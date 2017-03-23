@@ -5,6 +5,8 @@ import org.json4s.{DefaultFormats, Formats}
 import org.scalatra._
 import org.scalatra.json.JacksonJsonSupport
 
+import scala.util.parsing.json.JSON
+
 class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
 
   override protected implicit def jsonFormats: Formats = DefaultFormats
@@ -17,6 +19,8 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
 
   def mandatoryFields = Seq("valtakunnallinen_id", "livitunnus", "tie", "aosa", "puoli", "ajr", "aet",
     "pikavuoro", "kayttajatunnus", "pysakin_tyyppi", "inventointipvm")
+
+  def mandatoryTrFields = Seq("tietolaji")
 
   val massTransitStop: Map[String, Any] ={
     Map(
@@ -74,12 +78,20 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
 
   val trafficVolume: Map[String, Any] ={
     Map(
+
       "tietolaji" -> "tl201",          //Field code
       "tie" -> 45,                     //Road number
       "osa" -> 1,                      //Road part number
       "aet" -> 0,                      //Start distance
       "let" -> 100,                    //End distance
       "KTV" -> 1                       //placeholder value for traffic volume
+    )
+  }
+
+  val trafficVolumeWithRequiredParameters: Map[String, Any] ={
+    Map(
+      "tietolaji" -> "tl201",          //Field code
+      "tie" -> 45                      //Road number
     )
   }
 
@@ -160,72 +172,101 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
   get("/trrest/tietolajit/:fieldCode/:roadNumber") {
     //Checks that header contains X-OTH-Authorization attribute with correct base64 value
     if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg=="))) halt(BadRequest("401 Unauthorized"))
-    val fieldCode = params("fieldCode")
-    val roadNumber = params("roadNumber")
 
-    if(fieldCode != trafficVolume.get("tietolaji")){
-      halt(BadRequest("Invalid 'field code' value"))
-    } else if (roadNumber != trafficVolume.get("tie")) {
-      halt(BadRequest("Invalid 'road number' value"))
+    if (!trafficVolume.keySet.exists(_ == "tietolaji")){
+      halt(BadRequest("Key 'tietolaji' not found"))
+    }
+    if (!trafficVolume.keySet.exists(_ == "tie")){
+      halt(BadRequest("Key 'tie' not found"))
     }
 
-    trafficVolume.get("KTV")
+    val fieldCode = params("fieldCode")
+    val roadNumber = params("roadNumber").toLong
 
+    if(!trafficVolume.exists(_ == ("tietolaji",fieldCode))){
+      halt(BadRequest("Required parameter 'tietolaji' not found"))
+    }
+    if(!trafficVolume.exists(_ == ("tie",roadNumber))){
+        halt(BadRequest("Required parameter 'tie' not found"))
+    }
+    Seq(trafficVolume)
   }
 
   get("/trrest/tietolajit/:fieldCode/:roadNumber/:roadPartNumber") {
     //Checks that header contains X-OTH-Authorization attribute with correct base64 value
     if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg=="))) halt(BadRequest("401 Unauthorized"))
-    val fieldCode = params("fieldCode")
-    val roadNumber = params("roadNumber")
-    val roadPartNumber = params("roadPartNumber")
 
-    if(fieldCode != trafficVolume.get("tietolaji")){
-      halt(BadRequest("Invalid 'field code' value"))
-    } else if (roadNumber != trafficVolume.get("tie")) {
-      halt(BadRequest("Invalid 'road number' value"))
+    if (!trafficVolume.keySet.exists(_ == "tietolaji")){
+      halt(BadRequest("Key 'tietolaji' not found"))
+    }
+    if (!trafficVolume.keySet.exists(_ == "tie")){
+      halt(BadRequest("Key 'tie' not found"))
     }
 
-    trafficVolume.get("KTV")
+    val fieldCode = params("fieldCode")
+    val roadNumber = params("roadNumber").toLong
+    //val roadPartNumber = params("roadPartNumber").toLong
+
+    if(!trafficVolume.exists(_ == ("tietolaji",fieldCode))){
+      halt(BadRequest("Required parameter 'tietolaji' not found"))
+    }
+    if(!trafficVolume.exists(_ == ("tie",roadNumber))){
+      halt(BadRequest("Required parameter 'tie' not found"))
+    }
+    Seq(trafficVolume)
 
   }
 
   get("/trrest/tietolajit/:fieldCode/:roadNumber/:roadPartNumber/:startDistance") {
     //Checks that header contains X-OTH-Authorization attribute with correct base64 value
     if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg=="))) halt(BadRequest("401 Unauthorized"))
-    val fieldCode = params("fieldCode")
-    val roadNumber = params("roadNumber")
-    val roadPartNumber = params("roadPartNumber")
-    val startDistance = params("startDistance")
 
-    if(fieldCode != trafficVolume.get("tietolaji")){
-      halt(BadRequest("Invalid 'field code' value"))
-    } else if (roadNumber != trafficVolume.get("tie")) {
-      halt(BadRequest("Invalid 'road number' value"))
+    if (!trafficVolume.keySet.exists(_ == "tietolaji")){
+      halt(BadRequest("Key 'tietolaji' not found"))
+    }
+    if (!trafficVolume.keySet.exists(_ == "tie")){
+      halt(BadRequest("Key 'tie' not found"))
     }
 
-    trafficVolume.get("KTV")
+    val fieldCode = params("fieldCode")
+    val roadNumber = params("roadNumber").toLong
+    //val roadPartNumber = params("roadPartNumber").toLong
+    //val startDistance = params("startDistance").toLong
 
+    if(!trafficVolume.exists(_ == ("tietolaji",fieldCode))){
+      halt(BadRequest("Required parameter 'tietolaji' not found"))
+    }
+    if(!trafficVolume.exists(_ == ("tie",roadNumber))){
+      halt(BadRequest("Required parameter 'tie' not found"))
+    }
+    Seq(trafficVolume)
   }
 
   get("/trrest/tietolajit/:fieldCode/:roadNumber/:roadPartNumber/:startDistance/:endPart/:endDistance") {
     //Checks that header contains X-OTH-Authorization attribute with correct base64 value
     if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg=="))) halt(BadRequest("401 Unauthorized"))
-    val fieldCode = params("fieldCode")
-    val roadNumber = params("roadNumber")
-    val roadPartNumber = params("roadPartNumber")
-    val startDistance = params("startDistance")
-    val endPart = params("endPart")
-    val endDistance = params("endDistance")
 
-    if(fieldCode != trafficVolume.get("tietolaji")){
-      halt(BadRequest("Invalid 'field code' value"))
-    } else if (roadNumber != trafficVolume.get("tie")) {
-      halt(BadRequest("Invalid 'road number' value"))
+    if (!trafficVolume.keySet.exists(_ == "tietolaji")){
+      halt(BadRequest("Key 'tietolaji' not found"))
+    }
+    if (!trafficVolume.keySet.exists(_ == "tie")){
+      halt(BadRequest("Key 'tie' not found"))
     }
 
-    trafficVolume.get("KTV")
+    val fieldCode = params("fieldCode")
+    val roadNumber = params("roadNumber").toLong
+    //val roadPartNumber = params("roadPartNumber").toLong
+    //val startDistance = params("startDistance").toLong
+    //val endPart = params("endPart").toLong
+    //val endDistance = params("endDistance").toLong
 
+    if(!trafficVolume.exists(_ == ("tietolaji",fieldCode))){
+      halt(BadRequest("Required parameter 'tietolaji' not found"))
+    }
+    if(!trafficVolume.exists(_ == ("tie",roadNumber))){
+      halt(BadRequest("Required parameter 'tie' not found"))
+    }
+    Seq(trafficVolume)
   }
 
 }
