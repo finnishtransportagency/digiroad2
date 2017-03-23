@@ -687,6 +687,7 @@
 
     var refreshViewAfterSaving = function() {
       unselectRoadLink();
+      $('#feature-attributes').empty();
       me.refreshView();
     };
 
