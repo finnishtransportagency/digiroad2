@@ -546,19 +546,20 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
                 val addressFormLine = RoadAddressProjectFormLine(project.id, project.roadNumber, addressGroup._1._2, lastAddressM , MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(roadLink.head.municipalityCode, -1), addressGroup._2.last.discontinuityType.description )
                 addressFormLine
               })
-              Map("project" -> projectToApi(project), "projectAddresses" -> createdAddresses.headOption, "formInfo" -> formInfo)
+              Map("project" -> projectToApi(project), "projectAddresses" -> createdAddresses.headOption, "formInfo" -> formInfo, "success"->"ok")
             }
             case _ => {
               RoadAddressDAO.updateRoadAddressProject(roadAddressProject)
-              Map("roadAddressProject" -> roadAddressProject)
+              Map("roadAddressProject" -> roadAddressProject, "success"->"ok")
             }
           }
         }
-        else Map("project" -> projectToApi(roadAddressProject), "projectAddresses" -> None, "formInfo" -> None)
+        else Map("project" -> projectToApi(roadAddressProject), "projectAddresses" -> None, "formInfo" -> None, "s" +
+        "ss"-> "Tienumero 0")
       }
       catch {
         case a: Exception => println(a.getMessage)
-          Map()
+          Map("success"-> "Tallennus ei tuntemattomasta syystä onnistunut")
       }
     }
   }
