@@ -143,6 +143,7 @@
         rootElement.html(newProjectTemplate());
         jQuery('.modal-overlay').remove();
         addDatePicker();
+        applicationModel.setOpenProject(true);
       });
 
 
