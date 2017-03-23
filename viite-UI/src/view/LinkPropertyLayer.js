@@ -193,8 +193,13 @@
      * @param ol3Features
      */
     var addFeaturesToSelection = function (ol3Features) {
+      var olUids = _.map(selectSingleClick.getFeatures().getArray(), function(feature){
+        return feature.ol_uid;
+      });
       _.each(ol3Features, function(feature){
-        selectSingleClick.getFeatures().push(feature);
+        if(!_.contains(olUids,feature.ol_uid)){
+          selectSingleClick.getFeatures().push(feature);
+        }
       });
     };
 

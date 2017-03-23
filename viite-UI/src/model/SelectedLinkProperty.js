@@ -185,11 +185,12 @@
           }
         }
         //Now we just tidy up the adjacentNetwork by endAddressM again and set the current to this
-        applicationModel.setContinueButton(true);
+        applicationModel.setContinueButton(false);
         current = _.sortBy(adjacentNetwork, function(curr){
           return curr.getData().endAddressM;
         });
       }
+      applicationModel.setContinueButton(false);
     };
 
     var getLinkAdjacents = function(link) {
