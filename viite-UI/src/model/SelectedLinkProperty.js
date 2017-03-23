@@ -664,7 +664,7 @@
     };
 
     var continueSelectUnknown = function() {
-      if(applicationModel.getContinueButtons()){
+      if(!applicationModel.getContinueButtons()){
         new ModalConfirm("Tarkista irti geometriasta olevien tieosoitesegmenttien valinta. Kaikkia peräkkäisiä sopivia tieosoitesegmenttejä ei ole valittu.");
         return false;
       }else {
