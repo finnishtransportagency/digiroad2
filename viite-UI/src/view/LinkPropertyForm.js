@@ -565,8 +565,12 @@
         if(applicationModel.isActiveButtons())
           action = applicationModel.actionCalculating;
         applicationModel.setCurrentAction(action);
+        eventbus.trigger('linkProperties:activateInteractions');
         if('all' === applicationModel.getSelectionType() || 'floating' === applicationModel.getSelectionType()){
-          selectedLinkProperty.cancel();
+          selectedLinkProperty.clearAndReset(false);
+          applicationModel.toggleSelectionTypeAll();
+          selectedLinkProperty.close();
+          $('#feature-attributes').empty();
         } else {
           selectedLinkProperty.cancelAndReselect(action);
         }
@@ -607,7 +611,7 @@
       eventbus.on('adjacents:startedFloatingTransfer', function() {
         action = applicationModel.actionCalculating;
         rootElement.find('.link-properties button.cancel').attr('disabled', false);
-        if(applicationModel.isContinueButton() === false){
+        if(!applicationModel.isContinueButton()){
           rootElement.find('.link-properties button.continue').attr('disabled', true);
         }else {
           rootElement.find('.link-properties button.continue').attr('disabled', false);

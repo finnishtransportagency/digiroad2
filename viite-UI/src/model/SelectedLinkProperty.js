@@ -91,7 +91,7 @@
     };
 
     var openFloating = function(linkId, id, visibleFeatures){
-      var canIOpen = !_.isUndefined(linkId) ? !isSelectedByLinkId(linkId) || isDifferingSelection(singleLinkSelect) : !isSelectedById(id) || isDifferingSelection(singleLinkSelect);
+      var canIOpen = !_.isUndefined(linkId) ? !isSelectedByLinkId(linkId)  : !isSelectedById(id);
       if (canIOpen) {
         applicationModel.toggleSelectionTypeFloating();
         if(!_.isUndefined(linkId)){
@@ -118,7 +118,9 @@
           addToFeaturesToKeep(data4Display);
         }
         processOl3Features(visibleFeatures);
+        eventbus.trigger('adjacents:startedFloatingTransfer');
         eventbus.trigger('linkProperties:selected', data4Display);
+        eventbus.trigger('linkProperties:deactivateInteractions');
       }
     };
 
@@ -132,64 +134,6 @@
       });
       eventbus.trigger('linkProperties:ol3Selected', selectedOL3Features);
     };
-
-    var openTEST = function(linkId, id, singleLinkSelect, visibleFeatures) {
-      //var open = function(linkId, id, singleLinkSelect, checkAdjacency) {
-      var canIOpen = !_.isUndefined(linkId) ? !isSelectedByLinkId(linkId) || isDifferingSelection(singleLinkSelect) : !isSelectedById(id) || isDifferingSelection(singleLinkSelect);
-      if (canIOpen) {
-        if(featuresToKeep.length === 0){
-          close();
-        } else {
-          if (!_.isEmpty(current) && !isDirty()) {
-            _.forEach(current, function(selected) { selected.unselect(); });
-          }
-        }
-        if(!_.isUndefined(linkId)){
-          current = singleLinkSelect ? roadCollection.getByLinkId([linkId]) : roadCollection.getGroupByLinkId(linkId);
-        } else {
-          current = singleLinkSelect ? roadCollection.getById([id]) : roadCollection.getGroupById(id);
-        }
-
-        _.forEach(current, function (selected) {
-          selected.select();
-        });
-        var currentFloatings = _.filter(current, function(curr){
-          return curr.getData().roadLinkType === -1;
-        });
-        if(!_.isEmpty(currentFloatings)){
-          setSources(currentFloatings);
-        }
-        //Segment to construct adjacency
-        if(checkAdjacency){
-          fillAdjacents(linkId);
-        }
-        var data4Display = _.map(get(), function(feature){
-          return extractDataForDisplay([feature]);
-        });
-        if(!applicationModel.isReadOnly() && get()[0].roadLinkType === -1){
-          if (!_.isEmpty(featuresToKeep)) {
-            applicationModel.addSpinner();
-          }
-          if(_.isArray(data4Display)){
-            featuresToKeep = featuresToKeep.concat(data4Display);
-          } else {
-            featuresToKeep.push(data4Display);
-          }
-        }
-        var contains = _.find(featuresToKeep, function(fk){
-          return fk.linkId === linkId;
-        });
-        if(!_.isEmpty(featuresToKeep) && _.isUndefined(contains)){
-          if(_.isArray(data4Display)){
-            featuresToKeep = featuresToKeep.concat(data4Display);
-          } else {
-            featuresToKeep.push(data4Display);
-          }
-        }
-        eventbus.trigger('linkProperties:selected', data4Display);
-      }
-    };
-
 
     var fillAdjacents = function(linkId){
       var orderedCurrent = _.sortBy(current, function(curr){
@@ -241,6 +185,7 @@
           }
         }
         //Now we just tidy up the adjacentNetwork by endAddressM again and set the current to this
+        applicationModel.setContinueButton(true);
         current = _.sortBy(adjacentNetwork, function(curr){
           return curr.getData().endAddressM;
         });
@@ -249,80 +194,64 @@
 
     var getLinkAdjacents = function(link) {
       var linkIds = {};
-      backend.getFloatingAdjacent(link.linkId, link.roadNumber, link.roadPartNumber, link.trackCode, function(adjacents) {
-        if(!_.isEmpty(adjacents))
-          linkIds = adjacents;
-        if(!applicationModel.isReadOnly()){
-          var calculatedRoads = {"adjacents" : _.map(adjacents, function(a, index){
-            return _.merge({}, a, {"marker": markers[index]});
-          }), "links": link};
-          eventbus.trigger("adjacents:added",calculatedRoads.links, calculatedRoads.adjacents );
-        }
+      var chainLinks = [];
+      _.each(current, function (link) {
+        if (!_.isUndefined(link))
+          chainLinks.push(link.getData().linkId);
       });
+      _.each(targets, function (link) {
+        chainLinks.push(link.getData().linkId);
+      });
+      var data = {
+        "selectedLinks": _.uniq(chainLinks), "linkId": parseInt(link.linkId), "roadNumber": parseInt(link.roadNumber),
+        "roadPartNumber": parseInt(link.roadPartNumber), "trackCode": parseInt(link.trackCode)
+      };
+
+      if (!applicationModel.isReadOnly() && applicationModel.getSelectionType() !== 'all'){
+        applicationModel.addSpinner();
+        backend.getFloatingAdjacent(data, function (adjacents) {
+          applicationModel.removeSpinner();
+          if (!_.isEmpty(adjacents)){
+            linkIds = adjacents;
+            applicationModel.setCurrentAction(applicationModel.actionCalculating);
+          }
+          if (!applicationModel.isReadOnly()) {
+            var rejectedRoads = _.reject(get().concat(featuresToKeep), function(link){
+              return link.segmentId === "";
+            });
+            var selectedLinkIds = _.map(rejectedRoads, function (roads) {
+              return roads.linkId;
+            });
+            var filteredPreviousAdjacents = _.filter(adjacents, function(adj){
+              return !_.contains(_.pluck(previousAdjacents, 'linkId'), adj.linkId);
+            }).concat(previousAdjacents);
+            var filteredAdjacents = _.filter(filteredPreviousAdjacents, function(prvAdj){
+              return !_.contains(selectedLinkIds, prvAdj.linkId);
+            });
+            previousAdjacents = filteredAdjacents;
+            var markedRoads = {
+              "adjacents": _.map(applicationModel.getSelectionType() === 'floating' ? _.reject(filteredAdjacents, function(t){
+                return t.roadLinkType != -1;
+              }) :filteredAdjacents, function (a, index) {
+                return _.merge({}, a, {"marker": markers[index]});
+              }), "links": link
+            };
+            if(applicationModel.getSelectionType() === 'floating') {
+              eventbus.trigger("adjacents:floatingAdded", markedRoads.adjacents);
+              if(_.isEmpty(markedRoads.adjacents)){
+                applicationModel.setContinueButton(true);
+              }
+            }
+            else {
+              eventbus.trigger("adjacents:added", markedRoads.links, markedRoads.adjacents);
+            }
+            eventbus.trigger('adjacents:startedFloatingTransfer');
+          }
+        });
+      }
       return linkIds;
     };
 
-    /*
-     var getLinkAdjacents = function(link) {
-     var linkIds = {};
-     var chainLinks = [];
-     _.each(current, function (link) {
-     if (!_.isUndefined(link))
-     chainLinks.push(link.getData().linkId);
-     });
-     _.each(targets, function (link) {
-     chainLinks.push(link.getData().linkId);
-     });
-     var data = {
-     "selectedLinks": _.uniq(chainLinks), "linkId": parseInt(link.linkId), "roadNumber": parseInt(link.roadNumber),
-     "roadPartNumber": parseInt(link.roadPartNumber), "trackCode": parseInt(link.trackCode)
-     };
-
-     if (!applicationModel.isReadOnly() && applicationModel.getSelectionType() !== 'all'){
-     applicationModel.addSpinner();
-     backend.getFloatingAdjacent(data, function (adjacents) {
-     applicationModel.removeSpinner();
-     if (!_.isEmpty(adjacents)){
-     linkIds = adjacents;
-     applicationModel.setCurrentAction(applicationModel.actionCalculating);
-     }
-     if (!applicationModel.isReadOnly()) {
-     var rejectedRoads = _.reject(get().concat(featuresToKeep), function(link){
-     return link.segmentId === "";
-     });
-     var selectedLinkIds = _.map(rejectedRoads, function (roads) {
-     return roads.linkId;
-     });
-     var filteredPreviousAdjacents = _.filter(adjacents, function(adj){
-     return !_.contains(_.pluck(previousAdjacents, 'linkId'), adj.linkId);
-     }).concat(previousAdjacents);
-     var filteredAdjacents = _.filter(filteredPreviousAdjacents, function(prvAdj){
-     return !_.contains(selectedLinkIds, prvAdj.linkId);
-     });
-     previousAdjacents = filteredAdjacents;
-     var markedRoads = {
-     "adjacents": _.map(applicationModel.getSelectionType() === 'floating' ? _.reject(filteredAdjacents, function(t){
-     return t.roadLinkType != -1;
-     }) :filteredAdjacents, function (a, index) {
-     return _.merge({}, a, {"marker": markers[index]});
-     }), "links": link
-     };
-     if(applicationModel.getSelectionType() === 'floating') {
-     eventbus.trigger("adjacents:floatingAdded", markedRoads.adjacents);
-     if(_.isEmpty(markedRoads.adjacents)){
-     applicationModel.setContinueButton(true);
-     }
-     }
-     else {
-     eventbus.trigger("adjacents:added", markedRoads.links, markedRoads.adjacents);
-     }
-     eventbus.trigger('adjacents:startedFloatingTransfer');
-     }
-     });
-     }
-     return linkIds;
-     };
-     */
 
     eventbus.on("adjacents:additionalSourceSelected", function(existingSources, additionalSourceLinkId) {
 
@@ -543,7 +472,7 @@
       return targets;
     };
 
-    var cancel = function(action, changedTargetIds) {
+    var cancel = function() {
       dirty = false;
       _.each(current, function(selected) { selected.cancel(); });
       if(!_.isUndefined(_.first(current))){
@@ -734,7 +663,7 @@
     };
 
     var continueSelectUnknown = function() {
-      if(applicationModel.getContinueButtons() !== true){
+      if(applicationModel.getContinueButtons()){
         new ModalConfirm("Tarkista irti geometriasta olevien tieosoitesegmenttien valinta. Kaikkia peräkkäisiä sopivia tieosoitesegmenttejä ei ole valittu.");
         return false;
       }else {
@@ -785,6 +714,7 @@
       cancel: cancel,
       cancelAfterSiirra: cancelAfterSiirra,
       cancelAndReselect: cancelAndReselect,
+      clearAndReset: clearAndReset,
       continueSelectUnknown: continueSelectUnknown,
       isSelectedById: isSelectedById,
       isSelectedByLinkId: isSelectedByLinkId,
