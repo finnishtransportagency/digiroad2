@@ -20,7 +20,7 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
   def mandatoryFields = Seq("valtakunnallinen_id", "livitunnus", "tie", "aosa", "puoli", "ajr", "aet",
     "pikavuoro", "kayttajatunnus", "pysakin_tyyppi", "inventointipvm")
 
-  def mandatoryTrFields = Seq("tietolaji")
+  def mandatoryTrFields = Seq("tietolaji", "tie")
 
   val massTransitStop: Map[String, Any] ={
     Map(
@@ -173,21 +173,8 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
     //Checks that header contains X-OTH-Authorization attribute with correct base64 value
     if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg=="))) halt(BadRequest("401 Unauthorized"))
 
-    if (!trafficVolume.keySet.exists(_ == "tietolaji")){
-      halt(BadRequest("Key 'tietolaji' not found"))
-    }
-    if (!trafficVolume.keySet.exists(_ == "tie")){
-      halt(BadRequest("Key 'tie' not found"))
-    }
-
-    val fieldCode = params("fieldCode")
-    val roadNumber = params("roadNumber").toLong
-
-    if(!trafficVolume.exists(_ == ("tietolaji",fieldCode))){
-      halt(BadRequest("Required parameter 'tietolaji' not found"))
-    }
-    if(!trafficVolume.exists(_ == ("tie",roadNumber))){
-        halt(BadRequest("Required parameter 'tie' not found"))
+    if( ! mandatoryTrFields.filterNot(mf => trafficVolume.map(_._1).exists(tv => tv == mf)).isEmpty) {
+      halt(BadRequest("Malformed 'traffic volume' parameter"))
     }
     Seq(trafficVolume)
   }
@@ -196,48 +183,18 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
     //Checks that header contains X-OTH-Authorization attribute with correct base64 value
     if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg=="))) halt(BadRequest("401 Unauthorized"))
 
-    if (!trafficVolume.keySet.exists(_ == "tietolaji")){
-      halt(BadRequest("Key 'tietolaji' not found"))
-    }
-    if (!trafficVolume.keySet.exists(_ == "tie")){
-      halt(BadRequest("Key 'tie' not found"))
-    }
-
-    val fieldCode = params("fieldCode")
-    val roadNumber = params("roadNumber").toLong
-    //val roadPartNumber = params("roadPartNumber").toLong
-
-    if(!trafficVolume.exists(_ == ("tietolaji",fieldCode))){
-      halt(BadRequest("Required parameter 'tietolaji' not found"))
-    }
-    if(!trafficVolume.exists(_ == ("tie",roadNumber))){
-      halt(BadRequest("Required parameter 'tie' not found"))
+    if( ! mandatoryTrFields.filterNot(mf => trafficVolume.map(_._1).exists(tv => tv == mf)).isEmpty) {
+      halt(BadRequest("Malformed 'traffic volume' parameter"))
     }
     Seq(trafficVolume)
-
   }
 
   get("/trrest/tietolajit/:fieldCode/:roadNumber/:roadPartNumber/:startDistance") {
     //Checks that header contains X-OTH-Authorization attribute with correct base64 value
     if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg=="))) halt(BadRequest("401 Unauthorized"))
 
-    if (!trafficVolume.keySet.exists(_ == "tietolaji")){
-      halt(BadRequest("Key 'tietolaji' not found"))
-    }
-    if (!trafficVolume.keySet.exists(_ == "tie")){
-      halt(BadRequest("Key 'tie' not found"))
-    }
-
-    val fieldCode = params("fieldCode")
-    val roadNumber = params("roadNumber").toLong
-    //val roadPartNumber = params("roadPartNumber").toLong
-    //val startDistance = params("startDistance").toLong
-
-    if(!trafficVolume.exists(_ == ("tietolaji",fieldCode))){
-      halt(BadRequest("Required parameter 'tietolaji' not found"))
-    }
-    if(!trafficVolume.exists(_ == ("tie",roadNumber))){
-      halt(BadRequest("Required parameter 'tie' not found"))
+    if( ! mandatoryTrFields.filterNot(mf => trafficVolume.map(_._1).exists(tv => tv == mf)).isEmpty) {
+      halt(BadRequest("Malformed 'traffic volume' parameter"))
     }
     Seq(trafficVolume)
   }
@@ -246,25 +203,8 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
     //Checks that header contains X-OTH-Authorization attribute with correct base64 value
     if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg=="))) halt(BadRequest("401 Unauthorized"))
 
-    if (!trafficVolume.keySet.exists(_ == "tietolaji")){
-      halt(BadRequest("Key 'tietolaji' not found"))
-    }
-    if (!trafficVolume.keySet.exists(_ == "tie")){
-      halt(BadRequest("Key 'tie' not found"))
-    }
-
-    val fieldCode = params("fieldCode")
-    val roadNumber = params("roadNumber").toLong
-    //val roadPartNumber = params("roadPartNumber").toLong
-    //val startDistance = params("startDistance").toLong
-    //val endPart = params("endPart").toLong
-    //val endDistance = params("endDistance").toLong
-
-    if(!trafficVolume.exists(_ == ("tietolaji",fieldCode))){
-      halt(BadRequest("Required parameter 'tietolaji' not found"))
-    }
-    if(!trafficVolume.exists(_ == ("tie",roadNumber))){
-      halt(BadRequest("Required parameter 'tie' not found"))
+    if( ! mandatoryTrFields.filterNot(mf => trafficVolume.map(_._1).exists(tv => tv == mf)).isEmpty) {
+      halt(BadRequest("Malformed 'traffic volume' parameter"))
     }
     Seq(trafficVolume)
   }
