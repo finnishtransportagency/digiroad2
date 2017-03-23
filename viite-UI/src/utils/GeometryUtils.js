@@ -115,6 +115,11 @@
   };
   root.distanceOfPoints = distanceOfPoints;
 
+  var vectorialDistanceOfPoints = function (end, start) {
+    return Math.sqrt(Math.pow(end[0] - start[0], 2) + Math.pow(end[1] - start[1], 2));
+  };
+  root.vectorialDistanceOfPoints = vectorialDistanceOfPoints;
+
   var radiansToDegrees = function (radians) {
     return radians * (180 / Math.PI);
   };
@@ -132,7 +137,7 @@
     var firstVertex = _.first(vertices);
     var optionalMidpoint = _.reduce(_.tail(vertices), function (acc, vertex) {
       if (acc.midpoint) return acc;
-      var distance = distanceOfPoints(vertex, acc.previousVertex);
+      var distance = vectorialDistanceOfPoints(vertex, acc.previousVertex);
       var accumulatedDistance = acc.distanceTraversed + distance;
       if (accumulatedDistance < length / 2) {
         return {previousVertex: vertex, distanceTraversed: accumulatedDistance};
