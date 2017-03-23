@@ -61,65 +61,6 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Can fetch by bounding box with floating corrected") {
-    val modifiedLinkId = 1611317
-    val newLinkId = 6002
-    val municipalityCode = 235
-    val administrativeClass = Municipality
-    val trafficDirection = TrafficDirection.BothDirections
-    val functionalClass = 1
-    val linkType = Freeway
-
-    val changeInfo = Seq(
-      ChangeInfo(Some(modifiedLinkId), Some(modifiedLinkId), 12345, 5, Some(0), Some(150.0), Some(0), Some(100.0), 144000000),
-      ChangeInfo(Some(modifiedLinkId), Some(newLinkId), 12346, 6, Some(0), Some(0), Some(100.0), Some(150.0), 144000000)
-    )
-
-    val roadLinks = Seq(
-      RoadLink(modifiedLinkId, List(Point(3.0, 5.0), Point(8.0, 5.0)), 150.0, administrativeClass, functionalClass,
-        trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))),
-      RoadLink(newLinkId, List(Point(8.0, 5.0), Point(20.0, 5.0)), 100.0, administrativeClass, functionalClass,
-        trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
-    )
-
-    when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((roadLinks, changeInfo))
-
-    runWithRollback {
-      val (assetId, oldLinkId, oldStartMeasure, oldFloatingStatus) =
-        sql"""   select a.id, lp.link_id, lp.start_measure, a.floating
-                  from asset a
-                  join asset_link al on al.asset_id = a.id
-                  join lrm_position lp on lp.id = al.position_id
-                 where a.id = 600046""".as[(Long, Int, Double, Int)].first
-
-      val result = service.getByBoundingBox(testUser, BoundingRectangle(Point(374466.5, 6677346.5), Point(374467.5, 6677347.5))).head
-
-      result.id should equal(600046)
-      result.linkId should equal(6002)
-      result.lon should equal(374467)
-      result.lat should equal(6677347)
-      result.mValue should equal(3)
-      result.floating should be(false)
-
-      val (assetIdAfterCorretion, correctedLinkid, correctedStartMeasure, correctedFloatingStatus) =
-        sql"""   select a.id, lp.link_id, lp.start_measure, a.floating
-                  from asset a
-                  join asset_link al on al.asset_id = a.id
-                  join lrm_position lp on lp.id = al.position_id
-                 where a.id = 600046""".as[(Long, Int, Double, Int)].first
-
-      assetIdAfterCorretion should equal(result.id)
-      correctedLinkid should equal(result.linkId)
-      correctedStartMeasure should equal(result.mValue)
-      correctedFloatingStatus should equal(0)
-
-      assetIdAfterCorretion should be (assetId)
-      correctedLinkid should not be (oldLinkId)
-      correctedStartMeasure should not be(oldStartMeasure)
-    }
-  }
-
-
   test("Can fetch by municipality") {
     when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(235)).thenReturn((Seq(
       VVHRoadlink(388553074, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink), Nil))
@@ -132,65 +73,6 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
       result.lon should equal(374467)
       result.lat should equal(6677347)
       result.mValue should equal(103)
-    }
-  }
-
-  test("Can fetch by municipality with floating corrected") {
-    val modifiedLinkId = 1611317
-    val newLinkId = 6002
-    val municipalityCode = 235
-    val administrativeClass = Municipality
-    val trafficDirection = TrafficDirection.BothDirections
-    val functionalClass = 1
-    val linkType = Freeway
-
-
-    val changeInfo = Seq(
-      ChangeInfo(Some(modifiedLinkId), Some(modifiedLinkId), 12345, 5, Some(0), Some(150.0), Some(0), Some(100.0), 144000000),
-      ChangeInfo(Some(modifiedLinkId), Some(newLinkId), 12346, 6, Some(0), Some(0), Some(100.0), Some(150.0), 144000000)
-    )
-
-    val roadLinks = Seq(
-      RoadLink(modifiedLinkId, List(Point(3.0, 5.0), Point(8.0, 5.0)), 150.0, administrativeClass, functionalClass,
-        trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))),
-      RoadLink(newLinkId, List(Point(8.0, 5.0), Point(20.0, 5.0)), 100.0, administrativeClass, functionalClass,
-        trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
-    )
-
-    when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(235)).thenReturn((roadLinks, changeInfo))
-
-    runWithRollback {
-      val (assetId, oldLinkId, oldStartMeasure, oldFloatingStatus) =
-        sql"""   select a.id, lp.link_id, lp.start_measure, a.floating
-                  from asset a
-                  join asset_link al on al.asset_id = a.id
-                  join lrm_position lp on lp.id = al.position_id
-                 where a.id = 600046""".as[(Long, Int, Double, Int)].first
-
-      val result = service.getByMunicipality(235).find(_.id == 600046).get
-
-      result.id should equal(600046)
-      result.linkId should equal(6002)
-      result.lon should equal(374467)
-      result.lat should equal(6677347)
-      result.mValue should equal(3)
-      result.floating should be(false)
-
-      val (assetIdAfterCorretion, correctedLinkid, correctedStartMeasure, correctedFloatingStatus) =
-        sql"""   select a.id, lp.link_id, lp.start_measure, a.floating
-                  from asset a
-                  join asset_link al on al.asset_id = a.id
-                  join lrm_position lp on lp.id = al.position_id
-                 where a.id = 600046""".as[(Long, Int, Double, Int)].first
-
-      assetIdAfterCorretion should equal(result.id)
-      correctedLinkid should equal(result.linkId)
-      correctedStartMeasure should equal(result.mValue)
-      correctedFloatingStatus should equal(0)
-
-      assetIdAfterCorretion should be (assetId)
-      correctedLinkid should not be (oldLinkId)
-      correctedStartMeasure should not be(oldStartMeasure)
     }
   }
 

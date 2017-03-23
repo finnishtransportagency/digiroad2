@@ -51,8 +51,8 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
         user.isAuthorizedToRead(persistedAsset.municipalityCode)
       }.map { (persistedAsset: PersistedAsset) =>
         val (floating, assetFloatingReason) = super.isFloating(persistedAsset, roadLinks.find(_.linkId == persistedAsset.linkId))
-        if (floating && !persistedAsset.floating) {
 
+        if (floating || persistedAsset.floating) {
           PointAssetFiller.correctedPersistedAsset(persistedAsset, roadLinks, changeInfo) match {
             case Some(obstacle) =>
               val updated = IncomingObstacle(obstacle.lon, obstacle.lat, obstacle.linkId, persistedAsset.obstacleType)
@@ -63,9 +63,11 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
                 persistedAsset.createdAt, persistedAsset.modifiedBy, persistedAsset.modifiedAt), obstacle.floating, Some(FloatingReason.Unknown))
 
             case None => {
-              val logger = LoggerFactory.getLogger(getClass)
-              val floatingReasonMessage = floatingReason(persistedAsset, roadLinks.find(_.linkId == persistedAsset.linkId))
-              logger.info("Floating asset %d, reason: %s".format(persistedAsset.id, floatingReasonMessage))
+              if (floating && !persistedAsset.floating) {
+                val logger = LoggerFactory.getLogger(getClass)
+                val floatingReasonMessage = floatingReason(persistedAsset, roadLinks.find(_.linkId == persistedAsset.linkId))
+                logger.info("Floating asset %d, reason: %s".format(persistedAsset.id, floatingReasonMessage))
+              }
               AssetBeforeUpdate(setFloating(persistedAsset, floating), persistedAsset.floating, assetFloatingReason)
             }
           }
@@ -104,23 +106,19 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
 
     val (floating, assetFloatingReason) = isFloating(persistedStop, linkIdToRoadLink(persistedStop.linkId))
     if (floating) {
-      val persistedAsset = PointAssetFiller.correctedPersistedAsset(persistedStop, roadLinks, changeInfo) match {
+      PointAssetFiller.correctedPersistedAsset(persistedStop, roadLinks, changeInfo) match {
         case Some(obstacle) =>
           val updated = IncomingObstacle(obstacle.lon, obstacle.lat, obstacle.linkId, persistedStop.obstacleType)
           OracleObstacleDao.update(obstacle.assetId, updated, obstacle.mValue, "vvh_generated", persistedStop.municipalityCode)
 
-          new PersistedAsset(obstacle.assetId, obstacle.linkId, obstacle.lon, obstacle.lat,
+          val persistedAsset = new PersistedAsset(obstacle.assetId, obstacle.linkId, obstacle.lon, obstacle.lat,
             obstacle.mValue, obstacle.floating, persistedStop.municipalityCode, persistedStop.obstacleType, persistedStop.createdBy,
             persistedStop.createdAt, persistedStop.modifiedBy, persistedStop.modifiedAt)
 
-        case None => {
-          val logger = LoggerFactory.getLogger(getClass)
-          val floatingReasonMessage = floatingReason(persistedStop, roadLinks.find(_.linkId == persistedStop.linkId))
-          logger.info("Floating asset %d, reason: %s".format(persistedStop.id, floatingReasonMessage))
-          persistedStop
-        }
+          (conversion(persistedAsset, persistedAsset.floating), assetFloatingReason)
+
+        case None => (conversion(persistedStop, floating), assetFloatingReason)
       }
-      (conversion(persistedAsset, persistedAsset.floating), assetFloatingReason)
     }
     else
       (conversion(persistedStop, floating), assetFloatingReason)

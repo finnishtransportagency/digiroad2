@@ -65,12 +65,13 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService) extends Po
                 pedestrian.mValue, pedestrian.floating, persistedAsset.municipalityCode, persistedAsset.createdBy,
                 persistedAsset.createdAt, persistedAsset.modifiedBy, persistedAsset.modifiedAt), pedestrian.floating, assetFloatingReason)
 
-            case None => {
-              val logger = LoggerFactory.getLogger(getClass)
-              val floatingReasonMessage = floatingReason(persistedAsset, roadLinks.find(_.linkId == persistedAsset.linkId))
-              logger.info("Floating asset %d, reason: %s".format(persistedAsset.id, floatingReasonMessage))
+            case None =>
+              if (floating && !persistedAsset.floating) {
+                val logger = LoggerFactory.getLogger(getClass)
+                val floatingReasonMessage = floatingReason(persistedAsset, roadLinks.find(_.linkId == persistedAsset.linkId))
+                logger.info("Floating asset %d, reason: %s".format(persistedAsset.id, floatingReasonMessage))
+              }
               AssetBeforeUpdate(setFloating(persistedAsset, floating), persistedAsset.floating, assetFloatingReason)
-            }
           }
         }
         else
@@ -105,22 +106,19 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService) extends Po
 
     val (floating, assetFloatingReason) = isFloating(persistedStop, linkIdToRoadLink(persistedStop.linkId))
     if (floating) {
-      val persistedAsset = PointAssetFiller.correctedPersistedAsset(persistedStop, roadLinks, changeInfo) match {
+      PointAssetFiller.correctedPersistedAsset(persistedStop, roadLinks, changeInfo) match {
         case Some(pedestrian) =>
           OraclePedestrianCrossingDao.update(pedestrian.assetId, PedestrianCrossingToBePersisted(pedestrian.linkId,
             pedestrian.lon, pedestrian.lat, pedestrian.mValue, persistedStop.municipalityCode, "vvh_generated"))
 
-          new PersistedAsset(pedestrian.assetId, pedestrian.linkId, pedestrian.lon, pedestrian.lat,
+          val persistedAsset = new PersistedAsset(pedestrian.assetId, pedestrian.linkId, pedestrian.lon, pedestrian.lat,
             pedestrian.mValue, pedestrian.floating, persistedStop.municipalityCode, persistedStop.createdBy,
             persistedStop.createdAt, persistedStop.modifiedBy, persistedStop.modifiedAt)
 
-        case None =>
-          val logger = LoggerFactory.getLogger(getClass)
-          val floatingReasonMessage = floatingReason(persistedStop, roadLinks.find(_.linkId == persistedStop.linkId))
-          logger.info("Floating asset %d, reason: %s".format(persistedStop.id, floatingReasonMessage))
-          persistedStop
+          (conversion(persistedAsset, persistedAsset.floating), assetFloatingReason)
+
+        case None => (conversion(persistedStop, floating), assetFloatingReason)
       }
-      (conversion(persistedAsset, persistedAsset.floating), assetFloatingReason)
     }
     else
       (conversion(persistedStop, floating), assetFloatingReason)
