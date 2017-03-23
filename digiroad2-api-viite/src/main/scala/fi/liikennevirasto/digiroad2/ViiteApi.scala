@@ -263,7 +263,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "status" -> roadAddressProject.status,
       "name" -> roadAddressProject.name,
       "createdBy" -> roadAddressProject.createdBy,
-      "createdDate" -> roadAddressProject.createdDate.toString,
+      // for some reason created date is null when project is inserted through sqldeveloper's table view with right mouse click -> insert row even though correct date is visually shown
+      "createdDate" -> { if (roadAddressProject.createdDate==null){null} else {roadAddressProject.createdDate.toString}},
       "startDate" -> roadAddressProject.startDate.toString,
       "modifiedBy" -> roadAddressProject.modifiedBy,
       "additionalInfo" -> roadAddressProject.additionalInfo
