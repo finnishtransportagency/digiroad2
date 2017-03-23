@@ -422,10 +422,7 @@
         floatingMarkerLayer.getSource().clear();
       if(anomalousMarkerLayer.getSource() !== null)
         anomalousMarkerLayer.getSource().clear();
-
-      /*roadLayer.drawRoadLinks(roadLinks, zoom);
-       drawDashedLineFeaturesIfApplicable(roadLinks);*/
-
+       
       if(map.getView().getZoom() > zoomlevels.minZoomForAssets) {
         var floatingRoadMarkers = _.filter(roadLinks, function(roadlink) {
           return roadlink.roadLinkType === -1;
@@ -445,9 +442,7 @@
           anomalousMarkerLayer.getSource().addFeature(marker);
 
         });
-      }
-
-      if (map.getView().getZoom() > zoomlevels.minZoomForAssets) {
+        
         var actualPoints =  me.drawCalibrationMarkers(calibrationPointLayer.source, roadLinks);
         _.each(actualPoints, function(actualPoint) {
           var calMarker = new CalibrationPoint(actualPoint.point);
@@ -460,7 +455,7 @@
        redrawSelected();
        }*/
       addSelectInteractions();
-      eventbus.trigger('linkProperties:available');
+      //eventbus.trigger('linkProperties:available');
     };
 
     /* var createMouseClickHandler = function(floatlink) {
@@ -490,6 +485,7 @@
      };*/
 
     this.refreshView = function() {
+      //Generalize the zoom levels as the resolutions and zoom levels differ between map tile sources
       roadCollection.fetch(map.getExtent(), 11);
       roadLayer.layer.changed();
     };
@@ -533,10 +529,12 @@
      browseStyleMap.addUniqueValueRules('default', 'level', unknownFeatureSizeLookup, applicationModel.zoom);
      */
 
+    /*
      var typeFilter = function(type) {
      return new OpenLayers.Filter.Comparison(
      { type: OpenLayers.Filter.Comparison.EQUAL_TO, property: 'type', value: type });
      };
+    */
 
      /*
      var unknownLimitStyleRule = new OpenLayers.Rule({
@@ -698,12 +696,6 @@
       if(selectDoubleClick.getFeatures().getLength() !== 0){
         selectDoubleClick.getFeatures().clear();
       }
-    };
-
-    this.refreshView = function() {
-      // Generalize the zoom levels as the resolutions and zoom levels differ between map tile sources
-      roadCollection.fetch(map.getExtent(), 11);
-      roadLayer.layer.changed();
     };
 
     this.layerStarted = function(eventListener) {

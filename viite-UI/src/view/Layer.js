@@ -59,7 +59,7 @@
     this.drawSigns = function(layer, roadLinks) {
       var signs = mapOverLinkMiddlePoints(roadLinks, function(link, middlePoint) {
         var attributes = _.merge({}, link, { rotation: 0 });
-        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(middlePoint.x, middlePoint.y), attributes);
+        return new OpenLayers.Feature.Vector(new ol.geom.Point(middlePoint.x, middlePoint.y), attributes);
       });
 
       layer.addFeatures(signs);
