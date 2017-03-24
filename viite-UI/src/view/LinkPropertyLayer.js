@@ -1068,15 +1068,11 @@
     });
 
     var highlightAnomalousFeaturesByFloating = function() {
-      var featuresAnFloa = _.find(roadLayer.layer.getSource().getFeatures(), function(anfeature){
+      var featuresAnFloa = _.filter(roadLayer.layer.getSource().getFeatures(), function(anfeature){
         return anfeature.roadLinkData.anomaly === 1 || anfeature.roadLinkData.roadLinkType === -1;
-
       });
-      addFeaturesToSelection(featuresAnFloa);
-      floatingMarkerLayer.setZIndex(20);
-      anomalousMarkerLayer.setZIndex(20);
-      floatingMarkerLayer.setOpacity(20);
-      anomalousMarkerLayer.setOpacity(20);
+      var features = featuresAnFloa.concat(floatingMarkerLayer.getSource().getFeatures(), anomalousMarkerLayer.getSource().getFeatures());
+      addFeaturesToSelection(features);
     };
 
     eventbus.on('linkProperties:unselectAllFeatures', function(){
