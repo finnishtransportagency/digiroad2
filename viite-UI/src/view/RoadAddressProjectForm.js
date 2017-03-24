@@ -65,7 +65,7 @@
         '</div>' +
         '<div class="form-group">' +
         '<label class="control-label">Tieosat</label>' +
-        addSmallInputNumber('tie') + addSmallInputNumber('aosa') + addSmallInputNumber('losa') +
+        addSmallInputNumber('tie') + addSmallInputNumber('aosa') + addSmallInputNumber('losa') +  addReserveButton() +
         '</div>' +
         '</form>' +
 
@@ -131,6 +131,10 @@
 
       dateutil.addSingleDependentDatePicker($validFrom);
 
+    };
+
+    var addReserveButton = function() {
+        return '<button class="btn btn-reserve">Varaa</button>'
     };
 
     var bindEvents = function() {
