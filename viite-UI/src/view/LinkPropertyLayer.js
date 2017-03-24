@@ -551,6 +551,7 @@
      symbolizer: { externalGraphic: 'images/speed-limits/unknown.svg' }
      });
      */
+    
     /*
      browseStyle.addRules([unknownLimitStyleRule]);
      var vectorLayer = new OpenLayers.Layer.Vector(layerName, { styleMap: browseStyleMap });
@@ -674,7 +675,6 @@
       }
     };
 
-
     /*
      var drawDashedLineFeaturesIfApplicable = function (roadLinks) {
      drawDashedLineFeatures(roadLinks);
@@ -682,7 +682,6 @@
      drawUnderConstructionFeatures(roadLinks);
      };
      */
-
 
     var handleLinkPropertyChanged = function(eventListener) {
       //OL2
@@ -880,7 +879,7 @@
       };
 
       eventListener.listenTo(eventListener, 'map:clearLayers', clearLayers);
-    };
+  };
 
     var drawIndicators = function(links) {
       var features = [];
@@ -1079,6 +1078,13 @@
       roadLayer.layer.setOpacity(1);
       floatingMarkerLayer.setOpacity(1);
       anomalousMarkerLayer.setOpacity(1);
+    });
+
+    eventListener.listenTo(eventbus, 'linkProperties:clearHighlights', function(){
+      clearHighlights();
+      var featureToReOpen = _.cloneDeep(_.first(selectedLinkProperty.getFeaturesToKeepFloatings()));
+      var visibleFeatures = getVisibleFeatures(true,true,true);
+      selectedLinkProperty.openFloating(featureToReOpen.linkId, featureToReOpen.id, visibleFeatures);
     });
 
     var show = function(map) {

@@ -572,6 +572,7 @@
           selectedLinkProperty.close();
           $('#feature-attributes').empty();
         } else {
+          applicationModel.toggleSelectionTypeFloating();
           selectedLinkProperty.cancelAndReselect(action);
         }
         applicationModel.setActiveButtons(false);

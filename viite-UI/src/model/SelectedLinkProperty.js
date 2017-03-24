@@ -552,39 +552,11 @@
       }
     };
 
-
-    var cancelAndReselect = function(action, changedTargetIds) {
-      //Selected data backup
-      var originalData = _.filter(featuresToKeep, function (feature) {
-        return feature.roadLinkType === -1;
-      });
-      //Cancelling
-      dirty = false;
-      if (action !== applicationModel.actionCalculated && action !== applicationModel.actionCalculating) {
-        clearFeaturesToKeep();
-      }
-      if (_.isEmpty(changedTargetIds)) {
-        clearAndReset(false);
-        $('#adjacentsData').remove();
-        //Reselecting
-        if (applicationModel.getSelectionType() !== 'floating') {
-          eventbus.trigger('linkProperties:selected', _.cloneDeep(_.first(originalData)));
-        }
-      }
-      if (applicationModel.isActiveButtons() || action === -1) {
-        if (action !== applicationModel.actionCalculated) {
-          applicationModel.setActiveButtons(false);
-          eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
-          eventbus.trigger('roadLinks:unSelectIndicators', originalData);
-        }
-        applicationModel.setContinueButton(false);
-        eventbus.trigger('roadLinks:deleteSelection');
-        eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
-      }
-      eventbus.trigger('roadLinks:clearIndicators');
-      applicationModel.toggleSelectionTypeAll();
-      applicationModel.setContinueButton(true);
-    };
+    var cancelAndReselect = function(){
+      clearAndReset(false);
+      current = [];
+      eventbus.trigger('linkProperties:clearHighlights');
+  };
 
     var clearAndReset = function(afterSiira){
       roadCollection.resetTmp();
