@@ -89,12 +89,15 @@ module.exports = function(grunt) {
             xforward: false
           },
           {
-              context: '/maasto',
-              host: 'karttamoottori.maanmittauslaitos.fi',
-              https: false,
-              changeOrigin: true,
-              xforward: false,
-              headers: {referer: 'http://www.paikkatietoikkuna.fi/web/fi/kartta'}
+            context: '/maasto',
+            host: '172.17.204.46',
+            port: '8080',
+            https: false,
+            changeOrigin: true,
+            xforward: false,
+            rewrite: {
+              '^/maasto': '/digiroad/maasto'
+            }
           },
           {
               context: '/vkm',
@@ -143,12 +146,15 @@ module.exports = function(grunt) {
             headers: {referer: 'https://aineistot.esri.fi/arcgis/rest/services/Taustakartat/Harmaasavy/MapServer?f=jsapi'}
           },
           {
-              context: '/maasto',
-              host: 'karttamoottori.maanmittauslaitos.fi',
-              https: false,
-              changeOrigin: true,
-              xforward: false,
-              headers: {referer: 'http://www.paikkatietoikkuna.fi/web/fi/kartta'}
+            context: '/maasto',
+            host: '172.17.204.46',
+            port: '8080',
+            https: false,
+            changeOrigin: true,
+            xforward: false,
+            rewrite: {
+              '^/maasto': '/digiroad/maasto'
+            }
           },
           {
               context: '/vkm',

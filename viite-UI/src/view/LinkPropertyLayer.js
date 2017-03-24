@@ -431,7 +431,7 @@
         floatingMarkerLayer.getSource().clear();
       if(anomalousMarkerLayer.getSource() !== null)
         anomalousMarkerLayer.getSource().clear();
-       
+
       if(map.getView().getZoom() > zoomlevels.minZoomForAssets) {
         var floatingRoadMarkers = _.filter(roadLinks, function(roadlink) {
           return roadlink.roadLinkType === -1;
@@ -451,7 +451,7 @@
           anomalousMarkerLayer.getSource().addFeature(marker);
 
         });
-        
+
         var actualPoints =  me.drawCalibrationMarkers(calibrationPointLayer.source, roadLinks);
         _.each(actualPoints, function(actualPoint) {
           var calMarker = new CalibrationPoint(actualPoint.point);
@@ -543,15 +543,15 @@
      return new OpenLayers.Filter.Comparison(
      { type: OpenLayers.Filter.Comparison.EQUAL_TO, property: 'type', value: type });
      };
-    */
+     */
 
-     /*
+    /*
      var unknownLimitStyleRule = new OpenLayers.Rule({
      filter: typeFilter('roadAddressAnomaly'),
      symbolizer: { externalGraphic: 'images/speed-limits/unknown.svg' }
      });
      */
-     /*
+    /*
      browseStyle.addRules([unknownLimitStyleRule]);
      var vectorLayer = new OpenLayers.Layer.Vector(layerName, { styleMap: browseStyleMap });
      vectorLayer.setOpacity(1);
@@ -770,8 +770,6 @@
             });
           }
         });
-        //OL2
-        //indicatorLayer.clearMarkers();
         indicatorLayer.getSource().clear();
       });
 
@@ -792,11 +790,11 @@
       });
       eventListener.listenTo(eventbus, 'adjacents:added adjacents:aditionalSourceFound', function(sources,targets, aditionalLinkId){
         drawIndicators(targets);
-         _.map(_.rest(selectedLinkProperty.getFeaturesToKeep()), function (roads){
-         editFeatureDataForGreen(roads);
-         highlightFeatureByLinkId(roads.linkId);
-         });
-         highlightFeatureByLinkId(aditionalLinkId);
+        _.map(_.rest(selectedLinkProperty.getFeaturesToKeep()), function (roads){
+          editFeatureDataForGreen(roads);
+          highlightFeatureByLinkId(roads.linkId);
+        });
+        highlightFeatureByLinkId(aditionalLinkId);
       });
 
       eventListener.listenTo(eventbus, 'adjacents:floatingAdded', function(floatings){
@@ -810,8 +808,6 @@
         _.map(newRoads, function(road){
           afterTransferLinks.push(road);
         });
-        //OL2
-        //indicatorLayer.clearMarkers();
         indicatorLayer.getSource().clear();
         roadCollection.setTmpRoadAddresses(afterTransferLinks);
         roadCollection.setChangedIds(changedIds);
@@ -827,8 +823,6 @@
 
       eventListener.listenTo(eventbus, 'roadLink:editModeAdjacents', function() {
         if (applicationModel.isReadOnly() && !applicationModel.isActiveButtons()) {
-          //OL2
-          //indicatorLayer.clearMarkers();
           indicatorLayer.getSource().clear();
           var floatingsLinkIds = _.map(_.filter(selectedLinkProperty.getFeaturesToKeep(), function (feature) {
             return feature.roadLinkType == -1;
@@ -877,34 +871,16 @@
         }
       });
 
-      /*
-       eventListener.listenTo(eventbus, 'linkProperties:cancelled', unselectRoadLink);
-       };
+      eventListener.listenTo(eventbus, 'linkProperties:clearIndicators', function(){
+        clearIndicators();
+      });
 
-
-       */
       var clearIndicators = function () {
-        //OL2
-        //indicatorLayer.clearMarkers();
         indicatorLayer.getSource().clear();
       };
 
       eventListener.listenTo(eventListener, 'map:clearLayers', clearLayers);
     };
-
-    /*var drawIndicators= function(links){
-      indicatorLayer.getSource().clear();
-      var indicators = me.mapOverLinkMiddlePoints(links, function(link, middlePoint) {
-        var bounds = ol.extent.boundingExtent([middlePoint.x, middlePoint.y, middlePoint.x, middlePoint.y]);
-        //return createIndicatorFromBounds(bounds, link.marker);
-        return createIndicatorFromBounds(link.marker, middlePoint);
-      });
-      _.forEach(indicators, function(indicator){
-        indicatorLayer.getSource().addFeature(indicator);
-      });
-    };*/
-
-
 
     var drawIndicators = function(links) {
       var features = [];
@@ -928,15 +904,22 @@
         marker.setStyle(style);
         features.push(marker);
       };
+
+      var indicators = function() {
+        return me.mapOverLinkMiddlePoints(links, function(link, middlePoint) {
+          markerContainer(link, middlePoint);
+        });
+      };
+      indicators();
       indicatorLayer.getSource().addFeatures(features);
     };
-      /*var createIndicatorFromBounds = function(bounds, marker) {
-      var markerTemplate = _.template('<span class="marker" style="margin-left: -1em; margin-top: -1em; position: absolute;"><%= marker %></span>');
-      var box = new OpenLayers.Marker.Box(bounds, "00000000");
-      $(box.div).html(markerTemplate({'marker': marker}));
-      $(box.div).css('overflow', 'visible');
-      return box;
-    };*/
+    /*var createIndicatorFromBounds = function(bounds, marker) {
+     var markerTemplate = _.template('<span class="marker" style="margin-left: -1em; margin-top: -1em; position: absolute;"><%= marker %></span>');
+     var box = new OpenLayers.Marker.Box(bounds, "00000000");
+     $(box.div).html(markerTemplate({'marker': marker}));
+     $(box.div).css('overflow', 'visible');
+     return box;
+     };*/
 
     var createIndicatorFromBounds = function(markerText, position) {
       var features = [];
@@ -961,11 +944,11 @@
       };
 
       /*var indicators = function() {
-        return me.mapOverLinkMiddlePoints(links, function(link, middlePoint) {
-          markerContainer(link, middlePoint);
-        });
-      };
-      indicators();*/
+       return me.mapOverLinkMiddlePoints(links, function(link, middlePoint) {
+       markerContainer(link, middlePoint);
+       });
+       };
+       indicators();*/
       indicatorLayer.getSource().addFeatures(features);
     };
 
@@ -1032,30 +1015,30 @@
     var editFeatureDataForGreen = function (targets) {
       var features =[];
       if(targets !== 0){
-/*
-        _.map(roadLayer.layer.features, function(feature){
-          if(feature.attributes.linkId == targets){
-            feature.attributes.prevAnomaly = feature.attributes.anomaly;
-            feature.data.prevAnomaly = feature.data.anomaly;
-            feature.attributes.gapTransfering = true;
-            feature.data.gapTransfering = true;
+        /*
+         _.map(roadLayer.layer.features, function(feature){
+         if(feature.attributes.linkId == targets){
+         feature.attributes.prevAnomaly = feature.attributes.anomaly;
+         feature.data.prevAnomaly = feature.data.anomaly;
+         feature.attributes.gapTransfering = true;
+         feature.data.gapTransfering = true;
+         selectedLinkProperty.getFeaturesToKeep().push(feature.data);
+         features.push(feature);
+         roadCollection.addPreMovedRoadAddresses(feature.data);
+         */
+
+        //Change for OpenLayers3
+        _.map(roadLayer.layer.getSource().getFeatures(), function(feature){
+          if(feature.roadLinkData.linkId == targets){
+            feature.roadLinkData.prevAnomaly = feature.roadLinkData.anomaly;
+            feature.roadLinkData.prevAnomaly = feature.roadLinkData.anomaly;
+            feature.roadLinkData.gapTransfering = true;
+            feature.roadLinkData.gapTransfering = true;
             selectedLinkProperty.getFeaturesToKeep().push(feature.data);
             features.push(feature);
             roadCollection.addPreMovedRoadAddresses(feature.data);
-*/
 
-          //Change for OpenLayers3
-            _.map(roadLayer.layer.getSource().getFeatures(), function(feature){
-              if(feature.roadLinkData.linkId == targets){
-                feature.roadLinkData.prevAnomaly = feature.roadLinkData.anomaly;
-                feature.roadLinkData.prevAnomaly = feature.roadLinkData.anomaly;
-                feature.roadLinkData.gapTransfering = true;
-                feature.roadLinkData.gapTransfering = true;
-                selectedLinkProperty.getFeaturesToKeep().push(feature.data);
-                features.push(feature);
-                roadCollection.addPreMovedRoadAddresses(feature.data);
-
-              }
+          }
         });
       }
       if(features.length === 0)
@@ -1078,12 +1061,16 @@
     eventbus.on('linkProperties:unselectAllFeatures', function(){
       selectControl.unselectAll();
     });
-    
+
     eventbus.on('linkProperties:deactivateInteractions', function(){
-       deactivateSelectInteractions();
+      deactivateSelectInteractions();
     });
 
     eventbus.on('linkProperties:activateInteractions', function(){
+      activateSelectInteractions();
+    });
+
+    eventbus.on('linkProperties:addFeaturesToInteractions', function(){
       activateSelectInteractions();
     });
 

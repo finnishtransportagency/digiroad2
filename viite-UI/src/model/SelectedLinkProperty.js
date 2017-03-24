@@ -548,6 +548,7 @@
       if(!_.isUndefined(_.first(current))){
         var originalData = _.first(current).getData();
         eventbus.trigger('linkProperties:cancelled', _.cloneDeep(originalData));
+        eventbus.trigger('roadLinks:clearIndicators');
       }
     };
 
@@ -580,6 +581,7 @@
         eventbus.trigger('roadLinks:deleteSelection');
         eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
       }
+      eventbus.trigger('roadLinks:clearIndicators');
       applicationModel.toggleSelectionTypeAll();
       applicationModel.setContinueButton(true);
     };
@@ -590,6 +592,7 @@
       applicationModel.resetCurrentAction();
       roadCollection.resetPreMovedRoadAddresses();
       clearFeaturesToKeep();
+      eventbus.trigger('roadLinks:clearIndicators');
       if(!afterSiira) {
         roadCollection.resetNewTmpRoadAddresses();
         resetSources();
