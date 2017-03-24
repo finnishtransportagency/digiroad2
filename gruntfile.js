@@ -90,22 +90,19 @@ module.exports = function(grunt) {
           },
           {
             context: '/maasto',
-            host: '172.17.204.46',
-            port: '8080',
+            host: 'karttamoottori.maanmittauslaitos.fi',
             https: false,
             changeOrigin: true,
             xforward: false,
-            rewrite: {
-              '^/maasto': '/digiroad/maasto'
-            }
+            headers: {referer: 'http://www.paikkatietoikkuna.fi/web/fi/kartta'}
           },
           {
-              context: '/vkm',
-              host: 'localhost',
-              port: '8997',
-              https: false,
-              changeOrigin: false,
-              xforward: false
+            context: '/vkm',
+            host: 'localhost',
+            port: '8997',
+            https: false,
+            changeOrigin: false,
+            xforward: false
           }
         ]
       },
@@ -147,22 +144,19 @@ module.exports = function(grunt) {
           },
           {
             context: '/maasto',
-            host: '172.17.204.46',
-            port: '8080',
+            host: 'karttamoottori.maanmittauslaitos.fi',
             https: false,
             changeOrigin: true,
             xforward: false,
-            rewrite: {
-              '^/maasto': '/digiroad/maasto'
-            }
+            headers: {referer: 'http://www.paikkatietoikkuna.fi/web/fi/kartta'}
           },
           {
-              context: '/vkm',
-              host: 'localhost',
-              port: '8997',
-              https: false,
-              changeOrigin: false,
-              xforward: false
+            context: '/vkm',
+            host: 'localhost',
+            port: '8997',
+            https: false,
+            changeOrigin: false,
+            xforward: false
           }
         ]
       }
@@ -262,13 +256,9 @@ module.exports = function(grunt) {
       }
     },
     exec: {
-      prepare_openlayers: {
-        cmd: 'npm install',
-        cwd: './bower_components/openlayers/'
-      },
       build_openlayers: {
-        cmd: 'node tasks/build.js ../../viite-UI/src/resources/digiroad2/ol3/ol-custom.js build/ol3.js',
-        cwd: './bower_components/openlayers/'
+        cmd: './build.py',
+        cwd: './bower_components/openlayers/build/'
       }
     }
   });
@@ -294,23 +284,23 @@ module.exports = function(grunt) {
 
   grunt.registerTask('test', ['jshint', 'env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'mocha:unit', 'mocha:integration']);
 
-  grunt.registerTask('default', ['jshint', 'env:production', 'exec:prepare_openlayers', 'exec:build_openlayers', 'configureProxies:oth', 'preprocess:production', 'connect:oth', 'mocha:unit', 'mocha:integration', 'clean', 'less:production', 'less:viiteprod', 'concat', 'uglify', 'cachebreaker']);
+  grunt.registerTask('default', ['jshint', 'env:production', 'configureProxies:oth', 'preprocess:production', 'connect:oth', 'mocha:unit', 'mocha:integration', 'clean', 'less:production', 'less:viiteprod', 'concat', 'uglify', 'cachebreaker']);
 
-  grunt.registerTask('deploy', ['clean', 'env:production', 'exec:prepare_openlayers', 'exec:build_openlayers', 'preprocess:production', 'less:production', 'less:viiteprod', 'concat', 'uglify', 'cachebreaker']);
+  grunt.registerTask('deploy', ['clean', 'env:production', 'preprocess:production', 'less:production', 'less:viiteprod', 'concat', 'uglify', 'cachebreaker', 'save_deploy_info']);
 
   grunt.registerTask('integration-test', ['jshint', 'env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'mocha:integration']);
 
   grunt.registerTask('vallu-test-server', ['execute:vallu_local_test', 'watch']);
 
   grunt.registerTask('save_deploy_info',
-      function() {
-        var options = this.options({
-          file: 'revision.properties'
-        });
+    function() {
+      var options = this.options({
+        file: 'revision.properties'
+      });
 
-        var data = ('digiroad2.revision=' + " " + 'digiroad2.latestDeploy=' + grunt.template.today('dd-mm-yyyy h:MM:ss'));
-        grunt.file.write(options.file, data);
+      var data = ('digiroad2.latestDeploy=' + grunt.template.today('dd-mm-yyyy HH:MM:ss'));
+      grunt.file.write(options.file, data);
 
-      }
+    }
   );
 };
