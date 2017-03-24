@@ -115,7 +115,6 @@
         '<footer>' + buttons + '</footer>');
     };
 
-
     var addSmallLabel = function(label){
       return '<label class="control-label-small">'+label+'</label>';
     };
@@ -146,6 +145,21 @@
         applicationModel.setOpenProject(true);
       });
 
+      eventbus.on('roadAddress:openProject', function(result) {
+        currentProject = _.first(result.projects);
+        var text = '';
+        _.each(result.projectLinks, function(line){
+          text += '<div>' +
+            '<button class="delete btn-delete-roadpart">x</button>'+addSmallLabel(line.roadNumber)+ addSmallLabel(line.roadPartNumber)+ addSmallLabel(line.RoadLength)+ addSmallLabel(line.discontinuity)+ addSmallLabel(line.ely) +
+            '</div>';
+        });
+        rootElement.html(openProjectTemplate(currentProject, text));
+        jQuery('.modal-overlay').remove();
+        setTimeout(function(){}, 0);
+        // applicationModel.setOpenProject(true);
+        if(!_.isUndefined(currentProject))
+          eventbus.trigger('linkProperties:selectedProject', currentProject.linkId);
+      });
 
       eventbus.on('roadAddress:selected roadAddress:cancelled', function(roadAddress) {
 

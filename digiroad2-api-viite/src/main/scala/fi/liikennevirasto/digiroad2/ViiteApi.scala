@@ -163,8 +163,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     roadAddressService.saveRoadLinkProject(roadAddressProject)
   }
   get("/roadlinks/roadaddress/project/all") {
-    val projects = roadAddressService.getRoadAddressProjects()
-    projects.map(roadAddressProjectToApi)
+    roadAddressService.getRoadAddressProjects(0)
+  }
+
+  get("/roadlinks/roadaddress/project/all/projectId/:id") {
+    val projectId = params("id").toLong
+    val (projects, projectLinks) = roadAddressService.getProjectsWithLinksById(projectId)
+    Map("projects" -> Seq(projects).map(roadAddressProjectToApi), "projectLinks" -> projectLinks)
   }
 
   private def roadlinksData(): (Seq[String], Seq[String]) = {
@@ -265,7 +270,11 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "createdBy" -> roadAddressProject.createdBy,
       // for some reason created date is null when project is inserted through sqldeveloper's table view with right mouse click -> insert row even though correct date is visually shown
       "createdDate" -> { if (roadAddressProject.createdDate==null){null} else {roadAddressProject.createdDate.toString}},
+      "dateModified" -> roadAddressProject.dateModified,
       "startDate" -> roadAddressProject.startDate.toString,
+      "startPart" -> roadAddressProject.startPart,
+      "endPart" -> roadAddressProject.endPart,
+      "roadNumber" -> roadAddressProject.roadNumber,
       "modifiedBy" -> roadAddressProject.modifiedBy,
       "additionalInfo" -> roadAddressProject.additionalInfo
     )

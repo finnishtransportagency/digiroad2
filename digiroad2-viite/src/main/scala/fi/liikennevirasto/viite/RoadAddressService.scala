@@ -580,13 +580,35 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     )
   }
 
-  def getRoadAddressProjects(): Seq[RoadAddressProject] = {
+  def getRoadAddressProjects(projectId: Long): Seq[RoadAddressProject] = {
     withDynTransaction {
-        val projects = RoadAddressDAO.getRoadAddressProjects()
-        projects
+      RoadAddressDAO.getRoadAddressProjects(projectId)
     }
   }
 
+  def getProjectsWithLinksById(projectId: Long): (RoadAddressProject, Seq[RoadAddressProjectFormLine]) = {
+    withDynTransaction {
+      val project:RoadAddressProject = RoadAddressDAO.getRoadAddressProjects(projectId).head
+      val createdAddresses = RoadAddressDAO.getRoadAddressProjectLinks(project.id)
+      val groupedAddresses = createdAddresses.groupBy { address =>
+        (address.roadNumber, address.roadPartNumber)
+      }.toSeq.sortBy(_._1._2)(Ordering[Long])
+      val formInfo: Seq[RoadAddressProjectFormLine] = groupedAddresses.map(addressGroup => {
+        val lastAddressM = addressGroup._2.last.endAddrM
+        val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(addressGroup._2.last.linkId), false)
+        val addressFormLine = RoadAddressProjectFormLine(project.id, addressGroup._2.last.roadNumber, addressGroup._2.last.roadPartNumber, lastAddressM, MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(roadLink.head.municipalityCode, -1), addressGroup._2.last.discontinuityType.description)
+        addressFormLine
+      })
+
+       val fullProjectInfo:RoadAddressProject = formInfo.length match {
+         case 0 => project
+         case 1 => project.copy(roadNumber = formInfo.head.roadNumber, startPart = formInfo.head.roadPartNumber, endPart = formInfo.head.roadPartNumber)
+         case _ => project.copy(roadNumber = formInfo.head.roadNumber, startPart = formInfo.head.roadPartNumber, endPart = formInfo.last.roadPartNumber)
+       }
+
+      (fullProjectInfo, formInfo)
+    }
+  }
 }
 
 //TIETYYPPI (1= yleinen tie, 2 = lauttaväylä yleisellä tiellä, 3 = kunnan katuosuus, 4 = yleisen tien työmaa, 5 = yksityistie, 9 = omistaja selvittämättä)
