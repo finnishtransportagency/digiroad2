@@ -177,6 +177,11 @@
         applicationModel.addSpinner();
         projectCollection.createProject(data, currentProject);
       });
+
+      rootElement.on('click', '.btn-reserve', function() {
+        var data = $('#roadAddressProject').get(0);
+        projectCollection.checkIfReserved(data);
+      });
     
       rootElement.on('click', '.project-form button.cancel', function(){
         applicationModel.setOpenProject(false);

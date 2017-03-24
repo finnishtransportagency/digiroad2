@@ -22,5 +22,13 @@
       });
     };
 
+    this.checkIfReserved = function(data){
+      var dataJson = {id: 0, roadNumber : data[3].value === '' ? 0 : parseInt(data[3].value), startPart: data[4].value === '' ? 0 : parseInt(data[4].value), endPart : data[5].value === '' ? 0 : parseInt(data[5].value) };
+      backend.checkIfRoadpartReserved(dataJson, function(result) {
+        console.log(result);
+      }, function() {
+
+      });
+    };
   };
 })(this);
