@@ -60,7 +60,7 @@
           zIndex = 5;
         }
       } else {
-        zIndex = 3;
+        zIndex = 6;
       }
       return zIndex;
     };
@@ -120,7 +120,7 @@
       }
 
       if (roadLinkType !== -1 && anomaly === 1){
-        width = 5;
+        width = 7;
       }
 
       return width;

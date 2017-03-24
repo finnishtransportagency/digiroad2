@@ -124,6 +124,75 @@
       }
     };
 
+    var openUnknown = function(linkId, id, singleLinkSelect, visibleFeatures, checkAdjacency) {
+      var canIOpen = !_.isUndefined(linkId) ? !isSelectedByLinkId(linkId) || isDifferingSelection(singleLinkSelect) : !isSelectedById(id) || isDifferingSelection(singleLinkSelect);
+      if (canIOpen) {
+        if(featuresToKeep.length === 0){
+          close();
+        } else {
+          if (!_.isEmpty(current) && !isDirty()) {
+            _.forEach(current, function(selected) { selected.unselect(); });
+          }
+        }
+        if(!_.isUndefined(linkId)){
+          current = singleLinkSelect ? roadCollection.getByLinkId([linkId]) : roadCollection.getGroupByLinkId(linkId);
+        } else {
+          current = singleLinkSelect ? roadCollection.getById([id]) : roadCollection.getGroupById(id);
+        }
+
+        _.forEach(current, function (selected) {
+          selected.select();
+        });
+
+        var currentFloatings = _.filter(current, function(curr){
+          return curr.getData().roadLinkType === -1;
+        });
+        if(!_.isEmpty(currentFloatings)){
+          setSources(currentFloatings);
+        }
+
+        //Segment to construct adjacency
+        if(checkAdjacency){
+          fillAdjacents(linkId);
+        }
+
+        var data4Display = _.map(get(), function(feature){
+          return extractDataForDisplay([feature]);
+        });
+
+        if(!applicationModel.isReadOnly() && get()[0].roadLinkType === -1){
+          if (!_.isEmpty(featuresToKeep)) {
+            applicationModel.addSpinner();
+          }
+          if(_.isArray(data4Display)){
+            featuresToKeep = featuresToKeep.concat(data4Display);
+          } else {
+            featuresToKeep.push(data4Display);
+          }
+        }
+        var contains = _.find(featuresToKeep, function(fk){
+          return fk.linkId === linkId;
+        });
+
+        if(!_.isEmpty(featuresToKeep) && _.isUndefined(contains)){
+          if(_.isArray(extractDataForDisplay(get()))){
+            featuresToKeep = featuresToKeep.concat(data4Display);
+          } else {
+            featuresToKeep.push(data4Display);
+          }
+        }
+        var selectedOL3Features = _.filter(visibleFeatures, function(vf){
+          return (_.some(get(), function(s){
+              return s.linkId === vf.roadLinkData.linkId;
+            })) && (_.some(get(), function(s){
+              return s.mmlId === vf.roadLinkData.mmlId;
+            }));
+        });
+        eventbus.trigger('linkProperties:ol3Selected', selectedOL3Features);
+        eventbus.trigger('linkProperties:selected', extractDataForDisplay(get()));
+      }
+    };
+
      var processOl3Features = function (visibleFeatures){
       var selectedOL3Features = _.filter(visibleFeatures, function(vf){
         return (_.some(get().concat(featuresToKeep), function(s){
@@ -435,6 +504,12 @@
       }
     };
 
+    /*var getTargets = function(){
+     return _.union(_.map(targets, function (roadLink) {
+     return roadLink.getData();
+     }));
+     };*/
+
     var getTargets = function(){
       return _.union(targets);
     };
@@ -456,12 +531,6 @@
     var setFeaturesToHighlight = function(ft) {
       featuresToHighlight = ft;
     };
-
-    /*var getTargets = function(){
-     return _.union(_.map(targets, function (roadLink) {
-     return roadLink.getData();
-     }));
-     };*/
 
     var resetSources = function() {
       sources = [];
@@ -709,6 +778,7 @@
       close: close,
       open: open,
       openFloating: openFloating,
+      openUnknown: openUnknown,
       isDirty: isDirty,
       save: save,
       saveTransfer: saveTransfer,

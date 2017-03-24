@@ -172,7 +172,11 @@
             ('all' === applicationModel.getSelectionType() || 'floating' === applicationModel.getSelectionType()) &&
             !applicationModel.isReadOnly()) {
             selectedLinkProperty.openFloating(selection.roadLinkData.linkId, selection.roadLinkData.id, visibleFeatures);
-          } else {
+          } else if ('unknown' === applicationModel.getSelectionType() && !applicationModel.isReadOnly() &&
+            selection.roadLinkData.anomaly === 1 && selection.roadLinkData.roadLinkType !== -1  ){
+            selectedLinkProperty.openUnknown(selection.roadLinkData.linkId, selection.roadLinkData.id, visibleFeatures);
+          }
+          else {
             if (isAnomalousById(selection.id) || isFloatingById(selection.id)) {
               selectedLinkProperty.open(selection.roadLinkData.linkId, selection.roadLinkData.id, true, visibleFeatures);
             } else {
@@ -788,13 +792,11 @@
       });
       eventListener.listenTo(eventbus, 'adjacents:added adjacents:aditionalSourceFound', function(sources,targets, aditionalLinkId){
         drawIndicators(targets);
-        /*
          _.map(_.rest(selectedLinkProperty.getFeaturesToKeep()), function (roads){
          editFeatureDataForGreen(roads);
          highlightFeatureByLinkId(roads.linkId);
          });
          highlightFeatureByLinkId(aditionalLinkId);
-         */
       });
 
       eventListener.listenTo(eventbus, 'adjacents:floatingAdded', function(floatings){
@@ -890,23 +892,81 @@
       eventListener.listenTo(eventListener, 'map:clearLayers', clearLayers);
     };
 
-    var drawIndicators= function(links){
+    /*var drawIndicators= function(links){
       indicatorLayer.getSource().clear();
       var indicators = me.mapOverLinkMiddlePoints(links, function(link, middlePoint) {
         var bounds = ol.extent.boundingExtent([middlePoint.x, middlePoint.y, middlePoint.x, middlePoint.y]);
-        return createIndicatorFromBounds(bounds, link.marker);
+        //return createIndicatorFromBounds(bounds, link.marker);
+        return createIndicatorFromBounds(link.marker, middlePoint);
       });
       _.forEach(indicators, function(indicator){
         indicatorLayer.getSource().addFeature(indicator);
       });
-    };
+    };*/
 
-    var createIndicatorFromBounds = function(bounds, marker) {
+
+
+    var drawIndicators = function(links) {
+      var features = [];
+
+      var markerContainer = function(link, position) {
+        var style = new ol.style.Style({
+          image : new ol.style.Icon({
+            src: 'images/center-marker2.svg'
+          }),
+          text : new ol.style.Text({
+            text : link.marker,
+            fill: new ol.style.Fill({
+              color: '#ffffff'
+            }),
+            font : '12px sans-serif'
+          })
+        });
+        var marker = new ol.Feature({
+          geometry : new ol.geom.Point([position.x, position.y])
+        });
+        marker.setStyle(style);
+        features.push(marker);
+      };
+      indicatorLayer.getSource().addFeatures(features);
+    };
+      /*var createIndicatorFromBounds = function(bounds, marker) {
       var markerTemplate = _.template('<span class="marker" style="margin-left: -1em; margin-top: -1em; position: absolute;"><%= marker %></span>');
       var box = new OpenLayers.Marker.Box(bounds, "00000000");
       $(box.div).html(markerTemplate({'marker': marker}));
       $(box.div).css('overflow', 'visible');
       return box;
+    };*/
+
+    var createIndicatorFromBounds = function(markerText, position) {
+      var features = [];
+
+      var markerContainer = function(markerText, position) {
+        var style = new ol.style.Style({
+          image : new ol.style.Icon({
+            src: 'images/center-marker2.svg'
+          }),
+          text : new ol.style.Text({
+            text : markerText,
+            fill: new ol.style.Fill({
+              color: "#ffffff"
+            })
+          })
+        });
+        var marker = new ol.Feature({
+          geometry : new ol.geom.Point([position.x, position.y])
+        });
+        marker.setStyle(style);
+        features.push(marker);
+      };
+
+      /*var indicators = function() {
+        return me.mapOverLinkMiddlePoints(links, function(link, middlePoint) {
+          markerContainer(link, middlePoint);
+        });
+      };
+      indicators();*/
+      indicatorLayer.getSource().addFeatures(features);
     };
 
     var handleMapClick = function (){
@@ -972,6 +1032,7 @@
     var editFeatureDataForGreen = function (targets) {
       var features =[];
       if(targets !== 0){
+/*
         _.map(roadLayer.layer.features, function(feature){
           if(feature.attributes.linkId == targets){
             feature.attributes.prevAnomaly = feature.attributes.anomaly;
@@ -981,7 +1042,20 @@
             selectedLinkProperty.getFeaturesToKeep().push(feature.data);
             features.push(feature);
             roadCollection.addPreMovedRoadAddresses(feature.data);
-          }
+*/
+
+          //Change for OpenLayers3
+            _.map(roadLayer.layer.getSource().getFeatures(), function(feature){
+              if(feature.roadLinkData.linkId == targets){
+                feature.roadLinkData.prevAnomaly = feature.roadLinkData.anomaly;
+                feature.roadLinkData.prevAnomaly = feature.roadLinkData.anomaly;
+                feature.roadLinkData.gapTransfering = true;
+                feature.roadLinkData.gapTransfering = true;
+                selectedLinkProperty.getFeaturesToKeep().push(feature.data);
+                features.push(feature);
+                roadCollection.addPreMovedRoadAddresses(feature.data);
+
+              }
         });
       }
       if(features.length === 0)
@@ -994,14 +1068,15 @@
     });
 
     var highlightAnomalousFeaturesByFloating = function() {
-      _.find(roadLayer.layer.getSource().getFeatures(), function(anfeature){
-        if(anfeature.roadLinkData.anomaly === 1){
-          selectSingleClick.getFeatures().push(anfeature);
-          roadLayer.layer.setOpacity(1);
-          floatingMarkerLayer.setOpacity(1);
-          anomalousMarkerLayer.setOpacity(1);
-        }
+      var featuresAnFloa = _.find(roadLayer.layer.getSource().getFeatures(), function(anfeature){
+        return anfeature.roadLinkData.anomaly === 1 || anfeature.roadLinkData.roadLinkType === -1;
+
       });
+      addFeaturesToSelection(featuresAnFloa);
+      floatingMarkerLayer.setZIndex(20);
+      anomalousMarkerLayer.setZIndex(20);
+      floatingMarkerLayer.setOpacity(20);
+      anomalousMarkerLayer.setOpacity(20);
     };
 
     eventbus.on('linkProperties:unselectAllFeatures', function(){

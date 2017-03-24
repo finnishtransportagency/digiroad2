@@ -587,7 +587,8 @@
           applicationModel.toggleSelectionTypeUnknown();
           applicationModel.setContinueButton(false);
           eventbus.trigger('linkProperties:highlightAnomalousByFloating');
-        }
+          eventbus.trigger('linkProperties:activateInteractions');
+          }
       });
 
       eventbus.on('adjacents:roadTransfer', function(result, sourceIds, targets) {

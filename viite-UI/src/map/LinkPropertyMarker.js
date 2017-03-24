@@ -11,8 +11,7 @@
 
       var boxStyleFloat = new ol.style.Style({
         image: new ol.style.Icon({
-          //src: 'images/link-properties/flag-floating-plus-stick.png',
-          src: 'images/link-properties/flag-floating.svg',
+          src: 'images/link-properties/flag-floating-plus-stick.png',
           anchor: [0, 1]
         }),
         zIndex: 10
