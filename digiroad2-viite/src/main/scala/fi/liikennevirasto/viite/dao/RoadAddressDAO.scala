@@ -798,7 +798,7 @@ object RoadAddressDAO {
             FROM project $filter order by name, id """
     Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String )](query).list.map{
       case(id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo) =>
-        RoadAddressProject(id, state, name, createdBy, start_date ,modifiedBy, createdDate, modifiedDate, addInfo, 0, 0, 0)
+        RoadAddressProject(id, state, name, createdBy, createdDate ,modifiedBy, start_date, modifiedDate, addInfo, 0, 0, 0)
     }
   }
 

@@ -1,6 +1,9 @@
 package fi.liikennevirasto.digiroad2
 
+import java.text.SimpleDateFormat
+
 import fi.liikennevirasto.digiroad2.asset._
+
 import scala.util.parsing.json._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -271,13 +274,19 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       // for some reason created date is null when project is inserted through sqldeveloper's table view with right mouse click -> insert row even though correct date is visually shown
       "createdDate" -> { if (roadAddressProject.createdDate==null){null} else {roadAddressProject.createdDate.toString}},
       "dateModified" -> roadAddressProject.dateModified,
-      "startDate" -> roadAddressProject.startDate.toString,
+      "startDate" -> { if (roadAddressProject.startDate==null){null} else {formatToString(roadAddressProject.startDate.toString)}},
       "startPart" -> roadAddressProject.startPart,
       "endPart" -> roadAddressProject.endPart,
       "roadNumber" -> roadAddressProject.roadNumber,
       "modifiedBy" -> roadAddressProject.modifiedBy,
       "additionalInfo" -> roadAddressProject.additionalInfo
     )
+  }
+
+  def formatToString(entryDate: String): String = {
+    val date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").parse(entryDate)
+    val formattedDate = new SimpleDateFormat("dd.MM.yyyy").format(date)
+    formattedDate
   }
 
   private def calibrationPoint(geometry: Seq[Point], calibrationPoint: Option[CalibrationPoint]) = {
