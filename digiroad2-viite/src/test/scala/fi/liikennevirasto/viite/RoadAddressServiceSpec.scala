@@ -347,4 +347,18 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       RoadAddressDAO.fetchByLinkId(Set(5171285L, 5170935L, 5171863L)) should have size (3)
     }
   }
+
+  test("get projects by id") {
+    runWithRollback{
+      val countCurrentProjects = roadAddressService.getRoadAddressProjects(0)
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val roadAddressProject = RoadAddressProject(id, 1, "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", 5, 202, 203)
+      roadAddressService.saveRoadLinkProject(roadAddressProject)
+
+      val countAfterInsertProjects = roadAddressService.getRoadAddressProjects(0)
+      val count = countCurrentProjects.size + 1
+      countAfterInsertProjects.size should be (count)
+
+    }
+  }
 }
