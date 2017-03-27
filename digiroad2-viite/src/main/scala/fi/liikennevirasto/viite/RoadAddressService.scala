@@ -543,7 +543,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
               val formInfo = groupedAddresses.map(addressGroup =>{
                 val lastAddressM = addressGroup._2.last.endAddrM
                 val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(addressGroup._2.last.linkId), false)
-                val addressFormLine = RoadAddressProjectFormLine(project.id, project.roadNumber, addressGroup._1._2, lastAddressM , MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(roadLink.head.municipalityCode, -1), addressGroup._2.last.discontinuityType.description )
+                val addressFormLine = RoadAddressProjectFormLine(addressGroup._2.last.linkId, project.id, project.roadNumber, addressGroup._1._2, lastAddressM , MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(roadLink.head.municipalityCode, -1), addressGroup._2.last.discontinuityType.description )
                 addressFormLine
               })
               Map("project" -> projectToApi(project), "projectAddresses" -> createdAddresses.headOption, "formInfo" -> formInfo)
@@ -596,7 +596,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       val formInfo: Seq[RoadAddressProjectFormLine] = groupedAddresses.map(addressGroup => {
         val lastAddressM = addressGroup._2.last.endAddrM
         val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(addressGroup._2.last.linkId), false)
-        val addressFormLine = RoadAddressProjectFormLine(project.id, addressGroup._2.last.roadNumber, addressGroup._2.last.roadPartNumber, lastAddressM, MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(roadLink.head.municipalityCode, -1), addressGroup._2.last.discontinuityType.description)
+        val addressFormLine = RoadAddressProjectFormLine(addressGroup._2.last.linkId, project.id, addressGroup._2.last.roadNumber, addressGroup._2.last.roadPartNumber, lastAddressM, MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(roadLink.head.municipalityCode, -1), addressGroup._2.last.discontinuityType.description)
         addressFormLine
       })
 

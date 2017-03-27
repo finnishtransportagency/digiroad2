@@ -146,7 +146,7 @@
       });
 
       eventbus.on('roadAddress:openProject', function(result) {
-        currentProject = _.first(result.projects);
+        currentProject = result.projects;
         var text = '';
         _.each(result.projectLinks, function(line){
           text += '<div>' +

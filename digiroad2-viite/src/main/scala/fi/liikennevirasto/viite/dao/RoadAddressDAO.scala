@@ -77,7 +77,7 @@ case class RoadAddressProject(id: Long, status: Long, name: String, createdBy: S
 
 case class RoadAddressProjectLink(id : Long, projectId: Long, roadType: Long, discontinuityType: Discontinuity, roadNumber: Long, roadPartNumber: Long, startAddrM: Long, endAddrM: Long, lrmPositionId: Long, cratedBy: String, modifiedBy: String, linkId: Long, length: Double)
 
-case class RoadAddressProjectFormLine(projectId: Long, roadNumber: Long, roadPartNumber: Long, RoadLength: Long, ely : Long, discontinuity: String)
+case class RoadAddressProjectFormLine(startingLinkId: Long, projectId: Long, roadNumber: Long, roadPartNumber: Long, RoadLength: Long, ely : Long, discontinuity: String)
 
 case class RoadAddressCreator(administrativeClass : String, anomaly: Long, calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None),
                               constructionType: Long, discontinuity: Int, elyCode: Long, endAddressM : Long, endDate: String, endMValue: Double,
@@ -748,7 +748,7 @@ object RoadAddressDAO {
   def createRoadAddressProject(roadAddressProject: RoadAddressProject): Unit ={
     sqlu"""
            insert into project (id, state, name, ely, created_by, created_date, start_date ,modified_by, modified_date, add_info)
-           values (${roadAddressProject.id}, ${roadAddressProject.status}, ${roadAddressProject.name}, 0, ${roadAddressProject.createdBy}, sysdate ,${roadAddressProject.startDate}, '-' , '', ${roadAddressProject.additionalInfo})
+           values (${roadAddressProject.id}, ${roadAddressProject.status}, ${roadAddressProject.name}, 0, ${roadAddressProject.createdBy}, sysdate ,${roadAddressProject.startDate}, '-' , sysdate, ${roadAddressProject.additionalInfo})
            """.execute
   }
 
@@ -756,7 +756,7 @@ object RoadAddressDAO {
     sqlu"""
            insert into project_link (id, project_id, road_type, discontinuity_type, road_number, road_part_number, start_addr_m, end_addr_m, lrm_position_id, created_by, modified_by, created_date, modified_date)
            values (${id}, ${roadAddressProject.id}, ${roadAddress.track.value}, ${roadAddress.discontinuity.value}, ${roadAddress.roadNumber}, ${roadAddress.roadPartNumber}, ${roadAddress.startAddrMValue},
-            ${roadAddress.endAddrMValue}, ${roadAddress.lrmPositionId}, ${roadAddressProject.createdBy} , ${roadAddressProject.modifiedBy}, ${roadAddress.startDate}, ${roadAddressProject.dateModified})
+            ${roadAddress.endAddrMValue}, ${roadAddress.lrmPositionId}, ${roadAddressProject.createdBy} , ${roadAddressProject.modifiedBy}, ${roadAddress.startDate}, sysdate)
            """.execute
   }
 
@@ -775,7 +775,7 @@ object RoadAddressDAO {
 
   def updateRoadAddressProject(roadAddressProject : RoadAddressProject): Unit ={
     sqlu"""
-           update project set state = ${roadAddressProject.status}, name = ${roadAddressProject.name}, modified_by = '-' ,modified_date = ${roadAddressProject.dateModified} where id = ${roadAddressProject.id}
+           update project set state = ${roadAddressProject.status}, name = ${roadAddressProject.name}, modified_by = '-' ,modified_date = sysdate where id = ${roadAddressProject.id}
            """.execute
   }
 

@@ -162,7 +162,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val project = parsedBody.extract[RoadAddressProjectExtractor]
     val user = userProvider.getCurrentUser()
     val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
-    val roadAddressProject  = RoadAddressProject( project.id, project.status, project.name, user.username, DateTime.now(), "-", formatter.parseDateTime(project.startDate), DateTime.now(), project.additionalInfo, project.roadNumber, project.startPart, project.endPart)
+    val roadAddressProject  = RoadAddressProject(project.id, project.status, project.name, user.username, DateTime.now(), "-", formatter.parseDateTime(project.startDate), DateTime.now(), project.additionalInfo, project.roadNumber, project.startPart, project.endPart)
     roadAddressService.saveRoadLinkProject(roadAddressProject)
   }
   get("/roadlinks/roadaddress/project/all") {
@@ -172,7 +172,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   get("/roadlinks/roadaddress/project/all/projectId/:id") {
     val projectId = params("id").toLong
     val (projects, projectLinks) = roadAddressService.getProjectsWithLinksById(projectId)
-    Map("projects" -> Seq(projects).map(roadAddressProjectToApi), "projectLinks" -> projectLinks)
+    val project = Seq(projects).map(roadAddressProjectToApi)
+    val projectsWithLinkId = project.head + ("linkId" -> projectLinks.head.startingLinkId)
+    Map("projects" -> projectsWithLinkId, "projectLinks" -> projectLinks)
   }
 
   private def roadlinksData(): (Seq[String], Seq[String]) = {
@@ -273,7 +275,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "createdBy" -> roadAddressProject.createdBy,
       // for some reason created date is null when project is inserted through sqldeveloper's table view with right mouse click -> insert row even though correct date is visually shown
       "createdDate" -> { if (roadAddressProject.createdDate==null){null} else {roadAddressProject.createdDate.toString}},
-      "dateModified" -> roadAddressProject.dateModified,
+      "dateModified" -> { if (roadAddressProject.dateModified==null){null} else {formatToString(roadAddressProject.dateModified.toString)}},
       "startDate" -> { if (roadAddressProject.startDate==null){null} else {formatToString(roadAddressProject.startDate.toString)}},
       "startPart" -> roadAddressProject.startPart,
       "endPart" -> roadAddressProject.endPart,
