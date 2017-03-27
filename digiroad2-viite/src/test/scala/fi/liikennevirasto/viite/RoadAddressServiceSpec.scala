@@ -293,13 +293,13 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     runWithRollback{
       val id = Sequences.nextViitePrimaryKeySeqValue
 
-      val roadAddressProject = RoadAddressProject(id, 1, "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", 5, 202, 202)
+      val roadAddressProject = RoadAddressProject(id, 1, "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", 1, 1, 1)
       val result = roadAddressService.saveRoadLinkProject(roadAddressProject)
       result.size should be (3)
       result.get("project").get should not be None
-      result.get("projectAddresses").get should not be None
+      result.get("projectAddresses").get should be (None)
       result.get("formInfo").get should not be None
-      result.get("formInfo").size should be(1)
+      result.get("formInfo").size should be (1)
     }
   }
 
