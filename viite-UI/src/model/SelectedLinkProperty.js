@@ -471,7 +471,7 @@
         eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
       }
       applicationModel.toggleSelectionTypeAll();
-      applicationModel.setContinueButton(true);
+      applicationModel.setContinueButton(false);
     };
 
     var cancelAfterSiirra = function(action, changedTargetIds) {
