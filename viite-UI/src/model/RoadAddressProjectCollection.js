@@ -1,7 +1,7 @@
 (function(root) {
   root.RoadAddressProjectCollection = function(backend) {
     var roadAddressProjects = [];
-    var roadAddressProjectLinks = [{name: 'proj1', state: 1}, {name: 'projeto2', state: 1}];
+    var roadAddressProjectLinks = [];
 
     this.getProjects = function(){
       return backend.getRoadAddressProjects(function(projects){
