@@ -4,6 +4,7 @@ import java.net.URLEncoder
 import java.util
 import java.util.Properties
 
+import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.{Point, Vector3d}
 import org.apache.http.NameValuePair
 import org.apache.http.client.entity.UrlEncodedFormEntity
@@ -13,6 +14,7 @@ import org.apache.http.message.BasicNameValuePair
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization
+import fi.liikennevirasto.digiroad2.roadaddress.oracle.RoadAddressDAO
 /**
   * A road consists of 1-2 tracks (fi: "ajorata"). 2 tracks are separated by a fence or grass for example.
   * Left and Right are relative to the advancing direction (direction of growing m values)
@@ -250,8 +252,25 @@ class GeometryTransform {
         (addresses(1), RoadSide.Unknown)
       }
     }
-
   }
+
+  //TODO: Who calls this function has to use withDynTransaction
+  def resolveAddressAndLocation(linkId: Long, startM: Double, endM: Double, sideCode: SideCode) : Seq[ fi.liikennevirasto.digiroad2.roadaddress.oracle.RoadAddress] = {
+  //  withDynTransaction{
+      val roadAddress = new RoadAddressDAO().fetchByLinkIdAndMeasures(linkId, startM, endM)
+      roadAddress
+        .filter( road => compareSideCodes(sideCode, road))
+        .groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.sideCode)).map {
+            grouped =>
+              grouped._2.minBy(t => t.startMValue).copy(endMValue = grouped._2.maxBy(t => t.endMValue).endMValue)
+        }.toSeq
+    //}
+  }
+
+  def compareSideCodes(sideCode: SideCode, roadAddress: fi.liikennevirasto.digiroad2.roadaddress.oracle.RoadAddress): Boolean = {
+    (sideCode == SideCode.BothDirections || sideCode == SideCode.Unknown || roadAddress.sideCode == SideCode.BothDirections || roadAddress.sideCode == SideCode.Unknown) || sideCode == roadAddress.sideCode
+  }
+
 
   private def extractRoadAddresses(data: List[Map[String, Any]]) = {
     data.sortBy(_.getOrElse(VkmQueryIdentifier, Int.MaxValue).toString.toInt).map(mapFields)
@@ -271,7 +290,7 @@ class GeometryTransform {
     if (Track.apply(track).eq(Track.Unknown)) {
       throw new VKMClientException("Invalid value for Track (%s): %d".format(VkmTrackCode, track))
     }
-    RoadAddress(municipalityCode.map(_.toString), road, roadPart, Track.apply(track), mValue, deviation)
+    fi.liikennevirasto.digiroad2.util.RoadAddress(municipalityCode.map(_.toString), road, roadPart, Track.apply(track), mValue, deviation)
   }
 
   private def mapCoordinates(data: Map[String, Any]) = {
