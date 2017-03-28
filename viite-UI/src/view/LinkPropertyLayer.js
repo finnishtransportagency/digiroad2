@@ -11,31 +11,37 @@
     var floatingMarkerVector = new ol.source.Vector({});
     var anomalousMarkerVector = new ol.source.Vector({});
     var calibrationPointVector = new ol.source.Vector({});
+    var simulationVector = new ol.source.Vector({});
 
     var indicatorLayer = new ol.layer.Vector({
       source: indicatorVector
     });
-
     var floatingMarkerLayer = new ol.layer.Vector({
       source: floatingMarkerVector
     });
-
     var anomalousMarkerLayer = new ol.layer.Vector({
       source: anomalousMarkerVector
     });
-
     var calibrationPointLayer = new ol.layer.Vector({
       source: calibrationPointVector
+    });
+    var simulatedRoadsLayer = new ol.layer.Vector({
+      source: simulationVector,
+      style: function(feature) {
+        return styler.generateStyleByFeature(feature.roadLinkData,map.getView().getZoom());
+      }
     });
 
     map.addLayer(floatingMarkerLayer);
     map.addLayer(anomalousMarkerLayer);
     map.addLayer(calibrationPointLayer);
     map.addLayer(indicatorLayer);
+    map.addLayer(simulatedRoadsLayer);
     floatingMarkerLayer.setVisible(true);
     anomalousMarkerLayer.setVisible(true);
     calibrationPointLayer.setVisible(true);
     indicatorLayer.setVisible(true);
+    simulatedRoadsLayer.setVisible(true);
 
     var isAnomalousById = function(featureId){
       var anomalousMarkers = anomalousMarkerLayer.getSource().getFeatures();
@@ -49,6 +55,12 @@
       return !_.isUndefined(_.find(floatingMarkers, function(fm){
         return fm.id === featureId;
       }));
+    };
+
+    var setGeneralOpacity = function (opacity){
+      roadLayer.layer.setOpacity(opacity);
+      floatingMarkerLayer.setOpacity(opacity);
+      anomalousMarkerLayer.setOpacity(opacity);
     };
 
     /**
@@ -87,9 +99,7 @@
       //Since the selected features are moved to a new/temporary layer we just need to reduce the roadlayer's opacity levels.
       if (event.selected.length !== 0) {
         if (roadLayer.layer.getOpacity() === 1) {
-          roadLayer.layer.setOpacity(0.2);
-          floatingMarkerLayer.setOpacity(0.2);
-          anomalousMarkerLayer.setOpacity(0.2);
+          setGeneralOpacity(0.2);
         }
 
         selectedLinkProperty.close();
@@ -105,9 +115,7 @@
         }
       } else if (event.selected.length === 0 && event.deselected.length !== 0){
         selectedLinkProperty.close();
-        roadLayer.layer.setOpacity(1);
-        floatingMarkerLayer.setOpacity(1);
-        anomalousMarkerLayer.setOpacity(1);
+        setGeneralOpacity(1);
       }
     });
 
@@ -163,9 +171,7 @@
       if (!_.isUndefined(selection)) {
         if (event.selected.length !== 0) {
           if (roadLayer.layer.getOpacity() === 1) {
-            roadLayer.layer.setOpacity(0.2);
-            floatingMarkerLayer.setOpacity(0.2);
-            anomalousMarkerLayer.setOpacity(0.2);
+            setGeneralOpacity(0.2);
           }
           selectedLinkProperty.close();
           if (selection.roadLinkData.roadLinkType === -1 &&
@@ -186,9 +192,7 @@
         }
       } else if (event.selected.length === 0 && event.deselected.length !== 0) {
         selectedLinkProperty.close();
-        roadLayer.layer.setOpacity(1);
-        floatingMarkerLayer.setOpacity(1);
-        anomalousMarkerLayer.setOpacity(1);
+        setGeneralOpacity(1);
       }
     });
 
@@ -551,7 +555,7 @@
      symbolizer: { externalGraphic: 'images/speed-limits/unknown.svg' }
      });
      */
-    
+
     /*
      browseStyle.addRules([unknownLimitStyleRule]);
      var vectorLayer = new OpenLayers.Layer.Vector(layerName, { styleMap: browseStyleMap });
@@ -694,9 +698,7 @@
     var concludeLinkPropertyEdit = function(eventListener) {
       addSelectInteractions();
       eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
-      roadLayer.layer.setOpacity(1);
-      floatingMarkerLayer.setOpacity(1);
-      anomalousMarkerLayer.setOpacity(1);
+      setGeneralOpacity(1);
       //removeSelectInteractions();
       if(selectDoubleClick.getFeatures().getLength() !== 0){
         selectDoubleClick.getFeatures().clear();
@@ -804,7 +806,15 @@
         var afterTransferLinks=  _.filter(roadLinks, function(roadlink){
           return !_.contains(changedIds, roadlink.linkId.toString());
         });
+        var simulatedOL3Features = [];
         _.map(newRoads, function(road){
+          var points = _.map(road.points, function(point) {
+            return [point.x, point.y];
+          });
+          var feature =  new ol.Feature({ geometry: new ol.geom.LineString(points)
+          });
+          feature.roadLinkData = road;
+          simulatedOL3Features.push(feature);
           afterTransferLinks.push(road);
         });
         indicatorLayer.getSource().clear();
@@ -812,6 +822,10 @@
         roadCollection.setChangedIds(changedIds);
         applicationModel.setCurrentAction(applicationModel.actionCalculated);
         selectedLinkProperty.cancelAfterSiirra(applicationModel.actionCalculated, changedIds);
+
+        clearHighlights();
+        setGeneralOpacity(0.2);
+        simulatedRoadsLayer.getSource().addFeatures(simulatedOL3Features);
       });
       /*
        eventbus.on('linkProperties:reselectRoadLink', function(){
@@ -879,7 +893,7 @@
       };
 
       eventListener.listenTo(eventListener, 'map:clearLayers', clearLayers);
-  };
+    };
 
     var drawIndicators = function(links) {
       var features = [];
@@ -1075,13 +1089,14 @@
 
     eventListener.listenTo(eventbus, 'linkProperties:unselected', function() {
       clearHighlights();
-      roadLayer.layer.setOpacity(1);
-      floatingMarkerLayer.setOpacity(1);
-      anomalousMarkerLayer.setOpacity(1);
+      setGeneralOpacity(1);
     });
 
     eventListener.listenTo(eventbus, 'linkProperties:clearHighlights', function(){
       clearHighlights();
+      if(simulatedRoadsLayer.getSource().getFeatures().length !== 0){
+        simulatedRoadsLayer.getSource().clear();
+      }
       var featureToReOpen = _.cloneDeep(_.first(selectedLinkProperty.getFeaturesToKeepFloatings()));
       var visibleFeatures = getVisibleFeatures(true,true,true);
       selectedLinkProperty.openFloating(featureToReOpen.linkId, featureToReOpen.id, visibleFeatures);
