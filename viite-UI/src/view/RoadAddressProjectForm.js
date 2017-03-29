@@ -17,7 +17,7 @@
     };
 
     var inputFieldRequired = function(labelText, id, placeholder,  value) {
-      var field = '<div class="form-group">' +
+      var field = '<div class="form-group input-required">' +
       '<label class="control-label required">' + labelText + '</label>' +
         '<input type="text" class="form-control" id = "'+id+'" placeholder = "'+placeholder+'" value="'+value+'"/>' +
         '</div>';
@@ -35,7 +35,7 @@
     var buttons =
       '<div class="project-form form-controls">' +
       '<button class="next btn btn-next" disabled>Seuraava</button>' +
-      '<button class="save btn btn-tallena">Tallenna</button>' +
+      '<button class="save btn btn-tallena" disabled>Tallenna</button>' +
       '<button class="cancel btn btn-perruta">Peruuta</button>' +
       '</div>';
 
@@ -133,6 +133,15 @@
 
     };
 
+    var formIsValid = function(rootElement) {
+      if (rootElement.find('#nimi').val() && rootElement.find('#alkupvm').val() !== ''){
+        return false;
+      }
+      else {
+        return true;
+      }
+    };
+
     var addReserveButton = function() {
         return '<button class="btn btn-reserve">Varaa</button>'
     };
@@ -154,6 +163,11 @@
 
       eventbus.on('roadAddress:selected roadAddress:cancelled', function(roadAddress) {
 
+      });
+
+      eventbus.on('roadAddress:projectValidationFailed', function (result) {
+        new ModalConfirm(result.success.toString());
+          applicationModel.removeSpinner();
       });
 
       eventbus.on('roadAddress:projectSaved', function (result) {
@@ -182,12 +196,16 @@
         var data = $('#roadAddressProject').get(0);
         projectCollection.checkIfReserved(data);
       });
-    
+
       rootElement.on('click', '.project-form button.cancel', function(){
         applicationModel.setOpenProject(false);
         rootElement.find('header').toggle();
         rootElement.find('.wrapper').toggle();
         rootElement.find('footer').toggle();
+      });
+
+      rootElement.on('change', '.input-required', function() {
+        rootElement.find('.project-form button.save').attr('disabled', formIsValid(rootElement));
       });
 
     };

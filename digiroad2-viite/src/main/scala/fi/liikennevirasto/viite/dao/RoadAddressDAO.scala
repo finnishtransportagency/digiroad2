@@ -798,4 +798,32 @@ object RoadAddressDAO {
     }
   }
 
+  def roadPartExists(roadNumber:Long, roadPart:Long) :Boolean = {
+    val query = s"""SELECT COUNT(1)
+            FROM road_address
+             WHERE road_number=$roadNumber AND road_part_number=$roadPart"""
+    if (Q.queryNA[Int](query).first>0) true else false
+  }
+
+  def roadNumberExists(roadNumber:Long) :Boolean = {
+    val query = s"""SELECT COUNT(1)
+            FROM road_address
+             WHERE road_number=$roadNumber"""
+    if (Q.queryNA[Int](query).first>0) true else false
+  }
+
+  def roadPartReservedByProject(roadNumber:Long, roadPart:Long): String =
+  {
+    val query = s"""SELECT p.name
+                FROM project p
+             INNER JOIN project_link l
+             ON l.PROJECT_ID =  p.ID
+             WHERE l.road_number=$roadNumber AND road_part_number=$roadPart AND rownum < 2"""
+    Q.queryNA[String](query).first
+  }
+
+
+
+
+
 }
