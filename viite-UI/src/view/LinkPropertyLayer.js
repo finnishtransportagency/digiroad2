@@ -122,8 +122,6 @@
         if (roadLayer.layer.getOpacity() === 1) {
           setGeneralOpacity(0.2);
         }
-
-        selectedLinkProperty.close();
         var selection = _.find(event.selected, function(selectionTarget){
           return !_.isUndefined(selectionTarget.roadLinkData);
         });
@@ -131,6 +129,7 @@
           ('all' === applicationModel.getSelectionType() || 'floating' === applicationModel.getSelectionType()) &&
           !applicationModel.isReadOnly()) {
           selectedLinkProperty.openFloating(selection.roadLinkData.linkId, selection.roadLinkData.id, visibleFeatures);
+          floatingMarkerLayer.setOpacity(1);
         } else {
           selectedLinkProperty.open(selection.roadLinkData.linkId, selection.roadLinkData.id, true, visibleFeatures);
         }
@@ -194,12 +193,19 @@
           if (roadLayer.layer.getOpacity() === 1) {
             setGeneralOpacity(0.2);
           }
-          //selectedLinkProperty.close();
           if (selection.roadLinkData.roadLinkType === -1 &&
             ('all' === applicationModel.getSelectionType() || 'floating' === applicationModel.getSelectionType()) &&
             !applicationModel.isReadOnly()) {
+            selectedLinkProperty.close();
             selectedLinkProperty.openFloating(selection.roadLinkData.linkId, selection.roadLinkData.id, visibleFeatures);
-          } else if ('unknown' === applicationModel.getSelectionType() && !applicationModel.isReadOnly() &&
+            floatingMarkerLayer.setOpacity(1);
+          } else if(selection.roadLinkData.roadLinkType !== -1 && 'floating' === applicationModel.getSelectionType() &&
+            !applicationModel.isReadOnly() && event.deselected.length !== 0) {
+            var floatings = event.deselected;
+            var nonFloatings = event.selected;
+            removeFeaturesFromSelection(nonFloatings);
+            addFeaturesToSelection(floatings);
+          }else if ('unknown' === applicationModel.getSelectionType() && !applicationModel.isReadOnly() &&
             selection.roadLinkData.anomaly === 1 && selection.roadLinkData.roadLinkType !== -1  ){
             selectedLinkProperty.openUnknown(selection.roadLinkData.linkId, selection.roadLinkData.id, visibleFeatures);
           }
@@ -249,6 +255,23 @@
           selectSingleClick.getFeatures().push(feature);
         }
       });
+    };
+
+    /**
+     * Simple method that will remove various open layers 3 features from a selection.
+     * @param ol3Features
+     */
+    var removeFeaturesFromSelection = function (ol3Features) {
+      var olUids = _.map(selectSingleClick.getFeatures().getArray(), function(feature){
+        return feature.ol_uid;
+      });
+      _.each(ol3Features, function(feature){
+        if(_.contains(olUids,feature.ol_uid)){
+          selectSingleClick.getFeatures().remove(feature);
+          console.log(selectSingleClick.getFeatures());
+        }
+      });
+
     };
 
     /**
@@ -1132,7 +1155,7 @@
     });
 
     eventbus.on('linkProperties:deactivateInteractions', function(){
-      deactivateSelectInteractions();
+      //deactivateSelectInteractions();
     });
 
     eventbus.on('linkProperties:activateInteractions', function(){
@@ -1145,8 +1168,16 @@
 
     eventListener.listenTo(eventbus, 'linkProperties:unselected', function() {
       clearHighlights();
-      unselectRoadLink();
+      //TODO: CHECK IF NEEDED (GUILHERME DOES NOT)
+      //unselectRoadLink();
       setGeneralOpacity(1);
+      if ('floating' === applicationModel.getSelectionType()) {
+        setGeneralOpacity(0.2);
+        floatingMarkerLayer.setOpacity(1);
+      } else if ('unknown' === applicationModel.getSelectionType()) {
+        setGeneralOpacity(0.2);
+        anomalousMarkerLayer.setOpacity(1);
+      }
     });
 
     eventListener.listenTo(eventbus, 'linkProperties:clearHighlights', function(){

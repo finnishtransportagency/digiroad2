@@ -16,7 +16,7 @@
       if (!_.isEmpty(current) && !isDirty()) {
         _.forEach(current, function(selected) { selected.unselect(); });
         eventbus.trigger('linkProperties:unselected');
-        //current = [];
+        current = [];
         sources = [];
         targets = [];
         dirty = false;
