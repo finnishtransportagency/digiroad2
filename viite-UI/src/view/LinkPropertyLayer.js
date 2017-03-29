@@ -13,7 +13,7 @@
     var calibrationPointVector = new ol.source.Vector({});
     var greenRoadLayerVector = new ol.source.Vector({});
     var valintaRoadsLayerVector = new ol.source.Vector({});
-    var simulatedRoadsLayerVector = new ol.source.Vector({});
+    var simulationVector = new ol.source.Vector({});
 
     var indicatorLayer = new ol.layer.Vector({
       source: indicatorVector
@@ -40,9 +40,13 @@
     });
 
     var simulatedRoadsLayer = new ol.layer.Vector({
-      source: simulatedRoadsLayerVector
-    });
+       source: simulationVector,
+       style: function(feature) {
+         return styler.generateStyleByFeature(feature.roadLinkData,map.getView().getZoom());
+       }
+     });
 
+     
     map.addLayer(floatingMarkerLayer);
     map.addLayer(anomalousMarkerLayer);
     map.addLayer(calibrationPointLayer);
@@ -206,16 +210,17 @@
           }
         }
       } else if (event.selected.length === 0 && event.deselected.length !== 0) {
+        if(applicationModel.isContinueButton){
         selectedLinkProperty.close();
         setGeneralOpacity(1);
+        }
+        else{
+          return new ModalConfirm("Et voi valita tätä, koska tie, tieosa tai ajorata on eri kuin aikaisemmin valitulla");
+        }
       }
 
+    if (!_.isUndefined(selection)) {
       if(applicationModel.getSelectionType() === 'unknown' && selection.roadLinkData.roadLinkType !== -1 && selection.roadLinkData.anomaly === 1){
-        //if (selectedLinkProperty.getFeaturesToHighlight().length > 1 && applicationModel.getSelectionType() === 'unknown'){
-          //selectedLinkProperty.getFeaturesToHighlight().forEach(function (fml) {
-            //highlightFeatureByLinkId(fml.data.linkId);
-          //});
-        //}
         greenRoadLayer.setOpacity(1);
         var anomalousFeatures = _.uniq(_.filter(selectedLinkProperty.getFeaturesToKeep(), function (ft) {
             return ft.anomaly === 1;
@@ -224,6 +229,7 @@
         anomalousFeatures.forEach(function (fmf) {
           editFeatureDataForGreen(fmf.linkId);
         });
+        }
       }
     });
 
@@ -886,7 +892,7 @@
         selectedLinkProperty.cancelAfterSiirra(applicationModel.actionCalculated, changedIds);
 
         clearHighlights();
-        //greenRoadLayer.getSource().clear();
+        greenRoadLayer.getSource().clear();
         setGeneralOpacity(0.2);
         simulatedRoadsLayer.getSource().addFeatures(simulatedOL3Features);
       });
@@ -1143,7 +1149,9 @@
     });
 
     eventListener.listenTo(eventbus, 'linkProperties:clearHighlights', function(){
-      greenRoadLayer.getSource().clear();
+      if(greenRoadLayer.getSource().getFeatures().length !== 0){
+        greenRoadLayer.getSource().clear();
+      }
       clearHighlights();
       if(simulatedRoadsLayer.getSource().getFeatures().length !== 0){
         simulatedRoadsLayer.getSource().clear();
