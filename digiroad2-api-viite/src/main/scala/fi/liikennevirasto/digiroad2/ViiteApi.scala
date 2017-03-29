@@ -159,12 +159,24 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val project = parsedBody.extract[RoadAddressProjectExtractor]
     val user = userProvider.getCurrentUser()
     val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
-    val roadAddressProject  = RoadAddressProject( project.id, project.status, project.name, user.username, DateTime.now(), "-", formatter.parseDateTime(project.startDate), DateTime.now(), project.additionalInfo, project.roadNumber, project.startPart, project.endPart)
+    val roadAddressProject= RoadAddressProject( project.id, project.status, project.name, user.username, DateTime.now(), "-", formatter.parseDateTime(project.startDate), DateTime.now(), project.additionalInfo, List((project.roadNumber, project.startPart, project.endPart)))
     roadAddressService.saveRoadLinkProject(roadAddressProject)
   }
   get("/roadlinks/roadaddress/project/all") {
     val projects = roadAddressService.getRoadAddressProjects()
     projects.map(roadAddressProjectToApi)
+  }
+
+  get("/roadlinks/roadaddress/project/validatereservedlink/:roadnumber:startpart:endpart"){
+    val roadnumber = params("roadnumber").toLong
+    val startPart = params("startpart").toLong
+    val endPart = params("endpart").toLong
+    val (success,errorMessage)=roadAddressService.checkRoadAddressNumberAndSEParts(roadnumber,startPart,endPart)
+    if (success==true)
+      {Map("success"->"ok")}
+    else
+       Map("success"-> errorMessage)
+
   }
 
   private def roadlinksData(): (Seq[String], Seq[String]) = {

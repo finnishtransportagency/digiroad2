@@ -293,7 +293,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     runWithRollback{
       val id = Sequences.nextViitePrimaryKeySeqValue
 
-      val roadAddressProject = RoadAddressProject(id, 1, "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", 1, 1, 1)
+      val roadAddressProject = RoadAddressProject(id, 1, "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List((1, 1, 1)))
       val result = roadAddressService.saveRoadLinkProject(roadAddressProject)
       result.size should be (3)
       result.get("project").get should not be None
@@ -306,7 +306,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   test("save road link project without values") {
     runWithRollback{
       val id = Sequences.nextViitePrimaryKeySeqValue
-      val roadAddressProject = RoadAddressProject(id, 1, "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", 0, 0, 0)
+      val roadAddressProject = RoadAddressProject(id, 1, "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List((0, 0, 0)))
       val result = roadAddressService.saveRoadLinkProject(roadAddressProject)
       result.size should be (3)
       result.get("project").get should not be None
@@ -322,7 +322,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(5175306L))).thenReturn(Seq(roadlink))
     runWithRollback{
       val id = Sequences.nextViitePrimaryKeySeqValue
-      val roadAddressProject = RoadAddressProject(id, 1, "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", 1, 3, 5)
+      val roadAddressProject = RoadAddressProject(id, 1, "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List((1, 3, 5)))
       val result = roadAddressService.saveRoadLinkProject(roadAddressProject)
       result.size should be (3)
       result.get("project").get should not be None
