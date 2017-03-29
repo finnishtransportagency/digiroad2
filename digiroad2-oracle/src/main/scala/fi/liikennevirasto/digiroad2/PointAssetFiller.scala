@@ -102,7 +102,7 @@ object PointAssetFiller {
 
   def correctedPersistedAsset(asset: PersistedPointAsset, roadLinks: Seq[RoadLink], changeInfo: Seq[ChangeInfo]): Option[AssetAdjustment] = {
     correctRoadLinkAndGeometry(asset, roadLinks, changeInfo) match {
-      case Some(asset) => Some(asset)
+      case Some(asset_) => Some(asset_)
       case None =>
         correctOnlyGeometry(asset, roadLinks, changeInfo) match {
           case Some(asset_) => Some(asset_)

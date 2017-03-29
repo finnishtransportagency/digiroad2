@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import com.google.common.base.Optional
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
+import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, FloatingAsset, Unknown}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
@@ -56,6 +57,7 @@ trait PointAssetOperations {
   type PersistedAsset <: PersistedPointAsset
 
   case class FloatingPointAsset(id: Long, municipality: String, administrativeClass: String, floatingReason: Option[Long])
+  case class AssetBeforeUpdate(asset: PersistedAsset, persistedFloating: Boolean, floatingReason: Option[FloatingReason])
 
   def roadLinkService: RoadLinkService
   val idField = "id"
@@ -73,9 +75,13 @@ trait PointAssetOperations {
   def update(id:Long, updatedAsset: IncomingAsset, geometry: Seq[Point], municipality: Int, username: String): Long
 
   def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[PersistedAsset] = {
-    case class AssetBeforeUpdate(asset: PersistedAsset, persistedFloating: Boolean, floatingReason: Option[FloatingReason])
+    val roadLinks: Seq[RoadLink] = roadLinkService.getRoadLinksFromVVH(bounds)
+    getByBoundingBox(user, bounds, roadLinks, Seq(), floatingTreatment)
+  }
 
-    val roadLinks: Seq[RoadLinkLike] = roadLinkService.getRoadLinksFromVVH(bounds)
+  def getByBoundingBox(user: User, bounds: BoundingRectangle, roadLinks: Seq[RoadLink], changeInfo: Seq[ChangeInfo],
+                       adjustment: (Seq[RoadLink], Seq[ChangeInfo], AssetBeforeUpdate) => AssetBeforeUpdate): Seq[PersistedAsset] = {
+
     withDynSession {
       val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
       val filter = s"where a.asset_type_id = $typeId and $boundingBoxFilter"
@@ -85,14 +91,8 @@ trait PointAssetOperations {
         user.isAuthorizedToRead(persistedAsset.municipalityCode)
       }.map { (persistedAsset: PersistedAsset) =>
         val (floating, assetFloatingReason) = isFloating(persistedAsset, roadLinks.find(_.linkId == persistedAsset.linkId))
-        if (floating && !persistedAsset.floating) {
-          val logger = LoggerFactory.getLogger(getClass)
-          val floatingReasonMessage = floatingReason(persistedAsset, roadLinks.find(_.linkId == persistedAsset.linkId))
-          logger.info("Floating asset %d, reason: %s".format(persistedAsset.id, floatingReasonMessage))
-        }
-        AssetBeforeUpdate(setFloating(persistedAsset, floating), persistedAsset.floating, assetFloatingReason)
+        adjustment(roadLinks, changeInfo, AssetBeforeUpdate(persistedAsset, floating, assetFloatingReason))
       }
-
       assetsBeforeUpdate.foreach { asset =>
         if (asset.asset.floating != asset.persistedFloating) {
           updateFloating(asset.asset.id, asset.asset.floating, asset.floatingReason)
@@ -100,6 +100,15 @@ trait PointAssetOperations {
       }
       assetsBeforeUpdate.map(_.asset)
     }
+  }
+
+  private def floatingTreatment(roadLinks: Seq[RoadLink], changeInfo: Seq[ChangeInfo], assetBeforeUpdate: AssetBeforeUpdate) = {
+    if (assetBeforeUpdate.persistedFloating && !assetBeforeUpdate.asset.floating) {
+      val logger = LoggerFactory.getLogger(getClass)
+      val floatingReasonMessage = floatingReason(assetBeforeUpdate.asset, roadLinks.find(_.linkId == assetBeforeUpdate.asset.linkId))
+      logger.info("Floating asset %d, reason: %s".format(assetBeforeUpdate.asset.id, floatingReasonMessage))
+    }
+    AssetBeforeUpdate(setFloating(assetBeforeUpdate.asset, assetBeforeUpdate.persistedFloating), assetBeforeUpdate.asset.floating, assetBeforeUpdate.floatingReason)
   }
 
   protected def fetchFloatingAssets(addQueryFilter: String => String, isOperator: Option[Boolean]): Seq[(Long, String, Long, Option[Long])] ={
@@ -146,15 +155,29 @@ trait PointAssetOperations {
   }
 
   def getByMunicipality(municipalityCode: Int): Seq[PersistedAsset] = {
-    val roadLinks = roadLinkService.getRoadLinksFromVVH(municipalityCode).map(l => l.linkId -> l).toMap
+    val roadLinks = roadLinkService.getRoadLinksFromVVH(municipalityCode)
+     val mapRoadLinks = roadLinks.map(l => l.linkId -> l).toMap
+    getByMunicipality(municipalityCode, mapRoadLinks, roadLinks, Seq(), floatingCorrection)
+  }
+
+  def getByMunicipality[T](municipalityCode: Int, mapRoadLinks: Map[Long, RoadLink], roadLinks: Seq[RoadLink], changeInfo: Seq[ChangeInfo],
+                           floatingCorrection: (Seq[ChangeInfo], Seq[RoadLink], PersistedAsset, Boolean, Option[FloatingReason], (PersistedAsset, Boolean) => T) =>
+                          (PersistedAsset, Option[FloatingReason])): Seq[PersistedAsset] = {
+
     def linkIdToRoadLink(linkId: Long): Option[RoadLinkLike] =
-      roadLinks.get(linkId)
+      mapRoadLinks.get(linkId)
 
     withDynSession {
       fetchPointAssets(withMunicipality(municipalityCode))
-        .map(withFloatingUpdate(convertPersistedAsset(setFloating, linkIdToRoadLink)))
+        .map(withFloatingUpdate(convertPersistedAsset(setFloating, linkIdToRoadLink, changeInfo, roadLinks)))
         .toList
     }
+  }
+
+  private def floatingCorrection[T](changeInfo: Seq[ChangeInfo], roadLinks: Seq[RoadLink],
+                                    persistedStop: PersistedAsset, floating: Boolean, floatingReason: Option[FloatingReason],
+                                    conversion: (PersistedAsset, Boolean) => T) = {
+    (conversion(persistedStop, floating), floatingReason)
   }
 
   def getById(id: Long): Option[PersistedAsset] = {
@@ -165,7 +188,7 @@ trait PointAssetOperations {
       roadLinks.find(_.linkId == linkId)
 
     withDynSession {
-      persistedAsset.map(withFloatingUpdate(convertPersistedAsset(setFloating, findRoadlink)))
+      persistedAsset.map(withFloatingUpdate(convertPersistedAsset(setFloating, findRoadlink, Seq(), Seq())))
     }
   }
 
@@ -185,10 +208,11 @@ trait PointAssetOperations {
   }
 
   protected def convertPersistedAsset[T](conversion: (PersistedAsset, Boolean) => T,
-                                         roadLinkByLinkId: Long => Option[RoadLinkLike])
+                                         roadLinkByLinkId: Long => Option[RoadLinkLike],
+                                         changeInfo: Seq[ChangeInfo], roadLinks: Seq[RoadLink])
                                         (persistedStop: PersistedAsset): (T, Option[FloatingReason]) = {
     val (floating, floatingReason) = isFloating(persistedStop, roadLinkByLinkId(persistedStop.linkId))
-    (conversion(persistedStop, floating), floatingReason)
+    floatingCorrection(changeInfo, roadLinks, persistedStop, floating, floatingReason, conversion)
   }
 
   protected def withFilter(filter: String)(query: String): String = {
