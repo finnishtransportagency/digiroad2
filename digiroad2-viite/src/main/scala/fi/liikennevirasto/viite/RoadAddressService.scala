@@ -562,7 +562,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
                       RoadAddressDAO.createRoadAddressProjectLink(Sequences.nextViitePrimaryKeySeqValue, address, project))
                   }
                 }
-
                 val createdAddresses = RoadAddressDAO.getRoadAddressProjectLinks(project.id)
                 val groupedAddresses = createdAddresses.groupBy{address =>
                   (address.roadNumber, address.roadPartNumber)}.toSeq.sortBy(_._1._2 )(Ordering[Long])
@@ -586,10 +585,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         catch {
           case a: Exception => println(a.getMessage)
             if (a.getMessage.contains("ORA-20000")) {
-              val reservedByProject=""
-              Map("success"-> s"TIE ${roadAddressProject.roadNumber} OSA ${errorRoadPart} on jo varattuna projektissa $reservedByProject , tarkista tiedot")
+              val reservedByProject=RoadAddressDAO.roadPartReservedByProject(roadAddressProject.roadNumber,errorRoadPart)
+              Map("success"-> s"TIE ${roadAddressProject.roadNumber} OSA $errorRoadPart on jo varattuna projektissa $reservedByProject, tarkista tiedot")
             }else
-
               Map("success"-> "Tieosien varaus ei tuntemattomasta tietokantavirheestä johtuen onnistunut")
         }
       }
