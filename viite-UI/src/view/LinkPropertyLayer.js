@@ -218,14 +218,8 @@
           }
         }
       } else if (event.selected.length === 0 && event.deselected.length !== 0) {
-        if(applicationModel.isContinueButton()){
           selectedLinkProperty.close();
           setGeneralOpacity(1);
-        }
-        else{
-          return new Confirm();
-          //return new ModalConfirm("Et voi valita tätä, koska tie, tieosa tai ajorata on eri kuin aikaisemmin valitulla");
-        }
       }
 
       if (!_.isUndefined(selection)) {
