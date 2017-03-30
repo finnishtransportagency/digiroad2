@@ -12,6 +12,7 @@ import slick.jdbc.StaticQuery.interpolation
 case class RailwayCrossing(id: Long, linkId: Long,
                            lon: Double, lat: Double,
                            mValue: Double, floating: Boolean,
+                           vvhTimeStamp: Long,
                            municipalityCode: Int,
                            safetyEquipment: Int,
                            name: Option[String],
@@ -25,7 +26,7 @@ object OracleRailwayCrossingDao {
   def fetchByFilter(queryFilter: String => String): Seq[RailwayCrossing] = {
     val query =
       s"""
-        select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, a.municipality_code, ev.value,
+        select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code, ev.value,
         tpv.value_fi, a.created_by, a.created_date, a.modified_by, a.modified_date
         from asset a
         join asset_link al on a.id = al.asset_id
@@ -45,6 +46,7 @@ object OracleRailwayCrossingDao {
       val point = r.nextBytesOption().map(bytesToPoint).get
       val mValue = r.nextDouble()
       val floating = r.nextBoolean()
+      val vvhTimeStamp = r.nextLong()
       val municipalityCode = r.nextInt()
       val safetyEquipment = r.nextInt()
       val name = r.nextStringOption()
@@ -53,7 +55,7 @@ object OracleRailwayCrossingDao {
       val modifiedBy = r.nextStringOption()
       val modifiedDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
 
-      RailwayCrossing(id, linkId, point.x, point.y, mValue, floating, municipalityCode, safetyEquipment, name, createdBy, createdDateTime, modifiedBy, modifiedDateTime)
+      RailwayCrossing(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, safetyEquipment, name, createdBy, createdDateTime, modifiedBy, modifiedDateTime)
     }
   }
 

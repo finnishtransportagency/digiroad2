@@ -12,6 +12,7 @@ import slick.jdbc.StaticQuery.interpolation
 case class PedestrianCrossing(id: Long, linkId: Long,
                               lon: Double, lat: Double,
                               mValue: Double, floating: Boolean,
+                              vvhTimeStamp: Long,
                               municipalityCode: Int,
                               createdBy: Option[String] = None,
                               createdAt: Option[DateTime] = None,
@@ -58,7 +59,7 @@ object OraclePedestrianCrossingDao {
   def fetchByFilter(queryFilter: String => String): Seq[PedestrianCrossing] = {
     val query =
       """
-        select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, a.municipality_code, a.created_by, a.created_date, a.modified_by, a.modified_date
+        select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code, a.created_by, a.created_date, a.modified_by, a.modified_date
         from asset a
         join asset_link al on a.id = al.asset_id
         join lrm_position pos on al.position_id = pos.id
@@ -74,13 +75,14 @@ object OraclePedestrianCrossingDao {
       val point = r.nextBytesOption().map(bytesToPoint).get
       val mValue = r.nextDouble()
       val floating = r.nextBoolean()
+      val vvhTimeStamp = r.nextLong()
       val municipalityCode = r.nextInt()
       val createdBy = r.nextStringOption()
       val createdDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val modifiedBy = r.nextStringOption()
       val modifiedDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
 
-      PedestrianCrossing(id, linkId, point.x, point.y, mValue, floating, municipalityCode, createdBy, createdDateTime, modifiedBy, modifiedDateTime)
+      PedestrianCrossing(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, createdBy, createdDateTime, modifiedBy, modifiedDateTime)
     }
   }
 }

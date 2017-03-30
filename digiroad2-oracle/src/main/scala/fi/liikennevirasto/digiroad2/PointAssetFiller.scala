@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.util.MunicipalityCodeImporter
 import org.joda.time.DateTime
 
 object PointAssetFiller {
-  case class testPersistedPointAsset(id: Long, lon: Double, lat: Double, municipalityCode: Int, linkId: Long, mValue: Double, floating: Boolean) extends PersistedPointAsset
+  case class testPersistedPointAsset(id: Long, lon: Double, lat: Double, municipalityCode: Int, linkId: Long, mValue: Double, floating: Boolean, vvhTimeStamp: Long) extends PersistedPointAsset
 
 
   case class AssetAdjustment(assetId: Long, lon: Double, lat: Double, linkId: Long, mValue: Double, floating: Boolean)

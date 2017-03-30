@@ -12,6 +12,7 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 case class DirectionalTrafficSign(id: Long, linkId: Long,
                                   lon: Double, lat: Double,
                                   mValue: Double, floating: Boolean,
+                                  vvhTimeStamp: Long,
                                   municipalityCode: Int,
                                   validityDirection: Int,
                                   text: Option[String],
@@ -26,7 +27,7 @@ object OracleDirectionalTrafficSignDao {
   def fetchByFilter(queryFilter: String => String): Seq[DirectionalTrafficSign] = {
     val query =
       s"""
-        select a.id, lrm.link_id, a.geometry, lrm.start_measure, a.floating, a.municipality_code, lrm.side_code,
+        select a.id, lrm.link_id, a.geometry, lrm.start_measure, a.floating, lrm.adjusted_timestamp, a.municipality_code, lrm.side_code,
         tpv.value_fi, a.created_by, a.created_date, a.modified_by, a.modified_date, a.bearing
         from asset a
         join asset_link al on a.id = al.asset_id
@@ -45,6 +46,7 @@ object OracleDirectionalTrafficSignDao {
       val point = r.nextBytesOption().map(bytesToPoint).get
       val mValue = r.nextDouble()
       val floating = r.nextBoolean()
+      val vvhTimeStamp = r.nextLong()
       val municipalityCode = r.nextInt()
       val validityDirection = r.nextInt()
       val text = r.nextStringOption()
@@ -54,7 +56,7 @@ object OracleDirectionalTrafficSignDao {
       val modifiedDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val bearing = r.nextIntOption()
 
-      DirectionalTrafficSign(id, linkId, point.x, point.y, mValue, floating, municipalityCode, validityDirection, text, bearing, createdBy, createdDateTime, modifiedBy, modifiedDateTime)
+      DirectionalTrafficSign(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, validityDirection, text, bearing, createdBy, createdDateTime, modifiedBy, modifiedDateTime)
     }
   }
 

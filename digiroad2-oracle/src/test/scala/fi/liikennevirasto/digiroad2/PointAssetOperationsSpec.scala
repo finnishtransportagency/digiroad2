@@ -65,7 +65,7 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
 
   test("Check floating status when using three-dimensional road data") {
     val persistedAsset = PersistedMassTransitStop(22668828, 1234, 1234, Seq(2), 172, 453487.304243636, 6845919.0252246,
-      17.292, Option(2), Option(78), None, true, Modification(None, None),
+      17.292, Option(2), Option(78), None, true, 0, Modification(None, None),
       Modification(None, None), Seq())
 
     val geometry = List(Point(453466.069,6845915.849,108.81900000000314),
@@ -95,7 +95,7 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
     val functionalClass = 1
     val linkType = Freeway
 
-    val persistedAsset = testPersistedPointAsset(11, 10.0, 5.0, 235, modifiedLinkId, 2.0, true)
+    val persistedAsset = testPersistedPointAsset(11, 10.0, 5.0, 235, modifiedLinkId, 2.0, true, 0)
 
     val newRoadLinks = Seq(
       RoadLink(modifiedLinkId, List(Point(3.0, 5.0), Point(20.0, 5.0)), 150.0, administrativeClass, functionalClass,
@@ -123,7 +123,7 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
     val functionalClass = 1
     val linkType = Freeway
 
-    val persistedAsset = testPersistedPointAsset(11, 10.0, 5.0, 235, removedLinkId, 2.0, true)
+    val persistedAsset = testPersistedPointAsset(11, 10.0, 5.0, 235, removedLinkId, 2.0, true, 0)
 
     val newRoadLinks = Seq(
       RoadLink(modifiedLinkId, List(Point(3.0, 5.0), Point(20.0, 5.0)), 150.0, administrativeClass, functionalClass,
@@ -159,7 +159,7 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
     val functionalClass = 1
     val linkType = Freeway
 
-    val persistedAsset = testPersistedPointAsset(11, 5.0, 5.0, 235, modifiedLinkId, 2.0, true)
+    val persistedAsset = testPersistedPointAsset(11, 5.0, 5.0, 235, modifiedLinkId, 2.0, true, 0)
 
     val newRoadLinks = Seq(
       RoadLink(modifiedLinkId, List(Point(3.0, 5.0), Point(8.0, 5.0)), 150.0, administrativeClass, functionalClass,
@@ -196,7 +196,7 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
     val functionalClass = 1
     val linkType = Freeway
 
-    val persistedAsset = testPersistedPointAsset(11, 10.0, 5.0, 235, oldLinkId, 7.0, true)
+    val persistedAsset = testPersistedPointAsset(11, 10.0, 5.0, 235, oldLinkId, 7.0, true, 0)
 
     val newRoadLinks = Seq(
       RoadLink(newLinkId2, List(Point(3.0, 5.0), Point(8.0, 5.0)), 150.0, administrativeClass, functionalClass,
@@ -232,7 +232,7 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
     val functionalClass = 1
     val linkType = Freeway
 
-    val persistedAsset = testPersistedPointAsset(11, 5.0, 5.0, 235, CommonLinkId, 7.0, true)
+    val persistedAsset = testPersistedPointAsset(11, 5.0, 5.0, 235, CommonLinkId, 7.0, true, 0)
 
     val newRoadLinks = Seq(
       RoadLink(CommonLinkId, List(Point(3.0, 5.0), Point(8.0, 5.0)), 150.0, administrativeClass, functionalClass,
@@ -260,7 +260,7 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
     val functionalClass = 1
     val linkType = Freeway
 
-    val persistedAsset = testPersistedPointAsset(11, 10.0, 5.0, 235, CommonLinkId, 2.0, true)
+    val persistedAsset = testPersistedPointAsset(11, 10.0, 5.0, 235, CommonLinkId, 2.0, true, 0)
 
     val newRoadLinks = Seq(
       RoadLink(newLinkId, List(Point(3.0, 5.0), Point(8.0, 5.0)), 150.0, administrativeClass, functionalClass,
@@ -290,7 +290,7 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
   test("Auto correct floating point: join floating point to first roadlink geometry point") {
     val changeInfo = ChangeInfo(Some(1611552), Some(1611552), 12345, 7, Some(0), Some(10), Some(0), Some(10), 144000000)
 
-    val persistedAsset =  testPersistedPointAsset(100, 453464.069, 6845913.849, 24, 1611552, 68.02, false)
+    val persistedAsset =  testPersistedPointAsset(100, 453464.069, 6845913.849, 24, 1611552, 68.02, false, 0)
 
     val geometry = List(Point(453466.069,6845915.849,108.81900000000314),
       Point(453479.783,6845917.468,109.3920000000071), Point(453492.22,6845920.043,109.88400000000547),
@@ -316,7 +316,7 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
 
   test("Auto correct floating point: join floating point to last roadlink geometry point") {
     val changeInfo = ChangeInfo(Some(1611552), Some(1611552), 12345, 7, Some(0), Some(10), Some(0), Some(10), 144000000)
-    val persistedAsset =  testPersistedPointAsset(11, 453636.471, 6845998.216, 24, 1611552, 68.02, false)
+    val persistedAsset =  testPersistedPointAsset(11, 453636.471, 6845998.216, 24, 1611552, 68.02, false, 0)
 
     val geometry = List(Point(453466.069,6845915.849,108.81900000000314),
       Point(453479.783,6845917.468,109.3920000000071), Point(453492.22,6845920.043,109.88400000000547),
@@ -342,7 +342,7 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
 
   test("Auto correct floating point: join floating point to last roadlink geometry point (3 <startPoint > endPoint ") {
     val changeInfo = ChangeInfo(Some(1611552), Some(1611552), 12345, 7, Some(0), Some(10), Some(0), Some(10), 144000000)
-    val persistedAsset = testPersistedPointAsset(11, 453636.471, 6845998.216, 24, 1611552, 68.02, false)
+    val persistedAsset = testPersistedPointAsset(11, 453636.471, 6845998.216, 24, 1611552, 68.02, false, 0)
     // start to point = 2.400894
     // end to point = 2.227137
 
@@ -366,7 +366,7 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
   }
     test("Auto correct floating point: join floating point to last roadlink geometry point (3 <startPoint < endPoint ") {
       val changeInfo = ChangeInfo(Some(1611552), Some(1611552), 12345, 7, Some(0), Some(10), Some(0), Some(10), 144000000)
-      val persistedAsset =  testPersistedPointAsset(11, 453636.471, 6845998.216, 24, 1611552, 68.02, false)
+      val persistedAsset =  testPersistedPointAsset(11, 453636.471, 6845998.216, 24, 1611552, 68.02, false, 0)
 
       val geometry = List(Point(453636.269,6845996.549,108.81900000000314),
         Point(453638.674,6845997.889,114.12300000000687))

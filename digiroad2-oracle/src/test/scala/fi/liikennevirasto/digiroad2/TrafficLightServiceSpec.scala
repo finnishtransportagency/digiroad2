@@ -89,6 +89,7 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
         lat = 0,
         mValue = 2,
         floating = false,
+        vvhTimeStamp = 0,
         municipalityCode = 235,
         createdBy = Some("jakke"),
         createdAt = asset.createdAt
