@@ -599,23 +599,34 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
     val source = sources.head
 
-    val adjustedCreatedRoads = targets.size match {
-      case 1 => targets.foldLeft(targets) { (previousTargets, target) =>
-        RoadAddressLinkBuilder.adjustRoadAddressTopology(maxEndMValue, minStartAddressM, maxEndAddressM, source, target, previousTargets, user.username).filterNot(_.id == 0) }
+    val orderedTargets = targets.size match {
+      case 1 => targets
       case _ =>
         val surroundingMappedLinks = getValidSurroundingLinks(targets.map(_.linkId).toSet, source)
-        //order by Ids
-        val orderedSurroundingLinkIds = ListMap(surroundingMappedLinks.toSeq.sortBy(_._2.startAddressM):_*).map(_._1).toSet
-        val orderedTargets = orderedSurroundingLinkIds.map{
-          linkid =>
-            targets.filter(t => t.linkId == linkid).head
-        }.toSeq
-        orderedTargets.foldLeft(orderedTargets) { (previousTargets, target) =>
-          RoadAddressLinkBuilder.adjustRoadAddressTopology(maxEndMValue, minStartAddressM, maxEndAddressM, source, target, previousTargets, user.username).filterNot(_.id == 0) }
+        val startingLinkId = ListMap(surroundingMappedLinks.toSeq.sortBy(_._2.startAddressM):_*).keySet.head
+        val firstTarget = targets.filter(_.linkId == startingLinkId).head
+        val orderTargets = targets.foldLeft(Seq.empty[RoadAddressLink]) { (previousOrderedTargets, target) =>
+          orderLinksRecursivelyByAdjacency(firstTarget, target, targets, previousOrderedTargets)
+        }
+        orderTargets
     }
+
+    val adjustedCreatedRoads = orderedTargets.foldLeft(orderedTargets) { (previousTargets, target) =>
+          RoadAddressLinkBuilder.adjustRoadAddressTopology(maxEndMValue, minStartAddressM, maxEndAddressM, source, target, previousTargets, user.username).filterNot(_.id == 0) }
+
     adjustedCreatedRoads
   }
 
+  def orderLinksRecursivelyByAdjacency(firstTarget: RoadAddressLink, target: RoadAddressLink, targets: Seq[RoadAddressLink], previousOrderedTargets: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
+
+    val orderedTargets = previousOrderedTargets.size match {
+      case 0 => Seq(firstTarget)
+      case _ =>
+        val nextTarget = targets.filterNot(t =>  previousOrderedTargets.map(_.linkId).contains(t.linkId)).filter(rt => GeometryUtils.areAdjacent(previousOrderedTargets.last.geometry, target.geometry))
+        (previousOrderedTargets++nextTarget)
+    }
+    orderedTargets
+  }
 }
 
 //TIETYYPPI (1= yleinen tie, 2 = lauttaväylä yleisellä tiellä, 3 = kunnan katuosuus, 4 = yleisen tien työmaa, 5 = yksityistie, 9 = omistaja selvittämättä)
