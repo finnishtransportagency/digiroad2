@@ -35,6 +35,36 @@
       source: greenRoadLayerVector
     });
 
+    var greenRoads = function(Ol3Features, addToGreenLayer) {
+      var features = [];
+
+      var style = new ol.style.Style({
+        fill: new ol.style.Fill({
+          color: 'rgba(0, 255, 0, 0.75)'
+        }),
+        stroke: new ol.style.Stroke({
+          color: 'rgba(0, 255, 0, 0.75)',
+          width: 7
+        })
+      });
+
+      var greenRoadStyle = function(feature) {
+        feature.setStyle(style);
+        features.push(feature);
+      };
+
+      var greenStyle = function() {
+        _.each(Ol3Features, function(feature) {
+          greenRoadStyle(feature);
+        });
+      };
+      greenStyle();
+      greenRoadLayer.setZIndex(1000);
+      if(!addToGreenLayer){
+        greenRoadLayer.getSource().addFeatures(features);
+      }
+    };
+
     var valintaRoadsLayer = new ol.layer.Vector({
       source: valintaRoadsLayerVector,
       style: function(feature) {
@@ -694,34 +724,6 @@
       indicatorLayer.getSource().addFeatures(features);
     };
 
-    var greenRoads = function(Ol3Features) {
-      var features = [];
-
-      var style = new ol.style.Style({
-        fill: new ol.style.Fill({
-          color: 'rgba(0, 255, 0, 0.75)'
-        }),
-        stroke: new ol.style.Stroke({
-          color: 'rgba(0, 255, 0, 0.75)',
-          width: 7
-        })
-      });
-
-      var greenRoadStyle = function(feature) {
-        feature.setStyle(style);
-        features.push(feature);
-      };
-
-      var greenStyle = function() {
-        _.each(Ol3Features, function(feature) {
-          greenRoadStyle(feature);
-        });
-      };
-      greenStyle();
-      greenRoadLayer.setZIndex(1000);
-      greenRoadLayer.getSource().addFeatures(features);
-    };
-
     var cancelSelection = function() {
       if(!applicationModel.isActiveButtons()) {
         selectedLinkProperty.cancel();
@@ -745,6 +747,30 @@
       });
       reselectRoadLink(targetFeature, adjacents);
       draw();
+      reHighlightGreen();
+    };
+
+    var reHighlightGreen = function() {
+      var greenFeaturesLinkId = _.map(greenRoadLayer.getSource().getFeatures(), function(gf){
+        return gf.roadLinkData.linkId;
+      });
+
+      if (greenFeaturesLinkId.length !== 0) {
+        var features =[];
+        _.each(roadLayer.layer.getSource().getFeatures(), function (feature) {
+          if (_.contains(greenFeaturesLinkId, feature.roadLinkData.linkId)) {
+            console.log("Found Green Feature: " + feature.roadLinkData.linkId);
+
+            feature.roadLinkData.prevAnomaly = feature.roadLinkData.anomaly;
+            feature.roadLinkData.gapTransfering = true;
+            var greenRoadStyle = styler.generateStyleByFeature(feature.roadLinkData,map.getView().getZoom());
+            feature.setStyle(greenRoadStyle);
+            features.push(feature);
+          }
+        });
+        greenRoads(features,true);
+        addFeaturesToSelection(features);
+      }
     };
 
     var editFeatureDataForGreen = function (targets) {
@@ -764,7 +790,6 @@
               roadCollection.addPreMovedRoadAddresses(feature.data);
             }
           });
-
           greenRoads(features);
           addFeaturesToSelection(features);
         }
