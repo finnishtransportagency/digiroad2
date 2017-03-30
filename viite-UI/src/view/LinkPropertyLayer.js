@@ -349,8 +349,6 @@
     };
 
     var unselectRoadLink = function() {
-      selectedLinkProperty.close();
-      clearHighlights();
       indicatorLayer.getSource().clear();
       greenRoadLayer.getSource().clear();
       _.map(roadLayer.layer.getSource().getFeatures(),function (feature){
@@ -734,6 +732,7 @@
 
     var refreshViewAfterSaving = function() {
       unselectRoadLink();
+      $('#feature-attributes').empty();
       me.refreshView();
     };
 
@@ -801,6 +800,9 @@
     eventListener.listenTo(eventbus, 'linkProperties:unselected', function() {
       clearHighlights();
       setGeneralOpacity(1);
+      if(greenRoadLayer.getSource().getFeatures().length !== 0) {
+        unselectRoadLink();
+      }
       if(indicatorLayer.getSource().getFeatures().length !== 0){
         indicatorLayer.getSource().clear();
       }
@@ -816,6 +818,9 @@
     eventListener.listenTo(eventbus, 'linkProperties:clearHighlights', function(){
       if(greenRoadLayer.getSource().getFeatures().length !== 0){
         unselectRoadLink();
+      }
+      if(valintaRoadsLayer.getSource().getFeatures().length !== 0){
+        valintaRoadsLayer.getSource().clear();
       }
       clearHighlights();
       if(simulatedRoadsLayer.getSource().getFeatures().length !== 0){
