@@ -451,9 +451,20 @@
           floatingMarkerLayer.getSource().addFeature(marker);
         });
 
+        var featuresAnomalous = _.map(selectedLinkProperty.getFeaturesToKeep(), function(featureKeep){
+            if(featureKeep.anomaly === 1 && featureKeep.roadLinkType !== -1)
+                return featureKeep.linkId;
+        });
+
+        /*_.each(anomalousRoadMarkers, function(anomalouslink) {
+         var marker = cachedMarker.createMarker(anomalouslink);
+         anomalousMarkerLayer.getSource().addFeature(marker);
+         });*/
+
         _.each(anomalousRoadMarkers, function(anomalouslink) {
-          var marker = cachedMarker.createMarker(anomalouslink);
-          anomalousMarkerLayer.getSource().addFeature(marker);
+            if(!_.contains(featuresAnomalous, anomalouslink.linkId))
+               var marker = cachedMarker.createMarker(anomalouslink);
+               anomalousMarkerLayer.getSource().addFeature(marker);
         });
 
         var actualPoints =  me.drawCalibrationMarkers(calibrationPointLayer.source, roadLinks);
@@ -773,6 +784,32 @@
       }
     };
 
+    /*
+    * var editFeatureDataForGreen = function (targets) {
+     var features =[];
+     if(targets !== 0){
+     var targetFeature = _.find(greenRoadLayer.getSource().getFeatures(), function(greenfeature){
+     return targets !== 0 && greenfeature.roadLinkData.linkId === parseInt(targets);
+     });
+     if(!targetFeature){
+     _.map(roadLayer.layer.getSource().getFeatures(), function(feature){
+     if(feature.roadLinkData.linkId == targets){
+     feature.roadLinkData.prevAnomaly = feature.roadLinkData.anomaly;
+     feature.roadLinkData.gapTransfering = true;
+     var greenRoadStyle = styler.generateStyleByFeature(feature.roadLinkData,map.getView().getZoom());
+     feature.setStyle(greenRoadStyle);
+     features.push(feature);
+     roadCollection.addPreMovedRoadAddresses(feature.data);
+     }
+     });
+     greenRoads(features);
+     addFeaturesToSelection(features);
+     }
+     }
+     if(features.length === 0)
+     return undefined;
+     else return _.first(features);
+     };*/
     var editFeatureDataForGreen = function (targets) {
       var features =[];
       if(targets !== 0){
@@ -788,10 +825,20 @@
               feature.setStyle(greenRoadStyle);
               features.push(feature);
               roadCollection.addPreMovedRoadAddresses(feature.data);
+              var anomalousMarker = _.find(anomalousMarkerLayer.getSource().getFeatures(), function(markers){
+                return markers.roadLinkData.linkId === feature.roadLinkData.linkId;
+              });
+              if(!_.isUndefined(anomalousMarker)){
+                //anomalousMarkerVector.removeFeature(anomalousMarker);
+                anomalousMarkerLayer.getSource().removeFeature(anomalousMarker);
+                //selectSingleClick.getFeatures().remove(anomalousMarker);
+                anomalousMarkerLayer.setVisible(false);
+                anomalousMarkerLayer.setVisible(true);
+              }
             }
           });
-          greenRoads(features);
           addFeaturesToSelection(features);
+          greenRoads(features);
         }
       }
       if(features.length === 0)

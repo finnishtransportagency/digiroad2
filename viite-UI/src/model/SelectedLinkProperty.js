@@ -432,7 +432,7 @@
 
     var addTargets = function(target, adjacents){
       if(!_.contains(targets,target))
-        targets.push(roadCollection.getRoadLinkByLinkId(parseInt(target)));
+        targets.push(roadCollection.getRoadLinkByLinkId(parseInt(target)).getData());
       var targetData = _.filter(adjacents, function(adjacent){
         return adjacent.linkId == target;
       });
