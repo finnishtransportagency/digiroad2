@@ -480,7 +480,7 @@ object DataFixture {
     val busStops = trBusStops.flatMap{
       trStop =>
         try {
-          val stopPointOption = geometryTransform.addressToCoords(trStop.roadAddress).headOption
+          val stopPointOption = geometryTransform.addressToCoords(trStop.roadAddress.road, trStop.roadAddress.roadPart, trStop.roadAddress.track, trStop.roadAddress.mValue)
 
           stopPointOption match {
             case Some(stopPoint) =>
@@ -507,8 +507,8 @@ object DataFixture {
             }
           }
         }catch {
-          case e: VKMClientException => {
-            println("VKM throw exception for the TR bus stop address with livi Id "+ trStop.liviId +" "+ e.getMessage)
+          case e: RoadAddressException => {
+            println("RoadAddress throw exception for the TR bus stop address with livi Id "+ trStop.liviId +" "+ e.getMessage)
             None
           }
         }
@@ -628,7 +628,7 @@ object DataFixture {
             if(!dryRun)
               massTransitStopService.executeTierekisteriOperation(Operation.Create, stop, roadLinkByLinkId => roadLinks.find(r => r.linkId == roadLinkByLinkId), None, None)
           } catch {
-            case vkme: VKMClientException => println("Bus stop with national Id: "+stop.nationalId+" returns the following error: "+vkme.getMessage)
+            case roadAddrError: RoadAddressException => println("Bus stop with national Id: "+stop.nationalId+" returns the following error: "+roadAddrError.getMessage)
             case tre: TierekisteriClientException => println("Bus stop with national Id: "+stop.nationalId+" returns the following error: "+tre.getMessage)
           }
         }
