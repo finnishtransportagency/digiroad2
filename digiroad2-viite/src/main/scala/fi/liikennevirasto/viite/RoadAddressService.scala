@@ -17,6 +17,7 @@ import org.joda.time.{DateTime, DateTimeZone}
 import org.slf4j.LoggerFactory
 import slick.jdbc.{StaticQuery => Q}
 
+import scala.collection.immutable.ListMap
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
@@ -456,6 +457,40 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
   }
 
+  def getValidSurroundingLinks(linkIds: Set[Long], floating: RoadAddressLink): Map[Long, RoadAddressLink] = {
+    val roadLinks = roadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(linkIds)._1
+    try{
+      val surroundingLinks = linkIds.map{
+        linkid =>
+          val geomInChain = roadLinks.filter(_.linkId == linkid).map(_.geometry)
+          val sourceLinkGeometryOption = geomInChain.headOption
+          sourceLinkGeometryOption.map(sourceLinkGeometry => {
+            val sourceLinkEndpoints = GeometryUtils.geometryEndpoints(sourceLinkGeometry)
+            val delta: Vector3d = Vector3d(0.1, 0.1, 0)
+            val bounds = BoundingRectangle(sourceLinkEndpoints._1 - delta, sourceLinkEndpoints._1 + delta)
+            val bounds2 = BoundingRectangle(sourceLinkEndpoints._2 - delta, sourceLinkEndpoints._2 + delta)
+            val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, bounds2)
+            val addresses1 = fetchRoadAddressesByBoundingBox(bounds)._2
+            val addresses2 = fetchRoadAddressesByBoundingBox(bounds2)._2
+            val addresses = addresses1 ++ addresses2
+
+            val distinctRoadLinks = roadLinks.distinct
+            val adjacentLinks = distinctRoadLinks.map { rl =>
+              val ra = addresses.getOrElse(rl.linkId, Seq()).distinct
+              rl.linkId -> buildRoadAddressLink(rl, ra, Seq())
+            }.filter(_._2.exists(ral => GeometryUtils.areAdjacent(sourceLinkGeometry, ral.geometry)
+              && ral.roadLinkType != UnknownRoadLinkType && ral.roadNumber == floating.roadNumber && ral.roadPartNumber == floating.roadPartNumber && ral.trackCode == floating.trackCode))
+
+            (linkid -> adjacentLinks.flatMap(_._2).head)
+          }).head
+      }.toMap
+
+      surroundingLinks
+    } catch {
+      case e: Exception => Map()
+    }
+  }
+
   def getFloatingAdjacent(chainLinks: Set[Long], linkId: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Long, filterpreviousPoint: Boolean = true): Seq[RoadAddressLink] = {
     val chainRoadLinks = roadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(chainLinks)
     val geomInChain = chainRoadLinks._1.filter(_.linkId == linkId).map(_.geometry)++chainRoadLinks._2.filter(_.linkId == linkId).map(_.geometry)
@@ -506,7 +541,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val targetLinks = targets.flatMap(rd => {
       getUniqueRoadAddressLink(rd.toLong)
     })
-    RoadAddressLinkBuilder.transferRoadAddress(sourceLinks, targetLinks, user)
+    transferRoadAddress(sourceLinks, targetLinks, user)
   }
 
   def transferFloatingToGap(sourceIds: Set[Long], targetIds: Set[Long], roadAddresses: Seq[RoadAddress]) = {
@@ -515,6 +550,70 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       RoadAddressDAO.expireMissingRoadAddresses(targetIds)
       RoadAddressDAO.create(roadAddresses)
     }
+  }
+
+  def transferRoadAddress(sources: Seq[RoadAddressLink], targets: Seq[RoadAddressLink], user: User): Seq[RoadAddressLink] = {
+
+    def getMValues(cp: Option[Double], fl: Option[Double]): Double = {
+      (cp, fl) match {
+        case (Some(calibrationPoint), Some(mVal)) => calibrationPoint
+        case (None, Some(mVal)) => mVal
+        case (Some(calibrationPoint), None) => calibrationPoint
+        case (None, None) => 0.0
+      }
+    }
+
+    val adjustTopology: Seq[(Double, Seq[RoadAddressLink]) => Seq[RoadAddressLink]] = Seq(
+      RoadAddressLinkBuilder.dropSegmentsOutsideGeometry,
+      RoadAddressLinkBuilder.capToGeometry,
+      RoadAddressLinkBuilder.extendToGeometry,
+      RoadAddressLinkBuilder.dropShort
+    )
+
+    val allLinks = sources ++ targets
+    val targetsGeomLength = targets.map(_.length).sum
+
+    val allStartCp = sources.flatMap(_.startCalibrationPoint) ++ targets.flatMap(_.startCalibrationPoint)
+    val allEndCp = sources.flatMap(_.endCalibrationPoint) ++ targets.flatMap(_.endCalibrationPoint)
+    val startCalibrationPoints = allStartCp.filter(_.addressMValue == allStartCp.map(_.addressMValue).min)
+    val endCalibrationPoints = allEndCp.filter(_.addressMValue == allEndCp.map(_.addressMValue).max)
+    val startCp: Option[CalibrationPoint] = if (!startCalibrationPoints.isEmpty) Option(startCalibrationPoints.head) else None
+    val endCp: Option[CalibrationPoint] = if (!endCalibrationPoints.isEmpty) Option(endCalibrationPoints.head) else None
+    val minStartAddressM = sources.map(_.startAddressM).min
+    val maxEndAddressM = sources.map(_.endAddressM).max
+    var minStartMValue = 0.0
+    var maxEndMValue = 0.0
+    val adjustedSegments = adjustTopology.foldLeft(sources) { (previousSources, operation) => operation(targetsGeomLength, previousSources) }
+
+    if (!allLinks.flatMap(_.startCalibrationPoint).isEmpty) {
+      minStartMValue = getMValues(Option(allLinks.flatMap(_.startCalibrationPoint).map(_.segmentMValue).min), Option(allLinks.map(_.startMValue).min))
+    } else {
+      minStartMValue = adjustedSegments.map(_.startMValue).min
+    }
+
+    if (!allLinks.flatMap(_.endCalibrationPoint).isEmpty) {
+      maxEndMValue = getMValues(Option(allLinks.flatMap(_.endCalibrationPoint).map(_.segmentMValue).max), Option(allLinks.map(_.endMValue).max))
+    } else {
+      maxEndMValue = adjustedSegments.map(_.endMValue).max
+    }
+
+    val source = sources.head
+
+    val adjustedCreatedRoads = targets.size match {
+      case 1 => targets.foldLeft(targets) { (previousTargets, target) =>
+        RoadAddressLinkBuilder.adjustRoadAddressTopology(maxEndMValue, minStartAddressM, maxEndAddressM, source, target, previousTargets, user.username).filterNot(_.id == 0) }
+      case _ =>
+        val surroundingMappedLinks = getValidSurroundingLinks(targets.map(_.linkId).toSet, source)
+        //order by Ids
+        val orderedSurroundingLinkIds = ListMap(surroundingMappedLinks.toSeq.sortBy(_._2.startAddressM):_*).map(_._1).toSet
+        val orderedTargets = orderedSurroundingLinkIds.map{
+          linkid =>
+            targets.filter(t => t.linkId == linkid).head
+        }.toSeq
+        orderedTargets.foldLeft(orderedTargets) { (previousTargets, target) =>
+          RoadAddressLinkBuilder.adjustRoadAddressTopology(maxEndMValue, minStartAddressM, maxEndAddressM, source, target, previousTargets, user.username).filterNot(_.id == 0) }
+    }
+    adjustedCreatedRoads
   }
 
 }
@@ -669,6 +768,7 @@ object RoadAddressLinkBuilder {
 
   def adjustRoadAddressTopology(maxEndMValue: Double, minStartMAddress: Long, maxEndMAddress: Long, source: RoadAddressLink, currentTarget: RoadAddressLink, newRoadAddresses: Seq[RoadAddressLink], username: String): Seq[RoadAddressLink] = {
     val tempId = -1000
+
     val sorted = newRoadAddresses.sortBy(_.endAddressM)(Ordering[Long].reverse)
     val lastTarget = sorted.head
     val startAddressM = newRoadAddresses.filterNot(_.id == 0).size match {
@@ -684,57 +784,7 @@ object RoadAddressLinkBuilder {
     (newRoadAddresses++roadAddress)
   }
 
-  def transferRoadAddress(sources: Seq[RoadAddressLink], targets: Seq[RoadAddressLink], user: User): Seq[RoadAddressLink] = {
 
-    def getMValues(cp: Option[Double], fl: Option[Double]): Double = {
-      (cp, fl) match {
-        case (Some(calibrationPoint), Some(mVal)) => calibrationPoint
-        case (None, Some(mVal)) => mVal
-        case (Some(calibrationPoint), None) => calibrationPoint
-        case (None, None) => 0.0
-      }
-    }
-
-    val adjustTopology: Seq[(Double, Seq[RoadAddressLink]) => Seq[RoadAddressLink]] = Seq(
-      dropSegmentsOutsideGeometry,
-      capToGeometry,
-      extendToGeometry,
-      dropShort
-    )
-
-    val allLinks = sources ++ targets
-    val targetsGeomLength = targets.map(_.length).sum
-
-    val allStartCp = sources.flatMap(_.startCalibrationPoint) ++ targets.flatMap(_.startCalibrationPoint)
-    val allEndCp = sources.flatMap(_.endCalibrationPoint) ++ targets.flatMap(_.endCalibrationPoint)
-    val startCalibrationPoints = allStartCp.filter(_.addressMValue == allStartCp.map(_.addressMValue).min)
-    val endCalibrationPoints = allEndCp.filter(_.addressMValue == allEndCp.map(_.addressMValue).max)
-    val startCp: Option[CalibrationPoint] = if (!startCalibrationPoints.isEmpty) Option(startCalibrationPoints.head) else None
-    val endCp: Option[CalibrationPoint] = if (!endCalibrationPoints.isEmpty) Option(endCalibrationPoints.head) else None
-    val minStartAddressM = sources.map(_.startAddressM).min
-    val maxEndAddressM = sources.map(_.endAddressM).max
-    var minStartMValue = 0.0
-    var maxEndMValue = 0.0
-    val adjustedSegments = adjustTopology.foldLeft(sources) { (previousSources, operation) => operation(targetsGeomLength, previousSources) }
-
-    if (!allLinks.flatMap(_.startCalibrationPoint).isEmpty) {
-      minStartMValue = getMValues(Option(allLinks.flatMap(_.startCalibrationPoint).map(_.segmentMValue).min), Option(allLinks.map(_.startMValue).min))
-    } else {
-      minStartMValue = adjustedSegments.map(_.startMValue).min
-    }
-
-    if (!allLinks.flatMap(_.endCalibrationPoint).isEmpty) {
-      maxEndMValue = getMValues(Option(allLinks.flatMap(_.endCalibrationPoint).map(_.segmentMValue).max), Option(allLinks.map(_.endMValue).max))
-    } else {
-      maxEndMValue = adjustedSegments.map(_.endMValue).max
-    }
-
-    val source = sources.head
-    val adjustedCreatedRoads: Seq[RoadAddressLink] = targets.foldLeft(targets) { (previousTargets, target) =>
-      adjustRoadAddressTopology(maxEndMValue, minStartAddressM, maxEndAddressM, source, target, previousTargets, user.username).filterNot(_.id == 0) }
-
-    adjustedCreatedRoads
-  }
 
   private def toIntNumber(value: Any) = {
     try {
