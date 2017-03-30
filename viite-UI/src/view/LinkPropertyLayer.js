@@ -571,7 +571,7 @@
 
     this.refreshView = function() {
       //Generalize the zoom levels as the resolutions and zoom levels differ between map tile sources
-      roadCollection.fetch(map.getExtent(), 11);
+      roadCollection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getZoom());
       roadLayer.layer.changed();
     };
 
