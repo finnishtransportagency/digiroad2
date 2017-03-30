@@ -149,6 +149,21 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
     )))
   }
 
+  test("generatedValue returns true if creator is automatically generated (contains fixed part of auto-generated value)") {
+    integrationApi.speedLimitsToApi(Seq(SpeedLimit(1, 2, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(80)), Nil, 0, 1, None, None, Some("split_speedlimit_1234"), None, 0, None))) should be(Seq(Map(
+      "id" -> 1,
+      "sideCode" -> 1,
+      "points" -> Nil,
+      "geometryWKT" -> "",
+      "value" -> 80,
+      "startMeasure" -> 0,
+      "endMeasure" -> 1,
+      "linkId" -> 2,
+      "muokattu_viimeksi" -> "",
+      "generatedValue" -> true
+    )))
+  }
+
   test("generatedValue returns false if creator is automatically generated and modifier is real user") {
     integrationApi.speedLimitsToApi(Seq(SpeedLimit(1, 2, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(80)), Nil, 0, 1, Some("K123456"), None, Some("dr1conversion"), None, 0, None))) should be(Seq(Map(
       "id" -> 1,
