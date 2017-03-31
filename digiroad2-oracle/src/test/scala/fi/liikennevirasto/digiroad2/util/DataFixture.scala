@@ -4,7 +4,7 @@ import java.util.Properties
 
 import com.googlecode.flyway.core.Flyway
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, State, SideCode}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.{NewLinearAsset, NumericValue, NumericalLimitFiller, RoadLink}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{MassTransitStopDao, Queries}
 import fi.liikennevirasto.digiroad2.MassTransitStopService
@@ -585,6 +585,14 @@ object DataFixture {
   }
 
   def checkBusStopMatchingBetweenOTHandTR(dryRun: Boolean = false): Unit = {
+    def checkModifierSize(user: Modification) = {
+      user.modifier.map(_.length).getOrElse(0) > 10
+    }
+
+    def fixModifier(user: Modification) = {
+      Modification(user.modificationTime, Some("k127773"))
+    }
+
     println("\nVerify if OTH mass transit stop exist in Tierekisteri, if not present, create them. ")
     println(DateTime.now())
 
@@ -623,12 +631,25 @@ object DataFixture {
           //Add a list of missing stops with road addresses is available
           missedBusStopsOTH = missedBusStopsOTH ++ List(stop)
 
+          //If modified or created username is bigger than 10 of length we set with PO user
+          val adjustedStop = stop match {
+            case asset if checkModifierSize(asset.modified) && checkModifierSize(asset.created) =>
+              asset.copy(created = fixModifier(asset.created), modified = fixModifier(asset.modified))
+            case asset if checkModifierSize(asset.modified) =>
+              asset.copy(modified = fixModifier(asset.modified))
+            case asset if checkModifierSize(asset.created) =>
+              asset.copy(created = fixModifier(asset.created))
+            case _ =>
+              stop
+          }
+
           try {
             //Create missed Bus Stop at the Tierekisteri
             if(!dryRun)
-              massTransitStopService.executeTierekisteriOperation(Operation.Create, stop, roadLinkByLinkId => roadLinks.find(r => r.linkId == roadLinkByLinkId), None, None)
+              massTransitStopService.executeTierekisteriOperation(Operation.Create, adjustedStop, roadLinkByLinkId => roadLinks.find(r => r.linkId == roadLinkByLinkId), None, None)
           } catch {
-            case vkme: VKMClientException => println("Bus Stop With External Id: "+stop.nationalId+" returns the following error: "+vkme.getMessage)
+            case vkme: VKMClientException => println("Bus stop with national Id: "+adjustedStop.nationalId+" returns the following error: "+vkme.getMessage)
+            case tre: TierekisteriClientException => println("Bus stop with national Id: "+adjustedStop.nationalId+" returns the following error: "+tre.getMessage)
           }
         }
       }
@@ -724,10 +745,8 @@ object DataFixture {
     //For each municipality get all VVH Roadlinks for pick link id and pavement data
     municipalities.foreach { municipality =>
 
-      var countMotorwayBothDir = 0
-      var countMotorwayTowardDir  = 0
-      var countMotorwayAgainstDir = 0
-      var countSinglewayBothDir = 0
+      var countMotorway = 0
+      var countSingleway = 0
       println("Start processing municipality %d".format(municipality))
 
       //Obtain all RoadLink by municipality
@@ -756,31 +775,20 @@ object DataFixture {
             val endMeasure = GeometryUtils.geometryLength(roadLinkProp.geometry)
             roadLinkProp.linkType match {
               case asset.SingleCarriageway =>
-
                 roadLinkProp.trafficDirection match {
                   case asset.TrafficDirection.BothDirections => {
-                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, asset.SideCode.TowardsDigitizing.value , NumberOfRoadLanesSingleCarriageway)
-                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, asset.SideCode.AgainstDigitizing.value, NumberOfRoadLanesSingleCarriageway)
-                    countSinglewayBothDir = countSinglewayBothDir + 1
+                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, asset.SideCode.BothDirections.value , NumberOfRoadLanesSingleCarriageway)
+                    countSingleway = countSingleway+ 1
                   }
                   case _ => {
                     None
                   }
                 }
-              case asset.Motorway | asset.MultipleCarriageway | asset.Freeway =>
+              case asset.Motorway | asset.Freeway =>
                 roadLinkProp.trafficDirection match {
-                  case asset.TrafficDirection.BothDirections => {
-                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, asset.SideCode.TowardsDigitizing.value, NumberOfRoadLanesMotorway)
-                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, asset.SideCode.AgainstDigitizing.value, NumberOfRoadLanesMotorway)
-                    countMotorwayBothDir = countMotorwayBothDir + 1
-                  }
-                  case asset.TrafficDirection.TowardsDigitizing => {
-                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, asset.SideCode.TowardsDigitizing.value, NumberOfRoadLanesMotorway)
-                    countMotorwayTowardDir = countMotorwayTowardDir + 1
-                  }
-                  case asset.TrafficDirection.AgainstDigitizing => {
-                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, asset.SideCode.AgainstDigitizing.value, NumberOfRoadLanesMotorway)
-                    countMotorwayAgainstDir = countMotorwayAgainstDir + 1
+                  case asset.TrafficDirection.TowardsDigitizing | asset.TrafficDirection.AgainstDigitizing => {
+                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, asset.SideCode.BothDirections.value, NumberOfRoadLanesMotorway)
+                    countMotorway = countMotorway + 1
                   }
                   case _ => {
                     None
@@ -793,10 +801,8 @@ object DataFixture {
           }
         }
       }
-      println("Inserts SingleCarriage bothDir - " + countSinglewayBothDir)
-      println("Inserts Motorway... bothDir    - " + countMotorwayBothDir)
-      println("Inserts Motorway... towardDir  - " + countMotorwayTowardDir)
-      println("Inserts Motorway... AgainstDir - " + countMotorwayAgainstDir)
+      println("Inserts SingleCarriage - " + countSingleway)
+      println("Inserts Motorway...    - " + countMotorway)
       println("End processing municipality %d".format(municipality))
       println("")
     }

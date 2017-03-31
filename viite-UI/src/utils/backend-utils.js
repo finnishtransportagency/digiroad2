@@ -39,7 +39,6 @@
       });
     }, 1000);
 
-
     this.createRoadAddress = _.throttle(function(data, success, failure) {
       $.ajax({
         contentType: "application/json",
@@ -49,6 +48,24 @@
         dataType: "json",
         success: success,
         error: failure
+      });
+    }, 1000);
+
+    this.createRoadAddressProject = _.throttle(function(data, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "PUT",
+        url: "api/viite/roadlinks/roadaddress/project/save",
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    }, 1000);
+
+    this.getRoadAddressProjects = _.throttle(function(callback) {
+      return $.getJSON('api/viite/roadlinks/roadaddress/project/all', function(data) {
+        return _.isFunction(callback) && callback(data);
       });
     }, 1000);
 

@@ -642,7 +642,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  test("Should not save links to incomplete_link when the road source is not normal or complementary") {
+  test("Should not save links to incomplete_link when the road source is not normal") {
     OracleDatabase.withDynTransaction {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
       val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
@@ -668,8 +668,8 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       roadLinks.equals(Seq(roadLink1, roadLink2, roadLink3, roadLink4, roadLink5, roadLink6))
 
-      // Pass only incomplete road links with link source normal and complementary
-      val changeSet = RoadLinkChangeSet(List(), List(IncompleteLink(5,91,Municipality), IncompleteLink(6,91,Municipality)))
+      // Pass only incomplete road links with link source normal
+      val changeSet = RoadLinkChangeSet(List(), List(IncompleteLink(5,91,Municipality)))
       verify(mockEventBus).publish(
         org.mockito.Matchers.eq("linkProperties:changed"),
         org.mockito.Matchers.eq(changeSet))

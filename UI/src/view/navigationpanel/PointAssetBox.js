@@ -40,9 +40,7 @@
     };
 
     function show() {
-      if ((layerName != 'massTransitStop') &&
-          ((_.contains(userRoles, 'busStopMaintainer')) || (_.isEmpty(userRoles))) &&
-          !(_.contains(userRoles, 'operator') || _.contains(userRoles, 'premium'))) {
+      if ((layerName != 'massTransitStop') && editModeToggle.hasNoRolesPermission(userRoles)) {
         editModeToggle.reset();
       } else {
         editModeToggle.toggleEditMode(applicationModel.isReadOnly());

@@ -1,16 +1,16 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset._
-
 import scala.util.parsing.json._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.RoadAddressService
-import fi.liikennevirasto.viite.dao.{CalibrationPoint, Discontinuity, RoadAddress, RoadAddressCreator}
+import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{RoadAddressLink, RoadAddressLinkPartitioner}
 import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
 import org.json4s._
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.{NotFound, _}
@@ -22,10 +22,11 @@ import org.slf4j.LoggerFactory
 
 case class newAddressDataExtractor(sourceIds: Set[Long], targetIds: Set[Long], roadAddress: Seq[RoadAddressCreator])
 
+case class RoadAddressProjectExtractor(id: Long, status: Long, name: String, startDate: String, additionalInfo: String, roadNumber: Long, startPart: Long, endPart: Long)
+
 class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
                val roadAddressService: RoadAddressService,
                val userProvider: UserProvider = Digiroad2Context.userProvider,
-               val revision: String = Digiroad2Context.revision,
                val deploy_date: String = Digiroad2Context.deploy_date
                )
   extends ScalatraServlet
@@ -64,7 +65,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       val config = userProvider.getCurrentUser().configuration
       (config.east.map(_.toDouble), config.north.map(_.toDouble), config.zoom.map(_.toInt))
     }
-    StartupParameters(east.getOrElse(390000), north.getOrElse(6900000), zoom.getOrElse(2), revision, deploy_date)
+    StartupParameters(east.getOrElse(390000), north.getOrElse(6900000), zoom.getOrElse(2), deploy_date)
   }
 
 
@@ -143,15 +144,27 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
 
   put("/roadlinks/roadaddress") {
-    val test = parsedBody.extract[newAddressDataExtractor]
-    val roadAddressData = test.roadAddress
-    val sourceIds = test.sourceIds
-    val targetIds = test.targetIds
+    val data = parsedBody.extract[newAddressDataExtractor]
+    val roadAddressData = data.roadAddress
+    val sourceIds = data.sourceIds
+    val targetIds = data.targetIds
     val roadAddresses = roadAddressData.map{ ra =>
       RoadAddress(ra.id, ra.roadNumber, ra.roadPartNumber, Track.apply(ra.trackCode), Discontinuity.apply(ra.discontinuity), ra.startAddressM, ra.endAddressM,
-        Some(DateTime.now()), None, Option(ra.modifiedBy), ra.linkId, ra.startMValue, ra.endMValue, SideCode.apply(ra.sideCode), ra.calibrationPoints, false, ra.points)
+        Some(DateTime.now()), None, Option(ra.modifiedBy),0, ra.linkId, ra.startMValue, ra.endMValue, SideCode.apply(ra.sideCode), ra.calibrationPoints, false, ra.points)
     }
     roadAddressService.transferFloatingToGap(sourceIds, targetIds, roadAddresses)
+  }
+
+  put("/roadlinks/roadaddress/project/save"){
+    val project = parsedBody.extract[RoadAddressProjectExtractor]
+    val user = userProvider.getCurrentUser()
+    val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
+    val roadAddressProject  = RoadAddressProject( project.id, project.status, project.name, user.username, DateTime.now(), "-", formatter.parseDateTime(project.startDate), DateTime.now(), project.additionalInfo, project.roadNumber, project.startPart, project.endPart)
+    roadAddressService.saveRoadLinkProject(roadAddressProject)
+  }
+  get("/roadlinks/roadaddress/project/all") {
+    val projects = roadAddressService.getRoadAddressProjects()
+    projects.map(roadAddressProjectToApi)
   }
 
   private def roadlinksData(): (Seq[String], Seq[String]) = {
@@ -244,6 +257,20 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     )
   }
 
+  def roadAddressProjectToApi(roadAddressProject: RoadAddressProject): Map[String, Any] = {
+    Map(
+      "id" -> roadAddressProject.id,
+      "status" -> roadAddressProject.status,
+      "name" -> roadAddressProject.name,
+      "createdBy" -> roadAddressProject.createdBy,
+      // for some reason created date is null when project is inserted through sqldeveloper's table view with right mouse click -> insert row even though correct date is visually shown
+      "createdDate" -> { if (roadAddressProject.createdDate==null){null} else {roadAddressProject.createdDate.toString}},
+      "startDate" -> roadAddressProject.startDate.toString,
+      "modifiedBy" -> roadAddressProject.modifiedBy,
+      "additionalInfo" -> roadAddressProject.additionalInfo
+    )
+  }
+
   private def calibrationPoint(geometry: Seq[Point], calibrationPoint: Option[CalibrationPoint]) = {
     calibrationPoint match {
       case Some(point) =>
@@ -252,7 +279,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  case class StartupParameters(lon: Double, lat: Double, zoom: Int, revision: String, deploy_date: String)
+  case class StartupParameters(lon: Double, lat: Double, zoom: Int, deploy_date: String)
 
   get("/user/roles") {
     userProvider.getCurrentUser().configuration.roles

@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
+import java.awt.Polygon
 import java.io.{File, FilenameFilter, IOException}
 import java.util.Properties
 import java.util.concurrent.TimeUnit
@@ -64,6 +65,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   /**
+    * ATENTION Use this method always with transation not with session
     * This method returns a road link by link id.
     *
     * @param linkId
@@ -81,6 +83,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   /**
+    * ATENTION Use this method always with transation not with session
     * Returns the road links from VVH by municipality.
     *
     * @param municipality A integer, representative of the municipality Id.
@@ -96,6 +99,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   /**
+    * ATENTION Use this method always with transation not with session
     * This method returns road links by link ids.
     *
     * @param linkIds
@@ -221,6 +225,14 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       (enrichRoadLinksFromVVH(links, changes), changes)
     }
   }
+
+  def getRoadLinksAndChangesFromVVHWithPolygon(polygonString :String): (Seq[RoadLink], Seq[ChangeInfo])= {
+    val (changes, links) = Await.result(vvhClient.fetchChangesByPolygonF(polygonString).zip(vvhClient.fetchRoadLinksByPolygonF(polygonString)), atMost = Duration.Inf)
+    withDynTransaction {
+      (enrichRoadLinksFromVVH(links, changes), changes)
+    }
+  }
+
 
   /**
     * This method returns "real" road links, "complementary" road links and change data by bounding box and municipalities.
@@ -503,7 +515,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
     val (historyData, currentData, complementaryData) = Await.result(fut, Duration.Inf)
 
-    withDynSession {
+    withDynTransaction {
       (enrichRoadLinksFromVVH(currentData ++ complementaryData, Seq()), historyData)
     }
   }
@@ -731,9 +743,10 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * Used by RoadLinkService.fillIncompleteLinksWithPreviousLinkData and RoadLinkService.isIncomplete.
     */
   def isComplete(roadLink: RoadLink): Boolean = {
-    (roadLink.linkSource != LinkGeomSource.NormalLinkInterface && roadLink.linkSource != LinkGeomSource.ComplimentaryLinkInterface) ||
+    roadLink.linkSource != LinkGeomSource.NormalLinkInterface ||
       roadLink.functionalClass != FunctionalClass.Unknown && roadLink.linkType.value != UnknownLinkType.value
   }
+
   def getRoadLinksAndComplementaryLinksFromVVHByMunicipality(municipality: Int): Seq[RoadLink] = {
     val fut = for {
       complementary <-getComplementaryRoadLinksFromVVHFuture(municipality)
