@@ -247,9 +247,11 @@
             }
           }
         }
-      } else if (event.selected.length === 0 && event.deselected.length !== 0) {
+      } else if (event.selected.length === 0 && event.deselected.length !== 0 && applicationModel.getSelectionType() !== 'unknown') {
         selectedLinkProperty.close();
         setGeneralOpacity(1);
+      } else if (event.selected.length === 0 && event.deselected.length !== 0 && applicationModel.getSelectionType() === 'unknown'){
+        return new ModalConfirm("Tarkista irti geometriasta olevien tieosoitesegmenttien valinta. Kaikkia peräkkäisiä sopivia tieosoitesegmenttejä ei ole valittu.");
       }
 
       if (!_.isUndefined(selection)) {
@@ -456,15 +458,14 @@
                 return featureKeep.linkId;
         });
 
-        /*_.each(anomalousRoadMarkers, function(anomalouslink) {
+        _.each(anomalousRoadMarkers, function(anomalouslink) {
          var marker = cachedMarker.createMarker(anomalouslink);
          anomalousMarkerLayer.getSource().addFeature(marker);
-         });*/
+         });
 
         _.each(anomalousRoadMarkers, function(anomalouslink) {
-            if(!_.contains(featuresAnomalous, anomalouslink.linkId))
-               var marker = cachedMarker.createMarker(anomalouslink);
-               anomalousMarkerLayer.getSource().addFeature(marker);
+          var marker = cachedMarker.createMarker(anomalouslink);
+          anomalousMarkerLayer.getSource().addFeature(marker);
         });
 
         var actualPoints =  me.drawCalibrationMarkers(calibrationPointLayer.source, roadLinks);
@@ -825,16 +826,12 @@
               feature.setStyle(greenRoadStyle);
               features.push(feature);
               roadCollection.addPreMovedRoadAddresses(feature.data);
-              var anomalousMarker = _.find(anomalousMarkerLayer.getSource().getFeatures(), function(markers){
-                return markers.roadLinkData.linkId === feature.roadLinkData.linkId;
+              var valintaAnomalousMarker = _.filter(valintaRoadsLayer.getSource().getFeatures(), function(markersValinta){
+                return markersValinta.roadLinkData.linkId === feature.roadLinkData.linkId;
               });
-              if(!_.isUndefined(anomalousMarker)){
-                //anomalousMarkerVector.removeFeature(anomalousMarker);
-                anomalousMarkerLayer.getSource().removeFeature(anomalousMarker);
-                //selectSingleClick.getFeatures().remove(anomalousMarker);
-                anomalousMarkerLayer.setVisible(false);
-                anomalousMarkerLayer.setVisible(true);
-              }
+              _.each(valintaAnomalousMarker, function(masdsasd){
+                valintaRoadsLayer.getSource().removeFeature(masdsasd);  
+              });
             }
           });
           addFeaturesToSelection(features);

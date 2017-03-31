@@ -367,8 +367,11 @@
 
     var transferringCalculation = function(){
       var targetsData = _.map(targets,function (t){
-        return t.getData();
+          if (typeof t.getData() == "function") {
+             return t.getData();
+          } else return t;
       });
+      
       var targetDataIds = _.uniq(_.filter(_.map(targetsData.concat(featuresToKeep), function(feature){
         if(feature.roadLinkType != -1 && feature.anomaly == 1){
           return feature.linkId.toString();
