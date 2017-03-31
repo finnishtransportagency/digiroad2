@@ -367,7 +367,7 @@
 
     var transferringCalculation = function(){
       var targetsData = _.map(targets,function (t){
-          if (typeof t.getData() == "function") {
+          if (_.isUndefined(t.linkId)) {
              return t.getData();
           } else return t;
       });
@@ -403,7 +403,9 @@
       var roadAddresses = roadCollection.getNewTmpRoadAddresses();
 
       var targetsData = _.map(targets,function (t){
-        return t.getData();
+          if(_.isUndefined(t.linkId)){
+            return t.getData();     
+          }else return t;
       });
 
       var targetDataIds = _.uniq(_.filter(_.map(targetsData.concat(featuresToKeep), function(feature){

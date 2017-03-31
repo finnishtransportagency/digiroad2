@@ -43,8 +43,8 @@
           color: 'rgba(0, 255, 0, 0.75)'
         }),
         stroke: new ol.style.Stroke({
-          color: 'rgba(0, 255, 0, 0.75)',
-          width: 7
+          color: 'rgba(0, 255, 0, 0.95)',
+          width: 12
         })
       });
 
