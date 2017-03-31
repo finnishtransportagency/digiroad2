@@ -589,6 +589,7 @@
           applicationModel.setContinueButton(false);
           eventbus.trigger('linkProperties:highlightAnomalousByFloating');
           eventbus.trigger('linkProperties:activateInteractions');
+          eventbus.trigger('linkProperties:deactivateDoubleClick');
         }
       });
 

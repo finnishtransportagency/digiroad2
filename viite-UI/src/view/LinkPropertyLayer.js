@@ -103,7 +103,7 @@
       var isAnomalousRoadLayerFeature = _.find(roadLayerFeatures,function(rlf){
         return rlf.id === featureId;
       });
-      var isAnomalousRoadLayer = isAnomalousRoadLayerFeature.roadLinkData.anomaly === 1;
+      var isAnomalousRoadLayer = _.isUndefined(isAnomalousRoadLayerFeature) ? false : isAnomalousRoadLayerFeature.roadLinkData.anomaly === 1;
       return isAnomalous || isAnomalousRoadLayer;
     };
 
@@ -370,21 +370,25 @@
     /**
      * This will deactivate the following interactions from the map:
      * -selectDoubleClick
-     * -selectSingleClick
+     * -selectSingleClick - only if demanded with the Both
      */
-    var deactivateSelectInteractions = function() {
-      selectSingleClick.setActive(false);
+    var deactivateSelectInteractions = function(both) {
       selectDoubleClick.setActive(false);
+      if(both){
+        selectSingleClick.setActive(false);
+      }
     };
 
     /**
      * This will activate the following interactions from the map:
      * -selectDoubleClick
-     * -selectSingleClick
+     * -selectSingleClick - only if demanded with the Both
      */
-    var activateSelectInteractions = function() {
-      selectSingleClick.setActive(true);
+    var activateSelectInteractions = function(both) {
       selectDoubleClick.setActive(true);
+      if(both){
+        selectSingleClick.setActive(true);
+      }
     };
 
     var unselectRoadLink = function() {
@@ -874,6 +878,14 @@
       var featureToReOpen = _.cloneDeep(_.first(selectedLinkProperty.getFeaturesToKeepFloatings()));
       var visibleFeatures = getVisibleFeatures(true,true,true);
       selectedLinkProperty.openFloating(featureToReOpen.linkId, featureToReOpen.id, visibleFeatures);
+    });
+
+    eventListener.listenTo(eventbus, 'linkProperties:deactivateDoubleClick', function(){
+      deactivateSelectInteractions();
+    });
+
+    eventListener.listenTo(eventbus, 'linkProperties:activateDoubleClick', function(){
+      activateSelectInteractions();
     });
 
     var show = function(map) {
