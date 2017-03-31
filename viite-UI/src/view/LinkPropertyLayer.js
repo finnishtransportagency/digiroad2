@@ -235,6 +235,7 @@
             selectedLinkProperty.close();
             selectedLinkProperty.openFloating(selection.roadLinkData.linkId, selection.roadLinkData.id, visibleFeatures);
             floatingMarkerLayer.setOpacity(1);
+            anomalousMarkerLayer.setOpacity(1);
           } else if(selection.roadLinkData.roadLinkType !== -1 && 'floating' === applicationModel.getSelectionType() &&
             !applicationModel.isReadOnly() && event.deselected.length !== 0) {
             var floatings = event.deselected;
@@ -257,7 +258,7 @@
         selectedLinkProperty.close();
         setGeneralOpacity(1);
       } else if (event.selected.length === 0 && event.deselected.length !== 0 && applicationModel.getSelectionType() === 'unknown'){
-        return new ModalConfirm("Tarkista irti geometriasta olevien tieosoitesegmenttien valinta. Kaikkia peräkkäisiä sopivia tieosoitesegmenttejä ei ole valittu.");
+        return new ModalConfirm("Olet muokannut tietoja.Tallenna tai peru muutoksesi.");
       }
 
       if (!_.isUndefined(selection)) {

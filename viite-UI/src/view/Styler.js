@@ -18,7 +18,7 @@
         if(constructionType === 1) {
           return 'rgba(164, 164, 162, 0.65)';
         } else if (roadLinkType === -1) {
-          return 'rgba(247, 254, 46, 0.65)';
+          return 'rgba(247, 254, 46, 0.45)';
         } else {
           switch (roadClass) {
             case 1 : return 'rgba(255, 0, 0, 0.65)';
