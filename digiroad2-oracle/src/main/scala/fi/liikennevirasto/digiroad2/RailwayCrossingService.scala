@@ -31,10 +31,10 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
   private def floatingAdjustment(roadLinks: Seq[RoadLink], changeInfo: Seq[ChangeInfo], assetBeforeUpdate: AssetBeforeUpdate) = {
     if (assetBeforeUpdate.persistedFloating || assetBeforeUpdate.asset.floating) {
       PointAssetFiller.correctedPersistedAsset(assetBeforeUpdate.asset, roadLinks, changeInfo) match {
-        case Some(asset) =>
-          val updatedAsset = IncomingRailwayCrossing(asset.lon, asset.lat, asset.linkId, assetBeforeUpdate.asset.safetyEquipment, assetBeforeUpdate.asset.name)
-          OracleRailwayCrossingDao.update(asset.assetId, updatedAsset, asset.mValue, assetBeforeUpdate.asset.municipalityCode, "vvh_generated")
-          AssetBeforeUpdate(createPersistedAsset(assetBeforeUpdate.asset, asset), asset.floating, Some(FloatingReason.Unknown))
+        case Some(adjustment) =>
+          val updatedAsset = IncomingRailwayCrossing(adjustment.lon, adjustment.lat, adjustment.linkId, assetBeforeUpdate.asset.safetyEquipment, assetBeforeUpdate.asset.name)
+          OracleRailwayCrossingDao.update(adjustment.assetId, updatedAsset, adjustment.mValue, assetBeforeUpdate.asset.municipalityCode, "vvh_generated", Some(adjustment.vvhTimeStamp))
+          AssetBeforeUpdate(createPersistedAsset(assetBeforeUpdate.asset, adjustment), adjustment.floating, Some(FloatingReason.Unknown))
 
         case None =>
           if (assetBeforeUpdate.persistedFloating && !assetBeforeUpdate.asset.floating) {
@@ -61,11 +61,11 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
 
     if (floating) {
       PointAssetFiller.correctedPersistedAsset(persistedStop, roadLinks, changeInfo) match {
-        case Some(asset) =>
-          val updatedAsset = IncomingRailwayCrossing(asset.lon, asset.lat, asset.linkId, persistedStop.safetyEquipment, persistedStop.name)
-          OracleRailwayCrossingDao.update(asset.assetId, updatedAsset, asset.mValue, persistedStop.municipalityCode, "vvh_generated")
+        case Some(adjustment) =>
+          val updatedAsset = IncomingRailwayCrossing(adjustment.lon, adjustment.lat, adjustment.linkId, persistedStop.safetyEquipment, persistedStop.name)
+          OracleRailwayCrossingDao.update(adjustment.assetId, updatedAsset, adjustment.mValue, persistedStop.municipalityCode, "vvh_generated",  Some(adjustment.vvhTimeStamp))
 
-          val persistedAsset = createPersistedAsset(persistedStop, asset)
+          val persistedAsset = createPersistedAsset(persistedStop, adjustment)
           (conversion(persistedAsset, persistedAsset.floating), assetFloatingReason)
 
         case None => (conversion(persistedStop, floating), assetFloatingReason)

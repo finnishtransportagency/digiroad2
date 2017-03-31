@@ -72,18 +72,30 @@ object OracleTrafficLightDao {
     id
   }
 
-  def update(id: Long, trafficLight: TrafficLightToBePersisted) = {
+  def update(id: Long, trafficLight: TrafficLightToBePersisted, adjustedTimeStampOption: Option[Long] = None) = {
     sqlu""" update asset set municipality_code = ${trafficLight.municipalityCode} where id = $id """.execute
     updateAssetGeometry(id, Point(trafficLight.lon, trafficLight.lat))
     updateAssetModified(id, trafficLight.createdBy).execute
 
-    sqlu"""
-      update lrm_position
-       set
-       start_measure = ${trafficLight.mValue},
-       link_id = ${trafficLight.linkId}
-       where id = (select position_id from asset_link where asset_id = $id)
-    """.execute
+    adjustedTimeStampOption match {
+      case Some(adjustedTimeStamp) =>
+        sqlu"""
+          update lrm_position
+           set
+           start_measure = ${trafficLight.mValue},
+           link_id = ${trafficLight.linkId},
+           adjusted_timestamp = ${adjustedTimeStamp}
+           where id = (select position_id from asset_link where asset_id = $id)
+        """.execute
+      case _  =>
+        sqlu"""
+          update lrm_position
+           set
+           start_measure = ${trafficLight.mValue},
+           link_id = ${trafficLight.linkId}
+           where id = (select position_id from asset_link where asset_id = $id)
+        """.execute
+    }
     id
   }
 }

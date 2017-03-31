@@ -46,11 +46,11 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
   private def floatingAdjustment(roadLinks: Seq[RoadLink], changeInfo: Seq[ChangeInfo], assetBeforeUpdate: AssetBeforeUpdate) = {
     if (assetBeforeUpdate.persistedFloating || assetBeforeUpdate.asset.floating) {
       PointAssetFiller.correctedPersistedAsset(assetBeforeUpdate.asset, roadLinks, changeInfo) match {
-        case Some(asset) =>
-          val updated = IncomingObstacle(asset.lon, asset.lat, asset.linkId, assetBeforeUpdate.asset.obstacleType)
-          OracleObstacleDao.update(asset.assetId, updated, asset.mValue, "vvh_generated", assetBeforeUpdate.asset.municipalityCode)
+        case Some(adjustment) =>
+          val updated = IncomingObstacle(adjustment.lon, adjustment.lat, adjustment.linkId, assetBeforeUpdate.asset.obstacleType)
+          OracleObstacleDao.update(adjustment.assetId, updated, adjustment.mValue, "vvh_generated", assetBeforeUpdate.asset.municipalityCode, Some(adjustment.vvhTimeStamp))
 
-          AssetBeforeUpdate(createPersistedAsset(assetBeforeUpdate.asset, asset), asset.floating, Some(FloatingReason.Unknown))
+          AssetBeforeUpdate(createPersistedAsset(assetBeforeUpdate.asset, adjustment), adjustment.floating, Some(FloatingReason.Unknown))
 
         case None =>
           if (assetBeforeUpdate.persistedFloating && !assetBeforeUpdate.asset.floating) {
@@ -76,11 +76,11 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
                                     conversion: (PersistedAsset, Boolean) => T) = {
     if (floating) {
       PointAssetFiller.correctedPersistedAsset(persistedStop, roadLinks, changeInfo) match {
-        case Some(asset) =>
-          val updated = IncomingObstacle(asset.lon, asset.lat, asset.linkId, persistedStop.obstacleType)
-          OracleObstacleDao.update(asset.assetId, updated, asset.mValue, "vvh_generated", persistedStop.municipalityCode)
+        case Some(adjustment) =>
+          val updated = IncomingObstacle(adjustment.lon, adjustment.lat, adjustment.linkId, persistedStop.obstacleType)
+          OracleObstacleDao.update(adjustment.assetId, updated, adjustment.mValue, "vvh_generated", persistedStop.municipalityCode, Some(adjustment.vvhTimeStamp))
 
-          val persistedAsset = createPersistedAsset(persistedStop, asset)
+          val persistedAsset = createPersistedAsset(persistedStop, adjustment)
           (conversion(persistedAsset, persistedAsset.floating), assetFloatingReason)
 
         case None => (conversion(persistedStop, floating), assetFloatingReason)

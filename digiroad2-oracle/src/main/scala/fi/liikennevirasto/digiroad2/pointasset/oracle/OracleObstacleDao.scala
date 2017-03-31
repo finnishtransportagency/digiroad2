@@ -78,19 +78,32 @@ object OracleObstacleDao {
     id
   }
 
-  def update(id: Long, obstacle: IncomingObstacle, mValue: Double, username: String, municipality: Int) = {
+  def update(id: Long, obstacle: IncomingObstacle, mValue: Double, username: String, municipality: Int, adjustedTimeStampOption: Option[Long] = None) = {
     sqlu""" update asset set municipality_code = $municipality where id = $id """.execute
     updateAssetModified(id, username).execute
     updateAssetGeometry(id, Point(obstacle.lon, obstacle.lat))
     updateSingleChoiceProperty(id, getPropertyId, obstacle.obstacleType).execute
 
-    sqlu"""
-      update lrm_position
-       set
-       start_measure = $mValue,
-       link_id = ${obstacle.linkId}
-       where id = (select position_id from asset_link where asset_id = $id)
-    """.execute
+    adjustedTimeStampOption match {
+      case Some(adjustedTimeStamp) =>
+        sqlu"""
+          update lrm_position
+           set
+           start_measure = $mValue,
+           link_id = ${obstacle.linkId},
+           adjusted_timestamp = ${adjustedTimeStamp}
+          where id = (select position_id from asset_link where asset_id = $id)
+        """.execute
+      case _ =>
+        sqlu"""
+          update lrm_position
+           set
+           start_measure = $mValue,
+           link_id = ${obstacle.linkId}
+          where id = (select position_id from asset_link where asset_id = $id)
+        """.execute
+    }
+
     id
   }
 

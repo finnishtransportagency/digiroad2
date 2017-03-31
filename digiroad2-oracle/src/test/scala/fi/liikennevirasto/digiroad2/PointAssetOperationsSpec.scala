@@ -114,6 +114,164 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
     newAssetAdjusted.isEmpty should be(true)
   }
 
+  test("Auto Correct Floating Point that has been Divided and with more than one ChangeInfo") {
+    val cmpLinkId = 6001
+    val crpLinkId = 6002
+    val municipalityCode = 235
+    val administrativeClass = Municipality
+    val trafficDirection = TrafficDirection.BothDirections
+    val functionalClass = 1
+    val linkType = Freeway
+
+    val persistedAsset = testPersistedPointAsset(11, 10.0, 5.0, municipalityCode, cmpLinkId, 2.0, floating = true, 133999999)
+
+    val changeInfo = Seq(
+      ChangeInfo(Some(cmpLinkId), Some(cmpLinkId), 12345, 3, Some(0), Some(72), Some(6), Some(78), 144000000),
+      ChangeInfo(None, Some(cmpLinkId), 12346, 4, None, None, Some(0), Some(6), 144000000),
+
+      ChangeInfo(Some(cmpLinkId), Some(cmpLinkId), 12345, 3, Some(0), Some(78), Some(8), Some(80), 155000000),
+      ChangeInfo(None, Some(cmpLinkId), 12346, 4, None, None, Some(0), Some(8), 155000000)
+    )
+
+    val newRoadLinks = Seq(
+      RoadLink(cmpLinkId, List(Point(0, 0), Point(0, 200.0)), 200.0, administrativeClass, functionalClass,
+        trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))),
+      RoadLink(crpLinkId, List(Point(8.0, 5.0), Point(20.0, 5.0)), 100.0, administrativeClass, functionalClass,
+        trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
+    )
+
+    val newAssetAdjusted = PointAssetFiller.correctedPersistedAsset(persistedAsset, newRoadLinks, changeInfo)
+
+    newAssetAdjusted.isEmpty should be(false)
+    newAssetAdjusted.map { asset =>
+      asset.assetId should equal(11)
+      asset.lon should equal(0)
+      asset.lat should equal(16)
+      asset.linkId should equal(cmpLinkId)
+      asset.mValue should equal(16.0)
+      asset.floating should be(false)
+    }
+  }
+
+  test("Auto Correct Floating Point that has been Divided and with Asset filtering by vvhTimeStamp") {
+    val cmpLinkId = 6001
+    val crpLinkId = 6002
+    val municipalityCode = 235
+    val administrativeClass = Municipality
+    val trafficDirection = TrafficDirection.BothDirections
+    val functionalClass = 1
+    val linkType = Freeway
+
+    val persistedAsset = testPersistedPointAsset(11, 10.0, 5.0, municipalityCode, cmpLinkId, 2.0, floating = true, 144000000)
+
+    val changeInfo = Seq(
+      ChangeInfo(Some(cmpLinkId), Some(cmpLinkId), 12345, 3, Some(0), Some(72), Some(6), Some(78), 144000000),
+      ChangeInfo(None, Some(cmpLinkId), 12346, 4, None, None, Some(0), Some(6), 144000000),
+      ChangeInfo(Some(cmpLinkId), Some(cmpLinkId), 12345, 3, Some(0), Some(78), Some(8), Some(80), 155000000),
+      ChangeInfo(None, Some(cmpLinkId), 12346, 4, None, None, Some(0), Some(8), 155000000)
+    )
+
+    val newRoadLinks = Seq(
+      RoadLink(cmpLinkId, List(Point(0, 0), Point(0, 200.0)), 200.0, administrativeClass, functionalClass,
+        trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))),
+      RoadLink(crpLinkId, List(Point(8.0, 5.0), Point(20.0, 5.0)), 100.0, administrativeClass, functionalClass,
+        trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
+    )
+
+    val newAssetAdjusted = PointAssetFiller.correctedPersistedAsset(persistedAsset, newRoadLinks, changeInfo)
+
+    newAssetAdjusted.isEmpty should be(false)
+    newAssetAdjusted.map { asset =>
+      asset.assetId should equal(11)
+      asset.lon should equal(0)
+      asset.lat should equal(10)
+      asset.linkId should equal(cmpLinkId)
+      asset.mValue should equal(10.0)
+      asset.floating should be(false)
+    }
+  }
+
+  test("Auto Correct Floating Point that has been Shortened with more than one ChangeInfo and considering max distance allowed") {
+    val cmpLinkId = 6001
+    val crpLinkId = 6002
+    val municipalityCode = 235
+    val administrativeClass = Municipality
+    val trafficDirection = TrafficDirection.BothDirections
+    val functionalClass = 1
+    val linkType = Freeway
+
+    val persistedAsset = testPersistedPointAsset(11, 0, 3, municipalityCode, cmpLinkId, 3.0, floating = true, 133999999)
+
+    val changeInfo = Seq(
+      ChangeInfo(Some(cmpLinkId), Some(cmpLinkId), 12345, 7, Some(2), Some(121), Some(0), Some(119), 144000000),
+      ChangeInfo(Some(cmpLinkId), None, 12346, 8, Some(0), Some(2), None, None, 144000000),
+      ChangeInfo(Some(cmpLinkId), None, 12346, 8, Some(121), Some(127), None, None, 144000000),
+      ChangeInfo(Some(cmpLinkId), Some(cmpLinkId), 12345, 7, Some(2), Some(115), Some(0), Some(113), 144000000),
+      ChangeInfo(Some(cmpLinkId), None, 12346, 8, Some(0), Some(2), None, None, 144000000),
+      ChangeInfo(Some(cmpLinkId), None, 12346, 8, Some(115), Some(121), None, None, 144000000)
+
+    )
+
+    val newRoadLinks = Seq(
+      RoadLink(cmpLinkId, List(Point(0, 0), Point(0, 200.0)), 200.0, administrativeClass, functionalClass,
+        trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))),
+      RoadLink(crpLinkId, List(Point(8.0, 5.0), Point(20.0, 5.0)), 100.0, administrativeClass, functionalClass,
+        trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
+    )
+
+    val newAssetAdjusted = PointAssetFiller.correctedPersistedAsset(persistedAsset, newRoadLinks, changeInfo)
+
+    newAssetAdjusted.isEmpty should be(false)
+    newAssetAdjusted.map { asset =>
+      asset.assetId should equal(11)
+      asset.lon should equal(0)
+      asset.lat should equal(0)
+      asset.linkId should equal(cmpLinkId)
+      asset.mValue should equal(0.0)
+      asset.floating should be(false)
+    }
+  }
+
+  test("Auto Correct Floating Point that has been Shortened with more than one ChangeInfo and filtered by vvhTimeStamp") {
+    val cmpLinkId = 6001
+    val crpLinkId = 6002
+    val municipalityCode = 235
+    val administrativeClass = Municipality
+    val trafficDirection = TrafficDirection.BothDirections
+    val functionalClass = 1
+    val linkType = Freeway
+
+    val persistedAsset = testPersistedPointAsset(11, 0, 3, municipalityCode, cmpLinkId, 3, floating = true, 144000000)
+
+    val changeInfo = Seq(
+      ChangeInfo(Some(cmpLinkId), Some(cmpLinkId), 12345, 7, Some(2), Some(121), Some(0), Some(119), 144000000),
+      ChangeInfo(Some(cmpLinkId), None, 12346, 8, Some(0), Some(2), None, None, 144000000),
+      ChangeInfo(Some(cmpLinkId), None, 12346, 8, Some(121), Some(127), None, None, 144000000),
+      ChangeInfo(Some(cmpLinkId), Some(cmpLinkId), 12345, 7, Some(2), Some(115), Some(0), Some(113), 155000000),
+      ChangeInfo(Some(cmpLinkId), None, 12346, 8, Some(0), Some(2), None, None, 155000000),
+      ChangeInfo(Some(cmpLinkId), None, 12346, 8, Some(115), Some(121), None, None, 155000000)
+    )
+
+    val newRoadLinks = Seq(
+      RoadLink(cmpLinkId, List(Point(0, 0), Point(0, 200.0)), 200.0, administrativeClass, functionalClass,
+        trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode))),
+      RoadLink(crpLinkId, List(Point(8.0, 5.0), Point(20.0, 5.0)), 100.0, administrativeClass, functionalClass,
+        trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
+    )
+
+    val newAssetAdjusted = PointAssetFiller.correctedPersistedAsset(persistedAsset, newRoadLinks, changeInfo)
+
+    newAssetAdjusted.isEmpty should be(false)
+    newAssetAdjusted.map { asset =>
+      asset.assetId should equal(11)
+      asset.lon should equal(0)
+      asset.lat should equal(1)
+      asset.linkId should equal(cmpLinkId)
+      asset.mValue should equal(1.0)
+      asset.floating should be(false)
+    }
+  }
+
   test("Auto Correct Floating Point in case Geometry has been combined and the Asset its in Removed Part") {
     val modifiedLinkId = 6001
     val removedLinkId = 6002
@@ -288,104 +446,72 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
   }
 
   test("Auto correct floating point: join floating point to first roadlink geometry point") {
-    val changeInfo = ChangeInfo(Some(1611552), Some(1611552), 12345, 7, Some(0), Some(10), Some(0), Some(10), 144000000)
-
-    val persistedAsset =  testPersistedPointAsset(100, 453464.069, 6845913.849, 24, 1611552, 68.02, false, 0)
-
-    val geometry = List(Point(453466.069,6845915.849,108.81900000000314),
-      Point(453479.783,6845917.468,109.3920000000071), Point(453492.22,6845920.043,109.88400000000547),
-      Point(453585.919,6845972.216,113.33699999999953), Point(453610.303,6845984.065,113.6530000000057),
-      Point(453638.671,6845996.516,114.12300000000687))
+    val changeInfo = ChangeInfo(Some(1611552), Some(1611552), 12345, 7, Some(10), Some(100), Some(0), Some(100), 144000000)
+    val persistedAsset =  testPersistedPointAsset(11, 0, 8, 24, 1611552, 8, false, 0)
 
     val roadLinks = Seq(
-      RoadLink(1611552, geometry, 40.0, Municipality, 1, TrafficDirection.BothDirections, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
+      RoadLink(1611552, List(Point(0,10), Point(0,200)), 40.0, Municipality, 1, TrafficDirection.BothDirections, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
       RoadLink(1611558, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.BothDirections, PedestrianZone, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
     )
 
-    val updPersistedAsset = PointAssetFiller.correctRoadLinkAndGeometry(persistedAsset, roadLinks, changeInfo, None)
+    val updPersistedAsset = PointAssetFiller.correctShortened(persistedAsset, roadLinks, changeInfo, None)
 
     updPersistedAsset.isEmpty should be (false)
     updPersistedAsset.map{ s =>
       s.linkId should equal(1611552)
-      s.lon should equal(453466.069)
-      s.lat should equal(6845915.849)
+      s.lon should equal(0)
+      s.lat should equal(10)
       s.mValue should equal(0)
       s.floating should be (false)
     }
   }
 
   test("Auto correct floating point: join floating point to last roadlink geometry point") {
-    val changeInfo = ChangeInfo(Some(1611552), Some(1611552), 12345, 7, Some(0), Some(10), Some(0), Some(10), 144000000)
-    val persistedAsset =  testPersistedPointAsset(11, 453636.471, 6845998.216, 24, 1611552, 68.02, false, 0)
-
-    val geometry = List(Point(453466.069,6845915.849,108.81900000000314),
-      Point(453479.783,6845917.468,109.3920000000071), Point(453492.22,6845920.043,109.88400000000547),
-      Point(453585.919,6845972.216,113.33699999999953), Point(453610.303,6845984.065,113.6530000000057),
-      Point(453638.674,6845996.889,114.12300000000687))
+    val changeInfo = ChangeInfo(Some(1611552), Some(1611552), 12345, 7, Some(10), Some(80), Some(0), Some(70), 144000000)
+    val persistedAsset =  testPersistedPointAsset(11, 0, 82, 24, 1611552, 82, false, 0)
 
     val roadLinks = Seq(
-      RoadLink(1611552, geometry, 40.0, Municipality, 1, TrafficDirection.BothDirections, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
+      RoadLink(1611552, List(Point(0,0), Point(0,70)), 40.0, Municipality, 1, TrafficDirection.BothDirections, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
       RoadLink(1611558, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.BothDirections, PedestrianZone, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
     )
 
-    val updPersistedAsset = PointAssetFiller.correctRoadLinkAndGeometry(persistedAsset, roadLinks, changeInfo, None)
+    val updPersistedAsset = PointAssetFiller.correctShortened(persistedAsset, roadLinks, changeInfo, None)
 
     updPersistedAsset.isEmpty should be (false)
     updPersistedAsset.map{ s =>
       s.linkId should equal(1611552)
-      s.lon should equal(453638.67076795653)
-      s.lat should equal(6845996.887539081)
-      s.mValue should equal(192.00 +- 0.01)
+      s.lon should equal(0)
+      s.lat should equal(70)
+      s.mValue should equal(70)
       s.floating should be (false)
     }
   }
 
-  test("Auto correct floating point: join floating point to last roadlink geometry point (3 <startPoint > endPoint ") {
-    val changeInfo = ChangeInfo(Some(1611552), Some(1611552), 12345, 7, Some(0), Some(10), Some(0), Some(10), 144000000)
-    val persistedAsset = testPersistedPointAsset(11, 453636.471, 6845998.216, 24, 1611552, 68.02, false, 0)
-    // start to point = 2.400894
-    // end to point = 2.227137
+  test("Auto correct floating point: join floating point to last roadlink geometry point (3 < startPoint)") {
+    val changeInfo = ChangeInfo(Some(1611552), Some(1611552), 12345, 7, Some(10), Some(100), Some(0), Some(100), 144000000)
+    val persistedAsset =  testPersistedPointAsset(11, 0, 5, 24, 1611552, 5, false, 0)
 
-    val geometry = List(Point(453636.069, 6845995.849, 108.81900000000314),
-      Point(453638.674, 6845997.889, 114.12300000000687))
     val roadLinks = Seq(
-      RoadLink(1611552, geometry, 40.0, Municipality, 1, TrafficDirection.BothDirections, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
+      RoadLink(1611552, List(Point(0,10), Point(0,200)), 40.0, Municipality, 1, TrafficDirection.BothDirections, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
       RoadLink(1611558, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.BothDirections, PedestrianZone, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
     )
 
-    val updPersistedAsset = PointAssetFiller.correctRoadLinkAndGeometry(persistedAsset, roadLinks, changeInfo, None)
+    val updPersistedAsset = PointAssetFiller.correctShortened(persistedAsset, roadLinks, changeInfo, None)
 
-    updPersistedAsset.isEmpty should be(false)
-    updPersistedAsset.map { s =>
-      s.linkId should equal(1611552)
-      s.lon should equal(453637.4477647725)
-      s.lat should equal(6845996.928723661)
-      s.mValue should equal(3.30 +- 0.01)
-      s.floating should be(false)
-    }
+    updPersistedAsset.isEmpty should be (true)
   }
 
-  test("Auto correct floating point: join floating point to last roadlink geometry point (3 <startPoint < endPoint ") {
-      val changeInfo = ChangeInfo(Some(1611552), Some(1611552), 12345, 7, Some(0), Some(10), Some(0), Some(10), 144000000)
-      val persistedAsset =  testPersistedPointAsset(11, 453636.471, 6845998.216, 24, 1611552, 68.02, false, 0)
+  test("Auto correct floating point: join floating point to last roadlink geometry point (endPoint > 3) ") {
+    val changeInfo = ChangeInfo(Some(1611552), Some(1611552), 12345, 7, Some(10), Some(80), Some(0), Some(70), 144000000)
+    val persistedAsset =  testPersistedPointAsset(11, 0, 85, 24, 1611552, 85, false, 0)
 
-      val geometry = List(Point(453636.269,6845996.549,108.81900000000314),
-        Point(453638.674,6845997.889,114.12300000000687))
+    val roadLinks = Seq(
+      RoadLink(1611552, List(Point(0,0), Point(0,70)), 40.0, Municipality, 1, TrafficDirection.BothDirections, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
+      RoadLink(1611558, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.BothDirections, PedestrianZone, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+    )
 
-      val roadLinks = Seq(
-        RoadLink(1611552, geometry, 40.0, Municipality, 1, TrafficDirection.BothDirections, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
-        RoadLink(1611558, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.BothDirections, PedestrianZone, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
-      )
+    val updPersistedAsset = PointAssetFiller.correctShortened(persistedAsset, roadLinks, changeInfo, None)
 
-      val updPersistedAsset = PointAssetFiller.correctRoadLinkAndGeometry(persistedAsset, roadLinks, changeInfo, None)
-
-      updPersistedAsset.isEmpty should be (false)
-      updPersistedAsset.map{ s =>
-        s.linkId should equal(1611552)
-        s.lon should equal(453636.269)
-        s.lat should equal(6845996.549)
-        s.mValue should equal(0)
-        s.floating should be (false)
-      }
+    updPersistedAsset.isEmpty should be (true)
   }
 }

@@ -81,7 +81,7 @@ object OracleRailwayCrossingDao {
     id
   }
 
-  def update(id: Long, railwayCrossing: IncomingRailwayCrossing, mValue: Double, municipality: Int, username: String) = {
+  def update(id: Long, railwayCrossing: IncomingRailwayCrossing, mValue: Double, municipality: Int, username: String, adjustedTimeStampOption: Option[Long] = None) = {
     sqlu""" update asset set municipality_code = $municipality where id = $id """.execute
     updateAssetModified(id, username).execute
     updateAssetGeometry(id, Point(railwayCrossing.lon, railwayCrossing.lat))
@@ -89,13 +89,25 @@ object OracleRailwayCrossingDao {
     deleteTextProperty(id, getNamePropertyId).execute
     railwayCrossing.name.foreach(insertTextProperty(id, getNamePropertyId, _).execute)
 
-    sqlu"""
-      update lrm_position
-       set
-       start_measure = $mValue,
-       link_id = ${railwayCrossing.linkId}
-       where id = (select position_id from asset_link where asset_id = $id)
-    """.execute
+    adjustedTimeStampOption match {
+      case Some(adjustedTimeStamp) =>
+        sqlu"""
+          update lrm_position
+           set
+           start_measure = $mValue,
+           link_id = ${railwayCrossing.linkId},
+           adjusted_timestamp = ${adjustedTimeStamp}
+           where id = (select position_id from asset_link where asset_id = $id)
+        """.execute
+      case _ =>
+        sqlu"""
+          update lrm_position
+           set
+           start_measure = $mValue,
+           link_id = ${railwayCrossing.linkId}
+           where id = (select position_id from asset_link where asset_id = $id)
+        """.execute
+    }
     id
   }
 

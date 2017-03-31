@@ -47,11 +47,11 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
   private def floatingAdjustment(roadLinks: Seq[RoadLink], changeInfo: Seq[ChangeInfo], assetBeforeUpdate: AssetBeforeUpdate) = {
     if (assetBeforeUpdate.persistedFloating || assetBeforeUpdate.asset.floating) {
       PointAssetFiller.correctedPersistedAsset(assetBeforeUpdate.asset, roadLinks, changeInfo) match {
-        case Some(asset) =>
-          OracleTrafficLightDao.update(asset.assetId, TrafficLightToBePersisted(asset.linkId,
-            asset.lon, asset.lat, asset.mValue, assetBeforeUpdate.asset.municipalityCode, "vvh_generated"))
+        case Some(adjustment) =>
+          OracleTrafficLightDao.update(adjustment.assetId, TrafficLightToBePersisted(adjustment.linkId,
+            adjustment.lon, adjustment.lat, adjustment.mValue, assetBeforeUpdate.asset.municipalityCode, "vvh_generated"), Some(adjustment.vvhTimeStamp))
 
-          AssetBeforeUpdate(createPersistedAsset(assetBeforeUpdate.asset, asset), asset.floating, Some(FloatingReason.Unknown))
+          AssetBeforeUpdate(createPersistedAsset(assetBeforeUpdate.asset, adjustment), adjustment.floating, Some(FloatingReason.Unknown))
 
         case None =>
           if (assetBeforeUpdate.persistedFloating && !assetBeforeUpdate.asset.floating) {
@@ -77,11 +77,11 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
                                     conversion: (PersistedAsset, Boolean) => T) = {
     if (floating) {
       PointAssetFiller.correctedPersistedAsset(persistedStop, roadLinks, changeInfo) match {
-        case Some(asset) =>
-          OracleTrafficLightDao.update(asset.assetId, TrafficLightToBePersisted(asset.linkId,
-            asset.lon, asset.lat, asset.mValue, persistedStop.municipalityCode, "vvh_generated"))
+        case Some(adjustment) =>
+          OracleTrafficLightDao.update(adjustment.assetId, TrafficLightToBePersisted(adjustment.linkId,
+            adjustment.lon, adjustment.lat, adjustment.mValue, persistedStop.municipalityCode, "vvh_generated"), Some(adjustment.vvhTimeStamp))
 
-          val persistedAsset = createPersistedAsset(persistedStop, asset)
+          val persistedAsset = createPersistedAsset(persistedStop, adjustment)
           (conversion(persistedAsset, persistedAsset.floating), assetFloatingReason)
 
         case None => (conversion(persistedStop, floating), assetFloatingReason)

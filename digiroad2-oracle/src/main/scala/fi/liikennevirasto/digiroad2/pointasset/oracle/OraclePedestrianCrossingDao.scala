@@ -22,18 +22,30 @@ case class PedestrianCrossing(id: Long, linkId: Long,
 case class PedestrianCrossingToBePersisted(linkId: Long, lon: Double, lat: Double, mValue: Double, municipalityCode: Int, createdBy: String)
 
 object OraclePedestrianCrossingDao {
-  def update(id: Long, persisted: PedestrianCrossingToBePersisted) = {
+  def update(id: Long, persisted: PedestrianCrossingToBePersisted, adjustedTimeStampOption: Option[Long] = None) = {
     sqlu""" update asset set municipality_code = ${persisted.municipalityCode} where id = $id """.execute
     updateAssetGeometry(id, Point(persisted.lon, persisted.lat))
     updateAssetModified(id, persisted.createdBy).execute
 
-    sqlu"""
-      update lrm_position
-       set
-       start_measure = ${persisted.mValue},
-       link_id = ${persisted.linkId}
-       where id = (select position_id from asset_link where asset_id = $id)
-    """.execute
+    adjustedTimeStampOption match {
+      case Some(adjustedTimeStamp) =>
+        sqlu"""
+          update lrm_position
+           set
+           start_measure = ${persisted.mValue},
+           link_id = ${persisted.linkId},
+           adjusted_timestamp = ${adjustedTimeStamp}
+           where id = (select position_id from asset_link where asset_id = $id)
+        """.execute
+      case _ =>
+        sqlu"""
+          update lrm_position
+           set
+           start_measure = ${persisted.mValue},
+           link_id = ${persisted.linkId}
+           where id = (select position_id from asset_link where asset_id = $id)
+        """.execute
+    }
     id
   }
 
