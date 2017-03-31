@@ -1,7 +1,6 @@
 package fi.liikennevirasto.viite
 
-import java.sql.SQLException
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
+
 import fi.liikennevirasto.digiroad2.RoadLinkType.{ComplementaryRoadLinkType, FloatingRoadLinkType, NormalRoadLinkType, UnknownRoadLinkType}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
@@ -527,105 +526,152 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     * @return if exits true and empty string, else false and reason to pass to frontend as string
     */
   def checkRoadAddressNumberAndSEParts(roadNumber:Long, roadStartPart:Long, roadEndPart:Long): (Boolean, String) ={
-    if (!RoadAddressDAO.roadPartExists(roadNumber,roadStartPart)) {
-      if (!RoadAddressDAO.roadNumberExists(roadNumber)) {
-        (false, "Tienumeroa ei ole olemassa, tarkista tiedot")
-      }
-      else //roadnumber exists, but starting roadpart not
-        (false, "Tiellä ei ole olemassa valittua alkuosaa, tarkista tiedot")
-    } else if (!RoadAddressDAO.roadPartExists(roadNumber,roadEndPart)) { // ending part check
-      (false, "Tiellä ei ole olemassa valittua loppuosaa, tarkista tiedot")
-    } else
-    (true,"")
-  }
-
-
-  def saveRoadLinkProject(roadAddressProject: RoadAddressProject) : Map[String, Any] = {
     OracleDatabase.withDynTransaction {
-      for ((roadNumber,startPart,endPart) <- roadAddressProject.list) {
-
-        val (correctInput, errorMessage) = checkRoadAddressNumberAndSEParts(roadNumber, startPart, endPart)
-        if (!correctInput) {
-          dynamicSession.rollback()
-          return  Map("success" -> errorMessage)
-        } else {
-          var errorRoadPart: Long = 0
-          try {
-            if (roadNumber != 0) {
-              RoadAddressDAO.getRoadAddressProjectById(roadAddressProject.id) match {
-                case None => {
-                  val id = Sequences.nextViitePrimaryKeySeqValue
-                  val project = roadAddressProject.copy(id = id)
-                  RoadAddressDAO.createRoadAddressProject(project)
-                  //create ProjectLink
-                  if (startPart <= endPart) {
-                    for (part <- startPart to endPart) {
-                      errorRoadPart = part
-                      val addresses = RoadAddressDAO.fetchByRoadPart(roadNumber, part)
-                      addresses.foreach(address =>
-                        RoadAddressDAO.createRoadAddressProjectLink(Sequences.nextViitePrimaryKeySeqValue, address, project))
-                    }
-                  }
-                  val createdAddresses = RoadAddressDAO.getRoadAddressProjectLinks(project.id)
-                  val groupedAddresses = createdAddresses.groupBy { address =>
-                    (address.roadNumber, address.roadPartNumber)
-                  }.toSeq.sortBy(_._1._2)(Ordering[Long])
-                  val formInfo = groupedAddresses.map(addressGroup => {
-                    val lastAddressM = addressGroup._2.last.endAddrM
-                    val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(addressGroup._2.last.linkId), false)
-                    val addressFormLine = RoadAddressProjectFormLine(project.id, roadNumber, addressGroup._1._2, lastAddressM, MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(roadLink.head.municipalityCode, -1), addressGroup._2.last.discontinuityType.description)
-                    addressFormLine
-                  })
-                  //Map("project" -> projectToApi(project), "projectAddresses" -> createdAddresses.headOption, "formInfo" -> formInfo, "success" -> "ok")
-                }
-                case _ => {
-                  RoadAddressDAO.updateRoadAddressProject(roadAddressProject)
-
-                }
-              }
-            }
-         /*   else {
-              dynamicSession.rollback()
-           return Map("project" -> projectToApi(roadAddressProject), "projectAddresses" -> None, "formInfo" -> None, "s" +
-              "success" -> "Tien numeroksi ei saa asettaa nollaa")
-          }*/
-          }
-          catch {
-            case a: Exception => println(a.getMessage)
-              if (a.getMessage.contains("ORA-20000")) {
-                dynamicSession.rollback()
-                val reservedByProject = RoadAddressDAO.roadPartReservedByProject(roadNumber, errorRoadPart)
-                return Map("success" -> s"TIE ${roadNumber} OSA $errorRoadPart on jo varattuna projektissa $reservedByProject, tarkista tiedot")
-              } else
-                return Map("success" -> "Tieosien varaus ei tuntemattomasta tietokantavirheestä johtuen onnistunut")
-          }
+      if (!RoadAddressDAO.roadPartExists(roadNumber, roadStartPart)) {
+        if (!RoadAddressDAO.roadNumberExists(roadNumber)) {
+          (false, "Tienumeroa ei ole olemassa, tarkista tiedot")
         }
-      }
-      Map("roadAddressProject" -> roadAddressProject, "success" -> "ok")
+        else //roadnumber exists, but starting roadpart not
+          (false, "Tiellä ei ole olemassa valittua alkuosaa, tarkista tiedot")
+      } else if (!RoadAddressDAO.roadPartExists(roadNumber, roadEndPart)) { // ending part check
+        (false, "Tiellä ei ole olemassa valittua loppuosaa, tarkista tiedot")
+      } else
+        (true, "")
+    }
+  }
+  private def createNewProjectToDB(roadAddressProject: RoadAddressProject): RoadAddressProject = {
+    OracleDatabase.withDynTransaction {
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val project = roadAddressProject.copy(id = id)
+      RoadAddressDAO.createRoadAddressProject(project)
+      project
     }
   }
 
-  def projectToApi(roadAddressProject: RoadAddressProject) : Map[String, Any] = {
-    val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
-    Map(
-      "id" -> roadAddressProject.id,
-      "dateModified" -> roadAddressProject.dateModified.toString(formatter),
-      "startDate" -> roadAddressProject.startDate.toString(formatter),
-      "additionalInfo" -> roadAddressProject.additionalInfo,
-      "createdBy" -> roadAddressProject.createdBy,
-      "modifiedBy" -> roadAddressProject.modifiedBy,
-      "name" -> roadAddressProject.name,
-      "status" -> roadAddressProject.status
-    )
+  private def projectFound(roadAddressProject: RoadAddressProject): Option[RoadAddressProject] = {
+    OracleDatabase.withDynTransaction {
+      return RoadAddressDAO.getRoadAddressProjectById(roadAddressProject.id)
+    }
   }
 
+  def checkreservability(roadNumber:Long, startPart:Long, endPart:Long): (Boolean,String) = {
+    withDynTransaction {
+      for (part <- startPart to endPart) {
+        val reserved = RoadAddressDAO.roadPartReservedByProject(roadNumber, part)
+        reserved match {
+          case Some(projectname) => return (false, s"TIE $roadNumber OSA $part on jo varattuna projektissa $projectname, tarkista tiedot ")
+          case None =>println(s"Tie $roadNumber ja osa $part käytettävissä")
+          }
+        }
+      }
+    (true, "ok")
+  }
+
+
+
+
+  private def addLinksToProject(project: RoadAddressProject): String =
+  {
+    var errors:String=""
+    var errorRoadPart:Long=0
+    for ((roadNumber,startPart,endPart) <- project.list) {
+      val (validInput, errorMessage) = checkRoadAddressNumberAndSEParts(roadNumber, startPart, endPart)
+      if (!validInput) {
+        errors += s" $errorMessage (TIE $roadNumber.t AOSA: $startPart LOSA: $endPart)" + '\n'
+      } else {
+        withDynTransaction {
+          try {
+            for (part <- startPart to endPart) {
+              errorRoadPart = part
+              val addresses = RoadAddressDAO.fetchByRoadPart(roadNumber, part)
+              addresses.foreach(address =>
+                RoadAddressDAO.createRoadAddressProjectLink(Sequences.nextViitePrimaryKeySeqValue, address, project))
+            }
+          } catch {
+            case a: Exception =>
+              println(a.getMessage)
+              if (a.getMessage.contains("ORA-20000")) {
+                val reservedByProject = RoadAddressDAO.roadPartReservedByProject(roadNumber, errorRoadPart)
+                errors += s"TIE $roadNumber OSA $errorRoadPart on jo varattuna projektissa ${reservedByProject match { case Some(projectname) => {projectname}}}, tarkista tiedot " + '\n'
+              } else {
+                errors += s"Tieosan $errorRoadPart varaus ei tuntemattomasta virheestä johtuen onnistunut" + '\n'
+              }
+          }
+        }
+      }
+    }
+
+    errors
+  }
+
+
+
+  private def createformOfReservedLinks(project: RoadAddressProject):  (Seq[RoadAddressProjectFormLine],  Option[RoadAddressProjectLink])= {
+    withDynTransaction {
+    val createdAddresses = RoadAddressDAO.getRoadAddressProjectLinks(project.id)
+    val groupedAddresses = createdAddresses.groupBy { address =>
+      (address.roadNumber, address.roadPartNumber)
+    }.toSeq.sortBy(_._1._2)(Ordering[Long])
+   val adddressestoform = groupedAddresses.map(addressGroup => {
+      val lastAddressM = addressGroup._2.last.endAddrM
+      val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(addressGroup._2.last.linkId), false)
+      val addressFormLine = RoadAddressProjectFormLine(project.id, addressGroup._1._1, addressGroup._1._2, lastAddressM, MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(roadLink.head.municipalityCode, -1), addressGroup._2.last.discontinuityType.description)
+       //case class RoadAddressProjectFormLine(projectId: Long, roadNumber: Long, roadPartNumber: Long, RoadLength: Long, ely : Long, discontinuity: String)
+       addressFormLine
+
+     })
+    val addresses=createdAddresses.headOption
+    (adddressestoform,addresses)
+    }
+  }
+
+    def saveRoadLinkProject(roadAddressProject: RoadAddressProject) : Map[String, Any] = {
+      val projectF = projectFound(roadAddressProject)
+      projectF match{
+        case None => {
+          val project=createNewProjectToDB(roadAddressProject)
+          if (project.list.isEmpty) //check if new project has links
+          {
+            Map("project" -> projectToApi(project), "projectAddresses" -> None, "formInfo" -> None,
+              "success" -> "ok")
+          }
+          else
+          { //project with links success field contains errors if any, else "ok"
+            val errorMessage= addLinksToProject(project)
+
+              val (forminfo, createdlink) = createformOfReservedLinks(project)
+
+              Map("project" -> projectToApi(project), "projectAddresses" -> createdlink, "formInfo" -> forminfo,
+              "success" -> {if(errorMessage.isEmpty){"ok"} else{errorMessage}})
+
+            }
+        }
+        case _ => { //update project no specs for this yet?
+          RoadAddressDAO.updateRoadAddressProject(roadAddressProject)
+          Map("roadAddressProject" -> roadAddressProject, "success"->"ok")
+        }
+      }
+    }
+
+    def projectToApi(roadAddressProject: RoadAddressProject) : Map[String, Any] = {
+      val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
+      Map(
+        "id" -> roadAddressProject.id,
+        "dateModified" -> roadAddressProject.dateModified.toString(formatter),
+        "startDate" -> roadAddressProject.startDate.toString(formatter),
+        "additionalInfo" -> roadAddressProject.additionalInfo,
+        "createdBy" -> roadAddressProject.createdBy,
+        "modifiedBy" -> roadAddressProject.modifiedBy,
+        "name" -> roadAddressProject.name,
+        "status" -> roadAddressProject.status
+      )
+    }
   def getRoadAddressProjects(): Seq[RoadAddressProject] = {
     withDynTransaction {
         val projects = RoadAddressDAO.getRoadAddressProjects()
         projects
     }
   }
-
 }
 
 //TIETYYPPI (1= yleinen tie, 2 = lauttaväylä yleisellä tiellä, 3 = kunnan katuosuus, 4 = yleisen tien työmaa, 5 = yksityistie, 9 = omistaja selvittämättä)
