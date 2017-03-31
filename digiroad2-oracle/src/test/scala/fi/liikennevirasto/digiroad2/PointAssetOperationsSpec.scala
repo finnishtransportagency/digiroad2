@@ -109,7 +109,7 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
       ChangeInfo(Some(removedLinkId), Some(modifiedLinkId), 12346, 2, Some(0), Some(12.0), Some(5.0), Some(17.0), 144000000)
     )
 
-    val newAssetAdjusted = PointAssetFiller.correctOnlyGeometry(persistedAsset, newRoadLinks, changeInfo)
+    val newAssetAdjusted = PointAssetFiller.correctedPersistedAsset(persistedAsset, newRoadLinks, changeInfo)
 
     newAssetAdjusted.isEmpty should be(true)
   }
@@ -137,7 +137,7 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
       ChangeInfo(Some(removedLinkId), Some(modifiedLinkId), 12346, 2, Some(0), Some(12.0), Some(5.0), Some(17.0), 144000000)
     )
 
-    val newAssetAdjusted = PointAssetFiller.correctOnlyGeometry(persistedAsset, newRoadLinks, changeInfo)
+    val newAssetAdjusted = PointAssetFiller.correctedPersistedAsset(persistedAsset, newRoadLinks, changeInfo)
 
     newAssetAdjusted.isEmpty should be(false)
     newAssetAdjusted.map { asset =>
@@ -173,7 +173,7 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
       ChangeInfo(Some(modifiedLinkId), Some(newLinkId), 12346, 6, Some(0), Some(0), Some(5.0), Some(17.0), 144000000)
     )
 
-    val newAssetAdjusted = PointAssetFiller.correctOnlyGeometry(persistedAsset, newRoadLinks, changeInfo)
+    val newAssetAdjusted = PointAssetFiller.correctedPersistedAsset(persistedAsset, newRoadLinks, changeInfo)
 
     newAssetAdjusted.isEmpty should be(false)
     newAssetAdjusted.map { asset =>
@@ -210,7 +210,7 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
       ChangeInfo(Some(oldLinkId), Some(newLinkId), 12346, 6, Some(0), Some(5), Some(0), Some(5.0), 144000000)
     )
 
-    val newAssetAdjusted = PointAssetFiller.correctOnlyGeometry(persistedAsset, newRoadLinks, changeInfo)
+    val newAssetAdjusted = PointAssetFiller.correctedPersistedAsset(persistedAsset, newRoadLinks, changeInfo)
 
     newAssetAdjusted.isEmpty should be(false)
     newAssetAdjusted.map { asset =>
@@ -246,7 +246,7 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
       ChangeInfo(None, Some(CommonLinkId), 12346, 4, None, None, Some(0), Some(5.0), 144000000)
     )
 
-    val newAssetAdjusted = PointAssetFiller.correctOnlyGeometry(persistedAsset, newRoadLinks, changeInfo)
+    val newAssetAdjusted = PointAssetFiller.correctedPersistedAsset(persistedAsset, newRoadLinks, changeInfo)
 
     newAssetAdjusted.isEmpty should be(true)
   }
@@ -274,7 +274,7 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
       ChangeInfo(None, Some(CommonLinkId), 12346, 4, None, None, Some(0), Some(5.0), 144000000)
     )
 
-    val newAssetAdjusted = PointAssetFiller.correctOnlyGeometry(persistedAsset, newRoadLinks, changeInfo)
+    val newAssetAdjusted = PointAssetFiller.correctedPersistedAsset(persistedAsset, newRoadLinks, changeInfo)
 
     newAssetAdjusted.isEmpty should be(false)
     newAssetAdjusted.map { asset =>
@@ -302,7 +302,7 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
       RoadLink(1611558, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.BothDirections, PedestrianZone, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
     )
 
-    val updPersistedAsset = PointAssetFiller.correctRoadLinkAndGeometry(persistedAsset, roadLinks, changeInfo)
+    val updPersistedAsset = PointAssetFiller.correctRoadLinkAndGeometry(persistedAsset, roadLinks, changeInfo, None)
 
     updPersistedAsset.isEmpty should be (false)
     updPersistedAsset.map{ s =>
@@ -328,7 +328,7 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
       RoadLink(1611558, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.BothDirections, PedestrianZone, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
     )
 
-    val updPersistedAsset = PointAssetFiller.correctRoadLinkAndGeometry(persistedAsset, roadLinks, changeInfo)
+    val updPersistedAsset = PointAssetFiller.correctRoadLinkAndGeometry(persistedAsset, roadLinks, changeInfo, None)
 
     updPersistedAsset.isEmpty should be (false)
     updPersistedAsset.map{ s =>
@@ -353,7 +353,7 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
       RoadLink(1611558, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.BothDirections, PedestrianZone, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
     )
 
-    val updPersistedAsset = PointAssetFiller.correctRoadLinkAndGeometry(persistedAsset, roadLinks, changeInfo)
+    val updPersistedAsset = PointAssetFiller.correctRoadLinkAndGeometry(persistedAsset, roadLinks, changeInfo, None)
 
     updPersistedAsset.isEmpty should be(false)
     updPersistedAsset.map { s =>
@@ -364,7 +364,8 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
       s.floating should be(false)
     }
   }
-    test("Auto correct floating point: join floating point to last roadlink geometry point (3 <startPoint < endPoint ") {
+
+  test("Auto correct floating point: join floating point to last roadlink geometry point (3 <startPoint < endPoint ") {
       val changeInfo = ChangeInfo(Some(1611552), Some(1611552), 12345, 7, Some(0), Some(10), Some(0), Some(10), 144000000)
       val persistedAsset =  testPersistedPointAsset(11, 453636.471, 6845998.216, 24, 1611552, 68.02, false, 0)
 
@@ -376,7 +377,7 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
         RoadLink(1611558, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.BothDirections, PedestrianZone, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       )
 
-      val updPersistedAsset = PointAssetFiller.correctRoadLinkAndGeometry(persistedAsset, roadLinks, changeInfo)
+      val updPersistedAsset = PointAssetFiller.correctRoadLinkAndGeometry(persistedAsset, roadLinks, changeInfo, None)
 
       updPersistedAsset.isEmpty should be (false)
       updPersistedAsset.map{ s =>
