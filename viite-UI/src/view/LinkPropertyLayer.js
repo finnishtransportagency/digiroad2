@@ -96,9 +96,15 @@
 
     var isAnomalousById = function(featureId){
       var anomalousMarkers = anomalousMarkerLayer.getSource().getFeatures();
-      return !_.isUndefined(_.find(anomalousMarkers, function(am){
+      var isAnomalous = _.isUndefined(_.find(anomalousMarkers, function(am){
         return am.id === featureId;
       }));
+      var roadLayerFeatures = roadLayer.layer.getSource().getFeatures();
+      var isAnomalousRoadLayerFeature = _.find(roadLayerFeatures,function(rlf){
+        return rlf.id === featureId;
+      });
+      var isAnomalousRoadLayer = isAnomalousRoadLayerFeature.roadLinkData.anomaly === 1;
+      return isAnomalous || isAnomalousRoadLayer;
     };
 
     var isFloatingById = function(featureId){
@@ -454,14 +460,15 @@
         });
 
         var featuresAnomalous = _.map(selectedLinkProperty.getFeaturesToKeep(), function(featureKeep){
-            if(featureKeep.anomaly === 1 && featureKeep.roadLinkType !== -1)
-                return featureKeep.linkId;
+          if(featureKeep.anomaly === 1 && featureKeep.roadLinkType !== -1) {
+            return featureKeep.linkId;
+          }
         });
 
         _.each(anomalousRoadMarkers, function(anomalouslink) {
-         var marker = cachedMarker.createMarker(anomalouslink);
-         anomalousMarkerLayer.getSource().addFeature(marker);
-         });
+          var marker = cachedMarker.createMarker(anomalouslink);
+          anomalousMarkerLayer.getSource().addFeature(marker);
+        });
 
         _.each(anomalousRoadMarkers, function(anomalouslink) {
           var marker = cachedMarker.createMarker(anomalouslink);
@@ -636,12 +643,6 @@
         setGeneralOpacity(0.2);
         simulatedRoadsLayer.getSource().addFeatures(simulatedOL3Features);
       });
-      /*
-       eventbus.on('linkProperties:reselectRoadLink', function(){
-       reselectRoadLink();
-       roadLayer.redraw();
-       });
-       */
 
       eventListener.listenTo(eventbus, 'roadLink:editModeAdjacents', function() {
         if (applicationModel.isReadOnly() && !applicationModel.isActiveButtons()) {
@@ -785,32 +786,6 @@
       }
     };
 
-    /*
-    * var editFeatureDataForGreen = function (targets) {
-     var features =[];
-     if(targets !== 0){
-     var targetFeature = _.find(greenRoadLayer.getSource().getFeatures(), function(greenfeature){
-     return targets !== 0 && greenfeature.roadLinkData.linkId === parseInt(targets);
-     });
-     if(!targetFeature){
-     _.map(roadLayer.layer.getSource().getFeatures(), function(feature){
-     if(feature.roadLinkData.linkId == targets){
-     feature.roadLinkData.prevAnomaly = feature.roadLinkData.anomaly;
-     feature.roadLinkData.gapTransfering = true;
-     var greenRoadStyle = styler.generateStyleByFeature(feature.roadLinkData,map.getView().getZoom());
-     feature.setStyle(greenRoadStyle);
-     features.push(feature);
-     roadCollection.addPreMovedRoadAddresses(feature.data);
-     }
-     });
-     greenRoads(features);
-     addFeaturesToSelection(features);
-     }
-     }
-     if(features.length === 0)
-     return undefined;
-     else return _.first(features);
-     };*/
     var editFeatureDataForGreen = function (targets) {
       var features =[];
       if(targets !== 0){
@@ -830,7 +805,7 @@
                 return markersValinta.roadLinkData.linkId === feature.roadLinkData.linkId;
               });
               _.each(valintaAnomalousMarker, function(masdsasd){
-                valintaRoadsLayer.getSource().removeFeature(masdsasd);  
+                valintaRoadsLayer.getSource().removeFeature(masdsasd);
               });
             }
           });
