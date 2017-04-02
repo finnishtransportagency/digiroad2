@@ -40,4 +40,18 @@ object RoadAddressDAO {
       }
     }
 
+   def withRoadAddress(road: Long, roadPart: Long, track: Int, mValue: Double)(query: String): String = {
+    query + s" WHERE ra.road_number = $road AND ra.road_part_number = $roadPart " +
+      s"  AND ra.track_code = $track AND ra.start_addr_M <= $mValue AND ra.end_addr_M > $mValue"
+  }
+
+   def withLinkIdAndMeasure(linkId: Long, startM: Long, endM: Long, road: Option[Int] = None)(query: String): String = {
+
+    val qfilter = (road) match {
+      case Some(road) => "AND road_number = " + road
+      case (_) => " "
+    }
+    query + s" WHERE pos.link_id = $linkId AND pos.start_Measure <= $startM AND pos.end_Measure > $endM " + qfilter
+  }
+
 }

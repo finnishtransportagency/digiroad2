@@ -55,31 +55,9 @@ class RoadAddressException(response: String) extends RuntimeException(response)
 
 class GeometryTransform {
   // see page 16: http://www.liikennevirasto.fi/documents/20473/143621/tieosoitej%C3%A4rjestelm%C3%A4.pdf/
-  private def NonPedestrianRoadNumbersMin = "1"
-  private def AllRoadNumbersMin = "1"
-  private def NonPedestrianRoadNumbersMax = "62999"
-  private def AllRoadNumbersMax = "99999"
-
-  private def withRoadAddress(road: Long, roadPart: Long, track: Int, mValue: Double)(query: String): String = {
-    query + s" WHERE ra.road_number = $road AND ra.road_part_number = $roadPart " +
-      s"  AND ra.track_code = $track AND ra.start_addr_M <= $mValue AND ra.end_addr_M > $mValue"
-  }
-
-  private def withLinkIDandMeasure(linkId: Long, startM: Long, endM: Long, road: Option[Int] = None,
-                                   includePedestrian: Option[Boolean])(query: String): String = {
-
-    val qfilter = (road, includePedestrian) match {
-      case (Some(road), Some(false)) => "AND road_number = " + road
-      case (Some(road), Some(true)) => "AND road_number BETWEEN " + NonPedestrianRoadNumbersMin + " AND " + NonPedestrianRoadNumbersMax
-      case (None, Some(true)) => "AND road_number BETWEEN " + AllRoadNumbersMin + " AND " + AllRoadNumbersMax
-      case (_,_) => " "
-    }
-
-    query + s" WHERE pos.link_id = $linkId AND pos.start_Measure <= $startM AND pos.end_Measure > $endM " + qfilter
-  }
 
   def addressToCoords(road: Long, roadPart: Long, track: Track, mValue: Double) : Option[Point] = {
-    val addresslist = RoadAddressDAO.getRoadAddress(withRoadAddress(road, roadPart, track.value, mValue)).headOption
+    val addresslist = RoadAddressDAO.getRoadAddress(RoadAddressDAO.withRoadAddress(road, roadPart, track.value, mValue)).headOption
 
     addresslist match {
       case Some(address) =>
@@ -91,18 +69,18 @@ class GeometryTransform {
   def resolveAddressAndLocation(mValue: Double, linkId: Long, assetSideCode: Int, municipalityCode: Option[Int] = None, road: Option[Int] = None,
                                 roadPart: Option[Int] = None, includePedestrian: Option[Boolean] = Option(false)): (RoadAddress, RoadSide) = {
 
-    val roadAddress = RoadAddressDAO.getRoadAddress(withLinkIDandMeasure(linkId, mValue.toLong, mValue.toLong, road, includePedestrian)).headOption
+    val roadAddress = RoadAddressDAO.getRoadAddress(RoadAddressDAO.withLinkIdAndMeasure(linkId, mValue.toLong, mValue.toLong, road)).headOption
 
     val roadSide = roadAddress match {
       case Some(addrSide) if (addrSide.sideCode.value == assetSideCode) => RoadSide.Right //TowardsDigitizing //
-      case Some(addrSide) if (addrSide.sideCode.value != assetSideCode) => RoadSide.Left //SideCode.AgainstDigitizing //
+      case Some(addrSide) if (addrSide.sideCode.value != assetSideCode) => RoadSide.Left //AgainstDigitizing //
       case _ => RoadSide.Unknown
     }
 
     val address = roadAddress match {
-      case Some(addr) if (addr.track.value == assetSideCode || addr.track == Track.Combined) => RoadAddress(Some(municipalityCode.toString), addr.roadNumber.toInt, addr.roadPartNumber.toInt, addr.track, (addr.startAddrMValue + (mValue - addr.startMValue)).toInt, None)
       case Some(addr) if (addr.track.eq(Track.Unknown)) => throw new RoadAddressException ("Invalid value for Track: %d".format( addr.track.value))
-      case None  => throw new RoadAddressException("Invalid value for Track")
+      case Some(addr) => RoadAddress(Some(municipalityCode.toString), addr.roadNumber.toInt, addr.roadPartNumber.toInt, addr.track, (addr.startAddrMValue + (mValue - addr.startMValue)).toInt, None)
+      case None  => throw new RoadAddressException("No road address found")
     }
 
     (address, roadSide )
