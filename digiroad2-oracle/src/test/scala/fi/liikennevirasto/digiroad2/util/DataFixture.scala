@@ -780,7 +780,7 @@ object DataFixture {
       val assetToExpire = assetWithOneLane.filter(f => roadLinkMotorway.map(_.linkId).contains(f._1))
 
       //Expire all asset with road link type Motorway or Freeway with amount of lane equal 1
-      println("Assets to expire - " + assetToExpire)
+      println("Assets to expire - " + assetToExpire.size)
       assetToExpire.map(_._3).foreach(dao.updateExpiration(_, expired = true, username))
 
       val assetPrevCreated = assetCreated.map(_._1).filterNot(assetToExpire.map(_._1).toSet)
