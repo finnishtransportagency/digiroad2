@@ -30,12 +30,9 @@
 
     this.checkIfReserved = function(data) {
         return backend.checkIfRoadpartReserved(data[3].value === '' ? 0 : parseInt(data[3].value), data[4].value === '' ? 0 : parseInt(data[4].value), data[5].value === '' ? 0 : parseInt(data[5].value))
-            .then(function (resultfr) {
-
-
-              //  var success= _.get(resultfr[0], 'success')
-               if (resultfr.success!=="ok"){
-                   eventbus.trigger('roadAddress:projectValidationFailed', resultfr);
+            .then(function (validationResult) {
+               if (validationResult.success!=="ok"){
+                   eventbus.trigger('roadAddress:projectValidationFailed', validationResult);
                }
 
             });
