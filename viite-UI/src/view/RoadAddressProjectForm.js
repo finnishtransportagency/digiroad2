@@ -195,6 +195,7 @@
       rootElement.on('click', '.btn-reserve', function() {
         var data = $('#roadAddressProject').get(0);
         projectCollection.checkIfReserved(data);
+        return false;
       });
 
       rootElement.on('click', '.project-form button.cancel', function(){
