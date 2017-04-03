@@ -728,7 +728,6 @@ object DataFixture {
   def fillLaneAmountsMissingInRoadLink(): Unit = {
     val dao = new OracleLinearAssetDao(null)
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
-    val assetTypeId = 110
 
     lazy val linearAssetService: LinearAssetService = {
       new LinearAssetService(roadLinkService, new DummyEventBus)
