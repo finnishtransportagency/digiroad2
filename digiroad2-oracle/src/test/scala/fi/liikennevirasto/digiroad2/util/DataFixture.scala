@@ -772,17 +772,20 @@ object DataFixture {
       println ("Total RoadLink by State Class -> " + roadLinksFilteredByClass.size)
 
       //Obtain asset with a road link type asset.Motorway or asset.Freeway with amount of lanes < 2
-      val roadLinkMotorway  = roadLinksFilteredByClass.filter(road => road.linkType == asset.Motorway  || road.linkType == asset.Freeway)
+      val roadLinkMotorwayFreeway  = roadLinksFilteredByClass.filter(road => road.linkType == asset.Motorway  || road.linkType == asset.Freeway)
       //only created with amount of lanes equal 1
-      val assetWithOneLane = assetCreated.filter(_._2 == NumOfRoadLanesSingleCarriageway)
-      // and road type  = 1 or 4
-      val assetToExpire = assetWithOneLane.filter(f => roadLinkMotorway.map(_.linkId).contains(f._1))
+      //val assetWithOneLane = assetCreated.filter(_)
+      // and road type  = Motorway | Freeway
+      val (assetToExpire, assetPrevCreated) = assetCreated.partition{
+        case(linkId, value, assetId) =>
+          value <= NumOfRoadLanesSingleCarriageway && roadLinkMotorwayFreeway.map(_.linkId).contains(linkId)
+      }
 
       //Expire all asset with road link type Motorway or Freeway with amount of lane equal 1
       println("Assets to expire - " + assetToExpire.size)
-      assetToExpire.map(_._3).foreach(dao.updateExpiration(_, expired = true, username))
+      assetToExpire.foreach{case(linkId, value, assetId) => dao.updateExpiration(assetId, expired = true, username)}
 
-      val assetPrevCreated = assetCreated.map(_._1).filterNot(assetToExpire.map(_._1).toSet)
+      //val assetPrevCreated = assetCreated.map(_._1).filterNot(assetToExpire.map(_._1).toSet)
 
       //Exclude previously roadlink created
       val filteredRoadLinksByNonCreated = roadLinksFilteredByClass.filterNot(f => assetPrevCreated.contains(f.linkId))
