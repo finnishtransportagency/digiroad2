@@ -115,7 +115,7 @@ trait PointAssetOperations {
   }
 
   protected def getFloatingPointAssets(includedMunicipalities: Option[Set[Int]], isOperator: Option[Boolean] = None): Seq[FloatingPointAsset] = {
-    withDynSession {
+    withDynTransaction {
       val optionalMunicipalities = includedMunicipalities.map(_.mkString(","))
 
       val municipalityFilter = optionalMunicipalities match {

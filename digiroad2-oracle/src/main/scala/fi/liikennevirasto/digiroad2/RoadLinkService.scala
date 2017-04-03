@@ -65,6 +65,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   /**
+    * ATENTION Use this method always with transation not with session
     * This method returns a road link by link id.
     *
     * @param linkId
@@ -82,6 +83,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   /**
+    * ATENTION Use this method always with transation not with session
     * Returns the road links from VVH by municipality.
     *
     * @param municipality A integer, representative of the municipality Id.
@@ -97,6 +99,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   /**
+    * ATENTION Use this method always with transation not with session
     * This method returns road links by link ids.
     *
     * @param linkIds

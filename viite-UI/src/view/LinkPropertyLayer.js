@@ -25,7 +25,7 @@
     });
 
     var selectRoadLink = function(feature) {
-      if(!applicationModel.isReadOnly() && feature.attributes.anomaly !== 1 && feature.attributes.roadLinkType !== -1){
+      if(!applicationModel.isReadOnly() && feature.attributes.anomaly !== 1 && feature.attributes.roadLinkType !== -1 && applicationModel.isContinueButton()){
         unhighlightFeatureByLinkId(feature.attributes.linkId);
       }
       else if(!selectedLinkProperty.featureExistsInSelection(feature) && (typeof feature.attributes.linkId !== 'undefined')) {
@@ -687,6 +687,7 @@
 
     var refreshViewAfterSaving = function() {
       unselectRoadLink();
+      $('#feature-attributes').empty();
       me.refreshView();
     };
 
