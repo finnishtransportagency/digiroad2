@@ -801,14 +801,4 @@ object RoadAddressDAO {
         RoadAddressProject(id, state, name, createdBy, createdDate ,modifiedBy, start_date, modifiedDate, addInfo, 0, 0, 0)
     }
   }
-
-  def getRoadAddressProjectLinkById(projectId: Long) : List[RoadAddressProjectLink] = {
-    val query = s"""SELECT id, project_id, road_type, discontinuity_type, road_number, road_part_number, start_addr_m, end_addr_m, lrm_position_id, created_by, modified_by FROM Project_link Where project_id = $projectId"""
-    Q.queryNA[(Long, Long, Long, Int, Long, Long, Long, Long, Long, String, String, Long, Double)](query).list.map{
-      case(id, projectId, roadType, discontinuityType, roadNumber, roadPartNumber, startAddrM, endAddrM, lrmPositionId, createdBy, modifiedBy, linkId, length) =>
-        RoadAddressProjectLink(id, projectId, roadType, Discontinuity.apply(discontinuityType), roadNumber, roadPartNumber, startAddrM, endAddrM, lrmPositionId, createdBy, modifiedBy, linkId, length)
-    }
-  }
-
-
 }
