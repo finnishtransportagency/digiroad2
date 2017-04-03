@@ -485,6 +485,7 @@
           var calMarker = new CalibrationPoint(actualPoint.point);
           calibrationPointLayer.getSource().addFeature(calMarker.getMarker(true));
         });
+        calibrationPointLayer.setZIndex(22);
       }
       addSelectInteractions();
     };
@@ -828,7 +829,6 @@
     });
 
     var highlightAnomalousFeaturesByFloating = function() {
-
       var allFeatures = roadLayer.layer.getSource().getFeatures().concat(anomalousMarkerLayer.getSource().getFeatures()).concat(floatingMarkerLayer.getSource().getFeatures());
       _.each(allFeatures, function(feature){
         if(feature.roadLinkData.anomaly === 1 || feature.roadLinkData.roadLinkType === -1)
