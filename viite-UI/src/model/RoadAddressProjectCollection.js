@@ -34,9 +34,7 @@
                if (validationResult.success!=="ok"){
                    eventbus.trigger('roadAddress:projectValidationFailed', validationResult);
                }
-
             });
-
     };
   };
 })(this);
