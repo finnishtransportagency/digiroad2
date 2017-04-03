@@ -66,8 +66,7 @@ class GeometryTransform {
     }
   }
 
-  def resolveAddressAndLocation(mValue: Double, linkId: Long, assetSideCode: Int, municipalityCode: Option[Int] = None, road: Option[Int] = None,
-                                roadPart: Option[Int] = None, includePedestrian: Option[Boolean] = Option(false)): (RoadAddress, RoadSide) = {
+  def resolveAddressAndLocation(mValue: Double, linkId: Long, assetSideCode: Int, municipalityCode: Option[Int] = None, road: Option[Int] = None): (RoadAddress, RoadSide) = {
 
     val roadAddress = RoadAddressDAO.getRoadAddress(RoadAddressDAO.withLinkIdAndMeasure(linkId, mValue.toLong, mValue.toLong, road)).headOption
 
