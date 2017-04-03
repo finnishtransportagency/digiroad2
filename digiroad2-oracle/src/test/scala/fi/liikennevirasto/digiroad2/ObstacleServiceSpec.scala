@@ -12,16 +12,18 @@ import org.scalatest.{FunSuite, Matchers}
 import slick.jdbc.StaticQuery.interpolation
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
 
 
 
 class ObstacleServiceSpec extends FunSuite with Matchers {
+
   def toRoadLink(l: VVHRoadlink) = {
     RoadLink(l.linkId, l.geometry, GeometryUtils.geometryLength(l.geometry),
       l.administrativeClass, 1, l.trafficDirection, UnknownLinkType, None, None, l.attributes + ("MUNICIPALITYCODE" -> BigInt(l.municipalityCode)))
   }
+
   val testUser = User(
     id = 1,
     username = "Hannu",
@@ -40,12 +42,15 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
 
   val service = new ObstacleService(mockRoadLinkService) {
     override def withDynTransaction[T](f: => T): T = f
+
     override def withDynSession[T](f: => T): T = f
   }
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(service.dataSource)(test)
 
   test("Can fetch by bounding box") {
+    when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(), Nil))
+
     runWithRollback {
       val result = service.getByBoundingBox(testUser, BoundingRectangle(Point(374466.5, 6677346.5), Point(374467.5, 6677347.5))).head
       result.id should equal(600046)
@@ -57,8 +62,8 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
   }
 
   test("Can fetch by municipality") {
-    when(mockRoadLinkService.getRoadLinksFromVVH(235)).thenReturn(Seq(
-      VVHRoadlink(388553074, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
+    when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(235)).thenReturn((Seq(
+      VVHRoadlink(388553074, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink), Nil))
 
     runWithRollback {
       val result = service.getByMunicipality(235).find(_.id == 600046).get
@@ -72,8 +77,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
   }
 
   test("Expire obstacle") {
-    when(mockRoadLinkService.getRoadLinksFromVVH(235)).thenReturn(Seq(
-      VVHRoadlink(388553074, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
+    when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[Int])).thenReturn((List(), Nil))
 
     runWithRollback {
       val result = service.getByMunicipality(235).find(_.id == 600046).get
