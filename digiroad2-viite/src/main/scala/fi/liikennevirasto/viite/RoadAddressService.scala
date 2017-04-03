@@ -20,6 +20,7 @@ import org.joda.time.{DateTime, DateTimeZone}
 import org.slf4j.LoggerFactory
 
 import scala.collection.immutable.ListMap
+import scala.collection.immutable.Stream.Empty
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
@@ -459,7 +460,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
   }
 
-  def getValidSurroundingLinks(linkIds: Set[Long], floating: RoadAddressLink): Map[Long, RoadAddressLink] = {
+  def getValidSurroundingLinks(linkIds: Set[Long], floating: RoadAddressLink): Map[Long, Option[RoadAddressLink]] = {
     val roadLinks = roadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(linkIds)._1
     try{
       val surroundingLinks = linkIds.map{
@@ -472,18 +473,23 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
             val bounds = BoundingRectangle(sourceLinkEndpoints._1 - delta, sourceLinkEndpoints._1 + delta)
             val bounds2 = BoundingRectangle(sourceLinkEndpoints._2 - delta, sourceLinkEndpoints._2 + delta)
             val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, bounds2)
-            val addresses1 = fetchRoadAddressesByBoundingBox(bounds)._2
-            val addresses2 = fetchRoadAddressesByBoundingBox(bounds2)._2
-            val addresses = addresses1 ++ addresses2
+            val (floatingViiteRoadLinks1, addresses1, floating1) = fetchRoadAddressesByBoundingBox(bounds, true)
+            val (floatingViiteRoadLinks2, addresses2, floating2) = fetchRoadAddressesByBoundingBox(bounds2, true)
 
+            val addresses = addresses1 ++ addresses2
+            val floatingRoadAddressLinks = floatingViiteRoadLinks1 ++ floatingViiteRoadLinks2
             val distinctRoadLinks = roadLinks.distinct
-            val adjacentLinks = distinctRoadLinks.map { rl =>
+
+            val roadAddressLinks = distinctRoadLinks.map { rl =>
               val ra = addresses.getOrElse(rl.linkId, Seq()).distinct
               rl.linkId -> buildRoadAddressLink(rl, ra, Seq())
-            }.filter(_._2.exists(ral => GeometryUtils.areAdjacent(sourceLinkGeometry, ral.geometry)
-              && ral.roadLinkType != UnknownRoadLinkType && ral.roadNumber == floating.roadNumber && ral.roadPartNumber == floating.roadPartNumber && ral.trackCode == floating.trackCode))
+            }
 
-            (linkid -> adjacentLinks.flatMap(_._2).head)
+            val roadAddressLinksWithFloating = roadAddressLinks ++ floatingRoadAddressLinks
+            val adjacentLinks = roadAddressLinksWithFloating
+              .filter(_._2.exists(ral => GeometryUtils.areAdjacent(sourceLinkGeometry, ral.geometry)
+                && ral.roadLinkType != UnknownRoadLinkType && ral.roadNumber == floating.roadNumber && ral.roadPartNumber == floating.roadPartNumber && ral.trackCode == floating.trackCode))
+            (linkid -> adjacentLinks.flatMap(_._2).sortBy(_.startAddressM).headOption)
           }).head
       }.toMap
 
@@ -604,8 +610,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val orderedTargets = targets.size match {
       case 1 => targets
       case _ =>
-        val surroundingMappedLinks = getValidSurroundingLinks(targets.map(_.linkId).toSet, source)
-        val startingLinkId = ListMap(surroundingMappedLinks.toSeq.sortBy(_._2.startAddressM):_*).keySet.head
+        val optionalSurroundingMappedLinks = getValidSurroundingLinks(targets.map(_.linkId).toSet, source)
+        val surroundingMappedLinks = optionalSurroundingMappedLinks.filterNot(_._2.isEmpty)
+        val startingLinkId = surroundingMappedLinks.size match {
+          case 0 => targets.head.linkId
+          case _ => ListMap(surroundingMappedLinks.toSeq.sortBy(_._2.get.startAddressM):_*).keySet.head
+        }
         val firstTarget = targets.filter(_.linkId == startingLinkId).head
         val orderTargets = targets.foldLeft(Seq.empty[RoadAddressLink]) { (previousOrderedTargets, target) =>
           orderLinksRecursivelyByAdjacency(firstTarget, target, targets, previousOrderedTargets)
@@ -614,7 +624,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
 
     val adjustedCreatedRoads = orderedTargets.foldLeft(orderedTargets) { (previousTargets, target) =>
-          RoadAddressLinkBuilder.adjustRoadAddressTopology(maxEndMValue, minStartAddressM, maxEndAddressM, source, target, previousTargets, user.username).filterNot(_.id == 0) }
+      RoadAddressLinkBuilder.adjustRoadAddressTopology(maxEndMValue, minStartAddressM, maxEndAddressM, source, target, previousTargets, user.username).filterNot(_.id == 0) }
 
     adjustedCreatedRoads
   }
