@@ -31,6 +31,7 @@ object RoadAddressDAO {
            join lrm_position pos on ra.lrm_position_id = pos.id"""
 
       val queryWithFilter = queryFilter(query) + " and (ra.valid_to > sysdate or ra.valid_to is null) "
+      println(queryWithFilter)
       StaticQuery.queryNA[(Long, Long, Long, Int, Long, Long, Option[DateTime],
       Option[DateTime], Option[String], Long, Long, Double, Double, Int, Boolean, Double, Double, Double, Double)](queryWithFilter).list.map {
         case (id, roadNumber, roadPartNumber, track, startAddrMValue, endAddrMValue, startDate, endDate, modifiedBy,
