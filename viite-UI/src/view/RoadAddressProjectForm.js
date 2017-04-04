@@ -156,7 +156,6 @@
         rootElement.html(openProjectTemplate(currentProject, text));
         jQuery('.modal-overlay').remove();
         setTimeout(function(){}, 0);
-        // applicationModel.setOpenProject(true);
         if(!_.isUndefined(currentProject))
           eventbus.trigger('linkProperties:selectedProject', currentProject.linkId);
       });
