@@ -354,52 +354,57 @@
     var bindEvents = function() {
       var rootElement = $('#feature-attributes');
       var toggleMode = function(readOnly) {
-        rootElement.find('.editable .form-control-static').toggle(readOnly);
-        rootElement.find('select').toggle(!readOnly);
-        rootElement.find('.form-controls').toggle(!readOnly);
-        var uniqFeaturesToKeep = _.uniq(selectedLinkProperty.getFeaturesToKeep());
-        var lastFeatureToKeep = _.isUndefined(_.last(_.initial(uniqFeaturesToKeep))) ? _.last(uniqFeaturesToKeep) : _.last(_.initial(uniqFeaturesToKeep));
-        var firstSelectedLinkProperty = _.first(selectedLinkProperty.get());
-        if(!_.isEmpty(uniqFeaturesToKeep)){
-          if(readOnly){
-            if(lastFeatureToKeep.roadLinkType === -1){
-              rootElement.html(templateFloating(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
-            } else {
-              rootElement.html(template(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
-            }
-          } else {
-            if(lastFeatureToKeep.roadLinkType === -1){
-              rootElement.html(templateFloatingEditMode(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
-              if(applicationModel.getSelectionType() === 'floating' && firstSelectedLinkProperty.roadLinkType === -1){
-                selectedLinkProperty.getLinkAdjacents(_.last(selectedLinkProperty.get()), firstSelectedLinkProperty);
+        if(!applicationModel.isProjectOpen()) {
+          rootElement.find('.editable .form-control-static').toggle(readOnly);
+          rootElement.find('select').toggle(!readOnly);
+          rootElement.find('.form-controls').toggle(!readOnly);
+          var uniqFeaturesToKeep = _.uniq(selectedLinkProperty.getFeaturesToKeep());
+          var lastFeatureToKeep = _.isUndefined(_.last(_.initial(uniqFeaturesToKeep))) ? _.last(uniqFeaturesToKeep) : _.last(_.initial(uniqFeaturesToKeep));
+          var firstSelectedLinkProperty = _.first(selectedLinkProperty.get());
+          if (!_.isEmpty(uniqFeaturesToKeep)) {
+            if (readOnly) {
+              if (lastFeatureToKeep.roadLinkType === -1) {
+                rootElement.html(templateFloating(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
+              } else {
+                rootElement.html(template(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
               }
-              $('#floatingEditModeForm').show();
-            } else { //check if the before selected was a floating link and if the next one is unknown
-              if(uniqFeaturesToKeep.length > 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length-1].anomaly === 1 ){
+            } else {
+              if (lastFeatureToKeep.roadLinkType === -1) {
                 rootElement.html(templateFloatingEditMode(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
+                if (applicationModel.getSelectionType() === 'floating' && firstSelectedLinkProperty.roadLinkType === -1) {
+                  selectedLinkProperty.getLinkAdjacents(_.last(selectedLinkProperty.get()), firstSelectedLinkProperty);
+                }
+                $('#floatingEditModeForm').show();
+              } else { //check if the before selected was a floating link and if the next one is unknown
+                if (uniqFeaturesToKeep.length > 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length - 1].anomaly === 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length - 2].roadLinkType === -1) {
+                  rootElement.html(templateFloatingEditMode(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
+                  $('#floatingEditModeForm').show();
+                } else {
+                  rootElement.html(template(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
+                }
+              }
+            }
+          } else if (!_.isEmpty(selectedLinkProperty.get())) {
+            if (readOnly) {
+              if (firstSelectedLinkProperty.roadLinkType === -1) {
+                rootElement.html(templateFloating(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
+              } else {
+                rootElement.html(template(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
+              }
+            } else {
+              if (_.last(selectedLinkProperty.get()).roadLinkType === -1) {
+                applicationModel.toggleSelectionTypeFloating();
+                rootElement.html(templateFloatingEditMode(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
+                selectedLinkProperty.getLinkAdjacents(_.last(selectedLinkProperty.get()), firstSelectedLinkProperty);
                 $('#floatingEditModeForm').show();
               } else {
                 rootElement.html(template(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
               }
             }
           }
-        } else if(!_.isEmpty(selectedLinkProperty.get())){
-          if(readOnly){
-            if(firstSelectedLinkProperty.roadLinkType === -1){
-              rootElement.html(templateFloating(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
-            } else {
-              rootElement.html(template(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
-            }
-          } else {
-            if(_.last(selectedLinkProperty.get()).roadLinkType === -1){
-              applicationModel.toggleSelectionTypeFloating();
-              rootElement.html(templateFloatingEditMode(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
-              selectedLinkProperty.getLinkAdjacents(_.last(selectedLinkProperty.get()), firstSelectedLinkProperty);
-              $('#floatingEditModeForm').show();
-            } else {
-              rootElement.html(template(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
-            }
-          }
+          rootElement.find('.form-controls').toggle(!readOnly);
+          rootElement.find('.btn-move').prop("disabled", true);
+          rootElement.find('.btn-continue').prop("disabled", false);
         }
         rootElement.find('.form-controls').toggle(!readOnly);
         rootElement.find('.btn-move').prop("disabled", true);
@@ -547,7 +552,7 @@
         rootElement.find('.link-properties button').attr('disabled', false);
       });
       eventbus.on('linkProperties:unselected', function() {
-        if('all' === applicationModel.getSelectionType() || 'floating' === applicationModel.getSelectionType()){
+        if(('all' === applicationModel.getSelectionType() || 'floating' === applicationModel.getSelectionType()) && !applicationModel.isProjectOpen()){
           rootElement.empty();
         }
       });
@@ -565,16 +570,7 @@
         if(applicationModel.isActiveButtons())
           action = applicationModel.actionCalculating;
         applicationModel.setCurrentAction(action);
-        eventbus.trigger('linkProperties:activateInteractions');
-        if('all' === applicationModel.getSelectionType() || 'floating' === applicationModel.getSelectionType()){
-          selectedLinkProperty.clearAndReset(false);
-          applicationModel.toggleSelectionTypeAll();
-          selectedLinkProperty.close();
-          $('#feature-attributes').empty();
-        } else {
-          applicationModel.toggleSelectionTypeFloating();
-          selectedLinkProperty.cancelAndReselect(action);
-        }
+        selectedLinkProperty.cancel(action);
         applicationModel.setActiveButtons(false);
       });
       rootElement.on('click', '.link-properties button.calculate', function() {
@@ -588,8 +584,6 @@
           applicationModel.toggleSelectionTypeUnknown();
           applicationModel.setContinueButton(false);
           eventbus.trigger('linkProperties:highlightAnomalousByFloating');
-          eventbus.trigger('linkProperties:activateInteractions');
-          eventbus.trigger('linkProperties:deactivateDoubleClick');
         }
       });
 
@@ -614,7 +608,7 @@
       eventbus.on('adjacents:startedFloatingTransfer', function() {
         action = applicationModel.actionCalculating;
         rootElement.find('.link-properties button.cancel').attr('disabled', false);
-        if(!applicationModel.isContinueButton()){
+        if(applicationModel.isContinueButton() === false){
           rootElement.find('.link-properties button.continue').attr('disabled', true);
         }else {
           rootElement.find('.link-properties button.continue').attr('disabled', false);

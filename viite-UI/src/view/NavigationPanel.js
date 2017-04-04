@@ -40,6 +40,6 @@
         openProjectsBox.toggle();
       });
     }
-    
+
   }
 })(this);

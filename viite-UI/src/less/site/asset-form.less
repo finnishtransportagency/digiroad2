@@ -104,7 +104,8 @@
   }
 
   .form-manoeuvre {
-    .control-label {
+    .control-label,
+    .control-label-projects {
       width: 100%;
       margin-bottom: 10px;
       text-align: left;
@@ -147,7 +148,8 @@
         font-weight: normal;
       }
 
-      .existing-validity-period .control-label {
+      .existing-validity-period .control-label,
+      .existing-validity-period .control-label-projects {
         width: 40px;
         text-align: left;
       }
@@ -194,11 +196,13 @@
   }
 
   .edit-mode {
-    label.control-label.required:before {
+    label.control-label.required:before,
+    label.control-label-projects.required:before {
       content: '* ';
     }
 
-    label.control-label.required {
+    label.control-label.required,
+    label.control-label-projects.required {
       color: @warning;
     }
   }
@@ -271,6 +275,13 @@
     font-size: @font-size-xxs;
   }
 
+  .control-label-projects {
+    width: @control-label-projects-width;
+    margin-right: @control-label-margin;
+    font-size: @font-size-xs;
+    margin-top: 10px;
+  }
+
   .form-control.sub-control {
     width: auto;
   }
@@ -282,7 +293,7 @@
   .choice-group,
   .btn-block {
     width: 210px;
-    margin-top: 6px;
+    margin-top: 10px;
   }
 
   .form-control-static-floating {

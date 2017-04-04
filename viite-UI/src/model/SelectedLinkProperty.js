@@ -314,10 +314,26 @@
 
 
     eventbus.on("adjacents:additionalSourceSelected", function(existingSources, additionalSourceLinkId) {
-
-      var newSources = [existingSources].concat([roadCollection.getRoadLinkByLinkId(parseInt(additionalSourceLinkId)).getData()]);
+      sources = current;
+      var fetchedFeature = roadCollection.getRoadLinkByLinkId(parseInt(additionalSourceLinkId));
+      if(!_.isUndefined(fetchedFeature)){
+        sources.push(fetchedFeature);
+        featuresToKeep.push(fetchedFeature.getData());
+      }
+      var chainLinks = [];
+      _.each(sources, function(link){
+        if(!_.isUndefined(link))
+          chainLinks.push(link.getData().linkId);
+      });
+      _.each(targets, function(link){
+        chainLinks.push(link.getData().linkId);
+      });
+      var newSources = _.isArray(existingSources) ? existingSources : [existingSources];
+      if(!_.isUndefined(additionalSourceLinkId) && !_.isUndefined(fetchedFeature))
+        newSources.push(fetchedFeature.getData());
       var data = _.map(newSources, function (ns){
-        return {"linkId": ns.linkId, "roadNumber": ns.roadNumber, "roadPartNumber": ns.roadPartNumber, "trackCode": ns.trackCode};
+        return {"selectedLinks": _.uniq(chainLinks), "linkId": parseInt(ns.linkId), "roadNumber": parseInt(ns.roadNumber),
+          "roadPartNumber": parseInt(ns.roadPartNumber), "trackCode": parseInt(ns.trackCode)};
       });
       backend.getAdjacentsFromMultipleSources(data, function(adjacents){
         if(!_.isEmpty(adjacents) && !applicationModel.isReadOnly()){
@@ -371,7 +387,7 @@
              return t.getData();
           } else return t;
       });
-      
+
       var targetDataIds = _.uniq(_.filter(_.map(targetsData.concat(featuresToKeep), function(feature){
         if(feature.roadLinkType != -1 && feature.anomaly == 1){
           return feature.linkId.toString();
@@ -404,7 +420,7 @@
 
       var targetsData = _.map(targets,function (t){
           if(_.isUndefined(t.linkId)){
-            return t.getData();     
+            return t.getData();
           }else return t;
       });
 
@@ -448,8 +464,28 @@
       }
     };
 
+    var getSources = function() {
+      return _.union(_.map(sources, function (roadLink) {
+        return roadLink.getData();
+      }));
+    };
+
+    var setSources = function(scs) {
+      sources = scs;
+    };
+
+    var getFeaturesToHighlight = function() {
+      return featuresToHighlight;
+    };
+
+    var setFeaturesToHighlight = function(ft) {
+      featuresToHighlight = ft;
+    };
+
     var getTargets = function(){
-      return _.union(targets);
+      return _.union(_.map(targets, function (roadLink) {
+        return roadLink.getData();
+      }));
     };
 
     var getSources = function() {

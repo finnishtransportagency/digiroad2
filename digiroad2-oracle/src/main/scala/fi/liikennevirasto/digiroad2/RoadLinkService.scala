@@ -65,6 +65,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   /**
+    * ATENTION Use this method always with transation not with session
     * This method returns a road link by link id.
     *
     * @param linkId
@@ -97,6 +98,23 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   /**
+    * ATENTION Use this method always with transation not with session
+    * Returns the road links from VVH by municipality.
+    *
+    * @param municipality A integer, representative of the municipality Id.
+    */
+  def getRoadLinksFromVVHByMunicipality(municipality: Int, newTransaction: Boolean = true): Seq[RoadLink] = {
+    val vvhRoadLinks = vvhClient.queryByMunicipality(municipality)
+    if (newTransaction)
+      withDynTransaction {
+        enrichRoadLinksFromVVH(vvhRoadLinks)
+      }
+    else
+      enrichRoadLinksFromVVH(vvhRoadLinks)
+  }
+
+  /**
+    * ATENTION Use this method always with transation not with session
     * This method returns road links by link ids.
     *
     * @param linkIds
@@ -512,7 +530,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
     val (historyData, currentData, complementaryData) = Await.result(fut, Duration.Inf)
 
-    withDynSession {
+    withDynTransaction {
       (enrichRoadLinksFromVVH(currentData ++ complementaryData, Seq()), historyData)
     }
   }
@@ -740,9 +758,10 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * Used by RoadLinkService.fillIncompleteLinksWithPreviousLinkData and RoadLinkService.isIncomplete.
     */
   def isComplete(roadLink: RoadLink): Boolean = {
-    (roadLink.linkSource != LinkGeomSource.NormalLinkInterface && roadLink.linkSource != LinkGeomSource.ComplimentaryLinkInterface) ||
+    roadLink.linkSource != LinkGeomSource.NormalLinkInterface ||
       roadLink.functionalClass != FunctionalClass.Unknown && roadLink.linkType.value != UnknownLinkType.value
   }
+
   def getRoadLinksAndComplementaryLinksFromVVHByMunicipality(municipality: Int): Seq[RoadLink] = {
     val fut = for {
       complementary <-getComplementaryRoadLinksFromVVHFuture(municipality)

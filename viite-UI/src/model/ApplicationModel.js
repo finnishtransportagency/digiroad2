@@ -11,6 +11,7 @@
     var readOnly = true;
     var activeButtons = false;
     var continueButton = false;
+    var openProject = false;
     var actionCalculating = 0;
     var actionCalculated = 1;
     var currentAction;
@@ -50,6 +51,14 @@
         eventbus.trigger('application:activeButtons', newState);
       }
     };
+
+    var setOpenProject = function(newState){
+      if(openProject !== newState){
+        openProject = newState;
+        eventbus.trigger('application:openProject', newState);
+      }
+    };
+
     var setContinueButton = function(newState){
       if(continueButton !== newState){
         continueButton = newState;
@@ -98,7 +107,7 @@
       resetCurrentAction: resetCurrentAction,
       actionCalculating: actionCalculating,
       actionCalculated: actionCalculated,
-      moveMap: function(zoom, bbox, center) {
+      moveMap: function(zoom, bbox) {
         var hasZoomLevelChanged = zoom.level !== zoom;
         setZoomLevel(zoom);
         centerLonLat = center;
@@ -130,6 +139,7 @@
       setActiveButtons: setActiveButtons,
       setContinueButton: setContinueButton,
       getContinueButtons: getContinueButtons,
+      setOpenProject : setOpenProject,
       addSpinner: addSpinner,
       removeSpinner: removeSpinner,
       isReadOnly: function() {
@@ -140,6 +150,9 @@
       },
       isContinueButton: function() {
         return continueButton;
+      },
+      isProjectOpen: function() {
+        return openProject;
       },
       isDirty: function() {
         return isDirty();

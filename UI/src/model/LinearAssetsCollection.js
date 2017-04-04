@@ -149,7 +149,7 @@
     };
 
     this.saveSplit = function(callback) {
-      backend.splitLinearAssets(splitLinearAssets.existing.id, splitLinearAssets.splitMeasure, splitLinearAssets.created.value, splitLinearAssets.existing.value, function() {
+      backend.splitLinearAssets(typeId, splitLinearAssets.existing.id, splitLinearAssets.splitMeasure, splitLinearAssets.created.value, splitLinearAssets.existing.value, function() {
         eventbus.trigger(singleElementEvent('saved'));
         splitLinearAssets = {};
         dirty = false;
@@ -171,7 +171,7 @@
       separatedLimit.A = _.omit(separatedLimit.A, 'geometry');
       separatedLimit.B =_.omit(separatedLimit.B, 'geometry');
       if (separatedLimit.A.id) {
-        backend.separateLinearAssets(separatedLimit.A.id, separatedLimit.A.value, separatedLimit.B.value, success, failure);
+        backend.separateLinearAssets(typeId, separatedLimit.A.id, separatedLimit.A.value, separatedLimit.B.value, success, failure);
       } else {
         var separatedLimits = _.filter([separatedLimit.A, separatedLimit.B], function(limit) { return !_.isUndefined(limit.value); });
         backend.createLinearAssets({typeId: typeId, newLimits: separatedLimits}, success, failure);

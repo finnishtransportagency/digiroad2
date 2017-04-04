@@ -3,12 +3,14 @@
     var backend = customBackend || new Backend();
     var tileMaps = _.isUndefined(withTileMaps) ? true : withTileMaps;
     var roadCollection = new RoadCollection(backend);
+    var roadAddressProjectCollection = new RoadAddressProjectCollection(backend);
     var selectedLinkProperty = new SelectedLinkProperty(backend, roadCollection);
     var linkPropertiesModel = new LinkPropertiesModel();
     var instructionsPopup = new InstructionsPopup($('.digiroad2'));
 
     var models = {
       roadCollection: roadCollection,
+      roadAddressProjectCollection: roadAddressProjectCollection,
       selectedLinkProperty: selectedLinkProperty,
       linkPropertiesModel: linkPropertiesModel
     };
@@ -25,7 +27,7 @@
       // assetSelectionMenu.select(layer);
     });
 
-    var projectListMenu = ProjectListMenu();
+    var projectListModel = new ProjectListModel(models.roadAddressProjectCollection);
 
     NavigationPanel.initialize(
       $('#map-tools'),
@@ -33,7 +35,7 @@
           instructionsPopup,
           new LocationSearch(backend, window.applicationModel)
       ),
-      new ProjectSelectBox(projectListMenu),
+      new ProjectSelectBox(projectListModel),
       assetGroups
     );
 
@@ -111,7 +113,7 @@
 
     new LinkPropertyForm(models.selectedLinkProperty);
 
-    new RoadAddressProjectForm(backend);
+    new RoadAddressProjectForm(models.roadAddressProjectCollection);
 
     var layers = _.merge({
       road: roadLayer,
@@ -125,7 +127,7 @@
 
     // Show environment name next to Digiroad logo
     $('#notification').append(Environment.localizedName());
-    $('#notification').append(' Päivämäärä: ' + startupParameters.deploy_date + ' ' + startupParameters.revision);
+    $('#notification').append(' Päivämäärä: ' + startupParameters.deploy_date);
 
     // Show information modal in integration environment (remove when not needed any more)
     if (Environment.name() === 'integration') {
