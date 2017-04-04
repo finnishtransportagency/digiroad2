@@ -1287,12 +1287,10 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
       }
     }
 
-  def insertNewAsset(typeId: Int, linkId: Long, startMeasure: Double, endMeasure: Double, sideCode: Int, value: Int) {
-    val inputDateFormat = DateTimeFormat.forPattern("yyyyMMdd")
+  def insertNewAsset(typeId: Int, linkId: Long, startMeasure: Double, endMeasure: Double, sideCode: Int, value: Int, createdBy: String) {
     val assetId = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     val propertyId = sql"""select id from property where public_id = 'mittarajoitus'""".as[Long].first
-    val createdBy = "batch_process_"+inputDateFormat.print(DateTime.now())
 
     sqlu"""
          insert into asset(id, asset_type_id, created_by, created_date)
@@ -1315,12 +1313,14 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
   def getAllLinkIdByAsset(typeId: Long, linkId: Seq[Long]) = {
     MassQuery.withIds(linkId.toSet) { idTableName =>
       sql"""
-            select distinct (pos.link_id)
+            select pos.LINK_ID, prop.VALUE, a.id
             from ASSET a
             join ASSET_LINK al on a.id = al.asset_id
             join LRM_POSITION pos on al.position_id = pos.id
+            join number_property_value prop on prop.asset_id = a.id
             join #$idTableName i on i.id = pos.link_id
-            where a.asset_type_id = $typeId""".as[(Long)].list
+            where a.asset_type_id = $typeId
+            and (a.valid_to >= sysdate or a.valid_to is null)""".as[(Long, Int, Long)].list
     }
   }
 }
