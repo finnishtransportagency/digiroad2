@@ -72,9 +72,6 @@ object RoadAddressFiller {
     if(segments.isEmpty)
       return (segments, changeSet)
     val sorted = segments.filter(_.id != 0).sortBy(_.startMValue)(Ordering[Double])
-    if(sorted.size >= 2) {
-      println(roadLink.linkId)
-    }
     val segmentIds = sorted.map(_.id).toSet
     object UpdateValues extends Exception { }
     try {
@@ -82,11 +79,7 @@ object RoadAddressFiller {
         OracleDatabase.withDynSession {
           sorted.foreach { segment =>
             val old = RoadAddressDAO.getRoadAddress(segment.lrmPositionId, segment.linkId)
-            //val f: Point = old.geom.head.copy(x = old.geom.head.x + 2, y = old.geom.head.y + 2, z = old.geom.head.z + 1)
-            //val g: Point = old.geom.last.copy(x = old.geom.last.x + 2, y = old.geom.last.y + 2, z = old.geom.last.z + 1)
-            //val x = Seq[Point](f, g)
-            //old = old.copy(geom = x)
-            if (old != null) {
+            if (old != null && !old.floating) {
               //Validate if segment start and end were moved more than 1 meter
               if ((segment.geometry.head.distance2DTo(old.geom.head) > MaxDistanceDiffAllowed) ||
                 (segment.geometry.last.distance2DTo(old.geom.last) > MaxDistanceDiffAllowed)) {
