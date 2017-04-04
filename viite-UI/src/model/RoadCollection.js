@@ -58,16 +58,22 @@
 
   root.RoadCollection = function(backend) {
     var roadLinkGroups = [];
+    var tmpRoadAddresses = [];
+    var tmpNewRoadAddresses = [];
+    var preMovedRoadAddresses = [];
+    var changedIds = [];
 
     var roadLinks = function() {
       return _.flatten(roadLinkGroups);
     };
+
 
     var getSelectedRoadLinks = function() {
       return _.filter(roadLinks(), function(roadLink) {
         return roadLink.isSelected();
       });
     };
+
 
     this.fetch = function(boundingBox, zoom) {
       backend.getRoadLinks({boundingBox: boundingBox, zoom: zoom}, function(fetchedRoadLinks) {
@@ -76,8 +82,8 @@
         });
         var fetchedRoadLinkModels = _.map(fetchedRoadLinks, function(roadLinkGroup) {
           return _.map(roadLinkGroup, function(roadLink) {
-              return new RoadLinkModel(roadLink);
-            });
+            return new RoadLinkModel(roadLink);
+          });
         });
         roadLinkGroups = _.reject(fetchedRoadLinkModels, function(roadLinkGroup) {
           return _.some(roadLinkGroup, function(roadLink) {
@@ -109,6 +115,10 @@
       });
     };
 
+    this.getAllTmp = function(){
+      return tmpRoadAddresses;
+    };
+
     this.get = function(ids) {
       return _.map(ids, function(id) {
         return _.find(roadLinks(), function(road) { return road.getId() === id; });
@@ -116,9 +126,10 @@
     };
 
     this.getByLinkId = function(ids) {
-      return _.map(ids, function(id) {
-        return _.find(roadLinks(), function(road) { return road.getData().linkId === id; });
+      var segments = _.filter(roadLinks(), function (road){
+        return road.getData().linkId == ids;
       });
+      return segments;
     };
 
     this.getById = function(ids) {
@@ -151,8 +162,51 @@
       });
     };
 
+    this.setTmpRoadAddresses = function (tmp){
+      tmpRoadAddresses = tmp;
+    };
+
+    this.setChangedIds = function (ids){
+      changedIds = ids;
+    };
+
+    this.getChangedIds = function (){
+      return changedIds;
+    };
+
     this.reset = function(){
       roadLinkGroups = [];
     };
+    this.resetTmp = function(){
+      tmpRoadAddresses = [];
+    };
+    this.resetChangedIds = function(){
+      changedIds = [];
+    };
+
+    this.setNewTmpRoadAddresses = function (tmp){
+      tmpNewRoadAddresses = tmp;
+    };
+
+    this.getNewTmpRoadAddresses = function(){
+      return tmpNewRoadAddresses;
+    };
+
+    this.resetNewTmpRoadAddresses = function(){
+      tmpNewRoadAddresses = [];
+    };
+
+    this.addPreMovedRoadAddresses = function(ra){
+      preMovedRoadAddresses.push(ra);
+    };
+
+    this.getPreMovedRoadAddresses = function(){
+      return preMovedRoadAddresses;
+    };
+
+    this.resetPreMovedRoadAddresses = function(){
+      preMovedRoadAddresses = [];
+    };
+
   };
 })(this);

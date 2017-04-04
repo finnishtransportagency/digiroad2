@@ -642,6 +642,42 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
+  test("Should not save links to incomplete_link when the road source is not normal or complementary") {
+    OracleDatabase.withDynTransaction {
+      val mockVVHClient = MockitoSugar.mock[VVHClient]
+      val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
+      val vvhRoadLink1 = VVHRoadlink(1, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.InUse, linkSource = LinkGeomSource.FrozenLinkInterface)
+      val vvhRoadLink2 = VVHRoadlink(2, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.InUse, linkSource = LinkGeomSource.HistoryLinkInterface)
+      val vvhRoadLink3 = VVHRoadlink(3, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.InUse, linkSource = LinkGeomSource.SuravageLinkInterface)
+      val vvhRoadLink4 = VVHRoadlink(4, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.InUse, linkSource = LinkGeomSource.Unknown)
+      val vvhRoadLink5 = VVHRoadlink(5, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.InUse, linkSource = LinkGeomSource.NormalLinkInterface)
+      val vvhRoadLink6 = VVHRoadlink(6, 91, Nil, Municipality, TrafficDirection.TowardsDigitizing, FeatureClass.AllOthers, constructionType = ConstructionType.InUse, linkSource = LinkGeomSource.ComplimentaryLinkInterface)
+      when(mockVVHClient.fetchByMunicipalityF(91)).thenReturn(Promise.successful(Seq(vvhRoadLink1, vvhRoadLink2, vvhRoadLink3, vvhRoadLink4, vvhRoadLink5, vvhRoadLink6)).future)
+      when(mockVVHClient.queryChangesByMunicipalityF(91)).thenReturn(Promise.successful(Nil).future)
+      val service = new TestService(mockVVHClient, mockEventBus)
+
+      val roadLinks = service.getRoadLinksFromVVH(91)
+
+      // Return all road links (all are incomplete here)
+      val roadLink1 = RoadLink(1,List(),0.0,Municipality,99,TrafficDirection.TowardsDigitizing,UnknownLinkType,None,None,Map(),ConstructionType.InUse, linkSource = LinkGeomSource.FrozenLinkInterface)
+      val roadLink2 = RoadLink(2,List(),0.0,Municipality,99,TrafficDirection.TowardsDigitizing,UnknownLinkType,None,None,Map(),ConstructionType.InUse, linkSource = LinkGeomSource.HistoryLinkInterface)
+      val roadLink3 = RoadLink(3,List(),0.0,Municipality,99,TrafficDirection.TowardsDigitizing,UnknownLinkType,None,None,Map(),ConstructionType.InUse, linkSource = LinkGeomSource.SuravageLinkInterface)
+      val roadLink4 = RoadLink(4,List(),0.0,Municipality,99,TrafficDirection.TowardsDigitizing,UnknownLinkType,None,None,Map(),ConstructionType.InUse, linkSource = LinkGeomSource.Unknown)
+      val roadLink5 = RoadLink(5,List(),0.0,Municipality,99,TrafficDirection.TowardsDigitizing,UnknownLinkType,None,None,Map(),ConstructionType.InUse, linkSource = LinkGeomSource.NormalLinkInterface)
+      val roadLink6 = RoadLink(6,List(),0.0,Municipality,99,TrafficDirection.TowardsDigitizing,UnknownLinkType,None,None,Map(),ConstructionType.InUse, linkSource = LinkGeomSource.ComplimentaryLinkInterface)
+
+      roadLinks.equals(Seq(roadLink1, roadLink2, roadLink3, roadLink4, roadLink5, roadLink6))
+
+      // Pass only incomplete road links with link source normal and complementary
+      val changeSet = RoadLinkChangeSet(List(), List(IncompleteLink(5,91,Municipality), IncompleteLink(6,91,Municipality)))
+      verify(mockEventBus).publish(
+        org.mockito.Matchers.eq("linkProperties:changed"),
+        org.mockito.Matchers.eq(changeSet))
+
+      dynamicSession.rollback()
+    }
+  }
+
   test("Should return roadlinks and complementary roadlinks") {
 
     val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))

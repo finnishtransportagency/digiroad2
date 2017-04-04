@@ -80,6 +80,7 @@ class ViiteIntegrationApi(val roadAddressService: RoadAddressService) extends Sc
           "road_number" -> roadAddressLink.roadNumber,
           "road_part_number" -> roadAddressLink.roadPartNumber,
           "track_code" -> roadAddressLink.trackCode,
+          "side_code" -> roadAddressLink.sideCode.value,
           "start_addr_m" -> roadAddressLink.startAddressM,
           "end_addr_m" -> roadAddressLink.endAddressM,
           "ely_code" -> roadAddressLink.elyCode,

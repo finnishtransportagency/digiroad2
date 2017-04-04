@@ -8,7 +8,7 @@
     }).join('');
 
     var expandedTemplate = [
-      '<div class="panel">',
+      '<div class="panel ' + layerName +'">',
       '  <header class="panel-header expanded">',
       '    ' + title,
       '  </header>',
@@ -26,10 +26,13 @@
       new ActionPanelBoxes.Tool('Cut', ActionPanelBoxes.cutToolIcon, selectedLinearAsset)
     ]);
     var editModeToggle = new EditModeToggleButton(toolSelection);
+    var userRoles;
 
     var bindExternalEventHandlers = function() {
       eventbus.on('roles:fetched', function(roles) {
-        if (_.contains(roles, 'operator') || _.contains(roles, 'premium')) {
+        userRoles = roles;
+        if (_.contains(roles, 'operator') || (_.contains(roles, 'premium') && layerName != 'maintenanceRoad') ||
+           (_.contains(roles, 'serviceRoadMaintainer') && layerName == 'maintenanceRoad')) {
           toolSelection.reset();
           elements.expanded.append(toolSelection.element);
           elements.expanded.append(editModeToggle.element);
@@ -45,7 +48,11 @@
     var element = $('<div class="panel-group simple-limit ' + className + 's"/>').append(elements.expanded).hide();
 
     function show() {
-      editModeToggle.toggleEditMode(applicationModel.isReadOnly());
+      if (editModeToggle.hasNoRolesPermission(userRoles) || (_.contains(userRoles, 'premium') && (layerName == 'maintenanceRoad'))) {
+        editModeToggle.reset();
+      } else {
+        editModeToggle.toggleEditMode(applicationModel.isReadOnly());
+      }
       element.show();
     }
 

@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite.model
 
-import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.{Point, RoadLinkType}
 import fi.liikennevirasto.digiroad2.RoadLinkType.NormalRoadLinkType
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
@@ -67,5 +67,21 @@ class RoadAddressLinkPartitionerSpec extends FunSuite with Matchers {
     val mod = add.copy(geometry = Seq(Point(10.0,21.0), Point(11.0,21.0)))
     val partitioned = RoadAddressLinkPartitioner.partition(roadAddressLinks ++ Seq(mod))
     partitioned.size should be (4)
+  }
+
+  test("Connected floating + other roads are not combined") {
+    val add = Seq(makeRoadAddressLink(18, 0, 1, 2),makeRoadAddressLink(19, 0, 1, 2))
+    val mod2 = add.map(_.copy(roadLinkType = RoadLinkType.FloatingRoadLinkType))
+    val partitioned = RoadAddressLinkPartitioner.partition(roadAddressLinks.filter(_.id>0).map(ral => {
+      if (ral.id % 2 == 0)
+        ral.copy(roadLinkType = RoadLinkType.ComplementaryRoadLinkType)
+      else
+        ral
+    }) ++ mod2)
+    partitioned.size should be (3) // Floating road address links must be a group of their own
+
+    partitioned.exists(_.exists(_.roadLinkType == RoadLinkType.ComplementaryRoadLinkType)) should be (true)
+    partitioned.exists(_.exists(_.roadLinkType == RoadLinkType.NormalRoadLinkType)) should be (true)
+    partitioned.exists(_.exists(_.roadLinkType == RoadLinkType.FloatingRoadLinkType)) should be (true)
   }
 }

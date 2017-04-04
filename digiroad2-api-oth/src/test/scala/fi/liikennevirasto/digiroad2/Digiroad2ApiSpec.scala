@@ -133,7 +133,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   test("get enumerated property values", Tag("db")) {
     getWithUserAuth("/enumeratedPropertyValues/10") {
       status should equal(200)
-      parse(body).extract[List[EnumeratedPropertyValue]].size should be(14)
+      parse(body).extract[List[EnumeratedPropertyValue]].size should be(13)
     }
   }
 

@@ -133,13 +133,13 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
   private def roadLinkPropertiesToApi(roadLinks: Seq[RoadLink]): Seq[Map[String, Any]] = {
     roadLinks.map{ roadLink =>
       Map("linkId" -> roadLink.linkId,
-        "mmlId" -> roadLink.attributes.get("MTKID"),  // TODO: remove if mmlId field not needed any more in Kalpa API (transferred also in MTKID field)
+        "mmlId" -> roadLink.attributes.get("MTKID"),
         "administrativeClass" -> roadLink.administrativeClass.value,
         "functionalClass" -> roadLink.functionalClass,
         "trafficDirection" -> roadLink.trafficDirection.value,
         "linkType" -> roadLink.linkType.value,
         "modifiedAt" -> roadLink.modifiedAt,
-        "linkSource" -> roadLink.linkSource.value) ++ roadLink.attributes
+        "linkSource" -> roadLink.linkSource.value) ++ roadLink.attributes.filterNot(_._1 == "MTKID").filterNot(_._1 == "ROADNUMBER").filterNot(_._1 == "ROADPARTNUMBER")
     }
   }
 
@@ -344,7 +344,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case "congestion_tendencies" => linearAssetsToApi(150, municipalityNumber)
         case "european_roads" => linearAssetsToApi(260, municipalityNumber)
         case "exit_numbers" => linearAssetsToApi(270, municipalityNumber)
-        case "road_link_properties" => roadLinkPropertiesToApi(roadLinkService.getRoadLinksAndComplementaryLinksFromVVHByMunicipality(municipalityNumber))
+        case "road_link_properties" => roadLinkPropertiesToApi(roadLinkService.withRoadAddress(roadLinkService.getRoadLinksAndComplementaryLinksFromVVHByMunicipality(municipalityNumber)))
         case "manoeuvres" => manouvresToApi(manoeuvreService.getByMunicipality(municipalityNumber))
         case "service_points" => servicePointsToApi(servicePointService.getByMunicipality(municipalityNumber))
         case _ => BadRequest("Invalid asset type")

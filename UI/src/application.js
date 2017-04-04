@@ -322,15 +322,16 @@
           .concat(getLinearAsset(assetType.congestionTendency))
           .concat(getLinearAsset(assetType.damagedByThaw)),
       [manoeuvreBox]
-          .concat(getLinearAsset(assetType.prohibition))
-          .concat(getLinearAsset(assetType.hazardousMaterialTransportProhibition))
-          .concat(getLinearAsset(assetType.totalWeightLimit))
-          .concat(getLinearAsset(assetType.trailerTruckWeightLimit))
-          .concat(getLinearAsset(assetType.axleWeightLimit))
-          .concat(getLinearAsset(assetType.bogieWeightLimit))
-          .concat(getLinearAsset(assetType.heightLimit))
-          .concat(getLinearAsset(assetType.lengthLimit))
-          .concat(getLinearAsset(assetType.widthLimit))
+        .concat(getLinearAsset(assetType.prohibition))
+        .concat(getLinearAsset(assetType.hazardousMaterialTransportProhibition))
+        .concat(getLinearAsset(assetType.totalWeightLimit))
+        .concat(getLinearAsset(assetType.trailerTruckWeightLimit))
+        .concat(getLinearAsset(assetType.axleWeightLimit))
+        .concat(getLinearAsset(assetType.bogieWeightLimit))
+        .concat(getLinearAsset(assetType.heightLimit))
+        .concat(getLinearAsset(assetType.lengthLimit))
+        .concat(getLinearAsset(assetType.widthLimit)),
+      [].concat(getLinearAsset(assetType.maintenanceRoad))
     ];
 
     function getLinearAsset(typeId) {

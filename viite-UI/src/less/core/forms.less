@@ -246,6 +246,56 @@ input[type="checkbox"] {
   line-height: @line-height-modifier * 2;
 }
 
+form.roadAddressProject{
+  width: 350px;
+}
+form.roadAddressProject .control-label {
+  width: 110px !important;
+}
+
+form.roadAddressProject .control-label.required {
+  color: @warning;
+}
+
+form.roadAddressProject .form-control.large-input {
+  height: 150px !important;
+  margin-top: 6px !important;
+}
+
+form.roadAddressProject .control-label-small {
+  margin-left: 40px;
+  margin-top: 10px;
+  margin-bottom: 0px;
+  width: 70px !important;
+}
+
+form.roadAddressProject .form-control.small-input{
+  width: 50px !important;
+  margin-left: 25px;
+  margin-right: 40px;
+}
+
+form.roadAddressProject .form-control{
+  width: 190px !important;
+  margin-top: 6px !important;
+}
+
+form.roadAddressProject p {
+  width: 60%;
+}
+.form-editable-roadAddressProject > .control-label:first-child {
+  width: 0;
+  max-width: 0;
+  margin-right: 4px;
+}
+.modal-dialog form.roadAddressProject {
+  margin-left: -20px;
+}
+.modal-dialog form.roadAddressProject .form-control {
+  width: 170px !important;
+  margin-top: 6px !important;
+}
+
 // Help text
 //
 // Apply to any element you wish to create light text for placement immediately
@@ -288,6 +338,12 @@ input[type="checkbox"] {
     line-height: @line-height-modifier * 3;
     text-align: right;
     .hyphens();
+  }
+
+  control-label-small{
+    display: block;
+    margin-left: 20px;
+    margin-right: 20px;
   }
 
   .form-control,

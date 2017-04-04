@@ -13,6 +13,7 @@ import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import slick.jdbc.{StaticQuery => Q}
 
 
@@ -87,7 +88,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
   test("Create Road Address") {
     runWithRollback {
       val id = RoadAddressDAO.getNextRoadAddressId
-      val ra = Seq(RoadAddress(id, 1943845, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, (None, None), false,
+      val ra = Seq(RoadAddress(id, 1943845, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, (None, None), false,
         Seq(Point(0.0, 0.0), Point(0.0, 9.8))))
       val currentSize = RoadAddressDAO.fetchByRoadPart(ra.head.roadNumber, ra.head.roadPartNumber).size
       val returning = RoadAddressDAO.create(ra)
@@ -101,7 +102,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
   test("Create Road Address With Calibration Point") {
     runWithRollback {
       val id = RoadAddressDAO.getNextRoadAddressId
-      val ra = Seq(RoadAddress(id, 1943845, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing,
+      val ra = Seq(RoadAddress(id, 1943845, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"),0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing,
         (Some(CalibrationPoint(12345L, 0.0, 0L)), None), false,
         Seq(Point(0.0, 0.0), Point(0.0, 9.8))))
       val returning = RoadAddressDAO.create(ra)
@@ -112,7 +113,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
     }
     runWithRollback {
       val id = RoadAddressDAO.getNextRoadAddressId
-      val ra = Seq(RoadAddress(id, 1943845, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing,
+      val ra = Seq(RoadAddress(id, 1943845, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"),0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing,
         (Some(CalibrationPoint(12345L, 0.0, 0L)), Some(CalibrationPoint(12345L, 9.8, 10L))), false,
         Seq(Point(0.0, 0.0), Point(0.0, 9.8))))
       val returning = RoadAddressDAO.create(ra)
@@ -138,9 +139,9 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
     val localRoadAddressService = new RoadAddressService(localMockRoadLinkService,localMockEventBus)
     runWithRollback {
       val id = RoadAddressDAO.getNextRoadAddressId
-          val toBeMergedRoadAddresses = Seq(RoadAddress(id, 1943845, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, 6556558L, 0.0, 9.8, SideCode.TowardsDigitizing, (None, None), false,
+          val toBeMergedRoadAddresses = Seq(RoadAddress(id, 1943845, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"),0, 6556558L, 0.0, 9.8, SideCode.TowardsDigitizing, (None, None), false,
             Seq(Point(0.0, 0.0), Point(0.0, 9.8))))
-      localRoadAddressService.mergeRoadAddress(RoadAddressMerge(Set(1L), toBeMergedRoadAddresses))
+      localRoadAddressService.mergeRoadAddressInTX(RoadAddressMerge(Set(1L), toBeMergedRoadAddresses))
     }
   }
 
@@ -153,14 +154,22 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
 
     val beforeCallMethodDatetime = now()
     runWithRollback {
-      val linkIds: Set[Long] = Set(3114934, 3107028)
+      val linkIds: Set[Long] = Set(4147081)
       RoadAddressDAO.expireRoadAddresses(linkIds)
-      val dbResult = sql"""select valid_to FROM road_address where lrm_position_id in (select id from lrm_position where link_id in(3114934, 3107028))""".as[DateTime].list
-      dbResult.size should be (2)
+      val dbResult = sql"""select valid_to FROM road_address where lrm_position_id in (select id from lrm_position where link_id in(4147081))""".as[DateTime].list
+      dbResult.size should be (1)
       dbResult.foreach{ date =>
         date.getMillis should be >= beforeCallMethodDatetime.getMillis
       }
     }
   }
 
+  test("create road address project") {
+    runWithRollback {
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val rap = RoadAddressProject(id, 1, "TestProject", "TestUser", "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", 1, 3, 5)
+      RoadAddressDAO.createRoadAddressProject(rap)
+      RoadAddressDAO.getRoadAddressProjectById(id).nonEmpty should be(true)
+    }
+  }
 }

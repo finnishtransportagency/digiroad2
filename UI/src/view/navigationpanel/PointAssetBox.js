@@ -22,7 +22,10 @@
 
     element.append(panel);
 
+    var userRoles;
+
     eventbus.on('roles:fetched', function(roles) {
+      userRoles = roles;
       if (_.contains(roles, 'operator') || _.contains(roles, 'premium')) {
         panel.append(editModeToggle.element);
       }
@@ -37,7 +40,11 @@
     };
 
     function show() {
-      editModeToggle.toggleEditMode(applicationModel.isReadOnly());
+      if ((layerName != 'massTransitStop') && editModeToggle.hasNoRolesPermission(userRoles)) {
+        editModeToggle.reset();
+      } else {
+        editModeToggle.toggleEditMode(applicationModel.isReadOnly());
+      }
       element.show();
     }
 

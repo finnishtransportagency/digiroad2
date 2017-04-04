@@ -270,10 +270,11 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
     *
     * @param trMassTransitStop
     */
-  def updateMassTransitStop(trMassTransitStop: TierekisteriMassTransitStop, overrideLiviIdOption: Option[String]): Unit ={
+  def updateMassTransitStop(trMassTransitStop: TierekisteriMassTransitStop, overrideLiviIdOption: Option[String], overrideUserNameOption: Option[String] = None): Unit ={
     val liviId = overrideLiviIdOption.getOrElse(trMassTransitStop.liviId)
+    val trStop = trMassTransitStop.copy(modifiedBy = overrideUserNameOption.getOrElse(trMassTransitStop.modifiedBy))
     logger.info("Updating stop %s in Tierekisteri".format(liviId))
-    put(serviceUrl(liviId), trMassTransitStop) match {
+    put(serviceUrl(liviId), trStop) match {
       case Some(error) => throw new TierekisteriClientException("Tierekisteri error: " + error.content.get("error").get.toString)
       case _ => ;
     }
@@ -410,7 +411,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
 
     val json = Serialization.write(jsonObj ++ stopType)
     // Print JSON sent to Tierekisteri for testing purposes
-    //println(json)
+    logger.info("Stop in JSON: %s".format(json))
 
     new StringEntity(json, ContentType.APPLICATION_JSON)
   }

@@ -519,10 +519,10 @@ trait MassTransitStopService extends PointAssetOperations {
     val tierekisteriLiviId = MassTransitStopOperations.liviIdValueOption(persistedStop.propertyData).map(_.propertyValue) // Using the saved LiviId if any
     val modifiedAsset = fetchPointAssets(withId(id)).headOption // Reload from database
     if(tierekisteriOperation == Operation.Expire){
-      executeTierekisteriOperation(tierekisteriOperation, modifiedAsset.get, { _ => Some(roadLink) }, tierekisteriLiviId)
-      convertPersistedStopWithPropertiesAndPublishEvent(modifiedAsset, { _ => Some(roadLink) }, Operation.Noop, tierekisteriLiviId)
+      executeTierekisteriOperation(tierekisteriOperation, modifiedAsset.get, { _ => Some(roadLink) }, tierekisteriLiviId, Some(username))
+      convertPersistedStopWithPropertiesAndPublishEvent(modifiedAsset, { _ => Some(roadLink) }, Operation.Noop, tierekisteriLiviId, Some(username))
     } else {
-      convertPersistedStopWithPropertiesAndPublishEvent(modifiedAsset, { _ => Some(roadLink) }, tierekisteriOperation, tierekisteriLiviId)
+      convertPersistedStopWithPropertiesAndPublishEvent(modifiedAsset, { _ => Some(roadLink) }, tierekisteriOperation, tierekisteriLiviId, Some(username))
     }
   }
 
@@ -585,7 +585,7 @@ trait MassTransitStopService extends PointAssetOperations {
       val propsWithAdminClass = properties.filterNot(_.publicId == MassTransitStopOperations.MassTransitStopAdminClassPublicId) ++ Seq(newAdminClassProperty)
       val liviId = overWriteLiViIdentifierProperty(assetId, nationalId, propsWithAdminClass, administrativeClass)
       val operation = if (MassTransitStopOperations.isStoredInTierekisteri(propsWithAdminClass, administrativeClass)) Operation.Create else Operation.Noop
-      getPersistedStopWithPropertiesAndPublishEvent(assetId, fetchRoadLink, operation, liviId.map(_.values.head.propertyValue))
+      getPersistedStopWithPropertiesAndPublishEvent(assetId, fetchRoadLink, operation, liviId.map(_.values.head.propertyValue), Some(username))
     }
     else
       throw new IllegalArgumentException
@@ -603,15 +603,15 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 
   private def getPersistedStopWithPropertiesAndPublishEvent(assetId: Long, roadLinkByLinkId: Long => Option[RoadLinkLike],
-                                                            operation: Operation, liviId: Option[String]): MassTransitStopWithProperties = {
+                                                            operation: Operation, liviId: Option[String], username: Option[String]): MassTransitStopWithProperties = {
     // TODO: use already loaded asset
-    convertPersistedStopWithPropertiesAndPublishEvent(fetchPointAssets(withId(assetId)).headOption, roadLinkByLinkId, operation, liviId)
+    convertPersistedStopWithPropertiesAndPublishEvent(fetchPointAssets(withId(assetId)).headOption, roadLinkByLinkId, operation, liviId, username)
   }
 
   private def convertPersistedStopWithPropertiesAndPublishEvent(persistedStop: Option[PersistedMassTransitStop], roadLinkByLinkId: Long => Option[RoadLinkLike],
-                                                            operation: Operation, liviId: Option[String]): MassTransitStopWithProperties = {
+                                                            operation: Operation, liviId: Option[String], username: Option[String]): MassTransitStopWithProperties = {
     persistedStop.foreach { stop =>
-      executeTierekisteriOperation(operation, stop, roadLinkByLinkId, liviId)
+      executeTierekisteriOperation(operation, stop, roadLinkByLinkId, liviId, username)
 
       val municipalityName = massTransitStopDao.getMunicipalityNameByCode(stop.municipalityCode)
       eventbus.publish("asset:saved", eventBusMassTransitStop(stop, municipalityName))
@@ -696,7 +696,7 @@ trait MassTransitStopService extends PointAssetOperations {
     }
   }
 
-  def executeTierekisteriOperation(operation: Operation, persistedStop: PersistedMassTransitStop, roadLinkByLinkId: Long => Option[RoadLinkLike], overrideLiviId: Option[String]) = {
+  def executeTierekisteriOperation(operation: Operation, persistedStop: PersistedMassTransitStop, roadLinkByLinkId: Long => Option[RoadLinkLike], overrideLiviId: Option[String], username: Option[String] = None) = {
     if (operation != Operation.Noop) {
       val roadLink = roadLinkByLinkId.apply(persistedStop.linkId)
       val road = roadLink.flatMap(_.roadNumber
@@ -713,7 +713,7 @@ trait MassTransitStopService extends PointAssetOperations {
       operation match {
         case Create => tierekisteriClient.createMassTransitStop(newTierekisteriMassTransitStop)
         case Update => tierekisteriClient.updateMassTransitStop(newTierekisteriMassTransitStop, overrideLiviId)
-        case Expire => tierekisteriClient.updateMassTransitStop(newTierekisteriMassTransitStop, overrideLiviId)
+        case Expire => tierekisteriClient.updateMassTransitStop(newTierekisteriMassTransitStop, overrideLiviId, username)
         case Remove => tierekisteriClient.deleteMassTransitStop(overrideLiviId.getOrElse(newTierekisteriMassTransitStop.liviId))
         case Noop =>
       }
@@ -757,7 +757,7 @@ trait MassTransitStopService extends PointAssetOperations {
     if (tierekisteriClient.isTREnabled) {
       val (address, roadSide) = geometryTransform.resolveAddressAndLocation(Point(persistedStop.lon, persistedStop.lat), persistedStop.bearing.get)
       val updatedTierekisteriMassTransitStop = TierekisteriBusStopMarshaller.toTierekisteriMassTransitStop(persistedStop, address, Option(roadSide), Option(expireDate))
-      tierekisteriClient.updateMassTransitStop(updatedTierekisteriMassTransitStop, None)
+      tierekisteriClient.updateMassTransitStop(updatedTierekisteriMassTransitStop, None, Some(username))
     }
   }
 }

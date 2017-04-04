@@ -11,10 +11,9 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.JsonSerializer
 import fi.liikennevirasto.digiroad2.vallu.ValluSender
-import fi.liikennevirasto.viite.{RoadAddressMerge, RoadAddressService}
-import fi.liikennevirasto.viite.dao.{MissingRoadAddress, RoadAddress}
-import fi.liikennevirasto.viite.model.RoadAddressLink
+import fi.liikennevirasto.viite.dao.MissingRoadAddress
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
+import fi.liikennevirasto.viite.{RoadAddressMerge, RoadAddressService}
 import org.apache.http.impl.client.HttpClientBuilder
 
 class ValluActor extends Actor {
@@ -102,6 +101,11 @@ object Digiroad2Context {
     props.load(getClass.getResourceAsStream("/digiroad2.properties"))
     props
   }
+  lazy val revisionInfo: Properties = {
+    val props = new Properties()
+      props.load(getClass.getResourceAsStream("/revision.properties"))
+    props
+  }
 
   val system = ActorSystem("Digiroad2")
 
@@ -176,6 +180,12 @@ object Digiroad2Context {
 
   lazy val roadLinkService: RoadLinkService = {
     new RoadLinkService(vvhClient, eventbus, new JsonSerializer)
+  }
+  lazy val revision: String = {
+    revisionInfo.getProperty("digiroad2.revision")
+  }
+  lazy val deploy_date: String = {
+    revisionInfo.getProperty("digiroad2.latestDeploy")
   }
 
   lazy val massTransitStopService: MassTransitStopService = {

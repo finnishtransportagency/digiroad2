@@ -111,9 +111,14 @@
   };
 
   var distanceOfPoints = function (end, start) {
-    return Math.sqrt(Math.pow(end[0] - start[0], 2) + Math.pow(end[1] - start[1], 2));
+    return Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
   };
   root.distanceOfPoints = distanceOfPoints;
+
+  var vectorialDistanceOfPoints = function (end, start) {
+    return Math.sqrt(Math.pow(end[0] - start[0], 2) + Math.pow(end[1] - start[1], 2));
+  };
+  root.vectorialDistanceOfPoints = vectorialDistanceOfPoints;
 
   var radiansToDegrees = function (radians) {
     return radians * (180 / Math.PI);
@@ -132,7 +137,7 @@
     var firstVertex = _.first(vertices);
     var optionalMidpoint = _.reduce(_.tail(vertices), function (acc, vertex) {
       if (acc.midpoint) return acc;
-      var distance = distanceOfPoints(vertex, acc.previousVertex);
+      var distance = vectorialDistanceOfPoints(vertex, acc.previousVertex);
       var accumulatedDistance = acc.distanceTraversed + distance;
       if (accumulatedDistance < length / 2) {
         return {previousVertex: vertex, distanceTraversed: accumulatedDistance};
@@ -156,5 +161,18 @@
     var openlayersPoints = _.map(points, function(point) { return new OpenLayers.Geometry.Point(point.x, point.y); });
     return new OpenLayers.Geometry.LineString(openlayersPoints);
   };
+
+  root.areAdjacents = function(geometry1, geometry2){
+    var epsilon = 0.01;
+    var geom1FirstPoint = _.first(geometry1);
+    var geom1LastPoint = _.last(geometry1);
+    var geom2FirstPoint = _.first(geometry2);
+    var geom2LastPoint = _.last(geometry2);
+    return distanceOfPoints(geom2FirstPoint, geom1FirstPoint) < epsilon ||
+      distanceOfPoints(geom2LastPoint, geom1FirstPoint) < epsilon ||
+      distanceOfPoints(geom2FirstPoint,geom1LastPoint) < epsilon ||
+      distanceOfPoints(geom2LastPoint,geom1LastPoint) < epsilon;
+  };
+  
 })(window.GeometryUtils = window.GeometryUtils || {});
 

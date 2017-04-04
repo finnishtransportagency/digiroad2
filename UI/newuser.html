@@ -4,19 +4,53 @@
     <script type="text/javascript" src="bower_components/jquery/dist/jquery.min.js"></script>
     <script type="text/javascript" src="bower_components/jquery-migrate/jquery-migrate.min.js"></script>
     <script type="text/javascript" src="bower_components/lodash/lodash.min.js"></script>
+    <script type="text/javascript" src="src/modalconfirm/GenericConfirmPopup.js"></script>
 
     <script type="text/javascript">
-        function getParameterByName(name) {
-            name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
-            var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
-                    results = regex.exec(location.search);
-            return results == null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+
+        function showHideInfo() {
+            if ($("select[name='roleName']").val() == "serviceRoadMaintainer")
+                $(".authArea").show();
+            else
+                $(".authArea").hide();
         }
 
-        function showCreatedUser() {
-            var userName = getParameterByName('username')
-            if (userName) {
-                alert('Uusi käyttäjä "' + getParameterByName('username') + '" luotu');
+        function saveFormData() {
+            var username = $( "input[name=username]" ).val();
+            $.ajax({
+                //verify if user already exist, if exists open a confirm popup (ok -> update) , in case of error NotFound(404) insert a new user
+                url: "api/userconfig/user/" + username,
+                type: "get",
+                success: function () {
+                    new GenericConfirmPopup('Luomasi käyttäjätunnus on jo olemassa. Haluatko varmasti muuttaa käyttäjän tietoja?', {
+                        successCallback: function(){
+                            ajaxRequestPost(username, 'Käyttäjän "' + username + '" tietoja muokattu', showCreatedUser);
+                        }
+                    });
+                },
+                error: function (errorValue) {
+                    if (errorValue.status === 404) {
+                        ajaxRequestPost(username, 'Uusi käyttäjä "' + username + '" luotu', showCreatedUser);
+                    }
+                }
+            });
+            return false;
+        }
+        function ajaxRequestPost(username, successResponseValue, func) {
+            $.ajax({
+                type: "POST",
+                url: "api/userconfig/newuser",
+                data: $(".form-horizontal").serialize(),
+                success: function()
+                {
+                    func(username, successResponseValue);
+                }
+            });
+        }
+
+        function showCreatedUser(username, alertMessage) {
+            if (username) {
+                alert(alertMessage);
                 window.location.search='';
             }
         }
@@ -31,11 +65,12 @@
     <link rel="stylesheet" type="text/css" href="css/digiroad2.css">
     <title>Digiroad 2 uuden k&auml;ytt&auml;j&auml;n luominen</title>
 </head>
-<body onload="showCreatedUser()">
+<body>
     <div class="page new-user">
+        <div class="container"></div>
         <div class="content-box form-box">
             <header>Luo uusi k&auml;ytt&auml;j&auml;</header>
-            <form class="form form-horizontal" role="form" method="post" action="api/userconfig/newuser">
+            <form class="form form-horizontal" role="form" onsubmit="return saveFormData()">
                 <div class="form-group">
                     <label class="control-label">K&auml;ytt&auml;j&auml;tunnus</label>
                     <input type="text" name="username" class="form-control">
@@ -51,10 +86,30 @@
                     <span class="help-block">Esim. 091 tai 091, 092</span>
                 </div>
                 <div class="form-group">
-                    <label class="control-label">Oikeuden tyyppi</label>
-                    <select name="hasWriteAccess" class="form-control">
-                        <option value="true">Muokkausoikeus</option>
-                        <option value="false">Katseluoikeus</option>
+                    <label class="control-label">Ylläpitäjän rooli</label>
+                    <select name="roleName" class="form-control" onchange="showHideInfo()">
+                        <option value="premium">Ylläpitäjä</option>
+                        <option value="">Ei ELY-pysäkkien ylläpitäjä</option>
+                        <option value="busStopMaintainer">ELY-Joukkoliikenteen pysäkkien ylläpitäjä</option>
+                        <option value="operator">Operaattori</option>
+                        <option value="serviceRoadMaintainer">Huoltoteiden ylläpitäjä</option>
+                    </select>
+                </div>
+                <div class="form-group authArea" style="display:none">
+                    <label class="control-label">Ylläpitoalue</label>
+                    <select name="authorizationArea" class="form-control">
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                        <option value="9">9</option>
+                        <option value="10">10</option>
+                        <option value="11">11</option>
+                        <option value="12">12</option>
                     </select>
                 </div>
                 <div class="form-group form-controls">

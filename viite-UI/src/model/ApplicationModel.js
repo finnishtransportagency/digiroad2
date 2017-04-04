@@ -10,6 +10,32 @@
     var minEditModeZoomLevel = zoomlevels.minZoomForEditMode;
     var readOnly = true;
     var activeButtons = false;
+    var continueButton = false;
+    var actionCalculating = 0;
+    var actionCalculated = 1;
+    var currentAction;
+    var selectionType = 'all';
+
+    var getSelectionType = function (){
+      return selectionType;
+    };
+
+    var getContinueButtons = function(){
+      return continueButton;
+    };
+
+    var toggleSelectionTypeAll = function () {
+      selectionType = 'all';
+    };
+
+    var toggleSelectionTypeFloating = function(){
+      selectionType = 'floating';
+    };
+
+    var toggleSelectionTypeUnknown = function (){
+      selectionType = 'unknown';
+    };
+
     var setReadOnly = function(newState) {
       if (readOnly !== newState) {
         readOnly = newState;
@@ -24,6 +50,13 @@
         eventbus.trigger('application:activeButtons', newState);
       }
     };
+    var setContinueButton = function(newState){
+      if(continueButton !== newState){
+        continueButton = newState;
+        eventbus.trigger('application:valintaActive', newState);
+      }
+    };
+
     var roadTypeShown = true;
     var isDirty = function() {
       return _.any(models, function(model) { return model.isDirty(); });
@@ -39,7 +72,32 @@
       }
     }
 
+    var getCurrentAction = function() {
+      return currentAction;
+    };
+
+    var setCurrentAction = function(action) {
+      currentAction = action;
+    };
+
+    var resetCurrentAction = function(){
+      currentAction = null;
+    };
+
+    var addSpinner = function () {
+      jQuery('.container').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
+    };
+
+    var removeSpinner = function(){
+      jQuery('.spinner-overlay').remove();
+    };
+
     return {
+      getCurrentAction: getCurrentAction,
+      setCurrentAction: setCurrentAction,
+      resetCurrentAction: resetCurrentAction,
+      actionCalculating: actionCalculating,
+      actionCalculated: actionCalculated,
       moveMap: function(zoom, bbox, center) {
         var hasZoomLevelChanged = zoom.level !== zoom;
         setZoomLevel(zoom);
@@ -70,11 +128,18 @@
       },
       setReadOnly: setReadOnly,
       setActiveButtons: setActiveButtons,
+      setContinueButton: setContinueButton,
+      getContinueButtons: getContinueButtons,
+      addSpinner: addSpinner,
+      removeSpinner: removeSpinner,
       isReadOnly: function() {
         return readOnly;
       },
       isActiveButtons: function() {
-          return activeButtons;
+        return activeButtons;
+      },
+      isContinueButton: function() {
+        return continueButton;
       },
       isDirty: function() {
         return isDirty();
@@ -82,9 +147,9 @@
       canZoomOut: function() {
         return !(isDirty() && (zoom.level <= minDirtyZoomLevel));
       },
-        canZoomOutEditMode: function () {
-          return (zoom.level > minEditModeZoomLevel && !readOnly && activeButtons) ||  (!readOnly && !activeButtons) || (readOnly) ;
-        },
+      canZoomOutEditMode: function () {
+        return (zoom.level > minEditModeZoomLevel && !readOnly && activeButtons) ||  (!readOnly && !activeButtons) || (readOnly) ;
+      },
       assetDragDelay: 100,
       assetGroupingDistance: 36,
       setRoadTypeShown: function(bool) {
@@ -98,7 +163,11 @@
       },
       getCurrentLocation: function() {
         return centerLonLat;
-      }
+      },
+      getSelectionType: getSelectionType,
+      toggleSelectionTypeAll: toggleSelectionTypeAll,
+      toggleSelectionTypeFloating: toggleSelectionTypeFloating,
+      toggleSelectionTypeUnknown: toggleSelectionTypeUnknown
     };
   };
 })(this);

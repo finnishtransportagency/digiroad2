@@ -183,7 +183,7 @@ object Queries {
     join property p on p.asset_type_id = a.id
     join enumerated_value e on e.property_id = p.id
     join localized_string ls on ls.id = p.name_localized_string_id
-    where p.property_type = 'single_choice' or p.property_type = 'multiple_choice' and a.id = ?"""
+    where (p.property_type = 'single_choice' or p.property_type = 'multiple_choice') and a.id = ?"""
 
   def getEnumeratedPropertyValues(assetTypeId: Long): Seq[EnumeratedPropertyValue] = {
     Q.query[Long, EnumeratedPropertyValueRow](enumeratedPropertyValues).apply(assetTypeId).list.groupBy(_.propertyId).map { case (k, v) =>
@@ -235,6 +235,13 @@ object Queries {
     sql"""
       select id from municipality
     """.as[Int].list
+  }
+
+  def getMunicipalitiesWithoutAhvenanmaa: Seq[Int] = {
+    //The road_maintainer_id of Ahvenanmaa is 0
+    sql"""
+      select id from municipality where ROAD_MAINTAINER_ID != 0
+      """.as[Int].list
   }
 
   def getMunicipalitiesByEly(elyNro: Int): Seq[Int] = {
