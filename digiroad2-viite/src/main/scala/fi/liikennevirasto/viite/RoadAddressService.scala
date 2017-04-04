@@ -552,11 +552,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     transferRoadAddress(sourceLinks, targetLinks, user)
   }
 
-  def transferFloatingToGap(sourceIds: Set[Long], targetIds: Set[Long], roadAddresses: Seq[RoadAddress]) = {
+  def transferFloatingToGap(sourceIds: Set[Long], targetIds: Set[Long], roadAddresses: Seq[RoadAddress], user: User) = {
     withDynTransaction {
       RoadAddressDAO.expireRoadAddresses(sourceIds)
       RoadAddressDAO.expireMissingRoadAddresses(targetIds)
-      RoadAddressDAO.create(roadAddresses)
+      RoadAddressDAO.create(roadAddresses, user.username.toString)
     }
   }
 
