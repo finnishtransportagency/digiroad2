@@ -47,9 +47,13 @@
 
   var startApplication = function(backend, models, withTileMaps, startupParameters) {
     setupProjections();
-    var map = setupMap(backend, models, withTileMaps, startupParameters);
-    new URLRouter(map, backend, models);
-    eventbus.trigger('application:initialized');
+    fetch('components/WMTSCapabilities.xml').then(function(response) {
+      return response.text();
+    }).then(function(arcConfig) {
+      var map = setupMap(backend, models, withTileMaps, startupParameters, arcConfig);
+      new URLRouter(map, backend, models);
+      eventbus.trigger('application:initialized');
+    });
   };
 
   var localizedStrings;
@@ -83,55 +87,29 @@
     eventbus.on('confirm:show', function() { new Confirm(); });
   };
 
-  var createOpenLayersMap = function(startupParameters) {
-    var map = new OpenLayers.Map({
-      controls: [],
-      units: 'm',
-      maxExtent: new OpenLayers.Bounds(-548576, 6291456, 1548576, 8388608),
-      resolutions: [2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1, 0.5, 0.25, 0.125, 0.0625],
-      projection: 'EPSG:3067',
-      isBaseLayer: true,
-      center: new OpenLayers.LonLat(startupParameters.lon, startupParameters.lat),
-      fallThrough: true,
-      theme: null,
-      zoomMethod: null
+  var createOpenLayersMap = function(startupParameters, layers) {
+    var map = new ol.Map({
+      target: 'mapdiv',
+      layers: layers,
+      view: new ol.View({
+        center: [startupParameters.lon, startupParameters.lat],
+        projection: 'EPSG:3067',
+        zoom: startupParameters.zoom,
+        resolutions: [2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1, 0.5, 0.25, 0.125, 0.0625]
+      })
     });
-    var base = new OpenLayers.Layer("BaseLayer", {
-      layerId: 0,
-      isBaseLayer: true,
-      displayInLayerSwitcher: false
-    });
-    map.addLayer(base);
-    map.render('mapdiv');
-    map.zoomTo(startupParameters.zoom);
+    map.setProperties({extent : [-548576, 6291456, 1548576, 8388608]});
     return map;
   };
 
-  var setupMap = function(backend, models, withTileMaps, startupParameters) {
-    var map = createOpenLayersMap(startupParameters);
+  var setupMap = function(backend, models, withTileMaps, startupParameters, arcConfig) {
+    var tileMaps = new TileMapCollection(map, arcConfig);
 
-    var NavigationControl = OpenLayers.Class(OpenLayers.Control.Navigation, {
-      wheelDown: function(evt, delta) {
-        if (applicationModel.canZoomOut() && applicationModel.canZoomOutEditMode()) {
-          return OpenLayers.Control.Navigation.prototype.wheelDown.apply(this,arguments);
-        } else {
-          new Confirm();
-        }
-      }
-    });
-
-    map.addControl(new NavigationControl());
+    var map = createOpenLayersMap(startupParameters, tileMaps.layers);
 
     var mapOverlay = new MapOverlay($('.container'));
-
-    if (withTileMaps) {
-      // $.get('arcgis/rest/services/Taustakartat/Harmaasavy/MapServer?f=json', function (data) {
-      //   new TileMapCollection(map, data);
-      // });
-      // TODO: Use arcgis json data
-      new TileMapCollection(map, "");
-    }
-    var roadLayer = new RoadLayer(map, models.roadCollection);
+    var styler = new Styler();
+    var roadLayer = new RoadLayer3(map, models.roadCollection,styler);
 
     new LinkPropertyForm(models.selectedLinkProperty);
 
@@ -139,7 +117,7 @@
 
     var layers = _.merge({
       road: roadLayer,
-      linkProperty: new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel)});
+      linkProperty: new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel, styler)});
 
     var mapPluginsContainer = $('#map-plugins');
     new ScaleBar(map, mapPluginsContainer);
@@ -158,7 +136,7 @@
 
     new MapView(map, layers, new InstructionsPopup($('.digiroad2')));
 
-    applicationModel.moveMap(map.getZoom(), map.getExtent());
+    applicationModel.moveMap(map.getView().getZoom(), map.getLayers().getArray()[0].getExtent());
 
     return map;
   };

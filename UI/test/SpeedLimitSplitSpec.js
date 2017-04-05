@@ -20,6 +20,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
   };
 
   describe('splitting speed limit that has non zero start measure', function() {
+    this.timeout(1500000);
     before(function (done) {
       splitBackendCalls = [];
 
@@ -32,14 +33,17 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
         openLayersMap = map;
         testHelpers.selectLayer('speedLimit');
         testHelpers.clickVisibleEditModeButton();
-        done();
+        $('.speed-limits .action.cut').click();
+        var coordinate = [0.0, 110.0];
+        testHelpers.getPixelFromCoordinateAsync(openLayersMap, coordinate, function(pixel){
+          openLayersMap.dispatchEvent({ type: 'singleclick', coordinate: coordinate, pixel: pixel });
+          $('select.speed-limit-a option[value="100"]').prop('selected', true).change();
+          $('.speed-limit .save.btn').click();
+          done();
+        });
+
       }, backend);
 
-      $('.speed-limits .action.cut').click();
-      var pixel = openLayersMap.getPixelFromLonLat(new OpenLayers.LonLat(0.0, 110.0));
-      openLayersMap.events.triggerEvent('click', {target: {}, srcElement: {}, xy: {x: pixel.x, y: pixel.y}});
-      $('select.speed-limit-a option[value="100"]').prop('selected', true).change();
-      $('.speed-limit .save.btn').click();
     });
 
     it('takes the start measure into consideration on split measure', function() {
@@ -51,6 +55,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
   });
 
   describe('when loading application in edit mode with speed limit data', function() {
+    this.timeout(1500000);
     before(function (done) {
       splitBackendCalls = [];
       testHelpers.restartApplication(function(map) {
@@ -70,9 +75,12 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
       });
 
       describe('and cutting a speed limit', function() {
-        before(function () {
-          var pixel = openLayersMap.getPixelFromLonLat(new OpenLayers.LonLat(0.0, 40.0));
-          openLayersMap.events.triggerEvent('click', {target: {}, srcElement: {}, xy: {x: pixel.x, y: pixel.y}});
+        before(function (done) {
+          var coordinate = [0.0, 40.0];
+          testHelpers.getPixelFromCoordinateAsync(openLayersMap, coordinate, function(pixel){
+            openLayersMap.dispatchEvent({ type: 'singleclick', coordinate: coordinate, pixel: pixel });
+            done();
+          });
         });
 
         it('the speed limit should be split into two features', function() {

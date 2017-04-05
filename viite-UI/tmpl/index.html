@@ -1,6 +1,7 @@
 <html>
 <head>
   <meta charset="utf-8">
+  <!--<link rel="stylesheet" type="text/css" href="bower_components/openlayers/css/ol.css">-->
   <link rel="stylesheet" type="text/css" href="components/theme/default/style.css">
   <link rel="stylesheet" type="text/css" href="bower_components/pikaday/css/pikaday.css">
   <link rel="stylesheet" type="text/css" href="css/viite.css">
@@ -47,7 +48,7 @@
 <script type="text/javascript" src="bower_components/bacon/dist/Bacon.js"></script>
 <script type="text/javascript" src="bower_components/bacon.jquery/dist/bacon.jquery.js"></script>
 <!-- @if NODE_ENV == 'DEVELOPMENT' -->
-<script type="text/javascript" src="components/OpenLayers.js"></script>
+<script type="text/javascript" src="components/ol3.js"></script>
 <script type="text/javascript" src="src/utils/eventbus.js"></script>
 <script type="text/javascript" src="src/utils/geometry-calculations.js"></script>
 <script type="text/javascript" src="src/utils/LocationInputParser.js"></script>
@@ -60,6 +61,8 @@
 <script type="text/javascript" src="src/view/TileMapCollection.js"></script>
 <script type="text/javascript" src="src/view/Layer.js"></script>
 <script type="text/javascript" src="src/view/RoadLayer.js"></script>
+<script type="text/javascript" src="src/view/Styler.js"></script>
+<script type="text/javascript" src="src/view/RoadLayer3.js"></script>
 <script type="text/javascript" src="src/view/RoadLayerSelectionStyle.js"></script>
 <script type="text/javascript" src="src/view/MapView.js"></script>
 <script type="text/javascript" src="src/view/MapOverlay.js"></script>
@@ -104,7 +107,7 @@
 <script type="text/javascript" src="src/main.js"></script>
 <!-- @endif -->
 <!-- @if NODE_ENV == 'PRODUCTION' -->
-<script type="text/javascript" src="components/OpenLayers.js"></script>
+<script type="text/javascript" src="bower_components/openlayers/build/OpenLayers.js"></script>
 <script type="text/javascript" src="js/viite.min.js"></script>
 <!-- @endif -->
 </body>

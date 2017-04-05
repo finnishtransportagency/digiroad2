@@ -4,17 +4,16 @@ window.SpeedLimitLayer = function(params) {
       collection = params.collection,
       selectedSpeedLimit = params.selectedSpeedLimit,
       roadLayer = params.roadLayer,
+      style = params.style,
       layerName = 'speedLimit';
   var isActive = false;
 
   Layer.call(this, layerName, roadLayer);
   this.activateSelection = function() {
-    updateMassUpdateHandlerState();
-    doubleClickSelectControl.activate();
+    selectToolControl.activate();
   };
   this.deactivateSelection = function() {
-    updateMassUpdateHandlerState();
-    doubleClickSelectControl.deactivate();
+    selectToolControl.deactivate();
   };
   this.minZoomForContent = zoomlevels.minZoomForAssets;
   this.layerStarted = function(eventListener) {
@@ -22,34 +21,40 @@ window.SpeedLimitLayer = function(params) {
     changeTool(application.getSelectedTool());
   };
   this.refreshView = function(event) {
-    vectorLayer.setVisibility(true);
-    adjustStylesByZoomLevel(map.getZoom());
-    collection.fetch(map.getExtent()).then(function() {
-      eventbus.trigger('layer:speedLimit:' + event);
-    });
+    vectorLayer.setVisible(true);
+    adjustStylesByZoomLevel(map.getView().getZoom());
+    collection.fetch(map.getView().calculateExtent(map.getSize())).then(function() {
+        eventbus.trigger('layer:speedLimit:' + event);
+      });
+    };
     if (isActive) {
       showSpeedLimitsHistory();
     }
-  };
+
   this.removeLayerFeatures = function() {
-    vectorLayer.removeAllFeatures();
-    indicatorLayer.clearMarkers();
-    vectorLayerHistory.setVisibility(false);
+      vectorLayer.getSource().clear();
+      indicatorLayer.getSource().clear();
+      vectorLayerHistory.setVisible(false);
   };
   var me = this;
 
   var SpeedLimitCutter = function(vectorLayer, collection, eventListener) {
     var scissorFeatures = [];
     var CUT_THRESHOLD = 20;
+    var vectorSource = vectorLayer.getSource();
 
     var moveTo = function(x, y) {
-      vectorLayer.removeFeatures(scissorFeatures);
-      scissorFeatures = [new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(x, y), { type: 'cutter' })];
-      vectorLayer.addFeatures(scissorFeatures);
+      scissorFeatures = [new ol.Feature({geometry: new ol.geom.Point([x, y]), type: 'cutter' })];
+      selectToolControl.removeFeatures(function(feature) {
+        return feature.getProperties().type === 'cutter';
+      });
+      selectToolControl.addNewFeature(scissorFeatures, true);
     };
 
     var remove = function() {
-      vectorLayer.removeFeatures(scissorFeatures);
+      selectToolControl.removeFeatures(function(feature) {
+        return feature.getProperties().type === 'cutter';
+      });
       scissorFeatures = [];
     };
 
@@ -75,49 +80,56 @@ window.SpeedLimitLayer = function(params) {
       eventListener.listenTo(eventbus, 'map:clicked', clickHandler);
       eventListener.listenTo(eventbus, 'map:mouseMoved', function(event) {
         if (application.getSelectedTool() === 'Cut' && !collection.isDirty()) {
-          self.updateByPosition(event.xy);
+          self.updateByPosition(event.coordinate);
         }
       });
     };
 
     var isWithinCutThreshold = function(speedLimitLink) {
-      return speedLimitLink && speedLimitLink.distance < CUT_THRESHOLD;
+      return speedLimitLink !== undefined && speedLimitLink < CUT_THRESHOLD;
     };
 
     var findNearestSpeedLimitLink = function(point) {
-      return _.chain(vectorLayer.features)
-        .filter(function(feature) { return feature.geometry instanceof OpenLayers.Geometry.LineString; })
-        .reject(function(feature) { return _.has(feature.attributes, 'generatedId') && _.flatten(collection.getGroup(feature.attributes)).length > 0; })
-        .map(function(feature) {
-          return {feature: feature,
-                  distanceObject: feature.geometry.distanceTo(point, {details: true})};
-        })
-        .sortBy(function(x) {
-          return x.distanceObject.distance;
-        })
-        .head()
-        .value();
+      return _.chain(vectorSource.getFeatures())
+          .filter(function(feature) {
+            return feature.getGeometry() instanceof ol.geom.LineString;
+          })
+          .reject(function(feature) {
+            var properties = feature.getProperties();
+            return _.has(properties, 'generatedId') && _.flatten(collection.getGroup(properties)).length > 0;
+          })
+          .map(function(feature) {
+            var closestP = feature.getGeometry().getClosestPoint(point);
+            var distanceBetweenPoints = GeometryUtils.distanceOfPoints(point, closestP);
+            return {
+              feature: feature,
+              point: closestP,
+              distance: distanceBetweenPoints
+            };
+          })
+          .sortBy(function(nearest) {
+            return nearest.distance;
+          })
+          .head()
+          .value();
     };
 
-    this.updateByPosition = function(position) {
-      var lonlat = map.getLonLatFromPixel(position);
-      var mousePoint = new OpenLayers.Geometry.Point(lonlat.lon, lonlat.lat);
+    this.updateByPosition = function(mousePoint) {
       var closestSpeedLimitLink = findNearestSpeedLimitLink(mousePoint);
       if (!closestSpeedLimitLink) {
         return;
       }
-      var distanceObject = closestSpeedLimitLink.distanceObject;
-      if (isWithinCutThreshold(distanceObject)) {
-        moveTo(distanceObject.x0, distanceObject.y0);
+      if (isWithinCutThreshold(closestSpeedLimitLink.distance)) {
+        moveTo(closestSpeedLimitLink.point[0], closestSpeedLimitLink.point[1]);
       } else {
         remove();
       }
     };
 
-    this.cut = function(point) {
+    this.cut = function(mousePoint) {
       var pointsToLineString = function(points) {
-        var openlayersPoints = _.map(points, function(point) { return new OpenLayers.Geometry.Point(point.x, point.y); });
-        return new OpenLayers.Geometry.LineString(openlayersPoints);
+        var coordPoints = _.map(points, function(point) { return [point.x, point.y]; });
+        return new ol.geom.LineString(coordPoints);
       };
 
       var calculateSplitProperties = function(nearestSpeedLimit, point) {
@@ -128,16 +140,13 @@ window.SpeedLimitLayer = function(params) {
         return _.merge({ splitMeasure: splitMeasure }, splitVertices);
       };
 
-      var pixel = new OpenLayers.Pixel(point.x, point.y);
-      var mouseLonLat = map.getLonLatFromPixel(pixel);
-      var mousePoint = new OpenLayers.Geometry.Point(mouseLonLat.lon, mouseLonLat.lat);
-      var nearest = findNearestSpeedLimitLink(mousePoint);
+      var nearest = findNearestSpeedLimitLink([mousePoint.x, mousePoint.y]);
 
-      if (!isWithinCutThreshold(nearest.distanceObject)) {
+      if (!isWithinCutThreshold(nearest.distance)) {
         return;
       }
 
-      var nearestSpeedLimit = nearest.feature.attributes;
+      var nearestSpeedLimit = nearest.feature.getProperties();
       var splitProperties = calculateSplitProperties(nearestSpeedLimit, mousePoint);
       selectedSpeedLimit.splitSpeedLimit(nearestSpeedLimit.id, splitProperties);
 
@@ -147,274 +156,89 @@ window.SpeedLimitLayer = function(params) {
 
   var uiState = { zoomLevel: 9 };
 
-  var combineFilters = function(filters) {
-    return new OpenLayers.Filter.Logical({ type: OpenLayers.Filter.Logical.AND, filters: filters });
-  };
-
-  var typeFilter = function(type) {
-    return new OpenLayers.Filter.Comparison({ type: OpenLayers.Filter.Comparison.EQUAL_TO, property: 'type', value: type });
-  };
-
-  var zoomLevelFilter = function(zoomLevel) {
-    return new OpenLayers.Filter.Function({ evaluate: function() { return uiState.zoomLevel === zoomLevel; } });
-  };
-
-  var oneWayFilter = function() {
-    return new OpenLayers.Filter.Comparison({ type: OpenLayers.Filter.Comparison.NOT_EQUAL_TO, property: 'sideCode', value: 1 });
-  };
-
-  var createZoomAndTypeDependentRule = function(type, zoomLevel, style) {
-     return new OpenLayers.Rule({
-       filter: combineFilters([typeFilter(type), zoomLevelFilter(zoomLevel)]),
-       symbolizer: style
-     });
-  };
-
-  var createZoomDependentOneWayRule = function(zoomLevel, style) {
-    return new OpenLayers.Rule({
-      filter: combineFilters([oneWayFilter(), zoomLevelFilter(zoomLevel)]),
-      symbolizer: style
-    });
-  };
-
-  var createZoomAndTypeDependentOneWayRule = function(type, zoomLevel, style) {
-    return new OpenLayers.Rule({
-      filter: combineFilters([typeFilter(type), oneWayFilter(), zoomLevelFilter(zoomLevel)]),
-      symbolizer: style
-    });
-  };
-
-  var unknownLimitStyleRule = new OpenLayers.Rule({
-    filter: typeFilter('unknown'),
-    symbolizer: { externalGraphic: 'images/speed-limits/unknown.svg' }
+  var vectorSourceHistory = new ol.source.Vector();
+  var vectorLayerHistory = new ol.layer.Vector({
+    source : vectorSourceHistory,
+    style : function(feature) {
+      return style.historyStyle.getStyle( feature, {zoomLevel: uiState.zoomLevel});
+    }
   });
 
-  var overlayStyleRule = _.partial(createZoomAndTypeDependentRule, 'overlay');
-  var overlayStyleRules = [
-    overlayStyleRule(9, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 1, strokeDashstyle: '1 6' }),
-    overlayStyleRule(10, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 3, strokeDashstyle: '1 10' }),
-    overlayStyleRule(11, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 5, strokeDashstyle: '1 15' }),
-    overlayStyleRule(12, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 8, strokeDashstyle: '1 22' }),
-    overlayStyleRule(13, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 8, strokeDashstyle: '1 22' }),
-    overlayStyleRule(14, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 12, strokeDashstyle: '1 28' }),
-    overlayStyleRule(15, { strokeOpacity: 1.0, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 12, strokeDashstyle: '1 28' })
-  ];
-
-  var oneWayOverlayStyleRule = _.partial(createZoomAndTypeDependentOneWayRule, 'overlay');
-  var oneWayOverlayStyleRules = [
-    oneWayOverlayStyleRule(9, { strokeDashstyle: '1 6' }),
-    oneWayOverlayStyleRule(10, { strokeDashstyle: '1 10' }),
-    oneWayOverlayStyleRule(11, { strokeDashstyle: '1 10' }),
-    oneWayOverlayStyleRule(12, { strokeDashstyle: '1 16' }),
-    oneWayOverlayStyleRule(13, { strokeDashstyle: '1 16' }),
-    oneWayOverlayStyleRule(14, { strokeDashstyle: '1 16' }),
-    oneWayOverlayStyleRule(15, { strokeDashstyle: '1 16' })
-  ];
-
-  var validityDirectionStyleRules = [
-    createZoomDependentOneWayRule(9, { strokeWidth: 2 }),
-    createZoomDependentOneWayRule(10, { strokeWidth: 4 }),
-    createZoomDependentOneWayRule(11, { strokeWidth: 4 }),
-    createZoomDependentOneWayRule(12, { strokeWidth: 5 }),
-    createZoomDependentOneWayRule(13, { strokeWidth: 5 }),
-    createZoomDependentOneWayRule(14, { strokeWidth: 8 }),
-    createZoomDependentOneWayRule(15, { strokeWidth: 8 })
-  ];
-
-  var speedLimitStyleLookup = {
-    20:  { strokeColor: '#00ccdd', externalGraphic: 'images/speed-limits/20.svg' },
-    30:  { strokeColor: '#ff55dd', externalGraphic: 'images/speed-limits/30.svg' },
-    40:  { strokeColor: '#11bb00', externalGraphic: 'images/speed-limits/40.svg' },
-    50:  { strokeColor: '#ff0000', externalGraphic: 'images/speed-limits/50.svg' },
-    60:  { strokeColor: '#0011bb', externalGraphic: 'images/speed-limits/60.svg' },
-    70:  { strokeColor: '#00ccdd', externalGraphic: 'images/speed-limits/70.svg' },
-    80:  { strokeColor: '#ff0000', externalGraphic: 'images/speed-limits/80.svg' },
-    90:  { strokeColor: '#ff55dd', externalGraphic: 'images/speed-limits/90.svg' },
-    100: { strokeColor: '#11bb00', externalGraphic: 'images/speed-limits/100.svg' },
-    120: { strokeColor: '#0011bb', externalGraphic: 'images/speed-limits/120.svg' }
-  };
-
-  var speedLimitFeatureSizeLookup = {
-    9: { strokeWidth: 3, pointRadius: 0 },
-    10: { strokeWidth: 5, pointRadius: 10 },
-    11: { strokeWidth: 7, pointRadius: 14 },
-    12: { strokeWidth: 10, pointRadius: 16 },
-    13: { strokeWidth: 10, pointRadius: 16 },
-    14: { strokeWidth: 14, pointRadius: 22 },
-    15: { strokeWidth: 14, pointRadius: 22 }
-  };
-
-  var typeSpecificStyleLookup = {
-    overlay: { strokeOpacity: 1.0 },
-    other: { strokeOpacity: 0.7 },
-    unknown: { strokeColor: '#000000', strokeOpacity: 0.6, externalGraphic: 'images/speed-limits/unknown.svg' },
-    cutter: { externalGraphic: 'images/cursor-crosshair.svg', pointRadius: 11.5 }
-  };
-
-  var browseStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults());
-  var browseStyleMap = new OpenLayers.StyleMap({ default: browseStyle });
-  browseStyleMap.addUniqueValueRules('default', 'value', speedLimitStyleLookup);
-  browseStyleMap.addUniqueValueRules('default', 'zoomLevel', speedLimitFeatureSizeLookup, uiState);
-  browseStyleMap.addUniqueValueRules('default', 'type', typeSpecificStyleLookup);
-  browseStyle.addRules(overlayStyleRules);
-  browseStyle.addRules(validityDirectionStyleRules);
-  browseStyle.addRules(oneWayOverlayStyleRules);
-
-  var selectionDefaultStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
-    strokeOpacity: 0.15,
-    graphicOpacity: 0.3
-  }));
-  var selectionSelectStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
-    strokeOpacity: 0.7,
-    graphicOpacity: 1.0
-  }));
-  var selectionStyle = new OpenLayers.StyleMap({
-    default: selectionDefaultStyle,
-    select: selectionSelectStyle
-  });
-  selectionStyle.addUniqueValueRules('default', 'value', speedLimitStyleLookup);
-  selectionStyle.addUniqueValueRules('default', 'zoomLevel', speedLimitFeatureSizeLookup, uiState);
-  selectionStyle.addUniqueValueRules('select', 'type', typeSpecificStyleLookup);
-  selectionDefaultStyle.addRules(overlayStyleRules);
-  selectionDefaultStyle.addRules(validityDirectionStyleRules);
-  selectionDefaultStyle.addRules(oneWayOverlayStyleRules);
-  selectionDefaultStyle.addRules([unknownLimitStyleRule]);
-
-
-  //History rules
-  var overlayStyleRuleHistory = _.partial(createZoomAndTypeDependentRule, 'overlay');
-  var overlayStyleRulesHistory = [
-    overlayStyleRuleHistory(9, { strokeOpacity: 0.5, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 1, strokeDashstyle: '1 6' }),
-    overlayStyleRuleHistory(10, { strokeOpacity: 0.5, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 1, strokeDashstyle: '1 10' }),
-    overlayStyleRuleHistory(11, { strokeOpacity: 0.5, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 2, strokeDashstyle: '1 15' }),
-    overlayStyleRuleHistory(12, { strokeOpacity: 0.5, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 4, strokeDashstyle: '1 22' }),
-    overlayStyleRuleHistory(13, { strokeOpacity: 0.5, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 4, strokeDashstyle: '1 22' }),
-    overlayStyleRuleHistory(14, { strokeOpacity: 0.5, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 5, strokeDashstyle: '1 28' }),
-    overlayStyleRuleHistory(15, { strokeOpacity: 0.5, strokeColor: '#ffffff', strokeLinecap: 'square', strokeWidth: 5, strokeDashstyle: '1 28' })
-  ];
-
-  var validityDirectionStyleRulesHistory = [
-    createZoomDependentOneWayRule(9, { strokeWidth: 0.5 }),
-    createZoomDependentOneWayRule(10, { strokeWidth: 2 }),
-    createZoomDependentOneWayRule(11, { strokeWidth: 2 }),
-    createZoomDependentOneWayRule(12, { strokeWidth: 4 }),
-    createZoomDependentOneWayRule(13, { strokeWidth: 4 }),
-    createZoomDependentOneWayRule(14, { strokeWidth: 5 }),
-    createZoomDependentOneWayRule(15, { strokeWidth: 5 })
-  ];
-
-  var speedLimitFeatureSizeLookupHistory = {
-    9: {strokeWidth: 1, pointRadius: 0},
-    10: {strokeWidth: 2, pointRadius: 10},
-    11: {strokeWidth: 4, pointRadius: 12},
-    12: {strokeWidth: 5, pointRadius: 13},
-    13: {strokeWidth: 5, pointRadius: 14},
-    14: {strokeWidth: 7, pointRadius: 16},
-    15: {strokeWidth: 12, pointRadius: 16}
-  };
-
-  var typeSpecificStyleLookupHistory = {
-    overlay: { strokeOpacity: 0.8 },
-    other: { strokeOpacity: 0.5 },
-    unknown: { strokeColor: '#000000', strokeOpacity: 0.6, externalGraphic: 'images/speed-limits/unknown.svg' },
-    cutter: { externalGraphic: 'images/cursor-crosshair.svg', pointRadius: 11.5 }
-  };
-
-  var historyStyle = new OpenLayers.Style(OpenLayers.Util.applyDefaults({
-    strokeOpacity: 0.15,
-    graphicOpacity: 0.3
-  }));
-  var historyStyleMap = new OpenLayers.StyleMap({ default: historyStyle });
-  historyStyleMap.addUniqueValueRules('default', 'value', speedLimitStyleLookup);
-  historyStyleMap.addUniqueValueRules('default', 'zoomLevel', speedLimitFeatureSizeLookupHistory, uiState);
-  historyStyleMap.addUniqueValueRules('default', 'type', typeSpecificStyleLookupHistory);
-  historyStyle.addRules(overlayStyleRulesHistory);
-  historyStyle.addRules(validityDirectionStyleRulesHistory);
-  historyStyle.addRules(oneWayOverlayStyleRules);
-
-  var vectorLayerHistory = new OpenLayers.Layer.Vector(layerName, { styleMap: historyStyleMap});
   vectorLayerHistory.setOpacity(1);
-  vectorLayerHistory.setVisibility(false);
+  vectorLayerHistory.setVisible(false);
 
-  var vectorLayer = new OpenLayers.Layer.Vector(layerName, { styleMap: browseStyleMap });
+  var vectorSource = new ol.source.Vector();
+  var vectorLayer = new ol.layer.Vector({
+    source : vectorSource,
+    style : function(feature) {
+      return style.browsingStyle.getStyle( feature, {zoomLevel: uiState.zoomLevel});
+    }
+  });
+  vectorLayer.set('name', layerName);
   vectorLayer.setOpacity(1);
-  vectorLayer.setVisibility(false);
+  vectorLayer.setVisible(false);
   map.addLayer(vectorLayer);
 
-  var indicatorLayer = new OpenLayers.Layer.Boxes('adjacentLinkIndicators');
+  var indicatorVector = new ol.source.Vector({});
+  var indicatorLayer = new ol.layer.Vector({
+    source : indicatorVector
+  });
   map.addLayer(indicatorLayer);
+  indicatorLayer.setVisible(false);
 
   var speedLimitCutter = new SpeedLimitCutter(vectorLayer, collection, me.eventListener);
 
-  var highlightMultipleSpeedLimitFeatures = function() {
-    var partitioned = _.groupBy(vectorLayer.features, function(feature) {
-      return selectedSpeedLimit.isSelected(feature.attributes);
-    });
-    var selected = partitioned[true];
-    var unSelected = partitioned[false];
-    _.each(selected, function(feature) { selectControl.highlight(feature); });
-    _.each(unSelected, function(feature) { selectControl.unhighlight(feature); });
-  };
-
-  var highlightSpeedLimitFeatures = function() {
-    highlightMultipleSpeedLimitFeatures();
-  };
-
-  var setSelectionStyleAndHighlightFeature = function() {
-    vectorLayer.styleMap = selectionStyle;
-    highlightSpeedLimitFeatures();
-    vectorLayer.redraw();
-  };
-
-  var speedLimitOnSelect = function(feature) {
-    selectedSpeedLimit.open(feature.attributes, feature.singleLinkSelect);
-    setSelectionStyleAndHighlightFeature();
-  };
-
-  var speedLimitOnUnselect = function() {
-    if (selectedSpeedLimit.exists()) {
-      selectedSpeedLimit.close();
+  var OnSelect = function(evt) {
+    if(evt.selected.length !== 0) {
+      selectedSpeedLimit.open(evt.selected[0].getProperties(), true);
+      selectSpeedLimit(evt.selected[0].getProperties());
+    }else{
+      if (selectedSpeedLimit.exists()) {
+        selectToolControl.clear();
+        selectedSpeedLimit.close();
+      }
     }
   };
 
-  var selectControl = new OpenLayers.Control.SelectFeature(vectorLayer, {
-    onSelect: speedLimitOnSelect,
-    onUnselect: speedLimitOnUnselect
+  var selectToolControl = new SelectToolControl(application, vectorLayer, map, {
+    style: function(feature){ return style.browsingStyle.getStyle(feature, {zoomLevel: uiState.zoomLevel}); },
+    onDragEnd: onDragEnd,
+    onSelect: OnSelect,
+    filterGeometry: function(feature) { return true; }
   });
-  map.addControl(selectControl);
-  var doubleClickSelectControl = new DoubleClickSelectControl(selectControl, map);
 
-  var massUpdateHandler = new LinearAssetMassUpdate(map, vectorLayer, selectedSpeedLimit, function(speedLimits) {
+  function onDragEnd(speedLimits) {
+    if (selectedSpeedLimit.isDirty()) {
+      displayConfirmMessage();
+    } else {
+      if (speedLimits.length > 0) {
+        selectedSpeedLimit.close();
+        showDialog(speedLimits);
+      }
+    }
+  }
+  var showDialog = function (speedLimits) {
     activateSelectionStyle(speedLimits);
 
-    SpeedLimitMassUpdateDialog.show({
-      count: selectedSpeedLimit.count(),
-      onCancel: cancelSelection,
-      onSave: function(newSpeedLimit) {
-        selectedSpeedLimit.saveMultiple(newSpeedLimit);
-        activateBrowseStyle();
-        selectedSpeedLimit.closeMultiple();
-      }
-    });
-  });
+    selectToolControl.addSelectionFeatures(style.renderFeatures(selectedSpeedLimit.get()));
 
-  function cancelSelection() {
-    selectedSpeedLimit.closeMultiple();
-    activateBrowseStyle();
-    collection.fetch(map.getExtent());
-  }
-
-  var handleSpeedLimitUnSelected = function(selection) {
-    _.each(_.filter(vectorLayer.features, function(feature) {
-      return selection.isSelected(feature.attributes);
-    }), function(feature) {
-      selectControl.unhighlight(feature);
-    });
-
-    vectorLayer.styleMap = browseStyleMap;
-    vectorLayer.redraw();
-    me.eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
+       SpeedLimitMassUpdateDialog.show({
+       count: selectedSpeedLimit.count(),
+       onCancel: cancelSelection,
+       onSave: function(newSpeedLimit) {
+         selectedSpeedLimit.saveMultiple(newSpeedLimit);
+         selectToolControl.clear();
+         selectedSpeedLimit.closeMultiple();
+       },
+         validator: selectedSpeedLimit.validator,
+         formElements: params.formElements
+   });
   };
+  function cancelSelection() {
+    selectToolControl.clear();
+    selectedSpeedLimit.closeMultiple();
+    collection.fetch(map.getView().calculateExtent(map.getSize()));
+  }
 
   var update = function(zoom, boundingBox) {
     if (zoomlevels.isInAssetZoomLevel(zoom)) {
@@ -428,55 +252,29 @@ window.SpeedLimitLayer = function(params) {
 
   var adjustStylesByZoomLevel = function(zoom) {
     uiState.zoomLevel = zoom;
-    vectorLayer.redraw();
-    vectorLayerHistory.setVisibility(true);
+    vectorLayerHistory.setVisible(true);
   };
 
   var changeTool = function(tool) {
     if (tool === 'Cut') {
-      doubleClickSelectControl.deactivate();
+      selectToolControl.deactivate();
       speedLimitCutter.activate();
     } else if (tool === 'Select') {
       speedLimitCutter.deactivate();
-      doubleClickSelectControl.activate();
+      selectToolControl.activate();
     }
-    updateMassUpdateHandlerState();
-  };
-
-  var updateMassUpdateHandlerState = function() {
-    if (!application.isReadOnly() &&
-        application.getSelectedTool() === 'Select' &&
-        application.getSelectedLayer() === layerName) {
-      massUpdateHandler.activate();
-    } else {
-      massUpdateHandler.deactivate();
-    }
-  };
-
-  var activateBrowseStyle = function() {
-    _.each(vectorLayer.features, function(feature) {
-      selectControl.unhighlight(feature);
-    });
-    vectorLayer.styleMap = browseStyleMap;
-    vectorLayer.redraw();
   };
 
   var activateSelectionStyle = function(selectedSpeedLimits) {
-    vectorLayer.styleMap = selectionStyle;
     selectedSpeedLimit.openMultiple(selectedSpeedLimits);
-    highlightMultipleSpeedLimitFeatures();
-    vectorLayer.redraw();
   };
 
   var bindEvents = function(eventListener) {
     eventListener.listenTo(eventbus, 'speedLimits:fetched', redrawSpeedLimits);
     eventListener.listenTo(eventbus, 'tool:changed', changeTool);
-    eventListener.listenTo(eventbus, 'speedLimit:selected speedLimit:multiSelected', handleSpeedLimitSelected);
     eventListener.listenTo(eventbus, 'speedLimit:saved speedLimits:massUpdateSucceeded', handleSpeedLimitSaved);
     eventListener.listenTo(eventbus, 'speedLimit:valueChanged speedLimit:separated', handleSpeedLimitChanged);
     eventListener.listenTo(eventbus, 'speedLimit:cancelled speedLimit:saved', handleSpeedLimitCancelled);
-    eventListener.listenTo(eventbus, 'speedLimit:unselect', handleSpeedLimitUnSelected);
-    eventListener.listenTo(eventbus, 'application:readOnly', updateMassUpdateHandlerState);
     eventListener.listenTo(eventbus, 'speedLimit:selectByLinkId', selectSpeedLimitByLinkId);
     eventListener.listenTo(eventbus, 'speedLimits:massUpdateFailed', cancelSelection);
     eventListener.listenTo(eventbus, 'speedLimits:drawSpeedLimitsHistory', drawSpeedLimitsHistory);
@@ -485,110 +283,136 @@ window.SpeedLimitLayer = function(params) {
   };
 
   var showSpeedLimitsHistory = function() {
-    collection.fetchHistory(map.getExtent());
+    collection.fetchHistory(map.getView().calculateExtent(map.getSize()));
   };
 
   var hideSpeedLimitsHistory = function() {
-    vectorLayerHistory.setVisibility(false);
+    vectorLayerHistory.setVisible(false);
     isActive = false;
-    vectorLayerHistory.removeAllFeatures();
+    vectorLayerHistory.getSource().clear();
+  };
+
+  var indexOf = function (layers, layer) {
+    var length = layers.getLength();
+    for (var i = 0; i < length; i++) {
+      if (layer === layers.item(i)) {
+        return i;
+      }
+    }
+    return -1;
   };
 
   var drawSpeedLimitsHistory = function (historySpeedLimitChains) {
     isActive = true;
-    map.addLayer(vectorLayerHistory);
-    var roadLinksLayerIndex = map.layers.indexOf(_.find(map.layers, {name: 'road'} ));
-    map.setLayerIndex(vectorLayerHistory, roadLinksLayerIndex - 1);
+    vectorLayerHistory.set('name', layerName);
+
+    var roadLinksLayerIndex = indexOf(map.getLayers(),_.find(map.getLayers().getArray(), function(item){ return item.get('name') == 'road';}));
+    map.getLayers().setAt(roadLinksLayerIndex - 1, vectorLayerHistory);
     var historySpeedLimits = _.flatten(historySpeedLimitChains);
+
     drawSpeedLimits(historySpeedLimits, vectorLayerHistory);
   };
 
-  var handleSpeedLimitSelected = function(selectedSpeedLimit) {
-    setSelectionStyleAndHighlightFeature();
+  var selectSpeedLimitByLinkId = function(linkId) {
+    var feature = _.filter(vectorLayer.getSource().getFeatures(), function(feature) { return feature.getProperties().linkId === linkId; });
+    if (feature) {
+      selectToolControl.addSelectionFeatures(feature);
+    }
   };
 
-  var selectSpeedLimitByLinkId = function(linkId) {
-    var feature = _.find(vectorLayer.features, function(feature) { return feature.attributes.linkId === linkId; });
-    if (feature) {
-      selectControl.select(feature);
+  var selectSpeedLimit = function(feature) {
+    var features = _.filter(vectorLayer.getSource().getFeatures(), function(item) {
+        return item.getProperties().id === feature.id && item.getProperties().linkId === feature.linkId ;
+    });
+    if (features) {
+        selectToolControl.addSelectionFeatures(features);
     }
   };
 
   var handleSpeedLimitSaved = function() {
-    collection.fetch(map.getExtent());
+    collection.fetch(map.getView().calculateExtent(map.getSize()));
     applicationModel.setSelectedTool('Select');
   };
 
   var displayConfirmMessage = function() { new Confirm(); };
 
   var handleSpeedLimitChanged = function(selectedSpeedLimit) {
-    doubleClickSelectControl.deactivate();
+    selectToolControl.deactivate();
     me.eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
     me.eventListener.listenTo(eventbus, 'map:clicked', displayConfirmMessage);
     var selectedSpeedLimitFeatures = _.filter(vectorLayer.features, function(feature) { return selectedSpeedLimit.isSelected(feature.attributes); });
-    vectorLayer.removeFeatures(selectedSpeedLimitFeatures);
-    drawSpeedLimits(selectedSpeedLimit.get(), vectorLayer);
+    selectToolControl.addSelectionFeatures(style.renderFeatures(selectedSpeedLimit.get()));
   };
 
   var handleSpeedLimitCancelled = function() {
-    doubleClickSelectControl.activate();
+    selectToolControl.addSelectionFeatures(style.renderFeatures(selectedSpeedLimit.get()));
+    selectToolControl.activate();
     me.eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
     redrawSpeedLimits(collection.getAll());
   };
 
-  var drawIndicators = function(links) {
-    var markerTemplate = _.template('<span class="marker"><%= marker %></span>');
+    var drawIndicators = function(links) {
+        var features = [];
 
-    var markerContainer = function(position) {
-      var bounds = OpenLayers.Bounds.fromArray([position.x, position.y, position.x, position.y]);
-      return new OpenLayers.Marker.Box(bounds, "00000000");
+        var markerContainer = function(link, position) {
+            var style = new ol.style.Style({
+                image : new ol.style.Icon({
+                    src: 'images/center-marker2.svg',
+                    anchor : [-0.45, 0.15]
+                }),
+                text : new ol.style.Text({
+                    text : link.marker,
+                    fill: new ol.style.Fill({
+                        color: '#ffffff'
+                    }),
+                    offsetX : 23,
+                    offsetY : 7.5,
+                    font : '12px sans-serif'
+                })
+            });
+            var marker = new ol.Feature({
+                geometry : new ol.geom.Point([position.x, position.y])
+            });
+            marker.setStyle(style);
+            features.push(marker);
+        };
+
+        var indicatorsForSplit = function() {
+            return me.mapOverLinkMiddlePoints(links, function(link, middlePoint) {
+                markerContainer(link, middlePoint);
+            });
+        };
+
+        var indicatorsForSeparation = function() {
+            var geometriesForIndicators = _.map(links, function(link) {
+                var newLink = _.cloneDeep(link);
+                newLink.points = _.drop(newLink.points, 1);
+                return newLink;
+            });
+
+            return me.mapOverLinkMiddlePoints(geometriesForIndicators, function(link, middlePoint) {
+                markerContainer(link, middlePoint);
+            });
+        };
+
+        var indicators = function() {
+            if (selectedSpeedLimit.isSplit()) {
+                return indicatorsForSplit();
+            } else {
+                return indicatorsForSeparation();
+            }
+        };
+
+        indicators();
+        indicatorLayer.getSource().addFeatures(features);
     };
-
-    var indicatorsForSplit = function() {
-      return me.mapOverLinkMiddlePoints(links, function(link, middlePoint) {
-        var box = markerContainer(middlePoint);
-        var $marker = $(markerTemplate(link));
-        $(box.div).html($marker);
-        $(box.div).css({overflow: 'visible'});
-        return box;
-      });
-    };
-
-    var indicatorsForSeparation = function() {
-      var geometriesForIndicators = _.map(links, function(link) {
-        var newLink = _.cloneDeep(link);
-        newLink.points = _.drop(newLink.points, 1);
-        return newLink;
-      });
-
-      return me.mapOverLinkMiddlePoints(geometriesForIndicators, function(link, middlePoint) {
-        var box = markerContainer(middlePoint);
-        var $marker = $(markerTemplate(link)).css({position: 'relative', right: '14px', bottom: '11px'});
-        $(box.div).html($marker);
-        $(box.div).css({overflow: 'visible'});
-        return box;
-      });
-    };
-
-    var indicators = function() {
-      if (selectedSpeedLimit.isSplit()) {
-        return indicatorsForSplit();
-      } else {
-        return indicatorsForSeparation();
-      }
-    };
-
-    _.forEach(indicators(), function(indicator) {
-      indicatorLayer.addMarker(indicator);
-    });
-  };
 
   var redrawSpeedLimits = function(speedLimitChains) {
-    doubleClickSelectControl.deactivate();
-    vectorLayer.removeAllFeatures();
-    indicatorLayer.clearMarkers();
+    vectorSource.clear();
+    selectToolControl.clear();
+    indicatorLayer.getSource().clear();
     if (!selectedSpeedLimit.isDirty() && application.getSelectedTool() === 'Select') {
-      doubleClickSelectControl.activate();
+      selectToolControl.activate();
     }
 
     var speedLimits = _.flatten(speedLimitChains);
@@ -598,27 +422,24 @@ window.SpeedLimitLayer = function(params) {
   var drawSpeedLimits = function(speedLimits, layerToUse) {
     var speedLimitsWithType = _.map(speedLimits, function(limit) { return _.merge({}, limit, { type: 'other' }); });
     var offsetBySideCode = function(speedLimit) {
-      return GeometryUtils.offsetBySideCode(map.getZoom(), speedLimit);
+      return GeometryUtils.offsetBySideCode(map.getView().getZoom(), speedLimit);
     };
     var speedLimitsWithAdjustments = _.map(speedLimitsWithType, offsetBySideCode);
     var speedLimitsSplitAt70kmh = _.groupBy(speedLimitsWithAdjustments, function(speedLimit) { return speedLimit.value >= 70; });
     var lowSpeedLimits = speedLimitsSplitAt70kmh[false];
     var highSpeedLimits = speedLimitsSplitAt70kmh[true];
 
-    layerToUse.setVisibility(true);
-    layerToUse.addFeatures(lineFeatures(lowSpeedLimits));
-    layerToUse.addFeatures(dottedLineFeatures(highSpeedLimits));
-    layerToUse.addFeatures(limitSigns(speedLimitsWithAdjustments));
+    layerToUse.setVisible(true);
+    layerToUse.getSource().addFeatures(lineFeatures(lowSpeedLimits));
+    layerToUse.getSource().addFeatures(dottedLineFeatures(highSpeedLimits));
+    layerToUse.getSource().addFeatures(limitSigns(speedLimitsWithAdjustments));
 
     if (selectedSpeedLimit.exists()) {
-      selectControl.onSelect = function() {};
-      var feature = _.find(layerToUse.features, function(feature) { return selectedSpeedLimit.isSelected(feature.attributes); });
+      selectToolControl.onSelect = function() {};
+      var feature = _.filter(layerToUse.getSource().getFeatures(), function(feature) { return selectedSpeedLimit.isSelected(feature.getProperties()); });
       if (feature) {
-        selectControl.select(feature);
+        selectToolControl.addSelectionFeatures(feature);
       }
-      highlightMultipleSpeedLimitFeatures();
-      selectControl.onSelect = speedLimitOnSelect;
-
       if (selectedSpeedLimit.isSplitOrSeparated()) {
         drawIndicators(_.map(_.cloneDeep(selectedSpeedLimit.get()), offsetBySideCode));
       }
@@ -638,44 +459,49 @@ window.SpeedLimitLayer = function(params) {
   var limitSigns = function(speedLimits) {
     return _.map(speedLimits, function(speedLimit) {
       var points = _.map(speedLimit.points, function(point) {
-        return new OpenLayers.Geometry.Point(point.x, point.y);
+        return [point.x, point.y];
       });
-      var road = new OpenLayers.Geometry.LineString(points);
+      var road = new ol.geom.LineString(points);
       var signPosition = GeometryUtils.calculateMidpointOfLineString(road);
       var type = isUnknown(speedLimit) ? { type: 'unknown' } : {};
-      var attributes = _.merge(_.cloneDeep(speedLimit), type);
-      return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(signPosition.x, signPosition.y), attributes);
+      var properties = _.merge(_.cloneDeep(speedLimit), type);
+      var feature = new ol.Feature(new ol.geom.Point([signPosition.x, signPosition.y]));
+      feature.setProperties(_.omit(properties, 'geometry'));
+      return feature;
     });
   };
 
   var lineFeatures = function(speedLimits) {
     return _.map(speedLimits, function(speedLimit) {
       var points = _.map(speedLimit.points, function(point) {
-        return new OpenLayers.Geometry.Point(point.x, point.y);
+        return [point.x, point.y];
       });
       var type = isUnknown(speedLimit) ? { type: 'unknown' } : {};
-      var attributes = _.merge(_.cloneDeep(speedLimit), type);
-      return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), attributes);
+      var properties = _.merge(_.cloneDeep(speedLimit), type);
+      var feature = new ol.Feature(new ol.geom.LineString(points));
+      feature.setProperties(_.omit(properties, 'geometry'));
+      return feature;
     });
   };
 
   var reset = function() {
-    selectControl.unselectAll();
-    vectorLayer.styleMap = browseStyleMap;
+    vectorLayer.styleMap = style.browsingStyle;
     speedLimitCutter.deactivate();
   };
 
   var show = function(map) {
-    vectorLayer.setVisibility(true);
-    indicatorLayer.setVisibility(true);
+    vectorLayer.setVisible(true);
+    indicatorLayer.setVisible(true);
     me.show(map);
   };
 
   var hideLayer = function(map) {
     reset();
-    vectorLayer.setVisibility(false);
-    vectorLayerHistory.setVisibility(false);
-    indicatorLayer.setVisibility(false);
+    selectToolControl.clear();
+    selectedSpeedLimit.close();
+    vectorLayer.setVisible(false);
+    vectorLayerHistory.setVisible(false);
+    indicatorLayer.setVisible(false);
     me.stop();
     me.hide();
   };

@@ -1,5 +1,12 @@
 (function (root) {
   root.URLRouter = function(map, backend, models) {
+
+    var mapCenterAndZoom = function(x, y, zoom){
+      var mapView = map.getView();
+      mapView.setCenter([x, y]);
+      mapView.setZoom(zoom);
+    };
+
     var Router = Backbone.Router.extend({
       initialize: function () {
         // Support legacy format for opening mass transit stop via ...#300289
@@ -43,7 +50,7 @@
           eventbus.once('massTransitStops:available', function () {
             models.selectedMassTransitStopModel.changeByExternalId(id);
           });
-          map.setCenter(new OpenLayers.LonLat(massTransitStop.lon, massTransitStop.lat), 12);
+          mapCenterAndZoom(massTransitStop.lon, massTransitStop.lat, 12);
         });
       },
 
@@ -64,7 +71,7 @@
                 });
               });
             }
-            map.setCenter(new OpenLayers.LonLat(response.middlePoint.x, response.middlePoint.y), 12);
+            mapCenterAndZoom(response.middlePoint.x, response.middlePoint.y, 12);
           }
           else
           {
@@ -79,7 +86,7 @@
           eventbus.once('linkProperties:available', function () {
             models.selectedLinkProperty.open(response.id);
           });
-          map.setCenter(new OpenLayers.LonLat(response.middlePoint.x, response.middlePoint.y), 12);
+          mapCenterAndZoom(response.middlePoint.x, response.middlePoint.y, 12);
         });
       },
 
@@ -90,7 +97,7 @@
         $.when(layerSelected).then(function () {
           var mapMoved = $.when(roadLinkReceived).then(function (response) {
             var promise = eventbus.oncePromise('layer:speedLimit:moved');
-            map.setCenter(new OpenLayers.LonLat(response.middlePoint.x, response.middlePoint.y), 12);
+            mapCenterAndZoom(response.middlePoint.x, response.middlePoint.y, 12);
             return promise;
           });
           $.when(mapMoved).then(function () {
@@ -102,7 +109,7 @@
       pedestrianCrossings: function (id) {
         applicationModel.selectLayer('pedestrianCrossings');
         backend.getPointAssetById(id, 'pedestrianCrossings').then(function (result) {
-          map.setCenter(new OpenLayers.LonLat(result.lon, result.lat), 12);
+          mapCenterAndZoom(result.lon, result.lat, 12);
           models.selectedPedestrianCrossing.open(result);
         });
       },
@@ -110,7 +117,7 @@
       trafficLights: function (id) {
         applicationModel.selectLayer('trafficLights');
         backend.getPointAssetById(id, 'trafficLights').then(function (result) {
-          map.setCenter(new OpenLayers.LonLat(result.lon, result.lat), 12);
+          mapCenterAndZoom(result.lon, result.lat, 12);
           models.selectedTrafficLight.open(result);
         });
       },
@@ -118,7 +125,7 @@
       obstacles: function (id) {
         applicationModel.selectLayer('obstacles');
         backend.getPointAssetById(id, 'obstacles').then(function (result) {
-          map.setCenter(new OpenLayers.LonLat(result.lon, result.lat), 12);
+          mapCenterAndZoom(result.lon, result.lat, 12);
           models.selectedObstacle.open(result);
         });
       },
@@ -126,7 +133,7 @@
       railwayCrossings: function (id) {
         applicationModel.selectLayer('railwayCrossings');
         backend.getPointAssetById(id, 'railwayCrossings').then(function (result) {
-          map.setCenter(new OpenLayers.LonLat(result.lon, result.lat), 12);
+          mapCenterAndZoom(result.lon, result.lat, 12);
           models.selectedRailwayCrossing.open(result);
         });
       },
@@ -134,7 +141,7 @@
       directionalTrafficSigns: function (id) {
         applicationModel.selectLayer('directionalTrafficSigns');
         backend.getPointAssetById(id, 'directionalTrafficSigns').then(function (result) {
-          map.setCenter(new OpenLayers.LonLat(result.lon, result.lat), 12);
+          mapCenterAndZoom(result.lon, result.lat, 12);
           models.selectedDirectionalTrafficSign.open(result);
         });
       },

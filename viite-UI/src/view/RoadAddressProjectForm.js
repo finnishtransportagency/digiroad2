@@ -172,7 +172,7 @@
         applicationModel.addSpinner();
         projectCollection.createProject(data, currentProject);
       });
-    
+
       rootElement.on('click', '.project-form button.cancel', function(){
         applicationModel.setOpenProject(false);
         rootElement.find('header').toggle();

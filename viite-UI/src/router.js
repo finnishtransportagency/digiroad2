@@ -28,7 +28,8 @@
             models.selectedLinkProperty.open(response.linkId, response.id, true);
             eventbus.trigger('linkProperties:reselect');
           });
-          map.setCenter(new OpenLayers.LonLat(response.middlePoint.x, response.middlePoint.y), 12);
+          map.getView().setCenter([response.middlePoint.x, response.middlePoint.y]);
+          map.getView().setZoom(12);
         });
       },
 
@@ -38,7 +39,8 @@
           eventbus.once('linkProperties:available', function () {
             models.selectedLinkProperty.open(response.id);
           });
-          map.setCenter(new OpenLayers.LonLat(response.middlePoint.x, response.middlePoint.y), 12);
+          map.getView().setCenter([response.middlePoint.x, response.middlePoint.y]);
+          map.getView().setZoom(12);
         });
       }
     });
@@ -68,7 +70,8 @@
         router.navigate('linkProperty/' + linkId);
       applicationModel.selectLayer('linkProperty');
       backend.getRoadLinkByLinkId(linkId, function (response) {
-        map.setCenter(new OpenLayers.LonLat(response.middlePoint.x, response.middlePoint.y), 10);
+        map.getView().setCenter([response.middlePoint.x, response.middlePoint.y]);
+        map.getView().setZoom(10);
       });
     });
 

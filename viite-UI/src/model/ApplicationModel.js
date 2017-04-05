@@ -107,11 +107,11 @@
       resetCurrentAction: resetCurrentAction,
       actionCalculating: actionCalculating,
       actionCalculated: actionCalculated,
-      moveMap: function(zoom, bbox) {
+      moveMap: function(zoom, bbox, center) {
         var hasZoomLevelChanged = zoom.level !== zoom;
         setZoomLevel(zoom);
-        centerLonLat = bbox.getCenterLonLat();
-        eventbus.trigger('map:moved', {selectedLayer: selectedLayer, zoom: zoom, bbox: bbox, hasZoomLevelChanged: hasZoomLevelChanged});
+        centerLonLat = center;
+        eventbus.trigger('map:moved', {selectedLayer: selectedLayer, zoom: zoom, bbox: bbox, center: center, hasZoomLevelChanged: hasZoomLevelChanged});
       },
       setSelectedTool: setSelectedTool,
       getSelectedTool: function() {
