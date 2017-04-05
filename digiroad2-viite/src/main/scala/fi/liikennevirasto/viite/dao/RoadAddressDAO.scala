@@ -55,7 +55,7 @@ object RoadAddressProjectState{
   }
 
   case object Closed extends RoadAddressProjectState {def value = 0; def description = "Suljettu"}
-  case object Incomplete extends RoadAddressProjectState { def value = 1; def description = "Kesken"}
+  case object Incomplete extends RoadAddressProjectState { def value = 1; def description = "Keskeneräinen"}
 }
 
 sealed trait CalibrationCode {

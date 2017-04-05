@@ -3,9 +3,13 @@
     var projectList = $('<div id="project-window" class="form-horizontal project-list"></div>').hide();
     projectList.append('<button class="close btn-close">x</button>');
     projectList.append('<div class="content">Tieosoiteprojektit</div>');
+    projectList.append('<div class="content-new">' +
+      '<label class="content-new label">PROJEKTIN NIMI</label>' +
+      '<label class="content-new label" style="width: 100px">TILA</label>' +
+      '<div class="actions">' +
+    '<button class="new btn btn-primary" style="margin-top:-5px;">Uusi tieosoiteprojekti</button></div>' +
+      '</div>');
     projectList.append('<div id="project-list" style="width:700px; height:400px; overflow:auto;"></div>');
-    projectList.append('<div class="actions" style="position: absolute; bottom: 0px; right: 0px">' +
-      '<button class="new btn btn-primary">Uusi tieosoiteprojekti</button></div>');
 
     var staticField = function(labelText, dataField) {
       var field;
@@ -20,14 +24,6 @@
       var field;
       field = '<div>' +
         '<label class="control-label-projects-list">' + dataField + '</label>' +
-        '</div>';
-      return field;
-    };
-
-    var staticFieldProjectListHeader = function(dataField) {
-      var field;
-      field = '<div>' +
-        '<label class="control-label-projects-list"><strong>' + dataField + '</strong></label>' +
         '</div>';
       return field;
     };
@@ -50,18 +46,13 @@
             return proj.statusCode === 1;
           });
           if(!_.isEmpty(unfinishedProjects)){
-            var html = '<table align="center">';
-            html +='<tr class="project-item">' +
-            '<td>'+ staticFieldProjectListHeader('PROJEKTIN NIMI')+'</td>'+
-            '<td>'+ staticFieldProjectListHeader('TILA')+'</td>'+
-            '<td>'+
-            '</tr>';
+            var html = '<table align="left" width="100%">';
             _.each(unfinishedProjects, function(proj) {
               html += '<tr class="project-item">' +
-                '<td>'+ staticFieldProjectList(proj.name)+'</td>'+
-                '<td>'+ staticFieldProjectList(proj.statusDescription)+'</td>'+
-                '<td>'+'<button class="project-open btn btn-new" id="open-project-<%= proj.id %>">Avaa</button>' +'</td>'+
-                '</tr>';
+                '<td width="300px;">'+ staticFieldProjectList(proj.name)+'</td>'+
+                '<td width="300px;">'+ staticFieldProjectList(proj.statusDescription)+'</td>'+
+                '<td>'+'<button class="project-open btn btn-new" style="alignment: right; margin-bottom:6px" id="open-project-<%= proj.id %>">Avaa</button>' +'</td>'+
+                '</tr>' + '<tr style="border-bottom:1px solid darkgray; "><td colspan="100%"></td></tr>';
             });
             html += '</table>';
             $('#project-list').html($(html));
