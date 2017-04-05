@@ -464,16 +464,6 @@
       }
     };
 
-    var getSources = function() {
-      return _.union(_.map(sources, function (roadLink) {
-        return roadLink.getData();
-      }));
-    };
-
-    var setSources = function(scs) {
-      sources = scs;
-    };
-
     var getFeaturesToHighlight = function() {
       return featuresToHighlight;
     };

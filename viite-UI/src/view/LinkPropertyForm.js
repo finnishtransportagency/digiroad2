@@ -237,9 +237,9 @@
     var notificationFloatingTransfer = function(displayNotification) {
       if(displayNotification)
         return '' +
-          '<div class="form-group form-notification">' +
-          '<p>Tien geometria on muuttunut. Korjaa tieosoitesegmentin sijainti vastaamaan nykyistä geometriaa.</p>' +
-          '</div>';
+            '<div class="form-group form-notification">' +
+            '<p>Tien geometria on muuttunut. Korjaa tieosoitesegmentin sijainti vastaamaan nykyistä geometriaa.</p>' +
+            '</div>';
       else
         return '';
     };
@@ -376,7 +376,7 @@
                 }
                 $('#floatingEditModeForm').show();
               } else { //check if the before selected was a floating link and if the next one is unknown
-                if (uniqFeaturesToKeep.length > 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length - 1].anomaly === 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length - 2].roadLinkType === -1) {
+                if (uniqFeaturesToKeep.length > 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length - 1].anomaly === 1) {
                   rootElement.html(templateFloatingEditMode(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
                   $('#floatingEditModeForm').show();
                 } else {
@@ -406,9 +406,6 @@
           rootElement.find('.btn-move').prop("disabled", true);
           rootElement.find('.btn-continue').prop("disabled", false);
         }
-        rootElement.find('.form-controls').toggle(!readOnly);
-        rootElement.find('.btn-move').prop("disabled", true);
-        rootElement.find('.btn-continue').prop("disabled", false);
       };
 
       eventbus.on('linkProperties:selected linkProperties:cancelled', function(linkProperties) {
@@ -570,7 +567,16 @@
         if(applicationModel.isActiveButtons())
           action = applicationModel.actionCalculating;
         applicationModel.setCurrentAction(action);
-        selectedLinkProperty.cancel(action);
+        eventbus.trigger('linkProperties:activateInteractions');
+        if('all' === applicationModel.getSelectionType() || 'floating' === applicationModel.getSelectionType()){
+          selectedLinkProperty.clearAndReset(false);
+          applicationModel.toggleSelectionTypeAll();
+          selectedLinkProperty.close();
+          $('#feature-attributes').empty();
+        } else {
+          applicationModel.toggleSelectionTypeFloating();
+          selectedLinkProperty.cancelAndReselect(action);
+        }
         applicationModel.setActiveButtons(false);
       });
       rootElement.on('click', '.link-properties button.calculate', function() {
@@ -584,6 +590,8 @@
           applicationModel.toggleSelectionTypeUnknown();
           applicationModel.setContinueButton(false);
           eventbus.trigger('linkProperties:highlightAnomalousByFloating');
+          eventbus.trigger('linkProperties:activateInteractions');
+          eventbus.trigger('linkProperties:deactivateDoubleClick');
         }
       });
 
@@ -608,7 +616,7 @@
       eventbus.on('adjacents:startedFloatingTransfer', function() {
         action = applicationModel.actionCalculating;
         rootElement.find('.link-properties button.cancel').attr('disabled', false);
-        if(applicationModel.isContinueButton() === false){
+        if(!applicationModel.isContinueButton()){
           rootElement.find('.link-properties button.continue').attr('disabled', true);
         }else {
           rootElement.find('.link-properties button.continue').attr('disabled', false);

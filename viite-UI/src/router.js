@@ -70,7 +70,8 @@
         router.navigate('linkProperty/' + linkId);
       applicationModel.selectLayer('linkProperty');
       backend.getRoadLinkByLinkId(linkId, function (response) {
-        map.setCenter(new OpenLayers.LonLat(response.middlePoint.x, response.middlePoint.y), 10);
+        map.getView().setCenter([response.middlePoint.x, response.middlePoint.y]);
+        map.getView().setZoom(10);
       });
     });
 
