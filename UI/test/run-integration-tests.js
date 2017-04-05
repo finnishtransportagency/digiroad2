@@ -50,7 +50,7 @@ require(['chai',
       return fn.apply(thisp, arguments);
     };
   };
-  window.requestAnimationFrame = window.requestAnimationFrame || function(/* function */ callback, /* DOMElement */ element){
+  window.requestAnimationFrame = window.requestAnimationFrame || function(callback){
     window.setTimeout(callback, 1000 / 60);
   };
 
