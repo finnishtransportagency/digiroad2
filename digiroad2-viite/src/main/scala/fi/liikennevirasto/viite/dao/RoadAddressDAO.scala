@@ -773,8 +773,8 @@ object RoadAddressDAO {
     }
   }
 
-  def getRoadAddress(id : Long, linkId : Long) : RoadAddress = {
-    var query = s"""
+  def getRoadAddress(id : Long, linkId : Long) : Option[RoadAddress] = {
+    val query = s"""
         select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code,
@@ -789,7 +789,7 @@ object RoadAddressDAO {
           (valid_from is null or valid_from <= sysdate) and
           (valid_to is null or valid_to >= sysdate)
       """
-    queryList(query).head
+    queryList(query).headOption
   }
 
   def updateRoadAddressProject(roadAddressProject : RoadAddressProject): Unit ={

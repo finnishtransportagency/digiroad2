@@ -78,13 +78,16 @@ object RoadAddressFiller {
       if(sorted.nonEmpty) {
         OracleDatabase.withDynSession {
           sorted.foreach { segment =>
-            val old = RoadAddressDAO.getRoadAddress(segment.lrmPositionId, segment.linkId)
-            if (old != null && !old.floating) {
-              //Validate if segment start and end were moved more than 1 meter
-              if ((segment.geometry.head.distance2DTo(old.geom.head) > MaxDistanceDiffAllowed) ||
-                (segment.geometry.last.distance2DTo(old.geom.last) > MaxDistanceDiffAllowed)) {
-                throw UpdateValues
-              }
+            val oldOption = RoadAddressDAO.getRoadAddress(segment.lrmPositionId, segment.linkId)
+            oldOption match {
+              case Some(old) if (!old.floating) =>
+                if (((segment.geometry.head.distance2DTo(old.geom.head) > MaxDistanceDiffAllowed) &&
+                  (segment.geometry.head.distance2DTo(old.geom.last) > MaxDistanceDiffAllowed)) ||
+                  ((segment.geometry.last.distance2DTo(old.geom.head) > MaxDistanceDiffAllowed) &&
+                  (segment.geometry.last.distance2DTo(old.geom.last) > MaxDistanceDiffAllowed))) {
+                  throw UpdateValues
+                }
+              case _ =>
             }
           }
         }
@@ -95,7 +98,7 @@ object RoadAddressFiller {
       case UpdateValues =>
         (segments, changeSet.copy(toFloatingAddressIds = changeSet.toFloatingAddressIds ++ segmentIds))
 
-      case e: Exception => print(e.getMessage)
+      case e: Exception => println(e.getMessage)
         (segments, changeSet)
     }
   }

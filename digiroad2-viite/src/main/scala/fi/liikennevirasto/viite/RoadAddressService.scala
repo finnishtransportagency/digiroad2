@@ -408,7 +408,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         GeometryUtils.truncateGeometry3D(rl.geometry, address.startMValue, address.endMValue))
       if(float && !roadLink.isEmpty && !addressGeometry.isEmpty && !(GeometryUtils.geometryLength(addressGeometry.get) == 0.0)){
         println("Floating id %d (link id %d)".format(address.id, address.linkId))
-        RoadAddressDAO.changeRoadAddressFloating(float = true, address.id, addressGeometry)
+        RoadAddressDAO.changeRoadAddressFloating(float = true, address.id, None)
       }
       if (roadLink.isEmpty || addressGeometry.isEmpty || GeometryUtils.geometryLength(addressGeometry.get) == 0.0) {
         println("Floating id %d (link id %d)".format(address.id, address.linkId))
