@@ -16,6 +16,22 @@
       return field;
     };
 
+    var staticFieldProjectList = function(dataField) {
+      var field;
+      field = '<div>' +
+        '<label class="control-label-projects-list">' + dataField + '</label>' +
+        '</div>';
+      return field;
+    };
+
+    var staticFieldProjectListHeader = function(dataField) {
+      var field;
+      field = '<div>' +
+        '<label class="control-label-projects-list"><strong>' + dataField + '</strong></label>' +
+        '</div>';
+      return field;
+    };
+
     function toggle() {
       $('.container').append('<div class="modal-overlay confirm-modal"><div class="modal-dialog"></div></div>');
       $('.modal-dialog').append(projectList.toggle());
@@ -31,14 +47,19 @@
     function fetchProjects(){
         projectCollection.getAll().then(function(projects){
           var unfinishedProjects = _.filter(projects, function(proj){
-            return proj.status === 1;
+            return proj.statusCode === 1;
           });
           if(!_.isEmpty(unfinishedProjects)){
             var html = '<table align="center">';
+            html +='<tr class="project-item">' +
+            '<td>'+ staticFieldProjectListHeader('PROJEKTIN NIMI')+'</td>'+
+            '<td>'+ staticFieldProjectListHeader('TILA')+'</td>'+
+            '<td>'+
+            '</tr>';
             _.each(unfinishedProjects, function(proj) {
               html += '<tr class="project-item">' +
-                '<td>'+ staticField('PROJEKTIN NIMI', proj.name)+'</td>'+
-                '<td>'+ staticField('TILA', proj.status)+'</td>'+
+                '<td>'+ staticFieldProjectList(proj.name)+'</td>'+
+                '<td>'+ staticFieldProjectList(proj.statusDescription)+'</td>'+
                 '<td>'+'<button class="project-open btn btn-new" id="open-project-<%= proj.id %>">Avaa</button>' +'</td>'+
                 '</tr>';
             });

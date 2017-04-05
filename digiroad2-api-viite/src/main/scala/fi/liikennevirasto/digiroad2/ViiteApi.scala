@@ -159,7 +159,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val project = parsedBody.extract[RoadAddressProjectExtractor]
     val user = userProvider.getCurrentUser()
     val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
-    val roadAddressProject  = RoadAddressProject( project.id, project.status, project.name, user.username, DateTime.now(), "-", formatter.parseDateTime(project.startDate), DateTime.now(), project.additionalInfo, project.roadNumber, project.startPart, project.endPart)
+    val roadAddressProject  = RoadAddressProject( project.id, RoadAddressProjectState.apply(project.status), project.name, user.username, DateTime.now(), "-", formatter.parseDateTime(project.startDate), DateTime.now(), project.additionalInfo, project.roadNumber, project.startPart, project.endPart)
     roadAddressService.saveRoadLinkProject(roadAddressProject)
   }
   get("/roadlinks/roadaddress/project/all") {
@@ -260,7 +260,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   def roadAddressProjectToApi(roadAddressProject: RoadAddressProject): Map[String, Any] = {
     Map(
       "id" -> roadAddressProject.id,
-      "status" -> roadAddressProject.status,
+      "statusCode" -> roadAddressProject.status.value,
+      "statusDescription" -> roadAddressProject.status.description,
       "name" -> roadAddressProject.name,
       "createdBy" -> roadAddressProject.createdBy,
       "createdDate" -> roadAddressProject.createdDate.toString,
