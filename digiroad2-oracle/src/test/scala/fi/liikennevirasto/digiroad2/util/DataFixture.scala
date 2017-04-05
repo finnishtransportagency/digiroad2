@@ -3,22 +3,21 @@ package fi.liikennevirasto.digiroad2.util
 import java.util.Properties
 
 import com.googlecode.flyway.core.Flyway
-import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, State, SideCode}
-import fi.liikennevirasto.digiroad2.linearasset.{NewLinearAsset, NumericValue, NumericalLimitFiller, RoadLink}
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{MassTransitStopDao, Queries}
-import fi.liikennevirasto.digiroad2.MassTransitStopService
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
-import fi.liikennevirasto.digiroad2.pointasset.oracle.{Obstacle, OracleObstacleDao}
+import fi.liikennevirasto.digiroad2.{MassTransitStopService, _}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, SideCode, State}
+import fi.liikennevirasto.digiroad2.linearasset.{NewLinearAsset, NumericValue, PersistedLinearAsset}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.masstransitstop.MassTransitStopOperations
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{MassTransitStopDao, Queries}
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
+import fi.liikennevirasto.digiroad2.pointasset.oracle.Obstacle
+import fi.liikennevirasto.digiroad2.roadaddress.oracle.RoadAddressDAO
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
-import org.apache.http.client.config.RequestConfig
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
-import org.scalatest.mock.MockitoSugar
 import slick.jdbc.{StaticQuery => Q}
+
 
 object DataFixture {
   val TestAssetId = 300000
@@ -65,6 +64,26 @@ object DataFixture {
 
   lazy val geometryTransform: GeometryTransform = {
     new GeometryTransform()
+  }
+  lazy val oracleLinearAssetDao : OracleLinearAssetDao = {
+    new OracleLinearAssetDao(vvhClient)
+  }
+  lazy val roadAddressDao : RoadAddressDAO = {
+    new RoadAddressDAO()
+  }
+
+  lazy val tierikisteriClient : TierekisteriAssetDataClient = {
+    new TierekisteriAssetDataClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+      getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+      HttpClientBuilder.create().build)
+  }
+
+  def getProperty(name: String) = {
+    val property = properties.getProperty(name)
+    if(property != null)
+      property
+    else
+      throw new RuntimeException(s"cannot find property $name")
   }
 
   def flyway: Flyway = {
@@ -793,6 +812,47 @@ object DataFixture {
     println("\n")
   }
 
+  def fetchAllTrafficVolumeDataFromTR(): Unit = {
+
+    val trafficVolumeTR = "tl201"
+    val trafficVolumeId = 170
+
+    println("\n Expiring Traffic Volume From OTH Database")
+    OracleDatabase.withDynSession { oracleLinearAssetDao.expireAllAssetsByTypeId(trafficVolumeId) }
+    println("\n Traffic Volume data Expired")
+
+    println("\n Fetch Road Address From Viite")
+    val roadAddresses = OracleDatabase.withDynSession { roadAddressDao.fetchRoadAddresses() }
+    println("\n End of Fetch ")
+
+    println("\n Fetch Traffic Volume by Road Number ")
+    val fetchResult = roadAddresses.map( ra => (ra, tierikisteriClient.fetchActiveAssetData(trafficVolumeTR, ra.roadNumber)))
+    println("\n End of Traffic Volume fetch")
+
+   // println("\n Map road addresses to link ids using Viite")
+
+    println("\n Created OTH traffic volume assets form TR data")
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+
+    lazy val linearAssetService: LinearAssetService = {
+      new LinearAssetService(roadLinkService, new DummyEventBus)
+    }
+
+    fetchResult.foreach {
+      case (roadAddress, tierekisteri) =>
+        tierekisteri.foreach( result => {
+          linearAssetService.dao.createLinearAsset(trafficVolumeId, roadAddress.linkId, false, roadAddress.sideCode.value,
+            roadAddress.startMValue, roadAddress.endMValue, "batch_process_trafficVolume")
+          linearAssetService.dao.insertValue(trafficVolumeId, LinearAssetTypes.numericValuePropertyId, result.ktv)
+        }
+      )
+    }
+
+    // TierekisteriAssetData(ktv: Int)
+    println("\n Edn of creation OTH traffic volume assets form TR data")
+
+  }
+
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
@@ -874,6 +934,8 @@ object DataFixture {
         listingBusStopsWithSideCodeConflictWithRoadLinkDirection()
       case Some("fill_lane_amounts_in_missing_road_links") =>
         fillLaneAmountsMissingInRoadLink()
+      case Some("fetch_traffic_volume_from_TR_to_OTH") =>
+        fetchAllTrafficVolumeDataFromTR()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +

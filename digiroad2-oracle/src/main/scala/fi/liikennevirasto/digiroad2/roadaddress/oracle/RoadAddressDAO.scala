@@ -13,6 +13,20 @@ case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
                             floating: Boolean = false, geom: Seq[Point])
 class RoadAddressDAO {
 
+  def fetchRoadAddresses() : Seq[RoadAddress] = {
+    val query =
+      s"""
+			 select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
+       ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id,
+       pos.start_measure, pos.end_measure, pos.side_code, ra.floating
+       from road_address ra
+       join lrm_position pos on ra.lrm_position_id = pos.id
+		  """
+
+    queryRoadAddresses(query)
+  }
+
+
   def fetchByLinkIdAndMeasures(linkId: Long, startM: Double, endM: Double):  List[RoadAddress] = {
 
     val where =
@@ -48,6 +62,24 @@ class RoadAddressDAO {
         RoadAddress(id, roadNumber, roadPartNumber, Track.apply(track), discontinuity,
           startAddrMValue, endAddrMValue, lrmPositionId, linkId, startMValue, endMValue, SideCode.apply(sideCode),
           floating, Seq(Point(x,y), Point(x2,y2)))
+
+
+    }
+  }
+
+  private def queryRoadAddresses(query: String) = {
+    val tuples = Q.queryNA[(Long, Long, Long, Int, Int, Long, Long, Long, Long, Double, Double, Int,
+      Boolean)](query).list
+
+    tuples.map {
+      case (id, roadNumber, roadPartNumber, track, discontinuity, startAddrMValue, endAddrMValue, lrmPositionId,
+      linkId, startMValue, endMValue, sideCode, floating) =>
+
+        RoadAddress(id, roadNumber, roadPartNumber, Track.apply(track), discontinuity,
+          startAddrMValue, endAddrMValue, lrmPositionId, linkId, startMValue, endMValue, SideCode.apply(sideCode),
+          floating, Seq())
+
+
     }
   }
 }
