@@ -188,10 +188,6 @@ object Digiroad2Context {
     revisionInfo.getProperty("digiroad2.latestDeploy")
   }
 
-  lazy val deploy_date: String = {
-    revisionInfo.getProperty("digiroad2.latestDeploy")
-  }
-
   lazy val massTransitStopService: MassTransitStopService = {
     class ProductionMassTransitStopService(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService) extends MassTransitStopService {
       override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
