@@ -223,7 +223,7 @@ module.exports = function(grunt) {
       integration: {
         options: {
           mocha: { ignoreLeaks: true },
-          urls: ['http://127.0.0.1:9001/test/integration-tests.html'],
+          urls: ['http://127.0.0.1:9001/test/test-runner.html'],
           run: false,
           log: true,
           timeout: 10000,
