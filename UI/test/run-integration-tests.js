@@ -43,6 +43,17 @@ require(['chai',
         function(chai, chaiJquery, testHelpers) {
   chai.use(chaiJquery);
 
+  //Workaround to give PhantomJS openlayers support
+  Function.prototype.bind = Function.prototype.bind || function (thisp) {
+    var fn = this;
+    return function () {
+      return fn.apply(thisp, arguments);
+    };
+  };
+  window.requestAnimationFrame = window.requestAnimationFrame || function(/* function */ callback, /* DOMElement */ element){
+    window.setTimeout(callback, 1000 / 60);
+  };
+
   eventbus.once('map:initialized', function() {
     if (window.mochaPhantomJS) { mochaPhantomJS.run(); }
     else { mocha.run(); }
