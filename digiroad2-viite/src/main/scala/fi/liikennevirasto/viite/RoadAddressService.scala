@@ -552,11 +552,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     transferRoadAddress(sourceLinks, targetLinks, user)
   }
 
-  def transferFloatingToGap(sourceIds: Set[Long], targetIds: Set[Long], roadAddresses: Seq[RoadAddress], user: User) = {
+  def transferFloatingToGap(sourceIds: Set[Long], targetIds: Set[Long], roadAddresses: Seq[RoadAddress]) = {
     withDynTransaction {
       RoadAddressDAO.expireRoadAddresses(sourceIds)
       RoadAddressDAO.expireMissingRoadAddresses(targetIds)
-      RoadAddressDAO.create(roadAddresses, user.username.toString)
+      RoadAddressDAO.create(roadAddresses)
     }
   }
 
@@ -986,19 +986,7 @@ object RoadAddressLinkBuilder {
 
       if(nextSegment.sideCode.value != previousSegment.sideCode.value)
         throw new InvalidAddressDataException(s"Road Address ${nextSegment.id} and Road Address ${previousSegment.id} cannot have different side codes.")
-      //      if (previousSegment.geom.isEmpty)
-      //        println("P linkid" + previousSegment.linkId + " " + previousSegment.sideCode + " N/A")
-      //      else
-      //        println("P linkid" + previousSegment.linkId + " " + previousSegment.sideCode + " " + previousSegment.geom)
-      //
-      //      if (nextSegment.geom.isEmpty)
-      //        println("N linkid" + nextSegment.linkId + " " + nextSegment.sideCode + " N/A")
-      //      else
-      //        println("N linkid" + nextSegment.linkId + " " + nextSegment.sideCode + " " + nextSegment.geom)
-      //      println(startMValue, endMValue)
-      //      println("startAddrMValue: " + startAddrMValue + " endAddrMValue: " +  endAddrMValue)
       val combinedGeometry: Seq[Point] = GeometryUtils.truncateGeometry3D(Seq(previousSegment.geom.head, nextSegment.geom.last), startMValue, endMValue)
-      //      println("Combined: (%.3f %.3f) (%.3f %.3f)".format(combinedGeometry.head.x, combinedGeometry.head.y, combinedGeometry.last.x, combinedGeometry.last.y))
       val discontinuity = {
         if(nextSegment.endMValue > previousSegment.endMValue) {
           nextSegment.discontinuity
