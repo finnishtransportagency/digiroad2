@@ -80,7 +80,6 @@
       return _.template('' +
         '<header>' +
         titleWithProjectName(project.name) +
-        headerButton +
         '</header>' +
         '<div class="wrapper read-only">'+
         '<div class="form form-horizontal form-dark">'+
