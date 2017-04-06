@@ -26,6 +26,13 @@ object DataFixture {
     props.load(getClass.getResourceAsStream("/bonecp.properties"))
     props
   }
+
+  lazy val propertiesDigiroad: Properties = {
+    val props = new Properties()
+    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
+    props
+  }
+
   lazy val dr2properties: Properties = {
     val props = new Properties()
     props.load(getClass.getResourceAsStream("/digiroad2.properties"))
@@ -75,11 +82,11 @@ object DataFixture {
   lazy val tierikisteriClient : TierekisteriAssetDataClient = {
     new TierekisteriAssetDataClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
       getProperty("digiroad2.tierekisteri.enabled").toBoolean,
-      HttpClientBuilder.create().build)
+      HttpClientBuilder.create().build())
   }
 
   def getProperty(name: String) = {
-    val property = properties.getProperty(name)
+    val property = propertiesDigiroad.getProperty(name)
     if(property != null)
       property
     else
@@ -817,39 +824,44 @@ object DataFixture {
     val trafficVolumeTR = "tl201"
     val trafficVolumeId = 170
 
-    println("\n Expiring Traffic Volume From OTH Database")
+    println("\nExpiring Traffic Volume From OTH Database")
     OracleDatabase.withDynSession { oracleLinearAssetDao.expireAllAssetsByTypeId(trafficVolumeId) }
-    println("\n Traffic Volume data Expired")
+    println("\nTraffic Volume data Expired")
 
-    println("\n Fetch Road Address From Viite")
+    println("\nFetch Road Address From Viite")
     val roadAddresses = OracleDatabase.withDynSession { roadAddressDao.fetchRoadAddresses() }
-    println("\n End of Fetch ")
+    println("\nEnd of Fetch ")
 
-    println("\n Fetch Traffic Volume by Road Number ")
-    val fetchResult = roadAddresses.map( ra => (ra, tierikisteriClient.fetchActiveAssetData(trafficVolumeTR, ra.roadNumber)))
-    println("\n End of Traffic Volume fetch")
+    println("\nFetch Traffic Volume by Road Number ")
+    val tieri = roadAddresses.flatMap( ra => tierikisteriClient.fetchActiveAssetData(trafficVolumeTR, ra.roadNumber)).distinct
+    println("\nEnd of Traffic Volume fetch")
 
-   // println("\n Map road addresses to link ids using Viite")
+    println("\nMap road addresses to link ids using Viite")
+    val mapped = tieri.map( tr =>
+      ( roadAddresses.find( ra => ra.roadNumber == tr.roadNumber && ra.roadPartNumber == tr.roadPartNumber && ra.startMValue == tr.starMValue && ra.endMValue == tr.endMValue),
+        tr.ktv)
+    )
 
-    println("\n Created OTH traffic volume assets form TR data")
+    println("\nCreated OTH traffic volume assets form TR data")
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
 
     lazy val linearAssetService: LinearAssetService = {
       new LinearAssetService(roadLinkService, new DummyEventBus)
     }
 
-    fetchResult.foreach {
-      case (roadAddress, tierekisteri) =>
-        tierekisteri.foreach( result => {
-          linearAssetService.dao.createLinearAsset(trafficVolumeId, roadAddress.linkId, false, roadAddress.sideCode.value,
-            roadAddress.startMValue, roadAddress.endMValue, "batch_process_trafficVolume")
-          linearAssetService.dao.insertValue(trafficVolumeId, LinearAssetTypes.numericValuePropertyId, result.ktv)
-        }
-      )
+    if(mapped.nonEmpty) {
+      println("\nAsset created")
+      mapped.foreach {
+        case (ra, tierikisteri) =>
+          OracleDatabase.withDynSession {
+            val assetId = linearAssetService.dao.createLinearAsset(trafficVolumeId, ra.get.linkId, false, ra.get.sideCode.value,
+              ra.get.startMValue, ra.get.endMValue, "batch_process_trafficVolume")
+            linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, tierikisteri)
+          }
+      }
     }
-
-    // TierekisteriAssetData(ktv: Int)
-    println("\n Edn of creation OTH traffic volume assets form TR data")
+    //     TierekisteriAssetData(roadNumber, roadPartNumber, trackCode, starMValue, endMValue, ktv)
+     println("\n End of creation OTH traffic volume assets form TR data")
 
   }
 
@@ -943,7 +955,7 @@ object DataFixture {
         " generate_floating_obstacles | import_VVH_RoadLinks_by_municipalities | " +
         " check_unknown_speedlimits | set_transitStops_floating_reason | verify_roadLink_administrative_class_changed | set_TR_bus_stops_without_OTH_LiviId |" +
         " check_TR_bus_stops_without_OTH_LiviId | check_bus_stop_matching_between_OTH_TR | listing_bus_stops_with_side_code_conflict_with_roadLink_direction |" +
-        " fill_lane_amounts_in_missing_road_links")
+        " fill_lane_amounts_in_missing_road_links | fetch_traffic_volume_from_TR_to_OTH")
     }
   }
 }

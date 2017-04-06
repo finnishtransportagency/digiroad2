@@ -157,7 +157,11 @@ case class TierekisteriMassTransitStop(nationalId: Long,
                                        removalDate: Option[Date],
                                        inventoryDate: Date)
 
-case class TierekisteriAssetData(ktv: Int)
+case class TierekisteriAssetData(roadNumber: Long,
+                                 roadPartNumber: Long,
+                                 starMValue: Double,
+                                 endMValue: Double,
+                                 ktv: Int)
 
 case class TierekisteriError(content: Map[String, Any], url: String)
 
@@ -271,6 +275,15 @@ trait TierekisteriClient{
     } catch {
       case e: NumberFormatException =>
         throw new TierekisteriClientException("Invalid value in response: Long expected, got '%s'".format(value))
+    }
+  }
+
+  protected def convertToDouble(value: Option[String]): Option[Double] = {
+    try {
+      value.map(_.toDouble)
+    } catch {
+      case e: NumberFormatException =>
+        throw new TierekisteriClientException("Invalid value in response: Double expected, got '%s'".format(value))
     }
   }
 
@@ -531,7 +544,11 @@ class TierekisteriAssetDataClient(_tierekisteriRestApiEndPoint: String, _tiereki
   type TierekisteriType = TierekisteriAssetData
 
   private val serviceName = "trrest/tietolajit/"
-  private val trKTV = "ktv"
+  private val trKTV = "KTV"
+  private val trRoadNumber = "tie"
+  private val trRoadPartNumber = "osa"
+  private val trStartMValue = "aet"
+  private val trEndMValue = "let"
 
   private val serviceUrl : String = tierekisteriRestApiEndPoint + serviceName
   private def serviceUrl(assetType: String, roadNumber: Long) : String = serviceUrl + assetType + "/" + roadNumber
@@ -544,8 +561,12 @@ class TierekisteriAssetDataClient(_tierekisteriRestApiEndPoint: String, _tiereki
   override def mapFields(data: Map[String, Any]): TierekisteriAssetData = {
     //Mandatory field
     val ktv = convertToInt(getMandatoryFieldValue(data, trKTV)).get
+    val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
+    val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
+    val starMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
+    val endMValue = convertToDouble(getMandatoryFieldValue(data, trEndMValue)).get
 
-    TierekisteriAssetData(ktv)
+    TierekisteriAssetData(roadNumber, roadPartNumber, starMValue, endMValue, ktv)
   }
 
   /**

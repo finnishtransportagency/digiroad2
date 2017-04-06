@@ -76,15 +76,32 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
     )
   }
 
-  val trafficVolume: Map[String, Any] ={
-    Map(
-
+  val trafficVolume: Seq[Map[String, Any]] ={
+    Seq(
+      Map(
       "tietolaji" -> "tl201",          //Field code
       "tie" -> 45,                     //Road number
       "osa" -> 1,                      //Road part number
       "aet" -> 0,                      //Start distance
       "let" -> 100,                    //End distance
       "KTV" -> 1                       //placeholder value for traffic volume
+    ),
+      Map(
+      "tietolaji" -> "tl201",          //Field code
+      "tie" -> 5,                     //Road number
+      "osa" -> 201,                      //Road part number
+      "aet" -> 0,                      //Start distance
+      "let" -> 12.267,                    //End distance
+      "KTV" -> 224                       //placeholder value for traffic volume
+    ),
+      Map(
+      "tietolaji" -> "tl201",          //Field code
+      "tie" -> 5,                     //Road number
+      "osa" -> 201,                      //Road part number
+      "aet" -> 661,                      //Start distance
+      "let" -> 677.667,                    //End distance
+      "KTV" -> 223                       //placeholder value for traffic volume
+      )
     )
   }
 
@@ -173,40 +190,53 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
     //Checks that header contains X-OTH-Authorization attribute with correct base64 value
     if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg=="))) halt(BadRequest("401 Unauthorized"))
 
-    if( ! mandatoryTrFields.filterNot(mf => trafficVolume.map(_._1).exists(tv => tv == mf)).isEmpty) {
-      halt(BadRequest("Malformed 'traffic volume' parameter"))
-    }
-    Seq(trafficVolume)
+    val ktvValues = trafficVolume.map( tv  =>  tv.keys)
+    //TODO Check if mandatory fields are filled
+    //    if( ! mandatoryTrFields.filterNot(mf => ktvValues.exists(tv => tv == mf)).isEmpty) {
+    //      halt(BadRequest("Malformed 'traffic volume' parameter"))
+    //    }
+    trafficVolume.filter(x => x.getOrElse("tie", 0) == params("roadNumber").toInt)
+   // Seq(trafficVolume)
   }
 
   get("/trrest/tietolajit/:fieldCode/:roadNumber/:roadPartNumber") {
     //Checks that header contains X-OTH-Authorization attribute with correct base64 value
     if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg=="))) halt(BadRequest("401 Unauthorized"))
 
-    if( ! mandatoryTrFields.filterNot(mf => trafficVolume.map(_._1).exists(tv => tv == mf)).isEmpty) {
+    val ktvValues = trafficVolume.map( tv  =>  tv.keys)
+
+    if( ! mandatoryTrFields.filterNot(mf => ktvValues.exists(tv => tv == mf)).isEmpty) {
       halt(BadRequest("Malformed 'traffic volume' parameter"))
     }
-    Seq(trafficVolume)
+    trafficVolume.filter(x => x.getOrElse("tie", 0) == params("roadNumber") && x.getOrElse("osa", 0) == params("roadPartNumber"))
+
+   // Seq(trafficVolume)
   }
 
   get("/trrest/tietolajit/:fieldCode/:roadNumber/:roadPartNumber/:startDistance") {
     //Checks that header contains X-OTH-Authorization attribute with correct base64 value
     if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg=="))) halt(BadRequest("401 Unauthorized"))
 
-    if( ! mandatoryTrFields.filterNot(mf => trafficVolume.map(_._1).exists(tv => tv == mf)).isEmpty) {
+    val ktvValues = trafficVolume.map( tv  =>  tv.keys)
+
+    if( ! mandatoryTrFields.filterNot(mf => ktvValues.exists(tv => tv == mf)).isEmpty) {
       halt(BadRequest("Malformed 'traffic volume' parameter"))
     }
-    Seq(trafficVolume)
+    trafficVolume.filter(x => x.getOrElse("tie", 0) == params("roadNumber") && x.getOrElse("osa", 0) == params("roadPartNumber") && x.getOrElse("aet", 0) == params("startDistance"))
+//    Seq(trafficVolume)
   }
 
   get("/trrest/tietolajit/:fieldCode/:roadNumber/:roadPartNumber/:startDistance/:endPart/:endDistance") {
     //Checks that header contains X-OTH-Authorization attribute with correct base64 value
     if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg=="))) halt(BadRequest("401 Unauthorized"))
 
-    if( ! mandatoryTrFields.filterNot(mf => trafficVolume.map(_._1).exists(tv => tv == mf)).isEmpty) {
+    val ktvValues = trafficVolume.map( tv  =>  tv.keys)
+
+    if( ! mandatoryTrFields.filterNot(mf => ktvValues.exists(tv => tv == mf)).isEmpty) {
       halt(BadRequest("Malformed 'traffic volume' parameter"))
     }
-    Seq(trafficVolume)
+    trafficVolume.filter(x => x.getOrElse("tie", 0) == params("roadNumber") && x.getOrElse("osa", 0) == params("roadPartNumber") && x.getOrElse("aet", 0) == params("startDistance") && x.getOrElse("let", 0) == params("endDistance"))
+//    Seq(trafficVolume)
   }
 
 }

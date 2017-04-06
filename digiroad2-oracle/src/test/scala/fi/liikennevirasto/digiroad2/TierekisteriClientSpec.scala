@@ -379,6 +379,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
     }
   }
 
+  //TODO Correct tests with new API values
   test("fetch from tierekisteri active trafic volume with fieldCode and roadNumber") {
     assume(testConnection)
     val assets = tierekisteriAssetDataClient.fetchActiveAssetData("tl201", 45)

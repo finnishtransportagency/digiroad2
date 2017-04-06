@@ -16,13 +16,13 @@ class RoadAddressDAO {
   def fetchRoadAddresses() : Seq[RoadAddress] = {
     val query =
       s"""
-			 select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
-       ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id,
-       pos.start_measure, pos.end_measure, pos.side_code, ra.floating
-       from road_address ra
-       join lrm_position pos on ra.lrm_position_id = pos.id
+			select distinct ra.id, ra.road_number, ra.road_part_number, ra.track_code,
+      ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id,
+      pos.start_measure, pos.end_measure, pos.side_code, ra.floating, ra.valid_to
+      from road_address ra
+      join lrm_position pos on ra.lrm_position_id = pos.id
+      where valid_to is null OR valid_to <= SYSDATE
 		  """
-
     queryRoadAddresses(query)
   }
 
