@@ -47,7 +47,7 @@
 
   var startApplication = function(backend, models, withTileMaps, startupParameters) {
     setupProjections();
-    fetch('components/WMTSCapabilities.xml').then(function(response) {
+    fetch('components/WMTSCapabilities.xml', {credentials: "include"}).then(function(response) {
       return response.text();
     }).then(function(arcConfig) {
       var map = setupMap(backend, models, withTileMaps, startupParameters, arcConfig);
