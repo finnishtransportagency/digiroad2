@@ -789,7 +789,7 @@ object RoadAddressDAO {
     }.headOption
   }
 
-  def getRoadAddressProjects(projectId: Long) : List[RoadAddressProject] = {
+  def getRoadAddressProjects(projectId: Long = 0) : List[RoadAddressProject] = {
     val filter = projectId match{
       case 0 => ""
       case _ => s""" where id =${projectId}"""

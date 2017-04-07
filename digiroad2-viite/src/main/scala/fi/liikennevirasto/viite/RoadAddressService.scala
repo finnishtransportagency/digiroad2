@@ -701,9 +701,15 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     )
   }
 
-  def getRoadAddressProjects(projectId: Long): Seq[RoadAddressProject] = {
+  def getRoadAddressSingleProject(projectId: Long): Seq[RoadAddressProject] = {
     withDynTransaction {
       RoadAddressDAO.getRoadAddressProjects(projectId)
+    }
+  }
+
+  def getRoadAddressAllProjects(): Seq[RoadAddressProject] = {
+    withDynTransaction {
+      RoadAddressDAO.getRoadAddressProjects()
     }
   }
 
