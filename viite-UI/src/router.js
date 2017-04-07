@@ -68,11 +68,11 @@
     });
 
     eventbus.on('linkProperties:selectedProject', function (linkId) {
-        router.navigate('linkProperty/' + linkId);
+      router.navigate('linkProperty/' + linkId);
       applicationModel.selectLayer('linkProperty');
       backend.getRoadLinkByLinkId(linkId, function (response) {
         map.getView().setCenter([response.middlePoint.x, response.middlePoint.y]);
-        map.getView().setZoom(10);
+        map.getView().setZoom(8);
       });
     });
 

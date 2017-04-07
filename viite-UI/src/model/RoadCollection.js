@@ -91,6 +91,10 @@
           });
         }).concat(getSelectedRoadLinks());
         eventbus.trigger('roadLinks:fetched', roadLinkGroups);
+        if(applicationModel.isProjectButton()){
+          eventbus.trigger('linkProperties:highlightSelectedProject', applicationModel.getProjectFeature());
+          applicationModel.setProjectButton(false);
+        }
       });
     };
 

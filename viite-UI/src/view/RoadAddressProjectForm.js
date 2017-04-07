@@ -158,6 +158,8 @@
         setTimeout(function(){}, 0);
         if(!_.isUndefined(currentProject))
           eventbus.trigger('linkProperties:selectedProject', currentProject.linkId);
+          applicationModel.setProjectButton(true);
+          applicationModel.setProjectFeature(currentProject.linkId);
       });
 
       eventbus.on('roadAddress:selected roadAddress:cancelled', function(roadAddress) {
