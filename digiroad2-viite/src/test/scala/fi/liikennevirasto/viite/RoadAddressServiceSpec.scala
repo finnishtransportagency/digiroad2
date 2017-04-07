@@ -360,7 +360,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val countAfterInsertProjects = roadAddressService.getRoadAddressProjects(0)
       val count = countCurrentProjects.size + 1
       countAfterInsertProjects.size should be (count)
-
     }
   }
 
