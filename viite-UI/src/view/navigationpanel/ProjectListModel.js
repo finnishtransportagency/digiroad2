@@ -75,7 +75,6 @@
         $('.project-item').remove();
         hide();
       });
-
     }
 
     return {
