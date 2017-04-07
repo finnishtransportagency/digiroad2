@@ -1,7 +1,5 @@
-package fi.liikennevirasto.digiroad2.masstransitstop.oracle
+package fi.liikennevirasto.digiroad2.oracle
 
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries.nextPrimaryKeyId
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -9,13 +7,9 @@ import slick.jdbc.StaticQuery.interpolation
 object ImportLogService {
   val logger = LoggerFactory.getLogger(getClass)
 
-  def nextPrimaryKeySeqValue = {
-    nextPrimaryKeyId.as[Long].first
-  }
-
   def save(content: String): Long = {
     OracleDatabase.withDynTransaction {
-      val id = nextPrimaryKeySeqValue
+      val id = sql"""select primary_key_seq.nextval from dual""".as[Long].first
       sqlu"""
         insert into import_log(id, content)
         values ($id, $content)
