@@ -22,9 +22,11 @@
 
     var centerLonLat = {lon: 0, lat: 0};
     eventbus.on('map:moved', function(event) {
-      centerLonLat = event.bbox.getCenterLonLat();
-      container.find('.cbValue[axis="lat"]').text(Math.round(centerLonLat.lat));
-      container.find('.cbValue[axis="lon"]').text(Math.round(centerLonLat.lon));
+      centerLonLat = event.center;
+      if (centerLonLat) {
+        container.find('.cbValue[axis="lat"]').text(Math.round(centerLonLat[1]));
+        container.find('.cbValue[axis="lon"]').text(Math.round(centerLonLat[0]));
+      }
     });
 
     $('#mark-coordinates').on('click', function() {

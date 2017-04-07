@@ -31,8 +31,8 @@ module.exports = function(grunt) {
       },
       dist: {
         files: {
-          'dist/js/<%= pkg.name %>.js': ['UI/src/**/*.js'],
-          'dist-viite/js/<%= viitepkg.name %>.js': ['viite-UI/src/**/*.js']
+          'dist/js/<%= pkg.name %>.js': ['UI/src/**/*.js', '!**/ol-custom.js'],
+          'dist-viite/js/<%= viitepkg.name %>.js': ['viite-UI/src/**/*.js', '!**/ol-custom.js']
         }
       }
     },
@@ -262,9 +262,17 @@ module.exports = function(grunt) {
       }
     },
     exec: {
-      build_openlayers: {
-        cmd: './build.py',
-        cwd: './bower_components/openlayers/build/'
+      prepare_openlayers: {
+        cmd: 'npm install',
+        cwd: './bower_components/openlayers/'
+      },
+      viite_build_openlayers: {
+        cmd: 'node tasks/build.js ../../viite-UI/src/resources/digiroad2/ol3/ol-custom.js build/ol3.js',
+        cwd: './bower_components/openlayers/'
+      },
+      oth_build_openlayers: {
+        cmd: 'node tasks/build.js ../../UI/src/resources/digiroad2/ol3/ol-custom.js build/ol3.js',
+        cwd: './bower_components/openlayers/'
       }
     }
   });
@@ -290,9 +298,9 @@ module.exports = function(grunt) {
 
   grunt.registerTask('test', ['jshint', 'env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'mocha:unit', 'mocha:integration']);
 
-  grunt.registerTask('default', ['jshint', 'env:production', 'configureProxies:oth', 'preprocess:production', 'connect:oth', 'mocha:unit', 'mocha:integration', 'clean', 'less:production', 'less:viiteprod', 'concat', 'uglify', 'cachebreaker']);
+  grunt.registerTask('default', ['jshint', 'env:production', 'exec:prepare_openlayers', 'exec:oth_build_openlayers', 'exec:viite_build_openlayers', 'configureProxies:oth', 'preprocess:production', 'connect:oth', 'mocha:unit', 'mocha:integration', 'clean', 'less:production', 'less:viiteprod', 'concat', 'uglify', 'cachebreaker']);
 
-  grunt.registerTask('deploy', ['clean', 'env:production', 'preprocess:production', 'less:production', 'less:viiteprod', 'concat', 'uglify', 'cachebreaker', 'save_deploy_info']);
+  grunt.registerTask('deploy', ['clean', 'env:production', 'exec:prepare_openlayers', 'exec:oth_build_openlayers', 'exec:viite_build_openlayers', 'preprocess:production', 'less:production', 'less:viiteprod', 'concat', 'uglify', 'cachebreaker', 'save_deploy_info']);
 
   grunt.registerTask('integration-test', ['jshint', 'env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'mocha:integration']);
 

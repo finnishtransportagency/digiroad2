@@ -5,6 +5,7 @@ define(['chai', 'eventbus', 'TestHelpers', 'AssetsTestData'], function(chai, eve
   var assetData = _.merge({}, _.omit(assetsData[0], 'roadLinkId'), {propertyData: []});
 
   describe('when loading application with two bus stops', function() {
+    this.timeout(1500000);
     var openLayersMap;
     before(function(done) {
       var backend = testHelpers.fakeBackend(assetsData, assetData);
@@ -14,26 +15,34 @@ define(['chai', 'eventbus', 'TestHelpers', 'AssetsTestData'], function(chai, eve
       }, backend);
     });
     describe('and moving bus stop', function() {
-      var originalYPosition;
+      var originalCoordinates;
+      var newCoordinates;
       var testAssetId = 300348;
-      before(function() {
-        var marker = _.find(testHelpers.getAssetMarkers(openLayersMap), {id: testAssetId});
-        originalYPosition = marker.bounds.top;
+      before(function(done) {
+        var marker = testHelpers.getAssetMarker(openLayersMap, testAssetId);
+        originalCoordinates = [marker.data.lon, marker.data.lat];
         testHelpers.clickVisibleEditModeButton();
-        testHelpers.clickMarker(testAssetId, openLayersMap);
         eventbus.trigger('massTransitStop:movementPermission', true);
-        testHelpers.moveMarker(testAssetId, openLayersMap, 1, 0);
+        newCoordinates = [marker.data.lon + 1 , marker.data.lat];
+        testHelpers.moveMassTransitStop(openLayersMap, testAssetId, newCoordinates, function(){
+          done();
+        });
       });
       it('moves bus stop', function() {
-        var marker = _.find(testHelpers.getAssetMarkers(openLayersMap), {id: testAssetId});
-        expect(marker.bounds.top).to.be.above(originalYPosition);
+        var marker = testHelpers.getAssetMarker(openLayersMap, testAssetId);
+        expect(newCoordinates[1]).to.be.above(marker.geometry.getCoordinates()[1]);
       });
       describe('and canceling bus stop move', function() {
-        before(function() { $('button.cancel').click(); });
+        before(function(done) {
+          eventbus.once('asset:updateCancelled', function(){
+            done();
+          });
+          $('button.cancel').click();
+        });
 
         it('returns bus stop to original location', function() {
-          var marker = _.find(testHelpers.getAssetMarkers(openLayersMap), {id: testAssetId});
-          expect(marker.bounds.top).to.equal(originalYPosition);
+          var marker = testHelpers.getAssetMarker(openLayersMap, testAssetId);
+          expect(marker.geometry.getCoordinates()).to.deep.equal(originalCoordinates);
         });
       });
     });

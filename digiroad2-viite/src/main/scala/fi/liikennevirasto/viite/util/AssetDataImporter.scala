@@ -174,14 +174,6 @@ class AssetDataImporter {
       case (linkId, length) => adjust(lrmList.getOrElse(linkId, List()), length)
     }
 
-//    warningRows.foreach{
-//      warning =>
-//        val row = roads.find(r => r._16 == warning._1).get
-//        println("Suppressed row ID %d with reason 2: 'Values of the start and end fields are totally outside of the link geometry' (%.3f m) %s".format(warning._1, linkLengths.getOrElse(warning._2, Double.NaN), printRow(row)))
-//    }
-
-//    print(s"${DateTime.now()} - ")
-//    println("%d zero length segments removed".format(warningRows.size))
     print(s"${DateTime.now()} - ")
     println("%d segments with invalid link id removed".format(roads.filterNot(r => linkLengths.get(r._1).isDefined).size))
 

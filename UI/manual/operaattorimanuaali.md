@@ -13,7 +13,6 @@ VVH:n tuotantokanta --> OTH:n koulutuskanta, integraatiotesti ja tuotantokanta
 OTH:n eri ymp&auml;rist&ouml;jen osoitteet selaimessa:
 Integraatiotesti https://testiextranet.liikennevirasto.fi/digiroad/
 Testikanta https://devtest.liikennevirasto.fi/digiroad/
-Koulutuskanta https://apptest.liikennevirasto.fi/digiroad/
 Tuotanto https://extranet.liikennevirasto.fi/digiroad/
 
 Osa tietolajeista on tarkoitettu vain operaattorin yll&auml;pitoon toistaiseksi. N&auml;m&auml; saa n&auml;kyviin lis&auml;&auml;m&auml;ll&auml; osoitteeseen ?isExperimental=true, esim. https://extranet.liikennevirasto.fi/digiroad/?isExperimental=true
@@ -30,19 +29,14 @@ Ohjeessa on useassa kohdassa mainittu, ett&auml; tunnuksien hallinta on Digiroad
 
 ![Tuotantokanta](tuotantokanta_kuva.png)
 
-###Testiymp&auml;rist&ouml;:###
-
-![Testikanta](testikanta_kuva.png)
-
-###Koulutusymp&auml;rist&ouml;:###
-
-![Koulutuskanta](koulutuskanta_kuva.png)
-
 ###Integraatiotestausymp&auml;rist&ouml;###
 
 ![Integraatiotesti](integraatiotesti_kuva.png)
 
-Integraatiotestiymp&auml;rist&ouml; ja koulutusymp&auml;rist&ouml; tulevat olemaan identtisi&auml;. Kahden identtisen ymp&auml;rist&ouml;n hy&ouml;ty saavutetaan tilanteessa, kun Digiroad-operaattori pit&auml;&auml; koulutuksia. T&auml;ll&ouml;in koulutukset voivat jatkua, vaikka kehitystiimi vie uusia versioita tuotantoon, koska integraatiotestausymp&auml;rist&ouml; korvaa vanhan koulutuksen versioiden toimivuuden varmistuksessa.
+###Testiymp&auml;rist&ouml;:###
+
+![Testikanta](testikanta_kuva.png)
+
 
 2. Uuden k&auml;ytt&auml;j&auml;n lis&auml;&auml;minen
 -----------------------------

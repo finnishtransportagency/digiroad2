@@ -333,11 +333,15 @@
       return currentAsset.id;
     };
 
-    var getName = function() {
+    var getName = function(properties) {
+      if(properties)
+        return getPropertyValue({ propertyData: properties }, 'nimi_suomeksi');
       return getPropertyValue({ propertyData: getProperties() }, 'nimi_suomeksi');
     };
 
-    var getDirection = function() {
+    var getDirection = function(properties) {
+      if(properties)
+        return getPropertyValue({ propertyData: properties }, 'liikennointisuuntima');
       return getPropertyValue({ propertyData: getProperties() }, 'liikennointisuuntima');
     };
 
