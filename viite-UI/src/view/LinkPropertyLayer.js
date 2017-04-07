@@ -884,8 +884,16 @@
       deactivateSelectInteractions();
     });
 
+    eventListener.listenTo(eventbus, 'linkProperties:deactivateAllSelections', function(){
+      deactivateSelectInteractions(true);
+    });
+
     eventListener.listenTo(eventbus, 'linkProperties:activateDoubleClick', function(){
       activateSelectInteractions();
+    });
+
+    eventListener.listenTo(eventbus, 'linkProperties:activateAllSelections', function(){
+      activateSelectInteractions(true);
     });
 
     var show = function(map) {

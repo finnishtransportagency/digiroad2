@@ -138,6 +138,8 @@
           current = singleLinkSelect ? roadCollection.getById([id]) : roadCollection.getGroupById(id);
         }
 
+        eventbus.trigger('linkProperties:activateAllSelections');
+
         _.forEach(current, function (selected) {
           selected.select();
         });
@@ -178,6 +180,9 @@
         processOl3Features(visibleFeatures);
         eventbus.trigger('adjacents:startedFloatingTransfer');
         eventbus.trigger('linkProperties:selected', data4Display);
+        _.defer(function(){
+          eventbus.trigger('linkProperties:deactivateAllSelections');
+        });
       }
     };
 
