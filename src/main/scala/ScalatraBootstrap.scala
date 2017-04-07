@@ -1,6 +1,6 @@
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.authentication.SessionApi
-import fi.liikennevirasto.digiroad2.dataimport.MassTransitStopImportApi
+import fi.liikennevirasto.digiroad2.dataimport.{ImportDataApi, MassTransitStopImportApi}
 import fi.liikennevirasto.digiroad2.user.UserConfigurationApi
 import org.scalatra._
 import javax.servlet.ServletContext
@@ -23,6 +23,7 @@ ScalatraBootstrap extends LifeCycle {
     context.mount(new UserConfigurationApi, "/api/userconfig/*")
     context.mount(new PingApi, "/api/ping/*")
     context.mount(new MassTransitStopImportApi, "/api/import/*")
+    context.mount(new ImportDataApi, "/api/import/data/*")
     Digiroad2Context.massTransitStopService.massTransitStopEnumeratedPropertyValues
     context.mount(new IntegrationApi(Digiroad2Context.massTransitStopService), "/api/integration/*")
     context.mount(new ViiteIntegrationApi(Digiroad2Context.roadAddressService), "/api/viite/integration/*")
