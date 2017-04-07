@@ -69,6 +69,12 @@
       });
     }, 1000);
 
+    this.getProjectsWithLinksById = _.throttle(function(id, callback) {
+      return $.getJSON('api/viite/roadlinks/roadaddress/project/all/projectId/' + id, function(data) {
+        return _.isFunction(callback) && callback(data);
+      });
+    }, 1000);
+
     this.getUserRoles = function () {
       $.get('api/viite/user/roles', function (roles) {
         eventbus.trigger('roles:fetched', roles);

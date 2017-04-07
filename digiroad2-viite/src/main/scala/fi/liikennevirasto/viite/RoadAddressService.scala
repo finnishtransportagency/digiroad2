@@ -664,7 +664,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
               val formInfo = groupedAddresses.map(addressGroup =>{
                 val lastAddressM = addressGroup._2.last.endAddrM
                 val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(addressGroup._2.last.linkId), false)
-                val addressFormLine = RoadAddressProjectFormLine(project.id, project.roadNumber, addressGroup._1._2, lastAddressM , MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(roadLink.head.municipalityCode, -1), addressGroup._2.last.discontinuityType.description )
+                val addressFormLine = RoadAddressProjectFormLine(addressGroup._2.last.linkId, project.id, project.roadNumber, addressGroup._1._2, lastAddressM , MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(roadLink.head.municipalityCode, -1), addressGroup._2.last.discontinuityType.description )
                 addressFormLine
               })
               Map("project" -> projectToApi(project), "projectAddresses" -> createdAddresses.headOption, "formInfo" -> formInfo)
@@ -701,10 +701,39 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     )
   }
 
-  def getRoadAddressProjects(): Seq[RoadAddressProject] = {
+  def getRoadAddressSingleProject(projectId: Long): Seq[RoadAddressProject] = {
     withDynTransaction {
-      val projects = RoadAddressDAO.getRoadAddressProjects()
-      projects
+      RoadAddressDAO.getRoadAddressProjects(projectId)
+    }
+  }
+
+  def getRoadAddressAllProjects(): Seq[RoadAddressProject] = {
+    withDynTransaction {
+      RoadAddressDAO.getRoadAddressProjects()
+    }
+  }
+
+  def getProjectsWithLinksById(projectId: Long): (RoadAddressProject, Seq[RoadAddressProjectFormLine]) = {
+    withDynTransaction {
+      val project:RoadAddressProject = RoadAddressDAO.getRoadAddressProjects(projectId).head
+      val createdAddresses = RoadAddressDAO.getRoadAddressProjectLinks(project.id)
+      val groupedAddresses = createdAddresses.groupBy { address =>
+        (address.roadNumber, address.roadPartNumber)
+      }.toSeq.sortBy(_._1._2)(Ordering[Long])
+      val formInfo: Seq[RoadAddressProjectFormLine] = groupedAddresses.map(addressGroup => {
+        val lastAddressM = addressGroup._2.last.endAddrM
+        val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(addressGroup._2.last.linkId), false)
+        val addressFormLine = RoadAddressProjectFormLine(addressGroup._2.last.linkId, project.id, addressGroup._2.last.roadNumber, addressGroup._2.last.roadPartNumber, lastAddressM, MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(roadLink.head.municipalityCode, -1), addressGroup._2.last.discontinuityType.description)
+        addressFormLine
+      })
+
+       val fullProjectInfo:RoadAddressProject = formInfo.length match {
+         case 0 => project
+         case 1 => project.copy(roadNumber = formInfo.head.roadNumber, startPart = formInfo.head.roadPartNumber, endPart = formInfo.head.roadPartNumber)
+         case _ => project.copy(roadNumber = formInfo.head.roadNumber, startPart = formInfo.head.roadPartNumber, endPart = formInfo.last.roadPartNumber)
+       }
+
+      (fullProjectInfo, formInfo)
     }
   }
 }

@@ -824,6 +824,14 @@
       else return _.first(features);
     };
 
+    eventbus.on('linkProperties:highlightSelectedProject', function(featureLinkId){
+      setGeneralOpacity(0.2);
+      var projectFeature = _.filter(roadLayer.layer.getSource().getFeatures(), function (ft) {
+        return ft.roadLinkData.linkId === featureLinkId;
+      });
+      addFeaturesToSelection(projectFeature);
+    });
+
     eventbus.on('linkProperties:highlightAnomalousByFloating', function(){
       highlightAnomalousFeaturesByFloating();
     });

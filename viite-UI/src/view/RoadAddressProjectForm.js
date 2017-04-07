@@ -11,14 +11,14 @@
 
     var largeInputField = function (dataField) {
       return '<div class="form-group">' +
-      '<label class="control-label">LISÄTIEDOT</label>'+
-      '<textarea class="form-control large-input roadAddressProject" id="lisatiedot">'+(dataField === undefined ? "" : dataField )+'</textarea>'+
-      '</div>';
+        '<label class="control-label">LISÄTIEDOT</label>'+
+        '<textarea class="form-control large-input roadAddressProject" id="lisatiedot">'+(dataField === undefined ? "" : dataField )+'</textarea>'+
+        '</div>';
     };
 
     var inputFieldRequired = function(labelText, id, placeholder,  value) {
       var field = '<div class="form-group">' +
-      '<label class="control-label required">' + labelText + '</label>' +
+        '<label class="control-label required">' + labelText + '</label>' +
         '<input type="text" class="form-control" id = "'+id+'" placeholder = "'+placeholder+'" value="'+value+'"/>' +
         '</div>';
       return field;
@@ -105,15 +105,14 @@
         '</div>'+
         '</div>' +
         '<div class = "form-result">' +
-          '<label >PROJEKTIIN VALITUT TIEOSAT:</label>'+
-          '<div style="margin-left: 15px;">' +
-            addSmallLabel('TIE')+ addSmallLabel('OSA')+ addSmallLabel('PITUUS')+ addSmallLabel('JATKUU')+ addSmallLabel('ELY')+
-          '</div>'+
-          formInfo +
+        '<label >PROJEKTIIN VALITUT TIEOSAT:</label>'+
+        '<div style="margin-left: 15px;">' +
+        addSmallLabel('TIE')+ addSmallLabel('OSA')+ addSmallLabel('PITUUS')+ addSmallLabel('JATKUU')+ addSmallLabel('ELY')+
+        '</div>'+
+        formInfo +
         '</div></div></div>'+
         '<footer>' + buttons + '</footer>');
     };
-
 
     var addSmallLabel = function(label){
       return '<label class="control-label-small">'+label+'</label>';
@@ -145,25 +144,45 @@
         applicationModel.setOpenProject(true);
       });
 
+      eventbus.on('roadAddress:openProject', function(result) {
+        currentProject = result.projects;
+        var text = '';
+        _.each(result.projectLinks, function(line){
+          text += '<div>' +
+            '<button class="delete btn-delete-roadpart">x</button>'+addSmallLabel(line.roadNumber)+ addSmallLabel(line.roadPartNumber)+ addSmallLabel(line.RoadLength)+ addSmallLabel(line.discontinuity)+ addSmallLabel(line.ely) +
+            '</div>';
+        });
+        rootElement.html(openProjectTemplate(currentProject, text));
+        jQuery('.modal-overlay').remove();
+        setTimeout(function(){}, 0);
+        if(!_.isUndefined(currentProject))
+          eventbus.trigger('linkProperties:selectedProject', currentProject.linkId);
+          applicationModel.setProjectButton(true);
+          applicationModel.setProjectFeature(currentProject.linkId);
+      });
 
       eventbus.on('roadAddress:selected roadAddress:cancelled', function(roadAddress) {
 
       });
 
       eventbus.on('roadAddress:projectSaved', function (result) {
-        currentProject = result.project;
-        var text = '';
-        _.each(result.formInfo, function(line){
-          text += '<div>' +
-            '<button class="delete btn-delete-roadpart">x</button>'+addSmallLabel(line.roadNumber)+ addSmallLabel(line.roadPartNumber)+ addSmallLabel(line.RoadLength)+ addSmallLabel(line.discontinuity)+ addSmallLabel(line.ely) +
-          '</div>';
-        });
-        rootElement.html(openProjectTemplate(result.project, text));
+        if(!_.isEmpty(result)){
+          currentProject = result.project;
+          var text = '';
+          _.each(result.formInfo, function(line){
+            text += '<div>' +
+              '<button class="delete btn-delete-roadpart">x</button>'+addSmallLabel(line.roadNumber)+ addSmallLabel(line.roadPartNumber)+ addSmallLabel(line.RoadLength)+ addSmallLabel(line.discontinuity)+ addSmallLabel(line.ely) +
+              '</div>';
+          });
+          rootElement.html(openProjectTemplate(result.project, text));
 
-        jQuery('.modal-overlay').remove();
-        addDatePicker();
-        if(!_.isUndefined(result.projectAddresses))
-          eventbus.trigger('linkProperties:selectedProject', result.projectAddresses.linkId);
+          jQuery('.modal-overlay').remove();
+          addDatePicker();
+          if(!_.isUndefined(result.projectAddresses))
+            eventbus.trigger('linkProperties:selectedProject', result.projectAddresses.linkId);
+        } else {
+          jQuery('.modal-overlay').remove();
+        }
       });
 
       rootElement.on('click', '.project-form button.save', function() {
