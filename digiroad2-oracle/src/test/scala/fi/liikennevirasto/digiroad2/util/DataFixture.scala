@@ -824,6 +824,12 @@ object DataFixture {
     val trafficVolumeTR = "tl201"
     val trafficVolumeId = 170
 
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+
+    lazy val linearAssetService: LinearAssetService = {
+      new LinearAssetService(roadLinkService, new DummyEventBus)
+    }
+
     println("\nExpiring Traffic Volume From OTH Database")
     OracleDatabase.withDynSession { oracleLinearAssetDao.expireAllAssetsByTypeId(trafficVolumeId) }
     println("\nTraffic Volume data Expired")
@@ -832,37 +838,33 @@ object DataFixture {
     val roadAddresses = OracleDatabase.withDynSession { roadAddressDao.fetchRoadAddresses() }
     println("\nEnd of Fetch ")
 
+    println("\nFetch Road Numbers From Viite")
+    val roadNumbers = OracleDatabase.withDynSession { roadAddressDao.fetchRoadNumbers() }
+    println("\nEnd of Fetch ")
+
     println("\nFetch Traffic Volume by Road Number ")
-    val tieri = roadAddresses.flatMap( ra => tierikisteriClient.fetchActiveAssetData(trafficVolumeTR, ra.roadNumber)).distinct
-    println("\nEnd of Traffic Volume fetch")
+    roadNumbers.foreach{
+      case roadNumber =>
+        val trTrafficVolume = tierikisteriClient.fetchActiveAssetData(trafficVolumeTR, roadNumber)
+        println("\nMap road addresses to link ids using Viite")
 
-    println("\nMap road addresses to link ids using Viite")
-    val mapped = tieri.map( tr =>
-      ( roadAddresses.find( ra => ra.roadNumber == tr.roadNumber && ra.roadPartNumber == tr.roadPartNumber && ra.startMValue == tr.starMValue && ra.endMValue == tr.endMValue),
-        tr.ktv)
-    )
+        trTrafficVolume.foreach { tr =>
+          OracleDatabase.withDynTransaction {
+            val roadAddresses = roadAddressDao.fetchRoadAddressesFiltered(tr.roadNumber, tr.roadPartNumber, tr.starMValue, tr.endMValue)
 
-    println("\nCreated OTH traffic volume assets form TR data")
-    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+            println("\nCreated OTH traffic volume assets form TR data")
+            roadAddresses.foreach { ra =>
 
-    lazy val linearAssetService: LinearAssetService = {
-      new LinearAssetService(roadLinkService, new DummyEventBus)
-    }
+              val assetId = linearAssetService.dao.createLinearAsset(trafficVolumeId, ra.linkId, false, ra.sideCode.value,
+                ra.startMValue, ra.endMValue, "batch_process_trafficVolume")
 
-    if(mapped.nonEmpty) {
-      println("\nAsset created")
-      mapped.foreach {
-        case (ra, tierikisteri) =>
-          OracleDatabase.withDynSession {
-            val assetId = linearAssetService.dao.createLinearAsset(trafficVolumeId, ra.get.linkId, false, ra.get.sideCode.value,
-              ra.get.startMValue, ra.get.endMValue, "batch_process_trafficVolume")
-            linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, tierikisteri)
+              linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, tr.ktv)
+            }
           }
-      }
+        }
     }
-    //     TierekisteriAssetData(roadNumber, roadPartNumber, trackCode, starMValue, endMValue, ktv)
-     println("\n End of creation OTH traffic volume assets form TR data")
-
+    println("\nEnd of Traffic Volume fetch")
+    println("\nEnd of creation OTH traffic volume assets form TR data")
   }
 
   def main(args:Array[String]) : Unit = {

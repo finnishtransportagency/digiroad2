@@ -188,56 +188,34 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
 
   get("/trrest/tietolajit/:fieldCode/:roadNumber") {
     //Checks that header contains X-OTH-Authorization attribute with correct base64 value
-    if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg=="))) halt(BadRequest("401 Unauthorized"))
+    if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg==")))
+      halt(BadRequest("401 Unauthorized"))
 
-    val ktvValues = trafficVolume.map( tv  =>  tv.keys)
-    //TODO Check if mandatory fields are filled
-    //    if( ! mandatoryTrFields.filterNot(mf => ktvValues.exists(tv => tv == mf)).isEmpty) {
-    //      halt(BadRequest("Malformed 'traffic volume' parameter"))
-    //    }
     trafficVolume.filter(x => x.getOrElse("tie", 0) == params("roadNumber").toInt)
-   // Seq(trafficVolume)
   }
 
   get("/trrest/tietolajit/:fieldCode/:roadNumber/:roadPartNumber") {
     //Checks that header contains X-OTH-Authorization attribute with correct base64 value
-    if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg=="))) halt(BadRequest("401 Unauthorized"))
+    if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg==")))
+      halt(BadRequest("401 Unauthorized"))
 
-    val ktvValues = trafficVolume.map( tv  =>  tv.keys)
-
-    if( ! mandatoryTrFields.filterNot(mf => ktvValues.exists(tv => tv == mf)).isEmpty) {
-      halt(BadRequest("Malformed 'traffic volume' parameter"))
-    }
-    trafficVolume.filter(x => x.getOrElse("tie", 0) == params("roadNumber") && x.getOrElse("osa", 0) == params("roadPartNumber"))
-
-   // Seq(trafficVolume)
+    trafficVolume.filter(x => x.getOrElse("tie", 0) == params("roadNumber").toInt && x.getOrElse("osa", 0) == params("roadPartNumber").toInt)
   }
 
   get("/trrest/tietolajit/:fieldCode/:roadNumber/:roadPartNumber/:startDistance") {
     //Checks that header contains X-OTH-Authorization attribute with correct base64 value
-    if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg=="))) halt(BadRequest("401 Unauthorized"))
+    if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg==")))
+      halt(BadRequest("401 Unauthorized"))
 
-    val ktvValues = trafficVolume.map( tv  =>  tv.keys)
-
-    if( ! mandatoryTrFields.filterNot(mf => ktvValues.exists(tv => tv == mf)).isEmpty) {
-      halt(BadRequest("Malformed 'traffic volume' parameter"))
-    }
-    trafficVolume.filter(x => x.getOrElse("tie", 0) == params("roadNumber") && x.getOrElse("osa", 0) == params("roadPartNumber") && x.getOrElse("aet", 0) == params("startDistance"))
-//    Seq(trafficVolume)
+    trafficVolume.filter(x => x.getOrElse("tie", 0) == params("roadNumber").toInt && x.getOrElse("osa", 0) == params("roadPartNumber").toInt && x.getOrElse("aet", 0) == params("startDistance").toInt)
   }
 
   get("/trrest/tietolajit/:fieldCode/:roadNumber/:roadPartNumber/:startDistance/:endPart/:endDistance") {
     //Checks that header contains X-OTH-Authorization attribute with correct base64 value
-    if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg=="))) halt(BadRequest("401 Unauthorized"))
+    if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg==")))
+      halt(BadRequest("401 Unauthorized"))
 
-    val ktvValues = trafficVolume.map( tv  =>  tv.keys)
-
-    if( ! mandatoryTrFields.filterNot(mf => ktvValues.exists(tv => tv == mf)).isEmpty) {
-      halt(BadRequest("Malformed 'traffic volume' parameter"))
-    }
-    trafficVolume.filter(x => x.getOrElse("tie", 0) == params("roadNumber") && x.getOrElse("osa", 0) == params("roadPartNumber") && x.getOrElse("aet", 0) == params("startDistance") && x.getOrElse("let", 0) == params("endDistance"))
-//    Seq(trafficVolume)
+    trafficVolume.filter(x => x.getOrElse("tie", 0) == params("roadNumber").toInt && x.getOrElse("osa", 0) == params("roadPartNumber").toInt && x.getOrElse("aet", 0) == params("startDistance").toInt && x.getOrElse("let", 0) == params("endDistance").toInt)
   }
-
 }
 

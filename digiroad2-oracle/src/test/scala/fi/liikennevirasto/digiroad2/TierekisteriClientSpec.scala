@@ -379,7 +379,6 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
     }
   }
 
-  //TODO Correct tests with new API values
   test("fetch from tierekisteri active trafic volume with fieldCode and roadNumber") {
     assume(testConnection)
     val assets = tierekisteriAssetDataClient.fetchActiveAssetData("tl201", 45)
@@ -406,7 +405,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
 
   test("fetch from tierekisteri active trafic volume with fieldCode, roadNumber, roadPartNumber, startDistance, endPart and endDistance") {
     assume(testConnection)
-    val assets = tierekisteriAssetDataClient.fetchActiveAssetData("tl201", 45, 1, 0, 2, 5)
+    val assets = tierekisteriAssetDataClient.fetchActiveAssetData("tl201", 45, 1, 0, 0, 100)
 
     assets.size should be (1)
     assets.map(_.ktv) should contain (1)
