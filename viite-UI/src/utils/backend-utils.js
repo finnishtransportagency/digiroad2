@@ -87,7 +87,7 @@
     };
 
     this.getGeocode = function(address) {
-      return $.post("api/geocode", { address: address }).then(function(x) { return JSON.parse('{"results":[{"urakka_alue":"131","x":392818.286,"kuntakoodi":"091","y":6681275.071,"maakunta":"01","ely":"1","address":"Tattariharjuntie, Helsinki"}]}'); });
+      return $.post("vkm/geocode", { address: address }).then(function(x) { return JSON.parse(x); });
     };
 
     this.getCoordinatesFromRoadAddress = function(roadNumber, section, distance, lane) {
