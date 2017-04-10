@@ -414,9 +414,11 @@
         if(!_.isEmpty(result) && !applicationModel.isReadOnly()) {
           eventbus.trigger("adjacents:roadTransfer", result, sourceDataIds.concat(targetDataIds), targetDataIds);
           roadCollection.setNewTmpRoadAddresses(result);
+          _.defer(function(){
+            eventbus.trigger('linkProperties:deactivateAllSelections');
+          });
         }
       });
-
     };
 
     var saveTransfer = function() {

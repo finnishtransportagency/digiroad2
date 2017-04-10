@@ -567,7 +567,7 @@
         if(applicationModel.isActiveButtons())
           action = applicationModel.actionCalculating;
         applicationModel.setCurrentAction(action);
-        eventbus.trigger('linkProperties:activateInteractions');
+        eventbus.trigger('linkProperties:activateAllSelections');
         if('all' === applicationModel.getSelectionType() || 'floating' === applicationModel.getSelectionType()){
           selectedLinkProperty.clearAndReset(false);
           applicationModel.toggleSelectionTypeAll();
