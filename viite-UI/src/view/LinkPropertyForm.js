@@ -171,20 +171,20 @@
 
     var additionalSource = function(linkId, marker) {
       return (!_.isUndefined(marker)) ? '' +
-        '<div class = "form-group" id = "aditionalSource">' +
-        '<div style="display:inline-flex;justify-content:center;align-items:center;">' +
-        '<label class="control-label-floating"> LINK ID:</label>' +
-        '<span class="form-control-static-floating" style="display:inline-flex;width:auto;margin-right:5px">' + linkId + '</span>' +
-        '<span class="marker">' + marker + '</span>' +
-        '<button class="add-source btn btn-new" id="aditionalSourceButton-' + linkId + '" value="' + linkId + '">Lisää kelluva tieosoite</button>' +
-        '</div>' +
-        '</div>' : '' +
-        '<div class = "form-group" id = "aditionalSource">' +
-        '<div style="display:inline-flex;justify-content:center;align-items:center;">' +
-        '<label class="control-label-floating"> LINK ID:</label>' +
-        '<span class="form-control-static-floating" style="display:inline-flex;width:auto;margin-right:5px">' + linkId + '</span>' +
-        '</div>' +
-        '</div>';
+       '<div class = "form-group" id = "aditionalSource">' +
+       '<div style="display:inline-flex;justify-content:center;align-items:center;">' +
+       '<label class="control-label-floating"> LINK ID:</label>' +
+       '<span class="form-control-static-floating" style="display:inline-flex;width:auto;margin-right:5px">' + linkId + '</span>' +
+       '<span class="marker">' + marker + '</span>' +
+       '<button class="add-source btn btn-new" id="aditionalSourceButton-' + linkId + '" value="' + linkId + '">Lisää kelluva tieosoite</button>' +
+       '</div>' +
+       '</div>' : '' +
+       '<div class = "form-group" id = "aditionalSource">' +
+       '<div style="display:inline-flex;justify-content:center;align-items:center;">' +
+       '<label class="control-label-floating"> LINK ID:</label>' +
+       '<span class="form-control-static-floating" style="display:inline-flex;width:auto;margin-right:5px">' + linkId + '</span>' +
+       '</div>' +
+       '</div>';
     };
 
     var adjacentsTemplate = '' +
@@ -251,9 +251,9 @@
     var notificationFloatingTransfer = function(displayNotification) {
       if(displayNotification)
         return '' +
-          '<div class="form-group form-notification">' +
-          '<p>Tien geometria on muuttunut. Korjaa tieosoitesegmentin sijainti vastaamaan nykyistä geometriaa.</p>' +
-          '</div>';
+           '<div class="form-group form-notification">' +
+           '<p>Tien geometria on muuttunut. Korjaa tieosoitesegmentin sijainti vastaamaan nykyistä geometriaa.</p>' +
+           '</div>';
       else
         return '';
     };
