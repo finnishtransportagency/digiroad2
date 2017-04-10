@@ -116,16 +116,30 @@
         field = formFields(sources);
       } else if(labelText === 'ALKUETÄISYYS'){
         var startAddress =  _.min(_.pluck(selectedLinkProperty.get(), 'startAddressM'));
-        field = '<div class="form-group">' +
-          '<label class="control-label">' + labelText + '</label>' +
-          '<p class="form-control-static">' + startAddress + '</p>' +
-          '</div>';
+        if(floatingTransfer){
+          field = '<div class="form-group">' +
+            '<label class="control-label-floating">' + labelText + '</label>' +
+            '<p class="form-control-static-floating">' + startAddress + '</p>' +
+            '</div>' ;
+        } else {
+          field = '<div class="form-group">' +
+            '<label class="control-label">' + labelText + '</label>' +
+            '<p class="form-control-static">' + startAddress + '</p>' +
+            '</div>';
+        }
       } else if(labelText === 'LOPPUETÄISUUS'){
         var endAddress =  _.max(_.pluck(selectedLinkProperty.get(), 'endAddressM'));
-        field = '<div class="form-group">' +
-          '<label class="control-label">' + labelText + '</label>' +
-          '<p class="form-control-static">' + endAddress + '</p>' +
-          '</div>';
+        if(floatingTransfer){
+          field = '<div class="form-group">' +
+            '<label class="control-label-floating">' + labelText + '</label>' +
+            '<p class="form-control-static-floating">' + endAddress + '</p>' +
+            '</div>' ;
+        } else {
+          field = '<div class="form-group">' +
+            '<label class="control-label">' + labelText + '</label>' +
+            '<p class="form-control-static">' + endAddress + '</p>' +
+            '</div>';
+        }
       }
       return field;
     };
@@ -302,6 +316,8 @@
     };
 
     var templateFloatingEditMode = function(options) {
+      var startAddress = selectedLinkProperty.count() == 1 ? staticField('ALKUETÄISYYS', 'startAddressM') : dynamicField('ALKUETÄISYYS');
+      var endAddress = selectedLinkProperty.count() == 1 ? staticField('LOPPUETÄISUUS', 'endAddressM') : dynamicField('LOPPUETÄISUUS');
       var roadTypes = selectedLinkProperty.count() == 1 ? staticField('TIETYYPPI', 'roadType') : dynamicField('TIETYYPPI');
       var linkIds = dynamicField('VALITUT LINKIT');
       return _.template('<div style="display: none" id="floatingEditModeForm">' +
@@ -318,6 +334,8 @@
         '</div>' +
         staticField('TIENUMERO', 'roadNumber') +
         staticField('TIEOSANUMERO', 'roadPartNumber') +
+        startAddress +
+        endAddress +
         staticField('AJORATA', 'trackCode') +
         roadTypes +
         notificationFloatingTransfer(true) +
@@ -507,8 +525,8 @@
           });
 
         var fullTemplate = applicationModel.getCurrentAction() === applicationModel.actionCalculated ? afterCalculationTemplate : !_.isEmpty(floatingAdjacents) ? _.map(floatingAdjacents, function(fa){
-          return additionalSource(fa.linkId, fa.marker);
-        })[0] + adjacentsTemplate : adjacentsTemplate;
+              return additionalSource(fa.linkId, fa.marker);
+            })[0] + adjacentsTemplate : adjacentsTemplate;
 
         if(!_.isUndefined(additionalSourceLinkId)){
           return $(".form-group[id^='VALITUTLINKIT']:last").append('<div style="display:inline-flex;justify-content:center;align-items:center;">' +
