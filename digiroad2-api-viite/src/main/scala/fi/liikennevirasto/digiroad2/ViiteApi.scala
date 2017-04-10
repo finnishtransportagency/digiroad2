@@ -152,7 +152,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       RoadAddress(ra.id, ra.roadNumber, ra.roadPartNumber, Track.apply(ra.trackCode), Discontinuity.apply(ra.discontinuity), ra.startAddressM, ra.endAddressM,
         Some(DateTime.now()), None, Option(ra.modifiedBy),0, ra.linkId, ra.startMValue, ra.endMValue, SideCode.apply(ra.sideCode), ra.calibrationPoints, false, ra.points)
     }
-    roadAddressService.transferFloatingToGap(sourceIds, targetIds, roadAddresses)
+    val transferredRoadAddresses = roadAddressService.transferFloatingToGap(sourceIds, targetIds, roadAddresses)
+    roadAddressService.recalculateRoadAddresses(roadAddresses.head.roadNumber.toInt)
+    transferredRoadAddresses
   }
 
   put("/roadlinks/roadaddress/project/save"){

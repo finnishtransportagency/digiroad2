@@ -14,7 +14,7 @@ import fi.liikennevirasto.viite.RoadType._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
-import fi.liikennevirasto.viite.process.{InvalidAddressDataException, RoadAddressFiller}
+import fi.liikennevirasto.viite.process.{InvalidAddressDataException, LinkRoadAddressCalculator, RoadAddressFiller}
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, DateTimeZone}
 import org.slf4j.LoggerFactory
@@ -549,7 +549,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val targetLinks = targets.flatMap(rd => {
       getUniqueRoadAddressLink(rd.toLong)
     })
-    transferRoadAddress(sourceLinks, targetLinks, user)
+    val transferredRoadAddresses = transferRoadAddress(sourceLinks, targetLinks, user)
+
+    transferredRoadAddresses
   }
 
   def transferFloatingToGap(sourceIds: Set[Long], targetIds: Set[Long], roadAddresses: Seq[RoadAddress]) = {
@@ -581,28 +583,30 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val allLinks = sources ++ targets
     val targetsGeomLength = targets.map(_.length).sum
 
-    val allStartCp = sources.flatMap(_.startCalibrationPoint) ++ targets.flatMap(_.startCalibrationPoint)
-    val allEndCp = sources.flatMap(_.endCalibrationPoint) ++ targets.flatMap(_.endCalibrationPoint)
+    val allStartCp = sources.flatMap(_.startCalibrationPoint)
+    val allEndCp = sources.flatMap(_.endCalibrationPoint)
     val startCalibrationPoints = allStartCp.filter(_.addressMValue == allStartCp.map(_.addressMValue).min)
     val endCalibrationPoints = allEndCp.filter(_.addressMValue == allEndCp.map(_.addressMValue).max)
     val startCp: Option[CalibrationPoint] = if (!startCalibrationPoints.isEmpty) Option(startCalibrationPoints.head) else None
     val endCp: Option[CalibrationPoint] = if (!endCalibrationPoints.isEmpty) Option(endCalibrationPoints.head) else None
     val minStartAddressM = sources.map(_.startAddressM).min
     val maxEndAddressM = sources.map(_.endAddressM).max
-    var minStartMValue = 0.0
-    var maxEndMValue = 0.0
+
     val adjustedSegments = adjustTopology.foldLeft(sources) { (previousSources, operation) => operation(targetsGeomLength, previousSources) }
 
-    if (!allLinks.flatMap(_.startCalibrationPoint).isEmpty) {
-      minStartMValue = getMValues(Option(allLinks.flatMap(_.startCalibrationPoint).map(_.segmentMValue).min), Option(allLinks.map(_.startMValue).min))
-    } else {
-      minStartMValue = adjustedSegments.map(_.startMValue).min
+    val minStartMValue = allLinks.flatMap(_.startCalibrationPoint) match {
+      case Nil => adjustedSegments.map(_.startMValue).min
+      case _ => getMValues(Option(adjustedSegments.flatMap(_.startCalibrationPoint).map(_.segmentMValue).min), Option(adjustedSegments.map(_.startMValue).min))
     }
 
-    if (!allLinks.flatMap(_.endCalibrationPoint).isEmpty) {
-      maxEndMValue = getMValues(Option(allLinks.flatMap(_.endCalibrationPoint).map(_.segmentMValue).max), Option(allLinks.map(_.endMValue).max))
-    } else {
-      maxEndMValue = adjustedSegments.map(_.endMValue).max
+    val maxEndMValue = allLinks.flatMap(_.endCalibrationPoint) match {
+      case Nil => adjustedSegments.map(_.endMValue).max
+      case _ => getMValues(Option(adjustedSegments.flatMap(_.endCalibrationPoint).map(_.segmentMValue).max), Option(adjustedSegments.map(_.endMValue).max))
+    }
+
+    val calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = {
+//      (startCp.map(_.copy(segmentMValue = minStartMValue)), endCp.map(_.copy(segmentMValue = maxEndMValue)))
+      (startCp, endCp)
     }
 
     val source = sources.head
@@ -624,7 +628,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
 
     val adjustedCreatedRoads = orderedTargets.foldLeft(orderedTargets) { (previousTargets, target) =>
-      RoadAddressLinkBuilder.adjustRoadAddressTopology(maxEndMValue, minStartAddressM, maxEndAddressM, source, target, previousTargets, user.username).filterNot(_.id == 0) }
+      RoadAddressLinkBuilder.adjustRoadAddressTopology(calibrationPoints, maxEndMValue, minStartAddressM, maxEndAddressM, source, target, previousTargets, user.username).filterNot(_.id == 0) }
 
     adjustedCreatedRoads
   }
@@ -638,6 +642,37 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         (previousOrderedTargets++nextTarget)
     }
     orderedTargets
+  }
+
+  def recalculateRoadAddresses(roadNumber: Int) = {
+    OracleDatabase.withDynTransaction {
+      loopRoadParts(roadNumber)
+    }
+  }
+
+  def loopRoadParts(roadNumber: Int) = {
+    try{
+      var partNumberOpt = RoadAddressDAO.fetchNextRoadPartNumber(roadNumber, 0)
+      while (partNumberOpt.nonEmpty) {
+        val partNumber = partNumberOpt.get
+        val roads = RoadAddressDAO.fetchByRoadPart(roadNumber, partNumber)
+        try {
+          val adjusted = LinkRoadAddressCalculator.recalculate(roads)
+          assert(adjusted.size == roads.size) // Must not lose any
+          val (changed, unchanged) = adjusted.partition(ra =>
+              roads.exists(oldra => ra.id == oldra.id && (oldra.startAddrMValue != ra.startAddrMValue || oldra.endAddrMValue != ra.endAddrMValue))
+            )
+          println(s"Road $roadNumber, part $partNumber: ${changed.size} updated, ${unchanged.size} kept unchanged")
+          changed.foreach(addr => RoadAddressDAO.update(addr, None))
+        } catch {
+          case ex: InvalidAddressDataException => println(s"!!! Road $roadNumber, part $partNumber contains invalid address data - part skipped !!!")
+            ex.printStackTrace()
+        }
+        partNumberOpt = RoadAddressDAO.fetchNextRoadPartNumber(roadNumber, partNumber)
+      }
+    } catch {
+      case a: Exception => println(a.getMessage)
+    }
   }
 
   def saveRoadLinkProject(roadAddressProject: RoadAddressProject) : Map[String, Any] = {
@@ -857,7 +892,7 @@ object RoadAddressLinkBuilder {
     passThroughSegments
   }
 
-  def adjustRoadAddressTopology(maxEndMValue: Double, minStartMAddress: Long, maxEndMAddress: Long, source: RoadAddressLink, currentTarget: RoadAddressLink, roadAddresses: Seq[RoadAddressLink], username: String): Seq[RoadAddressLink] = {
+  def adjustRoadAddressTopology(calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]), maxEndMValue: Double, minStartMAddress: Long, maxEndMAddress: Long, source: RoadAddressLink, currentTarget: RoadAddressLink, roadAddresses: Seq[RoadAddressLink], username: String): Seq[RoadAddressLink] = {
     val tempId = -1000
     val sorted = roadAddresses.sortBy(_.endAddressM)(Ordering[Long].reverse)
     val lastTarget = sorted.head
@@ -870,8 +905,8 @@ object RoadAddressLinkBuilder {
 
     val newRoadAddress = Seq(RoadAddressLink(tempId, currentTarget.linkId, currentTarget.geometry, GeometryUtils.geometryLength(currentTarget.geometry), source.administrativeClass, source.linkType, NormalRoadLinkType, source.constructionType, source.roadLinkSource,
       source.roadType, source.modifiedAt, Option(username), currentTarget.attributes, source.roadNumber, source.roadPartNumber, source.trackCode, source.elyCode, source.discontinuity,
-      startAddressM, endMAddress, source.startDate, source.endDate, currentTarget.startMValue, GeometryUtils.geometryLength(currentTarget.geometry), source.sideCode, None, None))
-    (roadAddresses++newRoadAddress)
+      startAddressM, endMAddress, source.startDate, source.endDate, currentTarget.startMValue, GeometryUtils.geometryLength(currentTarget.geometry), source.sideCode, calibrationPoints._1, calibrationPoints._2))
+    roadAddresses++newRoadAddress
   }
 
 
