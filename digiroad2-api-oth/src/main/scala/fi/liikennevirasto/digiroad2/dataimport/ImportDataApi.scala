@@ -6,7 +6,6 @@ import fi.liikennevirasto.digiroad2.dataimport.RoadLinkCsvImporter.CsvImporter.{
 import fi.liikennevirasto.digiroad2.{Digiroad2Context, RoadLinkService, VVHClient}
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.oracle.ImportLogService
-import org.slf4j.LoggerFactory
 import org.json4s.{DefaultFormats, Extraction, Formats}
 import org.scalatra._
 import org.scalatra.servlet.FileUploadSupport
@@ -51,12 +50,12 @@ class ImportDataApi extends ScalatraServlet with FileUploadSupport with JacksonJ
     if (!userProvider.getCurrentUser().isOperator()) {
       halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
     }
-    val id = ImportLogService.save("Pysäkkien lataus on käynnissä. Päivitä sivu hetken kuluttua uudestaan.")
+    val id = ImportLogService.save("Kohteiden lataus on käynnissä. Päivitä sivu hetken kuluttua uudestaan.")
 
     try {
       val response = successfulDummyResult match {
         case ImportResult(Nil, Nil, Nil, Nil) => "CSV tiedosto käsitelty." //succesfully processed
-        case ImportResult(Nil, Nil, Nil, excludedLinks) => "CSV tiedosto käsitelty. Seuraavat päivitykset on jätetty huomioimatta:\n" + pretty(Extraction.decompose(excludedLinks)) //following links have been exluded
+        case ImportResult(Nil, Nil, Nil, excludedLinks) => "CSV tiedosto käsitelty. Seuraavat päivitykset on jätetty huomioimatta:\n" + pretty(Extraction.decompose(excludedLinks)) //following links have been excluded
         case _ => pretty(Extraction.decompose(successfulDummyResult))
       }
       ImportLogService.save(id, response)
@@ -66,5 +65,6 @@ class ImportDataApi extends ScalatraServlet with FileUploadSupport with JacksonJ
         throw e
       }
     }
+    redirect(url("/log/" + id))
   }
 }
