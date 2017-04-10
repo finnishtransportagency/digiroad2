@@ -113,8 +113,7 @@ class MassTransitStopDao {
         if (singleChoiceValueDoesNotExist(assetId, propertyId)) {
           insertSingleChoiceProperty(assetId, propertyId, propertyValues.head.propertyValue.toLong).execute
         } else {
-          if(!(propertyValues.head.propertyValue.isEmpty && propertyPublicId == "tietojen_yllapitaja"))
-            updateSingleChoiceProperty(assetId, propertyId, propertyValues.head.propertyValue.toLong).execute
+          updateSingleChoiceProperty(assetId, propertyId, propertyValues.head.propertyValue.toLong).execute
         }
       }
       case MultipleChoice => {
