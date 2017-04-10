@@ -42,24 +42,24 @@ object RoadLinkServiceDAO {
     updateExistingLinkPropertyRow(LinkType, LinkType, linkId, username, existingValue, value)
   }
 
-  def insertAdministrativeClass(linkId: Long, username: Option[String], existingValue: Int, value: Int) = {
+  def insertAdministrativeClass(linkId: Long, username: Option[String], value: Int) = {
     insertNewLinkProperty(FunctionalClass, FunctionalClass, linkId, username, value)
   }
 
-  def insertTrafficDirection(linkId: Long, username: Option[String], existingValue: Int, value: Int) = {
+  def insertTrafficDirection(linkId: Long, username: Option[String], value: Int) = {
     insertNewLinkProperty(TrafficDirection, TrafficDirection, linkId, username, value)
   }
 
-  def insertLinkType(linkId: Long, username: Option[String], existingValue: Int, value: Int) = {
+  def insertLinkType(linkId: Long, username: Option[String], value: Int) = {
     insertNewLinkProperty(LinkType, LinkType, linkId, username, value)
   }
 
   def getAdministrativeClassValue(linkId: Long) = {
-    getLinkProperty(LinkType, LinkType, linkId)
+    getLinkProperty(FunctionalClass, FunctionalClass, linkId)
   }
 
   def getTrafficDirectionValue(linkId: Long) = {
-    getLinkProperty(LinkType, LinkType, linkId)
+    getLinkProperty(TrafficDirection, TrafficDirection, linkId)
   }
 
   def getLinkTypeValue(linkId: Long) = {
