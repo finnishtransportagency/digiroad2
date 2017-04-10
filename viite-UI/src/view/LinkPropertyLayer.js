@@ -246,9 +246,10 @@
             if (selection.roadLinkData.anomaly === 1 && selection.roadLinkData.roadLinkType !== -1) {
               selectedLinkProperty.openUnknown(selection.roadLinkData.linkId, selection.roadLinkData.id, visibleFeatures);
             } else if(event.selected.length !== 0){
-              _.defer(function(){
-                removeFeaturesFromSelection(event.selected);
-              });
+              var deselecting = event.deselected;
+              var selecting = event.selected;
+              removeFeaturesFromSelection(selecting);
+              addFeaturesToSelection(deselecting);
             }
           }
           else {
