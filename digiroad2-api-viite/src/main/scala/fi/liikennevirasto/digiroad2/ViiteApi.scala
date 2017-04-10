@@ -1,12 +1,13 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset._
+
 import scala.util.parsing.json._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite.RoadAddressService
+import fi.liikennevirasto.viite.{RoadAddressService, minRoadAddressPart}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{RoadAddressLink, RoadAddressLinkPartitioner}
 import org.joda.time.DateTime
@@ -22,7 +23,8 @@ import org.slf4j.LoggerFactory
 
 case class newAddressDataExtractor(sourceIds: Set[Long], targetIds: Set[Long], roadAddress: Seq[RoadAddressCreator])
 
-case class RoadAddressProjectExtractor(id: Long, status: Long, name: String, startDate: String, additionalInfo: String, roadNumber: Long, startPart: Long, endPart: Long)
+
+case class RoadAddressProjectExtractor(id: Long, status: Long, name: String, startDate: String, additionalInfo: String,roadpartlist: List[minRoadAddressPart])
 
 class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
                val roadAddressService: RoadAddressService,
@@ -157,9 +159,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   put("/roadlinks/roadaddress/project/save"){
     val project = parsedBody.extract[RoadAddressProjectExtractor]
+    println(project)
     val user = userProvider.getCurrentUser()
     val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
-    val roadAddressProject= RoadAddressProject( project.id, project.status, project.name, user.username, DateTime.now(), "-", formatter.parseDateTime(project.startDate), DateTime.now(), project.additionalInfo, getRoadParts(project))
+    val roadAddressProject= RoadAddressProject( project.id, project.status, project.name, user.username, DateTime.now(), "-", formatter.parseDateTime(project.startDate), DateTime.now(), project.additionalInfo, project.roadpartlist)
     roadAddressService.saveRoadLinkProject(roadAddressProject)
   }
   get("/roadlinks/roadaddress/project/all") {
@@ -176,21 +179,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val (success,errorMessage)=roadAddressService.checkRoadAddressNumberAndSEParts(roadnumber,startPart,endPart)
     if (success==true)
       {
-        Map("success"-> roadAddressService.checkreservability(roadnumber,startPart,endPart)._2)
+        val roadaddresSetInfo=roadAddressService.checkreservability(roadnumber,startPart,endPart)
+        Map("success"-> roadaddresSetInfo._2, "roadparts" -> roadaddresSetInfo._3)
       }
     else
        Map("success"-> errorMessage)
 
   }
-
-  private def getRoadParts (projectinfo:RoadAddressProjectExtractor): List[(Long,Long,Long)] ={
-    //fix this when frontend sends list instead of one6
-    if (projectinfo.roadNumber==0 && projectinfo.startPart==0 && projectinfo.endPart==0)
-      List.empty[(Long,Long,Long)]
-    else
-      List((projectinfo.roadNumber,projectinfo.startPart,projectinfo.endPart))
-  }
-
 
   private def roadlinksData(): (Seq[String], Seq[String]) = {
     val data = JSON.parseFull(params.get("data").get).get.asInstanceOf[Map[String,Any]]

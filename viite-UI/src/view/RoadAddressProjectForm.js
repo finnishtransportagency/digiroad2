@@ -68,11 +68,16 @@
         addSmallInputNumber('tie') + addSmallInputNumber('aosa') + addSmallInputNumber('losa') +  addReserveButton() +
         '</div>' +
         '</form>' +
+          ' </div>'+
+        '</div>' + '<div class = "form-result">'  +'<label >' + 'PROJEKTIIN VALITUT TIEOSAT:' + '</label>'+
+          '<div style="margin-left: 15px;">' +
+          '</div>'+
+          addSmallLabel('TIE')+ addSmallLabel('OSA')+ addSmallLabel('PITUUS')+ addSmallLabel('JATKUU')+ addSmallLabel('ELY')+
 
-        '</div>' +'<label >' + 'PROJEKTIIN VALITUT TIEOSAT:' + '</label>'+
-        '</div>' +
+          '<div id ="roadpartList">'+
+          '</div></div>' +
 
-        '</div>' + '</div>' +
+        '</div> </div>'  +
         '<footer>' + buttons + '</footer>');
     };
 
@@ -99,7 +104,7 @@
         '</div>'+
         '<div class="form-group">' +
         '<label class="control-label">Tieosat</label>' +
-        addSmallInputNumber('tie', project.roadNumber)+ addSmallInputNumber('aosa', project.startPart)+ addSmallInputNumber('losa', project.endPart)+
+        addSmallInputNumber('tie')+ addSmallInputNumber('aosa')+ addSmallInputNumber('losa')+ addReserveButton() +
         '</div>'+
         '</form>' +
 
@@ -107,11 +112,11 @@
         '</div>' +
         '<div class = "form-result">' +
           '<label >PROJEKTIIN VALITUT TIEOSAT:</label>'+
-          '<div style="margin-left: 15px;">' +
+          '<div style="margin-left: 15px;">' +'</div>'+
             addSmallLabel('TIE')+ addSmallLabel('OSA')+ addSmallLabel('PITUUS')+ addSmallLabel('JATKUU')+ addSmallLabel('ELY')+
-          '</div>'+
+          '<div id ="roadpartList">'+
           formInfo +
-        '</div></div></div>'+
+          '</div></div></div></div>'+
         '<footer>' + buttons + '</footer>');
     };
 
@@ -174,8 +179,8 @@
         currentProject = result.project;
         var text = '';
         _.each(result.formInfo, function(line){
-          text += '<div>' +
-            '<button class="delete btn-delete-roadpart">x</button>'+addSmallLabel(line.roadNumber)+ addSmallLabel(line.roadPartNumber)+ addSmallLabel(line.RoadLength)+ addSmallLabel(line.discontinuity)+ addSmallLabel(line.ely) +
+          text += '<div>' + ' '+
+            addSmallLabel(line.roadNumber)+ addSmallLabel(line.roadPartNumber)+ addSmallLabel(line.RoadLength)+ addSmallLabel(line.discontinuity)+ addSmallLabel(line.ely) +
           '</div>';
         });
         rootElement.html(openProjectTemplate(result.project, text));
@@ -188,14 +193,20 @@
 
       rootElement.on('click', '.project-form button.save', function() {
         var data = $('#roadAddressProject').get(0);
+        var roadAddressProjectContent=null;
         applicationModel.addSpinner();
         projectCollection.createProject(data, currentProject);
       });
 
       rootElement.on('click', '.btn-reserve', function() {
-        var data = $('#roadAddressProject').get(0);
+       if ($('#roadAddressProject').get(0)!=null) {
+         var data = $('#roadAddressProject').get(0);
         projectCollection.checkIfReserved(data);
         return false;
+       } else
+       {
+        return false;
+       }
       });
 
       rootElement.on('click', '.project-form button.cancel', function(){

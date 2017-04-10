@@ -18,6 +18,7 @@ import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, DateTimeZone}
 import org.slf4j.LoggerFactory
 
+import scala.collection.mutable.ListBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
@@ -554,17 +555,42 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
   }
 
-  def checkreservability(roadNumber:Long, startPart:Long, endPart:Long): (Boolean,String) = {
+  def checkreservability(roadNumber:Long, startPart:Long, endPart:Long): (Boolean,String,Seq[minRoadAddressPart]) = {
     withDynTransaction {
+      var listOfAddressParts: ListBuffer[minRoadAddressPart] = ListBuffer.empty
       for (part <- startPart to endPart) {
         val reserved = RoadAddressDAO.roadPartReservedByProject(roadNumber, part)
         reserved match {
-          case Some(projectname) => return (false, s"TIE $roadNumber OSA $part on jo varattuna projektissa $projectname, tarkista tiedot ")
-          case None =>println(s"Tie $roadNumber ja osa $part käytettävissä")
+          case Some(projectname) => return (false, s"TIE $roadNumber OSA $part on jo varattuna projektissa $projectname, tarkista tiedot ",Seq.empty)
+          case None => {
+            val (roadpartID,linkID,lenght,discontinuity,ely,foundAddress)=getAddressPartinfo(roadNumber,part)
+            if (foundAddress==true) // db search failed or we couldnt get info from VVH
+            listOfAddressParts+=minRoadAddressPart(roadpartID,roadNumber,part,lenght,discontinuity,ely)
+          println(listOfAddressParts)
+            println(linkID)
+          }
           }
         }
+    (true, "ok",listOfAddressParts)
+    }
+  }
+
+  private def getAddressPartinfo(roadnumber:Long,roadpart:Long):(Long,Long,Double, String,Long,Boolean) = {
+     RoadAddressDAO.getRoadPartInfo(roadnumber, roadpart) match {
+      case Some((roadpartid,linkid, lenght, discontinuity)) => {
+        val enrichment = false
+        val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(linkid), enrichment)
+        val ely:Long = MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(roadLink.head.municipalityCode, 0)
+        if (ely == 0)
+          {
+          return (0,0,0, "", 0, false)
+          }
+      return  (roadpartid,linkid,lenght, Discontinuity.apply(discontinuity.toInt).description, ely, true)
       }
-    (true, "ok")
+      case None => {
+        return (0,0,0, "", 0, false)
+      }
+    }
   }
 
 
@@ -572,41 +598,45 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   private def addLinksToProject(project: RoadAddressProject): String =
   {
-    var errors:String=""
-    var errorRoadPart:Long=0
-    for ((roadNumber,startPart,endPart) <- project.list) {
-      val (validInput, errorMessage) = checkRoadAddressNumberAndSEParts(roadNumber, startPart, endPart)
-      if (!validInput) {
-        errors += s" $errorMessage (TIE $roadNumber.t AOSA: $startPart LOSA: $endPart)" + '\n'
-      } else {
-        withDynTransaction {
-          try {
-            for (part <- startPart to endPart) {
-              errorRoadPart = part
-              val addresses = RoadAddressDAO.fetchByRoadPart(roadNumber, part)
-              addresses.foreach(address =>
-                RoadAddressDAO.createRoadAddressProjectLink(Sequences.nextViitePrimaryKeySeqValue, address, project))
-            }
-          } catch {
-            case a: Exception =>
-              println(a.getMessage)
-              if (a.getMessage.contains("ORA-20000")) {
-                val reservedByProject = RoadAddressDAO.roadPartReservedByProject(roadNumber, errorRoadPart)
-                errors += s"TIE $roadNumber OSA $errorRoadPart on jo varattuna projektissa ${reservedByProject match { case Some(projectname) => {projectname}}}, tarkista tiedot " + '\n'
-              } else {
-                errors += s"Tieosan $errorRoadPart varaus ei tuntemattomasta virheestä johtuen onnistunut" + '\n'
-              }
+    var croadnumber:Long=0 //needed for error messages
+    var croadpart:Long=0
+    withDynTransaction {
+      try {
+        for (roadaddress <- project.list) { //check validity
+          if (!RoadAddressDAO.roadPartExists(roadaddress.roadNumber, roadaddress.roadPart)) {
+            return s"TIE ${roadaddress.roadNumber} OSA: ${roadaddress.roadPart} ei löytynyt tietokannasta"
           }
         }
+        for (roadaddress <- project.list) {
+          croadnumber = roadaddress.roadNumber
+          croadpart = roadaddress.roadPart
+            val addresses = RoadAddressDAO.fetchByRoadPart(roadaddress.roadNumber,roadaddress.roadPart)
+            addresses.foreach(address =>
+              RoadAddressDAO.createRoadAddressProjectLink(Sequences.nextViitePrimaryKeySeqValue, address, project))
+          println(addresses)
+          }
+      } catch {
+        case a: Exception =>
+          println(a.getMessage)
+          if (a.getMessage.contains("ORA-20000")) {
+            val reservedByProject = RoadAddressDAO.roadPartReservedByProject(croadnumber, croadpart)
+            return s"TIE $croadnumber OSA $croadpart on jo varattuna projektissa ${
+              reservedByProject match {
+                case Some(projectname) => {
+                  projectname
+                }
+              }
+            }, tarkista tiedot " + '\n'
+          } else {
+            return s"Tieosan $croadpart varaus ei tuntemattomasta virheestä johtuen onnistunut" + '\n'
+          }
       }
-    }
-
-    errors
+    };""
   }
 
 
 
-  private def createformOfReservedLinks(project: RoadAddressProject):  (Seq[RoadAddressProjectFormLine],  Option[RoadAddressProjectLink])= {
+  private def createFormOfReservedLinksToSavedRoadParts(project: RoadAddressProject):  (Seq[RoadAddressProjectFormLine],  Option[RoadAddressProjectLink])= {
     withDynTransaction {
     val createdAddresses = RoadAddressDAO.getRoadAddressProjectLinks(project.id)
     val groupedAddresses = createdAddresses.groupBy { address =>
@@ -639,11 +669,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
           { //project with links success field contains errors if any, else "ok"
             val errorMessage= addLinksToProject(project)
 
-              val (forminfo, createdlink) = createformOfReservedLinks(project)
+              val (forminfo, createdlink) = createFormOfReservedLinksToSavedRoadParts(project)
 
               Map("project" -> projectToApi(project), "projectAddresses" -> createdlink, "formInfo" -> forminfo,
               "success" -> {if(errorMessage.isEmpty){"ok"} else{errorMessage}})
-
             }
         }
         case _ => { //update project no specs for this yet?
@@ -695,6 +724,7 @@ object RoadType {
 }
 
 case class RoadAddressMerge(merged: Set[Long], created: Seq[RoadAddress])
+case class minRoadAddressPart(roadpartid:Long,roadNumber:Long, roadPart:Long, lenght:Double,discontinuity:String,ely:Long)
 
 object RoadAddressLinkBuilder {
   val RoadNumber = "ROADNUMBER"
