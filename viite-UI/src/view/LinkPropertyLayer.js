@@ -242,9 +242,14 @@
             var nonFloatings = event.selected;
             removeFeaturesFromSelection(nonFloatings);
             addFeaturesToSelection(floatings);
-          }else if ('unknown' === applicationModel.getSelectionType() && !applicationModel.isReadOnly() &&
-            selection.roadLinkData.anomaly === 1 && selection.roadLinkData.roadLinkType !== -1  ){
-            selectedLinkProperty.openUnknown(selection.roadLinkData.linkId, selection.roadLinkData.id, visibleFeatures);
+          }else if('unknown' === applicationModel.getSelectionType() && !applicationModel.isReadOnly()) {
+            if (selection.roadLinkData.anomaly === 1 && selection.roadLinkData.roadLinkType !== -1) {
+              selectedLinkProperty.openUnknown(selection.roadLinkData.linkId, selection.roadLinkData.id, visibleFeatures);
+            } else if(event.selected.length !== 0){
+              _.defer(function(){
+                removeFeaturesFromSelection(event.selected);
+              });
+            }
           }
           else {
             if (isAnomalousById(selection.id) || isFloatingById(selection.id)) {
