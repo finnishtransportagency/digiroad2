@@ -2,7 +2,9 @@ package fi.liikennevirasto.digiroad2.dataimport
 
 import java.io.{ByteArrayInputStream, InputStream}
 
-import fi.liikennevirasto.digiroad2.dataimport.RoadLinkCsvImporter.RoadLinkCsvImporter.ImportResult
+import fi.liikennevirasto.digiroad2.dataimport.CsvImporter.MalformedAsset
+import fi.liikennevirasto.digiroad2.dataimport.DataCsvImporter.RoadLinkCsvImporter
+import fi.liikennevirasto.digiroad2.dataimport.DataCsvImporter.RoadLinkCsvImporter.{ImportResult, MalformedLink}
 import fi.liikennevirasto.digiroad2.{AuthenticatedApiSpec, VVHClient}
 import fi.liikennevirasto.digiroad2.roadlinkservice.oracle.RoadLinkServiceDAO
 import fi.liikennevirasto.digiroad2.user.{Configuration, User, UserProvider}
@@ -31,7 +33,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   before {
-    testUserProvider.setCurrentUser(User(id = 1, username = "CsvImportApiSpec", configuration = Configuration(authorizedMunicipalities = Set(MunicipalityKauniainen))))
+    testUserProvider.setCurrentUser(User(id = 1, username = "CsvDataImportApiSpec", configuration = Configuration(authorizedMunicipalities = Set(MunicipalityKauniainen))))
   }
 //
 //  test("rowToString works correctly for few basic fields") {
@@ -43,7 +45,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
   val defaultKeys = "Linkin ID" :: roadLinkCsvImporter.mappings.keys.toList
 
-  //val defaultValues = defaultKeys.map { key => key -> "" }.toMap
+  val defaultValues = defaultKeys.map { key => key -> "" }.toMap
 
   private def createCSV(assets: Map[String, Any]*): String = {
     val headers = defaultKeys.mkString(";") + "\n"
@@ -88,14 +90,14 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 //    verify(mockService).updateExistingById(Matchers.eq(1l), Matchers.eq(None), Matchers.eq(Set.empty), Matchers.eq("CsvImportApiSpec"), anyObject())
 //  }
 
-//  test("validation fails if type is undefined", Tag("db")) {
-//    val assetFields = Map("Valtakunnallinen ID" -> 1, "Pysäkin tyyppi" -> ",")
-//    val invalidCsv = csvToInputStream(createCSV(assetFields))
-//    csvImporter.importAssets(invalidCsv) should equal(ImportResult(
-//      malformedAssets = List(MalformedAsset(
-//        malformedParameters = List("Pysäkin tyyppi"),
-//        csvRow = csvImporter.rowToString(defaultValues ++ assetFields)))))
-//  }
+  test("validation fails if field type is incorrect", Tag("db")) {
+    val roadLinkFields = Map("Link ID" -> 1, "Tielinkin tyyppi" -> 1)
+    val invalidCsv = csvToInputStream(createCSV(roadLinkFields))
+    roadLinkCsvImporter.importLinkAttribute(invalidCsv) should equal(ImportResult(
+      malformedLinks = List(MalformedLink(
+        malformedParameters = List("Tielinkin tyyppi"),
+        csvRow = roadLinkCsvImporter.rowToString(defaultValues ++ roadLinkFields)))))
+  }
 //
 //  test("validation fails if type contains illegal characters", Tag("db")) {
 //    val assetFields = Map("Valtakunnallinen ID" -> 1, "Pysäkin tyyppi" -> "2,a")

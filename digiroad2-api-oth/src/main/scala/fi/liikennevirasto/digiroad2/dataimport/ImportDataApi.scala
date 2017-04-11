@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.dataimport
 
 import fi.liikennevirasto.digiroad2.Digiroad2Context.{Digiroad2ServerOriginatedResponseHeader, userProvider}
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
-import fi.liikennevirasto.digiroad2.dataimport.RoadLinkCsvImporter.RoadLinkCsvImporter.{ExcludedLink, ImportResult}
+import fi.liikennevirasto.digiroad2.dataimport.DataCsvImporter.RoadLinkCsvImporter.{ExcludedLink, ImportResult}
 import fi.liikennevirasto.digiroad2.{Digiroad2Context, VVHClient}
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.oracle.ImportLogService
