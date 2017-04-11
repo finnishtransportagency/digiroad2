@@ -326,11 +326,12 @@ class AssetDataImporter {
     val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer)
     val service = new RoadAddressService(linkService, eventBus)
     OracleDatabase.withDynTransaction {
-      val roadNumbers = Queries.getDistinctRoadNumbers
+      //val roadNumbers = Queries.getDistinctRoadNumbers
+      val roadNumbers = Seq(95092)
       roadNumbers.foreach(roadNumber =>{
         println("Processing roadNumber %d at time: %s".format(roadNumber, DateTime.now().toString))
         val linkIds = Queries.getLinkIdsByRoadNumber(roadNumber)
-        val roadLinksFromVVH = linkService.getRoadLinksByLinkIdsFromVVH(linkIds, false)
+        val roadLinksFromVVH = linkService.getCurrentAndComplementaryVVHRoadLinks(linkIds, false)
         val addresses = RoadAddressDAO.fetchByLinkId(roadLinksFromVVH.map(_.linkId).toSet, false, false).groupBy(_.linkId)
 
         roadLinksFromVVH.foreach(roadLink => {
