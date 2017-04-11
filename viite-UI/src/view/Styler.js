@@ -55,9 +55,11 @@
      * @param anomaly The roadLink anomaly value (if 1 then this is an anomalous roadlink).
      * @returns {number} The zIndex for the feature.
      */
-    var determineZIndex = function (roadLinkType, anomaly){
+    var determineZIndex = function (roadLinkType, anomaly, roadLinkSource){
       var zIndex = 0;
-      if (anomaly === 0) {
+      if(roadLinkSource === 2){
+        zIndex = 8;
+      } else if (anomaly === 0) {
         if (roadLinkType === 3)
           zIndex = 4;
         else if(roadLinkType === -1) {
@@ -73,7 +75,7 @@
      * @param zoomLevel The actual zoom level.
      * @returns {number} The stroke width of a line.
      */
-    var strokeWidthByZoomLevel = function (zoomLevel, roadLinkType, anomaly){
+    var strokeWidthByZoomLevel = function (zoomLevel, roadLinkType, anomaly, roadLinkSource){
       var width = 0;
 
       switch (zoomLevel) {
@@ -82,11 +84,11 @@
           break;
         }
         case 7 : {
-          width = 1;
+          width = 2;
           break;
         }
         case 8 : {
-          width = 2;
+          width = 3;
           break;
         }
         case 9 : {
@@ -94,27 +96,27 @@
           break;
         }
         case 10: {
-          width = 4;
+          width = 5;
           break;
         }
         case 11: {
-          width = 4;
+          width = 8;
           break;
         }
         case 12: {
-          width = 5;
+          width = 10;
           break;
         }
         case 13: {
-          width = 5;
+          width = 10;
           break;
         }
         case 14: {
-          width = 6;
+          width = 14;
           break;
         }
         case 15: {
-          width = 7;
+          width = 14;
           break;
         }
       }
@@ -126,7 +128,9 @@
       if (roadLinkType !== -1 && anomaly === 1){
         width = 7;
       }
-
+      if(roadLinkSource === 2){
+        width = width + 4;
+      }
       return width;
     };
 
@@ -154,7 +158,7 @@
      * @returns {*[ol.style.Style, ol.style.Style, ol.style.Style]} And array of ol.style.Style, the first is for the gray line, the second is for the border and the third is for the line itself.
      */
     var generateStyleByFeature = function(roadLinkData, currentZoom){
-      var strokeWidth = strokeWidthByZoomLevel(currentZoom, roadLinkData.roadLinkType, roadLinkData.anomaly);
+      var strokeWidth = strokeWidthByZoomLevel(currentZoom, roadLinkData.roadLinkType, roadLinkData.anomaly, roadLinkData.roadLinkSource);
       //Gray line behind all of the styles present in the layer.
       var underLineColor = generateStrokeColor(99, roadLinkData.anomaly, roadLinkData.constructionType, roadLinkData.roadLinkType, roadLinkData.gapTransfering);
       //If the line we need to generate is a dashed line, middleLineColor will be the white one sitting behind the dashed/colored line and above the border and grey lines
@@ -227,7 +231,7 @@
       var underlineStyle = new ol.style.Style({
         stroke: underline
       });
-      var zIndex = determineZIndex(roadLinkData.roadLinkType, roadLinkData.anomaly);
+      var zIndex = determineZIndex(roadLinkData.roadLinkType, roadLinkData.anomaly, roadLinkData.roadLinkSource);
       underlineStyle.setZIndex(zIndex-1);
       borderStyle.setZIndex(zIndex);
       middleLineStyle.setZIndex(zIndex+1);
