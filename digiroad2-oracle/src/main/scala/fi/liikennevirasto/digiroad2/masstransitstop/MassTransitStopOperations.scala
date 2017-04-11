@@ -158,4 +158,13 @@ object MassTransitStopOperations {
         bearing.map(_ - 180).map(x => if (x < 0) x + 360 else x)
       }
     }
+
+  def getAdministrationProperty(properties: Set[SimpleProperty], assetProperties: Seq[AbstractProperty]): String = {
+    val administrationFromProperties = properties.find(_.publicId == AdministratorInfoPublicId)
+    val administrationFromAsset = assetProperties.find(_.publicId == AdministratorInfoPublicId).flatMap(prop => prop.values.headOption).get
+    administrationFromProperties.flatMap(_.values.headOption.map(_.propertyValue)) match {
+      case Some("") => administrationFromAsset.propertyValue
+      case Some(value) => value
+    }
+  }
 }

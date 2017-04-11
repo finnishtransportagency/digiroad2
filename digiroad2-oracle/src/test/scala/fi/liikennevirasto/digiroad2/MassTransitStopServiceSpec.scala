@@ -473,17 +473,16 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     }
   }
 
-  test("Overwrite LiviId of ELY/HSL stops when Tietojen ylläpitäjä is empty") {
+  test("Do not overwrite LiviId of ELY/HSL stops when Tietojen ylläpitäjä is empty") {
     runWithRollback {
       assetLock.synchronized {
         val eventbus = MockitoSugar.mock[DigiroadEventBus]
         val service = new TestMassTransitStopService(eventbus, mockRoadLinkService)
         val assetId = 300000
-        val propertyValueId = sql"""SELECT id FROM text_property_value where value_fi='OTHJ1' and asset_id = $assetId""".as[String].list.head
-        sqlu"""update text_property_value set value_fi='' where id = $propertyValueId""".execute
-        val dbResult = sql"""SELECT value_fi FROM text_property_value where id = $propertyValueId""".as[String].list
+        sqlu"""update text_property_value set value_fi='livi1' where asset_id = 300000 and value_fi = 'OTHJ1'""".execute
+        val dbResult = sql"""SELECT value_fi FROM text_property_value where value_fi='livi1' and asset_id = 300000""".as[String].list
         dbResult.size should be(1)
-        dbResult.head should be(null)
+        dbResult.head should be("livi1")
         val properties = List(
           SimpleProperty("tietojen_yllapitaja", List(PropertyValue(""))),
           SimpleProperty("yllapitajan_koodi", List(PropertyValue("OTHJ1"))))
@@ -493,7 +492,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
 
         //The property yllapitajan_koodi should not have values because property tietojen_yllapitaja is empty in the properties
         val liviIdentifierProperty = massTransitStop.propertyData.find(p => p.publicId == "yllapitajan_koodi").get
-        liviIdentifierProperty.values.head.propertyValue should be("OTHJ1")
+        liviIdentifierProperty.values.head.propertyValue should be("livi1")
       }
     }
   }

@@ -425,35 +425,13 @@ trait MassTransitStopService extends PointAssetOperations {
       massTransitStopDao.updateAssetLastModified(id, username)
       val oldLiviIdProperty = MassTransitStopOperations.liviIdValueOption(asset.propertyData)
       val newLiviIdProperty = if (properties.nonEmpty) {
-        val administrationProperty = properties.find(_.publicId == MassTransitStopOperations.AdministratorInfoPublicId)
-
-        val (elyAdministrated, hslAdministrated, newProperties) =
-          administrationProperty.flatMap(_.values.headOption.map(_.propertyValue)) match {
-            case Some("") =>
-              val adminPropertyByPersistedAsset = asset.propertyData.find(_.publicId == MassTransitStopOperations.AdministratorInfoPublicId).flatMap(_.values.headOption.map(_.propertyValue)).getOrElse(None)
-              val changedProperties = properties.map {
-                p =>
-                  p.publicId match {
-                    case MassTransitStopOperations.AdministratorInfoPublicId => p.copy(values = Seq(PropertyValue(adminPropertyByPersistedAsset.toString)))
-                    case _ => p
-                  }
-              }
-              (adminPropertyByPersistedAsset == MassTransitStopOperations.CentralELYPropertyValue,
-                adminPropertyByPersistedAsset == MassTransitStopOperations.HSLPropertyValue,
-                changedProperties)
-
-            case Some(value) =>
-              (administrationProperty.exists(_.values.headOption.exists(_.propertyValue == MassTransitStopOperations.CentralELYPropertyValue)),
-                administrationProperty.exists(_.values.headOption.exists(_.propertyValue == MassTransitStopOperations.HSLPropertyValue)),
-                properties)
-
-            case None => (false, false, properties)
-          }
-
-        if (!(elyAdministrated || hslAdministrated) && MassTransitStopOperations.liviIdValueOption(asset.propertyData).exists(_.propertyValue != "")) {
-          updatePropertiesForAsset(id, newProperties.toSeq, roadLink.get.administrativeClass, asset.nationalId, None)
+        val administrationPropertyValue = MassTransitStopOperations.getAdministrationProperty(properties, asset.propertyData)
+        val elyAdministrated = administrationPropertyValue == MassTransitStopOperations.CentralELYPropertyValue
+        val hslAdministrated = administrationPropertyValue == MassTransitStopOperations.HSLPropertyValue
+        if  (!(elyAdministrated || hslAdministrated) && MassTransitStopOperations.liviIdValueOption(asset.propertyData).exists(_.propertyValue != "")) {
+          updatePropertiesForAsset(id, properties.toSeq, roadLink.get.administrativeClass, asset.nationalId, None)
         } else {
-          updatePropertiesForAsset(id, newProperties.toSeq, roadLink.get.administrativeClass, asset.nationalId, MassTransitStopOperations.liviIdValueOption(asset.propertyData))
+          updatePropertiesForAsset(id, properties.toSeq, roadLink.get.administrativeClass, asset.nationalId, MassTransitStopOperations.liviIdValueOption(asset.propertyData))
         }
       } else {
         None
