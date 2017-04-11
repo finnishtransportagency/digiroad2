@@ -167,7 +167,9 @@ window.LinearAssetLayer = function(params) {
       var properties = feature.getProperties();
       verifyClickEvent(properties, evt);
     }else{
-      selectedLinearAsset.close();
+      if (selectedLinearAsset.exists()) {
+         selectedLinearAsset.close();
+      }
     }
   };
 

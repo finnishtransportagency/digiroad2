@@ -192,7 +192,6 @@ window.SpeedLimitLayer = function(params) {
     if(evt.selected.length !== 0) {
       var feature = evt.selected[0];
       var properties = feature.getProperties();
-      selectSpeedLimit(properties);
       verifyClickEvent(properties, evt);
     }else{
       if (selectedSpeedLimit.exists()) {
