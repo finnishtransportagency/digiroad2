@@ -175,7 +175,8 @@ object MassTransitStopOperations {
         }
         (newPropsWithAssetValue.headOption, adminValueFromAsset)
 
-      case Some(value) => (administrationFromProperties, value)
+      case Some(value) => (properties.headOption, value)
+      case None =>  (properties.headOption, "")
     }
   }
 }
