@@ -604,11 +604,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       case _ => getMValues(Option(adjustedSegments.flatMap(_.endCalibrationPoint).map(_.segmentMValue).max), Option(adjustedSegments.map(_.endMValue).max))
     }
 
-    val calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = {
-//      (startCp.map(_.copy(segmentMValue = minStartMValue)), endCp.map(_.copy(segmentMValue = maxEndMValue)))
-      (startCp, endCp)
-    }
-
     val source = sources.head
 
     val orderedTargets = targets.size match {
@@ -628,7 +623,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
 
     val adjustedCreatedRoads = orderedTargets.foldLeft(orderedTargets) { (previousTargets, target) =>
-      RoadAddressLinkBuilder.adjustRoadAddressTopology(calibrationPoints, maxEndMValue, minStartAddressM, maxEndAddressM, source, target, previousTargets, user.username).filterNot(_.id == 0) }
+      RoadAddressLinkBuilder.adjustRoadAddressTopology(orderedTargets.length, startCp, endCp, maxEndMValue, minStartAddressM, maxEndAddressM, source, target, previousTargets, user.username).filterNot(_.id == 0) }
 
     adjustedCreatedRoads
   }
@@ -892,24 +887,36 @@ object RoadAddressLinkBuilder {
     passThroughSegments
   }
 
-  def adjustRoadAddressTopology(calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]), maxEndMValue: Double, minStartMAddress: Long, maxEndMAddress: Long, source: RoadAddressLink, currentTarget: RoadAddressLink, roadAddresses: Seq[RoadAddressLink], username: String): Seq[RoadAddressLink] = {
+  def adjustRoadAddressTopology(expectedTargetsNumber: Int, startCp: Option[CalibrationPoint], endCp: Option[CalibrationPoint], maxEndMValue: Double, minStartMAddress: Long, maxEndMAddress: Long, source: RoadAddressLink, currentTarget: RoadAddressLink, roadAddresses: Seq[RoadAddressLink], username: String): Seq[RoadAddressLink] = {
     val tempId = -1000
     val sorted = roadAddresses.sortBy(_.endAddressM)(Ordering[Long].reverse)
-    val lastTarget = sorted.head
+    val previousTarget = sorted.head
     val startAddressM = roadAddresses.filterNot(_.id == 0).size match {
       case 0 => minStartMAddress
-      case _ => lastTarget.endAddressM
+      case _ => previousTarget.endAddressM
+    }
+    //Uppercase variable due to scala lexical rule disambiguation. If lowercase, it will be taken as pattern variable
+    val LastTarget = expectedTargetsNumber-1
+
+    val endAddressM = roadAddresses.filterNot(_.id == 0).size match {
+      case LastTarget => maxEndMAddress
+      case _ => startAddressM + GeometryUtils.geometryLength(currentTarget.geometry).toLong
     }
 
-    val endMAddress = startAddressM + GeometryUtils.geometryLength(currentTarget.geometry).toLong
+    val calibrationPointS = roadAddresses.filterNot(_.id == 0).size match {
+      case 0 => startCp
+      case _ => None
+    }
+    val calibrationPointE = roadAddresses.filterNot(_.id == 0).size match {
+      case LastTarget => endCp
+      case _ => None
+    }
 
     val newRoadAddress = Seq(RoadAddressLink(tempId, currentTarget.linkId, currentTarget.geometry, GeometryUtils.geometryLength(currentTarget.geometry), source.administrativeClass, source.linkType, NormalRoadLinkType, source.constructionType, source.roadLinkSource,
       source.roadType, source.modifiedAt, Option(username), currentTarget.attributes, source.roadNumber, source.roadPartNumber, source.trackCode, source.elyCode, source.discontinuity,
-      startAddressM, endMAddress, source.startDate, source.endDate, currentTarget.startMValue, GeometryUtils.geometryLength(currentTarget.geometry), source.sideCode, calibrationPoints._1, calibrationPoints._2))
+      startAddressM, endAddressM, source.startDate, source.endDate, currentTarget.startMValue, GeometryUtils.geometryLength(currentTarget.geometry), source.sideCode, calibrationPointS, calibrationPointE))
     roadAddresses++newRoadAddress
   }
-
-
 
   private def toIntNumber(value: Any) = {
     try {
