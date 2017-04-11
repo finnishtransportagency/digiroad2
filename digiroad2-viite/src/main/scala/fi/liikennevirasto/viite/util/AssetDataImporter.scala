@@ -326,8 +326,7 @@ class AssetDataImporter {
     val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer)
     val service = new RoadAddressService(linkService, eventBus)
     OracleDatabase.withDynTransaction {
-      //val roadNumbers = Queries.getDistinctRoadNumbers
-      val roadNumbers = Seq(95092)
+      val roadNumbers = Queries.getDistinctRoadNumbers
       roadNumbers.foreach(roadNumber =>{
         println("Processing roadNumber %d at time: %s".format(roadNumber, DateTime.now().toString))
         val linkIds = Queries.getLinkIdsByRoadNumber(roadNumber)
