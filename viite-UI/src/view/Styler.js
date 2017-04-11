@@ -98,23 +98,23 @@
           break;
         }
         case 11: {
-          width = 8;
+          width = 4;
           break;
         }
         case 12: {
-          width = 10;
+          width = 5;
           break;
         }
         case 13: {
-          width = 10;
+          width = 5;
           break;
         }
         case 14: {
-          width = 14;
+          width = 6;
           break;
         }
         case 15: {
-          width = 14;
+          width = 7;
           break;
         }
       }

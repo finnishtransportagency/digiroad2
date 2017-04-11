@@ -44,7 +44,7 @@
         }),
         stroke: new ol.style.Stroke({
           color: 'rgba(0, 255, 0, 0.95)',
-          width: 12
+          width: 8
         })
       });
 
@@ -456,7 +456,7 @@
       if(anomalousMarkerLayer.getSource() !== null)
         anomalousMarkerLayer.getSource().clear();
 
-      if(map.getView().getZoom() > zoomlevels.minZoomForAssets) {
+      if(map.getView().getZoom() >= zoomlevels.minZoomForAssets) {
         var floatingRoadMarkers = _.filter(roadLinks, function(roadlink) {
           return roadlink.roadLinkType === -1;
         });
