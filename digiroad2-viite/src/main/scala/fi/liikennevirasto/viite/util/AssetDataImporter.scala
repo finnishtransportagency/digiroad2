@@ -20,7 +20,7 @@ import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.{SimpleBusStop, _}
 import fi.liikennevirasto.digiroad2.util.VVHSerializer
 import fi.liikennevirasto.viite.{RoadAddressLinkBuilder, RoadAddressService}
-import fi.liikennevirasto.viite.dao.RoadAddress
+import fi.liikennevirasto.viite.dao.{RoadAddress, RoadAddressDAO}
 import org.joda.time._
 import org.slf4j.LoggerFactory
 import slick.jdbc.StaticQuery.interpolation
@@ -318,6 +318,37 @@ class AssetDataImporter {
         missing.foreach(service.createSingleMissingRoadAddress)
         println("Municipality %d: %d links added at time: %s".format(municipality, missing.size, DateTime.now().toString))
       })
+    }
+  }
+
+  def updateRoadAddressesGeometry(vvhClient: VVHClient) = {
+    val eventBus = new DummyEventBus
+    val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer)
+    val service = new RoadAddressService(linkService, eventBus)
+    OracleDatabase.withDynTransaction {
+      val roadNumbers = Queries.getDistinctRoadNumbers
+      roadNumbers.foreach(roadNumber =>{
+        println("Processing roadNumber %d at time: %s".format(roadNumber, DateTime.now().toString))
+        val linkIds = Queries.getLinkIdsByRoadNumber(roadNumber)
+        val roadLinksFromVVH = linkService.getRoadLinksByLinkIdsFromVVH(linkIds, false)
+        val addresses = RoadAddressDAO.fetchByLinkId(roadLinksFromVVH.map(_.linkId).toSet, false, false).groupBy(_.linkId)
+
+        roadLinksFromVVH.foreach(roadLink => {
+          val segmentsOnViiteDatabase = addresses.getOrElse(roadLink.linkId, Nil)
+          segmentsOnViiteDatabase.foreach(segment =>{
+              val newGeom = GeometryUtils.truncateGeometry3D(roadLink.geometry, segment.startMValue, segment.endMValue)
+              if (segment.geom.head.distance2DTo(newGeom.head) > 0.1 || segment.geom.last.distance2DTo(newGeom.last) > 0.1) {
+                RoadAddressDAO.updateGeometry(segment.id, newGeom)
+                println("Changed geometry on roadAddress id: " + segment.id)
+              }
+          })
+        })
+
+        println("RoadNumber:  %d: %d roadAddresses updated at time: %s".format(roadNumber, addresses.size, DateTime.now().toString))
+
+      })
+
+
     }
   }
 

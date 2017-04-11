@@ -1,6 +1,7 @@
 package fi.liikennevirasto.viite.dao
 
 import java.sql.Timestamp
+import java.text.DecimalFormat
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing, Unknown}
@@ -366,6 +367,21 @@ object RoadAddressDAO {
            geometry= MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(
              $x1,$y1,$z1,0.0,$x2,$y2,$z2,$length))
         WHERE id = ${roadAddress.id}""".execute
+    }
+  }
+
+  def updateGeometry(roadAddressId: Long, geometry: Seq[Point]): Unit = {
+    if(!geometry.isEmpty){
+      val newFormat = new DecimalFormat("#.###");
+      val first = geometry.head
+
+      val last = geometry.last
+      val (x1, y1, z1, x2, y2, z2) = (newFormat.format(first.x), newFormat.format(first.y), newFormat.format(first.z), newFormat.format(last.x), newFormat.format(last.y), newFormat.format(last.z))
+      val length = GeometryUtils.geometryLength(geometry)
+      sqlu"""UPDATE ROAD_ADDRESS
+        SET geometry= MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(
+             $x1,$y1,$z1,0.0,$x2,$y2,$z2,$length))
+        WHERE id = ${roadAddressId}""".execute
     }
   }
 

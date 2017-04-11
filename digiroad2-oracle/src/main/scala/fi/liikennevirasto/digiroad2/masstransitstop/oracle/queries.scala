@@ -244,6 +244,18 @@ object Queries {
       """.as[Int].list
   }
 
+  def getDistinctRoadNumbers : Seq[Int] = {
+    sql"""
+       select distinct road_number from road_address
+      """.as[Int].list
+  }
+
+  def getLinkIdsByRoadNumber(roadNumber: Int) : Set[Long] = {
+    sql"""
+       select distinct pos.LINK_ID from road_address ra join LRM_POSITION pos on ra.lrm_position_id = pos.id where ra.road_number = $roadNumber
+      """.as[Long].list.toSet
+  }
+
   def getMunicipalitiesByEly(elyNro: Int): Seq[Int] = {
     sql"""
       select m.id from municipality m where m.ELY_NRO = $elyNro
