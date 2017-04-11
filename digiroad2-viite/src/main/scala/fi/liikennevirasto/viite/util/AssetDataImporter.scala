@@ -337,11 +337,14 @@ class AssetDataImporter {
           val segmentsOnViiteDatabase = addresses.getOrElse(roadLink.linkId, Set())
           segmentsOnViiteDatabase.foreach(segment =>{
               val newGeom = GeometryUtils.truncateGeometry3D(roadLink.geometry, segment.startMValue, segment.endMValue)
+            if(!segment.geom.equals(Nil) && !newGeom.equals(Nil)) {
+
               if (((segment.geom.head.distance2DTo(newGeom.head) > 1) && (segment.geom.head.distance2DTo(newGeom.last) > 1)) ||
                 ((segment.geom.last.distance2DTo(newGeom.head) > 1) && (segment.geom.last.distance2DTo(newGeom.last) > 1))) {
                 RoadAddressDAO.updateGeometry(segment.id, newGeom)
                 println("Changed geometry on roadAddress id: " + segment.id)
               }
+            }
           })
         })
 
