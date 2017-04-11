@@ -159,12 +159,23 @@ object MassTransitStopOperations {
       }
     }
 
-  def getAdministrationProperty(properties: Set[SimpleProperty], assetProperties: Seq[AbstractProperty]): String = {
+  def verifyAdministrationValue(properties: Set[SimpleProperty], assetProperties: Seq[AbstractProperty]): (Option[SimpleProperty], String) = {
     val administrationFromProperties = properties.find(_.publicId == AdministratorInfoPublicId)
-    val administrationFromAsset = assetProperties.find(_.publicId == AdministratorInfoPublicId).flatMap(prop => prop.values.headOption).get
+    val administrationFromAsset = assetProperties.find(_.publicId == AdministratorInfoPublicId)
+
     administrationFromProperties.flatMap(_.values.headOption.map(_.propertyValue)) match {
-      case Some("") => administrationFromAsset.propertyValue
-      case Some(value) => value
+      case Some("") =>
+        val adminValueFromAsset = administrationFromAsset.flatMap(prop => prop.values.headOption).get.propertyValue
+        val newPropsWithAssetValue =
+          properties.map { oldProperty =>
+            oldProperty.publicId match {
+              case MassTransitStopOperations.AdministratorInfoPublicId => oldProperty.copy(values = Seq(PropertyValue(adminValueFromAsset)))
+              case _ => oldProperty
+            }
+        }
+        (newPropsWithAssetValue.headOption, adminValueFromAsset)
+
+      case Some(value) => (administrationFromProperties, value)
     }
   }
 }

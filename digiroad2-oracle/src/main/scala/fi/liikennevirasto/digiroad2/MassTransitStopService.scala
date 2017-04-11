@@ -425,13 +425,14 @@ trait MassTransitStopService extends PointAssetOperations {
       massTransitStopDao.updateAssetLastModified(id, username)
       val oldLiviIdProperty = MassTransitStopOperations.liviIdValueOption(asset.propertyData)
       val newLiviIdProperty = if (properties.nonEmpty) {
-        val administrationPropertyValue = MassTransitStopOperations.getAdministrationProperty(properties, asset.propertyData)
+        val administrationProperty = properties.find(_.publicId == MassTransitStopOperations.AdministratorInfoPublicId)
+        val (validatedProperty, administrationPropertyValue) = MassTransitStopOperations.verifyAdministrationValue(administrationProperty.toSet, asset.propertyData)
         val elyAdministrated = administrationPropertyValue == MassTransitStopOperations.CentralELYPropertyValue
         val hslAdministrated = administrationPropertyValue == MassTransitStopOperations.HSLPropertyValue
-        if  (!(elyAdministrated || hslAdministrated) && MassTransitStopOperations.liviIdValueOption(asset.propertyData).exists(_.propertyValue != "")) {
-          updatePropertiesForAsset(id, properties.toSeq, roadLink.get.administrativeClass, asset.nationalId, None)
+        if (!(elyAdministrated || hslAdministrated) && MassTransitStopOperations.liviIdValueOption(asset.propertyData).exists(_.propertyValue != "")) {
+          updatePropertiesForAsset(id, validatedProperty.toSeq, roadLink.get.administrativeClass, asset.nationalId, None)
         } else {
-          updatePropertiesForAsset(id, properties.toSeq, roadLink.get.administrativeClass, asset.nationalId, MassTransitStopOperations.liviIdValueOption(asset.propertyData))
+          updatePropertiesForAsset(id, validatedProperty.toSeq, roadLink.get.administrativeClass, asset.nationalId, MassTransitStopOperations.liviIdValueOption(asset.propertyData))
         }
       } else {
         None
