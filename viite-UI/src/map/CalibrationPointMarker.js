@@ -13,9 +13,8 @@
 
     var createCalibrationPointMarker = function() {
       var markerGraphics = _.clone(defaultMarkerGraphics);
-//      markerGraphics.rotation = 90;
       var marker =  new ol.Feature({
-          geometry: new ol.geom.Point([data.x, data.y]),
+          geometry: new ol.geom.Point([data.x, data.y])
         }
       );
 

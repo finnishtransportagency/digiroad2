@@ -3,7 +3,8 @@
 (function(root) {
   root.Styler = function() {
 
-    var borderWidth = 6;
+    var roadNormalType = 0;
+    var borderWidth = 3;
     var dashedLinesRoadClasses = [7, 8, 9, 10];
 
     /**
@@ -32,13 +33,14 @@
             case 9 : return 'rgba(255, 85, 221, 0.65)';
             case 10 : return 'rgba(255, 85, 221, 0.65)';
             case 11 : return 'rgba(68, 68, 68, 0.75)';
+            case 97 : return 'rgba(30, 30, 30, 1)';
             case 98 : return 'rgba(250, 250, 250, 1)';
             case 99 : return 'rgba(164, 164, 162, 0.65)';
           }
         }
       } else {
         if(constructionType === 1) {
-          return 'rgba(255, 153, 0, 0.65)';
+          return 'rgba(255, 153, 0, 0.95)';
         } else if (gapTransfering === true ) {
           return 'rgb(0, 255, 0, 0.75)';
         } else {
@@ -80,11 +82,11 @@
           break;
         }
         case 7 : {
-          width = 2;
+          width = 1;
           break;
         }
         case 8 : {
-          width = 3;
+          width = 2;
           break;
         }
         case 9 : {
@@ -92,7 +94,7 @@
           break;
         }
         case 10: {
-          width = 5;
+          width = 4;
           break;
         }
         case 11: {
@@ -168,6 +170,12 @@
         lineCap  = 'butt';
         middleLineCap = 'butt';
         borderCap = 'round'; 
+      } else if (roadLinkData.roadClass == 99 && roadLinkData.constructionType == 1) {
+        borderColor = lineColor;
+        middleLineColor = generateStrokeColor(97, roadNormalType, roadNormalType, roadLinkData.roadLinkType, roadLinkData.gapTransfering);
+        lineCap  = 'butt';
+        middleLineCap = 'butt';
+        borderCap = 'round';
       } else {
         borderColor = modifyColorProperties(lineColor, 1.45, true, false);
         borderColor = modifyColorProperties(borderColor,0.75, false, true);
@@ -177,6 +185,7 @@
       }
       var lineBorder = new ol.style.Stroke({
         width: strokeWidth + borderWidth,
+        //width: borderWidth,
         color: borderColor,
         lineCap: borderCap,
       });
@@ -196,8 +205,13 @@
         lineCap: lineCap
       });
 
+      //Dash lines
       if(_.contains(dashedLinesRoadClasses, roadLinkData.roadClass)){
         line.setLineDash([10, 10]);
+      }
+
+      if(roadLinkData.roadClass == 99 && roadLinkData.constructionType == 1){
+         line.setLineDash([10, 10]);
       }
 
       //Declaration of the Line Styles
