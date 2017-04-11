@@ -832,6 +832,31 @@ object DataFixture {
     println("\n")
   }
 
+  def testsVisualization(): Unit = {
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+    val municipalities: Seq[Int] = Seq(5)
+    //    val municipalities: Seq[Int] =
+    //      OracleDatabase.withDynSession {
+    //        Queries.getMunicipalities
+    //      }
+    //municipalities.foreach { municipality =>
+
+    val municipality = 698
+      println("Start processing municipality %d".format(municipality))
+      val (roadLinks, changesInfos) = roadLinkService.getRoadLinksAndChangesFromVVH(municipality)
+      if (changesInfos.size > 0) {
+      val filteredChanges = changesInfos.filter(_.changeType <= 8)//.filter(_.changeType >= 7)
+        filteredChanges.map { fc =>
+          println("type: %d, old_startM: %f, old_endM: %f, new_startM: %f, new_endM: %f, old_linkid: %d, new_linkid: %d"
+            .format(fc.changeType, fc.oldStartMeasure.getOrElse(0.00000999), fc.oldEndMeasure.getOrElse(0.00000999),
+              fc.newStartMeasure.getOrElse(0.00000999), fc.newEndMeasure.getOrElse(0.00000999), fc.oldId.getOrElse(0), fc.newId.getOrElse(0)))
+      }
+    }
+      println("End processing municipality %d".format(municipality))
+    }
+  //}
+
+
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
@@ -913,6 +938,8 @@ object DataFixture {
         listingBusStopsWithSideCodeConflictWithRoadLinkDirection()
       case Some("fill_lane_amounts_in_missing_road_links") =>
         fillLaneAmountsMissingInRoadLink()
+      case Some("testsVisualization") =>
+        testsVisualization()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
