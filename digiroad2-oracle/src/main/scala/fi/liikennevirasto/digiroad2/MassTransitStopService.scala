@@ -421,18 +421,20 @@ trait MassTransitStopService extends PointAssetOperations {
         .map{ x => (x.municipalityCode, x.geometry) }
         .getOrElse(throw new NoSuchElementException)
 
+      // Enrich properties with old administrator, if administrator value is empty in CSV import
+      val verifiedProperties = MassTransitStopOperations.getVerifiedProperties(properties, asset.propertyData)
+
       val id = asset.id
       massTransitStopDao.updateAssetLastModified(id, username)
       val oldLiviIdProperty = MassTransitStopOperations.liviIdValueOption(asset.propertyData)
-      val newLiviIdProperty = if (properties.nonEmpty) {
-        val administrationProperty = properties.find(_.publicId == MassTransitStopOperations.AdministratorInfoPublicId)
-        val (validatedProperty, administrationPropertyValue) = MassTransitStopOperations.verifyAdministrationValue(administrationProperty.toSet, asset.propertyData)
-        val elyAdministrated = administrationPropertyValue == MassTransitStopOperations.CentralELYPropertyValue
-        val hslAdministrated = administrationPropertyValue == MassTransitStopOperations.HSLPropertyValue
-        if (!(elyAdministrated || hslAdministrated) && MassTransitStopOperations.liviIdValueOption(asset.propertyData).exists(_.propertyValue != "")) {
-          updatePropertiesForAsset(id, validatedProperty.toSeq, roadLink.get.administrativeClass, asset.nationalId, None)
+      val newLiviIdProperty = if (verifiedProperties.nonEmpty) {
+        val administrationProperty = verifiedProperties.find(_.publicId == MassTransitStopOperations.AdministratorInfoPublicId)
+        val elyAdministrated = administrationProperty.exists(_.values.headOption.exists(_.propertyValue == MassTransitStopOperations.CentralELYPropertyValue))
+        val hslAdministrated = administrationProperty.exists(_.values.headOption.exists(_.propertyValue == MassTransitStopOperations.HSLPropertyValue))
+        if  (!(elyAdministrated || hslAdministrated) && MassTransitStopOperations.liviIdValueOption(asset.propertyData).exists(_.propertyValue != "")) {
+          updatePropertiesForAsset(id, verifiedProperties.toSeq, roadLink.get.administrativeClass, asset.nationalId, None)
         } else {
-          updatePropertiesForAsset(id, validatedProperty.toSeq, roadLink.get.administrativeClass, asset.nationalId, MassTransitStopOperations.liviIdValueOption(asset.propertyData))
+          updatePropertiesForAsset(id, verifiedProperties.toSeq, roadLink.get.administrativeClass, asset.nationalId, MassTransitStopOperations.liviIdValueOption(asset.propertyData))
         }
       } else {
         None
