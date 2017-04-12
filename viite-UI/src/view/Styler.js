@@ -33,8 +33,7 @@
             case 9 : return 'rgba(255, 85, 221, 0.65)';
             case 10 : return 'rgba(255, 85, 221, 0.65)';
             case 11 : return 'rgba(68, 68, 68, 0.75)';
-            case 96 : return 'rgba(30, 30, 30, 1)';
-            case 97 : return 'rgba(30, 30, 30, 1)';
+            case 97 : return 'rgba(30, 30, 30, 0,65)';
             case 98 : return 'rgba(250, 250, 250, 1)';
             case 99 : return 'rgba(164, 164, 162, 0.65)';
           }
@@ -76,7 +75,7 @@
      * @param zoomLevel The actual zoom level.
      * @returns {number} The stroke width of a line.
      */
-    var strokeWidthByZoomLevel = function (zoomLevel, roadLinkType, anomaly, roadLinkSource, notSelection){
+    var strokeWidthByZoomLevel = function (zoomLevel, roadLinkType, anomaly, roadLinkSource, notSelection, constructionType){
       var width = 0;
 
       switch (zoomLevel) {
@@ -126,12 +125,13 @@
         width = width + 13;
       }
 
-      if (roadLinkType !== -1 && anomaly === 1){
+      if (roadLinkType !== -1 && anomaly === 1 && constructionType !== 1){
         width = 7;
       }
       if(roadLinkSource === 2 && !notSelection){
         width = width + 4;
       }
+
       return width;
     };
 
@@ -159,7 +159,7 @@
      * @returns {*[ol.style.Style, ol.style.Style, ol.style.Style]} And array of ol.style.Style, the first is for the gray line, the second is for the border and the third is for the line itself.
      */
     var generateStyleByFeature = function(roadLinkData, currentZoom, notSelection){
-      var strokeWidth = strokeWidthByZoomLevel(currentZoom, roadLinkData.roadLinkType, roadLinkData.anomaly, roadLinkData.roadLinkSource, notSelection);
+      var strokeWidth = strokeWidthByZoomLevel(currentZoom, roadLinkData.roadLinkType, roadLinkData.anomaly, roadLinkData.roadLinkSource, notSelection, roadLinkData.constructionType);
       //Gray line behind all of the styles present in the layer.
       var underLineColor = generateStrokeColor(99, roadLinkData.anomaly, roadLinkData.constructionType, roadLinkData.roadLinkType, roadLinkData.gapTransfering);
       //If the line we need to generate is a dashed line, middleLineColor will be the white one sitting behind the dashed/colored line and above the border and grey lines
@@ -184,7 +184,7 @@
       }
       else if (roadLinkData.id !== 0 && roadLinkData.administrativeClass == "Municipality") {
         borderColor = lineColor;
-        middleLineColor = generateStrokeColor(96, roadNormalType, roadNormalType, roadLinkData.roadLinkType, roadLinkData.gapTransfering);
+        middleLineColor = generateStrokeColor(97, roadNormalType, roadNormalType, roadLinkData.roadLinkType, roadLinkData.gapTransfering);
         lineCap = 'butt';
         middleLineCap = 'butt';
         borderCap = 'round';
