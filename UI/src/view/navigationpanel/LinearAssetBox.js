@@ -7,6 +7,11 @@
              '</div>';
     }).join('');
 
+    var complementaryCheckBox = layerName === 'maintenanceRoad' ?
+        '<div class="check-box-container">' +
+            '<input id="complementaryCheckbox" type="checkbox" /><span>Näytä täydentävä geometria</span>' +
+        '</div>' : '';
+
     var expandedTemplate = [
       '<div class="panel ' + layerName +'">',
       '  <header class="panel-header expanded">',
@@ -15,6 +20,7 @@
       '  <div class="panel-section panel-legend limit-legend">',
             legendTemplate,
       '  </div>',
+        complementaryCheckBox,
       '</div>'].join('');
 
     var elements = {
@@ -44,6 +50,19 @@
     };
 
     bindExternalEventHandlers();
+
+    elements.expanded.find('#complementaryCheckbox').on('change', function (event) {
+        if ($(event.currentTarget).prop('checked')) {
+            eventbus.trigger('roadLinkComplementaryBS:show');
+        } else {
+            if (applicationModel.isDirty()) {
+                $(event.currentTarget).prop('checked', true);
+                new Confirm();
+            } else {
+                eventbus.trigger('roadLinkComplementaryBS:hide');
+            }
+        }
+    });
 
     var element = $('<div class="panel-group simple-limit ' + className + 's"/>').append(elements.expanded).hide();
 
