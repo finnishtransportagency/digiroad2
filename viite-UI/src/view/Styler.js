@@ -182,7 +182,7 @@
         middleLineCap = 'butt';
         borderCap = 'round';
       }
-      else if (roadLinkData.id != 0 && roadLinkData.administrativeClass == "Municipality") {
+      else if (roadLinkData.id !== 0 && roadLinkData.administrativeClass == "Municipality") {
         borderColor = lineColor;
         middleLineColor = generateStrokeColor(96, roadNormalType, roadNormalType, roadLinkData.roadLinkType, roadLinkData.gapTransfering);
         lineCap = 'butt';
@@ -202,7 +202,7 @@
         lineCap: borderCap,
       });
       var middleLineWidth = strokeWidth;
-      if(roadLinkData.id != 0 && roadLinkData.administrativeClass == "Municipality"){
+      if(roadLinkData.id !== 0 && roadLinkData.administrativeClass == "Municipality"){
         middleLineWidth = middleLineWidth+7;
       }
       var middleLine = new ol.style.Stroke({
