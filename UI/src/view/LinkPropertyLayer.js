@@ -165,17 +165,18 @@
       if(event.selected.length !== 0) {
         var feature = event.selected[0];
         var properties = feature.getProperties();
-        var features = _.filter(roadLayer.layer.getSource().getFeatures(), function(_feature) {
-          return feature.getProperties().linkId === _feature.getProperties().linkId;
-        });
-        selectToolControl.addSelectionFeatures(features);
-        selectedLinkProperty.open(properties.linkId, feature.singleLinkSelect);
+        verifyClickEvent(properties, event);
         redrawSelected();
         currentRenderIntent = 'select';
       }else{
           currentRenderIntent = 'default';
           selectedLinkProperty.close();
       }
+    };
+
+    var verifyClickEvent = function(properties, event){
+       var singleLinkSelect = event.mapBrowserEvent.type === 'dblclick';
+       selectedLinkProperty.open(properties.linkId, singleLinkSelect);
     };
 
     var unselectRoadLink = function() {

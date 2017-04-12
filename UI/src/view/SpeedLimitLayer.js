@@ -190,14 +190,28 @@ window.SpeedLimitLayer = function(params) {
 
   var OnSelect = function(evt) {
     if(evt.selected.length !== 0) {
-      selectedSpeedLimit.open(evt.selected[0].getProperties(), true);
-      selectSpeedLimit(evt.selected[0].getProperties());
+      var feature = evt.selected[0];
+      var properties = feature.getProperties();
+      verifyClickEvent(properties, evt);
     }else{
       if (selectedSpeedLimit.exists()) {
         selectToolControl.clear();
         selectedSpeedLimit.close();
       }
     }
+  };
+
+  var verifyClickEvent = function(properties, evt){
+    var singleLinkSelect = evt.mapBrowserEvent.type === 'dblclick';
+    selectedSpeedLimit.open(properties, singleLinkSelect);
+    highlightMultipleLinearAssetFeatures();
+  };
+
+  var highlightMultipleLinearAssetFeatures = function() {
+    var partitioned = _.groupBy(vectorLayer.getSource().getFeatures(), function (feature) {
+        return selectedSpeedLimit.isSelected(feature.getProperties());
+    });
+    selectToolControl.addSelectionFeatures(partitioned[true]);
   };
 
   var selectToolControl = new SelectToolControl(application, vectorLayer, map, {

@@ -176,12 +176,16 @@ define(['AssetsTestData',
    var feature = _.find(getSpeedLimitFeatures(map), function(feature) {
      return feature.getProperties().id === speedLimitId;
    });
+
+   var mapBrowserEvent =  singleLinkSelect ? { type: 'dblclick' } : { type: 'click' };
+
    interaction.getFeatures().clear();
    interaction.getFeatures().push(feature);
    interaction.dispatchEvent({
      type: 'select',
      selected: [feature],
-     deselected: []
+     deselected: [],
+     mapBrowserEvent : mapBrowserEvent
    });
  };
 
