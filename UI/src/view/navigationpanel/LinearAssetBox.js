@@ -7,10 +7,14 @@
              '</div>';
     }).join('');
 
-    var complementaryCheckBox = layerName === 'maintenanceRoad' ?
-        '<div class="check-box-container">' +
-            '<input id="complementaryCheckbox" type="checkbox" /><span>Näytä täydentävä geometria</span>' +
-        '</div>' : '';
+
+      var complementaryCheckBox = layerName === 'maintenanceRoad' ? [
+          '  <div class="panel-section roadLink-complementary-checkbox">',
+          '<div class="check-box-container">' +
+          '<input id="complementaryCheckbox" type="checkbox" /> <lable>Näytä täydentävä geometria</lable>' +
+          '</div>' +
+          '</div>'
+      ].join('') : '';
 
     var expandedTemplate = [
       '<div class="panel ' + layerName +'">',

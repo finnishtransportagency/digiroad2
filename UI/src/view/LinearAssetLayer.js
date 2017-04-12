@@ -7,11 +7,14 @@ window.LinearAssetLayer = function(params) {
       multiElementEventCategory = params.multiElementEventCategory,
       singleElementEventCategory = params.singleElementEventCategory,
       style = params.style,
-      layerName = params.layerName;
+      layerName = params.layerName,
+      roadCollection = params.roadCollection;
 
   Layer.call(this, layerName, roadLayer);
   var me = this;
   me.minZoomForContent = zoomlevels.minZoomForAssets;
+
+  var isComplementaryActiveBS = false;
 
   var singleElementEvents = function() {
     return _.map(arguments, function(argument) { return singleElementEventCategory + ':' + argument; }).join(' ');
@@ -238,6 +241,8 @@ window.LinearAssetLayer = function(params) {
     eventListener.listenTo(eventbus, singleElementEvents('cancelled', 'saved'), linearAssetCancelled);
     eventListener.listenTo(eventbus, singleElementEvents('selectByLinkId'), selectLinearAssetByLinkId);
     eventListener.listenTo(eventbus, multiElementEvent('massUpdateFailed'), cancelSelection);
+    eventListener.listenTo(eventbus, 'roadLinkComplementaryBS:show', showWithComplementary);
+    eventListener.listenTo(eventbus, 'roadLinkComplementaryBS:hide', show);
   };
 
   var selectLinearAssetByLinkId = function(linkId) {
@@ -381,10 +386,26 @@ window.LinearAssetLayer = function(params) {
     linearAssetCutter.deactivate();
   };
 
+  var registerRoadLinkFetched = function(){
+    if (zoomlevels.isInAssetZoomLevel(map.getView().getZoom())) {
+      eventbus.once('roadLinks:fetched', function() {
+        roadLayer.drawRoadLinks(roadCollection.getAll(), map.getView().getZoom());
+        collection.fetch(map.getView().calculateExtent(map.getSize()));
+      });
+      roadCollection.fetchWithComplementary( map.getView().calculateExtent(map.getSize()));
+    }
+  };
+
   var show = function(map) {
     vectorLayer.setVisible(true);
     indicatorLayer.setVisible(true);
+    isComplementaryActiveBS = false;
     me.show(map);
+  };
+
+  var showWithComplementary = function() {
+      isComplementaryActiveBS = true;
+      registerRoadLinkFetched();
   };
 
   var hideLayer = function() {
