@@ -326,9 +326,11 @@ class AssetDataImporter {
     val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer)
     val service = new RoadAddressService(linkService, eventBus)
     var counter = 0
+    var changed = 0
     OracleDatabase.withDynTransaction {
       val roadNumbers = Queries.getDistinctRoadNumbers(filterRoadAddresses)
       roadNumbers.foreach(roadNumber =>{
+        counter +=1
         println("Processing roadNumber %d (%d of %d) at time: %s".format(roadNumber, counter, roadNumbers.size,  DateTime.now().toString))
         val linkIds = Queries.getLinkIdsByRoadNumber(roadNumber)
         val roadLinksFromVVH = linkService.getCurrentAndComplementaryVVHRoadLinks(linkIds, false)
@@ -344,6 +346,7 @@ class AssetDataImporter {
                 ((segment.geom.last.distance2DTo(newGeom.head) > 1) && (segment.geom.last.distance2DTo(newGeom.last) > 1))) {
                 RoadAddressDAO.updateGeometry(segment.id, newGeom)
                 println("Changed geometry on roadAddress id " + segment.id + " and linkId ="+ segment.linkId)
+                changed +=1
               }
             }
           })
@@ -352,7 +355,7 @@ class AssetDataImporter {
         println("RoadNumber:  %d: %d roadAddresses updated at time: %s".format(roadNumber, addresses.size, DateTime.now().toString))
 
       })
-
+      println("Geometries changed count: %d", changed)
 
     }
   }
