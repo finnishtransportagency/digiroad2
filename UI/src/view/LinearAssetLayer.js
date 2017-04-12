@@ -180,10 +180,8 @@ window.LinearAssetLayer = function(params) {
   };
 
   var highlightMultipleLinearAssetFeatures = function() {
-    var partitioned = _.groupBy(vectorLayer.getSource().getFeatures(), function (feature) {
-      return selectedLinearAsset.isSelected(feature.getProperties());
-    });
-    selectToolControl.addSelectionFeatures(partitioned[true]);
+    var selectedAssets = selectedLinearAsset.get();
+    selectToolControl.addSelectionFeatures( style.renderFeatures(selectedAssets));
   };
 
   var selectToolControl = new SelectToolControl(application, vectorLayer, map, {
