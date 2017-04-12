@@ -200,7 +200,7 @@
       condition: ol.events.condition.singleClick,
       //The new/temporary layer needs to have a style function as well, we define it here.
       style: function(feature, resolution) {
-        return styler.generateStyleByFeature(feature.roadLinkData,map.getView().getZoom());
+        return styler.generateStyleByFeature(feature.roadLinkData,map.getView().getZoom(), true);
       }
     });
 

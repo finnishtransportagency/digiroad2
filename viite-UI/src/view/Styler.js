@@ -75,7 +75,7 @@
      * @param zoomLevel The actual zoom level.
      * @returns {number} The stroke width of a line.
      */
-    var strokeWidthByZoomLevel = function (zoomLevel, roadLinkType, anomaly, roadLinkSource){
+    var strokeWidthByZoomLevel = function (zoomLevel, roadLinkType, anomaly, roadLinkSource, notSelection){
       var width = 0;
 
       switch (zoomLevel) {
@@ -128,7 +128,7 @@
       if (roadLinkType !== -1 && anomaly === 1){
         width = 7;
       }
-      if(roadLinkSource === 2){
+      if(roadLinkSource === 2 && !notSelection){
         width = width + 4;
       }
       return width;
@@ -157,8 +157,8 @@
      * @param currentZoom The value of the current application zoom.
      * @returns {*[ol.style.Style, ol.style.Style, ol.style.Style]} And array of ol.style.Style, the first is for the gray line, the second is for the border and the third is for the line itself.
      */
-    var generateStyleByFeature = function(roadLinkData, currentZoom){
-      var strokeWidth = strokeWidthByZoomLevel(currentZoom, roadLinkData.roadLinkType, roadLinkData.anomaly, roadLinkData.roadLinkSource);
+    var generateStyleByFeature = function(roadLinkData, currentZoom, notSelection){
+      var strokeWidth = strokeWidthByZoomLevel(currentZoom, roadLinkData.roadLinkType, roadLinkData.anomaly, roadLinkData.roadLinkSource, notSelection);
       //Gray line behind all of the styles present in the layer.
       var underLineColor = generateStrokeColor(99, roadLinkData.anomaly, roadLinkData.constructionType, roadLinkData.roadLinkType, roadLinkData.gapTransfering);
       //If the line we need to generate is a dashed line, middleLineColor will be the white one sitting behind the dashed/colored line and above the border and grey lines
