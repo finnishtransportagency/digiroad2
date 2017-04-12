@@ -33,6 +33,7 @@
             case 9 : return 'rgba(255, 85, 221, 0.65)';
             case 10 : return 'rgba(255, 85, 221, 0.65)';
             case 11 : return 'rgba(68, 68, 68, 0.75)';
+            case 96 : return 'rgba(30, 30, 30, 1)';
             case 97 : return 'rgba(30, 30, 30, 1)';
             case 98 : return 'rgba(250, 250, 250, 1)';
             case 99 : return 'rgba(164, 164, 162, 0.65)';
@@ -177,7 +178,14 @@
       } else if (roadLinkData.roadClass == 99 && roadLinkData.constructionType == 1) {
         borderColor = lineColor;
         middleLineColor = generateStrokeColor(97, roadNormalType, roadNormalType, roadLinkData.roadLinkType, roadLinkData.gapTransfering);
-        lineCap  = 'butt';
+        lineCap = 'butt';
+        middleLineCap = 'butt';
+        borderCap = 'round';
+      }
+      else if (roadLinkData.id != 0 && roadLinkData.administrativeClass == "Municipality") {
+        borderColor = lineColor;
+        middleLineColor = generateStrokeColor(96, roadNormalType, roadNormalType, roadLinkData.roadLinkType, roadLinkData.gapTransfering);
+        lineCap = 'butt';
         middleLineCap = 'butt';
         borderCap = 'round';
       } else {
@@ -193,8 +201,12 @@
         color: borderColor,
         lineCap: borderCap,
       });
+      var middleLineWidth = strokeWidth;
+      if(roadLinkData.id != 0 && roadLinkData.administrativeClass == "Municipality"){
+        middleLineWidth = middleLineWidth+7;
+      }
       var middleLine = new ol.style.Stroke({
-        width: strokeWidth,
+        width: middleLineWidth,
         color: middleLineColor,
         lineCap: middleLineCap,
       });
