@@ -244,10 +244,17 @@ object Queries {
       """.as[Int].list
   }
 
-  def getDistinctRoadNumbers : Seq[Int] = {
-    sql"""
+  def getDistinctRoadNumbers(filterRoadAddresses : Boolean) : Seq[Int] = {
+    if(filterRoadAddresses){
+      sql"""
+      select distinct road_number from road_address where (ROAD_NUMBER <= 20000 or (road_number >= 40000 and road_number <= 70000))
+      """.as[Int].list
+    }
+    else{
+      sql"""
        select distinct road_number from road_address
       """.as[Int].list
+    }
   }
 
   def getLinkIdsByRoadNumber(roadNumber: Int) : Set[Long] = {

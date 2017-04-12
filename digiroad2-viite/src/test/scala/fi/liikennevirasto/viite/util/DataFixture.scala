@@ -84,10 +84,10 @@ object DataFixture {
     println()
   }
 
-  def updateRoadAddressesGeometry(): Unit = {
+  def updateRoadAddressesGeometry(filterRoadAddresses: Boolean): Unit = {
     println(s"\nUpdating road address table geometries at time: ${DateTime.now()}")
     val vVHClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
-    dataImporter.updateRoadAddressesGeometry(vvhClient)
+    dataImporter.updateRoadAddressesGeometry(vvhClient, filterRoadAddresses)
     println(s"Road addresses geometry update complete at time: ${DateTime.now()}")
     println()
   }
@@ -170,8 +170,10 @@ object DataFixture {
         updateMissingRoadAddresses()
       case Some("fuse_multi_segment_road_addresses") =>
         combineMultipleSegmentsOnLinks()
-      case Some("update_road_addresses_geometry") =>
-        updateRoadAddressesGeometry()
+      case Some("update_road_addresses_geometry_staging") =>
+        updateRoadAddressesGeometry(false)
+      case Some("update_road_addresses_geometry_qa") =>
+        updateRoadAddressesGeometry(true)
       case _ => println("Usage: DataFixture import_road_addresses | recalculate_addresses | update_missing | " +
         "find_floating_road_addresses | import_complementary_road_address | fuse_multi_segment_road_addresses")
     }

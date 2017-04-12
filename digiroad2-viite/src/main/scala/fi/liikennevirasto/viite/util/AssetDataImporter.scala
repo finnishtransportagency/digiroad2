@@ -321,17 +321,18 @@ class AssetDataImporter {
     }
   }
 
-  def updateRoadAddressesGeometry(vvhClient: VVHClient) = {
+  def updateRoadAddressesGeometry(vvhClient: VVHClient, filterRoadAddresses: Boolean) = {
     val eventBus = new DummyEventBus
     val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer)
     val service = new RoadAddressService(linkService, eventBus)
+    var counter = 0
     OracleDatabase.withDynTransaction {
-      val roadNumbers = Queries.getDistinctRoadNumbers
+      val roadNumbers = Queries.getDistinctRoadNumbers(filterRoadAddresses)
       roadNumbers.foreach(roadNumber =>{
-        println("Processing roadNumber %d at time: %s".format(roadNumber, DateTime.now().toString))
+        println("Processing roadNumber %d (%d of %d) at time: %s".format(roadNumber, counter, roadNumbers.size,  DateTime.now().toString))
         val linkIds = Queries.getLinkIdsByRoadNumber(roadNumber)
         val roadLinksFromVVH = linkService.getCurrentAndComplementaryVVHRoadLinks(linkIds, false)
-        val addresses = RoadAddressDAO.fetchByLinkId(roadLinksFromVVH.map(_.linkId).toSet, false, false).groupBy(_.linkId)
+        val addresses = RoadAddressDAO.fetchByLinkId(roadLinksFromVVH.map(_.linkId).toSet, false, true).groupBy(_.linkId)
 
         roadLinksFromVVH.foreach(roadLink => {
           val segmentsOnViiteDatabase = addresses.getOrElse(roadLink.linkId, Set())
@@ -342,7 +343,7 @@ class AssetDataImporter {
               if (((segment.geom.head.distance2DTo(newGeom.head) > 1) && (segment.geom.head.distance2DTo(newGeom.last) > 1)) ||
                 ((segment.geom.last.distance2DTo(newGeom.head) > 1) && (segment.geom.last.distance2DTo(newGeom.last) > 1))) {
                 RoadAddressDAO.updateGeometry(segment.id, newGeom)
-                println("Changed geometry on roadAddress id: " + segment.id)
+                println("Changed geometry on roadAddress id " + segment.id + " and linkId ="+ segment.linkId)
               }
             }
           })
