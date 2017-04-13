@@ -316,6 +316,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
        case Some(i:ArrayBuffer[minRoadAddressPart]) =>{
         i.isEmpty should be (true)
      }
+       case _ => true should be (false)
      }
 
     }
