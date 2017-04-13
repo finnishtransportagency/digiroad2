@@ -16,10 +16,12 @@
      */
     var generateStrokeColor = function (roadClass, anomaly, constructionType, roadLinkType, gapTransfering) {
       if (anomaly !== 1) {
-        if(constructionType === 1) {
-          return 'rgba(164, 164, 162, 0.65)';
-        } else if (roadLinkType === -1) {
-          return 'rgba(247, 254, 46, 0.45)';
+        if(roadLinkType === -1){
+          if(constructionType === 1  ) {
+            return 'rgba(164, 164, 162, 0.65)';
+          } else {
+            return 'rgba(247, 254, 46, 0.45)';
+          }
         } else {
           switch (roadClass) {
             case 1 : return 'rgba(255, 0, 0, 0.65)';
@@ -174,7 +176,7 @@
         middleLineColor = generateStrokeColor(98,  roadLinkData.anomaly, roadLinkData.constructionType, roadLinkData.roadLinkType, roadLinkData.gapTransfering);
         lineCap  = 'butt';
         middleLineCap = 'butt';
-        borderCap = 'round'; 
+        borderCap = 'round';
       } else if (roadLinkData.roadClass == 99 && roadLinkData.constructionType == 1) {
         borderColor = lineColor;
         middleLineColor = generateStrokeColor(97, roadNormalType, roadNormalType, roadLinkData.roadLinkType, roadLinkData.gapTransfering);
@@ -227,7 +229,7 @@
       }
 
       if(roadLinkData.roadClass == 99 && roadLinkData.constructionType == 1){
-         line.setLineDash([10, 10]);
+        line.setLineDash([10, 10]);
       }
 
       //Declaration of the Line Styles
