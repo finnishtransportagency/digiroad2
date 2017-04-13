@@ -112,18 +112,15 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val floating = floatingAddresses.groupBy(_.linkId)
     val addresses = nonFloatingAddresses.groupBy(_.linkId)
 
-    val floatingHistoryRoadLinks = roadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(floating.keySet)
+    val floatingHistoryRoadLinks = withDynTransaction {
+      roadLinkService.getViiteRoadLinksHistoryFromVVH(floating.keySet)
+    }
 
-
-    val floatingViiteHistoryRoadLinks = floatingHistoryRoadLinks._2.filter(rl => floating.keySet.contains(rl.linkId)).map {rl =>
+    val floatingViiteRoadLinks = floatingHistoryRoadLinks.filter(rl => floating.keySet.contains(rl.linkId)).map {rl =>
       val ra = floating.getOrElse(rl.linkId, Seq())
       rl.linkId -> buildFloatingRoadAddressLink(rl, ra)
     }.toMap
-    val floatingViiteCurrentRoadLinks = floatingHistoryRoadLinks._1.filter(rl => floating.keySet.contains(rl.linkId)).map { rl =>
-      val ra = floating.getOrElse(rl.linkId, Seq())
-      rl.linkId -> buildFloatingRoadAddressLink(rl, ra)
-    }.toMap
-    (floatingViiteHistoryRoadLinks ++ floatingViiteCurrentRoadLinks, addresses, floating)
+    (floatingViiteRoadLinks, addresses, floating)
   }
 
   def buildFloatingRoadAddressLink(rl: RoadLink, roadAddrSeq: Seq[RoadAddress]): Seq[RoadAddressLink] = {
