@@ -193,7 +193,6 @@
 
       rootElement.on('click', '.project-form button.save', function() {
         var data = $('#roadAddressProject').get(0);
-        var roadAddressProjectContent=null;
         applicationModel.addSpinner();
         projectCollection.createProject(data, currentProject);
       });
@@ -212,11 +211,18 @@
        }
       });
 
+
       rootElement.on('click', '.project-form button.cancel', function(){
-        applicationModel.setOpenProject(false);
-        rootElement.find('header').toggle();
-        rootElement.find('.wrapper').toggle();
-        rootElement.find('footer').toggle();
+        new GenericConfirmPopup('Haluatko varmasti peruuttaa? Mahdolliset tallentamattomat muutokset häviävät', {
+          successCallback: function () {
+            applicationModel.setOpenProject(false);
+            rootElement.find('header').toggle();
+            rootElement.find('.wrapper').toggle();
+            rootElement.find('footer').toggle();
+            projectCollection.clearRoadAddressProjects();
+          }
+        });
+
       });
 
       rootElement.on('change', '.input-required', function() {

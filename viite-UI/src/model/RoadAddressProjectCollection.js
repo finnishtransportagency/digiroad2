@@ -11,8 +11,11 @@
       });
     };
 
+
     this.clearRoadAddressProjects = function(){
       roadAddressProjects = [];
+      dirtyRoadSegmentLst=[];
+      currentRoadSegmentList= [];
     };
 
     this.createProject = function(data, currentProject){

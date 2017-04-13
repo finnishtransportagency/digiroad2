@@ -832,8 +832,10 @@ object RoadAddressDAO {
                 FROM road_address r
              INNER JOIN lrm_position l
              ON r.lrm_position_id =  l.id
-             WHERE r.road_number=$roadNumber AND r.road_part_number=$roadPart AND rownum < 2"""
+             WHERE r.road_number=$roadNumber AND r.road_part_number=$roadPart AND
+             (r.valid_from is null or r.valid_from <= sysdate) AND (r.valid_to is null or r.valid_to >= sysdate) AND track_code in (0,1) ORDER BY r.id Desc"""
      Q.queryNA[(Long,Long,Double,Long)](query).firstOption
     }
+
 
 }
