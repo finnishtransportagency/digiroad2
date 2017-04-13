@@ -596,12 +596,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
     val minStartMValue = allLinks.flatMap(_.startCalibrationPoint) match {
       case Nil => adjustedSegments.map(_.startMValue).min
-      case _ => getMValues(Option(adjustedSegments.flatMap(_.startCalibrationPoint).map(_.segmentMValue).min), Option(adjustedSegments.map(_.startMValue).min))
+      case _ => getMValues(Option(adjustedSegments.flatMap(_.startCalibrationPoint).map(_.segmentMValue).min), Option(allLinks.map(_.startMValue).min))
     }
 
     val maxEndMValue = allLinks.flatMap(_.endCalibrationPoint) match {
       case Nil => adjustedSegments.map(_.endMValue).max
-      case _ => getMValues(Option(adjustedSegments.flatMap(_.endCalibrationPoint).map(_.segmentMValue).max), Option(adjustedSegments.map(_.endMValue).max))
+      case _ => getMValues(Option(adjustedSegments.flatMap(_.endCalibrationPoint).map(_.segmentMValue).max), Option(allLinks.map(_.endMValue).max))
     }
 
     val source = sources.head
