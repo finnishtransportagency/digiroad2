@@ -3,7 +3,8 @@
 (function(root) {
   root.Styler = function() {
 
-    var borderWidth = 6;
+    var roadNormalType = 0;
+    var borderWidth = 3;
     var dashedLinesRoadClasses = [7, 8, 9, 10];
 
     /**
@@ -15,10 +16,12 @@
      */
     var generateStrokeColor = function (roadClass, anomaly, constructionType, roadLinkType, gapTransfering) {
       if (anomaly !== 1) {
-        if(constructionType === 1) {
-          return 'rgba(164, 164, 162, 0.65)';
-        } else if (roadLinkType === -1) {
-          return 'rgba(247, 254, 46, 0.45)';
+        if(roadLinkType === -1){
+          if(constructionType === 1  ) {
+            return 'rgba(164, 164, 162, 0.65)';
+          } else {
+            return 'rgba(247, 254, 46, 0.45)';
+          }
         } else {
           switch (roadClass) {
             case 1 : return 'rgba(255, 0, 0, 0.65)';
@@ -32,13 +35,14 @@
             case 9 : return 'rgba(255, 85, 221, 0.65)';
             case 10 : return 'rgba(255, 85, 221, 0.65)';
             case 11 : return 'rgba(68, 68, 68, 0.75)';
+            case 97 : return 'rgba(30, 30, 30, 1)';
             case 98 : return 'rgba(250, 250, 250, 1)';
             case 99 : return 'rgba(164, 164, 162, 0.65)';
           }
         }
       } else {
         if(constructionType === 1) {
-          return 'rgba(255, 153, 0, 0.65)';
+          return 'rgba(255, 153, 0, 0.95)';
         } else if (gapTransfering === true ) {
           return 'rgb(0, 255, 0, 0.75)';
         } else {
@@ -53,9 +57,11 @@
      * @param anomaly The roadLink anomaly value (if 1 then this is an anomalous roadlink).
      * @returns {number} The zIndex for the feature.
      */
-    var determineZIndex = function (roadLinkType, anomaly){
+    var determineZIndex = function (roadLinkType, anomaly, roadLinkSource){
       var zIndex = 0;
-      if (anomaly === 0) {
+      if(roadLinkSource === 2){
+        zIndex = 8;
+      } else if (anomaly === 0) {
         if (roadLinkType === 3)
           zIndex = 4;
         else if(roadLinkType === -1) {
@@ -71,7 +77,7 @@
      * @param zoomLevel The actual zoom level.
      * @returns {number} The stroke width of a line.
      */
-    var strokeWidthByZoomLevel = function (zoomLevel, roadLinkType, anomaly){
+    var strokeWidthByZoomLevel = function (zoomLevel, roadLinkType, anomaly, roadLinkSource, notSelection, constructionType){
       var width = 0;
 
       switch (zoomLevel) {
@@ -121,8 +127,11 @@
         width = width + 13;
       }
 
-      if (roadLinkType !== -1 && anomaly === 1){
+      if (roadLinkType !== -1 && anomaly === 1 && constructionType !== 1){
         width = 7;
+      }
+      if(roadLinkSource === 2 && !notSelection){
+        width = width + 4;
       }
 
       return width;
@@ -151,8 +160,8 @@
      * @param currentZoom The value of the current application zoom.
      * @returns {*[ol.style.Style, ol.style.Style, ol.style.Style]} And array of ol.style.Style, the first is for the gray line, the second is for the border and the third is for the line itself.
      */
-    var generateStyleByFeature = function(roadLinkData, currentZoom){
-      var strokeWidth = strokeWidthByZoomLevel(currentZoom, roadLinkData.roadLinkType, roadLinkData.anomaly);
+    var generateStyleByFeature = function(roadLinkData, currentZoom, notSelection){
+      var strokeWidth = strokeWidthByZoomLevel(currentZoom, roadLinkData.roadLinkType, roadLinkData.anomaly, roadLinkData.roadLinkSource, notSelection, roadLinkData.constructionType);
       //Gray line behind all of the styles present in the layer.
       var underLineColor = generateStrokeColor(99, roadLinkData.anomaly, roadLinkData.constructionType, roadLinkData.roadLinkType, roadLinkData.gapTransfering);
       //If the line we need to generate is a dashed line, middleLineColor will be the white one sitting behind the dashed/colored line and above the border and grey lines
@@ -167,7 +176,20 @@
         middleLineColor = generateStrokeColor(98,  roadLinkData.anomaly, roadLinkData.constructionType, roadLinkData.roadLinkType, roadLinkData.gapTransfering);
         lineCap  = 'butt';
         middleLineCap = 'butt';
-        borderCap = 'round'; 
+        borderCap = 'round';
+      } else if (roadLinkData.roadClass == 99 && roadLinkData.constructionType == 1) {
+        borderColor = lineColor;
+        middleLineColor = generateStrokeColor(97, roadNormalType, roadNormalType, roadLinkData.roadLinkType, roadLinkData.gapTransfering);
+        lineCap = 'butt';
+        middleLineCap = 'butt';
+        borderCap = 'round';
+      }
+      else if (roadLinkData.id !== 0 && roadLinkData.administrativeClass == "Municipality") {
+        borderColor = lineColor;
+        middleLineColor = generateStrokeColor(97, roadNormalType, roadNormalType, roadLinkData.roadLinkType, roadLinkData.gapTransfering);
+        lineCap = 'butt';
+        middleLineCap = 'butt';
+        borderCap = 'round';
       } else {
         borderColor = modifyColorProperties(lineColor, 1.45, true, false);
         borderColor = modifyColorProperties(borderColor,0.75, false, true);
@@ -180,8 +202,12 @@
         color: borderColor,
         lineCap: borderCap,
       });
+      var middleLineWidth = strokeWidth;
+      if(roadLinkData.id !== 0 && roadLinkData.administrativeClass == "Municipality"){
+        middleLineWidth = middleLineWidth+7;
+      }
       var middleLine = new ol.style.Stroke({
-        width: strokeWidth,
+        width: middleLineWidth,
         color: middleLineColor,
         lineCap: middleLineCap,
       });
@@ -196,7 +222,12 @@
         lineCap: lineCap
       });
 
+      //Dash lines
       if(_.contains(dashedLinesRoadClasses, roadLinkData.roadClass)){
+        line.setLineDash([10, 10]);
+      }
+
+      if(roadLinkData.roadClass == 99 && roadLinkData.constructionType == 1){
         line.setLineDash([10, 10]);
       }
 
@@ -213,7 +244,7 @@
       var underlineStyle = new ol.style.Style({
         stroke: underline
       });
-      var zIndex = determineZIndex(roadLinkData.roadLinkType, roadLinkData.anomaly);
+      var zIndex = determineZIndex(roadLinkData.roadLinkType, roadLinkData.anomaly, roadLinkData.roadLinkSource);
       underlineStyle.setZIndex(zIndex-1);
       borderStyle.setZIndex(zIndex);
       middleLineStyle.setZIndex(zIndex+1);
