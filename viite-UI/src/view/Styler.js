@@ -35,7 +35,7 @@
             case 9 : return 'rgba(255, 85, 221, 0.65)';
             case 10 : return 'rgba(255, 85, 221, 0.65)';
             case 11 : return 'rgba(68, 68, 68, 0.75)';
-            case 97 : return 'rgba(30, 30, 30, 0,65)';
+            case 97 : return 'rgba(30, 30, 30, 1)';
             case 98 : return 'rgba(250, 250, 250, 1)';
             case 99 : return 'rgba(164, 164, 162, 0.65)';
           }
