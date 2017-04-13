@@ -62,7 +62,7 @@
       };
 
 
-      var addToCurrentRoadPartListAndSort = function(querryresult) {
+      var addToCurrentRoadPartList = function(querryresult) {
           var qRoadparts=[];
           _.each(querryresult.roadparts, function(row) {
               qRoadparts.push(row)
@@ -77,7 +77,6 @@
               currentRoadSegmentList.push(row);
               dirtyRoadSegmentLst.push(row);
           });
-        //missing sort
       };
 
 
@@ -103,7 +102,7 @@
                    eventbus.trigger('roadAddress:projectValidationFailed', validationResult);
                } else
                {
-                   addToCurrentRoadPartListAndSort(validationResult);
+                   addToCurrentRoadPartList(validationResult);
                    updateforminfo(parseroadpartinfoToresultRow());
                }
             });

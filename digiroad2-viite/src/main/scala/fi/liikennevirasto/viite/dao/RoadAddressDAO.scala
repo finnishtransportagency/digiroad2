@@ -829,7 +829,7 @@ object RoadAddressDAO {
   def getRoadPartInfo(roadNumber:Long, roadPart:Long): Option[(Long,Long,Double,Long)] =
   {
     val query = s"""SELECT r.id, l.link_id, r.end_addr_M, r.discontinuity
-                FROM road_address r
+                FROM road_address rf
              INNER JOIN lrm_position l
              ON r.lrm_position_id =  l.id
              WHERE r.road_number=$roadNumber AND r.road_part_number=$roadPart AND

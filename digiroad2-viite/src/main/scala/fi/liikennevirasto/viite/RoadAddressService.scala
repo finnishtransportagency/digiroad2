@@ -634,7 +634,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
           }
         case _ : Throwable => return s"Tuntematon virhe"
       }
-    };
+    }
     ""
   }
 
@@ -710,23 +710,23 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
 
-    def projectToApi(roadAddressProject: RoadAddressProject) : Map[String, Any] = {
-      val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
-      Map(
-        "id" -> roadAddressProject.id,
-        "dateModified" -> roadAddressProject.dateModified.toString(formatter),
-        "startDate" -> roadAddressProject.startDate.toString(formatter),
-        "additionalInfo" -> roadAddressProject.additionalInfo,
-        "createdBy" -> roadAddressProject.createdBy,
-        "modifiedBy" -> roadAddressProject.modifiedBy,
-        "name" -> roadAddressProject.name,
-        "status" -> roadAddressProject.status
-      )
-    }
+  def projectToApi(roadAddressProject: RoadAddressProject) : Map[String, Any] = {
+    val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
+    Map(
+      "id" -> roadAddressProject.id,
+      "dateModified" -> roadAddressProject.dateModified.toString(formatter),
+      "startDate" -> roadAddressProject.startDate.toString(formatter),
+      "additionalInfo" -> roadAddressProject.additionalInfo,
+      "createdBy" -> roadAddressProject.createdBy,
+      "modifiedBy" -> roadAddressProject.modifiedBy,
+      "name" -> roadAddressProject.name,
+      "status" -> roadAddressProject.status
+    )
+  }
   def getRoadAddressProjects(): Seq[RoadAddressProject] = {
     withDynTransaction {
-        val projects = RoadAddressDAO.getRoadAddressProjects()
-        projects
+      val projects = RoadAddressDAO.getRoadAddressProjects()
+      projects
     }
   }
 }

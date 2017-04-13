@@ -287,7 +287,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     }
   }
 
-  test("save road link project and get form info") {
+ ignore ("save road link project and get form info rollback doesn't rollback") {
     val roadlink = RoadLink(5175306,Seq(Point(535605.272,6982204.22,85.90899999999965))
       ,540.3960283713503,State,99,AgainstDigitizing,UnknownLinkType,Some("25.06.2015 03:00:00"), Some("vvh_modified"),Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
       InUse,NormalLinkInterface)
@@ -304,7 +304,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     }
   }
 
-  test("save road link project without values") {
+  ignore("save road link project without values - rollback doesn't rollback") {
     runWithRollback{
       val id = Sequences.nextViitePrimaryKeySeqValue
       val roadAddressProject = RoadAddressProject(id, 1, "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",List.empty[minRoadAddressPart])
@@ -321,7 +321,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     }
   }
 
-  test("save road link project without valid roadParts") {
+  ignore("save road link project without valid roadParts - rollback doesn't rollback") {
     val roadlink = RoadLink(5175306,Seq(Point(535605.272,6982204.22,85.90899999999965))
       ,540.3960283713503,State,99,AgainstDigitizing,UnknownLinkType,Some("25.06.2015 03:00:00"), Some("vvh_modified"),Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
       InUse,NormalLinkInterface)
