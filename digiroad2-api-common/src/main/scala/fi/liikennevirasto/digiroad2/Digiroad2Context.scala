@@ -89,7 +89,7 @@ class RoadAddressAdjustment(roadAddressService: RoadAddressService) extends Acto
 
 class RoadAddressFloater(roadAddressService: RoadAddressService) extends Actor {
   def receive = {
-    case w: Set[any] => roadAddressService.checkRoadAddressFloating(w.asInstanceOf[Set[Long]])
+    case w: (Set[Long], Boolean) => roadAddressService.checkRoadAddressFloating(w._1.asInstanceOf[Set[Long]], w._2.asInstanceOf[Boolean])
     case _                    => println("roadAddressUpdater: Received unknown message")
   }
 }

@@ -1,6 +1,7 @@
 package fi.liikennevirasto.viite.dao
 
 import java.sql.Timestamp
+import java.text.DecimalFormat
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing, Unknown}
@@ -11,7 +12,7 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.dao.CalibrationCode._
-import fi.liikennevirasto.viite.model.Anomaly
+import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
@@ -366,6 +367,21 @@ object RoadAddressDAO {
            geometry= MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(
              $x1,$y1,$z1,0.0,$x2,$y2,$z2,$length))
         WHERE id = ${roadAddress.id}""".execute
+    }
+  }
+
+  def updateGeometry(roadAddressId: Long, geometry: Seq[Point]): Unit = {
+    if(!geometry.isEmpty){
+      val newFormat = new DecimalFormat("#.###");
+      val first = geometry.head
+
+      val last = geometry.last
+      val (x1, y1, z1, x2, y2, z2) = (newFormat.format(first.x), newFormat.format(first.y), newFormat.format(first.z), newFormat.format(last.x), newFormat.format(last.y), newFormat.format(last.z))
+      val length = GeometryUtils.geometryLength(geometry)
+      sqlu"""UPDATE ROAD_ADDRESS
+        SET geometry= MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(
+             $x1,$y1,$z1,0.0,$x2,$y2,$z2,$length))
+        WHERE id = ${roadAddressId}""".execute
     }
   }
 
@@ -770,6 +786,25 @@ object RoadAddressDAO {
       case(projectLinkId, projectId, roadType, discontinuityType, roadNumber, roadPartNumber, startAddrM, endAddrM, lrmPositionId, cratedBy, modifiedBy, linkId, length) =>
         RoadAddressProjectLink(projectLinkId, projectId, roadType, Discontinuity.apply(discontinuityType.toInt), roadNumber, roadPartNumber, startAddrM, endAddrM, lrmPositionId, cratedBy, modifiedBy, linkId, length)
     }
+  }
+
+  def getRoadAddress(id : Long, linkId : Long) : Option[RoadAddress] = {
+    val query = s"""
+        select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
+        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
+        pos.side_code,
+        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating,
+        (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as X,
+        (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as Y,
+        (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as X2,
+        (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as Y2
+        from road_address ra
+        join lrm_position pos on ra.lrm_position_id = pos.id
+        where ra.lrm_position_id = ${id} and pos.link_id = ${linkId} and
+          (valid_from is null or valid_from <= sysdate) and
+          (valid_to is null or valid_to >= sysdate)
+      """
+    queryList(query).headOption
   }
 
   def updateRoadAddressProject(roadAddressProject : RoadAddressProject): Unit ={
