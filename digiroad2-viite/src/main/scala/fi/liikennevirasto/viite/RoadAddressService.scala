@@ -178,7 +178,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
     eventbus.publish("roadAddress:persistMissingRoadAddress", changeSet.missingRoadAddresses)
     eventbus.publish("roadAddress:persistAdjustments", changeSet.adjustedMValues)
-    eventbus.publish("roadAddress:floatRoadAddress", (changeSet.toFloatingAddressIds ,true))
+    eventbus.publish("roadAddress:floatRoadAddress", changeSet.toFloatingAddressIds)
 
 
     val returningTopology = filledTopology.filter(link => !complementaryLinkIds.contains(link.linkId) ||
@@ -389,9 +389,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     *
     * @param ids
     */
-  def checkRoadAddressFloating(ids: Set[Long], float : Boolean): Unit = {
+  def checkRoadAddressFloating(ids: Set[Long]): Unit = {
     withDynTransaction {
-      checkRoadAddressFloatingWithoutTX(ids, float)
+      checkRoadAddressFloatingWithoutTX(ids)
     }
   }
 
@@ -400,7 +400,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     *
     * @param ids
     */
-  def checkRoadAddressFloatingWithoutTX(ids: Set[Long], float : Boolean = false): Unit = {
+  def checkRoadAddressFloatingWithoutTX(ids: Set[Long]): Unit = {
     val addresses = RoadAddressDAO.queryById(ids)
     val linkIdMap = addresses.groupBy(_.linkId).mapValues(_.map(_.id))
     val roadLinks =  roadLinkService.getCurrentAndComplementaryVVHRoadLinks(linkIdMap.keySet)
@@ -408,10 +408,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       val roadLink = roadLinks.find(_.linkId == address.linkId)
       val addressGeometry = roadLink.map(rl =>
         GeometryUtils.truncateGeometry3D(rl.geometry, address.startMValue, address.endMValue))
-      if(float && !roadLink.isEmpty && !addressGeometry.isEmpty && !(GeometryUtils.geometryLength(addressGeometry.get) == 0.0)){
-        println("Floating id %d (link id %d)".format(address.id, address.linkId))
-        RoadAddressDAO.changeRoadAddressFloating(float = true, address.id, addressGeometry)
-      }
       if (roadLink.isEmpty || addressGeometry.isEmpty || GeometryUtils.geometryLength(addressGeometry.get) == 0.0) {
         println("Floating id %d (link id %d)".format(address.id, address.linkId))
         RoadAddressDAO.changeRoadAddressFloating(float = true, address.id, None)

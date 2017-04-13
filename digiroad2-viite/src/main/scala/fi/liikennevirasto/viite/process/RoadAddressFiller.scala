@@ -68,39 +68,6 @@ object RoadAddressFiller {
     (passThroughSegments, changeSet.copy(toFloatingAddressIds = changeSet.toFloatingAddressIds ++ droppedSegmentIds))
   }
 
-  private def validateSegments(roadLink: RoadLink, segments: Seq[RoadAddressLink], changeSet: AddressChangeSet) : (Seq[RoadAddressLink], AddressChangeSet) = {
-    if(segments.isEmpty)
-      return (segments, changeSet)
-    val sorted = segments.filter(_.id != 0).sortBy(_.startMValue)(Ordering[Double])
-    val segmentIds = sorted.map(_.id).toSet
-    object UpdateValues extends Exception { }
-    try {
-      if(sorted.nonEmpty) {
-          sorted.foreach { segment =>
-            val oldOption = RoadAddressDAO.getRoadAddress(segment.lrmPositionId, segment.linkId)
-            oldOption match {
-              case Some(old) if (!old.floating) =>
-                if (((segment.geometry.head.distance2DTo(old.geom.head) > MaxDistanceDiffAllowed) &&
-                  (segment.geometry.head.distance2DTo(old.geom.last) > MaxDistanceDiffAllowed)) ||
-                  ((segment.geometry.last.distance2DTo(old.geom.head) > MaxDistanceDiffAllowed) &&
-                  (segment.geometry.last.distance2DTo(old.geom.last) > MaxDistanceDiffAllowed))) {
-                  throw UpdateValues
-                }
-              case _ =>
-            }
-          }
-      }
-      (segments, changeSet)
-    }
-    catch{
-      case UpdateValues =>
-        (segments, changeSet.copy(toFloatingAddressIds = changeSet.toFloatingAddressIds ++ segmentIds))
-
-      case e: Exception => println(e.getMessage)
-        (segments, changeSet)
-    }
-  }
-
   def generateUnknownRoadAddressesForRoadLink(roadLink: RoadLink, adjustedSegments: Seq[RoadAddressLink]): Seq[MissingRoadAddress] = {
     if (adjustedSegments.isEmpty)
       generateUnknownLink(roadLink)
@@ -128,27 +95,25 @@ object RoadAddressFiller {
       dropSegmentsOutsideGeometry,
       capToGeometry,
       extendToGeometry,
-      validateSegments,
       dropShort
     )
     val initialChangeSet = AddressChangeSet(Set.empty, Nil, Nil)
 
-    OracleDatabase.withDynSession {
-      roadLinks.foldLeft(Seq.empty[RoadAddressLink], initialChangeSet) { case (acc, roadLink) =>
-        val (existingSegments, changeSet) = acc
-        val segments = roadAddressMap.getOrElse(roadLink.linkId, Nil)
-        val validSegments = segments.filterNot { segment => changeSet.toFloatingAddressIds.contains(segment.id) }
+    roadLinks.foldLeft(Seq.empty[RoadAddressLink], initialChangeSet) { case (acc, roadLink) =>
+      val (existingSegments, changeSet) = acc
+      val segments = roadAddressMap.getOrElse(roadLink.linkId, Nil)
+      val validSegments = segments.filterNot { segment => changeSet.toFloatingAddressIds.contains(segment.id) }
 
-        val (adjustedSegments, segmentAdjustments) = fillOperations.foldLeft(validSegments, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
-          operation(roadLink, currentSegments, currentAdjustments)
-        }
-        val generatedRoadAddresses = generateUnknownRoadAddressesForRoadLink(roadLink, adjustedSegments)
-        val generatedLinks = buildMissingRoadAddress(roadLink, generatedRoadAddresses)
-        (existingSegments ++ adjustedSegments ++ generatedLinks,
-          segmentAdjustments.copy(missingRoadAddresses = segmentAdjustments.missingRoadAddresses ++
-            generatedRoadAddresses.filterNot(_.anomaly == Anomaly.None)))
+      val (adjustedSegments, segmentAdjustments) = fillOperations.foldLeft(validSegments, changeSet) { case ((currentSegments, currentAdjustments), operation) =>
+        operation(roadLink, currentSegments, currentAdjustments)
       }
+      val generatedRoadAddresses = generateUnknownRoadAddressesForRoadLink(roadLink, adjustedSegments)
+      val generatedLinks = buildMissingRoadAddress(roadLink, generatedRoadAddresses)
+      (existingSegments ++ adjustedSegments ++ generatedLinks,
+        segmentAdjustments.copy(missingRoadAddresses = segmentAdjustments.missingRoadAddresses ++
+          generatedRoadAddresses.filterNot(_.anomaly == Anomaly.None)))
     }
   }
+
 
 }
