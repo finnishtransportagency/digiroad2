@@ -199,7 +199,6 @@
       }
       var lineBorder = new ol.style.Stroke({
         width: strokeWidth + borderWidth,
-        //width: borderWidth,
         color: borderColor,
         lineCap: borderCap,
       });
