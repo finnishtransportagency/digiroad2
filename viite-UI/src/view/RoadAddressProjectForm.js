@@ -94,7 +94,7 @@
         staticField('Muokattu viimeksi', project.modifiedBy + ' ' + project.dateModified)+
         '<div class="form-group editable form-editable-roadAddressProject"> '+
 
-        '<form class="input-unit-combination form-group form-horizontal roadAddressProject">'+
+        '<form id="roadAddressProject" class="input-unit-combination form-group form-horizontal roadAddressProject">'+
         inputFieldRequired('*Nimi', 'nimi', '', project.name) +
         inputFieldRequired('*Alkupvm', 'alkupvm', 'pp.kk.vvvv', project.startDate)+
         largeInputField(project.additionalInfo)+
@@ -199,13 +199,16 @@
       });
 
       rootElement.on('click', '.btn-reserve', function() {
-       if ($('#roadAddressProject').get(0)!=null) {
-         var data = $('#roadAddressProject').get(0);
+       var data;
+        if ($('#roadAddressProject').get(0)!=null) {
+         data = $('#roadAddressProject').get(0);
         projectCollection.checkIfReserved(data);
         return false;
        } else
        {
-        return false;
+         data =$('#savedproject').get(0);
+         projectCollection.checkIfReserved(data);
+        return false
        }
       });
 

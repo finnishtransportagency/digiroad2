@@ -16,13 +16,19 @@
     };
 
     this.createProject = function(data, currentProject){
-      var dataJson = {id: 0, status:1 ,name : data[0].value, startDate: data[1].value , additionalInfo :  data[2].value,roadpartlist: dirtyRoadSegmentLst};
+      var projectid=0;
+      if (projectinfo!=null)
+      {
+        projectid=projectinfo.id;
+      }
+      var dataJson = {id: projectid, status:1 ,name : data[0].value, startDate: data[1].value , additionalInfo :  data[2].value,roadpartlist: dirtyRoadSegmentLst};
 
       backend.createRoadAddressProject(dataJson, function(result) {
         console.log(result.success);
         if(result.success === "ok") {
-            projectinfo={id:result.id, additionalInfo:result.additionalInfo, status:result.status, startDate:result.startDate};
+          projectinfo={id:result.project.id, additionalInfo:result.project.additionalInfo, status:result.project.status, startDate:result.project.startDate};
           eventbus.trigger('roadAddress:projectSaved', result);
+        dirtyRoadSegmentLst=[];
         }
         else {
           eventbus.trigger('roadAddress:projectValidationFailed', result);

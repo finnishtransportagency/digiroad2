@@ -774,9 +774,13 @@ object RoadAddressDAO {
   }
 
   def updateRoadAddressProject(roadAddressProject : RoadAddressProject): Unit ={
-    sqlu"""
-           update project set state = ${roadAddressProject.status}, name = ${roadAddressProject.name}, modified_by = '-' ,modified_date = ${roadAddressProject.dateModified} where id = ${roadAddressProject.id}
-           """.execute
+   val state = roadAddressProject.status
+    val name = roadAddressProject.name
+    val id=roadAddressProject.id
+   val message=    sqlu"""
+           update project set state = $state, name = $name, modified_by = '-' ,modified_date = sysdate where id = $id
+           """
+    message.execute
   }
 
   def getRoadAddressProjectById(id : Long) : Option[RoadAddressProject] = {

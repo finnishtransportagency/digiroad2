@@ -25,6 +25,8 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery
 import slick.jdbc.StaticQuery.interpolation
 
+import scala.collection.mutable.ArrayBuffer
+
 class RoadAddressServiceSpec extends FunSuite with Matchers{
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
@@ -293,9 +295,8 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     runWithRollback{
       val id = Sequences.nextViitePrimaryKeySeqValue
 
-      val roadAddressProject = RoadAddressProject(id, 1, "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List((1, 1, 1)))
+      val roadAddressProject = RoadAddressProject(id, 1, "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty[minRoadAddressPart])
       val result = roadAddressService.saveRoadLinkProject(roadAddressProject)
-      result.size should be (3)
       result.get("project").get should not be None
       result.get("projectAddresses").get should be (None)
       result.get("formInfo").get should not be None
@@ -306,12 +307,17 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   test("save road link project without values") {
     runWithRollback{
       val id = Sequences.nextViitePrimaryKeySeqValue
-      val roadAddressProject = RoadAddressProject(id, 1, "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List((0, 0, 0)))
+      val roadAddressProject = RoadAddressProject(id, 1, "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",List.empty[minRoadAddressPart])
       val result = roadAddressService.saveRoadLinkProject(roadAddressProject)
-      result.size should be (3)
       result.get("project").get should not be None
-      result.get("projectAddresses").get should be (None)
-      result.get("formInfo").get should be (None)
+      result.get("projectAddresses") == Some(None) should be (true)
+     result.get("formInfo") match
+      {
+       case Some(i:ArrayBuffer[minRoadAddressPart]) =>{
+        i.isEmpty should be (true)
+     }
+     }
+
     }
   }
 
@@ -322,9 +328,8 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(5175306L))).thenReturn(Seq(roadlink))
     runWithRollback{
       val id = Sequences.nextViitePrimaryKeySeqValue
-      val roadAddressProject = RoadAddressProject(id, 1, "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List((1, 3, 5)))
+      val roadAddressProject = RoadAddressProject(id, 1, "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty[minRoadAddressPart])
       val result = roadAddressService.saveRoadLinkProject(roadAddressProject)
-      result.size should be (3)
       result.get("project").get should not be None
       result.get("projectAddresses").get should be (None)
       result.get("formInfo").get should not be None
