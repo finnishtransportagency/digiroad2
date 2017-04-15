@@ -28,23 +28,20 @@ object DataCsvImporter {
 class RoadLinkNotFoundException(linkId: Int) extends RuntimeException
 
 trait RoadLinkCsvImporter {
-  //val roadLinkService: RoadLinkService //replaced by roadLinkServiceDAO
   val vvhClient: VVHClient
   val userProvider: UserProvider
 
-  case class CsvRoadLinkRow(linkId:	Int, administrativeClass: Int, functionalClass: Int, trafficDirection: Int, linkType: Int,
-                            verticalLevel: Int, municipalityCode: Int, roadNameFi: String, roadNameSe: String, roadNameSm: String,
-                            minAddressNumRight: Int, maxAddressNumRight: Int, minAddressNumLeft: Int, maxAddressNumLeft: Int,
-                            linkStatus: Int)
+  case class LinkProperty(columnName: String, value: String)
+  case class CsvRoadLinkRow(linkId:	Int, properties: Seq[LinkProperty])
 
-  type ParsedProperties  = List[ImportResult]
+  type ParsedProperties = List[LinkProperty]
   type MalformedParameters = List[String]
-  type ParsedAssetRow = (MalformedParameters, ParsedProperties)
+  type ParsedLinkRow = (MalformedParameters, ParsedProperties)
 
   type ExcludedRoadLinkTypes = List[AdministrativeClass]
   type IncompleteLink = List[String]
 
-  private val isValidAdministrativeClass = Set(2,3,99)
+  private val isValidAdministrativeClass = Seq(2,3,4)
 
   private val intFieldMappings = Map(
     "Hallinnollinen luokka" -> "administrativeClass",
@@ -61,83 +58,95 @@ trait RoadLinkCsvImporter {
   )
 
   private val textFieldMappings = Map(
-  "Tien nimi (suomi)" -> "roadNameFi",
-  "Tien nimi (ruotsi)" -> "roadNameSe",
-  "Tien nimi (saame)" -> "roadNameSm"
+    "Tien nimi (suomi)" -> "roadNameFi",
+    "Tien nimi (ruotsi)" -> "roadNameSe",
+    "Tien nimi (saame)" -> "roadNameSm"
   )
+
+  private val mandatoryFields = "Linkin ID"
+
 
   val mappings = textFieldMappings ++ intFieldMappings
 
- // val MandatoryParameters: Set[String] = mappings.keySet + "Linkin ID"
-  //private val MandatoryParameter: String = "Linkin ID"
-  //TODO return only one string instead of List Strings
-//  private def findMissingParameters(csvRowWithHeaders: Map[String, String]): List[String] = {
-//    csvRowWithHeaders.find(_._1 == "Linkin ID").map(_._2) match {
-//      case Some(value) => List[String]()
-//      case _ => List("Linkin ID")
-//    }
-//  }
+  val MandatoryParameters: Set[String] = mappings.keySet + mandatoryFields
 
   private def findMissingParameters(csvRowWithHeaders: Map[String, String]): List[String] = {
-    //MandatoryParameters.diff(csvRowWithHeaders.keys.toSet).toList
-    List[String]()
+    MandatoryParameters.diff(csvRowWithHeaders.keys.toSet).toList
+  }
+
+  private def findMandatoryParameters(csvRowWithHeaders: Map[String, String]): List[String] = {
+    val valueMandatory = csvRowWithHeaders.get(mandatoryFields) match {
+      case Some(value) =>  value
+      case _ => None
+    }
+
+    if (valueMandatory.asInstanceOf[String].isEmpty || !valueMandatory.asInstanceOf[String].forall(_.isDigit))
+      List(mandatoryFields)
+    else
+      Nil
   }
 
   def updateRoadLinkOTH(roadLinkAttribute: CsvRoadLinkRow, username: Option[String]): ExcludedRoadLinkTypes = {
 
-    if (!isBlank(roadLinkAttribute.administrativeClass.toString)) {
-      if (isValidAdministrativeClass.contains(roadLinkAttribute.administrativeClass)) {
-        val optionalAdministrativeClassValue: Option[Int] = RoadLinkServiceDAO.getAdministrativeClassValue(roadLinkAttribute.linkId)
-        optionalAdministrativeClassValue match {
+    roadLinkAttribute.properties.map { prop =>
+
+      if (prop.columnName.equals("Liikennevirran suunta")) {
+        val optionalTrafficDirectionValue: Option[Int] = RoadLinkServiceDAO.getTrafficDirectionValue(roadLinkAttribute.linkId)
+        optionalTrafficDirectionValue match {
           case Some(existingValue) =>
-            RoadLinkServiceDAO.updateAdministrativeClass(roadLinkAttribute.linkId, username, existingValue, roadLinkAttribute.administrativeClass)
+            RoadLinkServiceDAO.updateTrafficDirection(roadLinkAttribute.linkId, username, existingValue, prop.value.toInt)
           case None =>
-            RoadLinkServiceDAO.insertAdministrativeClass(roadLinkAttribute.linkId, username, roadLinkAttribute.administrativeClass)
+            RoadLinkServiceDAO.insertTrafficDirection(roadLinkAttribute.linkId, username, prop.value.toInt)
         }
-      } else
-        Nil
-    }
-
-    if (!isBlank(roadLinkAttribute.trafficDirection.toString)) {
-      val optionalTrafficDirectionValue: Option[Int] = RoadLinkServiceDAO.getTrafficDirectionValue(roadLinkAttribute.linkId)
-      optionalTrafficDirectionValue match {
-        case Some(existingValue) =>
-          RoadLinkServiceDAO.updateTrafficDirection(roadLinkAttribute.linkId, username, existingValue, roadLinkAttribute.administrativeClass)
-        case None =>
-          RoadLinkServiceDAO.insertTrafficDirection(roadLinkAttribute.linkId, username, roadLinkAttribute.administrativeClass)
       }
-    }
 
-    if (!isBlank(roadLinkAttribute.linkType.toString)) {
-      val optionalLinkTypeValue: Option[Int] = RoadLinkServiceDAO.getLinkTypeValue(roadLinkAttribute.linkId)
-      optionalLinkTypeValue match {
-        case Some(existingValue) =>
-          RoadLinkServiceDAO.updateAdministrativeClass(roadLinkAttribute.linkId, username, existingValue, roadLinkAttribute.administrativeClass)
-        case None =>
-          RoadLinkServiceDAO.insertAdministrativeClass(roadLinkAttribute.linkId, username, roadLinkAttribute.administrativeClass)
+      if (prop.columnName.equals("Tielinkin tyyppi")) {
+        val optionalLinkTypeValue: Option[Int] = RoadLinkServiceDAO.getLinkTypeValue(roadLinkAttribute.linkId)
+        optionalLinkTypeValue match {
+          case Some(existingValue) =>
+            RoadLinkServiceDAO.updateLinkType(roadLinkAttribute.linkId, username, existingValue, prop.value.toInt)
+          case None =>
+            RoadLinkServiceDAO.insertLinkType(roadLinkAttribute.linkId, username, prop.value.toInt)
+        }
+      }
+
+      if (prop.columnName.equals("Hallinnollinen luokka")) {
+
+            val optionalAdministrativeClassValue: Option[Int] = RoadLinkServiceDAO.getAdministrativeClassValue(roadLinkAttribute.linkId)
+            optionalAdministrativeClassValue match {
+              case Some(existingValue) =>
+                RoadLinkServiceDAO.updateAdministrativeClass(roadLinkAttribute.linkId, username, existingValue, prop.value.toInt)
+              case None =>
+                RoadLinkServiceDAO.insertAdministrativeClass(roadLinkAttribute.linkId, username, prop.value.toInt)
+            }
+        val optionalExclude = isValidAdministrativeClass.find(_ == prop.value.toInt) match {
+          case Some(x) => List()
+          case _ => List(isValidAdministrativeClass)
+        }
+        Nil
       }
     }
     Nil
-    //TODO confirm when the AdministrativeClass is equal 1 if needs to delete
-    //    } else
-    ///    roadLinkAttribute.linkId
   }
 
+  private def verifyValueType(parameterName: String, parameterValue: String): ParsedLinkRow = {
+    parameterValue.forall(_.isDigit) match {
+      case true => (Nil, List(LinkProperty(columnName = intFieldMappings(parameterName), value = parameterValue)))
+      case false => (List(parameterName), Nil)
+    }
+  }
 
-  private def assetRowToProperties(csvRowWithHeaders: Map[String, String]): MalformedParameters = {
-    csvRowWithHeaders.foldLeft(Nil: MalformedParameters) { (result, parameter) =>
+  private def linkRowToProperties(csvRowWithHeaders: Map[String, String]): ParsedLinkRow = {
+    csvRowWithHeaders.foldLeft(Nil: MalformedParameters, Nil: ParsedProperties) { (result, parameter) =>
       val (key, value) = parameter
       if (isBlank(value)) {
         result
       } else {
         if (textFieldMappings.contains(key)) {
-          val malformedParameters = textFieldMappings(key)
-          //result.copy(_2 = malformedParameters :: result._2)
-          result
+          result.copy(_2 = LinkProperty(columnName = textFieldMappings(key), value = value):: result._2)
         } else if (intFieldMappings.contains(key)) {
-
-          val malformedParameters = intFieldMappings(key)
-          result
+          val (malformedParameters, properties) = verifyValueType(key, value)
+          result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
         } else
           result
       }
@@ -155,23 +164,16 @@ trait RoadLinkCsvImporter {
     })
     csvReader.allWithHeaders().foldLeft(ImportResult()) { (result, row) =>
       val missingParameters = findMissingParameters(row)
-      val malformedParameters = assetRowToProperties(row)
-      if (missingParameters.isEmpty && malformedParameters.isEmpty ) {
-        val parsedRow = CsvRoadLinkRow(row("Linkin ID").toInt, row("Hallinnollinen luokka").toInt, row("Toiminnallinen luokka").toInt,
-          row("Liikennevirran suunta").toInt, row("Tielinkin tyyppi").toInt, row("Tasosijainti").toInt, row("Kuntanumero").toInt,
-          row("Tien nimi (suomi)").toString, row("Tien nimi (ruotsi)").toString, row("Tien nimi (saame)").toString,
-          row("Osoitenumerot oikealla alku").toInt, row("Osoitenumerot oikealla loppu").toInt, row("Osoitenumerot vasemmalla alku").toInt,
-          row("Osoitenumerot vasemmalla loppu").toInt, row("Linkin tila").toInt)
-
+      val (malformedFields, properties) = linkRowToProperties(row)
+      val malformedParameters = malformedFields ::: findMandatoryParameters(row)
+      if (missingParameters.isEmpty && malformedParameters.isEmpty) {
+          val parsedRow = CsvRoadLinkRow(row("Linkin ID").toInt, properties = properties )
         try {
           // if all things ok
           //call updateOTHdata
-          val excludedLinks = updateRoadLinkOTH(parsedRow, Some(userProvider.getCurrentUser().username)).map(excludedRoadLinkType => ExcludedLink(affectedRoadLinkType = excludedRoadLinkType.toString, csvRow = rowToString(row)))
+          val excludedLinks = updateRoadLinkOTH(parsedRow, Some(userProvider.getCurrentUser().username))
+            .map(excludedRoadLinkType => ExcludedLink(affectedRoadLinkType = excludedRoadLinkType.toString, csvRow = rowToString(row)))
           result.copy(excludedLinks = excludedLinks ::: result.excludedLinks)
-
-          // val excludedLinks = updateRoadLinkVVH(parsedRow, Some(userProvider.getCurrentUser().username))
-          //  .map(excludedRoadLinkType => ExcludedLink(affectedRoadLinkType = excludedRoadLinkType.toString, csvRow = rowToString(row)))
-          //result.copy(excludedLinks = excludedLinks ::: result.excludedLinks)
         } catch {
           case e: AssetNotFoundException => result.copy(nonExistingLinks = NonExistingLink(linkId = parsedRow.linkId, csvRow = rowToString(row)) :: result.nonExistingLinks)
         }

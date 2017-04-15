@@ -91,7 +91,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 //  }
 
   test("validation fails if field type is incorrect", Tag("db")) {
-    val roadLinkFields = Map("Link ID" -> 1, "Tielinkin tyyppi" -> 1)
+    val roadLinkFields = Map("Linkin ID" -> 1, "Hallinnollinen luokka" -> "1")
     val invalidCsv = csvToInputStream(createCSV(roadLinkFields))
     roadLinkCsvImporter.importLinkAttribute(invalidCsv) should equal(ImportResult(
       malformedLinks = List(MalformedLink(
