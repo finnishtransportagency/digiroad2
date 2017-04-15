@@ -254,6 +254,14 @@ trait PointAssetOperations {
     PointAssetOperations.isFloating(municipalityCode = persistedAsset.municipalityCode, lon = persistedAsset.lon,
       lat = persistedAsset.lat, mValue = persistedAsset.mValue, roadLink = roadLink)
   }
+
+  def hasChangeInfo(asset: PersistedPointAsset, changeInfos: Seq[ChangeInfo]): Boolean = {
+    changeInfos.filter(changeInfo => changeInfo.oldId.getOrElse(0L) == asset.linkId && changeInfo.vvhTimeStamp > asset.vvhTimeStamp).headOption match {
+      case Some(inf) => true
+      case _ => false
+    }
+  }
+
 }
 
 object PointAssetOperations {
