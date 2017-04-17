@@ -462,10 +462,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   def getValidSurroundingLinks(linkIds: Set[Long], floating: RoadAddressLink): Map[Long, Option[RoadAddressLink]] = {
     val roadLinks = roadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(linkIds)._1
+    val vvhRoadLinks = roadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(linkIds)._2
     try{
       val surroundingLinks = linkIds.map{
         linkid =>
-          val geomInChain = roadLinks.filter(_.linkId == linkid).map(_.geometry)
+          val geomInChain = roadLinks.filter(_.linkId == linkid).map(_.geometry) ++ vvhRoadLinks.filter(_.linkId == linkid).map(_.geometry)
           val sourceLinkGeometryOption = geomInChain.headOption
           sourceLinkGeometryOption.map(sourceLinkGeometry => {
             val sourceLinkEndpoints = GeometryUtils.geometryEndpoints(sourceLinkGeometry)
@@ -609,11 +610,21 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val orderedTargets = targets.size match {
       case 1 => targets
       case _ =>
-        val optionalSurroundingMappedLinks = getValidSurroundingLinks(targets.map(_.linkId).toSet, source)
-        val surroundingMappedLinks = optionalSurroundingMappedLinks.filterNot(_._2.isEmpty)
-        val startingLinkId = surroundingMappedLinks.size match {
+        val optionalSurroundingMappedLinks = getValidSurroundingLinks(targets.map(_.linkId).toSet, source).filterNot(_._2.isEmpty)
+        val startingLinkId = optionalSurroundingMappedLinks.size match {
           case 0 => targets.head.linkId
-          case _ => ListMap(surroundingMappedLinks.toSeq.sortBy(_._2.get.startAddressM):_*).keySet.head
+          case 1 => val secondOptionalSurroundingMappedLinks = getValidSurroundingLinks(Set(optionalSurroundingMappedLinks.head._2.get.linkId), source).filterNot(_._2.isEmpty)
+            if(secondOptionalSurroundingMappedLinks.nonEmpty && optionalSurroundingMappedLinks.head._2.get.endAddressM > secondOptionalSurroundingMappedLinks.head._2.get.endAddressM){
+              val resultLinkId = optionalSurroundingMappedLinks.head._1 match {
+                case x if(x == targets.head.linkId) => targets.last.linkId
+                case _ => targets.head.linkId
+              }
+              resultLinkId
+            } else {
+              ListMap(optionalSurroundingMappedLinks.toSeq.sortBy(_._2.get.startAddressM):_*).keySet.head
+            }
+
+          case _ => ListMap(optionalSurroundingMappedLinks.toSeq.sortBy(_._2.get.startAddressM):_*).keySet.head
         }
         val firstTarget = targets.filter(_.linkId == startingLinkId).head
         val orderTargets = targets.foldLeft(Seq.empty[RoadAddressLink]) { (previousOrderedTargets, target) =>
