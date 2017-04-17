@@ -89,6 +89,14 @@ trait LinearAssetOperations {
     LinearAssetPartitioner.partition(linearAssets, roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
 
+  def getComplementaryByIntersectedBoundingBox(typeId: Int, serviceArea : Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
+    val vVHRoadLinksAndChanges = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(bounds, municipalities)
+    val roadLinks = vVHRoadLinksAndChanges._1
+    val changes = vVHRoadLinksAndChanges._2
+    val linearAssets = getByRoadLinks(typeId, roadLinks, changes)
+    LinearAssetPartitioner.partition(linearAssets, roadLinks.groupBy(_.linkId).mapValues(_.head))
+  }
+
   /**
     * Returns linear assets by municipality. Used by all IntegrationApi linear asset endpoints (except speed limits).
     *

@@ -7,14 +7,13 @@ window.LinearAssetLayer = function(params) {
       multiElementEventCategory = params.multiElementEventCategory,
       singleElementEventCategory = params.singleElementEventCategory,
       style = params.style,
-      layerName = params.layerName,
-      roadCollection = params.roadCollection;
+      layerName = params.layerName;
 
   Layer.call(this, layerName, roadLayer);
   var me = this;
   me.minZoomForContent = zoomlevels.minZoomForAssets;
 
-  var isComplementaryActiveBS = false;
+  var isComplementaryChecked = false;
 
   var singleElementEvents = function() {
     return _.map(arguments, function(argument) { return singleElementEventCategory + ':' + argument; }).join(' ');
@@ -225,9 +224,13 @@ window.LinearAssetLayer = function(params) {
   }
 
   function cancelSelection() {
-    selectToolControl.clear();
-    selectedLinearAsset.closeMultiple();
-    collection.fetch(map.getView().calculateExtent(map.getSize()));
+    if(isComplementaryChecked){
+      selectToolControl.clear();
+      selectedLinearAsset.closeMultiple();
+      showWithComplementary();
+    }else{
+      hideComplementary();
+    }
   }
 
   var adjustStylesByZoomLevel = function(zoom) {
@@ -256,8 +259,8 @@ window.LinearAssetLayer = function(params) {
     eventListener.listenTo(eventbus, singleElementEvents('cancelled', 'saved'), linearAssetCancelled);
     eventListener.listenTo(eventbus, singleElementEvents('selectByLinkId'), selectLinearAssetByLinkId);
     eventListener.listenTo(eventbus, multiElementEvent('massUpdateFailed'), cancelSelection);
-    eventListener.listenTo(eventbus, 'roadLinkComplementaryBS:show', showWithComplementary);
-    eventListener.listenTo(eventbus, 'roadLinkComplementaryBS:hide', show);
+    eventListener.listenTo(eventbus, 'complementaryLinks:show', showWithComplementary);
+    eventListener.listenTo(eventbus, 'complementaryLinks:hide', hideComplementary);
   };
 
   var selectLinearAssetByLinkId = function(linkId) {
@@ -294,9 +297,15 @@ window.LinearAssetLayer = function(params) {
   this.refreshView = function(event) {
     vectorLayer.setVisible(true);
     adjustStylesByZoomLevel(map.getView().getZoom());
-    collection.fetch(map.getView().calculateExtent(map.getSize())).then(function() {
-      eventbus.trigger('layer:linearAsset:' + event);
-    });
+    if (isComplementaryChecked) {
+      collection.fetchAssetsWithComplementary(map.getView().calculateExtent(map.getSize())).then(function() {
+        eventbus.trigger('layer:linearAsset:' + event);
+      });
+    } else {
+      collection.fetch(map.getView().calculateExtent(map.getSize())).then(function() {
+        eventbus.trigger('layer:linearAsset:' + event);
+      });
+    }
   };
 
   this.activateSelection = function() {
@@ -401,26 +410,23 @@ window.LinearAssetLayer = function(params) {
     linearAssetCutter.deactivate();
   };
 
-  var registerRoadLinkFetched = function(){
-    if (zoomlevels.isInAssetZoomLevel(map.getView().getZoom())) {
-      eventbus.once('roadLinks:fetched', function() {
-        roadLayer.drawRoadLinks(roadCollection.getAll(), map.getView().getZoom());
-        collection.fetch(map.getView().calculateExtent(map.getSize()));
-      });
-      roadCollection.fetchWithComplementary( map.getView().calculateExtent(map.getSize()));
-    }
-  };
-
   var show = function(map) {
     vectorLayer.setVisible(true);
     indicatorLayer.setVisible(true);
-    isComplementaryActiveBS = false;
+    me.refreshView();
     me.show(map);
   };
 
   var showWithComplementary = function() {
-      isComplementaryActiveBS = true;
-      registerRoadLinkFetched();
+    isComplementaryChecked = true;
+    me.refreshView();
+  };
+
+  var hideComplementary = function() {
+    linearAssetUnSelected();
+    selectedLinearAsset.closeMultiple();
+    isComplementaryChecked = false;
+    me.refreshView();
   };
 
   var hideLayer = function() {

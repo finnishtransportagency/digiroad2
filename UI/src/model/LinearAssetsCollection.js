@@ -57,6 +57,23 @@
       });
     };
 
+    this.fetchAssetsWithComplementary = function(boundingBox) {
+      return backend.getLinearAssetsWithComplementary(boundingBox, typeId).then(function(linearAssetGroups) {
+        var partitionedLinearAssetGroups = _.groupBy(linearAssetGroups, function(linearAssetGroup) {
+          return _.some(linearAssetGroup, function(linearAsset) { return _.has(linearAsset, 'value'); });
+        });
+        var knownLinearAssets = partitionedLinearAssetGroups[true] || [];
+        var unknownLinearAssets = _.map(partitionedLinearAssetGroups[false], function(linearAssetGroup) {
+            return _.map(linearAssetGroup, function(linearAsset) {
+              return _.merge({}, linearAsset, { generatedId: generateUnknownLimitId(linearAsset) });
+            });
+          }) || [];
+        linearAssets = knownLinearAssets.concat(unknownLinearAssets);
+        eventbus.trigger(multiElementEvent('fetched'), self.getAll());
+      });
+    };
+
+
     var isEqual = function(a, b) {
       function equalUnknown() {
         return (_.has(a, 'generatedId') && _.has(b, 'generatedId') && (a.generatedId === b.generatedId));
