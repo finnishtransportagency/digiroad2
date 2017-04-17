@@ -253,7 +253,7 @@
             }
           }
           else {
-            if (isAnomalousById(selection.id) || isFloatingById(selection.id)) {
+            if (isAnomalousById(selection.id) || isFloatingById(selection.id) || selection.roadLinkData.anomaly === 1) {
               selectedLinkProperty.open(selection.roadLinkData.linkId, selection.roadLinkData.id, false, visibleFeatures);
             } else {
               selectedLinkProperty.open(selection.roadLinkData.linkId, selection.roadLinkData.id, true, visibleFeatures);
