@@ -149,12 +149,15 @@ object GeometryUtils {
 
   def geometryMoved(geometry1: Seq[Point], geometry2: Seq[Point]): Boolean = {
     val maxDistanceDiffAllowed = 1
-    val geometry1EndPoints = GeometryUtils.geometryEndpoints(geometry1)
-    val geometry2Endpoints = GeometryUtils.geometryEndpoints(geometry2)
-    (geometry2Endpoints._1.distance2DTo(geometry1EndPoints._1) > maxDistanceDiffAllowed &&
-      geometry2Endpoints._2.distance2DTo(geometry1EndPoints._1) > maxDistanceDiffAllowed) ||
-      (geometry2Endpoints._1.distance2DTo(geometry1EndPoints._2) > maxDistanceDiffAllowed &&
-      geometry2Endpoints._2.distance2DTo(geometry1EndPoints._2) > maxDistanceDiffAllowed)
+    if(!geometry1.isEmpty && !geometry2.isEmpty) {
+      val geometry1EndPoints = GeometryUtils.geometryEndpoints(geometry1)
+      val geometry2Endpoints = GeometryUtils.geometryEndpoints(geometry2)
+      (geometry2Endpoints._1.distance2DTo(geometry1EndPoints._1) > maxDistanceDiffAllowed &&
+        geometry2Endpoints._2.distance2DTo(geometry1EndPoints._1) > maxDistanceDiffAllowed) ||
+        (geometry2Endpoints._1.distance2DTo(geometry1EndPoints._2) > maxDistanceDiffAllowed &&
+          geometry2Endpoints._2.distance2DTo(geometry1EndPoints._2) > maxDistanceDiffAllowed)
+    }
+    false
   }
 
   def areAdjacent(point1: Point, point2: Point): Boolean = {

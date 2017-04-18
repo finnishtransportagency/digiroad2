@@ -406,7 +406,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       val addressGeometry = roadLink.map(rl =>
         GeometryUtils.truncateGeometry3D(rl.geometry, address.startMValue, address.endMValue))
       if(float && !(roadLink.isEmpty || addressGeometry.isEmpty || GeometryUtils.geometryLength(addressGeometry.get) == 0.0)){
-        println("Floating id %d (link id %d)".format(address.id, address.linkId))
+        println("Floating and update geometry id %d (link id %d)".format(address.id, address.linkId))
         RoadAddressDAO.changeRoadAddressFloating(float = true, address.id, addressGeometry)
       }
       else if (roadLink.isEmpty || addressGeometry.isEmpty || GeometryUtils.geometryLength(addressGeometry.get) == 0.0) {
