@@ -1,15 +1,19 @@
 package fi.liikennevirasto.viite
 
+import java.util.Date
+
 import fi.liikennevirasto.digiroad2.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2.RoadLinkType.{NormalRoadLinkType, UnknownRoadLinkType}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{HistoryLinkInterface, NormalLinkInterface}
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.{AgainstDigitizing, BothDirections}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.user.{Configuration, User}
+import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.RoadType.PublicRoad
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.Anomaly.NoAddressGiven
@@ -370,5 +374,72 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     third.linkId should equal(500074212)
     val checkAdjacency = GeometryUtils.areAdjacent(first.geometry, second.geometry)
     checkAdjacency should be (true)
+  }
+
+  test("transferRoadAddress should keep calibration points") {
+    runWithRollback {
+      val floatGeom = Seq(Point(532837.14110884, 6993543.6296834, 0.0), Point(533388.14110884, 6994014.1296834, 0.0))
+      val floatGeomLength = GeometryUtils.geometryLength(floatGeom)
+      val floatingLinks = Seq(
+        RoadAddressLink(-1000, 15171208, floatGeom,
+          floatGeomLength, Municipality, SingleCarriageway, NormalRoadLinkType, InUse, HistoryLinkInterface, RoadType.MunicipalityStreetRoad,
+          None, None, Map("linkId" -> 15171208, "segmentId" -> 63298), 5, 205, 1, 0, 0, 0, 500, "2015-01-01", "2016-01-01", 0.0, floatGeomLength,
+          SideCode.Unknown, Option(CalibrationPoint(15171208, 0.0, 0)), Option(CalibrationPoint(15171208, floatGeomLength, 500))))
+      RoadAddressDAO.create(floatingLinks.map(roadAddressLinkToRoadAddress(true)))
+
+      val cutPoint = GeometryUtils.calculatePointFromLinearReference(floatGeom, 230.0).get
+      val geom1 = Seq(floatGeom.head, cutPoint)
+      val geom2 = Seq(cutPoint, floatGeom.last)
+      val targetLinks = Seq(
+        RoadAddressLink(0, 15171208, geom1,
+          GeometryUtils.geometryLength(geom1), Municipality, SingleCarriageway, NormalRoadLinkType, InUse, HistoryLinkInterface, RoadType.MunicipalityStreetRoad,
+          None, None, Map("linkId" -> 15171208, "segmentId" -> 63298), 5, 205, 1, 0, 0, 0, 1, "2015-01-01", "2016-01-01", 0.0, 0.0,
+          SideCode.Unknown, None, None),
+        RoadAddressLink(0, 15171209, geom2,
+          GeometryUtils.geometryLength(geom2), Municipality, SingleCarriageway, NormalRoadLinkType, InUse, HistoryLinkInterface, RoadType.MunicipalityStreetRoad,
+          None, None, Map("linkId" -> 15171209, "segmentId" -> 63299), 5, 205, 1, 0, 0, 1, 2, "2015-01-01", "2016-01-01", 0.0, 0.0,
+          SideCode.Unknown, None, None))
+      when(mockRoadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(any[Set[Long]])).thenReturn((targetLinks.map(roadAddressLinkToRoadLink), Seq()))
+      when(mockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(floatingLinks.map(roadAddressLinkToHistoryLink))
+      when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[BoundingRectangle])).thenReturn(targetLinks.map(roadAddressLinkToRoadLink))
+      val newLinks = roadAddressService.transferRoadAddress(floatingLinks, targetLinks, User(1L, "foo", new Configuration()))
+      newLinks should have size (2)
+      newLinks.filter(_.linkId == 15171208).head.endCalibrationPoint should be (None)
+      newLinks.filter(_.linkId == 15171209).head.startCalibrationPoint should be (None)
+      newLinks.filter(_.linkId == 15171208).head.startCalibrationPoint.isEmpty should be (false)
+      newLinks.filter(_.linkId == 15171209).head.endCalibrationPoint.isEmpty should be (false)
+      val startCP = newLinks.filter(_.linkId == 15171208).head.startCalibrationPoint.get
+      val endCP = newLinks.filter(_.linkId == 15171209).head.endCalibrationPoint.get
+      startCP.segmentMValue should be (0.0)
+      endCP.segmentMValue should be (floatGeomLength)
+      startCP.addressMValue should be (0L)
+      endCP.addressMValue should be (500L)
+    }
+  }
+
+  private def roadAddressLinkToRoadLink(roadAddressLink: RoadAddressLink) = {
+    RoadLink(roadAddressLink.linkId,roadAddressLink.geometry
+      ,GeometryUtils.geometryLength(roadAddressLink.geometry),roadAddressLink.administrativeClass,99,AgainstDigitizing
+      ,SingleCarriageway,Some("25.06.2015 03:00:00"), Some("vvh_modified"),Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
+      InUse,NormalLinkInterface)
+  }
+
+  private def roadAddressLinkToHistoryLink(roadAddressLink: RoadAddressLink) = {
+    VVHHistoryRoadLink(roadAddressLink.linkId,749,roadAddressLink.geometry
+      ,roadAddressLink.administrativeClass,AgainstDigitizing
+      ,FeatureClass.AllOthers,123,123,Map("MUNICIPALITYCODE" -> BigInt.apply(749)))
+  }
+
+  private def roadAddressLinkToRoadAddress(floating: Boolean)(l: RoadAddressLink) = {
+    /*
+    roadNumber: Long, roadPartNumber: Long, track: Track,
+                       discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
+                       endDate: Option[DateTime] = None, modifiedBy: Option[String] = None, lrmPositionId : Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
+                       calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false,
+                       geom: Seq[Point])
+     */
+    RoadAddress(l.id, l.roadNumber, l.roadPartNumber, Track.apply(l.trackCode.toInt), Discontinuity.apply(l.discontinuity.toInt),
+      l.startAddressM, l.endAddressM, Option(new DateTime(new Date())), None, None, 0, l.linkId, l.startMValue, l.endMValue, l.sideCode,
+      (l.startCalibrationPoint, l.endCalibrationPoint), floating, l.geometry)
   }
 }
