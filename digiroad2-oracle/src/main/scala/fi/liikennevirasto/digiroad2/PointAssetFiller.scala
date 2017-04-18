@@ -58,7 +58,7 @@ object PointAssetFiller {
           correctGeometry(asset.id, newRoadLink, changeInfo.newStartMeasure.getOrElse(0.0), changeInfo.vvhTimeStamp)
         else if (changeInfo.oldEndMeasure.getOrElse(0.0) + MaxDistanceDiffAllowed >= mValue && changeInfo.oldEndMeasure.getOrElse(0.0) <= mValue)
           correctGeometry(asset.id, newRoadLink, changeInfo.newEndMeasure.getOrElse(0.0), changeInfo.vvhTimeStamp)
-        else if (!PointAssetOperations.coordinatesWithinThreshold(Some(assetpoint), roadOption))
+        else if (changeInfo.oldStartMeasure.getOrElse(0.0) <= mValue &&  changeInfo.oldEndMeasure.getOrElse(0.0) >= mValue)
           correctValuesAndGeometry(asset, roadLinks, changeInfo, adjustmentOption)
         else
           None

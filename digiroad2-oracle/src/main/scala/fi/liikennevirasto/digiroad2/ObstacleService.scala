@@ -50,7 +50,6 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
       case _ => false
     }
 
-    //if (assetBeforeUpdate.persistedFloating || assetBeforeUpdate.asset.floating || hasChangeInfo) {
     if (hasChangeInfo) {
       PointAssetFiller.correctedPersistedAsset(assetBeforeUpdate.asset, roadLinks, changeInfo) match {
         case Some(adjustment) =>
