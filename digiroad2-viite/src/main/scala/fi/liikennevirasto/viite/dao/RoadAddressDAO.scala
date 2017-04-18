@@ -527,6 +527,16 @@ object RoadAddressDAO {
       """.as[Long].list
   }
 
+  def getValidRoadNumbersWithFilter = {
+    sql"""
+       select distinct road_number
+              from road_address ra
+              where ra.floating = '0' AND (end_date < sysdate OR end_date IS NULL) AND
+              (ra.road_number <= 20000 OR (ra.road_number >= 40000 AND ra.road_number <= 70000) OR ra.road_number > 99999 )
+              order by road_number
+      """.as[Long].list
+  }
+
   def getValidRoadParts(roadNumber: Long) = {
     sql"""
        select distinct road_part_number
