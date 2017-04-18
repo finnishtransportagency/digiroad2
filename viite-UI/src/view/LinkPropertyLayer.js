@@ -458,12 +458,12 @@
       if(anomalousMarkerLayer.getSource() !== null)
         anomalousMarkerLayer.getSource().clear();
 
-        if(map.getView().getZoom() >= zoomlevels.minZoomForAssets) {
-          var floatingRoadMarkers = _.filter(roadLinks, function(roadlink) {
-            return roadlink.roadLinkType === -1;
-          });
+      if(map.getView().getZoom() >= zoomlevels.minZoomForAssets) {
+        var floatingRoadMarkers = _.filter(roadLinks, function(roadlink) {
+          return roadlink.roadLinkType === -1;
+        });
 
-          var anomalousRoadMarkers = _.filter(roadLinks, function(roadlink) {
+        var anomalousRoadMarkers = _.filter(roadLinks, function(roadlink) {
           return roadlink.anomaly === 1;
         });
 
