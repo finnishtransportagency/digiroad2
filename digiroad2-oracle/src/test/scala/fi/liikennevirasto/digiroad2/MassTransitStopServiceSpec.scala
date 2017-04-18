@@ -473,26 +473,23 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     }
   }
 
-  test("Do not overwrite LiviId of ELY/HSL stops when Tietojen ylläpitäjä is empty") {
+  test("Do not overwrite LiviId of ELY/HSL stops when Tietojen ylläpitäjä is empty in csv import file") {
     runWithRollback {
       assetLock.synchronized {
         val eventbus = MockitoSugar.mock[DigiroadEventBus]
         val service = new TestMassTransitStopService(eventbus, mockRoadLinkService)
         val assetId = 300000
-        sqlu"""update text_property_value set value_fi='livi1' where asset_id = 300000 and value_fi = 'OTHJ1'""".execute
-        val dbResult = sql"""SELECT value_fi FROM text_property_value where value_fi='livi1' and asset_id = 300000""".as[String].list
-        dbResult.size should be(1)
-        dbResult.head should be("livi1")
+        // properties in csv import file: 1;;Swedish name;;;;;;;;;;;;;;; (national id and swedish name given)
         val properties = List(
-          SimpleProperty("tietojen_yllapitaja", List(PropertyValue(""))),
-          SimpleProperty("yllapitajan_koodi", List(PropertyValue("OTHJ1"))))
-        val position = Some(Position(374450, 6677250, 123l, None))
-        RollbackMassTransitStopService.updateExistingById(assetId, position, properties.toSet, "user", _ => Unit)
+          SimpleProperty("nimi_ruotsiksi", List(PropertyValue("Swedish name"))))
+        RollbackMassTransitStopService.updateExistingById(assetId, None, properties.toSet, "user", _ => Unit)
         val massTransitStop = service.getById(assetId).get
 
-        //The property yllapitajan_koodi should not have values because property tietojen_yllapitaja is empty in the properties
+        val swedishNameProperty = massTransitStop.propertyData.find(p => p.publicId == "nimi_ruotsiksi").get
+        swedishNameProperty.values.head.propertyValue should be("Swedish name")
+
         val liviIdentifierProperty = massTransitStop.propertyData.find(p => p.publicId == "yllapitajan_koodi").get
-        liviIdentifierProperty.values.head.propertyValue should be("livi1")
+        liviIdentifierProperty.values.head.propertyValue should be("OTHJ1")
       }
     }
   }
