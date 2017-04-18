@@ -496,7 +496,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
       surroundingLinks
     } catch {
-      case e: Exception => Map()
+      case e: Exception =>
+        logger.warn("Exception occurred while getting surrounding links", e)
+        Map()
     }
   }
 
@@ -586,10 +588,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
     val allStartCp = sources.flatMap(_.startCalibrationPoint)
     val allEndCp = sources.flatMap(_.endCalibrationPoint)
-    val startCalibrationPoints = allStartCp.filter(_.addressMValue == allStartCp.map(_.addressMValue).min)
-    val endCalibrationPoints = allEndCp.filter(_.addressMValue == allEndCp.map(_.addressMValue).max)
-    val startCp: Option[CalibrationPoint] = if (!startCalibrationPoints.isEmpty) Option(startCalibrationPoints.head) else None
-    val endCp: Option[CalibrationPoint] = if (!endCalibrationPoints.isEmpty) Option(endCalibrationPoints.head) else None
+    val startCp = if (allStartCp.nonEmpty) Option(allStartCp.minBy(_.addressMValue)) else None
+    val endCp = if (allEndCp.nonEmpty) Option(allEndCp.maxBy(_.addressMValue)) else None
     val minStartAddressM = sources.map(_.startAddressM).min
     val maxEndAddressM = sources.map(_.endAddressM).max
 
