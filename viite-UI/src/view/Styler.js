@@ -211,9 +211,13 @@
         color: middleLineColor,
         lineCap: middleLineCap,
       });
+      var finalLineColor = lineColor;
+      if(roadLinkData.id !== 0 && roadLinkData.administrativeClass == "Municipality"){
+        finalLineColor = finalLineColor.replace("0.65", "1");
+      }
       var line = new ol.style.Stroke({
         width: strokeWidth,
-        color: lineColor,
+        color: finalLineColor,
         lineCap: lineCap
       });
       var underline = new ol.style.Stroke({
