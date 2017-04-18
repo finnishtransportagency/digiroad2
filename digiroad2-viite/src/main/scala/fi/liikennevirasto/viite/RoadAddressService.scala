@@ -461,8 +461,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   def getValidSurroundingLinks(linkIds: Set[Long], floating: RoadAddressLink): Map[Long, Option[RoadAddressLink]] = {
-    val roadLinks = roadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(linkIds)._1
-    val vvhRoadLinks = roadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(linkIds)._2
+    val (roadLinks, vvhRoadLinks) = roadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(linkIds)
     try{
       val surroundingLinks = linkIds.map{
         linkid =>
@@ -595,11 +594,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
     val adjustedSegments = adjustTopology.foldLeft(sources) { (previousSources, operation) => operation(targetsGeomLength, previousSources) }
 
-    val minStartMValue = allLinks.flatMap(_.startCalibrationPoint) match {
-      case Nil => adjustedSegments.map(_.startMValue).min
-      case _ => getMValues(Option(adjustedSegments.flatMap(_.startCalibrationPoint).map(_.segmentMValue).min), Option(allLinks.map(_.startMValue).min))
-    }
-
     val maxEndMValue = allLinks.flatMap(_.endCalibrationPoint) match {
       case Nil => adjustedSegments.map(_.endMValue).max
       case _ => getMValues(Option(adjustedSegments.flatMap(_.endCalibrationPoint).map(_.segmentMValue).max), Option(allLinks.map(_.endMValue).max))
@@ -650,31 +644,26 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     orderedTargets
   }
 
-  def recalculateRoadAddresses(roadNumber: Int) = {
+  def recalculateRoadAddresses(roadNumber: Long, roadPartNumber: Long) = {
     OracleDatabase.withDynTransaction {
-      loopRoadParts(roadNumber)
+      loopRoadParts(roadNumber, roadPartNumber)
     }
   }
 
-  def loopRoadParts(roadNumber: Int) = {
+  def loopRoadParts(roadNumber: Long, roadPartNumber: Long) = {
     try{
-      var partNumberOpt = RoadAddressDAO.fetchNextRoadPartNumber(roadNumber, 0)
-      while (partNumberOpt.nonEmpty) {
-        val partNumber = partNumberOpt.get
-        val roads = RoadAddressDAO.fetchByRoadPart(roadNumber, partNumber)
-        try {
-          val adjusted = LinkRoadAddressCalculator.recalculate(roads)
-          assert(adjusted.size == roads.size) // Must not lose any
-          val (changed, unchanged) = adjusted.partition(ra =>
-              roads.exists(oldra => ra.id == oldra.id && (oldra.startAddrMValue != ra.startAddrMValue || oldra.endAddrMValue != ra.endAddrMValue))
-            )
-          println(s"Road $roadNumber, part $partNumber: ${changed.size} updated, ${unchanged.size} kept unchanged")
-          changed.foreach(addr => RoadAddressDAO.update(addr, None))
-        } catch {
-          case ex: InvalidAddressDataException => println(s"!!! Road $roadNumber, part $partNumber contains invalid address data - part skipped !!!")
-            ex.printStackTrace()
-        }
-        partNumberOpt = RoadAddressDAO.fetchNextRoadPartNumber(roadNumber, partNumber)
+      val roads = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber)
+      try {
+        val adjusted = LinkRoadAddressCalculator.recalculate(roads)
+        assert(adjusted.size == roads.size) // Must not lose any
+        val (changed, unchanged) = adjusted.partition(ra =>
+            roads.exists(oldra => ra.id == oldra.id && (oldra.startAddrMValue != ra.startAddrMValue || oldra.endAddrMValue != ra.endAddrMValue))
+          )
+        println(s"Road $roadNumber, part $roadPartNumber: ${changed.size} updated, ${unchanged.size} kept unchanged")
+        changed.foreach(addr => RoadAddressDAO.update(addr, None))
+      } catch {
+        case ex: InvalidAddressDataException => println(s"!!! Road $roadNumber, part $roadPartNumber contains invalid address data - part skipped !!!")
+          ex.printStackTrace()
       }
     } catch {
       case a: Exception => println(a.getMessage)
