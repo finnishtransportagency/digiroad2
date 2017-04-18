@@ -20,9 +20,9 @@ import org.slf4j.LoggerFactory
   * Created by venholat on 25.8.2016.
   */
 
-case class newAddressDataExtractor(sourceIds: Set[Long], targetIds: Set[Long], roadAddress: Seq[RoadAddressCreator])
+case class NewAddressDataExtracted(sourceIds: Set[Long], targetIds: Set[Long], roadAddress: Seq[RoadAddressCreator])
 
-case class RoadAddressProjectExtractor(id: Long, status: Long, name: String, startDate: String, additionalInfo: String, roadNumber: Long, startPart: Long, endPart: Long)
+case class RoadAddressProjectExtracted(id: Long, status: Long, name: String, startDate: String, additionalInfo: String, roadNumber: Long, startPart: Long, endPart: Long)
 
 class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
                val roadAddressService: RoadAddressService,
@@ -97,43 +97,43 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-    get("/roadlinks/adjacent") {
-        val data = JSON.parseFull(params.get("roadData").get).get.asInstanceOf[Map[String,Any]]
-        val chainLinks = data.get("selectedLinks").get.asInstanceOf[Seq[Double]].map(rl => {
-          rl.toLong
-        }).toSet[Long]
-        val linkId = data.get("linkId").get.asInstanceOf[Double].toLong
-        val roadNumber = data.get("roadNumber").get.asInstanceOf[Double].toLong
-        val roadPartNumber = data.get("roadPartNumber").get.asInstanceOf[Double].toLong
-        val trackCode = data.get("trackCode").get.asInstanceOf[Double].toLong
+  get("/roadlinks/adjacent") {
+    val data = JSON.parseFull(params.get("roadData").get).get.asInstanceOf[Map[String,Any]]
+    val chainLinks = data.get("selectedLinks").get.asInstanceOf[Seq[Double]].map(rl => {
+      rl.toLong
+    }).toSet[Long]
+    val linkId = data.get("linkId").get.asInstanceOf[Double].toLong
+    val roadNumber = data.get("roadNumber").get.asInstanceOf[Double].toLong
+    val roadPartNumber = data.get("roadPartNumber").get.asInstanceOf[Double].toLong
+    val trackCode = data.get("trackCode").get.asInstanceOf[Double].toLong
 
-        roadAddressService.getFloatingAdjacent(chainLinks, linkId, roadNumber, roadPartNumber, trackCode).map(roadAddressLinkToApi)
-    }
+    roadAddressService.getFloatingAdjacent(chainLinks, linkId, roadNumber, roadPartNumber, trackCode).map(roadAddressLinkToApi)
+  }
 
   get("/roadlinks/multiSourceAdjacents") {
-      val roadData = JSON.parseFull(params.get("roadData").get).get.asInstanceOf[Seq[Map[String,Any]]]
-      if (roadData.isEmpty){
-        Set.empty
-      } else {
-        val adjacents:Seq[RoadAddressLink] = {
-          roadData.flatMap(rd => {
-            val chainLinks = rd.get("selectedLinks").get.asInstanceOf[Seq[Double]].map(rl => {
-              rl.toLong
-            }).toSet[Long]
-            val linkId = rd.get("linkId").get.asInstanceOf[Double].toLong
-            val roadNumber = rd.get("roadNumber").get.asInstanceOf[Double].toLong
-            val roadPartNumber = rd.get("roadPartNumber").get.asInstanceOf[Double].toLong
-            val trackCode = rd.get("trackCode").get.asInstanceOf[Double].toLong
-            roadAddressService.getFloatingAdjacent(chainLinks, linkId,
-              roadNumber, roadPartNumber, trackCode, false)
-          })
-        }
-        val linkIds: Seq[Long] = roadData.map(rd => rd.get("linkId").get.asInstanceOf[Double].toLong)
-        val result = adjacents.filter(adj => {
-          !linkIds.contains(adj.linkId)
-        }).distinct
-        result.map(roadAddressLinkToApi)
+    val roadData = JSON.parseFull(params.get("roadData").get).get.asInstanceOf[Seq[Map[String,Any]]]
+    if (roadData.isEmpty){
+      Set.empty
+    } else {
+      val adjacents:Seq[RoadAddressLink] = {
+        roadData.flatMap(rd => {
+          val chainLinks = rd.get("selectedLinks").get.asInstanceOf[Seq[Double]].map(rl => {
+            rl.toLong
+          }).toSet[Long]
+          val linkId = rd.get("linkId").get.asInstanceOf[Double].toLong
+          val roadNumber = rd.get("roadNumber").get.asInstanceOf[Double].toLong
+          val roadPartNumber = rd.get("roadPartNumber").get.asInstanceOf[Double].toLong
+          val trackCode = rd.get("trackCode").get.asInstanceOf[Double].toLong
+          roadAddressService.getFloatingAdjacent(chainLinks, linkId,
+            roadNumber, roadPartNumber, trackCode, false)
+        })
       }
+      val linkIds: Seq[Long] = roadData.map(rd => rd.get("linkId").get.asInstanceOf[Double].toLong)
+      val result = adjacents.filter(adj => {
+        !linkIds.contains(adj.linkId)
+      }).distinct
+      result.map(roadAddressLinkToApi)
+    }
   }
 
   get("/roadlinks/transferRoadLink") {
@@ -144,7 +144,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
 
   put("/roadlinks/roadaddress") {
-    val data = parsedBody.extract[newAddressDataExtractor]
+    val data = parsedBody.extract[NewAddressDataExtracted]
     val roadAddressData = data.roadAddress
     val sourceIds = data.sourceIds
     val targetIds = data.targetIds
@@ -166,7 +166,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
 
   put("/roadlinks/roadaddress/project/save"){
-    val project = parsedBody.extract[RoadAddressProjectExtractor]
+    val project = parsedBody.extract[RoadAddressProjectExtracted]
     val user = userProvider.getCurrentUser()
     val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
     val roadAddressProject  = RoadAddressProject( project.id, project.status, project.name, user.username, DateTime.now(), "-", formatter.parseDateTime(project.startDate), DateTime.now(), project.additionalInfo, project.roadNumber, project.startPart, project.endPart)
@@ -189,10 +189,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val viiteRoadLinks = zoomLevel match {
       //TODO: When well-performing solution for main parts and road parts is ready
       case DrawMainRoadPartsOnly =>
-//        roadAddressService.getCoarseRoadParts(boundingRectangle, Seq((1, 99)), municipalities)
+        //        roadAddressService.getCoarseRoadParts(boundingRectangle, Seq((1, 99)), municipalities)
         Seq()
       case DrawRoadPartsOnly =>
-//        roadAddressService.getRoadParts(boundingRectangle, Seq((1, 19999)), municipalities)
+        //        roadAddressService.getRoadParts(boundingRectangle, Seq((1, 19999)), municipalities)
         Seq()
       case DrawPublicRoads => roadAddressService.getRoadAddressLinks(boundingRectangle, Seq((1, 19999), (40000,49999)), municipalities, publicRoads = false)
       case DrawAllRoads => roadAddressService.getRoadAddressLinks(boundingRectangle, Seq(), municipalities, everything = true)
