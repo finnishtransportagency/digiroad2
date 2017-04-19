@@ -226,7 +226,7 @@ window.LinearAssetLayer = function(params) {
   function cancelSelection() {
     if(isComplementaryChecked){
       selectToolControl.clear();
-      selectedLinearAsset.closeMultiple();
+      selectedLinearAsset.close();
       showWithComplementary();
     }else{
       hideComplementary();
@@ -275,7 +275,7 @@ window.LinearAssetLayer = function(params) {
   };
 
   var handleLinearAssetSaved = function() {
-    collection.fetch(map.getView().calculateExtent(map.getSize()));
+    me.refreshView();
     applicationModel.setSelectedTool('Select');
   };
 
@@ -423,8 +423,8 @@ window.LinearAssetLayer = function(params) {
   };
 
   var hideComplementary = function() {
-    linearAssetUnSelected();
-    selectedLinearAsset.closeMultiple();
+    selectToolControl.clear();
+    selectedLinearAsset.close();
     isComplementaryChecked = false;
     me.refreshView();
   };
