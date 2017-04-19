@@ -431,13 +431,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   }
 
   private def roadAddressLinkToRoadAddress(floating: Boolean)(l: RoadAddressLink) = {
-    /*
-    roadNumber: Long, roadPartNumber: Long, track: Track,
-                       discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
-                       endDate: Option[DateTime] = None, modifiedBy: Option[String] = None, lrmPositionId : Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
-                       calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false,
-                       geom: Seq[Point])
-     */
     RoadAddress(l.id, l.roadNumber, l.roadPartNumber, Track.apply(l.trackCode.toInt), Discontinuity.apply(l.discontinuity.toInt),
       l.startAddressM, l.endAddressM, Option(new DateTime(new Date())), None, None, 0, l.linkId, l.startMValue, l.endMValue, l.sideCode,
       (l.startCalibrationPoint, l.endCalibrationPoint), floating, l.geometry)
