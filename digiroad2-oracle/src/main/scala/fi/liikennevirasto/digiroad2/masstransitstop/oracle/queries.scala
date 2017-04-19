@@ -247,12 +247,12 @@ object Queries {
   def getDistinctRoadNumbers(filterRoadAddresses : Boolean) : Seq[Int] = {
     if(filterRoadAddresses){
       sql"""
-      select distinct road_number from road_address where (ROAD_NUMBER <= 20000 or (road_number >= 40000 and road_number <= 70000))
+      select distinct road_number from road_address where (ROAD_NUMBER <= 20000 or (road_number >= 40000 and road_number <= 70000)) and floating = '0' AND (end_date < sysdate OR end_date IS NULL) order by road_number
       """.as[Int].list
     }
     else{
       sql"""
-       select distinct road_number from road_address
+       select distinct road_number from road_address where ra.floating = '0' AND (end_date < sysdate OR end_date IS NULL) order by road_number
       """.as[Int].list
     }
   }

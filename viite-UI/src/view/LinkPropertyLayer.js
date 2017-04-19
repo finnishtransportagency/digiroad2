@@ -44,7 +44,7 @@
         }),
         stroke: new ol.style.Stroke({
           color: 'rgba(0, 255, 0, 0.95)',
-          width: 12
+          width: 8
         })
       });
 
@@ -200,7 +200,7 @@
       condition: ol.events.condition.singleClick,
       //The new/temporary layer needs to have a style function as well, we define it here.
       style: function(feature, resolution) {
-        return styler.generateStyleByFeature(feature.roadLinkData,map.getView().getZoom());
+        return styler.generateStyleByFeature(feature.roadLinkData,map.getView().getZoom(), true);
       }
     });
 
@@ -253,7 +253,7 @@
             }
           }
           else {
-            if (isAnomalousById(selection.id) || isFloatingById(selection.id)) {
+            if (isAnomalousById(selection.id) || isFloatingById(selection.id) || selection.roadLinkData.anomaly === 1) {
               selectedLinkProperty.open(selection.roadLinkData.linkId, selection.roadLinkData.id, false, visibleFeatures);
             } else {
               selectedLinkProperty.open(selection.roadLinkData.linkId, selection.roadLinkData.id, true, visibleFeatures);
@@ -446,6 +446,8 @@
     };
 
     var draw = function() {
+      var marker;
+      var middlefloating;
       cachedLinkPropertyMarker = new LinkPropertyMarker(selectedLinkProperty);
       cachedMarker = new LinkPropertyMarker(selectedLinkProperty);
       removeSelectInteractions();
@@ -456,7 +458,7 @@
       if(anomalousMarkerLayer.getSource() !== null)
         anomalousMarkerLayer.getSource().clear();
 
-      if(map.getView().getZoom() > zoomlevels.minZoomForAssets) {
+      if(map.getView().getZoom() >= zoomlevels.minZoomForAssets) {
         var floatingRoadMarkers = _.filter(roadLinks, function(roadlink) {
           return roadlink.roadLinkType === -1;
         });
@@ -465,21 +467,19 @@
           return roadlink.anomaly === 1;
         });
 
-        _.each(floatingRoadMarkers, function(floatlink) {
-          var marker = cachedLinkPropertyMarker.createMarker(floatlink);
-          floatingMarkerLayer.getSource().addFeature(marker);
-        });
+          var floatingGroups = _.groupBy(floatingRoadMarkers, function(value){
+            return value.roadNumber + value.roadPartNumber + value.trackCode;
+          });
 
-        var featuresAnomalous = _.map(selectedLinkProperty.getFeaturesToKeep(), function(featureKeep){
-          if(featureKeep.anomaly === 1 && featureKeep.roadLinkType !== -1) {
-            return featureKeep.linkId;
-          }
-        });
-
-        _.each(anomalousRoadMarkers, function(anomalouslink) {
-          var marker = cachedMarker.createMarker(anomalouslink);
-          anomalousMarkerLayer.getSource().addFeature(marker);
-        });
+          var orderFloatGroup = _.sortBy(floatingGroups, 'startAddressM');
+          _.each(orderFloatGroup, function(floatGroup) {
+            floatGroup.sort(function(firstFloat, secondFloat){
+              return firstFloat.startAddressM - secondFloat.startAddressM;
+            });
+            middlefloating = floatGroup[Math.floor(floatGroup.length / 2)];
+            marker = cachedLinkPropertyMarker.createMarker(middlefloating);
+            floatingMarkerLayer.getSource().addFeature(marker);
+          });
 
         _.each(anomalousRoadMarkers, function(anomalouslink) {
           var marker = cachedMarker.createMarker(anomalouslink);

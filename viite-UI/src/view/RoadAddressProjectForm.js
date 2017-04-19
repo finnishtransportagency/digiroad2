@@ -11,8 +11,8 @@
 
     var largeInputField = function (dataField) {
       return '<div class="form-group">' +
-        '<label class="control-label">LISÄTIEDOT</label>'+
-        '<textarea class="form-control large-input roadAddressProject" id="lisatiedot">'+(dataField === undefined ? "" : dataField )+'</textarea>'+
+        '<label class="control-label">LISÄTIEDOT</label>'+ 
+        '<textarea class="form-control large-input roadAddressProject" id="lisatiedot">'+(dataField === undefined || dataField === null ? "" : dataField )+'</textarea>'+
         '</div>';
     };
 

@@ -176,7 +176,8 @@ object DataFixture {
       case Some("update_road_addresses_geometry") =>
         updateRoadAddressesGeometry(false)
       case _ => println("Usage: DataFixture import_road_addresses | recalculate_addresses | update_missing | " +
-        "find_floating_road_addresses | import_complementary_road_address | fuse_multi_segment_road_addresses")
+        "find_floating_road_addresses | import_complementary_road_address | fuse_multi_segment_road_addresses " +
+        "| update_road_addresses_geometry_no_complementary | update_road_addresses_geometry")
     }
   }
 }
