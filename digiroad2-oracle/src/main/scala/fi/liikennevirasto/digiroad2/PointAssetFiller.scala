@@ -51,8 +51,6 @@ object PointAssetFiller {
           case _ =>
             asset.mValue
         }
-        val assetpoint = Point(asset.lon, asset.lat)
-        val roadOption = GeometryUtils.calculatePointFromLinearReference(newRoadLink.geometry, mValue)
 
         if (changeInfo.oldStartMeasure.getOrElse(0.0) - MaxDistanceDiffAllowed <= mValue && changeInfo.oldStartMeasure.getOrElse(0.0) >= mValue)
           correctGeometry(asset.id, newRoadLink, changeInfo.newStartMeasure.getOrElse(0.0), changeInfo.vvhTimeStamp)
