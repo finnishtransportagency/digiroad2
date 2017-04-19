@@ -8,7 +8,6 @@ object RoadLinkServiceDAO {
   private val TrafficDirection = "traffic_direction"
   private val LinkType = "link_type"
 
-
   def updateExistingLinkPropertyRow(table: String, column: String, linkId: Long, username: Option[String], existingValue: Int, value: Int) = {
     if (existingValue != value) {
       sqlu"""update #$table
@@ -30,31 +29,32 @@ object RoadLinkServiceDAO {
     sql"""select #$column from #$table where link_id = $linkId""".as[Int].firstOption
   }
 
-  def updateAdministrativeClass(linkId: Long, username: Option[String], existingValue: Int, value: Int) = {
+  def updateFunctionalClass(linkId: Long, username: Option[String], existingValue: Int, value: Int) = {
     updateExistingLinkPropertyRow(FunctionalClass, FunctionalClass, linkId, username, existingValue, value)
   }
 
-  def updateTrafficDirection(linkId: Long, username: Option[String], existingValue: Int, value: Int) = {
-    updateExistingLinkPropertyRow(TrafficDirection, TrafficDirection, linkId, username, existingValue, value)
+  def deleteExistingLinkPropertyRow(table: String, column: String, linkId: Long) = {
+      sqlu"""delete from #$table
+                 where link_id = $linkId""".execute
+  }
+
+  def deleteTrafficDirection(linkId: Long) = {
+    deleteExistingLinkPropertyRow(TrafficDirection, TrafficDirection, linkId)
   }
 
   def updateLinkType(linkId: Long, username: Option[String], existingValue: Int, value: Int) = {
     updateExistingLinkPropertyRow(LinkType, LinkType, linkId, username, existingValue, value)
   }
 
-  def insertAdministrativeClass(linkId: Long, username: Option[String], value: Int) = {
+  def insertFunctionalClass(linkId: Long, username: Option[String], value: Int) = {
     insertNewLinkProperty(FunctionalClass, FunctionalClass, linkId, username, value)
-  }
-
-  def insertTrafficDirection(linkId: Long, username: Option[String], value: Int) = {
-    insertNewLinkProperty(TrafficDirection, TrafficDirection, linkId, username, value)
   }
 
   def insertLinkType(linkId: Long, username: Option[String], value: Int) = {
     insertNewLinkProperty(LinkType, LinkType, linkId, username, value)
   }
 
-  def getAdministrativeClassValue(linkId: Long) = {
+  def getFunctionalClassValue(linkId: Long) = {
     getLinkProperty(FunctionalClass, FunctionalClass, linkId)
   }
 

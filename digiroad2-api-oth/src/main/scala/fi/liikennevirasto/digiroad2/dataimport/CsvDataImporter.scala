@@ -75,32 +75,29 @@ trait RoadLinkCsvImporter {
   }
 
   private def findMandatoryParameters(csvRowWithHeaders: Map[String, String]): List[String] = {
-    val valueMandatory = csvRowWithHeaders.get(mandatoryFields) match {
-      case Some(value) =>  value
-      case _ => None
+    csvRowWithHeaders.get(mandatoryFields)
+    match {
+      case Some(value)
+        if (value.isEmpty || !value.forall(_.isDigit)) => List(mandatoryFields)
+      case _ => Nil
     }
-
-    if (valueMandatory.asInstanceOf[String].isEmpty || !valueMandatory.asInstanceOf[String].forall(_.isDigit))
-      List(mandatoryFields)
-    else
-      Nil
   }
 
-  def updateRoadLinkOTH(roadLinkAttribute: CsvRoadLinkRow, username: Option[String]): ExcludedRoadLinkTypes = {
+  def updateRoadLinkOTH(roadLinkAttribute: CsvRoadLinkRow, username: Option[String]) : ExcludedRoadLinkTypes = {
 
     roadLinkAttribute.properties.map { prop =>
-
-      if (prop.columnName.equals("Liikennevirran suunta")) {
+      // in new specification the values in this table will be deleted
+      if (prop.columnName.equals("trafficDirection")) {
         val optionalTrafficDirectionValue: Option[Int] = RoadLinkServiceDAO.getTrafficDirectionValue(roadLinkAttribute.linkId)
         optionalTrafficDirectionValue match {
           case Some(existingValue) =>
-            RoadLinkServiceDAO.updateTrafficDirection(roadLinkAttribute.linkId, username, existingValue, prop.value.toInt)
+            RoadLinkServiceDAO.deleteTrafficDirection(roadLinkAttribute.linkId)
           case None =>
-            RoadLinkServiceDAO.insertTrafficDirection(roadLinkAttribute.linkId, username, prop.value.toInt)
+            None
         }
       }
 
-      if (prop.columnName.equals("Tielinkin tyyppi")) {
+      if (prop.columnName.equals("linkType")) {
         val optionalLinkTypeValue: Option[Int] = RoadLinkServiceDAO.getLinkTypeValue(roadLinkAttribute.linkId)
         optionalLinkTypeValue match {
           case Some(existingValue) =>
@@ -110,20 +107,14 @@ trait RoadLinkCsvImporter {
         }
       }
 
-      if (prop.columnName.equals("Hallinnollinen luokka")) {
-
-            val optionalAdministrativeClassValue: Option[Int] = RoadLinkServiceDAO.getAdministrativeClassValue(roadLinkAttribute.linkId)
-            optionalAdministrativeClassValue match {
-              case Some(existingValue) =>
-                RoadLinkServiceDAO.updateAdministrativeClass(roadLinkAttribute.linkId, username, existingValue, prop.value.toInt)
-              case None =>
-                RoadLinkServiceDAO.insertAdministrativeClass(roadLinkAttribute.linkId, username, prop.value.toInt)
-            }
-        val optionalExclude = isValidAdministrativeClass.find(_ == prop.value.toInt) match {
-          case Some(x) => List()
-          case _ => List(isValidAdministrativeClass)
+      if (prop.columnName.equals("functionalClass")) {
+        val optionalAdministrativeClassValue: Option[Int] = RoadLinkServiceDAO.getFunctionalClassValue(roadLinkAttribute.linkId)
+        optionalAdministrativeClassValue match {
+          case Some(existingValue) =>
+            RoadLinkServiceDAO.updateFunctionalClass(roadLinkAttribute.linkId, username, existingValue, prop.value.toInt)
+          case None =>
+            RoadLinkServiceDAO.insertFunctionalClass(roadLinkAttribute.linkId, username, prop.value.toInt)
         }
-        Nil
       }
     }
     Nil
@@ -175,7 +166,7 @@ trait RoadLinkCsvImporter {
             .map(excludedRoadLinkType => ExcludedLink(affectedRoadLinkType = excludedRoadLinkType.toString, csvRow = rowToString(row)))
           result.copy(excludedLinks = excludedLinks ::: result.excludedLinks)
         } catch {
-          case e: AssetNotFoundException => result.copy(nonExistingLinks = NonExistingLink(linkId = parsedRow.linkId, csvRow = rowToString(row)) :: result.nonExistingLinks)
+          case e: RoadLinkNotFoundException => result.copy(nonExistingLinks = NonExistingLink(linkId = parsedRow.linkId, csvRow = rowToString(row)) :: result.nonExistingLinks)
         }
       } else {
         result.copy(

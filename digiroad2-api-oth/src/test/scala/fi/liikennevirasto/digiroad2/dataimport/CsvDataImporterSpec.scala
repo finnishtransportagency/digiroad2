@@ -57,81 +57,80 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 //
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
-  test("update administrativeClass by CSV import", Tag("db")) {
-    runWithRollback {
-      val mockVVHClient = MockitoSugar.mock[VVHClient]
-      val adminValue = RoadLinkServiceDAO.getAdministrativeClassValue(1611379)
-
-      val importer = importerWithService(mockVVHClient)
-      val csv = createCSV(Map("Link ID" -> 1611379, "Hallinnollinen luokka" -> 2),
-                          Map("Link ID" -> 1130, "Hallinnollinen luokka" -> 3)
-                        )
-
-      val inputStream = new ByteArrayInputStream(csv.getBytes)
-      val result = importer.importLinkAttribute(inputStream)
-      //+result should equal(ImportResult())
-
-    }
-  }
-
-//  test("do not update name if field is empty in CSV", Tag("db")) {
-//    val mockService = MockitoSugar.mock[MassTransitStopService]
-//    val mockVVHClient = MockitoSugar.mock[VVHClient]
-//
-//    when(mockService.getMassTransitStopByNationalId(Matchers.eq(1l), anyObject())).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil)))
-//
-//    val importer = importerWithService(mockService, mockVVHClient)
-//    val csv = createCSV(Map("Valtakunnallinen ID" -> 1))
-//
-//    val inputStream = new ByteArrayInputStream(csv.getBytes)
-//    val result = importer.importAssets(inputStream)
-//    result should equal(ImportResult())
-//
-//    verify(mockService).updateExistingById(Matchers.eq(1l), Matchers.eq(None), Matchers.eq(Set.empty), Matchers.eq("CsvImportApiSpec"), anyObject())
-//  }
-
-  test("validation fails if field type is incorrect", Tag("db")) {
-    val roadLinkFields = Map("Linkin ID" -> 1, "Hallinnollinen luokka" -> "1")
+  test("validation fails if field type \"Linkin ID\" is not filed", Tag("db")) {
+    val roadLinkFields = Map("Hallinnollinen luokka" -> "1", "Liikennevirran suunta" -> "5")
     val invalidCsv = csvToInputStream(createCSV(roadLinkFields))
     roadLinkCsvImporter.importLinkAttribute(invalidCsv) should equal(ImportResult(
       malformedLinks = List(MalformedLink(
-        malformedParameters = List("Tielinkin tyyppi"),
+        malformedParameters = List("Linkin ID"),
         csvRow = roadLinkCsvImporter.rowToString(defaultValues ++ roadLinkFields)))))
   }
-//
-//  test("validation fails if type contains illegal characters", Tag("db")) {
-//    val assetFields = Map("Valtakunnallinen ID" -> 1, "Pysäkin tyyppi" -> "2,a")
-//    val invalidCsv = csvToInputStream(createCSV(assetFields))
-//    csvImporter.importAssets(invalidCsv) should equal(ImportResult(
-//      malformedAssets = List(MalformedAsset(
-//        malformedParameters = List("Pysäkin tyyppi"),
-//        csvRow = csvImporter.rowToString(defaultValues ++ assetFields)))))
-//  }
-//
-//  test("validation fails when asset type is unknown", Tag("db")) {
-//    val assetFields = Map("Valtakunnallinen ID" -> 1, "Pysäkin tyyppi" -> "2,10")
-//    val invalidCsv = csvToInputStream(createCSV(assetFields))
-//    csvImporter.importAssets(invalidCsv) should equal(ImportResult(
-//      malformedAssets = List(MalformedAsset(
-//        malformedParameters = List("Pysäkin tyyppi"),
-//        csvRow = csvImporter.rowToString(defaultValues ++ assetFields)))))
-//  }
-//
-//  test("update asset type by CSV import", Tag("db")) {
-//    val mockService = MockitoSugar.mock[MassTransitStopService]
-//    val mockVVHClient = MockitoSugar.mock[VVHClient]
-//
-//    when(mockService.getMassTransitStopByNationalId(Matchers.eq(1l), anyObject())).thenReturn(Some(MassTransitStopWithProperties(1, 1, Nil, 0.0, 0.0, None, None, None, false, Nil)))
-//
-//    val importer = importerWithService(mockService, mockVVHClient)
-//    val csv = csvToInputStream(createCSV(Map("Valtakunnallinen ID" -> 1, "Pysäkin tyyppi" -> "1,2 , 3 ,4")))
-//
-//    importer.importAssets(csv) should equal(ImportResult())
-//
-//    val properties = Set(SimpleProperty("pysakin_tyyppi", Seq(PropertyValue("4"), PropertyValue("3"), PropertyValue("2"), PropertyValue("1"))))
-//    verify(mockService).updateExistingById(Matchers.eq(1l), Matchers.eq(None), Matchers.eq(properties), Matchers.eq("CsvImportApiSpec"), anyObject())
-//  }
-//
+
+  test("validation fails if type contains illegal characters", Tag("db")) {
+    val assetFields = Map("Linkin ID" -> 1, "Liikennevirran suunta" -> "a")
+    val invalidCsv = csvToInputStream(createCSV(assetFields))
+    roadLinkCsvImporter.importLinkAttribute(invalidCsv) should equal(ImportResult(
+      malformedLinks = List(MalformedLink(
+        malformedParameters = List("Liikennevirran suunta"),
+        csvRow = roadLinkCsvImporter.rowToString(defaultValues ++ assetFields)))))
+  }
+
+  test("update functionalClass by CSV import", Tag("db")) {
+    runWithRollback {
+      val link_id = 1000
+      val functionalClassValue = 3
+      RoadLinkServiceDAO.insertFunctionalClass(link_id, Some("unit_test"), 2)
+
+      val csv = csvToInputStream(createCSV(Map("Linkin ID" -> link_id, "Toiminnallinen luokka" -> functionalClassValue)))
+      roadLinkCsvImporter.importLinkAttribute(csv) should equal(ImportResult())
+      RoadLinkServiceDAO.getFunctionalClassValue(link_id) should equal (Some(functionalClassValue))
+    }
+  }
+
+  test("insert functionalClass by CSV import", Tag("db")) {
+    runWithRollback {
+      val link_id = 1000
+      val functionalClassValue = 3
+
+      val csv = csvToInputStream(createCSV(Map("Linkin ID" -> link_id, "Toiminnallinen luokka" -> functionalClassValue)))
+      roadLinkCsvImporter.importLinkAttribute(csv) should equal(ImportResult())
+      RoadLinkServiceDAO.getFunctionalClassValue(link_id) should equal (Some(functionalClassValue))
+    }
+  }
+
+  test("update linkType by CSV import", Tag("db")) {
+    runWithRollback {
+      val link_id = 1000
+      val linkTypeValue = 3
+      RoadLinkServiceDAO.insertLinkType(link_id, Some("unit_test"), 2)
+
+      val csv = csvToInputStream(createCSV(Map("Linkin ID" -> link_id, "Tielinkin tyyppi" ->linkTypeValue)))
+      roadLinkCsvImporter.importLinkAttribute(csv) should equal(ImportResult())
+      RoadLinkServiceDAO.getLinkTypeValue(link_id) should equal (Some(linkTypeValue))
+    }
+  }
+
+  test("insert linkType by CSV import", Tag("db")) {
+    runWithRollback {
+      val link_id = 1000
+      val linkTypeValue = 3
+
+      val csv = csvToInputStream(createCSV(Map("Linkin ID" -> link_id, "Tielinkin tyyppi" -> linkTypeValue)))
+      roadLinkCsvImporter.importLinkAttribute(csv) should equal(ImportResult())
+      RoadLinkServiceDAO.getLinkTypeValue(link_id) should equal (Some(linkTypeValue))
+    }
+  }
+
+  test("delete trafficDirection (when already exist in db) by CSV import", Tag("db")) {
+    runWithRollback {
+      val link_id = 1611388
+      val csv = csvToInputStream(createCSV(Map("Linkin ID" -> link_id, "Liikennevirran suunta" -> 3)))
+
+      roadLinkCsvImporter.importLinkAttribute(csv) should equal(ImportResult())
+      RoadLinkServiceDAO.getTrafficDirectionValue(link_id) should equal (None)
+    }
+  }
+
 //  test("update asset admin id by CSV import", Tag("db")) {
 //    val mockService = MockitoSugar.mock[MassTransitStopService]
 //    val mockVVHClient = MockitoSugar.mock[VVHClient]
