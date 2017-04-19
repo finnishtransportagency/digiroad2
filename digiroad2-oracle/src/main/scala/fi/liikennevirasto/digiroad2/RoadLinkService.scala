@@ -1171,6 +1171,16 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     vvhClient.complementaryData.fetchComplementaryRoadlinks(linkIds) ++ vvhClient.fetchByLinkIds(linkIds)
   }
 
+  def getCurrentAndComplementaryVVHRoadLinks(linkIds: Set[Long], newTransaction: Boolean = true): Seq[RoadLink] = {
+    val roadLinksVVH = vvhClient.complementaryData.fetchComplementaryRoadlinks(linkIds) ++ vvhClient.fetchByLinkIds(linkIds)
+    if (newTransaction)
+      withDynTransaction {
+        enrichRoadLinksFromVVH(roadLinksVVH)
+      }
+    else
+      enrichRoadLinksFromVVH(roadLinksVVH)
+  }
+
   def withRoadAddress(roadLinks: Seq[RoadLink]): Seq[RoadLink] = {
     val addressData = getRoadAddressesByLinkIds(roadLinks.map(_.linkId).toSet).map(a => (a.linkId, a)).toMap
     roadLinks.map(rl =>

@@ -12,7 +12,7 @@ import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.RoadType._
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.model.RoadAddressLink
+import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
 import fi.liikennevirasto.viite.process.{InvalidAddressDataException, LinkRoadAddressCalculator, RoadAddressFiller}
 import org.joda.time.format.DateTimeFormat
@@ -121,6 +121,13 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       rl.linkId -> buildFloatingRoadAddressLink(rl, ra)
     }.toMap
     (floatingViiteRoadLinks, addresses, floating)
+  }
+
+  def buildFloatingRoadAddressLink(rl: RoadLink, roadAddrSeq: Seq[RoadAddress]): Seq[RoadAddressLink] = {
+    val fusedRoadAddresses = RoadAddressLinkBuilder.fuseRoadAddress(roadAddrSeq)
+    fusedRoadAddresses.map( ra => {
+      RoadAddressLinkBuilder.build(rl, ra, true)
+    })
   }
 
   def buildFloatingRoadAddressLink(rl: VVHHistoryRoadLink, roadAddrSeq: Seq[RoadAddress]): Seq[RoadAddressLink] = {
@@ -694,7 +701,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
               val formInfo = groupedAddresses.map(addressGroup =>{
                 val lastAddressM = addressGroup._2.last.endAddrM
                 val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(addressGroup._2.last.linkId), false)
-                val addressFormLine = RoadAddressProjectFormLine(project.id, project.roadNumber, addressGroup._1._2, lastAddressM , MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(roadLink.head.municipalityCode, -1), addressGroup._2.last.discontinuityType.description )
+                val addressFormLine = RoadAddressProjectFormLine(addressGroup._2.last.linkId, project.id, project.roadNumber, addressGroup._1._2, lastAddressM , MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(roadLink.head.municipalityCode, -1), addressGroup._2.last.discontinuityType.description )
                 addressFormLine
               })
               Map("project" -> projectToApi(project), "projectAddresses" -> createdAddresses.headOption, "formInfo" -> formInfo)
@@ -731,10 +738,39 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     )
   }
 
-  def getRoadAddressProjects(): Seq[RoadAddressProject] = {
+  def getRoadAddressSingleProject(projectId: Long): Seq[RoadAddressProject] = {
     withDynTransaction {
-      val projects = RoadAddressDAO.getRoadAddressProjects()
-      projects
+      RoadAddressDAO.getRoadAddressProjects(projectId)
+    }
+  }
+
+  def getRoadAddressAllProjects(): Seq[RoadAddressProject] = {
+    withDynTransaction {
+      RoadAddressDAO.getRoadAddressProjects()
+    }
+  }
+
+  def getProjectsWithLinksById(projectId: Long): (RoadAddressProject, Seq[RoadAddressProjectFormLine]) = {
+    withDynTransaction {
+      val project:RoadAddressProject = RoadAddressDAO.getRoadAddressProjects(projectId).head
+      val createdAddresses = RoadAddressDAO.getRoadAddressProjectLinks(project.id)
+      val groupedAddresses = createdAddresses.groupBy { address =>
+        (address.roadNumber, address.roadPartNumber)
+      }.toSeq.sortBy(_._1._2)(Ordering[Long])
+      val formInfo: Seq[RoadAddressProjectFormLine] = groupedAddresses.map(addressGroup => {
+        val endAddressM = addressGroup._2.last.endAddrM
+        val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(addressGroup._2.head.linkId), false)
+        val addressFormLine = RoadAddressProjectFormLine(addressGroup._2.head.linkId, project.id, addressGroup._2.head.roadNumber, addressGroup._2.head.roadPartNumber, endAddressM, MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(roadLink.head.municipalityCode, -1), addressGroup._2.head.discontinuityType.description)
+        addressFormLine
+      })
+
+       val fullProjectInfo:RoadAddressProject = formInfo.length match {
+         case 0 => project
+         case 1 => project.copy(roadNumber = formInfo.head.roadNumber, startPart = formInfo.head.roadPartNumber, endPart = formInfo.head.roadPartNumber)
+         case _ => project.copy(roadNumber = formInfo.head.roadNumber, startPart = formInfo.head.roadPartNumber, endPart = formInfo.last.roadPartNumber)
+       }
+
+      (fullProjectInfo, formInfo)
     }
   }
 }
@@ -822,7 +858,7 @@ object RoadAddressLinkBuilder {
       roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(formatter.print).getOrElse(""), roadAddress.endDate.map(formatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue,
       roadAddress.sideCode,
       roadAddress.calibrationPoints._1,
-      roadAddress.calibrationPoints._2)
+      roadAddress.calibrationPoints._2,Anomaly.None, roadAddress.lrmPositionId)
 
   }
 
@@ -836,7 +872,7 @@ object RoadAddressLinkBuilder {
       extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
       roadLink.attributes, missingAddress.roadNumber.getOrElse(roadLinkRoadNumber),
       missingAddress.roadPartNumber.getOrElse(roadLinkRoadPartNumber), Track.Unknown.value, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), Discontinuity.Continuous.value,
-      0, 0, "", "", 0.0, length, SideCode.Unknown, None, None, missingAddress.anomaly)
+      0, 0, "", "", 0.0, length, SideCode.Unknown, None, None, missingAddress.anomaly, 0)
   }
 
   def build(historyRoadLink: VVHHistoryRoadLink, roadAddress: RoadAddress): RoadAddressLink = {
@@ -851,7 +887,7 @@ object RoadAddressLinkBuilder {
       roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate.map(formatter.print).getOrElse(""), roadAddress.endDate.map(formatter.print).getOrElse(""), roadAddress.startMValue, roadAddress.endMValue,
       roadAddress.sideCode,
       roadAddress.calibrationPoints._1,
-      roadAddress.calibrationPoints._2)
+      roadAddress.calibrationPoints._2, Anomaly.None, roadAddress.lrmPositionId)
   }
 
   def capToGeometry(geomLength: Double, sourceSegments: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
@@ -914,7 +950,7 @@ object RoadAddressLinkBuilder {
 
     val newRoadAddress = Seq(RoadAddressLink(tempId, currentTarget.linkId, currentTarget.geometry, GeometryUtils.geometryLength(currentTarget.geometry), source.administrativeClass, source.linkType, NormalRoadLinkType, source.constructionType, source.roadLinkSource,
       source.roadType, source.modifiedAt, Option(username), currentTarget.attributes, source.roadNumber, source.roadPartNumber, source.trackCode, source.elyCode, source.discontinuity,
-      startAddressM, endAddressM, source.startDate, source.endDate, currentTarget.startMValue, GeometryUtils.geometryLength(currentTarget.geometry), source.sideCode, calibrationPointS, calibrationPointE))
+      startAddressM, endAddressM, source.startDate, source.endDate, currentTarget.startMValue, GeometryUtils.geometryLength(currentTarget.geometry), source.sideCode, calibrationPointS, calibrationPointE, source.lrmPositionId))
     roadAddresses++newRoadAddress
   }
 

@@ -53,7 +53,7 @@
         vectorSource.clear();
         eventbus.trigger('map:clearLayers');
       }
-      roadCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom);
+      roadCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom+1);
       handleRoadsVisibility();
     };
 

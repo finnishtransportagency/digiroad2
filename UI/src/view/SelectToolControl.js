@@ -78,10 +78,9 @@
                 map.addInteraction(selectInteraction);
                 initialized = true;
             }
-
             mapDoubleClickEventKey = map.on('dblclick', function () {
                 _.defer(function(){
-                    if(selectInteraction.getFeatures().getLength() < 1 && map.getView().getZoom() <= 13){
+                    if(selectInteraction.getFeatures().getLength() < 1 && map.getView().getZoom() <= 13 && enabled){
                         map.getView().setZoom(map.getView().getZoom()+1);
                     }
                 });

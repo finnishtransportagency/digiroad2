@@ -1,6 +1,9 @@
 package fi.liikennevirasto.digiroad2
 
+import java.text.SimpleDateFormat
+
 import fi.liikennevirasto.digiroad2.asset._
+
 import scala.util.parsing.json._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -148,6 +151,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val roadAddressData = data.roadAddress
     val sourceIds = data.sourceIds
     val targetIds = data.targetIds
+    val user = userProvider.getCurrentUser()
+    val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
     val roadAddresses = roadAddressData.map{ ra =>
       val pointsToCalibration = ra.calibrationPoints.size match {
         case 0 => (None, None)
@@ -158,7 +163,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         case 2 => (Option(CalibrationPoint(ra.linkId, ra.startMValue, ra.calibrationPoints.head.value)), Option(CalibrationPoint(ra.linkId, ra.endMValue, ra.calibrationPoints.last.value)))
       }
       RoadAddress(ra.id, ra.roadNumber, ra.roadPartNumber, Track.apply(ra.trackCode), Discontinuity.apply(ra.discontinuity), ra.startAddressM, ra.endAddressM,
-        Some(DateTime.now()), None, Option(ra.modifiedBy),0, ra.linkId, ra.startMValue, ra.endMValue, SideCode.apply(ra.sideCode), pointsToCalibration, false, ra.points)
+        Some(formatter.parseDateTime(ra.startDate)), None, Option(user.username),0, ra.linkId, ra.startMValue, ra.endMValue, SideCode.apply(ra.sideCode), pointsToCalibration, false, ra.points)
     }
     val transferredRoadAddresses = roadAddressService.transferFloatingToGap(sourceIds, targetIds, roadAddresses)
     roadAddressService.recalculateRoadAddresses(roadAddresses.head.roadNumber.toInt, roadAddresses.head.roadPartNumber.toInt)
@@ -169,12 +174,19 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val project = parsedBody.extract[RoadAddressProjectExtracted]
     val user = userProvider.getCurrentUser()
     val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
-    val roadAddressProject  = RoadAddressProject( project.id, project.status, project.name, user.username, DateTime.now(), "-", formatter.parseDateTime(project.startDate), DateTime.now(), project.additionalInfo, project.roadNumber, project.startPart, project.endPart)
+    val roadAddressProject  = RoadAddressProject(project.id, project.status, project.name, user.username, DateTime.now(), "-", formatter.parseDateTime(project.startDate), DateTime.now(), project.additionalInfo, project.roadNumber, project.startPart, project.endPart)
     roadAddressService.saveRoadLinkProject(roadAddressProject)
   }
   get("/roadlinks/roadaddress/project/all") {
-    val projects = roadAddressService.getRoadAddressProjects()
-    projects.map(roadAddressProjectToApi)
+    roadAddressService.getRoadAddressAllProjects()
+  }
+
+  get("/roadlinks/roadaddress/project/all/projectId/:id") {
+    val projectId = params("id").toLong
+    val (projects, projectLinks) = roadAddressService.getProjectsWithLinksById(projectId)
+    val project = Seq(projects).map(roadAddressProjectToApi)
+    val projectsWithLinkId = project.head + ("linkId" -> projectLinks.head.startingLinkId)
+    Map("projects" -> projectsWithLinkId, "projectLinks" -> projectLinks)
   }
 
   private def roadlinksData(): (Seq[String], Seq[String]) = {
@@ -275,10 +287,20 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "createdBy" -> roadAddressProject.createdBy,
       // for some reason created date is null when project is inserted through sqldeveloper's table view with right mouse click -> insert row even though correct date is visually shown
       "createdDate" -> { if (roadAddressProject.createdDate==null){null} else {roadAddressProject.createdDate.toString}},
-      "startDate" -> roadAddressProject.startDate.toString,
+      "dateModified" -> { if (roadAddressProject.dateModified==null){null} else {formatToString(roadAddressProject.dateModified.toString)}},
+      "startDate" -> { if (roadAddressProject.startDate==null){null} else {formatToString(roadAddressProject.startDate.toString)}},
+      "startPart" -> roadAddressProject.startPart,
+      "endPart" -> roadAddressProject.endPart,
+      "roadNumber" -> roadAddressProject.roadNumber,
       "modifiedBy" -> roadAddressProject.modifiedBy,
       "additionalInfo" -> roadAddressProject.additionalInfo
     )
+  }
+
+  def formatToString(entryDate: String): String = {
+    val date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").parse(entryDate)
+    val formattedDate = new SimpleDateFormat("dd.MM.yyyy").format(date)
+    formattedDate
   }
 
   private def calibrationPoint(geometry: Seq[Point], calibrationPoint: Option[CalibrationPoint]) = {

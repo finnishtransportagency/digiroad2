@@ -4,7 +4,7 @@
     var cachedDirectionArrow = null;
 
     var defaultMarkerGraphics = {
-      externalGraphic: 'src/resources/digiroad2/bundle/assetlayer/images/calibration-point.png',
+      externalGraphic: 'images/calibration-point.png',
       graphicWidth: 16,
       graphicHeight: 30,
       graphicXOffset: -8,
@@ -13,16 +13,15 @@
 
     var createCalibrationPointMarker = function() {
       var markerGraphics = _.clone(defaultMarkerGraphics);
-//      markerGraphics.rotation = 90;
       var marker =  new ol.Feature({
-          geometry: new ol.geom.Point([data.x, data.y]),
+          geometry: new ol.geom.Point([data.x, data.y])
         }
       );
 
 
     var calibrationPointMarkerStyle = new ol.style.Style({
       image: new ol.style.Icon({
-        src: "../src/resources/digiroad2/bundle/assetlayer/images/calibration-point.png",
+        src: "images/calibration-point.png",
         anchor: [0.5, 1]
       })
     });

@@ -69,6 +69,12 @@
       });
     }, 1000);
 
+    this.getProjectsWithLinksById = _.throttle(function(id, callback) {
+      return $.getJSON('api/viite/roadlinks/roadaddress/project/all/projectId/' + id, function(data) {
+        return _.isFunction(callback) && callback(data);
+      });
+    }, 1000);
+
     this.getUserRoles = function () {
       $.get('api/viite/user/roles', function (roles) {
         eventbus.trigger('roles:fetched', roles);
@@ -81,7 +87,7 @@
     };
 
     this.getGeocode = function(address) {
-      return $.post("api/geocode", { address: address }).then(function(x) { return JSON.parse('{"results":[{"urakka_alue":"131","x":392818.286,"kuntakoodi":"091","y":6681275.071,"maakunta":"01","ely":"1","address":"Tattariharjuntie, Helsinki"}]}'); });
+      return $.post("vkm/geocode", { address: address }).then(function(x) { return JSON.parse(x); });
     };
 
     this.getCoordinatesFromRoadAddress = function(roadNumber, section, distance, lane) {
