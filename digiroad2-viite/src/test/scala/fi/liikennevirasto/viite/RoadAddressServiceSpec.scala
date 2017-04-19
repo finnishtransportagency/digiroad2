@@ -18,7 +18,7 @@ import fi.liikennevirasto.viite.RoadType.PublicRoad
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.Anomaly.NoAddressGiven
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink, RoadAddressLinkPartitioner}
-import fi.liikennevirasto.viite.process.RoadAddressFiller
+import fi.liikennevirasto.viite.process.{LinkRoadAddressCalculator, RoadAddressFiller}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
 import org.joda.time.DateTime
 import org.mockito.ArgumentCaptor
@@ -434,5 +434,15 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     RoadAddress(l.id, l.roadNumber, l.roadPartNumber, Track.apply(l.trackCode.toInt), Discontinuity.apply(l.discontinuity.toInt),
       l.startAddressM, l.endAddressM, Option(new DateTime(new Date())), None, None, 0, l.linkId, l.startMValue, l.endMValue, l.sideCode,
       (l.startCalibrationPoint, l.endCalibrationPoint), floating, l.geometry)
+  }
+
+  test("recalculate one track road with single part") {
+    runWithRollback {
+      val roads = RoadAddressDAO.fetchByRoadPart(833, 1)
+      val adjusted = LinkRoadAddressCalculator.recalculate(roads)
+      adjusted.head.endAddrMValue should be (22)
+      adjusted.lift(1).get.endAddrMValue should be (400)
+      adjusted.filter(_.startAddrMValue == 0) should have size (1)
+    }
   }
 }
