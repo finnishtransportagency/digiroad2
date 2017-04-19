@@ -29,30 +29,32 @@
     }
 
     function fetchProjects(){
-        projectCollection.getProjects().then(function(projects){
-          var unfinishedProjects = _.filter(projects, function(proj){
-            return proj.status === 1;
-          });
-          if(!_.isEmpty(unfinishedProjects)){
-            var html = '<table align="center">';
-            _.each(unfinishedProjects, function(proj) {
-              html += '<tr class="project-item">' +
-                '<td>'+ staticField('PROJEKTIN NIMI', proj.name)+'</td>'+
-                '<td>'+ staticField('TILA', proj.status)+'</td>'+
-                '<td>'+'<button class="project-open btn btn-new" id="open-project-'+proj.id +'" value="'+proj.id+'">Avaa</button>' +'</td>'+
-                '</tr>';
-            });
-            html += '</table>';
-            $('#project-list').html($(html));
-            $('[id*="open-project"]').click(function(event) {
-             projectCollection.getProjectsWithLinksById(parseInt(event.currentTarget.value)).then(function(result){
-                setTimeout(function(){}, 0);
-                eventbus.trigger('roadAddress:openProject', result);
-              });
-
-            });
-          }
+      projectCollection.getProjects().then(function(projects){
+        var unfinishedProjects = _.filter(projects, function(proj){
+          return proj.status === 1;
         });
+        if(!_.isEmpty(unfinishedProjects)){
+          var html = '<table align="center">';
+          _.each(unfinishedProjects, function(proj) {
+            html += '<tr class="project-item">' +
+              '<td>'+ staticField('PROJEKTIN NIMI', proj.name)+'</td>'+
+              '<td>'+ staticField('TILA', proj.status)+'</td>'+
+              '<td>'+'<button class="project-open btn btn-new" id="open-project-'+proj.id +'" value="'+proj.id+'">Avaa</button>' +'</td>'+
+              '</tr>';
+          });
+          html += '</table>';
+          $('#project-list').html($(html));
+          $('[id*="open-project"]').click(function(event) {
+            projectCollection.getProjectsWithLinksById(parseInt(event.currentTarget.value)).then(function(result){
+              setTimeout(function(){}, 0);
+              eventbus.trigger('roadAddress:openProject', result);
+              if(applicationModel.isReadOnly()) {
+                $('.edit-mode-btn:visible').click();
+              }
+            });
+          });
+        }
+      });
       setTimeout(function(){}, 0);
       projectList.show();
     }
