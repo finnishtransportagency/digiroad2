@@ -68,7 +68,7 @@
               qRoadparts.push(row)
           });
 
-          var sameElements=objectIntersection(qRoadparts,currentRoadSegmentList,function(arrayarow,arraybrow){return arrayarow.roadpartid===arraybrow.roadpartid; });
+          var sameElements=arrayIntersection(qRoadparts,currentRoadSegmentList,function(arrayarow,arraybrow){return arrayarow.roadpartid===arraybrow.roadpartid; });
           _.each(sameElements, function(row)
           {
               _.remove(qRoadparts,row)
@@ -80,7 +80,7 @@
       };
 
 
-      function objectIntersection(a, b, areEqualFunction) {
+      function arrayIntersection(a, b, areEqualFunction) {
           var results = [];
 
           for(var i = 0; i < a.length; i++) {

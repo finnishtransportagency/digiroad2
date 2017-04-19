@@ -73,7 +73,7 @@ case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
                        calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false,
                        geom: Seq[Point])
 
-case class RoadAddressProject(id: Long, status: Long, name: String, createdBy: String, createdDate: DateTime, modifiedBy:String, startDate: DateTime, dateModified: DateTime, additionalInfo :String,list: List[minRoadAddressPart]) //List[(roadNumber: Long, startPart: Long, endPart: Long])
+case class RoadAddressProject(id: Long, status: Long, name: String, createdBy: String, createdDate: DateTime, modifiedBy:String, startDate: DateTime, dateModified: DateTime, additionalInfo :String,list: List[minRoadAddressPart])
 
 case class RoadAddressProjectLink(id : Long, projectId: Long, roadType: Long, discontinuityType: Discontinuity, roadNumber: Long, roadPartNumber: Long, startAddrM: Long, endAddrM: Long, lrmPositionId: Long, cratedBy: String, modifiedBy: String, linkId: Long, length: Double)
 
@@ -281,7 +281,7 @@ object RoadAddressDAO {
         join lrm_position pos on ra.lrm_position_id = pos.id
         where floating = '0' and road_number = $roadNumber AND road_part_number = $roadPartNumber and t.id < t2.id AND
         (valid_to IS NULL OR valid_to >= sysdate) AND (valid_from IS NULL OR valid_from <= sysdate)
-        ORDER BY road_number, road_part_number, track_code, start_addr_m
+          ORDER BY road_number, road_part_number, track_code, start_addr_m
       """
     queryList(query)
   }
@@ -822,7 +822,7 @@ object RoadAddressDAO {
                 FROM project p
              INNER JOIN project_link l
              ON l.PROJECT_ID =  p.ID
-             WHERE l.road_number=$roadNumber AND road_part_number=$roadPart AND rownum < 2"""
+             WHERE l.road_number=$roadNumber AND road_part_number=$roadPart AND rownum < 2 """
     Q.queryNA[String](query).firstOption
   }
 
@@ -832,8 +832,11 @@ object RoadAddressDAO {
                 FROM road_address r
              INNER JOIN lrm_position l
              ON r.lrm_position_id =  l.id
+             INNER JOIN (Select  MAX(start_addr_m) as lol FROM road_address rm WHERE road_number=$roadNumber AND road_part_number=$roadPart AND
+             (rm.valid_from is null or rm.valid_from <= sysdate) AND (rm.valid_to is null or rm.valid_to >= sysdate) AND track_code in (0,1))  ra
+             on r.START_ADDR_M=ra.lol
              WHERE r.road_number=$roadNumber AND r.road_part_number=$roadPart AND
-             (r.valid_from is null or r.valid_from <= sysdate) AND (r.valid_to is null or r.valid_to >= sysdate) AND track_code in (0,1) ORDER BY r.id Desc"""
+             (r.valid_from is null or r.valid_from <= sysdate) AND (r.valid_to is null or r.valid_to >= sysdate) AND track_code in (0,1)"""
      Q.queryNA[(Long,Long,Double,Long)](query).firstOption
     }
 
