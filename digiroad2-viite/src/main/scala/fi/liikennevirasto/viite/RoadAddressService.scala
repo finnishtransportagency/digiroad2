@@ -14,7 +14,7 @@ import fi.liikennevirasto.viite.RoadType._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
-import fi.liikennevirasto.viite.process.{InvalidAddressDataException, RoadAddressFiller}
+import fi.liikennevirasto.viite.process.{InvalidAddressDataException, LinkRoadAddressCalculator, RoadAddressFiller}
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, DateTimeZone}
 import org.slf4j.LoggerFactory
@@ -468,11 +468,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   def getValidSurroundingLinks(linkIds: Set[Long], floating: RoadAddressLink): Map[Long, Option[RoadAddressLink]] = {
-    val roadLinks = roadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(linkIds)._1
+    val (roadLinks, vvhRoadLinks) = roadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(linkIds)
     try{
       val surroundingLinks = linkIds.map{
         linkid =>
-          val geomInChain = roadLinks.filter(_.linkId == linkid).map(_.geometry)
+          val geomInChain = roadLinks.filter(_.linkId == linkid).map(_.geometry) ++ vvhRoadLinks.filter(_.linkId == linkid).map(_.geometry)
           val sourceLinkGeometryOption = geomInChain.headOption
           sourceLinkGeometryOption.map(sourceLinkGeometry => {
             val sourceLinkEndpoints = GeometryUtils.geometryEndpoints(sourceLinkGeometry)
@@ -502,7 +502,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
       surroundingLinks
     } catch {
-      case e: Exception => Map()
+      case e: Exception =>
+        logger.warn("Exception occurred while getting surrounding links", e)
+        Map()
     }
   }
 
@@ -556,7 +558,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val targetLinks = targets.flatMap(rd => {
       getUniqueRoadAddressLink(rd.toLong)
     })
-    transferRoadAddress(sourceLinks, targetLinks, user)
+    val transferredRoadAddresses = transferRoadAddress(sourceLinks, targetLinks, user)
+
+    transferredRoadAddresses
   }
 
   def transferFloatingToGap(sourceIds: Set[Long], targetIds: Set[Long], roadAddresses: Seq[RoadAddress]) = {
@@ -588,28 +592,18 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val allLinks = sources ++ targets
     val targetsGeomLength = targets.map(_.length).sum
 
-    val allStartCp = sources.flatMap(_.startCalibrationPoint) ++ targets.flatMap(_.startCalibrationPoint)
-    val allEndCp = sources.flatMap(_.endCalibrationPoint) ++ targets.flatMap(_.endCalibrationPoint)
-    val startCalibrationPoints = allStartCp.filter(_.addressMValue == allStartCp.map(_.addressMValue).min)
-    val endCalibrationPoints = allEndCp.filter(_.addressMValue == allEndCp.map(_.addressMValue).max)
-    val startCp: Option[CalibrationPoint] = if (!startCalibrationPoints.isEmpty) Option(startCalibrationPoints.head) else None
-    val endCp: Option[CalibrationPoint] = if (!endCalibrationPoints.isEmpty) Option(endCalibrationPoints.head) else None
+    val allStartCp = sources.flatMap(_.startCalibrationPoint)
+    val allEndCp = sources.flatMap(_.endCalibrationPoint)
+    val startCp = if (allStartCp.nonEmpty) Option(allStartCp.minBy(_.addressMValue)) else None
+    val endCp = if (allEndCp.nonEmpty) Option(allEndCp.maxBy(_.addressMValue)) else None
     val minStartAddressM = sources.map(_.startAddressM).min
     val maxEndAddressM = sources.map(_.endAddressM).max
-    var minStartMValue = 0.0
-    var maxEndMValue = 0.0
+
     val adjustedSegments = adjustTopology.foldLeft(sources) { (previousSources, operation) => operation(targetsGeomLength, previousSources) }
 
-    if (!allLinks.flatMap(_.startCalibrationPoint).isEmpty) {
-      minStartMValue = getMValues(Option(allLinks.flatMap(_.startCalibrationPoint).map(_.segmentMValue).min), Option(allLinks.map(_.startMValue).min))
-    } else {
-      minStartMValue = adjustedSegments.map(_.startMValue).min
-    }
-
-    if (!allLinks.flatMap(_.endCalibrationPoint).isEmpty) {
-      maxEndMValue = getMValues(Option(allLinks.flatMap(_.endCalibrationPoint).map(_.segmentMValue).max), Option(allLinks.map(_.endMValue).max))
-    } else {
-      maxEndMValue = adjustedSegments.map(_.endMValue).max
+    val maxEndMValue = allLinks.flatMap(_.endCalibrationPoint) match {
+      case Nil => adjustedSegments.map(_.endMValue).max
+      case _ => getMValues(Option(adjustedSegments.flatMap(_.endCalibrationPoint).map(_.segmentMValue).max), Option(allLinks.map(_.endMValue).max))
     }
 
     val source = sources.head
@@ -617,11 +611,21 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val orderedTargets = targets.size match {
       case 1 => targets
       case _ =>
-        val optionalSurroundingMappedLinks = getValidSurroundingLinks(targets.map(_.linkId).toSet, source)
-        val surroundingMappedLinks = optionalSurroundingMappedLinks.filterNot(_._2.isEmpty)
-        val startingLinkId = surroundingMappedLinks.size match {
+        val optionalSurroundingMappedLinks = getValidSurroundingLinks(targets.map(_.linkId).toSet, source).filterNot(_._2.isEmpty)
+        val startingLinkId = optionalSurroundingMappedLinks.size match {
           case 0 => targets.head.linkId
-          case _ => ListMap(surroundingMappedLinks.toSeq.sortBy(_._2.get.startAddressM):_*).keySet.head
+          case 1 => val secondOptionalSurroundingMappedLinks = getValidSurroundingLinks(Set(optionalSurroundingMappedLinks.head._2.get.linkId), source).filterNot(_._2.isEmpty)
+            if(secondOptionalSurroundingMappedLinks.nonEmpty && optionalSurroundingMappedLinks.head._2.get.endAddressM > secondOptionalSurroundingMappedLinks.head._2.get.endAddressM){
+              val resultLinkId = optionalSurroundingMappedLinks.head._1 match {
+                case x if(x == targets.head.linkId) => targets.last.linkId
+                case _ => targets.head.linkId
+              }
+              resultLinkId
+            } else {
+              ListMap(optionalSurroundingMappedLinks.toSeq.sortBy(_._2.get.startAddressM):_*).keySet.head
+            }
+
+          case _ => ListMap(optionalSurroundingMappedLinks.toSeq.sortBy(_._2.get.startAddressM):_*).keySet.head
         }
         val firstTarget = targets.filter(_.linkId == startingLinkId).head
         val orderTargets = targets.foldLeft(Seq.empty[RoadAddressLink]) { (previousOrderedTargets, target) =>
@@ -631,7 +635,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
 
     val adjustedCreatedRoads = orderedTargets.foldLeft(orderedTargets) { (previousTargets, target) =>
-      RoadAddressLinkBuilder.adjustRoadAddressTopology(maxEndMValue, minStartAddressM, maxEndAddressM, source, target, previousTargets, user.username).filterNot(_.id == 0) }
+      RoadAddressLinkBuilder.adjustRoadAddressTopology(orderedTargets.length, startCp, endCp, maxEndMValue, minStartAddressM, maxEndAddressM, source, target, previousTargets, user.username).filterNot(_.id == 0) }
 
     adjustedCreatedRoads
   }
@@ -645,6 +649,32 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         (previousOrderedTargets++nextTarget)
     }
     orderedTargets
+  }
+
+  def recalculateRoadAddresses(roadNumber: Long, roadPartNumber: Long) = {
+    OracleDatabase.withDynTransaction {
+      loopRoadParts(roadNumber, roadPartNumber)
+    }
+  }
+
+  def loopRoadParts(roadNumber: Long, roadPartNumber: Long) = {
+    try{
+      val roads = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber)
+      try {
+        val adjusted = LinkRoadAddressCalculator.recalculate(roads)
+        assert(adjusted.size == roads.size) // Must not lose any
+        val (changed, unchanged) = adjusted.partition(ra =>
+            roads.exists(oldra => ra.id == oldra.id && (oldra.startAddrMValue != ra.startAddrMValue || oldra.endAddrMValue != ra.endAddrMValue))
+          )
+        println(s"Road $roadNumber, part $roadPartNumber: ${changed.size} updated, ${unchanged.size} kept unchanged")
+        changed.foreach(addr => RoadAddressDAO.update(addr, None))
+      } catch {
+        case ex: InvalidAddressDataException => println(s"!!! Road $roadNumber, part $roadPartNumber contains invalid address data - part skipped !!!")
+          ex.printStackTrace()
+      }
+    } catch {
+      case a: Exception => println(a.getMessage)
+    }
   }
 
   def saveRoadLinkProject(roadAddressProject: RoadAddressProject) : Map[String, Any] = {
@@ -893,24 +923,36 @@ object RoadAddressLinkBuilder {
     passThroughSegments
   }
 
-  def adjustRoadAddressTopology(maxEndMValue: Double, minStartMAddress: Long, maxEndMAddress: Long, source: RoadAddressLink, currentTarget: RoadAddressLink, roadAddresses: Seq[RoadAddressLink], username: String): Seq[RoadAddressLink] = {
+  def adjustRoadAddressTopology(expectedTargetsNumber: Int, startCp: Option[CalibrationPoint], endCp: Option[CalibrationPoint], maxEndMValue: Double, minStartMAddress: Long, maxEndMAddress: Long, source: RoadAddressLink, currentTarget: RoadAddressLink, roadAddresses: Seq[RoadAddressLink], username: String): Seq[RoadAddressLink] = {
     val tempId = -1000
     val sorted = roadAddresses.sortBy(_.endAddressM)(Ordering[Long].reverse)
-    val lastTarget = sorted.head
+    val previousTarget = sorted.head
     val startAddressM = roadAddresses.filterNot(_.id == 0).size match {
       case 0 => minStartMAddress
-      case _ => lastTarget.endAddressM
+      case _ => previousTarget.endAddressM
+    }
+    //Uppercase variable due to scala lexical rule disambiguation. If lowercase, it will be taken as pattern variable
+    val LastTarget = expectedTargetsNumber-1
+
+    val endAddressM = roadAddresses.filterNot(_.id == 0).size match {
+      case LastTarget => maxEndMAddress
+      case _ => startAddressM + GeometryUtils.geometryLength(currentTarget.geometry).toLong
     }
 
-    val endMAddress = startAddressM + GeometryUtils.geometryLength(currentTarget.geometry).toLong
+    val calibrationPointS = roadAddresses.filterNot(_.id == 0).size match {
+      case 0 => startCp
+      case _ => None
+    }
+    val calibrationPointE = roadAddresses.filterNot(_.id == 0).size match {
+      case LastTarget => endCp
+      case _ => None
+    }
 
     val newRoadAddress = Seq(RoadAddressLink(tempId, currentTarget.linkId, currentTarget.geometry, GeometryUtils.geometryLength(currentTarget.geometry), source.administrativeClass, source.linkType, NormalRoadLinkType, source.constructionType, source.roadLinkSource,
       source.roadType, source.modifiedAt, Option(username), currentTarget.attributes, source.roadNumber, source.roadPartNumber, source.trackCode, source.elyCode, source.discontinuity,
-      startAddressM, endMAddress, source.startDate, source.endDate, currentTarget.startMValue, GeometryUtils.geometryLength(currentTarget.geometry), source.sideCode, None, None, source.anomaly, source.lrmPositionId))
-    (roadAddresses++newRoadAddress)
+      startAddressM, endAddressM, source.startDate, source.endDate, currentTarget.startMValue, GeometryUtils.geometryLength(currentTarget.geometry), source.sideCode, calibrationPointS, calibrationPointE, Anomaly.None, 0))
+    roadAddresses++newRoadAddress
   }
-
-
 
   private def toIntNumber(value: Any) = {
     try {
