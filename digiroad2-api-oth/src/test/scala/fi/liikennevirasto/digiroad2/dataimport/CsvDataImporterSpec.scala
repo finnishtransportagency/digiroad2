@@ -57,7 +57,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 //
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
-  test("validation fails if field type \"Linkin ID\" is not filed", Tag("db")) {
+  test("validation fails if field type \"Linkin ID\" is not filled", Tag("db")) {
     val roadLinkFields = Map("Hallinnollinen luokka" -> "1", "Liikennevirran suunta" -> "5")
     val invalidCsv = csvToInputStream(createCSV(roadLinkFields))
     roadLinkCsvImporter.importLinkAttribute(invalidCsv) should equal(ImportResult(
@@ -130,6 +130,21 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       RoadLinkServiceDAO.getTrafficDirectionValue(link_id) should equal (None)
     }
   }
+
+  test("update OTH and VVH by CSV import", Tag("db")) {
+    runWithRollback {
+      val link_id = 1000
+      val linkTypeValue = 3
+      RoadLinkServiceDAO.insertLinkType(link_id, Some("unit_test"), 2)
+
+      val csv = csvToInputStream(createCSV(Map("Linkin ID" -> link_id, "Tielinkin tyyppi" ->linkTypeValue, "Kuntanumero" -> 2,
+        "Liikennevirran suunta" -> 1)))
+      roadLinkCsvImporter.importLinkAttribute(csv) should equal(ImportResult())
+      RoadLinkServiceDAO.getLinkTypeValue(link_id) should equal (Some(linkTypeValue))
+    }
+  }
+
+
 
 //  test("update asset admin id by CSV import", Tag("db")) {
 //    val mockService = MockitoSugar.mock[MassTransitStopService]
