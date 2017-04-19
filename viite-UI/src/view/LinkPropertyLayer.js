@@ -468,7 +468,7 @@
         });
 
           var floatingGroups = _.groupBy(floatingRoadMarkers, function(value){
-            return return value.linkId;
+            return value.linkId;
           });
 
           var orderFloatGroup = _.sortBy(floatingGroups, 'startAddressM');
