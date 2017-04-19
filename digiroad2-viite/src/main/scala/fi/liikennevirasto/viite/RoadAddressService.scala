@@ -950,7 +950,7 @@ object RoadAddressLinkBuilder {
 
     val newRoadAddress = Seq(RoadAddressLink(tempId, currentTarget.linkId, currentTarget.geometry, GeometryUtils.geometryLength(currentTarget.geometry), source.administrativeClass, source.linkType, NormalRoadLinkType, source.constructionType, source.roadLinkSource,
       source.roadType, source.modifiedAt, Option(username), currentTarget.attributes, source.roadNumber, source.roadPartNumber, source.trackCode, source.elyCode, source.discontinuity,
-      startAddressM, endAddressM, source.startDate, source.endDate, currentTarget.startMValue, GeometryUtils.geometryLength(currentTarget.geometry), source.sideCode, calibrationPointS, calibrationPointE, source.lrmPositionId))
+      startAddressM, endAddressM, source.startDate, source.endDate, currentTarget.startMValue, GeometryUtils.geometryLength(currentTarget.geometry), source.sideCode, calibrationPointS, calibrationPointE, Anomaly.None, 0))
     roadAddresses++newRoadAddress
   }
 

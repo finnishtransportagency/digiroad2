@@ -397,7 +397,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
         RoadAddressLink(-1000, 15171208, floatGeom,
           floatGeomLength, Municipality, SingleCarriageway, NormalRoadLinkType, InUse, HistoryLinkInterface, RoadType.MunicipalityStreetRoad,
           None, None, Map("linkId" -> 15171208, "segmentId" -> 63298), 5, 205, 1, 0, 0, 0, 500, "2015-01-01", "2016-01-01", 0.0, floatGeomLength,
-          SideCode.Unknown, Option(CalibrationPoint(15171208, 0.0, 0)), Option(CalibrationPoint(15171208, floatGeomLength, 500))))
+          SideCode.Unknown, Option(CalibrationPoint(15171208, 0.0, 0)), Option(CalibrationPoint(15171208, floatGeomLength, 500)), Anomaly.None, 0))
       RoadAddressDAO.create(floatingLinks.map(roadAddressLinkToRoadAddress(true)))
 
       val cutPoint = GeometryUtils.calculatePointFromLinearReference(floatGeom, 230.0).get
@@ -407,11 +407,11 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
         RoadAddressLink(0, 15171208, geom1,
           GeometryUtils.geometryLength(geom1), Municipality, SingleCarriageway, NormalRoadLinkType, InUse, HistoryLinkInterface, RoadType.MunicipalityStreetRoad,
           None, None, Map("linkId" -> 15171208, "segmentId" -> 63298), 5, 205, 1, 0, 0, 0, 1, "2015-01-01", "2016-01-01", 0.0, 0.0,
-          SideCode.Unknown, None, None),
+          SideCode.Unknown, None, None, Anomaly.None, 0),
         RoadAddressLink(0, 15171209, geom2,
           GeometryUtils.geometryLength(geom2), Municipality, SingleCarriageway, NormalRoadLinkType, InUse, HistoryLinkInterface, RoadType.MunicipalityStreetRoad,
           None, None, Map("linkId" -> 15171209, "segmentId" -> 63299), 5, 205, 1, 0, 0, 1, 2, "2015-01-01", "2016-01-01", 0.0, 0.0,
-          SideCode.Unknown, None, None))
+          SideCode.Unknown, None, None, Anomaly.None, 0))
       when(mockRoadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(any[Set[Long]])).thenReturn((targetLinks.map(roadAddressLinkToRoadLink), Seq()))
       when(mockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(floatingLinks.map(roadAddressLinkToHistoryLink))
       when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[BoundingRectangle])).thenReturn(targetLinks.map(roadAddressLinkToRoadLink))
