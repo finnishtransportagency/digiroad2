@@ -118,6 +118,10 @@ object MassTransitStopOperations {
     !isVirtualStop && (elyAdministrated || (isHSLAdministrated && isAdminClassState))
   }
 
+  def isVirtualBusStop(properties: Set[SimpleProperty]): Boolean = {
+    properties.find(pro => pro.publicId == MassTransitStopTypePublicId).exists(_.values.exists(_.propertyValue == VirtualBusStopPropertyValue))
+  }
+
   def getAdministrationClass(properties: Seq[AbstractProperty]): Option[AdministrativeClass] = {
     val propertyValueOption = properties.find(_.publicId == MassTransitStopAdminClassPublicId)
       .map(_.values).getOrElse(Seq()).headOption
