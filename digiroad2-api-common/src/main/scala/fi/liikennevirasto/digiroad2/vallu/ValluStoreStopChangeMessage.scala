@@ -56,7 +56,7 @@ object ValluStoreStopChangeMessage extends AssetPropertiesReader {
         <MunicipalityName>{stop.municipalityName}</MunicipalityName>
         <Comments>{if (propertyIsDefined(stop, "lisatiedot")) extractPropertyValue(stop, "lisatiedot") }</Comments>
         <ContactEmails>
-          <Contact>pysakit@liikennevirasto.fi</Contact>
+          <Contact>pysakit@digiroad.fi</Contact>
         </ContactEmails>
       </Stop>
     </Stops>).toString

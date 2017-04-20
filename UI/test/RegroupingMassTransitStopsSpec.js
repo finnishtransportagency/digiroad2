@@ -3,6 +3,7 @@ define(['chai', 'eventbus', 'TestHelpers', 'AssetsTestData'], function(chai, eve
   var expect = chai.expect;
 
   describe('when loading application with two individual bus stops with same validity periods', function() {
+    this.timeout(1500000);
     var openLayersMap;
     var testAsset1 = AssetsTestData.generateAsset({id: 1, nationalId: 1, lon: 374704.900011667, lat: 6677465.03054922, roadLinkId: 2148015});
     var testAsset2 = AssetsTestData.generateAsset({id: 2, nationalId: 2, lon: 374710.131074107, lat: 6677460.91654743, roadLinkId: 2148015});
@@ -11,35 +12,31 @@ define(['chai', 'eventbus', 'TestHelpers', 'AssetsTestData'], function(chai, eve
       var backend = testHelpers.fakeBackend(assetsData, testAsset2, 12);
       testHelpers.restartApplication(function(map) {
         openLayersMap = map;
+        testHelpers.selectLayer('massTransitStop');
+        testHelpers.clickVisibleEditModeButton();
         done();
       }, backend);
     });
 
     describe('and moving bus stop #2 near bus stop #1 and saving', function() {
       var originalMarker1Position;
-      before(function() {
-        var marker1 = _.find(testHelpers.getAssetMarkers(openLayersMap), {id: testAsset1.id});
-        applicationModel.assetGroupingDistance = geometrycalculator.getSquaredDistanceBetweenPoints(testAsset1, {
-          lon: testAsset2.lon - 1,
-          lat: testAsset2.lat + 1
+      before(function(done) {
+        var marker1 = testHelpers.getAssetMarker(openLayersMap, testAsset1.id);
+        originalMarker1Position = marker1.geometry;
+        var coordinate = [testAsset2.lon - 4, testAsset2.lat + 5];
+        testHelpers.moveMassTransitStop(openLayersMap, testAsset2.id, coordinate, function(){
+          $('button.save').click();
+          done();
         });
-        originalMarker1Position = marker1.bounds;
-        testHelpers.clickVisibleEditModeButton();
-        testHelpers.clickMarker(testAsset2.id, openLayersMap);
-        testHelpers.moveMarker(testAsset2.id, openLayersMap, -1, 1);
-        $('button.save').click();
-      });
-      it('groups the bus stops', function() {
-        expect($('.root').length).to.equal(1);
       });
       it('maintains the position of stop #1', function() {
-        var marker1 = _.find(testHelpers.getAssetMarkers(openLayersMap), {id: testAsset1.id});
-        expect(marker1.bounds).to.deep.equal(originalMarker1Position);
+        var marker1 = testHelpers.getAssetMarker(openLayersMap, testAsset1.id);
+        expect(marker1.geometry).to.deep.equal(originalMarker1Position);
       });
-      it('lines the bus stops horizontally', function() {
-        var marker1 = $('[data-asset-id='+testAsset1.id+']');
-        var marker2 = $('[data-asset-id='+testAsset2.id+']');
-        expect(marker1.offset().left).to.equal(marker2.offset().left);
+      it('lines at the same position', function() {
+        var marker1 = testHelpers.getAssetMarker(openLayersMap, testAsset1.id);
+        var marker2 = testHelpers.getAssetMarker(openLayersMap, testAsset2.id);
+        expect([marker1.data.group.lon, marker1.data.group.lat]).to.deep.equal([marker2.data.group.lon, marker2.data.group.lat]);
       });
     });
   });

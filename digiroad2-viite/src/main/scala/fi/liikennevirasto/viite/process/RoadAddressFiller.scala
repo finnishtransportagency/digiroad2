@@ -1,11 +1,12 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.GeometryUtils
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.State
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.viite.RoadAddressLinkBuilder
 import fi.liikennevirasto.viite.RoadType.PublicRoad
-import fi.liikennevirasto.viite.dao.{MissingRoadAddress, RoadAddress}
+import fi.liikennevirasto.viite.dao.{MissingRoadAddress, RoadAddress, RoadAddressDAO}
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
 
 object RoadAddressFiller {
@@ -113,5 +114,6 @@ object RoadAddressFiller {
           generatedRoadAddresses.filterNot(_.anomaly == Anomaly.None)))
     }
   }
+
 
 }

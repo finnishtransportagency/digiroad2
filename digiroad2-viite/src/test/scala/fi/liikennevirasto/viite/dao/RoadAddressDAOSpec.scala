@@ -14,6 +14,7 @@ import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import slick.jdbc.{StaticQuery => Q}
 
 

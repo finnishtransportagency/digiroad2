@@ -12,6 +12,7 @@ import slick.jdbc.StaticQuery.interpolation
 case class PedestrianCrossing(id: Long, linkId: Long,
                               lon: Double, lat: Double,
                               mValue: Double, floating: Boolean,
+                              vvhTimeStamp: Long,
                               municipalityCode: Int,
                               createdBy: Option[String] = None,
                               createdAt: Option[DateTime] = None,
@@ -21,18 +22,30 @@ case class PedestrianCrossing(id: Long, linkId: Long,
 case class PedestrianCrossingToBePersisted(linkId: Long, lon: Double, lat: Double, mValue: Double, municipalityCode: Int, createdBy: String)
 
 object OraclePedestrianCrossingDao {
-  def update(id: Long, persisted: PedestrianCrossingToBePersisted) = {
+  def update(id: Long, persisted: PedestrianCrossingToBePersisted, adjustedTimeStampOption: Option[Long] = None) = {
     sqlu""" update asset set municipality_code = ${persisted.municipalityCode} where id = $id """.execute
     updateAssetGeometry(id, Point(persisted.lon, persisted.lat))
     updateAssetModified(id, persisted.createdBy).execute
 
-    sqlu"""
-      update lrm_position
-       set
-       start_measure = ${persisted.mValue},
-       link_id = ${persisted.linkId}
-       where id = (select position_id from asset_link where asset_id = $id)
-    """.execute
+    adjustedTimeStampOption match {
+      case Some(adjustedTimeStamp) =>
+        sqlu"""
+          update lrm_position
+           set
+           start_measure = ${persisted.mValue},
+           link_id = ${persisted.linkId},
+           adjusted_timestamp = ${adjustedTimeStamp}
+           where id = (select position_id from asset_link where asset_id = $id)
+        """.execute
+      case _ =>
+        sqlu"""
+          update lrm_position
+           set
+           start_measure = ${persisted.mValue},
+           link_id = ${persisted.linkId}
+           where id = (select position_id from asset_link where asset_id = $id)
+        """.execute
+    }
     id
   }
 
@@ -58,7 +71,7 @@ object OraclePedestrianCrossingDao {
   def fetchByFilter(queryFilter: String => String): Seq[PedestrianCrossing] = {
     val query =
       """
-        select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, a.municipality_code, a.created_by, a.created_date, a.modified_by, a.modified_date
+        select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code, a.created_by, a.created_date, a.modified_by, a.modified_date
         from asset a
         join asset_link al on a.id = al.asset_id
         join lrm_position pos on al.position_id = pos.id
@@ -74,13 +87,14 @@ object OraclePedestrianCrossingDao {
       val point = r.nextBytesOption().map(bytesToPoint).get
       val mValue = r.nextDouble()
       val floating = r.nextBoolean()
+      val vvhTimeStamp = r.nextLong()
       val municipalityCode = r.nextInt()
       val createdBy = r.nextStringOption()
       val createdDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val modifiedBy = r.nextStringOption()
       val modifiedDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
 
-      PedestrianCrossing(id, linkId, point.x, point.y, mValue, floating, municipalityCode, createdBy, createdDateTime, modifiedBy, modifiedDateTime)
+      PedestrianCrossing(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, createdBy, createdDateTime, modifiedBy, modifiedDateTime)
     }
   }
 }

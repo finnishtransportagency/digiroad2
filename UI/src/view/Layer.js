@@ -5,9 +5,9 @@
     var mapOverLinkMiddlePoints = function(links, transformation) {
       return _.map(links, function(link) {
         var points = _.map(link.points, function(point) {
-          return new OpenLayers.Geometry.Point(point.x, point.y);
+          return [point.x, point.y];
         });
-        var lineString = new OpenLayers.Geometry.LineString(points);
+        var lineString = new ol.geom.LineString(points);
         var middlePoint = GeometryUtils.calculateMidpointOfLineString(lineString);
         return transformation(link, middlePoint);
       });
@@ -61,17 +61,17 @@
         return link.trafficDirection === 'AgainstDigitizing' || link.trafficDirection === 'TowardsDigitizing';
       });
       var oneWaySigns = mapOverLinkMiddlePoints(filteredLinks, function(link, middlePoint) {
-        var rotation = link.trafficDirection === 'AgainstDigitizing' ? middlePoint.angleFromNorth + 180.0 : middlePoint.angleFromNorth;
-        var attributes = _.merge({}, link, { rotation: rotation });
-        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(middlePoint.x, middlePoint.y), attributes);
+        var rotation = link.trafficDirection === 'AgainstDigitizing' ? middlePoint.angleFromNorth + Math.PI : middlePoint.angleFromNorth;
+        var attributes = _.merge({}, link, { rotation: rotation  });
+        return new ol.Feature(_.merge(attributes,{ geometry: new ol.geom.Point([middlePoint.x, middlePoint.y])}));
       });
 
-      layer.addFeatures(oneWaySigns);
+      layer.getSource().addFeatures(oneWaySigns);
     };
     this.mapOverLinkMiddlePoints = mapOverLinkMiddlePoints;
     this.show = function(map) {
       eventbus.on('map:moved', me.handleMapMoved);
-      if (map.getZoom() >= me.minZoomForContent) {
+      if (map.getView().getZoom() >= me.minZoomForContent) {
         me.start('shown');
       }
     };

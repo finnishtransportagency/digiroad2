@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Capabilities xmlns="http://www.opengis.net/wmts/1.0"
+xmlns:ows="http://www.opengis.net/ows/1.1"
+xmlns:xlink="http://www.w3.org/1999/xlink"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xmlns:gml="http://www.opengis.net/gml"
+xsi:schemaLocation="http://www.opengis.net/wmts/1.0 http://schemas.opengis.net/wmts/1.0/wmtsGetCapabilities_response.xsd"
+version="1.0.0">
+<!-- Service Identification --> <ows:ServiceIdentification>
+<ows:Title>Taustakartat_Harmaasavy</ows:Title>
+<ows:ServiceType>OGC WMTS</ows:ServiceType>
+<ows:ServiceTypeVersion>1.0.0</ows:ServiceTypeVersion>
+</ows:ServiceIdentification> <!-- Operations Metadata --> <ows:OperationsMetadata>
+<ows:Operation name="GetCapabilities">
+<ows:DCP>
+<ows:HTTP>
+<ows:Get xlink:href="https://aineistot.esri.fi/arcgis/rest/services/Taustakartat/Harmaasavy/MapServer/WMTS/1.0.0/WMTSCapabilities.xml">
+<ows:Constraint name="GetEncoding">
+<ows:AllowedValues>
+<ows:Value>RESTful</ows:Value>
+</ows:AllowedValues>
+</ows:Constraint>
+</ows:Get>
+<!-- add KVP binding in 10.1 -->
+<ows:Get xlink:href="https://aineistot.esri.fi/arcgis/rest/services/Taustakartat/Harmaasavy/MapServer/WMTS?">
+<ows:Constraint name="GetEncoding">
+<ows:AllowedValues>
+<ows:Value>KVP</ows:Value>
+</ows:AllowedValues>
+</ows:Constraint>
+</ows:Get>
+</ows:HTTP>
+</ows:DCP>
+</ows:Operation>
+<ows:Operation name="GetTile">
+<ows:DCP>
+<ows:HTTP>
+<ows:Get xlink:href="https://aineistot.esri.fi/arcgis/rest/services/Taustakartat/Harmaasavy/MapServer/WMTS/tile/1.0.0/">
+<ows:Constraint name="GetEncoding">
+<ows:AllowedValues>
+<ows:Value>RESTful</ows:Value>
+</ows:AllowedValues>
+</ows:Constraint>
+</ows:Get>
+<ows:Get xlink:href="https://aineistot.esri.fi/arcgis/rest/services/Taustakartat/Harmaasavy/MapServer/WMTS?">
+<ows:Constraint name="GetEncoding">
+<ows:AllowedValues>
+<ows:Value>KVP</ows:Value>
+</ows:AllowedValues>
+</ows:Constraint>
+</ows:Get>
+</ows:HTTP>
+</ows:DCP>
+</ows:Operation>
+</ows:OperationsMetadata> <Contents>
+<!--Layer--> <Layer>
+<ows:Title>Taustakartat_Harmaasavy</ows:Title> <ows:Identifier>Taustakartat_Harmaasavy</ows:Identifier>
+<ows:BoundingBox crs="urn:ogc:def:crs:EPSG::3067">
+<ows:LowerCorner>17670.28849999979 6560797.8247</ows:LowerCorner>
+<ows:UpperCorner>775438.4706999998 7824450.352</ows:UpperCorner>
+</ows:BoundingBox> <ows:WGS84BoundingBox crs="urn:ogc:def:crs:OGC:2:84">
+<ows:LowerCorner>14.240200579617369 58.9140090664189</ows:LowerCorner>
+<ows:UpperCorner>34.363945515411025 70.52525871145806</ows:UpperCorner>
+</ows:WGS84BoundingBox>
+<Style isDefault="true">
+<ows:Title>Default Style</ows:Title>
+<ows:Identifier>default</ows:Identifier>
+</Style>
+<Format>image/jpgpng</Format>
+<TileMatrixSetLink>
+<TileMatrixSet>default028mm</TileMatrixSet>
+</TileMatrixSetLink>
+<ResourceURL format="image/jpgpng" resourceType="tile" template="https://aineistot.esri.fi/arcgis/rest/services/Taustakartat/Harmaasavy/MapServer/WMTS/tile/1.0.0/Taustakartat_Harmaasavy/{Style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}" />
+</Layer> <!--TileMatrixSet-->
+<TileMatrixSet>
+<ows:Title>TileMatrix using 0.28mm</ows:Title>
+<ows:Abstract>The tile matrix set that has scale values calculated based on the dpi defined by OGC specification (dpi assumes 0.28mm as the physical distance of a pixel).</ows:Abstract> <ows:Identifier>default028mm</ows:Identifier>
+<ows:SupportedCRS>urn:ogc:def:crs:EPSG::3067</ows:SupportedCRS>
+<TileMatrix>
+<ows:Identifier>0</ows:Identifier>
+<ScaleDenominator>7559538.928600717</ScaleDenominator>
+<TopLeftCorner>-5120900.0 9998100.0</TopLeftCorner> <TileWidth>256</TileWidth> <TileHeight>256</TileHeight>
+<MatrixWidth>11</MatrixWidth> <MatrixHeight>7</MatrixHeight>
+</TileMatrix>
+<TileMatrix>
+<ows:Identifier>1</ows:Identifier>
+<ScaleDenominator>3779769.4643003587</ScaleDenominator>
+<TopLeftCorner>-5120900.0 9998100.0</TopLeftCorner> <TileWidth>256</TileWidth> <TileHeight>256</TileHeight>
+<MatrixWidth>22</MatrixWidth> <MatrixHeight>13</MatrixHeight>
+</TileMatrix>
+<TileMatrix>
+<ows:Identifier>2</ows:Identifier>
+<ScaleDenominator>1889884.7321501793</ScaleDenominator>
+<TopLeftCorner>-5120900.0 9998100.0</TopLeftCorner> <TileWidth>256</TileWidth> <TileHeight>256</TileHeight>
+<MatrixWidth>44</MatrixWidth> <MatrixHeight>26</MatrixHeight>
+</TileMatrix>
+<TileMatrix>
+<ows:Identifier>3</ows:Identifier>
+<ScaleDenominator>944942.3660750897</ScaleDenominator>
+<TopLeftCorner>-5120900.0 9998100.0</TopLeftCorner> <TileWidth>256</TileWidth> <TileHeight>256</TileHeight>
+<MatrixWidth>88</MatrixWidth> <MatrixHeight>51</MatrixHeight>
+</TileMatrix>
+<TileMatrix>
+<ows:Identifier>4</ows:Identifier>
+<ScaleDenominator>472471.18303754483</ScaleDenominator>
+<TopLeftCorner>-5120900.0 9998100.0</TopLeftCorner> <TileWidth>256</TileWidth> <TileHeight>256</TileHeight>
+<MatrixWidth>175</MatrixWidth> <MatrixHeight>102</MatrixHeight>
+</TileMatrix>
+<TileMatrix>
+<ows:Identifier>5</ows:Identifier>
+<ScaleDenominator>236235.59151877242</ScaleDenominator>
+<TopLeftCorner>-5120900.0 9998100.0</TopLeftCorner> <TileWidth>256</TileWidth> <TileHeight>256</TileHeight>
+<MatrixWidth>349</MatrixWidth> <MatrixHeight>203</MatrixHeight>
+</TileMatrix>
+<TileMatrix>
+<ows:Identifier>6</ows:Identifier>
+<ScaleDenominator>113393.08392901075</ScaleDenominator>
+<TopLeftCorner>-5120900.0 9998100.0</TopLeftCorner> <TileWidth>256</TileWidth> <TileHeight>256</TileHeight>
+<MatrixWidth>726</MatrixWidth> <MatrixHeight>423</MatrixHeight>
+</TileMatrix>
+<TileMatrix>
+<ows:Identifier>7</ows:Identifier>
+<ScaleDenominator>75595.38928600716</ScaleDenominator>
+<TopLeftCorner>-5120900.0 9998100.0</TopLeftCorner> <TileWidth>256</TileWidth> <TileHeight>256</TileHeight>
+<MatrixWidth>1089</MatrixWidth> <MatrixHeight>635</MatrixHeight>
+</TileMatrix>
+<TileMatrix>
+<ows:Identifier>8</ows:Identifier>
+<ScaleDenominator>56696.54196450538</ScaleDenominator>
+<TopLeftCorner>-5120900.0 9998100.0</TopLeftCorner> <TileWidth>256</TileWidth> <TileHeight>256</TileHeight>
+<MatrixWidth>1451</MatrixWidth> <MatrixHeight>846</MatrixHeight>
+</TileMatrix>
+<TileMatrix>
+<ows:Identifier>9</ows:Identifier>
+<ScaleDenominator>37797.69464300358</ScaleDenominator>
+<TopLeftCorner>-5120900.0 9998100.0</TopLeftCorner> <TileWidth>256</TileWidth> <TileHeight>256</TileHeight>
+<MatrixWidth>2177</MatrixWidth> <MatrixHeight>1269</MatrixHeight>
+</TileMatrix>
+<TileMatrix>
+<ows:Identifier>10</ows:Identifier>
+<ScaleDenominator>18898.84732150179</ScaleDenominator>
+<TopLeftCorner>-5120900.0 9998100.0</TopLeftCorner> <TileWidth>256</TileWidth> <TileHeight>256</TileHeight>
+<MatrixWidth>4353</MatrixWidth> <MatrixHeight>2538</MatrixHeight>
+</TileMatrix>
+<TileMatrix>
+<ows:Identifier>11</ows:Identifier>
+<ScaleDenominator>9449.423660750896</ScaleDenominator>
+<TopLeftCorner>-5120900.0 9998100.0</TopLeftCorner> <TileWidth>256</TileWidth> <TileHeight>256</TileHeight>
+<MatrixWidth>8706</MatrixWidth> <MatrixHeight>5075</MatrixHeight>
+</TileMatrix>
+<TileMatrix>
+<ows:Identifier>12</ows:Identifier>
+<ScaleDenominator>4724.711830375448</ScaleDenominator>
+<TopLeftCorner>-5120900.0 9998100.0</TopLeftCorner> <TileWidth>256</TileWidth> <TileHeight>256</TileHeight>
+<MatrixWidth>17411</MatrixWidth> <MatrixHeight>10150</MatrixHeight>
+</TileMatrix>
+</TileMatrixSet>
+</Contents>
+<ServiceMetadataURL xlink:href="https://aineistot.esri.fi/arcgis/rest/services/Taustakartat/Harmaasavy/MapServer/WMTS/1.0.0/WMTSCapabilities.xml" /> </Capabilities>

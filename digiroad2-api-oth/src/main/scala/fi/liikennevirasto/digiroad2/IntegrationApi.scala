@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Saturday, Sunday}
 import fi.liikennevirasto.digiroad2.linearasset._
+import fi.liikennevirasto.digiroad2.masstransitstop.MassTransitStopOperations
 import fi.liikennevirasto.digiroad2.pointasset.oracle._
 import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, Formats}
@@ -57,7 +58,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case e: Exception => 99
       }
     }
-    def extractBearing(massTransitStop: PersistedMassTransitStop): (String, Option[Int]) = { "suuntima" -> massTransitStop.bearing }
+    def extractBearing(massTransitStop: PersistedMassTransitStop): (String, Option[Int]) = { "suuntima" -> MassTransitStopOperations.calculateActualBearing(massTransitStop.validityDirection.getOrElse(0), massTransitStop.bearing) }
     def extractExternalId(massTransitStop: PersistedMassTransitStop): (String, Long) = { "valtakunnallinen_id" -> massTransitStop.nationalId }
     def extractFloating(massTransitStop: PersistedMassTransitStop): (String, Boolean) = { "kelluvuus" -> massTransitStop.floating }
     def extractLinkId(massTransitStop: PersistedMassTransitStop): (String, Option[Long]) = { "link_id" -> Some(massTransitStop.linkId) }
@@ -72,6 +73,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
           "properties" -> Map(
             extractModifier(massTransitStop),
             latestModificationTime(massTransitStop.created.modificationTime, massTransitStop.modified.modificationTime),
+            lastModifiedBy(massTransitStop.created.modifier, massTransitStop.modified.modifier),
             extractBearing(massTransitStop),
             extractExternalId(massTransitStop),
             extractFloating(massTransitStop),
@@ -125,8 +127,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "startMeasure" -> speedLimit.startMeasure,
         "endMeasure" -> speedLimit.endMeasure,
         "linkId" -> speedLimit.linkId,
-        latestModificationTime(speedLimit.createdDateTime, speedLimit.modifiedDateTime)
-      )
+        latestModificationTime(speedLimit.createdDateTime, speedLimit.modifiedDateTime),
+        lastModifiedBy(speedLimit.createdBy, speedLimit.modifiedBy))
     }
   }
 
@@ -139,6 +141,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "trafficDirection" -> roadLink.trafficDirection.value,
         "linkType" -> roadLink.linkType.value,
         "modifiedAt" -> roadLink.modifiedAt,
+        lastModifiedBy(None, roadLink.modifiedBy),
         "linkSource" -> roadLink.linkSource.value) ++ roadLink.attributes.filterNot(_._1 == "MTKID").filterNot(_._1 == "ROADNUMBER").filterNot(_._1 == "ROADPARTNUMBER")
     }
   }
@@ -192,7 +195,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "linkId" -> asset.linkId,
         "startMeasure" -> asset.startMeasure,
         "endMeasure" -> asset.endMeasure,
-        latestModificationTime(asset.createdDateTime, asset.modifiedDateTime))
+        latestModificationTime(asset.createdDateTime, asset.modifiedDateTime),
+        lastModifiedBy(asset.createdBy, asset.modifiedBy))
     }
   }
 
@@ -203,7 +207,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         geometryWKTForPointAssets(pedestrianCrossing.lon, pedestrianCrossing.lat),
         "linkId" -> pedestrianCrossing.linkId,
         "m_value" -> pedestrianCrossing.mValue,
-        latestModificationTime(pedestrianCrossing.createdAt, pedestrianCrossing.modifiedAt))
+        latestModificationTime(pedestrianCrossing.createdAt, pedestrianCrossing.modifiedAt),
+        lastModifiedBy(pedestrianCrossing.createdBy, pedestrianCrossing.modifiedBy))
     }
   }
 
@@ -214,7 +219,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         geometryWKTForPointAssets(trafficLight.lon, trafficLight.lat),
         "linkId" -> trafficLight.linkId,
         "m_value" -> trafficLight.mValue,
-        latestModificationTime(trafficLight.createdAt, trafficLight.modifiedAt))
+        latestModificationTime(trafficLight.createdAt, trafficLight.modifiedAt),
+        lastModifiedBy(trafficLight.createdBy, trafficLight.modifiedBy))
     }
   }
 
@@ -228,7 +234,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "bearing" -> directionalTrafficSign.bearing,
         "side_code" -> directionalTrafficSign.validityDirection,
         "text" -> directionalTrafficSign.text.map(_.split("\n").toSeq),
-        latestModificationTime(directionalTrafficSign.createdAt, directionalTrafficSign.modifiedAt))
+        latestModificationTime(directionalTrafficSign.createdAt, directionalTrafficSign.modifiedAt),
+        lastModifiedBy(directionalTrafficSign.createdBy, directionalTrafficSign.modifiedBy))
     }
   }
 
@@ -238,6 +245,32 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         .orElse(createdDateTime)
         .map(DateTimePropertyFormat.print)
         .getOrElse("")
+  }
+
+  def lastModifiedBy(createdBy: Option[String], modifiedBy: Option[String]): (String, Boolean) = {
+
+    val autoGeneratedValues = List("dr1conversion", "dr1_conversion", nonFixedUsers(modifiedBy), nonFixedUsers(createdBy), "automatic_correction", "excel_data_migration", "automatic_generation", "vvh_generated", "vvh_modified")
+
+    modifiedBy match {
+      case None => "generatedValue" -> false
+      case Some(value) if (value != null) =>
+        return "generatedValue" -> autoGeneratedValues.exists(agv => agv.equals(value))
+    }
+    createdBy match {
+      case None => "generatedValue" -> false
+      case Some(value) =>
+        "generatedValue" -> autoGeneratedValues.exists(agv => agv.equals(value))
+    }
+  }
+
+  def nonFixedUsers(userOption: Option[String])={
+    val nonFixedValues = List("split_speedlimit_", "batch_process_")
+    userOption match {
+      case Some(user) if(nonFixedValues.exists(nfv => user.startsWith(nfv))) =>
+        user
+      case _ =>
+        ""
+    }
   }
 
   def geometryWKTForLinearAssets(geometry: Seq[Point]): (String, String) =
@@ -270,7 +303,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "m_value" -> railwayCrossing.mValue,
         "safetyEquipment" -> railwayCrossing.safetyEquipment,
         "name" -> railwayCrossing.name,
-        latestModificationTime(railwayCrossing.createdAt, railwayCrossing.modifiedAt))
+        latestModificationTime(railwayCrossing.createdAt, railwayCrossing.modifiedAt),
+        lastModifiedBy(railwayCrossing.createdBy, railwayCrossing.modifiedBy))
     }
   }
 
@@ -282,7 +316,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "linkId" -> obstacle.linkId,
         "m_value" -> obstacle.mValue,
         "obstacle_type" -> obstacle.obstacleType,
-        latestModificationTime(obstacle.createdAt, obstacle.modifiedAt))
+        latestModificationTime(obstacle.createdAt, obstacle.modifiedAt),
+        lastModifiedBy(obstacle.createdBy, obstacle.modifiedBy))
     }
   }
 
@@ -297,7 +332,10 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "validityPeriods" -> manoeuvre.validityPeriods.map(toTimeDomain),
         "validityPeriodMinutes" -> manoeuvre.validityPeriods.map(toTimeDomainWithMinutes),
         "additionalInfo" -> manoeuvre.additionalInfo,
-        "modifiedDateTime" -> manoeuvre.modifiedDateTime)
+        "modifiedDateTime" -> manoeuvre.modifiedDateTime,
+        lastModifiedBy(None, Some(manoeuvre.modifiedBy)))
+
+
     }
   }
 
@@ -307,7 +345,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "point" -> Point(asset.lon, asset.lat),
         geometryWKTForPointAssets(asset.lon, asset.lat),
         "services" -> asset.services,
-        latestModificationTime(asset.createdAt, asset.modifiedAt))
+        latestModificationTime(asset.createdAt, asset.modifiedAt),
+        lastModifiedBy(asset.createdBy, asset.modifiedBy))
     }
   }
 

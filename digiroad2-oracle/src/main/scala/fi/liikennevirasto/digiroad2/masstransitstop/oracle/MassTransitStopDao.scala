@@ -9,6 +9,7 @@ import Database.dynamicSession
 import fi.liikennevirasto.digiroad2.{FloatingReason, MassTransitStopRow, Point, RoadLinkService}
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import fi.liikennevirasto.digiroad2.asset.{MassTransitStopValidityPeriod, _}
+import fi.liikennevirasto.digiroad2.masstransitstop.MassTransitStopOperations
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.user.User
@@ -55,16 +56,8 @@ class MassTransitStopDao {
     else Option(assetRow.property.propertyDisplayValue)
   }
 
-  private[this] def calculateActualBearing(validityDirection: Int, bearing: Option[Int]): Option[Int] = {
-    if (validityDirection != 3) {
-      bearing
-    } else {
-      bearing.map(_ - 180).map(x => if (x < 0) x + 360 else x)
-    }
-  }
-
   private[oracle] def getBearingDescription(validityDirection: Int, bearing: Option[Int]): String = {
-    calculateActualBearing(validityDirection, bearing).getOrElse(0) match {
+    MassTransitStopOperations.calculateActualBearing(validityDirection, bearing).getOrElse(0) match {
       case x if 46 to 135 contains x => "Itä"
       case x if 136 to 225 contains x => "Etelä"
       case x if 226 to 315 contains x => "Länsi"

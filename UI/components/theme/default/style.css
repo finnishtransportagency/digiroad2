@@ -514,3 +514,10 @@ a.olControlZoomOut {
 img.olTileImage {
     max-width: none;
 }
+
+.ol-box {
+    box-sizing: border-box;
+    border-radius: 2px;
+    border: 2px solid red;
+    background: rgba(255, 255, 255, 0.5);
+}
