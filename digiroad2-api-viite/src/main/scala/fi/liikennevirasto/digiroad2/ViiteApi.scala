@@ -174,11 +174,11 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val project = parsedBody.extract[RoadAddressProjectExtracted]
     val user = userProvider.getCurrentUser()
     val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
-    val roadAddressProject  = RoadAddressProject(project.id, project.status, project.name, user.username, DateTime.now(), "-", formatter.parseDateTime(project.startDate), DateTime.now(), project.additionalInfo, project.roadNumber, project.startPart, project.endPart)
+    val roadAddressProject  = RoadAddressProject( project.id, RoadAddressProjectState.apply(project.status), project.name, user.username, DateTime.now(), "-", formatter.parseDateTime(project.startDate), DateTime.now(), project.additionalInfo, project.roadNumber, project.startPart, project.endPart)
     roadAddressService.saveRoadLinkProject(roadAddressProject)
   }
   get("/roadlinks/roadaddress/project/all") {
-    roadAddressService.getRoadAddressAllProjects()
+    roadAddressService.getRoadAddressAllProjects().map(roadAddressProjectToApi)
   }
 
   get("/roadlinks/roadaddress/project/all/projectId/:id") {
@@ -282,10 +282,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   def roadAddressProjectToApi(roadAddressProject: RoadAddressProject): Map[String, Any] = {
     Map(
       "id" -> roadAddressProject.id,
-      "status" -> roadAddressProject.status,
+      "statusCode" -> roadAddressProject.status.value,
+      "statusDescription" -> roadAddressProject.status.description,
       "name" -> roadAddressProject.name,
       "createdBy" -> roadAddressProject.createdBy,
-      // for some reason created date is null when project is inserted through sqldeveloper's table view with right mouse click -> insert row even though correct date is visually shown
       "createdDate" -> { if (roadAddressProject.createdDate==null){null} else {roadAddressProject.createdDate.toString}},
       "dateModified" -> { if (roadAddressProject.dateModified==null){null} else {formatToString(roadAddressProject.dateModified.toString)}},
       "startDate" -> { if (roadAddressProject.startDate==null){null} else {formatToString(roadAddressProject.startDate.toString)}},

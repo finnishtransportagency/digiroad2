@@ -42,6 +42,23 @@ object Discontinuity {
   case object Continuous extends Discontinuity { def value = 5 ; def description = "Jatkuva"}
 }
 
+sealed trait RoadAddressProjectState{
+  def value: Int
+  def description: String
+}
+
+object RoadAddressProjectState{
+
+  val values = Set(Closed, Incomplete)
+
+  def apply(value: Long): RoadAddressProjectState = {
+    values.find(_.value == value).getOrElse(Closed)
+  }
+
+  case object Closed extends RoadAddressProjectState {def value = 0; def description = "Suljettu"}
+  case object Incomplete extends RoadAddressProjectState { def value = 1; def description = "Keskeneräinen"}
+}
+
 sealed trait CalibrationCode {
   def value: Int
 }
@@ -74,7 +91,7 @@ case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
                        calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false,
                        geom: Seq[Point])
 
-case class RoadAddressProject(id: Long, status: Long, name: String, createdBy: String, createdDate: DateTime, modifiedBy:String, startDate: DateTime, dateModified: DateTime, additionalInfo :String, roadNumber: Long, startPart: Long, endPart: Long)
+case class RoadAddressProject(id: Long, status: RoadAddressProjectState, name: String, createdBy: String, createdDate: DateTime, modifiedBy:String, startDate: DateTime, dateModified: DateTime, additionalInfo :String, roadNumber: Long, startPart: Long, endPart: Long)
 
 case class RoadAddressProjectLink(id : Long, projectId: Long, roadType: Long, discontinuityType: Discontinuity, roadNumber: Long, roadPartNumber: Long, startAddrM: Long, endAddrM: Long, lrmPositionId: Long, cratedBy: String, modifiedBy: String, linkId: Long, length: Double)
 
@@ -765,7 +782,7 @@ object RoadAddressDAO {
   def createRoadAddressProject(roadAddressProject: RoadAddressProject): Unit ={
     sqlu"""
            insert into project (id, state, name, ely, created_by, created_date, start_date ,modified_by, modified_date, add_info)
-           values (${roadAddressProject.id}, ${roadAddressProject.status}, ${roadAddressProject.name}, 0, ${roadAddressProject.createdBy}, sysdate ,${roadAddressProject.startDate}, '-' , sysdate, ${roadAddressProject.additionalInfo})
+           values (${roadAddressProject.id}, ${roadAddressProject.status.value}, ${roadAddressProject.name}, 0, ${roadAddressProject.createdBy}, sysdate ,${roadAddressProject.startDate}, '-' , sysdate, ${roadAddressProject.additionalInfo})
            """.execute
   }
 
@@ -811,7 +828,7 @@ object RoadAddressDAO {
 
   def updateRoadAddressProject(roadAddressProject : RoadAddressProject): Unit ={
     sqlu"""
-           update project set state = ${roadAddressProject.status}, name = ${roadAddressProject.name}, modified_by = '-' ,modified_date = sysdate where id = ${roadAddressProject.id}
+           update project set state = ${roadAddressProject.status.value}, name = ${roadAddressProject.name}, modified_by = '-' ,modified_date = sysdate where id = ${roadAddressProject.id}
            """.execute
   }
 
@@ -821,7 +838,7 @@ object RoadAddressDAO {
             FROM project $where"""
     Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String )](query).list.map{
       case(id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo) =>
-        RoadAddressProject(id, state, name, createdBy, start_date, modifiedBy, createdDate, modifiedDate, addInfo, 0, 0, 0)
+        RoadAddressProject(id, RoadAddressProjectState.apply(state), name, createdBy, start_date, modifiedBy, createdDate, modifiedDate, addInfo, 0, 0, 0)
     }.headOption
   }
 
@@ -834,7 +851,7 @@ object RoadAddressDAO {
             FROM project $filter order by name, id """
     Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String )](query).list.map{
       case(id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo) =>
-        RoadAddressProject(id, state, name, createdBy, createdDate ,modifiedBy, start_date, modifiedDate, addInfo, 0, 0, 0)
+        RoadAddressProject(id, RoadAddressProjectState.apply(state), name, createdBy, createdDate ,modifiedBy, start_date, modifiedDate, addInfo, 0, 0, 0)
     }
   }
 }
