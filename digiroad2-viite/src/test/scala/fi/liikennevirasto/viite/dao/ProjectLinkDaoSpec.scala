@@ -19,8 +19,8 @@ class ProjectLinkDaoSpec  extends FunSuite with Matchers{
   }
 
   def addprojects(): Unit ={
-    sqlu"""insert into project (id,state,name,ely,created_by) VALUES (1,0,'testproject',1,'automatedtest')""".execute
-    sqlu"""insert into project (id,state,name,ely,created_by) VALUES (2,0,'testproject2',1,'automatedtest')""".execute
+    sqlu"""insert into project (id,state,name,ely,created_by, start_date) VALUES (1,0,'testproject',1,'automatedtest', sysdate)""".execute
+    sqlu"""insert into project (id,state,name,ely,created_by, start_date) VALUES (2,0,'testproject2',1,'automatedtest', sysdate)""".execute
   }
 
   test("Add two links that are not reserved")

@@ -161,14 +161,27 @@ window.LinearAssetLayer = function(params) {
 
   var linearAssetCutter = new LinearAssetCutter(me.eventListener, vectorLayer, collection);
 
-  var OnSelect = function(feature) {
-    if(feature.selected.length !== 0) {
-      selectedLinearAsset.open(feature.selected[0].getProperties(), true);
+  var OnSelect = function(evt) {
+    if(evt.selected.length !== 0) {
+      var feature = evt.selected[0];
+      var properties = feature.getProperties();
+      verifyClickEvent(properties, evt);
     }else{
       if (selectedLinearAsset.exists()) {
-          selectedLinearAsset.close();
+         selectedLinearAsset.close();
       }
     }
+  };
+
+  var verifyClickEvent = function(properties, evt){
+    var singleLinkSelect = evt.mapBrowserEvent.type === 'dblclick';
+    selectedLinearAsset.open(properties, singleLinkSelect);
+    highlightMultipleLinearAssetFeatures();
+  };
+
+  var highlightMultipleLinearAssetFeatures = function() {
+    var selectedAssets = selectedLinearAsset.get();
+    selectToolControl.addSelectionFeatures( style.renderFeatures(selectedAssets));
   };
 
   var selectToolControl = new SelectToolControl(application, vectorLayer, map, {

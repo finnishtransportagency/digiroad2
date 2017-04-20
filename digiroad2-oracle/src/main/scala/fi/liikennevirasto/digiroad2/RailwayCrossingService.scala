@@ -29,7 +29,12 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
   }
 
   private def floatingAdjustment(roadLinks: Seq[RoadLink], changeInfo: Seq[ChangeInfo], assetBeforeUpdate: AssetBeforeUpdate) = {
-    if (assetBeforeUpdate.persistedFloating || assetBeforeUpdate.asset.floating) {
+    val hasChangeInfo = changeInfo.filter(changeInfos => changeInfos.oldId.getOrElse(0L) == assetBeforeUpdate.asset.linkId && changeInfos.vvhTimeStamp > assetBeforeUpdate.asset.vvhTimeStamp).headOption match {
+      case Some(inf) => true
+      case _ => false
+    }
+
+    if (hasChangeInfo) {
       PointAssetFiller.correctedPersistedAsset(assetBeforeUpdate.asset, roadLinks, changeInfo) match {
         case Some(adjustment) =>
           val updatedAsset = IncomingRailwayCrossing(adjustment.lon, adjustment.lat, adjustment.linkId, assetBeforeUpdate.asset.safetyEquipment, assetBeforeUpdate.asset.name)

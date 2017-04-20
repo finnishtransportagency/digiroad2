@@ -1,5 +1,11 @@
 (function(root) {
   root.LocationSearch = function(backend, applicationModel) {
+    /**
+     * Search by street address
+     *
+     * @param street
+     * @returns {*}
+     */
     var geocode = function(street) {
       return backend.getGeocode(street.address).then(function(result) {
         var resultLength = _.get(result, 'results.length');
@@ -14,23 +20,45 @@
       });
     };
 
-    var getCoordinatesFromRoadAddress = function(road) {
+    /**
+     * Road address search
+     *
+     * @param roadData
+     * @returns {*}
+     */
+    function roadLocationAPIResultParser(roadData){
       var constructTitle = function(result) {
         var address = _.get(result, 'alkupiste.tieosoitteet[0]');
         var titleParts = [_.get(address, 'tie'), _.get(address, 'osa'), _.get(address, 'etaisyys'), _.get(address, 'ajorata')];
         return _.some(titleParts, _.isUndefined) ? '' : titleParts.join(' ');
       };
+      var lon = _.get(roadData, 'alkupiste.tieosoitteet[0].point.x');
+      var lat = _.get(roadData, 'alkupiste.tieosoitteet[0].point.y');
+      var title = constructTitle(roadData);
+      if (lon && lat) {
+        return  [{title: title, lon: lon, lat: lat, resultType:"road"}];
+      } else {
+        return [];
+      }
+    }
+
+
+    /**
+     * Get road address coordinates
+     *
+     * @param road
+     * @returns {*}
+     */
+    var getCoordinatesFromRoadAddress = function(road) {
       return backend.getCoordinatesFromRoadAddress(road.roadNumber, road.section, road.distance, road.lane)
-        .then(function(result) {
-          var lon = _.get(result, 'alkupiste.tieosoitteet[0].point.x');
-          var lat = _.get(result, 'alkupiste.tieosoitteet[0].point.y');
-          var title = constructTitle(result);
-          if (lon && lat) {
-            return [{ title: title, lon: lon, lat: lat }];
-          } else {
+        .then(function(resultfromapi) {
+          var searchResult = roadLocationAPIResultParser(resultfromapi);
+          if (searchResult.length === 0) {
             return $.Deferred().reject('Tuntematon tieosoite');
+          } else {
+            return searchResult;
           }
-      });
+        });
     };
 
     var resultFromCoordinates = function(coordinates) {

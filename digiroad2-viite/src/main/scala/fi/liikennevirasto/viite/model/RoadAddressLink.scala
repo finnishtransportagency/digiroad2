@@ -12,7 +12,7 @@ case class RoadAddressLink(id: Long, linkId: Long, geometry: Seq[Point],
                            attributes: Map[String, Any] = Map(), roadNumber: Long, roadPartNumber: Long, trackCode: Long, elyCode: Long, discontinuity: Long,
                            startAddressM: Long, endAddressM: Long, startDate: String, endDate: String, startMValue: Double, endMValue: Double, sideCode: SideCode,
                            startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint],
-                           anomaly: Anomaly = Anomaly.None) extends PolyLine {
+                           anomaly: Anomaly = Anomaly.None, lrmPositionId: Long) extends PolyLine {
 }
 
 sealed trait Anomaly {

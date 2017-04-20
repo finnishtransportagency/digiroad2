@@ -9,6 +9,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   var requestingMovePermission  = false;
   var isComplementaryActiveBS = false;
   var massTransitStopLayerStyles = MassTransitStopLayerStyles(roadLayer);
+  var visibleAssets;
 
   var selectedControl = 'Select';
 
@@ -129,6 +130,11 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     var feature = asset.massTransitStop.getMarkerFeature();
     if(_.some(assetSource.getFeatures(), function(f){ return f == feature; }))
       assetSource.removeFeature(feature);
+  };
+
+  this.removeLayerFeatures = function () {
+    roadLayer.clearSelection();
+    _.each(visibleAssets, function (asset) { destroyAsset(asset); });
   };
 
   var isSelected = function(asset) {
@@ -503,6 +509,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   };
 
   function handleAllAssetsUpdated(assets) {
+    visibleAssets = assets;
     if (zoomlevels.isInAssetZoomLevel(map.getView().getZoom())) {
       updateAllAssets(assets);
     }

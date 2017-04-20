@@ -44,7 +44,7 @@
         }),
         stroke: new ol.style.Stroke({
           color: 'rgba(0, 255, 0, 0.95)',
-          width: 12
+          width: 8
         })
       });
 
@@ -200,7 +200,7 @@
       condition: ol.events.condition.singleClick,
       //The new/temporary layer needs to have a style function as well, we define it here.
       style: function(feature, resolution) {
-        return styler.generateStyleByFeature(feature.roadLinkData,map.getView().getZoom());
+        return styler.generateStyleByFeature(feature.roadLinkData,map.getView().getZoom(), true);
       }
     });
 
@@ -242,12 +242,18 @@
             var nonFloatings = event.selected;
             removeFeaturesFromSelection(nonFloatings);
             addFeaturesToSelection(floatings);
-          }else if ('unknown' === applicationModel.getSelectionType() && !applicationModel.isReadOnly() &&
-            selection.roadLinkData.anomaly === 1 && selection.roadLinkData.roadLinkType !== -1  ){
-            selectedLinkProperty.openUnknown(selection.roadLinkData.linkId, selection.roadLinkData.id, visibleFeatures);
+          }else if('unknown' === applicationModel.getSelectionType() && !applicationModel.isReadOnly()) {
+            if (selection.roadLinkData.anomaly === 1 && selection.roadLinkData.roadLinkType !== -1) {
+              selectedLinkProperty.openUnknown(selection.roadLinkData.linkId, selection.roadLinkData.id, visibleFeatures);
+            } else if(event.selected.length !== 0){
+              var deselecting = event.deselected;
+              var selecting = event.selected;
+              removeFeaturesFromSelection(selecting);
+              addFeaturesToSelection(deselecting);
+            }
           }
           else {
-            if (isAnomalousById(selection.id) || isFloatingById(selection.id)) {
+            if (isAnomalousById(selection.id) || isFloatingById(selection.id) || selection.roadLinkData.anomaly === 1) {
               selectedLinkProperty.open(selection.roadLinkData.linkId, selection.roadLinkData.id, false, visibleFeatures);
             } else {
               selectedLinkProperty.open(selection.roadLinkData.linkId, selection.roadLinkData.id, true, visibleFeatures);
@@ -440,6 +446,8 @@
     };
 
     var draw = function() {
+      var marker;
+      var middlefloating;
       cachedLinkPropertyMarker = new LinkPropertyMarker(selectedLinkProperty);
       cachedMarker = new LinkPropertyMarker(selectedLinkProperty);
       removeSelectInteractions();
@@ -450,7 +458,7 @@
       if(anomalousMarkerLayer.getSource() !== null)
         anomalousMarkerLayer.getSource().clear();
 
-      if(map.getView().getZoom() > zoomlevels.minZoomForAssets) {
+      if(map.getView().getZoom() >= zoomlevels.minZoomForAssets) {
         var floatingRoadMarkers = _.filter(roadLinks, function(roadlink) {
           return roadlink.roadLinkType === -1;
         });
@@ -459,21 +467,19 @@
           return roadlink.anomaly === 1;
         });
 
-        _.each(floatingRoadMarkers, function(floatlink) {
-          var marker = cachedLinkPropertyMarker.createMarker(floatlink);
-          floatingMarkerLayer.getSource().addFeature(marker);
-        });
+          var floatingGroups = _.groupBy(floatingRoadMarkers, function(value){
+            return value.linkId;
+          });
 
-        var featuresAnomalous = _.map(selectedLinkProperty.getFeaturesToKeep(), function(featureKeep){
-          if(featureKeep.anomaly === 1 && featureKeep.roadLinkType !== -1) {
-            return featureKeep.linkId;
-          }
-        });
-
-        _.each(anomalousRoadMarkers, function(anomalouslink) {
-          var marker = cachedMarker.createMarker(anomalouslink);
-          anomalousMarkerLayer.getSource().addFeature(marker);
-        });
+          var orderFloatGroup = _.sortBy(floatingGroups, 'startAddressM');
+          _.each(orderFloatGroup, function(floatGroup) {
+            floatGroup.sort(function(firstFloat, secondFloat){
+              return firstFloat.startAddressM - secondFloat.startAddressM;
+            });
+            middlefloating = floatGroup[Math.floor(floatGroup.length / 2)];
+            marker = cachedLinkPropertyMarker.createMarker(middlefloating);
+            floatingMarkerLayer.getSource().addFeature(marker);
+          });
 
         _.each(anomalousRoadMarkers, function(anomalouslink) {
           var marker = cachedMarker.createMarker(anomalouslink);
@@ -824,6 +830,14 @@
       else return _.first(features);
     };
 
+    eventbus.on('linkProperties:highlightSelectedProject', function(featureLinkId){
+      setGeneralOpacity(0.2);
+      var projectFeature = _.filter(roadLayer.layer.getSource().getFeatures(), function (ft) {
+        return ft.roadLinkData.linkId === featureLinkId;
+      });
+      addFeaturesToSelection(projectFeature);
+    });
+
     eventbus.on('linkProperties:highlightAnomalousByFloating', function(){
       highlightAnomalousFeaturesByFloating();
     });
@@ -884,8 +898,16 @@
       deactivateSelectInteractions();
     });
 
+    eventListener.listenTo(eventbus, 'linkProperties:deactivateAllSelections', function(){
+      deactivateSelectInteractions(true);
+    });
+
     eventListener.listenTo(eventbus, 'linkProperties:activateDoubleClick', function(){
       activateSelectInteractions();
+    });
+
+    eventListener.listenTo(eventbus, 'linkProperties:activateAllSelections', function(){
+      activateSelectInteractions(true);
     });
 
     var show = function(map) {
