@@ -150,4 +150,12 @@ object MassTransitStopOperations {
       .flatMap(_.values).map(_.propertyValue)
     propertiesSelected.contains(VirtualBusStopPropertyValue) && propertiesSelected.exists(!_.equals(VirtualBusStopPropertyValue))
   }
+
+   def calculateActualBearing(validityDirection: Int, bearing: Option[Int]): Option[Int] = {
+      if (validityDirection != 3) {
+        bearing
+      } else {
+        bearing.map(_ - 180).map(x => if (x < 0) x + 360 else x)
+      }
+    }
 }

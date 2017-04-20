@@ -114,23 +114,23 @@
 }
 
 //** Scale
-
 #map-plugins {
 	.scalebar {
 		position: absolute;
 		right: @feature-attribute-panel-width + 70px;
 		bottom: @line-height-base * 2.5;
-		font-size: 9px;
-		line-height: @line-height-modifier * 3;
-		color: @gray-darker-2;
 
-		.olControlScaleLineTop,
-		.olControlScaleLineBottom {
-			border-color: @gray-darker-2;
+		.olScaleLine {
 		}
-
-		.olControlScaleLineBottom {
-			display: none;
+		.olScaleLine-inner {
+			border: 2px solid @gray-darker-2;
+			border-top: none;
+			font-size: 9px;
+			line-height: @line-height-modifier * 3;
+			color: @gray-darker-2;
+			text-align: center;
+			margin: 1px;
+			will-change: contents, width;
 		}
 	}	
 }

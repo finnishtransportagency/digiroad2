@@ -63,7 +63,7 @@
 
     this.saveMultiple = function(value) {
       eventbus.trigger(singleElementEvent('saving'));
-      var partition = _.groupBy(selection, isUnknown);
+      var partition = _.groupBy(_.map(selection, function(item){ return _.omit(item, 'geometry'); }), isUnknown);
       var unknownLinearAssets = partition[true];
       var knownLinearAssets = partition[false];
 
@@ -102,7 +102,7 @@
       eventbus.trigger(singleElementEvent('saving'));
       var payloadContents = function() {
         if (self.isUnknown()) {
-          return { newLimits: selection };
+          return { newLimits: _.map(selection, function(item){ return _.omit(item, 'geometry'); }) };
         } else {
           return { ids: _.pluck(selection, 'id') };
         }

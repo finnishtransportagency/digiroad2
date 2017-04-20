@@ -5,9 +5,9 @@
     var mapOverLinkMiddlePoints = function(links, transformation) {
       return _.map(links, function(link) {
         var points = _.map(link.points, function(point) {
-          return new OpenLayers.Geometry.Point(point.x, point.y);
+          return [point.x, point.y];
         });
-        var lineString = new OpenLayers.Geometry.LineString(points);
+        var lineString = new ol.geom.LineString(points);
         var middlePoint = GeometryUtils.calculateMidpointOfLineString(lineString);
         return transformation(link, middlePoint);
       });
@@ -59,7 +59,7 @@
     this.drawSigns = function(layer, roadLinks) {
       var signs = mapOverLinkMiddlePoints(roadLinks, function(link, middlePoint) {
         var attributes = _.merge({}, link, { rotation: 0 });
-        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(middlePoint.x, middlePoint.y), attributes);
+        return new OpenLayers.Feature.Vector(new ol.geom.Point(middlePoint.x, middlePoint.y), attributes);
       });
 
       layer.addFeatures(signs);
@@ -71,14 +71,9 @@
       }).map(function(roadLink) {
         return roadLink.calibrationPoints;
       }));
-      var actualPoints = _.filter(calibrationPoints, function(cp){
+      return _.filter(calibrationPoints, function(cp){
         return cp.point !== undefined;
       });
-      var markers = _.map(actualPoints, function (cp) {
-        var calMarker = new CalibrationPoint(cp.point);
-        return calMarker.getMarker(false);
-      });
-      layer.addFeatures(markers);
     };
 
     this.mapOverLinkMiddlePoints = mapOverLinkMiddlePoints;
@@ -89,7 +84,8 @@
       }
     };
     this.hide = function() {
-      roadLayer.clear();
+      //roadLayer.clear();
+      layer.clear();
       eventbus.off('map:moved', me.handleMapMoved);
     };
 

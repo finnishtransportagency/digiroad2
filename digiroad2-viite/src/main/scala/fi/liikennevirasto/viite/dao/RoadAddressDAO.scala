@@ -1,6 +1,7 @@
 package fi.liikennevirasto.viite.dao
 
 import java.sql.Timestamp
+import java.text.DecimalFormat
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing, Unknown}
@@ -11,7 +12,7 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.{RoadType, minRoadAddressPart}
 import fi.liikennevirasto.viite.dao.CalibrationCode._
-import fi.liikennevirasto.viite.model.Anomaly
+import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
@@ -77,13 +78,15 @@ case class RoadAddressProject(id: Long, status: Long, name: String, createdBy: S
 
 case class RoadAddressProjectLink(id : Long, projectId: Long, roadType: Long, discontinuityType: Discontinuity, roadNumber: Long, roadPartNumber: Long, startAddrM: Long, endAddrM: Long, lrmPositionId: Long, cratedBy: String, modifiedBy: String, linkId: Long, length: Double)
 
-case class RoadAddressProjectFormLine(projectId: Long, roadNumber: Long, roadPartNumber: Long, RoadLength: Long, ely : Long, discontinuity: String)
+case class RoadAddressProjectFormLine(startingLinkId: Long, projectId: Long, roadNumber: Long, roadPartNumber: Long, RoadLength: Long, ely : Long, discontinuity: String)
 
-case class RoadAddressCreator(administrativeClass : String, anomaly: Long, calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None),
+case class RoadAddressCreator(administrativeClass : String, anomaly: Long, calibrationPoints: Seq[CalibrationPointCreator],
                               constructionType: Long, discontinuity: Int, elyCode: Long, endAddressM : Long, endDate: String, endMValue: Double,
                               id : Long, linkId: Long, linkType: Long, mmlId: Long, modifiedAt : String, modifiedBy: String, municipalityCode : Long, points: Seq[Point],
                               roadClass : Long, roadLinkType: Long, roadNameFi: String, roadNumber : Long, roadPartNumber: Long,
                               roadType: String, segmentId : Long, sideCode : Int, startAddressM : Long, startDate:String, startMValue: Long, trackCode : Int)
+
+case class CalibrationPointCreator(point: Point, value: Int)
 
 case class MissingRoadAddress(linkId: Long, startAddrMValue: Option[Long], endAddrMValue: Option[Long],
                               roadType: RoadType, roadNumber: Option[Long], roadPartNumber: Option[Long],
@@ -281,7 +284,7 @@ object RoadAddressDAO {
         join lrm_position pos on ra.lrm_position_id = pos.id
         where floating = '0' and road_number = $roadNumber AND road_part_number = $roadPartNumber and t.id < t2.id AND
         (valid_to IS NULL OR valid_to >= sysdate) AND (valid_from IS NULL OR valid_from <= sysdate)
-          ORDER BY road_number, road_part_number, track_code, start_addr_m
+        ORDER BY road_number, road_part_number, track_code, start_addr_m
       """
     queryList(query)
   }
@@ -366,6 +369,21 @@ object RoadAddressDAO {
            geometry= MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(
              $x1,$y1,$z1,0.0,$x2,$y2,$z2,$length))
         WHERE id = ${roadAddress.id}""".execute
+    }
+  }
+
+  def updateGeometry(roadAddressId: Long, geometry: Seq[Point]): Unit = {
+    if(!geometry.isEmpty){
+      val newFormat = new DecimalFormat("#.###");
+      val first = geometry.head
+
+      val last = geometry.last
+      val (x1, y1, z1, x2, y2, z2) = (newFormat.format(first.x), newFormat.format(first.y), newFormat.format(first.z), newFormat.format(last.x), newFormat.format(last.y), newFormat.format(last.z))
+      val length = GeometryUtils.geometryLength(geometry)
+      sqlu"""UPDATE ROAD_ADDRESS
+        SET geometry= MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(
+             $x1,$y1,$z1,0.0,$x2,$y2,$z2,$length))
+        WHERE id = ${roadAddressId}""".execute
     }
   }
 
@@ -725,8 +743,7 @@ object RoadAddressDAO {
         case Some(dt) => dateFormatter.print(dt)
         case None => ""
       })
-//      addressPS.setString(11, address.modifiedBy.getOrElse("-"))
-      addressPS.setString(11, createdBy)
+      addressPS.setString(11, address.modifiedBy.getOrElse(createdBy))
     val (p1, p2) = (address.geom.head, address.geom.last)
       addressPS.setDouble(12, p1.x)
       addressPS.setDouble(13, p1.y)
@@ -748,7 +765,7 @@ object RoadAddressDAO {
   def createRoadAddressProject(roadAddressProject: RoadAddressProject): Unit ={
     sqlu"""
            insert into project (id, state, name, ely, created_by, created_date, start_date ,modified_by, modified_date, add_info)
-           values (${roadAddressProject.id}, ${roadAddressProject.status}, ${roadAddressProject.name}, 0, ${roadAddressProject.createdBy}, sysdate ,${roadAddressProject.startDate}, '-' , '', ${roadAddressProject.additionalInfo})
+           values (${roadAddressProject.id}, ${roadAddressProject.status}, ${roadAddressProject.name}, 0, ${roadAddressProject.createdBy}, sysdate ,${roadAddressProject.startDate}, '-' , sysdate, ${roadAddressProject.additionalInfo})
            """.execute
   }
 
@@ -756,7 +773,7 @@ object RoadAddressDAO {
     sqlu"""
            insert into project_link (id, project_id, road_type, discontinuity_type, road_number, road_part_number, start_addr_m, end_addr_m, lrm_position_id, created_by, modified_by, created_date, modified_date)
            values (${id}, ${roadAddressProject.id}, ${roadAddress.track.value}, ${roadAddress.discontinuity.value}, ${roadAddress.roadNumber}, ${roadAddress.roadPartNumber}, ${roadAddress.startAddrMValue},
-            ${roadAddress.endAddrMValue}, ${roadAddress.lrmPositionId}, ${roadAddressProject.createdBy} , ${roadAddressProject.modifiedBy}, ${roadAddress.startDate}, ${roadAddressProject.dateModified})
+            ${roadAddress.endAddrMValue}, ${roadAddress.lrmPositionId}, ${roadAddressProject.createdBy} , ${roadAddressProject.modifiedBy}, ${roadAddress.startDate}, sysdate)
            """.execute
   }
 
@@ -773,14 +790,29 @@ object RoadAddressDAO {
     }
   }
 
+  def getRoadAddress(id : Long, linkId : Long) : Option[RoadAddress] = {
+    val query = s"""
+        select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
+        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
+        pos.side_code,
+        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating,
+        (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as X,
+        (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 1) as Y,
+        (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as X2,
+        (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t WHERE id = 2) as Y2
+        from road_address ra
+        join lrm_position pos on ra.lrm_position_id = pos.id
+        where ra.lrm_position_id = ${id} and pos.link_id = ${linkId} and
+          (valid_from is null or valid_from <= sysdate) and
+          (valid_to is null or valid_to >= sysdate)
+      """
+    queryList(query).headOption
+  }
+
   def updateRoadAddressProject(roadAddressProject : RoadAddressProject): Unit ={
-   val state = roadAddressProject.status
-    val name = roadAddressProject.name
-    val id=roadAddressProject.id
-   val message=    sqlu"""
-           update project set state = $state, name = $name, modified_by = '-' ,modified_date = sysdate where id = $id
-           """
-    message.execute
+    sqlu"""
+           update project set state = ${roadAddressProject.status}, name = ${roadAddressProject.name}, modified_by = '-' ,modified_date = sysdate where id = ${roadAddressProject.id}
+           """.execute
   }
 
   def getRoadAddressProjectById(id : Long) : Option[RoadAddressProject] = {
@@ -793,12 +825,16 @@ object RoadAddressDAO {
     }.headOption
   }
 
-  def getRoadAddressProjects() : List[RoadAddressProject] = {
+  def getRoadAddressProjects(projectId: Long = 0) : List[RoadAddressProject] = {
+    val filter = projectId match{
+      case 0 => ""
+      case _ => s""" where id =${projectId}"""
+    }
     val query = s"""SELECT id, state, name, created_by, created_date, start_date, modified_by, modified_date, add_info
-            FROM project order by name, id """
+            FROM project $filter order by name, id """
     Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String )](query).list.map{
       case(id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo) =>
-        RoadAddressProject(id, state, name, createdBy, start_date ,modifiedBy, createdDate, modifiedDate, addInfo, List.empty[minRoadAddressPart])
+        RoadAddressProject(id, state, name, createdBy, createdDate, modifiedBy, start_date , modifiedDate, addInfo, List.empty[minRoadAddressPart])
     }
   }
 

@@ -29,26 +29,32 @@
     }
 
     function fetchProjects(){
-        projectCollection.getAll().then(function(projects){
-          var unfinishedProjects = _.filter(projects, function(proj){
-            return proj.status === 1;
-          });
-          if(!_.isEmpty(unfinishedProjects)){
-            var html = '<table align="center">';
-            _.each(unfinishedProjects, function(proj) {
-              html += '<tr class="project-item">' +
-                '<td>'+ staticField('PROJEKTIN NIMI', proj.name)+'</td>'+
-                '<td>'+ staticField('TILA', proj.status)+'</td>'+
-                '<td>'+'<button class="project-open btn btn-new" id="open-project-<%= proj.id %>">Avaa</button>' +'</td>'+
-                '</tr>';
-            });
-            html += '</table>';
-            $('#project-list').html($(html));
-            $('[id*="open-project"]').click(unfinishedProjects,function(event) {
-              eventbus.trigger("roadAddress:openProject");
-            });
-          }
+      projectCollection.getProjects().then(function(projects){
+        var unfinishedProjects = _.filter(projects, function(proj){
+          return proj.status === 1;
         });
+        if(!_.isEmpty(unfinishedProjects)){
+          var html = '<table align="center">';
+          _.each(unfinishedProjects, function(proj) {
+            html += '<tr class="project-item">' +
+              '<td>'+ staticField('PROJEKTIN NIMI', proj.name)+'</td>'+
+              '<td>'+ staticField('TILA', proj.status)+'</td>'+
+              '<td>'+'<button class="project-open btn btn-new" id="open-project-'+proj.id +'" value="'+proj.id+'">Avaa</button>' +'</td>'+
+              '</tr>';
+          });
+          html += '</table>';
+          $('#project-list').html($(html));
+          $('[id*="open-project"]').click(function(event) {
+            projectCollection.getProjectsWithLinksById(parseInt(event.currentTarget.value)).then(function(result){
+              setTimeout(function(){}, 0);
+              eventbus.trigger('roadAddress:openProject', result);
+              if(applicationModel.isReadOnly()) {
+                $('.edit-mode-btn:visible').click();
+              }
+            });
+          });
+        }
+      });
       setTimeout(function(){}, 0);
       projectList.show();
     }
@@ -61,7 +67,7 @@
 
       projectList.on('click', 'button.new', function() {
         $('.project-list').append('<div class="modal-overlay confirm-modal"><div class="modal-dialog"></div></div>');
-        eventbus.trigger("roadAddress:newProject");
+        eventbus.trigger('roadAddress:newProject');
         if(applicationModel.isReadOnly()) {
           $('.edit-mode-btn:visible').click();
         }

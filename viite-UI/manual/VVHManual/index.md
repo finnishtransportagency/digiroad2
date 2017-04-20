@@ -766,14 +766,61 @@ _Vertical Level of Links._
 
 _Kun sovellus on laskenut tasosijainnit, ne on n&auml;ht&auml;viss&auml; ty&ouml;linkkien ominaisuustietotaulussa._
 
-5. MTK-p&auml;ivitysten ajaminen ja seuranta (vain kehitystiimin k&auml;ytt&ouml;&ouml;n)
+5. Suunnitelmalinkkien historiointi manuaalisesti
+--------------------------
+
+Kun MML palauttaa suunnitelmalinkit VVH:aan MTK-sanomien mukana, vastaava Suravage-aineisto l&ouml;ytyy my&ouml;s tielinkki-tasolta. Suunnitelmakohteet historioituvat suunnitelmalinkki-tasolta. Jos MML:n toimittama suunnitelmalinkki ei ole t&auml;ysin identtinen suunnitelmalinkin kanssa geometrialtaan, suunnitelmalinkki ei historioidu automaattisesti, vaan se on teht&auml;v&auml; VVH:ssa VVH-yll&auml;pit&auml;j&auml;n toimesta.
+
+Kohteet tulevat manuaaliseen historiointiin, jos
+
+- Kohde on huomattavasti muuttunut MML:lla, esimerkiksi sit&auml; pidennetty, lyhennetty, katkaistu tai yhdistetty toiseen linkkiin
+- Kohde on katsottu vastaavan jotain vanhaa MTK-ID:t&auml;, jolloin se ei ole varsinainen uusi Suravage-kohde eik&auml; sit&auml; olisi tarvinnut toimittaa MML:lle Suravage-prosessissa
+
+5.1. Lokin avaaminen
+--------------------------
+
+Kullakin k&auml;ytt&auml;j&auml;ll&auml; on loki, jossa on lueteltu ne MTK-ID:t, jotka on tunnistetu Suravage-kohteiksi, mutta joiden suunnitelmalinkki&auml; ei ole voitu historioida automaattisesti. Lokin saa n&auml;kyviin valikosta Digiroad: Editor -> Suravage History Log....
+
+Loki aukeaa n&auml;yt&ouml;n vasempaan laitaan.
+
+![Suravage manual history log](k56.png)
+
+_Suravage manual history log._
+
+Lokissa olevat sarakkeet kertovat kohteen MTK-ID:n, MML:n tekem&auml;n muutostyypin sek&auml; ty&ouml;n nimen, johon suunnitelmalinkki on alunperin tehty.
+
+5.2 Historioinnissa tarvittavat tasot
+--------------------------
+
+Historiointia varten kartalle tulee valita Add Layers -valikosta tasot:
+
+- Tielinkki (MTK)
+- Suunnitelmalinkki
+
+Tielinkki -tason avulla kohdistetaan lokista kohteeseen, jolle ei ole tunnistettu automaattisesti historioitavaa suunnitelmalinkki&auml;. Suunnitelmalinkki -tasolta vastaavasti valitaan kohteet, jotka historioidaan.
+
+5.3. Historiointiprosessi
+--------------------------
+
+Historiointi tapahtuu seuraavalla tavalla:
+
+1. Klikataan hiiren oikealla __lokista__ kohdetta ja valitaan "Zoom to Extent", sovellus kohdistaa kyseiseen MTK-ID:seen eli tielinkkiin
+1. Huomataan suunnilleen samasta kohdasta l&ouml;ytyv&auml; suunnitelmalinkki, joka voidaan historioida, koska MTK-kohde on korvannut sen
+1. Valitaan ArcMapin valintaty&ouml;kalulla historioitava __suunnitelmalinkki__ kartalta (historiointia varten kannattaa ko. taso laittaa asetukselle "Make this only selectable layer")
+1. Painetaan lokin alareunasta painiketta "Move to history"
+1. Nyt MTK-ID on k&auml;sitelty, ja sen saa pois lokista painamalla painiketta "Mark Processed"
+
+N&auml;in k&auml;yd&auml;&auml;n l&auml;pi koko loki, jotta suunnitelmalinkit eiv&auml;t j&auml;&auml; roikkumaan suunnitelmalinkki-tasolle kun MTK-linkit ovat ne korvanneet.
+
+
+6. MTK-p&auml;ivitysten ajaminen ja seuranta (vain kehitystiimin k&auml;ytt&ouml;&ouml;n)
 --------------------------
 
 VVH-sovellus p&auml;ivitt&auml;&auml; MTK:n p&auml;ivityssanomat joka aamuy&ouml; automaattisesti. Tarvittaessa p&auml;ivitykset voi my&ouml;s laittaa pois p&auml;&auml;lt&auml; (esim. Digiroad-julkaisua varten). Pois p&auml;&auml;lt&auml; olevista p&auml;ivityksist&auml; tai virheest&auml; p&auml;ivitysajossa ilmoitetaan kaikille k&auml;ytt&auml;jille sis&auml;&auml;nkirjautumisen yhteydess&auml;. Jos p&auml;ivitykset ovat p&auml;&auml;ll&auml;, eik&auml; virhetilanteita ole, niin ilmoitusta ei tule.
 
 P&auml;ivityksi&auml; ja niiden ajoa hallitsee toistaiseksi VVH:n kehitystiimi, eik&auml; muiden k&auml;ytt&auml;jien ole syyt&auml; puuttua p&auml;ivitysten ajoon.
 
-5.1. P&auml;ivitysten hallinta
+6.1. P&auml;ivitysten hallinta
 --------------------------
 
 P&auml;ivitykset voi poistaa automaattiajosta eli disabloida Digiroad Options -valikosta Database v&auml;lilehdelt&auml;. Kun VVH sovellus avataan, k&auml;ytt&auml;j&auml;lle ilmoitetaan, jos MTK-p&auml;ivitykset eiv&auml;t ole ajossa.
@@ -788,7 +835,7 @@ _Digiroad Updates. MTK-p&auml;ivitysten disablointi._
 
 _Kirjautumisen yhteydess&auml; n&auml;ytett&auml;v&auml; huomautus p&auml;ivityksien disabloinnista._
 
-5.2. Digiroad: RoadLink Changes
+6.2. Digiroad: RoadLink Changes
 --------------------------
 
 RoadLink Changes -valikossa voi tarkastella MTK-p&auml;ivityksi&auml; ja niiden muutoksia VVH:n tielinkki-aineistossa. RoadLink Changes avataan Digiroad Editor -alasvetovalikosta. Kun RoadLink Changes -ikkunan avaa, tulee kartalle my&ouml;s Tielinkin muutokset.lyr -taso, joka sis&auml;lt&auml;&auml; muutoskohteiden polygonit. Niiden avulla muutoksia voi olla helpompi tarkastella, erityisesti hy&ouml;dynt&auml;m&auml;ll&auml; attribuuttitaulua ja siell&auml; Select by Attributes -toimintoa esim. tietyn tyyppisten muutosten tarkasteluun (tuntematon, lyhennetty, pidennetty..).
@@ -822,7 +869,7 @@ Eri muutostyyppej&auml; ovat:
 
 Kun tarkastelee p&auml;ivityshistorian kohteita, kannattaa kartalle ottaa my&ouml;s tielinkin historia -taso ja visualisoida kaikki historian muutostyypit n&auml;kyviin. Tielinkin historiassa n&auml;kee vanhat tielinkit sellaisenaan, kuin ne ovat menneet historiaan.
 
-5.3 Here-flip
+6.3 Here-flip
 --------------------------
 
 Maastotietokannan kohteiden digitointisuunnat tarkistetaan MTK-importin yhteydess&auml;. Tarvittaessa digitointisuunta ja digitointisuuntariippuvaiset ominaisuustiedot k&auml;&auml;nnet&auml;&auml;n Here-flip -s&auml;&auml;nn&ouml;n mukaisesti. Here-flip -s&auml;&auml;nt&ouml; tarkoittaa, ett&auml; kaikkien tielinkkien digitointisuunnat noudattavat seuraavia s&auml;&auml;nt&ouml;j&auml;:

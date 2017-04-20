@@ -115,9 +115,9 @@
 
     var calculateMeasure = function(link) {
       var points = _.map(link.points, function(point) {
-        return new OpenLayers.Geometry.Point(point.x, point.y);
+        return [point.x, point.y];
       });
-      return new OpenLayers.Geometry.LineString(points).getLength();
+      return new ol.geom.LineString(points).getLength();
     };
 
     this.splitLinearAsset = function(id, split, callback) {
@@ -168,7 +168,8 @@
       var failure = function() {
         eventbus.trigger('asset:updateFailed');
       };
-
+      separatedLimit.A = _.omit(separatedLimit.A, 'geometry');
+      separatedLimit.B =_.omit(separatedLimit.B, 'geometry');
       if (separatedLimit.A.id) {
         backend.separateLinearAssets(typeId, separatedLimit.A.id, separatedLimit.A.value, separatedLimit.B.value, success, failure);
       } else {
@@ -188,9 +189,11 @@
     };
 
     this.separateLinearAsset = function(selectedLinearAsset) {
-      var limitA = _.cloneDeep(selectedLinearAsset);
-      var limitB = _.cloneDeep(selectedLinearAsset);
+      var limitA = _.clone(selectedLinearAsset);
+      var limitB = _.clone(selectedLinearAsset);
 
+      limitA = _.omit(limitA, 'geometry');
+      limitB = _.omit(limitB, 'geometry');
       limitA.sideCode = 2;
       limitA.marker = 'A';
       limitB.sideCode = 3;

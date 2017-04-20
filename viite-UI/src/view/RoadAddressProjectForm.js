@@ -11,9 +11,9 @@
 
     var largeInputField = function (dataField) {
       return '<div class="form-group">' +
-      '<label class="control-label">LISÄTIEDOT</label>'+
-      '<textarea class="form-control large-input roadAddressProject" id="lisatiedot">'+(dataField === undefined ? "" : dataField )+'</textarea>'+
-      '</div>';
+        '<label class="control-label">LISÄTIEDOT</label>'+
+        '<textarea class="form-control large-input roadAddressProject" id="lisatiedot">'+(dataField === undefined || dataField === null ? "" : dataField )+'</textarea>'+
+        '</div>';
     };
 
     var inputFieldRequired = function(labelText, id, placeholder,  value) {
@@ -85,7 +85,6 @@
       return _.template('' +
         '<header>' +
         titleWithProjectName(project.name) +
-        headerButton +
         '</header>' +
         '<div class="wrapper read-only">'+
         '<div class="form form-horizontal form-dark">'+
@@ -119,7 +118,6 @@
           '</div></div></div></div>'+
         '<footer>' + buttons + '</footer>');
     };
-
 
     var addSmallLabel = function(label){
       return '<label class="control-label-small">'+label+'</label>';
@@ -165,6 +163,22 @@
         applicationModel.setOpenProject(true);
       });
 
+      eventbus.on('roadAddress:openProject', function(result) {
+        currentProject = result.projects;
+        var text = '';
+        _.each(result.projectLinks, function(line){
+          text += '<div>' +
+            '<button class="delete btn-delete-roadpart">x</button>'+addSmallLabel(line.roadNumber)+ addSmallLabel(line.roadPartNumber)+ addSmallLabel(line.RoadLength)+ addSmallLabel(line.discontinuity)+ addSmallLabel(line.ely) +
+            '</div>';
+        });
+        rootElement.html(openProjectTemplate(currentProject, text));
+        jQuery('.modal-overlay').remove();
+        setTimeout(function(){}, 0);
+        if(!_.isUndefined(currentProject))
+          eventbus.trigger('linkProperties:selectedProject', currentProject.linkId);
+          applicationModel.setProjectButton(true);
+          applicationModel.setProjectFeature(currentProject.linkId);
+      });
 
       eventbus.on('roadAddress:selected roadAddress:cancelled', function(roadAddress) {
 
@@ -185,10 +199,13 @@
         });
         rootElement.html(openProjectTemplate(result.project, text));
 
-        jQuery('.modal-overlay').remove();
-        addDatePicker();
-        if(!_.isUndefined(result.projectAddresses))
-          eventbus.trigger('linkProperties:selectedProject', result.projectAddresses.linkId);
+          jQuery('.modal-overlay').remove();
+          addDatePicker();
+          if(!_.isUndefined(result.projectAddresses)) {
+            eventbus.trigger('linkProperties:selectedProject', result.projectAddresses.linkId);
+        } else {
+          jQuery('.modal-overlay').remove();
+        }
       });
 
       rootElement.on('click', '.project-form button.save', function() {

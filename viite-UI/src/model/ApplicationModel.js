@@ -12,6 +12,8 @@
     var activeButtons = false;
     var continueButton = false;
     var openProject = false;
+    var projectButton = false;
+    var projectFeature;
     var actionCalculating = 0;
     var actionCalculated = 1;
     var currentAction;
@@ -52,6 +54,16 @@
       }
     };
 
+    var setProjectFeature = function(featureLinkID){
+      projectFeature = featureLinkID;
+    };
+
+    var setProjectButton = function(newState){
+      if(projectButton !== newState){
+        projectButton = newState;
+        eventbus.trigger('application:projectButton', newState);
+      }
+    };
     var setOpenProject = function(newState){
       if(openProject !== newState){
         openProject = newState;
@@ -107,11 +119,11 @@
       resetCurrentAction: resetCurrentAction,
       actionCalculating: actionCalculating,
       actionCalculated: actionCalculated,
-      moveMap: function(zoom, bbox) {
+      moveMap: function(zoom, bbox, center) {
         var hasZoomLevelChanged = zoom.level !== zoom;
         setZoomLevel(zoom);
-        centerLonLat = bbox.getCenterLonLat();
-        eventbus.trigger('map:moved', {selectedLayer: selectedLayer, zoom: zoom, bbox: bbox, hasZoomLevelChanged: hasZoomLevelChanged});
+        centerLonLat = center;
+        eventbus.trigger('map:moved', {selectedLayer: selectedLayer, zoom: zoom, bbox: bbox, center: center, hasZoomLevelChanged: hasZoomLevelChanged});
       },
       setSelectedTool: setSelectedTool,
       getSelectedTool: function() {
@@ -137,9 +149,14 @@
       },
       setReadOnly: setReadOnly,
       setActiveButtons: setActiveButtons,
+      setProjectButton: setProjectButton,
+      setProjectFeature: setProjectFeature,
       setContinueButton: setContinueButton,
       getContinueButtons: getContinueButtons,
       setOpenProject : setOpenProject,
+      getProjectFeature: function() {
+        return projectFeature;
+      },
       addSpinner: addSpinner,
       removeSpinner: removeSpinner,
       isReadOnly: function() {
@@ -147,6 +164,9 @@
       },
       isActiveButtons: function() {
         return activeButtons;
+      },
+      isProjectButton: function() {
+        return projectButton;
       },
       isContinueButton: function() {
         return continueButton;
