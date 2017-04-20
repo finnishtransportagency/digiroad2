@@ -771,7 +771,7 @@ object RoadAddressDAO {
 
   def createRoadAddressProjectLink(id: Long, roadAddress: RoadAddress, roadAddressProject: RoadAddressProject) : Unit ={
     sqlu"""
-           insert into project_link (id, project_id, road_type, discontinuity_type, road_number, road_part_number, start_addr_m, end_addr_m, lrm_position_id, created_by, modified_by, created_date, modified_date)
+           insert into project_link (id, project_id, track_code, discontinuity_type, road_number, road_part_number, start_addr_m, end_addr_m, lrm_position_id, created_by, modified_by, created_date, modified_date)
            values (${id}, ${roadAddressProject.id}, ${roadAddress.track.value}, ${roadAddress.discontinuity.value}, ${roadAddress.roadNumber}, ${roadAddress.roadPartNumber}, ${roadAddress.startAddrMValue},
             ${roadAddress.endAddrMValue}, ${roadAddress.lrmPositionId}, ${roadAddressProject.createdBy} , ${roadAddressProject.modifiedBy}, ${roadAddress.startDate}, sysdate)
            """.execute
@@ -779,7 +779,7 @@ object RoadAddressDAO {
 
   def getRoadAddressProjectLinks(projectId : Long): List[RoadAddressProjectLink] ={
     val query =
-      s"""select PROJECT_LINK.ID, PROJECT_LINK.PROJECT_ID, PROJECT_LINK.ROAD_TYPE, PROJECT_LINK.DISCONTINUITY_TYPE, PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.START_ADDR_M, PROJECT_LINK.END_ADDR_M, PROJECT_LINK.LRM_POSITION_ID, PROJECT_LINK.CREATED_BY, PROJECT_LINK.MODIFIED_BY, lrm_position.link_id, (LRM_POSITION.END_MEASURE - LRM_POSITION.START_MEASURE) as length
+      s"""select PROJECT_LINK.ID, PROJECT_LINK.PROJECT_ID, PROJECT_LINK.TRACK_CODE, PROJECT_LINK.DISCONTINUITY_TYPE, PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.START_ADDR_M, PROJECT_LINK.END_ADDR_M, PROJECT_LINK.LRM_POSITION_ID, PROJECT_LINK.CREATED_BY, PROJECT_LINK.MODIFIED_BY, lrm_position.link_id, (LRM_POSITION.END_MEASURE - LRM_POSITION.START_MEASURE) as length
          from PROJECT_LINK join ROAD_ADDRESS join LRM_POSITION
          on LRM_POSITION.ID = ROAD_ADDRESS.LRM_POSITION_ID
          on (PROJECT_LINK.ROAD_NUMBER = ROAD_ADDRESS.ROAD_NUMBER and PROJECT_LINK.ROAD_PART_NUMBER = ROAD_ADDRESS.ROAD_PART_NUMBER and ROAD_ADDRESS.LRM_POSITION_ID = PROJECT_LINK.LRM_POSITION_ID)
