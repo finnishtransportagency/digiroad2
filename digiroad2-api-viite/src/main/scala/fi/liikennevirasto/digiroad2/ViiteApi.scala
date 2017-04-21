@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite.RoadAddressService
+import fi.liikennevirasto.viite.{ReservedRoadPart, RoadAddressService}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{RoadAddressLink, RoadAddressLinkPartitioner}
 import org.joda.time.DateTime
@@ -19,13 +19,16 @@ import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.{NotFound, _}
 import org.slf4j.LoggerFactory
 
+import scala.util.{Left, Right}
+
 /**
   * Created by venholat on 25.8.2016.
   */
 
 case class NewAddressDataExtracted(sourceIds: Set[Long], targetIds: Set[Long], roadAddress: Seq[RoadAddressCreator])
 
-case class RoadAddressProjectExtracted(id: Long, status: Long, name: String, startDate: String, additionalInfo: String, roadNumber: Long, startPart: Long, endPart: Long)
+
+case class RoadAddressProjectExtractor(id: Long, status: Long, name: String, startDate: String, additionalInfo: String,roadpartlist: List[ReservedRoadPart])
 
 class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
                val roadAddressService: RoadAddressService,
@@ -171,11 +174,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
 
   put("/roadlinks/roadaddress/project/save"){
-    val project = parsedBody.extract[RoadAddressProjectExtracted]
+    val project = parsedBody.extract[RoadAddressProjectExtractor]
     val user = userProvider.getCurrentUser()
     val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
-    val roadAddressProject  = RoadAddressProject( project.id, RoadAddressProjectState.apply(project.status), project.name, user.username, DateTime.now(), "-", formatter.parseDateTime(project.startDate), DateTime.now(), project.additionalInfo, project.roadNumber, project.startPart, project.endPart)
-    roadAddressService.saveRoadLinkProject(roadAddressProject)
+    val roadAddressProject= RoadAddressProject(project.id, RoadAddressProjectState.apply(project.status), project.name, user.username, DateTime.now(), "-", formatter.parseDateTime(project.startDate), DateTime.now(), project.additionalInfo, project.roadpartlist)
+    val (projectSaved, addr, info, success) = roadAddressService.saveRoadLinkProject(roadAddressProject)
+    Map("project" -> projectToApi(projectSaved), "projectAddresses" -> addr, "formInfo" -> info,
+      "success" -> success)
   }
   get("/roadlinks/roadaddress/project/all") {
     roadAddressService.getRoadAddressAllProjects().map(roadAddressProjectToApi)
@@ -189,10 +194,28 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     Map("projects" -> projectsWithLinkId, "projectLinks" -> projectLinks)
   }
 
+
+
+  get("/roadlinks/roadaddress/project/validatereservedlink/"){
+    val roadnumber = params("roadnumber").toLong
+    val startPart = params("startpart").toLong
+    val endPart = params("endpart").toLong
+    val errorMessageOpt=roadAddressService.checkRoadAddressNumberAndSEParts(roadnumber,startPart,endPart)
+    if (errorMessageOpt.isEmpty) {
+      val reservedParts=roadAddressService.checkReservability(roadnumber,startPart,endPart)
+      reservedParts match {
+        case Left(err) => Map("success"-> err, "roadparts" -> Seq.empty)
+        case Right(reservedRoadParts) => Map("success"-> "ok", "roadparts" -> reservedRoadParts.map(reservedRoadPartToApi))
+      }
+
+    } else
+      Map("success"-> errorMessageOpt.get)
+  }
+
   private def roadlinksData(): (Seq[String], Seq[String]) = {
     val data = JSON.parseFull(params.get("data").get).get.asInstanceOf[Map[String,Any]]
-    val sources = data.get("sourceLinkIds").get.asInstanceOf[Seq[String]]
-    val targets = data.get("targetLinkIds").get.asInstanceOf[Seq[String]]
+    val sources = data("sourceLinkIds").asInstanceOf[Seq[String]]
+    val targets = data("targetLinkIds").asInstanceOf[Seq[String]]
     (sources, targets)
   }
 
@@ -289,11 +312,42 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "createdDate" -> { if (roadAddressProject.createdDate==null){null} else {roadAddressProject.createdDate.toString}},
       "dateModified" -> { if (roadAddressProject.dateModified==null){null} else {formatToString(roadAddressProject.dateModified.toString)}},
       "startDate" -> { if (roadAddressProject.startDate==null){null} else {formatToString(roadAddressProject.startDate.toString)}},
-      "startPart" -> roadAddressProject.startPart,
-      "endPart" -> roadAddressProject.endPart,
-      "roadNumber" -> roadAddressProject.roadNumber,
       "modifiedBy" -> roadAddressProject.modifiedBy,
       "additionalInfo" -> roadAddressProject.additionalInfo
+    )
+  }
+
+  def projectToApi(roadAddressProject: RoadAddressProject) : Map[String, Any] = {
+    val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
+    Map(
+      "id" -> roadAddressProject.id,
+      "dateModified" -> roadAddressProject.dateModified.toString(formatter),
+      "startDate" -> roadAddressProject.startDate.toString(formatter),
+      "additionalInfo" -> roadAddressProject.additionalInfo,
+      "createdBy" -> roadAddressProject.createdBy,
+      "modifiedBy" -> roadAddressProject.modifiedBy,
+      "name" -> roadAddressProject.name,
+      "status" -> roadAddressProject.status
+    )
+  }
+
+  def reservedAddressToApi(roadAddressProjectFormLine: RoadAddressProjectFormLine) : Map[String, Any] = {
+    Map("roadNumber" -> roadAddressProjectFormLine.roadNumber,
+      "roadPartNumber" -> roadAddressProjectFormLine.roadNumber,
+      "roadPartId" -> roadAddressProjectFormLine.roadNumber,
+      "ely" -> roadAddressProjectFormLine.roadNumber,
+      "roadLength" -> roadAddressProjectFormLine.roadLength,
+      "discontinuity" -> roadAddressProjectFormLine.discontinuity
+    )
+  }
+
+  def reservedRoadPartToApi(reservedRoadPart: ReservedRoadPart) : Map[String, Any] = {
+    Map("roadNumber" -> reservedRoadPart.roadNumber,
+      "roadPartNumber" -> reservedRoadPart.roadPart,
+      "roadPartId" -> reservedRoadPart.roadPartId,
+      "ely" -> reservedRoadPart.roadNumber,
+      "length" -> reservedRoadPart.length,
+      "discontinuity" -> reservedRoadPart.discontinuity.description
     )
   }
 

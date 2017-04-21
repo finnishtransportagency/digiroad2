@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, RoadLinkService}
 import fi.liikennevirasto.viite.dao.Discontinuity.Discontinuous
-import fi.liikennevirasto.viite.{RoadAddressMerge, RoadAddressService}
+import fi.liikennevirasto.viite.{RoadAddressMerge, RoadAddressService, ReservedRoadPart}
 import org.joda.time.DateTime
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
@@ -165,12 +165,41 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("create road address project") {
+  test("create empty road address project") {
     runWithRollback {
       val id = Sequences.nextViitePrimaryKeySeqValue
-      val rap = RoadAddressProject(id, RoadAddressProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", 1, 3, 5)
+      val rap = RoadAddressProject(id, RoadAddressProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart])
       RoadAddressDAO.createRoadAddressProject(rap)
       RoadAddressDAO.getRoadAddressProjectById(id).nonEmpty should be(true)
     }
   }
+
+
+test("create road address project") {
+  val address=ReservedRoadPart(5:Long, 203:Long, 203:Long, 5.5:Double, Discontinuity.apply("jatkuva"), 8:Long)
+  runWithRollback {
+  val id = Sequences.nextViitePrimaryKeySeqValue
+  val rap = RoadAddressProject(id, RoadAddressProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(address))
+  RoadAddressDAO.createRoadAddressProject(rap)
+    val addresses = RoadAddressDAO.fetchByRoadPart(5, 203)
+    addresses.foreach(address =>
+      RoadAddressDAO.createRoadAddressProjectLink(Sequences.nextViitePrimaryKeySeqValue, address, rap))
+  RoadAddressDAO.getRoadAddressProjectById(id).nonEmpty should be(true)
+    val projectlinks=RoadAddressDAO.getRoadAddressProjectLinks(id)
+    projectlinks.length should be > 0
+  }
+}
+
+
+  test("get roadpart info") {
+    runWithRollback {
+      val reserveResult= RoadAddressDAO.getRoadPartInfo(5,203)
+      val expectedLink = reserveResult==Some((242,5172706,5907.0,5))
+      expectedLink should be (true)
+    }
+
+  }
+
+
+
 }
