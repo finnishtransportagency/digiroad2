@@ -168,7 +168,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
   test("create empty road address project") {
     runWithRollback {
       val id = Sequences.nextViitePrimaryKeySeqValue
-      val rap = RoadAddressProject(id, 1, "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart])
+      val rap = RoadAddressProject(id, RoadAddressProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart])
       RoadAddressDAO.createRoadAddressProject(rap)
       RoadAddressDAO.getRoadAddressProjectById(id).nonEmpty should be(true)
     }
@@ -179,7 +179,7 @@ test("create road address project") {
   val address=ReservedRoadPart(5:Long, 203:Long, 203:Long, 5.5:Double, Discontinuity.apply("jatkuva"), 8:Long)
   runWithRollback {
   val id = Sequences.nextViitePrimaryKeySeqValue
-  val rap = RoadAddressProject(id, 1, "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(address))
+  val rap = RoadAddressProject(id, RoadAddressProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(address))
   RoadAddressDAO.createRoadAddressProject(rap)
     val addresses = RoadAddressDAO.fetchByRoadPart(5, 203)
     addresses.foreach(address =>
