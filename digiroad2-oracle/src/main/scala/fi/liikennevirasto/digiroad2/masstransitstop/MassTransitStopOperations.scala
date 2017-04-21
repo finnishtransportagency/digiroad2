@@ -118,6 +118,10 @@ object MassTransitStopOperations {
     !isVirtualStop && (elyAdministrated || (isHSLAdministrated && isAdminClassState))
   }
 
+  def isVirtualBusStop(properties: Set[SimpleProperty]): Boolean = {
+    properties.find(pro => pro.publicId == MassTransitStopTypePublicId).exists(_.values.exists(_.propertyValue == VirtualBusStopPropertyValue))
+  }
+
   def getAdministrationClass(properties: Seq[AbstractProperty]): Option[AdministrativeClass] = {
     val propertyValueOption = properties.find(_.publicId == MassTransitStopAdminClassPublicId)
       .map(_.values).getOrElse(Seq()).headOption
@@ -158,4 +162,17 @@ object MassTransitStopOperations {
         bearing.map(_ - 180).map(x => if (x < 0) x + 360 else x)
       }
     }
+
+  def getVerifiedProperties(properties: Set[SimpleProperty], assetProperties: Seq[AbstractProperty]): Set[SimpleProperty] = {
+    val administrationFromProperties = properties.find(_.publicId == AdministratorInfoPublicId)
+
+    administrationFromProperties.flatMap(_.values.headOption.map(_.propertyValue)) match {
+      case Some(value) => properties
+      case None =>
+        val adminValueFromAsset = assetProperties.find(_.publicId == AdministratorInfoPublicId).flatMap(prop => prop.values.headOption).get.propertyValue
+        val oldAdministrationProperty = Seq(SimpleProperty(AdministratorInfoPublicId, Seq(PropertyValue(adminValueFromAsset))))
+        properties ++ oldAdministrationProperty
+    }
+  }
+
 }

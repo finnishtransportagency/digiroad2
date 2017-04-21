@@ -473,6 +473,27 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     }
   }
 
+  test("Do not overwrite LiviId of ELY/HSL stops when Tietojen ylläpitäjä is empty in csv import file") {
+    runWithRollback {
+      assetLock.synchronized {
+        val eventbus = MockitoSugar.mock[DigiroadEventBus]
+        val service = new TestMassTransitStopService(eventbus, mockRoadLinkService)
+        val assetId = 300000
+        // properties in csv import file: 1;;Swedish name;;;;;;;;;;;;;;; (national id and swedish name given)
+        val properties = List(
+          SimpleProperty("nimi_ruotsiksi", List(PropertyValue("Swedish name"))))
+        RollbackMassTransitStopService.updateExistingById(assetId, None, properties.toSet, "user", _ => Unit)
+        val massTransitStop = service.getById(assetId).get
+
+        val swedishNameProperty = massTransitStop.propertyData.find(p => p.publicId == "nimi_ruotsiksi").get
+        swedishNameProperty.values.head.propertyValue should be("Swedish name")
+
+        val liviIdentifierProperty = massTransitStop.propertyData.find(p => p.publicId == "yllapitajan_koodi").get
+        liviIdentifierProperty.values.head.propertyValue should be("OTHJ1")
+      }
+    }
+  }
+
   test("Overwrite non-existent asset liVi identifier property when administered by ELY"){
     runWithRollback {
       assetLock.synchronized {
