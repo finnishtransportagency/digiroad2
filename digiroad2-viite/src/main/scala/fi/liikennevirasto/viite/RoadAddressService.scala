@@ -658,14 +658,14 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     withDynTransaction {
       try {
         for (roadaddress <- project.reservedParts) { //check validity
-          if (!RoadAddressDAO.roadPartExists(roadaddress.roadNumber, roadaddress.roadPart)) {
-            return Some(s"TIE ${roadaddress.roadNumber} OSA: ${roadaddress.roadPart} ei löytynyt tietokannasta")
+          if (!RoadAddressDAO.roadPartExists(roadaddress.roadNumber, roadaddress.roadPartNumber)) {
+            return Some(s"TIE ${roadaddress.roadNumber} OSA: ${roadaddress.roadPartNumber} ei löytynyt tietokannasta")
           }
         }
         for (roadaddress <- project.reservedParts) {
           croadnumber = roadaddress.roadNumber
-          croadpart = roadaddress.roadPart
-          val addresses = RoadAddressDAO.fetchByRoadPart(roadaddress.roadNumber, roadaddress.roadPart)
+          croadpart = roadaddress.roadPartNumber
+          val addresses = RoadAddressDAO.fetchByRoadPart(roadaddress.roadNumber, roadaddress.roadPartNumber)
           addresses.foreach(address =>
             RoadAddressDAO.createRoadAddressProjectLink(Sequences.nextViitePrimaryKeySeqValue, address, project))
         }
@@ -894,6 +894,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
 
 case class RoadAddressMerge(merged: Set[Long], created: Seq[RoadAddress])
-case class ReservedRoadPart(roadPartId: Long, roadNumber: Long, roadPart: Long, length: Double, discontinuity: Discontinuity, ely: Long)
+case class ReservedRoadPart(roadPartId: Long, roadNumber: Long, roadPartNumber: Long, length: Double, discontinuity: Discontinuity, ely: Long)
 
 

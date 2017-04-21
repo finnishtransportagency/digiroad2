@@ -31,7 +31,7 @@
 
     this.createProject = function (data, currentProject) {
       var projectid = 0;
-      if (projectinfo !== null) {
+      if (projectinfo !== undefined) {
         projectid = projectinfo.id;
       }
       var dataJson = {
