@@ -168,7 +168,8 @@
         var text = '';
         _.each(result.projectLinks, function(line){
           text += '<div>' +
-            '<button class="delete btn-delete-roadpart">x</button>'+addSmallLabel(line.roadNumber)+ addSmallLabel(line.roadPartNumber)+ addSmallLabel(line.RoadLength)+ addSmallLabel(line.discontinuity)+ addSmallLabel(line.ely) +
+            '<button class="delete btn-delete-roadpart">x</button>'+addSmallLabel(line.roadNumber)+
+            addSmallLabel(line.roadPartNumber)+ addSmallLabel(line.roadLength)+ addSmallLabel(line.discontinuity)+ addSmallLabel(line.ely) +
             '</div>';
         });
         rootElement.html(openProjectTemplate(currentProject, text));
