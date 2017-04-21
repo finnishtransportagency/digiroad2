@@ -361,12 +361,12 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   }
 
   test("get projects by id") {
-    runWithRollback{
+    runWithRollback {
       val countCurrentProjects = roadAddressService.getRoadAddressAllProjects()
       val id = Sequences.nextViitePrimaryKeySeqValue
-      val roadAddressProject = RoadAddressProject(id, 1, "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", 5, 202, 203)
+      val addresses:List[minRoadAddressPart]= List(minRoadAddressPart(5:Long,203:Long, 203:Long, 5:Double,"jatkuva":String,8:Long))
+      val roadAddressProject = RoadAddressProject(id, 1, "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",addresses )
       roadAddressService.saveRoadLinkProject(roadAddressProject)
-
       val countAfterInsertProjects = roadAddressService.getRoadAddressAllProjects()
       val count = countCurrentProjects.size + 1
       countAfterInsertProjects.size should be (count)
