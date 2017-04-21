@@ -120,7 +120,7 @@
 
     var addSmallInputNumber = function(id, value){
       //Validate only numebers characters on "onkeypress"
-      return '<input type="text" onkeypress="return event.charCode >= 48 && event.charCode <= 57" class="form-control small-input roadAddressProject" id="'+id+'" value="'+(_.isUndefined(value)? '' : value )+'" onclick=""/>';
+      return '<input type="text" onkeypress="return !(event.charCode>=20 && event.charCode<=47)&&!(event.charCode>=58 && event.charCode<=127)" class="form-control small-input roadAddressProject" id="'+id+'" value="'+(_.isUndefined(value)? '' : value )+'" onclick=""/>';
     };
 
     var addDatePicker = function () {
