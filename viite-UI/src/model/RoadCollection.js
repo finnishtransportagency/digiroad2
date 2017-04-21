@@ -70,10 +70,9 @@
 
     var getSelectedRoadLinks = function() {
       return _.filter(roadLinks(), function(roadLink) {
-        return roadLink.isSelected();
+        return roadLink.isSelected() && roadLink.getData().anomaly === 0;
       });
     };
-
 
     this.fetch = function(boundingBox, zoom) {
       backend.getRoadLinks({boundingBox: boundingBox, zoom: zoom}, function(fetchedRoadLinks) {

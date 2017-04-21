@@ -758,8 +758,8 @@
     };
 
     var refreshViewAfterSaving = function() {
-      unselectRoadLink();
       $('#feature-attributes').empty();
+      clearLayers();
       me.refreshView();
     };
 
