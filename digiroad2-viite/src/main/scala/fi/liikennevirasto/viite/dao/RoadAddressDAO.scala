@@ -99,7 +99,6 @@ case class RoadAddressProject(id: Long, status: RoadAddressProjectState, name: S
                               modifiedBy: String, startDate: DateTime, dateModified: DateTime, additionalInfo: String,
                               reservedParts: Seq[ReservedRoadPart])
 
-
 case class RoadAddressProjectLink(id : Long, projectId: Long, roadType: Long, discontinuityType: Discontinuity,
                                   roadNumber: Long, roadPartNumber: Long, startAddrM: Long, endAddrM: Long,
                                   lrmPositionId: Long, cratedBy: String, modifiedBy: String, linkId: Long, length: Double)
