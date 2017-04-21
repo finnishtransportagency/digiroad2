@@ -205,7 +205,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       val reservedParts=roadAddressService.checkReservability(roadnumber,startPart,endPart)
       reservedParts match {
         case Left(err) => Map("success"-> err, "roadparts" -> Seq.empty)
-        case Right(reservedRoadParts) => Map("success"-> "ok", "roadparts" -> reservedRoadParts)
+        case Right(reservedRoadParts) => Map("success"-> "ok", "roadparts" -> reservedRoadParts.map(reservedRoadPartToApi))
       }
 
     } else
@@ -328,6 +328,26 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "modifiedBy" -> roadAddressProject.modifiedBy,
       "name" -> roadAddressProject.name,
       "status" -> roadAddressProject.status
+    )
+  }
+
+  def reservedAddressToApi(roadAddressProjectFormLine: RoadAddressProjectFormLine) : Map[String, Any] = {
+    Map("roadNumber" -> roadAddressProjectFormLine.roadNumber,
+      "roadPartNumber" -> roadAddressProjectFormLine.roadNumber,
+      "roadPartId" -> roadAddressProjectFormLine.roadNumber,
+      "ely" -> roadAddressProjectFormLine.roadNumber,
+      "roadLength" -> roadAddressProjectFormLine.roadLength,
+      "discontinuity" -> roadAddressProjectFormLine.discontinuity
+    )
+  }
+
+  def reservedRoadPartToApi(reservedRoadPart: ReservedRoadPart) : Map[String, Any] = {
+    Map("roadNumber" -> reservedRoadPart.roadNumber,
+      "roadPartNumber" -> reservedRoadPart.roadPart,
+      "roadPartId" -> reservedRoadPart.roadPartId,
+      "ely" -> reservedRoadPart.roadNumber,
+      "length" -> reservedRoadPart.length,
+      "discontinuity" -> reservedRoadPart.discontinuity.description
     )
   }
 

@@ -74,7 +74,7 @@
     var parseroadpartinfoToresultRow = function () {
       var listContent = '';
       _.each(currentRoadSegmentList, function (row) {
-          listContent += addSmallLabel(row.roadNumber) + addSmallLabel(row.roadPart) + addSmallLabel(row.lenght) + addSmallLabel(row.discontinuity) + addSmallLabel(row.ely) +
+          listContent += addSmallLabel(row.roadNumber) + addSmallLabel(row.roadPartNumber) + addSmallLabel(row.length) + addSmallLabel(row.discontinuity) + addSmallLabel(row.ely) +
             '</div>';
         }
       );
@@ -82,14 +82,14 @@
     };
 
 
-    var addToCurrentRoadPartList = function (querryresult) {
+    var addToCurrentRoadPartList = function (queryresult) {
       var qRoadparts = [];
-      _.each(querryresult.roadparts, function (row) {
+      _.each(queryresult.roadparts, function (row) {
         qRoadparts.push(row);
       });
 
       var sameElements = arrayIntersection(qRoadparts, currentRoadSegmentList, function (arrayarow, arraybrow) {
-        return arrayarow.roadpartid === arraybrow.roadpartid;
+        return arrayarow.roadPartId === arraybrow.roadPartId;
       });
       _.each(sameElements, function (row) {
         _.remove(qRoadparts, row);
@@ -102,9 +102,11 @@
 
 
     function arrayIntersection(a, b, areEqualFunction) {
-      return _.chain(a).filter(function(aElem) {
-        return b.indexOf(aElem) !== -1;
-      }).value;
+      return _.filter(a, function(aElem) {
+        return _.any(b, function(bElem) {
+          return areEqualFunction(aElem,bElem);
+        });
+      });
     }
 
 

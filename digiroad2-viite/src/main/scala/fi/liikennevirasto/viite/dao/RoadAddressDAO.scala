@@ -86,7 +86,7 @@ case class RoadAddressProjectLink(id : Long, projectId: Long, roadType: Long, di
                                   roadNumber: Long, roadPartNumber: Long, startAddrM: Long, endAddrM: Long,
                                   lrmPositionId: Long, cratedBy: String, modifiedBy: String, linkId: Long, length: Double)
 
-case class RoadAddressProjectFormLine(startingLinkId: Long, projectId: Long, roadNumber: Long, roadPartNumber: Long, RoadLength: Long, ely : Long, discontinuity: String)
+case class RoadAddressProjectFormLine(startingLinkId: Long, projectId: Long, roadNumber: Long, roadPartNumber: Long, roadLength: Long, ely : Long, discontinuity: String)
 
 case class RoadAddressCreator(administrativeClass : String, anomaly: Long, calibrationPoints: Seq[CalibrationPointCreator],
                               constructionType: Long, discontinuity: Int, elyCode: Long, endAddressM : Long, endDate: String, endMValue: Double,
