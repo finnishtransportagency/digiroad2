@@ -295,8 +295,8 @@
             previousAdjacents = filteredAdjacents;
             var markedRoads = {
               "adjacents": _.map(applicationModel.getSelectionType() === 'floating' ? _.reject(filteredAdjacents, function(t){
-                  return t.roadLinkType != -1;
-                }) :filteredAdjacents, function (a, index) {
+                return t.roadLinkType != -1;
+              }) :filteredAdjacents, function (a, index) {
                 return _.merge({}, a, {"marker": markers[index]});
               }), "links": link
             };
@@ -389,9 +389,9 @@
 
     var transferringCalculation = function(){
       var targetsData = _.map(targets,function (t){
-        if (_.isUndefined(t.linkId)) {
-          return t.getData();
-        } else return t;
+          if (_.isUndefined(t.linkId)) {
+            return t.getData();
+          } else return t;
       });
 
       var targetDataIds = _.uniq(_.filter(_.map(targetsData.concat(featuresToKeep), function(feature){
@@ -428,9 +428,9 @@
       var roadAddresses = roadCollection.getNewTmpRoadAddresses();
 
       var targetsData = _.map(targets,function (t){
-        if(_.isUndefined(t.linkId)){
-          return t.getData();
-        }else return t;
+          if(_.isUndefined(t.linkId)){
+            return t.getData();
+          }else return t;
       });
 
       var targetDataIds = _.uniq(_.filter(_.map(targetsData.concat(featuresToKeep), function(feature){
