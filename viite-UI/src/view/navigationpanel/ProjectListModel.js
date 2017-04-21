@@ -51,7 +51,7 @@
             html += '<tr class="project-item">' +
               '<td width="300px;">'+ staticFieldProjectList(proj.name)+'</td>'+
               '<td width="300px;">'+ staticFieldProjectList(proj.statusDescription)+'</td>'+
-              '<td>'+'<button class="project-open btn btn-new" style="alignment: right; margin-bottom:6px" id="open-project-<%= proj.id %>">Avaa</button>' +'</td>'+
+              '<td>'+'<button class="project-open btn btn-new" style="alignment: right; margin-bottom:6px" id="open-project-'+proj.id +'" value="'+proj.id+'"">Avaa</button>' +'</td>'+
               '</tr>' + '<tr style="border-bottom:1px solid darkgray; "><td colspan="100%"></td></tr>';
           });
           html += '</table>';
