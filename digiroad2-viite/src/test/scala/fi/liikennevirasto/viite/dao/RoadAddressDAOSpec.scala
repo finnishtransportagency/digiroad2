@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, RoadLinkService}
 import fi.liikennevirasto.viite.dao.Discontinuity.Discontinuous
-import fi.liikennevirasto.viite.{RoadAddressMerge, RoadAddressService, minRoadAddressPart}
+import fi.liikennevirasto.viite.{RoadAddressMerge, RoadAddressService, ReservedRoadPart}
 import org.joda.time.DateTime
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
@@ -168,7 +168,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
   test("create empty road address project") {
     runWithRollback {
       val id = Sequences.nextViitePrimaryKeySeqValue
-      val rap = RoadAddressProject(id, 1, "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty[minRoadAddressPart])
+      val rap = RoadAddressProject(id, 1, "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart])
       RoadAddressDAO.createRoadAddressProject(rap)
       RoadAddressDAO.getRoadAddressProjectById(id).nonEmpty should be(true)
     }
@@ -176,7 +176,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
 
 
 test("create road address project") {
-  val address=minRoadAddressPart(5:Long,203:Long, 203:Long, 5.5:Double,"jatkuva":String,8:Long)
+  val address=ReservedRoadPart(5:Long, 203:Long, 203:Long, 5.5:Double, Discontinuity.apply("jatkuva"), 8:Long)
   runWithRollback {
   val id = Sequences.nextViitePrimaryKeySeqValue
   val rap = RoadAddressProject(id, 1, "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(address))
