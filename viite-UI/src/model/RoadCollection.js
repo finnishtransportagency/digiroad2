@@ -168,7 +168,7 @@
       }
       else {
         var allGroups = _.filter(roadLinkGroups, function(rlg){
-          return _.some(rlg, function(groupedRoad){
+          return _.some(_.isArray(rlg) ? rlg : [rlg], function(groupedRoad){
             return groupedRoad.getData().roadNumber === road.roadNumber && groupedRoad.getData().anomaly === road.anomaly && groupedRoad.getData().roadLinkType === road.roadLinkType && groupedRoad.getData().roadPartNumber === road.roadPartNumber && groupedRoad.getData().trackCode === road.trackCode;
           });
         });
