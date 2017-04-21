@@ -190,7 +190,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val projectId = params("id").toLong
     val (projects, projectLinks) = roadAddressService.getProjectsWithLinksById(projectId)
     val project = Seq(projects).map(roadAddressProjectToApi)
-    val projectsWithLinkId = project.head + "linkId" -> projectLinks.headOption.map(_.startingLinkId).orNull
+    val projectsWithLinkId = project.head + "linkId" -> projectLinks.headOption.map(_.startingLinkId)
     Map("projects" -> projectsWithLinkId, "projectLinks" -> projectLinks)
   }
 
