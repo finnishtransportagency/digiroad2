@@ -50,6 +50,10 @@ object RoadLinkServiceDAO {
     insertNewLinkProperty(FunctionalClass, FunctionalClass, linkId, username, value)
   }
 
+  def insertTrafficDirection(linkId: Long, username: Option[String], value: Int) = {
+    insertNewLinkProperty(TrafficDirection, TrafficDirection, linkId, username, value)
+  }
+
   def insertLinkType(linkId: Long, username: Option[String], value: Int) = {
     insertNewLinkProperty(LinkType, LinkType, linkId, username, value)
   }
