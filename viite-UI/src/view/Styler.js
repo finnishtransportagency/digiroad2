@@ -166,10 +166,12 @@
       var underLineColor = generateStrokeColor(99, roadLinkData.anomaly, roadLinkData.constructionType, roadLinkData.roadLinkType, roadLinkData.gapTransfering);
       //If the line we need to generate is a dashed line, middleLineColor will be the white one sitting behind the dashed/colored line and above the border and grey lines
       var middleLineColor;
+      var adminClassColor;
       var borderColor;
       var lineCap;
       var borderCap;
       var middleLineCap;
+      var adminClassWidth;
       var lineColor = generateStrokeColor(roadLinkData.roadClass, roadLinkData.anomaly, roadLinkData.constructionType, roadLinkData.roadLinkType, roadLinkData.gapTransfering);
       if(roadLinkData.roadClass >= 7 && roadLinkData.roadClass <= 10 ){
         borderColor = lineColor;
@@ -178,13 +180,6 @@
         middleLineCap = 'butt';
         borderCap = 'round';
       } else if (roadLinkData.roadClass == 99 && roadLinkData.constructionType == 1) {
-        borderColor = lineColor;
-        middleLineColor = generateStrokeColor(97, roadNormalType, roadNormalType, roadLinkData.roadLinkType, roadLinkData.gapTransfering);
-        lineCap = 'butt';
-        middleLineCap = 'butt';
-        borderCap = 'round';
-      }
-      else if (roadLinkData.id !== 0 && roadLinkData.administrativeClass == "Municipality") {
         borderColor = lineColor;
         middleLineColor = generateStrokeColor(97, roadNormalType, roadNormalType, roadLinkData.roadLinkType, roadLinkData.gapTransfering);
         lineCap = 'butt';
@@ -204,25 +199,28 @@
       });
       var middleLineWidth = strokeWidth;
       if(roadLinkData.id !== 0 && roadLinkData.administrativeClass == "Municipality"){
-        middleLineWidth = middleLineWidth+7;
+        adminClassColor = generateStrokeColor(97, roadNormalType, roadNormalType, roadLinkData.roadLinkType, roadLinkData.gapTransfering);
+        adminClassWidth = middleLineWidth+7;
       }
       var middleLine = new ol.style.Stroke({
         width: middleLineWidth,
         color: middleLineColor,
         lineCap: middleLineCap,
       });
-      var finalLineColor = lineColor;
-      if(roadLinkData.id !== 0 && roadLinkData.administrativeClass == "Municipality"){
-        finalLineColor = finalLineColor.replace("0.65", "1");
-      }
       var line = new ol.style.Stroke({
         width: strokeWidth,
-        color: finalLineColor,
+        color: lineColor,
         lineCap: lineCap
       });
       var underline = new ol.style.Stroke({
         width: strokeWidth,
         color: underLineColor,
+        lineCap: lineCap
+      });
+
+      var adminClassLine = new ol.style.Stroke({
+        width: adminClassWidth,
+        color: adminClassColor,
         lineCap: lineCap
       });
 
@@ -248,12 +246,16 @@
       var underlineStyle = new ol.style.Style({
         stroke: underline
       });
+      var adminClassStyle = new ol.style.Style({
+        stroke: adminClassLine
+      });
       var zIndex = determineZIndex(roadLinkData.roadLinkType, roadLinkData.anomaly, roadLinkData.roadLinkSource);
       underlineStyle.setZIndex(zIndex-1);
       borderStyle.setZIndex(zIndex);
       middleLineStyle.setZIndex(zIndex+1);
       lineStyle.setZIndex(zIndex+2);
-      return [borderStyle , underlineStyle, middleLineStyle, lineStyle];
+      adminClassStyle.setZIndex(zIndex-2);
+      return [borderStyle , underlineStyle, middleLineStyle, lineStyle, adminClassStyle];
     };
 
     return {
