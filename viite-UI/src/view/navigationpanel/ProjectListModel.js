@@ -29,6 +29,7 @@
     }
 
     function fetchProjects(){
+      console.log(projectCollection);
       projectCollection.getProjects().then(function(projects){
         var unfinishedProjects = _.filter(projects, function(proj){
           return proj.status === 1;
