@@ -30,7 +30,7 @@
 
           this.createProject = function (data, currentProject) {
               var projectid = 0;
-              if (projectinfo != null) {
+              if (projectinfo !== null) {
                   projectid = projectinfo.id;
               }
               var dataJson = {
@@ -67,7 +67,7 @@
           };
 
           var updateforminfo = function (formInfo) {
-              $("#roadpartList").html(formInfo)
+              $("#roadpartList").html(formInfo);
           };
 
           var parseroadpartinfoToresultRow = function () {
@@ -77,21 +77,21 @@
                           '</div>';
                   }
               );
-              return listContent
+              return listContent;
           };
 
 
           var addToCurrentRoadPartList = function (querryresult) {
               var qRoadparts = [];
               _.each(querryresult.roadparts, function (row) {
-                  qRoadparts.push(row)
+                  qRoadparts.push(row);
               });
 
               var sameElements = arrayIntersection(qRoadparts, currentRoadSegmentList, function (arrayarow, arraybrow) {
                   return arrayarow.roadpartid === arraybrow.roadpartid;
               });
               _.each(sameElements, function (row) {
-                  _.remove(qRoadparts, row)
+                  _.remove(qRoadparts, row);
               });
               _.each(qRoadparts, function (row) {
                   currentRoadSegmentList.push(row);

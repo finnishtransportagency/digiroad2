@@ -70,7 +70,7 @@
             endpart: endPart
         })
             .then(function (x) {
-             return x
+             return x;
             });
     });
 

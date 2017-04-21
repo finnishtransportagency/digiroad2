@@ -146,7 +146,7 @@
     };
 
     var addReserveButton = function() {
-        return '<button class="btn btn-reserve">Varaa</button>'
+        return '<button class="btn btn-reserve">Varaa</button>';
     };
 
     var bindEvents = function() {
@@ -216,7 +216,7 @@
 
       rootElement.on('click', '.btn-reserve', function() {
        var data;
-        if ($('#roadAddressProject').get(0)!=null) {
+        if ($('#roadAddressProject').get(0)!==null) {
          data = $('#roadAddressProject').get(0);
         projectCollection.checkIfReserved(data);
         return false;
@@ -224,7 +224,7 @@
        {
          data =$('#savedproject').get(0);
          projectCollection.checkIfReserved(data);
-        return false
+        return false;
        }
       });
 
