@@ -301,7 +301,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     runWithRollback{
       val id = Sequences.nextViitePrimaryKeySeqValue
 
-      val roadAddressProject = RoadAddressProject(id, 1, "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart])
+      val roadAddressProject = RoadAddressProject(id, RoadAddressProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart])
       val (project, projLinkOpt, formLines, str) = roadAddressService.saveRoadLinkProject(roadAddressProject)
       projLinkOpt should be (None)
       formLines should have size (1)
@@ -311,7 +311,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   ignore("save road link project without values - rollback doesn't rollback") {
     runWithRollback{
       val id = Sequences.nextViitePrimaryKeySeqValue
-      val roadAddressProject = RoadAddressProject(id, 1, "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart])
+      val roadAddressProject = RoadAddressProject(id, RoadAddressProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart])
       val (project, projLinkOpt, formLines, str) = roadAddressService.saveRoadLinkProject(roadAddressProject)
       projLinkOpt should be (None)
       formLines should have size (0)
@@ -326,7 +326,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(5175306L))).thenReturn(Seq(roadlink))
     runWithRollback{
       val id = Sequences.nextViitePrimaryKeySeqValue
-      val roadAddressProject = RoadAddressProject(id, 1, "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart])
+      val roadAddressProject = RoadAddressProject(id, RoadAddressProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart])
       val (project, projLinkOpt, formLines, str) = roadAddressService.saveRoadLinkProject(roadAddressProject)
       projLinkOpt should be (None)
       formLines should have size (0)
@@ -355,7 +355,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val countCurrentProjects = roadAddressService.getRoadAddressAllProjects()
       val id = Sequences.nextViitePrimaryKeySeqValue
       val addresses:List[ReservedRoadPart]= List(ReservedRoadPart(5:Long, 203:Long, 203:Long, 5:Double, Discontinuity.apply("jatkuva"), 8:Long))
-      val roadAddressProject = RoadAddressProject(id, 1, "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", addresses)
+      val roadAddressProject = RoadAddressProject(id, RoadAddressProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", addresses)
       roadAddressService.saveRoadLinkProject(roadAddressProject)
       val countAfterInsertProjects = roadAddressService.getRoadAddressAllProjects()
       val count = countCurrentProjects.size + 1
