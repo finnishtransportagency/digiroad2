@@ -51,7 +51,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
 
   val logger = LoggerFactory.getLogger(getClass)
-  protected implicit val jsonFormats: Formats = DefaultFormats
+  protected implicit val jsonFormats: Formats = DefaultFormats + DiscontinuitySerializer
 
   before() {
     contentType = formats("json") + "; charset=utf-8"
@@ -373,3 +373,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
 }
 
+case object DiscontinuitySerializer extends CustomSerializer[Discontinuity](format => ( {
+  case s: JString => Discontinuity.apply(s.values)
+  case i: JInt => Discontinuity.apply(i.values.intValue)
+}, {
+  case s: Discontinuity => JString(s.description)
+}))
