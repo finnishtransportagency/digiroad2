@@ -133,9 +133,9 @@
           }
         }
         if(!_.isUndefined(linkId)){
-          current = roadCollection.getByLinkId([linkId]) ;
+          current = _.uniq(roadCollection.getByLinkId([linkId]), _.isEqual);
         } else {
-          current = roadCollection.getById([id]);
+          current = _.uniq(roadCollection.getById([id]), _.isEqual);
         }
 
         eventbus.trigger('linkProperties:activateAllSelections');
