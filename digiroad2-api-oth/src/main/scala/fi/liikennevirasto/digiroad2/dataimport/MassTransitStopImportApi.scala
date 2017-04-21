@@ -28,6 +28,7 @@ class MassTransitStopImportApi extends ScalatraServlet with CorsSupport with Req
   private final val threeMegabytes: Long = 3*1024*1024
   private val importLogger = LoggerFactory.getLogger(getClass)
   private val CSV_LOG_PATH = "/tmp/csv_import_logs/"
+  private val  BUS_STOP_LOG = "bus stop import"
   private val csvImporter = new CsvImporter {
     override val massTransitStopService: MassTransitStopService = Digiroad2Context.massTransitStopService
     override val userProvider: UserProvider = Digiroad2Context.userProvider
@@ -61,7 +62,7 @@ class MassTransitStopImportApi extends ScalatraServlet with CorsSupport with Req
   }
 
   get("/log/:id") {
-    params.getAs[Long]("id").flatMap(id => ImportLogService.get(id)).getOrElse("Logia ei löytynyt.")
+    params.getAs[Long]("id").flatMap(id => ImportLogService.get(id, BUS_STOP_LOG)).getOrElse("Logia ei löytynyt.")
   }
 
   private def fork(f: => Unit): Unit = {
@@ -94,10 +95,10 @@ class MassTransitStopImportApi extends ScalatraServlet with CorsSupport with Req
           case ImportResult(Nil, Nil, Nil, excludedAssets) => "CSV tiedosto käsitelty. Seuraavat päivitykset on jätetty huomioimatta:\n" + pretty(Extraction.decompose(excludedAssets))
           case _ => pretty(Extraction.decompose(result))
         }
-        ImportLogService.save(id, response)
+        ImportLogService.save(id, response, BUS_STOP_LOG )
       } catch {
         case e: Exception => {
-          ImportLogService.save(id, "Latauksessa tapahtui odottamaton virhe: " + e.toString())
+          ImportLogService.save(id, "Latauksessa tapahtui odottamaton virhe: " + e.toString(), BUS_STOP_LOG )
           throw e
         }
       } finally {

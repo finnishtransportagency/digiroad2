@@ -18,19 +18,21 @@ object ImportLogService {
     }
   }
 
-  def save(id: Long, content: String): Long = {
+  def save(id: Long, content: String, importType: String): Long = {
     OracleDatabase.withDynTransaction {
       sqlu"""
-        update import_log set content = $content
+        update import_log
+        set content = $content
+          , import_type = $importType
           where id = $id
       """.execute
       id
     }
   }
 
-  def get(id: Long): Option[String] = {
+  def get(id: Long, importType: String): Option[String] = {
     OracleDatabase.withDynTransaction {
-      sql"select content from import_log where id = $id".as[String].firstOption
+      sql"select content from import_log where id = $id and import_type = $importType".as[String].firstOption
     }
   }
 
