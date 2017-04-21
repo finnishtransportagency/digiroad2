@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
-import fi.liikennevirasto.viite.{RoadType, minRoadAddressPart}
+import fi.liikennevirasto.viite.{RoadType, ReservedRoadPart}
 import fi.liikennevirasto.viite.dao.CalibrationCode._
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
@@ -33,6 +33,10 @@ object Discontinuity {
 
   def apply(intValue: Int): Discontinuity = {
     values.find(_.value == intValue).getOrElse(Continuous)
+  }
+
+  def apply(s: String): Discontinuity = {
+    values.find(_.description.equalsIgnoreCase(s)).getOrElse(Continuous)
   }
 
   case object EndOfRoad extends Discontinuity { def value = 1; def description="Tien loppu" }
@@ -74,9 +78,13 @@ case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
                        calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false,
                        geom: Seq[Point])
 
-case class RoadAddressProject(id: Long, status: Long, name: String, createdBy: String, createdDate: DateTime, modifiedBy:String, startDate: DateTime, dateModified: DateTime, additionalInfo :String,list: List[minRoadAddressPart])
+case class RoadAddressProject(id: Long, status: Long, name: String, createdBy: String, createdDate: DateTime,
+                              modifiedBy: String, startDate: DateTime, dateModified: DateTime, additionalInfo: String,
+                              reservedParts: Seq[ReservedRoadPart])
 
-case class RoadAddressProjectLink(id : Long, projectId: Long, roadType: Long, discontinuityType: Discontinuity, roadNumber: Long, roadPartNumber: Long, startAddrM: Long, endAddrM: Long, lrmPositionId: Long, cratedBy: String, modifiedBy: String, linkId: Long, length: Double)
+case class RoadAddressProjectLink(id : Long, projectId: Long, roadType: Long, discontinuityType: Discontinuity,
+                                  roadNumber: Long, roadPartNumber: Long, startAddrM: Long, endAddrM: Long,
+                                  lrmPositionId: Long, cratedBy: String, modifiedBy: String, linkId: Long, length: Double)
 
 case class RoadAddressProjectFormLine(startingLinkId: Long, projectId: Long, roadNumber: Long, roadPartNumber: Long, RoadLength: Long, ely : Long, discontinuity: String)
 
@@ -821,7 +829,7 @@ object RoadAddressDAO {
             FROM project $where"""
     Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String )](query).list.map{
       case(id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo) =>
-        RoadAddressProject(id, state, name, createdBy, start_date, modifiedBy, createdDate, modifiedDate, addInfo, List.empty[minRoadAddressPart])
+        RoadAddressProject(id, state, name, createdBy, start_date, modifiedBy, createdDate, modifiedDate, addInfo, List.empty[ReservedRoadPart])
     }.headOption
   }
 
@@ -834,7 +842,7 @@ object RoadAddressDAO {
             FROM project $filter order by name, id """
     Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String )](query).list.map{
       case(id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo) =>
-        RoadAddressProject(id, state, name, createdBy, createdDate, modifiedBy, start_date , modifiedDate, addInfo, List.empty[minRoadAddressPart])
+        RoadAddressProject(id, state, name, createdBy, createdDate, modifiedBy, start_date, modifiedDate, addInfo, List.empty[ReservedRoadPart])
     }
   }
 
