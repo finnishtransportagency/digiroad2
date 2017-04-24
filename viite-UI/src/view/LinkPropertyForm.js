@@ -146,25 +146,29 @@
 
     var formFields = function (sources){
       var linkIds = "";
+      var ids = "";
       var field;
-      var id = 0;
+      var linkCounter = 0;
       _.each(sources, function(slp){
-        var divId = "VALITUTLINKIT" + id;
+        var divId = "VALITUTLINKIT" + linkCounter;
         var linkid = slp.linkId.toString();
+        var id = _.isUndefined(slp.id) ? '-1': slp.id.toString();
         if (linkIds.length === 0) {
           field = '<div class="form-group" id=' +divId +'>' +
             '<label class="control-label-floating">' + 'LINK ID:' + '</label>' +
             '<p class="form-control-static-floating">' + linkid + '</p>' +
             '</div>' ;
           linkIds = linkid;
-        } else if(linkIds.search(linkid) === -1){
+          ids = id;
+        } else if(linkIds.search(linkid) === -1 || ids.search(id) === -1){
           field = field + '<div class="form-group" id=' +divId +'>' +
             '<label class="control-label-floating">' + 'LINK ID:' + '</label>' +
             '<p class="form-control-static-floating">' + linkid + '</p>' +
             '</div>' ;
           linkIds = linkIds + ", " + linkid;
+          ids = ids + ", " + id;
         }
-        id = id + 1;
+        linkCounter = linkCounter + 1;
       });
       return field;
     };

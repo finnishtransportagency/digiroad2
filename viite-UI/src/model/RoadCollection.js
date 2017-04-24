@@ -70,10 +70,9 @@
 
     var getSelectedRoadLinks = function() {
       return _.filter(roadLinks(), function(roadLink) {
-        return roadLink.isSelected();
+        return roadLink.isSelected() && roadLink.getData().anomaly === 0;
       });
     };
-
 
     this.fetch = function(boundingBox, zoom) {
       backend.getRoadLinks({boundingBox: boundingBox, zoom: zoom}, function(fetchedRoadLinks) {
@@ -143,19 +142,37 @@
     };
 
     this.getGroup = function(id) {
-      return _.find(roadLinkGroups, function(roadLinkGroup) {
+      var group =_.find(roadLinkGroups, function(roadLinkGroup) {
         return _.some(roadLinkGroup, function(roadLink) {
           return roadLink.getId() === id;
         });
       });
+      var road = _.first(group).getData();
+      return processGroupOutput(road, group);
     };
 
     this.getGroupByLinkId = function (linkId) {
-      return _.find(roadLinkGroups, function(roadLinkGroup) {
+      var group = _.find(roadLinkGroups, function(roadLinkGroup) {
         return _.some(roadLinkGroup, function(roadLink) {
           return roadLink.getData().linkId === linkId;
         });
       });
+      var road = _.first(group).getData();
+      return processGroupOutput(road, group);
+    };
+
+    var processGroupOutput = function(road,group){
+      if(roadIsOther(road) || roadIsUnknown(road)){
+        return group;
+      }
+      else {
+        var allGroups = _.filter(roadLinkGroups, function(rlg){
+          return _.some(_.isArray(rlg) ? rlg : [rlg], function(groupedRoad){
+            return groupedRoad.getData().roadNumber === road.roadNumber && groupedRoad.getData().anomaly === road.anomaly && groupedRoad.getData().roadLinkType === road.roadLinkType && groupedRoad.getData().roadPartNumber === road.roadPartNumber && groupedRoad.getData().trackCode === road.trackCode;
+          });
+        });
+        return _.flatten(allGroups);
+      }
     };
 
     this.getGroupById = function (id) {
@@ -212,5 +229,13 @@
       preMovedRoadAddresses = [];
     };
 
+
+    var roadIsOther = function(road){
+      return  0 === road.roadNumber && 0 === road.anomaly && 0 === road.roadLinkType && 0 === road.roadPartNumber && 99 === road.trackCode;
+    };
+
+    var roadIsUnknown = function(road){
+      return  0 === road.roadNumber && 1 === road.anomaly && 0 === road.roadLinkType && 0 === road.roadPartNumber && 99 === road.trackCode;
+    };
   };
 })(this);

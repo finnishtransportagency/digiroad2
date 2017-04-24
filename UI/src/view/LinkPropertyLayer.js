@@ -175,7 +175,9 @@
     };
 
     var verifyClickEvent = function(properties, event){
-       var singleLinkSelect = event.mapBrowserEvent.type === 'dblclick';
+       var singleLinkSelect;
+       if(event)
+          singleLinkSelect = event.mapBrowserEvent.type === 'dblclick';
        selectedLinkProperty.open(properties.linkId, singleLinkSelect);
     };
 
@@ -238,7 +240,8 @@
       var roadLinkHistory =  roadCollection.getAllHistory();
 
       roadLayer.drawRoadLinks(roadLinks, map.getView().getZoom());
-      roadLayer.layer.getSource().addFeatures(drawDashedLineFeaturesIfApplicable(roadLinks));
+      //The sortBy is used to order the addition of the features. This is used in order to the dashed lines always be in the same position
+      roadLayer.layer.getSource().addFeatures(drawDashedLineFeaturesIfApplicable(_.sortBy(roadLinks, function(rl) { return rl.linkId; })));
       me.drawOneWaySigns(roadLayer.layer, roadLinks);
 
       historyLayer.drawRoadLinks(roadLinkHistory, map.getView().getZoom());
@@ -327,6 +330,11 @@
       eventListener.listenTo(eventbus, 'linkProperties:updateFailed', cancelSelection);
       eventListener.listenTo(eventbus, 'roadLinkComplementary:show', showRoadLinksWithComplementary);
       eventListener.listenTo(eventbus, 'roadLinkComplementary:hide', hideRoadLinksWithComplementary);
+      eventListener.listenTo(eventbus, 'linkProperties:selected linkProperties:multiSelected', function(link) {
+        verifyClickEvent(link);
+        redrawSelected();
+        currentRenderIntent = 'select';
+      });
     };
 
     var cancelSelection = function() {

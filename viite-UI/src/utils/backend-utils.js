@@ -63,6 +63,18 @@
       });
     }, 1000);
 
+    this.checkIfRoadpartReserved = (function(roadnuber,startPart,endPart) {
+        return $.get('api/viite/roadlinks/roadaddress/project/validatereservedlink/', {
+            roadnumber: roadnuber,
+            startpart: startPart,
+            endpart: endPart
+        })
+            .then(function (x) {
+             return x;
+            });
+    });
+
+
     this.getRoadAddressProjects = _.throttle(function(callback) {
       return $.getJSON('api/viite/roadlinks/roadaddress/project/all', function(data) {
         return _.isFunction(callback) && callback(data);

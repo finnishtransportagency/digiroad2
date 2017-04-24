@@ -42,7 +42,12 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService) extends Po
   }
 
   private def floatingAdjustment(roadLinks: Seq[RoadLink], changeInfo: Seq[ChangeInfo], assetBeforeUpdate: AssetBeforeUpdate) = {
-    if (assetBeforeUpdate.persistedFloating || assetBeforeUpdate.asset.floating) {
+    val hasChangeInfo = changeInfo.filter(changeInfos => changeInfos.oldId.getOrElse(0L) == assetBeforeUpdate.asset.linkId && changeInfos.vvhTimeStamp > assetBeforeUpdate.asset.vvhTimeStamp).headOption match {
+      case Some(inf) => true
+      case _ => false
+    }
+
+    if (hasChangeInfo) {
       PointAssetFiller.correctedPersistedAsset(assetBeforeUpdate.asset, roadLinks, changeInfo) match {
         case Some(adjustment) =>
           OraclePedestrianCrossingDao.update(adjustment.assetId, PedestrianCrossingToBePersisted(adjustment.linkId,

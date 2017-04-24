@@ -45,7 +45,12 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
   }
 
   private def floatingAdjustment(roadLinks: Seq[RoadLink], changeInfo: Seq[ChangeInfo], assetBeforeUpdate: AssetBeforeUpdate) = {
-    if (assetBeforeUpdate.persistedFloating || assetBeforeUpdate.asset.floating) {
+    val hasChangeInfo = changeInfo.filter(changeInfos => changeInfos.oldId.getOrElse(0L) == assetBeforeUpdate.asset.linkId && changeInfos.vvhTimeStamp > assetBeforeUpdate.asset.vvhTimeStamp).headOption match {
+      case Some(inf) => true
+      case _ => false
+    }
+
+    if (hasChangeInfo) {
       PointAssetFiller.correctedPersistedAsset(assetBeforeUpdate.asset, roadLinks, changeInfo) match {
         case Some(adjustment) =>
           OracleTrafficLightDao.update(adjustment.assetId, TrafficLightToBePersisted(adjustment.linkId,

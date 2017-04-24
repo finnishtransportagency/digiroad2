@@ -123,7 +123,7 @@
       }
     };
 
-    var openUnknown = function(linkId, id, singleLinkSelect, visibleFeatures, checkAdjacency) {
+    var openUnknown = function(linkId, id, visibleFeatures) {
       var canIOpen = !_.isUndefined(linkId) ? !isSelectedByLinkId(linkId) || isDifferingSelection(singleLinkSelect) : !isSelectedById(id) || isDifferingSelection(singleLinkSelect);
       if (canIOpen) {
         if(featuresToKeep.length === 0){
@@ -134,9 +134,9 @@
           }
         }
         if(!_.isUndefined(linkId)){
-          current = singleLinkSelect ? roadCollection.getByLinkId([linkId]) : roadCollection.getGroupByLinkId(linkId);
+          current = _.uniq(roadCollection.getByLinkId([linkId]), _.isEqual);
         } else {
-          current = singleLinkSelect ? roadCollection.getById([id]) : roadCollection.getGroupById(id);
+          current = _.uniq(roadCollection.getById([id]), _.isEqual);
         }
 
         eventbus.trigger('linkProperties:activateAllSelections');
@@ -150,11 +150,6 @@
         });
         if(!_.isEmpty(currentFloatings)){
           setSources(currentFloatings);
-        }
-
-        //Segment to construct adjacency
-        if(checkAdjacency){
-          fillAdjacents(linkId);
         }
 
         var data4Display = _.map(get(), function(feature){
