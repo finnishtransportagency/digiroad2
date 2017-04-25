@@ -176,9 +176,9 @@
         jQuery('.modal-overlay').remove();
         setTimeout(function(){}, 0);
         if(!_.isUndefined(currentProject))
-          eventbus.trigger('linkProperties:selectedProject', currentProject.linkId);
+          eventbus.trigger('linkProperties:selectedProject', result.linkId);
           applicationModel.setProjectButton(true);
-          applicationModel.setProjectFeature(currentProject.linkId);
+          applicationModel.setProjectFeature(currentProject.id);
       });
 
       eventbus.on('roadAddress:selected roadAddress:cancelled', function(roadAddress) {
@@ -195,15 +195,15 @@
         var text = '';
         _.each(result.formInfo, function(line){
           text += '<div>' + ' '+
-            addSmallLabel(line.roadNumber)+ addSmallLabel(line.roadPartNumber)+ addSmallLabel(line.RoadLength)+ addSmallLabel(line.discontinuity)+ addSmallLabel(line.ely) +
-          '</div>';
+            addSmallLabel(line.roadNumber)+ addSmallLabel(line.roadPartNumber)+ addSmallLabel(line.roadLength)+ addSmallLabel(line.discontinuity)+ addSmallLabel(line.ely) +
+            '</div>';
         });
         rootElement.html(openProjectTemplate(result.project, text));
 
-          jQuery('.modal-overlay').remove();
-          addDatePicker();
-          if(!_.isUndefined(result.projectAddresses)) {
-            eventbus.trigger('linkProperties:selectedProject', result.projectAddresses.linkId);
+        jQuery('.modal-overlay').remove();
+        addDatePicker();
+        if(!_.isUndefined(result.projectAddresses)) {
+          eventbus.trigger('linkProperties:selectedProject', result.projectAddresses.linkId);
         } else {
           jQuery('.modal-overlay').remove();
         }
