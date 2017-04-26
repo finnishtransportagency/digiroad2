@@ -738,7 +738,15 @@ trait LinearAssetOperations {
       }
     }
   }
+  def getActiveHuoltotie(): Seq[PersistedLinearAsset] = {
+    //TODO
+    throw new NotImplementedError()
+  }
 
+  def getActiveHuoltotieByPolygon(coordinates: String): Seq[PersistedLinearAsset] = {
+    //TODO
+    throw new NotImplementedError()
+  }
 }
 
 class LinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {
