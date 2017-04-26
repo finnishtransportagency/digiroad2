@@ -484,15 +484,15 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
             val bounds = BoundingRectangle(sourceLinkEndpoints._1 - delta, sourceLinkEndpoints._1 + delta)
             val bounds2 = BoundingRectangle(sourceLinkEndpoints._2 - delta, sourceLinkEndpoints._2 + delta)
             val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, bounds2)
-            val (floatingViiteRoadLinks1, addresses1, floating1) = fetchRoadAddressesByBoundingBox(bounds, true)
-            val (floatingViiteRoadLinks2, addresses2, floating2) = fetchRoadAddressesByBoundingBox(bounds2, true)
+            val (floatingViiteRoadLinks1, addresses1, floating1) = fetchRoadAddressesByBoundingBox(bounds)
+            val (floatingViiteRoadLinks2, addresses2, floating2) = fetchRoadAddressesByBoundingBox(bounds2)
 
             val addresses = addresses1 ++ addresses2
             val floatingRoadAddressLinks = floatingViiteRoadLinks1 ++ floatingViiteRoadLinks2
             val distinctRoadLinks = roadLinks.distinct
 
             val roadAddressLinks = distinctRoadLinks.map { rl =>
-              val ra = addresses.getOrElse(rl.linkId, Seq()).distinct
+              val ra = addresses.filter(_._1 != linkid).getOrElse(rl.linkId, Seq()).distinct
               rl.linkId -> buildRoadAddressLink(rl, ra, Seq())
             }
 
@@ -500,7 +500,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
             val adjacentLinks = roadAddressLinksWithFloating
               .filter(_._2.exists(ral => GeometryUtils.areAdjacent(sourceLinkGeometry, ral.geometry)
                 && ral.roadLinkType != UnknownRoadLinkType && ral.roadNumber == floating.roadNumber && ral.roadPartNumber == floating.roadPartNumber && ral.trackCode == floating.trackCode))
-            (linkid -> adjacentLinks.flatMap(_._2).sortBy(_.startAddressM).headOption)
+            (linkid -> adjacentLinks.flatMap(_._2).headOption)
           }).head
       }.toMap
 
@@ -649,6 +649,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   /**
     * Adds reserved road links (from road parts) to a road address project
+    *
     * @param project
     * @return
     */
@@ -730,10 +731,16 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         val startingLinkId = optionalSurroundingMappedLinks.size match {
           case 0 => targets.head.linkId
           case 1 => val secondOptionalSurroundingMappedLinks = getValidSurroundingLinks(Set(optionalSurroundingMappedLinks.head._2.get.linkId), source).filterNot(_._2.isEmpty)
-            if(secondOptionalSurroundingMappedLinks.nonEmpty && optionalSurroundingMappedLinks.head._2.get.endAddressM > secondOptionalSurroundingMappedLinks.head._2.get.endAddressM){
+            if (secondOptionalSurroundingMappedLinks.nonEmpty && optionalSurroundingMappedLinks.head._2.get.endAddressM < secondOptionalSurroundingMappedLinks.head._2.get.endAddressM) {
               val resultLinkId = optionalSurroundingMappedLinks.head._1 match {
-                case x if(x == targets.head.linkId) => targets.last.linkId
+                case x if (x == targets.head.linkId) => targets.last.linkId
                 case _ => targets.head.linkId
+              }
+              resultLinkId
+            } else if (secondOptionalSurroundingMappedLinks.nonEmpty && optionalSurroundingMappedLinks.head._2.get.endAddressM > secondOptionalSurroundingMappedLinks.head._2.get.endAddressM){
+              val resultLinkId = optionalSurroundingMappedLinks.head._1 match {
+                case x if (x == targets.head.linkId) => targets.head.linkId
+                case _ => targets.last.linkId
               }
               resultLinkId
             } else {
