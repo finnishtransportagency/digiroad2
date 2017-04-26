@@ -412,7 +412,7 @@
           roadCollection.setNewTmpRoadAddresses(result);
           _.defer(function(){
             eventbus.trigger('linkProperties:deactivateAllSelections');
-            eventbus.trigger('linkProperties:cleanFloatingsAfterSiira');
+            eventbus.trigger('linkProperties:cleanFloatingsAfterDefloat');
           });
         }
       });
@@ -468,14 +468,14 @@
       }
     };
 
-    var getFeaturesToHighlight = function() {
-      return featuresToHighlight;
-    };
-
-    var setFeaturesToHighlight = function(ft) {
-      featuresToHighlight = ft;
-    };
-
+    // var getFeaturesToHighlight = function() {
+    //   return featuresToHighlight;
+    // };
+    //
+    // var setFeaturesToHighlight = function(ft) {
+    //   featuresToHighlight = ft;
+    // };
+    //
     var getFloatingRoadMarker = function() {
       return floatingRoadMarker;
     };
@@ -529,14 +529,14 @@
       eventbus.trigger('linkProperties:clearHighlights');
     };
 
-    var clearAndReset = function(afterSiira){
+    var clearAndReset = function(afterDefloat){
       roadCollection.resetTmp();
       roadCollection.resetChangedIds();
       applicationModel.resetCurrentAction();
       roadCollection.resetPreMovedRoadAddresses();
       clearFeaturesToKeep();
       eventbus.trigger('roadLinks:clearIndicators');
-      if(!afterSiira) {
+      if(!afterDefloat) {
         roadCollection.resetNewTmpRoadAddresses();
         resetSources();
         resetTargets();
@@ -544,7 +544,7 @@
       }
     };
 
-    var cancelAfterSiirra = function(action, changedTargetIds) {
+    var cancelAfterDefloat = function(action, changedTargetIds) {
       dirty = false;
       var originalData = _.filter(featuresToKeep, function(feature){
         return feature.roadLinkType === -1;
@@ -732,7 +732,7 @@
       save: save,
       saveTransfer: saveTransfer,
       cancel: cancel,
-      cancelAfterSiirra: cancelAfterSiirra,
+      cancelAfterDefloat: cancelAfterDefloat,
       cancelAndReselect: cancelAndReselect,
       clearAndReset: clearAndReset,
       continueSelectUnknown: continueSelectUnknown,

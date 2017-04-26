@@ -74,7 +74,7 @@
     var setContinueButton = function(newState){
       if(continueButton !== newState){
         continueButton = newState;
-        eventbus.trigger('application:valintaActive', newState);
+        eventbus.trigger('application:pickActive', newState);
       }
     };
 
