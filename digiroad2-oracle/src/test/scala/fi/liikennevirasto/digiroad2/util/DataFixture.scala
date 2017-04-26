@@ -117,7 +117,8 @@ object DataFixture {
 //      "siilijarvi_traffic_directions.sql",
 //      "siilinjarvi_speed_limits.sql",
 //      "siilinjarvi_linear_assets.sql",
-      "insert_road_address_data.sql"
+      "insert_road_address_data.sql",
+      "insert_floating_road_addresses.sql"
     ))
   }
 
