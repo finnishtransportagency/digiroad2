@@ -233,6 +233,10 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }
   }
 
+  def getLinkIdsFromVVHWithPolygon(polygonString :String): Seq[Long] = {
+    Await.result(vvhClient.fetchLinkIdsByPolygonF(polygonString), atMost = Duration.Inf)
+  }
+
 
   /**
     * This method returns "real" road links, "complementary" road links and change data by bounding box and municipalities.

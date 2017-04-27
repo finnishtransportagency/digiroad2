@@ -74,7 +74,7 @@ class PolygonTools {
     wKTParser.read(areaChoose.getArea(areaId))
   }
 
-  private def multiPolygonToPolygonSeq (multiPoly: MultiPolygon): Seq[Polygon] ={
+  def multiPolygonToPolygonSeq (multiPoly: MultiPolygon): Seq[Polygon] ={
     var geomCounter=multiPoly.getNumGeometries
     var  listPolygons= ListBuffer.empty[Polygon]
     while (geomCounter>0)

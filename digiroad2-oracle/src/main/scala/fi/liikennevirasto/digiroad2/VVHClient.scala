@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.HttpClientBuilder
+import org.apache.http.util.EntityUtils
 import org.joda.time.{DateTime, DateTimeZone}
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
@@ -237,6 +238,18 @@ class VVHClient(vvhRestApiEndPoint: String) {
     else "f=pjson"
   }
 
+  protected def layerDefinition2(filter: String, customFieldSelection: Option[String] = None): String = {
+    val definitionStart = "[{"
+    val layerSelection = """"layerId":0,"""
+    val fieldSelection = customFieldSelection match {
+      case Some(fs) => s""""outFields":"""" + fs + """,CONSTRUCTIONTYPE""""
+      case _ => s""""outFields":"LINKID""""
+    }
+    val definitionEnd = "}]"
+    val definition = definitionStart + layerSelection + filter + fieldSelection + definitionEnd
+    URLEncoder.encode(definition, "UTF-8")
+  }
+
   /**
     * Returns VVH road links in bounding box area. Municipalities are optional.
     * Used by VVHClient.fetchByRoadNumbersBoundsAndMunicipalitiesF.
@@ -266,7 +279,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
     {
       return  Seq.empty[VVHRoadlink]
     }
-    val definition = layerDefinition(combineFiltersWithAnd("",""))
+    val definition = layerDefinition2(combineFiltersWithAnd("",""))
     val urlpoly=URLEncoder.encode(polygon)
     val url = vvhRestApiEndPoint + roadLinkDataService + "/FeatureServer/query?" +
     s"layerDefs=$definition&geometry=" + urlpoly +
@@ -276,6 +289,23 @@ class VVHClient(vvhRestApiEndPoint: String) {
       case Right(error) => throw new VVHClientException(error.toString)
     }
   }
+
+  def queryLinksIdByPolygons(polygon: String): Seq[Long] = {
+    if (!polygon.contains("{rings:[")) //check that input is somewhat correct
+    {
+      return  Seq.empty[Long]
+    }
+    val definition = layerDefinition2(combineFiltersWithAnd("",""))
+    val urlpoly=URLEncoder.encode(polygon)
+    val url = vvhRestApiEndPoint + roadLinkDataService + "/FeatureServer/query?" +
+      s"layerDefs=$definition&geometry=" + urlpoly +
+      "&geometryType=esriGeometryPolygon&spatialRel=esriSpatialRelIntersects&" + "returnGeometry=false&returnZ=true&returnM=true&geometryPrecision=3&f=pjson"
+    fetchVVHFeatures(url) match {
+      case Left(features) => features.map(extractLinkIdFromVVHFeature)
+      case Right(error) => throw new VVHClientException(error.toString)
+    }
+  }
+
 
   def queryChangesByPolygon(polygon: String): Seq[ChangeInfo] = {
     if (!polygon.contains("{rings:[")) //check that input is somewhat correct
@@ -324,6 +354,10 @@ class VVHClient(vvhRestApiEndPoint: String) {
 
   def fetchChangesByPolygonF(polygonstring : String): Future[Seq[ChangeInfo]] = {
     Future(queryChangesByPolygon(polygonstring))
+  }
+
+  def fetchLinkIdsByPolygonF(polygonstring : String): Future[Seq[Long]] = {
+    Future(queryLinksIdByPolygons(polygonstring))
   }
 
   /**
@@ -594,6 +628,17 @@ class VVHClient(vvhRestApiEndPoint: String) {
       extractTrafficDirection(attributes), featureClass, extractModifiedAt(attributes),
       extractAttributes(attributes) ++ linkGeometryForApi ++ linkGeometryWKTForApi, extractConstructionType(attributes), linkGeomSource)
 
+  }
+
+  protected def linkIdFromFeature(attributes: Map[String, Any]): Long = {
+    val linkId = attributes("LINKID").asInstanceOf[BigInt].longValue()
+    linkId
+  }
+
+  protected def extractLinkIdFromVVHFeature(feature: Map[String, Any]): Long = {
+    val attributes = extractFeatureAttributes(feature)
+//    val path = extractFeatureGeometry(feature)
+    linkIdFromFeature(attributes)
   }
 
   protected def extractVVHFeature(feature: Map[String, Any]): VVHRoadlink = {

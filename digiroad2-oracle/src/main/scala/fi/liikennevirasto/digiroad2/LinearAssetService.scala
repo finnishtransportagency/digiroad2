@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
+import com.vividsolutions.jts.geom.{MultiPolygon, Polygon}
 import fi.liikennevirasto.digiroad2.ChangeType._
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.asset._
@@ -367,6 +368,16 @@ trait LinearAssetOperations {
           dao.fetchMaintenancesByIds(typeId, ids)
         case _ =>
           dao.fetchLinearAssetsByIds(ids, LinearAssetTypes.getValuePropertyId(typeId))
+      }
+    }
+  }
+
+  def getPersistedAssetsByLinkIds(typeId: Int, linkIds: Seq[Long]): Seq[PersistedLinearAsset] = {
+    withDynTransaction {
+      typeId match {
+        case LinearAssetTypes.MaintenanceRoadAssetTypeId =>
+          dao.fetchMaintenancesByLinkIds(typeId, linkIds)
+        case _ => Seq.empty[PersistedLinearAsset]
       }
     }
   }
@@ -743,9 +754,22 @@ trait LinearAssetOperations {
     throw new NotImplementedError()
   }
 
-  def getActiveHuoltotieByPolygon(coordinates: String): Seq[PersistedLinearAsset] = {
-    //TODO
-    throw new NotImplementedError()
+  def getActiveHuoltotieByPolygon(areaId: String, typeId: Int): Seq[PersistedLinearAsset] = {
+    val polygonTool = new PolygonTools()
+    val geometry = polygonTool.getAreaGeometry(areaId.toInt)
+
+    val polygon = geometry match {
+      case _ if geometry.getGeometryType.toLowerCase.startsWith("polygon") =>
+        Seq(geometry.asInstanceOf[Polygon])
+      case _ if geometry.getGeometryType.toLowerCase.startsWith("multipolygon") =>
+        polygonTool.multiPolygonToPolygonSeq(geometry.asInstanceOf[MultiPolygon])
+      case _ => Seq.empty[Polygon]
+    }
+
+    val polygonStringList = polygonTool.stringifyGeometryForVVHClient(polygon)
+    val vVHLinkIds = polygonStringList.flatMap(roadLinkService.getLinkIdsFromVVHWithPolygon)
+
+    getPersistedAssetsByLinkIds(typeId, vVHLinkIds)
   }
 }
 
