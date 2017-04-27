@@ -1,7 +1,6 @@
 package fi.liikennevirasto.viite
 
 
-import com.sun.javaws.exceptions.InvalidArgumentException
 import fi.liikennevirasto.digiroad2.RoadLinkType.{ComplementaryRoadLinkType, FloatingRoadLinkType, NormalRoadLinkType, UnknownRoadLinkType}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
@@ -729,7 +728,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       else {
         val (previous, rest) = unordered.partition(u => extending(u, ordered.head))
         if (previous.isEmpty)
-          throw new InvalidArgumentException(Array("Non-contiguous road addressing"))
+          throw new IllegalArgumentException("Non-contiguous road addressing")
         else
           extendChainByAddress(previous ++ ordered, rest)
       }
@@ -753,7 +752,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         val startPoint = ordered.head.geometry.head
         val (previous, rest) = unordered.partition(u => GeometryUtils.minimumDistance(startPoint, u.geometry) < 0.1)
         if (previous.isEmpty)
-          throw new InvalidArgumentException(Array("Non-contiguous road target geometry"))
+          throw new IllegalArgumentException("Non-contiguous road target geometry")
         else
           extendChainByGeometry(previous ++ ordered, rest, getSideCode(previous.head, sideCode, endPoint))
       }
@@ -818,7 +817,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val allStartCp = sources.flatMap(_.startCalibrationPoint)
     val allEndCp = sources.flatMap(_.endCalibrationPoint)
     if (allStartCp.size > 1 || allEndCp.size > 1)
-      throw new InvalidArgumentException(Array("Source data contains too many calibration points"))
+      throw new IllegalArgumentException("Source data contains too many calibration points")
 
     val minStartAddressM = sources.map(_.startAddressM).min
     val maxEndAddressM = sources.map(_.endAddressM).max
