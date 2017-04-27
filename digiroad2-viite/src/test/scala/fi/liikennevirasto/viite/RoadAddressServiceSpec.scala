@@ -613,21 +613,9 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       (targets.map(roadAddressLinkToRoadLink), sources.map(roadAddressLinkToHistoryLink)))
     when(mockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
     when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[BoundingRectangle])).thenReturn(Seq())
-    val result = roadAddressService.transferRoadAddress(sources, targets, User(0L, "foo", Configuration()))
-    result.foreach(l => println(prettyPrint(l)))
-    val link456 = result.find(_.linkId == 456L)
-    val link457 = result.find(_.linkId == 457L)
-    link456.nonEmpty should be (true)
-    link457.nonEmpty should be (true)
-    link456.get.startAddressM should be (100)
-    link457.get.startAddressM should be (114)
-    link456.get.endAddressM should be (114)
-    link457.get.endAddressM should be (142)
-    sanityCheck(result)
-    link456.get.startCalibrationPoint.nonEmpty should be (false)
-    link457.get.startCalibrationPoint.nonEmpty should be (true)
-    link457.get.endCalibrationPoint.nonEmpty should be (false)
-    link456.get.endCalibrationPoint.nonEmpty should be (true)
+    the [IllegalArgumentException] thrownBy {
+      roadAddressService.transferRoadAddress(sources, targets, User(0L, "foo", Configuration()))
+    } should have message "Start calibration point not in the first link of source"
   }
 
   test("Zigzag geometry defloating") {
