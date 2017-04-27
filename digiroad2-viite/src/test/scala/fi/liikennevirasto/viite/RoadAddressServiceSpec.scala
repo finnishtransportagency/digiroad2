@@ -3,24 +3,22 @@ package fi.liikennevirasto.viite
 import java.util.Date
 
 import fi.liikennevirasto.digiroad2.FeatureClass.AllOthers
-import fi.liikennevirasto.digiroad2.RoadLinkType.{NormalRoadLinkType, UnknownRoadLinkType}
+import fi.liikennevirasto.digiroad2.RoadLinkType.NormalRoadLinkType
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{HistoryLinkInterface, NormalLinkInterface}
-import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
-import fi.liikennevirasto.digiroad2.asset.TrafficDirection.{AgainstDigitizing, BothDirections}
+import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
+import fi.liikennevirasto.digiroad2.asset.TrafficDirection.BothDirections
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite.RoadType.PublicRoad
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.model.Anomaly.NoAddressGiven
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink, RoadAddressLinkPartitioner}
-import fi.liikennevirasto.viite.process.{LinkRoadAddressCalculator, RoadAddressFiller}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
+import fi.liikennevirasto.viite.process.{LinkRoadAddressCalculator, RoadAddressFiller}
 import fi.liikennevirasto.viite.util.StaticTestData
 import org.joda.time.DateTime
 import org.mockito.ArgumentCaptor
@@ -32,8 +30,6 @@ import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery
 import slick.jdbc.StaticQuery.interpolation
-
-import scala.collection.mutable.ArrayBuffer
 
 class RoadAddressServiceSpec extends FunSuite with Matchers{
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
@@ -297,7 +293,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
   ignore ("save road link project and get form info rollback doesn't rollback") {
     val roadlink = RoadLink(5175306,Seq(Point(535605.272,6982204.22,85.90899999999965))
-      ,540.3960283713503,State,99,AgainstDigitizing,UnknownLinkType,Some("25.06.2015 03:00:00"), Some("vvh_modified"),Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
+      ,540.3960283713503,State,99,TrafficDirection.AgainstDigitizing,UnknownLinkType,Some("25.06.2015 03:00:00"), Some("vvh_modified"),Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
       InUse,NormalLinkInterface)
     when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(5175306L))).thenReturn(Seq(roadlink))
     runWithRollback{
@@ -323,7 +319,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
   ignore("save road link project without valid roadParts - rollback doesn't rollback") {
     val roadlink = RoadLink(5175306,Seq(Point(535605.272,6982204.22,85.90899999999965))
-      ,540.3960283713503,State,99,AgainstDigitizing,UnknownLinkType,Some("25.06.2015 03:00:00"), Some("vvh_modified"),Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
+      ,540.3960283713503,State,99,TrafficDirection.AgainstDigitizing,UnknownLinkType,Some("25.06.2015 03:00:00"), Some("vvh_modified"),Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
       InUse,NormalLinkInterface)
     when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(5175306L))).thenReturn(Seq(roadlink))
     runWithRollback{
@@ -408,14 +404,14 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
   private def roadAddressLinkToRoadLink(roadAddressLink: RoadAddressLink) = {
     RoadLink(roadAddressLink.linkId,roadAddressLink.geometry
-      ,GeometryUtils.geometryLength(roadAddressLink.geometry),roadAddressLink.administrativeClass,99,AgainstDigitizing
+      ,GeometryUtils.geometryLength(roadAddressLink.geometry),roadAddressLink.administrativeClass,99,TrafficDirection.AgainstDigitizing
       ,SingleCarriageway,Some("25.06.2015 03:00:00"), Some("vvh_modified"),Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
       InUse,NormalLinkInterface)
   }
 
   private def roadAddressLinkToHistoryLink(roadAddressLink: RoadAddressLink) = {
     VVHHistoryRoadLink(roadAddressLink.linkId,749,roadAddressLink.geometry
-      ,roadAddressLink.administrativeClass,AgainstDigitizing
+      ,roadAddressLink.administrativeClass,TrafficDirection.AgainstDigitizing
       ,FeatureClass.AllOthers,123,123,Map("MUNICIPALITYCODE" -> BigInt.apply(749)))
   }
 
@@ -657,8 +653,8 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     val link457 = result.find(_.linkId == 457L)
     link456.nonEmpty should be (true)
     link457.nonEmpty should be (true)
-    link456.get.sideCode should be (AgainstDigitizing)
-    link457.get.sideCode should be (TowardsDigitizing)
+    link456.get.sideCode should be (SideCode.AgainstDigitizing)
+    link457.get.sideCode should be (SideCode.TowardsDigitizing)
     link456.get.startAddressM should be (100)
     link457.get.startAddressM should be (119)
     link456.get.endAddressM should be (119)

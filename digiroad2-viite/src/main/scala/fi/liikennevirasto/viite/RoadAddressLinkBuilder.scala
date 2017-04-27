@@ -145,26 +145,27 @@ object RoadAddressLinkBuilder {
     val tempId = -1000
     val sorted = roadAddresses.sortBy(_.endAddressM)(Ordering[Long].reverse)
     val previousTarget = sorted.head
-    val startAddressM = roadAddresses.filterNot(_.id == 0).size match {
-      case 0 => minStartMAddress
-      case _ => previousTarget.endAddressM
-    }
-    //Uppercase variable due to scala lexical rule disambiguation. If lowercase, it will be taken as pattern variable
-    val LastTarget = expectedTargetsNumber-1
+    val startAddressM = if (roadAddresses.exists(_.id != 0))
+      previousTarget.endAddressM
+    else
+      minStartMAddress
 
-    val endAddressM = roadAddresses.filterNot(_.id == 0).size match {
-      case LastTarget => maxEndMAddress
-      case _ => startAddressM + GeometryUtils.geometryLength(currentTarget.geometry).toLong
-    }
+    val endAddressM = if (roadAddresses.count(_.id != 0) == expectedTargetsNumber-1)
+      maxEndMAddress
+    else
+      startAddressM + GeometryUtils.geometryLength(currentTarget.geometry).toLong
 
-    val calibrationPointS = roadAddresses.filterNot(_.id == 0).size match {
-      case 0 => startCp.map(_.copy(linkId = currentTarget.linkId, segmentMValue = 0.0))
-      case _ => None
-    }
-    val calibrationPointE = roadAddresses.filterNot(_.id == 0).size match {
-      case LastTarget => endCp.map(_.copy(linkId = currentTarget.linkId, segmentMValue = currentTarget.length))
-      case _ => None
-    }
+
+    val calibrationPointS = if (roadAddresses.count(_.id != 0) == 0)
+      startCp.map(_.copy(linkId = currentTarget.linkId, segmentMValue = 0.0))
+    else
+      None
+
+    val calibrationPointE = if (roadAddresses.count(_.id != 0) == expectedTargetsNumber - 1)
+      endCp.map(_.copy(linkId = currentTarget.linkId, segmentMValue = currentTarget.length))
+    else
+      None
+
 
     val newRoadAddress = Seq(RoadAddressLink(tempId, currentTarget.linkId, currentTarget.geometry,
       GeometryUtils.geometryLength(currentTarget.geometry), source.administrativeClass, source.linkType, NormalRoadLinkType,

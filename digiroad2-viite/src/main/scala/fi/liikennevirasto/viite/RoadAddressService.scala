@@ -3,7 +3,7 @@ package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2.RoadLinkType.{ComplementaryRoadLinkType, FloatingRoadLinkType, NormalRoadLinkType, UnknownRoadLinkType}
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
@@ -697,10 +697,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     * @return
     */
   def orderRoadAddressLinks(sources: Seq[RoadAddressLink], targets: Seq[RoadAddressLink]): (Seq[RoadAddressLink], Seq[RoadAddressLink]) = {
-    def switchSideCode(sideCode: SideCode) = {
-      // Switch between against and towards 2 -> 3, 3 -> 2
-      SideCode.apply(5-sideCode.value)
-    }
     /*
       Calculate sidecode changes - if next road address link starts with the current (end) point
       then side code remains the same. Otherwise it's reversed
@@ -823,7 +819,35 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val adjustedCreatedRoads = orderedTargets.foldLeft(orderedTargets) { (previousTargets, target) =>
       RoadAddressLinkBuilder.adjustRoadAddressTopology(orderedTargets.length, startCp, endCp, maxEndMValue, minStartAddressM, maxEndAddressM, source, target, previousTargets, user.username).filterNot(_.id == 0) }
 
-    adjustedCreatedRoads
+    // Figure out first link's side code
+    val startingSideCode = if (GeometryUtils.areAdjacent(adjustedCreatedRoads.head.geometry.head, orderedSources.head.geometry.head) ||
+      GeometryUtils.areAdjacent(adjustedCreatedRoads.head.geometry.last, orderedSources.head.geometry.last)) {
+      orderedSources.head.sideCode
+    } else {
+      switchSideCode(orderedSources.head.sideCode)
+    }
+
+    // Adjust SideCode according to the starting link
+    adjustSideCodes(Seq(adjustedCreatedRoads.head.copy(sideCode = startingSideCode)), adjustedCreatedRoads.tail)
+
+  }
+
+  private def adjustSideCodes(ready: Seq[RoadAddressLink], unprocessed: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
+    if (unprocessed.isEmpty)
+      ready
+    else {
+      val last = ready.last
+      val next = unprocessed.head
+      val endPoint = if (ready.last.sideCode == SideCode.TowardsDigitizing) ready.last.geometry.last else  ready.last.geometry.head
+      val touch = (GeometryUtils.areAdjacent(next.geometry.head, endPoint), GeometryUtils.areAdjacent(next.geometry.last, endPoint))
+      val nextSideCode = touch match {
+        case (true, false) => SideCode.TowardsDigitizing
+        case (false, true) => SideCode.AgainstDigitizing
+          //Overlapping or non-touching geometries
+        case (_, _) => throw new IllegalArgumentException("Touching geometries are invalid: %s %s".format(last.geometry, next.geometry))
+      }
+      adjustSideCodes(ready++Seq(next.copy(sideCode=nextSideCode)), unprocessed.tail)
+    }
   }
 
   def recalculateRoadAddresses(roadNumber: Long, roadPartNumber: Long) = {
@@ -950,6 +974,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       (fullProjectInfo, formInfo)
     }
   }
+
+  def switchSideCode(sideCode: SideCode) = {
+    // Switch between against and towards 2 -> 3, 3 -> 2
+    SideCode.apply(5-sideCode.value)
+  }
+
 }
 
 
