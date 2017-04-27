@@ -158,11 +158,11 @@ object RoadAddressLinkBuilder {
     }
 
     val calibrationPointS = roadAddresses.filterNot(_.id == 0).size match {
-      case 0 => startCp
+      case 0 => startCp.map(_.copy(linkId = currentTarget.linkId, segmentMValue = 0.0))
       case _ => None
     }
     val calibrationPointE = roadAddresses.filterNot(_.id == 0).size match {
-      case LastTarget => endCp
+      case LastTarget => endCp.map(_.copy(linkId = currentTarget.linkId, segmentMValue = currentTarget.length))
       case _ => None
     }
 

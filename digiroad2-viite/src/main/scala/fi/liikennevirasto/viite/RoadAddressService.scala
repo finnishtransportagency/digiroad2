@@ -782,28 +782,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       }
     }
 
-    /**
-      * Returns calibration point LRM value as if the sequence of road address links was continuous
-      * @param roadAddressLinks Floating source links
-      * @param calibrationPoint Calibration point to search for.
-      * @return Distance from the beginning
-      */
-    def getCalibrationPointLRM(roadAddressLinks: Seq[RoadAddressLink], calibrationPoint: CalibrationPoint): Double = {
-      roadAddressLinks.foldLeft(0.0){(lrm, ral) =>
-        if (ral.endAddressM <= calibrationPoint.addressMValue) {
-          ral.length
-        } else {
-          if (ral.startAddressM >= calibrationPoint.addressMValue)
-            0.0
-          else
-            ral.sideCode match {
-              case AgainstDigitizing => ral.length - calibrationPoint.segmentMValue
-              case _ => calibrationPoint.segmentMValue
-            }
-        }
-      }
-    }
-
     val adjustTopology: Seq[(Double, Seq[RoadAddressLink]) => Seq[RoadAddressLink]] = Seq(
       RoadAddressLinkBuilder.dropSegmentsOutsideGeometry,
       RoadAddressLinkBuilder.capToGeometry,
@@ -811,29 +789,36 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       RoadAddressLinkBuilder.dropShort
     )
 
-    val allLinks = sources ++ targets
-    val targetsGeomLength = targets.map(_.length).sum
+    val (orderedSources, orderedTargets) = orderRoadAddressLinks(sources, targets)
 
-    val allStartCp = sources.flatMap(_.startCalibrationPoint)
-    val allEndCp = sources.flatMap(_.endCalibrationPoint)
+    val allLinks = orderedSources ++ orderedTargets
+    val targetsGeomLength = orderedTargets.map(_.length).sum
+
+    val allStartCp = orderedSources.flatMap(_.startCalibrationPoint)
+    val allEndCp = orderedSources.flatMap(_.endCalibrationPoint)
     if (allStartCp.size > 1 || allEndCp.size > 1)
       throw new IllegalArgumentException("Source data contains too many calibration points")
 
-    val minStartAddressM = sources.map(_.startAddressM).min
-    val maxEndAddressM = sources.map(_.endAddressM).max
+    val minStartAddressM = orderedSources.head.startAddressM
+    val maxEndAddressM = orderedSources.last.endAddressM
 
-    val adjustedSegments = adjustTopology.foldLeft(sources) { (previousSources, operation) => operation(targetsGeomLength, previousSources) }
+    val adjustedSegments = adjustTopology.foldLeft(orderedSources) { (previousSources, operation) => operation(targetsGeomLength, previousSources) }
 
     val maxEndMValue = allLinks.flatMap(_.endCalibrationPoint) match {
       case Nil => adjustedSegments.map(_.endMValue).max
       case _ => getMValues(Option(adjustedSegments.flatMap(_.endCalibrationPoint).map(_.segmentMValue).max), Option(allLinks.map(_.endMValue).max))
     }
 
-    val (orderedSources, orderedTargets) = orderRoadAddressLinks(sources, targets)
     val source = orderedSources.head
 
     val startCp = allStartCp.headOption
     val endCp = allEndCp.headOption
+
+    if (startCp.nonEmpty && source.startCalibrationPoint.isEmpty)
+      throw new IllegalArgumentException("Start calibration point not in the first link of source")
+
+    if (endCp.nonEmpty && orderedSources.last.endCalibrationPoint.isEmpty)
+      throw new IllegalArgumentException("Start calibration point not in the first link of source")
 
     val adjustedCreatedRoads = orderedTargets.foldLeft(orderedTargets) { (previousTargets, target) =>
       RoadAddressLinkBuilder.adjustRoadAddressTopology(orderedTargets.length, startCp, endCp, maxEndMValue, minStartAddressM, maxEndAddressM, source, target, previousTargets, user.username).filterNot(_.id == 0) }

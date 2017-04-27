@@ -400,7 +400,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val startCP = newLinks.filter(_.linkId == 15171208).head.startCalibrationPoint.get
       val endCP = newLinks.filter(_.linkId == 15171209).head.endCalibrationPoint.get
       startCP.segmentMValue should be (0.0)
-      endCP.segmentMValue should be (floatGeomLength)
+      endCP.segmentMValue should be (GeometryUtils.geometryLength(geom2))
       startCP.addressMValue should be (0L)
       endCP.addressMValue should be (500L)
     }
