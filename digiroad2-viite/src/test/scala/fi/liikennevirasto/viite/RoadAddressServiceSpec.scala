@@ -572,8 +572,8 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   test("Defloating road links from three links to two links with one calibration point in the end") {
     val sources = Seq(
       createRoadAddressLink(1L, 123L, Seq(Point(0.0,0.0), Point(10.0, 10.0)), 1L, 1L, 0, 0, 14, SideCode.TowardsDigitizing, Anomaly.None),
-      createRoadAddressLink(3L, 125L, Seq(Point(20.0,20.0), Point(30.0, 30.0)), 1L, 1L, 0, 28, 42, SideCode.TowardsDigitizing, Anomaly.None),
-      createRoadAddressLink(2L, 124L, Seq(Point(10.0,10.0), Point(20.0, 20.0)), 1L, 1L, 0, 14, 28, SideCode.TowardsDigitizing, Anomaly.None, endCalibrationPoint = true)
+      createRoadAddressLink(3L, 125L, Seq(Point(20.0,20.0), Point(30.0, 30.0)), 1L, 1L, 0, 28, 42, SideCode.TowardsDigitizing, Anomaly.None, endCalibrationPoint = true),
+      createRoadAddressLink(2L, 124L, Seq(Point(10.0,10.0), Point(20.0, 20.0)), 1L, 1L, 0, 14, 28, SideCode.TowardsDigitizing, Anomaly.None)
     )
     val targets = Seq(
       createRoadAddressLink(0L, 456L, Seq(Point(0.0,0.0), Point(15.0, 15.0)), 0, 0, 0, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven),
@@ -593,10 +593,10 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     link456.get.startAddressM should be (0)
     link457.get.startAddressM should be (21)
     link456.get.endAddressM should be (21)
-    link457.get.endAddressM should be (28)
-    result.forall(l => l.endCalibrationPoint.isEmpty) should be (true)
-    link456.get.startCalibrationPoint.nonEmpty should be (true)
-    link457.get.startCalibrationPoint.nonEmpty should be (false)
+    link457.get.endAddressM should be (42)
+    result.forall(l => l.startCalibrationPoint.isEmpty) should be (true)
+    link456.get.endCalibrationPoint.isEmpty should be (true)
+    link457.get.endCalibrationPoint.isEmpty should be (false)
   }
 
   test("Defloating road links from three links to two links with one calibration point in between") {
