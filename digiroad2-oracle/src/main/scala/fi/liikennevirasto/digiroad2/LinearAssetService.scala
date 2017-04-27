@@ -750,8 +750,9 @@ trait LinearAssetOperations {
     }
   }
   def getActiveHuoltotie(): Seq[PersistedLinearAsset] = {
-    //TODO
-    throw new NotImplementedError()
+    withDynTransaction {
+      dao.fetchAllMaintenance(LinearAssetTypes.MaintenanceRoadAssetTypeId).filter(roadAsset => roadAsset.expired == false)
+    }
   }
 
   def getActiveHuoltotieByPolygon(areaId: String, typeId: Int): Seq[PersistedLinearAsset] = {
