@@ -615,7 +615,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[BoundingRectangle])).thenReturn(Seq())
     val result = roadAddressService.transferRoadAddress(sources, targets, User(0L, "foo", Configuration()))
     result.foreach(l => println(prettyPrint(l)))
-    sanityCheck(result)
     val link456 = result.find(_.linkId == 456L)
     val link457 = result.find(_.linkId == 457L)
     link456.nonEmpty should be (true)
@@ -624,6 +623,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     link457.get.startAddressM should be (114)
     link456.get.endAddressM should be (114)
     link457.get.endAddressM should be (142)
+    sanityCheck(result)
     link456.get.startCalibrationPoint.nonEmpty should be (false)
     link457.get.startCalibrationPoint.nonEmpty should be (true)
     link457.get.endCalibrationPoint.nonEmpty should be (false)
@@ -634,18 +634,18 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
     /*
 
-   (10,10) x                     x (30,10)
-          / \                   /
-         /   \                 /
-        /     \               /
-       /       \             /
-      x (5,5)   \           /
-                 \         /
-                  \       /
-                   \     /
-                    \   /
-                     \ /
-                      x (20,0)
+   (10,10) x                     x (30,10)           ,                     x (30,10)
+          / \                   /                   / \                   /
+         /   \                 /                   /   \                 /
+        /     \               /                   /     \               /
+       /       \             /                   /       \             /
+      x (5,5)   \           /                   x (5,5)   \           /
+                 \         /                               \         /
+                  \       /                                 \       /
+                   \     /                                   \     /
+                    \   /                                     \   /
+                     \ /                                (19,1) x /
+                      x (20,0)                                  v
 
      */
 
@@ -655,7 +655,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       createRoadAddressLink(2L, 124L, Seq(Point(20.0, 0.0), Point(10.0,10.0)), 1L, 1L, 0, 107, 121, SideCode.AgainstDigitizing, Anomaly.None)
     )
     val targets = Seq(
-      createRoadAddressLink(0L, 456L, Seq(Point(5.0,5.0), Point(10.0, 10.0), Point(19.0, 1.0)), 0, 0, 0, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven),
+      createRoadAddressLink(0L, 456L, Seq(Point(19.0, 1.0), Point(10.0, 10.0), Point(5.0,5.0)), 0, 0, 0, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven),
       createRoadAddressLink(0L, 457L, Seq(Point(19.0,1.0), Point(20.0, 0.0), Point(30.0, 10.0)), 0, 0, 0, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven)
     )
     when(mockRoadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(any[Set[Long]])).thenReturn(

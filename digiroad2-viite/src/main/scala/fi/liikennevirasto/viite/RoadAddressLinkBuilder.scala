@@ -13,9 +13,6 @@ import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, DateTimeZone}
 
-/**
-  * Created by venholat on 21.4.2017.
-  */
 object RoadAddressLinkBuilder {
   val RoadNumber = "ROADNUMBER"
   val RoadPartNumber = "ROADPARTNUMBER"
@@ -142,7 +139,9 @@ object RoadAddressLinkBuilder {
     passThroughSegments
   }
 
-  def adjustRoadAddressTopology(expectedTargetsNumber: Int, startCp: Option[CalibrationPoint], endCp: Option[CalibrationPoint], maxEndMValue: Double, minStartMAddress: Long, maxEndMAddress: Long, source: RoadAddressLink, currentTarget: RoadAddressLink, roadAddresses: Seq[RoadAddressLink], username: String): Seq[RoadAddressLink] = {
+  def adjustRoadAddressTopology(expectedTargetsNumber: Int, startCp: Option[CalibrationPoint], endCp: Option[CalibrationPoint],
+                                maxEndMValue: Double, minStartMAddress: Long, maxEndMAddress: Long, source: RoadAddressLink,
+                                currentTarget: RoadAddressLink, roadAddresses: Seq[RoadAddressLink], username: String): Seq[RoadAddressLink] = {
     val tempId = -1000
     val sorted = roadAddresses.sortBy(_.endAddressM)(Ordering[Long].reverse)
     val previousTarget = sorted.head
@@ -158,18 +157,15 @@ object RoadAddressLinkBuilder {
       case _ => startAddressM + GeometryUtils.geometryLength(currentTarget.geometry).toLong
     }
 
-    val calibrationPointS = roadAddresses.filterNot(_.id == 0).size match {
-      case 0 => startCp
-      case _ => None
-    }
-    val calibrationPointE = roadAddresses.filterNot(_.id == 0).size match {
-      case LastTarget => endCp
-      case _ => None
-    }
+    val calibrationPointS = startCp.find(_.linkId == currentTarget.linkId)
+    val calibrationPointE = endCp.find(_.linkId == currentTarget.linkId)
 
-    val newRoadAddress = Seq(RoadAddressLink(tempId, currentTarget.linkId, currentTarget.geometry, GeometryUtils.geometryLength(currentTarget.geometry), source.administrativeClass, source.linkType, NormalRoadLinkType, source.constructionType, source.roadLinkSource,
-      source.roadType, source.modifiedAt, Option(username), currentTarget.attributes, source.roadNumber, source.roadPartNumber, source.trackCode, source.elyCode, source.discontinuity,
-      startAddressM, endAddressM, source.startDate, source.endDate, currentTarget.startMValue, GeometryUtils.geometryLength(currentTarget.geometry), source.sideCode, calibrationPointS, calibrationPointE, Anomaly.None, 0))
+    val newRoadAddress = Seq(RoadAddressLink(tempId, currentTarget.linkId, currentTarget.geometry,
+      GeometryUtils.geometryLength(currentTarget.geometry), source.administrativeClass, source.linkType, NormalRoadLinkType,
+      source.constructionType, source.roadLinkSource, source.roadType, source.modifiedAt, Option(username),
+      currentTarget.attributes, source.roadNumber, source.roadPartNumber, source.trackCode, source.elyCode, source.discontinuity,
+      startAddressM, endAddressM, source.startDate, source.endDate, currentTarget.startMValue,
+      GeometryUtils.geometryLength(currentTarget.geometry), source.sideCode, calibrationPointS, calibrationPointE, Anomaly.None, 0))
     roadAddresses++newRoadAddress
   }
 

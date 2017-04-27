@@ -4,6 +4,7 @@ package fi.liikennevirasto.viite
 import com.sun.javaws.exceptions.InvalidArgumentException
 import fi.liikennevirasto.digiroad2.RoadLinkType.{ComplementaryRoadLinkType, FloatingRoadLinkType, NormalRoadLinkType, UnknownRoadLinkType}
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
@@ -689,6 +690,13 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     None
   }
 
+  /**
+    * Take two sequences of road address links and order them so that the sequence covers the same road geometry
+    * and logical addressing in the same order
+    * @param sources Source road address links (floating)
+    * @param targets Target road address links (missing addresses)
+    * @return
+    */
   def orderRoadAddressLinks(sources: Seq[RoadAddressLink], targets: Seq[RoadAddressLink]): (Seq[RoadAddressLink], Seq[RoadAddressLink]) = {
     def switchSideCode(sideCode: SideCode) = {
       // Switch between against and towards 2 -> 3, 3 -> 2
@@ -775,6 +783,28 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       }
     }
 
+    /**
+      * Returns calibration point LRM value as if the sequence of road address links was continuous
+      * @param roadAddressLinks Floating source links
+      * @param calibrationPoint Calibration point to search for.
+      * @return Distance from the beginning
+      */
+    def getCalibrationPointLRM(roadAddressLinks: Seq[RoadAddressLink], calibrationPoint: CalibrationPoint): Double = {
+      roadAddressLinks.foldLeft(0.0){(lrm, ral) =>
+        if (ral.endAddressM <= calibrationPoint.addressMValue) {
+          ral.length
+        } else {
+          if (ral.startAddressM >= calibrationPoint.addressMValue)
+            0.0
+          else
+            ral.sideCode match {
+              case AgainstDigitizing => ral.length - calibrationPoint.segmentMValue
+              case _ => calibrationPoint.segmentMValue
+            }
+        }
+      }
+    }
+
     val adjustTopology: Seq[(Double, Seq[RoadAddressLink]) => Seq[RoadAddressLink]] = Seq(
       RoadAddressLinkBuilder.dropSegmentsOutsideGeometry,
       RoadAddressLinkBuilder.capToGeometry,
@@ -787,8 +817,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
     val allStartCp = sources.flatMap(_.startCalibrationPoint)
     val allEndCp = sources.flatMap(_.endCalibrationPoint)
-    val startCp = if (allStartCp.nonEmpty) Option(allStartCp.minBy(_.addressMValue)) else None
-    val endCp = if (allEndCp.nonEmpty) Option(allEndCp.maxBy(_.addressMValue)) else None
+    if (allStartCp.size > 1 || allEndCp.size > 1)
+      throw new InvalidArgumentException(Array("Source data contains too many calibration points"))
+
     val minStartAddressM = sources.map(_.startAddressM).min
     val maxEndAddressM = sources.map(_.endAddressM).max
 
@@ -801,6 +832,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
     val (orderedSources, orderedTargets) = orderRoadAddressLinks(sources, targets)
     val source = orderedSources.head
+
+    val startCp = allStartCp.headOption.map(cp => cp.copy(segmentMValue = getCalibrationPointLRM(sources, cp)))
+    val endCp = allEndCp.headOption.map(cp => cp.copy(segmentMValue = getCalibrationPointLRM(sources, cp)))
 
     val adjustedCreatedRoads = orderedTargets.foldLeft(orderedTargets) { (previousTargets, target) =>
       RoadAddressLinkBuilder.adjustRoadAddressTopology(orderedTargets.length, startCp, endCp, maxEndMValue, minStartAddressM, maxEndAddressM, source, target, previousTargets, user.username).filterNot(_.id == 0) }
