@@ -62,6 +62,8 @@
       greenRoadLayer.setZIndex(10000);
       if(!addToGreenLayer){
         greenRoadLayer.getSource().addFeatures(features);
+        selectSingleClick.getFeatures().clear();
+        addFeaturesToSelection(features);
       }
     };
 
@@ -292,6 +294,7 @@
       _.each(ol3Features, function(feature){
         if(!_.contains(olUids,feature.ol_uid)){
           selectSingleClick.getFeatures().push(feature);
+          olUids.push(feature.ol_uid);
         }
       });
     };
