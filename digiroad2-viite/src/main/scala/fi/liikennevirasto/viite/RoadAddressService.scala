@@ -832,8 +832,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val (orderedSources, orderedTargets) = orderRoadAddressLinks(sources, targets)
     val source = orderedSources.head
 
-    val startCp = allStartCp.headOption.map(cp => cp.copy(segmentMValue = getCalibrationPointLRM(sources, cp)))
-    val endCp = allEndCp.headOption.map(cp => cp.copy(segmentMValue = getCalibrationPointLRM(sources, cp)))
+    val startCp = allStartCp.headOption
+    val endCp = allEndCp.headOption
 
     val adjustedCreatedRoads = orderedTargets.foldLeft(orderedTargets) { (previousTargets, target) =>
       RoadAddressLinkBuilder.adjustRoadAddressTopology(orderedTargets.length, startCp, endCp, maxEndMValue, minStartAddressM, maxEndAddressM, source, target, previousTargets, user.username).filterNot(_.id == 0) }
