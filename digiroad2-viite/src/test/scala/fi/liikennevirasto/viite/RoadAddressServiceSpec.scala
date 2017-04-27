@@ -365,28 +365,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     }
   }
 
-  test("order links by adjacency"){
-    val targets = Seq(
-      RoadAddressLink(0,500074228,List(Point(422567.965,7227452.099,11.505000000004657), Point(422567.097,7227461.748,11.51600000000326), Point(422565.931,7227472.045,11.53200000000652)),20.050769702601443,State,UnknownLinkType,UnknownRoadLinkType,InUse,LinkGeomSource.Unknown,PublicRoad,Some("20.02.2017 23:23:52"),Some("vvh_modified"),Map("TO_RIGHT" -> 686,"LAST_EDITED_DATE" -> "", "FROM_LEFT" -> 685, "MTKHEREFLIP" -> 0, "MTKID" -> 1280433854, "ROADNAME_FI" -> "", "VERTICALACCURACY" -> 201, "VALIDFROM" -> "", "CONSTRUCTIONTYPE" -> 0, "SURFACETYPE" -> 2, "MTKCLASS" -> 12121, "ROADPARTNUMBER" -> 6, "points" -> List(Map("x" -> 422567.965, "y" -> 7227452.099, "z" -> 11.505000000004657, "m" -> 0), Map("x" -> 422567.097, "y" -> 7227461.748, "z" -> 11.51600000000326, "m" -> 9.687999999994645), Map("x" -> 422565.931, "y" -> 7227472.045, "z" -> 11.53200000000652, "m" -> 20.050799999997253)), "TO_LEFT" -> 685, "VERTICALLEVEL" -> 0, "MUNICIPALITYCODE" -> 564, "FROM_RIGHT" -> 686, "CREATED_DATE" -> 0, "GEOMETRY_EDITED_DATE" -> 14876, "HORIZONTALACCURACY" -> 3000, "ROADNUMBER" -> 847),0,0,0,99,12,5,0,"","",0.0,20.050769702601443,SideCode.Unknown,None,None,NoAddressGiven,0),
-      RoadAddressLink(0,500074212,List(Point(422565.931,7227472.045,11.53200000000652), Point(422562.876,7227497.164,11.620999999999185), Point(422559.725,7227524.435,11.680999999996857), Point(422557.315,7227547.124,11.828999999997905), Point(422554.549,7227572.125,12.014999999999418), Point(422551.327,7227610.148,12.297000000005937), Point(422548.505,7227649.438,12.53200000000652), Point(422545.904,7227709.944,12.754000000000815), Point(422545.452,7227782.425,12.698999999993248), Point(422545.801,7227804.403,12.627999999996973), Point(422546.278,7227826.148,12.544999999998254)),355.05248288196043,State,UnknownLinkType,UnknownRoadLinkType,InUse,LinkGeomSource.Unknown,PublicRoad,Some("20.02.2017 23:23:52"),Some("vvh_modified"),Map("TO_RIGHT" -> 686,"LAST_EDITED_DATE" -> "", "FROM_LEFT" -> 685, "MTKHEREFLIP" -> 0, "MTKID" -> 1280433854, "ROADNAME_FI" -> "", "VERTICALACCURACY" -> 201, "VALIDFROM" -> "", "CONSTRUCTIONTYPE" -> 0, "SURFACETYPE" -> 2, "MTKCLASS" -> 12121, "ROADPARTNUMBER" -> 6, "points" -> List(Map("x" -> 422567.965, "y" -> 7227452.099, "z" -> 11.505000000004657, "m" -> 0), Map("x" -> 422567.097, "y" -> 7227461.748, "z" -> 11.51600000000326, "m" -> 9.687999999994645), Map("x" -> 422565.931, "y" -> 7227472.045, "z" -> 11.53200000000652, "m" -> 20.050799999997253)), "TO_LEFT" -> 685, "VERTICALLEVEL" -> 0, "MUNICIPALITYCODE" -> 564, "FROM_RIGHT" -> 686, "CREATED_DATE" -> 0, "GEOMETRY_EDITED_DATE" -> 14876, "HORIZONTALACCURACY" -> 3000, "ROADNUMBER" -> 847),0,0,0,99,12,5,0,"","",0.0,355.05248288196043,SideCode.Unknown,None,None,NoAddressGiven,0),
-      RoadAddressLink(0,500074210,List(Point(422651.18,7226954.399,11.104000000006636), Point(422641.906,7227005.073,11.228000000002794), Point(422635.518,7227045.286,11.334000000002561), Point(422621.596,7227124.561,11.406000000002678), Point(422608.243,7227202.666,11.42500000000291), Point(422599.521,7227254.884,11.453999999997905), Point(422595.212,7227279.694,11.452000000004773), Point(422592.228,7227296.228,11.427999999999884), Point(422589.78,7227310.823,11.426999999996042), Point(422585.782,7227333.714,11.461999999999534), Point(422581.424,7227360.454,11.619000000006054), Point(422574.5,7227401.73,11.551999999996042), Point(422570.619,7227426.949,11.539999999993597), Point(422567.965,7227452.099,11.505000000004657)),504.6706174979878,State,UnknownLinkType,UnknownRoadLinkType,InUse,LinkGeomSource.Unknown,PublicRoad,Some("20.02.2017 23:23:52"),Some("vvh_modified"),Map("TO_RIGHT" -> 686,"LAST_EDITED_DATE" -> "", "FROM_LEFT" -> 685, "MTKHEREFLIP" -> 0, "MTKID" -> 1280433854, "ROADNAME_FI" -> "", "VERTICALACCURACY" -> 201, "VALIDFROM" -> "", "CONSTRUCTIONTYPE" -> 0, "SURFACETYPE" -> 2, "MTKCLASS" -> 12121, "ROADPARTNUMBER" -> 6, "points" -> List(Map("x" -> 422567.965, "y" -> 7227452.099, "z" -> 11.505000000004657, "m" -> 0), Map("x" -> 422567.097, "y" -> 7227461.748, "z" -> 11.51600000000326, "m" -> 9.687999999994645), Map("x" -> 422565.931, "y" -> 7227472.045, "z" -> 11.53200000000652, "m" -> 20.050799999997253)), "TO_LEFT" -> 685, "VERTICALLEVEL" -> 0, "MUNICIPALITYCODE" -> 564, "FROM_RIGHT" -> 686, "CREATED_DATE" -> 0, "GEOMETRY_EDITED_DATE" -> 14876, "HORIZONTALACCURACY" -> 3000, "ROADNUMBER" -> 847),0,0,0,99,12,5,0,"","",0.0,504.6706174979878,SideCode.Unknown,None,None,NoAddressGiven,0)
-    )
-    val startingLinkId = 500074210L
-    val firstTarget = targets.filter(_.linkId == startingLinkId).head
-    val orderTargets = targets.foldLeft(Seq.empty[RoadAddressLink]) { (previousOrderedTargets, target) =>
-      roadAddressService.orderLinksRecursivelyByAdjacency(firstTarget, target, targets, previousOrderedTargets)
-    }
-    val first = orderTargets.head
-    val second = orderTargets.tail.head
-    val third = orderTargets.last
-    orderTargets.size should be (3)
-    first.linkId should equal(500074210)
-    second.linkId should equal(500074228)
-    third.linkId should equal(500074212)
-    val checkAdjacency = GeometryUtils.areAdjacent(first.geometry, second.geometry)
-    checkAdjacency should be (true)
-  }
-
   test("transferRoadAddress should keep calibration points") {
     runWithRollback {
       val floatGeom = Seq(Point(532837.14110884, 6993543.6296834, 0.0), Point(533388.14110884, 6994014.1296834, 0.0))
@@ -395,7 +373,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
         RoadAddressLink(-1000, 15171208, floatGeom,
           floatGeomLength, Municipality, SingleCarriageway, NormalRoadLinkType, InUse, HistoryLinkInterface, RoadType.MunicipalityStreetRoad,
           None, None, Map("linkId" -> 15171208, "segmentId" -> 63298), 5, 205, 1, 0, 0, 0, 500, "2015-01-01", "2016-01-01", 0.0, floatGeomLength,
-          SideCode.Unknown, Option(CalibrationPoint(15171208, 0.0, 0)), Option(CalibrationPoint(15171208, floatGeomLength, 500)), Anomaly.None, 0))
+          SideCode.TowardsDigitizing, Option(CalibrationPoint(15171208, 0.0, 0)), Option(CalibrationPoint(15171208, floatGeomLength, 500)), Anomaly.None, 0))
       RoadAddressDAO.create(floatingLinks.map(roadAddressLinkToRoadAddress(true)))
 
       val cutPoint = GeometryUtils.calculatePointFromLinearReference(floatGeom, 230.0).get

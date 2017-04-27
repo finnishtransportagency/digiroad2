@@ -690,6 +690,22 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   def orderRoadAddressLinks(sources: Seq[RoadAddressLink], targets: Seq[RoadAddressLink]): (Seq[RoadAddressLink], Seq[RoadAddressLink]) = {
+    def switchSideCode(sideCode: SideCode) = {
+      // Switch between against and towards 2 -> 3, 3 -> 2
+      SideCode.apply(5-sideCode.value)
+    }
+    /*
+      Calculate sidecode changes - if next road address link starts with the current (end) point
+      then side code remains the same. Otherwise it's reversed
+     */
+    def getSideCode(roadAddressLink: RoadAddressLink, previousSideCode: SideCode, currentPoint: Point) = {
+      val geom = roadAddressLink.geometry
+      if (GeometryUtils.areAdjacent(geom.head, currentPoint))
+        previousSideCode
+      else
+        switchSideCode(previousSideCode)
+    }
+
     def extending(link: RoadAddressLink, ext: RoadAddressLink) = {
       link.roadNumber == ext.roadNumber && link.roadPartNumber == ext.roadPartNumber &&
         link.trackCode == ext.trackCode && link.endAddressM == ext.startAddressM
@@ -710,27 +726,42 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
           extendChainByAddress(previous ++ ordered, rest)
       }
     }
-    def extendChainByGeometry(ordered: Seq[RoadAddressLink], unordered: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
+    def extendChainByGeometry(ordered: Seq[RoadAddressLink], unordered: Seq[RoadAddressLink], sideCode: SideCode): Seq[RoadAddressLink] = {
       if (ordered.isEmpty)
-        return extendChainByAddress(Seq(unordered.head), unordered.tail)
+        return extendChainByGeometry(Seq(unordered.head), unordered.tail, sideCode)
       if (unordered.isEmpty)
         return ordered
-      val endPoint = ordered.last.geometry.last
+      // Current position we are building from
+      val endPoint = sideCode match {
+        case SideCode.TowardsDigitizing => ordered.last.geometry.last
+        case SideCode.AgainstDigitizing => ordered.last.geometry.head
+        case _ => throw new InvalidAddressDataException("Bad sidecode on chain")
+      }
       val (next, rest) = unordered.partition(u => GeometryUtils.minimumDistance(endPoint, u.geometry) < 0.1)
-      if (next.nonEmpty)
-        extendChainByAddress(ordered ++ next, rest)
+      if (next.nonEmpty) {
+        extendChainByGeometry(ordered ++ next, rest, getSideCode(next.head, sideCode, endPoint))
+      }
       else {
         val startPoint = ordered.head.geometry.head
         val (previous, rest) = unordered.partition(u => GeometryUtils.minimumDistance(startPoint, u.geometry) < 0.1)
         if (previous.isEmpty)
           throw new InvalidArgumentException(Array("Non-contiguous road target geometry"))
         else
-          extendChainByAddress(previous ++ ordered, rest)
+          extendChainByGeometry(previous ++ ordered, rest, getSideCode(previous.head, sideCode, endPoint))
       }
     }
     val orderedSources = extendChainByAddress(Seq(sources.head), sources.tail)
-    val preSortedTargets = targets.sortBy(l => GeometryUtils.minimumDistance(orderedSources.head.geometry.head, l.geometry))
-    (orderedSources, extendChainByGeometry(Seq(preSortedTargets.head), preSortedTargets.tail))
+    val startingPoint = orderedSources.head.sideCode match {
+      case SideCode.TowardsDigitizing => orderedSources.head.geometry.head
+      case SideCode.AgainstDigitizing => orderedSources.head.geometry.last
+      case _ => throw new InvalidAddressDataException("Bad sidecode on source")
+    }
+    val preSortedTargets = targets.sortBy(l => GeometryUtils.minimumDistance(startingPoint, l.geometry))
+    val startingSideCode = if (GeometryUtils.areAdjacent(startingPoint, preSortedTargets.head.geometry.head))
+      SideCode.TowardsDigitizing
+    else
+      SideCode.AgainstDigitizing
+    (orderedSources, extendChainByGeometry(Seq(preSortedTargets.head), preSortedTargets.tail, startingSideCode))
   }
 
   def transferRoadAddress(sources: Seq[RoadAddressLink], targets: Seq[RoadAddressLink], user: User): Seq[RoadAddressLink] = {
@@ -775,17 +806,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       RoadAddressLinkBuilder.adjustRoadAddressTopology(orderedTargets.length, startCp, endCp, maxEndMValue, minStartAddressM, maxEndAddressM, source, target, previousTargets, user.username).filterNot(_.id == 0) }
 
     adjustedCreatedRoads
-  }
-
-  def orderLinksRecursivelyByAdjacency(firstTarget: RoadAddressLink, target: RoadAddressLink, targets: Seq[RoadAddressLink], previousOrderedTargets: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
-
-    val orderedTargets = previousOrderedTargets.size match {
-      case 0 => Seq(firstTarget)
-      case _ =>
-        val nextTarget = targets.filterNot(t =>  previousOrderedTargets.map(_.linkId).contains(t.linkId)).filter(rt => GeometryUtils.areAdjacent(previousOrderedTargets.last.geometry, target.geometry))
-        (previousOrderedTargets++nextTarget)
-    }
-    orderedTargets
   }
 
   def recalculateRoadAddresses(roadNumber: Long, roadPartNumber: Long) = {
