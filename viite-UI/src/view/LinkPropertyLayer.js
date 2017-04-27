@@ -998,9 +998,7 @@
     });
 
     eventListener.listenTo(eventbus, 'linkProperties:clearHighlights', function(){
-      if(greenRoadLayer.getSource().getFeatures().length !== 0){
-        unselectRoadLink();
-      }
+      unselectRoadLink();
       if(pickRoadsLayer.getSource().getFeatures().length !== 0){
         pickRoadsLayer.getSource().clear();
       }
