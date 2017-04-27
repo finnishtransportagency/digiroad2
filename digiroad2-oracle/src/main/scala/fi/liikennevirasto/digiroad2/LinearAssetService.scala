@@ -749,13 +749,13 @@ trait LinearAssetOperations {
       }
     }
   }
-  def getActiveHuoltotie(): Seq[PersistedLinearAsset] = {
+  def getActiveMaintenanceRoad(): Seq[PersistedLinearAsset] = {
     withDynTransaction {
       dao.fetchAllMaintenance(LinearAssetTypes.MaintenanceRoadAssetTypeId).filter(roadAsset => roadAsset.expired == false)
     }
   }
 
-  def getActiveHuoltotieByPolygon(areaId: String, typeId: Int): Seq[PersistedLinearAsset] = {
+  def getActiveMaintenanceRoadByPolygon(areaId: String, typeId: Int): Seq[PersistedLinearAsset] = {
     val polygonTool = new PolygonTools()
     val geometry = polygonTool.getAreaGeometry(areaId.toInt)
 

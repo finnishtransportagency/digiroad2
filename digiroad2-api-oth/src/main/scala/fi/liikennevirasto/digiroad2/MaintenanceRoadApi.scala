@@ -5,7 +5,7 @@ import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.ScalatraServlet
 import org.scalatra.json.JacksonJsonSupport
 
-class HuoltotieApi(val linearAssetService: LinearAssetService) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport {
+class MaintenanceRoadApi(val linearAssetService: LinearAssetService) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport {
   private val Kayttooikeus = "huoltotie_kayttooikeus"
   private val Huoltovastuu = "huoltotie_huoltovastuu"
   private val Tiehoitokunta = "huoltotie_tiehoitokunta"
@@ -32,13 +32,13 @@ class HuoltotieApi(val linearAssetService: LinearAssetService) extends ScalatraS
   private val trLisatieto = "lisatieto"
 
   get("/huoltotiet") {
-    val maintenanceAsset = linearAssetService.getActiveHuoltotie()
+    val maintenanceAsset = linearAssetService.getActiveMaintenanceRoad()
     createJson(maintenanceAsset)
   }
 
   get("/huoltotiet/:areaId"){
     var areaId = params("areaId")
-    val maintenanceAsset = linearAssetService.getActiveHuoltotieByPolygon(areaId, typeId)
+    val maintenanceAsset = linearAssetService.getActiveMaintenanceRoadByPolygon(areaId, typeId)
     createJson(maintenanceAsset)
   }
 
