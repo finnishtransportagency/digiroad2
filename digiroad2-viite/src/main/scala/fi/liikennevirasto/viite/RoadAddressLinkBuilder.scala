@@ -157,8 +157,14 @@ object RoadAddressLinkBuilder {
       case _ => startAddressM + GeometryUtils.geometryLength(currentTarget.geometry).toLong
     }
 
-    val calibrationPointS = startCp.find(_.linkId == currentTarget.linkId)
-    val calibrationPointE = endCp.find(_.linkId == currentTarget.linkId)
+    val calibrationPointS = roadAddresses.filterNot(_.id == 0).size match {
+      case 0 => startCp
+      case _ => None
+    }
+    val calibrationPointE = roadAddresses.filterNot(_.id == 0).size match {
+      case LastTarget => endCp
+      case _ => None
+    }
 
     val newRoadAddress = Seq(RoadAddressLink(tempId, currentTarget.linkId, currentTarget.geometry,
       GeometryUtils.geometryLength(currentTarget.geometry), source.administrativeClass, source.linkType, NormalRoadLinkType,
