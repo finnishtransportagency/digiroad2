@@ -577,11 +577,8 @@
       });
       eventbus.on('application:readOnly', toggleMode);
       rootElement.on('click', '.link-properties button.save', function() {
-        if(applicationModel.getCurrentAction() === applicationModel.actionCalculated)
-        {
+        if(applicationModel.getCurrentAction() === applicationModel.actionCalculated){
           selectedLinkProperty.saveTransfer();
-        } else {
-          selectedLinkProperty.save();
         }
       });
       rootElement.on('click', '.link-properties button.cancel', function() {

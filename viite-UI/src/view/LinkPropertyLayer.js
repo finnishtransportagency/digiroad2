@@ -768,6 +768,8 @@
       $('#feature-attributes').empty();
       clearLayers();
       me.refreshView();
+      activateSelectInteractions(true);
+      applicationModel.toggleSelectionTypeAll();
     };
 
     var redrawNextSelectedTarget= function(targets, adjacents) {
