@@ -532,6 +532,35 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     result.forall(l => l.startCalibrationPoint.isEmpty && l.endCalibrationPoint.isEmpty) should be (true)
   }
 
+  test("Defloating road links from three links to two links with against digitizing direction") {
+    val sources = Seq(
+      createRoadAddressLink(1L, 123L, Seq(Point(0.0,0.0), Point(10.0, 10.0)), 1L, 1L, 0, 128, 142, SideCode.AgainstDigitizing, Anomaly.None),
+      createRoadAddressLink(2L, 124L, Seq(Point(10.0,10.0), Point(20.0, 20.0)), 1L, 1L, 0, 114, 128, SideCode.AgainstDigitizing, Anomaly.None),
+      createRoadAddressLink(3L, 125L, Seq(Point(20.0,20.0), Point(30.0, 30.0)), 1L, 1L, 0, 100, 114, SideCode.AgainstDigitizing, Anomaly.None)
+    )
+    val targets = Seq(
+      createRoadAddressLink(0L, 457L, Seq(Point(15.0,15.0), Point(30.0, 30.0)), 0, 0, 0, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven),
+      createRoadAddressLink(0L, 456L, Seq(Point(0.0,0.0), Point(15.0, 15.0)), 0, 0, 0, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven)
+    )
+    when(mockRoadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(any[Set[Long]])).thenReturn(
+      (targets.map(roadAddressLinkToRoadLink), sources.map(roadAddressLinkToHistoryLink)))
+    when(mockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
+    when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[BoundingRectangle])).thenReturn(Seq())
+    val result = roadAddressService.transferRoadAddress(sources, targets, User(0L, "foo", Configuration()))
+    result.foreach(l => println(prettyPrint(l)))
+    sanityCheck(result)
+    val link456 = result.find(_.linkId == 456L)
+    val link457 = result.find(_.linkId == 457L)
+    link456.nonEmpty should be (true)
+    link457.nonEmpty should be (true)
+    link456.get.startAddressM should be (121)
+    link457.get.startAddressM should be (100)
+    link456.get.endAddressM should be (142)
+    link457.get.endAddressM should be (121)
+    result.forall(l => l.startCalibrationPoint.isEmpty && l.endCalibrationPoint.isEmpty) should be (true)
+    result.forall(l => l.sideCode == SideCode.AgainstDigitizing) should be (true)
+  }
+
   test("Defloating road links from three links to two links with one calibration point in beginning") {
     val sources = Seq(
       createRoadAddressLink(1L, 123L, Seq(Point(0.0,0.0), Point(10.0, 10.0)), 1L, 1L, 0, 0, 14, SideCode.TowardsDigitizing, Anomaly.None, startCalibrationPoint = true),
@@ -559,7 +588,37 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     link457.get.endAddressM should be (42)
     result.forall(l => l.endCalibrationPoint.isEmpty) should be (true)
     link456.get.startCalibrationPoint.nonEmpty should be (true)
-    link457.get.startCalibrationPoint.nonEmpty should be (true)
+    link457.get.startCalibrationPoint.nonEmpty should be (false)
+  }
+
+  test("Defloating road links from three links to two links with one calibration point in the end") {
+    val sources = Seq(
+      createRoadAddressLink(1L, 123L, Seq(Point(0.0,0.0), Point(10.0, 10.0)), 1L, 1L, 0, 0, 14, SideCode.TowardsDigitizing, Anomaly.None),
+      createRoadAddressLink(3L, 125L, Seq(Point(20.0,20.0), Point(30.0, 30.0)), 1L, 1L, 0, 28, 42, SideCode.TowardsDigitizing, Anomaly.None),
+      createRoadAddressLink(2L, 124L, Seq(Point(10.0,10.0), Point(20.0, 20.0)), 1L, 1L, 0, 14, 28, SideCode.TowardsDigitizing, Anomaly.None, endCalibrationPoint = true)
+    )
+    val targets = Seq(
+      createRoadAddressLink(0L, 456L, Seq(Point(0.0,0.0), Point(15.0, 15.0)), 0, 0, 0, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven),
+      createRoadAddressLink(0L, 457L, Seq(Point(15.0,15.0), Point(30.0, 30.0)), 0, 0, 0, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven)
+    )
+    when(mockRoadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(any[Set[Long]])).thenReturn(
+      (targets.map(roadAddressLinkToRoadLink), sources.map(roadAddressLinkToHistoryLink)))
+    when(mockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
+    when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[BoundingRectangle])).thenReturn(Seq())
+    val result = roadAddressService.transferRoadAddress(sources, targets, User(0L, "foo", Configuration()))
+    result.foreach(l => println(prettyPrint(l)))
+    sanityCheck(result)
+    val link456 = result.find(_.linkId == 456L)
+    val link457 = result.find(_.linkId == 457L)
+    link456.nonEmpty should be (true)
+    link457.nonEmpty should be (true)
+    link456.get.startAddressM should be (0)
+    link457.get.startAddressM should be (21)
+    link456.get.endAddressM should be (21)
+    link457.get.endAddressM should be (28)
+    result.forall(l => l.endCalibrationPoint.isEmpty) should be (true)
+    link456.get.startCalibrationPoint.nonEmpty should be (true)
+    link457.get.startCalibrationPoint.nonEmpty should be (false)
   }
 
   test("Defloating road links from three links to two links with one calibration point in between") {
@@ -614,8 +673,8 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
     val sources = Seq(
       createRoadAddressLink(1L, 123L, Seq(Point(5.0,5.0), Point(10.0, 10.0)), 1L, 1L, 0, 100, 107, SideCode.TowardsDigitizing, Anomaly.None),
-      createRoadAddressLink(3L, 125L, Seq(Point(20.0,0.0), Point(30.0, 10.0)), 1L, 1L, 0, 107, 121, SideCode.TowardsDigitizing, Anomaly.None),
-      createRoadAddressLink(2L, 124L, Seq(Point(20.0, 0.0), Point(10.0,10.0)), 1L, 1L, 0, 121, 135, SideCode.AgainstDigitizing, Anomaly.None)
+      createRoadAddressLink(3L, 125L, Seq(Point(20.0,0.0), Point(30.0, 10.0)), 1L, 1L, 0, 121, 135, SideCode.TowardsDigitizing, Anomaly.None),
+      createRoadAddressLink(2L, 124L, Seq(Point(20.0, 0.0), Point(10.0,10.0)), 1L, 1L, 0, 107, 121, SideCode.AgainstDigitizing, Anomaly.None)
     )
     val targets = Seq(
       createRoadAddressLink(0L, 456L, Seq(Point(5.0,5.0), Point(10.0, 10.0), Point(19.0, 1.0)), 0, 0, 0, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven),
@@ -663,5 +722,20 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     result.forall(l =>
       l.endCalibrationPoint.isEmpty || l.endCalibrationPoint.get.addressMValue == l.endAddressM) should be (true)
 
+  }
+
+  test("Order road address link sources and targets") {
+    val sources = Seq(
+      createRoadAddressLink(1L, 123L, Seq(Point(5.0,5.0), Point(10.0, 10.0)), 1L, 1L, 0, 100, 107, SideCode.TowardsDigitizing, Anomaly.None),
+      createRoadAddressLink(3L, 125L, Seq(Point(20.0, 0.0), Point(30.0, 10.0)), 1L, 1L, 0, 121, 135, SideCode.TowardsDigitizing, Anomaly.None),
+      createRoadAddressLink(2L, 124L, Seq(Point(20.0, 0.0), Point(10.0,10.0)), 1L, 1L, 0, 107, 121, SideCode.AgainstDigitizing, Anomaly.None)
+    )
+    val targets = Seq(
+      createRoadAddressLink(0L, 457L, Seq(Point(19.0,1.0), Point(20.0, 0.0), Point(30.0, 10.0)), 0, 0, 0, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven),
+      createRoadAddressLink(0L, 456L, Seq(Point(5.0,5.0), Point(10.0, 10.0), Point(19.0, 1.0)), 0, 0, 0, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven)
+    )
+    val (ordS, ordT) = roadAddressService.orderRoadAddressLinks(sources, targets)
+    ordS.map(_.id) should be (Seq(1L, 2L, 3L))
+    ordT.map(_.linkId) should be (Seq(456L, 457L))
   }
 }

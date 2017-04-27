@@ -1,6 +1,7 @@
 package fi.liikennevirasto.viite
 
 
+import com.sun.javaws.exceptions.InvalidArgumentException
 import fi.liikennevirasto.digiroad2.RoadLinkType.{ComplementaryRoadLinkType, FloatingRoadLinkType, NormalRoadLinkType, UnknownRoadLinkType}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
@@ -687,6 +688,51 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
     None
   }
+
+  def orderRoadAddressLinks(sources: Seq[RoadAddressLink], targets: Seq[RoadAddressLink]): (Seq[RoadAddressLink], Seq[RoadAddressLink]) = {
+    def extending(link: RoadAddressLink, ext: RoadAddressLink) = {
+      link.roadNumber == ext.roadNumber && link.roadPartNumber == ext.roadPartNumber &&
+        link.trackCode == ext.trackCode && link.endAddressM == ext.startAddressM
+    }
+    def extendChainByAddress(ordered: Seq[RoadAddressLink], unordered: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
+      if (ordered.isEmpty)
+        return extendChainByAddress(Seq(unordered.head), unordered.tail)
+      if (unordered.isEmpty)
+        return ordered
+      val (next, rest) = unordered.partition(u => extending(ordered.last, u))
+      if (next.nonEmpty)
+        extendChainByAddress(ordered ++ next, rest)
+      else {
+        val (previous, rest) = unordered.partition(u => extending(u, ordered.head))
+        if (previous.isEmpty)
+          throw new InvalidArgumentException(Array("Non-contiguous road addressing"))
+        else
+          extendChainByAddress(previous ++ ordered, rest)
+      }
+    }
+    def extendChainByGeometry(ordered: Seq[RoadAddressLink], unordered: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
+      if (ordered.isEmpty)
+        return extendChainByAddress(Seq(unordered.head), unordered.tail)
+      if (unordered.isEmpty)
+        return ordered
+      val endPoint = ordered.last.geometry.last
+      val (next, rest) = unordered.partition(u => GeometryUtils.minimumDistance(endPoint, u.geometry) < 0.1)
+      if (next.nonEmpty)
+        extendChainByAddress(ordered ++ next, rest)
+      else {
+        val startPoint = ordered.head.geometry.head
+        val (previous, rest) = unordered.partition(u => GeometryUtils.minimumDistance(startPoint, u.geometry) < 0.1)
+        if (previous.isEmpty)
+          throw new InvalidArgumentException(Array("Non-contiguous road target geometry"))
+        else
+          extendChainByAddress(previous ++ ordered, rest)
+      }
+    }
+    val orderedSources = extendChainByAddress(Seq(sources.head), sources.tail)
+    val preSortedTargets = targets.sortBy(l => GeometryUtils.minimumDistance(orderedSources.head.geometry.head, l.geometry))
+    (orderedSources, extendChainByGeometry(Seq(preSortedTargets.head), preSortedTargets.tail))
+  }
+
   def transferRoadAddress(sources: Seq[RoadAddressLink], targets: Seq[RoadAddressLink], user: User): Seq[RoadAddressLink] = {
 
     def getMValues(cp: Option[Double], fl: Option[Double]): Double = {
@@ -722,39 +768,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       case _ => getMValues(Option(adjustedSegments.flatMap(_.endCalibrationPoint).map(_.segmentMValue).max), Option(allLinks.map(_.endMValue).max))
     }
 
-    val source = sources.head
-
-    val orderedTargets = targets.size match {
-      case 1 => targets
-      case _ =>
-        val optionalSurroundingMappedLinks = getValidSurroundingLinks(targets.map(_.linkId).toSet, source).filterNot(_._2.isEmpty)
-        val startingLinkId = optionalSurroundingMappedLinks.size match {
-          case 0 => targets.head.linkId
-          case 1 => val secondOptionalSurroundingMappedLinks = getValidSurroundingLinks(Set(optionalSurroundingMappedLinks.head._2.get.linkId), source).filterNot(_._2.isEmpty)
-            if (secondOptionalSurroundingMappedLinks.nonEmpty && optionalSurroundingMappedLinks.head._2.get.endAddressM < secondOptionalSurroundingMappedLinks.head._2.get.endAddressM) {
-              val resultLinkId = optionalSurroundingMappedLinks.head._1 match {
-                case x if (x == targets.head.linkId) => targets.last.linkId
-                case _ => targets.head.linkId
-              }
-              resultLinkId
-            } else if (secondOptionalSurroundingMappedLinks.nonEmpty && optionalSurroundingMappedLinks.head._2.get.endAddressM > secondOptionalSurroundingMappedLinks.head._2.get.endAddressM){
-              val resultLinkId = optionalSurroundingMappedLinks.head._1 match {
-                case x if (x == targets.head.linkId) => targets.head.linkId
-                case _ => targets.last.linkId
-              }
-              resultLinkId
-            } else {
-              ListMap(optionalSurroundingMappedLinks.toSeq.sortBy(_._2.get.startAddressM):_*).keySet.head
-            }
-
-          case _ => ListMap(optionalSurroundingMappedLinks.toSeq.sortBy(_._2.get.startAddressM):_*).keySet.head
-        }
-        val firstTarget = targets.filter(_.linkId == startingLinkId).head
-        val orderTargets = targets.foldLeft(Seq.empty[RoadAddressLink]) { (previousOrderedTargets, target) =>
-          orderLinksRecursivelyByAdjacency(firstTarget, target, targets, previousOrderedTargets)
-        }
-        orderTargets
-    }
+    val (orderedSources, orderedTargets) = orderRoadAddressLinks(sources, targets)
+    val source = orderedSources.head
 
     val adjustedCreatedRoads = orderedTargets.foldLeft(orderedTargets) { (previousTargets, target) =>
       RoadAddressLinkBuilder.adjustRoadAddressTopology(orderedTargets.length, startCp, endCp, maxEndMValue, minStartAddressM, maxEndAddressM, source, target, previousTargets, user.username).filterNot(_.id == 0) }
