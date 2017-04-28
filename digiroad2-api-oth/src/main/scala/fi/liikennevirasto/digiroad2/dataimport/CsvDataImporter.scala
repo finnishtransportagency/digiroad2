@@ -34,6 +34,7 @@ trait RoadLinkCsvImporter {
   case class LinkProperty(columnName: String, value: String)
   case class CsvRoadLinkRow(linkId: Int, properties: Seq[LinkProperty])
 
+  type IncompleteParameters = List[String]
   type ParsedProperties = List[LinkProperty]
   type MalformedParameters = List[String]
   type ParsedLinkRow = (MalformedParameters, ParsedProperties)
@@ -82,7 +83,7 @@ trait RoadLinkCsvImporter {
     }
   }
 
-  def updateRoadLinkOTH(roadLinkAttribute: CsvRoadLinkRow, username: Option[String], hasTrafficDirectionChange: Boolean): List[String] = {
+  def updateRoadLinkOTH(roadLinkAttribute: CsvRoadLinkRow, username: Option[String], hasTrafficDirectionChange: Boolean): IncompleteParameters = {
     try {
       if (hasTrafficDirectionChange) {
         RoadLinkServiceDAO.getTrafficDirectionValue(roadLinkAttribute.linkId) match {
@@ -104,30 +105,15 @@ trait RoadLinkCsvImporter {
     } catch {
       case e: RoadLinkNotFoundException =>  List(roadLinkAttribute.linkId.toString)
     }
+  }
 
-//      roadLinkAttribute.properties.map { prop =>
-//        if (prop.columnName.equals("link_Type")) {
-//          val optionalLinkTypeValue: Option[Int] = RoadLinkServiceDAO.getLinkTypeValue(roadLinkAttribute.linkId)
-//          optionalLinkTypeValue match {
-//            case Some(existingValue) =>
-//              RoadLinkServiceDAO.updateLinkType(roadLinkAttribute.linkId, username, existingValue, prop.value.toInt)
-//            case None =>
-//              List("linkType")
-//            // RoadLinkServiceDAO.insertLinkType(roadLinkAttribute.linkId, username, prop.value.toInt)
-//          }
-//        }
-//
-//        if (prop.columnName.equals("functionalClass")) {
-//          val optionalAdministrativeClassValue: Option[Int] = RoadLinkServiceDAO.getFunctionalClassValue(roadLinkAttribute.linkId)
-//          optionalAdministrativeClassValue match {
-//            case Some(existingValue) =>
-//              RoadLinkServiceDAO.updateFunctionalClass(roadLinkAttribute.linkId, username, existingValue, prop.value.toInt)
-//            case None =>
-//              List("functionalClass")
-//            // RoadLinkServiceDAO.insertFunctionalClass(roadLinkAttribute.linkId, username, prop.value.toInt)
-//          }
-//        }
-//      }
+  def updateRoadLinkInVVH(roadLinkVVHAttribute: CsvRoadLinkRow): IncompleteParameters = {
+    val mapProperties = roadLinkVVHAttribute.properties.map { prop => prop.columnName -> prop.value }.toMap
+
+    vvhClient.complementaryData.updateVVHFeatures(mapProperties) match {
+      case Right(error) => List(roadLinkVVHAttribute.linkId.toString)
+      case _ => List()
+    }
   }
 
   private def verifyValueType(parameterName: String, parameterValue: String): ParsedLinkRow = {
@@ -198,12 +184,15 @@ trait RoadLinkCsvImporter {
             result.copy(nonExistingLinks = nonExistdLinks ::: result.nonExistingLinks)
           }
         }
-        else {
+
+        if (propertieVVH.size > 0) {
+          val parsedRowVVH = CsvRoadLinkRow(row("Linkin ID").toInt, properties = propertieVVH)
+          val nonExistdLinks = updateRoadLinkInVVH(parsedRowVVH)
+            .map(nonExistRoadLinkType => NonExistingLink(linkIdandField = nonExistRoadLinkType, csvRow = rowToString(row)))
+          result.copy(nonExistingLinks = nonExistdLinks ::: result.nonExistingLinks)
+        } else {
           result
         }
-        //            if (propertieVVH.size > 0) {
-        //                val parsedRowVVH = CsvRoadLinkRow(row("Linkin ID").toInt, properties = propertieVVH )
-        //            }
 
       } else {
         result.copy(

@@ -3,11 +3,13 @@ package fi.liikennevirasto.digiroad2.dataimport
 import java.io.{ByteArrayInputStream, InputStream}
 
 import fi.liikennevirasto.digiroad2.dataimport.DataCsvImporter.RoadLinkCsvImporter._
-import fi.liikennevirasto.digiroad2.{AuthenticatedApiSpec, VVHClient}
+import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.roadlinkservice.oracle.RoadLinkServiceDAO
 import fi.liikennevirasto.digiroad2.user.{Configuration, User, UserProvider}
 import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
 import fi.liikennevirasto.digiroad2.util.TestTransactions
+import org.mockito.Matchers._
+import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, Tag}
 
@@ -137,15 +139,19 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("update OTH and VVH by CSV import", Tag("db")) {
+    val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
+
     runWithRollback {
+      when(roadLinkCsvImporter.vvhClient.complementaryData).thenReturn(mockVVHComplementaryClient)
+      when(mockVVHComplementaryClient.updateVVHFeatures(any[Map[String , String]])).thenReturn( Left(List(Map("key" -> "value"))))
       val link_id = 1000
       val linkTypeValue = 3
       RoadLinkServiceDAO.insertLinkType(link_id, Some("unit_test"), 2)
 
-      val csv = csvToInputStream(createCSV(Map("Linkin ID" -> link_id, "Tielinkin tyyppi" ->linkTypeValue, "Kuntanumero" -> 2,
+      val csv = csvToInputStream(createCSV(Map("Linkin ID" -> link_id, "Tielinkin tyyppi" -> linkTypeValue, "Kuntanumero" -> 2,
         "Liikennevirran suunta" -> 1, "Hallinnollinen luokka" -> 2)))
       roadLinkCsvImporter.importLinkAttribute(csv) should equal(ImportResult())
-      RoadLinkServiceDAO.getLinkTypeValue(link_id) should equal (Some(linkTypeValue))
+      RoadLinkServiceDAO.getLinkTypeValue(link_id) should equal(Some(linkTypeValue))
     }
   }
 

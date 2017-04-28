@@ -4,11 +4,14 @@ import java.net.URLEncoder
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
-import org.apache.http.client.methods.HttpGet
+import org.apache.http.HttpStatus
+import org.apache.http.client.methods.{HttpPost, HttpGet}
+import org.apache.http.entity.{ContentType, StringEntity}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.{DateTime, DateTimeZone}
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
+import org.json4s.jackson.Serialization
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.Future
@@ -871,6 +874,39 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRe
         case Right(error) => throw new VVHClientException(error.toString)
       }
     }.toList
+  }
+
+  def updateVVHFeatures(complementaryFeatures: Map[String, String]): Either[List[Map[String, Any]], VVHError] = {
+    //TODO When the right EndPoint in VVH available need to modify this URL and test the response for verify if all continued ok.
+    val url = "http://localhost:8185/api/tierekisteri/updateFeaturesError/"
+    val request = new HttpPost(url)
+    request.setEntity(createJson(complementaryFeatures))
+    val client = HttpClientBuilder.create().build()
+    val response = client.execute(request)
+    try {
+      val content: Map[String, Any] = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]]
+      content.getOrElse("success", None) match {
+        case None => Right(VVHError(Map("error" -> "Update status not available in JSON Response"), url))
+        case true => Left(List(content))
+        case false =>
+          content.get("error").get.asInstanceOf[Map[String, Any]].getOrElse("description", None) match {
+            case None => Right(VVHError(Map("error" -> "Error Without Information"), url))
+            case value => Right(VVHError(Map("error" -> value), url))
+          }
+      }
+    } catch {
+      case e: Exception => Right(VVHError(Map("error" -> e.getMessage), url))
+    } finally {
+      response.close()
+    }
+  }
+
+  private def createJson(jsonObj: Map[String, String]) = {
+    val json = Serialization.write(jsonObj)
+    // Print JSON sent to VVH for testing purposes
+    logger.info("complementaryFeatures in JSON: %s".format(json))
+
+    new StringEntity(json, ContentType.APPLICATION_JSON)
   }
 }
 
