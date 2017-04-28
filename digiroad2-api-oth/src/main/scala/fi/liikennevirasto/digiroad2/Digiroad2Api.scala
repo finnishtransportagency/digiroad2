@@ -128,6 +128,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     validateBoundingBox(bbox)
     massTransitStopService.getByBoundingBox(user, bbox).map { stop =>
       Map("id" -> stop.id,
+        "linkId" -> stop.linkId,
         "nationalId" -> stop.nationalId,
         "stopTypes" -> stop.stopTypes,
         "municipalityNumber" -> stop.municipalityCode,
@@ -349,7 +350,7 @@ Returns empty result as Json message, not as page not found
     validateBusStopDirections(properties, linkId)
     try {
       val id = createMassTransitStop(lon, lat, linkId, bearing, properties)
-      massTransitStopService.getById(id)
+      massTransitStopService.getNormalAndComplementaryById(id)
     } catch {
       case e: RoadAddressException =>
         logger.warn(e.getMessage)
