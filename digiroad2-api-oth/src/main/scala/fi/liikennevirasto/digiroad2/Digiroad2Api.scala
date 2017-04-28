@@ -579,7 +579,7 @@ Returns empty result as Json message, not as page not found
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      if(user.isServiceRoadMaintainer())
+      if(user.isServiceRoadMaintainer() || user.isOperator())
       linearAssetService.getByIntersectedBoundingBox(typeId, user.configuration.authorizedAreas.head, boundingRectangle, municipalities).map { links =>
         links.map { link =>
           Map(
@@ -631,9 +631,7 @@ Returns empty result as Json message, not as page not found
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      //set if(true) to test functionality without permissions
-      if(user.isServiceRoadMaintainer())
-        //set user.configuration.authorizedAreas.head value to test functionality without permissions
+      if(user.isServiceRoadMaintainer() || user.isOperator())
         linearAssetService.getComplementaryByIntersectedBoundingBox(typeId, user.configuration.authorizedAreas.head, boundingRectangle, municipalities).map { links =>
           links.map { link =>
             Map(
