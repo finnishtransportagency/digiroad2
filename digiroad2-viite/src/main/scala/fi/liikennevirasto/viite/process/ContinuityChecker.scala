@@ -23,7 +23,7 @@ case class MissingLink(roadNumber: Long, roadPartNumber: Long, startMAddr: Optio
 class ContinuityChecker(roadLinkService: RoadLinkService) {
 
   def checkRoadPart(roadNumber: Int, roadPartNumber: Int, checkMissingLinks: Boolean = false) = {
-    val roadAddressList = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber)
+    val roadAddressList = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber, true)
     assert(roadAddressList.groupBy(ra => (ra.roadNumber, ra.roadPartNumber)).keySet.size == 1, "Mixed roadparts present!")
     val missingSegments = checkAddressesHaveNoGaps(roadAddressList)
     // TODO: Combine these checks, maybe?
