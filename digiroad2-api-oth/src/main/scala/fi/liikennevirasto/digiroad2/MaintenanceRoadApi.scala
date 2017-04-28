@@ -38,7 +38,7 @@ class MaintenanceRoadApi(val linearAssetService: LinearAssetService) extends Sca
 
   get("/huoltotiet/:areaId"){
     var areaId = params("areaId")
-    val maintenanceAsset = linearAssetService.getActiveMaintenanceRoadByPolygon(areaId, typeId)
+    val maintenanceAsset = linearAssetService.getActiveMaintenanceRoadByPolygon(areaId.toInt, typeId)
     createJson(maintenanceAsset)
   }
 

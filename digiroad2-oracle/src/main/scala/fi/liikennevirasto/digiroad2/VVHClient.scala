@@ -238,18 +238,6 @@ class VVHClient(vvhRestApiEndPoint: String) {
     else "f=pjson"
   }
 
-  protected def layerDefinition2(filter: String, customFieldSelection: Option[String] = None): String = {
-    val definitionStart = "[{"
-    val layerSelection = """"layerId":0,"""
-    val fieldSelection = customFieldSelection match {
-      case Some(fs) => s""""outFields":"""" + fs + """,CONSTRUCTIONTYPE""""
-      case _ => s""""outFields":"LINKID""""
-    }
-    val definitionEnd = "}]"
-    val definition = definitionStart + layerSelection + filter + fieldSelection + definitionEnd
-    URLEncoder.encode(definition, "UTF-8")
-  }
-
   /**
     * Returns VVH road links in bounding box area. Municipalities are optional.
     * Used by VVHClient.fetchByRoadNumbersBoundsAndMunicipalitiesF.
@@ -279,7 +267,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
     {
       return  Seq.empty[VVHRoadlink]
     }
-    val definition = layerDefinition2(combineFiltersWithAnd("",""))
+    val definition = layerDefinition(combineFiltersWithAnd("",""))
     val urlpoly=URLEncoder.encode(polygon)
     val url = vvhRestApiEndPoint + roadLinkDataService + "/FeatureServer/query?" +
     s"layerDefs=$definition&geometry=" + urlpoly +
@@ -295,7 +283,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
     {
       return  Seq.empty[Long]
     }
-    val definition = layerDefinition2(combineFiltersWithAnd("",""))
+    val definition = layerDefinition("", Some("LINKID"))
     val urlpoly=URLEncoder.encode(polygon)
     val url = vvhRestApiEndPoint + roadLinkDataService + "/FeatureServer/query?" +
       s"layerDefs=$definition&geometry=" + urlpoly +
@@ -314,12 +302,10 @@ class VVHClient(vvhRestApiEndPoint: String) {
     val url = vvhRestApiEndPoint + "/Roadlink_ChangeInfo/FeatureServer/query?" +
     "layerDefs="+URLEncoder.encode(defs, "UTF-8")+"&geometry=" +  URLEncoder.encode(polygon) + "&geometryType=esriGeometryPolygon&spatialRel=esriSpatialRelIntersects&returnGeometry=false&outFields=false&f=pjson"
 
-
     fetchVVHFeatures(url) match {
       case Left(features) => features.map(extractVVHChangeInfo)
       case Right(error) => throw new VVHClientException(error.toString)
     }
-
   }
 
   /**
@@ -637,7 +623,6 @@ class VVHClient(vvhRestApiEndPoint: String) {
 
   protected def extractLinkIdFromVVHFeature(feature: Map[String, Any]): Long = {
     val attributes = extractFeatureAttributes(feature)
-//    val path = extractFeatureGeometry(feature)
     linkIdFromFeature(attributes)
   }
 

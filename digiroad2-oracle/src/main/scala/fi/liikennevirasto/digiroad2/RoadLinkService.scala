@@ -233,8 +233,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }
   }
 
-  def getLinkIdsFromVVHWithPolygon(polygonString :String): Seq[Long] = {
-    Await.result(vvhClient.fetchLinkIdsByPolygonF(polygonString), atMost = Duration.Inf)
+  def getLinkIdsFromVVHWithPolygons(polygons :Seq[String]): Seq[Long] = {
+    Await.result(Future.sequence(polygons.map(vvhClient.fetchLinkIdsByPolygonF)), atMost = Duration.Inf).flatten
   }
 
 

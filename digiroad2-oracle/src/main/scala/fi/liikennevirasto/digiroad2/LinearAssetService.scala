@@ -46,6 +46,7 @@ trait LinearAssetOperations {
   def vvhClient: VVHClient
   def dao: OracleLinearAssetDao
   def eventBus: DigiroadEventBus
+  def polygonTools : PolygonTools
 
   lazy val dataSource = {
     val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))
@@ -79,10 +80,9 @@ trait LinearAssetOperations {
 
 
   def getByIntersectedBoundingBox(typeId: Int, serviceArea : Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
-    val polygonTool = new PolygonTools()
-    val polygonStringList =polygonTool.stringifyGeometryForVVHClient(
-        polygonTool.geometryInterceptorToBoundingBox(
-          polygonTool.getAreaGeometry(serviceArea),bounds))
+    val polygonStringList =polygonTools.stringifyGeometryForVVHClient(
+        polygonTools.geometryInterceptorToBoundingBox(
+          polygonTools.getAreaGeometry(serviceArea),bounds))
     val vVHRoadLinksAndChanges = polygonStringList.map(roadLinkService.getRoadLinksAndChangesFromVVHWithPolygon)
     val roadLinks = vVHRoadLinksAndChanges.flatMap(_._1)
     val changes =vVHRoadLinksAndChanges.flatMap(_._2)
@@ -755,21 +755,20 @@ trait LinearAssetOperations {
     }
   }
 
-  def getActiveMaintenanceRoadByPolygon(areaId: String, typeId: Int): Seq[PersistedLinearAsset] = {
-    val polygonTool = new PolygonTools()
-    val geometry = polygonTool.getAreaGeometry(areaId.toInt)
+  def getActiveMaintenanceRoadByPolygon(areaId: Int, typeId: Int): Seq[PersistedLinearAsset] = {
+
+    val geometry = polygonTools.getAreaGeometry(areaId)
 
     val polygon = geometry match {
       case _ if geometry.getGeometryType.toLowerCase.startsWith("polygon") =>
         Seq(geometry.asInstanceOf[Polygon])
       case _ if geometry.getGeometryType.toLowerCase.startsWith("multipolygon") =>
-        polygonTool.multiPolygonToPolygonSeq(geometry.asInstanceOf[MultiPolygon])
+        polygonTools.multiPolygonToPolygonSeq(geometry.asInstanceOf[MultiPolygon])
       case _ => Seq.empty[Polygon]
     }
 
-    val polygonStringList = polygonTool.stringifyGeometryForVVHClient(polygon)
-    val vVHLinkIds = polygonStringList.flatMap(roadLinkService.getLinkIdsFromVVHWithPolygon)
-
+    val polygonStringList = polygonTools.stringifyGeometryForVVHClient(polygon)
+    val vVHLinkIds = roadLinkService.getLinkIdsFromVVHWithPolygons(polygonStringList)
     getPersistedAssetsByLinkIds(typeId, vVHLinkIds)
   }
 }
@@ -779,6 +778,7 @@ class LinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   override def dao: OracleLinearAssetDao = new OracleLinearAssetDao(roadLinkServiceImpl.vvhClient)
   override def eventBus: DigiroadEventBus = eventBusImpl
   override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
+  override def polygonTools : PolygonTools = new PolygonTools()
 }
 
 class MissingMandatoryPropertyException(val missing: Set[String]) extends RuntimeException {
