@@ -6,6 +6,7 @@
     var sources = [];
     var featuresToKeep = [];
     var previousAdjacents = [];
+    var floatingRoadMarker = [];
 
     var markers = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
       "AA", "AB", "AC", "AD", "AE", "AF", "AG", "AH", "AI", "AJ", "AK", "AL", "AM", "AN", "AO", "AP", "AQ", "AR", "AS", "AT", "AU", "AV", "AW", "AX", "AY", "AZ",
@@ -122,7 +123,7 @@
       }
     };
 
-    var openUnknown = function(linkId, id, singleLinkSelect, visibleFeatures, checkAdjacency) {
+    var openUnknown = function(linkId, id, visibleFeatures) {
       var canIOpen = !_.isUndefined(linkId) ? !isSelectedByLinkId(linkId) || isDifferingSelection(singleLinkSelect) : !isSelectedById(id) || isDifferingSelection(singleLinkSelect);
       if (canIOpen) {
         if(featuresToKeep.length === 0){
@@ -133,9 +134,9 @@
           }
         }
         if(!_.isUndefined(linkId)){
-          current = singleLinkSelect ? roadCollection.getByLinkId([linkId]) : roadCollection.getGroupByLinkId(linkId);
+          current = _.uniq(roadCollection.getByLinkId([linkId]), _.isEqual);
         } else {
-          current = singleLinkSelect ? roadCollection.getById([id]) : roadCollection.getGroupById(id);
+          current = _.uniq(roadCollection.getById([id]), _.isEqual);
         }
 
         eventbus.trigger('linkProperties:activateAllSelections');
@@ -149,11 +150,6 @@
         });
         if(!_.isEmpty(currentFloatings)){
           setSources(currentFloatings);
-        }
-
-        //Segment to construct adjacency
-        if(checkAdjacency){
-          fillAdjacents(linkId);
         }
 
         var data4Display = _.map(get(), function(feature){
@@ -389,7 +385,7 @@
     var transferringCalculation = function(){
       var targetsData = _.map(targets,function (t){
           if (_.isUndefined(t.linkId)) {
-             return t.getData();
+            return t.getData();
           } else return t;
       });
 
@@ -414,9 +410,7 @@
         if(!_.isEmpty(result) && !applicationModel.isReadOnly()) {
           eventbus.trigger("adjacents:roadTransfer", result, sourceDataIds.concat(targetDataIds), targetDataIds);
           roadCollection.setNewTmpRoadAddresses(result);
-          _.defer(function(){
-            eventbus.trigger('linkProperties:deactivateAllSelections');
-          });
+          eventbus.trigger('linkProperties:cleanFloatingsAfterDefloat');
         }
       });
     };
@@ -471,12 +465,20 @@
       }
     };
 
-    var getFeaturesToHighlight = function() {
-      return featuresToHighlight;
+    // var getFeaturesToHighlight = function() {
+    //   return featuresToHighlight;
+    // };
+    //
+    // var setFeaturesToHighlight = function(ft) {
+    //   featuresToHighlight = ft;
+    // };
+    //
+    var getFloatingRoadMarker = function() {
+      return floatingRoadMarker;
     };
 
-    var setFeaturesToHighlight = function(ft) {
-      featuresToHighlight = ft;
+    var setFloatingRoadMarker  = function(ft) {
+      floatingRoadMarker = ft;
     };
 
     var getTargets = function(){
@@ -515,20 +517,23 @@
       }
     };
 
-    var cancelAndReselect = function(){
+    var cancelAndReselect = function(action){
+      if(action===0){
+        eventbus.trigger('linkProperties:floatingRoadMarkerPreviousSelected', getFloatingRoadMarker);
+      }
       clearAndReset(false);
       current = [];
       eventbus.trigger('linkProperties:clearHighlights');
     };
 
-    var clearAndReset = function(afterSiira){
+    var clearAndReset = function(afterDefloat){
       roadCollection.resetTmp();
       roadCollection.resetChangedIds();
       applicationModel.resetCurrentAction();
       roadCollection.resetPreMovedRoadAddresses();
       clearFeaturesToKeep();
       eventbus.trigger('roadLinks:clearIndicators');
-      if(!afterSiira) {
+      if(!afterDefloat) {
         roadCollection.resetNewTmpRoadAddresses();
         resetSources();
         resetTargets();
@@ -536,7 +541,7 @@
       }
     };
 
-    var cancelAfterSiirra = function(action, changedTargetIds) {
+    var cancelAfterDefloat = function(action, changedTargetIds) {
       dirty = false;
       var originalData = _.filter(featuresToKeep, function(feature){
         return feature.roadLinkType === -1;
@@ -724,7 +729,7 @@
       save: save,
       saveTransfer: saveTransfer,
       cancel: cancel,
-      cancelAfterSiirra: cancelAfterSiirra,
+      cancelAfterDefloat: cancelAfterDefloat,
       cancelAndReselect: cancelAndReselect,
       clearAndReset: clearAndReset,
       continueSelectUnknown: continueSelectUnknown,
@@ -733,6 +738,8 @@
       setTrafficDirection: setTrafficDirection,
       setFunctionalClass: setFunctionalClass,
       setLinkType: setLinkType,
+      setFloatingRoadMarker: setFloatingRoadMarker,
+      getFloatingRoadMarker: getFloatingRoadMarker,
       get: get,
       count: count,
       openMultiple: openMultiple,

@@ -254,6 +254,7 @@ trait PointAssetOperations {
     PointAssetOperations.isFloating(municipalityCode = persistedAsset.municipalityCode, lon = persistedAsset.lon,
       lat = persistedAsset.lat, mValue = persistedAsset.mValue, roadLink = roadLink)
   }
+
 }
 
 object PointAssetOperations {

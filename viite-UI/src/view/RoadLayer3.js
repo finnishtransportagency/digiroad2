@@ -50,11 +50,14 @@
       console.log("zoom = " + mapState.zoom);
       if (mapState.zoom !== currentZoom) {
         currentZoom = mapState.zoom;
+      }
+      if (mapState.zoom < minimumContentZoomLevel()) {
         vectorSource.clear();
         eventbus.trigger('map:clearLayers');
+      } else {
+        roadCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1);
+        handleRoadsVisibility();
       }
-      roadCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom+1);
-      handleRoadsVisibility();
     };
 
 

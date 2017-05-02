@@ -27,7 +27,7 @@
       // assetSelectionMenu.select(layer);
     });
 
-    var projectListModel = new ProjectListModel(models.roadAddressProjectCollection);
+    var projectListModel = new ProjectListModel(roadAddressProjectCollection);
 
     NavigationPanel.initialize(
       $('#map-tools'),
