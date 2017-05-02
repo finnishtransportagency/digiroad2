@@ -651,6 +651,13 @@
           simulatedOL3Features.push(feature);
           afterTransferLinks.push(road);
         });
+
+        var actualPoints =  me.drawCalibrationMarkers(calibrationPointLayer.source, newRoads);
+        _.each(actualPoints, function(actualPoint) {
+          var calMarker = new CalibrationPoint(actualPoint.point);
+          simulatedRoadsLayer.getSource().addFeature(calMarker.getMarker(true));
+        });
+
         indicatorLayer.getSource().clear();
         roadCollection.setTmpRoadAddresses(afterTransferLinks);
         roadCollection.setChangedIds(changedIds);
