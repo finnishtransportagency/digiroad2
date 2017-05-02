@@ -36,7 +36,7 @@ object DataFixture {
     var partNumberOpt = RoadAddressDAO.fetchNextRoadPartNumber(roadNumber, 0)
     while (partNumberOpt.nonEmpty) {
       val partNumber = partNumberOpt.get
-      val roads = RoadAddressDAO.fetchByRoadPart(roadNumber, partNumber)
+      val roads = RoadAddressDAO.fetchByRoadPart(roadNumber, partNumber, true)
       try {
         val adjusted = LinkRoadAddressCalculator.recalculate(roads)
         assert(adjusted.size == roads.size) // Must not lose any

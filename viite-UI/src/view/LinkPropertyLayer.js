@@ -770,6 +770,7 @@
       me.refreshView();
       activateSelectInteractions(true);
       applicationModel.toggleSelectionTypeAll();
+      selectedLinkProperty.clearFeaturesToKeep();
     };
 
     var redrawNextSelectedTarget= function(targets, adjacents) {
