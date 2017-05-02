@@ -7,6 +7,10 @@
     var featuresToKeep = [];
     var previousAdjacents = [];
     var floatingRoadMarker = [];
+    var UNAUTHORIZED_401 = 401;
+    var PRECONDITION_FAILED_412 = 412;
+    var INTERNAL_SERVER_ERROR_500 = 500;
+
 
     var markers = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
       "AA", "AB", "AC", "AD", "AE", "AF", "AG", "AH", "AI", "AJ", "AK", "AL", "AM", "AN", "AO", "AP", "AQ", "AR", "AS", "AT", "AU", "AV", "AW", "AX", "AY", "AZ",
@@ -369,24 +373,11 @@
         return selected.getData().linkId === linkId; });
     };
 
-    var save = function() {
-      eventbus.trigger('linkProperties:saving');
-      var linkIds = _.map(current, function(selected) { return selected.getId(); });
-      var modifications = _.map(current, function(c) { return c.getData(); });
-
-      backend.updateLinkProperties(linkIds, modifications, function() {
-        dirty = false;
-        eventbus.trigger('linkProperties:saved');
-      }, function() {
-        eventbus.trigger('linkProperties:updateFailed');
-      });
-    };
-
     var transferringCalculation = function(){
       var targetsData = _.map(targets,function (t){
-          if (_.isUndefined(t.linkId)) {
-            return t.getData();
-          } else return t;
+        if (_.isUndefined(t.linkId)) {
+          return t.getData();
+        } else return t;
       });
 
       var targetDataIds = _.uniq(_.filter(_.map(targetsData.concat(featuresToKeep), function(feature){
@@ -406,7 +397,7 @@
       });
       var data = {"sourceLinkIds": _.uniq(sourceDataIds), "targetLinkIds":_.uniq(targetDataIds)};
 
-      // TODO: There is no error handling in here, add checks.
+      if(!_.isEmpty(data.sourceLinkIds) && !_.isEmpty(data.targetLinkIds)){
       backend.getTransferResult(data, function(result) {
         if(!_.isEmpty(result) && !applicationModel.isReadOnly()) {
           eventbus.trigger("adjacents:roadTransfer", result, sourceDataIds.concat(targetDataIds), targetDataIds);
@@ -417,6 +408,9 @@
           });
         }
       });
+      } else {
+        eventbus.trigger('linkProperties:transferFailed', PRECONDITION_FAILED_412);
+      }
     };
 
     var saveTransfer = function() {
@@ -424,9 +418,9 @@
       var roadAddresses = roadCollection.getNewTmpRoadAddresses();
 
       var targetsData = _.map(targets,function (t){
-          if(_.isUndefined(t.linkId)){
-            return t.getData();
-          }else return t;
+        if(_.isUndefined(t.linkId)){
+          return t.getData();
+        }else return t;
       });
 
       var targetDataIds = _.uniq(_.filter(_.map(targetsData.concat(featuresToKeep), function(feature){
@@ -446,14 +440,15 @@
 
       var data = {'sourceIds': sourceDataIds, 'targetIds': targetDataIds, 'roadAddress': roadAddresses};
 
-      backend.createRoadAddress(data, function() {
-        dirty = false;
-        eventbus.trigger('linkProperties:saved');
-      }, function() {
-        eventbus.trigger('linkProperties:updateFailed');
-      });
-      targets = [];
-      applicationModel.setActiveButtons(false);
+      if(!_.isEmpty(data.sourceIds) && !_.isEmpty(data.targetIds) && !_.isEmpty(data.roadAddress)){
+        backend.createRoadAddress(data, function(errorObject) {
+          if (errorObject.status == INTERNAL_SERVER_ERROR_500) {
+            eventbus.trigger('linkProperties:transferFailed', INTERNAL_SERVER_ERROR_500);
+          }
+        });
+      } else {
+        eventbus.trigger('linkProperties:transferFailed', PRECONDITION_FAILED_412);
+      }
     };
 
     var addTargets = function(target, adjacents){
@@ -469,14 +464,6 @@
       }
     };
 
-    // var getFeaturesToHighlight = function() {
-    //   return featuresToHighlight;
-    // };
-    //
-    // var setFeaturesToHighlight = function(ft) {
-    //   featuresToHighlight = ft;
-    // };
-    //
     var getFloatingRoadMarker = function() {
       return floatingRoadMarker;
     };
@@ -509,6 +496,10 @@
     var resetTargets = function() {
       targets = [];
       return targets;
+    };
+
+    var setDirty = function(state){
+      dirty = state;
     };
 
     var cancel = function() {
@@ -569,46 +560,6 @@
         eventbus.trigger('roadLinks:fetched', action, changedTargetIds);
         applicationModel.setContinueButton(true);
       }
-    };
-
-    var gapTransferingCancel = function(){
-      //First we grab the floatings
-      var floatings = _.uniq(_.filter(_.map(featuresToKeep, function(feature){
-        if(feature.roadLinkType === -1){
-          return feature.linkId;
-        }
-      }), function (target){
-        return !_.isUndefined(target);
-      }));
-      //Secondly we clear them
-      clearFeaturesToKeep();
-      applicationModel.setActiveButtons(false);
-      applicationModel.setContinueButton(false);
-      eventbus.trigger('roadLinks:deleteSelection');
-
-      if (!_.isEmpty(current) && !isDirty()) {
-        _.forEach(current, function (selected) {
-          selected.unselect();
-        });
-        eventbus.trigger('linkProperties:unselected');
-        sources = [];
-        targets = [];
-        current = [];
-        featuresToKeep = [];
-      }
-      _.forEach(floatings, function(f){
-        var roadAddress = roadCollection.getByLinkId([f]);
-        var roads = _.map(get(), function (r){
-          return r.linkId;
-        });
-        var fetchedRoads = _.map(roadAddress, function (r){
-          return r.getData().linkId;
-        });
-        if(!_.contains(roads, _.first(fetchedRoads))){
-          current = current.concat(roadAddress);
-        }
-      });
-      eventbus.trigger('roadLinks:drawAfterGapCanceling');
     };
 
     var setLinkProperty = function(key, value) {
@@ -724,13 +675,12 @@
       clearFeaturesToKeep: clearFeaturesToKeep,
       transferringCalculation: transferringCalculation,
       getLinkAdjacents: getLinkAdjacents,
-      gapTransferingCancel: gapTransferingCancel,
       close: close,
       open: open,
       openFloating: openFloating,
       openUnknown: openUnknown,
       isDirty: isDirty,
-      save: save,
+      setDirty: setDirty,
       saveTransfer: saveTransfer,
       cancel: cancel,
       cancelAfterDefloat: cancelAfterDefloat,

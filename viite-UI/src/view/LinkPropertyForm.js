@@ -255,9 +255,9 @@
     var notificationFloatingTransfer = function(displayNotification) {
       if(displayNotification)
         return '' +
-            '<div class="form-group form-notification">' +
-            '<p>Tien geometria on muuttunut. Korjaa tieosoitesegmentin sijainti vastaamaan nykyistä geometriaa.</p>' +
-            '</div>';
+          '<div class="form-group form-notification">' +
+          '<p>Tien geometria on muuttunut. Korjaa tieosoitesegmentin sijainti vastaamaan nykyistä geometriaa.</p>' +
+          '</div>';
       else
         return '';
     };
@@ -529,8 +529,8 @@
           });
 
         var fullTemplate = applicationModel.getCurrentAction() === applicationModel.actionCalculated ? afterCalculationTemplate : !_.isEmpty(floatingAdjacents) ? _.map(floatingAdjacents, function(fa){
-              return additionalSource(fa.linkId, fa.marker);
-            })[0] + adjacentsTemplate : adjacentsTemplate;
+          return additionalSource(fa.linkId, fa.marker);
+        })[0] + adjacentsTemplate : adjacentsTemplate;
 
         if(!_.isUndefined(additionalSourceLinkId)){
           return $(".form-group[id^='VALITUTLINKIT']:last").append('<div style="display:inline-flex;justify-content:center;align-items:center;">' +
@@ -580,8 +580,6 @@
         if(applicationModel.getCurrentAction() === applicationModel.actionCalculated)
         {
           selectedLinkProperty.saveTransfer();
-        } else {
-          selectedLinkProperty.save();
         }
       });
       rootElement.on('click', '.link-properties button.cancel', function() {
@@ -659,6 +657,18 @@
       });
       eventbus.on('linkProperties:additionalFloatingSelected',function(data){
         processAditionalFloatings(data.selectedFloatings, data.selectedLinkId);
+      });
+
+      eventbus.on('linkProperties:transferFailed',function(errorCode){
+        if(errorCode == 401){
+          return new ModalConfirm("The current user do not have permissions do to this operation.");
+        } else if (errorCode == 412){
+          return new ModalConfirm("All the pre-requisites must be full-filled in order to process this action.");
+        } else if (errorCode == 500){
+          return new ModalConfirm("A unexpected error occurred while processing this action.");
+        } else {
+          return new ModalConfirm("A unexpected error occurred while processing this action.");
+        }
       });
     };
     bindEvents();
