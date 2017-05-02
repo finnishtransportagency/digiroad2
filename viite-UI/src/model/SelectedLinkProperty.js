@@ -7,6 +7,7 @@
     var featuresToKeep = [];
     var previousAdjacents = [];
     var floatingRoadMarker = [];
+    var anomalousMarkers = [];
 
     var markers = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
       "AA", "AB", "AC", "AD", "AE", "AF", "AG", "AH", "AI", "AJ", "AK", "AL", "AM", "AN", "AO", "AP", "AQ", "AR", "AS", "AT", "AU", "AV", "AW", "AX", "AY", "AZ",
@@ -465,20 +466,20 @@
       }
     };
 
-    // var getFeaturesToHighlight = function() {
-    //   return featuresToHighlight;
-    // };
-    //
-    // var setFeaturesToHighlight = function(ft) {
-    //   featuresToHighlight = ft;
-    // };
-    //
     var getFloatingRoadMarker = function() {
       return floatingRoadMarker;
     };
 
     var setFloatingRoadMarker  = function(ft) {
       floatingRoadMarker = ft;
+    };
+
+    var getAnomalousMarkers = function(){
+      return anomalousMarkers;
+    };
+
+    var setAnomalousMarkers = function(markers){
+      anomalousMarkers = markers;
     };
 
     var getTargets = function(){
@@ -519,7 +520,8 @@
 
     var cancelAndReselect = function(action){
       if(action===0){
-        eventbus.trigger('linkProperties:floatingRoadMarkerPreviousSelected', getFloatingRoadMarker);
+        var floatingMarkers = getFloatingRoadMarker();
+        eventbus.trigger('linkProperties:floatingRoadMarkerPreviousSelected', floatingMarkers);
       }
       clearAndReset(false);
       current = [];
@@ -636,7 +638,7 @@
 
     var getFeaturesToKeepUnknown = function() {
       return _.filter(featuresToKeep, function (fk) {
-        return fk.roadLinkType === -1;
+        return fk.anomaly === 1;
       });
     };
 
@@ -740,6 +742,8 @@
       setLinkType: setLinkType,
       setFloatingRoadMarker: setFloatingRoadMarker,
       getFloatingRoadMarker: getFloatingRoadMarker,
+      getAnomalousMarkers: getAnomalousMarkers,
+      setAnomalousMarkers: setAnomalousMarkers,
       get: get,
       count: count,
       openMultiple: openMultiple,

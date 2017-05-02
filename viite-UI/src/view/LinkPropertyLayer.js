@@ -869,6 +869,7 @@
 
     eventbus.on('linkProperties:cleanFloatingsAfterDefloat', function(){
       cleanFloatingsAfterDefloat();
+      cleanUnknowsAfterDefloat();
     });
 
     var cleanFloatingsAfterDefloat = function() {
@@ -877,7 +878,7 @@
        * Clean from pickLayer floatings selected
        */
       var FeaturesToKeepFloatings = _.reject(_.map(selectedLinkProperty.getFeaturesToKeepFloatings(), function (featureToKeep){
-        if(featureToKeep.roadLinkType === -1 && featureToKeep.anomaly === 0) {
+        if((featureToKeep.roadLinkType === -1 && featureToKeep.anomaly === 0)){
           return featureToKeep.linkId;
         } else return undefined;
       }), function(featuresNotToKeep){
@@ -947,8 +948,43 @@
     };
 
 
+    var cleanUnknowsAfterDefloat = function(){
+      var unknownRoadMarkers =[];
+
+      var unknownFeaturesToKeep = _.reject(_.map(selectedLinkProperty.getFeaturesToKeepUnknown(), function(feature){
+        if(feature.anomaly === 1){
+          return feature.linkId;
+        } else return undefined;
+      }), function(featureNotToKeep){
+        return _.isUndefined(featureNotToKeep);
+      });
+
+      //Clean from anomalousMarkerLayer
+
+      var olUidsAnomalousMarkerLayer = _.reject(_.map(anomalousMarkerLayer.getSource().getFeatures(),function(anomalousMarkerLayerFeature){
+        if(_.contains(unknownFeaturesToKeep, anomalousMarkerLayerFeature.roadLinkData.linkId)){
+          return anomalousMarkerLayerFeature.ol_uid;
+        } else return undefined;
+      }), function(featuresNotToKeep){
+        return _.isUndefined(featuresNotToKeep);
+      });
+
+      var anomalousMarkerLayerFeaturesToKeep = _.filter(anomalousMarkerLayer.getSource().getFeatures(), function(pf){
+        return !_.contains(olUidsAnomalousMarkerLayer, pf.ol_uid);
+      });
+
+      var anomalousMarkerLayerFeaturesToRemove = _.filter(anomalousMarkerLayer.getSource().getFeatures(), function(pf){
+        return _.contains(olUidsAnomalousMarkerLayer, pf.ol_uid);
+      });
+      anomalousMarkerLayer.getSource().clear();
+      anomalousMarkerLayer.getSource().addFeatures(anomalousMarkerLayerFeaturesToKeep);
+      unknownRoadMarkers = unknownRoadMarkers.concat(anomalousMarkerLayerFeaturesToRemove);
+      selectedLinkProperty.setAnomalousMarkers(unknownRoadMarkers);
+    };
+
       eventbus.on('linkProperties:floatingRoadMarkerPreviousSelected', function(){
         addSelectedFloatings();
+        addSelectedUnknowns();
       });
 
      var addSelectedFloatings = function() {
@@ -970,6 +1006,20 @@
         _.each(floatingRoad, function(road){
            roadLayer.layer.getSource().addFeature(road);
         });
+    };
+
+    var addSelectedUnknowns = function(){
+      var anomalousRoadMarker = selectedLinkProperty.getAnomalousMarkers();
+      var anomalousMarker = [];
+      _.each(anomalousRoadMarker, function(anomalous){
+        if(anomalous.getGeometry().getType() !== 'LineString'){
+          anomalousMarker.push(anomalous);
+        }
+      });
+
+      _.each(anomalousMarker, function(marker){
+        anomalousMarkerLayer.getSource().addFeature(marker);
+      });
     };
 
     eventbus.on('linkProperties:activateInteractions', function(){
