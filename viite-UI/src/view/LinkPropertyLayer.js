@@ -292,6 +292,7 @@
       _.each(ol3Features, function(feature){
         if(!_.contains(olUids,feature.ol_uid)){
           selectSingleClick.getFeatures().push(feature);
+          olUids.push(feature.ol_uid); // prevent adding duplicate entries
         }
       });
     };
