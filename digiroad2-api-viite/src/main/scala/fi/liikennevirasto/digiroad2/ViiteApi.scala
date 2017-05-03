@@ -334,7 +334,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     Map("roadNumber" -> roadAddressProjectFormLine.roadNumber,
       "roadPartNumber" -> roadAddressProjectFormLine.roadNumber,
       "roadPartId" -> roadAddressProjectFormLine.roadNumber,
-      "ely" -> roadAddressProjectFormLine.roadNumber,
+      "ely" -> roadAddressProjectFormLine.ely,
       "roadLength" -> roadAddressProjectFormLine.roadLength,
       "discontinuity" -> roadAddressProjectFormLine.discontinuity
     )
@@ -344,7 +344,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     Map("roadNumber" -> reservedRoadPart.roadNumber,
       "roadPartNumber" -> reservedRoadPart.roadPartNumber,
       "roadPartId" -> reservedRoadPart.roadPartId,
-      "ely" -> reservedRoadPart.roadNumber,
+      "ely" -> reservedRoadPart.ely,
       "length" -> reservedRoadPart.length,
       "discontinuity" -> reservedRoadPart.discontinuity.description
     )
