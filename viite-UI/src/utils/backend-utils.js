@@ -36,8 +36,8 @@
     this.getTransferResult = _.throttle(function(dataTransfer, callback) {
       return $.getJSON('api/viite/roadlinks/transferRoadLink?data=' +JSON.stringify(dataTransfer), function(data) {
         return _.isFunction(callback) && callback(data);
-      }).fail(function(){
-        eventbus.trigger('linkProperties:transferFailed', 500);
+      }).fail(function(obj) {
+        eventbus.trigger('linkProperties:transferFailed', obj.status);
       });
     }, 1000);
 
