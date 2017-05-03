@@ -265,6 +265,19 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }
   }
 
+  def getRoadLinksWithComplementaryAndChangesFromVVHWithPolygon(polygonString :String): (Seq[RoadLink], Seq[ChangeInfo])= {
+    val futures = for{
+      roadLinkResult <- vvhClient.complementaryData.fetchRoadLinksByPolygonF(polygonString)
+      changesResult <- vvhClient.fetchChangesByPolygonF(polygonString)
+      complementaryResult <- vvhClient.fetchRoadLinksByPolygonF(polygonString)
+    } yield (roadLinkResult, changesResult, complementaryResult)
+
+    val (complementaryLinks, changes, links) = Await.result(futures, Duration.Inf)
+
+    withDynTransaction {
+      (enrichRoadLinksFromVVH(links ++ complementaryLinks, changes), changes)
+    }
+  }
 
   /**
     * This method returns "real" road links, "complementary" road links and change data by bounding box and municipalities.
