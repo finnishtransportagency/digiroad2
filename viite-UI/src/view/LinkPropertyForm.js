@@ -660,7 +660,7 @@
 
       eventbus.on('linkProperties:transferFailed',function(errorCode){
         if (errorCode == 400){
-          return new ModalConfirm("Valittujen linkkien geometriaa ei saatu sovitettua kohdegeometrialle. Ota yhteyttä järjestelmätukeen.");
+          return new ModalConfirm("Valittujen lähdelinkkien geometriaa ei saatu sovitettua kohdegeometrialle. Ota yhteyttä järjestelmätukeen.");
         } else if (errorCode == 401){
           return new ModalConfirm("Sinulla ei ole käyttöoikeutta muutoksen tekemiseen.");
         } else if (errorCode == 412){
