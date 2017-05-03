@@ -659,10 +659,10 @@
       });
 
       eventbus.on('linkProperties:transferFailed',function(errorCode){
-        if(errorCode == 401){
-          return new ModalConfirm("Sinulla ei ole käyttöoikeutta muutoksen tekemiseen.");
-        } else if (errorCode == 400){
+        if (errorCode == 400){
           return new ModalConfirm("Valittujen linkkien geometriaa ei saatu sovitettua kohdegeometrialle.");
+        } else if (errorCode == 401){
+          return new ModalConfirm("Sinulla ei ole käyttöoikeutta muutoksen tekemiseen.");
         } else if (errorCode == 412){
           return new ModalConfirm("Täyttämättömien vaatimusten takia siirtoa ei saatu tehtyä.");
         } else if (errorCode == 500){
