@@ -7,7 +7,6 @@ import fi.liikennevirasto.digiroad2.RoadLinkType.NormalRoadLinkType
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{HistoryLinkInterface, NormalLinkInterface}
-import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.BothDirections
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
@@ -451,9 +450,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     result1.head.startMValue should be (0.0)
     result1.head.startAddressM should be (replacement1s.map(_.startAddressM).min)
     result1.head.endAddressM should be (replacement1s.map(_.endAddressM).max)
-    //    replacement1s.foreach(l=>println(prettyPrint(l)))
-    //    replacement1t.foreach(l=>println(prettyPrint(l)))
-    //    result1.foreach(l=>println(prettyPrint(l)))
 
     val replacement2s = addressLinks.filter(l => l.linkId == 1718096 || l.linkId==1718097)
     val replacement2t = addressLinks.filter(l => l.linkId == 500130201)
@@ -465,11 +461,9 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     result2.head.startMValue should be (0.0)
     result2.head.startAddressM should be (replacement2s.map(_.startAddressM).min)
     result2.head.endAddressM should be (replacement2s.map(_.endAddressM).max)
-    //    replacement2s.foreach(l=>println(prettyPrint(l)))
-    //    replacement2t.foreach(l=>println(prettyPrint(l)))
-    //    result2.foreach(l=>println(prettyPrint(l)))
   }
 
+  // used for debugging when needed
   private def prettyPrint(l: RoadAddressLink) = {
 
     s"""${if (l.id == -1000) { "NEW!" } else { l.id }} link: ${l.linkId} road address: ${l.roadNumber}/${l.roadPartNumber}/${l.trackCode}/${l.startAddressM}-${l.endAddressM} length: ${l.length} dir: ${l.sideCode}
@@ -493,7 +487,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     when(mockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
     when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[BoundingRectangle])).thenReturn(Seq())
     val result = roadAddressService.transferRoadAddress(sources, targets, User(0L, "foo", Configuration()))
-    result.foreach(l => println(prettyPrint(l)))
     sanityCheck(result)
     val link456 = result.find(_.linkId == 456L)
     val link457 = result.find(_.linkId == 457L)
@@ -521,7 +514,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     when(mockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
     when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[BoundingRectangle])).thenReturn(Seq())
     val result = roadAddressService.transferRoadAddress(sources, targets, User(0L, "foo", Configuration()))
-    result.foreach(l => println(prettyPrint(l)))
     sanityCheck(result)
     val link456 = result.find(_.linkId == 456L)
     val link457 = result.find(_.linkId == 457L)
@@ -550,7 +542,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     when(mockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
     when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[BoundingRectangle])).thenReturn(Seq())
     val result = roadAddressService.transferRoadAddress(sources, targets, User(0L, "foo", Configuration()))
-    result.foreach(l => println(prettyPrint(l)))
     sanityCheck(result)
     val link456 = result.find(_.linkId == 456L)
     val link457 = result.find(_.linkId == 457L)
@@ -580,7 +571,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     when(mockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
     when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[BoundingRectangle])).thenReturn(Seq())
     val result = roadAddressService.transferRoadAddress(sources, targets, User(0L, "foo", Configuration()))
-    result.foreach(l => println(prettyPrint(l)))
     sanityCheck(result)
     val link456 = result.find(_.linkId == 456L)
     val link457 = result.find(_.linkId == 457L)
@@ -647,7 +637,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     when(mockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
     when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[BoundingRectangle])).thenReturn(Seq())
     val result = roadAddressService.transferRoadAddress(sources, targets, User(0L, "foo", Configuration()))
-    result.foreach(l => println(prettyPrint(l)))
     sanityCheck(result)
     val link456 = result.find(_.linkId == 456L)
     val link457 = result.find(_.linkId == 457L)
