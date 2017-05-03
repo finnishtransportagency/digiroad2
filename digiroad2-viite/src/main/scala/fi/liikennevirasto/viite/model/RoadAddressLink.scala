@@ -12,7 +12,7 @@ case class RoadAddressLink(id: Long, linkId: Long, geometry: Seq[Point],
                            attributes: Map[String, Any] = Map(), roadNumber: Long, roadPartNumber: Long, trackCode: Long, elyCode: Long, discontinuity: Long,
                            startAddressM: Long, endAddressM: Long, startDate: String, endDate: String, startMValue: Double, endMValue: Double, sideCode: SideCode,
                            startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint],
-                           anomaly: Anomaly = Anomaly.None, lrmPositionId: Long) extends PolyLine {
+                           anomaly: Anomaly = Anomaly.None, lrmPositionId: Long, newGeometry: Option[Seq[Point]] = None) extends PolyLine {
 }
 
 sealed trait Anomaly {
@@ -20,7 +20,7 @@ sealed trait Anomaly {
 }
 
 object Anomaly {
-  val values = Set(None, NoAddressGiven, NotFullyCovered, Illogical)
+  val values = Set(None, NoAddressGiven, GeometryChanged, Illogical)
 
   def apply(intValue: Int): Anomaly = {
     values.find(_.value == intValue).getOrElse(None)
@@ -28,7 +28,7 @@ object Anomaly {
 
   case object None extends Anomaly { def value = 0 }
   case object NoAddressGiven extends Anomaly { def value = 1 }
-  case object NotFullyCovered extends Anomaly { def value = 2 }
+  case object GeometryChanged extends Anomaly { def value = 2 }
   case object Illogical extends Anomaly { def value = 3 }
 
 }
