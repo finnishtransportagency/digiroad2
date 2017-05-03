@@ -660,15 +660,15 @@
 
       eventbus.on('linkProperties:transferFailed',function(errorCode){
         if (errorCode == 400){
-          return new ModalConfirm("Valittujen linkkien geometriaa ei saatu sovitettua kohdegeometrialle.");
+          return new ModalConfirm("Valittujen linkkien geometriaa ei saatu sovitettua kohdegeometrialle. Ota yhteyttä järjestelmätukeen.");
         } else if (errorCode == 401){
           return new ModalConfirm("Sinulla ei ole käyttöoikeutta muutoksen tekemiseen.");
         } else if (errorCode == 412){
-          return new ModalConfirm("Täyttämättömien vaatimusten takia siirtoa ei saatu tehtyä.");
+          return new ModalConfirm("Täyttämättömien vaatimusten takia siirtoa ei saatu tehtyä. Ota yhteyttä järjestelmätukeen.");
         } else if (errorCode == 500){
-          return new ModalConfirm("Taustajärjestelmässä tapahtui odottamaton virhe toimintoa toteutettaessa.");
+          return new ModalConfirm("Siirto ei onnistunut taustajärjestelmässä tapahtuneen virheen takia, ota yhteyttä järjestelmätukeen.");
         } else {
-          return new ModalConfirm("Taustajärjestelmässä tapahtui odottamaton virhe toimintoa toteutettaessa.");
+          return new ModalConfirm("Siirto ei onnistunut taustajärjestelmässä tapahtuneen tuntemattoman virheen takia, ota yhteyttä järjestelmätukeen.");
         }
       });
     };
