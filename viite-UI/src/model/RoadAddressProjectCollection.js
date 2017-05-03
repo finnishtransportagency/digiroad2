@@ -27,6 +27,7 @@
       roadAddressProjects = [];
       dirtyRoadSegmentLst = [];
       currentRoadSegmentList = [];
+      projectinfo=undefined;
     };
 
     this.createProject = function (data, currentProject) {
