@@ -42,26 +42,29 @@ object PointAssetFiller {
     }
   }
 
-   def correctShortened(asset: PersistedPointAsset , roadLinks: Seq[RoadLink], changeInfo: ChangeInfo, adjustmentOption: Option[AssetAdjustment]): Option[AssetAdjustment]={
-     roadLinks.find(_.linkId == changeInfo.newId.getOrElse(0L)) match {
-       case Some(newRoadLink) =>
-         val mValue = adjustmentOption match {
-           case Some (adjustment) =>
+  def correctShortened(asset: PersistedPointAsset , roadLinks: Seq[RoadLink], changeInfo: ChangeInfo, adjustmentOption: Option[AssetAdjustment]): Option[AssetAdjustment]= {
+    roadLinks.find(_.linkId == changeInfo.newId.getOrElse(0L)) match {
+      case Some(newRoadLink) =>
+        val mValue = adjustmentOption match {
+          case Some(adjustment) =>
             adjustment.mValue
-           case _ =>
+          case _ =>
             asset.mValue
-         }
+        }
 
-         if (changeInfo.oldStartMeasure.getOrElse (0.0) - MaxDistanceDiffAllowed <= mValue && changeInfo.oldStartMeasure.getOrElse (0.0) >= mValue)
-          correctGeometry (asset.id, newRoadLink, changeInfo.newStartMeasure.getOrElse (0.0), changeInfo.vvhTimeStamp)
-         else if (changeInfo.oldEndMeasure.getOrElse (0.0) + MaxDistanceDiffAllowed >= mValue && changeInfo.oldEndMeasure.getOrElse (0.0) <= mValue)
-          correctGeometry (asset.id, newRoadLink, changeInfo.newEndMeasure.getOrElse (0.0), changeInfo.vvhTimeStamp)
-         else
-          correctValuesAndGeometry (asset, roadLinks, changeInfo, adjustmentOption)
-       case _ =>
-         None
-     }
+        if (changeInfo.oldStartMeasure.getOrElse(0.0) - MaxDistanceDiffAllowed <= mValue && changeInfo.oldStartMeasure.getOrElse(0.0) >= mValue)
+          correctGeometry(asset.id, newRoadLink, changeInfo.newStartMeasure.getOrElse(0.0), changeInfo.vvhTimeStamp)
+        else if (changeInfo.oldEndMeasure.getOrElse(0.0) + MaxDistanceDiffAllowed >= mValue && changeInfo.oldEndMeasure.getOrElse(0.0) <= mValue)
+          correctGeometry(asset.id, newRoadLink, changeInfo.newEndMeasure.getOrElse(0.0), changeInfo.vvhTimeStamp)
+        else if (changeInfo.oldStartMeasure.getOrElse(0.0) <= mValue &&  changeInfo.oldEndMeasure.getOrElse(0.0) >= mValue)
+          correctValuesAndGeometry(asset, roadLinks, changeInfo, adjustmentOption)
+        else
+          None
+      case _ =>
+        None
+    }
   }
+
 
   def correctedPersistedAsset(asset: PersistedPointAsset, roadLinks: Seq[RoadLink], changeInfos: Seq[ChangeInfo]): Option[AssetAdjustment] = {
     val pointAssetLastChanges = changeInfos.
@@ -75,7 +78,7 @@ object PointAssetFiller {
           case ChangeType.CombinedModifiedPart | ChangeType.CombinedRemovedPart if changeInfo.newId != changeInfo.oldId => //Geometry Combined
             correctValuesAndGeometry(asset, roadLinks, changeInfo, adjustment)
 
-          case ChangeType.LenghtenedCommonPart | ChangeType.LengthenedNewPart if asset.mValue < changeInfo.newStartMeasure.getOrElse(0.0) => //Geometry Lengthened
+          case ChangeType.LenghtenedCommonPart | ChangeType.LengthenedNewPart => //Geometry Lengthened
             correctValuesAndGeometry(asset, roadLinks, changeInfo, adjustment)
 
           case ChangeType.DividedModifiedPart | ChangeType.DividedNewPart if (asset.mValue >= changeInfo.oldStartMeasure.getOrElse(0.0)) && (asset.mValue <= changeInfo.oldEndMeasure.getOrElse(0.0)) => //Geometry Divided

@@ -36,18 +36,22 @@
     this.getTransferResult = _.throttle(function(dataTransfer, callback) {
       return $.getJSON('api/viite/roadlinks/transferRoadLink?data=' +JSON.stringify(dataTransfer), function(data) {
         return _.isFunction(callback) && callback(data);
+      }).fail(function(obj) {
+        eventbus.trigger('linkProperties:transferFailed', obj.status);
       });
     }, 1000);
 
-    this.createRoadAddress = _.throttle(function(data, success, failure) {
+    this.createRoadAddress = _.throttle(function(data, errorCallback) {
       $.ajax({
         contentType: "application/json",
         type: "PUT",
         url: "api/viite/roadlinks/roadaddress",
         data: JSON.stringify(data),
         dataType: "json",
-        success: success,
-        error: failure
+        success: function (link) {
+          eventbus.trigger('linkProperties:saved');
+        },
+        error: errorCallback
       });
     }, 1000);
 
@@ -62,6 +66,18 @@
         error: failure
       });
     }, 1000);
+
+    this.checkIfRoadpartReserved = (function(roadnuber,startPart,endPart) {
+      return $.get('api/viite/roadlinks/roadaddress/project/validatereservedlink/', {
+        roadnumber: roadnuber,
+        startpart: startPart,
+        endpart: endPart
+      })
+        .then(function (x) {
+          return x;
+        });
+    });
+
 
     this.getRoadAddressProjects = _.throttle(function(callback) {
       return $.getJSON('api/viite/roadlinks/roadaddress/project/all', function(data) {

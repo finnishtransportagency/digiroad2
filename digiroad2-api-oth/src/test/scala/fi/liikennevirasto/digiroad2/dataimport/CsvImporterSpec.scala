@@ -152,7 +152,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     verify(mockService).updateExistingById(Matchers.eq(1l), Matchers.eq(None), Matchers.eq(properties), Matchers.eq("CsvImportApiSpec"), anyObject())
   }
 
-  test("update asset LiVi id by CSV import", Tag("db")) {
+  test("Should not update asset LiVi id by CSV import (after Tierekisteri integration)", Tag("db")) {
     val mockService = MockitoSugar.mock[MassTransitStopService]
     val mockVVHClient = MockitoSugar.mock[VVHClient]
 
@@ -162,7 +162,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val csv = csvToInputStream(createCSV(Map("Valtakunnallinen ID" -> 1, "LiVi-tunnus" -> "Livi987654")))
 
     importer.importAssets(csv) should equal(ImportResult())
-    val properties = Set(SimpleProperty("yllapitajan_koodi", Seq(PropertyValue("Livi987654"))))
+    val properties = Set(SimpleProperty("yllapitajan_koodi", Seq(PropertyValue("Livi987654")))).filterNot(_.publicId == "yllapitajan_koodi")
     verify(mockService).updateExistingById(Matchers.eq(1l), Matchers.eq(None), Matchers.eq(properties), Matchers.eq("CsvImportApiSpec"), anyObject())
   }
 
@@ -211,7 +211,9 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     "valaistus" -> ("1", "2"),
     "saattomahdollisuus_henkiloautolla" -> ("1", "2"),
     "lisatiedot" -> ("qwer", "asdf"),
-    "tietojen_yllapitaja" -> ("1", "3")
+    "tietojen_yllapitaja" -> ("1", "3"),
+    "korotettu" -> ("1", "2"),
+    "roska_astia" -> ("1", "2")
   )
 
   test("update asset's properties in a generic manner", Tag("db")) {
@@ -226,7 +228,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     importer.importAssets(csv) should equal(ImportResult())
     val properties: Set[SimpleProperty] = exampleValues.map { case (key, value) =>
       SimpleProperty(key, Seq(PropertyValue(value._2)))
-    }.toSet
+    }.filterNot(_.publicId == "yllapitajan_koodi").toSet
 
     verify(mockService).updateExistingById(Matchers.eq(1l), Matchers.eq(None), Matchers.eq(properties), Matchers.eq("CsvImportApiSpec"), anyObject())
   }

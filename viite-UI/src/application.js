@@ -15,6 +15,7 @@
       linkPropertiesModel: linkPropertiesModel
     };
 
+    bindEvents();
     window.applicationModel = new ApplicationModel([
       selectedLinkProperty]);
 
@@ -23,17 +24,13 @@
     var assetGroups = groupAssets(
       linkPropertiesModel);
 
-    eventbus.on('layer:selected', function(layer) {
-      // assetSelectionMenu.select(layer);
-    });
-
-    var projectListModel = new ProjectListModel(models.roadAddressProjectCollection);
+    var projectListModel = new ProjectListModel(roadAddressProjectCollection);
 
     NavigationPanel.initialize(
       $('#map-tools'),
       new SearchBox(
-          instructionsPopup,
-          new LocationSearch(backend, window.applicationModel)
+        instructionsPopup,
+        new LocationSearch(backend, window.applicationModel)
       ),
       new ProjectSelectBox(projectListModel),
       assetGroups
@@ -58,33 +55,8 @@
 
   var localizedStrings;
 
-  var assetUpdateFailedMessage = 'Tallennus epäonnistui. Yritä hetken kuluttua uudestaan.';
-
   var indicatorOverlay = function() {
     jQuery('.container').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
-  };
-
-  var bindEvents = function(linearAssetSpecs, pointAssetSpecs) {
-    var singleElementEventNames = _.pluck(linearAssetSpecs, 'singleElementEventCategory');
-    var multiElementEventNames = _.pluck(linearAssetSpecs, 'multiElementEventCategory');
-    var linearAssetSavingEvents = _.map(singleElementEventNames, function(name) { return name + ':saving'; }).join(' ');
-    var pointAssetSavingEvents = _.map(pointAssetSpecs, function (spec) { return spec.layerName + ':saving'; }).join(' ');
-    eventbus.on('asset:saving asset:creating speedLimit:saving linkProperties:saving manoeuvres:saving ' + linearAssetSavingEvents + ' ' + pointAssetSavingEvents, function() {
-      indicatorOverlay();
-    });
-
-    var fetchedEventNames = _.map(multiElementEventNames, function(name) { return name + ':fetched'; }).join(' ');
-    eventbus.on('asset:saved asset:fetched asset:created speedLimits:fetched linkProperties:available manoeuvres:fetched pointAssets:fetched ' + fetchedEventNames, function() {
-      jQuery('.spinner-overlay').remove();
-    });
-
-    var massUpdateFailedEventNames = _.map(multiElementEventNames, function(name) { return name + ':massUpdateFailed'; }).join(' ');
-    eventbus.on('asset:updateFailed asset:creationFailed linkProperties:updateFailed speedLimits:massUpdateFailed ' + massUpdateFailedEventNames, function() {
-      jQuery('.spinner-overlay').remove();
-      alert(assetUpdateFailedMessage);
-    });
-
-    eventbus.on('confirm:show', function() { new Confirm(); });
   };
 
   var createOpenLayersMap = function(startupParameters, layers) {
@@ -186,6 +158,19 @@
   application.restart = function(backend, withTileMaps) {
     localizedStrings = undefined;
     this.start(backend, withTileMaps);
+  };
+
+  var bindEvents = function() {
+
+    eventbus.on('linkProperties:saving', function() {
+      indicatorOverlay();
+    });
+
+    eventbus.on('linkProperties:available', function() {
+      jQuery('.spinner-overlay').remove();
+    });
+
+    eventbus.on('confirm:show', function() { new Confirm(); });
   };
 
 }(window.Application = window.Application || {}));
