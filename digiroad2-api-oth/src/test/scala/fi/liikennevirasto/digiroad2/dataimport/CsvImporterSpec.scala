@@ -211,7 +211,9 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     "valaistus" -> ("1", "2"),
     "saattomahdollisuus_henkiloautolla" -> ("1", "2"),
     "lisatiedot" -> ("qwer", "asdf"),
-    "tietojen_yllapitaja" -> ("1", "3")
+    "tietojen_yllapitaja" -> ("1", "3"),
+    "korotettu" -> ("1", "2"),
+    "roska_astia" -> ("1", "2")
   )
 
   test("update asset's properties in a generic manner", Tag("db")) {
