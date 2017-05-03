@@ -7,6 +7,7 @@
     var featuresToKeep = [];
     var previousAdjacents = [];
     var floatingRoadMarker = [];
+    var BAD_REQUEST = 400;
     var UNAUTHORIZED_401 = 401;
     var PRECONDITION_FAILED_412 = 412;
     var INTERNAL_SERVER_ERROR_500 = 500;
@@ -439,8 +440,8 @@
 
       if(!_.isEmpty(data.sourceIds) && !_.isEmpty(data.targetIds) && !_.isEmpty(data.roadAddress)){
         backend.createRoadAddress(data, function(errorObject) {
-          if (errorObject.status == INTERNAL_SERVER_ERROR_500) {
-            eventbus.trigger('linkProperties:transferFailed', INTERNAL_SERVER_ERROR_500);
+          if (errorObject.status == INTERNAL_SERVER_ERROR_500 || errorObject.status == BAD_REQUEST) {
+            eventbus.trigger('linkProperties:transferFailed', errorObject.status);
           }
         });
       } else {

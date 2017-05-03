@@ -146,13 +146,16 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val (sources, targets) = roadlinksData()
     val user = userProvider.getCurrentUser()
     try{
-    val result = roadAddressService.getRoadAddressAfterCalculation(sources, targets, user)
-    result.map(roadAddressLinkToApi)
+      val result = roadAddressService.getRoadAddressAfterCalculation(sources, targets, user)
+      result.map(roadAddressLinkToApi)
     }
     catch {
+      case e: IllegalArgumentException =>
+        logger.warn("Invalid transfer attempted: " + e.getMessage, e)
+        BadRequest("Invalid transfer attempted: " + e.getMessage)
       case e: Exception =>
-    logger.warn(e.getMessage)
-      InternalServerError("A unexpected error occurred while processing this action.")
+        logger.warn(e.getMessage)
+        InternalServerError("A unexpected error occurred while processing this action.")
     }
   }
 
