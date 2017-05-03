@@ -2,7 +2,8 @@ package fi.liikennevirasto.digiroad2
 
 import java.awt.Polygon
 import java.io.{File, FilenameFilter, IOException}
-import java.util.Properties
+import java.text.SimpleDateFormat
+import java.util.{Date, Properties}
 import java.util.concurrent.TimeUnit
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
@@ -694,12 +695,31 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       None
   }
 
-  /**
-    * Returns latest value of given values (timestamp and user name). Used by RoadLinkService.fillIncompleteLinksWithPreviousLinkData.
-    */
-  def getLatestModification[T](values: Map[Option[String], Option [String]]) = {
+  private def getLatestModification[T](values: Map[Option[String], Option [String]]) = {
     if (values.nonEmpty)
-      Some(values.max)
+      Some(values.reduce(calculateLatestDate))
+    else
+      None
+  }
+
+  private def calculateLatestDate(stringOption1: (Option[String], Option[String]), stringOption2: (Option[String], Option[String])): (Option[String], Option[String]) = {
+    val date1 = convertStringToDate(stringOption1._1)
+    val date2 = convertStringToDate(stringOption2._1)
+    (date1, date2) match {
+      case (Some(d1), Some(d2)) =>
+        if (d1.after(d2))
+          stringOption1
+        else
+          stringOption2
+      case (Some(d1), None) => stringOption1
+      case (None, Some(d2)) => stringOption2
+      case (None, None) => (None, None)
+    }
+  }
+
+  private def convertStringToDate(str: Option[String]): Option[Date] = {
+    if (str.exists(_.trim.nonEmpty))
+      Some(new SimpleDateFormat("dd.MM.yyyy hh:mm:ss").parse(str.get))
     else
       None
   }
@@ -722,7 +742,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
         case _ => incompleteLink.linkType
       }
       val modifications = (oldPropertiesForIncompleteLink.map(_.modifiedAt) zip oldPropertiesForIncompleteLink.map(_.modifiedBy)).toMap
-      val (newModifiedAt, newModifiedBy) = getLatestModification(modifications).getOrElse(incompleteLink.modifiedAt, incompleteLink.modifiedBy)
+      val modicationsWithVvhModification = modifications ++ Map(incompleteLink.modifiedAt -> incompleteLink.modifiedBy)
+      val (newModifiedAt, newModifiedBy) = getLatestModification(modicationsWithVvhModification).getOrElse(incompleteLink.modifiedAt, incompleteLink.modifiedBy)
       val previousDirection = useValueWhenAllEqual(oldPropertiesForIncompleteLink.map(_.trafficDirection))
 
       incompleteLink.copy(

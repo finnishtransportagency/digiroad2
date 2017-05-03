@@ -296,7 +296,12 @@ object RoadAddressDAO {
     }
   }
 
-  def fetchByRoadPart(roadNumber: Long, roadPartNumber: Long) = {
+  def fetchByRoadPart(roadNumber: Long, roadPartNumber: Long, includeFloating: Boolean = false) = {
+    val floating = if (!includeFloating)
+      "floating='0' AND"
+    else
+      ""
+    // valid_to > sysdate because we may expire and query the data again in same transaction
     val query =
       s"""
         select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
@@ -307,8 +312,8 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
-        where floating = '0' and road_number = $roadNumber AND road_part_number = $roadPartNumber and t.id < t2.id AND
-        (valid_to IS NULL OR valid_to >= sysdate) AND (valid_from IS NULL OR valid_from <= sysdate)
+        where $floating road_number = $roadNumber AND road_part_number = $roadPartNumber and t.id < t2.id AND
+        (valid_to IS NULL OR valid_to > sysdate) AND (valid_from IS NULL OR valid_from <= sysdate)
         ORDER BY road_number, road_part_number, track_code, start_addr_m
       """
     queryList(query)

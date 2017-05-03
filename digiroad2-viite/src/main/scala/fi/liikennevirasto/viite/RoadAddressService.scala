@@ -573,6 +573,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       RoadAddressDAO.expireRoadAddresses(sourceIds)
       RoadAddressDAO.expireMissingRoadAddresses(targetIds)
       RoadAddressDAO.create(roadAddresses)
+      recalculateRoadAddresses(roadAddresses.head.roadNumber.toInt, roadAddresses.head.roadPartNumber.toInt)
     }
   }
 
@@ -667,7 +668,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         for (roadaddress <- project.reservedParts) {
           croadnumber = roadaddress.roadNumber
           croadpart = roadaddress.roadPartNumber
-          val addresses = RoadAddressDAO.fetchByRoadPart(roadaddress.roadNumber, roadaddress.roadPartNumber)
+          val addresses = RoadAddressDAO.fetchByRoadPart(roadaddress.roadNumber, roadaddress.roadPartNumber, true)
           addresses.foreach(address =>
             RoadAddressDAO.createRoadAddressProjectLink(Sequences.nextViitePrimaryKeySeqValue, address, project))
         }
@@ -851,28 +852,26 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   def recalculateRoadAddresses(roadNumber: Long, roadPartNumber: Long) = {
-    OracleDatabase.withDynTransaction {
-      loopRoadParts(roadNumber, roadPartNumber)
-    }
-  }
-
-  def loopRoadParts(roadNumber: Long, roadPartNumber: Long) = {
     try{
-      val roads = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber)
-      try {
-        val adjusted = LinkRoadAddressCalculator.recalculate(roads)
-        assert(adjusted.size == roads.size) // Must not lose any
-        val (changed, unchanged) = adjusted.partition(ra =>
-          roads.exists(oldra => ra.id == oldra.id && (oldra.startAddrMValue != ra.startAddrMValue || oldra.endAddrMValue != ra.endAddrMValue))
-        )
-        println(s"Road $roadNumber, part $roadPartNumber: ${changed.size} updated, ${unchanged.size} kept unchanged")
-        changed.foreach(addr => RoadAddressDAO.update(addr, None))
-      } catch {
-        case ex: InvalidAddressDataException => println(s"!!! Road $roadNumber, part $roadPartNumber contains invalid address data - part skipped !!!")
-          ex.printStackTrace()
+      val roads = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber, true)
+      if (!roads.exists(_.floating)) {
+        try {
+          val adjusted = LinkRoadAddressCalculator.recalculate(roads)
+          assert(adjusted.size == roads.size)
+          // Must not lose any
+          val (changed, unchanged) = adjusted.partition(ra =>
+            roads.exists(oldra => ra.id == oldra.id && (oldra.startAddrMValue != ra.startAddrMValue || oldra.endAddrMValue != ra.endAddrMValue))
+          )
+          logger.info(s"Road $roadNumber, part $roadPartNumber: ${changed.size} updated, ${unchanged.size} kept unchanged")
+          changed.foreach(addr => RoadAddressDAO.update(addr, None))
+        } catch {
+          case ex: InvalidAddressDataException => logger.error(s"!!! Road $roadNumber, part $roadPartNumber contains invalid address data - part skipped !!!", ex)
+        }
+      } else {
+        logger.info(s"Not recalculating $roadNumber / $roadPartNumber because floating segments were found")
       }
     } catch {
-      case a: Exception => println(a.getMessage)
+      case a: Exception => logger.error(a.getMessage, a)
     }
   }
 

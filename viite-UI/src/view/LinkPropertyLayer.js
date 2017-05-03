@@ -62,6 +62,8 @@
       greenRoadLayer.setZIndex(10000);
       if(!addToGreenLayer){
         greenRoadLayer.getSource().addFeatures(features);
+        selectSingleClick.getFeatures().clear();
+        addFeaturesToSelection(features);
       }
     };
 
@@ -770,6 +772,9 @@
       $('#feature-attributes').empty();
       clearLayers();
       me.refreshView();
+      activateSelectInteractions(true);
+      applicationModel.toggleSelectionTypeAll();
+      selectedLinkProperty.clearFeaturesToKeep();
     };
 
     var redrawNextSelectedTarget= function(targets, adjacents) {
@@ -998,9 +1003,7 @@
     });
 
     eventListener.listenTo(eventbus, 'linkProperties:clearHighlights', function(){
-      if(greenRoadLayer.getSource().getFeatures().length !== 0){
-        unselectRoadLink();
-      }
+      unselectRoadLink();
       if(pickRoadsLayer.getSource().getFeatures().length !== 0){
         pickRoadsLayer.getSource().clear();
       }
