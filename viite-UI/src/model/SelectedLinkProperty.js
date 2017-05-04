@@ -86,6 +86,11 @@
           current = singleLinkSelect ? roadCollection.getById([id]) : roadCollection.getGroupById(id);
         }
 
+        var currentFloatings = getCurrentFloatings();
+        if(!_.isEmpty(currentFloatings)){
+          setSources(currentFloatings);
+        }
+
         _.forEach(current, function (selected) {
           selected.select();
         });
