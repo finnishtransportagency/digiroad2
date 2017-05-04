@@ -12,7 +12,7 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.{RoadType, ReservedRoadPart}
 import fi.liikennevirasto.viite.dao.CalibrationCode._
-import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
+import fi.liikennevirasto.viite.model.Anomaly
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
@@ -468,22 +468,22 @@ object RoadAddressDAO {
       Q.updateNA(query).first
   }
 
-  def expireRoadAddresses (sourceIds: Set[Long]) = {
-    if (!sourceIds.isEmpty) {
+  def expireRoadAddresses (sourceLinkIds: Set[Long]) = {
+    if (!sourceLinkIds.isEmpty) {
       val query =
         s"""
-          Update road_address Set valid_to = sysdate Where lrm_position_id in (Select id From lrm_position where link_id in (${sourceIds.mkString(",")}))
+          Update road_address Set valid_to = sysdate Where lrm_position_id in (Select id From lrm_position where link_id in (${sourceLinkIds.mkString(",")}))
         """
       Q.updateNA(query).first
     }
   }
 
-  def expireMissingRoadAddresses (targetIds: Set[Long]) = {
+  def expireMissingRoadAddresses (targetLinkIds: Set[Long]) = {
 
-    if (!targetIds.isEmpty) {
+    if (!targetLinkIds.isEmpty) {
       val query =
         s"""
-          Delete from missing_road_address Where link_id in (${targetIds.mkString(",")})
+          Delete from missing_road_address Where link_id in (${targetLinkIds.mkString(",")})
         """
       Q.updateNA(query).first
     }
@@ -559,7 +559,7 @@ object RoadAddressDAO {
       """.as[Long].list
   }
 
-  def getValidRoadNumbersWithFilter = {
+  def getValidRoadNumbersWithFilterToTestAndDevEnv = {
     sql"""
        select distinct road_number
               from road_address ra
