@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2.dataimport
 import java.io.{InputStream, InputStreamReader}
 
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
+import com.jolbox.bonecp.{BoneCPDataSource, BoneCPConfig}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.dataimport.DataCsvImporter.RoadLinkCsvImporter._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -30,6 +31,12 @@ class RoadLinkNotFoundException(linkId: Int) extends RuntimeException
 trait RoadLinkCsvImporter {
   val vvhClient: VVHClient
   val userProvider: UserProvider
+  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+
+  lazy val dataSource = {
+    val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))
+    new BoneCPDataSource(cfg)
+  }
 
   case class LinkProperty(columnName: String, value: String)
   case class CsvRoadLinkRow(linkId: Int, properties: Seq[LinkProperty])
@@ -42,25 +49,25 @@ trait RoadLinkCsvImporter {
   private val administrativeClassLimitations: List[AdministrativeClass] = List(State)
 
   private val intFieldMappings = Map(
-    "Hallinnollinen luokka" -> "administrativeClass",
+    "Hallinnollinen luokka" -> "ADMINCLASS",
     "Toiminnallinen luokka" -> "functional_Class",
-    "Liikennevirran suunta" -> "trafficDirection",
+    "Liikennevirran suunta" -> "DIRECTIONTYPE",
     "Tielinkin tyyppi" -> "link_Type",
-    "Tasosijainti" -> "verticalLevel",
-    "Kuntanumero" -> "municipalityCode",
-    "Osoitenumerot oikealla alku" -> "minAddressNumberRight",
-    "Osoitenumerot oikealla loppu" -> "maxAddressNumberRight",
-    "Osoitenumerot vasemmalla alku" -> "minAddressNumberLeft",
-    "Osoitenumerot vasemmalla loppu" -> "maxAddressNumberLeft",
-    "Linkin tila" -> "linkStatus"
+    "Tasosijainti" -> "VERTICALLEVEL",
+    "Kuntanumero" -> "MUNICIPALITYCODE",
+    "Osoitenumerot oikealla alku" -> "FROM_RIGHT",
+    "Osoitenumerot oikealla loppu" -> "TO_RIGHT",
+    "Osoitenumerot vasemmalla alku" -> "FROM_LEFT",
+    "Osoitenumerot vasemmalla loppu" -> "TO_LEFT",
+    "Linkin tila" -> "CONSTRUCTIONTYPE"
   )
 
   private val fieldInOTH = List("link_Type", "functional_Class")
 
   private val textFieldMappings = Map(
-    "Tien nimi (suomi)" -> "roadNameFi",
-    "Tien nimi (ruotsi)" -> "roadNameSe",
-    "Tien nimi (saame)" -> "roadNameSm"
+    "Tien nimi (suomi)" -> "ROADNAME_FI",
+    "Tien nimi (ruotsi)" -> "ROADNAME_SE",
+    "Tien nimi (saame)" -> "ROADNAME_SM"
   )
 
   private val mandatoryFields = "Linkin ID"
@@ -110,7 +117,7 @@ trait RoadLinkCsvImporter {
   def updateRoadLinkInVVH(roadLinkVVHAttribute: CsvRoadLinkRow): IncompleteParameters = {
     val mapProperties = roadLinkVVHAttribute.properties.map { prop => prop.columnName -> prop.value }.toMap
 
-    vvhClient.complementaryData.updateVVHFeatures(mapProperties) match {
+    vvhClient.complementaryData.updateVVHFeatures(mapProperties ++ Map("LINKID" -> roadLinkVVHAttribute.linkId.toString)) match {
       case Right(error) => List(roadLinkVVHAttribute.linkId.toString)
       case _ => List()
     }
@@ -147,7 +154,7 @@ trait RoadLinkCsvImporter {
   }
 
   def validateAdministrativeClass(properties: Seq[LinkProperty]): Option[AdministrativeClass] = {
-    properties.filter(_.columnName == "administrativeClass").map(_.value).headOption
+    properties.filter(_.columnName == "ADMINCLASS").map(_.value).headOption
     match {
       case None => None
       case Some(propertyValue) =>
@@ -176,10 +183,10 @@ trait RoadLinkCsvImporter {
 
         val (propertieOTH, propertieVVH) = properties.partition(a => fieldInOTH.contains(a.columnName))
 
-        if (propertieOTH.size > 0 || propertieVVH.exists(_.columnName == "trafficDirection")) {
-          OracleDatabase.withDynTransaction {
+        if (propertieOTH.size > 0 || propertieVVH.exists(_.columnName == "DIRECTIONTYPE")) {
+          withDynTransaction {
             val parsedRowOTH = CsvRoadLinkRow(row("Linkin ID").toInt, properties = propertieOTH)
-            val nonExistdLinks = updateRoadLinkOTH(parsedRowOTH, Some(userProvider.getCurrentUser().username), propertieVVH.exists(_.columnName == "trafficDirection"))
+            val nonExistdLinks = updateRoadLinkOTH(parsedRowOTH, Some(userProvider.getCurrentUser().username), propertieVVH.exists(_.columnName == "DIRECTIONTYPE"))
               .map(nonExistRoadLinkType => NonExistingLink(linkIdandField = nonExistRoadLinkType, csvRow = rowToString(row)))
             result.copy(nonExistingLinks = nonExistdLinks ::: result.nonExistingLinks)
           }
