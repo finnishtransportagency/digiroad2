@@ -80,6 +80,11 @@ trait LinearAssetOperations {
     LinearAssetPartitioner.partition(linearAssets, roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
 
+  def getComplementaryByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
+    val (roadLinks, change) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(bounds, municipalities)
+    val linearAssets = getByRoadLinks(typeId, roadLinks, change)
+    LinearAssetPartitioner.partition(linearAssets, roadLinks.groupBy(_.linkId).mapValues(_.head))
+  }
 
   def getByIntersectedBoundingBox(typeId: Int, serviceArea : Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
     val polygonTool = new PolygonTools()
@@ -94,10 +99,14 @@ trait LinearAssetOperations {
   }
 
   def getComplementaryByIntersectedBoundingBox(typeId: Int, serviceArea : Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
-    val vVHRoadLinksAndChanges = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(bounds, municipalities)
-    val roadLinks = vVHRoadLinksAndChanges._1
-    val changes = vVHRoadLinksAndChanges._2
-    val linearAssets = getByRoadLinks(typeId, roadLinks, changes)
+    val polygonTool = new PolygonTools()
+    val polygonStringList =polygonTool.stringifyGeometryForVVHClient(
+      polygonTool.geometryInterceptorToBoundingBox(
+        polygonTool.getAreaGeometry(serviceArea),bounds))
+    val vVHRoadLinksAndChanges = polygonStringList.map(roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHWithPolygon)
+    val roadLinks = vVHRoadLinksAndChanges.flatMap(_._1)
+    val changes =vVHRoadLinksAndChanges.flatMap(_._2)
+    val linearAssets = getByRoadLinks(typeId,  roadLinks, changes)
     LinearAssetPartitioner.partition(linearAssets, roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
 
