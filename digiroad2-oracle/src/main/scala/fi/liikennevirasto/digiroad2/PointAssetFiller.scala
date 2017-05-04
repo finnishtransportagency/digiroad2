@@ -92,6 +92,15 @@ object PointAssetFiller {
     }
   }
 
+  def snapPersistedAssetToRoadLink(asset: PersistedPointAsset, roadLink: RoadLink): Option[AssetAdjustment] = {
+    // Adjust for geometry, "snap to road link": First find the closest point on road link (as mValue), then update
+    // point reference
+    val point = Point(asset.lon, asset.lat)
+    val lrm = GeometryUtils.calculateLinearReferenceFromPoint(point, roadLink.geometry)
+    correctGeometry(asset.id, roadLink, lrm, roadLink.attributes.getOrElse("LAST_EDITED_DATE",
+      roadLink.attributes.getOrElse("CREATED_DATE", BigInt(0))).asInstanceOf[BigInt].longValue())
+  }
+
   private def correctValuesAndGeometry(asset: PersistedPointAsset, roadLinks: Seq[RoadLink], changeInfo: ChangeInfo, adjustmentOption: Option[AssetAdjustment]) = {
     def calculateMvalue(mValue: Double, changeInfo: ChangeInfo)={
       (mValue - changeInfo.oldStartMeasure.getOrElse(0.0)) + changeInfo.newStartMeasure.getOrElse(0.0)

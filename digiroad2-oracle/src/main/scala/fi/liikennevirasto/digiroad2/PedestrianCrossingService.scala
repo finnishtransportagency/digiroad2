@@ -63,8 +63,21 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService) extends Po
           AssetBeforeUpdate(setFloating(assetBeforeUpdate.asset,  assetBeforeUpdate.persistedFloating), assetBeforeUpdate.asset.floating, assetBeforeUpdate.floatingReason)
       }
     }
-    else
-      AssetBeforeUpdate(setFloating(assetBeforeUpdate.asset, assetBeforeUpdate.persistedFloating), assetBeforeUpdate.asset.floating, assetBeforeUpdate.floatingReason)
+    else {
+      val roadLink = roadLinks.find(_.linkId == assetBeforeUpdate.asset.linkId)
+      if (roadLink.isEmpty || assetBeforeUpdate.persistedFloating) {
+        AssetBeforeUpdate(setFloating(assetBeforeUpdate.asset, assetBeforeUpdate.persistedFloating), assetBeforeUpdate.asset.floating, assetBeforeUpdate.floatingReason)
+      } else {
+        PointAssetFiller.snapPersistedAssetToRoadLink(assetBeforeUpdate.asset, roadLink.get) match {
+          case Some(adjustment) =>
+            OraclePedestrianCrossingDao.update(adjustment.assetId, PedestrianCrossingToBePersisted(adjustment.linkId,
+              adjustment.lon, adjustment.lat, adjustment.mValue, assetBeforeUpdate.asset.municipalityCode, "vvh_generated"), Some(adjustment.vvhTimeStamp))
+            AssetBeforeUpdate(createPersistedAsset(assetBeforeUpdate.asset, adjustment), adjustment.floating, Some(FloatingReason.Unknown))
+          case _ => AssetBeforeUpdate(setFloating(assetBeforeUpdate.asset, assetBeforeUpdate.persistedFloating), assetBeforeUpdate.asset.floating, assetBeforeUpdate.floatingReason)
+
+        }
+      }
+    }
   }
 
 
