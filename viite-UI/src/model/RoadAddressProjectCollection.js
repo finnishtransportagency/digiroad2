@@ -34,6 +34,9 @@
       var projectid = 0;
       if (projectinfo !== undefined) {
         projectid = projectinfo.id;
+      } else if (currentProject.id!==undefined)
+      {
+        projectid=currentProject.id;
       }
       var dataJson = {
         id: projectid,
@@ -109,6 +112,11 @@
         });
       });
     }
+
+
+      eventbus.on('clearproject', function() {
+        this.clearRoadAddressProjects();
+    });
 
 
     this.checkIfReserved = function (data) {
