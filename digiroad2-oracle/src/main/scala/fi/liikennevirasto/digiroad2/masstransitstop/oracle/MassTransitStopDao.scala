@@ -218,6 +218,12 @@ class MassTransitStopDao {
     """.as[String].first
   }
 
+  def getLinkSource(roadLinkId: Int): Int ={
+    sql"""SELECT lrm_position.link_source
+       |FROM lrm_position
+       |INNER JOIN asset_link ON lrm_position.id = asset_link.position_id WHERE asset_link.ASSET_ID = $roadLinkId""".as[Int].first
+  }
+
   def propertyDefaultValues(assetTypeId: Long): List[SimpleProperty] = {
     implicit val getDefaultValue = new GetResult[SimpleProperty] {
       def apply(r: PositionedResult) = {
@@ -283,10 +289,10 @@ class MassTransitStopDao {
     sqlu"""Delete From Asset Where id = $assetId""".execute
   }
 
-  def updateLrmPosition(id: Long, mValue: Double, linkId: Long) {
+  def updateLrmPosition(id: Long, mValue: Double, linkId: Long, linkSource: Int) {
     sqlu"""
            update lrm_position
-           set start_measure = $mValue, end_measure = $mValue, link_id = $linkId
+           set start_measure = $mValue, end_measure = $mValue, link_id = $linkId, link_source = $linkSource
            where id = (
             select lrm.id
             from asset a
@@ -296,10 +302,10 @@ class MassTransitStopDao {
       """.execute
   }
 
-  def insertLrmPosition(id: Long, mValue: Double, linkId: Long) {
+  def insertLrmPosition(id: Long, mValue: Double, linkId: Long, linkSource: Int) {
     sqlu"""
-           insert into lrm_position (id, start_measure, end_measure, link_id)
-           values ($id, $mValue, $mValue, $linkId)
+           insert into lrm_position (id, start_measure, end_measure, link_id, link_source)
+           values ($id, $mValue, $mValue, $linkId, $linkSource)
       """.execute
   }
 

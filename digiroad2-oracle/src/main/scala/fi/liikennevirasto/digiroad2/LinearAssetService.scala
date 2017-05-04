@@ -62,6 +62,10 @@ trait LinearAssetOperations {
     municipalityCode
   }
 
+  private def fetchRoadLinkAndComplementary(linkId: Long): Option[RoadLinkLike] = {
+    roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId, newTransaction = false)
+  }
+
   /**
     * Returns linear assets for Digiroad2Api /linearassets GET endpoint.
     *
@@ -483,7 +487,7 @@ trait LinearAssetOperations {
 
       toInsert.foreach{ linearAsset =>
         val id = dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
-          linearAsset.startMeasure, linearAsset.endMeasure, linearAsset.createdBy.getOrElse(LinearAssetTypes.VvhGenerated), linearAsset.vvhTimeStamp)
+          linearAsset.startMeasure, linearAsset.endMeasure, linearAsset.createdBy.getOrElse(LinearAssetTypes.VvhGenerated), linearAsset.vvhTimeStamp, fetchRoadLinkAndComplementary(linearAsset.linkId).get.linkSource.value)
         linearAsset.value match {
           case Some(NumericValue(intValue)) =>
             dao.insertValue(id, LinearAssetTypes.numericValuePropertyId, intValue)
@@ -556,7 +560,7 @@ trait LinearAssetOperations {
 
     //Create New Asset
     val newAssetIDcreate = createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, valueToUpdate, oldAsset.sideCode,
-      oldAsset.startMeasure, oldAsset.endMeasure, username, vvhClient.createVVHTimeStamp(5), true, oldAsset.createdBy, oldAsset.createdDateTime)
+      oldAsset.startMeasure, oldAsset.endMeasure, username, vvhClient.createVVHTimeStamp(5), Some(fetchRoadLinkAndComplementary(oldAsset.linkId).get.linkSource.value), true, oldAsset.createdBy, oldAsset.createdDateTime)
 
       Some(newAssetIDcreate)
   }
@@ -591,7 +595,7 @@ trait LinearAssetOperations {
   def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String): Seq[Long] = {
     withDynTransaction {
       newLinearAssets.map { newAsset =>
-        createWithoutTransaction(typeId, newAsset.linkId, newAsset.value, newAsset.sideCode, newAsset.startMeasure, newAsset.endMeasure, username, vvhClient.createVVHTimeStamp(5))
+        createWithoutTransaction(typeId, newAsset.linkId, newAsset.value, newAsset.sideCode, newAsset.startMeasure, newAsset.endMeasure, username, vvhClient.createVVHTimeStamp(5), Some(fetchRoadLinkAndComplementary(newAsset.linkId).get.linkSource.value))
       }
     }
   }
@@ -602,7 +606,7 @@ trait LinearAssetOperations {
   def split(id: Long, splitMeasure: Double, existingValue: Option[Value], createdValue: Option[Value], username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
     withDynTransaction {
       val linearAsset = dao.fetchLinearAssetsByIds(Set(id), LinearAssetTypes.numericValuePropertyId).head
-      val roadLink = vvhClient.fetchByLinkId(linearAsset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+      val roadLink = vvhClient.fetchRoadLinkOrComplementaryFromVVH(linearAsset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
       municipalityValidation(roadLink.municipalityCode)
 
       Queries.updateAssetModified(id, username).execute
@@ -615,7 +619,8 @@ trait LinearAssetOperations {
         case Some(value) => updateWithoutTransaction(Seq(id), value, username)
       }
 
-      val createdIdOption = createdValue.map(createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, _, linearAsset.sideCode, createdLinkMeasures._1, createdLinkMeasures._2, username, linearAsset.vvhTimeStamp))
+      val createdIdOption = createdValue.map(createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, _, linearAsset.sideCode, createdLinkMeasures._1, createdLinkMeasures._2, username, linearAsset.vvhTimeStamp,
+        fetchRoadLinkAndComplementary(linearAsset.linkId).get.linkSource.value))
 
       newIdsToReturn ++ Seq(createdIdOption).flatten
     }
@@ -646,7 +651,8 @@ trait LinearAssetOperations {
 
       dao.updateSideCode(newExistingIdsToReturn.head, SideCode.TowardsDigitizing)
 
-      val created = valueAgainstDigitization.map(createWithoutTransaction(existing.typeId, existing.linkId, _, SideCode.AgainstDigitizing.value, existing.startMeasure, existing.endMeasure, username, existing.vvhTimeStamp))
+      val created = valueAgainstDigitization.map(createWithoutTransaction(existing.typeId, existing.linkId, _, SideCode.AgainstDigitizing.value, existing.startMeasure, existing.endMeasure, username, existing.vvhTimeStamp,
+        fetchRoadLinkAndComplementary(existing.linkId).get.linkSource.value))
 
       newExistingIdsToReturn ++ created
     }
@@ -680,11 +686,11 @@ trait LinearAssetOperations {
   }
 
   private def createWithoutTransaction(typeId: Int, linkId: Long, value: Value, sideCode: Int, startMeasure: Double,
-                                       endMeasure: Double, username: String, vvhTimeStamp: Long, fromUpdate: Boolean = false,
+                                       endMeasure: Double, username: String, vvhTimeStamp: Long, linkSource: Option[Int], fromUpdate: Boolean = false,
                                        createdByFromUpdate: Option[String] = Some(""),
                                        createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now())): Long = {
     val id = dao.createLinearAsset(typeId, linkId, expired = false, sideCode, startMeasure, endMeasure, username,
-      vvhTimeStamp, fromUpdate, createdByFromUpdate, createdDateTimeFromUpdate)
+      vvhTimeStamp, linkSource, fromUpdate, createdByFromUpdate, createdDateTimeFromUpdate)
     value match {
       case NumericValue(intValue) =>
         dao.insertValue(id, LinearAssetTypes.numericValuePropertyId, intValue)
@@ -739,7 +745,8 @@ trait LinearAssetOperations {
             filter(_.attributes.get("SURFACETYPE").contains(2)).
             map(roadLink => NewLinearAsset(roadLink.linkId, 0, GeometryUtils.geometryLength(roadLink.geometry), NumericValue(1), 1, 0, None))
           newAssets.foreach{ newAsset =>
-              createWithoutTransaction(assetTypeId, newAsset.linkId, newAsset.value, newAsset.sideCode, newAsset.startMeasure, newAsset.endMeasure, LinearAssetTypes.VvhGenerated, vvhClient.createVVHTimeStamp(5))
+              createWithoutTransaction(assetTypeId, newAsset.linkId, newAsset.value, newAsset.sideCode, newAsset.startMeasure, newAsset.endMeasure, LinearAssetTypes.VvhGenerated, vvhClient.createVVHTimeStamp(5),
+                (fetchRoadLinkAndComplementary(newAsset.linkId).get.linkSource.value))
             count = count + 1
           }
         }

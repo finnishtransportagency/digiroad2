@@ -12,6 +12,7 @@ trait RoadLinkLike {
   def administrativeClass: AdministrativeClass
   def trafficDirection: TrafficDirection
   def roadNumber: Option[String]
+  def linkSource: LinkGeomSource
 }
 
 case class RoadLinkProperties(linkId: Long,
