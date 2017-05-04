@@ -72,7 +72,6 @@
       return properties;
     };
 
-
     var open = function(linkId, id, singleLinkSelect, visibleFeatures) {
       var canIOpen = !_.isUndefined(linkId) ? !isSelectedByLinkId(linkId) || isDifferingSelection(singleLinkSelect) : !isSelectedById(id) || isDifferingSelection(singleLinkSelect);
       if (canIOpen) {
@@ -313,7 +312,6 @@
       }
       return linkIds;
     };
-
 
     eventbus.on("adjacents:additionalSourceSelected", function(existingSources, additionalSourceLinkId) {
       sources = current;
@@ -709,6 +707,26 @@
         return false;
       }
     };
+    
+    var filterFeaturesAfterSimulation = function(features){
+      var linkIdsToRemove = linkIdsToExclude();
+      if(applicationModel.getCurrentAction() === applicationModel.actionCalculated){        
+        //Filter the features without said linkIds
+        if(linkIdsToRemove.length !== 0){
+          return _.reject(features, function(feature){
+            return _.contains(linkIdsToRemove, feature.roadLinkData.linkId);
+          });
+        } else {
+          return features;
+        }
+      } else return features;      
+    };
+    
+    var linkIdsToExclude = function(){
+      return _.chain(getFeaturesToKeepFloatings().concat(getFeaturesToKeepUnknown()).concat(getFeaturesToKeep())).map(function(feature){
+        return feature.linkId;
+      }).uniq().value();
+    };
 
     return {
       getSources: getSources,
@@ -753,7 +771,9 @@
       getFeaturesToKeepFloatings: getFeaturesToKeepFloatings,
       getFeaturesToKeepUnknown: getFeaturesToKeepUnknown,
       isLinkIdInCurrent: isLinkIdInCurrent,
-      isLinkIdInFeaturesToKeep: isLinkIdInFeaturesToKeep
+      isLinkIdInFeaturesToKeep: isLinkIdInFeaturesToKeep,
+      filterFeaturesAfterSimulation: filterFeaturesAfterSimulation,
+      linkIdsToExclude: linkIdsToExclude
     };
   };
 })(this);

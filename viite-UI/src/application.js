@@ -109,7 +109,7 @@
 
     var mapOverlay = new MapOverlay($('.container'));
     var styler = new Styler();
-    var roadLayer = new RoadLayer3(map, models.roadCollection,styler);
+    var roadLayer = new RoadLayer3(map, models.roadCollection,styler,models.selectedLinkProperty);
 
     new LinkPropertyForm(models.selectedLinkProperty);
 

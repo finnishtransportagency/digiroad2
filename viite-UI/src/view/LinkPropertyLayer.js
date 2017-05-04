@@ -455,6 +455,7 @@
       cachedMarker = new LinkPropertyMarker(selectedLinkProperty);
       removeSelectInteractions();
       var roadLinks = roadCollection.getAll();
+      var linkIdsToRemove = applicationModel.getCurrentAction() !== applicationModel.actionCalculated ? [] : selectedLinkProperty.linkIdsToExclude();
 
       if(floatingMarkerLayer.getSource() !== null)
         floatingMarkerLayer.getSource().clear();
@@ -469,24 +470,26 @@
         var anomalousRoadMarkers = _.filter(roadLinks, function(roadlink) {
           return roadlink.anomaly === 1;
         });
-        
-          var floatingGroups = _.groupBy(floatingRoadMarkers, function(value){
-            return value.linkId;
-          });
 
-          var orderFloatGroup = _.sortBy(floatingGroups, 'startAddressM');
-          _.each(orderFloatGroup, function(floatGroup) {
-            floatGroup.sort(function(firstFloat, secondFloat){
-              return firstFloat.startAddressM - secondFloat.startAddressM;
-            });
-            middlefloating = floatGroup[Math.floor(floatGroup.length / 2)];
-            marker = cachedLinkPropertyMarker.createMarker(middlefloating);
-            floatingMarkerLayer.getSource().addFeature(marker);
+        var floatingGroups = _.groupBy(floatingRoadMarkers, function(value){
+          return value.linkId;
+        });
+
+        var orderFloatGroup = _.sortBy(floatingGroups, 'startAddressM');
+        _.each(orderFloatGroup, function(floatGroup) {
+          floatGroup.sort(function(firstFloat, secondFloat){
+            return firstFloat.startAddressM - secondFloat.startAddressM;
           });
+          middlefloating = floatGroup[Math.floor(floatGroup.length / 2)];
+          marker = cachedLinkPropertyMarker.createMarker(middlefloating);
+          if(applicationModel.getCurrentAction() !== applicationModel.actionCalculated && !_.contains(linkIdsToRemove,marker.roadLinkData.linkId))
+            floatingMarkerLayer.getSource().addFeature(marker);
+        });
 
         _.each(anomalousRoadMarkers, function(anomalouslink) {
           var marker = cachedMarker.createMarker(anomalouslink);
-          anomalousMarkerLayer.getSource().addFeature(marker);
+          if(applicationModel.getCurrentAction() !== applicationModel.actionCalculated && !_.contains(linkIdsToRemove,marker.roadLinkData.linkId))
+            anomalousMarkerLayer.getSource().addFeature(marker);
         });
 
         var actualPoints =  me.drawCalibrationMarkers(calibrationPointLayer.source, roadLinks);
@@ -608,7 +611,21 @@
         indicatorLayer.getSource().clear();
       });
 
-      eventListener.listenTo(eventbus, 'roadLinks:fetched', draw);
+      eventListener.listenTo(eventbus, 'roadLinks:fetched', function(eventData){
+        draw();
+        _.defer(function(){
+          var floatingsLinkIds = _.chain(selectedLinkProperty.getFeaturesToKeepFloatings()).map(function(feature){
+            return feature.linkId;
+          }).uniq().value();
+          var visibleFeatures = getVisibleFeatures(true,false,true);
+          var featuresToReSelect = _.filter(visibleFeatures, function(feature){
+            return _.contains(floatingsLinkIds, feature.roadLinkData.linkId);
+          });
+          if(featuresToReSelect.length !== 0){
+            addFeaturesToSelection(featuresToReSelect);
+          }
+        });
+      });
       eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', draw);
       eventListener.listenTo(eventbus, 'linkProperties:updateFailed', cancelSelection);
       eventListener.listenTo(eventbus, 'adjacents:nextSelected', function(sources, adjacents, targets) {
@@ -715,6 +732,10 @@
 
       eventListener.listenTo(eventbus, 'linkProperties:clearIndicators', function(){
         clearIndicators();
+      });
+
+      eventListener.listenTo(eventbus, 'roadLinks:refreshView', function(){
+        me.refreshView();
       });
 
       var clearIndicators = function () {
@@ -866,7 +887,6 @@
       setGeneralOpacity(0.2);
     };
 
-
     eventbus.on('linkProperties:cleanFloatingsAfterDefloat', function(){
       cleanFloatingsAfterDefloat();
       cleanUnknowsAfterDefloat();
@@ -947,7 +967,6 @@
       selectedLinkProperty.setFloatingRoadMarker(floatingRoadMarker);
     };
 
-
     var cleanUnknowsAfterDefloat = function(){
       var unknownRoadMarkers =[];
 
@@ -982,30 +1001,30 @@
       selectedLinkProperty.setAnomalousMarkers(unknownRoadMarkers);
     };
 
-      eventbus.on('linkProperties:floatingRoadMarkerPreviousSelected', function(){
-        addSelectedFloatings();
-        addSelectedUnknowns();
+    eventbus.on('linkProperties:floatingRoadMarkerPreviousSelected', function(){
+      addSelectedFloatings();
+      addSelectedUnknowns();
+    });
+
+    var addSelectedFloatings = function() {
+      var floatingRoadMarker = selectedLinkProperty.getFloatingRoadMarker();
+      var floatingRoad = [];
+      var floatingMarker = [];
+      _.each(floatingRoadMarker, function(floating){
+        if(floating.getGeometry().getType() == 'LineString'){
+          floatingRoad.push(floating);
+        } else {
+          floatingMarker.push(floating);
+        }
       });
 
-     var addSelectedFloatings = function() {
-         var floatingRoadMarker = selectedLinkProperty.getFloatingRoadMarker();
-         var floatingRoad = [];
-         var floatingMarker = [];
-         _.each(floatingRoadMarker, function(floating){
-            if(floating.getGeometry().getType() == 'LineString'){
-                floatingRoad.push(floating);
-            } else {
-                floatingMarker.push(floating);
-            }
-         });
+      _.each(floatingMarker, function(marker){
+        floatingMarkerLayer.getSource().addFeature(marker);
+      });
 
-        _.each(floatingMarker, function(marker){
-           floatingMarkerLayer.getSource().addFeature(marker);
-        });
-
-        _.each(floatingRoad, function(road){
-           roadLayer.layer.getSource().addFeature(road);
-        });
+      _.each(floatingRoad, function(road){
+        roadLayer.layer.getSource().addFeature(road);
+      });
     };
 
     var addSelectedUnknowns = function(){
