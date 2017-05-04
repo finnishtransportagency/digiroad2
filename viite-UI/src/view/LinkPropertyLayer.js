@@ -660,7 +660,15 @@
         clearHighlights();
         greenRoadLayer.getSource().clear();
         setGeneralOpacity(0.2);
+
+        _.each(simulatedOL3Features, function(elem) {
+          roadLayer.layer.getSource().getFeatures().filter(function(item){
+            if( item.roadLinkData.linkId === elem.roadLinkData.linkId)
+              roadLayer.layer.getSource().removeFeature(item);
+          });
+        });
         simulatedRoadsLayer.getSource().addFeatures(simulatedOL3Features);
+        roadLayer.layer.getSource().addFeatures(simulatedOL3Features);
       });
 
       eventListener.listenTo(eventbus, 'roadLink:editModeAdjacents', function() {
@@ -775,6 +783,8 @@
       activateSelectInteractions(true);
       applicationModel.toggleSelectionTypeAll();
       selectedLinkProperty.clearFeaturesToKeep();
+      greenRoadLayer.getSource().clear();
+      simulatedRoadsLayer.getSource().clear();
     };
 
     var redrawNextSelectedTarget= function(targets, adjacents) {
