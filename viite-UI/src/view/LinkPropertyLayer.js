@@ -488,13 +488,14 @@
           var marker = cachedMarker.createMarker(anomalouslink);
           anomalousMarkerLayer.getSource().addFeature(marker);
         });
-
-        var actualPoints =  me.drawCalibrationMarkers(calibrationPointLayer.source, roadLinks);
-        _.each(actualPoints, function(actualPoint) {
-          var calMarker = new CalibrationPoint(actualPoint.point);
-          calibrationPointLayer.getSource().addFeature(calMarker.getMarker(true));
-        });
-        calibrationPointLayer.setZIndex(22);
+        if(!applicationModel.isActiveButtons()) {
+          var actualPoints = me.drawCalibrationMarkers(calibrationPointLayer.source, roadLinks);
+          _.each(actualPoints, function (actualPoint) {
+            var calMarker = new CalibrationPoint(actualPoint.point);
+            calibrationPointLayer.getSource().addFeature(calMarker.getMarker(true));
+          });
+          calibrationPointLayer.setZIndex(22);
+        }
       }
       addSelectInteractions();
     };
@@ -651,6 +652,13 @@
           simulatedOL3Features.push(feature);
           afterTransferLinks.push(road);
         });
+
+        var actualPoints =  me.drawCalibrationMarkers(calibrationPointLayer.source, newRoads);
+        _.each(actualPoints, function(actualPoint) {
+          var calMarker = new CalibrationPoint(actualPoint.point);
+          simulatedRoadsLayer.getSource().addFeature(calMarker.getMarker(true));
+        });
+
         indicatorLayer.getSource().clear();
         roadCollection.setTmpRoadAddresses(afterTransferLinks);
         roadCollection.setChangedIds(changedIds);
@@ -911,6 +919,24 @@
 
       pickRoadsLayer.getSource().clear();
       pickRoadsLayer.getSource().addFeatures(PickFeaturesToRemove );
+
+      /*
+       * Clean from calibrationPoints layer selected
+       */
+
+      _.map(selectedLinkProperty.getFeaturesToKeepFloatings(), function(featureToKeep){
+        if(featureToKeep.calibrationPoints.length > 0) {
+          _.each(featureToKeep.calibrationPoints, function (cPoint) {
+            var newPoint = new CalibrationPoint(cPoint.point).getMarker(true);
+            _.each(calibrationPointLayer.getSource().getFeatures(), function (feature) {
+              if (newPoint.values_.geometry.flatCoordinates[0] == feature.values_.geometry.flatCoordinates[0] &&
+                newPoint.values_.geometry.flatCoordinates[1] == feature.values_.geometry.flatCoordinates[1]) {
+                calibrationPointLayer.getSource().removeFeature(feature);
+              }
+            });
+          });
+        }
+      });
 
       /*
        * Clean from roadLayer floatings selected
