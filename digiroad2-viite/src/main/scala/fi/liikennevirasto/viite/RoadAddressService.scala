@@ -731,27 +731,22 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       }
     }
     def extendChainByGeometry(ordered: Seq[RoadAddressLink], unordered: Seq[RoadAddressLink], sideCode: SideCode): Seq[RoadAddressLink] = {
+      // First link gets the assigned side code
       if (ordered.isEmpty)
-        return extendChainByGeometry(Seq(unordered.head), unordered.tail, sideCode)
-      if (unordered.isEmpty)
+        return extendChainByGeometry(Seq(unordered.head.copy(sideCode=sideCode)), unordered.tail, sideCode)
+      if (unordered.isEmpty) {
+        println(ordered.map(_.linkId).mkString(" -> "))
         return ordered
-      // Current position we are building from
-      val endPoint = sideCode match {
-        case SideCode.TowardsDigitizing => ordered.last.geometry.last
-        case SideCode.AgainstDigitizing => ordered.last.geometry.head
-        case _ => throw new InvalidAddressDataException("Bad sidecode on chain")
       }
-      val (next, rest) = unordered.partition(u => GeometryUtils.minimumDistance(endPoint, u.geometry) < 0.1)
-      if (next.nonEmpty) {
-        extendChainByGeometry(ordered ++ next, rest, getSideCode(next.head, sideCode, endPoint))
-      }
-      else {
-        val startPoint = ordered.head.geometry.head
-        val (previous, rest) = unordered.partition(u => GeometryUtils.minimumDistance(startPoint, u.geometry) < 0.1)
-        if (previous.isEmpty)
-          throw new IllegalArgumentException("Non-contiguous road target geometry")
-        else
-          extendChainByGeometry(previous ++ ordered, rest, getSideCode(previous.head, sideCode, endPoint))
+      // Find a road address link that continues from current last link
+      unordered.find(ral => GeometryUtils.areAdjacent(ral.geometry, ordered.last.geometry)) match {
+        case Some(link) =>
+          val sideCode = if (isSideCodeChange(link.geometry, ordered.last.geometry))
+            switchSideCode(ordered.last.sideCode)
+          else
+            ordered.last.sideCode
+          extendChainByGeometry(ordered ++ Seq(link), unordered.filterNot(link.equals), sideCode)
+        case _ => throw new InvalidAddressDataException("Non-contiguous road target geometry")
       }
     }
     val orderedSources = extendChainByAddress(Seq(sources.head), sources.tail)
@@ -760,12 +755,15 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       case SideCode.AgainstDigitizing => orderedSources.head.geometry.last
       case _ => throw new InvalidAddressDataException("Bad sidecode on source")
     }
-    val preSortedTargets = targets.sortBy(l => GeometryUtils.minimumDistance(startingPoint, l.geometry))
-    val startingSideCode = if (GeometryUtils.areAdjacent(startingPoint, preSortedTargets.head.geometry.head))
-      SideCode.TowardsDigitizing
+
+    val (endingLinks, middleLinks) = targets.partition(t => targets.count(t2 => GeometryUtils.areAdjacent(t.geometry, t2.geometry)) < 3)
+    endingLinks.foreach(l => println(l.linkId + "  " + minDistanceBetweenEndPoints(Seq(startingPoint), l.geometry)))
+    val preSortedTargets = endingLinks.sortBy(l => minDistanceBetweenEndPoints(Seq(startingPoint), l.geometry)) ++ middleLinks
+    val startingSideCode = if (isDirectionMatch(orderedSources.head.geometry, preSortedTargets.head.geometry))
+      orderedSources.head.sideCode
     else
-      SideCode.AgainstDigitizing
-    (orderedSources, extendChainByGeometry(Seq(preSortedTargets.head), preSortedTargets.tail, startingSideCode))
+      switchSideCode(orderedSources.head.sideCode)
+    (orderedSources, extendChainByGeometry(Seq(), preSortedTargets, startingSideCode))
   }
 
   def transferRoadAddress(sources: Seq[RoadAddressLink], targets: Seq[RoadAddressLink], user: User): Seq[RoadAddressLink] = {
@@ -820,17 +818,52 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val adjustedCreatedRoads = orderedTargets.foldLeft(orderedTargets) { (previousTargets, target) =>
       RoadAddressLinkBuilder.adjustRoadAddressTopology(orderedTargets.length, startCp, endCp, maxEndMValue, minStartAddressM, maxEndAddressM, source, target, previousTargets, user.username).filterNot(_.id == 0) }
 
-    // Figure out first link's side code
-    val startingSideCode = if (GeometryUtils.areAdjacent(adjustedCreatedRoads.head.geometry.head, orderedSources.head.geometry.head) ||
-      GeometryUtils.areAdjacent(adjustedCreatedRoads.head.geometry.last, orderedSources.head.geometry.last)) {
-      orderedSources.head.sideCode
-    } else {
-      switchSideCode(orderedSources.head.sideCode)
-    }
+    println("Picked " + adjustedCreatedRoads.head.linkId)
+    // Figure out first target link's side code: is it changed from the source?
+//    val startingSideCode = if (isDirectionMatch(adjustedCreatedRoads.head.geometry, orderedSources.head.geometry)) {
+//      orderedSources.head.sideCode
+//    } else {
+//      switchSideCode(orderedSources.head.sideCode)
+//    }
+//    // Adjust SideCode according to the starting link
+//    adjustSideCodes(Seq(adjustedCreatedRoads.head.copy(sideCode = startingSideCode)), adjustedCreatedRoads.tail)
+    adjustedCreatedRoads
+  }
 
-    // Adjust SideCode according to the starting link
-    adjustSideCodes(Seq(adjustedCreatedRoads.head.copy(sideCode = startingSideCode)), adjustedCreatedRoads.tail)
+  /**
+    * Check if the sequence of points are going in matching direction (best matching)
+    * This means that the starting and ending points are closer to each other than vice versa
+    *
+    * @param geom1 Geometry one
+    * @param geom2 Geometry two
+    */
+  private def isDirectionMatch(geom1: Seq[Point], geom2: Seq[Point]): Boolean = {
+    val x = distancesBetweenEndPoints(geom1, geom2)
+    x._1 < x._2
+  }
 
+  private def isSideCodeChange(geom1: Seq[Point], geom2: Seq[Point]): Boolean = {
+    GeometryUtils.areAdjacent(geom1.last, geom2.last) ||
+      GeometryUtils.areAdjacent(geom1.head, geom2.head)
+  }
+
+  private def distancesBetweenEndPoints(geom1: Seq[Point], geom2: Seq[Point]) = {
+    (geom1.head.distance2DTo(geom2.head) + geom1.last.distance2DTo(geom2.last),
+      geom1.last.distance2DTo(geom2.head) + geom1.head.distance2DTo(geom2.last))
+  }
+
+  private def minDistanceBetweenEndPoints(geom1: Seq[Point], geom2: Seq[Point]) = {
+    val x = distancesBetweenEndPoints(geom1, geom2)
+    Math.min(x._1, x._2)
+  }
+
+  private def prettyPrint(l: RoadAddressLink) = {
+
+    s"""${if (l.id == -1000) { "NEW!" } else { l.id }} link: ${l.linkId} road address: ${l.roadNumber}/${l.roadPartNumber}/${l.trackCode}/${l.startAddressM}-${l.endAddressM} length: ${l.length} dir: ${l.sideCode}
+       |${if (l.startCalibrationPoint.nonEmpty) { " <- " + l.startCalibrationPoint.get.addressMValue } else ""}
+       |${if (l.endCalibrationPoint.nonEmpty) { " " + l.endCalibrationPoint.get.addressMValue + "->"} else ""}
+       | ${l.geometry.head.x},${l.geometry.head.y}-${l.geometry.last.x},${l.geometry.last.y}
+     """.stripMargin.replace("\n", "")
   }
 
   private def adjustSideCodes(ready: Seq[RoadAddressLink], unprocessed: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
@@ -839,14 +872,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     else {
       val last = ready.last
       val next = unprocessed.head
-      val endPoint = if (ready.last.sideCode == SideCode.TowardsDigitizing) ready.last.geometry.last else  ready.last.geometry.head
-      val touch = (GeometryUtils.areAdjacent(next.geometry.head, endPoint), GeometryUtils.areAdjacent(next.geometry.last, endPoint))
-      val nextSideCode = touch match {
-        case (true, false) => SideCode.TowardsDigitizing
-        case (false, true) => SideCode.AgainstDigitizing
-          //Overlapping or non-touching geometries
-        case (_, _) => throw new IllegalArgumentException("Touching geometries are invalid: %s %s".format(last.geometry, next.geometry))
-      }
+      println(last)
+      println(next)
+      val nextSideCode = if (isDirectionMatch(last.geometry, next.geometry))
+        last.sideCode
+      else
+        switchSideCode(last.sideCode)
       adjustSideCodes(ready++Seq(next.copy(sideCode=nextSideCode)), unprocessed.tail)
     }
   }

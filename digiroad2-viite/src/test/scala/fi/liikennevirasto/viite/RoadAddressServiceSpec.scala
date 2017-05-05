@@ -524,6 +524,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     link456.get.endAddressM should be (142)
     link457.get.endAddressM should be (121)
     result.forall(l => l.startCalibrationPoint.isEmpty && l.endCalibrationPoint.isEmpty) should be (true)
+    result.foreach(println)
     result.forall(l => l.sideCode == SideCode.AgainstDigitizing) should be (true)
   }
 

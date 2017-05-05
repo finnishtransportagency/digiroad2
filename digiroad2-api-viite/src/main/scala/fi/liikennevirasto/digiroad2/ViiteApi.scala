@@ -154,7 +154,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         logger.warn("Invalid transfer attempted: " + e.getMessage, e)
         BadRequest("Invalid transfer attempted: " + e.getMessage)
       case e: Exception =>
-        logger.warn(e.getMessage)
+        logger.warn(e.getMessage, e)
         InternalServerError("An unexpected error occurred while processing this action.")
     }
   }
