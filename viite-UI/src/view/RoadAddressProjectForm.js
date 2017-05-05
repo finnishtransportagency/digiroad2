@@ -179,6 +179,7 @@
           eventbus.trigger('linkProperties:selectedProject', result.linkId);
           applicationModel.setProjectButton(true);
           applicationModel.setProjectFeature(currentProject.id);
+          applicationModel.setOpenProject(true);
       });
 
       eventbus.on('roadAddress:selected roadAddress:cancelled', function(roadAddress) {
