@@ -3,6 +3,7 @@ package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2.RoadLinkType.{ComplementaryRoadLinkType, FloatingRoadLinkType, NormalRoadLinkType, UnknownRoadLinkType}
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
@@ -141,7 +142,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   def getRoadAddressLinks(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
-                          everything: Boolean = false, publicRoads: Boolean = false) = {
+                          everything: Boolean = false, publicRoads: Boolean = false): Seq[RoadAddressLink] = {
     def complementaryLinkFilter(roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
                                 everything: Boolean = false, publicRoads: Boolean = false)(roadAddressLink: RoadAddressLink) = {
       everything || publicRoads || roadNumberLimits.exists {
@@ -153,18 +154,18 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val fetchVVHStartTime = System.currentTimeMillis()
     val (complementedRoadLinks, complementaryLinkIds) = fetchRoadLinksWithComplementary(boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads)
     val linkIds = complementedRoadLinks.map(_.linkId).toSet
-
-    val (floatingViiteRoadLinks, addresses, floating) = Await.result(fetchRoadAddressesByBoundingBoxF, Duration.Inf)
     val fetchVVHEndTime = System.currentTimeMillis()
     logger.info("End fetch vvh road links in %.3f sec".format((fetchVVHEndTime - fetchVVHStartTime) * 0.001))
-    val missingLinkIds = linkIds -- floating.keySet -- addresses.keySet
 
     val fetchMissingRoadAddressStartTime = System.currentTimeMillis()
+    val (floatingViiteRoadLinks, addresses, floating) = Await.result(fetchRoadAddressesByBoundingBoxF, Duration.Inf)
+    val missingLinkIds = linkIds -- floating.keySet -- addresses.keySet
+
     val missedRL = withDynTransaction {
       RoadAddressDAO.getMissingRoadAddresses(missingLinkIds)
     }.groupBy(_.linkId)
     val fetchMissingRoadAddressEndTime = System.currentTimeMillis()
-    logger.info("End fetch missing road address in %.3f sec".format((fetchMissingRoadAddressEndTime - fetchMissingRoadAddressStartTime) * 0.001))
+    logger.info("End fetch missing and floating road address in %.3f sec".format((fetchMissingRoadAddressEndTime - fetchMissingRoadAddressStartTime) * 0.001))
 
     val buildStartTime = System.currentTimeMillis()
     val viiteRoadLinks = complementedRoadLinks.map { rl =>
@@ -688,6 +689,85 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
     None
   }
+
+  /**
+    * Take two sequences of road address links and order them so that the sequence covers the same road geometry
+    * and logical addressing in the same order
+    * @param sources Source road address links (floating)
+    * @param targets Target road address links (missing addresses)
+    * @return
+    */
+  def orderRoadAddressLinks(sources: Seq[RoadAddressLink], targets: Seq[RoadAddressLink]): (Seq[RoadAddressLink], Seq[RoadAddressLink]) = {
+    /*
+      Calculate sidecode changes - if next road address link starts with the current (end) point
+      then side code remains the same. Otherwise it's reversed
+     */
+    def getSideCode(roadAddressLink: RoadAddressLink, previousSideCode: SideCode, currentPoint: Point) = {
+      val geom = roadAddressLink.geometry
+      if (GeometryUtils.areAdjacent(geom.head, currentPoint))
+        previousSideCode
+      else
+        switchSideCode(previousSideCode)
+    }
+
+    def extending(link: RoadAddressLink, ext: RoadAddressLink) = {
+      link.roadNumber == ext.roadNumber && link.roadPartNumber == ext.roadPartNumber &&
+        link.trackCode == ext.trackCode && link.endAddressM == ext.startAddressM
+    }
+    def extendChainByAddress(ordered: Seq[RoadAddressLink], unordered: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
+      if (ordered.isEmpty)
+        return extendChainByAddress(Seq(unordered.head), unordered.tail)
+      if (unordered.isEmpty)
+        return ordered
+      val (next, rest) = unordered.partition(u => extending(ordered.last, u))
+      if (next.nonEmpty)
+        extendChainByAddress(ordered ++ next, rest)
+      else {
+        val (previous, rest) = unordered.partition(u => extending(u, ordered.head))
+        if (previous.isEmpty)
+          throw new IllegalArgumentException("Non-contiguous road addressing")
+        else
+          extendChainByAddress(previous ++ ordered, rest)
+      }
+    }
+    def extendChainByGeometry(ordered: Seq[RoadAddressLink], unordered: Seq[RoadAddressLink], sideCode: SideCode): Seq[RoadAddressLink] = {
+      if (ordered.isEmpty)
+        return extendChainByGeometry(Seq(unordered.head), unordered.tail, sideCode)
+      if (unordered.isEmpty)
+        return ordered
+      // Current position we are building from
+      val endPoint = sideCode match {
+        case SideCode.TowardsDigitizing => ordered.last.geometry.last
+        case SideCode.AgainstDigitizing => ordered.last.geometry.head
+        case _ => throw new InvalidAddressDataException("Bad sidecode on chain")
+      }
+      val (next, rest) = unordered.partition(u => GeometryUtils.minimumDistance(endPoint, u.geometry) < 0.1)
+      if (next.nonEmpty) {
+        extendChainByGeometry(ordered ++ next, rest, getSideCode(next.head, sideCode, endPoint))
+      }
+      else {
+        val startPoint = ordered.head.geometry.head
+        val (previous, rest) = unordered.partition(u => GeometryUtils.minimumDistance(startPoint, u.geometry) < 0.1)
+        if (previous.isEmpty)
+          throw new IllegalArgumentException("Non-contiguous road target geometry")
+        else
+          extendChainByGeometry(previous ++ ordered, rest, getSideCode(previous.head, sideCode, endPoint))
+      }
+    }
+    val orderedSources = extendChainByAddress(Seq(sources.head), sources.tail)
+    val startingPoint = orderedSources.head.sideCode match {
+      case SideCode.TowardsDigitizing => orderedSources.head.geometry.head
+      case SideCode.AgainstDigitizing => orderedSources.head.geometry.last
+      case _ => throw new InvalidAddressDataException("Bad sidecode on source")
+    }
+    val preSortedTargets = targets.sortBy(l => GeometryUtils.minimumDistance(startingPoint, l.geometry))
+    val startingSideCode = if (GeometryUtils.areAdjacent(startingPoint, preSortedTargets.head.geometry.head))
+      SideCode.TowardsDigitizing
+    else
+      SideCode.AgainstDigitizing
+    (orderedSources, extendChainByGeometry(Seq(preSortedTargets.head), preSortedTargets.tail, startingSideCode))
+  }
+
   def transferRoadAddress(sources: Seq[RoadAddressLink], targets: Seq[RoadAddressLink], user: User): Seq[RoadAddressLink] = {
 
     def getMValues(cp: Option[Double], fl: Option[Double]): Double = {
@@ -706,72 +786,69 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       RoadAddressLinkBuilder.dropShort
     )
 
-    val allLinks = sources ++ targets
-    val targetsGeomLength = targets.map(_.length).sum
+    val (orderedSources, orderedTargets) = orderRoadAddressLinks(sources, targets)
 
-    val allStartCp = sources.flatMap(_.startCalibrationPoint)
-    val allEndCp = sources.flatMap(_.endCalibrationPoint)
-    val startCp = if (allStartCp.nonEmpty) Option(allStartCp.minBy(_.addressMValue)) else None
-    val endCp = if (allEndCp.nonEmpty) Option(allEndCp.maxBy(_.addressMValue)) else None
-    val minStartAddressM = sources.map(_.startAddressM).min
-    val maxEndAddressM = sources.map(_.endAddressM).max
+    val allLinks = orderedSources ++ orderedTargets
+    val targetsGeomLength = orderedTargets.map(_.length).sum
 
-    val adjustedSegments = adjustTopology.foldLeft(sources) { (previousSources, operation) => operation(targetsGeomLength, previousSources) }
+    val allStartCp = orderedSources.flatMap(_.startCalibrationPoint)
+    val allEndCp = orderedSources.flatMap(_.endCalibrationPoint)
+    if (allStartCp.size > 1 || allEndCp.size > 1)
+      throw new IllegalArgumentException("Source data contains too many calibration points")
+
+    val minStartAddressM = orderedSources.head.startAddressM
+    val maxEndAddressM = orderedSources.last.endAddressM
+
+    val adjustedSegments = adjustTopology.foldLeft(orderedSources) { (previousSources, operation) => operation(targetsGeomLength, previousSources) }
 
     val maxEndMValue = allLinks.flatMap(_.endCalibrationPoint) match {
       case Nil => adjustedSegments.map(_.endMValue).max
       case _ => getMValues(Option(adjustedSegments.flatMap(_.endCalibrationPoint).map(_.segmentMValue).max), Option(allLinks.map(_.endMValue).max))
     }
 
-    val source = sources.head
+    val source = orderedSources.head
 
-    val orderedTargets = targets.size match {
-      case 1 => targets
-      case _ =>
-        val optionalSurroundingMappedLinks = getValidSurroundingLinks(targets.map(_.linkId).toSet, source).filterNot(_._2.isEmpty)
-        val startingLinkId = optionalSurroundingMappedLinks.size match {
-          case 0 => targets.head.linkId
-          case 1 => val secondOptionalSurroundingMappedLinks = getValidSurroundingLinks(Set(optionalSurroundingMappedLinks.head._2.get.linkId), source).filterNot(_._2.isEmpty)
-            if (secondOptionalSurroundingMappedLinks.nonEmpty && optionalSurroundingMappedLinks.head._2.get.endAddressM < secondOptionalSurroundingMappedLinks.head._2.get.endAddressM) {
-              val resultLinkId = optionalSurroundingMappedLinks.head._1 match {
-                case x if (x == targets.head.linkId) => targets.last.linkId
-                case _ => targets.head.linkId
-              }
-              resultLinkId
-            } else if (secondOptionalSurroundingMappedLinks.nonEmpty && optionalSurroundingMappedLinks.head._2.get.endAddressM > secondOptionalSurroundingMappedLinks.head._2.get.endAddressM){
-              val resultLinkId = optionalSurroundingMappedLinks.head._1 match {
-                case x if (x == targets.head.linkId) => targets.head.linkId
-                case _ => targets.last.linkId
-              }
-              resultLinkId
-            } else {
-              ListMap(optionalSurroundingMappedLinks.toSeq.sortBy(_._2.get.startAddressM):_*).keySet.head
-            }
+    val startCp = allStartCp.headOption
+    val endCp = allEndCp.headOption
 
-          case _ => ListMap(optionalSurroundingMappedLinks.toSeq.sortBy(_._2.get.startAddressM):_*).keySet.head
-        }
-        val firstTarget = targets.filter(_.linkId == startingLinkId).head
-        val orderTargets = targets.foldLeft(Seq.empty[RoadAddressLink]) { (previousOrderedTargets, target) =>
-          orderLinksRecursivelyByAdjacency(firstTarget, target, targets, previousOrderedTargets)
-        }
-        orderTargets
-    }
+    if (startCp.nonEmpty && source.startCalibrationPoint.isEmpty)
+      throw new IllegalArgumentException("Start calibration point not in the first link of source")
+
+    if (endCp.nonEmpty && orderedSources.last.endCalibrationPoint.isEmpty)
+      throw new IllegalArgumentException("Start calibration point not in the first link of source")
 
     val adjustedCreatedRoads = orderedTargets.foldLeft(orderedTargets) { (previousTargets, target) =>
       RoadAddressLinkBuilder.adjustRoadAddressTopology(orderedTargets.length, startCp, endCp, maxEndMValue, minStartAddressM, maxEndAddressM, source, target, previousTargets, user.username).filterNot(_.id == 0) }
 
-    adjustedCreatedRoads
+    // Figure out first link's side code
+    val startingSideCode = if (GeometryUtils.areAdjacent(adjustedCreatedRoads.head.geometry.head, orderedSources.head.geometry.head) ||
+      GeometryUtils.areAdjacent(adjustedCreatedRoads.head.geometry.last, orderedSources.head.geometry.last)) {
+      orderedSources.head.sideCode
+    } else {
+      switchSideCode(orderedSources.head.sideCode)
+    }
+
+    // Adjust SideCode according to the starting link
+    adjustSideCodes(Seq(adjustedCreatedRoads.head.copy(sideCode = startingSideCode)), adjustedCreatedRoads.tail)
+
   }
 
-  def orderLinksRecursivelyByAdjacency(firstTarget: RoadAddressLink, target: RoadAddressLink, targets: Seq[RoadAddressLink], previousOrderedTargets: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
-
-    val orderedTargets = previousOrderedTargets.size match {
-      case 0 => Seq(firstTarget)
-      case _ =>
-        val nextTarget = targets.filterNot(t =>  previousOrderedTargets.map(_.linkId).contains(t.linkId)).filter(rt => GeometryUtils.areAdjacent(previousOrderedTargets.last.geometry, target.geometry))
-        (previousOrderedTargets++nextTarget)
+  private def adjustSideCodes(ready: Seq[RoadAddressLink], unprocessed: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
+    if (unprocessed.isEmpty)
+      ready
+    else {
+      val last = ready.last
+      val next = unprocessed.head
+      val endPoint = if (ready.last.sideCode == SideCode.TowardsDigitizing) ready.last.geometry.last else  ready.last.geometry.head
+      val touch = (GeometryUtils.areAdjacent(next.geometry.head, endPoint), GeometryUtils.areAdjacent(next.geometry.last, endPoint))
+      val nextSideCode = touch match {
+        case (true, false) => SideCode.TowardsDigitizing
+        case (false, true) => SideCode.AgainstDigitizing
+          //Overlapping or non-touching geometries
+        case (_, _) => throw new IllegalArgumentException("Touching geometries are invalid: %s %s".format(last.geometry, next.geometry))
+      }
+      adjustSideCodes(ready++Seq(next.copy(sideCode=nextSideCode)), unprocessed.tail)
     }
-    orderedTargets
   }
 
   def recalculateRoadAddresses(roadNumber: Long, roadPartNumber: Long) = {
@@ -896,6 +973,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       (fullProjectInfo, formInfo)
     }
   }
+
+  def switchSideCode(sideCode: SideCode) = {
+    // Switch between against and towards 2 -> 3, 3 -> 2
+    SideCode.apply(5-sideCode.value)
+  }
+
 }
 
 
