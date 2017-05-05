@@ -14,6 +14,7 @@
     var greenRoadLayerVector = new ol.source.Vector({});
     var pickRoadsLayerVector = new ol.source.Vector({});
     var simulationVector = new ol.source.Vector({});
+    var geometryChangedVector = new ol.source.Vector({});
 
     var indicatorLayer = new ol.layer.Vector({
       source: indicatorVector
@@ -25,6 +26,13 @@
 
     var anomalousMarkerLayer = new ol.layer.Vector({
       source: anomalousMarkerVector
+    });
+
+    var geometryChangedLayer = new ol.layer.Vector({
+      source: geometryChangedVector,
+      style: function(feature) {
+        return styler.generateStyleByFeature(feature.roadLinkData,map.getView().getZoom());
+      }
     });
 
     var calibrationPointLayer = new ol.layer.Vector({
@@ -83,6 +91,7 @@
 
     map.addLayer(floatingMarkerLayer);
     map.addLayer(anomalousMarkerLayer);
+    map.addLayer(geometryChangedLayer);
     map.addLayer(calibrationPointLayer);
     map.addLayer(indicatorLayer);
     map.addLayer(greenRoadLayer);
@@ -90,6 +99,7 @@
     map.addLayer(simulatedRoadsLayer);
     floatingMarkerLayer.setVisible(true);
     anomalousMarkerLayer.setVisible(true);
+    geometryChangedLayer.setVisible(false);
     calibrationPointLayer.setVisible(true);
     indicatorLayer.setVisible(true);
     greenRoadLayer.setVisible(true);
@@ -132,7 +142,7 @@
       //Multi is the one en charge of defining if we select just the feature we clicked or all the overlaping
       //multi: true,
       //This will limit the interaction to the specific layer, in this case the layer where the roadAddressLinks are drawn
-      layer: roadLayer.layer,
+      layer: [roadLayer.layer, geometryChangedLayer],
       //Limit this interaction to the doubleClick
       condition: ol.events.condition.doubleClick,
       //The new/temporary layer needs to have a style function as well, we define it here.
@@ -197,7 +207,7 @@
       //Multi is the one en charge of defining if we select just the feature we clicked or all the overlaping
       //multi: true,
       //This will limit the interaction to the specific layer, in this case the layer where the roadAddressLinks are drawn
-      layer: [roadLayer.layer, floatingMarkerLayer, anomalousMarkerLayer, greenRoadLayer, pickRoadsLayer],
+      layer: [roadLayer.layer, floatingMarkerLayer, anomalousMarkerLayer, greenRoadLayer, pickRoadsLayer, geometryChangedLayer],
       //Limit this interaction to the singleClick
       condition: ol.events.condition.singleClick,
       //The new/temporary layer needs to have a style function as well, we define it here.
@@ -460,6 +470,8 @@
         floatingMarkerLayer.getSource().clear();
       if(anomalousMarkerLayer.getSource() !== null)
         anomalousMarkerLayer.getSource().clear();
+      if(geometryChangedLayer.getSource() !== null)
+        geometryChangedLayer.getSource().clear();
 
       if(map.getView().getZoom() >= zoomlevels.minZoomForAssets) {
         var floatingRoadMarkers = _.filter(roadLinks, function(roadlink) {
@@ -468,6 +480,10 @@
 
         var anomalousRoadMarkers = _.filter(roadLinks, function(roadlink) {
           return roadlink.anomaly === 1;
+        });
+
+        var geometryChangedRoadMarkers = _.filter(roadLinks, function(roadlink){
+          return roadlink.anomaly === 2;
         });
 
         var floatingGroups = _.groupBy(floatingRoadMarkers, function(value){
@@ -488,6 +504,32 @@
           var marker = cachedMarker.createMarker(anomalouslink);
           anomalousMarkerLayer.getSource().addFeature(marker);
         });
+
+        _.each(geometryChangedRoadMarkers, function(geometryChangedLink) {
+          var marker = cachedMarker.createMarker(geometryChangedLink);
+          geometryChangedLayer.getSource().addFeature(marker);
+          var newRoadLinkData = Object.assign({}, geometryChangedLink);
+          //TODO - Create some builder to unknown
+          newRoadLinkData.roadClass = 99;
+          newRoadLinkData.roadLinkSource = 99;
+          newRoadLinkData.sideCode = 99;
+          newRoadLinkData.linkType = 99;
+          newRoadLinkData.constructionType = 0;
+          newRoadLinkData.roadLinkType = "";
+          newRoadLinkData.id = 0;
+          newRoadLinkData.startAddressM = "";
+          newRoadLinkData.endAddressM = "";
+          newRoadLinkData.anomaly = 1;
+
+          var points = _.map(newRoadLinkData.newGeometry, function(point) {
+            return [point.x, point.y];
+          });
+          var feature = new ol.Feature({ geometry: new ol.geom.LineString(points)});
+          feature.roadLinkData = newRoadLinkData;
+          geometryChangedLayer.getSource().addFeature(feature);
+        });
+
+        geometryChangedLayer.setZIndex(100);
 
         var actualPoints =  me.drawCalibrationMarkers(calibrationPointLayer.source, roadLinks);
         _.each(actualPoints, function(actualPoint) {
@@ -854,6 +896,7 @@
 
     eventbus.on('linkProperties:deselectFeaturesSelected', function(){
       clearHighlights();
+      geometryChangedLayer.setVisible(true);
     });
 
     eventbus.on('linkProperties:highlightAnomalousByFloating', function(){
@@ -863,7 +906,7 @@
     var highlightAnomalousFeaturesByFloating = function() {
       var allFeatures = roadLayer.layer.getSource().getFeatures().concat(anomalousMarkerLayer.getSource().getFeatures()).concat(floatingMarkerLayer.getSource().getFeatures());
       _.each(allFeatures, function(feature){
-        if(feature.roadLinkData.anomaly === 1 || feature.roadLinkData.roadLinkType === -1)
+        if(feature.roadLinkData.anomaly === 1 || feature.roadLinkData.anomaly === 2 || feature.roadLinkData.roadLinkType === -1)
           pickRoadsLayer.getSource().addFeature(feature);
       });
       pickRoadsLayer.setOpacity(1);
