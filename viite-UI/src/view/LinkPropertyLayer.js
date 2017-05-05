@@ -889,7 +889,7 @@
 
     eventbus.on('linkProperties:cleanFloatingsAfterDefloat', function(){
       cleanFloatingsAfterDefloat();
-      cleanUnknowsAfterDefloat();
+      cleanUnknownsAfterDefloat();
     });
 
     var cleanFloatingsAfterDefloat = function() {
@@ -967,7 +967,7 @@
       selectedLinkProperty.setFloatingRoadMarker(floatingRoadMarker);
     };
 
-    var cleanUnknowsAfterDefloat = function(){
+    var cleanUnknownsAfterDefloat = function(){
       var unknownRoadMarkers =[];
 
       var unknownFeaturesToKeep = _.reject(_.map(selectedLinkProperty.getFeaturesToKeepUnknown(), function(feature){
