@@ -157,16 +157,20 @@
       };
 
       eventbus.on('roadAddress:newProject', function() {
+        currentProject=undefined; //clears old data
+        $("#roadAddressProject").html("");
         rootElement.html(newProjectTemplate());
         jQuery('.modal-overlay').remove();
         addDatePicker();
         applicationModel.setOpenProject(true);
+        projectCollection.clearRoadAddressProjects();
       });
 
       eventbus.on('roadAddress:openProject', function(result) {
         currentProject = result.projects;
+        projectCollection.clearRoadAddressProjects();
         var text = '';
-        _.each(result.projectLinks, function(line){
+        _.each(result.projectLinks, function(line){  //TODO later list of already saved roadlinks has to be saved in  roadaddressprojectcollection.currentRoadSegmentList for reserve button to function properly now saved links are cleared when newones are reserved
           text += '<div>' +
             addSmallLabel(line.roadNumber)+
             addSmallLabel(line.roadPartNumber)+ addSmallLabel(line.roadLength)+ addSmallLabel(line.discontinuity)+ addSmallLabel(line.ely) +
@@ -217,13 +221,14 @@
 
       rootElement.on('click', '.btn-reserve', function() {
        var data;
+       var lists = $('.roadAddressProject');
         if ($('#roadAddressProject').get(0)!==null) {
          data = $('#roadAddressProject').get(0);
         projectCollection.checkIfReserved(data);
         return false;
        } else
        {
-         data =$('#savedproject').get(0);
+        data =$('#roadpartList').get(0);
          projectCollection.checkIfReserved(data);
         return false;
        }

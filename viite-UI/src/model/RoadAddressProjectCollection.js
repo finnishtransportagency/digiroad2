@@ -1,7 +1,6 @@
 (function(root) {
   root.RoadAddressProjectCollection = function(backend) {
     var roadAddressProjects = [];
-    var roadAddressProjects2 = [{name: 'proj1', state: 1}, {name: 'projeto2', state: 1}];
     var currentRoadSegmentList = [];
     var dirtyRoadSegmentLst = [];
     var projectinfo;
@@ -34,7 +33,7 @@
       var projectid = 0;
       if (projectinfo !== undefined) {
         projectid = projectinfo.id;
-      } else if (currentProject.id!==undefined)
+      } else if (currentProject!==undefined && currentProject.id!==undefined)
       {
         projectid=currentProject.id;
       }
