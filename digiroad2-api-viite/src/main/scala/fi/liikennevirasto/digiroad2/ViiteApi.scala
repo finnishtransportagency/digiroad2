@@ -8,7 +8,7 @@ import scala.util.parsing.json._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.UserProvider
-import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.viite.{ReservedRoadPart, RoadAddressService}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{RoadAddressLink, RoadAddressLinkPartitioner}
@@ -34,7 +34,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
                val roadAddressService: RoadAddressService,
                val userProvider: UserProvider = Digiroad2Context.userProvider,
                val deploy_date: String = Digiroad2Context.deploy_date
-               )
+              )
   extends ScalatraServlet
     with JacksonJsonSupport
     with CorsSupport
@@ -145,8 +145,18 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   get("/roadlinks/transferRoadLink") {
     val (sources, targets) = roadlinksData()
     val user = userProvider.getCurrentUser()
-    val result = roadAddressService.getRoadAddressAfterCalculation(sources, targets, user)
-    result.map(roadAddressLinkToApi)
+    try{
+      val result = roadAddressService.getRoadAddressAfterCalculation(sources, targets, user)
+      result.map(roadAddressLinkToApi)
+    }
+    catch {
+      case e: IllegalArgumentException =>
+        logger.warn("Invalid transfer attempted: " + e.getMessage, e)
+        BadRequest("Invalid transfer attempted: " + e.getMessage)
+      case e: Exception =>
+        logger.warn(e.getMessage)
+        InternalServerError("An unexpected error occurred while processing this action.")
+    }
   }
 
   put("/roadlinks/roadaddress") {
@@ -168,8 +178,15 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       RoadAddress(ra.id, ra.roadNumber, ra.roadPartNumber, Track.apply(ra.trackCode), Discontinuity.apply(ra.discontinuity), ra.startAddressM, ra.endAddressM,
         Some(formatter.parseDateTime(ra.startDate)), None, Option(user.username),0, ra.linkId, ra.startMValue, ra.endMValue, SideCode.apply(ra.sideCode), pointsToCalibration, false, ra.points)
     }
-    val transferredRoadAddresses = roadAddressService.transferFloatingToGap(sourceIds, targetIds, roadAddresses)
-    transferredRoadAddresses
+    try {
+      val transferredRoadAddresses = roadAddressService.transferFloatingToGap(sourceIds, targetIds, roadAddresses)
+      transferredRoadAddresses
+    }
+    catch {
+      case e: RoadAddressException =>
+        logger.warn(e.getMessage)
+        InternalServerError("An unexpected error occurred while processing this action.")
+    }
   }
 
   put("/roadlinks/roadaddress/project/save"){
