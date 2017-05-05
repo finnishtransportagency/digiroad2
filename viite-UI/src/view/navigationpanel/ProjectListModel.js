@@ -57,7 +57,7 @@
           });
           html += '</table>';
           $('#project-list').html($(html));
-          $('[id*="open-project"]').one("click", function(event) {
+          $('[id*="open-project"]').click(function(event) {
             projectCollection.getProjectsWithLinksById(parseInt(event.currentTarget.value)).then(function(result){
               setTimeout(function(){}, 0);
               eventbus.trigger('roadAddress:openProject', result);

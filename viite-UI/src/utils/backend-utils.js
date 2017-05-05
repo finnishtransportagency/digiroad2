@@ -1,12 +1,20 @@
 (function (root) {
   root.Backend = function() {
     var self = this;
+    var  loadingProject;
     this.getRoadLinks = createCallbackRequestor(function(params) {
       var zoom = params.zoom;
       var boundingBox = params.boundingBox;
       return {
         url: 'api/viite/roadlinks?zoom=' + zoom + '&bbox=' + boundingBox
       };
+    });
+
+    this.abortLoadingProject=(function() {
+     if (loadingProject)
+     {
+       loadingProject.abort();
+     }
     });
 
     this.getRoadLinkByLinkId = _.throttle(function(linkId, callback) {
@@ -82,9 +90,13 @@
     }, 1000);
 
     this.getProjectsWithLinksById = _.throttle(function(id, callback) {
-      return $.getJSON('api/viite/roadlinks/roadaddress/project/all/projectId/' + id, function(data) {
+      if (loadingProject) {
+        loadingProject.abort();
+      }
+      loadingProject= $.getJSON('api/viite/roadlinks/roadaddress/project/all/projectId/' + id, function(data) {
         return _.isFunction(callback) && callback(data);
       });
+      return loadingProject;
     }, 1000);
 
     this.getUserRoles = function () {

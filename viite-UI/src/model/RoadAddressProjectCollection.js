@@ -27,6 +27,7 @@
       dirtyRoadSegmentLst = [];
       currentRoadSegmentList = [];
       projectinfo=undefined;
+      backend.abortLoadingProject();
     };
 
     this.createProject = function (data, currentProject) {
