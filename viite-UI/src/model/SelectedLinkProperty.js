@@ -7,11 +7,11 @@
     var featuresToKeep = [];
     var previousAdjacents = [];
     var floatingRoadMarker = [];
+    var anomalousMarkers = [];
     var BAD_REQUEST = 400;
     var UNAUTHORIZED_401 = 401;
     var PRECONDITION_FAILED_412 = 412;
     var INTERNAL_SERVER_ERROR_500 = 500;
-
 
     var markers = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
       "AA", "AB", "AC", "AD", "AE", "AF", "AG", "AH", "AI", "AJ", "AK", "AL", "AM", "AN", "AO", "AP", "AQ", "AR", "AS", "AT", "AU", "AV", "AW", "AX", "AY", "AZ",
@@ -75,7 +75,6 @@
       }
       return properties;
     };
-
 
     var open = function(linkId, id, singleLinkSelect, visibleFeatures) {
       var canIOpen = !_.isUndefined(linkId) ? !isSelectedByLinkId(linkId) || isDifferingSelection(singleLinkSelect) : !isSelectedById(id) || isDifferingSelection(singleLinkSelect);
@@ -323,7 +322,6 @@
       return linkIds;
     };
 
-
     eventbus.on("adjacents:additionalSourceSelected", function(existingSources, additionalSourceLinkId) {
       sources = current;
       var fetchedFeature = roadCollection.getRoadLinkByLinkId(parseInt(additionalSourceLinkId));
@@ -475,6 +473,14 @@
       floatingRoadMarker = ft;
     };
 
+    var getAnomalousMarkers = function(){
+      return anomalousMarkers;
+    };
+
+    var setAnomalousMarkers = function(markers){
+      anomalousMarkers = markers;
+    };
+
     var getTargets = function(){
       return _.union(_.map(targets, function (roadLink) {
         return roadLink.getData();
@@ -517,7 +523,8 @@
 
     var cancelAndReselect = function(action){
       if(action===0){
-        eventbus.trigger('linkProperties:floatingRoadMarkerPreviousSelected', getFloatingRoadMarker);
+        var floatingMarkers = getFloatingRoadMarker();
+        eventbus.trigger('linkProperties:floatingRoadMarkerPreviousSelected', floatingMarkers);
       }
       clearAndReset(false);
       current = [];
@@ -594,7 +601,7 @@
 
     var getFeaturesToKeepUnknown = function() {
       return _.filter(featuresToKeep, function (fk) {
-        return fk.roadLinkType === -1;
+        return fk.anomaly === 1;
       });
     };
 
@@ -665,6 +672,26 @@
         return false;
       }
     };
+    
+    var filterFeaturesAfterSimulation = function(features){
+      var linkIdsToRemove = linkIdsToExclude();
+      if(applicationModel.getCurrentAction() === applicationModel.actionCalculated){        
+        //Filter the features without said linkIds
+        if(linkIdsToRemove.length !== 0){
+          return _.reject(features, function(feature){
+            return _.contains(linkIdsToRemove, feature.roadLinkData.linkId);
+          });
+        } else {
+          return features;
+        }
+      } else return features;      
+    };
+    
+    var linkIdsToExclude = function(){
+      return _.chain(getFeaturesToKeepFloatings().concat(getFeaturesToKeepUnknown()).concat(getFeaturesToKeep())).map(function(feature){
+        return feature.linkId;
+      }).uniq().value();
+    };
 
     return {
       getSources: getSources,
@@ -697,6 +724,8 @@
       setLinkType: setLinkType,
       setFloatingRoadMarker: setFloatingRoadMarker,
       getFloatingRoadMarker: getFloatingRoadMarker,
+      getAnomalousMarkers: getAnomalousMarkers,
+      setAnomalousMarkers: setAnomalousMarkers,
       get: get,
       count: count,
       openMultiple: openMultiple,
@@ -706,7 +735,9 @@
       getFeaturesToKeepFloatings: getFeaturesToKeepFloatings,
       getFeaturesToKeepUnknown: getFeaturesToKeepUnknown,
       isLinkIdInCurrent: isLinkIdInCurrent,
-      isLinkIdInFeaturesToKeep: isLinkIdInFeaturesToKeep
+      isLinkIdInFeaturesToKeep: isLinkIdInFeaturesToKeep,
+      filterFeaturesAfterSimulation: filterFeaturesAfterSimulation,
+      linkIdsToExclude: linkIdsToExclude
     };
   };
 })(this);
