@@ -173,6 +173,10 @@ class VVHClient(vvhRestApiEndPoint: String) {
     filter
   }
 
+  private def withDateLimitFilter(attributeName: String, lowerDate: String, higherDate: String): String = {
+    s""""where":"( $attributeName >=date '$lowerDate' and $attributeName <=date '$higherDate' )","""
+  }
+
   protected def withMunicipalityFilter(municipalities: Set[Int]): String = {
     withFilter("MUNICIPALITYCODE", municipalities)
   }
@@ -204,6 +208,10 @@ class VVHClient(vvhRestApiEndPoint: String) {
 
   protected def withMtkClassFilter(ids: Set[Long]): String = {
     withFilter("MTKCLASS", ids)
+  }
+
+  protected  def withLastEditedDateFilter(lowerDate: String, higherDate: String): String = {
+    withDateLimitFilter("LAST_EDITED_DATE", lowerDate, higherDate)
   }
 
   protected def combineFiltersWithAnd(filter1: String, filter2: String): String = {
@@ -530,6 +538,21 @@ class VVHClient(vvhRestApiEndPoint: String) {
         case Right(error) => throw new VVHClientException(error.toString)
       }
     }.toList
+  }
+
+  /**
+    * Returns VVH road links. Obtain all RoadLinks changes between two given dates.
+    * Used by ??????????????????.
+    */
+  def fetchVVHRoadlinksChangesBetweenDates(lowerDate: String, higherDate: String): Seq[VVHRoadlink] = {
+    val definition = layerDefinition(withLastEditedDateFilter(lowerDate, higherDate))
+    val url = vvhRestApiEndPoint + roadLinkDataService + "/FeatureServer/query?" +
+      s"layerDefs=$definition&${queryParameters()}"
+
+    fetchVVHFeatures(url) match {
+      case Left(features) => features.map(extractVVHFeature)
+      case Right(error) => throw new VVHClientException(error.toString)
+    }
   }
 
   case class VVHError(content: Map[String, Any], url: String)
