@@ -376,7 +376,7 @@ trait LinearAssetOperations {
     withDynTransaction {
       typeId match {
         case LinearAssetTypes.MaintenanceRoadAssetTypeId =>
-          dao.fetchMaintenancesByLinkIds(typeId, linkIds)
+          dao.fetchMaintenancesByLinkIds(typeId, linkIds, includeExpire = false)
         case _ => Seq.empty[PersistedLinearAsset]
       }
     }
@@ -749,9 +749,10 @@ trait LinearAssetOperations {
       }
     }
   }
+
   def getActiveMaintenanceRoad(): Seq[PersistedLinearAsset] = {
     withDynTransaction {
-      dao.fetchAllMaintenance(LinearAssetTypes.MaintenanceRoadAssetTypeId).filter(roadAsset => roadAsset.expired == false)
+      dao.fetchAllMaintenance(LinearAssetTypes.MaintenanceRoadAssetTypeId, includeExpire = false)
     }
   }
 
@@ -768,7 +769,7 @@ trait LinearAssetOperations {
     }
 
     val polygonStringList = polygonTools.stringifyGeometryForVVHClient(polygon)
-    val vVHLinkIds = roadLinkService.getLinkIdsFromVVHWithPolygons(polygonStringList)
+    val vVHLinkIds = roadLinkService.getLinkIdsFromVVHWithComplementaryByPolygons(polygonStringList)
     getPersistedAssetsByLinkIds(typeId, vVHLinkIds)
   }
 }

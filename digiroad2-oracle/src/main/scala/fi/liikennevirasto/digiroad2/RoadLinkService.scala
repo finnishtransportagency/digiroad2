@@ -233,10 +233,38 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }
   }
 
-  def getLinkIdsFromVVHWithPolygons(polygons :Seq[String]): Seq[Long] = {
-    Await.result(Future.sequence(polygons.map(vvhClient.fetchLinkIdsByPolygonF)), atMost = Duration.Inf).flatten
+//  def getLinkIdsFromVVHWithPolygons(polygons :Seq[String], ): Seq[Long] = {
+//    Await.result(Future.sequence(polygons.map(vvhClient.fetchLinkIdsByPolygonF)), atMost = Duration.Inf).flatten
+//  }
+
+  /**
+    * This method returns "real" and "complementary" link id by polygons.
+    *
+    * @param polygons
+    * @return LinksId
+    */
+
+  def getLinkIdsFromVVHWithComplementaryByPolygons(polygons: Seq[String]) = {
+    polygons.flatMap(getLinkIdsFromVVHWithComplementaryByPolygon)
   }
 
+  /**
+    * This method returns "real" and "complementary" link id by polygon.
+    *
+    * @param polygon
+    * @return seq(LinksId) , seq(LinksId)
+    */
+  def getLinkIdsFromVVHWithComplementaryByPolygon(polygon :String): Seq[Long] = {
+
+     val fut = for {
+       f1Result <- vvhClient.fetchLinkIdsByPolygonF(polygon)
+       f2Result <- vvhClient.complementaryData.fetchLinkIdsByPolygonF(polygon)
+     } yield (f1Result, f2Result)
+
+
+    val (complementaryResult, result) = Await.result(fut, Duration.Inf)
+    complementaryResult ++result
+  }
 
   /**
     * This method returns "real" road links, "complementary" road links and change data by bounding box and municipalities.

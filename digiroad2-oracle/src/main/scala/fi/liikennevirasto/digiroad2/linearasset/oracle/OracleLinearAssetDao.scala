@@ -404,8 +404,10 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
   /**
     * Iterates a set of link ids with MaintenanceRoad asset type id and floating flag and returns linear assets. Used by LinearAssetService.getByRoadLinks
     */
-  def fetchMaintenancesByLinkIds(maintenanceRoadAssetTypeId: Int, linkIds: Seq[Long], includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
+  def fetchMaintenancesByLinkIds(maintenanceRoadAssetTypeId: Int, linkIds: Seq[Long], includeFloating: Boolean = false, includeExpire: Boolean = true ): Seq[PersistedLinearAsset] = {
     val floatingFilter = if (includeFloating) "" else "and a.floating = 0"
+    val expiredFilter = if (includeExpire) "" else "and (a.valid_to > sysdate or a.valid_to is null)"
+    val filter = floatingFilter ++ expiredFilter
 
     val assets = MassQuery.withIds(linkIds.toSet) { idTableName =>
       sql"""
@@ -421,7 +423,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
                 join #$idTableName i on i.id = pos.link_id
                 join property p on p.id = t.property_id
           where a.asset_type_id = #$maintenanceRoadAssetTypeId
-            #$floatingFilter
+          #$filter
          union
          select a.id, e.id, e.property_id, cast (e.value as varchar2 (30)), p.property_type, p.public_id, p.required,
                 pos.link_id, pos.side_code,
@@ -436,7 +438,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
                 join #$idTableName i on i.id = pos.link_id
                 join property p on p.id = e.property_id
           where a.asset_type_id = #$maintenanceRoadAssetTypeId
-            #$floatingFilter"""
+          #$filter"""
         .as[(Long, Long, Long, String, String, String, Boolean, Long, Int, Double, Double, Long, Option[DateTime], Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean)].list
     }
 
@@ -514,8 +516,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
   /**
     * Fetch all MaintenanceRoad asset type and floating flag and returns linear assets.
     */
-  def fetchAllMaintenance(maintenanceRoadAssetTypeId: Int, includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
-    val floatingFilter = if (includeFloating) "" else "and a.floating = 0"
+  def fetchAllMaintenance(maintenanceRoadAssetTypeId: Int, includeExpire: Boolean = true ): Seq[PersistedLinearAsset] = {
 
     val assets =
       sql"""
@@ -530,7 +531,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
                 join text_property_value t on t.asset_id = a.id
                 join property p on p.id = t.property_id
           where a.asset_type_id = #$maintenanceRoadAssetTypeId
-            #$floatingFilter
+            #$includeExpire
          union
          select a.id, e.id, e.property_id, cast (e.value as varchar2 (30)), p.property_type, p.public_id, p.required,
                 pos.link_id, pos.side_code,
@@ -544,7 +545,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
                 join enumerated_value e on e.id = s.enumerated_value_id
                 join property p on p.id = e.property_id
           where a.asset_type_id = #$maintenanceRoadAssetTypeId
-            #$floatingFilter"""
+            #$includeExpire"""
         .as[(Long, Long, Long, String, String, String, Boolean, Long, Int, Double, Double, Long, Option[DateTime], Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean)].list
 
 

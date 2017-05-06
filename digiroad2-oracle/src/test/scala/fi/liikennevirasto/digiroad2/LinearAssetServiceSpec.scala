@@ -1915,7 +1915,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
     when(mockPolygonTools.getAreaGeometry(any[Int])).thenReturn(geomBuilder.polygon(24.2, 60.5, 24.8, 60.5, 24.8, 59, 24.2, 59))
     when(mockPolygonTools.stringifyGeometryForVVHClient(any[Seq[Polygon]])).thenReturn(Seq(""))
-    when(mockRoadLinkService.getLinkIdsFromVVHWithPolygons(Seq(""))).thenReturn(Seq(388562360l))
+    when(mockRoadLinkService.getLinkIdsFromVVHWithComplementaryByPolygons(Seq(""))).thenReturn(Seq(388562360l))
 
     val maintenanceRoad = MaintenanceRoad(propertiesSeq)
     runWithRollback {
@@ -1938,7 +1938,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
     when(mockPolygonTools.getAreaGeometry(any[Int])).thenReturn(geomBuilder.polygon(24.2, 60.5, 24.8, 60.5, 24.8, 59, 24.2, 59))
     when(mockPolygonTools.stringifyGeometryForVVHClient(any[Seq[Polygon]])).thenReturn(Seq(""))
-    when(mockRoadLinkService.getLinkIdsFromVVHWithPolygons(Seq(""))).thenReturn(Seq(388562360l))
+    when(mockRoadLinkService.getLinkIdsFromVVHWithComplementaryByPolygons(Seq(""))).thenReturn(Seq(388562360l))
     OracleDatabase.withDynTransaction {
       val assets = ServiceWithDao.getActiveMaintenanceRoadByPolygon(1, 290)
       assets.length should be(0)
