@@ -50,6 +50,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
                     VVHRoadlink(1611069l, 91,  List(Point(127.239, 0.0), Point(146.9, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockVVHClient.fetchByLinkIds(Set(1611374l)))
     .thenReturn(List(VVHRoadlink(1611374l, 235, Seq(Point(0, 0), Point(120, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockVVHClient.fetchRoadLinkOrComplementaryFromVVH(any[Long])).thenReturn(Some(VVHRoadlink(1611071l, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
   def toRoadLink(l: VVHRoadlink) = {
     RoadLink(l.linkId, l.geometry, GeometryUtils.geometryLength(l.geometry),
@@ -77,6 +78,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       VVHRoadlink(1611069l, 91,  List(Point(127.239, 0.0), Point(146.9, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockRoadLinkService.fetchVVHRoadlinks(Set(1611374l)))
     .thenReturn(List(VVHRoadlink(1611374l, 235, Seq(Point(0, 0), Point(120, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((vvhRoadlinksForBoundingBox.map(toRoadLink), Nil))
 
   val testObstacleService = new ObstacleService(mockRoadLinkService)
   val testRailwayCrossingService = new RailwayCrossingService(mockRoadLinkService)

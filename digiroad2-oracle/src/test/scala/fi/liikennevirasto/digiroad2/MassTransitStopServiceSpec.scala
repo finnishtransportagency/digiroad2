@@ -69,7 +69,11 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       when(mockRoadLinkService.getRoadLinkFromVVH(rl.linkId, false))
         .thenReturn(Some(toRoadLink(rl))))
     when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]])).thenReturn(vvhRoadLinks)
-    when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(vvhRoadLinks.map(toRoadLink))}
+    when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(vvhRoadLinks.map(toRoadLink))
+    when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[Long], any[Boolean])).thenReturn(Some(toRoadLink(VVHRoadlink(1611601L, 91, Seq(Point(374668.195,6676884.282), Point(374805.498, 6676906.051)), State, TrafficDirection.BothDirections, FeatureClass.AllOthers))))
+  }
+
+
   class TestMassTransitStopService(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService) extends MassTransitStopService {
     override def withDynSession[T](f: => T): T = f
     override def withDynTransaction[T](f: => T): T = f
@@ -605,6 +609,9 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       massTransitStop.floating should be(false)
       massTransitStop.stopTypes should be(List(1))
       massTransitStop.validityPeriod should be(Some(MassTransitStopValidityPeriod.Current))
+      mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(123l, newTransaction = false).get.linkSource.value should be (1)
+
+
 
       //The property yllapitajan_koodi should not have values
       val liviIdentifierProperty = massTransitStop.propertyData.find(p => p.publicId == "yllapitajan_koodi").get

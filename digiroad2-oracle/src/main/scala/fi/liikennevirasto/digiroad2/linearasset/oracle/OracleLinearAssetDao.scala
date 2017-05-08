@@ -982,7 +982,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     * Creates new linear asset. Return id of new asset. Used by LinearAssetService.createWithoutTransaction
     */
   def createLinearAsset(typeId: Int, linkId: Long, expired: Boolean, sideCode: Int, startMeasure: Double,
-                        endMeasure: Double, username: String, vvhTimeStamp: Long = 0L, linkSource: Int,
+                        endMeasure: Double, username: String, vvhTimeStamp: Long = 0L, linkSource: Option[Int],
                         fromUpdate: Boolean = false,
                         createdByFromUpdate: Option[String] = Some(""),
                         createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now())): Long = {
@@ -1135,9 +1135,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
   }
 
   def getLinkSource(roadLinkId: Long): Int ={
-    sql"""SELECT lrm_position.link_source
-       |FROM lrm_position
-       |INNER JOIN asset_link ON lrm_position.id = asset_link.position_id WHERE asset_link.ASSET_ID = $roadLinkId""".as[Int].first
+    sql"""SELECT lrm_position.link_source FROM lrm_position INNER JOIN asset_link ON lrm_position.id = asset_link.position_id WHERE asset_link.ASSET_ID = $roadLinkId""".as[Int].first
   }
 
   /**

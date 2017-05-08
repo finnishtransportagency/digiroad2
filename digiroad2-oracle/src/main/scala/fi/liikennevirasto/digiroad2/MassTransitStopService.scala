@@ -440,7 +440,7 @@ trait MassTransitStopService extends PointAssetOperations {
         val position = optionalPosition.get
         val point = Point(position.lon, position.lat)
         val mValue = calculateLinearReferenceFromPoint(point, geometry)
-        massTransitStopDao.updateLrmPosition(id, mValue, linkId, roadLink.get.linkSource.value)
+        massTransitStopDao.updateLrmPosition(id, mValue, linkId, Some(roadLink.get.linkSource.value))
         massTransitStopDao.updateBearing(id, position)
         massTransitStopDao.updateMunicipality(id, municipalityCode)
         updateAssetGeometry(id, point)
@@ -512,7 +512,7 @@ trait MassTransitStopService extends PointAssetOperations {
       val position = optionalPosition.get
       val point = Point(position.lon, position.lat)
       val mValue = calculateLinearReferenceFromPoint(point, roadLink.geometry)
-      massTransitStopDao.updateLrmPosition(id, mValue, roadLink.linkId, roadLink.linkSource.value)
+      massTransitStopDao.updateLrmPosition(id, mValue, roadLink.linkId, Some(roadLink.linkSource.value))
       massTransitStopDao.updateBearing(id, position)
       massTransitStopDao.updateMunicipality(id, roadLink.municipalityCode)
       updateAssetGeometry(id, point)
@@ -552,6 +552,14 @@ trait MassTransitStopService extends PointAssetOperations {
     roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId, newTransaction = false)
   }
 
+  private def getLinkSource(linkId: Long): Option[Int] = {
+    roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId, newTransaction = false) match {
+      case Some(roadlink) =>
+        Some(roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId, newTransaction = false).get.linkSource.value)
+      case _ => None
+    }
+  }
+
   override def create(asset: NewMassTransitStop, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass]): Long = {
     withDynTransaction {
       val point = Point(asset.lon, asset.lat)
@@ -570,7 +578,7 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 
   private def create(asset: NewMassTransitStop, username: String, point: Point, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass]): MassTransitStopWithProperties = {
-    val linkSource = fetchRoadLinkAndComplementary(asset.linkId).get.linkSource.value
+    val linkSource = getLinkSource(asset.linkId)
     val assetId = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     val nationalId = massTransitStopDao.getNationalBusStopId

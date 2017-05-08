@@ -289,7 +289,7 @@ class MassTransitStopDao {
     sqlu"""Delete From Asset Where id = $assetId""".execute
   }
 
-  def updateLrmPosition(id: Long, mValue: Double, linkId: Long, linkSource: Int) {
+  def updateLrmPosition(id: Long, mValue: Double, linkId: Long, linkSource: Option[Int]) {
     sqlu"""
            update lrm_position
            set start_measure = $mValue, end_measure = $mValue, link_id = $linkId, link_source = $linkSource
@@ -302,7 +302,7 @@ class MassTransitStopDao {
       """.execute
   }
 
-  def insertLrmPosition(id: Long, mValue: Double, linkId: Long, linkSource: Int) {
+  def insertLrmPosition(id: Long, mValue: Double, linkId: Long, linkSource: Option[Int]) {
     sqlu"""
            insert into lrm_position (id, start_measure, end_measure, link_id, link_source)
            values ($id, $mValue, $mValue, $linkId, $linkSource)

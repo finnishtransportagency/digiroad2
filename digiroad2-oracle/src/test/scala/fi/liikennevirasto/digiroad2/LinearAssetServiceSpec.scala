@@ -23,17 +23,21 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
   val mockVVHClient = MockitoSugar.mock[VVHClient]
   when(mockVVHClient.fetchByLinkId(388562360l)).thenReturn(Some(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockVVHClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockVVHClient.fetchRoadLinkOrComplementaryFromVVH(any[Long])).thenReturn(Some(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+
 
   val roadLink = RoadLink(
     1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
     1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)))
   when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(roadLink), Nil))
   when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[Int])).thenReturn((List(roadLink), Nil))
+  when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[Long], any[Boolean])).thenReturn(Some(roadLink))
+
 
   val mockLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
   when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(30, Seq(1), "mittarajoitus"))
     .thenReturn(Seq(PersistedLinearAsset(1, 1, 1, Some(NumericValue(40000)), 0.4, 9.6, None, None, None, None, false, 30, 0, None)))
-
+  when(mockLinearAssetDao.getLinkSource(388562360l)).thenReturn(1)
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val linearAssetDao = new OracleLinearAssetDao(mockVVHClient)
 
@@ -157,7 +161,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       val asset = linearAssetDao.fetchMaintenancesByLinkIds(290, Seq(388562360l)).head
       asset.value should be (Some(maintenanceRoad))
       asset.expired should be (false)
-      linearAssetDao.getLinkSource(388562360l) should be (1)
+      mockLinearAssetDao.getLinkSource(388562360l) should be (1)
     }
   }
 
