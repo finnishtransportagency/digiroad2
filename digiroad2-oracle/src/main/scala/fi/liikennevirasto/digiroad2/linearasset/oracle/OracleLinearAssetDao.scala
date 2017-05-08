@@ -513,58 +513,6 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     }.toSeq
   }
 
-  /**
-    * Fetch all MaintenanceRoad asset type and floating flag and returns linear assets.
-    */
-  def fetchAllMaintenance(maintenanceRoadAssetTypeId: Int, includeExpire: Boolean = true ): Seq[PersistedLinearAsset] = {
-
-    val assets =
-      sql"""
-         select a.id, t.id, t.property_id, t.value_fi, p.property_type, p.public_id, p.required, pos.link_id,
-                pos.side_code, pos.start_measure,
-                pos.end_measure, pos.adjusted_timestamp, pos.modified_date, a.created_by, a.created_date,
-                a.modified_by, a.modified_date,
-                case when a.valid_to <= sysdate then 1 else 0 end as expired
-           from asset a
-                join asset_link al on a.id = al.asset_id
-                join lrm_position pos on al.position_id = pos.id
-                join text_property_value t on t.asset_id = a.id
-                join property p on p.id = t.property_id
-          where a.asset_type_id = #$maintenanceRoadAssetTypeId
-            #$includeExpire
-         union
-         select a.id, e.id, e.property_id, cast (e.value as varchar2 (30)), p.property_type, p.public_id, p.required,
-                pos.link_id, pos.side_code,
-                pos.start_measure, pos.end_measure, pos.adjusted_timestamp, pos.modified_date, a.created_by,
-                a.created_date, a.modified_by, a.modified_date,
-                case when a.valid_to <= sysdate then 1 else 0 end as expired
-           from asset a
-               join asset_link al on a.id = al.asset_id
-                join lrm_position pos on al.position_id = pos.id
-                join single_choice_value s on s.asset_id = a.id
-                join enumerated_value e on e.id = s.enumerated_value_id
-                join property p on p.id = e.property_id
-          where a.asset_type_id = #$maintenanceRoadAssetTypeId
-            #$includeExpire"""
-        .as[(Long, Long, Long, String, String, String, Boolean, Long, Int, Double, Double, Long, Option[DateTime], Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean)].list
-
-
-    val groupedByAssetId = assets.groupBy(_._1)
-    val groupedByMaintenanceRoadId = groupedByAssetId.mapValues(_.groupBy(_._2))
-
-    groupedByMaintenanceRoadId.map { case (assetId, rowsByMaintenanceRoadId) =>
-      val (_, _, _, _, _, _, _, linkId, sideCode, startMeasure, endMeasure, vvhTimeStamp, geomModifiedDate, createdBy, createdDate, modifiedBy, modifiedDate, expired) = groupedByAssetId(assetId).head
-      val maintenanceRoadValues = rowsByMaintenanceRoadId.keys.toSeq.sorted.map { maintenanceRoadId =>
-        val rows = rowsByMaintenanceRoadId(maintenanceRoadId)
-        val propertyValue = rows.head._4
-        val propertyType = rows.head._5
-        val propertyPublicId = rows.head._6
-        Properties(propertyPublicId, propertyType, propertyValue)
-      }
-      PersistedLinearAsset(assetId, linkId, sideCode, Some(MaintenanceRoad(maintenanceRoadValues)), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, maintenanceRoadAssetTypeId, vvhTimeStamp, geomModifiedDate)
-    }.toSeq
-  }
-
   private def fetchSpeedLimitsByLinkId(linkId: Long) = {
     sql"""
       select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, pos.adjusted_timestamp, pos.modified_date

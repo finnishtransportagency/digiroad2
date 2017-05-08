@@ -45,15 +45,8 @@ class ServiceRoadAPI(val linearAssetService: LinearAssetOperations, val roadLink
   private val trPuh2 = "puh2"
   private val trLisatieto = "lisatieto"
 
-
   before() {
     basicAuth
-  }
-
-  get("/huoltotiet") {
-    contentType = formats("json")
-    val maintenanceAsset = linearAssetService.getActiveMaintenanceRoad()
-    createJson(maintenanceAsset)
   }
 
   get("/huoltotiet/:areaId"){

@@ -750,12 +750,6 @@ trait LinearAssetOperations {
     }
   }
 
-  def getActiveMaintenanceRoad(): Seq[PersistedLinearAsset] = {
-    withDynTransaction {
-      dao.fetchAllMaintenance(LinearAssetTypes.MaintenanceRoadAssetTypeId, includeExpire = false)
-    }
-  }
-
   def getActiveMaintenanceRoadByPolygon(areaId: Int, typeId: Int): Seq[PersistedLinearAsset] = {
 
     val geometry = polygonTools.getAreaGeometry(areaId)

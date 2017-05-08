@@ -18,7 +18,6 @@ class ServiceRoadApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
   val mockLinearAssetService = MockitoSugar.mock[LinearAssetOperations]
   val serviceRoadAPI = new ServiceRoadAPI(mockLinearAssetService, mockRoadLinkService)
   when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLink))
-  when(mockLinearAssetService.getActiveMaintenanceRoad()).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(MaintenanceRoad(Seq())), 0, 10, None, None, None, None, false, 30, 0, None)))
   when(mockLinearAssetService.getActiveMaintenanceRoadByPolygon(any[Int], any[Int])).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(MaintenanceRoad(Seq())), 0, 10, None, None, None, None, false, 30, 0, None)))
 
    addServlet(serviceRoadAPI, "/*")
@@ -37,12 +36,6 @@ class ServiceRoadApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
 
     getWithBasicUserAuth("/huoltotiet", "nonexisting", "incorrect") {
       status should equal(401)
-    }
-  }
-
-  test("Get all existing active assets in database") {
-    getWithBasicUserAuth("/huoltotiet", "kalpa", "kalpa") {
-      status should equal(200)
     }
   }
 
