@@ -501,6 +501,9 @@
         }
       }
       addSelectInteractions();
+      if(applicationModel.getCurrentAction() === -1){
+        applicationModel.removeSpinner();
+      }
     };
 
     this.refreshView = function() {
@@ -802,7 +805,6 @@
     };
 
     var refreshViewAfterSaving = function() {
-      applicationModel.removeSpinner();
       selectedLinkProperty.setDirty(false);
       selectedLinkProperty.resetTargets();
       applicationModel.setActiveButtons(false);

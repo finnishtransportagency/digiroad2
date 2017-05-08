@@ -579,6 +579,8 @@
       rootElement.on('click', '.link-properties button.save', function() {
         if(applicationModel.getCurrentAction() === applicationModel.actionCalculated){
           selectedLinkProperty.saveTransfer();
+          applicationModel.setCurrentAction(-1);
+          applicationModel.addSpinner();
         }
       });
       rootElement.on('click', '.link-properties button.cancel', function() {
