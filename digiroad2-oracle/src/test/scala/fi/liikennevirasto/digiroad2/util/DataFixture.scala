@@ -834,31 +834,44 @@ object DataFixture {
     OracleDatabase.withDynSession { oracleLinearAssetDao.expireAllAssetsByTypeId(trafficVolumeId) }
     println("\nTraffic Volume data Expired")
 
-    println("\nFetch Road Address From Viite")
-    val roadAddresses = OracleDatabase.withDynSession { roadAddressDao.fetchRoadAddresses() }
-    println("\nEnd of Fetch ")
-
     println("\nFetch Road Numbers From Viite")
     val roadNumbers = OracleDatabase.withDynSession { roadAddressDao.fetchRoadNumbers() }
     println("\nEnd of Fetch ")
 
-    println("\nFetch Traffic Volume by Road Number ")
+    println("roadNumbers: ")
+    roadNumbers.foreach(ra => println(ra))
+
     roadNumbers.foreach{
       case roadNumber =>
+        println("\nFetch Traffic Volume by Road Number " + roadNumber)
         val trTrafficVolume = tierikisteriClient.fetchActiveAssetData(trafficVolumeTR, roadNumber)
-        println("\nMap road addresses to link ids using Viite")
 
-        trTrafficVolume.foreach { tr =>
+        trTrafficVolume.foreach { tr => println("\nTR: roadNumber, roadPartNumber, start, end and kvt" + tr.roadNumber +" "+ tr.roadPartNumber +" "+ tr.starMValue +" "+ tr.endMValue +" "+ tr.ktv) }
+
+        val r = trTrafficVolume.groupBy(trTrafficVolume => (trTrafficVolume.roadNumber, trTrafficVolume.roadPartNumber, trTrafficVolume.starMValue, trTrafficVolume.endMValue)).map(_._2.head)
+
+        r.foreach { tr =>
           OracleDatabase.withDynTransaction {
+
+            println("\nFetch road addresses to link ids using Viite, trRoadNumber, roadPartNumber start and end " + tr.roadNumber + " " + tr.roadPartNumber + " " + tr.starMValue + " " +  tr.endMValue)
             val roadAddresses = roadAddressDao.fetchRoadAddressesFiltered(tr.roadNumber, tr.roadPartNumber, tr.starMValue, tr.endMValue)
 
-            println("\nCreated OTH traffic volume assets form TR data")
+            val roadAddressLinks = roadAddresses.map(ra => ra.linkId).toSet
+            val vvhRoadlinks = roadLinkService.fetchVVHRoadlinks(roadAddressLinks)
+
+            roadAddresses.filterNot(ra => vvhRoadlinks.exists(t => t.linkId == ra.linkId) )
+
+            println("roadAddresses Filtered: ")
+            roadAddresses.foreach(ra => println(ra.linkId))
+
             roadAddresses.foreach { ra =>
 
-              val assetId = linearAssetService.dao.createLinearAsset(trafficVolumeId, ra.linkId, false, ra.sideCode.value,
+              val assetId = linearAssetService.dao.createLinearAsset(trafficVolumeId, ra.linkId, false, SideCode.BothDirections.value,
                 ra.startMValue, ra.endMValue, "batch_process_trafficVolume")
+              println("\nCreated OTH traffic volume assets form TR data with assetId " + assetId)
 
               linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, tr.ktv)
+              println("\nCreated OTH property value with value " + tr.ktv  + " and assetId "+ assetId )
             }
           }
         }

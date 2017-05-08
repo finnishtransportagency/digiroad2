@@ -313,6 +313,7 @@ trait TierekisteriClient{
     new SimpleDateFormat(dateFormat).format(date)
   }
 
+  //TODO: ignore case sensitive
   protected def getFieldValue(data: Map[String, Any], field: String): Option[String] = {
     try {
       data.get(field).map(_.toString) match {
@@ -543,12 +544,12 @@ class TierekisteriAssetDataClient(_tierekisteriRestApiEndPoint: String, _tiereki
   override def client: CloseableHttpClient = _client
   type TierekisteriType = TierekisteriAssetData
 
-  private val serviceName = "trrest/tietolajit/"
-  private val trKTV = "KTV"
-  private val trRoadNumber = "tie"
-  private val trRoadPartNumber = "osa"
-  private val trStartMValue = "aet"
-  private val trEndMValue = "let"
+  private val serviceName = "tietolajit/"
+  private val trKTV = "KVL"
+  private val trRoadNumber = "TIE"
+  private val trRoadPartNumber = "OSA"
+  private val trStartMValue = "ETAISYYS"
+  private val trEndMValue = "LET"
 
   private val serviceUrl : String = tierekisteriRestApiEndPoint + serviceName
   private def serviceUrl(assetType: String, roadNumber: Long) : String = serviceUrl + assetType + "/" + roadNumber
@@ -576,9 +577,9 @@ class TierekisteriAssetDataClient(_tierekisteriRestApiEndPoint: String, _tiereki
     * @return
     */
   def fetchActiveAssetData(assetType: String, roadNumber: Long): Seq[TierekisteriAssetData] = {
-    request[List[Map[String, Any]]](serviceUrl(assetType, roadNumber)) match {
+    request[Map[String,List[Map[String, Any]]]](serviceUrl(assetType, roadNumber)) match {
       case Left(content) => {
-        content.map{
+        content("Data").map{
           asset => mapFields(asset)
         }
       }
