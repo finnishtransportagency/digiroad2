@@ -690,4 +690,19 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     ordS.map(_.id) should be (Seq(1L, 2L, 3L))
     ordT.map(_.linkId) should be (Seq(456L, 457L))
   }
+
+  test("Yet another test case to Order road address link sources and targets") {
+    val sources = Seq(
+      createRoadAddressLink(193080L, 1021200L, Seq(Point(653051.929,6927199.581,105.14400000000023), Point(653031.198,6927221.85,105.55199999999604), Point(653011.425,6927242.865,105.92900000000373), Point(652995.475256991,6927260.328718615,106.23299510185589)), 4846L, 1L, 0, 4035, 4118, SideCode.AgainstDigitizing, Anomaly.None),
+      createRoadAddressLink(233578L, 1021217L, Seq(Point(652995.475,6927260.329,106.2329999999929), Point(652988.767,6927267.695,106.42500000000291), Point(652983.363,6927272.531,106.53200000000652)), 4846L, 1L, 0, 4018, 4035, SideCode.AgainstDigitizing, Anomaly.None)
+    )
+    val targets = Seq(
+      createRoadAddressLink(0L, 500073990L, Seq(Point(653003.293,6927251.369,106.06299999999464), Point(652993.291,6927263.081,106.29799999999523)), 0, 0, 99, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven),
+      createRoadAddressLink(0L, 500073981L, Seq(Point(653051.929,6927199.581,105.14400000000023), Point(653031.198,6927221.85,105.55199999999604), Point(653011.425,6927242.865,105.92900000000373), Point(653003.293,6927251.369,106.06299999999464)), 0, 0, 99, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven),
+      createRoadAddressLink(0L, 500073988L, Seq(Point(652993.291,6927263.081,106.29799999999523), Point(652988.767,6927267.695,106.42500000000291), Point(652983.363,6927272.531,106.53200000000652)), 0, 0, 99, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven)
+    )
+    val (ordS, ordT) = roadAddressService.orderRoadAddressLinks(sources, targets)
+    ordS.map(_.id) should be (Seq(233578L, 193080L))
+    ordT.map(_.linkId) should be (Seq(500073988L, 500073990L, 500073981L))
+  }
 }
