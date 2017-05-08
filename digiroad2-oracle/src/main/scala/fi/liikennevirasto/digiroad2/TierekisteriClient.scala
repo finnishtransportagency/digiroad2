@@ -161,7 +161,7 @@ case class TierekisteriAssetData(roadNumber: Long,
                                  roadPartNumber: Long,
                                  starMValue: Double,
                                  endMValue: Double,
-                                 ktv: Int)
+                                 kvl: Int)
 
 case class TierekisteriError(content: Map[String, Any], url: String)
 
@@ -545,7 +545,7 @@ class TierekisteriAssetDataClient(_tierekisteriRestApiEndPoint: String, _tiereki
   type TierekisteriType = TierekisteriAssetData
 
   private val serviceName = "tietolajit/"
-  private val trKTV = "KVL"
+  private val trKVL = "KVL"
   private val trRoadNumber = "TIE"
   private val trRoadPartNumber = "OSA"
   private val trStartMValue = "ETAISYYS"
@@ -561,13 +561,13 @@ class TierekisteriAssetDataClient(_tierekisteriRestApiEndPoint: String, _tiereki
 
   override def mapFields(data: Map[String, Any]): TierekisteriAssetData = {
     //Mandatory field
-    val ktv = convertToInt(getMandatoryFieldValue(data, trKTV)).get
+    val kvl = convertToInt(getMandatoryFieldValue(data, trKVL)).get
     val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
     val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
     val starMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
     val endMValue = convertToDouble(getMandatoryFieldValue(data, trEndMValue)).get
 
-    TierekisteriAssetData(roadNumber, roadPartNumber, starMValue, endMValue, ktv)
+    TierekisteriAssetData(roadNumber, roadPartNumber, starMValue, endMValue, kvl)
   }
 
   /**
@@ -589,9 +589,9 @@ class TierekisteriAssetDataClient(_tierekisteriRestApiEndPoint: String, _tiereki
   }
 
   def fetchActiveAssetData(assetType: String, roadNumber: Long, roadPartNumber: Long): Seq[TierekisteriAssetData] = {
-    request[List[Map[String, Any]]](serviceUrl(assetType, roadNumber, roadPartNumber)) match {
+    request[Map[String,List[Map[String, Any]]]](serviceUrl(assetType, roadNumber, roadPartNumber)) match {
       case Left(content) =>
-        content.map{
+        content("Data").map{
           asset => mapFields(asset)
         }
       case Right(null) => Seq()
@@ -600,9 +600,9 @@ class TierekisteriAssetDataClient(_tierekisteriRestApiEndPoint: String, _tiereki
   }
 
   def fetchActiveAssetData(assetType: String, roadNumber: Long, roadPartNumber: Long, startDistance: Int): Seq[TierekisteriAssetData] = {
-    request[List[Map[String, Any]]](serviceUrl(assetType, roadNumber, roadPartNumber, startDistance)) match {
+    request[Map[String,List[Map[String, Any]]]](serviceUrl(assetType, roadNumber, roadPartNumber, startDistance)) match {
       case Left(content) =>
-        content.map{
+        content("Data").map{
           asset => mapFields(asset)
         }
       case Right(null) => Seq()
@@ -611,9 +611,9 @@ class TierekisteriAssetDataClient(_tierekisteriRestApiEndPoint: String, _tiereki
   }
 
   def fetchActiveAssetData(assetType: String, roadNumber: Long, roadPartNumber: Long, startDistance: Int, endPart: Int, endDistance: Int): Seq[TierekisteriAssetData] = {
-    request[List[Map[String, Any]]](serviceUrl(assetType, roadNumber, roadPartNumber, startDistance, endPart, endDistance)) match {
+    request[Map[String,List[Map[String, Any]]]](serviceUrl(assetType, roadNumber, roadPartNumber, startDistance, endPart, endDistance)) match {
       case Left(content) =>
-        content.map{
+        content("Data").map{
           asset => mapFields(asset)
         }
       case Right(null) => Seq()

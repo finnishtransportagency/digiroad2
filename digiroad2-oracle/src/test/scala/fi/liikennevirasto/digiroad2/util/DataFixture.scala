@@ -846,7 +846,7 @@ object DataFixture {
         println("\nFetch Traffic Volume by Road Number " + roadNumber)
         val trTrafficVolume = tierikisteriClient.fetchActiveAssetData(trafficVolumeTR, roadNumber)
 
-        trTrafficVolume.foreach { tr => println("\nTR: roadNumber, roadPartNumber, start, end and kvt" + tr.roadNumber +" "+ tr.roadPartNumber +" "+ tr.starMValue +" "+ tr.endMValue +" "+ tr.ktv) }
+        trTrafficVolume.foreach { tr => println("\nTR: roadNumber, roadPartNumber, start, end and kvt " + tr.roadNumber +" "+ tr.roadPartNumber +" "+ tr.starMValue +" "+ tr.endMValue +" "+ tr.kvl) }
 
         val r = trTrafficVolume.groupBy(trTrafficVolume => (trTrafficVolume.roadNumber, trTrafficVolume.roadPartNumber, trTrafficVolume.starMValue, trTrafficVolume.endMValue)).map(_._2.head)
 
@@ -859,20 +859,19 @@ object DataFixture {
             val roadAddressLinks = roadAddresses.map(ra => ra.linkId).toSet
             val vvhRoadlinks = roadLinkService.fetchVVHRoadlinks(roadAddressLinks)
 
-            roadAddresses.filterNot(ra => vvhRoadlinks.exists(t => t.linkId == ra.linkId) )
+            println("roadAddresses fetched: ")
+            roadAddresses.filter(ra => vvhRoadlinks.exists(t => t.linkId == ra.linkId) ).foreach(ra => println(ra.linkId))
 
-            println("roadAddresses Filtered: ")
-            roadAddresses.foreach(ra => println(ra.linkId))
+            roadAddresses
+              .filter(ra => vvhRoadlinks.exists(t => t.linkId == ra.linkId) )
+              .foreach { ra =>
+                val assetId = linearAssetService.dao.createLinearAsset(trafficVolumeId, ra.linkId, false, SideCode.BothDirections.value,
+                  ra.startMValue, ra.endMValue, "batch_process_trafficVolume")
+                println("\nCreated OTH traffic volume assets form TR data with assetId " + assetId)
 
-            roadAddresses.foreach { ra =>
-
-              val assetId = linearAssetService.dao.createLinearAsset(trafficVolumeId, ra.linkId, false, SideCode.BothDirections.value,
-                ra.startMValue, ra.endMValue, "batch_process_trafficVolume")
-              println("\nCreated OTH traffic volume assets form TR data with assetId " + assetId)
-
-              linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, tr.ktv)
-              println("\nCreated OTH property value with value " + tr.ktv  + " and assetId "+ assetId )
-            }
+                linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, tr.kvl)
+                println("\nCreated OTH property value with value " + tr.kvl  + " and assetId "+ assetId )
+              }
           }
         }
     }

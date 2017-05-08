@@ -384,7 +384,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
     val assets = tierekisteriAssetDataClient.fetchActiveAssetData("tl201", 45)
 
     assets.size should be (1)
-    assets.map(_.ktv) should contain (1)
+    assets.map(_.kvl) should contain (1)
   }
 
   test("fetch from tierekisteri active trafic volume with fieldCode, roadNumber and roadPartNumber") {
@@ -392,7 +392,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
     val assets = tierekisteriAssetDataClient.fetchActiveAssetData("tl201", 45, 1)
 
     assets.size should be (1)
-    assets.map(_.ktv) should contain (1)
+    assets.map(_.kvl) should contain (1)
   }
 
   test("fetch from tierekisteri active trafic volume with fieldCode, roadNumber, roadPartNumber and startDistance") {
@@ -400,7 +400,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
     val assets = tierekisteriAssetDataClient.fetchActiveAssetData("tl201", 45, 1, 0)
 
     assets.size should be (1)
-    assets.map(_.ktv) should contain (1)
+    assets.map(_.kvl) should contain (1)
   }
 
   test("fetch from tierekisteri active trafic volume with fieldCode, roadNumber, roadPartNumber, startDistance, endPart and endDistance") {
@@ -408,15 +408,6 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
     val assets = tierekisteriAssetDataClient.fetchActiveAssetData("tl201", 45, 1, 0, 0, 100)
 
     assets.size should be (1)
-    assets.map(_.ktv) should contain (1)
+    assets.map(_.kvl) should contain (1)
   }
-
-  test("fetch from tierekisteri active trafic volume without mandatory fields") {
-    assume(testConnection)
-    val assets = tierekisteriAssetDataClient.fetchActiveAssetData("tl201", 45)
-
-    assets.size should be (1)
-    assets.map(_.ktv) should contain (1)
-  }
-
 }

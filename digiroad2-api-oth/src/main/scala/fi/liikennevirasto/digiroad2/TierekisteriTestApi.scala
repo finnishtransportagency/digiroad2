@@ -76,32 +76,19 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
     )
   }
 
-  val trafficVolume: Seq[Map[String, Any]] ={
-    Seq(
-      Map(
-      "tietolaji" -> "tl201",          //Field code
-      "tie" -> 45,                     //Road number
-      "osa" -> 1,                      //Road part number
-      "aet" -> 0,                      //Start distance
-      "let" -> 100,                    //End distance
-      "KTV" -> 1                       //placeholder value for traffic volume
-    ),
-      Map(
-      "tietolaji" -> "tl201",          //Field code
-      "tie" -> 5,                     //Road number
-      "osa" -> 201,                      //Road part number
-      "aet" -> 0,                      //Start distance
-      "let" -> 12.267,                    //End distance
-      "KTV" -> 224                       //placeholder value for traffic volume
-    ),
-      Map(
-      "tietolaji" -> "tl201",          //Field code
-      "tie" -> 5,                     //Road number
-      "osa" -> 201,                      //Road part number
-      "aet" -> 661,                      //Start distance
-      "let" -> 677.667,                    //End distance
-      "KTV" -> 223                       //placeholder value for traffic volume
-      )
+  val trafficVolume: Map[String,List[Map[String, Any]]] ={
+    Map(
+      "Data" ->
+        List(
+          Map(
+              "TIETOLAJI" -> "tl201",          //Field code
+              "TIE" -> 45,                     //Road number
+              "OSA" -> 1,                      //Road part number
+              "ETAISYYS" -> 0,                      //Start distance
+              "LET" -> 0,                    //End distance
+              "KVL" -> 1                       //placeholder value for traffic volume
+            )
+        )
     )
   }
 
@@ -186,36 +173,36 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
     halt(NoContent())
   }
 
-  get("/trrest/tietolajit/:fieldCode/:roadNumber") {
+  get("/tietolajit/:fieldCode/:roadNumber") {
     //Checks that header contains X-OTH-Authorization attribute with correct base64 value
     if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg==")))
       halt(BadRequest("401 Unauthorized"))
 
-    trafficVolume.filter(x => x.getOrElse("tie", 0) == params("roadNumber").toInt)
+    trafficVolume
   }
 
-  get("/trrest/tietolajit/:fieldCode/:roadNumber/:roadPartNumber") {
+  get("/tietolajit/:fieldCode/:roadNumber/:roadPartNumber") {
     //Checks that header contains X-OTH-Authorization attribute with correct base64 value
     if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg==")))
       halt(BadRequest("401 Unauthorized"))
 
-    trafficVolume.filter(x => x.getOrElse("tie", 0) == params("roadNumber").toInt && x.getOrElse("osa", 0) == params("roadPartNumber").toInt)
+    trafficVolume
   }
 
-  get("/trrest/tietolajit/:fieldCode/:roadNumber/:roadPartNumber/:startDistance") {
+  get("/tietolajit/:fieldCode/:roadNumber/:roadPartNumber/:startDistance") {
     //Checks that header contains X-OTH-Authorization attribute with correct base64 value
     if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg==")))
       halt(BadRequest("401 Unauthorized"))
 
-    trafficVolume.filter(x => x.getOrElse("tie", 0) == params("roadNumber").toInt && x.getOrElse("osa", 0) == params("roadPartNumber").toInt && x.getOrElse("aet", 0) == params("startDistance").toInt)
+    trafficVolume
   }
 
-  get("/trrest/tietolajit/:fieldCode/:roadNumber/:roadPartNumber/:startDistance/:endPart/:endDistance") {
+  get("/tietolajit/:fieldCode/:roadNumber/:roadPartNumber/:startDistance/:endPart/:endDistance") {
     //Checks that header contains X-OTH-Authorization attribute with correct base64 value
     if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg==")))
       halt(BadRequest("401 Unauthorized"))
 
-    trafficVolume.filter(x => x.getOrElse("tie", 0) == params("roadNumber").toInt && x.getOrElse("osa", 0) == params("roadPartNumber").toInt && x.getOrElse("aet", 0) == params("startDistance").toInt && x.getOrElse("let", 0) == params("endDistance").toInt)
+    trafficVolume
   }
 }
 
