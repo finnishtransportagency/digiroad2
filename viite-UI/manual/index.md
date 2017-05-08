@@ -26,9 +26,10 @@ _Karttan&auml;kym&auml; kirjautumisen j&auml;lkeen._
 
 Oikeudet on rajattu maantieteellisesti sek&auml; k&auml;ytt&auml;j&auml;n roolin mukaan.
 
-- Ilman erikseen annettuja oikeuksia Liikenneviraston tunnuksilla p&auml;&auml;see katselemaan kaikkia aineistoja.
-- Sovelluksen k&auml;ytt&auml;j&auml;ll&auml; on oikeudet h&auml;nelle m&auml;&auml;riteltyjen Elyjen maantieteellisten kuntarajojen sis&auml;puolella oleviin tieosoitteisiin
+- Ilman erikseen annettuja oikeuksia Liikenneviraston tunnuksilla p&auml;&auml;see katselemaan kaikkia tieosoitteita
+- Sovelluksen k&auml;ytt&auml;j&auml;ll&auml; on oikeudet muokata h&auml;nelle m&auml;&auml;riteltyjen Elyjen maantieteellisten kuntarajojen sis&auml;puolella olevia tieosoitteita
 - Joillekin k&auml;ytt&auml;jille on voitu antaa oikeudet koko Suomen alueelle
+- Tieosoiteprojektit -painike ja Siirry muokkaustilaan -painike n&auml;kyv&auml;t vain k&auml;ytt&auml;jille, joilla on oikeudet muokata tieosoitteita
 
 Jos kirjautumisen j&auml;lkeen ei avaudu karttak&auml;ytt&ouml;liittym&auml;n katselutilaa, ei kyseisell&auml; tunnuksella ole p&auml;&auml;sy&auml; Liikenneviraston extranettiin. T&auml;ll&ouml;in tulee ottaa yhteytt&auml; Liikennevirastossa omaan yhteyshenkil&ouml;&ouml;n.
 
@@ -60,7 +61,9 @@ Viite-sovelluksessa pohja-aineistona oleva geometria tulee Liikenneviraston V&au
 
 ###Digiroad: Ominaisuustietojen hallinta###
 
-Viite-sovelluksella ja Digiroadin ominaisuustietojen hallinnan (OTH) -sovelluksella ei ole loppuk&auml;ytt&auml;j&auml;n n&auml;k&ouml;kulmasta mit&auml;&auml;n yhteytt&auml;. Molemmissa sovelluksissa on kuitenkin k&auml;yt&ouml;ss&auml; sama, V&auml;yl&auml;verkon hallinnan tarjoama keskilinjageometria.
+Molemmissa sovelluksissa on k&auml;yt&ouml;ss&auml; sama, V&auml;yl&auml;verkon hallinnan tarjoama keskilinjageometria.
+
+Lis&auml;ksi OTH-sovellus hy&ouml;dynt&auml;&auml; Viitteen tieosoitetietoja, jotka n&auml;ytet&auml;&auml;n OTH:ssa tielinkin ominaisuustietona.
 
 ###Liikenneviraston Tierekisteri###
 
@@ -126,6 +129,8 @@ Tieosoitteella haku: Tieosoitteesta hakukentt&auml;&auml;n voi sy&ouml;tt&auml;&
 
 Tieosoiteverkko tulee n&auml;kyviin, kun zoomaa tasolle, jossa mittakaavajanassa on 2 km. T&auml;st&auml; tasosta ja sit&auml; l&auml;hemp&auml;&auml; piirret&auml;&auml;n kartalle valtatiet, kantatiet, seututiet, yhdystiet ja numeroidut kadut. Kun zoomaa tasolle, jossa mittakaavajanassa on suurempi 100 metri&auml; (100 metrin mittakaavajanoja on kaksi kappaletta), tulevat n&auml;kyviin kaikki tieverkon kohteet.
 
+Tieosoiteverkko on v&auml;rikoodattu tienumeroiden mukaan. Vasemman yl&auml;kulman selitteess&auml; on kerrottu kunkin v&auml;rikoodin tienumerot. Lis&auml;ksi kartalle piirtyv&auml;t kalibrointipisteet, eli ne kohdat, joissa vaihtuu tieosa tai ajoratakoodi.
+
 ![Mittakaavajanassa 2km](k4.JPG)
 
 _Mittakaavajanassa 2 km._
@@ -134,7 +139,12 @@ _Mittakaavajanassa 2 km._
 
 _Mittakaavajanassa 100 m._
 
-Tieosoiteverkko on v&auml;rikoodattu tienumeroiden mukaan. Vasemman yl&auml;kulman selitteess&auml; on kerrottu kunkin v&auml;rikoodin tienumerot. Lis&auml;ksi kartalle piirtyv&auml;t kalibrointipisteet, eli ne kohdat, joissa vaihtuu tieosa tai ajoratakoodi.
+Tieosoitteelliset kadut erottuvat kartalla muista tieosoitesegmenteist&auml; siten, ett&auml; niiden ymp&auml;rill&auml; on musta v&auml;ritys.
+
+![Tieosoitteellinen katu](k16.JPG)
+
+_Tieosoitteellinen katu, merkattuna mustalla v&auml;rityksell&auml; tienumeron v&auml;rityksen lis&auml;ksi._
+
 
 4.1 Kohteiden valinta
 --------------------------
@@ -155,7 +165,7 @@ _Tieosoitesegmentin valinta._
 
 Tieosoitteilla on seuraavat ominaisuustiedot:
 
-|Ominaisuustieto|Kuvaus|Sovellus generoi|
+|Ominaisuustieto|Kuvaus|Sovellus muodostaa|
 |---------------|------|----------------|
 |Segmentin ID|Segmentin yksil&ouml;iv&auml; ID, n&auml;kyy kun tieosoitteen valitsee tuplaklikkaamallaID|X|
 |Muokattu viimeksi*|Muokkaajan k&auml;ytt&auml;j&auml;tunnus ja tiedon muokkaushetki.|X|
@@ -168,7 +178,6 @@ Tieosoitteilla on seuraavat ominaisuustiedot:
 |ELY|Liikenneviraston ELY-numero.|X|
 |Tietyyppi|Muodostetaan Maanmittauslaitoksen hallinnollinen luokka -tiedoista, kts. taulukko alempana. Jos valitulla tieosalla on useita tietyyppej&auml;, ne kerrotaan ominaisuustietotaulussa pilkulla erotettuna.|X|
 |Jatkuvuus|Tieosoiteverkon mukainen jatkuvuus-tieto. L&auml;ht&ouml;aineistona Tierekisterin tieosoitteet vuonna 2016.|X|
-|Lakkautus|Ei k&auml;yt&ouml;ss&auml; toistaiseksi||
 
 *)Muokattu viimeksi -tiedoissa vvh_modified tarkoittaa, ett&auml; muutos on tullut Maanmittauslaitokselta joko geometriaan tai geometrian ominaisuustietoihin. Muokatti viimeksi -p&auml;iv&auml;t ovat kaikki v&auml;hint&auml;&auml;n 29.10.2015, koska tuolloin on tehty Maanmittauslaitoksen geometrioista alkulataus VVH:n tietokantaan.
 **)Tieosoiteverkon kalibrointipisteet (tieosan alku- ja loppupisteet sek&auml; ajoratakoodin vaihtuminen) m&auml;&auml;rittelev&auml;t mitatut alku- ja loppuet&auml;isyydet. Kalibrointipiste v&auml;lill&auml; alku- ja loppuet&auml;isyydet lasketaan tieosoitesegmenttikohtaisesti Viite-sovelluksessa.
@@ -260,4 +269,81 @@ _Geometriasta irti olevia tieosoitesegmenttej&auml;. Yksitt&auml;isen segmentin 
 Kohteen valinta noudattaa samaa logiikka kuin muidenkin kohteiden tapauksessa. Klikkaamalla kerran sovellus valitsee kartalta ruudulla n&auml;kyv&auml;n osuuden kyseisest&auml; tieosasta, eli osuuden jolla on sama tienumero, tieosanumero ja ajoratakoodi. Tuplaklikkaus valitsee yhden tieosoitesegmentin. Kohdetta valitessa kannattaa olla huolellinen, ett&auml; klikatessa osuu keltaiseen korostukseen eik&auml; tuntemattomaan tielinkkiin (musta kohde). 
 
 Valitun kohteen tiedot tulevat n&auml;kyviin ominaisuustieton&auml;kym&auml;&auml;n. Geometriasta irti olevalla kohteella on ominaisuustieton&auml;kym&auml;ss&auml; huomiolaatikko joka varoittaa tien geometrian muuttuneen (2).
+
+8. Geometriasta irti olevien tieosoitesegmenttien korjaaminen takaisin geometrialle
+--------------------------
+
+T&auml;ydennet&auml;&auml;n my&ouml;hemmin.
+
+9. Tieosoiteprojektin tekeminen
+--------------------------
+
+Uuden tieosoiteprojektin tekeminen aloitetaan klikkaamalla vasemman yl&auml;kulman painiketta Tieosoiteprojektit (1) ja avautuvasta ikkunasta painiketta Uusi tieosoiteprojekti (2).
+
+![Uusi tieosoiteprojekti](k17.JPG)
+
+_Tieosoiteprojektit -painike ja Uusi tieosoiteprojekti -painike._
+
+N&auml;yt&ouml;n oikeaan laitaan avautuu lomake tieosoiteprojektin perustietojen t&auml;ydent&auml;miseen. Jos k&auml;ytt&auml;j&auml; ei ole muokkaustilassa, sovellus siirtyy t&auml;ss&auml; vaiheessa automaattisesti muokkaustilaan.
+
+![Uusi tieosoiteprojekti](k18.JPG)
+
+_Tieosoiteprojektin perustietojen lomake._
+
+Pakollisia tietoja ovat nimi ja projektin muutosten voimaantulop&auml;iv&auml;m&auml;&auml;r&auml;, jotka on merkattu lomakkeelle oranssilla (3). Tallenna -painike (4) aktivoituu vasta, kun n&auml;m&auml; pakolliset tiedot on t&auml;ydennetty. Projektiin ei ole pakko t&auml;ydent&auml;&auml; yht&auml;&auml;n tieosaa. Lis&auml;tiedot -kentt&auml;&auml;n k&auml;ytt&auml;j&auml; voi halutessaan tehd&auml; muistiinpanoja tieosoiteprojektista.
+
+![Uusi tieosoiteprojekti](k19.JPG)
+
+_Tieosoiteprojektin perustietojen t&auml;ytt&auml;minen._
+
+Projektin tieosat lis&auml;t&auml;&auml;n t&auml;ydent&auml;m&auml;ll&auml; niiden tiedot kenttiin tie, aosa, losa ja painamalla painiketta Varaa (5). __Kaikki kent&auml;t tulee t&auml;yt&auml;&auml; aina, kun haluaa varata tieosan!__ 
+
+Varaa -painikkeen painamisen j&auml;lkeen tieosan tiedot tulevat n&auml;kyviin lomakkeelle.
+
+![Uusi tieosoiteprojekti](k22.JPG)
+
+_Tieosan tiedot lomakkeella Varaa -painikkeen painamisen j&auml;lkeen._
+
+Tieosoiteprojekti tallennetaan painikkeesta Tallenna, jolloin tiedot tallentuvat tietokantaan ja projektiin p&auml;&auml;see palaamaan Tieosoiteprojektit -listan kautta. Peruuta -painikkeesta projekti suljetaan, ja tallentamattomat tiedot menetet&auml;&auml;n. Sovellus varoittaa peruuttamisen yhteydess&auml; t&auml;st&auml;.
+
+Tallentamisen yhteydess&auml; sovellus zoomaa varatun tieosan alkuun.
+
+![Uusi tieosoiteprojekti](k20.JPG)
+
+_Tallentamisen yhteydess&auml; sovellus zoomaa varatun tieosan alkuun. Tie 71 osa 1 alkaa kohdistimen n&auml;ytt&auml;m&auml;st&auml; kohdasta, ja jatkuu oikealle (oranssi kantatie)._
+
+Varauksen yhteydess&auml; j&auml;rjestelm&auml; tekee varattaville tieosille tarkistukset:
+
+- Onko varattava tieosa olemassa
+- Onko varattava tieosa vapaana, eik&auml; varattuna mihink&auml;&auml;n toiseen projektiin
+
+Virheellisist&auml; varausyrityksist&auml; j&auml;rjestelm&auml; antaa asianmukaisen virheilmoituksen. Alla olevassa kuvissa on erilaisista virheilmoituksista, joiden mukaan k&auml;ytt&auml;j&auml;n tulee korjata varausta. __K&auml;ytt&auml;j&auml;n tulee huomioida, ett&auml; varauksen yhteydess&auml; kaikki kent&auml;t (TIE, AOSA, LOSA) tulee t&auml;ytt&auml;&auml;, tai k&auml;ytt&auml;j&auml; saa virheilmoituksen!__
+
+![Uusi tieosoiteprojekti](k21.JPG)
+
+_Yritetty luoda samalla tieosavarauksella tie 71, osa 1 projekti uudelleen. 
+Tieosa on kuitenkin jo varattuna aiemmin luotuun projektiin nimelt&auml; "Tieosoitemuutos tie 71 osa 1"._
+
+![Uusi tieosoiteprojekti](k23.JPG)
+
+_Tiet&auml; ei ole olemassa._
+
+![Uusi tieosoiteprojekti](k24.JPG)
+
+_Tieosaa ei ole olemassa._
+
+![Uusi tieosoiteprojekti](k25.JPG)
+
+_Tieosaa ei ole olemassa._
+
+9.1. Olemassa olevan tieosoiteprojektin avaaminen Tieosoiteprojektit -listalta
+--------------------------
+
+Tallennetun tieosoiteprojektin saa auki Tieosoiteprojektit -listalta painamalla Avaa -painiketta. Avaamisen yhteydess&auml; sovellus zoomaa varatun tieosan alkuun, jotta k&auml;ytt&auml;j&auml; p&auml;&auml;see projektin alueelle.
+
+Tieosoiteprojektit -listalla n&auml;kyv&auml;t kaikkien k&auml;ytt&auml;jien projektit. Projektit ovat projektin nimen mukaisessa aakkosj&auml;rjestyksess&auml;.
+
+![Uusi tieosoiteprojekti](k26.JPG)
+
+_Tieosoiteprojektit -listaus._
 
