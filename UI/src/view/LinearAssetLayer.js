@@ -1,3 +1,59 @@
+(function(root) {
+  root.AssetLabel = function() {
+    var me = this;
+
+    this.getCoordinates = function(points){
+      return _.map(points, function(point) {
+        return [point.x, point.y];
+      });
+    };
+
+    this.getCoordinate = function(point){
+      return [point.x, point.y];
+    };
+
+    this.createFeature = function(point){
+      return new ol.Feature(new ol.geom.Point(me.getCoordinate(point)));
+    };
+
+    this.renderFeaturesByLinearAssets = function(linearAssets, getValue, getPoints){
+      return me.renderFeatures(linearAssets, getValue, function(asset){
+        var coordinates = me.getCoordinates(getPoints(asset));
+        var lineString = new ol.geom.LineString(coordinates);
+        return GeometryUtils.calculateMidpointOfLineString(lineString);
+      });
+    };
+
+    this.renderFeatures = function(assets, getValue, getPoint) {};
+  };
+
+  root.NumericalAssetLabel = function(){
+    AssetLabel.call(this);
+    var me = this;
+
+    var getLabelStyle = function(value){
+      return new ol.style.Style({
+        text : new ol.style.Text({
+          text : value,
+          fill: new ol.style.Fill({
+            color: '#ffffff'
+          }),
+          font : '12px sans-serif'
+        })
+      });
+    };
+
+    this.renderFeatures = function(assets, getValue, getPoint){
+      return _.map(assets, function(asset){
+        var style = getLabelStyle(getValue(asset));
+        var feature = me.createFeature(getPoint(asset));
+        feature.setStyle(style);
+        return feature;
+      });
+    };
+  };
+})(this);
+
 window.LinearAssetLayer = function(params) {
   var map = params.map,
       application = params.application,
@@ -7,7 +63,9 @@ window.LinearAssetLayer = function(params) {
       multiElementEventCategory = params.multiElementEventCategory,
       singleElementEventCategory = params.singleElementEventCategory,
       style = params.style,
-      layerName = params.layerName;
+      layerName = params.layerName,
+      assetLabel = new NumericalAssetLabel();//params.assetLabel;
+
 
   Layer.call(this, layerName, roadLayer);
   var me = this;
@@ -181,7 +239,8 @@ window.LinearAssetLayer = function(params) {
 
   var highlightMultipleLinearAssetFeatures = function() {
     var selectedAssets = selectedLinearAsset.get();
-    selectToolControl.addSelectionFeatures( style.renderFeatures(selectedAssets));
+    var features = style.renderFeatures(selectedAssets).concat(assetLabel.renderFeaturesByLinearAssets(selectedAssets, function(asset){ return "100"; }, function(asset){ return asset.points; }));
+    selectToolControl.addSelectionFeatures( features);
   };
 
   var selectToolControl = new SelectToolControl(application, vectorLayer, map, {
@@ -377,6 +436,7 @@ window.LinearAssetLayer = function(params) {
 
   var drawLinearAssets = function(linearAssets) {
     vectorSource.addFeatures(style.renderFeatures(linearAssets));
+    vectorSource.addFeatures(assetLabel.renderFeaturesByLinearAssets(linearAssets, function(asset){ return "100"; }, function(asset){ return asset.points; }));
   };
 
   var decorateSelection = function () {
