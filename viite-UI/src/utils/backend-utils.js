@@ -114,6 +114,12 @@
       $.getJSON(url, callback);
     };
 
+    this.getRoadAddressProjectList = function () {
+      $.get('api/viite/roadlinks/roadaddress/project/all', function (list) {
+        eventbus.trigger('projects:fetched', list);
+      });
+    };
+
     this.getGeocode = function(address) {
       return $.post("vkm/geocode", { address: address }).then(function(x) { return JSON.parse(x); });
     };
@@ -164,6 +170,14 @@
       self.getStartupParametersWithCallback = function(callback) { callback(startupParameters); };
       return self;
     };
+
+    this.withRoadAddressProjectData = function(roadAddressProjectData) {
+      self.getRoadAddressProjectList = function () {
+        eventbus.trigger('projects:fetched', roadAddressProjectData);
+      };
+      return self;
+    };
+
 
   };
 }(this));

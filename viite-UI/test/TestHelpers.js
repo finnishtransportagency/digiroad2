@@ -1,9 +1,11 @@
 define(['RoadAddressTestData',
         'RoadLinkTestData',
-        'UserRolesTestData'],
+        'UserRolesTestData',
+        'RoadAddressProjectTestData'],
        function(RoadAddressTestData,
                 RoadLinkTestData,
-                UserRolesTestData) {
+                UserRolesTestData,
+                RoadAddressProjectTestData) {
 
   var unbindEvents = function() {
     eventbus.off();
@@ -44,6 +46,7 @@ define(['RoadAddressTestData',
   var fakeBackend = function(zoomLevel) {
     return new Backend().withRoadLinkData(RoadLinkTestData.generate())
       .withUserRolesData(UserRolesTestData.generate())
+      .withRoadAddressProjectData(RoadAddressProjectTestData.generate())
       .withStartupParameters({ lon: 374750.0, lat: 6677409.0, zoom: zoomLevel || 10 });
   };
 
@@ -53,6 +56,10 @@ define(['RoadAddressTestData',
 
   var clickVisbleYesConfirmPopup = function(){
     $('.btn.yes:visible').click();
+  };
+
+  var clickProjectListButton = function(){
+    $('#projectListButton:visible').click();
   };
 
   var getLayerByName = function(map, name){
@@ -93,6 +100,7 @@ define(['RoadAddressTestData',
    defaultBackend: defaultBackend,
    fakeBackend: fakeBackend,
    clickVisibleEditModeButton: clickVisibleEditModeButton,
+   clickProjectListButton: clickProjectListButton,
    clickVisbleYesConfirmPopup: clickVisbleYesConfirmPopup,
    clickMap: clickMap,
    getLineStringFeatures: getLineStringFeatures,
