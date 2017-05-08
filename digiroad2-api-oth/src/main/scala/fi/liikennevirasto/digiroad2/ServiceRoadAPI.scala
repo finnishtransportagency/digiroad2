@@ -8,7 +8,6 @@ import org.scalatra.ScalatraServlet
 import org.scalatra.json.JacksonJsonSupport
 
 class ServiceRoadAPI(val linearAssetService: LinearAssetOperations, val roadLinkService: RoadLinkService) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport {
-  private val dateFormat = "yyyy-MM-dd"
 
   override def baseAuth: String = "serviceRoad."
   override val realm: String = "Service Road API"
@@ -28,11 +27,11 @@ class ServiceRoadAPI(val linearAssetService: LinearAssetOperations, val roadLink
   val typeId = LinearAssetTypes.MaintenanceRoadAssetTypeId
 
   private val trLinkID = "linkId"
-  private val trAssetID = "assetId"
+  private val trAssetID = "id"
   private val trGeometry = "geometry"
   private val trStartMeasure = "startMeasure"
   private val trEndMeasure = "endMeasure"
-  private val trModifiedAt = "modifiedDate"
+  private val trModifiedAt = "modifiedAt"
   private val trModifiedBy = "modifiedBy"
   private val trKayttooikeus = "kayttooikeus"
   private val trHuoltovastuu = "huoltovastuu"
@@ -97,7 +96,7 @@ class ServiceRoadAPI(val linearAssetService: LinearAssetOperations, val roadLink
 
   private def convertToDate(value: Option[DateTime]): Option[String] = {
     value match {
-      case Some(date) =>  Some(DateTimeFormat.forPattern("yyyy-MM-dd").print(date))
+      case Some(date) =>  Some(DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss").print(date))
       case _ => None
     }
   }

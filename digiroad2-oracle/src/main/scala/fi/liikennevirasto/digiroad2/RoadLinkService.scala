@@ -129,8 +129,6 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     Future(getRoadLinksFromVVH(municipality))
   }
 
-
-
   /**
     * This method returns road links by bounding box and municipalities.
     *
@@ -233,10 +231,6 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }
   }
 
-//  def getLinkIdsFromVVHWithPolygons(polygons :Seq[String], ): Seq[Long] = {
-//    Await.result(Future.sequence(polygons.map(vvhClient.fetchLinkIdsByPolygonF)), atMost = Duration.Inf).flatten
-//  }
-
   /**
     * This method returns "real" and "complementary" link id by polygons.
     *
@@ -258,12 +252,11 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
      val fut = for {
        f1Result <- vvhClient.fetchLinkIdsByPolygonF(polygon)
-       f2Result <- vvhClient.complementaryData.fetchLinkIdsByPolygonF(polygon)
+       f2Result <- vvhClient.complementaryData.fetchLinkIdsByPolygonFComplementary(polygon)
      } yield (f1Result, f2Result)
 
-
     val (complementaryResult, result) = Await.result(fut, Duration.Inf)
-    complementaryResult ++result
+    complementaryResult ++ result
   }
 
   /**
