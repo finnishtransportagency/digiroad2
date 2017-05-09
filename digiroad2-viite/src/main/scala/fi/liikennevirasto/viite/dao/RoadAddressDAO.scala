@@ -93,7 +93,10 @@ case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
                        discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
                        endDate: Option[DateTime] = None, modifiedBy: Option[String] = None, lrmPositionId : Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
                        calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false,
-                       geom: Seq[Point])
+                       geom: Seq[Point]) {
+  val endCalibrationPoint = calibrationPoints._2
+  val startCalibrationPoint = calibrationPoints._1
+}
 
 case class RoadAddressProject(id: Long, status: RoadAddressProjectState, name: String, createdBy: String, createdDate: DateTime,
                               modifiedBy: String, startDate: DateTime, dateModified: DateTime, additionalInfo: String,

@@ -557,15 +557,14 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   def getRoadAddressAfterCalculation(sources: Seq[String], targets: Seq[String], user: User): Seq[RoadAddressLink] = {
-    val sourceLinks = sources.flatMap(rd => {
+    val sourceRoadAddressLinks = sources.flatMap(rd => {
       getUniqueRoadAddressLink(rd.toLong)
     })
-    val targetLinks = targets.flatMap(rd => {
-      getUniqueRoadAddressLink(rd.toLong)
-    })
-    val transferredRoadAddresses = transferRoadAddress(sourceLinks, targetLinks, user)
-
-    transferredRoadAddresses
+    val targetIds = targets.map(rd => rd.toLong).toSet
+    val targetRoadAddressLinks = targetIds.toSeq.flatMap(getUniqueRoadAddressLink)
+    val transferredRoadAddresses = transferRoadAddress(sourceRoadAddressLinks, targetRoadAddressLinks, user)
+    val target = roadLinkService.getRoadLinksByLinkIdsFromVVH(targetIds)
+    transferredRoadAddresses.map(ra => RoadAddressLinkBuilder.build(target.find(_.linkId == ra.linkId).get, ra))
   }
 
   def transferFloatingToGap(sourceIds: Set[Long], targetIds: Set[Long], roadAddresses: Seq[RoadAddress]) = {
@@ -690,72 +689,18 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     None
   }
 
-  def orderRoadAddressLinks(sources: Seq[RoadAddressLink], targets: Seq[RoadAddressLink]): (Seq[RoadAddressLink], Seq[RoadAddressLink]) = {
-    DefloatMapper.orderRoadAddressLinks(sources, targets)
-  }
+  def transferRoadAddress(sources: Seq[RoadAddressLink], targets: Seq[RoadAddressLink], user: User): Seq[RoadAddress] = {
 
-  def transferRoadAddress(sources: Seq[RoadAddressLink], targets: Seq[RoadAddressLink], user: User): Seq[RoadAddressLink] = {
+    val mapping = DefloatMapper.createAddressMap(sources, targets)
 
-    def getMValues(cp: Option[Double], fl: Option[Double]): Double = {
-      (cp, fl) match {
-        case (Some(calibrationPoint), Some(mVal)) => calibrationPoint
-        case (None, Some(mVal)) => mVal
-        case (Some(calibrationPoint), None) => calibrationPoint
-        case (None, None) => 0.0
-      }
+    val sourceRoadAddresses = withDynSession {
+      RoadAddressDAO.fetchByLinkId(sources.map(_.linkId).toSet, includeFloating = true,
+        includeHistory = false)
     }
+    // Assert: calibration points (0-2), geometry checks, directions check etc
+    val targetRoadAddresses = sourceRoadAddresses.flatMap(DefloatMapper.mapRoadAddresses(mapping))
 
-    val adjustTopology: Seq[(Double, Seq[RoadAddressLink]) => Seq[RoadAddressLink]] = Seq(
-      RoadAddressLinkBuilder.dropSegmentsOutsideGeometry,
-      RoadAddressLinkBuilder.capToGeometry,
-      RoadAddressLinkBuilder.extendToGeometry,
-      RoadAddressLinkBuilder.dropShort
-    )
-
-    val (orderedSources, orderedTargets) = orderRoadAddressLinks(sources, targets)
-
-    val allLinks = orderedSources ++ orderedTargets
-    val targetsGeomLength = orderedTargets.map(_.length).sum
-
-    val allStartCp = orderedSources.flatMap(_.startCalibrationPoint)
-    val allEndCp = orderedSources.flatMap(_.endCalibrationPoint)
-    if (allStartCp.size > 1 || allEndCp.size > 1)
-      throw new IllegalArgumentException("Source data contains too many calibration points")
-
-    val minStartAddressM = orderedSources.head.startAddressM
-    val maxEndAddressM = orderedSources.last.endAddressM
-
-    val adjustedSegments = adjustTopology.foldLeft(orderedSources) { (previousSources, operation) => operation(targetsGeomLength, previousSources) }
-
-    val maxEndMValue = allLinks.flatMap(_.endCalibrationPoint) match {
-      case Nil => adjustedSegments.map(_.endMValue).max
-      case _ => getMValues(Option(adjustedSegments.flatMap(_.endCalibrationPoint).map(_.segmentMValue).max), Option(allLinks.map(_.endMValue).max))
-    }
-
-    val source = orderedSources.head
-
-    val startCp = allStartCp.headOption
-    val endCp = allEndCp.headOption
-
-    if (startCp.nonEmpty && source.startCalibrationPoint.isEmpty)
-      throw new IllegalArgumentException("Start calibration point not in the first link of source")
-
-    if (endCp.nonEmpty && orderedSources.last.endCalibrationPoint.isEmpty)
-      throw new IllegalArgumentException("Start calibration point not in the first link of source")
-
-    val adjustedCreatedRoads = orderedTargets.foldLeft(orderedTargets) { (previousTargets, target) =>
-      RoadAddressLinkBuilder.adjustRoadAddressTopology(orderedTargets.length, startCp, endCp, maxEndMValue, minStartAddressM, maxEndAddressM, source, target, previousTargets, user.username).filterNot(_.id == 0) }
-
-    println("Picked " + adjustedCreatedRoads.head.linkId)
-    // Figure out first target link's side code: is it changed from the source?
-//    val startingSideCode = if (isDirectionMatch(adjustedCreatedRoads.head.geometry, orderedSources.head.geometry)) {
-//      orderedSources.head.sideCode
-//    } else {
-//      switchSideCode(orderedSources.head.sideCode)
-//    }
-//    // Adjust SideCode according to the starting link
-//    adjustSideCodes(Seq(adjustedCreatedRoads.head.copy(sideCode = startingSideCode)), adjustedCreatedRoads.tail)
-    adjustedCreatedRoads
+    targetRoadAddresses
   }
 
   /**
@@ -792,22 +737,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
        |${if (l.endCalibrationPoint.nonEmpty) { " " + l.endCalibrationPoint.get.addressMValue + "->"} else ""}
        | ${l.geometry.head.x},${l.geometry.head.y}-${l.geometry.last.x},${l.geometry.last.y}
      """.stripMargin.replace("\n", "")
-  }
-
-  private def adjustSideCodes(ready: Seq[RoadAddressLink], unprocessed: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
-    if (unprocessed.isEmpty)
-      ready
-    else {
-      val last = ready.last
-      val next = unprocessed.head
-      println(last)
-      println(next)
-      val nextSideCode = if (isDirectionMatch(last.geometry, next.geometry))
-        last.sideCode
-      else
-        switchSideCode(last.sideCode)
-      adjustSideCodes(ready++Seq(next.copy(sideCode=nextSideCode)), unprocessed.tail)
-    }
   }
 
   def recalculateRoadAddresses(roadNumber: Long, roadPartNumber: Long) = {

@@ -8,13 +8,11 @@ import fi.liikennevirasto.viite.model.RoadAddressLink
 
 object DefloatMapper {
 
-  def  createAddressMap(sources: Seq[RoadAddressLink], targets: Seq[RoadAddressLink]): Seq[RoadAddressMapping] = {
+  def createAddressMap(sources: Seq[RoadAddressLink], targets: Seq[RoadAddressLink]): Seq[RoadAddressMapping] = {
     val (orderedSource, orderedTarget) = orderRoadAddressLinks(sources, targets)
     val targetCoeff = orderedSource.map(_.length).sum / orderedTarget.map(_.length).sum
     val runningLength = (orderedSource.scanLeft(0.0)((len, link) => len+link.length) ++
       orderedTarget.scanLeft(0.0)((len, link) => len+targetCoeff*link.length)).map(setPrecision).distinct.sorted
-    orderedSource.foreach(x => println(x.linkId + " " + x.length + " m"))
-    orderedTarget.foreach(x => println(x.linkId + " " + x.length + " m"))
     val pairs = runningLength.zip(runningLength.tail).map{ case (st, end) =>
       (findStartLRMLocation(st, orderedSource), findEndLRMLocation(end, orderedSource), findStartLRMLocation(st, orderedTarget), findEndLRMLocation(end, orderedTarget))}
     pairs.map { case ((startSource, endSource, startTarget, endTarget)) => {
@@ -31,29 +29,41 @@ object DefloatMapper {
     }
   }
 
-  def mapRoadAddresses(roadAddressMapping: Seq[RoadAddressMapping])(roadAddresses: Seq[RoadAddress]): Seq[RoadAddress] = {
-    roadAddresses.flatMap( ra => {
-      val mappings = roadAddressMapping.filter(mapping => mapping.sourceLinkId == ra.linkId &&
-        isBetween(ra.startMValue, mapping.sourceStartM, mapping.sourceEndM))
-      mappings.map(mapping => {
-        val (mappedStartAddrM, mappedEndAddrM) = splitRoadAddressValues(ra, mapping.sourceStartM, mapping.sourceEndM)
-        ra.copy(id=0, linkId = mapping.targetLinkId, startAddrMValue = mappedStartAddrM, endAddrMValue = mappedEndAddrM)
-      })
-    }
-    )
+  def mapRoadAddresses(roadAddressMapping: Seq[RoadAddressMapping])(ra: RoadAddress): Seq[RoadAddress] = {
+    val mappings = roadAddressMapping.filter(mapping => mapping.sourceLinkId == ra.linkId &&
+      isMatch(ra.startMValue, ra.endMValue, mapping.sourceStartM, mapping.sourceEndM))
+//    println(ra.linkId, ra.startMValue, ra.endMValue, ra.startAddrMValue, ra.endAddrMValue)
+//    mappings.foreach(println)
+    mappings.map(mapping => {
+      val (mappedStartM, mappedEndM) = (mapping.targetStartM, mapping.targetEndM)
+      val (sideCode, (mappedStartAddrM, mappedEndAddrM)) =
+        if (isDirectionMatch(mapping))
+          (ra.sideCode, splitRoadAddressValues(ra, mapping.sourceStartM, mapping.sourceEndM))
+        else {
+          (switchSideCode(ra.sideCode), splitRoadAddressValues(ra, mapping.sourceStartM, mapping.sourceEndM).swap)
+        }
+//      println(mappedStartM, mappedEndM, mappedStartAddrM, mappedEndAddrM)
+      val (startM, endM, startAddrM, endAddrM) =
+        if (mappedStartM > mappedEndM)
+          (mappedEndM, mappedStartM, mappedEndAddrM, mappedStartAddrM)
+        else
+          (mappedStartM, mappedEndM, mappedStartAddrM, mappedEndAddrM)
+      ra.copy(id=0, linkId = mapping.targetLinkId, startAddrMValue = startAddrM, endAddrMValue = endAddrM,
+        sideCode = sideCode, startMValue = startM, endMValue = endM, geom = Seq())
+    })
   }
 
   private def setPrecision(d: Double) = {
     BigDecimal(d).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
   }
 
-  private def isBetween(x: Double, limit1: Double, limit2: Double) = {
-    !(x > Math.max(limit1, limit2) || x < Math.max(limit1, limit2))
+  private def isMatch(xStart: Double, xEnd: Double, limit1: Double, limit2: Double) = {
+//    println(s"GeometryUtils.overlapAmount(($xStart, $xEnd), ($limit1, $limit2)): "+ GeometryUtils.overlapAmount((xStart, xEnd), (limit1, limit2)))
+    GeometryUtils.overlapAmount((xStart, xEnd), (limit1, limit2)) > 0.999
   }
 
   private def splitRoadAddressValues(roadAddress: RoadAddress, startM: Double, endM: Double): (Long, Long) = {
-    val coefficient = (roadAddress.endAddrMValue - roadAddress.startAddrMValue)/(roadAddress.endMValue - roadAddress.startMValue)
-    (roadAddress.startAddrMValue + Math.round(startM*coefficient), roadAddress.startAddrMValue + Math.round(endM*coefficient))
+    (roadAddress.startAddrMValue + Math.round(startM), roadAddress.startAddrMValue + Math.round(endM))
   }
 
   private def findStartLRMLocation(mValue: Double, links: Seq[RoadAddressLink]): (RoadAddressLink, Double) = {
@@ -149,7 +159,7 @@ object DefloatMapper {
             switchSideCode(ordered.last.sideCode)
           else
             ordered.last.sideCode
-          extendChainByGeometry(ordered ++ Seq(link), unordered.filterNot(link.equals), sideCode)
+          extendChainByGeometry(ordered ++ Seq(link.copy(sideCode=sideCode)), unordered.filterNot(link.equals), sideCode)
         case _ => throw new InvalidAddressDataException("Non-contiguous road target geometry")
       }
     }
@@ -161,7 +171,6 @@ object DefloatMapper {
     }
 
     val (endingLinks, middleLinks) = targets.partition(t => targets.count(t2 => GeometryUtils.areAdjacent(t.geometry, t2.geometry)) < 3)
-    endingLinks.foreach(l => println(l.linkId + "  " + minDistanceBetweenEndPoints(Seq(startingPoint), l.geometry)))
     val preSortedTargets = endingLinks.sortBy(l => minDistanceBetweenEndPoints(Seq(startingPoint), l.geometry)) ++ middleLinks
     val startingSideCode = if (isDirectionMatch(orderedSources.head.geometry, preSortedTargets.head.geometry))
       orderedSources.head.sideCode
@@ -200,6 +209,10 @@ object DefloatMapper {
   private def minDistanceBetweenEndPoints(geom1: Seq[Point], geom2: Seq[Point]) = {
     val x = distancesBetweenEndPoints(geom1, geom2)
     Math.min(x._1, x._2)
+  }
+
+  private def isDirectionMatch(r: RoadAddressMapping): Boolean = {
+    ((r.sourceStartM - r.sourceEndM) * (r.targetStartM - r.targetEndM)) > 0
   }
 }
 
