@@ -100,6 +100,13 @@
       });
     };
 
+    this.getNormalAssets = function (boundingBox) {
+      self.getAssetsWithCallback(boundingBox, function (assets) {
+        var filteredAssets = _.where(assets, {linkSource: 1});
+        eventbus.trigger('normalAssets:fetched', filteredAssets);
+      });
+    };
+
     this.getAssetsWithCallback = createCallbackRequestor(function(boundingBox) {
       return {
         url: 'api/massTransitStops?bbox=' + boundingBox

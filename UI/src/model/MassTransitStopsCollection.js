@@ -16,13 +16,23 @@
         return selected;
       }));
     };
-
     var refreshAssets = function(mapMoveEvent) {
       backend.getAssetsWithCallback(mapMoveEvent.bbox, function(backendAssets) {
         if (mapMoveEvent.hasZoomLevelChanged) {
           eventbus.trigger('assets:all-updated massTransitStops:available', backendAssets);
         } else {
           eventbus.trigger('assets:new-fetched massTransitStops:available', filterNonExistingAssets(backendAssets, assets));
+        }
+      });
+    };
+
+    var refreshNormalAssets = function(mapMoveEvent) {
+      backend.getAssetsWithCallback(mapMoveEvent.bbox, function(backendAssets) {
+        var filteredAssets = _.where(backendAssets, {linkSource: 1});
+        if (mapMoveEvent.hasZoomLevelChanged) {
+          eventbus.trigger('assets:normal-updated massTransitStops:available', filteredAssets);
+        } else {
+          eventbus.trigger('assets:new-fetched massTransitStops:available', filterNonExistingAssets(filteredAssets, assets));
         }
       });
     };
@@ -44,7 +54,11 @@
       fetchAssets: function(boundingBox) {
         backend.getAssets(boundingBox);
       },
+      fetchNormalAssets: function(boundingBox) {
+        backend.getNormalAssets(boundingBox);
+      },
       refreshAssets: refreshAssets,
+      refreshNormalAssets: refreshNormalAssets,
       insertAssetsFromGroup: function(assetGroup) {
         _.each(assetGroup, function(asset) {
           asset.data = _.merge(asset.data, {originalLon: asset.data.lon, originalLat: asset.data.lat } );
