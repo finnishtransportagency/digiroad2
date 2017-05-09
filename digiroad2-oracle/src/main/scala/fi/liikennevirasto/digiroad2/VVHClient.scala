@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.HttpClientBuilder
+import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, DateTimeZone}
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
@@ -173,8 +174,12 @@ class VVHClient(vvhRestApiEndPoint: String) {
     filter
   }
 
-  private def withDateLimitFilter(attributeName: String, lowerDate: String, higherDate: String): String = {
-    s""""where":"( $attributeName >=date '$lowerDate' and $attributeName <=date '$higherDate' )","""
+  private def withDateLimitFilter(attributeName: String, lowerDate: DateTime, higherDate: DateTime): String = {
+    val formatter = DateTimeFormat.forPattern("yyyy-MM-dd")
+    val since = formatter.print(lowerDate)
+    val until = formatter.print(higherDate)
+
+    s""""where":"( $attributeName >=date '$since' and $attributeName <=date '$until' )","""
   }
 
   protected def withMunicipalityFilter(municipalities: Set[Int]): String = {
@@ -210,7 +215,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
     withFilter("MTKCLASS", ids)
   }
 
-  protected  def withLastEditedDateFilter(lowerDate: String, higherDate: String): String = {
+  protected  def withLastEditedDateFilter(lowerDate: DateTime, higherDate: DateTime): String = {
     withDateLimitFilter("LAST_EDITED_DATE", lowerDate, higherDate)
   }
 
@@ -542,9 +547,9 @@ class VVHClient(vvhRestApiEndPoint: String) {
 
   /**
     * Returns VVH road links. Obtain all RoadLinks changes between two given dates.
-    * Used by ??????????????????.
+    * Used by RoadLinkService.fetchChangedVVHRoadlinksBetweenDates (called from getRoadLinksBetweenTwoDatesFromVVH).
     */
-  def fetchVVHRoadlinksChangesBetweenDates(lowerDate: String, higherDate: String): Seq[VVHRoadlink] = {
+  def fetchVVHRoadlinksChangesBetweenDates(lowerDate: DateTime, higherDate: DateTime): Seq[VVHRoadlink] = {
     val definition = layerDefinition(withLastEditedDateFilter(lowerDate, higherDate))
     val url = vvhRestApiEndPoint + roadLinkDataService + "/FeatureServer/query?" +
       s"layerDefs=$definition&${queryParameters()}"
