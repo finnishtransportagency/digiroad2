@@ -65,7 +65,6 @@ object PointAssetFiller {
     }
   }
 
-
   def correctedPersistedAsset(asset: PersistedPointAsset, roadLinks: Seq[RoadLink], changeInfos: Seq[ChangeInfo]): Option[AssetAdjustment] = {
     val pointAssetLastChanges = changeInfos.
       filterNot(changeInfo => changeInfo.newId.isEmpty || changeInfo.oldId.isEmpty).
@@ -86,6 +85,9 @@ object PointAssetFiller {
 
           case ChangeType.ShortenedCommonPart | ChangeType.ShortenedRemovedPart => //Geometry Shortened
             correctShortened(asset, roadLinks, changeInfo, adjustment)
+
+          case ChangeType.ReplacedNewPart | ChangeType.ReplacedCommonPart =>
+            correctValuesAndGeometry(asset, roadLinks, changeInfo, adjustment)
 
           case _ => adjustment
         }
