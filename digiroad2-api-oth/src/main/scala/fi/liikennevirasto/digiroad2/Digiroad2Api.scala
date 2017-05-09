@@ -137,7 +137,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         "validityDirection" -> stop.validityDirection,
         "bearing" -> stop.bearing,
         "validityPeriod" -> stop.validityPeriod,
-        "floating" -> stop.floating)
+        "floating" -> stop.floating,
+        "linkSource" -> stop.linkSource)
     }
   }
 

@@ -32,7 +32,7 @@ case class MassTransitStopWithProperties(id: Long, nationalId: Long, stopTypes: 
 case class PersistedMassTransitStop(id: Long, nationalId: Long, linkId: Long, stopTypes: Seq[Int],
                                     municipalityCode: Int, lon: Double, lat: Double, mValue: Double,
                                     validityDirection: Option[Int], bearing: Option[Int],
-                                    validityPeriod: Option[String], floating: Boolean, vvhTimeStamp: Long,
+                                    validityPeriod: Option[String], floating: Boolean, vvhTimeStamp: Long, linkSource: Int,
                                     created: Modification, modified: Modification,
                                     propertyData: Seq[Property]) extends PersistedPointAsset with TimeStamps
 
@@ -245,7 +245,7 @@ trait MassTransitStopService extends PointAssetOperations {
         end as display_value,
         lrm.id, lrm.start_measure, lrm.end_measure, lrm.link_id,
         a.created_date, a.created_by, a.modified_date, a.modified_by,
-        SDO_CS.TRANSFORM(a.geometry, 4326) AS position_wgs84
+        SDO_CS.TRANSFORM(a.geometry, 4326) AS position_wgs84, lrm.link_source
         from asset a
           join asset_link al on a.id = al.asset_id
           join lrm_position lrm on al.position_id = lrm.id
@@ -352,11 +352,12 @@ trait MassTransitStopService extends PointAssetOperations {
       val stopTypes = extractStopTypes(stopRows)
       val mValue = row.lrmPosition.startMeasure
       val vvhTimeStamp = row.lrmPosition.vvhTimeStamp
+      val linkSource = row.lrmPosition.linkSource
 
       id -> PersistedMassTransitStop(id = row.id, nationalId = row.externalId, linkId = row.linkId, stopTypes = stopTypes,
         municipalityCode = row.municipalityCode, lon = point.x, lat = point.y, mValue = mValue,
         validityDirection = Some(row.validityDirection), bearing = row.bearing,
-        validityPeriod = validityPeriod, floating = row.persistedFloating, vvhTimeStamp = vvhTimeStamp,  created = row.created, modified = row.modified,
+        validityPeriod = validityPeriod, floating = row.persistedFloating, vvhTimeStamp = vvhTimeStamp, linkSource = linkSource, created = row.created, modified = row.modified,
         propertyData = properties)
     }.values.toSeq
   }
@@ -699,9 +700,10 @@ trait MassTransitStopService extends PointAssetOperations {
       val created = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
       val modified = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
       val wgsPoint = r.nextBytesOption.map(bytesToPoint)
+      val linkSource = r.nextInt
       MassTransitStopRow(id, externalId, assetTypeId, point, linkId, bearing, validityDirection,
         validFrom, validTo, property, created, modified, wgsPoint,
-        lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point, vvhTimeStamp), municipalityCode = municipalityCode, persistedFloating = persistedFloating)
+        lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point, vvhTimeStamp, linkSource), municipalityCode = municipalityCode, persistedFloating = persistedFloating)
     }
   }
 
