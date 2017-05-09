@@ -1,7 +1,6 @@
 (function(root) {
   root.RoadAddressProjectCollection = function(backend) {
     var roadAddressProjects = [];
-    var roadAddressProjects2 = [{name: 'proj1', state: 1}, {name: 'projeto2', state: 1}];
     var currentRoadSegmentList = [];
     var dirtyRoadSegmentLst = [];
     var projectinfo;
@@ -27,12 +26,17 @@
       roadAddressProjects = [];
       dirtyRoadSegmentLst = [];
       currentRoadSegmentList = [];
+      projectinfo=undefined;
+      backend.abortLoadingProject();
     };
 
     this.createProject = function (data, currentProject) {
       var projectid = 0;
       if (projectinfo !== undefined) {
         projectid = projectinfo.id;
+      } else if (currentProject!==undefined && currentProject.id!==undefined)
+      {
+        projectid=currentProject.id;
       }
       var dataJson = {
         id: projectid,
@@ -108,6 +112,11 @@
         });
       });
     }
+
+
+      eventbus.on('clearproject', function() {
+        this.clearRoadAddressProjects();
+    });
 
 
     this.checkIfReserved = function (data) {

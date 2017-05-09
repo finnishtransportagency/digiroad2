@@ -6,12 +6,14 @@ require.config({
     eventbus:                         '../src/utils/eventbus',
     RoadAddressTestData:              '../test_data/RoadAddressTestData',
     RoadLinkTestData:                 '../test_data/RoadLinkTestData',
-    UserRolesTestData:                '../test_data/UserRolesTestData'
+    UserRolesTestData:                '../test_data/UserRolesTestData',
+    RoadAddressProjectTestData:       '../test_data/RoadAddressProjectTestData'
   },
   shim: {
     'chai-jquery': ['jquery', 'chai'],
     'eventbus': { exports: 'eventbus' },
     'RoadAddressTestData': { exports: 'RoadAddressTestData' },
+    'RoadAddressProjectTestData': { exports: 'RoadAddressProjectTestData' },
     'RoadLinkTestData': { exports: 'RoadLinkTestData' },
     'UserRolesTestData': { exports: 'UserRolesTestData' }
   },
@@ -20,7 +22,8 @@ require.config({
 require(['chai',
          'chai-jquery',
          'TestHelpers',
-         'FloatingRoadAddressSpec'
+         'FloatingRoadAddressSpec',
+         'RoadAddressProjectSpec'
         ],
         function(chai, chaiJquery, testHelpers) {
   chai.use(chaiJquery);
