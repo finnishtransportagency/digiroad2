@@ -165,7 +165,7 @@
       singleElementEventCategory: 'roadWidth',
       multiElementEventCategory: 'roadWidth',
       layerName: 'roadWidth',
-      title: 'Leveys',
+      title: 'Leveys (cm)',
       newTitle: 'Uusi leveys',
       className: 'road-width',
       unit: 'cm',
@@ -174,7 +174,8 @@
         title: 'Leveys',
         enabled: 'Leveys tiedossa',
         disabled: 'Leveys ei tiedossa'
-      }
+      },
+      label: new NumericalAssetLabel()
     },
     {
       typeId: assetType.congestionTendency,

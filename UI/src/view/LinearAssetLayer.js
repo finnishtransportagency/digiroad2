@@ -16,25 +16,47 @@
       return new ol.Feature(new ol.geom.Point(me.getCoordinate(point)));
     };
 
-    this.renderFeaturesByLinearAssets = function(linearAssets, getValue, getPoints){
-      return me.renderFeatures(linearAssets, getValue, function(asset){
-        var coordinates = me.getCoordinates(getPoints(asset));
+    this.renderFeaturesByLinearAssets = function(linearAssets){
+      return me.renderFeatures(linearAssets, function(asset){
+        var coordinates = me.getCoordinates(me.getPoints(asset));
         var lineString = new ol.geom.LineString(coordinates);
         return GeometryUtils.calculateMidpointOfLineString(lineString);
       });
     };
 
-    this.renderFeatures = function(assets, getValue, getPoint) {};
+    this.renderFeatures = function(assets, getPoint){
+        var teste = _.chain(assets).
+          map(function(asset){
+            var assetValue = me.getValue(asset);
+            if(assetValue){
+                var style = me.getStyle(assetValue);
+                var feature = me.createFeature(getPoint(asset));
+                feature.setStyle(style);
+                return feature;
+            }
+          }).
+          filter(function(feature){ return feature != undefined; }).
+          value();
+        debugger;
+        return teste;
+    };
+
+    this.getPoints = function(asset){ return asset.points; }
+
+    this.getValue = function(asset){};
+
+    this.getStyle = function(value){};
+
   };
 
   root.NumericalAssetLabel = function(){
     AssetLabel.call(this);
     var me = this;
 
-    var getLabelStyle = function(value){
+    this.getStyle = function(value){
       return new ol.style.Style({
         text : new ol.style.Text({
-          text : value,
+          text : ""+value,
           fill: new ol.style.Fill({
             color: '#ffffff'
           }),
@@ -43,14 +65,10 @@
       });
     };
 
-    this.renderFeatures = function(assets, getValue, getPoint){
-      return _.map(assets, function(asset){
-        var style = getLabelStyle(getValue(asset));
-        var feature = me.createFeature(getPoint(asset));
-        feature.setStyle(style);
-        return feature;
-      });
+    this.getValue = function(asset){
+      return asset.value;
     };
+
   };
 })(this);
 
@@ -64,7 +82,7 @@ window.LinearAssetLayer = function(params) {
       singleElementEventCategory = params.singleElementEventCategory,
       style = params.style,
       layerName = params.layerName,
-      assetLabel = new NumericalAssetLabel();//params.assetLabel;
+      assetLabel = params.assetLabel// new NumericalAssetLabel();//params.assetLabel;
 
 
   Layer.call(this, layerName, roadLayer);
@@ -239,8 +257,10 @@ window.LinearAssetLayer = function(params) {
 
   var highlightMultipleLinearAssetFeatures = function() {
     var selectedAssets = selectedLinearAsset.get();
-    var features = style.renderFeatures(selectedAssets).concat(assetLabel.renderFeaturesByLinearAssets(selectedAssets, function(asset){ return "100"; }, function(asset){ return asset.points; }));
-    selectToolControl.addSelectionFeatures( features);
+    var features = style.renderFeatures(selectedAssets);
+    if(assetLabel)
+        features = features.concat(assetLabel.renderFeaturesByLinearAssets(selectedAssets));
+    selectToolControl.addSelectionFeatures(features);
   };
 
   var selectToolControl = new SelectToolControl(application, vectorLayer, map, {
@@ -436,7 +456,8 @@ window.LinearAssetLayer = function(params) {
 
   var drawLinearAssets = function(linearAssets) {
     vectorSource.addFeatures(style.renderFeatures(linearAssets));
-    vectorSource.addFeatures(assetLabel.renderFeaturesByLinearAssets(linearAssets, function(asset){ return "100"; }, function(asset){ return asset.points; }));
+    if(assetLabel)
+      vectorSource.addFeatures(assetLabel.renderFeaturesByLinearAssets(linearAssets));
   };
 
   var decorateSelection = function () {

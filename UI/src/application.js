@@ -223,7 +223,8 @@
        multiElementEventCategory: asset.multiElementEventCategory,
        singleElementEventCategory: asset.singleElementEventCategory,
        style: PiecewiseLinearAssetStyle(applicationModel),
-       formElements: AssetFormElementsFactory.construct(asset)
+       formElements: AssetFormElementsFactory.construct(asset),
+       assetLabel: asset.label
      });
      return acc;
     }, {});
