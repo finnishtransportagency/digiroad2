@@ -165,7 +165,7 @@
       singleElementEventCategory: 'roadWidth',
       multiElementEventCategory: 'roadWidth',
       layerName: 'roadWidth',
-      title: 'Leveys (cm)',
+      title: 'Leveys',
       newTitle: 'Uusi leveys',
       className: 'road-width',
       unit: 'cm',
@@ -173,7 +173,8 @@
       editControlLabels: {
         title: 'Leveys',
         enabled: 'Leveys tiedossa',
-        disabled: 'Leveys ei tiedossa'
+        disabled: 'Leveys ei tiedossa',
+        showUnit: true
       },
       label: new NumericalAssetLabel()
     },
