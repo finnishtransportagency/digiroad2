@@ -14,7 +14,7 @@ import fi.liikennevirasto.viite.RoadType._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
-import fi.liikennevirasto.viite.process.{InvalidAddressDataException, LinkRoadAddressCalculator, RoadAddressFiller}
+import fi.liikennevirasto.viite.process.{DefloatMapper, InvalidAddressDataException, LinkRoadAddressCalculator, RoadAddressFiller}
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, DateTimeZone}
 import org.slf4j.LoggerFactory
@@ -690,80 +690,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     None
   }
 
-  /**
-    * Take two sequences of road address links and order them so that the sequence covers the same road geometry
-    * and logical addressing in the same order
-    * @param sources Source road address links (floating)
-    * @param targets Target road address links (missing addresses)
-    * @return
-    */
   def orderRoadAddressLinks(sources: Seq[RoadAddressLink], targets: Seq[RoadAddressLink]): (Seq[RoadAddressLink], Seq[RoadAddressLink]) = {
-    /*
-      Calculate sidecode changes - if next road address link starts with the current (end) point
-      then side code remains the same. Otherwise it's reversed
-     */
-    def getSideCode(roadAddressLink: RoadAddressLink, previousSideCode: SideCode, currentPoint: Point) = {
-      val geom = roadAddressLink.geometry
-      if (GeometryUtils.areAdjacent(geom.head, currentPoint))
-        previousSideCode
-      else
-        switchSideCode(previousSideCode)
-    }
-
-    def extending(link: RoadAddressLink, ext: RoadAddressLink) = {
-      link.roadNumber == ext.roadNumber && link.roadPartNumber == ext.roadPartNumber &&
-        link.trackCode == ext.trackCode && link.endAddressM == ext.startAddressM
-    }
-    def extendChainByAddress(ordered: Seq[RoadAddressLink], unordered: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
-      if (ordered.isEmpty)
-        return extendChainByAddress(Seq(unordered.head), unordered.tail)
-      if (unordered.isEmpty)
-        return ordered
-      val (next, rest) = unordered.partition(u => extending(ordered.last, u))
-      if (next.nonEmpty)
-        extendChainByAddress(ordered ++ next, rest)
-      else {
-        val (previous, rest) = unordered.partition(u => extending(u, ordered.head))
-        if (previous.isEmpty)
-          throw new IllegalArgumentException("Non-contiguous road addressing")
-        else
-          extendChainByAddress(previous ++ ordered, rest)
-      }
-    }
-    def extendChainByGeometry(ordered: Seq[RoadAddressLink], unordered: Seq[RoadAddressLink], sideCode: SideCode): Seq[RoadAddressLink] = {
-      // First link gets the assigned side code
-      if (ordered.isEmpty)
-        return extendChainByGeometry(Seq(unordered.head.copy(sideCode=sideCode)), unordered.tail, sideCode)
-      if (unordered.isEmpty) {
-        println(ordered.map(_.linkId).mkString(" -> "))
-        return ordered
-      }
-      // Find a road address link that continues from current last link
-      unordered.find(ral => GeometryUtils.areAdjacent(ral.geometry, ordered.last.geometry)) match {
-        case Some(link) =>
-          val sideCode = if (isSideCodeChange(link.geometry, ordered.last.geometry))
-            switchSideCode(ordered.last.sideCode)
-          else
-            ordered.last.sideCode
-          extendChainByGeometry(ordered ++ Seq(link), unordered.filterNot(link.equals), sideCode)
-        case _ => throw new InvalidAddressDataException("Non-contiguous road target geometry")
-      }
-    }
-    val orderedSources = extendChainByAddress(Seq(sources.head), sources.tail)
-    val startingPoint = orderedSources.head.sideCode match {
-      case SideCode.TowardsDigitizing => orderedSources.head.geometry.head
-      case SideCode.AgainstDigitizing => orderedSources.head.geometry.last
-      case _ => throw new InvalidAddressDataException("Bad sidecode on source")
-    }
-
-    val (endingLinks, middleLinks) = targets.partition(t => targets.count(t2 => GeometryUtils.areAdjacent(t.geometry, t2.geometry)) < 3)
-    endingLinks.foreach(l => println(l.linkId + "  " + minDistanceBetweenEndPoints(Seq(startingPoint), l.geometry)))
-    val preSortedTargets = endingLinks.sortBy(l => minDistanceBetweenEndPoints(Seq(startingPoint), l.geometry)) ++ middleLinks
-    val startingSideCode = if (isDirectionMatch(orderedSources.head.geometry, preSortedTargets.head.geometry))
-      orderedSources.head.sideCode
-    else
-      switchSideCode(orderedSources.head.sideCode)
-    (orderedSources, extendChainByGeometry(Seq(), preSortedTargets, startingSideCode))
+    DefloatMapper.orderRoadAddressLinks(sources, targets)
   }
 
   def transferRoadAddress(sources: Seq[RoadAddressLink], targets: Seq[RoadAddressLink], user: User): Seq[RoadAddressLink] = {
