@@ -313,7 +313,6 @@ trait TierekisteriClient{
     new SimpleDateFormat(dateFormat).format(date)
   }
 
-  //TODO: ignore case sensitive
   protected def getFieldValue(data: Map[String, Any], field: String): Option[String] = {
     try {
       data.get(field).map(_.toString) match {

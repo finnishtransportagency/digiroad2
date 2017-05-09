@@ -254,17 +254,14 @@ class GeometryTransform {
     }
   }
 
-  //TODO: Who calls this function has to use withDynTransaction
   def resolveAddressAndLocation(linkId: Long, startM: Double, endM: Double, sideCode: SideCode) : Seq[ fi.liikennevirasto.digiroad2.roadaddress.oracle.RoadAddress] = {
-  //  withDynTransaction{
-      val roadAddress = new RoadAddressDAO().fetchByLinkIdAndMeasures(linkId, startM, endM)
-      roadAddress
-        .filter( road => compareSideCodes(sideCode, road))
-        .groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.sideCode)).map {
-            grouped =>
-              grouped._2.minBy(t => t.startMValue).copy(endMValue = grouped._2.maxBy(t => t.endMValue).endMValue)
-        }.toSeq
-    //}
+    val roadAddress = new RoadAddressDAO().fetchByLinkIdAndMeasures(linkId, startM, endM)
+    roadAddress
+      .filter( road => compareSideCodes(sideCode, road))
+      .groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.sideCode)).map {
+          grouped =>
+            grouped._2.minBy(t => t.startMValue).copy(endMValue = grouped._2.maxBy(t => t.endMValue).endMValue)
+      }.toSeq
   }
 
   def compareSideCodes(sideCode: SideCode, roadAddress: fi.liikennevirasto.digiroad2.roadaddress.oracle.RoadAddress): Boolean = {
