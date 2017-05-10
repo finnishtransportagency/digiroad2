@@ -413,6 +413,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       if(float && !(roadLink.isEmpty || addressGeometry.isEmpty || GeometryUtils.geometryLength(addressGeometry.get) == 0.0)){
         println("Floating and update geometry id %d (link id %d)".format(address.id, address.linkId))
         RoadAddressDAO.changeRoadAddressFloating(float = true, address.id, addressGeometry)
+        val missing = new MissingRoadAddress(address.linkId, None, None, RoadAddressLinkBuilder.getRoadType(roadLink.get.administrativeClass, UnknownLinkType), None,None,None ,None,Anomaly.GeometryChanged)
+        createSingleMissingRoadAddress(missing)
       }
       else if (roadLink.isEmpty || addressGeometry.isEmpty || GeometryUtils.geometryLength(addressGeometry.get) == 0.0) {
         println("Floating id %d (link id %d)".format(address.id, address.linkId))
@@ -822,7 +824,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       throw new IllegalArgumentException("Start calibration point not in the first link of source")
 
     val adjustedCreatedRoads = orderedTargets.foldLeft(orderedTargets) { (previousTargets, target) =>
-      RoadAddressLinkBuilder.adjustRoadAddressTopology(orderedTargets.length, startCp, endCp, maxEndMValue, minStartAddressM, maxEndAddressM, source, target, previousTargets, user.username).filterNot(_.id == 0) }
+      RoadAddressLinkBuilder.adjustRoadAddressTopology(orderedTargets.length, startCp, endCp, maxEndMValue, minStartAddressM, maxEndAddressM, source, target, previousTargets, user.username).filterNot(_.id == 0 && source.linkId == target.linkId) }
 
     // Figure out first link's side code
     val startingSideCode = if (GeometryUtils.areAdjacent(adjustedCreatedRoads.head.geometry.head, orderedSources.head.geometry.head) ||
