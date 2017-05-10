@@ -161,9 +161,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
   var renderAssets = function(assetDatas) {
     assetLayer.setVisible(true);
-
     _.each(assetDatas, function(assetGroup) {
-
       assetGroup = _.sortBy(assetGroup, 'id');
       var centroidLonLat = geometrycalculator.getCentroid(assetGroup);
       _.each(assetGroup, function(asset) {
@@ -291,7 +289,6 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
         .pluck('propertyValue')
         .value();
   };
-
 
   var handleAssetPropertyValueChanged = function(propertyData) {
 
@@ -535,15 +532,16 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
   this.refreshView = function() {
     var extent = map.getView().calculateExtent(map.getSize());
+
     eventbus.once('roadLinks:fetched', function () {
       roadLayer.drawRoadLinks(roadCollection.getAll(), map.getView().getZoom());
     });
 
+    massTransitStopsCollection.refreshAssets({ bbox: extent, hasZoomLevelChanged: true });
+
     if (isComplementaryActiveBS) {
-      massTransitStopsCollection.refreshAssets({ bbox: extent, hasZoomLevelChanged: true });
       roadCollection.fetchWithComplementary(extent);
     } else {
-      massTransitStopsCollection.refreshNormalAssets({ bbox: extent, hasZoomLevelChanged: true });
       roadCollection.fetch(extent);
     }
   };

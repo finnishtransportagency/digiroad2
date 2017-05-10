@@ -1134,10 +1134,6 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     requiredProperties
   }
 
-  def getLinkSource(roadLinkId: Long): Int ={
-    sql"""SELECT lrm_position.link_source FROM lrm_position INNER JOIN asset_link ON lrm_position.id = asset_link.position_id WHERE asset_link.ASSET_ID = $roadLinkId""".as[Int].first
-  }
-
   /**
     * Saves prohibition value to db. Used by OracleLinearAssetDao.updateProhibitionValue and LinearAssetService.createWithoutTransaction.
     */
