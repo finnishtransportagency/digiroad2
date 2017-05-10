@@ -46,7 +46,9 @@
         assets = _.omit(assets, assetId.toString());
       },
       getAssets: function() {
-        return filterComplementaries(assets);
+        if(isComplementaryActive)
+            return assets;
+        return _.filter(assets, function(asset){ return asset.data.linkSource == 1;});
       },
       getComplementaryAssets: function(){
         return _.reject(assets, function(asset){
