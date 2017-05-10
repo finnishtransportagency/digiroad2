@@ -129,7 +129,7 @@
     };
 
     var openUnknown = function(linkId, id, visibleFeatures) {
-      var canIOpen = !_.isUndefined(linkId) ? !isSelectedByLinkId(linkId) || isDifferingSelection(singleLinkSelect) : !isSelectedById(id) || isDifferingSelection(singleLinkSelect);
+      var canIOpen = !_.isUndefined(linkId) ? true /*!isSelectedByLinkId(linkId) */ : !isSelectedById(id);
       if (canIOpen) {
         if(featuresToKeep.length === 0){
           close();
@@ -142,6 +142,11 @@
           current = _.uniq(roadCollection.getByLinkId([linkId]), _.isEqual);
         } else {
           current = _.uniq(roadCollection.getById([id]), _.isEqual);
+        }
+        if(current[0].getData().anomaly == 2) {
+          current = _.filter(roadCollection.getTmpRoadLinkGroups(), function(linkGroup){
+            return linkGroup.getData().linkId === linkId;
+          });
         }
 
         eventbus.trigger('linkProperties:activateAllSelections');
@@ -277,8 +282,8 @@
           applicationModel.removeSpinner();
           if (!_.isEmpty(adjacents)){
             linkIds = adjacents;
-            applicationModel.setCurrentAction(applicationModel.actionCalculating);
           }
+          applicationModel.setCurrentAction(applicationModel.actionCalculating);
           if (!applicationModel.isReadOnly()) {
             var rejectedRoads = _.reject(get().concat(featuresToKeep), function(link){
               return link.segmentId === "";
@@ -523,6 +528,8 @@
       roadCollection.resetTmp();
       roadCollection.resetChangedIds();
       applicationModel.resetCurrentAction();
+      applicationModel.setContinueButton(false);
+      applicationModel.setActiveButtons(false);
       roadCollection.resetPreMovedRoadAddresses();
       clearFeaturesToKeep();
       eventbus.trigger('roadLinks:clearIndicators');

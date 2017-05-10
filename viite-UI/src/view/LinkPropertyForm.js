@@ -438,7 +438,7 @@
           var firstFloatingSelected = _.first(_.filter(uniqFeaturesToKeep,function (feature){
             return feature.roadLinkType === -1;
           }));
-          var canStartTransfer = compactForm && !applicationModel.isReadOnly() && uniqFeaturesToKeep.length > 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length-1].anomaly === 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length-2].roadLinkType === -1;
+          var canStartTransfer = compactForm && !applicationModel.isReadOnly() && uniqFeaturesToKeep.length > 1 && (uniqFeaturesToKeep[uniqFeaturesToKeep.length-1].anomaly === 1 ||uniqFeaturesToKeep[uniqFeaturesToKeep.length-1].anomaly === 2 )  && uniqFeaturesToKeep[uniqFeaturesToKeep.length-2].roadLinkType === -1;
           if(canStartTransfer)
             selectedLinkProperty.getLinkAdjacents(selectedLinkProperty.get()[0], firstFloatingSelected);
           linkProperties.modifiedBy = linkProperties.modifiedBy || '-';
