@@ -3,10 +3,8 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.pointasset.oracle.{PedestrianCrossing, _}
+import fi.liikennevirasto.digiroad2.pointasset.oracle._
 import fi.liikennevirasto.digiroad2.user.User
-import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
 case class IncomingObstacle(lon: Double, lat: Double, linkId: Long, obstacleType: Int) extends IncomingPointAsset
@@ -40,35 +38,16 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
 
   override def getByBoundingBox(user: User, bounds: BoundingRectangle) : Seq[PersistedAsset] = {
     val (roadLinks, changeInfo) = roadLinkService.getRoadLinksAndChangesFromVVH(bounds)
-    super.getByBoundingBox(user, bounds, roadLinks, changeInfo, floatingAdjustment)
+    super.getByBoundingBox(user, bounds, roadLinks, changeInfo, floatingAdjustment(adjustmentOperation, createOperation))
   }
 
-  private def floatingAdjustment(roadLinks: Seq[RoadLink], changeInfo: Seq[ChangeInfo], assetBeforeUpdate: AssetBeforeUpdate) = {
-    //the asset could be not floating, however it needs to be adjusted
-    val hasChangeInfo = changeInfo.filter(changeInfos => changeInfos.oldId.getOrElse(0L) == assetBeforeUpdate.asset.linkId && changeInfos.vvhTimeStamp > assetBeforeUpdate.asset.vvhTimeStamp).headOption match {
-      case Some(inf) => true
-      case _ => false
-    }
+  private def createOperation(asset: PersistedAsset, adjustment: AssetAdjustment): PersistedAsset = {
+    createPersistedAsset(asset, adjustment)
+  }
 
-    if (hasChangeInfo) {
-      PointAssetFiller.correctedPersistedAsset(assetBeforeUpdate.asset, roadLinks, changeInfo) match {
-        case Some(adjustment) =>
-          val updated = IncomingObstacle(adjustment.lon, adjustment.lat, adjustment.linkId, assetBeforeUpdate.asset.obstacleType)
-          OracleObstacleDao.update(adjustment.assetId, updated, adjustment.mValue, "vvh_generated", assetBeforeUpdate.asset.municipalityCode, Some(adjustment.vvhTimeStamp))
-
-          AssetBeforeUpdate(createPersistedAsset(assetBeforeUpdate.asset, adjustment), adjustment.floating, Some(FloatingReason.Unknown))
-
-        case None =>
-          if (assetBeforeUpdate.persistedFloating && !assetBeforeUpdate.asset.floating) {
-            val logger = LoggerFactory.getLogger(getClass)
-            val floatingReasonMessage = floatingReason(assetBeforeUpdate.asset, roadLinks.find(_.linkId == assetBeforeUpdate.asset.linkId))
-            logger.info("Floating asset %d, reason: %s".format(assetBeforeUpdate.asset.id, floatingReasonMessage))
-          }
-          AssetBeforeUpdate(setFloating(assetBeforeUpdate.asset, assetBeforeUpdate.persistedFloating), assetBeforeUpdate.asset.floating, assetBeforeUpdate.floatingReason)
-      }
-    }
-    else
-      AssetBeforeUpdate(setFloating(assetBeforeUpdate.asset, assetBeforeUpdate.persistedFloating), assetBeforeUpdate.asset.floating, assetBeforeUpdate.floatingReason)
+  private def adjustmentOperation(assetBeforeUpdate: AssetBeforeUpdate, adjustment: AssetAdjustment): Long = {
+    val updated = IncomingObstacle(adjustment.lon, adjustment.lat, adjustment.linkId, assetBeforeUpdate.asset.obstacleType)
+    OracleObstacleDao.update(adjustment.assetId, updated, adjustment.mValue, "vvh_generated", assetBeforeUpdate.asset.municipalityCode, Some(adjustment.vvhTimeStamp))
   }
 
   override def getByMunicipality(municipalityCode: Int): Seq[PersistedAsset] = {

@@ -587,6 +587,7 @@
           action = applicationModel.actionCalculating;
         applicationModel.setCurrentAction(action);
         eventbus.trigger('linkProperties:activateAllSelections');
+        eventbus.trigger('roadLinks:refreshView');
         if('all' === applicationModel.getSelectionType() || 'floating' === applicationModel.getSelectionType()){
           selectedLinkProperty.clearAndReset(false);
           applicationModel.toggleSelectionTypeAll();

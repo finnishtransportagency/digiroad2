@@ -347,21 +347,11 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     )
   }
 
-  def reservedAddressToApi(roadAddressProjectFormLine: RoadAddressProjectFormLine) : Map[String, Any] = {
-    Map("roadNumber" -> roadAddressProjectFormLine.roadNumber,
-      "roadPartNumber" -> roadAddressProjectFormLine.roadNumber,
-      "roadPartId" -> roadAddressProjectFormLine.roadNumber,
-      "ely" -> roadAddressProjectFormLine.roadNumber,
-      "roadLength" -> roadAddressProjectFormLine.roadLength,
-      "discontinuity" -> roadAddressProjectFormLine.discontinuity
-    )
-  }
-
   def reservedRoadPartToApi(reservedRoadPart: ReservedRoadPart) : Map[String, Any] = {
     Map("roadNumber" -> reservedRoadPart.roadNumber,
       "roadPartNumber" -> reservedRoadPart.roadPartNumber,
       "roadPartId" -> reservedRoadPart.roadPartId,
-      "ely" -> reservedRoadPart.roadNumber,
+      "ely" -> reservedRoadPart.ely,
       "length" -> reservedRoadPart.length,
       "discontinuity" -> reservedRoadPart.discontinuity.description
     )
