@@ -687,83 +687,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   def transferRoadAddress(sources: Seq[RoadAddressLink], targets: Seq[RoadAddressLink], user: User): Seq[RoadAddress] = {
-    def postTransferChecks(seq: Seq[RoadAddress]) = {
-      if (seq.count(_.startCalibrationPoint.nonEmpty) > 1)
-        throw new InvalidAddressDataException("Too many starting calibration points after transfer")
-      if (seq.count(_.endCalibrationPoint.nonEmpty) > 1)
-        throw new InvalidAddressDataException("Too many starting calibration points after transfer")
-      val startCPAddr = seq.find(_.startCalibrationPoint.nonEmpty)
-      val endCPAddr = seq.find(_.endCalibrationPoint.nonEmpty)
-      if (startCPAddr.nonEmpty) {
-        val (addr, cp) = (startCPAddr.get, startCPAddr.get.startCalibrationPoint.get)
-        if (addr.startAddrMValue != cp.addressMValue)
-          throw new InvalidAddressDataException(s"Start calibration point value mismatch in $cp")
-        if (seq.exists(_.startAddrMValue < cp.addressMValue))
-          throw new InvalidAddressDataException(s"Start calibration point not in the beginning of chain $cp")
-        if (addr.sideCode == SideCode.TowardsDigitizing && Math.abs(cp.segmentMValue) > 0.0 ||
-          addr.sideCode == SideCode.AgainstDigitizing && Math.abs(cp.segmentMValue - addr.endMValue) > 0.001)
-          throw new InvalidAddressDataException(s"Start calibration point LRM mismatch in $cp, sideCode = ${addr.sideCode}, ${addr.startMValue}-${addr.endMValue}")
-      }
-      if (endCPAddr.nonEmpty) {
-        val (addr, cp) = (endCPAddr.get, endCPAddr.get.endCalibrationPoint.get)
-        if (addr.endAddrMValue != cp.addressMValue)
-          throw new InvalidAddressDataException(s"End calibration point value mismatch in $cp")
-        if (seq.exists(_.endAddrMValue > cp.addressMValue))
-          throw new InvalidAddressDataException(s"End calibration point not in the end of chain $cp")
-        if (Math.abs(cp.segmentMValue - addr.endMValue) > 0.1)
-          throw new InvalidAddressDataException(s"End calibration point LRM mismatch in $cp")
-      }
-      val grouped = seq.groupBy(_.linkId).mapValues(_.groupBy(_.sideCode).keySet.size)
-      if (grouped.exists{ case (_, sideCodes) => sideCodes > 1})
-        throw new InvalidAddressDataException(s"Multiple sidecodes generated for links ${grouped.filter(_._2 > 1).keySet.mkString(", ")}")
-    }
-
-    def preTransferChecks(seq: Seq[RoadAddress]) = {
-      if (seq.count(_.startCalibrationPoint.nonEmpty) > 1)
-        throw new IllegalArgumentException("Too many starting calibration points before transfer")
-      if (seq.count(_.endCalibrationPoint.nonEmpty) > 1)
-        throw new IllegalArgumentException("Too many starting calibration points before transfer")
-      val startCPAddr = seq.find(_.startCalibrationPoint.nonEmpty)
-      val endCPAddr = seq.find(_.endCalibrationPoint.nonEmpty)
-      if (startCPAddr.nonEmpty) {
-        val (addr, cp) = (startCPAddr.get, startCPAddr.get.startCalibrationPoint.get)
-        if (addr.startAddrMValue != cp.addressMValue)
-          throw new IllegalArgumentException(s"Start calibration point value mismatch in $cp")
-        if (seq.exists(_.startAddrMValue < cp.addressMValue))
-          throw new IllegalArgumentException("Start calibration point not in the first link of source")
-        if (addr.sideCode == SideCode.TowardsDigitizing && Math.abs(cp.segmentMValue) > 0.0 ||
-          addr.sideCode == SideCode.AgainstDigitizing && Math.abs(cp.segmentMValue - addr.endMValue) > 0.001)
-          throw new IllegalArgumentException(s"Start calibration point LRM mismatch in $cp")
-      }
-      if (endCPAddr.nonEmpty) {
-        val (addr, cp) = (endCPAddr.get, endCPAddr.get.endCalibrationPoint.get)
-        if (addr.endAddrMValue != cp.addressMValue)
-          throw new IllegalArgumentException(s"End calibration point value mismatch in $cp")
-        if (seq.exists(_.endAddrMValue > cp.addressMValue))
-          throw new IllegalArgumentException("Start calibration point not in the last link of source")
-        if (Math.abs(cp.segmentMValue -
-          (addr.sideCode match {
-            case SideCode.AgainstDigitizing => 0.0
-            case SideCode.TowardsDigitizing => addr.endMValue
-            case _ => Double.NegativeInfinity
-          })
-        ) > 0.1)
-          throw new IllegalArgumentException(s"End calibration point LRM mismatch in $cp")
-      }
-      val grouped = seq.groupBy(_.linkId).mapValues(_.groupBy(_.sideCode).keySet.size)
-      if (grouped.exists{ case (_, sideCodes) => sideCodes > 1})
-        throw new IllegalArgumentException(s"Multiple sidecodes found for links ${grouped.filter(_._2 > 1).keySet.mkString(", ")}")
-    }
-
-    def invalidMapping(roadAddressMapping: RoadAddressMapping) = {
-      roadAddressMapping.sourceStartM.isNaN || roadAddressMapping.sourceEndM.isNaN ||
-        roadAddressMapping.targetStartM.isNaN || roadAddressMapping.targetEndM.isNaN
-    }
-
     val mapping = DefloatMapper.createAddressMap(sources, targets)
-    if (mapping.exists(invalidMapping)) {
+    if (mapping.exists(DefloatMapper.invalidMapping)) {
       throw new InvalidAddressDataException("Mapping failed to map following items: " +
-        mapping.filter(invalidMapping).map(r => s"${r.sourceLinkId}: ${r.sourceStartM}-${r.sourceEndM} -> ${r.targetLinkId}: ${r.targetStartM}-${r.targetEndM}").mkString(", ")
+        mapping.filter(DefloatMapper.invalidMapping).map(
+          r => s"${r.sourceLinkId}: ${r.sourceStartM}-${r.sourceEndM} -> ${r.targetLinkId}: ${r.targetStartM}-${r.targetEndM}").mkString(", ")
       )
     }
     val sourceRoadAddresses = withDynSession {
@@ -771,48 +699,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         includeHistory = false)
     }
 
-    preTransferChecks(sourceRoadAddresses)
+    DefloatMapper.preTransferChecks(sourceRoadAddresses)
 
     val targetRoadAddresses = RoadAddressLinkBuilder.fuseRoadAddress(sourceRoadAddresses.flatMap(DefloatMapper.mapRoadAddresses(mapping)))
-    postTransferChecks(targetRoadAddresses)
+    DefloatMapper.postTransferChecks(targetRoadAddresses)
 
     targetRoadAddresses
-  }
-
-  /**
-    * Check if the sequence of points are going in matching direction (best matching)
-    * This means that the starting and ending points are closer to each other than vice versa
-    *
-    * @param geom1 Geometry one
-    * @param geom2 Geometry two
-    */
-  private def isDirectionMatch(geom1: Seq[Point], geom2: Seq[Point]): Boolean = {
-    val x = distancesBetweenEndPoints(geom1, geom2)
-    x._1 < x._2
-  }
-
-  private def isSideCodeChange(geom1: Seq[Point], geom2: Seq[Point]): Boolean = {
-    GeometryUtils.areAdjacent(geom1.last, geom2.last) ||
-      GeometryUtils.areAdjacent(geom1.head, geom2.head)
-  }
-
-  private def distancesBetweenEndPoints(geom1: Seq[Point], geom2: Seq[Point]) = {
-    (geom1.head.distance2DTo(geom2.head) + geom1.last.distance2DTo(geom2.last),
-      geom1.last.distance2DTo(geom2.head) + geom1.head.distance2DTo(geom2.last))
-  }
-
-  private def minDistanceBetweenEndPoints(geom1: Seq[Point], geom2: Seq[Point]) = {
-    val x = distancesBetweenEndPoints(geom1, geom2)
-    Math.min(x._1, x._2)
-  }
-
-  private def prettyPrint(l: RoadAddressLink) = {
-
-    s"""${if (l.id == -1000) { "NEW!" } else { l.id }} link: ${l.linkId} road address: ${l.roadNumber}/${l.roadPartNumber}/${l.trackCode}/${l.startAddressM}-${l.endAddressM} length: ${l.length} dir: ${l.sideCode}
-       |${if (l.startCalibrationPoint.nonEmpty) { " <- " + l.startCalibrationPoint.get.addressMValue } else ""}
-       |${if (l.endCalibrationPoint.nonEmpty) { " " + l.endCalibrationPoint.get.addressMValue + "->"} else ""}
-       | ${l.geometry.head.x},${l.geometry.head.y}-${l.geometry.last.x},${l.geometry.last.y}
-     """.stripMargin.replace("\n", "")
   }
 
   def recalculateRoadAddresses(roadNumber: Long, roadPartNumber: Long) = {
@@ -936,11 +828,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
       (fullProjectInfo, formInfo)
     }
-  }
-
-  def switchSideCode(sideCode: SideCode) = {
-    // Switch between against and towards 2 -> 3, 3 -> 2
-    SideCode.apply(5-sideCode.value)
   }
 
 }
