@@ -36,8 +36,6 @@ object DefloatMapper {
   def mapRoadAddresses(roadAddressMapping: Seq[RoadAddressMapping])(ra: RoadAddress): Seq[RoadAddress] = {
     val mappings = roadAddressMapping.filter(mapping => mapping.sourceLinkId == ra.linkId &&
       isMatch(ra.startMValue, ra.endMValue, mapping.sourceStartM, mapping.sourceEndM))
-//    println(ra.linkId, ra.startMValue, ra.endMValue, ra.startAddrMValue, ra.endAddrMValue)
-//    mappings.foreach(println)
     mappings.map(mapping => {
       val (mappedStartM, mappedEndM) = (mapping.targetStartM, mapping.targetEndM)
       val (sideCode, mappedGeom, (mappedStartAddrM, mappedEndAddrM)) =
@@ -47,7 +45,6 @@ object DefloatMapper {
           (switchSideCode(ra.sideCode), mapping.targetGeom.reverse,
             splitRoadAddressValues(ra, mapping.sourceStartM, mapping.sourceEndM).swap)
         }
-//      println(mappedStartM, mappedEndM, mappedStartAddrM, mappedEndAddrM)
       val (startM, endM, startAddrM, endAddrM) =
         if (mappedStartM > mappedEndM)
           (mappedEndM, mappedStartM, mappedEndAddrM, mappedStartAddrM)
@@ -61,11 +58,9 @@ object DefloatMapper {
         case None => None
         case Some(cp) => if (cp.addressMValue == endAddrM) Some(cp.copy(linkId = mapping.targetLinkId, segmentMValue = endM)) else None
       }
-      val rap = ra.copy(id=0, linkId = mapping.targetLinkId, startAddrMValue = startCP.map(_.addressMValue).getOrElse(startAddrM),
+      ra.copy(id=0, linkId = mapping.targetLinkId, startAddrMValue = startCP.map(_.addressMValue).getOrElse(startAddrM),
         endAddrMValue = endCP.map(_.addressMValue).getOrElse(endAddrM),
         sideCode = sideCode, startMValue = startM, endMValue = endM, geom = mappedGeom, calibrationPoints = (startCP, endCP))
-      println(rap)
-      rap
     })
   }
 
@@ -74,7 +69,6 @@ object DefloatMapper {
   }
 
   private def isMatch(xStart: Double, xEnd: Double, limit1: Double, limit2: Double) = {
-//    println(s"GeometryUtils.overlapAmount(($xStart, $xEnd), ($limit1, $limit2)): "+ GeometryUtils.overlapAmount((xStart, xEnd), (limit1, limit2)))
     GeometryUtils.overlapAmount((xStart, xEnd), (limit1, limit2)) > 0.999
   }
 
