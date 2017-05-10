@@ -1,11 +1,18 @@
 (function(root) {
   root.MassTransitStopsCollection = function(backend) {
     var assets = {};
+    var isComplementaryActive = false;
     var validityPeriods = {
       current: true,
       future: false,
       past: false
     };
+    var filterComplementaries = function(assets){
+      if(isComplementaryActive)
+        return assets;
+      return _.where(assets, {linkSource: 1});
+    };
+
     var filterNonExistingAssets = function(assets, existingAssets) {
       return _.reject(assets, function(asset) {
         return _.has(existingAssets, asset.id.toString());
@@ -18,21 +25,11 @@
     };
     var refreshAssets = function(mapMoveEvent) {
       backend.getAssetsWithCallback(mapMoveEvent.bbox, function(backendAssets) {
+        backendAssets = filterComplementaries(backendAssets);
         if (mapMoveEvent.hasZoomLevelChanged) {
           eventbus.trigger('assets:all-updated massTransitStops:available', backendAssets);
         } else {
           eventbus.trigger('assets:new-fetched massTransitStops:available', filterNonExistingAssets(backendAssets, assets));
-        }
-      });
-    };
-
-    var refreshNormalAssets = function(mapMoveEvent) {
-      backend.getAssetsWithCallback(mapMoveEvent.bbox, function(backendAssets) {
-        var filteredAssets = _.where(backendAssets, {linkSource: 1});
-        if (mapMoveEvent.hasZoomLevelChanged) {
-          eventbus.trigger('assets:normal-updated massTransitStops:available', filteredAssets);
-        } else {
-          eventbus.trigger('assets:new-fetched massTransitStops:available', filterNonExistingAssets(filteredAssets, assets));
         }
       });
     };
@@ -49,16 +46,21 @@
         assets = _.omit(assets, assetId.toString());
       },
       getAssets: function() {
-        return assets;
+        return filterComplementaries(assets);
+      },
+      getComplementaryAssets: function(){
+        return _.reject(assets, function(asset){
+          if(!isComplementaryActive)
+            return asset.data.linkSource == 1;
+          return true;
+        });
       },
       fetchAssets: function(boundingBox) {
-        backend.getAssets(boundingBox);
-      },
-      fetchNormalAssets: function(boundingBox) {
-        backend.getNormalAssets(boundingBox);
+        backend.getAssets(boundingBox, function(assets){
+          return filterComplementaries(assets);
+        });
       },
       refreshAssets: refreshAssets,
-      refreshNormalAssets: refreshNormalAssets,
       insertAssetsFromGroup: function(assetGroup) {
         _.each(assetGroup, function(asset) {
           asset.data = _.merge(asset.data, {originalLon: asset.data.lon, originalLat: asset.data.lat } );
@@ -84,6 +86,12 @@
       },
       selectedValidityPeriodsContain: function(validityPeriod) {
         return validityPeriods[validityPeriod];
+      },
+      activeComplementary: function(enable){
+        isComplementaryActive = enable;
+      },
+      isComplementaryActive: function(){
+        return isComplementaryActive;
       }
     };
   };

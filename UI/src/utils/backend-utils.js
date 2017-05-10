@@ -94,16 +94,12 @@
       });
     }, 1000);
 
-    this.getAssets = function (boundingBox) {
-      self.getAssetsWithCallback(boundingBox, function (assets) {
-        eventbus.trigger('assets:fetched', assets);
-      });
-    };
+    this.getAssets = function (boundingBox, filter) {
+      if(!filter)
+        filter = function(assets){return assets;};
 
-    this.getNormalAssets = function (boundingBox) {
       self.getAssetsWithCallback(boundingBox, function (assets) {
-        var filteredAssets = _.where(assets, {linkSource: 1});
-        eventbus.trigger('normalAssets:fetched', filteredAssets);
+        eventbus.trigger('assets:fetched',filter(assets));
       });
     };
 
