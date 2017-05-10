@@ -58,49 +58,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     def unapply(i: Int): Boolean = r contains i
   }
 
-  /**
-    * Get calibration points for road not in a project
-    *
-    * @param roadNumber
-    * @return
-    */
-  def getCalibrationPoints(roadNumber: Long) = {
-    // TODO: Implementation
-    Seq(CalibrationPoint(1, 0.0, 0))
-  }
-
-  /**
-    * Get calibration points for road including project created ones
-    *
-    * @param roadNumber
-    * @param projectId
-    * @return
-    */
-  def getCalibrationPoints(roadNumber: Long, projectId: Long): Seq[CalibrationPoint] = {
-    // TODO: Implementation
-    getCalibrationPoints(roadNumber) ++ Seq(CalibrationPoint(2, 0.0, 0))
-  }
-
-  def getCalibrationPoints(linkIds: Set[Long]) = {
-
-    linkIds.map(linkId => CalibrationPoint(linkId, 0.0, 0))
-  }
-
-  def addRoadAddresses(roadLinks: Seq[RoadLink]) = {
-    val linkIds = roadLinks.map(_.linkId).toSet
-    val calibrationPoints = getCalibrationPoints(linkIds)
-  }
-
   private def fetchRoadLinksWithComplementary(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
                                               everything: Boolean = false, publicRoads: Boolean = false): (Seq[RoadLink], Set[Long]) = {
     val roadLinksF = Future(roadLinkService.getViiteRoadLinksFromVVH(boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads))
     val complementaryLinksF = Future(roadLinkService.getComplementaryRoadLinksFromVVH(boundingRectangle, municipalities))
     val (roadLinks, complementaryLinks) = Await.result(roadLinksF.zip(complementaryLinksF), Duration.Inf)
     (roadLinks ++ complementaryLinks, complementaryLinks.map(_.linkId).toSet)
-  }
-
-  def nonPrivatefetchRoadAddressesByBoundingBox(bounds: BoundingRectangle, fetchOnlyFloating: Boolean = false) = {
-    fetchRoadAddressesByBoundingBox(bounds, true)
   }
 
   private def fetchRoadAddressesByBoundingBox(boundingRectangle: BoundingRectangle, fetchOnlyFloating: Boolean = false) = {
@@ -295,20 +258,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
   }
 
-  def getUniqueRoadAddressLink(id: Long) = {
-
-    val (addresses, missedRL) = withDynTransaction {
-      (RoadAddressDAO.fetchByLinkId(Set(id), true),
-        RoadAddressDAO.getMissingRoadAddresses(Set(id)))
-    }
-    val (roadLinks, vvhHistoryLinks) = roadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(Set(id))
-    (addresses.size, roadLinks.size) match {
-      case (0, 0) => List()
-      case (_, 0) => addresses.flatMap(a => vvhHistoryLinks.map(rl => RoadAddressLinkBuilder.build(rl, a)))
-      case (0, _) => missedRL.flatMap(a => roadLinks.map(rl => RoadAddressLinkBuilder.build(rl, a)))
-      case (_, _) => addresses.flatMap(a => roadLinks.map(rl => RoadAddressLinkBuilder.build(rl, a)))
-    }
-  }
+  def getUniqueRoadAddressLink(id: Long) = getRoadAddressLink(id)
 
   def roadClass(roadAddressLink: RoadAddressLink) = {
     val C1 = new Contains(1 to 39)
