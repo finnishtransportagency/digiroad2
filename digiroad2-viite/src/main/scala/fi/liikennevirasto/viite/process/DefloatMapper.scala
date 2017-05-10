@@ -9,24 +9,28 @@ import fi.liikennevirasto.viite.model.RoadAddressLink
 object DefloatMapper {
 
   def createAddressMap(sources: Seq[RoadAddressLink], targets: Seq[RoadAddressLink]): Seq[RoadAddressMapping] = {
+    def formMapping(startSourceLink: RoadAddressLink, startSourceM: Double,
+                    endSourceLink: RoadAddressLink, endSourceM: Double,
+                    startTargetLink: RoadAddressLink, startTargetM: Double,
+                    endTargetLink: RoadAddressLink, endTargetM: Double): RoadAddressMapping = {
+      RoadAddressMapping(startSourceLink.linkId, startTargetLink.linkId, startSourceM,
+        if (startSourceLink.linkId == endSourceLink.linkId) endSourceM else Double.NaN,
+        startTargetM,
+        if (startTargetLink.linkId == endTargetLink.linkId) endTargetM else Double.NaN,
+        Seq(GeometryUtils.calculatePointFromLinearReference(startSourceLink.geometry, startSourceM).getOrElse(Point(Double.NaN, Double.NaN)),
+        GeometryUtils.calculatePointFromLinearReference(endSourceLink.geometry, endSourceM).getOrElse(Point(Double.NaN, Double.NaN))),
+        Seq(GeometryUtils.calculatePointFromLinearReference(startTargetLink.geometry, startTargetM).getOrElse(Point(Double.NaN, Double.NaN)),
+          GeometryUtils.calculatePointFromLinearReference(endTargetLink.geometry, endTargetM).getOrElse(Point(Double.NaN, Double.NaN)))
+      )
+    }
+
     val (orderedSource, orderedTarget) = orderRoadAddressLinks(sources, targets)
     val targetCoeff = orderedSource.map(_.length).sum / orderedTarget.map(_.length).sum
     val runningLength = (orderedSource.scanLeft(0.0)((len, link) => len+link.length) ++
       orderedTarget.scanLeft(0.0)((len, link) => len+targetCoeff*link.length)).map(setPrecision).distinct.sorted
     val pairs = runningLength.zip(runningLength.tail).map{ case (st, end) =>
       (findStartLRMLocation(st, orderedSource), findEndLRMLocation(end, orderedSource), findStartLRMLocation(st, orderedTarget), findEndLRMLocation(end, orderedTarget))}
-    pairs.map { case ((startSource, endSource, startTarget, endTarget)) => {
-      val sourceLinkId = startSource._1.linkId
-      val targetLinkId = startTarget._1.linkId
-      val sourceEndLinkId = endSource._1.linkId
-      val targetEndLinkId = endTarget._1.linkId
-      RoadAddressMapping(sourceLinkId, targetLinkId, startSource._2,
-        if (sourceLinkId == sourceEndLinkId) endSource._2 else Double.NaN,
-        startTarget._2,
-        if (targetLinkId == targetEndLinkId) endTarget._2 else Double.NaN
-      )
-    }
-    }
+    pairs.map(x => formMapping(x._1._1, x._1._2, x._2._1, x._2._2, x._3._1, x._3._2, x._4._1, x._4._2))
   }
 
   def mapRoadAddresses(roadAddressMapping: Seq[RoadAddressMapping])(ra: RoadAddress): Seq[RoadAddress] = {
@@ -36,11 +40,12 @@ object DefloatMapper {
 //    mappings.foreach(println)
     mappings.map(mapping => {
       val (mappedStartM, mappedEndM) = (mapping.targetStartM, mapping.targetEndM)
-      val (sideCode, (mappedStartAddrM, mappedEndAddrM)) =
+      val (sideCode, mappedGeom, (mappedStartAddrM, mappedEndAddrM)) =
         if (isDirectionMatch(mapping))
-          (ra.sideCode, splitRoadAddressValues(ra, mapping.sourceStartM, mapping.sourceEndM))
+          (ra.sideCode, mapping.targetGeom, splitRoadAddressValues(ra, mapping.sourceStartM, mapping.sourceEndM))
         else {
-          (switchSideCode(ra.sideCode), splitRoadAddressValues(ra, mapping.sourceStartM, mapping.sourceEndM).swap)
+          (switchSideCode(ra.sideCode), mapping.targetGeom.reverse,
+            splitRoadAddressValues(ra, mapping.sourceStartM, mapping.sourceEndM).swap)
         }
 //      println(mappedStartM, mappedEndM, mappedStartAddrM, mappedEndAddrM)
       val (startM, endM, startAddrM, endAddrM) =
@@ -48,8 +53,19 @@ object DefloatMapper {
           (mappedEndM, mappedStartM, mappedEndAddrM, mappedStartAddrM)
         else
           (mappedStartM, mappedEndM, mappedStartAddrM, mappedEndAddrM)
-      ra.copy(id=0, linkId = mapping.targetLinkId, startAddrMValue = startAddrM, endAddrMValue = endAddrM,
-        sideCode = sideCode, startMValue = startM, endMValue = endM, geom = Seq())
+      val startCP = ra.startCalibrationPoint match {
+        case None => None
+        case Some(cp) => if (cp.addressMValue == startAddrM) Some(cp.copy(linkId = mapping.targetLinkId)) else None
+      }
+      val endCP = ra.endCalibrationPoint match {
+        case None => None
+        case Some(cp) => if (cp.addressMValue == endAddrM) Some(cp.copy(linkId = mapping.targetLinkId, segmentMValue = endM)) else None
+      }
+      val rap = ra.copy(id=0, linkId = mapping.targetLinkId, startAddrMValue = startCP.map(_.addressMValue).getOrElse(startAddrM),
+        endAddrMValue = endCP.map(_.addressMValue).getOrElse(endAddrM),
+        sideCode = sideCode, startMValue = startM, endMValue = endM, geom = mappedGeom, calibrationPoints = (startCP, endCP))
+      println(rap)
+      rap
     })
   }
 
@@ -63,7 +79,14 @@ object DefloatMapper {
   }
 
   private def splitRoadAddressValues(roadAddress: RoadAddress, startM: Double, endM: Double): (Long, Long) = {
-    (roadAddress.startAddrMValue + Math.round(startM), roadAddress.startAddrMValue + Math.round(endM))
+    val coefficient = (roadAddress.endAddrMValue - roadAddress.startAddrMValue) / (roadAddress.endMValue - roadAddress.startMValue)
+    roadAddress.sideCode match {
+      case SideCode.AgainstDigitizing =>
+        (roadAddress.endAddrMValue - Math.round(endM*coefficient), roadAddress.endAddrMValue - Math.round(startM*coefficient))
+      case SideCode.TowardsDigitizing =>
+        (roadAddress.startAddrMValue + Math.round(startM*coefficient), roadAddress.startAddrMValue + Math.round(endM*coefficient))
+      case _ => throw new InvalidAddressDataException(s"Bad sidecode ${roadAddress.sideCode} on road address $roadAddress")
+    }
   }
 
   private def findStartLRMLocation(mValue: Double, links: Seq[RoadAddressLink]): (RoadAddressLink, Double) = {
@@ -217,4 +240,4 @@ object DefloatMapper {
 }
 
 case class RoadAddressMapping(sourceLinkId: Long, targetLinkId: Long, sourceStartM: Double, sourceEndM: Double,
-                              targetStartM: Double, targetEndM: Double)
+                              targetStartM: Double, targetEndM: Double, sourceGeom: Seq[Point], targetGeom: Seq[Point])
