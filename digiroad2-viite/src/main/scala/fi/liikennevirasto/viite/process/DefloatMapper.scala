@@ -25,11 +25,12 @@ object DefloatMapper {
     }
 
     val (orderedSource, orderedTarget) = orderRoadAddressLinks(sources, targets)
+    // The lengths may not be exactly equal: coefficient is to adjust that we advance both chains at the same relative speed
     val targetCoeff = orderedSource.map(_.length).sum / orderedTarget.map(_.length).sum
     val runningLength = (orderedSource.scanLeft(0.0)((len, link) => len+link.length) ++
       orderedTarget.scanLeft(0.0)((len, link) => len+targetCoeff*link.length)).map(setPrecision).distinct.sorted
     val pairs = runningLength.zip(runningLength.tail).map{ case (st, end) =>
-      (findStartLRMLocation(st, orderedSource), findEndLRMLocation(end, orderedSource), findStartLRMLocation(st, orderedTarget), findEndLRMLocation(end, orderedTarget))}
+      (findStartLRMLocation(st, orderedSource), findEndLRMLocation(end, orderedSource), findStartLRMLocation(st/targetCoeff, orderedTarget), findEndLRMLocation(end/targetCoeff, orderedTarget))}
     pairs.map(x => formMapping(x._1._1, x._1._2, x._2._1, x._2._2, x._3._1, x._3._2, x._4._1, x._4._2))
   }
 
@@ -52,13 +53,13 @@ object DefloatMapper {
           (mappedStartM, mappedEndM, mappedStartAddrM, mappedEndAddrM)
       val startCP = ra.startCalibrationPoint match {
         case None => None
-        case Some(cp) => if (cp.addressMValue == startAddrM) Some(cp.copy(linkId = mapping.targetLinkId)) else None
+        case Some(cp) => if (cp.addressMValue == startAddrM) Some(cp.copy(linkId = mapping.targetLinkId, segmentMValue = mappedStartM)) else None
       }
       val endCP = ra.endCalibrationPoint match {
         case None => None
-        case Some(cp) => if (cp.addressMValue == endAddrM) Some(cp.copy(linkId = mapping.targetLinkId, segmentMValue = endM)) else None
+        case Some(cp) => if (cp.addressMValue == endAddrM) Some(cp.copy(linkId = mapping.targetLinkId, segmentMValue = mappedEndM)) else None
       }
-      ra.copy(id=0, linkId = mapping.targetLinkId, startAddrMValue = startCP.map(_.addressMValue).getOrElse(startAddrM),
+      ra.copy(id = -1000L, linkId = mapping.targetLinkId, startAddrMValue = startCP.map(_.addressMValue).getOrElse(startAddrM),
         endAddrMValue = endCP.map(_.addressMValue).getOrElse(endAddrM),
         sideCode = sideCode, startMValue = startM, endMValue = endM, geom = mappedGeom, calibrationPoints = (startCP, endCP))
     })
@@ -73,6 +74,7 @@ object DefloatMapper {
   }
 
   private def splitRoadAddressValues(roadAddress: RoadAddress, startM: Double, endM: Double): (Long, Long) = {
+    // The lengths may not be exactly equal: coefficient is to adjust that
     val coefficient = (roadAddress.endAddrMValue - roadAddress.startAddrMValue) / (roadAddress.endMValue - roadAddress.startMValue)
     roadAddress.sideCode match {
       case SideCode.AgainstDigitizing =>
@@ -104,7 +106,7 @@ object DefloatMapper {
     if (links.isEmpty)
       throw new InvalidAddressDataException(s"Unable to map linear locations $mValue beyond links end")
     val current = links.head
-    if (Math.abs(current.length - mValue) < 0.1 ) {
+    if (Math.abs(current.length - mValue) < 1.0 && links.tail.isEmpty || Math.abs(current.length - mValue) < 0.1) {
       (current, setPrecision(applySideCode(current.length, current.length, current.sideCode)))
     } else if (current.length < mValue) {
       findEndLRMLocation(mValue - current.length, links.tail)
