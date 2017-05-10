@@ -229,13 +229,22 @@ window.LinearAssetLayer = function(params) {
     uiState.zoomLevel = zoom;
   };
 
-  var changeTool = function(tool) {
-    if (tool === 'Cut') {
-      selectToolControl.deactivate();
-      linearAssetCutter.activate();
-    } else if (tool === 'Select') {
-      linearAssetCutter.deactivate();
-      selectToolControl.activate();
+  var changeTool = function(tool, eventListener) {
+    switch(tool) {
+      case 'Cut':
+        selectToolControl.deactivate();
+        linearAssetCutter.activate();
+        selectToolControl.deactivePoligon();
+        break;
+      case 'Select':
+        linearAssetCutter.deactivate();
+        selectToolControl.activate();
+        selectToolControl.deactivePoligon();
+        break;
+      case 'Rectangle':
+        selectToolControl.activePoligon();
+        break;
+      default:
     }
   };
 

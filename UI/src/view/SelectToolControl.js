@@ -4,6 +4,7 @@
         var mapDoubleClickEventKey;
         var enabled = false;
         var initialized = false;
+        var activeDragBox = false;
 
         var settings = _.extend({
             onDragStart: function(){},
@@ -19,7 +20,7 @@
         }, options);
 
         var dragBoxInteraction = new ol.interaction.DragBox({
-            condition: ol.events.condition.platformModifierKeyOnly
+            condition: function(event){ return ol.events.condition.platformModifierKeyOnly(event) || activeDragBox; }
         });
 
         var selectInteraction = new ol.interaction.Select({
@@ -93,6 +94,14 @@
             map.unByKey(mapDoubleClickEventKey);
         };
 
+        var activePoligon = function() {
+            activeDragBox = true;
+        };
+
+        var deactivePoligon = function() {
+            activeDragBox = false;
+        };
+
         var clear = function(){
             selectInteraction.getFeatures().clear();
             highlightLayer();
@@ -137,6 +146,8 @@
             toggleDragBox: toggleDragBox,
             activate: activate,
             deactivate: deactivate,
+            activePoligon: activePoligon,
+            deactivePoligon: deactivePoligon,
             clear : clear,
             removeFeatures : removeFeatures
         };
