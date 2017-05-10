@@ -131,7 +131,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           val roadPartNumber = rd.get("roadPartNumber").get.asInstanceOf[Double].toLong
           val trackCode = rd.get("trackCode").get.asInstanceOf[Double].toLong
           roadAddressService.getFloatingAdjacent(chainLinks, linkId,
-            roadNumber, roadPartNumber, trackCode, false)
+            roadNumber, roadPartNumber, trackCode)
         })
       }
       val linkIds: Seq[Long] = roadData.map(rd => rd.get("linkId").get.asInstanceOf[Double].toLong)

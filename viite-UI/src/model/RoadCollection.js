@@ -175,7 +175,7 @@
     };
 
     this.addTmpRoadLinkGroups = function (tmp) {
-      if(tmpRoadLinkGroups.filter(function (roadTmp) { return roadTmp.getData().linkId === tmp.linkId}).length === 0) {
+      if(tmpRoadLinkGroups.filter(function (roadTmp) { return roadTmp.getData().linkId === tmp.linkId;}).length === 0) {
         tmpRoadLinkGroups.push(new RoadLinkModel(tmp));
       }
     };

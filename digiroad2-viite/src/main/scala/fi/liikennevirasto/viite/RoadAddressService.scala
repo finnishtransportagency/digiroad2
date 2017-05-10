@@ -519,7 +519,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
   }
 
-  def getFloatingAdjacent(chainLinks: Set[Long], linkId: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Long, filterpreviousPoint: Boolean = true): Seq[RoadAddressLink] = {
+  def getFloatingAdjacent(chainLinks: Set[Long], linkId: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Long): Seq[RoadAddressLink] = {
     val chainRoadLinks = roadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(chainLinks)
     val geomInChain = chainRoadLinks._1.filter(_.linkId == linkId).map(_.geometry) ++ chainRoadLinks._2.filter(_.linkId == linkId).map(_.geometry)
     val sourceLinkGeometryOption = geomInChain.headOption
@@ -537,7 +537,18 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       val addresses = addresses1 ++ addresses2
       val distinctRoadLinks = roadLinks.distinct
       val linkIds = distinctRoadLinks.map(_.linkId).toSet
-      val missingLinkIds = linkIds -- floating.keySet -- addresses.keySet
+
+      val checkLinkAnomaly = withDynTransaction {
+        RoadAddressDAO.getMissingRoadAddresses(Set(linkId))
+      }.headOption
+
+      val missingLinkIds = if (checkLinkAnomaly.nonEmpty){
+        val missingAnomaly = checkLinkAnomaly.get.anomaly.value match {
+          case 1 => linkIds -- floating.keySet -- addresses.keySet
+          case 2 => linkIds -- addresses.keySet
+        }
+        missingAnomaly
+      } else Set.empty[Long]
 
       val missedRL = withDynTransaction {
         RoadAddressDAO.getMissingRoadAddresses(missingLinkIds)
@@ -560,6 +571,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
       (viiteFloatingRoadLinks.distinct ++ viiteMissingRoadLinks)
     }).getOrElse(Seq())
+    //TODO show all returning adjacent targets as possible selecting markers for the current linkId, in the UI.
   }
 
   def getRoadAddressAfterCalculation(sources: Seq[String], targets: Seq[String], user: User): Seq[RoadAddressLink] = {
@@ -850,7 +862,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       val nextSideCode = touch match {
         case (true, false) => SideCode.TowardsDigitizing
         case (false, true) => SideCode.AgainstDigitizing
-          //Overlapping or non-touching geometries
+        //Overlapping or non-touching geometries
         case (_, _) => throw new IllegalArgumentException("Touching geometries are invalid: %s %s".format(last.geometry, next.geometry))
       }
       adjustSideCodes(ready++Seq(next.copy(sideCode=nextSideCode)), unprocessed.tail)
