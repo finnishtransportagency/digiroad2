@@ -29,9 +29,12 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
   val roadLink = RoadLink(
     1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
     1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)))
+  val roadLinkWithLinkSource = RoadLink(
+    1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+    1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
   when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(roadLink), Nil))
   when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[Int])).thenReturn((List(roadLink), Nil))
-  when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[Long], any[Boolean])).thenReturn(Some(roadLink))
+  when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[Long], any[Boolean])).thenReturn(Some(roadLinkWithLinkSource))
 
 
   val mockLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
@@ -142,6 +145,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       val asset = linearAssetDao.fetchLinearAssetsByIds(Set(newAssets.head), "mittarajoitus").head
       asset.value should be (Some(NumericValue(1000)))
       asset.expired should be (false)
+      mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(388562360l, newTransaction = false).get.linkSource.value should be (1)
     }
   }
 
