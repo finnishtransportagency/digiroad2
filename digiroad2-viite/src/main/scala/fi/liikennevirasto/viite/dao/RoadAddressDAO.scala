@@ -145,7 +145,7 @@ object RoadAddressDAO {
         join lrm_position pos on ra.lrm_position_id = pos.id
         where $filter $floatingFilter and
           (valid_from is null or valid_from <= sysdate) and
-          (valid_to is null or valid_to >= sysdate)
+          (valid_to is null or valid_to > sysdate)
       """
     (queryList(query), Seq())
   }
@@ -222,7 +222,7 @@ object RoadAddressDAO {
         join lrm_position pos on ra.lrm_position_id = pos.id
         $where $floating $history and t.id < t2.id and
           (valid_from is null or valid_from <= sysdate) and
-          (valid_to is null or valid_to >= sysdate)
+          (valid_to is null or valid_to > sysdate)
       """
     queryList(query)
   }
@@ -264,7 +264,7 @@ object RoadAddressDAO {
         join lrm_position pos on ra.lrm_position_id = pos.id
         $where AND $geomFilter $coarseWhere AND floating='0' and t.id < t2.id and
           (valid_from is null or valid_from <= sysdate) and
-          (valid_to is null or valid_to >= sysdate)
+          (valid_to is null or valid_to > sysdate)
       """
     queryList(query)
   }
@@ -293,7 +293,7 @@ object RoadAddressDAO {
         join $idTableName i on i.id = pos.link_id
         where t.id < t2.id $floating $history and
           (valid_from is null or valid_from <= sysdate) and
-          (valid_to is null or valid_to >= sysdate)
+          (valid_to is null or valid_to > sysdate)
       """
         queryList(query)
     }
@@ -338,11 +338,11 @@ object RoadAddressDAO {
         from road_address ra
         join lrm_position pos on ra.lrm_position_id = pos.id
         where road_number = $roadNumber AND (valid_from is null or valid_from <= sysdate) and
-          (valid_to is null or valid_to >= sysdate)
+          (valid_to is null or valid_to > sysdate)
         GROUP BY link_id
         HAVING COUNT(*) > 1) AND
         road_number = $roadNumber AND (valid_from is null or valid_from <= sysdate) and
-          (valid_to is null or valid_to >= sysdate)
+          (valid_to is null or valid_to > sysdate)
       """
     queryList(query)
   }
@@ -642,7 +642,7 @@ object RoadAddressDAO {
         join $idTableName i on i.id = pos.link_id
         where floating='1' and t.id < t2.id AND
           (valid_from is null or valid_from <= sysdate) and
-          (valid_to is null or valid_to >= sysdate)
+          (valid_to is null or valid_to > sysdate)
       """
         queryList(query)
     }
@@ -669,7 +669,7 @@ object RoadAddressDAO {
         join lrm_position pos on ra.lrm_position_id = pos.id
         $where AND floating='1' and t.id < t2.id and
           (valid_from is null or valid_from <= sysdate) and
-          (valid_to is null or valid_to >= sysdate)
+          (valid_to is null or valid_to > sysdate)
       """
     queryList(query)
   }
@@ -701,7 +701,7 @@ object RoadAddressDAO {
         join lrm_position pos on ra.lrm_position_id = pos.id
         $where and t.id < t2.id and
           (valid_from is null or valid_from <= sysdate) and
-          (valid_to is null or valid_to >= sysdate)
+          (valid_to is null or valid_to > sysdate)
       """
     queryList(query)
   }
@@ -722,7 +722,7 @@ object RoadAddressDAO {
         join $idTableName i on i.id = ra.id
         where t.id < t2.id and
           (valid_from is null or valid_from <= sysdate) and
-          (valid_to is null or valid_to >= sysdate)
+          (valid_to is null or valid_to > sysdate)
       """
         queryList(query)
     }
@@ -837,7 +837,7 @@ object RoadAddressDAO {
         join lrm_position pos on ra.lrm_position_id = pos.id
         where ra.lrm_position_id = ${id} and pos.link_id = ${linkId} and
           (valid_from is null or valid_from <= sysdate) and
-          (valid_to is null or valid_to >= sysdate)
+          (valid_to is null or valid_to > sysdate)
       """
     queryList(query).headOption
   }
@@ -902,10 +902,10 @@ object RoadAddressDAO {
              INNER JOIN lrm_position l
              ON r.lrm_position_id =  l.id
              INNER JOIN (Select  MAX(start_addr_m) as lol FROM road_address rm WHERE road_number=$roadNumber AND road_part_number=$roadPart AND
-             (rm.valid_from is null or rm.valid_from <= sysdate) AND (rm.valid_to is null or rm.valid_to >= sysdate) AND track_code in (0,1))  ra
+             (rm.valid_from is null or rm.valid_from <= sysdate) AND (rm.valid_to is null or rm.valid_to > sysdate) AND track_code in (0,1))  ra
              on r.START_ADDR_M=ra.lol
              WHERE r.road_number=$roadNumber AND r.road_part_number=$roadPart AND
-             (r.valid_from is null or r.valid_from <= sysdate) AND (r.valid_to is null or r.valid_to >= sysdate) AND track_code in (0,1)"""
+             (r.valid_from is null or r.valid_from <= sysdate) AND (r.valid_to is null or r.valid_to > sysdate) AND track_code in (0,1)"""
      Q.queryNA[(Long,Long,Double,Long)](query).firstOption
     }
 
