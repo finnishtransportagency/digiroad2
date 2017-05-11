@@ -281,7 +281,8 @@ object RoadAddressLinkBuilder {
       val calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = {
         val left = Seq(cpNext._1, cpPrevious._1).flatten.sortBy(_.segmentMValue).headOption
         val right = Seq(cpNext._2, cpPrevious._2).flatten.sortBy(_.segmentMValue).lastOption
-        (left.map(_.copy(segmentMValue = startMValue)), right.map(_.copy(segmentMValue = endMValue)))
+        (left.map(_.copy(segmentMValue = if (nextSegment.sideCode == SideCode.AgainstDigitizing) endMValue else startMValue)),
+          right.map(_.copy(segmentMValue = if (nextSegment.sideCode == SideCode.AgainstDigitizing) startMValue else endMValue)))
       }
 
       if(nextSegment.sideCode.value != previousSegment.sideCode.value)

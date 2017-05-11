@@ -499,15 +499,19 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }).getOrElse(Seq())
   }
 
-  def getRoadAddressAfterCalculation(sources: Seq[String], targets: Seq[String], user: User): Seq[RoadAddressLink] = {
+  def getRoadAddressLinksAfterCalculation(sources: Seq[String], targets: Seq[String], user: User): Seq[RoadAddressLink] = {
+    val transferredRoadAddresses = getRoadAddressesAfterCalculation(sources, targets, user)
+    val target = roadLinkService.getRoadLinksByLinkIdsFromVVH(targets.map(rd => rd.toLong).toSet)
+    transferredRoadAddresses.map(ra => RoadAddressLinkBuilder.build(target.find(_.linkId == ra.linkId).get, ra))
+  }
+
+  def getRoadAddressesAfterCalculation(sources: Seq[String], targets: Seq[String], user: User): Seq[RoadAddress] = {
     val sourceRoadAddressLinks = sources.flatMap(rd => {
       getUniqueRoadAddressLink(rd.toLong)
     })
     val targetIds = targets.map(rd => rd.toLong).toSet
     val targetRoadAddressLinks = targetIds.toSeq.flatMap(getUniqueRoadAddressLink)
-    val transferredRoadAddresses = transferRoadAddress(sourceRoadAddressLinks, targetRoadAddressLinks, user)
-    val target = roadLinkService.getRoadLinksByLinkIdsFromVVH(targetIds)
-    transferredRoadAddresses.map(ra => RoadAddressLinkBuilder.build(target.find(_.linkId == ra.linkId).get, ra))
+    transferRoadAddress(sourceRoadAddressLinks, targetRoadAddressLinks, user)
   }
 
   def transferFloatingToGap(sourceIds: Set[Long], targetIds: Set[Long], roadAddresses: Seq[RoadAddress]) = {

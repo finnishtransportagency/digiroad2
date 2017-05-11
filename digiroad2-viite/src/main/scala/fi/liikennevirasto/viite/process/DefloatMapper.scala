@@ -53,14 +53,16 @@ object DefloatMapper {
           (mappedStartM, mappedEndM, mappedStartAddrM, mappedEndAddrM)
       val startCP = ra.startCalibrationPoint match {
         case None => None
-        case Some(cp) => if (cp.addressMValue == startAddrM) Some(cp.copy(linkId = mapping.targetLinkId, segmentMValue = mappedStartM)) else None
+        case Some(cp) => if (cp.addressMValue == startAddrM) Some(cp.copy(linkId = mapping.targetLinkId,
+          segmentMValue = if (sideCode == SideCode.AgainstDigitizing) Math.max(startM, endM) else 0.0)) else None
       }
       val endCP = ra.endCalibrationPoint match {
         case None => None
-        case Some(cp) => if (cp.addressMValue == endAddrM) Some(cp.copy(linkId = mapping.targetLinkId, segmentMValue = mappedEndM)) else None
+        case Some(cp) => if (cp.addressMValue == endAddrM) Some(cp.copy(linkId = mapping.targetLinkId,
+          segmentMValue = if (sideCode == SideCode.TowardsDigitizing) Math.max(startM, endM) else 0.0)) else None
       }
       ra.copy(id = -1000L, linkId = mapping.targetLinkId, startAddrMValue = startCP.map(_.addressMValue).getOrElse(startAddrM),
-        endAddrMValue = endCP.map(_.addressMValue).getOrElse(endAddrM),
+        endAddrMValue = endCP.map(_.addressMValue).getOrElse(endAddrM), floating = false,
         sideCode = sideCode, startMValue = startM, endMValue = endM, geom = mappedGeom, calibrationPoints = (startCP, endCP))
     })
   }
@@ -257,8 +259,9 @@ object DefloatMapper {
         throw new InvalidAddressDataException(s"End calibration point value mismatch in $cp")
       if (seq.exists(_.endAddrMValue > cp.addressMValue))
         throw new InvalidAddressDataException(s"End calibration point not in the end of chain $cp")
-      if (Math.abs(cp.segmentMValue - addr.endMValue) > 0.1)
-        throw new InvalidAddressDataException(s"End calibration point LRM mismatch in $cp")
+      if (addr.sideCode == SideCode.AgainstDigitizing && Math.abs(cp.segmentMValue) > 0.0 ||
+        addr.sideCode == SideCode.TowardsDigitizing && Math.abs(cp.segmentMValue - addr.endMValue) > 0.001)
+        throw new InvalidAddressDataException(s"End calibration point LRM mismatch in $cp, sideCode = ${addr.sideCode}, ${addr.startMValue}-${addr.endMValue}")
     }
     val grouped = seq.groupBy(_.linkId).mapValues(_.groupBy(_.sideCode).keySet.size)
     if (grouped.exists{ case (_, sideCodes) => sideCodes > 1})

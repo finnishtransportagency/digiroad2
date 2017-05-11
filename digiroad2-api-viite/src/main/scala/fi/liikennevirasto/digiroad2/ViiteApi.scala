@@ -146,7 +146,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val (sources, targets) = roadlinksData()
     val user = userProvider.getCurrentUser()
     try{
-      val result = roadAddressService.getRoadAddressAfterCalculation(sources, targets, user)
+      val result = roadAddressService.getRoadAddressLinksAfterCalculation(sources, targets, user)
       result.map(roadAddressLinkToApi)
     }
     catch {
@@ -166,18 +166,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val targetIds = data.targetIds
     val user = userProvider.getCurrentUser()
     val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
-    val roadAddresses = roadAddressData.map{ ra =>
-      val pointsToCalibration = ra.calibrationPoints.size match {
-        case 0 => (None, None)
-        case 1 => ra.calibrationPoints.head.value match {
-          case 0 => (Option(CalibrationPoint(ra.linkId, ra.startMValue, ra.calibrationPoints.head.value)), None)
-          case _ => (None, Option(CalibrationPoint(ra.linkId, ra.endMValue, ra.calibrationPoints.head.value)))
-        }
-        case 2 => (Option(CalibrationPoint(ra.linkId, ra.startMValue, ra.calibrationPoints.head.value)), Option(CalibrationPoint(ra.linkId, ra.endMValue, ra.calibrationPoints.last.value)))
-      }
-      RoadAddress(ra.id, ra.roadNumber, ra.roadPartNumber, Track.apply(ra.trackCode), Discontinuity.apply(ra.discontinuity), ra.startAddressM, ra.endAddressM,
-        Some(formatter.parseDateTime(ra.startDate)), None, Option(user.username),0, ra.linkId, ra.startMValue, ra.endMValue, SideCode.apply(ra.sideCode), pointsToCalibration, false, ra.points)
-    }
+
+    val roadAddresses = roadAddressService.getRoadAddressesAfterCalculation(sourceIds.toSeq.map(_.toString), targetIds.toSeq.map(_.toString), user)
     try {
       val transferredRoadAddresses = roadAddressService.transferFloatingToGap(sourceIds, targetIds, roadAddresses)
       transferredRoadAddresses
