@@ -451,6 +451,13 @@ object RoadAddressDAO {
            """.execute
   }
 
+  def createMissingRoadAddress (linkId: Long, start_addr_m: Long, end_addr_m: Long, anomaly_code: Int, start_m : Double, end_m : Double) = {
+    sqlu"""
+           insert into missing_road_address (link_id, start_addr_m, end_addr_m,anomaly_code, start_m, end_m)
+           values ($linkId, $start_addr_m, $end_addr_m, $anomaly_code, $start_m, $end_m)
+           """.execute
+  }
+
   def lockRoadAddressTable(): Unit = {
     sqlu"""
            LOCK TABLE ROAD_ADDRESS IN EXCLUSIVE MODE

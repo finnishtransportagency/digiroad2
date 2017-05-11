@@ -413,8 +413,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       if(float && !(roadLink.isEmpty || addressGeometry.isEmpty || GeometryUtils.geometryLength(addressGeometry.get) == 0.0)){
         println("Floating and update geometry id %d (link id %d)".format(address.id, address.linkId))
         RoadAddressDAO.changeRoadAddressFloating(float = true, address.id, addressGeometry)
-        val missing = new MissingRoadAddress(address.linkId, None, None, RoadAddressLinkBuilder.getRoadType(roadLink.get.administrativeClass, UnknownLinkType), None,None,None ,None,Anomaly.GeometryChanged)
-        createSingleMissingRoadAddress(missing)
+        val missing = new MissingRoadAddress(address.linkId, Some(address.startAddrMValue), Some(address.endAddrMValue), RoadAddressLinkBuilder.getRoadType(roadLink.get.administrativeClass, UnknownLinkType), None,None,Some(address.startMValue) ,Some(address.endMValue),Anomaly.GeometryChanged)
+        RoadAddressDAO.createMissingRoadAddress(missing.linkId, missing.startAddrMValue.getOrElse(0), missing.endAddrMValue.getOrElse(0), missing.anomaly.value, missing.startMValue.get, missing.endMValue.get)
       }
       else if (roadLink.isEmpty || addressGeometry.isEmpty || GeometryUtils.geometryLength(addressGeometry.get) == 0.0) {
         println("Floating id %d (link id %d)".format(address.id, address.linkId))
