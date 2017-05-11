@@ -8,6 +8,7 @@ import fi.liikennevirasto.viite.RoadAddressLinkBuilder
 import fi.liikennevirasto.viite.RoadType.PublicRoad
 import fi.liikennevirasto.viite.dao.{MissingRoadAddress, RoadAddress, RoadAddressDAO}
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
+import fi.liikennevirasto.viite._
 
 object RoadAddressFiller {
   case class LRMValueAdjustment(addressId: Long, linkId: Long, startMeasure: Option[Double], endMeasure: Option[Double])
@@ -15,15 +16,6 @@ object RoadAddressFiller {
                                toFloatingAddressIds: Set[Long],
                                adjustedMValues: Seq[LRMValueAdjustment],
                                missingRoadAddresses: Seq[MissingRoadAddress])
-  private val MaxAllowedMValueError = 0.001
-  private val Epsilon = 1E-6 /* Smallest mvalue difference we can tolerate to be "equal to zero". One micrometer.
-                                See https://en.wikipedia.org/wiki/Floating_point#Accuracy_problems
-                             */
-  private val MaxDistanceDiffAllowed = 1.0 /*Temporary restriction from PO: Filler limit on modifications
-                                            (LRM adjustments) is limited to 1 meter. If there is a need to fill /
-                                            cut more than that then nothing is done to the road address LRM data.
-                                            */
-  private val MinAllowedRoadAddressLength = 0.1
 
   private def capToGeometry(roadLink: RoadLink, segments: Seq[RoadAddressLink], changeSet: AddressChangeSet): (Seq[RoadAddressLink], AddressChangeSet) = {
     val linkLength = GeometryUtils.geometryLength(roadLink.geometry)
