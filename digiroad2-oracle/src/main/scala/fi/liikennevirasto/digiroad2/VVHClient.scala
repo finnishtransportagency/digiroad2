@@ -309,7 +309,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
     nvps.add(new BasicNameValuePair("geometryPrecision", "3"))
     nvps.add(new BasicNameValuePair("f", "pjson"))
 
-    fetchPostVVHFeatures(url, nvps) match {
+    fetchVVHFeatures(url, nvps) match {
       case Left(features) => features.map(extractLinkIdFromVVHFeature)
       case Right(error) => throw new VVHClientException(error.toString)
     }
@@ -597,7 +597,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
     }
   }
 
-  protected def fetchPostVVHFeatures(url: String, formparams: ArrayList[NameValuePair]): Either[List[Map[String, Any]], VVHError] = {
+  protected def fetchVVHFeatures(url: String, formparams: ArrayList[NameValuePair]): Either[List[Map[String, Any]], VVHError] = {
     val fetchVVHStartTime = System.currentTimeMillis()
     val request = new HttpPost(url)
     request.setEntity(new UrlEncodedFormEntity(formparams, "utf-8"))

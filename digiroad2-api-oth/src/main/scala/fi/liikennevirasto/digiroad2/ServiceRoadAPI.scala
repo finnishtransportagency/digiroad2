@@ -26,23 +26,23 @@ class ServiceRoadAPI(val linearAssetService: LinearAssetOperations, val roadLink
   protected implicit def jsonFormats: Formats = DefaultFormats
   val typeId = LinearAssetTypes.MaintenanceRoadAssetTypeId
 
-  private val trLinkID = "linkId"
-  private val trAssetID = "id"
-  private val trGeometry = "geometry"
-  private val trStartMeasure = "startMeasure"
-  private val trEndMeasure = "endMeasure"
-  private val trModifiedAt = "modifiedAt"
-  private val trModifiedBy = "modifiedBy"
-  private val trKayttooikeus = "kayttooikeus"
-  private val trHuoltovastuu = "huoltovastuu"
-  private val trTiehoitokunta = "tiehoitokunta"
-  private val trNimi = "nimi"
-  private val trOsoite = "osoite"
-  private val trPostinumero = "postinumero"
-  private val trPostitoimipaikka = "postitoimipaikka"
-  private val trPuh1 = "puh1"
-  private val trPuh2 = "puh2"
-  private val trLisatieto = "lisatieto"
+  private val liviLinkID = "linkId"
+  private val liviAssetID = "id"
+  private val liviGeometry = "geometry"
+  private val liviStartMeasure = "startMeasure"
+  private val liviEndMeasure = "endMeasure"
+  private val liviModifiedAt = "modifiedAt"
+  private val liviGeneratedValue = "generatedValue"
+  private val liviKayttooikeus = "kayttooikeus"
+  private val liviHuoltovastuu = "huoltovastuu"
+  private val liviTiehoitokunta = "tiehoitokunta"
+  private val liviNimi = "nimi"
+  private val liviOsoite = "osoite"
+  private val liviPostinumero = "postinumero"
+  private val liviPostitoimipaikka = "postitoimipaikka"
+  private val liviPuh1 = "puh1"
+  private val liviPuh2 = "puh2"
+  private val liviLisatieto = "lisatieto"
 
   before() {
     basicAuth
@@ -70,23 +70,23 @@ class ServiceRoadAPI(val linearAssetService: LinearAssetOperations, val roadLink
 
   private def createMap(asset: PersistedLinearAsset, maintenanceRoad: Seq[Properties], geometry: Option[Seq[Point]]): Map[String, Any] = {
     Map(
-      trLinkID -> asset.linkId,
-      trAssetID -> asset.id,
-      trGeometry -> geometry,
-      trStartMeasure -> asset.startMeasure,
-      trEndMeasure -> asset.endMeasure,
-      trModifiedAt ->  convertToDate(asset.modifiedDateTime),
-      trModifiedBy -> asset.modifiedBy,
-      trKayttooikeus -> getFieldValue(maintenanceRoad, Kayttooikeus),
-      trHuoltovastuu -> getFieldValue(maintenanceRoad, Huoltovastuu),
-      trTiehoitokunta -> getFieldValue(maintenanceRoad, Tiehoitokunta),
-      trNimi -> getFieldValue(maintenanceRoad, Nimi),
-      trOsoite -> getFieldValue(maintenanceRoad, Osoite),
-      trPostinumero -> getFieldValue(maintenanceRoad, Postinumero),
-      trPostitoimipaikka -> getFieldValue(maintenanceRoad, Postitoimipaikka),
-      trPuh1 -> getFieldValue(maintenanceRoad, Puh1),
-      trPuh2 -> getFieldValue(maintenanceRoad, Puh2),
-      trLisatieto -> getFieldValue(maintenanceRoad, Lisatieto)
+      liviLinkID -> asset.linkId,
+      liviAssetID -> asset.id,
+      liviGeometry -> geometry,
+      liviStartMeasure -> asset.startMeasure,
+      liviEndMeasure -> asset.endMeasure,
+      liviModifiedAt ->  convertToDate(if(asset.modifiedDateTime.isEmpty) asset.modifiedDateTime else asset.createdDateTime),
+      liviGeneratedValue -> (if(asset.modifiedBy.nonEmpty) getModifiedByValue(asset.modifiedBy) else getModifiedByValue(asset.createdBy)),
+      liviKayttooikeus -> getFieldValueInt(maintenanceRoad, Kayttooikeus),
+      liviHuoltovastuu -> getFieldValueInt(maintenanceRoad, Huoltovastuu),
+      liviTiehoitokunta -> getFieldValue(maintenanceRoad, Tiehoitokunta),
+      liviNimi -> getFieldValue(maintenanceRoad, Nimi),
+      liviOsoite -> getFieldValue(maintenanceRoad, Osoite),
+      liviPostinumero -> getFieldValue(maintenanceRoad, Postinumero),
+      liviPostitoimipaikka -> getFieldValue(maintenanceRoad, Postitoimipaikka),
+      liviPuh1 -> getFieldValue(maintenanceRoad, Puh1),
+      liviPuh2 -> getFieldValue(maintenanceRoad, Puh2),
+      liviLisatieto -> getFieldValue(maintenanceRoad, Lisatieto)
     )
   }
 
@@ -94,10 +94,21 @@ class ServiceRoadAPI(val linearAssetService: LinearAssetOperations, val roadLink
     properties.find(p => p.publicId == publicId).map(_.value)
   }
 
+  private def getFieldValueInt(properties: Seq[Properties], publicId: String): Option[Int] = {
+    properties.find(p => p.publicId == publicId).map(_.value.toInt)
+  }
+
   private def convertToDate(value: Option[DateTime]): Option[String] = {
     value match {
-      case Some(date) =>  Some(DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss").print(date))
+      case Some(date) =>  Some(DateTimeFormat.forPattern("dd.MM.yyyy HH:mm:ss").print(date))
       case _ => None
+    }
+  }
+
+  def getModifiedByValue(modifiedValue: Option[String]) : Int = {
+    modifiedValue match {
+      case Some(value) if value == "vvh_generated" => 1
+      case _ => 0
     }
   }
 }
