@@ -758,7 +758,7 @@ object RoadAddressDAO {
       lrmPositionPS.setDouble(4, address.startMValue)
       lrmPositionPS.setDouble(5, address.endMValue)
       lrmPositionPS.addBatch()
-      addressPS.setLong(1, if (address.id == -1000) {
+      addressPS.setLong(1, if (address.id == fi.liikennevirasto.viite.NewRoadAddress) {
         Sequences.nextViitePrimaryKeySeqValue
       } else address.id)
       addressPS.setLong(2, lrmId)

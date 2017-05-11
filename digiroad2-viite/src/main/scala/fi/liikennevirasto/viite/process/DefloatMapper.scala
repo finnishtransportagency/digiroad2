@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.RoadAddress
 import fi.liikennevirasto.viite.model.RoadAddressLink
+import fi.liikennevirasto.viite.{MaxAllowedMValueError,MinAllowedRoadAddressLength,MaxDistanceDiffAllowed,NewRoadAddress}
 
 object DefloatMapper {
 
@@ -61,7 +62,7 @@ object DefloatMapper {
         case Some(cp) => if (cp.addressMValue == endAddrM) Some(cp.copy(linkId = mapping.targetLinkId,
           segmentMValue = if (sideCode == SideCode.TowardsDigitizing) Math.max(startM, endM) else 0.0)) else None
       }
-      ra.copy(id = -1000L, linkId = mapping.targetLinkId, startAddrMValue = startCP.map(_.addressMValue).getOrElse(startAddrM),
+      ra.copy(id = NewRoadAddress, linkId = mapping.targetLinkId, startAddrMValue = startCP.map(_.addressMValue).getOrElse(startAddrM),
         endAddrMValue = endCP.map(_.addressMValue).getOrElse(endAddrM), floating = false,
         sideCode = sideCode, startMValue = startM, endMValue = endM, geom = mappedGeom, calibrationPoints = (startCP, endCP))
     })
@@ -91,7 +92,7 @@ object DefloatMapper {
     if (links.isEmpty)
       throw new InvalidAddressDataException(s"Unable to map linear locations $mValue beyond links end")
     val current = links.head
-    if (Math.abs(current.length - mValue) < 0.1) {
+    if (Math.abs(current.length - mValue) < MinAllowedRoadAddressLength) {
       if (links.tail.nonEmpty)
         findStartLRMLocation(0.0, links.tail)
       else
@@ -108,7 +109,7 @@ object DefloatMapper {
     if (links.isEmpty)
       throw new InvalidAddressDataException(s"Unable to map linear locations $mValue beyond links end")
     val current = links.head
-    if (Math.abs(current.length - mValue) < 1.0 && links.tail.isEmpty || Math.abs(current.length - mValue) < 0.1) {
+    if (Math.abs(current.length - mValue) < MaxDistanceDiffAllowed && links.tail.isEmpty || Math.abs(current.length - mValue) < MinAllowedRoadAddressLength) {
       (current, setPrecision(applySideCode(current.length, current.length, current.sideCode)))
     } else if (current.length < mValue) {
       findEndLRMLocation(mValue - current.length, links.tail)
@@ -250,7 +251,7 @@ object DefloatMapper {
       if (seq.exists(_.startAddrMValue < cp.addressMValue))
         throw new InvalidAddressDataException(s"Start calibration point not in the beginning of chain $cp")
       if (addr.sideCode == SideCode.TowardsDigitizing && Math.abs(cp.segmentMValue) > 0.0 ||
-        addr.sideCode == SideCode.AgainstDigitizing && Math.abs(cp.segmentMValue - addr.endMValue) > 0.001)
+        addr.sideCode == SideCode.AgainstDigitizing && Math.abs(cp.segmentMValue - addr.endMValue) > MaxAllowedMValueError)
         throw new InvalidAddressDataException(s"Start calibration point LRM mismatch in $cp, sideCode = ${addr.sideCode}, ${addr.startMValue}-${addr.endMValue}")
     }
     if (endCPAddr.nonEmpty) {
@@ -260,7 +261,7 @@ object DefloatMapper {
       if (seq.exists(_.endAddrMValue > cp.addressMValue))
         throw new InvalidAddressDataException(s"End calibration point not in the end of chain $cp")
       if (addr.sideCode == SideCode.AgainstDigitizing && Math.abs(cp.segmentMValue) > 0.0 ||
-        addr.sideCode == SideCode.TowardsDigitizing && Math.abs(cp.segmentMValue - addr.endMValue) > 0.001)
+        addr.sideCode == SideCode.TowardsDigitizing && Math.abs(cp.segmentMValue - addr.endMValue) > MaxAllowedMValueError)
         throw new InvalidAddressDataException(s"End calibration point LRM mismatch in $cp, sideCode = ${addr.sideCode}, ${addr.startMValue}-${addr.endMValue}")
     }
     val grouped = seq.groupBy(_.linkId).mapValues(_.groupBy(_.sideCode).keySet.size)
@@ -282,7 +283,7 @@ object DefloatMapper {
       if (seq.exists(_.startAddrMValue < cp.addressMValue))
         throw new IllegalArgumentException("Start calibration point not in the first link of source")
       if (addr.sideCode == SideCode.TowardsDigitizing && Math.abs(cp.segmentMValue) > 0.0 ||
-        addr.sideCode == SideCode.AgainstDigitizing && Math.abs(cp.segmentMValue - addr.endMValue) > 0.001)
+        addr.sideCode == SideCode.AgainstDigitizing && Math.abs(cp.segmentMValue - addr.endMValue) > MaxAllowedMValueError)
         throw new IllegalArgumentException(s"Start calibration point LRM mismatch in $cp")
     }
     if (endCPAddr.nonEmpty) {
@@ -297,12 +298,15 @@ object DefloatMapper {
           case SideCode.TowardsDigitizing => addr.endMValue
           case _ => Double.NegativeInfinity
         })
-      ) > 0.1)
+      ) > MinAllowedRoadAddressLength)
         throw new IllegalArgumentException(s"End calibration point LRM mismatch in $cp")
     }
     val grouped = seq.groupBy(_.linkId).mapValues(_.groupBy(_.sideCode).keySet.size)
     if (grouped.exists{ case (_, sideCodes) => sideCodes > 1})
       throw new IllegalArgumentException(s"Multiple sidecodes found for links ${grouped.filter(_._2 > 1).keySet.mkString(", ")}")
+    val tracks = seq.map(_.track).toSet
+    if (tracks.size > 1)
+      throw new IllegalArgumentException(s"Multiple track codes found ${tracks.mkString(", ")}")
   }
 
   def invalidMapping(roadAddressMapping: RoadAddressMapping): Boolean = {
