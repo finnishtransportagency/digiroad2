@@ -86,7 +86,7 @@ object PointAssetFiller {
           case ChangeType.ShortenedCommonPart | ChangeType.ShortenedRemovedPart => //Geometry Shortened
             correctShortened(asset, roadLinks, changeInfo, adjustment)
 
-          case ChangeType.ReplacedNewPart | ChangeType.ReplacedCommonPart =>
+          case ChangeType.ReplacedCommonPart =>
             correctValuesAndGeometry(asset, roadLinks, changeInfo, adjustment)
 
           case _ => adjustment
