@@ -31,7 +31,11 @@ object DefloatMapper {
     val runningLength = (orderedSource.scanLeft(0.0)((len, link) => len+link.length) ++
       orderedTarget.scanLeft(0.0)((len, link) => len+targetCoeff*link.length)).map(setPrecision).distinct.sorted
     val pairs = runningLength.zip(runningLength.tail).map{ case (st, end) =>
-      (findStartLRMLocation(st, orderedSource), findEndLRMLocation(end, orderedSource), findStartLRMLocation(st/targetCoeff, orderedTarget), findEndLRMLocation(end/targetCoeff, orderedTarget))}
+      val startSource = findStartLRMLocation(st, orderedSource)
+      val endSource = findEndLRMLocation(end, orderedSource, startSource._1.linkId)
+      val startTarget = findStartLRMLocation(st/targetCoeff, orderedTarget)
+      val endTarget = findEndLRMLocation(end/targetCoeff, orderedTarget, startTarget._1.linkId)
+      (startSource, endSource, startTarget, endTarget)}
     pairs.map(x => formMapping(x._1._1, x._1._2, x._2._1, x._2._2, x._3._1, x._3._2, x._4._1, x._4._2))
   }
 
@@ -105,17 +109,19 @@ object DefloatMapper {
     }
   }
 
-  private def findEndLRMLocation(mValue: Double, links: Seq[RoadAddressLink]): (RoadAddressLink, Double) = {
+  private def findEndLRMLocation(mValue: Double, links: Seq[RoadAddressLink], linkId: Long): (RoadAddressLink, Double) = {
     if (links.isEmpty)
       throw new InvalidAddressDataException(s"Unable to map linear locations $mValue beyond links end")
     val current = links.head
-    if (Math.abs(current.length - mValue) < MaxDistanceDiffAllowed && links.tail.isEmpty || Math.abs(current.length - mValue) < MinAllowedRoadAddressLength) {
-      (current, setPrecision(applySideCode(current.length, current.length, current.sideCode)))
-    } else if (current.length < mValue) {
-      findEndLRMLocation(mValue - current.length, links.tail)
-    } else {
-      val dist = applySideCode(mValue, current.length, current.sideCode)
-      (current, setPrecision(Math.min(Math.max(0.0, dist), current.length)))
+    if (current.linkId != linkId)
+      findEndLRMLocation(mValue - current.length, links.tail, linkId)
+    else {
+      if (Math.abs(current.length - mValue) < MaxDistanceDiffAllowed) {
+        (current, setPrecision(applySideCode(current.length, current.length, current.sideCode)))
+      } else {
+        val dist = applySideCode(mValue, current.length, current.sideCode)
+        (current, setPrecision(Math.min(Math.max(0.0, dist), current.length)))
+      }
     }
   }
 

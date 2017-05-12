@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite
 
-import java.util.Date
+import java.util.{Date, Properties}
 
 import fi.liikennevirasto.digiroad2.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2.RoadLinkType.NormalRoadLinkType
@@ -696,6 +696,25 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     link457.get.startCalibrationPoint.nonEmpty should be (false)
     link457.get.endCalibrationPoint.nonEmpty should be (false)
     link456.get.endCalibrationPoint.nonEmpty should be (false)
+  }
+
+  test("test mapping 6760") {
+    val properties: Properties = {
+      val props = new Properties()
+      props.load(getClass.getResourceAsStream("/digiroad2.properties"))
+      props
+    }
+    val VVHClient = new VVHClient(properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+    val myService = new RoadAddressService(new RoadLinkService(VVHClient, mockEventBus, new DummySerializer()),mockEventBus) {
+      override def withDynTransaction[T](f: => T): T = f
+      override def withDynSession[T](f: => T): T = f
+    }
+    val targetIds = Seq("500055834","500055835","500055830","500055829")
+    val roadAddresses = runWithRollback {
+      targetIds.map(_.toLong).foreach(id => RoadAddressDAO.createMissingRoadAddress(id, 0L, 0L, 1))
+      myService.getRoadAddressesAfterCalculation(Seq("3611217","3611218"), targetIds, User(0L, "foo", Configuration()))
+    }
+    roadAddresses.size should be >0
   }
 
   private def createRoadAddressLink(id: Long, linkId: Long, geom: Seq[Point], roadNumber: Long, roadPartNumber: Long, trackCode: Long,
