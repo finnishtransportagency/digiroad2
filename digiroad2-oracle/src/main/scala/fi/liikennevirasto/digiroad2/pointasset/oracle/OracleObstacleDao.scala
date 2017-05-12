@@ -57,7 +57,7 @@ object OracleObstacleDao {
     }
   }
 
-  def create(obstacle: IncomingObstacle, mValue: Double, username: String, municipality: Int): Long = {
+  def create(obstacle: IncomingObstacle, mValue: Double, username: String, municipality: Int, adjustmentTimestamp: Long): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     sqlu"""
@@ -65,8 +65,8 @@ object OracleObstacleDao {
         into asset(id, asset_type_id, created_by, created_date, municipality_code)
         values ($id, 220, $username, sysdate, $municipality)
 
-        into lrm_position(id, start_measure, link_id)
-        values ($lrmPositionId, $mValue, ${obstacle.linkId})
+        into lrm_position(id, start_measure, link_id, adjusted_timestamp)
+        values ($lrmPositionId, $mValue, ${obstacle.linkId}, $adjustmentTimestamp)
 
         into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId)

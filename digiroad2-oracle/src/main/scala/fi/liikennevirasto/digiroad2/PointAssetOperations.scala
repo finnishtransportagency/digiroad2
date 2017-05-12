@@ -321,7 +321,7 @@ object PointAssetOperations {
           val roadOption = GeometryUtils.calculatePointFromLinearReference(roadLink.geometry, mValue)
           if(!coordinatesWithinThreshold(Some(point), roadOption)){
             roadOption match {
-              case Some(value) => return (true, Some(FloatingReason.DistanceToRoad))
+              case Some(_) => return (true, Some(FloatingReason.DistanceToRoad))
               case _ => return (true, Some(FloatingReason.NoReferencePointForMValue))
             }
           }
