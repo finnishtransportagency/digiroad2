@@ -32,35 +32,15 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
     createPersistedAsset(asset, adjustment)
   }
 
-  private def adjustmentOperation(assetBeforeUpdate: AssetBeforeUpdate, adjustment: AssetAdjustment): Long = {
-    val updatedAsset = IncomingRailwayCrossing(adjustment.lon, adjustment.lat, adjustment.linkId, assetBeforeUpdate.asset.safetyEquipment, assetBeforeUpdate.asset.name)
-    OracleRailwayCrossingDao.update(adjustment.assetId, updatedAsset, adjustment.mValue, assetBeforeUpdate.asset.municipalityCode, "vvh_generated", Some(adjustment.vvhTimeStamp))
+  private def adjustmentOperation(persistedAsset: PersistedAsset, adjustment: AssetAdjustment): Long = {
+    val updatedAsset = IncomingRailwayCrossing(adjustment.lon, adjustment.lat, adjustment.linkId, persistedAsset.safetyEquipment, persistedAsset.name)
+    OracleRailwayCrossingDao.update(adjustment.assetId, updatedAsset, adjustment.mValue, persistedAsset.municipalityCode, "vvh_generated", Some(adjustment.vvhTimeStamp))
   }
 
   override def getByMunicipality(municipalityCode: Int): Seq[PersistedAsset] = {
     val (roadLinks, changeInfo) = roadLinkService.getRoadLinksAndChangesFromVVH(municipalityCode)
     val mapRoadLinks = roadLinks.map(l => l.linkId -> l).toMap
-    getByMunicipality(municipalityCode, mapRoadLinks, roadLinks, changeInfo, floatingCorrection)
-  }
-
-  private def floatingCorrection[T](changeInfo: Seq[ChangeInfo], roadLinks: Seq[RoadLink],
-                                    persistedStop: PersistedAsset, floating: Boolean, assetFloatingReason: Option[FloatingReason],
-                                    conversion: (PersistedAsset, Boolean) => T) = {
-
-    if (floating) {
-      PointAssetFiller.correctedPersistedAsset(persistedStop, roadLinks, changeInfo) match {
-        case Some(adjustment) =>
-          val updatedAsset = IncomingRailwayCrossing(adjustment.lon, adjustment.lat, adjustment.linkId, persistedStop.safetyEquipment, persistedStop.name)
-          OracleRailwayCrossingDao.update(adjustment.assetId, updatedAsset, adjustment.mValue, persistedStop.municipalityCode, "vvh_generated",  Some(adjustment.vvhTimeStamp))
-
-          val persistedAsset = createPersistedAsset(persistedStop, adjustment)
-          (conversion(persistedAsset, persistedAsset.floating), assetFloatingReason)
-
-        case None => (conversion(persistedStop, floating), assetFloatingReason)
-      }
-    }
-    else
-      (conversion(persistedStop, floating), assetFloatingReason)
+    getByMunicipality(municipalityCode, mapRoadLinks, roadLinks, changeInfo, floatingAdjustment(adjustmentOperation, createOperation))
   }
 
   private def createPersistedAsset[T](persistedStop: PersistedAsset, asset: AssetAdjustment) = {
