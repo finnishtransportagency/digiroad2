@@ -1023,6 +1023,7 @@
        * Add to FloatingRoadMarker to keep in the case of clicking cancel (peruuta).
        */
       selectedLinkProperty.setFloatingRoadMarker(floatingRoadMarker);
+      geometryChangedLayer.setVisible(false);
     };
 
 
