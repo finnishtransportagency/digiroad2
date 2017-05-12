@@ -643,6 +643,7 @@
           rootElement.find('.link-properties button.continue').attr('disabled', false);
         }
         applicationModel.setActiveButtons(true);
+        eventbus.trigger('layer:enableButtons', false);
       });
 
       eventbus.on('adjacents:floatingAdded', function(floatingRoads){
