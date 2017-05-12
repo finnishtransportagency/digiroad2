@@ -1293,9 +1293,9 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
         link = vvhRoadLink,
         value =
           if (municipalitiesCodeToValidate.contains(vvhRoadLink.municipalityCode)) {
-            vvhRoadLink.attributes.get("ROADNAME_SE").getOrElse("none").toString
+            vvhRoadLink.attributes.getOrElse("ROADNAME_SE", "").toString
           } else {
-            vvhRoadLink.attributes.get("ROADNAME_FI").getOrElse("none").toString
+            vvhRoadLink.attributes.getOrElse("ROADNAME_FI", "").toString
           },
         createdAt = vvhRoadLink.attributes.get("CREATED_DATE") match {
           case Some(date) => Some(new DateTime(date.asInstanceOf[BigInt].toLong, timezone))
