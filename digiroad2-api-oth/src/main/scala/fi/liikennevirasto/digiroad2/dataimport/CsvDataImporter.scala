@@ -16,11 +16,11 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 object DataCsvImporter {
 
   object RoadLinkCsvImporter {
-    case class NonExistingLink(linkIdandField: String, csvRow: String)
+    case class NonUpdatedLink(linkId: Long, csvRow: String)
     case class IncompleteLink(missingParameters: List[String], csvRow: String)
     case class MalformedLink(malformedParameters: List[String], csvRow: String)
     case class ExcludedLink(affectedRoadLinkType: String, csvRow: String)
-    case class ImportResult(nonExistingLinks: List[NonExistingLink] = Nil,
+    case class ImportResult(nonUpdatedLinks: List[NonUpdatedLink] = Nil,
                             incompleteLinks: List[IncompleteLink] = Nil,
                             malformedLinks: List[MalformedLink] = Nil,
                             excludedLinks: List[ExcludedLink] = Nil)
@@ -91,7 +91,7 @@ trait RoadLinkCsvImporter {
     }
   }
 
-  def updateRoadLinkOTH(roadLinkAttribute: CsvRoadLinkRow, username: Option[String], hasTrafficDirectionChange: Boolean): IncompleteParameters = {
+  def updateRoadLinkOTH(roadLinkAttribute: CsvRoadLinkRow, username: Option[String], hasTrafficDirectionChange: Boolean): Option[Long] = {
     try {
       if (hasTrafficDirectionChange) {
         RoadLinkServiceDAO.getTrafficDirectionValue(roadLinkAttribute.linkId) match {
@@ -109,18 +109,18 @@ trait RoadLinkCsvImporter {
             RoadLinkServiceDAO.insertNewLinkProperty(prop.columnName, prop.columnName, roadLinkAttribute.linkId, username, prop.value.toString.toInt)
         }
       }
-      List()
+      None
     } catch {
-      case e: RoadLinkNotFoundException =>  List(roadLinkAttribute.linkId.toString)
+      case e: RoadLinkNotFoundException =>  Some(roadLinkAttribute.linkId)
     }
   }
 
-  def updateRoadLinkInVVH(roadLinkVVHAttribute: CsvRoadLinkRow): IncompleteParameters = {
+  def updateRoadLinkInVVH(roadLinkVVHAttribute: CsvRoadLinkRow): Option[Long] = {
     val mapProperties = roadLinkVVHAttribute.properties.map { prop => prop.columnName -> prop.value }.toMap
 
     vvhClient.complementaryData.updateVVHFeatures(mapProperties ++ Map("OBJECTID" -> roadLinkVVHAttribute.linkId)) match {
-      case Right(error) => List(roadLinkVVHAttribute.linkId.toString)
-      case _ => List()
+      case Right(error) => Some(roadLinkVVHAttribute.linkId)
+      case _ => None
     }
   }
 
@@ -187,20 +187,23 @@ trait RoadLinkCsvImporter {
         withDynTransaction {
           if (propertieOTH.size > 0 || propertieVVH.exists(_.columnName == "DIRECTIONTYPE")) {
             val parsedRowOTH = CsvRoadLinkRow(row("Linkin ID").toInt, properties = propertieOTH)
-            val nonExistdLinks = updateRoadLinkOTH(parsedRowOTH, Some(userProvider.getCurrentUser().username), propertieVVH.exists(_.columnName == "DIRECTIONTYPE"))
-              .map(nonExistRoadLinkType => NonExistingLink(linkIdandField = nonExistRoadLinkType, csvRow = rowToString(row)))
-            result.copy(nonExistingLinks = nonExistdLinks ::: result.nonExistingLinks)
+            updateRoadLinkOTH(parsedRowOTH, Some(userProvider.getCurrentUser().username), propertieVVH.exists(_.columnName == "DIRECTIONTYPE")) match {
+              case None => result
+              case Some(value) =>
+                result.copy(nonUpdatedLinks = NonUpdatedLink(linkId = value, csvRow = rowToString(row)) :: result.nonUpdatedLinks)
+
+            }
           }
           if (propertieVVH.size > 0) {
             val parsedRowVVH = CsvRoadLinkRow(row("Linkin ID").toInt, properties = propertieVVH)
-            val nonExistedLinksVVH = updateRoadLinkInVVH(parsedRowVVH)
-              .map(nonExistRoadLinkType => NonExistingLink(linkIdandField = nonExistRoadLinkType, csvRow = rowToString(row)))
-            result.copy(nonExistingLinks = nonExistedLinksVVH ::: result.nonExistingLinks)
-            if (!nonExistedLinksVVH.isEmpty)
-              dynamicSession.rollback()
-          }
+            updateRoadLinkInVVH(parsedRowVVH) match {
+              case None => result
+              case Some(value) =>
+                dynamicSession.rollback()
+                result.copy(nonUpdatedLinks = NonUpdatedLink(linkId = value, csvRow = rowToString(row)) :: result.nonUpdatedLinks)
+            }
+          } else result
         }
-        result
       } else {
         result.copy(
           incompleteLinks = missingParameters match {
