@@ -1,13 +1,15 @@
 package fi.liikennevirasto.digiroad2
 
 import java.net.URLEncoder
+import java.util.ArrayList
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
-import org.apache.http.HttpStatus
+import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.{HttpPost, HttpGet}
-import org.apache.http.entity.{ContentType, StringEntity}
 import org.apache.http.impl.client.HttpClientBuilder
+import org.apache.http.message.BasicNameValuePair
+import org.apache.http.NameValuePair
 import org.joda.time.{DateTime, DateTimeZone}
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
@@ -876,22 +878,29 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRe
     }.toList
   }
 
-  def updateVVHFeatures(complementaryFeatures: Map[String, String]): Either[List[Map[String, Any]], VVHError] = {
-    //TODO When the right EndPoint in VVH available need to modify this URL and test the response for verify if all continued ok.
-    val url = "http://localhost:8185/api/tierekisteri/updateFeaturesError/"
+  def updateVVHFeatures(complementaryFeatures: Map[String, Any]): Either[List[Map[String, Any]], VVHError] = {
+    val url = vvhRestApiEndPoint + roadLinkComplementaryService + "/FeatureServer/0/updateFeatures"
     val request = new HttpPost(url)
-    request.setEntity(createJson(complementaryFeatures))
+    request.setEntity(new UrlEncodedFormEntity(createFormParams(complementaryFeatures), "utf-8"))
     val client = HttpClientBuilder.create().build()
     val response = client.execute(request)
     try {
-      val content: Map[String, Any] = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Any]]
-      content.getOrElse("success", None) match {
-        case None => Right(VVHError(Map("error" -> "Update status not available in JSON Response"), url))
-        case true => Left(List(content))
-        case false =>
-          content.get("error").get.asInstanceOf[Map[String, Any]].getOrElse("description", None) match {
-            case None => Right(VVHError(Map("error" -> "Error Without Information"), url))
-            case value => Right(VVHError(Map("error" -> value), url))
+      val content: Map[String, Seq[Map[String, Any]]] = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Seq[Map[String, Any]]]]
+      content.get("updateResults").getOrElse(None) match {
+        case None =>
+          content.get("error").head.asInstanceOf[Map[String, Any]].getOrElse("details", None) match {
+            case None => Right(VVHError(Map("error" -> "Error Without Details "), url))
+            case value => Right(VVHError(Map("error details" -> value), url))
+          }
+        case _ =>
+          content.get("updateResults").get.map(_.getOrElse("success", None)).head match {
+            case None => Right(VVHError(Map("error" -> "Update status not available in JSON Response"), url))
+            case true => Left(List(content))
+            case false =>
+              content.get("updateResults").get.map(_.getOrElse("error", None)).head.asInstanceOf[Map[String, Any]].getOrElse("description", None) match {
+                case None => Right(VVHError(Map("error" -> "Error Without Information"), url))
+                case value => Right(VVHError(Map("error" -> value), url))
+              }
           }
       }
     } catch {
@@ -901,12 +910,18 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRe
     }
   }
 
-  private def createJson(jsonObj: Map[String, String]) = {
-    val json = Serialization.write(jsonObj)
+  private def createFormParams(complementaryFeatures: Map[String, Any]): ArrayList[NameValuePair] = {
+    val featuresValue = Serialization.write(Seq(Map("attributes" -> complementaryFeatures)))
     // Print JSON sent to VVH for testing purposes
-    logger.info("complementaryFeatures in JSON: %s".format(json))
+    logger.info("complementaryFeatures to JSON: %s".format(featuresValue))
 
-    new StringEntity(json, ContentType.APPLICATION_JSON)
+    val nvps = new ArrayList[NameValuePair]()
+    nvps.add(new BasicNameValuePair("features", featuresValue))
+    nvps.add(new BasicNameValuePair("gdbVersion", ""))
+    nvps.add(new BasicNameValuePair("rollbackOnFailure", "true"))
+    nvps.add(new BasicNameValuePair("f", "pjson"))
+
+    nvps
   }
 }
 

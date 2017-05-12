@@ -11,6 +11,7 @@ import fi.liikennevirasto.digiroad2.roadlinkservice.oracle.RoadLinkServiceDAO
 import fi.liikennevirasto.digiroad2.{VVHClient}
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import org.apache.commons.lang3.StringUtils.isBlank
+import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
 object DataCsvImporter {
 
@@ -38,7 +39,7 @@ trait RoadLinkCsvImporter {
     new BoneCPDataSource(cfg)
   }
 
-  case class LinkProperty(columnName: String, value: String)
+  case class LinkProperty(columnName: String, value: Any)
   case class CsvRoadLinkRow(linkId: Int, properties: Seq[LinkProperty])
 
   type IncompleteParameters = List[String]
@@ -103,9 +104,9 @@ trait RoadLinkCsvImporter {
         val optionalLinkTypeValue: Option[Int] = RoadLinkServiceDAO.getLinkProperty(prop.columnName, prop.columnName, roadLinkAttribute.linkId)
         optionalLinkTypeValue match {
           case Some(existingValue) =>
-            RoadLinkServiceDAO.updateExistingLinkPropertyRow(prop.columnName, prop.columnName, roadLinkAttribute.linkId, username, existingValue, prop.value.toInt)
+            RoadLinkServiceDAO.updateExistingLinkPropertyRow(prop.columnName, prop.columnName, roadLinkAttribute.linkId, username, existingValue, prop.value.toString.toInt)
           case None =>
-            RoadLinkServiceDAO.insertNewLinkProperty(prop.columnName, prop.columnName, roadLinkAttribute.linkId, username, prop.value.toInt)
+            RoadLinkServiceDAO.insertNewLinkProperty(prop.columnName, prop.columnName, roadLinkAttribute.linkId, username, prop.value.toString.toInt)
         }
       }
       List()
@@ -117,7 +118,7 @@ trait RoadLinkCsvImporter {
   def updateRoadLinkInVVH(roadLinkVVHAttribute: CsvRoadLinkRow): IncompleteParameters = {
     val mapProperties = roadLinkVVHAttribute.properties.map { prop => prop.columnName -> prop.value }.toMap
 
-    vvhClient.complementaryData.updateVVHFeatures(mapProperties ++ Map("LINKID" -> roadLinkVVHAttribute.linkId.toString)) match {
+    vvhClient.complementaryData.updateVVHFeatures(mapProperties ++ Map("OBJECTID" -> roadLinkVVHAttribute.linkId)) match {
       case Right(error) => List(roadLinkVVHAttribute.linkId.toString)
       case _ => List()
     }
@@ -125,16 +126,16 @@ trait RoadLinkCsvImporter {
 
   private def verifyValueType(parameterName: String, parameterValue: String): ParsedLinkRow = {
     parameterValue.forall(_.isDigit) match {
-      case true => (Nil, List(LinkProperty(columnName = intFieldMappings(parameterName), value = parameterValue)))
+      case true => (Nil, List(LinkProperty(columnName = intFieldMappings(parameterName), value = parameterValue.toInt)))
       case false => (List(parameterName), Nil)
     }
   }
 
-  private def linkRowToProperties(csvRowWithHeaders: Map[String, String]): ParsedLinkRow = {
+  private def linkRowToProperties(csvRowWithHeaders: Map[String, Any]): ParsedLinkRow = {
     csvRowWithHeaders.foldLeft(Nil: MalformedParameters, Nil: ParsedProperties) { (result, parameter) =>
       val (key, value) = parameter
 
-      if (isBlank(value)) {
+      if (isBlank(value.toString)) {
         if (mandatoryFields.contains(key))
           result.copy(_1 = List(mandatoryFields) ::: result._1, _2 = result._2)
         else
@@ -143,9 +144,9 @@ trait RoadLinkCsvImporter {
         if (textFieldMappings.contains(key)) {
           result.copy(_2 = LinkProperty(columnName = textFieldMappings(key), value = value) :: result._2)
         } else if (intFieldMappings.contains(key)) {
-          val (malformedParameters, properties) = verifyValueType(key, value)
+          val (malformedParameters, properties) = verifyValueType(key, value.toString)
           result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
-        } else if (mandatoryFields.contains(key) && !value.forall(_.isDigit)) {
+        } else if (mandatoryFields.contains(key) && !value.toString.forall(_.isDigit)) {
           result.copy(_1 = List(mandatoryFields) ::: result._1, _2 = result._2)
         } else
           result
@@ -158,8 +159,8 @@ trait RoadLinkCsvImporter {
     match {
       case None => None
       case Some(propertyValue) =>
-        if (administrativeClassLimitations.contains(AdministrativeClass.apply(propertyValue.toInt))) {
-          Some(AdministrativeClass.apply(propertyValue.toInt))
+        if (administrativeClassLimitations.contains(AdministrativeClass.apply(propertyValue.toString.toInt))) {
+          Some(AdministrativeClass.apply(propertyValue.toString.toInt))
         } else {
           None
         }
@@ -183,24 +184,23 @@ trait RoadLinkCsvImporter {
 
         val (propertieOTH, propertieVVH) = properties.partition(a => fieldInOTH.contains(a.columnName))
 
-        if (propertieOTH.size > 0 || propertieVVH.exists(_.columnName == "DIRECTIONTYPE")) {
-          withDynTransaction {
+        withDynTransaction {
+          if (propertieOTH.size > 0 || propertieVVH.exists(_.columnName == "DIRECTIONTYPE")) {
             val parsedRowOTH = CsvRoadLinkRow(row("Linkin ID").toInt, properties = propertieOTH)
             val nonExistdLinks = updateRoadLinkOTH(parsedRowOTH, Some(userProvider.getCurrentUser().username), propertieVVH.exists(_.columnName == "DIRECTIONTYPE"))
               .map(nonExistRoadLinkType => NonExistingLink(linkIdandField = nonExistRoadLinkType, csvRow = rowToString(row)))
             result.copy(nonExistingLinks = nonExistdLinks ::: result.nonExistingLinks)
           }
+          if (propertieVVH.size > 0) {
+            val parsedRowVVH = CsvRoadLinkRow(row("Linkin ID").toInt, properties = propertieVVH)
+            val nonExistedLinksVVH = updateRoadLinkInVVH(parsedRowVVH)
+              .map(nonExistRoadLinkType => NonExistingLink(linkIdandField = nonExistRoadLinkType, csvRow = rowToString(row)))
+            result.copy(nonExistingLinks = nonExistedLinksVVH ::: result.nonExistingLinks)
+            if (!nonExistedLinksVVH.isEmpty)
+              dynamicSession.rollback()
+          }
         }
-
-        if (propertieVVH.size > 0) {
-          val parsedRowVVH = CsvRoadLinkRow(row("Linkin ID").toInt, properties = propertieVVH)
-          val nonExistdLinks = updateRoadLinkInVVH(parsedRowVVH)
-            .map(nonExistRoadLinkType => NonExistingLink(linkIdandField = nonExistRoadLinkType, csvRow = rowToString(row)))
-          result.copy(nonExistingLinks = nonExistdLinks ::: result.nonExistingLinks)
-        } else {
-          result
-        }
-
+        result
       } else {
         result.copy(
           incompleteLinks = missingParameters match {
