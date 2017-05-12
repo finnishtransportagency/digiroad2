@@ -672,6 +672,7 @@
       });
       eventListener.listenTo(eventbus, 'adjacents:added adjacents:aditionalSourceFound', function(sources,targets, aditionalLinkId){
         drawIndicators(targets);
+        geometryChangedLayer.setVisible(true);
         _.map(_.rest(selectedLinkProperty.getFeaturesToKeep()), function (roads){
           editFeatureDataForGreen(roads);
         });
@@ -832,9 +833,15 @@
       _.find(roadLayer.layer.getSource().getFeatures(), function(feature) {
         return targets !== 0 && feature.roadLinkData.linkId === parseInt(targets);
       }).roadLinkData.gapTransfering = true;
-      var targetFeature =_.find(roadLayer.layer.getSource().getFeatures(), function(feature) {
+      var targetFeature = _.find(geometryChangedLayer.getSource().getFeatures(), function(feature) {
         return targets !== 0 && feature.roadLinkData.linkId === parseInt(targets);
       });
+      if(_.isUndefined(targetFeature))
+      {
+        targetFeature = _.find(roadLayer.layer.getSource().getFeatures(), function (feature) {
+          return targets !== 0 && feature.roadLinkData.linkId === parseInt(targets);
+        });
+      }
       reselectRoadLink(targetFeature, adjacents);
       draw();
       reHighlightGreen();
@@ -879,6 +886,12 @@
                 });
                 feature = new ol.Feature({geometry: new ol.geom.LineString(points)});
                 feature.roadLinkData = roadLink;
+                var pickAnomalousMarker = _.filter(geometryChangedLayer.getSource().getFeatures(), function(marker){
+                  return marker.roadLinkData.linkId === feature.roadLinkData.linkId;
+                });
+                _.each(pickAnomalousMarker, function(pickRoads){
+                  geometryChangedLayer.getSource().removeFeature(pickRoads);
+                });
               }
 
               feature.roadLinkData.prevAnomaly = feature.roadLinkData.anomaly;

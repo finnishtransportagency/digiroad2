@@ -546,6 +546,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         val missingAnomaly = checkLinkAnomaly.get.anomaly match {
           case Anomaly.NoAddressGiven => linkIds -- floating.keySet -- addresses.keySet
           case Anomaly.GeometryChanged => linkIds -- addresses.keySet
+          case _ => Set.empty[Long]
         }
         missingAnomaly
       } else Set.empty[Long]
