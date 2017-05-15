@@ -1894,4 +1894,58 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     }
   }
 
+
+  test("Create linear asset on a road link that has changed previously"){
+    val oldLinkId1 = 5000
+    val linkId1 = 5001
+    val newLinkId = 6000
+    val municipalityCode = 235
+    val administrativeClass = Municipality
+    val trafficDirection = TrafficDirection.BothDirections
+    val functionalClass = 1
+    val linkType = Freeway
+    val assetTypeId = 120
+
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val timeStamp = new VVHClient("http://localhost:6080").createVVHTimeStamp(5)
+    when(mockVVHClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
+    when(mockRoadLinkService.vvhClient).thenReturn(mockVVHClient)
+
+    val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
+      override def withDynTransaction[T](f: => T): T = f
+      override def vvhClient: VVHClient = mockVVHClient
+    }
+
+    val roadLinks = Seq(
+      RoadLink(linkId1, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))),
+      RoadLink(newLinkId, List(Point(0.0, 0.0), Point(120.0, 0.0)), 120.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))))
+
+    val changeInfo = Seq(
+      ChangeInfo(Some(oldLinkId1), Some(newLinkId), 12345, 1, Some(0), Some(100), Some(0), Some(100), 1476468913000L),
+      ChangeInfo(Some(linkId1), Some(newLinkId), 12345, 2, Some(0), Some(20), Some(100), Some(120), 1476468913000L)
+    )
+
+    OracleDatabase.withDynTransaction {
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((roadLinks, changeInfo))
+      val newAsset1 = NewLinearAsset(linkId1, 0.0, 20, NumericValue(2017), 1, 234567, None)
+      val id1 = service.create(Seq(newAsset1), assetTypeId, "KX2")
+
+      val newAsset = NewLinearAsset(newLinkId, 0.0, 120, NumericValue(4779), 1, 234567, None)
+      val id = service.create(Seq(newAsset), assetTypeId, "KX2")
+
+      id should have size (1)
+      id.head should not be (0)
+
+      val assets = service.getPersistedAssetsByIds(assetTypeId, Set(1L, id.head, id1.head))
+      assets should have size (2)
+      assets.forall(_.vvhTimeStamp > 0L) should be (true)
+
+      val after = service.getByBoundingBox(assetTypeId, BoundingRectangle(Point(0.0, 0.0), Point(120.0, 120.0)), Set(municipalityCode))
+      after should have size(2)
+      after.flatten.forall(_.id != 0) should be (true)
+      dynamicSession.rollback()
+
+    }
+  }
 }
