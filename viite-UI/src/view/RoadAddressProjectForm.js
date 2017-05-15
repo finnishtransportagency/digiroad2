@@ -34,7 +34,7 @@
 
     var buttons =
       '<div class="project-form form-controls">' +
-      '<button class="next btn btn-next" disabled>Seuraava</button>' +
+      '<button class="next btn btn-next">Seuraava</button>' +
       '<button class="save btn btn-tallena" disabled>Tallenna</button>' +
       '<button class="cancel btn btn-perruta">Peruuta</button>' +
       '</div>';
@@ -233,6 +233,10 @@
          projectCollection.checkIfReserved(data);
         return false;
        }
+      });
+
+      rootElement.on('click', '.project-form button.next', function(){
+
       });
 
 

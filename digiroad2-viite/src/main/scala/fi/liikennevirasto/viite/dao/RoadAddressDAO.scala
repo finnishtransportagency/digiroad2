@@ -879,10 +879,9 @@ object RoadAddressDAO {
   def getRoadAddressProjectLinks(projectId : Long): List[RoadAddressProjectLink] ={
     val query =
       s"""select PROJECT_LINK.ID, PROJECT_LINK.PROJECT_ID, PROJECT_LINK.TRACK_CODE, PROJECT_LINK.DISCONTINUITY_TYPE, PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.START_ADDR_M, PROJECT_LINK.END_ADDR_M, PROJECT_LINK.LRM_POSITION_ID, PROJECT_LINK.CREATED_BY, PROJECT_LINK.MODIFIED_BY, lrm_position.link_id, (LRM_POSITION.END_MEASURE - LRM_POSITION.START_MEASURE) as length, PROJECT_LINK.CALIBRATION_POINTS, PROJECT_LINK.STATUS
-         from PROJECT_LINK join ROAD_ADDRESS join LRM_POSITION
-         on LRM_POSITION.ID = ROAD_ADDRESS.LRM_POSITION_ID
-         on (PROJECT_LINK.ROAD_NUMBER = ROAD_ADDRESS.ROAD_NUMBER and PROJECT_LINK.ROAD_PART_NUMBER = ROAD_ADDRESS.ROAD_PART_NUMBER and ROAD_ADDRESS.LRM_POSITION_ID = PROJECT_LINK.LRM_POSITION_ID)
-         where (PROJECT_LINK.PROJECT_ID = $projectId) order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
+                  from PROJECT_LINK join LRM_POSITION
+                  on LRM_POSITION.ID = PROJECT_LINK.LRM_POSITION_ID
+                  where (PROJECT_LINK.PROJECT_ID = $projectId ) order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
     Q.queryNA[(Long, Long, Int, Int, Long, Long, Long, Long, Long, String, String, Long, Double, Long, Int)](query).list.map{
       case(projectLinkId, projectId, trackCode, discontinuityType, roadNumber, roadPartNumber, startAddrM, endAddrM, lrmPositionId, createdBy, modifiedBy, linkId, length, calibrationPoints, status) =>
         RoadAddressProjectLink(projectId, roadNumber, roadPartNumber, Track.apply(trackCode), Discontinuity.apply(discontinuityType), startAddrM, endAddrM, None, None, None, lrmPositionId,linkId,0L,0L, SideCode.apply(99), (None, None), false, Seq.empty[Point], projectId, LinkStatus.apply(status))
