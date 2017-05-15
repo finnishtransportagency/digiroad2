@@ -221,7 +221,7 @@
     };
 
     this.setValue = function(value) {
-      if (value != selection[0].value || Array.isArray(value)) {
+      if (value != selection[0].value) {
         var newGroup = _.map(selection, function(s) { return _.assign({}, s, { value: value }); });
         selection = collection.replaceSegments(selection, newGroup);
         dirty = true;
@@ -261,6 +261,8 @@
     }
 
     function requiredFieldsFilled(value) {
+      if (_.isUndefined(value)) return false;
+
       var requiredFields = _.filter(value, function (val) {
         return (val.publicId === "huoltotie_kayttooikeus") || (val.publicId === "huoltotie_huoltovastuu") || (val.publicId === "huoltotie_tiehoitokunta");
       });
@@ -268,14 +270,14 @@
     }
 
     this.setAValue = function (value) {
-      if ((value != selection[0].value) || (Array.isArray(value))) {
+      if (value != selection[0].value) {
         selection[0].value = value;
         eventbus.trigger(singleElementEvent('valueChanged'), self);
       }
     };
 
     this.setBValue = function (value) {
-      if ((value != selection[1].value) || (Array.isArray(value))) {
+      if (value != selection[1].value) {
         selection[1].value = value;
         eventbus.trigger(singleElementEvent('valueChanged'), self);
       }
@@ -314,19 +316,28 @@
     this.isSaveable = function() {
       var valuesDiffer = function () { return (selection[0].value !== selection[1].value); };
       if (this.isDirty()) {
-        if(Array.isArray(selection[0].value)){
-            if(this.isSplitOrSeparated() && areMandatoryFieldsFilled(selection)){
-                return validator(selection[0].value);
-            }
-            else if (!this.isSplitOrSeparated() && requiredFieldsFilled(selection[0].value)) {
-                return validator(selection[0].value);
-            }
-        }
-        else if (this.isSplitOrSeparated() && valuesDiffer()) {
-          return validator(selection[0].value) && validator(selection[1].value);
+        if (this.isSplitOrSeparated() && valuesDiffer()) {
+          switch(validator.name) {
+            case 'maintenanceRoad':
+              if(Array.isArray(selection[0].value) && Array.isArray(selection[1].value)) {
+                return areMandatoryFieldsFilled(selection);
+              }else if(Array.isArray(selection[0].value)) {
+                return requiredFieldsFilled(selection[0].value);
+              }else if(Array.isArray(selection[1].value)) {
+                return requiredFieldsFilled(selection[1].value);
+              }
+                break;
+            default:
+                return validator(selection[0].value) && validator(selection[1].value);
+          }
         }
         else if (!this.isSplitOrSeparated()) {
-          return validator(selection[0].value);
+          switch (validator.name) {
+            case 'maintenanceRoad':
+              return requiredFieldsFilled(selection[0].value);
+            default:
+              return validator(selection[0].value);
+          }
         }
       }
       return false;

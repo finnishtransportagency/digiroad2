@@ -328,6 +328,7 @@
       newTitle: 'Uusi rautateiden huoltotie',
       className: 'maintenanceRoad',
       isSeparable: false,
+      unit: '',
       editControlLabels: {
         title: '',
         enabled: 'Huoltotie',
