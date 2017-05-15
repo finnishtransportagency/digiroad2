@@ -66,6 +66,7 @@
       style: vectorLayerStyle
     });
     vectorLayer.setVisible(true);
+    vectorLayer.set('name', 'roadLayer');
     map.addLayer(vectorLayer);
 
     eventbus.on('map:moved', mapMovedHandler, this);

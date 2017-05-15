@@ -40,24 +40,27 @@
     var config = {layer: "Taustakartat_Harmaasavy"};
     var options = ol.source.WMTS.optionsFromCapabilities(result, config);
     var greyscaleLayer = new ol.layer.Tile({source: new ol.source.WMTS(options)});
-
+    greyscaleLayer.set('name','greyScaleLayer');
     var aerialMapLayer = new ol.layer.Tile(_.merge({
       source: new ol.source.XYZ(_.merge({
         tileGrid: new ol.tilegrid.TileGrid(_.merge({}, tileGridConfig, resolutionConfig))
       }, aerialMapConfig))
     }, layerConfig));
+    aerialMapLayer.set('name','aerialMapLayer');
 
     var backgroundMapLayer = new ol.layer.Tile(_.merge({
       source: new ol.source.XYZ(_.merge({
         tileGrid: new ol.tilegrid.TileGrid(_.merge({}, tileGridConfig, resolutionConfig))
       }, backgroundMapConfig))
     }, layerConfig));
+    backgroundMapLayer.set('name','backgroudMapLayer');
 
     var terrainMapLayer = new ol.layer.Tile(_.merge({
       source: new ol.source.XYZ(_.merge({
         tileGrid: new ol.tilegrid.TileGrid(_.merge({}, tileGridConfig, resolutionConfig))
       }, terrainMapConfig))
     }, layerConfig));
+    terrainMapLayer.set('name','terrainMapLayer');
     var tileMapLayers = {
       background: backgroundMapLayer,
       greyscale: greyscaleLayer,

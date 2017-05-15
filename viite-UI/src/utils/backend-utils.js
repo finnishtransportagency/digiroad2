@@ -153,5 +153,18 @@
       return self;
     };
 
+    this.withFloatingAdjacents = function(selectedFloatingData, selectedUnknownData) {
+      self.getFloatingAdjacent= function (roadLinkData, callback) {
+        if(roadLinkData.linkId === 1718151 || roadLinkData.linkId === 1718152) {
+          callback(selectedFloatingData);
+        } else if(roadLinkData.linkId === 500130202) {
+          callback(selectedUnknownData);
+        } else {
+          callback([]);
+        }
+      };
+      return self;
+    };
+
   };
 }(this));

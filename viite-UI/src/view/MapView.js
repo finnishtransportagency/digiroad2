@@ -45,6 +45,7 @@
     var vectorLayer = new ol.layer.Vector({
       source: centerMarkerLayer
     });
+    vectorLayer.set('name','mapViewVectorLayer');
 
     var addCenterMarkerLayerToMap = function(map) {
       map.addLayer(vectorLayer);
