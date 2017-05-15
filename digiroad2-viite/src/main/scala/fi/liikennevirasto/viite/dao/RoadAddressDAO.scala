@@ -89,11 +89,32 @@ object CalibrationCode {
 }
 case class CalibrationPoint(linkId: Long, segmentMValue: Double, addressMValue: Long)
 
+trait RoadAddress {
+  def id: Long
+  def roadNumber: Long
+  def roadPartNumber: Long
+  def track: Track
+  def discontinuity: Discontinuity
+  def startAddrMValue: Long
+  def endAddrMValue: Long
+  def startDate: Option[DateTime]
+  def endDate: Option[DateTime]
+  def modifiedBy: Option[String]
+  def lrmPositionId : Long
+  def linkId: Long
+  def startMValue: Double
+  def endMValue: Double
+  def sideCode: SideCode
+  def calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint])
+  def floating: Boolean
+  def geom: Seq[Point]
+}
+
 case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track,
                        discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
                        endDate: Option[DateTime] = None, modifiedBy: Option[String] = None, lrmPositionId : Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
                        calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false,
-                       geom: Seq[Point]) {
+                       geom: Seq[Point]) extends RoadAddress {
   val endCalibrationPoint = calibrationPoints._2
   val startCalibrationPoint = calibrationPoints._1
 }
@@ -102,9 +123,11 @@ case class RoadAddressProject(id: Long, status: RoadAddressProjectState, name: S
                               modifiedBy: String, startDate: DateTime, dateModified: DateTime, additionalInfo: String,
                               reservedParts: Seq[ReservedRoadPart])
 
-case class RoadAddressProjectLink(id : Long, projectId: Long, roadType: Long, discontinuityType: Discontinuity,
-                                  roadNumber: Long, roadPartNumber: Long, startAddrM: Long, endAddrM: Long,
-                                  lrmPositionId: Long, cratedBy: String, modifiedBy: String, linkId: Long, length: Double)
+case class RoadAddressProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track,
+                                  discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
+                                  endDate: Option[DateTime] = None, modifiedBy: Option[String] = None, lrmPositionId : Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
+                                  calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false,
+                                  geom: Seq[Point], projectId: Long, status: LinkStatus) extends RoadAddress
 
 case class RoadAddressProjectFormLine(startingLinkId: Long, projectId: Long, roadNumber: Long, roadPartNumber: Long, roadLength: Long, ely : Long, discontinuity: String)
 
@@ -119,6 +142,21 @@ case class CalibrationPointCreator(point: Point, value: Int)
 case class MissingRoadAddress(linkId: Long, startAddrMValue: Option[Long], endAddrMValue: Option[Long],
                               roadType: RoadType, roadNumber: Option[Long], roadPartNumber: Option[Long],
                               startMValue: Option[Double], endMValue: Option[Double], anomaly: Anomaly)
+
+
+sealed trait LinkStatus {
+  def value: Int
+}
+
+object LinkStatus {
+  val values = Set(NotHandled)
+  case object NotHandled extends LinkStatus {def value = 0}
+  def apply(intValue: Int): LinkStatus = {
+    values.find(_.value == intValue).getOrElse(NotHandled)
+  }
+}
+
+
 
 object RoadAddressDAO {
 
