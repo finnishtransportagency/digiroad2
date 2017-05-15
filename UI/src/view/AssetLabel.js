@@ -35,7 +35,7 @@
                         return feature;
                     }
                 }).
-                filter(function(feature){ return feature != undefined; }).
+                filter(function(feature){ return feature !== undefined; }).
                 value();
         };
 

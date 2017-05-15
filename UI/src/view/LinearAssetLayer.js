@@ -1,28 +1,3 @@
-(function(root) {
-  //TODO change this on the task DROTH-626
-  root.NumericalAssetLabel = function(){
-    AssetLabel.call(this);
-    var me = this;
-
-    this.getStyle = function(value){
-      return new ol.style.Style({
-        text : new ol.style.Text({
-          text : ""+value,
-          fill: new ol.style.Fill({
-            color: '#ffffff'
-          }),
-          font : '12px sans-serif'
-        })
-      });
-    };
-
-    this.getValue = function(asset){
-      return asset.value;
-    };
-
-  };
-})(this);
-
 window.LinearAssetLayer = function(params) {
   var map = params.map,
       application = params.application,
@@ -33,7 +8,7 @@ window.LinearAssetLayer = function(params) {
       singleElementEventCategory = params.singleElementEventCategory,
       style = params.style,
       layerName = params.layerName,
-      assetLabel = params.assetLabel// new NumericalAssetLabel();//params.assetLabel;
+      assetLabel = params.assetLabel;
 
 
   Layer.call(this, layerName, roadLayer);
@@ -304,9 +279,11 @@ window.LinearAssetLayer = function(params) {
     selectToolControl.deactivate();
     eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
     eventListener.listenTo(eventbus, 'map:clicked', me.displayConfirmMessage);
-    selectToolControl.addSelectionFeatures(style.renderFeatures(selectedLinearAsset.get()));
+    var features = style.renderFeatures(selectedLinearAsset.get());
+    if(assetLabel)
+        features = features.concat(assetLabel.renderFeaturesByLinearAssets(selectedLinearAsset.get()));
+    selectToolControl.addSelectionFeatures(features);
     decorateSelection();
-
   };
 
   this.layerStarted = function(eventListener) {
