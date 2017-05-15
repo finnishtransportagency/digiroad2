@@ -832,9 +832,8 @@ object RoadAddressDAO {
     val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure) values (?, ?, ?, ?, ?)")
     val addressPS = dynamicSession.prepareStatement("insert into PROJECT_LINK (id, project_id, lrm_position_id, " +
       "road_number, road_part_number, " +
-      "track_code, discontinuity_type, START_ADDR_M, END_ADDR_M, start_date, end_date, created_by, " +
-      "VALID_FROM, calibration_points) values (?, ?, ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), " +
-      "TO_DATE(?, 'YYYY-MM-DD'), ?, sysdate, ?)")
+      "track_code, discontinuity_type, START_ADDR_M, END_ADDR_M, created_by, " +
+      "calibration_points) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
     val ids = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= ${roadAddresses.size}""".as[Long].list
     roadAddresses.zip(ids).foreach { case ((address), (lrmId)) =>
       createLRMPosition(lrmPositionPS, lrmId, address.linkId, address.sideCode.value, address.startMValue, address.endMValue)
@@ -849,16 +848,8 @@ object RoadAddressDAO {
       addressPS.setLong(7, address.discontinuity.value)
       addressPS.setLong(8, address.startAddrMValue)
       addressPS.setLong(9, address.endAddrMValue)
-      addressPS.setString(10, address.startDate match {
-        case Some(dt) => dateFormatter.print(dt)
-        case None => ""
-      })
-      addressPS.setString(11, address.endDate match {
-        case Some(dt) => dateFormatter.print(dt)
-        case None => ""
-      })
-      addressPS.setString(12, address.modifiedBy.get)
-      addressPS.setDouble(13, CalibrationCode.getFromAddress(address).value)
+      addressPS.setString(10, address.modifiedBy.get)
+      addressPS.setDouble(11, CalibrationCode.getFromAddress(address).value)
       addressPS.addBatch()
     }
     lrmPositionPS.executeBatch()
