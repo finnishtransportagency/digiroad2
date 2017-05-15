@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite.dao
 
-import java.sql.Timestamp
+import java.sql.{PreparedStatement, Timestamp}
 import java.text.DecimalFormat
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
@@ -10,7 +10,7 @@ import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
-import fi.liikennevirasto.viite.{RoadType, ReservedRoadPart}
+import fi.liikennevirasto.viite.{ReservedRoadPart, RoadType}
 import fi.liikennevirasto.viite.dao.CalibrationCode._
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
@@ -73,7 +73,7 @@ object CalibrationCode {
     values.find(_.value == intValue).getOrElse(No)
   }
 
-  def getFromAddress(roadAddress: RoadAddress): CalibrationCode = {
+  def getFromAddress(roadAddress: BaseRoadAddress): CalibrationCode = {
     (roadAddress.calibrationPoints._1.isEmpty, roadAddress.calibrationPoints._2.isEmpty) match {
       case (true, true)   => No
       case (true, false)  => AtEnd
@@ -790,12 +790,7 @@ object RoadAddressDAO {
       "?,?,0.0,?,?,?,0.0,?)), ?, ?)")
     val ids = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= ${roadAddresses.size}""".as[Long].list
     roadAddresses.zip(ids).foreach { case ((address), (lrmId)) =>
-      lrmPositionPS.setLong(1, lrmId)
-      lrmPositionPS.setLong(2, address.linkId)
-      lrmPositionPS.setLong(3, address.sideCode.value)
-      lrmPositionPS.setDouble(4, address.startMValue)
-      lrmPositionPS.setDouble(5, address.endMValue)
-      lrmPositionPS.addBatch()
+      createLRMPosition(lrmPositionPS, lrmId, address.linkId, address.sideCode.value, address.startMValue, address.endMValue)
       addressPS.setLong(1, if (address.id == fi.liikennevirasto.viite.NewRoadAddress) {
         Sequences.nextViitePrimaryKeySeqValue
       } else address.id)
@@ -833,6 +828,56 @@ object RoadAddressDAO {
     roadAddresses.map(_.id)
   }
 
+  def create(roadAddresses: Seq[RoadAddressProjectLink]): Seq[Long] = {
+    val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure) values (?, ?, ?, ?, ?)")
+    val addressPS = dynamicSession.prepareStatement("insert into PROJECT_LINK (id, project_id, lrm_position_id, " +
+      "road_number, road_part_number, " +
+      "track_code, discontinuity_type, START_ADDR_M, END_ADDR_M, start_date, end_date, created_by, " +
+      "VALID_FROM, calibration_points) values (?, ?, ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), " +
+      "TO_DATE(?, 'YYYY-MM-DD'), ?, sysdate, ?)")
+    val ids = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= ${roadAddresses.size}""".as[Long].list
+    roadAddresses.zip(ids).foreach { case ((address), (lrmId)) =>
+      createLRMPosition(lrmPositionPS, lrmId, address.linkId, address.sideCode.value, address.startMValue, address.endMValue)
+      addressPS.setLong(1, if (address.id == fi.liikennevirasto.viite.NewRoadAddress) {
+        Sequences.nextViitePrimaryKeySeqValue
+      } else address.id)
+      addressPS.setLong(2, address.projectId)
+      addressPS.setLong(3, lrmId)
+      addressPS.setLong(4, address.roadNumber)
+      addressPS.setLong(5, address.roadPartNumber)
+      addressPS.setLong(6, address.track.value)
+      addressPS.setLong(7, address.discontinuity.value)
+      addressPS.setLong(8, address.startAddrMValue)
+      addressPS.setLong(9, address.endAddrMValue)
+      addressPS.setString(10, address.startDate match {
+        case Some(dt) => dateFormatter.print(dt)
+        case None => ""
+      })
+      addressPS.setString(11, address.endDate match {
+        case Some(dt) => dateFormatter.print(dt)
+        case None => ""
+      })
+      addressPS.setString(12, address.modifiedBy.get)
+      addressPS.setDouble(13, CalibrationCode.getFromAddress(address).value)
+      addressPS.addBatch()
+    }
+    lrmPositionPS.executeBatch()
+    addressPS.executeBatch()
+    lrmPositionPS.close()
+    addressPS.close()
+    roadAddresses.map(_.id)
+  }
+
+  private def createLRMPosition(lrmPositionPS: PreparedStatement, id: Long, linkId: Long, sideCode: Int,
+                                startM: Double, endM: Double): Unit = {
+    lrmPositionPS.setLong(1, id)
+    lrmPositionPS.setLong(2, linkId)
+    lrmPositionPS.setLong(3, sideCode)
+    lrmPositionPS.setDouble(4, startM)
+    lrmPositionPS.setDouble(5, endM)
+    lrmPositionPS.addBatch()
+  }
+
   def createRoadAddressProject(roadAddressProject: RoadAddressProject): Unit ={
     sqlu"""
            insert into project (id, state, name, ely, created_by, created_date, start_date ,modified_by, modified_date, add_info)
@@ -840,7 +885,8 @@ object RoadAddressDAO {
            """.execute
   }
 
-  def createRoadAddressProjectLink(id: Long, roadAddress: RoadAddress, roadAddressProject: RoadAddressProject) : Unit ={
+  def createRoadAddressProjectLink(id: Long, roadAddress: RoadAddressProjectLink, roadAddressProject: RoadAddressProject) : Unit ={
+
     sqlu"""
            insert into project_link (id, project_id, track_code, discontinuity_type, road_number, road_part_number, start_addr_m, end_addr_m, lrm_position_id, created_by, modified_by, created_date, modified_date)
            values (${id}, ${roadAddressProject.id}, ${roadAddress.track.value}, ${roadAddress.discontinuity.value}, ${roadAddress.roadNumber}, ${roadAddress.roadPartNumber}, ${roadAddress.startAddrMValue},
