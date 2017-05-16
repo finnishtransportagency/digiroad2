@@ -32,12 +32,18 @@
       return '<span class ="edit-mode-title">'+projectName+'</span>';
     };
 
-    var buttons =
-      '<div class="project-form form-controls">' +
-      '<button class="next btn btn-next" disabled>Seuraava</button>' +
-      '<button class="save btn btn-tallena" disabled>Tallenna</button>' +
-      '<button class="cancel btn btn-perruta">Peruuta</button>' +
-      '</div>';
+    var buttons = function(ready) {
+      var html = '<div class="project-form form-controls">' +
+        '<button class="next btn btn-next"';
+      if (!ready)
+        html = html + "disabled";
+      html = html +
+        '>Seuraava</button>' +
+        '<button class="save btn btn-tallena" disabled>Tallenna</button>' +
+        '<button class="cancel btn btn-perruta">Peruuta</button>' +
+        '</div>';
+      return html;
+  };
 
     var headerButton =
       '<div class="linear-asset form-controls">'+
@@ -78,7 +84,7 @@
         '</div></div>' +
 
         '</div> </div>'  +
-        '<footer>' + buttons + '</footer>');
+        '<footer>' + buttons(false) + '</footer>');
     };
 
     var openProjectTemplate = function(project, formInfo) {
@@ -116,7 +122,7 @@
         '<div id ="roadpartList">'+
         formInfo +
         '</div></div></div></div>'+
-        '<footer>' + buttons + '</footer>');
+        '<footer>' + buttons(formInfo !== '') + '</footer>');
     };
 
     var addSmallLabel = function(label){
@@ -201,32 +207,28 @@
         rootElement.find('.btn-next').prop("disabled", false);
       });
 
-      eventbus.on('roadAddress:projectSaved', function (result) {
-        currentProject = result.project;
-        var text = '';
-        _.each(result.formInfo, function(line){
-          text += '<div>' + ' '+
-            addSmallLabel(line.roadNumber)+ addSmallLabel(line.roadPartNumber)+ addSmallLabel(line.roadLength)+ addSmallLabel(line.discontinuity)+ addSmallLabel(line.ely) +
-            '</div>';
-        });
-        rootElement.html(openProjectTemplate(result.project, text));
-
-        jQuery('.modal-overlay').remove();
-        addDatePicker();
-        if(!_.isUndefined(result.projectAddresses)) {
-          eventbus.trigger('linkProperties:selectedProject', result.projectAddresses.linkId);
-        } else {
-          jQuery('.modal-overlay').remove();
-        }
-      });
-
       rootElement.on('click', '.project-form button.save', function() {
         var data = $('#roadAddressProject').get(0);
         applicationModel.addSpinner();
+        eventbus.once('roadAddress:projectSaved', function (result) {
+          currentProject = result.project;
+          var text = '';
+          _.each(result.formInfo, function(line){
+            text += '<div>' + ' '+
+              addSmallLabel(line.roadNumber)+ addSmallLabel(line.roadPartNumber)+ addSmallLabel(line.roadLength)+ addSmallLabel(line.discontinuity)+ addSmallLabel(line.ely) +
+              '</div>';
+          });
+          rootElement.html(openProjectTemplate(currentProject, text));
+
+          jQuery('.modal-overlay').remove();
+          addDatePicker();
+          if(!_.isUndefined(result.projectAddresses)) {
+            eventbus.trigger('linkProperties:selectedProject', result.projectAddresses.linkId);
+          }
+        });
         if(_.isUndefined(currentProject) || currentProject.id === 0){
           projectCollection.createProject(data, currentProject);
-        }
-        else{
+        } else {
           projectCollection.saveProject(data, currentProject);
         }
       });
