@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, RoadLinkService}
-import fi.liikennevirasto.viite.dao.{Discontinuity, RoadAddressDAO, RoadAddressProject, RoadAddressProjectState}
+import fi.liikennevirasto.viite.dao.{Discontinuity, RoadAddressDAO, RoadAddressProject, ProjectState}
 import org.joda.time.DateTime
 import org.mockito.Mockito.when
 import org.scalatest.{FunSuite, Matchers}
@@ -39,7 +39,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
 
   test ("create road link project without road parts") {
     runWithRollback{
-      val roadAddressProject = RoadAddressProject(0, RoadAddressProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart])
+      val roadAddressProject = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart])
       val (project, projLinkOpt, formLines, str) = projectService.createRoadLinkProject(roadAddressProject)
       projLinkOpt should be (None)
       formLines should have size (0)
@@ -53,7 +53,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       InUse,NormalLinkInterface)
     when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(5175306L))).thenReturn(Seq(roadlink))
     runWithRollback{
-      val roadAddressProject = RoadAddressProject(0, RoadAddressProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart])
+      val roadAddressProject = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart])
       val (project, projLinkOpt, formLines, str) = projectService.createRoadLinkProject(roadAddressProject)
       projLinkOpt should be (None)
       formLines should have size (0)
@@ -66,7 +66,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       val countCurrentProjects = projectService.getRoadAddressAllProjects()
       val id = 0
       val addresses:List[ReservedRoadPart]= List(ReservedRoadPart(5:Long, 203:Long, 203:Long, 5:Double, Discontinuity.apply("jatkuva"), 8:Long))
-      val roadAddressProject = RoadAddressProject(id, RoadAddressProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", addresses)
+      val roadAddressProject = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", addresses)
       projectService.createRoadLinkProject(roadAddressProject)
       val countAfterInsertProjects = projectService.getRoadAddressAllProjects()
       count = countCurrentProjects.size + 1
@@ -83,7 +83,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       val countCurrentProjects = projectService.getRoadAddressAllProjects()
       val id = 0
       val addresses = List(ReservedRoadPart(5:Long, 203:Long, 203:Long, 5:Double, Discontinuity.apply("jatkuva"), 8:Long))
-      val roadAddressProject = RoadAddressProject(id, RoadAddressProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List())
+      val roadAddressProject = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List())
       val saved = projectService.createRoadLinkProject(roadAddressProject)._1
       val changed = saved.copy(reservedParts = addresses)
       projectService.saveRoadLinkProject(changed)

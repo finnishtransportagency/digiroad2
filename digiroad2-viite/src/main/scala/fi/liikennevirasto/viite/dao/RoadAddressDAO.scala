@@ -799,7 +799,6 @@ object RoadAddressDAO {
     roadAddresses.map(_.id)
   }
 
-
   def createLRMPosition(lrmPositionPS: PreparedStatement, id: Long, linkId: Long, sideCode: Int,
                                 startM: Double, endM: Double): Unit = {
     lrmPositionPS.setLong(1, id)
@@ -856,6 +855,4 @@ object RoadAddressDAO {
              (r.valid_from is null or r.valid_from <= sysdate) AND (r.valid_to is null or r.valid_to > sysdate) AND track_code in (0,1)"""
      Q.queryNA[(Long,Long,Double,Long)](query).firstOption
     }
-
-
 }
