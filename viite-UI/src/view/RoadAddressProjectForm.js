@@ -39,8 +39,8 @@
         html = html + "disabled";
       html = html +
         '>Seuraava</button>' +
-        '<button class="save btn btn-tallena" disabled>Tallenna</button>' +
-        '<button class="cancel btn btn-perruta">Peruuta</button>' +
+        '<button class="save btn btn-save" disabled>Tallenna</button>' +
+        '<button class="cancel btn btn-cancel">Peruuta</button>' +
         '</div>';
       return html;
   };
@@ -205,6 +205,7 @@
 
       eventbus.on('roadAddress:projectValidationSucceed', function () {
         rootElement.find('.btn-next').prop("disabled", false);
+        rootElement.find('.btn-save').prop("disabled", false);
       });
 
       rootElement.on('click', '.project-form button.save', function() {

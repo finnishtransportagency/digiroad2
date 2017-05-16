@@ -59,11 +59,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         val reserved = ProjectDAO.roadPartReservedByProject(roadNumber, part)
         reserved match {
           case Some(projectname) => return Left(s"TIE $roadNumber OSA $part on jo varattuna projektissa $projectname, tarkista tiedot")
-          case None => {
+          case None =>
             val (roadpartID, linkID, length, discontinuity, ely, foundAddress) = getAddressPartinfo(roadNumber, part)
             if (foundAddress) // db search failed or we couldnt get info from VVH
               listOfAddressParts += ReservedRoadPart(roadpartID, roadNumber, part, length, Discontinuity.apply(discontinuity), ely)
-          }
         }
       }
       Right(listOfAddressParts)
@@ -75,15 +74,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       case Some((roadpartid, linkid, lenght, discontinuity)) => {
         val enrichment = false
         val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(linkid), enrichment)
-        val ely: Long = MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(roadLink.head.municipalityCode, 0)
-        if (ely == 0) {
-          return (0, 0, 0, "", 0, false)
+        val ely: Option[Long] = roadLink.headOption.map(rl => MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(rl.municipalityCode, 0))
+        ely match {
+          case Some(value) if ely.nonEmpty && ely.get != 0 => (roadpartid, linkid, lenght, Discontinuity.apply(discontinuity.toInt).description, value, true)
+          case _ => (0, 0, 0, "", 0, false)
         }
-        return (roadpartid, linkid, lenght, Discontinuity.apply(discontinuity.toInt).description, ely, true)
       }
-      case None => {
-        return (0, 0, 0, "", 0, false)
-      }
+      case None =>
+        (0, 0, 0, "", 0, false)
+
     }
   }
 
@@ -193,7 +192,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def getProjectsWithLinksById(projectId: Long): (RoadAddressProject, Seq[ProjectFormLine]) = {
+  def getProjectsWithReservedRoadParts(projectId: Long): (RoadAddressProject, Seq[ProjectFormLine]) = {
     withDynTransaction {
       val project:RoadAddressProject = ProjectDAO.getRoadAddressProjects(projectId).head
       val createdAddresses = ProjectDAO.getProjectLinks(project.id)
@@ -210,13 +209,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         addressFormLine
       })
 
-      val fullProjectInfo:RoadAddressProject = formInfo.length match {
-        case 0 => project
-        //case 1 => project.copy(roadNumber = formInfo.head.roadNumber, startPart = formInfo.head.roadPartNumber, endPart = formInfo.head.roadPartNumber)
-        case _ => project
-      }
-
-      (fullProjectInfo, formInfo)
+      (project, formInfo)
     }
   }
 

@@ -202,7 +202,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val roadAddressProject= RoadAddressProject(project.id, ProjectState.apply(project.status), project.name,
       user.username, DateTime.now(), "-", formatter.parseDateTime(project.startDate), DateTime.now(), project.additionalInfo, project.roadPartList)
     try {
-      val (projectSaved, addr, info, success) = projectService.saveRoadLinkProject(roadAddressProject)
+      val (projectSaved, addr, _, success) = projectService.saveRoadLinkProject(roadAddressProject)
+      val info = projectService.getProjectsWithReservedRoadParts(projectSaved.id)._2
       Map("project" -> projectToApi(projectSaved), "projectAddresses" -> addr, "formInfo" -> info,
         "success" -> success)
     } catch {
@@ -216,13 +217,11 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   get("/roadlinks/roadaddress/project/all/projectId/:id") {
     val projectId = params("id").toLong
-    val (projects, projectLinks) = projectService.getProjectsWithLinksById(projectId)
+    val (projects, projectLinks) = projectService.getProjectsWithReservedRoadParts(projectId)
     val project = Seq(projects).map(roadAddressProjectToApi)
     val projectsWithLinkId = project.head
     Map("projects" -> projectsWithLinkId,"linkId" -> projectLinks.headOption.map(_.startingLinkId), "projectLinks" -> projectLinks)
   }
-
-
 
   get("/roadlinks/roadaddress/project/validatereservedlink/"){
     val roadnumber = params("roadnumber").toLong
@@ -235,7 +234,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         case Left(err) => Map("success"-> err, "roadparts" -> Seq.empty)
         case Right(reservedRoadParts) => Map("success"-> "ok", "roadparts" -> reservedRoadParts.map(reservedRoadPartToApi))
       }
-
     } else
       Map("success"-> errorMessageOpt.get)
   }
