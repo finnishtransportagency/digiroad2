@@ -230,6 +230,8 @@
     };
 
     function isValueDifferent(selection){
+      if(selection.length != 2) return false;
+
       var nonEmptyValues = _.map(selection, function (select) {
         return  _.filter(select.value, function(val){ return !_.isEmpty(val.value); });
       });
@@ -243,30 +245,21 @@
       return _.contains(mapped, true);
     }
 
-
-    function areMandatoryFieldsFilled(selection) {
-      var requiredFields = _.map(selection, function(select){
-        return _.filter(select.value, function (val) {
-          return (val.publicId === "huoltotie_kayttooikeus") || (val.publicId === "huoltotie_huoltovastuu") || (val.publicId === "huoltotie_tiehoitokunta");
-        });
+    function getRequiredFields(properties){
+      return _.filter(properties, function (property) {
+        return (property.publicId === "huoltotie_kayttooikeus") || (property.publicId === "huoltotie_huoltovastuu") || (property.publicId === "huoltotie_tiehoitokunta");
       });
-      var containsEmpty = _.map(requiredFields, function (req) {
-        return (_.some(req, function (fields) {
-          return fields.value === '';
-        }));
-      });
-      return !(_.some(containsEmpty, function (value) {
-        return value;
-      })) && isValueDifferent(selection);
     }
 
-    function requiredFieldsFilled(value) {
-      if (_.isUndefined(value)) return false;
+    function checkFormMandatoryFields(formSelection) {
+        if (_.isUndefined(formSelection.value)) return false;
+        var requiredFields = getRequiredFields(formSelection.value);
+        return !_.some(requiredFields, function(fields){ return fields.value === ''; });
+    }
 
-      var requiredFields = _.filter(value, function (val) {
-        return (val.publicId === "huoltotie_kayttooikeus") || (val.publicId === "huoltotie_huoltovastuu") || (val.publicId === "huoltotie_tiehoitokunta");
-      });
-      return !(_.some(requiredFields, function(fields){ return fields.value === ''; }));
+    function checkFormsMandatoryFields(formSelections) {
+      var mandatorySelected = !_.some(formSelections, function(formSelection){ return !checkFormMandatoryFields(formSelection); });
+      return mandatorySelected && isValueDifferent(formSelections);
     }
 
     this.setAValue = function (value) {
@@ -316,29 +309,16 @@
     this.isSaveable = function() {
       var valuesDiffer = function () { return (selection[0].value !== selection[1].value); };
       if (this.isDirty()) {
-        if (this.isSplitOrSeparated() && valuesDiffer()) {
-          switch(validator.name) {
-            case 'maintenanceRoad':
-              if(Array.isArray(selection[0].value) && Array.isArray(selection[1].value)) {
-                return areMandatoryFieldsFilled(selection);
-              }else if(Array.isArray(selection[0].value)) {
-                return requiredFieldsFilled(selection[0].value);
-              }else if(Array.isArray(selection[1].value)) {
-                return requiredFieldsFilled(selection[1].value);
-              }
-                break;
-            default:
-                return validator(selection[0].value) && validator(selection[1].value);
-          }
-        }
-        else if (!this.isSplitOrSeparated()) {
-          switch (validator.name) {
-            case 'maintenanceRoad':
-              return requiredFieldsFilled(selection[0].value);
-            default:
-              return validator(selection[0].value);
-          }
-        }
+      }
+      switch(validator.name){
+        case 'maintenanceRoad':
+          return checkFormsMandatoryFields(selection);
+        default:
+          if (this.isSplitOrSeparated() && valuesDiffer())
+            return validator(selection[0].value) && validator(selection[1].value);
+
+          if(!this.isSplitOrSeparated())
+            return validator(selection[0].value);
       }
       return false;
     };
