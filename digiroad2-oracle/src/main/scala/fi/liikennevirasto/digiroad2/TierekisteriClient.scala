@@ -203,10 +203,10 @@ trait TierekisteriClient{
     }
   }
 
-  protected def post(url: String, trMassTransitStop: TierekisteriType, createJson: (TierekisteriType) => StringEntity): Option[TierekisteriError] = {
+  protected def post(url: String, trEntity: TierekisteriType, createJson: (TierekisteriType) => StringEntity): Option[TierekisteriError] = {
     val request = new HttpPost(url)
     request.addHeader("X-OTH-Authorization", "Basic " + auth.getAuthInBase64)
-    request.setEntity(createJson(trMassTransitStop))
+    request.setEntity(createJson(trEntity))
     val response = client.execute(request)
     try {
       val statusCode = response.getStatusLine.getStatusCode
@@ -225,10 +225,10 @@ trait TierekisteriClient{
     }
   }
 
-  protected def put(url: String, tnMassTransitStop: TierekisteriType, createJson: (TierekisteriType) => StringEntity): Option[TierekisteriError] = {
+  protected def put(url: String, trEntity: TierekisteriType, createJson: (TierekisteriType) => StringEntity): Option[TierekisteriError] = {
     val request = new HttpPut(url)
     request.addHeader("X-OTH-Authorization", "Basic " + auth.getAuthInBase64)
-    request.setEntity(createJson(tnMassTransitStop))
+    request.setEntity(createJson(trEntity))
     val response = client.execute(request)
     try {
       val statusCode = response.getStatusLine.getStatusCode
@@ -331,11 +331,11 @@ trait TierekisteriClient{
   }
 }
 
-class TierekisteriMassTransitStopClient(_tierekisteriRestApiEndPoint: String, _tierekisteriEnabled: Boolean, _client: CloseableHttpClient) extends TierekisteriClient{
+class TierekisteriMassTransitStopClient(trEndPoint: String, trEnabled: Boolean, httpClient: CloseableHttpClient) extends TierekisteriClient{
 
-  override def tierekisteriRestApiEndPoint: String = _tierekisteriRestApiEndPoint
-  override def tierekisteriEnabled: Boolean = _tierekisteriEnabled
-  override def client: CloseableHttpClient = _client
+  override def tierekisteriRestApiEndPoint: String = trEndPoint
+  override def tierekisteriEnabled: Boolean = trEnabled
+  override def client: CloseableHttpClient = httpClient
   type TierekisteriType = TierekisteriMassTransitStop
 
   private val serviceName = "pysakit/"
@@ -536,11 +536,11 @@ class TierekisteriMassTransitStopClient(_tierekisteriRestApiEndPoint: String, _t
   }
 }
 
-class TierekisteriAssetDataClient(_tierekisteriRestApiEndPoint: String, _tierekisteriEnabled: Boolean, _client: CloseableHttpClient) extends TierekisteriClient {
+class TierekisteriAssetDataClient(trEndPoint: String, trEnable: Boolean, httpClient: CloseableHttpClient) extends TierekisteriClient {
 
-  override def tierekisteriRestApiEndPoint: String = _tierekisteriRestApiEndPoint
-  override def tierekisteriEnabled: Boolean = _tierekisteriEnabled
-  override def client: CloseableHttpClient = _client
+  override def tierekisteriRestApiEndPoint: String = trEndPoint
+  override def tierekisteriEnabled: Boolean = trEnable
+  override def client: CloseableHttpClient = httpClient
   type TierekisteriType = TierekisteriAssetData
 
   private val serviceName = "tietolajit/"

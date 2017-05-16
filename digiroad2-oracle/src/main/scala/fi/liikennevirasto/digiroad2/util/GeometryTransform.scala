@@ -287,7 +287,7 @@ class GeometryTransform {
     if (Track.apply(track).eq(Track.Unknown)) {
       throw new VKMClientException("Invalid value for Track (%s): %d".format(VkmTrackCode, track))
     }
-    fi.liikennevirasto.digiroad2.util.RoadAddress(municipalityCode.map(_.toString), road, roadPart, Track.apply(track), mValue, deviation)
+    RoadAddress(municipalityCode.map(_.toString), road, roadPart, Track.apply(track), mValue, deviation)
   }
 
   private def mapCoordinates(data: Map[String, Any]) = {
