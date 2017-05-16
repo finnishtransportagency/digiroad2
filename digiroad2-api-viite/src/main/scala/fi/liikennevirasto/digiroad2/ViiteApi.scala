@@ -185,7 +185,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
     val roadAddressProject= RoadAddressProject(project.id, RoadAddressProjectState.apply(project.status), project.name,
       user.username, DateTime.now(), "-", formatter.parseDateTime(project.startDate), DateTime.now(), project.additionalInfo, project.roadPartList)
-    val (projectSaved, addr, info, success) = roadAddressService.saveRoadLinkProject(roadAddressProject)
+    val (projectSaved, addr, info, success) = roadAddressService.createRoadLinkProject(roadAddressProject)
     Map("project" -> projectToApi(projectSaved), "projectAddresses" -> addr, "formInfo" -> info,
       "success" -> success)
   }

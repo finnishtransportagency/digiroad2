@@ -531,7 +531,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     * @return Optional error message, None if no error
     */
   def checkRoadAddressNumberAndSEParts(roadNumber: Long, roadStartPart: Long, roadEndPart: Long): Option[String] = {
-    OracleDatabase.withDynTransaction {
+    withDynTransaction {
       if (!RoadAddressDAO.roadPartExists(roadNumber, roadStartPart)) {
         if (!RoadAddressDAO.roadNumberExists(roadNumber)) {
           Some("Tienumeroa ei ole olemassa, tarkista tiedot")
@@ -546,18 +546,16 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   private def createNewProjectToDB(roadAddressProject: RoadAddressProject): RoadAddressProject = {
-    OracleDatabase.withDynTransaction {
-      val id = Sequences.nextViitePrimaryKeySeqValue
-      val project = roadAddressProject.copy(id = id)
-      RoadAddressDAO.createRoadAddressProject(project)
-      project
-    }
+    val id = Sequences.nextViitePrimaryKeySeqValue
+    val project = roadAddressProject.copy(id = id)
+    RoadAddressDAO.createRoadAddressProject(project)
+    project
   }
 
   private def projectFound(roadAddressProject: RoadAddressProject): Option[RoadAddressProject] = {
     val newRoadAddressProject=0
     if (roadAddressProject.id==newRoadAddressProject) return None
-    OracleDatabase.withDynTransaction {
+    withDynTransaction {
       return RoadAddressDAO.getRoadAddressProjectById(roadAddressProject.id)
     }
   }
@@ -689,17 +687,20 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   private def createNewRoadLinkProject(roadAddressProject: RoadAddressProject) = {
-    val project = createNewProjectToDB(roadAddressProject)
-    if (project.reservedParts.isEmpty) //check if new project has links
-    {
-      val (forminfo, createdlink) = createFormOfReservedLinksToSavedRoadParts(project)
-      (project, None, forminfo, "ok")
-    } else { //project with links success field contains errors if any, else "ok"
-    val errorMessage = addLinksToProject(project)
+    withDynTransaction {
+      val project = createNewProjectToDB(roadAddressProject)
+      if (project.reservedParts.isEmpty) //check if new project has links
+      {
+        val (forminfo, createdlink) = createFormOfReservedLinksToSavedRoadParts(project)
+        (project, None, forminfo, "ok")
+      } else {
+        //project with links success field contains errors if any, else "ok"
+        val errorMessage = addLinksToProject(project)
 
-      val (forminfo, createdlink) = createFormOfReservedLinksToSavedRoadParts(project)
+        val (forminfo, createdlink) = createFormOfReservedLinksToSavedRoadParts(project)
 
-      (project, createdlink, forminfo,  errorMessage.getOrElse("ok"))
+        (project, createdlink, forminfo, errorMessage.getOrElse("ok"))
+      }
     }
   }
 

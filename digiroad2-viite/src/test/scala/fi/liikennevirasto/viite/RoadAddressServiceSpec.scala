@@ -352,6 +352,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   }
 
   test("create and get projects by id") {
+    var count = 0
     runWithRollback {
       val countCurrentProjects = roadAddressService.getRoadAddressAllProjects()
       val id = 0
@@ -359,12 +360,16 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val roadAddressProject = RoadAddressProject(id, RoadAddressProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", addresses)
       roadAddressService.createRoadLinkProject(roadAddressProject)
       val countAfterInsertProjects = roadAddressService.getRoadAddressAllProjects()
-      val count = countCurrentProjects.size + 1
+      count = countCurrentProjects.size + 1
       countAfterInsertProjects.size should be (count)
+    }
+    runWithRollback {
+      roadAddressService.getRoadAddressAllProjects().size should be (count-1)
     }
   }
 
   test("save project") {
+    var count = 0
     runWithRollback {
       val countCurrentProjects = roadAddressService.getRoadAddressAllProjects()
       val id = 0
@@ -374,9 +379,10 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val changed = saved.copy(reservedParts = addresses)
       roadAddressService.saveRoadLinkProject(changed)
       val countAfterInsertProjects = roadAddressService.getRoadAddressAllProjects()
-      val count = countCurrentProjects.size + 1
+      count = countCurrentProjects.size + 1
       countAfterInsertProjects.size should be (count)
     }
+    runWithRollback { roadAddressService.getRoadAddressAllProjects() } should have size (count - 1)
   }
 
   test("transferRoadAddress should keep calibration points") {
@@ -406,7 +412,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       when(mockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(floatingLinks.map(roadAddressLinkToHistoryLink))
       when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[BoundingRectangle])).thenReturn(targetLinks.map(roadAddressLinkToRoadLink))
       val newLinks = roadAddressService.transferRoadAddress(floatingLinks, targetLinks, User(1L, "foo", new Configuration()))
-      newLinks.map(prettyPrint).foreach(println)
+//      newLinks.map(prettyPrint).foreach(println)
       newLinks should have size (2)
       newLinks.filter(_.linkId == 15171208).head.endCalibrationPoint should be (None)
       newLinks.filter(_.linkId == 15171209).head.startCalibrationPoint should be (None)
@@ -470,7 +476,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       replacement1t.size should be(1)
       val result1 = roadAddressService.transferRoadAddress(replacement1s, replacement1t, User(0L, "foo", Configuration())).sortBy(_.startAddrMValue)
       sanityCheck(result1)
-      result1.map(prettyPrint).foreach(println)
+//      result1.map(prettyPrint).foreach(println)
       result1.head.startMValue should be(0.0)
       result1.head.startAddrMValue should be(replacement1s.map(_.startAddressM).min)
       result1.last.endAddrMValue should be(replacement1s.map(_.endAddressM).max)
@@ -481,7 +487,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       replacement2t.size should be(1)
       val result2 = roadAddressService.transferRoadAddress(replacement2s, replacement2t, User(0L, "foo", Configuration())).sortBy(_.startAddrMValue)
       sanityCheck(result2)
-      result2.map(prettyPrint).foreach(println)
+//      result2.map(prettyPrint).foreach(println)
 
       result2.head.startMValue should be(0.0)
       result2.head.startAddrMValue should be(replacement2s.map(_.startAddressM).min)
@@ -528,8 +534,8 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     sanityCheck(result)
     val targetLinks = targets.map(roadAddressLinkToRoadLink)
     val linkResult = result.map(ra => RoadAddressLinkBuilder.build(targetLinks.find(_.linkId == ra.linkId).get, ra))
-    result.map(prettyPrint).foreach(println)
-    linkResult.map(prettyPrint).foreach(println)
+//    result.map(prettyPrint).foreach(println)
+//    linkResult.map(prettyPrint).foreach(println)
     val link456 = linkResult.find(_.linkId == 456L)
     val link457 = linkResult.find(_.linkId == 457L)
     link456.nonEmpty should be(true)
@@ -569,7 +575,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     link456.get.endAddrMValue should be (142)
     link457.get.endAddrMValue should be (121)
     result.forall(l => l.startCalibrationPoint.isEmpty && l.endCalibrationPoint.isEmpty) should be (true)
-    result.foreach(println)
+//    result.foreach(println)
     result.forall(l => l.sideCode == SideCode.AgainstDigitizing) should be (true)
   }
 
@@ -695,7 +701,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       RoadAddressDAO.create(sources.map(roadAddressLinkToRoadAddress(true)))
       roadAddressService.transferRoadAddress(sources, targets, User(0L, "foo", Configuration()))
     }
-    result.map(prettyPrint).foreach(println)
+//    result.map(prettyPrint).foreach(println)
     sanityCheck(result)
     val link456 = result.find(_.linkId == 456L)
     val link457 = result.find(_.linkId == 457L)
