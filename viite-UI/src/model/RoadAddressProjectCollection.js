@@ -158,6 +158,7 @@
           } else {
             addToCurrentRoadPartList(validationResult);
             updateFormInfo(parseroadpartinfoToresultRow());
+            eventbus.trigger('roadAddress:projectValidationSucceed');
           }
         });
     };
