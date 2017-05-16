@@ -230,7 +230,7 @@
     };
 
     function isValueDifferent(selection){
-      if(selection.length != 2) return false;
+      if(selection.length == 1) return true;
 
       var nonEmptyValues = _.map(selection, function (select) {
         return  _.filter(select.value, function(val){ return !_.isEmpty(val.value); });
@@ -252,14 +252,14 @@
     }
 
     function checkFormMandatoryFields(formSelection) {
-        if (_.isUndefined(formSelection.value)) return false;
+        if (_.isUndefined(formSelection.value)) return true;
         var requiredFields = getRequiredFields(formSelection.value);
         return !_.some(requiredFields, function(fields){ return fields.value === ''; });
     }
 
     function checkFormsMandatoryFields(formSelections) {
       var mandatorySelected = !_.some(formSelections, function(formSelection){ return !checkFormMandatoryFields(formSelection); });
-      return mandatorySelected && isValueDifferent(formSelections);
+      return mandatorySelected;
     }
 
     this.setAValue = function (value) {
@@ -309,16 +309,18 @@
     this.isSaveable = function() {
       var valuesDiffer = function () { return (selection[0].value !== selection[1].value); };
       if (this.isDirty()) {
-      }
-      switch(validator.name){
-        case 'maintenanceRoad':
-          return checkFormsMandatoryFields(selection);
-        default:
-          if (this.isSplitOrSeparated() && valuesDiffer())
-            return validator(selection[0].value) && validator(selection[1].value);
+        switch (validator.name) {
+          case 'maintenanceRoad':
+            if(this.isSplitOrSeparated())
+              return checkFormsMandatoryFields(selection) && isValueDifferent(selection);
+            return checkFormsMandatoryFields(selection);
+          default:
+            if (this.isSplitOrSeparated() && valuesDiffer())
+              return validator(selection[0].value) && validator(selection[1].value);
 
-          if(!this.isSplitOrSeparated())
-            return validator(selection[0].value);
+            if (!this.isSplitOrSeparated())
+              return validator(selection[0].value);
+        }
       }
       return false;
     };
