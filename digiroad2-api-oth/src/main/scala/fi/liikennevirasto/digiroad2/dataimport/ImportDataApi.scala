@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.dataimport
 
 import fi.liikennevirasto.digiroad2.Digiroad2Context.{Digiroad2ServerOriginatedResponseHeader, userProvider}
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
-import fi.liikennevirasto.digiroad2.dataimport.DataCsvImporter.RoadLinkCsvImporter.{ExcludedLink, ImportResult}
+import fi.liikennevirasto.digiroad2.dataimport.DataCsvImporter.RoadLinkCsvImporter.{ImportResult}
 import fi.liikennevirasto.digiroad2.{Digiroad2Context, VVHClient}
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.oracle.ImportLogService
@@ -17,7 +17,6 @@ class ImportDataApi extends ScalatraServlet with FileUploadSupport with JacksonJ
   private val CSV_LOG_PATH = "/tmp/csv_data_import_logs/"
   private val  ROAD_LINK_LOG = "road link import"
   private val csvImporter = new RoadLinkCsvImporter {
-   // override val roadLinkService: RoadLinkService = Digiroad2Context.roadLinkService
     override val userProvider: UserProvider = Digiroad2Context.userProvider
     override val vvhClient: VVHClient = Digiroad2Context.vvhClient
   }

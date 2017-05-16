@@ -389,21 +389,9 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     vvhClient.fetchByLinkId(id).map(_.geometry)
   }
 
-
-//  private def updateExistingLinkPropertyRow(table: String, column: String, linkId: Long, username: Option[String], existingValue: Int, value: Int) = {
-//    if (existingValue != value) {
-//      sqlu"""update #$table
-//               set #$column = $value,
-//                   modified_date = current_timestamp,
-//                   modified_by = $username
-//               where link_id = $linkId""".execute
-//    }
-//  }
-
   protected def setLinkProperty(table: String, column: String, value: Int, linkId: Long, username: Option[String],
                                 optionalVVHValue: Option[Int] = None, latestModifiedAt: Option[String],
                                 latestModifiedBy: Option[String]) = {
-    //val optionalExistingValue: Option[Int] = sql"""select #$column from #$table where link_id = $linkId""".as[Int].firstOption
     val optionalExistingValue: Option[Int] = RoadLinkServiceDAO.getLinkProperty(table, column, linkId)
     (optionalExistingValue, optionalVVHValue) match {
       case (Some(existingValue), _) =>
@@ -422,10 +410,6 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
                                  column: String, linkId: Long, username: Option[String], value: Int, latestModifiedAt: Option[String],
                                  latestModifiedBy: Option[String]) = {
     if (latestModifiedAt.isEmpty) {
-//      sqlu"""insert into #$table (id, link_id, #$column, modified_by)
-//                 select primary_key_seq.nextval, $linkId, $value, $username
-//                 from dual
-//                 where not exists (select * from #$table where link_id = $linkId)""".execute
       RoadLinkServiceDAO.insertNewLinkProperty(table, column, linkId, username, value)
     } else{
       try {
@@ -481,24 +465,6 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     ).toMap
 
   }
-// TODO não estão a ser usadas, faz sentido remover??? Could I delete that, isn't in use?
-//  private def fetchTrafficDirections(idTableName: String): Seq[(Long, Int, DateTime, String)] = {
-//    sql"""select t.link_id, t.traffic_direction, t.modified_date, t.modified_by
-//            from traffic_direction t
-//            join #$idTableName i on i.id = t.link_id""".as[(Long, Int, DateTime, String)].list
-//  }
-//
-//  private def fetchFunctionalClasses(idTableName: String): Seq[(Long, Int, DateTime, String)] = {
-//    sql"""select f.link_id, f.functional_class, f.modified_date, f.modified_by
-//            from functional_class f
-//            join #$idTableName i on i.id = f.link_id""".as[(Long, Int, DateTime, String)].list
-//  }
-//
-//  private def fetchLinkTypes(idTableName: String): Seq[(Long, Int, DateTime, String)] = {
-//    sql"""select l.link_id, l.link_type, l.modified_date, l.modified_by
-//            from link_type l
-//            join #$idTableName i on i.id = l.link_id""".as[(Long, Int, DateTime, String)].list
-//  }
 
   def getViiteRoadLinksHistoryFromVVH(roadAddressesLinkIds: Set[Long]): Seq[VVHHistoryRoadLink] = {
     if (roadAddressesLinkIds.nonEmpty) {
