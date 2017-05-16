@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
-import fi.liikennevirasto.viite.{ReservedRoadPart, RoadAddressService}
+import fi.liikennevirasto.viite.{ProjectService, ReservedRoadPart, RoadAddressService}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{RoadAddressLink, RoadAddressLinkPartitioner}
 import org.joda.time.DateTime
@@ -32,6 +32,7 @@ case class RoadAddressProjectExtractor(id: Long, status: Long, name: String, sta
 
 class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
                val roadAddressService: RoadAddressService,
+               val projectService: ProjectService,
                val userProvider: UserProvider = Digiroad2Context.userProvider,
                val deploy_date: String = Digiroad2Context.deploy_date
               )
@@ -185,17 +186,17 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
     val roadAddressProject= RoadAddressProject(project.id, RoadAddressProjectState.apply(project.status), project.name,
       user.username, DateTime.now(), "-", formatter.parseDateTime(project.startDate), DateTime.now(), project.additionalInfo, project.roadPartList)
-    val (projectSaved, addr, info, success) = roadAddressService.createRoadLinkProject(roadAddressProject)
+    val (projectSaved, addr, info, success) = projectService.createRoadLinkProject(roadAddressProject)
     Map("project" -> projectToApi(projectSaved), "projectAddresses" -> addr, "formInfo" -> info,
       "success" -> success)
   }
   get("/roadlinks/roadaddress/project/all") {
-    roadAddressService.getRoadAddressAllProjects().map(roadAddressProjectToApi)
+    projectService.getRoadAddressAllProjects().map(roadAddressProjectToApi)
   }
 
   get("/roadlinks/roadaddress/project/all/projectId/:id") {
     val projectId = params("id").toLong
-    val (projects, projectLinks) = roadAddressService.getProjectsWithLinksById(projectId)
+    val (projects, projectLinks) = projectService.getProjectsWithLinksById(projectId)
     val project = Seq(projects).map(roadAddressProjectToApi)
     val projectsWithLinkId = project.head
     Map("projects" -> projectsWithLinkId,"linkId" -> projectLinks.headOption.map(_.startingLinkId), "projectLinks" -> projectLinks)
@@ -207,9 +208,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val roadnumber = params("roadnumber").toLong
     val startPart = params("startpart").toLong
     val endPart = params("endpart").toLong
-    val errorMessageOpt=roadAddressService.checkRoadAddressNumberAndSEParts(roadnumber,startPart,endPart)
+    val errorMessageOpt=projectService.checkRoadAddressNumberAndSEParts(roadnumber,startPart,endPart)
     if (errorMessageOpt.isEmpty) {
-      val reservedParts=roadAddressService.checkReservability(roadnumber,startPart,endPart)
+      val reservedParts=projectService.checkReservability(roadnumber,startPart,endPart)
       reservedParts match {
         case Left(err) => Map("success"-> err, "roadparts" -> Seq.empty)
         case Right(reservedRoadParts) => Map("success"-> "ok", "roadparts" -> reservedRoadParts.map(reservedRoadPartToApi))

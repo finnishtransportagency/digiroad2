@@ -294,46 +294,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     }
   }
 
-  ignore ("save road link project and get form info rollback doesn't rollback") {
-    val roadlink = RoadLink(5175306,Seq(Point(535605.272,6982204.22,85.90899999999965))
-      ,540.3960283713503,State,99,TrafficDirection.AgainstDigitizing,UnknownLinkType,Some("25.06.2015 03:00:00"), Some("vvh_modified"),Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
-      InUse,NormalLinkInterface)
-    when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(5175306L))).thenReturn(Seq(roadlink))
-    runWithRollback{
-      val id = Sequences.nextViitePrimaryKeySeqValue
-
-      val roadAddressProject = RoadAddressProject(id, RoadAddressProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart])
-      val (project, projLinkOpt, formLines, str) = roadAddressService.saveRoadLinkProject(roadAddressProject)
-      projLinkOpt should be (None)
-      formLines should have size (1)
-    }
-  }
-
-  ignore("save road link project without values - rollback doesn't rollback") {
-    runWithRollback{
-      val id = Sequences.nextViitePrimaryKeySeqValue
-      val roadAddressProject = RoadAddressProject(id, RoadAddressProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart])
-      val (project, projLinkOpt, formLines, str) = roadAddressService.saveRoadLinkProject(roadAddressProject)
-      projLinkOpt should be (None)
-      formLines should have size (0)
-
-    }
-  }
-
-  ignore("save road link project without valid roadParts - rollback doesn't rollback") {
-    val roadlink = RoadLink(5175306,Seq(Point(535605.272,6982204.22,85.90899999999965))
-      ,540.3960283713503,State,99,TrafficDirection.AgainstDigitizing,UnknownLinkType,Some("25.06.2015 03:00:00"), Some("vvh_modified"),Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
-      InUse,NormalLinkInterface)
-    when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(5175306L))).thenReturn(Seq(roadlink))
-    runWithRollback{
-      val id = Sequences.nextViitePrimaryKeySeqValue
-      val roadAddressProject = RoadAddressProject(id, RoadAddressProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart])
-      val (project, projLinkOpt, formLines, str) = roadAddressService.saveRoadLinkProject(roadAddressProject)
-      projLinkOpt should be (None)
-      formLines should have size (0)
-    }
-  }
-
   ignore("merge road addresses - ignored because rollback doesn't do what it's supposed to do") {
     runWithRollback {
       val addressList = RoadAddressDAO.fetchByLinkId(Set(5171285L, 5170935L, 5171863L))
@@ -351,39 +311,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     }
   }
 
-  test("create and get projects by id") {
-    var count = 0
-    runWithRollback {
-      val countCurrentProjects = roadAddressService.getRoadAddressAllProjects()
-      val id = 0
-      val addresses:List[ReservedRoadPart]= List(ReservedRoadPart(5:Long, 203:Long, 203:Long, 5:Double, Discontinuity.apply("jatkuva"), 8:Long))
-      val roadAddressProject = RoadAddressProject(id, RoadAddressProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", addresses)
-      roadAddressService.createRoadLinkProject(roadAddressProject)
-      val countAfterInsertProjects = roadAddressService.getRoadAddressAllProjects()
-      count = countCurrentProjects.size + 1
-      countAfterInsertProjects.size should be (count)
-    }
-    runWithRollback {
-      roadAddressService.getRoadAddressAllProjects().size should be (count-1)
-    }
-  }
-
-  test("save project") {
-    var count = 0
-    runWithRollback {
-      val countCurrentProjects = roadAddressService.getRoadAddressAllProjects()
-      val id = 0
-      val addresses = List(ReservedRoadPart(5:Long, 203:Long, 203:Long, 5:Double, Discontinuity.apply("jatkuva"), 8:Long))
-      val roadAddressProject = RoadAddressProject(id, RoadAddressProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List())
-      val saved = roadAddressService.createRoadLinkProject(roadAddressProject)._1
-      val changed = saved.copy(reservedParts = addresses)
-      roadAddressService.saveRoadLinkProject(changed)
-      val countAfterInsertProjects = roadAddressService.getRoadAddressAllProjects()
-      count = countCurrentProjects.size + 1
-      countAfterInsertProjects.size should be (count)
-    }
-    runWithRollback { roadAddressService.getRoadAddressAllProjects() } should have size (count - 1)
-  }
 
   test("transferRoadAddress should keep calibration points") {
     runWithRollback {
