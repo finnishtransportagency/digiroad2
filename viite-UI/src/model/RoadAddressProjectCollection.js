@@ -30,7 +30,7 @@
       backend.abortLoadingProject();
     };
 
-    this.createProject = function (data, currentProject) {
+    this.saveProject = function (data, currentProject) {
       var projectid = 0;
       if (projectinfo !== undefined) {
         projectid = projectinfo.id;
@@ -70,14 +70,14 @@
 
       var dataJson = {
         id: 0,
-        status: currentProject.status,
+        status: 1,
         name: data[0].value,
         startDate: data[1].value,
         additionalInfo: data[2].value,
         roadPartList: dirtyRoadSegmentLst
       };
 
-      backend.saveRoadAddressProject(dataJson, function (result) {
+      backend.createRoadAddressProject(dataJson, function (result) {
         if (result.success === "ok") {
           projectinfo = {
             id: result.project.id,
