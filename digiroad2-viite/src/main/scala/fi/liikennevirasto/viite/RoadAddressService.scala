@@ -598,7 +598,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   /**
-    * Adds reserved road links (from road parts) to a road address project
+    * Adds reserved road links (from road parts) to a road address project. Reservability is check before this.
     *
     * @param project
     * @return
