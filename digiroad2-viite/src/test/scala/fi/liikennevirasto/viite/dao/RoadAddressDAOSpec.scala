@@ -169,8 +169,8 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap = RoadAddressProject(id, RoadAddressProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart])
-      RoadAddressDAO.createRoadAddressProject(rap)
-      RoadAddressDAO.getRoadAddressProjectById(id).nonEmpty should be(true)
+      ProjectDAO.createRoadAddressProject(rap)
+      ProjectDAO.getRoadAddressProjectById(id).nonEmpty should be(true)
     }
   }
 
@@ -186,11 +186,11 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap = RoadAddressProject(id, RoadAddressProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(address))
-      RoadAddressDAO.createRoadAddressProject(rap)
+      ProjectDAO.createRoadAddressProject(rap)
       val addresses = RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(rap))
-      RoadAddressDAO.create(addresses)
-      RoadAddressDAO.getRoadAddressProjectById(id).nonEmpty should be(true)
-      val projectlinks=RoadAddressDAO.getRoadAddressProjectLinks(id)
+      ProjectDAO.create(addresses)
+      ProjectDAO.getRoadAddressProjectById(id).nonEmpty should be(true)
+      val projectlinks=ProjectDAO.getRoadAddressProjectLinks(id)
       projectlinks.length should be > 0
     }
   }

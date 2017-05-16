@@ -40,7 +40,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   private def createNewProjectToDB(roadAddressProject: RoadAddressProject): RoadAddressProject = {
     val id = Sequences.nextViitePrimaryKeySeqValue
     val project = roadAddressProject.copy(id = id)
-    RoadAddressDAO.createRoadAddressProject(project)
+    ProjectDAO.createRoadAddressProject(project)
     project
   }
 
@@ -48,7 +48,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val newRoadAddressProject=0
     if (roadAddressProject.id==newRoadAddressProject) return None
     withDynTransaction {
-      return RoadAddressDAO.getRoadAddressProjectById(roadAddressProject.id)
+      return ProjectDAO.getRoadAddressProjectById(roadAddressProject.id)
     }
   }
 
@@ -56,7 +56,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     withDynTransaction {
       var listOfAddressParts: ListBuffer[ReservedRoadPart] = ListBuffer.empty
       for (part <- startPart to endPart) {
-        val reserved = RoadAddressDAO.roadPartReservedByProject(roadNumber, part)
+        val reserved = ProjectDAO.roadPartReservedByProject(roadNumber, part)
         reserved match {
           case Some(projectname) => return Left(s"TIE $roadNumber OSA $part on jo varattuna projektissa $projectname, tarkista tiedot")
           case None => {
@@ -110,12 +110,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     else {
       val addresses = project.reservedParts.flatMap(roadaddress =>
         RoadAddressDAO.fetchByRoadPart(roadaddress.roadNumber, roadaddress.roadPartNumber, false).map(toProjectLink))
-      RoadAddressDAO.create(addresses)
+      ProjectDAO.create(addresses)
       None
     }
   }
   private def createFormOfReservedLinksToSavedRoadParts(project: RoadAddressProject): (Seq[RoadAddressProjectFormLine], Option[RoadAddressProjectLink]) = {
-    val createdAddresses = RoadAddressDAO.getRoadAddressProjectLinks(project.id)
+    val createdAddresses = ProjectDAO.getRoadAddressProjectLinks(project.id)
     val groupedAddresses = createdAddresses.groupBy { address =>
       (address.roadNumber, address.roadPartNumber)
     }.toSeq.sortBy(_._1._2)(Ordering[Long])
@@ -155,7 +155,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       throw new IllegalArgumentException("Project not found")
     withDynTransaction {
       if (roadAddressProject.reservedParts.isEmpty) { //roadaddresses to update is empty
-        RoadAddressDAO.updateRoadAddressProject(roadAddressProject)
+        ProjectDAO.updateRoadAddressProject(roadAddressProject)
         val (forminfo, createdlink) = createFormOfReservedLinksToSavedRoadParts(roadAddressProject)
         (roadAddressProject, createdlink, forminfo, "ok")
       } else {
@@ -163,7 +163,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         val errorMessage = addLinksToProject(roadAddressProject)
         if (errorMessage.isEmpty) {
           //adding links succeeeded
-          RoadAddressDAO.updateRoadAddressProject(roadAddressProject)
+          ProjectDAO.updateRoadAddressProject(roadAddressProject)
           val (forminfo, createdlink) = createFormOfReservedLinksToSavedRoadParts(roadAddressProject)
           (roadAddressProject, createdlink, forminfo, "ok")
         } else {
@@ -183,20 +183,20 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   def getRoadAddressSingleProject(projectId: Long): Seq[RoadAddressProject] = {
     withDynTransaction {
-      RoadAddressDAO.getRoadAddressProjects(projectId)
+      ProjectDAO.getRoadAddressProjects(projectId)
     }
   }
 
   def getRoadAddressAllProjects(): Seq[RoadAddressProject] = {
     withDynTransaction {
-      RoadAddressDAO.getRoadAddressProjects()
+      ProjectDAO.getRoadAddressProjects()
     }
   }
 
   def getProjectsWithLinksById(projectId: Long): (RoadAddressProject, Seq[RoadAddressProjectFormLine]) = {
     withDynTransaction {
-      val project:RoadAddressProject = RoadAddressDAO.getRoadAddressProjects(projectId).head
-      val createdAddresses = RoadAddressDAO.getRoadAddressProjectLinks(project.id)
+      val project:RoadAddressProject = ProjectDAO.getRoadAddressProjects(projectId).head
+      val createdAddresses = ProjectDAO.getRoadAddressProjectLinks(project.id)
       val groupedAddresses = createdAddresses.groupBy { address =>
         (address.roadNumber, address.roadPartNumber)
       }.toSeq.sortBy(_._1._2)(Ordering[Long])
