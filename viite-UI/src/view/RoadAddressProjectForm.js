@@ -197,6 +197,10 @@
         applicationModel.removeSpinner();
       });
 
+      eventbus.on('roadAddress:projectValidationSucceed', function () {
+        rootElement.find('.btn-next').prop("disabled", false);
+      });
+
       eventbus.on('roadAddress:projectSaved', function (result) {
         currentProject = result.project;
         var text = '';
@@ -231,7 +235,6 @@
           data =$('#roadpartList').get(0);
         }
         projectCollection.checkIfReserved(data);
-        rootElement.find('.btn-next').prop("disabled", false);
         return false;
       });
 

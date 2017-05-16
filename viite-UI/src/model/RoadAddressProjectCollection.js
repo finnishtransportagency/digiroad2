@@ -127,6 +127,7 @@
           } else {
             addToCurrentRoadPartList(validationResult);
             updateforminfo(parseroadpartinfoToresultRow());
+            eventbus.trigger('roadAddress:projectValidationSucceed');
           }
         });
     };
