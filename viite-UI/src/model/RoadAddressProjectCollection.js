@@ -48,7 +48,6 @@
       };
 
       backend.saveRoadAddressProject(dataJson, function (result) {
-        console.log(result.success);
         if (result.success === "ok") {
           projectinfo = {
             id: result.project.id,
@@ -67,10 +66,10 @@
       });
     };
 
-    this.saveProject = function (data, currentProject) {
+    this.createProject = function (data, currentProject) {
 
       var dataJson = {
-        id: currentProject.id,
+        id: 0,
         status: currentProject.status,
         name: data[0].value,
         startDate: data[1].value,
@@ -79,7 +78,6 @@
       };
 
       backend.saveRoadAddressProject(dataJson, function (result) {
-        console.log(result.success);
         if (result.success === "ok") {
           projectinfo = {
             id: result.project.id,
@@ -87,7 +85,7 @@
             status: result.project.status,
             startDate: result.project.startDate
           };
-          eventbus.trigger('roadAddress:projectCreated', result);
+          eventbus.trigger('roadAddress:projectSaved', result);
           dirtyRoadSegmentLst = [];
         }
         else {

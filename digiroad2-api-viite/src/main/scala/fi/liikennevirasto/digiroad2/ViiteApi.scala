@@ -186,10 +186,30 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
     val roadAddressProject= RoadAddressProject(project.id, RoadAddressProjectState.apply(project.status), project.name,
       user.username, DateTime.now(), "-", formatter.parseDateTime(project.startDate), DateTime.now(), project.additionalInfo, project.roadPartList)
-    val (projectSaved, addr, info, success) = projectService.createRoadLinkProject(roadAddressProject)
-    Map("project" -> projectToApi(projectSaved), "projectAddresses" -> addr, "formInfo" -> info,
-      "success" -> success)
+    try {
+      val (projectSaved, addr, info, success) = projectService.createRoadLinkProject(roadAddressProject)
+      Map("project" -> projectToApi(projectSaved), "projectAddresses" -> addr, "formInfo" -> info,
+        "success" -> success)
+    } catch {
+      case ex: IllegalArgumentException => BadRequest(s"A project with id ${project.id} has already been created")
+    }
   }
+
+  put("/roadlinks/roadaddress/project/save"){
+    val project = parsedBody.extract[RoadAddressProjectExtractor]
+    val user = userProvider.getCurrentUser()
+    val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
+    val roadAddressProject= RoadAddressProject(project.id, RoadAddressProjectState.apply(project.status), project.name,
+      user.username, DateTime.now(), "-", formatter.parseDateTime(project.startDate), DateTime.now(), project.additionalInfo, project.roadPartList)
+    try {
+      val (projectSaved, addr, info, success) = projectService.saveRoadLinkProject(roadAddressProject)
+      Map("project" -> projectToApi(projectSaved), "projectAddresses" -> addr, "formInfo" -> info,
+        "success" -> success)
+    } catch {
+      case ex: IllegalArgumentException => NotFound(s"Project id ${project.id} not found")
+    }
+  }
+
   get("/roadlinks/roadaddress/project/all") {
     projectService.getRoadAddressAllProjects().map(roadAddressProjectToApi)
   }
