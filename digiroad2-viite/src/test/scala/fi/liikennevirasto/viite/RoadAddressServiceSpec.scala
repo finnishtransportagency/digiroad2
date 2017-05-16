@@ -10,7 +10,6 @@ import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{HistoryLinkInterface, 
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.BothDirections
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util.Track
@@ -294,47 +293,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     }
   }
 
-  ignore ("save road link project and get form info rollback doesn't rollback") {
-    val roadlink = RoadLink(5175306,Seq(Point(535605.272,6982204.22,85.90899999999965))
-      ,540.3960283713503,State,99,TrafficDirection.AgainstDigitizing,UnknownLinkType,Some("25.06.2015 03:00:00"), Some("vvh_modified"),Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
-      InUse,NormalLinkInterface)
-    when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(5175306L))).thenReturn(Seq(roadlink))
-    runWithRollback{
-      val id = Sequences.nextViitePrimaryKeySeqValue
-
-      val roadAddressProject = RoadAddressProject(id, RoadAddressProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart])
-      val (project, projLinkOpt, formLines, str) = roadAddressService.saveRoadLinkProject(roadAddressProject)
-      projLinkOpt should be (None)
-      formLines should have size (1)
-    }
-  }
-
-  ignore("save road link project without values - rollback doesn't rollback") {
-    runWithRollback{
-      val id = Sequences.nextViitePrimaryKeySeqValue
-      val roadAddressProject = RoadAddressProject(id, RoadAddressProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart])
-      val (project, projLinkOpt, formLines, str) = roadAddressService.saveRoadLinkProject(roadAddressProject)
-      projLinkOpt should be (None)
-      formLines should have size (0)
-
-    }
-  }
-
-  ignore("save road link project without valid roadParts - rollback doesn't rollback") {
-    val roadlink = RoadLink(5175306,Seq(Point(535605.272,6982204.22,85.90899999999965))
-      ,540.3960283713503,State,99,TrafficDirection.AgainstDigitizing,UnknownLinkType,Some("25.06.2015 03:00:00"), Some("vvh_modified"),Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
-      InUse,NormalLinkInterface)
-    when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(5175306L))).thenReturn(Seq(roadlink))
-    runWithRollback{
-      val id = Sequences.nextViitePrimaryKeySeqValue
-      val roadAddressProject = RoadAddressProject(id, RoadAddressProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart])
-      val (project, projLinkOpt, formLines, str) = roadAddressService.saveRoadLinkProject(roadAddressProject)
-      projLinkOpt should be (None)
-      formLines should have size (0)
-    }
-  }
-
-  ignore("merge road addresses - ignored because rollback doesn't do what it's supposed to do") {
+  test("merge road addresses") {
     runWithRollback {
       val addressList = RoadAddressDAO.fetchByLinkId(Set(5171285L, 5170935L, 5171863L))
       addressList should have size (3)
@@ -346,23 +305,12 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val addressListMerged = RoadAddressDAO.fetchByLinkId(Set(5171285L, 5170935L, 5171863L))
       addressListMerged should have size (1)
       addressListMerged.head.linkId should be (address.linkId)
-      dynamicSession.rollback()
+    }
+    runWithRollback {
       RoadAddressDAO.fetchByLinkId(Set(5171285L, 5170935L, 5171863L)) should have size (3)
     }
   }
 
-  test("get projects by id") {
-    runWithRollback {
-      val countCurrentProjects = roadAddressService.getRoadAddressAllProjects()
-      val id = Sequences.nextViitePrimaryKeySeqValue
-      val addresses:List[ReservedRoadPart]= List(ReservedRoadPart(5:Long, 203:Long, 203:Long, 5:Double, Discontinuity.apply("jatkuva"), 8:Long))
-      val roadAddressProject = RoadAddressProject(id, RoadAddressProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", addresses)
-      roadAddressService.saveRoadLinkProject(roadAddressProject)
-      val countAfterInsertProjects = roadAddressService.getRoadAddressAllProjects()
-      val count = countCurrentProjects.size + 1
-      countAfterInsertProjects.size should be (count)
-    }
-  }
 
   test("transferRoadAddress should keep calibration points") {
     runWithRollback {
@@ -391,7 +339,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       when(mockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(floatingLinks.map(roadAddressLinkToHistoryLink))
       when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[BoundingRectangle])).thenReturn(targetLinks.map(roadAddressLinkToRoadLink))
       val newLinks = roadAddressService.transferRoadAddress(floatingLinks, targetLinks, User(1L, "foo", new Configuration()))
-      newLinks.map(prettyPrint).foreach(println)
       newLinks should have size (2)
       newLinks.filter(_.linkId == 15171208).head.endCalibrationPoint should be (None)
       newLinks.filter(_.linkId == 15171209).head.startCalibrationPoint should be (None)
@@ -455,7 +402,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       replacement1t.size should be(1)
       val result1 = roadAddressService.transferRoadAddress(replacement1s, replacement1t, User(0L, "foo", Configuration())).sortBy(_.startAddrMValue)
       sanityCheck(result1)
-      result1.map(prettyPrint).foreach(println)
       result1.head.startMValue should be(0.0)
       result1.head.startAddrMValue should be(replacement1s.map(_.startAddressM).min)
       result1.last.endAddrMValue should be(replacement1s.map(_.endAddressM).max)
@@ -466,7 +412,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       replacement2t.size should be(1)
       val result2 = roadAddressService.transferRoadAddress(replacement2s, replacement2t, User(0L, "foo", Configuration())).sortBy(_.startAddrMValue)
       sanityCheck(result2)
-      result2.map(prettyPrint).foreach(println)
 
       result2.head.startMValue should be(0.0)
       result2.head.startAddrMValue should be(replacement2s.map(_.startAddressM).min)
@@ -513,8 +458,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     sanityCheck(result)
     val targetLinks = targets.map(roadAddressLinkToRoadLink)
     val linkResult = result.map(ra => RoadAddressLinkBuilder.build(targetLinks.find(_.linkId == ra.linkId).get, ra))
-    result.map(prettyPrint).foreach(println)
-    linkResult.map(prettyPrint).foreach(println)
     val link456 = linkResult.find(_.linkId == 456L)
     val link457 = linkResult.find(_.linkId == 457L)
     link456.nonEmpty should be(true)
@@ -554,7 +497,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     link456.get.endAddrMValue should be (142)
     link457.get.endAddrMValue should be (121)
     result.forall(l => l.startCalibrationPoint.isEmpty && l.endCalibrationPoint.isEmpty) should be (true)
-    result.foreach(println)
     result.forall(l => l.sideCode == SideCode.AgainstDigitizing) should be (true)
   }
 
@@ -680,7 +622,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       RoadAddressDAO.create(sources.map(roadAddressLinkToRoadAddress(true)))
       roadAddressService.transferRoadAddress(sources, targets, User(0L, "foo", Configuration()))
     }
-    result.map(prettyPrint).foreach(println)
     sanityCheck(result)
     val link456 = result.find(_.linkId == 456L)
     val link457 = result.find(_.linkId == 457L)

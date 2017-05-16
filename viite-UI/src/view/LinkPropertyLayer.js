@@ -310,7 +310,6 @@
       _.each(ol3Features, function(feature){
         if(_.contains(olUids,feature.ol_uid)){
           selectSingleClick.getFeatures().remove(feature);
-          console.log(selectSingleClick.getFeatures());
         }
       });
 

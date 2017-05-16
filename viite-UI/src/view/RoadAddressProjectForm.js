@@ -18,7 +18,7 @@
 
     var inputFieldRequired = function(labelText, id, placeholder,  value) {
       var field = '<div class="form-group input-required">' +
-      '<label class="control-label required">' + labelText + '</label>' +
+        '<label class="control-label required">' + labelText + '</label>' +
         '<input type="text" class="form-control" id = "'+id+'" placeholder = "'+placeholder+'" value="'+value+'"/>' +
         '</div>';
       return field;
@@ -32,12 +32,18 @@
       return '<span class ="edit-mode-title">'+projectName+'</span>';
     };
 
-    var buttons =
-      '<div class="project-form form-controls">' +
-      '<button class="next btn btn-next" disabled>Seuraava</button>' +
-      '<button class="save btn btn-tallena" disabled>Tallenna</button>' +
-      '<button class="cancel btn btn-perruta">Peruuta</button>' +
-      '</div>';
+    var buttons = function(ready) {
+      var html = '<div class="project-form form-controls">' +
+        '<button class="next btn btn-next"';
+      if (!ready)
+        html = html + "disabled";
+      html = html +
+        '>Seuraava</button>' +
+        '<button class="save btn btn-save" disabled>Tallenna</button>' +
+        '<button class="cancel btn btn-cancel">Peruuta</button>' +
+        '</div>';
+      return html;
+  };
 
     var headerButton =
       '<div class="linear-asset form-controls">'+
@@ -68,17 +74,17 @@
         addSmallInputNumber('tie') + addSmallInputNumber('aosa') + addSmallInputNumber('losa') +  addReserveButton() +
         '</div>' +
         '</form>' +
-          ' </div>'+
+        ' </div>'+
         '</div>' + '<div class = "form-result">'  +'<label >' + 'PROJEKTIIN VALITUT TIEOSAT:' + '</label>'+
-          '<div style="margin-left: 15px;">' +
-          '</div>'+
-          addSmallLabel('TIE')+ addSmallLabel('OSA')+ addSmallLabel('PITUUS')+ addSmallLabel('JATKUU')+ addSmallLabel('ELY')+
+        '<div style="margin-left: 15px;">' +
+        '</div>'+
+        addSmallLabel('TIE')+ addSmallLabel('OSA')+ addSmallLabel('PITUUS')+ addSmallLabel('JATKUU')+ addSmallLabel('ELY')+
 
-          '<div id ="roadpartList">'+
-          '</div></div>' +
+        '<div id ="roadpartList">'+
+        '</div></div>' +
 
         '</div> </div>'  +
-        '<footer>' + buttons + '</footer>');
+        '<footer>' + buttons(false) + '</footer>');
     };
 
     var openProjectTemplate = function(project, formInfo) {
@@ -110,13 +116,13 @@
         '</div>'+
         '</div>' +
         '<div class = "form-result">' +
-          '<label >PROJEKTIIN VALITUT TIEOSAT:</label>'+
-          '<div style="margin-left: 15px;">' +'</div>'+
-            addSmallLabel('TIE')+ addSmallLabel('OSA')+ addSmallLabel('PITUUS')+ addSmallLabel('JATKUU')+ addSmallLabel('ELY')+
-          '<div id ="roadpartList">'+
-          formInfo +
-          '</div></div></div></div>'+
-        '<footer>' + buttons + '</footer>');
+        '<label >PROJEKTIIN VALITUT TIEOSAT:</label>'+
+        '<div style="margin-left: 15px;">' +'</div>'+
+        addSmallLabel('TIE')+ addSmallLabel('OSA')+ addSmallLabel('PITUUS')+ addSmallLabel('JATKUU')+ addSmallLabel('ELY')+
+        '<div id ="roadpartList">'+
+        formInfo +
+        '</div></div></div></div>'+
+        '<footer>' + buttons(formInfo !== '') + '</footer>');
     };
 
     var addSmallLabel = function(label){
@@ -126,7 +132,7 @@
     var addSmallInputNumber = function(id, value){
       //Validate only numebers characters on "onkeypress" including TAB and backspace
       return '<input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode == 8 || event.keyCode == 9)' +
-          '" class="form-control small-input roadAddressProject" id="'+id+'" value="'+(_.isUndefined(value)? '' : value )+'" onclick=""/>';
+        '" class="form-control small-input roadAddressProject" id="'+id+'" value="'+(_.isUndefined(value)? '' : value )+'" onclick=""/>';
     };
 
     var addDatePicker = function () {
@@ -146,7 +152,7 @@
     };
 
     var addReserveButton = function() {
-        return '<button class="btn btn-reserve">Varaa</button>';
+      return '<button class="btn btn-reserve">Varaa</button>';
     };
 
     var bindEvents = function() {
@@ -181,9 +187,11 @@
         setTimeout(function(){}, 0);
         if(!_.isUndefined(currentProject))
           eventbus.trigger('linkProperties:selectedProject', result.linkId);
-          applicationModel.setProjectButton(true);
-          applicationModel.setProjectFeature(currentProject.id);
-          applicationModel.setOpenProject(true);
+        applicationModel.setProjectButton(true);
+        applicationModel.setProjectFeature(currentProject.id);
+        applicationModel.setOpenProject(true);
+        if(result.projectLinks.length > 0)
+          rootElement.find('.btn-next').prop("disabled", false);
       });
 
       eventbus.on('roadAddress:selected roadAddress:cancelled', function(roadAddress) {
@@ -192,47 +200,67 @@
 
       eventbus.on('roadAddress:projectValidationFailed', function (result) {
         new ModalConfirm(result.success.toString());
-          applicationModel.removeSpinner();
+        applicationModel.removeSpinner();
       });
 
-      eventbus.on('roadAddress:projectSaved', function (result) {
-        currentProject = result.project;
-        var text = '';
-        _.each(result.formInfo, function(line){
-          text += '<div>' + ' '+
-            addSmallLabel(line.roadNumber)+ addSmallLabel(line.roadPartNumber)+ addSmallLabel(line.roadLength)+ addSmallLabel(line.discontinuity)+ addSmallLabel(line.ely) +
-            '</div>';
-        });
-        rootElement.html(openProjectTemplate(result.project, text));
-
-        jQuery('.modal-overlay').remove();
-        addDatePicker();
-        if(!_.isUndefined(result.projectAddresses)) {
-          eventbus.trigger('linkProperties:selectedProject', result.projectAddresses.linkId);
-        } else {
-          jQuery('.modal-overlay').remove();
-        }
+      eventbus.on('roadAddress:projectValidationSucceed', function () {
+        rootElement.find('.btn-next').prop("disabled", false);
+        rootElement.find('.btn-save').prop("disabled", false);
       });
 
       rootElement.on('click', '.project-form button.save', function() {
         var data = $('#roadAddressProject').get(0);
         applicationModel.addSpinner();
-        projectCollection.createProject(data, currentProject);
+        eventbus.once('roadAddress:projectSaved', function (result) {
+          currentProject = result.project;
+          var text = '';
+          _.each(result.formInfo, function(line){
+            text += '<div>' + ' '+
+              addSmallLabel(line.roadNumber)+ addSmallLabel(line.roadPartNumber)+ addSmallLabel(line.roadLength)+ addSmallLabel(line.discontinuity)+ addSmallLabel(line.ely) +
+              '</div>';
+          });
+          rootElement.html(openProjectTemplate(currentProject, text));
+
+          jQuery('.modal-overlay').remove();
+          addDatePicker();
+          if(!_.isUndefined(result.projectAddresses)) {
+            eventbus.trigger('linkProperties:selectedProject', result.projectAddresses.linkId);
+          }
+        });
+        if(_.isUndefined(currentProject) || currentProject.id === 0){
+          projectCollection.createProject(data, currentProject);
+        } else {
+          projectCollection.saveProject(data, currentProject);
+        }
       });
 
       rootElement.on('click', '.btn-reserve', function() {
-       var data;
-       var lists = $('.roadAddressProject');
+        var data;
+        var lists = $('.roadAddressProject');
         if ($('#roadAddressProject').get(0)!==null) {
-         data = $('#roadAddressProject').get(0);
+          data = $('#roadAddressProject').get(0);
+        } else {
+          data =$('#roadpartList').get(0);
+        }
         projectCollection.checkIfReserved(data);
         return false;
-       } else
-       {
-        data =$('#roadpartList').get(0);
-         projectCollection.checkIfReserved(data);
-        return false;
-       }
+      });
+
+      rootElement.on('click', '.project-form button.next', function(){
+        var data = $('#roadAddressProject').get(0);
+        applicationModel.addSpinner();
+        eventbus.once('roadAddress:projectSaved', function (result) {
+          jQuery('.modal-overlay').remove();
+          if(!_.isUndefined(result.projectAddresses)) {
+            eventbus.trigger('linkProperties:selectedProject', result.projectAddresses.linkId);
+            // TODO: Go to project edit mode layer
+          }
+        });
+        if(_.isUndefined(currentProject) || currentProject.id === 0){
+          projectCollection.createProject(data, currentProject);
+        } else {
+          projectCollection.saveProject(data, currentProject);
+        }
       });
 
 
