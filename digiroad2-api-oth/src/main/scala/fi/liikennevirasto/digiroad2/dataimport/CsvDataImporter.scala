@@ -179,7 +179,6 @@ trait RoadLinkCsvImporter {
               case None => result
               case Some(value) =>
                 dynamicSession.rollback()
-                println(" OTH")
                 result.copy(nonUpdatedLinks = NonUpdatedLink(linkId = value, csvRow = rowToString(row)) :: result.nonUpdatedLinks)
 
             }
@@ -190,7 +189,6 @@ trait RoadLinkCsvImporter {
               case None => result
               case Some(value) =>
                 dynamicSession.rollback()
-                println(" VVH")
                 result.copy(nonUpdatedLinks = NonUpdatedLink(linkId = value, csvRow = rowToString(row)) :: result.nonUpdatedLinks)
             }
           } else result
