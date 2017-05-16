@@ -148,7 +148,6 @@ trait RoadLinkCsvImporter {
   def validateAdministrativeClass(properties: Seq[LinkProperty]): Option[AdministrativeClass] = {
     properties.filter(_.columnName == "ADMINCLASS").map(_.value).headOption
     match {
-      case None => None
       case Some(propertyValue) if (administrativeClassLimitations.contains(AdministrativeClass.apply(propertyValue.toString.toInt))) =>
         Some(AdministrativeClass.apply(propertyValue.toString.toInt))
       case _ => None
