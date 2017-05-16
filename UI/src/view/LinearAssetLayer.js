@@ -187,7 +187,8 @@ window.LinearAssetLayer = function(params) {
   var selectToolControl = new SelectToolControl(application, vectorLayer, map, {
     style: function(feature){ return feature.setStyle(style.browsingStyleProvider.getStyle(feature, {zoomLevel: uiState.zoomLevel})); },
     onDragEnd: onDragEnd,
-    onSelect: OnSelect
+    onSelect: OnSelect,
+    onDrawEnd: onDrawEnd
   });
 
   var showDialog = function (linearAssets) {
@@ -219,6 +220,17 @@ window.LinearAssetLayer = function(params) {
     }
   }
 
+  function onDrawEnd(linearAssets) {
+    if (selectedLinearAsset.isDirty()) {
+      me.displayConfirmMessage();
+    } else {
+      if (linearAssets.length > 0) {
+        selectedLinearAsset.close();
+        showDialog(linearAssets);
+      }
+    }
+  }
+
   function cancelSelection() {
     selectToolControl.clear();
     selectedLinearAsset.closeMultiple();
@@ -229,20 +241,25 @@ window.LinearAssetLayer = function(params) {
     uiState.zoomLevel = zoom;
   };
 
-  var changeTool = function(tool, eventListener) {
+  var changeTool = function(tool) {
     switch(tool) {
       case 'Cut':
         selectToolControl.deactivate();
         linearAssetCutter.activate();
-        selectToolControl.deactivePoligon();
         break;
       case 'Select':
         linearAssetCutter.deactivate();
         selectToolControl.activate();
-        selectToolControl.deactivePoligon();
         break;
       case 'Rectangle':
-        selectToolControl.activePoligon();
+        linearAssetCutter.deactivate();
+        selectToolControl.activate();
+        selectToolControl.activeDragBox();
+        break;
+      case 'Polygon':
+        linearAssetCutter.deactivate();
+        selectToolControl.activate();
+        selectToolControl.activePolygon();
         break;
       default:
     }
@@ -373,11 +390,7 @@ window.LinearAssetLayer = function(params) {
 
   var redrawLinearAssets = function(linearAssetChains) {
     vectorSource.clear();
-    selectToolControl.deactivate();
     indicatorLayer.getSource().clear();
-    if (!selectedLinearAsset.isDirty() && application.getSelectedTool() === 'Select') {
-      selectToolControl.activate();
-    }
     var linearAssets = _.flatten(linearAssetChains);
       decorateSelection();
 

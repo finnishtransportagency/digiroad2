@@ -4,11 +4,13 @@
         var mapDoubleClickEventKey;
         var enabled = false;
         var initialized = false;
-        var activeDragBox = false;
+        var isPolygonActive = false;
+        var isDragBoxActive = false;
 
         var settings = _.extend({
             onDragStart: function(){},
             onDragEnd: function(){},
+            onDrawEnd: function(){},
             onSelect: function() {},
             style: function(){},
             enableSelect: function(){ return true; },
@@ -20,13 +22,33 @@
         }, options);
 
         var dragBoxInteraction = new ol.interaction.DragBox({
-            condition: function(event){ return ol.events.condition.platformModifierKeyOnly(event) || activeDragBox; }
+            condition: function(event){ return ol.events.condition.platformModifierKeyOnly(event) || isDragBoxActive; }
+        });
+
+        var drawInteraction = new ol.interaction.Draw({
+            condition: function(event){ return ol.events.condition.noModifierKeys(event) || isPolygonActive; },
+            type: /** @type {ol.geom.GeometryType} */ ('Polygon'),
+            style: new ol.style.Style({
+              fill: new ol.style.Fill({
+                color: 'rgba(255, 255, 255, 0.5)'
+              }),
+              stroke: new ol.style.Stroke({
+                color: 'red',
+                width: 2
+              }),
+              image: new ol.style.Circle({
+                radius: 7,
+                fill: new ol.style.Fill({
+                  color: 'red'
+                })
+              })
+            })
         });
 
         var selectInteraction = new ol.interaction.Select({
             layer: layer,
             condition: function(events){
-                return enabled &&(ol.events.condition.doubleClick(events) || ol.events.condition.singleClick(events));
+                return !isPolygonActive && enabled &&(ol.events.condition.doubleClick(events) || ol.events.condition.singleClick(events));
             },
             style: settings.style,
             filter : settings.filterGeometry
@@ -44,6 +66,16 @@
             settings.onDragEnd(selectedFeatures);
         });
 
+        drawInteraction.on('drawend', function(evt){
+            evt.preventDefault();
+            var polygon_extent = evt.feature.getGeometry().getExtent();
+            var selectedFeatures = [];
+            layer.getSource().forEachFeatureIntersectingExtent(polygon_extent, function(feature) {
+                selectedFeatures.push(feature.getProperties());
+            });
+            settings.onDrawEnd(selectedFeatures);
+        });
+
         selectInteraction.on('select',  function(evt){
             if(evt.selected.length > 0 && settings.enableSelect(evt))
                 unhighlightLayer();
@@ -54,15 +86,15 @@
         });
 
         var toggleDragBox = function() {
-            if (!application.isReadOnly() && enabled && settings.draggable) {
-                destroyDragBoxInteraction();
-                map.addInteraction(dragBoxInteraction);
-            }
-            else{
-                if((!settings.draggable && enabled) || application.isReadOnly() )
-                    destroyDragBoxInteraction();
-            }
+          if (!application.isReadOnly() && enabled && settings.draggable) {
+            destroyDragBoxInteraction();
+            map.addInteraction(dragBoxInteraction);
+          } else {
+            if ((!settings.draggable && enabled) || application.isReadOnly())
+              destroyDragBoxInteraction();
+          }
         };
+
 
         var highlightLayer = function(){
             layer.setOpacity(1);
@@ -87,19 +119,34 @@
                 });
             });
             toggleDragBox();
+
+
         };
 
         var deactivate = function() {
             enabled = false;
+            isPolygonActive = false;
+            isDragBoxActive = false;
+            map.removeInteraction(dragBoxInteraction);
+            map.removeInteraction(drawInteraction);
             map.unByKey(mapDoubleClickEventKey);
+
         };
 
-        var activePoligon = function() {
-            activeDragBox = true;
+        var activePolygon = function(){
+            isPolygonActive = true;
+            isDragBoxActive = false;
+            map.removeInteraction(dragBoxInteraction);
+            map.addInteraction(selectInteraction);
+            map.addInteraction(drawInteraction);
         };
 
-        var deactivePoligon = function() {
-            activeDragBox = false;
+        var activeDragbox = function(){
+            isDragBoxActive = true;
+            isPolygonActive = false;
+            map.removeInteraction(drawInteraction);
+            map.addInteraction(selectInteraction);
+            map.addInteraction(dragBoxInteraction);
         };
 
         var clear = function(){
@@ -131,7 +178,7 @@
 
         var destroyDragBoxInteraction = function () {
             _.each(map.getInteractions().getArray(), function (interaction) {
-                if(!(interaction instanceof ol.interaction.DragZoom) && (interaction instanceof ol.interaction.DragBox))
+                if(!(interaction instanceof ol.interaction.DragZoom) && (interaction instanceof ol.interaction.DragBox) || (interaction instanceof ol.interaction.Draw))
                     map.removeInteraction(interaction);
             });
         };
@@ -140,14 +187,13 @@
 
         return {
             getSelectInteraction: function(){ return selectInteraction; },
-            getDragBoxInteraction: function(){ return dragBoxInteraction; },
             addSelectionFeatures: addSelectionFeatures,
             addNewFeature : addNewFeature,
             toggleDragBox: toggleDragBox,
             activate: activate,
             deactivate: deactivate,
-            activePoligon: activePoligon,
-            deactivePoligon: deactivePoligon,
+            activePolygon: activePolygon,
+            activeDragBox: activeDragbox,
             clear : clear,
             removeFeatures : removeFeatures
         };
