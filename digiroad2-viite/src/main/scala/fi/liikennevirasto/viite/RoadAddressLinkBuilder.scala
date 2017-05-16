@@ -52,7 +52,7 @@ object RoadAddressLinkBuilder {
     }
   }
 
-  def build(roadLink: RoadLink, roadAddress: RoadAddress, floating: Boolean = false) = {
+  def build(roadLink: RoadLink, roadAddress: RoadAddress, floating: Boolean = false, newGeometry: Option[Seq[Point]] = None) = {
     val roadLinkType = (floating, roadLink.linkSource) match {
       case (true, _) => FloatingRoadLinkType
       case (false, LinkGeomSource.ComplimentaryLinkInterface) => ComplementaryRoadLinkType

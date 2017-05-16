@@ -231,21 +231,21 @@
           if (roadLayer.layer.getOpacity() === 1) {
             setGeneralOpacity(0.2);
           }
-          if (selection.roadLinkData.roadLinkType === -1 &&
+          if (selection.roadLinkData.roadLinkType === -1 && //TODO: magic number
             ('all' === applicationModel.getSelectionType() || 'floating' === applicationModel.getSelectionType()) &&
             !applicationModel.isReadOnly()) {
             selectedLinkProperty.close();
             selectedLinkProperty.openFloating(selection.roadLinkData.linkId, selection.roadLinkData.id, visibleFeatures);
             floatingMarkerLayer.setOpacity(1);
             anomalousMarkerLayer.setOpacity(1);
-          } else if(selection.roadLinkData.roadLinkType !== -1 && 'floating' === applicationModel.getSelectionType() &&
+          } else if(selection.roadLinkData.roadLinkType !== -1 && 'floating' === applicationModel.getSelectionType() &&  //TODO: magic number
             !applicationModel.isReadOnly() && event.deselected.length !== 0) {
             var floatings = event.deselected;
             var nonFloatings = event.selected;
             removeFeaturesFromSelection(nonFloatings);
             addFeaturesToSelection(floatings);
           }else if('unknown' === applicationModel.getSelectionType() && !applicationModel.isReadOnly()) {
-            if (selection.roadLinkData.anomaly === 1 && selection.roadLinkData.roadLinkType !== -1) {
+            if (selection.roadLinkData.anomaly === 1 && selection.roadLinkData.roadLinkType !== -1) {  //TODO: magic number
               selectedLinkProperty.openUnknown(selection.roadLinkData.linkId, selection.roadLinkData.id, visibleFeatures);
             } else if(event.selected.length !== 0){
               var deselecting = event.deselected;

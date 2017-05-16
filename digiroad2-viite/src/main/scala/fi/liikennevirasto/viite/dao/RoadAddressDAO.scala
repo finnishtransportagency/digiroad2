@@ -12,7 +12,7 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.{RoadType, ReservedRoadPart}
 import fi.liikennevirasto.viite.dao.CalibrationCode._
-import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
+import fi.liikennevirasto.viite.model.Anomaly
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
@@ -558,6 +558,16 @@ object RoadAddressDAO {
        select distinct road_number
               from road_address ra
               where ra.floating = '0' AND (end_date < sysdate OR end_date IS NULL)
+              order by road_number
+      """.as[Long].list
+  }
+
+  def getValidRoadNumbersWithFilterToTestAndDevEnv = {
+    sql"""
+       select distinct road_number
+              from road_address ra
+              where ra.floating = '0' AND (end_date < sysdate OR end_date IS NULL) AND
+              (ra.road_number <= 20000 OR (ra.road_number >= 40000 AND ra.road_number <= 70000) OR ra.road_number > 99999 )
               order by road_number
       """.as[Long].list
   }
