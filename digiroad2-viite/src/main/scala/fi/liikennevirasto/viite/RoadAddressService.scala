@@ -610,39 +610,21 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         roadAddress.endDate, modifiedBy=Option(project.createdBy), 0L, roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
         roadAddress.sideCode, roadAddress.calibrationPoints, floating=false, roadAddress.geom, project.id, LinkStatus.NotHandled)
     }
-    var croadnumber: Long = 0 //needed for error messages
-    var croadpart: Long = 0
     withDynTransaction {
-      try {
-        for (roadaddress <- project.reservedParts) { //check validity
-          if (!RoadAddressDAO.roadPartExists(roadaddress.roadNumber, roadaddress.roadPartNumber)) {
-            return Some(s"TIE ${roadaddress.roadNumber} OSA: ${roadaddress.roadPartNumber} ei löytynyt tietokannasta")
-          }
-        }
-        for (roadaddress <- project.reservedParts) {
-          croadnumber = roadaddress.roadNumber
-          croadpart = roadaddress.roadPartNumber
-          val addresses = RoadAddressDAO.fetchByRoadPart(roadaddress.roadNumber, roadaddress.roadPartNumber, true).
-            map(toProjectLink)
-
-          RoadAddressDAO.create(addresses)
-        }
-      } catch {
-        case a: Exception =>
-          if (a.getMessage.contains("ORA-20000")) {
-            val reservedByProject = RoadAddressDAO.roadPartReservedByProject(croadnumber, croadpart)
-            logger.info(s"Road part being reserved was already reserved to project $reservedByProject")
-            return Some(s"TIE $croadnumber OSA $croadpart on jo varattuna projektissa ${
-              reservedByProject.getOrElse("<Tuntematon>")
-            }, tarkista tiedot " + '\n')
-          } else {
-            logger.error(s"Reserving of road part $croadpart failed: ${a.getMessage}", a)
-            return Some(s"Tieosan $croadpart varaus ei tuntemattomasta virheestä johtuen onnistunut" + '\n')
-          }
-        case _ : Throwable => return Some(s"Tuntematon virhe")
+      //TODO: Check that there are no floating road addresses present when starting
+      val errors = project.reservedParts.map(roadAddress =>
+        if (!RoadAddressDAO.roadPartExists(roadAddress.roadNumber, roadAddress.roadPartNumber)) {
+          s"TIE ${roadAddress.roadNumber} OSA: ${roadAddress.roadPartNumber}"
+        } else "").filterNot(_ == "")
+      if (errors.nonEmpty)
+        return Some(s"Seuraavia tieosia ei löytynyt tietokannasta: ${errors.mkString(", ")}")
+      else {
+        val addresses = project.reservedParts.flatMap(roadaddress =>
+          RoadAddressDAO.fetchByRoadPart(roadaddress.roadNumber, roadaddress.roadPartNumber, false).map(toProjectLink))
+        RoadAddressDAO.create(addresses)
+        None
       }
     }
-    None
   }
 
   def transferRoadAddress(sources: Seq[RoadAddressLink], targets: Seq[RoadAddressLink], user: User): Seq[RoadAddress] = {

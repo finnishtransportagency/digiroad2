@@ -140,8 +140,8 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
     val localRoadAddressService = new RoadAddressService(localMockRoadLinkService,localMockEventBus)
     runWithRollback {
       val id = RoadAddressDAO.getNextRoadAddressId
-          val toBeMergedRoadAddresses = Seq(RoadAddress(id, 1943845, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"),0, 6556558L, 0.0, 9.8, SideCode.TowardsDigitizing, (None, None), false,
-            Seq(Point(0.0, 0.0), Point(0.0, 9.8))))
+      val toBeMergedRoadAddresses = Seq(RoadAddress(id, 1943845, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"),0, 6556558L, 0.0, 9.8, SideCode.TowardsDigitizing, (None, None), false,
+        Seq(Point(0.0, 0.0), Point(0.0, 9.8))))
       localRoadAddressService.mergeRoadAddressInTX(RoadAddressMerge(Set(1L), toBeMergedRoadAddresses))
     }
   }
@@ -175,25 +175,25 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
   }
 
 
-test("create road address project with project links") {
-  def toProjectLink(project: RoadAddressProject)(roadAddress: RoadAddress): RoadAddressProjectLink = {
-    RoadAddressProjectLink(id=NewRoadAddress, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track,
-      roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
-      roadAddress.endDate, modifiedBy=Option(project.createdBy), 0L, roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
-      roadAddress.sideCode, roadAddress.calibrationPoints, floating=false, roadAddress.geom, project.id, LinkStatus.NotHandled)
+  test("create road address project with project links") {
+    def toProjectLink(project: RoadAddressProject)(roadAddress: RoadAddress): RoadAddressProjectLink = {
+      RoadAddressProjectLink(id=NewRoadAddress, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track,
+        roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
+        roadAddress.endDate, modifiedBy=Option(project.createdBy), 0L, roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
+        roadAddress.sideCode, roadAddress.calibrationPoints, floating=false, roadAddress.geom, project.id, LinkStatus.NotHandled)
+    }
+    val address=ReservedRoadPart(5:Long, 203:Long, 203:Long, 5.5:Double, Discontinuity.apply("jatkuva"), 8:Long)
+    runWithRollback {
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val rap = RoadAddressProject(id, RoadAddressProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(address))
+      RoadAddressDAO.createRoadAddressProject(rap)
+      val addresses = RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(rap))
+      RoadAddressDAO.create(addresses)
+      RoadAddressDAO.getRoadAddressProjectById(id).nonEmpty should be(true)
+      val projectlinks=RoadAddressDAO.getRoadAddressProjectLinks(id)
+      projectlinks.length should be > 0
+    }
   }
-  val address=ReservedRoadPart(5:Long, 203:Long, 203:Long, 5.5:Double, Discontinuity.apply("jatkuva"), 8:Long)
-  runWithRollback {
-    val id = Sequences.nextViitePrimaryKeySeqValue
-    val rap = RoadAddressProject(id, RoadAddressProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(address))
-    RoadAddressDAO.createRoadAddressProject(rap)
-    val addresses = RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(rap))
-    RoadAddressDAO.create(addresses)
-    RoadAddressDAO.getRoadAddressProjectById(id).nonEmpty should be(true)
-    val projectlinks=RoadAddressDAO.getRoadAddressProjectLinks(id)
-    projectlinks.length should be > 0
-  }
-}
 
   test("get roadpart info") {
     runWithRollback {
