@@ -184,6 +184,8 @@
         applicationModel.setProjectButton(true);
         applicationModel.setProjectFeature(currentProject.id);
         applicationModel.setOpenProject(true);
+        if(result.projectLinks.length > 0)
+          rootElement.find('.btn-next').prop("disabled", false);
       });
 
       eventbus.on('roadAddress:selected roadAddress:cancelled', function(roadAddress) {
