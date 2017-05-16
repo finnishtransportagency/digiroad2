@@ -12,37 +12,7 @@ class ServiceRoadAPI(val linearAssetService: LinearAssetOperations, val roadLink
   override def baseAuth: String = "serviceRoad."
   override val realm: String = "Service Road API"
 
-  private val Kayttooikeus = "huoltotie_kayttooikeus"
-  private val Huoltovastuu = "huoltotie_huoltovastuu"
-  private val Tiehoitokunta = "huoltotie_tiehoitokunta"
-  private val Nimi = "huoltotie_nimi"
-  private val Osoite = "huoltotie_osoite"
-  private val Postinumero = "huoltotie_postinumero"
-  private val Postitoimipaikka = "huoltotie_postitoimipaikka"
-  private val Puh1 = "huoltotie_puh1"
-  private val Puh2 = "huoltotie_puh2"
-  private val Lisatieto = "huoltotie_lisatieto"
-
   protected implicit def jsonFormats: Formats = DefaultFormats
-  val typeId = LinearAssetTypes.MaintenanceRoadAssetTypeId
-
-  private val liviLinkID = "linkId"
-  private val liviAssetID = "id"
-  private val liviGeometry = "geometry"
-  private val liviStartMeasure = "startMeasure"
-  private val liviEndMeasure = "endMeasure"
-  private val liviModifiedAt = "modifiedAt"
-  private val liviGeneratedValue = "generatedValue"
-  private val liviKayttooikeus = "kayttooikeus"
-  private val liviHuoltovastuu = "huoltovastuu"
-  private val liviTiehoitokunta = "tiehoitokunta"
-  private val liviNimi = "nimi"
-  private val liviOsoite = "osoite"
-  private val liviPostinumero = "postinumero"
-  private val liviPostitoimipaikka = "postitoimipaikka"
-  private val liviPuh1 = "puh1"
-  private val liviPuh2 = "puh2"
-  private val liviLisatieto = "lisatieto"
 
   before() {
     basicAuth
@@ -51,7 +21,7 @@ class ServiceRoadAPI(val linearAssetService: LinearAssetOperations, val roadLink
   get("/huoltotiet/:areaId"){
     contentType = formats("json")
     var areaId = params("areaId")
-    val maintenanceAsset = linearAssetService.getActiveMaintenanceRoadByPolygon(areaId.toInt, typeId)
+    val maintenanceAsset = linearAssetService.getActiveMaintenanceRoadByPolygon(areaId.toInt, LinearAssetTypes.MaintenanceRoadAssetTypeId)
     createJson(maintenanceAsset)
   }
 
@@ -70,23 +40,23 @@ class ServiceRoadAPI(val linearAssetService: LinearAssetOperations, val roadLink
 
   private def createMap(asset: PersistedLinearAsset, maintenanceRoad: Seq[Properties], geometry: Option[Seq[Point]]): Map[String, Any] = {
     Map(
-      liviLinkID -> asset.linkId,
-      liviAssetID -> asset.id,
-      liviGeometry -> geometry,
-      liviStartMeasure -> asset.startMeasure,
-      liviEndMeasure -> asset.endMeasure,
-      liviModifiedAt ->  convertToDate(if(asset.modifiedDateTime.isEmpty) asset.modifiedDateTime else asset.createdDateTime),
-      liviGeneratedValue -> (if(asset.modifiedBy.nonEmpty) getModifiedByValue(asset.modifiedBy) else getModifiedByValue(asset.createdBy)),
-      liviKayttooikeus -> getFieldValueInt(maintenanceRoad, Kayttooikeus),
-      liviHuoltovastuu -> getFieldValueInt(maintenanceRoad, Huoltovastuu),
-      liviTiehoitokunta -> getFieldValue(maintenanceRoad, Tiehoitokunta),
-      liviNimi -> getFieldValue(maintenanceRoad, Nimi),
-      liviOsoite -> getFieldValue(maintenanceRoad, Osoite),
-      liviPostinumero -> getFieldValue(maintenanceRoad, Postinumero),
-      liviPostitoimipaikka -> getFieldValue(maintenanceRoad, Postitoimipaikka),
-      liviPuh1 -> getFieldValue(maintenanceRoad, Puh1),
-      liviPuh2 -> getFieldValue(maintenanceRoad, Puh2),
-      liviLisatieto -> getFieldValue(maintenanceRoad, Lisatieto)
+      "linkId" -> asset.linkId,
+      "id" -> asset.id,
+      "geometry" -> geometry,
+      "startMeasure" -> asset.startMeasure,
+      "endMeasure" -> asset.endMeasure,
+      "modifiedAt" ->  convertToDate(if(asset.modifiedDateTime.isEmpty) asset.modifiedDateTime else asset.createdDateTime),
+      "generatedValue" -> (if(asset.modifiedBy.nonEmpty) getModifiedByValue(asset.modifiedBy) else getModifiedByValue(asset.createdBy)),
+      "kayttooikeus" -> getFieldValueInt(maintenanceRoad, "huoltotie_kayttooikeus"),
+      "huoltovastuu" -> getFieldValueInt(maintenanceRoad, "huoltotie_huoltovastuu"),
+      "tiehoitokunta" -> getFieldValue(maintenanceRoad, "huoltotie_tiehoitokunta"),
+      "nimi" -> getFieldValue(maintenanceRoad, "huoltotie_nimi"),
+      "osoite" -> getFieldValue(maintenanceRoad, "huoltotie_osoite"),
+      "postinumero" -> getFieldValue(maintenanceRoad, "huoltotie_postinumero"),
+      "postitoimipaikka" -> getFieldValue(maintenanceRoad, "huoltotie_postitoimipaikka"),
+      "puh1" -> getFieldValue(maintenanceRoad, "huoltotie_puh1"),
+      "puh2" -> getFieldValue(maintenanceRoad, "huoltotie_puh2"),
+      "lisatieto" -> getFieldValue(maintenanceRoad, "huoltotie_lisatieto")
     )
   }
 

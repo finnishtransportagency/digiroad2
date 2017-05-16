@@ -80,9 +80,7 @@ trait LinearAssetOperations {
 
 
   def getByIntersectedBoundingBox(typeId: Int, serviceArea : Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
-    val polygonStringList =polygonTools.stringifyGeometryForVVHClient(
-        polygonTools.geometryInterceptorToBoundingBox(
-          polygonTools.getAreaGeometry(serviceArea),bounds))
+    val polygonStringList = polygonTools.geometryInterceptorToBoundingBox(polygonTools.getAreaGeometry(serviceArea),bounds)
     val vVHRoadLinksAndChanges = polygonStringList.map(roadLinkService.getRoadLinksAndChangesFromVVHWithPolygon)
     val roadLinks = vVHRoadLinksAndChanges.flatMap(_._1)
     val changes =vVHRoadLinksAndChanges.flatMap(_._2)
@@ -751,19 +749,8 @@ trait LinearAssetOperations {
   }
 
   def getActiveMaintenanceRoadByPolygon(areaId: Int, typeId: Int): Seq[PersistedLinearAsset] = {
-
-    val geometry = polygonTools.getAreaGeometry(areaId)
-
-    val polygon = geometry match {
-      case _ if geometry.getGeometryType.toLowerCase.startsWith("polygon") =>
-        Seq(geometry.asInstanceOf[Polygon])
-      case _ if geometry.getGeometryType.toLowerCase.startsWith("multipolygon") =>
-        polygonTools.multiPolygonToPolygonSeq(geometry.asInstanceOf[MultiPolygon])
-      case _ => Seq.empty[Polygon]
-    }
-
-    val polygonStringList = polygonTools.stringifyGeometryForVVHClient(polygon)
-    val vVHLinkIds = roadLinkService.getLinkIdsFromVVHWithComplementaryByPolygons(polygonStringList)
+    val polygon= polygonTools.getPolygonByArea(areaId)
+    val vVHLinkIds = roadLinkService.getLinkIdsFromVVHWithComplementaryByPolygons(polygon)
     getPersistedAssetsByLinkIds(typeId, vVHLinkIds)
   }
 }

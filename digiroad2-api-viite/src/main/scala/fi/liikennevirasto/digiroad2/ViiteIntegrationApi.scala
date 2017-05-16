@@ -31,7 +31,7 @@ trait ViiteAuthenticationSupport extends ScentrySupport[BasicAuthUser] with Basi
   }
 
   override protected def registerAuthStrategies = {
-    scentry.register("Basic", app => new IntegrationAuthStrategy(app, realm, ""))
+    scentry.register("Basic", app => new IntegrationAuthStrategy(app, realm))
   }
 }
 

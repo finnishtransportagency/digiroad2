@@ -1,11 +1,11 @@
 package fi.liikennevirasto.digiroad2
 
-import java.awt.Polygon
 import java.io.{File, FilenameFilter, IOException}
 import java.util.Properties
 import java.util.concurrent.TimeUnit
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
+import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.GeometryUtils._
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
@@ -224,7 +224,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }
   }
 
-  def getRoadLinksAndChangesFromVVHWithPolygon(polygonString :String): (Seq[RoadLink], Seq[ChangeInfo])= {
+  def getRoadLinksAndChangesFromVVHWithPolygon(polygonString :Polygon): (Seq[RoadLink], Seq[ChangeInfo])= {
     val (changes, links) = Await.result(vvhClient.fetchChangesByPolygonF(polygonString).zip(vvhClient.fetchRoadLinksByPolygonF(polygonString)), atMost = Duration.Inf)
     withDynTransaction {
       (enrichRoadLinksFromVVH(links, changes), changes)
@@ -238,9 +238,9 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @return LinksId
     */
 
-  def getLinkIdsFromVVHWithComplementaryByPolygons(polygons: Seq[String]) = {
-    polygons.flatMap(getLinkIdsFromVVHWithComplementaryByPolygon)
-  }
+    def getLinkIdsFromVVHWithComplementaryByPolygons(polygons: Seq[Polygon]) = {
+      polygons.flatMap(getLinkIdsFromVVHWithComplementaryByPolygon)
+    }
 
   /**
     * This method returns "real" and "complementary" link id by polygon.
@@ -248,7 +248,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @param polygon
     * @return seq(LinksId) , seq(LinksId)
     */
-  def getLinkIdsFromVVHWithComplementaryByPolygon(polygon :String): Seq[Long] = {
+  def getLinkIdsFromVVHWithComplementaryByPolygon(polygon :Polygon): Seq[Long] = {
 
      val fut = for {
        f1Result <- vvhClient.fetchLinkIdsByPolygonF(polygon)

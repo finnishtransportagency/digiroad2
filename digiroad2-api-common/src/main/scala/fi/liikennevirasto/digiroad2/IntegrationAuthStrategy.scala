@@ -9,7 +9,7 @@ import org.scalatra.auth.strategy.{BasicAuthStrategy, BasicAuthSupport}
 
 case class BasicAuthUser(username: String)
 
-class IntegrationAuthStrategy(protected override val app: ScalatraBase, realm: String, baseAuth: String)
+class IntegrationAuthStrategy(protected override val app: ScalatraBase, realm: String, baseAuth: String = "")
   extends BasicAuthStrategy[BasicAuthUser](app, realm) {
 
   lazy val properties: Properties = {
