@@ -35,6 +35,6 @@ Insert Into ROAD_ADDRESS_CHANGES(PROJECT_ID, CHANGE_TYPE, OLD_ROAD_NUMBER, OLD_R
 
 
 --Test Project Data
-Insert Into Project (ID,State, NAME, ELY, CREATED_BY, CREATED_DATE, MODIFIED_BY, MODIFIED_DATE, ADD_INFO, START_DATE) Values (11117, 0, 'Ennallaan', 1, 'TEST_USER', '2017.11.01', 'TEST_USER', '2017.11.01', 'Test data for JSON', sysdate);
-Insert Into Project (ID,State, NAME, ELY, CREATED_BY, CREATED_DATE, MODIFIED_BY, MODIFIED_DATE, ADD_INFO, START_DATE) Values (11118, 0, 'Uusi', 1, 'TEST_USER', '2017.11.01', 'TEST_USER', '2017.11.01', 'Test data for JSON', sysdate);
-Insert Into Project (ID,State, NAME, ELY, CREATED_BY, CREATED_DATE, MODIFIED_BY, MODIFIED_DATE, ADD_INFO, START_DATE) Values (8914, 0, 'Multiple actions', 9, 'TEST_USER', '2017.06.01', 'TEST_USER', '2017.06.01', 'Test data for JSON', sysdate);
+Insert Into Project (ID,State, NAME, ELY, CREATED_BY, CREATED_DATE, MODIFIED_BY, MODIFIED_DATE, ADD_INFO, START_DATE) Values (11117, 0, 'Ennallaan', 1, 'TEST_USER', TO_DATE('2017.11.01', 'RRRR.MM.DD'), 'TEST_USER', TO_DATE('2017.11.01', 'RRRR.MM.DD'), 'Test data for JSON', sysdate);
+Insert Into Project (ID,State, NAME, ELY, CREATED_BY, CREATED_DATE, MODIFIED_BY, MODIFIED_DATE, ADD_INFO, START_DATE) Values (11118, 0, 'Uusi', 1, 'TEST_USER', TO_DATE('2017.11.01', 'RRRR.MM.DD'), 'TEST_USER', TO_DATE('2017.11.01', 'RRRR.MM.DD'), 'Test data for JSON', sysdate);
+Insert Into Project (ID,State, NAME, ELY, CREATED_BY, CREATED_DATE, MODIFIED_BY, MODIFIED_DATE, ADD_INFO, START_DATE) Values (8914, 0, 'Multiple actions', 9, 'TEST_USER', TO_DATE('2017.06.01', 'RRRR.MM.DD'), 'TEST_USER', TO_DATE('2017.06.01', 'RRRR.MM.DD'), 'Test data for JSON', sysdate);
