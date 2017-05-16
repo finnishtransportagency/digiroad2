@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite.dao
 
-import java.sql.Timestamp
+import java.sql.{PreparedStatement, Timestamp}
 import java.text.DecimalFormat
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
@@ -10,10 +10,10 @@ import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
-import fi.liikennevirasto.viite.{RoadType, ReservedRoadPart}
 import fi.liikennevirasto.viite.dao.CalibrationCode._
-import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
+import fi.liikennevirasto.viite.model.Anomaly
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
+import fi.liikennevirasto.viite.{ReservedRoadPart, RoadType}
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
 import org.slf4j.LoggerFactory
@@ -73,7 +73,7 @@ object CalibrationCode {
     values.find(_.value == intValue).getOrElse(No)
   }
 
-  def getFromAddress(roadAddress: RoadAddress): CalibrationCode = {
+  def getFromAddress(roadAddress: BaseRoadAddress): CalibrationCode = {
     (roadAddress.calibrationPoints._1.isEmpty, roadAddress.calibrationPoints._2.isEmpty) match {
       case (true, true)   => No
       case (true, false)  => AtEnd
@@ -89,11 +89,32 @@ object CalibrationCode {
 }
 case class CalibrationPoint(linkId: Long, segmentMValue: Double, addressMValue: Long)
 
+trait BaseRoadAddress {
+  def id: Long
+  def roadNumber: Long
+  def roadPartNumber: Long
+  def track: Track
+  def discontinuity: Discontinuity
+  def startAddrMValue: Long
+  def endAddrMValue: Long
+  def startDate: Option[DateTime]
+  def endDate: Option[DateTime]
+  def modifiedBy: Option[String]
+  def lrmPositionId : Long
+  def linkId: Long
+  def startMValue: Double
+  def endMValue: Double
+  def sideCode: SideCode
+  def calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint])
+  def floating: Boolean
+  def geom: Seq[Point]
+}
+
 case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track,
                        discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
                        endDate: Option[DateTime] = None, modifiedBy: Option[String] = None, lrmPositionId : Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
                        calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false,
-                       geom: Seq[Point]) {
+                       geom: Seq[Point]) extends BaseRoadAddress {
   val endCalibrationPoint = calibrationPoints._2
   val startCalibrationPoint = calibrationPoints._1
 }
@@ -102,9 +123,11 @@ case class RoadAddressProject(id: Long, status: RoadAddressProjectState, name: S
                               modifiedBy: String, startDate: DateTime, dateModified: DateTime, additionalInfo: String,
                               reservedParts: Seq[ReservedRoadPart])
 
-case class RoadAddressProjectLink(id : Long, projectId: Long, roadType: Long, discontinuityType: Discontinuity,
-                                  roadNumber: Long, roadPartNumber: Long, startAddrM: Long, endAddrM: Long,
-                                  lrmPositionId: Long, cratedBy: String, modifiedBy: String, linkId: Long, length: Double)
+case class RoadAddressProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track,
+                                  discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
+                                  endDate: Option[DateTime] = None, modifiedBy: Option[String] = None, lrmPositionId : Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
+                                  calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false,
+                                  geom: Seq[Point], projectId: Long, status: LinkStatus) extends BaseRoadAddress
 
 case class RoadAddressProjectFormLine(startingLinkId: Long, projectId: Long, roadNumber: Long, roadPartNumber: Long, roadLength: Long, ely : Long, discontinuity: String)
 
@@ -119,6 +142,21 @@ case class CalibrationPointCreator(point: Point, value: Int)
 case class MissingRoadAddress(linkId: Long, startAddrMValue: Option[Long], endAddrMValue: Option[Long],
                               roadType: RoadType, roadNumber: Option[Long], roadPartNumber: Option[Long],
                               startMValue: Option[Double], endMValue: Option[Double], anomaly: Anomaly)
+
+
+sealed trait LinkStatus {
+  def value: Int
+}
+
+object LinkStatus {
+  val values = Set(NotHandled)
+  case object NotHandled extends LinkStatus {def value = 0}
+  def apply(intValue: Int): LinkStatus = {
+    values.find(_.value == intValue).getOrElse(NotHandled)
+  }
+}
+
+
 
 object RoadAddressDAO {
 
@@ -752,12 +790,7 @@ object RoadAddressDAO {
       "?,?,0.0,?,?,?,0.0,?)), ?, ?)")
     val ids = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= ${roadAddresses.size}""".as[Long].list
     roadAddresses.zip(ids).foreach { case ((address), (lrmId)) =>
-      lrmPositionPS.setLong(1, lrmId)
-      lrmPositionPS.setLong(2, address.linkId)
-      lrmPositionPS.setLong(3, address.sideCode.value)
-      lrmPositionPS.setDouble(4, address.startMValue)
-      lrmPositionPS.setDouble(5, address.endMValue)
-      lrmPositionPS.addBatch()
+      createLRMPosition(lrmPositionPS, lrmId, address.linkId, address.sideCode.value, address.startMValue, address.endMValue)
       addressPS.setLong(1, if (address.id == fi.liikennevirasto.viite.NewRoadAddress) {
         Sequences.nextViitePrimaryKeySeqValue
       } else address.id)
@@ -795,6 +828,47 @@ object RoadAddressDAO {
     roadAddresses.map(_.id)
   }
 
+  def create(roadAddresses: Seq[RoadAddressProjectLink]): Seq[Long] = {
+    val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure) values (?, ?, ?, ?, ?)")
+    val addressPS = dynamicSession.prepareStatement("insert into PROJECT_LINK (id, project_id, lrm_position_id, " +
+      "road_number, road_part_number, " +
+      "track_code, discontinuity_type, START_ADDR_M, END_ADDR_M, created_by, " +
+      "calibration_points) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+    val ids = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= ${roadAddresses.size}""".as[Long].list
+    roadAddresses.zip(ids).foreach { case ((address), (lrmId)) =>
+      createLRMPosition(lrmPositionPS, lrmId, address.linkId, address.sideCode.value, address.startMValue, address.endMValue)
+      addressPS.setLong(1, if (address.id == fi.liikennevirasto.viite.NewRoadAddress) {
+        Sequences.nextViitePrimaryKeySeqValue
+      } else address.id)
+      addressPS.setLong(2, address.projectId)
+      addressPS.setLong(3, lrmId)
+      addressPS.setLong(4, address.roadNumber)
+      addressPS.setLong(5, address.roadPartNumber)
+      addressPS.setLong(6, address.track.value)
+      addressPS.setLong(7, address.discontinuity.value)
+      addressPS.setLong(8, address.startAddrMValue)
+      addressPS.setLong(9, address.endAddrMValue)
+      addressPS.setString(10, address.modifiedBy.get)
+      addressPS.setDouble(11, CalibrationCode.getFromAddress(address).value)
+      addressPS.addBatch()
+    }
+    lrmPositionPS.executeBatch()
+    addressPS.executeBatch()
+    lrmPositionPS.close()
+    addressPS.close()
+    roadAddresses.map(_.id)
+  }
+
+  private def createLRMPosition(lrmPositionPS: PreparedStatement, id: Long, linkId: Long, sideCode: Int,
+                                startM: Double, endM: Double): Unit = {
+    lrmPositionPS.setLong(1, id)
+    lrmPositionPS.setLong(2, linkId)
+    lrmPositionPS.setLong(3, sideCode)
+    lrmPositionPS.setDouble(4, startM)
+    lrmPositionPS.setDouble(5, endM)
+    lrmPositionPS.addBatch()
+  }
+
   def createRoadAddressProject(roadAddressProject: RoadAddressProject): Unit ={
     sqlu"""
            insert into project (id, state, name, ely, created_by, created_date, start_date ,modified_by, modified_date, add_info)
@@ -802,26 +876,18 @@ object RoadAddressDAO {
            """.execute
   }
 
-  def createRoadAddressProjectLink(id: Long, roadAddress: RoadAddress, roadAddressProject: RoadAddressProject) : Unit ={
-    sqlu"""
-           insert into project_link (id, project_id, track_code, discontinuity_type, road_number, road_part_number, start_addr_m, end_addr_m, lrm_position_id, created_by, modified_by, created_date, modified_date)
-           values (${id}, ${roadAddressProject.id}, ${roadAddress.track.value}, ${roadAddress.discontinuity.value}, ${roadAddress.roadNumber}, ${roadAddress.roadPartNumber}, ${roadAddress.startAddrMValue},
-            ${roadAddress.endAddrMValue}, ${roadAddress.lrmPositionId}, ${roadAddressProject.createdBy} , ${roadAddressProject.modifiedBy}, ${roadAddress.startDate}, sysdate)
-           """.execute
-  }
-
   def getRoadAddressProjectLinks(projectId : Long): List[RoadAddressProjectLink] ={
     val query =
-      s"""select PROJECT_LINK.ID, PROJECT_LINK.PROJECT_ID, PROJECT_LINK.TRACK_CODE, PROJECT_LINK.DISCONTINUITY_TYPE, PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.START_ADDR_M, PROJECT_LINK.END_ADDR_M, PROJECT_LINK.LRM_POSITION_ID, PROJECT_LINK.CREATED_BY, PROJECT_LINK.MODIFIED_BY, lrm_position.link_id, (LRM_POSITION.END_MEASURE - LRM_POSITION.START_MEASURE) as length
-         from PROJECT_LINK join ROAD_ADDRESS join LRM_POSITION
-         on LRM_POSITION.ID = ROAD_ADDRESS.LRM_POSITION_ID
-         on (PROJECT_LINK.ROAD_NUMBER = ROAD_ADDRESS.ROAD_NUMBER and PROJECT_LINK.ROAD_PART_NUMBER = ROAD_ADDRESS.ROAD_PART_NUMBER and ROAD_ADDRESS.LRM_POSITION_ID = PROJECT_LINK.LRM_POSITION_ID)
-         where (PROJECT_LINK.PROJECT_ID = $projectId) order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
-    Q.queryNA[(Long, Long, Long, Long, Long, Long, Long, Long, Long, String, String, Long, Double)](query).list.map{
-      case(projectLinkId, projectId, trackCode, discontinuityType, roadNumber, roadPartNumber, startAddrM, endAddrM, lrmPositionId, cratedBy, modifiedBy, linkId, length) =>
-        RoadAddressProjectLink(projectLinkId, projectId, trackCode, Discontinuity.apply(discontinuityType.toInt), roadNumber, roadPartNumber, startAddrM, endAddrM, lrmPositionId, cratedBy, modifiedBy, linkId, length)
+      s"""select PROJECT_LINK.ID, PROJECT_LINK.PROJECT_ID, PROJECT_LINK.TRACK_CODE, PROJECT_LINK.DISCONTINUITY_TYPE, PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.START_ADDR_M, PROJECT_LINK.END_ADDR_M, PROJECT_LINK.LRM_POSITION_ID, PROJECT_LINK.CREATED_BY, PROJECT_LINK.MODIFIED_BY, lrm_position.link_id, (LRM_POSITION.END_MEASURE - LRM_POSITION.START_MEASURE) as length, PROJECT_LINK.CALIBRATION_POINTS, PROJECT_LINK.STATUS
+                  from PROJECT_LINK join LRM_POSITION
+                  on LRM_POSITION.ID = PROJECT_LINK.LRM_POSITION_ID
+                  where (PROJECT_LINK.PROJECT_ID = $projectId ) order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
+    Q.queryNA[(Long, Long, Int, Int, Long, Long, Long, Long, Long, String, String, Long, Double, Long, Int)](query).list.map{
+      case(projectLinkId, projectId, trackCode, discontinuityType, roadNumber, roadPartNumber, startAddrM, endAddrM, lrmPositionId, createdBy, modifiedBy, linkId, length, calibrationPoints, status) =>
+        RoadAddressProjectLink(projectLinkId, roadNumber, roadPartNumber, Track.apply(trackCode), Discontinuity.apply(discontinuityType), startAddrM, endAddrM, None, None, None, lrmPositionId,linkId,0L,0L, SideCode.apply(99), (None, None), false, Seq.empty[Point], projectId, LinkStatus.apply(status))
     }
   }
+
 
   def getRoadAddress(id : Long, linkId : Long) : Option[RoadAddress] = {
     val query = s"""

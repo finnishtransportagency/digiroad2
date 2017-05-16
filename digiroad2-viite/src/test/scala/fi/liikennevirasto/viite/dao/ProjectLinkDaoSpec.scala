@@ -1,7 +1,11 @@
 package fi.liikennevirasto.viite.dao
 import java.sql.SQLException
+
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, RoadLinkService}
 import slick.jdbc.StaticQuery.interpolation
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.viite.RoadAddressService
+import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -35,7 +39,8 @@ class ProjectLinkDaoSpec  extends FunSuite with Matchers{
     }
   }
 
-  test("Add two links that are reserved")
+  //TRIGGER has been removed for the time being. Should activate the test again if the triggers are activated again.
+  ignore("Add two links that are reserved")
   {
     OracleDatabase.withDynTransaction {
       addprojects()

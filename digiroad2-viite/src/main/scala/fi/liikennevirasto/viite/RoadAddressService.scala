@@ -598,44 +598,33 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   /**
-    * Adds reserved road links (from road parts) to a road address project
+    * Adds reserved road links (from road parts) to a road address project. Reservability is check before this.
     *
     * @param project
     * @return
     */
   private def addLinksToProject(project: RoadAddressProject): Option[String] = {
-    var croadnumber: Long = 0 //needed for error messages
-    var croadpart: Long = 0
+    def toProjectLink(roadAddress: RoadAddress): RoadAddressProjectLink = {
+      RoadAddressProjectLink(id=NewRoadAddress, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track,
+        roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
+        roadAddress.endDate, modifiedBy=Option(project.createdBy), 0L, roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
+        roadAddress.sideCode, roadAddress.calibrationPoints, floating=false, roadAddress.geom, project.id, LinkStatus.NotHandled)
+    }
     withDynTransaction {
-      try {
-        for (roadaddress <- project.reservedParts) { //check validity
-          if (!RoadAddressDAO.roadPartExists(roadaddress.roadNumber, roadaddress.roadPartNumber)) {
-            return Some(s"TIE ${roadaddress.roadNumber} OSA: ${roadaddress.roadPartNumber} ei löytynyt tietokannasta")
-          }
-        }
-        for (roadaddress <- project.reservedParts) {
-          croadnumber = roadaddress.roadNumber
-          croadpart = roadaddress.roadPartNumber
-          val addresses = RoadAddressDAO.fetchByRoadPart(roadaddress.roadNumber, roadaddress.roadPartNumber, true)
-          addresses.foreach(address =>
-            RoadAddressDAO.createRoadAddressProjectLink(Sequences.nextViitePrimaryKeySeqValue, address, project))
-        }
-      } catch {
-        case a: Exception =>
-          if (a.getMessage.contains("ORA-20000")) {
-            val reservedByProject = RoadAddressDAO.roadPartReservedByProject(croadnumber, croadpart)
-            logger.info(s"Road part being reserved was already reserved to project $reservedByProject")
-            return Some(s"TIE $croadnumber OSA $croadpart on jo varattuna projektissa ${
-              reservedByProject.getOrElse("<Tuntematon>")
-            }, tarkista tiedot " + '\n')
-          } else {
-            logger.error(s"Reserving of road part $croadpart failed: ${a.getMessage}", a)
-            return Some(s"Tieosan $croadpart varaus ei tuntemattomasta virheestä johtuen onnistunut" + '\n')
-          }
-        case _ : Throwable => return Some(s"Tuntematon virhe")
+      //TODO: Check that there are no floating road addresses present when starting
+      val errors = project.reservedParts.map(roadAddress =>
+        if (!RoadAddressDAO.roadPartExists(roadAddress.roadNumber, roadAddress.roadPartNumber)) {
+          s"TIE ${roadAddress.roadNumber} OSA: ${roadAddress.roadPartNumber}"
+        } else "").filterNot(_ == "")
+      if (errors.nonEmpty)
+        return Some(s"Seuraavia tieosia ei löytynyt tietokannasta: ${errors.mkString(", ")}")
+      else {
+        val addresses = project.reservedParts.flatMap(roadaddress =>
+          RoadAddressDAO.fetchByRoadPart(roadaddress.roadNumber, roadaddress.roadPartNumber, false).map(toProjectLink))
+        RoadAddressDAO.create(addresses)
+        None
       }
     }
-    None
   }
 
   def transferRoadAddress(sources: Seq[RoadAddressLink], targets: Seq[RoadAddressLink], user: User): Seq[RoadAddress] = {
@@ -690,9 +679,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         (address.roadNumber, address.roadPartNumber)
       }.toSeq.sortBy(_._1._2)(Ordering[Long])
       val adddressestoform = groupedAddresses.map(addressGroup => {
-        val lastAddressM = addressGroup._2.last.endAddrM
+        val lastAddressM = addressGroup._2.last.endAddrMValue
         val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(addressGroup._2.last.linkId), false)
-        val addressFormLine = RoadAddressProjectFormLine(addressGroup._2.last.linkId, project.id, addressGroup._1._1, addressGroup._1._2, lastAddressM, MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(roadLink.head.municipalityCode, -1), addressGroup._2.last.discontinuityType.description)
+        val addressFormLine = RoadAddressProjectFormLine(addressGroup._2.last.linkId, project.id, addressGroup._1._1,
+          addressGroup._1._2, lastAddressM, MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(roadLink.head.municipalityCode, -1),
+          addressGroup._2.last.discontinuity.description)
         //TODO:case class RoadAddressProjectFormLine(projectId: Long, roadNumber: Long, roadPartNumber: Long, RoadLength: Long, ely : Long, discontinuity: String)
         addressFormLine
       })
@@ -766,9 +757,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         (address.roadNumber, address.roadPartNumber)
       }.toSeq.sortBy(_._1._2)(Ordering[Long])
       val formInfo: Seq[RoadAddressProjectFormLine] = groupedAddresses.map(addressGroup => {
-        val endAddressM = addressGroup._2.last.endAddrM
+        val endAddressM = addressGroup._2.last.endAddrMValue
         val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(addressGroup._2.head.linkId), false)
-        val addressFormLine = RoadAddressProjectFormLine(addressGroup._2.head.linkId, project.id, addressGroup._2.head.roadNumber, addressGroup._2.head.roadPartNumber, endAddressM, MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(roadLink.head.municipalityCode, -1), addressGroup._2.last.discontinuityType.description)
+        val addressFormLine = RoadAddressProjectFormLine(addressGroup._2.head.linkId, project.id,
+          addressGroup._2.head.roadNumber, addressGroup._2.head.roadPartNumber, endAddressM,
+          MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(roadLink.head.municipalityCode, -1),
+          addressGroup._2.last.discontinuity.description)
         addressFormLine
       })
 
