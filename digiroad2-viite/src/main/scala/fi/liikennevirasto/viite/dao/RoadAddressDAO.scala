@@ -114,21 +114,6 @@ case class MissingRoadAddress(linkId: Long, startAddrMValue: Option[Long], endAd
                               roadType: RoadType, roadNumber: Option[Long], roadPartNumber: Option[Long],
                               startMValue: Option[Double], endMValue: Option[Double], anomaly: Anomaly)
 
-
-sealed trait LinkStatus {
-  def value: Int
-}
-
-object LinkStatus {
-  val values = Set(NotHandled)
-  case object NotHandled extends LinkStatus {def value = 0}
-  def apply(intValue: Int): LinkStatus = {
-    values.find(_.value == intValue).getOrElse(NotHandled)
-  }
-}
-
-
-
 object RoadAddressDAO {
 
   def fetchByBoundingBox(boundingRectangle: BoundingRectangle, fetchOnlyFloating: Boolean): (Seq[RoadAddress], Seq[MissingRoadAddress]) = {

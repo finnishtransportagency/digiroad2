@@ -27,6 +27,17 @@ object ProjectState{
   case object Incomplete extends ProjectState { def value = 1; def description = "Keskeneräinen"}
 }
 
+sealed trait LinkStatus {
+  def value: Int
+}
+
+object LinkStatus {
+  val values = Set(NotHandled)
+  case object NotHandled extends LinkStatus {def value = 0}
+  def apply(intValue: Int): LinkStatus = {
+    values.find(_.value == intValue).getOrElse(NotHandled)
+  }
+}
 
 case class RoadAddressProject(id: Long, status: ProjectState, name: String, createdBy: String, createdDate: DateTime,
                               modifiedBy: String, startDate: DateTime, dateModified: DateTime, additionalInfo: String,
