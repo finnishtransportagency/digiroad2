@@ -3,15 +3,13 @@ package fi.liikennevirasto.digiroad2
 import java.text.SimpleDateFormat
 
 import fi.liikennevirasto.digiroad2.asset._
-
-import scala.util.parsing.json._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.UserProvider
-import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
-import fi.liikennevirasto.viite.{ReservedRoadPart, RoadAddressService}
+import fi.liikennevirasto.digiroad2.util.RoadAddressException
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{RoadAddressLink, RoadAddressLinkPartitioner}
+import fi.liikennevirasto.viite.{ReservedRoadPart, RoadAddressService,ViiteTierekisteriClient}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.json4s._
@@ -19,6 +17,7 @@ import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.{NotFound, _}
 import org.slf4j.LoggerFactory
 
+import scala.util.parsing.json._
 import scala.util.{Left, Right}
 
 /**
@@ -142,6 +141,12 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
+
+  get("/roadlinks/checkproject/") {
+    val linkId = params("projectId").toLong
+    val client = new ViiteTierekisteriClient()
+    client.getprojectstatus(linkId.toString)
+  }
   get("/roadlinks/transferRoadLink") {
     val (sources, targets) = roadlinksData()
     val user = userProvider.getCurrentUser()
