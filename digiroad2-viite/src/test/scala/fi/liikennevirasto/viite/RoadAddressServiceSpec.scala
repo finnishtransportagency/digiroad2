@@ -10,7 +10,6 @@ import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{HistoryLinkInterface, 
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.BothDirections
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util.Track
@@ -294,7 +293,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     }
   }
 
-  ignore("merge road addresses - ignored because rollback doesn't do what it's supposed to do") {
+  test("merge road addresses") {
     runWithRollback {
       val addressList = RoadAddressDAO.fetchByLinkId(Set(5171285L, 5170935L, 5171863L))
       addressList should have size (3)
@@ -306,7 +305,8 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       val addressListMerged = RoadAddressDAO.fetchByLinkId(Set(5171285L, 5170935L, 5171863L))
       addressListMerged should have size (1)
       addressListMerged.head.linkId should be (address.linkId)
-      dynamicSession.rollback()
+    }
+    runWithRollback {
       RoadAddressDAO.fetchByLinkId(Set(5171285L, 5170935L, 5171863L)) should have size (3)
     }
   }
