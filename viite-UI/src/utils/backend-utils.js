@@ -63,7 +63,7 @@
       });
     }, 1000);
 
-    this.createRoadAddressProject = _.throttle(function(data, success, failure) {
+    this.saveRoadAddressProject = _.throttle(function(data, success, failure) {
       $.ajax({
         contentType: "application/json",
         type: "PUT",

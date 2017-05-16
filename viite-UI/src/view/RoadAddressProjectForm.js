@@ -219,7 +219,12 @@
       rootElement.on('click', '.project-form button.save', function() {
         var data = $('#roadAddressProject').get(0);
         applicationModel.addSpinner();
-        projectCollection.createProject(data, currentProject);
+        if(_.isUndefined(currentProject) || currentProject.id === 0){
+          projectCollection.createProject(data, currentProject);
+        }
+        else{
+          projectCollection.saveProject()
+        }
       });
 
       rootElement.on('click', '.btn-reserve', function() {

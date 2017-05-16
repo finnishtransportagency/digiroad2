@@ -44,10 +44,41 @@
         name: data[0].value,
         startDate: data[1].value,
         additionalInfo: data[2].value,
-        roadpartlist: dirtyRoadSegmentLst
+        roadPartList: dirtyRoadSegmentLst
       };
 
-      backend.createRoadAddressProject(dataJson, function (result) {
+      backend.saveRoadAddressProject(dataJson, function (result) {
+        console.log(result.success);
+        if (result.success === "ok") {
+          projectinfo = {
+            id: result.project.id,
+            additionalInfo: result.project.additionalInfo,
+            status: result.project.status,
+            startDate: result.project.startDate
+          };
+          eventbus.trigger('roadAddress:projectSaved', result);
+          dirtyRoadSegmentLst = [];
+        }
+        else {
+          eventbus.trigger('roadAddress:projectValidationFailed', result);
+        }
+      }, function () {
+        eventbus.trigger('roadAddress:projectFailed');
+      });
+    };
+
+    this.saveProject = function (data, currentProject) {
+
+      var dataJson = {
+        id: currentProject.id,
+        status: currentProject.status,
+        name: data[0].value,
+        startDate: data[1].value,
+        additionalInfo: data[2].value,
+        roadPartList: dirtyRoadSegmentLst
+      };
+
+      backend.saveRoadAddressProject(dataJson, function (result) {
         console.log(result.success);
         if (result.success === "ok") {
           projectinfo = {
@@ -71,8 +102,8 @@
       return '<label class="control-label-small">' + label + '</label>';
     };
 
-    var updateforminfo = function (formInfo) {
-      $("#roadpartList").html(formInfo);
+    var updateFormInfo = function (formInfo) {
+      $("#roadpartList").append($("#roadpartList").html(formInfo));
     };
 
     var parseroadpartinfoToresultRow = function () {
@@ -126,7 +157,7 @@
             eventbus.trigger('roadAddress:projectValidationFailed', validationResult);
           } else {
             addToCurrentRoadPartList(validationResult);
-            updateforminfo(parseroadpartinfoToresultRow());
+            updateFormInfo(parseroadpartinfoToresultRow());
           }
         });
     };
