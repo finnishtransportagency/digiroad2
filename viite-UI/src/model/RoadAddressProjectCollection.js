@@ -87,7 +87,7 @@
             status: result.project.status,
             startDate: result.project.startDate
           };
-          eventbus.trigger('roadAddress:projectSaved', result);
+          eventbus.trigger('roadAddress:projectCreated', result);
           dirtyRoadSegmentLst = [];
         }
         else {

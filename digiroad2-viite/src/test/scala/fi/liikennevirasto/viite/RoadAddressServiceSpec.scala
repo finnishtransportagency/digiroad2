@@ -351,13 +351,28 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     }
   }
 
-  test("get projects by id") {
+  test("create and get projects by id") {
     runWithRollback {
       val countCurrentProjects = roadAddressService.getRoadAddressAllProjects()
-      val id = Sequences.nextViitePrimaryKeySeqValue
+      val id = 0
       val addresses:List[ReservedRoadPart]= List(ReservedRoadPart(5:Long, 203:Long, 203:Long, 5:Double, Discontinuity.apply("jatkuva"), 8:Long))
       val roadAddressProject = RoadAddressProject(id, RoadAddressProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", addresses)
-      roadAddressService.saveRoadLinkProject(roadAddressProject)
+      roadAddressService.createRoadLinkProject(roadAddressProject)
+      val countAfterInsertProjects = roadAddressService.getRoadAddressAllProjects()
+      val count = countCurrentProjects.size + 1
+      countAfterInsertProjects.size should be (count)
+    }
+  }
+
+  test("save project") {
+    runWithRollback {
+      val countCurrentProjects = roadAddressService.getRoadAddressAllProjects()
+      val id = 0
+      val addresses = List(ReservedRoadPart(5:Long, 203:Long, 203:Long, 5:Double, Discontinuity.apply("jatkuva"), 8:Long))
+      val roadAddressProject = RoadAddressProject(id, RoadAddressProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List())
+      val saved = roadAddressService.createRoadLinkProject(roadAddressProject)._1
+      val changed = saved.copy(reservedParts = addresses)
+      roadAddressService.saveRoadLinkProject(changed)
       val countAfterInsertProjects = roadAddressService.getRoadAddressAllProjects()
       val count = countCurrentProjects.size + 1
       countAfterInsertProjects.size should be (count)

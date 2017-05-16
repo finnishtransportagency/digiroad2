@@ -201,7 +201,7 @@
         rootElement.find('.btn-next').prop("disabled", false);
       });
 
-      eventbus.on('roadAddress:projectSaved', function (result) {
+      eventbus.on('roadAddress:projectCreated', function (result) {
         currentProject = result.project;
         var text = '';
         _.each(result.formInfo, function(line){
@@ -227,7 +227,7 @@
           projectCollection.createProject(data, currentProject);
         }
         else{
-          projectCollection.saveProject()
+          projectCollection.saveProject(data, currentProject);
         }
       });
 

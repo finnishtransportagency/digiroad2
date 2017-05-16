@@ -555,9 +555,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   private def projectFound(roadAddressProject: RoadAddressProject): Option[RoadAddressProject] = {
-   val newRoadAddressProject=0
-    if (roadAddressProject.id==newRoadAddressProject) return None;
-      OracleDatabase.withDynTransaction {
+    val newRoadAddressProject=0
+    if (roadAddressProject.id==newRoadAddressProject) return None
+    OracleDatabase.withDynTransaction {
       return RoadAddressDAO.getRoadAddressProjectById(roadAddressProject.id)
     }
   }
@@ -610,20 +610,18 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         roadAddress.endDate, modifiedBy=Option(project.createdBy), 0L, roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
         roadAddress.sideCode, roadAddress.calibrationPoints, floating=false, roadAddress.geom, project.id, LinkStatus.NotHandled)
     }
-    withDynTransaction {
-      //TODO: Check that there are no floating road addresses present when starting
-      val errors = project.reservedParts.map(roadAddress =>
-        if (!RoadAddressDAO.roadPartExists(roadAddress.roadNumber, roadAddress.roadPartNumber)) {
-          s"TIE ${roadAddress.roadNumber} OSA: ${roadAddress.roadPartNumber}"
-        } else "").filterNot(_ == "")
-      if (errors.nonEmpty)
-        return Some(s"Seuraavia tieosia ei löytynyt tietokannasta: ${errors.mkString(", ")}")
-      else {
-        val addresses = project.reservedParts.flatMap(roadaddress =>
-          RoadAddressDAO.fetchByRoadPart(roadaddress.roadNumber, roadaddress.roadPartNumber, false).map(toProjectLink))
-        RoadAddressDAO.create(addresses)
-        None
-      }
+    //TODO: Check that there are no floating road addresses present when starting
+    val errors = project.reservedParts.map(roadAddress =>
+      if (!RoadAddressDAO.roadPartExists(roadAddress.roadNumber, roadAddress.roadPartNumber)) {
+        s"TIE ${roadAddress.roadNumber} OSA: ${roadAddress.roadPartNumber}"
+      } else "").filterNot(_ == "")
+    if (errors.nonEmpty)
+      return Some(s"Seuraavia tieosia ei löytynyt tietokannasta: ${errors.mkString(", ")}")
+    else {
+      val addresses = project.reservedParts.flatMap(roadaddress =>
+        RoadAddressDAO.fetchByRoadPart(roadaddress.roadNumber, roadaddress.roadPartNumber, false).map(toProjectLink))
+      RoadAddressDAO.create(addresses)
+      None
     }
   }
 
@@ -673,23 +671,21 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   private def createFormOfReservedLinksToSavedRoadParts(project: RoadAddressProject): (Seq[RoadAddressProjectFormLine], Option[RoadAddressProjectLink]) = {
-    withDynTransaction {
-      val createdAddresses = RoadAddressDAO.getRoadAddressProjectLinks(project.id)
-      val groupedAddresses = createdAddresses.groupBy { address =>
-        (address.roadNumber, address.roadPartNumber)
-      }.toSeq.sortBy(_._1._2)(Ordering[Long])
-      val adddressestoform = groupedAddresses.map(addressGroup => {
-        val lastAddressM = addressGroup._2.last.endAddrMValue
-        val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(addressGroup._2.last.linkId), false)
-        val addressFormLine = RoadAddressProjectFormLine(addressGroup._2.last.linkId, project.id, addressGroup._1._1,
-          addressGroup._1._2, lastAddressM, MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(roadLink.head.municipalityCode, -1),
-          addressGroup._2.last.discontinuity.description)
-        //TODO:case class RoadAddressProjectFormLine(projectId: Long, roadNumber: Long, roadPartNumber: Long, RoadLength: Long, ely : Long, discontinuity: String)
-        addressFormLine
-      })
-      val addresses = createdAddresses.headOption
-      (adddressestoform, addresses)
-    }
+    val createdAddresses = RoadAddressDAO.getRoadAddressProjectLinks(project.id)
+    val groupedAddresses = createdAddresses.groupBy { address =>
+      (address.roadNumber, address.roadPartNumber)
+    }.toSeq.sortBy(_._1._2)(Ordering[Long])
+    val adddressestoform = groupedAddresses.map(addressGroup => {
+      val lastAddressM = addressGroup._2.last.endAddrMValue
+      val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(addressGroup._2.last.linkId), false)
+      val addressFormLine = RoadAddressProjectFormLine(addressGroup._2.last.linkId, project.id, addressGroup._1._1,
+        addressGroup._1._2, lastAddressM, MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(roadLink.head.municipalityCode, -1),
+        addressGroup._2.last.discontinuity.description)
+      //TODO:case class RoadAddressProjectFormLine(projectId: Long, roadNumber: Long, roadPartNumber: Long, RoadLength: Long, ely : Long, discontinuity: String)
+      addressFormLine
+    })
+    val addresses = createdAddresses.headOption
+    (adddressestoform, addresses)
   }
 
   private def createNewRoadLinkProject(roadAddressProject: RoadAddressProject) = {
@@ -708,14 +704,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   def saveRoadLinkProject(roadAddressProject: RoadAddressProject): (RoadAddressProject, Option[RoadAddressProjectLink], Seq[RoadAddressProjectFormLine], String) = {
-    val projectF = projectFound(roadAddressProject)
-    if (projectF.isEmpty)
-      createNewRoadLinkProject(roadAddressProject)
-    else {
+    if (projectFound(roadAddressProject).isEmpty)
+      throw new IllegalArgumentException("Project not found")
+    withDynTransaction {
       if (roadAddressProject.reservedParts.isEmpty) { //roadaddresses to update is empty
-        withDynTransaction {
-          RoadAddressDAO.updateRoadAddressProject(roadAddressProject)
-        }
+        RoadAddressDAO.updateRoadAddressProject(roadAddressProject)
         val (forminfo, createdlink) = createFormOfReservedLinksToSavedRoadParts(roadAddressProject)
         (roadAddressProject, createdlink, forminfo, "ok")
       } else {
@@ -723,9 +716,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         val errorMessage = addLinksToProject(roadAddressProject)
         if (errorMessage.isEmpty) {
           //adding links succeeeded
-          withDynTransaction {
-            RoadAddressDAO.updateRoadAddressProject(roadAddressProject)
-          }
+          RoadAddressDAO.updateRoadAddressProject(roadAddressProject)
           val (forminfo, createdlink) = createFormOfReservedLinksToSavedRoadParts(roadAddressProject)
           (roadAddressProject, createdlink, forminfo, "ok")
         } else {
@@ -735,6 +726,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         }
       }
     }
+  }
+
+  def createRoadLinkProject(roadAddressProject: RoadAddressProject): (RoadAddressProject, Option[RoadAddressProjectLink], Seq[RoadAddressProjectFormLine], String) = {
+    if (roadAddressProject.id != 0)
+      throw new IllegalArgumentException(s"Road address project to create has an id ${roadAddressProject.id}")
+    createNewRoadLinkProject(roadAddressProject)
   }
 
   def getRoadAddressSingleProject(projectId: Long): Seq[RoadAddressProject] = {

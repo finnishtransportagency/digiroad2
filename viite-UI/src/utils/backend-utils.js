@@ -66,8 +66,8 @@
     this.saveRoadAddressProject = _.throttle(function(data, success, failure) {
       $.ajax({
         contentType: "application/json",
-        type: "PUT",
-        url: "api/viite/roadlinks/roadaddress/project/save",
+        type: "POST",
+        url: "api/viite/roadlinks/roadaddress/project/create",
         data: JSON.stringify(data),
         dataType: "json",
         success: success,
