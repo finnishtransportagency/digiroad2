@@ -67,12 +67,14 @@
     });
 
     eventbus.on('linkProperties:selectedProject', function (linkId) {
-      router.navigate('linkProperty/' + linkId);
-      applicationModel.selectLayer('linkProperty');
-      backend.getRoadLinkByLinkId(linkId, function (response) {
-        map.getView().setCenter([response.middlePoint.x, response.middlePoint.y]);
-        map.getView().setZoom(8);
-      });
+      if (typeof linkId !== 'undefined') {
+        router.navigate('linkProperty/' + linkId);
+        applicationModel.selectLayer('linkProperty');
+        backend.getRoadLinkByLinkId(linkId, function (response) {
+          map.getView().setCenter([response.middlePoint.x, response.middlePoint.y]);
+          map.getView().setZoom(8);
+        });
+      }
     });
 
     eventbus.on('layer:selected', function (layer) {
