@@ -246,7 +246,20 @@
       });
 
       rootElement.on('click', '.project-form button.next', function(){
-
+        var data = $('#roadAddressProject').get(0);
+        applicationModel.addSpinner();
+        eventbus.once('roadAddress:projectSaved', function (result) {
+          jQuery('.modal-overlay').remove();
+          if(!_.isUndefined(result.projectAddresses)) {
+            eventbus.trigger('linkProperties:selectedProject', result.projectAddresses.linkId);
+            // TODO: Go to project edit mode layer
+          }
+        });
+        if(_.isUndefined(currentProject) || currentProject.id === 0){
+          projectCollection.createProject(data, currentProject);
+        } else {
+          projectCollection.saveProject(data, currentProject);
+        }
       });
 
 
