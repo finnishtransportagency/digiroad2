@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication,
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.pointasset.oracle.IncomingServicePoint
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
-import fi.liikennevirasto.digiroad2.util.VKMClientException
+import fi.liikennevirasto.digiroad2.util.RoadAddressException
 import fi.liikennevirasto.digiroad2.util.Track
 import org.apache.http.HttpStatus
 import fi.liikennevirasto.digiroad2.util.GMapUrlSigner
@@ -279,8 +279,8 @@ Returns empty result as Json message, not as page not found
       massTransitStopService.updateExistingById(id, position, properties.toSet, userProvider.getCurrentUser().username, validateMunicipalityAuthorization(id))
     } catch {
       case e: NoSuchElementException => BadRequest("Target roadlink not found")
-      case e: VKMClientException =>
-        logger.warn("VKM error: " + e.getMessage)
+      case e: RoadAddressException =>
+        logger.warn("RoadAddress error: " + e.getMessage)
         PreconditionFailed("Unable to find target road link")
     }
   }
@@ -352,7 +352,7 @@ Returns empty result as Json message, not as page not found
       val id = createMassTransitStop(lon, lat, linkId, bearing, properties)
       massTransitStopService.getById(id)
     } catch {
-      case e: VKMClientException =>
+      case e: RoadAddressException =>
         logger.warn(e.getMessage)
         PreconditionFailed("Unable to find target road link")
     }
@@ -540,7 +540,7 @@ Returns empty result as Json message, not as page not found
       ActionResult(ResponseStatus(HttpStatus.SC_NON_AUTHORITATIVE_INFORMATION, reason), body, headers)
   }
 
-  object VKMRoadAddressNotFound {
+  object RoadAddressNotFound {
     def apply(body: Any = Unit, headers: Map[String, String] = Map.empty, reason: String = "") =
       ActionResult(ResponseStatus(HttpStatus.SC_PRECONDITION_FAILED, reason), body, headers)
   }
@@ -550,7 +550,7 @@ Returns empty result as Json message, not as page not found
     case ue: UnauthenticatedException => halt(Unauthorized("Not authenticated"))
     case unf: UserNotFoundException => halt(Forbidden(unf.username))
     case te: TierekisteriClientException => halt(TierekisteriInternalServerError("Tietojen tallentaminen/muokkaminen Tierekisterissa epäonnistui. Tehtyjä muutoksia ei tallennettu OTH:ssa"))
-    case vkme: VKMClientException => halt(VKMRoadAddressNotFound("Sovellus ei pysty tunnistamaan annetulle pysäkin sijainnille tieosoitetta. Pysäkin tallennus Tierekisterissä ja OTH:ssa epäonnistui"))
+    case rae: RoadAddressException => halt(RoadAddressNotFound("Sovellus ei pysty tunnistamaan annetulle pysäkin sijainnille tieosoitetta. Pysäkin tallennus Tierekisterissä ja OTH:ssa epäonnistui"))
     case e: Exception =>
       logger.error("API Error", e)
       NewRelic.noticeError(e)

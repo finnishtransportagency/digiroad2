@@ -9,7 +9,6 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.conn.{ConnectTimeoutException, HttpHostConnectException}
-import org.apache.http.impl.client.HttpClientBuilder
 import org.scalatest.{FunSuite, Matchers}
 import slick.jdbc.StaticQuery.interpolation
 import slick.driver.JdbcDriver.backend.Database
@@ -20,176 +19,100 @@ import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
 class GeometryTransformSpec extends FunSuite with Matchers {
 
   val transform = new GeometryTransform()
-  val connectedToVKM = testConnection
-  def runWithRollback(f: => Unit): Unit = {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
-      f
-      dynamicSession.rollback()
-    }
-  }
 
-  private def testConnection: Boolean = {
-    val properties = new Properties()
-    properties.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    val url = properties.getProperty("digiroad2.VKMUrl")
-    val request = new HttpGet(url)
-    request.setConfig(RequestConfig.custom().setConnectTimeout(2500).build())
-    val client = HttpClientBuilder.create().build()
-    try {
-      val response = client.execute(request)
-      try {
-        response.getStatusLine.getStatusCode >= 200
-      } finally {
-        response.close()
-      }
-    } catch {
-      case e: HttpHostConnectException =>
-        false
-      case e: ConnectTimeoutException =>
-        false
-      case e: ConnectException =>
-        false
-    }
-  }
-
-  test("URL params should be well-formed") {
-    def urlParamMatch(urlParams: String, key: String, value: String) = {
-      urlParams.matches("(^|.*&)"+key+"="+value+"(&.*|$)")
-    }
-
-    transform.urlParams(Map("tie"-> Option(50), "tieosa" -> None)) should be ("tie=50")
-    val allParams = transform.urlParams(Map("tie" -> Option(50), "osa" -> Option(1), "etaisyys" -> Option(234),
-      "ajorata" -> Option(Track.Combined.value), "x" -> Option(3874744.2331), "y" -> Option(339484.1234)))
-
-    urlParamMatch(allParams, "tie", "50") should be (true)
-    urlParamMatch(allParams, "osa", "1") should be (true)
-    urlParamMatch(allParams, "etaisyys", "234") should be (true)
-    urlParamMatch(allParams, "ajorata", "0") should be (true)
-    urlParamMatch(allParams, "x", "3874744\\.2331") should be (true)
-    urlParamMatch(allParams, "y", "339484\\.1234") should be (true)
-  }
-
-  test("json should be well-formed") {
-    transform.jsonParams(List(Map("tie"-> Option(50), "tieosa" -> None))) should be ("{\"koordinaatit\":[{\"tie\":50}]}")
-    transform.jsonParams(List(Map("x" -> Option(3874744.2331), "y" -> Option(339484.1234)))) should be ("{\"koordinaatit\":[{\"x\":3874744.2331,\"y\":339484.1234}]}")
-  }
-
-  test("VKM request") {
-    assume(connectedToVKM)
-    val coord = Point(358813,6684163)
-    val roadAddress = transform.coordToAddress(coord, Option(110))
-    roadAddress.road should be (110)
-    roadAddress.roadPart should be >0
-  }
-
-  test("Multiple VKM requests") {
-    assume(connectedToVKM)
-    val coords = Seq(Point(358813,6684163), Point(358832,6684148), Point(358770,6684181))
-    val roadAddresses = transform.coordsToAddresses(coords, Option(110))
-    roadAddresses.foreach(_.road should be (110))
-    roadAddresses.foreach(_.roadPart should be >0)
-    roadAddresses.foreach(_.municipalityCode.isEmpty should be (false))
-    roadAddresses.foreach(_.deviation.getOrElse(0.0) should be >20.0)
-  }
-
-  test("missing results for query") {
-    assume(connectedToVKM)
-    val coord = Point(385879,6671604)
-    val thrown = intercept[VKMClientException] {
-      transform.coordToAddress(coord, Option(1), Option(0))
-    }
-    thrown.getMessage should be ("VKM error: Kohdetta ei löytynyt.")
-  }
-
-  test("missing results for multiple query") {
-    assume(connectedToVKM)
-    val coords = Seq(Point(385879,6671604), Point(385878,6671604), Point(385880,6671604))
-    val thrown = intercept[VKMClientException] {
-      transform.coordsToAddresses(coords, Option(1), Option(0))
-    }
-    thrown.getMessage should be ("VKM error: Kohdetta ei löytynyt.")
-  }
+  def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
   test("Resolve location on left") {
-    assume(connectedToVKM)
-    val coord = Point(358627.87728143384,6684191.235849902)
-    val (roadAddress, roadSide) = transform.resolveAddressAndLocation(coord, 104, Option(110))
-    roadAddress.road should be (110)
-    roadAddress.track should be (Track.LeftSide)
-    roadSide should be (RoadSide.Left)
+    val linkId = 1641830
+    val mValue = 60
+    val sideCode = 1
+
+    runWithRollback {
+      sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE)
+    values (5400000,null,2,10,298.694,null,1641830,0,to_timestamp('17.02.17 12:21:39','RR.MM.DD HH24:MI:SS'))""".execute
+
+      sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO)
+    values (7000000,921,2,0,5,0,299,5400000,to_date('01.09.12','RR.MM.DD'),null,'tr',to_date('01.09.12','RR.MM.DD'),2,0,MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(385258.765,7300119.103,0,0,384984.756,7300237.964,0,299)),null)""".execute
+
+      val (roadAddress, roadSide) =
+        transform.resolveAddressAndLocation(mValue, linkId, sideCode)
+
+      roadAddress.road should be(921)
+      roadAddress.track should be(Track.Combined)
+      roadAddress.mValue should be(50)
+      roadSide should be(RoadSide.Left)
+    }
   }
 
   test("Resolve location on right") {
-    assume(connectedToVKM)
-    val coord = Point(358637.366678646,6684210.86903845)
-    val (roadAddress, roadSide) = transform.resolveAddressAndLocation(coord, 292, Option(110))
-    roadAddress.road should be (110)
-    roadAddress.track should be (Track.RightSide)
-    roadSide should be (RoadSide.Right)
+    val linkId = 1641830
+    val mValue = 60
+    val sideCode = 1
+
+    runWithRollback {
+      sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE)
+    values (5400000,null,1,0,298.694,null,1641830,0,to_timestamp('17.02.17 12:21:39','RR.MM.DD HH24:MI:SS'))""".execute
+
+      sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO)
+    values (7000000,921,2,1,5,0,299,5400000,to_date('01.09.12','RR.MM.DD'),null,'tr',to_date('01.09.12','RR.MM.DD'),2,0,MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(385258.765,7300119.103,0,0,384984.756,7300237.964,0,299)),null)""".execute
+
+      val (roadAddress, roadSide) = transform.resolveAddressAndLocation(mValue, linkId, sideCode)
+      roadAddress.road should be(921)
+      roadAddress.track should be(Track.RightSide)
+      roadAddress.mValue should be(60)
+      roadSide should be(RoadSide.Right)
+    }
   }
 
   test("Resolve location on two-way road") {
-    assume(connectedToVKM)
-    val coord = Point(358345,6684305)
-    val (roadAddress, roadSide) = transform.resolveAddressAndLocation(coord, 110, Option(110))
-    roadAddress.road should be (110)
-    roadAddress.track should be (Track.Combined)
-    roadSide should be (RoadSide.Left)
-  }
+    val linkId = 1641830
+    val mValue = 11
+    val sideCode = 0
 
-  // The VKM result has changed
-  ignore("end of road part") {
-    assume(connectedToVKM)
-    val coord = Point(385879,6671604)
-    val (roadAddress, roadSide) = transform.resolveAddressAndLocation(coord, 190, Option(1))
-    roadAddress.road should be (1)
-    roadAddress.track should be (Track.LeftSide)
-    roadSide should be (RoadSide.Unknown)
-  }
+    runWithRollback {
+      sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE)
+      values (5400000,null,2,1,298.694,null,1641830,0,to_timestamp('17.02.17 12:21:39','RR.MM.DD HH24:MI:SS'))""".execute
 
-  test("missing results for location resolve") {
-    assume(connectedToVKM)
-    val coord = Point(385879,6671604)
-    val thrown = intercept[VKMClientException] {
-      transform.resolveAddressAndLocation(coord, 190, Option(1), Option(0))
+      sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO)
+      values (7000000,110,2,0,5,0,299,5400000,to_date('01.09.12','RR.MM.DD'),null,'tr',to_date('01.09.12','RR.MM.DD'),2,0,MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(385258.765,7300119.103,0,0,384984.756,7300237.964,0,299)),null)""".execute
+
+      sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE)
+      values (5400005,null,2,1,150.690,null,1641830,0,to_timestamp('17.02.17 12:21:39','RR.MM.DD HH24:MI:SS'))""".execute
+
+      sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO)
+      values (8000000,110,2,0,5,0,160,5400005,to_date('01.09.12','RR.MM.DD'),null,'tr',to_date('01.09.12','RR.MM.DD'),2,0,MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(385258.765,7300119.103,0,0,384984.756,7300237.964,0,299)),null)""".execute
+
+      val (roadAddress, roadSide) = transform.resolveAddressAndLocation(mValue, linkId, sideCode, road = Option(110))
+      roadAddress.road should be(110)
+      roadAddress.track should be(Track.Combined)
+      roadSide should be(RoadSide.Left)
     }
-    thrown.getMessage should be ("VKM error: Kohdetta ei löytynyt.")
-
-  }
-
-  test("Resolve location close to pedestrian walkway") {
-    assume(connectedToVKM)
-    val coord = Point(378847,6677884)
-    val (roadAddress, roadSide) = transform.resolveAddressAndLocation(coord, 270)
-    roadAddress.road should be (110)
-  }
-
-  test("Resolve location close to pedestrian walkway, allow pedestrian as result") {
-    assume(connectedToVKM)
-    val coord = Point(378847,6677884)
-    val (roadAddress, roadSide) = transform.resolveAddressAndLocation(coord, 270, includePedestrian = Option(true))
-    roadAddress.road should be >= (69999)
-  }
-
-  test("Resolve location far from pedestrian walkway, allow pedestrian as result") {
-    assume(connectedToVKM)
-    val coord = Point(378817,6677914)
-    val (roadAddress, roadSide) = transform.resolveAddressAndLocation(coord, 270, includePedestrian = Option(true))
-    roadAddress.road should be (110)
   }
 
   test("Resolve road address -> coordinate") {
-    assume(connectedToVKM)
-    val address = RoadAddress(None, 110, 1, Track.Combined, 3697, None)
-    val (coord) = transform.addressToCoords(address)
-    coord.size should be (1)
-    coord.head.x shouldNot be (0.0)
-    coord.head.y shouldNot be (0.0)
-    val (newAddress, side) = transform.resolveAddressAndLocation(coord.head, 270, includePedestrian = Option(true))
-    newAddress.road should be (address.road)
-    newAddress.roadPart should be (address.roadPart)
-    newAddress.track.value should be (address.track.value)
-    Math.abs(newAddress.mValue - address.mValue) < 5 should be (true)
+    runWithRollback {
+        sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE)
+               values (500000,null,2,0,15,null,3714864,0,to_timestamp('17.02.17 12:19:45','RR.MM.DD HH24:MI:SS'))""".execute
+        sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO)
+               values (7000001,20,1,0,5,0,20,500000,to_date('56.01.01','RR.MM.DD'),null,'tr',to_date('98.10.16','RR.MM.DD'),0,0,MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(0,0,0,0,0,20,0,0)),null)""".execute
+
+        sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE)
+               values (500001,null,2,0,6,null,3710726,0,to_timestamp('17.02.17 12:19:45','RR.MM.DD HH24:MI:SS'))""".execute
+        sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO)
+               values (7000002,20,2,0,5,20,30,500001,to_date('60.01.01','RR.MM.DD'),null,'tr',to_date('98.10.16','RR.MM.DD'),0,0,MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(0,20,0,0,0,30,0,0)),null)""".execute
+
+        sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE)
+               values (500002,null,2,0,8,null,3714455,0,to_timestamp('17.02.17 12:19:45','RR.MM.DD HH24:MI:SS'))""".execute
+        sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO)
+                values (7000003,20,3,0,5,30,40,500002,to_date('60.01.01','RR.MM.DD'),null,'tr',to_date('98.10.16','RR.MM.DD'),0,0,MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(0,30,0,0,0,40,0,0)),null)""".execute
+
+        val address = RoadAddress(None, 20, 2, Track.Combined, 22, None)
+        val coord = transform.addressToCoords(address.road, address.roadPart, address.track, address.mValue)
+
+        coord.size should be(1)
+        coord.head.x should be(0.0)
+        coord.head.y should be(22.0)
+    }
   }
 
   test("Resolve address and location from Viite"){

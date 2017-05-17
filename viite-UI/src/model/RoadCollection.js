@@ -70,10 +70,9 @@
 
     var getSelectedRoadLinks = function() {
       return _.filter(roadLinks(), function(roadLink) {
-        return roadLink.isSelected();
+        return roadLink.isSelected() && roadLink.getData().anomaly === 0;
       });
     };
-
 
     this.fetch = function(boundingBox, zoom) {
       backend.getRoadLinks({boundingBox: boundingBox, zoom: zoom}, function(fetchedRoadLinks) {
@@ -90,7 +89,11 @@
             _.contains(selectedIds, roadLink.getId());
           });
         }).concat(getSelectedRoadLinks());
-        eventbus.trigger('roadLinks:fetched');
+        eventbus.trigger('roadLinks:fetched', roadLinkGroups);
+        if(applicationModel.isProjectButton()){
+          eventbus.trigger('linkProperties:highlightSelectedProject', applicationModel.getProjectFeature());
+          applicationModel.setProjectButton(false);
+        }
       });
     };
 
@@ -208,5 +211,12 @@
       preMovedRoadAddresses = [];
     };
 
+    var roadIsOther = function(road){
+      return  0 === road.roadNumber && 0 === road.anomaly && 0 === road.roadLinkType && 0 === road.roadPartNumber && 99 === road.trackCode;
+    };
+
+    var roadIsUnknown = function(road){
+      return  0 === road.roadNumber && 1 === road.anomaly && 0 === road.roadLinkType && 0 === road.roadPartNumber && 99 === road.trackCode;
+    };
   };
 })(this);

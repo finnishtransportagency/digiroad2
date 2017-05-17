@@ -6,17 +6,18 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
 
   var assertSpeedLimitIsSelectedWithLimitValue = function(openLayersMap, speedLimitId, limitValue) {
     var features = _.filter(testHelpers.getSpeedLimitFeatures(openLayersMap), function(feature) {
-      return feature.attributes.id === speedLimitId;
+      return feature.getProperties().id === speedLimitId;
     });
     expect(features.length).not.to.equal(0);
     _.each(features, function(feature) {
-      expect(feature.attributes.value).to.equal(limitValue);
+      expect(feature.getProperties().value).to.equal(limitValue);
     });
     expect($('#feature-attributes .speed-limit :selected')).to.contain(limitValue.toString());
     expect($('#feature-attributes header span')).to.have.text("Segmentin ID: " + speedLimitId);
   };
 
   describe('when loading application with speed limit data', function() {
+    this.timeout(1500000);
     var openLayersMap;
     before(function(done) {
       testHelpers.restartApplication(function(map) {
@@ -53,12 +54,21 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
 
       describe('and clicking on the background map', function() {
         before(function(done) {
-          var layer = _.find(openLayersMap.layers, function(layer) { return layer.isBaseLayer; }).div;
           eventbus.once('speedLimit:unselect', function() { done(); });
-          testHelpers.clickElement(layer);
+
+          var interaction = _.find(openLayersMap.getInteractions().getArray(), function(interaction) {
+            return interaction.get('name') === 'speedLimit';
+          });
+
+          interaction.getFeatures().clear();
+          interaction.dispatchEvent({
+            type: 'select',
+            selected: [],
+            deselected: []
+          });
         });
         it('deselects speed limit', function() {
-          expect($('#feature-attributes header')).not.to.exist;
+            expect($('#feature-attributes header')).not.to.exist;
         });
       });
     });
@@ -84,6 +94,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
   });
 
   describe('when loading application in edit mode with speed limits', function() {
+    this.timeout(1500000);
     var openLayersMap;
     var speedLimitId = 13;
     var speedLimits = [_.find(SpeedLimitsTestData.generate(), function(g) { return _.some(g, {id: speedLimitId}); })];
@@ -104,12 +115,12 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
         $('#feature-attributes .form-control.speed-limit').val('100').change();
       });
       it('should update all speed limit links on map', function() {
-        var features = _.filter(testHelpers.getSpeedLimitFeatures(openLayersMap), function(feature) {
-          return feature.attributes.id === speedLimitId;
+        var features = _.filter(testHelpers.getSelectedSpeedLimitFeatures(openLayersMap), function(feature) {
+          return feature.getProperties().id === speedLimitId;
         });
         expect(features.length).not.to.equal(0);
         _.each(features, function(feature) {
-          expect(feature.attributes.value).to.equal(100);
+          expect(feature.getProperties().value).to.equal(100);
         });
       });
 
@@ -123,6 +134,7 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
   });
 
   describe('when loading application in edit mode with speed limits', function() {
+    this.timeout(1500000);
     var openLayersMap;
     var speedLimitId = 13;
     var speedLimits = [_.find(SpeedLimitsTestData.generate(), function(g) { return _.some(g, {id: speedLimitId}); })];
@@ -159,7 +171,6 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
           expect($(lastModifiedElement).text()).to.equal('Muokattu viimeksi: modifier 10.09.2014 13:36:58');
         });
       });
-
     });
   });
 });

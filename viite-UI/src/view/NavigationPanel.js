@@ -2,9 +2,9 @@
   root.NavigationPanel = {
     initialize: initialize
   };
+  var navigationPanel = $('<div class="navigation-panel"></div>');
 
   function initialize(container, searchBox, openProjectsBox, assetControlGroups) {
-    var navigationPanel = $('<div class="navigation-panel"></div>');
 
     navigationPanel.append(searchBox.element);
     navigationPanel.append(openProjectsBox.element);
@@ -37,10 +37,14 @@
 
     function bindEvents() {
       openProjectsBox.button.on('click', function(){
-        //TODO get the list of projects to show on VIITE-86
         openProjectsBox.toggle();
       });
     }
-    
+
+    eventbus.on('layer:enableButtons', enableButtons);
+    function enableButtons(value) {
+      navigationPanel.find(":button").prop('disabled', !value);
+    }
+
   }
 })(this);

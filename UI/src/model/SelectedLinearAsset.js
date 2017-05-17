@@ -63,7 +63,7 @@
 
     this.saveMultiple = function(value) {
       eventbus.trigger(singleElementEvent('saving'));
-      var partition = _.groupBy(selection, isUnknown);
+      var partition = _.groupBy(_.map(selection, function(item){ return _.omit(item, 'geometry'); }), isUnknown);
       var unknownLinearAssets = partition[true];
       var knownLinearAssets = partition[false];
 
@@ -102,7 +102,7 @@
       eventbus.trigger(singleElementEvent('saving'));
       var payloadContents = function() {
         if (self.isUnknown()) {
-          return { newLimits: selection };
+          return { newLimits: _.map(selection, function(item){ return _.omit(item, 'geometry'); }) };
         } else {
           return { ids: _.pluck(selection, 'id') };
         }
@@ -221,7 +221,7 @@
     };
 
     this.setValue = function(value) {
-      if (value != selection[0].value || Array.isArray(value)) {
+      if (value != selection[0].value) {
         var newGroup = _.map(selection, function(s) { return _.assign({}, s, { value: value }); });
         selection = collection.replaceSegments(selection, newGroup);
         dirty = true;
@@ -230,6 +230,8 @@
     };
 
     function isValueDifferent(selection){
+      if(selection.length == 1) return true;
+
       var nonEmptyValues = _.map(selection, function (select) {
         return  _.filter(select.value, function(val){ return !_.isEmpty(val.value); });
       });
@@ -243,39 +245,32 @@
       return _.contains(mapped, true);
     }
 
-
-    function areMandatoryFieldsFilled(selection) {
-      var requiredFields = _.map(selection, function(select){
-        return _.filter(select.value, function (val) {
-          return (val.publicId === "huoltotie_kayttooikeus") || (val.publicId === "huoltotie_huoltovastuu") || (val.publicId === "huoltotie_tiehoitokunta");
-        });
+    function getRequiredFields(properties){
+      return _.filter(properties, function (property) {
+        return (property.publicId === "huoltotie_kayttooikeus") || (property.publicId === "huoltotie_huoltovastuu") || (property.publicId === "huoltotie_tiehoitokunta");
       });
-      var containsEmpty = _.map(requiredFields, function (req) {
-        return (_.some(req, function (fields) {
-          return fields.value === '';
-        }));
-      });
-      return !(_.some(containsEmpty, function (value) {
-        return value;
-      })) && isValueDifferent(selection);
     }
 
-    function requiredFieldsFilled(value) {
-      var requiredFields = _.filter(value, function (val) {
-        return (val.publicId === "huoltotie_kayttooikeus") || (val.publicId === "huoltotie_huoltovastuu") || (val.publicId === "huoltotie_tiehoitokunta");
-      });
-      return !(_.some(requiredFields, function(fields){ return fields.value === ''; }));
+    function checkFormMandatoryFields(formSelection) {
+        if (_.isUndefined(formSelection.value)) return true;
+        var requiredFields = getRequiredFields(formSelection.value);
+        return !_.some(requiredFields, function(fields){ return fields.value === ''; });
+    }
+
+    function checkFormsMandatoryFields(formSelections) {
+      var mandatorySelected = !_.some(formSelections, function(formSelection){ return !checkFormMandatoryFields(formSelection); });
+      return mandatorySelected;
     }
 
     this.setAValue = function (value) {
-      if ((value != selection[0].value) || (Array.isArray(value))) {
+      if (value != selection[0].value) {
         selection[0].value = value;
         eventbus.trigger(singleElementEvent('valueChanged'), self);
       }
     };
 
     this.setBValue = function (value) {
-      if ((value != selection[1].value) || (Array.isArray(value))) {
+      if (value != selection[1].value) {
         selection[1].value = value;
         eventbus.trigger(singleElementEvent('valueChanged'), self);
       }
@@ -314,19 +309,17 @@
     this.isSaveable = function() {
       var valuesDiffer = function () { return (selection[0].value !== selection[1].value); };
       if (this.isDirty()) {
-        if(Array.isArray(selection[0].value)){
-            if(this.isSplitOrSeparated() && areMandatoryFieldsFilled(selection)){
-                return validator(selection[0].value);
-            }
-            else if (!this.isSplitOrSeparated() && requiredFieldsFilled(selection[0].value)) {
-                return validator(selection[0].value);
-            }
-        }
-        else if (this.isSplitOrSeparated() && valuesDiffer()) {
-          return validator(selection[0].value) && validator(selection[1].value);
-        }
-        else if (!this.isSplitOrSeparated()) {
-          return validator(selection[0].value);
+        switch (validator.name) {
+          case 'maintenanceRoad':
+            if(this.isSplitOrSeparated())
+              return checkFormsMandatoryFields(selection) && isValueDifferent(selection);
+            return checkFormsMandatoryFields(selection);
+          default:
+            if (this.isSplitOrSeparated() && valuesDiffer())
+              return validator(selection[0].value) && validator(selection[1].value);
+
+            if (!this.isSplitOrSeparated())
+              return validator(selection[0].value);
         }
       }
       return false;

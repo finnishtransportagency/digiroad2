@@ -3,12 +3,12 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
   var expect = chai.expect;
   var lineStrings = function(features) {
     return _.filter(features, function(feature) {
-      return feature.geometry instanceof OpenLayers.Geometry.LineString;
+      return feature.getGeometry() instanceof ol.geom.LineString;
     });
   };
   var points = function(features) {
     return _.filter(features, function(feature) {
-      return feature.geometry instanceof OpenLayers.Geometry.Point;
+      return feature.getGeometry() instanceof ol.geom.Point;
     });
   };
 
@@ -23,13 +23,13 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
     });
     it('displays speed limits', function() {
       var speedLimitVectors = lineStrings(testHelpers.getSpeedLimitFeatures(openLayersMap));
-      var limits = _.map(speedLimitVectors, function(vector) { return vector.attributes.value; });
+      var limits = _.map(speedLimitVectors, function(vector) { return vector.getProperties().value; });
       expect(limits).to.have.length(2);
       expect(limits).to.have.members([40, 60]);
     });
     it('displays speed limit signs', function() {
       var speedLimitSigns = points(testHelpers.getSpeedLimitFeatures(openLayersMap));
-      var limits = _.map(speedLimitSigns, function(point) { return point.attributes.value; });
+      var limits = _.map(speedLimitSigns, function(point) { return point.getProperties().value; });
       expect(limits).to.have.length(2);
       expect(limits).to.have.members([40, 60]);
     });

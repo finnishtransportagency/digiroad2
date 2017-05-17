@@ -16,6 +16,8 @@ import fi.liikennevirasto.digiroad2.roadaddress.oracle.RoadAddressDAO
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
+import org.scalatest.mock.MockitoSugar
 import slick.jdbc.{StaticQuery => Q}
 
 
@@ -142,7 +144,8 @@ object DataFixture {
 //      "siilijarvi_traffic_directions.sql",
 //      "siilinjarvi_speed_limits.sql",
 //      "siilinjarvi_linear_assets.sql",
-      "insert_road_address_data.sql"
+      "insert_road_address_data.sql",
+      "insert_floating_road_addresses.sql"
     ))
   }
 
@@ -506,7 +509,7 @@ object DataFixture {
     val busStops = trBusStops.flatMap{
       trStop =>
         try {
-          val stopPointOption = geometryTransform.addressToCoords(trStop.roadAddress).headOption
+          val stopPointOption = withDynSession{ geometryTransform.addressToCoords(trStop.roadAddress.road, trStop.roadAddress.roadPart, trStop.roadAddress.track, trStop.roadAddress.mValue) }
 
           stopPointOption match {
             case Some(stopPoint) =>
@@ -528,13 +531,13 @@ object DataFixture {
                 Some(NearestBusStops(trStop, peristedStop, distance))
               }
             case _ => {
-              println("VKM can't resolve the coordenates of the TR bus stop address with livi Id "+ trStop.liviId)
+              println("Can't resolve the coordenates of the TR bus stop address with livi Id "+ trStop.liviId)
               None
             }
           }
         }catch {
-          case e: VKMClientException => {
-            println("VKM throw exception for the TR bus stop address with livi Id "+ trStop.liviId +" "+ e.getMessage)
+          case e: RoadAddressException => {
+            println("RoadAddress throw exception for the TR bus stop address with livi Id "+ trStop.liviId +" "+ e.getMessage)
             None
           }
         }
@@ -611,6 +614,14 @@ object DataFixture {
   }
 
   def checkBusStopMatchingBetweenOTHandTR(dryRun: Boolean = false): Unit = {
+    def checkModifierSize(user: Modification) = {
+      user.modifier.map(_.length).getOrElse(0) > 10
+    }
+
+    def fixModifier(user: Modification) = {
+      Modification(user.modificationTime, Some("k127773"))
+    }
+
     println("\nVerify if OTH mass transit stop exist in Tierekisteri, if not present, create them. ")
     println(DateTime.now())
 
@@ -649,13 +660,25 @@ object DataFixture {
           //Add a list of missing stops with road addresses is available
           missedBusStopsOTH = missedBusStopsOTH ++ List(stop)
 
+          //If modified or created username is bigger than 10 of length we set with PO user
+          val adjustedStop = stop match {
+            case asset if checkModifierSize(asset.modified) && checkModifierSize(asset.created) =>
+              asset.copy(created = fixModifier(asset.created), modified = fixModifier(asset.modified))
+            case asset if checkModifierSize(asset.modified) =>
+              asset.copy(modified = fixModifier(asset.modified))
+            case asset if checkModifierSize(asset.created) =>
+              asset.copy(created = fixModifier(asset.created))
+            case _ =>
+              stop
+          }
+
           try {
             //Create missed Bus Stop at the Tierekisteri
             if(!dryRun)
-              massTransitStopService.executeTierekisteriOperation(Operation.Create, stop, roadLinkByLinkId => roadLinks.find(r => r.linkId == roadLinkByLinkId), None, None)
+              massTransitStopService.executeTierekisteriOperation(Operation.Create, adjustedStop, roadLinkByLinkId => roadLinks.find(r => r.linkId == roadLinkByLinkId), None, None)
           } catch {
-            case vkme: VKMClientException => println("Bus stop with national Id: "+stop.nationalId+" returns the following error: "+vkme.getMessage)
-            case tre: TierekisteriClientException => println("Bus stop with national Id: "+stop.nationalId+" returns the following error: "+tre.getMessage)
+            case roadAddrError: RoadAddressException => println("Bus stop with national Id: "+adjustedStop.nationalId+" returns the following error: "+roadAddrError.getMessage)
+            case tre: TierekisteriClientException => println("Bus stop with national Id: "+adjustedStop.nationalId+" returns the following error: "+tre.getMessage)
           }
         }
       }
@@ -731,14 +754,20 @@ object DataFixture {
 
 
   def fillLaneAmountsMissingInRoadLink(): Unit = {
+    val dao = new OracleLinearAssetDao(null)
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+
+    lazy val linearAssetService: LinearAssetService = {
+      new LinearAssetService(roadLinkService, new DummyEventBus)
+    }
+
     println("\nFill Lane Amounts in missing road links")
     println(DateTime.now())
-
-
+    val username = "batch_process_"+DateTimeFormat.forPattern("yyyyMMdd").print(DateTime.now())
 
     val LanesNumberAssetTypeId = 140
-    val NumberOfRoadLanesMotorway = 2
-    val NumberOfRoadLanesSingleCarriageway = 1
+    val NumOfRoadLanesMotorway = 2
+    val NumOfRoadLanesSingleCarriageway = 1
 
     //Get All Municipalities
     val municipalities: Seq[Int] =
@@ -762,7 +791,7 @@ object DataFixture {
 
       OracleDatabase.withDynTransaction{
         //Obtain all existing RoadLinkId by AssetType and roadLinks
-        val assetCreated: Seq[Long] = dataImporter.getAllLinkIdByAsset(LanesNumberAssetTypeId, roadLinks.map(_.linkId))
+        val assetCreated = dataImporter.getAllLinkIdByAsset(LanesNumberAssetTypeId, roadLinks.map(_.linkId))
 
       println ("Total created previously      -> " + assetCreated.size)
 
@@ -770,8 +799,20 @@ object DataFixture {
       val roadLinksFilteredByClass = roadLinks.filter(p => (p.administrativeClass == State))
       println ("Total RoadLink by State Class -> " + roadLinksFilteredByClass.size)
 
+      //Obtain asset with a road link type Motorway or Freeway
+      val roadLinkMotorwayFreeway  = roadLinksFilteredByClass.filter(road => road.linkType == asset.Motorway  || road.linkType == asset.Freeway)
+
+      val (assetToExpire, assetPrevCreated) = assetCreated.partition{
+        case(linkId, value, assetId) =>
+          value <= NumOfRoadLanesSingleCarriageway && roadLinkMotorwayFreeway.map(_.linkId).contains(linkId)
+      }
+
+      //Expire all asset with road link type Motorway or Freeway with amount of lane equal 1
+      println("Assets to expire - " + assetToExpire.size)
+      assetToExpire.foreach{case(linkId, value, assetId) => dao.updateExpiration(assetId, expired = true, username)}
+
       //Exclude previously roadlink created
-      val filteredRoadLinksByNonCreated = roadLinksFilteredByClass.filterNot(f => assetCreated.contains(f.linkId))
+      val filteredRoadLinksByNonCreated = roadLinksFilteredByClass.filterNot(f => assetPrevCreated.contains(f.linkId))
       println ("Max possibles to insert       -> " + filteredRoadLinksByNonCreated.size )
 
       if (filteredRoadLinksByNonCreated.size != 0) {
@@ -783,7 +824,7 @@ object DataFixture {
               case asset.SingleCarriageway =>
                 roadLinkProp.trafficDirection match {
                   case asset.TrafficDirection.BothDirections => {
-                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, asset.SideCode.BothDirections.value , NumberOfRoadLanesSingleCarriageway)
+                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, asset.SideCode.BothDirections.value , NumOfRoadLanesSingleCarriageway, username)
                     countSingleway = countSingleway+ 1
                   }
                   case _ => {
@@ -793,7 +834,7 @@ object DataFixture {
               case asset.Motorway | asset.Freeway =>
                 roadLinkProp.trafficDirection match {
                   case asset.TrafficDirection.TowardsDigitizing | asset.TrafficDirection.AgainstDigitizing => {
-                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, asset.SideCode.BothDirections.value, NumberOfRoadLanesMotorway)
+                    dataImporter.insertNewAsset(LanesNumberAssetTypeId, roadLinkProp.linkId, 0, endMeasure, asset.SideCode.BothDirections.value, NumOfRoadLanesMotorway, username)
                     countMotorway = countMotorway + 1
                   }
                   case _ => {

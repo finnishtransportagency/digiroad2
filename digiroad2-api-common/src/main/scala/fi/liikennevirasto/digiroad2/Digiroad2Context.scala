@@ -13,7 +13,7 @@ import fi.liikennevirasto.digiroad2.util.JsonSerializer
 import fi.liikennevirasto.digiroad2.vallu.ValluSender
 import fi.liikennevirasto.viite.dao.MissingRoadAddress
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
-import fi.liikennevirasto.viite.{RoadAddressMerge, RoadAddressService}
+import fi.liikennevirasto.viite.{ProjectService, RoadAddressMerge, RoadAddressService}
 import org.apache.http.impl.client.HttpClientBuilder
 
 class ValluActor extends Actor {
@@ -142,6 +142,10 @@ object Digiroad2Context {
 
   lazy val roadAddressService: RoadAddressService = {
     new RoadAddressService(roadLinkService, eventbus)
+  }
+
+  lazy val projectService: ProjectService = {
+    new ProjectService(roadAddressService, roadLinkService, eventbus)
   }
 
   lazy val authenticationTestModeEnabled: Boolean = {

@@ -36,7 +36,7 @@ object DataFixture {
     var partNumberOpt = RoadAddressDAO.fetchNextRoadPartNumber(roadNumber, 0)
     while (partNumberOpt.nonEmpty) {
       val partNumber = partNumberOpt.get
-      val roads = RoadAddressDAO.fetchByRoadPart(roadNumber, partNumber)
+      val roads = RoadAddressDAO.fetchByRoadPart(roadNumber, partNumber, true)
       try {
         val adjusted = LinkRoadAddressCalculator.recalculate(roads)
         assert(adjusted.size == roads.size) // Must not lose any
@@ -81,6 +81,14 @@ object DataFixture {
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
     dataImporter.updateMissingRoadAddresses(vvhClient)
     println(s"Missing address update complete at time: ${DateTime.now()}")
+    println()
+  }
+
+  def updateRoadAddressesGeometry(filterRoadAddresses: Boolean): Unit = {
+    println(s"\nUpdating road address table geometries at time: ${DateTime.now()}")
+    val vVHClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+    dataImporter.updateRoadAddressesGeometry(vvhClient, filterRoadAddresses)
+    println(s"Road addresses geometry update complete at time: ${DateTime.now()}")
     println()
   }
 
@@ -160,11 +168,15 @@ object DataFixture {
         recalculate()
       case Some ("update_missing") =>
         updateMissingRoadAddresses()
-      case Some("fuse_multi_segment_road_addresses") => {
+      case Some("fuse_multi_segment_road_addresses") =>
         combineMultipleSegmentsOnLinks()
-      }
+      case Some("update_road_addresses_geometry_no_complementary") =>
+        updateRoadAddressesGeometry(true)
+      case Some("update_road_addresses_geometry") =>
+        updateRoadAddressesGeometry(false)
       case _ => println("Usage: DataFixture import_road_addresses | recalculate_addresses | update_missing | " +
-        "find_floating_road_addresses | import_complementary_road_address | fuse_multi_segment_road_addresses")
+        "find_floating_road_addresses | import_complementary_road_address | fuse_multi_segment_road_addresses " +
+        "| update_road_addresses_geometry_no_complementary | update_road_addresses_geometry")
     }
   }
 }

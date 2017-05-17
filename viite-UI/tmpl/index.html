@@ -1,6 +1,7 @@
 <html>
 <head>
   <meta charset="utf-8">
+  <!--<link rel="stylesheet" type="text/css" href="bower_components/openlayers/css/ol.css">-->
   <link rel="stylesheet" type="text/css" href="components/theme/default/style.css">
   <link rel="stylesheet" type="text/css" href="bower_components/pikaday/css/pikaday.css">
   <link rel="stylesheet" type="text/css" href="css/viite.css">
@@ -47,7 +48,7 @@
 <script type="text/javascript" src="bower_components/bacon/dist/Bacon.js"></script>
 <script type="text/javascript" src="bower_components/bacon.jquery/dist/bacon.jquery.js"></script>
 <!-- @if NODE_ENV == 'DEVELOPMENT' -->
-<script type="text/javascript" src="components/OpenLayers.js"></script>
+<script type="text/javascript" src="components/ol3.js"></script>
 <script type="text/javascript" src="src/utils/eventbus.js"></script>
 <script type="text/javascript" src="src/utils/geometry-calculations.js"></script>
 <script type="text/javascript" src="src/utils/LocationInputParser.js"></script>
@@ -60,6 +61,8 @@
 <script type="text/javascript" src="src/view/TileMapCollection.js"></script>
 <script type="text/javascript" src="src/view/Layer.js"></script>
 <script type="text/javascript" src="src/view/RoadLayer.js"></script>
+<script type="text/javascript" src="src/view/Styler.js"></script>
+<script type="text/javascript" src="src/view/RoadLayer3.js"></script>
 <script type="text/javascript" src="src/view/RoadLayerSelectionStyle.js"></script>
 <script type="text/javascript" src="src/view/MapView.js"></script>
 <script type="text/javascript" src="src/view/MapOverlay.js"></script>
@@ -76,6 +79,7 @@
 <script type="text/javascript" src="src/view/LinkPropertyLayerStyles.js"></script>
 <script type="text/javascript" src="src/view/LinkPropertyMassUpdateDialog.js"></script>
 <script type="text/javascript" src="src/view/RoadAddressProjectForm.js"></script>
+<script type="text/javascript" src="src/model/RoadAddressProjectCollection.js"></script>
 <script type="text/javascript" src="src/map/LinkPropertyMarker.js"></script>
 <script type="text/javascript" src="src/router.js"></script>
 <script type="text/javascript" src="src/application.js"></script>
@@ -84,7 +88,7 @@
 <script type="text/javascript" src="src/view/navigationpanel/RoadLinkBox.js"></script>
 <script type="text/javascript" src="src/view/navigationpanel/LayerSelectBox.js"></script>
 <script type="text/javascript" src="src/view/navigationpanel/ProjectSelectBox.js"></script>
-<script type="text/javascript" src="src/view/navigationpanel/ProjectListMenu.js"></script>
+<script type="text/javascript" src="src/view/navigationpanel/ProjectListModel.js"></script>
 <script type="text/javascript" src="src/view/navigationpanel/SearchBox.js"></script>
 <script type="text/javascript" src="src/view/NavigationPanel.js"></script>
 <script type="text/javascript" src="src/model/ApplicationModel.js"></script>
@@ -101,9 +105,10 @@
 <script type="text/javascript" src="src/assetgrouping/asset-grouping.js"></script>
 <script type="text/javascript" src="src/analytics.js"></script>
 <script type="text/javascript" src="src/main.js"></script>
+<script type="text/javascript" src="src/modalconfirm/GenericConfirmPopup.js"></script>
 <!-- @endif -->
 <!-- @if NODE_ENV == 'PRODUCTION' -->
-<script type="text/javascript" src="components/OpenLayers.js"></script>
+<script type="text/javascript" src="components/ol3.js"></script>
 <script type="text/javascript" src="js/viite.min.js"></script>
 <!-- @endif -->
 </body>

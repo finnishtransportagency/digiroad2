@@ -1,19 +1,11 @@
-define(['AssetsTestData',
+define(['RoadAddressTestData',
         'RoadLinkTestData',
         'UserRolesTestData',
-        'EnumeratedPropertyValuesTestData',
-        'AssetPropertyNamesTestData',
-        'SpeedLimitsTestData',
-        'SpeedLimitSplitTestData',
-        'AssetTypePropertiesTestData'],
-       function(AssetsTestData,
+        'RoadAddressProjectTestData'],
+       function(RoadAddressTestData,
                 RoadLinkTestData,
                 UserRolesTestData,
-                EnumeratedPropertyValuesTestData,
-                AssetPropertyNamesTestData,
-                SpeedLimitsTestData,
-                SpeedLimitSplitTestData,
-                AssetTypePropertiesTestData) {
+                RoadAddressProjectTestData) {
 
   var unbindEvents = function() {
     eventbus.off();
@@ -48,129 +40,71 @@ define(['AssetsTestData',
   };
 
   var defaultBackend = function() {
-    return fakeBackend(AssetsTestData.generate(), {});
+    return fakeBackend({});
   };
 
-  var fakeBackend = function(assetsData, assetData, zoomLevel) {
-    var speedLimitsTestData = SpeedLimitsTestData.generate(2);
+  var fakeBackend = function(zoomLevel) {
     return new Backend().withRoadLinkData(RoadLinkTestData.generate())
       .withUserRolesData(UserRolesTestData.generate())
-      .withEnumeratedPropertyValues(EnumeratedPropertyValuesTestData.generate())
-      .withStartupParameters({ lon: 374750.0, lat: 6677409.0, zoom: zoomLevel || 10 })
-      .withAssetPropertyNamesData(AssetPropertyNamesTestData.generate())
-      .withAssetsData(assetsData)
-      .withAssetData(assetData)
-      .withSpeedLimitsData(speedLimitsTestData)
-      .withSpeedLimitUpdate(speedLimitsTestData)
-      .withPassThroughAssetCreation()
-      .withAssetTypePropertiesData(AssetTypePropertiesTestData.generate());
+      .withRoadAddressProjectData(RoadAddressProjectTestData.generate())
+      .withStartupParameters({ lon: 374750.0, lat: 6677409.0, zoom: zoomLevel || 10 });
   };
 
   var clickVisibleEditModeButton = function() {
     $('.edit-mode-btn:visible').click();
   };
 
-  var clickMarker = function(id, map) {
-    var markerBounds = _.find(map.getLayersByName('massTransitStop')[0].markers, {id: id}).bounds;
-    var markerPixelPosition = map.getPixelFromLonLat(new OpenLayers.LonLat(markerBounds.top, markerBounds.left));
-    var event = { clientX: markerPixelPosition.x, clientY: markerPixelPosition.y };
-    var asset = massTransitStopsCollection.getAsset(id);
-    if (asset) { asset.mouseClickHandler(event); }
+  var clickVisbleYesConfirmPopup = function(){
+    $('.btn.yes:visible').click();
   };
 
-  var moveMarker = function(id, map, deltaLon, deltaLat) {
-    var asset = massTransitStopsCollection.getAsset(id);
-    if (asset) {
-      var originBounds = _.find(map.getLayersByName('massTransitStop')[0].markers, {id: id}).bounds;
-      var originLonLat = new OpenLayers.LonLat(originBounds.top, originBounds.left);
-      var targetLonLat = new OpenLayers.LonLat(originLonLat.lon + deltaLon, originLonLat.lat + deltaLat);
-      var originPixel = map.getPixelFromLonLat(originLonLat);
-      var targetPixel = map.getPixelFromLonLat(targetLonLat);
-      var mouseDownEvent = {clientX: originPixel.x, clientY: originPixel.y};
-      var mouseUpEvent = {clientX: targetPixel.x, clientY: targetPixel.y};
-      asset.mouseDownHandler(mouseDownEvent);
-      eventbus.trigger('map:mouseMoved', {clientX: targetPixel.x, clientY: targetPixel.y, xy: {x: targetPixel.x, y: targetPixel.y - 40}});
-      asset.mouseUpHandler(mouseUpEvent);
-    }
+  var clickProjectListButton = function(){
+    $('#projectListButton:visible').click();
+  };
+
+  var getLayerByName = function(map, name){
+      var layers = map.getLayers().getArray();
+      return _.find(layers, function(layer){
+          return layer.get('name') === name;
+      });
   };
 
   var clickMap = function(map, longitude, latitude) {
-    var pixel = map.getPixelFromLonLat(new OpenLayers.LonLat(longitude, latitude));
-    map.events.triggerEvent('click',  {target: {}, srcElement: {}, xy: {x: pixel.x, y: pixel.y}});
+    map.dispatchEvent({ type: 'singleclick', coordinate: [longitude, latitude] });
   };
 
-  var massSelect = function(map, longitude1, latitude1, longitude2, latitude2) {
-    var topLeft = map.getPixelFromLonLat(new OpenLayers.LonLat(longitude1, latitude1));
-    var bottomRight = map.getPixelFromLonLat(new OpenLayers.LonLat(longitude2, latitude2));
-    var commonParameters = {target: {}, srcElement: {}, button: 1};
-    var modifierKey = (navigator.platform.toLowerCase().indexOf('mac') === 0) ? { metaKey: true } : { ctrlKey: true };
-    var mouseDownEvent = _.merge({}, commonParameters, modifierKey, { xy: {x: topLeft.x, y: topLeft.y} });
-    var mouseMoveEvent = _.merge({}, commonParameters, modifierKey, { xy: {x: bottomRight.x, y: bottomRight.y} });
-    var mouseUpEvent = _.merge({}, commonParameters, modifierKey, { xy: {x: bottomRight.x, y: bottomRight.y} });
-    map.events.triggerEvent('mousedown', mouseDownEvent);
-    map.events.triggerEvent('mousemove', mouseMoveEvent);
-    map.events.triggerEvent('mouseup', mouseUpEvent);
-  };
-
-  var getAssetMarkers = function(map) {
-    return map.getLayersByName('massTransitStop')[0].markers;
-  };
-
-  var getSpeedLimitFeatures = function(map) {
-    return map.getLayersByName('speedLimit')[0].features;
-  };
-
- var getSpeedLimitLayer = function(map) {
-   return map.getLayersByName('speedLimit')[0];
- };
-
- var getLineStringFeatures = function(layer) {
-   return _.filter(layer.features, function(feature) {
-    return feature.geometry instanceof OpenLayers.Geometry.LineString;
+  var getLineStringFeatures = function(layer) {
+   return _.filter(layer.getSource().getFeatures(), function(feature) {
+    return feature.getGeometry() instanceof ol.geom.LineString;
    });
- };
-
- var getSpeedLimitVertices = function(openLayersMap, id) {
-  return _.chain(getLineStringFeatures(getSpeedLimitLayer(openLayersMap)))
-    .filter(function(feature) { return feature.attributes.id === id; })
-    .map(function(feature)  { return feature.geometry.getVertices(); })
-    .flatten()
-    .value();
   };
-
- var selectSpeedLimit = function(map, speedLimitId, singleLinkSelect) {
-   var control = _.find(map.controls, function(control) { return control.layer && control.layer.name === 'speedLimit'; });
-   var feature = _.find(getSpeedLimitFeatures(map), function(feature) {
-     return feature.attributes.id === speedLimitId;
-   });
-   control.select(_.assign({singleLinkSelect: singleLinkSelect || false}, feature));
- };
-
- var clickElement = function(element) {
-   var event = document.createEvent('MouseEvent');
-   event.initMouseEvent('click', true, true, window, null, 0, 0, 0, 0, false, false, false, false, 0, null);
-   element.dispatchEvent(event);
- };
 
  var selectLayer = function(layerName) {
    applicationModel.selectLayer(layerName);
  };
 
+ var getPixelFromCoordinateAsync = function(map, coordinate, callback) {
+   var pixel = map.getPixelFromCoordinate(coordinate);
+   if (pixel) {
+     window.setTimeout(function() { callback(pixel); }, 0);
+   } else {
+     map.once('postrender', function() {
+       getPixelFromCoordinateAsync(map, coordinate, callback);
+     });
+   }
+ };
+
  return {
    restartApplication: restartApplication,
+   getPixelFromCoordinateAsync: getPixelFromCoordinateAsync,
    defaultBackend: defaultBackend,
    fakeBackend: fakeBackend,
    clickVisibleEditModeButton: clickVisibleEditModeButton,
-   clickMarker: clickMarker,
-   moveMarker: moveMarker,
+   clickProjectListButton: clickProjectListButton,
+   clickVisbleYesConfirmPopup: clickVisbleYesConfirmPopup,
    clickMap: clickMap,
-   massSelect: massSelect,
-   getAssetMarkers: getAssetMarkers,
    getLineStringFeatures: getLineStringFeatures,
-   getSpeedLimitFeatures: getSpeedLimitFeatures,
-   getSpeedLimitVertices: getSpeedLimitVertices,
-   selectSpeedLimit: selectSpeedLimit,
-   clickElement: clickElement,
-   selectLayer: selectLayer
+   selectLayer: selectLayer,
+   getLayerByName: getLayerByName
  };
 });
