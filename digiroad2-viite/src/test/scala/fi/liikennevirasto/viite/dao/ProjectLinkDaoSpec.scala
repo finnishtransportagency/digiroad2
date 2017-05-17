@@ -88,6 +88,7 @@ class ProjectLinkDaoSpec  extends FunSuite with Matchers{
       ProjectDAO.getRoadAddressProjectById(id).nonEmpty should be(true)
       val projectlinks=ProjectDAO.getProjectLinks(id)
       projectlinks.length should be > 0
+      projectlinks.forall(_.status == LinkStatus.NotHandled) should be (true)
     }
   }
 
