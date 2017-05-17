@@ -21,6 +21,8 @@
     var close = function() {
       if (!_.isEmpty(current) && !isDirty()) {
         _.forEach(current, function(selected) { selected.unselect(); });
+        applicationModel.setActiveButtons(false);
+        eventbus.trigger('layer:enableButtons', true);
         eventbus.trigger('linkProperties:unselected');
         current = [];
         sources = [];
