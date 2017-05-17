@@ -17,6 +17,14 @@
      }
     });
 
+    this.getProjectLinks = createCallbackRequestor(function(params) {
+        var zoom = params.zoom;
+        var boundingBox = params.boundingBox;
+        return {
+            url: 'api/viite/projectlinks?zoom=' + zoom + '&bbox=' + boundingBox
+        };
+    });
+
     this.getRoadLinkByLinkId = _.throttle(function(linkId, callback) {
       return $.getJSON('api/viite/roadlinks/' + linkId, function(data) {
         return _.isFunction(callback) && callback(data);
