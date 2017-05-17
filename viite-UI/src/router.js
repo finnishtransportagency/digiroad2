@@ -18,7 +18,8 @@
 
       routes: {
         'linkProperty/:linkId': 'linkProperty',
-        'linkProperty/mml/:mmlId': 'linkPropertyByMml'
+        'linkProperty/mml/:mmlId': 'linkPropertyByMml',
+        'roadAddressProject/' : 'roadAddressProject'
       },
 
       linkProperty: function (linkId) {
@@ -42,6 +43,10 @@
           map.getView().setCenter([response.middlePoint.x, response.middlePoint.y]);
           map.getView().setZoom(12);
         });
+      },
+
+      roadAddressProject: function () {
+          applicationModel.selectLayer('roadAddressProject');
       }
     });
 
@@ -54,6 +59,10 @@
 
     eventbus.on('linkProperties:unselected', function () {
       router.navigate('linkProperty');
+    });
+
+    eventbus.on('roadAddressProject:selected', function () {
+      router.navigate('roadAddressProject');
     });
 
     eventbus.on('linkProperties:selected', function (linkProperty) {
