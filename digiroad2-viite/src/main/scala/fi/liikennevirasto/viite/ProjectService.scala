@@ -4,7 +4,6 @@ import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, RoadLinkService}
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.ViiteTierekisteriClient
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ListBuffer

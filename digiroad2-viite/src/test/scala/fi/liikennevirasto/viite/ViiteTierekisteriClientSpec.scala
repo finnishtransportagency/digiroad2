@@ -5,13 +5,15 @@ import java.util.Properties
 import org.apache.http.client.methods.HttpPost
 import org.scalatest.{FunSuite, Matchers}
 
+import scala.reflect.io.File
+
 /**
   * Created by alapeijario on 17.5.2017.
   */
 class ViiteTierekisteriClientSpec extends FunSuite with Matchers{
   {
 
-    lazy val properties: Properties = {
+    val properties: Properties = {
       val props = new Properties()
       props.load(getClass.getResourceAsStream("/digiroad2.properties"))
       props
