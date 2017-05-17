@@ -31,7 +31,7 @@ object ChangeType {
 
 }
 
-case class RoadAddressChangeRecipient(roadNumber: Option[Long], trackCode: Option[Long], startRoadPartNumber: Option[Long], endRoadPartNumber: Option[Long], startAddressM: Option[Long], endAddressM:Option[Long])
+case class RoadAddressChangeRecipient(roadNumber: Option[Long], trackCode: Option[Long], startRoadPartNumber: Option[Long], endRoadPartNumber: Option[Long], startAddressM: Option[Double], endAddressM:Option[Double])
 case class RoadAddressChangeInfo(changeType: ChangeType, source: RoadAddressChangeRecipient, target: RoadAddressChangeRecipient, discontinuity: Discontinuity, roadType: RoadType)
 case class ProjectRoadAddressChange(projectId: Long, projectName: Option[String], ely: Long, user: String, changeDate: DateTime, changeInfo: RoadAddressChangeInfo)
 
@@ -46,8 +46,8 @@ object RoadAddressChangesDAO {
   private def queryList(query: String) = {
     val tuples = Q.queryNA[(Long, Option[String], String, Option[DateTime],
       String, Option[DateTime], Long, Int, Option[Long], Option[Long],
-      Option[Long], Option[Long], Option[Long], Option[Long], Option[Long],
-      Option[Long], Option[Long], Option[Long], Option[Long], Option[Long], Int, Int)](query).list
+      Option[Long], Option[Long], Option[Double], Option[Double], Option[Long],
+      Option[Long], Option[Long], Option[Long], Option[Double], Option[Double], Int, Int)](query).list
       tuples.map{
       case (projectId, projectName, createdBy, createdDate, modifiedBy, modifiedDate, ely, changeType, sourceRoadNumber, sourceTrackCode ,sourceStartRoadPartNumber, sourceEndRoadPartNumber, sourceStartAddressM, sourceEndAddressM, targetRoadNumber, targetTrackCode, targetStartRoadPartNumber, targetEndRoadPartNumber, targetStartAddressM, targetEndAddressM, discontinuity, roadType) =>
         val source = RoadAddressChangeRecipient(sourceRoadNumber, sourceTrackCode, sourceStartRoadPartNumber, sourceEndRoadPartNumber, sourceStartAddressM, sourceEndAddressM)

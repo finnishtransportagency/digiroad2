@@ -4,6 +4,7 @@ import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, RoadLinkService}
 import fi.liikennevirasto.viite.dao._
+import fi.liikennevirasto.viite.ViiteTierekisteriClient
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ListBuffer
@@ -213,5 +214,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  def getRoadAddressChangesAndSendToTR(projectId: Set[Long]) = {
+    val roadAddressChanges = RoadAddressChangesDAO.fetchRoadAddressChanges(projectId)
+    ViiteTierekisteriClient.sendRoadAddressChangeData(roadAddressChanges)
+  }
+
+  def getProjectStatusFromTR(projectId: Long) = {
+    ViiteTierekisteriClient.getProjectStatus(projectId.toString)
+  }
 
 }
