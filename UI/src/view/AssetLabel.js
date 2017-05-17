@@ -16,19 +16,22 @@
             return new ol.Feature(new ol.geom.Point(me.getCoordinate(point)));
         };
 
-        this.renderFeaturesByLinearAssets = function(linearAssets){
-            return me.renderFeatures(linearAssets, function(asset){
+        this.renderFeaturesByLinearAssets = function(linearAssets, zoomLevel){
+            return me.renderFeatures(linearAssets, zoomLevel, function(asset){
                 var coordinates = me.getCoordinates(me.getPoints(asset));
                 var lineString = new ol.geom.LineString(coordinates);
                 return GeometryUtils.calculateMidpointOfLineString(lineString);
             });
         };
 
-        this.renderFeatures = function(assets, getPoint){
+        this.renderFeatures = function(assets, zoomLevel, getPoint){
+            if(!me.isVisibleZoom(zoomLevel))
+                return [];
+
             return _.chain(assets).
                 map(function(asset){
                     var assetValue = me.getValue(asset);
-                    if(assetValue){
+                    if(assetValue !== undefined){
                         var style = me.getStyle(assetValue);
                         var feature = me.createFeature(getPoint(asset));
                         feature.setStyle(style);
@@ -37,6 +40,20 @@
                 }).
                 filter(function(feature){ return feature !== undefined; }).
                 value();
+        };
+
+        this.getMarkerOffset = function(zoomLevel){
+            if(me.isVisibleZoom(zoomLevel))
+                return [23, 9];
+        };
+
+        this.getMarkerAnchor = function(zoomLevel){
+            if(me.isVisibleZoom(zoomLevel))
+                return [-0.45, 0.15];
+        };
+
+        this.isVisibleZoom = function(zoomLevel){
+            return zoomLevel >= 12;
         };
 
         this.getPoints = function(asset){ return asset.points; };
