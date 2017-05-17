@@ -43,7 +43,7 @@
 
     eventbus.on('layer:enableButtons', enableButtons);
     function enableButtons(value) {
-      navigationPanel.find(":button").prop('disabled', !value);
+      navigationPanel.find(':button, :input').prop('disabled', !value);
     }
 
   }
