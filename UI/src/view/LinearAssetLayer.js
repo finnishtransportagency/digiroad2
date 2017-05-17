@@ -253,12 +253,10 @@ window.LinearAssetLayer = function(params) {
         break;
       case 'Rectangle':
         linearAssetCutter.deactivate();
-        selectToolControl.activate();
         selectToolControl.activeDragBox();
         break;
       case 'Polygon':
         linearAssetCutter.deactivate();
-        selectToolControl.activate();
         selectToolControl.activePolygon();
         break;
       default:
