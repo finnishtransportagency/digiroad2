@@ -79,7 +79,6 @@ def sendJsonMessage(trProject:changepPoject): (Int,String) ={
   val request = new HttpPost(getRestEndPoint+"addresschange/")
   request.addHeader("X-OTH-Authorization", "Basic " + auth.getAuthInBase64)
   request.setEntity(createJsonmessage(trProject))
- // request.setEntity(createJsonmessage(changepPoject(8912, "Testproject", "TestUser", 3, "2017-06-01", Seq {changeInfoitem(2, 1, 1, changeInfoRoadParts(None, None, None, None, None, None), changeInfoRoadParts(Option(403), Option(0), Option(8), Option(0), Option(8), Option(1001)))})))
   val response = client.execute(request)
   val statusCode = response.getStatusLine.getStatusCode
   val reason = response.getStatusLine.getReasonPhrase
