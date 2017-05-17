@@ -7,10 +7,10 @@ import org.apache.http.client.methods.{HttpGet, HttpPost}
 import org.apache.http.entity.{ContentType, StringEntity}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.json4s.jackson.Serialization
-import org.json4s.DefaultFormats
+import org.json4s.{DefaultFormats, StreamInput}
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.format.DateTimeFormatter
-
+import org.json4s.jackson.JsonMethods.parse
 case class changepPoject(id:Long, name:String, user:String, ely:Long, change_date:String, change_info:Seq[changeInfoitem])
 case class changeInfoitem(changetype :Int, continuity:Int, road_type:Int, source:changeInfoRoadParts,target:changeInfoRoadParts)
 case class changeInfoRoadParts(tie :Option[Long], ajr:Option[Long], aosa:Option[Long],aet:Option[Double],losa:Option[Long], let:Option[Double])  //roadnumber,track,roadparts beggining, start_part_M,roadpart_end, end_part_M
@@ -22,7 +22,6 @@ object ViiteTierekisteriClient {
     val props = new Properties()
     props.load(getClass.getResourceAsStream("/digiroad2.properties"))
     props
-
   }
 
   private def getRestEndPoint: String = {
@@ -108,6 +107,7 @@ object ViiteTierekisteriClient {
     val request = new HttpGet(getRestEndPoint+"addresschange/"+projectid)
     request.addHeader("X-OTH-Authorization", "Basic " + auth.getAuthInBase64)
     val response = client.execute(request)
+    val testdata=parse(StreamInput(response.getEntity.getContent))
     response.toString
   }
 }

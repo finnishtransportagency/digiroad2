@@ -36,5 +36,12 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers{
       message.projectId should be (0)
       message.reason should startWith ("Created")
     }
+
+    test("TR-project-status") {
+      val response = ViiteTierekisteriClient.getProjectStatus("8900")
+      ""
+    }
+
+
   }
 }
