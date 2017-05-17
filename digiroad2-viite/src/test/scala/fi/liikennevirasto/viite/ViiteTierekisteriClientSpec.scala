@@ -10,8 +10,6 @@ import org.scalatest.{FunSuite, Matchers}
   */
 class ViiteTierekisteriClientSpec extends FunSuite with Matchers{
   {
-    val trclient = new ViiteTierekisteriClient()
-
 
     lazy val properties: Properties = {
       val props = new Properties()
@@ -21,21 +19,22 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers{
     }
 
     def getRestEndPoint: String = {
-    val loadedKeyString = properties.getProperty("digiroad2.tierekisteriViiteRestApiEndPoint")
-    println("viite-endpoint = "+loadedKeyString)
-    if (loadedKeyString == null)
-      throw new IllegalArgumentException("Missing TierekisteriViiteRestApiEndPoint")
-    loadedKeyString
-  }
+      val loadedKeyString = properties.getProperty("digiroad2.tierekisteriViiteRestApiEndPoint")
+      println("viite-endpoint = "+loadedKeyString)
+      if (loadedKeyString == null)
+        throw new IllegalArgumentException("Missing TierekisteriViiteRestApiEndPoint")
+      loadedKeyString
+    }
 
 
     test("TR-connection Create test") {
       val request = new HttpPost(getRestEndPoint + "addresschange/")
 
-     val (trresponse,message)= trclient.sendJsonMessage(changepPoject(0, "Testproject", "TestUser", 3, "2017-06-01", Seq {
+      val message= ViiteTierekisteriClient.sendJsonMessage(changepPoject(0, "Testproject", "TestUser", 3, "2017-06-01", Seq {
         changeInfoitem(2, 1, 1, changeInfoRoadParts(None, None, None, None, None, None), changeInfoRoadParts(Option(403), Option(0), Option(8), Option(0), Option(8), Option(1001))) // projectid 0 wont be added to TR
-       }))
-    message should startWith ("Created")
+      }))
+      message.projectId should be (0)
+      message.reason should startWith ("Created")
     }
   }
 }
