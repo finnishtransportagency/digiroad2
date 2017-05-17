@@ -3,8 +3,9 @@
     var Router = Backbone.Router.extend({
       initialize: function () {
         // Support legacy format for opening mass transit stop via ...#300289
-        this.route(/^(\d+)$/, function (nationalId) {
-          this.massTransitStop(nationalId);
+
+        this.route(/^(\d+)$/, function (layer) {
+          applicationModel.selectLayer(layer);
         });
 
         this.route(/^([A-Za-z]+)$/, function (layer) {
@@ -19,7 +20,7 @@
       routes: {
         'linkProperty/:linkId': 'linkProperty',
         'linkProperty/mml/:mmlId': 'linkPropertyByMml',
-        'roadAddressProject/' : 'roadAddressProject'
+        'roadAddressProject/:projectId' : 'roadAddressProject'
       },
 
       linkProperty: function (linkId) {
@@ -46,7 +47,7 @@
       },
 
       roadAddressProject: function () {
-          applicationModel.selectLayer('roadAddressProject');
+        applicationModel.selectLayer('roadAddressProject');
       }
     });
 
@@ -61,8 +62,8 @@
       router.navigate('linkProperty');
     });
 
-    eventbus.on('roadAddressProject:selected', function () {
-      router.navigate('roadAddressProject');
+    eventbus.on('roadAddressProject:selected', function (projId) {
+      router.navigate('roadAddressProject/' + projId);
     });
 
     eventbus.on('linkProperties:selected', function (linkProperty) {

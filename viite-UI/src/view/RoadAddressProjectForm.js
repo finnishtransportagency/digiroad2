@@ -261,6 +261,9 @@
         } else {
           projectCollection.saveProject(data, currentProject);
         }
+        // eventbus.trigger('roadAddressProject:selected', 695);
+        eventbus.trigger('roadAddressProject:selected', currentProject.id);
+        eventbus.trigger('layer:selected', 'roadAddressProject', applicationModel.getSelectedLayer());
       });
 
 

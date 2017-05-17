@@ -38,6 +38,13 @@
             this.hide();
         };
 
+        eventbus.on('roadAddressProject:selected', function(projId) {
+            projectCollection.fetch(map.getView().calculateExtent(map.getSize()),map.getView().getZoom(), projId);
+            vectorSource.clear();
+            eventbus.trigger('map:clearLayers');
+            vectorLayer.changed();
+        });
+
         vectorLayer.setVisible(true);
         map.addLayer(vectorLayer);
 

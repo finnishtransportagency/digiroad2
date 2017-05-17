@@ -22,7 +22,7 @@
         var boundingBox = params.boundingBox;
         var projectId = params.projectId;
         return {
-            url: 'api/viite/projectlinks?zoom=' + zoom + '&bbox=' + boundingBox + '&id=' + projectId
+            url: 'api/viite/project/roadlinks?zoom=' + zoom + '&bbox=' + boundingBox + '&id=' + projectId
         };
     });
 
