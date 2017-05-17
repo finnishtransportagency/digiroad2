@@ -67,8 +67,12 @@ class RoadAddressException(response: String) extends RuntimeException(response)
 class GeometryTransform {
   // see page 16: http://www.liikennevirasto.fi/documents/20473/143621/tieosoitej%C3%A4rjestelm%C3%A4.pdf/
 
+  lazy val roadAddressDao : RoadAddressDAO = {
+    new RoadAddressDAO()
+  }
+
   def addressToCoords(road: Long, roadPart: Long, track: Track, mValue: Double) : Option[Point] = {
-    val addresslist = RoadAddressDAO.getRoadAddress(RoadAddressDAO.withRoadAddress(road, roadPart, track.value, mValue)).headOption
+    val addresslist = roadAddressDao.getRoadAddress(roadAddressDao.withRoadAddress(road, roadPart, track.value, mValue)).headOption
 
     addresslist match {
       case Some(address) =>
@@ -79,7 +83,7 @@ class GeometryTransform {
 
   def resolveAddressAndLocation(mValue: Double, linkId: Long, assetSideCode: Int, municipalityCode: Option[Int] = None, road: Option[Int] = None): (RoadAddress, RoadSide) = {
 
-    val roadAddress = RoadAddressDAO.getRoadAddress(RoadAddressDAO.withLinkIdAndMeasure(linkId, mValue.toLong, mValue.toLong, road)).headOption
+    val roadAddress = roadAddressDao.getRoadAddress(roadAddressDao.withLinkIdAndMeasure(linkId, mValue.toLong, mValue.toLong, road)).headOption
 
     val roadSide = roadAddress match {
       case Some(addrSide) if (addrSide.sideCode.value == assetSideCode) => RoadSide.Right //TowardsDigitizing //
@@ -97,7 +101,7 @@ class GeometryTransform {
   }
 
   def resolveAddressAndLocation(linkId: Long, startM: Double, endM: Double, sideCode: SideCode) : Seq[ fi.liikennevirasto.digiroad2.roadaddress.oracle.RoadAddress] = {
-    val roadAddress = new RoadAddressDAO().fetchByLinkIdAndMeasures(linkId, startM, endM)
+    val roadAddress = roadAddressDao.getByLinkIdAndMeasures(linkId, startM, endM)
     roadAddress
       .filter( road => compareSideCodes(sideCode, road))
       .groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.sideCode)).map {
