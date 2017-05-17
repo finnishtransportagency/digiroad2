@@ -21,8 +21,33 @@
             strategy: ol.loadingstrategy.bbox
         });
 
+      //Work in progress - add style for all roads on the layer that are not part of the project
+      var styleFunction = function (feature, resolution){
+
+        var borderWidth = 3;
+        var strokeWidth = Styler.strokeWidthByZoomLevel(resolution, feature.roadLinkData.roadLinkType, feature.roadLinkData.anomaly, feature.roadLinkData.roadLinkSource, false, feature.roadLinkData.constructionType);
+        var lineColor = 'rgba(247, 254, 46, 0.45)';
+        var borderCap = 'round';
+
+        var line = new ol.style.Stroke({
+          width: strokeWidth + borderWidth,
+          color: lineColor,
+          lineCap: borderCap
+        });
+
+        //Declaration of the Line Styles
+        var lineStyle = new ol.style.Style({
+          stroke: line
+        });
+
+        var zIndex = Styler.determineZIndex(feature.roadLinkData.roadLinkType, feature.roadLinkData.anomaly, feature.roadLinkData.roadLinkSource);
+        lineStyle.setZIndex(zIndex+2);
+        return [lineStyle];
+      };
+
         vectorLayer = new ol.layer.Vector({
-            source: vectorSource
+            source: vectorSource,
+            style: styleFunction
         });
 
         var loadFeatures = function (features) {
