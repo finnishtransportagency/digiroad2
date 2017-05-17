@@ -32,10 +32,12 @@ sealed trait LinkStatus {
 }
 
 object LinkStatus {
-  val values = Set(NotHandled)
+  val values = Set(NotHandled, Terminated, Unknown)
   case object NotHandled extends LinkStatus {def value = 0}
+  case object Terminated extends LinkStatus {def value = 1}
+  case object Unknown extends LinkStatus {def value = 99}
   def apply(intValue: Int): LinkStatus = {
-    values.find(_.value == intValue).getOrElse(NotHandled)
+    values.find(_.value == intValue).getOrElse(Unknown)
   }
 }
 

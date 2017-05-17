@@ -116,6 +116,7 @@ case class MissingRoadAddress(linkId: Long, startAddrMValue: Option[Long], endAd
 
 object RoadAddressDAO {
 
+  // TODO: Remove Missing Road Address Search from here - it's never returning anything and not expected to be used
   def fetchByBoundingBox(boundingRectangle: BoundingRectangle, fetchOnlyFloating: Boolean): (Seq[RoadAddress], Seq[MissingRoadAddress]) = {
     val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),
       boundingRectangle.rightTop - boundingRectangle.diagonal.scale(.15))
