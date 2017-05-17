@@ -41,6 +41,20 @@ class DefloatMapperSpec extends FunSuite with Matchers{
     roadAddressTarget.size should be (4)
   }
 
+  test("test order road address link with intersection") {
+    val sources = Seq(
+      createRoadAddressLink(1L, 123L, Seq(Point(422739.942,7228000.062), Point(422654.464, 7228017.876)), 1L, 1L, 0, 100, 107, SideCode.TowardsDigitizing, Anomaly.None),
+      createRoadAddressLink(3L, 125L, Seq(Point(422565.724, 7228023.602), Point(422556.5834168215, 7228025.871885278)), 1L, 1L, 0, 121, 135, SideCode.TowardsDigitizing, Anomaly.None),
+      createRoadAddressLink(2L, 124L, Seq(Point(422654.464, 7228017.876), Point(422565.724,7228023.602)), 1L, 1L, 0, 107, 121, SideCode.AgainstDigitizing, Anomaly.None)
+    )
+    val targets = Seq(
+      createRoadAddressLink(0L, 457L, Seq(Point(422566.54,7228030.756), Point(422557.481, 7228032.199)), 0, 0, 0, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven),
+      createRoadAddressLink(0L, 456L, Seq(Point(422566.54,7228030.756), Point(422598.206, 7228229.117)), 0, 0, 0, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven),
+      createRoadAddressLink(0L, 458L, Seq(Point(422739.942,7228000.062), Point(422566.54, 7228030.756)), 0, 0, 0, 0, 0, SideCode.Unknown, Anomaly.NoAddressGiven)
+    )
+    an [IllegalArgumentException] should be thrownBy DefloatMapper.orderRoadAddressLinks(sources, targets)
+  }
+
   test("Order road address link sources and targets") {
     val sources = Seq(
       createRoadAddressLink(1L, 123L, Seq(Point(5.0,5.0), Point(10.0, 10.0)), 1L, 1L, 0, 100, 107, SideCode.TowardsDigitizing, Anomaly.None),

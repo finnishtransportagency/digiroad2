@@ -152,7 +152,11 @@ object DefloatMapper {
       else
         switchSideCode(previousSideCode)
     }
-
+    def hasIntersection(roadLinks: Seq[RoadAddressLink]): Boolean = {
+      val MaxCommunPoints = 2
+      val endPoints = roadLinks.map(rl =>GeometryUtils.geometryEndpoints(rl.geometry)).flatMap( t => Seq(t._1, t._2))
+      endPoints.length - endPoints.distinct.length >= MaxCommunPoints
+    }
     def extending(link: RoadAddressLink, ext: RoadAddressLink) = {
       link.roadNumber == ext.roadNumber && link.roadPartNumber == ext.roadPartNumber &&
         link.trackCode == ext.trackCode && link.endAddressM == ext.startAddressM
@@ -197,6 +201,9 @@ object DefloatMapper {
       case SideCode.AgainstDigitizing => orderedSources.head.geometry.last
       case _ => throw new InvalidAddressDataException("Bad sidecode on source")
     }
+
+    if( hasIntersection(targets) )
+      throw new IllegalArgumentException("Non-contiguous road addressing")
 
     val (endingLinks, middleLinks) = targets.partition(t => targets.count(t2 => GeometryUtils.areAdjacent(t.geometry, t2.geometry)) < 3)
     val preSortedTargets = endingLinks.sortBy(l => minDistanceBetweenEndPoints(Seq(startingPoint), l.geometry)) ++ middleLinks
