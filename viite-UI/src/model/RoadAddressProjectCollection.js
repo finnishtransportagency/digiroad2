@@ -4,9 +4,26 @@
     var currentRoadSegmentList = [];
     var dirtyRoadSegmentLst = [];
     var projectinfo;
+    var fetchedProjectLinks = [];
+
+    var projectLinks = function() {
+        return _.flatten(fetchedProjectLinks);
+    };
 
     this.getAll = function () {
-      var roadAddressProjectLinks = [];
+      return _.map(projectLinks(), function(projectLink) {
+        return projectLink.getData();
+      });
+    };
+
+    this.fetch = function(boundingBox, zoom) {
+      backend.getProjectLinks({boundingBox: boundingBox, zoom: zoom}, function(fetchedLinks) {
+          fetchedProjectLinks = _.map(fetchedLinks, function(projectLinkGroup) {
+              return _.map(projectLinkGroup, function(projectLink) {
+                  return new ProjectLinkModel(projectLink);
+              });
+          });
+      });
     };
 
     this.getProjects = function () {
@@ -159,6 +176,17 @@
             eventbus.trigger('roadAddress:projectValidationSucceed');
           }
         });
+    };
+
+    var ProjectLinkModel = function(data) {
+
+        var getData = function() {
+           return data;
+        };
+
+        return {
+           getData: getData
+        };
     };
   };
 })(this);
