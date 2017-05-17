@@ -24,7 +24,7 @@ class PolygonToolsSpec extends FunSuite with Matchers {
   }
   test("Polygon to string test") {
     val poly1=geomBuilder.polygon(24.2,60.5, 24.8,60.5, 24.8,59, 24.2,59)
-    val polyString = vvhClient.stringifyGeometry(poly1)
+    val polyString = vvhClient.stringifyPolygonGeometry(poly1)
     polyString should be ("{rings:[[[24.2,60.5],[24.8,60.5],[24.8,59.0],[24.2,59.0]]]}")
   }
 

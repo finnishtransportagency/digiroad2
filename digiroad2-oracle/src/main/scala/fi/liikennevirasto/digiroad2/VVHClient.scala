@@ -156,15 +156,16 @@ class VVHClient(vvhRestApiEndPoint: String) {
 
   /**
     *
-    * @param geometry polygon to be converted to string
+    * @param polygon to be converted to string
     * @return string compatible with VVH polygon query
     */
-  def stringifyGeometry(geometry: Polygon): String = {
+
+  def stringifyPolygonGeometry(polygon: Polygon): String = {
     var stringPolygonList: String = ""
       var polygonString: String = "{rings:[["
-      geometry.getCoordinates
-      if (geometry.getCoordinates.length > 0) {
-        for (point <- geometry.getCoordinates.dropRight(1)) {
+      polygon.getCoordinates
+      if (polygon.getCoordinates.length > 0) {
+        for (point <- polygon.getCoordinates.dropRight(1)) {
           // drop removes duplicates
           polygonString += "[" + point.x + "," + point.y + "],"
         }
@@ -291,7 +292,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
     *  Polygon string example "{rings:[[[564000,6930000],[566000,6931000],[567000,6933000]]]}"
     */
   def queryRoadLinksByPolygons(polygon: Polygon): Seq[VVHRoadlink] = {
-    val polygonString = stringifyGeometry(polygon)
+    val polygonString = stringifyPolygonGeometry(polygon)
     if (!polygonString.contains("{rings:["))
     {
       return  Seq.empty[VVHRoadlink]
@@ -313,7 +314,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
   }
 
   def queryLinksIdByPolygons(polygon: Polygon, url: String): Seq[Long] = {
-    val polygonString = stringifyGeometry(polygon)
+    val polygonString = stringifyPolygonGeometry(polygon)
     if (!polygonString.contains("{rings:["))
     {
       return  Seq.empty[Long]
@@ -336,7 +337,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
   }
   
   def queryChangesByPolygon(polygon: Polygon): Seq[ChangeInfo] = {
-    val polygonString = stringifyGeometry(polygon)
+    val polygonString = stringifyPolygonGeometry(polygon)
     if (!polygonString.contains("{rings:["))
       return  Seq.empty[ChangeInfo]
     val defs="[{\"layerId\":0,\"outFields\":\"OLD_ID,NEW_ID,MTKID,CHANGETYPE,OLD_START,OLD_END,NEW_START,NEW_END,CREATED_DATE,CONSTRUCTIONTYPE\"}]"
@@ -375,12 +376,12 @@ class VVHClient(vvhRestApiEndPoint: String) {
     Future(queryByMunicipalitesAndBounds(bounds, municipalities))
   }
 
-  def fetchRoadLinksByPolygonF(polygonString : Polygon): Future[Seq[VVHRoadlink]] = {
-    Future(queryRoadLinksByPolygons(polygonString))
+  def fetchRoadLinksByPolygonF(polygon : Polygon): Future[Seq[VVHRoadlink]] = {
+    Future(queryRoadLinksByPolygons(polygon))
   }
 
-  def fetchChangesByPolygonF(polygonstring : Polygon): Future[Seq[ChangeInfo]] = {
-    Future(queryChangesByPolygon(polygonstring))
+  def fetchChangesByPolygonF(polygon : Polygon): Future[Seq[ChangeInfo]] = {
+    Future(queryChangesByPolygon(polygon))
   }
 
   def fetchLinkIdsByPolygonF(polygon : Polygon): Future[Seq[Long]] = {
@@ -682,13 +683,11 @@ class VVHClient(vvhRestApiEndPoint: String) {
   }
 
   protected def linkIdFromFeature(attributes: Map[String, Any]): Long = {
-    val linkId = attributes("LINKID").asInstanceOf[BigInt].longValue()
-    linkId
+    attributes("LINKID").asInstanceOf[BigInt].longValue()
   }
 
   protected def extractLinkIdFromVVHFeature(feature: Map[String, Any]): Long = {
-    val attributes = extractFeatureAttributes(feature)
-    linkIdFromFeature(attributes)
+    linkIdFromFeature(extractFeatureAttributes(feature))
   }
 
   protected def extractVVHFeature(feature: Map[String, Any]): VVHRoadlink = {

@@ -224,8 +224,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }
   }
 
-  def getRoadLinksAndChangesFromVVHWithPolygon(polygonString :Polygon): (Seq[RoadLink], Seq[ChangeInfo])= {
-    val (changes, links) = Await.result(vvhClient.fetchChangesByPolygonF(polygonString).zip(vvhClient.fetchRoadLinksByPolygonF(polygonString)), atMost = Duration.Inf)
+  def getRoadLinksAndChangesFromVVHWithPolygon(polygon :Polygon): (Seq[RoadLink], Seq[ChangeInfo])= {
+    val (changes, links) = Await.result(vvhClient.fetchChangesByPolygonF(polygon).zip(vvhClient.fetchRoadLinksByPolygonF(polygon)), atMost = Duration.Inf)
     withDynTransaction {
       (enrichRoadLinksFromVVH(links, changes), changes)
     }
