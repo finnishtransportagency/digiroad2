@@ -141,6 +141,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
+  get("/roadlinks/trtrigger") {
+    val client = new ViiteTierekisteriClient()
+    client.sendJsonMessage(null) //TODO only for testing remove before merging master
+  }
 
   get("/roadlinks/checkproject/") {
     val linkId = params("projectId").toLong
