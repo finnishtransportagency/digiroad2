@@ -41,12 +41,6 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val testUserProvider = new OracleUserProvider
   val roadLinkCsvImporter = importerWithNullService()
 
-  private def importerWithService(testVVHClient: VVHClient) : RoadLinkCsvImporter = {
-    new RoadLinkCsvImporter {
-      override val userProvider: UserProvider = testUserProvider
-      override val vvhClient: VVHClient = testVVHClient
-    }
-  }
   private def importerWithNullService() : RoadLinkCsvImporter = {
     new RoadLinkCsvImporter {
       override val userProvider: UserProvider = testUserProvider
@@ -102,7 +96,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val assetFields = Map("Linkin ID" -> 1, "Hallinnollinen luokka" -> 1)
     val invalidCsv = csvToInputStream(createCSV(assetFields))
     roadLinkCsvImporter.importLinkAttribute(invalidCsv) should equal(ImportResult(
-      excludedLinks = List(ExcludedLink(affectedRoadLinkType = "State", csvRow = roadLinkCsvImporter.rowToString(defaultValues ++ assetFields)))))
+      excludedLinks = List(ExcludedLink(unauthorizedAdminClass = "State", csvRow = roadLinkCsvImporter.rowToString(defaultValues ++ assetFields)))))
   }
 
   test("update functionalClass by CSV import", Tag("db")) {
