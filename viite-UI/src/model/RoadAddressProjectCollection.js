@@ -16,8 +16,8 @@
       });
     };
 
-    this.fetch = function(boundingBox, zoom) {
-      backend.getProjectLinks({boundingBox: boundingBox, zoom: zoom}, function(fetchedLinks) {
+    this.fetch = function(boundingBox, zoom, projectId) {
+      backend.getProjectLinks({boundingBox: boundingBox, zoom: zoom, projectId: projectId}, function(fetchedLinks) {
           fetchedProjectLinks = _.map(fetchedLinks, function(projectLinkGroup) {
               return _.map(projectLinkGroup, function(projectLink) {
                   return new ProjectLinkModel(projectLink);

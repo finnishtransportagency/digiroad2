@@ -20,8 +20,9 @@
     this.getProjectLinks = createCallbackRequestor(function(params) {
         var zoom = params.zoom;
         var boundingBox = params.boundingBox;
+        var projectId = params.projectId;
         return {
-            url: 'api/viite/projectlinks?zoom=' + zoom + '&bbox=' + boundingBox
+            url: 'api/viite/projectlinks?zoom=' + zoom + '&bbox=' + boundingBox + '&id=' + projectId
         };
     });
 
