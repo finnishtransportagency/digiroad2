@@ -142,13 +142,8 @@
 
     };
 
-    var formIsValid = function(rootElement) {
-      if (rootElement.find('#nimi').val() && rootElement.find('#alkupvm').val() !== ''){
-        return false;
-      }
-      else {
-        return true;
-      }
+    var formIsInvalid = function(rootElement) {
+      return !(rootElement.find('#nimi').val() && rootElement.find('#alkupvm').val() !== '');
     };
 
     var addReserveButton = function() {
@@ -204,8 +199,8 @@
       });
 
       eventbus.on('roadAddress:projectValidationSucceed', function () {
-        rootElement.find('.btn-next').prop("disabled", false);
-        rootElement.find('.btn-save').prop("disabled", false);
+        rootElement.find('.btn-next').prop("disabled", formIsInvalid(rootElement));
+        rootElement.find('.btn-save').prop("disabled", formIsInvalid(rootElement));
       });
 
       rootElement.on('click', '.project-form button.save', function() {
@@ -278,7 +273,8 @@
       });
 
       rootElement.on('change', '.input-required', function() {
-        rootElement.find('.project-form button.save').attr('disabled', formIsValid(rootElement));
+        rootElement.find('.project-form button.next').attr('disabled', formIsInvalid(rootElement));
+        rootElement.find('.project-form button.save').attr('disabled', formIsInvalid(rootElement));
       });
 
     };
