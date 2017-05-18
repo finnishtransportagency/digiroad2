@@ -65,6 +65,7 @@
 
     eventbus.on('roadAddressProject:selected', function (projId) {
       router.navigate('roadAddressProject/' + projId);
+      applicationModel.selectLayer('roadAddressProject');
     });
 
     eventbus.on('linkProperties:selected', function (linkProperty) {
