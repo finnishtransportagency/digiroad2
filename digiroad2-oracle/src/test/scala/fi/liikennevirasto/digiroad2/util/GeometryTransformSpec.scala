@@ -1,10 +1,20 @@
 package fi.liikennevirasto.digiroad2.util
 
+import java.net.ConnectException
+import java.util.Properties
+
+import fi.liikennevirasto.digiroad2.{Point, RoadLinkService}
+import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import org.apache.http.client.config.RequestConfig
+import org.apache.http.client.methods.HttpGet
 import org.apache.http.conn.{ConnectTimeoutException, HttpHostConnectException}
 import org.scalatest.{FunSuite, Matchers}
-import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.driver.JdbcDriver.backend.Database
+import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
+
 
 class GeometryTransformSpec extends FunSuite with Matchers {
 
@@ -102,6 +112,122 @@ class GeometryTransformSpec extends FunSuite with Matchers {
         coord.size should be(1)
         coord.head.x should be(0.0)
         coord.head.y should be(22.0)
+    }
+  }
+
+  test("Resolve address and location from Viite"){
+    runWithRollback{
+      val lrmPositionsIds = Queries.fetchLrmPositionIds(4)
+
+      sqlu"""insert into lrm_position(id, side_code, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(0)}, 2, 6000, null, 0.000, 100.000)""".execute
+      sqlu"""insert into lrm_position(id, side_code, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(1)}, 2, 6000, null, 100.000, 200.000)""".execute
+      sqlu"""insert into lrm_position(id, side_code, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(2)}, 2, 6000, null, 200.000, 350.000)""".execute
+      sqlu"""insert into lrm_position(id, side_code, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(3)}, 2, 6000, null, 350.000, 500.000)""".execute
+
+      sqlu"""insert into road_address(id, road_number, road_part_number, track_code, discontinuity, start_addr_m, end_addr_m, lrm_position_id,
+                                     start_date, end_date, created_by, valid_from, calibration_points, floating, geometry, valid_to)
+             values (600, 100, 1, 0, 5, 0, 150, ${lrmPositionsIds(0)}, '2015-01-01', NULL, 'test', '2015-01-01', 0, '0'
+                    , MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(534718.983,6980666.786,0,0,534857.168,6980825.352,0,212))
+                    , NULL)""".execute
+
+      sqlu"""insert into road_address(id, road_number, road_part_number, track_code, discontinuity, start_addr_m, end_addr_m, lrm_position_id,
+                                      start_date, end_date, created_by, valid_from, calibration_points, floating, geometry, valid_to)
+              values (601, 101, 1, 0, 5, 150, 250, ${lrmPositionsIds(1)}, '2015-01-01', NULL, 'test', '2015-01-01', 0, '0'
+                      , MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(534718.983,6980666.786,0,0,534857.168,6980825.352,0,212))
+                      , NULL)""".execute
+
+      sqlu"""insert into road_address(id, road_number, road_part_number, track_code, discontinuity, start_addr_m, end_addr_m, lrm_position_id,
+                                      start_date, end_date, created_by, valid_from, calibration_points, floating, geometry, valid_to)
+             values (602, 102, 1, 0, 5, 250, 400, ${lrmPositionsIds(2)}, '2015-01-01', NULL, 'test', '2015-01-01', 0, '0'
+                     , MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(534718.983,6980666.786,0,0,534857.168,6980825.352,0,212))
+                     , NULL)""".execute
+
+      sqlu"""insert into road_address(id, road_number, road_part_number, track_code, discontinuity, start_addr_m, end_addr_m, lrm_position_id,
+                                      start_date, end_date, created_by, valid_from, calibration_points, floating, geometry, valid_to)
+             values (603, 103, 1, 0, 5, 400, 550, ${lrmPositionsIds(3)}, '2015-01-01', NULL, 'test', '2015-01-01', 0, '0'
+                     , MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(534718.983,6980666.786,0,0,534857.168,6980825.352,0,212))
+                     , NULL)""".execute
+
+      val roadAddress = transform.resolveAddressAndLocation(6000, 0, 500, SideCode.BothDirections)
+      roadAddress.length should be(4)
+      roadAddress.map( _.id ).sorted should be (Seq (600, 601, 602, 603))
+
+    }
+  }
+
+  test("Resolve address and location from Viite with road address with exceeding lrm_position bounds "){
+    runWithRollback{
+      val lrmPositionsIds = Queries.fetchLrmPositionIds(1)
+
+      sqlu"""insert into lrm_position(id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(0)}, 6000, null, 100.000, 250.000)""".execute
+
+      sqlu"""insert into road_address(id, road_number, road_part_number, track_code, discontinuity, start_addr_m, end_addr_m, lrm_position_id,
+                                     start_date, end_date, created_by, valid_from, calibration_points, floating, geometry, valid_to)
+             values (600, 100, 1, 0, 5, 0, 150, ${lrmPositionsIds(0)}, '2015-01-01', NULL, 'test', '2015-01-01', 0, '0'
+                    , MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(534718.983,6980666.786,0,0,534857.168,6980825.352,0,212))
+                    , NULL)""".execute
+
+      val roadAddress = transform.resolveAddressAndLocation(6000, 0, 500, SideCode.Unknown)
+      roadAddress.length should be(1)
+      roadAddress.map( _.id ).sorted should be (Seq (600))
+
+    }
+  }
+
+  test("Resolve address and location from Viite with road address with lrm_position measure bigger"){
+    runWithRollback{
+      val lrmPositionsIds = Queries.fetchLrmPositionIds(1)
+
+      sqlu"""insert into lrm_position(id, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(0)}, 6000, null, 0.000, 250.000)""".execute
+
+      sqlu"""insert into road_address(id, road_number, road_part_number, track_code, discontinuity, start_addr_m, end_addr_m, lrm_position_id,
+                                     start_date, end_date, created_by, valid_from, calibration_points, floating, geometry, valid_to)
+             values (600, 100, 1, 0, 5, 150, 500, ${lrmPositionsIds(0)}, '2015-01-01', NULL, 'test', '2015-01-01', 0, '0'
+                    , MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(534718.983,6980666.786,0,0,534857.168,6980825.352,0,212))
+                    , NULL)""".execute
+
+      val roadAddress = transform.resolveAddressAndLocation(6000, 0, 500, SideCode.Unknown)
+      roadAddress.length should be(1)
+      roadAddress.map( _.id ).sorted should be (Seq (600))
+
+    }
+  }
+
+  test("Resolve address and location from Viite with no matching side code "){
+    runWithRollback{
+      val lrmPositionsIds = Queries.fetchLrmPositionIds(1)
+     //Side Code TowardsDigitizing
+      sqlu"""insert into lrm_position(id, side_code, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(0)}, 2, 6000, null, 100.000, 250.000)""".execute
+
+      sqlu"""insert into road_address(id, road_number, road_part_number, track_code, discontinuity, start_addr_m, end_addr_m, lrm_position_id,
+                                     start_date, end_date, created_by, valid_from, calibration_points, floating, geometry, valid_to)
+             values (600, 100, 1, 0, 5, 0, 150, ${lrmPositionsIds(0)}, '2015-01-01', NULL, 'test', '2015-01-01', 0, '0'
+                    , MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(534718.983,6980666.786,0,0,534857.168,6980825.352,0,212))
+                    , NULL)""".execute
+
+      val roadAddress = transform.resolveAddressAndLocation(6000, 0, 500, SideCode.AgainstDigitizing)
+      roadAddress.length should be(0)
+
+    }
+  }
+
+
+  test("Resolve address and location from Viite with matching side code "){
+    runWithRollback{
+      val lrmPositionsIds = Queries.fetchLrmPositionIds(1)
+      //Side Code TowardsDigitizing
+      sqlu"""insert into lrm_position(id, side_code, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(0)}, 2, 6000, null, 100.000, 250.000)""".execute
+
+      sqlu"""insert into road_address(id, road_number, road_part_number, track_code, discontinuity, start_addr_m, end_addr_m, lrm_position_id,
+                                     start_date, end_date, created_by, valid_from, calibration_points, floating, geometry, valid_to)
+             values (600, 100, 1, 0, 5, 0, 150, ${lrmPositionsIds(0)}, '2015-01-01', NULL, 'test', '2015-01-01', 0, '0'
+                    , MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(534718.983,6980666.786,0,0,534857.168,6980825.352,0,212))
+                    , NULL)""".execute
+
+      val roadAddress = transform.resolveAddressAndLocation(6000, 0, 500, SideCode.TowardsDigitizing)
+      roadAddress.length should be(1)
+      roadAddress.map( _.id ).sorted should be (Seq (600))
+
     }
   }
 }

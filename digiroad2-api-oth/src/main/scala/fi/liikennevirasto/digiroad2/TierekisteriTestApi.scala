@@ -5,6 +5,8 @@ import org.json4s.{DefaultFormats, Formats}
 import org.scalatra._
 import org.scalatra.json.JacksonJsonSupport
 
+import scala.util.parsing.json.JSON
+
 class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
 
   override protected implicit def jsonFormats: Formats = DefaultFormats
@@ -17,6 +19,8 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
 
   def mandatoryFields = Seq("valtakunnallinen_id", "livitunnus", "tie", "aosa", "puoli", "ajr", "aet",
     "pikavuoro", "kayttajatunnus", "pysakin_tyyppi", "inventointipvm")
+
+  def mandatoryTrFields = Seq("tietolaji", "tie")
 
   val massTransitStop: Map[String, Any] ={
     Map(
@@ -69,6 +73,29 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
       "saattomahd" -> "ei",
       "korotus" -> "on",
       "valaistus" -> "ei_tietoa"
+    )
+  }
+
+  val trafficVolume: Map[String,List[Map[String, Any]]] ={
+    Map(
+      "Data" ->
+        List(
+          Map(
+              "TIETOLAJI" -> "tl201",          //Field code
+              "TIE" -> 45,                     //Road number
+              "OSA" -> 1,                      //Road part number
+              "ETAISYYS" -> 0,                      //Start distance
+              "LET" -> 0,                    //End distance
+              "KVL" -> 1                       //placeholder value for traffic volume
+            )
+        )
+    )
+  }
+
+  val trafficVolumeWithRequiredParameters: Map[String, Any] ={
+    Map(
+      "tietolaji" -> "tl201",          //Field code
+      "tie" -> 45                      //Road number
     )
   }
 
@@ -144,6 +171,38 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
       halt(NotFound())
 
     halt(NoContent())
+  }
+
+  get("/tietolajit/:fieldCode/:roadNumber") {
+    //Checks that header contains X-OTH-Authorization attribute with correct base64 value
+    if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg==")))
+      halt(BadRequest("401 Unauthorized"))
+
+    trafficVolume
+  }
+
+  get("/tietolajit/:fieldCode/:roadNumber/:roadPartNumber") {
+    //Checks that header contains X-OTH-Authorization attribute with correct base64 value
+    if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg==")))
+      halt(BadRequest("401 Unauthorized"))
+
+    trafficVolume
+  }
+
+  get("/tietolajit/:fieldCode/:roadNumber/:roadPartNumber/:startDistance") {
+    //Checks that header contains X-OTH-Authorization attribute with correct base64 value
+    if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg==")))
+      halt(BadRequest("401 Unauthorized"))
+
+    trafficVolume
+  }
+
+  get("/tietolajit/:fieldCode/:roadNumber/:roadPartNumber/:startDistance/:endPart/:endDistance") {
+    //Checks that header contains X-OTH-Authorization attribute with correct base64 value
+    if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg==")))
+      halt(BadRequest("401 Unauthorized"))
+
+    trafficVolume
   }
 }
 

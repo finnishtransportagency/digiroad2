@@ -157,24 +157,187 @@ case class TierekisteriMassTransitStop(nationalId: Long,
                                        removalDate: Option[Date],
                                        inventoryDate: Date)
 
+case class TierekisteriAssetData(roadNumber: Long,
+                                 roadPartNumber: Long,
+                                 starMValue: Double,
+                                 endMValue: Double,
+                                 kvl: Int)
+
 case class TierekisteriError(content: Map[String, Any], url: String)
 
 class TierekisteriClientException(response: String) extends RuntimeException(response)
 
 class TierekisteriClientWarnings(response: String) extends RuntimeException(response)
 
-/**
-  * TierekisteriClient is a utility for using Tierekisteri (TR) bus stop REST API in OTH.
-  *
-  * @param tierekisteriRestApiEndPoint
-  * @param tierekisteriEnabled
-  *
-  */
-class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnabled: Boolean, client: CloseableHttpClient) {
+trait TierekisteriClient{
+
+  def tierekisteriRestApiEndPoint: String
+  def tierekisteriEnabled: Boolean
+  def client: CloseableHttpClient
+
+  type TierekisteriType
 
   protected implicit val jsonFormats: Formats = DefaultFormats
+  protected val dateFormat = "yyyy-MM-dd"
+  protected val auth = new TierekisteriAuthPropertyReader
+  protected lazy val logger = LoggerFactory.getLogger(getClass)
 
-  private val dateFormat = "yyyy-MM-dd"
+  def mapFields(data: Map[String, Any]): TierekisteriType
+
+  protected def request[T](url: String): Either[T, TierekisteriError] = {
+    val request = new HttpGet(url)
+    request.addHeader("X-OTH-Authorization", "Basic " + auth.getAuthInBase64)
+    val response = client.execute(request)
+    try {
+      val statusCode = response.getStatusLine.getStatusCode
+      if (statusCode == HttpStatus.SC_NOT_FOUND) {
+        return Right(null)
+      } else if (statusCode >= HttpStatus.SC_BAD_REQUEST) {
+        return Right(TierekisteriError(Map("error" -> ErrorMessageConverter.convertJSONToError(response), "content" -> response.getEntity.getContent), url))
+      }
+      Left(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[T])
+    } catch {
+      case e: Exception => Right(TierekisteriError(Map("error" -> e.getMessage, "content" -> response.getEntity.getContent), url))
+    } finally {
+      response.close()
+    }
+  }
+
+  protected def post(url: String, trEntity: TierekisteriType, createJson: (TierekisteriType) => StringEntity): Option[TierekisteriError] = {
+    val request = new HttpPost(url)
+    request.addHeader("X-OTH-Authorization", "Basic " + auth.getAuthInBase64)
+    request.setEntity(createJson(trEntity))
+    val response = client.execute(request)
+    try {
+      val statusCode = response.getStatusLine.getStatusCode
+      val reason = response.getStatusLine.getReasonPhrase
+      if (statusCode >= HttpStatus.SC_BAD_REQUEST) {
+        logger.warn("Tierekisteri error: " + url + " " + statusCode + " " + reason)
+        val error = ErrorMessageConverter.convertJSONToError(response)
+        logger.warn("Json from Tierekisteri: " + error)
+        return Some(TierekisteriError(Map("error" -> error), url))
+      }
+      None
+    } catch {
+      case e: Exception => Some(TierekisteriError(Map("error" -> e.getMessage), url))
+    } finally {
+      response.close()
+    }
+  }
+
+  protected def put(url: String, trEntity: TierekisteriType, createJson: (TierekisteriType) => StringEntity): Option[TierekisteriError] = {
+    val request = new HttpPut(url)
+    request.addHeader("X-OTH-Authorization", "Basic " + auth.getAuthInBase64)
+    request.setEntity(createJson(trEntity))
+    val response = client.execute(request)
+    try {
+      val statusCode = response.getStatusLine.getStatusCode
+      val reason = response.getStatusLine.getReasonPhrase
+      if (statusCode >= HttpStatus.SC_BAD_REQUEST) {
+        logger.warn("Tierekisteri error: " + url + " " + statusCode + " " + reason)
+        val error = ErrorMessageConverter.convertJSONToError(response)
+        logger.warn("Json from Tierekisteri: " + error)
+        return Some(TierekisteriError(Map("error" -> error), url))
+      }
+      None
+    } catch {
+      case e: Exception => Some(TierekisteriError(Map("error" -> e.getMessage), url))
+    } finally {
+      response.close()
+    }
+  }
+
+  protected def delete(url: String): Option[TierekisteriError] = {
+    val request = new HttpDelete(url)
+    request.setHeader("content-type","application/json")
+    request.addHeader("X-OTH-Authorization", "Basic " + auth.getAuthInBase64)
+    val response = client.execute(request)
+    try {
+      val statusCode = response.getStatusLine.getStatusCode
+      val reason = response.getStatusLine.getReasonPhrase
+      if (statusCode >= HttpStatus.SC_BAD_REQUEST) {
+        logger.warn("Tierekisteri error: " + url + " " + statusCode + " " + reason)
+        val error = ErrorMessageConverter.convertJSONToError(response)
+        logger.warn("Json from Tierekisteri: " + error)
+        return Some(TierekisteriError(Map("error" -> error), url))
+      }
+      None
+    } catch {
+      case e: Exception => Some(TierekisteriError(Map("error" -> e.getMessage), url))
+    } finally {
+      response.close()
+    }
+  }
+
+  protected def convertToLong(value: Option[String]): Option[Long] = {
+    try {
+      value.map(_.toLong)
+    } catch {
+      case e: NumberFormatException =>
+        throw new TierekisteriClientException("Invalid value in response: Long expected, got '%s'".format(value))
+    }
+  }
+
+  protected def convertToDouble(value: Option[String]): Option[Double] = {
+    try {
+      value.map(_.toDouble)
+    } catch {
+      case e: NumberFormatException =>
+        throw new TierekisteriClientException("Invalid value in response: Double expected, got '%s'".format(value))
+    }
+  }
+
+  protected def convertToInt(value: Option[String]): Option[Int] = {
+    try {
+      value.map(_.toInt)
+    } catch {
+      case e: NumberFormatException =>
+        throw new TierekisteriClientException("Invalid value in response: Int expected, got '%s'".format(value))
+    }
+  }
+
+  protected def convertToDate(value: Option[String]): Option[Date] = {
+    try {
+      value.map(dv => new SimpleDateFormat(dateFormat).parse(dv))
+    } catch {
+      case e: ParseException =>
+        throw new TierekisteriClientException("Invalid value in response: Date expected, got '%s'".format(value))
+    }
+  }
+
+  protected def convertDateToString(date: Option[Date]): Option[String] = {
+    date.map(dv => convertDateToString(dv))
+  }
+
+  protected def convertDateToString(date: Date): String = {
+    new SimpleDateFormat(dateFormat).format(date)
+  }
+
+  protected def getFieldValue(data: Map[String, Any], field: String): Option[String] = {
+    try {
+      data.get(field).map(_.toString) match {
+        case Some(value) => Some(value)
+        case _ => None
+      }
+    } catch {
+      case ex: NullPointerException => None
+    }
+  }
+  protected def getMandatoryFieldValue(data: Map[String, Any], field: String): Option[String] = {
+    val fieldValue = getFieldValue(data, field)
+    if (fieldValue.isEmpty)
+      throw new TierekisteriClientException("Missing mandatory field in response '%s'".format(field))
+    fieldValue
+  }
+}
+
+class TierekisteriMassTransitStopClient(trEndPoint: String, trEnabled: Boolean, httpClient: CloseableHttpClient) extends TierekisteriClient{
+
+  override def tierekisteriRestApiEndPoint: String = trEndPoint
+  override def tierekisteriEnabled: Boolean = trEnabled
+  override def client: CloseableHttpClient = httpClient
+  type TierekisteriType = TierekisteriMassTransitStop
+
   private val serviceName = "pysakit/"
 
   private val trNationalId = "valtakunnallinen_id"
@@ -195,14 +358,12 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
   private val trEquipment = "varusteet"
   private val trUser = "kayttajatunnus"
   private val trInventoryDate = "inventointipvm"
-  private val auth = new TierekisteriAuthPropertyReader
   private val serviceUrl : String = tierekisteriRestApiEndPoint + serviceName
   private def serviceUrl(id: String) : String = serviceUrl + id
 
   private def booleanCodeToBoolean: Map[String, Boolean] = Map("on" -> true, "ei" -> false)
   private def booleanToBooleanCode: Map[Boolean, String] = Map(true -> "on", false -> "ei")
 
-  private lazy val logger = LoggerFactory.getLogger(getClass)
 
   private val toIso8601 = DateTimeFormat.forPattern("yyyy-MM-dd")
 
@@ -258,7 +419,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
     */
   def createMassTransitStop(trMassTransitStop: TierekisteriMassTransitStop): Unit ={
     logger.info("Creating stop %s in Tierekisteri".format(trMassTransitStop.liviId))
-    post(serviceUrl, trMassTransitStop) match {
+    post(serviceUrl, trMassTransitStop, createJson) match {
       case Some(error) => throw new TierekisteriClientException("Tierekisteri error: " + error.content.get("error").get.toString)
       case _ => ; // do nothing
     }
@@ -274,7 +435,7 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
     val liviId = overrideLiviIdOption.getOrElse(trMassTransitStop.liviId)
     val trStop = trMassTransitStop.copy(modifiedBy = overrideUserNameOption.getOrElse(trMassTransitStop.modifiedBy))
     logger.info("Updating stop %s in Tierekisteri".format(liviId))
-    put(serviceUrl(liviId), trStop) match {
+    put(serviceUrl(liviId), trStop, createJson) match {
       case Some(error) => throw new TierekisteriClientException("Tierekisteri error: " + error.content.get("error").get.toString)
       case _ => ;
     }
@@ -294,92 +455,8 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
     }
   }
 
-  private def request[T](url: String): Either[T, TierekisteriError] = {
-    val request = new HttpGet(url)
-    request.addHeader("X-OTH-Authorization", "Basic " + auth.getAuthInBase64)
-    val response = client.execute(request)
-    try {
-      val statusCode = response.getStatusLine.getStatusCode
-      if (statusCode == HttpStatus.SC_NOT_FOUND) {
-        return Right(null)
-      } else if (statusCode >= HttpStatus.SC_BAD_REQUEST) {
-        return Right(TierekisteriError(Map("error" -> ErrorMessageConverter.convertJSONToError(response), "content" -> response.getEntity.getContent), url))
-      }
-      Left(parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[T])
-    } catch {
-      case e: Exception => Right(TierekisteriError(Map("error" -> e.getMessage, "content" -> response.getEntity.getContent), url))
-    } finally {
-      response.close()
-    }
-  }
 
-  private def post(url: String, trMassTransitStop: TierekisteriMassTransitStop): Option[TierekisteriError] = {
-    val request = new HttpPost(url)
-    request.addHeader("X-OTH-Authorization", "Basic " + auth.getAuthInBase64)
-    request.setEntity(createJson(trMassTransitStop))
-    val response = client.execute(request)
-    try {
-      val statusCode = response.getStatusLine.getStatusCode
-      val reason = response.getStatusLine.getReasonPhrase
-      if (statusCode >= HttpStatus.SC_BAD_REQUEST) {
-        logger.warn("Tierekisteri error: " + url + " " + statusCode + " " + reason)
-        val error = ErrorMessageConverter.convertJSONToError(response)
-        logger.warn("Json from Tierekisteri: " + error)
-        return Some(TierekisteriError(Map("error" -> error), url))
-      }
-     None
-    } catch {
-      case e: Exception => Some(TierekisteriError(Map("error" -> e.getMessage), url))
-    } finally {
-      response.close()
-    }
-  }
-
-  private def put(url: String, tnMassTransitStop: TierekisteriMassTransitStop): Option[TierekisteriError] = {
-    val request = new HttpPut(url)
-    request.addHeader("X-OTH-Authorization", "Basic " + auth.getAuthInBase64)
-    request.setEntity(createJson(tnMassTransitStop))
-    val response = client.execute(request)
-    try {
-      val statusCode = response.getStatusLine.getStatusCode
-      val reason = response.getStatusLine.getReasonPhrase
-      if (statusCode >= HttpStatus.SC_BAD_REQUEST) {
-        logger.warn("Tierekisteri error: " + url + " " + statusCode + " " + reason)
-        val error = ErrorMessageConverter.convertJSONToError(response)
-        logger.warn("Json from Tierekisteri: " + error)
-        return Some(TierekisteriError(Map("error" -> error), url))
-      }
-      None
-    } catch {
-      case e: Exception => Some(TierekisteriError(Map("error" -> e.getMessage), url))
-    } finally {
-      response.close()
-    }
-  }
-
-  private def delete(url: String): Option[TierekisteriError] = {
-    val request = new HttpDelete(url)
-    request.setHeader("content-type","application/json")
-    request.addHeader("X-OTH-Authorization", "Basic " + auth.getAuthInBase64)
-    val response = client.execute(request)
-    try {
-      val statusCode = response.getStatusLine.getStatusCode
-      val reason = response.getStatusLine.getReasonPhrase
-      if (statusCode >= HttpStatus.SC_BAD_REQUEST) {
-        logger.warn("Tierekisteri error: " + url + " " + statusCode + " " + reason)
-        val error = ErrorMessageConverter.convertJSONToError(response)
-        logger.warn("Json from Tierekisteri: " + error)
-        return Some(TierekisteriError(Map("error" -> error), url))
-      }
-      None
-    } catch {
-      case e: Exception => Some(TierekisteriError(Map("error" -> e.getMessage), url))
-    } finally {
-      response.close()
-    }
-  }
-
-  private def createJson(trMassTransitStop: TierekisteriMassTransitStop) = {
+  protected def createJson(trMassTransitStop: TierekisteriType) = {
 
     val jsonObj = Map(
       trNationalId -> trMassTransitStop.nationalId,
@@ -416,43 +493,27 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
     new StringEntity(json, ContentType.APPLICATION_JSON)
   }
 
-  private def mapFields(data: Map[String, Any]): TierekisteriMassTransitStop = {
-    def getFieldValue(field: String): Option[String] = {
-      try {
-        data.get(field).map(_.toString) match {
-          case Some(value) => Some(value)
-          case _ => None
-        }
-      } catch {
-        case ex: NullPointerException => None
-      }
-    }
-    def getMandatoryFieldValue(field: String): Option[String] = {
-      val fieldValue = getFieldValue(field)
-      if (fieldValue.isEmpty)
-        throw new TierekisteriClientException("Missing mandatory field in response '%s'".format(field))
-      fieldValue
-    }
+  override def mapFields(data: Map[String, Any]): TierekisteriMassTransitStop = {
 
     //Mandatory fields
-    val nationalId = convertToLong(getMandatoryFieldValue(trNationalId)).get
-    val roadSide = TRRoadSide.apply(getMandatoryFieldValue(trSide).get)
-    val express = booleanCodeToBoolean.getOrElse(getMandatoryFieldValue(trIsExpress).get, throw new TierekisteriClientException("The boolean code '%s' is not supported".format(getFieldValue(trIsExpress))))
-    val liviId = getMandatoryFieldValue(trLiviId).get
-    val stopType = StopType.apply(getMandatoryFieldValue(trStopType).get)
-    val modifiedBy = getMandatoryFieldValue(trUser).get
-    val roadAddress = RoadAddress(None, convertToInt(getMandatoryFieldValue(trRoadNumber)).get,
-      convertToInt(getMandatoryFieldValue(trRoadPartNumber)).get,Track.Combined,convertToInt(getMandatoryFieldValue(trDistance)).get,None)
+    val nationalId = convertToLong(getMandatoryFieldValue(data, trNationalId)).get
+    val roadSide = TRRoadSide.apply(getMandatoryFieldValue(data, trSide).get)
+    val express = booleanCodeToBoolean.getOrElse(getMandatoryFieldValue(data, trIsExpress).get, throw new TierekisteriClientException("The boolean code '%s' is not supported".format(getFieldValue(data, trIsExpress))))
+    val liviId = getMandatoryFieldValue(data, trLiviId).get
+    val stopType = StopType.apply(getMandatoryFieldValue(data, trStopType).get)
+    val modifiedBy = getMandatoryFieldValue(data, trUser).get
+    val roadAddress = RoadAddress(None, convertToInt(getMandatoryFieldValue(data, trRoadNumber)).get,
+      convertToInt(getMandatoryFieldValue(data, trRoadPartNumber)).get,Track.Combined,convertToInt(getMandatoryFieldValue(data, trDistance)).get,None)
 
     //Not mandatory fields
     val equipments = extractEquipment(data)
-    val stopCode = getFieldValue(trStopCode)
-    val nameFi = getFieldValue(trNameFi)
-    val nameSe = getFieldValue(trNameSe)
-    val operatingFrom = convertToDate(getFieldValue(trOperatingFrom))
-    val operatingTo = convertToDate(getFieldValue(trOperatingTo))
-    val removalDate = convertToDate(getFieldValue(trRemovalDate))
-    val inventoryDate = convertToDate(Some(getFieldValue(trInventoryDate).getOrElse(toIso8601.print(DateTime.now())))).get
+    val stopCode = getFieldValue(data, trStopCode)
+    val nameFi = getFieldValue(data, trNameFi)
+    val nameSe = getFieldValue(data, trNameSe)
+    val operatingFrom = convertToDate(getFieldValue(data, trOperatingFrom))
+    val operatingTo = convertToDate(getFieldValue(data, trOperatingTo))
+    val removalDate = convertToDate(getFieldValue(data, trRemovalDate))
+    val inventoryDate = convertToDate(Some(getFieldValue(data, trInventoryDate).getOrElse(toIso8601.print(DateTime.now())))).get
 
     TierekisteriMassTransitStop(nationalId,liviId, roadAddress, roadSide, stopType, express, equipments,
       stopCode, nameFi, nameSe, modifiedBy, operatingFrom, operatingTo, removalDate, inventoryDate)
@@ -473,42 +534,93 @@ class TierekisteriClient(tierekisteriRestApiEndPoint: String, tierekisteriEnable
       }
     }.toMap
   }
+}
 
-  private def convertToLong(value: Option[String]): Option[Long] = {
-    try {
-      value.map(_.toLong)
-    } catch {
-      case e: NumberFormatException =>
-        throw new TierekisteriClientException("Invalid value in response: Long expected, got '%s'".format(value))
+class TierekisteriAssetDataClient(trEndPoint: String, trEnable: Boolean, httpClient: CloseableHttpClient) extends TierekisteriClient {
+
+  override def tierekisteriRestApiEndPoint: String = trEndPoint
+  override def tierekisteriEnabled: Boolean = trEnable
+  override def client: CloseableHttpClient = httpClient
+  type TierekisteriType = TierekisteriAssetData
+
+  private val serviceName = "tietolajit/"
+  private val trKVL = "KVL"
+  private val trRoadNumber = "TIE"
+  private val trRoadPartNumber = "OSA"
+  private val trStartMValue = "ETAISYYS"
+  private val trEndMValue = "LET"
+
+  private val serviceUrl : String = tierekisteriRestApiEndPoint + serviceName
+  private def serviceUrl(assetType: String, roadNumber: Long) : String = serviceUrl + assetType + "/" + roadNumber
+  private def serviceUrl(assetType: String, roadNumber: Long, roadPartNumber: Long) : String = serviceUrl + assetType + "/" + roadNumber + "/" + roadPartNumber
+  private def serviceUrl(assetType: String, roadNumber: Long, roadPartNumber: Long, startDistance: Int) : String =
+    serviceUrl + assetType + "/" + roadNumber + "/" + roadPartNumber + "/" + startDistance
+  private def serviceUrl(assetType: String, roadNumber: Long, roadPartNumber: Long, startDistance: Int, endPart: Int, endDistance: Int) : String =
+    serviceUrl + assetType + "/" + roadNumber + "/" + roadPartNumber + "/" + startDistance + "/" + endPart + "/" + endDistance
+
+  override def mapFields(data: Map[String, Any]): TierekisteriAssetData = {
+    //Mandatory field
+    val kvl = convertToInt(getMandatoryFieldValue(data, trKVL)).get
+    val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
+    val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
+    val starMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
+    val endMValue = convertToDouble(getMandatoryFieldValue(data, trEndMValue)).get
+
+    TierekisteriAssetData(roadNumber, roadPartNumber, starMValue, endMValue, kvl)
+  }
+
+  /**
+    * Return all asset data currently active from Tierekisteri
+    * Tierekisteri REST API endpoint: GET /trrest/tietolajit/{tietolaji}/{tie}
+    *
+    * @return
+    */
+  def fetchActiveAssetData(assetType: String, roadNumber: Long): Seq[TierekisteriAssetData] = {
+    request[Map[String,List[Map[String, Any]]]](serviceUrl(assetType, roadNumber)) match {
+      case Left(content) => {
+        content("Data").map{
+          asset => mapFields(asset)
+        }
+      }
+      case Right(null) => Seq()
+      case Right(error) => throw new TierekisteriClientException("Tierekisteri error: " + error.content.get("error").get.toString)
     }
   }
 
-  private def convertToInt(value: Option[String]): Option[Int] = {
-    try {
-      value.map(_.toInt)
-    } catch {
-      case e: NumberFormatException =>
-        throw new TierekisteriClientException("Invalid value in response: Int expected, got '%s'".format(value))
+  def fetchActiveAssetData(assetType: String, roadNumber: Long, roadPartNumber: Long): Seq[TierekisteriAssetData] = {
+    request[Map[String,List[Map[String, Any]]]](serviceUrl(assetType, roadNumber, roadPartNumber)) match {
+      case Left(content) =>
+        content("Data").map{
+          asset => mapFields(asset)
+        }
+      case Right(null) => Seq()
+      case Right(error) => throw new TierekisteriClientException("Tierekisteri error: " + error.content.get("error").get.toString)
     }
   }
 
-  private def convertToDate(value: Option[String]): Option[Date] = {
-    try {
-      value.map(dv => new SimpleDateFormat(dateFormat).parse(dv))
-    } catch {
-      case e: ParseException =>
-        throw new TierekisteriClientException("Invalid value in response: Date expected, got '%s'".format(value))
+  def fetchActiveAssetData(assetType: String, roadNumber: Long, roadPartNumber: Long, startDistance: Int): Seq[TierekisteriAssetData] = {
+    request[Map[String,List[Map[String, Any]]]](serviceUrl(assetType, roadNumber, roadPartNumber, startDistance)) match {
+      case Left(content) =>
+        content("Data").map{
+          asset => mapFields(asset)
+        }
+      case Right(null) => Seq()
+      case Right(error) => throw new TierekisteriClientException("Tierekisteri error: " + error.content.get("error").get.toString)
     }
   }
 
-  private def convertDateToString(date: Option[Date]): Option[String] = {
-    date.map(dv => convertDateToString(dv))
-  }
-
-  private def convertDateToString(date: Date): String = {
-    new SimpleDateFormat(dateFormat).format(date)
+  def fetchActiveAssetData(assetType: String, roadNumber: Long, roadPartNumber: Long, startDistance: Int, endPart: Int, endDistance: Int): Seq[TierekisteriAssetData] = {
+    request[Map[String,List[Map[String, Any]]]](serviceUrl(assetType, roadNumber, roadPartNumber, startDistance, endPart, endDistance)) match {
+      case Left(content) =>
+        content("Data").map{
+          asset => mapFields(asset)
+        }
+      case Right(null) => Seq()
+      case Right(error) => throw new TierekisteriClientException("Tierekisteri error: " + error.content.get("error").get.toString)
+    }
   }
 }
+
 
 object ErrorMessageConverter {
   protected implicit val jsonFormats: Formats = DefaultFormats
