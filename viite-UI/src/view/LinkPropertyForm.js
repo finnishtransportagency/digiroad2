@@ -674,10 +674,8 @@
         }
       });
 
-      eventbus.on('layer:selected', function(layer) {
-        if(layer !== 'linkProperty') {
+      eventbus.on('roadAddressProject:selected', function() {
           $('.wrapper').remove();
-        }
       });
     };
     bindEvents();

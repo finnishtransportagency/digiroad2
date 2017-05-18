@@ -26,7 +26,7 @@
       var styleFunction = function (feature, resolution){
 
         if(feature.projectLinkData.status === 0) {
-          var borderWidth = 5;
+          var borderWidth = 3;
           var strokeWidth = styler.strokeWidthByZoomLevel(resolution, feature.projectLinkData.roadLinkType, feature.projectLinkData.anomaly, feature.projectLinkData.roadLinkSource, false, feature.projectLinkData.constructionType);
           var lineColor = 'rgba(247, 254, 46, 1)';
           var borderCap = 'round';
