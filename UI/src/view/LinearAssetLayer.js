@@ -259,7 +259,7 @@ window.LinearAssetLayer = function(params) {
     eventListener.listenTo(eventbus, 'tool:changed', changeTool);
     eventListener.listenTo(eventbus, singleElementEvents('saved'), handleLinearAssetSaved);
     eventListener.listenTo(eventbus, multiElementEvent('massUpdateSucceeded'), handleLinearAssetSaved);
-    eventListener.listenTo(eventbus, singleElementEvents('valueChanged', 'separated', 'selected'), linearAssetChanged);
+    eventListener.listenTo(eventbus, singleElementEvents('valueChanged', 'separated'), linearAssetChanged);
     eventListener.listenTo(eventbus, singleElementEvents('cancelled', 'saved'), linearAssetCancelled);
     eventListener.listenTo(eventbus, singleElementEvents('selectByLinkId'), selectLinearAssetByLinkId);
     eventListener.listenTo(eventbus, multiElementEvent('massUpdateFailed'), cancelSelection);
@@ -286,10 +286,6 @@ window.LinearAssetLayer = function(params) {
     selectToolControl.deactivate();
     eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
     eventListener.listenTo(eventbus, 'map:clicked', me.displayConfirmMessage);
-    var features = style.renderFeatures(selectedLinearAsset.get());
-    if(assetLabel)
-        features = features.concat(assetLabel.renderFeaturesByLinearAssets(selectedLinearAsset.get(), uiState.zoomLevel));
-    selectToolControl.addSelectionFeatures(features);
     decorateSelection();
   };
 
@@ -328,8 +324,11 @@ window.LinearAssetLayer = function(params) {
     var features = [];
 
     var markerContainer = function(link, position) {
-        var anchor = assetLabel.getMarkerAnchor(uiState.zoomLevel);
-        var offset = assetLabel.getMarkerOffset(uiState.zoomLevel);
+        var anchor, offset;
+        if(assetLabel){
+            anchor = assetLabel.getMarkerAnchor(uiState.zoomLevel);
+            offset = assetLabel.getMarkerOffset(uiState.zoomLevel);
+        }
 
         var imageSettings = {src: 'images/center-marker2.svg'};
         if(anchor)
@@ -405,6 +404,11 @@ window.LinearAssetLayer = function(params) {
 
   var decorateSelection = function () {
     if (selectedLinearAsset.exists()) {
+      var features = style.renderFeatures(selectedLinearAsset.get());
+      if(assetLabel)
+          features = features.concat(assetLabel.renderFeaturesByLinearAssets(selectedLinearAsset.get(), uiState.zoomLevel));
+      selectToolControl.addSelectionFeatures(features);
+
       if (selectedLinearAsset.isSplitOrSeparated()) {
         var offsetBySideCode = function (linearAsset) {
           return GeometryUtils.offsetBySideCode(applicationModel.zoom.level, linearAsset);
