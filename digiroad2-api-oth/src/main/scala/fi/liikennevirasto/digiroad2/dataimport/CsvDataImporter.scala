@@ -108,8 +108,12 @@ trait RoadLinkCsvImporter {
 
   def updateRoadLinkInVVH(roadLinkVVHAttribute: CsvRoadLinkRow): Option[Long] = {
     val mapProperties = roadLinkVVHAttribute.properties.map { prop => prop.columnName -> prop.value }.toMap
+    val objectId = vvhClient.complementaryData.fetchComplementaryRoadlink(roadLinkVVHAttribute.linkId).map(_.attributes.getOrElse("OBJECTID", None)) match {
+      case None => return Some(roadLinkVVHAttribute.linkId)
+      case Some(objId) => objId
+    }
 
-    vvhClient.complementaryData.updateVVHFeatures(mapProperties ++ Map("OBJECTID" -> roadLinkVVHAttribute.linkId)) match {
+    vvhClient.complementaryData.updateVVHFeatures(mapProperties ++ Map("OBJECTID" -> objectId)) match {
       case Right(error) => Some(roadLinkVVHAttribute.linkId)
       case _ => None
     }
