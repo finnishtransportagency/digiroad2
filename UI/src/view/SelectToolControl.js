@@ -22,7 +22,7 @@
         }, options);
 
         var dragBoxInteraction = new ol.interaction.DragBox({
-            condition: function(event){ return ol.events.condition.platformModifierKeyOnly(event) }
+            condition: function(event){ return ol.events.condition.platformModifierKeyOnly(event); }
         });
 
         var drawInteraction = new ol.interaction.Draw({
