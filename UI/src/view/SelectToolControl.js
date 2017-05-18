@@ -150,6 +150,13 @@
             map.addInteraction(drawSquare);
         };
 
+        var deactivateDraw = function () {
+            isPolygonActive = false;
+            isDragBoxActive = false;
+            map.removeInteraction(drawSquare);
+            map.removeInteraction(drawInteraction);
+        };
+
         var clear = function(){
             selectInteraction.getFeatures().clear();
             highlightLayer();
@@ -214,7 +221,8 @@
             activePolygon: activePolygon,
             activeDragBox: activeDragbox,
             clear : clear,
-            removeFeatures : removeFeatures
+            removeFeatures : removeFeatures,
+            deactivateDraw: deactivateDraw
         };
     };
 })(this);

@@ -203,6 +203,7 @@ window.LinearAssetLayer = function(params) {
           selectedLinearAsset.saveMultiple(value);
           selectToolControl.clear();
           selectedLinearAsset.closeMultiple();
+          selectToolControl.deactivateDraw();
         },
         validator: selectedLinearAsset.validator,
         formElements: params.formElements
