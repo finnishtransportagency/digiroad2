@@ -196,20 +196,27 @@ window.LinearAssetLayer = function(params) {
   });
 
   var showDialog = function (linearAssets) {
-    selectedLinearAsset.openMultiple(linearAssets);
+      linearAssets = _.filter(linearAssets, function(asset){
+          return asset && !(asset.geometry instanceof ol.geom.Point);
+      });
 
-    selectToolControl.addSelectionFeatures(style.renderFeatures(selectedLinearAsset.get()));
+      selectedLinearAsset.openMultiple(linearAssets);
 
-     LinearAssetMassUpdateDialog.show({
-        count: selectedLinearAsset.count(),
-        onCancel: cancelSelection,
-        onSave: function (value) {
-          selectedLinearAsset.saveMultiple(value);
-          selectToolControl.clear();
-          selectedLinearAsset.closeMultiple();
-        },
-        validator: selectedLinearAsset.validator,
-        formElements: params.formElements
+      var features = style.renderFeatures(selectedLinearAsset.get());
+      if(assetLabel)
+         features = features.concat(assetLabel.renderFeaturesByLinearAssets(selectedLinearAsset.get(), uiState.zoomLevel));
+      selectToolControl.addSelectionFeatures(features);
+
+      LinearAssetMassUpdateDialog.show({
+         count: selectedLinearAsset.count(),
+         onCancel: cancelSelection,
+         onSave: function (value) {
+           selectedLinearAsset.saveMultiple(value);
+           selectToolControl.clear();
+           selectedLinearAsset.closeMultiple();
+         },
+         validator: selectedLinearAsset.validator,
+         formElements: params.formElements
       });
   };
 
