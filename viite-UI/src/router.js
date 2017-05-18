@@ -46,7 +46,8 @@
         });
       },
 
-      roadAddressProject: function () {
+      roadAddressProject: function (projectId) {
+        eventbus.trigger('roadAddressProject:openProject', {id: projectId});
         applicationModel.selectLayer('roadAddressProject');
       }
     });

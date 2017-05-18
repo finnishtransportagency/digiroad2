@@ -56,7 +56,7 @@
         roadCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1);
         handleRoadsVisibility();
       } else if (mapState.selectedLayer == 'roadAddressProject'){
-        projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1);
+        projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1, undefined);
         handleRoadsVisibility();
       }
     };

@@ -252,8 +252,8 @@
         eventbus.once('roadAddress:projectSaved', function (result) {
           jQuery('.modal-overlay').remove();
           if(!_.isUndefined(result.projectAddresses)) {
-            eventbus.trigger('linkProperties:selectedProject', result.projectAddresses.linkId);
-            // TODO: Go to project edit mode layer
+            console.log(result);
+            eventbus.trigger('roadAddressProject:openProject', result.project);
           }
         });
         if(_.isUndefined(currentProject) || currentProject.id === 0){

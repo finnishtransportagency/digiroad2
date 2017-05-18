@@ -3,6 +3,7 @@
         var vectorLayer;
         var layerMinContentZoomLevels = {};
         var currentZoom = 0;
+        var project;
 
         var vectorSource = new ol.source.Vector({
             loader: function(extent, resolution, projection) {
@@ -63,11 +64,20 @@
             this.hide();
         };
 
+        eventbus.on('roadAddressProject:openProject', function(projectSelected) {
+          this.project = projectSelected;
+          eventbus.trigger('roadAddressProject:selected', projectSelected.id);
+        });
+
         eventbus.on('roadAddressProject:selected', function(projId) {
-            projectCollection.fetch(map.getView().calculateExtent(map.getSize()),map.getView().getZoom(), projId);
+            console.log(projId);
+          eventbus.once('roadAddressProject:projectFetched', function(id) {
+            projectCollection.fetch(map.getView().calculateExtent(map.getSize()),map.getView().getZoom(), id);
             vectorSource.clear();
             eventbus.trigger('map:clearLayers');
             vectorLayer.changed();
+          });
+            projectCollection.getProjectsWithLinksById(projId);
         });
 
         vectorLayer.setVisible(true);

@@ -1136,6 +1136,13 @@
       activateSelectInteractions(true);
     });
 
+    eventListener.listenTo(eventbus, 'layer:selected', function(layer, previouslySelectedLayer){
+      if (previouslySelectedLayer !== 'linkProperty') {
+        deactivateSelectInteractions(true);
+        clearLayers();
+        hideLayer();
+      }
+    });
     var show = function(map) {
       vectorLayer.setVisible(true);
     };
