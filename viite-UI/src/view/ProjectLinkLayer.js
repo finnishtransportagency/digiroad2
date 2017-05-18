@@ -1,5 +1,6 @@
 (function(root) {
     root.ProjectLinkLayer = function(map, projectCollection) {
+        var layerName = 'roadAddressProject';
         var vectorLayer;
         var layerMinContentZoomLevels = {};
         var currentZoom = 0;
@@ -71,16 +72,15 @@
 
         eventbus.on('roadAddressProject:openProject', function(projectSelected) {
           this.project = projectSelected;
-          eventbus.trigger('roadAddressProject:selected', projectSelected.id);
+          eventbus.trigger('roadAddressProject:selected', projectSelected.id, layerName, applicationModel.getSelectedLayer());
         });
 
         eventbus.on('roadAddressProject:selected', function(projId) {
             console.log(projId);
           eventbus.once('roadAddressProject:projectFetched', function(id) {
             projectCollection.fetch(map.getView().calculateExtent(map.getSize()),map.getView().getZoom(), id);
-            vectorSource.clear();
-            eventbus.trigger('map:clearLayers');
-            vectorLayer.changed();
+            // vectorSource.clear();
+            // eventbus.trigger('map:clearLayers');
           });
             projectCollection.getProjectsWithLinksById(projId);
         });

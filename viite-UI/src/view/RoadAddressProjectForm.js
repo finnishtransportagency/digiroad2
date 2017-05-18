@@ -260,7 +260,6 @@
           if(!_.isUndefined(result.projectAddresses)) {
             console.log(result);
             eventbus.trigger('roadAddressProject:openProject', result.project);
-            eventbus.trigger('layer:selected');
           }
         });
         if(_.isUndefined(currentProject) || currentProject.id === 0){

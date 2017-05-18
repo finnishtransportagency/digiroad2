@@ -92,6 +92,15 @@
       applicationModel.setMinDirtyZoomLevel(minZoomForContent());
     }, this);
 
+    eventbus.on('roadAddressProject:selected', function selectLayer(id, layer, previouslySelectedLayer) {
+      var layerToBeHidden = layers[previouslySelectedLayer];
+      var layerToBeShown = layers[layer];
+
+      if (layerToBeHidden) layerToBeHidden.hide(map);
+      layerToBeShown.show(map);
+      applicationModel.setMinDirtyZoomLevel(minZoomForContent());
+    }, this);
+
     map.on('moveend', function() {
       applicationModel.moveMap(map.getView().getZoom(), map.getLayers().getArray()[0].getExtent(), map.getView().getCenter());
     });
