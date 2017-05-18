@@ -91,27 +91,27 @@ class GeometryTransformSpec extends FunSuite with Matchers {
 
   test("Resolve road address -> coordinate") {
     runWithRollback {
-        sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE)
+      sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE)
                values (500000,null,2,0,15,null,3714864,0,to_timestamp('17.02.17 12:19:45','RR.MM.DD HH24:MI:SS'))""".execute
-        sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO)
+      sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO)
                values (7000001,20,1,0,5,0,20,500000,to_date('56.01.01','RR.MM.DD'),null,'tr',to_date('98.10.16','RR.MM.DD'),0,0,MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(0,0,0,0,0,20,0,0)),null)""".execute
 
-        sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE)
+      sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE)
                values (500001,null,2,0,6,null,3710726,0,to_timestamp('17.02.17 12:19:45','RR.MM.DD HH24:MI:SS'))""".execute
-        sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO)
+      sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO)
                values (7000002,20,2,0,5,20,30,500001,to_date('60.01.01','RR.MM.DD'),null,'tr',to_date('98.10.16','RR.MM.DD'),0,0,MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(0,20,0,0,0,30,0,0)),null)""".execute
 
-        sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE)
+      sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE)
                values (500002,null,2,0,8,null,3714455,0,to_timestamp('17.02.17 12:19:45','RR.MM.DD HH24:MI:SS'))""".execute
-        sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO)
+      sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO)
                 values (7000003,20,3,0,5,30,40,500002,to_date('60.01.01','RR.MM.DD'),null,'tr',to_date('98.10.16','RR.MM.DD'),0,0,MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(0,30,0,0,0,40,0,0)),null)""".execute
 
-        val address = RoadAddress(None, 20, 2, Track.Combined, 22, None)
-        val coord = transform.addressToCoords(address.road, address.roadPart, address.track, address.mValue)
+      val address = RoadAddress(None, 20, 2, Track.Combined, 22, None)
+      val coord = transform.addressToCoords(address.road, address.roadPart, address.track, address.mValue)
 
-        coord.size should be(1)
-        coord.head.x should be(0.0)
-        coord.head.y should be(22.0)
+      coord.size should be(1)
+      coord.head.x should be(0.0)
+      coord.head.y should be(22.0)
     }
   }
 
@@ -126,25 +126,25 @@ class GeometryTransformSpec extends FunSuite with Matchers {
 
       sqlu"""insert into road_address(id, road_number, road_part_number, track_code, discontinuity, start_addr_m, end_addr_m, lrm_position_id,
                                      start_date, end_date, created_by, valid_from, calibration_points, floating, geometry, valid_to)
-             values (600, 100, 1, 0, 5, 0, 150, ${lrmPositionsIds(0)}, '2015-01-01', NULL, 'test', '2015-01-01', 0, '0'
+             values (600, 100, 1, 0, 5, 0, 150, ${lrmPositionsIds(0)}, to_date('15.01.01','RR.MM.DD'), NULL, 'test', to_date('15.01.01','RR.MM.DD'), 0, '0'
                     , MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(534718.983,6980666.786,0,0,534857.168,6980825.352,0,212))
                     , NULL)""".execute
 
       sqlu"""insert into road_address(id, road_number, road_part_number, track_code, discontinuity, start_addr_m, end_addr_m, lrm_position_id,
                                       start_date, end_date, created_by, valid_from, calibration_points, floating, geometry, valid_to)
-              values (601, 101, 1, 0, 5, 150, 250, ${lrmPositionsIds(1)}, '2015-01-01', NULL, 'test', '2015-01-01', 0, '0'
+              values (601, 101, 1, 0, 5, 150, 250, ${lrmPositionsIds(1)}, to_date('15.01.01','RR.MM.DD'), NULL, 'test', to_date('15.01.01','RR.MM.DD'), 0, '0'
                       , MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(534718.983,6980666.786,0,0,534857.168,6980825.352,0,212))
                       , NULL)""".execute
 
       sqlu"""insert into road_address(id, road_number, road_part_number, track_code, discontinuity, start_addr_m, end_addr_m, lrm_position_id,
                                       start_date, end_date, created_by, valid_from, calibration_points, floating, geometry, valid_to)
-             values (602, 102, 1, 0, 5, 250, 400, ${lrmPositionsIds(2)}, '2015-01-01', NULL, 'test', '2015-01-01', 0, '0'
+             values (602, 102, 1, 0, 5, 250, 400, ${lrmPositionsIds(2)}, to_date('15.01.01','RR.MM.DD'), NULL, 'test', to_date('15.01.01','RR.MM.DD'), 0, '0'
                      , MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(534718.983,6980666.786,0,0,534857.168,6980825.352,0,212))
                      , NULL)""".execute
 
       sqlu"""insert into road_address(id, road_number, road_part_number, track_code, discontinuity, start_addr_m, end_addr_m, lrm_position_id,
                                       start_date, end_date, created_by, valid_from, calibration_points, floating, geometry, valid_to)
-             values (603, 103, 1, 0, 5, 400, 550, ${lrmPositionsIds(3)}, '2015-01-01', NULL, 'test', '2015-01-01', 0, '0'
+             values (603, 103, 1, 0, 5, 400, 550, ${lrmPositionsIds(3)}, to_date('15.01.01','RR.MM.DD'), NULL, 'test', to_date('15.01.01','RR.MM.DD'), 0, '0'
                      , MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(534718.983,6980666.786,0,0,534857.168,6980825.352,0,212))
                      , NULL)""".execute
 
@@ -163,7 +163,7 @@ class GeometryTransformSpec extends FunSuite with Matchers {
 
       sqlu"""insert into road_address(id, road_number, road_part_number, track_code, discontinuity, start_addr_m, end_addr_m, lrm_position_id,
                                      start_date, end_date, created_by, valid_from, calibration_points, floating, geometry, valid_to)
-             values (600, 100, 1, 0, 5, 0, 150, ${lrmPositionsIds(0)}, '2015-01-01', NULL, 'test', '2015-01-01', 0, '0'
+             values (600, 100, 1, 0, 5, 0, 150, ${lrmPositionsIds(0)}, to_date('15.01.01','RR.MM.DD'), NULL, 'test', to_date('15.01.01','RR.MM.DD'), 0, '0'
                     , MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(534718.983,6980666.786,0,0,534857.168,6980825.352,0,212))
                     , NULL)""".execute
 
@@ -182,7 +182,7 @@ class GeometryTransformSpec extends FunSuite with Matchers {
 
       sqlu"""insert into road_address(id, road_number, road_part_number, track_code, discontinuity, start_addr_m, end_addr_m, lrm_position_id,
                                      start_date, end_date, created_by, valid_from, calibration_points, floating, geometry, valid_to)
-             values (600, 100, 1, 0, 5, 150, 500, ${lrmPositionsIds(0)}, '2015-01-01', NULL, 'test', '2015-01-01', 0, '0'
+             values (600, 100, 1, 0, 5, 150, 500, ${lrmPositionsIds(0)}, to_date('15.01.01','RR.MM.DD'), NULL, 'test', to_date('15.01.01','RR.MM.DD'), 0, '0'
                     , MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(534718.983,6980666.786,0,0,534857.168,6980825.352,0,212))
                     , NULL)""".execute
 
@@ -196,12 +196,12 @@ class GeometryTransformSpec extends FunSuite with Matchers {
   test("Resolve address and location from Viite with no matching side code "){
     runWithRollback{
       val lrmPositionsIds = Queries.fetchLrmPositionIds(1)
-     //Side Code TowardsDigitizing
+      //Side Code TowardsDigitizing
       sqlu"""insert into lrm_position(id, side_code, link_id, mml_id, start_measure, end_measure) VALUES (${lrmPositionsIds(0)}, 2, 6000, null, 100.000, 250.000)""".execute
 
       sqlu"""insert into road_address(id, road_number, road_part_number, track_code, discontinuity, start_addr_m, end_addr_m, lrm_position_id,
                                      start_date, end_date, created_by, valid_from, calibration_points, floating, geometry, valid_to)
-             values (600, 100, 1, 0, 5, 0, 150, ${lrmPositionsIds(0)}, '2015-01-01', NULL, 'test', '2015-01-01', 0, '0'
+             values (600, 100, 1, 0, 5, 0, 150, ${lrmPositionsIds(0)}, to_date('15.01.01','RR.MM.DD'), NULL, 'test', to_date('15.01.01','RR.MM.DD'), 0, '0'
                     , MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(534718.983,6980666.786,0,0,534857.168,6980825.352,0,212))
                     , NULL)""".execute
 
@@ -211,7 +211,6 @@ class GeometryTransformSpec extends FunSuite with Matchers {
     }
   }
 
-
   test("Resolve address and location from Viite with matching side code "){
     runWithRollback{
       val lrmPositionsIds = Queries.fetchLrmPositionIds(1)
@@ -220,7 +219,7 @@ class GeometryTransformSpec extends FunSuite with Matchers {
 
       sqlu"""insert into road_address(id, road_number, road_part_number, track_code, discontinuity, start_addr_m, end_addr_m, lrm_position_id,
                                      start_date, end_date, created_by, valid_from, calibration_points, floating, geometry, valid_to)
-             values (600, 100, 1, 0, 5, 0, 150, ${lrmPositionsIds(0)}, '2015-01-01', NULL, 'test', '2015-01-01', 0, '0'
+             values (600, 100, 1, 0, 5, 0, 150, ${lrmPositionsIds(0)}, to_date('15.01.01','RR.MM.DD'), NULL, 'test', to_date('15.01.01','RR.MM.DD'), 0, '0'
                     , MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(534718.983,6980666.786,0,0,534857.168,6980825.352,0,212))
                     , NULL)""".execute
 
