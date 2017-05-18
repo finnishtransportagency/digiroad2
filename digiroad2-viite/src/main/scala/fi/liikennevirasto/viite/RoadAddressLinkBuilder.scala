@@ -13,26 +13,15 @@ import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, DateTimeZone}
 
-/**
-  * Created by venholat on 21.4.2017.
-  */
 object RoadAddressLinkBuilder {
   val RoadNumber = "ROADNUMBER"
   val RoadPartNumber = "ROADPARTNUMBER"
   val ComplementarySubType = 3
   val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
-  val MaxAllowedMValueError = 0.001
-  val Epsilon = 1E-6
-  /* Smallest mvalue difference we can tolerate to be "equal to zero". One micrometer.
-                                See https://en.wikipedia.org/wiki/Floating_point#Accuracy_problems
-                             */
-  val MaxDistanceDiffAllowed = 1.0
   /*Temporary restriction from PO: Filler limit on modifications
                                             (LRM adjustments) is limited to 1 meter. If there is a need to fill /
                                             cut more than that then nothing is done to the road address LRM data.
                                             */
-  val MinAllowedRoadAddressLength = 0.1
-
   lazy val municipalityMapping = OracleDatabase.withDynSession {
     MunicipalityDAO.getMunicipalityMapping
   }
@@ -142,34 +131,40 @@ object RoadAddressLinkBuilder {
     passThroughSegments
   }
 
-  def adjustRoadAddressTopology(expectedTargetsNumber: Int, startCp: Option[CalibrationPoint], endCp: Option[CalibrationPoint], maxEndMValue: Double, minStartMAddress: Long, maxEndMAddress: Long, source: RoadAddressLink, currentTarget: RoadAddressLink, roadAddresses: Seq[RoadAddressLink], username: String): Seq[RoadAddressLink] = {
-    val tempId = -1000
+  def adjustRoadAddressTopology(expectedTargetsNumber: Int, startCp: Option[CalibrationPoint], endCp: Option[CalibrationPoint],
+                                maxEndMValue: Double, minStartMAddress: Long, maxEndMAddress: Long, source: RoadAddressLink,
+                                currentTarget: RoadAddressLink, roadAddresses: Seq[RoadAddressLink], username: String): Seq[RoadAddressLink] = {
+    val tempId = fi.liikennevirasto.viite.NewRoadAddress
     val sorted = roadAddresses.sortBy(_.endAddressM)(Ordering[Long].reverse)
     val previousTarget = sorted.head
-    val startAddressM = roadAddresses.filterNot(_.id == 0).size match {
-      case 0 => minStartMAddress
-      case _ => previousTarget.endAddressM
-    }
-    //Uppercase variable due to scala lexical rule disambiguation. If lowercase, it will be taken as pattern variable
-    val LastTarget = expectedTargetsNumber-1
+    val startAddressM = if (roadAddresses.exists(_.id != 0))
+      previousTarget.endAddressM
+    else
+      minStartMAddress
 
-    val endAddressM = roadAddresses.filterNot(_.id == 0).size match {
-      case LastTarget => maxEndMAddress
-      case _ => startAddressM + GeometryUtils.geometryLength(currentTarget.geometry).toLong
-    }
+    val endAddressM = if (roadAddresses.count(_.id != 0) == expectedTargetsNumber-1)
+      maxEndMAddress
+    else
+      startAddressM + GeometryUtils.geometryLength(currentTarget.geometry).toLong
 
-    val calibrationPointS = roadAddresses.filterNot(_.id == 0).size match {
-      case 0 => startCp
-      case _ => None
-    }
-    val calibrationPointE = roadAddresses.filterNot(_.id == 0).size match {
-      case LastTarget => endCp
-      case _ => None
-    }
 
-    val newRoadAddress = Seq(RoadAddressLink(tempId, currentTarget.linkId, currentTarget.geometry, GeometryUtils.geometryLength(currentTarget.geometry), source.administrativeClass, source.linkType, NormalRoadLinkType, source.constructionType, source.roadLinkSource,
-      source.roadType, source.modifiedAt, Option(username), currentTarget.attributes, source.roadNumber, source.roadPartNumber, source.trackCode, source.elyCode, source.discontinuity,
-      startAddressM, endAddressM, source.startDate, source.endDate, currentTarget.startMValue, GeometryUtils.geometryLength(currentTarget.geometry), source.sideCode, calibrationPointS, calibrationPointE, Anomaly.None, 0))
+    val calibrationPointS = if (roadAddresses.count(_.id != 0) == 0)
+      startCp.map(_.copy(linkId = currentTarget.linkId, segmentMValue = 0.0))
+    else
+      None
+
+    val calibrationPointE = if (roadAddresses.count(_.id != 0) == expectedTargetsNumber - 1)
+      endCp.map(_.copy(linkId = currentTarget.linkId, segmentMValue = currentTarget.length))
+    else
+      None
+
+
+    val newRoadAddress = Seq(RoadAddressLink(tempId, currentTarget.linkId, currentTarget.geometry,
+      GeometryUtils.geometryLength(currentTarget.geometry), source.administrativeClass, source.linkType, NormalRoadLinkType,
+      source.constructionType, source.roadLinkSource, source.roadType, source.modifiedAt, Option(username),
+      currentTarget.attributes, source.roadNumber, source.roadPartNumber, source.trackCode, source.elyCode, source.discontinuity,
+      startAddressM, endAddressM, source.startDate, source.endDate, currentTarget.startMValue,
+      GeometryUtils.geometryLength(currentTarget.geometry), source.sideCode, calibrationPointS, calibrationPointE, Anomaly.None, 0))
     roadAddresses++newRoadAddress
   }
 
@@ -258,7 +253,7 @@ object RoadAddressLinkBuilder {
       getValue(cpPrevious._1.orElse(cpNext._1), cpNext._2.orElse(cpPrevious._2)).getOrElse(op(leftMValue,rightMValue))
     }
 
-    val tempId = -1000
+    val tempId = fi.liikennevirasto.viite.NewRoadAddress
 
     if(nextSegment.roadNumber     == previousSegment.roadNumber &&
       nextSegment.roadPartNumber  == previousSegment.roadPartNumber &&
@@ -278,7 +273,8 @@ object RoadAddressLinkBuilder {
       val calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = {
         val left = Seq(cpNext._1, cpPrevious._1).flatten.sortBy(_.segmentMValue).headOption
         val right = Seq(cpNext._2, cpPrevious._2).flatten.sortBy(_.segmentMValue).lastOption
-        (left.map(_.copy(segmentMValue = startMValue)), right.map(_.copy(segmentMValue = endMValue)))
+        (left.map(_.copy(segmentMValue = if (nextSegment.sideCode == SideCode.AgainstDigitizing) endMValue else startMValue)),
+          right.map(_.copy(segmentMValue = if (nextSegment.sideCode == SideCode.AgainstDigitizing) startMValue else endMValue)))
       }
 
       if(nextSegment.sideCode.value != previousSegment.sideCode.value)

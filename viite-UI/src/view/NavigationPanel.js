@@ -2,9 +2,9 @@
   root.NavigationPanel = {
     initialize: initialize
   };
+  var navigationPanel = $('<div class="navigation-panel"></div>');
 
   function initialize(container, searchBox, openProjectsBox, assetControlGroups) {
-    var navigationPanel = $('<div class="navigation-panel"></div>');
 
     navigationPanel.append(searchBox.element);
     navigationPanel.append(openProjectsBox.element);
@@ -39,6 +39,11 @@
       openProjectsBox.button.on('click', function(){
         openProjectsBox.toggle();
       });
+    }
+
+    eventbus.on('layer:enableButtons', enableButtons);
+    function enableButtons(value) {
+      navigationPanel.find(':button, :input').prop('disabled', !value);
     }
 
   }

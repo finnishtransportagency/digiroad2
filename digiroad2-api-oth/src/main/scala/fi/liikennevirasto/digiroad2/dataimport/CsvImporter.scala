@@ -54,7 +54,6 @@ trait CsvImporter {
   private val textFieldMappings = Map(
     "Pysäkin nimi" -> "nimi_suomeksi" ,
     "Ylläpitäjän tunnus" -> "yllapitajan_tunnus",
-    "LiVi-tunnus" -> "yllapitajan_koodi",
     "Matkustajatunnus" -> "matkustajatunnus",
     "Pysäkin nimi ruotsiksi" -> "nimi_ruotsiksi",
     "Liikennöintisuunta" -> "liikennointisuunta",
@@ -74,6 +73,8 @@ trait CsvImporter {
     "Sähköinen aikataulunäyttö" -> "sahkoinen_aikataulunaytto",
     "Valaistus" -> "valaistus",
     "Saattomahdollisuus henkilöautolla" -> "saattomahdollisuus_henkiloautolla",
+    "Korotettu" -> "korotettu",
+    "Roska-astia" -> "roska_astia",
     "Tietojen ylläpitäjä" -> stopAdministratorProperty
   )
 

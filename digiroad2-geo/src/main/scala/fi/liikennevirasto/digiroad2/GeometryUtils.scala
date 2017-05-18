@@ -222,6 +222,13 @@ object GeometryUtils {
     }
   }
 
+  def overlapAmount(segment1: (Double, Double), segment2: (Double, Double)): Double = {
+    val overlapping = overlap(segment1, segment2).getOrElse((0.0, 0.0))
+    val seg1len = Math.abs(segment1._1 - segment1._2)
+    val seg2len = Math.abs(segment2._1 - segment2._2)
+    Math.abs(overlapping._1 - overlapping._2) / Math.min(seg1len, seg2len)
+  }
+
   def isDirectionChangeProjection(projection: Projection): Boolean = {
     ((projection.oldEnd - projection.oldStart)*(projection.newEnd - projection.newStart)) < 0
   }

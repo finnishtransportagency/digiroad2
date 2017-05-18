@@ -36,6 +36,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
         if(!feature.getProperties().data || !feature.getProperties().data.nationalId)
           return;
 
+        feature.getProperties().massTransitStop.getMarkerSelectionStyles();
         selectedMassTransitStopModel.change(feature.getProperties().data);
         movementPermissionConfirmed = false;
       });
@@ -385,6 +386,8 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   var handleAssetFetched = function(backendAsset) {
     deselectAsset(selectedAsset);
     selectedAsset = massTransitStopsCollection.getAsset(backendAsset.id);
+    selectedAsset.massTransitStop.getMarkerSelectionStyles();
+    selectControl.addSelectionFeatures([selectedAsset.massTransitStop.getMarker().feature], false, false);
   };
 
   var ownedByELY = function () {

@@ -65,7 +65,6 @@ object PointAssetFiller {
     }
   }
 
-
   def correctedPersistedAsset(asset: PersistedPointAsset, roadLinks: Seq[RoadLink], changeInfos: Seq[ChangeInfo]): Option[AssetAdjustment] = {
     val pointAssetLastChanges = changeInfos.
       filterNot(changeInfo => changeInfo.newId.isEmpty || changeInfo.oldId.isEmpty).
@@ -87,9 +86,21 @@ object PointAssetFiller {
           case ChangeType.ShortenedCommonPart | ChangeType.ShortenedRemovedPart => //Geometry Shortened
             correctShortened(asset, roadLinks, changeInfo, adjustment)
 
+          case ChangeType.ReplacedCommonPart =>
+            correctValuesAndGeometry(asset, roadLinks, changeInfo, adjustment)
+
           case _ => adjustment
         }
     }
+  }
+
+  def snapPersistedAssetToRoadLink(asset: PersistedPointAsset, roadLink: RoadLink): Option[AssetAdjustment] = {
+    // Adjust for geometry, "snap to road link": First find the closest point on road link (as mValue), then update
+    // point reference
+    val point = Point(asset.lon, asset.lat)
+    val lrm = GeometryUtils.calculateLinearReferenceFromPoint(point, roadLink.geometry)
+    correctGeometry(asset.id, roadLink, lrm, roadLink.attributes.getOrElse("LAST_EDITED_DATE",
+      roadLink.attributes.getOrElse("CREATED_DATE", BigInt(0))).asInstanceOf[BigInt].longValue())
   }
 
   private def correctValuesAndGeometry(asset: PersistedPointAsset, roadLinks: Seq[RoadLink], changeInfo: ChangeInfo, adjustmentOption: Option[AssetAdjustment]) = {

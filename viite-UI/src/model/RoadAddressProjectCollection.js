@@ -1,7 +1,6 @@
 (function(root) {
   root.RoadAddressProjectCollection = function(backend) {
     var roadAddressProjects = [];
-    var roadAddressProjects2 = [{name: 'proj1', state: 1}, {name: 'projeto2', state: 1}];
     var currentRoadSegmentList = [];
     var dirtyRoadSegmentLst = [];
     var projectinfo;
@@ -27,12 +26,17 @@
       roadAddressProjects = [];
       dirtyRoadSegmentLst = [];
       currentRoadSegmentList = [];
+      projectinfo=undefined;
+      backend.abortLoadingProject();
     };
 
-    this.createProject = function (data, currentProject) {
+    this.saveProject = function (data, currentProject) {
       var projectid = 0;
       if (projectinfo !== undefined) {
         projectid = projectinfo.id;
+      } else if (currentProject!==undefined && currentProject.id!==undefined)
+      {
+        projectid=currentProject.id;
       }
       var dataJson = {
         id: projectid,
@@ -40,11 +44,40 @@
         name: data[0].value,
         startDate: data[1].value,
         additionalInfo: data[2].value,
-        roadpartlist: dirtyRoadSegmentLst
+        roadPartList: dirtyRoadSegmentLst
+      };
+
+      backend.saveRoadAddressProject(dataJson, function (result) {
+        if (result.success === "ok") {
+          projectinfo = {
+            id: result.project.id,
+            additionalInfo: result.project.additionalInfo,
+            status: result.project.status,
+            startDate: result.project.startDate
+          };
+          eventbus.trigger('roadAddress:projectSaved', result);
+          dirtyRoadSegmentLst = [];
+        }
+        else {
+          eventbus.trigger('roadAddress:projectValidationFailed', result);
+        }
+      }, function () {
+        eventbus.trigger('roadAddress:projectFailed');
+      });
+    };
+
+    this.createProject = function (data, currentProject) {
+
+      var dataJson = {
+        id: 0,
+        status: 1,
+        name: data[0].value,
+        startDate: data[1].value,
+        additionalInfo: data[2].value,
+        roadPartList: dirtyRoadSegmentLst
       };
 
       backend.createRoadAddressProject(dataJson, function (result) {
-        console.log(result.success);
         if (result.success === "ok") {
           projectinfo = {
             id: result.project.id,
@@ -67,8 +100,8 @@
       return '<label class="control-label-small">' + label + '</label>';
     };
 
-    var updateforminfo = function (formInfo) {
-      $("#roadpartList").html(formInfo);
+    var updateFormInfo = function (formInfo) {
+      $("#roadpartList").append($("#roadpartList").html(formInfo));
     };
 
     var parseroadpartinfoToresultRow = function () {
@@ -110,6 +143,11 @@
     }
 
 
+      eventbus.on('clearproject', function() {
+        this.clearRoadAddressProjects();
+    });
+
+
     this.checkIfReserved = function (data) {
       return backend.checkIfRoadpartReserved(data[3].value === '' ? 0 : parseInt(data[3].value), data[4].value === '' ? 0 : parseInt(data[4].value), data[5].value === '' ? 0 : parseInt(data[5].value))
         .then(function (validationResult) {
@@ -117,7 +155,8 @@
             eventbus.trigger('roadAddress:projectValidationFailed', validationResult);
           } else {
             addToCurrentRoadPartList(validationResult);
-            updateforminfo(parseroadpartinfoToresultRow());
+            updateFormInfo(parseroadpartinfoToresultRow());
+            eventbus.trigger('roadAddress:projectValidationSucceed');
           }
         });
     };

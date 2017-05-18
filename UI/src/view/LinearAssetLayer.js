@@ -36,7 +36,7 @@ window.LinearAssetLayer = function(params) {
 
     var remove = function () {
       selectToolControl.removeFeatures(function(feature) {
-          return feature.getProperties().type === 'cutter';
+          return feature && feature.getProperties().type === 'cutter';
       });
       scissorFeatures = [];
     };

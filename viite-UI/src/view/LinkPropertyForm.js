@@ -213,7 +213,7 @@
     var afterCalculationTemplate ='' +
       '<div class="form-group" id="afterCalculationInfo">' +
       ' <br><br><p><span style="margin-top:6px; color:#ffffff; padding-top:6px; padding-bottom:6px; line-height:15px;">TARKISTA TEKEMÄSI MUUTOKSET KARTTANÄKYMÄSTÄ.</span></p>' +
-      ' <p><span style="margin-top:6px; color:#ffffff; padding-top:6px; padding-bottom:6px; line-height:15px;">JOS TEKEMÄSI MUUTOKSET OVAT OK, PAINA TALLENA</span></p>' +
+      ' <p><span style="margin-top:6px; color:#ffffff; padding-top:6px; padding-bottom:6px; line-height:15px;">JOS TEKEMÄSI MUUTOKSET OVAT OK, PAINA TALLENNA</span></p>' +
       ' <p><span style="margin-top:6px; color:#ffffff; padding-top:6px; padding-bottom:6px; line-height:15px;">JOS HALUAT KORJATA TEKEMÄSI MUUTOKSIA, PAINA PERUUTA</span></p>' +
       '</div>';
 
@@ -242,22 +242,22 @@
       '<div class="link-properties form-controls">' +
       '<button class="continue ready btn btn-continue" disabled>Valinta valmis</button>'  +
       '<button class="calculate btn btn-move" disabled>Siirrä</button>' +
-      '<button class="save btn btn-tallena" disabled>Tallenna</button>' +
-      '<button class="cancel btn btn-perruta" disabled>Peruuta</button>' +
+      '<button class="save btn btn-save" disabled>Tallenna</button>' +
+      '<button class="cancel btn btn-cancel" disabled>Peruuta</button>' +
       '</div>';
 
     var buttons =
       '<div class="link-properties form-controls">' +
-      '<button class="save btn btn-tallena" disabled>Tallenna</button>' +
-      '<button class="cancel btn btn-perruta" disabled>Peruuta</button>' +
+      '<button class="save btn btn-save" disabled>Tallenna</button>' +
+      '<button class="cancel btn btn-cancel" disabled>Peruuta</button>' +
       '</div>';
 
     var notificationFloatingTransfer = function(displayNotification) {
       if(displayNotification)
         return '' +
-            '<div class="form-group form-notification">' +
-            '<p>Tien geometria on muuttunut. Korjaa tieosoitesegmentin sijainti vastaamaan nykyistä geometriaa.</p>' +
-            '</div>';
+          '<div class="form-group form-notification">' +
+          '<p>Tien geometria on muuttunut. Korjaa tieosoitesegmentin sijainti vastaamaan nykyistä geometriaa.</p>' +
+          '</div>';
       else
         return '';
     };
@@ -529,8 +529,8 @@
           });
 
         var fullTemplate = applicationModel.getCurrentAction() === applicationModel.actionCalculated ? afterCalculationTemplate : !_.isEmpty(floatingAdjacents) ? _.map(floatingAdjacents, function(fa){
-              return additionalSource(fa.linkId, fa.marker);
-            })[0] + adjacentsTemplate : adjacentsTemplate;
+          return additionalSource(fa.linkId, fa.marker);
+        })[0] + adjacentsTemplate : adjacentsTemplate;
 
         if(!_.isUndefined(additionalSourceLinkId)){
           return $(".form-group[id^='VALITUTLINKIT']:last").append('<div style="display:inline-flex;justify-content:center;align-items:center;">' +
@@ -577,11 +577,8 @@
       });
       eventbus.on('application:readOnly', toggleMode);
       rootElement.on('click', '.link-properties button.save', function() {
-        if(applicationModel.getCurrentAction() === applicationModel.actionCalculated)
-        {
+        if(applicationModel.getCurrentAction() === applicationModel.actionCalculated){
           selectedLinkProperty.saveTransfer();
-        } else {
-          selectedLinkProperty.save();
         }
       });
       rootElement.on('click', '.link-properties button.cancel', function() {
@@ -590,6 +587,7 @@
           action = applicationModel.actionCalculating;
         applicationModel.setCurrentAction(action);
         eventbus.trigger('linkProperties:activateAllSelections');
+        eventbus.trigger('roadLinks:refreshView');
         if('all' === applicationModel.getSelectionType() || 'floating' === applicationModel.getSelectionType()){
           selectedLinkProperty.clearAndReset(false);
           applicationModel.toggleSelectionTypeAll();
@@ -611,6 +609,7 @@
           rootElement.find('.link-properties button.continue').attr('disabled', true);
           applicationModel.toggleSelectionTypeUnknown();
           applicationModel.setContinueButton(false);
+          eventbus.trigger('linkProperties:deselectFeaturesSelected');
           eventbus.trigger('linkProperties:highlightAnomalousByFloating');
           eventbus.trigger('linkProperties:activateInteractions');
           eventbus.trigger('linkProperties:deactivateDoubleClick');
@@ -644,6 +643,7 @@
           rootElement.find('.link-properties button.continue').attr('disabled', false);
         }
         applicationModel.setActiveButtons(true);
+        eventbus.trigger('layer:enableButtons', false);
       });
 
       eventbus.on('adjacents:floatingAdded', function(floatingRoads){
@@ -658,6 +658,20 @@
       });
       eventbus.on('linkProperties:additionalFloatingSelected',function(data){
         processAditionalFloatings(data.selectedFloatings, data.selectedLinkId);
+      });
+
+      eventbus.on('linkProperties:transferFailed',function(errorCode){
+        if (errorCode == 400){
+          return new ModalConfirm("Valittujen lähdelinkkien geometriaa ei saatu sovitettua kohdegeometrialle. Ota yhteyttä järjestelmätukeen.");
+        } else if (errorCode == 401){
+          return new ModalConfirm("Sinulla ei ole käyttöoikeutta muutoksen tekemiseen.");
+        } else if (errorCode == 412){
+          return new ModalConfirm("Täyttämättömien vaatimusten takia siirtoa ei saatu tehtyä. Ota yhteyttä järjestelmätukeen.");
+        } else if (errorCode == 500){
+          return new ModalConfirm("Siirto ei onnistunut taustajärjestelmässä tapahtuneen virheen takia, ota yhteyttä järjestelmätukeen.");
+        } else {
+          return new ModalConfirm("Siirto ei onnistunut taustajärjestelmässä tapahtuneen tuntemattoman virheen takia, ota yhteyttä järjestelmätukeen.");
+        }
       });
     };
     bindEvents();

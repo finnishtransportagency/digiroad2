@@ -1,5 +1,5 @@
 (function(root) {
-  root.RoadLayer3 = function(map, roadCollection,styler) {
+  root.RoadLayer3 = function(map, roadCollection,styler, selectedLinkProperty) {
     var vectorLayer;
     var layerMinContentZoomLevels = {};
     var currentZoom = 0;
@@ -29,7 +29,7 @@
 
     var loadFeatures = function (features) {
       vectorSource.clear(true);
-      vectorSource.addFeatures(features);
+      vectorSource.addFeatures(selectedLinkProperty.filterFeaturesAfterSimulation(features));
     };
 
     var minimumContentZoomLevel = function() {
@@ -46,15 +46,16 @@
     };
 
     var mapMovedHandler = function(mapState) {
-      console.log("map moved");
-      console.log("zoom = " + mapState.zoom);
       if (mapState.zoom !== currentZoom) {
         currentZoom = mapState.zoom;
+      }
+      if (mapState.zoom < minimumContentZoomLevel()) {
         vectorSource.clear();
         eventbus.trigger('map:clearLayers');
+      } else {
+        roadCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1);
+        handleRoadsVisibility();
       }
-      roadCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom+1);
-      handleRoadsVisibility();
     };
 
 
