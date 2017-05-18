@@ -39,9 +39,9 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers{
       message.reason should startWith ("Created")
     }
 
+
     test("TR-project-status") {
       val response = ViiteTierekisteriClient.getProjectStatus("8900")
-      ""
     }
 
 

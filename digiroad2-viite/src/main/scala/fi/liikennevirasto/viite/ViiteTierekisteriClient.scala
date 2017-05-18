@@ -8,10 +8,12 @@ import org.apache.http.entity.{ContentType, StringEntity}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.json4s.jackson.Serialization
 import org.json4s.{DefaultFormats, StreamInput}
+import org.json4s.Formats
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.format.DateTimeFormatter
 import org.json4s.jackson.JsonMethods.parse
 case class changepPoject(id:Long, name:String, user:String, ely:Long, change_date:String, change_info:Seq[changeInfoitem])
+case class trPojectStatus(id:Option[Long],id_tr_projekti:Option[Long],projekti:Option[Long],tunnus:Option[Long],status:Option[String],name:Option[String],change_date:Option[String],ely:Option[Int],muutospvm:Option[String],user:Option[String],published_date:Option[String],job_number:Option[Long],error_message:Option[String],start_time:Option[String],end_time:Option[String],error_code:Option[Int])
 case class changeInfoitem(changetype :Int, continuity:Int, road_type:Int, source:changeInfoRoadParts,target:changeInfoRoadParts)
 case class changeInfoRoadParts(tie :Option[Long], ajr:Option[Long], aosa:Option[Long],aet:Option[Double],losa:Option[Long], let:Option[Double])  //roadnumber,track,roadparts beggining, start_part_M,roadpart_end, end_part_M
 case class ProjectChangeStatus(projectId: Long, status: Int, reason: String)
@@ -95,19 +97,37 @@ object ViiteTierekisteriClient {
     val request = new HttpPost(getRestEndPoint+"addresschange/")
     request.addHeader("X-OTH-Authorization", "Basic " + auth.getAuthInBase64)
     request.setEntity(createJsonmessage(trProject))
-    // request.setEntity(createJsonmessage(changepPoject(8912, "Testproject", "TestUser", 3, "2017-06-01", Seq {changeInfoitem(2, 1, 1, changeInfoRoadParts(None, None, None, None, None, None), changeInfoRoadParts(Option(403), Option(0), Option(8), Option(0), Option(8), Option(1001)))})))
     val response = client.execute(request)
     val statusCode = response.getStatusLine.getStatusCode
     val reason = response.getStatusLine.getReasonPhrase
     ProjectChangeStatus(trProject.id, statusCode, reason)
   }
 
-  def getProjectStatus(projectid:String): String =
+  def getProjectStatus(projectid:String): Map[String,Any] =
   {
+    implicit val formats = DefaultFormats
     val request = new HttpGet(getRestEndPoint+"addresschange/"+projectid)
     request.addHeader("X-OTH-Authorization", "Basic " + auth.getAuthInBase64)
     val response = client.execute(request)
-    val testdata=parse(StreamInput(response.getEntity.getContent))
-    response.toString
+    val receivedData=parse(StreamInput(response.getEntity.getContent)).extract[trPojectStatus]
+    Map(
+      "id"->receivedData.id,
+      "id_tr_projekti"-> receivedData.id_tr_projekti.getOrElse("null"),
+      "projekti"-> receivedData.projekti.getOrElse("null"),
+      "tunnus"->receivedData.tunnus.getOrElse("null"),
+      "status"->receivedData.status.getOrElse("null"),
+      "name"-> receivedData.name.getOrElse("null"),
+      "change_date"->receivedData.change_date.getOrElse("null"),
+      "ely"->receivedData.ely.getOrElse("null"),
+      "muutospvm"->receivedData.muutospvm.getOrElse("null"),
+      "user"->receivedData.user.getOrElse("null"),
+      "published_date"->receivedData.published_date.getOrElse("null"),
+      "job_number"->receivedData.job_number.getOrElse("null"),
+      "error_message"->receivedData.error_message.getOrElse("null"),
+      "start_time"->receivedData.start_time.getOrElse("null"),
+      "end_time"->receivedData.end_time.getOrElse("null"),
+      "error_code"->receivedData.error_code.getOrElse("null")
+    )
+
   }
 }
