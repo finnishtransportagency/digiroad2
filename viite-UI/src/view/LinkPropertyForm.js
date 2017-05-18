@@ -673,6 +673,12 @@
           return new ModalConfirm("Siirto ei onnistunut taustajärjestelmässä tapahtuneen tuntemattoman virheen takia, ota yhteyttä järjestelmätukeen.");
         }
       });
+
+      eventbus.on('layer:selected', function(layer) {
+        if(layer !== 'linkProperty') {
+          $('.wrapper').remove();
+        }
+      });
     };
     bindEvents();
   };

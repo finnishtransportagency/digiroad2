@@ -208,6 +208,12 @@
         rootElement.find('.btn-save').prop("disabled", false);
       });
 
+      eventbus.on('layer:selected', function(layer) {
+        if(layer !== 'roadAddressProject') {
+          $('.wrapper').remove();
+        }
+      });
+
       rootElement.on('click', '.project-form button.save', function() {
         var data = $('#roadAddressProject').get(0);
         applicationModel.addSpinner();
