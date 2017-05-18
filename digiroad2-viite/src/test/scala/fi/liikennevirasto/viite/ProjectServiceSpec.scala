@@ -11,6 +11,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao._
+import fi.liikennevirasto.viite.process.ProjectDeltaCalculator
 import org.joda.time.DateTime
 import org.mockito.Mockito.when
 import org.scalatest.{FunSuite, Matchers}
@@ -137,4 +138,32 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       unk.exists(_.attributes.getOrElse("ROADPARTNUMBER", "0").toString == "203") should be (true)
     }
   }
+
+  test("Calculate delta for project") {
+    var count = 0
+    val roadlink = RoadLink(5170939L,Seq(Point(535605.272,6982204.22,85.90899999999965))
+      ,540.3960283713503,State,99,TrafficDirection.AgainstDigitizing,UnknownLinkType,Some("25.06.2015 03:00:00"), Some("vvh_modified"),Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
+      InUse,NormalLinkInterface)
+    when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(5170939L))).thenReturn(Seq(roadlink))
+    runWithRollback {
+      val countCurrentProjects = projectService.getRoadAddressAllProjects()
+      val addresses = List(ReservedRoadPart(0L, 5L, 205L, 5.0, Discontinuity.apply("jatkuva"), 8:Long))
+      val roadAddressProject = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List())
+      val saved = projectService.createRoadLinkProject(roadAddressProject)._1
+      val changed = saved.copy(reservedParts = addresses)
+      projectService.saveRoadLinkProject(changed)
+      val countAfterInsertProjects = projectService.getRoadAddressAllProjects()
+      count = countCurrentProjects.size + 1
+      countAfterInsertProjects.size should be (count)
+      sqlu"""UPDATE Project_link set status = 1""".execute
+      val terminations = ProjectDeltaCalculator.delta(saved.id).terminations
+      val sections = ProjectDeltaCalculator.partition(terminations)
+      sections should have size (2)
+      sections.exists(_.track == Track.LeftSide) should be (true)
+      sections.exists(_.track == Track.RightSide) should be (true)
+      sections.groupBy(_.endMAddr).keySet.size should be (1)
+    }
+    runWithRollback { projectService.getRoadAddressAllProjects() } should have size (count - 1)
+  }
+
 }
