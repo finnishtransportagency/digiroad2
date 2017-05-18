@@ -4,6 +4,7 @@
         var layerMinContentZoomLevels = {};
         var currentZoom = 0;
         var project;
+        var styler = new Styler();
 
         var vectorSource = new ol.source.Vector({
             loader: function(extent, resolution, projection) {
@@ -22,28 +23,32 @@
             strategy: ol.loadingstrategy.bbox
         });
 
-      //Work in progress - add style for all roads on the layer that are not part of the project
       var styleFunction = function (feature, resolution){
 
-        var borderWidth = 3;
-        var strokeWidth = Styler.strokeWidthByZoomLevel(resolution, feature.roadLinkData.roadLinkType, feature.roadLinkData.anomaly, feature.roadLinkData.roadLinkSource, false, feature.roadLinkData.constructionType);
-        var lineColor = 'rgba(247, 254, 46, 0.45)';
-        var borderCap = 'round';
+        if(feature.projectLinkData.status === 0) {
+          var borderWidth = 3;
+          var strokeWidth = styler.strokeWidthByZoomLevel(resolution, feature.projectLinkData.roadLinkType, feature.projectLinkData.anomaly, feature.projectLinkData.roadLinkSource, false, feature.projectLinkData.constructionType);
+          var lineColor = 'rgba(247, 254, 46, 0.45)';
+          var borderCap = 'round';
 
-        var line = new ol.style.Stroke({
-          width: strokeWidth + borderWidth,
-          color: lineColor,
-          lineCap: borderCap
-        });
+          var line = new ol.style.Stroke({
+            width: strokeWidth + borderWidth,
+            color: lineColor,
+            lineCap: borderCap
+          });
 
-        //Declaration of the Line Styles
-        var lineStyle = new ol.style.Style({
-          stroke: line
-        });
+          //Declaration of the Line Styles
+          var lineStyle = new ol.style.Style({
+            stroke: line
+          });
 
-        var zIndex = Styler.determineZIndex(feature.roadLinkData.roadLinkType, feature.roadLinkData.anomaly, feature.roadLinkData.roadLinkSource);
-        lineStyle.setZIndex(zIndex+2);
-        return [lineStyle];
+          var zIndex = styler.determineZIndex(feature.projectLinkData.roadLinkType, feature.projectLinkData.anomaly, feature.projectLinkData.roadLinkSource);
+          lineStyle.setZIndex(zIndex + 2);
+          return [lineStyle];
+        }
+        else{
+          return styler.generateStyleByFeature(feature.projectLinkData, resolution);
+        }
       };
 
         vectorLayer = new ol.layer.Vector({
@@ -78,6 +83,21 @@
             vectorLayer.changed();
           });
             projectCollection.getProjectsWithLinksById(projId);
+        });
+
+        eventbus.on('roadAddressProject:fetched', function(newRoads){
+          var simulatedOL3Features = [];
+          _.map(newRoads, function(road){
+            var points = _.map(road[0].getData().points, function(point) {
+              return [point.x, point.y];
+            });
+            var feature =  new ol.Feature({ geometry: new ol.geom.LineString(points)
+            });
+            feature.projectLinkData = road[0].getData();
+            simulatedOL3Features.push(feature);
+          });
+          vectorLayer.getSource().addFeatures(simulatedOL3Features);
+          vectorLayer.changed();
         });
 
         vectorLayer.setVisible(true);

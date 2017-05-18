@@ -260,7 +260,8 @@
 
     return {
       generateStyleByFeature: generateStyleByFeature,
-      strokeWidthByZoomLevel: strokeWidthByZoomLevel
+      strokeWidthByZoomLevel: strokeWidthByZoomLevel,
+      determineZIndex: determineZIndex
     };
   };
 })(this);

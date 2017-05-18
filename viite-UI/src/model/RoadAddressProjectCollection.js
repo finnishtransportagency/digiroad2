@@ -28,6 +28,7 @@
               return new ProjectLinkModel(projectLink);
             });
           });
+          eventbus.trigger('roadAddressProject:fetched', fetchedProjectLinks);
         });
     };
 
