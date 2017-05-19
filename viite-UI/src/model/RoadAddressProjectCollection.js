@@ -19,11 +19,10 @@
     };
 
     this.getByLinkId = function (ids) {
-      console.log('getByLinkId');
-      var projectLinks = _.filter(projectLinks(), function (projectLink){
+      var ProjectLinks = _.filter(_.flatten(fetchedProjectLinks), function (projectLink){
           return projectLink.getData().linkId == ids;
       });
-      return projectLinks;
+      return ProjectLinks;
     };
 
     this.fetch = function(boundingBox, zoom, projectId) {

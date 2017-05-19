@@ -77,9 +77,11 @@
 
     selectSingleClick.on('select',function(event) {
       console.log("click");
-      console.log(event);
       // TODO: 374 to take this to form
-      selectedProjectLinkProperty.open();
+      var selection = _.find(event.selected, function (selectionTarget) {
+          return !_.isUndefined(selectionTarget.projectLinkData);
+      });
+      selectedProjectLinkProperty.open(selection.projectLinkData.linkId);
     });
 
     var selectDoubleClick = new ol.interaction.Select({
@@ -102,8 +104,11 @@
 
     selectDoubleClick.on('select',function(event) {
       console.log("clickety-click");
-      console.log(event);
       // TODO: 374 to take this to form
+      var selection = _.find(event.selected, function (selectionTarget) {
+          return !_.isUndefined(selectionTarget.projectLinkData);
+      });
+      selectedProjectLinkProperty.open(selection.projectLinkData.linkId);
     });
 
     //Add defined interactions to the map.
