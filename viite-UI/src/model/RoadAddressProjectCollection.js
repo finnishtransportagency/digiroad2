@@ -18,8 +18,12 @@
       });
     };
 
-    this.getByLinkId = function () {
+    this.getByLinkId = function (ids) {
       console.log('getByLinkId');
+      var projectLinks = _.filter(projectLinks(), function (projectLink){
+          return projectLink.getData().linkId == ids;
+      });
+      return projectLinks;
     };
 
     this.fetch = function(boundingBox, zoom, projectId) {
