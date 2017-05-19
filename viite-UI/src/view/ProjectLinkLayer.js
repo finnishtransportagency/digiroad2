@@ -70,6 +70,7 @@
     selectSingleClick.on('select',function(event) {
       console.log("click");
       console.log(event);
+      // TODO: 374 to take this to form
     });
 
     var selectDoubleClick = new ol.interaction.Select({
@@ -85,6 +86,7 @@
     selectDoubleClick.on('select',function(event) {
       console.log("clickety-click");
       console.log(event);
+      // TODO: 374 to take this to form
     });
 
       //Add defined interactions to the map.
