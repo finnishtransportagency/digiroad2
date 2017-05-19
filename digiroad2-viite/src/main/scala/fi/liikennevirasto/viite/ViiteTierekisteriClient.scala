@@ -8,9 +8,7 @@ import org.apache.http.entity.{ContentType, StringEntity}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.json4s.jackson.Serialization
 import org.json4s.{DefaultFormats, StreamInput}
-import org.json4s.Formats
 import org.joda.time.format.DateTimeFormat
-import org.joda.time.format.DateTimeFormatter
 import org.json4s.jackson.JsonMethods.parse
 
 import scala.util.control.NonFatal
@@ -29,7 +27,10 @@ object ViiteTierekisteriClient {
   }
 
   private def getRestEndPoint: String = {
-    val loadedKeyString = properties.getProperty("digiroad2.tierekisteriViiteRestApiEndPoint")
+    val isTREnabled = properties.getProperty("digiroad2.tierekisteri.enabled") == "true"
+    val loadedKeyString = if(isTREnabled){
+      properties.getProperty("digiroad2.tierekisteriViiteRestApiEndPoint")
+    }  else "http://localhost:8080/trrest/"
     println("viite-endpoint = "+loadedKeyString)
     if (loadedKeyString == null)
       throw new IllegalArgumentException("Missing TierekisteriViiteRestApiEndPoint")

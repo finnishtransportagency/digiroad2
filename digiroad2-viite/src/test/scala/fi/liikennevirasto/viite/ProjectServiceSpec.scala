@@ -1,5 +1,8 @@
 package fi.liikennevirasto.viite
 
+import java.net.ConnectException
+import java.util.Properties
+
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.{State, TrafficDirection, UnknownLinkType}
@@ -7,7 +10,11 @@ import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, RoadLinkService}
-import fi.liikennevirasto.viite.dao.{Discontinuity, RoadAddressDAO, RoadAddressProject, ProjectState}
+import fi.liikennevirasto.viite.dao.{Discontinuity, ProjectState, RoadAddressDAO, RoadAddressProject}
+import org.apache.http.client.config.RequestConfig
+import org.apache.http.client.methods.HttpGet
+import org.apache.http.conn.{ConnectTimeoutException, HttpHostConnectException}
+import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import org.mockito.Mockito.when
 import org.scalatest.{FunSuite, Matchers}
@@ -34,6 +41,33 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       val t = f
       dynamicSession.rollback()
       t
+    }
+  }
+  val dr2properties: Properties = {
+    val props = new Properties()
+    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
+    props
+  }
+
+  private def testConnection: Boolean = {
+    val url = dr2properties.getProperty("digiroad2.tierekisteriViiteRestApiEndPoint")
+    val request = new HttpGet(url)
+    request.setConfig(RequestConfig.custom().setConnectTimeout(2500).build())
+    val client = HttpClientBuilder.create().build()
+    try {
+      val response = client.execute(request)
+      try {
+        response.getStatusLine.getStatusCode >= 200
+      } finally {
+        response.close()
+      }
+    } catch {
+      case e: HttpHostConnectException =>
+        false
+      case e: ConnectTimeoutException =>
+        false
+      case e: ConnectException =>
+        false
     }
   }
 
@@ -95,6 +129,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
   }
 
   test("fetch project data and send it to TR") {
+    assume(testConnection)
     runWithRollback{
       //Assuming that there is data to show
       val projectId = 0
