@@ -77,7 +77,7 @@
 
     selectSingleClick.on('select',function(event) {
       console.log("click");
-      // TODO: 374 to take this to form
+      // TODO: 374 validate selection
       var selection = _.find(event.selected, function (selectionTarget) {
           return !_.isUndefined(selectionTarget.projectLinkData);
       });
@@ -104,7 +104,7 @@
 
     selectDoubleClick.on('select',function(event) {
       console.log("clickety-click");
-      // TODO: 374 to take this to form
+      // TODO: 374 validate selection
       var selection = _.find(event.selected, function (selectionTarget) {
           return !_.isUndefined(selectionTarget.projectLinkData);
       });
