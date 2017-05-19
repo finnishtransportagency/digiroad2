@@ -143,6 +143,15 @@ object ChangeType {
   }
 }
 
+object VVHClient {
+  def createVVHTimeStamp(offsetHours: Int): Long = {
+    val oneHourInMs = 60 * 60 * 1000L
+    val utcTime = DateTime.now().minusHours(offsetHours).getMillis
+    val curr = utcTime + DateTimeZone.getDefault.getOffset(utcTime)
+    curr - (curr % (24L*oneHourInMs))
+  }
+}
+
 class VVHClient(vvhRestApiEndPoint: String) {
   class VVHClientException(response: String) extends RuntimeException(response)
   protected implicit val jsonFormats: Formats = DefaultFormats
@@ -810,10 +819,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
     * @param offsetHours Number of hours since midnight to return current day as a VVH timestamp (UNIX time in ms)
     */
   def createVVHTimeStamp(offsetHours: Int): Long = {
-    val oneHourInMs = 60 * 60 * 1000L
-    val utcTime = DateTime.now().minusHours(offsetHours).getMillis
-    val curr = utcTime + DateTimeZone.getDefault.getOffset(utcTime)
-    curr - (curr % (24L*oneHourInMs))
+    VVHClient.createVVHTimeStamp(offsetHours)
   }
 }
 
