@@ -72,8 +72,24 @@
       console.log(event);
     });
 
-      //We add the defined interaction to the map.
+    var selectDoubleClick = new ol.interaction.Select({
+      layer: vectorLayer,
+      //Limit this interaction to the singleClick
+      condition: ol.events.condition.doubleClick,
+      //The new/temporary layer needs to have a style function as well, we define it here.
+      // style: function(feature, resolution) {
+      //   return styler.generateStyleByFeature(feature.roadLinkData,map.getView().getZoom(), true);
+      // }
+    });
+
+    selectDoubleClick.on('select',function(event) {
+      console.log("clickety-click");
+      console.log(event);
+    });
+
+      //Add defined interactions to the map.
     map.addInteraction(selectSingleClick);
+    map.addInteraction(selectDoubleClick);
 
     var mapMovedHandler = function(mapState) {
       if (mapState.zoom !== currentZoom) {
