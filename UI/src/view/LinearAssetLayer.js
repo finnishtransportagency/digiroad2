@@ -161,7 +161,7 @@ window.LinearAssetLayer = function(params) {
 
   var linearAssetCutter = new LinearAssetCutter(me.eventListener, vectorLayer, collection);
 
-  var OnSelect = function(evt) {
+  var onSelect = function(evt) {
     if(evt.selected.length !== 0) {
       var feature = evt.selected[0];
       var properties = feature.getProperties();
@@ -186,9 +186,8 @@ window.LinearAssetLayer = function(params) {
 
   var selectToolControl = new SelectToolControl(application, vectorLayer, map, {
     style: function(feature){ return feature.setStyle(style.browsingStyleProvider.getStyle(feature, {zoomLevel: uiState.zoomLevel})); },
-    onDragEnd: onDragEnd,
-    onSelect: OnSelect,
-    onDrawEnd: onDrawEnd
+    onInteractionEnd: onInteractionEnd,
+    onSelect: onSelect
   });
 
   var showDialog = function (linearAssets) {
@@ -210,7 +209,7 @@ window.LinearAssetLayer = function(params) {
       });
   };
 
-  function onDragEnd(linearAssets) {
+  function onInteractionEnd(linearAssets) {
     if (selectedLinearAsset.isDirty()) {
         me.displayConfirmMessage();
     } else {
@@ -218,17 +217,6 @@ window.LinearAssetLayer = function(params) {
             selectedLinearAsset.close();
             showDialog(linearAssets);
         }
-    }
-  }
-
-  function onDrawEnd(linearAssets) {
-    if (selectedLinearAsset.isDirty()) {
-      me.displayConfirmMessage();
-    } else {
-      if (linearAssets.length > 0) {
-        selectedLinearAsset.close();
-        showDialog(linearAssets);
-      }
     }
   }
 
@@ -254,7 +242,7 @@ window.LinearAssetLayer = function(params) {
         break;
       case 'Rectangle':
         linearAssetCutter.deactivate();
-        selectToolControl.activeDragBox();
+        selectToolControl.activeRectangle();
         break;
       case 'Polygon':
         linearAssetCutter.deactivate();

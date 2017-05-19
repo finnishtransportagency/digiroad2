@@ -187,7 +187,7 @@
       selectedLinkProperty.close();
     };
 
-    var onDragEnd = function(links) {
+    var onInteractionEnd = function(links) {
         selectedLinkProperty.openMultiple(links);
 
         highlightFeatures();
@@ -215,7 +215,7 @@
           var provider = linkPropertyLayerStyles.getDatasetSpecificStyle(linkPropertiesModel.getDataset(), currentRenderIntent);
           return provider.getStyle(feature, {zoomLevel: roadLayer.getZoomLevel()});
       },
-      onDragEnd: onDragEnd,
+      onInteractionEnd: onInteractionEnd,
       onSelect: selectRoadLink
     });
 

@@ -214,12 +214,12 @@ window.SpeedLimitLayer = function(params) {
 
   var selectToolControl = new SelectToolControl(application, vectorLayer, map, {
     style: function(feature){ return style.browsingStyle.getStyle(feature, {zoomLevel: uiState.zoomLevel}); },
-    onDragEnd: onDragEnd,
+    onInteractionEnd: onInteractionEnd,
     onSelect: OnSelect,
     filterGeometry: function(feature) { return true; }
   });
 
-  function onDragEnd(speedLimits) {
+  function onInteractionEnd(speedLimits) {
     if (selectedSpeedLimit.isDirty()) {
       displayConfirmMessage();
     } else {

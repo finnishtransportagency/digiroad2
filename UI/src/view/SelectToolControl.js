@@ -5,12 +5,11 @@
         var enabled = false;
         var initialized = false;
         var isPolygonActive = false;
-        var isDragBoxActive = false;
+        var isRectangleActive = false;
 
         var settings = _.extend({
             onDragStart: function(){},
-            onDragEnd: function(){},
-            onDrawEnd: function(){},
+            onInteractionEnd: function(){},
             onSelect: function() {},
             style: function(){},
             enableSelect: function(){ return true; },
@@ -32,7 +31,7 @@
         });
 
         var drawSquare = new ol.interaction.Draw({
-            condition: function(event){ return ol.events.condition.noModifierKeys(event) || isDragBoxActive; },
+            condition: function(event){ return ol.events.condition.noModifierKeys(event) || isRectangleActive; },
             type: ('Circle'),
             style: drawStyle(),
             geometryFunction: ol.interaction.Draw.createBox()
@@ -41,7 +40,7 @@
         var selectInteraction = new ol.interaction.Select({
             layer: layer,
             condition: function(events){
-                return !isPolygonActive && !isDragBoxActive && enabled &&(ol.events.condition.doubleClick(events) || ol.events.condition.singleClick(events));
+                return !isPolygonActive && !isRectangleActive && enabled &&(ol.events.condition.doubleClick(events) || ol.events.condition.singleClick(events));
             },
             style: settings.style,
             filter : settings.filterGeometry
@@ -52,29 +51,27 @@
         dragBoxInteraction.on('boxstart', settings.onDragStart);
         dragBoxInteraction.on('boxend', function() {
             var extent = dragBoxInteraction.getGeometry().getExtent();
+            interactionEnd(extent);
+        });
+
+        function interactionEnd(extent) {
             var selectedFeatures = [];
             layer.getSource().forEachFeatureIntersectingExtent(extent, function (feature) {
                 selectedFeatures.push(feature.getProperties());
             });
-            settings.onDragEnd(selectedFeatures);
-        });
-
-        function drawEnd(evt) {
-            evt.preventDefault();
-            var polygon_extent = evt.feature.getGeometry().getExtent();
-            var selectedFeatures = [];
-            layer.getSource().forEachFeatureIntersectingExtent(polygon_extent, function (feature) {
-                selectedFeatures.push(feature.getProperties());
-            });
-            settings.onDrawEnd(selectedFeatures);
+            settings.onInteractionEnd(selectedFeatures);
         }
 
         drawSquare.on('drawend', function(evt) {
-            drawEnd(evt);
+            evt.preventDefault();
+            var extent = evt.feature.getGeometry().getExtent();
+            interactionEnd(extent);
         });
 
         drawInteraction.on('drawend', function(evt){
-            drawEnd(evt);
+            evt.preventDefault();
+            var extent = evt.feature.getGeometry().getExtent();
+            interactionEnd(extent);
         });
 
         selectInteraction.on('select',  function(evt){
@@ -125,7 +122,7 @@
         var deactivate = function() {
             enabled = false;
             isPolygonActive = false;
-            isDragBoxActive = false;
+            isRectangleActive = false;
             map.removeInteraction(drawSquare);
             map.removeInteraction(drawInteraction);
             map.unByKey(mapDoubleClickEventKey);
@@ -135,15 +132,15 @@
         var activePolygon = function(){
             activate();
             isPolygonActive = true;
-            isDragBoxActive = false;
+            isRectangleActive = false;
             map.removeInteraction(drawSquare);
             map.addInteraction(selectInteraction);
             map.addInteraction(drawInteraction);
         };
 
-        var activeDragbox = function(){
+        var activeRectangle = function(){
             activate();
-            isDragBoxActive = true;
+            isRectangleActive = true;
             isPolygonActive = false;
             map.removeInteraction(drawInteraction);
             map.addInteraction(selectInteraction);
@@ -152,7 +149,7 @@
 
         var deactivateDraw = function () {
             isPolygonActive = false;
-            isDragBoxActive = false;
+            isRectangleActive = false;
             map.removeInteraction(drawSquare);
             map.removeInteraction(drawInteraction);
         };
@@ -219,7 +216,7 @@
             activate: activate,
             deactivate: deactivate,
             activePolygon: activePolygon,
-            activeDragBox: activeDragbox,
+            activeRectangle: activeRectangle,
             clear : clear,
             removeFeatures : removeFeatures,
             deactivateDraw: deactivateDraw
