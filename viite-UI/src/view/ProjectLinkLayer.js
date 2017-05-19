@@ -1,10 +1,12 @@
 (function(root) {
-  root.ProjectLinkLayer = function(map, projectCollection, selectedProjectLinkProperty) {
+  root.ProjectLinkLayer = function(map, projectCollection, selectedProjectLinkProperty, roadLayer) {
     var layerName = 'roadAddressProject';
     var vectorLayer;
     var layerMinContentZoomLevels = {};
     var currentZoom = 0;
+    Layer.call(this, layerName, roadLayer);
     var project;
+    var me = this;
     var styler = new Styler();
 
     var vectorSource = new ol.source.Vector({
@@ -81,7 +83,8 @@
       var selection = _.find(event.selected, function (selectionTarget) {
           return !_.isUndefined(selectionTarget.projectLinkData);
       });
-      selectedProjectLinkProperty.open(selection.projectLinkData.linkId);
+      if (!_.isUndefined(selection))
+        selectedProjectLinkProperty.open(selection.projectLinkData.linkId);
     });
 
     var selectDoubleClick = new ol.interaction.Select({
@@ -150,8 +153,8 @@
     };
 
     var hideLayer = function() {
-      // this.stop(); // No such function
-      this.hide();
+      me.stop();
+      me.hide();
     };
 
     eventbus.on('roadAddressProject:openProject', function(projectSelected) {
