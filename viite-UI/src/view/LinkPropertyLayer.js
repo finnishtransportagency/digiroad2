@@ -808,6 +808,7 @@
       applicationModel.removeSpinner();
       selectedLinkProperty.setDirty(false);
       selectedLinkProperty.resetTargets();
+      applicationModel.resetCurrentAction();
       applicationModel.setActiveButtons(false);
       $('#feature-attributes').empty();
       clearLayers();
