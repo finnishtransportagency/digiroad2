@@ -281,6 +281,21 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   }
 
+  def updateProjectLinkStatus(projectId: Long, linkIds: Set[Long], linkStatus: LinkStatus, userName: String): Unit = {
+    withDynTransaction{
+      val projectLinks = ProjectDAO.getProjectLinks(projectId)
+      val changed = projectLinks.filter(pl => linkIds.contains(pl.linkId)).map(_.id).toSet
+      ProjectDAO.updateProjectLinkStatus(changed, linkStatus, userName)
+    }
+  }
+
+  def projectLinkPublishable(projectId: Long): Boolean = {
+    // TODO: add other checks after transfers etc. are enabled
+    withDynSession{
+      ProjectDAO.getProjectLinks(projectId, Some(LinkStatus.NotHandled)).isEmpty
+    }
+  }
+
   private def toProjectAddressLink(ral: RoadAddressLinkLike): ProjectAddressLink = {
     ProjectAddressLink(ral.id, ral.linkId, ral.geometry, ral.length, ral.administrativeClass, ral.linkType, ral.roadLinkType,
       ral.constructionType, ral.roadLinkSource, ral.roadType, ral.modifiedAt, ral.modifiedBy,

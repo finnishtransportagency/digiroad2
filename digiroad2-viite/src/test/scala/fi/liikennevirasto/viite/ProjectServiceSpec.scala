@@ -166,4 +166,27 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
     runWithRollback { projectService.getRoadAddressAllProjects() } should have size (count - 1)
   }
 
+  test("update project link status and check project status") {
+    var count = 0
+    val roadlink = RoadLink(5170939L,Seq(Point(535605.272,6982204.22,85.90899999999965))
+      ,540.3960283713503,State,99,TrafficDirection.AgainstDigitizing,UnknownLinkType,Some("25.06.2015 03:00:00"), Some("vvh_modified"),Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
+      InUse,NormalLinkInterface)
+    when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(5170939L))).thenReturn(Seq(roadlink))
+    runWithRollback {
+      val countCurrentProjects = projectService.getRoadAddressAllProjects()
+      val id = 0
+      val addresses = List(ReservedRoadPart(5:Long, 5:Long, 205:Long, 5:Double, Discontinuity.apply("jatkuva"), 8:Long))
+      val roadAddressProject = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", addresses)
+      val saved = projectService.createRoadLinkProject(roadAddressProject)._1
+      val countAfterInsertProjects = projectService.getRoadAddressAllProjects()
+      count = countCurrentProjects.size + 1
+      countAfterInsertProjects.size should be (count)
+      projectService.projectLinkPublishable(saved.id) should be (false)
+      val linkIds = ProjectDAO.getProjectLinks(saved.id).map(_.linkId).toSet
+      projectService.updateProjectLinkStatus(saved.id, linkIds, LinkStatus.Terminated, "-")
+      projectService.projectLinkPublishable(saved.id) should be (true)
+    }
+    runWithRollback { projectService.getRoadAddressAllProjects() } should have size (count - 1)
+  }
+
 }

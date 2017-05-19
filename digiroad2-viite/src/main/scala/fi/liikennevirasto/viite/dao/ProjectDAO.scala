@@ -94,7 +94,8 @@ object ProjectDAO {
          """.execute
   }
 
-  def getProjectLinks(projectId: Long): List[ProjectLink] = {
+  def getProjectLinks(projectId: Long, linkStatusFilter: Option[LinkStatus] = None): List[ProjectLink] = {
+    val filter = if (linkStatusFilter.isEmpty) "" else s"PROJECT_LINK.STATUS = ${linkStatusFilter.get.value} AND"
     val query =
       s"""select PROJECT_LINK.ID, PROJECT_LINK.PROJECT_ID, PROJECT_LINK.TRACK_CODE, PROJECT_LINK.DISCONTINUITY_TYPE,
           PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.START_ADDR_M, PROJECT_LINK.END_ADDR_M,
@@ -103,7 +104,7 @@ object ProjectDAO {
           (LRM_POSITION.END_MEASURE - LRM_POSITION.START_MEASURE) as length, PROJECT_LINK.CALIBRATION_POINTS, PROJECT_LINK.STATUS
                 from PROJECT_LINK join LRM_POSITION
                 on LRM_POSITION.ID = PROJECT_LINK.LRM_POSITION_ID
-                where (PROJECT_LINK.PROJECT_ID = $projectId ) order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
+                where $filter (PROJECT_LINK.PROJECT_ID = $projectId ) order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
     Q.queryNA[(Long, Long, Int, Int, Long, Long, Long, Long, Long, Long, Long, Long, String, String, Long, Double, Long, Int)](query).list.map {
       case (projectLinkId, projectId, trackCode, discontinuityType, roadNumber, roadPartNumber, startAddrM, endAddrM,
       startMValue, endMValue, sideCode , lrmPositionId, createdBy, modifiedBy, linkId, length, calibrationPoints, status) =>
@@ -154,6 +155,13 @@ object ProjectDAO {
     Q.queryNA[String](query).firstOption
   }
 
+  def updateProjectLinkStatus(projectLinkIds: Set[Long], linkStatus: LinkStatus, userName: String): Unit = {
+    if (projectLinkIds.nonEmpty) {
+      val (firstThousand, rest) = projectLinkIds.splitAt(1000)
+      sqlu"""UPDATE PROJECT_LINK SET STATUS = ${linkStatus.value}, MODIFIED_BY=$userName WHERE ID in (${firstThousand.mkString(",")})""".execute
+      updateProjectLinkStatus(rest, linkStatus, userName)
+    }
+  }
 }
 
 

@@ -30,6 +30,8 @@ case class NewAddressDataExtracted(sourceIds: Set[Long], targetIds: Set[Long], r
 
 case class RoadAddressProjectExtractor(id: Long, status: Long, name: String, startDate: String, additionalInfo: String,roadPartList: List[ReservedRoadPart])
 
+case class RoadAddressProjectLinkUpdate(linkIds: Seq[Long], projectId: Long, newStatus: Int)
+
 class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
                val roadAddressService: RoadAddressService,
                val projectService: ProjectService,
@@ -256,6 +258,15 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       params.get("bbox")
         .map(getProjectLinks(projectId, zoomLevel))
         .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
+  }
+
+  put("/project/roadlinks"){
+    val user = userProvider.getCurrentUser()
+
+    val modification = parsedBody.extract[RoadAddressProjectLinkUpdate]
+    projectService.updateProjectLinkStatus(modification.projectId, modification.linkIds.toSet,
+      LinkStatus.apply(modification.newStatus), user.username)
+    Map("projectId" -> modification.projectId, "publishable" -> projectService.projectLinkPublishable(modification.projectId))
   }
 
   private def roadlinksData(): (Seq[String], Seq[String]) = {
