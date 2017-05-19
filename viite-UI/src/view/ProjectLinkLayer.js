@@ -28,7 +28,7 @@
 
       if(feature.projectLinkData.status === 0) {
         var borderWidth = 3;
-        var strokeWidth = styler.strokeWidthByZoomLevel(resolution, feature.projectLinkData.roadLinkType, feature.projectLinkData.anomaly, feature.projectLinkData.roadLinkSource, false, feature.projectLinkData.constructionType);
+        var strokeWidth = styler.strokeWidthByZoomLevel(currentZoom, feature.projectLinkData.roadLinkType, feature.projectLinkData.anomaly, feature.projectLinkData.roadLinkSource, false, feature.projectLinkData.constructionType);
         var lineColor = 'rgba(247, 254, 46, 1)';
         var borderCap = 'round';
 
@@ -48,7 +48,7 @@
         return [lineStyle];
       }
       else{
-        return styler.generateStyleByFeature(feature.projectLinkData, resolution);
+        return styler.generateStyleByFeature(feature.projectLinkData, currentZoom);
       }
     };
 
