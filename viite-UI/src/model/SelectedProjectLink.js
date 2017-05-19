@@ -4,7 +4,7 @@
         var current = [];
         var open = function (event) {
             current = projectLinkCollection.getByLinkId();
-            eventbus.trigger('ProjectLinkProperties:selected', current);
+            eventbus.trigger('projectLink:clicked');
         };
 
         return {

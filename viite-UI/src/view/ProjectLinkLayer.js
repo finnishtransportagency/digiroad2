@@ -72,7 +72,6 @@
       console.log(event);
       // TODO: 374 to take this to form
       selectedProjectLinkProperty.open();
-      eventbus.trigger('projectLink:clicked');
     });
 
     var selectDoubleClick = new ol.interaction.Select({
