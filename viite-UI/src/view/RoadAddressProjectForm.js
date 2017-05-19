@@ -68,6 +68,19 @@
       }
     };
 
+    var selectedData = function (selected) {
+      //TODO: Now only data of the first selection, support for chain
+      var span = '';
+        if (selected) {
+          span = '<span><label>' +
+                 'TIE ' + selected[0].roadNumber +
+                 'OSA ' + selected[0].roadPartNumber +
+                 'AJR ' + selected[0].trackCode +
+                 '</label></span>'
+        }
+        return span;
+    };
+
     // var terminationButtons = function(ready) {
     //   var html = '<div class="project-form form-controls">' +
     //     '<button class="next btn btn-save"disabled>Tallenna</button>' +
@@ -160,7 +173,7 @@
         '<footer>' + buttons(formInfo !== '') + '</footer>');
     };
 
-    var selectedProjectLinkTemplate = function(project, optionTags) {
+    var selectedProjectLinkTemplate = function(project, optionTags, selected) {
       return _.template('' +
         // '<header>' +
         // titleWithProjectName(project.name) +
@@ -172,16 +185,17 @@
         staticField('Muokattu viimeksi', project.modifiedBy + ' ' + project.dateModified)+
         '<div class="form-group editable form-editable-roadAddressProject"> '+
         '<form id="roadAddressProject" class="input-unit-combination form-group form-horizontal roadAddressProject">'+
-        '</form>' +
-        '</div>'+
-        '</div>' +
         '<label>Toimenpiteet</label>'+
+        selectedData(selected) +
         '<div class="input-unit-combination">' +
         '<select class="form-control" id="dropDown" size="1">'+
         '<option value="action1">Valitse</option>'+
         '<option value="action2">Lakkautus</option>'+
         '</select>'+
         '</div>'+
+        '</form>' +
+        '</div>'+
+        '</div>' +
         '</div>'+
         '</div>'+
         '<footer>' + terminationButtons() + '</footer>');
@@ -281,6 +295,7 @@
 
       eventbus.on('projectLink:clicked', function(selected) {
         selectedProjectLink = selected;
+        rootElement.html(selectedProjectLinkTemplate(currentProject, options, selectedProjectLink));
       });
 
       rootElement.on('click', '.project-form button.save', function() {
@@ -330,7 +345,7 @@
           if(!_.isUndefined(result.projectAddresses)) {
             console.log(result);
             eventbus.trigger('roadAddressProject:openProject', result.project);
-            rootElement.html(selectedProjectLinkTemplate(currentProject, options));
+            rootElement.html(selectedProjectLinkTemplate(currentProject, options, selectedProjectLink));
           }
         });
         if(_.isUndefined(currentProject) || currentProject.id === 0){
