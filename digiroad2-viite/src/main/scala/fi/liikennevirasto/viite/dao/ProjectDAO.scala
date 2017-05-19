@@ -156,11 +156,13 @@ object ProjectDAO {
   }
 
   def updateProjectLinkStatus(projectLinkIds: Set[Long], linkStatus: LinkStatus, userName: String): Unit = {
-    if (projectLinkIds.nonEmpty) {
-      val (firstThousand, rest) = projectLinkIds.splitAt(1000)
-      sqlu"""UPDATE PROJECT_LINK SET STATUS = ${linkStatus.value}, MODIFIED_BY=$userName WHERE ID in (${firstThousand.mkString(",")})""".execute
-      updateProjectLinkStatus(rest, linkStatus, userName)
+    val updatePS = dynamicSession.prepareStatement("SET STATUS = ${linkStatus.value}, MODIFIED_BY=$userName WHERE ID = ?")
+    projectLinkIds.foreach{ id =>
+      updatePS.setLong(1, id)
+      updatePS.addBatch()
     }
+    updatePS.executeBatch()
+    updatePS.close()
   }
 }
 
