@@ -5,6 +5,7 @@
     var roadCollection = new RoadCollection(backend);
     var roadAddressProjectCollection = new RoadAddressProjectCollection(backend);
     var selectedLinkProperty = new SelectedLinkProperty(backend, roadCollection);
+    var selectedProjectLinkProperty = new SelectedProjectLink();
     var linkPropertiesModel = new LinkPropertiesModel();
     var instructionsPopup = new InstructionsPopup($('.digiroad2'));
 
@@ -12,7 +13,8 @@
       roadCollection: roadCollection,
       roadAddressProjectCollection: roadAddressProjectCollection,
       selectedLinkProperty: selectedLinkProperty,
-      linkPropertiesModel: linkPropertiesModel
+      linkPropertiesModel: linkPropertiesModel,
+      selectedProjectLinkProperty : selectedProjectLinkProperty
     };
 
     bindEvents();
@@ -82,7 +84,7 @@
     var mapOverlay = new MapOverlay($('.container'));
     var styler = new Styler();
     var roadLayer = new RoadLayer3(map, models.roadCollection, styler, models.selectedLinkProperty);
-    var projectLinkLayer = new ProjectLinkLayer(map, models.roadAddressProjectCollection);
+    var projectLinkLayer = new ProjectLinkLayer(map, models.roadAddressProjectCollection, models.selectedProjectLinkProperty);
 
     new LinkPropertyForm(models.selectedLinkProperty);
 

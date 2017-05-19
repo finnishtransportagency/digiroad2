@@ -1,5 +1,5 @@
 (function(root) {
-  root.ProjectLinkLayer = function(map, projectCollection) {
+  root.ProjectLinkLayer = function(map, projectCollection, selectedProjectLinkProperty) {
     var layerName = 'roadAddressProject';
     var vectorLayer;
     var layerMinContentZoomLevels = {};
@@ -71,6 +71,7 @@
       console.log("click");
       console.log(event);
       // TODO: 374 to take this to form
+      selectedProjectLinkProperty.open();
       eventbus.trigger('projectLink:clicked');
     });
 
