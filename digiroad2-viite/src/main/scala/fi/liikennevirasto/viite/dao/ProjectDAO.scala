@@ -4,6 +4,7 @@ import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import fi.liikennevirasto.viite.ReservedRoadPart
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -156,13 +157,12 @@ object ProjectDAO {
   }
 
   def updateProjectLinkStatus(projectLinkIds: Set[Long], linkStatus: LinkStatus, userName: String): Unit = {
-    val updatePS = dynamicSession.prepareStatement("SET STATUS = ${linkStatus.value}, MODIFIED_BY=$userName WHERE ID = ?")
-    projectLinkIds.foreach{ id =>
-      updatePS.setLong(1, id)
-      updatePS.addBatch()
+    val user = userName.replaceAll("[^A-Za-z0-9\\-]+", "")
+    MassQuery.withIds(projectLinkIds) {
+      s: String =>
+        val sql = s"UPDATE PROJECT_LINK SET STATUS = ${linkStatus.value}, MODIFIED_BY='$user' WHERE ID IN (SELECT ID FROM $s)"
+        Q.updateNA(sql).execute
     }
-    updatePS.executeBatch()
-    updatePS.close()
   }
 }
 
