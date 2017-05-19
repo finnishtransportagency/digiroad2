@@ -324,6 +324,7 @@
       rootElement.on('click', '.project-form button.next', function(){
         var data = $('#roadAddressProject').get(0);
         applicationModel.addSpinner();
+        applicationModel.selectLayer('roadAddressProject');
         eventbus.once('roadAddress:projectSaved', function (result) {
           jQuery('.modal-overlay').remove();
           if(!_.isUndefined(result.projectAddresses)) {

@@ -27,7 +27,7 @@
     var styleFunction = function (feature, resolution){
 
       if(feature.projectLinkData.status === 0) {
-        var borderWidth = 3;
+        var borderWidth = 8;
         var strokeWidth = styler.strokeWidthByZoomLevel(currentZoom, feature.projectLinkData.roadLinkType, feature.projectLinkData.anomaly, feature.projectLinkData.roadLinkSource, false, feature.projectLinkData.constructionType);
         var lineColor = 'rgba(247, 254, 46, 1)';
         var borderCap = 'round';
@@ -62,9 +62,17 @@
       //Limit this interaction to the singleClick
       condition: ol.events.condition.singleClick,
       //The new/temporary layer needs to have a style function as well, we define it here.
-      // style: function(feature, resolution) {
-      //   return styler.generateStyleByFeature(feature.roadLinkData,map.getView().getZoom(), true);
-      // }
+      style: function(feature, resolution) {
+        return new ol.style.Style({
+          fill: new ol.style.Fill({
+            color: 'rgba(0, 255, 0, 0.75)'
+          }),
+          stroke: new ol.style.Stroke({
+            color: 'rgba(0, 255, 0, 0.95)',
+            width: 8
+          })
+        });
+      }
     });
 
     selectSingleClick.on('select',function(event) {
@@ -79,9 +87,17 @@
       //Limit this interaction to the singleClick
       condition: ol.events.condition.doubleClick,
       //The new/temporary layer needs to have a style function as well, we define it here.
-      // style: function(feature, resolution) {
-      //   return styler.generateStyleByFeature(feature.roadLinkData,map.getView().getZoom(), true);
-      // }
+      style: function(feature, resolution) {
+        return new ol.style.Style({
+          fill: new ol.style.Fill({
+            color: 'rgba(0, 255, 0, 0.75)'
+          }),
+          stroke: new ol.style.Stroke({
+            color: 'rgba(0, 255, 0, 0.95)',
+            width: 8
+          })
+        });
+      }
     });
 
     selectDoubleClick.on('select',function(event) {
