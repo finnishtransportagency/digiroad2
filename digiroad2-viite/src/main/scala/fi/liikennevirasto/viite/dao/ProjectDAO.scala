@@ -17,7 +17,7 @@ sealed trait ProjectState{
 
 object ProjectState{
 
-  val values = Set(Closed, Incomplete)
+  val values = Set(Closed, Incomplete,Sent2TR,ErroredInTR,TRProcessing,Saved2TR,Unknown)
 
   def apply(value: Long): ProjectState = {
     values.find(_.value == value).getOrElse(Closed)
@@ -25,6 +25,11 @@ object ProjectState{
 
   case object Closed extends ProjectState {def value = 0; def description = "Suljettu"}
   case object Incomplete extends ProjectState { def value = 1; def description = "Keskeneräinen"}
+  case object Sent2TR extends ProjectState {def value=2; def description ="Lähetetty tierekisteriin"}
+  case object ErroredInTR extends ProjectState {def value=3; def description ="Virhe tierekisterissä"}
+  case object TRProcessing extends ProjectState {def value=4; def description="Tierekisterissä käsittelyssä"}
+  case object Saved2TR extends ProjectState{def value=5;def description ="Viety tierekisteriin"}
+  case object Unknown extends ProjectState{def value=99;def description ="Tuntematon"}
 }
 
 sealed trait LinkStatus {
@@ -144,6 +149,24 @@ object ProjectDAO {
     Q.queryNA[String](query).firstOption
   }
 
+  def getProjectstatus(projectID: String): Option[ProjectState] = {
+    val query =
+      s""" SELECT state
+     |   FROM project
+     |   WHERE id=$projectID
+   """
+    Q.queryNA[Long](query).firstOption match
+    {
+      case Some(statenumber)=> Some(ProjectState.apply(statenumber))
+      case None=>None
+    }
 }
+
+
+def updateProjectStatus(projectID:String,state:ProjectState) {
+  sqlu""" update project set state=${state.value}. WHERE id=$projectID   """.execute
+}
+
+  }
 
 

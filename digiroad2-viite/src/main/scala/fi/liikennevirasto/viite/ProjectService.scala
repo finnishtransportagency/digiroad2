@@ -222,4 +222,72 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     ViiteTierekisteriClient.getProjectStatus(projectId.toString)
   }
 
+  val listOfExitStatuses=List(1,3,5) // closed, errorinTR,savedtotr magic numbers
+  def checkProjectStatusUntilEndState(projectID:String): Unit =
+  {
+    val thread = new Thread(){
+      override  def run {
+        val projectstatus=ProjectDAO.getProjectstatus(projectID)
+        if (projectstatus!=None)
+          {
+        var currentstate=projectstatus.getOrElse(ProjectState.apply(99))
+        var newstatus=getStatusFromTRObject(ViiteTierekisteriClient.getProjectStatusObject(projectID)).getOrElse(ProjectState.apply(99))
+        do
+        {
+          val (currentstatetmp) = updateProjectStatusIfNeeded(currentstate,newstatus,projectID)
+          currentstate=currentstatetmp
+          Thread.sleep(60000) //wait 10 minutes before rechecking
+          newstatus=getStatusFromTRObject(ViiteTierekisteriClient.getProjectStatusObject(projectID)).getOrElse(ProjectState.apply(99))
+        }
+        while (!listOfExitStatuses.contains(newstatus.value))
+        updateProjectStatusIfNeeded(currentstate,newstatus,projectID)
+      if (currentstate.value==5)
+        {
+          //TODO
+          //copy & update new roads
+          // remove links from project-link table
+
+        }
+
+          }
+      }
+    }
+    thread.setPriority(31)
+    thread.start()
+  }
+
+  private def getStatusFromTRObject(trProject:Option[trPojectStatus]):Option[ProjectState] = {
+    trProject match {
+      case Some(trPojectobject) => mapTRstateToViiteState(trPojectobject.status.getOrElse(""))
+      case None => None
+      case _ => None
+    }
+  }
+
+    private def updateProjectStatusIfNeeded(currentStatus:ProjectState, newStatus:ProjectState,projectid:String) :(ProjectState)= {
+      if (currentStatus.value!=newStatus.value && newStatus.value!=99) //magic numbers
+        {
+          ProjectDAO.updateProjectStatus(projectid,newStatus)
+        }
+      if (newStatus.value!=99){
+        newStatus
+      } else
+        {
+         currentStatus
+        }
+    }
+
+
+  private def mapTRstateToViiteState(trState:String): Option[ProjectState] ={
+    if(trState=="S"|| trState=="K"){
+      Some(ProjectState.apply(4))
+    }    else if (trState=="T"){
+      Some(ProjectState.apply(5))
+    } else if (trState=="V"){
+      Some(ProjectState.apply((3)))
+    } else {
+      None
+    }
+
+  }
 }

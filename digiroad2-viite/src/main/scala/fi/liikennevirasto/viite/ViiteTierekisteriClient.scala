@@ -12,6 +12,8 @@ import org.json4s.Formats
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.format.DateTimeFormatter
 import org.json4s.jackson.JsonMethods.parse
+
+import scala.util.control.NonFatal
 case class changepPoject(id:Long, name:String, user:String, ely:Long, change_date:String, change_info:Seq[changeInfoitem])
 case class trPojectStatus(id:Option[Long],id_tr_projekti:Option[Long],projekti:Option[Long],tunnus:Option[Long],status:Option[String],name:Option[String],change_date:Option[String],ely:Option[Int],muutospvm:Option[String],user:Option[String],published_date:Option[String],job_number:Option[Long],error_message:Option[String],start_time:Option[String],end_time:Option[String],error_code:Option[Int])
 case class changeInfoitem(changetype :Int, continuity:Int, road_type:Int, source:changeInfoRoadParts,target:changeInfoRoadParts)
@@ -129,5 +131,23 @@ object ViiteTierekisteriClient {
       "error_code"->receivedData.error_code.getOrElse("null")
     )
 
+  }
+
+  def getProjectStatusObject(projectid:String): Option[trPojectStatus] = {
+
+    implicit val formats = DefaultFormats
+    val request = new HttpGet(getRestEndPoint + "addresschange/" + projectid)
+    request.addHeader("X-OTH-Authorization", "Basic " + auth.getAuthInBase64)
+
+    val response = client.execute(request)
+    try {
+     val  receivedData = parse(StreamInput(response.getEntity.getContent)).extract[trPojectStatus]
+    response.close()
+      return Option(receivedData)
+    } catch {
+      case NonFatal(e) => None
+    }finally {
+    response.close()
+  }
   }
 }
