@@ -164,8 +164,21 @@ object ProjectDAO {
 
 
 def updateProjectStatus(projectID:String,state:ProjectState) {
-  sqlu""" update project set state=${state.value}. WHERE id=$projectID   """.execute
+  val projectstate=state.value
+  sqlu""" update project set state=$projectstate WHERE id=$projectID   """.execute
 }
+
+  def getProjectsWithWaitingTRStatus(): List[Long]={
+    val stateSent2TR=2
+    val query= s"""
+         SELECT id
+         FROM project
+         WHERE state=$stateSent2TR
+       """
+    Q.queryNA[Long](query).list
+  }
+
+
 
   }
 

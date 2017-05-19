@@ -33,7 +33,7 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers{
       val request = new HttpPost(getRestEndPoint + "addresschange/")
 
       val message= ViiteTierekisteriClient.sendJsonMessage(changepPoject(0, "Testproject", "TestUser", 3, "2017-06-01", Seq {
-        changeInfoitem(2, 1, 1, changeInfoRoadParts(None, None, None, None, None, None), changeInfoRoadParts(Option(403), Option(0), Option(8), Option(0), Option(8), Option(1001))) // projectid 0 wont be added to TR
+        changeInfoitem(2, 1, 1, changeInfoRoadParts(None, None, None, None, None, None), changeInfoRoadParts(None, Option(0), Option(8), Option(0), Option(8), Option(1001))) // projectid 0 wont be added to TR
       }))
       message.projectId should be (0)
       message.reason should startWith ("Created")
