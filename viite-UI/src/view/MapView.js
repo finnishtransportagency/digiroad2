@@ -50,7 +50,7 @@
       map.addLayer(vectorLayer);
     };
 
-    eventbus.on('application:initialized', function() {
+    eventbus.on('application:initialized layer:fetched', function() {
       var zoom = map.getView().getZoom();
       applicationModel.setZoomLevel(zoom);
       if (!zoomlevels.isInAssetZoomLevel(zoom)) {

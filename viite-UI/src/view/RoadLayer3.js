@@ -1,5 +1,5 @@
 (function(root) {
-  root.RoadLayer3 = function(map, roadCollection, projectCollection, styler, selectedLinkProperty) {
+  root.RoadLayer3 = function(map, roadCollection, styler, selectedLinkProperty) {
     var vectorLayer;
     var layerMinContentZoomLevels = {};
     var currentZoom = 0;
@@ -54,9 +54,6 @@
         eventbus.trigger('map:clearLayers');
       } else if (mapState.selectedLayer == 'linkProperty'){
         roadCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1);
-        handleRoadsVisibility();
-      } else if (mapState.selectedLayer == 'roadAddressProject'){
-        projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1, undefined);
         handleRoadsVisibility();
       }
     };
