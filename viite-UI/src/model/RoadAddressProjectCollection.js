@@ -18,6 +18,10 @@
       });
     };
 
+    this.getByLinkId = function () {
+      console.log('getByLinkId');
+    };
+
     this.fetch = function(boundingBox, zoom, projectId) {
       var id = projectId;
       if (typeof id === 'undefined' && typeof projectinfo !== 'undefined')

@@ -1,8 +1,10 @@
 (function(root) {
-    root.SelectedProjectLink = function() {
+    root.SelectedProjectLink = function(projectLinkCollection) {
 
-        var open = function () {
-            eventbus.trigger('ProjectLinkProperties:selected');
+        var current = [];
+        var open = function (event) {
+            current = projectLinkCollection.getByLinkId();
+            eventbus.trigger('ProjectLinkProperties:selected', current);
         };
 
         return {

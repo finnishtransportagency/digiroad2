@@ -5,7 +5,7 @@
     var roadCollection = new RoadCollection(backend);
     var roadAddressProjectCollection = new RoadAddressProjectCollection(backend);
     var selectedLinkProperty = new SelectedLinkProperty(backend, roadCollection);
-    var selectedProjectLinkProperty = new SelectedProjectLink();
+    var selectedProjectLinkProperty = new SelectedProjectLink(roadAddressProjectCollection);
     var linkPropertiesModel = new LinkPropertiesModel();
     var instructionsPopup = new InstructionsPopup($('.digiroad2'));
 
