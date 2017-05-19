@@ -259,7 +259,9 @@
     };
 
     return {
-      generateStyleByFeature: generateStyleByFeature
+      generateStyleByFeature: generateStyleByFeature,
+      strokeWidthByZoomLevel: strokeWidthByZoomLevel,
+      determineZIndex: determineZIndex
     };
   };
 })(this);

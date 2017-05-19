@@ -4,9 +4,33 @@
     var currentRoadSegmentList = [];
     var dirtyRoadSegmentLst = [];
     var projectinfo;
+    var fetchedProjectLinks = [];
+    var roadAddressProjectLinks = [];
+    var self = this;
+
+    var projectLinks = function() {
+        return _.flatten(fetchedProjectLinks);
+    };
 
     this.getAll = function () {
-      var roadAddressProjectLinks = [];
+      return _.map(projectLinks(), function(projectLink) {
+        return projectLink.getData();
+      });
+    };
+
+    this.fetch = function(boundingBox, zoom, projectId) {
+      var id = projectId;
+      if (typeof id === 'undefined' && typeof projectinfo !== 'undefined')
+        id = projectinfo.id;
+      if (id)
+        backend.getProjectLinks({boundingBox: boundingBox, zoom: zoom, projectId: id}, function(fetchedLinks) {
+          fetchedProjectLinks = _.map(fetchedLinks, function(projectLinkGroup) {
+            return _.map(projectLinkGroup, function(projectLink) {
+              return new ProjectLinkModel(projectLink);
+            });
+          });
+          eventbus.trigger('roadAddressProject:fetched', self.getAll());
+        });
     };
 
     this.getProjects = function () {
@@ -16,9 +40,13 @@
     };
 
     this.getProjectsWithLinksById = function (projectId) {
-      return backend.getProjectsWithLinksById(projectId, function (projects) {
-        roadAddressProjects = projects.project;
-        roadAddressProjectLinks = projects.projectLinks;
+      return backend.getProjectsWithLinksById(projectId, function (result) {
+        roadAddressProjects = result.projects;
+        roadAddressProjectLinks = result.projectLinks;
+        projectinfo = {
+          id: result.projects.id
+        };
+        eventbus.trigger('roadAddressProject:projectFetched', projectinfo.id);
       });
     };
 
@@ -159,6 +187,17 @@
             eventbus.trigger('roadAddress:projectValidationSucceed');
           }
         });
+    };
+
+    var ProjectLinkModel = function(data) {
+
+        var getData = function() {
+           return data;
+        };
+
+        return {
+           getData: getData
+        };
     };
   };
 })(this);

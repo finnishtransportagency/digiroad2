@@ -203,6 +203,12 @@
         rootElement.find('.btn-save').prop("disabled", formIsInvalid(rootElement));
       });
 
+      eventbus.on('layer:selected', function(layer) {
+        if(layer !== 'roadAddressProject') {
+          $('.wrapper').remove();
+        }
+      });
+
       rootElement.on('click', '.project-form button.save', function() {
         var data = $('#roadAddressProject').get(0);
         applicationModel.addSpinner();
@@ -247,8 +253,7 @@
         eventbus.once('roadAddress:projectSaved', function (result) {
           jQuery('.modal-overlay').remove();
           if(!_.isUndefined(result.projectAddresses)) {
-            eventbus.trigger('linkProperties:selectedProject', result.projectAddresses.linkId);
-            // TODO: Go to project edit mode layer
+            eventbus.trigger('roadAddressProject:openProject', result.project);
           }
         });
         if(_.isUndefined(currentProject) || currentProject.id === 0){

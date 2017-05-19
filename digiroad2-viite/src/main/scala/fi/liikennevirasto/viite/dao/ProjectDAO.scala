@@ -32,10 +32,12 @@ sealed trait LinkStatus {
 }
 
 object LinkStatus {
-  val values = Set(NotHandled)
+  val values = Set(NotHandled, Terminated, Unknown)
   case object NotHandled extends LinkStatus {def value = 0}
+  case object Terminated extends LinkStatus {def value = 1}
+  case object Unknown extends LinkStatus {def value = 99}
   def apply(intValue: Int): LinkStatus = {
-    values.find(_.value == intValue).getOrElse(NotHandled)
+    values.find(_.value == intValue).getOrElse(Unknown)
   }
 }
 
@@ -94,13 +96,20 @@ object ProjectDAO {
 
   def getProjectLinks(projectId: Long): List[ProjectLink] = {
     val query =
-      s"""select PROJECT_LINK.ID, PROJECT_LINK.PROJECT_ID, PROJECT_LINK.TRACK_CODE, PROJECT_LINK.DISCONTINUITY_TYPE, PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.START_ADDR_M, PROJECT_LINK.END_ADDR_M, PROJECT_LINK.LRM_POSITION_ID, PROJECT_LINK.CREATED_BY, PROJECT_LINK.MODIFIED_BY, lrm_position.link_id, (LRM_POSITION.END_MEASURE - LRM_POSITION.START_MEASURE) as length, PROJECT_LINK.CALIBRATION_POINTS, PROJECT_LINK.STATUS
+      s"""select PROJECT_LINK.ID, PROJECT_LINK.PROJECT_ID, PROJECT_LINK.TRACK_CODE, PROJECT_LINK.DISCONTINUITY_TYPE,
+          PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.START_ADDR_M, PROJECT_LINK.END_ADDR_M,
+          LRM_POSITION.START_MEASURE, LRM_POSITION.END_MEASURE, LRM_POSITION.SIDE_CODE, PROJECT_LINK.LRM_POSITION_ID,
+          PROJECT_LINK.CREATED_BY, PROJECT_LINK.MODIFIED_BY, lrm_position.link_id,
+          (LRM_POSITION.END_MEASURE - LRM_POSITION.START_MEASURE) as length, PROJECT_LINK.CALIBRATION_POINTS, PROJECT_LINK.STATUS
                 from PROJECT_LINK join LRM_POSITION
                 on LRM_POSITION.ID = PROJECT_LINK.LRM_POSITION_ID
                 where (PROJECT_LINK.PROJECT_ID = $projectId ) order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
-    Q.queryNA[(Long, Long, Int, Int, Long, Long, Long, Long, Long, String, String, Long, Double, Long, Int)](query).list.map {
-      case (projectLinkId, projectId, trackCode, discontinuityType, roadNumber, roadPartNumber, startAddrM, endAddrM, lrmPositionId, createdBy, modifiedBy, linkId, length, calibrationPoints, status) =>
-        ProjectLink(projectLinkId, roadNumber, roadPartNumber, Track.apply(trackCode), Discontinuity.apply(discontinuityType), startAddrM, endAddrM, None, None, None, lrmPositionId, linkId, 0L, 0L, SideCode.apply(99), (None, None), false, Seq.empty[Point], projectId, LinkStatus.apply(status))
+    Q.queryNA[(Long, Long, Int, Int, Long, Long, Long, Long, Long, Long, Long, Long, String, String, Long, Double, Long, Int)](query).list.map {
+      case (projectLinkId, projectId, trackCode, discontinuityType, roadNumber, roadPartNumber, startAddrM, endAddrM,
+      startMValue, endMValue, sideCode , lrmPositionId, createdBy, modifiedBy, linkId, length, calibrationPoints, status) =>
+         ProjectLink(projectLinkId, roadNumber, roadPartNumber, Track.apply(trackCode), Discontinuity.apply(discontinuityType),
+           startAddrM, endAddrM, None, None, None, lrmPositionId, linkId, startMValue, endMValue, SideCode.apply(sideCode.toInt),
+           (None, None), false, Seq.empty[Point], projectId, LinkStatus.apply(status))
     }
   }
 

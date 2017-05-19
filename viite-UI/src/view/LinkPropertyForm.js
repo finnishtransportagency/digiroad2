@@ -673,6 +673,10 @@
           return new ModalConfirm("Siirto ei onnistunut taustajärjestelmässä tapahtuneen tuntemattoman virheen takia, ota yhteyttä järjestelmätukeen.");
         }
       });
+
+      eventbus.on('roadAddressProject:selected', function() {
+          $('.wrapper').remove();
+      });
     };
     bindEvents();
   };

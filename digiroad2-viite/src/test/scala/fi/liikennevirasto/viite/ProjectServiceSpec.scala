@@ -1,13 +1,17 @@
 package fi.liikennevirasto.viite
 
+import java.util.Properties
+
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
-import fi.liikennevirasto.digiroad2.asset.{State, TrafficDirection, UnknownLinkType}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, State, TrafficDirection, UnknownLinkType}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, RoadLinkService}
-import fi.liikennevirasto.viite.dao.{Discontinuity, RoadAddressDAO, RoadAddressProject, ProjectState}
+import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.viite.dao._
+import fi.liikennevirasto.viite.process.ProjectDeltaCalculator
 import org.joda.time.DateTime
 import org.mockito.Mockito.when
 import org.scalatest.{FunSuite, Matchers}
@@ -18,6 +22,11 @@ import slick.jdbc.StaticQuery
 import slick.jdbc.StaticQuery.interpolation
 
 class ProjectServiceSpec  extends FunSuite with Matchers {
+  val properties: Properties = {
+    val props = new Properties()
+    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
+    props
+  }
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val roadAddressService = new RoadAddressService(mockRoadLinkService,mockEventBus) {
@@ -90,6 +99,69 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       val countAfterInsertProjects = projectService.getRoadAddressAllProjects()
       count = countCurrentProjects.size + 1
       countAfterInsertProjects.size should be (count)
+    }
+    runWithRollback { projectService.getRoadAddressAllProjects() } should have size (count - 1)
+  }
+
+  ignore("Fetch project links") { // Needs more of mocking because of Futures + transactions disagreeing
+    val roadLinkService = new RoadLinkService(new VVHClient(properties.getProperty("digiroad2.VVHRestApiEndPoint")), mockEventBus, new DummySerializer) {
+      override def withDynSession[T](f: => T): T = f
+      override def withDynTransaction[T](f: => T): T = f
+    }
+    val roadAddressService = new RoadAddressService(roadLinkService,mockEventBus) {
+      override def withDynSession[T](f: => T): T = f
+      override def withDynTransaction[T](f: => T): T = f
+    }
+    val projectService = new ProjectService(roadAddressService, roadLinkService, mockEventBus) {
+      override def withDynSession[T](f: => T): T = f
+      override def withDynTransaction[T](f: => T): T = f
+    }
+    runWithRollback {
+      val addresses:List[ReservedRoadPart]= List(ReservedRoadPart(0:Long, 5:Long, 205:Long, 5:Double, Discontinuity.apply("jatkuva"), 8:Long))
+      val roadAddressProject = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", addresses)
+      val savedProject = projectService.createRoadLinkProject(roadAddressProject)._1
+      val startingLinkId = ProjectDAO.getProjectLinks(savedProject.id).filter(_.track == Track.LeftSide).minBy(_.startAddrMValue).linkId
+      val boundingRectangle = roadLinkService.fetchVVHRoadlinks(Set(startingLinkId)).map { vrl =>
+        val x = vrl.geometry.map(l => l.x)
+        val y = vrl.geometry.map(l => l.y)
+
+        BoundingRectangle(Point(x.min, y.min) + Vector3d(-5.0,-5.0,0.0), Point(x.max, y.max) + Vector3d(5.0,5.0,0.0))}.head
+
+      val links = projectService.getProjectRoadLinks(savedProject.id, boundingRectangle, Seq(), Set(), true, true)
+      links.nonEmpty should be (true)
+      links.exists(_.status == LinkStatus.Unknown) should be (true)
+      links.exists(_.status == LinkStatus.NotHandled) should be (true)
+      val (unk, nh) = links.partition(_.status == LinkStatus.Unknown)
+      nh.forall(l => l.roadNumber == 5 && l.roadPartNumber == 205) should be (true)
+      unk.forall(l => l.roadNumber != 5 || l.roadPartNumber != 205) should be (true)
+      nh.map(_.linkId).toSet.intersect(unk.map(_.linkId).toSet) should have size (0)
+      unk.exists(_.attributes.getOrElse("ROADPARTNUMBER", "0").toString == "203") should be (true)
+    }
+  }
+
+  test("Calculate delta for project") {
+    var count = 0
+    val roadlink = RoadLink(5170939L,Seq(Point(535605.272,6982204.22,85.90899999999965))
+      ,540.3960283713503,State,99,TrafficDirection.AgainstDigitizing,UnknownLinkType,Some("25.06.2015 03:00:00"), Some("vvh_modified"),Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
+      InUse,NormalLinkInterface)
+    when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(5170939L))).thenReturn(Seq(roadlink))
+    runWithRollback {
+      val countCurrentProjects = projectService.getRoadAddressAllProjects()
+      val addresses = List(ReservedRoadPart(0L, 5L, 205L, 5.0, Discontinuity.apply("jatkuva"), 8:Long))
+      val roadAddressProject = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List())
+      val saved = projectService.createRoadLinkProject(roadAddressProject)._1
+      val changed = saved.copy(reservedParts = addresses)
+      projectService.saveRoadLinkProject(changed)
+      val countAfterInsertProjects = projectService.getRoadAddressAllProjects()
+      count = countCurrentProjects.size + 1
+      countAfterInsertProjects.size should be (count)
+      sqlu"""UPDATE Project_link set status = 1""".execute
+      val terminations = ProjectDeltaCalculator.delta(saved.id).terminations
+      val sections = ProjectDeltaCalculator.partition(terminations)
+      sections should have size (2)
+      sections.exists(_.track == Track.LeftSide) should be (true)
+      sections.exists(_.track == Track.RightSide) should be (true)
+      sections.groupBy(_.endMAddr).keySet.size should be (1)
     }
     runWithRollback { projectService.getRoadAddressAllProjects() } should have size (count - 1)
   }
