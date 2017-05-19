@@ -840,7 +840,6 @@
         var features =[];
         _.each(roadLayer.layer.getSource().getFeatures(), function (feature) {
           if (_.contains(greenFeaturesLinkId, feature.roadLinkData.linkId)) {
-            console.log("Found Green Feature: " + feature.roadLinkData.linkId);
 
             feature.roadLinkData.prevAnomaly = feature.roadLinkData.anomaly;
             feature.roadLinkData.gapTransfering = true;

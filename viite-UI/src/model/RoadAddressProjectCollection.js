@@ -40,11 +40,9 @@
     };
 
     this.getProjectsWithLinksById = function (projectId) {
-      console.log(projectId);
       return backend.getProjectsWithLinksById(projectId, function (result) {
         roadAddressProjects = result.projects;
         roadAddressProjectLinks = result.projectLinks;
-        console.log(result);
         projectinfo = {
           id: result.projects.id
         };

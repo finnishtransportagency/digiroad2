@@ -138,7 +138,6 @@
     });
 
     eventbus.on('roadAddressProject:selected', function(projId) {
-      console.log(projId);
       eventbus.once('roadAddressProject:projectFetched', function(id) {
         projectCollection.fetch(map.getView().calculateExtent(map.getSize()),map.getView().getZoom(), id);
         // vectorSource.clear();

@@ -258,7 +258,6 @@
         eventbus.once('roadAddress:projectSaved', function (result) {
           jQuery('.modal-overlay').remove();
           if(!_.isUndefined(result.projectAddresses)) {
-            console.log(result);
             eventbus.trigger('roadAddressProject:openProject', result.project);
           }
         });

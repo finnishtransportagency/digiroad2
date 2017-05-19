@@ -63,9 +63,8 @@
       router.navigate('linkProperty');
     });
 
-    eventbus.on('roadAddressProject:selected', function (projId) {
-      router.navigate('roadAddressProject/' + projId);
-      applicationModel.selectLayer('roadAddressProject');
+    eventbus.on('roadAddressProject:selected', function (id, layerName, selectedLayer) {
+      router.navigate('roadAddressProject/' + id);
     });
 
     eventbus.on('linkProperties:selected', function (linkProperty) {

@@ -21,7 +21,6 @@
         var zoom = params.zoom;
         var boundingBox = params.boundingBox;
         var projectId = params.projectId;
-        console.log(projectId);
         return {
             url: 'api/viite/project/roadlinks?zoom=' + zoom + '&bbox=' + boundingBox + '&id=' + projectId
         };
