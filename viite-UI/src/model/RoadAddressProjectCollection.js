@@ -6,6 +6,7 @@
     var projectinfo;
     var fetchedProjectLinks = [];
     var roadAddressProjectLinks = [];
+    var self = this;
 
     var projectLinks = function() {
         return _.flatten(fetchedProjectLinks);
@@ -28,7 +29,7 @@
               return new ProjectLinkModel(projectLink);
             });
           });
-          eventbus.trigger('roadAddressProject:fetched', fetchedProjectLinks);
+          eventbus.trigger('roadAddressProject:fetched', self.getAll());
         });
     };
 

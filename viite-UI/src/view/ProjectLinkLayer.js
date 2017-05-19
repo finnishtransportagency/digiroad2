@@ -129,20 +129,20 @@
       projectCollection.getProjectsWithLinksById(projId);
     });
 
-    eventbus.on('roadAddressProject:fetched', function(newRoads){
-      var simulatedOL3Features = [];
-      _.map(newRoads, function(road){
-        var points = _.map(road[0].getData().points, function(point) {
-          return [point.x, point.y];
+        eventbus.on('roadAddressProject:fetched', function(projectLinks){
+          var simulatedOL3Features = [];
+          _.map(projectLinks, function(projectLink){
+            var points = _.map(projectLink.points, function(point) {
+              return [point.x, point.y];
+            });
+            var feature =  new ol.Feature({ geometry: new ol.geom.LineString(points)
+            });
+            feature.projectLinkData = projectLink;
+            simulatedOL3Features.push(feature);
+          });
+          vectorLayer.getSource().addFeatures(simulatedOL3Features);
+          vectorLayer.changed();
         });
-        var feature =  new ol.Feature({ geometry: new ol.geom.LineString(points)
-        });
-        feature.projectLinkData = road[0].getData();
-        simulatedOL3Features.push(feature);
-      });
-      vectorLayer.getSource().addFeatures(simulatedOL3Features);
-      vectorLayer.changed();
-    });
 
     eventbus.on('map:moved', mapMovedHandler, this);
 
