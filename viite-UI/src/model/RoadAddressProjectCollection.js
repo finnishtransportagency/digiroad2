@@ -18,9 +18,17 @@
       });
     };
 
+    this.getMultiSelectIds = function (linkId) {
+      var chain = _.find(fetchedProjectLinks, function (linkChain) {
+        var pureChain = _.map(linkChain, function(l) { return l.getData(); });
+        return _.some(pureChain, {"linkId": linkId});
+      });
+      return _.map(chain, function (link) { return link.getData().linkId});
+    };
+
     this.getByLinkId = function (ids) {
       var ProjectLinks = _.filter(_.flatten(fetchedProjectLinks), function (projectLink){
-          return projectLink.getData().linkId == ids;
+          return _.contains(ids, projectLink.getData().linkId);
       });
       return ProjectLinks;
     };

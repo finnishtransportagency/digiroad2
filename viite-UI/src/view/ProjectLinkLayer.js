@@ -46,7 +46,7 @@
         });
 
         var zIndex = styler.determineZIndex(feature.projectLinkData.roadLinkType, feature.projectLinkData.anomaly, feature.projectLinkData.roadLinkSource);
-        lineStyle.setZIndex(zIndex + 2);
+        lineStyle.setZIndex(zIndex + 3);
         return [lineStyle];
       }
       else{
@@ -84,7 +84,7 @@
           return !_.isUndefined(selectionTarget.projectLinkData);
       });
       if (!_.isUndefined(selection))
-        selectedProjectLinkProperty.open(selection.projectLinkData.linkId);
+        selectedProjectLinkProperty.open(selection.projectLinkData.linkId, true);
     });
 
     var selectDoubleClick = new ol.interaction.Select({
@@ -105,14 +105,68 @@
       }
     });
 
+    var clearHighlights = function(){
+      if(selectDoubleClick.getFeatures().getLength() !== 0){
+        selectDoubleClick.getFeatures().clear();
+      }
+      if(selectSingleClick.getFeatures().getLength() !== 0){
+        selectSingleClick.getFeatures().clear();
+      }
+    };
+
+    var highlightFeatures = function() {
+      clearHighlights();
+      var featuresToHighlight = [];
+      _.each(vectorLayer.getSource().getFeatures(), function(feature) {
+        var canIHighlight = !_.isUndefined(feature.projectLinkData.linkId) ?
+          selectedProjectLinkProperty.isSelected(feature.projectLinkData.linkId) : false;
+        if(canIHighlight){
+          featuresToHighlight.push(feature);
+        }
+      });
+      if(featuresToHighlight.length !== 0)
+        addFeaturesToSelection(featuresToHighlight);
+    };
+
+    /**
+     * Simple method that will add various open layers 3 features to a selection.
+     * @param ol3Features
+     */
+    var addFeaturesToSelection = function (ol3Features) {
+      var olUids = _.map(selectSingleClick.getFeatures().getArray(), function(feature){
+        return feature.ol_uid;
+      });
+      _.each(ol3Features, function(feature){
+        if(!_.contains(olUids,feature.ol_uid)){
+          selectSingleClick.getFeatures().push(feature);
+          olUids.push(feature.ol_uid); // prevent adding duplicate entries
+        }
+      });
+    };
+
+    eventbus.on('projectLink:clicked', function() {
+      highlightFeatures();
+    });
+
     selectDoubleClick.on('select',function(event) {
       console.log("clickety-click");
       // TODO: 374 validate selection
       var selection = _.find(event.selected, function (selectionTarget) {
           return !_.isUndefined(selectionTarget.projectLinkData);
       });
-      selectedProjectLinkProperty.open(selection.projectLinkData.linkId);
+      if (!_.isUndefined(selection))
+        selectedProjectLinkProperty.open(selection.projectLinkData.linkId);
     });
+
+    var zoomDoubleClickListener = function(event) {
+      _.defer(function(){
+        if(selectDoubleClick.getFeatures().getLength() < 1 && map.getView().getZoom() <= 13){
+          map.getView().setZoom(map.getView().getZoom()+1);
+        }
+      });
+    };
+    //This will control the double click zoom when there is no selection that activates
+    map.on('dblclick', zoomDoubleClickListener);
 
     //Add defined interactions to the map.
     map.addInteraction(selectSingleClick);
@@ -159,6 +213,8 @@
 
     eventbus.on('roadAddressProject:openProject', function(projectSelected) {
       this.project = projectSelected;
+      eventbus.trigger('layer:enableButtons', false);
+      eventbus.trigger('editMode:setReadOnly', false);
       eventbus.trigger('roadAddressProject:selected', projectSelected.id, layerName, applicationModel.getSelectedLayer());
     });
 

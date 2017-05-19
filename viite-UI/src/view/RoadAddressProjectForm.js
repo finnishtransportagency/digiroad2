@@ -73,9 +73,9 @@
       var span = '';
         if (selected) {
           span = '<span><label>' +
-                 'TIE ' + selected[0].roadNumber +
-                 'OSA ' + selected[0].roadPartNumber +
-                 'AJR ' + selected[0].trackCode +
+                 'TIE ' + selected.roadNumber +
+                 'OSA ' + selected.roadPartNumber +
+                 'AJR ' + selected.trackCode +
                  '</label></span>'
         }
         return span;
@@ -174,6 +174,9 @@
     };
 
     var selectedProjectLinkTemplate = function(project, optionTags, selected) {
+      var selection = _.chain(selected).map(function(link) {
+        return selectedData(link);
+      });
       return _.template('' +
         // '<header>' +
         // titleWithProjectName(project.name) +
@@ -186,7 +189,7 @@
         '<div class="form-group editable form-editable-roadAddressProject"> '+
         '<form id="roadAddressProject" class="input-unit-combination form-group form-horizontal roadAddressProject">'+
         '<label>Toimenpiteet</label>'+
-        selectedData(selected) +
+        selection +
         '<div class="input-unit-combination">' +
         '<select class="form-control" id="dropDown" size="1">'+
         '<option value="action1">Valitse</option>'+
