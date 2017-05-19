@@ -243,7 +243,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     logger.info("End fetch vvh road links in %.3f sec".format((fetchVVHEndTime - fetchVVHStartTime) * 0.001))
 
     val fetchMissingRoadAddressStartTime = System.currentTimeMillis()
-    val ((addresses, floating), projectLinks) = Await.result(fetchRoadAddressesByBoundingBoxF.zip(fetchProjectLinksF), Duration.Inf)
+    val ((floating, addresses), projectLinks) = Await.result(fetchRoadAddressesByBoundingBoxF.zip(fetchProjectLinksF), Duration.Inf)
     // TODO: When floating handling is enabled we need this - but ignoring the result otherwise here
     val missingLinkIds = linkIds -- floating.keySet -- addresses.keySet -- projectLinks.keySet
 
