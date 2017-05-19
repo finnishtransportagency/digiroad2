@@ -279,8 +279,8 @@
         }
       });
 
-      eventbus.on('projectLink:clicked', function() {
-        selectedProjectLink = true;
+      eventbus.on('projectLink:clicked', function(selected) {
+        selectedProjectLink = selected;
       });
 
       rootElement.on('click', '.project-form button.save', function() {
