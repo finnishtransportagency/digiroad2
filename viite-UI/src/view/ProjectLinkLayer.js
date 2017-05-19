@@ -71,6 +71,7 @@
       console.log("click");
       console.log(event);
       // TODO: 374 to take this to form
+      eventbus.trigger('projectLink:clicked');
     });
 
     var selectDoubleClick = new ol.interaction.Select({
@@ -89,7 +90,7 @@
       // TODO: 374 to take this to form
     });
 
-      //Add defined interactions to the map.
+    //Add defined interactions to the map.
     map.addInteraction(selectSingleClick);
     map.addInteraction(selectDoubleClick);
 
@@ -138,6 +139,7 @@
     });
 
     eventbus.on('roadAddressProject:selected', function(projId) {
+      console.log(projId);
       eventbus.once('roadAddressProject:projectFetched', function(id) {
         projectCollection.fetch(map.getView().calculateExtent(map.getSize()),map.getView().getZoom(), id);
         // vectorSource.clear();
@@ -146,20 +148,20 @@
       projectCollection.getProjectsWithLinksById(projId);
     });
 
-        eventbus.on('roadAddressProject:fetched', function(projectLinks){
-          var simulatedOL3Features = [];
-          _.map(projectLinks, function(projectLink){
-            var points = _.map(projectLink.points, function(point) {
-              return [point.x, point.y];
-            });
-            var feature =  new ol.Feature({ geometry: new ol.geom.LineString(points)
-            });
-            feature.projectLinkData = projectLink;
-            simulatedOL3Features.push(feature);
-          });
-          vectorLayer.getSource().addFeatures(simulatedOL3Features);
-          vectorLayer.changed();
+    eventbus.on('roadAddressProject:fetched', function(projectLinks){
+      var simulatedOL3Features = [];
+      _.map(projectLinks, function(projectLink){
+        var points = _.map(projectLink.points, function(point) {
+          return [point.x, point.y];
         });
+        var feature =  new ol.Feature({ geometry: new ol.geom.LineString(points)
+        });
+        feature.projectLinkData = projectLink;
+        simulatedOL3Features.push(feature);
+      });
+      vectorLayer.getSource().addFeatures(simulatedOL3Features);
+      vectorLayer.changed();
+    });
 
     eventbus.on('map:moved', mapMovedHandler, this);
 

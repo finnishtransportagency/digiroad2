@@ -1,6 +1,6 @@
 (function (root) {
   root.RoadAddressProjectForm = function(projectCollection) {
-    var currentProject;
+    var currentProject = false;
     var staticField = function(labelText, dataField) {
       var field;
       field = '<div class="form-group">' +
@@ -8,6 +8,7 @@
         '</div>';
       return field;
     };
+    var options =['Valitse'];
 
     var largeInputField = function (dataField) {
       return '<div class="form-group">' +
@@ -16,7 +17,7 @@
         '</div>';
     };
 
-    var inputFieldRequired = function(labelText, id, placeholder,  value) {
+    var inputFieldRequired = function(labelText, id, placeholder, value) {
       var field = '<div class="form-group input-required">' +
         '<label class="control-label required">' + labelText + '</label>' +
         '<input type="text" class="form-control" id = "'+id+'" placeholder = "'+placeholder+'" value="'+value+'"/>' +
@@ -43,7 +44,19 @@
         '<button class="cancel btn btn-cancel">Peruuta</button>' +
         '</div>';
       return html;
-  };
+    };
+
+    var terminationButtons = function(ready) {
+      var html = '<div class="project-form form-controls">' +
+        '<button class="next btn btn-save " disabled>Tallenna</button>' +
+      // if (!ready)
+      //   html = html + "disabled";
+      // html = html +
+      //   '>Tallenna</button>' +
+        '<button class="cancel btn btn-cancel">Peruuta</button>' +
+        '</div>';
+      return html;
+    };
 
     var headerButton =
       '<div class="linear-asset form-controls">'+
@@ -125,6 +138,48 @@
         '<footer>' + buttons(formInfo !== '') + '</footer>');
     };
 
+    var selectedProjectLinkTemplate = function(project, optionTags) {
+      return _.template('' +
+        // '<header>' +
+        // titleWithProjectName(project.name) +
+        // '</header>' +
+        '<div class="wrapper read-only">'+
+        '<div class="form form-horizontal form-dark">'+
+        '<div class="edit-control-group choice-group">'+
+        staticField('Lisätty järjestelmään', project.createdBy + ' ' + project.startDate)+
+        staticField('Muokattu viimeksi', project.modifiedBy + ' ' + project.dateModified)+
+        '<div class="form-group editable form-editable-roadAddressProject"> '+
+        '<form id="roadAddressProject" class="input-unit-combination form-group form-horizontal roadAddressProject">'+
+        '</form>' +
+        '</div>'+
+        '</div>' +
+        // '<div class = "form-result">' +
+        // '<div style="margin-left: 15px;">' +'</div>'+
+        // addSmallLabel('TIE')+ addSmallLabel('OSA')+ addSmallLabel('PITUUS')+ addSmallLabel('JATKUU')+ addSmallLabel('ELY')+
+        // '<div id ="roadpartList">'+
+        // formInfo +
+        // '</div>' +
+        // '</div>' +
+        '<label>Toimenpiteet</label>'+
+        '<div class="input-unit-combination">' +
+        // '<select class="form-control" id="dropDown" multiple="multiple" size="1">'+
+        '<select class="form-control" id="dropDown" size="1">'+
+        '<option value="action1">Valitse</option>'+
+        '<option value="action2">Lakkautus</option>'+
+        '</select>'+
+        //   <select name="selSS2" id="selSeaShells2" multiple="multiple" size="5">
+        //   <option value="val0">sea zero</option>
+        // <option value="val1">sea one</option>
+        // <option value="val2">sea two</option>
+        // <option value="val3">sea three</option>
+        // <option value="val4">sea four</option>
+        // </select>
+        '</div>'+
+        '</div>'+
+        '</div>'+
+        '<footer>' + terminationButtons(project.id) + '</footer>');
+    };
+
     var addSmallLabel = function(label){
       return '<label class="control-label-small">'+label+'</label>';
     };
@@ -142,8 +197,13 @@
 
     };
 
-    var formIsInvalid = function(rootElement) {
-      return !(rootElement.find('#nimi').val() && rootElement.find('#alkupvm').val() !== '');
+    var formIsValid = function(rootElement) {
+      if (rootElement.find('#nimi').val() && rootElement.find('#alkupvm').val() !== ''){
+        return false;
+      }
+      else {
+        return true;
+      }
     };
 
     var addReserveButton = function() {
@@ -178,6 +238,7 @@
             '</div>';
         });
         rootElement.html(openProjectTemplate(currentProject, text));
+        // rootElement.html(selectedProjectLinkTemplate(currentProject, text));
         jQuery('.modal-overlay').remove();
         setTimeout(function(){}, 0);
         if(!_.isUndefined(currentProject))
@@ -199,14 +260,18 @@
       });
 
       eventbus.on('roadAddress:projectValidationSucceed', function () {
-        rootElement.find('.btn-next').prop("disabled", formIsInvalid(rootElement));
-        rootElement.find('.btn-save').prop("disabled", formIsInvalid(rootElement));
+        rootElement.find('.btn-next').prop("disabled", false);
+        rootElement.find('.btn-save').prop("disabled", false);
       });
 
       eventbus.on('layer:selected', function(layer) {
         if(layer !== 'roadAddressProject') {
           $('.wrapper').remove();
         }
+      });
+
+      eventbus.on('projectLink:clicked', function(layer) {
+        var projectSelected = true;
       });
 
       rootElement.on('click', '.project-form button.save', function() {
@@ -253,7 +318,9 @@
         eventbus.once('roadAddress:projectSaved', function (result) {
           jQuery('.modal-overlay').remove();
           if(!_.isUndefined(result.projectAddresses)) {
+            console.log(result);
             eventbus.trigger('roadAddressProject:openProject', result.project);
+            rootElement.html(selectedProjectLinkTemplate(currentProject, options));
           }
         });
         if(_.isUndefined(currentProject) || currentProject.id === 0){
@@ -278,8 +345,7 @@
       });
 
       rootElement.on('change', '.input-required', function() {
-        rootElement.find('.project-form button.next').attr('disabled', formIsInvalid(rootElement));
-        rootElement.find('.project-form button.save').attr('disabled', formIsInvalid(rootElement));
+        rootElement.find('.project-form button.save').attr('disabled', formIsValid(rootElement));
       });
 
     };
