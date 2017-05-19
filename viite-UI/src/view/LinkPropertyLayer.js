@@ -1137,12 +1137,19 @@
     });
 
     eventListener.listenTo(eventbus, 'layer:selected', function(layer, previouslySelectedLayer){
-      //TODO remove interactions to respective layer when the current layer dont match
-      // if (previouslySelectedLayer === 'linkProperty') {
-        // deactivateSelectInteractions(true);
+      //TODO create proper system for layer changes and needed calls
+      if (layer !== 'linkProperty') {
+        deactivateSelectInteractions(true);
+        removeSelectInteractions();
+      } else {
+        activateSelectInteractions(true);
+        addSelectInteractions();
+      }
+      if (previouslySelectedLayer === 'linkProperty') {
         clearLayers();
         hideLayer();
-      // }
+        removeSelectInteractions();
+      }
     });
     var show = function(map) {
       vectorLayer.setVisible(true);

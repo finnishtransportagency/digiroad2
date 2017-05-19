@@ -67,7 +67,12 @@
       // }
     });
 
-    //We add the defined interaction to the map.
+    selectSingleClick.on('select',function(event) {
+      console.log("click");
+      console.log(event);
+    });
+
+      //We add the defined interaction to the map.
     map.addInteraction(selectSingleClick);
 
     var mapMovedHandler = function(mapState) {
@@ -105,7 +110,7 @@
     };
 
     var hideLayer = function() {
-      this.stop();
+      // this.stop(); // No such function
       this.hide();
     };
 
