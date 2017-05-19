@@ -230,8 +230,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
 
     val fetchRoadAddressesByBoundingBoxF = Future(withDynTransaction {
-      val (addr, floating) = RoadAddressDAO.fetchByBoundingBox(boundingRectangle, fetchOnlyFloating = false)._1.partition(_.floating)
-      (addr.groupBy(_.linkId), floating.groupBy(_.linkId))
+      val (floating, addresses) = RoadAddressDAO.fetchByBoundingBox(boundingRectangle, fetchOnlyFloating = false)._1.partition(_.floating)
+      (floating.groupBy(_.linkId), addresses.groupBy(_.linkId))
     })
     val fetchProjectLinksF = Future(withDynTransaction {
       ProjectDAO.getProjectLinks(projectId).groupBy(_.linkId)
