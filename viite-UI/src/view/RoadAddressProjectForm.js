@@ -1,6 +1,7 @@
 (function (root) {
   root.RoadAddressProjectForm = function(projectCollection) {
     var currentProject = false;
+    var selectedProjectLink = false;
     var staticField = function(labelText, dataField) {
       var field;
       field = '<div class="form-group">' +
@@ -46,17 +47,38 @@
       return html;
     };
 
-    var terminationButtons = function(ready) {
+    var terminationButtons = function() {
       var html = '<div class="project-form form-controls">' +
-        '<button class="next btn btn-save " disabled>Tallenna</button>' +
-      // if (!ready)
-      //   html = html + "disabled";
-      // html = html +
-      //   '>Tallenna</button>' +
+        '<button class="next btn btn-save"';
+      if (!selectedProjectLink)
+        html = html + "disabled";
+      html = html +
+        '>Tallenna</button>' +
         '<button class="cancel btn btn-cancel">Peruuta</button>' +
         '</div>';
       return html;
     };
+
+    var processSelectedLinks = function(selectedLinks){
+      if(!_.isUndefined(selectedLinks)){
+        return $(".form-group[id^='VALITUTLINKIT']:last").append('<div style="display:inline-flex;justify-content:center;align-items:center;">' +
+          '<label class="control-label-floating"> LINK ID:</label>' +
+          '<span class="form-control-static-floating" style="display:inline-flex;width:auto;margin-right:5px">' + additionalSourceLinkId + '</span>' +
+          '</div>');
+      }
+    };
+
+    // var terminationButtons = function(ready) {
+    //   var html = '<div class="project-form form-controls">' +
+    //     '<button class="next btn btn-save"disabled>Tallenna</button>' +
+    //   // if (!selectedProjectLink)
+    //   //   html = html + "disabled";
+    //   // html = html +
+    //   //   '>Tallenna</button>' +
+    //     '<button class="cancel btn btn-cancel">Peruuta</button>' +
+    //     '</div>';
+    //   return html;
+    // };
 
     var headerButton =
       '<div class="linear-asset form-controls">'+
@@ -153,31 +175,16 @@
         '</form>' +
         '</div>'+
         '</div>' +
-        // '<div class = "form-result">' +
-        // '<div style="margin-left: 15px;">' +'</div>'+
-        // addSmallLabel('TIE')+ addSmallLabel('OSA')+ addSmallLabel('PITUUS')+ addSmallLabel('JATKUU')+ addSmallLabel('ELY')+
-        // '<div id ="roadpartList">'+
-        // formInfo +
-        // '</div>' +
-        // '</div>' +
         '<label>Toimenpiteet</label>'+
         '<div class="input-unit-combination">' +
-        // '<select class="form-control" id="dropDown" multiple="multiple" size="1">'+
         '<select class="form-control" id="dropDown" size="1">'+
         '<option value="action1">Valitse</option>'+
         '<option value="action2">Lakkautus</option>'+
         '</select>'+
-        //   <select name="selSS2" id="selSeaShells2" multiple="multiple" size="5">
-        //   <option value="val0">sea zero</option>
-        // <option value="val1">sea one</option>
-        // <option value="val2">sea two</option>
-        // <option value="val3">sea three</option>
-        // <option value="val4">sea four</option>
-        // </select>
         '</div>'+
         '</div>'+
         '</div>'+
-        '<footer>' + terminationButtons(project.id) + '</footer>');
+        '<footer>' + terminationButtons() + '</footer>');
     };
 
     var addSmallLabel = function(label){
@@ -192,9 +199,11 @@
 
     var addDatePicker = function () {
       var $validFrom = $('#alkupvm');
-
       dateutil.addSingleDependentDatePicker($validFrom);
+    };
 
+    var formIsInvalid = function(rootElement) {
+      return !(rootElement.find('#nimi').val() && rootElement.find('#alkupvm').val() !== '');
     };
 
     var formIsValid = function(rootElement) {
@@ -260,8 +269,8 @@
       });
 
       eventbus.on('roadAddress:projectValidationSucceed', function () {
-        rootElement.find('.btn-next').prop("disabled", false);
-        rootElement.find('.btn-save').prop("disabled", false);
+        rootElement.find('.btn-next').prop("disabled", formIsInvalid(rootElement));
+        rootElement.find('.btn-save').prop("disabled", formIsInvalid(rootElement));
       });
 
       eventbus.on('layer:selected', function(layer) {
@@ -270,8 +279,8 @@
         }
       });
 
-      eventbus.on('projectLink:clicked', function(layer) {
-        var projectSelected = true;
+      eventbus.on('projectLink:clicked', function() {
+        selectedProjectLink = true;
       });
 
       rootElement.on('click', '.project-form button.save', function() {
@@ -345,7 +354,8 @@
       });
 
       rootElement.on('change', '.input-required', function() {
-        rootElement.find('.project-form button.save').attr('disabled', formIsValid(rootElement));
+        rootElement.find('.project-form button.next').attr('disabled', formIsInvalid(rootElement));
+        rootElement.find('.project-form button.save').attr('disabled', formIsInvalid(rootElement));
       });
 
     };
