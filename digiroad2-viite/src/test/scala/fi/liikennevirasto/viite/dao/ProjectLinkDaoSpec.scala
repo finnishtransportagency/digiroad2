@@ -99,7 +99,7 @@ class ProjectLinkDaoSpec  extends FunSuite with Matchers{
     val rap = RoadAddressProject(id, ProjectState.apply(2), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(address))
     ProjectDAO.createRoadAddressProject(rap)
     val waitingCountNow=  ProjectDAO.getProjectsWithWaitingTRStatus().length
-    waitingCountp - waitingCountNow  should be (1)
+    waitingCountNow - waitingCountp  should be (1)
   }
   }
 
