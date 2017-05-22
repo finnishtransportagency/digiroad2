@@ -252,10 +252,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   def updateProjectsWaitingResponseFromTR(): Unit =
   {
+    withDynSession {
     val ProjectsInTRPending= ProjectDAO.getProjectsWithWaitingTRStatus()
     for(project<-ProjectsInTRPending)
     {
-      checkprojectstatus(project.toString)
+
+        checkprojectstatus(project.toString)
+      }
     }
   }
 

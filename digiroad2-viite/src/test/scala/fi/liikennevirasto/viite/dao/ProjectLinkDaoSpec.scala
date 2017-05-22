@@ -91,9 +91,6 @@ class ProjectLinkDaoSpec  extends FunSuite with Matchers{
     }
   }
 
-
-
-
   test("get projects waiting TR response") {
   val address=ReservedRoadPart(5:Long, 203:Long, 203:Long, 5.5:Double, Discontinuity.apply("jatkuva"), 8:Long)
   runWithRollback {
