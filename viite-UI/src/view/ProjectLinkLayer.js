@@ -1,10 +1,12 @@
 (function(root) {
-  root.ProjectLinkLayer = function(map, projectCollection) {
+  root.ProjectLinkLayer = function(map, projectCollection, selectedProjectLinkProperty, roadLayer) {
     var layerName = 'roadAddressProject';
     var vectorLayer;
     var layerMinContentZoomLevels = {};
     var currentZoom = 0;
+    Layer.call(this, layerName, roadLayer);
     var project;
+    var me = this;
     var styler = new Styler();
 
     var vectorSource = new ol.source.Vector({
@@ -27,7 +29,7 @@
     var styleFunction = function (feature, resolution){
 
       if(feature.projectLinkData.status === 0) {
-        var borderWidth = 3;
+        var borderWidth = 8;
         var strokeWidth = styler.strokeWidthByZoomLevel(currentZoom, feature.projectLinkData.roadLinkType, feature.projectLinkData.anomaly, feature.projectLinkData.roadLinkSource, false, feature.projectLinkData.constructionType);
         var lineColor = 'rgba(247, 254, 46, 1)';
         var borderCap = 'round';
@@ -44,7 +46,7 @@
         });
 
         var zIndex = styler.determineZIndex(feature.projectLinkData.roadLinkType, feature.projectLinkData.anomaly, feature.projectLinkData.roadLinkSource);
-        lineStyle.setZIndex(zIndex + 2);
+        lineStyle.setZIndex(zIndex + 3);
         return [lineStyle];
       }
       else{
@@ -62,15 +64,27 @@
       //Limit this interaction to the singleClick
       condition: ol.events.condition.singleClick,
       //The new/temporary layer needs to have a style function as well, we define it here.
-      // style: function(feature, resolution) {
-      //   return styler.generateStyleByFeature(feature.roadLinkData,map.getView().getZoom(), true);
-      // }
+      style: function(feature, resolution) {
+        return new ol.style.Style({
+          fill: new ol.style.Fill({
+            color: 'rgba(0, 255, 0, 0.75)'
+          }),
+          stroke: new ol.style.Stroke({
+            color: 'rgba(0, 255, 0, 0.95)',
+            width: 8
+          })
+        });
+      }
     });
 
     selectSingleClick.on('select',function(event) {
       console.log("click");
-      console.log(event);
-      // TODO: 374 to take this to form
+      // TODO: 374 validate selection
+      var selection = _.find(event.selected, function (selectionTarget) {
+          return !_.isUndefined(selectionTarget.projectLinkData);
+      });
+      if (!_.isUndefined(selection))
+        selectedProjectLinkProperty.open(selection.projectLinkData.linkId, true);
     });
 
     var selectDoubleClick = new ol.interaction.Select({
@@ -78,18 +92,83 @@
       //Limit this interaction to the singleClick
       condition: ol.events.condition.doubleClick,
       //The new/temporary layer needs to have a style function as well, we define it here.
-      // style: function(feature, resolution) {
-      //   return styler.generateStyleByFeature(feature.roadLinkData,map.getView().getZoom(), true);
-      // }
+      style: function(feature, resolution) {
+        return new ol.style.Style({
+          fill: new ol.style.Fill({
+            color: 'rgba(0, 255, 0, 0.75)'
+          }),
+          stroke: new ol.style.Stroke({
+            color: 'rgba(0, 255, 0, 0.95)',
+            width: 8
+          })
+        });
+      }
+    });
+
+    var clearHighlights = function(){
+      if(selectDoubleClick.getFeatures().getLength() !== 0){
+        selectDoubleClick.getFeatures().clear();
+      }
+      if(selectSingleClick.getFeatures().getLength() !== 0){
+        selectSingleClick.getFeatures().clear();
+      }
+    };
+
+    var highlightFeatures = function() {
+      clearHighlights();
+      var featuresToHighlight = [];
+      _.each(vectorLayer.getSource().getFeatures(), function(feature) {
+        var canIHighlight = !_.isUndefined(feature.projectLinkData.linkId) ?
+          selectedProjectLinkProperty.isSelected(feature.projectLinkData.linkId) : false;
+        if(canIHighlight){
+          featuresToHighlight.push(feature);
+        }
+      });
+      if(featuresToHighlight.length !== 0)
+        addFeaturesToSelection(featuresToHighlight);
+    };
+
+    /**
+     * Simple method that will add various open layers 3 features to a selection.
+     * @param ol3Features
+     */
+    var addFeaturesToSelection = function (ol3Features) {
+      var olUids = _.map(selectSingleClick.getFeatures().getArray(), function(feature){
+        return feature.ol_uid;
+      });
+      _.each(ol3Features, function(feature){
+        if(!_.contains(olUids,feature.ol_uid)){
+          selectSingleClick.getFeatures().push(feature);
+          olUids.push(feature.ol_uid); // prevent adding duplicate entries
+        }
+      });
+    };
+
+    eventbus.on('projectLink:clicked', function() {
+      highlightFeatures();
     });
 
     selectDoubleClick.on('select',function(event) {
       console.log("clickety-click");
-      console.log(event);
-      // TODO: 374 to take this to form
+      // TODO: 374 validate selection
+      var selection = _.find(event.selected, function (selectionTarget) {
+          return !_.isUndefined(selectionTarget.projectLinkData);
+      });
+      if (!_.isUndefined(selection))
+        selectedProjectLinkProperty.open(selection.projectLinkData.linkId);
     });
 
-      //Add defined interactions to the map.
+    var zoomDoubleClickListener = function(event) {
+      _.defer(function(){
+        if(selectDoubleClick.getFeatures().getLength() < 1 && map.getView().getZoom() <= 13){
+          map.getView().setZoom(map.getView().getZoom()+1);
+        }
+      });
+    };
+    //This will control the double click zoom when there is no selection that activates
+    map.on('dblclick', zoomDoubleClickListener);
+
+    //Add defined interactions to the map.
     map.addInteraction(selectSingleClick);
     map.addInteraction(selectDoubleClick);
 
@@ -128,16 +207,19 @@
     };
 
     var hideLayer = function() {
-      // this.stop(); // No such function
-      this.hide();
+      me.stop();
+      me.hide();
     };
 
     eventbus.on('roadAddressProject:openProject', function(projectSelected) {
       this.project = projectSelected;
+      eventbus.trigger('layer:enableButtons', false);
+      eventbus.trigger('editMode:setReadOnly', false);
       eventbus.trigger('roadAddressProject:selected', projectSelected.id, layerName, applicationModel.getSelectedLayer());
     });
 
     eventbus.on('roadAddressProject:selected', function(projId) {
+      console.log(projId);
       eventbus.once('roadAddressProject:projectFetched', function(id) {
         projectCollection.fetch(map.getView().calculateExtent(map.getSize()),map.getView().getZoom(), id);
         // vectorSource.clear();
@@ -146,20 +228,20 @@
       projectCollection.getProjectsWithLinksById(projId);
     });
 
-        eventbus.on('roadAddressProject:fetched', function(projectLinks){
-          var simulatedOL3Features = [];
-          _.map(projectLinks, function(projectLink){
-            var points = _.map(projectLink.points, function(point) {
-              return [point.x, point.y];
-            });
-            var feature =  new ol.Feature({ geometry: new ol.geom.LineString(points)
-            });
-            feature.projectLinkData = projectLink;
-            simulatedOL3Features.push(feature);
-          });
-          vectorLayer.getSource().addFeatures(simulatedOL3Features);
-          vectorLayer.changed();
+    eventbus.on('roadAddressProject:fetched', function(projectLinks){
+      var simulatedOL3Features = [];
+      _.map(projectLinks, function(projectLink){
+        var points = _.map(projectLink.points, function(point) {
+          return [point.x, point.y];
         });
+        var feature =  new ol.Feature({ geometry: new ol.geom.LineString(points)
+        });
+        feature.projectLinkData = projectLink;
+        simulatedOL3Features.push(feature);
+      });
+      vectorLayer.getSource().addFeatures(simulatedOL3Features);
+      vectorLayer.changed();
+    });
 
     eventbus.on('map:moved', mapMovedHandler, this);
 

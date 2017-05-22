@@ -105,6 +105,10 @@
       });
     };
 
+    eventbus.on('editMode:setReadOnly', function(mode) {
+      editModeToggle.toggleEditMode(mode);
+    });
+
     bindExternalEventHandlers();
 
     elements.expanded.find('.legend-container').append(roadClassLegend);

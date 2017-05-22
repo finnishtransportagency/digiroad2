@@ -1,6 +1,7 @@
 (function (root) {
   root.RoadAddressProjectForm = function(projectCollection) {
-    var currentProject;
+    var currentProject = false;
+    var selectedProjectLink = false;
     var staticField = function(labelText, dataField) {
       var field;
       field = '<div class="form-group">' +
@@ -8,6 +9,15 @@
         '</div>';
       return field;
     };
+    var actionSelectedField = function() {
+      //TODO: cancel and save buttons Viite-374
+      var field;
+      field = '<div class="form-group action-selected-field" hidden = "true">' +
+        '<p class="asset-log-info">' + 'Tarkista tekemäsi muutokset.' + '<br>' + 'Jos muutokset ok, tallenna.' + '</p>' +
+        '</div>';
+      return field;
+    };
+    var options =['Valitse'];
 
     var largeInputField = function (dataField) {
       return '<div class="form-group">' +
@@ -16,7 +26,7 @@
         '</div>';
     };
 
-    var inputFieldRequired = function(labelText, id, placeholder,  value) {
+    var inputFieldRequired = function(labelText, id, placeholder, value) {
       var field = '<div class="form-group input-required">' +
         '<label class="control-label required">' + labelText + '</label>' +
         '<input type="text" class="form-control" id = "'+id+'" placeholder = "'+placeholder+'" value="'+value+'"/>' +
@@ -43,7 +53,52 @@
         '<button class="cancel btn btn-cancel">Peruuta</button>' +
         '</div>';
       return html;
-  };
+    };
+
+    var terminationButtons = function() {
+      var html = '<div class="project-form form-controls">' +
+        '<button class="next btn btn-save"';
+      if (!selectedProjectLink)
+        html = html + "disabled";
+      html = html +
+        '>Tallenna</button>' +
+        '<button class="cancel btn btn-cancel">Peruuta</button>' +
+        '</div>';
+      return html;
+    };
+
+    var processSelectedLinks = function(selectedLinks){
+      if(!_.isUndefined(selectedLinks)){
+        return $(".form-group[id^='VALITUTLINKIT']:last").append('<div style="display:inline-flex;justify-content:center;align-items:center;">' +
+          '<label class="control-label-floating"> LINK ID:</label>' +
+          '<span class="form-control-static-floating" style="display:inline-flex;width:auto;margin-right:5px">' + additionalSourceLinkId + '</span>' +
+          '</div>');
+      }
+    };
+
+    var selectedData = function (selected) {
+      var span = '';
+        if (selected) {
+          span = '<span><label>' +
+                 'TIE ' + selected.roadNumber +
+                 ' OSA ' + selected.roadPartNumber +
+                 ' AJR ' + selected.trackCode +
+                 '</label></span>'
+        }
+        return span;
+    };
+
+    // var terminationButtons = function(ready) {
+    //   var html = '<div class="project-form form-controls">' +
+    //     '<button class="next btn btn-save"disabled>Tallenna</button>' +
+    //   // if (!selectedProjectLink)
+    //   //   html = html + "disabled";
+    //   // html = html +
+    //   //   '>Tallenna</button>' +
+    //     '<button class="cancel btn btn-cancel">Peruuta</button>' +
+    //     '</div>';
+    //   return html;
+    // };
 
     var headerButton =
       '<div class="linear-asset form-controls">'+
@@ -125,6 +180,44 @@
         '<footer>' + buttons(formInfo !== '') + '</footer>');
     };
 
+    var selectedProjectLinkTemplate = function(project, optionTags, selected) {
+      var selection = _.chain(selected).map(function(link) {
+        return selectedData(link);
+      });
+      return _.template('' +
+        // '<header>' +
+        // titleWithProjectName(project.name) +
+        // '</header>' +
+        '<div class="wrapper read-only">'+
+        '<div class="form form-horizontal form-dark">'+
+        '<div class="edit-control-group choice-group">'+
+        staticField('Lisätty järjestelmään', project.createdBy + ' ' + project.startDate)+
+        staticField('Muokattu viimeksi', project.modifiedBy + ' ' + project.dateModified)+
+        '<div class="form-group editable form-editable-roadAddressProject"> '+
+        '<form id="roadAddressProject" class="input-unit-combination form-group form-horizontal roadAddressProject">'+
+        '<label>Toimenpiteet</label>'+
+        selection +
+        '<div class="input-unit-combination">' +
+        '<select class="form-control" id="dropDown" size="1">'+
+        '<option value="action1">Valitse</option>'+
+        '<option value="action2">Lakkautus</option>'+
+        '<option value="action3">Uusi</option>'+
+        '<option value="action4">Numeroinnin muutos</option>'+
+        '<option value="action5">Ennallaan</option>'+
+        '<option value="action6">Kalibrointiarvon muutos</option>'+
+        '<option value="action7">Siirto</option>'+
+        '<option value="action8">Kalibrointipisteen siirto</option>'+
+        '</select>'+
+        '</div>'+
+        '</form>' +
+        actionSelectedField()+
+        '</div>'+
+        '</div>' +
+        '</div>'+
+        '</div>'+
+        '<footer>' + terminationButtons() + '</footer>');
+    };
+
     var addSmallLabel = function(label){
       return '<label class="control-label-small">'+label+'</label>';
     };
@@ -137,13 +230,20 @@
 
     var addDatePicker = function () {
       var $validFrom = $('#alkupvm');
-
       dateutil.addSingleDependentDatePicker($validFrom);
-
     };
 
     var formIsInvalid = function(rootElement) {
       return !(rootElement.find('#nimi').val() && rootElement.find('#alkupvm').val() !== '');
+    };
+
+    var formIsValid = function(rootElement) {
+      if (rootElement.find('#nimi').val() && rootElement.find('#alkupvm').val() !== ''){
+        return false;
+      }
+      else {
+        return true;
+      }
     };
 
     var addReserveButton = function() {
@@ -178,6 +278,7 @@
             '</div>';
         });
         rootElement.html(openProjectTemplate(currentProject, text));
+        // rootElement.html(selectedProjectLinkTemplate(currentProject, text));
         jQuery('.modal-overlay').remove();
         setTimeout(function(){}, 0);
         if(!_.isUndefined(currentProject))
@@ -207,6 +308,11 @@
         if(layer !== 'roadAddressProject') {
           $('.wrapper').remove();
         }
+      });
+
+      eventbus.on('projectLink:clicked', function(selected) {
+        selectedProjectLink = selected;
+        rootElement.html(selectedProjectLinkTemplate(currentProject, options, selectedProjectLink));
       });
 
       rootElement.on('click', '.project-form button.save', function() {
@@ -247,13 +353,20 @@
         return false;
       });
 
+      rootElement.on('change', '.form-group', function() {
+        rootElement.find('.action-selected-field').prop("hidden", false);
+      });
+
       rootElement.on('click', '.project-form button.next', function(){
         var data = $('#roadAddressProject').get(0);
         applicationModel.addSpinner();
+        applicationModel.selectLayer('roadAddressProject');
         eventbus.once('roadAddress:projectSaved', function (result) {
           jQuery('.modal-overlay').remove();
           if(!_.isUndefined(result.projectAddresses)) {
+            console.log(result);
             eventbus.trigger('roadAddressProject:openProject', result.project);
+            rootElement.html(selectedProjectLinkTemplate(currentProject, options, selectedProjectLink));
           }
         });
         if(_.isUndefined(currentProject) || currentProject.id === 0){
