@@ -56,7 +56,14 @@
   };
     var sendRoadAddressChangeButton = function() {
       //TODO: Viite-375 show send-button after successful save
-      var sendButton = '<div class="project-form form-controls">' +
+
+       $('#information-content').append('' +
+        '<div class="form form-horizontal">' +
+        '<p>' + 'Validointi ok. Voit tehdä tieosoitteenmuutosilmoituksen' + '<br>' +
+        'tai jatkaa muokkauksia.' + '</p>' +
+        '</div>');
+
+        var sendButton = '<div class="project-form form-controls">' +
         '<button class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button>';
         return sendButton;
       };
@@ -191,9 +198,9 @@
         return selectedData(link);
       });
       return _.template('' +
-        // '<header>' +
-        // titleWithProjectName(project.name) +
-        // '</header>' +
+        '<header>' +
+         titleWithProjectName(project.name) +
+        '</header>' +
         '<div class="wrapper read-only">'+
         '<div class="form form-horizontal form-dark">'+
         '<div class="edit-control-group choice-group">'+
