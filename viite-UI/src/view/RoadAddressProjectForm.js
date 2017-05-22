@@ -224,7 +224,7 @@
     };
 
     var addSmallInputNumber = function(id, value){
-      //Validate only numebers characters on "onkeypress" including TAB and backspace
+      //Validate only number characters on "onkeypress" including TAB and backspace
       return '<input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode == 8 || event.keyCode == 9)' +
         '" class="form-control small-input roadAddressProject" id="'+id+'" value="'+(_.isUndefined(value)? '' : value )+'" onclick=""/>';
     };
@@ -279,7 +279,6 @@
             '</div>';
         });
         rootElement.html(openProjectTemplate(currentProject, text));
-        // rootElement.html(selectedProjectLinkTemplate(currentProject, text));
         jQuery('.modal-overlay').remove();
         setTimeout(function(){}, 0);
         if(!_.isUndefined(currentProject))
@@ -320,6 +319,29 @@
         // Projectinfo is not undefined and publishable is something like true.
         var ready = projectCollection.projectinfo && projectCollection.projectinfo.publishable;
         rootElement.find('.btn-send').prop("disabled", !ready);
+      });
+
+      eventbus.on('roadAddress:projectLinksUpdateFailed',function(errorCode){
+        applicationModel.removeSpinner();
+        //TODO 375 should modify text to show error status during Status update
+        if (errorCode == 400){
+          return new ModalConfirm("Valittujen lähdelinkkien geometriaa ei saatu sovitettua kohdegeometrialle. Ota yhteyttä järjestelmätukeen.");
+        } else if (errorCode == 401){
+          return new ModalConfirm("Sinulla ei ole käyttöoikeutta muutoksen tekemiseen.");
+        } else if (errorCode == 412){
+          return new ModalConfirm("Täyttämättömien vaatimusten takia siirtoa ei saatu tehtyä. Ota yhteyttä järjestelmätukeen.");
+        } else if (errorCode == 500){
+          return new ModalConfirm("Siirto ei onnistunut taustajärjestelmässä tapahtuneen virheen takia, ota yhteyttä järjestelmätukeen.");
+        } else {
+          return new ModalConfirm("Siirto ei onnistunut taustajärjestelmässä tapahtuneen tuntemattoman virheen takia, ota yhteyttä järjestelmätukeen.");
+        }
+      });
+
+      eventbus.on('roadAddress:projectLinksUpdated',function(){
+        $('.project-form button.update').remove();
+        $('.project-form button.cancel').remove();
+        applicationModel.removeSpinner();
+        //TODO 375 append publish button
       });
 
       rootElement.on('click', '.project-form button.save', function() {

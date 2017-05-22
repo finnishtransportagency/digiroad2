@@ -9,6 +9,10 @@
     var self = this;
     var STATUS_NOT_HANDLED = 0;
     var STATUS_HANDLED = 1;
+    var BAD_REQUEST_400 = 400;
+    var UNAUTHORIZED_401 = 401;
+    var PRECONDITION_FAILED_412 = 412;
+    var INTERNAL_SERVER_ERROR_500 = 500;
 
     var projectLinks = function() {
       return _.flatten(fetchedProjectLinks);
@@ -115,8 +119,7 @@
 
 
     this.saveProjectLinks = function(selectedProjectLink, currentProject) {
-      // eventbus.trigger('linkProperties:saving');
-
+      applicationModel.addSpinner();
       var linkIds = _.map(selectedProjectLink,function (t){
         if(!_.isUndefined(t.linkId)){
           return t.linkId;
@@ -129,12 +132,12 @@
 
       if(!_.isEmpty(linkIds) && projectId !== 0){
         backend.updateProjectLinks(data, function(errorObject) {
-          // if (errorObject.status == INTERNAL_SERVER_ERROR_500 || errorObject.status == BAD_REQUEST) {
-          eventbus.trigger('linkProperties:transferFailed', errorObject.status);
-          // }
+          if (errorObject.status == INTERNAL_SERVER_ERROR_500 || errorObject.status == BAD_REQUEST_400) {
+          eventbus.trigger('roadAddress:projectLinksUpdateFailed', errorObject.status);
+          }
         });
       } else {
-        eventbus.trigger('projectLinks:updateFailed', 'preconditionfailed');
+        eventbus.trigger('roadAddress:projectLinksUpdateFailed', PRECONDITION_FAILED_412);
       }
     };
 

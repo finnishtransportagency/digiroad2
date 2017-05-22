@@ -34,7 +34,7 @@
         data: JSON.stringify(data),
         dataType: "json",
         success: function (link) {
-          eventbus.trigger('projectroadlinks:saved');
+          eventbus.trigger('roadAddress:projectLinksUpdated');
         },
         error: errorCallback
       });
