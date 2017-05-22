@@ -283,7 +283,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       Some(ProjectState.apply(4))
     }    else if (trState=="T"){
       Some(ProjectState.apply(5))
-    } else if (trState=="V"){
+    } else if (trState=="V" || trState=="null"){  //null when we get response, but TR for some reason doesn't have that project
       Some(ProjectState.apply((3)))
     } else {
       None
