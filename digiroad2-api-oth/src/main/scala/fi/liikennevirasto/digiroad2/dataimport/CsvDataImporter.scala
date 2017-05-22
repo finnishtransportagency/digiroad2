@@ -40,7 +40,7 @@ trait RoadLinkCsvImporter {
   }
 
   case class LinkProperty(columnName: String, value: Any)
-  case class CsvRoadLinkRow(linkId: Int, properties: Seq[LinkProperty])
+  case class CsvRoadLinkRow(linkId: Int, objectID: Int = 0, properties: Seq[LinkProperty])
 
   type IncompleteParameters = List[String]
   type ParsedProperties = List[LinkProperty]
@@ -107,20 +107,8 @@ trait RoadLinkCsvImporter {
   }
 
   def updateRoadLinkInVVH(roadLinkVVHAttribute: CsvRoadLinkRow): Option[Long] = {
-    def getCompletaryObjectId(linkId: Long) = {
-      vvhClient.complementaryData.fetchComplementaryRoadlink(roadLinkVVHAttribute.linkId) match {
-        case Some(vvhRoadlink) => vvhRoadlink.attributes.get("OBJECTID")
-        case _ => None
-      }
-    }
-
     val mapProperties = roadLinkVVHAttribute.properties.map { prop => prop.columnName -> prop.value }.toMap
-    val objectId = getCompletaryObjectId(roadLinkVVHAttribute.linkId) match {
-      case None => return Some(roadLinkVVHAttribute.linkId)
-      case Some(objId) => objId
-    }
-
-    vvhClient.complementaryData.updateVVHFeatures(mapProperties ++ Map("OBJECTID" -> objectId)) match {
+    vvhClient.complementaryData.updateVVHFeatures(mapProperties ++ Map("OBJECTID" -> roadLinkVVHAttribute.objectID)) match {
       case Right(error) => Some(roadLinkVVHAttribute.linkId)
       case _ => None
     }
@@ -156,12 +144,11 @@ trait RoadLinkCsvImporter {
     }
   }
 
-  def validateAdministrativeClass(properties: Seq[LinkProperty]): Option[AdministrativeClass] = {
-    properties.filter(_.columnName == "ADMINCLASS").map(_.value).headOption
-    match {
-      case Some(propertyValue) if (administrativeClassLimitations.contains(AdministrativeClass.apply(propertyValue.toString.toInt))) =>
-        Some(AdministrativeClass.apply(propertyValue.toString.toInt))
-      case _ => None
+  def validateAdministrativeClass(adminClassValue: Int): Option[AdministrativeClass] = {
+    if (administrativeClassLimitations.contains(AdministrativeClass.apply(adminClassValue))) {
+      Some(AdministrativeClass.apply(adminClassValue))
+    } else {
+      None
     }
   }
 
@@ -175,10 +162,22 @@ trait RoadLinkCsvImporter {
       override val delimiter: Char = ';'
     })
     csvReader.allWithHeaders().foldLeft(ImportResult()) { (result, row) =>
+      def getCompletaryVVHInfo(linkId: Long) = {
+        vvhClient.complementaryData.fetchComplementaryRoadlink(linkId) match {
+          case Some(vvhRoadlink) => (vvhRoadlink.attributes.get("OBJECTID"), vvhRoadlink.administrativeClass.value)
+          case _ => None
+        }
+      }
+
+      val (objectId, oldAdminClassValue) = getCompletaryVVHInfo(row("Linkin ID").toInt) match {
+        case None => (None, None)
+        case (Some(objId), adminClass) => (objId, adminClass)
+      }
       val missingParameters = findMissingParameters(row)
       val (malformedParameters, properties) = linkRowToProperties(row)
-      val unauthorizedAdminClass = validateAdministrativeClass(properties)
-      if (missingParameters.isEmpty && malformedParameters.isEmpty && unauthorizedAdminClass.isEmpty) {
+      val unauthorizedAdminClass = validateAdministrativeClass(oldAdminClassValue.toString.toInt)
+
+      if (missingParameters.isEmpty && malformedParameters.isEmpty && unauthorizedAdminClass.isEmpty && objectId != None) {
 
         val (propertiesOTH, propertiesVVH) = properties.partition(a => fieldInOTH.contains(a.columnName))
         val hasDirectionType = propertiesVVH.exists(_.columnName == "DIRECTIONTYPE")
@@ -189,13 +188,11 @@ trait RoadLinkCsvImporter {
             updateRoadLinkOTH(parsedRowOTH, Some(userProvider.getCurrentUser().username), hasDirectionType) match {
               case None => result
               case Some(value) =>
-                dynamicSession.rollback()
                 result.copy(nonUpdatedLinks = NonUpdatedLink(linkId = value, csvRow = rowToString(row)) :: result.nonUpdatedLinks)
-
             }
           }
           if (propertiesVVH.nonEmpty) {
-            val parsedRowVVH = CsvRoadLinkRow(row("Linkin ID").toInt, properties = propertiesVVH)
+            val parsedRowVVH = CsvRoadLinkRow(row("Linkin ID").toInt, objectId.toString.toInt, properties = propertiesVVH)
             updateRoadLinkInVVH(parsedRowVVH) match {
               case None => result
               case Some(value) =>
@@ -206,6 +203,10 @@ trait RoadLinkCsvImporter {
         }
       } else {
         result.copy(
+          nonUpdatedLinks = objectId match {
+            case None => NonUpdatedLink(linkId = row("Linkin ID").toInt, csvRow = rowToString(row)) :: result.nonUpdatedLinks
+            case _ => result.nonUpdatedLinks
+          },
           incompleteLinks = missingParameters match {
             case Nil => result.incompleteLinks
             case parameters => IncompleteLink(missingParameters = parameters, csvRow = rowToString(row)) :: result.incompleteLinks
