@@ -59,7 +59,8 @@
         roadAddressProjects = result.projects;
         roadAddressProjectLinks = result.projectLinks;
         projectinfo = {
-          id: result.projects.id
+          id: result.projects.id,
+          publishable: false
         };
         eventbus.trigger('roadAddressProject:projectFetched', projectinfo.id);
       });
@@ -96,7 +97,8 @@
             id: result.project.id,
             additionalInfo: result.project.additionalInfo,
             status: result.project.status,
-            startDate: result.project.startDate
+            startDate: result.project.startDate,
+            publishable: false
           };
           eventbus.trigger('roadAddress:projectSaved', result);
           dirtyRoadSegmentLst = [];
@@ -126,7 +128,8 @@
             id: result.project.id,
             additionalInfo: result.project.additionalInfo,
             status: result.project.status,
-            startDate: result.project.startDate
+            startDate: result.project.startDate,
+            publishable: false
           };
           eventbus.trigger('roadAddress:projectSaved', result);
           dirtyRoadSegmentLst = [];
@@ -137,6 +140,11 @@
       }, function () {
         eventbus.trigger('roadAddress:projectFailed');
       });
+    };
+
+    this.publishProject = function() {
+      // TODO: Project publish action
+      console.log("TODO");
     };
 
     var addSmallLabel = function (label) {

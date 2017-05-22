@@ -269,6 +269,16 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     Map("projectId" -> modification.projectId, "publishable" -> projectService.projectLinkPublishable(modification.projectId))
   }
 
+  post("/project/publish"){
+    val user = userProvider.getCurrentUser()
+    val projectId = params.get("projectId")
+
+    projectId.map(_.toLong).map(projectService.publishProject).map {
+      case Some(s) => PreconditionFailed(s)
+      case _ => Map("status" -> "ok")
+    }.getOrElse(BadRequest("Missing mandatory 'projectId' parameter"))
+  }
+
   private def roadlinksData(): (Seq[String], Seq[String]) = {
     val data = JSON.parseFull(params.get("data").get).get.asInstanceOf[Map[String,Any]]
     val sources = data("sourceLinkIds").asInstanceOf[Seq[String]]

@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, RoadLinkService}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink, RoadAddressLinkLike}
-import fi.liikennevirasto.viite.process.RoadAddressFiller
+import fi.liikennevirasto.viite.process.{ProjectDeltaCalculator, RoadAddressFiller}
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ListBuffer
@@ -297,6 +297,19 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     withDynSession{
       ProjectDAO.getProjectLinks(projectId, Some(LinkStatus.NotHandled)).isEmpty
     }
+  }
+
+  /**
+    * Publish project with id projectId
+    * @param projectId Project to publish
+    * @return optional error message, empty if no error
+    */
+  def publishProject(projectId: Long): Option[String] = {
+    // TODO: Check that project actually is finished: projectLinkPublishable(projectId)
+    // TODO: use ProjectDeltaCalculator to calculate delta
+    // TODO: Do the changes given in Delta in database
+    // TODO: Run post-change tests for the roads that have been edited and throw an exception to roll back if not acceptable
+    Some("Not implemented")
   }
 
   private def toProjectAddressLink(ral: RoadAddressLinkLike): ProjectAddressLink = {

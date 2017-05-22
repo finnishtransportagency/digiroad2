@@ -321,6 +321,12 @@
         rootElement.html(selectedProjectLinkTemplate(currentProject, options, selectedProjectLink));
       });
 
+      eventbus.on('roadAddress:linksSaved', function() {
+        // Projectinfo is not undefined and publishable is something like true.
+        var ready = projectCollection.projectinfo && projectCollection.projectinfo.publishable;
+        rootElement.find('.btn-send').prop("disabled", !ready);
+      });
+
       rootElement.on('click', '.project-form button.save', function() {
         var data = $('#roadAddressProject').get(0);
         applicationModel.addSpinner();
@@ -402,7 +408,7 @@
       });
 
       rootElement.on('click', '.project-form button.send', function(){
-
+        projectCollection.publishProject();
       });
     };
     bindEvents();
