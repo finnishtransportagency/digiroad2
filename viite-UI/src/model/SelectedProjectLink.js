@@ -3,6 +3,7 @@
 
     var current = [];
     var ids = [];
+
     var open = function (linkid, multiSelect) {
       if (!multiSelect) {
         current = projectLinkCollection.getByLinkId([linkid]);

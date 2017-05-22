@@ -260,7 +260,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
   }
 
-  put("/project/roadlinks"){
+  put("/project/roadlinksSent"){
     val user = userProvider.getCurrentUser()
 
     val modification = parsedBody.extract[RoadAddressProjectLinkUpdate]

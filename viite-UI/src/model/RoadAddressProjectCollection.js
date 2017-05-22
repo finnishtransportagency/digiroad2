@@ -7,9 +7,11 @@
     var fetchedProjectLinks = [];
     var roadAddressProjectLinks = [];
     var self = this;
+    var STATUS_NOT_HANDLED = 0;
+    var STATUS_HANDLED = 1;
 
     var projectLinks = function() {
-        return _.flatten(fetchedProjectLinks);
+      return _.flatten(fetchedProjectLinks);
     };
 
     this.getAll = function () {
@@ -28,7 +30,7 @@
 
     this.getByLinkId = function (ids) {
       var ProjectLinks = _.filter(_.flatten(fetchedProjectLinks), function (projectLink){
-          return _.contains(ids, projectLink.getData().linkId);
+        return _.contains(ids, projectLink.getData().linkId);
       });
       return ProjectLinks;
     };
@@ -109,6 +111,31 @@
       }, function () {
         eventbus.trigger('roadAddress:projectFailed');
       });
+    };
+
+
+    this.saveProjectLinks = function(selectedProjectLink, currentProject) {
+      // eventbus.trigger('linkProperties:saving');
+
+      var linkIds = _.map(selectedProjectLink,function (t){
+        if(!_.isUndefined(t.linkId)){
+          return t.linkId;
+        } else return t;
+      });
+
+      var projectId = currentProject.id;
+
+      var data = {'linkIds': linkIds, 'projectId': projectId, 'newStatus': STATUS_HANDLED};
+
+      if(!_.isEmpty(linkIds) && projectId !== 0){
+        backend.updateProjectLinks(data, function(errorObject) {
+          // if (errorObject.status == INTERNAL_SERVER_ERROR_500 || errorObject.status == BAD_REQUEST) {
+          eventbus.trigger('linkProperties:transferFailed', errorObject.status);
+          // }
+        });
+      } else {
+        eventbus.trigger('projectLinks:updateFailed', 'preconditionfailed');
+      }
     };
 
     this.createProject = function (data, currentProject) {
@@ -194,8 +221,8 @@
     }
 
 
-      eventbus.on('clearproject', function() {
-        this.clearRoadAddressProjects();
+    eventbus.on('clearproject', function() {
+      this.clearRoadAddressProjects();
     });
 
 
@@ -214,13 +241,13 @@
 
     var ProjectLinkModel = function(data) {
 
-        var getData = function() {
-           return data;
-        };
+      var getData = function() {
+        return data;
+      };
 
-        return {
-           getData: getData
-        };
+      return {
+        getData: getData
+      };
     };
   };
 })(this);

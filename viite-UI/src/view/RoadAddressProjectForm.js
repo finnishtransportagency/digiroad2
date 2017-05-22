@@ -70,7 +70,7 @@
 
     var terminationButtons = function() {
       var html = '<div class="project-form form-controls">' +
-        '<button class="next btn btn-save"';
+        '<button class="update btn btn-save"';
       if (!selectedProjectLink)
         html = html + "disabled";
       html = html +
@@ -93,25 +93,13 @@
       var span = '';
         if (selected) {
           span = '<span><label>' +
-                 'TIE ' + selected.roadNumber +
+                 ' TIE ' + selected.roadNumber +
                  ' OSA ' + selected.roadPartNumber +
                  ' AJR ' + selected.trackCode +
                  '</label></span>';
         }
         return span;
     };
-
-    // var terminationButtons = function(ready) {
-    //   var html = '<div class="project-form form-controls">' +
-    //     '<button class="next btn btn-save"disabled>Tallenna</button>' +
-    //   // if (!selectedProjectLink)
-    //   //   html = html + "disabled";
-    //   // html = html +
-    //   //   '>Tallenna</button>' +
-    //     '<button class="cancel btn btn-cancel">Peruuta</button>' +
-    //     '</div>';
-    //   return html;
-    // };
 
     var headerButton =
       '<div class="linear-asset form-controls">'+
@@ -358,6 +346,10 @@
         } else {
           projectCollection.saveProject(data, currentProject);
         }
+      });
+
+      rootElement.on('click', '.project-form button.update', function() {
+        projectCollection.saveProjectLinks(selectedProjectLink, currentProject);
       });
 
       rootElement.on('click', '.btn-reserve', function() {
