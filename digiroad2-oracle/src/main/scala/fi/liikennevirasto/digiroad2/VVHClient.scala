@@ -14,31 +14,6 @@ import org.slf4j.LoggerFactory
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
 
-
-sealed trait NodeType  {
-  def value: Int
-}
-
-object NodeType {
-val values = Set(Suljettu_liikennealue, Risteys, Tasoristeys, Pseudosolmupiste, Tien_paatepiste,
-   Kiertoliittyma, Liikenneaukio, Tiepalvelualue, Kevyen_liikenteen_liittyma, Unknown)
-
-  def apply(intValue: Int): NodeType = {
-    values.find(_.value == intValue).getOrElse(Unknown)
-  }
-
-  case object Suljettu_liikennealue extends NodeType { def value = 1 }
-  case object Risteys extends NodeType { def value = 2 }
-  case object Tasoristeys extends NodeType { def value = 3 }
-  case object Pseudosolmupiste extends NodeType { def value = 4 }
-  case object Tien_paatepiste extends NodeType { def value = 5 }
-  case object Kiertoliittyma extends NodeType { def value = 6 }
-  case object Liikenneaukio extends NodeType { def value = 7 }
-  case object Tiepalvelualue extends NodeType { def value = 8 }
-  case object Kevyen_liikenteen_liittyma extends NodeType { def value = 9 }
-  case object Unknown extends NodeType { def value = 99 }
-}
-
 sealed trait FeatureClass
 object FeatureClass {
   case object TractorRoad extends FeatureClass
@@ -47,6 +22,29 @@ object FeatureClass {
   case object AllOthers extends FeatureClass
 }
 
+sealed trait NodeType {
+  def value: Int
+}
+
+object NodeType {
+  val values = Set(ClosedTrafficArea, Intersection, RailwayCrossing, PseudoNode, EndOfTheRoad,
+    RoundaboutNodeType, TrafficedSquare, RoadServiceArea, LightTrafficJunction, UnknownNodeType)
+
+  def apply(value: Int): NodeType = {
+    values.find(_.value == value).getOrElse(UnknownNodeType)
+  }
+
+  case object ClosedTrafficArea extends NodeType { def value = 1 }
+  case object Intersection extends NodeType { def value = 2 }
+  case object RailwayCrossing extends NodeType { def value = 3 }
+  case object PseudoNode extends NodeType { def value = 4 }
+  case object EndOfTheRoad extends NodeType { def value = 5 }
+  case object RoundaboutNodeType extends NodeType { def value = 6 }
+  case object TrafficedSquare extends NodeType { def value = 7 }
+  case object RoadServiceArea extends NodeType { def value = 8 }
+  case object LightTrafficJunction extends NodeType { def value = 9 }
+  case object UnknownNodeType extends NodeType { def value = 99 }
+}
 case class VVHRoadlink(linkId: Long, municipalityCode: Int, geometry: Seq[Point],
                        administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection,
                        featureClass: FeatureClass, modifiedAt: Option[DateTime] = None, attributes: Map[String, Any] = Map(),
@@ -61,8 +59,7 @@ case class ChangeInfo(oldId: Option[Long], newId: Option[Long], mmlId: Long, cha
 case class VVHHistoryRoadLink(linkId: Long, municipalityCode: Int, geometry: Seq[Point], administrativeClass: AdministrativeClass,
                               trafficDirection: TrafficDirection, featureClass: FeatureClass, createdDate:BigInt, endDate: BigInt, attributes: Map[String, Any] = Map())
 
-case class VVHRoadNodes(objectId: Long, geometry: Seq[Point], nodeId: Long, formOfNode: NodeType, municipalityCode: Int, createdDate:BigInt,
-                        modifiedDate:BigInt, attributes: Map[String, Any] = Map())
+case class VVHRoadNodes(objectId: Long, geometry: Point, nodeId: Long, formOfNode: NodeType, municipalityCode: Int)
 
 /**
   * Numerical values for change types from VVH ChangeInfo Api
@@ -731,6 +728,13 @@ class VVHClient(vvhRestApiEndPoint: String) {
       .getOrElse(TrafficDirection.UnknownDirection)
   }
 
+  protected def extractNodeType(attributes: Map[String, Any]): NodeType = {
+    Option(attributes("FORMOFNODE").asInstanceOf[BigInt])
+      .map(_.toInt)
+      .map(NodeType.apply)
+      .getOrElse(NodeType.UnknownNodeType)
+  }
+
   /**
     * Extract double value from VVH data. Used for change info start and end measures.
     */
@@ -1057,30 +1061,11 @@ class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRestApiE
 class VVHRoadNodesClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRestApiEndPoint) {
 
   private val roadNodesService = "Roadnode_data"
-  override val linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface //tipo de geometria
+  override val linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface
 
   def fetchByMunicipalityFuture(municipality: Int): Future[Seq[VVHRoadNodes]] = {
     Future(queryVVHRoadNodesByMunicipality(municipality))
   }
-
-//  def fetchRoadNodes[T](municipality: Set[Int], fieldSelection: Option[String],
-  //                        fetchGeometry: Boolean,
-  //                        resultTransition: (Map[String, Any], List[List[Double]]) => T,
-  //                        filter: Set[Int] => String): Seq[T] = {
-  //
-  //      val definition = roadNodesLayerDefinition(withMunicipalityFilter(municipality))
-  //      val url = vvhRestApiEndPoint + roadNodesService + "/FeatureServer/query?" +
-  //        s"layerDefs=$definition&${queryParameters(fetchGeometry)}"
-  //
-  //      fetchVVHFeatures(url) match {
-  //        case Left(features) => features.map { feature =>
-  //          val attributes = extractFeatureAttributes(feature)
-  //          val geometry = if (fetchGeometry) extractFeatureGeometry(feature) else Nil
-  //          resultTransition(attributes, geometry)
-  //        }
-  //        case Right(error) => throw new VVHClientException(error.toString)
-  //      }
-  //    }.toList
 
   def queryVVHRoadNodesByMunicipality(municipality: Int): Seq[VVHRoadNodes] = {
     val definition = roadNodesLayerDefinition(withMunicipalityFilter(Set(municipality)))
@@ -1095,25 +1080,18 @@ class VVHRoadNodesClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRestAp
 
   protected def extractVVHFeatureRoadNodes(feature: Map[String, Any]): VVHRoadNodes = {
     val attributes = extractFeatureAttributes(feature)
-    val path = extractFeatureGeometry(feature)
-    roadNodesFromFeature(attributes, path)
+    val geometry = feature("geometry").asInstanceOf[Map[String, Double]]
+    roadNodesFromFeature(attributes, geometry)
   }
 
-  protected def roadNodesFromFeature(attributes: Map[String, Any], path: List[List[Double]]): VVHRoadNodes = {
-    val linkGeometry: Seq[Point] = path.map(point => {
-      Point(point(0), point(1), extractMeasure(point(2)).get)
-    })
+  protected def roadNodesFromFeature(attributes: Map[String, Any], geometryNode: Map[String, Double]): VVHRoadNodes = {
+    val linkGeometry: Point = Point(geometryNode.get("x").get, geometryNode.get("y").get)
+
     val municipalityCode = attributes("MUNICIPALITYCODE").asInstanceOf[BigInt].toInt
-    val linkGeometryForApi = Map("points" -> path.map(point => Map("x" -> point(0), "y" -> point(1), "z" -> point(2), "m" -> point(3))))
-    val linkGeometryWKTForApi = Map("geometryWKT" -> ("LINESTRING ZM (" + path.map(point => point(0) + " " + point(1) + " " + point(2) + " " + point(3)).mkString(", ") + ")"))
-
     val objectId = attributes("OBJECTID").asInstanceOf[BigInt].longValue()
-    val createdDate = attributes("CREATED_DATE").asInstanceOf[BigInt].longValue()
-    val modifiedDate = attributes("LAST_EDITED_DATE").asInstanceOf[BigInt].longValue()
     val nodeId = attributes("NODEID").asInstanceOf[BigInt].longValue()
-    val formOfNode = attributes("FORMOFNODE ").asInstanceOf[Int].intValue()
 
-    VVHRoadNodes(objectId, linkGeometry, nodeId, NodeType.apply(formOfNode), municipalityCode, createdDate, modifiedDate, extractAttributesRoadNodes(attributes) ++ linkGeometryForApi ++ linkGeometryWKTForApi)
+    VVHRoadNodes(objectId, linkGeometry, nodeId, extractNodeType(attributes), municipalityCode)
   }
 
   private def roadNodesLayerDefinition(filter: String, customFieldSelection: Option[String] = None): String = {
@@ -1121,32 +1099,12 @@ class VVHRoadNodesClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRestAp
     val layerSelection = """"layerId":0,"""
     val fieldSelection = customFieldSelection match {
       case Some(fs) => s""""outFields":"""" + fs
-      //case _ => s""""outFields":"OBJECTID,DRID,NODEID,FORMOFNODE,MUNICIPALITYCODE,CREATED_DATE,CREATED_USER,LAST_EDITED_DATE,GEOMETRY_EDITED_DATE,VALIDATIONSTATUS,OBJECTSTATUS,SUBTYPE,JOBID,OPT_MTKID""""
-      case _ => s""""outFields":"OBJECTID""""
-
+      case _ => s""""outFields":"OBJECTID,NODEID,FORMOFNODE,MUNICIPALITYCODE""""
     }
     val definitionEnd = "}]"
     val definition = definitionStart + layerSelection + filter + fieldSelection + definitionEnd
     URLEncoder.encode(definition, "UTF-8")
   }
-
-  protected def extractAttributesRoadNodes(attributesMap: Map[String, Any]): Map[String, Any] = {
-    attributesMap.filterKeys{ x => Set(
-      "FORMOFNODE",
-      "CREATED_USER",
-      "GEOMETRY_EDITED_DATE",
-      "VALIDATIONSTATUS",
-      "OBJECTSTATUS",
-      "SUBTYPE",
-      "JOBID",
-      "SHAPE",
-      "OPT_MTKID"
-    ).contains(x)
-    }.filter { case (_, value) =>
-      value != null
-    }
-  }
-
 }
 
 
