@@ -23,9 +23,14 @@
       return _.contains(ids, linkId);
     };
 
+    var clean = function(){
+      current = [];
+    };
+
     return {
       open: open,
       get: get,
+      clean: clean,
       isSelected: isSelected
     };
   };
