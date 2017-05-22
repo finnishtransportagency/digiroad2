@@ -89,6 +89,9 @@
     });
 
     eventbus.on('layer:selected', function (layer) {
+      if(layer.indexOf('/') === -1){
+        layer = layer.concat('/');
+      }
       router.navigate(layer);
     });
   };
