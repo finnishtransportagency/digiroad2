@@ -47,7 +47,7 @@ trait RoadLinkCsvImporter {
   type MalformedParameters = List[String]
   type ParsedLinkRow = (MalformedParameters, ParsedProperties)
 
-  private val administrativeClassLimitations: List[AdministrativeClass] = List(State)
+  private val administrativeClassLimitations: List[AdministrativeClass] = List(State, Unknown)
 
   private val intFieldMappings = Map(
     "Hallinnollinen luokka" -> "ADMINCLASS",
@@ -144,11 +144,15 @@ trait RoadLinkCsvImporter {
     }
   }
 
-  def validateAdministrativeClass(adminClassValue: Int): Option[AdministrativeClass] = {
-    if (administrativeClassLimitations.contains(AdministrativeClass.apply(adminClassValue))) {
-      Some(AdministrativeClass.apply(adminClassValue))
-    } else {
-      None
+  def validateAdministrativeClass(adminClassValue: Any): Option[AdministrativeClass] = {
+    adminClassValue match {
+      case None => Some(Unknown)
+      case _ =>
+        if (administrativeClassLimitations.contains(AdministrativeClass.apply(adminClassValue.toString.toInt))) {
+          Some(AdministrativeClass.apply(adminClassValue.toString.toInt))
+        } else {
+          None
+        }
     }
   }
 
@@ -169,44 +173,11 @@ trait RoadLinkCsvImporter {
         }
       }
 
-      val (objectId, oldAdminClassValue) = getCompletaryVVHInfo(row("Linkin ID").toInt) match {
-        case None => (None, None)
-        case (Some(objId), adminClass) => (objId, adminClass)
-      }
       val missingParameters = findMissingParameters(row)
       val (malformedParameters, properties) = linkRowToProperties(row)
-      val unauthorizedAdminClass = validateAdministrativeClass(oldAdminClassValue.toString.toInt)
 
-      if (missingParameters.isEmpty && malformedParameters.isEmpty && unauthorizedAdminClass.isEmpty && objectId != None) {
-
-        val (propertiesOTH, propertiesVVH) = properties.partition(a => fieldInOTH.contains(a.columnName))
-        val hasDirectionType = propertiesVVH.exists(_.columnName == "DIRECTIONTYPE")
-
-        withDynTransaction {
-          if (propertiesOTH.nonEmpty || hasDirectionType ) {
-            val parsedRowOTH = CsvRoadLinkRow(row("Linkin ID").toInt, properties = propertiesOTH)
-            updateRoadLinkOTH(parsedRowOTH, Some(userProvider.getCurrentUser().username), hasDirectionType) match {
-              case None => result
-              case Some(value) =>
-                result.copy(nonUpdatedLinks = NonUpdatedLink(linkId = value, csvRow = rowToString(row)) :: result.nonUpdatedLinks)
-            }
-          }
-          if (propertiesVVH.nonEmpty) {
-            val parsedRowVVH = CsvRoadLinkRow(row("Linkin ID").toInt, objectId.toString.toInt, properties = propertiesVVH)
-            updateRoadLinkInVVH(parsedRowVVH) match {
-              case None => result
-              case Some(value) =>
-                dynamicSession.rollback()
-                result.copy(nonUpdatedLinks = NonUpdatedLink(linkId = value, csvRow = rowToString(row)) :: result.nonUpdatedLinks)
-            }
-          } else result
-        }
-      } else {
+      if (missingParameters.nonEmpty || malformedParameters.nonEmpty) {
         result.copy(
-          nonUpdatedLinks = objectId match {
-            case None => NonUpdatedLink(linkId = row("Linkin ID").toInt, csvRow = rowToString(row)) :: result.nonUpdatedLinks
-            case _ => result.nonUpdatedLinks
-          },
           incompleteLinks = missingParameters match {
             case Nil => result.incompleteLinks
             case parameters => IncompleteLink(missingParameters = parameters, csvRow = rowToString(row)) :: result.incompleteLinks
@@ -214,12 +185,49 @@ trait RoadLinkCsvImporter {
           malformedLinks = malformedParameters match {
             case Nil => result.malformedLinks
             case parameters => MalformedLink(malformedParameters = parameters, csvRow = rowToString(row)) :: result.malformedLinks
-          },
-          excludedLinks = unauthorizedAdminClass match {
-            case None => result.excludedLinks
-            case Some(parameters) => ExcludedLink(unauthorizedAdminClass = parameters.toString, csvRow = rowToString(row)) :: result.excludedLinks
+          })
+      } else {
+        val (objectId, oldAdminClassValue) = getCompletaryVVHInfo(row("Linkin ID").toInt) match {
+          case None => (None, None)
+          case (Some(objId), adminClass) => (objId, adminClass)
+        }
+        val unauthorizedAdminClass = validateAdministrativeClass(oldAdminClassValue)
+
+        if (unauthorizedAdminClass.isEmpty && objectId != None) {
+          val (propertiesOTH, propertiesVVH) = properties.partition(a => fieldInOTH.contains(a.columnName))
+          val hasDirectionType = propertiesVVH.exists(_.columnName == "DIRECTIONTYPE")
+
+          withDynTransaction {
+            if (propertiesOTH.nonEmpty || hasDirectionType) {
+              val parsedRowOTH = CsvRoadLinkRow(row("Linkin ID").toInt, properties = propertiesOTH)
+              updateRoadLinkOTH(parsedRowOTH, Some(userProvider.getCurrentUser().username), hasDirectionType) match {
+                case None => result
+                case Some(value) =>
+                  result.copy(nonUpdatedLinks = NonUpdatedLink(linkId = value, csvRow = rowToString(row)) :: result.nonUpdatedLinks)
+              }
+            }
+            if (propertiesVVH.nonEmpty) {
+              val parsedRowVVH = CsvRoadLinkRow(row("Linkin ID").toInt, objectId.toString.toInt, properties = propertiesVVH)
+              updateRoadLinkInVVH(parsedRowVVH) match {
+                case None => result
+                case Some(value) =>
+                  dynamicSession.rollback()
+                  result.copy(nonUpdatedLinks = NonUpdatedLink(linkId = value, csvRow = rowToString(row)) :: result.nonUpdatedLinks)
+              }
+            } else result
           }
-        )
+        } else {
+          result.copy(
+            nonUpdatedLinks = objectId match {
+              case None => NonUpdatedLink(linkId = row("Linkin ID").toInt, csvRow = rowToString(row)) :: result.nonUpdatedLinks
+              case _ => result.nonUpdatedLinks
+            },
+            excludedLinks = unauthorizedAdminClass match {
+              case None => result.excludedLinks
+              case Some(parameters) => ExcludedLink(unauthorizedAdminClass = parameters.toString, csvRow = rowToString(row)) :: result.excludedLinks
+            }
+          )
+        }
       }
     }
   }
