@@ -9,6 +9,14 @@
         '</div>';
       return field;
     };
+    var actionSelectedField = function() {
+      //TODO: cancel and save buttons Viite-374
+      var field;
+      field = '<div class="form-group action-selected-field" hidden = "true">' +
+        '<p class="asset-log-info">' + 'Tarkista tekemäsi muutokset.' + '<br>' + 'Jos muutokset ok, tallenna.' + '</p>' +
+        '</div>';
+      return field;
+    };
     var options =['Valitse'];
 
     var largeInputField = function (dataField) {
@@ -69,7 +77,6 @@
     };
 
     var selectedData = function (selected) {
-      //TODO: Now only data of the first selection, support for chain
       var span = '';
         if (selected) {
           span = '<span><label>' +
@@ -203,6 +210,7 @@
         '</select>'+
         '</div>'+
         '</form>' +
+        actionSelectedField()+
         '</div>'+
         '</div>' +
         '</div>'+
@@ -343,6 +351,10 @@
         }
         projectCollection.checkIfReserved(data);
         return false;
+      });
+
+      rootElement.on('change', '.form-group', function() {
+        rootElement.find('.action-selected-field').prop("hidden", false);
       });
 
       rootElement.on('click', '.project-form button.next', function(){
