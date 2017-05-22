@@ -74,8 +74,8 @@
         if (selected) {
           span = '<span><label>' +
                  'TIE ' + selected.roadNumber +
-                 'OSA ' + selected.roadPartNumber +
-                 'AJR ' + selected.trackCode +
+                 ' OSA ' + selected.roadPartNumber +
+                 ' AJR ' + selected.trackCode +
                  '</label></span>'
         }
         return span;
@@ -194,6 +194,12 @@
         '<select class="form-control" id="dropDown" size="1">'+
         '<option value="action1">Valitse</option>'+
         '<option value="action2">Lakkautus</option>'+
+        '<option value="action3">Uusi</option>'+
+        '<option value="action4">Numeroinnin muutos</option>'+
+        '<option value="action5">Ennallaan</option>'+
+        '<option value="action6">Kalibrointiarvon muutos</option>'+
+        '<option value="action7">Siirto</option>'+
+        '<option value="action8">Kalibrointipisteen siirto</option>'+
         '</select>'+
         '</div>'+
         '</form>' +
