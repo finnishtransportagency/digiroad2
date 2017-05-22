@@ -99,6 +99,10 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       enrichRoadLinksFromVVH(vvhRoadLinks)
   }
 
+  def getRoadLinksFromVVHByMunicipality(municipality: Int): Seq[VVHRoadNodes] = {
+    vvhClient.roadNodesData.queryVVHRoadNodesByMunicipality(municipality)
+  }
+
   /**
     * ATENTION Use this method always with transation not with session
     * This method returns road links by link ids.

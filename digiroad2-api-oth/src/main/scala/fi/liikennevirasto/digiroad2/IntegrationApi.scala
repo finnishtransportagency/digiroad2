@@ -342,8 +342,6 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "additionalInfo" -> manoeuvre.additionalInfo,
         "modifiedDateTime" -> manoeuvre.modifiedDateTime,
         lastModifiedBy(None, Some(manoeuvre.modifiedBy)))
-
-
     }
   }
 
@@ -394,6 +392,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case "road_link_properties" => roadLinkPropertiesToApi(roadLinkService.withRoadAddress(roadLinkService.getRoadLinksAndComplementaryLinksFromVVHByMunicipality(municipalityNumber)))
         case "manoeuvres" => manouvresToApi(manoeuvreService.getByMunicipality(municipalityNumber))
         case "service_points" => servicePointsToApi(servicePointService.getByMunicipality(municipalityNumber))
+        case "road_nodes" => servicePointsToApi(roadLinkService.getRoadLinksFromVVHByMunicipality(10))
         case _ => BadRequest("Invalid asset type")
       }
     } getOrElse {
