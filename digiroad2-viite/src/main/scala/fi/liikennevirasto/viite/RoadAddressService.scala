@@ -320,7 +320,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   def createMergedSegments(mergedRoadAddress: Seq[RoadAddress]) = {
-    mergedRoadAddress.grouped(500).foreach(group => RoadAddressDAO.create(group, "Automatic_merged"))
+    mergedRoadAddress.grouped(500).foreach(group => RoadAddressDAO.create(group, Some("Automatic_merged")))
   }
 
   def updateMergedSegments(expiredIds: Set[Long]) = {
@@ -516,7 +516,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     withDynTransaction {
       RoadAddressDAO.expireRoadAddresses(sourceIds)
       RoadAddressDAO.expireMissingRoadAddresses(targetIds)
-      RoadAddressDAO.create(roadAddresses, username)
+      RoadAddressDAO.create(roadAddresses, Some(username))
       recalculateRoadAddresses(roadAddresses.head.roadNumber.toInt, roadAddresses.head.roadPartNumber.toInt)
     }
   }
