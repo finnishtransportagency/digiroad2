@@ -261,7 +261,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         rl.linkId -> buildProjectRoadLink(rl, pl)
     }.filterNot { case (_, optPAL) => optPAL.isEmpty}.toMap.mapValues(_.get)
 
+    val filledProjectLinks = RoadAddressFiller.fillProjectTopology(complementedRoadLinks, projectRoadLinks)
+
     val nonProjectRoadLinks = complementedRoadLinks.filterNot(rl => projectRoadLinks.keySet.contains(rl.linkId))
+
     val viiteRoadLinks = nonProjectRoadLinks
       .map { rl =>
         val ra = addresses.getOrElse(rl.linkId, Seq())
@@ -277,7 +280,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val returningTopology = filledTopology.filter(link => !complementaryLinkIds.contains(link.linkId) ||
       complementaryLinkFilter(roadNumberLimits, municipalities, everything, publicRoads)(link))
 
-    returningTopology.map(toProjectAddressLink) ++ projectRoadLinks.values.toSeq
+    returningTopology.map(toProjectAddressLink) ++ filledProjectLinks
 
   }
 

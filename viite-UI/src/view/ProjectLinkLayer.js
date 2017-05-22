@@ -239,6 +239,7 @@
         feature.projectLinkData = projectLink;
         simulatedOL3Features.push(feature);
       });
+      vectorLayer.getSource().clear(true); // Otherwise we get multiple copies: TODO: clear only inside bbox
       vectorLayer.getSource().addFeatures(simulatedOL3Features);
       vectorLayer.changed();
     });
