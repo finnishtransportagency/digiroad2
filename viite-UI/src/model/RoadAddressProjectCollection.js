@@ -23,7 +23,7 @@
         var pureChain = _.map(linkChain, function(l) { return l.getData(); });
         return _.some(pureChain, {"linkId": linkId});
       });
-      return _.map(chain, function (link) { return link.getData().linkId});
+      return _.map(chain, function (link) { return link.getData().linkId; });
     };
 
     this.getByLinkId = function (ids) {

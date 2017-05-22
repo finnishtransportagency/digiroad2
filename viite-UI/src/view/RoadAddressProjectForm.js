@@ -83,7 +83,7 @@
                  'TIE ' + selected.roadNumber +
                  ' OSA ' + selected.roadPartNumber +
                  ' AJR ' + selected.trackCode +
-                 '</label></span>'
+                 '</label></span>';
         }
         return span;
     };

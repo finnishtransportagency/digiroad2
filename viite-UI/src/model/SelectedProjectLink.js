@@ -6,7 +6,7 @@
     var open = function (linkid, multiSelect) {
       if (!multiSelect) {
         current = projectLinkCollection.getByLinkId([linkid]);
-        ids = [linkid]
+        ids = [linkid];
       } else {
         ids = projectLinkCollection.getMultiSelectIds(linkid);
         current = projectLinkCollection.getByLinkId(ids);
