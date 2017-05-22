@@ -53,7 +53,13 @@
         '<button class="cancel btn btn-cancel">Peruuta</button>' +
         '</div>';
       return html;
-    };
+  };
+    var sendRoadAddressChangeButton = function() {
+      //TODO: Viite-375 show send-button after successful save
+      var sendButton = '<div class="project-form form-controls">' +
+        '<button class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button>';
+        return sendButton;
+      };
 
     var terminationButtons = function() {
       var html = '<div class="project-form form-controls">' +
@@ -395,6 +401,9 @@
         rootElement.find('.project-form button.save').attr('disabled', formIsInvalid(rootElement));
       });
 
+      rootElement.on('click', '.project-form button.send', function(){
+
+      });
     };
     bindEvents();
   };
