@@ -149,7 +149,7 @@ object ProjectDAO {
     Q.queryNA[String](query).firstOption
   }
 
-  def getProjectstatus(projectID: String): Option[ProjectState] = {
+  def getProjectstatus(projectID: Long): Option[ProjectState] = {
     val query =
       s""" SELECT state
      |   FROM project
@@ -163,7 +163,7 @@ object ProjectDAO {
 }
 
 
-def updateProjectStatus(projectID:String,state:ProjectState) {
+def updateProjectStatus(projectID:Long,state:ProjectState) {
   val projectstate=state.value
   sqlu""" update project set state=$projectstate WHERE id=$projectID   """.execute
 }

@@ -139,10 +139,10 @@ object ViiteTierekisteriClient {
 
   }
 
-  def getProjectStatusObject(projectid:String): Option[TRProjectStatus] = {
+  def getProjectStatusObject(projectid:Long): Option[TRProjectStatus] = {
 
     implicit val formats = DefaultFormats
-    val request = new HttpGet(getRestEndPoint + "addresschange/" + projectid)
+    val request = new HttpGet(s"${getRestEndPoint}addresschange/$projectid")
     request.addHeader("X-OTH-Authorization", "Basic " + auth.getAuthInBase64)
 
     val response = client.execute(request)

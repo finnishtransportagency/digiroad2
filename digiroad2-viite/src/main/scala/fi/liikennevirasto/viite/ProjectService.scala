@@ -237,12 +237,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def updateProjectStatusIfNeeded(currentStatus:ProjectState, newStatus:ProjectState,projectid:String) :(ProjectState)= {
-    if (currentStatus.value!=newStatus.value && newStatus.value!=99) //magic numbers
+  def updateProjectStatusIfNeeded(currentStatus:ProjectState, newStatus:ProjectState, projectId:Long) :(ProjectState)= {
+    if (currentStatus.value!=newStatus.value && newStatus != ProjectState.Unknown) //magic numbers
     {
-      ProjectDAO.updateProjectStatus(projectid,newStatus)
+      ProjectDAO.updateProjectStatus(projectId,newStatus)
     }
-    if (newStatus.value!=99){
+    if (newStatus != ProjectState.Unknown){
       newStatus
     } else
     {
@@ -257,18 +257,18 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     for(project<-ProjectsInTRPending)
     {
 
-        checkprojectstatus(project.toString)
+        checkprojectstatus(project)
       }
     }
   }
 
-  private def checkprojectstatus(projectID:String): Unit =
+  private def checkprojectstatus(projectID: Long) =
   {
     val projectstatus=ProjectDAO.getProjectstatus(projectID)
-    if (projectstatus!=None)
+    if (projectstatus.isDefined)
     {
-      val currentState=projectstatus.getOrElse(ProjectState.apply(99))
-      val newState =getStatusFromTRObject(ViiteTierekisteriClient.getProjectStatusObject(projectID)).getOrElse(ProjectState.apply(99))
+      val currentState=projectstatus.getOrElse(ProjectState.Unknown)
+      val newState =getStatusFromTRObject(ViiteTierekisteriClient.getProjectStatusObject(projectID)).getOrElse(ProjectState.Unknown)
       updateProjectStatusIfNeeded(currentState,newState,projectID)
     }
     {

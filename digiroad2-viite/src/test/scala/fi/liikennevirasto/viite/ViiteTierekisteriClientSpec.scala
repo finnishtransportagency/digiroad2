@@ -65,6 +65,6 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
   test("Get project status from TR") {
     assume(testConnection)
     val response = ViiteTierekisteriClient.getProjectStatus("0")
-    response
+    response == null should be (false)
   }
 }
