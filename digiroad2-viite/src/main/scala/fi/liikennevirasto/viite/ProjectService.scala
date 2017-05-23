@@ -250,16 +250,23 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  private def getProjectsPendingInTR() :Seq[Long]= {
+    withDynSession {
+      ProjectDAO.getProjectsWithWaitingTRStatus()
+    }
+  }
   def updateProjectsWaitingResponseFromTR(): Unit =
   {
-    withDynSession {
-    val ProjectsInTRPending= ProjectDAO.getProjectsWithWaitingTRStatus()
-    for(project<-ProjectsInTRPending)
-    {
 
+    val listOfPendingProjects=getProjectsPendingInTR()
+
+    for(project<-listOfPendingProjects)
+    {
+      withDynSession {
         checkprojectstatus(project)
       }
     }
+
   }
 
   private def checkprojectstatus(projectID: Long) =
