@@ -52,4 +52,10 @@ case class Point(x: Double, y: Double, z: Double = 0.0) {
   def +(that: Vector3d): Point = {
     Point(x + that.x, y + that.y, z + that.z)
   }
+
+  override def equals(o: Any) = o match {
+    case that: Point => GeometryUtils.areAdjacent(that, this)
+    case _ => false
+  }
+
 }
