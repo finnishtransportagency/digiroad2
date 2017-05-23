@@ -43,7 +43,7 @@
         return assets[assetId];
       },
       destroyAsset: function(assetId) {
-        assets = _.omit(assets, assetId.toString());
+        assets = _.omit(assets, ""+assetId);
       },
       getAssets: function() {
         if(isComplementaryActive)
