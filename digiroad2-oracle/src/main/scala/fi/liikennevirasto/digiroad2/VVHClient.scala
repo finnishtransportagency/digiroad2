@@ -27,7 +27,7 @@ sealed trait NodeType {
 }
 
 object NodeType {
-  val values = Set(ClosedTrafficArea, Intersection, RailwayCrossing, PseudoNode, EndOfTheRoad,
+  val values = Set[NodeType](ClosedTrafficArea, Intersection, RailwayCrossing, PseudoNode, EndOfTheRoad,
     RoundaboutNodeType, TrafficedSquare, RoadServiceArea, LightTrafficJunction, UnknownNodeType)
 
   def apply(value: Int): NodeType = {

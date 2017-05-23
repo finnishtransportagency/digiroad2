@@ -99,10 +99,6 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       enrichRoadLinksFromVVH(vvhRoadLinks)
   }
 
-  def getRoadLinksFromVVHByMunicipality(municipality: Int): Seq[VVHRoadNodes] = {
-    vvhClient.roadNodesData.queryVVHRoadNodesByMunicipality(municipality)
-  }
-
   /**
     * ATENTION Use this method always with transation not with session
     * This method returns road links by link ids.
@@ -134,7 +130,13 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     Future(getRoadLinksFromVVH(municipality))
   }
 
+  def getRoadNodesByMunicipality(municipality: Int): Seq[VVHRoadNodes] = {
+    getCachedRoadNodes(municipality)
+  }
 
+  def getRoadNodesFromVVHFuture(municipality: Int): Future[Seq[VVHRoadNodes]] = {
+    Future(getRoadNodesByMunicipality(municipality))
+  }
 
   /**
     * This method returns road links by bounding box and municipalities.
@@ -618,6 +620,10 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }
   }
 
+  def reloadRoadNodesFromVVH(municipality: Int): (Seq[VVHRoadNodes])= {
+    vvhClient.roadNodesData.queryVVHRoadNodesByMunicipality(municipality)
+  }
+
   /**
     * Returns closest road link by user's authorization and point coordinates. Used by Digiroad2Api /servicePoints PUT and /servicePoints/:id PUT endpoints.
     */
@@ -781,6 +787,10 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     val (complementaryResult, roadLinksResult) = Await.result(fut, Duration.Inf)
     complementaryResult           ++roadLinksResult
   }
+
+  def getRoadNodesFromVVHByMunicipality(municipality: Int): Seq[VVHRoadNodes] = {
+    Await.result(getRoadNodesFromVVHFuture(municipality), Duration.Inf)
+}
 
   /**
     * Checks if road link is not complete. Used by RoadLinkService.enrichRoadLinksFromVVH.
@@ -1074,8 +1084,10 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
   private val geometryCacheFileNames = "geom_%d_%d.cached"
   private val changeCacheFileNames = "changes_%d_%d.cached"
+  private val nodeCacheFileNames = "nodes_%d_%d.cached"
   private val geometryCacheStartsMatch = "geom_%d_"
   private val changeCacheStartsMatch = "changes_%d_"
+  private val nodeCacheStartsMatch = "nodes_%d_"
   private val allCacheEndsMatch = ".cached"
 
   private def deleteOldCacheFiles(municipalityCode: Int, dir: Option[File], maxAge: Long) = {
@@ -1118,6 +1130,24 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }
   }
 
+  private def getNodeCacheFiles(municipalityCode: Int, dir: Option[File]): Option[File] = {
+    val twentyHours = 20L * 60 * 60 * 1000
+
+    deleteOldCacheFiles(municipalityCode, dir, twentyHours)
+
+    val cachedGeometryFile = dir.map(cacheDir => cacheDir.listFiles(new FilenameFilter {
+      override def accept(dir: File, name: String): Boolean = {
+        name.startsWith(nodeCacheStartsMatch.format(municipalityCode))
+      }
+    }).filter(f => f.lastModified() + twentyHours > System.currentTimeMillis))
+
+    if (cachedGeometryFile.nonEmpty && cachedGeometryFile.get.nonEmpty && cachedGeometryFile.get.head.canRead) {
+      Some(cachedGeometryFile.get.head)
+    } else {
+      None
+    }
+  }
+
   //getRoadLinksFromVVHFuture expects to get only "normal" roadlinks from getCachedRoadLinksAndChanges  method.
   private def getCachedRoadLinksAndChanges(municipalityCode: Int): (Seq[RoadLink], Seq[ChangeInfo]) = {
     val dir = getCacheDirectory
@@ -1147,6 +1177,31 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
           }
         }
         (roadLinks, changes)
+    }
+  }
+
+  private def getCachedRoadNodes(municipalityCode: Int): Seq[VVHRoadNodes] = {
+    val dir = getCacheDirectory
+    val cachedFiles = getNodeCacheFiles(municipalityCode, dir)
+    cachedFiles match {
+      case Some(nodeFile) =>
+        logger.info("Returning cached result")
+        vvhSerializer.readCachedNodes(nodeFile)
+      case _ =>
+        val roadNodes = reloadRoadNodesFromVVH(municipalityCode)
+        if (dir.nonEmpty) {
+          try {
+            val newGeomFile = new File(dir.get, nodeCacheFileNames.format(municipalityCode, System.currentTimeMillis))
+            if (vvhSerializer.writeCache(newGeomFile, roadNodes)) {
+              logger.info("New cached file created: " + newGeomFile + " containing " + roadNodes.size + " items")
+            } else {
+              logger.error("Writing cached geom file failed!")
+            }
+          } catch {
+            case ex: Exception => logger.warn("Failed cache IO when writing:", ex)
+          }
+        }
+        roadNodes
     }
   }
 

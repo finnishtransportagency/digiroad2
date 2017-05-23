@@ -5,7 +5,7 @@ import java.io.{File, FileReader}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ValidityPeriodDayOfWeek}
 import fi.liikennevirasto.digiroad2.util.VVHSerializer
-import fi.liikennevirasto.digiroad2.{ChangeInfo, FeatureClass, VVHHistoryRoadLink}
+import fi.liikennevirasto.digiroad2.{ChangeInfo, FeatureClass, VVHHistoryRoadLink, VVHRoadNodes}
 import org.json4s.JsonAST.{JInt, JString}
 import org.json4s.jackson.Serialization.read
 import org.json4s.{CustomSerializer, DefaultFormats, Formats}
@@ -93,5 +93,10 @@ class RoadLinkDeserializer extends VVHSerializer {
   }
   override def writeCache(file: File, objects: Seq[Object]): Boolean = {
     false
+  }
+
+  override def readCachedNodes(file: File): Seq[VVHRoadNodes] = {
+    val json = new FileReader(file)
+    read[Seq[VVHRoadNodes]](json)
   }
 }

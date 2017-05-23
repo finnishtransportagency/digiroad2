@@ -345,7 +345,6 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     }
   }
 
-
   def servicePointsToApi(servicePoints: Set[ServicePoint]) = {
     servicePoints.map { asset =>
       Map("id" -> asset.id,
@@ -359,7 +358,10 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
 
   def roadNodesToApi(roadNodes: Seq[VVHRoadNodes]) = {
     roadNodes.map { roadNode =>
-      Map("objectId" -> roadNode.objectId)
+      Map("nodeId" -> roadNode.nodeId,
+          "nodeType" -> roadNode.formOfNode.value,
+          "point" -> roadNode.geometry
+      )
     }
   }
 
@@ -399,7 +401,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case "road_link_properties" => roadLinkPropertiesToApi(roadLinkService.withRoadAddress(roadLinkService.getRoadLinksAndComplementaryLinksFromVVHByMunicipality(municipalityNumber)))
         case "manoeuvres" => manouvresToApi(manoeuvreService.getByMunicipality(municipalityNumber))
         case "service_points" => servicePointsToApi(servicePointService.getByMunicipality(municipalityNumber))
-        case "road_nodes" => roadNodesToApi(roadLinkService.getRoadLinksFromVVHByMunicipalityTest(10))
+        case "road_nodes" => roadNodesToApi(roadLinkService.getRoadNodesFromVVHByMunicipality(municipalityNumber))
         case _ => BadRequest("Invalid asset type")
       }
     } getOrElse {
