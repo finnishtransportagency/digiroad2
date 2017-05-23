@@ -387,7 +387,6 @@
       });
 
       rootElement.on('change', '#dropDown', function() {
-        console.log('change');
         projectCollection.setDirty(_.map(selectedProjectLink, function(link) { return link.linkId; }));
       });
 
@@ -415,7 +414,6 @@
           currentProject = result.project;
           jQuery('.modal-overlay').remove();
           if(!_.isUndefined(result.projectAddresses)) {
-            console.log(result);
             eventbus.trigger('roadAddressProject:openProject', result.project);
             rootElement.html(selectedProjectLinkTemplate(currentProject, options, selectedProjectLink));
           }

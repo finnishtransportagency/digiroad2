@@ -222,8 +222,6 @@
     var redraw = function(){
       var editedLinks = projectCollection.getDirty();
       var projectLinks = projectCollection.getAll();
-      console.log(editedLinks);
-      console.log(projectLinks);
       var features = [];
       _.map(projectLinks, function(projectLink) {
         var points = _.map(projectLink.points, function (point) {
@@ -239,7 +237,6 @@
         return (!_.isUndefined(feature.projectLinkData.linkId) && _.contains(editedLinks, feature.projectLinkData.linkId));
       });
       features = [];
-      console.log(partitioned);
       _.each(partitioned[0], function(feature) {
         var editedLink = (!_.isUndefined(feature.projectLinkData.linkId) && _.contains(editedLinks, feature.projectLinkData.linkId));
         if(editedLink){
@@ -260,7 +257,6 @@
         addFeaturesToSelection(features);
       features = features.concat(partitioned[1]);
       vectorLayer.getSource().clear(true); // Otherwise we get multiple copies: TODO: clear only inside bbox
-      console.log(features);
       vectorLayer.getSource().addFeatures(features);
       vectorLayer.changed();
     };
@@ -273,7 +269,6 @@
     });
 
     eventbus.on('roadAddressProject:selected', function(projId) {
-      console.log(projId);
       eventbus.once('roadAddressProject:projectFetched', function(id) {
         projectCollection.fetch(map.getView().calculateExtent(map.getSize()),map.getView().getZoom(), id);
         // vectorSource.clear();
