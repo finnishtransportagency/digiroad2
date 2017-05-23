@@ -338,8 +338,6 @@
       });
 
       eventbus.on('roadAddress:projectLinksUpdated',function(){
-        $('.project-form button.update').remove();
-        $('.project-form button.cancel').remove();
         applicationModel.removeSpinner();
         //TODO 375 append publish button
       });
