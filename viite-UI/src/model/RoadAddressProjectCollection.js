@@ -6,6 +6,7 @@
     var projectinfo;
     var fetchedProjectLinks = [];
     var roadAddressProjectLinks = [];
+    var projectLinksSaved = [];
     var self = this;
     var STATUS_NOT_HANDLED = 0;
     var STATUS_HANDLED = 1;
@@ -23,6 +24,10 @@
         return projectLink.getData();
       });
     };
+
+    this.getSavedLinks = function(){
+      return projectLinksSaved;
+    }
 
     this.getMultiSelectIds = function (linkId) {
       var chain = _.find(fetchedProjectLinks, function (linkChain) {
@@ -125,6 +130,8 @@
           return t.linkId;
         } else return t;
       });
+
+      projectLinksSaved = projectLinksSaved.concat(linkIds);
 
       var projectId = currentProject.id;
 

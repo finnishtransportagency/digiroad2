@@ -27,11 +27,20 @@
     });
 
     var styleFunction = function (feature, resolution){
+      var status = feature.projectLinkData.status;
+      var borderWidth;
+      var lineColor;
+      if(status === 0 || status === 1) {
+        if(status === 0){
+          borderWidth = 8;
+          lineColor = 'rgba(247, 254, 46, 1)';
+        }
+        else{
+          borderWidth = 3;
+          lineColor = 'rgba(56, 56, 54, 1)';
+        }
 
-      if(feature.projectLinkData.status === 0) {
-        var borderWidth = 8;
         var strokeWidth = styler.strokeWidthByZoomLevel(currentZoom, feature.projectLinkData.roadLinkType, feature.projectLinkData.anomaly, feature.projectLinkData.roadLinkSource, false, feature.projectLinkData.constructionType);
-        var lineColor = 'rgba(247, 254, 46, 1)';
         var borderCap = 'round';
 
         var line = new ol.style.Stroke({
@@ -128,6 +137,31 @@
       if(featuresToHighlight.length !== 0)
         addFeaturesToSelection(featuresToHighlight);
     };
+
+    eventbus.on('roadAddress:projectLinksUpdated',function(){
+      var savedLinks = projectCollection.getSavedLinks();
+      var features = [];
+      clearHighlights();
+      _.each(vectorLayer.getSource().getFeatures(), function(feature) {
+        var terminatedLink = (!_.isUndefined(feature.projectLinkData.linkId) && _.contains(savedLinks, feature.projectLinkData.linkId));
+        if(terminatedLink){
+          vectorLayer.getSource().removeFeature(feature);
+          feature.projectLinkData.status = 1;
+          feature.setStyle(new ol.style.Style({
+            fill: new ol.style.Fill({
+              color: 'rgba(56, 56, 54, 1)'
+            }),
+            stroke: new ol.style.Stroke({
+              color: 'rgba(56, 56, 54, 1)',
+              width: 8
+            })
+          }));
+          features.push(feature);
+        }
+      });
+      if(features.length !== 0)
+        addFeaturesToSelection(features);
+    });
 
     /**
      * Simple method that will add various open layers 3 features to a selection.
