@@ -87,7 +87,6 @@
     });
 
     selectSingleClick.on('select',function(event) {
-      console.log("click");
       // TODO: 374 validate selection
       var selection = _.find(event.selected, function (selectionTarget) {
           return !_.isUndefined(selectionTarget.projectLinkData);
@@ -140,8 +139,9 @@
 
     eventbus.on('roadAddress:projectLinksEdited',function(){
       var editedLinks = projectCollection.getDirty();
+      var allLinks = projectCollection.getAll();
       var features = [];
-      clearHighlights();
+      redraw(allLinks);
       _.each(vectorLayer.getSource().getFeatures(), function(feature) {
         var terminatedLink = (!_.isUndefined(feature.projectLinkData.linkId) && _.contains(editedLinks, feature.projectLinkData.linkId));
         if(terminatedLink){
@@ -184,7 +184,6 @@
     });
 
     selectDoubleClick.on('select',function(event) {
-      console.log("clickety-click");
       // TODO: 374 validate selection
       var selection = _.find(event.selected, function (selectionTarget) {
           return !_.isUndefined(selectionTarget.projectLinkData);
@@ -246,6 +245,22 @@
       me.hide();
     };
 
+    var redraw = function(projectLinks){
+      var simulatedOL3Features = [];
+      _.map(projectLinks, function(projectLink){
+        var points = _.map(projectLink.points, function(point) {
+          return [point.x, point.y];
+        });
+        var feature =  new ol.Feature({ geometry: new ol.geom.LineString(points)
+        });
+        feature.projectLinkData = projectLink;
+        simulatedOL3Features.push(feature);
+      });
+      vectorLayer.getSource().clear(true); // Otherwise we get multiple copies: TODO: clear only inside bbox
+      vectorLayer.getSource().addFeatures(simulatedOL3Features);
+      vectorLayer.changed();
+    };
+
     eventbus.on('roadAddressProject:openProject', function(projectSelected) {
       this.project = projectSelected;
       eventbus.trigger('layer:enableButtons', false);
@@ -263,20 +278,8 @@
       projectCollection.getProjectsWithLinksById(projId);
     });
 
-    eventbus.on('roadAddressProject:fetched', function(projectLinks){
-      var simulatedOL3Features = [];
-      _.map(projectLinks, function(projectLink){
-        var points = _.map(projectLink.points, function(point) {
-          return [point.x, point.y];
-        });
-        var feature =  new ol.Feature({ geometry: new ol.geom.LineString(points)
-        });
-        feature.projectLinkData = projectLink;
-        simulatedOL3Features.push(feature);
-      });
-      vectorLayer.getSource().clear(true); // Otherwise we get multiple copies: TODO: clear only inside bbox
-      vectorLayer.getSource().addFeatures(simulatedOL3Features);
-      vectorLayer.changed();
+    eventbus.on('roadAddressProject:fetched', function(projectLinks) {
+      redraw(projectLinks);
     });
 
     eventbus.on('map:moved', mapMovedHandler, this);

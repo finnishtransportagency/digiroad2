@@ -8,7 +8,7 @@
           applicationModel.selectLayer(layer);
         });
 
-        this.route(/^([A-Za-z]+)$/, function (layer) {
+        this.route(/^([A-Za-z]+)\/?$/, function (layer) {
           applicationModel.selectLayer(layer);
         });
 
