@@ -30,16 +30,16 @@
       var status = feature.projectLinkData.status;
       var borderWidth;
       var lineColor;
-      if(status === 0 || status === 1) {
-        if(status === 0){
-          borderWidth = 8;
-          lineColor = 'rgba(247, 254, 46, 1)';
-        }
-        else{
-          borderWidth = 3;
-          lineColor = 'rgba(56, 56, 54, 1)';
-        }
 
+      if(status === 0) {
+        borderWidth = 8;
+        lineColor = 'rgba(247, 254, 46, 1)';
+      }
+      if (status === 1) {
+        borderWidth = 3;
+        lineColor = 'rgba(56, 56, 54, 1)';
+      }
+      if (status === 0 || status === 1) {
         var strokeWidth = styler.strokeWidthByZoomLevel(currentZoom, feature.projectLinkData.roadLinkType, feature.projectLinkData.anomaly, feature.projectLinkData.roadLinkSource, false, feature.projectLinkData.constructionType);
         var borderCap = 'round';
 
@@ -54,7 +54,7 @@
           stroke: line
         });
 
-        var zIndex = styler.determineZIndex(feature.projectLinkData.roadLinkType, feature.projectLinkData.anomaly, feature.projectLinkData.roadLinkSource);
+        var zIndex = styler.determineZIndex(feature.projectLinkData.roadLinkType, feature.projectLinkData.anomaly, feature.projectLinkData.roadLinkSource, status);
         lineStyle.setZIndex(zIndex + 3);
         return [lineStyle];
       }
@@ -138,12 +138,12 @@
         addFeaturesToSelection(featuresToHighlight);
     };
 
-    eventbus.on('roadAddress:projectLinksUpdated',function(){
-      var savedLinks = projectCollection.getSavedLinks();
+    eventbus.on('roadAddress:projectLinksEdited',function(){
+      var editedLinks = projectCollection.getDirty();
       var features = [];
       clearHighlights();
       _.each(vectorLayer.getSource().getFeatures(), function(feature) {
-        var terminatedLink = (!_.isUndefined(feature.projectLinkData.linkId) && _.contains(savedLinks, feature.projectLinkData.linkId));
+        var terminatedLink = (!_.isUndefined(feature.projectLinkData.linkId) && _.contains(editedLinks, feature.projectLinkData.linkId));
         if(terminatedLink){
           vectorLayer.getSource().removeFeature(feature);
           feature.projectLinkData.status = 1;

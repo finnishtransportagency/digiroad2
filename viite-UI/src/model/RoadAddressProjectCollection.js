@@ -1,15 +1,16 @@
 (function(root) {
   root.RoadAddressProjectCollection = function(backend) {
     var roadAddressProjects = [];
-    var currentRoadSegmentList = [];
-    var dirtyRoadSegmentLst = [];
+    var currentRoadPartList = [];
+    var dirtyRoadPartList = [];
     var projectinfo;
     var fetchedProjectLinks = [];
     var roadAddressProjectLinks = [];
     var projectLinksSaved = [];
+    var dirtyProjectLinks = [];
     var self = this;
     var STATUS_NOT_HANDLED = 0;
-    var STATUS_HANDLED = 1;
+    var STATUS_TERMINATED = 1;
     var BAD_REQUEST_400 = 400;
     var UNAUTHORIZED_401 = 401;
     var PRECONDITION_FAILED_412 = 412;
@@ -79,8 +80,9 @@
 
     this.clearRoadAddressProjects = function () {
       roadAddressProjects = [];
-      dirtyRoadSegmentLst = [];
-      currentRoadSegmentList = [];
+      dirtyRoadPartList = [];
+      currentRoadPartList = [];
+      dirtyProjectLinks = [];
       projectinfo=undefined;
       backend.abortLoadingProject();
     };
@@ -99,7 +101,7 @@
         name: data[0].value,
         startDate: data[1].value,
         additionalInfo: data[2].value,
-        roadPartList: dirtyRoadSegmentLst
+        roadPartList: dirtyRoadPartList
       };
 
       backend.saveRoadAddressProject(dataJson, function (result) {
@@ -112,7 +114,7 @@
             publishable: false
           };
           eventbus.trigger('roadAddress:projectSaved', result);
-          dirtyRoadSegmentLst = [];
+          dirtyRoadPartList = [];
         }
         else {
           eventbus.trigger('roadAddress:projectValidationFailed', result);
@@ -135,7 +137,7 @@
 
       var projectId = currentProject.id;
 
-      var data = {'linkIds': linkIds, 'projectId': projectId, 'newStatus': STATUS_HANDLED};
+      var data = {'linkIds': linkIds, 'projectId': projectId, 'newStatus': STATUS_TERMINATED};
 
       if(!_.isEmpty(linkIds) && projectId !== 0){
         backend.updateProjectLinks(data, function(errorObject) {
@@ -156,7 +158,7 @@
         name: data[0].value,
         startDate: data[1].value,
         additionalInfo: data[2].value,
-        roadPartList: dirtyRoadSegmentLst
+        roadPartList: dirtyRoadPartList
       };
 
       backend.createRoadAddressProject(dataJson, function (result) {
@@ -169,7 +171,7 @@
             publishable: false
           };
           eventbus.trigger('roadAddress:projectSaved', result);
-          dirtyRoadSegmentLst = [];
+          dirtyRoadPartList = [];
         }
         else {
           eventbus.trigger('roadAddress:projectValidationFailed', result);
@@ -194,7 +196,7 @@
 
     var parseroadpartinfoToresultRow = function () {
       var listContent = '';
-      _.each(currentRoadSegmentList, function (row) {
+      _.each(currentRoadPartList, function (row) {
           listContent += addSmallLabel(row.roadNumber) + addSmallLabel(row.roadPartNumber) + addSmallLabel(row.length) + addSmallLabel(row.discontinuity) + addSmallLabel(row.ely) +
             '</div>';
         }
@@ -209,16 +211,25 @@
         qRoadparts.push(row);
       });
 
-      var sameElements = arrayIntersection(qRoadparts, currentRoadSegmentList, function (arrayarow, arraybrow) {
+      var sameElements = arrayIntersection(qRoadparts, currentRoadPartList, function (arrayarow, arraybrow) {
         return arrayarow.roadPartId === arraybrow.roadPartId;
       });
       _.each(sameElements, function (row) {
         _.remove(qRoadparts, row);
       });
       _.each(qRoadparts, function (row) {
-        currentRoadSegmentList.push(row);
-        dirtyRoadSegmentLst.push(row);
+        currentRoadPartList.push(row);
+        dirtyRoadPartList.push(row);
       });
+    };
+
+    this.setDirty = function(editedRoadLinks) {
+      dirtyProjectLinks = editedRoadLinks;
+      eventbus.trigger('roadAddress:projectLinksEdited');
+    };
+
+    this.getDirty = function() {
+      return dirtyProjectLinks;
     };
 
 
