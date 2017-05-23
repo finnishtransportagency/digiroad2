@@ -110,7 +110,23 @@
       });
     }, 1000);
 
-    this.checkIfRoadpartReserved = (function(roadnuber,startPart,endPart) {
+    this.sendProjectToTR = _.throttle(function(projectID, success, failure) {
+    var Json = {
+      projectID: projectID
+    };
+    $.ajax({
+      contentType: "application/json",
+      type: "POST",
+      url: "api/viite/roadlinks/roadaddress/project/sendToTR",
+      data: JSON.stringify(Json),
+      dataType: "json",
+      success: success,
+      error: failure
+    });
+  }, 1000);
+
+
+this.checkIfRoadpartReserved = (function(roadnuber,startPart,endPart) {
       return $.get('api/viite/roadlinks/roadaddress/project/validatereservedlink/', {
         roadnumber: roadnuber,
         startpart: startPart,
