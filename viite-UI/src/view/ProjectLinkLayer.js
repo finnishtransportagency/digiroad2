@@ -27,11 +27,20 @@
     });
 
     var styleFunction = function (feature, resolution){
+      var status = feature.projectLinkData.status;
+      var borderWidth;
+      var lineColor;
 
-      if(feature.projectLinkData.status === 0) {
-        var borderWidth = 8;
+      if(status === 0) {
+        borderWidth = 8;
+        lineColor = 'rgba(247, 254, 46, 1)';
+      }
+      if (status === 1) {
+        borderWidth = 3;
+        lineColor = 'rgba(56, 56, 54, 1)';
+      }
+      if (status === 0 || status === 1) {
         var strokeWidth = styler.strokeWidthByZoomLevel(currentZoom, feature.projectLinkData.roadLinkType, feature.projectLinkData.anomaly, feature.projectLinkData.roadLinkSource, false, feature.projectLinkData.constructionType);
-        var lineColor = 'rgba(247, 254, 46, 1)';
         var borderCap = 'round';
 
         var line = new ol.style.Stroke({
@@ -45,7 +54,7 @@
           stroke: line
         });
 
-        var zIndex = styler.determineZIndex(feature.projectLinkData.roadLinkType, feature.projectLinkData.anomaly, feature.projectLinkData.roadLinkSource);
+        var zIndex = styler.determineZIndex(feature.projectLinkData.roadLinkType, feature.projectLinkData.anomaly, feature.projectLinkData.roadLinkSource, status);
         lineStyle.setZIndex(zIndex + 3);
         return [lineStyle];
       }
@@ -78,7 +87,6 @@
     });
 
     selectSingleClick.on('select',function(event) {
-      console.log("click");
       // TODO: 374 validate selection
       var selection = _.find(event.selected, function (selectionTarget) {
           return !_.isUndefined(selectionTarget.projectLinkData);
@@ -150,7 +158,6 @@
     });
 
     selectDoubleClick.on('select',function(event) {
-      console.log("clickety-click");
       // TODO: 374 validate selection
       var selection = _.find(event.selected, function (selectionTarget) {
           return !_.isUndefined(selectionTarget.projectLinkData);
@@ -212,6 +219,48 @@
       me.hide();
     };
 
+    var redraw = function(){
+      var editedLinks = projectCollection.getDirty();
+      var projectLinks = projectCollection.getAll();
+      var features = [];
+      _.map(projectLinks, function(projectLink) {
+        var points = _.map(projectLink.points, function (point) {
+          return [point.x, point.y];
+        });
+        var feature = new ol.Feature({
+          geometry: new ol.geom.LineString(points)
+        });
+        feature.projectLinkData = projectLink;
+        features.push(feature);
+      });
+      var partitioned = _.partition(features, function(feature) {
+        return (!_.isUndefined(feature.projectLinkData.linkId) && _.contains(editedLinks, feature.projectLinkData.linkId));
+      });
+      features = [];
+      _.each(partitioned[0], function(feature) {
+        var editedLink = (!_.isUndefined(feature.projectLinkData.linkId) && _.contains(editedLinks, feature.projectLinkData.linkId));
+        if(editedLink){
+          feature.projectLinkData.status = 1;
+          feature.setStyle(new ol.style.Style({
+            fill: new ol.style.Fill({
+              color: 'rgba(56, 56, 54, 1)'
+            }),
+            stroke: new ol.style.Stroke({
+              color: 'rgba(56, 56, 54, 1)',
+              width: 8
+            })
+          }));
+          features.push(feature);
+        }
+      });
+      if(features.length !== 0)
+        addFeaturesToSelection(features);
+      features = features.concat(partitioned[1]);
+      vectorLayer.getSource().clear(true); // Otherwise we get multiple copies: TODO: clear only inside bbox
+      vectorLayer.getSource().addFeatures(features);
+      vectorLayer.changed();
+    };
+
     eventbus.on('roadAddressProject:openProject', function(projectSelected) {
       this.project = projectSelected;
       eventbus.trigger('layer:enableButtons', false);
@@ -220,7 +269,6 @@
     });
 
     eventbus.on('roadAddressProject:selected', function(projId) {
-      console.log(projId);
       eventbus.once('roadAddressProject:projectFetched', function(id) {
         projectCollection.fetch(map.getView().calculateExtent(map.getSize()),map.getView().getZoom(), id);
         // vectorSource.clear();
@@ -229,20 +277,12 @@
       projectCollection.getProjectsWithLinksById(projId);
     });
 
-    eventbus.on('roadAddressProject:fetched', function(projectLinks){
-      var simulatedOL3Features = [];
-      _.map(projectLinks, function(projectLink){
-        var points = _.map(projectLink.points, function(point) {
-          return [point.x, point.y];
-        });
-        var feature =  new ol.Feature({ geometry: new ol.geom.LineString(points)
-        });
-        feature.projectLinkData = projectLink;
-        simulatedOL3Features.push(feature);
-      });
-      vectorLayer.getSource().clear(true); // Otherwise we get multiple copies: TODO: clear only inside bbox
-      vectorLayer.getSource().addFeatures(simulatedOL3Features);
-      vectorLayer.changed();
+    eventbus.on('roadAddressProject:fetched', function() {
+      redraw();
+    });
+
+    eventbus.on('roadAddress:projectLinksEdited',function(){
+      redraw();
     });
 
     eventbus.on('map:moved', mapMovedHandler, this);

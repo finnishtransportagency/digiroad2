@@ -91,12 +91,21 @@
 
     var selectedData = function (selected) {
       var span = '';
-        if (selected) {
-          span = '<span><label>' +
-                 ' TIE ' + selected.roadNumber +
-                 ' OSA ' + selected.roadPartNumber +
-                 ' AJR ' + selected.trackCode +
-                 '</label></span>';
+        if (selected[0]) {
+          var link = selected[0];
+          var startM = Math.min.apply(Math, _.map(selected, function(l) { return l.startAddressM; }));
+          var endM = Math.max.apply(Math, _.map(selected, function(l) { return l.endAddressM; }));
+          span = '<div class="edit-control-group choice-group">' +
+            '<label class="control-label-floating"> TIE </label>' +
+            '<span class="form-control-static-floating" style="display:inline-flex;width:auto;margin-right:5px">' + link.roadNumber + '</span>' +
+            '<label class="control-label-floating"> OSA </label>' +
+            '<span class="form-control-static-floating" style="display:inline-flex;width:auto;margin-right:5px">' + link.roadPartNumber + '</span>' +
+            '<label class="control-label-floating"> AJR </label>' +
+            '<span class="form-control-static-floating" style="display:inline-flex;width:auto;margin-right:5px">' + link.trackCode + '</span>' +
+            '<label class="control-label-floating"> M: </label>' +
+            '<span class="form-control-static-floating" style="display:inline-flex;width:auto;margin-right:5px">' + startM + ' - ' + endM + '</span>' +
+            '</div>' +
+            '</div>';
         }
         return span;
     };
@@ -182,9 +191,8 @@
     };
 
     var selectedProjectLinkTemplate = function(project, optionTags, selected) {
-      var selection = _.chain(selected).map(function(link) {
-        return selectedData(link);
-      });
+      var selection = selectedData(selected);
+
       return _.template('' +
         '<header>' +
          titleWithProjectName(project.name) +
@@ -202,12 +210,12 @@
         '<select class="form-control" id="dropDown" size="1">'+
         '<option value="action1">Valitse</option>'+
         '<option value="action2">Lakkautus</option>'+
-        '<option value="action3">Uusi</option>'+
-        '<option value="action4">Numeroinnin muutos</option>'+
-        '<option value="action5">Ennallaan</option>'+
-        '<option value="action6">Kalibrointiarvon muutos</option>'+
-        '<option value="action7">Siirto</option>'+
-        '<option value="action8">Kalibrointipisteen siirto</option>'+
+        '<option value="action3" disabled>Uusi</option>'+
+        '<option value="action4" disabled>Numeroinnin muutos</option>'+
+        '<option value="action5" disabled>Ennallaan</option>'+
+        '<option value="action6" disabled>Kalibrointiarvon muutos</option>'+
+        '<option value="action7" disabled>Siirto</option>'+
+        '<option value="action8" disabled>Kalibrointipisteen siirto</option>'+
         '</select>'+
         '</div>'+
         '</form>' +
@@ -321,6 +329,10 @@
         rootElement.find('.btn-send').prop("disabled", !ready);
       });
 
+      eventbus.on('roadAddress:projectFailed', function() {
+        applicationModel.removeSpinner();
+      });
+
       eventbus.on('roadAddress:projectLinksUpdateFailed',function(errorCode){
         applicationModel.removeSpinner();
         //TODO 375 should modify text to show error status during Status update
@@ -372,6 +384,10 @@
         projectCollection.saveProjectLinks(selectedProjectLink, currentProject);
       });
 
+      rootElement.on('change', '#dropDown', function() {
+        projectCollection.setDirty(_.map(selectedProjectLink, function(link) { return link.linkId; }));
+      });
+
       rootElement.on('click', '.btn-reserve', function() {
         var data;
         var lists = $('.roadAddressProject');
@@ -393,9 +409,9 @@
         applicationModel.addSpinner();
         applicationModel.selectLayer('roadAddressProject');
         eventbus.once('roadAddress:projectSaved', function (result) {
+          currentProject = result.project;
           jQuery('.modal-overlay').remove();
           if(!_.isUndefined(result.projectAddresses)) {
-            console.log(result);
             eventbus.trigger('roadAddressProject:openProject', result.project);
             rootElement.html(selectedProjectLinkTemplate(currentProject, options, selectedProjectLink));
           }
