@@ -27,6 +27,7 @@
         targets = [];
         dirty = false;
         featuresToKeep = [];
+        applicationModel.setActiveButtons(false);
       }
     };
 
