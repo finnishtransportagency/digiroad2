@@ -27,7 +27,7 @@
 
     this.getSavedLinks = function(){
       return projectLinksSaved;
-    }
+    };
 
     this.getMultiSelectIds = function (linkId) {
       var chain = _.find(fetchedProjectLinks, function (linkChain) {

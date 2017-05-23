@@ -321,6 +321,10 @@
         rootElement.find('.btn-send').prop("disabled", !ready);
       });
 
+      eventbus.on('roadAddress:projectFailed', function() {
+        applicationModel.removeSpinner();
+      });
+
       eventbus.on('roadAddress:projectLinksUpdateFailed',function(errorCode){
         applicationModel.removeSpinner();
         //TODO 375 should modify text to show error status during Status update
