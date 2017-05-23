@@ -229,7 +229,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
 
 
-  private def getStatusFromTRObject(trProject:Option[trPojectStatus]):Option[ProjectState] = {
+  private def getStatusFromTRObject(trProject:Option[TRProjectStatus]):Option[ProjectState] = {
     trProject match {
       case Some(trPojectobject) => mapTRstateToViiteState(trPojectobject.status.getOrElse(""))
       case None => None

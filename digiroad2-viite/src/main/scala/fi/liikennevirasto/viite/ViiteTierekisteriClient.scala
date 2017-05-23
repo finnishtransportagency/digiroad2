@@ -12,10 +12,15 @@ import org.joda.time.format.DateTimeFormat
 import org.json4s.jackson.JsonMethods.parse
 
 import scala.util.control.NonFatal
-case class changepPoject(id:Long, name:String, user:String, ely:Long, change_date:String, change_info:Seq[changeInfoitem])
-case class trPojectStatus(id:Option[Long],id_tr_projekti:Option[Long],projekti:Option[Long],tunnus:Option[Long],status:Option[String],name:Option[String],change_date:Option[String],ely:Option[Int],muutospvm:Option[String],user:Option[String],published_date:Option[String],job_number:Option[Long],error_message:Option[String],start_time:Option[String],end_time:Option[String],error_code:Option[Int])
-case class changeInfoitem(changetype :Int, continuity:Int, road_type:Int, source:changeInfoRoadParts,target:changeInfoRoadParts)
-case class changeInfoRoadParts(tie :Option[Long], ajr:Option[Long], aosa:Option[Long],aet:Option[Double],losa:Option[Long], let:Option[Double])  //roadnumber,track,roadparts beggining, start_part_M,roadpart_end, end_part_M
+case class ChangeProject(id:Long, name:String, user:String, ely:Long, change_date:String, change_info:Seq[ChangeInfoItem])
+case class TRProjectStatus(id:Option[Long], id_tr_projekti:Option[Long], projekti:Option[Long], tunnus:Option[Long],
+                           status:Option[String], name:Option[String], change_date:Option[String], ely:Option[Int],
+                           muutospvm:Option[String], user:Option[String], published_date:Option[String],
+                           job_number:Option[Long], error_message:Option[String], start_time:Option[String],
+                           end_time:Option[String], error_code:Option[Int])
+case class ChangeInfoItem(changetype :Int, continuity:Int, road_type:Int, source:ChangeInfoRoadParts, target:ChangeInfoRoadParts)
+case class ChangeInfoRoadParts(tie :Option[Long], ajr:Option[Long], aosa:Option[Long], aet:Option[Double],
+                               losa:Option[Long], let:Option[Double])  //roadnumber,track,roadparts beggining, start_part_M,roadpart_end, end_part_M
 case class ProjectChangeStatus(projectId: Long, status: Int, reason: String)
 
 object ViiteTierekisteriClient {
@@ -47,18 +52,18 @@ object ViiteTierekisteriClient {
     messageList
   }
 
-  private def convertChangeDataToChangepPoject(changeData: ProjectRoadAddressChange): changepPoject = {
-    val source = changeInfoRoadParts(changeData.changeInfo.source.roadNumber, changeData.changeInfo.source.trackCode, changeData.changeInfo.source.startRoadPartNumber, changeData.changeInfo.source.startAddressM, changeData.changeInfo.source.endRoadPartNumber, changeData.changeInfo.source.endAddressM)
-    val target = changeInfoRoadParts(changeData.changeInfo.target.roadNumber, changeData.changeInfo.target.trackCode, changeData.changeInfo.target.startRoadPartNumber, changeData.changeInfo.target.startAddressM, changeData.changeInfo.target.endRoadPartNumber, changeData.changeInfo.target.endAddressM)
-    val changeInfo = changeInfoitem(changeData.changeInfo.changeType.value, changeData.changeInfo.discontinuity.value, changeData.changeInfo.roadType.value, source, target)
-    changepPoject(changeData.projectId, changeData.projectName.getOrElse(""), changeData.user, changeData.ely,DateTimeFormat.forPattern("yyyy-MM-DD").print(changeData.changeDate), Seq(changeInfo))
+  private def convertChangeDataToChangepPoject(changeData: ProjectRoadAddressChange): ChangeProject = {
+    val source = ChangeInfoRoadParts(changeData.changeInfo.source.roadNumber, changeData.changeInfo.source.trackCode, changeData.changeInfo.source.startRoadPartNumber, changeData.changeInfo.source.startAddressM, changeData.changeInfo.source.endRoadPartNumber, changeData.changeInfo.source.endAddressM)
+    val target = ChangeInfoRoadParts(changeData.changeInfo.target.roadNumber, changeData.changeInfo.target.trackCode, changeData.changeInfo.target.startRoadPartNumber, changeData.changeInfo.target.startAddressM, changeData.changeInfo.target.endRoadPartNumber, changeData.changeInfo.target.endAddressM)
+    val changeInfo = ChangeInfoItem(changeData.changeInfo.changeType.value, changeData.changeInfo.discontinuity.value, changeData.changeInfo.roadType.value, source, target)
+    ChangeProject(changeData.projectId, changeData.projectName.getOrElse(""), changeData.user, changeData.ely,DateTimeFormat.forPattern("yyyy-MM-DD").print(changeData.changeDate), Seq(changeInfo))
   }
 
   private val auth = new TierekisteriAuthPropertyReader
 
   private val client = HttpClientBuilder.create().build
 
-  def createJsonmessage(trProject:changepPoject) = {
+  def createJsonmessage(trProject:ChangeProject) = {
     implicit val formats = DefaultFormats
     val jsonObj = Map(
       "id" -> trProject.id,
@@ -96,7 +101,7 @@ object ViiteTierekisteriClient {
     new StringEntity(json, ContentType.APPLICATION_JSON)
   }
 
-  def sendJsonMessage(trProject:changepPoject): ProjectChangeStatus ={
+  def sendJsonMessage(trProject:ChangeProject): ProjectChangeStatus ={
     val request = new HttpPost(getRestEndPoint+"addresschange/")
     request.addHeader("X-OTH-Authorization", "Basic " + auth.getAuthInBase64)
     request.setEntity(createJsonmessage(trProject))
@@ -112,7 +117,7 @@ object ViiteTierekisteriClient {
     val request = new HttpGet(getRestEndPoint+"addresschange/"+projectid)
     request.addHeader("X-OTH-Authorization", "Basic " + auth.getAuthInBase64)
     val response = client.execute(request)
-    val receivedData=parse(StreamInput(response.getEntity.getContent)).extract[trPojectStatus]
+    val receivedData=parse(StreamInput(response.getEntity.getContent)).extract[TRProjectStatus]
     Map(
       "id"->receivedData.id,
       "id_tr_projekti"-> receivedData.id_tr_projekti.getOrElse("null"),
@@ -134,7 +139,7 @@ object ViiteTierekisteriClient {
 
   }
 
-  def getProjectStatusObject(projectid:String): Option[trPojectStatus] = {
+  def getProjectStatusObject(projectid:String): Option[TRProjectStatus] = {
 
     implicit val formats = DefaultFormats
     val request = new HttpGet(getRestEndPoint + "addresschange/" + projectid)
@@ -142,7 +147,7 @@ object ViiteTierekisteriClient {
 
     val response = client.execute(request)
     try {
-     val  receivedData = parse(StreamInput(response.getEntity.getContent)).extract[trPojectStatus]
+     val  receivedData = parse(StreamInput(response.getEntity.getContent)).extract[TRProjectStatus]
     response.close()
       return Option(receivedData)
     } catch {
