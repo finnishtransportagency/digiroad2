@@ -33,8 +33,8 @@
         url: "api/viite/project/roadlinks",
         data: JSON.stringify(data),
         dataType: "json",
-        success: function (link) {
-          eventbus.trigger('roadAddress:projectLinksUpdated');
+        success: function (data) {
+          eventbus.trigger('roadAddress:projectLinksUpdated', data);
         },
         error: errorCallback
       });

@@ -135,7 +135,7 @@
 
       projectLinksSaved = projectLinksSaved.concat(linkIds);
 
-      var projectId = currentProject.id;
+      var projectId = projectinfo.id;
 
       var data = {'linkIds': linkIds, 'projectId': projectId, 'newStatus': STATUS_TERMINATED};
 
@@ -143,6 +143,8 @@
         backend.updateProjectLinks(data, function(errorObject) {
           if (errorObject.status == INTERNAL_SERVER_ERROR_500 || errorObject.status == BAD_REQUEST_400) {
             eventbus.trigger('roadAddress:projectLinksUpdateFailed', errorObject.status);
+          } else {
+            console.log("TODO Success, refresh now");
           }
         });
       } else {
@@ -182,8 +184,11 @@
     };
 
     this.publishProject = function() {
-      // TODO: Project publish action
-      console.log("TODO");
+      backend.sendProjectToTR(projectinfo.id, function() {
+        console.log("Success");
+      }, function() {
+        console.log("Failure");
+      });
     };
 
     var addSmallLabel = function (label) {

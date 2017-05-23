@@ -202,7 +202,7 @@
         '<div class="edit-control-group choice-group">'+
         staticField('Lisätty järjestelmään', project.createdBy + ' ' + project.startDate)+
         staticField('Muokattu viimeksi', project.modifiedBy + ' ' + project.dateModified)+
-        '<div class="form-group editable form-editable-roadAddressProject"> '+
+        '<div class="form-group editable form-editable-roadAddressProject" id="information-content"> '+
         '<form id="roadAddressProject" class="input-unit-combination form-group form-horizontal roadAddressProject">'+
         '<label>Toimenpiteet</label>'+
         selection +
@@ -349,9 +349,13 @@
         }
       });
 
-      eventbus.on('roadAddress:projectLinksUpdated',function(){
+      eventbus.on('roadAddress:projectLinksUpdated',function(data){
         applicationModel.removeSpinner();
-        //TODO 375 append publish button
+        if (typeof data !== 'undefined' && typeof data.publishable !== 'undefined') {
+          console.log(data);
+          var publishButton = sendRoadAddressChangeButton();
+          $('.form-controls').replaceWith(publishButton);
+        }
       });
 
       rootElement.on('click', '.project-form button.save', function() {
