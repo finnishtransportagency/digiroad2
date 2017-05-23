@@ -286,15 +286,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   private def mapTRstateToViiteState(trState:String): Option[ProjectState] ={
-    if(trState=="S"|| trState=="K"){
-      Some(ProjectState.apply(4))
-    }    else if (trState=="T"){
-      Some(ProjectState.apply(5))
-    } else if (trState=="V" || trState=="null"){  //null when we get response, but TR for some reason doesn't have that project
-      Some(ProjectState.apply((3)))
-    } else {
-      None
-    }
 
+    trState match {
+      case "S" => Some(ProjectState.apply(ProjectState.TRProcessing.value))
+      case "K" => Some(ProjectState.apply(ProjectState.TRProcessing.value))
+      case "T" => Some(ProjectState.apply(ProjectState.Saved2TR.value))
+      case "V" => Some(ProjectState.apply(ProjectState.ErroredInTR.value))
+      case "null" => Some(ProjectState.apply(ProjectState.ErroredInTR.value))
+      case _=> None
+    }
   }
 }
