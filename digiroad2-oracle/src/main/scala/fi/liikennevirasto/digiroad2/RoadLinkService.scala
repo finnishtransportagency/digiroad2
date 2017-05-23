@@ -118,7 +118,6 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   /**
-    * ATENTION Use this method always with transation not with session
     * This method returns VVH road links that had changed between two dates.
     *
     * @param since
@@ -801,6 +800,10 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     val (complementaryResult, roadLinksResult) = Await.result(fut, Duration.Inf)
     complementaryResult           ++roadLinksResult
   }
+
+//  def getRoadNodesFromVVHByMunicipality(municipality: Int): Seq[RoadLink] = {
+//    val vvhRoadNodes = fetchVVHRoadlinks(linkIds))
+//  }
 
   /**
     * Checks if road link is not complete. Used by RoadLinkService.enrichRoadLinksFromVVH.
