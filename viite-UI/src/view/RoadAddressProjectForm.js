@@ -395,6 +395,7 @@
         applicationModel.addSpinner();
         applicationModel.selectLayer('roadAddressProject');
         eventbus.once('roadAddress:projectSaved', function (result) {
+          currentProject = result.project;
           jQuery('.modal-overlay').remove();
           if(!_.isUndefined(result.projectAddresses)) {
             console.log(result);
