@@ -801,10 +801,6 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     complementaryResult           ++roadLinksResult
   }
 
-//  def getRoadNodesFromVVHByMunicipality(municipality: Int): Seq[RoadLink] = {
-//    val vvhRoadNodes = fetchVVHRoadlinks(linkIds))
-//  }
-
   /**
     * Checks if road link is not complete. Used by RoadLinkService.enrichRoadLinksFromVVH.
     */
