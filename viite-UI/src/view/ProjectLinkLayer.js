@@ -137,32 +137,6 @@
         addFeaturesToSelection(featuresToHighlight);
     };
 
-    eventbus.on('roadAddress:projectLinksEdited',function(){
-      var editedLinks = projectCollection.getDirty();
-      var allLinks = projectCollection.getAll();
-      var features = [];
-      redraw(allLinks);
-      _.each(vectorLayer.getSource().getFeatures(), function(feature) {
-        var terminatedLink = (!_.isUndefined(feature.projectLinkData.linkId) && _.contains(editedLinks, feature.projectLinkData.linkId));
-        if(terminatedLink){
-          vectorLayer.getSource().removeFeature(feature);
-          feature.projectLinkData.status = 1;
-          feature.setStyle(new ol.style.Style({
-            fill: new ol.style.Fill({
-              color: 'rgba(56, 56, 54, 1)'
-            }),
-            stroke: new ol.style.Stroke({
-              color: 'rgba(56, 56, 54, 1)',
-              width: 8
-            })
-          }));
-          features.push(feature);
-        }
-      });
-      if(features.length !== 0)
-        addFeaturesToSelection(features);
-    });
-
     /**
      * Simple method that will add various open layers 3 features to a selection.
      * @param ol3Features
@@ -245,19 +219,49 @@
       me.hide();
     };
 
-    var redraw = function(projectLinks){
-      var simulatedOL3Features = [];
-      _.map(projectLinks, function(projectLink){
-        var points = _.map(projectLink.points, function(point) {
+    var redraw = function(){
+      var editedLinks = projectCollection.getDirty();
+      var projectLinks = projectCollection.getAll();
+      console.log(editedLinks);
+      console.log(projectLinks);
+      var features = [];
+      _.map(projectLinks, function(projectLink) {
+        var points = _.map(projectLink.points, function (point) {
           return [point.x, point.y];
         });
-        var feature =  new ol.Feature({ geometry: new ol.geom.LineString(points)
+        var feature = new ol.Feature({
+          geometry: new ol.geom.LineString(points)
         });
         feature.projectLinkData = projectLink;
-        simulatedOL3Features.push(feature);
+        features.push(feature);
       });
+      var partitioned = _.partition(features, function(feature) {
+        return (!_.isUndefined(feature.projectLinkData.linkId) && _.contains(editedLinks, feature.projectLinkData.linkId));
+      });
+      features = [];
+      console.log(partitioned);
+      _.each(partitioned[0], function(feature) {
+        var editedLink = (!_.isUndefined(feature.projectLinkData.linkId) && _.contains(editedLinks, feature.projectLinkData.linkId));
+        if(editedLink){
+          feature.projectLinkData.status = 1;
+          feature.setStyle(new ol.style.Style({
+            fill: new ol.style.Fill({
+              color: 'rgba(56, 56, 54, 1)'
+            }),
+            stroke: new ol.style.Stroke({
+              color: 'rgba(56, 56, 54, 1)',
+              width: 8
+            })
+          }));
+          features.push(feature);
+        }
+      });
+      if(features.length !== 0)
+        addFeaturesToSelection(features);
+      features = features.concat(partitioned[1]);
       vectorLayer.getSource().clear(true); // Otherwise we get multiple copies: TODO: clear only inside bbox
-      vectorLayer.getSource().addFeatures(simulatedOL3Features);
+      console.log(features);
+      vectorLayer.getSource().addFeatures(features);
       vectorLayer.changed();
     };
 
@@ -278,8 +282,12 @@
       projectCollection.getProjectsWithLinksById(projId);
     });
 
-    eventbus.on('roadAddressProject:fetched', function(projectLinks) {
-      redraw(projectLinks);
+    eventbus.on('roadAddressProject:fetched', function() {
+      redraw();
+    });
+
+    eventbus.on('roadAddress:projectLinksEdited',function(){
+      redraw();
     });
 
     eventbus.on('map:moved', mapMovedHandler, this);
