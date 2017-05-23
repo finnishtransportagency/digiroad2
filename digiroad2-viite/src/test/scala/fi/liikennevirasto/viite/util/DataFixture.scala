@@ -132,7 +132,7 @@ object DataFixture {
             val (kept, removed) = list.partition(ra => currReplacement.exists(_.id == ra.id))
             val (created) = currReplacement.filterNot(ra => kept.exists(_.id == ra.id))
             RoadAddressDAO.remove(removed)
-            RoadAddressDAO.create(created, "Automatic_merged")
+            RoadAddressDAO.create(created, Some("Automatic_merged"))
           }
         }
       })
