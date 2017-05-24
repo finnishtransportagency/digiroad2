@@ -19,7 +19,6 @@ case class TRProjectStatus(id:Option[Long], trProjectId:Option[Long], trSubProje
                            trJobNumber:Option[Long], errorMessage:Option[String], trProcessingStarted:Option[String],
                            trProcessingEnded:Option[String], errorCode:Option[Int])
 case class ChangeProject(id:Long, name:String, user:String, ely:Long, changeDate:String, changeInfoSeq:Seq[RoadAddressChangeInfo])
-case class ChangeInfoItem(changeType: ChangeType, continuity: Discontinuity, roadType: Int, source: RoadAddressChangeRecipient, target: RoadAddressChangeRecipient)
 case class ProjectChangeStatus(projectId: Long, status: Int, reason: String)
 
 
@@ -51,12 +50,12 @@ case object ChangeInfoItemSerializer extends CustomSerializer[RoadAddressChangeI
       Discontinuity.apply(o.values("continuity").asInstanceOf[BigInt].intValue),
       RoadType.apply(o.values("road_type").asInstanceOf[BigInt].intValue))
 }, {
-  case o: ChangeInfoItem =>
+  case o: RoadAddressChangeInfo =>
     implicit val formats = DefaultFormats + ChangeInfoRoadPartsSerializer
     JObject(
       JField("change_type", JInt(BigInt.apply(o.changeType.value))),
-      JField("continuity", JInt(BigInt.apply(o.continuity.value))),
-      JField("road_type", JInt(BigInt.apply(o.roadType))),
+      JField("continuity", JInt(BigInt.apply(o.discontinuity.value))),
+      JField("road_type", JInt(BigInt.apply(o.roadType.value))),
       JField("source", Extraction.decompose(o.source)),
       JField("target", Extraction.decompose(o.target))
     )
@@ -171,39 +170,7 @@ object ViiteTierekisteriClient {
 
   def createJsonmessage(trProject:ChangeProject) = {
     implicit val formats = DefaultFormats + ChangeInfoRoadPartsSerializer + ChangeInfoItemSerializer + ChangeProjectSerializer
-    val jsonObj = Map(
-      "id" -> trProject.id,
-      "name" -> trProject.name,
-      "user" -> trProject.user,
-      "ely" -> trProject.ely,
-      "change_date" -> trProject.changeDate,
-      "change_info" -> {
-        trProject.changeInfoSeq.map(changeInfo =>
-          Map(
-            "change_type" -> changeInfo.changeType,
-            "continuity" -> changeInfo.discontinuity.value,
-            "road_type" -> changeInfo.roadType,
-            "source" -> Map(
-              "tie" -> changeInfo.source.roadNumber.getOrElse("null"),
-              "ajr" -> changeInfo.source.trackCode.getOrElse("null"),
-              "aosa" -> changeInfo.source.startRoadPartNumber.getOrElse("null"),
-              "aet" -> changeInfo.source.startAddressM.getOrElse("null"),
-              "losa" -> changeInfo.source.endRoadPartNumber.getOrElse("null"),
-              "let" -> changeInfo.source.endAddressM.getOrElse("null")
-            ),
-            "target" -> Map(
-              "tie" -> changeInfo.target.roadNumber.getOrElse("null"),
-              "ajr" -> changeInfo.target.trackCode.getOrElse("null"),
-              "aosa" -> changeInfo.target.startRoadPartNumber.getOrElse("null"),
-              "aet" -> changeInfo.target.startAddressM.getOrElse("null"),
-              "losa" -> changeInfo.target.endRoadPartNumber.getOrElse("null"),
-              "let" -> changeInfo.target.endAddressM.getOrElse("null")
-            )
-          )
-        )
-      }
-    )
-    val json = Serialization.write(jsonObj)
+    val json = Serialization.write(Extraction.decompose(trProject))
     new StringEntity(json, ContentType.APPLICATION_JSON)
   }
 
