@@ -133,9 +133,21 @@
       };
     }
 
-    this.withRoadLinkData = function (roadLinkData) {
+    //Methods for the UI Integrated Tests
+
+    var afterSave = false;
+
+    var resetAfterSave = function(){
+      afterSave = false;
+    };
+
+    this.withRoadLinkData = function (roadLinkData, afterSaveRoadLinkData) {
       self.getRoadLinks = function(boundingBox, callback) {
-        callback(roadLinkData);
+        if(afterSave){
+          callback(afterSaveRoadLinkData);
+        } else {
+          callback(roadLinkData);
+        }
         eventbus.trigger('roadLinks:fetched');
       };
       return self;
@@ -145,6 +157,7 @@
       self.getUserRoles = function () {
         eventbus.trigger('roles:fetched', userRolesData);
       };
+      afterSave = false;
       return self;
     };
 
@@ -162,6 +175,21 @@
         } else {
           callback([]);
         }
+      };
+      return self;
+    };
+
+    this.withGetTransferResult = function(simulationData){
+      self.getTransferResult = function(selectedRoadAddressData, callback) {
+        callback(simulationData);
+      };
+      return self;
+    };
+
+    this.withRoadAddressCreation = function(){
+      self.createRoadAddress = function(data){
+        afterSave = true;
+        eventbus.trigger('linkProperties:saved');
       };
       return self;
     };

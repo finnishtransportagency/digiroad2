@@ -55,7 +55,9 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
       before(function(done){
         var ol3Feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getPickRoadsLayerName(), unknownRoadLinkId);
         testHelpers.selectSingleFeature(openLayersMap, ol3Feature);
-        done();
+        setTimeout(function(){
+          done();
+        },1000);
       });
 
       it('Check if the unknown road was selected via form',function(){
@@ -75,6 +77,53 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
         var unknownFeatureFromGreenLayer = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getGreenRoadLayerName(),unknownRoadLinkId);
         expect(unknownFeatureFromGreenLayer).to.not.be.undefined;
         expect(unknownFeatureFromGreenLayer.roadLinkData.linkId).to.be.equal(unknownRoadLinkId);
+      });
+    });
+
+    describe('Click the Sirra button to start the simulation', function() {
+      before(function(done){
+        testHelpers.clickEnabledSirraButton();
+        setTimeout(function(){
+          done();
+        },1000);
+      });
+
+      it('Confirm that the form changed', function(){
+        expect($('[id^=afterCalculationInfo]:visible').length).to.equals(1);
+        expect($('[id^=VALITUTLINKIT] p:visible').length).to.be.above(0);
+        expect(floatingsLinkIds.concat(unknownRoadLinkId)).to.include.members([parseInt($('[id^=VALITUTLINKIT] p:visible').html())]);
+        expect($('.link-properties button.calculate:disabled').length).to.equals(1);
+        expect($('.link-properties button.save:enabled').length).to.equals(1);
+      });
+
+      it('Verify that the simulated road addresses are simulated',function(){
+        var simulatedFeatures = testHelpers.getFeaturesRoadLinkData(openLayersMap, testHelpers.getSimulatedRoadsLayerName());
+        expect(simulatedFeatures.length).to.be.above(0);
+        var featuresIds = _.chain(simulatedFeatures).map(function(sf){
+          return sf.id;
+        }).uniq().value();
+        expect(featuresIds.length).to.equals(1);
+        expect(_.first(featuresIds)).to.equals(-1000);
+      });
+    });
+
+    describe('Click the Tallenna button to save the simulated data', function(){
+      before(function(done){
+        testHelpers.clickEnabledSaveButton();
+        setTimeout(function(){
+          done();
+        },1000);
+      });
+
+      it('Verify that the previous unknown link is now no longer unknown and there is only one feature', function(){
+        var features= testHelpers.getFeaturesRoadLinkData(openLayersMap, testHelpers.getRoadLayerName());
+        var roadLinkData = _.filter(features, function(rld){
+          return rld.linkId === unknownRoadLinkId;
+        });
+        expect(roadLinkData.length).to.equals(1);
+        expect(_.first(roadLinkData).anomaly).to.equals(0);
+        expect(_.first(roadLinkData).id).to.not.equals(-1000);
+        expect(_.first(roadLinkData).roadLinkType).to.not.equals(-1);
       });
     });
 

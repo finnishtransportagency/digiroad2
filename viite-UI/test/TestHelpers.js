@@ -9,7 +9,7 @@ define(['RoadAddressTestData',
       return 'roadLayer';
     };
     var getFloatingMarkerLayerName = function() {
-      return 'floatingMarkerLayerName';
+      return 'floatingMarkerLayer';
     };
     var getAnomalousMarkerLayerName = function() {
       return 'anomalousMarkerLayer';
@@ -24,7 +24,7 @@ define(['RoadAddressTestData',
       return 'pickRoadsLayer';
     };
     var getSimulatedRoadsLayerName = function() {
-      return 'simulatedRoadsLayerName';
+      return 'simulatedRoadsLayer';
     };
     var getSingleClickName = function() {
       return 'selectSingleClickInteraction';
@@ -70,10 +70,12 @@ define(['RoadAddressTestData',
     };
 
     var fakeBackend = function(zoomLevel, generatedData, latitude, longitude) {
-      return new Backend().withRoadLinkData(generatedData)
+      return new Backend().withRoadLinkData(generatedData, selectTestData('roadAddressAfterSave'))
         .withUserRolesData(UserRolesTestData.generate())
         .withStartupParameters({ lon: longitude, lat: latitude, zoom: zoomLevel || 10 })
-        .withFloatingAdjacents(selectTestData('floatingRoadAddress'), selectTestData('unknownRoadAddress'));
+        .withFloatingAdjacents(selectTestData('floatingRoadAddress'), selectTestData('unknownRoadAddress'))
+        .withGetTransferResult(selectTestData('transferFloating'))
+        .withRoadAddressCreation();
     };
 
     var clickVisibleEditModeButton = function() {
@@ -84,15 +86,27 @@ define(['RoadAddressTestData',
       $('.btn.yes:visible').click();
     };
 
+    var clickValintaButton = function(){
+      $('.link-properties button.continue').click();
+    };
+
+    var clickMap = function(map, longitude, latitude) {
+      map.dispatchEvent({ type: 'singleclick', coordinate: [longitude, latitude] });
+    };
+
+    var clickEnabledSirraButton = function(){
+      $('.link-properties button.calculate:enabled').click();
+    };
+
+    var clickEnabledSaveButton = function(){
+      $('.link-properties button.save:enabled').click();
+    };
+
     var getLayerByName = function(map, name){
       var layers = map.getLayers().getArray();
       return _.find(layers, function(layer){
         return layer.get('name') === name;
       });
-    };
-
-    var clickMap = function(map, longitude, latitude) {
-      map.dispatchEvent({ type: 'singleclick', coordinate: [longitude, latitude] });
     };
 
     var getLineStringFeatures = function(layer) {
@@ -122,10 +136,14 @@ define(['RoadAddressTestData',
           return UserRolesTestData.generate();
         case 'roadAddress':
           return RoadAddressTestData.generateRoadAddressLinks();
+        case 'roadAddressAfterSave':
+          return RoadAddressTestData.generateRoadAddressDataAfterSave();
         case 'floatingRoadAddress':
           return RoadAddressTestData.generateFloatingAdjacentData();
         case 'unknownRoadAddress':
           return RoadAddressTestData.generateUnknownAdjacentData();
+        case 'transferFloating':
+         return RoadAddressTestData.generateTransferFloatingData();
         case 'roadLink':
           return RoadLinkTestData.generate();
       }
@@ -172,10 +190,6 @@ define(['RoadAddressTestData',
       });
     };
 
-    var clickValintaButton = function(){
-      $('.link-properties button.continue').click();
-    };
-
     return {
       getRoadLayerName: getRoadLayerName,
       getFloatingMarkerLayerName: getFloatingMarkerLayerName,
@@ -190,8 +204,11 @@ define(['RoadAddressTestData',
       getPixelFromCoordinateAsync: getPixelFromCoordinateAsync,
       defaultBackend: defaultBackend,
       fakeBackend: fakeBackend,
+      clickValintaButton:clickValintaButton,
+      clickEnabledSirraButton: clickEnabledSirraButton,
       clickVisibleEditModeButton: clickVisibleEditModeButton,
       clickVisbleYesConfirmPopup: clickVisbleYesConfirmPopup,
+      clickEnabledSaveButton: clickEnabledSaveButton,
       clickMap: clickMap,
       getLineStringFeatures: getLineStringFeatures,
       selectLayer: selectLayer,
@@ -201,7 +218,6 @@ define(['RoadAddressTestData',
       getFeaturesRoadLinkData: getFeaturesRoadLinkData,
       getFeatureByLinkId: getFeatureByLinkId,
       getRoadLinkDataByLinkId: getRoadLinkDataByLinkId,
-      selectSingleFeature: selectSingleFeature,
-      clickValintaButton:clickValintaButton
+      selectSingleFeature: selectSingleFeature
     };
   });
