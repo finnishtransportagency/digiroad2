@@ -2,15 +2,13 @@ package fi.liikennevirasto.viite.dao
 import java.sql.SQLException
 
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, RoadLinkService}
-import slick.jdbc.StaticQuery.interpolation
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.viite._
 import org.joda.time.DateTime
-import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.jdbc.StaticQuery.interpolation
 
 /**
   * Class to test DB trigger that does not allow reserving already reserved links to project

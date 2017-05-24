@@ -16,7 +16,6 @@ import fi.liikennevirasto.viite.dao.MissingRoadAddress
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
 import fi.liikennevirasto.viite.{ProjectService, RoadAddressMerge, RoadAddressService}
 import org.apache.http.impl.client.HttpClientBuilder
-import org.scalatest.time.Seconds
 
 import scala.concurrent.duration.FiniteDuration
 

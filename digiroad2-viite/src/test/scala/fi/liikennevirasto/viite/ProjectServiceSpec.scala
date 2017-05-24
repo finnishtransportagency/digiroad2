@@ -7,25 +7,21 @@ import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, State, TrafficDirection, UnknownLinkType}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, RoadLinkService}
-import fi.liikennevirasto.viite.dao.{Discontinuity, ProjectState, RoadAddressDAO, RoadAddressProject}
+import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, RoadLinkService, _}
+import fi.liikennevirasto.viite.dao.{Discontinuity, ProjectState, RoadAddressProject, _}
+import fi.liikennevirasto.viite.process.ProjectDeltaCalculator
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.conn.{ConnectTimeoutException, HttpHostConnectException}
 import org.apache.http.impl.client.HttpClientBuilder
-import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.process.ProjectDeltaCalculator
 import org.joda.time.DateTime
 import org.mockito.Mockito.when
-import org.scalatest.{FunSuite, Matchers}
 import org.scalatest.mock.MockitoSugar
+import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import slick.jdbc.StaticQuery
 import slick.jdbc.StaticQuery.interpolation
 
 class ProjectServiceSpec  extends FunSuite with Matchers {

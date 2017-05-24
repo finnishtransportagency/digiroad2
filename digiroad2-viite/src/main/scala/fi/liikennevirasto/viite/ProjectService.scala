@@ -7,13 +7,13 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, RoadLinkService}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink, RoadAddressLinkLike}
-import fi.liikennevirasto.viite.process.{ProjectDeltaCalculator, RoadAddressFiller}
+import fi.liikennevirasto.viite.process.RoadAddressFiller
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ListBuffer
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
 
 class ProjectService(roadAddressService: RoadAddressService, roadLinkService: RoadLinkService, eventbus: DigiroadEventBus) {
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)

@@ -6,12 +6,10 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.UserProvider
-import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
-import fi.liikennevirasto.viite.{ProjectService, ReservedRoadPart, RoadAddressService}
+import fi.liikennevirasto.digiroad2.util.RoadAddressException
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.model.{RoadAddressLink, RoadAddressLinkPartitioner}
-import fi.liikennevirasto.viite.{ReservedRoadPart, RoadAddressService,ViiteTierekisteriClient}
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink, RoadAddressLinkPartitioner}
+import fi.liikennevirasto.viite.{ProjectService, ReservedRoadPart, RoadAddressService}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.json4s._

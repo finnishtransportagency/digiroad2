@@ -6,9 +6,6 @@ import org.json4s._
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra._
 
-/**
-  * Created by pedrosag on 17-05-2017.
-  */
 class ViiteTierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
 
   val projectResponseObject = Map (
@@ -80,287 +77,117 @@ class ViiteTierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
   }
 
   private def validateProject(project: Map[String,Any]) ={
-    val projectId = project.get("id").get
+    def testNonNull(source: Map[String, Any], key: String, errorMessage: String): Unit = {
+      if (source(key) == "null") {
+        println(errorMessage)
+        halt(BadRequest(errorMessage))
+      }
+    }
+
+    def testIsNull(source: Map[String, Any], key: String, errorMessage: String): Unit = {
+      if (source(key) != "null") {
+        println(errorMessage)
+        halt(BadRequest(errorMessage))
+      }
+    }
+
+    val (roadNo, track, startPart, startAM, endPart, endAM) = ("tie", "ajr", "aosa", "aet", "losa", "let")
+    val projectId = project("id")
     val keys = project.keySet.toList
     if(!projectId.equals(0)){
       halt(ExpectationFailed("Not the test project"));
     }
     val changeInfo = project.get(keys(1)).map(_.asInstanceOf[List[Map[String, Any]]].head)
-    val changeType = changeInfo.get.get("change_type").get
+    val changeType = changeInfo.get("change_type")
     val source = changeInfo.get.get("source").map(_.asInstanceOf[Map[String, Any]]).get
     val target = changeInfo.get.get("target").map(_.asInstanceOf[Map[String, Any]]).get
     changeType match {
-      case 1 => {
+      case 1 =>
         //Source - not null
         //Target - all null
         println("Matched 1")
-        if(source.get("tie").get == "null") {
-          println(SourceTieIsNullMessage);
-          halt(BadRequest(SourceTieIsNullMessage))
-        }
-        if(source.get("ajr").get == "null") {
-          println(SourceAjrIsNullMessage);
-          halt(BadRequest(SourceAjrIsNullMessage))
-        }
-        if(source.get("aosa").get == "null") {
-          println(SourceAosaIsNullMessage);
-          halt(BadRequest(SourceAosaIsNullMessage))
-        }
-        if(source.get("aet").get == "null") {
-          println(SourceAetIsNullMessage);
-          halt(BadRequest(SourceAetIsNullMessage))
-        }
-        if(source.get("losa").get == "null") {
-          println(SourceLosaIsNullMessage);
-          halt(BadRequest(SourceLosaIsNullMessage))
-        }
-        if(source.get("let").get == "null") {
-          println(SourceLetIsNullMessage);
-          halt(BadRequest(SourceLetIsNullMessage))
-        }
 
-        if(target.get("tie").get != "null") {
-          println(TargetTieIsNullMessage);
-          halt(BadRequest(TargetTieIsNullMessage))
-        }
-        if(target.get("ajr").get != "null") {
-          println(TargetAjrIsNullMessage);
-          halt(BadRequest(TargetAjrIsNullMessage))
-        }
-        if(target.get("aosa").get != "null") {
-          println(TargetAosaIsNullMessage);
-          halt(BadRequest(TargetAosaIsNullMessage))
-        }
-        if(target.get("aet").get != "null") {
-          println(TargetAetIsNullMessage);
-          halt(BadRequest(TargetAetIsNullMessage))
-        }
-        if(target.get("losa").get != "null") {
-          println(TargetLosaIsNullMessage);
-          halt(BadRequest(TargetLosaIsNullMessage))
-        }
-        if(target.get("let").get != "null") {
-          println(TargetLetIsNullMessage);
-          halt(BadRequest(TargetLetIsNullMessage))
-        }
+        testNonNull(source, roadNo, SourceTieIsNullMessage)
+        testNonNull(source, track, SourceAjrIsNullMessage)
+        testNonNull(source, startPart, SourceAosaIsNullMessage)
+        testNonNull(source, startAM, SourceAetIsNullMessage)
+        testNonNull(source, endPart, SourceLosaIsNullMessage)
+        testNonNull(source, endAM, SourceLetIsNullMessage)
 
-      }
-      case 2 => {
+        testIsNull(target, roadNo, TargetTieIsNullMessage)
+        testIsNull(target, track, TargetAjrIsNullMessage)
+        testIsNull(target, startPart, TargetAosaIsNullMessage)
+        testIsNull(target, startAM, TargetAetIsNullMessage)
+        testIsNull(target, endPart, TargetLosaIsNullMessage)
+        testIsNull(target, endAM, TargetLetIsNullMessage)
+      case 2 =>
         //Source - all null
         //Target - not null
         println("Matched 2")
-        if(source.get("tie").get != "null") {
-          println(SourceTieIsNullMessage);
-          halt(BadRequest(SourceTieIsNullMessage))
-        }
-        if(source.get("ajr").get != "null") {
-          println(SourceAjrIsNullMessage);
-          halt(BadRequest(SourceAjrIsNullMessage))
-        }
-        if(source.get("aosa").get != "null") {
-          println(SourceAosaIsNullMessage);
-          halt(BadRequest(SourceAosaIsNullMessage))
-        }
-        if(source.get("aet").get != "null") {
-          println(SourceAetIsNullMessage);
-          halt(BadRequest(SourceAetIsNullMessage))
-        }
-        if(source.get("losa").get != "null") {
-          println(SourceLosaIsNullMessage);
-          halt(BadRequest(SourceLosaIsNullMessage))
-        }
-        if(source.get("let").get != "null") {
-          println(SourceLetIsNullMessage);
-          halt(BadRequest(SourceLetIsNullMessage))
-        }
+        testIsNull(source, roadNo, SourceTieIsNullMessage)
+        testIsNull(source, track, SourceAjrIsNullMessage)
+        testIsNull(source, startPart, SourceAosaIsNullMessage)
+        testIsNull(source, startAM, SourceAetIsNullMessage)
+        testIsNull(source, endPart, SourceLosaIsNullMessage)
+        testIsNull(source, endAM, SourceLetIsNullMessage)
 
-        if(target.get("tie").get == "null") {
-          println(TargetTieIsNullMessage);
-          halt(BadRequest(TargetTieIsNullMessage))
-        }
-        if(target.get("ajr").get == "null") {
-          println(TargetAjrIsNullMessage);
-          halt(BadRequest(TargetAjrIsNullMessage))
-        }
-        if(target.get("aosa").get == "null") {
-          println(TargetAosaIsNullMessage);
-          halt(BadRequest(TargetAosaIsNullMessage))
-        }
-        if(target.get("aet").get == "null") {
-          println(TargetAetIsNullMessage);
-          halt(BadRequest(TargetAetIsNullMessage))
-        }
-        if(target.get("losa").get == "null") {
-          println(TargetLosaIsNullMessage);
-          halt(BadRequest(TargetLosaIsNullMessage))
-        }
-        if(target.get("let").get == "null") {
-          println(TargetLetIsNullMessage);
-          halt(BadRequest(TargetLetIsNullMessage))
-        }
-      }
-      case 3 => {
+        testNonNull(target, roadNo, TargetTieIsNullMessage)
+        testNonNull(target, track, TargetAjrIsNullMessage)
+        testNonNull(target, startPart, TargetAosaIsNullMessage)
+        testNonNull(target, startAM, TargetAetIsNullMessage)
+        testNonNull(target, endPart, TargetLosaIsNullMessage)
+        testNonNull(target, endAM, TargetLetIsNullMessage)
+      case 3 =>
         //Source - not null
         //Target - not null
         println("Matched 3")
-        if(source.get("tie").get == "null") {
-          println(SourceTieIsNullMessage);
-          halt(BadRequest(SourceTieIsNullMessage))
-        }
-        if(source.get("ajr").get == "null") {
-          println(SourceAjrIsNullMessage);
-          halt(BadRequest(SourceAjrIsNullMessage))
-        }
-        if(source.get("aosa").get == "null") {
-          println(SourceAosaIsNullMessage);
-          halt(BadRequest(SourceAosaIsNullMessage))
-        }
-        if(source.get("aet").get == "null") {
-          println(SourceAetIsNullMessage);
-          halt(BadRequest(SourceAetIsNullMessage))
-        }
-        if(source.get("losa").get == "null") {
-          println(SourceLosaIsNullMessage);
-          halt(BadRequest(SourceLosaIsNullMessage))
-        }
-        if(source.get("let").get == "null") {
-          println(SourceLetIsNullMessage);
-          halt(BadRequest(SourceLetIsNullMessage))
-        }
+        testNonNull(source, roadNo, SourceTieIsNullMessage)
+        testNonNull(source, track, SourceAjrIsNullMessage)
+        testNonNull(source, startPart, SourceAosaIsNullMessage)
+        testNonNull(source, startAM, SourceAetIsNullMessage)
+        testNonNull(source, endPart, SourceLosaIsNullMessage)
+        testNonNull(source, endAM, SourceLetIsNullMessage)
 
-        if(target.get("tie").get == "null") {
-          println(TargetTieIsNullMessage);
-          halt(BadRequest(TargetTieIsNullMessage))
-        }
-        if(target.get("ajr").get == "null") {
-          println(TargetAjrIsNullMessage);
-          halt(BadRequest(TargetAjrIsNullMessage))
-        }
-        if(target.get("aosa").get == "null") {
-          println(TargetAosaIsNullMessage);
-          halt(BadRequest(TargetAosaIsNullMessage))
-        }
-        if(target.get("aet").get == "null") {
-          println(TargetAetIsNullMessage);
-          halt(BadRequest(TargetAetIsNullMessage))
-        }
-        if(target.get("losa").get == "null") {
-          println(TargetLosaIsNullMessage);
-          halt(BadRequest(TargetLosaIsNullMessage))
-        }
-        if(target.get("let").get == "null") {
-          println(TargetLetIsNullMessage);
-          halt(BadRequest(TargetLetIsNullMessage))
-        }
-      }
-      case 4 => {
+        testNonNull(target, roadNo, TargetTieIsNullMessage)
+        testNonNull(target, track, TargetAjrIsNullMessage)
+        testNonNull(target, startPart, TargetAosaIsNullMessage)
+        testNonNull(target, startAM, TargetAetIsNullMessage)
+        testNonNull(target, endPart, TargetLosaIsNullMessage)
+        testNonNull(target, endAM, TargetLetIsNullMessage)
+      case 4 =>
         //Source - not null
         //Target - not null
         println("Matched 4")
-        if(source.get("tie").get == "null") {
-          println(SourceTieIsNullMessage);
-          halt(BadRequest(SourceTieIsNullMessage))
-        }
-        if(source.get("ajr").get == "null") {
-          println(SourceAjrIsNullMessage);
-          halt(BadRequest(SourceAjrIsNullMessage))
-        }
-        if(source.get("aosa").get == "null") {
-          println(SourceAosaIsNullMessage);
-          halt(BadRequest(SourceAosaIsNullMessage))
-        }
-        if(source.get("aet").get == "null") {
-          println(SourceAetIsNullMessage);
-          halt(BadRequest(SourceAetIsNullMessage))
-        }
-        if(source.get("losa").get == "null") {
-          println(SourceLosaIsNullMessage);
-          halt(BadRequest(SourceLosaIsNullMessage))
-        }
-        if(source.get("let").get == "null") {
-          println(SourceLetIsNullMessage);
-          halt(BadRequest(SourceLetIsNullMessage))
-        }
+        testNonNull(source, roadNo, SourceTieIsNullMessage)
+        testNonNull(source, track, SourceAjrIsNullMessage)
+        testNonNull(source, startPart, SourceAosaIsNullMessage)
+        testNonNull(source, startAM, SourceAetIsNullMessage)
+        testNonNull(source, endPart, SourceLosaIsNullMessage)
+        testNonNull(source, endAM, SourceLetIsNullMessage)
 
-        if(target.get("tie").get == "null") {
-          println(TargetTieIsNullMessage);
-          halt(BadRequest(TargetTieIsNullMessage))
-        }
-        if(target.get("ajr").get == "null") {
-          println(TargetAjrIsNullMessage);
-          halt(BadRequest(TargetAjrIsNullMessage))
-        }
-        if(target.get("aosa").get == "null") {
-          println(TargetAosaIsNullMessage);
-          halt(BadRequest(TargetAosaIsNullMessage))
-        }
-        if(target.get("aet").get == "null") {
-          println(TargetAetIsNullMessage);
-          halt(BadRequest(TargetAetIsNullMessage))
-        }
-        if(target.get("losa").get == "null") {
-          println(TargetLosaIsNullMessage);
-          halt(BadRequest(TargetLosaIsNullMessage))
-        }
-        if(target.get("let").get == "null") {
-          println(TargetLetIsNullMessage);
-          halt(BadRequest(TargetLetIsNullMessage))
-        }
-      }
-      case 5 => {
+        testNonNull(target, roadNo, TargetTieIsNullMessage)
+        testNonNull(target, track, TargetAjrIsNullMessage)
+        testNonNull(target, startPart, TargetAosaIsNullMessage)
+        testNonNull(target, startAM, TargetAetIsNullMessage)
+        testNonNull(target, endPart, TargetLosaIsNullMessage)
+        testNonNull(target, endAM, TargetLetIsNullMessage)
+      case 5 =>
         //Source - not null
         //Target - all null
         println("Matched 5")
-        if(source.get("tie").get == "null") {
-          println(SourceTieIsNullMessage);
-          halt(BadRequest(SourceTieIsNullMessage))
-        }
-        if(source.get("ajr").get == "null") {
-          println(SourceAjrIsNullMessage);
-          halt(BadRequest(SourceAjrIsNullMessage))
-        }
-        if(source.get("aosa").get == "null") {
-          println(SourceAosaIsNullMessage);
-          halt(BadRequest(SourceAosaIsNullMessage))
-        }
-        if(source.get("aet").get == "null") {
-          println(SourceAetIsNullMessage);
-          halt(BadRequest(SourceAetIsNullMessage))
-        }
-        if(source.get("losa").get == "null") {
-          println(SourceLosaIsNullMessage);
-          halt(BadRequest(SourceLosaIsNullMessage))
-        }
-        if(source.get("let").get == "null") {
-          println(SourceLetIsNullMessage);
-          halt(BadRequest(SourceLetIsNullMessage))
-        }
+        testNonNull(source, roadNo, SourceTieIsNullMessage)
+        testNonNull(source, track, SourceAjrIsNullMessage)
+        testNonNull(source, startPart, SourceAosaIsNullMessage)
+        testNonNull(source, startAM, SourceAetIsNullMessage)
+        testNonNull(source, endPart, SourceLosaIsNullMessage)
+        testNonNull(source, endAM, SourceLetIsNullMessage)
 
-        if(target.get("tie").get != "null") {
-          println(TargetTieIsNullMessage);
-          halt(BadRequest(TargetTieIsNullMessage))
-        }
-        if(target.get("ajr").get != "null") {
-          println(TargetAjrIsNullMessage);
-          halt(BadRequest(TargetAjrIsNullMessage))
-        }
-        if(target.get("aosa").get != "null") {
-          println(TargetAosaIsNullMessage);
-          halt(BadRequest(TargetAosaIsNullMessage))
-        }
-        if(target.get("aet").get != "null") {
-          println(TargetAetIsNullMessage);
-          halt(BadRequest(TargetAetIsNullMessage))
-        }
-        if(target.get("losa").get != "null") {
-          println(TargetLosaIsNullMessage);
-          halt(BadRequest(TargetLosaIsNullMessage))
-        }
-        if(target.get("let").get != "null") {
-          println(TargetLetIsNullMessage);
-          halt(BadRequest(TargetLetIsNullMessage))
-        }
-      }
+        testIsNull(target, roadNo, TargetTieIsNullMessage)
+        testIsNull(target, track, TargetAjrIsNullMessage)
+        testIsNull(target, startPart, TargetAosaIsNullMessage)
+        testIsNull(target, startAM, TargetAetIsNullMessage)
+        testIsNull(target, endPart, TargetLosaIsNullMessage)
+        testIsNull(target, endAM, TargetLetIsNullMessage)
     }
   }
 
