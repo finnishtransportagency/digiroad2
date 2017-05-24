@@ -19,7 +19,7 @@ object DataCsvImporter {
     case class NonUpdatedLink(linkId: Long, csvRow: String)
     case class IncompleteLink(missingParameters: List[String], csvRow: String)
     case class MalformedLink(malformedParameters: List[String], csvRow: String)
-    case class ExcludedLink(unauthorizedAdminClass: String, csvRow: String)
+    case class ExcludedLink(unauthorizedAdminClass: List[String], csvRow: String)
     case class ImportResult(nonUpdatedLinks: List[NonUpdatedLink] = Nil,
                             incompleteLinks: List[IncompleteLink] = Nil,
                             malformedLinks: List[MalformedLink] = Nil,
@@ -47,7 +47,7 @@ trait RoadLinkCsvImporter {
   type MalformedParameters = List[String]
   type ParsedLinkRow = (MalformedParameters, ParsedProperties)
 
-  private val administrativeClassLimitations: List[AdministrativeClass] = List(State, Unknown)
+  private val administrativeClassLimitations: List[AdministrativeClass] = List(State)
 
   private val intFieldMappings = Map(
     "Hallinnollinen luokka" -> "ADMINCLASS",
@@ -144,15 +144,11 @@ trait RoadLinkCsvImporter {
     }
   }
 
-  def validateAdministrativeClass(adminClassValue: Any): Option[AdministrativeClass] = {
-    adminClassValue match {
-      case None => Some(Unknown)
-      case _ =>
-        if (administrativeClassLimitations.contains(AdministrativeClass.apply(adminClassValue.toString.toInt))) {
-          Some(AdministrativeClass.apply(adminClassValue.toString.toInt))
-        } else {
-          None
-        }
+  def validateAdministrativeClass(optionalAdminClassValue : Option[Any], dataLocation: String): List[String] = {
+    optionalAdminClassValue match {
+      case Some(adminClassValue) if (administrativeClassLimitations.contains(AdministrativeClass.apply(adminClassValue.toString.toInt))) =>
+                List("AdminClass value State found on  " ++ dataLocation)
+      case _ => List()
     }
   }
 
@@ -191,7 +187,11 @@ trait RoadLinkCsvImporter {
           case None => (None, None)
           case (Some(objId), adminClass) => (objId, adminClass)
         }
-        val unauthorizedAdminClass = validateAdministrativeClass(oldAdminClassValue)
+
+        val unauthorizedAdminClass = (oldAdminClassValue match {
+            case None => List("AdminClass value Unknown found on VVH")
+            case adminClassValue => validateAdministrativeClass(Some(adminClassValue) , "VVH")
+        }) ++ validateAdministrativeClass( properties.filter (prop => prop.columnName == "ADMINCLASS").map(_.value).headOption, "CSV")
 
         if (unauthorizedAdminClass.isEmpty && objectId != None) {
           val (propertiesOTH, propertiesVVH) = properties.partition(a => fieldInOTH.contains(a.columnName))
@@ -223,8 +223,8 @@ trait RoadLinkCsvImporter {
               case _ => result.nonUpdatedLinks
             },
             excludedLinks = unauthorizedAdminClass match {
-              case None => result.excludedLinks
-              case Some(parameters) => ExcludedLink(unauthorizedAdminClass = parameters.toString, csvRow = rowToString(row)) :: result.excludedLinks
+              case Nil => result.excludedLinks
+              case parameters => ExcludedLink(unauthorizedAdminClass = parameters, csvRow = rowToString(row)) :: result.excludedLinks
             }
           )
         }
