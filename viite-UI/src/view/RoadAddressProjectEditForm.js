@@ -56,14 +56,14 @@
     };
     var sendRoadAddressChangeButton = function() {
 
-      $('#information-content').append('' +
+      $('#information-content').html('' +
         '<div class="form form-horizontal">' +
         '<p>' + 'Validointi ok. Voit tehdä tieosoitteenmuutosilmoituksen' + '<br>' +
         'tai jatkaa muokkauksia.' + '</p>' +
         '</div>');
 
       var sendButton = '<div class="project-form form-controls">' +
-        '<button class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button>';
+        '<button class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button></div>';
       return sendButton;
     };
 
@@ -202,7 +202,7 @@
         applicationModel.removeSpinner();
         //TODO 375 should modify text to show error status during Status update
         if (errorCode == 400){
-          return new ModalConfirm("Valittujen lähdelinkkien geometriaa ei saatu sovitettua kohdegeometrialle. Ota yhteyttä järjestelmätukeen.");
+          return new ModalConfirm("Päivitys epäonnistui puutteelisten tietojen takia. Ota yhteyttä järjestelmätukeen.");
         } else if (errorCode == 401){
           return new ModalConfirm("Sinulla ei ole käyttöoikeutta muutoksen tekemiseen.");
         } else if (errorCode == 412){
@@ -216,10 +216,11 @@
 
       eventbus.on('roadAddress:projectLinksUpdated',function(data){
         applicationModel.removeSpinner();
+        rootElement.html('');
         if (typeof data !== 'undefined' && typeof data.publishable !== 'undefined' && data.publishable) {
           console.log(data);
           var publishButton = sendRoadAddressChangeButton();
-          $('.form-controls').replaceWith(publishButton);
+          rootElement.append(publishButton);
         }
           projectCollection.setDirty(_.map(selectedProjectLink, function(link) { return link.linkId; }));
       });
@@ -232,41 +233,9 @@
           projectCollection.setDirty(_.map(selectedProjectLink, function(link) { return link.linkId; }));
       });
 
-      rootElement.on('click', '.btn-reserve', function() {
-        var data;
-        var lists = $('.roadAddressProject');
-        if ($('#roadAddressProject').get(0)!==null) {
-          data = $('#roadAddressProject').get(0);
-        } else {
-          data =$('#roadpartList').get(0);
-        }
-        projectCollection.checkIfReserved(data);
-        return false;
-      });
-
       rootElement.on('change', '.form-group', function() {
         rootElement.find('.action-selected-field').prop("hidden", false);
       });
-
-      rootElement.on('click', '.project-form button.next', function(){
-        var data = $('#roadAddressProject').get(0);
-        applicationModel.addSpinner();
-        applicationModel.selectLayer('roadAddressProject');
-        eventbus.once('roadAddress:projectSaved', function (result) {
-          currentProject = result.project;
-          jQuery('.modal-overlay').remove();
-          if(!_.isUndefined(result.projectAddresses)) {
-            eventbus.trigger('roadAddressProject:openProject', result.project);
-            rootElement.html(selectedProjectLinkTemplate(currentProject, options, selectedProjectLink));
-          }
-        });
-        if(_.isUndefined(currentProject) || currentProject.id === 0){
-          projectCollection.createProject(data, currentProject);
-        } else {
-          projectCollection.saveProject(data, currentProject);
-        }
-      });
-
 
       rootElement.on('click', '.project-form button.cancel', function(){
         new GenericConfirmPopup('Haluatko varmasti peruuttaa? Mahdolliset tallentamattomat muutokset häviävät', {
@@ -279,11 +248,6 @@
           }
         });
 
-      });
-
-      rootElement.on('change', '.input-required', function() {
-        rootElement.find('.project-form button.next').attr('disabled', formIsInvalid(rootElement));
-        rootElement.find('.project-form button.save').attr('disabled', formIsInvalid(rootElement));
       });
 
       rootElement.on('click', '.project-form button.send', function(){
