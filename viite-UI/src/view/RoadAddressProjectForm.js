@@ -273,6 +273,7 @@
         jQuery('.modal-overlay').remove();
         addDatePicker();
         applicationModel.setOpenProject(true);
+        activeLayer = true;
         projectCollection.clearRoadAddressProjects();
       });
 

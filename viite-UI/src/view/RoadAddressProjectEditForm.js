@@ -19,21 +19,6 @@
     };
     var options =['Valitse'];
 
-    var largeInputField = function (dataField) {
-      return '<div class="form-group">' +
-        '<label class="control-label">LISÄTIEDOT</label>'+
-        '<textarea class="form-control large-input roadAddressProject" id="lisatiedot">'+(dataField === undefined || dataField === null ? "" : dataField )+'</textarea>'+
-        '</div>';
-    };
-
-    var inputFieldRequired = function(labelText, id, placeholder, value) {
-      var field = '<div class="form-group input-required">' +
-        '<label class="control-label required">' + labelText + '</label>' +
-        '<input type="text" class="form-control" id = "'+id+'" placeholder = "'+placeholder+'" value="'+value+'"/>' +
-        '</div>';
-      return field;
-    };
-
     var title = function() {
       return '<span class ="edit-mode-title">Uusi tieosoiteprojekti</span>';
     };
@@ -42,18 +27,6 @@
       return '<span class ="edit-mode-title">'+projectName+'</span>';
     };
 
-    var buttons = function(ready) {
-      var html = '<div class="project-form form-controls">' +
-        '<button class="next btn btn-next"';
-      if (!ready)
-        html = html + "disabled";
-      html = html +
-        '>Seuraava</button>' +
-        '<button class="save btn btn-save" disabled>Tallenna</button>' +
-        '<button class="cancel btn btn-cancel">Peruuta</button>' +
-        '</div>';
-      return html;
-    };
     var sendRoadAddressChangeButton = function() {
 
       $('#information-content').html('' +
@@ -62,9 +35,8 @@
         'tai jatkaa muokkauksia.' + '</p>' +
         '</div>');
 
-      var sendButton = '<div class="project-form form-controls">' +
+      return '<div class="project-form form-controls">' +
         '<button class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button></div>';
-      return sendButton;
     };
 
     var terminationButtons = function() {
@@ -74,18 +46,9 @@
         html = html + "disabled";
       html = html +
         '>Tallenna</button>' +
-        '<button class="cancel btn btn-cancel">Peruuta</button>' +
+        '<button class="cancelLink btn btn-cancel">Peruuta</button>' +
         '</div>';
       return html;
-    };
-
-    var processSelectedLinks = function(selectedLinks){
-      if(!_.isUndefined(selectedLinks)){
-        return $(".form-group[id^='VALITUTLINKIT']:last").append('<div style="display:inline-flex;justify-content:center;align-items:center;">' +
-          '<label class="control-label-floating"> LINK ID:</label>' +
-          '<span class="form-control-static-floating" style="display:inline-flex;width:auto;margin-right:5px">' + additionalSourceLinkId + '</span>' +
-          '</div>');
-      }
     };
 
     var selectedData = function (selected) {
@@ -109,11 +72,6 @@
       return span;
     };
 
-    var headerButton =
-      '<div class="linear-asset form-controls">'+
-      '<button class="cancel btn btn-secondary">Sulje projekti</button>'+
-      '</div>';
-
     var selectedProjectLinkTemplate = function(project, optionTags, selected) {
       var selection = selectedData(selected);
       var status = _.uniq(_.map(selected, function(l) { return l.status; }));
@@ -132,7 +90,7 @@
         staticField('Muokattu viimeksi', project.modifiedBy + ' ' + project.dateModified)+
         '<div class="form-group editable form-editable-roadAddressProject" id="information-content"> '+
         '<form id="roadAddressProject" class="input-unit-combination form-group form-horizontal roadAddressProject">'+
-        '<label>Toimenpiteet</label>'+
+        '<div><label>Toimenpiteet</label></div>'+
         selection +
         '<div class="input-unit-combination">' +
         '<select class="form-control" id="dropDown" size="1">'+
@@ -243,7 +201,7 @@
         rootElement.find('.action-selected-field').prop("hidden", false);
       });
 
-      rootElement.on('click', '.project-form button.cancel', function(){
+      rootElement.on('click', '.project-form button.cancelLink', function(){
         projectCollection.setDirty([]);
         eventbus.trigger('projectLink:clicked', []);
         $('.wrapper').remove();
