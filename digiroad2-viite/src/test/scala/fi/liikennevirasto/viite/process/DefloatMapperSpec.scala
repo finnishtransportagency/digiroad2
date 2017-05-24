@@ -37,7 +37,6 @@ class DefloatMapperSpec extends FunSuite with Matchers{
     val roadAddressSource = sources.map(roadAddressLinkToRoadAddress(true))
     val mapping = DefloatMapper.createAddressMap(sources, targets)
     val roadAddressTarget = roadAddressSource.flatMap(DefloatMapper.mapRoadAddresses(mapping))
-    roadAddressTarget.foreach(println)
     roadAddressTarget.size should be (4)
   }
 
