@@ -367,7 +367,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def updateProjectStatusIfNeeded(currentStatus:ProjectState, newStatus:ProjectState, projectId:Long) :(ProjectState)= {
-    if (currentStatus.value!=newStatus.value && newStatus != ProjectState.Unknown) //magic numbers
+    if (currentStatus.value!=newStatus.value && newStatus != ProjectState.Unknown)
     {
       ProjectDAO.updateProjectStatus(projectId,newStatus)
     }

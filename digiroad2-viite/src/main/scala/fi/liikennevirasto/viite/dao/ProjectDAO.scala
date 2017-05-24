@@ -190,11 +190,10 @@ object ProjectDAO {
   }
 
   def getProjectsWithWaitingTRStatus(): List[Long]={
-    val stateSent2TR=2
     val query= s"""
          SELECT id
          FROM project
-         WHERE state=$stateSent2TR
+         WHERE state=${ProjectState.Sent2TR.value}
        """
     Q.queryNA[Long](query).list
   }
