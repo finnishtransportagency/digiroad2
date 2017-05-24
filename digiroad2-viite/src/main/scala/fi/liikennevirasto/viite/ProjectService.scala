@@ -356,12 +356,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     ViiteTierekisteriClient.getProjectStatus(projectId.toString)
   }
 
-
-
-
   val listOfExitStatuses=List(1,3,5) // closed, errorinTR,savedtotr magic numbers
-
-
 
   private def getStatusFromTRObject(trProject:Option[TRProjectStatus]):Option[ProjectState] = {
     trProject match {

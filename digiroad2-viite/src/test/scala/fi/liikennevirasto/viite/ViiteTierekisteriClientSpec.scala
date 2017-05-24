@@ -7,9 +7,12 @@ import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.{HttpGet, HttpPost}
 import org.apache.http.conn.{ConnectTimeoutException, HttpHostConnectException}
 import org.apache.http.impl.client.HttpClientBuilder
+import org.json4s.{DefaultFormats, StringInput}
 import org.scalatest.{FunSuite, Matchers}
 
 import scala.reflect.io.File
+import org.json4s.jackson.JsonMethods.{parse, render}
+import org.json4s.jackson.Serialization
 
 /**
   * Created by alapeijario on 17.5.2017.
@@ -66,5 +69,52 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
     assume(testConnection)
     val response = ViiteTierekisteriClient.getProjectStatus("0")
     response == null should be (false)
+  }
+
+  test("parse changeinforoadparts from json") {
+    val string = "{" +
+      "\"tie\": 1," +
+      "\"ajr\": 0," +
+      "\"aosa\": 10," +
+      "\"aet\":0," +
+      "\"losa\": 10," +
+      "\"let\": 1052" +
+      "}"
+    implicit val formats = DefaultFormats + ChangeInfoRoadPartsSerializer
+    val cirp = parse(StringInput(string)).extract[ChangeInfoRoadParts]
+    cirp.road should be (Some(1))
+    cirp.track should be (Some(0))
+    cirp.startPart should be (Some(10))
+    cirp.startAddrM should be (Some(0))
+    cirp.endPart should be (Some(10))
+    cirp.endAddrM should be (Some(1052))
+  }
+
+  test("parse TRProjectStatus to and from json") {
+    implicit val formats = DefaultFormats + TRProjectStatusSerializer
+    val trps = TRProjectStatus(Some(1), Some(2), Some(3), Some(4), Some("status"), Some("name"), Some("change_date"),
+      Some(5), Some("muutospvm"), Some("user"), Some("published_date"), Some(6), Some("error_message"), Some("start_time"),
+      Some("end_time"), Some(7))
+    val string = Serialization.write(trps).toString
+    val trps2 = parse(StringInput(string)).extract[TRProjectStatus]
+    trps2 should be (trps)
+  }
+
+  test("Parse example messages TRStatus") {
+    implicit val formats = DefaultFormats + TRProjectStatusSerializer
+    val string = "{\n\"id_tr_projekti\": 1162,\n\"projekti\": 1731,\n\"id\": 13255,\n\"tunnus\": 5,\n\"status\": \"T\"," +
+      "\n\"name\": \"test\",\n\"change_date\": \"2017-06-01\",\n\"ely\": 1,\n\"muutospvm\": \"2017-05-15\",\n\"user\": \"user\"," +
+      "\n\"published_date\": \"2017-05-15\",\n\"job_number\": 28,\n\"error_message\": null,\n\"start_time\": \"2017-05-15\"," +
+      "\n\"end_time\": \"2017-05-15\",\n\"error_code\": 0\n}"
+    parse(StringInput(string)).extract[TRProjectStatus]
+  }
+  test("Parse example messages ChangeInfo") {
+    implicit val formats = DefaultFormats + TRProjectStatusSerializer + ChangeInfoItemSerializer + ChangeProjectSerializer
+    val string = "{\n\t\"id\": 8914,\n\t\"name\": \"Numerointi\",\n\t\"user\": \"user\",\n\t\"ely\": 9,\n\t\"change_date\": \"2017-06-01\"," +
+      " \n\t\"change_info\":[ {\n\t\t\"change_type\": 4,\n\t\t\"source\": {\n\t\t\t\"tie\": 11007," +
+      "\n\t\t\t\"ajr\": 0,\n\t\t\t\"aosa\": 2,\n\t\t\t\"aet\": 0,\n\t\t\t\"losa\": 2,\n\t\t\t\"let\": 1895\n\t\t}," +
+      "\n\t\t\"target\": {\n\t\t\t\"tie\": 11007,\n\t\t\t\"ajr\": 0,\n\t\t\t\"aosa\": 1,\n\t\t\t\"aet\": 3616," +
+      "\n\t\t\t\"losa\": 1,\n\t\t\t\"let\": 5511\n\t\t},\n\t\t\"continuity\": 5,\n\t\t\"road_type\": 821\n\t}]\n}"
+    parse(StringInput(string)).extract[ChangeProject]
   }
 }
