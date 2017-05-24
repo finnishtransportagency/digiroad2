@@ -1,11 +1,12 @@
 package fi.liikennevirasto.digiroad2.util
 
 
-import com.vividsolutions.jts.geom.{Coordinate, GeometryFactory}
+import java.util.Properties
+import com.vividsolutions.jts.geom.{Coordinate, GeometryFactory, Polygon}
 import org.scalatest.{FunSuite, Matchers}
 import org.geotools.geometry.jts.GeometryBuilder
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
-import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.{Point, VVHClient}
 import com.vividsolutions.jts.io.WKTReader
 
 
@@ -14,11 +15,16 @@ class PolygonToolsSpec extends FunSuite with Matchers {
   val geomFact= new GeometryFactory()
   val geomBuilder = new GeometryBuilder(geomFact)
   val wKTParser = new WKTReader()
+  val vvhClient = new VVHClient(properties.getProperty("digiroad2.VVHRestApiEndPoint"))
 
-
+  lazy val properties: Properties = {
+    val props = new Properties()
+    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
+    props
+  }
   test("Polygon to string test") {
-    val poly1=List(geomBuilder.polygon(24.2,60.5, 24.8,60.5, 24.8,59, 24.2,59))
-    val polyString =polygonTools.stringifyGeometryForVVHClient(poly1).head
+    val poly1=geomBuilder.polygon(24.2,60.5, 24.8,60.5, 24.8,59, 24.2,59)
+    val polyString = vvhClient.stringifyPolygonGeometry(poly1)
     polyString should be ("{rings:[[[24.2,60.5],[24.8,60.5],[24.8,59.0],[24.2,59.0]]]}")
   }
 

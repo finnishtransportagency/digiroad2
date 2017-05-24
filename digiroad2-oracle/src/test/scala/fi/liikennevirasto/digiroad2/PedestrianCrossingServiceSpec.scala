@@ -111,6 +111,8 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
 
       val asset = assets.head
 
+      asset.vvhTimeStamp should not be(0)
+
       asset should be(PedestrianCrossing(
         id = id,
         linkId = 388553075,
@@ -118,7 +120,7 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
         lat = 0,
         mValue = 2,
         floating = false,
-        vvhTimeStamp = 0,
+        vvhTimeStamp = asset.vvhTimeStamp,
         municipalityCode = 235,
         createdBy = Some("jakke"),
         createdAt = asset.createdAt

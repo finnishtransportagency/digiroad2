@@ -11,6 +11,7 @@ import fi.liikennevirasto.viite.{ProjectService, ReservedRoadPart, RoadAddressSe
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{RoadAddressLink, RoadAddressLinkPartitioner}
 import fi.liikennevirasto.viite.{ReservedRoadPart, RoadAddressService,ViiteTierekisteriClient}
+import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink, RoadAddressLinkPartitioner}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.json4s._
@@ -29,6 +30,8 @@ case class NewAddressDataExtracted(sourceIds: Set[Long], targetIds: Set[Long], r
 
 
 case class RoadAddressProjectExtractor(id: Long, status: Long, name: String, startDate: String, additionalInfo: String,roadPartList: List[ReservedRoadPart])
+
+case class RoadAddressProjectLinkUpdate(linkIds: Seq[Long], projectId: Long, newStatus: Int)
 
 class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
                val roadAddressService: RoadAddressService,
@@ -175,7 +178,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
     val roadAddresses = roadAddressService.getRoadAddressesAfterCalculation(sourceIds.toSeq.map(_.toString), targetIds.toSeq.map(_.toString), user)
     try {
-      val transferredRoadAddresses = roadAddressService.transferFloatingToGap(sourceIds, targetIds, roadAddresses)
+      val transferredRoadAddresses = roadAddressService.transferFloatingToGap(sourceIds, targetIds, roadAddresses, user.username)
       transferredRoadAddresses
     }
     catch {
@@ -243,6 +246,45 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       Map("success"-> errorMessageOpt.get)
   }
 
+  get("/project/roadlinks"){
+    response.setHeader("Access-Control-Allow-Headers", "*")
+
+    val user = userProvider.getCurrentUser()
+
+    val zoomLevel = chooseDrawType(params.getOrElse("zoom", "5"))
+    val projectId: Long = params.get("id") match {
+      case Some (s) if s != "" && s.toLong != 0 => s.toLong
+      case _ =>
+
+        0L
+    }
+    if (projectId == 0)
+      BadRequest("Missing mandatory 'id' parameter")
+    else
+      params.get("bbox")
+        .map(getProjectLinks(projectId, zoomLevel))
+        .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
+  }
+
+  put("/project/roadlinks"){
+    val user = userProvider.getCurrentUser()
+
+    val modification = parsedBody.extract[RoadAddressProjectLinkUpdate]
+    projectService.updateProjectLinkStatus(modification.projectId, modification.linkIds.toSet,
+      LinkStatus.apply(modification.newStatus), user.username)
+    Map("projectId" -> modification.projectId, "publishable" -> projectService.projectLinkPublishable(modification.projectId))
+  }
+
+  post("/project/publish"){
+    val user = userProvider.getCurrentUser()
+    val projectId = params.get("projectId")
+
+    projectId.map(_.toLong).map(projectService.publishProject).map {
+      case Some(s) => PreconditionFailed(s)
+      case _ => Map("status" -> "ok")
+    }.getOrElse(BadRequest("Missing mandatory 'projectId' parameter"))
+  }
+
   private def roadlinksData(): (Seq[String], Seq[String]) = {
     val data = JSON.parseFull(params.get("data").get).get.asInstanceOf[Map[String,Any]]
     val sources = data("sourceLinkIds").asInstanceOf[Seq[String]]
@@ -271,6 +313,23 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
+  private def getProjectLinks(projectId: Long, zoomLevel: Int)(bbox: String): Seq[Seq[Map[String, Any]]] = {
+    val boundingRectangle = constructBoundingRectangle(bbox)
+    val viiteRoadLinks = zoomLevel match {
+      case DrawMainRoadPartsOnly =>
+        Seq()
+      case DrawRoadPartsOnly =>
+        Seq()
+      case DrawPublicRoads => projectService.getProjectRoadLinks(projectId, boundingRectangle, Seq((1, 19999), (40000,49999)), Set(), publicRoads = false)
+      case DrawAllRoads => projectService.getProjectRoadLinks(projectId, boundingRectangle, Seq(), Set(), everything = true)
+      case _ => projectService.getProjectRoadLinks(projectId, boundingRectangle, Seq((1, 19999)), Set())
+    }
+
+    val partitionedRoadLinks = RoadAddressLinkPartitioner.partition(viiteRoadLinks)
+    partitionedRoadLinks.map {
+      _.map(projectAddressLinkToApi)
+    }
+  }
   private def chooseDrawType(zoomLevel: String) = {
     val C1 = new Contains(-10 to 3)
     val C2 = new Contains(4 to 5)
@@ -330,6 +389,43 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "sideCode" -> roadAddressLink.sideCode.value,
       "linkType" -> roadAddressLink.linkType.value,
       "roadLinkSource" ->  roadAddressLink.roadLinkSource.value
+    )
+  }
+
+  def projectAddressLinkToApi(projectAddressLink: ProjectAddressLink): Map[String, Any] = {
+    Map(
+      "segmentId" -> projectAddressLink.id,
+      "id" -> projectAddressLink.id,
+      "linkId" -> projectAddressLink.linkId,
+      "mmlId" -> projectAddressLink.attributes.get("MTKID"),
+      "points" -> projectAddressLink.geometry,
+      "calibrationPoints" -> Seq(calibrationPoint(projectAddressLink.geometry, projectAddressLink.startCalibrationPoint),
+        calibrationPoint(projectAddressLink.geometry, projectAddressLink.endCalibrationPoint)),
+      "administrativeClass" -> projectAddressLink.administrativeClass.toString,
+      "roadClass" -> roadAddressService.roadClass(projectAddressLink),
+      "roadType" -> projectAddressLink.roadType.displayValue,
+      "modifiedAt" -> projectAddressLink.modifiedAt,
+      "modifiedBy" -> projectAddressLink.modifiedBy,
+      "municipalityCode" -> projectAddressLink.attributes.get("MUNICIPALITYCODE"),
+      "roadNameFi" -> projectAddressLink.attributes.get("ROADNAME_FI"),
+      "roadNameSe" -> projectAddressLink.attributes.get("ROADNAME_SE"),
+      "roadNameSm" -> projectAddressLink.attributes.get("ROADNAME_SM"),
+      "roadNumber" -> projectAddressLink.roadNumber,
+      "roadPartNumber" -> projectAddressLink.roadPartNumber,
+      "elyCode" -> projectAddressLink.elyCode,
+      "trackCode" -> projectAddressLink.trackCode,
+      "startAddressM" -> projectAddressLink.startAddressM,
+      "endAddressM" -> projectAddressLink.endAddressM,
+      "discontinuity" -> projectAddressLink.discontinuity,
+      "anomaly" -> projectAddressLink.anomaly.value,
+      "roadLinkType" -> projectAddressLink.roadLinkType.value,
+      "constructionType" ->projectAddressLink.constructionType.value,
+      "startMValue" -> projectAddressLink.startMValue,
+      "endMValue" -> projectAddressLink.endMValue,
+      "sideCode" -> projectAddressLink.sideCode.value,
+      "linkType" -> projectAddressLink.linkType.value,
+      "roadLinkSource" ->  projectAddressLink.roadLinkSource.value,
+      "status" -> projectAddressLink.status.value
     )
   }
 

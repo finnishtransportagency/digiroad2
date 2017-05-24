@@ -116,6 +116,7 @@ case class MissingRoadAddress(linkId: Long, startAddrMValue: Option[Long], endAd
 
 object RoadAddressDAO {
 
+  // TODO: Remove Missing Road Address Search from here - it's never returning anything and not expected to be used
   def fetchByBoundingBox(boundingRectangle: BoundingRectangle, fetchOnlyFloating: Boolean): (Seq[RoadAddress], Seq[MissingRoadAddress]) = {
     val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),
       boundingRectangle.rightTop - boundingRectangle.diagonal.scale(.15))
@@ -737,7 +738,7 @@ object RoadAddressDAO {
     Q.updateNA(query).first
   }
 
-  def create(roadAddresses: Seq[RoadAddress], createdBy : String = "-"): Seq[Long] = {
+  def create(roadAddresses: Seq[RoadAddress], createdBy : Option[String] = None): Seq[Long] = {
     val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure) values (?, ?, ?, ?, ?)")
     val addressPS = dynamicSession.prepareStatement("insert into ROAD_ADDRESS (id, lrm_position_id, road_number, road_part_number, " +
       "track_code, discontinuity, START_ADDR_M, END_ADDR_M, start_date, end_date, created_by, " +
@@ -765,7 +766,7 @@ object RoadAddressDAO {
         case Some(dt) => dateFormatter.print(dt)
         case None => ""
       })
-      addressPS.setString(11, address.modifiedBy.getOrElse(createdBy))
+      addressPS.setString(11, createdBy.getOrElse(address.modifiedBy.getOrElse("-")))
     val (p1, p2) = (address.geom.head, address.geom.last)
       addressPS.setDouble(12, p1.x)
       addressPS.setDouble(13, p1.y)

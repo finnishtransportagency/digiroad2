@@ -28,7 +28,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     id = 1,
     username = "Hannu",
     configuration = Configuration(authorizedMunicipalities = Set(235)))
-  val mockTierekisteriClient = MockitoSugar.mock[TierekisteriClient]
+  val mockTierekisteriClient = MockitoSugar.mock[TierekisteriMassTransitStopClient]
   when(mockTierekisteriClient.fetchMassTransitStop(any[String])).thenReturn(Some(
     TierekisteriMassTransitStop(2, "2", RoadAddress(None, 1, 1, Track.Combined, 1, None), TRRoadSide.Unknown, StopType.Combined,
       false, equipments = Map(), None, None, None, "KX12356", None, None, None, new Date))
@@ -73,7 +73,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   class TestMassTransitStopService(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService) extends MassTransitStopService {
     override def withDynSession[T](f: => T): T = f
     override def withDynTransaction[T](f: => T): T = f
-    override val tierekisteriClient: TierekisteriClient = mockTierekisteriClient
+    override val tierekisteriClient: TierekisteriMassTransitStopClient = mockTierekisteriClient
     override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
     override val tierekisteriEnabled = false
     override val geometryTransform: GeometryTransform = mockGeometryTransform
@@ -82,7 +82,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   class TestMassTransitStopServiceWithTierekisteri(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService) extends MassTransitStopService {
     override def withDynSession[T](f: => T): T = f
     override def withDynTransaction[T](f: => T): T = f
-    override val tierekisteriClient: TierekisteriClient = mockTierekisteriClient
+    override val tierekisteriClient: TierekisteriMassTransitStopClient = mockTierekisteriClient
     override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
     override val tierekisteriEnabled = true
     override val geometryTransform: GeometryTransform = mockGeometryTransform
@@ -95,14 +95,14 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   class TestMassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService) extends MassTransitStopService {
     override def withDynSession[T](f: => T): T = TestTransactions.withDynSession()(f)
     override def withDynTransaction[T](f: => T): T = TestTransactions.withDynTransaction()(f)
-    override val tierekisteriClient: TierekisteriClient = mockTierekisteriClient
+    override val tierekisteriClient: TierekisteriMassTransitStopClient = mockTierekisteriClient
     override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
     override val tierekisteriEnabled = true
     override val geometryTransform: GeometryTransform = mockGeometryTransform
   }
 
   class MassTransitStopServiceWithTierekisteri(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService) extends MassTransitStopService {
-    override val tierekisteriClient: TierekisteriClient = mockTierekisteriClient
+    override val tierekisteriClient: TierekisteriMassTransitStopClient = mockTierekisteriClient
     override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
     override val tierekisteriEnabled = true
     override val geometryTransform: GeometryTransform = mockGeometryTransform

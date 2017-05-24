@@ -50,6 +50,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     with RequestHeaderAuthentication
     with GZipSupport {
     val serviceRoadTypeid=290
+    val trafficVolumeTypeid=170
     val logger = LoggerFactory.getLogger(getClass)
   // Somewhat arbitrarily chosen limit for bounding box (Math.abs(y1 - y2) * Math.abs(x1 - x2))
   val MAX_BOUNDING_BOX = 100000000
@@ -666,6 +667,8 @@ Returns empty result as Json message, not as page not found
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
     if (user.isServiceRoadMaintainer() && typeId!=serviceRoadTypeid)
       halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
+    if (typeId==trafficVolumeTypeid)
+      halt(BadRequest("Cannot modify 'traffic Volume' asset"))
     val valueOption = extractLinearAssetValue(parsedBody \ "value")
     val existingAssets = (parsedBody \ "ids").extract[Set[Long]]
     val newLinearAssets = extractNewLinearAssets(typeId, parsedBody \ "newLimits")
@@ -700,6 +703,8 @@ Returns empty result as Json message, not as page not found
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
     if (user.isServiceRoadMaintainer() && typeId!=serviceRoadTypeid)
       halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
+    if (typeId==trafficVolumeTypeid)
+      halt(BadRequest("Cannot delete 'traffic Volume' asset"))
     val linkIds = linearAssetService.getPersistedAssetsByIds(typeId, ids).map(_.linkId)
     roadLinkService.fetchVVHRoadlinks(linkIds.toSet)
       .map(_.municipalityCode)
@@ -713,6 +718,8 @@ Returns empty result as Json message, not as page not found
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
     if (user.isServiceRoadMaintainer() && typeId!=serviceRoadTypeid)
       halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
+    if (typeId==trafficVolumeTypeid)
+      halt(BadRequest("Cannot modify 'traffic Volume' asset"))
     linearAssetService.split(params("id").toLong,
       (parsedBody \ "splitMeasure").extract[Double],
       extractLinearAssetValue(parsedBody \ "existingValue"),
@@ -726,6 +733,8 @@ Returns empty result as Json message, not as page not found
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
     if (user.isServiceRoadMaintainer() && typeId!=serviceRoadTypeid)
       halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
+    if (typeId==trafficVolumeTypeid)
+      halt(BadRequest("Cannot modify 'traffic Volume' asset"))
     linearAssetService.separate(params("id").toLong,
       extractLinearAssetValue(parsedBody \ "valueTowardsDigitization"),
       extractLinearAssetValue(parsedBody \ "valueAgainstDigitization"),
