@@ -91,26 +91,22 @@ trait LinearAssetOperations {
   }
 
   def getByIntersectedBoundingBox(typeId: Int, serviceArea : Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
-    val polygonTool = new PolygonTools()
-    val polygonStringList =polygonTool.stringifyGeometryForVVHClient(
-        polygonTool.geometryInterceptorToBoundingBox(
-          polygonTool.getAreaGeometry(serviceArea),bounds))
-    val vVHRoadLinksAndChanges = polygonStringList.map(roadLinkService.getRoadLinksAndChangesFromVVHWithPolygon)
-    val roadLinks = vVHRoadLinksAndChanges.flatMap(_._1)
-    val changes =vVHRoadLinksAndChanges.flatMap(_._2)
-    val linearAssets = getByRoadLinks(typeId,  roadLinks, changes)
-    LinearAssetPartitioner.partition(linearAssets, roadLinks.groupBy(_.linkId).mapValues(_.head))
+    getEitherByIntersectedBoundingBox(typeId, serviceArea, bounds, municipalities, roadLinkService.getRoadLinksAndChangesFromVVHWithPolygon)
   }
 
   def getComplementaryByIntersectedBoundingBox(typeId: Int, serviceArea : Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
+    getEitherByIntersectedBoundingBox(typeId, serviceArea, bounds, municipalities, roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHWithPolygon)
+  }
+
+  def getEitherByIntersectedBoundingBox(typeId: Int, serviceArea : Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set(), getRoadlinks: (String) => (Seq[RoadLink], Seq[ChangeInfo])): Seq[Seq[PieceWiseLinearAsset]] = {
     val polygonTool = new PolygonTools()
-    val polygonStringList =polygonTool.stringifyGeometryForVVHClient(
+    val polygonStringList = polygonTool.stringifyGeometryForVVHClient(
       polygonTool.geometryInterceptorToBoundingBox(
-        polygonTool.getAreaGeometry(serviceArea),bounds))
-    val vVHRoadLinksAndChanges = polygonStringList.map(roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHWithPolygon)
+        polygonTool.getAreaGeometry(serviceArea), bounds))
+    val vVHRoadLinksAndChanges = polygonStringList.map(getRoadlinks)
     val roadLinks = vVHRoadLinksAndChanges.flatMap(_._1)
-    val changes =vVHRoadLinksAndChanges.flatMap(_._2)
-    val linearAssets = getByRoadLinks(typeId,  roadLinks, changes)
+    val changes = vVHRoadLinksAndChanges.flatMap(_._2)
+    val linearAssets = getByRoadLinks(typeId, roadLinks, changes)
     LinearAssetPartitioner.partition(linearAssets, roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
 

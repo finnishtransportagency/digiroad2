@@ -581,45 +581,9 @@ Returns empty result as Json message, not as page not found
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
       if(user.isServiceRoadMaintainer())
-      linearAssetService.getByIntersectedBoundingBox(typeId, user.configuration.authorizedAreas.head, boundingRectangle, municipalities).map { links =>
-        links.map { link =>
-          Map(
-            "id" -> (if (link.id == 0) None else Some(link.id)),
-            "linkId" -> link.linkId,
-            "sideCode" -> link.sideCode,
-            "trafficDirection" -> link.trafficDirection,
-            "value" -> link.value.map(_.toJson),
-            "points" -> link.geometry,
-            "expired" -> link.expired,
-            "startMeasure" -> link.startMeasure,
-            "endMeasure" -> link.endMeasure,
-            "modifiedBy" -> link.modifiedBy,
-            "modifiedAt" -> link.modifiedDateTime,
-            "createdBy" -> link.createdBy,
-            "createdAt" -> link.createdDateTime
-          )
-        }
-      }
+        mapLinearAssets(linearAssetService.getByIntersectedBoundingBox(typeId, user.configuration.authorizedAreas.head, boundingRectangle, municipalities))
       else
-      linearAssetService.getByBoundingBox(typeId, boundingRectangle, municipalities).map { links =>
-        links.map { link =>
-          Map(
-            "id" -> (if (link.id == 0) None else Some(link.id)),
-            "linkId" -> link.linkId,
-            "sideCode" -> link.sideCode,
-            "trafficDirection" -> link.trafficDirection,
-            "value" -> link.value.map(_.toJson),
-            "points" -> link.geometry,
-            "expired" -> link.expired,
-            "startMeasure" -> link.startMeasure,
-            "endMeasure" -> link.endMeasure,
-            "modifiedBy" -> link.modifiedBy,
-            "modifiedAt" -> link.modifiedDateTime,
-            "createdBy" -> link.createdBy,
-            "createdAt" -> link.createdDateTime
-          )
-        }
-      }
+        mapLinearAssets(linearAssetService.getByBoundingBox(typeId, boundingRectangle, municipalities))
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
     }
@@ -633,47 +597,33 @@ Returns empty result as Json message, not as page not found
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
       if(user.isServiceRoadMaintainer())
-        linearAssetService.getComplementaryByIntersectedBoundingBox(typeId, user.configuration.authorizedAreas.head, boundingRectangle, municipalities).map { links =>
-          links.map { link =>
-            Map(
-              "id" -> (if (link.id == 0) None else Some(link.id)),
-              "linkId" -> link.linkId,
-              "sideCode" -> link.sideCode,
-              "trafficDirection" -> link.trafficDirection,
-              "value" -> link.value.map(_.toJson),
-              "points" -> link.geometry,
-              "expired" -> link.expired,
-              "startMeasure" -> link.startMeasure,
-              "endMeasure" -> link.endMeasure,
-              "modifiedBy" -> link.modifiedBy,
-              "modifiedAt" -> link.modifiedDateTime,
-              "createdBy" -> link.createdBy,
-              "createdAt" -> link.createdDateTime
-            )
-          }
-        }
+        mapLinearAssets(linearAssetService.getComplementaryByIntersectedBoundingBox(typeId, user.configuration.authorizedAreas.head, boundingRectangle, municipalities))
       else
-        linearAssetService.getComplementaryByBoundingBox(typeId, boundingRectangle, municipalities).map { links =>
-          links.map { link =>
-            Map(
-              "id" -> (if (link.id == 0) None else Some(link.id)),
-              "linkId" -> link.linkId,
-              "sideCode" -> link.sideCode,
-              "trafficDirection" -> link.trafficDirection,
-              "value" -> link.value.map(_.toJson),
-              "points" -> link.geometry,
-              "expired" -> link.expired,
-              "startMeasure" -> link.startMeasure,
-              "endMeasure" -> link.endMeasure,
-              "modifiedBy" -> link.modifiedBy,
-              "modifiedAt" -> link.modifiedDateTime,
-              "createdBy" -> link.createdBy,
-              "createdAt" -> link.createdDateTime
-            )
-          }
-        }
+        mapLinearAssets(linearAssetService.getComplementaryByBoundingBox(typeId, boundingRectangle, municipalities))
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
+    }
+  }
+
+  def mapLinearAssets(assets: Seq[Seq[PieceWiseLinearAsset]]): Seq[Seq[Map[String, Any]]] = {
+    assets.map { links =>
+      links.map { link =>
+        Map(
+          "id" -> (if (link.id == 0) None else Some(link.id)),
+          "linkId" -> link.linkId,
+          "sideCode" -> link.sideCode,
+          "trafficDirection" -> link.trafficDirection,
+          "value" -> link.value.map(_.toJson),
+          "points" -> link.geometry,
+          "expired" -> link.expired,
+          "startMeasure" -> link.startMeasure,
+          "endMeasure" -> link.endMeasure,
+          "modifiedBy" -> link.modifiedBy,
+          "modifiedAt" -> link.modifiedDateTime,
+          "createdBy" -> link.createdBy,
+          "createdAt" -> link.createdDateTime
+        )
+      }
     }
   }
 
