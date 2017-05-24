@@ -2,6 +2,7 @@
   root.RoadAddressProjectForm = function(projectCollection) {
     var currentProject = false;
     var selectedProjectLink = false;
+    var activeLayer = false;
     var staticField = function(labelText, dataField) {
       var field;
       field = '<div class="form-group">' +
@@ -308,15 +309,10 @@
       });
 
       eventbus.on('layer:selected', function(layer) {
-        if(layer !== 'roadAddressProject') {
+        activeLayer = layer === 'linkPropertyLayer'
+        if(!activeLayer) {
           $('.wrapper').remove();
         }
-      });
-
-      eventbus.on('roadAddress:linksSaved', function() {
-        // Projectinfo is not undefined and publishable is something like true.
-        var ready = projectCollection.projectinfo && projectCollection.projectinfo.publishable;
-        rootElement.find('.btn-send').prop("disabled", !ready);
       });
 
       eventbus.on('roadAddress:projectFailed', function() {
@@ -386,16 +382,17 @@
 
 
       rootElement.on('click', '.project-form button.cancel', function(){
-        new GenericConfirmPopup('Haluatko varmasti peruuttaa? Mahdolliset tallentamattomat muutokset häviävät', {
-          successCallback: function () {
-            applicationModel.setOpenProject(false);
-            rootElement.find('header').toggle();
-            rootElement.find('.wrapper').toggle();
-            rootElement.find('footer').toggle();
-            projectCollection.clearRoadAddressProjects();
-          }
-        });
-
+        if (activeLayer) {
+          new GenericConfirmPopup('Haluatko varmasti peruuttaa? Mahdolliset tallentamattomat muutokset häviävät', {
+            successCallback: function () {
+              applicationModel.setOpenProject(false);
+              rootElement.find('header').toggle();
+              rootElement.find('.wrapper').toggle();
+              rootElement.find('footer').toggle();
+              projectCollection.clearRoadAddressProjects();
+            }
+          });
+        }
       });
 
       rootElement.on('change', '.input-required', function() {

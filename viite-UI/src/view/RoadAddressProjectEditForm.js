@@ -116,7 +116,11 @@
 
     var selectedProjectLinkTemplate = function(project, optionTags, selected) {
       var selection = selectedData(selected);
-
+      var status = _.uniq(_.map(selected, function(l) { return l.status; }));
+      if (status.length == 1)
+        status = status[0];
+      else
+        status = 0;
       return _.template('' +
         '<header>' +
         titleWithProjectName(project.name) +
@@ -133,7 +137,7 @@
         '<div class="input-unit-combination">' +
         '<select class="form-control" id="dropDown" size="1">'+
         '<option value="action1">Valitse</option>'+
-        '<option value="action2">Lakkautus</option>'+
+        '<option value="action2"' + (status == 1 ? ' selected' : '') + '>Lakkautus</option>'+
         '<option value="action3" disabled>Uusi</option>'+
         '<option value="action4" disabled>Numeroinnin muutos</option>'+
         '<option value="action5" disabled>Ennallaan</option>'+
@@ -238,16 +242,9 @@
       });
 
       rootElement.on('click', '.project-form button.cancel', function(){
-        new GenericConfirmPopup('Haluatko varmasti peruuttaa? Mahdolliset tallentamattomat muutokset häviävät', {
-          successCallback: function () {
-            applicationModel.setOpenProject(false);
-            rootElement.find('header').toggle();
-            rootElement.find('.wrapper').toggle();
-            rootElement.find('footer').toggle();
-            projectCollection.clearRoadAddressProjects();
-          }
-        });
-
+        projectCollection.setDirty([]);
+        eventbus.trigger('projectLink:clicked', []);
+        $('.wrapper').remove();
       });
 
       rootElement.on('click', '.project-form button.send', function(){
