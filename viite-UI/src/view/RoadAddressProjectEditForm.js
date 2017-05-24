@@ -102,7 +102,7 @@
           '<label class="control-label-floating"> AJR </label>' +
           '<span class="form-control-static-floating" style="display:inline-flex;width:auto;margin-right:5px">' + link.trackCode + '</span>' +
           '<label class="control-label-floating"> M: </label>' +
-          '<span class="form-control-static-floating" style="display:inline-flex;width:auto;margin-right:5px">' + startM + ' - ' + endM + '</span>' +
+          '<span class="form-control-static-floating" style="display:inline-flex;width:auto;margin-right:0px">' + startM + ' - ' + endM + '</span>' +
           '</div>' +
           '</div>';
       }
@@ -189,6 +189,7 @@
 
       eventbus.on('projectLink:clicked', function(selected) {
         selectedProjectLink = selected;
+        currentProject = projectCollection.getCurrentProject();
         rootElement.html(selectedProjectLinkTemplate(currentProject, options, selectedProjectLink));
       });
 
@@ -230,6 +231,7 @@
       });
 
       rootElement.on('click', '.project-form button.update', function() {
+        currentProject = projectCollection.getCurrentProject();
         projectCollection.saveProjectLinks(selectedProjectLink, currentProject);
       });
 

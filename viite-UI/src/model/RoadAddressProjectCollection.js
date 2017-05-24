@@ -4,6 +4,7 @@
     var currentRoadPartList = [];
     var dirtyRoadPartList = [];
     var projectinfo;
+    var currentProject;
     var fetchedProjectLinks = [];
     var roadAddressProjectLinks = [];
     var projectLinksSaved = [];
@@ -69,6 +70,7 @@
     this.getProjectsWithLinksById = function (projectId) {
       return backend.getProjectsWithLinksById(projectId, function (result) {
         roadAddressProjects = result.projects;
+        currentProject = result.projects;
         roadAddressProjectLinks = result.projectLinks;
         projectinfo = {
           id: result.projects.id,
@@ -87,7 +89,7 @@
       backend.abortLoadingProject();
     };
 
-    this.saveProject = function (data, currentProject) {
+    this.saveProject = function (data) {
       var projectid = 0;
       if (projectinfo !== undefined) {
         projectid = projectinfo.id;
@@ -115,6 +117,7 @@
           };
           eventbus.trigger('roadAddress:projectSaved', result);
           dirtyRoadPartList = [];
+          currentProject = result.project;
         }
         else {
           eventbus.trigger('roadAddress:projectValidationFailed', result);
@@ -158,7 +161,7 @@
       }
     };
 
-    this.createProject = function (data, currentProject) {
+    this.createProject = function (data) {
 
       var dataJson = {
         id: 0,
@@ -180,6 +183,7 @@
           };
           eventbus.trigger('roadAddress:projectSaved', result);
           dirtyRoadPartList = [];
+          currentProject = result.project;
         }
         else {
           eventbus.trigger('roadAddress:projectValidationFailed', result);
@@ -256,6 +260,10 @@
     eventbus.on('clearproject', function() {
       this.clearRoadAddressProjects();
     });
+
+    this.getCurrentProject = function(){
+      return currentProject;
+    };
 
 
     this.checkIfReserved = function (data) {

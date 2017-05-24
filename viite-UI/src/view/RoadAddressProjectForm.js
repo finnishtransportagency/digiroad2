@@ -309,7 +309,7 @@
       });
 
       eventbus.on('layer:selected', function(layer) {
-        activeLayer = layer === 'linkPropertyLayer'
+        activeLayer = layer === 'linkPropertyLayer';
         if(!activeLayer) {
           $('.wrapper').remove();
         }
@@ -339,9 +339,9 @@
           }
         });
         if(_.isUndefined(currentProject) || currentProject.id === 0){
-          projectCollection.createProject(data, currentProject);
+          projectCollection.createProject(data);
         } else {
-          projectCollection.saveProject(data, currentProject);
+          projectCollection.saveProject(data);
         }
       });
 
@@ -364,20 +364,24 @@
       rootElement.on('click', '.project-form button.next', function(){
         var data = $('#roadAddressProject').get(0);
         applicationModel.addSpinner();
-        applicationModel.selectLayer('roadAddressProject');
         eventbus.once('roadAddress:projectSaved', function (result) {
           currentProject = result.project;
           jQuery('.modal-overlay').remove();
           if(!_.isUndefined(result.projectAddresses)) {
+            eventbus.trigger('linkProperties:selectedProject', result.projectAddresses.linkId);
             eventbus.trigger('roadAddressProject:openProject', result.project);
             rootElement.html(selectedProjectLinkTemplate(currentProject, options, selectedProjectLink));
+            _.defer(function(){
+              applicationModel.selectLayer('roadAddressProject');
+            });
           }
         });
         if(_.isUndefined(currentProject) || currentProject.id === 0){
-          projectCollection.createProject(data, currentProject);
+          projectCollection.createProject(data);
         } else {
-          projectCollection.saveProject(data, currentProject);
+          projectCollection.saveProject(data);
         }
+
       });
 
 
