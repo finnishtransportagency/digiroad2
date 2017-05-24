@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite
 import java.util.Properties
 
 import fi.liikennevirasto.digiroad2.util.TierekisteriAuthPropertyReader
-import fi.liikennevirasto.viite.dao.ProjectRoadAddressChange
+import fi.liikennevirasto.viite.dao._
 import org.apache.http.client.methods.{HttpGet, HttpPost}
 import org.apache.http.entity.{ContentType, StringEntity}
 import org.apache.http.impl.client.HttpClientBuilder
@@ -13,15 +13,13 @@ import org.json4s.JsonAST._
 import org.json4s.jackson.JsonMethods.parse
 
 import scala.util.control.NonFatal
-case class ChangeProject(id:Long, name:String, user:String, ely:Long, changeDate:String, changeInfoSeq:Seq[ChangeInfoItem])
 case class TRProjectStatus(id:Option[Long], trProjectId:Option[Long], trSubProjectId:Option[Long], trTrackingCode:Option[Long],
                            status:Option[String], name:Option[String], changeDate:Option[String], ely:Option[Int],
                            trModifiedDate:Option[String], user:Option[String], trPublishedDate:Option[String],
                            trJobNumber:Option[Long], errorMessage:Option[String], trProcessingStarted:Option[String],
                            trProcessingEnded:Option[String], errorCode:Option[Int])
-case class ChangeInfoItem(changeType: Int, continuity:Int, roadType:Int, source: ChangeInfoRoadParts, target: ChangeInfoRoadParts)
-case class ChangeInfoRoadParts(road: Option[Long], track: Option[Long], startPart: Option[Long], startAddrM: Option[Long],
-                               endPart: Option[Long], endAddrM: Option[Long])
+case class ChangeProject(id:Long, name:String, user:String, ely:Long, changeDate:String, changeInfoSeq:Seq[RoadAddressChangeInfo])
+case class ChangeInfoItem(changeType: ChangeType, continuity: Discontinuity, roadType: Int, source: RoadAddressChangeRecipient, target: RoadAddressChangeRecipient)
 case class ProjectChangeStatus(projectId: Long, status: Int, reason: String)
 
 
@@ -31,7 +29,7 @@ case object ChangeProjectSerializer extends CustomSerializer[ChangeProject](form
     ChangeProject(o.values("id").asInstanceOf[BigInt].longValue(), o.values("name").asInstanceOf[String],
       o.values("user").asInstanceOf[String], o.values("ely").asInstanceOf[BigInt].intValue(),
       o.values("change_date").asInstanceOf[String],
-      (o \\ "change_info").extract[Seq[ChangeInfoItem]])
+      (o \\ "change_info").extract[Seq[RoadAddressChangeInfo]])
 }, {
   case o: ChangeProject =>
     implicit val formats = DefaultFormats + ChangeInfoItemSerializer
@@ -45,17 +43,19 @@ case object ChangeProjectSerializer extends CustomSerializer[ChangeProject](form
     )
 }))
 
-case object ChangeInfoItemSerializer extends CustomSerializer[ChangeInfoItem](format => ({
+case object ChangeInfoItemSerializer extends CustomSerializer[RoadAddressChangeInfo](format => ({
   case o: JObject =>
     implicit val formats = DefaultFormats + ChangeInfoRoadPartsSerializer
-    ChangeInfoItem(o.values("change_type").asInstanceOf[BigInt].intValue, o.values("continuity").asInstanceOf[BigInt].intValue,
-      o.values("road_type").asInstanceOf[BigInt].intValue, (o \\ "source").extract[ChangeInfoRoadParts], (o \\ "target").extract[ChangeInfoRoadParts])
+    RoadAddressChangeInfo(ChangeType.apply(o.values("change_type").asInstanceOf[BigInt].intValue),
+      (o \\ "source").extract[RoadAddressChangeRecipient], (o \\ "target").extract[RoadAddressChangeRecipient],
+      Discontinuity.apply(o.values("continuity").asInstanceOf[BigInt].intValue),
+      RoadType.apply(o.values("road_type").asInstanceOf[BigInt].intValue))
 }, {
   case o: ChangeInfoItem =>
     implicit val formats = DefaultFormats + ChangeInfoRoadPartsSerializer
     JObject(
-      JField("change_type", JInt(BigInt.apply(o.changeType))),
-      JField("continuity", JInt(BigInt.apply(o.continuity))),
+      JField("change_type", JInt(BigInt.apply(o.changeType.value))),
+      JField("continuity", JInt(BigInt.apply(o.continuity.value))),
       JField("road_type", JInt(BigInt.apply(o.roadType))),
       JField("source", Extraction.decompose(o.source)),
       JField("target", Extraction.decompose(o.target))
@@ -107,7 +107,7 @@ case object TRProjectStatusSerializer extends CustomSerializer[TRProjectStatus](
       JField("error_code", s.errorCode.map(l => JInt(BigInt.apply(l))).orNull))
 }))
 
-case object ChangeInfoRoadPartsSerializer extends CustomSerializer[ChangeInfoRoadParts](format => ( {
+case object ChangeInfoRoadPartsSerializer extends CustomSerializer[RoadAddressChangeRecipient](format => ( {
   case o: JObject =>
     def jIntToLong(jInt: Any): Long = {
       jInt.asInstanceOf[BigInt].longValue()
@@ -115,16 +115,16 @@ case object ChangeInfoRoadPartsSerializer extends CustomSerializer[ChangeInfoRoa
     val map = o.values
     val (road, track, startPart, stm, endPart, enm) =
       (map.get("tie"), map.get("ajr"), map.get("aosa"), map.get("aet"), map.get("losa"), map.get("let"))
-    ChangeInfoRoadParts(road.map(jIntToLong), track.map(jIntToLong), startPart.map(jIntToLong), stm.map(jIntToLong),
-      endPart.map(jIntToLong), enm.map(jIntToLong))
+    RoadAddressChangeRecipient(road.map(jIntToLong), track.map(jIntToLong), startPart.map(jIntToLong), endPart.map(jIntToLong),
+      stm.map(jIntToLong), enm.map(jIntToLong))
 }, {
-  case s: ChangeInfoRoadParts =>
-    JObject(JField("tie", s.road.map(l => JInt(BigInt.apply(l))).orNull),
-      JField("ajr", s.track.map(l => JInt(BigInt.apply(l))).orNull),
-      JField("aosa", s.startPart.map(l => JInt(BigInt.apply(l))).orNull),
-      JField("aet", s.startAddrM.map(l => JInt(BigInt.apply(l))).orNull),
-      JField("losa", s.endPart.map(l => JInt(BigInt.apply(l))).orNull),
-      JField("let", s.endAddrM.map(l => JInt(BigInt.apply(l))).orNull))
+  case s: RoadAddressChangeRecipient =>
+    JObject(JField("tie", s.roadNumber.map(l => JInt(BigInt.apply(l))).orNull),
+      JField("ajr", s.trackCode.map(l => JInt(BigInt.apply(l))).orNull),
+      JField("aosa", s.startRoadPartNumber.map(l => JInt(BigInt.apply(l))).orNull),
+      JField("aet", s.startAddressM.map(l => JInt(BigInt.apply(l))).orNull),
+      JField("losa", s.endRoadPartNumber.map(l => JInt(BigInt.apply(l))).orNull),
+      JField("let", s.endAddressM.map(l => JInt(BigInt.apply(l))).orNull))
 }))
 
 object ViiteTierekisteriClient {
@@ -150,21 +150,17 @@ object ViiteTierekisteriClient {
     val projects = changeData.map(cd => {
       convertChangeDataToChangeProject(cd)
     })
-    val messageList =  projects.map(p =>{
-      sendJsonMessage(p)
-    })
-    messageList
+    val grouped = projects.groupBy(p => (p.id, p.ely, p.name, p.changeDate, p.user))
+    if (grouped.keySet.size > 1)
+      throw new IllegalArgumentException("Multiple projects, elys, users or change dates in single data set")
+    val project = projects.tail.foldLeft(projects.head) { case (proj1, proj2) =>
+      proj1.copy(changeInfoSeq = proj1.changeInfoSeq ++ proj2.changeInfoSeq)
+    }
+    sendJsonMessage(project)
   }
 
   private def convertChangeDataToChangeProject(changeData: ProjectRoadAddressChange): ChangeProject = {
-    val source = ChangeInfoRoadParts(changeData.changeInfo.source.roadNumber, changeData.changeInfo.source.trackCode,
-      changeData.changeInfo.source.startRoadPartNumber, changeData.changeInfo.source.startAddressM,
-      changeData.changeInfo.source.endRoadPartNumber, changeData.changeInfo.source.endAddressM)
-    val target = ChangeInfoRoadParts(changeData.changeInfo.target.roadNumber, changeData.changeInfo.target.trackCode,
-      changeData.changeInfo.target.startRoadPartNumber, changeData.changeInfo.target.startAddressM,
-      changeData.changeInfo.target.endRoadPartNumber, changeData.changeInfo.target.endAddressM)
-    val changeInfo = ChangeInfoItem(changeData.changeInfo.changeType.value, changeData.changeInfo.discontinuity.value,
-      changeData.changeInfo.roadType.value, source, target)
+    val changeInfo = changeData.changeInfo
     ChangeProject(changeData.projectId, changeData.projectName.getOrElse(""), changeData.user, changeData.ely,
       DateTimeFormat.forPattern("yyyy-MM-DD").print(changeData.changeDate), Seq(changeInfo))
   }
@@ -174,7 +170,7 @@ object ViiteTierekisteriClient {
   private val client = HttpClientBuilder.create().build
 
   def createJsonmessage(trProject:ChangeProject) = {
-    implicit val formats = DefaultFormats + ChangeInfoRoadPartsSerializer
+    implicit val formats = DefaultFormats + ChangeInfoRoadPartsSerializer + ChangeInfoItemSerializer + ChangeProjectSerializer
     val jsonObj = Map(
       "id" -> trProject.id,
       "name" -> trProject.name,
@@ -185,23 +181,23 @@ object ViiteTierekisteriClient {
         trProject.changeInfoSeq.map(changeInfo =>
           Map(
             "change_type" -> changeInfo.changeType,
-            "continuity" -> changeInfo.continuity,
+            "continuity" -> changeInfo.discontinuity.value,
             "road_type" -> changeInfo.roadType,
             "source" -> Map(
-              "tie" -> changeInfo.source.road.getOrElse("null"),
-              "ajr" -> changeInfo.source.track.getOrElse("null"),
-              "aosa" -> changeInfo.source.startPart.getOrElse("null"),
-              "aet" -> changeInfo.source.startAddrM.getOrElse("null"),
-              "losa" -> changeInfo.source.endPart.getOrElse("null"),
-              "let" -> changeInfo.source.endAddrM.getOrElse("null")
+              "tie" -> changeInfo.source.roadNumber.getOrElse("null"),
+              "ajr" -> changeInfo.source.trackCode.getOrElse("null"),
+              "aosa" -> changeInfo.source.startRoadPartNumber.getOrElse("null"),
+              "aet" -> changeInfo.source.startAddressM.getOrElse("null"),
+              "losa" -> changeInfo.source.endRoadPartNumber.getOrElse("null"),
+              "let" -> changeInfo.source.endAddressM.getOrElse("null")
             ),
             "target" -> Map(
-              "tie" -> changeInfo.target.road.getOrElse("null"),
-              "ajr" -> changeInfo.target.track.getOrElse("null"),
-              "aosa" -> changeInfo.target.startPart.getOrElse("null"),
-              "aet" -> changeInfo.target.startAddrM.getOrElse("null"),
-              "losa" -> changeInfo.target.endPart.getOrElse("null"),
-              "let" -> changeInfo.target.endAddrM.getOrElse("null")
+              "tie" -> changeInfo.target.roadNumber.getOrElse("null"),
+              "ajr" -> changeInfo.target.trackCode.getOrElse("null"),
+              "aosa" -> changeInfo.target.startRoadPartNumber.getOrElse("null"),
+              "aet" -> changeInfo.target.startAddressM.getOrElse("null"),
+              "losa" -> changeInfo.target.endRoadPartNumber.getOrElse("null"),
+              "let" -> changeInfo.target.endAddressM.getOrElse("null")
             )
           )
         )

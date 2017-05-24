@@ -225,8 +225,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       //Assuming that there is data to show
       val projectId = 0
       val responses = projectService.getRoadAddressChangesAndSendToTR(Set(projectId))
-      responses.isEmpty should be(false)
-      responses.head.projectId should be(projectId)
+      responses.projectId should be(projectId)
     }
   }
 

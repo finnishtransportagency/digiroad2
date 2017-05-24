@@ -3,6 +3,7 @@ package fi.liikennevirasto.viite
 import java.net.ConnectException
 import java.util.Properties
 
+import fi.liikennevirasto.viite.dao.{ChangeType, Discontinuity, RoadAddressChangeInfo, RoadAddressChangeRecipient}
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.{HttpGet, HttpPost}
 import org.apache.http.conn.{ConnectTimeoutException, HttpHostConnectException}
@@ -26,7 +27,7 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
   }
 
   def getRestEndPoint: String = {
-    val loadedKeyString = dr2properties.getProperty("digiroad2.tierekisteriViiteRestApiEndPoint")
+    val loadedKeyString = dr2properties.getProperty("digiroad2.tierekisteriViiteRestApiEndPoint", "http://localhost:8080/api/tierekisteri/")
     println("viite-endpoint = "+loadedKeyString)
     if (loadedKeyString == null)
       throw new IllegalArgumentException("Missing TierekisteriViiteRestApiEndPoint")
@@ -34,7 +35,8 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
   }
 
   private def testConnection: Boolean = {
-    val url = dr2properties.getProperty("digiroad2.tierekisteriViiteRestApiEndPoint")
+    // If you get NPE here, you have not included main module (digiroad2) as a test dependency to digiroad2-viite
+    val url = dr2properties.getProperty("digiroad2.tierekisteriViiteRestApiEndPoint", "http://localhost:8080/api/tierekisteri/")
     val request = new HttpGet(url)
     request.setConfig(RequestConfig.custom().setConnectTimeout(2500).build())
     val client = HttpClientBuilder.create().build()
@@ -58,7 +60,7 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
   test("TR-connection Create test") {
     assume(testConnection)
     val message= ViiteTierekisteriClient.sendJsonMessage(ChangeProject(0, "Testproject", "TestUser", 3, "2017-06-01", Seq {
-      ChangeInfoItem(2, 1, 1, ChangeInfoRoadParts(None, None, None, None, None, None), ChangeInfoRoadParts(Option(403), Option(0), Option(8), Option(0), Option(8), Option(1001))) // projectid 0 wont be added to TR
+      RoadAddressChangeInfo(ChangeType.apply(2), RoadAddressChangeRecipient(None, None, None, None, None, None), RoadAddressChangeRecipient(Option(403), Option(0), Option(8), Option(0), Option(8), Option(1001)), Discontinuity.apply(1), RoadType.apply(1)) // projectid 0 wont be added to TR
     }))
     message.projectId should be (0)
     message.status should be (201)
@@ -81,13 +83,13 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
       "\"let\": 1052" +
       "}"
     implicit val formats = DefaultFormats + ChangeInfoRoadPartsSerializer
-    val cirp = parse(StringInput(string)).extract[ChangeInfoRoadParts]
-    cirp.road should be (Some(1))
-    cirp.track should be (Some(0))
-    cirp.startPart should be (Some(10))
-    cirp.startAddrM should be (Some(0))
-    cirp.endPart should be (Some(10))
-    cirp.endAddrM should be (Some(1052))
+    val cirp = parse(StringInput(string)).extract[RoadAddressChangeRecipient]
+    cirp.roadNumber should be (Some(1))
+    cirp.trackCode should be (Some(0))
+    cirp.startRoadPartNumber should be (Some(10))
+    cirp.startAddressM should be (Some(0))
+    cirp.endRoadPartNumber should be (Some(10))
+    cirp.endAddressM should be (Some(1052))
   }
 
   test("parse TRProjectStatus to and from json") {
