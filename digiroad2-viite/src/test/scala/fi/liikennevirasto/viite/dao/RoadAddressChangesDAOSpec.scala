@@ -8,9 +8,6 @@ import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 
-/**
-  * Created by pedrosag on 16-05-2017.
-  */
 class RoadAddressChangesDAOSpec extends FunSuite with Matchers {
 
   def runWithRollback(f: => Unit): Unit = {
@@ -33,6 +30,5 @@ class RoadAddressChangesDAOSpec extends FunSuite with Matchers {
       changesList.head.projectId should be(projectId)
     }
   }
-
 
 }
