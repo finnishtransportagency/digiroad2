@@ -76,7 +76,7 @@ object RoadAddressLinkBuilder {
     else
       NormalRoadLinkType
 
-    val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry, projectLink.startMValue, projectLink.endMValue)
+    val geom = roadLink.geometry
     val length = GeometryUtils.geometryLength(geom)
     ProjectAddressLink(projectLink.id, roadLink.linkId, geom,
       length, roadLink.administrativeClass, roadLink.linkType, roadLinkType, roadLink.constructionType, roadLink.linkSource, getRoadType(roadLink.administrativeClass, roadLink.linkType), extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),

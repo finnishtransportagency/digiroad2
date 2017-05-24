@@ -11,20 +11,34 @@
     });
 
     this.abortLoadingProject=(function() {
-     if (loadingProject)
-     {
-       loadingProject.abort();
-     }
+      if (loadingProject)
+      {
+        loadingProject.abort();
+      }
     });
 
     this.getProjectLinks = createCallbackRequestor(function(params) {
-        var zoom = params.zoom;
-        var boundingBox = params.boundingBox;
-        var projectId = params.projectId;
-        return {
-            url: 'api/viite/project/roadlinks?zoom=' + zoom + '&bbox=' + boundingBox + '&id=' + projectId
-        };
+      var zoom = params.zoom;
+      var boundingBox = params.boundingBox;
+      var projectId = params.projectId;
+      return {
+        url: 'api/viite/project/roadlinks?zoom=' + zoom + '&bbox=' + boundingBox + '&id=' + projectId
+      };
     });
+
+    this.updateProjectLinks = _.throttle(function(data, errorCallback) {
+      $.ajax({
+        contentType: "application/json",
+        type: "PUT",
+        url: "api/viite/project/roadlinks",
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: function (link) {
+          eventbus.trigger('roadAddress:projectLinksUpdated');
+        },
+        error: errorCallback
+      });
+    }, 1000);
 
     this.getRoadLinkByLinkId = _.throttle(function(linkId, callback) {
       return $.getJSON('api/viite/roadlinks/' + linkId, function(data) {

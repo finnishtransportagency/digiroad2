@@ -1,21 +1,48 @@
 (function(root) {
   root.RoadAddressProjectCollection = function(backend) {
     var roadAddressProjects = [];
-    var currentRoadSegmentList = [];
-    var dirtyRoadSegmentLst = [];
+    var currentRoadPartList = [];
+    var dirtyRoadPartList = [];
     var projectinfo;
     var fetchedProjectLinks = [];
     var roadAddressProjectLinks = [];
+    var projectLinksSaved = [];
+    var dirtyProjectLinks = [];
     var self = this;
+    var STATUS_NOT_HANDLED = 0;
+    var STATUS_TERMINATED = 1;
+    var BAD_REQUEST_400 = 400;
+    var UNAUTHORIZED_401 = 401;
+    var PRECONDITION_FAILED_412 = 412;
+    var INTERNAL_SERVER_ERROR_500 = 500;
 
     var projectLinks = function() {
-        return _.flatten(fetchedProjectLinks);
+      return _.flatten(fetchedProjectLinks);
     };
 
     this.getAll = function () {
       return _.map(projectLinks(), function(projectLink) {
         return projectLink.getData();
       });
+    };
+
+    this.getSavedLinks = function(){
+      return projectLinksSaved;
+    };
+
+    this.getMultiSelectIds = function (linkId) {
+      var chain = _.find(fetchedProjectLinks, function (linkChain) {
+        var pureChain = _.map(linkChain, function(l) { return l.getData(); });
+        return _.some(pureChain, {"linkId": linkId});
+      });
+      return _.map(chain, function (link) { return link.getData().linkId; });
+    };
+
+    this.getByLinkId = function (ids) {
+      var ProjectLinks = _.filter(_.flatten(fetchedProjectLinks), function (projectLink){
+        return _.contains(ids, projectLink.getData().linkId);
+      });
+      return ProjectLinks;
     };
 
     this.fetch = function(boundingBox, zoom, projectId) {
@@ -44,7 +71,8 @@
         roadAddressProjects = result.projects;
         roadAddressProjectLinks = result.projectLinks;
         projectinfo = {
-          id: result.projects.id
+          id: result.projects.id,
+          publishable: false
         };
         eventbus.trigger('roadAddressProject:projectFetched', projectinfo.id);
       });
@@ -52,8 +80,9 @@
 
     this.clearRoadAddressProjects = function () {
       roadAddressProjects = [];
-      dirtyRoadSegmentLst = [];
-      currentRoadSegmentList = [];
+      dirtyRoadPartList = [];
+      currentRoadPartList = [];
+      dirtyProjectLinks = [];
       projectinfo=undefined;
       backend.abortLoadingProject();
     };
@@ -72,7 +101,7 @@
         name: data[0].value,
         startDate: data[1].value,
         additionalInfo: data[2].value,
-        roadPartList: dirtyRoadSegmentLst
+        roadPartList: dirtyRoadPartList
       };
 
       backend.saveRoadAddressProject(dataJson, function (result) {
@@ -81,10 +110,11 @@
             id: result.project.id,
             additionalInfo: result.project.additionalInfo,
             status: result.project.status,
-            startDate: result.project.startDate
+            startDate: result.project.startDate,
+            publishable: false
           };
           eventbus.trigger('roadAddress:projectSaved', result);
-          dirtyRoadSegmentLst = [];
+          dirtyRoadPartList = [];
         }
         else {
           eventbus.trigger('roadAddress:projectValidationFailed', result);
@@ -92,6 +122,32 @@
       }, function () {
         eventbus.trigger('roadAddress:projectFailed');
       });
+    };
+
+
+    this.saveProjectLinks = function(selectedProjectLink, currentProject) {
+      applicationModel.addSpinner();
+      var linkIds = _.map(selectedProjectLink,function (t){
+        if(!_.isUndefined(t.linkId)){
+          return t.linkId;
+        } else return t;
+      });
+
+      projectLinksSaved = projectLinksSaved.concat(linkIds);
+
+      var projectId = currentProject.id;
+
+      var data = {'linkIds': linkIds, 'projectId': projectId, 'newStatus': STATUS_TERMINATED};
+
+      if(!_.isEmpty(linkIds) && typeof projectId !== 'undefined' && projectId !== 0){
+        backend.updateProjectLinks(data, function(errorObject) {
+          if (errorObject.status == INTERNAL_SERVER_ERROR_500 || errorObject.status == BAD_REQUEST_400) {
+            eventbus.trigger('roadAddress:projectLinksUpdateFailed', errorObject.status);
+          }
+        });
+      } else {
+        eventbus.trigger('roadAddress:projectLinksUpdateFailed', PRECONDITION_FAILED_412);
+      }
     };
 
     this.createProject = function (data, currentProject) {
@@ -102,7 +158,7 @@
         name: data[0].value,
         startDate: data[1].value,
         additionalInfo: data[2].value,
-        roadPartList: dirtyRoadSegmentLst
+        roadPartList: dirtyRoadPartList
       };
 
       backend.createRoadAddressProject(dataJson, function (result) {
@@ -111,10 +167,11 @@
             id: result.project.id,
             additionalInfo: result.project.additionalInfo,
             status: result.project.status,
-            startDate: result.project.startDate
+            startDate: result.project.startDate,
+            publishable: false
           };
           eventbus.trigger('roadAddress:projectSaved', result);
-          dirtyRoadSegmentLst = [];
+          dirtyRoadPartList = [];
         }
         else {
           eventbus.trigger('roadAddress:projectValidationFailed', result);
@@ -122,6 +179,11 @@
       }, function () {
         eventbus.trigger('roadAddress:projectFailed');
       });
+    };
+
+    this.publishProject = function() {
+      // TODO: Project publish action
+      console.log("TODO");
     };
 
     var addSmallLabel = function (label) {
@@ -134,7 +196,7 @@
 
     var parseroadpartinfoToresultRow = function () {
       var listContent = '';
-      _.each(currentRoadSegmentList, function (row) {
+      _.each(currentRoadPartList, function (row) {
           listContent += addSmallLabel(row.roadNumber) + addSmallLabel(row.roadPartNumber) + addSmallLabel(row.length) + addSmallLabel(row.discontinuity) + addSmallLabel(row.ely) +
             '</div>';
         }
@@ -149,16 +211,25 @@
         qRoadparts.push(row);
       });
 
-      var sameElements = arrayIntersection(qRoadparts, currentRoadSegmentList, function (arrayarow, arraybrow) {
+      var sameElements = arrayIntersection(qRoadparts, currentRoadPartList, function (arrayarow, arraybrow) {
         return arrayarow.roadPartId === arraybrow.roadPartId;
       });
       _.each(sameElements, function (row) {
         _.remove(qRoadparts, row);
       });
       _.each(qRoadparts, function (row) {
-        currentRoadSegmentList.push(row);
-        dirtyRoadSegmentLst.push(row);
+        currentRoadPartList.push(row);
+        dirtyRoadPartList.push(row);
       });
+    };
+
+    this.setDirty = function(editedRoadLinks) {
+      dirtyProjectLinks = editedRoadLinks;
+      eventbus.trigger('roadAddress:projectLinksEdited');
+    };
+
+    this.getDirty = function() {
+      return dirtyProjectLinks;
     };
 
 
@@ -171,8 +242,8 @@
     }
 
 
-      eventbus.on('clearproject', function() {
-        this.clearRoadAddressProjects();
+    eventbus.on('clearproject', function() {
+      this.clearRoadAddressProjects();
     });
 
 
@@ -191,13 +262,13 @@
 
     var ProjectLinkModel = function(data) {
 
-        var getData = function() {
-           return data;
-        };
+      var getData = function() {
+        return data;
+      };
 
-        return {
-           getData: getData
-        };
+      return {
+        getData: getData
+      };
     };
   };
 })(this);
