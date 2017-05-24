@@ -198,9 +198,4 @@ object ProjectDAO {
        """
     Q.queryNA[Long](query).list
   }
-
-
-
 }
-
-
