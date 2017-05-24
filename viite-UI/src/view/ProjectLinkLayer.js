@@ -92,6 +92,7 @@
           return !_.isUndefined(selectionTarget.projectLinkData);
       });
       selectedProjectLinkProperty.clean();
+      $('.wrapper').remove();
       if (!_.isUndefined(selection))
         selectedProjectLinkProperty.open(selection.projectLinkData.linkId, true);
     });
