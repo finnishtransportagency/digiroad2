@@ -10,6 +10,10 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
     var openLayersMap;
     before(function(done) {
       var backend = testHelpers.fakeBackend(13, testHelpers.selectTestData('roadAddress'),354810.0, 6676460.0);
+      //TODO
+      //The restartApplication command is not properly applying the selected backend to the context of the tests done in this file.
+      //It was "quick-fixed" by changing the default backend function in the Test-Helpers to retrive the data I need (thus locking the backend in one mode).
+      //I require some assistance with this issue.
       testHelpers.restartApplication(function(map) {
         openLayersMap = map;
         testHelpers.clickVisibleEditModeButton();

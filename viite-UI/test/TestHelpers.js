@@ -65,6 +65,10 @@ define(['RoadAddressTestData',
       Application.restart(backend || defaultBackend(), false);
     };
 
+    //TODO
+    //The restartApplication command is not properly applying the selected backend to the context of the tests done in this FloatingRoadAddressSpec.
+    //It was "quick-fixed" by changing the default backend function (bellow) in the this file to retrive the data I need (thus locking the backend in one mode).
+    //I require some assistance with this issue.
     var defaultBackend = function() {
       return fakeBackend(13, selectTestData('roadAddress'),354810.0, 6676460.0);
     };
