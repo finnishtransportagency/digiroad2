@@ -153,7 +153,7 @@ object DefloatMapper {
         switchSideCode(previousSideCode)
     }
     def touching(p: Point, points: Seq[Point]) = {
-      points.count(x => (x-p).length() < MaxDistanceDiffAllowed)
+      points.count(x => (x-p).to2D().length() < MaxDistanceDiffAllowed)
     }
     def hasIntersection(roadLinks: Seq[RoadAddressLink]): Boolean = {
       val endPoints = roadLinks.map(rl =>GeometryUtils.geometryEndpoints(rl.geometry))
