@@ -25,19 +25,10 @@ class ViiteTierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
     "start_time" -> "2017-05-15",
     "end_time" -> "2017-05-15",
     "error_code" -> 0);
-  val SourceTieIsNullMessage = "Source Tie is null"
-  val SourceAjrIsNullMessage = "Source Ajr is null"
-  val SourceAosaIsNullMessage = "Source Aosa is null"
-  val SourceAetIsNullMessage = "Source Aet is null"
-  val SourceLosaIsNullMessage = "Source Losa is null"
-  val SourceLetIsNullMessage = "Source Let is null"
-
-  val TargetTieIsNullMessage = "Target Tie is null"
-  val TargetAjrIsNullMessage = "Target Ajr is null"
-  val TargetAosaIsNullMessage = "Target Aosa is null"
-  val TargetAetIsNullMessage = "Target Aet is null"
-  val TargetLosaIsNullMessage = "Target Losa is null"
-  val TargetLetIsNullMessage = "Target Let is null"
+  val SourceXIsNullMessage = "Source %s is null"
+  val TargetXIsNullMessage = "Target %s is null"
+  val SourceXNotNullMessage = "Source %s is not null"
+  val TargetXNotNullMessage = "Target %s is not null"
 
 
   override protected implicit def jsonFormats: Formats = DefaultFormats
@@ -77,25 +68,35 @@ class ViiteTierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
   }
 
   private def validateProject(project: Map[String,Any]) ={
-    def testNonNull(source: Map[String, Any], key: String, errorMessage: String): Unit = {
-      if (source(key) == "null") {
-        println(errorMessage)
-        halt(BadRequest(errorMessage))
+    def testNonNull(map: Map[String, Any], keys: Seq[String], errorTemplate: String): Unit = {
+      if (keys.nonEmpty) {
+        val key = keys.head
+        val errorMessage = errorTemplate.format(key)
+        if (map(key) == "null") {
+          println(errorMessage)
+          halt(BadRequest(errorMessage))
+        }
+        testNonNull(map, keys.tail, errorTemplate)
       }
     }
 
-    def testIsNull(source: Map[String, Any], key: String, errorMessage: String): Unit = {
-      if (source(key) != "null") {
-        println(errorMessage)
-        halt(BadRequest(errorMessage))
+    def testIsNull(map: Map[String, Any], keys: Seq[String], errorTemplate: String): Unit = {
+      if (keys.nonEmpty) {
+        val key = keys.head
+        val errorMessage = errorTemplate.format(key)
+        if (map(key) != "null") {
+          println(errorMessage)
+          halt(BadRequest(errorMessage))
+        }
+        testIsNull(map, keys.tail, errorTemplate)
       }
     }
 
-    val (roadNo, track, startPart, startAM, endPart, endAM) = ("tie", "ajr", "aosa", "aet", "losa", "let")
+    val changeInfoKeys = Seq("tie", "ajr", "aosa", "aet", "losa", "let")
     val projectId = project("id")
     val keys = project.keySet.toList
     if(!projectId.equals(0)){
-      halt(ExpectationFailed("Not the test project"));
+      halt(ExpectationFailed("Not the test project"))
     }
     val changeInfo = project.get(keys(1)).map(_.asInstanceOf[List[Map[String, Any]]].head)
     val changeType = changeInfo.get("change_type")
@@ -106,88 +107,32 @@ class ViiteTierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
         //Source - not null
         //Target - all null
         println("Matched 1")
-
-        testNonNull(source, roadNo, SourceTieIsNullMessage)
-        testNonNull(source, track, SourceAjrIsNullMessage)
-        testNonNull(source, startPart, SourceAosaIsNullMessage)
-        testNonNull(source, startAM, SourceAetIsNullMessage)
-        testNonNull(source, endPart, SourceLosaIsNullMessage)
-        testNonNull(source, endAM, SourceLetIsNullMessage)
-
-        testIsNull(target, roadNo, TargetTieIsNullMessage)
-        testIsNull(target, track, TargetAjrIsNullMessage)
-        testIsNull(target, startPart, TargetAosaIsNullMessage)
-        testIsNull(target, startAM, TargetAetIsNullMessage)
-        testIsNull(target, endPart, TargetLosaIsNullMessage)
-        testIsNull(target, endAM, TargetLetIsNullMessage)
+        testNonNull(source, changeInfoKeys, SourceXIsNullMessage)
+        testIsNull(target, changeInfoKeys, TargetXNotNullMessage)
       case 2 =>
         //Source - all null
         //Target - not null
         println("Matched 2")
-        testIsNull(source, roadNo, SourceTieIsNullMessage)
-        testIsNull(source, track, SourceAjrIsNullMessage)
-        testIsNull(source, startPart, SourceAosaIsNullMessage)
-        testIsNull(source, startAM, SourceAetIsNullMessage)
-        testIsNull(source, endPart, SourceLosaIsNullMessage)
-        testIsNull(source, endAM, SourceLetIsNullMessage)
-
-        testNonNull(target, roadNo, TargetTieIsNullMessage)
-        testNonNull(target, track, TargetAjrIsNullMessage)
-        testNonNull(target, startPart, TargetAosaIsNullMessage)
-        testNonNull(target, startAM, TargetAetIsNullMessage)
-        testNonNull(target, endPart, TargetLosaIsNullMessage)
-        testNonNull(target, endAM, TargetLetIsNullMessage)
+        testIsNull(source, changeInfoKeys, SourceXNotNullMessage)
+        testNonNull(target, changeInfoKeys, TargetXIsNullMessage)
       case 3 =>
         //Source - not null
         //Target - not null
         println("Matched 3")
-        testNonNull(source, roadNo, SourceTieIsNullMessage)
-        testNonNull(source, track, SourceAjrIsNullMessage)
-        testNonNull(source, startPart, SourceAosaIsNullMessage)
-        testNonNull(source, startAM, SourceAetIsNullMessage)
-        testNonNull(source, endPart, SourceLosaIsNullMessage)
-        testNonNull(source, endAM, SourceLetIsNullMessage)
-
-        testNonNull(target, roadNo, TargetTieIsNullMessage)
-        testNonNull(target, track, TargetAjrIsNullMessage)
-        testNonNull(target, startPart, TargetAosaIsNullMessage)
-        testNonNull(target, startAM, TargetAetIsNullMessage)
-        testNonNull(target, endPart, TargetLosaIsNullMessage)
-        testNonNull(target, endAM, TargetLetIsNullMessage)
+        testNonNull(source, changeInfoKeys, SourceXIsNullMessage)
+        testNonNull(target, changeInfoKeys, TargetXIsNullMessage)
       case 4 =>
         //Source - not null
         //Target - not null
         println("Matched 4")
-        testNonNull(source, roadNo, SourceTieIsNullMessage)
-        testNonNull(source, track, SourceAjrIsNullMessage)
-        testNonNull(source, startPart, SourceAosaIsNullMessage)
-        testNonNull(source, startAM, SourceAetIsNullMessage)
-        testNonNull(source, endPart, SourceLosaIsNullMessage)
-        testNonNull(source, endAM, SourceLetIsNullMessage)
-
-        testNonNull(target, roadNo, TargetTieIsNullMessage)
-        testNonNull(target, track, TargetAjrIsNullMessage)
-        testNonNull(target, startPart, TargetAosaIsNullMessage)
-        testNonNull(target, startAM, TargetAetIsNullMessage)
-        testNonNull(target, endPart, TargetLosaIsNullMessage)
-        testNonNull(target, endAM, TargetLetIsNullMessage)
+        testNonNull(source, changeInfoKeys, SourceXIsNullMessage)
+        testNonNull(target, changeInfoKeys, TargetXIsNullMessage)
       case 5 =>
         //Source - not null
         //Target - all null
         println("Matched 5")
-        testNonNull(source, roadNo, SourceTieIsNullMessage)
-        testNonNull(source, track, SourceAjrIsNullMessage)
-        testNonNull(source, startPart, SourceAosaIsNullMessage)
-        testNonNull(source, startAM, SourceAetIsNullMessage)
-        testNonNull(source, endPart, SourceLosaIsNullMessage)
-        testNonNull(source, endAM, SourceLetIsNullMessage)
-
-        testIsNull(target, roadNo, TargetTieIsNullMessage)
-        testIsNull(target, track, TargetAjrIsNullMessage)
-        testIsNull(target, startPart, TargetAosaIsNullMessage)
-        testIsNull(target, startAM, TargetAetIsNullMessage)
-        testIsNull(target, endPart, TargetLosaIsNullMessage)
-        testIsNull(target, endAM, TargetLetIsNullMessage)
+        testNonNull(source, changeInfoKeys, SourceXIsNullMessage)
+        testIsNull(target, changeInfoKeys, TargetXNotNullMessage)
     }
   }
 
