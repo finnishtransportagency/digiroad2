@@ -257,14 +257,6 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       stateaftercheck.description should be (ProjectState.ErroredInTR.description)
     }
 
-
-
   }
-
-
-
-
-
-
 
 }
