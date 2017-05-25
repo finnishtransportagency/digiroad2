@@ -7,8 +7,13 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
     this.timeout(1500000);
 
     before(function(done) {
-      testHelpers.clickProjectListButton();
-      done();
+      var backend = testHelpers.fakeBackend(13, testHelpers.selectTestData('roadAddress'),354810.0, 6676460.0);
+
+      testHelpers.restartApplication(function(map) {
+        eventbus.once('roadLayer:featuresLoaded', function() {
+          done();
+        });
+      }, backend);
     });
 
     it('open project list window', function () {

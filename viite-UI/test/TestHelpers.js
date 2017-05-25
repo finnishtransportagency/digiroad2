@@ -1,11 +1,11 @@
 define(['RoadAddressTestData',
-        'RoadLinkTestData',
-        'UserRolesTestData',
-        'RoadAddressProjectTestData'],
-       function(RoadAddressTestData,
-                RoadLinkTestData,
-                UserRolesTestData,
-                RoadAddressProjectTestData) {
+    'RoadLinkTestData',
+    'UserRolesTestData',
+    'RoadAddressProjectTestData'],
+  function(RoadAddressTestData,
+           RoadLinkTestData,
+           UserRolesTestData,
+           RoadAddressProjectTestData) {
 
     var getRoadLayerName = function() {
       return 'roadLayer';
@@ -109,11 +109,11 @@ define(['RoadAddressTestData',
       $('.link-properties button.save:enabled').click();
     };
 
-  var clickProjectListButton = function(){
-    $('#projectListButton:visible').click();
-  };
+    var clickProjectListButton = function(){
+      $('#projectListButton:visible').click();
+    };
 
-  var getLayerByName = function(map, name){
+    var getLayerByName = function(map, name){
       var layers = map.getLayers().getArray();
       return _.find(layers, function(layer){
         return layer.get('name') === name;
@@ -154,7 +154,7 @@ define(['RoadAddressTestData',
         case 'unknownRoadAddress':
           return RoadAddressTestData.generateUnknownAdjacentData();
         case 'transferFloating':
-         return RoadAddressTestData.generateTransferFloatingData();
+          return RoadAddressTestData.generateTransferFloatingData();
         case 'roadLink':
           return RoadLinkTestData.generate();
       }
