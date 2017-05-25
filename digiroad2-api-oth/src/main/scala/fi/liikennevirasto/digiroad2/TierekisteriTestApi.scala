@@ -76,17 +76,20 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
     )
   }
 
+  val trafficVolumeTRCode = "tl201"
+  val lightingTRCode = "tl167"
+
   val trafficVolume: Map[String,List[Map[String, Any]]] ={
     Map(
       "Data" ->
         List(
           Map(
-              "TIETOLAJI" -> "tl201",          //Field code
-              "TIE" -> 45,                     //Road number
-              "OSA" -> 1,                      //Road part number
+              "TIETOLAJI" -> trafficVolumeTRCode,   //Field code
+              "TIE" -> 45,                          //Road number
+              "OSA" -> 1,                           //Road part number
               "ETAISYYS" -> 0,                      //Start distance
-              "LET" -> 0,                    //End distance
-              "KVL" -> 1                       //placeholder value for traffic volume
+              "LET" -> 0,                           //End distance
+              "KVL" -> 1                            //placeholder value for traffic volume
             )
         )
     )
@@ -96,6 +99,21 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
     Map(
       "tietolaji" -> "tl201",          //Field code
       "tie" -> 45                      //Road number
+    )
+  }
+
+  val lighting: Map[String,List[Map[String, Any]]] ={
+    Map(
+      "Data" ->
+        List(
+          Map(
+            "TIETOLAJI" -> lightingTRCode,   //Field code
+            "TIE" -> 45,                     //Road number
+            "OSA" -> 1,                      //Road part number
+            "ETAISYYS" -> 0,                 //Start distance
+            "LET" -> 0                       //End distance
+          )
+        )
     )
   }
 
@@ -175,34 +193,54 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
 
   get("/tietolajit/:fieldCode/:roadNumber") {
     //Checks that header contains X-OTH-Authorization attribute with correct base64 value
-    if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg==")))
+    if (!request.headers.exists(_ ==("X-OTH-Authorization", "Basic dXNlclhZWjpwYXNzd29yZFhZWg==")))
       halt(BadRequest("401 Unauthorized"))
 
-    trafficVolume
+    val fieldCode = params("fieldCode")
+    if (fieldCode == trafficVolumeTRCode) {
+      trafficVolume
+    } else if (fieldCode == lightingTRCode) {
+      lighting
+    }
   }
 
   get("/tietolajit/:fieldCode/:roadNumber/:roadPartNumber") {
     //Checks that header contains X-OTH-Authorization attribute with correct base64 value
-    if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg==")))
+    if (!request.headers.exists(_ ==("X-OTH-Authorization", "Basic dXNlclhZWjpwYXNzd29yZFhZWg==")))
       halt(BadRequest("401 Unauthorized"))
 
-    trafficVolume
+    val fieldCode = params("fieldCode")
+    if (fieldCode == trafficVolumeTRCode) {
+      trafficVolume
+    } else if (fieldCode == lightingTRCode) {
+      lighting
+    }
   }
 
   get("/tietolajit/:fieldCode/:roadNumber/:roadPartNumber/:startDistance") {
     //Checks that header contains X-OTH-Authorization attribute with correct base64 value
-    if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg==")))
+    if (!request.headers.exists(_ ==("X-OTH-Authorization", "Basic dXNlclhZWjpwYXNzd29yZFhZWg==")))
       halt(BadRequest("401 Unauthorized"))
 
-    trafficVolume
+    val fieldCode = params("fieldCode")
+    if (fieldCode == trafficVolumeTRCode) {
+      trafficVolume
+    } else if (fieldCode == lightingTRCode) {
+      lighting
+    }
   }
 
   get("/tietolajit/:fieldCode/:roadNumber/:roadPartNumber/:startDistance/:endPart/:endDistance") {
     //Checks that header contains X-OTH-Authorization attribute with correct base64 value
-    if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg==")))
+    if (!request.headers.exists(_ ==("X-OTH-Authorization", "Basic dXNlclhZWjpwYXNzd29yZFhZWg==")))
       halt(BadRequest("401 Unauthorized"))
 
-    trafficVolume
+    val fieldCode = params("fieldCode")
+    if (fieldCode == trafficVolumeTRCode) {
+      trafficVolume
+    } else if (fieldCode == lightingTRCode) {
+      lighting
+    }
   }
 }
 
