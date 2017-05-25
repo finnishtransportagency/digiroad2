@@ -12,6 +12,10 @@
     var UNAUTHORIZED_401 = 401;
     var PRECONDITION_FAILED_412 = 412;
     var INTERNAL_SERVER_ERROR_500 = 500;
+    var floatingRoadLinkType=-1;
+    var noAnomaly=0;
+    var noAddressAnomaly=1;
+    var geometryChangedAnomaly=2;
 
     var markers = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
       "AA", "AB", "AC", "AD", "AE", "AF", "AG", "AH", "AI", "AJ", "AK", "AL", "AM", "AN", "AO", "AP", "AQ", "AR", "AS", "AT", "AU", "AV", "AW", "AX", "AY", "AZ",
@@ -121,7 +125,7 @@
           return extractDataForDisplay([feature]);
         });
 
-        if(!applicationModel.isReadOnly() && get()[0].roadLinkType === -1){
+        if(!applicationModel.isReadOnly() && get()[0].roadLinkType === floatingRoadLinkType){
           addToFeaturesToKeep(data4Display);
         }
         if(!_.isEmpty(featuresToKeep) && !isLinkIdInFeaturesToKeep(linkId)){
@@ -135,7 +139,7 @@
     };
 
     var openUnknown = function(linkId, id, visibleFeatures) {
-      var canIOpen = !_.isUndefined(linkId) ? true /*!isSelectedByLinkId(linkId) */ : !isSelectedById(id);
+      var canIOpen = !_.isUndefined(linkId) ? true : !isSelectedById(id);
       if (canIOpen) {
         if(featuresToKeep.length === 0){
           close();
@@ -149,7 +153,7 @@
         } else {
           current = _.uniq(roadCollection.getById([id]), _.isEqual);
         }
-        if(current[0].getData().anomaly == 2) {
+        if(current[0].getData().anomaly == geometryChangedAnomaly) {
           current = _.filter(roadCollection.getTmpRoadLinkGroups(), function(linkGroup){
             return linkGroup.getData().linkId === linkId;
           });
@@ -162,7 +166,7 @@
         });
 
         var currentFloatings = _.filter(current, function(curr){
-          return curr.getData().roadLinkType === -1;
+          return curr.getData().roadLinkType === floatingRoadLinkType;
         });
         if(!_.isEmpty(currentFloatings)){
           setSources(currentFloatings);
@@ -172,7 +176,7 @@
           return extractDataForDisplay([feature]);
         });
 
-        if(!applicationModel.isReadOnly() && get()[0].anomaly === 1){
+        if(!applicationModel.isReadOnly() && get()[0].anomaly === noAddressAnomaly){
           addToFeaturesToKeep(data4Display);
         }
         if(!_.isEmpty(featuresToKeep) && !isLinkIdInFeaturesToKeep(linkId)){
@@ -292,7 +296,7 @@
           applicationModel.setCurrentAction(applicationModel.actionCalculating);
           if (!applicationModel.isReadOnly()) {
             var rejectedRoads = _.reject(get().concat(featuresToKeep), function(link){
-              return link.segmentId === "" || link.anomaly === 2;
+              return link.segmentId === "" || link.anomaly === geometryChangedAnomaly;
             });
             var selectedLinkIds = _.map(rejectedRoads, function (roads) {
               return roads.linkId;
@@ -306,7 +310,7 @@
             previousAdjacents = filteredAdjacents;
             var markedRoads = {
               "adjacents": _.map(applicationModel.getSelectionType() === 'floating' ? _.reject(filteredAdjacents, function(t){
-                return t.roadLinkType != -1;
+                return t.roadLinkType != floatingRoadLinkType;
               }) :filteredAdjacents, function (a, index) {
                 return _.merge({}, a, {"marker": markers[index]});
               }), "links": link
@@ -392,7 +396,7 @@
       });
 
       var targetDataIds = _.uniq(_.filter(_.map(targetsData.concat(featuresToKeep), function(feature){
-        if(feature.roadLinkType != -1 && feature.anomaly == 1){
+        if(feature.roadLinkType != floatingRoadLinkType && feature.anomaly == noAddressAnomaly){
           return feature.linkId.toString();
         }
       }), function (target){
@@ -400,7 +404,7 @@
       }));
 
       var sourceDataIds = _.filter(_.map(getSources(), function (feature) {
-        if(feature.roadLinkType == -1){
+        if(feature.roadLinkType == floatingRoadLinkType){
           return feature.linkId.toString();
         }
       }), function (source){
@@ -432,14 +436,14 @@
       });
 
       var targetDataIds = _.uniq(_.filter(_.map(targetsData.concat(featuresToKeep), function(feature){
-        if(feature.roadLinkType != -1 && feature.anomaly == 1){
+        if(feature.roadLinkType != floatingRoadLinkType && feature.anomaly == noAddressAnomaly){
           return feature.linkId;
         }
       }), function (target){
         return !_.isUndefined(target);
       }));
       var sourceDataIds = _.filter(_.map(get().concat(featuresToKeep), function (feature) {
-        if(feature.roadLinkType == -1){
+        if(feature.roadLinkType == floatingRoadLinkType){
           return feature.linkId;
         }
       }), function (source){
@@ -529,7 +533,7 @@
     };
 
     var cancelAndReselect = function(action){
-      if(action===0){
+      if(action===applicationModel.actionCalculating){
         var floatingMarkers = getFloatingRoadMarker();
         eventbus.trigger('linkProperties:floatingRoadMarkerPreviousSelected', floatingMarkers);
       }
@@ -558,7 +562,7 @@
     var cancelAfterDefloat = function(action, changedTargetIds) {
       dirty = false;
       var originalData = _.filter(featuresToKeep, function(feature){
-        return feature.roadLinkType === -1;
+        return feature.roadLinkType === floatingRoadLinkType;
       });
       if(action !== applicationModel.actionCalculated && action !== applicationModel.actionCalculating)
         clearFeaturesToKeep();
@@ -598,19 +602,19 @@
 
     var getCurrentFloatings = function(){
       return _.filter(current, function(curr){
-        return curr.getData().roadLinkType === -1;
+        return curr.getData().roadLinkType === floatingRoadLinkType;
       });
     };
 
     var getFeaturesToKeepFloatings = function() {
       return _.filter(featuresToKeep, function (fk) {
-        return fk.roadLinkType === -1;
+        return fk.roadLinkType === floatingRoadLinkType;
       });
     };
 
     var getFeaturesToKeepUnknown = function() {
       return _.filter(featuresToKeep, function (fk) {
-        return fk.anomaly === 1;
+        return fk.anomaly === noAddressAnomaly;
       });
     };
 
@@ -647,7 +651,7 @@
     var clearFeaturesToKeep = function() {
       if('floating' === applicationModel.getSelectionType() || 'unknown' === applicationModel.getSelectionType()){
         featuresToKeep = _.filter(featuresToKeep, function(feature){
-          return feature.roadLinkType === -1;
+          return feature.roadLinkType === floatingRoadLinkType;
         });
       } else {
         featuresToKeep = [];

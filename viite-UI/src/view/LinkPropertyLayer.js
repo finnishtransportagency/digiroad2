@@ -1089,7 +1089,7 @@
       var unknownRoadMarkers =[];
 
       var unknownFeaturesToKeep = _.reject(_.map(selectedLinkProperty.getFeaturesToKeepUnknown(), function(feature){
-        if(feature.anomaly === 1){
+        if(feature.anomaly === noAddressAnomaly){
           return feature.linkId;
         } else return undefined;
       }), function(featureNotToKeep){
