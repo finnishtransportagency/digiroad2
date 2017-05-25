@@ -148,7 +148,7 @@
         } else {
           callback(roadLinkData);
         }
-        eventbus.trigger('roadLinks:fetched');
+        eventbus.trigger('roadLinks:fetched', afterSave ? afterSaveRoadLinkData : roadLinkData);
       };
       return self;
     };

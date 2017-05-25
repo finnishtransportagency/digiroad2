@@ -30,6 +30,7 @@
     var loadFeatures = function (features) {
       vectorSource.clear(true);
       vectorSource.addFeatures(selectedLinkProperty.filterFeaturesAfterSimulation(features));
+      eventbus.trigger('roadLayer:featuresLoaded', features); // For testing: tells that the layer is ready to be "clicked"
     };
 
     var minimumContentZoomLevel = function() {
