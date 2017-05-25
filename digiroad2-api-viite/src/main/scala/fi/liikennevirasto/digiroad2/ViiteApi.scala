@@ -30,7 +30,6 @@ case class NewAddressDataExtracted(sourceIds: Set[Long], targetIds: Set[Long], r
 case class RoadAddressProjectExtractor(id: Long, status: Long, name: String, startDate: String, additionalInfo: String,roadPartList: List[ReservedRoadPart])
 
 case class RoadAddressProjectLinkUpdate(linkIds: Seq[Long], projectId: Long, newStatus: Int)
-
 class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
                val roadAddressService: RoadAddressService,
                val projectService: ProjectService,
@@ -200,6 +199,23 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       case ex: IllegalArgumentException => BadRequest(s"A project with id ${project.id} has already been created")
     }
   }
+
+  post("/roadlinks/roadaddress/project/sendToTR"){
+     (parsedBody \ "projectID").extractOpt[Long] match
+       {
+       case Some(s)=>
+         {
+           println( s"publishing project $s")
+           //TODO call getRoadAddressChangesAndSendToTR(projectID). if success change projectstatus to "sent to TR"
+           Map("projectSent" -> "TODO")
+
+         }
+       case _=> BadRequest(s"Invalid arguments")
+     }
+     Map("projectSent" -> "TODO")
+
+  }
+
 
   put("/roadlinks/roadaddress/project/save"){
     val project = parsedBody.extract[RoadAddressProjectExtractor]
