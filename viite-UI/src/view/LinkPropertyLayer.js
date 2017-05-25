@@ -528,7 +528,6 @@
 
           var marker = cachedMarker.createMarker(newRoadLinkData);
           geometryChangedLayer.getSource().addFeature(marker);
-          //marker.setZIndex(1000);
 
           var points = _.map(newRoadLinkData.newGeometry, function(point) {
             return [point.x, point.y];
@@ -690,7 +689,6 @@
       });
       eventListener.listenTo(eventbus, 'adjacents:added adjacents:aditionalSourceFound', function(sources,targets, aditionalLinkId){
         drawIndicators(targets);
-        geometryChangedLayer.setVisible(true);
         _.map(_.rest(selectedLinkProperty.getFeaturesToKeep()), function (roads){
           editFeatureDataForGreen(roads);
         });
@@ -857,7 +855,11 @@
       applicationModel.removeSpinner();
       selectedLinkProperty.setDirty(false);
       selectedLinkProperty.resetTargets();
+      selectedLinkProperty.clearFeaturesToKeep();
       applicationModel.setActiveButtons(false);
+      applicationModel.setContinueButton(false);
+      applicationModel.setCurrentAction(applicationModel.actionCalculating);
+      eventbus.trigger('layer:enableButtons');
       $('#feature-attributes').empty();
       clearLayers();
       me.refreshView();
