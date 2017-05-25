@@ -200,27 +200,31 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  post("/roadlinks/roadaddress/project/sendToTR"){
-     (parsedBody \ "projectID").extractOpt[Long] match
-       {
-       case Some(s)=>
-         {
-
-     //     val response =projectService.getRoadAddressChangesAndSendToTR(Set(s))
-
-     //      println( s"publishing project $s dsds ${response.status}")
-           //TODO call getRoadAddressChangesAndSendToTR(projectID). if success change projectstatus to "sent to TR"
-           Map("projectSent" -> "TODO")
-
-         }
-       case _=> BadRequest(s"Invalid arguments")
-     }
-     Map("projectSent" -> "TODO")
-
+  post("/roadlinks/roadaddress/project/sendToTR") {
+    (parsedBody \ "projectID").extractOpt[Long] match {
+      case Some(id) => {
+        withDynSession {
+          projectService.publishProject(id) match {
+            case Some(message) => {
+              val trProjectStateMessage = projectService.getRoadAddressChangesAndSendToTR(Set(id))
+              trProjectStateMessage.status match {
+                case it if 200 until 300 contains it => Map("Validation" -> "ok", "ProjectSent" -> "ok", "Reason" -> trProjectStateMessage.reason)
+                case _ =>{
+                //rollback
+                  Map("Validation" -> "ok", "ProjectSent" -> "failed", "Reason" -> trProjectStateMessage.reason)
+                }
+              }
+            }
+            case _ => BadRequest("Validation" -> "failed")
+          }
+        }
+      }
+      case _ => BadRequest(s"Invalid arguments")
+    }
   }
 
 
-  put("/roadlinks/roadaddress/project/save"){
+    put("/roadlinks/roadaddress/project/save"){
     val project = parsedBody.extract[RoadAddressProjectExtractor]
     val user = userProvider.getCurrentUser()
     val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
