@@ -92,6 +92,7 @@
           return !_.isUndefined(selectionTarget.projectLinkData);
       });
       selectedProjectLinkProperty.clean();
+      $('.wrapper').remove();
       if (!_.isUndefined(selection))
         selectedProjectLinkProperty.open(selection.projectLinkData.linkId, true);
     });
@@ -283,6 +284,10 @@
 
     eventbus.on('roadAddress:projectLinksEdited',function(){
       redraw();
+    });
+
+    eventbus.on('roadAddressProject:projectLinkSaved',function(projectId){
+      projectCollection.fetch(map.getView().calculateExtent(map.getSize()),map.getView().getZoom(), projectId);
     });
 
     eventbus.on('map:moved', mapMovedHandler, this);
