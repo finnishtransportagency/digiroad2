@@ -105,7 +105,45 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
         csvRow = roadLinkCsvImporter.rowToString(defaultValues ++ assetFields)))))
   }
 
-  test("validation fails if type contains administrative class = 1", Tag("db")) {
+  test("validation fails if administrative class = 1 on VVH", Tag("db")) {
+    val newLinkId1 = 5000
+    val municipalityCode = 564
+    val administrativeClass = State
+    val trafficDirection = TrafficDirection.BothDirections
+    val attributes1 = Map("OBJECTID" -> BigInt(99))
+
+    val newRoadLink1 = VVHRoadlink(newLinkId1, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1)
+    val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
+
+    when(roadLinkCsvImporter.vvhClient.complementaryData).thenReturn(mockVVHComplementaryClient)
+    when(mockVVHComplementaryClient.fetchComplementaryRoadlink(any[Long])).thenReturn(Some(newRoadLink1))
+
+    val assetFields = Map("Linkin ID" -> 1, "Hallinnollinen luokka" -> 2)
+    val invalidCsv = csvToInputStream(createCSV(assetFields))
+    roadLinkCsvImporter.importLinkAttribute(invalidCsv) should equal(ImportResult(
+      excludedLinks = List(ExcludedLink(unauthorizedAdminClass = List("AdminClass value State found on  VVH"), csvRow = roadLinkCsvImporter.rowToString(defaultValues ++ assetFields)))))
+  }
+
+  test("validation fails if administrative class = 1 on CSV", Tag("db")) {
+    val newLinkId1 = 5000
+    val municipalityCode = 564
+    val administrativeClass = Municipality
+    val trafficDirection = TrafficDirection.BothDirections
+    val attributes1 = Map("OBJECTID" -> BigInt(99))
+
+    val newRoadLink1 = VVHRoadlink(newLinkId1, municipalityCode, List(Point(0.0, 0.0), Point(20.0, 0.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1)
+    val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
+
+    when(roadLinkCsvImporter.vvhClient.complementaryData).thenReturn(mockVVHComplementaryClient)
+    when(mockVVHComplementaryClient.fetchComplementaryRoadlink(any[Long])).thenReturn(Some(newRoadLink1))
+
+    val assetFields = Map("Linkin ID" -> 1, "Hallinnollinen luokka" -> 1)
+    val invalidCsv = csvToInputStream(createCSV(assetFields))
+    roadLinkCsvImporter.importLinkAttribute(invalidCsv) should equal(ImportResult(
+      excludedLinks = List(ExcludedLink(unauthorizedAdminClass = List("AdminClass value State found on  CSV"), csvRow = roadLinkCsvImporter.rowToString(defaultValues ++ assetFields)))))
+  }
+
+  test("validation fails if administrative class = 1 on CSV and VVH", Tag("db")) {
     val newLinkId1 = 5000
     val municipalityCode = 564
     val administrativeClass = State
@@ -121,7 +159,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val assetFields = Map("Linkin ID" -> 1, "Hallinnollinen luokka" -> 1)
     val invalidCsv = csvToInputStream(createCSV(assetFields))
     roadLinkCsvImporter.importLinkAttribute(invalidCsv) should equal(ImportResult(
-      excludedLinks = List(ExcludedLink(unauthorizedAdminClass = List("State"), csvRow = roadLinkCsvImporter.rowToString(defaultValues ++ assetFields)))))
+      excludedLinks = List(ExcludedLink(unauthorizedAdminClass = List("AdminClass value State found on  VVH", "AdminClass value State found on  CSV"), csvRow = roadLinkCsvImporter.rowToString(defaultValues ++ assetFields)))))
   }
 
   test("update functionalClass by CSV import", Tag("db")) {
