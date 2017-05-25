@@ -110,11 +110,12 @@
       });
     }, 1000);
 
-    this.checkIfRoadpartReserved = (function(roadnuber,startPart,endPart) {
+    this.checkIfRoadpartReserved = (function(roadNumber,startPart,endPart,projDate) {
       return $.get('api/viite/roadlinks/roadaddress/project/validatereservedlink/', {
-        roadnumber: roadnuber,
-        startpart: startPart,
-        endpart: endPart
+        roadNumber: roadNumber,
+        startPart: startPart,
+        endPart: endPart,
+        projDate: projDate
       })
         .then(function (x) {
           return x;

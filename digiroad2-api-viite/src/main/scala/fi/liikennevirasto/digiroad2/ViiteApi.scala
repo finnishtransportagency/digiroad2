@@ -230,15 +230,21 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
 
   get("/roadlinks/roadaddress/project/validatereservedlink/"){
-    val roadnumber = params("roadnumber").toLong
-    val startPart = params("startpart").toLong
-    val endPart = params("endpart").toLong
-    val errorMessageOpt=projectService.checkRoadAddressNumberAndSEParts(roadnumber,startPart,endPart)
+    val roadNumber = params("roadNumber").toLong
+    val startPart = params("startPart").toLong
+    val endPart = params("endPart").toLong
+    val projDate = params("projDate").toString
+    val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
+    val errorMessageOpt=projectService.checkRoadAddressNumberAndSEParts(roadNumber, startPart, endPart)
     if (errorMessageOpt.isEmpty) {
-      val reservedParts=projectService.checkReservability(roadnumber,startPart,endPart)
-      reservedParts match {
+        projectService.checkReservability(roadNumber, startPart, endPart) match {
         case Left(err) => Map("success"-> err, "roadparts" -> Seq.empty)
-        case Right(reservedRoadParts) => Map("success"-> "ok", "roadparts" -> reservedRoadParts.map(reservedRoadPartToApi))
+        case Right(reservedRoadParts) => {
+          projectService.projDateValidation(reservedRoadParts, formatter.parseDateTime(projDate)) match {
+            case Some(errMsg) => Map("success"-> errMsg)
+            case None => Map("success" -> "ok", "roadparts" -> reservedRoadParts.map(reservedRoadPartToApi))
+          }
+        }
       }
     } else
       Map("success"-> errorMessageOpt.get)

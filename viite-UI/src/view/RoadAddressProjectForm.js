@@ -255,8 +255,16 @@
       }
     };
 
+    var projDateExists = function(rootElement) {
+      if (rootElement.find('#alkupvm').val() !== ''){
+          return false;
+      } else {
+          return true;
+        }
+    };
+
     var addReserveButton = function() {
-      return '<button class="btn btn-reserve">Varaa</button>';
+      return '<button class="btn btn-reserve" disabled>Varaa</button>';
     };
 
     var bindEvents = function() {
@@ -442,6 +450,7 @@
       rootElement.on('change', '.input-required', function() {
         rootElement.find('.project-form button.next').attr('disabled', formIsInvalid(rootElement));
         rootElement.find('.project-form button.save').attr('disabled', formIsInvalid(rootElement));
+        rootElement.find('#roadAddressProject button.btn-reserve').attr('disabled', projDateExists(rootElement));
       });
 
       rootElement.on('click', '.project-form button.send', function(){

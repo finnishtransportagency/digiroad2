@@ -76,7 +76,7 @@ class ProjectLinkDaoSpec  extends FunSuite with Matchers{
         roadAddress.endDate, modifiedBy=Option(project.createdBy), 0L, roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
         roadAddress.sideCode, roadAddress.calibrationPoints, floating=false, roadAddress.geom, project.id, LinkStatus.NotHandled)
     }
-    val address=ReservedRoadPart(5:Long, 203:Long, 203:Long, 5.5:Double, Discontinuity.apply("jatkuva"), 8:Long)
+    val address=ReservedRoadPart(5:Long, 203:Long, 203:Long, 5.5:Double, Discontinuity.apply("jatkuva"), 8:Long, None:Option[DateTime], None:Option[DateTime])
     runWithRollback {
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(address))
@@ -91,7 +91,7 @@ class ProjectLinkDaoSpec  extends FunSuite with Matchers{
   }
 
   test("get projects waiting TR response") {
-  val address=ReservedRoadPart(5:Long, 203:Long, 203:Long, 5.5:Double, Discontinuity.apply("jatkuva"), 8:Long)
+  val address=ReservedRoadPart(5:Long, 203:Long, 203:Long, 5.5:Double, Discontinuity.apply("jatkuva"), 8:Long, None:Option[DateTime], None:Option[DateTime])
   runWithRollback {
     val waitingCountp=  ProjectDAO.getProjectsWithWaitingTRStatus().length
     val id = Sequences.nextViitePrimaryKeySeqValue
