@@ -67,7 +67,6 @@
     var setOpenProject = function(newState){
       if(openProject !== newState){
         openProject = newState;
-        eventbus.trigger('application:openProject', newState);
       }
     };
 

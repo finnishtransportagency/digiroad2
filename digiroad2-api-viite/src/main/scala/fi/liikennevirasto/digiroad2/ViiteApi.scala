@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
-import fi.liikennevirasto.viite.{ReservedRoadPart, RoadAddressService}
+import fi.liikennevirasto.viite.{ProjectService, ReservedRoadPart, RoadAddressService}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{RoadAddressLink, RoadAddressLinkPartitioner}
 import org.joda.time.DateTime
@@ -28,10 +28,11 @@ import scala.util.{Left, Right}
 case class NewAddressDataExtracted(sourceIds: Set[Long], targetIds: Set[Long], roadAddress: Seq[RoadAddressCreator])
 
 
-case class RoadAddressProjectExtractor(id: Long, status: Long, name: String, startDate: String, additionalInfo: String,roadpartlist: List[ReservedRoadPart])
+case class RoadAddressProjectExtractor(id: Long, status: Long, name: String, startDate: String, additionalInfo: String,roadPartList: List[ReservedRoadPart])
 
 class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
                val roadAddressService: RoadAddressService,
+               val projectService: ProjectService,
                val userProvider: UserProvider = Digiroad2Context.userProvider,
                val deploy_date: String = Digiroad2Context.deploy_date
               )
@@ -146,7 +147,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val (sources, targets) = roadlinksData()
     val user = userProvider.getCurrentUser()
     try{
-      val result = roadAddressService.getRoadAddressAfterCalculation(sources, targets, user)
+      val result = roadAddressService.getRoadAddressLinksAfterCalculation(sources, targets, user)
       result.map(roadAddressLinkToApi)
     }
     catch {
@@ -154,7 +155,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         logger.warn("Invalid transfer attempted: " + e.getMessage, e)
         BadRequest("Invalid transfer attempted: " + e.getMessage)
       case e: Exception =>
-        logger.warn(e.getMessage)
+        logger.warn(e.getMessage, e)
         InternalServerError("An unexpected error occurred while processing this action.")
     }
   }
@@ -166,18 +167,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val targetIds = data.targetIds
     val user = userProvider.getCurrentUser()
     val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
-    val roadAddresses = roadAddressData.map{ ra =>
-      val pointsToCalibration = ra.calibrationPoints.size match {
-        case 0 => (None, None)
-        case 1 => ra.calibrationPoints.head.value match {
-          case 0 => (Option(CalibrationPoint(ra.linkId, ra.startMValue, ra.calibrationPoints.head.value)), None)
-          case _ => (None, Option(CalibrationPoint(ra.linkId, ra.endMValue, ra.calibrationPoints.head.value)))
-        }
-        case 2 => (Option(CalibrationPoint(ra.linkId, ra.startMValue, ra.calibrationPoints.head.value)), Option(CalibrationPoint(ra.linkId, ra.endMValue, ra.calibrationPoints.last.value)))
-      }
-      RoadAddress(ra.id, ra.roadNumber, ra.roadPartNumber, Track.apply(ra.trackCode), Discontinuity.apply(ra.discontinuity), ra.startAddressM, ra.endAddressM,
-        Some(formatter.parseDateTime(ra.startDate)), None, Option(user.username),0, ra.linkId, ra.startMValue, ra.endMValue, SideCode.apply(ra.sideCode), pointsToCalibration, false, ra.points)
-    }
+
+    val roadAddresses = roadAddressService.getRoadAddressesAfterCalculation(sourceIds.toSeq.map(_.toString), targetIds.toSeq.map(_.toString), user)
     try {
       val transferredRoadAddresses = roadAddressService.transferFloatingToGap(sourceIds, targetIds, roadAddresses)
       transferredRoadAddresses
@@ -189,41 +180,60 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
+  post("/roadlinks/roadaddress/project/create"){
+    val project = parsedBody.extract[RoadAddressProjectExtractor]
+    val user = userProvider.getCurrentUser()
+    val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
+    val roadAddressProject= RoadAddressProject(project.id, ProjectState.apply(project.status), project.name,
+      user.username, DateTime.now(), "-", formatter.parseDateTime(project.startDate), DateTime.now(), project.additionalInfo, project.roadPartList)
+    try {
+      val (projectSaved, addr, info, success) = projectService.createRoadLinkProject(roadAddressProject)
+      Map("project" -> projectToApi(projectSaved), "projectAddresses" -> addr, "formInfo" -> info,
+        "success" -> success)
+    } catch {
+      case ex: IllegalArgumentException => BadRequest(s"A project with id ${project.id} has already been created")
+    }
+  }
+
   put("/roadlinks/roadaddress/project/save"){
     val project = parsedBody.extract[RoadAddressProjectExtractor]
     val user = userProvider.getCurrentUser()
     val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
-    val roadAddressProject= RoadAddressProject(project.id, RoadAddressProjectState.apply(project.status), project.name, user.username, DateTime.now(), "-", formatter.parseDateTime(project.startDate), DateTime.now(), project.additionalInfo, project.roadpartlist)
-    val (projectSaved, addr, info, success) = roadAddressService.saveRoadLinkProject(roadAddressProject)
-    Map("project" -> projectToApi(projectSaved), "projectAddresses" -> addr, "formInfo" -> info,
-      "success" -> success)
+    val roadAddressProject= RoadAddressProject(project.id, ProjectState.apply(project.status), project.name,
+      user.username, DateTime.now(), "-", formatter.parseDateTime(project.startDate), DateTime.now(), project.additionalInfo, project.roadPartList)
+    try {
+      val (projectSaved, addr, _, success) = projectService.saveRoadLinkProject(roadAddressProject)
+      val info = projectService.getProjectsWithReservedRoadParts(projectSaved.id)._2
+      Map("project" -> projectToApi(projectSaved), "projectAddresses" -> addr, "formInfo" -> info,
+        "success" -> success)
+    } catch {
+      case ex: IllegalArgumentException => NotFound(s"Project id ${project.id} not found")
+    }
   }
+
   get("/roadlinks/roadaddress/project/all") {
-    roadAddressService.getRoadAddressAllProjects().map(roadAddressProjectToApi)
+    projectService.getRoadAddressAllProjects().map(roadAddressProjectToApi)
   }
 
   get("/roadlinks/roadaddress/project/all/projectId/:id") {
     val projectId = params("id").toLong
-    val (projects, projectLinks) = roadAddressService.getProjectsWithLinksById(projectId)
+    val (projects, projectLinks) = projectService.getProjectsWithReservedRoadParts(projectId)
     val project = Seq(projects).map(roadAddressProjectToApi)
     val projectsWithLinkId = project.head
     Map("projects" -> projectsWithLinkId,"linkId" -> projectLinks.headOption.map(_.startingLinkId), "projectLinks" -> projectLinks)
   }
 
-
-
   get("/roadlinks/roadaddress/project/validatereservedlink/"){
     val roadnumber = params("roadnumber").toLong
     val startPart = params("startpart").toLong
     val endPart = params("endpart").toLong
-    val errorMessageOpt=roadAddressService.checkRoadAddressNumberAndSEParts(roadnumber,startPart,endPart)
+    val errorMessageOpt=projectService.checkRoadAddressNumberAndSEParts(roadnumber,startPart,endPart)
     if (errorMessageOpt.isEmpty) {
-      val reservedParts=roadAddressService.checkReservability(roadnumber,startPart,endPart)
+      val reservedParts=projectService.checkReservability(roadnumber,startPart,endPart)
       reservedParts match {
         case Left(err) => Map("success"-> err, "roadparts" -> Seq.empty)
         case Right(reservedRoadParts) => Map("success"-> "ok", "roadparts" -> reservedRoadParts.map(reservedRoadPartToApi))
       }
-
     } else
       Map("success"-> errorMessageOpt.get)
   }
@@ -348,21 +358,11 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     )
   }
 
-  def reservedAddressToApi(roadAddressProjectFormLine: RoadAddressProjectFormLine) : Map[String, Any] = {
-    Map("roadNumber" -> roadAddressProjectFormLine.roadNumber,
-      "roadPartNumber" -> roadAddressProjectFormLine.roadNumber,
-      "roadPartId" -> roadAddressProjectFormLine.roadNumber,
-      "ely" -> roadAddressProjectFormLine.roadNumber,
-      "roadLength" -> roadAddressProjectFormLine.roadLength,
-      "discontinuity" -> roadAddressProjectFormLine.discontinuity
-    )
-  }
-
   def reservedRoadPartToApi(reservedRoadPart: ReservedRoadPart) : Map[String, Any] = {
     Map("roadNumber" -> reservedRoadPart.roadNumber,
       "roadPartNumber" -> reservedRoadPart.roadPartNumber,
       "roadPartId" -> reservedRoadPart.roadPartId,
-      "ely" -> reservedRoadPart.roadNumber,
+      "ely" -> reservedRoadPart.ely,
       "length" -> reservedRoadPart.length,
       "discontinuity" -> reservedRoadPart.discontinuity.description
     )

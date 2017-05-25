@@ -222,7 +222,6 @@
       preMovedRoadAddresses = [];
     };
 
-
     var roadIsOther = function(road){
       return  0 === road.roadNumber && 0 === road.anomaly && 0 === road.roadLinkType && 0 === road.roadPartNumber && 99 === road.trackCode;
     };

@@ -515,9 +515,10 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     } yield (f1Result, f2Result, f3Result)
 
     val (historyData, currentData, complementaryData) = Await.result(fut, Duration.Inf)
+    val uniqueHistoryData = historyData.groupBy(_.linkId).mapValues(_.maxBy(_.endDate)).values.toSeq
 
     withDynTransaction {
-      (enrichRoadLinksFromVVH(currentData ++ complementaryData, Seq()), historyData)
+      (enrichRoadLinksFromVVH(currentData ++ complementaryData, Seq()), uniqueHistoryData)
     }
   }
 

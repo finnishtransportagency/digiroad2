@@ -1,27 +1,18 @@
 package fi.liikennevirasto.viite
 
 
-import fi.liikennevirasto.digiroad2.RoadLinkType.{ComplementaryRoadLinkType, FloatingRoadLinkType, NormalRoadLinkType, UnknownRoadLinkType}
+import fi.liikennevirasto.digiroad2.RoadLinkType.{FloatingRoadLinkType, UnknownRoadLinkType}
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.User
-import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite.RoadType._
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
+import fi.liikennevirasto.viite.model.RoadAddressLink
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
-import fi.liikennevirasto.viite.process.{InvalidAddressDataException, LinkRoadAddressCalculator, RoadAddressFiller}
-import org.joda.time.format.DateTimeFormat
-import org.joda.time.{DateTime, DateTimeZone}
+import fi.liikennevirasto.viite.process._
 import org.slf4j.LoggerFactory
 
-import scala.collection.immutable.ListMap
-import scala.collection.immutable.Stream.Empty
-import scala.collection.mutable.ListBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
@@ -63,49 +54,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     def unapply(i: Int): Boolean = r contains i
   }
 
-  /**
-    * Get calibration points for road not in a project
-    *
-    * @param roadNumber
-    * @return
-    */
-  def getCalibrationPoints(roadNumber: Long) = {
-    // TODO: Implementation
-    Seq(CalibrationPoint(1, 0.0, 0))
-  }
-
-  /**
-    * Get calibration points for road including project created ones
-    *
-    * @param roadNumber
-    * @param projectId
-    * @return
-    */
-  def getCalibrationPoints(roadNumber: Long, projectId: Long): Seq[CalibrationPoint] = {
-    // TODO: Implementation
-    getCalibrationPoints(roadNumber) ++ Seq(CalibrationPoint(2, 0.0, 0))
-  }
-
-  def getCalibrationPoints(linkIds: Set[Long]) = {
-
-    linkIds.map(linkId => CalibrationPoint(linkId, 0.0, 0))
-  }
-
-  def addRoadAddresses(roadLinks: Seq[RoadLink]) = {
-    val linkIds = roadLinks.map(_.linkId).toSet
-    val calibrationPoints = getCalibrationPoints(linkIds)
-  }
-
   private def fetchRoadLinksWithComplementary(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
                                               everything: Boolean = false, publicRoads: Boolean = false): (Seq[RoadLink], Set[Long]) = {
     val roadLinksF = Future(roadLinkService.getViiteRoadLinksFromVVH(boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads))
     val complementaryLinksF = Future(roadLinkService.getComplementaryRoadLinksFromVVH(boundingRectangle, municipalities))
     val (roadLinks, complementaryLinks) = Await.result(roadLinksF.zip(complementaryLinksF), Duration.Inf)
     (roadLinks ++ complementaryLinks, complementaryLinks.map(_.linkId).toSet)
-  }
-
-  def nonPrivatefetchRoadAddressesByBoundingBox(bounds: BoundingRectangle, fetchOnlyFloating: Boolean = false) = {
-    fetchRoadAddressesByBoundingBox(bounds, true)
   }
 
   private def fetchRoadAddressesByBoundingBox(boundingRectangle: BoundingRectangle, fetchOnlyFloating: Boolean = false) = {
@@ -216,7 +170,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val fusedRoadAddresses = RoadAddressLinkBuilder.fuseRoadAddress(roadAddrSeq)
     val kept = fusedRoadAddresses.map(_.id).toSet
     val removed = roadAddrSeq.map(_.id).toSet.diff(kept)
-    val roadAddressesToRegister = fusedRoadAddresses.filter(_.id == -1000)
+    val roadAddressesToRegister = fusedRoadAddresses.filter(_.id == fi.liikennevirasto.viite.NewRoadAddress)
     if (roadAddressesToRegister.nonEmpty)
       eventbus.publish("roadAddress:mergeRoadAddress", RoadAddressMerge(removed, roadAddressesToRegister))
     if (floaters.nonEmpty) {
@@ -300,20 +254,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
   }
 
-  def getUniqueRoadAddressLink(id: Long) = {
-
-    val (addresses, missedRL) = withDynTransaction {
-      (RoadAddressDAO.fetchByLinkId(Set(id), true),
-        RoadAddressDAO.getMissingRoadAddresses(Set(id)))
-    }
-    val (roadLinks, vvhHistoryLinks) = roadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(Set(id))
-    (addresses.size, roadLinks.size) match {
-      case (0, 0) => List()
-      case (_, 0) => addresses.flatMap(a => vvhHistoryLinks.map(rl => RoadAddressLinkBuilder.build(rl, a)))
-      case (0, _) => missedRL.flatMap(a => roadLinks.map(rl => RoadAddressLinkBuilder.build(rl, a)))
-      case (_, _) => addresses.flatMap(a => roadLinks.map(rl => RoadAddressLinkBuilder.build(rl, a)))
-    }
-  }
+  def getUniqueRoadAddressLink(id: Long) = getRoadAddressLink(id)
 
   def roadClass(roadAddressLink: RoadAddressLink) = {
     val C1 = new Contains(1 to 39)
@@ -575,16 +516,19 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     //TODO show all returning adjacent targets as possible selecting markers for the current linkId, in the UI.
   }
 
-  def getRoadAddressAfterCalculation(sources: Seq[String], targets: Seq[String], user: User): Seq[RoadAddressLink] = {
-    val sourceLinks = sources.flatMap(rd => {
-      getUniqueRoadAddressLink(rd.toLong)
-    })
-    val targetLinks = targets.flatMap(rd => {
-      getUniqueRoadAddressLink(rd.toLong)
-    })
-    val transferredRoadAddresses = transferRoadAddress(sourceLinks, targetLinks, user)
+  def getRoadAddressLinksAfterCalculation(sources: Seq[String], targets: Seq[String], user: User): Seq[RoadAddressLink] = {
+    val transferredRoadAddresses = getRoadAddressesAfterCalculation(sources, targets, user)
+    val target = roadLinkService.getRoadLinksByLinkIdsFromVVH(targets.map(rd => rd.toLong).toSet)
+    transferredRoadAddresses.map(ra => RoadAddressLinkBuilder.build(target.find(_.linkId == ra.linkId).get, ra))
+  }
 
-    transferredRoadAddresses
+  def getRoadAddressesAfterCalculation(sources: Seq[String], targets: Seq[String], user: User): Seq[RoadAddress] = {
+    val sourceRoadAddressLinks = sources.flatMap(rd => {
+      getUniqueRoadAddressLink(rd.toLong)
+    })
+    val targetIds = targets.map(rd => rd.toLong).toSet
+    val targetRoadAddressLinks = targetIds.toSeq.flatMap(getUniqueRoadAddressLink)
+    transferRoadAddress(sourceRoadAddressLinks, targetRoadAddressLinks, user)
   }
 
   def transferFloatingToGap(sourceIds: Set[Long], targetIds: Set[Long], roadAddresses: Seq[RoadAddress]) = {
@@ -596,278 +540,25 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
   }
 
-  /**
-    *
-    * @param roadNumber    Road's number (long)
-    * @param roadStartPart Starting part (long)
-    * @param roadEndPart   Ending part (long)
-    * @return Optional error message, None if no error
-    */
-  def checkRoadAddressNumberAndSEParts(roadNumber: Long, roadStartPart: Long, roadEndPart: Long): Option[String] = {
-    OracleDatabase.withDynTransaction {
-      if (!RoadAddressDAO.roadPartExists(roadNumber, roadStartPart)) {
-        if (!RoadAddressDAO.roadNumberExists(roadNumber)) {
-          Some("Tienumeroa ei ole olemassa, tarkista tiedot")
-        }
-        else //roadnumber exists, but starting roadpart not
-          Some("Tiellä ei ole olemassa valittua alkuosaa, tarkista tiedot")
-      } else if (!RoadAddressDAO.roadPartExists(roadNumber, roadEndPart)) { // ending part check
-        Some("Tiellä ei ole olemassa valittua loppuosaa, tarkista tiedot")
-      } else
-        None
+  def transferRoadAddress(sources: Seq[RoadAddressLink], targets: Seq[RoadAddressLink], user: User): Seq[RoadAddress] = {
+    val mapping = DefloatMapper.createAddressMap(sources, targets)
+    if (mapping.exists(DefloatMapper.invalidMapping)) {
+      throw new InvalidAddressDataException("Mapping failed to map following items: " +
+        mapping.filter(DefloatMapper.invalidMapping).map(
+          r => s"${r.sourceLinkId}: ${r.sourceStartM}-${r.sourceEndM} -> ${r.targetLinkId}: ${r.targetStartM}-${r.targetEndM}").mkString(", ")
+      )
     }
-  }
-
-  private def createNewProjectToDB(roadAddressProject: RoadAddressProject): RoadAddressProject = {
-    OracleDatabase.withDynTransaction {
-      val id = Sequences.nextViitePrimaryKeySeqValue
-      val project = roadAddressProject.copy(id = id)
-      RoadAddressDAO.createRoadAddressProject(project)
-      project
-    }
-  }
-
-  private def projectFound(roadAddressProject: RoadAddressProject): Option[RoadAddressProject] = {
-    OracleDatabase.withDynTransaction {
-      return RoadAddressDAO.getRoadAddressProjectById(roadAddressProject.id)
-    }
-  }
-
-  def checkReservability(roadNumber: Long, startPart: Long, endPart: Long): Either[String, Seq[ReservedRoadPart]] = {
-    withDynTransaction {
-      var listOfAddressParts: ListBuffer[ReservedRoadPart] = ListBuffer.empty
-      for (part <- startPart to endPart) {
-        val reserved = RoadAddressDAO.roadPartReservedByProject(roadNumber, part)
-        reserved match {
-          case Some(projectname) => return Left(s"TIE $roadNumber OSA $part on jo varattuna projektissa $projectname, tarkista tiedot")
-          case None => {
-            val (roadpartID, linkID, length, discontinuity, ely, foundAddress) = getAddressPartinfo(roadNumber, part)
-            if (foundAddress) // db search failed or we couldnt get info from VVH
-              listOfAddressParts += ReservedRoadPart(roadpartID, roadNumber, part, length, Discontinuity.apply(discontinuity), ely)
-          }
-        }
-      }
-      Right(listOfAddressParts)
-    }
-  }
-
-  private def getAddressPartinfo(roadnumber: Long, roadpart: Long): (Long, Long, Double, String, Long, Boolean) = {
-    RoadAddressDAO.getRoadPartInfo(roadnumber, roadpart) match {
-      case Some((roadpartid, linkid, lenght, discontinuity)) => {
-        val enrichment = false
-        val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(linkid), enrichment)
-        val ely: Long = MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(roadLink.head.municipalityCode, 0)
-        if (ely == 0) {
-          return (0, 0, 0, "", 0, false)
-        }
-        return (roadpartid, linkid, lenght, Discontinuity.apply(discontinuity.toInt).description, ely, true)
-      }
-      case None => {
-        return (0, 0, 0, "", 0, false)
-      }
-    }
-  }
-
-  /**
-    * Adds reserved road links (from road parts) to a road address project
-    *
-    * @param project
-    * @return
-    */
-  private def addLinksToProject(project: RoadAddressProject): Option[String] = {
-    var croadnumber: Long = 0 //needed for error messages
-    var croadpart: Long = 0
-    withDynTransaction {
-      try {
-        for (roadaddress <- project.reservedParts) { //check validity
-          if (!RoadAddressDAO.roadPartExists(roadaddress.roadNumber, roadaddress.roadPartNumber)) {
-            return Some(s"TIE ${roadaddress.roadNumber} OSA: ${roadaddress.roadPartNumber} ei löytynyt tietokannasta")
-          }
-        }
-        for (roadaddress <- project.reservedParts) {
-          croadnumber = roadaddress.roadNumber
-          croadpart = roadaddress.roadPartNumber
-          val addresses = RoadAddressDAO.fetchByRoadPart(roadaddress.roadNumber, roadaddress.roadPartNumber, true)
-          addresses.foreach(address =>
-            RoadAddressDAO.createRoadAddressProjectLink(Sequences.nextViitePrimaryKeySeqValue, address, project))
-        }
-      } catch {
-        case a: Exception =>
-          if (a.getMessage.contains("ORA-20000")) {
-            val reservedByProject = RoadAddressDAO.roadPartReservedByProject(croadnumber, croadpart)
-            logger.info(s"Road part being reserved was already reserved to project $reservedByProject")
-            return Some(s"TIE $croadnumber OSA $croadpart on jo varattuna projektissa ${
-              reservedByProject.getOrElse("<Tuntematon>")
-            }, tarkista tiedot " + '\n')
-          } else {
-            logger.error(s"Reserving of road part $croadpart failed: ${a.getMessage}", a)
-            return Some(s"Tieosan $croadpart varaus ei tuntemattomasta virheestä johtuen onnistunut" + '\n')
-          }
-        case _ : Throwable => return Some(s"Tuntematon virhe")
-      }
-    }
-    None
-  }
-
-  /**
-    * Take two sequences of road address links and order them so that the sequence covers the same road geometry
-    * and logical addressing in the same order
-    * @param sources Source road address links (floating)
-    * @param targets Target road address links (missing addresses)
-    * @return
-    */
-  def orderRoadAddressLinks(sources: Seq[RoadAddressLink], targets: Seq[RoadAddressLink]): (Seq[RoadAddressLink], Seq[RoadAddressLink]) = {
-    /*
-      Calculate sidecode changes - if next road address link starts with the current (end) point
-      then side code remains the same. Otherwise it's reversed
-     */
-    def getSideCode(roadAddressLink: RoadAddressLink, previousSideCode: SideCode, currentPoint: Point) = {
-      val geom = roadAddressLink.geometry
-      if (GeometryUtils.areAdjacent(geom.head, currentPoint))
-        previousSideCode
-      else
-        switchSideCode(previousSideCode)
+    val sourceRoadAddresses = withDynSession {
+      RoadAddressDAO.fetchByLinkId(sources.map(_.linkId).toSet, includeFloating = true,
+        includeHistory = false)
     }
 
-    def extending(link: RoadAddressLink, ext: RoadAddressLink) = {
-      link.roadNumber == ext.roadNumber && link.roadPartNumber == ext.roadPartNumber &&
-        link.trackCode == ext.trackCode && link.endAddressM == ext.startAddressM
-    }
-    def extendChainByAddress(ordered: Seq[RoadAddressLink], unordered: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
-      if (ordered.isEmpty)
-        return extendChainByAddress(Seq(unordered.head), unordered.tail)
-      if (unordered.isEmpty)
-        return ordered
-      val (next, rest) = unordered.partition(u => extending(ordered.last, u))
-      if (next.nonEmpty)
-        extendChainByAddress(ordered ++ next, rest)
-      else {
-        val (previous, rest) = unordered.partition(u => extending(u, ordered.head))
-        if (previous.isEmpty)
-          throw new IllegalArgumentException("Non-contiguous road addressing")
-        else
-          extendChainByAddress(previous ++ ordered, rest)
-      }
-    }
-    def extendChainByGeometry(ordered: Seq[RoadAddressLink], unordered: Seq[RoadAddressLink], sideCode: SideCode): Seq[RoadAddressLink] = {
-      if (ordered.isEmpty)
-        return extendChainByGeometry(Seq(unordered.head), unordered.tail, sideCode)
-      if (unordered.isEmpty)
-        return ordered
-      // Current position we are building from
-      val endPoint = sideCode match {
-        case SideCode.TowardsDigitizing => ordered.last.geometry.last
-        case SideCode.AgainstDigitizing => ordered.last.geometry.head
-        case _ => throw new InvalidAddressDataException("Bad sidecode on chain")
-      }
-      val (next, rest) = unordered.partition(u => GeometryUtils.minimumDistance(endPoint, u.geometry) < 0.1)
-      if (next.nonEmpty) {
-        extendChainByGeometry(ordered ++ next, rest, getSideCode(next.head, sideCode, endPoint))
-      }
-      else {
-        val startPoint = ordered.head.geometry.head
-        val (previous, rest) = unordered.partition(u => GeometryUtils.minimumDistance(startPoint, u.geometry) < 0.1)
-        if (previous.isEmpty)
-          throw new IllegalArgumentException("Non-contiguous road target geometry")
-        else
-          extendChainByGeometry(previous ++ ordered, rest, getSideCode(previous.head, sideCode, endPoint))
-      }
-    }
-    val orderedSources = extendChainByAddress(Seq(sources.head), sources.tail)
-    val startingPoint = orderedSources.head.sideCode match {
-      case SideCode.TowardsDigitizing => orderedSources.head.geometry.head
-      case SideCode.AgainstDigitizing => orderedSources.head.geometry.last
-      case _ => throw new InvalidAddressDataException("Bad sidecode on source")
-    }
-    val preSortedTargets = targets.sortBy(l => GeometryUtils.minimumDistance(startingPoint, l.geometry))
-    val startingSideCode = if (GeometryUtils.areAdjacent(startingPoint, preSortedTargets.head.geometry.head))
-      SideCode.TowardsDigitizing
-    else
-      SideCode.AgainstDigitizing
-    (orderedSources, extendChainByGeometry(Seq(preSortedTargets.head), preSortedTargets.tail, startingSideCode))
-  }
+    DefloatMapper.preTransferChecks(sourceRoadAddresses)
 
-  def transferRoadAddress(sources: Seq[RoadAddressLink], targets: Seq[RoadAddressLink], user: User): Seq[RoadAddressLink] = {
+    val targetRoadAddresses = RoadAddressLinkBuilder.fuseRoadAddress(sourceRoadAddresses.flatMap(DefloatMapper.mapRoadAddresses(mapping)))
+    DefloatMapper.postTransferChecks(targetRoadAddresses)
 
-    def getMValues(cp: Option[Double], fl: Option[Double]): Double = {
-      (cp, fl) match {
-        case (Some(calibrationPoint), Some(mVal)) => calibrationPoint
-        case (None, Some(mVal)) => mVal
-        case (Some(calibrationPoint), None) => calibrationPoint
-        case (None, None) => 0.0
-      }
-    }
-
-    val adjustTopology: Seq[(Double, Seq[RoadAddressLink]) => Seq[RoadAddressLink]] = Seq(
-      RoadAddressLinkBuilder.dropSegmentsOutsideGeometry,
-      RoadAddressLinkBuilder.capToGeometry,
-      RoadAddressLinkBuilder.extendToGeometry,
-      RoadAddressLinkBuilder.dropShort
-    )
-
-    val (orderedSources, orderedTargets) = orderRoadAddressLinks(sources, targets)
-
-    val allLinks = orderedSources ++ orderedTargets
-    val targetsGeomLength = orderedTargets.map(_.length).sum
-
-    val allStartCp = orderedSources.flatMap(_.startCalibrationPoint)
-    val allEndCp = orderedSources.flatMap(_.endCalibrationPoint)
-    if (allStartCp.size > 1 || allEndCp.size > 1)
-      throw new IllegalArgumentException("Source data contains too many calibration points")
-
-    val minStartAddressM = orderedSources.head.startAddressM
-    val maxEndAddressM = orderedSources.last.endAddressM
-
-    val adjustedSegments = adjustTopology.foldLeft(orderedSources) { (previousSources, operation) => operation(targetsGeomLength, previousSources) }
-
-    val maxEndMValue = allLinks.flatMap(_.endCalibrationPoint) match {
-      case Nil => adjustedSegments.map(_.endMValue).max
-      case _ => getMValues(Option(adjustedSegments.flatMap(_.endCalibrationPoint).map(_.segmentMValue).max), Option(allLinks.map(_.endMValue).max))
-    }
-
-    val source = orderedSources.head
-
-    val startCp = allStartCp.headOption
-    val endCp = allEndCp.headOption
-
-    if (startCp.nonEmpty && source.startCalibrationPoint.isEmpty)
-      throw new IllegalArgumentException("Start calibration point not in the first link of source")
-
-    if (endCp.nonEmpty && orderedSources.last.endCalibrationPoint.isEmpty)
-      throw new IllegalArgumentException("Start calibration point not in the first link of source")
-
-    val adjustedCreatedRoads = orderedTargets.foldLeft(orderedTargets) { (previousTargets, target) =>
-      RoadAddressLinkBuilder.adjustRoadAddressTopology(orderedTargets.length, startCp, endCp, maxEndMValue, minStartAddressM, maxEndAddressM, source, target, previousTargets, user.username).filterNot(_.id == 0 && source.linkId == target.linkId) }
-
-    // Figure out first link's side code
-    val startingSideCode = if (GeometryUtils.areAdjacent(adjustedCreatedRoads.head.geometry.head, orderedSources.head.geometry.head) ||
-      GeometryUtils.areAdjacent(adjustedCreatedRoads.head.geometry.last, orderedSources.head.geometry.last)) {
-      orderedSources.head.sideCode
-    } else {
-      switchSideCode(orderedSources.head.sideCode)
-    }
-
-    // Adjust SideCode according to the starting link
-    adjustSideCodes(Seq(adjustedCreatedRoads.head.copy(sideCode = startingSideCode)), adjustedCreatedRoads.tail)
-
-  }
-
-  private def adjustSideCodes(ready: Seq[RoadAddressLink], unprocessed: Seq[RoadAddressLink]): Seq[RoadAddressLink] = {
-    if (unprocessed.isEmpty)
-      ready
-    else {
-      val last = ready.last
-      val next = unprocessed.head
-      val endPoint = if (ready.last.sideCode == SideCode.TowardsDigitizing) ready.last.geometry.last else  ready.last.geometry.head
-      val touch = (GeometryUtils.areAdjacent(next.geometry.head, endPoint), GeometryUtils.areAdjacent(next.geometry.last, endPoint))
-      val nextSideCode = touch match {
-        case (true, false) => SideCode.TowardsDigitizing
-        case (false, true) => SideCode.AgainstDigitizing
-        //Overlapping or non-touching geometries
-        case (_, _) => throw new IllegalArgumentException("Touching geometries are invalid: %s %s".format(last.geometry, next.geometry))
-      }
-      adjustSideCodes(ready++Seq(next.copy(sideCode=nextSideCode)), unprocessed.tail)
-    }
+    targetRoadAddresses
   }
 
   def recalculateRoadAddresses(roadNumber: Long, roadPartNumber: Long) = {
@@ -894,112 +585,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
   }
 
-  private def createFormOfReservedLinksToSavedRoadParts(project: RoadAddressProject): (Seq[RoadAddressProjectFormLine], Option[RoadAddressProjectLink]) = {
-    withDynTransaction {
-      val createdAddresses = RoadAddressDAO.getRoadAddressProjectLinks(project.id)
-      val groupedAddresses = createdAddresses.groupBy { address =>
-        (address.roadNumber, address.roadPartNumber)
-      }.toSeq.sortBy(_._1._2)(Ordering[Long])
-      val adddressestoform = groupedAddresses.map(addressGroup => {
-        val lastAddressM = addressGroup._2.last.endAddrM
-        val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(addressGroup._2.last.linkId), false)
-        val addressFormLine = RoadAddressProjectFormLine(addressGroup._2.last.linkId, project.id, addressGroup._1._1, addressGroup._1._2, lastAddressM, MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(roadLink.head.municipalityCode, -1), addressGroup._2.last.discontinuityType.description)
-        //TODO:case class RoadAddressProjectFormLine(projectId: Long, roadNumber: Long, roadPartNumber: Long, RoadLength: Long, ely : Long, discontinuity: String)
-        addressFormLine
-      })
-      val addresses = createdAddresses.headOption
-      (adddressestoform, addresses)
-    }
-  }
-
-  private def createNewRoadLinkProject(roadAddressProject: RoadAddressProject) = {
-    val project = createNewProjectToDB(roadAddressProject)
-    if (project.reservedParts.isEmpty) //check if new project has links
-    {
-      val (forminfo, createdlink) = createFormOfReservedLinksToSavedRoadParts(project)
-      (project, None, forminfo, "ok")
-    } else { //project with links success field contains errors if any, else "ok"
-    val errorMessage = addLinksToProject(project)
-
-      val (forminfo, createdlink) = createFormOfReservedLinksToSavedRoadParts(project)
-
-      (project, createdlink, forminfo,  errorMessage.getOrElse("ok"))
-    }
-  }
-
-  def saveRoadLinkProject(roadAddressProject: RoadAddressProject): (RoadAddressProject, Option[RoadAddressProjectLink], Seq[RoadAddressProjectFormLine], String) = {
-    val projectF = projectFound(roadAddressProject)
-    if (projectF.isEmpty)
-      createNewRoadLinkProject(roadAddressProject)
-    else {
-      if (roadAddressProject.reservedParts.isEmpty) { //roadaddresses to update is empty
-        withDynTransaction {
-          RoadAddressDAO.updateRoadAddressProject(roadAddressProject)
-        }
-        val (forminfo, createdlink) = createFormOfReservedLinksToSavedRoadParts(roadAddressProject)
-        (roadAddressProject, createdlink, forminfo, "ok")
-      } else {
-        //list contains road addresses that we need to add
-        val errorMessage = addLinksToProject(roadAddressProject)
-        if (errorMessage.isEmpty) {
-          //adding links succeeeded
-          withDynTransaction {
-            RoadAddressDAO.updateRoadAddressProject(roadAddressProject)
-          }
-          val (forminfo, createdlink) = createFormOfReservedLinksToSavedRoadParts(roadAddressProject)
-          (roadAddressProject, createdlink, forminfo, "ok")
-        } else {
-          //adding links failed
-          val (forminfo, createdlink) = createFormOfReservedLinksToSavedRoadParts(roadAddressProject)
-          (roadAddressProject, createdlink, forminfo, errorMessage.get)
-        }
-      }
-    }
-  }
-
-  def getRoadAddressSingleProject(projectId: Long): Seq[RoadAddressProject] = {
-    withDynTransaction {
-      RoadAddressDAO.getRoadAddressProjects(projectId)
-    }
-  }
-
-  def getRoadAddressAllProjects(): Seq[RoadAddressProject] = {
-    withDynTransaction {
-      RoadAddressDAO.getRoadAddressProjects()
-    }
-  }
-
-  def getProjectsWithLinksById(projectId: Long): (RoadAddressProject, Seq[RoadAddressProjectFormLine]) = {
-    withDynTransaction {
-      val project:RoadAddressProject = RoadAddressDAO.getRoadAddressProjects(projectId).head
-      val createdAddresses = RoadAddressDAO.getRoadAddressProjectLinks(project.id)
-      val groupedAddresses = createdAddresses.groupBy { address =>
-        (address.roadNumber, address.roadPartNumber)
-      }.toSeq.sortBy(_._1._2)(Ordering[Long])
-      val formInfo: Seq[RoadAddressProjectFormLine] = groupedAddresses.map(addressGroup => {
-        val endAddressM = addressGroup._2.last.endAddrM
-        val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(addressGroup._2.head.linkId), false)
-        val addressFormLine = RoadAddressProjectFormLine(addressGroup._2.head.linkId, project.id, addressGroup._2.head.roadNumber, addressGroup._2.head.roadPartNumber, endAddressM, MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(roadLink.head.municipalityCode, -1), addressGroup._2.head.discontinuityType.description)
-        addressFormLine
-      })
-
-      val fullProjectInfo:RoadAddressProject = formInfo.length match {
-        case 0 => project
-        //case 1 => project.copy(roadNumber = formInfo.head.roadNumber, startPart = formInfo.head.roadPartNumber, endPart = formInfo.head.roadPartNumber)
-        case _ => project
-      }
-
-      (fullProjectInfo, formInfo)
-    }
-  }
-
-  def switchSideCode(sideCode: SideCode) = {
-    // Switch between against and towards 2 -> 3, 3 -> 2
-    SideCode.apply(5-sideCode.value)
-  }
-
 }
-
 
 case class RoadAddressMerge(merged: Set[Long], created: Seq[RoadAddress])
 case class ReservedRoadPart(roadPartId: Long, roadNumber: Long, roadPartNumber: Long, length: Double, discontinuity: Discontinuity, ely: Long)

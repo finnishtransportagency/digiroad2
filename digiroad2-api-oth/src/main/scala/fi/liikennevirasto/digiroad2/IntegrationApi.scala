@@ -142,7 +142,10 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "linkType" -> roadLink.linkType.value,
         "modifiedAt" -> roadLink.modifiedAt,
         lastModifiedBy(None, roadLink.modifiedBy),
-        "linkSource" -> roadLink.linkSource.value) ++ roadLink.attributes.filterNot(_._1 == "MTKID").filterNot(_._1 == "ROADNUMBER").filterNot(_._1 == "ROADPARTNUMBER")
+        "linkSource" -> roadLink.linkSource.value) ++ roadLink.attributes.filterNot(_._1 == "MTKID")
+                                                                         .filterNot(_._1 == "ROADNUMBER")
+                                                                         .filterNot(_._1 == "ROADPARTNUMBER")
+                                                                         .filterNot(_._1 == "MTKCLASS" && roadLink.linkSource.value == LinkGeomSource.ComplimentaryLinkInterface.value)
     }
   }
 

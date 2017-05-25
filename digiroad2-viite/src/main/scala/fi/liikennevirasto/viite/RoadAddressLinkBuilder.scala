@@ -18,18 +18,10 @@ object RoadAddressLinkBuilder {
   val RoadPartNumber = "ROADPARTNUMBER"
   val ComplementarySubType = 3
   val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
-  val MaxAllowedMValueError = 0.001
-  val Epsilon = 1E-6
-  /* Smallest mvalue difference we can tolerate to be "equal to zero". One micrometer.
-                                See https://en.wikipedia.org/wiki/Floating_point#Accuracy_problems
-                             */
-  val MaxDistanceDiffAllowed = 1.0
   /*Temporary restriction from PO: Filler limit on modifications
                                             (LRM adjustments) is limited to 1 meter. If there is a need to fill /
                                             cut more than that then nothing is done to the road address LRM data.
                                             */
-  val MinAllowedRoadAddressLength = 0.1
-
   lazy val municipalityMapping = OracleDatabase.withDynSession {
     MunicipalityDAO.getMunicipalityMapping
   }
@@ -142,7 +134,7 @@ object RoadAddressLinkBuilder {
   def adjustRoadAddressTopology(expectedTargetsNumber: Int, startCp: Option[CalibrationPoint], endCp: Option[CalibrationPoint],
                                 maxEndMValue: Double, minStartMAddress: Long, maxEndMAddress: Long, source: RoadAddressLink,
                                 currentTarget: RoadAddressLink, roadAddresses: Seq[RoadAddressLink], username: String): Seq[RoadAddressLink] = {
-    val tempId = -1000
+    val tempId = fi.liikennevirasto.viite.NewRoadAddress
     val sorted = roadAddresses.sortBy(_.endAddressM)(Ordering[Long].reverse)
     val previousTarget = sorted.head
     val startAddressM = if (roadAddresses.exists(_.id != 0))
@@ -262,7 +254,7 @@ object RoadAddressLinkBuilder {
       getValue(cpPrevious._1.orElse(cpNext._1), cpNext._2.orElse(cpPrevious._2)).getOrElse(op(leftMValue,rightMValue))
     }
 
-    val tempId = -1000
+    val tempId = fi.liikennevirasto.viite.NewRoadAddress
 
     if(nextSegment.roadNumber     == previousSegment.roadNumber &&
       nextSegment.roadPartNumber  == previousSegment.roadPartNumber &&
@@ -282,7 +274,8 @@ object RoadAddressLinkBuilder {
       val calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = {
         val left = Seq(cpNext._1, cpPrevious._1).flatten.sortBy(_.segmentMValue).headOption
         val right = Seq(cpNext._2, cpPrevious._2).flatten.sortBy(_.segmentMValue).lastOption
-        (left.map(_.copy(segmentMValue = startMValue)), right.map(_.copy(segmentMValue = endMValue)))
+        (left.map(_.copy(segmentMValue = if (nextSegment.sideCode == SideCode.AgainstDigitizing) endMValue else startMValue)),
+          right.map(_.copy(segmentMValue = if (nextSegment.sideCode == SideCode.AgainstDigitizing) startMValue else endMValue)))
       }
 
       if(nextSegment.sideCode.value != previousSegment.sideCode.value)

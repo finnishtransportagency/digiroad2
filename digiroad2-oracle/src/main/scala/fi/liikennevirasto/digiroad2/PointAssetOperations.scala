@@ -112,6 +112,39 @@ trait PointAssetOperations {
     AssetBeforeUpdate(setFloating(assetBeforeUpdate.asset, assetBeforeUpdate.persistedFloating), assetBeforeUpdate.asset.floating, assetBeforeUpdate.floatingReason)
   }
 
+  def floatingAdjustment(adjustmentOperation: ((AssetBeforeUpdate, AssetAdjustment) => Any),
+                         createOperation: ((PersistedAsset, AssetAdjustment) => PersistedAsset))
+                        (roadLinks: Seq[RoadLink], changeInfo: Seq[ChangeInfo], assetBeforeUpdate: AssetBeforeUpdate): AssetBeforeUpdate = {
+    val hasChangeInfo = changeInfo.exists(changeInfos => changeInfos.oldId.getOrElse(0L) == assetBeforeUpdate.asset.linkId && changeInfos.vvhTimeStamp > assetBeforeUpdate.asset.vvhTimeStamp)
+
+    if (hasChangeInfo) {
+      PointAssetFiller.correctedPersistedAsset(assetBeforeUpdate.asset, roadLinks, changeInfo) match {
+        case Some(adjustment) =>
+          adjustmentOperation(assetBeforeUpdate, adjustment)
+          AssetBeforeUpdate(createOperation(assetBeforeUpdate.asset, adjustment), adjustment.floating, Some(FloatingReason.Unknown))
+        case None =>
+          if (assetBeforeUpdate.persistedFloating && !assetBeforeUpdate.asset.floating) {
+            val logger = LoggerFactory.getLogger(getClass)
+            val floatingReasonMessage = floatingReason(assetBeforeUpdate.asset, roadLinks.find(_.linkId == assetBeforeUpdate.asset.linkId))
+            logger.info("Floating asset %d, reason: %s".format(assetBeforeUpdate.asset.id, floatingReasonMessage))
+          }
+          AssetBeforeUpdate(setFloating(assetBeforeUpdate.asset,  assetBeforeUpdate.persistedFloating), assetBeforeUpdate.asset.floating, assetBeforeUpdate.floatingReason)
+      }
+    } else {
+      val roadLink = roadLinks.find(_.linkId == assetBeforeUpdate.asset.linkId)
+      if (roadLink.isEmpty || assetBeforeUpdate.persistedFloating) {
+        AssetBeforeUpdate(setFloating(assetBeforeUpdate.asset, assetBeforeUpdate.persistedFloating), assetBeforeUpdate.asset.floating, assetBeforeUpdate.floatingReason)
+      } else {
+        PointAssetFiller.snapPersistedAssetToRoadLink(assetBeforeUpdate.asset, roadLink.get) match {
+          case Some(adjustment) =>
+            adjustmentOperation(assetBeforeUpdate, adjustment)
+            AssetBeforeUpdate(createOperation(assetBeforeUpdate.asset, adjustment), adjustment.floating, Some(FloatingReason.Unknown))
+          case _ => AssetBeforeUpdate(setFloating(assetBeforeUpdate.asset, assetBeforeUpdate.persistedFloating), assetBeforeUpdate.asset.floating, assetBeforeUpdate.floatingReason)
+        }
+      }
+    }
+  }
+
   protected def fetchFloatingAssets(addQueryFilter: String => String, isOperator: Option[Boolean]): Seq[(Long, String, Long, Option[Long])] ={
     var query = s"""
           select a.$idField, m.name_fi, lrm.link_id, null

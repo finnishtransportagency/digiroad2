@@ -323,7 +323,6 @@
       _.each(ol3Features, function(feature){
         if(_.contains(olUids,feature.ol_uid)){
           selectSingleClick.getFeatures().remove(feature);
-          console.log(selectSingleClick.getFeatures());
         }
       });
 
@@ -468,6 +467,7 @@
       cachedMarker = new LinkPropertyMarker(selectedLinkProperty);
       removeSelectInteractions();
       var roadLinks = roadCollection.getAll();
+      var linkIdsToRemove = applicationModel.getCurrentAction() !== applicationModel.actionCalculated ? [] : selectedLinkProperty.linkIdsToExclude();
 
       if(floatingMarkerLayer.getSource() !== null)
         floatingMarkerLayer.getSource().clear();
@@ -500,12 +500,14 @@
           });
           middlefloating = floatGroup[Math.floor(floatGroup.length / 2)];
           marker = cachedLinkPropertyMarker.createMarker(middlefloating);
-          floatingMarkerLayer.getSource().addFeature(marker);
+          if(applicationModel.getCurrentAction() !== applicationModel.actionCalculated && !_.contains(linkIdsToRemove,marker.roadLinkData.linkId))
+            floatingMarkerLayer.getSource().addFeature(marker);
         });
 
         _.each(anomalousRoadMarkers, function(anomalouslink) {
           var marker = cachedMarker.createMarker(anomalouslink);
-          anomalousMarkerLayer.getSource().addFeature(marker);
+          if(applicationModel.getCurrentAction() !== applicationModel.actionCalculated && !_.contains(linkIdsToRemove,marker.roadLinkData.linkId))
+            anomalousMarkerLayer.getSource().addFeature(marker);
         });
 
         _.each(geometryChangedRoadMarkers, function(geometryChangedLink) {
@@ -538,13 +540,15 @@
         });
 
         geometryChangedLayer.setZIndex(100);
-
-        var actualPoints =  me.drawCalibrationMarkers(calibrationPointLayer.source, roadLinks);
-        _.each(actualPoints, function(actualPoint) {
-          var calMarker = new CalibrationPoint(actualPoint.point);
-          calibrationPointLayer.getSource().addFeature(calMarker.getMarker(true));
-        });
         calibrationPointLayer.setZIndex(22);
+        if(!applicationModel.isActiveButtons()) {
+          var actualPoints = me.drawCalibrationMarkers(calibrationPointLayer.source, roadLinks);
+          _.each(actualPoints, function (actualPoint) {
+            var calMarker = new CalibrationPoint(actualPoint.point);
+            calibrationPointLayer.getSource().addFeature(calMarker.getMarker(true));
+          });
+          calibrationPointLayer.setZIndex(22);
+        }
       }
       addSelectInteractions();
     };
@@ -659,7 +663,21 @@
         indicatorLayer.getSource().clear();
       });
 
-      eventListener.listenTo(eventbus, 'roadLinks:fetched', draw);
+      eventListener.listenTo(eventbus, 'roadLinks:fetched', function(eventData){
+        draw();
+        _.defer(function(){
+          var floatingsLinkIds = _.chain(selectedLinkProperty.getFeaturesToKeepFloatings()).map(function(feature){
+            return feature.linkId;
+          }).uniq().value();
+          var visibleFeatures = getVisibleFeatures(true,false,true);
+          var featuresToReSelect = _.filter(visibleFeatures, function(feature){
+            return _.contains(floatingsLinkIds, feature.roadLinkData.linkId);
+          });
+          if(featuresToReSelect.length !== 0){
+            addFeaturesToSelection(featuresToReSelect);
+          }
+        });
+      });
       eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', draw);
       eventListener.listenTo(eventbus, 'linkProperties:updateFailed', cancelSelection);
       eventListener.listenTo(eventbus, 'adjacents:nextSelected', function(sources, adjacents, targets) {
@@ -703,6 +721,13 @@
           simulatedOL3Features.push(feature);
           afterTransferLinks.push(road);
         });
+
+        var actualPoints =  me.drawCalibrationMarkers(calibrationPointLayer.source, newRoads);
+        _.each(actualPoints, function(actualPoint) {
+          var calMarker = new CalibrationPoint(actualPoint.point);
+          simulatedRoadsLayer.getSource().addFeature(calMarker.getMarker(true));
+        });
+
         indicatorLayer.getSource().clear();
         roadCollection.setTmpRoadAddresses(afterTransferLinks);
         roadCollection.setChangedIds(changedIds);
@@ -712,7 +737,15 @@
         clearHighlights();
         greenRoadLayer.getSource().clear();
         setGeneralOpacity(0.2);
+
+        _.each(simulatedOL3Features, function(elem) {
+          roadLayer.layer.getSource().getFeatures().filter(function(item){
+            if( item.roadLinkData.linkId === elem.roadLinkData.linkId)
+              roadLayer.layer.getSource().removeFeature(item);
+          });
+        });
         simulatedRoadsLayer.getSource().addFeatures(simulatedOL3Features);
+        roadLayer.layer.getSource().addFeatures(simulatedOL3Features);
       });
 
       eventListener.listenTo(eventbus, 'roadLink:editModeAdjacents', function() {
@@ -767,6 +800,10 @@
 
       eventListener.listenTo(eventbus, 'linkProperties:clearIndicators', function(){
         clearIndicators();
+      });
+
+      eventListener.listenTo(eventbus, 'roadLinks:refreshView', function(){
+        me.refreshView();
       });
 
       var clearIndicators = function () {
@@ -827,6 +864,8 @@
       activateSelectInteractions(true);
       applicationModel.toggleSelectionTypeAll();
       selectedLinkProperty.clearFeaturesToKeep();
+      greenRoadLayer.getSource().clear();
+      simulatedRoadsLayer.getSource().clear();
     };
 
     var redrawNextSelectedTarget= function(targets, adjacents) {
@@ -945,9 +984,9 @@
       setGeneralOpacity(0.2);
     };
 
-
     eventbus.on('linkProperties:cleanFloatingsAfterDefloat', function(){
       cleanFloatingsAfterDefloat();
+      cleanUnknownsAfterDefloat();
     });
 
     var cleanFloatingsAfterDefloat = function() {
@@ -976,6 +1015,24 @@
 
       pickRoadsLayer.getSource().clear();
       pickRoadsLayer.getSource().addFeatures(PickFeaturesToRemove );
+
+      /*
+       * Clean from calibrationPoints layer selected
+       */
+
+      _.map(selectedLinkProperty.getFeaturesToKeepFloatings(), function(featureToKeep){
+        if(featureToKeep.calibrationPoints.length > 0) {
+          _.each(featureToKeep.calibrationPoints, function (cPoint) {
+            var newPoint = new CalibrationPoint(cPoint.point).getMarker(true);
+            _.each(calibrationPointLayer.getSource().getFeatures(), function (feature) {
+              if (newPoint.values_.geometry.flatCoordinates[0] == feature.values_.geometry.flatCoordinates[0] &&
+                newPoint.values_.geometry.flatCoordinates[1] == feature.values_.geometry.flatCoordinates[1]) {
+                calibrationPointLayer.getSource().removeFeature(feature);
+              }
+            });
+          });
+        }
+      });
 
       /*
        * Clean from roadLayer floatings selected
@@ -1026,9 +1083,43 @@
       geometryChangedLayer.setVisible(false);
     };
 
+    var cleanUnknownsAfterDefloat = function(){
+      var unknownRoadMarkers =[];
+
+      var unknownFeaturesToKeep = _.reject(_.map(selectedLinkProperty.getFeaturesToKeepUnknown(), function(feature){
+        if(feature.anomaly === 1){
+          return feature.linkId;
+        } else return undefined;
+      }), function(featureNotToKeep){
+        return _.isUndefined(featureNotToKeep);
+      });
+
+      //Clean from anomalousMarkerLayer
+
+      var olUidsAnomalousMarkerLayer = _.reject(_.map(anomalousMarkerLayer.getSource().getFeatures(),function(anomalousMarkerLayerFeature){
+        if(_.contains(unknownFeaturesToKeep, anomalousMarkerLayerFeature.roadLinkData.linkId)){
+          return anomalousMarkerLayerFeature.ol_uid;
+        } else return undefined;
+      }), function(featuresNotToKeep){
+        return _.isUndefined(featuresNotToKeep);
+      });
+
+      var anomalousMarkerLayerFeaturesToKeep = _.filter(anomalousMarkerLayer.getSource().getFeatures(), function(pf){
+        return !_.contains(olUidsAnomalousMarkerLayer, pf.ol_uid);
+      });
+
+      var anomalousMarkerLayerFeaturesToRemove = _.filter(anomalousMarkerLayer.getSource().getFeatures(), function(pf){
+        return _.contains(olUidsAnomalousMarkerLayer, pf.ol_uid);
+      });
+      anomalousMarkerLayer.getSource().clear();
+      anomalousMarkerLayer.getSource().addFeatures(anomalousMarkerLayerFeaturesToKeep);
+      unknownRoadMarkers = unknownRoadMarkers.concat(anomalousMarkerLayerFeaturesToRemove);
+      selectedLinkProperty.setAnomalousMarkers(unknownRoadMarkers);
+    };
 
     eventbus.on('linkProperties:floatingRoadMarkerPreviousSelected', function(){
       addSelectedFloatings();
+      addSelectedUnknowns();
     });
 
     var addSelectedFloatings = function() {
@@ -1049,6 +1140,20 @@
 
       _.each(floatingRoad, function(road){
         roadLayer.layer.getSource().addFeature(road);
+      });
+    };
+
+    var addSelectedUnknowns = function(){
+      var anomalousRoadMarker = selectedLinkProperty.getAnomalousMarkers();
+      var anomalousMarker = [];
+      _.each(anomalousRoadMarker, function(anomalous){
+        if(anomalous.getGeometry().getType() !== 'LineString'){
+          anomalousMarker.push(anomalous);
+        }
+      });
+
+      _.each(anomalousMarker, function(marker){
+        anomalousMarkerLayer.getSource().addFeature(marker);
       });
     };
 
