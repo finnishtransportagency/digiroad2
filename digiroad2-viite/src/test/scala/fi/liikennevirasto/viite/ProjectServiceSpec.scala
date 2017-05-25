@@ -222,10 +222,12 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
   test("fetch project data and send it to TR") {
     assume(testConnection)
     runWithRollback{
+      val project = RoadAddressProject(1,ProjectState.Incomplete,"testiprojekti","Test",DateTime.now(),"Test",DateTime.now(),DateTime.now(),"info",List(ReservedRoadPart(5:Long, 203:Long, 203:Long, 5:Double, Discontinuity.apply("jatkuva"), 8:Long)))
+           ProjectDAO.createRoadAddressProject(project)
+            sqlu""" insert into road_address_changes(project_id,change_type,new_road_number,new_road_part_number,new_track_code,new_start_addr_m,new_end_addr_m,new_discontinuity,new_road_type,new_ely) Values(1,1,6,1,1,0,10.5,1,1,8) """.execute
       //Assuming that there is data to show
-      val projectId = 0
-      val responses = projectService.getRoadAddressChangesAndSendToTR(Set(projectId))
-      responses.projectId should be(projectId)
+      val responses = projectService.getRoadAddressChangesAndSendToTR(Set(1))
+      responses.projectId should be( 1)
     }
   }
 
