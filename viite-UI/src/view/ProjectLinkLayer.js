@@ -286,6 +286,10 @@
       redraw();
     });
 
+    eventbus.on('roadAddressProject:projectLinkSaved',function(projectId){
+      projectCollection.fetch(map.getView().calculateExtent(map.getSize()),map.getView().getZoom(), projectId);
+    });
+
     eventbus.on('map:moved', mapMovedHandler, this);
 
     vectorLayer.setVisible(true);
