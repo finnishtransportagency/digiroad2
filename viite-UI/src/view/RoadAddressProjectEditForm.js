@@ -109,21 +109,6 @@
         '<footer>' + terminationButtons() + '</footer>');
     };
 
-    var addSmallLabel = function(label){
-      return '<label class="control-label-small">'+label+'</label>';
-    };
-
-    var addSmallInputNumber = function(id, value){
-      //Validate only number characters on "onkeypress" including TAB and backspace
-      return '<input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode == 8 || event.keyCode == 9)' +
-        '" class="form-control small-input roadAddressProject" id="'+id+'" value="'+(_.isUndefined(value)? '' : value )+'" onclick=""/>';
-    };
-
-    var addDatePicker = function () {
-      var $validFrom = $('#alkupvm');
-      dateutil.addSingleDependentDatePicker($validFrom);
-    };
-
     var bindEvents = function() {
 
       var rootElement = $('#feature-attributes');
@@ -159,7 +144,6 @@
 
       eventbus.on('roadAddress:projectLinksUpdateFailed',function(errorCode){
         applicationModel.removeSpinner();
-        //TODO 375 should modify text to show error status during Status update
         if (errorCode == 400){
           return new ModalConfirm("Päivitys epäonnistui puutteelisten tietojen takia. Ota yhteyttä järjestelmätukeen.");
         } else if (errorCode == 401){
@@ -181,7 +165,7 @@
           var publishButton = sendRoadAddressChangeButton();
           rootElement.append(publishButton);
         }
-          projectCollection.setDirty(_.map(selectedProjectLink, function(link) { return link.linkId; }));
+        eventbus.trigger('roadAddressProject:projectLinkSaved', data.projectId);
       });
 
       rootElement.on('click', '.project-form button.update', function() {
