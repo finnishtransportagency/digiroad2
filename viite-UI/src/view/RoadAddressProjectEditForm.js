@@ -13,7 +13,7 @@
       //TODO: cancel and save buttons Viite-374
       var field;
       field = '<div class="form-group action-selected-field" hidden = "true">' +
-        '<p class="asset-log-info">' + 'Tarkista tekemäsi muutokset.' + '<br>' + 'Jos muutokset ok, tallenna.' + '</p>' +
+        '<div class="asset-log-info">' + 'Tarkista tekemäsi muutokset.' + '<br>' + 'Jos muutokset ok, tallenna.' + '</div>' +
         '</div>';
       return field;
     };
@@ -57,15 +57,12 @@
         var link = selected[0];
         var startM = Math.min.apply(Math, _.map(selected, function(l) { return l.startAddressM; }));
         var endM = Math.max.apply(Math, _.map(selected, function(l) { return l.endAddressM; }));
-        span = '<div class="edit-control-group choice-group">' +
-          '<label class="control-label-floating"> TIE </label>' +
-          '<span class="form-control-static-floating" style="display:inline-flex;width:auto;margin-right:5px">' + link.roadNumber + '</span>' +
-          '<label class="control-label-floating"> OSA </label>' +
-          '<span class="form-control-static-floating" style="display:inline-flex;width:auto;margin-right:5px">' + link.roadPartNumber + '</span>' +
-          '<label class="control-label-floating"> AJR </label>' +
-          '<span class="form-control-static-floating" style="display:inline-flex;width:auto;margin-right:5px">' + link.trackCode + '</span>' +
-          '<label class="control-label-floating"> M: </label>' +
-          '<span class="form-control-static-floating" style="display:inline-flex;width:auto;margin-right:0px">' + startM + ' - ' + endM + '</span>' +
+        span = '<div class="project-edit-selections" style="display:inline-block;padding-left:8px;">' +
+          '<div class="project-edit">' +
+          ' TIE ' + '<span class="project-edit">' + link.roadNumber + '</span>' +
+          ' OSA ' + '<span class="project-edit">' + link.roadPartNumber + '</span>' +
+          ' AJR ' + '<span class="project-edit">' + link.trackCode + '</span>' +
+          ' M:  ' + '<span class="project-edit">' + startM + ' - ' + endM + '</span>' +
           '</div>' +
           '</div>';
       }
@@ -90,8 +87,7 @@
         staticField('Muokattu viimeksi', project.modifiedBy + ' ' + project.dateModified)+
         '<div class="form-group editable form-editable-roadAddressProject" id="information-content"> '+
         '<form id="roadAddressProject" class="input-unit-combination form-group form-horizontal roadAddressProject">'+
-        '<div><label>Toimenpiteet</label></div>'+
-        selection +
+        '<label>Toimenpiteet,' + selection  + '</label>' +
         '<div class="input-unit-combination">' +
         '<select class="form-control" id="dropDown" size="1">'+
         '<option value="action1">Valitse</option>'+
