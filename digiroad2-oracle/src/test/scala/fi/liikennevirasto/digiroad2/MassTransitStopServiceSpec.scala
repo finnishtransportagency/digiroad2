@@ -48,6 +48,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     VVHRoadlink(1611601L, 235, Seq(Point(374668.195,6676884.282), Point(374805.498, 6676906.051)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers))
 
   val mockVVHClient = MockitoSugar.mock[VVHClient]
+  val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
   val mockGeometryTransform = MockitoSugar.mock[GeometryTransform]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
 
@@ -57,11 +58,12 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   }
   before {
     // Reset the mocks here so individual tests don't have to
-    when(mockVVHClient.queryByMunicipalitesAndBounds(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks)
+    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBounds(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks)
     vvhRoadLinks.foreach(rl =>
-      when(mockVVHClient.fetchByLinkId(rl.linkId))
+      when(mockVVHRoadLinkClient.fetchByLinkId(rl.linkId))
         .thenReturn(Some(rl)))
-    when(mockVVHClient.fetchByLinkIds(any[Set[Long]])).thenReturn(vvhRoadLinks)
+    when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(vvhRoadLinks)
     when(mockGeometryTransform.resolveAddressAndLocation(any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]]
     )).thenReturn((RoadAddress(Option("235"), 1, 1, Track.Combined, 0, None), RoadSide.Right))
     when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks.map(toRoadLink))
@@ -853,7 +855,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val municipalityCode = 91
       val geometry = Seq(Point(0.0,0.0), Point(120.0, 0.0))
 
-      when(mockVVHClient.fetchByLinkId(linkId))
+      when(mockVVHRoadLinkClient.fetchByLinkId(linkId))
         .thenReturn(Some(VVHRoadlink(linkId, municipalityCode, geometry, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
       val oldAssetId = service.create(NewMassTransitStop(0, 0, linkId, 0, properties), "test", geometry, municipalityCode, Some(Municipality))
@@ -882,7 +884,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val municipalityCode = 91
       val geometry = Seq(Point(0.0,0.0), Point(120.0, 0.0))
 
-      when(mockVVHClient.fetchByLinkId(linkId))
+      when(mockVVHRoadLinkClient.fetchByLinkId(linkId))
         .thenReturn(Some(VVHRoadlink(linkId, municipalityCode, geometry, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
       val assetId = service.create(NewMassTransitStop(0, 0, linkId, 0, properties), "test", geometry , municipalityCode, Some(Municipality))
@@ -1042,7 +1044,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   }
 
   test("Stop floats if a State road has got changed to a road owned by municipality"){
-    when(mockVVHClient.queryByMunicipalitesAndBounds(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks)
+    when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBounds(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks)
 
     val massTransitStopDao = new MassTransitStopDao
     runWithRollback{
@@ -1057,7 +1059,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   }
 
   test("Stop floats if a State road has got changed to a road owned to a private road"){
-    when(mockVVHClient.queryByMunicipalitesAndBounds(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks)
+    when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBounds(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks)
 
     val massTransitStopDao = new MassTransitStopDao
     runWithRollback{
@@ -1075,7 +1077,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     val vvhRoadLinks = List(
       VVHRoadlink(1021227, 90, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))
 
-    when(mockVVHClient.queryByMunicipalitesAndBounds(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks)
+    when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBounds(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks)
     when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks.map(toRoadLink))
 
     val massTransitStopDao = new MassTransitStopDao
@@ -1094,7 +1096,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     val vvhRoadLinks = List(
       VVHRoadlink(1021227, 90, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))
 
-    when(mockVVHClient.queryByMunicipalitesAndBounds(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks)
+    when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBounds(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks)
     when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks.map(toRoadLink))
 
     val massTransitStopDao = new MassTransitStopDao
@@ -1110,7 +1112,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   }
 
   test("Stops working list shouldn't have floating assets with floating reason RoadOwnerChanged if user is not operator"){
-    when(mockVVHClient.queryByMunicipalitesAndBounds(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks)
+    when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBounds(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks)
 
     runWithRollback {
       val assetId = 300012
@@ -1131,7 +1133,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   }
 
   test("Stops working list should have all floating assets if user is operator"){
-    when(mockVVHClient.queryByMunicipalitesAndBounds(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks)
+    when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBounds(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks)
 
     runWithRollback {
       val assetId = 300012
@@ -1189,7 +1191,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val rad = RoadAddress(Some("235"), 110, 10, Track.Combined, 108, None)
       when(mockGeometryTransform.resolveAddressAndLocation(any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]]
       )).thenReturn((rad, RoadSide.Right))
-      when(mockVVHClient.queryByMunicipalitesAndBounds(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks)
+      when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBounds(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks)
       val trStop = TierekisteriMassTransitStop(85755, "livi114873", rad, TRRoadSide.Unknown, StopType.Unknown, false,
         equipments, None, Option("TierekisteriFi"), Option("TierekisteriSe"), "test", Option(new Date), Option(new Date), Option(new Date), new Date(2016, 8, 1))
 

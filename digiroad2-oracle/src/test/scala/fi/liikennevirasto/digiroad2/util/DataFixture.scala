@@ -406,7 +406,7 @@ object DataFixture {
 
     if(assets.length > 0){
 
-      val roadLinks = vvhClient.fetchByLinkIds(assets.map(_._2).toSet)
+      val roadLinks = vvhClient.roadLinkData.fetchByLinkIds(assets.map(_._2).toSet)
 
       assets.foreach {
         _ match {
@@ -436,7 +436,7 @@ object DataFixture {
 
     if(assets.length > 0){
       //Get All RoadLinks from VVH by asset link ids
-      val roadLinks = vvhClient.fetchByLinkIds(assets.map(_._2).toSet)
+      val roadLinks = vvhClient.roadLinkData.fetchByLinkIds(assets.map(_._2).toSet)
 
       assets.foreach{
         _ match {
@@ -573,7 +573,7 @@ object DataFixture {
 
     if (assets.length > 0) {
 
-      val roadLinks = vvhClient.fetchByLinkIds(assets.map(_._2).toSet)
+      val roadLinks = vvhClient.roadLinkData.fetchByLinkIds(assets.map(_._2).toSet)
 
       assets.foreach {
         _ match {
@@ -645,7 +645,7 @@ object DataFixture {
       persistedStop = massTransitStopService.getByMunicipality(municipality, false)
 
       //Get all road links from VVH
-      val roadLinks = vvhClient.fetchByLinkIds(persistedStop.map(_.linkId).toSet)
+      val roadLinks = vvhClient.roadLinkData.fetchByLinkIds(persistedStop.map(_.linkId).toSet)
 
       persistedStop.foreach { stop =>
         // Validate if OTH stop are known in Tierekisteri and if is maintained by ELY
@@ -905,7 +905,7 @@ object DataFixture {
               .filter(ra => vvhRoadlinks.exists(t => t.linkId == ra.linkId) )
               .foreach { ra =>
                 val assetId = linearAssetService.dao.createLinearAsset(trafficVolumeId, ra.linkId, false, SideCode.BothDirections.value,
-                  ra.startMValue, ra.endMValue, "batch_process_trafficVolume", vvhClient.createVVHTimeStamp(5))
+                  ra.startMValue, ra.endMValue, "batch_process_trafficVolume", vvhClient.roadLinkData.createVVHTimeStamp(5))
                 println("\nCreated OTH traffic volume assets form TR data with assetId " + assetId)
 
                 linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, tr.kvl)

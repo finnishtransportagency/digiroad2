@@ -161,7 +161,8 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
         where a.asset_type_id = $assetTypeId and a.id = $id
         """.as[(Long, Double, Double)].list
 
-    val roadLinksByLinkId = vvhClient.fetchByLinkIds(links.map(_._1).toSet)
+    //TODO This sould be done in DAO object
+    val roadLinksByLinkId = vvhClient.roadLinkData.fetchByLinkIds(links.map(_._1).toSet)
 
     links.map { case (linkId, startMeasure, endMeasure) =>
       val vvhRoadLink = roadLinksByLinkId.find(_.linkId == linkId).getOrElse(throw new NoSuchElementException)
@@ -619,7 +620,8 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
         where a.asset_type_id = 20 and a.id = $id
         """.as[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[DateTime])].list
 
-    val roadLinksByLinkId = vvhClient.fetchByLinkIds(speedLimits.map(_._2).toSet)
+    //TODO This sould be done in DAO object
+    val roadLinksByLinkId = vvhClient.roadLinkData.fetchByLinkIds(speedLimits.map(_._2).toSet)
 
     speedLimits.map { case (assetId, linkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, geomModifiedDate) =>
       val vvhRoadLink = roadLinksByLinkId.find(_.linkId == linkId).getOrElse(throw new NoSuchElementException)
@@ -755,7 +757,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     */
   def createSpeedLimit(creator: String, linkId: Long, linkMeasures: (Double, Double), sideCode: SideCode, value: Int,
                        vvhTimeStamp: Long, municipalityValidation: (Int) => Unit): Option[Long] = {
-    municipalityValidation(vvhClient.fetchByLinkId(linkId).get.municipalityCode)
+    municipalityValidation(vvhClient.roadLinkData.fetchByLinkId(linkId).get.municipalityCode)
     createSpeedLimitWithoutDuplicates(creator, linkId, linkMeasures, sideCode, value, None, None, None, None)
   }
 
