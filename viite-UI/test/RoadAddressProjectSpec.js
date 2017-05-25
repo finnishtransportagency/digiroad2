@@ -1,5 +1,5 @@
 /*jshint expr: true*/
-define(['chai', 'TestHelpers'], function(chai, testHelpers) {
+define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers) {
   var expect = chai.expect;
   var assert = chai.assert;
 
@@ -16,27 +16,17 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
       }, backend);
     });
 
-    it('open project list window', function () {
-       assert($('#project-window:visible').length > 0, "Windows didn't open. Check permissions.");
-    });
-
-
-  });
-
-  describe('when click on the Tieosoiteprojektit button when editing a floating road', function() {
-    this.timeout(1500000);
-
     before(function(done) {
-      eventbus.trigger('layer:enableButtons', true);
+      $('[id^=projectListButton]:visible').prop('disabled', false);
+      $('[id^=projectListButton]:visible').attr('disabled', false);
       testHelpers.clickProjectListButton();
       done();
     });
 
-    it('do not open project list window', function () {
-      assert($('#project-window:visible').length === 0, "Windows shouldn't open.");
-      eventbus.trigger('layer:enableButtons', false);
+    it('open project list window', function () {
+      $('[id^=projectListButton]').prop('disabled', false);
+      $('[id^=projectListButton]').attr('disabled', false);
+      assert($('[id^=project-window]:visible').length > 0, "Windows didn't open. Check permissions.");
     });
-
   });
-
 });

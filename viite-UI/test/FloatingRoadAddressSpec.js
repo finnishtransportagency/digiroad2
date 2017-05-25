@@ -88,7 +88,7 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
         testHelpers.clickEnabledSirraButton();
         setTimeout(function(){
           done();
-        },1000);
+        },2000);
       });
 
       it('Confirm that the form changed', function(){
@@ -115,7 +115,7 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
         testHelpers.clickEnabledSaveButton();
         setTimeout(function(){
           done();
-        },1000);
+        },2000);
       });
 
       it('Verify that the previous unknown link is now no longer unknown and there is only one feature', function(){

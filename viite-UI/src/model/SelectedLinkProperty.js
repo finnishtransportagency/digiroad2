@@ -358,6 +358,7 @@
     });
 
     eventbus.on('linkProperties:saved', function(){
+      eventbus.trigger('layer:enableButtons', true);
       applicationModel.toggleSelectionTypeAll();
       clearFeaturesToKeep();
     });

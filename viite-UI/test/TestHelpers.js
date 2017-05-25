@@ -110,7 +110,7 @@ define(['RoadAddressTestData',
     };
 
     var clickProjectListButton = function(){
-      $('#projectListButton:visible').click();
+      $('[id=projectListButton]').click()
     };
 
     var getLayerByName = function(map, name){
