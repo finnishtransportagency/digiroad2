@@ -205,7 +205,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
        {
        case Some(s)=>
          {
-           println( s"publishing project $s")
+
+     //     val response =projectService.getRoadAddressChangesAndSendToTR(Set(s))
+
+     //      println( s"publishing project $s dsds ${response.status}")
            //TODO call getRoadAddressChangesAndSendToTR(projectID). if success change projectstatus to "sent to TR"
            Map("projectSent" -> "TODO")
 
