@@ -53,7 +53,7 @@
         tileGrid: new ol.tilegrid.TileGrid(_.merge({}, tileGridConfig, resolutionConfig))
       }, backgroundMapConfig))
     }, layerConfig));
-    backgroundMapLayer.set('name','backgroudMapLayer');
+    backgroundMapLayer.set('name','backgroundMapLayer');
 
     var terrainMapLayer = new ol.layer.Tile(_.merge({
       source: new ol.source.XYZ(_.merge({
