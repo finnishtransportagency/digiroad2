@@ -1,5 +1,5 @@
 (function(root) {
-  root.RoadLayer3 = function(map, roadCollection,styler, selectedLinkProperty) {
+  root.RoadLayer3 = function(map, roadCollection, styler, selectedLinkProperty) {
     var vectorLayer;
     var layerMinContentZoomLevels = {};
     var currentZoom = 0;
@@ -47,20 +47,21 @@
     };
 
     var mapMovedHandler = function(mapState) {
-      console.log("map moved");
-      console.log("zoom = " + mapState.zoom);
       if (mapState.zoom !== currentZoom) {
         currentZoom = mapState.zoom;
       }
       if (mapState.zoom < minimumContentZoomLevel()) {
         vectorSource.clear();
         eventbus.trigger('map:clearLayers');
-      } else {
+      } else if (mapState.selectedLayer == 'linkProperty'){
         roadCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1);
         handleRoadsVisibility();
       }
     };
 
+    var clear = function(){
+      vectorLayer.getSource().clear();
+    };
 
     vectorLayer = new ol.layer.Vector({
       source: vectorSource,
@@ -73,7 +74,8 @@
     eventbus.on('map:moved', mapMovedHandler, this);
 
     return {
-      layer: vectorLayer
+      layer: vectorLayer,
+      clear: clear
     };
   };
 })(this);

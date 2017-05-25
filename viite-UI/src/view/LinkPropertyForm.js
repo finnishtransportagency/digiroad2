@@ -242,14 +242,14 @@
       '<div class="link-properties form-controls">' +
       '<button class="continue ready btn btn-continue" disabled>Valinta valmis</button>'  +
       '<button class="calculate btn btn-move" disabled>Siirrä</button>' +
-      '<button class="save btn btn-tallena" disabled>Tallenna</button>' +
-      '<button class="cancel btn btn-perruta" disabled>Peruuta</button>' +
+      '<button class="save btn btn-save" disabled>Tallenna</button>' +
+      '<button class="cancel btn btn-cancel" disabled>Peruuta</button>' +
       '</div>';
 
     var buttons =
       '<div class="link-properties form-controls">' +
-      '<button class="save btn btn-tallena" disabled>Tallenna</button>' +
-      '<button class="cancel btn btn-perruta" disabled>Peruuta</button>' +
+      '<button class="save btn btn-save" disabled>Tallenna</button>' +
+      '<button class="cancel btn btn-cancel" disabled>Peruuta</button>' +
       '</div>';
 
     var notificationFloatingTransfer = function(displayNotification) {
@@ -652,6 +652,7 @@
           rootElement.find('.link-properties button.continue').attr('disabled', false);
         }
         applicationModel.setActiveButtons(true);
+        eventbus.trigger('layer:enableButtons', false);
       });
 
       eventbus.on('adjacents:floatingAdded', function(floatingRoads){
@@ -680,6 +681,10 @@
         } else {
           return new ModalConfirm("Siirto ei onnistunut taustajärjestelmässä tapahtuneen tuntemattoman virheen takia, ota yhteyttä järjestelmätukeen.");
         }
+      });
+
+      eventbus.on('roadAddressProject:selected', function() {
+          $('.wrapper').remove();
       });
     };
     bindEvents();

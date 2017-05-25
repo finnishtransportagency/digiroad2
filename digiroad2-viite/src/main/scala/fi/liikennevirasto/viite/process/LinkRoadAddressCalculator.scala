@@ -76,4 +76,6 @@ object LinkRoadAddressCalculator {
   }
 }
 
-class InvalidAddressDataException(string: String) extends RuntimeException;
+class InvalidAddressDataException(string: String) extends RuntimeException {
+  override def getMessage: String = string
+};

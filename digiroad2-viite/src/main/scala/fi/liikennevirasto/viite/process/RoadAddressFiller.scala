@@ -1,13 +1,13 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.State
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.viite.RoadAddressLinkBuilder
 import fi.liikennevirasto.viite.RoadType.PublicRoad
-import fi.liikennevirasto.viite.dao.{MissingRoadAddress, RoadAddress, RoadAddressDAO}
-import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
+import fi.liikennevirasto.viite.dao.MissingRoadAddress
+import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLink}
+import fi.liikennevirasto.viite._
 
 object RoadAddressFiller {
   case class LRMValueAdjustment(addressId: Long, linkId: Long, startMeasure: Option[Double], endMeasure: Option[Double])
@@ -15,15 +15,6 @@ object RoadAddressFiller {
                                toFloatingAddressIds: Set[Long],
                                adjustedMValues: Seq[LRMValueAdjustment],
                                missingRoadAddresses: Seq[MissingRoadAddress])
-  private val MaxAllowedMValueError = 0.001
-  private val Epsilon = 1E-6 /* Smallest mvalue difference we can tolerate to be "equal to zero". One micrometer.
-                                See https://en.wikipedia.org/wiki/Floating_point#Accuracy_problems
-                             */
-  private val MaxDistanceDiffAllowed = 1.0 /*Temporary restriction from PO: Filler limit on modifications
-                                            (LRM adjustments) is limited to 1 meter. If there is a need to fill /
-                                            cut more than that then nothing is done to the road address LRM data.
-                                            */
-  private val MinAllowedRoadAddressLength = 0.1
 
   private def capToGeometry(roadLink: RoadLink, segments: Seq[RoadAddressLink], changeSet: AddressChangeSet): (Seq[RoadAddressLink], AddressChangeSet) = {
     val linkLength = GeometryUtils.geometryLength(roadLink.geometry)
@@ -57,6 +48,22 @@ object RoadAddressFiller {
       case _ => (segments, Seq())
     }
     (adjustments._1, changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ adjustments._2))
+  }
+
+  private def extendToGeometry(roadLink: RoadLink, segments: Seq[ProjectAddressLink]): Seq[ProjectAddressLink] = {
+    if (segments.isEmpty)
+      return segments
+    val linkLength = GeometryUtils.geometryLength(roadLink.geometry)
+    val sorted = segments.sortBy(_.endMValue)(Ordering[Double].reverse)
+    val lastSegment = sorted.head
+    val restSegments = sorted.tail
+    val allowedDiff = ((linkLength - MaxAllowedMValueError) - lastSegment.endMValue) <= MaxDistanceDiffAllowed
+    val adjustments = if ((lastSegment.endMValue < linkLength - MaxAllowedMValueError) && allowedDiff) {
+      restSegments ++ Seq(lastSegment.copy(endMValue = linkLength))
+    } else {
+      segments
+    }
+    adjustments
   }
 
   private def dropShort(roadLink: RoadLink, segments: Seq[RoadAddressLink], changeSet: AddressChangeSet): (Seq[RoadAddressLink], AddressChangeSet) = {
@@ -115,5 +122,20 @@ object RoadAddressFiller {
     }
   }
 
+  def fillProjectTopology(roadLinks: Seq[RoadLink], roadAddressMap: Map[Long, ProjectAddressLink]): Seq[ProjectAddressLink] = {
+    val fillOperations: Seq[(RoadLink, Seq[ProjectAddressLink]) => Seq[ProjectAddressLink]] = Seq(
+      extendToGeometry
+    )
+
+    roadLinks.foldLeft(Seq.empty[ProjectAddressLink]) { case (acc, roadLink) =>
+      val existingSegments = acc
+      val segment = roadAddressMap.get(roadLink.linkId).map(pal => Seq(pal)).getOrElse(Seq())
+
+      val adjustedSegments = fillOperations.foldLeft(segment) { case (currentSegments, operation) =>
+        operation(roadLink, currentSegments)
+      }
+      existingSegments ++ adjustedSegments
+    }
+  }
 
 }

@@ -1,6 +1,7 @@
 (function (root) {
   root.Backend = function() {
     var self = this;
+    var  loadingProject;
     this.getRoadLinks = createCallbackRequestor(function(params) {
       var zoom = params.zoom;
       var boundingBox = params.boundingBox;
@@ -8,6 +9,36 @@
         url: 'api/viite/roadlinks?zoom=' + zoom + '&bbox=' + boundingBox
       };
     });
+
+    this.abortLoadingProject=(function() {
+      if (loadingProject)
+      {
+        loadingProject.abort();
+      }
+    });
+
+    this.getProjectLinks = createCallbackRequestor(function(params) {
+      var zoom = params.zoom;
+      var boundingBox = params.boundingBox;
+      var projectId = params.projectId;
+      return {
+        url: 'api/viite/project/roadlinks?zoom=' + zoom + '&bbox=' + boundingBox + '&id=' + projectId
+      };
+    });
+
+    this.updateProjectLinks = _.throttle(function(data, errorCallback) {
+      $.ajax({
+        contentType: "application/json",
+        type: "PUT",
+        url: "api/viite/project/roadlinks",
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: function (link) {
+          eventbus.trigger('roadAddress:projectLinksUpdated');
+        },
+        error: errorCallback
+      });
+    }, 1000);
 
     this.getRoadLinkByLinkId = _.throttle(function(linkId, callback) {
       return $.getJSON('api/viite/roadlinks/' + linkId, function(data) {
@@ -55,11 +86,23 @@
       });
     }, 1000);
 
-    this.createRoadAddressProject = _.throttle(function(data, success, failure) {
+    this.saveRoadAddressProject = _.throttle(function(data, success, failure) {
       $.ajax({
         contentType: "application/json",
         type: "PUT",
         url: "api/viite/roadlinks/roadaddress/project/save",
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    }, 1000);
+
+    this.createRoadAddressProject = _.throttle(function(data, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "POST",
+        url: "api/viite/roadlinks/roadaddress/project/create",
         data: JSON.stringify(data),
         dataType: "json",
         success: success,
@@ -86,9 +129,13 @@
     }, 1000);
 
     this.getProjectsWithLinksById = _.throttle(function(id, callback) {
-      return $.getJSON('api/viite/roadlinks/roadaddress/project/all/projectId/' + id, function(data) {
+      if (loadingProject) {
+        loadingProject.abort();
+      }
+      loadingProject= $.getJSON('api/viite/roadlinks/roadaddress/project/all/projectId/' + id, function(data) {
         return _.isFunction(callback) && callback(data);
       });
+      return loadingProject;
     }, 1000);
 
     this.getUserRoles = function () {
@@ -100,6 +147,12 @@
     this.getStartupParametersWithCallback = function(callback) {
       var url = 'api/viite/startupParameters';
       $.getJSON(url, callback);
+    };
+
+    this.getRoadAddressProjectList = function () {
+      $.get('api/viite/roadlinks/roadaddress/project/all', function (list) {
+        eventbus.trigger('projects:fetched', list);
+      });
     };
 
     this.getGeocode = function(address) {
@@ -193,6 +246,14 @@
       };
       return self;
     };
+
+    this.withRoadAddressProjectData = function(roadAddressProjectData) {
+      self.getRoadAddressProjectList = function () {
+        eventbus.trigger('projects:fetched', roadAddressProjectData);
+      };
+      return self;
+    };
+
 
   };
 }(this));

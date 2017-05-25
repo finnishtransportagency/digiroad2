@@ -59,7 +59,7 @@ object OracleRailwayCrossingDao {
     }
   }
 
-  def create(asset: IncomingRailwayCrossing, mValue: Double, municipality: Int, username: String): Long = {
+  def create(asset: IncomingRailwayCrossing, mValue: Double, municipality: Int, username: String, adjustedTimestamp: Long): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     sqlu"""
@@ -67,8 +67,8 @@ object OracleRailwayCrossingDao {
         into asset(id, asset_type_id, created_by, created_date, municipality_code)
         values ($id, 230, $username, sysdate, $municipality)
 
-        into lrm_position(id, start_measure, link_id)
-        values ($lrmPositionId, $mValue, ${asset.linkId})
+        into lrm_position(id, start_measure, link_id, adjusted_timestamp)
+        values ($lrmPositionId, $mValue, ${asset.linkId}, $adjustedTimestamp)
 
         into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId)

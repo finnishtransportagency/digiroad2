@@ -1,9 +1,11 @@
 define(['RoadAddressTestData',
-    'RoadLinkTestData',
-    'UserRolesTestData'],
-  function(RoadAddressTestData,
-           RoadLinkTestData,
-           UserRolesTestData) {
+        'RoadLinkTestData',
+        'UserRolesTestData',
+        'RoadAddressProjectTestData'],
+       function(RoadAddressTestData,
+                RoadLinkTestData,
+                UserRolesTestData,
+                RoadAddressProjectTestData) {
 
     var getRoadLayerName = function() {
       return 'roadLayer';
@@ -79,6 +81,7 @@ define(['RoadAddressTestData',
         .withStartupParameters({ lon: longitude, lat: latitude, zoom: zoomLevel || 10 })
         .withFloatingAdjacents(selectTestData('floatingRoadAddress'), selectTestData('unknownRoadAddress'))
         .withGetTransferResult(selectTestData('transferFloating'))
+        .withRoadAddressProjectData(RoadAddressProjectTestData.generate())
         .withRoadAddressCreation();
     };
 
@@ -106,7 +109,11 @@ define(['RoadAddressTestData',
       $('.link-properties button.save:enabled').click();
     };
 
-    var getLayerByName = function(map, name){
+  var clickProjectListButton = function(){
+    $('#projectListButton:visible').click();
+  };
+
+  var getLayerByName = function(map, name){
       var layers = map.getLayers().getArray();
       return _.find(layers, function(layer){
         return layer.get('name') === name;
@@ -211,6 +218,7 @@ define(['RoadAddressTestData',
       clickValintaButton:clickValintaButton,
       clickEnabledSirraButton: clickEnabledSirraButton,
       clickVisibleEditModeButton: clickVisibleEditModeButton,
+      clickProjectListButton: clickProjectListButton,
       clickVisbleYesConfirmPopup: clickVisbleYesConfirmPopup,
       clickEnabledSaveButton: clickEnabledSaveButton,
       clickMap: clickMap,

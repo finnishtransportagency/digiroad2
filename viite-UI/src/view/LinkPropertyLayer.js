@@ -14,6 +14,7 @@
     var greenRoadLayerVector = new ol.source.Vector({});
     var pickRoadsLayerVector = new ol.source.Vector({});
     var simulationVector = new ol.source.Vector({});
+    var activeLayer = false;
 
     var indicatorLayer = new ol.layer.Vector({
       source: indicatorVector
@@ -185,14 +186,17 @@
     });
     selectDoubleClick.set('name','selectDoubleClickInteraction');
 
-    //This will control the double click zoom when there is no selection
-    map.on('dblclick', function(event) {
-      _.defer(function(){
-        if(selectDoubleClick.getFeatures().getLength() < 1 && map.getView().getZoom() <= 13){
-          map.getView().setZoom(map.getView().getZoom()+1);
-        }
-      });
-    });
+
+    var zoomDoubleClickListener = function(event) {
+      if (activeLayer)
+        _.defer(function(){
+          if(selectDoubleClick.getFeatures().getLength() < 1 && map.getView().getZoom() <= 13){
+            map.getView().setZoom(map.getView().getZoom()+1);
+          }
+        });
+    };
+    //This will control the double click zoom when there is no selection that activates
+    map.on('dblclick', zoomDoubleClickListener);
 
     /**
      * We declare the type of interaction we want the map to be able to respond.
@@ -319,7 +323,6 @@
       _.each(ol3Features, function(feature){
         if(_.contains(olUids,feature.ol_uid)){
           selectSingleClick.getFeatures().remove(feature);
-          console.log(selectSingleClick.getFeatures());
         }
       });
 
@@ -817,6 +820,7 @@
     var refreshViewAfterSaving = function() {
       selectedLinkProperty.setDirty(false);
       selectedLinkProperty.resetTargets();
+      applicationModel.resetCurrentAction();
       applicationModel.setActiveButtons(false);
       $('#feature-attributes').empty();
       clearLayers();
@@ -849,7 +853,6 @@
         var features =[];
         _.each(roadLayer.layer.getSource().getFeatures(), function (feature) {
           if (_.contains(greenFeaturesLinkId, feature.roadLinkData.linkId)) {
-            console.log("Found Green Feature: " + feature.roadLinkData.linkId);
 
             feature.roadLinkData.prevAnomaly = feature.roadLinkData.anomaly;
             feature.roadLinkData.gapTransfering = true;
@@ -1149,6 +1152,23 @@
       activateSelectInteractions(true);
     });
 
+    eventListener.listenTo(eventbus, 'layer:selected', function(layer, previouslySelectedLayer){
+      //TODO create proper system for layer changes and needed calls
+      if (layer !== 'linkProperty') {
+        deactivateSelectInteractions(true);
+        removeSelectInteractions();
+        activeLayer = false;
+      } else {
+        activeLayer = true;
+        activateSelectInteractions(true);
+        addSelectInteractions();
+      }
+      if (previouslySelectedLayer === 'linkProperty') {
+        clearLayers();
+        hideLayer();
+        removeSelectInteractions();
+      }
+    });
     var show = function(map) {
       vectorLayer.setVisible(true);
     };

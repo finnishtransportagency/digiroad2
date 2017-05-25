@@ -34,7 +34,7 @@
     }
 
     function open(asset) {
-      originalAsset = _.cloneDeep(asset);
+      originalAsset = _.cloneDeep(_.omit(asset, "geometry"));
       current = asset;
       eventbus.trigger(assetName + ':selected');
     }
