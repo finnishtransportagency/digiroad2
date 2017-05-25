@@ -1,12 +1,12 @@
 package fi.liikennevirasto.digiroad2
 
-import java.awt.Polygon
 import java.io.{File, FilenameFilter, IOException}
 import java.text.SimpleDateFormat
 import java.util.{Date, Properties}
 import java.util.concurrent.TimeUnit
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
+import com.vividsolutions.jts.geom.Polygon
 import fi.liikennevirasto.digiroad2.GeometryUtils._
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
@@ -233,13 +233,40 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }
   }
 
-  def getRoadLinksAndChangesFromVVHWithPolygon(polygonString :String): (Seq[RoadLink], Seq[ChangeInfo])= {
-    val (changes, links) = Await.result(vvhClient.fetchChangesByPolygonF(polygonString).zip(vvhClient.fetchRoadLinksByPolygonF(polygonString)), atMost = Duration.Inf)
+  def getRoadLinksAndChangesFromVVHWithPolygon(polygon :Polygon): (Seq[RoadLink], Seq[ChangeInfo])= {
+    val (changes, links) = Await.result(vvhClient.fetchChangesByPolygonF(polygon).zip(vvhClient.fetchRoadLinksByPolygonF(polygon)), atMost = Duration.Inf)
     withDynTransaction {
       (enrichRoadLinksFromVVH(links, changes), changes)
     }
   }
 
+  /**
+    * This method returns "real" and "complementary" link id by polygons.
+    *
+    * @param polygons
+    * @return LinksId
+    */
+
+    def getLinkIdsFromVVHWithComplementaryByPolygons(polygons: Seq[Polygon]) = {
+      polygons.flatMap(getLinkIdsFromVVHWithComplementaryByPolygon)
+    }
+
+  /**
+    * This method returns "real" and "complementary" link id by polygon.
+    *
+    * @param polygon
+    * @return seq(LinksId) , seq(LinksId)
+    */
+  def getLinkIdsFromVVHWithComplementaryByPolygon(polygon :Polygon): Seq[Long] = {
+
+     val fut = for {
+       f1Result <- vvhClient.fetchLinkIdsByPolygonF(polygon)
+       f2Result <- vvhClient.complementaryData.fetchLinkIdsByPolygonFComplementary(polygon)
+     } yield (f1Result, f2Result)
+
+    val (complementaryResult, result) = Await.result(fut, Duration.Inf)
+    complementaryResult ++ result
+  }
 
   /**
     * This method returns "real" road links, "complementary" road links and change data by bounding box and municipalities.

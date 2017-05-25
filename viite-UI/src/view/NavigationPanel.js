@@ -27,10 +27,10 @@
     bindEvents();
 
     eventbus.on('layer:selected', function selectLayer(layer, previouslySelectedLayer) {
-      var previousControl = assetControlMap[previouslySelectedLayer];
-      if (previousControl) previousControl.hide();
-      assetControlMap[layer].show();
-      assetElementDiv.show();
+        var previousControl = assetControlMap[previouslySelectedLayer];
+        if (previousControl) previousControl.hide();
+        assetControlMap.linkProperty.show();
+        assetElementDiv.show();
     });
 
     container.append(navigationPanel);
@@ -43,7 +43,7 @@
 
     eventbus.on('layer:enableButtons', enableButtons);
     function enableButtons(value) {
-      navigationPanel.find(":button").prop('disabled', !value);
+      navigationPanel.find(':button, :input').prop('disabled', !value);
     }
 
   }

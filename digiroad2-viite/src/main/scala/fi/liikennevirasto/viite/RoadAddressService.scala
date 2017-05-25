@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.model.RoadAddressLink
+import fi.liikennevirasto.viite.model.{RoadAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
 import fi.liikennevirasto.viite.process._
 import org.slf4j.LoggerFactory
@@ -256,7 +256,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   def getUniqueRoadAddressLink(id: Long) = getRoadAddressLink(id)
 
-  def roadClass(roadAddressLink: RoadAddressLink) = {
+  def roadClass(roadAddressLink: RoadAddressLinkLike) = {
     val C1 = new Contains(1 to 39)
     val C2 = new Contains(40 to 99)
     val C3 = new Contains(100 to 999)
@@ -320,7 +320,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   def createMergedSegments(mergedRoadAddress: Seq[RoadAddress]) = {
-    mergedRoadAddress.grouped(500).foreach(group => RoadAddressDAO.create(group, "Automatic_merged"))
+    mergedRoadAddress.grouped(500).foreach(group => RoadAddressDAO.create(group, Some("Automatic_merged")))
   }
 
   def updateMergedSegments(expiredIds: Set[Long]) = {
@@ -512,11 +512,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     transferRoadAddress(sourceRoadAddressLinks, targetRoadAddressLinks, user)
   }
 
-  def transferFloatingToGap(sourceIds: Set[Long], targetIds: Set[Long], roadAddresses: Seq[RoadAddress]) = {
+  def transferFloatingToGap(sourceIds: Set[Long], targetIds: Set[Long], roadAddresses: Seq[RoadAddress], username: String) = {
     withDynTransaction {
       RoadAddressDAO.expireRoadAddresses(sourceIds)
       RoadAddressDAO.expireMissingRoadAddresses(targetIds)
-      RoadAddressDAO.create(roadAddresses)
+      RoadAddressDAO.create(roadAddresses, Some(username))
       recalculateRoadAddresses(roadAddresses.head.roadNumber.toInt, roadAddresses.head.roadPartNumber.toInt)
     }
   }

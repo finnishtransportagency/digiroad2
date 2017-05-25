@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
+import com.vividsolutions.jts.geom.{MultiPolygon, Polygon}
 import fi.liikennevirasto.digiroad2.ChangeType._
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.asset._
@@ -45,6 +46,7 @@ trait LinearAssetOperations {
   def vvhClient: VVHClient
   def dao: OracleLinearAssetDao
   def eventBus: DigiroadEventBus
+  def polygonTools : PolygonTools
 
   lazy val dataSource = {
     val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))
@@ -78,10 +80,7 @@ trait LinearAssetOperations {
 
 
   def getByIntersectedBoundingBox(typeId: Int, serviceArea : Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
-    val polygonTool = new PolygonTools()
-    val polygonStringList =polygonTool.stringifyGeometryForVVHClient(
-        polygonTool.geometryInterceptorToBoundingBox(
-          polygonTool.getAreaGeometry(serviceArea),bounds))
+    val polygonStringList = polygonTools.geometryInterceptorToBoundingBox(polygonTools.getAreaGeometry(serviceArea),bounds)
     val vVHRoadLinksAndChanges = polygonStringList.map(roadLinkService.getRoadLinksAndChangesFromVVHWithPolygon)
     val roadLinks = vVHRoadLinksAndChanges.flatMap(_._1)
     val changes =vVHRoadLinksAndChanges.flatMap(_._2)
@@ -368,6 +367,16 @@ trait LinearAssetOperations {
           dao.fetchMaintenancesByIds(typeId, ids)
         case _ =>
           dao.fetchLinearAssetsByIds(ids, LinearAssetTypes.getValuePropertyId(typeId))
+      }
+    }
+  }
+
+  def getPersistedAssetsByLinkIds(typeId: Int, linkIds: Seq[Long]): Seq[PersistedLinearAsset] = {
+    withDynTransaction {
+      typeId match {
+        case LinearAssetTypes.MaintenanceRoadAssetTypeId =>
+          dao.fetchMaintenancesByLinkIds(typeId, linkIds, includeExpire = false)
+        case _ => Seq.empty[PersistedLinearAsset]
       }
     }
   }
@@ -740,6 +749,11 @@ trait LinearAssetOperations {
     }
   }
 
+  def getActiveMaintenanceRoadByPolygon(areaId: Int, typeId: Int): Seq[PersistedLinearAsset] = {
+    val polygon= polygonTools.getPolygonByArea(areaId)
+    val vVHLinkIds = roadLinkService.getLinkIdsFromVVHWithComplementaryByPolygons(polygon)
+    getPersistedAssetsByLinkIds(typeId, vVHLinkIds)
+  }
 }
 
 class LinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {
@@ -747,6 +761,7 @@ class LinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   override def dao: OracleLinearAssetDao = new OracleLinearAssetDao(roadLinkServiceImpl.vvhClient)
   override def eventBus: DigiroadEventBus = eventBusImpl
   override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
+  override def polygonTools : PolygonTools = new PolygonTools()
 }
 
 class MissingMandatoryPropertyException(val missing: Set[String]) extends RuntimeException {

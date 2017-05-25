@@ -3,6 +3,17 @@ package fi.liikennevirasto.digiroad2.util
 import fi.liikennevirasto.digiroad2.roadaddress.oracle.RoadAddressDAO
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 
+import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.{Point, Vector3d}
+import org.apache.http.NameValuePair
+import org.apache.http.client.entity.UrlEncodedFormEntity
+import org.apache.http.client.methods.{HttpGet, HttpPost}
+import org.apache.http.impl.client.HttpClientBuilder
+import org.apache.http.message.BasicNameValuePair
+import org.json4s._
+import org.json4s.jackson.JsonMethods._
+import org.json4s.jackson.Serialization
+import fi.liikennevirasto.digiroad2.roadaddress.oracle.RoadAddressDAO
 /**
   * A road consists of 1-2 tracks (fi: "ajorata"). 2 tracks are separated by a fence or grass for example.
   * Left and Right are relative to the advancing direction (direction of growing m values)
@@ -56,8 +67,12 @@ class RoadAddressException(response: String) extends RuntimeException(response)
 class GeometryTransform {
   // see page 16: http://www.liikennevirasto.fi/documents/20473/143621/tieosoitej%C3%A4rjestelm%C3%A4.pdf/
 
+  lazy val roadAddressDao : RoadAddressDAO = {
+    new RoadAddressDAO()
+  }
+
   def addressToCoords(road: Long, roadPart: Long, track: Track, mValue: Double) : Option[Point] = {
-    val addresslist = RoadAddressDAO.getRoadAddress(RoadAddressDAO.withRoadAddress(road, roadPart, track.value, mValue)).headOption
+    val addresslist = roadAddressDao.getRoadAddress(roadAddressDao.withRoadAddress(road, roadPart, track.value, mValue)).headOption
 
     addresslist match {
       case Some(address) =>
@@ -68,7 +83,7 @@ class GeometryTransform {
 
   def resolveAddressAndLocation(mValue: Double, linkId: Long, assetSideCode: Int, municipalityCode: Option[Int] = None, road: Option[Int] = None): (RoadAddress, RoadSide) = {
 
-    val roadAddress = RoadAddressDAO.getRoadAddress(RoadAddressDAO.withLinkIdAndMeasure(linkId, mValue.toLong, mValue.toLong, road)).headOption
+    val roadAddress = roadAddressDao.getRoadAddress(roadAddressDao.withLinkIdAndMeasure(linkId, mValue.toLong, mValue.toLong, road)).headOption
 
     val roadSide = roadAddress match {
       case Some(addrSide) if (addrSide.sideCode.value == assetSideCode) => RoadSide.Right //TowardsDigitizing //
@@ -83,5 +98,19 @@ class GeometryTransform {
     }
 
     (address, roadSide )
+  }
+
+  def resolveAddressAndLocation(linkId: Long, startM: Double, endM: Double, sideCode: SideCode) : Seq[ fi.liikennevirasto.digiroad2.roadaddress.oracle.RoadAddress] = {
+    val roadAddress = roadAddressDao.getByLinkIdAndMeasures(linkId, startM, endM)
+    roadAddress
+      .filter( road => compareSideCodes(sideCode, road))
+      .groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.sideCode)).map {
+      grouped =>
+        grouped._2.minBy(t => t.startMValue).copy(endMValue = grouped._2.maxBy(t => t.endMValue).endMValue)
+    }.toSeq
+  }
+
+  def compareSideCodes(sideCode: SideCode, roadAddress: fi.liikennevirasto.digiroad2.roadaddress.oracle.RoadAddress): Boolean = {
+    (sideCode == SideCode.BothDirections || sideCode == SideCode.Unknown || roadAddress.sideCode == SideCode.BothDirections || roadAddress.sideCode == SideCode.Unknown) || sideCode == roadAddress.sideCode
   }
 }

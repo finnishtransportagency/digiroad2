@@ -902,7 +902,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
       StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("esterakennelma").first
     }
 
-    val id = OracleObstacleDao.create(incomingObstacle, 0.0, "test_data", 749)
+    val id = OracleObstacleDao.create(incomingObstacle, 0.0, "test_data", 749, 0)
     sqlu"""update asset set floating = 1 where id = $id""".execute
     id
   }

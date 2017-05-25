@@ -11,6 +11,9 @@ package object viite {
   val MaxDistanceDiffAllowed = 1.0 /* Temporary restriction from PO: Filler limit on modifications
                                       (LRM adjustments) is limited to 1 meter. If there is a need to fill /
                                       cut more than that then nothing is done to the road address LRM data.
+
+                                      Used also for checking the integrity of the targets of floating road links: no
+                                      three roads may have ending points closer to this in the target geometry
                                    */
 
   val MinAllowedRoadAddressLength = 0.1

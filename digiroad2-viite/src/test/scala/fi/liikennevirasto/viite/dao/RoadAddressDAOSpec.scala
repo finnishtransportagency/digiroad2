@@ -100,6 +100,23 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Create Road Address with username") {
+    runWithRollback {
+      val username = "testUser"
+      val id = RoadAddressDAO.getNextRoadAddressId
+      val ra = Seq(RoadAddress(id, 1943845, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, (None, None), false,
+        Seq(Point(0.0, 0.0), Point(0.0, 9.8))))
+      val currentSize = RoadAddressDAO.fetchByRoadPart(ra.head.roadNumber, ra.head.roadPartNumber).size
+      val returning = RoadAddressDAO.create(ra, Some(username))
+      returning.nonEmpty should be (true)
+      returning.head should be (id)
+      val newSize = currentSize + 1
+      val roadAddress = RoadAddressDAO.fetchByRoadPart(ra.head.roadNumber, ra.head.roadPartNumber)
+      roadAddress should have size(newSize)
+      roadAddress.head.modifiedBy.get should be (username)
+    }
+  }
+
   test("Create Road Address With Calibration Point") {
     runWithRollback {
       val id = RoadAddressDAO.getNextRoadAddressId

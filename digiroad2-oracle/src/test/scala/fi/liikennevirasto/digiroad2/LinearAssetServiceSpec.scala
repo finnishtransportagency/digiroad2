@@ -1,12 +1,15 @@
+
 package fi.liikennevirasto.digiroad2
 
+import com.vividsolutions.jts.geom.{GeometryFactory, Polygon}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Saturday, Weekday}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.util.TestTransactions
+import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
+import org.geotools.geometry.jts.GeometryBuilder
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.mockito.ArgumentCaptor
@@ -18,9 +21,13 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{StaticQuery => Q}
 
+import scala.collection.mutable.ListBuffer
+
 class LinearAssetServiceSpec extends FunSuite with Matchers {
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockVVHClient = MockitoSugar.mock[VVHClient]
+  val mockPolygonTools = MockitoSugar.mock[PolygonTools]
+
   when(mockVVHClient.fetchByLinkId(388562360l)).thenReturn(Some(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockVVHClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
@@ -43,6 +50,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     override def dao: OracleLinearAssetDao = mockLinearAssetDao
     override def eventBus: DigiroadEventBus = mockEventBus
     override def vvhClient: VVHClient = mockVVHClient
+    override def polygonTools: PolygonTools = mockPolygonTools
   }
 
   object ServiceWithDao extends LinearAssetOperations {
@@ -51,7 +59,11 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     override def dao: OracleLinearAssetDao = linearAssetDao
     override def eventBus: DigiroadEventBus = mockEventBus
     override def vvhClient: VVHClient = mockVVHClient
+    override def polygonTools: PolygonTools = mockPolygonTools
   }
+
+  val geomFact= new GeometryFactory()
+  val geomBuilder = new GeometryBuilder(geomFact)
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(PassThroughService.dataSource)(test)
 
@@ -1894,7 +1906,6 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     }
   }
 
-
   test("Create linear asset on a road link that has changed previously"){
     val oldLinkId1 = 5000
     val linkId1 = 5001
@@ -1946,6 +1957,41 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       after.flatten.forall(_.id != 0) should be (true)
       dynamicSession.rollback()
 
+    }
+  }
+
+  test("Fetch all Active Maintenance Road By Polygon") {
+
+    val prop1 = Properties("huoltotie_kayttooikeus", "single_choice", "1")
+    val prop2 = Properties("huoltotie_huoltovastuu", "single_choice", "2")
+    val prop3 = Properties("huoltotie_tiehoitokunta", "text", "text")
+
+    val propertiesSeq :Seq[Properties] = List(prop1, prop2, prop3)
+
+    when(mockPolygonTools.getAreaGeometry(any[Int])).thenReturn(geomBuilder.polygon(24.2, 60.5, 24.8, 60.5, 24.8, 59, 24.2, 59))
+    when(mockRoadLinkService.getLinkIdsFromVVHWithComplementaryByPolygons(any[Seq[Polygon]])).thenReturn(Seq(388562360l))
+
+    val maintenanceRoad = MaintenanceRoad(propertiesSeq)
+    runWithRollback {
+      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, maintenanceRoad, 1, 0, None)), 290, "testuser")
+      newAssets.length should be(1)
+
+      val assets = ServiceWithDao.getActiveMaintenanceRoadByPolygon(1, 290)
+      assets.map { asset =>
+        asset.linkId should be(388562360l)
+        asset.startMeasure should be(0)
+        asset.endMeasure should be(20)
+        asset.value.get.asInstanceOf[MaintenanceRoad].maintenanceRoad.length should be(3)
+      }
+    }
+  }
+
+  test("Fetch Active Maintenance Road By Polygon, with an empty result") {
+
+    when(mockRoadLinkService.getLinkIdsFromVVHWithComplementaryByPolygons(Seq(geomBuilder.polygon(24.2, 60.5, 24.8, 60.5, 24.8, 59, 24.2, 59)))).thenReturn(Seq(388562360l))
+    OracleDatabase.withDynTransaction {
+      val assets = ServiceWithDao.getActiveMaintenanceRoadByPolygon(1, 290)
+      assets.length should be(0)
     }
   }
 }

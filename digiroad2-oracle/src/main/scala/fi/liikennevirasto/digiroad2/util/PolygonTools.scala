@@ -47,25 +47,18 @@ class PolygonTools {
     } else
       Seq.empty[Polygon]
   }
-  /**
-    *
-    * @param geometrySeq sequence of polygons to be converted to strings
-    * @return sequence of strings compatible with VVH polygon query
-    */
-  def stringifyGeometryForVVHClient(geometrySeq: Seq[Polygon]): Seq[String] = {
-    var stringPolygonList = ListBuffer.empty[String]
-    for (geometry <- geometrySeq) {
-      var polygonString: String = "{rings:[["
-      if (geometry.getCoordinates.length > 0) {
-        for (point <- geometry.getCoordinates.dropRight(1)) {
-          // drop removes duplicates
-          polygonString += "[" + point.x + "," + point.y + "],"
-        }
-        polygonString = polygonString.dropRight(1) + "]]}"
-        stringPolygonList += polygonString
-      }
+
+  def getPolygonByArea(areaId: Int): Seq[Polygon] = {
+    val geometry = getAreaGeometry(areaId)
+
+    val polygon = geometry match {
+      case _ if geometry.getGeometryType.toLowerCase.startsWith("polygon") =>
+        Seq(geometry.asInstanceOf[Polygon])
+      case _ if geometry.getGeometryType.toLowerCase.startsWith("multipolygon") =>
+        multiPolygonToPolygonSeq(geometry.asInstanceOf[MultiPolygon])
+      case _ => Seq.empty[Polygon]
     }
-    stringPolygonList
+    polygon
   }
 
   def getAreaGeometry(areaId: Int): Geometry = {
@@ -74,7 +67,7 @@ class PolygonTools {
     wKTParser.read(areaChoose.getArea(areaId))
   }
 
-  private def multiPolygonToPolygonSeq (multiPoly: MultiPolygon): Seq[Polygon] ={
+  def multiPolygonToPolygonSeq (multiPoly: MultiPolygon): Seq[Polygon] ={
     var geomCounter=multiPoly.getNumGeometries
     var  listPolygons= ListBuffer.empty[Polygon]
     while (geomCounter>0)
