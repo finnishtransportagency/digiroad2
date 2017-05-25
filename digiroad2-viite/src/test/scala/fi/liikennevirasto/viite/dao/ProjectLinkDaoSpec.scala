@@ -2,15 +2,13 @@ package fi.liikennevirasto.viite.dao
 import java.sql.SQLException
 
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, RoadLinkService}
-import slick.jdbc.StaticQuery.interpolation
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.viite._
 import org.joda.time.DateTime
-import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.jdbc.StaticQuery.interpolation
 
 /**
   * Class to test DB trigger that does not allow reserving already reserved links to project
@@ -92,11 +90,16 @@ class ProjectLinkDaoSpec  extends FunSuite with Matchers{
     }
   }
 
-  test("get roadpart info") {
-    runWithRollback {
-      val reserveResult= RoadAddressDAO.getRoadPartInfo(5,203)
-      val expectedLink = reserveResult==Some((242,5172706,5907.0,5))
-      expectedLink should be (true)
-    }
+  test("get projects waiting TR response") {
+  val address=ReservedRoadPart(5:Long, 203:Long, 203:Long, 5.5:Double, Discontinuity.apply("jatkuva"), 8:Long)
+  runWithRollback {
+    val waitingCountp=  ProjectDAO.getProjectsWithWaitingTRStatus().length
+    val id = Sequences.nextViitePrimaryKeySeqValue
+    val rap = RoadAddressProject(id, ProjectState.apply(2), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(address))
+    ProjectDAO.createRoadAddressProject(rap)
+    val waitingCountNow=  ProjectDAO.getProjectsWithWaitingTRStatus().length
+    waitingCountNow - waitingCountp  should be (1)
   }
+  }
+
 }

@@ -7,13 +7,13 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, RoadLinkService}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink, RoadAddressLinkLike}
-import fi.liikennevirasto.viite.process.{ProjectDeltaCalculator, RoadAddressFiller}
+import fi.liikennevirasto.viite.process.RoadAddressFiller
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ListBuffer
+import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
-import scala.concurrent.ExecutionContext.Implicits.global
 
 class ProjectService(roadAddressService: RoadAddressService, roadLinkService: RoadLinkService, eventbus: DigiroadEventBus) {
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
@@ -220,6 +220,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  def getRoadAddressChangesAndSendToTR(projectId: Set[Long]) = {
+    val roadAddressChanges = RoadAddressChangesDAO.fetchRoadAddressChanges(projectId)
+    ViiteTierekisteriClient.sendRoadAddressChangeData(roadAddressChanges)
+  }
+
   def getProjectRoadLinks(projectId: Long, boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
                           everything: Boolean = false, publicRoads: Boolean = false): Seq[ProjectAddressLink] = {
     def complementaryLinkFilter(roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
@@ -347,4 +352,77 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     (roadLinks ++ complementaryLinks, complementaryLinks.map(_.linkId).toSet)
   }
 
+  def getProjectStatusFromTR(projectId: Long) = {
+    ViiteTierekisteriClient.getProjectStatus(projectId.toString)
+  }
+
+  val listOfExitStatuses=List(1,3,5) // closed, errorinTR,savedtotr magic numbers
+
+  private def getStatusFromTRObject(trProject:Option[TRProjectStatus]):Option[ProjectState] = {
+    trProject match {
+      case Some(trPojectobject) => mapTRstateToViiteState(trPojectobject.status.getOrElse(""))
+      case None => None
+      case _ => None
+    }
+  }
+
+  def updateProjectStatusIfNeeded(currentStatus:ProjectState, newStatus:ProjectState, projectId:Long) :(ProjectState)= {
+    if (currentStatus.value!=newStatus.value && newStatus != ProjectState.Unknown)
+    {
+      ProjectDAO.updateProjectStatus(projectId,newStatus)
+    }
+    if (newStatus != ProjectState.Unknown){
+      newStatus
+    } else
+    {
+      currentStatus
+    }
+  }
+
+  private def getProjectsPendingInTR() :Seq[Long]= {
+    withDynSession {
+      ProjectDAO.getProjectsWithWaitingTRStatus()
+    }
+  }
+  def updateProjectsWaitingResponseFromTR(): Unit =
+  {
+
+    val listOfPendingProjects=getProjectsPendingInTR()
+
+    for(project<-listOfPendingProjects)
+    {
+      withDynSession {
+        checkprojectstatus(project)
+      }
+    }
+
+  }
+
+  private def checkprojectstatus(projectID: Long) =
+  {
+    val projectstatus=ProjectDAO.getProjectstatus(projectID)
+    if (projectstatus.isDefined)
+    {
+      val currentState=projectstatus.getOrElse(ProjectState.Unknown)
+      val newState =getStatusFromTRObject(ViiteTierekisteriClient.getProjectStatusObject(projectID)).getOrElse(ProjectState.Unknown)
+      updateProjectStatusIfNeeded(currentState,newState,projectID)
+    }
+    {
+      //TODO
+      //copy & update new roads
+      // remove links from project-link table
+    }
+  }
+
+  private def mapTRstateToViiteState(trState:String): Option[ProjectState] ={
+
+    trState match {
+      case "S" => Some(ProjectState.apply(ProjectState.TRProcessing.value))
+      case "K" => Some(ProjectState.apply(ProjectState.TRProcessing.value))
+      case "T" => Some(ProjectState.apply(ProjectState.Saved2TR.value))
+      case "V" => Some(ProjectState.apply(ProjectState.ErroredInTR.value))
+      case "null" => Some(ProjectState.apply(ProjectState.ErroredInTR.value))
+      case _=> None
+    }
+  }
 }
