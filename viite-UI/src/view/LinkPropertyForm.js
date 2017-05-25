@@ -610,7 +610,7 @@
           applicationModel.toggleSelectionTypeUnknown();
           applicationModel.setContinueButton(false);
           eventbus.trigger('linkProperties:deselectFeaturesSelected');
-          eventbus.trigger('linkProperties:highlightAnomalousByFloating');
+          eventbus.trigger('linkProperties:highlightSelectedFloatingFeatures');
           eventbus.trigger('linkProperties:activateInteractions');
           eventbus.trigger('linkProperties:deactivateDoubleClick');
         }
