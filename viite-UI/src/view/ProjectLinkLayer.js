@@ -169,7 +169,7 @@
 
     var zoomDoubleClickListener = function(event) {
       _.defer(function(){
-        if(selectDoubleClick.getFeatures().getLength() < 1 && selectedProjectLinkProperty.get().length < 1 && map.getView().getZoom() <= 13){
+        if(selectedProjectLinkProperty.get().length === 0 && applicationModel.getSelectedLayer() == 'roadAddressProject' && map.getView().getZoom() <= 13){
           map.getView().setZoom(map.getView().getZoom()+1);
         }
       });

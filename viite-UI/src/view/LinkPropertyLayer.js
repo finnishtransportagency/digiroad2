@@ -190,7 +190,7 @@
     var zoomDoubleClickListener = function(event) {
       if (activeLayer)
         _.defer(function(){
-          if(selectDoubleClick.getFeatures().getLength() < 1 && map.getView().getZoom() <= 13){
+          if(selectDoubleClick.getFeatures().getLength() === 0 && applicationModel.getSelectedLayer() == 'linkProperty' && map.getView().getZoom() <= 13){
             map.getView().setZoom(map.getView().getZoom()+1);
           }
         });
