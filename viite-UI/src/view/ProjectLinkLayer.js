@@ -2,6 +2,7 @@
   root.ProjectLinkLayer = function(map, projectCollection, selectedProjectLinkProperty, roadLayer) {
     var layerName = 'roadAddressProject';
     var vectorLayer;
+    var calibrationPointVector = new ol.source.Vector({});
     var layerMinContentZoomLevels = {};
     var currentZoom = 0;
     Layer.call(this, layerName, roadLayer);
@@ -25,6 +26,11 @@
       },
       strategy: ol.loadingstrategy.bbox
     });
+
+    var calibrationPointLayer = new ol.layer.Vector({
+      source: calibrationPointVector
+    });
+    calibrationPointLayer.set('name','calibrationPointLayer');
 
     var styleFunction = function (feature, resolution){
       var status = feature.projectLinkData.status;
@@ -234,6 +240,12 @@
         feature.projectLinkData = projectLink;
         features.push(feature);
       });
+      var actualPoints = me.drawCalibrationMarkers(calibrationPointLayer.source, projectLinks);
+      _.each(actualPoints, function (actualPoint) {
+        var calMarker = new CalibrationPoint(actualPoint.point);
+        calibrationPointLayer.getSource().addFeature(calMarker.getMarker(true));
+      });
+      calibrationPointLayer.setZIndex(22);
       var partitioned = _.partition(features, function(feature) {
         return (!_.isUndefined(feature.projectLinkData.linkId) && _.contains(editedLinks, feature.projectLinkData.linkId));
       });
@@ -293,8 +305,9 @@
     eventbus.on('map:moved', mapMovedHandler, this);
 
     vectorLayer.setVisible(true);
+    calibrationPointLayer.setVisible(true);
     map.addLayer(vectorLayer);
-
+    map.addLayer(calibrationPointLayer);
     return {
       show: show,
       hide: hideLayer
