@@ -168,6 +168,19 @@
         eventbus.trigger('roadAddressProject:projectLinkSaved', data.projectId);
       });
 
+      eventbus.on('roadAddress:projectSentSuccess', function() {
+        new ModalConfirm("Muutosilmoitus lähetetty Tierekisteriin.");
+        //TODO: Viite is returned to the initial state
+        /*
+        applicationModel.setOpenProject(false);
+        projectCollection.clearRoadAddressProjects();
+        applicationModel.selectLayer('linkProperty');
+        */
+      });
+      eventbus.on('roadAddress:projectSentFailed', function(error) {
+        new ModalConfirm(error);
+      });
+
       rootElement.on('click', '.project-form button.update', function() {
         currentProject = projectCollection.getCurrentProject();
         projectCollection.saveProjectLinks(selectedProjectLink, currentProject);

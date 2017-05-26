@@ -190,10 +190,17 @@
     };
 
     this.publishProject = function() {
-      backend.sendProjectToTR(projectinfo.id, function() {
+      backend.sendProjectToTR(projectinfo.id, function(result) {
         console.log("Success");
-      }, function() {
+          if(result.sendSuccess) {
+            eventbus.trigger('roadAddress:projectSentSuccess');
+          }
+          else {
+            eventbus.trigger('roadAddress:projectSentFailed', result.errorMessage);
+          }
+      }, function(result) {
         console.log("Failure");
+        eventbus.trigger('roadAddress:projectSentFailed', result.status);
       });
     };
 
