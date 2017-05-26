@@ -323,6 +323,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     withDynTransaction {
       val returnValue: Option[String] = None //not implemented yet
 
+      addProjectDeltaToDB(ProjectDeltaCalculator.delta(projectId))
       returnValue match {
         case Some(message) => {
           val trProjectStateMessage = getRoadAddressChangesAndSendToTR(Set(projectId))
@@ -343,13 +344,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
     // TODO: Check that project actually is finished: projectLinkPublishable(projectId)
     // TODO: use ProjectDeltaCalculator to calculate delta
-//      addProjectDeltaToDB(ProjectDeltaCalculator.delta(projectId))  // TODO: Do the changes given in Delta in database
+//        // TODO: Do the changes given in Delta in database
     // TODO: Run post-change tests for the roads that have been edited and throw an exception to roll back if not acceptable
 
   }
 
   private def addProjectDeltaToDB(projectDelta:Delta):Unit= {
-    //  ProjectDAO.insertDeltaToRoadChangeTable(projectDelta)
+      ProjectDAO.insertDeltaToRoadChangeTable(projectDelta)
   }
 
 

@@ -182,7 +182,7 @@ object ProjectDAO {
        val ely= 1 //TODO missing
 
        val projectChange = dynamicSession.prepareStatement("INSERT INTO ROAD_ADDRESS_CHANGES (project_id,change_type,old_road_number,new_road_number,old_road_part_number,new_road_part_number, " +
-         "old_track_code,new_track_code,old_start_addr_m,new_start_addr_m,old_end_addr_m_m,new_end_addr_m,new_discontinuity,new_road_type,new_ely)" +
+         "old_track_code,new_track_code,old_start_addr_m,new_start_addr_m,old_end_addr_m,new_end_addr_m,new_discontinuity,new_road_type,new_ely)" +
          "values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,? )")
 
        delta.terminations.foreach { case (address) =>
@@ -202,6 +202,7 @@ object ProjectDAO {
          projectChange.setLong(14, roadtype)
          projectChange.setLong(15, ely)
          projectChange.addBatch()
+
        }
     projectChange.executeBatch()
     projectChange.close()
