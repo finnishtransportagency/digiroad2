@@ -218,7 +218,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       Map("project" -> projectToApi(projectSaved), "projectAddresses" -> addr, "formInfo" -> info,
         "success" -> success)
     } catch {
-      case ex: IllegalArgumentException => NotFound(s"Project id ${project.id} not found")
+      case ex: IllegalArgumentException =>
+        NotFound(s"Project id ${project.id} not found")
     }
   }
 
