@@ -830,6 +830,9 @@
       selectedLinkProperty.clearFeaturesToKeep();
       greenRoadLayer.getSource().clear();
       simulatedRoadsLayer.getSource().clear();
+      eventbus.once('roadLinks:fetched', function(){
+        applicationModel.removeSpinner();
+      });
     };
 
     var redrawNextSelectedTarget= function(targets, adjacents) {
