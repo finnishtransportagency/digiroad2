@@ -81,8 +81,14 @@ object DataFixture {
     new RoadAddressDAO()
   }
 
-  lazy val tierikisteriClient : TierekisteriAssetDataClient = {
-    new TierekisteriAssetDataClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+  lazy val tierekisteriTrafficVolumeAsset : TierekisteriTrafficVolumeAsset = {
+    new TierekisteriTrafficVolumeAsset(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+      getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+      HttpClientBuilder.create().build())
+  }
+
+  lazy val tierekisteriLightingAsset : TierekisteriLightingAsset = {
+    new TierekisteriLightingAsset(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
       getProperty("digiroad2.tierekisteri.enabled").toBoolean,
       HttpClientBuilder.create().build())
   }
@@ -885,7 +891,7 @@ object DataFixture {
     roadNumbers.foreach{
       case roadNumber =>
         println("\nFetch Traffic Volume by Road Number " + roadNumber)
-        val trTrafficVolume = tierikisteriClient.fetchActiveAssetData(trafficVolumeTR, roadNumber)
+        val trTrafficVolume = tierekisteriTrafficVolumeAsset.fetchActiveAssetData(trafficVolumeTR, roadNumber)
 
         trTrafficVolume.foreach { tr => println("\nTR: roadNumber, roadPartNumber, start, end and kvt " + tr.roadNumber +" "+ tr.roadPartNumber +" "+ tr.starMValue +" "+ tr.endMValue +" "+ tr.kvl) }
 
@@ -918,6 +924,67 @@ object DataFixture {
     }
     println("\nEnd of Traffic Volume fetch")
     println("\nEnd of creation OTH traffic volume assets form TR data")
+  }
+
+  def fetchAllLightingDataFromTR(): Unit = {
+    val lightingTR = "tl167"
+    val lightingAssetId = 100
+
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+
+    lazy val linearAssetService: LinearAssetService = {
+      new LinearAssetService(roadLinkService, new DummyEventBus)
+    }
+
+    println("\nExpiring Lighting From OTH Database")
+//    OracleDatabase.withDynSession {
+//      oracleLinearAssetDao.expireAllAssetsByTypeId(lightingAssetId)
+//    }
+    println("\nLighting data Expired")
+
+    println("\nFetch Road Numbers From Viite")
+    val roadNumbers = OracleDatabase.withDynSession {
+      roadAddressDao.getRoadNumbers()
+    }
+    println("\nEnd of Fetch ")
+
+    println("roadNumbers: ")
+    roadNumbers.foreach(ra => println(ra))
+
+    roadNumbers.foreach {
+      case roadNumber =>
+        println("\nFetch Lighting by Road Number " + roadNumber)
+        val trLighting = tierekisteriLightingAsset.fetchActiveAssetData(lightingTR, roadNumber)
+
+        trLighting.foreach { tr => println("\nTR: roadNumber, roadPartNumber, start and end: " + tr.roadNumber + " " + tr.roadPartNumber + " " + tr.starMValue + " " + tr.endMValue) }
+
+        val newTRLighting = trLighting.groupBy(trLighting => (trLighting.roadNumber, trLighting.roadPartNumber, trLighting.starMValue, trLighting.endMValue)).map(_._2.head)
+
+        newTRLighting.foreach { trl =>
+          OracleDatabase.withDynTransaction {
+            println("\nFetch road addresses to link ids using Viite, trRoadNumber, roadPartNumber start and end " + trl.roadNumber + " " + trl.roadPartNumber + " " + trl.starMValue + " " + trl.endMValue)
+            val roadAddresses = roadAddressDao.getRoadAddressesFiltered(trl.roadNumber, trl.roadPartNumber, trl.starMValue, trl.endMValue)
+            val roadAddressLinks = roadAddresses.map(ra => ra.linkId).toSet
+            val vvhRoadlinks = roadLinkService.fetchVVHRoadlinks(roadAddressLinks).filter(_.administrativeClass == State.value)
+
+            println("roadAddresses fetched: ")
+            roadAddresses.filter(ra => vvhRoadlinks.exists(_.linkId == ra.linkId)).foreach(ra => println(ra.linkId))
+
+            roadAddresses
+              .filter(ra => vvhRoadlinks.exists(_.linkId == ra.linkId))
+              .foreach { ra =>
+//                val assetId = linearAssetService.dao.createLinearAsset(lightingAssetId, ra.linkId, false, SideCode.BothDirections.value,
+//                  ra.startMValue, ra.endMValue, "batch_process_lighting")
+//                println("\nCreated OTH traffic volume assets form TR data with assetId " + assetId)
+//
+//                linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, tr.kvl)
+//                println("\nCreated OTH property value with value " + tr.kvl + " and assetId " + assetId)
+              }
+          }
+        }
+    }
+    println("\nEnd of Lighting fetch")
+    println("\nEnd of creation OTH Lighting assets form TR data")
   }
 
   def main(args:Array[String]) : Unit = {
@@ -1003,6 +1070,8 @@ object DataFixture {
         fillLaneAmountsMissingInRoadLink()
       case Some("fetch_traffic_volume_from_TR_to_OTH") =>
         fetchAllTrafficVolumeDataFromTR()
+      case Some("fetch_lighting_from_TR_to_OTH") =>
+        fetchAllLightingDataFromTR()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
@@ -1010,7 +1079,7 @@ object DataFixture {
         " generate_floating_obstacles | import_VVH_RoadLinks_by_municipalities | " +
         " check_unknown_speedlimits | set_transitStops_floating_reason | verify_roadLink_administrative_class_changed | set_TR_bus_stops_without_OTH_LiviId |" +
         " check_TR_bus_stops_without_OTH_LiviId | check_bus_stop_matching_between_OTH_TR | listing_bus_stops_with_side_code_conflict_with_roadLink_direction |" +
-        " fill_lane_amounts_in_missing_road_links | fetch_traffic_volume_from_TR_to_OTH")
+        " fill_lane_amounts_in_missing_road_links | fetch_traffic_volume_from_TR_to_OTH | fetch_lighting_from_TR_to_OTH")
     }
   }
 }
