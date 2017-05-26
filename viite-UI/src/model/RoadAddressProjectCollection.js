@@ -11,7 +11,7 @@
     var dirtyProjectLinks = [];
     var self = this;
     this.STATUS_NOT_HANDLED = 0;
-    var STATUS_TERMINATED = 1;
+    this.STATUS_TERMINATED = 1;
     var BAD_REQUEST_400 = 400;
     var UNAUTHORIZED_401 = 401;
     var PRECONDITION_FAILED_412 = 412;

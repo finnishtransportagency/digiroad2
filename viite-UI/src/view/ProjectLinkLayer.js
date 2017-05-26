@@ -73,7 +73,7 @@
       condition: ol.events.condition.singleClick,
       //The new/temporary layer needs to have a style function as well, we define it here.
       style: function(feature, resolution) {
-        if(feature.projectLinkData.status === projectCollection.STATUS_NOT_HANDLED)
+        if (feature.projectLinkData.status === projectCollection.STATUS_NOT_HANDLED){
           return new ol.style.Style({
             fill: new ol.style.Fill({
               color: 'rgba(0, 255, 0, 0.75)'
@@ -83,6 +83,17 @@
               width: 8
             })
           });
+        } else if(feature.projectLinkData.status === projectCollection.STATUS_TERMINATED){
+          return new ol.style.Style({
+            fill: new ol.style.Fill({
+              color: 'rgba(0, 0, 0, 0.75)'
+            }),
+            stroke: new ol.style.Stroke({
+              color: 'rgba(0, 0, 0, 0.95)',
+              width: 8
+            })
+          });
+        }
       }
     });
 
@@ -102,7 +113,7 @@
       condition: ol.events.condition.doubleClick,
       //The new/temporary layer needs to have a style function as well, we define it here.
       style: function(feature, resolution) {
-        if(feature.projectLinkData.status === projectCollection.STATUS_NOT_HANDLED)
+        if(feature.projectLinkData.status === projectCollection.STATUS_NOT_HANDLED) {
           return new ol.style.Style({
             fill: new ol.style.Fill({
               color: 'rgba(0, 255, 0, 0.75)'
@@ -112,6 +123,17 @@
               width: 8
             })
           });
+        } else if(feature.projectLinkData.status === projectCollection.STATUS_TERMINATED){
+          return new ol.style.Style({
+            fill: new ol.style.Fill({
+              color: 'rgba(0, 0, 0, 0.75)'
+            }),
+            stroke: new ol.style.Stroke({
+              color: 'rgba(0, 0, 0, 0.95)',
+              width: 8
+            })
+          });
+        }
       }
     });
 
