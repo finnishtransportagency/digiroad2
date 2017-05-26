@@ -312,16 +312,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def publishProject(projectId: Long): Option[String] = {
     // TODO: Check that project actually is finished: projectLinkPublishable(projectId)
     // TODO: use ProjectDeltaCalculator to calculate delta
-    // maybe addProjectDeltaToDB(ProjectDeltaCalculator.delta(projectId))?  // TODO: Do the changes given in Delta in database
+      addProjectDeltaToDB(ProjectDeltaCalculator.delta(projectId))  // TODO: Do the changes given in Delta in database
     // TODO: Run post-change tests for the roads that have been edited and throw an exception to roll back if not acceptable
     None //not implemented yet
   }
 
-  private def addProjectDeltaToDB(projectDelta:Delta) = {
-    (
-      //TODO roadaddress changes db tb
-    None
-    )
+  private def addProjectDeltaToDB(projectDelta:Delta):Unit= {
+    //  ProjectDAO.insertDeltaToRoadChangeTable(projectDelta)
   }
 
 

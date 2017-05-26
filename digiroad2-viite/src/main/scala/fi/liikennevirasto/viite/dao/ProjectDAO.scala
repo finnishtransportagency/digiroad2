@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.ReservedRoadPart
+import fi.liikennevirasto.viite.process.Delta
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -172,6 +173,25 @@ object ProjectDAO {
       case Some(statenumber)=> Some(ProjectState.apply(statenumber))
       case None=>None
     }
+  }
+
+  def insertDeltaToRoadChangeTable(delta:Delta):Unit=
+  {
+   for (roadaddress <-delta.terminations)
+     {
+       val changeType=5 //TODO missing
+       val roadtype=99 //TODO missing
+       val ely= 1 //TODO missing
+
+      /*
+       sqlu"""
+         INSERT INTO ROAD_ADDRESS_CHANGES (project_id,change_type,old_road_number,new_road_number,old_road_part_number,new_road_part_number,old_track_code,new_track_code,old_start_addr_m,new_start_addr_m,old_end_addr_m_m,new_end_addr_m,new_discontinuity,new_road_type,new_ely)
+         Values(${roadaddress.id},changeType,${roadaddress.roadNumber},${roadaddress.roadNumber},${roadaddress.roadPartNumber},${roadaddress.roadPartNumber},${roadaddress.track},${roadaddress.track},${roadaddress.startMValue},${roadaddress.startMValue},${roadaddress.endMValue},
+         ${roadaddress.endMValue},${roadaddress.discontinuity},roadtype,ely)
+         """.execute*/
+
+     }
+
   }
 
 
