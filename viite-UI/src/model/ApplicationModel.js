@@ -139,8 +139,6 @@
           selectedLayer = layer;
           setSelectedTool('Select');
           eventbus.trigger('layer:selected', layer, previouslySelectedLayer);
-        } else {
-          eventbus.trigger('layer:' + selectedLayer + ':shown');
         }
       },
       getSelectedLayer: function() {

@@ -50,7 +50,7 @@
       map.addLayer(vectorLayer);
     };
 
-    eventbus.on('application:initialized', function() {
+    eventbus.on('application:initialized layer:fetched', function() {
       var zoom = map.getView().getZoom();
       applicationModel.setZoomLevel(zoom);
       if (!zoomlevels.isInAssetZoomLevel(zoom)) {
@@ -84,6 +84,15 @@
     eventbus.on('coordinates:marked', drawCenterMarker, this);
 
     eventbus.on('layer:selected', function selectLayer(layer, previouslySelectedLayer) {
+      var layerToBeHidden = layers[previouslySelectedLayer];
+      var layerToBeShown = layers[layer];
+
+      if (layerToBeHidden) layerToBeHidden.hide(map);
+      layerToBeShown.show(map);
+      applicationModel.setMinDirtyZoomLevel(minZoomForContent());
+    }, this);
+
+    eventbus.on('roadAddressProject:selected', function selectLayer(id, layer, previouslySelectedLayer) {
       var layerToBeHidden = layers[previouslySelectedLayer];
       var layerToBeShown = layers[layer];
 

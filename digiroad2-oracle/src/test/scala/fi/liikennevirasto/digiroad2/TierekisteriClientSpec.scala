@@ -24,8 +24,14 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
     props
   }
 
-  lazy val tierekisteriClient: TierekisteriClient = {
-    new TierekisteriClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+  lazy val tierekisteriMassTransitStopClient: TierekisteriMassTransitStopClient = {
+    new TierekisteriMassTransitStopClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+      HttpClientBuilder.create().build())
+  }
+
+  lazy val tierekisteriAssetDataClient: TierekisteriAssetDataClient = {
+    new TierekisteriAssetDataClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
       dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
       HttpClientBuilder.create().build())
   }
@@ -57,7 +63,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
   test("fetch from tierekisteri all active mass transit stop") {
     assume(testConnection)
     val dateFormat = new SimpleDateFormat("yyyy-MM-dd")
-    val assets = tierekisteriClient.fetchActiveMassTransitStops()
+    val assets = tierekisteriMassTransitStopClient.fetchActiveMassTransitStops()
 
     assets.size should be (2)
     assets.map(_.liviId) should contain ("OTHJ208914")
@@ -93,7 +99,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
   test("fetch from tierekisteri mass transit stop") {
     assume(testConnection)
     val dateFormat = new SimpleDateFormat("yyyy-MM-dd")
-    val asset = tierekisteriClient.fetchMassTransitStop("OTHJ208914").get
+    val asset = tierekisteriMassTransitStopClient.fetchMassTransitStop("OTHJ208914").get
 
     asset.nationalId should be (208914)
     asset.liviId should be ("OTHJ208914")
@@ -126,20 +132,20 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
   test("fetch should return None when mass transit stop doesn't exist"){
     assume(testConnection)
 
-    val asset = tierekisteriClient.fetchMassTransitStop("12345")
+    val asset = tierekisteriMassTransitStopClient.fetchMassTransitStop("12345")
     asset should be(None)
   }
 
   test("delete tierekisteri mass transit stop"){
     assume(testConnection)
-    tierekisteriClient.deleteMassTransitStop("OTHJ208914")
+    tierekisteriMassTransitStopClient.deleteMassTransitStop("OTHJ208914")
   }
 
   test("delete should throw exception when mass transit stop doesn't exist"){
     assume(testConnection)
 
     val thrown = intercept[TierekisteriClientException] {
-      val asset = tierekisteriClient.deleteMassTransitStop("123475")
+      val asset = tierekisteriMassTransitStopClient.deleteMassTransitStop("123475")
     }
     thrown.getMessage should be ("Tierekisteri error: 404: N/A")
   }
@@ -161,7 +167,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
     val tkMassTransitStop = TierekisteriMassTransitStop(208914,"OTHJ208914",RoadAddress(None,25823,104,Track.Combined,150,None),TRRoadSide.Right,StopType.Combined, false,
       equipments,Option("681"),Option("Raisionjoki"), Option("Reso å"), "KX123456", Option(new Date), Option(new Date), Option(new Date), new Date)
 
-    tierekisteriClient.createMassTransitStop(tkMassTransitStop)
+    tierekisteriMassTransitStopClient.createMassTransitStop(tkMassTransitStop)
   }
 
   test("post should throw exception when mass transit data has errors") {
@@ -183,7 +189,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
       val tkMassTransitStop = TierekisteriMassTransitStop(208914, "OTHJ208914eeeeeeeeeeeee", RoadAddress(None, 25823, 104, Track.Combined, 150, None), TRRoadSide.Right, StopType.Combined, false,
         equipments, Option("681"),Option("Raisionjoki"), Option("Reso å"), "KX123456", Option(new Date), Option(new Date), Option(new Date), new Date(2016, 9,1))
 
-      tierekisteriClient.createMassTransitStop(tkMassTransitStop)
+      tierekisteriMassTransitStopClient.createMassTransitStop(tkMassTransitStop)
 
     }
     thrown.getMessage should be ("Tierekisteri error: 400: N/A")
@@ -208,7 +214,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
       val tkMassTransitStop = TierekisteriMassTransitStop(208913,"OTHJ208916",RoadAddress(None,25823,104,Track.Combined,150,None),TRRoadSide.Right,StopType.Combined, false,
         equipments,Option("681"),Option("Raisionjoki"), Option("Reso å"), "KX123456", Option(new Date), Option(new Date), Option(new Date), new Date(2016, 9, 1))
 
-      tierekisteriClient.createMassTransitStop(tkMassTransitStop)
+      tierekisteriMassTransitStopClient.createMassTransitStop(tkMassTransitStop)
 
     }
     thrown.getMessage should be ("Tierekisteri error: 409: N/A")
@@ -235,7 +241,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
       false, equipmentsMap,
       Option("681"),Option("Raisionjoki"), Option("Reso å"), "KX123456", Option(new Date), Option(new Date), Option(new Date), new Date)
 
-    val asset = tierekisteriClient.updateMassTransitStop(objTierekisteriMassTransitStop, None)
+    val asset = tierekisteriMassTransitStopClient.updateMassTransitStop(objTierekisteriMassTransitStop, None)
   }
 
   test("updating bus stop information in Tierekisteri using override in PUT method") {
@@ -259,7 +265,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
       false, equipmentsMap,
       Option("681"),Option("Raisionjoki"), Option("Reso å"), "KX123456", Option(new Date), Option(new Date), Option(new Date), new Date)
 
-    val asset = tierekisteriClient.updateMassTransitStop(objTierekisteriMassTransitStop, Some("Livi123456"))
+    val asset = tierekisteriMassTransitStopClient.updateMassTransitStop(objTierekisteriMassTransitStop, Some("Livi123456"))
   }
 
   test("updating bus stop information in Tierekisteri using PUT method (400 (BAD REQUEST) malformed)") {
@@ -284,7 +290,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
       Option("681"),Option("Raisionjoki"), Option("Reso å"), "KX123456", Option(new Date), Option(new Date), Option(new Date), new Date)
 
     val thrown = intercept[TierekisteriClientException] {
-      val asset = tierekisteriClient.updateMassTransitStop(objTierekisteriMassTransitStop, None)
+      val asset = tierekisteriMassTransitStopClient.updateMassTransitStop(objTierekisteriMassTransitStop, None)
     }
     thrown.getMessage should be ("Tierekisteri error: 400: N/A")
   }
@@ -311,7 +317,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
       Option("681"),Option("Raisionjoki"), Option("Reso å"), "KX123456", Option(new Date), Option(new Date), Option(new Date), new Date)
 
     val thrown = intercept[TierekisteriClientException] {
-      val asset = tierekisteriClient.updateMassTransitStop(objTierekisteriMassTransitStop, None)
+      val asset = tierekisteriMassTransitStopClient.updateMassTransitStop(objTierekisteriMassTransitStop, None)
     }
     thrown.getMessage should be ("Tierekisteri error: 500: N/A")
   }
@@ -319,7 +325,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
 
   test("Returning only mandatory fields from Tierekisteri should be accepted") {
     val httpClient = MockitoSugar.mock[CloseableHttpClient]
-    val trClient =  new TierekisteriClient(
+    val trClient =  new TierekisteriMassTransitStopClient(
       dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
       dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
       httpClient)
@@ -373,4 +379,35 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
     }
   }
 
+  test("fetch from tierekisteri active trafic volume with fieldCode and roadNumber") {
+    assume(testConnection)
+    val assets = tierekisteriAssetDataClient.fetchActiveAssetData("tl201", 45)
+
+    assets.size should be (1)
+    assets.map(_.kvl) should contain (1)
+  }
+
+  test("fetch from tierekisteri active trafic volume with fieldCode, roadNumber and roadPartNumber") {
+    assume(testConnection)
+    val assets = tierekisteriAssetDataClient.fetchActiveAssetData("tl201", 45, 1)
+
+    assets.size should be (1)
+    assets.map(_.kvl) should contain (1)
+  }
+
+  test("fetch from tierekisteri active trafic volume with fieldCode, roadNumber, roadPartNumber and startDistance") {
+    assume(testConnection)
+    val assets = tierekisteriAssetDataClient.fetchActiveAssetData("tl201", 45, 1, 0)
+
+    assets.size should be (1)
+    assets.map(_.kvl) should contain (1)
+  }
+
+  test("fetch from tierekisteri active trafic volume with fieldCode, roadNumber, roadPartNumber, startDistance, endPart and endDistance") {
+    assume(testConnection)
+    val assets = tierekisteriAssetDataClient.fetchActiveAssetData("tl201", 45, 1, 0, 0, 100)
+
+    assets.size should be (1)
+    assets.map(_.kvl) should contain (1)
+  }
 }

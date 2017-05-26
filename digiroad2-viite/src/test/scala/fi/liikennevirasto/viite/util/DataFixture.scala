@@ -133,12 +133,24 @@ object DataFixture {
             val (kept, removed) = list.partition(ra => currReplacement.exists(_.id == ra.id))
             val (created) = currReplacement.filterNot(ra => kept.exists(_.id == ra.id))
             RoadAddressDAO.remove(removed)
-            RoadAddressDAO.create(created, "Automatic_merged")
+            RoadAddressDAO.create(created, Some("Automatic_merged"))
           }
         }
       })
     }
     println(s"\nFinished the combination of multiple segments on links at time: ${DateTime.now()}")
+  }
+
+  private def importRoadAddressChangeTestData(): Unit ={
+    println(s"\nCommencing road address change test data import at time: ${DateTime.now()}")
+    OracleDatabase.withDynTransaction {
+      OracleDatabase.setSessionLanguage()
+    }
+    SqlScriptRunner.runViiteScripts(List(
+      "insert_road_address_change_test_data.sql"
+    ))
+    println(s"Road Address Change Test Data import completed at time: ${DateTime.now()}")
+    println()
   }
 
   def main(args:Array[String]) : Unit = {
@@ -175,9 +187,11 @@ object DataFixture {
         updateRoadAddressesGeometry(true)
       case Some("update_road_addresses_geometry") =>
         updateRoadAddressesGeometry(false)
+      case Some ("import_road_address_change_test_data") =>
+        importRoadAddressChangeTestData()
       case _ => println("Usage: DataFixture import_road_addresses | recalculate_addresses | update_missing | " +
         "find_floating_road_addresses | import_complementary_road_address | fuse_multi_segment_road_addresses " +
-        "| update_road_addresses_geometry_no_complementary | update_road_addresses_geometry")
+        "| update_road_addresses_geometry_no_complementary | update_road_addresses_geometry | import_road_address_change_test_data")
     }
   }
 }

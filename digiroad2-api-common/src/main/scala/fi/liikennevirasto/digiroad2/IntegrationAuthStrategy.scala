@@ -9,7 +9,7 @@ import org.scalatra.auth.strategy.{BasicAuthStrategy, BasicAuthSupport}
 
 case class BasicAuthUser(username: String)
 
-class IntegrationAuthStrategy(protected override val app: ScalatraBase, realm: String)
+class IntegrationAuthStrategy(protected override val app: ScalatraBase, realm: String, baseAuth: String = "")
   extends BasicAuthStrategy[BasicAuthUser](app, realm) {
 
   lazy val properties: Properties = {
@@ -28,7 +28,7 @@ class IntegrationAuthStrategy(protected override val app: ScalatraBase, realm: S
   }
 
   def validate(username: String, password: String)(implicit request: HttpServletRequest, response: HttpServletResponse): Option[BasicAuthUser] = {
-    if (username == getProperty("authentication.basic.username") && password == getProperty("authentication.basic.password")) Some(BasicAuthUser(username))
+      if (username == getProperty("authentication."+baseAuth+"basic.username") && password == getProperty("authentication."+baseAuth+"basic.password")) Some(BasicAuthUser(username))
     else None
   }
 
@@ -38,6 +38,7 @@ class IntegrationAuthStrategy(protected override val app: ScalatraBase, realm: S
 trait AuthenticationSupport extends ScentrySupport[BasicAuthUser] with BasicAuthSupport[BasicAuthUser] {
   self: ScalatraBase =>
 
+  def baseAuth: String = ""
   val realm = "Digiroad 2 Integration API"
 
   protected def fromSession = { case id: String => BasicAuthUser(id)  }
@@ -52,7 +53,7 @@ trait AuthenticationSupport extends ScentrySupport[BasicAuthUser] with BasicAuth
   }
 
   override protected def registerAuthStrategies = {
-    scentry.register("Basic", app => new IntegrationAuthStrategy(app, realm))
+    scentry.register("Basic", app => new IntegrationAuthStrategy(app, realm, baseAuth))
   }
 }
 

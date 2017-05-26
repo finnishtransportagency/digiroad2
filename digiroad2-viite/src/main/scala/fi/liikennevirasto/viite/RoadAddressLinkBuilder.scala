@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, VVHHistoryRoadLink}
 import fi.liikennevirasto.viite.RoadType._
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
+import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLink}
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, DateTimeZone}
@@ -67,6 +67,24 @@ object RoadAddressLinkBuilder {
       roadAddress.sideCode,
       roadAddress.calibrationPoints._1,
       roadAddress.calibrationPoints._2,Anomaly.None, roadAddress.lrmPositionId)
+
+  }
+
+  def build(roadLink: RoadLink, projectLink: ProjectLink): ProjectAddressLink = {
+    val roadLinkType = if (roadLink.linkSource==LinkGeomSource.ComplimentaryLinkInterface)
+      ComplementaryRoadLinkType
+    else
+      NormalRoadLinkType
+
+    val geom = roadLink.geometry
+    val length = GeometryUtils.geometryLength(geom)
+    ProjectAddressLink(projectLink.id, roadLink.linkId, geom,
+      length, roadLink.administrativeClass, roadLink.linkType, roadLinkType, roadLink.constructionType, roadLink.linkSource, getRoadType(roadLink.administrativeClass, roadLink.linkType), extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
+      roadLink.attributes, projectLink.roadNumber, projectLink.roadPartNumber, projectLink.track.value, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), projectLink.discontinuity.value,
+      projectLink.startAddrMValue, projectLink.endAddrMValue, projectLink.startMValue, projectLink.endMValue,
+      projectLink.sideCode,
+      projectLink.calibrationPoints._1,
+      projectLink.calibrationPoints._2,Anomaly.None, projectLink.lrmPositionId, projectLink.status)
 
   }
 

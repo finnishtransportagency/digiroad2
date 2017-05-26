@@ -50,7 +50,7 @@ class ContinuityChecker(roadLinkService: RoadLinkService) {
     }
   }
 
-  private def checkAddressesHaveNoGaps(addresses: Seq[RoadAddress]) = {
+  def checkAddressesHaveNoGaps(addresses: Seq[RoadAddress]): Seq[MissingSegment] = {
     val addressMap = addresses.groupBy(_.startAddrMValue)
     val missingFirst = !addressMap.contains(0L) match {
       case true => Seq(MissingSegment(addresses.head.roadNumber, addresses.head.roadPartNumber,
@@ -82,14 +82,10 @@ class ContinuityChecker(roadLinkService: RoadLinkService) {
     }
 
     val nextAddressItems = addressMap.getOrElse(address.endAddrMValue, Seq())
-    nothingAfter(address, addressMap) ||
-      combinedTrackFollows(address, nextAddressItems) ||
-      sameTrackFollows(address, nextAddressItems) ||
-      splitTrackFollows(address, nextAddressItems)
-  }
-
-  private def nextSegment(addressMap: Map[Long, Seq[RoadAddress]])(address: RoadAddress) = {
-
+      !nothingAfter(address, addressMap) &&
+      !(combinedTrackFollows(address, nextAddressItems) ||
+        sameTrackFollows(address, nextAddressItems) ||
+        splitTrackFollows(address, nextAddressItems))
   }
 
   private def checkLinksExist(addresses: Seq[RoadAddress]): Seq[MissingLink] = {

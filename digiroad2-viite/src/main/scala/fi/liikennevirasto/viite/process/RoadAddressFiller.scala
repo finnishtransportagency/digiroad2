@@ -1,13 +1,12 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.asset.State
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.viite.RoadAddressLinkBuilder
 import fi.liikennevirasto.viite.RoadType.PublicRoad
-import fi.liikennevirasto.viite.dao.{MissingRoadAddress, RoadAddress, RoadAddressDAO}
-import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
+import fi.liikennevirasto.viite.dao.MissingRoadAddress
+import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLink}
 import fi.liikennevirasto.viite._
 
 object RoadAddressFiller {
@@ -49,6 +48,22 @@ object RoadAddressFiller {
       case _ => (segments, Seq())
     }
     (adjustments._1, changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ adjustments._2))
+  }
+
+  private def extendToGeometry(roadLink: RoadLink, segments: Seq[ProjectAddressLink]): Seq[ProjectAddressLink] = {
+    if (segments.isEmpty)
+      return segments
+    val linkLength = GeometryUtils.geometryLength(roadLink.geometry)
+    val sorted = segments.sortBy(_.endMValue)(Ordering[Double].reverse)
+    val lastSegment = sorted.head
+    val restSegments = sorted.tail
+    val allowedDiff = ((linkLength - MaxAllowedMValueError) - lastSegment.endMValue) <= MaxDistanceDiffAllowed
+    val adjustments = if ((lastSegment.endMValue < linkLength - MaxAllowedMValueError) && allowedDiff) {
+      restSegments ++ Seq(lastSegment.copy(endMValue = linkLength))
+    } else {
+      segments
+    }
+    adjustments
   }
 
   private def dropShort(roadLink: RoadLink, segments: Seq[RoadAddressLink], changeSet: AddressChangeSet): (Seq[RoadAddressLink], AddressChangeSet) = {
@@ -107,5 +122,20 @@ object RoadAddressFiller {
     }
   }
 
+  def fillProjectTopology(roadLinks: Seq[RoadLink], roadAddressMap: Map[Long, ProjectAddressLink]): Seq[ProjectAddressLink] = {
+    val fillOperations: Seq[(RoadLink, Seq[ProjectAddressLink]) => Seq[ProjectAddressLink]] = Seq(
+      extendToGeometry
+    )
+
+    roadLinks.foldLeft(Seq.empty[ProjectAddressLink]) { case (acc, roadLink) =>
+      val existingSegments = acc
+      val segment = roadAddressMap.get(roadLink.linkId).map(pal => Seq(pal)).getOrElse(Seq())
+
+      val adjustedSegments = fillOperations.foldLeft(segment) { case (currentSegments, operation) =>
+        operation(roadLink, currentSegments)
+      }
+      existingSegments ++ adjustedSegments
+    }
+  }
 
 }
