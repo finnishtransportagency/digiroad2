@@ -513,7 +513,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
       (viiteFloatingRoadLinks.distinct ++ viiteMissingRoadLinks)
     }).getOrElse(Seq())
-    //TODO show all returning adjacent targets as possible selecting markers for the current linkId, in the UI.
   }
 
   def getRoadAddressLinksAfterCalculation(sources: Seq[String], targets: Seq[String], user: User): Seq[RoadAddressLink] = {
