@@ -392,7 +392,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
   */
 
   //case 1
-  test("Should unfloat the obstacle when exists just one roadlink inside a radius of 10 meters"){
+  test("Should unfloat the obstacle when exists just one roadliDo not overwrite LiviId of ELY/HSL stops when Tietojen ylläpitäjä is empty in csv import filenk inside a radius of 10 meters"){
     val oldLinkId = 521232
     val linkId = 5170455
     val municipality = 853
@@ -403,10 +403,12 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
     val mockVVHClient = MockitoSugar.mock[VVHClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+    val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
 
     when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
     when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
-    when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
+    when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
 
     val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, 0, obstacleType, Some("unit_test"))
 
@@ -440,10 +442,12 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
     val mockVVHClient = MockitoSugar.mock[VVHClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+    val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
 
     when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
     when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
-    when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
+    when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
 
     val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, 0, obstacleType, Some("unit_test"))
 
@@ -468,10 +472,12 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     )
     val mockVVHClient = MockitoSugar.mock[VVHClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+    val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
 
     when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
     when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
-    when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
+    when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
 
     val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, 0, obstacleType, Some("unit_test"))
 
@@ -504,10 +510,12 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
     val mockVVHClient = MockitoSugar.mock[VVHClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+    val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
 
     when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
     when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
-    when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
+    when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
 
     val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, 0, obstacleType, Some("unit_test"))
     val roadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
@@ -532,10 +540,12 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     )
     val mockVVHClient = MockitoSugar.mock[VVHClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+    val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
 
     when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
     when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
-    when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
+    when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
 
     val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, 0, obstacleType, Some("unit_test"))
 
@@ -568,10 +578,12 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     )
     val mockVVHClient = MockitoSugar.mock[VVHClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+    val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
 
     when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
     when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
-    when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
+    when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
     val roadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
 
     val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, 0, obstacleType, Some("unit_test"))
@@ -595,10 +607,12 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     )
     val mockVVHClient = MockitoSugar.mock[VVHClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+    val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
 
     when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
     when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
-    when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
+    when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
 
     val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, 0, obstacleType, Some("unit_test"))
 
@@ -622,10 +636,12 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     )
     val mockVVHClient = MockitoSugar.mock[VVHClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+    val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
 
     when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
     when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
-    when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
+    when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
 
     val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, 0, obstacleType, Some("unit_test"))
 
@@ -651,10 +667,12 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     )
     val mockVVHClient = MockitoSugar.mock[VVHClient]
     val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+    val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
 
     when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
     when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
-    when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
+    when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
 
     val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, 0, obstacleType, Some("unit_test"))
 

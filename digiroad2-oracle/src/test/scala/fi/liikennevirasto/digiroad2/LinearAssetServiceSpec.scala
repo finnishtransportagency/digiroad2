@@ -1722,10 +1722,11 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
   test("Should extend traffic count on segment") {
 
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val mockVVHClient = MockitoSugar.mock[VVHRoadLinkClient]
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
     val timeStamp = new VVHRoadLinkClient("http://localhost:6080").createVVHTimeStamp(-5)
-    when(mockVVHClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
-    when(mockRoadLinkService.vvhClient.roadLinkData).thenReturn(mockVVHClient)
+    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockVVHRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
     val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
     }
@@ -1779,10 +1780,11 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
   test("Should apply pavement on whole segment") {
 
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val mockVVHClient = MockitoSugar.mock[VVHRoadLinkClient]
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
     val timeStamp = new VVHRoadLinkClient("http://localhost:6080").createVVHTimeStamp(-5)
-    when(mockVVHClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
-    when(mockRoadLinkService.vvhClient.roadLinkData).thenReturn(mockVVHClient)
+    when(mockVVHRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
+    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
     val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
     }
@@ -1823,11 +1825,12 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
   test("Get Municipality Code By Asset Id") {
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val mockVVHClient = MockitoSugar.mock[VVHRoadLinkClient]
-    when(mockVVHClient.createVVHTimeStamp(any[Int])).thenCallRealMethod()
-    val timeStamp = mockVVHClient.createVVHTimeStamp(-5)
-    when(mockVVHClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
-    when(mockRoadLinkService.vvhClient.roadLinkData).thenReturn(mockVVHClient)
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockVVHRoadLinkClient.createVVHTimeStamp(any[Int])).thenCallRealMethod()
+    val timeStamp = mockVVHRoadLinkClient.createVVHTimeStamp(-5)
+    when(mockVVHRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
     val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f
     }
@@ -1926,7 +1929,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     val mockVVHClient = MockitoSugar.mock[VVHClient]
     val timeStamp = new VVHRoadLinkClient("http://localhost:6080").createVVHTimeStamp(5)
     when(mockVVHRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
-    when(mockRoadLinkService.vvhClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
 
     val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
       override def withDynTransaction[T](f: => T): T = f

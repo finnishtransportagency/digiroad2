@@ -286,8 +286,8 @@ trait VVHClientOperations {
   protected def serviceUrl(polygon: Polygon, definition: String, parameters: String) : String = {
     val polygonString = stringifyPolygonGeometry(polygon)
     serviceUrl +
-      s"layerDefs=$definition&geometry=" + URLEncoder.encode(polygonString) +
-      "&geometryType=esriGeometryPolygon&spatialRel=esriSpatialRelIntersects&$parameters"
+      s"?layerDefs=$definition&geometry=" + URLEncoder.encode(polygonString) +
+      s"&geometryType=esriGeometryPolygon&spatialRel=esriSpatialRelIntersects&$parameters"
   }
 
   protected def serviceUrl(definition: String, parameters: String) : String = {
@@ -475,6 +475,9 @@ trait VVHClientOperations {
     *  Polygon string example "{rings:[[[564000,6930000],[566000,6931000],[567000,6933000]]]}"
     */
   protected def queryByPolygons(polygon: Polygon): Seq[VVHType] = {
+    if(polygon.getCoordinates.size == 0)
+      return Seq[VVHType]()
+
     val definition = layerDefinition(combineFiltersWithAnd("",""))
     val url = serviceUrl(polygon, definition, queryParameters())
 
@@ -492,7 +495,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
 
   protected override val restApiEndPoint = vvhRestApiEndPoint
   protected override val serviceName = "Roadlink_data"
-  protected override val linkGeomSource = LinkGeomSource.NormalLinkInterface
+  protected override val linkGeomSource:LinkGeomSource = LinkGeomSource.NormalLinkInterface
 
   protected override def defaultOutFields(): String = {
     "MTKID,LINKID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,SURFACETYPE,END_DATE,STARTNODE,ENDNODE"
@@ -597,13 +600,13 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
   }
 
   //Extract attributes methods
-  protected override def extractVVHFeature(feature: Map[String, Any]): VVHType = {
+  protected override def extractVVHFeature(feature: Map[String, Any]): VVHRoadlink = {
     val attributes = extractFeatureAttributes(feature)
     val path = extractFeatureGeometry(feature)
     extractRoadLinkFeature(attributes, path)
   }
 
-  protected def extractRoadLinkFeature(attributes: Map[String, Any], path: List[List[Double]]): VVHType = {
+  protected def extractRoadLinkFeature(attributes: Map[String, Any], path: List[List[Double]]): VVHRoadlink = {
     val linkGeometry: Seq[Point] = path.map(point => {
       Point(point(0), point(1), extractMeasure(point(2)).get)
     })
@@ -945,7 +948,7 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClie
 
   protected override val restApiEndPoint = vvhRestApiEndPoint
   protected override val serviceName = "Roadlink_complimentary"
-  protected override val linkGeomSource = LinkGeomSource.ComplimentaryLinkInterface
+  protected override val linkGeomSource:LinkGeomSource = LinkGeomSource.ComplimentaryLinkInterface
 
   override def defaultOutFields() : String = {
     "MTKID,LINKID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,SURFACETYPE,SUBTYPE"

@@ -558,7 +558,7 @@ trait LinearAssetOperations {
 
     //Create New Asset
     val newAssetIDcreate = createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, valueToUpdate, oldAsset.sideCode,
-      oldAsset.startMeasure, oldAsset.endMeasure, username, VVHClient.createVVHTimeStamp(5), true, oldAsset.createdBy, oldAsset.createdDateTime)
+      oldAsset.startMeasure, oldAsset.endMeasure, username, vvhClient.roadLinkData.createVVHTimeStamp(5), true, oldAsset.createdBy, oldAsset.createdDateTime)
 
       Some(newAssetIDcreate)
   }
