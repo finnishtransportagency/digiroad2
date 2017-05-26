@@ -177,21 +177,34 @@ object ProjectDAO {
 
   def insertDeltaToRoadChangeTable(delta:Delta):Unit=
   {
-   for (roadaddress <-delta.terminations)
-     {
        val changeType=5 //TODO missing
        val roadtype=99 //TODO missing
        val ely= 1 //TODO missing
 
-      /*
-       sqlu"""
-         INSERT INTO ROAD_ADDRESS_CHANGES (project_id,change_type,old_road_number,new_road_number,old_road_part_number,new_road_part_number,old_track_code,new_track_code,old_start_addr_m,new_start_addr_m,old_end_addr_m_m,new_end_addr_m,new_discontinuity,new_road_type,new_ely)
-         Values(${roadaddress.id},changeType,${roadaddress.roadNumber},${roadaddress.roadNumber},${roadaddress.roadPartNumber},${roadaddress.roadPartNumber},${roadaddress.track},${roadaddress.track},${roadaddress.startMValue},${roadaddress.startMValue},${roadaddress.endMValue},
-         ${roadaddress.endMValue},${roadaddress.discontinuity},roadtype,ely)
-         """.execute*/
+       val projectChange = dynamicSession.prepareStatement("INSERT INTO ROAD_ADDRESS_CHANGES (project_id,change_type,old_road_number,new_road_number,old_road_part_number,new_road_part_number, " +
+         "old_track_code,new_track_code,old_start_addr_m,new_start_addr_m,old_end_addr_m_m,new_end_addr_m,new_discontinuity,new_road_type,new_ely)" +
+         "values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,? )")
 
-     }
-
+       delta.terminations.foreach { case (address) =>
+         projectChange.setLong(1, address.id)
+         projectChange.setLong(2, changeType)
+         projectChange.setLong(3, address.roadNumber)
+         projectChange.setLong(4, address.roadNumber)
+         projectChange.setLong(5, address.roadPartNumber)
+         projectChange.setLong(6, address.roadPartNumber)
+         projectChange.setLong(7, address.track.value)
+         projectChange.setLong(8, address.track.value)
+         projectChange.setDouble(9, address.startMValue)
+         projectChange.setDouble(10, address.startMValue)
+         projectChange.setDouble(11, address.endMValue)
+         projectChange.setDouble(12, address.endMValue)
+         projectChange.setLong(13, address.discontinuity.value)
+         projectChange.setLong(14, roadtype)
+         projectChange.setLong(15, ely)
+         projectChange.addBatch()
+       }
+    projectChange.executeBatch()
+    projectChange.close()
   }
 
 
