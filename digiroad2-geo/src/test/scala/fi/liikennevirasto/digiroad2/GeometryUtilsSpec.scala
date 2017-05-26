@@ -219,4 +219,28 @@ class GeometryUtilsSpec extends FunSuite with Matchers {
     truncatedGeometry should be (Seq(Point(1.0, 0.0), Point(5.0, 0.0)))
   }
 
+  test("geometry moved more over 1 meter on road end"){
+    val geometry1 = List(Point(0.0, 0.0), Point(1.0, 0.0), Point(1.0, 1.0))
+    val geometry2 = List(Point(0.0, 0.0), Point(1.0, 0.0), Point(5.0, 5.0))
+    geometryMoved(geometry1, geometry2) should be (true)
+  }
+
+  test("geometry moved more over 1 meter on road start"){
+    val geometry1 = List(Point(0.0, 0.0), Point(1.0, 0.0), Point(1.0, 1.0))
+    val geometry2 = List(Point(5.0, 1.0), Point(1.0, 0.0), Point(1.0, 1.0))
+    geometryMoved(geometry1, geometry2) should be (true)
+  }
+
+  test("geometry moved less than 1 meter"){
+    val geometry1 = List(Point(0.0, 0.0), Point(1.0, 0.0), Point(1.0, 1.0))
+    val geometry2 = List(Point(0.5, 0.0), Point(1.0, 0.0), Point(1.0, 1.0))
+    geometryMoved(geometry1, geometry2) should be (false)
+  }
+
+  test("geometry remains the same"){
+    val geometry1 = List(Point(0.0, 0.0), Point(1.0, 0.0), Point(1.0, 1.0))
+    val geometry2 = List(Point(0.0, 0.0), Point(1.0, 0.0), Point(1.0, 1.0))
+    geometryMoved(geometry1, geometry2) should be (false)
+  }
+
 }

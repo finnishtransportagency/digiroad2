@@ -157,7 +157,8 @@ object GeometryUtils {
         (geometry2Endpoints._1.distance2DTo(geometry1EndPoints._2) > maxDistanceDiffAllowed &&
           geometry2Endpoints._2.distance2DTo(geometry1EndPoints._2) > maxDistanceDiffAllowed)
     }
-    false
+    else
+      false
   }
 
   def areAdjacent(point1: Point, point2: Point): Boolean = {
