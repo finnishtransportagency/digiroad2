@@ -202,10 +202,22 @@ this.checkIfRoadpartReserved = (function(roadnuber,startPart,endPart) {
       };
     }
 
-    this.withRoadLinkData = function (roadLinkData) {
+    //Methods for the UI Integrated Tests
+
+    var afterSave = false;
+
+    var resetAfterSave = function(){
+      afterSave = false;
+    };
+
+    this.withRoadLinkData = function (roadLinkData, afterSaveRoadLinkData) {
       self.getRoadLinks = function(boundingBox, callback) {
-        callback(roadLinkData);
-        eventbus.trigger('roadLinks:fetched');
+        if(afterSave){
+          callback(afterSaveRoadLinkData);
+        } else {
+          callback(roadLinkData);
+        }
+        eventbus.trigger('roadLinks:fetched', afterSave ? afterSaveRoadLinkData : roadLinkData);
       };
       return self;
     };
@@ -214,11 +226,40 @@ this.checkIfRoadpartReserved = (function(roadnuber,startPart,endPart) {
       self.getUserRoles = function () {
         eventbus.trigger('roles:fetched', userRolesData);
       };
+      afterSave = false;
       return self;
     };
 
     this.withStartupParameters = function(startupParameters) {
       self.getStartupParametersWithCallback = function(callback) { callback(startupParameters); };
+      return self;
+    };
+
+    this.withFloatingAdjacents = function(selectedFloatingData, selectedUnknownData) {
+      self.getFloatingAdjacent= function (roadLinkData, callback) {
+        if(roadLinkData.linkId === 1718151 || roadLinkData.linkId === 1718152) {
+          callback(selectedFloatingData);
+        } else if(roadLinkData.linkId === 500130202) {
+          callback(selectedUnknownData);
+        } else {
+          callback([]);
+        }
+      };
+      return self;
+    };
+
+    this.withGetTransferResult = function(simulationData){
+      self.getTransferResult = function(selectedRoadAddressData, callback) {
+        callback(simulationData);
+      };
+      return self;
+    };
+
+    this.withRoadAddressCreation = function(){
+      self.createRoadAddress = function(data){
+        afterSave = true;
+        eventbus.trigger('linkProperties:saved');
+      };
       return self;
     };
 
