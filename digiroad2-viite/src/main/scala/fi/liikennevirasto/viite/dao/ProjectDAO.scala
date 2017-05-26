@@ -177,12 +177,17 @@ object ProjectDAO {
 
   def insertDeltaToRoadChangeTable(delta:Delta,projectId:Long):Unit=
   {
-       val changeType=5 //TODO missing
-       val roadtype=99 //TODO missing
-       val ely= 1 //TODO missing
-       val projectChange = dynamicSession.prepareStatement("INSERT INTO ROAD_ADDRESS_CHANGES (project_id,change_type,old_road_number,new_road_number,old_road_part_number,new_road_part_number, " +
-         "old_track_code,new_track_code,old_start_addr_m,new_start_addr_m,old_end_addr_m,new_end_addr_m,new_discontinuity,new_road_type,new_ely)" +
-         "values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,? )")
+    val changeType=5 //TODO hardcoded to termination
+  val roadtype=99 //TODO missing
+   getRoadAddressProjectById(projectId) match
+     {
+
+     case Some(project)=>
+     {
+
+     val projectChange = dynamicSession.prepareStatement("INSERT INTO ROAD_ADDRESS_CHANGES (project_id,change_type,old_road_number,new_road_number,old_road_part_number,new_road_part_number, " +
+       "old_track_code,new_track_code,old_start_addr_m,new_start_addr_m,old_end_addr_m,new_end_addr_m,new_discontinuity,new_road_type,new_ely)" +
+       "values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,? )")
 
        delta.terminations.foreach { case (address) =>
          projectChange.setLong(1, projectId)
@@ -199,12 +204,18 @@ object ProjectDAO {
          projectChange.setDouble(12, address.endMValue)
          projectChange.setLong(13, address.discontinuity.value)
          projectChange.setLong(14, roadtype)
-         projectChange.setLong(15, ely)
+         projectChange.setLong(15, 3)
          projectChange.addBatch()
 
        }
-    projectChange.executeBatch()
-    projectChange.close()
+       projectChange.executeBatch()
+       projectChange.close()
+
+     }
+
+   }
+
+
   }
 
 
