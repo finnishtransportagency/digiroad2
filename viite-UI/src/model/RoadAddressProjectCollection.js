@@ -10,7 +10,7 @@
     var projectLinksSaved = [];
     var dirtyProjectLinks = [];
     var self = this;
-    var STATUS_NOT_HANDLED = 0;
+    this.STATUS_NOT_HANDLED = 0;
     var STATUS_TERMINATED = 1;
     var BAD_REQUEST_400 = 400;
     var UNAUTHORIZED_401 = 401;
