@@ -208,7 +208,11 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
             case Some(message) => {
               val trProjectStateMessage = projectService.getRoadAddressChangesAndSendToTR(Set(id))
               trProjectStateMessage.status match {
-                case it if 200 until 300 contains it => Map("Validation" -> "ok", "ProjectSent" -> "ok", "Reason" -> trProjectStateMessage.reason)
+                case it if 200 until 300 contains it => {
+                projectService.setProjectStatusToSend2TR(id)
+                  Map("Validation" -> "ok", "ProjectSent" -> "ok", "Reason" -> trProjectStateMessage.reason)
+                }
+
                 case _ =>{
                 //rollback
                   Map("Validation" -> "ok", "ProjectSent" -> "failed", "Reason" -> trProjectStateMessage.reason)

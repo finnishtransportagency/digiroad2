@@ -374,6 +374,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  def setProjectStatusToSend2TR(projectId:Long) =
+  {
+    ProjectDAO.updateProjectStatus(projectId, ProjectState.Sent2TR)
+  }
+
   def updateProjectStatusIfNeeded(currentStatus:ProjectState, newStatus:ProjectState, projectId:Long) :(ProjectState)= {
     if (currentStatus.value!=newStatus.value && newStatus != ProjectState.Unknown)
     {
