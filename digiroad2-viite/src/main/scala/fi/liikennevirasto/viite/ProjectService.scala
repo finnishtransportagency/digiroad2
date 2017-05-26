@@ -343,7 +343,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
     // TODO: Check that project actually is finished: projectLinkPublishable(projectId)
     // TODO: use ProjectDeltaCalculator to calculate delta
-      addProjectDeltaToDB(ProjectDeltaCalculator.delta(projectId))  // TODO: Do the changes given in Delta in database
+//      addProjectDeltaToDB(ProjectDeltaCalculator.delta(projectId))  // TODO: Do the changes given in Delta in database
     // TODO: Run post-change tests for the roads that have been edited and throw an exception to roll back if not acceptable
 
   }
