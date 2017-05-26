@@ -932,11 +932,11 @@
     };
 
     var highlightSelectedFloatingFeatures = function() {
-      var floatingFeatures = roadLayer.layer.getSource().getFeatures().concat(floatingMarkerLayer.getSource().getFeatures());
+      var allFeatures = roadLayer.layer.getSource().getFeatures().concat(anomalousMarkerLayer.getSource().getFeatures()).concat(floatingMarkerLayer.getSource().getFeatures());
       var selectedFloatingIds = _.pluck(selectedLinkProperty.getFeaturesToKeepFloatings(), 'linkId');
 
-      _.each(floatingFeatures, function(feature){
-        if(_.contains(selectedFloatingIds, feature.roadLinkData.linkId) && feature.roadLinkData.roadLinkType === -1)
+      _.each(allFeatures, function(feature){
+        if(feature.roadLinkData.anomaly === 1 || (_.contains(selectedFloatingIds, feature.roadLinkData.linkId) && feature.roadLinkData.roadLinkType === -1))
           pickRoadsLayer.getSource().addFeature(feature);
       });
       pickRoadsLayer.setOpacity(1);
