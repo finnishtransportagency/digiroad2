@@ -50,7 +50,7 @@ object LinkStatus {
 
 case class RoadAddressProject(id: Long, status: ProjectState, name: String, createdBy: String, createdDate: DateTime,
                               modifiedBy: String, startDate: DateTime, dateModified: DateTime, additionalInfo: String,
-                              reservedParts: Seq[ReservedRoadPart])
+                              reservedParts: Seq[ReservedRoadPart], ely: Option[Long] = None)
 
 case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track,
                        discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
@@ -97,7 +97,7 @@ object ProjectDAO {
   def createRoadAddressProject(roadAddressProject: RoadAddressProject): Unit = {
     sqlu"""
          insert into project (id, state, name, ely, created_by, created_date, start_date ,modified_by, modified_date, add_info)
-         values (${roadAddressProject.id}, ${roadAddressProject.status.value}, ${roadAddressProject.name}, 0, ${roadAddressProject.createdBy}, sysdate ,${roadAddressProject.startDate}, '-' , sysdate, ${roadAddressProject.additionalInfo})
+         values (${roadAddressProject.id}, ${roadAddressProject.status.value}, ${roadAddressProject.name}, -1, ${roadAddressProject.createdBy}, sysdate ,${roadAddressProject.startDate}, '-' , sysdate, ${roadAddressProject.additionalInfo})
          """.execute
   }
 
@@ -127,14 +127,21 @@ object ProjectDAO {
          """.execute
   }
 
+  def updateProjectELY(roadAddressProject: RoadAddressProject, ely: Long): Unit = {
+    sqlu"""
+       update project set ely = $ely, modified_date = sysdate where id =  ${roadAddressProject.id}
+      """.execute
+  }
+
   def getRoadAddressProjectById(id: Long): Option[RoadAddressProject] = {
     val where = s""" where id =${id}"""
     val query =
-      s"""SELECT id, state, name, created_by, created_date, start_date, modified_by, modified_date, add_info
+      s"""SELECT id, state, name, created_by, created_date, start_date, modified_by, modified_date, add_info, ely
           FROM project $where"""
-    Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String)](query).list.map {
-      case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo) =>
-        RoadAddressProject(id, ProjectState.apply(state), name, createdBy, start_date, modifiedBy, createdDate, modifiedDate, addInfo, List.empty[ReservedRoadPart])
+    println(query)
+    Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String, Option[Long])](query).list.map {
+      case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo, ely) =>
+        RoadAddressProject(id, ProjectState.apply(state), name, createdBy, start_date, modifiedBy, createdDate, modifiedDate, addInfo, List.empty[ReservedRoadPart], ely)
     }.headOption
   }
 

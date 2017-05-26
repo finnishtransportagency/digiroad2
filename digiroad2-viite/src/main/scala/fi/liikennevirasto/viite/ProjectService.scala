@@ -114,12 +114,25 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         s"TIE ${roadAddress.roadNumber} OSA: ${roadAddress.roadPartNumber}"
       } else "").filterNot(_ == "")
     if (errors.nonEmpty)
-      return Some(s"Seuraavia tieosia ei löytynyt tietokannasta: ${errors.mkString(", ")}")
+      Some(s"Seuraavia tieosia ei löytynyt tietokannasta: ${errors.mkString(", ")}")
     else {
+      val elyErrors = project.reservedParts.map(roadAddress =>
+      if (project.ely.nonEmpty && roadAddress.ely != project.ely.get) {
+        s"TIE ${roadAddress.roadNumber} OSA: ${roadAddress.roadPartNumber} (ELY != ${project.ely.get})"
+      } else "").filterNot(_ == "")
+      if (elyErrors.nonEmpty)
+        return Some(s"Seuraavat tieosat ovat eri ELY-numerolla kuin projektin muut osat: ${errors.mkString(", ")}")
       val addresses = project.reservedParts.flatMap(roadaddress =>
         RoadAddressDAO.fetchByRoadPart(roadaddress.roadNumber, roadaddress.roadPartNumber, false).map(toProjectLink))
-      ProjectDAO.create(addresses)
-      None
+      val ely = project.reservedParts.map(_.ely)
+      if (ely.distinct.size > 1) {
+        Some(s"Tieosat ovat eri ELYistä")
+      }  else {
+        ProjectDAO.create(addresses)
+        if (project.ely.isEmpty)
+          ProjectDAO.updateProjectELY(project, ely.head)
+        None
+      }
     }
   }
   private def createFormOfReservedLinksToSavedRoadParts(project: RoadAddressProject): (Seq[ProjectFormLine], Option[ProjectLink]) = {
