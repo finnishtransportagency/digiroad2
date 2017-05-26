@@ -24,14 +24,17 @@
     var indicatorLayer = new ol.layer.Vector({
       source: indicatorVector
     });
+    indicatorLayer.set('name','indicatorLayer');
 
     var floatingMarkerLayer = new ol.layer.Vector({
       source: floatingMarkerVector
     });
+    floatingMarkerLayer.set('name','floatingMarkerLayer');
 
     var anomalousMarkerLayer = new ol.layer.Vector({
       source: anomalousMarkerVector
     });
+    anomalousMarkerLayer.set('name','anomalousMarkerLayer');
 
     var geometryChangedLayer = new ol.layer.Vector({
       source: geometryChangedVector,
@@ -43,10 +46,12 @@
     var calibrationPointLayer = new ol.layer.Vector({
       source: calibrationPointVector
     });
+    calibrationPointLayer.set('name','calibrationPointLayer');
 
     var greenRoadLayer = new ol.layer.Vector({
       source: greenRoadLayerVector
     });
+    greenRoadLayer.set('name','greenRoadLayer');
 
     var greenRoads = function(Ol3Features, addToGreenLayer) {
       var features = [];
@@ -86,6 +91,7 @@
         return styler.generateStyleByFeature(feature.roadLinkData,map.getView().getZoom());
       }
     });
+    pickRoadsLayer.set('name','pickRoadsLayer');
 
     var simulatedRoadsLayer = new ol.layer.Vector({
       source: simulationVector,
@@ -93,6 +99,7 @@
         return styler.generateStyleByFeature(feature.roadLinkData,map.getView().getZoom());
       }
     });
+    simulatedRoadsLayer.set('name','simulatedRoadsLayer');
 
     map.addLayer(floatingMarkerLayer);
     map.addLayer(anomalousMarkerLayer);
@@ -191,6 +198,7 @@
         setGeneralOpacity(1);
       }
     });
+    selectDoubleClick.set('name','selectDoubleClickInteraction');
 
 
     var zoomDoubleClickListener = function(event) {
@@ -223,6 +231,7 @@
         return styler.generateStyleByFeature(feature.roadLinkData,map.getView().getZoom(), true);
       }
     });
+    selectSingleClick.set('name','selectSingleClickInteraction');
 
     //We add the defined interaction to the map.
     map.addInteraction(selectSingleClick);
@@ -555,6 +564,9 @@
         }
       }
       addSelectInteractions();
+      if(applicationModel.getCurrentAction() === -1){
+        applicationModel.removeSpinner();
+      }
     };
 
     this.refreshView = function() {
@@ -570,6 +582,7 @@
     var vectorLayer = new ol.layer.Vector();
     vectorLayer.setOpacity(1);
     vectorLayer.setVisible(true);
+    vectorLayer.set('name','vectorLayer');
 
     var getSelectedFeatures = function() {
       return _.filter(roadLayer.layer.getSource().getFeatures(), function (feature) {
@@ -857,7 +870,6 @@
     };
 
     var refreshViewAfterSaving = function() {
-      applicationModel.removeSpinner();
       selectedLinkProperty.setDirty(false);
       selectedLinkProperty.resetTargets();
       selectedLinkProperty.clearFeaturesToKeep();
@@ -873,6 +885,9 @@
       selectedLinkProperty.clearFeaturesToKeep();
       greenRoadLayer.getSource().clear();
       simulatedRoadsLayer.getSource().clear();
+      eventbus.once('roadLinks:fetched', function(){
+        applicationModel.removeSpinner();
+      });
     };
 
     var redrawNextSelectedTarget= function(targets, adjacents) {

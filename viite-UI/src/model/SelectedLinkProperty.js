@@ -33,6 +33,7 @@
         targets = [];
         dirty = false;
         featuresToKeep = [];
+        applicationModel.setActiveButtons(false);
       }
     };
 
@@ -363,6 +364,12 @@
           eventbus.trigger("adjacents:aditionalSourceFound",calculatedRoads.links, calculatedRoads.adjacents );
         }
       });
+    });
+
+    eventbus.on('linkProperties:saved', function(){
+      eventbus.trigger('layer:enableButtons', true);
+      applicationModel.toggleSelectionTypeAll();
+      clearFeaturesToKeep();
     });
 
     var openMultiple = function(links) {

@@ -6,6 +6,7 @@
 
   function initialize(container, searchBox, openProjectsBox, assetControlGroups) {
 
+    navigationPanel = $('<div class="navigation-panel"></div>');
     navigationPanel.append(searchBox.element);
     navigationPanel.append(openProjectsBox.element);
 

@@ -204,6 +204,7 @@ module.exports = function(grunt) {
       files: ['Gruntfile.js', 'UI/test/**/*.js', 'UI/src/**/*.js', 'UI/test_data/*.js', 'UI/src/',
         'viite-UI/test/**/*.js', 'viite-UI/src/**/*.js', 'viite-UI/test_data/*.js', 'viite-UI/src/' ],
       options: {
+        reporterOutput: "",
         // options here to override JSHint defaults
         globals: {
           jQuery: true,
