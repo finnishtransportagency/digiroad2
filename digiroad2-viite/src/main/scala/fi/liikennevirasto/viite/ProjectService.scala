@@ -15,6 +15,7 @@ import scala.collection.mutable.ListBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
+import scala.util.control.NonFatal
 
 class ProjectService(roadAddressService: RoadAddressService, roadLinkService: RoadLinkService, eventbus: DigiroadEventBus) {
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
@@ -297,7 +298,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       ProjectDAO.updateProjectLinkStatus(changed, linkStatus, userName)
       try {
         val delta = ProjectDeltaCalculator.delta(projectId)
-        addProjectDeltaToDB(delta)
+        addProjectDeltaToDB(delta,projectId)
         true
       } catch {
         case ex: RoadAddressException =>
@@ -320,37 +321,32 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @return optional error message, empty if no error
     */
   def publishProject(projectId: Long): PublishResult = {
+    // TODO: Check that project actually is finished: projectLinkPublishable(projectId)
+    // TODO: Run post-change tests for the roads that have been edited and throw an exception to roll back if not acceptable
     withDynTransaction {
       val returnValue: Option[String] = None //not implemented yet
-
-      addProjectDeltaToDB(ProjectDeltaCalculator.delta(projectId))
-      returnValue match {
-        case Some(message) => {
-          val trProjectStateMessage = getRoadAddressChangesAndSendToTR(Set(projectId))
-          trProjectStateMessage.status match {
-            case it if 200 until 300 contains it => {
-              setProjectStatusToSend2TR(projectId)
-              PublishResult(true, true, Some(trProjectStateMessage.reason))
-            }
-
-            case _ =>{
-              //rollback
-              PublishResult(true, false, Some(trProjectStateMessage.reason))
-            }
+      try {
+        val delta=ProjectDeltaCalculator.delta(projectId)
+        addProjectDeltaToDB(delta,projectId)
+        val trProjectStateMessage = getRoadAddressChangesAndSendToTR(Set(projectId))
+        trProjectStateMessage.status match {
+          case it if 200 until 300 contains it => {
+            setProjectStatusToSend2TR(projectId)
+            PublishResult(true, true, Some(trProjectStateMessage.reason))
+          }
+          case _ => {
+            //rollback
+            PublishResult(true, false, Some(trProjectStateMessage.reason))
           }
         }
-        case _ => PublishResult(false, false, None)
+      } catch{
+        case NonFatal(e) =>  PublishResult(false, false, None)
       }
     }
-    // TODO: Check that project actually is finished: projectLinkPublishable(projectId)
-    // TODO: use ProjectDeltaCalculator to calculate delta
-//        // TODO: Do the changes given in Delta in database
-    // TODO: Run post-change tests for the roads that have been edited and throw an exception to roll back if not acceptable
-
   }
 
-  private def addProjectDeltaToDB(projectDelta:Delta):Unit= {
-      ProjectDAO.insertDeltaToRoadChangeTable(projectDelta)
+  private def addProjectDeltaToDB(projectDelta:Delta,projectId:Long):Unit= {
+      ProjectDAO.insertDeltaToRoadChangeTable(projectDelta,projectId)
   }
 
 
