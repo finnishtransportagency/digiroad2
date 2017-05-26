@@ -337,10 +337,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     // TODO: Check that project actually is finished: projectLinkPublishable(projectId)
     // TODO: Run post-change tests for the roads that have been edited and throw an exception to roll back if not acceptable
     withDynTransaction {
-      val returnValue: Option[String] = None //not implemented yet
       try {
         val delta=ProjectDeltaCalculator.delta(projectId)
-        addProjectDeltaToDB(delta,projectId)
+        if(!addProjectDeltaToDB(delta,projectId)) {return PublishResult(false, false, Some("Muutostaulun luonti epäonnistui. Tarkasta ely"))}
         val trProjectStateMessage = getRoadAddressChangesAndSendToTR(Set(projectId))
         trProjectStateMessage.status match {
           case it if 200 until 300 contains it => {
@@ -358,8 +357,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  private def addProjectDeltaToDB(projectDelta:Delta,projectId:Long):Unit= {
-      ProjectDAO.insertDeltaToRoadChangeTable(projectDelta,projectId)
+  private def addProjectDeltaToDB(projectDelta:Delta,projectId:Long):Boolean= {
+    return  ProjectDAO.insertDeltaToRoadChangeTable(projectDelta,projectId)
   }
 
 
