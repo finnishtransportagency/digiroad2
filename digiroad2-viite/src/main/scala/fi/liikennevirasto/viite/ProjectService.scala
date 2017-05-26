@@ -4,6 +4,7 @@ import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.util.RoadAddressException
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, RoadLinkService}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink, RoadAddressLinkLike}
@@ -289,11 +290,20 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   }
 
-  def updateProjectLinkStatus(projectId: Long, linkIds: Set[Long], linkStatus: LinkStatus, userName: String): Unit = {
+  def updateProjectLinkStatus(projectId: Long, linkIds: Set[Long], linkStatus: LinkStatus, userName: String): Boolean = {
     withDynTransaction{
       val projectLinks = ProjectDAO.getProjectLinks(projectId)
       val changed = projectLinks.filter(pl => linkIds.contains(pl.linkId)).map(_.id).toSet
       ProjectDAO.updateProjectLinkStatus(changed, linkStatus, userName)
+      try {
+        val delta = ProjectDeltaCalculator.delta(projectId)
+        addProjectDeltaToDB(delta)
+        true
+      } catch {
+        case ex: RoadAddressException =>
+          logger.info("Delta calculation not possible: " + ex.getMessage)
+          false
+      }
     }
   }
 
@@ -309,12 +319,33 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @param projectId Project to publish
     * @return optional error message, empty if no error
     */
-  def publishProject(projectId: Long): Option[String] = {
+  def publishProject(projectId: Long): PublishResult = {
+    withDynTransaction {
+      val returnValue: Option[String] = None //not implemented yet
+
+      returnValue match {
+        case Some(message) => {
+          val trProjectStateMessage = getRoadAddressChangesAndSendToTR(Set(projectId))
+          trProjectStateMessage.status match {
+            case it if 200 until 300 contains it => {
+              setProjectStatusToSend2TR(projectId)
+              PublishResult(true, true, Some(trProjectStateMessage.reason))
+            }
+
+            case _ =>{
+              //rollback
+              PublishResult(true, false, Some(trProjectStateMessage.reason))
+            }
+          }
+        }
+        case _ => PublishResult(false, false, None)
+      }
+    }
     // TODO: Check that project actually is finished: projectLinkPublishable(projectId)
     // TODO: use ProjectDeltaCalculator to calculate delta
       addProjectDeltaToDB(ProjectDeltaCalculator.delta(projectId))  // TODO: Do the changes given in Delta in database
     // TODO: Run post-change tests for the roads that have been edited and throw an exception to roll back if not acceptable
-    None //not implemented yet
+
   }
 
   private def addProjectDeltaToDB(projectDelta:Delta):Unit= {
@@ -435,4 +466,5 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       case _=> None
     }
   }
+  case class PublishResult(validationSuccess: Boolean, sendSuccess: Boolean, errorMessage: Option[String])
 }

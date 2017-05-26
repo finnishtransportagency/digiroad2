@@ -201,30 +201,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
 
   post("/roadlinks/roadaddress/project/sendToTR") {
-    (parsedBody \ "projectID").extractOpt[Long] match {
-      case Some(id) => {
-        withDynSession {
-          projectService.publishProject(id) match {
-            case Some(message) => {
-              val trProjectStateMessage = projectService.getRoadAddressChangesAndSendToTR(Set(id))
-              trProjectStateMessage.status match {
-                case it if 200 until 300 contains it => {
-                projectService.setProjectStatusToSend2TR(id)
-                  Map("Validation" -> "ok", "ProjectSent" -> "ok", "Reason" -> trProjectStateMessage.reason)
-                }
-
-                case _ =>{
-                //rollback
-                  Map("Validation" -> "ok", "ProjectSent" -> "failed", "Reason" -> trProjectStateMessage.reason)
-                }
-              }
-            }
-            case _ => BadRequest("Validation" -> "failed")
-          }
-        }
-      }
-      case _ => BadRequest(s"Invalid arguments")
-    }
+    (parsedBody \ "projectID").extractOpt[Long].map(projectService.publishProject)
+      .getOrElse(BadRequest(s"Invalid arguments"))
   }
 
 
@@ -295,16 +273,17 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val user = userProvider.getCurrentUser()
 
     val modification = parsedBody.extract[RoadAddressProjectLinkUpdate]
-    projectService.updateProjectLinkStatus(modification.projectId, modification.linkIds.toSet,
+    val updated = projectService.updateProjectLinkStatus(modification.projectId, modification.linkIds.toSet,
       LinkStatus.apply(modification.newStatus), user.username)
-    Map("projectId" -> modification.projectId, "publishable" -> projectService.projectLinkPublishable(modification.projectId))
+    Map("projectId" -> modification.projectId, "publishable" -> (updated &&
+      projectService.projectLinkPublishable(modification.projectId)))
   }
 
   post("/project/publish"){
     val user = userProvider.getCurrentUser()
     val projectId = params.get("projectId")
 
-    projectId.map(_.toLong).map(projectService.publishProject).map {
+    projectId.map(_.toLong).map(projectService.publishProject).map(_.errorMessage).map {
       case Some(s) => PreconditionFailed(s)
       case _ => Map("status" -> "ok")
     }.getOrElse(BadRequest("Missing mandatory 'projectId' parameter"))
