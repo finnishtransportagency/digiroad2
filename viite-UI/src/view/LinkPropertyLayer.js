@@ -864,7 +864,7 @@
       applicationModel.resetCurrentAction();
       applicationModel.setActiveButtons(false);
       applicationModel.setContinueButton(false);
-      eventbus.trigger('layer:enableButtons');
+      eventbus.trigger('layer:enableButtons', true);
       $('#feature-attributes').empty();
       clearLayers();
       me.refreshView();
@@ -924,6 +924,7 @@
         if(!targetFeature){
           _.map(roadLayer.layer.getSource().getFeatures(), function(feature){
             if(feature.roadLinkData.linkId == targets){
+              var pickAnomalousMarker;
               if(feature.roadLinkData.anomaly === geometryChangedAnomaly) {
                 var roadLink = feature.roadLinkData;
                 var points = _.map(roadLink.newGeometry, function (point) {
@@ -931,7 +932,7 @@
                 });
                 feature = new ol.Feature({geometry: new ol.geom.LineString(points)});
                 feature.roadLinkData = roadLink;
-                var pickAnomalousMarker = _.filter(geometryChangedLayer.getSource().getFeatures(), function(marker){
+                pickAnomalousMarker = _.filter(geometryChangedLayer.getSource().getFeatures(), function(marker){
                   return marker.roadLinkData.linkId === feature.roadLinkData.linkId;
                 });
                 _.each(pickAnomalousMarker, function(pickRoads){
@@ -945,7 +946,7 @@
               feature.setStyle(greenRoadStyle);
               features.push(feature);
               roadCollection.addPreMovedRoadAddresses(feature.data);
-              var pickAnomalousMarker = _.filter(pickRoadsLayer.getSource().getFeatures(), function(markersPick){
+              pickAnomalousMarker = _.filter(pickRoadsLayer.getSource().getFeatures(), function(markersPick){
                 return markersPick.roadLinkData.linkId === feature.roadLinkData.linkId;
               });
               _.each(pickAnomalousMarker, function(pickRoads){
