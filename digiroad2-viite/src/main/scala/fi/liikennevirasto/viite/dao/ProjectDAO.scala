@@ -172,8 +172,8 @@ object ProjectDAO {
   def getProjectstatus(projectID: Long): Option[ProjectState] = {
     val query =
       s""" SELECT state
-         |   FROM project
-         |   WHERE id=$projectID
+            FROM project
+            WHERE id=$projectID
    """
     Q.queryNA[Long](query).firstOption match
     {
