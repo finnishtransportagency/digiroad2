@@ -192,8 +192,7 @@ trait TierekisteriClient{
   }
   protected def request[T](url: String): Either[T, TierekisteriError] = {
     val request = new HttpGet(url)
-    request.addHeader("X-OTH-Authorization", "Basic " + auth.getOldAuthInBase64)
-    request.addHeader("X-Authorization", "Basic " + auth.getAuthInBase64)
+    addAuthorizationHeader(request)
     val response = client.execute(request)
     try {
       val statusCode = response.getStatusLine.getStatusCode
@@ -213,7 +212,6 @@ trait TierekisteriClient{
   protected def post(url: String, trEntity: TierekisteriType, createJson: (TierekisteriType) => StringEntity): Option[TierekisteriError] = {
     val request = new HttpPost(url)
     addAuthorizationHeader(request)
-
     request.setEntity(createJson(trEntity))
     val response = client.execute(request)
     try {
