@@ -1,5 +1,5 @@
 (function (root) {
-  root.RoadAddressProjectEditForm = function(projectCollection) {
+  root.RoadAddressProjectEditForm = function(projectCollection, selectedProjectLinkProperty) {
     var currentProject = false;
     var selectedProjectLink = false;
     var staticField = function(labelText, dataField) {
@@ -170,13 +170,20 @@
 
       eventbus.on('roadAddress:projectSentSuccess', function() {
         new ModalConfirm("Muutosilmoitus lähetetty Tierekisteriin.");
-        //TODO: Viite is returned to the initial state
-        /*
-        applicationModel.setOpenProject(false);
-        projectCollection.clearRoadAddressProjects();
+
         applicationModel.selectLayer('linkProperty');
-        */
+
+        rootElement.empty();
+        $('#information-content').empty();
+
+        selectedProjectLinkProperty.close();
+        projectCollection.clearRoadAddressProjects();
+        projectCollection.reset();
+        applicationModel.setOpenProject(false);
+
+        eventbus.trigger('roadAddressProject:deselectFeaturesSelected');
       });
+
       eventbus.on('roadAddress:projectSentFailed', function(error) {
         new ModalConfirm(error);
       });

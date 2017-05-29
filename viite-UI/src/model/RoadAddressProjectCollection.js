@@ -31,6 +31,10 @@
       return projectLinksSaved;
     };
 
+    this.reset = function(){
+      fetchedProjectLinks = [];
+    };
+
     this.getMultiSelectIds = function (linkId) {
       var chain = _.find(fetchedProjectLinks, function (linkChain) {
         var pureChain = _.map(linkChain, function(l) { return l.getData(); });

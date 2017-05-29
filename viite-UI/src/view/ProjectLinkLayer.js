@@ -194,6 +194,63 @@
       }
     };
 
+    var clearHighlights = function(){
+      if(selectDoubleClick.getFeatures().getLength() !== 0){
+         selectDoubleClick.getFeatures().clear();
+      }
+      if(selectSingleClick.getFeatures().getLength() !== 0){
+         selectSingleClick.getFeatures().clear();
+      }
+    };
+
+    /**
+     * This will add all the following interactions from the map:
+     * -selectDoubleClick
+     * -selectSingleClick
+     */
+
+    var addSelectInteractions = function () {
+      map.addInteraction(selectDoubleClick);
+      map.addInteraction(selectSingleClick);
+    };
+
+    /**
+     * This will remove all the following interactions from the map:
+     * -selectDoubleClick
+     * -selectSingleClick
+     */
+
+    var removeSelectInteractions = function() {
+      map.removeInteraction(selectDoubleClick);
+      map.removeInteraction(selectSingleClick);
+    };
+
+    /**
+     * This will deactivate the following interactions from the map:
+     * -selectDoubleClick
+     * -selectSingleClick - only if demanded with the Both
+     */
+
+    var deactivateSelectInteractions = function(both) {
+      selectDoubleClick.setActive(false);
+      if(both){
+        selectSingleClick.setActive(false);
+      }
+    };
+
+    /**
+     * This will activate the following interactions from the map:
+     * -selectDoubleClick
+     * -selectSingleClick - only if demanded with the Both
+     */
+
+    var activateSelectInteractions = function(both) {
+      selectDoubleClick.setActive(true);
+      if(both){
+        selectSingleClick.setActive(true);
+      }
+    };
+
     var handleRoadsVisibility = function() {
       if (_.isObject(vectorLayer)) {
         vectorLayer.setVisible(map.getView().getZoom() >= minimumContentZoomLevel());
@@ -218,6 +275,10 @@
     var hideLayer = function() {
       me.stop();
       me.hide();
+    };
+
+    var clearProjectLinkLayer = function() {
+      vectorLayer.getSource().clear();
     };
 
     var redraw = function(){
@@ -291,6 +352,27 @@
     });
 
     eventbus.on('map:moved', mapMovedHandler, this);
+
+    eventbus.on('layer:selected', function(layer, previouslySelectedLayer) {
+     //TODO create proper system for layer changes and needed calls
+     if (layer !== 'roadAddressProject') {
+       deactivateSelectInteractions(true);
+       removeSelectInteractions();
+     }
+     else {
+       activateSelectInteractions(true);
+       addSelectInteractions();
+     }
+     if (previouslySelectedLayer === 'roadAddressProject') {
+       clearProjectLinkLayer();
+       hideLayer();
+       removeSelectInteractions();
+     }
+    });
+
+    eventbus.on('roadAddressProject:deselectFeaturesSelected', function(){
+      clearHighlights();
+    });
 
     vectorLayer.setVisible(true);
     map.addLayer(vectorLayer);
