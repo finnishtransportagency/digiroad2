@@ -16,6 +16,7 @@ import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
 import fi.liikennevirasto.viite.{ReservedRoadPart, RoadType}
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
+import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -828,9 +829,9 @@ object RoadAddressDAO {
     if (Q.queryNA[Int](query).first>0) true else false
   }
 
-  def getRoadPartInfo(roadNumber:Long, roadPart:Long): Option[(Long,Long,Double,Long)] =
+  def getRoadPartInfo(roadNumber:Long, roadPart:Long): Option[(Long,Long,Double,Long,DateTime,DateTime)] =
   {
-    val query = s"""SELECT r.id, l.link_id, r.end_addr_M, r.discontinuity
+    val query = s"""SELECT r.id, l.link_id, r.end_addr_M, r.discontinuity, r.start_date, r.end_date
                 FROM road_address r
              INNER JOIN lrm_position l
              ON r.lrm_position_id =  l.id
@@ -839,6 +840,6 @@ object RoadAddressDAO {
              on r.START_ADDR_M=ra.lol
              WHERE r.road_number=$roadNumber AND r.road_part_number=$roadPart AND
              (r.valid_from is null or r.valid_from <= sysdate) AND (r.valid_to is null or r.valid_to > sysdate) AND track_code in (0,1)"""
-     Q.queryNA[(Long,Long,Double,Long)](query).firstOption
+     Q.queryNA[(Long,Long,Double,Long, DateTime, DateTime)](query).firstOption
     }
 }

@@ -7,7 +7,8 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, RoadLinkService}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink, RoadAddressLinkLike}
-import fi.liikennevirasto.viite.process.RoadAddressFiller
+import fi.liikennevirasto.viite.process.{ProjectDeltaCalculator, RoadAddressFiller}
+import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ListBuffer
@@ -67,29 +68,34 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         reserved match {
           case Some(projectname) => return Left(s"TIE $roadNumber OSA $part on jo varattuna projektissa $projectname, tarkista tiedot")
           case None =>
-            val (roadpartID, linkID, length, discontinuity, ely, foundAddress) = getAddressPartinfo(roadNumber, part)
+            val (roadpartID, linkID, length, discontinuity, ely, startDate, endDate, foundAddress) = getAddressPartinfo(roadNumber, part)
             if (foundAddress) // db search failed or we couldnt get info from VVH
-              listOfAddressParts += ReservedRoadPart(roadpartID, roadNumber, part, length, Discontinuity.apply(discontinuity), ely)
+              listOfAddressParts += ReservedRoadPart(roadpartID, roadNumber, part, length, Discontinuity.apply(discontinuity), ely, startDate, endDate)
         }
       }
       Right(listOfAddressParts)
     }
   }
 
-  private def getAddressPartinfo(roadnumber: Long, roadpart: Long): (Long, Long, Double, String, Long, Boolean) = {
+  def projDateValidation(reservedParts:Seq[ReservedRoadPart], projDate:DateTime): Option[String] = {
+    reservedParts.foreach( part => if(part.startDate.nonEmpty && part.startDate.get.isAfter(projDate)) return Option(s"Tieosalla TIE ${part.roadNumber} OSA ${part.roadPartNumber} alkupäivämäärä <start_date> on uudempi kuin tieosoiteprojektin alkupäivämäärä <alkupvm projektin kentästä>, tarkista tiedot."))
+    reservedParts.foreach( part => if(part.endDate.nonEmpty && part.endDate.get.isBefore(projDate)) return Option(s"Tieosalla TIE ${part.roadNumber} OSA ${part.roadPartNumber} alkupäivämäärä <start_date> on uudempi kuin tieosoiteprojektin alkupäivämäärä <alkupvm projektin kentästä>, tarkista tiedot."))
+    None
+  }
+
+  private def getAddressPartinfo(roadnumber: Long, roadpart: Long): (Long, Long, Double, String, Long, Option[DateTime], Option[DateTime], Boolean) = {
     RoadAddressDAO.getRoadPartInfo(roadnumber, roadpart) match {
-      case Some((roadpartid, linkid, lenght, discontinuity)) => {
+      case Some((roadpartid, linkid, lenght, discontinuity, startDate, endDate)) => {
         val enrichment = false
         val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(linkid), enrichment)
         val ely: Option[Long] = roadLink.headOption.map(rl => MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(rl.municipalityCode, 0))
         ely match {
-          case Some(value) if ely.nonEmpty && ely.get != 0 => (roadpartid, linkid, lenght, Discontinuity.apply(discontinuity.toInt).description, value, true)
-          case _ => (0, 0, 0, "", 0, false)
+          case Some(value) if ely.nonEmpty && ely.get != 0 => (roadpartid, linkid, lenght, Discontinuity.apply(discontinuity.toInt).description, value, Option(startDate), Option(endDate), true)
+          case _ => (0, 0, 0, "", 0, None, None, false)
         }
       }
       case None =>
-        (0, 0, 0, "", 0, false)
-
+        (0, 0, 0, "", 0, None, None, false)
     }
   }
 

@@ -263,7 +263,7 @@
 
 
     this.checkIfReserved = function (data) {
-      return backend.checkIfRoadpartReserved(data[3].value === '' ? 0 : parseInt(data[3].value), data[4].value === '' ? 0 : parseInt(data[4].value), data[5].value === '' ? 0 : parseInt(data[5].value))
+      return backend.checkIfRoadpartReserved(data[3].value === '' ? 0 : parseInt(data[3].value), data[4].value === '' ? 0 : parseInt(data[4].value), data[5].value === '' ? 0 : parseInt(data[5].value), data[1].value)
         .then(function (validationResult) {
           if (validationResult.success !== "ok") {
             eventbus.trigger('roadAddress:projectValidationFailed', validationResult);
