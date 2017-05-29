@@ -62,7 +62,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       when(mockVVHClient.fetchByLinkId(rl.linkId))
         .thenReturn(Some(rl)))
     when(mockVVHClient.fetchByLinkIds(any[Set[Long]])).thenReturn(vvhRoadLinks)
-    when(mockGeometryTransform.resolveAddressAndLocation(any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]]
+    when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]]
     )).thenReturn((RoadAddress(Option("235"), 1, 1, Track.Combined, 0, None), RoadSide.Right))
     when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks.map(toRoadLink))
     vvhRoadLinks.foreach(rl =>
@@ -794,7 +794,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val stopOption = RollbackMassTransitStopService.fetchPointAssets((s:String) => s"""$s where a.id = $assetId""").headOption
       stopOption.isEmpty should be (false)
       val stop = stopOption.get
-      val (address, roadSide) = geometryTransform.resolveAddressAndLocation(stop.mValue, stop.linkId, stop.validityDirection.get, Some(stop.municipalityCode))
+      val (address, roadSide) = geometryTransform.resolveAddressAndLocation(Point(0,0), 0, stop.mValue, stop.linkId, stop.validityDirection.get, Some(stop.municipalityCode))
       val trStop = TierekisteriBusStopMarshaller.toTierekisteriMassTransitStop(stop, address, Option(roadSide))
       roadSide should be (RoadSide.Left)
       trStop.nationalId should be (stop.nationalId)
@@ -829,7 +829,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val stopOption = RollbackMassTransitStopService.fetchPointAssets((s:String) => s"""$s where a.id = $assetId""").headOption
       stopOption.isEmpty should be (false)
       val stop = stopOption.get
-      val (address, roadSide) = geometryTransform.resolveAddressAndLocation(stop.mValue, stop.linkId, stop.validityDirection.get, Some(stop.municipalityCode))
+      val (address, roadSide) = geometryTransform.resolveAddressAndLocation(Point(0,0), 0, stop.mValue, stop.linkId, stop.validityDirection.get, Some(stop.municipalityCode))
       val expireDate = new Date(10487450L)
       val trStop = TierekisteriBusStopMarshaller.toTierekisteriMassTransitStop(stop, address, Option(roadSide), Some(expireDate))
       trStop.operatingTo.isEmpty should be (false)
@@ -937,7 +937,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
           SimpleProperty("vaikutussuunta", Seq(PropertyValue("2")))
         )), "masstransitstopservice_spec",
         vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass))
-      when(mockGeometryTransform.resolveAddressAndLocation(any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]]
+      when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]]
       )).thenReturn((new RoadAddress(Some("235"), 110, 10, Track.Combined, 108, None), RoadSide.Right))
       val service = RollbackMassTransitStopServiceWithTierekisteri
       val stop = service.getById(id).get
@@ -970,7 +970,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
           SimpleProperty("vaikutussuunta", Seq(PropertyValue("2")))
         )), "masstransitstopservice_spec",
         vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass))
-      when(mockGeometryTransform.resolveAddressAndLocation(any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]]
+      when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]]
       )).thenReturn((new RoadAddress(Some("235"), 110, 10, Track.Combined, 108, None), RoadSide.Right))
       val service = RollbackMassTransitStopServiceWithTierekisteri
       val stop = service.getById(id).get
@@ -1018,7 +1018,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
           SimpleProperty("vaikutussuunta", Seq(PropertyValue("2")))
         )), "masstransitstopservice_spec",
         vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass))
-      when(mockGeometryTransform.resolveAddressAndLocation(any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]]
+      when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]]
       )).thenReturn((new RoadAddress(Some("235"), 110, 10, Track.Combined, 108, None), RoadSide.Right))
       val service = RollbackMassTransitStopServiceWithTierekisteri
       val stop = service.getById(id).get
@@ -1187,7 +1187,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     )
     runWithRollback {
       val rad = RoadAddress(Some("235"), 110, 10, Track.Combined, 108, None)
-      when(mockGeometryTransform.resolveAddressAndLocation(any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]]
+      when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]]
       )).thenReturn((rad, RoadSide.Right))
       when(mockVVHClient.queryByMunicipalitesAndBounds(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks)
       val trStop = TierekisteriMassTransitStop(85755, "livi114873", rad, TRRoadSide.Unknown, StopType.Unknown, false,
@@ -1227,7 +1227,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     val service = new TestMassTransitStopServiceWithDynTransaction(new DummyEventBus, mockRoadLinkService)
     when(mockTierekisteriClient.isTREnabled).thenReturn(true)
     when(mockTierekisteriClient.updateMassTransitStop(any[TierekisteriMassTransitStop], any[Option[String]], any[Option[String]])).thenThrow(new TierekisteriClientException("TR-test exception"))
-    when(mockGeometryTransform.resolveAddressAndLocation(any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]])).thenReturn(
+    when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]])).thenReturn(
       (RoadAddress(Option("235"), 1, 1, Track.Combined, 0, None), RoadSide.Left)
     )
 

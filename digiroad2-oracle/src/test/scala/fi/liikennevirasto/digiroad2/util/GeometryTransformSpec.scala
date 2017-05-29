@@ -35,7 +35,7 @@ class GeometryTransformSpec extends FunSuite with Matchers {
     values (7000000,921,2,0,5,0,299,5400000,to_date('01.09.12','RR.MM.DD'),null,'tr',to_date('01.09.12','RR.MM.DD'),2,0,MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(385258.765,7300119.103,0,0,384984.756,7300237.964,0,299)),null)""".execute
 
       val (roadAddress, roadSide) =
-        transform.resolveAddressAndLocation(mValue, linkId, sideCode)
+        transform.resolveAddressAndLocation(Point(0,0), 0, mValue, linkId, sideCode)
 
       roadAddress.road should be(921)
       roadAddress.track should be(Track.Combined)
@@ -56,7 +56,7 @@ class GeometryTransformSpec extends FunSuite with Matchers {
       sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO)
     values (7000000,921,2,1,5,0,299,5400000,to_date('01.09.12','RR.MM.DD'),null,'tr',to_date('01.09.12','RR.MM.DD'),2,0,MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(385258.765,7300119.103,0,0,384984.756,7300237.964,0,299)),null)""".execute
 
-      val (roadAddress, roadSide) = transform.resolveAddressAndLocation(mValue, linkId, sideCode)
+      val (roadAddress, roadSide) = transform.resolveAddressAndLocation(Point(0,0), 0, mValue, linkId, sideCode)
       roadAddress.road should be(921)
       roadAddress.track should be(Track.RightSide)
       roadAddress.mValue should be(60)
@@ -82,7 +82,7 @@ class GeometryTransformSpec extends FunSuite with Matchers {
       sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO)
       values (8000000,110,2,0,5,0,160,5400005,to_date('01.09.12','RR.MM.DD'),null,'tr',to_date('01.09.12','RR.MM.DD'),2,0,MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),MDSYS.SDO_ORDINATE_ARRAY(385258.765,7300119.103,0,0,384984.756,7300237.964,0,299)),null)""".execute
 
-      val (roadAddress, roadSide) = transform.resolveAddressAndLocation(mValue, linkId, sideCode, road = Option(110))
+      val (roadAddress, roadSide) = transform.resolveAddressAndLocation(Point(0,0), 0, mValue, linkId, sideCode, road = Option(110))
       roadAddress.road should be(110)
       roadAddress.track should be(Track.Combined)
       roadSide should be(RoadSide.Left)
