@@ -186,7 +186,8 @@ trait TierekisteriClient{
 
   protected def request[T](url: String): Either[T, TierekisteriError] = {
     val request = new HttpGet(url)
-    request.addHeader("X-OTH-Authorization", "Basic " + auth.getAuthInBase64)
+    request.addHeader("X-OTH-Authorization", "Basic " + auth.getOldAuthInBase64)
+    request.addHeader("X-Authorization", "Basic " + auth.getAuthInBase64)
     val response = client.execute(request)
     try {
       val statusCode = response.getStatusLine.getStatusCode
@@ -205,7 +206,8 @@ trait TierekisteriClient{
 
   protected def post(url: String, trEntity: TierekisteriType, createJson: (TierekisteriType) => StringEntity): Option[TierekisteriError] = {
     val request = new HttpPost(url)
-    request.addHeader("X-OTH-Authorization", "Basic " + auth.getAuthInBase64)
+    request.addHeader("X-OTH-Authorization", "Basic " + auth.getOldAuthInBase64)
+    request.addHeader("X-Authorization", "Basic " + auth.getAuthInBase64)
     request.setEntity(createJson(trEntity))
     val response = client.execute(request)
     try {
@@ -227,7 +229,8 @@ trait TierekisteriClient{
 
   protected def put(url: String, trEntity: TierekisteriType, createJson: (TierekisteriType) => StringEntity): Option[TierekisteriError] = {
     val request = new HttpPut(url)
-    request.addHeader("X-OTH-Authorization", "Basic " + auth.getAuthInBase64)
+    request.addHeader("X-OTH-Authorization", "Basic " + auth.getOldAuthInBase64)
+    request.addHeader("X-Authorization", "Basic " + auth.getAuthInBase64)
     request.setEntity(createJson(trEntity))
     val response = client.execute(request)
     try {
@@ -250,7 +253,8 @@ trait TierekisteriClient{
   protected def delete(url: String): Option[TierekisteriError] = {
     val request = new HttpDelete(url)
     request.setHeader("content-type","application/json")
-    request.addHeader("X-OTH-Authorization", "Basic " + auth.getAuthInBase64)
+    request.addHeader("X-OTH-Authorization", "Basic " + auth.getOldAuthInBase64)
+    request.addHeader("X-Authorization", "Basic " + auth.getAuthInBase64)
     val response = client.execute(request)
     try {
       val statusCode = response.getStatusLine.getStatusCode
