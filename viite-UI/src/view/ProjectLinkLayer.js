@@ -5,6 +5,7 @@
     var calibrationPointVector = new ol.source.Vector({});
     var layerMinContentZoomLevels = {};
     var currentZoom = 0;
+    var standardZIndex = 6;
     Layer.call(this, layerName, roadLayer);
     var project;
     var me = this;
@@ -28,9 +29,9 @@
     });
 
     var calibrationPointLayer = new ol.layer.Vector({
-      source: calibrationPointVector
+      source: calibrationPointVector,
+      name: 'calibrationPointLayer'
     });
-    calibrationPointLayer.set('name','calibrationPointLayer');
 
     var styleFunction = function (feature, resolution){
       var status = feature.projectLinkData.status;
@@ -61,7 +62,7 @@
         });
 
         var zIndex = styler.determineZIndex(feature.projectLinkData.roadLinkType, feature.projectLinkData.anomaly, feature.projectLinkData.roadLinkSource, status);
-        lineStyle.setZIndex(zIndex + 3);
+        lineStyle.setZIndex(zIndex + 1);
         return [lineStyle];
       }
       else{
@@ -245,7 +246,8 @@
         var calMarker = new CalibrationPoint(actualPoint.point);
         calibrationPointLayer.getSource().addFeature(calMarker.getMarker(true));
       });
-      calibrationPointLayer.setZIndex(22);
+
+      calibrationPointLayer.setZIndex(standardZIndex + 2);
       var partitioned = _.partition(features, function(feature) {
         return (!_.isUndefined(feature.projectLinkData.linkId) && _.contains(editedLinks, feature.projectLinkData.linkId));
       });
@@ -284,8 +286,6 @@
     eventbus.on('roadAddressProject:selected', function(projId) {
       eventbus.once('roadAddressProject:projectFetched', function(id) {
         projectCollection.fetch(map.getView().calculateExtent(map.getSize()),map.getView().getZoom(), id);
-        // vectorSource.clear();
-        // eventbus.trigger('map:clearLayers');
       });
       projectCollection.getProjectsWithLinksById(projId);
     });
