@@ -440,7 +440,7 @@ trait LinearAssetOperations {
     */
   def update(ids: Seq[Long], value: Value, username: String): Seq[Long] = {
     withDynTransaction {
-      updateWithoutTransaction(ids, value, username, None, None)
+      updateWithoutTransaction(ids, value, username)
     }
   }
 
@@ -642,7 +642,7 @@ trait LinearAssetOperations {
 
       val newExistingIdsToReturn = valueTowardsDigitization match {
         case None => dao.updateExpiration(id, expired = true, username).toSeq
-        case Some(value) => updateWithoutTransaction(Seq(id), value, username, None, None)
+        case Some(value) => updateWithoutTransaction(Seq(id), value, username)
       }
 
       dao.updateSideCode(newExistingIdsToReturn.head, SideCode.TowardsDigitizing)
@@ -653,7 +653,7 @@ trait LinearAssetOperations {
     }
   }
 
-  private def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, newStartMeasure: Option[Double], newEndMeasure: Option[Double]): Seq[Long] = {
+  private def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, newStartMeasure: Option[Double] = None, newEndMeasure: Option[Double] = None): Seq[Long] = {
     if (ids.isEmpty)
       return ids
 
@@ -668,7 +668,7 @@ trait LinearAssetOperations {
         case TextualValue(textValue) =>
           updateValueByExpiration(id, TextualValue(textValue), LinearAssetTypes.getValuePropertyId(typeId), username, newStartMeasure, newEndMeasure)
         case prohibitions: Prohibitions =>
-          dao.updateProhibitionValue(id, prohibitions, username)
+          dao.updateProhibitionValue(id, prohibitions, username, newStartMeasure, newEndMeasure)
         case maintenanceRoad: MaintenanceRoad =>
           val missingProperties = validateRequiredProperties(typeId, maintenanceRoad)
           if (missingProperties.nonEmpty)

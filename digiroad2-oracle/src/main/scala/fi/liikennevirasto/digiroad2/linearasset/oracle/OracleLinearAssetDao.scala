@@ -1104,7 +1104,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
   /**
     *  Updates prohibition value. Used by LinearAssetService.updateWithoutTransaction.
     */
-  def updateProhibitionValue(id: Long, value: Prohibitions, username: String): Option[Long] = {
+  def updateProhibitionValue(id: Long, value: Prohibitions, username: String, startMeasure: Option[Double] = None, endMeasure: Option[Double] = None): Option[Long] = {
     Queries.updateAssetModified(id, username).first
 
     val prohibitionValueIds = sql"""select id from PROHIBITION_VALUE where asset_id = $id""".as[Int].list.mkString(",")
@@ -1115,6 +1115,10 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     }
 
     insertProhibitionValue(id, value)
+    (startMeasure, endMeasure) match {
+      case (None, None) => None
+      case (Some(start), Some(end)) => updateMValues(id, (start, end))
+    }
     Some(id)
   }
 
