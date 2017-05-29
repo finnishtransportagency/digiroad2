@@ -92,6 +92,7 @@
           return !_.isUndefined(selectionTarget.projectLinkData);
       });
       selectedProjectLinkProperty.clean();
+      $('.wrapper').remove();
       if (!_.isUndefined(selection))
         selectedProjectLinkProperty.open(selection.projectLinkData.linkId, true);
     });
@@ -168,7 +169,7 @@
 
     var zoomDoubleClickListener = function(event) {
       _.defer(function(){
-        if(selectDoubleClick.getFeatures().getLength() < 1 && selectedProjectLinkProperty.get().length < 1 && map.getView().getZoom() <= 13){
+        if(selectedProjectLinkProperty.get().length === 0 && applicationModel.getSelectedLayer() == 'roadAddressProject' && map.getView().getZoom() <= 13){
           map.getView().setZoom(map.getView().getZoom()+1);
         }
       });
@@ -283,6 +284,10 @@
 
     eventbus.on('roadAddress:projectLinksEdited',function(){
       redraw();
+    });
+
+    eventbus.on('roadAddressProject:projectLinkSaved',function(projectId){
+      projectCollection.fetch(map.getView().calculateExtent(map.getSize()),map.getView().getZoom(), projectId);
     });
 
     eventbus.on('map:moved', mapMovedHandler, this);

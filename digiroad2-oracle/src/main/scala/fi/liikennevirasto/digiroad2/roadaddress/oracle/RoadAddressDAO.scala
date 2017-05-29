@@ -51,7 +51,7 @@ class RoadAddressDAO {
     sql"""
 			select distinct (ra.road_number)
       from road_address ra
-      where ra.valid_to is null OR ra.valid_to <= SYSDATE
+      where ra.valid_to is null OR ra.valid_to > SYSDATE
 		  """.as[Long].list
   }
 
@@ -59,7 +59,7 @@ class RoadAddressDAO {
     val where =
       s""" where (( pos.start_measure >= $startM and pos.end_measure <= $endM ) or
          ( $endM >= pos.start_measure and $endM <= pos.end_measure)) and ra.road_number= $roadNumber and ra.road_part_number= $roadPartNumber
-          and (valid_to is null OR valid_to <= SYSDATE) and ra.floating = 0 """
+          and (valid_to is null OR valid_to > SYSDATE) and ra.floating = 0 """
 
     val query =
       s"""
