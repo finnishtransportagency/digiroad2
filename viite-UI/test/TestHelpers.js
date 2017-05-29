@@ -77,7 +77,7 @@ define(['RoadAddressTestData',
 
     var fakeBackend = function(zoomLevel, generatedData, latitude, longitude) {
       return new Backend().withRoadLinkData(generatedData, selectTestData('roadAddressAfterSave'))
-        .withUserRolesData(UserRolesTestData.generate())
+        .withUserRolesData(UserRolesTestData.roles())
         .withStartupParameters({ lon: longitude, lat: latitude, zoom: zoomLevel || 10 })
         .withFloatingAdjacents(selectTestData('floatingRoadAddress'), selectTestData('unknownRoadAddress'))
         .withGetTransferResult(selectTestData('transferFloating'))
@@ -144,7 +144,7 @@ define(['RoadAddressTestData',
     var selectTestData = function(selection){
       switch (selection){
         case 'user':
-          return UserRolesTestData.generate();
+          return UserRolesTestData.roles();
         case 'roadAddress':
           return RoadAddressTestData.generateRoadAddressLinks();
         case 'roadAddressAfterSave':
@@ -157,6 +157,12 @@ define(['RoadAddressTestData',
           return RoadAddressTestData.generateTransferFloatingData();
         case 'roadLink':
           return RoadLinkTestData.generate();
+        case 'normalLinkData':
+          return RoadAddressProjectTestData.generateNormalLinkData();
+        case 'reservedProjectLinks':
+          return RoadAddressProjectTestData.generateReservedProjectLinkData();
+        case 'terminatedProjectLinks':
+          return RoadAddressProjectTestData.generateTerminatedProjectLinkData();
       }
     };
 
