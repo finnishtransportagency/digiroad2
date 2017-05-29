@@ -360,7 +360,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     roadNodes.map { roadNode =>
       Map("nodeId" -> roadNode.nodeId,
           "nodeType" -> roadNode.formOfNode.value,
-          "point" -> roadNode.geometry
+          "point" -> Map("x" -> roadNode.geometry.x, "y" -> roadNode.geometry.y)
       )
     }
   }
