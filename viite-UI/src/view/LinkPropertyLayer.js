@@ -527,7 +527,6 @@
         _.each(geometryChangedRoadMarkers, function(geometryChangedLink) {
 
           var newRoadLinkData = Object.assign({}, geometryChangedLink);
-          //TODO - Create some builder to unknown
           newRoadLinkData.roadClass = 99;
           newRoadLinkData.roadLinkSource = 99;
           newRoadLinkData.sideCode = 99;
