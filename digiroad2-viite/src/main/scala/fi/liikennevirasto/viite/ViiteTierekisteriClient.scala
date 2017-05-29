@@ -3,6 +3,7 @@ import java.util.Properties
 
 import fi.liikennevirasto.digiroad2.util.TierekisteriAuthPropertyReader
 import fi.liikennevirasto.viite.dao._
+import fi.liikennevirasto.viite.util.ViiteTierekisteriAuthPropertyReader
 import org.apache.http.client.methods.{HttpGet, HttpPost}
 import org.apache.http.entity.{ContentType, StringEntity}
 import org.apache.http.impl.client.HttpClientBuilder
@@ -161,10 +162,10 @@ object ViiteTierekisteriClient {
   private def convertChangeDataToChangeProject(changeData: ProjectRoadAddressChange): ChangeProject = {
     val changeInfo = changeData.changeInfo
     ChangeProject(changeData.projectId, changeData.projectName.getOrElse(""), changeData.user, changeData.ely,
-      DateTimeFormat.forPattern("yyyy-MM-DD").print(changeData.changeDate), Seq(changeInfo))
+      DateTimeFormat.forPattern("yyyy-MM-dd").print(changeData.changeDate), Seq(changeInfo))
   }
 
-  private val auth = new TierekisteriAuthPropertyReader
+  private val auth = new ViiteTierekisteriAuthPropertyReader
 
   private val client = HttpClientBuilder.create().build
 
@@ -176,7 +177,7 @@ object ViiteTierekisteriClient {
 
   def sendJsonMessage(trProject:ChangeProject): ProjectChangeStatus ={
     val request = new HttpPost(getRestEndPoint+"addresschange/")
-    request.addHeader("X-OTH-Authorization", "Basic " + auth.getAuthInBase64)
+    request.addHeader("X-Authorization", "Basic " + auth.getAuthInBase64)
     request.setEntity(createJsonmessage(trProject))
     val response = client.execute(request)
     val statusCode = response.getStatusLine.getStatusCode
