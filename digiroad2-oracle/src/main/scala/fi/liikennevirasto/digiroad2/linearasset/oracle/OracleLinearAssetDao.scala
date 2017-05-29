@@ -1118,6 +1118,8 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     (startMeasure, endMeasure) match {
       case (None, None) => None
       case (Some(start), Some(end)) => updateMValues(id, (start, end))
+      case (Some(_), None) => None
+      case (None, Some(_)) => None
     }
     Some(id)
   }
