@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import java.util.Properties
+import java.util.concurrent.TimeUnit
 
 import akka.actor.{Actor, ActorSystem, Props}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
@@ -15,6 +16,8 @@ import fi.liikennevirasto.viite.dao.MissingRoadAddress
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
 import fi.liikennevirasto.viite.{ProjectService, RoadAddressMerge, RoadAddressService}
 import org.apache.http.impl.client.HttpClientBuilder
+
+import scala.concurrent.duration.FiniteDuration
 
 class ValluActor extends Actor {
   def receive = {
@@ -108,6 +111,11 @@ object Digiroad2Context {
   }
 
   val system = ActorSystem("Digiroad2")
+  import system.dispatcher
+  system.scheduler.schedule(FiniteDuration(2, TimeUnit.MINUTES),FiniteDuration(10, TimeUnit.MINUTES)) { //first query after 2 mins, then every 10 mins
+    projectService.updateProjectsWaitingResponseFromTR()
+  }
+
 
   val vallu = system.actorOf(Props[ValluActor], name = "vallu")
   eventbus.subscribe(vallu, "asset:saved")

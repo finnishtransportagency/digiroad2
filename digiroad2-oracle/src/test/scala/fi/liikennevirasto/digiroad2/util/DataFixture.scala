@@ -3,21 +3,19 @@ package fi.liikennevirasto.digiroad2.util
 import java.util.Properties
 
 import com.googlecode.flyway.core.Flyway
-import fi.liikennevirasto.digiroad2.{MassTransitStopService, _}
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.{NewLinearAsset, NumericValue, PersistedLinearAsset}
-import fi.liikennevirasto.digiroad2.roadaddress.oracle.RoadAddressDAO
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.masstransitstop.MassTransitStopOperations
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{MassTransitStopDao, Queries}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.pointasset.oracle.Obstacle
+import fi.liikennevirasto.digiroad2.roadaddress.oracle.RoadAddressDAO
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
+import fi.liikennevirasto.digiroad2.{MassTransitStopService, _}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
-import org.scalatest.mock.MockitoSugar
 import slick.jdbc.{StaticQuery => Q}
 
 
@@ -913,7 +911,7 @@ object DataFixture {
               .filter(ra => vvhRoadlinks.exists(t => t.linkId == ra.linkId) )
               .foreach { ra =>
                 val assetId = linearAssetService.dao.createLinearAsset(trafficVolumeId, ra.linkId, false, SideCode.BothDirections.value,
-                  ra.startMValue, ra.endMValue, "batch_process_trafficVolume")
+                  ra.startMValue, ra.endMValue, "batch_process_trafficVolume", vvhClient.createVVHTimeStamp(5))
                 println("\nCreated OTH traffic volume assets form TR data with assetId " + assetId)
 
                 linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, tr.kvl)

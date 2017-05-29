@@ -1,14 +1,15 @@
 package fi.liikennevirasto.viite.dao
 import com.github.tototoshi.slick.MySQLJodaSupport._
+import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
+import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.viite.ReservedRoadPart
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{GetResult, StaticQuery => Q}
+import slick.jdbc.{StaticQuery => Q}
 
 sealed trait ProjectState{
   def value: Int
@@ -17,7 +18,7 @@ sealed trait ProjectState{
 
 object ProjectState{
 
-  val values = Set(Closed, Incomplete)
+  val values = Set(Closed, Incomplete,Sent2TR,ErroredInTR,TRProcessing,Saved2TR,Unknown)
 
   def apply(value: Long): ProjectState = {
     values.find(_.value == value).getOrElse(Closed)
@@ -25,6 +26,11 @@ object ProjectState{
 
   case object Closed extends ProjectState {def value = 0; def description = "Suljettu"}
   case object Incomplete extends ProjectState { def value = 1; def description = "Keskeneräinen"}
+  case object Sent2TR extends ProjectState {def value=2; def description ="Lähetetty tierekisteriin"}
+  case object ErroredInTR extends ProjectState {def value=3; def description ="Virhe tierekisterissä"}
+  case object TRProcessing extends ProjectState {def value=4; def description="Tierekisterissä käsittelyssä"}
+  case object Saved2TR extends ProjectState{def value=5;def description ="Viety tierekisteriin"}
+  case object Unknown extends ProjectState{def value=99;def description ="Tuntematon"}
 }
 
 sealed trait LinkStatus {
@@ -94,7 +100,8 @@ object ProjectDAO {
          """.execute
   }
 
-  def getProjectLinks(projectId: Long): List[ProjectLink] = {
+  def getProjectLinks(projectId: Long, linkStatusFilter: Option[LinkStatus] = None): List[ProjectLink] = {
+    val filter = if (linkStatusFilter.isEmpty) "" else s"PROJECT_LINK.STATUS = ${linkStatusFilter.get.value} AND"
     val query =
       s"""select PROJECT_LINK.ID, PROJECT_LINK.PROJECT_ID, PROJECT_LINK.TRACK_CODE, PROJECT_LINK.DISCONTINUITY_TYPE,
           PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.START_ADDR_M, PROJECT_LINK.END_ADDR_M,
@@ -103,13 +110,13 @@ object ProjectDAO {
           (LRM_POSITION.END_MEASURE - LRM_POSITION.START_MEASURE) as length, PROJECT_LINK.CALIBRATION_POINTS, PROJECT_LINK.STATUS
                 from PROJECT_LINK join LRM_POSITION
                 on LRM_POSITION.ID = PROJECT_LINK.LRM_POSITION_ID
-                where (PROJECT_LINK.PROJECT_ID = $projectId ) order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
+                where $filter (PROJECT_LINK.PROJECT_ID = $projectId ) order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
     Q.queryNA[(Long, Long, Int, Int, Long, Long, Long, Long, Long, Long, Long, Long, String, String, Long, Double, Long, Int)](query).list.map {
       case (projectLinkId, projectId, trackCode, discontinuityType, roadNumber, roadPartNumber, startAddrM, endAddrM,
       startMValue, endMValue, sideCode , lrmPositionId, createdBy, modifiedBy, linkId, length, calibrationPoints, status) =>
-         ProjectLink(projectLinkId, roadNumber, roadPartNumber, Track.apply(trackCode), Discontinuity.apply(discontinuityType),
-           startAddrM, endAddrM, None, None, None, lrmPositionId, linkId, startMValue, endMValue, SideCode.apply(sideCode.toInt),
-           (None, None), false, Seq.empty[Point], projectId, LinkStatus.apply(status))
+        ProjectLink(projectLinkId, roadNumber, roadPartNumber, Track.apply(trackCode), Discontinuity.apply(discontinuityType),
+          startAddrM, endAddrM, None, None, None, lrmPositionId, linkId, startMValue, endMValue, SideCode.apply(sideCode.toInt),
+          (None, None), false, Seq.empty[Point], projectId, LinkStatus.apply(status))
     }
   }
 
@@ -154,6 +161,40 @@ object ProjectDAO {
     Q.queryNA[String](query).firstOption
   }
 
+  def getProjectstatus(projectID: Long): Option[ProjectState] = {
+    val query =
+      s""" SELECT state
+         |   FROM project
+         |   WHERE id=$projectID
+   """
+    Q.queryNA[Long](query).firstOption match
+    {
+      case Some(statenumber)=> Some(ProjectState.apply(statenumber))
+      case None=>None
+    }
+  }
+
+
+  def updateProjectLinkStatus(projectLinkIds: Set[Long], linkStatus: LinkStatus, userName: String): Unit = {
+    val user = userName.replaceAll("[^A-Za-z0-9\\-]+", "")
+    MassQuery.withIds(projectLinkIds) {
+      s: String =>
+        val sql = s"UPDATE PROJECT_LINK SET STATUS = ${linkStatus.value}, MODIFIED_BY='$user' WHERE ID IN (SELECT ID FROM $s)"
+        Q.updateNA(sql).execute
+    }
+  }
+
+  def updateProjectStatus(projectID:Long,state:ProjectState) {
+    val projectstate=state.value
+    sqlu""" update project set state=$projectstate WHERE id=$projectID   """.execute
+  }
+
+  def getProjectsWithWaitingTRStatus(): List[Long]={
+    val query= s"""
+         SELECT id
+         FROM project
+         WHERE state=${ProjectState.Sent2TR.value}
+       """
+    Q.queryNA[Long](query).list
+  }
 }
-
-

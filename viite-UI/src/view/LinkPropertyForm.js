@@ -375,6 +375,20 @@
 
     var bindEvents = function() {
       var rootElement = $('#feature-attributes');
+
+      var switchMode = function (readOnly){
+        toggleMode(readOnly);
+        var uniqFeaturesToKeep = _.uniq(selectedLinkProperty.getFeaturesToKeep());
+        var firstFloatingSelected = _.first(_.filter(uniqFeaturesToKeep,function (feature){
+          return feature.roadLinkType === -1;
+        }));
+        var canStartTransfer = compactForm && !applicationModel.isReadOnly() && uniqFeaturesToKeep.length > 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length-1].anomaly === 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length-2].roadLinkType === -1;
+        if(canStartTransfer)
+          _.defer(function(){
+            selectedLinkProperty.getLinkAdjacents(selectedLinkProperty.get()[0], firstFloatingSelected);
+          });
+      };
+
       var toggleMode = function(readOnly) {
         if(!applicationModel.isProjectOpen()) {
           rootElement.find('.editable .form-control-static').toggle(readOnly);
@@ -434,13 +448,6 @@
         if(!_.isEmpty(selectedLinkProperty.get()) || !_.isEmpty(linkProperties)){
 
           compactForm = !_.isEmpty(selectedLinkProperty.get()) && (selectedLinkProperty.get()[0].roadLinkType === -1 || selectedLinkProperty.getFeaturesToKeep().length >= 1);
-          var uniqFeaturesToKeep = _.uniq(selectedLinkProperty.getFeaturesToKeep());
-          var firstFloatingSelected = _.first(_.filter(uniqFeaturesToKeep,function (feature){
-            return feature.roadLinkType === -1;
-          }));
-          var canStartTransfer = compactForm && !applicationModel.isReadOnly() && uniqFeaturesToKeep.length > 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length-1].anomaly === 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length-2].roadLinkType === -1;
-          if(canStartTransfer)
-            selectedLinkProperty.getLinkAdjacents(selectedLinkProperty.get()[0], firstFloatingSelected);
           linkProperties.modifiedBy = linkProperties.modifiedBy || '-';
           linkProperties.modifiedAt = linkProperties.modifiedAt || '';
           linkProperties.localizedLinkTypes = getLocalizedLinkType(linkProperties.linkType) || 'Tuntematon';
@@ -500,7 +507,7 @@
           rootElement.find('.link-types').change(function(event) {
             selectedLinkProperty.setLinkType(parseInt($(event.currentTarget).find(':selected').attr('value'), 10));
           });
-          toggleMode(applicationModel.isReadOnly());
+          switchMode(applicationModel.isReadOnly());
         }
       });
 
@@ -579,6 +586,8 @@
       rootElement.on('click', '.link-properties button.save', function() {
         if(applicationModel.getCurrentAction() === applicationModel.actionCalculated){
           selectedLinkProperty.saveTransfer();
+          applicationModel.setCurrentAction(-1);
+          applicationModel.addSpinner();
         }
       });
       rootElement.on('click', '.link-properties button.cancel', function() {

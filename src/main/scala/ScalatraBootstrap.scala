@@ -32,6 +32,7 @@ ScalatraBootstrap extends LifeCycle {
     context.mount(new ServiceRoadAPI(Digiroad2Context.linearAssetService, Digiroad2Context.roadLinkService ), "/api/livi/*")
     if (!Digiroad2Context.getProperty("digiroad2.tierekisteri.enabled").toBoolean) {
       context.mount(new TierekisteriTestApi, "/api/tierekisteri/*")
+      context.mount(new ViiteTierekisteriTestApi, "/api/trrest/*")
     }
   }
 }

@@ -2,11 +2,12 @@ package fi.liikennevirasto.digiroad2
 
 import java.text.{ParseException, SimpleDateFormat}
 import java.util.Date
+
 import fi.liikennevirasto.digiroad2.asset.{Property, PropertyValue}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
 import fi.liikennevirasto.digiroad2.util.{RoadAddress, RoadSide, TierekisteriAuthPropertyReader, Track}
 import org.apache.http.HttpStatus
-import org.apache.http.client.methods._
+import org.apache.http.client.methods.{HttpRequestBase, _}
 import org.apache.http.entity.{ContentType, StringEntity}
 import org.apache.http.impl.client.CloseableHttpClient
 import org.joda.time.DateTime
@@ -189,9 +190,14 @@ trait TierekisteriClient{
 
   def mapFields(data: Map[String, Any]): TierekisteriType
 
+  def addAuthorizationHeader(request: HttpRequestBase) = {
+    request.addHeader("X-OTH-Authorization", "Basic " + auth.getOldAuthInBase64)
+    request.addHeader("X-Authorization", "Basic " + auth.getAuthInBase64)
+
+  }
   protected def request[T](url: String): Either[T, TierekisteriError] = {
     val request = new HttpGet(url)
-    request.addHeader("X-OTH-Authorization", "Basic " + auth.getAuthInBase64)
+    addAuthorizationHeader(request)
     val response = client.execute(request)
     try {
       val statusCode = response.getStatusLine.getStatusCode
@@ -210,7 +216,7 @@ trait TierekisteriClient{
 
   protected def post(url: String, trEntity: TierekisteriType, createJson: (TierekisteriType) => StringEntity): Option[TierekisteriError] = {
     val request = new HttpPost(url)
-    request.addHeader("X-OTH-Authorization", "Basic " + auth.getAuthInBase64)
+    addAuthorizationHeader(request)
     request.setEntity(createJson(trEntity))
     val response = client.execute(request)
     try {
@@ -232,7 +238,7 @@ trait TierekisteriClient{
 
   protected def put(url: String, trEntity: TierekisteriType, createJson: (TierekisteriType) => StringEntity): Option[TierekisteriError] = {
     val request = new HttpPut(url)
-    request.addHeader("X-OTH-Authorization", "Basic " + auth.getAuthInBase64)
+    addAuthorizationHeader(request)
     request.setEntity(createJson(trEntity))
     val response = client.execute(request)
     try {
@@ -255,7 +261,7 @@ trait TierekisteriClient{
   protected def delete(url: String): Option[TierekisteriError] = {
     val request = new HttpDelete(url)
     request.setHeader("content-type","application/json")
-    request.addHeader("X-OTH-Authorization", "Basic " + auth.getAuthInBase64)
+    addAuthorizationHeader(request)
     val response = client.execute(request)
     try {
       val statusCode = response.getStatusLine.getStatusCode

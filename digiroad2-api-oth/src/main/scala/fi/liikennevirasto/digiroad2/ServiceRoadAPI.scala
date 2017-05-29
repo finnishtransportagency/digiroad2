@@ -45,7 +45,7 @@ class ServiceRoadAPI(val linearAssetService: LinearAssetOperations, val roadLink
       "geometry" -> geometry,
       "startMeasure" -> asset.startMeasure,
       "endMeasure" -> asset.endMeasure,
-      "modifiedAt" ->  convertToDate(if(asset.modifiedDateTime.isEmpty) asset.modifiedDateTime else asset.createdDateTime),
+      "modifiedAt" ->  convertToDate(if(asset.modifiedDateTime.nonEmpty) asset.modifiedDateTime else asset.createdDateTime),
       "generatedValue" -> (if(asset.modifiedBy.nonEmpty) getModifiedByValue(asset.modifiedBy) else getModifiedByValue(asset.createdBy)),
       "kayttooikeus" -> getFieldValueInt(maintenanceRoad, "huoltotie_kayttooikeus"),
       "huoltovastuu" -> getFieldValueInt(maintenanceRoad, "huoltotie_huoltovastuu"),

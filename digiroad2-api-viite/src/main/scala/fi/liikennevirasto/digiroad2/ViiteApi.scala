@@ -3,15 +3,13 @@ package fi.liikennevirasto.digiroad2
 import java.text.SimpleDateFormat
 
 import fi.liikennevirasto.digiroad2.asset._
-
-import scala.util.parsing.json._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.UserProvider
-import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
-import fi.liikennevirasto.viite.{ProjectService, ReservedRoadPart, RoadAddressService}
+import fi.liikennevirasto.digiroad2.util.RoadAddressException
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink, RoadAddressLinkPartitioner}
+import fi.liikennevirasto.viite.{ProjectService, ReservedRoadPart, RoadAddressService}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.json4s._
@@ -19,6 +17,7 @@ import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.{NotFound, _}
 import org.slf4j.LoggerFactory
 
+import scala.util.parsing.json._
 import scala.util.{Left, Right}
 
 /**
@@ -30,6 +29,7 @@ case class NewAddressDataExtracted(sourceIds: Set[Long], targetIds: Set[Long], r
 
 case class RoadAddressProjectExtractor(id: Long, status: Long, name: String, startDate: String, additionalInfo: String,roadPartList: List[ReservedRoadPart])
 
+case class RoadAddressProjectLinkUpdate(linkIds: Seq[Long], projectId: Long, newStatus: Int)
 class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
                val roadAddressService: RoadAddressService,
                val projectService: ProjectService,
@@ -143,6 +143,11 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
+  get("/roadlinks/checkproject/") {
+    val linkId = params("projectId").toLong
+    projectService.getProjectStatusFromTR(linkId)
+  }
+
   get("/roadlinks/transferRoadLink") {
     val (sources, targets) = roadlinksData()
     val user = userProvider.getCurrentUser()
@@ -194,6 +199,23 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       case ex: IllegalArgumentException => BadRequest(s"A project with id ${project.id} has already been created")
     }
   }
+
+  post("/roadlinks/roadaddress/project/sendToTR"){
+     (parsedBody \ "projectID").extractOpt[Long] match
+       {
+       case Some(s)=>
+         {
+           println( s"publishing project $s")
+           //TODO call getRoadAddressChangesAndSendToTR(projectID). if success change projectstatus to "sent to TR"
+           Map("projectSent" -> "TODO")
+
+         }
+       case _=> BadRequest(s"Invalid arguments")
+     }
+     Map("projectSent" -> "TODO")
+
+  }
+
 
   put("/roadlinks/roadaddress/project/save"){
     val project = parsedBody.extract[RoadAddressProjectExtractor]
@@ -256,6 +278,25 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       params.get("bbox")
         .map(getProjectLinks(projectId, zoomLevel))
         .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
+  }
+
+  put("/project/roadlinks"){
+    val user = userProvider.getCurrentUser()
+
+    val modification = parsedBody.extract[RoadAddressProjectLinkUpdate]
+    projectService.updateProjectLinkStatus(modification.projectId, modification.linkIds.toSet,
+      LinkStatus.apply(modification.newStatus), user.username)
+    Map("projectId" -> modification.projectId, "publishable" -> projectService.projectLinkPublishable(modification.projectId))
+  }
+
+  post("/project/publish"){
+    val user = userProvider.getCurrentUser()
+    val projectId = params.get("projectId")
+
+    projectId.map(_.toLong).map(projectService.publishProject).map {
+      case Some(s) => PreconditionFailed(s)
+      case _ => Map("status" -> "ok")
+    }.getOrElse(BadRequest("Missing mandatory 'projectId' parameter"))
   }
 
   private def roadlinksData(): (Seq[String], Seq[String]) = {

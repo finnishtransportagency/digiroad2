@@ -8,7 +8,7 @@
           applicationModel.selectLayer(layer);
         });
 
-        this.route(/^([A-Za-z]+)$/, function (layer) {
+        this.route(/^([A-Za-z]+)\/?$/, function (layer) {
           applicationModel.selectLayer(layer);
         });
 
@@ -89,6 +89,9 @@
     });
 
     eventbus.on('layer:selected', function (layer) {
+      if(layer.indexOf('/') === -1){
+        layer = layer.concat('/');
+      }
       router.navigate(layer);
     });
   };
