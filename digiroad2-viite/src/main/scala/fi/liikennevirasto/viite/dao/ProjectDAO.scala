@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.ReservedRoadPart
-import fi.liikennevirasto.viite.process.Delta
+import fi.liikennevirasto.viite.process.{Delta, ProjectDeltaCalculator}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -184,35 +184,35 @@ object ProjectDAO {
 
   def insertDeltaToRoadChangeTable(delta:Delta,projectId:Long):Boolean= {
     val changeType = 5 //hardcoded to termination
-    val roadtype = 9 //TODO missing
+    val roadType = 9 //TODO missing
     getRoadAddressProjectById(projectId) match {
       case Some(project) => {
         project.ely match {
           case Some(ely) => {
-            val projectChange = dynamicSession.prepareStatement("INSERT INTO ROAD_ADDRESS_CHANGES (project_id,change_type,old_road_number,new_road_number,old_road_part_number,new_road_part_number, " +
-              "old_track_code,new_track_code,old_start_addr_m,new_start_addr_m,old_end_addr_m,new_end_addr_m,new_discontinuity,new_road_type,new_ely)" +
-              "values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,? )")
-
-            delta.terminations.foreach { case (address) =>
-              projectChange.setLong(1, projectId)
-              projectChange.setLong(2, changeType)
-              projectChange.setLong(3, address.roadNumber)
-              projectChange.setLong(4, address.roadNumber)
-              projectChange.setLong(5, address.roadPartNumber)
-              projectChange.setLong(6, address.roadPartNumber)
-              projectChange.setLong(7, address.track.value)
-              projectChange.setLong(8, address.track.value)
-              projectChange.setDouble(9, address.startAddrMValue)
-              projectChange.setDouble(10, address.startAddrMValue)
-              projectChange.setDouble(11, address.endAddrMValue)
-              projectChange.setDouble(12, address.endAddrMValue)
-              projectChange.setLong(13, address.discontinuity.value)
-              projectChange.setLong(14, roadtype)
-              projectChange.setLong(15, ely)
-              projectChange.addBatch()
+            val roadAddressChangePS = dynamicSession.prepareStatement("INSERT INTO ROAD_ADDRESS_CHANGES " +
+              "(project_id,change_type,old_road_number,new_road_number,old_road_part_number,new_road_part_number, " +
+              "old_track_code,new_track_code,old_start_addr_m,new_start_addr_m,old_end_addr_m,new_end_addr_m," +
+              "new_discontinuity,new_road_type,new_ely) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,? )")
+            ProjectDeltaCalculator.partition(delta.terminations).foreach { case (roadAddressSection) =>
+              roadAddressChangePS.setLong(1, projectId)
+              roadAddressChangePS.setLong(2, changeType)
+              roadAddressChangePS.setLong(3, roadAddressSection.roadNumber)
+              roadAddressChangePS.setLong(4, null)
+              roadAddressChangePS.setLong(5, roadAddressSection.roadPartNumberStart)
+              roadAddressChangePS.setLong(6, null)
+              roadAddressChangePS.setLong(7, roadAddressSection.track.value)
+              roadAddressChangePS.setLong(8, null)
+              roadAddressChangePS.setDouble(9, roadAddressSection.startMAddr)
+              roadAddressChangePS.setDouble(10, null)
+              roadAddressChangePS.setDouble(11, roadAddressSection.endMAddr)
+              roadAddressChangePS.setDouble(12, null)
+              roadAddressChangePS.setLong(13, Discontinuity.Continuous.value) // TODO: Check what is the proper code
+              roadAddressChangePS.setLong(14, roadType)
+              roadAddressChangePS.setLong(15, ely)
+              roadAddressChangePS.addBatch()
             }
-            projectChange.executeBatch()
-            projectChange.close()
+            roadAddressChangePS.executeBatch()
+            roadAddressChangePS.close()
             true
           }
           case _=>  false
