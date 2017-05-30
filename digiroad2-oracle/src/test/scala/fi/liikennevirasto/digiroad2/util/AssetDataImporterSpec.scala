@@ -392,7 +392,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
   */
 
   //case 1
-  test("Should unfloat the obstacle when exists just one roadliDo not overwrite LiviId of ELY/HSL stops when Tietojen ylläpitäjä is empty in csv import filenk inside a radius of 10 meters"){
+  test("Should unfloat the obstacle when exists just one roadlink inside a radius of 10 meters"){
     val oldLinkId = 521232
     val linkId = 5170455
     val municipality = 853
