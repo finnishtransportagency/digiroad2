@@ -39,10 +39,16 @@
     ];
   };
 
+  var generateRoadPartChecker = function(){
+    return {"success":"ok","roadparts":[{"roadPartNumber":205,"roadNumber":5,"ely":8,"length":6730.0,"roadPartId":195379,"discontinuity":"Jatkuva"},{"roadPartNumber":206,"roadNumber":5,"ely":8,"length":4750.0,"roadPartId":195879,"discontinuity":"Jatkuva"}]
+    };
+  };
+
   root.RoadAddressProjectTestData = {
     generate: generate,
     generateNormalLinkData: generateNormalLinkData,
     generateReservedProjectLinkData: generateReservedProjectLinkData,
-    generateTerminatedProjectLinkData: generateTerminatedProjectLinkData
+    generateTerminatedProjectLinkData: generateTerminatedProjectLinkData,
+    generateRoadPartChecker: generateRoadPartChecker
   };
 }(this));

@@ -85,7 +85,7 @@ define(['RoadAddressTestData',
         .withFloatingAdjacents(selectTestData('floatingRoadAddress'), selectTestData('unknownRoadAddress'))
         .withGetTransferResult(selectTestData('transferFloating'))
         .withRoadAddressProjectData(RoadAddressProjectTestData.generate())
-        // .withReservedRoadLinkData(RoadAddressProjectTestData.generateReservedProjectLinkData())
+        .withRoadPartReserved(RoadAddressProjectTestData.generateRoadPartChecker())
         .withRoadAddressCreation();
     };
 
@@ -119,6 +119,10 @@ define(['RoadAddressTestData',
 
     var clickNextButton = function(){
       $('.btn-next').click();
+    };
+
+    var clickReserveButton = function(){
+      $('.btn-reserve').click();
     };
 
     var clickOpenProjectButton = function(){
@@ -243,6 +247,7 @@ define(['RoadAddressTestData',
       clickVisibleEditModeButton: clickVisibleEditModeButton,
       clickProjectListButton: clickProjectListButton,
       clickNextButton: clickNextButton,
+      clickReserveButton: clickReserveButton,
       clickOpenProjectButton: clickOpenProjectButton,
       clickNewProjectButton: clickNewProjectButton,
       clickVisbleYesConfirmPopup: clickVisbleYesConfirmPopup,

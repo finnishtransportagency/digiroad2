@@ -111,22 +111,22 @@
     }, 1000);
 
     this.sendProjectToTR = _.throttle(function(projectID, success, failure) {
-    var Json = {
-      projectID: projectID
-    };
-    $.ajax({
-      contentType: "application/json",
-      type: "POST",
-      url: "api/viite/roadlinks/roadaddress/project/sendToTR",
-      data: JSON.stringify(Json),
-      dataType: "json",
-      success: success,
-      error: failure
-    });
-  }, 1000);
+      var Json = {
+        projectID: projectID
+      };
+      $.ajax({
+        contentType: "application/json",
+        type: "POST",
+        url: "api/viite/roadlinks/roadaddress/project/sendToTR",
+        data: JSON.stringify(Json),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    }, 1000);
 
 
-this.checkIfRoadpartReserved = (function(roadnuber,startPart,endPart) {
+    this.checkIfRoadpartReserved = (function(roadnuber,startPart,endPart) {
       return $.get('api/viite/roadlinks/roadaddress/project/validatereservedlink/', {
         roadnumber: roadnuber,
         startpart: startPart,
@@ -136,7 +136,6 @@ this.checkIfRoadpartReserved = (function(roadnuber,startPart,endPart) {
           return x;
         });
     });
-
 
     this.getRoadAddressProjects = _.throttle(function(callback) {
       return $.getJSON('api/viite/roadlinks/roadaddress/project/all', function(data) {
@@ -210,6 +209,7 @@ this.checkIfRoadpartReserved = (function(roadnuber,startPart,endPart) {
       afterSave = false;
     };
 
+
     this.withRoadLinkData = function (roadLinkData, afterSaveRoadLinkData) {
       self.getRoadLinks = function(boundingBox, callback) {
         if(afterSave){
@@ -270,6 +270,12 @@ this.checkIfRoadpartReserved = (function(roadnuber,startPart,endPart) {
       return self;
     };
 
+    this.withRoadPartReserved = function(returnData){
+      self.checkIfRoadpartReserved = function(){
+        return returnData;
+      };
+      return self;
+    };
 
   };
 }(this));

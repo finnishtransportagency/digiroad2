@@ -40,25 +40,35 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
       });
 
       it('open project form info', function () {
-        // assert($('[id^=project-window]:visible').length > 0, "Form didn't open.");
-        // $('.project-form button.next:visible').prop('disabled', false);
-        // $('.project-form button.next:visible').attr('disabled', false);
+        $('.project-form button.next:visible').prop('disabled', false);
+        $('.project-form button.next:visible').attr('disabled', false);
         assert($('.project-form:visible').length > 0, "Form didn't open.");
       });
     });
 
-    // //3-third -click in the next-Seuraava button WIP
-    // describe('when clicking in next aka Seuraava button', function() {
-    //   before(function (done) {
-    //     $('.btn-next').prop('disabled', false);
-    //     $('.btn-next').attr('disabled', false);
-    //     testHelpers.clickNextButton();
-    //     // var backend = testHelpers.fakeBackend(13, testHelpers.selectTestData('reservedProjectLinks'), 533540.0, 6987836.0);
-    //     done();
-    //   });
-    // });
+    // 3-third -click in the reserve button
+    describe('when clicking in reserve aka Varaa button', function() {
+      before(function (done) {
+        $('.btn-reserve').prop('disabled', false);
+        $('.btn-reserve').attr('disabled', false);
+        
+        testHelpers.clickReserveButton();
+        done();
+      });
+    });
 
-    // //4-fourth select reserved road link WIP
+  // 4-fourth -click in the next-Seuraava button WIP
+  //   describe('when clicking in next aka Seuraava button', function() {
+  //     before(function (done) {
+  //       $('.btn-next').prop('disabled', false);
+  //       $('.btn-next').attr('disabled', false);
+  //       testHelpers.clickNextButton();
+  //
+  //       done();
+  //     });
+  //   });
+
+    // //5-fifth select reserved road link WIP
     // describe('when selecting one reserved link', function() {
     //   before(function(done){
     //     var ol3Feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 5172091);
