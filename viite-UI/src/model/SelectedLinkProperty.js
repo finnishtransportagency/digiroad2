@@ -6,6 +6,16 @@
     var sources = [];
     var featuresToKeep = [];
     var previousAdjacents = [];
+    var floatingRoadMarker = [];
+    var anomalousMarkers = [];
+    var BAD_REQUEST = 400;
+    var UNAUTHORIZED_401 = 401;
+    var PRECONDITION_FAILED_412 = 412;
+    var INTERNAL_SERVER_ERROR_500 = 500;
+    var floatingRoadLinkType=-1;
+    var noAnomaly=0;
+    var noAddressAnomaly=1;
+    var geometryChangedAnomaly=2;
 
     var markers = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z",
       "AA", "AB", "AC", "AD", "AE", "AF", "AG", "AH", "AI", "AJ", "AK", "AL", "AM", "AN", "AO", "AP", "AQ", "AR", "AS", "AT", "AU", "AV", "AW", "AX", "AY", "AZ",
@@ -15,12 +25,15 @@
     var close = function() {
       if (!_.isEmpty(current) && !isDirty()) {
         _.forEach(current, function(selected) { selected.unselect(); });
+        applicationModel.setActiveButtons(false);
+        eventbus.trigger('layer:enableButtons', true);
         eventbus.trigger('linkProperties:unselected');
         current = [];
         sources = [];
         targets = [];
         dirty = false;
         featuresToKeep = [];
+        applicationModel.setActiveButtons(false);
       }
     };
 
@@ -70,7 +83,6 @@
       return properties;
     };
 
-
     var open = function(linkId, id, singleLinkSelect, visibleFeatures) {
       var canIOpen = !_.isUndefined(linkId) ? !isSelectedByLinkId(linkId) || isDifferingSelection(singleLinkSelect) : !isSelectedById(id) || isDifferingSelection(singleLinkSelect);
       if (canIOpen) {
@@ -78,6 +90,11 @@
           current = singleLinkSelect ? roadCollection.getByLinkId([linkId]) : roadCollection.getGroupByLinkId(linkId);
         } else {
           current = singleLinkSelect ? roadCollection.getById([id]) : roadCollection.getGroupById(id);
+        }
+
+        var currentFloatings = getCurrentFloatings();
+        if(!_.isEmpty(currentFloatings)){
+          setSources(currentFloatings);
         }
 
         _.forEach(current, function (selected) {
@@ -109,7 +126,7 @@
           return extractDataForDisplay([feature]);
         });
 
-        if(!applicationModel.isReadOnly() && get()[0].roadLinkType === -1){
+        if(!applicationModel.isReadOnly() && get()[0].roadLinkType === floatingRoadLinkType){
           addToFeaturesToKeep(data4Display);
         }
         if(!_.isEmpty(featuresToKeep) && !isLinkIdInFeaturesToKeep(linkId)){
@@ -122,8 +139,8 @@
       }
     };
 
-    var openUnknown = function(linkId, id, singleLinkSelect, visibleFeatures, checkAdjacency) {
-      var canIOpen = !_.isUndefined(linkId) ? !isSelectedByLinkId(linkId) || isDifferingSelection(singleLinkSelect) : !isSelectedById(id) || isDifferingSelection(singleLinkSelect);
+    var openUnknown = function(linkId, id, visibleFeatures) {
+      var canIOpen = !_.isUndefined(linkId) ? true : !isSelectedById(id);
       if (canIOpen) {
         if(featuresToKeep.length === 0){
           close();
@@ -133,9 +150,14 @@
           }
         }
         if(!_.isUndefined(linkId)){
-          current = singleLinkSelect ? roadCollection.getByLinkId([linkId]) : roadCollection.getGroupByLinkId(linkId);
+          current = _.uniq(roadCollection.getByLinkId([linkId]), _.isEqual);
         } else {
-          current = singleLinkSelect ? roadCollection.getById([id]) : roadCollection.getGroupById(id);
+          current = _.uniq(roadCollection.getById([id]), _.isEqual);
+        }
+        if(current[0].getData().anomaly == geometryChangedAnomaly) {
+          current = _.filter(roadCollection.getTmpRoadLinkGroups(), function(linkGroup){
+            return linkGroup.getData().linkId === linkId;
+          });
         }
 
         eventbus.trigger('linkProperties:activateAllSelections');
@@ -145,22 +167,17 @@
         });
 
         var currentFloatings = _.filter(current, function(curr){
-          return curr.getData().roadLinkType === -1;
+          return curr.getData().roadLinkType === floatingRoadLinkType;
         });
         if(!_.isEmpty(currentFloatings)){
           setSources(currentFloatings);
-        }
-
-        //Segment to construct adjacency
-        if(checkAdjacency){
-          fillAdjacents(linkId);
         }
 
         var data4Display = _.map(get(), function(feature){
           return extractDataForDisplay([feature]);
         });
 
-        if(!applicationModel.isReadOnly() && get()[0].anomaly === 1){
+        if(!applicationModel.isReadOnly() && get()[0].anomaly === noAddressAnomaly){
           addToFeaturesToKeep(data4Display);
         }
         if(!_.isEmpty(featuresToKeep) && !isLinkIdInFeaturesToKeep(linkId)){
@@ -276,11 +293,11 @@
           applicationModel.removeSpinner();
           if (!_.isEmpty(adjacents)){
             linkIds = adjacents;
-            applicationModel.setCurrentAction(applicationModel.actionCalculating);
           }
+          applicationModel.setCurrentAction(applicationModel.actionCalculating);
           if (!applicationModel.isReadOnly()) {
             var rejectedRoads = _.reject(get().concat(featuresToKeep), function(link){
-              return link.segmentId === "";
+              return link.segmentId === "" || link.anomaly === geometryChangedAnomaly;
             });
             var selectedLinkIds = _.map(rejectedRoads, function (roads) {
               return roads.linkId;
@@ -294,7 +311,7 @@
             previousAdjacents = filteredAdjacents;
             var markedRoads = {
               "adjacents": _.map(applicationModel.getSelectionType() === 'floating' ? _.reject(filteredAdjacents, function(t){
-                return t.roadLinkType != -1;
+                return t.roadLinkType != floatingRoadLinkType;
               }) :filteredAdjacents, function (a, index) {
                 return _.merge({}, a, {"marker": markers[index]});
               }), "links": link
@@ -316,7 +333,6 @@
       }
       return linkIds;
     };
-
 
     eventbus.on("adjacents:additionalSourceSelected", function(existingSources, additionalSourceLinkId) {
       sources = current;
@@ -350,6 +366,12 @@
       });
     });
 
+    eventbus.on('linkProperties:saved', function(){
+      eventbus.trigger('layer:enableButtons', true);
+      applicationModel.toggleSelectionTypeAll();
+      clearFeaturesToKeep();
+    });
+
     var openMultiple = function(links) {
       var uniqueLinks = _.unique(links, 'linkId');
       current = roadCollection.get(_.pluck(uniqueLinks, 'linkId'));
@@ -373,28 +395,15 @@
         return selected.getData().linkId === linkId; });
     };
 
-    var save = function() {
-      eventbus.trigger('linkProperties:saving');
-      var linkIds = _.map(current, function(selected) { return selected.getId(); });
-      var modifications = _.map(current, function(c) { return c.getData(); });
-
-      backend.updateLinkProperties(linkIds, modifications, function() {
-        dirty = false;
-        eventbus.trigger('linkProperties:saved');
-      }, function() {
-        eventbus.trigger('linkProperties:updateFailed');
-      });
-    };
-
     var transferringCalculation = function(){
       var targetsData = _.map(targets,function (t){
-          if (_.isUndefined(t.linkId)) {
-             return t.getData();
-          } else return t;
+        if (_.isUndefined(t.linkId)) {
+          return t.getData();
+        } else return t;
       });
 
       var targetDataIds = _.uniq(_.filter(_.map(targetsData.concat(featuresToKeep), function(feature){
-        if(feature.roadLinkType != -1 && feature.anomaly == 1){
+        if(feature.roadLinkType != floatingRoadLinkType && feature.anomaly == noAddressAnomaly){
           return feature.linkId.toString();
         }
       }), function (target){
@@ -402,7 +411,7 @@
       }));
 
       var sourceDataIds = _.filter(_.map(getSources(), function (feature) {
-        if(feature.roadLinkType == -1){
+        if(feature.roadLinkType == floatingRoadLinkType){
           return feature.linkId.toString();
         }
       }), function (source){
@@ -410,15 +419,17 @@
       });
       var data = {"sourceLinkIds": _.uniq(sourceDataIds), "targetLinkIds":_.uniq(targetDataIds)};
 
+      if(!_.isEmpty(data.sourceLinkIds) && !_.isEmpty(data.targetLinkIds)){
       backend.getTransferResult(data, function(result) {
         if(!_.isEmpty(result) && !applicationModel.isReadOnly()) {
           eventbus.trigger("adjacents:roadTransfer", result, sourceDataIds.concat(targetDataIds), targetDataIds);
           roadCollection.setNewTmpRoadAddresses(result);
-          _.defer(function(){
-            eventbus.trigger('linkProperties:deactivateAllSelections');
-          });
+          eventbus.trigger('linkProperties:cleanFloatingsAfterDefloat');
         }
       });
+      } else {
+        eventbus.trigger('linkProperties:transferFailed', PRECONDITION_FAILED_412);
+      }
     };
 
     var saveTransfer = function() {
@@ -426,20 +437,20 @@
       var roadAddresses = roadCollection.getNewTmpRoadAddresses();
 
       var targetsData = _.map(targets,function (t){
-          if(_.isUndefined(t.linkId)){
-            return t.getData();
-          }else return t;
+        if(_.isUndefined(t.linkId)){
+          return t.getData();
+        }else return t;
       });
 
       var targetDataIds = _.uniq(_.filter(_.map(targetsData.concat(featuresToKeep), function(feature){
-        if(feature.roadLinkType != -1 && feature.anomaly == 1){
+        if(feature.roadLinkType != floatingRoadLinkType && feature.anomaly == noAddressAnomaly){
           return feature.linkId;
         }
       }), function (target){
         return !_.isUndefined(target);
       }));
       var sourceDataIds = _.filter(_.map(get().concat(featuresToKeep), function (feature) {
-        if(feature.roadLinkType == -1){
+        if(feature.roadLinkType == floatingRoadLinkType){
           return feature.linkId;
         }
       }), function (source){
@@ -448,14 +459,15 @@
 
       var data = {'sourceIds': sourceDataIds, 'targetIds': targetDataIds, 'roadAddress': roadAddresses};
 
-      backend.createRoadAddress(data, function() {
-        dirty = false;
-        eventbus.trigger('linkProperties:saved');
-      }, function() {
-        eventbus.trigger('linkProperties:updateFailed');
-      });
-      targets = [];
-      applicationModel.setActiveButtons(false);
+      if(!_.isEmpty(data.sourceIds) && !_.isEmpty(data.targetIds) && !_.isEmpty(data.roadAddress)){
+        backend.createRoadAddress(data, function(errorObject) {
+          if (errorObject.status == INTERNAL_SERVER_ERROR_500 || errorObject.status == BAD_REQUEST) {
+            eventbus.trigger('linkProperties:transferFailed', errorObject.status);
+          }
+        });
+      } else {
+        eventbus.trigger('linkProperties:transferFailed', PRECONDITION_FAILED_412);
+      }
     };
 
     var addTargets = function(target, adjacents){
@@ -471,12 +483,20 @@
       }
     };
 
-    var getFeaturesToHighlight = function() {
-      return featuresToHighlight;
+    var getFloatingRoadMarker = function() {
+      return floatingRoadMarker;
     };
 
-    var setFeaturesToHighlight = function(ft) {
-      featuresToHighlight = ft;
+    var setFloatingRoadMarker  = function(ft) {
+      floatingRoadMarker = ft;
+    };
+
+    var getAnomalousMarkers = function(){
+      return anomalousMarkers;
+    };
+
+    var setAnomalousMarkers = function(markers){
+      anomalousMarkers = markers;
     };
 
     var getTargets = function(){
@@ -505,6 +525,10 @@
       return targets;
     };
 
+    var setDirty = function(state){
+      dirty = state;
+    };
+
     var cancel = function() {
       dirty = false;
       _.each(current, function(selected) { selected.cancel(); });
@@ -515,20 +539,26 @@
       }
     };
 
-    var cancelAndReselect = function(){
+    var cancelAndReselect = function(action){
+      if(action===applicationModel.actionCalculating){
+        var floatingMarkers = getFloatingRoadMarker();
+        eventbus.trigger('linkProperties:floatingRoadMarkerPreviousSelected', floatingMarkers);
+      }
       clearAndReset(false);
       current = [];
       eventbus.trigger('linkProperties:clearHighlights');
     };
 
-    var clearAndReset = function(afterSiira){
+    var clearAndReset = function(afterDefloat){
       roadCollection.resetTmp();
       roadCollection.resetChangedIds();
       applicationModel.resetCurrentAction();
+      applicationModel.setContinueButton(false);
+      applicationModel.setActiveButtons(false);
       roadCollection.resetPreMovedRoadAddresses();
       clearFeaturesToKeep();
       eventbus.trigger('roadLinks:clearIndicators');
-      if(!afterSiira) {
+      if(!afterDefloat) {
         roadCollection.resetNewTmpRoadAddresses();
         resetSources();
         resetTargets();
@@ -536,10 +566,10 @@
       }
     };
 
-    var cancelAfterSiirra = function(action, changedTargetIds) {
+    var cancelAfterDefloat = function(action, changedTargetIds) {
       dirty = false;
       var originalData = _.filter(featuresToKeep, function(feature){
-        return feature.roadLinkType === -1;
+        return feature.roadLinkType === floatingRoadLinkType;
       });
       if(action !== applicationModel.actionCalculated && action !== applicationModel.actionCalculating)
         clearFeaturesToKeep();
@@ -562,46 +592,6 @@
       }
     };
 
-    var gapTransferingCancel = function(){
-      //First we grab the floatings
-      var floatings = _.uniq(_.filter(_.map(featuresToKeep, function(feature){
-        if(feature.roadLinkType === -1){
-          return feature.linkId;
-        }
-      }), function (target){
-        return !_.isUndefined(target);
-      }));
-      //Secondly we clear them
-      clearFeaturesToKeep();
-      applicationModel.setActiveButtons(false);
-      applicationModel.setContinueButton(false);
-      eventbus.trigger('roadLinks:deleteSelection');
-
-      if (!_.isEmpty(current) && !isDirty()) {
-        _.forEach(current, function (selected) {
-          selected.unselect();
-        });
-        eventbus.trigger('linkProperties:unselected');
-        sources = [];
-        targets = [];
-        current = [];
-        featuresToKeep = [];
-      }
-      _.forEach(floatings, function(f){
-        var roadAddress = roadCollection.getByLinkId([f]);
-        var roads = _.map(get(), function (r){
-          return r.linkId;
-        });
-        var fetchedRoads = _.map(roadAddress, function (r){
-          return r.getData().linkId;
-        });
-        if(!_.contains(roads, _.first(fetchedRoads))){
-          current = current.concat(roadAddress);
-        }
-      });
-      eventbus.trigger('roadLinks:drawAfterGapCanceling');
-    };
-
     var setLinkProperty = function(key, value) {
       dirty = true;
       _.each(current, function(selected) { selected.setLinkProperty(key, value); });
@@ -619,19 +609,19 @@
 
     var getCurrentFloatings = function(){
       return _.filter(current, function(curr){
-        return curr.getData().roadLinkType === -1;
+        return curr.getData().roadLinkType === floatingRoadLinkType;
       });
     };
 
     var getFeaturesToKeepFloatings = function() {
       return _.filter(featuresToKeep, function (fk) {
-        return fk.roadLinkType === -1;
+        return fk.roadLinkType === floatingRoadLinkType;
       });
     };
 
     var getFeaturesToKeepUnknown = function() {
       return _.filter(featuresToKeep, function (fk) {
-        return fk.roadLinkType === -1;
+        return fk.anomaly === noAddressAnomaly;
       });
     };
 
@@ -668,7 +658,7 @@
     var clearFeaturesToKeep = function() {
       if('floating' === applicationModel.getSelectionType() || 'unknown' === applicationModel.getSelectionType()){
         featuresToKeep = _.filter(featuresToKeep, function(feature){
-          return feature.roadLinkType === -1;
+          return feature.roadLinkType === floatingRoadLinkType;
         });
       } else {
         featuresToKeep = [];
@@ -702,6 +692,26 @@
         return false;
       }
     };
+    
+    var filterFeaturesAfterSimulation = function(features){
+      var linkIdsToRemove = linkIdsToExclude();
+      if(applicationModel.getCurrentAction() === applicationModel.actionCalculated){        
+        //Filter the features without said linkIds
+        if(linkIdsToRemove.length !== 0){
+          return _.reject(features, function(feature){
+            return _.contains(linkIdsToRemove, feature.roadLinkData.linkId);
+          });
+        } else {
+          return features;
+        }
+      } else return features;      
+    };
+    
+    var linkIdsToExclude = function(){
+      return _.chain(getFeaturesToKeepFloatings().concat(getFeaturesToKeepUnknown()).concat(getFeaturesToKeep())).map(function(feature){
+        return feature.linkId;
+      }).uniq().value();
+    };
 
     return {
       getSources: getSources,
@@ -715,16 +725,15 @@
       clearFeaturesToKeep: clearFeaturesToKeep,
       transferringCalculation: transferringCalculation,
       getLinkAdjacents: getLinkAdjacents,
-      gapTransferingCancel: gapTransferingCancel,
       close: close,
       open: open,
       openFloating: openFloating,
       openUnknown: openUnknown,
       isDirty: isDirty,
-      save: save,
+      setDirty: setDirty,
       saveTransfer: saveTransfer,
       cancel: cancel,
-      cancelAfterSiirra: cancelAfterSiirra,
+      cancelAfterDefloat: cancelAfterDefloat,
       cancelAndReselect: cancelAndReselect,
       clearAndReset: clearAndReset,
       continueSelectUnknown: continueSelectUnknown,
@@ -733,6 +742,10 @@
       setTrafficDirection: setTrafficDirection,
       setFunctionalClass: setFunctionalClass,
       setLinkType: setLinkType,
+      setFloatingRoadMarker: setFloatingRoadMarker,
+      getFloatingRoadMarker: getFloatingRoadMarker,
+      getAnomalousMarkers: getAnomalousMarkers,
+      setAnomalousMarkers: setAnomalousMarkers,
       get: get,
       count: count,
       openMultiple: openMultiple,
@@ -742,7 +755,9 @@
       getFeaturesToKeepFloatings: getFeaturesToKeepFloatings,
       getFeaturesToKeepUnknown: getFeaturesToKeepUnknown,
       isLinkIdInCurrent: isLinkIdInCurrent,
-      isLinkIdInFeaturesToKeep: isLinkIdInFeaturesToKeep
+      isLinkIdInFeaturesToKeep: isLinkIdInFeaturesToKeep,
+      filterFeaturesAfterSimulation: filterFeaturesAfterSimulation,
+      linkIdsToExclude: linkIdsToExclude
     };
   };
 })(this);

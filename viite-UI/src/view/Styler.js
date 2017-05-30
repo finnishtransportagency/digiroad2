@@ -3,8 +3,23 @@
 (function(root) {
   root.Styler = function() {
 
-    var borderWidth = 6;
+    var roadNormalType = 0;
+    var borderWidth = 3;
     var dashedLinesRoadClasses = [7, 8, 9, 10];
+
+    var LINKSOURCE_NORMAL = 1;
+    var LINKSOURCE_COMPLEM = 2;
+    var LINKSOURCE_SURAVAGE = 3;
+    var LINKSOURCE_FROZEN = 4;
+    var LINKSOURCE_HISTORIC = 5;
+
+    var LINKTYPE_NORMAL = 0;
+    var LINKTYPE_COMPLEM = 1;
+    var LINKTYPE_UNKNOWN = 3;
+    var LINKTYPE_FLOATING = -1;
+
+    var PROJECTLINKSTATUS_NOTHANDLED = 0;
+    var PROJECTLINKSTATUS_TERMINATED = 1;
 
     /**
      * Inspired on the LinkPropertyLayerStyles roadClassRules, unknownRoadAddressAnomalyRules and constructionTypeRules.
@@ -15,10 +30,12 @@
      */
     var generateStrokeColor = function (roadClass, anomaly, constructionType, roadLinkType, gapTransfering) {
       if (anomaly !== 1) {
-        if(constructionType === 1) {
-          return 'rgba(164, 164, 162, 0.65)';
-        } else if (roadLinkType === -1) {
-          return 'rgba(247, 254, 46, 0.45)';
+        if(roadLinkType === -1){
+          if(constructionType === 1  ) {
+            return 'rgba(164, 164, 162, 0.65)';
+          } else {
+            return 'rgba(247, 254, 46, 0.45)';
+          }
         } else {
           switch (roadClass) {
             case 1 : return 'rgba(255, 0, 0, 0.65)';
@@ -32,13 +49,14 @@
             case 9 : return 'rgba(255, 85, 221, 0.65)';
             case 10 : return 'rgba(255, 85, 221, 0.65)';
             case 11 : return 'rgba(68, 68, 68, 0.75)';
+            case 97 : return 'rgba(30, 30, 30, 1)';
             case 98 : return 'rgba(250, 250, 250, 1)';
             case 99 : return 'rgba(164, 164, 162, 0.65)';
           }
         }
       } else {
         if(constructionType === 1) {
-          return 'rgba(255, 153, 0, 0.65)';
+          return 'rgba(255, 153, 0, 0.95)';
         } else if (gapTransfering === true ) {
           return 'rgb(0, 255, 0, 0.75)';
         } else {
@@ -51,15 +69,21 @@
      * Inspired in the LinkPropertyLayerStyles complementaryRoadAddressRules and unknownRoadAddressAnomalyRules,
      * @param roadLinkType The roadLink roadLinkType.
      * @param anomaly The roadLink anomaly value (if 1 then this is an anomalous roadlink).
+     * @param roadLinkSource The link source for this road link
+     * @param projectLinkStatus Optional project link status (only in project mode, undef otherwise)
      * @returns {number} The zIndex for the feature.
      */
-    var determineZIndex = function (roadLinkType, anomaly){
+    var determineZIndex = function (roadLinkType, anomaly, roadLinkSource, projectLinkStatus){
       var zIndex = 0;
-      if (anomaly === 0) {
-        if (roadLinkType === 3)
+      if(roadLinkSource === LINKSOURCE_COMPLEM){
+        zIndex = 8;
+      } else if (anomaly === 0) {
+        if (roadLinkType === LINKTYPE_UNKNOWN)
           zIndex = 4;
-        else if(roadLinkType === -1) {
+        else if(roadLinkType === LINKTYPE_FLOATING) {
           zIndex = 5;
+        } else {
+          zIndex = 6;
         }
       } else {
         zIndex = 6;
@@ -71,7 +95,7 @@
      * @param zoomLevel The actual zoom level.
      * @returns {number} The stroke width of a line.
      */
-    var strokeWidthByZoomLevel = function (zoomLevel, roadLinkType, anomaly){
+    var strokeWidthByZoomLevel = function (zoomLevel, roadLinkType, anomaly, roadLinkSource, notSelection, constructionType){
       var width = 0;
 
       switch (zoomLevel) {
@@ -121,8 +145,11 @@
         width = width + 13;
       }
 
-      if (roadLinkType !== -1 && anomaly === 1){
+      if (roadLinkType !== -1 && anomaly === 1 && constructionType !== 1){
         width = 7;
+      }
+      if(roadLinkSource === 2 && !notSelection){
+        width = width + 4;
       }
 
       return width;
@@ -151,23 +178,31 @@
      * @param currentZoom The value of the current application zoom.
      * @returns {*[ol.style.Style, ol.style.Style, ol.style.Style]} And array of ol.style.Style, the first is for the gray line, the second is for the border and the third is for the line itself.
      */
-    var generateStyleByFeature = function(roadLinkData, currentZoom){
-      var strokeWidth = strokeWidthByZoomLevel(currentZoom, roadLinkData.roadLinkType, roadLinkData.anomaly);
+    var generateStyleByFeature = function(roadLinkData, currentZoom, notSelection){
+      var strokeWidth = strokeWidthByZoomLevel(currentZoom, roadLinkData.roadLinkType, roadLinkData.anomaly, roadLinkData.roadLinkSource, notSelection, roadLinkData.constructionType);
       //Gray line behind all of the styles present in the layer.
       var underLineColor = generateStrokeColor(99, roadLinkData.anomaly, roadLinkData.constructionType, roadLinkData.roadLinkType, roadLinkData.gapTransfering);
       //If the line we need to generate is a dashed line, middleLineColor will be the white one sitting behind the dashed/colored line and above the border and grey lines
       var middleLineColor;
+      var adminClassColor;
       var borderColor;
       var lineCap;
       var borderCap;
       var middleLineCap;
+      var adminClassWidth;
       var lineColor = generateStrokeColor(roadLinkData.roadClass, roadLinkData.anomaly, roadLinkData.constructionType, roadLinkData.roadLinkType, roadLinkData.gapTransfering);
       if(roadLinkData.roadClass >= 7 && roadLinkData.roadClass <= 10 ){
         borderColor = lineColor;
         middleLineColor = generateStrokeColor(98,  roadLinkData.anomaly, roadLinkData.constructionType, roadLinkData.roadLinkType, roadLinkData.gapTransfering);
         lineCap  = 'butt';
         middleLineCap = 'butt';
-        borderCap = 'round'; 
+        borderCap = 'round';
+      } else if (roadLinkData.roadClass == 99 && roadLinkData.constructionType == 1) {
+        borderColor = lineColor;
+        middleLineColor = generateStrokeColor(97, roadNormalType, roadNormalType, roadLinkData.roadLinkType, roadLinkData.gapTransfering);
+        lineCap = 'butt';
+        middleLineCap = 'butt';
+        borderCap = 'round';
       } else {
         borderColor = modifyColorProperties(lineColor, 1.45, true, false);
         borderColor = modifyColorProperties(borderColor,0.75, false, true);
@@ -180,8 +215,13 @@
         color: borderColor,
         lineCap: borderCap,
       });
+      var middleLineWidth = strokeWidth;
+      if(roadLinkData.id !== 0 && roadLinkData.administrativeClass == "Municipality"){
+        adminClassColor = generateStrokeColor(97, roadNormalType, roadNormalType, roadLinkData.roadLinkType, roadLinkData.gapTransfering);
+        adminClassWidth = middleLineWidth+7;
+      }
       var middleLine = new ol.style.Stroke({
-        width: strokeWidth,
+        width: middleLineWidth,
         color: middleLineColor,
         lineCap: middleLineCap,
       });
@@ -196,7 +236,18 @@
         lineCap: lineCap
       });
 
+      var adminClassLine = new ol.style.Stroke({
+        width: adminClassWidth,
+        color: adminClassColor,
+        lineCap: lineCap
+      });
+
+      //Dash lines
       if(_.contains(dashedLinesRoadClasses, roadLinkData.roadClass)){
+        line.setLineDash([10, 10]);
+      }
+
+      if(roadLinkData.roadClass == 99 && roadLinkData.constructionType == 1){
         line.setLineDash([10, 10]);
       }
 
@@ -213,16 +264,22 @@
       var underlineStyle = new ol.style.Style({
         stroke: underline
       });
-      var zIndex = determineZIndex(roadLinkData.roadLinkType, roadLinkData.anomaly);
+      var adminClassStyle = new ol.style.Style({
+        stroke: adminClassLine
+      });
+      var zIndex = determineZIndex(roadLinkData.roadLinkType, roadLinkData.anomaly, roadLinkData.roadLinkSource);
       underlineStyle.setZIndex(zIndex-1);
       borderStyle.setZIndex(zIndex);
       middleLineStyle.setZIndex(zIndex+1);
       lineStyle.setZIndex(zIndex+2);
-      return [borderStyle , underlineStyle, middleLineStyle, lineStyle];
+      adminClassStyle.setZIndex(zIndex-2);
+      return [borderStyle , underlineStyle, middleLineStyle, lineStyle, adminClassStyle];
     };
 
     return {
-      generateStyleByFeature: generateStyleByFeature
+      generateStyleByFeature: generateStyleByFeature,
+      strokeWidthByZoomLevel: strokeWidthByZoomLevel,
+      determineZIndex: determineZIndex
     };
   };
 })(this);

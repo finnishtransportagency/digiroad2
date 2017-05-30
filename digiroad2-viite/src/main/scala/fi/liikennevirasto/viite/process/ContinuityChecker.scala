@@ -23,7 +23,7 @@ case class MissingLink(roadNumber: Long, roadPartNumber: Long, startMAddr: Optio
 class ContinuityChecker(roadLinkService: RoadLinkService) {
 
   def checkRoadPart(roadNumber: Int, roadPartNumber: Int, checkMissingLinks: Boolean = false) = {
-    val roadAddressList = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber)
+    val roadAddressList = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber, true)
     assert(roadAddressList.groupBy(ra => (ra.roadNumber, ra.roadPartNumber)).keySet.size == 1, "Mixed roadparts present!")
     val missingSegments = checkAddressesHaveNoGaps(roadAddressList)
     // TODO: Combine these checks, maybe?
@@ -50,7 +50,7 @@ class ContinuityChecker(roadLinkService: RoadLinkService) {
     }
   }
 
-  private def checkAddressesHaveNoGaps(addresses: Seq[RoadAddress]) = {
+  def checkAddressesHaveNoGaps(addresses: Seq[RoadAddress]): Seq[MissingSegment] = {
     val addressMap = addresses.groupBy(_.startAddrMValue)
     val missingFirst = !addressMap.contains(0L) match {
       case true => Seq(MissingSegment(addresses.head.roadNumber, addresses.head.roadPartNumber,
@@ -82,14 +82,10 @@ class ContinuityChecker(roadLinkService: RoadLinkService) {
     }
 
     val nextAddressItems = addressMap.getOrElse(address.endAddrMValue, Seq())
-    nothingAfter(address, addressMap) ||
-      combinedTrackFollows(address, nextAddressItems) ||
-      sameTrackFollows(address, nextAddressItems) ||
-      splitTrackFollows(address, nextAddressItems)
-  }
-
-  private def nextSegment(addressMap: Map[Long, Seq[RoadAddress]])(address: RoadAddress) = {
-
+      !nothingAfter(address, addressMap) &&
+      !(combinedTrackFollows(address, nextAddressItems) ||
+        sameTrackFollows(address, nextAddressItems) ||
+        splitTrackFollows(address, nextAddressItems))
   }
 
   private def checkLinksExist(addresses: Seq[RoadAddress]): Seq[MissingLink] = {

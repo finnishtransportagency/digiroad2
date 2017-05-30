@@ -150,9 +150,9 @@
           return [point.x, point.y];
         });
         var type = isUnknown(speedLimit) ? { type: 'unknown' } : {};
-        var attributes = _.merge(_.cloneDeep(speedLimit), type);
+        var attributes = _.merge(_.cloneDeep(_.omit(speedLimit, "geometry")), type);
         var feature = new ol.Feature(new ol.geom.LineString(points));
-        feature.setProperties(_.omit(attributes, 'geometry'));
+        feature.setProperties(attributes);
         return feature;
       });
     };
@@ -171,10 +171,10 @@
         var road = new ol.geom.LineString(points);
         var signPosition = GeometryUtils.calculateMidpointOfLineString(road);
         var type = isUnknown(speedLimit) ? { type: 'unknown' } : {};
-        var attributes = _.merge(_.cloneDeep(speedLimit), type);
+        var attributes = _.merge(_.cloneDeep(_.omit(speedLimit, "geometry")), type);
 
         var feature = new ol.Feature(new ol.geom.Point([signPosition.x, signPosition.y]));
-        feature.setProperties(_.omit(attributes, 'geometry'));
+        feature.setProperties(attributes);
         return feature;
       });
     };

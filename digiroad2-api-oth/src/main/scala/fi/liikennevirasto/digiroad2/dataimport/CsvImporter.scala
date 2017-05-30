@@ -54,7 +54,6 @@ trait CsvImporter {
   private val textFieldMappings = Map(
     "Pysäkin nimi" -> "nimi_suomeksi" ,
     "Ylläpitäjän tunnus" -> "yllapitajan_tunnus",
-    "LiVi-tunnus" -> "yllapitajan_koodi",
     "Matkustajatunnus" -> "matkustajatunnus",
     "Pysäkin nimi ruotsiksi" -> "nimi_ruotsiksi",
     "Liikennöintisuunta" -> "liikennointisuunta",
@@ -74,6 +73,8 @@ trait CsvImporter {
     "Sähköinen aikataulunäyttö" -> "sahkoinen_aikataulunaytto",
     "Valaistus" -> "valaistus",
     "Saattomahdollisuus henkilöautolla" -> "saattomahdollisuus_henkiloautolla",
+    "Korotettu" -> "korotettu",
+    "Roska-astia" -> "roska_astia",
     "Tietojen ylläpitäjä" -> stopAdministratorProperty
   )
 
@@ -177,14 +178,16 @@ trait CsvImporter {
   }
 
   def updateAsset(externalId: Long, properties: Seq[SimpleProperty], roadTypeLimitations: Set[AdministrativeClass]): ExcludedRoadLinkTypes = {
+    // Remove livi-id from properties, we don't want to change is with CSV
+    val propertiesWithoutLiviId = properties.filterNot(_.publicId == "yllapitajan_koodi")
     if(roadTypeLimitations.nonEmpty) {
-      val result: Either[AdministrativeClass, MassTransitStopWithProperties] = updateAssetByExternalIdLimitedByRoadType(externalId, properties, roadTypeLimitations)
+      val result: Either[AdministrativeClass, MassTransitStopWithProperties] = updateAssetByExternalIdLimitedByRoadType(externalId, propertiesWithoutLiviId, roadTypeLimitations)
       result match {
         case Left(roadLinkType) => List(roadLinkType)
         case _ => Nil
       }
     } else {
-      updateAssetByExternalId(externalId, properties)
+      updateAssetByExternalId(externalId, propertiesWithoutLiviId)
       Nil
     }
   }

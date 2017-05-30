@@ -5,6 +5,7 @@
     var roadCollection = new RoadCollection(backend);
     var roadAddressProjectCollection = new RoadAddressProjectCollection(backend);
     var selectedLinkProperty = new SelectedLinkProperty(backend, roadCollection);
+    var selectedProjectLinkProperty = new SelectedProjectLink(roadAddressProjectCollection);
     var linkPropertiesModel = new LinkPropertiesModel();
     var instructionsPopup = new InstructionsPopup($('.digiroad2'));
 
@@ -12,9 +13,11 @@
       roadCollection: roadCollection,
       roadAddressProjectCollection: roadAddressProjectCollection,
       selectedLinkProperty: selectedLinkProperty,
-      linkPropertiesModel: linkPropertiesModel
+      linkPropertiesModel: linkPropertiesModel,
+      selectedProjectLinkProperty : selectedProjectLinkProperty
     };
 
+    bindEvents();
     window.applicationModel = new ApplicationModel([
       selectedLinkProperty]);
 
@@ -23,17 +26,13 @@
     var assetGroups = groupAssets(
       linkPropertiesModel);
 
-    eventbus.on('layer:selected', function(layer) {
-      // assetSelectionMenu.select(layer);
-    });
-
-    var projectListModel = new ProjectListModel(models.roadAddressProjectCollection);
+    var projectListModel = new ProjectListModel(roadAddressProjectCollection);
 
     NavigationPanel.initialize(
       $('#map-tools'),
       new SearchBox(
-          instructionsPopup,
-          new LocationSearch(backend, window.applicationModel)
+        instructionsPopup,
+        new LocationSearch(backend, window.applicationModel)
       ),
       new ProjectSelectBox(projectListModel),
       assetGroups
@@ -58,33 +57,8 @@
 
   var localizedStrings;
 
-  var assetUpdateFailedMessage = 'Tallennus epäonnistui. Yritä hetken kuluttua uudestaan.';
-
   var indicatorOverlay = function() {
     jQuery('.container').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
-  };
-
-  var bindEvents = function(linearAssetSpecs, pointAssetSpecs) {
-    var singleElementEventNames = _.pluck(linearAssetSpecs, 'singleElementEventCategory');
-    var multiElementEventNames = _.pluck(linearAssetSpecs, 'multiElementEventCategory');
-    var linearAssetSavingEvents = _.map(singleElementEventNames, function(name) { return name + ':saving'; }).join(' ');
-    var pointAssetSavingEvents = _.map(pointAssetSpecs, function (spec) { return spec.layerName + ':saving'; }).join(' ');
-    eventbus.on('asset:saving asset:creating speedLimit:saving linkProperties:saving manoeuvres:saving ' + linearAssetSavingEvents + ' ' + pointAssetSavingEvents, function() {
-      indicatorOverlay();
-    });
-
-    var fetchedEventNames = _.map(multiElementEventNames, function(name) { return name + ':fetched'; }).join(' ');
-    eventbus.on('asset:saved asset:fetched asset:created speedLimits:fetched linkProperties:available manoeuvres:fetched pointAssets:fetched ' + fetchedEventNames, function() {
-      jQuery('.spinner-overlay').remove();
-    });
-
-    var massUpdateFailedEventNames = _.map(multiElementEventNames, function(name) { return name + ':massUpdateFailed'; }).join(' ');
-    eventbus.on('asset:updateFailed asset:creationFailed linkProperties:updateFailed speedLimits:massUpdateFailed ' + massUpdateFailedEventNames, function() {
-      jQuery('.spinner-overlay').remove();
-      alert(assetUpdateFailedMessage);
-    });
-
-    eventbus.on('confirm:show', function() { new Confirm(); });
   };
 
   var createOpenLayersMap = function(startupParameters, layers) {
@@ -109,14 +83,17 @@
 
     var mapOverlay = new MapOverlay($('.container'));
     var styler = new Styler();
-    var roadLayer = new RoadLayer3(map, models.roadCollection,styler);
+    var roadLayer = new RoadLayer3(map, models.roadCollection, styler, models.selectedLinkProperty);
+    var projectLinkLayer = new ProjectLinkLayer(map, models.roadAddressProjectCollection, models.selectedProjectLinkProperty, roadLayer);
 
     new LinkPropertyForm(models.selectedLinkProperty);
 
     new RoadAddressProjectForm(models.roadAddressProjectCollection);
+    new RoadAddressProjectEditForm(models.roadAddressProjectCollection);
 
     var layers = _.merge({
       road: roadLayer,
+      roadAddressProject: projectLinkLayer,
       linkProperty: new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel, styler)});
 
     var mapPluginsContainer = $('#map-plugins');
@@ -131,7 +108,7 @@
 
     // Show information modal in integration environment (remove when not needed any more)
     if (Environment.name() === 'integration') {
-      showInformationModal('Huom!<br>Tämä sivu ei ole enää käytössä.<br>Digiroad-sovellus on siirtynyt osoitteeseen <a href="https://extranet.liikennevirasto.fi/digiroad/" style="color:#FFFFFF;text-decoration: underline">https://extranet.liikennevirasto.fi/digiroad/</a>');
+      showInformationModal('Huom!<br>Olet integraatiotestiympäristössä.');
     }
 
     new MapView(map, layers, new InstructionsPopup($('.digiroad2')));
@@ -186,6 +163,19 @@
   application.restart = function(backend, withTileMaps) {
     localizedStrings = undefined;
     this.start(backend, withTileMaps);
+  };
+
+  var bindEvents = function() {
+
+    eventbus.on('linkProperties:saving', function() {
+      indicatorOverlay();
+    });
+
+    eventbus.on('linkProperties:available', function() {
+      jQuery('.spinner-overlay').remove();
+    });
+
+    eventbus.on('confirm:show', function() { new Confirm(); });
   };
 
 }(window.Application = window.Application || {}));

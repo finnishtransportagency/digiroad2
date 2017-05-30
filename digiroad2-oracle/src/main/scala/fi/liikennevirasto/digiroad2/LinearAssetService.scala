@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
+import com.vividsolutions.jts.geom.{MultiPolygon, Polygon}
 import fi.liikennevirasto.digiroad2.ChangeType._
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.asset._
@@ -45,6 +46,7 @@ trait LinearAssetOperations {
   def vvhClient: VVHClient
   def dao: OracleLinearAssetDao
   def eventBus: DigiroadEventBus
+  def polygonTools : PolygonTools
 
   lazy val dataSource = {
     val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))
@@ -98,12 +100,9 @@ trait LinearAssetOperations {
     getEitherByIntersectedBoundingBox(typeId, serviceArea, bounds, municipalities, roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHWithPolygon)
   }
 
-  def getEitherByIntersectedBoundingBox(typeId: Int, serviceArea : Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set(), getRoadlinks: (String) => (Seq[RoadLink], Seq[ChangeInfo])): Seq[Seq[PieceWiseLinearAsset]] = {
-    val polygonTool = new PolygonTools()
-    val polygonStringList = polygonTool.stringifyGeometryForVVHClient(
-      polygonTool.geometryInterceptorToBoundingBox(
-        polygonTool.getAreaGeometry(serviceArea), bounds))
-    val vVHRoadLinksAndChanges = polygonStringList.map(getRoadlinks)
+  def getEitherByIntersectedBoundingBox(typeId: Int, serviceArea : Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set(), getRoadlinks: (Polygon) => (Seq[RoadLink], Seq[ChangeInfo])): Seq[Seq[PieceWiseLinearAsset]] = {
+    val polygons = polygonTools.geometryInterceptorToBoundingBox(polygonTools.getAreaGeometry(serviceArea),bounds)
+    val vVHRoadLinksAndChanges = polygons.map(getRoadlinks)
     val roadLinks = vVHRoadLinksAndChanges.flatMap(_._1)
     val changes = vVHRoadLinksAndChanges.flatMap(_._2)
     val linearAssets = getByRoadLinks(typeId, roadLinks, changes)
@@ -142,7 +141,8 @@ trait LinearAssetOperations {
         }
       }.filterNot(_.expired)
 
-    val assetsOnChangedLinks = existingAssets.filter(a => LinearAssetUtils.newChangeInfoDetected(a, changes))
+    val (assetsOnChangedLinks, assetsWithoutChangedLinks) = existingAssets.partition(a => LinearAssetUtils.newChangeInfoDetected(a, changes))
+
     val projectableTargetRoadLinks = roadLinks.filter(
       rl => rl.linkType.value == UnknownLinkType.value || rl.isCarTrafficRoad)
 
@@ -151,11 +151,11 @@ trait LinearAssetOperations {
     val (expiredPavingAssetIds, newAndUpdatedPavingAssets) = getPavingAssetChanges(existingAssets, roadLinks, changes, typeId)
 
     val combinedAssets = existingAssets.filterNot(
-      a => expiredPavingAssetIds.contains(a.id) || newAndUpdatedPavingAssets.exists(_.id == a.id)
+      a => expiredPavingAssetIds.contains(a.id) || newAndUpdatedPavingAssets.exists(_.id == a.id) || assetsWithoutChangedLinks.exists(_.id == a.id)
     ) ++ newAndUpdatedPavingAssets
 
     val filledNewAssets = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
-      combinedAssets, assetsOnChangedLinks, changes)
+      combinedAssets, assetsOnChangedLinks, changes) ++ assetsWithoutChangedLinks
 
     val newAssets = newAndUpdatedPavingAssets.filterNot(a => filledNewAssets.exists(f => f.linkId == a.linkId)) ++ filledNewAssets
 
@@ -388,6 +388,16 @@ trait LinearAssetOperations {
           dao.fetchMaintenancesByIds(typeId, ids)
         case _ =>
           dao.fetchLinearAssetsByIds(ids, LinearAssetTypes.getValuePropertyId(typeId))
+      }
+    }
+  }
+
+  def getPersistedAssetsByLinkIds(typeId: Int, linkIds: Seq[Long]): Seq[PersistedLinearAsset] = {
+    withDynTransaction {
+      typeId match {
+        case LinearAssetTypes.MaintenanceRoadAssetTypeId =>
+          dao.fetchMaintenancesByLinkIds(typeId, linkIds, includeExpire = false)
+        case _ => Seq.empty[PersistedLinearAsset]
       }
     }
   }
@@ -763,6 +773,11 @@ trait LinearAssetOperations {
     }
   }
 
+  def getActiveMaintenanceRoadByPolygon(areaId: Int, typeId: Int): Seq[PersistedLinearAsset] = {
+    val polygon= polygonTools.getPolygonByArea(areaId)
+    val vVHLinkIds = roadLinkService.getLinkIdsFromVVHWithComplementaryByPolygons(polygon)
+    getPersistedAssetsByLinkIds(typeId, vVHLinkIds)
+  }
 }
 
 class LinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {
@@ -770,6 +785,7 @@ class LinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   override def dao: OracleLinearAssetDao = new OracleLinearAssetDao(roadLinkServiceImpl.vvhClient)
   override def eventBus: DigiroadEventBus = eventBusImpl
   override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
+  override def polygonTools : PolygonTools = new PolygonTools()
 }
 
 class MissingMandatoryPropertyException(val missing: Set[String]) extends RuntimeException {

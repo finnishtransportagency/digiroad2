@@ -3,6 +3,10 @@
     var functionalClasses = [1, 2, 3, 4, 5, 6, 7, 8];
     var compactForm = false;
     var options;
+    var floatingRoadLinkType=-1;
+    var noAnomaly=0;
+    var noAddressAnomaly=1;
+    var geometryChangedAnomaly=2;
 
     var localizedAdministrativeClasses = {
       Private: 'Yksityisen omistama',
@@ -146,25 +150,29 @@
 
     var formFields = function (sources){
       var linkIds = "";
+      var ids = "";
       var field;
-      var id = 0;
+      var linkCounter = 0;
       _.each(sources, function(slp){
-        var divId = "VALITUTLINKIT" + id;
+        var divId = "VALITUTLINKIT" + linkCounter;
         var linkid = slp.linkId.toString();
+        var id = _.isUndefined(slp.id) ? '-1': slp.id.toString();
         if (linkIds.length === 0) {
           field = '<div class="form-group" id=' +divId +'>' +
             '<label class="control-label-floating">' + 'LINK ID:' + '</label>' +
             '<p class="form-control-static-floating">' + linkid + '</p>' +
             '</div>' ;
           linkIds = linkid;
-        } else if(linkIds.search(linkid) === -1){
+          ids = id;
+        } else if(linkIds.search(linkid) === -1 || ids.search(id) === -1){
           field = field + '<div class="form-group" id=' +divId +'>' +
             '<label class="control-label-floating">' + 'LINK ID:' + '</label>' +
             '<p class="form-control-static-floating">' + linkid + '</p>' +
             '</div>' ;
           linkIds = linkIds + ", " + linkid;
+          ids = ids + ", " + id;
         }
-        id = id + 1;
+        linkCounter = linkCounter + 1;
       });
       return field;
     };
@@ -209,7 +217,7 @@
     var afterCalculationTemplate ='' +
       '<div class="form-group" id="afterCalculationInfo">' +
       ' <br><br><p><span style="margin-top:6px; color:#ffffff; padding-top:6px; padding-bottom:6px; line-height:15px;">TARKISTA TEKEMÄSI MUUTOKSET KARTTANÄKYMÄSTÄ.</span></p>' +
-      ' <p><span style="margin-top:6px; color:#ffffff; padding-top:6px; padding-bottom:6px; line-height:15px;">JOS TEKEMÄSI MUUTOKSET OVAT OK, PAINA TALLENA</span></p>' +
+      ' <p><span style="margin-top:6px; color:#ffffff; padding-top:6px; padding-bottom:6px; line-height:15px;">JOS TEKEMÄSI MUUTOKSET OVAT OK, PAINA TALLENNA</span></p>' +
       ' <p><span style="margin-top:6px; color:#ffffff; padding-top:6px; padding-bottom:6px; line-height:15px;">JOS HALUAT KORJATA TEKEMÄSI MUUTOKSIA, PAINA PERUUTA</span></p>' +
       '</div>';
 
@@ -238,22 +246,22 @@
       '<div class="link-properties form-controls">' +
       '<button class="continue ready btn btn-continue" disabled>Valinta valmis</button>'  +
       '<button class="calculate btn btn-move" disabled>Siirrä</button>' +
-      '<button class="save btn btn-tallena" disabled>Tallenna</button>' +
-      '<button class="cancel btn btn-perruta" disabled>Peruuta</button>' +
+      '<button class="save btn btn-save" disabled>Tallenna</button>' +
+      '<button class="cancel btn btn-cancel" disabled>Peruuta</button>' +
       '</div>';
 
     var buttons =
       '<div class="link-properties form-controls">' +
-      '<button class="save btn btn-tallena" disabled>Tallenna</button>' +
-      '<button class="cancel btn btn-perruta" disabled>Peruuta</button>' +
+      '<button class="save btn btn-save" disabled>Tallenna</button>' +
+      '<button class="cancel btn btn-cancel" disabled>Peruuta</button>' +
       '</div>';
 
     var notificationFloatingTransfer = function(displayNotification) {
       if(displayNotification)
         return '' +
-            '<div class="form-group form-notification">' +
-            '<p>Tien geometria on muuttunut. Korjaa tieosoitesegmentin sijainti vastaamaan nykyistä geometriaa.</p>' +
-            '</div>';
+          '<div class="form-group form-notification">' +
+          '<p>Tien geometria on muuttunut. Korjaa tieosoitesegmentin sijainti vastaamaan nykyistä geometriaa.</p>' +
+          '</div>';
       else
         return '';
     };
@@ -371,6 +379,20 @@
 
     var bindEvents = function() {
       var rootElement = $('#feature-attributes');
+
+      var switchMode = function (readOnly){
+        toggleMode(readOnly);
+        var uniqFeaturesToKeep = _.uniq(selectedLinkProperty.getFeaturesToKeep());
+        var firstFloatingSelected = _.first(_.filter(uniqFeaturesToKeep,function (feature){
+          return feature.roadLinkType === floatingRoadLinkType;
+        }));
+        var canStartTransfer = compactForm && !applicationModel.isReadOnly() && uniqFeaturesToKeep.length > 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length-1].anomaly === noAddressAnomaly && uniqFeaturesToKeep[uniqFeaturesToKeep.length-2].roadLinkType === floatingRoadLinkType;
+        if(canStartTransfer)
+          _.defer(function(){
+            selectedLinkProperty.getLinkAdjacents(selectedLinkProperty.get()[0], firstFloatingSelected);
+          });
+      };
+
       var toggleMode = function(readOnly) {
         if(!applicationModel.isProjectOpen()) {
           rootElement.find('.editable .form-control-static').toggle(readOnly);
@@ -381,20 +403,20 @@
           var firstSelectedLinkProperty = _.first(selectedLinkProperty.get());
           if (!_.isEmpty(uniqFeaturesToKeep)) {
             if (readOnly) {
-              if (lastFeatureToKeep.roadLinkType === -1) {
+              if (lastFeatureToKeep.roadLinkType === floatingRoadLinkType) {
                 rootElement.html(templateFloating(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
               } else {
                 rootElement.html(template(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
               }
             } else {
-              if (lastFeatureToKeep.roadLinkType === -1) {
+              if (lastFeatureToKeep.roadLinkType === floatingRoadLinkType) {
                 rootElement.html(templateFloatingEditMode(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
-                if (applicationModel.getSelectionType() === 'floating' && firstSelectedLinkProperty.roadLinkType === -1) {
+                if (applicationModel.getSelectionType() === 'floating' && firstSelectedLinkProperty.roadLinkType === floatingRoadLinkType) {
                   selectedLinkProperty.getLinkAdjacents(_.last(selectedLinkProperty.get()), firstSelectedLinkProperty);
                 }
                 $('#floatingEditModeForm').show();
               } else { //check if the before selected was a floating link and if the next one is unknown
-                if (uniqFeaturesToKeep.length > 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length - 1].anomaly === 1) {
+                if (uniqFeaturesToKeep.length > 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length - 1].anomaly === noAddressAnomaly) {
                   rootElement.html(templateFloatingEditMode(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
                   $('#floatingEditModeForm').show();
                 } else {
@@ -404,13 +426,13 @@
             }
           } else if (!_.isEmpty(selectedLinkProperty.get())) {
             if (readOnly) {
-              if (firstSelectedLinkProperty.roadLinkType === -1) {
+              if (firstSelectedLinkProperty.roadLinkType === floatingRoadLinkType) {
                 rootElement.html(templateFloating(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
               } else {
                 rootElement.html(template(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
               }
             } else {
-              if (_.last(selectedLinkProperty.get()).roadLinkType === -1) {
+              if (_.last(selectedLinkProperty.get()).roadLinkType === floatingRoadLinkType) {
                 applicationModel.toggleSelectionTypeFloating();
                 rootElement.html(templateFloatingEditMode(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
                 selectedLinkProperty.getLinkAdjacents(_.last(selectedLinkProperty.get()), firstSelectedLinkProperty);
@@ -429,14 +451,7 @@
       eventbus.on('linkProperties:selected linkProperties:cancelled', function(linkProperties) {
         if(!_.isEmpty(selectedLinkProperty.get()) || !_.isEmpty(linkProperties)){
 
-          compactForm = !_.isEmpty(selectedLinkProperty.get()) && (selectedLinkProperty.get()[0].roadLinkType === -1 || selectedLinkProperty.getFeaturesToKeep().length >= 1);
-          var uniqFeaturesToKeep = _.uniq(selectedLinkProperty.getFeaturesToKeep());
-          var firstFloatingSelected = _.first(_.filter(uniqFeaturesToKeep,function (feature){
-            return feature.roadLinkType === -1;
-          }));
-          var canStartTransfer = compactForm && !applicationModel.isReadOnly() && uniqFeaturesToKeep.length > 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length-1].anomaly === 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length-2].roadLinkType === -1;
-          if(canStartTransfer)
-            selectedLinkProperty.getLinkAdjacents(selectedLinkProperty.get()[0], firstFloatingSelected);
+          compactForm = !_.isEmpty(selectedLinkProperty.get()) && (selectedLinkProperty.get()[0].roadLinkType === floatingRoadLinkType || selectedLinkProperty.getFeaturesToKeep().length >= 1);
           linkProperties.modifiedBy = linkProperties.modifiedBy || '-';
           linkProperties.modifiedAt = linkProperties.modifiedAt || '';
           linkProperties.localizedLinkTypes = getLocalizedLinkType(linkProperties.linkType) || 'Tuntematon';
@@ -496,7 +511,7 @@
           rootElement.find('.link-types').change(function(event) {
             selectedLinkProperty.setLinkType(parseInt($(event.currentTarget).find(':selected').attr('value'), 10));
           });
-          toggleMode(applicationModel.isReadOnly());
+          switchMode(applicationModel.isReadOnly());
         }
       });
 
@@ -514,19 +529,19 @@
 
       var processAdjacents = function (sources, targets, additionalSourceLinkId) {
         var adjacents = _.reject(targets, function(t){
-          return t.roadLinkType == -1;
+          return t.roadLinkType == floatingRoadLinkType;
         });
 
         //singleLinkSelection case
         var floatingAdjacents = [];
         if(selectedLinkProperty.count() === 1)
           floatingAdjacents = _.filter(targets, function(t){
-            return t.roadLinkType == -1;
+            return t.roadLinkType == floatingRoadLinkType;
           });
 
         var fullTemplate = applicationModel.getCurrentAction() === applicationModel.actionCalculated ? afterCalculationTemplate : !_.isEmpty(floatingAdjacents) ? _.map(floatingAdjacents, function(fa){
-              return additionalSource(fa.linkId, fa.marker);
-            })[0] + adjacentsTemplate : adjacentsTemplate;
+          return additionalSource(fa.linkId, fa.marker);
+        })[0] + adjacentsTemplate : adjacentsTemplate;
 
         if(!_.isUndefined(additionalSourceLinkId)){
           return $(".form-group[id^='VALITUTLINKIT']:last").append('<div style="display:inline-flex;justify-content:center;align-items:center;">' +
@@ -538,7 +553,7 @@
         $('[id^=VALITUTLINKIT]').remove();
 
         var nonFloatingFeatures = _.reject(selectedLinkProperty.getFeaturesToKeep(), function(t){
-          return t.roadLinkType == -1;
+          return t.roadLinkType == floatingRoadLinkType;
         });
 
         var fields = formFields(_.map(nonFloatingFeatures, function(sId){
@@ -573,11 +588,10 @@
       });
       eventbus.on('application:readOnly', toggleMode);
       rootElement.on('click', '.link-properties button.save', function() {
-        if(applicationModel.getCurrentAction() === applicationModel.actionCalculated)
-        {
+        if(applicationModel.getCurrentAction() === applicationModel.actionCalculated){
           selectedLinkProperty.saveTransfer();
-        } else {
-          selectedLinkProperty.save();
+          applicationModel.setCurrentAction(-1);
+          applicationModel.addSpinner();
         }
       });
       rootElement.on('click', '.link-properties button.cancel', function() {
@@ -586,6 +600,7 @@
           action = applicationModel.actionCalculating;
         applicationModel.setCurrentAction(action);
         eventbus.trigger('linkProperties:activateAllSelections');
+        eventbus.trigger('roadLinks:refreshView');
         if('all' === applicationModel.getSelectionType() || 'floating' === applicationModel.getSelectionType()){
           selectedLinkProperty.clearAndReset(false);
           applicationModel.toggleSelectionTypeAll();
@@ -607,6 +622,7 @@
           rootElement.find('.link-properties button.continue').attr('disabled', true);
           applicationModel.toggleSelectionTypeUnknown();
           applicationModel.setContinueButton(false);
+          eventbus.trigger('linkProperties:deselectFeaturesSelected');
           eventbus.trigger('linkProperties:highlightAnomalousByFloating');
           eventbus.trigger('linkProperties:activateInteractions');
           eventbus.trigger('linkProperties:deactivateDoubleClick');
@@ -640,6 +656,7 @@
           rootElement.find('.link-properties button.continue').attr('disabled', false);
         }
         applicationModel.setActiveButtons(true);
+        eventbus.trigger('layer:enableButtons', false);
       });
 
       eventbus.on('adjacents:floatingAdded', function(floatingRoads){
@@ -654,6 +671,24 @@
       });
       eventbus.on('linkProperties:additionalFloatingSelected',function(data){
         processAditionalFloatings(data.selectedFloatings, data.selectedLinkId);
+      });
+
+      eventbus.on('linkProperties:transferFailed',function(errorCode){
+        if (errorCode == 400){
+          return new ModalConfirm("Valittujen lähdelinkkien geometriaa ei saatu sovitettua kohdegeometrialle. Ota yhteyttä järjestelmätukeen.");
+        } else if (errorCode == 401){
+          return new ModalConfirm("Sinulla ei ole käyttöoikeutta muutoksen tekemiseen.");
+        } else if (errorCode == 412){
+          return new ModalConfirm("Täyttämättömien vaatimusten takia siirtoa ei saatu tehtyä. Ota yhteyttä järjestelmätukeen.");
+        } else if (errorCode == 500){
+          return new ModalConfirm("Siirto ei onnistunut taustajärjestelmässä tapahtuneen virheen takia, ota yhteyttä järjestelmätukeen.");
+        } else {
+          return new ModalConfirm("Siirto ei onnistunut taustajärjestelmässä tapahtuneen tuntemattoman virheen takia, ota yhteyttä järjestelmätukeen.");
+        }
+      });
+
+      eventbus.on('roadAddressProject:selected', function() {
+          $('.wrapper').remove();
       });
     };
     bindEvents();

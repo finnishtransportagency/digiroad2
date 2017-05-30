@@ -84,8 +84,7 @@
       }
     };
     this.hide = function() {
-      //roadLayer.clear();
-      layer.clear();
+      roadLayer.clear();
       eventbus.off('map:moved', me.handleMapMoved);
     };
 

@@ -6,20 +6,17 @@
     var panelHeader = $('<div class="panel-header"></div>').append(selectProjectButton);
     var addedPanelHeader = groupDiv.append(projectSelectDiv.append(panelHeader));
 
-    var bindEvents = function() {
-      function selectLayerOrShowConfirmDialog() {
-        if (applicationModel.isDirty()) {
-          new Confirm();
-        }
+    function selectLayerOrShowConfirmDialog() {
+      if (applicationModel.isProjectOpen()) {
+        new ModalConfirm("Projektin muokkaus on kesken. Tallenna muutokset ja/tai poistu Peruuta-painikkeella.");
+      } else {
+        projectListModel.toggle();
       }
-      selectProjectButton.on('click', selectLayerOrShowConfirmDialog);
-    };
-
-    bindEvents();
+    }
 
     return {
       button: selectProjectButton,
-      toggle: projectListModel.toggle,
+      toggle: selectLayerOrShowConfirmDialog,
       element: addedPanelHeader.append(projectListModel.element)
     };
   };

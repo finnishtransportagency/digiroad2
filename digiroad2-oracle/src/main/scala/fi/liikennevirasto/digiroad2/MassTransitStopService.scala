@@ -47,7 +47,7 @@ trait MassTransitStopService extends PointAssetOperations {
 
   lazy val logger = LoggerFactory.getLogger(getClass)
   val massTransitStopDao: MassTransitStopDao
-  val tierekisteriClient: TierekisteriClient
+  val tierekisteriClient: TierekisteriMassTransitStopClient
   val tierekisteriEnabled: Boolean
   val roadLinkService: RoadLinkService
   override val idField = "external_id"
@@ -422,17 +422,21 @@ trait MassTransitStopService extends PointAssetOperations {
         .map{ x => (x.municipalityCode, x.geometry) }
         .getOrElse(throw new NoSuchElementException)
 
+      // Enrich properties with old administrator, if administrator value is empty in CSV import
+      val verifiedProperties = MassTransitStopOperations.getVerifiedProperties(properties, asset.propertyData)
+
       val id = asset.id
       massTransitStopDao.updateAssetLastModified(id, username)
+      val isVirtualBusStop = MassTransitStopOperations.isVirtualBusStop(properties)
       val oldLiviIdProperty = MassTransitStopOperations.liviIdValueOption(asset.propertyData)
-      val newLiviIdProperty = if (properties.nonEmpty) {
-        val administrationProperty = properties.find(_.publicId == MassTransitStopOperations.AdministratorInfoPublicId)
+      val newLiviIdProperty = if (verifiedProperties.nonEmpty) {
+        val administrationProperty = verifiedProperties.find(_.publicId == MassTransitStopOperations.AdministratorInfoPublicId)
         val elyAdministrated = administrationProperty.exists(_.values.headOption.exists(_.propertyValue == MassTransitStopOperations.CentralELYPropertyValue))
         val hslAdministrated = administrationProperty.exists(_.values.headOption.exists(_.propertyValue == MassTransitStopOperations.HSLPropertyValue))
-        if  (!(elyAdministrated || hslAdministrated) && MassTransitStopOperations.liviIdValueOption(asset.propertyData).exists(_.propertyValue != "")) {
-          updatePropertiesForAsset(id, properties.toSeq, roadLink.get.administrativeClass, asset.nationalId, None)
+        if  ( (!(elyAdministrated || hslAdministrated) || isVirtualBusStop) && MassTransitStopOperations.liviIdValueOption(asset.propertyData).exists(_.propertyValue != "")) {
+          updatePropertiesForAsset(id, verifiedProperties.toSeq, roadLink.get.administrativeClass, asset.nationalId, None)
         } else {
-          updatePropertiesForAsset(id, properties.toSeq, roadLink.get.administrativeClass, asset.nationalId, MassTransitStopOperations.liviIdValueOption(asset.propertyData))
+          updatePropertiesForAsset(id, verifiedProperties.toSeq, roadLink.get.administrativeClass, asset.nationalId, MassTransitStopOperations.liviIdValueOption(asset.propertyData))
         }
       } else {
         None
@@ -459,11 +463,12 @@ trait MassTransitStopService extends PointAssetOperations {
       val wasStoredInTierekisteri = MassTransitStopOperations.isStoredInTierekisteri(persistedStop)
       val shouldBeInTierekisteri = MassTransitStopOperations.isStoredInTierekisteri(mergedProperties)
 
-      val operation = (wasStoredInTierekisteri, shouldBeInTierekisteri) match {
-        case (true, true) => Operation.Update
-        case (true, false) => Operation.Expire
-        case (false, true) => Operation.Create
-        case (false, false) => Operation.Noop
+      val operation = (wasStoredInTierekisteri, shouldBeInTierekisteri, isVirtualBusStop) match {
+        case (true, true, _) => Operation.Update
+        case (true, false, false) => Operation.Expire
+        case (true, false, true) => Operation.Remove
+        case (false, true, _) => Operation.Create
+        case (false, false, _) => Operation.Noop
       }
 
       if(optionalPosition.isDefined && operation == Operation.Update) {
@@ -520,7 +525,7 @@ trait MassTransitStopService extends PointAssetOperations {
     }
     val tierekisteriLiviId = MassTransitStopOperations.liviIdValueOption(persistedStop.propertyData).map(_.propertyValue) // Using the saved LiviId if any
     val modifiedAsset = fetchPointAssets(withId(id)).headOption // Reload from database
-    if(tierekisteriOperation == Operation.Expire){
+    if(tierekisteriOperation == Operation.Expire || tierekisteriOperation == Operation.Remove){
       executeTierekisteriOperation(tierekisteriOperation, modifiedAsset.get, { _ => Some(roadLink) }, tierekisteriLiviId, Some(username))
       convertPersistedStopWithPropertiesAndPublishEvent(modifiedAsset, { _ => Some(roadLink) }, Operation.Noop, tierekisteriLiviId, Some(username))
     } else {

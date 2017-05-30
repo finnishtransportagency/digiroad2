@@ -1,5 +1,5 @@
 (function(root) {
-  root.RoadLayer3 = function(map, roadCollection,styler) {
+  root.RoadLayer3 = function(map, roadCollection, styler, selectedLinkProperty) {
     var vectorLayer;
     var layerMinContentZoomLevels = {};
     var currentZoom = 0;
@@ -29,7 +29,8 @@
 
     var loadFeatures = function (features) {
       vectorSource.clear(true);
-      vectorSource.addFeatures(features);
+      vectorSource.addFeatures(selectedLinkProperty.filterFeaturesAfterSimulation(features));
+      eventbus.trigger('roadLayer:featuresLoaded', features); // For testing: tells that the layer is ready to be "clicked"
     };
 
     var minimumContentZoomLevel = function() {
@@ -46,29 +47,35 @@
     };
 
     var mapMovedHandler = function(mapState) {
-      console.log("map moved");
-      console.log("zoom = " + mapState.zoom);
       if (mapState.zoom !== currentZoom) {
         currentZoom = mapState.zoom;
+      }
+      if (mapState.zoom < minimumContentZoomLevel()) {
         vectorSource.clear();
         eventbus.trigger('map:clearLayers');
+      } else if (mapState.selectedLayer == 'linkProperty'){
+        roadCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1);
+        handleRoadsVisibility();
       }
-      roadCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom);
-      handleRoadsVisibility();
     };
 
+    var clear = function(){
+      vectorLayer.getSource().clear();
+    };
 
     vectorLayer = new ol.layer.Vector({
       source: vectorSource,
       style: vectorLayerStyle
     });
     vectorLayer.setVisible(true);
+    vectorLayer.set('name', 'roadLayer');
     map.addLayer(vectorLayer);
 
     eventbus.on('map:moved', mapMovedHandler, this);
 
     return {
-      layer: vectorLayer
+      layer: vectorLayer,
+      clear: clear
     };
   };
 })(this);

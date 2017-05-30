@@ -67,14 +67,13 @@
     var setOpenProject = function(newState){
       if(openProject !== newState){
         openProject = newState;
-        eventbus.trigger('application:openProject', newState);
       }
     };
 
     var setContinueButton = function(newState){
       if(continueButton !== newState){
         continueButton = newState;
-        eventbus.trigger('application:valintaActive', newState);
+        eventbus.trigger('application:pickActive', newState);
       }
     };
 
@@ -140,8 +139,6 @@
           selectedLayer = layer;
           setSelectedTool('Select');
           eventbus.trigger('layer:selected', layer, previouslySelectedLayer);
-        } else {
-          eventbus.trigger('layer:' + selectedLayer + ':shown');
         }
       },
       getSelectedLayer: function() {

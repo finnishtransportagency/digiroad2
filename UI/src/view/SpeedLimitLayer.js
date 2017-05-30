@@ -208,10 +208,8 @@ window.SpeedLimitLayer = function(params) {
   };
 
   var highlightMultipleLinearAssetFeatures = function() {
-    var partitioned = _.groupBy(vectorLayer.getSource().getFeatures(), function (feature) {
-        return selectedSpeedLimit.isSelected(feature.getProperties());
-    });
-    selectToolControl.addSelectionFeatures(partitioned[true]);
+    var selectedAsset = selectedSpeedLimit.get();
+    selectToolControl.addSelectionFeatures(style.renderFeatures(selectedAsset));
   };
 
   var selectToolControl = new SelectToolControl(application, vectorLayer, map, {

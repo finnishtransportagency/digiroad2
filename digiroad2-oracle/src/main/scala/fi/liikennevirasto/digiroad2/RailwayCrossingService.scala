@@ -25,54 +25,22 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
 
   override def getByBoundingBox(user: User, bounds: BoundingRectangle) : Seq[PersistedAsset] = {
     val (roadLinks, changeInfo) = roadLinkService.getRoadLinksAndChangesFromVVH(bounds)
-    super.getByBoundingBox(user, bounds, roadLinks, changeInfo, floatingAdjustment)
+    super.getByBoundingBox(user, bounds, roadLinks, changeInfo, floatingAdjustment(adjustmentOperation, createOperation))
   }
 
-  private def floatingAdjustment(roadLinks: Seq[RoadLink], changeInfo: Seq[ChangeInfo], assetBeforeUpdate: AssetBeforeUpdate) = {
-    if (assetBeforeUpdate.persistedFloating || assetBeforeUpdate.asset.floating) {
-      PointAssetFiller.correctedPersistedAsset(assetBeforeUpdate.asset, roadLinks, changeInfo) match {
-        case Some(adjustment) =>
-          val updatedAsset = IncomingRailwayCrossing(adjustment.lon, adjustment.lat, adjustment.linkId, assetBeforeUpdate.asset.safetyEquipment, assetBeforeUpdate.asset.name)
-          OracleRailwayCrossingDao.update(adjustment.assetId, updatedAsset, adjustment.mValue, assetBeforeUpdate.asset.municipalityCode, "vvh_generated", Some(adjustment.vvhTimeStamp))
-          AssetBeforeUpdate(createPersistedAsset(assetBeforeUpdate.asset, adjustment), adjustment.floating, Some(FloatingReason.Unknown))
+  private def createOperation(asset: PersistedAsset, adjustment: AssetAdjustment): PersistedAsset = {
+    createPersistedAsset(asset, adjustment)
+  }
 
-        case None =>
-          if (assetBeforeUpdate.persistedFloating && !assetBeforeUpdate.asset.floating) {
-            val logger = LoggerFactory.getLogger(getClass)
-            val floatingReasonMessage = floatingReason(assetBeforeUpdate.asset, roadLinks.find(_.linkId == assetBeforeUpdate.asset.linkId))
-            logger.info("Floating asset %d, reason: %s".format(assetBeforeUpdate.asset.id, floatingReasonMessage))
-          }
-          AssetBeforeUpdate(setFloating(assetBeforeUpdate.asset,  assetBeforeUpdate.persistedFloating), assetBeforeUpdate.asset.floating, assetBeforeUpdate.floatingReason)
-      }
-    }
-    else
-      AssetBeforeUpdate(setFloating(assetBeforeUpdate.asset, assetBeforeUpdate.persistedFloating), assetBeforeUpdate.asset.floating, assetBeforeUpdate.floatingReason)
+  private def adjustmentOperation(persistedAsset: PersistedAsset, adjustment: AssetAdjustment): Long = {
+    val updatedAsset = IncomingRailwayCrossing(adjustment.lon, adjustment.lat, adjustment.linkId, persistedAsset.safetyEquipment, persistedAsset.name)
+    OracleRailwayCrossingDao.update(adjustment.assetId, updatedAsset, adjustment.mValue, persistedAsset.municipalityCode, "vvh_generated", Some(adjustment.vvhTimeStamp))
   }
 
   override def getByMunicipality(municipalityCode: Int): Seq[PersistedAsset] = {
     val (roadLinks, changeInfo) = roadLinkService.getRoadLinksAndChangesFromVVH(municipalityCode)
     val mapRoadLinks = roadLinks.map(l => l.linkId -> l).toMap
-    getByMunicipality(municipalityCode, mapRoadLinks, roadLinks, changeInfo, floatingCorrection)
-  }
-
-  private def floatingCorrection[T](changeInfo: Seq[ChangeInfo], roadLinks: Seq[RoadLink],
-                                    persistedStop: PersistedAsset, floating: Boolean, assetFloatingReason: Option[FloatingReason],
-                                    conversion: (PersistedAsset, Boolean) => T) = {
-
-    if (floating) {
-      PointAssetFiller.correctedPersistedAsset(persistedStop, roadLinks, changeInfo) match {
-        case Some(adjustment) =>
-          val updatedAsset = IncomingRailwayCrossing(adjustment.lon, adjustment.lat, adjustment.linkId, persistedStop.safetyEquipment, persistedStop.name)
-          OracleRailwayCrossingDao.update(adjustment.assetId, updatedAsset, adjustment.mValue, persistedStop.municipalityCode, "vvh_generated",  Some(adjustment.vvhTimeStamp))
-
-          val persistedAsset = createPersistedAsset(persistedStop, adjustment)
-          (conversion(persistedAsset, persistedAsset.floating), assetFloatingReason)
-
-        case None => (conversion(persistedStop, floating), assetFloatingReason)
-      }
-    }
-    else
-      (conversion(persistedStop, floating), assetFloatingReason)
+    getByMunicipality(municipalityCode, mapRoadLinks, roadLinks, changeInfo, floatingAdjustment(adjustmentOperation, createOperation))
   }
 
   private def createPersistedAsset[T](persistedStop: PersistedAsset, asset: AssetAdjustment) = {
@@ -85,14 +53,14 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
   override def create(asset: IncomingRailwayCrossing, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass] = None): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat, 0), geometry)
     withDynTransaction {
-      OracleRailwayCrossingDao.create(asset, mValue, municipality, username)
+      OracleRailwayCrossingDao.create(asset, mValue, municipality, username, VVHClient.createVVHTimeStamp(5))
     }
   }
 
   override def update(id: Long, updatedAsset: IncomingRailwayCrossing, geometry: Seq[Point], municipality: Int, username: String): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat, 0), geometry)
     withDynTransaction {
-      OracleRailwayCrossingDao.update(id, updatedAsset, mValue, municipality, username)
+      OracleRailwayCrossingDao.update(id, updatedAsset, mValue, municipality, username, Some(VVHClient.createVVHTimeStamp(5)))
     }
     id
   }

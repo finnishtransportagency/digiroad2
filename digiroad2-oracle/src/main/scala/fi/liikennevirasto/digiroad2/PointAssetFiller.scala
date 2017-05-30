@@ -42,25 +42,27 @@ object PointAssetFiller {
     }
   }
 
-   def correctShortened(asset: PersistedPointAsset , roadLinks: Seq[RoadLink], changeInfo: ChangeInfo, adjustmentOption: Option[AssetAdjustment]): Option[AssetAdjustment]={
-     roadLinks.find(_.linkId == changeInfo.newId.getOrElse(0L)) match {
-       case Some(newRoadLink) =>
-         val mValue = adjustmentOption match {
-           case Some (adjustment) =>
+  def correctShortened(asset: PersistedPointAsset , roadLinks: Seq[RoadLink], changeInfo: ChangeInfo, adjustmentOption: Option[AssetAdjustment]): Option[AssetAdjustment]= {
+    roadLinks.find(_.linkId == changeInfo.newId.getOrElse(0L)) match {
+      case Some(newRoadLink) =>
+        val mValue = adjustmentOption match {
+          case Some(adjustment) =>
             adjustment.mValue
-           case _ =>
+          case _ =>
             asset.mValue
-         }
+        }
 
-         if (changeInfo.oldStartMeasure.getOrElse (0.0) - MaxDistanceDiffAllowed <= mValue && changeInfo.oldStartMeasure.getOrElse (0.0) >= mValue)
-          correctGeometry (asset.id, newRoadLink, changeInfo.newStartMeasure.getOrElse (0.0), changeInfo.vvhTimeStamp)
-         else if (changeInfo.oldEndMeasure.getOrElse (0.0) + MaxDistanceDiffAllowed >= mValue && changeInfo.oldEndMeasure.getOrElse (0.0) <= mValue)
-          correctGeometry (asset.id, newRoadLink, changeInfo.newEndMeasure.getOrElse (0.0), changeInfo.vvhTimeStamp)
-         else
-          correctValuesAndGeometry (asset, roadLinks, changeInfo, adjustmentOption)
-       case _ =>
-         None
-     }
+        if (changeInfo.oldStartMeasure.getOrElse(0.0) - MaxDistanceDiffAllowed <= mValue && changeInfo.oldStartMeasure.getOrElse(0.0) >= mValue)
+          correctGeometry(asset.id, newRoadLink, changeInfo.newStartMeasure.getOrElse(0.0), changeInfo.vvhTimeStamp)
+        else if (changeInfo.oldEndMeasure.getOrElse(0.0) + MaxDistanceDiffAllowed >= mValue && changeInfo.oldEndMeasure.getOrElse(0.0) <= mValue)
+          correctGeometry(asset.id, newRoadLink, changeInfo.newEndMeasure.getOrElse(0.0), changeInfo.vvhTimeStamp)
+        else if (changeInfo.oldStartMeasure.getOrElse(0.0) <= mValue &&  changeInfo.oldEndMeasure.getOrElse(0.0) >= mValue)
+          correctValuesAndGeometry(asset, roadLinks, changeInfo, adjustmentOption)
+        else
+          None
+      case _ =>
+        None
+    }
   }
 
   def correctedPersistedAsset(asset: PersistedPointAsset, roadLinks: Seq[RoadLink], changeInfos: Seq[ChangeInfo]): Option[AssetAdjustment] = {
@@ -75,7 +77,7 @@ object PointAssetFiller {
           case ChangeType.CombinedModifiedPart | ChangeType.CombinedRemovedPart if changeInfo.newId != changeInfo.oldId => //Geometry Combined
             correctValuesAndGeometry(asset, roadLinks, changeInfo, adjustment)
 
-          case ChangeType.LenghtenedCommonPart | ChangeType.LengthenedNewPart if asset.mValue < changeInfo.newStartMeasure.getOrElse(0.0) => //Geometry Lengthened
+          case ChangeType.LenghtenedCommonPart | ChangeType.LengthenedNewPart => //Geometry Lengthened
             correctValuesAndGeometry(asset, roadLinks, changeInfo, adjustment)
 
           case ChangeType.DividedModifiedPart | ChangeType.DividedNewPart if (asset.mValue >= changeInfo.oldStartMeasure.getOrElse(0.0)) && (asset.mValue <= changeInfo.oldEndMeasure.getOrElse(0.0)) => //Geometry Divided
@@ -84,9 +86,21 @@ object PointAssetFiller {
           case ChangeType.ShortenedCommonPart | ChangeType.ShortenedRemovedPart => //Geometry Shortened
             correctShortened(asset, roadLinks, changeInfo, adjustment)
 
+          case ChangeType.ReplacedCommonPart =>
+            correctValuesAndGeometry(asset, roadLinks, changeInfo, adjustment)
+
           case _ => adjustment
         }
     }
+  }
+
+  def snapPersistedAssetToRoadLink(asset: PersistedPointAsset, roadLink: RoadLink): Option[AssetAdjustment] = {
+    // Adjust for geometry, "snap to road link": First find the closest point on road link (as mValue), then update
+    // point reference
+    val point = Point(asset.lon, asset.lat)
+    val lrm = GeometryUtils.calculateLinearReferenceFromPoint(point, roadLink.geometry)
+    correctGeometry(asset.id, roadLink, lrm, roadLink.attributes.getOrElse("LAST_EDITED_DATE",
+      roadLink.attributes.getOrElse("CREATED_DATE", BigInt(0))).asInstanceOf[BigInt].longValue())
   }
 
   private def correctValuesAndGeometry(asset: PersistedPointAsset, roadLinks: Seq[RoadLink], changeInfo: ChangeInfo, adjustmentOption: Option[AssetAdjustment]) = {

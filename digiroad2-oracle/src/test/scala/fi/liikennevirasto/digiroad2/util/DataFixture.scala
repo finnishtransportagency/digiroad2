@@ -3,23 +3,21 @@ package fi.liikennevirasto.digiroad2.util
 import java.util.Properties
 
 import com.googlecode.flyway.core.Flyway
-import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.{NewLinearAsset, NumericValue, NumericalLimitFiller, RoadLink}
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{MassTransitStopDao, Queries}
-import fi.liikennevirasto.digiroad2.MassTransitStopService
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
-import fi.liikennevirasto.digiroad2.pointasset.oracle.{Obstacle, OracleObstacleDao}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.masstransitstop.MassTransitStopOperations
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{MassTransitStopDao, Queries}
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
+import fi.liikennevirasto.digiroad2.pointasset.oracle.Obstacle
+import fi.liikennevirasto.digiroad2.roadaddress.oracle.RoadAddressDAO
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
-import org.apache.http.client.config.RequestConfig
+import fi.liikennevirasto.digiroad2.{MassTransitStopService, _}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
-import org.scalatest.mock.MockitoSugar
 import slick.jdbc.{StaticQuery => Q}
+
 
 object DataFixture {
   val TestAssetId = 300000
@@ -28,6 +26,13 @@ object DataFixture {
     props.load(getClass.getResourceAsStream("/bonecp.properties"))
     props
   }
+
+  lazy val propertiesDigiroad: Properties = {
+    val props = new Properties()
+    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
+    props
+  }
+
   lazy val dr2properties: Properties = {
     val props = new Properties()
     props.load(getClass.getResourceAsStream("/digiroad2.properties"))
@@ -44,8 +49,8 @@ object DataFixture {
   lazy val obstacleService: ObstacleService = {
     new ObstacleService(roadLinkService)
   }
-  lazy val tierekisteriClient: TierekisteriClient = {
-    new TierekisteriClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+  lazy val tierekisteriClient: TierekisteriMassTransitStopClient = {
+    new TierekisteriMassTransitStopClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
       dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
       HttpClientBuilder.create().build())
   }
@@ -57,7 +62,7 @@ object DataFixture {
     class MassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService) extends MassTransitStopService {
       override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
       override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
-      override val tierekisteriClient: TierekisteriClient = DataFixture.tierekisteriClient
+      override val tierekisteriClient: TierekisteriMassTransitStopClient = DataFixture.tierekisteriClient
       override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
       override val tierekisteriEnabled = true
     }
@@ -66,6 +71,26 @@ object DataFixture {
 
   lazy val geometryTransform: GeometryTransform = {
     new GeometryTransform()
+  }
+  lazy val oracleLinearAssetDao : OracleLinearAssetDao = {
+    new OracleLinearAssetDao(vvhClient)
+  }
+  lazy val roadAddressDao : RoadAddressDAO = {
+    new RoadAddressDAO()
+  }
+
+  lazy val tierikisteriClient : TierekisteriAssetDataClient = {
+    new TierekisteriAssetDataClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+      getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+      HttpClientBuilder.create().build())
+  }
+
+  def getProperty(name: String) = {
+    val property = propertiesDigiroad.getProperty(name)
+    if(property != null)
+      property
+    else
+      throw new RuntimeException(s"cannot find property $name")
   }
 
   def flyway: Flyway = {
@@ -117,7 +142,8 @@ object DataFixture {
 //      "siilijarvi_traffic_directions.sql",
 //      "siilinjarvi_speed_limits.sql",
 //      "siilinjarvi_linear_assets.sql",
-      "insert_road_address_data.sql"
+      "insert_road_address_data.sql",
+      "insert_floating_road_addresses.sql"
     ))
   }
 
@@ -481,7 +507,7 @@ object DataFixture {
     val busStops = trBusStops.flatMap{
       trStop =>
         try {
-          val stopPointOption = geometryTransform.addressToCoords(trStop.roadAddress.road, trStop.roadAddress.roadPart, trStop.roadAddress.track, trStop.roadAddress.mValue)
+          val stopPointOption = withDynSession{ geometryTransform.addressToCoords(trStop.roadAddress.road, trStop.roadAddress.roadPart, trStop.roadAddress.track, trStop.roadAddress.mValue) }
 
           stopPointOption match {
             case Some(stopPoint) =>
@@ -503,7 +529,7 @@ object DataFixture {
                 Some(NearestBusStops(trStop, peristedStop, distance))
               }
             case _ => {
-              println("VKM can't resolve the coordenates of the TR bus stop address with livi Id "+ trStop.liviId)
+              println("Can't resolve the coordenates of the TR bus stop address with livi Id "+ trStop.liviId)
               None
             }
           }
@@ -832,6 +858,66 @@ object DataFixture {
     println("\n")
   }
 
+  def fetchAllTrafficVolumeDataFromTR(): Unit = {
+
+    val trafficVolumeTR = "tl201"
+    val trafficVolumeId = 170
+
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+
+    lazy val linearAssetService: LinearAssetService = {
+      new LinearAssetService(roadLinkService, new DummyEventBus)
+    }
+
+    println("\nExpiring Traffic Volume From OTH Database")
+    OracleDatabase.withDynSession { oracleLinearAssetDao.expireAllAssetsByTypeId(trafficVolumeId) }
+    println("\nTraffic Volume data Expired")
+
+    println("\nFetch Road Numbers From Viite")
+    val roadNumbers = OracleDatabase.withDynSession { roadAddressDao.getRoadNumbers() }
+    println("\nEnd of Fetch ")
+
+    println("roadNumbers: ")
+    roadNumbers.foreach(ra => println(ra))
+
+    roadNumbers.foreach{
+      case roadNumber =>
+        println("\nFetch Traffic Volume by Road Number " + roadNumber)
+        val trTrafficVolume = tierikisteriClient.fetchActiveAssetData(trafficVolumeTR, roadNumber)
+
+        trTrafficVolume.foreach { tr => println("\nTR: roadNumber, roadPartNumber, start, end and kvt " + tr.roadNumber +" "+ tr.roadPartNumber +" "+ tr.starMValue +" "+ tr.endMValue +" "+ tr.kvl) }
+
+        val r = trTrafficVolume.groupBy(trTrafficVolume => (trTrafficVolume.roadNumber, trTrafficVolume.roadPartNumber, trTrafficVolume.starMValue, trTrafficVolume.endMValue)).map(_._2.head)
+
+        r.foreach { tr =>
+          OracleDatabase.withDynTransaction {
+
+            println("\nFetch road addresses to link ids using Viite, trRoadNumber, roadPartNumber start and end " + tr.roadNumber + " " + tr.roadPartNumber + " " + tr.starMValue + " " +  tr.endMValue)
+            val roadAddresses = roadAddressDao.getRoadAddressesFiltered(tr.roadNumber, tr.roadPartNumber, tr.starMValue, tr.endMValue)
+
+            val roadAddressLinks = roadAddresses.map(ra => ra.linkId).toSet
+            val vvhRoadlinks = roadLinkService.fetchVVHRoadlinks(roadAddressLinks)
+
+            println("roadAddresses fetched: ")
+            roadAddresses.filter(ra => vvhRoadlinks.exists(t => t.linkId == ra.linkId) ).foreach(ra => println(ra.linkId))
+
+            roadAddresses
+              .filter(ra => vvhRoadlinks.exists(t => t.linkId == ra.linkId) )
+              .foreach { ra =>
+                val assetId = linearAssetService.dao.createLinearAsset(trafficVolumeId, ra.linkId, false, SideCode.BothDirections.value,
+                  ra.startMValue, ra.endMValue, "batch_process_trafficVolume", vvhClient.createVVHTimeStamp(5))
+                println("\nCreated OTH traffic volume assets form TR data with assetId " + assetId)
+
+                linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, tr.kvl)
+                println("\nCreated OTH property value with value " + tr.kvl  + " and assetId "+ assetId )
+              }
+          }
+        }
+    }
+    println("\nEnd of Traffic Volume fetch")
+    println("\nEnd of creation OTH traffic volume assets form TR data")
+  }
+
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
@@ -913,6 +999,8 @@ object DataFixture {
         listingBusStopsWithSideCodeConflictWithRoadLinkDirection()
       case Some("fill_lane_amounts_in_missing_road_links") =>
         fillLaneAmountsMissingInRoadLink()
+      case Some("fetch_traffic_volume_from_TR_to_OTH") =>
+        fetchAllTrafficVolumeDataFromTR()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
@@ -920,7 +1008,7 @@ object DataFixture {
         " generate_floating_obstacles | import_VVH_RoadLinks_by_municipalities | " +
         " check_unknown_speedlimits | set_transitStops_floating_reason | verify_roadLink_administrative_class_changed | set_TR_bus_stops_without_OTH_LiviId |" +
         " check_TR_bus_stops_without_OTH_LiviId | check_bus_stop_matching_between_OTH_TR | listing_bus_stops_with_side_code_conflict_with_roadLink_direction |" +
-        " fill_lane_amounts_in_missing_road_links")
+        " fill_lane_amounts_in_missing_road_links | fetch_traffic_volume_from_TR_to_OTH")
     }
   }
 }

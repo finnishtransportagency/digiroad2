@@ -328,14 +328,15 @@
       newTitle: 'Uusi rautateiden huoltotie',
       className: 'maintenanceRoad',
       isSeparable: false,
+      unit: '',
       editControlLabels: {
         title: '',
         enabled: 'Huoltotie',
         disabled: 'Ei huoltotietä'
       },
       possibleValues: [
-        {'name': 'Käyttöoikeus', 'propType': 'single_choice', 'id': "huoltotie_kayttooikeus", value: [{typeId: 1, title: 'Tieoikeus'},{typeId: 2, title: 'Tiekunnan osakkuus'},{typeId: 3, title: 'LiVin hallinnoimalla maa-alueella'},{typeId: 4, title: 'Huoltoreittikäytössä olevat kevyen liikenteen väylät (ei rautatieliikennealuetta) väylä'},{typeId: 5, title: 'Tuntematon'}]},
-        {'name': 'Huoltovastuu', 'propType': 'single_choice', 'id': "huoltotie_huoltovastuu", value: [{typeId: 1, title: 'LiVi'}, {typeId: 2, title: 'Muu'}, {typeId: 0, title: 'Ei tietoa'}]},
+        {'name': 'Käyttöoikeus', 'propType': 'single_choice', 'id': "huoltotie_kayttooikeus", value: [{typeId: 1, title: 'Tieoikeus'},{typeId: 2, title: 'Tiekunnan osakkuus'},{typeId: 3, title: 'LiVin hallinnoimalla maa-alueella'},{typeId: 4, title: 'Huoltoreittikäytössä olevat kevyen liikenteen väylät (ei rautatieliikennealuetta) väylä'},{typeId: 99, title: 'Tuntematon'}]},
+        {'name': 'Huoltovastuu', 'propType': 'single_choice', 'id': "huoltotie_huoltovastuu", value: [{typeId: 1, title: 'LiVi'}, {typeId: 2, title: 'Muu'}, {typeId: 99, title: 'Ei tietoa'}]},
         {'name': "Tiehoitokunta", 'propType': 'text', 'id': "huoltotie_tiehoitokunta" },
         {'name': "Nimi", 'propType': 'text', 'id': "huoltotie_nimi" },
         {'name': "Osoite", 'propType': 'text', 'id': "huoltotie_osoite"},
