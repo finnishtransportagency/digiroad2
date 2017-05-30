@@ -450,6 +450,13 @@ object RoadAddressDAO {
            """.execute
   }
 
+  def createMissingRoadAddress (linkId: Long, start_addr_m: Long, end_addr_m: Long, anomaly_code: Int, start_m : Double, end_m : Double) = {
+    sqlu"""
+           insert into missing_road_address (link_id, start_addr_m, end_addr_m,anomaly_code, start_m, end_m)
+           values ($linkId, $start_addr_m, $end_addr_m, $anomaly_code, $start_m, $end_m)
+           """.execute
+  }
+
   def lockRoadAddressTable(): Unit = {
     sqlu"""
            LOCK TABLE ROAD_ADDRESS IN EXCLUSIVE MODE
@@ -549,13 +556,18 @@ object RoadAddressDAO {
     changeRoadAddressFloating(if (float) 1 else 0, roadAddressId, geometry)
   }
 
-  def getValidRoadNumbers = {
-    sql"""
+  def getCurrentValidRoadNumbers(filter: String = "") = {
+    Q.queryNA[Long](s"""
        select distinct road_number
               from road_address ra
-              where ra.floating = '0' AND (end_date < sysdate OR end_date IS NULL)
+              where ra.floating = '0' AND (end_date > sysdate OR end_date IS NULL) AND (valid_to > sysdate OR valid_to IS NULL)
+              $filter
               order by road_number
-      """.as[Long].list
+      """).list
+  }
+
+  def getValidRoadNumbersWithFilterToTestAndDevEnv = {
+    getCurrentValidRoadNumbers("AND (ra.road_number <= 20000 OR (ra.road_number >= 40000 AND ra.road_number <= 70000) OR ra.road_number > 99999 )")
   }
 
   def getValidRoadParts(roadNumber: Long) = {
