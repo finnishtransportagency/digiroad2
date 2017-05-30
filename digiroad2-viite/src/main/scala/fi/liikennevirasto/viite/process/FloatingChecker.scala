@@ -1,8 +1,8 @@
 package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.{GeometryUtils, RoadLinkService, VVHRoadlink}
-import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.{RoadAddress, RoadAddressDAO}
+import fi.liikennevirasto.viite.MaxMoveDistanceBeforeFloating
 
 
 class FloatingChecker(roadLinkService: RoadLinkService) {
@@ -16,7 +16,7 @@ class FloatingChecker(roadLinkService: RoadLinkService) {
     }
 
     def validateGeometryChange(roadLink : VVHRoadlink, roadAddresses: Seq[RoadAddress]) : Boolean = {
-      roadAddresses.exists(ra => GeometryUtils.geometryMoved(
+      roadAddresses.exists(ra => GeometryUtils.geometryMoved(MaxMoveDistanceBeforeFloating)(
         GeometryUtils.truncateGeometry2D(roadLink.geometry, ra.startMValue, ra.endMValue),
         ra.geom
       ))
