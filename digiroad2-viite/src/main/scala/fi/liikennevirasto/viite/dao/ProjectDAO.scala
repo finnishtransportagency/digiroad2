@@ -169,7 +169,7 @@ object ProjectDAO {
     Q.queryNA[String](query).firstOption
   }
 
-  def getProjectstatus(projectID: Long): Option[ProjectState] = {
+  def getProjectStatus(projectID: Long): Option[ProjectState] = {
     val query =
       s""" SELECT state
             FROM project
@@ -182,8 +182,7 @@ object ProjectDAO {
     }
   }
 
-  def insertDeltaToRoadChangeTable(delta:Delta,projectId:Long):Boolean= {
-    val changeType = AddressChangeType.Termination // = 5, hardcoded to termination
+  def insertDeltaToRoadChangeTable(delta: Delta, projectId: Long): Boolean= {
     val roadType = 9 //TODO missing
     getRoadAddressProjectById(projectId) match {
       case Some(project) => {
@@ -195,7 +194,7 @@ object ProjectDAO {
               "new_discontinuity,new_road_type,new_ely) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,? )")
             ProjectDeltaCalculator.partition(delta.terminations).foreach { case (roadAddressSection) =>
               roadAddressChangePS.setLong(1, projectId)
-              roadAddressChangePS.setLong(2, changeType.value)
+              roadAddressChangePS.setLong(2, AddressChangeType.Termination.value)
               roadAddressChangePS.setLong(3, roadAddressSection.roadNumber)
               roadAddressChangePS.setLong(4, null)
               roadAddressChangePS.setLong(5, roadAddressSection.roadPartNumberStart)

@@ -450,7 +450,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   private def checkprojectstatus(projectID: Long) =
   {
-    val projectstatus=ProjectDAO.getProjectstatus(projectID)
+    val projectstatus=ProjectDAO.getProjectStatus(projectID)
     if (projectstatus.isDefined)
     {
       val currentState=projectstatus.getOrElse(ProjectState.Unknown)
