@@ -94,7 +94,7 @@ class GeometryTransform {
 
     //If there is no roadAddress in VIITE try to find it in VKM
     if(roadAddress.isEmpty)
-      vkmGeometryTransform.resolveAddressAndLocation(coord, heading, road)
+      return vkmGeometryTransform.resolveAddressAndLocation(coord, heading, road)
 
     val roadSide = roadAddress match {
       case Some(addrSide) if (addrSide.sideCode.value == assetSideCode) => RoadSide.Right //TowardsDigitizing //
