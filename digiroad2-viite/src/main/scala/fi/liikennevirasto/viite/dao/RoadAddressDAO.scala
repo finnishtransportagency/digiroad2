@@ -555,23 +555,18 @@ object RoadAddressDAO {
     changeRoadAddressFloating(if (float) 1 else 0, roadAddressId, geometry)
   }
 
-  def getValidRoadNumbers = {
+  def getCurrentValidRoadNumbers(filter: String = "") = {
     sql"""
        select distinct road_number
               from road_address ra
-              where ra.floating = '0' AND (end_date < sysdate OR end_date IS NULL)
+              where ra.floating = '0' AND (end_date > sysdate OR end_date IS NULL) AND (valid_to > sysdate OR valid_to IS NULL)
+              $filter
               order by road_number
       """.as[Long].list
   }
 
   def getValidRoadNumbersWithFilterToTestAndDevEnv = {
-    sql"""
-       select distinct road_number
-              from road_address ra
-              where ra.floating = '0' AND (end_date < sysdate OR end_date IS NULL) AND
-              (ra.road_number <= 20000 OR (ra.road_number >= 40000 AND ra.road_number <= 70000) OR ra.road_number > 99999 )
-              order by road_number
-      """.as[Long].list
+    getCurrentValidRoadNumbers("AND (ra.road_number <= 20000 OR (ra.road_number >= 40000 AND ra.road_number <= 70000) OR ra.road_number > 99999 )")
   }
 
   def getValidRoadParts(roadNumber: Long) = {

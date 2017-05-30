@@ -46,7 +46,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
 
   test("Get valid road numbers") {
     runWithRollback {
-      val numbers = RoadAddressDAO.getValidRoadNumbers
+      val numbers = RoadAddressDAO.getCurrentValidRoadNumbers()
       numbers.isEmpty should be(false)
       numbers should contain(5L)
     }

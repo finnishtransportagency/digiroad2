@@ -124,7 +124,7 @@ object DataFixture {
     println(s"\nCombining multiple segments on links at time: ${DateTime.now()}")
     OracleDatabase.withDynTransaction {
       OracleDatabase.setSessionLanguage()
-      RoadAddressDAO.getValidRoadNumbers.foreach( road => {
+      RoadAddressDAO.getCurrentValidRoadNumbers().foreach(road => {
         val roadAddresses = RoadAddressDAO.fetchMultiSegmentLinkIds(road).groupBy(_.linkId)
         val replacements = roadAddresses.mapValues(RoadAddressLinkBuilder.fuseRoadAddress)
         roadAddresses.foreach{ case (linkId, list) =>
