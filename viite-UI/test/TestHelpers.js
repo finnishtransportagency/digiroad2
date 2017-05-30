@@ -28,6 +28,9 @@ define(['RoadAddressTestData',
     var getSimulatedRoadsLayerName = function() {
       return 'simulatedRoadsLayer';
     };
+    var getRoadAddressProjectLayerName = function() {
+      return 'roadAddressProject';
+    };
     var getSingleClickName = function() {
       return 'selectSingleClickInteraction';
     };
@@ -82,6 +85,7 @@ define(['RoadAddressTestData',
         .withFloatingAdjacents(selectTestData('floatingRoadAddress'), selectTestData('unknownRoadAddress'))
         .withGetTransferResult(selectTestData('transferFloating'))
         .withRoadAddressProjectData(RoadAddressProjectTestData.generate())
+        // .withReservedRoadLinkData(RoadAddressProjectTestData.generateReservedProjectLinkData())
         .withRoadAddressCreation();
     };
 
@@ -111,6 +115,18 @@ define(['RoadAddressTestData',
 
     var clickProjectListButton = function(){
       $('[id=projectListButton]').click();
+    };
+
+    var clickNextButton = function(){
+      $('.btn-next').click();
+    };
+
+    var clickOpenProjectButton = function(){
+      $('[id*="open-project"]').click();
+    };
+
+    var clickNewProjectButton = function(){
+      $('button.new').click();
     };
 
     var getLayerByName = function(map, name){
@@ -214,6 +230,7 @@ define(['RoadAddressTestData',
       getCalibrationPointLayerName: getCalibrationPointLayerName,
       getGreenRoadLayerName: getGreenRoadLayerName,
       getPickRoadsLayerName: getPickRoadsLayerName,
+      getRoadAddressProjectLayerName: getRoadAddressProjectLayerName,
       getSimulatedRoadsLayerName: getSimulatedRoadsLayerName,
       getSingleClickName: getSingleClickName,
       getDoubleClickName: getDoubleClickName,
@@ -225,6 +242,9 @@ define(['RoadAddressTestData',
       clickEnabledSirraButton: clickEnabledSirraButton,
       clickVisibleEditModeButton: clickVisibleEditModeButton,
       clickProjectListButton: clickProjectListButton,
+      clickNextButton: clickNextButton,
+      clickOpenProjectButton: clickOpenProjectButton,
+      clickNewProjectButton: clickNewProjectButton,
       clickVisbleYesConfirmPopup: clickVisbleYesConfirmPopup,
       clickEnabledSaveButton: clickEnabledSaveButton,
       clickMap: clickMap,
