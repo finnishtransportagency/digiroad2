@@ -373,6 +373,7 @@
       typeId: assetType.pedestrianCrossings,
       layerName: 'pedestrianCrossings',
       title: 'Suojatie',
+      complementaryPossible: true,
       newAsset: {  },
       legendValues: [
         {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Suojatie'},
@@ -388,6 +389,7 @@
       typeId: assetType.obstacles,
       layerName: 'obstacles',
       title: 'Esterakennelma',
+      complementaryPossible: true,
       newAsset: { obstacleType: 1 },
       legendValues: [
         {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Suljettu yhteys'},
@@ -404,6 +406,7 @@
       typeId: assetType.railwayCrossings,
       layerName: 'railwayCrossings',
       title: 'Rautatien tasoristeys',
+      complementaryPossible: true,
       newAsset: { safetyEquipment: 1 },
       legendValues: [
         {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Rautatien tasoristeys'},
@@ -419,6 +422,7 @@
       typeId: assetType.directionalTrafficSigns,
       layerName: 'directionalTrafficSigns',
       title: 'Opastustaulu',
+      complementaryPossible: false,
       newAsset: { validityDirection: 2 },
       legendValues: [
         {symbolUrl: 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow-directional-traffic-sign.svg', label: 'Opastustaulu'},
@@ -434,6 +438,7 @@
       typeId: assetType.servicePoints,
       layerName: 'servicePoints',
       title: 'Palvelupiste',
+      complementaryPossible: false,
       newAsset: { services: [] },
       legendValues: [
         {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Palvelupiste'}
@@ -448,6 +453,7 @@
       typeId: assetType.trafficLights,
       layerName: 'trafficLights',
       title: 'Liikennevalo',
+      complementaryPossible: true,
       newAsset: {  },
       legendValues: [
         {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Liikennevalo'},

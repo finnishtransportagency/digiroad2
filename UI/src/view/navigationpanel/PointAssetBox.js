@@ -1,5 +1,5 @@
 (function (root) {
-  root.PointAssetBox = function (selectedPointAsset, title, layerName, legendValues) {
+  root.PointAssetBox = function (selectedPointAsset, title, layerName, legendValues, complementaryPossible) {
     var className = _.kebabCase(layerName);
     var element = $('<div class="panel-group point-asset ' + className + '"></div>').hide();
 
@@ -10,6 +10,13 @@
 
     var editModeToggle = new EditModeToggleButton(toolSelection);
 
+    var complementaryCheckBox = complementaryPossible ?
+            '<div class="panel-section">' +
+              '<div class="check-box-container">' +
+                '<input id="complementaryCheckbox" type="checkbox" /> <lable>Näytä täydentävä geometria</lable>' +
+              '</div>' +
+            '</div>' : '';
+
     var legendTemplate = _(legendValues).map(function (val) {
       return '<div class="legend-entry">' +
         '<div class="label"><span>' + val.label + '</span> <img class="symbol" src="' + val.symbolUrl + '"/></div>' +
@@ -17,7 +24,7 @@
     }).join('');
 
     var legend = '<div class="panel-section panel-legend limit-legend">' + legendTemplate + '</div>';
-    var panel = $('<div class="panel"><header class="panel-header expanded">' + title + '</header>' + legend + '</div>');
+    var panel = $('<div class="panel"><header class="panel-header expanded">' + title + '</header>' + legend + complementaryCheckBox + '</div>');
     panel.append(toolSelection.element);
 
     element.append(panel);
@@ -35,6 +42,7 @@
       title: title,
       layerName: layerName,
       element: element,
+      complementaryPossible: complementaryPossible,
       show: show,
       hide: hide
     };
