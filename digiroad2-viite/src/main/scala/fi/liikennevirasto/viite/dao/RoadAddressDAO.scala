@@ -556,13 +556,13 @@ object RoadAddressDAO {
   }
 
   def getCurrentValidRoadNumbers(filter: String = "") = {
-    sql"""
+    Q.queryNA[Long](s"""
        select distinct road_number
               from road_address ra
               where ra.floating = '0' AND (end_date > sysdate OR end_date IS NULL) AND (valid_to > sysdate OR valid_to IS NULL)
               $filter
               order by road_number
-      """.as[Long].list
+      """).list
   }
 
   def getValidRoadNumbersWithFilterToTestAndDevEnv = {
