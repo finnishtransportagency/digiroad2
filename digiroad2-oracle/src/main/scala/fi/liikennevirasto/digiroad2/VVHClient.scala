@@ -862,15 +862,16 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRe
 
   /**
     * Returns VVH road links in polygon area. Municipalities are optional.
-    *  Polygon string example "{rings:[[[564000,6930000],[566000,6931000],[567000,6933000]]]}"
+    *
     */
-  override def queryRoadLinksByPolygons(polygon: String): Seq[VVHRoadlink] = {
-    if (!polygon.contains("{rings:[")) //check that input is somewhat correct
+  override def queryRoadLinksByPolygons(polygon: Polygon): Seq[VVHRoadlink] = {
+    val polygonString = stringifyPolygonGeometry(polygon)
+    if (!polygonString.contains("{rings:[")) //check that input is somewhat correct
     {
       return  Seq.empty[VVHRoadlink]
     }
     val definition = layerDefinition(combineFiltersWithAnd("",""))
-    val urlpoly=URLEncoder.encode(polygon)
+    val urlpoly=URLEncoder.encode(polygonString)
     val url = vvhRestApiEndPoint + roadLinkComplementaryService + "/FeatureServer/query?" +
       s"layerDefs=$definition&geometry=" + urlpoly +
       "&geometryType=esriGeometryPolygon&spatialRel=esriSpatialRelIntersects&" + queryParameters()

@@ -227,7 +227,7 @@ trait PointAssetOperations {
       roadLinks.find(_.linkId == linkId)
 
     withDynSession {
-      persistedAsset.map(withFloatingUpdate(convertPersistedAsset(setFloating, findRoadlink, Seq(), Seq())))
+      persistedAsset.map(withFloatingUpdate(convertPersistedAsset(setFloating, findRoadlink)))
     }
   }
 
