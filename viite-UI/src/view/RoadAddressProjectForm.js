@@ -300,6 +300,7 @@
         applicationModel.setProjectFeature(currentProject.id);
         applicationModel.setOpenProject(true);
         activeLayer = true;
+        rootElement.find('.btn-reserve').prop("disabled", false);
         if(result.projectLinks.length > 0)
           rootElement.find('.btn-next').prop("disabled", false);
       });
