@@ -54,12 +54,13 @@ object ProjectDeltaCalculator {
       else
         combine(roadAddressSeq.tail, combineTwo(result.head, roadAddressSeq.head) ++ result.tail)
     }
-    val grouped = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
+    val grouped = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track, ra.discontinuity))
     grouped.mapValues(v => combine(v)).values.flatten.map(ra => RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
-      ra.track, ra.startAddrMValue, ra.endAddrMValue)).toSeq
+      ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity)).toSeq
   }
 }
 
 case class Delta(startDate: DateTime, terminations: Seq[RoadAddress])
 case class RoadPart(roadNumber: Long, roadPartNumber: Long)
-case class RoadAddressSection(roadNumber: Long, roadPartNumberStart: Long, roadPartNumberEnd: Long, track: Track, startMAddr: Long, endMAddr: Long)
+case class RoadAddressSection(roadNumber: Long, roadPartNumberStart: Long, roadPartNumberEnd: Long, track: Track,
+                              startMAddr: Long, endMAddr: Long, discontinuity: Discontinuity)

@@ -206,7 +206,7 @@ object ProjectDAO {
               roadAddressChangePS.setDouble(10, null)
               roadAddressChangePS.setDouble(11, roadAddressSection.endMAddr)
               roadAddressChangePS.setDouble(12, null)
-              roadAddressChangePS.setLong(13, Discontinuity.Continuous.value) // TODO: Check what is the proper code
+              roadAddressChangePS.setLong(13, roadAddressSection.discontinuity.value)
               roadAddressChangePS.setLong(14, roadType)
               roadAddressChangePS.setLong(15, ely)
               roadAddressChangePS.addBatch()
