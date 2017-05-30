@@ -183,7 +183,7 @@ object ProjectDAO {
   }
 
   def insertDeltaToRoadChangeTable(delta:Delta,projectId:Long):Boolean= {
-    val changeType = 5 //hardcoded to termination
+    val changeType = AddressChangeType.Termination // = 5, hardcoded to termination
     val roadType = 9 //TODO missing
     getRoadAddressProjectById(projectId) match {
       case Some(project) => {
@@ -195,7 +195,7 @@ object ProjectDAO {
               "new_discontinuity,new_road_type,new_ely) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,? )")
             ProjectDeltaCalculator.partition(delta.terminations).foreach { case (roadAddressSection) =>
               roadAddressChangePS.setLong(1, projectId)
-              roadAddressChangePS.setLong(2, changeType)
+              roadAddressChangePS.setLong(2, changeType.value)
               roadAddressChangePS.setLong(3, roadAddressSection.roadNumber)
               roadAddressChangePS.setLong(4, null)
               roadAddressChangePS.setLong(5, roadAddressSection.roadPartNumberStart)

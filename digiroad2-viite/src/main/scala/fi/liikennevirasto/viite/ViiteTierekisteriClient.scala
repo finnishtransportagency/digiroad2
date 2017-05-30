@@ -52,7 +52,7 @@ case object ChangeProjectSerializer extends CustomSerializer[ChangeProject](form
 case object ChangeInfoItemSerializer extends CustomSerializer[RoadAddressChangeInfo](format => ({
   case o: JObject =>
     implicit val formats = DefaultFormats + ChangeInfoRoadPartsSerializer
-    RoadAddressChangeInfo(ChangeType.apply(o.values("change_type").asInstanceOf[BigInt].intValue),
+    RoadAddressChangeInfo(AddressChangeType.apply(o.values("change_type").asInstanceOf[BigInt].intValue),
       (o \\ "source").extract[RoadAddressChangeRecipient], (o \\ "target").extract[RoadAddressChangeRecipient],
       Discontinuity.apply(o.values("continuity").asInstanceOf[BigInt].intValue),
       RoadType.apply(o.values("road_type").asInstanceOf[BigInt].intValue))
