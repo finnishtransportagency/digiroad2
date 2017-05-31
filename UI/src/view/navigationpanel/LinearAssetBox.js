@@ -1,5 +1,5 @@
 (function(root) {
-  root.LinearAssetBox = function(selectedLinearAsset, layerName, title, className, legendValues) {
+  root.LinearAssetBox = function(selectedLinearAsset, layerName, title, className, legendValues, showUnit, unit) {
     var legendTemplate = _.map(legendValues, function(value, idx) {
       return '<div class="legend-entry">' +
                '<div class="label">' + value + '</div>' +
@@ -10,7 +10,7 @@
     var expandedTemplate = [
       '<div class="panel ' + layerName +'">',
       '  <header class="panel-header expanded">',
-      '    ' + title,
+      '    ' + title + (showUnit ? ' ('+unit+')': ''),
       '  </header>',
       '  <div class="panel-section panel-legend limit-legend">',
             legendTemplate,
