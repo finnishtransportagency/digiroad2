@@ -242,7 +242,7 @@ object ProjectDAO {
     val query= s"""
          SELECT id
          FROM project
-         WHERE state=${ProjectState.Sent2TR.value}
+         WHERE state=${ProjectState.Sent2TR.value} OR state=${ProjectState.TRProcessing.value}
        """
     Q.queryNA[Long](query).list
   }

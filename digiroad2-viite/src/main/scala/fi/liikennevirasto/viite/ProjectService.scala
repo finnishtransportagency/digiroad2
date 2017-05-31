@@ -436,9 +436,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
   def updateProjectsWaitingResponseFromTR(): Unit =
   {
-
     val listOfPendingProjects=getProjectsPendingInTR()
-
     for(project<-listOfPendingProjects)
     {
       withDynSession {
