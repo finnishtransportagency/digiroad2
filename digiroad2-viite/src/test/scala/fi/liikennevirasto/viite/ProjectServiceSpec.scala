@@ -241,7 +241,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
     val roadAddressProject = RoadAddressProject(projectId, ProjectState.apply(2), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(), None)
     runWithRollback{
       val saved = projectService.createRoadLinkProject(roadAddressProject)._1
-      val stateaftercheck= projectService.updateProjectStatusIfNeeded(sent2TRState,savedState,saved.id)
+      val stateaftercheck= projectService.updateProjectStatusIfNeeded(sent2TRState,savedState,"",saved.id)
       stateaftercheck.description should be (ProjectState.Saved2TR.description)
     }
 
@@ -256,7 +256,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
     val roadAddressProject = RoadAddressProject(projectId, ProjectState.apply(2), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(), None)
     runWithRollback{
       val saved = projectService.createRoadLinkProject(roadAddressProject)._1
-      val stateaftercheck= projectService.updateProjectStatusIfNeeded(sent2TRState,savedState,saved.id)
+      val stateaftercheck= projectService.updateProjectStatusIfNeeded(sent2TRState,savedState,"failed",saved.id)
       stateaftercheck.description should be (ProjectState.ErroredInTR.description)
     }
 

@@ -73,7 +73,8 @@ object RoadAddressChangesDAO {
           createdBy
         } else {
           if(modifiedDate.get.isAfter(createdDate.get)){
-            modifiedBy
+           // modifiedBy currently always returns empty
+            createdBy
           } else createdBy
         }
         val date = if(modifiedDate.isEmpty){
