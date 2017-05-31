@@ -43,7 +43,7 @@
     function fetchProjects(){
       projectCollection.getProjects().then(function(projects){
         var unfinishedProjects = _.filter(projects, function(proj){
-          return proj.statusCode === 1;
+          return proj.statusCode < 6 && proj.statusCode > 0 ;
         });
         if(!_.isEmpty(unfinishedProjects)){
           var html = '<table align="left" width="100%">';
