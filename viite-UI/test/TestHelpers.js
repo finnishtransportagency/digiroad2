@@ -86,6 +86,8 @@ define(['RoadAddressTestData',
         .withGetTransferResult(selectTestData('transferFloating'))
         .withRoadAddressProjectData(RoadAddressProjectTestData.generate())
         .withRoadPartReserved(RoadAddressProjectTestData.generateRoadPartChecker())
+        .withProjectLinks(RoadAddressProjectTestData.generateProjectLinkData())
+        .withProjectsWithLinksById(RoadAddressProjectTestData.generateProjectLinksByProjectId())//create this
         .withRoadAddressCreation();
     };
 
@@ -180,7 +182,7 @@ define(['RoadAddressTestData',
         case 'normalLinkData':
           return RoadAddressProjectTestData.generateNormalLinkData();
         case 'reservedProjectLinks':
-          return RoadAddressProjectTestData.generateReservedProjectLinkData();
+          return RoadAddressProjectTestData.generateProjectLinkData();
         case 'terminatedProjectLinks':
           return RoadAddressProjectTestData.generateTerminatedProjectLinkData();
       }

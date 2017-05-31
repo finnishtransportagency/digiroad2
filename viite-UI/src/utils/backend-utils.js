@@ -276,6 +276,19 @@
       };
       return self;
     };
+    this.withProjectLinks = function(returnData){
+      self.getProjectLinks = function(){
+        return returnData;
+      };
+      return self;
+    };
+
+    this.withProjectsWithLinksById = function(returnData){
+      self.getProjectsWithLinksById = function(){
+        return returnData;
+      };
+      return self;
+    };
 
   };
 }(this));

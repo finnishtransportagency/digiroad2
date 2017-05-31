@@ -67,13 +67,14 @@
       source: vectorSource,
       style: styleFunction
     });
+    vectorLayer.set('name', layerName);
 
     var selectSingleClick = new ol.interaction.Select({
       layer: vectorLayer,
       condition: ol.events.condition.singleClick,
       //The new/temporary layer needs to have a style function as well, we define it here.
       style: function(feature, resolution) {
-        if (feature.projectLinkData.status === projectCollection.STATUS_NOT_HANDLED){
+        if (feature.projectLinkData.status === 0){
           return new ol.style.Style({
             fill: new ol.style.Fill({
               color: 'rgba(0, 255, 0, 0.75)'
@@ -83,7 +84,7 @@
               width: 8
             })
           });
-        } else if(feature.projectLinkData.status === projectCollection.STATUS_TERMINATED){
+        } else if(feature.projectLinkData.status === 1){
           return new ol.style.Style({
             fill: new ol.style.Fill({
               color: 'rgba(0, 0, 0, 0.75)'

@@ -5,10 +5,12 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
 
   describe('when click on the Tieosoiteprojektit button', function() {
     this.timeout(1500000);
+    var openLayersMap;
     before(function(done) {
-      var backend = testHelpers.fakeBackend(13, testHelpers.selectTestData('roadAddress'),354810.0, 6676460.0);
+      var backend = testHelpers.fakeBackend(9, testHelpers.selectTestData('reservedProjectLinks'),354810.0, 6676460.0);
 
       testHelpers.restartApplication(function(map) {
+        openLayersMap = map;
         eventbus.once('roadLayer:featuresLoaded', function() {
           done();
         });
@@ -28,9 +30,8 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
       $('[id^=projectListButton]').attr('disabled', false);
       assert($('[id^=project-window]:visible').length > 0, "Windows didn't open. Check permissions.");
     });
-  });
 
-    //2-second -click Avaa button and display form info
+    //2-second -click Uusi tieosoiteprojekti button and display form info
     describe('when clicking in new project button', function() {
       before(function(done) {
         $('[id*="open-project"]:visible').prop('disabled', false);
@@ -51,22 +52,46 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
       before(function (done) {
         $('.btn-reserve').prop('disabled', false);
         $('.btn-reserve').attr('disabled', false);
-        
+
         testHelpers.clickReserveButton();
         done();
       });
     });
 
-  // 4-fourth -click in the next-Seuraava button WIP
-  //   describe('when clicking in next aka Seuraava button', function() {
-  //     before(function (done) {
-  //       $('.btn-next').prop('disabled', false);
-  //       $('.btn-next').attr('disabled', false);
-  //       testHelpers.clickNextButton();
-  //
-  //       done();
-  //     });
-  //   });
+    // 4-fourth -click in the next-Seuraava button
+    describe('when clicking in next aka Seuraava button', function() {
+      before(function (done) {
+        $('.btn-next').prop('disabled', false);
+        $('.btn-next').attr('disabled', false);
+        testHelpers.clickNextButton();
+        done();
+      });
+
+      // it('load project road links in the map', function () {
+      //   $('.project-form button.next:visible').prop('disabled', false);
+      //   $('.project-form button.next:visible').attr('disabled', false);
+      //   assert($('.project-form:visible').length > 0, "Form didn't open.");
+      // });
+
+    });
+
+    //5-fifth select reserved road link WIP
+    // describe('when selecting one reserved link', function(){
+    //   before(function(done){
+    //     var ol3Feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 5172134);
+    //     testHelpers.selectSingleFeature(openLayersMap, ol3Feature);
+    //     setTimeout(function(){
+    //       done();
+    //     },1000);
+    //   });
+    //
+    //   it('Check if the project link was selected ', function(){
+    //     var featureFromProjectLayer = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(),5172134);
+    //     expect(featureFromProjectLayer).to.not.be.undefined;
+    //     expect(featureFromProjectLayer.roadLinkData.linkId).to.be.equal(5172091);
+    //   });
+    // });
+
 
     // //5-fifth select reserved road link WIP
     // describe('when selecting one reserved link', function() {
@@ -81,5 +106,7 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
     //   });
     // });
 
-  // });
+    // });
+  });
+
 });
