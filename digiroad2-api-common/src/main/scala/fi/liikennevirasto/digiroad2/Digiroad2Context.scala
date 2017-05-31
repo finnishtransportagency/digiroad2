@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import java.util.Properties
+import java.util.concurrent.TimeUnit
 
 import akka.actor.{Actor, ActorSystem, Props}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
@@ -13,8 +14,10 @@ import fi.liikennevirasto.digiroad2.util.JsonSerializer
 import fi.liikennevirasto.digiroad2.vallu.ValluSender
 import fi.liikennevirasto.viite.dao.MissingRoadAddress
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
-import fi.liikennevirasto.viite.{RoadAddressMerge, RoadAddressService}
+import fi.liikennevirasto.viite.{ProjectService, RoadAddressMerge, RoadAddressService}
 import org.apache.http.impl.client.HttpClientBuilder
+
+import scala.concurrent.duration.FiniteDuration
 
 class ValluActor extends Actor {
   def receive = {
@@ -108,6 +111,11 @@ object Digiroad2Context {
   }
 
   val system = ActorSystem("Digiroad2")
+  import system.dispatcher
+  system.scheduler.schedule(FiniteDuration(2, TimeUnit.MINUTES),FiniteDuration(10, TimeUnit.MINUTES)) { //first query after 2 mins, then every 10 mins
+    projectService.updateProjectsWaitingResponseFromTR()
+  }
+
 
   val vallu = system.actorOf(Props[ValluActor], name = "vallu")
   eventbus.subscribe(vallu, "asset:saved")
@@ -144,6 +152,10 @@ object Digiroad2Context {
     new RoadAddressService(roadLinkService, eventbus)
   }
 
+  lazy val projectService: ProjectService = {
+    new ProjectService(roadAddressService, roadLinkService, eventbus)
+  }
+
   lazy val authenticationTestModeEnabled: Boolean = {
     properties.getProperty("digiroad2.authenticationTestMode", "false").toBoolean
   }
@@ -172,8 +184,8 @@ object Digiroad2Context {
     new VVHClient(getProperty("digiroad2.VVHRestApiEndPoint"))
   }
 
-  lazy val tierekisteriClient: TierekisteriClient = {
-    new TierekisteriClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+  lazy val tierekisteriClient: TierekisteriMassTransitStopClient = {
+    new TierekisteriMassTransitStopClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
       getProperty("digiroad2.tierekisteri.enabled").toBoolean,
       HttpClientBuilder.create().build)
   }
@@ -193,7 +205,7 @@ object Digiroad2Context {
       override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
       override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
       override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
-      override val tierekisteriClient: TierekisteriClient = Digiroad2Context.tierekisteriClient
+      override val tierekisteriClient: TierekisteriMassTransitStopClient = Digiroad2Context.tierekisteriClient
       override val tierekisteriEnabled = getProperty("digiroad2.tierekisteri.enabled").toBoolean
     }
     new ProductionMassTransitStopService(eventbus, roadLinkService)

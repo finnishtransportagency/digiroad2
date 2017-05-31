@@ -260,20 +260,82 @@ _Rakenteilla oleva kohde, jonka hallinnollisen luokan arvo on jokin muu kuin 1=V
 --------------------------
 Geometriasta irti olevilla tieosoitesegmenteilla tarkoitetaan sellaisia segmentteja jotka eiv&auml;t l&ouml;yd&auml; omaa tielinkin ID:ta vastaavaa lineaarilokaatiota k&auml;yt&ouml;ss&auml; olevista linkeist&auml;.
 
-Geometriasta irti olevan segmentin tunnistaa keltaisesta korostuksesta. Lis&auml;ksi jokaisella tieosoitesegmentilla on punainen huomiolippu. Linkin voi valita huomiolippua tai keltaista korostusta klikkaamalla (1).  
+Geometriasta irti olevan segmentin tunnistaa keltaisesta korostuksesta. Lis&auml;ksi jokaisella tieosoitesegmentilla on punainen huomiolippu. Segmentin voi valita huomiolippua tai keltaista korostusta klikkaamalla (1).  
 
 ![Geometriasta irti oleva tieosoitesegmentti](k12.JPG)
 
-_Geometriasta irti olevia tieosoitesegmenttej&auml;. Yksitt&auml;isen segmentin tiedot saa n&auml;kyviin tuplaklikkaamalla segmentin keltaista korostetta tai punaista huomiolippua._
+_Geometriasta irti olevia tieosoitesegmenttej&auml;. Segmentin tiedot saa n&auml;kyviin klikkaamalla segmentin keltaista korostetta tai punaista huomiolippua._
 
-Kohteen valinta noudattaa samaa logiikka kuin muidenkin kohteiden tapauksessa. Klikkaamalla kerran sovellus valitsee kartalta ruudulla n&auml;kyv&auml;n osuuden kyseisest&auml; tieosasta, eli osuuden jolla on sama tienumero, tieosanumero ja ajoratakoodi. Tuplaklikkaus valitsee yhden tieosoitesegmentin. Kohdetta valitessa kannattaa olla huolellinen, ett&auml; klikatessa osuu keltaiseen korostukseen eik&auml; tuntemattomaan tielinkkiin (musta kohde). 
+Keltaisten kohteiden valinta toimii yksinkertaisemmin, kuin muiden tieosoitesegmenttien. Sek&auml; klikkaamalla kerran ett&auml; tuplaklikkaus valitsevat molemmat ruudulta n&auml;kyv&auml;n osuuden kyseisest&auml; tieosasta, eli osuuden jolla on sama tienumero, tieosanumero ja ajoratakoodi. T&auml;m&auml; sen vuoksi, ett&auml; kohteiden korjaaminen sujuu tehokkaammin, kun valinta tapahtuu aina koko keltaiselle osuudelle tieosasta. Kohdetta valitessa kannattaa olla huolellinen, ett&auml; klikatessa osuu keltaiseen korostukseen eik&auml; tuntemattomaan tielinkkiin (musta kohde). 
 
 Valitun kohteen tiedot tulevat n&auml;kyviin ominaisuustieton&auml;kym&auml;&auml;n. Geometriasta irti olevalla kohteella on ominaisuustieton&auml;kym&auml;ss&auml; huomiolaatikko joka varoittaa tien geometrian muuttuneen (2).
 
 8. Geometriasta irti olevien tieosoitesegmenttien korjaaminen takaisin geometrialle
 --------------------------
 
-T&auml;ydennet&auml;&auml;n my&ouml;hemmin.
+Geometriasta irti olevien tieosoitesegmenttien korjausta varten k&auml;ytt&auml;j&auml;n tulee siirty&auml; muokkaustilaan. Korjausprosessissa geometriasta irti olevat tieosoitesegmentit kiinnitet&auml;&auml;n takaisin geometriaan kertomalla niille uudet tielinkit, joihin ne kiinnittyv&auml;t.
+
+Yleispiirteinen korjausprosessi: ensin valitaan kartalta keltainen, geometriasta irti oleva tieosoitesegmentti. T&auml;m&auml;n j&auml;lkeen sovellus ohjeistaa k&auml;ytt&auml;j&auml;&auml; n&auml;yt&ouml;n oikean laidan ominaisuustietotaulussa jatkamaan valintoja tai painamaan Valinta valmis -painiketta. Muutokset voi tarkistaa Siirr&auml;-painikkeen painamisen j&auml;lkeen ennen Tallennusta.
+
+__Korjausprosessi tarkemmin:__
+
+
+__Vaihe 1__
+
+Valitaan keltainen tieosoitesegmentti klikkaamalla keltaisesta osuudesta tai klikkaamalla punaisesta huomiolipusta. Valitun kohteen tiedot tulevat n&auml;kyviin ominaisuustietotauluun ja valittu kohde korostuu kartalla (1). 
+
+Muokkaustilassa keltaisten, geometriasta irti olevien tieosoitesegmenttien valinnan poistaminen tehd&auml;&auml;n aina ominaisuustietotaulun oikean alalaidan Peruuta-painikkeen (2) kautta.
+
+__Vaihe 2__
+
+Tarkistetaan ominaisuustietotaulusta, onko kohteen vieress&auml; lis&auml;&auml; valittavia korjattavia tieosoitesegmenttej&auml; (3) (t&auml;ss&auml; tapauksessa ei ole). Jos on tarpeen valita lis&auml;&auml; kohteita, klikataan niit&auml; ominaisuustietotaulun Valitse-painikkeista. Kun kaikki tarpeelliset valinnat on tehty, klikataan Valinta valmis -painiketta (4).
+
+![korjaus](k27.JPG)
+
+__Vaihe 3__
+
+Kun Valinta valmis -painiketta on painettu, sovellus muuttaa piirtoj&auml;rjestyksen sitten, ett&auml; mustat tuntemattomat kohteet piirtyv&auml;t p&auml;&auml;limm&auml;iseksi. 
+
+![korjaus](k28.JPG)
+
+Seuraavaksi valitaan klikkaamalla tuntematon musta tielinkki, jolle kohde halutaan siirt&auml;&auml;. Valinnan j&auml;lkeen sovellus muuttaa valitun tuntemattoman mustan kohteen vihre&auml;ksi, eli valituksi.
+
+![korjaus](k29.JPG)
+
+__Vaihe 4__
+
+Tarkistetaan ominaisuustietotaulusta (6), onko kohteen vieress&auml; lis&auml;&auml; valittavia mustia tuntemattomia tieosoitesegmenttej&auml;, joille valitut keltaiset tieosoitesegmentit pit&auml;isi siirt&auml;&auml;. Jos on tarpeen valita lis&auml;&auml; kohteita, klikataan niit&auml; ominaisuustietotaulun Valitse-painikkeesta.
+
+![korjaus](k30.JPG)
+
+Kaikki valitut linkit listataan ominaisuustietotaulussa (7) ja ne n&auml;kyv&auml;t kartalla vihre&auml;n&auml; (8). Kun kaikki tarpeelliset valinnat on tehty, klikataan oranssia Siirr&auml;-painiketta (9).
+
+![korjaus](k31.JPG)
+
+__Vaihe 5__
+
+Siirron j&auml;lkeen sovellus pyyt&auml;&auml; (1) k&auml;ytt&auml;j&auml;&auml; tarkastamaan tuloksen kartalta. Jos tulos on ok, painetaan Tallenna (2). Jos k&auml;ytt&auml;j&auml; haluaa tehd&auml; muutoksia valintoihin, painetaan Peruuta (3).
+
+![korjaus](k32.JPG)
+
+__Vaihe 6__
+
+Korjauksen j&auml;lkeen tieosoiteverkko on ehe&auml;. Tallentamisen j&auml;lkeen tieosoitesegmenttien kalibrointipisteet ja kalibrointipisteiden kohdalla olevat alku- ja loppuet&auml;isyysarvot ovat s&auml;ilyneet ennallaan. Kohteet ovat vain saaneet uudet tielinkit, joihin niiden lineaarilokaatio on kiinnitetty.
+
+![korjaus](k33.JPG)
+
+
+8.1 Siirron ep&auml;onnistuminen
+--------------------------
+
+Jos vaiheen 4 siirto ei onnistu, sovellus ilmoittaa t&auml;st&auml; k&auml;ytt&auml;j&auml;lle. T&auml;ll&ouml;in taustaj&auml;rjestelm&auml; ei osaa siirt&auml;&auml; tieosoitesegmenttej&auml; uudelle geometrialle, eik&auml; siirron tietoja tallenneta tietokantaan. N&auml;m&auml; kohteet voi j&auml;tt&auml;&auml; toistaiseksi korjaamatta, ja k&auml;ytt&auml;j&auml;n tulisi ilmoittaa niist&auml; j&auml;rjestelm&auml;tukeen, jotta sovelluksen toimintaa voidaan kehitt&auml;&auml;.
+
+![korjaus](k34.JPG)
+
+_Ilmoitus siirron ep&auml;onnistumisesta._
+
+Ep&auml;onnistuneen siirron j&auml;lkeen ty&ouml;skentely&auml; voi jatkaa toisella kohteella klikkaamalla Peruuta-painiketta kaksi kertaa.
+
 
 9. Tieosoiteprojektin tekeminen
 --------------------------

@@ -7,6 +7,20 @@
     var borderWidth = 3;
     var dashedLinesRoadClasses = [7, 8, 9, 10];
 
+    var LINKSOURCE_NORMAL = 1;
+    var LINKSOURCE_COMPLEM = 2;
+    var LINKSOURCE_SURAVAGE = 3;
+    var LINKSOURCE_FROZEN = 4;
+    var LINKSOURCE_HISTORIC = 5;
+
+    var LINKTYPE_NORMAL = 0;
+    var LINKTYPE_COMPLEM = 1;
+    var LINKTYPE_UNKNOWN = 3;
+    var LINKTYPE_FLOATING = -1;
+
+    var PROJECTLINKSTATUS_NOTHANDLED = 0;
+    var PROJECTLINKSTATUS_TERMINATED = 1;
+
     /**
      * Inspired on the LinkPropertyLayerStyles roadClassRules, unknownRoadAddressAnomalyRules and constructionTypeRules.
      * @param roadClass The roadLink roadClass.
@@ -55,17 +69,21 @@
      * Inspired in the LinkPropertyLayerStyles complementaryRoadAddressRules and unknownRoadAddressAnomalyRules,
      * @param roadLinkType The roadLink roadLinkType.
      * @param anomaly The roadLink anomaly value (if 1 then this is an anomalous roadlink).
+     * @param roadLinkSource The link source for this road link
+     * @param projectLinkStatus Optional project link status (only in project mode, undef otherwise)
      * @returns {number} The zIndex for the feature.
      */
-    var determineZIndex = function (roadLinkType, anomaly, roadLinkSource){
+    var determineZIndex = function (roadLinkType, anomaly, roadLinkSource, projectLinkStatus){
       var zIndex = 0;
-      if(roadLinkSource === 2){
+      if(roadLinkSource === LINKSOURCE_COMPLEM){
         zIndex = 8;
       } else if (anomaly === 0) {
-        if (roadLinkType === 3)
+        if (roadLinkType === LINKTYPE_UNKNOWN)
           zIndex = 4;
-        else if(roadLinkType === -1) {
+        else if(roadLinkType === LINKTYPE_FLOATING) {
           zIndex = 5;
+        } else {
+          zIndex = 6;
         }
       } else {
         zIndex = 6;
@@ -259,7 +277,9 @@
     };
 
     return {
-      generateStyleByFeature: generateStyleByFeature
+      generateStyleByFeature: generateStyleByFeature,
+      strokeWidthByZoomLevel: strokeWidthByZoomLevel,
+      determineZIndex: determineZIndex
     };
   };
 })(this);

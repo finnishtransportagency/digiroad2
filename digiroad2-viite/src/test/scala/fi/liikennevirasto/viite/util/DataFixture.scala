@@ -95,13 +95,14 @@ object DataFixture {
   def findFloatingRoadAddresses(): Unit = {
     println(s"\nFinding road addresses that are floating at time: ${DateTime.now()}")
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+    val username = properties.getProperty("bonecp.username")
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
     val roadAddressService = new RoadAddressService(roadLinkService, new DummyEventBus)
     OracleDatabase.withDynTransaction {
       val checker = new FloatingChecker(roadLinkService)
-      val roads = checker.checkRoadNetwork()
+      val roads = checker.checkRoadNetwork(username)
       println(s"${roads.size} segment(s) found")
-      roadAddressService.checkRoadAddressFloatingWithoutTX(roads.map(_.id).toSet)
+      roadAddressService.checkRoadAddressFloatingWithoutTX(roads.map(_.id).toSet, true)
     }
     println(s"\nRoad Addresses floating field update complete at time: ${DateTime.now()}")
     println()
@@ -123,7 +124,7 @@ object DataFixture {
     println(s"\nCombining multiple segments on links at time: ${DateTime.now()}")
     OracleDatabase.withDynTransaction {
       OracleDatabase.setSessionLanguage()
-      RoadAddressDAO.getValidRoadNumbers.foreach( road => {
+      RoadAddressDAO.getCurrentValidRoadNumbers().foreach(road => {
         val roadAddresses = RoadAddressDAO.fetchMultiSegmentLinkIds(road).groupBy(_.linkId)
         val replacements = roadAddresses.mapValues(RoadAddressLinkBuilder.fuseRoadAddress)
         roadAddresses.foreach{ case (linkId, list) =>
@@ -132,12 +133,24 @@ object DataFixture {
             val (kept, removed) = list.partition(ra => currReplacement.exists(_.id == ra.id))
             val (created) = currReplacement.filterNot(ra => kept.exists(_.id == ra.id))
             RoadAddressDAO.remove(removed)
-            RoadAddressDAO.create(created, "Automatic_merged")
+            RoadAddressDAO.create(created, Some("Automatic_merged"))
           }
         }
       })
     }
     println(s"\nFinished the combination of multiple segments on links at time: ${DateTime.now()}")
+  }
+
+  private def importRoadAddressChangeTestData(): Unit ={
+    println(s"\nCommencing road address change test data import at time: ${DateTime.now()}")
+    OracleDatabase.withDynTransaction {
+      OracleDatabase.setSessionLanguage()
+    }
+    SqlScriptRunner.runViiteScripts(List(
+      "insert_road_address_change_test_data.sql"
+    ))
+    println(s"Road Address Change Test Data import completed at time: ${DateTime.now()}")
+    println()
   }
 
   def main(args:Array[String]) : Unit = {
@@ -174,9 +187,11 @@ object DataFixture {
         updateRoadAddressesGeometry(true)
       case Some("update_road_addresses_geometry") =>
         updateRoadAddressesGeometry(false)
+      case Some ("import_road_address_change_test_data") =>
+        importRoadAddressChangeTestData()
       case _ => println("Usage: DataFixture import_road_addresses | recalculate_addresses | update_missing | " +
         "find_floating_road_addresses | import_complementary_road_address | fuse_multi_segment_road_addresses " +
-        "| update_road_addresses_geometry_no_complementary | update_road_addresses_geometry")
+        "| update_road_addresses_geometry_no_complementary | update_road_addresses_geometry | import_road_address_change_test_data")
     }
   }
 }

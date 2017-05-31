@@ -53,15 +53,15 @@ object OracleTrafficLightDao {
     }
   }
 
-  def create(trafficLight: TrafficLightToBePersisted, username: String): Long = {
+  def create(trafficLight: TrafficLightToBePersisted, username: String, adjustedTimestamp: Long): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     sqlu"""
       insert all
         into asset(id, asset_type_id, created_by, created_date, municipality_code)
         values ($id, 280, $username, sysdate, ${trafficLight.municipalityCode})
-        into lrm_position(id, start_measure, link_id)
-        values ($lrmPositionId, ${trafficLight.mValue}, ${trafficLight.linkId})
+        into lrm_position(id, start_measure, link_id, adjusted_timestamp)
+        values ($lrmPositionId, ${trafficLight.mValue}, ${trafficLight.linkId}, $adjustedTimestamp)
 
         into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId)

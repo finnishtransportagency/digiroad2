@@ -24,14 +24,14 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
   override def create(asset: IncomingObstacle, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass] = None): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat, 0), geometry)
     withDynTransaction {
-      OracleObstacleDao.create(asset, mValue, username, municipality)
+      OracleObstacleDao.create(asset, mValue, username, municipality, VVHClient.createVVHTimeStamp(5))
     }
   }
 
   override def update(id: Long, updatedAsset: IncomingObstacle, geometry: Seq[Point], municipality: Int, username: String): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat, 0), geometry)
     withDynTransaction {
-      OracleObstacleDao.update(id, updatedAsset, mValue, username, municipality)
+      OracleObstacleDao.update(id, updatedAsset, mValue, username, municipality, Some(VVHClient.createVVHTimeStamp(5)))
     }
     id
   }
@@ -45,35 +45,15 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
     createPersistedAsset(asset, adjustment)
   }
 
-  private def adjustmentOperation(assetBeforeUpdate: AssetBeforeUpdate, adjustment: AssetAdjustment): Long = {
-    val updated = IncomingObstacle(adjustment.lon, adjustment.lat, adjustment.linkId, assetBeforeUpdate.asset.obstacleType)
-    OracleObstacleDao.update(adjustment.assetId, updated, adjustment.mValue, "vvh_generated", assetBeforeUpdate.asset.municipalityCode, Some(adjustment.vvhTimeStamp))
+  private def adjustmentOperation(persistedAsset: PersistedAsset, adjustment: AssetAdjustment): Long = {
+    val updated = IncomingObstacle(adjustment.lon, adjustment.lat, adjustment.linkId, persistedAsset.obstacleType)
+    OracleObstacleDao.update(adjustment.assetId, updated, adjustment.mValue, "vvh_generated", persistedAsset.municipalityCode, Some(adjustment.vvhTimeStamp))
   }
 
   override def getByMunicipality(municipalityCode: Int): Seq[PersistedAsset] = {
     val (roadLinks, changeInfo) = roadLinkService.getRoadLinksAndChangesFromVVH(municipalityCode)
     val mapRoadLinks = roadLinks.map(l => l.linkId -> l).toMap
-    getByMunicipality(municipalityCode, mapRoadLinks, roadLinks, changeInfo, floatingCorrection)
-  }
-
-  private def floatingCorrection[T](changeInfo: Seq[ChangeInfo], roadLinks: Seq[RoadLink],
-                                    persistedStop: PersistedAsset, floating: Boolean, assetFloatingReason: Option[FloatingReason],
-                                    conversion: (PersistedAsset, Boolean) => T) = {
-    if (floating) {
-      PointAssetFiller.correctedPersistedAsset(persistedStop, roadLinks, changeInfo) match {
-        case Some(adjustment) =>
-          val updated = IncomingObstacle(adjustment.lon, adjustment.lat, adjustment.linkId, persistedStop.obstacleType)
-          OracleObstacleDao.update(adjustment.assetId, updated, adjustment.mValue, "vvh_generated", persistedStop.municipalityCode, Some(adjustment.vvhTimeStamp))
-
-          val persistedAsset = createPersistedAsset(persistedStop, adjustment)
-          (conversion(persistedAsset, persistedAsset.floating), assetFloatingReason)
-
-        case None => (conversion(persistedStop, floating), assetFloatingReason)
-      }
-    }
-    else
-      (conversion(persistedStop, floating), assetFloatingReason)
-
+    getByMunicipality(municipalityCode, mapRoadLinks, roadLinks, changeInfo, floatingAdjustment(adjustmentOperation, createOperation))
   }
 
   private def createPersistedAsset[T](persistedStop: PersistedAsset, asset: AssetAdjustment) = {
