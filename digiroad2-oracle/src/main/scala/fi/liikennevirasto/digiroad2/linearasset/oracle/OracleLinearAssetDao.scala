@@ -983,8 +983,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
   /**
     * Creates new linear asset. Return id of new asset. Used by LinearAssetService.createWithoutTransaction
     */
-  def createLinearAsset(typeId: Int, linkId: Long, expired: Boolean, sideCode: Int, startMeasure: Double,
-                        endMeasure: Double, username: String, vvhTimeStamp: Long = 0L,
+  def createLinearAsset(typeId: Int, linkId: Long, expired: Boolean, sideCode: Int, measures: Measures, username: String, vvhTimeStamp: Long = 0L,
                         fromUpdate: Boolean = false,
                         createdByFromUpdate: Option[String] = Some(""),
                         createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now())): Long = {
@@ -998,7 +997,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
         values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $username, CURRENT_TIMESTAMP)
 
         into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp)
-        values ($lrmPositionId, $startMeasure, $endMeasure, $linkId, $sideCode, CURRENT_TIMESTAMP, $vvhTimeStamp)
+        values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, CURRENT_TIMESTAMP, $vvhTimeStamp)
 
         into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId)
@@ -1011,7 +1010,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
       values ($id, $typeId, $username, sysdate, #$validTo)
 
       into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp)
-      values ($lrmPositionId, $startMeasure, $endMeasure, $linkId, $sideCode, CURRENT_TIMESTAMP, $vvhTimeStamp)
+      values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, CURRENT_TIMESTAMP, $vvhTimeStamp)
 
       into asset_link(asset_id, position_id)
       values ($id, $lrmPositionId)
@@ -1104,7 +1103,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
   /**
     *  Updates prohibition value. Used by LinearAssetService.updateWithoutTransaction.
     */
-  def updateProhibitionValue(id: Long, value: Prohibitions, username: String, startMeasure: Option[Double] = None, endMeasure: Option[Double] = None): Option[Long] = {
+  def updateProhibitionValue(id: Long, value: Prohibitions, username: String, optMeasure: Option[Measures] = None ): Option[Long] = {
     Queries.updateAssetModified(id, username).first
 
     val prohibitionValueIds = sql"""select id from PROHIBITION_VALUE where asset_id = $id""".as[Int].list.mkString(",")
@@ -1115,11 +1114,9 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     }
 
     insertProhibitionValue(id, value)
-    (startMeasure, endMeasure) match {
-      case (None, None) => None
-      case (Some(start), Some(end)) => updateMValues(id, (start, end))
-      case (Some(_), None) => None
-      case (None, Some(_)) => None
+    optMeasure match {
+      case None => None
+      case Some(measure) => updateMValues(id, (measure.startMeasure, measure.endMeasure))
     }
     Some(id)
   }
