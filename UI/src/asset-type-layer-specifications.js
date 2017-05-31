@@ -175,8 +175,8 @@
         enabled: 'Leveys tiedossa',
         disabled: 'Leveys ei tiedossa',
         showUnit: true
-      },
-      label: new LinearAssetLabel()
+      }//,
+      //label: new LinearAssetLabel()
     },
     {
       typeId: assetType.congestionTendency,
