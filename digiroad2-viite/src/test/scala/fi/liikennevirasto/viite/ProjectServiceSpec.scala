@@ -5,11 +5,12 @@ import java.util.Properties
 
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, State, TrafficDirection, UnknownLinkType}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, RoadLinkService, _}
+import fi.liikennevirasto.viite.dao.Discontinuity.Discontinuous
 import fi.liikennevirasto.viite.dao.{Discontinuity, ProjectState, RoadAddressProject, _}
 import fi.liikennevirasto.viite.process.ProjectDeltaCalculator
 import org.apache.http.client.config.RequestConfig
@@ -74,6 +75,13 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       case e: ConnectException =>
         false
     }
+  }
+
+  private def toProjectLink(project: RoadAddressProject)(roadAddress: RoadAddress): ProjectLink = {
+    ProjectLink(id=NewRoadAddress, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track,
+      roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
+      roadAddress.endDate, modifiedBy=Option(project.createdBy), 0L, roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
+      roadAddress.sideCode, roadAddress.calibrationPoints, floating=false, roadAddress.geom, project.id, LinkStatus.NotHandled)
   }
 
   test ("create road link project without road parts") {
@@ -266,6 +274,31 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       stateaftercheck.description should be (ProjectState.ErroredInTR.description)
     }
 
+  }
+
+  test("process roadChange data and expire the roadLinks"){
+      //First Create Mock Project, RoadLinks and
+
+    runWithRollback{
+      val projectId = 1
+      val roadNumber = 1943845
+      val roadPartNumber = 1
+      //Creation of Test road
+      val id = RoadAddressDAO.getNextRoadAddressId
+      val ra = Seq(RoadAddress(id, roadNumber, roadPartNumber, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, (None, None), false,
+        Seq(Point(0.0, 0.0), Point(0.0, 9.8))))
+      val returning = RoadAddressDAO.create(ra)
+      var roads = RoadAddressDAO.fetchByLinkId(Set(12345L))
+
+      val project = RoadAddressProject(1,ProjectState.Incomplete,"testiprojekti","Test",DateTime.now(),"Test",DateTime.now(),DateTime.now(),"info",List(ReservedRoadPart(5:Long, roadNumber:Long, roadPartNumber:Long, 5:Double, Discontinuity.apply("jatkuva"), 8:Long, None:Option[DateTime], None:Option[DateTime])))
+      ProjectDAO.createRoadAddressProject(project)
+      sqlu"""insert into road_address_changes
+             (project_id,change_type,new_road_number,new_road_part_number,new_track_code,new_start_addr_m,new_end_addr_m,new_discontinuity,new_road_type,new_ely) Values ($projectId,5,$roadNumber,$roadPartNumber,1,0,10.5,1,1,8)""".execute
+
+      val addresses = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber).map(toProjectLink(project))
+
+      projectService.updateRoadAddressWithProject(ProjectState.Sent2TR, projectId)
+    }
   }
 
 }

@@ -4,7 +4,9 @@ import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, RoadLinkService}
+import fi.liikennevirasto.viite.dao.ProjectState._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.{ProjectDeltaCalculator, RoadAddressFiller}
@@ -411,13 +413,18 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     {
       val currentState=projectstatus.getOrElse(ProjectState.Unknown)
       val newState =getStatusFromTRObject(ViiteTierekisteriClient.getProjectStatusObject(projectID)).getOrElse(ProjectState.Unknown)
-      updateProjectStatusIfNeeded(currentState,newState,projectID)
-    }
-    {
-      //TODO
+      val updatedStatus = updateProjectStatusIfNeeded(currentState,newState,projectID)
+
+      //TODO - WORK IN PROGRESS
       //copy & update new roads
       // remove links from project-link table
+      //updateRoadAddressWithProject(newState, projectID)
+
+      updatedStatus
     }
+
+
+
   }
 
   private def mapTRstateToViiteState(trState:String): Option[ProjectState] ={
@@ -429,6 +436,29 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       case "V" => Some(ProjectState.apply(ProjectState.ErroredInTR.value))
       case "null" => Some(ProjectState.apply(ProjectState.ErroredInTR.value))
       case _=> None
+    }
+  }
+
+
+  //TODO: in progress
+  def updateRoadAddressWithProject(newState: ProjectState, projectID: Long) ={
+    if(newState.value != ErroredInTR.value || newState.value != Unknown.value){
+      val links = ProjectDAO.getProjectLinks(projectID)
+      val changes = RoadAddressChangesDAO.fetchRoadAddressChanges(Set(projectID))
+
+      val newLinks = changes.filter(_.changeInfo.changeType.value == 5).map(ci => {
+        val link = links.find(_.roadNumber == ci.changeInfo.source.roadNumber.get).get
+        if(ci.changeInfo.source.endRoadPartNumber != ci.changeInfo.source.startRoadPartNumber){
+          new RoadAddress(-1000, ci.changeInfo.source.roadNumber.get, ci.changeInfo.source.startRoadPartNumber.get, Track.apply(ci.changeInfo.source.trackCode.get.toInt), ci.changeInfo.discontinuity, ci.changeInfo.source.startAddressM.get, ci.changeInfo.source.endAddressM.get, Option(ci.changeDate),None, None, link.lrmPositionId, link.linkId, ci.changeInfo.source.startAddressM.get, ci.changeInfo.source.endAddressM.get, link.sideCode, link.calibrationPoints, link.floating, link.geom)
+          new RoadAddress(-1000, ci.changeInfo.source.roadNumber.get, ci.changeInfo.source.endRoadPartNumber.get, Track.apply(ci.changeInfo.source.trackCode.get.toInt), ci.changeInfo.discontinuity, ci.changeInfo.source.startAddressM.get, ci.changeInfo.source.endAddressM.get, Option(ci.changeDate),None, None, link.lrmPositionId, link.linkId, ci.changeInfo.source.startAddressM.get, ci.changeInfo.source.endAddressM.get, link.sideCode, link.calibrationPoints, link.floating, link.geom)
+        }
+        else {
+          new RoadAddress(-1000, ci.changeInfo.source.roadNumber.get, ci.changeInfo.source.startRoadPartNumber.get, Track.apply(ci.changeInfo.source.trackCode.get.toInt), ci.changeInfo.discontinuity, ci.changeInfo.source.startAddressM.get, ci.changeInfo.source.endAddressM.get, Option(ci.changeDate),None, None, link.lrmPositionId, link.linkId, ci.changeInfo.source.startAddressM.get, ci.changeInfo.source.endAddressM.get, link.sideCode, link.calibrationPoints, link.floating, link.geom)
+        }
+      })
+
+      RoadAddressDAO.expireRoadAddresses(newLinks.map(_.linkId).toSet)
+      RoadAddressDAO.create(newLinks, None)
     }
   }
 }
