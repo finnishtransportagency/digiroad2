@@ -27,6 +27,10 @@
       return '<span class ="edit-mode-title">'+projectName+'</span>';
     };
 
+    var clearInformationContent = function() {
+      $('#information-content').empty();
+    };
+
     var sendRoadAddressChangeButton = function() {
 
       $('#information-content').html('' +
@@ -129,6 +133,7 @@
       eventbus.on('projectLink:clicked', function(selected) {
         selectedProjectLink = selected;
         currentProject = projectCollection.getCurrentProject();
+        clearInformationContent();
         rootElement.html(selectedProjectLinkTemplate(currentProject, options, selectedProjectLink));
       });
 
@@ -173,7 +178,7 @@
         applicationModel.selectLayer('linkProperty');
 
         rootElement.empty();
-        $('#information-content').empty();
+        clearInformationContent();
 
         selectedProjectLinkProperty.close();
         projectCollection.clearRoadAddressProjects();
