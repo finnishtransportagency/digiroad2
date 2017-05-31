@@ -336,4 +336,5 @@ object RoadType {
   case object PublicUnderConstructionRoad extends RoadType { def value = 4; def displayValue = "Yleisen tien työmaa" }
   case object PrivateRoadType extends RoadType { def value = 5; def displayValue = "Yksityistie" }
   case object UnknownOwnerRoad extends RoadType { def value = 9; def displayValue = "Omistaja selvittämättä" }
+  case object Unknown extends RoadType { def value = 99; def displayValue = "Ei määritelty" }
 }
