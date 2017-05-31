@@ -16,10 +16,12 @@ class FloatingChecker(roadLinkService: RoadLinkService) {
     }
 
     def validateGeometryChange(roadLink : VVHRoadlink, roadAddresses: Seq[RoadAddress]) : Boolean = {
-      roadAddresses.exists(ra => GeometryUtils.geometryMoved(MaxMoveDistanceBeforeFloating)(
-        GeometryUtils.truncateGeometry2D(roadLink.geometry, ra.startMValue, ra.endMValue),
-        ra.geom
-      ))
+      false
+      // TODO: FIXME
+//      roadAddresses.exists(ra => GeometryUtils.geometryMoved(MaxMoveDistanceBeforeFloating)(
+//        GeometryUtils.truncateGeometry2D(roadLink.geometry, ra.startMValue, ra.endMValue),
+//        ra.geom
+//      ))
     }
 
     def checkGeometryChangeOfSegments(roadAddressList: Seq[RoadAddress], roadLinks : Map[Long, Seq[VVHRoadlink]]): Seq[RoadAddress] = {
