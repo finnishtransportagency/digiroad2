@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, RoadLinkService}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, RoadLinkService, GeometryUtils}
 import fi.liikennevirasto.viite.dao.ProjectState._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink, RoadAddressLinkLike}
@@ -414,12 +414,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val currentState=projectstatus.getOrElse(ProjectState.Unknown)
       val newState =getStatusFromTRObject(ViiteTierekisteriClient.getProjectStatusObject(projectID)).getOrElse(ProjectState.Unknown)
       val updatedStatus = updateProjectStatusIfNeeded(currentState,newState,projectID)
-
-      //TODO - WORK IN PROGRESS
-      //copy & update new roads
-      // remove links from project-link table
-      //updateRoadAddressWithProject(newState, projectID)
-
+      updateRoadAddressWithProject(newState, projectID)
       updatedStatus
     }
 
@@ -439,21 +434,20 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-
-  //TODO: in progress
   def updateRoadAddressWithProject(newState: ProjectState, projectID: Long) ={
-    if(newState.value != ErroredInTR.value || newState.value != Unknown.value){
+    if((newState.value != ErroredInTR.value || newState.value != Unknown.value) && newState.value == Saved2TR.value){
       val links = ProjectDAO.getProjectLinks(projectID)
       val changes = RoadAddressChangesDAO.fetchRoadAddressChanges(Set(projectID))
-
+      val vvhRoadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(links.map(_.linkId).toSet,false)
       val newLinks = changes.filter(_.changeInfo.changeType.value == 5).map(ci => {
         val link = links.find(_.roadNumber == ci.changeInfo.source.roadNumber.get).get
+        val newGeom = GeometryUtils.truncateGeometry3D(vvhRoadLinks.find(_.linkId == link.linkId).get.geometry,link.startMValue, link.endMValue)
         if(ci.changeInfo.source.endRoadPartNumber != ci.changeInfo.source.startRoadPartNumber){
-          new RoadAddress(-1000, ci.changeInfo.source.roadNumber.get, ci.changeInfo.source.startRoadPartNumber.get, Track.apply(ci.changeInfo.source.trackCode.get.toInt), ci.changeInfo.discontinuity, ci.changeInfo.source.startAddressM.get, ci.changeInfo.source.endAddressM.get, Option(ci.changeDate),None, None, link.lrmPositionId, link.linkId, ci.changeInfo.source.startAddressM.get, ci.changeInfo.source.endAddressM.get, link.sideCode, link.calibrationPoints, link.floating, link.geom)
-          new RoadAddress(-1000, ci.changeInfo.source.roadNumber.get, ci.changeInfo.source.endRoadPartNumber.get, Track.apply(ci.changeInfo.source.trackCode.get.toInt), ci.changeInfo.discontinuity, ci.changeInfo.source.startAddressM.get, ci.changeInfo.source.endAddressM.get, Option(ci.changeDate),None, None, link.lrmPositionId, link.linkId, ci.changeInfo.source.startAddressM.get, ci.changeInfo.source.endAddressM.get, link.sideCode, link.calibrationPoints, link.floating, link.geom)
+          new RoadAddress(-1000, ci.changeInfo.source.roadNumber.get, ci.changeInfo.source.startRoadPartNumber.get, Track.apply(ci.changeInfo.source.trackCode.get.toInt), ci.changeInfo.discontinuity, ci.changeInfo.source.startAddressM.get, ci.changeInfo.source.endAddressM.get, Option(ci.changeDate),None, None, link.lrmPositionId, link.linkId, ci.changeInfo.source.startAddressM.get, ci.changeInfo.source.endAddressM.get, link.sideCode, link.calibrationPoints, link.floating, newGeom)
+          new RoadAddress(-1000, ci.changeInfo.source.roadNumber.get, ci.changeInfo.source.endRoadPartNumber.get, Track.apply(ci.changeInfo.source.trackCode.get.toInt), ci.changeInfo.discontinuity, ci.changeInfo.source.startAddressM.get, ci.changeInfo.source.endAddressM.get, Option(ci.changeDate),None, None, link.lrmPositionId, link.linkId, ci.changeInfo.source.startAddressM.get, ci.changeInfo.source.endAddressM.get, link.sideCode, link.calibrationPoints, link.floating, newGeom)
         }
         else {
-          new RoadAddress(-1000, ci.changeInfo.source.roadNumber.get, ci.changeInfo.source.startRoadPartNumber.get, Track.apply(ci.changeInfo.source.trackCode.get.toInt), ci.changeInfo.discontinuity, ci.changeInfo.source.startAddressM.get, ci.changeInfo.source.endAddressM.get, Option(ci.changeDate),None, None, link.lrmPositionId, link.linkId, ci.changeInfo.source.startAddressM.get, ci.changeInfo.source.endAddressM.get, link.sideCode, link.calibrationPoints, link.floating, link.geom)
+          new RoadAddress(-1000, ci.changeInfo.source.roadNumber.get, ci.changeInfo.source.startRoadPartNumber.get, Track.apply(ci.changeInfo.source.trackCode.get.toInt), ci.changeInfo.discontinuity, ci.changeInfo.source.startAddressM.get, ci.changeInfo.source.endAddressM.get, Option(ci.changeDate),None, None, link.lrmPositionId, link.linkId, ci.changeInfo.source.startAddressM.get, ci.changeInfo.source.endAddressM.get, link.sideCode, link.calibrationPoints, link.floating, newGeom)
         }
       })
 
