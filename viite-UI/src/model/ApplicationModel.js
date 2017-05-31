@@ -67,7 +67,6 @@
     var setOpenProject = function(newState){
       if(openProject !== newState){
         openProject = newState;
-        eventbus.trigger('application:openProject', newState);
       }
     };
 
@@ -140,8 +139,6 @@
           selectedLayer = layer;
           setSelectedTool('Select');
           eventbus.trigger('layer:selected', layer, previouslySelectedLayer);
-        } else {
-          eventbus.trigger('layer:' + selectedLayer + ':shown');
         }
       },
       getSelectedLayer: function() {

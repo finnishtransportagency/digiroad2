@@ -2,10 +2,11 @@
   root.NavigationPanel = {
     initialize: initialize
   };
+  var navigationPanel = $('<div class="navigation-panel"></div>');
 
   function initialize(container, searchBox, openProjectsBox, assetControlGroups) {
-    var navigationPanel = $('<div class="navigation-panel"></div>');
 
+    navigationPanel = $('<div class="navigation-panel"></div>');
     navigationPanel.append(searchBox.element);
     navigationPanel.append(openProjectsBox.element);
 
@@ -27,10 +28,10 @@
     bindEvents();
 
     eventbus.on('layer:selected', function selectLayer(layer, previouslySelectedLayer) {
-      var previousControl = assetControlMap[previouslySelectedLayer];
-      if (previousControl) previousControl.hide();
-      assetControlMap[layer].show();
-      assetElementDiv.show();
+        var previousControl = assetControlMap[previouslySelectedLayer];
+        if (previousControl) previousControl.hide();
+        assetControlMap.linkProperty.show();
+        assetElementDiv.show();
     });
 
     container.append(navigationPanel);
@@ -39,6 +40,11 @@
       openProjectsBox.button.on('click', function(){
         openProjectsBox.toggle();
       });
+    }
+
+    eventbus.on('layer:enableButtons', enableButtons);
+    function enableButtons(value) {
+      navigationPanel.find(':button, :input').prop('disabled', !value);
     }
 
   }

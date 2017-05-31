@@ -5,6 +5,7 @@
     var roadCollection = new RoadCollection(backend);
     var roadAddressProjectCollection = new RoadAddressProjectCollection(backend);
     var selectedLinkProperty = new SelectedLinkProperty(backend, roadCollection);
+    var selectedProjectLinkProperty = new SelectedProjectLink(roadAddressProjectCollection);
     var linkPropertiesModel = new LinkPropertiesModel();
     var instructionsPopup = new InstructionsPopup($('.digiroad2'));
 
@@ -12,7 +13,8 @@
       roadCollection: roadCollection,
       roadAddressProjectCollection: roadAddressProjectCollection,
       selectedLinkProperty: selectedLinkProperty,
-      linkPropertiesModel: linkPropertiesModel
+      linkPropertiesModel: linkPropertiesModel,
+      selectedProjectLinkProperty : selectedProjectLinkProperty
     };
 
     bindEvents();
@@ -81,14 +83,17 @@
 
     var mapOverlay = new MapOverlay($('.container'));
     var styler = new Styler();
-    var roadLayer = new RoadLayer3(map, models.roadCollection,styler);
+    var roadLayer = new RoadLayer3(map, models.roadCollection, styler, models.selectedLinkProperty);
+    var projectLinkLayer = new ProjectLinkLayer(map, models.roadAddressProjectCollection, models.selectedProjectLinkProperty, roadLayer);
 
     new LinkPropertyForm(models.selectedLinkProperty);
 
     new RoadAddressProjectForm(models.roadAddressProjectCollection);
+    new RoadAddressProjectEditForm(models.roadAddressProjectCollection);
 
     var layers = _.merge({
       road: roadLayer,
+      roadAddressProject: projectLinkLayer,
       linkProperty: new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel, styler)});
 
     var mapPluginsContainer = $('#map-plugins');
@@ -103,7 +108,7 @@
 
     // Show information modal in integration environment (remove when not needed any more)
     if (Environment.name() === 'integration') {
-      showInformationModal('Huom!<br>Tämä sivu ei ole enää käytössä.<br>Digiroad-sovellus on siirtynyt osoitteeseen <a href="https://extranet.liikennevirasto.fi/digiroad/" style="color:#FFFFFF;text-decoration: underline">https://extranet.liikennevirasto.fi/digiroad/</a>');
+      showInformationModal('Huom!<br>Olet integraatiotestiympäristössä.');
     }
 
     new MapView(map, layers, new InstructionsPopup($('.digiroad2')));

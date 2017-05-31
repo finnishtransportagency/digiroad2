@@ -49,15 +49,15 @@ object OraclePedestrianCrossingDao {
     id
   }
 
-  def create(crossing: PedestrianCrossingToBePersisted, username: String): Long = {
+  def create(crossing: PedestrianCrossingToBePersisted, username: String, adjustedTimestamp: Long): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     sqlu"""
       insert all
         into asset(id, asset_type_id, created_by, created_date, municipality_code)
         values ($id, 200, $username, sysdate, ${crossing.municipalityCode})
-        into lrm_position(id, start_measure, link_id)
-        values ($lrmPositionId, ${crossing.mValue}, ${crossing.linkId})
+        into lrm_position(id, start_measure, link_id, adjusted_timestamp)
+        values ($lrmPositionId, ${crossing.mValue}, ${crossing.linkId}, $adjustedTimestamp)
 
         into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId)

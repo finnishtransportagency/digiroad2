@@ -58,6 +58,7 @@
 
   root.RoadCollection = function(backend) {
     var roadLinkGroups = [];
+    var tmpRoadLinkGroups = [];
     var tmpRoadAddresses = [];
     var tmpNewRoadAddresses = [];
     var preMovedRoadAddresses = [];
@@ -122,6 +123,10 @@
       return tmpRoadAddresses;
     };
 
+    this.getTmpRoadLinkGroups = function () {
+      return tmpRoadLinkGroups;
+    };
+
     this.get = function(ids) {
       return _.map(ids, function(id) {
         return _.find(roadLinks(), function(road) { return road.getId() === id; });
@@ -169,6 +174,12 @@
       tmpRoadAddresses = tmp;
     };
 
+    this.addTmpRoadLinkGroups = function (tmp) {
+      if(tmpRoadLinkGroups.filter(function (roadTmp) { return roadTmp.getData().linkId === tmp.linkId;}).length === 0) {
+        tmpRoadLinkGroups.push(new RoadLinkModel(tmp));
+      }
+    };
+
     this.setChangedIds = function (ids){
       changedIds = ids;
     };
@@ -210,7 +221,6 @@
     this.resetPreMovedRoadAddresses = function(){
       preMovedRoadAddresses = [];
     };
-
 
     var roadIsOther = function(road){
       return  0 === road.roadNumber && 0 === road.anomaly && 0 === road.roadLinkType && 0 === road.roadPartNumber && 99 === road.trackCode;
