@@ -31,7 +31,7 @@ module.exports = function(grunt) {
       },
       dist: {
         files: {
-          'dist/js/<%= pkg.name %>.js': ['UI/src/view/AssetLabel.js', 'UI/src/view/LinearAssetLayer.js', 'UI/src/**/*.js', '!**/ol-custom.js'],
+          'dist/js/<%= pkg.name %>.js': ['UI/src/view/AssetLabel.js', 'UI/src/view/LinearAssetLabel.js', 'UI/src/**/*.js', '!**/ol-custom.js'],
           'dist-viite/js/<%= viitepkg.name %>.js': ['viite-UI/src/**/*.js', '!**/ol-custom.js']
         }
       }
