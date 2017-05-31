@@ -1,6 +1,7 @@
 package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
+import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.dao._
 import org.joda.time.DateTime
 
@@ -39,6 +40,9 @@ object ProjectDeltaCalculator {
       throw new RoadAddressException(s"Termination has gaps in between: ${missingSegments.mkString("\n")}") //TODO: terminate only part of the road part later
   }
 
+  // TODO: When other than terminations are handled we partition also project links: section should include road type
+  def projectLinkPartition(projectLinks: Seq[ProjectLink]): Seq[RoadAddressSection] = ???
+
   def partition(roadAddresses: Seq[RoadAddress]): Seq[RoadAddressSection] = {
     def combineTwo(r1: RoadAddress, r2: RoadAddress): Seq[RoadAddress] = {
       if (r1.track == r2.track && r1.endAddrMValue == r2.startAddrMValue)
@@ -56,11 +60,11 @@ object ProjectDeltaCalculator {
     }
     val grouped = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track, ra.discontinuity))
     grouped.mapValues(v => combine(v)).values.flatten.map(ra => RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
-      ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity)).toSeq
+      ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, RoadType.Unknown)).toSeq
   }
 }
 
 case class Delta(startDate: DateTime, terminations: Seq[RoadAddress])
 case class RoadPart(roadNumber: Long, roadPartNumber: Long)
 case class RoadAddressSection(roadNumber: Long, roadPartNumberStart: Long, roadPartNumberEnd: Long, track: Track,
-                              startMAddr: Long, endMAddr: Long, discontinuity: Discontinuity)
+                              startMAddr: Long, endMAddr: Long, discontinuity: Discontinuity, roadType: RoadType)
