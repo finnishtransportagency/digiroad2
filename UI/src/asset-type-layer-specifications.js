@@ -29,9 +29,6 @@
     maintenanceRoad: 290
   };
 
-  //keep it here because the uglify
-  var linearAssetLabel = new LinearAssetLabel();
-
   root.linearAssetSpecs = [
     {
       typeId: assetType.totalWeightLimit,
@@ -179,7 +176,7 @@
         disabled: 'Leveys ei tiedossa',
         showUnit: true
       },
-      label: linearAssetLabel
+      label: new LinearAssetLabel()
     },
     {
       typeId: assetType.congestionTendency,
