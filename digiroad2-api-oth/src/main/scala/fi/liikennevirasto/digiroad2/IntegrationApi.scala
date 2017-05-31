@@ -142,10 +142,15 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "linkType" -> roadLink.linkType.value,
         "modifiedAt" -> roadLink.modifiedAt,
         lastModifiedBy(None, roadLink.modifiedBy),
+        "startNode" -> roadLink.attributes.get("STARTNODE"),
+        "endNode" -> roadLink.attributes.get("ENDNODE"),
         "linkSource" -> roadLink.linkSource.value) ++ roadLink.attributes.filterNot(_._1 == "MTKID")
                                                                          .filterNot(_._1 == "ROADNUMBER")
                                                                          .filterNot(_._1 == "ROADPARTNUMBER")
+                                                                         .filterNot(_._1 == "STARTNODE")
+                                                                         .filterNot(_._1 == "ENDNODE")
                                                                          .filterNot(_._1 == "MTKCLASS" && roadLink.linkSource.value == LinkGeomSource.ComplimentaryLinkInterface.value)
+
     }
   }
 
@@ -337,8 +342,6 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "additionalInfo" -> manoeuvre.additionalInfo,
         "modifiedDateTime" -> manoeuvre.modifiedDateTime,
         lastModifiedBy(None, Some(manoeuvre.modifiedBy)))
-
-
     }
   }
 
@@ -350,6 +353,15 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "services" -> asset.services,
         latestModificationTime(asset.createdAt, asset.modifiedAt),
         lastModifiedBy(asset.createdBy, asset.modifiedBy))
+    }
+  }
+
+  def roadNodesToApi(roadNodes: Seq[VVHRoadNodes]) = {
+    roadNodes.map { roadNode =>
+      Map("nodeId" -> roadNode.nodeId,
+          "nodeType" -> roadNode.formOfNode.value,
+          "point" -> Map("x" -> roadNode.geometry.x, "y" -> roadNode.geometry.y)
+      )
     }
   }
 
@@ -389,6 +401,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case "road_link_properties" => roadLinkPropertiesToApi(roadLinkService.withRoadAddress(roadLinkService.getRoadLinksAndComplementaryLinksFromVVHByMunicipality(municipalityNumber)))
         case "manoeuvres" => manouvresToApi(manoeuvreService.getByMunicipality(municipalityNumber))
         case "service_points" => servicePointsToApi(servicePointService.getByMunicipality(municipalityNumber))
+        case "road_nodes" => roadNodesToApi(roadLinkService.getRoadNodesFromVVHByMunicipality(municipalityNumber))
         case _ => BadRequest("Invalid asset type")
       }
     } getOrElse {
