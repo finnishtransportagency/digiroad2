@@ -411,15 +411,23 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def setProjectStatusToSend2TR(projectId:Long) =
-  {
-    ProjectDAO.updateProjectStatus(projectId, ProjectState.Sent2TR)
+  private def getTRErrorMessage(trProject:Option[TRProjectStatus]):String = {
+    trProject match {
+      case Some(trProjectobject) => trProjectobject.errorMessage.getOrElse("")
+      case None => ""
+      case _ => ""
+    }
   }
 
-  def updateProjectStatusIfNeeded(currentStatus:ProjectState, newStatus:ProjectState, projectId:Long) :(ProjectState)= {
+  def setProjectStatusToSend2TR(projectId:Long) =
+  {
+    ProjectDAO.updateProjectStatus(projectId, ProjectState.Sent2TR,"")
+  }
+
+  def updateProjectStatusIfNeeded(currentStatus:ProjectState, newStatus:ProjectState, errorMessage:String,projectId:Long) :(ProjectState)= {
     if (currentStatus.value!=newStatus.value && newStatus != ProjectState.Unknown)
     {
-      ProjectDAO.updateProjectStatus(projectId,newStatus)
+      ProjectDAO.updateProjectStatus(projectId,newStatus,errorMessage)
     }
     if (newStatus != ProjectState.Unknown){
       newStatus
@@ -452,8 +460,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     if (projectstatus.isDefined)
     {
       val currentState=projectstatus.getOrElse(ProjectState.Unknown)
-      val newState =getStatusFromTRObject(ViiteTierekisteriClient.getProjectStatusObject(projectID)).getOrElse(ProjectState.Unknown)
-      updateProjectStatusIfNeeded(currentState,newState,projectID)
+      val trProjectState=ViiteTierekisteriClient.getProjectStatusObject(projectID)
+      val newState =getStatusFromTRObject(trProjectState).getOrElse(ProjectState.Unknown)
+      val errorMessage = getTRErrorMessage(trProjectState)
+      updateProjectStatusIfNeeded(currentState,newState,errorMessage,projectID)
     }
     {
       //TODO

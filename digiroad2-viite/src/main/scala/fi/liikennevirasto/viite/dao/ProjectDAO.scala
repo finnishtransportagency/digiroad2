@@ -233,9 +233,9 @@ object ProjectDAO {
     }
   }
 
-  def updateProjectStatus(projectID:Long,state:ProjectState) {
+  def updateProjectStatus(projectID:Long,state:ProjectState,errorMessage:String) {
     val projectstate=state.value
-    sqlu""" update project set state=$projectstate WHERE id=$projectID   """.execute
+    sqlu""" update project set state=$projectstate, status_info=$errorMessage  WHERE id=$projectID""".execute
   }
 
   def getProjectsWithWaitingTRStatus(): List[Long]={
