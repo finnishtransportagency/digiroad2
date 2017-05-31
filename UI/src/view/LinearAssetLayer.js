@@ -163,7 +163,7 @@ window.LinearAssetLayer = function(params) {
 
   var linearAssetCutter = new LinearAssetCutter(me.eventListener, vectorLayer, collection);
 
-  var OnSelect = function(evt) {
+  var onSelect = function(evt) {
     if(evt.selected.length !== 0) {
       var feature = evt.selected[0];
       var properties = feature.getProperties();
@@ -191,8 +191,8 @@ window.LinearAssetLayer = function(params) {
 
   var selectToolControl = new SelectToolControl(application, vectorLayer, map, {
     style: function(feature){ return feature.setStyle(style.browsingStyleProvider.getStyle(feature, {zoomLevel: uiState.zoomLevel})); },
-    onDragEnd: onDragEnd,
-    onSelect: OnSelect
+    onInteractionEnd: onInteractionEnd,
+    onSelect: onSelect
   });
 
   var showDialog = function (linearAssets) {
@@ -207,20 +207,20 @@ window.LinearAssetLayer = function(params) {
          features = features.concat(assetLabel.renderFeaturesByLinearAssets(selectedLinearAsset.get(), uiState.zoomLevel));
       selectToolControl.addSelectionFeatures(features);
 
-      LinearAssetMassUpdateDialog.show({
-         count: selectedLinearAsset.count(),
-         onCancel: cancelSelection,
-         onSave: function (value) {
-           selectedLinearAsset.saveMultiple(value);
-           selectToolControl.clear();
-           selectedLinearAsset.closeMultiple();
-         },
-         validator: selectedLinearAsset.validator,
-         formElements: params.formElements
+     LinearAssetMassUpdateDialog.show({
+        count: selectedLinearAsset.count(),
+        onCancel: cancelSelection,
+        onSave: function (value) {
+          selectedLinearAsset.saveMultiple(value);
+          selectToolControl.clear();
+          selectedLinearAsset.closeMultiple();
+        selectToolControl.deactivateDraw();},
+        validator: selectedLinearAsset.validator,
+        formElements: params.formElements
       });
   };
 
-  function onDragEnd(linearAssets) {
+  function onInteractionEnd(linearAssets) {
     if (selectedLinearAsset.isDirty()) {
         me.displayConfirmMessage();
     } else {
@@ -242,12 +242,24 @@ window.LinearAssetLayer = function(params) {
   };
 
   var changeTool = function(tool) {
-    if (tool === 'Cut') {
-      selectToolControl.deactivate();
-      linearAssetCutter.activate();
-    } else if (tool === 'Select') {
-      linearAssetCutter.deactivate();
-      selectToolControl.activate();
+    switch(tool) {
+      case 'Cut':
+        selectToolControl.deactivate();
+        linearAssetCutter.activate();
+        break;
+      case 'Select':
+        linearAssetCutter.deactivate();
+        selectToolControl.activate();
+        break;
+      case 'Rectangle':
+        linearAssetCutter.deactivate();
+        selectToolControl.activeRectangle();
+        break;
+      case 'Polygon':
+        linearAssetCutter.deactivate();
+        selectToolControl.activePolygon();
+        break;
+      default:
     }
   };
 
@@ -385,11 +397,7 @@ window.LinearAssetLayer = function(params) {
 
   var redrawLinearAssets = function(linearAssetChains) {
     vectorSource.clear();
-    selectToolControl.deactivate();
     indicatorLayer.getSource().clear();
-    if (!selectedLinearAsset.isDirty() && application.getSelectedTool() === 'Select') {
-      selectToolControl.activate();
-    }
     var linearAssets = _.flatten(linearAssetChains);
       decorateSelection();
 

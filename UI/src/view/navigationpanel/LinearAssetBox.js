@@ -21,10 +21,15 @@
       expanded: $(expandedTemplate)
     };
 
-    var toolSelection = new ActionPanelBoxes.ToolSelection([
+    var actions = [
       new ActionPanelBoxes.Tool('Select', ActionPanelBoxes.selectToolIcon, selectedLinearAsset),
-      new ActionPanelBoxes.Tool('Cut', ActionPanelBoxes.cutToolIcon, selectedLinearAsset)
-    ]);
+      new ActionPanelBoxes.Tool('Cut', ActionPanelBoxes.cutToolIcon, selectedLinearAsset),
+      new ActionPanelBoxes.Tool('Rectangle', ActionPanelBoxes.rectangleToolIcon, selectedLinearAsset),
+      new ActionPanelBoxes.Tool('Polygon', ActionPanelBoxes.polygonToolIcon, selectedLinearAsset)
+    ];
+
+    var toolSelection = new ActionPanelBoxes.ToolSelection(actions);
+
     var editModeToggle = new EditModeToggleButton(toolSelection);
     var userRoles;
 
