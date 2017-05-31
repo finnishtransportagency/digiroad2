@@ -27,6 +27,10 @@
       return '<span class ="edit-mode-title">'+projectName+'</span>';
     };
 
+    var clearInformationContent = function() {
+      $('#information-content').empty();
+    };
+
     var sendRoadAddressChangeButton = function() {
 
       $('#information-content').html('' +
@@ -36,7 +40,7 @@
         '</div>');
 
       return '<div class="project-form form-controls">' +
-        '<button class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button></div>';
+        '<button class="send btn btn-block btn-send" disabled>Tee tieosoitteenmuutosilmoitus</button></div>';
     };
 
     var terminationButtons = function() {
@@ -129,13 +133,13 @@
       eventbus.on('projectLink:clicked', function(selected) {
         selectedProjectLink = selected;
         currentProject = projectCollection.getCurrentProject();
+        clearInformationContent();
         rootElement.html(selectedProjectLinkTemplate(currentProject, options, selectedProjectLink));
       });
 
       eventbus.on('roadAddress:linksSaved', function() {
         // Projectinfo is not undefined and publishable is something like true.
-        var ready = projectCollection.projectinfo && projectCollection.projectinfo.publishable;
-        rootElement.find('.btn-send').prop("disabled", !ready);
+        rootElement.find('.project-form .btn-send').prop("disabled", false);
       });
 
       eventbus.on('roadAddress:projectFailed', function() {
@@ -174,7 +178,7 @@
         applicationModel.selectLayer('linkProperty');
 
         rootElement.empty();
-        $('#information-content').empty();
+        clearInformationContent();
 
         selectedProjectLinkProperty.close();
         projectCollection.clearRoadAddressProjects();
