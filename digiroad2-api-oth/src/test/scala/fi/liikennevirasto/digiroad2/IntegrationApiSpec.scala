@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.asset.{Modification, SideCode, TrafficDirection}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset._
 import org.json4s.{DefaultFormats, Formats}
 import org.mockito.Mockito._
@@ -8,6 +8,7 @@ import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Tag}
 import org.scalatra.test.scalatest.ScalatraSuite
 import org.apache.commons.codec.binary.Base64
+import org.joda.time.DateTime
 import org.json4s.jackson.JsonMethods._
 import org.slf4j.LoggerFactory
 
@@ -176,6 +177,26 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
       "linkId" -> 2,
       "muokattu_viimeksi" -> "",
       "generatedValue" -> false
+    )))
+  }
+
+  test("changeType validation returns 'add' if asset is create before the actual date") {
+    val changedSpeedLimits = ChangedSpeedLimit(
+      speedLimit = SpeedLimit(1, 2, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(80)), Nil, 0, 1, Some("modifiedByUser"), None, Some("createdByUser"), Some(DateTime.parse("2017-05-07T12:00Z")), 0, None),
+      link = RoadLink(12345, Seq(), 10.0, Municipality, 5, TrafficDirection.UnknownDirection, SingleCarriageway, None, None))
+
+    integrationApi.speedLimitsChangesToApi(DateTime.parse("2017-05-06T12:00Z"), Seq(changedSpeedLimits)) should be(Seq(Map(
+      "id" -> 1,
+      "sideCode" -> 1,
+      "points" -> Nil,
+      "geometryWKT" -> "",
+      "value" -> 80,
+      "startMeasure" -> 0.0,
+      "endMeasure" -> 1.0,
+      "linkId" -> 2,
+      "muokattu_viimeksi" -> "07.05.2017 12:00:00",
+      "generatedValue" -> false,
+      "changeType" -> "Add"
     )))
   }
 

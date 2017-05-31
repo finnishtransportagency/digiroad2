@@ -132,6 +132,22 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     }
   }
 
+  def speedLimitsChangesToApi(since: DateTime, speedLimits: Seq[ChangedSpeedLimit]) = {
+    speedLimits.map { case ChangedSpeedLimit(speedLimit, link) =>
+      Map("id" -> speedLimit.id,
+        "sideCode" -> speedLimit.sideCode.value,
+        "points" -> speedLimit.geometry,
+        geometryWKTForLinearAssets(speedLimit.geometry),
+        "value" -> speedLimit.value.fold(0)(_.value),
+        "startMeasure" -> speedLimit.startMeasure,
+        "endMeasure" -> speedLimit.endMeasure,
+        "linkId" -> speedLimit.linkId,
+        latestModificationTime(speedLimit.createdDateTime, speedLimit.modifiedDateTime),
+        lastModifiedBy(speedLimit.createdBy, speedLimit.modifiedBy),
+        "changeType" -> extractChangeType(since, speedLimit.expired, speedLimit.createdDateTime))
+    }
+  }
+
   private def roadLinkPropertiesToApi(roadLinks: Seq[RoadLink]): Seq[Map[String, Any]] = {
     roadLinks.map{ roadLink =>
       Map("linkId" -> roadLink.linkId,
@@ -351,6 +367,31 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         latestModificationTime(asset.createdAt, asset.modifiedAt),
         lastModifiedBy(asset.createdBy, asset.modifiedBy))
     }
+  }
+
+  private def extractChangeType(since: DateTime, expired: Boolean, createdDateTime: Option[DateTime]) = {
+    if (expired) {
+      "Remove"
+    } else if (createdDateTime.exists(_.isAfter(since))) {
+      "Add"
+    } else {
+      "Modify"
+    }
+  }
+
+  get("/changes/:assetType") {
+    contentType = formats("json")
+     val since = DateTime.parse(params("since"))
+     val until = params.get("until") match {
+       case Some(dateValue) => DateTime.parse(dateValue)
+       case _ => DateTime.now()
+     }
+
+     val assetType = params("assetType")
+     assetType match {
+       case "speed_limits" => speedLimitsChangesToApi(since, speedLimitService.getChanged(since, until))
+       case _ => BadRequest("Invalid asset type")
+     }
   }
 
   get("/:assetType") {
