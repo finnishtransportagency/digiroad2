@@ -186,40 +186,51 @@ object ViiteTierekisteriClient {
     request.addHeader("X-Authorization", "Basic " + auth.getAuthInBase64)
     request.setEntity(createJsonmessage(trProject))
     val response = client.execute(request)
+    try {
     val statusCode = response.getStatusLine.getStatusCode
     val reason = response.getStatusLine.getReasonPhrase
     ProjectChangeStatus(trProject.id, statusCode, reason)
+    } catch {
+      case NonFatal(e) => ProjectChangeStatus(trProject.id, ProjectState.Incomplete.value, "Lähetys tierekisteriin epäonnistui") // sending project to tierekisteri failed
+    } finally {
+      response.close()
+    }
   }
 
-  def getProjectStatus(projectid:String): Map[String,Any] =
-  {
+  def getProjectStatus(projectid:String): Map[String,Any] = {
     implicit val formats = DefaultFormats
-    val request = new HttpGet(getRestEndPoint+"addresschange/"+projectid)
+    val request = new HttpGet(getRestEndPoint + "addresschange/" + projectid)
     request.addHeader("X-Authorization", "Basic " + auth.getAuthInBase64)
     val response = client.execute(request)
-    val receivedData=responseMapper(parse(StreamInput(response.getEntity.getContent)).extract[TRstatusresponse])
-    Map(
-      "id"->receivedData.id,
-      "id_tr_projekti"-> receivedData.trProjectId.getOrElse("null"),
-      "projekti"-> receivedData.trSubProjectId.getOrElse("null"),
-      "tunnus"->receivedData.trTrackingCode.getOrElse("null"),
-      "status"->receivedData.status.getOrElse("null"),
-      "name"-> receivedData.name.getOrElse("null"),
-      "change_date"->receivedData.changeDate.getOrElse("null"),
-      "ely"->receivedData.ely.getOrElse("null"),
-      "muutospvm"->receivedData.trModifiedDate.getOrElse("null"),
-      "user"->receivedData.user.getOrElse("null"),
-      "published_date"->receivedData.trPublishedDate.getOrElse("null"),
-      "job_number"->receivedData.trJobNumber.getOrElse("null"),
-      "error_message"->receivedData.errorMessage.getOrElse("null"),
-      "start_time"->receivedData.trProcessingStarted.getOrElse("null"),
-      "end_time"->receivedData.trProcessingEnded.getOrElse("null"),
-      "error_code"->receivedData.errorCode.getOrElse("null")
-    )
+    try {
+      val receivedData = responseMapper(parse(StreamInput(response.getEntity.getContent)).extract[TRstatusresponse])
+      Map(
+        "id" -> receivedData.id,
+        "id_tr_projekti" -> receivedData.trProjectId.getOrElse("null"),
+        "projekti" -> receivedData.trSubProjectId.getOrElse("null"),
+        "tunnus" -> receivedData.trTrackingCode.getOrElse("null"),
+        "status" -> receivedData.status.getOrElse("null"),
+        "name" -> receivedData.name.getOrElse("null"),
+        "change_date" -> receivedData.changeDate.getOrElse("null"),
+        "ely" -> receivedData.ely.getOrElse("null"),
+        "muutospvm" -> receivedData.trModifiedDate.getOrElse("null"),
+        "user" -> receivedData.user.getOrElse("null"),
+        "published_date" -> receivedData.trPublishedDate.getOrElse("null"),
+        "job_number" -> receivedData.trJobNumber.getOrElse("null"),
+        "error_message" -> receivedData.errorMessage.getOrElse("null"),
+        "start_time" -> receivedData.trProcessingStarted.getOrElse("null"),
+        "end_time" -> receivedData.trProcessingEnded.getOrElse("null"),
+        "error_code" -> receivedData.errorCode.getOrElse("null"),
+        "success" -> "true"
+      )
+    } catch {
+      case NonFatal(e) => Map("success" -> "false")
+    } finally {
+      response.close()
+    }
   }
 
   def getProjectStatusObject(projectid:Long): Option[TRProjectStatus] = {
-
     implicit val formats = DefaultFormats
     val request = new HttpGet(s"${getRestEndPoint}addresschange/$projectid")
     request.addHeader("X-Authorization", "Basic " + auth.getAuthInBase64)
@@ -228,8 +239,7 @@ object ViiteTierekisteriClient {
     try {
       val  receivedData = parse(StreamInput(response.getEntity.getContent)).extract[TRstatusresponse]
       response.close()
-
-      return Option(responseMapper(receivedData))
+      Option(responseMapper(receivedData))
     } catch {
       case NonFatal(e) => None
     }finally {
