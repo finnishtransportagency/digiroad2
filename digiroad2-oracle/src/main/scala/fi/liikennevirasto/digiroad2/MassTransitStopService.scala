@@ -18,7 +18,7 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 
 import scala.util.Try
 
-case class NewMassTransitStop(lon: Double, lat: Double, linkId: Long, bearing: Int, properties: Seq[SimpleProperty]) extends IncomingPointAsset
+case class NewMassTransitStop(lon: Double, lat: Double, linkId: Long, bearing: Int, properties: Seq[SimpleProperty], linkSource: Int) extends IncomingPointAsset
 
 case class MassTransitStop(id: Long, nationalId: Long, lon: Double, lat: Double, bearing: Option[Int],
                            validityDirection: Int, municipalityNumber: Int,
@@ -482,7 +482,7 @@ trait MassTransitStopService extends PointAssetOperations {
 
           //Create a new asset
           create(NewMassTransitStop(position.lon, position.lat, linkId, position.bearing.getOrElse(asset.bearing.get),
-            mergedProperties), username, newPoint, geometry, municipalityCode, Some(roadLink.get.administrativeClass))
+            mergedProperties, roadLink.get.linkSource.value), username, newPoint, geometry, municipalityCode, Some(roadLink.get.administrativeClass))
         } else {
           update(asset, optionalPosition, username, mergedProperties, roadLink.get, operation)
         }
@@ -558,14 +558,6 @@ trait MassTransitStopService extends PointAssetOperations {
     roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId, newTransaction = false)
   }
 
-  private def getLinkSource(linkId: Long): Option[Int] = {
-    roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId, newTransaction = false) match {
-      case Some(roadlink) =>
-        Some(roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId, newTransaction = false).get.linkSource.value)
-      case _ => None
-    }
-  }
-
   override def create(asset: NewMassTransitStop, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass]): Long = {
     withDynTransaction {
       val point = Point(asset.lon, asset.lat)
@@ -584,13 +576,12 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 
   private def create(asset: NewMassTransitStop, username: String, point: Point, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass]): MassTransitStopWithProperties = {
-    val linkSource = getLinkSource(asset.linkId)
     val assetId = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     val nationalId = massTransitStopDao.getNationalBusStopId
     val mValue = calculateLinearReferenceFromPoint(point, geometry)
     val floating = !PointAssetOperations.coordinatesWithinThreshold(Some(point), GeometryUtils.calculatePointFromLinearReference(geometry, mValue))
-    massTransitStopDao.insertLrmPosition(lrmPositionId, mValue, asset.linkId, linkSource)
+    massTransitStopDao.insertLrmPosition(lrmPositionId, mValue, asset.linkId, Some(asset.linkSource))
     massTransitStopDao.insertAsset(assetId, nationalId, asset.lon, asset.lat, asset.bearing, username, municipality, floating)
     massTransitStopDao.insertAssetLink(assetId, lrmPositionId)
 

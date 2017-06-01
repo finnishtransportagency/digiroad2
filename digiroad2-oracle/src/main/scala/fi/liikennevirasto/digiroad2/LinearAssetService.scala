@@ -65,11 +65,12 @@ trait LinearAssetOperations {
   }
 
   private def getLinkSource(linkId: Long): Option[Int] = {
-        roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId, newTransaction = false) match {
-          case Some(roadlink) =>
-            Some(roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId, newTransaction = false).get.linkSource.value)
-          case _ => None
-        }
+    val roadlink = roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId, newTransaction = false)
+    roadlink match {
+      case Some(result) =>
+        Some(roadlink.get.linkSource.value)
+      case _ => None
+    }
   }
 
   /**
@@ -639,7 +640,7 @@ trait LinearAssetOperations {
       }
 
       val createdIdOption = createdValue.map(createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, _, linearAsset.sideCode, createdLinkMeasures._1, createdLinkMeasures._2, username, linearAsset.vvhTimeStamp,
-       getLinkSource(linearAsset.linkId)))
+        Some(roadLink.linkSource.value)))
 
       newIdsToReturn ++ Seq(createdIdOption).flatten
     }
@@ -671,7 +672,7 @@ trait LinearAssetOperations {
       dao.updateSideCode(newExistingIdsToReturn.head, SideCode.TowardsDigitizing)
 
       val created = valueAgainstDigitization.map(createWithoutTransaction(existing.typeId, existing.linkId, _, SideCode.AgainstDigitizing.value, existing.startMeasure, existing.endMeasure, username, existing.vvhTimeStamp,
-        getLinkSource(existing.linkId)))
+        Some(roadLink.linkSource.value)))
 
       newExistingIdsToReturn ++ created
     }
