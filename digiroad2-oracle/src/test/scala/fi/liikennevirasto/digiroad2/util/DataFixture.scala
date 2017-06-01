@@ -935,9 +935,9 @@ object DataFixture {
     }
 
     println("\nExpiring Lighting From OTH Database")
-//    OracleDatabase.withDynSession {
-//      oracleLinearAssetDao.expireAllAssetsByTypeId(lightingAssetId)
-//    }
+    OracleDatabase.withDynSession {
+      oracleLinearAssetDao.expireAllAssetsByTypeId(lightingAssetId)
+    }
     println("\nLighting data Expired")
 
     println("\nFetch Road Numbers From Viite")
@@ -963,20 +963,34 @@ object DataFixture {
             println("\nFetch road addresses to link ids using Viite, trRoadNumber, roadPartNumber start and end " + trl.roadNumber + " " + trl.roadPartNumber + " " + trl.starMValue + " " + trl.endMValue)
             val roadAddresses = roadAddressDao.getRoadAddressesFiltered(trl.roadNumber, trl.roadPartNumber, trl.starMValue, trl.endMValue)
             val roadAddressLinks = roadAddresses.map(ra => ra.linkId).toSet
-            val vvhRoadlinks = roadLinkService.fetchVVHRoadlinks(roadAddressLinks).filter(_.administrativeClass == State.value)
+            val vvhRoadlinks = roadLinkService.fetchVVHRoadlinks(roadAddressLinks).filter(_.administrativeClass == State)
 
             println("roadAddresses fetched: ")
-            roadAddresses.filter(ra => vvhRoadlinks.exists(_.linkId == ra.linkId)).foreach(ra => println(ra.linkId))
+            roadAddresses
+              .filter(ra => vvhRoadlinks.exists(_.linkId == ra.linkId))
+              .foreach { ra =>
+                println(ra.linkId)
+              }
 
             roadAddresses
               .filter(ra => vvhRoadlinks.exists(_.linkId == ra.linkId))
               .foreach { ra =>
-//                val assetId = linearAssetService.dao.createLinearAsset(lightingAssetId, ra.linkId, false, SideCode.BothDirections.value,
-//                  ra.startMValue, ra.endMValue, "batch_process_lighting")
-//                println("\nCreated OTH traffic volume assets form TR data with assetId " + assetId)
-//
-//                linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, tr.kvl)
-//                println("\nCreated OTH property value with value " + tr.kvl + " and assetId " + assetId)
+                val newStartMValue =
+                  if (ra.startAddrMValue >= trl.starMValue) {
+                    ra.startMValue
+                  } else {
+                    (trl.starMValue - ra.startAddrMValue) + ra.startMValue
+                  }
+
+                val newEndMValue =
+                  if (ra.endAddrMValue <= trl.endMValue) {
+                    ra.endMValue
+                  } else {
+                    ra.endMValue - (ra.endAddrMValue - trl.endMValue)
+                  }
+                val assetId = linearAssetService.dao.createLinearAsset(lightingAssetId, ra.linkId, false, SideCode.BothDirections.value,
+                  newStartMValue, newEndMValue, "batch_process_lighting", vvhClient.createVVHTimeStamp(5))
+                println("\nCreated OTH Lighting assets form TR data with assetId " + assetId)
               }
           }
         }
