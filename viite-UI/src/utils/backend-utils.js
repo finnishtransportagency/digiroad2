@@ -289,8 +289,22 @@
       return self;
     };
 
-    this.withProjectsWithLinksById = function(returnData){
+    this.withGetProjectsWithLinksById = function(returnData){
       self.getProjectsWithLinksById = function(){
+        return returnData;
+      };
+      return self;
+    };
+    
+    this.withSaveRoadAddressProject = function(returnData){
+      self.saveRoadAddressProject = function(){
+        return returnData;
+      };
+      return self;
+    };
+
+    this.withGetRoadLinkByLinkId = function(returnData){
+      self.getRoadLinkByLinkId = function(){
         return returnData;
       };
       return self;

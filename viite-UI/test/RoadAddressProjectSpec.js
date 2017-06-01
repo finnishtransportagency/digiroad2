@@ -76,7 +76,7 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
     //     $('.btn-next').prop('disabled', false);
     //     $('.btn-next').attr('disabled', false);
     //     testHelpers.clickNextButton();
-    //     var ol3Feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 5172091);
+    //     var ol3Feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 1717409);
     //     testHelpers.selectSingleFeature(openLayersMap, ol3Feature);
     //     setTimeout(function(){
     //       console.log("Ended the 4th test.");
@@ -86,44 +86,12 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
     //   });
     //
     //   it('Check if the project link was selected ', function(){
-    //     var featureFromProjectLayer = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 5172091);
+    //     var featureFromProjectLayer = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 1717409);
     //     expect(featureFromProjectLayer).to.not.be.undefined;
-    //     expect(featureFromProjectLayer.roadLinkData.linkId).to.be.equal(5172091);
+    //     expect(featureFromProjectLayer.roadLinkData.linkId).to.be.equal(1717409);
     //   });
     // });
 
-    //5-fifth select reserved road link WIP
-    // describe('when selecting one reserved link', function(){
-    //   before(function(done){
-    //     var ol3Feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 5172134);
-    //     testHelpers.selectSingleFeature(openLayersMap, ol3Feature);
-    //     setTimeout(function(){
-    //       done();
-    //     },1000);
-    //   });
-    //
-    //   it('Check if the project link was selected ', function(){
-    //     var featureFromProjectLayer = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(),5172091);
-    //     expect(featureFromProjectLayer).to.not.be.undefined;
-    //     expect(featureFromProjectLayer.roadLinkData.linkId).to.be.equal(5172091);
-    //   });
-    // });
-
-
-    // //5-fifth select reserved road link WIP
-    // describe('when selecting one reserved link', function() {
-    //   before(function(done){
-    //     var ol3Feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 5172091);
-    //     testHelpers.selectSingleFeature(openLayersMap, ol3Feature);
-    //     done();
-    //   });
-    //
-    //   it('it should shown info in the form', function() {
-    //     expect($('[id^=information-content]:visible').length).to.equals(1);
-    //   });
-    // });
-
-    // });
   });
 
 });
