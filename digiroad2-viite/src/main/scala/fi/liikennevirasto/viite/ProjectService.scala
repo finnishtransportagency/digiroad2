@@ -436,7 +436,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def updateRoadAddressWithProject(newState: ProjectState, projectID: Long) ={
-    if((newState.value != ErroredInTR.value || newState.value != Unknown.value) && newState.value == Saved2TR.value){
+    if(newState.value == Saved2TR.value){
       val links = ProjectDAO.getProjectLinks(projectID)
       val changes = RoadAddressChangesDAO.fetchRoadAddressChanges(Set(projectID))
       val vvhRoadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(links.map(_.linkId).toSet,false)
