@@ -104,8 +104,8 @@
         };
 
         var addLayerBehind = function(map, layer, name){
-            var idx = findLayerIndexByName(map, name);
-            map.getLayers().setAt(idx - 1, layer);
+          var idx = findLayerIndexByName(map, name);
+          map.getLayers().insertAt(idx, layer);
         };
 
         vectorLayer.set('name', 'historyDataLayer');

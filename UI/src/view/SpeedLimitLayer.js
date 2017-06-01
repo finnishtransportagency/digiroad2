@@ -319,7 +319,7 @@ window.SpeedLimitLayer = function(params) {
     vectorLayerHistory.set('name', layerName);
 
     var roadLinksLayerIndex = indexOf(map.getLayers(),_.find(map.getLayers().getArray(), function(item){ return item.get('name') == 'road';}));
-    map.getLayers().setAt(roadLinksLayerIndex - 1, vectorLayerHistory);
+    map.getLayers().insertAt(roadLinksLayerIndex, vectorLayerHistory);
     var historySpeedLimits = _.flatten(historySpeedLimitChains);
 
     drawSpeedLimits(historySpeedLimits, vectorLayerHistory);
