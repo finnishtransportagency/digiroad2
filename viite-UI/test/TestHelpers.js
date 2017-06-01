@@ -87,7 +87,8 @@ define(['RoadAddressTestData',
         .withRoadAddressProjectData(RoadAddressProjectTestData.generate())
         .withRoadPartReserved(RoadAddressProjectTestData.generateRoadPartChecker())
         .withProjectLinks(RoadAddressProjectTestData.generateProjectLinkData())
-        .withProjectsWithLinksById(RoadAddressProjectTestData.generateProjectLinksByProjectId())//create this
+        .withProjectsWithLinksById(RoadAddressProjectTestData.generateProjectLinksByProjectId())
+        .withRoadAddressProjects(RoadAddressProjectTestData.generateProject())
         .withRoadAddressCreation();
     };
 

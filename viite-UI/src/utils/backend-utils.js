@@ -133,7 +133,7 @@
         endpart: endPart
       })
         .then(function (x) {
-          return x;
+          eventbus.trigger('roadPartsValidation: checkRoadParts', x);
         });
     });
 
@@ -209,6 +209,12 @@
       afterSave = false;
     };
 
+    this.withRoadAddressProjects = function(returnData){
+      self.getRoadAddressProjects = function(){
+        return returnData;
+      };
+      return self;
+    };
 
     this.withRoadLinkData = function (roadLinkData, afterSaveRoadLinkData) {
       self.getRoadLinks = function(boundingBox, callback) {
