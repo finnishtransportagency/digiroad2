@@ -38,6 +38,19 @@
       }
     });
 
+    elements.expanded.find('#complementaryCheckbox').on('change', function (event) {
+      if ($(event.currentTarget).prop('checked')) {
+        eventbus.trigger('withComplementary:show');
+      } else {
+        if (applicationModel.isDirty()) {
+          $(event.currentTarget).prop('checked', true);
+          new Confirm();
+        } else {
+          eventbus.trigger('withComplementary:hide');
+        }
+      }
+    });
+
     return {
       title: title,
       layerName: layerName,
