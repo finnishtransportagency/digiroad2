@@ -42,6 +42,10 @@
 
     function fetchProjects(){
       projectCollection.getProjects();
+    }
+
+    function bindEvents(){
+
       eventbus.once('roadAddressProjects:fetched', function(projects){
         var unfinishedProjects = _.filter(projects, function(proj){
           return proj.statusCode === 1;
@@ -66,14 +70,8 @@
               }
             });
           });
-          //projectList.show();
         }
       });
-      setTimeout(function(){}, 0);
-
-    }
-
-    function bindEvents(){
 
       projectList.on('click', 'button.cancel', function() {
         hide();

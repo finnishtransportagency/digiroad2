@@ -101,7 +101,7 @@
     selectSingleClick.on('select',function(event) {
       // TODO: allow selection for non-addressed road links
       var selection = _.find(event.selected, function (selectionTarget) {
-        return !_.isUndefined(selectionTarget.projectLinkData) && selectionTarget.projectLinkData.status === projectCollection.STATUS_NOT_HANDLED;
+        return !_.isUndefined(selectionTarget.projectLinkData) && selectionTarget.projectLinkData.status === 0;
       });
       selectedProjectLinkProperty.clean();
       $('.wrapper').remove();
@@ -114,7 +114,7 @@
       condition: ol.events.condition.doubleClick,
       //The new/temporary layer needs to have a style function as well, we define it here.
       style: function(feature, resolution) {
-        if(feature.projectLinkData.status === projectCollection.STATUS_NOT_HANDLED) {
+        if(feature.projectLinkData.status === 0) {
           return new ol.style.Style({
             fill: new ol.style.Fill({
               color: 'rgba(0, 255, 0, 0.75)'
@@ -124,7 +124,7 @@
               width: 8
             })
           });
-        } else if(feature.projectLinkData.status === projectCollection.STATUS_TERMINATED){
+        } else if(feature.projectLinkData.status === 1){
           return new ol.style.Style({
             fill: new ol.style.Fill({
               color: 'rgba(0, 0, 0, 0.75)'
@@ -141,7 +141,7 @@
     selectDoubleClick.on('select',function(event) {
       // TODO: allow selection for non-addressed road links
       var selection = _.find(event.selected, function (selectionTarget) {
-        return !_.isUndefined(selectionTarget.projectLinkData) && selectionTarget.projectLinkData.status === projectCollection.STATUS_NOT_HANDLED;
+        return !_.isUndefined(selectionTarget.projectLinkData) && selectionTarget.projectLinkData.status === 0;
       });
       if (!_.isUndefined(selection))
         selectedProjectLinkProperty.open(selection.projectLinkData.linkId);
