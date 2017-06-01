@@ -440,6 +440,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val links = ProjectDAO.getProjectLinks(projectID)
       val changes = RoadAddressChangesDAO.fetchRoadAddressChanges(Set(projectID))
       val vvhRoadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(links.map(_.linkId).toSet,false)
+      //TODO: ask ProjectDeltaCalculator for Delta, update given set of RoadAddresses to have valid_to = sysdate and copy them as new road addresses with end_date = {projDate}
       val newLinks = changes.filter(_.changeInfo.changeType.value == Expiration.value).flatMap(ci => {
         val link = links.find(_.roadNumber == ci.changeInfo.source.roadNumber.get).get
         val newGeom = GeometryUtils.truncateGeometry3D(vvhRoadLinks.find(_.linkId == link.linkId).get.geometry,link.startMValue, link.endMValue)
