@@ -200,6 +200,8 @@
       eventListener.listenTo(eventbus, layerName + ':unselected', handleUnSelected);
       eventListener.listenTo(eventbus, layerName + ':changed', handleChanged);
       eventListener.listenTo(eventbus, 'application:readOnly', toggleMode);
+      eventListener.listenTo(eventbus, 'withComplementary:show', showWithComplementary);
+      eventListener.listenTo(eventbus, 'withComplementary:hide', show);
     }
 
     function handleCreationCancelled() {
@@ -275,8 +277,14 @@
       });
     }
 
+    function showWithComplementary() {
+      collection.activeComplementary(true);
+      me.refreshView();
+    }
+
     function show(map) {
       vectorLayer.setVisible(true);
+      collection.activeComplementary(false);
       me.show(map);
     }
 

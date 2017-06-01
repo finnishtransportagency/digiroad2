@@ -38,7 +38,7 @@
       }
     });
 
-    elements.expanded.find('#complementaryCheckbox').on('change', function (event) {
+    element.find('#complementaryCheckbox').on('change', function (event) {
       if ($(event.currentTarget).prop('checked')) {
         eventbus.trigger('withComplementary:show');
       } else {
