@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.user.User
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
-case class IncomingRailwayCrossing(lon: Double, lat: Double, linkId: Long, safetyEquipment: Int, name: Option[String]) extends IncomingPointAsset
+case class IncomingRailwayCrossing(lon: Double, lat: Double, linkId: Long, safetyEquipment: Int, name: Option[String], linkSource: Int) extends IncomingPointAsset
 
 class RailwayCrossingService(val roadLinkService: RoadLinkService) extends PointAssetOperations {
   type IncomingAsset = IncomingRailwayCrossing
@@ -33,7 +33,7 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
   }
 
   private def adjustmentOperation(persistedAsset: PersistedAsset, adjustment: AssetAdjustment): Long = {
-    val updatedAsset = IncomingRailwayCrossing(adjustment.lon, adjustment.lat, adjustment.linkId, persistedAsset.safetyEquipment, persistedAsset.name)
+    val updatedAsset = IncomingRailwayCrossing(adjustment.lon, adjustment.lat, adjustment.linkId, persistedAsset.safetyEquipment, persistedAsset.name, persistedAsset.linkSource)
     OracleRailwayCrossingDao.update(adjustment.assetId, updatedAsset, adjustment.mValue, persistedAsset.municipalityCode, "vvh_generated", Some(adjustment.vvhTimeStamp))
   }
 
@@ -47,7 +47,7 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
 
     new PersistedAsset(asset.assetId, asset.linkId, asset.lon, asset.lat,
       asset.mValue, asset.floating, persistedStop.vvhTimeStamp, persistedStop.municipalityCode, persistedStop.safetyEquipment, persistedStop.name,
-      persistedStop.createdBy, persistedStop.createdAt, persistedStop.modifiedBy, persistedStop.modifiedAt)
+      persistedStop.createdBy, persistedStop.createdAt, persistedStop.modifiedBy, persistedStop.modifiedAt, persistedStop.linkSource)
   }
 
   override def create(asset: IncomingRailwayCrossing, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass] = None): Long = {

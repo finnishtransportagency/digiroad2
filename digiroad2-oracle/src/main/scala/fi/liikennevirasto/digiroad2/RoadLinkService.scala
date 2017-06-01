@@ -531,6 +531,21 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     } else
       Nil
   }
+  //TODO this two methods are already created on DROTH-517
+    def getRoadLinkAndComplementaryFromVVH(linkId: Long, newTransaction: Boolean = true): Option[RoadLink] = {
+        val vvhRoadLinks = fetchVVHRoadlinksAndComplementary(Set(linkId))
+        if (newTransaction)
+            withDynTransaction {
+                enrichRoadLinksFromVVH(vvhRoadLinks)
+              }.headOption
+        else
+          enrichRoadLinksFromVVH(vvhRoadLinks).headOption
+      }
+
+  def fetchVVHRoadlinksAndComplementary(linkIds: Set[Long]): Seq[VVHRoadlink] = {
+    if (linkIds.nonEmpty) vvhClient.fetchByLinkIds(linkIds) ++ vvhClient.complementaryData.fetchComplementaryRoadlinks(linkIds)
+    else Seq.empty[VVHRoadlink]
+  }
 
   def getViiteCurrentAndHistoryRoadLinksFromVVH(roadAddressesLinkIds: Set[Long]): (Seq[RoadLink], Seq[VVHHistoryRoadLink]) = {
     val fut = for{

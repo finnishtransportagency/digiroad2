@@ -18,7 +18,7 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 
 import scala.util.Try
 
-case class NewMassTransitStop(lon: Double, lat: Double, linkId: Long, bearing: Int, properties: Seq[SimpleProperty]) extends IncomingPointAsset
+case class NewMassTransitStop(lon: Double, lat: Double, linkId: Long, bearing: Int, properties: Seq[SimpleProperty], linkSource: Int) extends IncomingPointAsset
 
 case class MassTransitStop(id: Long, nationalId: Long, lon: Double, lat: Double, bearing: Option[Int],
                            validityDirection: Int, municipalityNumber: Int,
@@ -34,7 +34,7 @@ case class PersistedMassTransitStop(id: Long, nationalId: Long, linkId: Long, st
                                     validityDirection: Option[Int], bearing: Option[Int],
                                     validityPeriod: Option[String], floating: Boolean, vvhTimeStamp: Long,
                                     created: Modification, modified: Modification,
-                                    propertyData: Seq[Property]) extends PersistedPointAsset with TimeStamps
+                                    propertyData: Seq[Property], linkSource: Int) extends PersistedPointAsset with TimeStamps
 
 case class MassTransitStopRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], linkId: Long, bearing: Option[Int],
                               validityDirection: Int, validFrom: Option[LocalDate], validTo: Option[LocalDate], property: PropertyRow,
@@ -245,7 +245,7 @@ trait MassTransitStopService extends PointAssetOperations {
         end as display_value,
         lrm.id, lrm.start_measure, lrm.end_measure, lrm.link_id,
         a.created_date, a.created_by, a.modified_date, a.modified_by,
-        SDO_CS.TRANSFORM(a.geometry, 4326) AS position_wgs84
+        SDO_CS.TRANSFORM(a.geometry, 4326) AS position_wgs84, lrm.link_source
         from asset a
           join asset_link al on a.id = al.asset_id
           join lrm_position lrm on al.position_id = lrm.id
@@ -352,12 +352,13 @@ trait MassTransitStopService extends PointAssetOperations {
       val stopTypes = extractStopTypes(stopRows)
       val mValue = row.lrmPosition.startMeasure
       val vvhTimeStamp = row.lrmPosition.vvhTimeStamp
+      val linkSource = row.lrmPosition.linkSource
 
       id -> PersistedMassTransitStop(id = row.id, nationalId = row.externalId, linkId = row.linkId, stopTypes = stopTypes,
         municipalityCode = row.municipalityCode, lon = point.x, lat = point.y, mValue = mValue,
         validityDirection = Some(row.validityDirection), bearing = row.bearing,
         validityPeriod = validityPeriod, floating = row.persistedFloating, vvhTimeStamp = vvhTimeStamp,  created = row.created, modified = row.modified,
-        propertyData = properties)
+        propertyData = properties, linkSource = linkSource)
     }.values.toSeq
   }
 
@@ -481,7 +482,7 @@ trait MassTransitStopService extends PointAssetOperations {
 
           //Create a new asset
           create(NewMassTransitStop(position.lon, position.lat, linkId, position.bearing.getOrElse(asset.bearing.get),
-            mergedProperties), username, newPoint, geometry, municipalityCode, Some(roadLink.get.administrativeClass))
+            mergedProperties, asset.linkSource), username, newPoint, geometry, municipalityCode, Some(roadLink.get.administrativeClass))
         } else {
           update(asset, optionalPosition, username, mergedProperties, roadLink.get, operation)
         }
@@ -691,9 +692,11 @@ trait MassTransitStopService extends PointAssetOperations {
       val created = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
       val modified = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
       val wgsPoint = r.nextBytesOption.map(bytesToPoint)
+      val linkSource = r.nextInt()
+
       MassTransitStopRow(id, externalId, assetTypeId, point, linkId, bearing, validityDirection,
         validFrom, validTo, property, created, modified, wgsPoint,
-        lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point, vvhTimeStamp), municipalityCode = municipalityCode, persistedFloating = persistedFloating)
+        lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point, vvhTimeStamp, linkSource), municipalityCode = municipalityCode, persistedFloating = persistedFloating)
     }
   }
 

@@ -543,6 +543,14 @@ class VVHClient(vvhRestApiEndPoint: String) {
     * and OracleLinearAssetDao.createSpeedLimit.
     */
   def fetchByLinkId(linkId: Long): Option[VVHRoadlink] = fetchByLinkIds(Set(linkId)).headOption
+//TODO this mehods is already created on DROTH-517
+  def fetchRoadLinkOrComplementaryFromVVH(linkId: Long): Option[VVHRoadlink] = {
+        val vvhRoadLink = fetchByLinkId(linkId) match {
+          case Some(vvhRoadLink) => Some(vvhRoadLink)
+          case None => complementaryData.fetchComplementaryRoadlink(linkId)
+        }
+        vvhRoadLink
+      }
 
   /**
     * Returns VVH road links by link ids.

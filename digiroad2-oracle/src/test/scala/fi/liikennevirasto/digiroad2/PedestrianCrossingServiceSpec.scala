@@ -67,7 +67,7 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
 
     runWithRollback {
       OraclePedestrianCrossingDao.update(600029, PedestrianCrossingToBePersisted(1611317, 374406.8,
-        6677308.2, 31.550, 235, "Hannu"))
+        6677308.2, 31.550, 235, "Hannu", 1))
       val result = service.getByBoundingBox(testUser, BoundingRectangle(Point(374406, 6677306.5), Point(374408.5, 6677309.5))).head
       result.id should equal(600029)
       result.linkId should equal(1611317)
@@ -104,7 +104,7 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
   test("Create new") {
     runWithRollback {
       val now = DateTime.now()
-      val id = service.create(IncomingPedestrianCrossing(2, 0.0, 388553075), "jakke", Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 235)
+      val id = service.create(IncomingPedestrianCrossing(2, 0.0, 388553075, 1), "jakke", Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 235)
       val assets = service.getPersistedAssetsByIds(Set(id))
 
       assets.size should be(1)
@@ -123,7 +123,8 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
         vvhTimeStamp = asset.vvhTimeStamp,
         municipalityCode = 235,
         createdBy = Some("jakke"),
-        createdAt = asset.createdAt
+        createdAt = asset.createdAt,
+        linkSource = asset.linkSource
       ))
     }
   }

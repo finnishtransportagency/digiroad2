@@ -158,14 +158,14 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("validate request parameters when creating a new mass transit stop", Tag("db")) {
-    val requestPayload = """{"lon": 0, "lat": 0, "linkId": 2, "bearing": 0}"""
+    val requestPayload = """{"lon": 0, "lat": 0, "linkId": 2, "bearing": 0, "linkSource": 1}"""
     postJsonWithUserAuth("/massTransitStops", requestPayload.getBytes) {
       status should equal(400)
     }
   }
 
   test("validate user rights when creating a new mass transit stop", Tag("db")) {
-    val requestPayload = """{"lon": 0, "lat": 0, "linkId": 1, "bearing": 0}"""
+    val requestPayload = """{"lon": 0, "lat": 0, "linkId": 1, "bearing": 0, "linkSource": 1}"""
     postJsonWithUserAuth("/massTransitStops", requestPayload.getBytes) {
       status should equal(401)
     }

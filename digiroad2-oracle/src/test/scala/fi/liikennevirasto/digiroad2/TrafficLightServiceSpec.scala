@@ -75,7 +75,7 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
   test("Create new") {
     runWithRollback {
       val now = DateTime.now()
-      val id = service.create(IncomingTrafficLight(2, 0.0, 388553075), "jakke", Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 235)
+      val id = service.create(IncomingTrafficLight(2, 0.0, 388553075, 1), "jakke", Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 235)
       val assets = service.getPersistedAssetsByIds(Set(id))
 
       assets.size should be(1)
@@ -94,7 +94,8 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
         vvhTimeStamp = asset.vvhTimeStamp,
         municipalityCode = 235,
         createdBy = Some("jakke"),
-        createdAt = asset.createdAt
+        createdAt = asset.createdAt,
+        linkSource = asset.linkSource
       ))
     }
   }
@@ -119,7 +120,7 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
       beforeUpdate.modifiedBy should equal(None)
       beforeUpdate.modifiedAt should equal(None)
 
-      service.update(id = 600070, IncomingTrafficLight(100, 0, 123), linkGeometry, 91, "test")
+      service.update(id = 600070, IncomingTrafficLight(100, 0, 123, 1), linkGeometry, 91, "test")
 
       val afterUpdate = service.getByMunicipality(91).find(_.id == 600070).get
       afterUpdate.id should equal(600070)

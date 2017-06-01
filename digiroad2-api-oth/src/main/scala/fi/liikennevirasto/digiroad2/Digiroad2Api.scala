@@ -250,12 +250,13 @@ Returns empty result as Json message, not as page not found
     assetPropertyService.getEnumeratedPropertyValues(params("assetTypeId").toLong)
   }
 
-  private def massTransitStopPositionParameters(parsedBody: JValue): (Option[Double], Option[Double], Option[Long], Option[Int]) = {
+  private def massTransitStopPositionParameters(parsedBody: JValue): (Option[Double], Option[Double], Option[Long], Option[Int], Int) = {
     val lon = (parsedBody \ "lon").extractOpt[Double]
     val lat = (parsedBody \ "lat").extractOpt[Double]
     val roadLinkId = (parsedBody \ "linkId").extractOpt[Long]
     val bearing = (parsedBody \ "bearing").extractOpt[Int]
-    (lon, lat, roadLinkId, bearing)
+    val linkSource = (parsedBody \ "linkSource").extract[Int]
+    (lon, lat, roadLinkId, bearing, linkSource)
   }
 
   put("/massTransitStops/:id") {
@@ -263,7 +264,7 @@ Returns empty result as Json message, not as page not found
       if (!userProvider.getCurrentUser().isAuthorizedToWrite(municipalityCode))
         halt(Unauthorized("User cannot update mass transit stop " + id + ". No write access to municipality " + municipalityCode))
     }
-    val (optionalLon, optionalLat, optionalLinkId, bearing) = massTransitStopPositionParameters(parsedBody)
+    val (optionalLon, optionalLat, optionalLinkId, bearing, linkSource) = massTransitStopPositionParameters(parsedBody)
     val properties = (parsedBody \ "properties").extractOpt[Seq[SimpleProperty]].getOrElse(Seq())
     val linkId = (parsedBody \ "linkId").extractOpt[Long]
     validateBusStopMaintainerUser(properties)
@@ -285,9 +286,9 @@ Returns empty result as Json message, not as page not found
     }
   }
 
-  private def createMassTransitStop(lon: Double, lat: Double, linkId: Long, bearing: Int, properties: Seq[SimpleProperty]): Long = {
+  private def createMassTransitStop(lon: Double, lat: Double, linkId: Long, bearing: Int, properties: Seq[SimpleProperty], linkSource: Int): Long = {
     val roadLink = vvhClient.fetchByLinkId(linkId).getOrElse(throw new NoSuchElementException)
-    massTransitStopService.create(NewMassTransitStop(lon, lat, linkId, bearing, properties), userProvider.getCurrentUser().username, roadLink.geometry, roadLink.municipalityCode, Some(roadLink.administrativeClass))
+    massTransitStopService.create(NewMassTransitStop(lon, lat, linkId, bearing, properties, linkSource), userProvider.getCurrentUser().username, roadLink.geometry, roadLink.municipalityCode, Some(roadLink.administrativeClass))
   }
 
   private def validateUserRights(linkId: Long) = {
@@ -343,13 +344,14 @@ Returns empty result as Json message, not as page not found
     val lat = positionParameters._2.get
     val linkId = positionParameters._3.get
     val bearing = positionParameters._4.get
+    val linkSource = positionParameters._5
     val properties = (parsedBody \ "properties").extract[Seq[SimpleProperty]]
     validateUserRights(linkId)
     validateBusStopMaintainerUser(properties)
     validateCreationProperties(properties)
     validateBusStopDirections(properties, linkId)
     try {
-      val id = createMassTransitStop(lon, lat, linkId, bearing, properties)
+      val id = createMassTransitStop(lon, lat, linkId, bearing, properties, linkSource)
       massTransitStopService.getById(id)
     } catch {
       case e: RoadAddressException =>
@@ -1044,7 +1046,7 @@ Returns empty result as Json message, not as page not found
       halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     val id = params("id").toLong
     val updatedAsset = (parsedBody \ "asset").extract[service.IncomingAsset]
-    roadLinkService.getRoadLinkFromVVH(updatedAsset.linkId) match {
+    roadLinkService.getRoadLinkAndComplementaryFromVVH(updatedAsset.linkId) match {
       case None => halt(NotFound(s"Roadlink with mml id ${updatedAsset.linkId} does not exist"))
       case Some(link) => service.update(id, updatedAsset, link.geometry, link.municipalityCode, user.username)
     }
@@ -1055,7 +1057,8 @@ Returns empty result as Json message, not as page not found
     if (user.isServiceRoadMaintainer())
       halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     val asset = (parsedBody \ "asset").extract[service.IncomingAsset]
-    for (link <- vvhClient.fetchByLinkId(asset.linkId)) {
+    for (link <- vvhClient.fetchRoadLinkOrComplementaryFromVVH(asset.linkId)) {
+    //for (link <- vvhClient.fetchByLinkId(asset.linkId)) {
       validateUserMunicipalityAccess(user)(link.municipalityCode)
       service.create(asset, user.username, link.geometry, link.municipalityCode, Some(link.administrativeClass))
     }

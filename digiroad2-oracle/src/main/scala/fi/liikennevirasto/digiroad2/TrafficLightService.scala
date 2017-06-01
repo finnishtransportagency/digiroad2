@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.pointasset.oracle.{OracleTrafficLightDao, Tr
 import fi.liikennevirasto.digiroad2.user.User
 import org.slf4j.LoggerFactory
 
-case class IncomingTrafficLight(lon: Double, lat: Double, linkId: Long) extends IncomingPointAsset
+case class IncomingTrafficLight(lon: Double, lat: Double, linkId: Long, linkSource: Int) extends IncomingPointAsset
 
 class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAssetOperations {
   type IncomingAsset = IncomingTrafficLight
@@ -19,7 +19,7 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
   override def update(id: Long, updatedAsset: IncomingAsset, geometry: Seq[Point], municipality: Int, username: String): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat, 0), geometry)
     withDynTransaction {
-      OracleTrafficLightDao.update(id, TrafficLightToBePersisted(updatedAsset.linkId, updatedAsset.lon, updatedAsset.lat, mValue, municipality, username), Some(VVHClient.createVVHTimeStamp(5)))
+      OracleTrafficLightDao.update(id, TrafficLightToBePersisted(updatedAsset.linkId, updatedAsset.lon, updatedAsset.lat, mValue, municipality, username, updatedAsset.linkSource), Some(VVHClient.createVVHTimeStamp(5)))
     }
     id
   }
@@ -35,7 +35,7 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
   override def create(asset: IncomingAsset, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass] = None): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat, 0), geometry)
     withDynTransaction {
-      OracleTrafficLightDao.create(TrafficLightToBePersisted(asset.linkId, asset.lon, asset.lat, mValue, municipality, username), username, VVHClient.createVVHTimeStamp(5))
+      OracleTrafficLightDao.create(TrafficLightToBePersisted(asset.linkId, asset.lon, asset.lat, mValue, municipality, username, asset.linkSource), username, VVHClient.createVVHTimeStamp(5))
     }
   }
 
@@ -50,7 +50,7 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
 
   private def adjustmentOperation(persistedAsset: PersistedAsset, adjustment: AssetAdjustment): Long = {
     OracleTrafficLightDao.update(adjustment.assetId, TrafficLightToBePersisted(adjustment.linkId,
-      adjustment.lon, adjustment.lat, adjustment.mValue, persistedAsset.municipalityCode, "vvh_generated"), Some(adjustment.vvhTimeStamp))
+      adjustment.lon, adjustment.lat, adjustment.mValue, persistedAsset.municipalityCode, "vvh_generated", persistedAsset.linkSource), Some(adjustment.vvhTimeStamp))
   }
 
   override def getByMunicipality(municipalityCode: Int): Seq[PersistedAsset] = {
@@ -63,6 +63,6 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
 
     new PersistedAsset(asset.assetId, asset.linkId, asset.lon, asset.lat,
       asset.mValue, asset.floating, persistedStop.vvhTimeStamp, persistedStop.municipalityCode, persistedStop.createdBy,
-      persistedStop.createdAt, persistedStop.modifiedBy, persistedStop.modifiedAt)
+      persistedStop.createdAt, persistedStop.modifiedBy, persistedStop.modifiedAt, persistedStop.linkSource)
   }
 }

@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.pointasset.oracle.{OraclePedestrianCrossingD
 import fi.liikennevirasto.digiroad2.user.User
 import org.slf4j.LoggerFactory
 
-case class IncomingPedestrianCrossing(lon: Double, lat: Double, linkId: Long) extends IncomingPointAsset
+case class IncomingPedestrianCrossing(lon: Double, lat: Double, linkId: Long, linkSource: Int) extends IncomingPointAsset
 
 class PedestrianCrossingService(val roadLinkService: RoadLinkService) extends PointAssetOperations {
   type IncomingAsset = IncomingPedestrianCrossing
@@ -24,14 +24,14 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService) extends Po
   override def create(asset: IncomingPedestrianCrossing, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass] = None): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat, 0), geometry)
     withDynTransaction {
-      OraclePedestrianCrossingDao.create(PedestrianCrossingToBePersisted(asset.linkId, asset.lon, asset.lat, mValue, municipality, username), username, VVHClient.createVVHTimeStamp(5))
+      OraclePedestrianCrossingDao.create(PedestrianCrossingToBePersisted(asset.linkId, asset.lon, asset.lat, mValue, municipality, username,asset.linkSource), username, VVHClient.createVVHTimeStamp(5))
     }
   }
 
   override def update(id: Long, updatedAsset: IncomingAsset, geometry: Seq[Point], municipality: Int, username: String): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat, 0), geometry)
     withDynTransaction {
-      OraclePedestrianCrossingDao.update(id, PedestrianCrossingToBePersisted(updatedAsset.linkId, updatedAsset.lon, updatedAsset.lat, mValue, municipality, username), Some(VVHClient.createVVHTimeStamp(5)))
+      OraclePedestrianCrossingDao.update(id, PedestrianCrossingToBePersisted(updatedAsset.linkId, updatedAsset.lon, updatedAsset.lat, mValue, municipality, username, updatedAsset.linkSource), Some(VVHClient.createVVHTimeStamp(5)))
     }
     id
   }
@@ -47,7 +47,7 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService) extends Po
 
   private def adjustmentOperation(persistedAsset: PersistedAsset, adjustment: AssetAdjustment): Long = {
     OraclePedestrianCrossingDao.update(adjustment.assetId, PedestrianCrossingToBePersisted(adjustment.linkId,
-      adjustment.lon, adjustment.lat, adjustment.mValue, persistedAsset.municipalityCode, "vvh_generated"), Some(adjustment.vvhTimeStamp))
+      adjustment.lon, adjustment.lat, adjustment.mValue, persistedAsset.municipalityCode, "vvh_generated", persistedAsset.linkSource), Some(adjustment.vvhTimeStamp))
   }
 
   override def getByMunicipality(municipalityCode: Int): Seq[PersistedAsset] = {
@@ -60,7 +60,7 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService) extends Po
 
     new PersistedAsset(asset.assetId, asset.linkId, asset.lon, asset.lat,
       asset.mValue, asset.floating, persistedStop.vvhTimeStamp, persistedStop.municipalityCode, persistedStop.createdBy,
-      persistedStop.createdAt, persistedStop.modifiedBy, persistedStop.modifiedAt)
+      persistedStop.createdAt, persistedStop.modifiedBy, persistedStop.modifiedAt, persistedStop.linkSource)
   }
 }
 

@@ -9,7 +9,7 @@
     };
 
     function fetch(boundingBox) {
-      return backend.getPointAssets(boundingBox, endPointName)
+      return backend.getPointAssetsWithComplementary(boundingBox, endPointName)
         .then(function(assets) {
           eventbus.trigger('pointAssets:fetched');
           return filterComplementaries(assets);

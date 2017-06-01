@@ -36,6 +36,7 @@ trait IncomingPointAsset {
   val lon: Double
   val lat: Double
   val linkId: Long
+  val linkSource: Int
 }
 
 trait PointAsset extends FloatingAsset {
@@ -51,6 +52,7 @@ trait PersistedPointAsset extends PointAsset with IncomingPointAsset {
   val mValue: Double
   val floating: Boolean
   val vvhTimeStamp: Long
+  val linkSource: Int
 }
 
 trait PointAssetOperations {
@@ -76,7 +78,8 @@ trait PointAssetOperations {
   def update(id:Long, updatedAsset: IncomingAsset, geometry: Seq[Point], municipality: Int, username: String): Long
 
   def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[PersistedAsset] = {
-    val roadLinks: Seq[RoadLink] = roadLinkService.getRoadLinksFromVVH(bounds)
+    val roadLinks1: Seq[RoadLink] = roadLinkService.getRoadLinksFromVVH(bounds)
+    val roadLinks: Seq[RoadLink] = roadLinkService.getRoadLinksWithComplementaryFromVVH(bounds)
     getByBoundingBox(user, bounds, roadLinks, Seq(), floatingTreatment)
   }
 

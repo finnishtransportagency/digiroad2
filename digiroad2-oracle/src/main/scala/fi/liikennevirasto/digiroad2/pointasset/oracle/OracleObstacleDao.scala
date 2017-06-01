@@ -19,14 +19,16 @@ case class Obstacle(id: Long, linkId: Long,
                     createdBy: Option[String] = None,
                     createdAt: Option[DateTime] = None,
                     modifiedBy: Option[String] = None,
-                    modifiedAt: Option[DateTime] = None) extends PersistedPointAsset
+                    modifiedAt: Option[DateTime] = None,
+                    linkSource: Int) extends PersistedPointAsset
 
 object OracleObstacleDao {
   // This works as long as there is only one (and exactly one) property (currently type) for obstacles and up to one value
   def fetchByFilter(queryFilter: String => String): Seq[Obstacle] = {
     val query =
       """
-        select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code, ev.value, a.created_by, a.created_date, a.modified_by, a.modified_date
+        select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code, ev.value, a.created_by, a.created_date, a.modified_by,
+        a.modified_date, pos.link_source
         from asset a
         join asset_link al on a.id = al.asset_id
         join lrm_position pos on al.position_id = pos.id
@@ -52,8 +54,9 @@ object OracleObstacleDao {
       val createdDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val modifiedBy = r.nextStringOption()
       val modifiedDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val linkSource = r.nextInt()
 
-      Obstacle(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, obstacleType, createdBy, createdDateTime, modifiedBy, modifiedDateTime)
+      Obstacle(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, obstacleType, createdBy, createdDateTime, modifiedBy, modifiedDateTime, linkSource)
     }
   }
 
@@ -65,8 +68,8 @@ object OracleObstacleDao {
         into asset(id, asset_type_id, created_by, created_date, municipality_code)
         values ($id, 220, $username, sysdate, $municipality)
 
-        into lrm_position(id, start_measure, link_id, adjusted_timestamp)
-        values ($lrmPositionId, $mValue, ${obstacle.linkId}, $adjustmentTimestamp)
+        into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source)
+        values ($lrmPositionId, $mValue, ${obstacle.linkId}, $adjustmentTimestamp, ${obstacle.linkSource})
 
         into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId)
@@ -111,7 +114,8 @@ object OracleObstacleDao {
     val query =
       """
         select * from (
-          select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code, ev.value, a.created_by, a.created_date, a.modified_by, a.modified_date
+          select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code, ev.value, a.created_by, a.created_date, a.modified_by, a.modified_date,
+          pos.link_source
             from asset a
             join asset_link al on a.id = al.asset_id
             join lrm_position pos on al.position_id = pos.id

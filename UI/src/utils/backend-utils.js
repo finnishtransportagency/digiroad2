@@ -166,7 +166,7 @@
       });
     };
 
-    this.getPointAssets = latestResponseRequestor(function(boundingBox, endPointName) {
+    this.getPointAssetsWithComplementary = latestResponseRequestor(function(boundingBox, endPointName) {
       return {
         url: 'api/' + endPointName + '?bbox=' + boundingBox
       };

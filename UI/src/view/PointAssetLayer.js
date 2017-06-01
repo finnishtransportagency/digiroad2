@@ -254,8 +254,8 @@
       var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), selectedLon, selectedLat);
       var projectionOnNearestLine = geometrycalculator.nearestPointOnLine(nearestLine, { x: selectedLon, y: selectedLat });
       var bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
-
-      var asset = createAssetWithPosition(selectedLat, selectedLon, nearestLine, projectionOnNearestLine, bearing);
+      var linkSource = 1
+      var asset = createAssetWithPosition(selectedLat, selectedLon, nearestLine, projectionOnNearestLine, bearing, linkSource);
 
       vectorLayer.getSource().addFeature(createFeature(asset));
       selectedAsset.place(asset);

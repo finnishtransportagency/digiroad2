@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.pointasset.oracle._
 import fi.liikennevirasto.digiroad2.user.User
 import org.slf4j.LoggerFactory
 
-case class IncomingObstacle(lon: Double, lat: Double, linkId: Long, obstacleType: Int) extends IncomingPointAsset
+case class IncomingObstacle(lon: Double, lat: Double, linkId: Long, obstacleType: Int, linkSource: Int) extends IncomingPointAsset
 
 class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOperations {
   type IncomingAsset = IncomingObstacle
@@ -46,7 +46,7 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
   }
 
   private def adjustmentOperation(persistedAsset: PersistedAsset, adjustment: AssetAdjustment): Long = {
-    val updated = IncomingObstacle(adjustment.lon, adjustment.lat, adjustment.linkId, persistedAsset.obstacleType)
+    val updated = IncomingObstacle(adjustment.lon, adjustment.lat, adjustment.linkId, persistedAsset.obstacleType, persistedAsset.linkSource)
     OracleObstacleDao.update(adjustment.assetId, updated, adjustment.mValue, "vvh_generated", persistedAsset.municipalityCode, Some(adjustment.vvhTimeStamp))
   }
 
@@ -60,7 +60,7 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
 
     new PersistedAsset(asset.assetId, asset.linkId, asset.lon, asset.lat,
       asset.mValue, asset.floating, persistedStop.vvhTimeStamp, persistedStop.municipalityCode, persistedStop.obstacleType, persistedStop.createdBy,
-      persistedStop.createdAt, persistedStop.modifiedBy, persistedStop.modifiedAt)
+      persistedStop.createdAt, persistedStop.modifiedBy, persistedStop.modifiedAt, persistedStop.linkSource)
 
   }
 

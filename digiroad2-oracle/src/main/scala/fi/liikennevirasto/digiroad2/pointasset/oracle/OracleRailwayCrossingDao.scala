@@ -19,7 +19,8 @@ case class RailwayCrossing(id: Long, linkId: Long,
                            createdBy: Option[String] = None,
                            createdAt: Option[DateTime] = None,
                            modifiedBy: Option[String] = None,
-                           modifiedAt: Option[DateTime] = None) extends PersistedPointAsset
+                           modifiedAt: Option[DateTime] = None,
+                           linkSource: Int) extends PersistedPointAsset
 
 object OracleRailwayCrossingDao {
   // This works as long as there are only two properties of different types for railway crossings
@@ -27,7 +28,7 @@ object OracleRailwayCrossingDao {
     val query =
       s"""
         select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code, ev.value,
-        tpv.value_fi, a.created_by, a.created_date, a.modified_by, a.modified_date
+        tpv.value_fi, a.created_by, a.created_date, a.modified_by, a.modified_date, pos.link_source
         from asset a
         join asset_link al on a.id = al.asset_id
         join lrm_position pos on al.position_id = pos.id
@@ -54,8 +55,9 @@ object OracleRailwayCrossingDao {
       val createdDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val modifiedBy = r.nextStringOption()
       val modifiedDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val linkSource = r.nextInt()
 
-      RailwayCrossing(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, safetyEquipment, name, createdBy, createdDateTime, modifiedBy, modifiedDateTime)
+      RailwayCrossing(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, safetyEquipment, name, createdBy, createdDateTime, modifiedBy, modifiedDateTime, linkSource)
     }
   }
 
@@ -67,8 +69,8 @@ object OracleRailwayCrossingDao {
         into asset(id, asset_type_id, created_by, created_date, municipality_code)
         values ($id, 230, $username, sysdate, $municipality)
 
-        into lrm_position(id, start_measure, link_id, adjusted_timestamp)
-        values ($lrmPositionId, $mValue, ${asset.linkId}, $adjustedTimestamp)
+        into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source)
+        values ($lrmPositionId, $mValue, ${asset.linkId}, $adjustedTimestamp, ${asset.linkSource})
 
         into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId)

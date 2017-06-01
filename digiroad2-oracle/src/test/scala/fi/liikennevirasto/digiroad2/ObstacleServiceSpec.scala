@@ -91,7 +91,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
 
   test("Create new obstacle") {
     runWithRollback {
-      val id = service.create(IncomingObstacle(2.0, 0.0, 388553075, 2), "jakke", Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 235)
+      val id = service.create(IncomingObstacle(2.0, 0.0, 388553075, 2, 1), "jakke", Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 235)
 
       val assets = service.getPersistedAssetsByIds(Set(id))
 
@@ -115,7 +115,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
   test("Update obstacle") {
     runWithRollback {
       val obstacle = service.getById(600046).get
-      val updated = IncomingObstacle(obstacle.lon, obstacle.lat, obstacle.linkId, 2)
+      val updated = IncomingObstacle(obstacle.lon, obstacle.lat, obstacle.linkId, 2, 1)
 
       service.update(obstacle.id, updated, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 235, "unit_test")
       val updatedObstacle = service.getById(600046).get
@@ -129,7 +129,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
 
   test("Asset can be outside link within treshold") {
     runWithRollback {
-      val id = service.create(IncomingObstacle(373494.183, 6677669.927, 1191950690, 2), "unit_test", Seq(Point(373500.349, 6677657.152), Point(373494.182, 6677669.918)), 235)
+      val id = service.create(IncomingObstacle(373494.183, 6677669.927, 1191950690, 2, 1), "unit_test", Seq(Point(373500.349, 6677657.152), Point(373494.182, 6677669.918)), 235)
 
       val asset = service.getById(id).get
 
@@ -169,7 +169,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
     }
 
     runWithRollback {
-      val id = service.create(IncomingObstacle(240877.69416595, 6700681.8198731, 5797521, 2), "unit_test", roadLink.geometry, 853)
+      val id = service.create(IncomingObstacle(240877.69416595, 6700681.8198731, 5797521, 2, 1), "unit_test", roadLink.geometry, 853)
 
       val asset = service.getById(id).get
 

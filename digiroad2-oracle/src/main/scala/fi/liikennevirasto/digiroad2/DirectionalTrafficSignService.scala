@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.pointasset.oracle._
 
-case class IncomingDirectionalTrafficSign(lon: Double, lat: Double, linkId: Long, validityDirection: Int, text: Option[String], bearing: Option[Int]) extends IncomingPointAsset
+case class IncomingDirectionalTrafficSign(lon: Double, lat: Double, linkId: Long, validityDirection: Int, text: Option[String], bearing: Option[Int], linkSource: Int) extends IncomingPointAsset
 
 
 class DirectionalTrafficSignService(val roadLinkService: RoadLinkService) extends PointAssetOperations {
