@@ -41,11 +41,9 @@ class PolygonTools {
     geometries.flatMap{
       geometry =>
       val intersectionGeometry = geometry.intersection(BoundingBoxAsPoly)
-      if (intersectionGeometry.getGeometryType.toLowerCase.startsWith("polygon")) {
-        Seq(intersectionGeometry.asInstanceOf[Polygon])
-      } else if (intersectionGeometry.isEmpty) {
-        Seq.empty[Polygon]
-      } else if (intersectionGeometry.getGeometryType.toLowerCase.contains("multipolygon")) {
+      if (intersectionGeometry.isInstanceOf[Polygon]) {
+        polygonToPolygonSeq(intersectionGeometry.asInstanceOf[Polygon])
+      } else if (intersectionGeometry.isInstanceOf[MultiPolygon]) {
         multiPolygonToPolygonSeq(intersectionGeometry.asInstanceOf[MultiPolygon])
       } else
         Seq.empty[Polygon]
@@ -54,6 +52,7 @@ class PolygonTools {
 
   def getPolygonByArea(areaId: Int): Seq[Polygon] = {
     val geometry = getAreaGeometry(areaId)
+
     val polygon = geometry match {
       case _ if geometry.getGeometryType.toLowerCase.startsWith("polygon") =>
         Seq(geometry.asInstanceOf[Polygon])
@@ -76,6 +75,7 @@ class PolygonTools {
 
   private def multiPolygonToPolygonSeq (multiPoly: MultiPolygon): Seq[Polygon] ={
     var geomCounter=multiPoly.getNumGeometries
+
     var  listPolygons= ListBuffer.empty[Polygon]
     while (geomCounter>0)
     {
@@ -86,5 +86,16 @@ class PolygonTools {
       geomCounter-=1
     }
     listPolygons
+  }
+
+  private def polygonToPolygonSeq(polygon: Polygon) : Seq[Polygon] = {
+    def isPolygonEmpty(polygon: Polygon) = {
+      polygon.getNumPoints() > 0
+    }
+
+    if(isPolygonEmpty(polygon))
+      Seq(polygon)
+    else
+      Seq.empty[Polygon]
   }
 }
