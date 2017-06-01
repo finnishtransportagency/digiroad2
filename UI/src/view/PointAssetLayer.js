@@ -15,8 +15,6 @@
     var me = this;
     me.minZoomForContent = zoomlevels.minZoomForAssets;
 
-    var showComplementaryRoads = false;
-
     var vectorSource = new ol.source.Vector();
     var vectorLayer = new ol.layer.Vector({
        source : vectorSource,
@@ -206,7 +204,7 @@
       eventListener.listenTo(eventbus, layerName + ':changed', handleChanged);
       eventListener.listenTo(eventbus, 'application:readOnly', toggleMode);
       eventListener.listenTo(eventbus, 'withComplementary:show', showWithComplementary);
-      eventListener.listenTo(eventbus, 'withComplementary:hide', show);
+      eventListener.listenTo(eventbus, 'withComplementary:hide', hideComplementary);
     }
 
     function handleCreationCancelled() {
@@ -289,9 +287,14 @@
 
     function show(map) {
       vectorLayer.setVisible(true);
-      collection.activeComplementary(false);
       me.refreshView();
       me.show(map);
+    }
+
+    function hideComplementary() {
+      collection.activeComplementary(false);
+      selectedAsset.close();
+      me.refreshView();
     }
 
     function hide() {
