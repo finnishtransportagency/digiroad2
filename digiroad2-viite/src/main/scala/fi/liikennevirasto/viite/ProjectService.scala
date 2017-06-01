@@ -439,15 +439,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val links = ProjectDAO.getProjectLinks(projectID)
       val changes = RoadAddressChangesDAO.fetchRoadAddressChanges(Set(projectID))
       val vvhRoadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(links.map(_.linkId).toSet,false)
-      val newLinks = changes.filter(_.changeInfo.changeType.value == 5).map(ci => {
+      val newLinks = changes.filter(_.changeInfo.changeType.value == 5).flatMap(ci => {
         val link = links.find(_.roadNumber == ci.changeInfo.source.roadNumber.get).get
         val newGeom = GeometryUtils.truncateGeometry3D(vvhRoadLinks.find(_.linkId == link.linkId).get.geometry,link.startMValue, link.endMValue)
-        if(ci.changeInfo.source.endRoadPartNumber != ci.changeInfo.source.startRoadPartNumber){
-          new RoadAddress(-1000, ci.changeInfo.source.roadNumber.get, ci.changeInfo.source.startRoadPartNumber.get, Track.apply(ci.changeInfo.source.trackCode.get.toInt), ci.changeInfo.discontinuity, ci.changeInfo.source.startAddressM.get, ci.changeInfo.source.endAddressM.get, Option(ci.changeDate),None, None, link.lrmPositionId, link.linkId, ci.changeInfo.source.startAddressM.get, ci.changeInfo.source.endAddressM.get, link.sideCode, link.calibrationPoints, link.floating, newGeom)
-          new RoadAddress(-1000, ci.changeInfo.source.roadNumber.get, ci.changeInfo.source.endRoadPartNumber.get, Track.apply(ci.changeInfo.source.trackCode.get.toInt), ci.changeInfo.discontinuity, ci.changeInfo.source.startAddressM.get, ci.changeInfo.source.endAddressM.get, Option(ci.changeDate),None, None, link.lrmPositionId, link.linkId, ci.changeInfo.source.startAddressM.get, ci.changeInfo.source.endAddressM.get, link.sideCode, link.calibrationPoints, link.floating, newGeom)
+        if(ci.changeInfo.source.endRoadPartNumber.get != ci.changeInfo.source.startRoadPartNumber.get){
+          Seq(new RoadAddress(-1000, ci.changeInfo.source.roadNumber.get, ci.changeInfo.source.startRoadPartNumber.get, Track.apply(ci.changeInfo.source.trackCode.get.toInt), ci.changeInfo.discontinuity, ci.changeInfo.source.startAddressM.get, ci.changeInfo.source.endAddressM.get, Option(ci.changeDate),None, None, link.lrmPositionId, link.linkId, ci.changeInfo.source.startAddressM.get, ci.changeInfo.source.endAddressM.get, link.sideCode, link.calibrationPoints, link.floating, newGeom),
+          new RoadAddress(-1000, ci.changeInfo.source.roadNumber.get, ci.changeInfo.source.endRoadPartNumber.get, Track.apply(ci.changeInfo.source.trackCode.get.toInt), ci.changeInfo.discontinuity, ci.changeInfo.source.startAddressM.get, ci.changeInfo.source.endAddressM.get, Option(ci.changeDate),None, None, link.lrmPositionId, link.linkId, ci.changeInfo.source.startAddressM.get, ci.changeInfo.source.endAddressM.get, link.sideCode, link.calibrationPoints, link.floating, newGeom))
         }
         else {
-          new RoadAddress(-1000, ci.changeInfo.source.roadNumber.get, ci.changeInfo.source.startRoadPartNumber.get, Track.apply(ci.changeInfo.source.trackCode.get.toInt), ci.changeInfo.discontinuity, ci.changeInfo.source.startAddressM.get, ci.changeInfo.source.endAddressM.get, Option(ci.changeDate),None, None, link.lrmPositionId, link.linkId, ci.changeInfo.source.startAddressM.get, ci.changeInfo.source.endAddressM.get, link.sideCode, link.calibrationPoints, link.floating, newGeom)
+          Seq(new RoadAddress(-1000, ci.changeInfo.source.roadNumber.get, ci.changeInfo.source.startRoadPartNumber.get, Track.apply(ci.changeInfo.source.trackCode.get.toInt), ci.changeInfo.discontinuity, ci.changeInfo.source.startAddressM.get, ci.changeInfo.source.endAddressM.get, Option(ci.changeDate),None, None, link.lrmPositionId, link.linkId, ci.changeInfo.source.startAddressM.get, ci.changeInfo.source.endAddressM.get, link.sideCode, link.calibrationPoints, link.floating, newGeom))
         }
       })
 

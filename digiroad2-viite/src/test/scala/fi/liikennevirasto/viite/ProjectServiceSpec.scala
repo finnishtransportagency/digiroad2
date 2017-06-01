@@ -309,7 +309,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
               old_road_number,old_road_part_number,old_track_code,old_start_addr_m,old_end_addr_m)
              Values ($projectId,5,$roadNumber,$roadPartNumber,1,0,10,1,1,8,$roadNumber,$roadPartNumber,1,0,10)""".execute
 
-      projectService.updateRoadAddressWithProject(ProjectState.Sent2TR, projectId)
+      projectService.updateRoadAddressWithProject(ProjectState.Saved2TR, projectId)
 
       val roadsAfterChanges = RoadAddressDAO.fetchByLinkId(Set(linkId)).head
 
