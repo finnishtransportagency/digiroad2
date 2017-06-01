@@ -990,6 +990,8 @@ object DataFixture {
                   }
                 val assetId = linearAssetService.dao.createLinearAsset(lightingAssetId, ra.linkId, false, SideCode.BothDirections.value,
                   newStartMValue, newEndMValue, "batch_process_lighting", vvhClient.createVVHTimeStamp(5))
+
+                linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, 1)
                 println("\nCreated OTH Lighting assets form TR data with assetId " + assetId)
               }
           }
