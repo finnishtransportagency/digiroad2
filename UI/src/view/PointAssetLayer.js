@@ -15,6 +15,8 @@
     var me = this;
     me.minZoomForContent = zoomlevels.minZoomForAssets;
 
+    var showComplementaryRoads = false;
+
     var vectorSource = new ol.source.Vector();
     var vectorLayer = new ol.layer.Vector({
        source : vectorSource,
@@ -137,7 +139,10 @@
         roadLayer.drawRoadLinks(roadCollection.getAll(), map.getView().getZoom());
          selectControl.activate();
       });
-      roadCollection.fetch(map.getView().calculateExtent(map.getSize()));
+      if(collection.complementaryIsActive())
+        roadCollection.fetchWithComplementary(map.getView().calculateExtent(map.getSize()));
+      else
+        roadCollection.fetch(map.getView().calculateExtent(map.getSize()));
       collection.fetch(map.getView().calculateExtent(map.getSize())).then(function(assets) {
         if (selectedAsset.exists()) {
           var assetsWithoutSelectedAsset = _.reject(assets, {id: selectedAsset.getId()});
@@ -285,6 +290,7 @@
     function show(map) {
       vectorLayer.setVisible(true);
       collection.activeComplementary(false);
+      me.refreshView();
       me.show(map);
     }
 
