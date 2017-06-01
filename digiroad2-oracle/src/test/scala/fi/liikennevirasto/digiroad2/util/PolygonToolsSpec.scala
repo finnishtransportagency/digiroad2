@@ -31,7 +31,7 @@ class PolygonToolsSpec extends FunSuite with Matchers {
   test("Polygon & BoundingBox intersection test") {
     val boundingBox= BoundingRectangle(Point(24,60), Point(25,61))
     val poly1=geomBuilder.polygon(24.2,60.5, 24.8,60.5, 24.8,59, 24.2,59)
-    val interceptedPolygon= polygonTools.geometryInterceptorToBoundingBox(poly1,boundingBox).head
+    val interceptedPolygon= polygonTools.geometryInterceptorToBoundingBox(Seq(poly1),boundingBox).head
     interceptedPolygon.getCoordinates.contains(new Coordinate(24.2,60.5)) should be (true)
     interceptedPolygon.getCoordinates.contains(new Coordinate(24.2,60)) should be (true)
     interceptedPolygon.getCoordinates.contains(new Coordinate(24.8,60)) should be (true)
@@ -41,21 +41,21 @@ class PolygonToolsSpec extends FunSuite with Matchers {
   test("Multipolygon & BoundingBox intersection test") {
     val boundingBox= BoundingRectangle(Point(0,0), Point(100,100))
     val poly1= wKTParser.read("MULTIPOLYGON(((20 80,40 80,40 60,20 60, 20 80)),((70 80, 90 80, 90 60, 70 60, 70 80)))")
-    val interceptedPolygonListSize= polygonTools.geometryInterceptorToBoundingBox(poly1,boundingBox).length
+    val interceptedPolygonListSize= polygonTools.geometryInterceptorToBoundingBox(Seq(poly1),boundingBox).length
     interceptedPolygonListSize should be (2)
   }
 
   test("Polygon & BoundingBox intersection no-common points test") {
     val boundingBox= BoundingRectangle(Point(240,600), Point(250,610))
     val poly1=geomBuilder.polygon(24.2,60.5, 24.8,60.5, 24.8,59, 24.2,59)
-    val interceptedPolygon= polygonTools.geometryInterceptorToBoundingBox(poly1,boundingBox).head
+    val interceptedPolygon= polygonTools.geometryInterceptorToBoundingBox(Seq(poly1),boundingBox).head
     interceptedPolygon.isEmpty should be (true)
   }
 
   test("Polygon & BoundingBox intersects common line, but has no common area") {
     val bounds= BoundingRectangle(Point(564000, 6930000),Point(566000, 6931000))
     val poly1=geomBuilder.polygon(564000, 6930000, 568000, 6930000, 568000, 6920000, 564000, 6920000)
-    val interceptedPolygon= polygonTools.geometryInterceptorToBoundingBox(poly1,bounds)
+    val interceptedPolygon= polygonTools.geometryInterceptorToBoundingBox(Seq(poly1),bounds)
     interceptedPolygon.isEmpty should be (true)
   }
 }

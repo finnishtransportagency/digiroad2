@@ -27,30 +27,33 @@ class PolygonTools {
 
   /**
     *
-    * @param geometry jts Geometry
+    * @param geometries jts Geometries
     * @param boundingBox  BoundingRectangle
     * @return returns Sequence of JTS Polygons that are with in bounding box
     */
-  def geometryInterceptorToBoundingBox(geometry: Geometry, boundingBox: BoundingRectangle): Seq[Polygon] = {
+  def geometryInterceptorToBoundingBox(geometries: Seq[Geometry], boundingBox: BoundingRectangle): Seq[Polygon] = {
     val leftBottomP = boundingBox.leftBottom
     val rightTopP = boundingBox.rightTop
     val leftTopP = Point(leftBottomP.x, rightTopP.y)
     val rightBottom = Point(rightTopP.x, leftBottomP.y)
     val BoundingBoxAsPoly = geomBuilder.polygon(leftTopP.x, leftTopP.y, rightTopP.x, rightTopP.y, rightBottom.x, rightBottom.y, leftBottomP.x, leftBottomP.y)
-    val intersectionGeometry = geometry.intersection(BoundingBoxAsPoly)
-    if (intersectionGeometry.getGeometryType.toLowerCase.startsWith("polygon")) {
-      Seq(intersectionGeometry.asInstanceOf[Polygon])
-    } else if (intersectionGeometry.isEmpty) {
-      Seq.empty[Polygon]
-    } else if (intersectionGeometry.getGeometryType.toLowerCase.contains("multipolygon")) {
-      multiPolygonToPolygonSeq(intersectionGeometry.asInstanceOf[MultiPolygon])
-    } else
-      Seq.empty[Polygon]
+
+    geometries.flatMap{
+      geometry =>
+      val intersectionGeometry = geometry.intersection(BoundingBoxAsPoly)
+      if (intersectionGeometry.getGeometryType.toLowerCase.startsWith("polygon")) {
+        Seq(intersectionGeometry.asInstanceOf[Polygon])
+      } else if (intersectionGeometry.isEmpty) {
+        Seq.empty[Polygon]
+      } else if (intersectionGeometry.getGeometryType.toLowerCase.contains("multipolygon")) {
+        multiPolygonToPolygonSeq(intersectionGeometry.asInstanceOf[MultiPolygon])
+      } else
+        Seq.empty[Polygon]
+    }
   }
 
   def getPolygonByArea(areaId: Int): Seq[Polygon] = {
     val geometry = getAreaGeometry(areaId)
-
     val polygon = geometry match {
       case _ if geometry.getGeometryType.toLowerCase.startsWith("polygon") =>
         Seq(geometry.asInstanceOf[Polygon])
@@ -61,13 +64,17 @@ class PolygonTools {
     polygon
   }
 
+  def getAreasGeometries(areadIds: Set[Int]): Seq[Geometry] ={
+    areadIds.map(getAreaGeometry).toSeq
+  }
+
   def getAreaGeometry(areaId: Int): Geometry = {
     val wKTParser = new WKTReader()
     val areaChoose= new getServiceArea()
     wKTParser.read(areaChoose.getArea(areaId))
   }
 
-  def multiPolygonToPolygonSeq (multiPoly: MultiPolygon): Seq[Polygon] ={
+  private def multiPolygonToPolygonSeq (multiPoly: MultiPolygon): Seq[Polygon] ={
     var geomCounter=multiPoly.getNumGeometries
     var  listPolygons= ListBuffer.empty[Polygon]
     while (geomCounter>0)
