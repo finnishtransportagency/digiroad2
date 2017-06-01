@@ -303,6 +303,13 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       projectLink.isEmpty should be (false)
       errmsg should be ("ok")
       projectId = proj.id
+      val projectLinkId = projectLink.get.id
+      val projectLinkProjectId = projectLink.get.projectId
+      val terminatedValue = LinkStatus.Terminated.value
+      //Changing the status of the test link to terminated
+      sqlu"""Update Project_Link Set Status = $terminatedValue
+            Where ID = $projectLinkId And PROJECT_ID = $projectLinkProjectId""".execute
+
       //Creation of test road_address_changes
       sqlu"""insert into road_address_changes
              (project_id,change_type,new_road_number,new_road_part_number,new_track_code,new_start_addr_m,new_end_addr_m,new_discontinuity,new_road_type,new_ely,
