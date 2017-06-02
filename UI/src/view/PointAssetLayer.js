@@ -77,7 +77,7 @@
               roadLayer.selectRoadLink(roadCollection.getRoadLinkByLinkId(nearestLine.linkId).getData());
               feature.features.getArray()[0].getGeometry().setCoordinates([newPosition.x, newPosition.y]);
               var newBearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
-              selectedAsset.set({lon: newPosition.x, lat: newPosition.y, linkId: nearestLine.linkId, geometry: feature.features.getArray()[0].getGeometry(), floating: false, bearing: newBearing});
+              selectedAsset.set({lon: newPosition.x, lat: newPosition.y, linkId: nearestLine.linkId, geometry: feature.features.getArray()[0].getGeometry(), floating: false, bearing: newBearing, linkSource: nearestLine.linkSource});
             }
           }
         }
