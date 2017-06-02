@@ -39,7 +39,8 @@
             trafficDirection: vector.trafficDirection,
             start: start_point,
             end: end_point,
-            distance: point_distance
+            distance: point_distance,
+            linkSource: vector.linkSource
           };
         }
       }
