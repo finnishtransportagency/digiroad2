@@ -87,7 +87,8 @@ object OracleTrafficLightDao {
            set
            start_measure = ${trafficLight.mValue},
            link_id = ${trafficLight.linkId},
-           adjusted_timestamp = ${adjustedTimeStamp}
+           adjusted_timestamp = ${adjustedTimeStamp},
+           link_source = ${trafficLight.linkSource}
            where id = (select position_id from asset_link where asset_id = $id)
         """.execute
       case _  =>
@@ -95,7 +96,8 @@ object OracleTrafficLightDao {
           update lrm_position
            set
            start_measure = ${trafficLight.mValue},
-           link_id = ${trafficLight.linkId}
+           link_id = ${trafficLight.linkId},
+           link_source = ${trafficLight.linkSource}
            where id = (select position_id from asset_link where asset_id = $id)
         """.execute
     }

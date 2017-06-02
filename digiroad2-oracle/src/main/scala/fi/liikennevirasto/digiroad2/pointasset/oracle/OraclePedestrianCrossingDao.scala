@@ -35,7 +35,8 @@ object OraclePedestrianCrossingDao {
            set
            start_measure = ${persisted.mValue},
            link_id = ${persisted.linkId},
-           adjusted_timestamp = ${adjustedTimeStamp}
+           adjusted_timestamp = ${adjustedTimeStamp},
+           link_source = ${persisted.linkSource}
            where id = (select position_id from asset_link where asset_id = $id)
         """.execute
       case _ =>
@@ -43,7 +44,8 @@ object OraclePedestrianCrossingDao {
           update lrm_position
            set
            start_measure = ${persisted.mValue},
-           link_id = ${persisted.linkId}
+           link_id = ${persisted.linkId},
+           link_source = ${persisted.linkSource}
            where id = (select position_id from asset_link where asset_id = $id)
         """.execute
     }

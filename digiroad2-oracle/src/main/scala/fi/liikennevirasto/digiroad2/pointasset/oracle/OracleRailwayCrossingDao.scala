@@ -98,7 +98,8 @@ object OracleRailwayCrossingDao {
            set
            start_measure = $mValue,
            link_id = ${railwayCrossing.linkId},
-           adjusted_timestamp = ${adjustedTimeStamp}
+           adjusted_timestamp = ${adjustedTimeStamp},
+           link_source = ${railwayCrossing.linkSource}
            where id = (select position_id from asset_link where asset_id = $id)
         """.execute
       case _ =>
@@ -106,7 +107,8 @@ object OracleRailwayCrossingDao {
           update lrm_position
            set
            start_measure = $mValue,
-           link_id = ${railwayCrossing.linkId}
+           link_id = ${railwayCrossing.linkId},
+           link_source = ${railwayCrossing.linkSource}
            where id = (select position_id from asset_link where asset_id = $id)
         """.execute
     }
