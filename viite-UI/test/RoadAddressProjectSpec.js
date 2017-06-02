@@ -1,6 +1,5 @@
 /*jshint expr: true*/
 define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers) {
-// define(['chai', 'TestHelpers'], function(chai, testHelpers) {
   var expect = chai.expect;
   var assert = chai.assert;
 
@@ -9,7 +8,6 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
     var openLayersMap;
     before(function(done) {
       var backend = testHelpers.fakeBackend(13, testHelpers.selectTestData('roadAddress'),354810.0, 6676460.0);
-      // 6679154I:359436
 
       testHelpers.restartApplication(function(map) {
         openLayersMap = map;
@@ -25,7 +23,6 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
       $('[id^=projectListButton]:visible').prop('disabled', false);
       $('[id^=projectListButton]:visible').attr('disabled', false);
       testHelpers.clickProjectListButton();
-      console.log("Ended the first test.");
       done();
     });
 
@@ -41,7 +38,6 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
         $('[id*="open-project"]:visible').prop('disabled', false);
         $('[id*="open-project"]:visible').attr('disabled', false);
         testHelpers.clickNewProjectButton();
-        console.log("Ended the second test");
         done();
       });
 
@@ -67,7 +63,6 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
         eventbus.on('roadPartsValidation:checkRoadParts', function(validationResult){
           if(validationResult.success == "ok"){
             done();
-            console.log("Ended the 3rd test");
           }
         });
         testHelpers.clickReserveButton();
@@ -80,25 +75,33 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
     });
 
     // 4-fourth -click in the next-Seuraava button
-    // describe('when clicking in next aka Seuraava button and select one reserved link', function() {
-    //   before(function (done) {
-    //     eventbus.once('roadAddressProject:fetched',function (){
-    //       var ol3Feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 1717275);
-    //       testHelpers.selectSingleFeature(openLayersMap, ol3Feature);
-    //       console.log("Ended the 4th test.");
-    //       setTimeout(function(){
-    //         done();
-    //       },1000);
-    //     });
-    //     testHelpers.clickNextButton();
-    //   });
-    //
-    //   it('Check if the project link was selected ', function(){
-    //     var featureFromProjectLayer = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 1717275);
-    //     expect(featureFromProjectLayer).to.not.be.undefined;
-    //     expect(featureFromProjectLayer.roadLinkData.linkId).to.be.equal(1717275);
-    //   });
-    // });
+    describe('when clicking in next aka Seuraava button and select one reserved link', function() {
+      before(function (done) {
+        eventbus.once('roadAddressProject:fetched',function (){
+          var ol3Feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 1717275);
+          testHelpers.selectSingleFeatureByInteraction(openLayersMap, ol3Feature, testHelpers.getSingleClickNameProjectLinkLayer());
+          setTimeout(function(){
+            done();
+          },1000);
+        });
+        testHelpers.clickNextButton();
+      });
+
+      it('Check if the project link was selected ', function(){
+        var featureFromProjectLayerNotHandled = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 1717275);
+        var featureFromProjectLayerTerminated = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 1717361);
+        var featureFromProjectLayerNotReserved = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 499896971);
+        expect(featureFromProjectLayerNotHandled).to.not.be.undefined;
+        expect(featureFromProjectLayerNotHandled.projectLinkData.linkId).to.be.equal(1717275);
+        expect(featureFromProjectLayerNotHandled.projectLinkData.status).to.be.equal(0);
+        expect(featureFromProjectLayerTerminated).to.not.be.undefined;
+        expect(featureFromProjectLayerTerminated.projectLinkData.linkId).to.be.equal(1717361);
+        expect(featureFromProjectLayerTerminated.projectLinkData.status).to.be.equal(1);
+        expect(featureFromProjectLayerNotReserved).to.not.be.undefined;
+        expect(featureFromProjectLayerNotReserved.projectLinkData.linkId).to.be.equal(499896971);
+        expect(featureFromProjectLayerNotReserved.projectLinkData.status).to.be.equal(99);
+      });
+    });
 
   });
 

@@ -98,6 +98,8 @@
       }
     });
 
+    selectSingleClick.set('name','selectSingleClickInteractionPLL');
+
     selectSingleClick.on('select',function(event) {
       // TODO: allow selection for non-addressed road links
       var selection = _.find(event.selected, function (selectionTarget) {
@@ -137,6 +139,8 @@
         }
       }
     });
+
+    selectDoubleClick.set('name','selectDoubleClickInteractionPLL');
 
     selectDoubleClick.on('select',function(event) {
       // TODO: allow selection for non-addressed road links

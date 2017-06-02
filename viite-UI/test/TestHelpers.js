@@ -31,9 +31,19 @@ define(['RoadAddressTestData',
     var getRoadAddressProjectLayerName = function() {
       return 'roadAddressProject';
     };
-    var getSingleClickName = function() {
-      return 'selectSingleClickInteraction';
+    var getSingleClickNameLinkPropertyLayer = function() {
+      return 'selectSingleClickInteractionLPL';
     };
+    var getDoubleClickNameLinkPropertyLayer = function() {
+      return 'selectDoubleClickInteractionLPL';
+    };
+    var getSingleClickNameProjectLinkLayer = function() {
+      return 'selectSingleClickInteractionPLL';
+    };
+    var getDoubleClickNameProjectLinkLayer = function() {
+      return 'selectDoubleClickInteractionPLL';
+    };
+
     var getDoubleClickName = function() {
       return 'selectDoubleClickInteraction';
     };
@@ -208,7 +218,7 @@ define(['RoadAddressTestData',
     var getFeatureByLinkId = function(map, layerName, linkId){
       var features = getFeatures(map, layerName);
       return _.find(features, function(feature){
-        return feature.roadLinkData.linkId === linkId;
+        return (layerName == "roadAddressProject" ? feature.projectLinkData.linkId === linkId : feature.roadLinkData.linkId === linkId);
       });
     };
 
@@ -219,9 +229,9 @@ define(['RoadAddressTestData',
       });
     };
 
-    var selectSingleFeature = function(map, feature){
+    var selectSingleFeatureByInteraction = function(map, feature, interactionName){
       var interaction = _.find(map.getInteractions().getArray(), function(interaction) {
-        return interaction.get('name') === 'selectSingleClickInteraction';
+        return interaction.get('name') === interactionName;
       });
       interaction.getFeatures().clear();
       interaction.getFeatures().push(feature);
@@ -241,7 +251,10 @@ define(['RoadAddressTestData',
       getPickRoadsLayerName: getPickRoadsLayerName,
       getRoadAddressProjectLayerName: getRoadAddressProjectLayerName,
       getSimulatedRoadsLayerName: getSimulatedRoadsLayerName,
-      getSingleClickName: getSingleClickName,
+      getSingleClickNameLinkPropertyLayer: getSingleClickNameLinkPropertyLayer,
+      getDoubleClickNameLinkPropertyLayer: getDoubleClickNameLinkPropertyLayer,
+      getSingleClickNameProjectLinkLayer: getSingleClickNameProjectLinkLayer,
+      getDoubleClickNameProjectLinkLayer: getDoubleClickNameProjectLinkLayer,
       getDoubleClickName: getDoubleClickName,
       restartApplication: restartApplication,
       getPixelFromCoordinateAsync: getPixelFromCoordinateAsync,
@@ -266,6 +279,6 @@ define(['RoadAddressTestData',
       getFeaturesRoadLinkData: getFeaturesRoadLinkData,
       getFeatureByLinkId: getFeatureByLinkId,
       getRoadLinkDataByLinkId: getRoadLinkDataByLinkId,
-      selectSingleFeature: selectSingleFeature
+      selectSingleFeatureByInteraction: selectSingleFeatureByInteraction
     };
   });

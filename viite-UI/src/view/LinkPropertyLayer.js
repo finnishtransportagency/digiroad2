@@ -184,7 +184,7 @@
         setGeneralOpacity(1);
       }
     });
-    selectDoubleClick.set('name','selectDoubleClickInteraction');
+    selectDoubleClick.set('name','selectDoubleClickInteractionLPL');
 
 
     var zoomDoubleClickListener = function(event) {
@@ -217,7 +217,7 @@
         return styler.generateStyleByFeature(feature.roadLinkData,map.getView().getZoom(), true);
       }
     });
-    selectSingleClick.set('name','selectSingleClickInteraction');
+    selectSingleClick.set('name','selectSingleClickInteractionLPL');
 
     //We add the defined interaction to the map.
     map.addInteraction(selectSingleClick);

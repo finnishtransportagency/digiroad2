@@ -25,7 +25,7 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
 
       before(function(done){
         var ol3Feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadLayerName(), floatingsLinkIds[Math.round(Math.random())]);
-        testHelpers.selectSingleFeature(openLayersMap, ol3Feature);
+        testHelpers.selectSingleFeatureByInteraction(openLayersMap, ol3Feature, testHelpers.getSingleClickNameLinkPropertyLayer());
         done();
       });
 
@@ -57,7 +57,7 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
     describe('Selecting a unknown road to transfer the floatings', function(){
       before(function(done){
         var ol3Feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getPickRoadsLayerName(), unknownRoadLinkId);
-        testHelpers.selectSingleFeature(openLayersMap, ol3Feature);
+        testHelpers.selectSingleFeatureByInteraction(openLayersMap, ol3Feature, testHelpers.getSingleClickNameLinkPropertyLayer());
         setTimeout(function(){
           done();
         },1000);
