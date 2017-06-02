@@ -133,7 +133,7 @@
         endpart: endPart
       })
         .then(function (x) {
-          eventbus.trigger('roadPartsValidation: checkRoadParts', x);
+          eventbus.trigger('roadPartsValidation:checkRoadParts', x);
         });
     });
 
@@ -278,12 +278,14 @@
 
     this.withRoadPartReserved = function(returnData){
       self.checkIfRoadpartReserved = function(){
+        eventbus.trigger('roadPartsValidation:checkRoadParts', returnData);
         return returnData;
       };
       return self;
     };
     this.withProjectLinks = function(returnData){
-      self.getProjectLinks = function(){
+      self.getProjectLinks = function(params, callback){
+        callback(returnData);
         return returnData;
       };
       return self;
@@ -295,7 +297,8 @@
       };
       return self;
     };
-    
+
+
     this.withSaveRoadAddressProject = function(returnData){
       self.saveRoadAddressProject = function(){
         return returnData;
@@ -303,8 +306,17 @@
       return self;
     };
 
+    this.withCreateRoadAddressProject = function(returnData){
+      self.createRoadAddressProject = function(data, successCallback){
+        successCallback(returnData);
+        return returnData;
+      };
+      return self;
+    };
+
     this.withGetRoadLinkByLinkId = function(returnData){
-      self.getRoadLinkByLinkId = function(){
+      self.getRoadLinkByLinkId = function(linkId, callback){
+        callback(returnData);
         return returnData;
       };
       return self;

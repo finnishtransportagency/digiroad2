@@ -86,10 +86,11 @@ define(['RoadAddressTestData',
         .withGetTransferResult(selectTestData('transferFloating'))
         .withRoadAddressProjectData(RoadAddressProjectTestData.generate())
         .withRoadPartReserved(RoadAddressProjectTestData.generateRoadPartChecker())
-        .withProjectLinks(RoadAddressProjectTestData.gpl())
+        .withProjectLinks(RoadAddressProjectTestData.generateProjectLinks())
         .withGetProjectsWithLinksById(RoadAddressProjectTestData.generateProjectLinksByProjectId())
         .withRoadAddressProjects(RoadAddressProjectTestData.generateProject())
         .withGetRoadLinkByLinkId(RoadAddressProjectTestData.generateRoadLinkByLinkId())
+        .withCreateRoadAddressProject(RoadAddressProjectTestData.generateCreateRoadAddressProject())
         .withRoadAddressCreation();
     };
 
