@@ -197,4 +197,12 @@ object ProjectDAO {
        """
     Q.queryNA[Long](query).list
   }
+
+  def removeProjectLinksById(projectLinkIds: Set[Long])= {
+    val query =
+      s"""
+         DELETE FROM Project_Link WHERE id IN (${projectLinkIds.mkString(",")})
+       """
+    Q.updateNA(query).first
+  }
 }

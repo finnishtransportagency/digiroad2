@@ -22,6 +22,13 @@ class ProjectLinkDaoSpec  extends FunSuite with Matchers{
     }
   }
 
+  private def toProjectLink(project: RoadAddressProject)(roadAddress: RoadAddress): ProjectLink = {
+    ProjectLink(id=NewRoadAddress, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track,
+      roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
+      roadAddress.endDate, modifiedBy=Option(project.createdBy), 0L, roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
+      roadAddress.sideCode, roadAddress.calibrationPoints, floating=false, roadAddress.geom, project.id, LinkStatus.NotHandled)
+  }
+
   def addprojects(): Unit ={
     sqlu"""insert into project (id,state,name,ely,created_by, start_date) VALUES (1,0,'testproject',1,'automatedtest', sysdate)""".execute
     sqlu"""insert into project (id,state,name,ely,created_by, start_date) VALUES (2,0,'testproject2',1,'automatedtest', sysdate)""".execute
@@ -70,12 +77,6 @@ class ProjectLinkDaoSpec  extends FunSuite with Matchers{
   }
 
   test("create road address project with project links") {
-    def toProjectLink(project: RoadAddressProject)(roadAddress: RoadAddress): ProjectLink = {
-      ProjectLink(id=NewRoadAddress, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track,
-        roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
-        roadAddress.endDate, modifiedBy=Option(project.createdBy), 0L, roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
-        roadAddress.sideCode, roadAddress.calibrationPoints, floating=false, roadAddress.geom, project.id, LinkStatus.NotHandled)
-    }
     val address=ReservedRoadPart(5:Long, 203:Long, 203:Long, 5.5:Double, Discontinuity.apply("jatkuva"), 8:Long, None:Option[DateTime], None:Option[DateTime])
     runWithRollback {
       val id = Sequences.nextViitePrimaryKeySeqValue
@@ -91,15 +92,30 @@ class ProjectLinkDaoSpec  extends FunSuite with Matchers{
   }
 
   test("get projects waiting TR response") {
-  val address=ReservedRoadPart(5:Long, 203:Long, 203:Long, 5.5:Double, Discontinuity.apply("jatkuva"), 8:Long, None:Option[DateTime], None:Option[DateTime])
-  runWithRollback {
-    val waitingCountp=  ProjectDAO.getProjectsWithWaitingTRStatus().length
-    val id = Sequences.nextViitePrimaryKeySeqValue
-    val rap = RoadAddressProject(id, ProjectState.apply(2), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(address))
-    ProjectDAO.createRoadAddressProject(rap)
-    val waitingCountNow=  ProjectDAO.getProjectsWithWaitingTRStatus().length
-    waitingCountNow - waitingCountp  should be (1)
+    val address=ReservedRoadPart(5:Long, 203:Long, 203:Long, 5.5:Double, Discontinuity.apply("jatkuva"), 8:Long, None:Option[DateTime], None:Option[DateTime])
+    runWithRollback {
+      val waitingCountp=  ProjectDAO.getProjectsWithWaitingTRStatus().length
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val rap = RoadAddressProject(id, ProjectState.apply(2), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(address))
+      ProjectDAO.createRoadAddressProject(rap)
+      val waitingCountNow=  ProjectDAO.getProjectsWithWaitingTRStatus().length
+      waitingCountNow - waitingCountp  should be (1)
+    }
   }
+
+  test("check the removal of project links"){
+    val address=ReservedRoadPart(5:Long, 203:Long, 203:Long, 5.5:Double, Discontinuity.apply("jatkuva"), 8:Long, None:Option[DateTime], None:Option[DateTime])
+    runWithRollback{
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(address))
+      ProjectDAO.createRoadAddressProject(rap)
+      val addresses = RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(rap))
+      ProjectDAO.create(addresses)
+      ProjectDAO.getRoadAddressProjectById(id).nonEmpty should be(true)
+      val projectLinks = ProjectDAO.getProjectLinks(id)
+      ProjectDAO.removeProjectLinksById(projectLinks.map(_.id).toSet)
+      ProjectDAO.getProjectLinks(id).nonEmpty should be(false)
+    }
   }
 
 }

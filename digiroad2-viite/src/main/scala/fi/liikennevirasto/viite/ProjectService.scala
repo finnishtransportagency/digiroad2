@@ -444,7 +444,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       //Expiring old addresses
       RoadAddressDAO.expireById(delta.terminations.map(_.id).toSet)
       //Creating new addresses with the applicable changes
-      RoadAddressDAO.create(newLinks, None)
+      val newRoads = RoadAddressDAO.create(newLinks, None)
+      //Remove the ProjectLinks from PROJECT_LINK table
+      val projectLinks = ProjectDAO.getProjectLinks(projectID, Some(LinkStatus.Terminated))
+      ProjectDAO.removeProjectLinksById(projectLinks.map(_.projectId).toSet)
+      newRoads
     } else {
       throw new RuntimeException(s"Project state not at Saved2TR: $newState")
     }
