@@ -10,7 +10,7 @@ import fi.liikennevirasto.viite.dao.ChangeType.Expiration
 import fi.liikennevirasto.viite.dao.ProjectState._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink, RoadAddressLinkLike}
-import fi.liikennevirasto.viite.process.{ProjectDeltaCalculator, RoadAddressFiller}
+import fi.liikennevirasto.viite.process.{Delta, ProjectDeltaCalculator, RoadAddressFiller}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
@@ -18,6 +18,7 @@ import scala.collection.mutable.ListBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
+import scala.util.control.NonFatal
 
 class ProjectService(roadAddressService: RoadAddressService, roadLinkService: RoadLinkService, eventbus: DigiroadEventBus) {
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
@@ -81,8 +82,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def projDateValidation(reservedParts:Seq[ReservedRoadPart], projDate:DateTime): Option[String] = {
-    reservedParts.foreach( part => if(part.startDate.nonEmpty && part.startDate.get.isAfter(projDate)) return Option(s"Tieosalla TIE ${part.roadNumber} OSA ${part.roadPartNumber} alkupäivämäärä <start_date> on uudempi kuin tieosoiteprojektin alkupäivämäärä <alkupvm projektin kentästä>, tarkista tiedot."))
-    reservedParts.foreach( part => if(part.endDate.nonEmpty && part.endDate.get.isBefore(projDate)) return Option(s"Tieosalla TIE ${part.roadNumber} OSA ${part.roadPartNumber} alkupäivämäärä <start_date> on uudempi kuin tieosoiteprojektin alkupäivämäärä <alkupvm projektin kentästä>, tarkista tiedot."))
+    reservedParts.foreach( part => {
+      if(part.startDate.nonEmpty && part.startDate.get.isAfter(projDate)) return Option(s"Tieosalla TIE ${part.roadNumber} OSA ${part.roadPartNumber} alkupäivämäärä ${part.startDate.get.toString("dd.MM.yyyy")} on uudempi kuin tieosoiteprojektin alkupäivämäärä ${projDate.toString("dd.MM.yyyy")}, tarkista tiedot.")
+      if(part.endDate.nonEmpty && part.endDate.get.isAfter(projDate)) return Option(s"Tieosalla TIE ${part.roadNumber} OSA ${part.roadPartNumber} loppupäivämäärä ${part.endDate.get.toString("dd.MM.yyyy")} on uudempi kuin tieosoiteprojektin alkupäivämäärä ${projDate.toString("dd.MM.yyyy")}, tarkista tiedot.")
+    })
     None
   }
 
@@ -109,11 +112,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @return
     */
   private def addLinksToProject(project: RoadAddressProject): Option[String] = {
-    def toProjectLink(roadAddress: RoadAddress): ProjectLink = {
+    def toProjectLink(roadTypeMap: Map[Long, RoadType])(roadAddress: RoadAddress): ProjectLink = {
       ProjectLink(id=NewRoadAddress, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track,
         roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
         roadAddress.endDate, modifiedBy=Option(project.createdBy), 0L, roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
-        roadAddress.sideCode, roadAddress.calibrationPoints, floating=false, roadAddress.geom, project.id, LinkStatus.NotHandled)
+        roadAddress.sideCode, roadAddress.calibrationPoints, floating=false, roadAddress.geom, project.id,
+        LinkStatus.NotHandled, roadTypeMap.getOrElse(roadAddress.linkId, RoadType.Unknown))
     }
     //TODO: Check that there are no floating road addresses present when starting
     val errors = project.reservedParts.map(roadAddress =>
@@ -121,12 +125,29 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         s"TIE ${roadAddress.roadNumber} OSA: ${roadAddress.roadPartNumber}"
       } else "").filterNot(_ == "")
     if (errors.nonEmpty)
-      return Some(s"Seuraavia tieosia ei löytynyt tietokannasta: ${errors.mkString(", ")}")
+      Some(s"Seuraavia tieosia ei löytynyt tietokannasta: ${errors.mkString(", ")}")
     else {
-      val addresses = project.reservedParts.flatMap(roadaddress =>
-        RoadAddressDAO.fetchByRoadPart(roadaddress.roadNumber, roadaddress.roadPartNumber, false).map(toProjectLink))
-      ProjectDAO.create(addresses)
-      None
+      val elyErrors = project.reservedParts.map(roadAddress =>
+      if (project.ely.nonEmpty && roadAddress.ely != project.ely.get) {
+        s"TIE ${roadAddress.roadNumber} OSA: ${roadAddress.roadPartNumber} (ELY != ${project.ely.get})"
+      } else "").filterNot(_ == "")
+      if (elyErrors.nonEmpty)
+        return Some(s"Seuraavat tieosat ovat eri ELY-numerolla kuin projektin muut osat: ${errors.mkString(", ")}")
+      val addresses = project.reservedParts.flatMap { roadaddress =>
+        val addressesOnPart = RoadAddressDAO.fetchByRoadPart(roadaddress.roadNumber, roadaddress.roadPartNumber, false)
+        val mapping = roadLinkService.getRoadLinksByLinkIdsFromVVH(addressesOnPart.map(_.linkId).toSet, false)
+          .map(rl => rl.linkId -> RoadAddressLinkBuilder.getRoadType(rl.administrativeClass, rl.linkType)).toMap
+        addressesOnPart.map(toProjectLink(mapping))
+      }
+      val ely = project.reservedParts.map(_.ely)
+      if (ely.distinct.size > 1) {
+        Some(s"Tieosat ovat eri ELYistä")
+      }  else {
+        ProjectDAO.create(addresses)
+        if (project.ely.isEmpty)
+          ProjectDAO.updateProjectELY(project, ely.head)
+        None
+      }
     }
   }
   private def createFormOfReservedLinksToSavedRoadParts(project: RoadAddressProject): (Seq[ProjectFormLine], Option[ProjectLink]) = {
@@ -298,11 +319,20 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   }
 
-  def updateProjectLinkStatus(projectId: Long, linkIds: Set[Long], linkStatus: LinkStatus, userName: String): Unit = {
+  def updateProjectLinkStatus(projectId: Long, linkIds: Set[Long], linkStatus: LinkStatus, userName: String): Boolean = {
     withDynTransaction{
       val projectLinks = ProjectDAO.getProjectLinks(projectId)
       val changed = projectLinks.filter(pl => linkIds.contains(pl.linkId)).map(_.id).toSet
       ProjectDAO.updateProjectLinkStatus(changed, linkStatus, userName)
+      try {
+        val delta = ProjectDeltaCalculator.delta(projectId)
+        addProjectDeltaToDB(delta,projectId)
+        true
+      } catch {
+        case ex: RoadAddressException =>
+          logger.info("Delta calculation not possible: " + ex.getMessage)
+          false
+      }
     }
   }
 
@@ -318,13 +348,34 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @param projectId Project to publish
     * @return optional error message, empty if no error
     */
-  def publishProject(projectId: Long): Option[String] = {
+  def publishProject(projectId: Long): PublishResult = {
     // TODO: Check that project actually is finished: projectLinkPublishable(projectId)
-    // TODO: use ProjectDeltaCalculator to calculate delta
-    // TODO: Do the changes given in Delta in database
     // TODO: Run post-change tests for the roads that have been edited and throw an exception to roll back if not acceptable
-    Some("Not implemented")
+    withDynTransaction {
+      try {
+        val delta=ProjectDeltaCalculator.delta(projectId)
+        if(!addProjectDeltaToDB(delta,projectId)) {return PublishResult(false, false, Some("Muutostaulun luonti epäonnistui. Tarkasta ely"))}
+        val trProjectStateMessage = getRoadAddressChangesAndSendToTR(Set(projectId))
+        trProjectStateMessage.status match {
+          case it if 200 until 300 contains it => {
+            setProjectStatusToSend2TR(projectId)
+            PublishResult(true, true, Some(trProjectStateMessage.reason))
+          }
+          case _ => {
+            //rollback
+            PublishResult(true, false, Some(trProjectStateMessage.reason))
+          }
+        }
+      } catch{
+        case NonFatal(e) =>  PublishResult(false, false, None)
+      }
+    }
   }
+
+  private def addProjectDeltaToDB(projectDelta:Delta,projectId:Long):Boolean= {
+    return  ProjectDAO.insertDeltaToRoadChangeTable(projectDelta,projectId)
+  }
+
 
   private def toProjectAddressLink(ral: RoadAddressLinkLike): ProjectAddressLink = {
     ProjectAddressLink(ral.id, ral.linkId, ral.geometry, ral.length, ral.administrativeClass, ral.linkType, ral.roadLinkType,
@@ -375,10 +426,23 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def updateProjectStatusIfNeeded(currentStatus:ProjectState, newStatus:ProjectState, projectId:Long) :(ProjectState)= {
+  private def getTRErrorMessage(trProject:Option[TRProjectStatus]):String = {
+    trProject match {
+      case Some(trProjectobject) => trProjectobject.errorMessage.getOrElse("")
+      case None => ""
+      case _ => ""
+    }
+  }
+
+  def setProjectStatusToSend2TR(projectId:Long) =
+  {
+    ProjectDAO.updateProjectStatus(projectId, ProjectState.Sent2TR,"")
+  }
+
+  def updateProjectStatusIfNeeded(currentStatus:ProjectState, newStatus:ProjectState, errorMessage:String,projectId:Long) :(ProjectState)= {
     if (currentStatus.value!=newStatus.value && newStatus != ProjectState.Unknown)
     {
-      ProjectDAO.updateProjectStatus(projectId,newStatus)
+      ProjectDAO.updateProjectStatus(projectId,newStatus,errorMessage)
     }
     if (newStatus != ProjectState.Unknown){
       newStatus
@@ -395,9 +459,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
   def updateProjectsWaitingResponseFromTR(): Unit =
   {
-
     val listOfPendingProjects=getProjectsPendingInTR()
-
     for(project<-listOfPendingProjects)
     {
       withDynSession {
@@ -409,12 +471,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   private def checkprojectstatus(projectID: Long) =
   {
-    val projectstatus=ProjectDAO.getProjectstatus(projectID)
+    val projectstatus=ProjectDAO.getProjectStatus(projectID)
     if (projectstatus.isDefined)
     {
       val currentState=projectstatus.getOrElse(ProjectState.Unknown)
+      val trProjectState=ViiteTierekisteriClient.getProjectStatusObject(projectID)
       val newState =getStatusFromTRObject(ViiteTierekisteriClient.getProjectStatusObject(projectID)).getOrElse(ProjectState.Unknown)
-      val updatedStatus = updateProjectStatusIfNeeded(currentState,newState,projectID)
+      val errorMessage = getTRErrorMessage(trProjectState)
+      val updatedStatus = updateProjectStatusIfNeeded(currentState,newState,errorMessage,projectID)
       updateRoadAddressWithProject(newState, projectID)
       updatedStatus
     }
@@ -453,4 +517,5 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       throw new RuntimeException(s"Project state not at Saved2TR: $newState")
     }
   }
+  case class PublishResult(validationSuccess: Boolean, sendSuccess: Boolean, errorMessage: Option[String])
 }

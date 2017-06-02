@@ -190,7 +190,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val user = userProvider.getCurrentUser()
     val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
     val roadAddressProject= RoadAddressProject(project.id, ProjectState.apply(project.status), project.name,
-      user.username, DateTime.now(), "-", formatter.parseDateTime(project.startDate), DateTime.now(), project.additionalInfo, project.roadPartList)
+      user.username, DateTime.now(), "-", formatter.parseDateTime(project.startDate), DateTime.now(), project.additionalInfo, project.roadPartList, None)
     try {
       val (projectSaved, addr, info, success) = projectService.createRoadLinkProject(roadAddressProject)
       Map("project" -> projectToApi(projectSaved), "projectAddresses" -> addr, "formInfo" -> info,
@@ -200,36 +200,26 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  post("/roadlinks/roadaddress/project/sendToTR"){
-     (parsedBody \ "projectID").extractOpt[Long] match
-       {
-       case Some(s)=>
-         {
-           println( s"publishing project $s")
-           //TODO call getRoadAddressChangesAndSendToTR(projectID). if success change projectstatus to "sent to TR"
-           Map("projectSent" -> "TODO")
-
-         }
-       case _=> BadRequest(s"Invalid arguments")
-     }
-     Map("projectSent" -> "TODO")
-
+  post("/roadlinks/roadaddress/project/sendToTR") {
+    (parsedBody \ "projectID").extractOpt[Long].map(projectService.publishProject)
+      .getOrElse(BadRequest(s"Invalid arguments"))
   }
 
 
-  put("/roadlinks/roadaddress/project/save"){
+    put("/roadlinks/roadaddress/project/save"){
     val project = parsedBody.extract[RoadAddressProjectExtractor]
     val user = userProvider.getCurrentUser()
     val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
     val roadAddressProject= RoadAddressProject(project.id, ProjectState.apply(project.status), project.name,
-      user.username, DateTime.now(), "-", formatter.parseDateTime(project.startDate), DateTime.now(), project.additionalInfo, project.roadPartList)
+      user.username, DateTime.now(), "-", formatter.parseDateTime(project.startDate), DateTime.now(), project.additionalInfo, project.roadPartList, None)
     try {
       val (projectSaved, addr, _, success) = projectService.saveRoadLinkProject(roadAddressProject)
       val info = projectService.getProjectsWithReservedRoadParts(projectSaved.id)._2
       Map("project" -> projectToApi(projectSaved), "projectAddresses" -> addr, "formInfo" -> info,
         "success" -> success)
     } catch {
-      case ex: IllegalArgumentException => NotFound(s"Project id ${project.id} not found")
+      case ex: IllegalArgumentException =>
+        NotFound(s"Project id ${project.id} not found")
     }
   }
 
@@ -290,16 +280,17 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val user = userProvider.getCurrentUser()
 
     val modification = parsedBody.extract[RoadAddressProjectLinkUpdate]
-    projectService.updateProjectLinkStatus(modification.projectId, modification.linkIds.toSet,
+    val updated = projectService.updateProjectLinkStatus(modification.projectId, modification.linkIds.toSet,
       LinkStatus.apply(modification.newStatus), user.username)
-    Map("projectId" -> modification.projectId, "publishable" -> projectService.projectLinkPublishable(modification.projectId))
+    Map("projectId" -> modification.projectId, "publishable" -> (updated &&
+      projectService.projectLinkPublishable(modification.projectId)))
   }
 
   post("/project/publish"){
     val user = userProvider.getCurrentUser()
     val projectId = params.get("projectId")
 
-    projectId.map(_.toLong).map(projectService.publishProject).map {
+    projectId.map(_.toLong).map(projectService.publishProject).map(_.errorMessage).map {
       case Some(s) => PreconditionFailed(s)
       case _ => Map("status" -> "ok")
     }.getOrElse(BadRequest("Missing mandatory 'projectId' parameter"))
@@ -461,7 +452,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "dateModified" -> { if (roadAddressProject.dateModified==null){null} else {formatToString(roadAddressProject.dateModified.toString)}},
       "startDate" -> { if (roadAddressProject.startDate==null){null} else {formatToString(roadAddressProject.startDate.toString)}},
       "modifiedBy" -> roadAddressProject.modifiedBy,
-      "additionalInfo" -> roadAddressProject.additionalInfo
+      "additionalInfo" -> roadAddressProject.additionalInfo,
+      "statusInfo" -> roadAddressProject.statusInfo
     )
   }
 
@@ -475,7 +467,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "createdBy" -> roadAddressProject.createdBy,
       "modifiedBy" -> roadAddressProject.modifiedBy,
       "name" -> roadAddressProject.name,
-      "status" -> roadAddressProject.status
+      "status" -> roadAddressProject.status,
+      "statusInfo" -> roadAddressProject.statusInfo
     )
   }
 
