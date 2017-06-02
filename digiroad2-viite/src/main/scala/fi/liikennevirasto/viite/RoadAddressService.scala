@@ -313,7 +313,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val unMergedCount = RoadAddressDAO.queryById(data.merged).size
     if (unMergedCount != data.merged.size)
       throw new InvalidAddressDataException("Data modified while updating, rolling back transaction: some source rows no longer valid")
-    val mergedCount = updateMergedSegments(data.merged)
+    val mergedCount = expireRoadAddresses(data.merged)
     if (mergedCount == data.merged.size)
       createMergedSegments(data.created)
     else
@@ -324,7 +324,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     mergedRoadAddress.grouped(500).foreach(group => RoadAddressDAO.create(group, Some("Automatic_merged")))
   }
 
-  def updateMergedSegments(expiredIds: Set[Long]) = {
+  def expireRoadAddresses(expiredIds: Set[Long]) = {
     expiredIds.grouped(500).map(group => RoadAddressDAO.expireById(group)).sum
   }
 
