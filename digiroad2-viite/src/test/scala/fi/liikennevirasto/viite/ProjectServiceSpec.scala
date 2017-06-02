@@ -169,11 +169,32 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
     }
   }
 
-  test("Fetch more recent project links than project") {
+  test("Validate road part dates with project date - startDate") {
     val projDate = DateTime.parse("2015-01-01")
     val addresses = List(ReservedRoadPart(5:Long, 5:Long, 205:Long, 5:Double, Discontinuity.apply("jatkuva"), 8:Long, Option(DateTime.parse("2017-01-01")):Option[DateTime], None:Option[DateTime]))
     val errorMsg = projectService.projDateValidation(addresses, projDate)
     errorMsg should not be (None)
+  }
+
+  test("Validate road part dates with project date - startDate valid") {
+    val projDate = DateTime.parse("2015-01-01")
+    val addresses = List(ReservedRoadPart(5:Long, 5:Long, 205:Long, 5:Double, Discontinuity.apply("jatkuva"), 8:Long, Option(DateTime.parse("2010-01-01")):Option[DateTime], None:Option[DateTime]))
+    val errorMsg = projectService.projDateValidation(addresses, projDate)
+    errorMsg should be (None)
+  }
+
+  test("Validate road part dates with project date - startDate and endDate") {
+    val projDate = DateTime.parse("2015-01-01")
+    val addresses = List(ReservedRoadPart(5:Long, 5:Long, 205:Long, 5:Double, Discontinuity.apply("jatkuva"), 8:Long, Option(DateTime.parse("2010-01-01")):Option[DateTime], Option(DateTime.parse("2017-01-01")):Option[DateTime]))
+    val errorMsg = projectService.projDateValidation(addresses, projDate)
+    errorMsg should not be (None)
+  }
+
+  test("Validate road part dates with project date - startDate and endDate valid") {
+    val projDate = DateTime.parse("2018-01-01")
+    val addresses = List(ReservedRoadPart(5:Long, 5:Long, 205:Long, 5:Double, Discontinuity.apply("jatkuva"), 8:Long, Option(DateTime.parse("2010-01-01")):Option[DateTime], Option(DateTime.parse("2017-01-01")):Option[DateTime]))
+    val errorMsg = projectService.projDateValidation(addresses, projDate)
+    errorMsg should be (None)
   }
 
   test("Calculate delta for project") {
