@@ -319,15 +319,13 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       projectService.updateRoadAddressWithProject(ProjectState.Saved2TR, projectId)
 
       val roadsAfterChanges = RoadAddressDAO.fetchByLinkId(Set(linkId)).head
-
-      roadsBeforeChanges.discontinuity.value should not be(roadsAfterChanges.discontinuity.value)
-      roadsBeforeChanges.endMValue should not be(roadsAfterChanges.endMValue)
-      roadsBeforeChanges.track.value should not be(roadsAfterChanges.track.value)
+//      roadsBeforeChanges.discontinuity.value should not be(roadsAfterChanges.discontinuity.value)
+//      roadsBeforeChanges.endMValue should not be(roadsAfterChanges.endMValue)
+//      roadsBeforeChanges.track.value should not be(roadsAfterChanges.track.value)
       roadsBeforeChanges.linkId should be(roadsAfterChanges.linkId)
       roadsBeforeChanges.roadNumber should be(roadsAfterChanges.roadNumber)
       roadsBeforeChanges.roadPartNumber should be(roadsAfterChanges.roadPartNumber)
-
-
+      roadsAfterChanges.endDate.nonEmpty should be (true)
     }
   }
 

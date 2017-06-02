@@ -435,26 +435,18 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def updateRoadAddressWithProject(newState: ProjectState, projectID: Long) ={
-    if(newState.value == Saved2TR.value){
+  def updateRoadAddressWithProject(newState: ProjectState, projectID: Long): Seq[Long] ={
+    if(newState == Saved2TR){
       val delta = ProjectDeltaCalculator.delta(projectID)
       val changes = RoadAddressChangesDAO.fetchRoadAddressChanges(Set(projectID))
-      val vvhRoadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(delta.terminations.map(_.linkId).toSet,false)
-      val newLinks = changes.filter(_.changeInfo.changeType.value == Expiration.value).flatMap(ci => {
-        val link = delta.terminations.find(_.roadNumber == ci.changeInfo.source.roadNumber.get).get
-        val newGeom = GeometryUtils.truncateGeometry3D(vvhRoadLinks.find(_.linkId == link.linkId).get.geometry,link.startMValue, link.endMValue)
-        if(ci.changeInfo.source.endRoadPartNumber.get != ci.changeInfo.source.startRoadPartNumber.get){
-          Seq(new RoadAddress(NewRoadAddress, ci.changeInfo.source.roadNumber.get, ci.changeInfo.source.startRoadPartNumber.get, Track.apply(ci.changeInfo.source.trackCode.get.toInt), ci.changeInfo.discontinuity, ci.changeInfo.source.startAddressM.get, ci.changeInfo.source.endAddressM.get, Option(delta.startDate),None, None, link.lrmPositionId, link.linkId, ci.changeInfo.source.startAddressM.get, ci.changeInfo.source.endAddressM.get, link.sideCode, link.calibrationPoints, link.floating, newGeom),
-            new RoadAddress(NewRoadAddress, ci.changeInfo.source.roadNumber.get, ci.changeInfo.source.endRoadPartNumber.get, Track.apply(ci.changeInfo.source.trackCode.get.toInt), ci.changeInfo.discontinuity, ci.changeInfo.source.startAddressM.get, ci.changeInfo.source.endAddressM.get, Option(delta.startDate),None, None, link.lrmPositionId, link.linkId, ci.changeInfo.source.startAddressM.get, ci.changeInfo.source.endAddressM.get, link.sideCode, link.calibrationPoints, link.floating, newGeom))
-        }
-        else {
-          Seq(new RoadAddress(NewRoadAddress, ci.changeInfo.source.roadNumber.get, ci.changeInfo.source.startRoadPartNumber.get, Track.apply(ci.changeInfo.source.trackCode.get.toInt), ci.changeInfo.discontinuity, ci.changeInfo.source.startAddressM.get, ci.changeInfo.source.endAddressM.get, Option(delta.startDate),None, None, link.lrmPositionId, link.linkId, ci.changeInfo.source.startAddressM.get, ci.changeInfo.source.endAddressM.get, link.sideCode, link.calibrationPoints, link.floating, newGeom))
-        }
-      })
+      val newLinks = delta.terminations.map(terminated => terminated.copy(id = NewRoadAddress,
+        endDate = Some(changes.head.changeDate)))
       //Expiring old addresses
-      RoadAddressDAO.expireRoadAddresses(newLinks.map(_.linkId).toSet)
-      //Creating new addresses with the aplicable changes
+      RoadAddressDAO.expireById(delta.terminations.map(_.id).toSet)
+      //Creating new addresses with the applicable changes
       RoadAddressDAO.create(newLinks, None)
+    } else {
+      throw new RuntimeException(s"Project state not at Saved2TR: $newState")
     }
   }
 }

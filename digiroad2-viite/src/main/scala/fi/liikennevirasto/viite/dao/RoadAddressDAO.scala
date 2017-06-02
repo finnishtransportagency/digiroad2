@@ -463,7 +463,7 @@ object RoadAddressDAO {
           """.execute
   }
 
-  def updateMergedSegmentsById (ids: Set[Long]): Int = {
+  def expireById(ids: Set[Long]): Int = {
     val query =
       s"""
           Update ROAD_ADDRESS ra Set valid_to = sysdate where valid_to IS NULL and id in (${ids.mkString(",")})
@@ -474,6 +474,8 @@ object RoadAddressDAO {
       Q.updateNA(query).first
   }
 
+  // This is dangerous, don't use this. Use expireById instead
+  @Deprecated
   def expireRoadAddresses (sourceLinkIds: Set[Long]) = {
     if (!sourceLinkIds.isEmpty) {
       val query =

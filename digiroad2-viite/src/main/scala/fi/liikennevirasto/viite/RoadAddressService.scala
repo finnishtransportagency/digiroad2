@@ -325,7 +325,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   def updateMergedSegments(expiredIds: Set[Long]) = {
-    expiredIds.grouped(500).map(group => RoadAddressDAO.updateMergedSegmentsById(group)).sum
+    expiredIds.grouped(500).map(group => RoadAddressDAO.expireById(group)).sum
   }
 
   /**
@@ -533,10 +533,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     transferRoadAddress(sourceRoadAddressLinks, targetRoadAddressLinks, user)
   }
 
-  def transferFloatingToGap(sourceIds: Set[Long], targetIds: Set[Long], roadAddresses: Seq[RoadAddress], username: String) = {
+  def transferFloatingToGap(sourceIds: Set[Long], targetIds: Set[Long], roadAddresses: Seq[RoadAddress], username: String): Unit = {
     withDynTransaction {
-      RoadAddressDAO.expireRoadAddresses(sourceIds)
-      RoadAddressDAO.expireMissingRoadAddresses(targetIds)
+      val currentRoadAddresses = RoadAddressDAO.fetchByLinkId(sourceIds, includeFloating = true, includeHistory = true)
+      RoadAddressDAO.expireById(currentRoadAddresses.map(_.id).toSet)
       RoadAddressDAO.create(roadAddresses, Some(username))
       recalculateRoadAddresses(roadAddresses.head.roadNumber.toInt, roadAddresses.head.roadPartNumber.toInt)
     }
