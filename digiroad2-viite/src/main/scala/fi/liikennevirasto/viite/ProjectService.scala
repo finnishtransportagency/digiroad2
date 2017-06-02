@@ -6,7 +6,6 @@ import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, RoadLinkService}
-import fi.liikennevirasto.viite.dao.ChangeType.Expiration
 import fi.liikennevirasto.viite.dao.ProjectState._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink, RoadAddressLinkLike}
@@ -463,28 +462,25 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     for(project<-listOfPendingProjects)
     {
       withDynSession {
-        checkprojectstatus(project)
+        checkProjectStatus(project)
       }
     }
 
   }
 
-  private def checkprojectstatus(projectID: Long) =
+  private def checkProjectStatus(projectID: Long) =
   {
-    val projectstatus=ProjectDAO.getProjectStatus(projectID)
-    if (projectstatus.isDefined)
+    val projectStatus=ProjectDAO.getProjectStatus(projectID)
+    if (projectStatus.isDefined)
     {
-      val currentState=projectstatus.getOrElse(ProjectState.Unknown)
-      val trProjectState=ViiteTierekisteriClient.getProjectStatusObject(projectID)
-      val newState =getStatusFromTRObject(ViiteTierekisteriClient.getProjectStatusObject(projectID)).getOrElse(ProjectState.Unknown)
+      val currentState = projectStatus.getOrElse(ProjectState.Unknown)
+      val trProjectState = ViiteTierekisteriClient.getProjectStatusObject(projectID)
+      val newState = getStatusFromTRObject(trProjectState).getOrElse(ProjectState.Unknown)
       val errorMessage = getTRErrorMessage(trProjectState)
       val updatedStatus = updateProjectStatusIfNeeded(currentState,newState,errorMessage,projectID)
       updateRoadAddressWithProject(newState, projectID)
       updatedStatus
     }
-
-
-
   }
 
   private def mapTRstateToViiteState(trState:String): Option[ProjectState] ={

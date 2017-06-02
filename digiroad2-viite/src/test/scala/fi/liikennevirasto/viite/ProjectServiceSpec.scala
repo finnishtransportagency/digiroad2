@@ -82,7 +82,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
     ProjectLink(id=NewRoadAddress, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track,
       roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
       roadAddress.endDate, modifiedBy=Option(project.createdBy), 0L, roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
-      roadAddress.sideCode, roadAddress.calibrationPoints, floating=false, roadAddress.geom, project.id, LinkStatus.NotHandled)
+      roadAddress.sideCode, roadAddress.calibrationPoints, floating=false, roadAddress.geom, project.id, LinkStatus.NotHandled, RoadType.PublicRoad)
   }
 
   test ("create road link project without road parts") {
@@ -319,7 +319,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       val project = RoadAddressProject(projectId,ProjectState.Incomplete,"testiprojekti","Test",DateTime.now(),"Test",
         DateTime.now(),DateTime.now(),"info",
         List(ReservedRoadPart(0:Long, roadNumber:Long, roadPartNumber:Long, 5:Double, Discontinuity.apply("jatkuva"),
-          8:Long, None:Option[DateTime], None:Option[DateTime])))
+          8:Long, None:Option[DateTime], None:Option[DateTime])), None)
       val (proj, projectLink, _, errmsg) = projectService.createRoadLinkProject(project)
       projectLink.isEmpty should be (false)
       errmsg should be ("ok")
