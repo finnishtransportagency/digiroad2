@@ -10,6 +10,7 @@ import org.apache.http.NameValuePair
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.{HttpGet, HttpPost}
 import org.apache.http.impl.client.HttpClientBuilder
+import org.joda.time.format.DateTimeFormat
 import org.apache.http.message.BasicNameValuePair
 import org.apache.http.util.EntityUtils
 import org.joda.time.{DateTime, DateTimeZone}
@@ -209,6 +210,14 @@ class VVHClient(vvhRestApiEndPoint: String) {
     filter
   }
 
+  private def withDateLimitFilter(attributeName: String, lowerDate: DateTime, higherDate: DateTime): String = {
+    val formatter = DateTimeFormat.forPattern("yyyy-MM-dd")
+    val since = formatter.print(lowerDate)
+    val until = formatter.print(higherDate)
+
+    s""""where":"( $attributeName >=date '$since' and $attributeName <=date '$until' )","""
+  }
+
   protected def withMunicipalityFilter(municipalities: Set[Int]): String = {
     withFilter("MUNICIPALITYCODE", municipalities)
   }
@@ -240,6 +249,10 @@ class VVHClient(vvhRestApiEndPoint: String) {
 
   protected def withMtkClassFilter(ids: Set[Long]): String = {
     withFilter("MTKCLASS", ids)
+  }
+
+  protected  def withLastEditedDateFilter(lowerDate: DateTime, higherDate: DateTime): String = {
+    withDateLimitFilter("LAST_EDITED_DATE", lowerDate, higherDate)
   }
 
   protected def combineFiltersWithAnd(filter1: String, filter2: String): String = {
@@ -344,7 +357,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
       case Right(error) => throw new VVHClientException(error.toString)
     }
   }
-  
+
   def queryChangesByPolygon(polygon: Polygon): Seq[ChangeInfo] = {
     val polygonString = stringifyPolygonGeometry(polygon)
     if (!polygonString.contains("{rings:["))
@@ -605,6 +618,21 @@ class VVHClient(vvhRestApiEndPoint: String) {
         case Right(error) => throw new VVHClientException(error.toString)
       }
     }.toList
+  }
+
+  /**
+    * Returns VVH road links. Obtain all RoadLinks changes between two given dates.
+    * Used by RoadLinkService.fetchChangedVVHRoadlinksBetweenDates (called from getRoadLinksBetweenTwoDatesFromVVH).
+    */
+  def fetchVVHRoadlinksChangesBetweenDates(lowerDate: DateTime, higherDate: DateTime): Seq[VVHRoadlink] = {
+    val definition = layerDefinition(withLastEditedDateFilter(lowerDate, higherDate))
+    val url = vvhRestApiEndPoint + roadLinkDataService + "/FeatureServer/query?" +
+      s"layerDefs=$definition&${queryParameters()}"
+
+    fetchVVHFeatures(url) match {
+      case Left(features) => features.map(extractVVHFeature)
+      case Right(error) => throw new VVHClientException(error.toString)
+    }
   }
 
   case class VVHError(content: Map[String, Any], url: String)

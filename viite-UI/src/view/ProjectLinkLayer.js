@@ -2,8 +2,10 @@
   root.ProjectLinkLayer = function(map, projectCollection, selectedProjectLinkProperty, roadLayer) {
     var layerName = 'roadAddressProject';
     var vectorLayer;
+    var calibrationPointVector = new ol.source.Vector({});
     var layerMinContentZoomLevels = {};
     var currentZoom = 0;
+    var standardZIndex = 6;
     Layer.call(this, layerName, roadLayer);
     var project;
     var me = this;
@@ -24,6 +26,11 @@
         loadFeatures(features);
       },
       strategy: ol.loadingstrategy.bbox
+    });
+
+    var calibrationPointLayer = new ol.layer.Vector({
+      source: calibrationPointVector,
+      name: 'calibrationPointLayer'
     });
 
     var styleFunction = function (feature, resolution){
@@ -55,7 +62,7 @@
         });
 
         var zIndex = styler.determineZIndex(feature.projectLinkData.roadLinkType, feature.projectLinkData.anomaly, feature.projectLinkData.roadLinkSource, status);
-        lineStyle.setZIndex(zIndex + 3);
+        lineStyle.setZIndex(zIndex + 1);
         return [lineStyle];
       }
       else{
@@ -169,7 +176,7 @@
 
     var zoomDoubleClickListener = function(event) {
       _.defer(function(){
-        if(selectDoubleClick.getFeatures().getLength() < 1 && selectedProjectLinkProperty.get().length < 1 && map.getView().getZoom() <= 13){
+        if(selectedProjectLinkProperty.get().length === 0 && applicationModel.getSelectedLayer() == 'roadAddressProject' && map.getView().getZoom() <= 13){
           map.getView().setZoom(map.getView().getZoom()+1);
         }
       });
@@ -295,6 +302,13 @@
         feature.projectLinkData = projectLink;
         features.push(feature);
       });
+      var actualPoints = me.drawCalibrationMarkers(calibrationPointLayer.source, projectLinks);
+      _.each(actualPoints, function (actualPoint) {
+        var calMarker = new CalibrationPoint(actualPoint.point);
+        calibrationPointLayer.getSource().addFeature(calMarker.getMarker(true));
+      });
+
+      calibrationPointLayer.setZIndex(standardZIndex + 2);
       var partitioned = _.partition(features, function(feature) {
         return (!_.isUndefined(feature.projectLinkData.linkId) && _.contains(editedLinks, feature.projectLinkData.linkId));
       });
@@ -333,8 +347,6 @@
     eventbus.on('roadAddressProject:selected', function(projId) {
       eventbus.once('roadAddressProject:projectFetched', function(id) {
         projectCollection.fetch(map.getView().calculateExtent(map.getSize()),map.getView().getZoom(), id);
-        // vectorSource.clear();
-        // eventbus.trigger('map:clearLayers');
       });
       projectCollection.getProjectsWithLinksById(projId);
     });
@@ -375,8 +387,9 @@
     });
 
     vectorLayer.setVisible(true);
+    calibrationPointLayer.setVisible(true);
     map.addLayer(vectorLayer);
-
+    map.addLayer(calibrationPointLayer);
     return {
       show: show,
       hide: hideLayer

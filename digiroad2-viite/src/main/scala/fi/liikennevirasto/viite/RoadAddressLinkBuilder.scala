@@ -52,7 +52,7 @@ object RoadAddressLinkBuilder {
     }
   }
 
-  def build(roadLink: RoadLink, roadAddress: RoadAddress, floating: Boolean = false) = {
+  def build(roadLink: RoadLink, roadAddress: RoadAddress, floating: Boolean = false, newGeometry: Option[Seq[Point]] = None) = {
     val roadLinkType = (floating, roadLink.linkSource) match {
       case (true, _) => FloatingRoadLinkType
       case (false, LinkGeomSource.ComplimentaryLinkInterface) => ComplementaryRoadLinkType
@@ -183,7 +183,8 @@ object RoadAddressLinkBuilder {
       currentTarget.attributes, source.roadNumber, source.roadPartNumber, source.trackCode, source.elyCode, source.discontinuity,
       startAddressM, endAddressM, source.startDate, source.endDate, currentTarget.startMValue,
       GeometryUtils.geometryLength(currentTarget.geometry), source.sideCode, calibrationPointS, calibrationPointE, Anomaly.None, 0))
-    roadAddresses++newRoadAddress
+    val newIds = newRoadAddress.map(_.linkId)
+    roadAddresses.filterNot(ra => newIds.contains(ra.linkId))++newRoadAddress
   }
 
   private def toIntNumber(value: Any) = {

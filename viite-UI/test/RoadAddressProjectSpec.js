@@ -1,5 +1,5 @@
 /*jshint expr: true*/
-define(['chai', 'TestHelpers'], function(chai, testHelpers) {
+define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers) {
   var expect = chai.expect;
   var assert = chai.assert;
 
@@ -7,31 +7,26 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
     this.timeout(1500000);
 
     before(function(done) {
+      var backend = testHelpers.fakeBackend(13, testHelpers.selectTestData('roadAddress'),354810.0, 6676460.0);
+
+      testHelpers.restartApplication(function(map) {
+        eventbus.once('roadLayer:featuresLoaded', function() {
+          done();
+        });
+      }, backend);
+    });
+
+    before(function(done) {
+      $('[id^=projectListButton]:visible').prop('disabled', false);
+      $('[id^=projectListButton]:visible').attr('disabled', false);
       testHelpers.clickProjectListButton();
       done();
     });
 
     it('open project list window', function () {
-       assert($('#project-window:visible').length > 0, "Windows didn't open. Check permissions.");
+      $('[id^=projectListButton]').prop('disabled', false);
+      $('[id^=projectListButton]').attr('disabled', false);
+      assert($('[id^=project-window]:visible').length > 0, "Windows didn't open. Check permissions.");
     });
-
-
   });
-
-  describe('when click on the Tieosoiteprojektit button when editing a floating road', function() {
-    this.timeout(1500000);
-
-    before(function(done) {
-      eventbus.trigger('layer:enableButtons', true);
-      testHelpers.clickProjectListButton();
-      done();
-    });
-
-    it('do not open project list window', function () {
-      assert($('#project-window:visible').length === 0, "Windows shouldn't open.");
-      eventbus.trigger('layer:enableButtons', false);
-    });
-
-  });
-
 });

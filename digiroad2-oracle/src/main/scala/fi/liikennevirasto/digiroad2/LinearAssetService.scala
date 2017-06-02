@@ -79,9 +79,9 @@ trait LinearAssetOperations {
   }
 
 
-  def getByIntersectedBoundingBox(typeId: Int, serviceArea : Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
-    val polygonStringList = polygonTools.geometryInterceptorToBoundingBox(polygonTools.getAreaGeometry(serviceArea),bounds)
-    val vVHRoadLinksAndChanges = polygonStringList.map(roadLinkService.getRoadLinksAndChangesFromVVHWithPolygon)
+  def getByIntersectedBoundingBox(typeId: Int, serviceAreas : Set[Int], bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
+    val polygonList = polygonTools.geometryInterceptorToBoundingBox(polygonTools.getAreasGeometries(serviceAreas),bounds)
+    val vVHRoadLinksAndChanges = polygonList.map(roadLinkService.getRoadLinksAndChangesFromVVHWithPolygon)
     val roadLinks = vVHRoadLinksAndChanges.flatMap(_._1)
     val changes =vVHRoadLinksAndChanges.flatMap(_._2)
     val linearAssets = getByRoadLinks(typeId,  roadLinks, changes)

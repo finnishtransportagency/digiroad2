@@ -16,6 +16,7 @@ import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
 import fi.liikennevirasto.viite.{ReservedRoadPart, RoadType}
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
+import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -93,6 +94,7 @@ trait BaseRoadAddress {
   def geom: Seq[Point]
 }
 
+// Note: Geometry on road address is not directed: it isn't guaranteed to have a direction of digitization or road addressing
 case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track,
                        discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
                        endDate: Option[DateTime] = None, modifiedBy: Option[String] = None, lrmPositionId : Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
@@ -449,6 +451,13 @@ object RoadAddressDAO {
            """.execute
   }
 
+  def createMissingRoadAddress (linkId: Long, start_addr_m: Long, end_addr_m: Long, anomaly_code: Int, start_m : Double, end_m : Double) = {
+    sqlu"""
+           insert into missing_road_address (link_id, start_addr_m, end_addr_m,anomaly_code, start_m, end_m)
+           values ($linkId, $start_addr_m, $end_addr_m, $anomaly_code, $start_m, $end_m)
+           """.execute
+  }
+
   def lockRoadAddressTable(): Unit = {
     sqlu"""
            LOCK TABLE ROAD_ADDRESS IN EXCLUSIVE MODE
@@ -548,13 +557,18 @@ object RoadAddressDAO {
     changeRoadAddressFloating(if (float) 1 else 0, roadAddressId, geometry)
   }
 
-  def getValidRoadNumbers = {
-    sql"""
+  def getCurrentValidRoadNumbers(filter: String = "") = {
+    Q.queryNA[Long](s"""
        select distinct road_number
               from road_address ra
-              where ra.floating = '0' AND (end_date < sysdate OR end_date IS NULL)
+              where ra.floating = '0' AND (end_date > sysdate OR end_date IS NULL) AND (valid_to > sysdate OR valid_to IS NULL)
+              $filter
               order by road_number
-      """.as[Long].list
+      """).list
+  }
+
+  def getValidRoadNumbersWithFilterToTestAndDevEnv = {
+    getCurrentValidRoadNumbers("AND (ra.road_number <= 20000 OR (ra.road_number >= 40000 AND ra.road_number <= 70000) OR ra.road_number > 99999 )")
   }
 
   def getValidRoadParts(roadNumber: Long) = {
@@ -828,9 +842,9 @@ object RoadAddressDAO {
     if (Q.queryNA[Int](query).first>0) true else false
   }
 
-  def getRoadPartInfo(roadNumber:Long, roadPart:Long): Option[(Long,Long,Double,Long)] =
+  def getRoadPartInfo(roadNumber:Long, roadPart:Long): Option[(Long,Long,Double,Long,DateTime,DateTime)] =
   {
-    val query = s"""SELECT r.id, l.link_id, r.end_addr_M, r.discontinuity
+    val query = s"""SELECT r.id, l.link_id, r.end_addr_M, r.discontinuity, r.start_date, r.end_date
                 FROM road_address r
              INNER JOIN lrm_position l
              ON r.lrm_position_id =  l.id
@@ -839,6 +853,6 @@ object RoadAddressDAO {
              on r.START_ADDR_M=ra.lol
              WHERE r.road_number=$roadNumber AND r.road_part_number=$roadPart AND
              (r.valid_from is null or r.valid_from <= sysdate) AND (r.valid_to is null or r.valid_to > sysdate) AND track_code in (0,1)"""
-     Q.queryNA[(Long,Long,Double,Long)](query).firstOption
+     Q.queryNA[(Long,Long,Double,Long, DateTime, DateTime)](query).firstOption
     }
 }

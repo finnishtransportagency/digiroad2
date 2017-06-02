@@ -95,13 +95,14 @@ object DataFixture {
   def findFloatingRoadAddresses(): Unit = {
     println(s"\nFinding road addresses that are floating at time: ${DateTime.now()}")
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+    val username = properties.getProperty("bonecp.username")
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
     val roadAddressService = new RoadAddressService(roadLinkService, new DummyEventBus)
     OracleDatabase.withDynTransaction {
       val checker = new FloatingChecker(roadLinkService)
-      val roads = checker.checkRoadNetwork()
+      val roads = checker.checkRoadNetwork(username)
       println(s"${roads.size} segment(s) found")
-      roadAddressService.checkRoadAddressFloatingWithoutTX(roads.map(_.id).toSet)
+      roadAddressService.checkRoadAddressFloatingWithoutTX(roads.map(_.id).toSet, true)
     }
     println(s"\nRoad Addresses floating field update complete at time: ${DateTime.now()}")
     println()
@@ -123,7 +124,7 @@ object DataFixture {
     println(s"\nCombining multiple segments on links at time: ${DateTime.now()}")
     OracleDatabase.withDynTransaction {
       OracleDatabase.setSessionLanguage()
-      RoadAddressDAO.getValidRoadNumbers.foreach( road => {
+      RoadAddressDAO.getCurrentValidRoadNumbers().foreach(road => {
         val roadAddresses = RoadAddressDAO.fetchMultiSegmentLinkIds(road).groupBy(_.linkId)
         val replacements = roadAddresses.mapValues(RoadAddressLinkBuilder.fuseRoadAddress)
         roadAddresses.foreach{ case (linkId, list) =>
