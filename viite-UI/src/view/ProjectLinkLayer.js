@@ -201,15 +201,6 @@
       }
     };
 
-    var clearHighlights = function(){
-      if(selectDoubleClick.getFeatures().getLength() !== 0){
-         selectDoubleClick.getFeatures().clear();
-      }
-      if(selectSingleClick.getFeatures().getLength() !== 0){
-         selectSingleClick.getFeatures().clear();
-      }
-    };
-
     /**
      * This will add all the following interactions from the map:
      * -selectDoubleClick
