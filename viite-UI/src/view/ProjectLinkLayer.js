@@ -98,6 +98,7 @@
       var selection = _.find(event.selected, function (selectionTarget) {
           return !_.isUndefined(selectionTarget.projectLinkData);
       });
+      revertSelectedChanges();
       selectedProjectLinkProperty.clean();
       $('.wrapper').remove();
       if (!_.isUndefined(selection))
@@ -121,6 +122,14 @@
         });
       }
     });
+
+    var revertSelectedChanges = function() {
+      if(projectCollection.isDirty()) {
+        projectCollection.revertLinkStatus();
+        projectCollection.setDirty([]);
+        eventbus.trigger('roadAddress:projectLinksEdited');
+      }
+    };
 
     var clearHighlights = function(){
       if(selectDoubleClick.getFeatures().getLength() !== 0){
@@ -165,11 +174,25 @@
       highlightFeatures();
     });
 
+    eventbus.on('layer:selected', function(layer) {
+      if (layer === 'roadAddressProject') {
+        vectorLayer.setVisible(true);
+        calibrationPointLayer.setVisible(true);
+      } else {
+        clearHighlights();
+        var featuresToHighlight = [];
+        vectorLayer.setVisible(false);
+        calibrationPointLayer.setVisible(false);
+        eventbus.trigger('roadLinks:fetched');
+      }
+    });
+
     selectDoubleClick.on('select',function(event) {
       // TODO: 374 validate selection
       var selection = _.find(event.selected, function (selectionTarget) {
           return !_.isUndefined(selectionTarget.projectLinkData);
       });
+      revertSelectedChanges();
       if (!_.isUndefined(selection))
         selectedProjectLinkProperty.open(selection.projectLinkData.linkId);
     });
@@ -280,7 +303,7 @@
     };
 
     var redraw = function(){
-      var editedLinks = projectCollection.getDirty();
+      var editedLinks = _.map(projectCollection.getDirty(), function(editedLink) {return editedLink.id;});
       var projectLinks = projectCollection.getAll();
       var features = [];
       _.map(projectLinks, function(projectLink) {
@@ -383,7 +406,8 @@
     map.addLayer(calibrationPointLayer);
     return {
       show: show,
-      hide: hideLayer
+      hide: hideLayer,
+      clearHighlights: clearHighlights
     };
   };
 

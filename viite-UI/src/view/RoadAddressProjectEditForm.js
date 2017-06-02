@@ -1,5 +1,5 @@
 (function (root) {
-  root.RoadAddressProjectEditForm = function(projectCollection, selectedProjectLinkProperty) {
+  root.RoadAddressProjectEditForm = function(projectCollection, selectedProjectLinkProperty, projectLinkLayer) {
     var currentProject = false;
     var selectedProjectLink = false;
     var staticField = function(labelText, dataField) {
@@ -125,16 +125,13 @@
       });
 
       eventbus.on('layer:selected', function(layer) {
-        if(layer !== 'roadAddressProject') {
-          $('.wrapper').remove();
-        }
       });
 
       eventbus.on('projectLink:clicked', function(selected) {
         selectedProjectLink = selected;
         currentProject = projectCollection.getCurrentProject();
         clearInformationContent();
-        rootElement.html(selectedProjectLinkTemplate(currentProject, options, selectedProjectLink));
+        rootElement.html(selectedProjectLinkTemplate(currentProject.projects, options, selectedProjectLink));
       });
 
       eventbus.on('roadAddress:linksSaved', function() {
@@ -199,7 +196,7 @@
       });
 
       rootElement.on('change', '#dropDown', function() {
-          projectCollection.setDirty(_.map(selectedProjectLink, function(link) { return link.linkId; }));
+        projectCollection.setDirty(_.map(selectedProjectLink, function(link) { return {'id':link.linkId, 'status':link.status}; }));
       });
 
       rootElement.on('change', '.form-group', function() {
@@ -207,9 +204,16 @@
       });
 
       rootElement.on('click', '.project-form button.cancelLink', function(){
-        projectCollection.setDirty([]);
-        eventbus.trigger('projectLink:clicked', []);
-        $('.wrapper').remove();
+        if(projectCollection.isDirty()) {
+          projectCollection.revertLinkStatus();
+          projectCollection.setDirty([]);
+          projectLinkLayer.clearHighlights();
+          $('.wrapper').remove();
+          eventbus.trigger('roadAddress:projectLinksEdited');
+        } else {
+          eventbus.trigger('roadAddress:openProject', projectCollection.getCurrentProject());
+          eventbus.trigger('roadLinks:refreshView');
+        }
       });
 
       rootElement.on('click', '.project-form button.send', function(){

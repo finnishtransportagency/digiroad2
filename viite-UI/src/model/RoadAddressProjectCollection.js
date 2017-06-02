@@ -75,8 +75,7 @@
     this.getProjectsWithLinksById = function (projectId) {
       return backend.getProjectsWithLinksById(projectId, function (result) {
         roadAddressProjects = result.projects;
-        currentProject = result.projects;
-        roadAddressProjectLinks = result.projectLinks;
+        currentProject = result;
         projectinfo = {
           id: result.projects.id,
           publishable: false
@@ -85,6 +84,15 @@
       });
     };
 
+    this.revertLinkStatus = function () {
+      var fetchedLinks = this.getAll();
+      dirtyProjectLinks.forEach(function (dirtyLink) {
+        _.filter(fetchedLinks, {linkId: dirtyLink.id}).forEach(function (fetchedLink) {
+          fetchedLink.status = dirtyLink.status;
+        });
+      });
+    };
+    
     this.clearRoadAddressProjects = function () {
       roadAddressProjects = [];
       dirtyRoadPartList = [];
@@ -98,9 +106,9 @@
       var projectid = 0;
       if (projectinfo !== undefined) {
         projectid = projectinfo.id;
-      } else if (currentProject!==undefined && currentProject.id!==undefined)
+      } else if (currentProject!==undefined && currentProject.projects.id!==undefined)
       {
-        projectid=currentProject.id;
+        projectid=currentProject.projects.id;
       }
       var dataJson = {
         id: projectid,
@@ -122,7 +130,7 @@
           };
           eventbus.trigger('roadAddress:projectSaved', result);
           dirtyRoadPartList = [];
-          currentProject = result.project;
+          currentProject = result;
         }
         else {
           eventbus.trigger('roadAddress:projectValidationFailed', result);
@@ -184,7 +192,7 @@
           };
           eventbus.trigger('roadAddress:projectSaved', result);
           dirtyRoadPartList = [];
-          currentProject = result.project;
+          currentProject = result;
         }
         else {
           eventbus.trigger('roadAddress:projectValidationFailed', result);
@@ -255,6 +263,9 @@
       return dirtyProjectLinks;
     };
 
+    this.isDirty = function() {
+      return dirtyProjectLinks.length > 0;
+    };
 
     function arrayIntersection(a, b, areEqualFunction) {
       return _.filter(a, function(aElem) {

@@ -317,9 +317,6 @@
 
       eventbus.on('layer:selected', function(layer) {
         activeLayer = layer === 'linkPropertyLayer';
-        if(!activeLayer) {
-          $('.wrapper').remove();
-        }
       });
 
       eventbus.on('roadAddress:projectFailed', function() {
@@ -403,6 +400,9 @@
               projectCollection.clearRoadAddressProjects();
             }
           });
+        } else {
+          eventbus.trigger('roadAddress:openProject', projectCollection.getCurrentProject());
+          eventbus.trigger('roadLinks:refreshView');
         }
       });
 
