@@ -3,6 +3,7 @@ import java.util.Properties
 
 import fi.liikennevirasto.digiroad2.util.TierekisteriAuthPropertyReader
 import fi.liikennevirasto.viite.dao._
+import fi.liikennevirasto.viite.util.ViiteTierekisteriAuthPropertyReader
 import org.apache.http.client.methods.{HttpGet, HttpPost}
 import org.apache.http.entity.{ContentType, StringEntity}
 import org.apache.http.impl.client.HttpClientBuilder
@@ -18,6 +19,12 @@ case class TRProjectStatus(id:Option[Long], trProjectId:Option[Long], trSubProje
                            trModifiedDate:Option[String], user:Option[String], trPublishedDate:Option[String],
                            trJobNumber:Option[Long], errorMessage:Option[String], trProcessingStarted:Option[String],
                            trProcessingEnded:Option[String], errorCode:Option[Int])
+case class TRstatusresponse(id_tr_projekti:Option[Long], projekti:Option[Long],id:Option[Long], tunnus:Option[Long],
+                            status:Option[String], name:Option[String], changeDate:Option[String], ely:Option[Int],
+                            muutospvm:Option[String], user:Option[String], published_date:Option[String],
+                            job_number:Option[Long], errorMessage:Option[String], start_time:Option[String],
+                            end_time:Option[String], error_code:Option[Int])
+
 case class ChangeProject(id:Long, name:String, user:String, ely:Long, changeDate:String, changeInfoSeq:Seq[RoadAddressChangeInfo])
 case class ProjectChangeStatus(projectId: Long, status: Int, reason: String)
 
@@ -45,7 +52,7 @@ case object ChangeProjectSerializer extends CustomSerializer[ChangeProject](form
 case object ChangeInfoItemSerializer extends CustomSerializer[RoadAddressChangeInfo](format => ({
   case o: JObject =>
     implicit val formats = DefaultFormats + ChangeInfoRoadPartsSerializer
-    RoadAddressChangeInfo(ChangeType.apply(o.values("change_type").asInstanceOf[BigInt].intValue),
+    RoadAddressChangeInfo(AddressChangeType.apply(o.values("change_type").asInstanceOf[BigInt].intValue),
       (o \\ "source").extract[RoadAddressChangeRecipient], (o \\ "target").extract[RoadAddressChangeRecipient],
       Discontinuity.apply(o.values("continuity").asInstanceOf[BigInt].intValue),
       RoadType.apply(o.values("road_type").asInstanceOf[BigInt].intValue))
@@ -161,10 +168,10 @@ object ViiteTierekisteriClient {
   private def convertChangeDataToChangeProject(changeData: ProjectRoadAddressChange): ChangeProject = {
     val changeInfo = changeData.changeInfo
     ChangeProject(changeData.projectId, changeData.projectName.getOrElse(""), changeData.user, changeData.ely,
-      DateTimeFormat.forPattern("yyyy-MM-DD").print(changeData.changeDate), Seq(changeInfo))
+      DateTimeFormat.forPattern("yyyy-MM-dd").print(changeData.changeDate), Seq(changeInfo))
   }
 
-  private val auth = new TierekisteriAuthPropertyReader
+  private val auth = new ViiteTierekisteriAuthPropertyReader
 
   private val client = HttpClientBuilder.create().build
 
@@ -176,57 +183,72 @@ object ViiteTierekisteriClient {
 
   def sendJsonMessage(trProject:ChangeProject): ProjectChangeStatus ={
     val request = new HttpPost(getRestEndPoint+"addresschange/")
-    request.addHeader("X-OTH-Authorization", "Basic " + auth.getAuthInBase64)
+    request.addHeader("X-Authorization", "Basic " + auth.getAuthInBase64)
     request.setEntity(createJsonmessage(trProject))
     val response = client.execute(request)
+    try {
     val statusCode = response.getStatusLine.getStatusCode
     val reason = response.getStatusLine.getReasonPhrase
     ProjectChangeStatus(trProject.id, statusCode, reason)
+    } catch {
+      case NonFatal(e) => ProjectChangeStatus(trProject.id, ProjectState.Incomplete.value, "Lähetys tierekisteriin epäonnistui") // sending project to tierekisteri failed
+    } finally {
+      response.close()
+    }
   }
 
-  def getProjectStatus(projectid:String): Map[String,Any] =
-  {
+  def getProjectStatus(projectid:String): Map[String,Any] = {
     implicit val formats = DefaultFormats
-    val request = new HttpGet(getRestEndPoint+"addresschange/"+projectid)
-    request.addHeader("X-OTH-Authorization", "Basic " + auth.getAuthInBase64)
+    val request = new HttpGet(getRestEndPoint + "addresschange/" + projectid)
+    request.addHeader("X-Authorization", "Basic " + auth.getAuthInBase64)
     val response = client.execute(request)
-    val receivedData=parse(StreamInput(response.getEntity.getContent)).extract[TRProjectStatus]
-    Map(
-      "id"->receivedData.id,
-      "id_tr_projekti"-> receivedData.trProjectId.getOrElse("null"),
-      "projekti"-> receivedData.trSubProjectId.getOrElse("null"),
-      "tunnus"->receivedData.trTrackingCode.getOrElse("null"),
-      "status"->receivedData.status.getOrElse("null"),
-      "name"-> receivedData.name.getOrElse("null"),
-      "change_date"->receivedData.changeDate.getOrElse("null"),
-      "ely"->receivedData.ely.getOrElse("null"),
-      "muutospvm"->receivedData.trModifiedDate.getOrElse("null"),
-      "user"->receivedData.user.getOrElse("null"),
-      "published_date"->receivedData.trPublishedDate.getOrElse("null"),
-      "job_number"->receivedData.trJobNumber.getOrElse("null"),
-      "error_message"->receivedData.errorMessage.getOrElse("null"),
-      "start_time"->receivedData.trProcessingStarted.getOrElse("null"),
-      "end_time"->receivedData.trProcessingEnded.getOrElse("null"),
-      "error_code"->receivedData.errorCode.getOrElse("null")
-    )
-
+    try {
+      val receivedData = responseMapper(parse(StreamInput(response.getEntity.getContent)).extract[TRstatusresponse])
+      Map(
+        "id" -> receivedData.id,
+        "id_tr_projekti" -> receivedData.trProjectId.getOrElse("null"),
+        "projekti" -> receivedData.trSubProjectId.getOrElse("null"),
+        "tunnus" -> receivedData.trTrackingCode.getOrElse("null"),
+        "status" -> receivedData.status.getOrElse("null"),
+        "name" -> receivedData.name.getOrElse("null"),
+        "change_date" -> receivedData.changeDate.getOrElse("null"),
+        "ely" -> receivedData.ely.getOrElse("null"),
+        "muutospvm" -> receivedData.trModifiedDate.getOrElse("null"),
+        "user" -> receivedData.user.getOrElse("null"),
+        "published_date" -> receivedData.trPublishedDate.getOrElse("null"),
+        "job_number" -> receivedData.trJobNumber.getOrElse("null"),
+        "error_message" -> receivedData.errorMessage.getOrElse("null"),
+        "start_time" -> receivedData.trProcessingStarted.getOrElse("null"),
+        "end_time" -> receivedData.trProcessingEnded.getOrElse("null"),
+        "error_code" -> receivedData.errorCode.getOrElse("null"),
+        "success" -> "true"
+      )
+    } catch {
+      case NonFatal(e) => Map("success" -> "false")
+    } finally {
+      response.close()
+    }
   }
 
   def getProjectStatusObject(projectid:Long): Option[TRProjectStatus] = {
-
     implicit val formats = DefaultFormats
     val request = new HttpGet(s"${getRestEndPoint}addresschange/$projectid")
-    request.addHeader("X-OTH-Authorization", "Basic " + auth.getAuthInBase64)
+    request.addHeader("X-Authorization", "Basic " + auth.getAuthInBase64)
 
     val response = client.execute(request)
     try {
-      val  receivedData = parse(StreamInput(response.getEntity.getContent)).extract[TRProjectStatus]
+      val  receivedData = parse(StreamInput(response.getEntity.getContent)).extract[TRstatusresponse]
       response.close()
-      return Option(receivedData)
+      Option(responseMapper(receivedData))
     } catch {
       case NonFatal(e) => None
     }finally {
       response.close()
     }
   }
+
+  def responseMapper (response:TRstatusresponse): TRProjectStatus = {
+    TRProjectStatus(response.id, response.id_tr_projekti, response.tunnus, response.job_number, response.status, response.name, response.changeDate, response.ely, response.muutospvm, response.user, response.published_date, response.job_number, response.errorMessage, response.start_time, response.end_time, response.error_code)
+  }
+
 }
