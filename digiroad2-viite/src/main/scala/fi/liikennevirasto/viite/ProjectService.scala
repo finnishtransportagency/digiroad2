@@ -463,7 +463,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     {
       withDynSession {
         val status = checkProjectStatus(project)
-        ProjectDAO.setCheckCounter(project, ProjectDAO.getCheckCounter(project).get)
+        ProjectDAO.incrementCheckCounter(project, 1)
         status
       }
     }

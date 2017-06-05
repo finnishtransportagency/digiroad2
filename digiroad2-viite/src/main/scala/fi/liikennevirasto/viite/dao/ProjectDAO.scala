@@ -204,6 +204,10 @@ object ProjectDAO {
     sqlu"""UPDATE project SET check_counter=$counter WHERE id=$projectID""".execute
   }
 
+  def incrementCheckCounter(projectID:Long, increment: Long) = {
+    sqlu"""UPDATE project p0 SET check_counter=((SELECT check_counter FROM project p1 WHERE p0.ID = p1.ID)+$increment) WHERE id=$projectID""".execute
+  }
+
   def insertDeltaToRoadChangeTable(delta: Delta, projectId: Long): Boolean= {
     val roadType = 9 //TODO missing
     getRoadAddressProjectById(projectId) match {

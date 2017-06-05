@@ -132,6 +132,9 @@ class ProjectLinkDaoSpec  extends FunSuite with Matchers{
       ProjectDAO.setCheckCounter(id, counterBeforeUpdate+1)
       val counterAfterUpdate = ProjectDAO.getCheckCounter(id).get
       counterAfterUpdate should be(1)
+      ProjectDAO.incrementCheckCounter(id, 2)
+      val counterAfterIncrement = ProjectDAO.getCheckCounter(id).get
+      counterAfterIncrement should be(3)
     }
 
   }
