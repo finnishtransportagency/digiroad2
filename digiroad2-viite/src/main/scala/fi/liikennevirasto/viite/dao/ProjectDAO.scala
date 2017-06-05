@@ -142,7 +142,6 @@ object ProjectDAO {
     val query =
       s"""SELECT id, state, name, created_by, created_date, start_date, modified_by, modified_date, add_info, ely, status_info
           FROM project $where"""
-    println(query)
     Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String, Option[Long], Option[String])](query).list.map {
       case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo, ely, statusInfo) =>
         RoadAddressProject(id, ProjectState.apply(state), name, createdBy, start_date, modifiedBy, createdDate, modifiedDate, addInfo, List.empty[ReservedRoadPart], statusInfo, ely)
@@ -185,6 +184,24 @@ object ProjectDAO {
       case Some(statenumber)=> Some(ProjectState.apply(statenumber))
       case None=>None
     }
+  }
+
+  def getCheckCounter(projectID: Long): Option[Long] = {
+    val query =
+      s"""
+         SELECT CHECK_COUNTER
+         FROM project
+         WHERE id=$projectID
+       """
+    Q.queryNA[Long](query).firstOption match
+       {
+      case Some(number) => Some(number)
+      case None => Some(0)
+    }
+  }
+
+  def setCheckCounter(projectID: Long, counter: Long) = {
+    sqlu"""UPDATE project SET check_counter=$counter WHERE id=$projectID""".execute
   }
 
   def insertDeltaToRoadChangeTable(delta: Delta, projectId: Long): Boolean= {

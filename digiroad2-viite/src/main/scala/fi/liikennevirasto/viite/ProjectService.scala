@@ -462,7 +462,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     for(project<-listOfPendingProjects)
     {
       withDynSession {
-        checkProjectStatus(project)
+        val status = checkProjectStatus(project)
+        ProjectDAO.setCheckCounter(project, ProjectDAO.getCheckCounter(project).get)
+        status
       }
     }
 
