@@ -119,7 +119,7 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
 
   def headerContainsAuth(header: Map[String, String]): Boolean = {
     //Checks that header contains X-OTH-Authorization and X-Authorization attribute with correct base64 value
-    (header.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg==")) && header.exists(_==("X-Authorization","Basic dHJyZXN0b3RoOmxva2FrdXUyMDE2dGllcmVraXN0ZXJp")))
+    (header.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg==")) && header.exists(_==("X-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg==")))
   }
 
   get("/pysakit/:id"){
