@@ -10,7 +10,7 @@
       return zoom < 10 ? 10 : zoom;
     },
     minZoomForAssets: 6,
-    minZoomForRoadLinks: 1,
+    minZoomForRoadLinks: 5,
     minZoomForEditMode: 10,
     maxZoomLevel: 15
   };

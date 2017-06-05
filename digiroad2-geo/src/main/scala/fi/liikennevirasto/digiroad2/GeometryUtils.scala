@@ -147,6 +147,11 @@ object GeometryUtils {
       geometry2Endpoints._2.distance2DTo(geometry1EndPoints._2) < epsilon
   }
 
+  def geometryMoved(maxDistanceDiffAllowed: Double)(geometry1: Seq[Point], geometry2: Seq[Point]): Boolean = {
+    !(geometry1.nonEmpty && geometry2.nonEmpty &&
+      withinTolerance(GeometryUtils.geometryEndpoints(geometry1), GeometryUtils.geometryEndpoints(geometry2), maxDistanceDiffAllowed))
+  }
+
   def areAdjacent(point1: Point, point2: Point): Boolean = {
     val epsilon = 0.01
     point1.distance2DTo(point2) < epsilon
@@ -222,16 +227,27 @@ object GeometryUtils {
     }
   }
 
+  def overlapAmount(segment1: (Double, Double), segment2: (Double, Double)): Double = {
+    val overlapping = overlap(segment1, segment2).getOrElse((0.0, 0.0))
+    val seg1len = Math.abs(segment1._1 - segment1._2)
+    val seg2len = Math.abs(segment2._1 - segment2._2)
+    Math.abs(overlapping._1 - overlapping._2) / Math.min(seg1len, seg2len)
+  }
+
   def isDirectionChangeProjection(projection: Projection): Boolean = {
     ((projection.oldEnd - projection.oldStart)*(projection.newEnd - projection.newStart)) < 0
   }
 
-  def withinTolerance(geom1: Seq[Point], geom2: Seq[Point], tolerance: Double) = {
+  def withinTolerance(geom1: Seq[Point], geom2: Seq[Point], tolerance: Double): Boolean = {
     geom1.size == geom2.size &&
       geom1.zip(geom2).forall {
         case (p1, p2) => geometryLength(Seq(p1,p2)) <= tolerance
         case _ => false
       }
+  }
+
+  def withinTolerance(geom1: (Point, Point), geom2: (Point, Point), tolerance: Double): Boolean = {
+    withinTolerance(Seq(geom1._1, geom1._2), Seq(geom2._1, geom2._2), tolerance)
   }
 
   case class Projection(oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, vvhTimeStamp: Long)

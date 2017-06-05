@@ -1,6 +1,7 @@
 (function (root) {
   root.Backend = function() {
     var self = this;
+    var  loadingProject;
     this.getRoadLinks = createCallbackRequestor(function(params) {
       var zoom = params.zoom;
       var boundingBox = params.boundingBox;
@@ -8,6 +9,36 @@
         url: 'api/viite/roadlinks?zoom=' + zoom + '&bbox=' + boundingBox
       };
     });
+
+    this.abortLoadingProject=(function() {
+      if (loadingProject)
+      {
+        loadingProject.abort();
+      }
+    });
+
+    this.getProjectLinks = createCallbackRequestor(function(params) {
+      var zoom = params.zoom;
+      var boundingBox = params.boundingBox;
+      var projectId = params.projectId;
+      return {
+        url: 'api/viite/project/roadlinks?zoom=' + zoom + '&bbox=' + boundingBox + '&id=' + projectId
+      };
+    });
+
+    this.updateProjectLinks = _.throttle(function(data, errorCallback) {
+      $.ajax({
+        contentType: "application/json",
+        type: "PUT",
+        url: "api/viite/project/roadlinks",
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: function (data) {
+          eventbus.trigger('roadAddress:projectLinksUpdated', data);
+        },
+        error: errorCallback
+      });
+    }, 1000);
 
     this.getRoadLinkByLinkId = _.throttle(function(linkId, callback) {
       return $.getJSON('api/viite/roadlinks/' + linkId, function(data) {
@@ -36,22 +67,26 @@
     this.getTransferResult = _.throttle(function(dataTransfer, callback) {
       return $.getJSON('api/viite/roadlinks/transferRoadLink?data=' +JSON.stringify(dataTransfer), function(data) {
         return _.isFunction(callback) && callback(data);
+      }).fail(function(obj) {
+        eventbus.trigger('linkProperties:transferFailed', obj.status);
       });
     }, 1000);
 
-    this.createRoadAddress = _.throttle(function(data, success, failure) {
+    this.createRoadAddress = _.throttle(function(data, errorCallback) {
       $.ajax({
         contentType: "application/json",
         type: "PUT",
         url: "api/viite/roadlinks/roadaddress",
         data: JSON.stringify(data),
         dataType: "json",
-        success: success,
-        error: failure
+        success: function (link) {
+          eventbus.trigger('linkProperties:saved');
+        },
+        error: errorCallback
       });
     }, 1000);
 
-    this.createRoadAddressProject = _.throttle(function(data, success, failure) {
+    this.saveRoadAddressProject = _.throttle(function(data, success, failure) {
       $.ajax({
         contentType: "application/json",
         type: "PUT",
@@ -63,10 +98,59 @@
       });
     }, 1000);
 
+    this.createRoadAddressProject = _.throttle(function(data, success, failure) {
+      $.ajax({
+        contentType: "application/json",
+        type: "POST",
+        url: "api/viite/roadlinks/roadaddress/project/create",
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    }, 1000);
+
+    this.sendProjectToTR = _.throttle(function(projectID, success, failure) {
+      var Json = {
+        projectID: projectID
+      };
+      $.ajax({
+        contentType: "application/json",
+        type: "POST",
+        url: "api/viite/roadlinks/roadaddress/project/sendToTR",
+        data: JSON.stringify(Json),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    }, 1000);
+    
+    this.checkIfRoadpartReserved = (function(roadNumber,startPart,endPart,projDate) {
+      return $.get('api/viite/roadlinks/roadaddress/project/validatereservedlink/', {
+        roadNumber: roadNumber,
+        startPart: startPart,
+        endPart: endPart,
+        projDate: projDate
+      })
+        .then(function (x) {
+          return x;
+        });
+    });
+
     this.getRoadAddressProjects = _.throttle(function(callback) {
       return $.getJSON('api/viite/roadlinks/roadaddress/project/all', function(data) {
         return _.isFunction(callback) && callback(data);
       });
+    }, 1000);
+
+    this.getProjectsWithLinksById = _.throttle(function(id, callback) {
+      if (loadingProject) {
+        loadingProject.abort();
+      }
+      loadingProject= $.getJSON('api/viite/roadlinks/roadaddress/project/all/projectId/' + id, function(data) {
+        return _.isFunction(callback) && callback(data);
+      });
+      return loadingProject;
     }, 1000);
 
     this.getUserRoles = function () {
@@ -78,6 +162,12 @@
     this.getStartupParametersWithCallback = function(callback) {
       var url = 'api/viite/startupParameters';
       $.getJSON(url, callback);
+    };
+
+    this.getRoadAddressProjectList = function () {
+      $.get('api/viite/roadlinks/roadaddress/project/all', function (list) {
+        eventbus.trigger('projects:fetched', list);
+      });
     };
 
     this.getGeocode = function(address) {
@@ -111,10 +201,22 @@
       };
     }
 
-    this.withRoadLinkData = function (roadLinkData) {
+    //Methods for the UI Integrated Tests
+
+    var afterSave = false;
+
+    var resetAfterSave = function(){
+      afterSave = false;
+    };
+
+    this.withRoadLinkData = function (roadLinkData, afterSaveRoadLinkData) {
       self.getRoadLinks = function(boundingBox, callback) {
-        callback(roadLinkData);
-        eventbus.trigger('roadLinks:fetched');
+        if(afterSave){
+          callback(afterSaveRoadLinkData);
+        } else {
+          callback(roadLinkData);
+        }
+        eventbus.trigger('roadLinks:fetched', afterSave ? afterSaveRoadLinkData : roadLinkData);
       };
       return self;
     };
@@ -123,6 +225,7 @@
       self.getUserRoles = function () {
         eventbus.trigger('roles:fetched', userRolesData);
       };
+      afterSave = false;
       return self;
     };
 
@@ -130,6 +233,42 @@
       self.getStartupParametersWithCallback = function(callback) { callback(startupParameters); };
       return self;
     };
+
+    this.withFloatingAdjacents = function(selectedFloatingData, selectedUnknownData) {
+      self.getFloatingAdjacent= function (roadLinkData, callback) {
+        if(roadLinkData.linkId === 1718151 || roadLinkData.linkId === 1718152) {
+          callback(selectedFloatingData);
+        } else if(roadLinkData.linkId === 500130202) {
+          callback(selectedUnknownData);
+        } else {
+          callback([]);
+        }
+      };
+      return self;
+    };
+
+    this.withGetTransferResult = function(simulationData){
+      self.getTransferResult = function(selectedRoadAddressData, callback) {
+        callback(simulationData);
+      };
+      return self;
+    };
+
+    this.withRoadAddressCreation = function(){
+      self.createRoadAddress = function(data){
+        afterSave = true;
+        eventbus.trigger('linkProperties:saved');
+      };
+      return self;
+    };
+
+    this.withRoadAddressProjectData = function(roadAddressProjectData) {
+      self.getRoadAddressProjectList = function () {
+        eventbus.trigger('projects:fetched', roadAddressProjectData);
+      };
+      return self;
+    };
+
 
   };
 }(this));

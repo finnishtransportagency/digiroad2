@@ -7,11 +7,15 @@ window.LinearAssetLayer = function(params) {
       multiElementEventCategory = params.multiElementEventCategory,
       singleElementEventCategory = params.singleElementEventCategory,
       style = params.style,
-      layerName = params.layerName;
+      layerName = params.layerName,
+      assetLabel = params.assetLabel;
+
 
   Layer.call(this, layerName, roadLayer);
   var me = this;
   me.minZoomForContent = zoomlevels.minZoomForAssets;
+
+  var isComplementaryChecked = false;
 
   var singleElementEvents = function() {
     return _.map(arguments, function(argument) { return singleElementEventCategory + ':' + argument; }).join(' ');
@@ -24,15 +28,20 @@ window.LinearAssetLayer = function(params) {
   var LinearAssetCutter = function(eventListener, vectorLayer, collection) {
     var scissorFeatures = [];
     var CUT_THRESHOLD = 20;
+    var vectorSource = vectorLayer.getSource();
 
     var moveTo = function(x, y) {
-      vectorLayer.removeFeatures(scissorFeatures);
-      scissorFeatures = [new OpenLayers.Feature.Vector(new OpenLayers.Geometry.Point(x, y), { type: 'cutter' })];
-      vectorLayer.addFeatures(scissorFeatures);
+      scissorFeatures = [new ol.Feature({geometry: new ol.geom.Point([x, y]), type: 'cutter' })];
+      selectToolControl.removeFeatures(function(feature) {
+            return feature.getProperties().type === 'cutter';
+      });
+      selectToolControl.addNewFeature(scissorFeatures, true);
     };
 
-    var remove = function() {
-      vectorLayer.removeFeatures(scissorFeatures);
+    var remove = function () {
+      selectToolControl.removeFeatures(function(feature) {
+          return feature && feature.getProperties().type === 'cutter';
+      });
       scissorFeatures = [];
     };
 
@@ -41,7 +50,7 @@ window.LinearAssetLayer = function(params) {
     var clickHandler = function(evt) {
       if (application.getSelectedTool() === 'Cut') {
         if (collection.isDirty()) {
-          displayConfirmMessage();
+          me.displayConfirmMessage();
         } else {
           self.cut(evt);
         }
@@ -58,49 +67,56 @@ window.LinearAssetLayer = function(params) {
       eventListener.listenTo(eventbus, 'map:clicked', clickHandler);
       eventListener.listenTo(eventbus, 'map:mouseMoved', function(event) {
         if (application.getSelectedTool() === 'Cut' && !collection.isDirty()) {
-          self.updateByPosition(event.xy);
+          self.updateByPosition(event.coordinate);
         }
       });
     };
 
     var isWithinCutThreshold = function(linearAssetLink) {
-      return linearAssetLink && linearAssetLink.distance < CUT_THRESHOLD;
+      return linearAssetLink && linearAssetLink < CUT_THRESHOLD;
     };
 
     var findNearestLinearAssetLink = function(point) {
-      return _.chain(vectorLayer.features)
-        .filter(function(feature) { return feature.geometry instanceof OpenLayers.Geometry.LineString; })
-        .reject(function(feature) { return _.has(feature.attributes, 'generatedId') && _.flatten(collection.getGroup(feature.attributes)).length > 0; })
-        .map(function(feature) {
-          return {feature: feature,
-                  distanceObject: feature.geometry.distanceTo(point, {details: true})};
+      return _.chain(vectorSource.getFeatures())
+        .filter(function(feature) {
+          return feature.getGeometry() instanceof ol.geom.LineString;
         })
-        .sortBy(function(x) {
-          return x.distanceObject.distance;
+        .reject(function(feature) {
+          var properties = feature.getProperties();
+          return _.has(properties, 'generatedId') && _.flatten(collection.getGroup(properties)).length > 0;
+        })
+        .map(function(feature) {
+          var closestP = feature.getGeometry().getClosestPoint(point);
+          //TODO be sure about this distance
+          var distanceBetweenPoints = GeometryUtils.distanceOfPoints(point, closestP);
+          return {
+            feature: feature,
+            point: closestP,
+            distance: distanceBetweenPoints
+          };
+        })
+        .sortBy(function(nearest) {
+          return nearest.distance;
         })
         .head()
         .value();
     };
 
-    this.updateByPosition = function(position) {
-      var lonlat = map.getLonLatFromPixel(position);
-      var mousePoint = new OpenLayers.Geometry.Point(lonlat.lon, lonlat.lat);
+    this.updateByPosition = function(mousePoint) {
       var closestLinearAssetLink = findNearestLinearAssetLink(mousePoint);
-      if (!closestLinearAssetLink) {
-        return;
-      }
-      var distanceObject = closestLinearAssetLink.distanceObject;
-      if (isWithinCutThreshold(distanceObject)) {
-        moveTo(distanceObject.x0, distanceObject.y0);
-      } else {
-        remove();
+      if (closestLinearAssetLink) {
+        if (isWithinCutThreshold(closestLinearAssetLink.distance)) {
+          moveTo(closestLinearAssetLink.point[0], closestLinearAssetLink.point[1]);
+        } else {
+          remove();
+        }
       }
     };
 
-    this.cut = function(point) {
+    this.cut = function(mousePoint) {
       var pointsToLineString = function(points) {
-        var openlayersPoints = _.map(points, function(point) { return new OpenLayers.Geometry.Point(point.x, point.y); });
-        return new OpenLayers.Geometry.LineString(openlayersPoints);
+        var coordPoints = _.map(points, function(point) { return [point.x, point.y]; });
+        return new ol.geom.LineString(coordPoints);
       };
 
       var calculateSplitProperties = function(nearestLinearAsset, point) {
@@ -111,16 +127,13 @@ window.LinearAssetLayer = function(params) {
         return _.merge({ splitMeasure: splitMeasure }, splitVertices);
       };
 
-      var pixel = new OpenLayers.Pixel(point.x, point.y);
-      var mouseLonLat = map.getLonLatFromPixel(pixel);
-      var mousePoint = new OpenLayers.Geometry.Point(mouseLonLat.lon, mouseLonLat.lat);
-      var nearest = findNearestLinearAssetLink(mousePoint);
+      var nearest = findNearestLinearAssetLink([mousePoint.x, mousePoint.y]);
 
-      if (!isWithinCutThreshold(nearest.distanceObject)) {
+      if (!isWithinCutThreshold(nearest.distance)) {
         return;
       }
 
-      var nearestLinearAsset = nearest.feature.attributes;
+      var nearestLinearAsset = nearest.feature.getProperties();
       var splitProperties = calculateSplitProperties(nearestLinearAsset, mousePoint);
       selectedLinearAsset.splitLinearAsset(nearestLinearAsset.id, splitProperties);
 
@@ -130,213 +143,244 @@ window.LinearAssetLayer = function(params) {
 
   var uiState = { zoomLevel: 9 };
 
-  var vectorLayer = new OpenLayers.Layer.Vector(layerName, { styleMap: style.browsing });
+  var vectorSource = new ol.source.Vector();
+  var vectorLayer = new ol.layer.Vector({
+    source : vectorSource,
+    style : function(feature) {
+      return style.browsingStyleProvider.getStyle(feature, {zoomLevel: uiState.zoomLevel});
+    }
+  });
+
+  vectorLayer.set('name', layerName);
   vectorLayer.setOpacity(1);
-  vectorLayer.setVisibility(false);
+  vectorLayer.setVisible(false);
   map.addLayer(vectorLayer);
 
-  var indicatorLayer = new OpenLayers.Layer.Boxes('adjacentLinkIndicators');
+  var indicatorVector = new ol.source.Vector({});
+  var indicatorLayer = new ol.layer.Vector({
+     source : indicatorVector
+  });
   map.addLayer(indicatorLayer);
+  indicatorLayer.setVisible(false);
 
   var linearAssetCutter = new LinearAssetCutter(me.eventListener, vectorLayer, collection);
 
-  var highlightMultipleLinearAssetFeatures = function() {
-    var partitioned = _.groupBy(vectorLayer.features, function(feature) {
-      return selectedLinearAsset.isSelected(feature.attributes);
-    });
-    var selected = partitioned[true];
-    var unSelected = partitioned[false];
-    _.each(selected, function(feature) { selectControl.highlight(feature); });
-    _.each(unSelected, function(feature) { selectControl.unhighlight(feature); });
+  var onSelect = function(evt) {
+    if(evt.selected.length !== 0) {
+      var feature = evt.selected[0];
+      var properties = feature.getProperties();
+      verifyClickEvent(properties, evt);
+    }else{
+      if (selectedLinearAsset.exists()) {
+         selectedLinearAsset.close();
+      }
+    }
   };
 
-  var highlightLinearAssetFeatures = function() {
+  var verifyClickEvent = function(properties, evt){
+    var singleLinkSelect = evt.mapBrowserEvent.type === 'dblclick';
+    selectedLinearAsset.open(properties, singleLinkSelect);
     highlightMultipleLinearAssetFeatures();
   };
 
-  var setSelectionStyleAndHighlightFeature = function() {
-    vectorLayer.styleMap = style.selection;
-    highlightLinearAssetFeatures();
-    vectorLayer.redraw();
+  var highlightMultipleLinearAssetFeatures = function() {
+    var selectedAssets = selectedLinearAsset.get();
+    var features = style.renderFeatures(selectedAssets);
+    if(assetLabel)
+        features = features.concat(assetLabel.renderFeaturesByLinearAssets(selectedAssets, uiState.zoomLevel));
+    selectToolControl.addSelectionFeatures(features);
   };
 
-  var linearAssetOnSelect = function(feature) {
-    selectedLinearAsset.open(feature.attributes, feature.singleLinkSelect);
-    setSelectionStyleAndHighlightFeature();
+  var selectToolControl = new SelectToolControl(application, vectorLayer, map, {
+    style: function(feature){ return feature.setStyle(style.browsingStyleProvider.getStyle(feature, {zoomLevel: uiState.zoomLevel})); },
+    onInteractionEnd: onInteractionEnd,
+    onSelect: onSelect
+  });
+
+  var showDialog = function (linearAssets) {
+      linearAssets = _.filter(linearAssets, function(asset){
+          return asset && !(asset.geometry instanceof ol.geom.Point);
+      });
+
+      selectedLinearAsset.openMultiple(linearAssets);
+
+      var features = style.renderFeatures(selectedLinearAsset.get());
+      if(assetLabel)
+         features = features.concat(assetLabel.renderFeaturesByLinearAssets(selectedLinearAsset.get(), uiState.zoomLevel));
+      selectToolControl.addSelectionFeatures(features);
+
+     LinearAssetMassUpdateDialog.show({
+        count: selectedLinearAsset.count(),
+        onCancel: cancelSelection,
+        onSave: function (value) {
+          selectedLinearAsset.saveMultiple(value);
+          selectToolControl.clear();
+          selectedLinearAsset.closeMultiple();
+        selectToolControl.deactivateDraw();},
+        validator: selectedLinearAsset.validator,
+        formElements: params.formElements
+      });
   };
 
-  var linearAssetOnUnselect = function() {
-    if (selectedLinearAsset.exists()) {
-      selectedLinearAsset.close();
+  function onInteractionEnd(linearAssets) {
+    if (selectedLinearAsset.isDirty()) {
+        me.displayConfirmMessage();
+    } else {
+        if (linearAssets.length > 0) {
+            selectedLinearAsset.close();
+            showDialog(linearAssets);
+        }
     }
-  };
-
-  var selectControl = new OpenLayers.Control.SelectFeature(vectorLayer, {
-    onSelect: linearAssetOnSelect,
-    onUnselect: linearAssetOnUnselect
-  });
-  map.addControl(selectControl);
-  var doubleClickSelectControl = new DoubleClickSelectControl(selectControl, map);
-
-  var massUpdateHandler = new LinearAssetMassUpdate(map, vectorLayer, selectedLinearAsset, function(linearAssets) {
-    selectedLinearAsset.openMultiple(linearAssets);
-
-    LinearAssetMassUpdateDialog.show({
-      count: selectedLinearAsset.count(),
-      onCancel: cancelSelection,
-      onSave: function(value) {
-        selectedLinearAsset.saveMultiple(value);
-        activateBrowseStyle();
-        selectedLinearAsset.closeMultiple();
-      },
-      validator: selectedLinearAsset.validator,
-      formElements: params.formElements
-    });
-  });
-
-  function cancelSelection() {
-    selectedLinearAsset.closeMultiple();
-    activateBrowseStyle();
-    collection.fetch(map.getExtent());
   }
 
-  var handleLinearAssetUnSelected = function(eventListener, selection) {
-    _.each(_.filter(vectorLayer.features, function(feature) {
-      return selection.isSelected(feature.attributes);
-    }), function(feature) {
-      selectControl.unhighlight(feature);
-    });
-
-    vectorLayer.styleMap = style.browsing;
-    vectorLayer.redraw();
-    eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
-  };
+  function cancelSelection() {
+    if(isComplementaryChecked){
+      selectToolControl.clear();
+      selectedLinearAsset.close();
+      showWithComplementary();
+    }else{
+      hideComplementary();
+    }
+  }
 
   var adjustStylesByZoomLevel = function(zoom) {
     uiState.zoomLevel = zoom;
-    vectorLayer.redraw();
   };
 
   var changeTool = function(tool) {
-    if (tool === 'Cut') {
-      doubleClickSelectControl.deactivate();
-      linearAssetCutter.activate();
-    } else if (tool === 'Select') {
-      linearAssetCutter.deactivate();
-      doubleClickSelectControl.activate();
+    switch(tool) {
+      case 'Cut':
+        linearAssetCutter.activate();
+        break;
+      case 'Select':
+        linearAssetCutter.deactivate();
+        break;
+      case 'Rectangle':
+        linearAssetCutter.deactivate();
+        selectToolControl.activeRectangle();
+        break;
+      case 'Polygon':
+        linearAssetCutter.deactivate();
+        selectToolControl.activePolygon();
+        break;
+      default:
     }
-    updateMassUpdateHandlerState();
-  };
-
-  var updateMassUpdateHandlerState = function() {
-    if (!application.isReadOnly() &&
-        application.getSelectedTool() === 'Select' &&
-        application.getSelectedLayer() === layerName) {
-      massUpdateHandler.activate();
-    } else {
-      massUpdateHandler.deactivate();
-    }
-  };
-
-  var activateBrowseStyle = function() {
-    _.each(vectorLayer.features, function(feature) {
-      selectControl.unhighlight(feature);
-    });
-    vectorLayer.styleMap = style.browsing;
-    vectorLayer.redraw();
   };
 
   var bindEvents = function(eventListener) {
     var linearAssetChanged = _.partial(handleLinearAssetChanged, eventListener);
     var linearAssetCancelled = _.partial(handleLinearAssetCancelled, eventListener);
-    var linearAssetUnSelected = _.partial(handleLinearAssetUnSelected, eventListener);
+    eventListener.listenTo(eventbus, singleElementEvents('unselect'), linearAssetUnSelected);
     eventListener.listenTo(eventbus, multiElementEvent('fetched'), redrawLinearAssets);
     eventListener.listenTo(eventbus, 'tool:changed', changeTool);
-    eventListener.listenTo(eventbus, singleElementEvents('selected', 'multiSelected'), handleLinearAssetSelected);
     eventListener.listenTo(eventbus, singleElementEvents('saved'), handleLinearAssetSaved);
     eventListener.listenTo(eventbus, multiElementEvent('massUpdateSucceeded'), handleLinearAssetSaved);
     eventListener.listenTo(eventbus, singleElementEvents('valueChanged', 'separated'), linearAssetChanged);
     eventListener.listenTo(eventbus, singleElementEvents('cancelled', 'saved'), linearAssetCancelled);
-    eventListener.listenTo(eventbus, singleElementEvents('unselect'), linearAssetUnSelected);
-    eventListener.listenTo(eventbus, 'application:readOnly', updateMassUpdateHandlerState);
     eventListener.listenTo(eventbus, singleElementEvents('selectByLinkId'), selectLinearAssetByLinkId);
     eventListener.listenTo(eventbus, multiElementEvent('massUpdateFailed'), cancelSelection);
-  };
-
-  var handleLinearAssetSelected = function() {
-    setSelectionStyleAndHighlightFeature();
+    eventListener.listenTo(eventbus, 'complementaryLinks:show', showWithComplementary);
+    eventListener.listenTo(eventbus, 'complementaryLinks:hide', hideComplementary);
   };
 
   var selectLinearAssetByLinkId = function(linkId) {
     var feature = _.find(vectorLayer.features, function(feature) { return feature.attributes.linkId === linkId; });
     if (feature) {
-      selectControl.select(feature);
+        selectToolControl.addSelectionFeatures([feature]);
     }
   };
 
+  var linearAssetUnSelected = function () {
+    selectToolControl.clear();
+  };
+
   var handleLinearAssetSaved = function() {
-    collection.fetch(map.getExtent());
+    me.refreshView();
     applicationModel.setSelectedTool('Select');
   };
 
-  var displayConfirmMessage = function() { new Confirm(); };
-
   var handleLinearAssetChanged = function(eventListener, selectedLinearAsset) {
-    doubleClickSelectControl.deactivate();
-    eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
-    eventListener.listenTo(eventbus, 'map:clicked', displayConfirmMessage);
-    var selectedLinearAssetFeatures = _.filter(vectorLayer.features, function(feature) { return selectedLinearAsset.isSelected(feature.attributes); });
-    vectorLayer.removeFeatures(selectedLinearAssetFeatures);
-    drawLinearAssets(selectedLinearAsset.get());
+    //Disable interaction so the user can not click on another feature after made changes
+    selectToolControl.deactivate();
+    eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
+    eventListener.listenTo(eventbus, 'map:clicked', me.displayConfirmMessage);
     decorateSelection();
   };
 
   this.layerStarted = function(eventListener) {
     bindEvents(eventListener);
-    changeTool(application.getSelectedTool());
-    updateMassUpdateHandlerState();
   };
+
   this.refreshView = function(event) {
-    vectorLayer.setVisibility(true);
-    adjustStylesByZoomLevel(map.getZoom);
-    collection.fetch(map.getExtent()).then(function() {
-      eventbus.trigger('layer:linearAsset:' + event);
-    });
+    vectorLayer.setVisible(true);
+    adjustStylesByZoomLevel(map.getView().getZoom());
+    if (isComplementaryChecked) {
+      collection.fetchAssetsWithComplementary(map.getView().calculateExtent(map.getSize())).then(function() {
+        eventbus.trigger('layer:linearAsset:' + event);
+      });
+    } else {
+      collection.fetch(map.getView().calculateExtent(map.getSize())).then(function() {
+        eventbus.trigger('layer:linearAsset:' + event);
+      });
+    }
   };
+
   this.activateSelection = function() {
-    updateMassUpdateHandlerState();
-    doubleClickSelectControl.activate();
+    selectToolControl.activate();
   };
   this.deactivateSelection = function() {
-    updateMassUpdateHandlerState();
-    doubleClickSelectControl.deactivate();
+    selectToolControl.deactivate();
   };
   this.removeLayerFeatures = function() {
-    vectorLayer.removeAllFeatures();
-    indicatorLayer.clearMarkers();
+    vectorLayer.getSource().clear();
+    indicatorLayer.getSource().clear();
   };
 
   var handleLinearAssetCancelled = function(eventListener) {
-    doubleClickSelectControl.activate();
-    eventListener.stopListening(eventbus, 'map:clicked', displayConfirmMessage);
+    selectToolControl.clear();
+    selectToolControl.activate();
+    eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
     redrawLinearAssets(collection.getAll());
   };
 
   var drawIndicators = function(links) {
-    var markerTemplate = _.template('<span class="marker"><%= marker %></span>');
+    var features = [];
 
-    var markerContainer = function(position) {
-      var bounds = OpenLayers.Bounds.fromArray([position.x, position.y, position.x, position.y]);
-      return new OpenLayers.Marker.Box(bounds, "00000000");
+    var markerContainer = function(link, position) {
+        var anchor, offset;
+        if(assetLabel){
+            anchor = assetLabel.getMarkerAnchor(uiState.zoomLevel);
+            offset = assetLabel.getMarkerOffset(uiState.zoomLevel);
+        }
+
+        var imageSettings = {src: 'images/center-marker2.svg'};
+        if(anchor)
+            imageSettings = _.merge(imageSettings, { anchor : anchor });
+
+        var textSettings = {
+            text : link.marker,
+            fill: new ol.style.Fill({
+                color: '#ffffff'
+            }),
+            font : '12px sans-serif'
+        };
+        if(offset)
+          textSettings = _.merge(textSettings, {offsetX : offset[0], offsetY : offset[1]});
+
+        var style = new ol.style.Style({
+            image : new ol.style.Icon(imageSettings),
+            text : new ol.style.Text(textSettings)
+        });
+        var marker = new ol.Feature({
+            geometry : new ol.geom.Point([position.x, position.y])
+        });
+        marker.setStyle(style);
+        features.push(marker);
     };
 
     var indicatorsForSplit = function() {
       return me.mapOverLinkMiddlePoints(links, function(link, middlePoint) {
-        var box = markerContainer(middlePoint);
-        var $marker = $(markerTemplate(link));
-        $(box.div).html($marker);
-        $(box.div).css({overflow: 'visible'});
-        return box;
+          markerContainer(link, middlePoint);
       });
     };
 
@@ -348,85 +392,79 @@ window.LinearAssetLayer = function(params) {
       });
 
       return me.mapOverLinkMiddlePoints(geometriesForIndicators, function(link, middlePoint) {
-        var box = markerContainer(middlePoint);
-        var $marker = $(markerTemplate(link)).css({position: 'relative', right: '14px', bottom: '11px'});
-        $(box.div).html($marker);
-        $(box.div).css({overflow: 'visible'});
-        return box;
+          markerContainer(link, middlePoint);
       });
     };
 
     var indicators = function() {
       if (selectedLinearAsset.isSplit()) {
         return indicatorsForSplit();
-      } else {
-        return indicatorsForSeparation();
       }
+      return indicatorsForSeparation();
     };
-
-    _.forEach(indicators(), function(indicator) {
-      indicatorLayer.addMarker(indicator);
-    });
+    indicators();
+    selectToolControl.addNewFeature(features);
   };
 
   var redrawLinearAssets = function(linearAssetChains) {
-    doubleClickSelectControl.deactivate();
-    me.removeLayerFeatures();
-    if (!selectedLinearAsset.isDirty() && application.getSelectedTool() === 'Select') {
-      doubleClickSelectControl.activate();
-    }
-
+    vectorSource.clear();
+    indicatorLayer.getSource().clear();
     var linearAssets = _.flatten(linearAssetChains);
-    drawLinearAssets(linearAssets);
-    decorateSelection();
+      decorateSelection();
+
+      drawLinearAssets(linearAssets);
   };
 
   var drawLinearAssets = function(linearAssets) {
-    vectorLayer.addFeatures(style.renderFeatures(linearAssets));
+    vectorSource.addFeatures(style.renderFeatures(linearAssets));
+    if(assetLabel)
+      vectorSource.addFeatures(assetLabel.renderFeaturesByLinearAssets(linearAssets, uiState.zoomLevel));
   };
 
-  var decorateSelection = function() {
-    var offsetBySideCode = function(linearAsset) {
-      return GeometryUtils.offsetBySideCode(applicationModel.zoom.level, linearAsset);
-    };
-
+  var decorateSelection = function () {
     if (selectedLinearAsset.exists()) {
-      withoutOnSelect(function() {
-        var feature = _.find(vectorLayer.features, function(feature) { return selectedLinearAsset.isSelected(feature.attributes); });
-        if (feature) {
-          selectControl.select(feature);
-        }
-        highlightMultipleLinearAssetFeatures();
-      });
+      var features = style.renderFeatures(selectedLinearAsset.get());
+      if(assetLabel)
+          features = features.concat(assetLabel.renderFeaturesByLinearAssets(selectedLinearAsset.get(), uiState.zoomLevel));
+      selectToolControl.addSelectionFeatures(features);
 
       if (selectedLinearAsset.isSplitOrSeparated()) {
+        var offsetBySideCode = function (linearAsset) {
+          return GeometryUtils.offsetBySideCode(applicationModel.zoom.level, linearAsset);
+        };
         drawIndicators(_.map(_.cloneDeep(selectedLinearAsset.get()), offsetBySideCode));
       }
     }
   };
 
-  var withoutOnSelect = function(f) {
-    selectControl.onSelect = function() {};
-    f();
-    selectControl.onSelect = linearAssetOnSelect;
-  };
-
   var reset = function() {
-    selectControl.unselectAll();
-    vectorLayer.styleMap = style.browsing;
     linearAssetCutter.deactivate();
   };
 
   var show = function(map) {
-    vectorLayer.setVisibility(true);
-    indicatorLayer.setVisibility(true);
+    vectorLayer.setVisible(true);
+    indicatorLayer.setVisible(true);
+    me.refreshView();
     me.show(map);
+  };
+
+  var showWithComplementary = function() {
+    isComplementaryChecked = true;
+    me.refreshView();
+  };
+
+  var hideComplementary = function() {
+    selectToolControl.clear();
+    selectedLinearAsset.close();
+    isComplementaryChecked = false;
+    me.refreshView();
   };
 
   var hideLayer = function() {
     reset();
-    vectorLayer.setVisibility(false);
-    indicatorLayer.setVisibility(false);
+    vectorLayer.setVisible(false);
+    indicatorLayer.setVisible(false);
+    selectedLinearAsset.close();
     me.stop();
     me.hide();
   };

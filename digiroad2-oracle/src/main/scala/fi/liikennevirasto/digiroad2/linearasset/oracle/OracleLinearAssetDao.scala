@@ -404,8 +404,10 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
   /**
     * Iterates a set of link ids with MaintenanceRoad asset type id and floating flag and returns linear assets. Used by LinearAssetService.getByRoadLinks
     */
-  def fetchMaintenancesByLinkIds(maintenanceRoadAssetTypeId: Int, linkIds: Seq[Long], includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
+  def fetchMaintenancesByLinkIds(maintenanceRoadAssetTypeId: Int, linkIds: Seq[Long], includeFloating: Boolean = false, includeExpire: Boolean = true ): Seq[PersistedLinearAsset] = {
     val floatingFilter = if (includeFloating) "" else "and a.floating = 0"
+    val expiredFilter = if (includeExpire) "" else "and (a.valid_to > sysdate or a.valid_to is null)"
+    val filter = floatingFilter ++ expiredFilter
 
     val assets = MassQuery.withIds(linkIds.toSet) { idTableName =>
       sql"""
@@ -421,7 +423,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
                 join #$idTableName i on i.id = pos.link_id
                 join property p on p.id = t.property_id
           where a.asset_type_id = #$maintenanceRoadAssetTypeId
-            #$floatingFilter
+          #$filter
          union
          select a.id, e.id, e.property_id, cast (e.value as varchar2 (30)), p.property_type, p.public_id, p.required,
                 pos.link_id, pos.side_code,
@@ -436,7 +438,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
                 join #$idTableName i on i.id = pos.link_id
                 join property p on p.id = e.property_id
           where a.asset_type_id = #$maintenanceRoadAssetTypeId
-            #$floatingFilter"""
+          #$filter"""
         .as[(Long, Long, Long, String, String, String, Boolean, Long, Int, Double, Double, Long, Option[DateTime], Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean)].list
     }
 
@@ -982,7 +984,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     * Creates new linear asset. Return id of new asset. Used by LinearAssetService.createWithoutTransaction
     */
   def createLinearAsset(typeId: Int, linkId: Long, expired: Boolean, sideCode: Int, startMeasure: Double,
-                        endMeasure: Double, username: String, vvhTimeStamp: Long = 0L,
+                        endMeasure: Double, username: String, vvhTimeStamp: Long = 0L, linkSource: Option[Int],
                         fromUpdate: Boolean = false,
                         createdByFromUpdate: Option[String] = Some(""),
                         createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now())): Long = {
@@ -995,8 +997,8 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
         into asset(id, asset_type_id, created_by, created_date, valid_to, modified_by, modified_date)
         values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $username, CURRENT_TIMESTAMP)
 
-        into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp)
-        values ($lrmPositionId, $startMeasure, $endMeasure, $linkId, $sideCode, CURRENT_TIMESTAMP, $vvhTimeStamp)
+        into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
+        values ($lrmPositionId, $startMeasure, $endMeasure, $linkId, $sideCode, CURRENT_TIMESTAMP, $vvhTimeStamp, $linkSource)
 
         into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId)
@@ -1008,8 +1010,8 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
         into asset(id, asset_type_id, created_by, created_date, valid_to)
       values ($id, $typeId, $username, sysdate, #$validTo)
 
-      into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp)
-      values ($lrmPositionId, $startMeasure, $endMeasure, $linkId, $sideCode, CURRENT_TIMESTAMP, $vvhTimeStamp)
+      into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
+      values ($lrmPositionId, $startMeasure, $endMeasure, $linkId, $sideCode, CURRENT_TIMESTAMP, $vvhTimeStamp, $linkSource)
 
       into asset_link(asset_id, position_id)
       values ($id, $lrmPositionId)

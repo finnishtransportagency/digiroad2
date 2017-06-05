@@ -709,4 +709,46 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
+  test("Get information about changes in road names when using all other municipalities") {
+    val modifiedAt = Some(DateTime.parse("2015-05-07T12:00Z"))
+    val attributes: Map[String, Any] =
+      Map("ROADNAME_SE" -> "roadname_se",
+        "ROADNAME_FI" -> "roadname_fi",
+        "CREATED_DATE" -> BigInt.apply(1446132842000L))
+
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    when(mockVVHClient.fetchVVHRoadlinksChangesBetweenDates(DateTime.parse("2017-05-07T12:00Z"), DateTime.parse("2017-05-09T12:00Z")))
+      .thenReturn(Seq(VVHRoadlink(1611447, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, modifiedAt, attributes)))
+    val service = new TestService(mockVVHClient)
+
+    val changedVVHRoadlinks = service.getChanged(DateTime.parse("2017-05-07T12:00Z"), DateTime.parse("2017-05-09T12:00Z"))
+    changedVVHRoadlinks.length should be(1)
+    changedVVHRoadlinks.head.link.linkId should be(1611447)
+    changedVVHRoadlinks.head.link.municipalityCode should be(91)
+    changedVVHRoadlinks.head.value should be(attributes.get("ROADNAME_FI").get.toString)
+    changedVVHRoadlinks.head.createdAt should be(Some(DateTime.parse("2015-10-29T15:34:02.000Z")))
+    changedVVHRoadlinks.head.changeType should be("Modify")
+  }
+
+  test("Get information about changes in road names when using the municipalities of Ahvenanmaa") {
+    val modifiedAt = Some(DateTime.parse("2015-05-07T12:00Z"))
+    val attributes: Map[String, Any] =
+      Map("ROADNAME_SE" -> "roadname_se",
+        "ROADNAME_FI" -> "roadname_fi",
+        "CREATED_DATE" -> BigInt.apply(1446132842000L))
+
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    when(mockVVHClient.fetchVVHRoadlinksChangesBetweenDates(DateTime.parse("2017-05-07T12:00Z"), DateTime.parse("2017-05-09T12:00Z")))
+      .thenReturn(Seq(VVHRoadlink(1611447, 60, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, modifiedAt, attributes)))
+    val service = new TestService(mockVVHClient)
+
+    val changedVVHRoadlinks = service.getChanged(DateTime.parse("2017-05-07T12:00Z"), DateTime.parse("2017-05-09T12:00Z"))
+    changedVVHRoadlinks.length should be(1)
+    changedVVHRoadlinks.head.link.linkId should be(1611447)
+    changedVVHRoadlinks.head.link.municipalityCode should be(60)
+    changedVVHRoadlinks.head.value should be(attributes.get("ROADNAME_SE").get.toString)
+    changedVVHRoadlinks.head.createdAt should be(Some(DateTime.parse("2015-10-29T15:34:02.000Z")))
+    changedVVHRoadlinks.head.changeType should be("Modify")
+  }
+
 }

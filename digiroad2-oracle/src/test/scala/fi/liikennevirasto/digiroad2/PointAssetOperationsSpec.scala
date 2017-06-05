@@ -67,7 +67,7 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
 
   test("Check floating status when using three-dimensional road data") {
     val persistedAsset = PersistedMassTransitStop(22668828, 1234, 1234, Seq(2), 172, 453487.304243636, 6845919.0252246,
-      17.292, Option(2), Option(78), None, true, 0, Modification(None, None),
+      17.292, Option(2), Option(78), None, true, 0, 1, Modification(None, None),
       Modification(None, None), Seq())
 
     val geometry = List(Point(453466.069,6845915.849,108.81900000000314),
@@ -443,6 +443,39 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
       asset.lat should equal(5.0)
       asset.linkId should equal(CommonLinkId)
       asset.mValue should equal(7.0)
+      asset.floating should be(false)
+    }
+  }
+
+  test("Auto Correct Floating Point in case Geometry has been Replaced and the Asset its in Common Part") {
+    val linkId = 6002
+    val municipalityCode = 235
+    val administrativeClass = Municipality
+    val trafficDirection = TrafficDirection.BothDirections
+    val functionalClass = 1
+    val linkType = Freeway
+
+    val persistedAsset = testPersistedPointAsset(11, 10.0, 5.0, 235, linkId, 2.0, true, 0)
+
+    val newRoadLinks = Seq(
+      RoadLink(linkId, List(Point(0, 0), Point(0, 40)), 40.0, administrativeClass, functionalClass,
+        trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode)))
+    )
+
+    val changeInfo = Seq(
+      ChangeInfo(Some(linkId), Some(linkId), 12345, 13, Some(0), Some(17.0), Some(0), Some(15.0), 144000000),
+      ChangeInfo(Some(linkId), None, 12346, 15, Some(15), Some(16), None, None, 144000000)
+    )
+
+    val newAssetAdjusted = PointAssetFiller.correctedPersistedAsset(persistedAsset, newRoadLinks, changeInfo)
+
+    newAssetAdjusted.isEmpty should be(false)
+    newAssetAdjusted.map { asset =>
+      asset.assetId should equal(11)
+      asset.lon should equal(0)
+      asset.lat should equal(2)
+      asset.linkId should equal(linkId)
+      asset.mValue should equal(2)
       asset.floating should be(false)
     }
   }

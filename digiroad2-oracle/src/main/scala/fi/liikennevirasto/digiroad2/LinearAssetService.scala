@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
+import com.vividsolutions.jts.geom.{MultiPolygon, Polygon}
 import fi.liikennevirasto.digiroad2.ChangeType._
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.asset._
@@ -45,6 +46,7 @@ trait LinearAssetOperations {
   def vvhClient: VVHClient
   def dao: OracleLinearAssetDao
   def eventBus: DigiroadEventBus
+  def polygonTools : PolygonTools
 
   lazy val dataSource = {
     val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))
@@ -62,6 +64,15 @@ trait LinearAssetOperations {
     municipalityCode
   }
 
+  private def getLinkSource(linkId: Long): Option[Int] = {
+    val roadlink = roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId, newTransaction = false)
+    roadlink match {
+      case Some(result) =>
+        Some(roadlink.get.linkSource.value)
+      case _ => None
+    }
+  }
+
   /**
     * Returns linear assets for Digiroad2Api /linearassets GET endpoint.
     *
@@ -76,16 +87,26 @@ trait LinearAssetOperations {
     LinearAssetPartitioner.partition(linearAssets, roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
 
+  def getComplementaryByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
+    val (roadLinks, change) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(bounds, municipalities)
+    val linearAssets = getByRoadLinks(typeId, roadLinks, change)
+    LinearAssetPartitioner.partition(linearAssets, roadLinks.groupBy(_.linkId).mapValues(_.head))
+  }
 
-  def getByIntersectedBoundingBox(typeId: Int, serviceArea : Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
-    val polygonTool = new PolygonTools()
-    val polygonStringList =polygonTool.stringifyGeometryForVVHClient(
-        polygonTool.geometryInterceptorToBoundingBox(
-          polygonTool.getAreaGeometry(serviceArea),bounds))
-    val vVHRoadLinksAndChanges = polygonStringList.map(roadLinkService.getRoadLinksAndChangesFromVVHWithPolygon)
+  def getByIntersectedBoundingBox(typeId: Int, serviceAreas : Set[Int], bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
+    getEitherByIntersectedBoundingBox(typeId, serviceAreas, bounds, municipalities, roadLinkService.getRoadLinksAndChangesFromVVHWithPolygon)
+  }
+
+  def getComplementaryByIntersectedBoundingBox(typeId: Int, serviceAreas : Set[Int], bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
+    getEitherByIntersectedBoundingBox(typeId, serviceAreas, bounds, municipalities, roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHWithPolygon)
+  }
+
+  def getEitherByIntersectedBoundingBox(typeId: Int, serviceAreas : Set[Int], bounds: BoundingRectangle, municipalities: Set[Int] = Set(), getRoadlinks: (Polygon) => (Seq[RoadLink], Seq[ChangeInfo])): Seq[Seq[PieceWiseLinearAsset]] = {
+    val polygons = polygonTools.geometryInterceptorToBoundingBox(polygonTools.getAreasGeometries(serviceAreas),bounds)
+    val vVHRoadLinksAndChanges = polygons.map(getRoadlinks)
     val roadLinks = vVHRoadLinksAndChanges.flatMap(_._1)
-    val changes =vVHRoadLinksAndChanges.flatMap(_._2)
-    val linearAssets = getByRoadLinks(typeId,  roadLinks, changes)
+    val changes = vVHRoadLinksAndChanges.flatMap(_._2)
+    val linearAssets = getByRoadLinks(typeId, roadLinks, changes)
     LinearAssetPartitioner.partition(linearAssets, roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
 
@@ -121,7 +142,8 @@ trait LinearAssetOperations {
         }
       }.filterNot(_.expired)
 
-    val assetsOnChangedLinks = existingAssets.filter(a => LinearAssetUtils.newChangeInfoDetected(a, changes))
+    val (assetsOnChangedLinks, assetsWithoutChangedLinks) = existingAssets.partition(a => LinearAssetUtils.newChangeInfoDetected(a, changes))
+
     val projectableTargetRoadLinks = roadLinks.filter(
       rl => rl.linkType.value == UnknownLinkType.value || rl.isCarTrafficRoad)
 
@@ -130,11 +152,11 @@ trait LinearAssetOperations {
     val (expiredPavingAssetIds, newAndUpdatedPavingAssets) = getPavingAssetChanges(existingAssets, roadLinks, changes, typeId)
 
     val combinedAssets = existingAssets.filterNot(
-      a => expiredPavingAssetIds.contains(a.id) || newAndUpdatedPavingAssets.exists(_.id == a.id)
+      a => expiredPavingAssetIds.contains(a.id) || newAndUpdatedPavingAssets.exists(_.id == a.id) || assetsWithoutChangedLinks.exists(_.id == a.id)
     ) ++ newAndUpdatedPavingAssets
 
     val filledNewAssets = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
-      combinedAssets, assetsOnChangedLinks, changes)
+      combinedAssets, assetsOnChangedLinks, changes) ++ assetsWithoutChangedLinks
 
     val newAssets = newAndUpdatedPavingAssets.filterNot(a => filledNewAssets.exists(f => f.linkId == a.linkId)) ++ filledNewAssets
 
@@ -371,6 +393,16 @@ trait LinearAssetOperations {
     }
   }
 
+  def getPersistedAssetsByLinkIds(typeId: Int, linkIds: Seq[Long]): Seq[PersistedLinearAsset] = {
+    withDynTransaction {
+      typeId match {
+        case LinearAssetTypes.MaintenanceRoadAssetTypeId =>
+          dao.fetchMaintenancesByLinkIds(typeId, linkIds, includeExpire = false)
+        case _ => Seq.empty[PersistedLinearAsset]
+      }
+    }
+  }
+
   /**
     * This method returns linear assets that have been changed in OTH between given date values. It is used by TN-ITS ChangeApi.
     *
@@ -475,7 +507,7 @@ trait LinearAssetOperations {
 
       toInsert.foreach{ linearAsset =>
         val id = dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
-          linearAsset.startMeasure, linearAsset.endMeasure, linearAsset.createdBy.getOrElse(LinearAssetTypes.VvhGenerated), linearAsset.vvhTimeStamp)
+          linearAsset.startMeasure, linearAsset.endMeasure, linearAsset.createdBy.getOrElse(LinearAssetTypes.VvhGenerated), linearAsset.vvhTimeStamp, getLinkSource(linearAsset.linkId))
         linearAsset.value match {
           case Some(NumericValue(intValue)) =>
             dao.insertValue(id, LinearAssetTypes.numericValuePropertyId, intValue)
@@ -548,7 +580,7 @@ trait LinearAssetOperations {
 
     //Create New Asset
     val newAssetIDcreate = createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, valueToUpdate, oldAsset.sideCode,
-      oldAsset.startMeasure, oldAsset.endMeasure, username, vvhClient.createVVHTimeStamp(5), true, oldAsset.createdBy, oldAsset.createdDateTime)
+      oldAsset.startMeasure, oldAsset.endMeasure, username, vvhClient.createVVHTimeStamp(5), getLinkSource(oldAsset.linkId), true, oldAsset.createdBy, oldAsset.createdDateTime)
 
       Some(newAssetIDcreate)
   }
@@ -583,7 +615,7 @@ trait LinearAssetOperations {
   def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String): Seq[Long] = {
     withDynTransaction {
       newLinearAssets.map { newAsset =>
-        createWithoutTransaction(typeId, newAsset.linkId, newAsset.value, newAsset.sideCode, newAsset.startMeasure, newAsset.endMeasure, username, vvhClient.createVVHTimeStamp(5))
+        createWithoutTransaction(typeId, newAsset.linkId, newAsset.value, newAsset.sideCode, newAsset.startMeasure, newAsset.endMeasure, username, vvhClient.createVVHTimeStamp(5), getLinkSource(newAsset.linkId))
       }
     }
   }
@@ -594,7 +626,7 @@ trait LinearAssetOperations {
   def split(id: Long, splitMeasure: Double, existingValue: Option[Value], createdValue: Option[Value], username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
     withDynTransaction {
       val linearAsset = dao.fetchLinearAssetsByIds(Set(id), LinearAssetTypes.numericValuePropertyId).head
-      val roadLink = vvhClient.fetchByLinkId(linearAsset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+      val roadLink = vvhClient.fetchRoadLinkOrComplementaryFromVVH(linearAsset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
       municipalityValidation(roadLink.municipalityCode)
 
       Queries.updateAssetModified(id, username).execute
@@ -607,7 +639,8 @@ trait LinearAssetOperations {
         case Some(value) => updateWithoutTransaction(Seq(id), value, username)
       }
 
-      val createdIdOption = createdValue.map(createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, _, linearAsset.sideCode, createdLinkMeasures._1, createdLinkMeasures._2, username, linearAsset.vvhTimeStamp))
+      val createdIdOption = createdValue.map(createWithoutTransaction(linearAsset.typeId, linearAsset.linkId, _, linearAsset.sideCode, createdLinkMeasures._1, createdLinkMeasures._2, username, linearAsset.vvhTimeStamp,
+        Some(roadLink.linkSource.value)))
 
       newIdsToReturn ++ Seq(createdIdOption).flatten
     }
@@ -638,7 +671,8 @@ trait LinearAssetOperations {
 
       dao.updateSideCode(newExistingIdsToReturn.head, SideCode.TowardsDigitizing)
 
-      val created = valueAgainstDigitization.map(createWithoutTransaction(existing.typeId, existing.linkId, _, SideCode.AgainstDigitizing.value, existing.startMeasure, existing.endMeasure, username, existing.vvhTimeStamp))
+      val created = valueAgainstDigitization.map(createWithoutTransaction(existing.typeId, existing.linkId, _, SideCode.AgainstDigitizing.value, existing.startMeasure, existing.endMeasure, username, existing.vvhTimeStamp,
+        Some(roadLink.linkSource.value)))
 
       newExistingIdsToReturn ++ created
     }
@@ -672,11 +706,11 @@ trait LinearAssetOperations {
   }
 
   private def createWithoutTransaction(typeId: Int, linkId: Long, value: Value, sideCode: Int, startMeasure: Double,
-                                       endMeasure: Double, username: String, vvhTimeStamp: Long, fromUpdate: Boolean = false,
+                                       endMeasure: Double, username: String, vvhTimeStamp: Long, linkSource: Option[Int], fromUpdate: Boolean = false,
                                        createdByFromUpdate: Option[String] = Some(""),
                                        createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now())): Long = {
     val id = dao.createLinearAsset(typeId, linkId, expired = false, sideCode, startMeasure, endMeasure, username,
-      vvhTimeStamp, fromUpdate, createdByFromUpdate, createdDateTimeFromUpdate)
+      vvhTimeStamp, linkSource, fromUpdate, createdByFromUpdate, createdDateTimeFromUpdate)
     value match {
       case NumericValue(intValue) =>
         dao.insertValue(id, LinearAssetTypes.numericValuePropertyId, intValue)
@@ -731,7 +765,8 @@ trait LinearAssetOperations {
             filter(_.attributes.get("SURFACETYPE").contains(2)).
             map(roadLink => NewLinearAsset(roadLink.linkId, 0, GeometryUtils.geometryLength(roadLink.geometry), NumericValue(1), 1, 0, None))
           newAssets.foreach{ newAsset =>
-              createWithoutTransaction(assetTypeId, newAsset.linkId, newAsset.value, newAsset.sideCode, newAsset.startMeasure, newAsset.endMeasure, LinearAssetTypes.VvhGenerated, vvhClient.createVVHTimeStamp(5))
+              createWithoutTransaction(assetTypeId, newAsset.linkId, newAsset.value, newAsset.sideCode, newAsset.startMeasure, newAsset.endMeasure, LinearAssetTypes.VvhGenerated, vvhClient.createVVHTimeStamp(5),
+                getLinkSource(newAsset.linkId))
             count = count + 1
           }
         }
@@ -739,6 +774,11 @@ trait LinearAssetOperations {
     }
   }
 
+  def getActiveMaintenanceRoadByPolygon(areaId: Int, typeId: Int): Seq[PersistedLinearAsset] = {
+    val polygon= polygonTools.getPolygonByArea(areaId)
+    val vVHLinkIds = roadLinkService.getLinkIdsFromVVHWithComplementaryByPolygons(polygon)
+    getPersistedAssetsByLinkIds(typeId, vVHLinkIds)
+  }
 }
 
 class LinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {
@@ -746,6 +786,7 @@ class LinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   override def dao: OracleLinearAssetDao = new OracleLinearAssetDao(roadLinkServiceImpl.vvhClient)
   override def eventBus: DigiroadEventBus = eventBusImpl
   override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
+  override def polygonTools : PolygonTools = new PolygonTools()
 }
 
 class MissingMandatoryPropertyException(val missing: Set[String]) extends RuntimeException {
