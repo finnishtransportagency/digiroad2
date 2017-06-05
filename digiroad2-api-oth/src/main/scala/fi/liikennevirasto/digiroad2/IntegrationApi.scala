@@ -381,7 +381,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
 
   get("/changes/:assetType") {
     contentType = formats("json")
-     val since = DateTime.parse(params("since"))
+     val since = DateTime.parse(params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter"))))
      val until = params.get("until") match {
        case Some(dateValue) => DateTime.parse(dateValue)
        case _ => DateTime.now()
