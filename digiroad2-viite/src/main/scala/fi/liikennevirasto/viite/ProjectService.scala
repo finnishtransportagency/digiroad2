@@ -4,8 +4,9 @@ import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.util.RoadAddressException
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, RoadLinkService}
+import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, RoadLinkService}
+import fi.liikennevirasto.viite.dao.ProjectState._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.{Delta, ProjectDeltaCalculator, RoadAddressFiller}
@@ -461,27 +462,24 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     for(project<-listOfPendingProjects)
     {
       withDynSession {
-        checkprojectstatus(project)
+        checkProjectStatus(project)
       }
     }
 
   }
 
-  private def checkprojectstatus(projectID: Long) =
+  private def checkProjectStatus(projectID: Long) =
   {
-    val projectstatus=ProjectDAO.getProjectStatus(projectID)
-    if (projectstatus.isDefined)
+    val projectStatus=ProjectDAO.getProjectStatus(projectID)
+    if (projectStatus.isDefined)
     {
-      val currentState=projectstatus.getOrElse(ProjectState.Unknown)
-      val trProjectState=ViiteTierekisteriClient.getProjectStatusObject(projectID)
-      val newState =getStatusFromTRObject(trProjectState).getOrElse(ProjectState.Unknown)
+      val currentState = projectStatus.getOrElse(ProjectState.Unknown)
+      val trProjectState = ViiteTierekisteriClient.getProjectStatusObject(projectID)
+      val newState = getStatusFromTRObject(trProjectState).getOrElse(ProjectState.Unknown)
       val errorMessage = getTRErrorMessage(trProjectState)
-      updateProjectStatusIfNeeded(currentState,newState,errorMessage,projectID)
-    }
-    {
-      //TODO
-      //copy & update new roads
-      // remove links from project-link table
+      val updatedStatus = updateProjectStatusIfNeeded(currentState,newState,errorMessage,projectID)
+      updateRoadAddressWithProject(newState, projectID)
+      updatedStatus
     }
   }
 
@@ -494,6 +492,25 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       case "V" => Some(ProjectState.apply(ProjectState.ErroredInTR.value))
       case "null" => Some(ProjectState.apply(ProjectState.ErroredInTR.value))
       case _=> None
+    }
+  }
+
+  def updateRoadAddressWithProject(newState: ProjectState, projectID: Long): Seq[Long] ={
+    if(newState == Saved2TR){
+      val delta = ProjectDeltaCalculator.delta(projectID)
+      val changes = RoadAddressChangesDAO.fetchRoadAddressChanges(Set(projectID))
+      val newLinks = delta.terminations.map(terminated => terminated.copy(id = NewRoadAddress,
+        endDate = Some(changes.head.changeDate)))
+      //Expiring old addresses
+      roadAddressService.expireRoadAddresses(delta.terminations.map(_.id).toSet)
+      //Creating new addresses with the applicable changes
+      val newRoads = RoadAddressDAO.create(newLinks, None)
+      //Remove the ProjectLinks from PROJECT_LINK table?
+//      val projectLinks = ProjectDAO.getProjectLinks(projectID, Some(LinkStatus.Terminated))
+//      ProjectDAO.removeProjectLinksById(projectLinks.map(_.projectId).toSet)
+      newRoads
+    } else {
+      throw new RuntimeException(s"Project state not at Saved2TR: $newState")
     }
   }
   case class PublishResult(validationSuccess: Boolean, sendSuccess: Boolean, errorMessage: Option[String])

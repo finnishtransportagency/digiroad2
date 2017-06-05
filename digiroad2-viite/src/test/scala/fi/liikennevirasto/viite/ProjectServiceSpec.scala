@@ -5,11 +5,12 @@ import java.util.Properties
 
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, State, TrafficDirection, UnknownLinkType}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, RoadLinkService, _}
+import fi.liikennevirasto.viite.dao.Discontinuity.Discontinuous
 import fi.liikennevirasto.viite.dao.{Discontinuity, ProjectState, RoadAddressProject, _}
 import fi.liikennevirasto.viite.process.ProjectDeltaCalculator
 import org.apache.http.client.config.RequestConfig
@@ -75,6 +76,13 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       case e: ConnectException =>
         false
     }
+  }
+
+  private def toProjectLink(project: RoadAddressProject)(roadAddress: RoadAddress): ProjectLink = {
+    ProjectLink(id=NewRoadAddress, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track,
+      roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
+      roadAddress.endDate, modifiedBy=Option(project.createdBy), 0L, roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
+      roadAddress.sideCode, roadAddress.calibrationPoints, floating=false, roadAddress.geom, project.id, LinkStatus.NotHandled, RoadType.PublicRoad)
   }
 
   test ("create road link project without road parts") {
@@ -288,6 +296,55 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       stateaftercheck.description should be (ProjectState.ErroredInTR.description)
     }
 
+  }
+
+  test("process roadChange data and expire the roadLinks"){
+      //First Create Mock Project, RoadLinks and
+
+    runWithRollback{
+      var projectId = 0L
+      val roadNumber = 1943845
+      val roadPartNumber = 1
+      val linkId = 12345L
+      //Creation of Test road
+      val id = RoadAddressDAO.getNextRoadAddressId
+      val ra = Seq(RoadAddress(id, roadNumber, roadPartNumber, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 0, linkId, 0.0, 9.8, SideCode.TowardsDigitizing, (None, None), false,
+        Seq(Point(0.0, 0.0), Point(0.0, 9.8))))
+      RoadAddressDAO.create(ra)
+      val roadsBeforeChanges = RoadAddressDAO.fetchByLinkId(Set(linkId)).head
+
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(linkId))).thenReturn(Seq(RoadLink(linkId, ra.head.geom, 9.8, State, 1, TrafficDirection.BothDirections,
+        Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(167)))))
+      //Creation of test project with test links
+      val project = RoadAddressProject(projectId,ProjectState.Incomplete,"testiprojekti","Test",DateTime.now(),"Test",
+        DateTime.now(),DateTime.now(),"info",
+        List(ReservedRoadPart(0:Long, roadNumber:Long, roadPartNumber:Long, 5:Double, Discontinuity.apply("jatkuva"),
+          8:Long, None:Option[DateTime], None:Option[DateTime])), None)
+      val (proj, projectLink, _, errmsg) = projectService.createRoadLinkProject(project)
+      projectLink.isEmpty should be (false)
+      errmsg should be ("ok")
+      projectId = proj.id
+      val projectLinkId = projectLink.get.id
+      val projectLinkProjectId = projectLink.get.projectId
+      val terminatedValue = LinkStatus.Terminated.value
+      //Changing the status of the test link to terminated
+      sqlu"""Update Project_Link Set Status = $terminatedValue
+            Where ID = $projectLinkId And PROJECT_ID = $projectLinkProjectId""".execute
+
+      //Creation of test road_address_changes
+      sqlu"""insert into road_address_changes
+             (project_id,change_type,new_road_number,new_road_part_number,new_track_code,new_start_addr_m,new_end_addr_m,new_discontinuity,new_road_type,new_ely,
+              old_road_number,old_road_part_number,old_track_code,old_start_addr_m,old_end_addr_m)
+             Values ($projectId,5,$roadNumber,$roadPartNumber,1,0,10,1,1,8,$roadNumber,$roadPartNumber,1,0,10)""".execute
+
+      projectService.updateRoadAddressWithProject(ProjectState.Saved2TR, projectId)
+
+      val roadsAfterChanges = RoadAddressDAO.fetchByLinkId(Set(linkId)).head
+      roadsBeforeChanges.linkId should be(roadsAfterChanges.linkId)
+      roadsBeforeChanges.roadNumber should be(roadsAfterChanges.roadNumber)
+      roadsBeforeChanges.roadPartNumber should be(roadsAfterChanges.roadPartNumber)
+      roadsAfterChanges.endDate.nonEmpty should be (true)
+    }
   }
 
 }

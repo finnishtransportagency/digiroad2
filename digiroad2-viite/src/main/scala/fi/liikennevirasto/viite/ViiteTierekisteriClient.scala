@@ -152,7 +152,7 @@ object ViiteTierekisteriClient {
     loadedKeyString
   }
 
-  def sendRoadAddressChangeData(changeData: List[ProjectRoadAddressChange]) = {
+  def sendRoadAddressChangeData(changeData: List[ProjectRoadAddressChange]): ProjectChangeStatus= {
     val projects = changeData.map(cd => {
       convertChangeDataToChangeProject(cd)
     })
