@@ -14,7 +14,7 @@ import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkProperties}
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.{VVHRoadLinkHistoryProcessor, VVHSerializer}
-import org.joda.time.DateTime
+import org.joda.time.{DateTimeZone, DateTime}
 import org.joda.time.format.ISODateTimeFormat
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -28,6 +28,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 case class IncompleteLink(linkId: Long, municipalityCode: Int, administrativeClass: AdministrativeClass)
 case class RoadLinkChangeSet(adjustedRoadLinks: Seq[RoadLink], incompleteLinks: Seq[IncompleteLink])
+case class ChangedVVHRoadlink(link: VVHRoadlink, value: String, createdAt: Option[DateTime], changeType: String)
 
 sealed trait RoadLinkType {
   def value: Int
@@ -138,6 +139,17 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   /**
+    * This method returns VVH road links that had changed between two dates.
+    *
+    * @param since
+    * @param until
+    * @return Road links
+    */
+  def getRoadLinksBetweenTwoDatesFromVVH(since: DateTime, until: DateTime, newTransaction: Boolean = true): Seq[VVHRoadlink] = {
+    fetchChangedVVHRoadlinksBetweenDates(since, until)
+  }
+
+  /**
     * This method returns road links by municipality.
     *
     * @param municipality
@@ -202,6 +214,18 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     else Seq.empty[VVHRoadlink]
   }
 
+
+  /**
+    * This method returns VVH road links that had changed between two dates.
+    *
+    * @param since
+    * @param until
+    * @return VVHRoadLinks
+    */
+  def fetchChangedVVHRoadlinksBetweenDates(since: DateTime, until: DateTime): Seq[VVHRoadlink] = {
+    if ((since != null) || (until != null)) vvhClient.fetchVVHRoadlinksChangesBetweenDates(since, until)
+    else Seq.empty[VVHRoadlink]
+  }
 
   /**
     * This method returns VVH road links by bounding box.  Utilized to find the closest road link of a point.
@@ -1320,6 +1344,36 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
             => RoadLinkRoadAddress(id, roadNumber, roadPartNumber, track, sideCode, startAddrMValue, endAddrMValue)
           }
       }
+    }
+  }
+
+  /**
+    * This method returns Road Link that have been changed in VVH between given dates values. It is used by TN-ITS ChangeApi.
+    *
+    * @param sinceDate
+    * @param untilDate
+    * @return Changed Road Links between given dates
+    */
+  def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedVVHRoadlink] = {
+    val municipalitiesCodeToValidate = List(35, 43, 60, 62, 65, 76, 170, 295, 318, 417, 438, 478, 736, 766, 771, 941)
+    val timezone = DateTimeZone.forOffsetHours(0)
+
+    val vvhRoadLinks = getRoadLinksBetweenTwoDatesFromVVH(sinceDate, untilDate)
+    vvhRoadLinks.map { vvhRoadLink =>
+      ChangedVVHRoadlink(
+        link = vvhRoadLink,
+        value =
+          if (municipalitiesCodeToValidate.contains(vvhRoadLink.municipalityCode)) {
+            vvhRoadLink.attributes.getOrElse("ROADNAME_SE", "").toString
+          } else {
+            vvhRoadLink.attributes.getOrElse("ROADNAME_FI", "").toString
+          },
+        createdAt = vvhRoadLink.attributes.get("CREATED_DATE") match {
+          case Some(date) => Some(new DateTime(date.asInstanceOf[BigInt].toLong, timezone))
+          case _ => None
+        },
+        changeType = "Modify"
+      )
     }
   }
 

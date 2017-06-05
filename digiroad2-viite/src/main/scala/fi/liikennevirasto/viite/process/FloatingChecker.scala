@@ -15,11 +15,22 @@ class FloatingChecker(roadLinkService: RoadLinkService) {
           ra.geom))
     }
 
+    /**
+      * Check if road address geometry is moved by road link geometry change at leas MaxMoveDistanceBeforeFloating
+      * meters. Because road address geometry isn't directed check for fit either way
+      * @param roadLink Road link for road address list
+      * @param roadAddresses Sequence of road addresses to check
+      * @return true, if geometry has changed for any of the links beyond tolerance
+      */
     def validateGeometryChange(roadLink : VVHRoadlink, roadAddresses: Seq[RoadAddress]) : Boolean = {
-      roadAddresses.exists(ra => GeometryUtils.geometryMoved(MaxMoveDistanceBeforeFloating)(
-        GeometryUtils.truncateGeometry2D(roadLink.geometry, ra.startMValue, ra.endMValue),
-        ra.geom
-      ))
+      roadAddresses.exists(ra =>
+        GeometryUtils.geometryMoved(MaxMoveDistanceBeforeFloating)(
+          GeometryUtils.truncateGeometry2D(roadLink.geometry, ra.startMValue, ra.endMValue), // 2D = don't care about changing height values
+          ra.geom) &&
+          GeometryUtils.geometryMoved(MaxMoveDistanceBeforeFloating)(
+            GeometryUtils.truncateGeometry2D(roadLink.geometry, ra.startMValue, ra.endMValue),
+            ra.geom.reverse)      // Road Address geometry isn't necessarily directed: start and end may not be aligned by side code
+      )
     }
 
     def checkGeometryChangeOfSegments(roadAddressList: Seq[RoadAddress], roadLinks : Map[Long, Seq[VVHRoadlink]]): Seq[RoadAddress] = {

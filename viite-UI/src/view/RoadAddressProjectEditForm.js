@@ -1,5 +1,5 @@
 (function (root) {
-  root.RoadAddressProjectEditForm = function(projectCollection) {
+  root.RoadAddressProjectEditForm = function(projectCollection, selectedProjectLinkProperty) {
     var currentProject = false;
     var selectedProjectLink = false;
     var staticField = function(labelText, dataField) {
@@ -27,6 +27,10 @@
       return '<span class ="edit-mode-title">'+projectName+'</span>';
     };
 
+    var clearInformationContent = function() {
+      $('#information-content').empty();
+    };
+
     var sendRoadAddressChangeButton = function() {
 
       $('#information-content').html('' +
@@ -36,7 +40,7 @@
         '</div>');
 
       return '<div class="project-form form-controls">' +
-        '<button class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button></div>';
+        '<button class="send btn btn-block btn-send" disabled>Tee tieosoitteenmuutosilmoitus</button></div>';
     };
 
     var terminationButtons = function() {
@@ -129,13 +133,13 @@
       eventbus.on('projectLink:clicked', function(selected) {
         selectedProjectLink = selected;
         currentProject = projectCollection.getCurrentProject();
+        clearInformationContent();
         rootElement.html(selectedProjectLinkTemplate(currentProject, options, selectedProjectLink));
       });
 
       eventbus.on('roadAddress:linksSaved', function() {
         // Projectinfo is not undefined and publishable is something like true.
-        var ready = projectCollection.projectinfo && projectCollection.projectinfo.publishable;
-        rootElement.find('.btn-send').prop("disabled", !ready);
+        rootElement.find('.project-form .btn-send').prop("disabled", false);
       });
 
       eventbus.on('roadAddress:projectFailed', function() {
@@ -166,6 +170,27 @@
           rootElement.append(publishButton);
         }
         eventbus.trigger('roadAddressProject:projectLinkSaved', data.projectId);
+      });
+
+      eventbus.on('roadAddress:projectSentSuccess', function() {
+        new ModalConfirm("Muutosilmoitus lähetetty Tierekisteriin.");
+        //TODO: make more generic layer change/refresh
+        applicationModel.selectLayer('linkProperty');
+
+        rootElement.empty();
+        clearInformationContent();
+
+        selectedProjectLinkProperty.close();
+        projectCollection.clearRoadAddressProjects();
+        projectCollection.reset();
+        applicationModel.setOpenProject(false);
+
+        eventbus.trigger('roadAddressProject:deselectFeaturesSelected');
+        eventbus.trigger('roadLinks:refreshView');
+      });
+
+      eventbus.on('roadAddress:projectSentFailed', function(error) {
+        new ModalConfirm(error);
       });
 
       rootElement.on('click', '.project-form button.update', function() {

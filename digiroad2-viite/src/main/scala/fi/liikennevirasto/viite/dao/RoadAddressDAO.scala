@@ -94,6 +94,7 @@ trait BaseRoadAddress {
   def geom: Seq[Point]
 }
 
+// Note: Geometry on road address is not directed: it isn't guaranteed to have a direction of digitization or road addressing
 case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track,
                        discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
                        endDate: Option[DateTime] = None, modifiedBy: Option[String] = None, lrmPositionId : Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
@@ -463,7 +464,7 @@ object RoadAddressDAO {
           """.execute
   }
 
-  def updateMergedSegmentsById (ids: Set[Long]): Int = {
+  def expireById(ids: Set[Long]): Int = {
     val query =
       s"""
           Update ROAD_ADDRESS ra Set valid_to = sysdate where valid_to IS NULL and id in (${ids.mkString(",")})
@@ -474,6 +475,8 @@ object RoadAddressDAO {
       Q.updateNA(query).first
   }
 
+  // This is dangerous, don't use this. Use expireById instead
+  @Deprecated
   def expireRoadAddresses (sourceLinkIds: Set[Long]) = {
     if (!sourceLinkIds.isEmpty) {
       val query =
@@ -843,7 +846,9 @@ object RoadAddressDAO {
 
   def getRoadPartInfo(roadNumber:Long, roadPart:Long): Option[(Long,Long,Double,Long,DateTime,DateTime)] =
   {
-    val query = s"""SELECT r.id, l.link_id, r.end_addr_M, r.discontinuity, r.start_date, r.end_date
+    val query = s"""SELECT r.id, l.link_id, r.end_addr_M, r.discontinuity,
+                (Select Max(ra.start_date) from road_address ra Where r.ROAD_PART_NUMBER = ra.ROAD_PART_NUMBER and r.ROAD_NUMBER = ra.ROAD_NUMBER) as start_date,
+                (Select Max(ra.end_Date) from road_address ra Where r.ROAD_PART_NUMBER = ra.ROAD_PART_NUMBER and r.ROAD_NUMBER = ra.ROAD_NUMBER) as end_date
                 FROM road_address r
              INNER JOIN lrm_position l
              ON r.lrm_position_id =  l.id

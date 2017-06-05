@@ -582,7 +582,7 @@ Returns empty result as Json message, not as page not found
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
       if(user.isServiceRoadMaintainer())
-        mapLinearAssets(linearAssetService.getByIntersectedBoundingBox(typeId, user.configuration.authorizedAreas.head, boundingRectangle, municipalities))
+        mapLinearAssets(linearAssetService.getByIntersectedBoundingBox(typeId, user.configuration.authorizedAreas, boundingRectangle, municipalities))
       else
         mapLinearAssets(linearAssetService.getByBoundingBox(typeId, boundingRectangle, municipalities))
     } getOrElse {
