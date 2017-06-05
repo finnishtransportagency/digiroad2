@@ -718,7 +718,7 @@ trait MassTransitStopService extends PointAssetOperations {
           case _ => None
         }
       )
-      val (address, roadSide) = geometryTransform.resolveAddressAndLocation(persistedStop.mValue, persistedStop.linkId, persistedStop.validityDirection.get, road = road)
+      val (address, roadSide) = geometryTransform.resolveAddressAndLocation(Point(persistedStop.lon, persistedStop.lat), persistedStop.bearing.get, persistedStop.mValue, persistedStop.linkId, persistedStop.validityDirection.get, road = road)
 
       val expire = if(operation == Operation.Expire) Some(new Date()) else None
       val newTierekisteriMassTransitStop = TierekisteriBusStopMarshaller.toTierekisteriMassTransitStop(persistedStop, address, Option(roadSide), expire, overrideLiviId)
@@ -768,7 +768,7 @@ trait MassTransitStopService extends PointAssetOperations {
     val expireDate= new Date()
     massTransitStopDao.expireMassTransitStop(username, persistedStop.id)
     if (tierekisteriClient.isTREnabled) {
-      val (address, roadSide) = geometryTransform.resolveAddressAndLocation(persistedStop.mValue, persistedStop.linkId, persistedStop.validityDirection.get)
+      val (address, roadSide) = geometryTransform.resolveAddressAndLocation(Point(persistedStop.lon, persistedStop.lat), persistedStop.bearing.get, persistedStop.mValue, persistedStop.linkId, persistedStop.validityDirection.get)
       val updatedTierekisteriMassTransitStop = TierekisteriBusStopMarshaller.toTierekisteriMassTransitStop(persistedStop, address, Option(roadSide), Option(expireDate))
       tierekisteriClient.updateMassTransitStop(updatedTierekisteriMassTransitStop, None, Some(username))
     }
