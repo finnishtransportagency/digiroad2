@@ -299,8 +299,6 @@
     eventbus.on('roadAddressProject:selected', function(projId) {
       eventbus.once('roadAddressProject:projectFetched', function(id) {
         projectCollection.fetch(map.getView().calculateExtent(map.getSize()),map.getView().getZoom(), id);
-        // vectorSource.clear();
-        // eventbus.trigger('map:clearLayers');
       });
       projectCollection.getProjectsWithLinksById(projId);
     });

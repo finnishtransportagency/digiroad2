@@ -77,14 +77,14 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
     // 4-fourth -click in the next-Seuraava button
     describe('when clicking in next aka Seuraava button and select one reserved link', function() {
       before(function (done) {
-        eventbus.once('roadAddressProject:fetched',function (){
+
+        eventbus.on('roadAddressProject:fetched',function (){
           var ol3Feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 1717275);
           testHelpers.selectSingleFeatureByInteraction(openLayersMap, ol3Feature, testHelpers.getSingleClickNameProjectLinkLayer());
-          setTimeout(function(){
+          console.log("Before roadAddressProject:rendered done()");
             done();
-          },1000);
         });
-        testHelpers.clickNextButton();
+          testHelpers.clickNextButton();
       });
 
       it('Check if the project link was selected ', function(){

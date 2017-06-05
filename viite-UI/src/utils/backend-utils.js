@@ -285,6 +285,7 @@
     };
     this.withProjectLinks = function(returnData){
       self.getProjectLinks = function(params, callback){
+        console.log('Returning withProjectLinks data: ' + returnData);
         callback(returnData);
         return returnData;
       };
@@ -292,10 +293,15 @@
     };
 
     this.withGetProjectsWithLinksById = function(returnData){
-      self.getProjectsWithLinksById = function(){
+      if (loadingProject) {
+        loadingProject.abort();
+      }
+      self.getProjectsWithLinksById = function(params, callback){
+        callback(returnData);
         return returnData;
       };
-      return self;
+      loadingProject=self;
+      return loadingProject;
     };
 
 
@@ -308,6 +314,7 @@
 
     this.withCreateRoadAddressProject = function(returnData){
       self.createRoadAddressProject = function(data, successCallback){
+        console.log('Returning withCreateRoadAddressProject data: ' + returnData);
         successCallback(returnData);
         return returnData;
       };
@@ -316,6 +323,7 @@
 
     this.withGetRoadLinkByLinkId = function(returnData){
       self.getRoadLinkByLinkId = function(linkId, callback){
+        console.log('Returning withGetRoadLinkByLinkId data: ' + returnData);
         callback(returnData);
         return returnData;
       };

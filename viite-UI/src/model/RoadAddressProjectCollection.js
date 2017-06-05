@@ -57,8 +57,9 @@
               return new ProjectLinkModel(projectLink);
             });
           });
-          eventbus.trigger('roadAddressProject:fetched', self.getAll());
-        });
+            eventbus.trigger('roadAddressProject:fetched', self.getAll());
+
+      });
     };
 
     this.getProjects = function () {
