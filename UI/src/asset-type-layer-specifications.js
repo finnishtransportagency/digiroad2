@@ -40,6 +40,7 @@
       className: 'total-weight-limit',
       unit: 'kg',
       isSeparable: false,
+      complementaryPossible: true,
       editControlLabels: { title: 'Rajoitus',
         enabled: 'Rajoitus',
         disabled: 'Ei rajoitusta' }
@@ -54,6 +55,7 @@
       className: 'trailer-truck-weight-limit',
       unit: 'kg',
       isSeparable: false,
+      complementaryPossible: true,
       editControlLabels: { title: 'Rajoitus',
         enabled: 'Rajoitus',
         disabled: 'Ei rajoitusta' }
@@ -68,6 +70,7 @@
       className: 'axle-weight-limit',
       unit: 'kg',
       isSeparable: false,
+      complementaryPossible: true,
       editControlLabels: { title: 'Rajoitus',
         enabled: 'Rajoitus',
         disabled: 'Ei rajoitusta' }
@@ -82,6 +85,7 @@
       className: 'bogie-weight-limit',
       unit: 'kg',
       isSeparable: false,
+      complementaryPossible: true,
       editControlLabels: { title: 'Rajoitus',
         enabled: 'Rajoitus',
         disabled: 'Ei rajoitusta' }
@@ -96,6 +100,7 @@
       className: 'height-limit',
       unit: 'cm',
       isSeparable: false,
+      complementaryPossible: true,
       editControlLabels: { title: 'Rajoitus',
         enabled: 'Rajoitus',
         disabled: 'Ei rajoitusta' }
@@ -110,6 +115,7 @@
       className: 'length-limit',
       unit: 'cm',
       isSeparable: false,
+      complementaryPossible: true,
       editControlLabels: { title: 'Rajoitus',
         enabled: 'Rajoitus',
         disabled: 'Ei rajoitusta' }
@@ -124,6 +130,7 @@
       className: 'width-limit',
       unit: 'cm',
       isSeparable: false,
+      complementaryPossible: true,
       editControlLabels: { title: 'Rajoitus',
         enabled: 'Rajoitus',
         disabled: 'Ei rajoitusta' }
@@ -138,6 +145,7 @@
       newTitle: 'Uusi valaistus',
       className: 'lit-road',
       isSeparable: false,
+      complementaryPossible: true,
       editControlLabels: {
         title: 'Valaistus',
         enabled: 'Valaistus',
@@ -154,6 +162,7 @@
       newTitle: 'Uusi kelirikko',
       className: 'road-damaged-by-thaw',
       isSeparable: false,
+      complementaryPossible: true,
       editControlLabels: {
         title: 'Kelirikko',
         enabled: 'Kelirikko',
@@ -170,6 +179,7 @@
       className: 'road-width',
       unit: 'cm',
       isSeparable: false,
+      complementaryPossible: true,
       editControlLabels: {
         title: 'Leveys',
         enabled: 'Leveys tiedossa',
@@ -188,6 +198,7 @@
       newTitle: 'Uusi ruuhkautumisherkkä tie',
       className: 'congestion-tendency',
       isSeparable: false,
+      complementaryPossible: false,
       editControlLabels: {
         title: 'Herkkyys',
         enabled: 'Ruuhkaantumisherkkä',
@@ -204,6 +215,7 @@
       newTitle: 'Uusi päällyste',
       className: 'paved-road',
       isSeparable: false,
+      complementaryPossible: true,
       editControlLabels: {
         title: 'Päällyste',
         enabled: 'Päällyste',
@@ -220,6 +232,7 @@
       className: 'traffic-volume',
       unit: 'ajoneuvoa/vuorokausi',
       isSeparable: false,
+      complementaryPossible: false,
       editControlLabels: {
         title: '',
         enabled: 'Liikennemäärä',
@@ -236,6 +249,7 @@
       newTitle: 'Uusi joukkoliikennekaista',
       className: 'mass-transit-lane',
       isSeparable: true,
+      complementaryPossible: true,
       editControlLabels: {
         title: 'Kaista',
         enabled: 'Joukkoliikennekaista',
@@ -252,6 +266,7 @@
       className: 'winter-speed-limits',
       unit: 'km/h',
       isSeparable: true,
+      complementaryPossible: true,
       editControlLabels: {
         title: 'Rajoitus',
         enabled: 'Talvinopeusrajoitus',
@@ -268,6 +283,7 @@
       newTitle: 'Uusi ajoneuvokohtainen rajoitus',
       className: 'prohibition',
       isSeparable: true,
+      complementaryPossible: true,
       editControlLabels: {
         title: 'Rajoitus',
         enabled: 'Rajoitus',
@@ -283,6 +299,7 @@
       newTitle: 'Uusi VAK-rajoitus',
       className: 'hazardousMaterialTransportProhibition',
       isSeparable: true,
+      complementaryPossible: true,
       editControlLabels: {
         title: 'VAK-rajoitus',
         enabled: 'Rajoitus',
@@ -299,6 +316,7 @@
       className: 'european-road',
       unit: '',
       isSeparable: false,
+      complementaryPossible: false,
       editControlLabels: {
         title: '',
         enabled: 'Eurooppatienumero(t)',
@@ -315,6 +333,7 @@
       className: 'exit-number',
       unit: '',
       isSeparable: false,
+      complementaryPossible: false,
       editControlLabels: {
         title: '',
         enabled: 'Liittymänumero(t)',
@@ -331,6 +350,7 @@
       className: 'maintenanceRoad',
       isSeparable: false,
       unit: '',
+      complementaryPossible: true,
       editControlLabels: {
         title: '',
         enabled: 'Huoltotie',
@@ -358,6 +378,7 @@
       className: 'lane-count',
       unit: 'kpl / suunta',
       isSeparable: true,
+      complementaryPossible: true,
       editControlLabels: {
         title: 'Lukumäärä',
         enabled: 'Kaistojen lukumäärä / suunta',

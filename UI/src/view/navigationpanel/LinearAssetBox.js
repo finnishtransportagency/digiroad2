@@ -1,5 +1,5 @@
 (function(root) {
-  root.LinearAssetBox = function(selectedLinearAsset, layerName, title, className, legendValues, showUnit, unit) {
+  root.LinearAssetBox = function(selectedLinearAsset, layerName, title, className, legendValues, showUnit, unit, complementaryPossible) {
     var legendTemplate = _.map(legendValues, function(value, idx) {
       return '<div class="legend-entry">' +
                '<div class="label">' + value + '</div>' +
@@ -8,7 +8,7 @@
     }).join('');
 
 
-      var complementaryLinkCheckBox = layerName === 'maintenanceRoad' ? [
+      var complementaryLinkCheckBox = complementaryPossible ? [
           '  <div class="panel-section roadLink-complementary-checkbox">',
           '<div class="check-box-container">' +
           '<input id="complementaryLinkCheckBox" type="checkbox" /> <lable>Näytä täydentävä geometria</lable>' +

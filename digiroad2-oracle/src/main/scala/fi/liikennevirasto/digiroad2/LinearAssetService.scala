@@ -661,7 +661,7 @@ trait LinearAssetOperations {
   def separate(id: Long, valueTowardsDigitization: Option[Value], valueAgainstDigitization: Option[Value], username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
     withDynTransaction {
       val existing = dao.fetchLinearAssetsByIds(Set(id), LinearAssetTypes.numericValuePropertyId).head
-      val roadLink = vvhClient.fetchByLinkId(existing.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+      val roadLink = vvhClient.fetchRoadLinkOrComplementaryFromVVH(existing.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
       municipalityValidation(roadLink.municipalityCode)
 
       val newExistingIdsToReturn = valueTowardsDigitization match {
