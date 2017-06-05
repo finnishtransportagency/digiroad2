@@ -1172,5 +1172,15 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
   def expireAllAssetsByTypeId (typeId: Int): Unit = {
     sqlu"update asset set valid_to = sysdate - 1/86400 where asset_type_id = $typeId".execute
   }
+
+  /**
+    * When invoked will expire assets by Id.
+    * It is required that the invoker takes care of the transaction.
+    *
+    * @param id Represets the id of the Linear Asset
+    */
+  def expireAssetsById (id: Long): Unit = {
+    sqlu"update asset set valid_to = sysdate - 1/86400 where id = $id".execute
+  }
 }
 

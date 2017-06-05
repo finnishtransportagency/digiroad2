@@ -934,9 +934,24 @@ object DataFixture {
       new LinearAssetService(roadLinkService, new DummyEventBus)
     }
 
-    println("\nExpiring Lighting From OTH Database")
-    OracleDatabase.withDynSession {
-      oracleLinearAssetDao.expireAllAssetsByTypeId(lightingAssetId)
+    println("\nExpiring litRoad From OTH Database Only with administrativeClass == State")
+    //Get All Municipalities
+    val municipalities: Seq[Int] =
+      OracleDatabase.withDynSession {
+        Queries.getMunicipalities
+      }
+
+    municipalities.foreach { municipality =>
+      println("\nStart processing municipality %d".format(municipality))
+      val roadLinksWithStateFilter = roadLinkService.getVVHRoadLinksF(municipality).filter(_.administrativeClass == State).map(_.linkId)
+
+      OracleDatabase.withDynTransaction {
+        oracleLinearAssetDao.fetchLinearAssetsByLinkIds(lightingAssetId, roadLinksWithStateFilter, LinearAssetTypes.numericValuePropertyId).map { persistedLinearAsset =>
+          oracleLinearAssetDao.expireAssetsById(persistedLinearAsset.id)
+          println("Asset with Id: " + persistedLinearAsset.id + " Expired.")
+        }
+      }
+      println("\nEnd processing municipality %d".format(municipality))
     }
     println("\nLighting data Expired")
 
@@ -983,7 +998,7 @@ object DataFixture {
                   }
 
                 val newEndMValue =
-                  if (ra.endAddrMValue <= trl.endMValue) {
+                  if (trl.endMValue <= ra.endAddrMValue) {
                     ra.endMValue
                   } else {
                     ra.endMValue - (ra.endAddrMValue - trl.endMValue)
