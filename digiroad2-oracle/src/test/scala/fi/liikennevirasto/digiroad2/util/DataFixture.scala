@@ -905,7 +905,7 @@ object DataFixture {
               .filter(ra => vvhRoadlinks.exists(t => t.linkId == ra.linkId) )
               .foreach { ra =>
                 val assetId = linearAssetService.dao.createLinearAsset(trafficVolumeId, ra.linkId, false, SideCode.BothDirections.value,
-                  ra.startMValue, ra.endMValue, "batch_process_trafficVolume", vvhClient.createVVHTimeStamp(5))
+                  ra.startMValue, ra.endMValue, "batch_process_trafficVolume", vvhClient.createVVHTimeStamp(5), Some(LinkGeomSource.NormalLinkInterface.value))
                 println("\nCreated OTH traffic volume assets form TR data with assetId " + assetId)
 
                 linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, tr.kvl)

@@ -42,16 +42,24 @@
     };
 
     this.fetch = function(boundingBox) {
-      return backend.getLinearAssets(boundingBox, typeId).then(function(linearAssetGroups) {
+      return fetch(boundingBox, backend.getLinearAssets(boundingBox, typeId));
+    };
+
+    this.fetchAssetsWithComplementary = function(boundingBox) {
+      return fetch(boundingBox, backend.getLinearAssetsWithComplementary(boundingBox, typeId));
+    };
+
+    var fetch = function(boundingBox, assets) {
+      return assets.then(function(linearAssetGroups) {
         var partitionedLinearAssetGroups = _.groupBy(linearAssetGroups, function(linearAssetGroup) {
           return _.some(linearAssetGroup, function(linearAsset) { return _.has(linearAsset, 'value'); });
         });
         var knownLinearAssets = partitionedLinearAssetGroups[true] || [];
         var unknownLinearAssets = _.map(partitionedLinearAssetGroups[false], function(linearAssetGroup) {
-          return _.map(linearAssetGroup, function(linearAsset) {
-            return _.merge({}, linearAsset, { generatedId: generateUnknownLimitId(linearAsset) });
-          });
-        }) || [];
+            return _.map(linearAssetGroup, function(linearAsset) {
+              return _.merge({}, linearAsset, { generatedId: generateUnknownLimitId(linearAsset) });
+            });
+          }) || [];
         linearAssets = knownLinearAssets.concat(unknownLinearAssets);
         eventbus.trigger(multiElementEvent('fetched'), self.getAll());
       });

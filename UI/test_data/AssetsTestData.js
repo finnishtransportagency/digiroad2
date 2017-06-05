@@ -14,6 +14,7 @@
           roadLinkId: 5809,
           stopTypes: [2],
           bearing: 219,
+          linkSource: 1,
           validityDirection: 3,
           readOnly: true,
           municipalityNumber: 235,

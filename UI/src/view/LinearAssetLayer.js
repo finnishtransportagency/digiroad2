@@ -15,6 +15,8 @@ window.LinearAssetLayer = function(params) {
   var me = this;
   me.minZoomForContent = zoomlevels.minZoomForAssets;
 
+  var isComplementaryChecked = false;
+
   var singleElementEvents = function() {
     return _.map(arguments, function(argument) { return singleElementEventCategory + ':' + argument; }).join(' ');
   };
@@ -232,9 +234,13 @@ window.LinearAssetLayer = function(params) {
   }
 
   function cancelSelection() {
-    selectToolControl.clear();
-    selectedLinearAsset.closeMultiple();
-    collection.fetch(map.getView().calculateExtent(map.getSize()));
+    if(isComplementaryChecked){
+      selectToolControl.clear();
+      selectedLinearAsset.close();
+      showWithComplementary();
+    }else{
+      hideComplementary();
+    }
   }
 
   var adjustStylesByZoomLevel = function(zoom) {
@@ -275,6 +281,8 @@ window.LinearAssetLayer = function(params) {
     eventListener.listenTo(eventbus, singleElementEvents('cancelled', 'saved'), linearAssetCancelled);
     eventListener.listenTo(eventbus, singleElementEvents('selectByLinkId'), selectLinearAssetByLinkId);
     eventListener.listenTo(eventbus, multiElementEvent('massUpdateFailed'), cancelSelection);
+    eventListener.listenTo(eventbus, 'complementaryLinks:show', showWithComplementary);
+    eventListener.listenTo(eventbus, 'complementaryLinks:hide', hideComplementary);
   };
 
   var selectLinearAssetByLinkId = function(linkId) {
@@ -289,7 +297,7 @@ window.LinearAssetLayer = function(params) {
   };
 
   var handleLinearAssetSaved = function() {
-    collection.fetch(map.getView().calculateExtent(map.getSize()));
+    me.refreshView();
     applicationModel.setSelectedTool('Select');
   };
 
@@ -309,9 +317,15 @@ window.LinearAssetLayer = function(params) {
   this.refreshView = function(event) {
     vectorLayer.setVisible(true);
     adjustStylesByZoomLevel(map.getView().getZoom());
-    collection.fetch(map.getView().calculateExtent(map.getSize())).then(function() {
-      eventbus.trigger('layer:linearAsset:' + event);
-    });
+    if (isComplementaryChecked) {
+      collection.fetchAssetsWithComplementary(map.getView().calculateExtent(map.getSize())).then(function() {
+        eventbus.trigger('layer:linearAsset:' + event);
+      });
+    } else {
+      collection.fetch(map.getView().calculateExtent(map.getSize())).then(function() {
+        eventbus.trigger('layer:linearAsset:' + event);
+      });
+    }
   };
 
   this.activateSelection = function() {
@@ -433,7 +447,20 @@ window.LinearAssetLayer = function(params) {
   var show = function(map) {
     vectorLayer.setVisible(true);
     indicatorLayer.setVisible(true);
+    me.refreshView();
     me.show(map);
+  };
+
+  var showWithComplementary = function() {
+    isComplementaryChecked = true;
+    me.refreshView();
+  };
+
+  var hideComplementary = function() {
+    selectToolControl.clear();
+    selectedLinearAsset.close();
+    isComplementaryChecked = false;
+    me.refreshView();
   };
 
   var hideLayer = function() {

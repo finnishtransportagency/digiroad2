@@ -149,10 +149,6 @@ define(['AssetsTestData',
     return getLayerByName(map, 'speedLimit');
   };
 
- //var getMasstransitStop = function(map){
- //    return getLayerByName(map, 'massTransitStop');
- //};
-
   var getLineStringFeatures = function(layer) {
    return _.filter(layer.getSource().getFeatures(), function(feature) {
     return feature.getGeometry() instanceof ol.geom.LineString;
