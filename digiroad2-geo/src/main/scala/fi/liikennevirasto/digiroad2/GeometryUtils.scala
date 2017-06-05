@@ -250,5 +250,13 @@ object GeometryUtils {
     withinTolerance(Seq(geom1._1, geom1._2), Seq(geom2._1, geom2._2), tolerance)
   }
 
+  def calculateActualBearing(validityDirection: Int, bearing: Option[Int]): Option[Int] = {
+    if (validityDirection != 3) {
+      bearing
+    } else {
+      bearing.map(_ - 180).map(x => if (x < 0) x + 360 else x)
+    }
+  }
+
   case class Projection(oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, vvhTimeStamp: Long)
 }
