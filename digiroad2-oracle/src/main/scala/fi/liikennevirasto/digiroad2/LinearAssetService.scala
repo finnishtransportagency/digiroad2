@@ -93,16 +93,16 @@ trait LinearAssetOperations {
     LinearAssetPartitioner.partition(linearAssets, roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
 
-  def getByIntersectedBoundingBox(typeId: Int, serviceArea : Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
-    getEitherByIntersectedBoundingBox(typeId, serviceArea, bounds, municipalities, roadLinkService.getRoadLinksAndChangesFromVVHWithPolygon)
+  def getByIntersectedBoundingBox(typeId: Int, serviceAreas : Set[Int], bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
+    getEitherByIntersectedBoundingBox(typeId, serviceAreas, bounds, municipalities, roadLinkService.getRoadLinksAndChangesFromVVHWithPolygon)
   }
 
-  def getComplementaryByIntersectedBoundingBox(typeId: Int, serviceArea : Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
-    getEitherByIntersectedBoundingBox(typeId, serviceArea, bounds, municipalities, roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHWithPolygon)
+  def getComplementaryByIntersectedBoundingBox(typeId: Int, serviceAreas : Set[Int], bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[PieceWiseLinearAsset]] = {
+    getEitherByIntersectedBoundingBox(typeId, serviceAreas, bounds, municipalities, roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVHWithPolygon)
   }
 
-  def getEitherByIntersectedBoundingBox(typeId: Int, serviceArea : Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set(), getRoadlinks: (Polygon) => (Seq[RoadLink], Seq[ChangeInfo])): Seq[Seq[PieceWiseLinearAsset]] = {
-    val polygons = polygonTools.geometryInterceptorToBoundingBox(polygonTools.getAreaGeometry(serviceArea),bounds)
+  def getEitherByIntersectedBoundingBox(typeId: Int, serviceAreas : Set[Int], bounds: BoundingRectangle, municipalities: Set[Int] = Set(), getRoadlinks: (Polygon) => (Seq[RoadLink], Seq[ChangeInfo])): Seq[Seq[PieceWiseLinearAsset]] = {
+    val polygons = polygonTools.geometryInterceptorToBoundingBox(polygonTools.getAreasGeometries(serviceAreas),bounds)
     val vVHRoadLinksAndChanges = polygons.map(getRoadlinks)
     val roadLinks = vVHRoadLinksAndChanges.flatMap(_._1)
     val changes = vVHRoadLinksAndChanges.flatMap(_._2)
