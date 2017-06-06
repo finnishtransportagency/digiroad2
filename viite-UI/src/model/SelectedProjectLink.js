@@ -27,10 +27,16 @@
       current = [];
     };
 
+    var close = function(){
+      current = [];
+      eventbus.trigger('layer:enableButtons', true);
+    };
+
     return {
       open: open,
       get: get,
       clean: clean,
+      close: close,
       isSelected: isSelected
     };
   };

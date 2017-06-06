@@ -67,7 +67,7 @@ class PointAssetOperationsSpec extends FunSuite with Matchers {
 
   test("Check floating status when using three-dimensional road data") {
     val persistedAsset = PersistedMassTransitStop(22668828, 1234, 1234, Seq(2), 172, 453487.304243636, 6845919.0252246,
-      17.292, Option(2), Option(78), None, true, 0, Modification(None, None),
+      17.292, Option(2), Option(78), None, true, 0, 1, Modification(None, None),
       Modification(None, None), Seq())
 
     val geometry = List(Point(453466.069,6845915.849,108.81900000000314),

@@ -1,11 +1,18 @@
 (function(root) {
   root.MassTransitStopsCollection = function(backend) {
     var assets = {};
+    var isComplementaryActive = false;
     var validityPeriods = {
       current: true,
       future: false,
       past: false
     };
+    var filterComplementaries = function(assets){
+      if(isComplementaryActive)
+        return assets;
+      return _.where(assets, {linkSource: 1});
+    };
+
     var filterNonExistingAssets = function(assets, existingAssets) {
       return _.reject(assets, function(asset) {
         return _.has(existingAssets, asset.id.toString());
@@ -16,9 +23,9 @@
         return selected;
       }));
     };
-
     var refreshAssets = function(mapMoveEvent) {
       backend.getAssetsWithCallback(mapMoveEvent.bbox, function(backendAssets) {
+        backendAssets = filterComplementaries(backendAssets);
         if (mapMoveEvent.hasZoomLevelChanged) {
           eventbus.trigger('assets:all-updated massTransitStops:available', backendAssets);
         } else {
@@ -36,13 +43,24 @@
         return assets[assetId];
       },
       destroyAsset: function(assetId) {
-        assets = _.omit(assets, assetId.toString());
+        assets = _.omit(assets, ""+assetId);
       },
       getAssets: function() {
-        return assets;
+        if(isComplementaryActive)
+            return assets;
+        return _.filter(assets, function(asset){ return asset.data.linkSource == 1;});
+      },
+      getComplementaryAssets: function(){
+        return _.reject(assets, function(asset){
+          if(!isComplementaryActive)
+            return asset.data.linkSource == 1;
+          return true;
+        });
       },
       fetchAssets: function(boundingBox) {
-        backend.getAssets(boundingBox);
+        backend.getAssets(boundingBox, function(assets){
+          return filterComplementaries(assets);
+        });
       },
       refreshAssets: refreshAssets,
       insertAssetsFromGroup: function(assetGroup) {
@@ -70,6 +88,12 @@
       },
       selectedValidityPeriodsContain: function(validityPeriod) {
         return validityPeriods[validityPeriod];
+      },
+      activeComplementary: function(enable){
+        isComplementaryActive = enable;
+      },
+      isComplementaryActive: function(){
+        return isComplementaryActive;
       }
     };
   };

@@ -50,6 +50,11 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
                     VVHRoadlink(1611069l, 91,  List(Point(127.239, 0.0), Point(146.9, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockVVHClient.fetchByLinkIds(Set(1611374l)))
     .thenReturn(List(VVHRoadlink(1611374l, 235, Seq(Point(0, 0), Point(120, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockVVHClient.fetchRoadLinkOrComplementaryFromVVH(1611071l)).thenReturn(Some(VVHRoadlink(1611071l, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockVVHClient.fetchRoadLinkOrComplementaryFromVVH(2l))
+    .thenReturn(Some(VVHRoadlink(2l, 235, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockVVHClient.fetchRoadLinkOrComplementaryFromVVH(1l))
+    .thenReturn(Some(VVHRoadlink(1l, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
   def toRoadLink(l: VVHRoadlink) = {
     RoadLink(l.linkId, l.geometry, GeometryUtils.geometryLength(l.geometry),
@@ -77,6 +82,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       VVHRoadlink(1611069l, 91,  List(Point(127.239, 0.0), Point(146.9, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockRoadLinkService.fetchVVHRoadlinks(Set(1611374l)))
     .thenReturn(List(VVHRoadlink(1611374l, 235, Seq(Point(0, 0), Point(120, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((vvhRoadlinksForBoundingBox.map(toRoadLink), Nil))
 
   val testObstacleService = new ObstacleService(mockRoadLinkService)
   val testRailwayCrossingService = new RailwayCrossingService(mockRoadLinkService)
@@ -263,6 +269,22 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   test("get numerical limits with bounding box should return bad request if typeId missing", Tag("db")) {
     getWithUserAuth("/linearassets?bbox=374037,6677013,374540,6677675") {
       status should equal(400)
+    }
+  }
+
+  test("get complementary numerical limits with bounding box should return bad request if typeId missing", Tag("db")) {
+    getWithUserAuth("/linearassets/complementary?bbox=374037,6677013,374540,6677675") {
+      status should equal(400)
+    }
+  }
+
+  test("get complementary numerical limits with bounding box", Tag("db")) {
+    getWithUserAuth("/linearassets/complementary?typeId=30&bbox=374037,6677013,374540,6677675") {
+      status should equal(200)
+      val parsedBody = parse(body).extract[Seq[LinearAssetFromApi]]
+      parsedBody.size should be(3)
+      parsedBody.count(_.id.isEmpty) should be(1)
+      parsedBody.count(_.id.isDefined) should be(2)
     }
   }
 

@@ -59,7 +59,7 @@ class RoadAddressDAO {
     val where =
       s""" where (( ra.start_addr_m >= $startM and ra.end_addr_m <= $endM ) or ( $startM >= ra.start_addr_m and $startM < ra.end_addr_m) or
          ( $endM > ra.start_addr_m and $endM <= ra.end_addr_m)) and ra.road_number= $roadNumber and ra.road_part_number= $roadPartNumber
-          and (valid_to is null OR valid_to > SYSDATE) and ra.floating = 0 """
+         and (valid_to is null OR valid_to > SYSDATE) and ra.floating = 0 """
 
     val query =
       s"""

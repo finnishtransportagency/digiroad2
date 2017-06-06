@@ -31,6 +31,10 @@
       return projectLinksSaved;
     };
 
+    this.reset = function(){
+      fetchedProjectLinks = [];
+    };
+
     this.getMultiSelectIds = function (linkId) {
       var chain = _.find(fetchedProjectLinks, function (linkChain) {
         var pureChain = _.map(linkChain, function(l) { return l.getData(); });
@@ -58,6 +62,7 @@
             });
           });
           eventbus.trigger('roadAddressProject:fetched', self.getAll());
+          eventbus.trigger('roadAddress:linksSaved');
         });
     };
 
@@ -190,10 +195,17 @@
     };
 
     this.publishProject = function() {
-      backend.sendProjectToTR(projectinfo.id, function() {
+      backend.sendProjectToTR(projectinfo.id, function(result) {
         console.log("Success");
-      }, function() {
+          if(result.sendSuccess) {
+            eventbus.trigger('roadAddress:projectSentSuccess');
+          }
+          else {
+            eventbus.trigger('roadAddress:projectSentFailed', result.errorMessage);
+          }
+      }, function(result) {
         console.log("Failure");
+        eventbus.trigger('roadAddress:projectSentFailed', result.status);
       });
     };
 
@@ -263,7 +275,7 @@
 
 
     this.checkIfReserved = function (data) {
-      return backend.checkIfRoadpartReserved(data[3].value === '' ? 0 : parseInt(data[3].value), data[4].value === '' ? 0 : parseInt(data[4].value), data[5].value === '' ? 0 : parseInt(data[5].value))
+      return backend.checkIfRoadpartReserved(data[3].value === '' ? 0 : parseInt(data[3].value), data[4].value === '' ? 0 : parseInt(data[4].value), data[5].value === '' ? 0 : parseInt(data[5].value), data[1].value)
         .then(function (validationResult) {
           if (validationResult.success !== "ok") {
             eventbus.trigger('roadAddress:projectValidationFailed', validationResult);
