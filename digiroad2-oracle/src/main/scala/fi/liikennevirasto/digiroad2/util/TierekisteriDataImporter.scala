@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.util
 
-import fi.liikennevirasto.digiroad2.asset.{State, SideCode}
+import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode, State}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -58,7 +58,7 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
               .filter(ra => vvhRoadlinks.exists(t => t.linkId == ra.linkId))
               .foreach { ra =>
                 val assetId = linearAssetService.dao.createLinearAsset(trafficVolumeId, ra.linkId, false, SideCode.BothDirections.value,
-                  ra.startMValue, ra.endMValue, "batch_process_trafficVolume", vvhClient.createVVHTimeStamp(5))
+                  Measures(ra.startMValue, ra.endMValue), "batch_process_trafficVolume", vvhClient.createVVHTimeStamp(5), Some(LinkGeomSource.NormalLinkInterface.value))
                 println("\nCreated OTH traffic volume assets form TR data with assetId " + assetId)
 
                 linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, tr.kvl)
@@ -143,7 +143,7 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
                     ra.endMValue - (ra.endAddrMValue - trl.endMValue)
                   }
                 val assetId = linearAssetService.dao.createLinearAsset(lightingAssetId, ra.linkId, false, SideCode.BothDirections.value,
-                  newStartMValue, newEndMValue, "batch_process_lighting", vvhClient.createVVHTimeStamp(5))
+                  Measures(newStartMValue, newEndMValue), "batch_process_lighting", vvhClient.createVVHTimeStamp(5), Some(LinkGeomSource.NormalLinkInterface.value))
 
                 linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, 1)
                 println("\nCreated OTH Lighting assets form TR data with assetId " + assetId)
