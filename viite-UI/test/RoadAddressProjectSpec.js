@@ -81,7 +81,6 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
         eventbus.on('roadAddressProject:fetched',function (){
           var ol3Feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 1717275);
           testHelpers.selectSingleFeatureByInteraction(openLayersMap, ol3Feature, testHelpers.getSingleClickNameProjectLinkLayer());
-          console.log("Before roadAddressProject:rendered done()");
             done();
         });
           testHelpers.clickNextButton();
