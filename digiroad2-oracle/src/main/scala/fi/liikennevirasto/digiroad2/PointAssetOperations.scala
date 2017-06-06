@@ -4,7 +4,7 @@ import com.google.common.base.Optional
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, FloatingAsset, Unknown}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.User
@@ -51,6 +51,7 @@ trait PersistedPointAsset extends PointAsset with IncomingPointAsset {
   val mValue: Double
   val floating: Boolean
   val vvhTimeStamp: Long
+  val linkSource: Int
 }
 
 trait PointAssetOperations {
@@ -72,11 +73,11 @@ trait PointAssetOperations {
   def typeId: Int
   def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[RoadLinkLike] = Nil): Seq[PersistedAsset]
   def setFloating(persistedAsset: PersistedAsset, floating: Boolean): PersistedAsset
-  def create(asset: IncomingAsset, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass]): Long
-  def update(id:Long, updatedAsset: IncomingAsset, geometry: Seq[Point], municipality: Int, username: String): Long
+  def create(asset: IncomingAsset, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass], linkSource: LinkGeomSource): Long
+  def update(id:Long, updatedAsset: IncomingAsset, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long
 
   def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[PersistedAsset] = {
-    val roadLinks: Seq[RoadLink] = roadLinkService.getRoadLinksFromVVH(bounds)
+    val roadLinks: Seq[RoadLink] = roadLinkService.getRoadLinksWithComplementaryFromVVH(bounds)
     getByBoundingBox(user, bounds, roadLinks, Seq(), floatingTreatment)
   }
 

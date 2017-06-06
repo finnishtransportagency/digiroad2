@@ -94,12 +94,9 @@
       });
     }, 1000);
 
-    this.getAssets = function (boundingBox, filter) {
-      if(!filter)
-        filter = function(assets){return assets;};
-
+    this.getAssets = function (boundingBox) {
       self.getAssetsWithCallback(boundingBox, function (assets) {
-        eventbus.trigger('assets:fetched',filter(assets));
+        eventbus.trigger('assets:fetched', assets);
       });
     };
 
@@ -169,7 +166,7 @@
       });
     };
 
-    this.getPointAssets = latestResponseRequestor(function(boundingBox, endPointName) {
+    this.getPointAssetsWithComplementary = latestResponseRequestor(function(boundingBox, endPointName) {
       return {
         url: 'api/' + endPointName + '?bbox=' + boundingBox
       };

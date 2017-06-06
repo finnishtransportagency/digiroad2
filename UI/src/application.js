@@ -223,8 +223,7 @@
        multiElementEventCategory: asset.multiElementEventCategory,
        singleElementEventCategory: asset.singleElementEventCategory,
        style: PiecewiseLinearAssetStyle(applicationModel),
-       formElements: AssetFormElementsFactory.construct(asset),
-       assetLabel: asset.label
+       formElements: AssetFormElementsFactory.construct(asset)
      });
      return acc;
     }, {});
@@ -347,7 +346,7 @@
     function getPointAsset(typeId) {
       var asset = _.find(pointAssets, {typeId: typeId});
       if (asset) {
-        return [PointAssetBox(asset.selectedPointAsset, asset.title, asset.layerName, asset.legendValues)];
+        return [PointAssetBox(asset.selectedPointAsset, asset.title, asset.layerName, asset.legendValues, asset.complementaryPossible)];
       }
       return [];
     }

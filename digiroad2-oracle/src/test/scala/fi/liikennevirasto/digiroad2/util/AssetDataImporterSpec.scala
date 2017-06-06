@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2.util
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle, Municipality, TrafficDirection}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -405,7 +406,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     when(mockVVHClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
     when(mockVVHClient.queryChangesByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
 
-    val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, 0, obstacleType, Some("unit_test"))
+    val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, 0, obstacleType, Some("unit_test"), linkSource = NormalLinkInterface.value)
 
     val beforeCallMethodDatetime = DateTime.now()
     val roadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
@@ -439,7 +440,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     when(mockVVHClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
     when(mockVVHClient.queryChangesByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
 
-    val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, 0, obstacleType, Some("unit_test"))
+    val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, 0, obstacleType, Some("unit_test"), linkSource = NormalLinkInterface.value)
 
     val roadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
     val resultObstacle = assetDataImporter.updateObstacleToRoadLink(floatingObstacle, roadLinkService)
@@ -464,7 +465,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     when(mockVVHClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
     when(mockVVHClient.queryChangesByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
 
-    val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, 0, obstacleType, Some("unit_test"))
+    val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, 0, obstacleType, Some("unit_test"), linkSource = NormalLinkInterface.value)
 
     val beforeCallMethodDatetime = DateTime.now()
     val roadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
@@ -497,7 +498,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     when(mockVVHClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
     when(mockVVHClient.queryChangesByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
 
-    val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, 0, obstacleType, Some("unit_test"))
+    val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, 0, obstacleType, Some("unit_test"), linkSource = NormalLinkInterface.value)
     val roadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
     val resultObstacle = assetDataImporter.updateObstacleToRoadLink(floatingObstacle, roadLinkService)
 
@@ -522,7 +523,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     when(mockVVHClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
     when(mockVVHClient.queryChangesByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
 
-    val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, 0, obstacleType, Some("unit_test"))
+    val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, 0, obstacleType, Some("unit_test"), linkSource = NormalLinkInterface.value)
 
     val beforeCallMethodDatetime = DateTime.now()
     val roadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
@@ -556,7 +557,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     when(mockVVHClient.queryChangesByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
     val roadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
 
-    val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, 0, obstacleType, Some("unit_test"))
+    val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, 0, obstacleType, Some("unit_test"), linkSource = NormalLinkInterface.value)
 
     val resultObstacle = assetDataImporter.updateObstacleToRoadLink(floatingObstacle, roadLinkService)
 
@@ -579,7 +580,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     when(mockVVHClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
     when(mockVVHClient.queryChangesByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
 
-    val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, 0, obstacleType, Some("unit_test"))
+    val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, 0, obstacleType, Some("unit_test"), linkSource = NormalLinkInterface.value)
 
     val beforeCallMethodDatetime = DateTime.now()
     val roadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
@@ -603,7 +604,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     when(mockVVHClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
     when(mockVVHClient.queryChangesByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
 
-    val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, 0, obstacleType, Some("unit_test"))
+    val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, 0, obstacleType, Some("unit_test"), linkSource = NormalLinkInterface.value)
 
     val beforeCallMethodDatetime = DateTime.now()
     val roadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)
@@ -629,7 +630,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     when(mockVVHClient.fetchByMunicipalitiesAndBoundsF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(vvhRoadLinks))
     when(mockVVHClient.queryChangesByBoundsAndMunicipalitiesF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq()))
 
-    val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, 0, obstacleType, Some("unit_test"))
+    val floatingObstacle = Obstacle(1, oldLinkId, obstaclePoint.x, obstaclePoint.y, mValue, true, 0, 0, obstacleType, Some("unit_test"), linkSource = NormalLinkInterface.value)
 
     val beforeCallMethodDatetime = DateTime.now()
     val roadLinkService = new RoadLinkService(mockVVHClient, new DummyEventBus, new DummySerializer)

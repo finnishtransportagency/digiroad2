@@ -391,6 +391,17 @@ class VVHClient(vvhRestApiEndPoint: String) {
     }
   }
 
+  def queryByMunicipalites(municipalities: Set[Int]): Seq[VVHRoadlink] = {
+    val definition = layerDefinition(withMunicipalityFilter(municipalities))
+    val url = vvhRestApiEndPoint + roadLinkDataService + "/FeatureServer/query?" +
+      s"layerDefs=$definition&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters()
+
+    fetchVVHFeatures(url) match {
+      case Left(features) => features.map(extractVVHFeature)
+      case Right(error) => throw new VVHClientException(error.toString)
+    }
+  }
+
   /**
     * Returns VVH road links. Uses Scala Future for concurrent operations.
     * Used by RoadLinkService.getRoadLinksAndChangesFromVVH(bounds, municipalities),
@@ -398,6 +409,10 @@ class VVHClient(vvhRestApiEndPoint: String) {
     */
   def fetchByMunicipalitiesAndBoundsF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[VVHRoadlink]] = {
     Future(queryByMunicipalitesAndBounds(bounds, municipalities))
+  }
+
+  def fetchByMunicipalitiesF(municipalities: Set[Int]): Future[Seq[VVHRoadlink]] = {
+    Future(queryByMunicipalites(municipalities))
   }
 
   def fetchRoadLinksByPolygonF(polygon : Polygon): Future[Seq[VVHRoadlink]] = {
@@ -485,8 +500,8 @@ class VVHClient(vvhRestApiEndPoint: String) {
     * Returns VVH change data. Uses Scala Future for concurrent operations.
     * Used by RoadLinkService.reloadRoadLinksAndChangesFromVVH(municipality).
     */
-  def queryChangesByMunicipalityF(municipality: Int): Future[Seq[ChangeInfo]] = {
-    val definition = layerDefinition(withMunicipalityFilter(Set(municipality)), Some("OLD_ID,NEW_ID,MTKID,CHANGETYPE,OLD_START,OLD_END,NEW_START,NEW_END,CREATED_DATE"))
+  def queryChangesByMunicipalityF(municipality: Set[Int]): Future[Seq[ChangeInfo]] = {
+    val definition = layerDefinition(withMunicipalityFilter(municipality), Some("OLD_ID,NEW_ID,MTKID,CHANGETYPE,OLD_START,OLD_END,NEW_START,NEW_END,CREATED_DATE"))
 
     val url = vvhRestApiEndPoint + "/Roadlink_ChangeInfo/FeatureServer/query?" +
       s"layerDefs=$definition&" + queryParameters(true)
@@ -913,6 +928,23 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRe
   }
 
   /**
+    * Returns VVH road links in municipality.
+    *
+    */
+  def queryByMunicipalities(municipalities: Set[Int], extraFilter: Option[String] = None): Seq[VVHRoadlink] = {
+    val definition = layerDefinition(combineFiltersWithAnd(withMunicipalityFilter(municipalities), extraFilter),
+      Option("MTKID,LINKID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS," +
+        "ADMINCLASS,DIRECTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT," +
+        "LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,SURFACETYPE,SUBTYPE"))
+    val url = vvhRestApiEndPoint + roadLinkComplementaryService + "/FeatureServer/query?" +
+      s"layerDefs=$definition&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters()
+
+    resolveComplementaryVVHFeatures(url) match {
+      case Left(features) => features.map(extractVVHFeature)
+      case Right(error) => throw new VVHClientException(error.toString)
+    }
+  }
+  /**
     * Returns VVH complementary road links in a municipality
     * Used by VVHClient.fetchByMunicipalityAndRoadNumbers.
     */
@@ -961,6 +993,9 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRe
     Future(queryByBoundsAndMunicipalities(bounds, municipalities, Some(withMtkClassFilter(Set(12314)))))
   }
 
+  def fetchWalkwaysByMunicipalitiesF(municipalities: Set[Int]): Future[Seq[VVHRoadlink]] = {
+    Future(queryByMunicipalities(municipalities, Some(withMtkClassFilter(Set(12314)))))
+  }
 
   /**
     * Returns VVH road links. Uses Scala Future for concurrent operations.

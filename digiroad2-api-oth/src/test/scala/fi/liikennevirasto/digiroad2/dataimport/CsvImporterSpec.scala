@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2.dataimport
 import java.io.{ByteArrayInputStream, InputStream}
 
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.{PropertyValue, _}
 import fi.liikennevirasto.digiroad2.dataimport.CsvImporter._
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.MassTransitStopDao
@@ -293,7 +294,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       when(mockMassTransitStopService.getByNationalId(Matchers.eq(id), anyObject(), anyObject())).thenAnswer(new Answer[Option[Object]] {
         override def answer(invocation: InvocationOnMock): Option[Object] = {
           val transformation: PersistedMassTransitStop => (Object, Object) = invocation.getArguments()(2).asInstanceOf[PersistedMassTransitStop => (Object, Object)]
-          val stop = PersistedMassTransitStop(id, id, id, Nil, 235, 0.0, 0.0, 0.0, None, None, None, false, 0, 1, Modification(None, None), Modification(None, None), Nil)
+          val stop = PersistedMassTransitStop(id, id, id, Nil, 235, 0.0, 0.0, 0.0, None, None, None, false, 0, Modification(None, None), Modification(None, None), Nil, NormalLinkInterface.value)
           Some(transformation(stop)._1)
         }
       })

@@ -12,6 +12,7 @@ import org.scalatest.{FunSuite, Matchers}
 import slick.jdbc.StaticQuery.interpolation
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
 
@@ -49,7 +50,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(service.dataSource)(test)
 
   test("Can fetch by bounding box") {
-    when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(), Nil))
+    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(), Nil))
 
     runWithRollback {
       val result = service.getByBoundingBox(testUser, BoundingRectangle(Point(374466.5, 6677346.5), Point(374467.5, 6677347.5))).head
@@ -62,7 +63,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
   }
 
   test("Can fetch by municipality") {
-    when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(235)).thenReturn((Seq(
+    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(235)).thenReturn((Seq(
       VVHRoadlink(388553074, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink), Nil))
 
     runWithRollback {
@@ -91,7 +92,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
 
   test("Create new obstacle") {
     runWithRollback {
-      val id = service.create(IncomingObstacle(2.0, 0.0, 388553075, 2), "jakke", Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 235)
+      val id = service.create(IncomingObstacle(2.0, 0.0, 388553075, 2), "jakke", Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 235, linkSource = NormalLinkInterface)
 
       val assets = service.getPersistedAssetsByIds(Set(id))
 
@@ -117,7 +118,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
       val obstacle = service.getById(600046).get
       val updated = IncomingObstacle(obstacle.lon, obstacle.lat, obstacle.linkId, 2)
 
-      service.update(obstacle.id, updated, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 235, "unit_test")
+      service.update(obstacle.id, updated, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 235, "unit_test", linkSource = NormalLinkInterface)
       val updatedObstacle = service.getById(600046).get
 
       updatedObstacle.obstacleType should equal(2)
@@ -129,7 +130,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
 
   test("Asset can be outside link within treshold") {
     runWithRollback {
-      val id = service.create(IncomingObstacle(373494.183, 6677669.927, 1191950690, 2), "unit_test", Seq(Point(373500.349, 6677657.152), Point(373494.182, 6677669.918)), 235)
+      val id = service.create(IncomingObstacle(373494.183, 6677669.927, 1191950690, 2), "unit_test", Seq(Point(373500.349, 6677657.152), Point(373494.182, 6677669.918)), 235, linkSource = NormalLinkInterface)
 
       val asset = service.getById(id).get
 
@@ -169,7 +170,7 @@ class ObstacleServiceSpec extends FunSuite with Matchers {
     }
 
     runWithRollback {
-      val id = service.create(IncomingObstacle(240877.69416595, 6700681.8198731, 5797521, 2), "unit_test", roadLink.geometry, 853)
+      val id = service.create(IncomingObstacle(240877.69416595, 6700681.8198731, 5797521, 2), "unit_test", roadLink.geometry, 853, linkSource = NormalLinkInterface)
 
       val asset = service.getById(id).get
 

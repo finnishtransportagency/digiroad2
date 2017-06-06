@@ -1,8 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
-import fi.liikennevirasto.digiroad2.util.MunicipalityCodeImporter
-import org.joda.time.DateTime
 
 object PointAssetFiller {
 
