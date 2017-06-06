@@ -124,9 +124,6 @@
 
       });
 
-      eventbus.on('layer:selected', function(layer) {
-      });
-
       eventbus.on('projectLink:clicked', function(selected) {
         selectedProjectLink = selected;
         currentProject = projectCollection.getCurrentProject();
