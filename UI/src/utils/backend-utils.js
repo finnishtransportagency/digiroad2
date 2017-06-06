@@ -94,9 +94,12 @@
       });
     }, 1000);
 
-    this.getAssets = function (boundingBox) {
+    this.getAssets = function (boundingBox, filter) {
+      if(!filter)
+        filter = function(assets){return assets;};
+
       self.getAssetsWithCallback(boundingBox, function (assets) {
-        eventbus.trigger('assets:fetched', assets);
+        eventbus.trigger('assets:fetched',filter(assets));
       });
     };
 
@@ -210,6 +213,12 @@
     this.getLinearAssets = latestResponseRequestor(function(boundingBox, typeId) {
       return {
         url: 'api/linearassets?bbox=' + boundingBox + '&typeId=' + typeId
+      };
+    });
+
+    this.getLinearAssetsWithComplementary = latestResponseRequestor(function(boundingBox, typeId) {
+      return {
+        url: 'api/linearassets/complementary?bbox=' + boundingBox + '&typeId=' + typeId
       };
     });
 

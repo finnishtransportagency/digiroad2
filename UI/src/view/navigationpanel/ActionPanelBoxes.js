@@ -2,6 +2,8 @@
   var selectToolIcon = '<img src="images/select-tool.svg"/>';
   var cutToolIcon = '<img src="images/cut-tool.svg"/>';
   var addToolIcon = '<img src="images/add-tool.svg"/>';
+  var rectangleToolIcon = '<img src="images/rectangle-tool.svg"/>';
+  var polygonToolIcon = '<img src="images/polygon-tool.svg"/>';
 
   var Tool = function(toolName, icon, selectedAssetModel) {
     var className = toolName.toLowerCase();
@@ -70,6 +72,8 @@
   ActionPanelBoxes.addToolIcon = addToolIcon;
   ActionPanelBoxes.Tool = Tool;
   ActionPanelBoxes.ToolSelection = ToolSelection;
+  ActionPanelBoxes.rectangleToolIcon = rectangleToolIcon;
+  ActionPanelBoxes.polygonToolIcon = polygonToolIcon;
 
   ActionPanelBoxes.SpeedLimitBox = function(selectedSpeedLimit) {
     var speedLimits = [120, 100, 90, 80, 70, 60, 50, 40, 30, 20];

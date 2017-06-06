@@ -104,8 +104,8 @@
         };
 
         var addLayerBehind = function(map, layer, name){
-            var idx = findLayerIndexByName(map, name);
-            map.getLayers().setAt(idx - 1, layer);
+          var idx = findLayerIndexByName(map, name);
+          map.getLayers().insertAt(idx, layer);
         };
 
         vectorLayer.set('name', 'historyDataLayer');
@@ -187,7 +187,7 @@
       selectedLinkProperty.close();
     };
 
-    var onDragEnd = function(links) {
+    var onInteractionEnd = function(links) {
         selectedLinkProperty.openMultiple(links);
 
         highlightFeatures();
@@ -215,7 +215,7 @@
           var provider = linkPropertyLayerStyles.getDatasetSpecificStyle(linkPropertiesModel.getDataset(), currentRenderIntent);
           return provider.getStyle(feature, {zoomLevel: roadLayer.getZoomLevel()});
       },
-      onDragEnd: onDragEnd,
+      onInteractionEnd: onInteractionEnd,
       onSelect: selectRoadLink
     });
 

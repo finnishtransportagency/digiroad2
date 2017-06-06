@@ -31,6 +31,7 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
       case "height_limits"               => linearAssetsToGeoJson(since, linearAssetService.getChanged(70, since, until))
       case "length_limits"               => linearAssetsToGeoJson(since, linearAssetService.getChanged(80, since, until))
       case "width_limits"                => linearAssetsToGeoJson(since, linearAssetService.getChanged(90, since, until))
+      case "road_names"                  => vvhRoadLinkToGeoJson(roadLinkService.getChanged(since, until))
     }
   }
 
@@ -139,4 +140,37 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
       "Modify"
     }
   }
+
+  private def vvhRoadLinkToGeoJson(changedRoadlinks: Seq[ChangedVVHRoadlink]) =
+    Map(
+      "type" -> "FeatureCollection",
+      "features" ->
+        changedRoadlinks.map { case ChangedVVHRoadlink(link, value, createdAt, changeType) =>
+          Map(
+            "type" -> "Feature",
+            "id" -> link.linkId,
+            "geometry" -> Map(
+              "type" -> "LineString",
+              "coordinates" -> link.geometry.map(p => Seq(p.x, p.y, p.z))
+            ),
+            "properties" ->
+              Map(
+                "value" -> value,
+                "sideCode" -> (link.trafficDirection match {
+                  case TrafficDirection.AgainstDigitizing =>
+                    SideCode.AgainstDigitizing.value
+                  case TrafficDirection.TowardsDigitizing =>
+                    SideCode.TowardsDigitizing.value
+                  case _ =>
+                    SideCode.BothDirections.value
+                }),
+                "startMeasure" -> 0,
+                "endMeasure" -> link.geometry.length,
+                "modifiedAt" -> link.modifiedAt.map(DateTimePropertyFormat.print(_)),
+                "createdAt" -> createdAt.map(DateTimePropertyFormat.print(_)),
+                "changeType" -> changeType
+              )
+          )
+        }
+    )
 }

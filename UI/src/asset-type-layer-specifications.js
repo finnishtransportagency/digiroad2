@@ -173,8 +173,10 @@
       editControlLabels: {
         title: 'Leveys',
         enabled: 'Leveys tiedossa',
-        disabled: 'Leveys ei tiedossa'
-      }
+        disabled: 'Leveys ei tiedossa',
+        showUnit: true
+      },
+      label: new LinearAssetLabel()
     },
     {
       typeId: assetType.congestionTendency,

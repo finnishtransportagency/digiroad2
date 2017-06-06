@@ -19,5 +19,8 @@ package object viite {
   val MinAllowedRoadAddressLength = 0.1
   /* No road address can be generated on a segment smaller than this. */
 
+  val MaxMoveDistanceBeforeFloating = 1.0
+  /* Maximum amount a road start / end may move until it is turned into a floating road address */
+
   val NewRoadAddress: Long = -1000L
 }

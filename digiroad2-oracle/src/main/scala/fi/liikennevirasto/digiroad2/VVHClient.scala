@@ -10,11 +10,14 @@ import org.apache.http.NameValuePair
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.{HttpGet, HttpPost}
 import org.apache.http.impl.client.HttpClientBuilder
+import org.joda.time.format.DateTimeFormat
 import org.apache.http.message.BasicNameValuePair
 import org.apache.http.util.EntityUtils
+import org.apache.http.NameValuePair
 import org.joda.time.{DateTime, DateTimeZone}
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
+import org.json4s.jackson.Serialization
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.Future
@@ -209,6 +212,14 @@ class VVHClient(vvhRestApiEndPoint: String) {
     filter
   }
 
+  private def withDateLimitFilter(attributeName: String, lowerDate: DateTime, higherDate: DateTime): String = {
+    val formatter = DateTimeFormat.forPattern("yyyy-MM-dd")
+    val since = formatter.print(lowerDate)
+    val until = formatter.print(higherDate)
+
+    s""""where":"( $attributeName >=date '$since' and $attributeName <=date '$until' )","""
+  }
+
   protected def withMunicipalityFilter(municipalities: Set[Int]): String = {
     withFilter("MUNICIPALITYCODE", municipalities)
   }
@@ -242,6 +253,10 @@ class VVHClient(vvhRestApiEndPoint: String) {
     withFilter("MTKCLASS", ids)
   }
 
+  protected  def withLastEditedDateFilter(lowerDate: DateTime, higherDate: DateTime): String = {
+    withDateLimitFilter("LAST_EDITED_DATE", lowerDate, higherDate)
+  }
+
   protected def combineFiltersWithAnd(filter1: String, filter2: String): String = {
 
     (filter1.isEmpty, filter2.isEmpty) match {
@@ -261,7 +276,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
     val layerSelection = """"layerId":0,"""
     val fieldSelection = customFieldSelection match {
       case Some(fs) => s""""outFields":"""" + fs + """,CONSTRUCTIONTYPE""""
-      case _ => s""""outFields":"MTKID,LINKID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,SURFACETYPE,END_DATE""""
+      case _ => s""""outFields":"MTKID,LINKID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,SURFACETYPE,END_DATE,OBJECTID""""
     }
     val definitionEnd = "}]"
     definitionStart + layerSelection + filter + fieldSelection + definitionEnd
@@ -344,7 +359,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
       case Right(error) => throw new VVHClientException(error.toString)
     }
   }
-  
+
   def queryChangesByPolygon(polygon: Polygon): Seq[ChangeInfo] = {
     val polygonString = stringifyPolygonGeometry(polygon)
     if (!polygonString.contains("{rings:["))
@@ -581,6 +596,14 @@ class VVHClient(vvhRestApiEndPoint: String) {
                            resultTransition: (Map[String, Any], List[List[Double]]) => T): Seq[T] =
     fetchVVHRoadlinks(linkIds, fieldSelection, fetchGeometry, resultTransition, withLinkIdFilter)
 
+  def fetchRoadLinkOrComplementaryFromVVH(linkId: Long): Option[VVHRoadlink] = {
+    val vvhRoadLink = fetchByLinkId(linkId) match {
+      case Some(vvhRoadLink) => Some(vvhRoadLink)
+      case None => complementaryData.fetchComplementaryRoadlink(linkId)
+    }
+    vvhRoadLink
+  }
+
   /**
     * Returns VVH road links.
     * Used by VVHClient.fetchByLinkIds, VVHClient.fetchByMmlIds and VVHClient.fetchVVHRoadlinks
@@ -605,6 +628,21 @@ class VVHClient(vvhRestApiEndPoint: String) {
         case Right(error) => throw new VVHClientException(error.toString)
       }
     }.toList
+  }
+
+  /**
+    * Returns VVH road links. Obtain all RoadLinks changes between two given dates.
+    * Used by RoadLinkService.fetchChangedVVHRoadlinksBetweenDates (called from getRoadLinksBetweenTwoDatesFromVVH).
+    */
+  def fetchVVHRoadlinksChangesBetweenDates(lowerDate: DateTime, higherDate: DateTime): Seq[VVHRoadlink] = {
+    val definition = layerDefinition(withLastEditedDateFilter(lowerDate, higherDate))
+    val url = vvhRestApiEndPoint + roadLinkDataService + "/FeatureServer/query?" +
+      s"layerDefs=$definition&${queryParameters()}"
+
+    fetchVVHFeatures(url) match {
+      case Left(features) => features.map(extractVVHFeature)
+      case Right(error) => throw new VVHClientException(error.toString)
+    }
   }
 
   case class VVHError(content: Map[String, Any], url: String)
@@ -732,7 +770,8 @@ class VVHClient(vvhRestApiEndPoint: String) {
       "LAST_EDITED_DATE",
       "SURFACETYPE",
       "SUBTYPE",
-      "END_DATE").contains(x)
+      "END_DATE",
+      "OBJECTID").contains(x)
     }.filter { case (_, value) =>
       value != null
     }
@@ -850,6 +889,27 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRe
   def queryLinksIdByPolygonsWithComplemntaryRoadLink(polygon: Polygon): Seq[Long] = {
     val url = vvhRestApiEndPoint + roadLinkComplementaryService + "/FeatureServer/query"
     queryLinksIdByPolygons(polygon, url)
+  }
+
+  /**
+    * Returns VVH road links in polygon area. Municipalities are optional.
+    *
+    */
+  override def queryRoadLinksByPolygons(polygon: Polygon): Seq[VVHRoadlink] = {
+    val polygonString = stringifyPolygonGeometry(polygon)
+    if (!polygonString.contains("{rings:[")) //check that input is somewhat correct
+    {
+      return  Seq.empty[VVHRoadlink]
+    }
+    val definition = layerDefinition(combineFiltersWithAnd("",""))
+    val urlpoly=URLEncoder.encode(polygonString)
+    val url = vvhRestApiEndPoint + roadLinkComplementaryService + "/FeatureServer/query?" +
+      s"layerDefs=$definition&geometry=" + urlpoly +
+      "&geometryType=esriGeometryPolygon&spatialRel=esriSpatialRelIntersects&" + queryParameters()
+    resolveComplementaryVVHFeatures(url) match {
+      case Left(features) => features.map(extractVVHFeature)
+      case Right(error) => throw new VVHClientException(error.toString)
+    }
   }
 
   /**
@@ -976,6 +1036,52 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRe
         case Right(error) => throw new VVHClientException(error.toString)
       }
     }.toList
+  }
+
+  def updateVVHFeatures(complementaryFeatures: Map[String, Any]): Either[List[Map[String, Any]], VVHError] = {
+    val url = vvhRestApiEndPoint + roadLinkComplementaryService + "/FeatureServer/0/updateFeatures"
+    val request = new HttpPost(url)
+    request.setEntity(new UrlEncodedFormEntity(createFormParams(complementaryFeatures), "utf-8"))
+    val client = HttpClientBuilder.create().build()
+    val response = client.execute(request)
+    try {
+      val content: Map[String, Seq[Map[String, Any]]] = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Seq[Map[String, Any]]]]
+      content.get("updateResults").getOrElse(None) match {
+        case None =>
+          content.get("error").head.asInstanceOf[Map[String, Any]].getOrElse("details", None) match {
+            case None => Right(VVHError(Map("error" -> "Error Without Details "), url))
+            case value => Right(VVHError(Map("error details" -> value), url))
+          }
+        case _ =>
+          content.get("updateResults").get.map(_.getOrElse("success", None)).head match {
+            case None => Right(VVHError(Map("error" -> "Update status not available in JSON Response"), url))
+            case true => Left(List(content))
+            case false =>
+              content.get("updateResults").get.map(_.getOrElse("error", None)).head.asInstanceOf[Map[String, Any]].getOrElse("description", None) match {
+                case None => Right(VVHError(Map("error" -> "Error Without Information"), url))
+                case value => Right(VVHError(Map("error" -> value), url))
+              }
+          }
+      }
+    } catch {
+      case e: Exception => Right(VVHError(Map("error" -> e.getMessage), url))
+    } finally {
+      response.close()
+    }
+  }
+
+  private def createFormParams(complementaryFeatures: Map[String, Any]): ArrayList[NameValuePair] = {
+    val featuresValue = Serialization.write(Seq(Map("attributes" -> complementaryFeatures)))
+    // Print JSON sent to VVH for testing purposes
+    logger.info("complementaryFeatures to JSON: %s".format(featuresValue))
+
+    val nvps = new ArrayList[NameValuePair]()
+    nvps.add(new BasicNameValuePair("features", featuresValue))
+    nvps.add(new BasicNameValuePair("gdbVersion", ""))
+    nvps.add(new BasicNameValuePair("rollbackOnFailure", "true"))
+    nvps.add(new BasicNameValuePair("f", "pjson"))
+
+    nvps
   }
 }
 

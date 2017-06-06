@@ -1,7 +1,5 @@
-package fi.liikennevirasto.digiroad2.masstransitstop.oracle
+package fi.liikennevirasto.digiroad2.oracle
 
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries.nextPrimaryKeyId
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -9,13 +7,9 @@ import slick.jdbc.StaticQuery.interpolation
 object ImportLogService {
   val logger = LoggerFactory.getLogger(getClass)
 
-  def nextPrimaryKeySeqValue = {
-    nextPrimaryKeyId.as[Long].first
-  }
-
   def save(content: String): Long = {
     OracleDatabase.withDynTransaction {
-      val id = nextPrimaryKeySeqValue
+      val id = sql"""select primary_key_seq.nextval from dual""".as[Long].first
       sqlu"""
         insert into import_log(id, content)
         values ($id, $content)
@@ -24,19 +18,21 @@ object ImportLogService {
     }
   }
 
-  def save(id: Long, content: String): Long = {
+  def save(id: Long, content: String, importType: String): Long = {
     OracleDatabase.withDynTransaction {
       sqlu"""
-        update import_log set content = $content
+        update import_log
+        set content = $content
+          , import_type = $importType
           where id = $id
       """.execute
       id
     }
   }
 
-  def get(id: Long): Option[String] = {
+  def get(id: Long, importType: String): Option[String] = {
     OracleDatabase.withDynTransaction {
-      sql"select content from import_log where id = $id".as[String].firstOption
+      sql"select content from import_log where id = $id and import_type = $importType".as[String].firstOption
     }
   }
 

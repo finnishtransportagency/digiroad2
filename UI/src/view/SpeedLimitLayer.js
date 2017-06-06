@@ -18,7 +18,6 @@ window.SpeedLimitLayer = function(params) {
   this.minZoomForContent = zoomlevels.minZoomForAssets;
   this.layerStarted = function(eventListener) {
     bindEvents(eventListener);
-    changeTool(application.getSelectedTool());
   };
   this.refreshView = function(event) {
     vectorLayer.setVisible(true);
@@ -214,12 +213,12 @@ window.SpeedLimitLayer = function(params) {
 
   var selectToolControl = new SelectToolControl(application, vectorLayer, map, {
     style: function(feature){ return style.browsingStyle.getStyle(feature, {zoomLevel: uiState.zoomLevel}); },
-    onDragEnd: onDragEnd,
+    onInteractionEnd: onInteractionEnd,
     onSelect: OnSelect,
     filterGeometry: function(feature) { return true; }
   });
 
-  function onDragEnd(speedLimits) {
+  function onInteractionEnd(speedLimits) {
     if (selectedSpeedLimit.isDirty()) {
       displayConfirmMessage();
     } else {
@@ -269,11 +268,9 @@ window.SpeedLimitLayer = function(params) {
 
   var changeTool = function(tool) {
     if (tool === 'Cut') {
-      selectToolControl.deactivate();
       speedLimitCutter.activate();
     } else if (tool === 'Select') {
       speedLimitCutter.deactivate();
-      selectToolControl.activate();
     }
   };
 
@@ -319,7 +316,7 @@ window.SpeedLimitLayer = function(params) {
     vectorLayerHistory.set('name', layerName);
 
     var roadLinksLayerIndex = indexOf(map.getLayers(),_.find(map.getLayers().getArray(), function(item){ return item.get('name') == 'road';}));
-    map.getLayers().setAt(roadLinksLayerIndex - 1, vectorLayerHistory);
+    map.getLayers().insertAt(roadLinksLayerIndex, vectorLayerHistory);
     var historySpeedLimits = _.flatten(historySpeedLimitChains);
 
     drawSpeedLimits(historySpeedLimits, vectorLayerHistory);
@@ -422,6 +419,7 @@ window.SpeedLimitLayer = function(params) {
   var redrawSpeedLimits = function(speedLimitChains) {
     vectorSource.clear();
     selectToolControl.clear();
+    selectToolControl.deactivate();
     indicatorLayer.getSource().clear();
     if (!selectedSpeedLimit.isDirty() && application.getSelectedTool() === 'Select') {
       selectToolControl.activate();
