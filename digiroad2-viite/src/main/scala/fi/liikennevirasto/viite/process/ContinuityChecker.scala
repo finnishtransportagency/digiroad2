@@ -82,7 +82,7 @@ class ContinuityChecker(roadLinkService: RoadLinkService) {
     }
 
     val nextAddressItems = addressMap.getOrElse(address.endAddrMValue, Seq())
-      !nothingAfter(address, addressMap) &&
+    !nothingAfter(address, addressMap) &&
       !(combinedTrackFollows(address, nextAddressItems) ||
         sameTrackFollows(address, nextAddressItems) ||
         splitTrackFollows(address, nextAddressItems))

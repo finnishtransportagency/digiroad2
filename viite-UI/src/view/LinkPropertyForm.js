@@ -3,6 +3,10 @@
     var functionalClasses = [1, 2, 3, 4, 5, 6, 7, 8];
     var compactForm = false;
     var options;
+    var floatingRoadLinkType=-1;
+    var noAnomaly=0;
+    var noAddressAnomaly=1;
+    var geometryChangedAnomaly=2;
 
     var localizedAdministrativeClasses = {
       Private: 'Yksityisen omistama',
@@ -375,6 +379,20 @@
 
     var bindEvents = function() {
       var rootElement = $('#feature-attributes');
+
+      var switchMode = function (readOnly){
+        toggleMode(readOnly);
+        var uniqFeaturesToKeep = _.uniq(selectedLinkProperty.getFeaturesToKeep());
+        var firstFloatingSelected = _.first(_.filter(uniqFeaturesToKeep,function (feature){
+          return feature.roadLinkType === floatingRoadLinkType;
+        }));
+        var canStartTransfer = compactForm && !applicationModel.isReadOnly() && uniqFeaturesToKeep.length > 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length-1].anomaly === noAddressAnomaly && uniqFeaturesToKeep[uniqFeaturesToKeep.length-2].roadLinkType === floatingRoadLinkType;
+        if(canStartTransfer)
+          _.defer(function(){
+            selectedLinkProperty.getLinkAdjacents(selectedLinkProperty.get()[0], firstFloatingSelected);
+          });
+      };
+
       var toggleMode = function(readOnly) {
         if(!applicationModel.isProjectOpen()) {
           rootElement.find('.editable .form-control-static').toggle(readOnly);
@@ -385,20 +403,20 @@
           var firstSelectedLinkProperty = _.first(selectedLinkProperty.get());
           if (!_.isEmpty(uniqFeaturesToKeep)) {
             if (readOnly) {
-              if (lastFeatureToKeep.roadLinkType === -1) {
+              if (lastFeatureToKeep.roadLinkType === floatingRoadLinkType) {
                 rootElement.html(templateFloating(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
               } else {
                 rootElement.html(template(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
               }
             } else {
-              if (lastFeatureToKeep.roadLinkType === -1) {
+              if (lastFeatureToKeep.roadLinkType === floatingRoadLinkType) {
                 rootElement.html(templateFloatingEditMode(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
-                if (applicationModel.getSelectionType() === 'floating' && firstSelectedLinkProperty.roadLinkType === -1) {
+                if (applicationModel.getSelectionType() === 'floating' && firstSelectedLinkProperty.roadLinkType === floatingRoadLinkType) {
                   selectedLinkProperty.getLinkAdjacents(_.last(selectedLinkProperty.get()), firstSelectedLinkProperty);
                 }
                 $('#floatingEditModeForm').show();
               } else { //check if the before selected was a floating link and if the next one is unknown
-                if (uniqFeaturesToKeep.length > 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length - 1].anomaly === 1) {
+                if (uniqFeaturesToKeep.length > 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length - 1].anomaly === noAddressAnomaly) {
                   rootElement.html(templateFloatingEditMode(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
                   $('#floatingEditModeForm').show();
                 } else {
@@ -408,13 +426,13 @@
             }
           } else if (!_.isEmpty(selectedLinkProperty.get())) {
             if (readOnly) {
-              if (firstSelectedLinkProperty.roadLinkType === -1) {
+              if (firstSelectedLinkProperty.roadLinkType === floatingRoadLinkType) {
                 rootElement.html(templateFloating(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
               } else {
                 rootElement.html(template(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
               }
             } else {
-              if (_.last(selectedLinkProperty.get()).roadLinkType === -1) {
+              if (_.last(selectedLinkProperty.get()).roadLinkType === floatingRoadLinkType) {
                 applicationModel.toggleSelectionTypeFloating();
                 rootElement.html(templateFloatingEditMode(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
                 selectedLinkProperty.getLinkAdjacents(_.last(selectedLinkProperty.get()), firstSelectedLinkProperty);
@@ -433,14 +451,7 @@
       eventbus.on('linkProperties:selected linkProperties:cancelled', function(linkProperties) {
         if(!_.isEmpty(selectedLinkProperty.get()) || !_.isEmpty(linkProperties)){
 
-          compactForm = !_.isEmpty(selectedLinkProperty.get()) && (selectedLinkProperty.get()[0].roadLinkType === -1 || selectedLinkProperty.getFeaturesToKeep().length >= 1);
-          var uniqFeaturesToKeep = _.uniq(selectedLinkProperty.getFeaturesToKeep());
-          var firstFloatingSelected = _.first(_.filter(uniqFeaturesToKeep,function (feature){
-            return feature.roadLinkType === -1;
-          }));
-          var canStartTransfer = compactForm && !applicationModel.isReadOnly() && uniqFeaturesToKeep.length > 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length-1].anomaly === 1 && uniqFeaturesToKeep[uniqFeaturesToKeep.length-2].roadLinkType === -1;
-          if(canStartTransfer)
-            selectedLinkProperty.getLinkAdjacents(selectedLinkProperty.get()[0], firstFloatingSelected);
+          compactForm = !_.isEmpty(selectedLinkProperty.get()) && (selectedLinkProperty.get()[0].roadLinkType === floatingRoadLinkType || selectedLinkProperty.getFeaturesToKeep().length >= 1);
           linkProperties.modifiedBy = linkProperties.modifiedBy || '-';
           linkProperties.modifiedAt = linkProperties.modifiedAt || '';
           linkProperties.localizedLinkTypes = getLocalizedLinkType(linkProperties.linkType) || 'Tuntematon';
@@ -500,7 +511,7 @@
           rootElement.find('.link-types').change(function(event) {
             selectedLinkProperty.setLinkType(parseInt($(event.currentTarget).find(':selected').attr('value'), 10));
           });
-          toggleMode(applicationModel.isReadOnly());
+          switchMode(applicationModel.isReadOnly());
         }
       });
 
@@ -518,14 +529,14 @@
 
       var processAdjacents = function (sources, targets, additionalSourceLinkId) {
         var adjacents = _.reject(targets, function(t){
-          return t.roadLinkType == -1;
+          return t.roadLinkType == floatingRoadLinkType;
         });
 
         //singleLinkSelection case
         var floatingAdjacents = [];
         if(selectedLinkProperty.count() === 1)
           floatingAdjacents = _.filter(targets, function(t){
-            return t.roadLinkType == -1;
+            return t.roadLinkType == floatingRoadLinkType;
           });
 
         var fullTemplate = applicationModel.getCurrentAction() === applicationModel.actionCalculated ? afterCalculationTemplate : !_.isEmpty(floatingAdjacents) ? _.map(floatingAdjacents, function(fa){
@@ -542,7 +553,7 @@
         $('[id^=VALITUTLINKIT]').remove();
 
         var nonFloatingFeatures = _.reject(selectedLinkProperty.getFeaturesToKeep(), function(t){
-          return t.roadLinkType == -1;
+          return t.roadLinkType == floatingRoadLinkType;
         });
 
         var fields = formFields(_.map(nonFloatingFeatures, function(sId){
@@ -579,6 +590,8 @@
       rootElement.on('click', '.link-properties button.save', function() {
         if(applicationModel.getCurrentAction() === applicationModel.actionCalculated){
           selectedLinkProperty.saveTransfer();
+          applicationModel.setCurrentAction(-1);
+          applicationModel.addSpinner();
         }
       });
       rootElement.on('click', '.link-properties button.cancel', function() {

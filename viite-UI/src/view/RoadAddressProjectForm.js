@@ -255,8 +255,12 @@
       }
     };
 
+    var projDateEmpty = function(rootElement) {
+      return !rootElement.find('#alkupvm').val();
+    };
+
     var addReserveButton = function() {
-      return '<button class="btn btn-reserve">Varaa</button>';
+      return '<button class="btn btn-reserve" disabled>Varaa</button>';
     };
 
     var bindEvents = function() {
@@ -296,6 +300,7 @@
         applicationModel.setProjectFeature(currentProject.id);
         applicationModel.setOpenProject(true);
         activeLayer = true;
+        rootElement.find('.btn-reserve').prop("disabled", false);
         if(result.projectLinks.length > 0)
           rootElement.find('.btn-next').prop("disabled", false);
       });
@@ -404,6 +409,7 @@
       rootElement.on('change', '.input-required', function() {
         rootElement.find('.project-form button.next').attr('disabled', formIsInvalid(rootElement));
         rootElement.find('.project-form button.save').attr('disabled', formIsInvalid(rootElement));
+        rootElement.find('#roadAddressProject button.btn-reserve').attr('disabled', projDateEmpty(rootElement));
       });
 
     };

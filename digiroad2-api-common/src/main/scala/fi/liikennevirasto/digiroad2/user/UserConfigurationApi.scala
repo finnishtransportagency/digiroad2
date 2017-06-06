@@ -101,8 +101,12 @@ class UserConfigurationApi extends ScalatraServlet with JacksonJsonSupport
       case _ => Set[String]()
     }
 
-    val authorizedAreas = authorizationArea.toInt match {
-      case authId if (1 to 12).contains(authId) && roleName == Role.ServiceRoadMaintainer  => Set[Int](authId)
+    val authorizedAreas = splitToInts(authorizationArea) match {
+      case Some(authIds) if roleName == Role.ServiceRoadMaintainer  =>
+        if(authIds.toSet.subsetOf((1 to 12).toSet))
+          authIds.toSet
+        else
+          halt(BadRequest("Authorization area should be between 1 and 12"))
       case _ => Set[Int]()
     }
 

@@ -11,36 +11,48 @@ import slick.jdbc.{GetResult, StaticQuery => Q}
   * Created by pedrosag on 16-05-2017.
   */
 
-sealed trait ChangeType {
+sealed trait AddressChangeType {
   def value: Int
 }
 
-object ChangeType {
-  val values = Set(Unchanged, New, Transfer, Numeration, Expiration)
+object AddressChangeType {
+  val values = Set(Unchanged, New, Transfer, ReNumeration, Termination)
 
-  def apply(intValue: Int): ChangeType = {
+  def apply(intValue: Int): AddressChangeType = {
     values.find(_.value == intValue).getOrElse(Unknown)
   }
 
-  case object Unchanged extends ChangeType { def value = 1 }
-  case object New extends ChangeType { def value = 2 }
-  case object Transfer extends ChangeType { def value = 3 }
-  case object Numeration extends ChangeType { def value = 4 }
-  case object Expiration extends ChangeType { def value = 5 }
-  case object Unknown extends ChangeType { def value = 99 }
+  /*
+      Unchanged is a no-operation, tells TR that some road part or section stays intact but it needs
+        to be included in the message for other changes
+      New is a road address placing to a road that did not have road address before
+      Transfer is an adjustment of a road address, such as extending a road 100 meters from the start:
+        all the addresses on the first part are transferred with +100 to each start and end address M values.
+      ReNumeration is a change in road addressing but no physical or length changes. A road part gets a new
+        road and/or road part number.
+      Termination is for ending a road address (and possibly assigning the previously used road address
+        to a new physical location at the same time)
+   */
+
+  case object Unchanged extends AddressChangeType { def value = 1 }
+  case object New extends AddressChangeType { def value = 2 }
+  case object Transfer extends AddressChangeType { def value = 3 }
+  case object ReNumeration extends AddressChangeType { def value = 4 }
+  case object Termination extends AddressChangeType { def value = 5 }
+  case object Unknown extends AddressChangeType { def value = 99 }
 
 }
 
 case class RoadAddressChangeRecipient(roadNumber: Option[Long], trackCode: Option[Long], startRoadPartNumber: Option[Long],
                                       endRoadPartNumber: Option[Long], startAddressM: Option[Long], endAddressM:Option[Long])
-case class RoadAddressChangeInfo(changeType: ChangeType, source: RoadAddressChangeRecipient, target: RoadAddressChangeRecipient, discontinuity: Discontinuity, roadType: RoadType)
+case class RoadAddressChangeInfo(changeType: AddressChangeType, source: RoadAddressChangeRecipient, target: RoadAddressChangeRecipient, discontinuity: Discontinuity, roadType: RoadType)
 case class ProjectRoadAddressChange(projectId: Long, projectName: Option[String], ely: Long, user: String, changeDate: DateTime, changeInfo: RoadAddressChangeInfo)
 
 object RoadAddressChangesDAO {
 
   implicit val getDiscontinuity = GetResult[Discontinuity]( r=> Discontinuity.apply(r.nextInt()))
 
-  implicit val getChangeType = GetResult[ChangeType]( r=> ChangeType.apply(r.nextInt()))
+  implicit val getAddressChangeType = GetResult[AddressChangeType](r=> AddressChangeType.apply(r.nextInt()))
 
   implicit val getRoadType = GetResult[RoadType]( r=> RoadType.apply(r.nextInt()))
 
@@ -56,12 +68,13 @@ object RoadAddressChangesDAO {
       targetEndAddressM, discontinuity, roadType) =>
         val source = RoadAddressChangeRecipient(sourceRoadNumber, sourceTrackCode, sourceStartRoadPartNumber, sourceEndRoadPartNumber, sourceStartAddressM, sourceEndAddressM)
         val target = RoadAddressChangeRecipient(targetRoadNumber, targetTrackCode, targetStartRoadPartNumber, targetEndRoadPartNumber, targetStartAddressM, targetEndAddressM)
-        val changeInfo = RoadAddressChangeInfo(ChangeType.apply(changeType), source, target, Discontinuity.apply(discontinuity), RoadType.apply(roadType))
+        val changeInfo = RoadAddressChangeInfo(AddressChangeType.apply(changeType), source, target, Discontinuity.apply(discontinuity), RoadType.apply(roadType))
         val user = if(modifiedDate.isEmpty){
           createdBy
         } else {
           if(modifiedDate.get.isAfter(createdDate.get)){
-            modifiedBy
+           // modifiedBy currently always returns empty
+            createdBy
           } else createdBy
         }
         val date = if(modifiedDate.isEmpty){

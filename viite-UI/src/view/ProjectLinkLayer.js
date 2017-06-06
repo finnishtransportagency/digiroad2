@@ -2,8 +2,10 @@
   root.ProjectLinkLayer = function(map, projectCollection, selectedProjectLinkProperty, roadLayer) {
     var layerName = 'roadAddressProject';
     var vectorLayer;
+    var calibrationPointVector = new ol.source.Vector({});
     var layerMinContentZoomLevels = {};
     var currentZoom = 0;
+    var standardZIndex = 6;
     Layer.call(this, layerName, roadLayer);
     var project;
     var me = this;
@@ -24,6 +26,11 @@
         loadFeatures(features);
       },
       strategy: ol.loadingstrategy.bbox
+    });
+
+    var calibrationPointLayer = new ol.layer.Vector({
+      source: calibrationPointVector,
+      name: 'calibrationPointLayer'
     });
 
     var styleFunction = function (feature, resolution){
@@ -55,7 +62,7 @@
         });
 
         var zIndex = styler.determineZIndex(feature.projectLinkData.roadLinkType, feature.projectLinkData.anomaly, feature.projectLinkData.roadLinkSource, status);
-        lineStyle.setZIndex(zIndex + 3);
+        lineStyle.setZIndex(zIndex + 1);
         return [lineStyle];
       }
       else{
@@ -169,7 +176,7 @@
 
     var zoomDoubleClickListener = function(event) {
       _.defer(function(){
-        if(selectDoubleClick.getFeatures().getLength() < 1 && selectedProjectLinkProperty.get().length < 1 && map.getView().getZoom() <= 13){
+        if(selectedProjectLinkProperty.get().length === 0 && applicationModel.getSelectedLayer() == 'roadAddressProject' && map.getView().getZoom() <= 13){
           map.getView().setZoom(map.getView().getZoom()+1);
         }
       });
@@ -191,6 +198,54 @@
       } else if (mapState.selectedLayer == layerName){
         projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1, undefined);
         handleRoadsVisibility();
+      }
+    };
+
+    /**
+     * This will add all the following interactions from the map:
+     * -selectDoubleClick
+     * -selectSingleClick
+     */
+
+    var addSelectInteractions = function () {
+      map.addInteraction(selectDoubleClick);
+      map.addInteraction(selectSingleClick);
+    };
+
+    /**
+     * This will remove all the following interactions from the map:
+     * -selectDoubleClick
+     * -selectSingleClick
+     */
+
+    var removeSelectInteractions = function() {
+      map.removeInteraction(selectDoubleClick);
+      map.removeInteraction(selectSingleClick);
+    };
+
+    /**
+     * This will deactivate the following interactions from the map:
+     * -selectDoubleClick
+     * -selectSingleClick - only if demanded with the Both
+     */
+
+    var deactivateSelectInteractions = function(both) {
+      selectDoubleClick.setActive(false);
+      if(both){
+        selectSingleClick.setActive(false);
+      }
+    };
+
+    /**
+     * This will activate the following interactions from the map:
+     * -selectDoubleClick
+     * -selectSingleClick - only if demanded with the Both
+     */
+
+    var activateSelectInteractions = function(both) {
+      selectDoubleClick.setActive(true);
+      if(both){
+        selectSingleClick.setActive(true);
       }
     };
 
@@ -220,6 +275,10 @@
       me.hide();
     };
 
+    var clearProjectLinkLayer = function() {
+      vectorLayer.getSource().clear();
+    };
+
     var redraw = function(){
       var editedLinks = projectCollection.getDirty();
       var projectLinks = projectCollection.getAll();
@@ -234,6 +293,13 @@
         feature.projectLinkData = projectLink;
         features.push(feature);
       });
+      var actualPoints = me.drawCalibrationMarkers(calibrationPointLayer.source, projectLinks);
+      _.each(actualPoints, function (actualPoint) {
+        var calMarker = new CalibrationPoint(actualPoint.point);
+        calibrationPointLayer.getSource().addFeature(calMarker.getMarker(true));
+      });
+
+      calibrationPointLayer.setZIndex(standardZIndex + 2);
       var partitioned = _.partition(features, function(feature) {
         return (!_.isUndefined(feature.projectLinkData.linkId) && _.contains(editedLinks, feature.projectLinkData.linkId));
       });
@@ -272,8 +338,6 @@
     eventbus.on('roadAddressProject:selected', function(projId) {
       eventbus.once('roadAddressProject:projectFetched', function(id) {
         projectCollection.fetch(map.getView().calculateExtent(map.getSize()),map.getView().getZoom(), id);
-        // vectorSource.clear();
-        // eventbus.trigger('map:clearLayers');
       });
       projectCollection.getProjectsWithLinksById(projId);
     });
@@ -292,9 +356,31 @@
 
     eventbus.on('map:moved', mapMovedHandler, this);
 
-    vectorLayer.setVisible(true);
-    map.addLayer(vectorLayer);
+    eventbus.on('layer:selected', function(layer, previouslySelectedLayer) {
+     //TODO create proper system for layer changes and needed calls
+     if (layer !== 'roadAddressProject') {
+       deactivateSelectInteractions(true);
+       removeSelectInteractions();
+     }
+     else {
+       activateSelectInteractions(true);
+       addSelectInteractions();
+     }
+     if (previouslySelectedLayer === 'roadAddressProject') {
+       clearProjectLinkLayer();
+       hideLayer();
+       removeSelectInteractions();
+     }
+    });
 
+    eventbus.on('roadAddressProject:deselectFeaturesSelected', function(){
+      clearHighlights();
+    });
+
+    vectorLayer.setVisible(true);
+    calibrationPointLayer.setVisible(true);
+    map.addLayer(vectorLayer);
+    map.addLayer(calibrationPointLayer);
     return {
       show: show,
       hide: hideLayer
