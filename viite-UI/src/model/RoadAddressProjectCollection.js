@@ -58,7 +58,6 @@
             });
           });
             eventbus.trigger('roadAddressProject:fetched', self.getAll());
-
       });
     };
 

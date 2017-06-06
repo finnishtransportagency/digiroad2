@@ -202,7 +202,6 @@
     }
 
     //Methods for the UI Integrated Tests
-
     var afterSave = false;
 
     var resetAfterSave = function(){
@@ -285,7 +284,6 @@
     };
     this.withProjectLinks = function(returnData){
       self.getProjectLinks = function(params, callback){
-        console.log('Returning withProjectLinks data: ' + returnData);
         callback(returnData);
         return returnData;
       };
@@ -293,15 +291,11 @@
     };
 
     this.withGetProjectsWithLinksById = function(returnData){
-      if (loadingProject) {
-        loadingProject.abort();
-      }
       self.getProjectsWithLinksById = function(params, callback){
         callback(returnData);
         return returnData;
       };
-      loadingProject=self;
-      return loadingProject;
+      return self;
     };
 
 
@@ -314,7 +308,6 @@
 
     this.withCreateRoadAddressProject = function(returnData){
       self.createRoadAddressProject = function(data, successCallback){
-        console.log('Returning withCreateRoadAddressProject data: ' + returnData);
         successCallback(returnData);
         return returnData;
       };
@@ -323,7 +316,6 @@
 
     this.withGetRoadLinkByLinkId = function(returnData){
       self.getRoadLinkByLinkId = function(linkId, callback){
-        console.log('Returning withGetRoadLinkByLinkId data: ' + returnData);
         callback(returnData);
         return returnData;
       };
