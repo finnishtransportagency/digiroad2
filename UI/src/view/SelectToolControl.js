@@ -130,7 +130,6 @@
         };
 
         var activePolygon = function(){
-            activate();
             isPolygonActive = true;
             isRectangleActive = false;
             map.removeInteraction(drawSquare);
@@ -139,7 +138,6 @@
         };
 
         var activeRectangle = function(){
-            activate();
             isRectangleActive = true;
             isPolygonActive = false;
             map.removeInteraction(drawInteraction);

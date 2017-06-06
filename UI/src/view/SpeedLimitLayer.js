@@ -18,7 +18,6 @@ window.SpeedLimitLayer = function(params) {
   this.minZoomForContent = zoomlevels.minZoomForAssets;
   this.layerStarted = function(eventListener) {
     bindEvents(eventListener);
-    changeTool(application.getSelectedTool());
   };
   this.refreshView = function(event) {
     vectorLayer.setVisible(true);
@@ -269,11 +268,9 @@ window.SpeedLimitLayer = function(params) {
 
   var changeTool = function(tool) {
     if (tool === 'Cut') {
-      selectToolControl.deactivate();
       speedLimitCutter.activate();
     } else if (tool === 'Select') {
       speedLimitCutter.deactivate();
-      selectToolControl.activate();
     }
   };
 
@@ -422,6 +419,7 @@ window.SpeedLimitLayer = function(params) {
   var redrawSpeedLimits = function(speedLimitChains) {
     vectorSource.clear();
     selectToolControl.clear();
+    selectToolControl.deactivate();
     indicatorLayer.getSource().clear();
     if (!selectedSpeedLimit.isDirty() && application.getSelectedTool() === 'Select') {
       selectToolControl.activate();
