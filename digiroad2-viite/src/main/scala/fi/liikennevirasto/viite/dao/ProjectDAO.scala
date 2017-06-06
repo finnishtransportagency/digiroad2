@@ -22,7 +22,7 @@ object ProjectState{
   val values = Set(Closed, Incomplete,Sent2TR,ErroredInTR,TRProcessing,Saved2TR,Unknown)
 
   // These states are final
-  val nonActiveStates = Set(ProjectState.Closed, ProjectState.Saved2TR)
+  val nonActiveStates = Set(ProjectState.Closed.value, ProjectState.Saved2TR.value)
 
   def apply(value: Long): ProjectState = {
     values.find(_.value == value).getOrElse(Closed)
@@ -170,7 +170,7 @@ object ProjectDAO {
               FROM project p
            INNER JOIN project_link l
            ON l.PROJECT_ID =  p.ID
-           WHERE l.road_number=$roadNumber AND road_part_number=$roadPart AND p.state NOT IN ($states) rownum < 2 """
+           WHERE l.road_number=$roadNumber AND road_part_number=$roadPart AND p.state NOT IN ($states) AND rownum < 2 """
     Q.queryNA[String](query).firstOption
   }
 
