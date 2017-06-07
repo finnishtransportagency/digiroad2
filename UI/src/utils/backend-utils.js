@@ -94,9 +94,12 @@
       });
     }, 1000);
 
-    this.getAssets = function (boundingBox) {
+    this.getAssets = function (boundingBox, filter) {
+      if(!filter)
+        filter = function(assets){return assets;};
+
       self.getAssetsWithCallback(boundingBox, function (assets) {
-        eventbus.trigger('assets:fetched', assets);
+        eventbus.trigger('assets:fetched',filter(assets));
       });
     };
 
