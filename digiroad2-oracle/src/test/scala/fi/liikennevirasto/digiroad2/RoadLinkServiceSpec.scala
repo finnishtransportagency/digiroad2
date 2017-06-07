@@ -804,7 +804,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
     OracleDatabase.withDynTransaction {
       when(mockVVHClient.roadNodesData).thenReturn(mockVVHRoadNodesClient)
-      when(mockVVHRoadNodesClient.queryVVHRoadNodesByMunicipality(any[Int])).thenReturn(Seq(vvhRoadNode, vvhRoadNode1))
+      when(mockVVHRoadNodesClient.fetchByMunicipality(any[Int])).thenReturn(Seq(vvhRoadNode, vvhRoadNode1))
 
       val roadNodes = service.getRoadNodesFromVVHByMunicipality(235)
       roadNodes.size should be (2)
