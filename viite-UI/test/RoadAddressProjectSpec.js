@@ -102,6 +102,45 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
       });
     });
 
+    // 5 - Change link state and cancel status change
+    describe('when clicking Peruuta button after change status', function() {
+      before(function (done) {
+        var featureSelectedFromProjectLayer1 = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 1717275);
+        expect(featureSelectedFromProjectLayer1).to.not.be.undefined;
+        expect(featureSelectedFromProjectLayer1.projectLinkData.status).to.be.equal(0);
+        $('#dropDown').change();
+        var featureSelectedFromProjectLayer = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 1717275);
+        expect(featureSelectedFromProjectLayer).to.not.be.undefined;
+        expect(featureSelectedFromProjectLayer.projectLinkData.status).to.be.equal(1);
+        eventbus.on('roadAddress:projectLinksEdited',function (){
+          done();
+        });
+        $('.cancelLink').click();
+      });
+
+      it('Check if the status is reverted ', function(){
+        // it should revert to the previous state (0)
+        var featureReverted = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 1717275);
+        expect(featureReverted).to.not.be.undefined;
+        console.log(featureReverted.projectLinkData.status);
+        expect(featureReverted.projectLinkData.status).to.be.equal(0);
+      });
+    });
+
+    describe('when clicking Peruuta button', function() {
+      before(function (done) {
+        // Click Cancel (Peruuta)
+        $('.cancelLink').click();
+        done();
+      });
+
+      it('Check if it change to the road form', function(){
+        $('.project-form button.next:visible').prop('disabled', false);
+        $('.project-form button.next:visible').attr('disabled', false);
+        assert($('.project-form:visible').length > 0, "Form didn't open.");
+      });
+    });
+
   });
 
 });

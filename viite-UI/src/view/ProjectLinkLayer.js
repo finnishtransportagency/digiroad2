@@ -155,6 +155,7 @@
       var selection = _.find(event.selected, function (selectionTarget) {
         return !_.isUndefined(selectionTarget.projectLinkData) && selectionTarget.projectLinkData.status === 0;
       });
+      revertSelectedChanges();
       if (!_.isUndefined(selection))
         selectedProjectLinkProperty.open(selection.projectLinkData.linkId);
     });
@@ -222,16 +223,6 @@
         eventbus.trigger('roadLinks:fetched');
       }
     });
-
-    // selectDoubleClick.on('select',function(event) {
-    //   // TODO: 374 validate selection
-    //   var selection = _.find(event.selected, function (selectionTarget) {
-    //       return !_.isUndefined(selectionTarget.projectLinkData);
-    //   });
-    //   revertSelectedChanges();
-    //   if (!_.isUndefined(selection))
-    //     selectedProjectLinkProperty.open(selection.projectLinkData.linkId);
-    // });
 
     var zoomDoubleClickListener = function(event) {
       _.defer(function(){
