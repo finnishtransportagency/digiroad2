@@ -20,7 +20,9 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       if(properties.massTransitStop)
         return properties.massTransitStop.getMarkerDefaultStyles();
       return [];
-    }
+    },
+    //Increase the buffer around the viewport extend because of group bus stops
+    renderBuffer: 300
   });
 
   assetLayer.set('name', layerName);
