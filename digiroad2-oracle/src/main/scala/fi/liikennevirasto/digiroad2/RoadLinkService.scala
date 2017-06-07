@@ -1167,10 +1167,16 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   private val changeCacheStartsMatch = "changes_%d_"
   private val allCacheEndsMatch = ".cached"
 
-  private def deleteOldCacheFiles(municipalityCode: Int, dir: Option[File], maxAge: Long) = {
+  private val geometryWithComplementaryCacheFileNames = "geomWithComplementary_%d_%d.cached"
+  private val changeCacheFileNamesWithComplementary = "changesWithComplementary_%d_%d.cached"
+  private val geometryWithComplementaryCacheStartsMatch = "geomWithComplementary_%d_"
+  private val changeCacheWithComplementaryStartsMatch = "changesWithComplementary_%d_"
+  private val geometryCacheWithComplementaryStartsMatch = "geom_%d_"
+
+  private def deleteOldCacheFiles(municipalityCode: Int, dir: Option[File], maxAge: Long, cacheName: String) = {
     val oldCacheFiles = dir.map(cacheDir => cacheDir.listFiles(new FilenameFilter {
       override def accept(dir: File, name: String): Boolean = {
-        name.startsWith(geometryCacheStartsMatch.format(municipalityCode))
+        name.startsWith(cacheName.format(municipalityCode))
       }
     }).filter(f => f.lastModified() + maxAge < System.currentTimeMillis))
 
@@ -1183,20 +1189,22 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     )
   }
 
-  private def getCacheFiles(municipalityCode: Int, dir: Option[File]): (Option[(File, File)]) = {
+  private def getCacheFiles(municipalityCode: Int, dir: Option[File], withComplementary: Option[Boolean] = Some(false)): (Option[(File, File)]) = {
     val twentyHours = 20L * 60 * 60 * 1000
 
-    deleteOldCacheFiles(municipalityCode, dir, twentyHours)
+    deleteOldCacheFiles(municipalityCode, dir, twentyHours, if(withComplementary.get) geometryCacheWithComplementaryStartsMatch else geometryCacheStartsMatch)
 
     val cachedGeometryFile = dir.map(cacheDir => cacheDir.listFiles(new FilenameFilter {
       override def accept(dir: File, name: String): Boolean = {
-        name.startsWith(geometryCacheStartsMatch.format(municipalityCode))
+        if(withComplementary.get) name.startsWith(geometryWithComplementaryCacheStartsMatch.format(municipalityCode))
+        else name.startsWith(geometryCacheStartsMatch.format(municipalityCode))
       }
     }).filter(f => f.lastModified() + twentyHours > System.currentTimeMillis))
 
     val cachedChangesFile = dir.map(cacheDir => cacheDir.listFiles(new FilenameFilter {
       override def accept(dir: File, name: String): Boolean = {
-        name.startsWith(changeCacheStartsMatch.format(municipalityCode))
+        if(withComplementary.get) name.startsWith(changeCacheWithComplementaryStartsMatch.format(municipalityCode))
+        else name.startsWith(changeCacheStartsMatch.format(municipalityCode))
       }
     }).filter(f => f.lastModified() + twentyHours > System.currentTimeMillis))
     if (cachedGeometryFile.nonEmpty && cachedGeometryFile.get.nonEmpty && cachedGeometryFile.get.head.canRead &&
@@ -1241,7 +1249,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
   private def getCachedRoadLinksWithComplementaryAndChanges(municipalityCode: Int): (Seq[RoadLink], Seq[ChangeInfo]) = {
     val dir = getCacheDirectory
-    val cachedFiles = getCacheFiles(municipalityCode, dir)
+    val cachedFiles = getCacheFiles(municipalityCode, dir, Some(true))
     cachedFiles match {
       case Some((geometryFile, changesFile)) =>
         logger.info("Returning cached result")
@@ -1250,13 +1258,13 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
         val (roadLinks, changes) = reloadRoadLinksWithComplementaryAndChangesFromVVH(municipalityCode)
         if (dir.nonEmpty) {
           try {
-            val newGeomFile = new File(dir.get, geometryCacheFileNames.format(municipalityCode, System.currentTimeMillis))
+            val newGeomFile = new File(dir.get, geometryWithComplementaryCacheFileNames.format(municipalityCode, System.currentTimeMillis))
             if (vvhSerializer.writeCache(newGeomFile, roadLinks)) {
               logger.info("New cached file created: " + newGeomFile + " containing " + roadLinks.size + " items")
             } else {
               logger.error("Writing cached geom file failed!")
             }
-            val newChangeFile = new File(dir.get, changeCacheFileNames.format(municipalityCode, System.currentTimeMillis))
+            val newChangeFile = new File(dir.get, changeCacheFileNamesWithComplementary.format(municipalityCode, System.currentTimeMillis))
             if (vvhSerializer.writeCache(newChangeFile, changes)) {
               logger.info("New cached file created: " + newChangeFile + " containing " + changes.size + " items")
             } else {
