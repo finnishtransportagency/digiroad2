@@ -114,6 +114,7 @@
       });
       selectedProjectLinkProperty.clean();
       $('.wrapper').remove();
+      $('#actionButtons').empty();
       if (!_.isUndefined(selection))
         selectedProjectLinkProperty.open(selection.projectLinkData.linkId, true);
     });

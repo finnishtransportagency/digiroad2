@@ -43,13 +43,9 @@
         '<button class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button></div>';
     };
 
-    var terminationButtons = function() {
-      var html = '<div class="project-form form-controls">' +
-        '<button class="update btn btn-save"';
-      if (!selectedProjectLink)
-        html = html + "disabled";
-      html = html +
-        '>Tallenna</button>' +
+    var actionButtons = function() {
+      var html = '<div class="project-form form-controls" id="actionButtons">' +
+        '<button class="update btn btn-save" disabled>Tallenna</button>' +
         '<button class="cancelLink btn btn-cancel">Peruuta</button>' +
         '</div>';
       return html;
@@ -94,7 +90,7 @@
         '<label>Toimenpiteet,' + selection  + '</label>' +
         '<div class="input-unit-combination">' +
         '<select class="form-control" id="dropDown" size="1">'+
-        '<option value="action1">Valitse</option>'+
+        '<option selected disabled hidden>Valitse</option>'+
         '<option value="action2"' + (status == 1 ? ' selected' : '') + '>Lakkautus</option>'+
         '<option value="action3" disabled>Uusi</option>'+
         '<option value="action4" disabled>Numeroinnin muutos</option>'+
@@ -110,7 +106,7 @@
         '</div>' +
         '</div>'+
         '</div>'+
-        '<footer>' + terminationButtons() + '</footer>');
+        '<footer>' + actionButtons() + '</footer>');
     };
 
     var bindEvents = function() {
@@ -205,6 +201,7 @@
 
       rootElement.on('change', '#dropDown', function() {
           projectCollection.setDirty(_.map(selectedProjectLink, function(link) { return link.linkId; }));
+          rootElement.find('.project-form button.update').prop("disabled", false);
       });
 
       rootElement.on('change', '.form-group', function() {

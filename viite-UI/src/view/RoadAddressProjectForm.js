@@ -43,8 +43,8 @@
       return '<span class ="edit-mode-title">'+projectName+'</span>';
     };
 
-    var buttons = function(ready) {
-      var html = '<div class="project-form form-controls">' +
+    var actionButtons = function(ready) {
+      var html = '<div class="project-form form-controls" id="actionButtons">' +
         '<button class="next btn btn-next"';
       if (!ready)
         html = html + "disabled";
@@ -54,39 +54,6 @@
         '<button class="cancel btn btn-cancel">Peruuta</button>' +
         '</div>';
       return html;
-    };
-    var sendRoadAddressChangeButton = function() {
-
-      $('#information-content').append('' +
-        '<div class="form form-horizontal">' +
-        '<p>' + 'Validointi ok. Voit tehdä tieosoitteenmuutosilmoituksen' + '<br>' +
-        'tai jatkaa muokkauksia.' + '</p>' +
-        '</div>');
-
-      var sendButton = '<div class="project-form form-controls">' +
-        '<button class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button>';
-      return sendButton;
-    };
-
-    var terminationButtons = function() {
-      var html = '<div class="project-form form-controls">' +
-        '<button class="update btn btn-save"';
-      if (!selectedProjectLink)
-        html = html + "disabled";
-      html = html +
-        '>Tallenna</button>' +
-        '<button class="cancel btn btn-cancel">Peruuta</button>' +
-        '</div>';
-      return html;
-    };
-
-    var processSelectedLinks = function(selectedLinks){
-      if(!_.isUndefined(selectedLinks)){
-        return $(".form-group[id^='VALITUTLINKIT']:last").append('<div style="display:inline-flex;justify-content:center;align-items:center;">' +
-          '<label class="control-label-floating"> LINK ID:</label>' +
-          '<span class="form-control-static-floating" style="display:inline-flex;width:auto;margin-right:5px">' + additionalSourceLinkId + '</span>' +
-          '</div>');
-      }
     };
 
     var selectedData = function (selected) {
@@ -109,11 +76,6 @@
       }
       return span;
     };
-
-    var headerButton =
-      '<div class="linear-asset form-controls">'+
-      '<button class="cancel btn btn-secondary">Sulje projekti</button>'+
-      '</div>';
 
     var newProjectTemplate = function() {
       return _.template('' +
@@ -149,7 +111,7 @@
         '</div></div>' +
 
         '</div> </div>'  +
-        '<footer>' + buttons(false) + '</footer>');
+        '<footer>' + actionButtons(false) + '</footer>');
     };
 
     var openProjectTemplate = function(project, formInfo) {
@@ -187,7 +149,7 @@
         '<div id ="roadpartList">'+
         formInfo +
         '</div></div></div></div>'+
-        '<footer>' + buttons(formInfo !== '') + '</footer>');
+        '<footer>' + actionButtons(formInfo !== '') + '</footer>');
     };
 
     var selectedProjectLinkTemplate = function(project, optionTags, selected) {
@@ -224,7 +186,7 @@
         '</div>' +
         '</div>'+
         '</div>'+
-        '<footer>' + terminationButtons() + '</footer>');
+        '<footer></footer>');
     };
 
     var addSmallLabel = function(label){
