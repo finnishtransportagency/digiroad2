@@ -85,8 +85,15 @@
     }).join('');
     var speedLimitHistoryCheckBox = [
       '<div class="check-box-container">',
-          '<input type="checkbox" /> <lable>Näytä poistuneet tielinkit</lable>' +
+          '<input id="historyCheckbox" type="checkbox" /> <lable>Näytä poistuneet tielinkit</lable>' +
     '</div>'].join('');
+
+    var speedLimitComplementaryCheckBox = [
+      '<div class="check-box-container">' +
+        '<input id="complementaryCheckbox" type="checkbox" /> <lable>Näytä täydentävä geometria</lable>' +
+      '</div>' +
+      '</div>'
+    ].join('');
 
     var expandedTemplate = [
       '<div class="panel">',
@@ -96,6 +103,7 @@
       '  <div class="panel-section panel-legend linear-asset-legend speed-limit-legend">',
             speedLimitLegendTemplate,
             speedLimitHistoryCheckBox,
+            speedLimitComplementaryCheckBox,
       '  </div>',
       '</div>'].join('');
 
@@ -143,12 +151,25 @@
       element.hide();
     }
 
-    elements.expanded.find('input[type=checkbox]').on('change', function (event) {
+    elements.expanded.find('#historyCheckbox').on('change', function (event) {
       var eventTarget = $(event.currentTarget);
       if (eventTarget.prop('checked')) {
         eventbus.trigger('speedLimits:showSpeedLimitsHistory');
       } else {
         eventbus.trigger('speedLimits:hideSpeedLimitsHistory');
+      }
+    });
+
+    elements.expanded.find('#complementaryCheckbox').on('change', function (event) {
+      if ($(event.currentTarget).prop('checked')) {
+        eventbus.trigger('speedLimitComplementary:show');
+      } else {
+        if (applicationModel.isDirty()) {
+          $(event.currentTarget).prop('checked', true);
+          new Confirm();
+        } else {
+          eventbus.trigger('speedLimitComplementary:hide');
+        }
       }
     });
 
