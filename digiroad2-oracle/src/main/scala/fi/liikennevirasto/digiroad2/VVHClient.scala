@@ -376,19 +376,6 @@ trait VVHClientOperations {
     latestDate.orElse(validFromDate).map(modifiedTime => new DateTime(modifiedTime))
   }
 
-  //TODO maybe this should go to roadlink
-  protected val featureClassCodeToFeatureClass: Map[Int, FeatureClass] = Map(
-    12316 -> FeatureClass.TractorRoad,
-    12141 -> FeatureClass.DrivePath,
-    12314 -> FeatureClass.CycleOrPedestrianPath
-  )
-
-  //TODO maybe this should go to roadlink
-  protected val vvhTrafficDirectionToTrafficDirection: Map[Int, TrafficDirection] = Map(
-    0 -> TrafficDirection.BothDirections,
-    1 -> TrafficDirection.TowardsDigitizing,
-    2 -> TrafficDirection.AgainstDigitizing)
-
   /**
     * Extract double value from VVH data. Used for change info start and end measures.
     */
@@ -428,27 +415,6 @@ trait VVHClientOperations {
   //TODO change this comments
   /**
     * Returns VVH road links in bounding box area. Municipalities are optional.
-    * Used by VVHClient.fetchByMunicipalitiesAndBoundsF, RoadLinkService.getVVHRoadLinks(bounds, municipalities), RoadLinkService.getVVHRoadLinks(bounds),
-    * PointAssetOperations.getByBoundingBox and ServicePointImporter.importServicePoints.
-    */
-  /*
-  protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[VVHType] = {
-    val definition = layerDefinition(withMunicipalityFilter(municipalities))
-    val url = serviceUrl(bounds, definition, queryParameters())
-
-    fetchVVHFeatures(url) match {
-      case Left(features) => features.map(extractVVHFeature)
-      case Right(error) => throw new VVHClientException(error.toString)
-    }
-  }
-
-  protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle): Seq[VVHType] = {
-    queryByMunicipalitiesAndBounds(bounds, Set[Int]())
-  }*/
-
-  //TODO change this comments
-  /**
-    * Returns VVH road links in bounding box area. Municipalities are optional.
     * Used by VVHClient.fetchByBoundsAndMunicipalitiesF.
     */
   protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int], filter: Option[String]): Seq[VVHType] = {
@@ -469,10 +435,8 @@ trait VVHClientOperations {
     queryByMunicipalitiesAndBounds(bounds, Set[Int](), None)
   }
 
-  //TODO change this comment and visibility type
   /**
-    * Returns VVH road links in polygon area. Municipalities are optional.
-    *  Polygon string example "{rings:[[[564000,6930000],[566000,6931000],[567000,6933000]]]}"
+    * Returns VVH road links in polygon area.
     */
   protected def queryByPolygons(polygon: Polygon): Seq[VVHType] = {
     if(polygon.getCoordinates.size == 0)
@@ -724,6 +688,17 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
       withRoadNumbersFilter(roadNumbers.tail, includeAllPublicRoads, s"""$filter OR $filterAdd""")
   }
 
+  protected val featureClassCodeToFeatureClass: Map[Int, FeatureClass] = Map(
+    12316 -> FeatureClass.TractorRoad,
+    12141 -> FeatureClass.DrivePath,
+    12314 -> FeatureClass.CycleOrPedestrianPath
+  )
+
+  protected val vvhTrafficDirectionToTrafficDirection: Map[Int, TrafficDirection] = Map(
+    0 -> TrafficDirection.BothDirections,
+    1 -> TrafficDirection.TowardsDigitizing,
+    2 -> TrafficDirection.AgainstDigitizing)
+
   /**
     * Returns VVH road link by linkid
     * Used by Digiroad2Api.createMassTransitStop, Digiroad2Api.validateUserRights, Digiroad2Api &#47;manoeuvres DELETE endpoint, Digiroad2Api manoeuvres PUT endpoint,
@@ -849,8 +824,6 @@ class VVHChangeInfoClient(vvhRestApiEndPoint: String) extends VVHClientOperation
     val optionalLayers = content.get("layers").map(_.asInstanceOf[List[Map[String, Any]]])
     val optionalFeatureLayer = optionalLayers.flatMap { layers => layers.find { layer => layer.contains("features") } }
     val optionalFeatures = optionalFeatureLayer.flatMap { featureLayer => featureLayer.get("features").map(_.asInstanceOf[List[Map[String, Any]]]) }
-    //TODO Check if the change info have contruction type
-    //optionalFeatures.map(_.filter(roadLinkStatusFilter)).map(Left(_)).getOrElse(Right(VVHError(content, url)))
     optionalFeatures.map(Left(_)).getOrElse(Right(VVHError(content, url)))
   }
 
@@ -912,8 +885,6 @@ class VVHRoadNodesClient(vvhRestApiEndPoint: String) extends VVHClientOperations
     val optionalLayers = content.get("layers").map(_.asInstanceOf[List[Map[String, Any]]])
     val optionalFeatureLayer = optionalLayers.flatMap { layers => layers.find { layer => layer.contains("features") } }
     val optionalFeatures = optionalFeatureLayer.flatMap { featureLayer => featureLayer.get("features").map(_.asInstanceOf[List[Map[String, Any]]]) }
-    //TODO Check if the change info have contruction type
-    //optionalFeatures.map(_.filter(roadLinkStatusFilter)).map(Left(_)).getOrElse(Right(VVHError(content, url)))
     optionalFeatures.map(Left(_)).getOrElse(Right(VVHError(content, url)))
   }
 
