@@ -560,6 +560,16 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     }
   }
 
+  var handleMapMoved = function(mapMoveEvent) {
+    if (zoomlevels.isInAssetZoomLevel(mapMoveEvent.zoom)) {
+      me.handleMapMoved(mapMoveEvent)
+    } else {
+      if (applicationModel.getSelectedLayer() === 'massTransitStop') {
+          assetSource.clear();
+      }
+    }
+  };
+
   var bindEvents = function() {
     eventListener.listenTo(eventbus, 'validityPeriod:changed', handleValidityPeriodChanged);
     eventListener.listenTo(eventbus, 'tool:changed', toolSelectionChange);
@@ -582,7 +592,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     eventListener.listenTo(eventbus, 'assets:all-updated', handleAllAssetsUpdated);
     eventListener.listenTo(eventbus, 'assets:new-fetched', handleNewAssetsFetched);
     eventListener.listenTo(eventbus, 'assetGroup:destroyed', reRenderGroup);
-    eventListener.listenTo(eventbus, 'map:moved', me.handleMapMoved);
+    eventListener.listenTo(eventbus, 'map:moved', handleMapMoved);
     eventListener.listenTo(eventbus, 'map:clicked', handleMapClick);
     eventListener.listenTo(eventbus, 'layer:selected', closeAsset);
     eventListener.listenTo(eventbus, 'massTransitStopDeleted', function(asset){
