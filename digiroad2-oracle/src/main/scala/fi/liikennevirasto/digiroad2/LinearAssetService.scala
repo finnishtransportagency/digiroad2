@@ -558,7 +558,7 @@ trait LinearAssetOperations {
 
     //Create New Asset
     val newAssetIDcreate = createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, valueToUpdate, oldAsset.sideCode,
-      oldAsset.startMeasure, oldAsset.endMeasure, username, vvhClient.createVVHTimeStamp(5), true, oldAsset.createdBy, oldAsset.createdDateTime)
+      oldAsset.startMeasure, oldAsset.endMeasure, username, vvhClient.roadLinkData.createVVHTimeStamp(5), true, oldAsset.createdBy, oldAsset.createdDateTime)
 
       Some(newAssetIDcreate)
   }
@@ -593,7 +593,7 @@ trait LinearAssetOperations {
   def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String): Seq[Long] = {
     withDynTransaction {
       newLinearAssets.map { newAsset =>
-        createWithoutTransaction(typeId, newAsset.linkId, newAsset.value, newAsset.sideCode, newAsset.startMeasure, newAsset.endMeasure, username, vvhClient.createVVHTimeStamp(5))
+        createWithoutTransaction(typeId, newAsset.linkId, newAsset.value, newAsset.sideCode, newAsset.startMeasure, newAsset.endMeasure, username, vvhClient.roadLinkData.createVVHTimeStamp(5))
       }
     }
   }
@@ -604,7 +604,7 @@ trait LinearAssetOperations {
   def split(id: Long, splitMeasure: Double, existingValue: Option[Value], createdValue: Option[Value], username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
     withDynTransaction {
       val linearAsset = dao.fetchLinearAssetsByIds(Set(id), LinearAssetTypes.numericValuePropertyId).head
-      val roadLink = vvhClient.fetchByLinkId(linearAsset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+      val roadLink = vvhClient.roadLinkData.fetchByLinkId(linearAsset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
       municipalityValidation(roadLink.municipalityCode)
 
       Queries.updateAssetModified(id, username).execute
@@ -638,7 +638,7 @@ trait LinearAssetOperations {
   def separate(id: Long, valueTowardsDigitization: Option[Value], valueAgainstDigitization: Option[Value], username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
     withDynTransaction {
       val existing = dao.fetchLinearAssetsByIds(Set(id), LinearAssetTypes.numericValuePropertyId).head
-      val roadLink = vvhClient.fetchByLinkId(existing.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+      val roadLink = vvhClient.roadLinkData.fetchByLinkId(existing.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
       municipalityValidation(roadLink.municipalityCode)
 
       val newExistingIdsToReturn = valueTowardsDigitization match {
@@ -741,7 +741,7 @@ trait LinearAssetOperations {
             filter(_.attributes.get("SURFACETYPE").contains(2)).
             map(roadLink => NewLinearAsset(roadLink.linkId, 0, GeometryUtils.geometryLength(roadLink.geometry), NumericValue(1), 1, 0, None))
           newAssets.foreach{ newAsset =>
-              createWithoutTransaction(assetTypeId, newAsset.linkId, newAsset.value, newAsset.sideCode, newAsset.startMeasure, newAsset.endMeasure, LinearAssetTypes.VvhGenerated, vvhClient.createVVHTimeStamp(5))
+              createWithoutTransaction(assetTypeId, newAsset.linkId, newAsset.value, newAsset.sideCode, newAsset.startMeasure, newAsset.endMeasure, LinearAssetTypes.VvhGenerated, VVHClient.createVVHTimeStamp(5))
             count = count + 1
           }
         }

@@ -286,12 +286,12 @@ Returns empty result as Json message, not as page not found
   }
 
   private def createMassTransitStop(lon: Double, lat: Double, linkId: Long, bearing: Int, properties: Seq[SimpleProperty]): Long = {
-    val roadLink = vvhClient.fetchByLinkId(linkId).getOrElse(throw new NoSuchElementException)
+    val roadLink = vvhClient.roadLinkData.fetchByLinkId(linkId).getOrElse(throw new NoSuchElementException)
     massTransitStopService.create(NewMassTransitStop(lon, lat, linkId, bearing, properties), userProvider.getCurrentUser().username, roadLink.geometry, roadLink.municipalityCode, Some(roadLink.administrativeClass))
   }
 
   private def validateUserRights(linkId: Long) = {
-    val authorized: Boolean = vvhClient.fetchByLinkId(linkId).map(_.municipalityCode).exists(userProvider.getCurrentUser().isAuthorizedToWrite)
+    val authorized: Boolean = vvhClient.roadLinkData.fetchByLinkId(linkId).map(_.municipalityCode).exists(userProvider.getCurrentUser().isAuthorizedToWrite)
     if (!authorized) halt(Unauthorized("User not authorized"))
   }
 
@@ -941,7 +941,7 @@ Returns empty result as Json message, not as page not found
 
     manoeuvreIds.foreach { manoeuvreId =>
       val sourceRoadLinkId = manoeuvreService.getSourceRoadLinkIdById(manoeuvreId)
-      validateUserMunicipalityAccess(user)(vvhClient.fetchByLinkId(sourceRoadLinkId).get.municipalityCode)
+      validateUserMunicipalityAccess(user)(vvhClient.roadLinkData.fetchByLinkId(sourceRoadLinkId).get.municipalityCode)
       manoeuvreService.deleteManoeuvre(user.username, manoeuvreId)
     }
   }
@@ -956,7 +956,7 @@ Returns empty result as Json message, not as page not found
 
     manoeuvreUpdates.foreach { case (id, updates) =>
       val sourceRoadLinkId = manoeuvreService.getSourceRoadLinkIdById(id)
-      validateUserMunicipalityAccess(user)(vvhClient.fetchByLinkId(sourceRoadLinkId).get.municipalityCode)
+      validateUserMunicipalityAccess(user)(vvhClient.roadLinkData.fetchByLinkId(sourceRoadLinkId).get.municipalityCode)
       manoeuvreService.updateManoeuvre(user.username, id, updates)
     }
   }
@@ -1055,7 +1055,7 @@ Returns empty result as Json message, not as page not found
     if (user.isServiceRoadMaintainer())
       halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     val asset = (parsedBody \ "asset").extract[service.IncomingAsset]
-    for (link <- vvhClient.fetchByLinkId(asset.linkId)) {
+    for (link <- vvhClient.roadLinkData.fetchByLinkId(asset.linkId)) {
       validateUserMunicipalityAccess(user)(link.municipalityCode)
       service.create(asset, user.username, link.geometry, link.municipalityCode, Some(link.administrativeClass))
     }

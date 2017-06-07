@@ -1,4 +1,4 @@
-package fi.liikennevirasto.digiroad2.util
+  package fi.liikennevirasto.digiroad2.util
 
 import java.net.ConnectException
 import java.util.Properties
