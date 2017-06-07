@@ -40,7 +40,7 @@
         '</div>');
 
       return '<div class="project-form form-controls">' +
-        '<button class="send btn btn-block btn-send" disabled>Tee tieosoitteenmuutosilmoitus</button></div>';
+        '<button class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button></div>';
     };
 
     var terminationButtons = function() {
@@ -137,9 +137,14 @@
         rootElement.html(selectedProjectLinkTemplate(currentProject, options, selectedProjectLink));
       });
 
-      eventbus.on('roadAddress:linksSaved', function() {
-        // Projectinfo is not undefined and publishable is something like true.
-        rootElement.find('.project-form .btn-send').prop("disabled", false);
+      eventbus.on('roadAddressProject:publishable', function() {
+        /*
+          Project is publishable, remove spinner here to make sure
+          every call from backend and reDraw() is finished before enable send to TR
+        */
+        var publishButton = sendRoadAddressChangeButton();
+        rootElement.append(publishButton);
+        applicationModel.removeSpinner();
       });
 
       eventbus.on('roadAddress:projectFailed', function() {
@@ -162,14 +167,14 @@
       });
 
       eventbus.on('roadAddress:projectLinksUpdated',function(data){
-        applicationModel.removeSpinner();
         rootElement.html('');
         if (typeof data !== 'undefined' && typeof data.publishable !== 'undefined' && data.publishable) {
-          console.log(data);
-          var publishButton = sendRoadAddressChangeButton();
-          rootElement.append(publishButton);
+          eventbus.trigger('roadAddressProject:projectLinkSaved', data.id, data.publishable);
         }
-        eventbus.trigger('roadAddressProject:projectLinkSaved', data.projectId);
+        else {
+          eventbus.trigger('roadAddressProject:projectLinkSaved', data.id, data.publishable);
+          applicationModel.removeSpinner();
+        }
       });
 
       eventbus.on('roadAddress:projectSentSuccess', function() {
