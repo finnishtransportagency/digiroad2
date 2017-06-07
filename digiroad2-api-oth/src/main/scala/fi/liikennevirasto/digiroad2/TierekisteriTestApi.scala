@@ -76,17 +76,20 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
     )
   }
 
+  val trafficVolumeTRCode = "tl201"
+  val lightingTRCode = "tl167"
+
   val trafficVolume: Map[String,List[Map[String, Any]]] ={
     Map(
       "Data" ->
         List(
           Map(
-              "TIETOLAJI" -> "tl201",          //Field code
-              "TIE" -> 45,                     //Road number
-              "OSA" -> 1,                      //Road part number
+              "TIETOLAJI" -> trafficVolumeTRCode,   //Field code
+              "TIE" -> 45,                          //Road number
+              "OSA" -> 1,                           //Road part number
               "ETAISYYS" -> 0,                      //Start distance
-              "LET" -> 0,                    //End distance
-              "KVL" -> 1                       //placeholder value for traffic volume
+              "LET" -> 0,                           //End distance
+              "KVL" -> 1                            //placeholder value for traffic volume
             )
         )
     )
@@ -99,9 +102,24 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
     )
   }
 
+  val lighting: Map[String,List[Map[String, Any]]] ={
+    Map(
+      "Data" ->
+        List(
+          Map(
+            "TIETOLAJI" -> lightingTRCode,   //Field code
+            "TIE" -> 45,                     //Road number
+            "OSA" -> 1,                      //Road part number
+            "ETAISYYS" -> 0,                 //Start distance
+            "LET" -> 0                       //End distance
+          )
+        )
+    )
+  }
+
   def headerContainsAuth(header: Map[String, String]): Boolean = {
     //Checks that header contains X-OTH-Authorization and X-Authorization attribute with correct base64 value
-    (header.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg==")) && header.exists(_==("X-Authorization","Basic dHJyZXN0b3RoOmxva2FrdXUyMDE2dGllcmVraXN0ZXJp")))
+    (header.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg==")) && header.exists(_==("X-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg==")))
   }
 
   get("/pysakit/:id"){
@@ -176,25 +194,46 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
 
   get("/tietolajit/:fieldCode/:roadNumber") {
     if(!headerContainsAuth(request.headers)) halt(BadRequest("401 Unauthorized"))
-    trafficVolume
+
+    val fieldCode = params("fieldCode")
+    if (fieldCode == trafficVolumeTRCode) {
+      trafficVolume
+    } else if (fieldCode == lightingTRCode) {
+      lighting
+    }
   }
 
   get("/tietolajit/:fieldCode/:roadNumber/:roadPartNumber") {
     if(!headerContainsAuth(request.headers)) halt(BadRequest("401 Unauthorized"))
 
-    trafficVolume
+    val fieldCode = params("fieldCode")
+    if (fieldCode == trafficVolumeTRCode) {
+      trafficVolume
+    } else if (fieldCode == lightingTRCode) {
+      lighting
+    }
   }
 
   get("/tietolajit/:fieldCode/:roadNumber/:roadPartNumber/:startDistance") {
     if(!headerContainsAuth(request.headers)) halt(BadRequest("401 Unauthorized"))
 
-    trafficVolume
+    val fieldCode = params("fieldCode")
+    if (fieldCode == trafficVolumeTRCode) {
+      trafficVolume
+    } else if (fieldCode == lightingTRCode) {
+      lighting
+    }
   }
 
   get("/tietolajit/:fieldCode/:roadNumber/:roadPartNumber/:startDistance/:endPart/:endDistance") {
     if(!headerContainsAuth(request.headers)) halt(BadRequest("401 Unauthorized"))
 
-    trafficVolume
+    val fieldCode = params("fieldCode")
+    if (fieldCode == trafficVolumeTRCode) {
+      trafficVolume
+    } else if (fieldCode == lightingTRCode) {
+      lighting
+    }
   }
 }
 

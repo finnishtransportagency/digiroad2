@@ -1,5 +1,8 @@
 (function(root) {
+
+  var roles = function() { return ['operator', 'viite']; };
+
   root.UserRolesTestData = {
-    generate: function() { return ['operator', 'viite']; }
+    roles: roles
   };
 }(this));

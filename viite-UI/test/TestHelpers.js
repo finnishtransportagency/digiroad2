@@ -28,9 +28,22 @@ define(['RoadAddressTestData',
     var getSimulatedRoadsLayerName = function() {
       return 'simulatedRoadsLayer';
     };
-    var getSingleClickName = function() {
-      return 'selectSingleClickInteraction';
+    var getRoadAddressProjectLayerName = function() {
+      return 'roadAddressProject';
     };
+    var getSingleClickNameLinkPropertyLayer = function() {
+      return 'selectSingleClickInteractionLPL';
+    };
+    var getDoubleClickNameLinkPropertyLayer = function() {
+      return 'selectDoubleClickInteractionLPL';
+    };
+    var getSingleClickNameProjectLinkLayer = function() {
+      return 'selectSingleClickInteractionPLL';
+    };
+    var getDoubleClickNameProjectLinkLayer = function() {
+      return 'selectDoubleClickInteractionPLL';
+    };
+
     var getDoubleClickName = function() {
       return 'selectDoubleClickInteraction';
     };
@@ -77,11 +90,17 @@ define(['RoadAddressTestData',
 
     var fakeBackend = function(zoomLevel, generatedData, latitude, longitude) {
       return new Backend().withRoadLinkData(generatedData, selectTestData('roadAddressAfterSave'))
-        .withUserRolesData(UserRolesTestData.generate())
+        .withUserRolesData(UserRolesTestData.roles())
         .withStartupParameters({ lon: longitude, lat: latitude, zoom: zoomLevel || 10 })
         .withFloatingAdjacents(selectTestData('floatingRoadAddress'), selectTestData('unknownRoadAddress'))
         .withGetTransferResult(selectTestData('transferFloating'))
         .withRoadAddressProjectData(RoadAddressProjectTestData.generate())
+        .withRoadPartReserved(RoadAddressProjectTestData.generateRoadPartChecker())
+        .withProjectLinks(RoadAddressProjectTestData.generateProjectLinks())
+        .withGetProjectsWithLinksById(RoadAddressProjectTestData.generateProjectLinksByProjectId())
+        .withRoadAddressProjects(RoadAddressProjectTestData.generateProject())
+        .withGetRoadLinkByLinkId(RoadAddressProjectTestData.generateRoadLinkByLinkId())
+        .withCreateRoadAddressProject(RoadAddressProjectTestData.generateCreateRoadAddressProject())
         .withRoadAddressCreation();
     };
 
@@ -111,6 +130,22 @@ define(['RoadAddressTestData',
 
     var clickProjectListButton = function(){
       $('[id=projectListButton]').click();
+    };
+
+    var clickNextButton = function(){
+      $('.btn-next').click();
+    };
+
+    var clickReserveButton = function(){
+      $('.btn-reserve').click();
+    };
+
+    var clickOpenProjectButton = function(){
+      $('[id*="open-project"]').click();
+    };
+
+    var clickNewProjectButton = function(){
+      $('button.new').click();
     };
 
     var getLayerByName = function(map, name){
@@ -144,7 +179,7 @@ define(['RoadAddressTestData',
     var selectTestData = function(selection){
       switch (selection){
         case 'user':
-          return UserRolesTestData.generate();
+          return UserRolesTestData.roles();
         case 'roadAddress':
           return RoadAddressTestData.generateRoadAddressLinks();
         case 'roadAddressAfterSave':
@@ -157,6 +192,12 @@ define(['RoadAddressTestData',
           return RoadAddressTestData.generateTransferFloatingData();
         case 'roadLink':
           return RoadLinkTestData.generate();
+        case 'normalLinkData':
+          return RoadAddressProjectTestData.generateNormalLinkData();
+        case 'reservedProjectLinks':
+          return RoadAddressProjectTestData.generateProjectLinkData();
+        case 'terminatedProjectLinks':
+          return RoadAddressProjectTestData.generateTerminatedProjectLinkData();
       }
     };
 
@@ -177,7 +218,7 @@ define(['RoadAddressTestData',
     var getFeatureByLinkId = function(map, layerName, linkId){
       var features = getFeatures(map, layerName);
       return _.find(features, function(feature){
-        return feature.roadLinkData.linkId === linkId;
+        return (layerName == "roadAddressProject" ? feature.projectLinkData.linkId === linkId : feature.roadLinkData.linkId === linkId);
       });
     };
 
@@ -188,9 +229,9 @@ define(['RoadAddressTestData',
       });
     };
 
-    var selectSingleFeature = function(map, feature){
+    var selectSingleFeatureByInteraction = function(map, feature, interactionName){
       var interaction = _.find(map.getInteractions().getArray(), function(interaction) {
-        return interaction.get('name') === 'selectSingleClickInteraction';
+        return interaction.get('name') === interactionName;
       });
       interaction.getFeatures().clear();
       interaction.getFeatures().push(feature);
@@ -208,8 +249,12 @@ define(['RoadAddressTestData',
       getCalibrationPointLayerName: getCalibrationPointLayerName,
       getGreenRoadLayerName: getGreenRoadLayerName,
       getPickRoadsLayerName: getPickRoadsLayerName,
+      getRoadAddressProjectLayerName: getRoadAddressProjectLayerName,
       getSimulatedRoadsLayerName: getSimulatedRoadsLayerName,
-      getSingleClickName: getSingleClickName,
+      getSingleClickNameLinkPropertyLayer: getSingleClickNameLinkPropertyLayer,
+      getDoubleClickNameLinkPropertyLayer: getDoubleClickNameLinkPropertyLayer,
+      getSingleClickNameProjectLinkLayer: getSingleClickNameProjectLinkLayer,
+      getDoubleClickNameProjectLinkLayer: getDoubleClickNameProjectLinkLayer,
       getDoubleClickName: getDoubleClickName,
       restartApplication: restartApplication,
       getPixelFromCoordinateAsync: getPixelFromCoordinateAsync,
@@ -219,6 +264,10 @@ define(['RoadAddressTestData',
       clickEnabledSirraButton: clickEnabledSirraButton,
       clickVisibleEditModeButton: clickVisibleEditModeButton,
       clickProjectListButton: clickProjectListButton,
+      clickNextButton: clickNextButton,
+      clickReserveButton: clickReserveButton,
+      clickOpenProjectButton: clickOpenProjectButton,
+      clickNewProjectButton: clickNewProjectButton,
       clickVisbleYesConfirmPopup: clickVisbleYesConfirmPopup,
       clickEnabledSaveButton: clickEnabledSaveButton,
       clickMap: clickMap,
@@ -230,6 +279,6 @@ define(['RoadAddressTestData',
       getFeaturesRoadLinkData: getFeaturesRoadLinkData,
       getFeatureByLinkId: getFeatureByLinkId,
       getRoadLinkDataByLinkId: getRoadLinkDataByLinkId,
-      selectSingleFeature: selectSingleFeature
+      selectSingleFeatureByInteraction: selectSingleFeatureByInteraction
     };
   });

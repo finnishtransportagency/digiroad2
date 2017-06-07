@@ -198,7 +198,7 @@
         setGeneralOpacity(1);
       }
     });
-    selectDoubleClick.set('name','selectDoubleClickInteraction');
+    selectDoubleClick.set('name','selectDoubleClickInteractionLPL');
 
 
     var zoomDoubleClickListener = function(event) {
@@ -231,7 +231,7 @@
         return styler.generateStyleByFeature(feature.roadLinkData,map.getView().getZoom(), true);
       }
     });
-    selectSingleClick.set('name','selectSingleClickInteraction');
+    selectSingleClick.set('name','selectSingleClickInteractionLPL');
 
     //We add the defined interaction to the map.
     map.addInteraction(selectSingleClick);
@@ -996,10 +996,26 @@
       highlightAnomalousFeaturesByFloating();
     });
 
+    eventbus.on('linkProperties:highlightSelectedFloatingFeatures', function(){
+      highlightSelectedFloatingFeatures();
+    });
+
     var highlightAnomalousFeaturesByFloating = function() {
       var allFeatures = roadLayer.layer.getSource().getFeatures().concat(anomalousMarkerLayer.getSource().getFeatures()).concat(floatingMarkerLayer.getSource().getFeatures());
       _.each(allFeatures, function(feature){
         if(feature.roadLinkData.anomaly === noAddressAnomaly || feature.roadLinkData.anomaly === geometryChangedAnomaly || feature.roadLinkData.roadLinkType === floatingRoadLinkType)
+          pickRoadsLayer.getSource().addFeature(feature);
+      });
+      pickRoadsLayer.setOpacity(1);
+      setGeneralOpacity(0.2);
+    };
+
+    var highlightSelectedFloatingFeatures = function() {
+      var allFeatures = roadLayer.layer.getSource().getFeatures().concat(anomalousMarkerLayer.getSource().getFeatures()).concat(floatingMarkerLayer.getSource().getFeatures());
+      var selectedFloatingIds = _.pluck(selectedLinkProperty.getFeaturesToKeepFloatings(), 'linkId');
+
+      _.each(allFeatures, function(feature){
+        if(feature.roadLinkData.anomaly === 1 || (_.contains(selectedFloatingIds, feature.roadLinkData.linkId) && feature.roadLinkData.roadLinkType === -1))
           pickRoadsLayer.getSource().addFeature(feature);
       });
       pickRoadsLayer.setOpacity(1);

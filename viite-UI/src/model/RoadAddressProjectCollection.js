@@ -69,6 +69,7 @@
     this.getProjects = function () {
       return backend.getRoadAddressProjects(function (projects) {
         roadAddressProjects = projects;
+        eventbus.trigger('roadAddressProjects:fetched', projects);
       });
     };
 
@@ -275,6 +276,15 @@
       });
     }
 
+    eventbus.on('roadPartsValidation:checkRoadParts', function(validationResult) {
+      if (validationResult.success !== "ok") {
+        eventbus.trigger('roadAddress:projectValidationFailed', validationResult);
+      } else {
+        addToCurrentRoadPartList(validationResult);
+        updateFormInfo(parseroadpartinfoToresultRow());
+        eventbus.trigger('roadAddress:projectValidationSucceed');
+      }
+    });
 
     eventbus.on('clearproject', function() {
       this.clearRoadAddressProjects();
@@ -285,17 +295,10 @@
     };
 
 
+
     this.checkIfReserved = function (data) {
-      return backend.checkIfRoadpartReserved(data[3].value === '' ? 0 : parseInt(data[3].value), data[4].value === '' ? 0 : parseInt(data[4].value), data[5].value === '' ? 0 : parseInt(data[5].value), data[1].value)
-        .then(function (validationResult) {
-          if (validationResult.success !== "ok") {
-            eventbus.trigger('roadAddress:projectValidationFailed', validationResult);
-          } else {
-            addToCurrentRoadPartList(validationResult);
-            updateFormInfo(parseroadpartinfoToresultRow());
-            eventbus.trigger('roadAddress:projectValidationSucceed');
-          }
-        });
+      return backend.checkIfRoadpartReserved(data[3].value === '' ? 0 : parseInt(data[3].value), data[4].value === '' ? 0 : parseInt(data[4].value), data[5].value === '' ? 0 : parseInt(data[5].value), data[1].value);
+
     };
 
     var ProjectLinkModel = function(data) {

@@ -124,7 +124,7 @@
         error: failure
       });
     }, 1000);
-    
+
     this.checkIfRoadpartReserved = (function(roadNumber,startPart,endPart,projDate) {
       return $.get('api/viite/roadlinks/roadaddress/project/validatereservedlink/', {
         roadNumber: roadNumber,
@@ -133,7 +133,7 @@
         projDate: projDate
       })
         .then(function (x) {
-          return x;
+          eventbus.trigger('roadPartsValidation:checkRoadParts', x);
         });
     });
 
@@ -202,11 +202,17 @@
     }
 
     //Methods for the UI Integrated Tests
-
     var afterSave = false;
 
     var resetAfterSave = function(){
       afterSave = false;
+    };
+
+    this.withRoadAddressProjects = function(returnData){
+      self.getRoadAddressProjects = function(){
+        return returnData;
+      };
+      return self;
     };
 
     this.withRoadLinkData = function (roadLinkData, afterSaveRoadLinkData) {
@@ -269,6 +275,52 @@
       return self;
     };
 
+    this.withRoadPartReserved = function(returnData){
+      self.checkIfRoadpartReserved = function(){
+        eventbus.trigger('roadPartsValidation:checkRoadParts', returnData);
+        return returnData;
+      };
+      return self;
+    };
+    this.withProjectLinks = function(returnData){
+      self.getProjectLinks = function(params, callback){
+        callback(returnData);
+        return returnData;
+      };
+      return self;
+    };
+
+    this.withGetProjectsWithLinksById = function(returnData){
+      self.getProjectsWithLinksById = function(params, callback){
+        callback(returnData);
+        return returnData;
+      };
+      return self;
+    };
+
+
+    this.withSaveRoadAddressProject = function(returnData){
+      self.saveRoadAddressProject = function(){
+        return returnData;
+      };
+      return self;
+    };
+
+    this.withCreateRoadAddressProject = function(returnData){
+      self.createRoadAddressProject = function(data, successCallback){
+        successCallback(returnData);
+        return returnData;
+      };
+      return self;
+    };
+
+    this.withGetRoadLinkByLinkId = function(returnData){
+      self.getRoadLinkByLinkId = function(linkId, callback){
+        callback(returnData);
+        return returnData;
+      };
+      return self;
+    };
 
   };
 }(this));
