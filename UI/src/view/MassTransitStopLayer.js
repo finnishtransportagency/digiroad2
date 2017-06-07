@@ -562,7 +562,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
   var handleMapMoved = function(mapMoveEvent) {
     if (zoomlevels.isInAssetZoomLevel(mapMoveEvent.zoom)) {
-      me.handleMapMoved(mapMoveEvent)
+      me.handleMapMoved(mapMoveEvent);
     } else {
       if (applicationModel.getSelectedLayer() === 'massTransitStop') {
           assetSource.clear();
