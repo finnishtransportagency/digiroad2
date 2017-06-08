@@ -212,13 +212,58 @@
     //This will control the double click zoom when there is no selection that activates
     map.on('dblclick', zoomDoubleClickListener);
 
+    var infoContainer = document.getElementById('popup');
+    var infoContent = document.getElementById('popup-content');
+
+    var overlay = new ol.Overlay(({
+      element: infoContainer
+      //autoPan: false,
+    }));
+
+    map.addOverlay(overlay);
+
     //Listen pointermove and get pixel for displaying roadaddress feature info
     eventbus.on('map:mouseMoved', function (event, pixel) {
       if (event.dragging || applicationModel.getSelectedLayer() != 'roadAddressProject') {
         return;
       }
-      console.log(pixel);
+      displayRoadAddressInfo(event, pixel);
     });
+
+    var displayRoadAddressInfo = function(event, pixel) {
+      
+      var featureAtPixel = map.forEachFeatureAtPixel(pixel, function (feature, vectorLayer) {
+        return feature;
+      });
+
+      //ignore if target feature is marker
+      if(!_.isUndefined(featureAtPixel) && (!_.isUndefined(featureAtPixel.roadLinkData) || !_.isUndefined(featureAtPixel.projectLinkData))) {
+       var data;
+       var coord = map.getEventCoordinate(event.originalEvent);
+
+       if(!_.isUndefined(featureAtPixel.projectLinkData)) {
+         data = featureAtPixel.projectLinkData;
+       }
+       else {
+         data = featureAtPixel.roadLinkData;
+       }
+
+       infoContent.innerHTML = '<p>' +
+          'Tienumero: ' + data.roadNumber + '<br>' +
+          'Tieosanumero: ' + data.roadPartNumber + '<br>' +
+          'Ajorata: ' + data.trackCode + '<br>' +
+          'AET: ' + data.startAddressM + '<br>' +
+          'LET: ' + data.endAddressM + '<br>' +
+         '</p>';
+
+       overlay.setPosition(coord);
+
+      } else {
+        overlay.setPosition(undefined);
+      }
+    };
+
+
 
     //Add defined interactions to the map.
     map.addInteraction(selectSingleClick);
