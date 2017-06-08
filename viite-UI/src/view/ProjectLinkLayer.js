@@ -212,6 +212,14 @@
     //This will control the double click zoom when there is no selection that activates
     map.on('dblclick', zoomDoubleClickListener);
 
+    //Listen pointermove and get pixel for displaying roadaddress feature info
+    eventbus.on('map:mouseMoved', function (event, pixel) {
+      if (event.dragging || applicationModel.getSelectedLayer() != 'roadAddressProject') {
+        return;
+      }
+      console.log(pixel);
+    });
+
     //Add defined interactions to the map.
     map.addInteraction(selectSingleClick);
     map.addInteraction(selectDoubleClick);
