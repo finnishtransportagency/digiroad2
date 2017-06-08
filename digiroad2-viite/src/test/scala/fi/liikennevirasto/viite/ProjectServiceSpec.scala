@@ -347,4 +347,51 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
     }
   }
 
+  test("verify existence of roadAddressNumbersAndSEParts") {
+    val roadNumber = 1943845
+    val roadStartPart = 1
+    val roadEndPart = 2
+    runWithRollback{
+      val id1 = RoadAddressDAO.getNextRoadAddressId
+      val id2 = RoadAddressDAO.getNextRoadAddressId
+      val ra = Seq(RoadAddress(id1, roadNumber, roadStartPart, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, (None, None), false,
+        Seq(Point(0.0, 0.0), Point(0.0, 9.8))))
+      val rb = Seq(RoadAddress(id2, roadNumber, roadEndPart, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, (None, None), false,
+        Seq(Point(0.0, 0.0), Point(0.0, 9.8))))
+      val shouldNotExist = projectService.checkRoadAddressNumberAndSEParts(roadNumber, roadStartPart, roadEndPart)
+      shouldNotExist.get should be("Tienumeroa ei ole olemassa, tarkista tiedot")
+      RoadAddressDAO.create(ra)
+      val roadNumberShouldNotExist = projectService.checkRoadAddressNumberAndSEParts(roadNumber, roadStartPart+1, roadEndPart)
+      roadNumberShouldNotExist.get should be("Tiellä ei ole olemassa valittua alkuosaa, tarkista tiedot")
+      val endingPartShouldNotExist = projectService.checkRoadAddressNumberAndSEParts(roadNumber, roadStartPart, roadEndPart)
+      endingPartShouldNotExist.get should be("Tiellä ei ole olemassa valittua loppuosaa, tarkista tiedot")
+      RoadAddressDAO.create(rb)
+      val allIsOk = projectService.checkRoadAddressNumberAndSEParts(roadNumber, roadStartPart, roadEndPart)
+      allIsOk should be(None)
+    }
+  }
+
+  test("check reservability of a road") {
+    val roadNumber = 1943845
+    val roadStartPart = 1
+    val roadEndPart = 2
+    val roadlink = RoadLink(12345L,Seq(Point(535605.272,6982204.22,85.90899999999965))
+      ,540.3960283713503,State,99,TrafficDirection.AgainstDigitizing,UnknownLinkType,Some("25.06.2015 03:00:00"), Some("vvh_modified"),Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
+      InUse,NormalLinkInterface)
+    when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadlink))
+    runWithRollback {
+      val id1 = RoadAddressDAO.getNextRoadAddressId
+      val ra = Seq(RoadAddress(id1, roadNumber, roadStartPart, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, (None, None), false,
+        Seq(Point(0.0, 0.0), Point(0.0, 9.8))))
+      val reservation = projectService.checkReservability(roadNumber, roadStartPart, roadEndPart)
+      RoadAddressDAO.create(ra)
+      val id2 = RoadAddressDAO.getNextRoadAddressId
+      val rb = Seq(RoadAddress(id2, roadNumber, roadEndPart, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, (None, None), false,
+        Seq(Point(0.0, 0.0), Point(0.0, 9.8))))
+
+
+      RoadAddressDAO.create(rb)
+      reservation
+    }
+  }
 }

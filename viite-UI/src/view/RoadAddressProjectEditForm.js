@@ -40,16 +40,12 @@
         '</div>');
 
       return '<div class="project-form form-controls">' +
-        '<button class="send btn btn-block btn-send" disabled>Tee tieosoitteenmuutosilmoitus</button></div>';
+        '<button class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button></div>';
     };
 
-    var terminationButtons = function() {
-      var html = '<div class="project-form form-controls">' +
-        '<button class="update btn btn-save"';
-      if (!selectedProjectLink)
-        html = html + "disabled";
-      html = html +
-        '>Tallenna</button>' +
+    var actionButtons = function() {
+      var html = '<div class="project-form form-controls" id="actionButtons">' +
+        '<button class="update btn btn-save" disabled>Tallenna</button>' +
         '<button class="cancelLink btn btn-cancel">Peruuta</button>' +
         '</div>';
       return html;
@@ -94,7 +90,7 @@
         '<label>Toimenpiteet,' + selection  + '</label>' +
         '<div class="input-unit-combination">' +
         '<select class="form-control" id="dropDown" size="1">'+
-        '<option value="action1">Valitse</option>'+
+        '<option selected disabled hidden>Valitse</option>'+
         '<option value="action2"' + (status == 1 ? ' selected' : '') + '>Lakkautus</option>'+
         '<option value="action3" disabled>Uusi</option>'+
         '<option value="action4" disabled>Numeroinnin muutos</option>'+
@@ -110,7 +106,7 @@
         '</div>' +
         '</div>'+
         '</div>'+
-        '<footer>' + terminationButtons() + '</footer>');
+        '<footer>' + actionButtons() + '</footer>');
     };
 
     var bindEvents = function() {
@@ -131,9 +127,14 @@
         rootElement.html(selectedProjectLinkTemplate(currentProject.projects, options, selectedProjectLink));
       });
 
-      eventbus.on('roadAddress:linksSaved', function() {
-        // Projectinfo is not undefined and publishable is something like true.
-        rootElement.find('.project-form .btn-send').prop("disabled", false);
+      eventbus.on('roadAddressProject:publishable', function() {
+        /*
+          Project is publishable, remove spinner here to make sure
+          every call from backend and reDraw() is finished before enable send to TR
+        */
+        var publishButton = sendRoadAddressChangeButton();
+        rootElement.append(publishButton);
+        applicationModel.removeSpinner();
       });
 
       eventbus.on('roadAddress:projectFailed', function() {
@@ -156,14 +157,14 @@
       });
 
       eventbus.on('roadAddress:projectLinksUpdated',function(data){
-        applicationModel.removeSpinner();
         rootElement.html('');
         if (typeof data !== 'undefined' && typeof data.publishable !== 'undefined' && data.publishable) {
-          console.log(data);
-          var publishButton = sendRoadAddressChangeButton();
-          rootElement.append(publishButton);
+          eventbus.trigger('roadAddressProject:projectLinkSaved', data.id, data.publishable);
         }
-        eventbus.trigger('roadAddressProject:projectLinkSaved', data.projectId);
+        else {
+          eventbus.trigger('roadAddressProject:projectLinkSaved', data.id, data.publishable);
+          applicationModel.removeSpinner();
+        }
       });
 
       eventbus.on('roadAddress:projectSentSuccess', function() {
@@ -194,6 +195,7 @@
 
       rootElement.on('change', '#dropDown', function() {
         projectCollection.setDirty(_.map(selectedProjectLink, function(link) { return {'id':link.linkId, 'status':link.status}; }));
+        rootElement.find('.project-form button.update').prop("disabled", false);
       });
 
       rootElement.on('change', '.form-group', function() {

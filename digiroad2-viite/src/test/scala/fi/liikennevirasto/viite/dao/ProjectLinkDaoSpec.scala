@@ -118,4 +118,25 @@ class ProjectLinkDaoSpec  extends FunSuite with Matchers{
     }
   }
 
+  test("verify if one can increment the project check counter"){
+    val address=ReservedRoadPart(5:Long, 203:Long, 203:Long, 5.5:Double, Discontinuity.apply("jatkuva"), 8:Long, None:Option[DateTime], None:Option[DateTime])
+    runWithRollback{
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(address), None)
+      ProjectDAO.createRoadAddressProject(rap)
+      val addresses = RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(rap))
+      ProjectDAO.create(addresses)
+      ProjectDAO.getRoadAddressProjectById(id).nonEmpty should be(true)
+      val counterBeforeUpdate = ProjectDAO.getCheckCounter(id).get
+      counterBeforeUpdate should be(0)
+      ProjectDAO.setCheckCounter(id, counterBeforeUpdate+1)
+      val counterAfterUpdate = ProjectDAO.getCheckCounter(id).get
+      counterAfterUpdate should be(1)
+      ProjectDAO.incrementCheckCounter(id, 2)
+      val counterAfterIncrement = ProjectDAO.getCheckCounter(id).get
+      counterAfterIncrement should be(3)
+    }
+
+  }
+
 }

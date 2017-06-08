@@ -50,7 +50,7 @@
       return ProjectLinks;
     };
 
-    this.fetch = function(boundingBox, zoom, projectId) {
+    this.fetch = function(boundingBox, zoom, projectId, isPublishable) {
       var id = projectId;
       if (typeof id === 'undefined' && typeof projectinfo !== 'undefined')
         id = projectinfo.id;
@@ -62,7 +62,9 @@
             });
           });
           eventbus.trigger('roadAddressProject:fetched', self.getAll());
-          eventbus.trigger('roadAddress:linksSaved');
+          if(isPublishable) {
+            eventbus.trigger('roadAddressProject:publishable');
+          }
         });
     };
 
