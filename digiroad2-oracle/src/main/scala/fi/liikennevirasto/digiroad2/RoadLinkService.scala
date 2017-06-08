@@ -29,7 +29,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 case class IncompleteLink(linkId: Long, municipalityCode: Int, administrativeClass: AdministrativeClass)
 case class RoadLinkChangeSet(adjustedRoadLinks: Seq[RoadLink], incompleteLinks: Seq[IncompleteLink])
-case class ChangedVVHRoadlink(link: VVHRoadlink, value: String, createdAt: Option[DateTime], changeType: String)
+case class ChangedVVHRoadlink(link: RoadLink, value: String, createdAt: Option[DateTime], changeType: String)
 
 sealed trait RoadLinkType {
   def value: Int
@@ -1327,17 +1327,21 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     val municipalitiesCodeToValidate = List(35, 43, 60, 62, 65, 76, 170, 295, 318, 417, 438, 478, 736, 766, 771, 941)
     val timezone = DateTimeZone.forOffsetHours(0)
 
-    val vvhRoadLinks = getRoadLinksBetweenTwoDatesFromVVH(sinceDate, untilDate)
-    vvhRoadLinks.map { vvhRoadLink =>
+    val roadLinks =
+      withDynTransaction {
+        enrichRoadLinksFromVVH(getRoadLinksBetweenTwoDatesFromVVH(sinceDate, untilDate))
+      }
+
+    roadLinks.map { roadLink =>
       ChangedVVHRoadlink(
-        link = vvhRoadLink,
+        link = roadLink,
         value =
-          if (municipalitiesCodeToValidate.contains(vvhRoadLink.municipalityCode)) {
-            vvhRoadLink.attributes.getOrElse("ROADNAME_SE", "").toString
+          if (municipalitiesCodeToValidate.contains(roadLink.municipalityCode)) {
+            roadLink.attributes.getOrElse("ROADNAME_SE", "").toString
           } else {
-            vvhRoadLink.attributes.getOrElse("ROADNAME_FI", "").toString
+            roadLink.attributes.getOrElse("ROADNAME_FI", "").toString
           },
-        createdAt = vvhRoadLink.attributes.get("CREATED_DATE") match {
+        createdAt = roadLink.attributes.get("CREATED_DATE") match {
           case Some(date) => Some(new DateTime(date.asInstanceOf[BigInt].toLong, timezone))
           case _ => None
         },
