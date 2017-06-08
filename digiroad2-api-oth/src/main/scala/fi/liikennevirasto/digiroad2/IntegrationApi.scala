@@ -58,7 +58,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case e: Exception => 99
       }
     }
-    def extractBearing(massTransitStop: PersistedMassTransitStop): (String, Option[Int]) = { "suuntima" -> MassTransitStopOperations.calculateActualBearing(massTransitStop.validityDirection.getOrElse(0), massTransitStop.bearing) }
+    def extractBearing(massTransitStop: PersistedMassTransitStop): (String, Option[Int]) = { "suuntima" -> GeometryUtils.calculateActualBearing(massTransitStop.validityDirection.getOrElse(0), massTransitStop.bearing) }
     def extractExternalId(massTransitStop: PersistedMassTransitStop): (String, Long) = { "valtakunnallinen_id" -> massTransitStop.nationalId }
     def extractFloating(massTransitStop: PersistedMassTransitStop): (String, Boolean) = { "kelluvuus" -> massTransitStop.floating }
     def extractLinkId(massTransitStop: PersistedMassTransitStop): (String, Option[Long]) = { "link_id" -> Some(massTransitStop.linkId) }
@@ -250,7 +250,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         geometryWKTForPointAssets(directionalTrafficSign.lon, directionalTrafficSign.lat),
         "linkId" -> directionalTrafficSign.linkId,
         "m_value" -> directionalTrafficSign.mValue,
-        "bearing" -> directionalTrafficSign.bearing,
+        "bearing" -> GeometryUtils.calculateActualBearing( directionalTrafficSign.validityDirection,directionalTrafficSign.bearing),
         "side_code" -> directionalTrafficSign.validityDirection,
         "text" -> directionalTrafficSign.text.map(_.split("\n").toSeq),
         latestModificationTime(directionalTrafficSign.createdAt, directionalTrafficSign.modifiedAt),
