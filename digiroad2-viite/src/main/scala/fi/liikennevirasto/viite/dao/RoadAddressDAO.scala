@@ -296,6 +296,34 @@ object RoadAddressDAO {
     }
   }
 
+  private def fetchByAddress(roadNumber: Long, roadPartNumber: Long, track: Track, startAddrM: Option[Long], endAddrM: Option[Long]) = {
+    val startFilter = startAddrM.map(s => s" AND start_addr_m = $s").getOrElse("")
+    val endFilter = endAddrM.map(e => s" AND end_addr_m = $e").getOrElse("")
+    val query =
+      s"""
+        select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
+        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
+        pos.side_code,
+        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y
+        from road_address ra cross join
+        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
+        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
+        join lrm_position pos on ra.lrm_position_id = pos.id
+        where t.id < t2.id AND ra.road_number = $roadNumber AND ra.road_part_number = $roadPartNumber AND
+         ra.track_code = ${track.value} and
+          (valid_from is null or valid_from <= sysdate) and
+          (valid_to is null or valid_to > sysdate) $startFilter $endFilter
+      """
+    queryList(query).headOption
+  }
+
+  def fetchByAddressStart(roadNumber: Long, roadPartNumber: Long, track: Track, startAddrM: Long): Option[RoadAddress] = {
+    fetchByAddress(roadNumber, roadPartNumber, track, Some(startAddrM), None)
+  }
+  def fetchByAddressEnd(roadNumber: Long, roadPartNumber: Long, track: Track, endAddrM: Long): Option[RoadAddress] = {
+    fetchByAddress(roadNumber, roadPartNumber, track, None, Some(endAddrM))
+  }
+
   def fetchByRoadPart(roadNumber: Long, roadPartNumber: Long, includeFloating: Boolean = false) = {
     val floating = if (!includeFloating)
       "floating='0' AND"

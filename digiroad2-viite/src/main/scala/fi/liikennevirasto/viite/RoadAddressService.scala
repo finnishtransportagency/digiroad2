@@ -7,6 +7,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.User
+import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
@@ -463,59 +464,41 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
   }
 
-  def getFloatingAdjacent(chainLinks: Set[Long], linkId: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Long): Seq[RoadAddressLink] = {
-    val chainRoadLinks = roadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(chainLinks)
-    val geomInChain = chainRoadLinks._1.filter(_.linkId == linkId).map(_.geometry) ++ chainRoadLinks._2.filter(_.linkId == linkId).map(_.geometry)
-    val sourceLinkGeometryOption = geomInChain.headOption
-    sourceLinkGeometryOption.map(sourceLinkGeometry => {
-      val sourceLinkEndpoints = GeometryUtils.geometryEndpoints(sourceLinkGeometry)
-      val delta: Vector3d = Vector3d(0.1, 0.1, 0)
-      val bounds = BoundingRectangle(sourceLinkEndpoints._1 - delta, sourceLinkEndpoints._1 + delta)
-      val bounds2 = BoundingRectangle(sourceLinkEndpoints._2 - delta, sourceLinkEndpoints._2 + delta)
-      val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, bounds2)
-      val (floatingViiteRoadLinks1, addresses1, floating1) = fetchRoadAddressesByBoundingBox(bounds, true)
-      val (floatingViiteRoadLinks2, addresses2, floating2) = fetchRoadAddressesByBoundingBox(bounds2, true)
-      val floatingViiteRoadLinks = floatingViiteRoadLinks1 ++ floatingViiteRoadLinks2
+  private def getAdjacentAddresses(chainLinks: Set[Long], linkId: Long, roadNumber: Long, roadPartNumber: Long, track: Track) = {
+    withDynSession {
+      val ra = RoadAddressDAO.fetchByLinkId(chainLinks, includeFloating = true).sortBy(_.startAddrMValue)
+      assert(ra.forall(r => r.roadNumber == roadNumber && r.roadPartNumber == roadPartNumber && r.track == track),
+        s"Mixed floating addresses selected ($roadNumber/$roadPartNumber/$track): " + ra.map(r =>
+          s"${r.linkId} = ${r.roadNumber}/${r.roadPartNumber}/${r.track.value}").mkString(", "))
+      val startValues = ra.map(_.startAddrMValue)
+      val endValues = ra.map(_.endAddrMValue)
+      val orphanStarts = startValues.filterNot(st => endValues.contains(st))
+      val orphanEnds = endValues.filterNot(st => startValues.contains(st))
+      // TODO: should we get all road addresses for the links or is it just enough to pick the links they are on?
+      (orphanStarts.flatMap(st => RoadAddressDAO.fetchByAddressEnd(roadNumber, roadPartNumber, track, st))
+        ++ orphanEnds.flatMap(end => RoadAddressDAO.fetchByAddressStart(roadNumber, roadPartNumber, track, end)))
+        .distinct
+    }
+  }
 
-      val floating = floating1 ++ floating2
-      val addresses = addresses1 ++ addresses2
-      val distinctRoadLinks = roadLinks.distinct
-      val linkIds = distinctRoadLinks.map(_.linkId).toSet
+  def getFloatingAdjacent(chainLinks: Set[Long], linkId: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Int): Seq[RoadAddressLink] = {
+      val adjacentAddresses = getAdjacentAddresses(chainLinks, linkId, roadNumber, roadPartNumber, Track.apply(trackCode))
+      val adjacentLinkIds = adjacentAddresses.map(_.linkId).toSet
+      val roadLinks = roadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(adjacentLinkIds)
+      val adjacentAddressLinks = roadLinks._1.map(rl => rl.linkId -> rl).toMap
+      val historyLinks = roadLinks._2.groupBy(rl => rl.linkId)
 
-      val checkLinkAnomaly = withDynTransaction {
-        RoadAddressDAO.getMissingRoadAddresses(Set(linkId))
-      }.headOption
+      val anomaly2List = withDynSession{ RoadAddressDAO.getMissingRoadAddresses(adjacentLinkIds).filter(_.anomaly == Anomaly.GeometryChanged) }
 
-      val missingLinkIds = if (checkLinkAnomaly.nonEmpty){
-        val missingAnomaly = checkLinkAnomaly.get.anomaly match {
-          case Anomaly.NoAddressGiven => linkIds -- floating.keySet -- addresses.keySet
-          case Anomaly.GeometryChanged => linkIds -- addresses.keySet
-          case _ => Set.empty[Long]
+      val floatingAdjacents = adjacentAddresses.filter(_.floating).map(ra =>
+        if (anomaly2List.exists(_.linkId == ra.linkId)) {
+          val rl = adjacentAddressLinks(ra.linkId)
+          RoadAddressLinkBuilder.build(rl, ra, true, Some(rl.geometry))
+        } else {
+          RoadAddressLinkBuilder.build(historyLinks(ra.linkId).head, ra)
         }
-        missingAnomaly
-      } else Set.empty[Long]
-
-      val missedRL = withDynTransaction {
-        RoadAddressDAO.getMissingRoadAddresses(missingLinkIds)
-      }.groupBy(_.linkId)
-
-      val viiteMissingRoadLinks = distinctRoadLinks.map { rl =>
-        val ra = addresses.getOrElse(rl.linkId, Seq()).distinct
-        val missed = missedRL.getOrElse(rl.linkId, Seq()).distinct
-        rl.linkId -> buildRoadAddressLink(rl, ra, missed)
-      }.filter(_._2.exists(ral => GeometryUtils.areAdjacent(sourceLinkGeometry, ral.geometry)
-        && ral.roadLinkType == UnknownRoadLinkType))
-        .flatMap(_._2)
-
-      val viiteFloatingRoadLinks = floatingViiteRoadLinks
-        .filterNot(_._1 == linkId)
-        .filter(_._2.exists(ral => GeometryUtils.areAdjacent(sourceLinkGeometry, ral.geometry)
-          && ral.roadNumber == roadNumber && ral.roadPartNumber == roadPartNumber && ral.trackCode == trackCode
-          && ral.roadLinkType == FloatingRoadLinkType))
-        .flatMap(_._2).toSeq
-
-      (viiteFloatingRoadLinks.distinct ++ viiteMissingRoadLinks)
-    }).getOrElse(Seq())
+      )
+      floatingAdjacents
   }
 
   def getRoadAddressLinksAfterCalculation(sources: Seq[String], targets: Seq[String], user: User): Seq[RoadAddressLink] = {

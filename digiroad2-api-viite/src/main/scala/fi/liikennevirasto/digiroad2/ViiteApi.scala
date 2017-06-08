@@ -114,7 +114,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val linkId = data("linkId").asInstanceOf[Long]
     val roadNumber = data("roadNumber").asInstanceOf[Long]
     val roadPartNumber = data("roadPartNumber").asInstanceOf[Long]
-    val trackCode = data("trackCode").asInstanceOf[Long]
+    val trackCode = data("trackCode").asInstanceOf[Long].toInt
 
     roadAddressService.getFloatingAdjacent(chainLinks, linkId, roadNumber, roadPartNumber, trackCode).map(roadAddressLinkToApi)
   }
@@ -136,7 +136,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           val linkId = rd("linkId").asInstanceOf[Long]
           val roadNumber = rd("roadNumber").asInstanceOf[Long]
           val roadPartNumber = rd("roadPartNumber").asInstanceOf[Long]
-          val trackCode = rd("trackCode").asInstanceOf[Long]
+          val trackCode = rd("trackCode").asInstanceOf[Long].toInt
           roadAddressService.getFloatingAdjacent(chainLinks, linkId,
             roadNumber, roadPartNumber, trackCode)
         })
