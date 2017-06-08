@@ -222,48 +222,50 @@
 
     map.addOverlay(overlay);
 
-    //Listen pointermove and get pixel for displaying roadaddress feature info
+    //Listen pointerMove and get pixel for displaying roadAddress feature info
     eventbus.on('map:mouseMoved', function (event, pixel) {
-      if (event.dragging || applicationModel.getSelectedLayer() != 'roadAddressProject') {
+      if (event.dragging || applicationModel.getSelectedLayer() !== 'roadAddressProject') {
         return;
       }
       displayRoadAddressInfo(event, pixel);
     });
 
     var displayRoadAddressInfo = function(event, pixel) {
-      
+
       var featureAtPixel = map.forEachFeatureAtPixel(pixel, function (feature, vectorLayer) {
         return feature;
       });
 
-      //ignore if target feature is marker
-      if(!_.isUndefined(featureAtPixel) && (!_.isUndefined(featureAtPixel.roadLinkData) || !_.isUndefined(featureAtPixel.projectLinkData))) {
-       var data;
-       var coord = map.getEventCoordinate(event.originalEvent);
+      //Ignore if target feature is marker
+      if(isDefined(featureAtPixel) && (isDefined(featureAtPixel.roadLinkData) || isDefined(featureAtPixel.projectLinkData))) {
+       var roadData;
+       var coordinate = map.getEventCoordinate(event.originalEvent);
 
-       if(!_.isUndefined(featureAtPixel.projectLinkData)) {
-         data = featureAtPixel.projectLinkData;
+       if(isDefined(featureAtPixel.projectLinkData)) {
+         roadData = featureAtPixel.projectLinkData;
        }
        else {
-         data = featureAtPixel.roadLinkData;
+         roadData = featureAtPixel.roadLinkData;
        }
 
        infoContent.innerHTML = '<p>' +
-          'Tienumero: ' + data.roadNumber + '<br>' +
-          'Tieosanumero: ' + data.roadPartNumber + '<br>' +
-          'Ajorata: ' + data.trackCode + '<br>' +
-          'AET: ' + data.startAddressM + '<br>' +
-          'LET: ' + data.endAddressM + '<br>' +
+          'Tienumero: ' + roadData.roadNumber + '<br>' +
+          'Tieosanumero: ' + roadData.roadPartNumber + '<br>' +
+          'Ajorata: ' + roadData.trackCode + '<br>' +
+          'AET: ' + roadData.startAddressM + '<br>' +
+          'LET: ' + roadData.endAddressM + '<br>' +
          '</p>';
 
-       overlay.setPosition(coord);
+       overlay.setPosition(coordinate);
 
       } else {
         overlay.setPosition(undefined);
       }
     };
 
-
+var isDefined=function(variable) {
+ return !_.isUndefined(variable);
+};
 
     //Add defined interactions to the map.
     map.addInteraction(selectSingleClick);
