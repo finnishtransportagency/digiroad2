@@ -254,6 +254,7 @@ window.LinearAssetLayer = function(params) {
         break;
       case 'Select':
         linearAssetCutter.deactivate();
+        selectToolControl.deactivateDraw();
         break;
       case 'Rectangle':
         linearAssetCutter.deactivate();
