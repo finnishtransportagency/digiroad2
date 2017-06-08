@@ -360,6 +360,7 @@
               rootElement.find('.wrapper').toggle();
               rootElement.find('footer').toggle();
               projectCollection.clearRoadAddressProjects();
+              eventbus.trigger('layer:enableButtons', true);
             }
           });
         } else {
