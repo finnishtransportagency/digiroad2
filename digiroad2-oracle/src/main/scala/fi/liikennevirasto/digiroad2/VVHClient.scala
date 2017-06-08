@@ -972,11 +972,6 @@ class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvh
     VVHHistoryRoadLink(linkId, municipalityCode, linkGeometry, extractAdministrativeClass(attributes),
       extractTrafficDirection(attributes), featureClass, createdDate, endTime, extractAttributes(attributes) ++ linkGeometryForApi ++ linkGeometryWKTForApi)
   }
-
-  private def linkIdFilter(linkIds: Set[Long]): String = {
-    withFilter("LINKID", linkIds)
-  }
-
   /**
     * Returns VVH road link history data in bounding box area. Municipalities are optional.
     * Used by VVHClient.fetchVVHRoadlinksF, RoadLinkService.getVVHRoadLinks(bounds, municipalities), RoadLinkService.getVVHRoadLinks(bounds),
@@ -989,7 +984,7 @@ class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvh
       val batchSize = 1000
       val idGroups: List[Set[Long]] = linkIds.grouped(batchSize).toList
       idGroups.par.flatMap { ids =>
-        val definition = layerDefinition(linkIdFilter(ids))
+        val definition = layerDefinition(withLinkIdFilter(ids))
         val url = serviceUrl(definition, queryParameters())
 
         fetchVVHFeatures(url) match {
