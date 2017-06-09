@@ -501,6 +501,23 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       floatingAdjacents
   }
 
+  def getAdjacent(chainLinks: Set[Long], linkId: Long): Seq[RoadAddressLink] = {
+    val chainRoadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(chainLinks)
+    val pointCloud = chainRoadLinks.map(_.geometry).map(GeometryUtils.geometryEndpoints).flatMap(x => Seq(x._1, x._2))
+    val boundingPoints = GeometryUtils.boundingRectangleCorners(pointCloud)
+    val boundingRectangle = BoundingRectangle(boundingPoints._1 + Vector3d(-.1, .1, 0.0), boundingPoints._2 + Vector3d(.1, -.1, 0.0))
+    val connectedLinks = roadLinkService.getRoadLinksAndChangesFromVVH(boundingRectangle)._1
+      .filterNot(rl => chainLinks.contains(rl.linkId))
+      .filter{rl =>
+        val endPoints = GeometryUtils.geometryEndpoints(rl.geometry)
+        pointCloud.exists(p => GeometryUtils.areAdjacent(p, endPoints._1) || GeometryUtils.areAdjacent(p, endPoints._2))
+      }.map(rl => rl.linkId -> rl).toMap
+    val missingLinks = withDynSession {
+      RoadAddressDAO.getMissingRoadAddresses(connectedLinks.keySet)
+    }
+    missingLinks.map(ml => RoadAddressLinkBuilder.build(connectedLinks(ml.linkId), ml))
+  }
+
   def getRoadAddressLinksAfterCalculation(sources: Seq[String], targets: Seq[String], user: User): Seq[RoadAddressLink] = {
     val transferredRoadAddresses = getRoadAddressesAfterCalculation(sources, targets, user)
     val target = roadLinkService.getRoadLinksByLinkIdsFromVVH(targets.map(rd => rd.toLong).toSet)

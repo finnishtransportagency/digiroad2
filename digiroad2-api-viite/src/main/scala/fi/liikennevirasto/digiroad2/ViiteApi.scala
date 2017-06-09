@@ -119,6 +119,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     roadAddressService.getFloatingAdjacent(chainLinks, linkId, roadNumber, roadPartNumber, trackCode).map(roadAddressLinkToApi)
   }
 
+  get("/roadlinks/adjacent/target") {
+    val data = JSON.parseFull(params.getOrElse("roadData", "{}")).get.asInstanceOf[Map[String,Any]]
+    val chainLinks = data("selectedLinks").asInstanceOf[Seq[Long]].toSet
+    val linkId = data("linkId").asInstanceOf[Long]
+
+    roadAddressService.getAdjacent(chainLinks, linkId).map(roadAddressLinkToApi)
+  }
   get("/roadlinks/multiSourceAdjacents") {
     val roadData = JSON.parseFull(params.getOrElse("roadData", "[]")).get.asInstanceOf[Seq[Map[String,Any]]]
     println(params("roadData"))
@@ -130,9 +137,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     } else {
       val adjacents: Seq[RoadAddressLink] = {
         roadData.flatMap(rd => {
-          val chainLinks = rd("selectedLinks").asInstanceOf[Seq[Long]].map(rl => {
-            rl.toLong
-          }).toSet[Long]
+          val chainLinks = rd("selectedLinks").asInstanceOf[Seq[Long]].toSet
           val linkId = rd("linkId").asInstanceOf[Long]
           val roadNumber = rd("roadNumber").asInstanceOf[Long]
           val roadPartNumber = rd("roadPartNumber").asInstanceOf[Long]

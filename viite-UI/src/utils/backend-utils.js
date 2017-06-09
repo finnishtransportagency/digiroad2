@@ -58,6 +58,12 @@
       });
     }, 1000);
 
+    this.getTargetAdjacent = _.throttle(function(roadData, callback) {
+      return $.getJSON('api/viite/roadlinks/adjacent/target?roadData=' +JSON.stringify(roadData), function(data) {
+        return _.isFunction(callback) && callback(data);
+      });
+    }, 1000);
+
     this.getAdjacentsFromMultipleSources = _.throttle(function(roadData, callback) {
       return $.getJSON('api/viite/roadlinks/multiSourceAdjacents?roadData=' +JSON.stringify(roadData), function(data) {
         return _.isFunction(callback) && callback(data);

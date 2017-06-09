@@ -250,5 +250,18 @@ object GeometryUtils {
     withinTolerance(Seq(geom1._1, geom1._2), Seq(geom2._1, geom2._2), tolerance)
   }
 
+  /**
+    * Returns top-left and bottom-right corners for a minimal box that contains all given points
+    * @param points point cloud
+    * @return (top-left), (bottom-right) points
+    */
+  def boundingRectangleCorners(points: Seq[Point]): (Point, Point) = {
+    val left = points.minBy(_.x).x
+    val right = points.maxBy(_.x).x
+    val top = points.maxBy(_.y).y
+    val bottom = points.minBy(_.y).y
+    (Point(left, top), Point(right, bottom))
+  }
+
   case class Projection(oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, vvhTimeStamp: Long)
 }
