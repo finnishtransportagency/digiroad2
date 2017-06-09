@@ -137,7 +137,10 @@
         roadLayer.drawRoadLinks(roadCollection.getAll(), map.getView().getZoom());
          selectControl.activate();
       });
-      roadCollection.fetch(map.getView().calculateExtent(map.getSize()));
+      if(collection.complementaryIsActive())
+        roadCollection.fetchWithComplementary(map.getView().calculateExtent(map.getSize()));
+      else
+        roadCollection.fetch(map.getView().calculateExtent(map.getSize()));
       collection.fetch(map.getView().calculateExtent(map.getSize())).then(function(assets) {
         if (selectedAsset.exists()) {
           var assetsWithoutSelectedAsset = _.reject(assets, {id: selectedAsset.getId()});
@@ -200,6 +203,8 @@
       eventListener.listenTo(eventbus, layerName + ':unselected', handleUnSelected);
       eventListener.listenTo(eventbus, layerName + ':changed', handleChanged);
       eventListener.listenTo(eventbus, 'application:readOnly', toggleMode);
+      eventListener.listenTo(eventbus, 'withComplementary:show', showWithComplementary);
+      eventListener.listenTo(eventbus, 'withComplementary:hide', hideComplementary);
     }
 
     function handleCreationCancelled() {
@@ -275,9 +280,21 @@
       });
     }
 
+    function showWithComplementary() {
+      collection.activeComplementary(true);
+      me.refreshView();
+    }
+
     function show(map) {
       vectorLayer.setVisible(true);
+      me.refreshView();
       me.show(map);
+    }
+
+    function hideComplementary() {
+      collection.activeComplementary(false);
+      selectedAsset.close();
+      me.refreshView();
     }
 
     function hide() {

@@ -14,6 +14,7 @@ import Database.dynamicSession
 import _root_.oracle.sql.STRUCT
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries._
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
@@ -901,8 +902,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
     def getPropertyId: Long = {
       StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("esterakennelma").first
     }
-
-    val id = OracleObstacleDao.create(incomingObstacle, 0.0, "test_data", 749, 0)
+    val id = OracleObstacleDao.create(incomingObstacle, 0.0, "test_data", 749, 0, NormalLinkInterface)
     sqlu"""update asset set floating = 1 where id = $id""".execute
     id
   }
