@@ -531,16 +531,19 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
 
   private def fetchOverrides(idTableName: String): Map[Long, (Option[(Long, Int, DateTime, String)],
-    Option[(Long, Int, DateTime, String)], Option[(Long, Int, DateTime, String)])] = {
+    Option[(Long, Int, DateTime, String)], Option[(Long, Int, DateTime, String)], Option[(Long, Int, DateTime, String)])] = {
     sql"""select i.id, t.link_id, t.traffic_direction, t.modified_date, t.modified_by,
           f.link_id, f.functional_class, f.modified_date, f.modified_by,
-          l.link_id, l.link_type, l.modified_date, l.modified_by
+          l.link_id, l.link_type, l.modified_date, l.modified_by,
+          a.link_id, a.administrative_class, a.modified_date, a.modified_by
             from #$idTableName i
             left join traffic_direction t on i.id = t.link_id
             left join functional_class f on i.id = f.link_id
             left join link_type l on i.id = l.link_id
+            left join administrative_class a on i.id = a.link_id
 
       """.as[(Long, Option[Long], Option[Int], Option[DateTime], Option[String],
+      Option[Long], Option[Int], Option[DateTime], Option[String],
       Option[Long], Option[Int], Option[DateTime], Option[String],
       Option[Long], Option[Int], Option[DateTime], Option[String])].list.map(row =>
     {
@@ -556,7 +559,11 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
         case (Some(linkId), Some(dir), Some(modDate), Some(modBy)) => Option((linkId, dir, modDate, modBy))
         case _ => None
       }
-      row._1 ->(td, fc, lt)
+      val ac = (row._14, row._15, row._16, row._17) match{
+        case (Some(linkId), Some(dir), Some(modDate), Some(modBy)) => Option((linkId, dir, modDate, modBy))
+        case _ => None
+      }
+      row._1 ->(td, fc, lt, ac)
     }
     ).toMap
 
@@ -941,7 +948,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
       RoadLink(link.linkId, link.geometry,
         GeometryUtils.geometryLength(link.geometry),
-        link.administrativeClass,
+        propertyRows.administrativeClassValue(link.linkId),
         propertyRows.functionalClassValue(link.linkId),
         propertyRows.trafficDirectionValue(link.linkId).getOrElse(link.trafficDirection),
         propertyRows.linkTypeValue(link.linkId),
@@ -955,15 +962,17 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       parameterMap.filter(i => i._2.nonEmpty).mapValues(i => i.get)
     }
     def splitMap(parameterMap: Map[Long, (Option[(Long, Int, DateTime, String)],
-      Option[(Long, Int, DateTime, String)], Option[(Long, Int, DateTime, String)])]) = {
+      Option[(Long, Int, DateTime, String)], Option[(Long, Int, DateTime, String)],
+      Option[(Long, Int, DateTime, String)] )]) = {
       (cleanMap(parameterMap.map(i => i._1 -> i._2._1)),
         cleanMap(parameterMap.map(i => i._1 -> i._2._2)),
-        cleanMap(parameterMap.map(i => i._1 -> i._2._3)))
+        cleanMap(parameterMap.map(i => i._1 -> i._2._3)),
+        cleanMap(parameterMap.map(i => i._1 -> i._2._4)),)
     }
     MassQuery.withIds(linkIds) {
       idTableName =>
-        val (td, fc, lt) = splitMap(fetchOverrides(idTableName))
-        RoadLinkPropertyRows(td, fc, lt)
+        val (td, fc, lt, ac) = splitMap(fetchOverrides(idTableName))
+        RoadLinkPropertyRows(td, fc, lt, ac)
     }
   }
 
@@ -972,7 +981,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
   case class RoadLinkPropertyRows(trafficDirectionRowsByLinkId: Map[RoadLinkId, RoadLinkPropertyRow],
                                   functionalClassRowsByLinkId: Map[RoadLinkId, RoadLinkPropertyRow],
-                                  linkTypeRowsByLinkId: Map[RoadLinkId, RoadLinkPropertyRow]) {
+                                  linkTypeRowsByLinkId: Map[RoadLinkId, RoadLinkPropertyRow],
+                                  administrativeClassRowsByLinkId: Map[RoadLinkId, RoadLinkPropertyRow]) {
 
     def functionalClassValue(linkId: Long): Int = {
       val functionalClassRowOption = functionalClassRowsByLinkId.get(linkId)
@@ -987,6 +997,11 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     def trafficDirectionValue(linkId: Long): Option[TrafficDirection] = {
       val trafficDirectionRowOption = trafficDirectionRowsByLinkId.get(linkId)
       trafficDirectionRowOption.map(trafficDirectionRow => TrafficDirection(trafficDirectionRow._2))
+    }
+
+    def administrativeClassValue(linkId: Long): AdministrativeClass = {
+      val administrativeRowOption = administrativeClassRowsByLinkId.get(linkId)
+      administrativeRowOption.map( ac => AdministrativeClass.apply(ac._2)).getOrElse(AdministrativeClass.apply(99))
     }
 
     def latestModifications(linkId: Long, optionalModification: Option[(DateTime, String)] = None): Option[(DateTime, String)] = {
