@@ -163,7 +163,7 @@ trait RoadLinkCsvImporter {
     })
     csvReader.allWithHeaders().foldLeft(ImportResult()) { (result, row) =>
       def getCompletaryVVHInfo(linkId: Long) = {
-        vvhClient.complementaryData.fetchComplementaryRoadlink(linkId) match {
+        vvhClient.complementaryData.fetchByLinkId(linkId) match {
           case Some(vvhRoadlink) => (vvhRoadlink.attributes.get("OBJECTID"), vvhRoadlink.administrativeClass.value)
           case _ => None
         }

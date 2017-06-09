@@ -95,7 +95,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
 
     when(roadLinkCsvImporter.vvhClient.complementaryData).thenReturn(mockVVHComplementaryClient)
-    when(mockVVHComplementaryClient.fetchComplementaryRoadlink(any[Long])).thenReturn(Some(newRoadLink1))
+    when(mockVVHComplementaryClient.fetchByLinkId(any[Long])).thenReturn(Some(newRoadLink1))
 
     val assetFields = Map("Linkin ID" -> 1, "Liikennevirran suunta" -> "a")
     val invalidCsv = csvToInputStream(createCSV(assetFields))
@@ -116,7 +116,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
 
     when(roadLinkCsvImporter.vvhClient.complementaryData).thenReturn(mockVVHComplementaryClient)
-    when(mockVVHComplementaryClient.fetchComplementaryRoadlink(any[Long])).thenReturn(Some(newRoadLink1))
+    when(mockVVHComplementaryClient.fetchByLinkId(any[Long])).thenReturn(Some(newRoadLink1))
 
     val assetFields = Map("Linkin ID" -> 1, "Hallinnollinen luokka" -> 2)
     val invalidCsv = csvToInputStream(createCSV(assetFields))
@@ -135,7 +135,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
 
     when(roadLinkCsvImporter.vvhClient.complementaryData).thenReturn(mockVVHComplementaryClient)
-    when(mockVVHComplementaryClient.fetchComplementaryRoadlink(any[Long])).thenReturn(Some(newRoadLink1))
+    when(mockVVHComplementaryClient.fetchByLinkId(any[Long])).thenReturn(Some(newRoadLink1))
 
     val assetFields = Map("Linkin ID" -> 1, "Hallinnollinen luokka" -> 1)
     val invalidCsv = csvToInputStream(createCSV(assetFields))
@@ -154,7 +154,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val mockVVHComplementaryClient = MockitoSugar.mock[VVHComplementaryClient]
 
     when(roadLinkCsvImporter.vvhClient.complementaryData).thenReturn(mockVVHComplementaryClient)
-    when(mockVVHComplementaryClient.fetchComplementaryRoadlink(any[Long])).thenReturn(Some(newRoadLink1))
+    when(mockVVHComplementaryClient.fetchByLinkId(any[Long])).thenReturn(Some(newRoadLink1))
 
     val assetFields = Map("Linkin ID" -> 1, "Hallinnollinen luokka" -> 1)
     val invalidCsv = csvToInputStream(createCSV(assetFields))
@@ -174,7 +174,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
     runWithRollback {
       when(roadLinkCsvImporter.vvhClient.complementaryData).thenReturn(mockVVHComplementaryClient)
-      when(mockVVHComplementaryClient.fetchComplementaryRoadlink(any[Long])).thenReturn(Some(newRoadLink1))
+      when(mockVVHComplementaryClient.fetchByLinkId(any[Long])).thenReturn(Some(newRoadLink1))
 
       val link_id = 1000
       val functionalClassValue = 3
@@ -198,7 +198,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
     runWithRollback {
       when(roadLinkCsvImporter.vvhClient.complementaryData).thenReturn(mockVVHComplementaryClient)
-      when(mockVVHComplementaryClient.fetchComplementaryRoadlink(any[Long])).thenReturn(Some(newRoadLink1))
+      when(mockVVHComplementaryClient.fetchByLinkId(any[Long])).thenReturn(Some(newRoadLink1))
 
       val link_id = 1000
       val functionalClassValue = 3
@@ -221,7 +221,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
     runWithRollback {
       when(roadLinkCsvImporter.vvhClient.complementaryData).thenReturn(mockVVHComplementaryClient)
-      when(mockVVHComplementaryClient.fetchComplementaryRoadlink(any[Long])).thenReturn(Some(newRoadLink1))
+      when(mockVVHComplementaryClient.fetchByLinkId(any[Long])).thenReturn(Some(newRoadLink1))
       val link_id = 1000
       val linkTypeValue = 3
       RoadLinkServiceDAO.insertLinkType(link_id, Some("unit_test"), 2)
@@ -244,7 +244,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
     runWithRollback {
       when(roadLinkCsvImporter.vvhClient.complementaryData).thenReturn(mockVVHComplementaryClient)
-      when(mockVVHComplementaryClient.fetchComplementaryRoadlink(any[Long])).thenReturn(Some(newRoadLink1))
+      when(mockVVHComplementaryClient.fetchByLinkId(any[Long])).thenReturn(Some(newRoadLink1))
       val link_id = 1000
       val linkTypeValue = 3
 
@@ -268,7 +268,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     runWithRollback {
       when(roadLinkCsvImporter.vvhClient.complementaryData).thenReturn(mockVVHComplementaryClient)
       when(mockVVHComplementaryClient.updateVVHFeatures(any[Map[String , String]])).thenReturn( Left(List(Map("key" -> "value"))))
-      when(mockVVHComplementaryClient.fetchComplementaryRoadlink(any[Long])).thenReturn(Some(newRoadLink1))
+      when(mockVVHComplementaryClient.fetchByLinkId(any[Long])).thenReturn(Some(newRoadLink1))
       val link_id = 1611388
       RoadLinkServiceDAO.insertTrafficDirection(link_id, Some("unit_test"), 1)
       val csv = csvToInputStream(createCSV(Map("Linkin ID" -> link_id, "Liikennevirran suunta" -> 3)))
@@ -292,7 +292,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     runWithRollback {
       when(roadLinkCsvImporter.vvhClient.complementaryData).thenReturn(mockVVHComplementaryClient)
       when(mockVVHComplementaryClient.updateVVHFeatures(any[Map[String , String]])).thenReturn( Left(List(Map("key" -> "value"))))
-      when(mockVVHComplementaryClient.fetchComplementaryRoadlink(any[Long])).thenReturn(Some(newRoadLink1))
+      when(mockVVHComplementaryClient.fetchByLinkId(any[Long])).thenReturn(Some(newRoadLink1))
       val link_id = 1000
       val linkTypeValue = 3
       RoadLinkServiceDAO.insertLinkType(link_id, Some("unit_test"), 2)
