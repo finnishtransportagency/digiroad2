@@ -217,7 +217,6 @@
 
     var overlay = new ol.Overlay(({
       element: infoContainer
-      //autoPan: false,
     }));
 
     map.addOverlay(overlay);
