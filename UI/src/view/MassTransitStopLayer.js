@@ -7,7 +7,6 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   var selectedAsset;
   var movementPermissionConfirmed = false;
   var requestingMovePermission  = false;
-  var isComplementaryActiveBS = false;
   var massTransitStopLayerStyles = MassTransitStopLayerStyles(roadLayer);
   var visibleAssets;
 
@@ -21,7 +20,9 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       if(properties.massTransitStop)
         return properties.massTransitStop.getMarkerDefaultStyles();
       return [];
-    }
+    },
+    //Increase the buffer around the viewport extend because of group bus stops
+    renderBuffer: 300
   });
 
   assetLayer.set('name', layerName);
@@ -129,6 +130,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
   var removeAssetFromMap = function(asset) {
     var feature = asset.massTransitStop.getMarkerFeature();
+    massTransitStopsCollection.destroyAsset(asset.data.id);
     if(_.some(assetSource.getFeatures(), function(f){ return f == feature; }))
       assetSource.removeFeature(feature);
   };
@@ -162,8 +164,8 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
   var renderAssets = function(assetDatas) {
     assetLayer.setVisible(true);
+    _.each(massTransitStopsCollection.getComplementaryAssets(), removeAssetFromMap);
     _.each(assetDatas, function(assetGroup) {
-
       assetGroup = _.sortBy(assetGroup, 'id');
       var centroidLonLat = geometrycalculator.getCentroid(assetGroup);
       _.each(assetGroup, function(asset) {
@@ -543,7 +545,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
     massTransitStopsCollection.refreshAssets({ bbox: extent, hasZoomLevelChanged: true });
 
-    if (isComplementaryActiveBS) {
+    if (massTransitStopsCollection.isComplementaryActive()) {
       roadCollection.fetchWithComplementary(extent);
     } else {
       roadCollection.fetch(extent);
@@ -557,6 +559,16 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       dragControl.activate();
     }
   }
+
+  var handleMapMoved = function(mapMoveEvent) {
+    if (zoomlevels.isInAssetZoomLevel(mapMoveEvent.zoom)) {
+      me.handleMapMoved(mapMoveEvent);
+    } else {
+      if (applicationModel.getSelectedLayer() === 'massTransitStop') {
+          assetSource.clear();
+      }
+    }
+  };
 
   var bindEvents = function() {
     eventListener.listenTo(eventbus, 'validityPeriod:changed', handleValidityPeriodChanged);
@@ -580,7 +592,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     eventListener.listenTo(eventbus, 'assets:all-updated', handleAllAssetsUpdated);
     eventListener.listenTo(eventbus, 'assets:new-fetched', handleNewAssetsFetched);
     eventListener.listenTo(eventbus, 'assetGroup:destroyed', reRenderGroup);
-    eventListener.listenTo(eventbus, 'map:moved', me.handleMapMoved);
+    eventListener.listenTo(eventbus, 'map:moved', handleMapMoved);
     eventListener.listenTo(eventbus, 'map:clicked', handleMapClick);
     eventListener.listenTo(eventbus, 'layer:selected', closeAsset);
     eventListener.listenTo(eventbus, 'massTransitStopDeleted', function(asset){
@@ -595,7 +607,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       movementPermissionConfirmed = movementPermission;
     });
     eventListener.listenTo(eventbus, 'roadLinkComplementaryBS:show', showWithComplementary);
-    eventListener.listenTo(eventbus, 'roadLinkComplementaryBS:hide', show);
+    eventListener.listenTo(eventbus, 'roadLinkComplementaryBS:hide', hideComplementary);
     eventListener.listenTo(eventbus, 'road-type:selected', roadLayer.toggleRoadTypeWithSpecifiedStyle);
 
     eventListener.listenTo(eventbus, 'application:readOnly', toggleMode);
@@ -616,10 +628,10 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   var registerRoadLinkFetched = function(){
     if (zoomlevels.isInAssetZoomLevel(map.getView().getZoom())) {
       eventbus.once('roadLinks:fetched', function() {
-        roadLayer.drawRoadLinks(roadCollection.getAll(), map.getView().getZoom());
-        massTransitStopsCollection.fetchAssets( map.getView().calculateExtent(map.getSize()));
+          roadLayer.drawRoadLinks(roadCollection.getAll(), map.getView().getZoom());
+          massTransitStopsCollection.fetchAssets( map.getView().calculateExtent(map.getSize()));
       });
-      roadCollection.fetchWithComplementary( map.getView().calculateExtent(map.getSize()));
+      roadCollection.fetch( map.getView().calculateExtent(map.getSize()));
     }
   };
 
@@ -629,13 +641,19 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     startListening();
     assetLayer.setVisible(true);
     registerRoadLinkFetched();
-    isComplementaryActiveBS = false;
     me.show(map);
   };
 
   var showWithComplementary = function() {
-    isComplementaryActiveBS = true;
+    massTransitStopsCollection.activeComplementary(true);
     registerRoadLinkFetched();
+  };
+
+  var hideComplementary = function (){
+    massTransitStopsCollection.activeComplementary(false);
+    registerRoadLinkFetched();
+    selectedMassTransitStopModel.close();
+    selectControl.clear();
   };
 
   var hideLayer = function() {

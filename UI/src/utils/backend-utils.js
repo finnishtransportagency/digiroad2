@@ -94,9 +94,12 @@
       });
     }, 1000);
 
-    this.getAssets = function (boundingBox) {
+    this.getAssets = function (boundingBox, filter) {
+      if(!filter)
+        filter = function(assets){return assets;};
+
       self.getAssetsWithCallback(boundingBox, function (assets) {
-        eventbus.trigger('assets:fetched', assets);
+        eventbus.trigger('assets:fetched',filter(assets));
       });
     };
 
@@ -210,6 +213,12 @@
     this.getLinearAssets = latestResponseRequestor(function(boundingBox, typeId) {
       return {
         url: 'api/linearassets?bbox=' + boundingBox + '&typeId=' + typeId
+      };
+    });
+
+    this.getLinearAssetsWithComplementary = latestResponseRequestor(function(boundingBox, typeId) {
+      return {
+        url: 'api/linearassets/complementary?bbox=' + boundingBox + '&typeId=' + typeId
       };
     });
 
@@ -373,7 +382,7 @@
       function getJson(){
         $.getJSON("api/masstransitstopgapiurl?latitude=" + lati + "&longitude=" + longi+"&heading="+heading)
           .done(function (response) {
-            $(streetViewTemplatesgooglestreetview).replaceWith('<img id="streetViewTemplatesgooglestreetview" alt="Google StreetView-n&auml;kym&auml" src=' +response.gmapiurl +'>');
+            $('#streetViewTemplatesgooglestreetview').replaceWith('<img id="streetViewTemplatesgooglestreetview" alt="Google StreetView-n&auml;kym&auml" src=' +response.gmapiurl +'>');
           });
       }
       if (lati && longi && heading)

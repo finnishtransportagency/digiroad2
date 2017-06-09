@@ -51,15 +51,15 @@ class RoadAddressDAO {
     sql"""
 			select distinct (ra.road_number)
       from road_address ra
-      where ra.valid_to is null OR ra.valid_to <= SYSDATE
+      where ra.valid_to is null OR ra.valid_to > SYSDATE
 		  """.as[Long].list
   }
 
   def getRoadAddressesFiltered(roadNumber: Long, roadPartNumber: Long, startM: Double, endM: Double): Seq[RoadAddress] = {
     val where =
-      s""" where (( pos.start_measure >= $startM and pos.end_measure <= $endM ) or
-         ( $endM >= pos.start_measure and $endM <= pos.end_measure)) and ra.road_number= $roadNumber and ra.road_part_number= $roadPartNumber
-          and (valid_to is null OR valid_to <= SYSDATE) and ra.floating = 0 """
+      s""" where (( ra.start_addr_m >= $startM and ra.end_addr_m <= $endM ) or ( $startM >= ra.start_addr_m and $startM < ra.end_addr_m) or
+         ( $endM > ra.start_addr_m and $endM <= ra.end_addr_m)) and ra.road_number= $roadNumber and ra.road_part_number= $roadPartNumber
+         and (valid_to is null OR valid_to > SYSDATE) and ra.floating = 0 """
 
     val query =
       s"""

@@ -24,12 +24,13 @@
     });
 
     function vectorLayerStyle(feature) {
-      return styler.generateStyleByFeature(feature.roadLinkData, currentZoom-2);
+      return styler.generateStyleByFeature(feature.roadLinkData, currentZoom);
     }
 
     var loadFeatures = function (features) {
       vectorSource.clear(true);
       vectorSource.addFeatures(selectedLinkProperty.filterFeaturesAfterSimulation(features));
+      eventbus.trigger('roadLayer:featuresLoaded', features); // For testing: tells that the layer is ready to be "clicked"
     };
 
     var minimumContentZoomLevel = function() {
@@ -67,6 +68,7 @@
       style: vectorLayerStyle
     });
     vectorLayer.setVisible(true);
+    vectorLayer.set('name', 'roadLayer');
     map.addLayer(vectorLayer);
 
     eventbus.on('map:moved', mapMovedHandler, this);

@@ -9,4 +9,10 @@ class TierekisteriAuthPropertyReaderSpec extends FunSuite with Matchers {
     val authenticate = reader.getAuthInBase64
     authenticate should be ("dXNlclhZWjpwYXNzd29yZFhZWg==")
   }
+
+  test("Old Basic64 authentication for TR client") {
+    val authenticate = reader.getOldAuthInBase64
+    authenticate should be ("dXNlclhZWjpwYXNzd29yZFhZWg==")
+  }
+
 }

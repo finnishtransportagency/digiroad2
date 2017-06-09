@@ -69,6 +69,13 @@ class RoadAddressLinkPartitionerSpec extends FunSuite with Matchers {
     partitioned.size should be (4)
   }
 
+  test("Connected anomalous type NoAddressGiven & GeometryChanged roads are combined") {
+    val add = makeRoadAddressLink(0, Anomaly.GeometryChanged.value, 0, 0, 1.0, 11.0)
+    val mod = add.copy(geometry = Seq(Point(10.0,21.0), Point(11.0,21.0)))
+    val partitioned = RoadAddressLinkPartitioner.partition(roadAddressLinks ++ Seq(mod))
+    partitioned.size should be (4)
+  }
+
   test("Connected floating + other roads are not combined") {
     val add = Seq(makeRoadAddressLink(18, 0, 1, 2),makeRoadAddressLink(19, 0, 1, 2))
     val mod2 = add.map(_.copy(roadLinkType = RoadLinkType.FloatingRoadLinkType))

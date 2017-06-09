@@ -5,8 +5,8 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
 
   describe('when loading application with overlapping bus stops in different validity periods', function() {
     var openLayersMap;
-    before(function(done) { testHelpers.restartApplication(
-      function(map) {
+    before(function(done) {
+      testHelpers.restartApplication(function(map) {
         openLayersMap = map;
         done();
       });

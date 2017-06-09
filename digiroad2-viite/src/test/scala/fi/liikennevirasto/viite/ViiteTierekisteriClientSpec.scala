@@ -3,7 +3,7 @@ package fi.liikennevirasto.viite
 import java.net.ConnectException
 import java.util.Properties
 
-import fi.liikennevirasto.viite.dao.{ChangeType, Discontinuity, RoadAddressChangeInfo, RoadAddressChangeRecipient}
+import fi.liikennevirasto.viite.dao.{AddressChangeType, Discontinuity, RoadAddressChangeInfo, RoadAddressChangeRecipient}
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.conn.{ConnectTimeoutException, HttpHostConnectException}
@@ -58,7 +58,7 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
   test("TR-connection Create test") {
     assume(testConnection)
     val message= ViiteTierekisteriClient.sendJsonMessage(ChangeProject(0, "Testproject", "TestUser", 3, "2017-06-01", Seq {
-      RoadAddressChangeInfo(ChangeType.apply(2), RoadAddressChangeRecipient(None, None, None, None, None, None), RoadAddressChangeRecipient(Option(403), Option(0), Option(8), Option(0), Option(8), Option(1001)), Discontinuity.apply(1), RoadType.apply(1)) // projectid 0 wont be added to TR
+      RoadAddressChangeInfo(AddressChangeType.apply(2), RoadAddressChangeRecipient(None, None, None, None, None, None), RoadAddressChangeRecipient(Option(403), Option(0), Option(8), Option(0), Option(8), Option(1001)), Discontinuity.apply(1), RoadType.apply(1)) // projectid 0 wont be added to TR
     }))
     message.projectId should be (0)
     message.status should be (201)

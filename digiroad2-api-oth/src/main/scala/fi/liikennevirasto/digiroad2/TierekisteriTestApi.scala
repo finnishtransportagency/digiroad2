@@ -76,17 +76,20 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
     )
   }
 
+  val trafficVolumeTRCode = "tl201"
+  val lightingTRCode = "tl167"
+
   val trafficVolume: Map[String,List[Map[String, Any]]] ={
     Map(
       "Data" ->
         List(
           Map(
-              "TIETOLAJI" -> "tl201",          //Field code
-              "TIE" -> 45,                     //Road number
-              "OSA" -> 1,                      //Road part number
+              "TIETOLAJI" -> trafficVolumeTRCode,   //Field code
+              "TIE" -> 45,                          //Road number
+              "OSA" -> 1,                           //Road part number
               "ETAISYYS" -> 0,                      //Start distance
-              "LET" -> 0,                    //End distance
-              "KVL" -> 1                       //placeholder value for traffic volume
+              "LET" -> 0,                           //End distance
+              "KVL" -> 1                            //placeholder value for traffic volume
             )
         )
     )
@@ -99,9 +102,28 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
     )
   }
 
+  val lighting: Map[String,List[Map[String, Any]]] ={
+    Map(
+      "Data" ->
+        List(
+          Map(
+            "TIETOLAJI" -> lightingTRCode,   //Field code
+            "TIE" -> 45,                     //Road number
+            "OSA" -> 1,                      //Road part number
+            "ETAISYYS" -> 0,                 //Start distance
+            "LET" -> 0                       //End distance
+          )
+        )
+    )
+  }
+
+  def headerContainsAuth(header: Map[String, String]): Boolean = {
+    //Checks that header contains X-OTH-Authorization and X-Authorization attribute with correct base64 value
+    (header.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg==")) && header.exists(_==("X-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg==")))
+  }
+
   get("/pysakit/:id"){
-    //Checks that header contains X-OTH-Authorization attribute with correct base64 value
-    if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg=="))) halt(BadRequest("401 Unauthorized"))
+    if(!headerContainsAuth(request.headers)) halt(BadRequest("401 Unauthorized"))
     val liviId = params("id")
     if (liviId == "OTHJ208910")
       massTransitStopWithOnlyMandatoryParameters
@@ -114,8 +136,7 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
   }
 
   get("/pysakit/") {
-    //Checks that header contains X-OTH-Authorization attribute with correct base64 value
-    if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg=="))) halt(BadRequest("401 Unauthorized"))
+    if(!headerContainsAuth(request.headers)) halt(BadRequest("401 Unauthorized"))
     List(
       massTransitStop,
       massTransitStopWithOnlyMandatoryParameters
@@ -123,8 +144,7 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
   }
 
   put("/pysakit/:liviId") {
-    //Checks that header contains X-OTH-Authorization attribute with correct base64 value
-    if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg=="))) halt(BadRequest("401 Unauthorized"))
+    if(!headerContainsAuth(request.headers)) halt(BadRequest("401 Unauthorized"))
     val liviId = params("liviId")
     if (liviId == "OTHJ20891499999999") {
       halt(BadRequest("Invalid 'mass transit stop' value for a field"))
@@ -143,8 +163,8 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
   }
 
   post("/pysakit/"){
-    //Checks that header contains X-OTH-Authorization attribute with correct base64 value
-    if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg=="))) halt(BadRequest("401 Unauthorized"))
+    if(!headerContainsAuth(request.headers)) halt(BadRequest("401 Unauthorized"))
+
     val body = parsedBody.extract[Map[String, Any]]
 
     mandatoryFields.foreach{ field  =>
@@ -163,8 +183,7 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
   }
 
   delete("/pysakit/:liviId"){
-    //Checks that header contains X-OTH-Authorization attribute with correct base64 value
-    if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg=="))) halt(BadRequest("401 Unauthorized"))
+    if(!headerContainsAuth(request.headers)) halt(BadRequest("401 Unauthorized"))
     val liviId = params("liviId")
 
     if(liviId != "OTHJ208914")
@@ -174,35 +193,47 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
   }
 
   get("/tietolajit/:fieldCode/:roadNumber") {
-    //Checks that header contains X-OTH-Authorization attribute with correct base64 value
-    if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg==")))
-      halt(BadRequest("401 Unauthorized"))
+    if(!headerContainsAuth(request.headers)) halt(BadRequest("401 Unauthorized"))
 
-    trafficVolume
+    val fieldCode = params("fieldCode")
+    if (fieldCode == trafficVolumeTRCode) {
+      trafficVolume
+    } else if (fieldCode == lightingTRCode) {
+      lighting
+    }
   }
 
   get("/tietolajit/:fieldCode/:roadNumber/:roadPartNumber") {
-    //Checks that header contains X-OTH-Authorization attribute with correct base64 value
-    if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg==")))
-      halt(BadRequest("401 Unauthorized"))
+    if(!headerContainsAuth(request.headers)) halt(BadRequest("401 Unauthorized"))
 
-    trafficVolume
+    val fieldCode = params("fieldCode")
+    if (fieldCode == trafficVolumeTRCode) {
+      trafficVolume
+    } else if (fieldCode == lightingTRCode) {
+      lighting
+    }
   }
 
   get("/tietolajit/:fieldCode/:roadNumber/:roadPartNumber/:startDistance") {
-    //Checks that header contains X-OTH-Authorization attribute with correct base64 value
-    if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg==")))
-      halt(BadRequest("401 Unauthorized"))
+    if(!headerContainsAuth(request.headers)) halt(BadRequest("401 Unauthorized"))
 
-    trafficVolume
+    val fieldCode = params("fieldCode")
+    if (fieldCode == trafficVolumeTRCode) {
+      trafficVolume
+    } else if (fieldCode == lightingTRCode) {
+      lighting
+    }
   }
 
   get("/tietolajit/:fieldCode/:roadNumber/:roadPartNumber/:startDistance/:endPart/:endDistance") {
-    //Checks that header contains X-OTH-Authorization attribute with correct base64 value
-    if (!request.headers.exists(_==("X-OTH-Authorization","Basic dXNlclhZWjpwYXNzd29yZFhZWg==")))
-      halt(BadRequest("401 Unauthorized"))
+    if(!headerContainsAuth(request.headers)) halt(BadRequest("401 Unauthorized"))
 
-    trafficVolume
+    val fieldCode = params("fieldCode")
+    if (fieldCode == trafficVolumeTRCode) {
+      trafficVolume
+    } else if (fieldCode == lightingTRCode) {
+      lighting
+    }
   }
 }
 

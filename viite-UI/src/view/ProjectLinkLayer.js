@@ -2,8 +2,10 @@
   root.ProjectLinkLayer = function(map, projectCollection, selectedProjectLinkProperty, roadLayer) {
     var layerName = 'roadAddressProject';
     var vectorLayer;
+    var calibrationPointVector = new ol.source.Vector({});
     var layerMinContentZoomLevels = {};
     var currentZoom = 0;
+    var standardZIndex = 6;
     Layer.call(this, layerName, roadLayer);
     var project;
     var me = this;
@@ -24,6 +26,11 @@
         loadFeatures(features);
       },
       strategy: ol.loadingstrategy.bbox
+    });
+
+    var calibrationPointLayer = new ol.layer.Vector({
+      source: calibrationPointVector,
+      name: 'calibrationPointLayer'
     });
 
     var styleFunction = function (feature, resolution){
@@ -55,7 +62,7 @@
         });
 
         var zIndex = styler.determineZIndex(feature.projectLinkData.roadLinkType, feature.projectLinkData.anomaly, feature.projectLinkData.roadLinkSource, status);
-        lineStyle.setZIndex(zIndex + 3);
+        lineStyle.setZIndex(zIndex + 1);
         return [lineStyle];
       }
       else{
@@ -67,52 +74,100 @@
       source: vectorSource,
       style: styleFunction
     });
+    vectorLayer.set('name', layerName);
 
     var selectSingleClick = new ol.interaction.Select({
       layer: vectorLayer,
-      //Limit this interaction to the singleClick
       condition: ol.events.condition.singleClick,
       //The new/temporary layer needs to have a style function as well, we define it here.
       style: function(feature, resolution) {
-        return new ol.style.Style({
-          fill: new ol.style.Fill({
-            color: 'rgba(0, 255, 0, 0.75)'
-          }),
-          stroke: new ol.style.Stroke({
-            color: 'rgba(0, 255, 0, 0.95)',
-            width: 8
-          })
-        });
+        if (feature.projectLinkData.status === 0){
+          return new ol.style.Style({
+            fill: new ol.style.Fill({
+              color: 'rgba(0, 255, 0, 0.75)'
+            }),
+            stroke: new ol.style.Stroke({
+              color: 'rgba(0, 255, 0, 0.95)',
+              width: 8
+            })
+          });
+        } else if(feature.projectLinkData.status === 1){
+          return new ol.style.Style({
+            fill: new ol.style.Fill({
+              color: 'rgba(0, 0, 0, 0.75)'
+            }),
+            stroke: new ol.style.Stroke({
+              color: 'rgba(0, 0, 0, 0.95)',
+              width: 8
+            })
+          });
+        }
       }
     });
 
+    selectSingleClick.set('name','selectSingleClickInteractionPLL');
+
     selectSingleClick.on('select',function(event) {
-      // TODO: 374 validate selection
+      // TODO: allow selection for non-addressed road links
       var selection = _.find(event.selected, function (selectionTarget) {
-          return !_.isUndefined(selectionTarget.projectLinkData);
+        return !_.isUndefined(selectionTarget.projectLinkData) && selectionTarget.projectLinkData.status === 0;
       });
+      revertSelectedChanges();
       selectedProjectLinkProperty.clean();
+      $('.wrapper').remove();
+      $('#actionButtons').empty();
       if (!_.isUndefined(selection))
         selectedProjectLinkProperty.open(selection.projectLinkData.linkId, true);
     });
 
     var selectDoubleClick = new ol.interaction.Select({
       layer: vectorLayer,
-      //Limit this interaction to the singleClick
       condition: ol.events.condition.doubleClick,
       //The new/temporary layer needs to have a style function as well, we define it here.
       style: function(feature, resolution) {
-        return new ol.style.Style({
-          fill: new ol.style.Fill({
-            color: 'rgba(0, 255, 0, 0.75)'
-          }),
-          stroke: new ol.style.Stroke({
-            color: 'rgba(0, 255, 0, 0.95)',
-            width: 8
-          })
-        });
+        if(feature.projectLinkData.status === 0) {
+          return new ol.style.Style({
+            fill: new ol.style.Fill({
+              color: 'rgba(0, 255, 0, 0.75)'
+            }),
+            stroke: new ol.style.Stroke({
+              color: 'rgba(0, 255, 0, 0.95)',
+              width: 8
+            })
+          });
+        } else if(feature.projectLinkData.status === 1){
+          return new ol.style.Style({
+            fill: new ol.style.Fill({
+              color: 'rgba(0, 0, 0, 0.75)'
+            }),
+            stroke: new ol.style.Stroke({
+              color: 'rgba(0, 0, 0, 0.95)',
+              width: 8
+            })
+          });
+        }
       }
     });
+
+    selectDoubleClick.set('name','selectDoubleClickInteractionPLL');
+
+    selectDoubleClick.on('select',function(event) {
+      // TODO: allow selection for non-addressed road links
+      var selection = _.find(event.selected, function (selectionTarget) {
+        return !_.isUndefined(selectionTarget.projectLinkData) && selectionTarget.projectLinkData.status === 0;
+      });
+      revertSelectedChanges();
+      if (!_.isUndefined(selection))
+        selectedProjectLinkProperty.open(selection.projectLinkData.linkId);
+    });
+
+    var revertSelectedChanges = function() {
+      if(projectCollection.isDirty()) {
+        projectCollection.revertLinkStatus();
+        projectCollection.setDirty([]);
+        eventbus.trigger('roadAddress:projectLinksEdited');
+      }
+    };
 
     var clearHighlights = function(){
       if(selectDoubleClick.getFeatures().getLength() !== 0){
@@ -157,24 +212,86 @@
       highlightFeatures();
     });
 
-    selectDoubleClick.on('select',function(event) {
-      // TODO: 374 validate selection
-      var selection = _.find(event.selected, function (selectionTarget) {
-          return !_.isUndefined(selectionTarget.projectLinkData);
-      });
-      if (!_.isUndefined(selection))
-        selectedProjectLinkProperty.open(selection.projectLinkData.linkId);
+    eventbus.on('layer:selected', function(layer) {
+      if (layer === 'roadAddressProject') {
+        vectorLayer.setVisible(true);
+        calibrationPointLayer.setVisible(true);
+      } else {
+        clearHighlights();
+        var featuresToHighlight = [];
+        vectorLayer.setVisible(false);
+        calibrationPointLayer.setVisible(false);
+        eventbus.trigger('roadLinks:fetched');
+      }
     });
 
     var zoomDoubleClickListener = function(event) {
       _.defer(function(){
-        if(selectDoubleClick.getFeatures().getLength() < 1 && selectedProjectLinkProperty.get().length < 1 && map.getView().getZoom() <= 13){
+        if(selectedProjectLinkProperty.get().length === 0 && applicationModel.getSelectedLayer() == 'roadAddressProject' && map.getView().getZoom() <= 13){
           map.getView().setZoom(map.getView().getZoom()+1);
         }
       });
     };
     //This will control the double click zoom when there is no selection that activates
     map.on('dblclick', zoomDoubleClickListener);
+
+    var infoContainer = document.getElementById('popup');
+    var infoContent = document.getElementById('popup-content');
+
+    var overlay = new ol.Overlay(({
+      element: infoContainer
+    }));
+
+    map.addOverlay(overlay);
+
+    //Listen pointerMove and get pixel for displaying roadAddress feature info
+    eventbus.on('map:mouseMoved', function (event, pixel) {
+      if (event.dragging || applicationModel.getSelectedLayer() !== 'roadAddressProject') {
+        return;
+      }
+      displayRoadAddressInfo(event, pixel);
+    });
+
+    var displayRoadAddressInfo = function(event, pixel) {
+
+      var featureAtPixel = map.forEachFeatureAtPixel(pixel, function (feature, vectorLayer) {
+        return feature;
+      });
+
+      //Ignore if target feature is marker
+      if(isDefined(featureAtPixel) && (isDefined(featureAtPixel.roadLinkData) || isDefined(featureAtPixel.projectLinkData))) {
+       var roadData;
+       var coordinate = map.getEventCoordinate(event.originalEvent);
+
+       if(isDefined(featureAtPixel.projectLinkData)) {
+         roadData = featureAtPixel.projectLinkData;
+       }
+       else {
+         roadData = featureAtPixel.roadLinkData;
+       }
+        if (roadData.roadNumber!==0 &&roadData.roadPartNumber!==0&&roadData.roadPartNumber!==99 ){
+       infoContent.innerHTML = '<p>' +
+          'Tienumero: ' + roadData.roadNumber + '<br>' +
+          'Tieosanumero: ' + roadData.roadPartNumber + '<br>' +
+          'Ajorata: ' + roadData.trackCode + '<br>' +
+          'AET: ' + roadData.startAddressM + '<br>' +
+          'LET: ' + roadData.endAddressM + '<br>' +'</p>';
+
+        } else {
+          infoContent.innerHTML = '<p>' +
+          'Tuntematon tien segmentti' +'</p>'; // road with no address
+        }
+
+       overlay.setPosition(coordinate);
+
+      } else {
+        overlay.setPosition(undefined);
+      }
+    };
+
+var isDefined=function(variable) {
+ return !_.isUndefined(variable);
+};
 
     //Add defined interactions to the map.
     map.addInteraction(selectSingleClick);
@@ -190,6 +307,54 @@
       } else if (mapState.selectedLayer == layerName){
         projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1, undefined);
         handleRoadsVisibility();
+      }
+    };
+
+    /**
+     * This will add all the following interactions from the map:
+     * -selectDoubleClick
+     * -selectSingleClick
+     */
+
+    var addSelectInteractions = function () {
+      map.addInteraction(selectDoubleClick);
+      map.addInteraction(selectSingleClick);
+    };
+
+    /**
+     * This will remove all the following interactions from the map:
+     * -selectDoubleClick
+     * -selectSingleClick
+     */
+
+    var removeSelectInteractions = function() {
+      map.removeInteraction(selectDoubleClick);
+      map.removeInteraction(selectSingleClick);
+    };
+
+    /**
+     * This will deactivate the following interactions from the map:
+     * -selectDoubleClick
+     * -selectSingleClick - only if demanded with the Both
+     */
+
+    var deactivateSelectInteractions = function(both) {
+      selectDoubleClick.setActive(false);
+      if(both){
+        selectSingleClick.setActive(false);
+      }
+    };
+
+    /**
+     * This will activate the following interactions from the map:
+     * -selectDoubleClick
+     * -selectSingleClick - only if demanded with the Both
+     */
+
+    var activateSelectInteractions = function(both) {
+      selectDoubleClick.setActive(true);
+      if(both){
+        selectSingleClick.setActive(true);
       }
     };
 
@@ -219,8 +384,12 @@
       me.hide();
     };
 
+    var clearProjectLinkLayer = function() {
+      vectorLayer.getSource().clear();
+    };
+
     var redraw = function(){
-      var editedLinks = projectCollection.getDirty();
+      var editedLinks = _.map(projectCollection.getDirty(), function(editedLink) {return editedLink.id;});
       var projectLinks = projectCollection.getAll();
       var features = [];
       _.map(projectLinks, function(projectLink) {
@@ -233,6 +402,13 @@
         feature.projectLinkData = projectLink;
         features.push(feature);
       });
+      var actualPoints = me.drawCalibrationMarkers(calibrationPointLayer.source, projectLinks);
+      _.each(actualPoints, function (actualPoint) {
+        var calMarker = new CalibrationPoint(actualPoint.point);
+        calibrationPointLayer.getSource().addFeature(calMarker.getMarker(true));
+      });
+
+      calibrationPointLayer.setZIndex(standardZIndex + 2);
       var partitioned = _.partition(features, function(feature) {
         return (!_.isUndefined(feature.projectLinkData.linkId) && _.contains(editedLinks, feature.projectLinkData.linkId));
       });
@@ -271,8 +447,6 @@
     eventbus.on('roadAddressProject:selected', function(projId) {
       eventbus.once('roadAddressProject:projectFetched', function(id) {
         projectCollection.fetch(map.getView().calculateExtent(map.getSize()),map.getView().getZoom(), id);
-        // vectorSource.clear();
-        // eventbus.trigger('map:clearLayers');
       });
       projectCollection.getProjectsWithLinksById(projId);
     });
@@ -285,14 +459,41 @@
       redraw();
     });
 
+    eventbus.on('roadAddressProject:projectLinkSaved',function(projectId, isPublishable){
+      projectCollection.fetch(map.getView().calculateExtent(map.getSize()),map.getView().getZoom(), projectId, isPublishable);
+    });
+
     eventbus.on('map:moved', mapMovedHandler, this);
 
-    vectorLayer.setVisible(true);
-    map.addLayer(vectorLayer);
+    eventbus.on('layer:selected', function(layer, previouslySelectedLayer) {
+     //TODO create proper system for layer changes and needed calls
+     if (layer !== 'roadAddressProject') {
+       deactivateSelectInteractions(true);
+       removeSelectInteractions();
+     }
+     else {
+       activateSelectInteractions(true);
+       addSelectInteractions();
+     }
+     if (previouslySelectedLayer === 'roadAddressProject') {
+       clearProjectLinkLayer();
+       hideLayer();
+       removeSelectInteractions();
+     }
+    });
 
+    eventbus.on('roadAddressProject:deselectFeaturesSelected', function(){
+      clearHighlights();
+    });
+
+    vectorLayer.setVisible(true);
+    calibrationPointLayer.setVisible(true);
+    map.addLayer(vectorLayer);
+    map.addLayer(calibrationPointLayer);
     return {
       show: show,
-      hide: hideLayer
+      hide: hideLayer,
+      clearHighlights: clearHighlights
     };
   };
 

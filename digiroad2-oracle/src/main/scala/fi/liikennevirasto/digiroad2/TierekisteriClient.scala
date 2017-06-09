@@ -2,11 +2,12 @@ package fi.liikennevirasto.digiroad2
 
 import java.text.{ParseException, SimpleDateFormat}
 import java.util.Date
+
 import fi.liikennevirasto.digiroad2.asset.{Property, PropertyValue}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
 import fi.liikennevirasto.digiroad2.util.{RoadAddress, RoadSide, TierekisteriAuthPropertyReader, Track}
 import org.apache.http.HttpStatus
-import org.apache.http.client.methods._
+import org.apache.http.client.methods.{HttpRequestBase, _}
 import org.apache.http.entity.{ContentType, StringEntity}
 import org.apache.http.impl.client.CloseableHttpClient
 import org.joda.time.DateTime
@@ -157,11 +158,16 @@ case class TierekisteriMassTransitStop(nationalId: Long,
                                        removalDate: Option[Date],
                                        inventoryDate: Date)
 
-case class TierekisteriAssetData(roadNumber: Long,
-                                 roadPartNumber: Long,
-                                 starMValue: Double,
-                                 endMValue: Double,
-                                 kvl: Int)
+trait TierekisteriAssetData {
+  val roadNumber: Long
+  val roadPartNumber: Long
+  val starMValue: Double
+  val endMValue: Double
+}
+
+case class TierekisteriTrafficData(roadNumber: Long, roadPartNumber: Long, starMValue: Double, endMValue: Double, kvl: Int) extends TierekisteriAssetData
+
+case class TierekisteriLighting(roadNumber: Long, roadPartNumber: Long, starMValue: Double, endMValue: Double) extends TierekisteriAssetData
 
 case class TierekisteriError(content: Map[String, Any], url: String)
 
@@ -184,9 +190,14 @@ trait TierekisteriClient{
 
   def mapFields(data: Map[String, Any]): TierekisteriType
 
+  def addAuthorizationHeader(request: HttpRequestBase) = {
+    request.addHeader("X-OTH-Authorization", "Basic " + auth.getOldAuthInBase64)
+    request.addHeader("X-Authorization", "Basic " + auth.getAuthInBase64)
+
+  }
   protected def request[T](url: String): Either[T, TierekisteriError] = {
     val request = new HttpGet(url)
-    request.addHeader("X-OTH-Authorization", "Basic " + auth.getAuthInBase64)
+    addAuthorizationHeader(request)
     val response = client.execute(request)
     try {
       val statusCode = response.getStatusLine.getStatusCode
@@ -205,7 +216,7 @@ trait TierekisteriClient{
 
   protected def post(url: String, trEntity: TierekisteriType, createJson: (TierekisteriType) => StringEntity): Option[TierekisteriError] = {
     val request = new HttpPost(url)
-    request.addHeader("X-OTH-Authorization", "Basic " + auth.getAuthInBase64)
+    addAuthorizationHeader(request)
     request.setEntity(createJson(trEntity))
     val response = client.execute(request)
     try {
@@ -227,7 +238,7 @@ trait TierekisteriClient{
 
   protected def put(url: String, trEntity: TierekisteriType, createJson: (TierekisteriType) => StringEntity): Option[TierekisteriError] = {
     val request = new HttpPut(url)
-    request.addHeader("X-OTH-Authorization", "Basic " + auth.getAuthInBase64)
+    addAuthorizationHeader(request)
     request.setEntity(createJson(trEntity))
     val response = client.execute(request)
     try {
@@ -250,7 +261,7 @@ trait TierekisteriClient{
   protected def delete(url: String): Option[TierekisteriError] = {
     val request = new HttpDelete(url)
     request.setHeader("content-type","application/json")
-    request.addHeader("X-OTH-Authorization", "Basic " + auth.getAuthInBase64)
+    addAuthorizationHeader(request)
     val response = client.execute(request)
     try {
       val statusCode = response.getStatusLine.getStatusCode
@@ -536,19 +547,13 @@ class TierekisteriMassTransitStopClient(trEndPoint: String, trEnabled: Boolean, 
   }
 }
 
-class TierekisteriAssetDataClient(trEndPoint: String, trEnable: Boolean, httpClient: CloseableHttpClient) extends TierekisteriClient {
-
-  override def tierekisteriRestApiEndPoint: String = trEndPoint
-  override def tierekisteriEnabled: Boolean = trEnable
-  override def client: CloseableHttpClient = httpClient
-  type TierekisteriType = TierekisteriAssetData
+trait TierekisteriAssetDataClient extends TierekisteriClient {
 
   private val serviceName = "tietolajit/"
-  private val trKVL = "KVL"
-  private val trRoadNumber = "TIE"
-  private val trRoadPartNumber = "OSA"
-  private val trStartMValue = "ETAISYYS"
-  private val trEndMValue = "LET"
+  protected val trRoadNumber = "TIE"
+  protected val trRoadPartNumber = "OSA"
+  protected val trStartMValue = "ETAISYYS"
+  protected val trEndMValue = "LET"
 
   private val serviceUrl : String = tierekisteriRestApiEndPoint + serviceName
   private def serviceUrl(assetType: String, roadNumber: Long) : String = serviceUrl + assetType + "/" + roadNumber
@@ -558,24 +563,13 @@ class TierekisteriAssetDataClient(trEndPoint: String, trEnable: Boolean, httpCli
   private def serviceUrl(assetType: String, roadNumber: Long, roadPartNumber: Long, startDistance: Int, endPart: Int, endDistance: Int) : String =
     serviceUrl + assetType + "/" + roadNumber + "/" + roadPartNumber + "/" + startDistance + "/" + endPart + "/" + endDistance
 
-  override def mapFields(data: Map[String, Any]): TierekisteriAssetData = {
-    //Mandatory field
-    val kvl = convertToInt(getMandatoryFieldValue(data, trKVL)).get
-    val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
-    val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
-    val starMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
-    val endMValue = convertToDouble(getMandatoryFieldValue(data, trEndMValue)).get
-
-    TierekisteriAssetData(roadNumber, roadPartNumber, starMValue, endMValue, kvl)
-  }
-
   /**
     * Return all asset data currently active from Tierekisteri
     * Tierekisteri REST API endpoint: GET /trrest/tietolajit/{tietolaji}/{tie}
     *
     * @return
     */
-  def fetchActiveAssetData(assetType: String, roadNumber: Long): Seq[TierekisteriAssetData] = {
+  def fetchActiveAssetData(assetType: String, roadNumber: Long): Seq[TierekisteriType] = {
     request[Map[String,List[Map[String, Any]]]](serviceUrl(assetType, roadNumber)) match {
       case Left(content) => {
         content("Data").map{
@@ -587,7 +581,7 @@ class TierekisteriAssetDataClient(trEndPoint: String, trEnable: Boolean, httpCli
     }
   }
 
-  def fetchActiveAssetData(assetType: String, roadNumber: Long, roadPartNumber: Long): Seq[TierekisteriAssetData] = {
+  def fetchActiveAssetData(assetType: String, roadNumber: Long, roadPartNumber: Long): Seq[TierekisteriType] = {
     request[Map[String,List[Map[String, Any]]]](serviceUrl(assetType, roadNumber, roadPartNumber)) match {
       case Left(content) =>
         content("Data").map{
@@ -598,7 +592,7 @@ class TierekisteriAssetDataClient(trEndPoint: String, trEnable: Boolean, httpCli
     }
   }
 
-  def fetchActiveAssetData(assetType: String, roadNumber: Long, roadPartNumber: Long, startDistance: Int): Seq[TierekisteriAssetData] = {
+  def fetchActiveAssetData(assetType: String, roadNumber: Long, roadPartNumber: Long, startDistance: Int): Seq[TierekisteriType] = {
     request[Map[String,List[Map[String, Any]]]](serviceUrl(assetType, roadNumber, roadPartNumber, startDistance)) match {
       case Left(content) =>
         content("Data").map{
@@ -609,7 +603,7 @@ class TierekisteriAssetDataClient(trEndPoint: String, trEnable: Boolean, httpCli
     }
   }
 
-  def fetchActiveAssetData(assetType: String, roadNumber: Long, roadPartNumber: Long, startDistance: Int, endPart: Int, endDistance: Int): Seq[TierekisteriAssetData] = {
+  def fetchActiveAssetData(assetType: String, roadNumber: Long, roadPartNumber: Long, startDistance: Int, endPart: Int, endDistance: Int): Seq[TierekisteriType] = {
     request[Map[String,List[Map[String, Any]]]](serviceUrl(assetType, roadNumber, roadPartNumber, startDistance, endPart, endDistance)) match {
       case Left(content) =>
         content("Data").map{
@@ -621,6 +615,42 @@ class TierekisteriAssetDataClient(trEndPoint: String, trEnable: Boolean, httpCli
   }
 }
 
+class TierekisteriTrafficVolumeAsset(trEndPoint: String, trEnable: Boolean, httpClient: CloseableHttpClient) extends TierekisteriAssetDataClient {
+  override def tierekisteriRestApiEndPoint: String = trEndPoint
+  override def tierekisteriEnabled: Boolean = trEnable
+  override def client: CloseableHttpClient = httpClient
+  type TierekisteriType = TierekisteriTrafficData
+
+  private val trKVL = "KVL"
+
+  override def mapFields(data: Map[String, Any]): TierekisteriTrafficData = {
+    //Mandatory field
+    val kvl = convertToInt(getMandatoryFieldValue(data, trKVL)).get
+    val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
+    val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
+    val starMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
+    val endMValue = convertToDouble(getMandatoryFieldValue(data, trEndMValue)).get
+
+    TierekisteriTrafficData(roadNumber, roadPartNumber, starMValue, endMValue, kvl)
+  }
+}
+
+class TierekisteriLightingAsset(trEndPoint: String, trEnable: Boolean, httpClient: CloseableHttpClient) extends TierekisteriAssetDataClient {
+  override def tierekisteriRestApiEndPoint: String = trEndPoint
+  override def tierekisteriEnabled: Boolean = trEnable
+  override def client: CloseableHttpClient = httpClient
+  type TierekisteriType = TierekisteriLighting
+
+  override def mapFields(data: Map[String, Any]): TierekisteriLighting = {
+    //Mandatory field
+    val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
+    val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
+    val starMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
+    val endMValue = convertToDouble(getMandatoryFieldValue(data, trEndMValue)).get
+
+    TierekisteriLighting(roadNumber, roadPartNumber, starMValue, endMValue)
+  }
+}
 
 object ErrorMessageConverter {
   protected implicit val jsonFormats: Formats = DefaultFormats

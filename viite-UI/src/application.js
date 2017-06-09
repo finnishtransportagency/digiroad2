@@ -89,6 +89,7 @@
     new LinkPropertyForm(models.selectedLinkProperty);
 
     new RoadAddressProjectForm(models.roadAddressProjectCollection);
+    new RoadAddressProjectEditForm(models.roadAddressProjectCollection, models.selectedProjectLinkProperty, projectLinkLayer);
 
     var layers = _.merge({
       road: roadLayer,
@@ -107,7 +108,7 @@
 
     // Show information modal in integration environment (remove when not needed any more)
     if (Environment.name() === 'integration') {
-      showInformationModal('Huom!<br>Tämä sivu ei ole enää käytössä.<br>Digiroad-sovellus on siirtynyt osoitteeseen <a href="https://extranet.liikennevirasto.fi/digiroad/" style="color:#FFFFFF;text-decoration: underline">https://extranet.liikennevirasto.fi/digiroad/</a>');
+      showInformationModal('Huom!<br>Olet integraatiotestiympäristössä.');
     }
 
     new MapView(map, layers, new InstructionsPopup($('.digiroad2')));

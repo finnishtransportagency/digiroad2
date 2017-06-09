@@ -58,7 +58,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case e: Exception => 99
       }
     }
-    def extractBearing(massTransitStop: PersistedMassTransitStop): (String, Option[Int]) = { "suuntima" -> MassTransitStopOperations.calculateActualBearing(massTransitStop.validityDirection.getOrElse(0), massTransitStop.bearing) }
+    def extractBearing(massTransitStop: PersistedMassTransitStop): (String, Option[Int]) = { "suuntima" -> GeometryUtils.calculateActualBearing(massTransitStop.validityDirection.getOrElse(0), massTransitStop.bearing) }
     def extractExternalId(massTransitStop: PersistedMassTransitStop): (String, Long) = { "valtakunnallinen_id" -> massTransitStop.nationalId }
     def extractFloating(massTransitStop: PersistedMassTransitStop): (String, Boolean) = { "kelluvuus" -> massTransitStop.floating }
     def extractLinkId(massTransitStop: PersistedMassTransitStop): (String, Option[Long]) = { "link_id" -> Some(massTransitStop.linkId) }
@@ -129,6 +129,22 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "linkId" -> speedLimit.linkId,
         latestModificationTime(speedLimit.createdDateTime, speedLimit.modifiedDateTime),
         lastModifiedBy(speedLimit.createdBy, speedLimit.modifiedBy))
+    }
+  }
+
+  def speedLimitsChangesToApi(since: DateTime, speedLimits: Seq[ChangedSpeedLimit]) = {
+    speedLimits.map { case ChangedSpeedLimit(speedLimit, link) =>
+      Map("id" -> speedLimit.id,
+        "sideCode" -> speedLimit.sideCode.value,
+        "points" -> speedLimit.geometry,
+        geometryWKTForLinearAssets(speedLimit.geometry),
+        "value" -> speedLimit.value.fold(0)(_.value),
+        "startMeasure" -> speedLimit.startMeasure,
+        "endMeasure" -> speedLimit.endMeasure,
+        "linkId" -> speedLimit.linkId,
+        latestModificationTime(speedLimit.createdDateTime, speedLimit.modifiedDateTime),
+        lastModifiedBy(speedLimit.createdBy, speedLimit.modifiedBy),
+        "changeType" -> extractChangeType(since, speedLimit.expired, speedLimit.createdDateTime))
     }
   }
 
@@ -239,7 +255,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         geometryWKTForPointAssets(directionalTrafficSign.lon, directionalTrafficSign.lat),
         "linkId" -> directionalTrafficSign.linkId,
         "m_value" -> directionalTrafficSign.mValue,
-        "bearing" -> directionalTrafficSign.bearing,
+        "bearing" -> GeometryUtils.calculateActualBearing( directionalTrafficSign.validityDirection,directionalTrafficSign.bearing),
         "side_code" -> directionalTrafficSign.validityDirection,
         "text" -> directionalTrafficSign.text.map(_.split("\n").toSeq),
         latestModificationTime(directionalTrafficSign.createdAt, directionalTrafficSign.modifiedAt),
@@ -363,6 +379,31 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
           "point" -> Map("x" -> roadNode.geometry.x, "y" -> roadNode.geometry.y)
       )
     }
+  }
+
+  private def extractChangeType(since: DateTime, expired: Boolean, createdDateTime: Option[DateTime]) = {
+    if (expired) {
+      "Remove"
+    } else if (createdDateTime.exists(_.isAfter(since))) {
+      "Add"
+    } else {
+      "Modify"
+    }
+  }
+
+  get("/changes/:assetType") {
+    contentType = formats("json")
+     val since = DateTime.parse(params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter"))))
+     val until = params.get("until") match {
+       case Some(dateValue) => DateTime.parse(dateValue)
+       case _ => DateTime.now()
+     }
+
+     val assetType = params("assetType")
+     assetType match {
+       case "speed_limits" => speedLimitsChangesToApi(since, speedLimitService.getChanged(since, until))
+       case _ => BadRequest("Invalid asset type")
+     }
   }
 
   get("/:assetType") {

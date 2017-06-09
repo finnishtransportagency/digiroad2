@@ -45,6 +45,7 @@
     var vectorLayer = new ol.layer.Vector({
       source: centerMarkerLayer
     });
+    vectorLayer.set('name','mapViewVectorLayer');
 
     var addCenterMarkerLayerToMap = function(map) {
       map.addLayer(vectorLayer);
@@ -106,7 +107,8 @@
     });
 
     map.on('pointermove', function(event) {
-      eventbus.trigger('map:mouseMoved', event);
+      var pixel = map.getEventPixel(event.originalEvent);
+      eventbus.trigger('map:mouseMoved', event, pixel);
     }, true);
 
     map.on('singleclick', function(event) {

@@ -30,8 +30,14 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
       HttpClientBuilder.create().build())
   }
 
-  lazy val tierekisteriAssetDataClient: TierekisteriAssetDataClient = {
-    new TierekisteriAssetDataClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+  lazy val tierekisteriTrafficVolumeAsset: TierekisteriTrafficVolumeAsset = {
+    new TierekisteriTrafficVolumeAsset(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+      HttpClientBuilder.create().build())
+  }
+
+  lazy val tierekisteriLightingAsset: TierekisteriLightingAsset = {
+    new TierekisteriLightingAsset(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
       dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
       HttpClientBuilder.create().build())
   }
@@ -381,7 +387,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
 
   test("fetch from tierekisteri active trafic volume with fieldCode and roadNumber") {
     assume(testConnection)
-    val assets = tierekisteriAssetDataClient.fetchActiveAssetData("tl201", 45)
+    val assets = tierekisteriTrafficVolumeAsset.fetchActiveAssetData("tl201", 45)
 
     assets.size should be (1)
     assets.map(_.kvl) should contain (1)
@@ -389,7 +395,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
 
   test("fetch from tierekisteri active trafic volume with fieldCode, roadNumber and roadPartNumber") {
     assume(testConnection)
-    val assets = tierekisteriAssetDataClient.fetchActiveAssetData("tl201", 45, 1)
+    val assets = tierekisteriTrafficVolumeAsset.fetchActiveAssetData("tl201", 45, 1)
 
     assets.size should be (1)
     assets.map(_.kvl) should contain (1)
@@ -397,7 +403,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
 
   test("fetch from tierekisteri active trafic volume with fieldCode, roadNumber, roadPartNumber and startDistance") {
     assume(testConnection)
-    val assets = tierekisteriAssetDataClient.fetchActiveAssetData("tl201", 45, 1, 0)
+    val assets = tierekisteriTrafficVolumeAsset.fetchActiveAssetData("tl201", 45, 1, 0)
 
     assets.size should be (1)
     assets.map(_.kvl) should contain (1)
@@ -405,9 +411,38 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
 
   test("fetch from tierekisteri active trafic volume with fieldCode, roadNumber, roadPartNumber, startDistance, endPart and endDistance") {
     assume(testConnection)
-    val assets = tierekisteriAssetDataClient.fetchActiveAssetData("tl201", 45, 1, 0, 0, 100)
+    val assets = tierekisteriTrafficVolumeAsset.fetchActiveAssetData("tl201", 45, 1, 0, 0, 100)
 
     assets.size should be (1)
     assets.map(_.kvl) should contain (1)
   }
+
+  test("fetch from tierekisteri active Lighting with fieldCode and roadNumber") {
+    assume(testConnection)
+    val assets = tierekisteriLightingAsset.fetchActiveAssetData("tl167", 45)
+
+    assets.size should be (1)
+  }
+
+  test("fetch from tierekisteri active Lighting with fieldCode, roadNumber and roadPartNumber") {
+    assume(testConnection)
+    val assets = tierekisteriLightingAsset.fetchActiveAssetData("tl167", 45, 1)
+
+    assets.size should be (1)
+  }
+
+  test("fetch from tierekisteri active Lighting with fieldCode, roadNumber, roadPartNumber and startDistance") {
+    assume(testConnection)
+    val assets = tierekisteriLightingAsset.fetchActiveAssetData("tl167", 45, 1, 0)
+
+    assets.size should be (1)
+  }
+
+  test("fetch from tierekisteri active Lighting with fieldCode, roadNumber, roadPartNumber, startDistance, endPart and endDistance") {
+    assume(testConnection)
+    val assets = tierekisteriLightingAsset.fetchActiveAssetData("tl167", 45, 1, 0, 0, 100)
+
+    assets.size should be (1)
+  }
+
 }
