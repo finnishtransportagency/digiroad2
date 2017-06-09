@@ -502,7 +502,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val delta = ProjectDeltaCalculator.delta(projectID)
       val changes = RoadAddressChangesDAO.fetchRoadAddressChanges(Set(projectID))
       val newLinks = delta.terminations.map(terminated => terminated.copy(id = NewRoadAddress,
-        endDate = Some(changes.head.changeDate)))
+        endDate = Some(changes.head.projectStartDate)))
       //Expiring old addresses
       roadAddressService.expireRoadAddresses(delta.terminations.map(_.id).toSet)
       //Creating new addresses with the applicable changes
