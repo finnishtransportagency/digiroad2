@@ -168,7 +168,7 @@ object ViiteTierekisteriClient {
   private def convertChangeDataToChangeProject(changeData: ProjectRoadAddressChange): ChangeProject = {
     val changeInfo = changeData.changeInfo
     ChangeProject(changeData.projectId, changeData.projectName.getOrElse(""), changeData.user, changeData.ely,
-      DateTimeFormat.forPattern("yyyy-MM-dd").print(changeData.changeDate), Seq(changeInfo))
+      DateTimeFormat.forPattern("yyyy-MM-dd").print(changeData.projectStartDate), Seq(changeInfo))
   }
 
   private val auth = new ViiteTierekisteriAuthPropertyReader
