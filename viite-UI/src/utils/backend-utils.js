@@ -328,5 +328,13 @@
       return self;
     };
 
+    this.withGetTargetAdjacent = function(returnData){
+      self.getTargetAdjacent = function(linkId, callback){
+        callback(returnData);
+        return returnData;
+      };
+      return self;
+    };
+
   };
 }(this));
