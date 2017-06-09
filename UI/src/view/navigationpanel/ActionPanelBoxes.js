@@ -162,13 +162,13 @@
 
     elements.expanded.find('#complementaryCheckbox').on('change', function (event) {
       if ($(event.currentTarget).prop('checked')) {
-        eventbus.trigger('speedLimitComplementary:show');
+        eventbus.trigger('speedLimits:showSpeedLimitsComplementary');
       } else {
         if (applicationModel.isDirty()) {
           $(event.currentTarget).prop('checked', true);
           new Confirm();
         } else {
-          eventbus.trigger('speedLimitComplementary:hide');
+          eventbus.trigger('speedLimits:hideSpeedLimitsComplementary');
         }
       }
     });

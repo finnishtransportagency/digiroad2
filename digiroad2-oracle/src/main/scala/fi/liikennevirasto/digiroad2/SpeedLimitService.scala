@@ -80,7 +80,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     * Returns speed limits for Digiroad2Api /speedlimits GET endpoint.
     */
   def get(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[Seq[SpeedLimit]] = {
-    val (roadLinks, change) = roadLinkServiceImplementation.getRoadLinksAndChangesFromVVH(bounds, municipalities)
+    val (roadLinks, change) = roadLinkServiceImplementation.getRoadLinksWithComplementaryAndChangesFromVVH(bounds, municipalities)
     withDynTransaction {
       val (filledTopology,roadLinksByLinkId) = getFilledTopologyAndRoadLinks(roadLinks, change)
       LinearAssetPartitioner.partition(filledTopology, roadLinksByLinkId)
@@ -127,7 +127,8 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
             modifiedBy = speedLimit.modifiedBy, modifiedDateTime = speedLimit.modifiedDate,
             createdBy = speedLimit.createdBy, createdDateTime = speedLimit.createdDate,
             vvhTimeStamp = speedLimit.vvhTimeStamp, geomModifiedDate = speedLimit.geomModifiedDate,
-            expired = speedLimit.expired
+            expired = speedLimit.expired,
+            linkSource = roadLink.linkSource
           ),
           link = roadLink
         )
@@ -315,7 +316,8 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
       GeometryUtils.truncateGeometry3D(roadLink.geometry, persistedSpeedLimit.startMeasure, persistedSpeedLimit.endMeasure),
       persistedSpeedLimit.startMeasure, persistedSpeedLimit.endMeasure,
       persistedSpeedLimit.modifiedBy, persistedSpeedLimit.modifiedDate,
-      persistedSpeedLimit.createdBy, persistedSpeedLimit.createdDate, persistedSpeedLimit.vvhTimeStamp, persistedSpeedLimit.geomModifiedDate)
+      persistedSpeedLimit.createdBy, persistedSpeedLimit.createdDate, persistedSpeedLimit.vvhTimeStamp, persistedSpeedLimit.geomModifiedDate,
+      linkSource = roadLink.linkSource)
   }
 
   private def isSeparableValidation(speedLimit: SpeedLimit): SpeedLimit = {
@@ -357,9 +359,12 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     * Saves new speed limit from UI. Used by Digiroad2Api /speedlimits PUT and /speedlimits POST endpoints.
     */
   def create(newLimits: Seq[NewLimit], value: Int, username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
+    val roadLinks = roadLinkServiceImplementation.getRoadLinksByLinkIdsFromVVH(newLimits.map(_.linkId).toSet)
+
     withDynTransaction {
       val createdIds = newLimits.flatMap { limit =>
-        dao.createSpeedLimit(username, limit.linkId, (limit.startMeasure, limit.endMeasure), SideCode.BothDirections, value, vvhClient.createVVHTimeStamp(5), municipalityValidation)
+        val linkSource = roadLinks.find(_.linkId == limit.linkId).map(_.linkSource)
+        dao.createSpeedLimit(username, limit.linkId, (limit.startMeasure, limit.endMeasure), SideCode.BothDirections, value, vvhClient.createVVHTimeStamp(5), linkSource.get, municipalityValidation)
       }
       eventbus.publish("speedLimits:purgeUnknownLimits", newLimits.map(_.linkId).toSet)
       createdIds

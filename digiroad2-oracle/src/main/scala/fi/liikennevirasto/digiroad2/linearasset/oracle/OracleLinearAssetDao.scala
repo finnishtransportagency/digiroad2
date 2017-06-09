@@ -601,7 +601,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     val (assetId, linkId, sideCode, speedLimit, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, geomModifiedDate) = segment
     val roadLink = topology.find(_.linkId == linkId).get
     val geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, startMeasure, endMeasure)
-    SpeedLimit(assetId, linkId, sideCode, roadLink.trafficDirection, speedLimit.map(NumericValue), geometry, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, geomModifiedDate)
+    SpeedLimit(assetId, linkId, sideCode, roadLink.trafficDirection, speedLimit.map(NumericValue), geometry, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, geomModifiedDate, linkSource = roadLink.linkSource)
   }
 
   /**
@@ -609,7 +609,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     */
   def getSpeedLimitLinksById(id: Long): Seq[SpeedLimit] = {
     val speedLimits = sql"""
-      select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by, a.modified_date, a.created_by, a.created_date, pos.adjusted_timestamp, pos.modified_date
+      select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by, a.modified_date, a.created_by, a.created_date, pos.adjusted_timestamp, pos.modified_date, pos.link_source
         from ASSET a
         join ASSET_LINK al on a.id = al.asset_id
         join LRM_POSITION pos on al.position_id = pos.id
@@ -617,13 +617,13 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
         join SINGLE_CHOICE_VALUE s on s.asset_id = a.id and s.property_id = p.id
         join ENUMERATED_VALUE e on s.enumerated_value_id = e.id
         where a.asset_type_id = 20 and a.id = $id
-        """.as[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[DateTime])].list
+        """.as[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[DateTime], Int)].list
 
     val roadLinksByLinkId = vvhClient.fetchByLinkIds(speedLimits.map(_._2).toSet)
 
-    speedLimits.map { case (assetId, linkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, geomModifiedDate) =>
+    speedLimits.map { case (assetId, linkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, geomModifiedDate, linkSource) =>
       val vvhRoadLink = roadLinksByLinkId.find(_.linkId == linkId).getOrElse(throw new NoSuchElementException)
-      SpeedLimit(assetId, linkId, sideCode, vvhRoadLink.trafficDirection, value.map(NumericValue), GeometryUtils.truncateGeometry3D(vvhRoadLink.geometry, startMeasure, endMeasure), startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, geomModifiedDate)
+      SpeedLimit(assetId, linkId, sideCode, vvhRoadLink.trafficDirection, value.map(NumericValue), GeometryUtils.truncateGeometry3D(vvhRoadLink.geometry, startMeasure, endMeasure), startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, geomModifiedDate, linkSource = vvhRoadLink.linkSource)
     }
   }
 
@@ -632,7 +632,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
       sql"""select a.id, pos.link_id, pos.side_code, e.value,
             pos.start_measure, pos.end_measure,
             a.modified_by, a.modified_date, a.created_by, a.created_date,
-            pos.adjusted_timestamp, pos.modified_date
+            pos.adjusted_timestamp, pos.modified_date, pos.link_source
         from ASSET a
         join ASSET_LINK al on a.id = al.asset_id
         join LRM_POSITION pos on al.position_id = pos.id
@@ -641,12 +641,12 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
         join ENUMERATED_VALUE e on s.enumerated_value_id = e.id
         join #$idTableName i on (i.id = pos.link_id)
         where a.asset_type_id = 20 AND (a.valid_to IS NULL OR a.valid_to >= CURRENT_TIMESTAMP ) AND a.floating = 0""".as[
-        (Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[DateTime])
+        (Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[DateTime], Int)
         ].list
     }
     speedLimits.map {
-      case (assetId, linkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, geomModifiedDate) =>
-        SpeedLimit(assetId, linkId, sideCode, TrafficDirection.UnknownDirection, value.map(NumericValue), Seq(Point(0.0, 0.0)), startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, geomModifiedDate)
+      case (assetId, linkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, geomModifiedDate, linkSource) =>
+        SpeedLimit(assetId, linkId, sideCode, TrafficDirection.UnknownDirection, value.map(NumericValue), Seq(Point(0.0, 0.0)), startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, geomModifiedDate, linkSource = LinkGeomSource.apply(linkSource))
     }
   }
 
@@ -675,7 +675,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     }
 
     val idString = ids.mkString(",")
-    val sql = "select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by, a.modified_date, a.created_by, a.created_date, pos.adjusted_timestamp, pos.modified_date " +
+    val sql = "select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by, a.modified_date, a.created_by, a.created_date, pos.adjusted_timestamp, pos.modified_date, pos.link_source " +
       "from ASSET a " +
       "join ASSET_LINK al on a.id = al.asset_id " +
       "join LRM_POSITION pos on al.position_id = pos.id " +
@@ -685,9 +685,9 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
       "where a.asset_type_id = 20 AND (a.valid_to IS NULL OR a.valid_to >= CURRENT_TIMESTAMP ) AND a.floating = 0"
 
     val idSql = sql + makeLinkIdSql(idString)
-    Q.queryNA[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[DateTime])](idSql).list.map {
-      case (assetId, linkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, geomModifiedDate) =>
-        SpeedLimit(assetId, linkId, sideCode, TrafficDirection.UnknownDirection, value.map(NumericValue), Seq(Point(0.0, 0.0)), startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, geomModifiedDate)
+    Q.queryNA[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[DateTime], Int)](idSql).list.map {
+      case (assetId, linkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, geomModifiedDate, linkSource) =>
+        SpeedLimit(assetId, linkId, sideCode, TrafficDirection.UnknownDirection, value.map(NumericValue), Seq(Point(0.0, 0.0)), startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, geomModifiedDate, linkSource = LinkGeomSource.apply(linkSource))
     }
   }
 
@@ -696,7 +696,8 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     */
   def getPersistedSpeedLimit(id: Long): Option[PersistedSpeedLimit] = {
     val speedLimit = sql"""
-      select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by, a.modified_date, a.created_by, a.created_date, pos.adjusted_timestamp, pos.modified_date        from ASSET a
+      select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, a.modified_by, a.modified_date, a.created_by, a.created_date, pos.adjusted_timestamp, pos.modified_date
+      from ASSET a
         join ASSET_LINK al on a.id = al.asset_id
         join LRM_POSITION pos on al.position_id = pos.id
         join PROPERTY p on a.asset_type_id = p.asset_type_id and p.public_id = 'rajoitus'
@@ -754,7 +755,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     * Used by SpeedLimitService.create.
     */
   def createSpeedLimit(creator: String, linkId: Long, linkMeasures: (Double, Double), sideCode: SideCode, value: Int,
-                       vvhTimeStamp: Long, municipalityValidation: (Int) => Unit): Option[Long] = {
+                       vvhTimeStamp: Long, linkSource: LinkGeomSource, municipalityValidation: (Int) => Unit): Option[Long] = {
     municipalityValidation(vvhClient.fetchByLinkId(linkId).get.municipalityCode)
     createSpeedLimitWithoutDuplicates(creator, linkId, linkMeasures, sideCode, value, None, None, None, None)
   }
