@@ -244,7 +244,7 @@
       });
 
       eventbus.on('roadAddress:openProject', function(result) {
-        currentProject = result.projects;
+        currentProject = result.project;
         projectCollection.clearRoadAddressProjects();
         var text = '';
         _.each(result.projectLinks, function(line){  //TODO later list of already saved roadlinks has to be saved in  roadaddressprojectcollection.currentRoadSegmentList for reserve button to function properly now saved links are cleared when newones are reserved
@@ -263,8 +263,7 @@
         applicationModel.setOpenProject(true);
         activeLayer = true;
         rootElement.find('.btn-reserve').prop("disabled", false);
-        if(result.projectLinks.length > 0)
-          rootElement.find('.btn-next').prop("disabled", false);
+        rootElement.find('.btn-next').prop("disabled", false);
       });
 
       eventbus.on('roadAddress:projectValidationFailed', function (result) {
@@ -336,7 +335,6 @@
           if(!_.isUndefined(result.projectAddresses)) {
             eventbus.trigger('linkProperties:selectedProject', result.projectAddresses.linkId);
             eventbus.trigger('roadAddressProject:openProject', result.project);
-            rootElement.html(selectedProjectLinkTemplate(currentProject, options, selectedProjectLink));
             _.defer(function(){
               applicationModel.selectLayer('roadAddressProject');
             });
@@ -347,7 +345,6 @@
         } else {
           projectCollection.saveProject(data);
         }
-
       });
 
 

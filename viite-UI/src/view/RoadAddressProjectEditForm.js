@@ -124,7 +124,7 @@
         selectedProjectLink = selected;
         currentProject = projectCollection.getCurrentProject();
         clearInformationContent();
-        rootElement.html(selectedProjectLinkTemplate(currentProject.projects, options, selectedProjectLink));
+        rootElement.html(selectedProjectLinkTemplate(currentProject.project, options, selectedProjectLink));
       });
 
       eventbus.on('roadAddressProject:publishable', function() {

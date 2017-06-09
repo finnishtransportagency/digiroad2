@@ -45,7 +45,7 @@
   };
 
   var generateProjectLinksByProjectId = function(){
-    return {"projects":{"statusCode":1,"name":"Project Two","statusDescription":"Keskeneräinen","dateModified":"01.06.2017","id":454808,"createdBy":"silari","additionalInfo":null,"startDate":"01.06.2017","modifiedBy":"-","createdDate":"2017-06-01T19:03:12.000+03:00"},"linkId":1717275,"projectLinks":[{"startingLinkId":1717275,"projectId":454808,"roadNumber":1130,"roadPartNumber":4,"roadLength":6362,"ely":1,"discontinuity":"Jatkuva"}]};
+    return {"project":{"statusCode":1,"name":"Project Two","statusDescription":"Keskeneräinen","dateModified":"01.06.2017","id":454808,"createdBy":"silari","additionalInfo":null,"startDate":"01.06.2017","modifiedBy":"-","createdDate":"2017-06-01T19:03:12.000+03:00"},"linkId":1717275,"projectLinks":[{"startingLinkId":1717275,"projectId":454808,"roadNumber":1130,"roadPartNumber":4,"roadLength":6362,"ely":1,"discontinuity":"Jatkuva"}]};
   };
 
   var generateRoadPartChecker = function(){

@@ -77,10 +77,10 @@
 
     this.getProjectsWithLinksById = function (projectId) {
       return backend.getProjectsWithLinksById(projectId, function (result) {
-        roadAddressProjects = result.projects;
+        roadAddressProjects = result.project;
         currentProject = result;
         projectinfo = {
-          id: result.projects.id,
+          id: result.project.id,
           publishable: false
         };
         eventbus.trigger('roadAddressProject:projectFetched', projectinfo.id);
@@ -109,9 +109,9 @@
       var projectid = 0;
       if (projectinfo !== undefined) {
         projectid = projectinfo.id;
-      } else if (currentProject!==undefined && currentProject.projects.id!==undefined)
+      } else if (currentProject!==undefined && currentProject.project.id!==undefined)
       {
-        projectid=currentProject.projects.id;
+        projectid=currentProject.project.id;
       }
       var dataJson = {
         id: projectid,
