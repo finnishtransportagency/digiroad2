@@ -7,6 +7,7 @@ object RoadLinkServiceDAO {
   private val FunctionalClass = "functional_class"
   private val TrafficDirection = "traffic_direction"
   private val LinkType = "link_type"
+  private val AdministrativeClass = "administrative_class"
 
   def updateExistingLinkPropertyRow(table: String, column: String, linkId: Long, username: Option[String], existingValue: Int, value: Int) = {
     if (existingValue != value) {
@@ -27,6 +28,14 @@ object RoadLinkServiceDAO {
 
   def getLinkProperty(table: String, column: String, linkId: Long) = {
     sql"""select #$column from #$table where link_id = $linkId""".as[Int].firstOption
+  }
+
+  def expireExistingLinkPropertyRow(table: String, linkId: Long, username: Option[String]) = {
+    sqlu"""update #$table
+                 set valid_to = current_timestamp,
+                     modified_date = current_timestamp,
+                     modified_by = $username
+                 where link_id = $linkId""".execute
   }
 
   def updateFunctionalClass(linkId: Long, username: Option[String], existingValue: Int, value: Int) = {
@@ -68,6 +77,22 @@ object RoadLinkServiceDAO {
 
   def getLinkTypeValue(linkId: Long) = {
     getLinkProperty(LinkType, LinkType, linkId)
+  }
+
+  def updateAdministrativeClass(linkId: Long, username: Option[String], existingValue: Int, value: Int) = {
+    updateExistingLinkPropertyRow(AdministrativeClass, AdministrativeClass, linkId, username, existingValue, value)
+  }
+
+  def insertAdministrativeClass(linkId: Long, username: Option[String], value: Int) = {
+    insertNewLinkProperty(AdministrativeClass, AdministrativeClass, linkId, username, value)
+  }
+
+  def getAdministrativeClassValue(linkId: Long) = {
+    getLinkProperty(AdministrativeClass, AdministrativeClass, linkId)
+  }
+
+  def expireAdministrativeClass(linkId: Long, username: Option[String]) = {
+    expireExistingLinkPropertyRow(AdministrativeClass, linkId, username)
   }
 
 }
