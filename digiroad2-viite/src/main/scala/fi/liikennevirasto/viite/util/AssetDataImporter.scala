@@ -160,7 +160,7 @@ class AssetDataImporter {
     print(s"${DateTime.now()} - ")
     println("Read %d road links from vvh".format(linkLengths.size))
 
-    val floatingLinks = vvhClient.historyData.fetchVVHRoadLinkHistoryByLinkIds(roads.filterNot(r => linkLengths.get(r._1).isDefined).map(_._1).toSet).groupBy(_.linkId).mapValues(_.maxBy(_.endDate))
+    val floatingLinks = vvhClient.historyData.fetchVVHRoadLinkByLinkIds(roads.filterNot(r => linkLengths.get(r._1).isDefined).map(_._1).toSet).groupBy(_.linkId).mapValues(_.maxBy(_.endDate))
     print(s"${DateTime.now()} - ")
     println(floatingLinks.size + " links can be saved as floating addresses")
 

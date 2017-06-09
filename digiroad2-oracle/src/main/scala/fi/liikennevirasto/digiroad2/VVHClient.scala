@@ -216,13 +216,13 @@ trait VVHClientOperations {
     filter
   }
 
-  //TODO check this method to removoe the adminclass
   protected def withLimitFilter(attributeName: String, low: Int, high: Int, includeAllPublicRoads: Boolean = false): String = {
     val filter =
       if (low < 0 || high < 0 || low > high) {
         ""
       } else {
         if (includeAllPublicRoads) {
+          //TODO check if we can remove the adminclass in the future
           s""""where":"( ADMINCLASS = 1 OR $attributeName >= $low and $attributeName <= $high )","""
         } else {
           s""""where":"( $attributeName >= $low and $attributeName <= $high )","""
@@ -396,11 +396,8 @@ trait VVHClientOperations {
     VVHClient.createVVHTimeStamp(offsetHours)
   }
 
-  //TODO change this comment
   /**
     * Returns VVH road links by municipality.
-    * Used by VVHClient.fetchByMunicipalityF(municipality),
-    * RoadLinkService.fetchVVHRoadlinks(municipalityCode) and AssetDataImporter.adjustToNewDigitization(vvhHost).
     */
   protected def queryByMunicipality(municipality: Int): Seq[VVHType] = {
     val definition = layerDefinition(withMunicipalityFilter(Set(municipality)))
@@ -412,10 +409,8 @@ trait VVHClientOperations {
     }
   }
 
-  //TODO change this comments
   /**
     * Returns VVH road links in bounding box area. Municipalities are optional.
-    * Used by VVHClient.fetchByBoundsAndMunicipalitiesF.
     */
   protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle, municipalities: Set[Int], filter: Option[String]): Seq[VVHType] = {
     val definition = layerDefinition(combineFiltersWithAnd(withMunicipalityFilter(municipalities), filter))
@@ -514,7 +509,6 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
 
   protected def queryLinksIdByPolygons(polygon: Polygon): Seq[Long] = {
     val polygonString = stringifyPolygonGeometry(polygon)
-    //TODO have a look on this validation
     if (!polygonString.contains("{rings:["))
     {
       return  Seq.empty[Long]
@@ -536,10 +530,8 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
     }
   }
 
-  //TODO comment and generic type !??!?!??!?
   /**
     * Returns VVH road links.
-    * Used by VVHClient.fetchByLinkIds, VVHClient.fetchByMmlIds and VVHClient.fetchVVHRoadlinks
     */
   protected def queryByLinkIds[T](linkIds: Set[Long],
                                   fieldSelection: Option[String],
@@ -977,7 +969,7 @@ class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvh
     * Used by VVHClient.fetchVVHRoadlinksF, RoadLinkService.getVVHRoadLinks(bounds, municipalities), RoadLinkService.getVVHRoadLinks(bounds),
     * PointAssetService.getByBoundingBox and ServicePointImporter.importServicePoints.
     */
-  def fetchVVHRoadLinkHistoryByLinkIds(linkIds: Set[Long] = Set()): Seq[VVHHistoryRoadLink] = {
+  def fetchVVHRoadLinkByLinkIds(linkIds: Set[Long] = Set()): Seq[VVHHistoryRoadLink] = {
     if (linkIds.isEmpty)
       Nil
     else {
@@ -995,7 +987,7 @@ class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvh
     }
   }
 
-  def fetchVVHRoadLinkHistoryByLinkIdsF(linkIds: Set[Long] = Set()): Future[Seq[VVHHistoryRoadLink]] = {
-    Future(fetchVVHRoadLinkHistoryByLinkIds(linkIds))
+  def fetchVVHRoadLinkByLinkIdsF(linkIds: Set[Long] = Set()): Future[Seq[VVHHistoryRoadLink]] = {
+    Future(fetchVVHRoadLinkByLinkIds(linkIds))
   }
 }

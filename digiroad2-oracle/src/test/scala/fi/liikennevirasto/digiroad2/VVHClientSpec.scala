@@ -41,7 +41,7 @@ class VVHClientSpec extends FunSuite with Matchers{
     */
   test("Test VVH History LinkId API") {
     val vvhClient= new VVHClient(properties.getProperty("digiroad2.VVHRestApiEndPoint"))
-    val result = vvhClient.historyData.fetchVVHRoadLinkHistoryByLinkIds(Set(440484,440606,440405,440489))
+    val result = vvhClient.historyData.fetchVVHRoadLinkByLinkIds(Set(440484,440606,440405,440489))
     result.nonEmpty should be (true)
   }
   test("Fetch changes with polygon string ") {

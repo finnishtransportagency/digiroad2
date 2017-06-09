@@ -533,7 +533,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
   def getViiteRoadLinksHistoryFromVVH(roadAddressesLinkIds: Set[Long]): Seq[VVHHistoryRoadLink] = {
     if (roadAddressesLinkIds.nonEmpty) {
-      val historyData = Await.result(vvhClient.historyData.fetchVVHRoadLinkHistoryByLinkIdsF(roadAddressesLinkIds), atMost = Duration.Inf)
+      val historyData = Await.result(vvhClient.historyData.fetchVVHRoadLinkByLinkIdsF(roadAddressesLinkIds), atMost = Duration.Inf)
       val groupedData = historyData.groupBy(_.linkId)
       groupedData.mapValues(_.maxBy(_.endDate)).values.toSeq
     } else
@@ -542,7 +542,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
   def getViiteCurrentAndHistoryRoadLinksFromVVH(roadAddressesLinkIds: Set[Long]): (Seq[RoadLink], Seq[VVHHistoryRoadLink]) = {
     val fut = for{
-      f1Result <- vvhClient.historyData.fetchVVHRoadLinkHistoryByLinkIdsF(roadAddressesLinkIds)
+      f1Result <- vvhClient.historyData.fetchVVHRoadLinkByLinkIdsF(roadAddressesLinkIds)
       f2Result <- vvhClient.roadLinkData.fetchByLinkIdsF(roadAddressesLinkIds)
       f3Result <- vvhClient.complementaryData.fetchByLinkIdsF(roadAddressesLinkIds)
     } yield (f1Result, f2Result, f3Result)
