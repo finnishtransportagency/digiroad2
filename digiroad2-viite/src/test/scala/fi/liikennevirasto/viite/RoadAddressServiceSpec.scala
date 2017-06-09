@@ -11,6 +11,7 @@ import fi.liikennevirasto.digiroad2.asset.TrafficDirection.BothDirections
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.roadaddress.oracle.RoadAddressDAO
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao._
@@ -418,6 +419,40 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       result2.last.endAddrMValue should be(replacement2s.map(_.endAddressM).max)
     }
   }
+
+  test("GetFloatingAdjacents road links on road 75 part 2 sourceLinkId 5176142") {
+    val roadAddressService = new RoadAddressService(mockRoadLinkService,mockEventBus)
+    val road75FloatingAddresses = RoadAddress(367,75,2,Track.Combined,Discontinuity.Continuous,3532,3598,None,None,Some("tr"),70000389,5176142,0.0,65.259,SideCode.TowardsDigitizing,(None,None),true,List(Point(538889.668,6999800.979,0.0), Point(538912.266,6999862.199,0.0)))
+
+    when(mockRoadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(any[Set[Long]])).thenReturn(
+      (Seq(), Stream()))
+
+    val result = roadAddressService.getFloatingAdjacent(Set(road75FloatingAddresses.linkId), road75FloatingAddresses.linkId, road75FloatingAddresses.roadNumber, road75FloatingAddresses.roadPartNumber, road75FloatingAddresses.track.value)
+    result.size should be (0)
+  }
+
+//  test("GetFloatingAdjacents road links on road 75 part 2 targetLinkId 5176147") {
+//    val roadAddressService = new RoadAddressService(mockRoadLinkService,mockEventBus)
+//    /*RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track,
+//      discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
+//    endDate: Option[DateTime] = None, modifiedBy: Option[String] = None, lrmPositionId : Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
+//    calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false,
+//    geom: Seq[Point])*/
+//
+//    val road75Target5176147 = RoadAddress(367,75,2,Track.Combined,Discontinuity.Continuous,3532,3598,None,None,Some("tr"),70000389,5176142,0.0,65.259,SideCode.TowardsDigitizing,(None,None),true,List(Point(538889.668,6999800.979,0.0), Point(538912.266,6999862.199,0.0)))
+////    --floating selection
+////    fetchByLinkId:then:
+////    RoadAddress(367,75,2,Combined,Continuous,3532,3598,Some(1992-10-08T00:00:00.000+02:00),None,Some(tr),70000389,5176142,0.0,65.259,TowardsDigitizing,(None,None),true,List(Point(538889.668,6999800.979,0.0), Point(538912.266,6999862.199,0.0)))
+////
+////    when(mockRoadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(any[Set[Long]])).thenReturn())
+////should return 3 missingAdjacentRoadlinks: 5176151, 6479168, 499836959
+////
+////    getMissingRoadAddresses:
+////    size = 3?
+//
+//    val result = roadAddressService.getFloatingAdjacent(Set(5176147), 5176147L, 75L, 2L, 0)
+////should have 3 missing adjacent linkIds
+//  }
 
   // used for debugging when needed
   private def prettyPrint(l: RoadAddressLink) = {
