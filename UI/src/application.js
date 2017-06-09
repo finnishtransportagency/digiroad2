@@ -339,7 +339,7 @@
       var asset = _.find(linearAssets, {typeId: typeId});
       if (asset) {
         var legendValues = [asset.editControlLabels.disabled, asset.editControlLabels.enabled];
-        return [new LinearAssetBox(asset.selectedLinearAsset, asset.layerName, asset.title, asset.className, legendValues, asset.editControlLabels.showUnit, asset.unit, asset.complementaryPossible)];
+        return [new LinearAssetBox(asset.selectedLinearAsset, asset.layerName, asset.title, asset.className, legendValues, asset.editControlLabels.showUnit, asset.unit, asset.allowComplementaryLinks)];
       }
       return [];
     }
