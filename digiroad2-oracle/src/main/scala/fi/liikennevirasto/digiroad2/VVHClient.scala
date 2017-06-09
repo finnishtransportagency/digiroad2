@@ -12,9 +12,11 @@ import org.apache.http.client.methods.{HttpGet, HttpPost}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.http.message.BasicNameValuePair
 import org.apache.http.util.EntityUtils
+import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, DateTimeZone}
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
+import org.json4s.jackson.Serialization
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.Future
@@ -184,6 +186,17 @@ class VVHClient(vvhRestApiEndPoint: String) {
   lazy val complementaryData: VVHComplementaryClient = new VVHComplementaryClient(vvhRestApiEndPoint)
   lazy val historyData: VVHHistoryClient = new VVHHistoryClient(vvhRestApiEndPoint)
   lazy val roadNodesData: VVHRoadNodesClient = new VVHRoadNodesClient(vvhRestApiEndPoint)
+
+  def fetchRoadLinkByLinkId(linkId: Long): Option[VVHRoadlink] = {
+    roadLinkData.fetchByLinkId(linkId) match {
+      case Some(vvhRoadLink) => Some(vvhRoadLink)
+      case None => complementaryData.fetchByLinkId(linkId)
+    }
+  }
+
+  def createVVHTimeStamp(offsetHours: Int): Long = {
+    VVHClient.createVVHTimeStamp(offsetHours)
+  }
 }
 
 trait VVHClientOperations {
@@ -667,6 +680,19 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
     withFilter("MTKCLASS", ids)
   }
 
+  protected  def withLastEditedDateFilter(lowerDate: DateTime, higherDate: DateTime): String = {
+    withDateLimitFilter("LAST_EDITED_DATE", lowerDate, higherDate)
+  }
+
+  protected def withDateLimitFilter(attributeName: String, lowerDate: DateTime, higherDate: DateTime): String = {
+    val formatter = DateTimeFormat.forPattern("yyyy-MM-dd")
+    val since = formatter.print(lowerDate)
+    val until = formatter.print(higherDate)
+
+    s""""where":"( $attributeName >=date '$since' and $attributeName <=date '$until' )","""
+  }
+
+
   protected def withRoadNumbersFilter(roadNumbers: Seq[(Int, Int)], includeAllPublicRoads: Boolean, filter: String = ""): String = {
     if (roadNumbers.isEmpty)
       return s""""where":"($filter)","""
@@ -690,6 +716,19 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
     0 -> TrafficDirection.BothDirections,
     1 -> TrafficDirection.TowardsDigitizing,
     2 -> TrafficDirection.AgainstDigitizing)
+
+  /**
+    * Returns VVH road links. Obtain all RoadLinks changes between two given dates.
+    */
+  def fetchByChangesDates(lowerDate: DateTime, higherDate: DateTime): Seq[VVHRoadlink] = {
+    val definition = layerDefinition(withLastEditedDateFilter(lowerDate, higherDate))
+    val url = serviceUrl(definition, queryParameters())
+
+    fetchVVHFeatures(url) match {
+      case Left(features) => features.map(extractVVHFeature)
+      case Right(error) => throw new VVHClientException(error.toString)
+    }
+  }
 
   /**
     * Returns VVH road link by linkid
@@ -799,6 +838,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
                            fetchGeometry: Boolean,
                            resultTransition: (Map[String, Any], List[List[Double]]) => T): Seq[T] =
     queryByLinkIds(linkIds, fieldSelection, fetchGeometry, resultTransition, withLinkIdFilter)
+
 }
 
 class VVHChangeInfoClient(vvhRestApiEndPoint: String) extends VVHClientOperations {
@@ -917,9 +957,56 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClie
     "MTKID,LINKID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,SURFACETYPE,SUBTYPE,CONSTRUCTIONTYPE"
   }
 
+  private def createFormParams(complementaryFeatures: Map[String, Any]): ArrayList[NameValuePair] = {
+    val featuresValue = Serialization.write(Seq(Map("attributes" -> complementaryFeatures)))
+    // Print JSON sent to VVH for testing purposes
+    logger.info("complementaryFeatures to JSON: %s".format(featuresValue))
+
+    val nvps = new ArrayList[NameValuePair]()
+    nvps.add(new BasicNameValuePair("features", featuresValue))
+    nvps.add(new BasicNameValuePair("gdbVersion", ""))
+    nvps.add(new BasicNameValuePair("rollbackOnFailure", "true"))
+    nvps.add(new BasicNameValuePair("f", "pjson"))
+
+    nvps
+  }
+
   def fetchWalkwaysByBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[VVHRoadlink]] = {
     Future(queryByMunicipalitiesAndBounds(bounds, municipalities, Some(withMtkClassFilter(Set(12314)))))
   }
+
+  def updateVVHFeatures(complementaryFeatures: Map[String, Any]): Either[List[Map[String, Any]], VVHError] = {
+    val url = vvhRestApiEndPoint + serviceName + "/FeatureServer/0/updateFeatures"
+    val request = new HttpPost(url)
+    request.setEntity(new UrlEncodedFormEntity(createFormParams(complementaryFeatures), "utf-8"))
+    val client = HttpClientBuilder.create().build()
+    val response = client.execute(request)
+    try {
+      val content: Map[String, Seq[Map[String, Any]]] = parse(StreamInput(response.getEntity.getContent)).values.asInstanceOf[Map[String, Seq[Map[String, Any]]]]
+      content.get("updateResults").getOrElse(None) match {
+        case None =>
+          content.get("error").head.asInstanceOf[Map[String, Any]].getOrElse("details", None) match {
+            case None => Right(VVHError(Map("error" -> "Error Without Details "), url))
+            case value => Right(VVHError(Map("error details" -> value), url))
+          }
+        case _ =>
+          content.get("updateResults").get.map(_.getOrElse("success", None)).head match {
+            case None => Right(VVHError(Map("error" -> "Update status not available in JSON Response"), url))
+            case true => Left(List(content))
+            case false =>
+              content.get("updateResults").get.map(_.getOrElse("error", None)).head.asInstanceOf[Map[String, Any]].getOrElse("description", None) match {
+                case None => Right(VVHError(Map("error" -> "Error Without Information"), url))
+                case value => Right(VVHError(Map("error" -> value), url))
+              }
+          }
+      }
+    } catch {
+      case e: Exception => Right(VVHError(Map("error" -> e.getMessage), url))
+    } finally {
+      response.close()
+    }
+  }
+
 }
 
 class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvhRestApiEndPoint){

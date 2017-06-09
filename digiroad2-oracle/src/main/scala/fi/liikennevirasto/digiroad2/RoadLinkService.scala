@@ -214,12 +214,12 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   def fetchVVHComplementaryRoadlinks(linkIds: Set[Long]): Seq[VVHRoadlink] = {
-    if (linkIds.nonEmpty) vvhClient.complementaryData.fetchComplementaryRoadlinks(linkIds)
+    if (linkIds.nonEmpty) vvhClient.complementaryData.fetchByLinkIds(linkIds)
     else Seq.empty[VVHRoadlink]
   }
 
   def fetchVVHRoadlinksAndComplementary(linkIds: Set[Long]): Seq[VVHRoadlink] = {
-    if (linkIds.nonEmpty) vvhClient.fetchByLinkIds(linkIds) ++ vvhClient.complementaryData.fetchComplementaryRoadlinks(linkIds)
+    if (linkIds.nonEmpty) vvhClient.roadLinkData.fetchByLinkIds(linkIds) ++ vvhClient.complementaryData.fetchByLinkIds(linkIds)
     else Seq.empty[VVHRoadlink]
   }
 
@@ -232,7 +232,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @return VVHRoadLinks
     */
   def fetchChangedVVHRoadlinksBetweenDates(since: DateTime, until: DateTime): Seq[VVHRoadlink] = {
-    if ((since != null) || (until != null)) vvhClient.fetchVVHRoadlinksChangesBetweenDates(since, until)
+    if ((since != null) || (until != null)) vvhClient.roadLinkData.fetchByChangesDates(since, until)
     else Seq.empty[VVHRoadlink]
   }
 
@@ -299,9 +299,9 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
   def getRoadLinksWithComplementaryAndChangesFromVVHWithPolygon(polygon :Polygon): (Seq[RoadLink], Seq[ChangeInfo])= {
     val futures = for{
-      roadLinkResult <- vvhClient.complementaryData.fetchRoadLinksByPolygonF(polygon)
-      changesResult <- vvhClient.fetchChangesByPolygonF(polygon)
-      complementaryResult <- vvhClient.fetchRoadLinksByPolygonF(polygon)
+      roadLinkResult <- vvhClient.roadLinkData.fetchByPolygonF(polygon)
+      changesResult <- vvhClient.roadLinkChangeInfo.fetchByPolygonF(polygon)
+      complementaryResult <- vvhClient.complementaryData.fetchByPolygonF(polygon)
     } yield (roadLinkResult, changesResult, complementaryResult)
 
     val (complementaryLinks, changes, links) = Await.result(futures, Duration.Inf)

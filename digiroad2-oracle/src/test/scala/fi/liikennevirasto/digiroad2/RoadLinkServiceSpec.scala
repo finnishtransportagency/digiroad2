@@ -821,7 +821,9 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         "MUNICIPALITYCODE" -> BigInt(91))
 
     val mockVVHClient = MockitoSugar.mock[VVHClient]
-    when(mockVVHClient.fetchVVHRoadlinksChangesBetweenDates(DateTime.parse("2017-05-07T12:00Z"), DateTime.parse("2017-05-09T12:00Z")))
+    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockVVHRoadLinkClient.fetchByChangesDates(DateTime.parse("2017-05-07T12:00Z"), DateTime.parse("2017-05-09T12:00Z")))
       .thenReturn(Seq(VVHRoadlink(1611447, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, modifiedAt, attributes)))
     val service = new TestService(mockVVHClient)
 
@@ -845,7 +847,9 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
         "MUNICIPALITYCODE" -> BigInt(60))
 
     val mockVVHClient = MockitoSugar.mock[VVHClient]
-    when(mockVVHClient.fetchVVHRoadlinksChangesBetweenDates(DateTime.parse("2017-05-07T12:00Z"), DateTime.parse("2017-05-09T12:00Z")))
+    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockVVHRoadLinkClient.fetchByChangesDates(DateTime.parse("2017-05-07T12:00Z"), DateTime.parse("2017-05-09T12:00Z")))
       .thenReturn(Seq(VVHRoadlink(1611447, 60, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, modifiedAt, attributes)))
     val service = new TestService(mockVVHClient)
 
