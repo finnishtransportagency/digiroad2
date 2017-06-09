@@ -263,8 +263,7 @@
         applicationModel.setOpenProject(true);
         activeLayer = true;
         rootElement.find('.btn-reserve').prop("disabled", false);
-        if(result.projectLinks.length > 0)
-          rootElement.find('.btn-next').prop("disabled", false);
+        rootElement.find('.btn-next').prop("disabled", false);
       });
 
       eventbus.on('roadAddress:projectValidationFailed', function (result) {
@@ -338,12 +337,12 @@
           jQuery('.modal-overlay').remove();
           if(!_.isUndefined(result.projectAddresses)) {
             eventbus.trigger('linkProperties:selectedProject', result.projectAddresses.linkId);
-            eventbus.trigger('roadAddressProject:openProject', result.project);
-            rootElement.html(selectedProjectLinkTemplate(currentProject, options, selectedProjectLink));
-            _.defer(function(){
-              applicationModel.selectLayer('roadAddressProject');
-            });
           }
+          eventbus.trigger('roadAddressProject:openProject', result.project);
+          rootElement.html(selectedProjectLinkTemplate(currentProject, options, selectedProjectLink));
+          _.defer(function(){
+            applicationModel.selectLayer('roadAddressProject');
+          });
         });
         if(_.isUndefined(currentProject) || currentProject.id === 0){
           projectCollection.createProject(data);
