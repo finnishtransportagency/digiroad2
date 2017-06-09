@@ -82,9 +82,9 @@
         roadAddressProjectLinks = result.projectLinks;
         projectinfo = {
           id: result.projects.id,
-          publishable: false
+          publishable: result.publishable
         };
-        eventbus.trigger('roadAddressProject:projectFetched', projectinfo.id);
+        eventbus.trigger('roadAddressProject:projectFetched', projectinfo);
       });
     };
 
