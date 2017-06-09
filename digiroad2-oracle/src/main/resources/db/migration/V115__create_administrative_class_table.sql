@@ -6,5 +6,5 @@ create table administrative_class(
   vvh_administrative_class number(10, 0),
   modified_date timestamp,
 	modified_by varchar2(128),
-	valid_to timestamp,
+	valid_to timestamp
 );
