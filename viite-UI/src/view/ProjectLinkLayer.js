@@ -212,6 +212,64 @@
     //This will control the double click zoom when there is no selection that activates
     map.on('dblclick', zoomDoubleClickListener);
 
+    var infoContainer = document.getElementById('popup');
+    var infoContent = document.getElementById('popup-content');
+
+    var overlay = new ol.Overlay(({
+      element: infoContainer
+    }));
+
+    map.addOverlay(overlay);
+
+    //Listen pointerMove and get pixel for displaying roadAddress feature info
+    eventbus.on('map:mouseMoved', function (event, pixel) {
+      if (event.dragging || applicationModel.getSelectedLayer() !== 'roadAddressProject') {
+        return;
+      }
+      displayRoadAddressInfo(event, pixel);
+    });
+
+    var displayRoadAddressInfo = function(event, pixel) {
+
+      var featureAtPixel = map.forEachFeatureAtPixel(pixel, function (feature, vectorLayer) {
+        return feature;
+      });
+
+      //Ignore if target feature is marker
+      if(isDefined(featureAtPixel) && (isDefined(featureAtPixel.roadLinkData) || isDefined(featureAtPixel.projectLinkData))) {
+       var roadData;
+       var coordinate = map.getEventCoordinate(event.originalEvent);
+
+       if(isDefined(featureAtPixel.projectLinkData)) {
+         roadData = featureAtPixel.projectLinkData;
+       }
+       else {
+         roadData = featureAtPixel.roadLinkData;
+       }
+        if (roadData.roadNumber!==0 &&roadData.roadPartNumber!==0&&roadData.roadPartNumber!==99 ){
+       infoContent.innerHTML = '<p>' +
+          'Tienumero: ' + roadData.roadNumber + '<br>' +
+          'Tieosanumero: ' + roadData.roadPartNumber + '<br>' +
+          'Ajorata: ' + roadData.trackCode + '<br>' +
+          'AET: ' + roadData.startAddressM + '<br>' +
+          'LET: ' + roadData.endAddressM + '<br>' +'</p>';
+
+        } else {
+          infoContent.innerHTML = '<p>' +
+          'Tuntematon tien segmentti' +'</p>'; // road with no address
+        }
+
+       overlay.setPosition(coordinate);
+
+      } else {
+        overlay.setPosition(undefined);
+      }
+    };
+
+var isDefined=function(variable) {
+ return !_.isUndefined(variable);
+};
+
     //Add defined interactions to the map.
     map.addInteraction(selectSingleClick);
     map.addInteraction(selectDoubleClick);
