@@ -244,7 +244,7 @@
       });
 
       eventbus.on('roadAddress:openProject', function(result) {
-        currentProject = result.projects;
+        currentProject = result.project;
         projectCollection.clearRoadAddressProjects();
         var text = '';
         _.each(result.projectLinks, function(line){  //TODO later list of already saved roadlinks has to be saved in  roadaddressprojectcollection.currentRoadSegmentList for reserve button to function properly now saved links are cleared when newones are reserved
@@ -263,8 +263,7 @@
         applicationModel.setOpenProject(true);
         activeLayer = true;
         rootElement.find('.btn-reserve').prop("disabled", false);
-        if(result.projectLinks.length > 0)
-          rootElement.find('.btn-next').prop("disabled", false);
+        rootElement.find('.btn-next').prop("disabled", false);
       });
 
       eventbus.on('roadAddress:projectValidationFailed', function (result) {
@@ -279,9 +278,6 @@
 
       eventbus.on('layer:selected', function(layer) {
         activeLayer = layer === 'linkPropertyLayer';
-        if(!activeLayer) {
-          $('.wrapper').remove();
-        }
       });
 
       eventbus.on('roadAddress:projectFailed', function() {
@@ -339,7 +335,6 @@
           if(!_.isUndefined(result.projectAddresses)) {
             eventbus.trigger('linkProperties:selectedProject', result.projectAddresses.linkId);
             eventbus.trigger('roadAddressProject:openProject', result.project);
-            rootElement.html(selectedProjectLinkTemplate(currentProject, options, selectedProjectLink));
             _.defer(function(){
               applicationModel.selectLayer('roadAddressProject');
             });
@@ -350,7 +345,6 @@
         } else {
           projectCollection.saveProject(data);
         }
-
       });
 
 
@@ -363,8 +357,12 @@
               rootElement.find('.wrapper').toggle();
               rootElement.find('footer').toggle();
               projectCollection.clearRoadAddressProjects();
+              eventbus.trigger('layer:enableButtons', true);
             }
           });
+        } else {
+          eventbus.trigger('roadAddress:openProject', projectCollection.getCurrentProject());
+          eventbus.trigger('roadLinks:refreshView');
         }
       });
 

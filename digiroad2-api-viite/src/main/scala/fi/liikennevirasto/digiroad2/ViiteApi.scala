@@ -232,7 +232,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val (projects, projectLinks) = projectService.getProjectsWithReservedRoadParts(projectId)
     val project = Seq(projects).map(roadAddressProjectToApi)
     val projectsWithLinkId = project.head
-    Map("projects" -> projectsWithLinkId,"linkId" -> projectLinks.headOption.map(_.startingLinkId), "projectLinks" -> projectLinks)
+    Map("project" -> projectsWithLinkId,"linkId" -> projectLinks.headOption.map(_.startingLinkId), "projectLinks" -> projectLinks)
   }
 
   get("/roadlinks/roadaddress/project/validatereservedlink/"){
