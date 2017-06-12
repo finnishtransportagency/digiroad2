@@ -19,7 +19,7 @@ import org.scalatra._
 import org.scalatra.json._
 import org.slf4j.LoggerFactory
 
-case class LinkProperties(linkId: Long, functionalClass: Int, linkType: LinkType, trafficDirection: TrafficDirection)
+case class LinkProperties(linkId: Long, functionalClass: Int, linkType: LinkType, trafficDirection: TrafficDirection, administrativeClass: Int)
 
 case class ExistingLinearAsset(id: Long, linkId: Long)
 
@@ -505,6 +505,8 @@ Returns empty result as Json message, not as page not found
     val user = userProvider.getCurrentUser()
     def municipalityValidation(municipalityCode: Int) = validateUserMunicipalityAccess(user)(municipalityCode)
     properties.map { prop =>
+      if (prop.administrativeClass == State)
+        halt(BadRequest("The Value Inserted in Administrative Class is not allowed."))
       roadLinkService.updateLinkProperties(prop.linkId, prop.functionalClass, prop.linkType, prop.trafficDirection, Option(user.username), municipalityValidation).map { roadLink =>
         Map("linkId" -> roadLink.linkId,
           "points" -> roadLink.geometry,

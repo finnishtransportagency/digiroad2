@@ -967,7 +967,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       (cleanMap(parameterMap.map(i => i._1 -> i._2._1)),
         cleanMap(parameterMap.map(i => i._1 -> i._2._2)),
         cleanMap(parameterMap.map(i => i._1 -> i._2._3)),
-        cleanMap(parameterMap.map(i => i._1 -> i._2._4)),)
+        cleanMap(parameterMap.map(i => i._1 -> i._2._4)))
     }
     MassQuery.withIds(linkIds) {
       idTableName =>
