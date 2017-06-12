@@ -224,11 +224,12 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       countAfterInsertProjects.size should be (count)
       sqlu"""UPDATE Project_link set status = 1""".execute
       val terminations = ProjectDeltaCalculator.delta(saved.id).terminations
+      terminations should have size(66)
       val sections = ProjectDeltaCalculator.partition(terminations)
-      sections should have size (2)
+      sections should have size (64)
       sections.exists(_.track == Track.LeftSide) should be (true)
       sections.exists(_.track == Track.RightSide) should be (true)
-      sections.groupBy(_.endMAddr).keySet.size should be (1)
+      sections.groupBy(_.endMAddr).keySet.size should be (59)
     }
     runWithRollback { projectService.getRoadAddressAllProjects() } should have size (count - 1)
   }
