@@ -335,6 +335,7 @@
           if(!_.isUndefined(result.projectAddresses)) {
             eventbus.trigger('linkProperties:selectedProject', result.projectAddresses.linkId);
             eventbus.trigger('roadAddressProject:openProject', result.project);
+            rootElement.html(selectedProjectLinkTemplate(currentProject, options, selectedProjectLink));
             _.defer(function(){
               applicationModel.selectLayer('roadAddressProject');
             });
