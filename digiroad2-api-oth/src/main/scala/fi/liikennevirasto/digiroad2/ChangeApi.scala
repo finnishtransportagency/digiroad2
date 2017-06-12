@@ -156,6 +156,19 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
             "properties" ->
               Map(
                 "value" -> value,
+                "link" -> Map(
+                  "type" -> "Feature",
+                  "id" -> link.linkId,
+                  "geometry" -> Map(
+                    "type" -> "LineString",
+                    "coordinates" -> link.geometry.map(p => Seq(p.x, p.y, p.z))
+                  ),
+                  "properties" -> Map(
+                    "functionalClass" -> link.functionalClass,
+                    "type" -> link.linkType.value,
+                    "length" -> link.length
+                  )
+                ),
                 "sideCode" -> (link.trafficDirection match {
                   case TrafficDirection.AgainstDigitizing =>
                     SideCode.AgainstDigitizing.value
@@ -166,7 +179,7 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
                 }),
                 "startMeasure" -> 0,
                 "endMeasure" -> link.geometry.length,
-                "modifiedAt" -> link.modifiedAt.map(DateTimePropertyFormat.print(_)),
+                "modifiedAt" -> link.modifiedAt,
                 "createdAt" -> createdAt.map(DateTimePropertyFormat.print(_)),
                 "changeType" -> changeType
               )
