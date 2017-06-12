@@ -561,13 +561,13 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
         case _ => None
       }
       val ac = (row._14, row._15, row._16, row._17) match{
-        case (Some(linkId), Some(dir), Some(modDate), Some(modBy)) => Option((linkId, dir, modDate, modBy))
+        case (Some(linkId), Some(value), Some(modDate), Some(modBy)) => Option((linkId, value, modDate, modBy))
+        case (Some(linkId), Some(value), _ , Some(modBy)) => Option((linkId, value, DateTime.now(), modBy))
         case _ => None
       }
       row._1 ->(td, fc, lt, ac)
     }
     ).toMap
-
   }
 
   def getViiteRoadLinksHistoryFromVVH(roadAddressesLinkIds: Set[Long]): Seq[VVHHistoryRoadLink] = {
@@ -735,6 +735,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       if (roadLink.trafficDirection != TrafficDirection.UnknownDirection)  setLinkProperty("traffic_direction", "traffic_direction", roadLink.trafficDirection.value, roadLink.linkId, None, vvhTrafficDirection, roadLink.modifiedAt, roadLink.modifiedBy)
       if (roadLink.functionalClass != FunctionalClass.Unknown) setLinkProperty("functional_class", "functional_class", roadLink.functionalClass, roadLink.linkId, username, None, roadLink.modifiedAt, roadLink.modifiedBy)
       if (roadLink.linkType != UnknownLinkType) setLinkProperty("link_type", "link_type", roadLink.linkType.value, roadLink.linkId, username, None, roadLink.modifiedAt, roadLink.modifiedBy)
+      if (roadLink.administrativeClass != Unknown) setLinkProperty("administrative_class", "administrative_class", roadLink.administrativeClass.value, roadLink.linkId, username, None, roadLink.modifiedAt, roadLink.modifiedBy)
     }
     withDynTransaction {
       adjustedRoadLinks.foreach(updateProperties)
@@ -928,6 +929,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
         propertyRows.functionalClassValue(linkId),
         propertyRows.linkTypeValue(linkId),
         propertyRows.trafficDirectionValue(linkId).getOrElse(TrafficDirection.UnknownDirection),
+        propertyRows.administrativeClassValue(linkId),
         modifiedAt.map(DateTimePropertyFormat.print),
         modifiedBy)
     }
@@ -1009,8 +1011,9 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       val functionalClassRowOption = functionalClassRowsByLinkId.get(linkId)
       val linkTypeRowOption = linkTypeRowsByLinkId.get(linkId)
       val trafficDirectionRowOption = trafficDirectionRowsByLinkId.get(linkId)
+      val administrativeRowOption = administrativeClassRowsByLinkId.get(linkId)
 
-      val modifications = List(functionalClassRowOption, trafficDirectionRowOption, linkTypeRowOption).map {
+      val modifications = List(functionalClassRowOption, trafficDirectionRowOption, linkTypeRowOption, administrativeRowOption).map {
         case Some((_, _, at, by)) => Some((at, by))
         case _ => None
       } :+ optionalModification
