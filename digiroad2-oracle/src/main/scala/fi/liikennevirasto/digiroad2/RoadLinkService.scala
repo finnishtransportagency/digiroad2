@@ -458,7 +458,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * Saves road link property data from UI. Used by Digiroad2Api /linkproperties PUT endpoint.
     */
   def updateLinkProperties(linkId: Long, functionalClass: Int, linkType: LinkType,
-                           direction: TrafficDirection, username: Option[String], municipalityValidation: Int => Unit): Option[RoadLink] = {
+                           direction: TrafficDirection, administrativeClass: AdministrativeClass, username: Option[String], municipalityValidation: Int => Unit): Option[RoadLink] = {
     val vvhRoadLink = vvhClient.fetchByLinkId(linkId) match {
       case Some(vvhRoadLink) => Some(vvhRoadLink)
       case None => vvhClient.complementaryData.fetchComplementaryRoadlink(linkId)
@@ -469,6 +469,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
         setLinkProperty("traffic_direction", "traffic_direction", direction.value, linkId, username, Some(vvhRoadLink.trafficDirection.value), None, None)
         if (functionalClass != FunctionalClass.Unknown) setLinkProperty("functional_class", "functional_class", functionalClass, linkId, username, None, None, None)
         if (linkType != UnknownLinkType) setLinkProperty("link_type", "link_type", linkType.value, linkId, username, None, None, None)
+        setLinkProperty("administrative_class", "administrative_class", administrativeClass.value, linkId, username, None, None, None)
         val enrichedLink = enrichRoadLinksFromVVH(Seq(vvhRoadLink)).head
         if (enrichedLink.functionalClass != FunctionalClass.Unknown && enrichedLink.linkType != UnknownLinkType) {
           removeIncompleteness(linkId)

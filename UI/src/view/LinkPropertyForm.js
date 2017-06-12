@@ -8,6 +8,12 @@
       State: 'Valtion omistama'
     };
 
+    var administrativeClasses = [
+      ['State',  'Yksityisen omistama'],
+      ['Municipality',  'Kunnan omistama'],
+      ['Private',  'Valtion omistama']
+    ];
+
     var localizedTrafficDirections = {
       BothDirections: 'Molempiin suuntiin',
       AgainstDigitizing: 'Digitointisuuntaa vastaan',
@@ -114,8 +120,11 @@
             '<div class="form-group">' +
               '<p class="form-control-static asset-log-info">Geometrian lähde: <%- linkSource %></p>' +
             '</div>' +
-            staticField('Hallinnollinen luokka', 'localizedAdministrativeClass') +
+           // staticField('Hallinnollinen luokka', 'localizedAdministrativeClass') +
             '<div class="form-group editable">' +
+              '<label class="control-label">Hallinnollinen luokka</label>' +
+              '<p class="form-control-static"><%- localizedAdministrativeClass %></p>' +
+              '<select class="form-control administrative-class" style="display: none"><%= administrativeClassOptionTags %></select>' +
               '<label class="control-label">Toiminnallinen luokka</label>' +
               '<p class="form-control-static"><%- localizedFunctionalClass %></p>' +
               '<select class="form-control functional-class" style="display: none"><%= functionalClassOptionTags %></select>' +
@@ -205,10 +214,15 @@
           var selected = value[0] == linkProperties.linkType ? " selected" : "";
           return '<option value="' + value[0] + '"' + selected + '>' + value[1] + '</option>';
         }).join('');
+        var administrativeClassOptionTags = _.map(administrativeClasses, function(value) {
+          var selected = value[0] == linkProperties.administrativeClass ? " selected" : "";
+          return '<option value="' + value[0] + '"' + selected + '>' + value[1] + '</option>';
+        }).join('');
         var defaultUnknownOptionTag = '<option value="" style="display:none;"></option>';
         var options =  { imports: { trafficDirectionOptionTags: defaultUnknownOptionTag.concat(trafficDirectionOptionTags),
                                     functionalClassOptionTags: defaultUnknownOptionTag.concat(functionalClassOptionTags),
-                                    linkTypesOptionTags: defaultUnknownOptionTag.concat(linkTypesOptionTags) }};
+                                    linkTypesOptionTags: defaultUnknownOptionTag.concat(linkTypesOptionTags),
+                                    administrativeClassOptionTags : defaultUnknownOptionTag.concat(administrativeClassOptionTags)}};
         rootElement.html(template(options)(linkProperties));
         rootElement.find('.traffic-direction').change(function(event) {
           selectedLinkProperty.setTrafficDirection($(event.currentTarget).find(':selected').attr('value'));
@@ -218,6 +232,9 @@
         });
         rootElement.find('.link-types').change(function(event) {
           selectedLinkProperty.setLinkType(parseInt($(event.currentTarget).find(':selected').attr('value'), 10));
+        });
+        rootElement.find('.administrative-class').change(function(event) {
+          selectedLinkProperty.setAdministrativeClass($(event.currentTarget).find(':selected').attr('value'));
         });
         toggleMode(applicationModel.isReadOnly());
       });

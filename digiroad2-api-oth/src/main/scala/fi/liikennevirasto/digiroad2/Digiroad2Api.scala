@@ -19,7 +19,7 @@ import org.scalatra._
 import org.scalatra.json._
 import org.slf4j.LoggerFactory
 
-case class LinkProperties(linkId: Long, functionalClass: Int, linkType: LinkType, trafficDirection: TrafficDirection, administrativeClass: Int)
+case class LinkProperties(linkId: Long, functionalClass: Int, linkType: LinkType, trafficDirection: TrafficDirection, administrativeClass: AdministrativeClass)
 
 case class ExistingLinearAsset(id: Long, linkId: Long)
 
@@ -85,7 +85,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     case lt: LinkType => JInt(BigInt(lt.value))
   }))
 
-  protected implicit val jsonFormats: Formats = DefaultFormats + DateTimeSerializer + SideCodeSerializer + TrafficDirectionSerializer + LinkTypeSerializer + DayofWeekSerializer
+  case object AdministrativeClassSerializer extends CustomSerializer[AdministrativeClass](format => ( {
+    case JString(administrativeClass) => AdministrativeClass(administrativeClass)
+  }, {
+    case ac: AdministrativeClass => JString(ac.toString)
+  }))
+
+  protected implicit val jsonFormats: Formats = DefaultFormats + DateTimeSerializer + SideCodeSerializer + TrafficDirectionSerializer + LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer
 
   before() {
     contentType = formats("json") + "; charset=utf-8"
@@ -505,9 +511,7 @@ Returns empty result as Json message, not as page not found
     val user = userProvider.getCurrentUser()
     def municipalityValidation(municipalityCode: Int) = validateUserMunicipalityAccess(user)(municipalityCode)
     properties.map { prop =>
-      if (prop.administrativeClass == State)
-        halt(BadRequest("The Value Inserted in Administrative Class is not allowed."))
-      roadLinkService.updateLinkProperties(prop.linkId, prop.functionalClass, prop.linkType, prop.trafficDirection, Option(user.username), municipalityValidation).map { roadLink =>
+      roadLinkService.updateLinkProperties(prop.linkId, prop.functionalClass, prop.linkType, prop.trafficDirection, prop.administrativeClass, Option(user.username), municipalityValidation).map { roadLink =>
         Map("linkId" -> roadLink.linkId,
           "points" -> roadLink.geometry,
           "administrativeClass" -> roadLink.administrativeClass.toString,
