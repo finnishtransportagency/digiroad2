@@ -491,6 +491,15 @@
         geometryChangedLayer.getSource().clear();
 
       if(map.getView().getZoom() >= zoomlevels.minZoomForAssets) {
+        //TODO get all not-unknown and not-floating and not-geometrychanged and apply their arrow-drop colors to respective rules
+        var testRoadMarker = _.filter(roadLinks, function(roadlink) {
+          return roadlink.linkId === 5169004;
+        });
+
+        var directionRoadMarker = _.filter(roadLinks, function(roadlink) {
+          return roadlink.roadLinkType !== floatingRoadLinkType && roadlink.anomaly !== noAddressAnomaly && roadlink.anomaly === geometryChangedAnomaly;
+        });
+
         var floatingRoadMarkers = _.filter(roadLinks, function(roadlink) {
           return roadlink.roadLinkType === floatingRoadLinkType;
         });
@@ -516,6 +525,18 @@
           marker = cachedLinkPropertyMarker.createMarker(middlefloating);
           if(applicationModel.getCurrentAction() !== applicationModel.actionCalculated && !_.contains(linkIdsToRemove,marker.roadLinkData.linkId))
             floatingMarkerLayer.getSource().addFeature(marker);
+        });
+
+        _.each(testRoadMarker, function(testlink) {
+          var marker = cachedMarker.createMarker(testlink);
+          if(applicationModel.getCurrentAction() !== applicationModel.actionCalculated && !_.contains(linkIdsToRemove,marker.roadLinkData.linkId))
+            anomalousMarkerLayer.getSource().addFeature(marker);
+        });
+        //WIP direction marker
+        _.each(directionRoadMarker, function(directionlink) {
+          var marker = cachedMarker.createMarker(directionlink);
+          if(applicationModel.getCurrentAction() !== applicationModel.actionCalculated && !_.contains(linkIdsToRemove,marker.roadLinkData.linkId))
+            anomalousMarkerLayer.getSource().addFeature(marker);
         });
 
         _.each(anomalousRoadMarkers, function(anomalouslink) {
