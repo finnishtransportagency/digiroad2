@@ -4,7 +4,7 @@ import java.util.Properties
 import javax.sql.DataSource
 
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.pointasset.oracle.{Obstacle, OracleObstacleDao}
@@ -637,7 +637,7 @@ class AssetDataImporter {
 
     withDynTransaction {
       val speedLimitLinks = sql"""
-            select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure
+            select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, pos.link_source
             from asset a
             join asset_link al on a.id = al.asset_id
             join lrm_position pos on al.position_id = pos.id
@@ -648,11 +648,11 @@ class AssetDataImporter {
             and floating = 0
             and (select count(*) from asset_link where asset_id = a.id) > 1
             and a.id between $chunkStart and $chunkEnd
-          """.as[(Long, Long, Int, Option[Int], Double, Double)].list
+          """.as[(Long, Long, Int, Option[Int], Double, Double, Int)].list
 
       speedLimitLinks.foreach { speedLimitLink =>
-        val (id, linkId, sideCode, value, startMeasure, endMeasure) = speedLimitLink
-        dao.forceCreateLinearAsset(s"split_speedlimit_$id", 20, linkId, (startMeasure, endMeasure), SideCode(sideCode), value, (id, value) => dao.insertEnumeratedValue(id, "rajoitus", value), None, None, None, None)
+        val (id, linkId, sideCode, value, startMeasure, endMeasure, linkSource) = speedLimitLink
+        dao.forceCreateLinearAsset(s"split_speedlimit_$id", 20, linkId, Measures(startMeasure, endMeasure), SideCode(sideCode), value, (id, value) => dao.insertEnumeratedValue(id, "rajoitus", value), None, None, None, None, LinkGeomSource.apply(linkSource))
       }
       println(s"created ${speedLimitLinks.length} new single link speed limits")
 
@@ -667,7 +667,7 @@ class AssetDataImporter {
 
     withDynTransaction {
       val linearAssetLinks = sql"""
-            select a.id, pos.link_id, pos.side_code, pos.start_measure, pos.end_measure, n.value
+            select a.id, pos.link_id, pos.side_code, pos.start_measure, pos.end_measure, n.value, pos.link_source
             from asset a
             join asset_link al on a.id = al.asset_id
             join lrm_position pos on al.position_id = pos.id
@@ -676,10 +676,10 @@ class AssetDataImporter {
             and floating = 0
             and (select count(*) from asset_link where asset_id = a.id) > 1
             and a.id between $chunkStart and $chunkEnd
-          """.as[(Long, Long, Int, Double, Double, Option[Int])].list
+          """.as[(Long, Long, Int, Double, Double, Option[Int], Int)].list
 
-      linearAssetLinks.foreach { case (id, linkId, sideCode, startMeasure, endMeasure, value) =>
-        dao.forceCreateLinearAsset(s"split_linearasset_$id", typeId, linkId, (startMeasure, endMeasure), SideCode(sideCode), value, (id, value) => dao.insertValue(id, "mittarajoitus", value), None, None, None, None)
+      linearAssetLinks.foreach { case (id, linkId, sideCode, startMeasure, endMeasure, value, linkSource) =>
+        dao.forceCreateLinearAsset(s"split_linearasset_$id", typeId, linkId, Measures(startMeasure, endMeasure), SideCode(sideCode), value, (id, value) => dao.insertValue(id, "mittarajoitus", value), None, None, None, None, linkSource = LinkGeomSource.apply(linkSource))
       }
 
       println(s"created ${linearAssetLinks.length} new single link linear assets")

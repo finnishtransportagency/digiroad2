@@ -90,7 +90,7 @@
 
     var speedLimitComplementaryCheckBox = [
       '<div class="check-box-container">' +
-        '<input id="complementaryCheckbox" type="checkbox" /> <lable>Näytä täydentävä geometria</lable>' +
+        '<input id="compCheckbox" type="checkbox" /> <lable>Näytä täydentävä geometria</lable>' +
       '</div>' +
       '</div>'
     ].join('');
@@ -160,7 +160,7 @@
       }
     });
 
-    elements.expanded.find('#complementaryCheckbox').on('change', function (event) {
+    elements.expanded.find('#compCheckbox').on('change', function (event) {
       if ($(event.currentTarget).prop('checked')) {
         eventbus.trigger('speedLimits:showSpeedLimitsComplementary');
       } else {

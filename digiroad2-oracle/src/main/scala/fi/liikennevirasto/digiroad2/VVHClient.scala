@@ -604,6 +604,10 @@ class VVHClient(vvhRestApiEndPoint: String) {
     vvhRoadLink
   }
 
+  def fetchRoadLinksOrComplementaryFromVVH(linkId: Set[Long]): Seq[VVHRoadlink] = {
+    fetchByLinkIds(linkId) ++ complementaryData.fetchComplementaryRoadlinks(linkId)
+  }
+
   /**
     * Returns VVH road links.
     * Used by VVHClient.fetchByLinkIds, VVHClient.fetchByMmlIds and VVHClient.fetchVVHRoadlinks

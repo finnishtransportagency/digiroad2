@@ -163,11 +163,11 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
       val roadLink = VVHRoadlink(123, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
       val dao = daoWithRoadLinks(List(roadLink))
       val id = simulateQuery {
-        dao.createSpeedLimit("test", 123, (0.0, 100.0), SideCode.BothDirections, 40, 0, NormalLinkInterface, _ => ())
+        dao.createSpeedLimit("test", 123, Measures(0.0, 100.0), SideCode.BothDirections, 40, 0, NormalLinkInterface, _ => ())
       }
       id shouldBe defined
       val id2 = simulateQuery {
-        dao.createSpeedLimit("test", 123, (0.0, 100.0), SideCode.BothDirections, 40, 0, NormalLinkInterface, _ => ())
+        dao.createSpeedLimit("test", 123, Measures(0.0, 100.0), SideCode.BothDirections, 40, 0, NormalLinkInterface, _ => ())
       }
       id2 shouldBe None
     }
@@ -178,15 +178,15 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
       val roadLink = VVHRoadlink(123, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
       val dao = daoWithRoadLinks(List(roadLink))
       val id = simulateQuery {
-        dao.createSpeedLimit("test", 123, (0.0, 100.0), SideCode.TowardsDigitizing, 40, 0, NormalLinkInterface, _ => ())
+        dao.createSpeedLimit("test", 123, Measures(0.0, 100.0), SideCode.TowardsDigitizing, 40, 0, NormalLinkInterface, _ => ())
       }
       id shouldBe defined
       val id2 = simulateQuery {
-        dao.createSpeedLimit("test", 123, (0.0, 100.0), SideCode.AgainstDigitizing, 40, 0, NormalLinkInterface, _ => ())
+        dao.createSpeedLimit("test", 123, Measures(0.0, 100.0), SideCode.AgainstDigitizing, 40, 0, NormalLinkInterface, _ => ())
       }
       id2 shouldBe defined
       val id3 = simulateQuery {
-        dao.createSpeedLimit("test", 123, (0.0, 100.0), SideCode.BothDirections, 40, 0, NormalLinkInterface, _ => ())
+        dao.createSpeedLimit("test", 123, Measures(0.0, 100.0), SideCode.BothDirections, 40, 0, NormalLinkInterface, _ => ())
       }
       id3 shouldBe None
     }
@@ -211,11 +211,11 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
       val roadLink = VVHRoadlink(linkId, 0, Nil, Municipality, TrafficDirection.UnknownDirection, AllOthers)
       val dao = daoWithRoadLinks(List(roadLink))
 
-      dao.createSpeedLimit("test", linkId, (11.0, 16.0), SideCode.BothDirections, 40, 0, NormalLinkInterface, _ => ())
+      dao.createSpeedLimit("test", linkId, Measures(11.0, 16.0), SideCode.BothDirections, 40, 0, NormalLinkInterface, _ => ())
       dao.purgeFromUnknownSpeedLimits(linkId, 84.121)
       sql"""select link_id from unknown_speed_limit where link_id = $linkId""".as[Long].firstOption should be(Some(linkId))
 
-      dao.createSpeedLimit("test", linkId, (20.0, 54.0), SideCode.BothDirections, 40, 0, NormalLinkInterface, _ => ())
+      dao.createSpeedLimit("test", linkId, Measures(20.0, 54.0), SideCode.BothDirections, 40, 0, NormalLinkInterface, _ => ())
       dao.purgeFromUnknownSpeedLimits(linkId, 84.121)
       sql"""select link_id from unknown_speed_limit where link_id = $linkId""".as[Long].firstOption should be(None)
     }
