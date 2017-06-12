@@ -1,5 +1,5 @@
 (function (root) {
-  root.PointAssetBox = function (selectedPointAsset, title, layerName, legendValues, complementaryPossible) {
+  root.PointAssetBox = function (selectedPointAsset, title, layerName, legendValues, allowComplementaryLinks) {
     var className = _.kebabCase(layerName);
     var element = $('<div class="panel-group point-asset ' + className + '"></div>').hide();
 
@@ -10,7 +10,7 @@
 
     var editModeToggle = new EditModeToggleButton(toolSelection);
 
-    var complementaryCheckBox = complementaryPossible ?
+    var complementaryCheckBox = allowComplementaryLinks ?
             '<div class="panel-section">' +
               '<div class="check-box-container">' +
                 '<input id="complementaryCheckbox" type="checkbox" /> <lable>Näytä täydentävä geometria</lable>' +
@@ -55,7 +55,7 @@
       title: title,
       layerName: layerName,
       element: element,
-      complementaryPossible: complementaryPossible,
+      allowComplementaryLinks: allowComplementaryLinks,
       show: show,
       hide: hide
     };
