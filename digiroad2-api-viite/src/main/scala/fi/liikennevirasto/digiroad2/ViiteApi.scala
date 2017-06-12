@@ -232,7 +232,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val (projects, projectLinks) = projectService.getProjectsWithReservedRoadParts(projectId)
     val project = Seq(projects).map(roadAddressProjectToApi)
     val projectsWithLinkId = project.head
-    Map("project" -> projectsWithLinkId,"linkId" -> projectLinks.headOption.map(_.startingLinkId), "projectLinks" -> projectLinks)
+    val publishable = projectService.projectLinkPublishable(projectId) && projectLinks.size > 0
+    Map("project" -> projectsWithLinkId,"linkId" -> projectLinks.headOption.map(_.startingLinkId), "projectLinks" -> projectLinks, "publishable" -> publishable)
   }
 
   get("/roadlinks/roadaddress/project/validatereservedlink/"){

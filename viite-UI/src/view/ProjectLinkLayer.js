@@ -445,8 +445,8 @@ var isDefined=function(variable) {
     });
 
     eventbus.on('roadAddressProject:selected', function(projId) {
-      eventbus.once('roadAddressProject:projectFetched', function(id) {
-        projectCollection.fetch(map.getView().calculateExtent(map.getSize()),map.getView().getZoom(), id);
+      eventbus.once('roadAddressProject:projectFetched', function(projectInfo) {
+        projectCollection.fetch(map.getView().calculateExtent(map.getSize()),map.getView().getZoom(), projectInfo.id, projectInfo.publishable);
       });
       projectCollection.getProjectsWithLinksById(projId);
     });

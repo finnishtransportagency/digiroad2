@@ -81,9 +81,9 @@
         currentProject = result;
         projectinfo = {
           id: result.project.id,
-          publishable: false
+          publishable: result.publishable
         };
-        eventbus.trigger('roadAddressProject:projectFetched', projectinfo.id);
+        eventbus.trigger('roadAddressProject:projectFetched', projectinfo);
       });
     };
 
@@ -95,7 +95,7 @@
         });
       });
     };
-    
+
     this.clearRoadAddressProjects = function () {
       roadAddressProjects = [];
       dirtyRoadPartList = [];
