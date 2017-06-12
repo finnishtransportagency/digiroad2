@@ -99,6 +99,14 @@
       }
     };
 
+    var validateAdministrativeClass = function(){
+      if(selectedLinkProperty.get()[0].administrativeClass === 'State')
+        return '<select class="form-control administrative-class" style="display: none" disabled><%= administrativeClassOptionTags %></select>';
+      else
+        return '<select class="form-control administrative-class" style="display: none"><%= administrativeClassOptionTags %></select>';
+    };
+
+
     var buttons =
       '<div class="link-properties form-controls">' +
         '<button class="save btn btn-primary" disabled>Tallenna</button>' +
@@ -120,11 +128,10 @@
             '<div class="form-group">' +
               '<p class="form-control-static asset-log-info">Geometrian lähde: <%- linkSource %></p>' +
             '</div>' +
-           // staticField('Hallinnollinen luokka', 'localizedAdministrativeClass') +
             '<div class="form-group editable">' +
               '<label class="control-label">Hallinnollinen luokka</label>' +
               '<p class="form-control-static"><%- localizedAdministrativeClass %></p>' +
-              '<select class="form-control administrative-class" style="display: none"><%= administrativeClassOptionTags %></select>' +
+               validateAdministrativeClass() +
               '<label class="control-label">Toiminnallinen luokka</label>' +
               '<p class="form-control-static"><%- localizedFunctionalClass %></p>' +
               '<select class="form-control functional-class" style="display: none"><%= functionalClassOptionTags %></select>' +
@@ -216,7 +223,10 @@
         }).join('');
         var administrativeClassOptionTags = _.map(administrativeClasses, function(value) {
           var selected = value[0] == linkProperties.administrativeClass ? " selected" : "";
-          return '<option value="' + value[0] + '"' + selected + '>' + value[1] + '</option>';
+          return value[0] !== 'State' ?
+            '<option value="' + value[0] + '"' + selected + '>' + value[1] + '</option>' :
+            '<option value="' + value[0] + '" disabled' + selected + '>' + value[1] + '</option>';
+
         }).join('');
         var defaultUnknownOptionTag = '<option value="" style="display:none;"></option>';
         var options =  { imports: { trafficDirectionOptionTags: defaultUnknownOptionTag.concat(trafficDirectionOptionTags),
