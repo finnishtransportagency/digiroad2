@@ -112,6 +112,7 @@
       var selection = _.find(event.selected, function (selectionTarget) {
         return !_.isUndefined(selectionTarget.projectLinkData) && selectionTarget.projectLinkData.status === 0;
       });
+      revertSelectedChanges();
       selectedProjectLinkProperty.clean();
       $('.wrapper').remove();
       $('#actionButtons').empty();
@@ -155,9 +156,18 @@
       var selection = _.find(event.selected, function (selectionTarget) {
         return !_.isUndefined(selectionTarget.projectLinkData) && selectionTarget.projectLinkData.status === 0;
       });
+      revertSelectedChanges();
       if (!_.isUndefined(selection))
         selectedProjectLinkProperty.open(selection.projectLinkData.linkId);
     });
+
+    var revertSelectedChanges = function() {
+      if(projectCollection.isDirty()) {
+        projectCollection.revertLinkStatus();
+        projectCollection.setDirty([]);
+        eventbus.trigger('roadAddress:projectLinksEdited');
+      }
+    };
 
     var clearHighlights = function(){
       if(selectDoubleClick.getFeatures().getLength() !== 0){
@@ -200,6 +210,19 @@
 
     eventbus.on('projectLink:clicked', function() {
       highlightFeatures();
+    });
+
+    eventbus.on('layer:selected', function(layer) {
+      if (layer === 'roadAddressProject') {
+        vectorLayer.setVisible(true);
+        calibrationPointLayer.setVisible(true);
+      } else {
+        clearHighlights();
+        var featuresToHighlight = [];
+        vectorLayer.setVisible(false);
+        calibrationPointLayer.setVisible(false);
+        eventbus.trigger('roadLinks:fetched');
+      }
     });
 
     var zoomDoubleClickListener = function(event) {
@@ -366,7 +389,7 @@ var isDefined=function(variable) {
     };
 
     var redraw = function(){
-      var editedLinks = projectCollection.getDirty();
+      var editedLinks = _.map(projectCollection.getDirty(), function(editedLink) {return editedLink.id;});
       var projectLinks = projectCollection.getAll();
       var features = [];
       _.map(projectLinks, function(projectLink) {
@@ -469,7 +492,8 @@ var isDefined=function(variable) {
     map.addLayer(calibrationPointLayer);
     return {
       show: show,
-      hide: hideLayer
+      hide: hideLayer,
+      clearHighlights: clearHighlights
     };
   };
 

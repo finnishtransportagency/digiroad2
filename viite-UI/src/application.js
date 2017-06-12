@@ -89,7 +89,7 @@
     new LinkPropertyForm(models.selectedLinkProperty);
 
     new RoadAddressProjectForm(models.roadAddressProjectCollection);
-    new RoadAddressProjectEditForm(models.roadAddressProjectCollection, models.selectedProjectLinkProperty);
+    new RoadAddressProjectEditForm(models.roadAddressProjectCollection, models.selectedProjectLinkProperty, projectLinkLayer);
 
     var layers = _.merge({
       road: roadLayer,

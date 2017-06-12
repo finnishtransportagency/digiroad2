@@ -2,10 +2,9 @@ package fi.liikennevirasto.digiroad2.util
 
 import java.io.{File, FileReader, FileWriter}
 import java.nio.file.Paths
-
 import java.nio.file.Files.copy
 
-import fi.liikennevirasto.digiroad2.ChangeInfo
+import fi.liikennevirasto.digiroad2.{ChangeInfo, VVHRoadNodes, NodeType}
 import fi.liikennevirasto.digiroad2.asset.{LinkType, TrafficDirection, _}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ValidityPeriodDayOfWeek}
 import org.json4s.JsonAST.{JInt, JString}
@@ -60,8 +59,15 @@ class JsonSerializer extends VVHSerializer {
       JInt(BigInt(constructionType.value))
   }))
 
+  case object NodeTypeSerializer extends CustomSerializer[NodeType](format => ( {
+    case JInt(typeInt) => NodeType(typeInt.toInt)
+  }, {
+    case nodeType: NodeType =>
+      JInt(BigInt(nodeType.value))
+  }))
+
   protected implicit val jsonFormats: Formats = DefaultFormats + SideCodeSerializer + TrafficDirectionSerializer +
-    LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + LinkGeomSourceSerializer + ConstructionTypeSerializer
+    LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + LinkGeomSourceSerializer + ConstructionTypeSerializer + NodeTypeSerializer
 
   override def readCachedGeometry(file: File): Seq[RoadLink] = {
     val json = new FileReader(file)
@@ -71,6 +77,11 @@ class JsonSerializer extends VVHSerializer {
   override def readCachedChanges(file: File): Seq[ChangeInfo] = {
     val json = new FileReader(file)
     read[Seq[ChangeInfo]](json)
+  }
+
+  override def readCachedNodes(file: File): Seq[VVHRoadNodes] = {
+    val json = new FileReader(file)
+    read[Seq[VVHRoadNodes]](json)
   }
   override def writeCache(file: File, objects: Seq[Object]): Boolean = {
 

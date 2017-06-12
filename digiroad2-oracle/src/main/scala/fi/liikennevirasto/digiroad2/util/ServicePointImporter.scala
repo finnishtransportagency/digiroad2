@@ -42,7 +42,7 @@ object ServicePointImporter {
           val assetId = Sequences.nextPrimaryKeySeqValue
           val point = rows.head._6.head
           val diagonal = Vector3d(150, 150, 0)
-          val municipalities = vvhClient.queryByMunicipalitesAndBounds(BoundingRectangle(point - diagonal, point + diagonal))
+          val municipalities = vvhClient.roadLinkData.fetchByBounds(BoundingRectangle(point - diagonal, point + diagonal))
           val municipalityCode = municipalities.groupBy(roadlink => roadlink.municipalityCode).size match {
             case 0 =>
               println("No municipality found for asset id " + assetId)

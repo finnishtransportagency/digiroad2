@@ -20,4 +20,8 @@ class DummySerializer extends VVHSerializer{
   override def readCachedChanges(file: File): Seq[ChangeInfo] = {
     Seq()
   }
+
+  override def readCachedNodes(file: File): Seq[VVHRoadNodes] = {
+    Seq()
+  }
 }
