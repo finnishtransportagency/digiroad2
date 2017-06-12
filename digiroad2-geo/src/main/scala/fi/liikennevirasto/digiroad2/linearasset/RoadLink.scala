@@ -19,6 +19,7 @@ case class RoadLinkProperties(linkId: Long,
                               functionalClass: Int,
                               linkType: LinkType,
                               trafficDirection: TrafficDirection,
+                              administrativeClass: AdministrativeClass,
                               modifiedAt: Option[String],
                               modifiedBy: Option[String])
 
