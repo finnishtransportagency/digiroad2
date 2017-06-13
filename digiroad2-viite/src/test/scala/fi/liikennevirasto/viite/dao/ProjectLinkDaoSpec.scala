@@ -139,4 +139,35 @@ class ProjectLinkDaoSpec  extends FunSuite with Matchers{
 
   }
 
+  test("Update project link status"){
+    val address=ReservedRoadPart(5:Long, 203:Long, 203:Long, 5.5:Double, Discontinuity.apply("jatkuva"), 8:Long, None:Option[DateTime], None:Option[DateTime])
+    runWithRollback{
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
+      ProjectDAO.createRoadAddressProject(rap)
+      val addresses = RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(rap))
+      ProjectDAO.create(addresses)
+      val projectLinks = ProjectDAO.getProjectLinks(id)
+      ProjectDAO.updateProjectLinkStatus(projectLinks.map( x=> x.id).toSet ,LinkStatus.Terminated,"test")
+      val updatedProjectLinks = ProjectDAO.getProjectLinks(id)
+      updatedProjectLinks.head.status should be (LinkStatus.Terminated)
+    }
+  }
+
+
+  test("Update project status"){
+    val address=ReservedRoadPart(5:Long, 203:Long, 203:Long, 5.5:Double, Discontinuity.apply("jatkuva"), 8:Long, None:Option[DateTime], None:Option[DateTime])
+    runWithRollback{
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
+      ProjectDAO.createRoadAddressProject(rap)
+      ProjectDAO.updateProjectStatus(id,ProjectState.Saved2TR,"")
+      ProjectDAO.getProjectStatus(id) should be (Some(ProjectState.Saved2TR))
+      }
+  }
+
+
+
+
+
 }
