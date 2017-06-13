@@ -180,17 +180,20 @@ class ProjectLinkDaoSpec  extends FunSuite with Matchers{
           project.additionalInfo should be ("updated info")
           project.createdDate should be (DateTime.parse("1901-01-01"))
           project.dateModified.getMillis should be > DateTime.parse("1901-01-03").getMillis+100000000
-
         case None => { None should be (RoadAddressProject) }
       }
     }
   }
 
-
-
-
-
-
-
-
+  test("get roadaddressprojects") {
+    val address = ReservedRoadPart(5: Long, 203: Long, 203: Long, 5.5: Double, Discontinuity.apply("jatkuva"), 8: Long, None: Option[DateTime], None: Option[DateTime])
+    runWithRollback {
+      val projectListSize = ProjectDAO.getRoadAddressProjects().length
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(address), None)
+      ProjectDAO.createRoadAddressProject(rap)
+      val projectlist = ProjectDAO.getRoadAddressProjects()
+      projectlist.length-projectListSize should be (1)
+    }
+  }
 }
