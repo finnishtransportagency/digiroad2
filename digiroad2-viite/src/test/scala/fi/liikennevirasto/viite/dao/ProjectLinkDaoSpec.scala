@@ -175,9 +175,12 @@ class ProjectLinkDaoSpec  extends FunSuite with Matchers{
       ProjectDAO.createRoadAddressProject(rap)
       ProjectDAO.updateRoadAddressProject(updatedrap)
       ProjectDAO.getRoadAddressProjectById(id) match {
-        case Some(project) => {
+        case Some(project) =>
           project.name should be ("newname")
-          }
+          project.additionalInfo should be ("updated info")
+          project.createdDate should be (DateTime.parse("1901-01-01"))
+          project.dateModified.getMillis should be > DateTime.parse("1901-01-03").getMillis+100000000
+
         case None => { None should be (RoadAddressProject) }
       }
     }
