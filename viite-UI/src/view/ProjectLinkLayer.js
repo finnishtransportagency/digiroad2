@@ -246,7 +246,7 @@
 
     //Listen pointerMove and get pixel for displaying roadAddress feature info
     eventbus.on('map:mouseMoved', function (event, pixel) {
-      if (event.dragging || applicationModel.getSelectedLayer() !== 'roadAddressProject') {
+      if (event.dragging) {
         return;
       }
       displayRoadAddressInfo(event, pixel);
