@@ -464,24 +464,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     GeometryUtils.areAdjacent(road75TargetLink.head.geometry, result(2).geometry) should be (true)
   }
 
-  // used for debugging when needed
-  private def prettyPrint(l: RoadAddressLink) = {
-
-    s"""${if (l.id == -1000) { "NEW!" } else { l.id }} link: ${l.linkId} road address: ${l.roadNumber}/${l.roadPartNumber}/${l.trackCode}/${l.startAddressM}-${l.endAddressM} length: ${l.length} dir: ${l.sideCode}
-       |${if (l.startCalibrationPoint.nonEmpty) { " <- " + l.startCalibrationPoint.get.addressMValue + " "} else ""}
-       |${if (l.endCalibrationPoint.nonEmpty) { " " + l.endCalibrationPoint.get.addressMValue + " ->"} else ""}
-     """.stripMargin.replace("\n", "")
-  }
-
-  // used for debugging when needed
-  private def prettyPrint(l: RoadAddress) = {
-
-    s"""${if (l.id == -1000) { "NEW!" } else { l.id }} link: ${l.linkId} road address: ${l.roadNumber}/${l.roadPartNumber}/${l.track.value}/${l.startAddrMValue}-${l.endAddrMValue} length: ${l.endMValue - l.startMValue} dir: ${l.sideCode}
-       |${if (l.startCalibrationPoint.nonEmpty) { " <- " + l.startCalibrationPoint.get.addressMValue + " "} else ""}
-       |${if (l.endCalibrationPoint.nonEmpty) { " " + l.endCalibrationPoint.get.addressMValue + " ->"} else ""}
-     """.stripMargin.replace("\n", "")
-  }
-
   test("Defloating road links from three links to two links") {
     val sources = Seq(
       createRoadAddressLink(8000001L, 123L, Seq(Point(0.0,0.0), Point(10.0, 10.0)), 1L, 1L, 0, 100, 114, SideCode.TowardsDigitizing, Anomaly.None),
