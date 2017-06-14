@@ -24,88 +24,94 @@
         zIndex: 10
       });
 
-      var boxStyleTest = new ol.style.Style({
-        image: new ol.style.Icon({
-          src: "images/link-properties/arrow-drop-red.svg"
-          //TODO set rotation maybe by feature. 1st need to get feature for each roadlink
-        }),
-        zIndex: 10
-      });
+      // var boxStyleTest = new ol.style.Style({
+      //   image: new ol.style.Icon({
+      //     src: "images/link-properties/arrow-drop-red.svg"
+      //     // rotation: angle * Math.PI / 180
+      //   }),
+      //   zIndex: 10
+      // });
 
       var boxStyleDirectional = function(rl) {
         if(rl.roadClass == 1){
-        new ol.style.Style({
-          image: new ol.style.Icon({
-            src: "images/link-properties/arrow-drop-red.svg"
-            //TODO set rotation maybe by feature. 1st need to get feature for each roadlink
-          }),
-          zIndex: 10
-        });
+          return new ol.style.Style({
+            image: new ol.style.Icon({
+              src: "images/link-properties/arrow-drop-red.svg"
+            }),
+            zIndex: 10
+          });
         } else if (rl.roadClass == 2){
-          new ol.style.Style({
+          return new ol.style.Style({
             image: new ol.style.Icon({
               src: "images/link-properties/arrow-drop-pink.svg"
             }),
             zIndex: 10
           });
         } else if (rl.roadClass == 3){
-          new ol.style.Style({
+          return new ol.style.Style({
             image: new ol.style.Icon({
               src: "images/link-properties/arrow-drop-pink.svg"
             }),
             zIndex: 10
           });
         } else if (rl.roadClass == 4){
-          new ol.style.Style({
+          return new ol.style.Style({
             image: new ol.style.Icon({
               src: "images/link-properties/arrow-drop-blue.svg"
             }),
             zIndex: 10
           });
         } else if (rl.roadClass == 5){
-          new ol.style.Style({
+          return new ol.style.Style({
             image: new ol.style.Icon({
               src: "images/link-properties/arrow-drop-cyan.svg"
             }),
             zIndex: 10
           });
         } else if (rl.roadClass == 6){
-          new ol.style.Style({
+          return new ol.style.Style({
             image: new ol.style.Icon({
               src: "images/link-properties/arrow-drop-pink.svg"
             }),
             zIndex: 10
           });
         } else if (rl.roadClass == 7){
-          new ol.style.Style({
+          return new ol.style.Style({
             image: new ol.style.Icon({
               src: "images/link-properties/arrow-drop-grey.svg"
             }),
             zIndex: 10
           });
         } else if (rl.roadClass == 8){
-          new ol.style.Style({
+          return new ol.style.Style({
             image: new ol.style.Icon({
               src: "images/link-properties/arrow-drop-pink.svg"
             }),
             zIndex: 10
           });
         } else if (rl.roadClass == 9){
-          new ol.style.Style({
+          return new ol.style.Style({
             image: new ol.style.Icon({
               src: "images/link-properties/arrow-drop-pink.svg"
             }),
             zIndex: 10
           });
         } else if (rl.roadClass == 10){
-          new ol.style.Style({
+          return new ol.style.Style({
             image: new ol.style.Icon({
               src: "images/link-properties/arrow-drop-pink.svg"
             }),
             zIndex: 10
           });
         } else if (rl.roadClass == 11){
-          new ol.style.Style({
+          return new ol.style.Style({
+            image: new ol.style.Icon({
+              src: "images/link-properties/arrow-drop-grey.svg"
+            }),
+            zIndex: 10
+          });
+        } else {
+          return new ol.style.Style({
             image: new ol.style.Icon({
               src: "images/link-properties/arrow-drop-grey.svg"
             }),
@@ -118,8 +124,6 @@
         box.setStyle(boxStyleFloat);
       } else if(roadlink.id===0 && roadlink.roadLinkType === 0){
         box.setStyle(boxStyleUnknown);
-      } else if (roadlink.roadLinkType === 1){
-        box.setStyle(boxStyleTest);
       } else {
         box.setStyle(boxStyleDirectional(roadlink));
       }
