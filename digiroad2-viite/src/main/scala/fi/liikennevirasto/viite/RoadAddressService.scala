@@ -256,6 +256,15 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
   }
 
+  def getTargetRoadLink(linkId: Long): RoadAddressLink = {
+    val (roadLinks, _) = roadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(Set(linkId))
+    if (roadLinks.isEmpty) {
+      throw new InvalidAddressDataException(s"Can't find road link for target link id $linkId")
+    } else{
+      RoadAddressLinkBuilder.build(roadLinks.head, MissingRoadAddress(linkId = linkId, None, None, RoadType.Unknown, None, None, None, None, anomaly = Anomaly.NoAddressGiven))
+    }
+  }
+
   def getUniqueRoadAddressLink(id: Long) = getRoadAddressLink(id)
 
   def roadClass(roadAddressLink: RoadAddressLinkLike) = {
@@ -526,10 +535,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   def getRoadAddressesAfterCalculation(sources: Seq[String], targets: Seq[String], user: User): Seq[RoadAddress] = {
     val sourceRoadAddressLinks = sources.flatMap(rd => {
-      getUniqueRoadAddressLink(rd.toLong)
+      getRoadAddressLink(rd.toLong)
     })
     val targetIds = targets.map(rd => rd.toLong).toSet
-    val targetRoadAddressLinks = targetIds.toSeq.flatMap(getUniqueRoadAddressLink)
+    val targetRoadAddressLinks = targetIds.toSeq.map(getTargetRoadLink)
     transferRoadAddress(sourceRoadAddressLinks, targetRoadAddressLinks, user)
   }
 

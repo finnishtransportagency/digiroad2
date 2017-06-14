@@ -1,11 +1,11 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, RoadLinkType}
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.RoadAddress
-import fi.liikennevirasto.viite.model.RoadAddressLink
-import fi.liikennevirasto.viite.{MaxAllowedMValueError,MinAllowedRoadAddressLength,MaxDistanceDiffAllowed,NewRoadAddress}
+import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
+import fi.liikennevirasto.viite.{MaxAllowedMValueError, MaxDistanceDiffAllowed, MinAllowedRoadAddressLength, NewRoadAddress}
 
 object DefloatMapper {
 
@@ -24,19 +24,62 @@ object DefloatMapper {
           GeometryUtils.calculatePointFromLinearReference(endTargetLink.geometry, endTargetM).getOrElse(Point(Double.NaN, Double.NaN)))
       )
     }
+    // TODO: Continue here on VIITE-509
+    def adjustSplitLinks(s: Seq[RoadAddressMapping]): Seq[RoadAddressMapping] = {
+      s
+    }
+    def prettyPrint(l: RoadAddressLink): String = {
+
+      s"""${if (l.id == -1000) { "NEW!" } else { l.id }} link: ${l.linkId} road address: ${l.roadNumber}/${l.roadPartNumber}/${l.trackCode}/${l.startAddressM}-${l.endAddressM} length: ${l.length} dir: ${l.sideCode}
+         |${if (l.startCalibrationPoint.nonEmpty) { " <- " + l.startCalibrationPoint.get.addressMValue + " "} else ""}
+         |${if (l.endCalibrationPoint.nonEmpty) { " " + l.endCalibrationPoint.get.addressMValue + " ->"} else ""}
+         |${if (l.anomaly != Anomaly.None) { " " + l.anomaly } else ""}
+         |${if (l.roadLinkType != RoadLinkType.NormalRoadLinkType) { " " + l.roadLinkType } else ""}
+     """.stripMargin.replace("\n", "")
+    }
+    /* For mapping purposes we have to fuse all road addresses on link to get it right. Otherwise start of a segment
+       is assumed to be the start of a road link
+     */
+    def fuseAddressByLinkId(s: Seq[RoadAddressLink], fused: Seq[RoadAddressLink] = Seq()): Seq[RoadAddressLink] = {
+      if (s.isEmpty)
+      // We collect them in reverse order because we're interested in the last one
+        fused.reverse
+      else {
+        val next = s.head
+        val previousOpt = fused.headOption.filter(_.linkId == next.linkId)
+        if (previousOpt.nonEmpty) {
+          // At this point we know that the chain is continuous, all are on same road part and track and ordered
+          val edited = previousOpt.get.copy(startAddressM = Math.min(previousOpt.get.startAddressM, next.startAddressM),
+            endAddressM = Math.max(previousOpt.get.endAddressM, next.endAddressM),
+            startMValue = Math.min(previousOpt.get.startMValue, next.startMValue),
+            endMValue = Math.max(previousOpt.get.endMValue, next.endMValue),
+            geometry =
+              if (next.sideCode == SideCode.AgainstDigitizing)
+                next.geometry ++ previousOpt.get.geometry
+              else
+                previousOpt.get.geometry ++ next.geometry,
+            length = previousOpt.get.length + next.length
+          )
+          fuseAddressByLinkId(s.tail, Seq(edited) ++ fused.tail)
+        } else {
+          fuseAddressByLinkId(s.tail, Seq(next) ++ fused)
+        }
+      }
+    }
 
     val (orderedSource, orderedTarget) = orderRoadAddressLinks(sources, targets)
+    val joinedSource = fuseAddressByLinkId(orderedSource)
     // The lengths may not be exactly equal: coefficient is to adjust that we advance both chains at the same relative speed
-    val targetCoeff = orderedSource.map(_.length).sum / orderedTarget.map(_.length).sum
-    val runningLength = (orderedSource.scanLeft(0.0)((len, link) => len+link.length) ++
+    val targetCoeff = joinedSource.map(_.length).sum / orderedTarget.map(_.length).sum
+    val runningLength = (joinedSource.scanLeft(0.0)((len, link) => len+link.length) ++
       orderedTarget.scanLeft(0.0)((len, link) => len+targetCoeff*link.length)).map(setPrecision).distinct.sorted
     val pairs = runningLength.zip(runningLength.tail).map{ case (st, end) =>
-      val startSource = findStartLRMLocation(st, orderedSource)
-      val endSource = findEndLRMLocation(end, orderedSource, startSource._1.linkId)
+      val startSource = findStartLRMLocation(st, joinedSource)
+      val endSource = findEndLRMLocation(end, joinedSource, startSource._1.linkId)
       val startTarget = findStartLRMLocation(st/targetCoeff, orderedTarget)
       val endTarget = findEndLRMLocation(end/targetCoeff, orderedTarget, startTarget._1.linkId)
       (startSource, endSource, startTarget, endTarget)}
-    pairs.map(x => formMapping(x._1._1, x._1._2, x._2._1, x._2._2, x._3._1, x._3._2, x._4._1, x._4._2))
+    adjustSplitLinks(pairs.map(x => formMapping(x._1._1, x._1._2, x._2._1, x._2._2, x._3._1, x._3._2, x._4._1, x._4._2)))
   }
 
   def mapRoadAddresses(roadAddressMapping: Seq[RoadAddressMapping])(ra: RoadAddress): Seq[RoadAddress] = {
@@ -46,10 +89,10 @@ object DefloatMapper {
       val (mappedStartM, mappedEndM) = (mapping.targetStartM, mapping.targetEndM)
       val (sideCode, mappedGeom, (mappedStartAddrM, mappedEndAddrM)) =
         if (isDirectionMatch(mapping))
-          (ra.sideCode, mapping.targetGeom, splitRoadAddressValues(ra, mapping.sourceStartM, mapping.sourceEndM))
+          (ra.sideCode, mapping.targetGeom, splitRoadAddressValues(ra, mapping))
         else {
           (switchSideCode(ra.sideCode), mapping.targetGeom.reverse,
-            splitRoadAddressValues(ra, mapping.sourceStartM, mapping.sourceEndM).swap)
+            splitRoadAddressValues(ra, mapping).swap)
         }
       val (startM, endM, startAddrM, endAddrM) =
         if (mappedStartM > mappedEndM)
@@ -80,9 +123,18 @@ object DefloatMapper {
     GeometryUtils.overlapAmount((xStart, xEnd), (limit1, limit2)) > 0.999
   }
 
-  private def splitRoadAddressValues(roadAddress: RoadAddress, startM: Double, endM: Double): (Long, Long) = {
+  private def splitRoadAddressValues(roadAddress: RoadAddress, mapping: RoadAddressMapping): (Long, Long) = {
+    // Check if the road address covers the whole mapping area
+
+    val (startM, endM) =
+
+      (mapping.sourceStartM, mapping.sourceEndM)
     // The lengths may not be exactly equal: coefficient is to adjust that
     val coefficient = (roadAddress.endAddrMValue - roadAddress.startAddrMValue) / (roadAddress.endMValue - roadAddress.startMValue)
+    println(coefficient)
+    println(startM, endM)
+    println(roadAddress.startAddrMValue, roadAddress.endAddrMValue)
+    println(roadAddress.startMValue, roadAddress.endMValue)
     roadAddress.sideCode match {
       case SideCode.AgainstDigitizing =>
         (roadAddress.endAddrMValue - Math.round(endM*coefficient), roadAddress.endAddrMValue - Math.round(startM*coefficient))
