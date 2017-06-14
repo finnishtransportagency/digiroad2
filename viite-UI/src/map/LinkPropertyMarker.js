@@ -32,87 +32,21 @@
       //   zIndex: 10
       // });
 
+      var colorMap = {1:'red', 2:'pink', 3:'pink', 4:'blue', 5:'cyan', 6:'pink', 7:'grey', 8:'pink', 9:'pink', 10:'pink', 11:'grey' };
+
       var boxStyleDirectional = function(rl) {
-        if(rl.roadClass == 1){
+        if(rl.roadClass in colorMap){
           return new ol.style.Style({
             image: new ol.style.Icon({
-              src: "images/link-properties/arrow-drop-red.svg"
-            }),
-            zIndex: 10
-          });
-        } else if (rl.roadClass == 2){
-          return new ol.style.Style({
-            image: new ol.style.Icon({
-              src: "images/link-properties/arrow-drop-pink.svg"
-            }),
-            zIndex: 10
-          });
-        } else if (rl.roadClass == 3){
-          return new ol.style.Style({
-            image: new ol.style.Icon({
-              src: "images/link-properties/arrow-drop-pink.svg"
-            }),
-            zIndex: 10
-          });
-        } else if (rl.roadClass == 4){
-          return new ol.style.Style({
-            image: new ol.style.Icon({
-              src: "images/link-properties/arrow-drop-blue.svg"
-            }),
-            zIndex: 10
-          });
-        } else if (rl.roadClass == 5){
-          return new ol.style.Style({
-            image: new ol.style.Icon({
-              src: "images/link-properties/arrow-drop-cyan.svg"
-            }),
-            zIndex: 10
-          });
-        } else if (rl.roadClass == 6){
-          return new ol.style.Style({
-            image: new ol.style.Icon({
-              src: "images/link-properties/arrow-drop-pink.svg"
-            }),
-            zIndex: 10
-          });
-        } else if (rl.roadClass == 7){
-          return new ol.style.Style({
-            image: new ol.style.Icon({
-              src: "images/link-properties/arrow-drop-grey.svg"
-            }),
-            zIndex: 10
-          });
-        } else if (rl.roadClass == 8){
-          return new ol.style.Style({
-            image: new ol.style.Icon({
-              src: "images/link-properties/arrow-drop-pink.svg"
-            }),
-            zIndex: 10
-          });
-        } else if (rl.roadClass == 9){
-          return new ol.style.Style({
-            image: new ol.style.Icon({
-              src: "images/link-properties/arrow-drop-pink.svg"
-            }),
-            zIndex: 10
-          });
-        } else if (rl.roadClass == 10){
-          return new ol.style.Style({
-            image: new ol.style.Icon({
-              src: "images/link-properties/arrow-drop-pink.svg"
-            }),
-            zIndex: 10
-          });
-        } else if (rl.roadClass == 11){
-          return new ol.style.Style({
-            image: new ol.style.Icon({
-              src: "images/link-properties/arrow-drop-grey.svg"
+              rotation: middlePoint.angleFromNorth* Math.PI / 180,
+              src: "images/link-properties/arrow-drop-"+colorMap[rl.roadClass]+".svg"
             }),
             zIndex: 10
           });
         } else {
           return new ol.style.Style({
             image: new ol.style.Icon({
+              rotation: middlePoint.angleFromNorth* Math.PI / 180,
               src: "images/link-properties/arrow-drop-grey.svg"
             }),
             zIndex: 10
@@ -120,13 +54,13 @@
         }
       };
 
-      if(roadlink.roadLinkType==-1){
-        box.setStyle(boxStyleFloat);
-      } else if(roadlink.id===0 && roadlink.roadLinkType === 0){
-        box.setStyle(boxStyleUnknown);
-      } else {
+      // if(roadlink.roadLinkType==-1){
+      //   box.setStyle(boxStyleFloat);
+      // } else if(roadlink.id===0 && roadlink.roadLinkType === 0){
+      //   box.setStyle(boxStyleUnknown);
+      // } else {
         box.setStyle(boxStyleDirectional(roadlink));
-      }
+      // }
 
       box.id = roadlink.linkId;
       box.roadLinkData = roadlink;
