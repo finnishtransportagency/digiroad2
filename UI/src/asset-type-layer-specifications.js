@@ -383,7 +383,8 @@
         title: 'Lukumäärä',
         enabled: 'Kaistojen lukumäärä / suunta',
         disabled: 'Ei tietoa'
-      }
+      },
+      label: new LinearAssetLabel()
     }
   ];
 
