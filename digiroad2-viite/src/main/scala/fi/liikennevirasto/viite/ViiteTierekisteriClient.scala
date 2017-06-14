@@ -27,6 +27,7 @@ case class TRstatusresponse(id_tr_projekti:Option[Long], projekti:Option[Long],i
 
 case class ChangeProject(id:Long, name:String, user:String, ely:Long, changeDate:String, changeInfoSeq:Seq[RoadAddressChangeInfo])
 case class ProjectChangeStatus(projectId: Long, status: Int, reason: String)
+case class TRErrorResponse(error_message:String)
 
 
 case object ChangeProjectSerializer extends CustomSerializer[ChangeProject](format => ({
@@ -182,14 +183,18 @@ object ViiteTierekisteriClient {
   }
 
   def sendJsonMessage(trProject:ChangeProject): ProjectChangeStatus ={
+    implicit val formats = DefaultFormats
     val request = new HttpPost(getRestEndPoint+"addresschange/")
     request.addHeader("X-Authorization", "Basic " + auth.getAuthInBase64)
     request.setEntity(createJsonmessage(trProject))
     val response = client.execute(request)
+    var errorMessage= TRErrorResponse("")
     try {
-    val statusCode = response.getStatusLine.getStatusCode
-    val reason = response.getStatusLine.getReasonPhrase
-    ProjectChangeStatus(trProject.id, statusCode, reason)
+      val statusCode = response.getStatusLine.getStatusCode
+      if (statusCode>=400 && statusCode<500)
+      errorMessage = parse(StreamInput(response.getEntity.getContent)).extract[TRErrorResponse] // would be nice if we didn't need case class for parsing of one attribute
+      val reason = response.getStatusLine.getReasonPhrase
+      ProjectChangeStatus(trProject.id, statusCode, errorMessage.error_message)
     } catch {
       case NonFatal(e) => ProjectChangeStatus(trProject.id, ProjectState.Incomplete.value, "Lähetys tierekisteriin epäonnistui") // sending project to tierekisteri failed
     } finally {
