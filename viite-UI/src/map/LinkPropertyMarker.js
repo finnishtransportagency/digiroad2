@@ -54,13 +54,13 @@
         }
       };
 
-      // if(roadlink.roadLinkType==-1){
-      //   box.setStyle(boxStyleFloat);
-      // } else if(roadlink.id===0 && roadlink.roadLinkType === 0){
-      //   box.setStyle(boxStyleUnknown);
-      // } else {
+      if(roadlink.roadLinkType==-1){
+        box.setStyle(boxStyleFloat);
+      } else if(roadlink.id===0 && roadlink.roadLinkType === 0){
+        box.setStyle(boxStyleUnknown);
+      } else {
         box.setStyle(boxStyleDirectional(roadlink));
-      // }
+      }
 
       box.id = roadlink.linkId;
       box.roadLinkData = roadlink;
