@@ -103,7 +103,10 @@
       allowComplementaryLinks: true,
       editControlLabels: { title: 'Rajoitus',
         enabled: 'Rajoitus',
-        disabled: 'Ei rajoitusta' }
+        disabled: 'Ei rajoitusta',
+        showUnit: true
+      },
+      label: new LinearAssetLabel()
     },
     {
       typeId: assetType.lengthLimit,
