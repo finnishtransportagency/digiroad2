@@ -19,23 +19,10 @@ object DefloatMapper {
         startTargetM,
         if (startTargetLink.linkId == endTargetLink.linkId) endTargetM else Double.NaN,
         Seq(GeometryUtils.calculatePointFromLinearReference(startSourceLink.geometry, startSourceM).getOrElse(Point(Double.NaN, Double.NaN)),
-        GeometryUtils.calculatePointFromLinearReference(endSourceLink.geometry, endSourceM).getOrElse(Point(Double.NaN, Double.NaN))),
+          GeometryUtils.calculatePointFromLinearReference(endSourceLink.geometry, endSourceM).getOrElse(Point(Double.NaN, Double.NaN))),
         Seq(GeometryUtils.calculatePointFromLinearReference(startTargetLink.geometry, startTargetM).getOrElse(Point(Double.NaN, Double.NaN)),
           GeometryUtils.calculatePointFromLinearReference(endTargetLink.geometry, endTargetM).getOrElse(Point(Double.NaN, Double.NaN)))
       )
-    }
-    // TODO: Continue here on VIITE-509
-    def adjustSplitLinks(s: Seq[RoadAddressMapping]): Seq[RoadAddressMapping] = {
-      s
-    }
-    def prettyPrint(l: RoadAddressLink): String = {
-
-      s"""${if (l.id == -1000) { "NEW!" } else { l.id }} link: ${l.linkId} road address: ${l.roadNumber}/${l.roadPartNumber}/${l.trackCode}/${l.startAddressM}-${l.endAddressM} length: ${l.length} dir: ${l.sideCode}
-         |${if (l.startCalibrationPoint.nonEmpty) { " <- " + l.startCalibrationPoint.get.addressMValue + " "} else ""}
-         |${if (l.endCalibrationPoint.nonEmpty) { " " + l.endCalibrationPoint.get.addressMValue + " ->"} else ""}
-         |${if (l.anomaly != Anomaly.None) { " " + l.anomaly } else ""}
-         |${if (l.roadLinkType != RoadLinkType.NormalRoadLinkType) { " " + l.roadLinkType } else ""}
-     """.stripMargin.replace("\n", "")
     }
     /* For mapping purposes we have to fuse all road addresses on link to get it right. Otherwise start of a segment
        is assumed to be the start of a road link
@@ -79,20 +66,39 @@ object DefloatMapper {
       val startTarget = findStartLRMLocation(st/targetCoeff, orderedTarget)
       val endTarget = findEndLRMLocation(end/targetCoeff, orderedTarget, startTarget._1.linkId)
       (startSource, endSource, startTarget, endTarget)}
-    adjustSplitLinks(pairs.map(x => formMapping(x._1._1, x._1._2, x._2._1, x._2._2, x._3._1, x._3._2, x._4._1, x._4._2)))
+    pairs.map(x => formMapping(x._1._1, x._1._2, x._2._1, x._2._2, x._3._1, x._3._2, x._4._1, x._4._2))
   }
 
   def mapRoadAddresses(roadAddressMapping: Seq[RoadAddressMapping])(ra: RoadAddress): Seq[RoadAddress] = {
+    def truncate(geometry: Seq[Point], d1: Double, d2: Double) = {
+      GeometryUtils.truncateGeometry3D(geometry, Math.min(d1, d2), Math.max(d1, d2))
+    }
+    def adjust(roadAddressMapping: RoadAddressMapping, startM: Double, endM: Double) = {
+      val (sourceLen, targetLen) = (roadAddressMapping.sourceEndM - roadAddressMapping.sourceStartM, roadAddressMapping.targetEndM - roadAddressMapping.targetStartM)
+      val (newStartM, newEndM) =
+        (startM < roadAddressMapping.sourceStartM + MaxDistanceDiffAllowed, endM > roadAddressMapping.sourceEndM) match {
+          case (true, true) => (roadAddressMapping.sourceStartM, roadAddressMapping.sourceEndM)
+          case (true, false) => (roadAddressMapping.sourceStartM, endM)
+          case (false, true) => (startM, roadAddressMapping.sourceEndM)
+          case (false, false) => (startM, endM)
+        }
+      val (newTargetStartM, newTargetEndM) = (newStartM / sourceLen * targetLen, newEndM / sourceLen * targetLen)
+      roadAddressMapping.copy(sourceStartM = newStartM, sourceEndM = newEndM, sourceGeom =
+        truncate(roadAddressMapping.sourceGeom, newStartM, newEndM),
+        targetStartM = newTargetStartM, targetEndM = newTargetEndM, targetGeom =
+          truncate(roadAddressMapping.targetGeom, newTargetStartM, newTargetEndM))
+    }
     val mappings = roadAddressMapping.filter(mapping => mapping.sourceLinkId == ra.linkId &&
       isMatch(ra.startMValue, ra.endMValue, mapping.sourceStartM, mapping.sourceEndM))
     mappings.map(mapping => {
-      val (mappedStartM, mappedEndM) = (mapping.targetStartM, mapping.targetEndM)
+      val adjMap = adjust(mapping, ra.startMValue, ra.endMValue)
+      val (mappedStartM, mappedEndM) = (adjMap.targetStartM, adjMap.targetEndM)
       val (sideCode, mappedGeom, (mappedStartAddrM, mappedEndAddrM)) =
-        if (isDirectionMatch(mapping))
-          (ra.sideCode, mapping.targetGeom, splitRoadAddressValues(ra, mapping))
+        if (isDirectionMatch(adjMap))
+          (ra.sideCode, adjMap.targetGeom, splitRoadAddressValues(ra, adjMap))
         else {
-          (switchSideCode(ra.sideCode), mapping.targetGeom.reverse,
-            splitRoadAddressValues(ra, mapping).swap)
+          (switchSideCode(ra.sideCode), adjMap.targetGeom.reverse,
+            splitRoadAddressValues(ra, adjMap).swap)
         }
       val (startM, endM, startAddrM, endAddrM) =
         if (mappedStartM > mappedEndM)
@@ -101,15 +107,15 @@ object DefloatMapper {
           (mappedStartM, mappedEndM, mappedStartAddrM, mappedEndAddrM)
       val startCP = ra.startCalibrationPoint match {
         case None => None
-        case Some(cp) => if (cp.addressMValue == startAddrM) Some(cp.copy(linkId = mapping.targetLinkId,
+        case Some(cp) => if (cp.addressMValue == startAddrM) Some(cp.copy(linkId = adjMap.targetLinkId,
           segmentMValue = if (sideCode == SideCode.AgainstDigitizing) Math.max(startM, endM) else 0.0)) else None
       }
       val endCP = ra.endCalibrationPoint match {
         case None => None
-        case Some(cp) => if (cp.addressMValue == endAddrM) Some(cp.copy(linkId = mapping.targetLinkId,
+        case Some(cp) => if (cp.addressMValue == endAddrM) Some(cp.copy(linkId = adjMap.targetLinkId,
           segmentMValue = if (sideCode == SideCode.TowardsDigitizing) Math.max(startM, endM) else 0.0)) else None
       }
-      ra.copy(id = NewRoadAddress, linkId = mapping.targetLinkId, startAddrMValue = startCP.map(_.addressMValue).getOrElse(startAddrM),
+      ra.copy(id = NewRoadAddress, linkId = adjMap.targetLinkId, startAddrMValue = startCP.map(_.addressMValue).getOrElse(startAddrM),
         endAddrMValue = endCP.map(_.addressMValue).getOrElse(endAddrM), floating = false,
         sideCode = sideCode, startMValue = startM, endMValue = endM, geom = mappedGeom, calibrationPoints = (startCP, endCP))
     })
