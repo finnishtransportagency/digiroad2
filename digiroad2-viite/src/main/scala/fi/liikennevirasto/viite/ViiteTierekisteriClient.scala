@@ -193,7 +193,6 @@ object ViiteTierekisteriClient {
       val statusCode = response.getStatusLine.getStatusCode
       if (statusCode>=400 && statusCode<500)
       errorMessage = parse(StreamInput(response.getEntity.getContent)).extract[TRErrorResponse] // would be nice if we didn't need case class for parsing of one attribute
-      val reason = response.getStatusLine.getReasonPhrase
       ProjectChangeStatus(trProject.id, statusCode, errorMessage.error_message)
     } catch {
       case NonFatal(e) => ProjectChangeStatus(trProject.id, ProjectState.Incomplete.value, "Lähetys tierekisteriin epäonnistui") // sending project to tierekisteri failed
