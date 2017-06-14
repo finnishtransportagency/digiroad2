@@ -72,17 +72,25 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     .thenReturn(vvhRoadlinksForBoundingBox.map(toRoadLink))
   when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]]))
     .thenReturn((vvhRoadlinksForBoundingBox.map(toRoadLink), Nil))
+  when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]]))
+    .thenReturn((vvhRoadlinksForBoundingBox.map(toRoadLink), Nil))
   when(mockRoadLinkService.getRoadLinkFromVVH(1611071l))
     .thenReturn(Some(toRoadLink(VVHRoadlink(1611071l, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))))
   when(mockRoadLinkService.getRoadLinkFromVVH(1611353))
     .thenReturn(Some(toRoadLink(VVHRoadlink(1611353, 235, roadLinkGeometry, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers))))
-  when(mockRoadLinkService.fetchVVHRoadlinks(Set(1611071l, 1611070l, 1611069l)))
-    .thenReturn(Seq(VVHRoadlink(1611071l, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
-      VVHRoadlink(1611070l, 91,  List(Point(117.318, 0.0), Point(127.239, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
-      VVHRoadlink(1611069l, 91,  List(Point(127.239, 0.0), Point(146.9, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+//  when(mockRoadLinkService.fetchVVHRoadlinks(Set(1611071l, 1611070l, 1611069l)))
+//    .thenReturn(Seq(VVHRoadlink(1611071l, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
+//      VVHRoadlink(1611070l, 91,  List(Point(117.318, 0.0), Point(127.239, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
+//      VVHRoadlink(1611069l, 91,  List(Point(127.239, 0.0), Point(146.9, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockRoadLinkService.fetchVVHRoadlinks(Set(1611374l)))
     .thenReturn(List(VVHRoadlink(1611374l, 235, Seq(Point(0, 0), Point(120, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
   when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((vvhRoadlinksForBoundingBox.map(toRoadLink), Nil))
+
+  when(mockRoadLinkService.fetchVVHRoadlinksAndComplementary(Set(1611071l, 1611070l, 1611069l))).thenReturn(Seq(VVHRoadlink(1611071l, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
+    VVHRoadlink(1611070l, 91,  List(Point(117.318, 0.0), Point(127.239, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
+    VVHRoadlink(1611069l, 91,  List(Point(127.239, 0.0), Point(146.9, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+
+  when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary((1611071l))).thenReturn(Some(VVHRoadlink(1611071l, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
   val testObstacleService = new ObstacleService(mockRoadLinkService)
   val testRailwayCrossingService = new RailwayCrossingService(mockRoadLinkService)

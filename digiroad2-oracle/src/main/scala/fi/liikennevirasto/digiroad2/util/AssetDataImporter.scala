@@ -633,7 +633,7 @@ class AssetDataImporter {
   }
 
   private def splitSpeedLimits(chunkStart: Long, chunkEnd: Long) = {
-    val dao = new OracleLinearAssetDao(null)
+    val dao = new OracleLinearAssetDao(null, null)
 
     withDynTransaction {
       val speedLimitLinks = sql"""
@@ -663,7 +663,7 @@ class AssetDataImporter {
   }
 
   private def splitLinearAssets(typeId: Int, chunkStart: Long, chunkEnd: Long) = {
-    val dao = new OracleLinearAssetDao(null)
+    val dao = new OracleLinearAssetDao(null, null)
 
     withDynTransaction {
       val linearAssetLinks = sql"""

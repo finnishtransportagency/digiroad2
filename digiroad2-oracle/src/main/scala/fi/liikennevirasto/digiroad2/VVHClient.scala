@@ -596,16 +596,13 @@ class VVHClient(vvhRestApiEndPoint: String) {
                            resultTransition: (Map[String, Any], List[List[Double]]) => T): Seq[T] =
     fetchVVHRoadlinks(linkIds, fieldSelection, fetchGeometry, resultTransition, withLinkIdFilter)
 
+  //TODO check if this method can be replaced by fetchVVHRoadlinksAndComplementary
   def fetchRoadLinkOrComplementaryFromVVH(linkId: Long): Option[VVHRoadlink] = {
     val vvhRoadLink = fetchByLinkId(linkId) match {
       case Some(vvhRoadLink) => Some(vvhRoadLink)
       case None => complementaryData.fetchComplementaryRoadlink(linkId)
     }
     vvhRoadLink
-  }
-
-  def fetchRoadLinksOrComplementaryFromVVH(linkId: Set[Long]): Seq[VVHRoadlink] = {
-    fetchByLinkIds(linkId) ++ complementaryData.fetchComplementaryRoadlinks(linkId)
   }
 
   /**

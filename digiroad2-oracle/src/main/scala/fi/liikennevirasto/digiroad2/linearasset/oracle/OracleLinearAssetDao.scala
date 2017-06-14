@@ -18,7 +18,7 @@ case class PersistedSpeedLimit(id: Long, linkId: Long, sideCode: SideCode, value
                                modifiedBy: Option[String], modifiedDate: Option[DateTime], createdBy: Option[String], createdDate: Option[DateTime],
                                vvhTimeStamp: Long, geomModifiedDate: Option[DateTime], expired: Boolean = false, linkSource: LinkGeomSource)
 
-class OracleLinearAssetDao(val vvhClient: VVHClient) {
+class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService ) {
 
   def MassQueryThreshold = 500
   /**
@@ -161,7 +161,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
         where a.asset_type_id = $assetTypeId and a.id = $id
         """.as[(Long, Double, Double)].list
 
-    val roadLinksByLinkId = vvhClient.fetchRoadLinksOrComplementaryFromVVH(links.map(_._1).toSet)
+    val roadLinksByLinkId = roadLinkService.fetchVVHRoadlinksAndComplementary(links.map(_._1).toSet)
 
     links.map { case (linkId, startMeasure, endMeasure) =>
       val vvhRoadLink = roadLinksByLinkId.find(_.linkId == linkId).getOrElse(throw new NoSuchElementException)
@@ -619,7 +619,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
         where a.asset_type_id = 20 and a.id = $id
         """.as[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[DateTime])].list
 
-    val roadLinksWithComplementaryByLinkId = vvhClient.fetchRoadLinksOrComplementaryFromVVH(speedLimits.map(_._2).toSet)
+    val roadLinksWithComplementaryByLinkId = roadLinkService.fetchVVHRoadlinksAndComplementary(speedLimits.map(_._2).toSet)
 
     speedLimits.map { case (assetId, linkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, geomModifiedDate) =>
       val vvhRoadLink = roadLinksWithComplementaryByLinkId.find(_.linkId == linkId).getOrElse(throw new NoSuchElementException)
@@ -755,16 +755,17 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     * Used by SpeedLimitService.create.
     */
   def createSpeedLimit(creator: String, linkId: Long, linkMeasures: Measures, sideCode: SideCode, value: Int,
-                       vvhTimeStamp: Long, linkSource: LinkGeomSource, municipalityValidation: (Int) => Unit): Option[Long] = {
-    municipalityValidation(vvhClient.fetchRoadLinkOrComplementaryFromVVH(linkId).get.municipalityCode)
-    createSpeedLimitWithoutDuplicates(creator, linkId, linkMeasures, sideCode, value, None, None, None, None, linkSource )
+                       vvhTimeStamp: Long, municipalityValidation: (Int) => Unit): Option[Long] = {
+    val roadlink = roadLinkService.fetchVVHRoadlinkAndComplementary(linkId)
+    municipalityValidation(roadlink.get.municipalityCode)
+    createSpeedLimitWithoutDuplicates(creator, linkId, linkMeasures, sideCode, value, None, None, None, None, roadlink.get.linkSource)
   }
 
   /**
     * Creates new speed limit. Returns id of new speed limit. SpeedLimitService.persistProjectedLimit and SpeedLimitService.separate.
     */
   def createSpeedLimit(creator: String, linkId: Long, linkMeasures: Measures, sideCode: SideCode, value: Int, vvhTimeStamp: Option[Long], createdDate: Option[DateTime] = None, modifiedBy: Option[String] = None, modifiedAt: Option[DateTime] = None, linkSource: LinkGeomSource) =
-    createSpeedLimitWithoutDuplicates(creator, linkId, linkMeasures, sideCode, value, vvhTimeStamp, createdDate, modifiedBy, modifiedAt, linkSource)
+    createSpeedLimitWithoutDuplicates(creator, linkId, linkMeasures, sideCode, value, vvhTimeStamp, createdDate, modifiedBy, modifiedAt, roadLinkService.fetchVVHRoadlinksAndComplementary(Set(linkId)).map(_.linkSource).head)
 
   /**
     * Saves enumerated value to db. Used by OracleLinearAssetDao.createSpeedLimitWithoutDuplicates and AssetDataImporter.splitSpeedLimits.

@@ -13,7 +13,7 @@ import Database.dynamicSession
 
 class CsvGenerator(vvhServiceHost: String) {
   val roadLinkService = new RoadLinkService(new VVHClient(vvhServiceHost), new DummyEventBus, new DummySerializer)
-  val linearAssetDao = new OracleLinearAssetDao(roadLinkService.vvhClient)
+  val linearAssetDao = new OracleLinearAssetDao(roadLinkService.vvhClient, roadLinkService)
 
   val Source = 1
   val Destination = 3

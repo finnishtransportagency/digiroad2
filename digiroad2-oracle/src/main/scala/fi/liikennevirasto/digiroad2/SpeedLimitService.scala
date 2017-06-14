@@ -12,7 +12,7 @@ import org.slf4j.LoggerFactory
 case class ChangedSpeedLimit(speedLimit: SpeedLimit, link: RoadLink)
 
 class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLinkServiceImplementation: RoadLinkService) {
-  val dao: OracleLinearAssetDao = new OracleLinearAssetDao(vvhClient)
+  val dao: OracleLinearAssetDao = new OracleLinearAssetDao(vvhClient, roadLinkServiceImplementation)
   val logger = LoggerFactory.getLogger(getClass)
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
@@ -109,7 +109,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     val persistedSpeedLimits = withDynTransaction {
       dao.getSpeedLimitsChangedSince(sinceDate, untilDate)
     }
-    val roadLinks = roadLinkServiceImplementation.getRoadLinksByLinkIdsFromVVH(persistedSpeedLimits.map(_.linkId).toSet)
+    val roadLinks = roadLinkServiceImplementation.getRoadLinksAndCompelemtnaryByLinkIdsFromVVH(persistedSpeedLimits.map(_.linkId).toSet)
     val roadLinksWithoutWalkways = roadLinks.filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
 
     persistedSpeedLimits.flatMap { speedLimit =>
@@ -308,7 +308,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
   }
 
   private def toSpeedLimit(persistedSpeedLimit: PersistedSpeedLimit): SpeedLimit = {
-    val roadLink = roadLinkServiceImplementation.getRoadLinkFromVVH(persistedSpeedLimit.linkId).get
+    val roadLink = roadLinkServiceImplementation.getRoadLinkAndComplementaryFromVVH(persistedSpeedLimit.linkId).get
 
     SpeedLimit(
       persistedSpeedLimit.id, persistedSpeedLimit.linkId, persistedSpeedLimit.sideCode,
@@ -348,7 +348,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     * Returns speed limits by municipality. Used by IntegrationApi speed_limits endpoint.
     */
   def get(municipality: Int): Seq[SpeedLimit] = {
-
+  //TODO precisa de ser alterado, este codigo está nos points
     val (roadLinks, changes) = roadLinkServiceImplementation.getRoadLinksAndChangesFromVVH(municipality)
     withDynTransaction {
       getFilledTopologyAndRoadLinks(roadLinks, changes)._1
@@ -361,8 +361,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
   def create(newLimits: Seq[NewLimit], value: Int, username: String, municipalityValidation: (Int) => Unit): Seq[Long] = {
     withDynTransaction {
       val createdIds = newLimits.flatMap { limit =>
-        val roadLink = roadLinkServiceImplementation.getRoadLinkAndComplementaryFromVVH(limit.linkId, false)
-        dao.createSpeedLimit(username, limit.linkId, Measures(limit.startMeasure, limit.endMeasure), SideCode.BothDirections, value, vvhClient.createVVHTimeStamp(5), roadLink.get.linkSource, municipalityValidation)
+        dao.createSpeedLimit(username, limit.linkId, Measures(limit.startMeasure, limit.endMeasure), SideCode.BothDirections, value, vvhClient.createVVHTimeStamp(5), municipalityValidation)
       }
       eventbus.publish("speedLimits:purgeUnknownLimits", newLimits.map(_.linkId).toSet)
       createdIds

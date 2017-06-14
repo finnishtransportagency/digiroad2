@@ -782,7 +782,7 @@ trait LinearAssetOperations {
 
 class LinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {
   override def roadLinkService: RoadLinkService = roadLinkServiceImpl
-  override def dao: OracleLinearAssetDao = new OracleLinearAssetDao(roadLinkServiceImpl.vvhClient)
+  override def dao: OracleLinearAssetDao = new OracleLinearAssetDao(roadLinkServiceImpl.vvhClient, roadLinkServiceImpl)
   override def eventBus: DigiroadEventBus = eventBusImpl
   override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
   override def polygonTools : PolygonTools = new PolygonTools()
