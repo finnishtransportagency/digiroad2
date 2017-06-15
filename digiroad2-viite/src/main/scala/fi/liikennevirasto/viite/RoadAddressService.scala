@@ -483,7 +483,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       val endValues = ra.map(_.endAddrMValue)
       val orphanStarts = startValues.filterNot(st => endValues.contains(st))
       val orphanEnds = endValues.filterNot(st => startValues.contains(st))
-      // TODO: should we get all road addresses for the links or is it just enough to pick the links they are on?
       (orphanStarts.flatMap(st => RoadAddressDAO.fetchByAddressEnd(roadNumber, roadPartNumber, track, st))
         ++ orphanEnds.flatMap(end => RoadAddressDAO.fetchByAddressStart(roadNumber, roadPartNumber, track, end)))
         .distinct
