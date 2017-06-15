@@ -112,6 +112,7 @@
       var selection = _.find(event.selected, function (selectionTarget) {
         return !_.isUndefined(selectionTarget.projectLinkData) && selectionTarget.projectLinkData.status === 0;
       });
+      revertSelectedChanges();
       selectedProjectLinkProperty.clean();
       $('.wrapper').remove();
       $('#actionButtons').empty();
@@ -155,9 +156,18 @@
       var selection = _.find(event.selected, function (selectionTarget) {
         return !_.isUndefined(selectionTarget.projectLinkData) && selectionTarget.projectLinkData.status === 0;
       });
+      revertSelectedChanges();
       if (!_.isUndefined(selection))
         selectedProjectLinkProperty.open(selection.projectLinkData.linkId);
     });
+
+    var revertSelectedChanges = function() {
+      if(projectCollection.isDirty()) {
+        projectCollection.revertLinkStatus();
+        projectCollection.setDirty([]);
+        eventbus.trigger('roadAddress:projectLinksEdited');
+      }
+    };
 
     var clearHighlights = function(){
       if(selectDoubleClick.getFeatures().getLength() !== 0){
@@ -202,6 +212,19 @@
       highlightFeatures();
     });
 
+    eventbus.on('layer:selected', function(layer) {
+      if (layer === 'roadAddressProject') {
+        vectorLayer.setVisible(true);
+        calibrationPointLayer.setVisible(true);
+      } else {
+        clearHighlights();
+        var featuresToHighlight = [];
+        vectorLayer.setVisible(false);
+        calibrationPointLayer.setVisible(false);
+        eventbus.trigger('roadLinks:fetched');
+      }
+    });
+
     var zoomDoubleClickListener = function(event) {
       _.defer(function(){
         if(selectedProjectLinkProperty.get().length === 0 && applicationModel.getSelectedLayer() == 'roadAddressProject' && map.getView().getZoom() <= 13){
@@ -211,6 +234,64 @@
     };
     //This will control the double click zoom when there is no selection that activates
     map.on('dblclick', zoomDoubleClickListener);
+
+    var infoContainer = document.getElementById('popup');
+    var infoContent = document.getElementById('popup-content');
+
+    var overlay = new ol.Overlay(({
+      element: infoContainer
+    }));
+
+    map.addOverlay(overlay);
+
+    //Listen pointerMove and get pixel for displaying roadAddress feature info
+    eventbus.on('map:mouseMoved', function (event, pixel) {
+      if (event.dragging) {
+        return;
+      }
+      displayRoadAddressInfo(event, pixel);
+    });
+
+    var displayRoadAddressInfo = function(event, pixel) {
+
+      var featureAtPixel = map.forEachFeatureAtPixel(pixel, function (feature, vectorLayer) {
+        return feature;
+      });
+
+      //Ignore if target feature is marker
+      if(isDefined(featureAtPixel) && (isDefined(featureAtPixel.roadLinkData) || isDefined(featureAtPixel.projectLinkData))) {
+       var roadData;
+       var coordinate = map.getEventCoordinate(event.originalEvent);
+
+       if(isDefined(featureAtPixel.projectLinkData)) {
+         roadData = featureAtPixel.projectLinkData;
+       }
+       else {
+         roadData = featureAtPixel.roadLinkData;
+       }
+        if (roadData.roadNumber!==0 &&roadData.roadPartNumber!==0&&roadData.roadPartNumber!==99 ){
+       infoContent.innerHTML = '<p>' +
+          'Tienumero: ' + roadData.roadNumber + '<br>' +
+          'Tieosanumero: ' + roadData.roadPartNumber + '<br>' +
+          'Ajorata: ' + roadData.trackCode + '<br>' +
+          'AET: ' + roadData.startAddressM + '<br>' +
+          'LET: ' + roadData.endAddressM + '<br>' +'</p>';
+
+        } else {
+          infoContent.innerHTML = '<p>' +
+          'Tuntematon tien segmentti' +'</p>'; // road with no address
+        }
+
+       overlay.setPosition(coordinate);
+
+      } else {
+        overlay.setPosition(undefined);
+      }
+    };
+
+var isDefined=function(variable) {
+ return !_.isUndefined(variable);
+};
 
     //Add defined interactions to the map.
     map.addInteraction(selectSingleClick);
@@ -308,7 +389,7 @@
     };
 
     var redraw = function(){
-      var editedLinks = projectCollection.getDirty();
+      var editedLinks = _.map(projectCollection.getDirty(), function(editedLink) {return editedLink.id;});
       var projectLinks = projectCollection.getAll();
       var features = [];
       _.map(projectLinks, function(projectLink) {
@@ -364,8 +445,8 @@
     });
 
     eventbus.on('roadAddressProject:selected', function(projId) {
-      eventbus.once('roadAddressProject:projectFetched', function(id) {
-        projectCollection.fetch(map.getView().calculateExtent(map.getSize()),map.getView().getZoom(), id);
+      eventbus.once('roadAddressProject:projectFetched', function(projectInfo) {
+        projectCollection.fetch(map.getView().calculateExtent(map.getSize()),map.getView().getZoom(), projectInfo.id, projectInfo.publishable);
       });
       projectCollection.getProjectsWithLinksById(projId);
     });
@@ -411,7 +492,8 @@
     map.addLayer(calibrationPointLayer);
     return {
       show: show,
-      hide: hideLayer
+      hide: hideLayer,
+      clearHighlights: clearHighlights
     };
   };
 

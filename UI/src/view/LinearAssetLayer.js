@@ -250,10 +250,12 @@ window.LinearAssetLayer = function(params) {
   var changeTool = function(tool) {
     switch(tool) {
       case 'Cut':
+        selectToolControl.deactivate();
         linearAssetCutter.activate();
         break;
       case 'Select':
         linearAssetCutter.deactivate();
+        selectToolControl.deactivateDraw();
         break;
       case 'Rectangle':
         linearAssetCutter.deactivate();

@@ -141,14 +141,14 @@ class AssetDataImporter {
     val roadLinks = linkIdSet.grouped(4000).flatMap(group =>
       // DEV complementary link load
       if (complementaryLinks)
-        vvhClientProd.getOrElse(vvhClient).complementaryData.fetchComplementaryRoadlinks(group)
+        vvhClientProd.getOrElse(vvhClient).complementaryData.fetchByLinkIds(group)
       else {
         // If in production or QA environment -> load complementary links, too
         if (vvhClientProd.isEmpty)
-          vvhClient.fetchByLinkIds(group) ++ vvhClient.complementaryData.fetchComplementaryRoadlinks(group)
+          vvhClient.roadLinkData.fetchByLinkIds(group) ++ vvhClient.complementaryData.fetchByLinkIds(group)
         else
           // If in DEV environment -> don't load complementary links at this stage (no data for them)
-          vvhClientProd.get.fetchByLinkIds(group) ++ vvhClientProd.get.complementaryData.fetchComplementaryRoadlinks(group)
+          vvhClientProd.get.roadLinkData.fetchByLinkIds(group) ++ vvhClientProd.get.complementaryData.fetchByLinkIds(group)
       }
     ).toSeq
 
@@ -160,7 +160,7 @@ class AssetDataImporter {
     print(s"${DateTime.now()} - ")
     println("Read %d road links from vvh".format(linkLengths.size))
 
-    val floatingLinks = vvhClient.historyData.fetchVVHRoadlinkHistory(roads.filterNot(r => linkLengths.get(r._1).isDefined).map(_._1).toSet).groupBy(_.linkId).mapValues(_.maxBy(_.endDate))
+    val floatingLinks = vvhClient.historyData.fetchVVHRoadLinkByLinkIds(roads.filterNot(r => linkLengths.get(r._1).isDefined).map(_._1).toSet).groupBy(_.linkId).mapValues(_.maxBy(_.endDate))
     print(s"${DateTime.now()} - ")
     println(floatingLinks.size + " links can be saved as floating addresses")
 
@@ -181,7 +181,7 @@ class AssetDataImporter {
       print(s"${DateTime.now()} - ")
       println("Converting link ids to DEV link ids")
       val mmlIdMaps = roadLinks.filter(_.attributes.get("MTKID").nonEmpty).map(rl => rl.attributes("MTKID").asInstanceOf[BigInt].longValue() -> rl.linkId).toMap
-      val links = mmlIdMaps.keys.toSet.grouped(4000).flatMap(grp => vvhClient.fetchByMmlIds(grp)).toSeq
+      val links = mmlIdMaps.keys.toSet.grouped(4000).flatMap(grp => vvhClient.roadLinkData.fetchByMmlIds(grp)).toSeq
       val fromMmlIdMap = links.map(rl => rl.attributes("MTKID").asInstanceOf[BigInt].longValue() -> rl.linkId).toMap
       val (differ, same) = fromMmlIdMap.map { case (mmlId, devLinkId) =>
         mmlIdMaps(mmlId) -> devLinkId

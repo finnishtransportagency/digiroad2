@@ -317,7 +317,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
         Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(167)))))
       //Creation of test project with test links
       val project = RoadAddressProject(projectId,ProjectState.Incomplete,"testiprojekti","Test",DateTime.now(),"Test",
-        DateTime.now(),DateTime.now(),"info",
+        DateTime.parse("1990-01-01"),DateTime.now(),"info",
         List(ReservedRoadPart(0:Long, roadNumber:Long, roadPartNumber:Long, 5:Double, Discontinuity.apply("jatkuva"),
           8:Long, None:Option[DateTime], None:Option[DateTime])), None)
       val (proj, projectLink, _, errmsg) = projectService.createRoadLinkProject(project)
@@ -344,6 +344,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       roadsBeforeChanges.roadNumber should be(roadsAfterChanges.roadNumber)
       roadsBeforeChanges.roadPartNumber should be(roadsAfterChanges.roadPartNumber)
       roadsAfterChanges.endDate.nonEmpty should be (true)
+      roadsAfterChanges.endDate.get.toString("yyyy-MM-dd") should be("1990-01-01")
     }
   }
 

@@ -155,14 +155,6 @@ object MassTransitStopOperations {
     propertiesSelected.contains(VirtualBusStopPropertyValue) && propertiesSelected.exists(!_.equals(VirtualBusStopPropertyValue))
   }
 
-   def calculateActualBearing(validityDirection: Int, bearing: Option[Int]): Option[Int] = {
-      if (validityDirection != 3) {
-        bearing
-      } else {
-        bearing.map(_ - 180).map(x => if (x < 0) x + 360 else x)
-      }
-    }
-
   def getVerifiedProperties(properties: Set[SimpleProperty], assetProperties: Seq[AbstractProperty]): Set[SimpleProperty] = {
     val administrationFromProperties = properties.find(_.publicId == AdministratorInfoPublicId)
 

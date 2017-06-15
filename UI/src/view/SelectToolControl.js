@@ -70,8 +70,15 @@
 
         drawInteraction.on('drawend', function(evt){
             evt.preventDefault();
-            var extent = evt.feature.getGeometry().getExtent();
-            interactionEnd(extent);
+            var polygonGeometry = evt.feature.getGeometry();
+            var features =  layer.getSource().getFeatures();
+            var selected = _.filter(features, function(feature) {
+                return _.some(feature.getGeometry().getCoordinates(), function(coordinate) {
+                    return polygonGeometry.intersectsCoordinate(coordinate);
+                });
+              });
+            var selectedProperties = _.map(selected, function(select) { return select.getProperties(); });
+            settings.onInteractionEnd(selectedProperties);
         });
 
         selectInteraction.on('select',  function(evt){

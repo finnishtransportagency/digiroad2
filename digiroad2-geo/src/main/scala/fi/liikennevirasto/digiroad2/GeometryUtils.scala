@@ -250,6 +250,14 @@ object GeometryUtils {
     withinTolerance(Seq(geom1._1, geom1._2), Seq(geom2._1, geom2._2), tolerance)
   }
 
+  def calculateActualBearing(validityDirection: Int, bearing: Option[Int]): Option[Int] = {
+    if (validityDirection != 3) {
+      bearing
+    } else {
+      bearing.map(_ - 180).map(x => if (x < 0) x + 360 else x)
+    }
+  }
+
   /**
     * Returns top-left and bottom-right corners for a minimal box that contains all given points
     * @param points point cloud

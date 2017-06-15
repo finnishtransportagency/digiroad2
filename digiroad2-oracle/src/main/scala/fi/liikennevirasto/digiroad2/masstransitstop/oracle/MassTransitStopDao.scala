@@ -3,10 +3,9 @@ package fi.liikennevirasto.digiroad2.masstransitstop.oracle
 import java.sql.SQLException
 
 import _root_.oracle.spatial.geometry.JGeometry
-
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import fi.liikennevirasto.digiroad2.{FloatingReason, MassTransitStopRow, Point, RoadLinkService}
+import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import fi.liikennevirasto.digiroad2.asset.{MassTransitStopValidityPeriod, _}
 import fi.liikennevirasto.digiroad2.masstransitstop.MassTransitStopOperations
@@ -16,6 +15,7 @@ import fi.liikennevirasto.digiroad2.user.User
 import org.joda.time.{DateTime, Interval, LocalDate}
 import org.joda.time.format.ISODateTimeFormat
 import org.slf4j.LoggerFactory
+
 import scala.language.reflectiveCalls
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParameter, StaticQuery => Q}
@@ -57,7 +57,7 @@ class MassTransitStopDao {
   }
 
   private[oracle] def getBearingDescription(validityDirection: Int, bearing: Option[Int]): String = {
-    MassTransitStopOperations.calculateActualBearing(validityDirection, bearing).getOrElse(0) match {
+    GeometryUtils.calculateActualBearing(validityDirection, bearing).getOrElse(0) match {
       case x if 46 to 135 contains x => "Itä"
       case x if 136 to 225 contains x => "Etelä"
       case x if 226 to 315 contains x => "Länsi"
