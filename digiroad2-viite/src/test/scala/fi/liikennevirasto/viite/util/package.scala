@@ -22,9 +22,13 @@ package object util {
   // used for debugging when needed
   def prettyPrint(l: RoadAddress): String = {
 
-    s"""${if (l.id == -1000) { "NEW!" } else { l.id }} link: ${l.linkId} road address: ${l.roadNumber}/${l.roadPartNumber}/${l.track.value}/${l.startAddrMValue}-${l.endAddrMValue} length: ${l.endMValue - l.startMValue} dir: ${l.sideCode}
+    s"""${if (l.id == -1000) { "NEW!" } else { l.id }} link: ${l.linkId} ${setPrecision(l.startMValue)}-${setPrecision(l.endMValue)} road address: ${l.roadNumber}/${l.roadPartNumber}/${l.track.value}/${l.startAddrMValue}-${l.endAddrMValue} length: ${setPrecision(l.endMValue - l.startMValue)} dir: ${l.sideCode}
        |${if (l.startCalibrationPoint.nonEmpty) { " <- " + l.startCalibrationPoint.get.addressMValue + " "} else ""}
        |${if (l.endCalibrationPoint.nonEmpty) { " " + l.endCalibrationPoint.get.addressMValue + " ->"} else ""}
      """.stripMargin.replace("\n", "")
+  }
+
+  private def setPrecision(d: Double) = {
+    BigDecimal(d).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
   }
 }

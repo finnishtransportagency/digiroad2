@@ -73,23 +73,22 @@ object DefloatMapper {
     def truncate(geometry: Seq[Point], d1: Double, d2: Double) = {
       GeometryUtils.truncateGeometry3D(geometry, Math.min(d1, d2), Math.max(d1, d2))
     }
-    def adjust(roadAddressMapping: RoadAddressMapping, startM: Double, endM: Double) = {
-      val (sourceLen, targetLen) = (roadAddressMapping.sourceEndM - roadAddressMapping.sourceStartM, roadAddressMapping.targetEndM - roadAddressMapping.targetStartM)
-      val (newStartM, newEndM) =
-        (startM < roadAddressMapping.sourceStartM + MaxDistanceDiffAllowed, endM > roadAddressMapping.sourceEndM) match {
-          case (true, true) => (roadAddressMapping.sourceStartM, roadAddressMapping.sourceEndM)
-          case (true, false) => (roadAddressMapping.sourceStartM, endM)
-          case (false, true) => (startM, roadAddressMapping.sourceEndM)
-          case (false, false) => (startM, endM)
-        }
-      val (newTargetStartM, newTargetEndM) = (newStartM / sourceLen * targetLen, newEndM / sourceLen * targetLen)
-      roadAddressMapping.copy(sourceStartM = newStartM, sourceEndM = newEndM, sourceGeom =
-        truncate(roadAddressMapping.sourceGeom, newStartM, newEndM),
-        targetStartM = newTargetStartM, targetEndM = newTargetEndM, targetGeom =
-          truncate(roadAddressMapping.targetGeom, newTargetStartM, newTargetEndM))
+    def adjust(mapping: RoadAddressMapping, startM: Double, endM: Double) = {
+      if (mapping.sourceLinkId != mapping.targetLinkId)
+        mapping
+      else {
+        val (newStartM, newEndM) =
+          (if (startM < mapping.sourceStartM + MaxDistanceDiffAllowed) mapping.sourceStartM else startM,
+            if (endM > mapping.sourceEndM - MaxDistanceDiffAllowed) mapping.sourceEndM else endM)
+        val (newTargetStartM, newTargetEndM) = (newStartM * mapping.coefficient, newEndM * mapping.coefficient)
+        mapping.copy(sourceStartM = newStartM, sourceEndM = newEndM, sourceGeom =
+          truncate(mapping.sourceGeom, newStartM, newEndM),
+          targetStartM = newTargetStartM, targetEndM = newTargetEndM, targetGeom =
+            truncate(mapping.targetGeom, newTargetStartM, newTargetEndM))
+      }
     }
     val mappings = roadAddressMapping.filter(mapping => mapping.sourceLinkId == ra.linkId &&
-      isMatch(ra.startMValue, ra.endMValue, mapping.sourceStartM, mapping.sourceEndM))
+      mapping.matches(ra))
     mappings.map(mapping => {
       val adjMap = adjust(mapping, ra.startMValue, ra.endMValue)
       val (mappedStartM, mappedEndM) = (adjMap.targetStartM, adjMap.targetEndM)
@@ -125,10 +124,6 @@ object DefloatMapper {
     BigDecimal(d).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
   }
 
-  private def isMatch(xStart: Double, xEnd: Double, limit1: Double, limit2: Double) = {
-    GeometryUtils.overlapAmount((xStart, xEnd), (limit1, limit2)) > 0.999
-  }
-
   private def splitRoadAddressValues(roadAddress: RoadAddress, mapping: RoadAddressMapping): (Long, Long) = {
     // Check if the road address covers the whole mapping area
 
@@ -137,10 +132,6 @@ object DefloatMapper {
       (mapping.sourceStartM, mapping.sourceEndM)
     // The lengths may not be exactly equal: coefficient is to adjust that
     val coefficient = (roadAddress.endAddrMValue - roadAddress.startAddrMValue) / (roadAddress.endMValue - roadAddress.startMValue)
-    println(coefficient)
-    println(startM, endM)
-    println(roadAddress.startAddrMValue, roadAddress.endAddrMValue)
-    println(roadAddress.startMValue, roadAddress.endMValue)
     roadAddress.sideCode match {
       case SideCode.AgainstDigitizing =>
         (roadAddress.endAddrMValue - Math.round(endM*coefficient), roadAddress.endAddrMValue - Math.round(startM*coefficient))
@@ -392,4 +383,20 @@ object DefloatMapper {
 }
 
 case class RoadAddressMapping(sourceLinkId: Long, targetLinkId: Long, sourceStartM: Double, sourceEndM: Double,
-                              targetStartM: Double, targetEndM: Double, sourceGeom: Seq[Point], targetGeom: Seq[Point])
+                              targetStartM: Double, targetEndM: Double, sourceGeom: Seq[Point], targetGeom: Seq[Point]) {
+  override def toString: String = {
+    s"$sourceLinkId -> $targetLinkId: $sourceStartM-$sourceEndM ->  $targetStartM-$targetEndM, $sourceGeom -> $targetGeom"
+  }
+  /**
+    * Test if this mapping matches the road address: Road address is on source link and overlap match is at least 99,9%
+    * (overlap amount is the overlapping length divided by the smallest length)
+   */
+  def matches(roadAddress: RoadAddress): Boolean = {
+    sourceLinkId == roadAddress.linkId &&
+      GeometryUtils.overlapAmount((roadAddress.startMValue, roadAddress.endMValue), (sourceStartM, sourceEndM)) > 0.999
+  }
+
+  val sourceLen: Double = Math.abs(sourceEndM - sourceStartM)
+  val targetLen: Double = Math.abs(targetEndM - targetStartM)
+  val coefficient: Double = targetLen/sourceLen
+}

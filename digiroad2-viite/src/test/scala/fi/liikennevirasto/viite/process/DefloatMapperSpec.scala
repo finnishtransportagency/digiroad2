@@ -12,7 +12,7 @@ import fi.liikennevirasto.viite.dao.{CalibrationPoint, Discontinuity, RoadAddres
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
-import fi.liikennevirasto.viite.util
+import fi.liikennevirasto.viite.util._
 
 class DefloatMapperSpec extends FunSuite with Matchers{
   val sources = Seq(
@@ -39,6 +39,30 @@ class DefloatMapperSpec extends FunSuite with Matchers{
     val mapping = DefloatMapper.createAddressMap(sources, targets)
     val roadAddressTarget = roadAddressSource.flatMap(DefloatMapper.mapRoadAddresses(mapping))
     roadAddressTarget.size should be (4)
+  }
+
+  test("test mapping complex situations") {
+    val roadAddressSource = sources.map(roadAddressLinkToRoadAddress(true))
+    roadAddressSource.map(prettyPrint).foreach(println)
+    // Note: this mapping doesn't make sense, it's only for unit testing on complex situation
+    val mapping = Seq(
+      RoadAddressMapping(1021200L, 1021217L, 0.0, 10.0, 2.214, 5.0, Seq(Point(0.0, 0.0), Point(0.0,10.0)), Seq(Point(0.0, 0.0), Point(0.0,10.0))),
+      RoadAddressMapping(1021200L, 1021200L, 10.0, 40.0, 40.0, 0.0, Seq(Point(0.0, 10.0), Point(0.0,40.0)), Seq(Point(0.0, 40.0), Point(0.0,0.0))),
+      RoadAddressMapping(1021200L, 1021217L, 40.0, 82.345, 5.0, 17.215, Seq(Point(0.0, 40.0), Point(0.0,143.345)), Seq(Point(0.0, 5.0), Point(0.0,17.215))),
+      RoadAddressMapping(1021217L, 1021217L, 0.0, 40.345, 0.0, 2.214/17.215*40.345, Seq(Point(0.0, 40.0), Point(0.0,143.345)), Seq(Point(0.0, 5.0), Point(0.0,17.215)))
+    )
+    val roadAddressTarget = roadAddressSource.flatMap(DefloatMapper.mapRoadAddresses(mapping))
+    roadAddressTarget.size should be (4)
+    roadAddressTarget.find(r => r.linkId == 1021200L)
+      .map(r => r.startMValue).getOrElse(Double.NaN) should be (13.333 +- .001)
+    roadAddressTarget.find(r => r.linkId == 1021200L)
+      .map(r => r.endMValue).getOrElse(Double.NaN) should be (53.333 +- .001)
+    roadAddressTarget.find(r => r.linkId == 1021217L && r.startMValue == 0.0)
+      .map(r => r.endMValue).getOrElse(Double.NaN) should be (2.214 +- .001)
+    roadAddressTarget.find(r => r.linkId == 1021217L && r.startMValue >= 2.213 && r.startMValue <= 2.215)
+      .map(r => r.endMValue).getOrElse(Double.NaN) should be (5.0 +- .001)
+    roadAddressTarget.find(r => r.linkId == 1021217L && r.startMValue >= 4.999)
+      .map(r => r.endMValue).getOrElse(Double.NaN) should be (17.215 +- .001)
   }
 
   test("test order road address link with intersection") {

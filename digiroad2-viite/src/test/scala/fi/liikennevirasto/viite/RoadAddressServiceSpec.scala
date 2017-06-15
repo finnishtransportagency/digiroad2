@@ -11,7 +11,7 @@ import fi.liikennevirasto.digiroad2.asset.TrafficDirection.BothDirections
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.roadaddress.oracle.RoadAddressDAO
+import fi.liikennevirasto.viite.util._
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao._
@@ -345,6 +345,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       newLinks.filter(_.linkId == 15171209).head.startCalibrationPoint should be (None)
       newLinks.filter(_.linkId == 15171208).head.startCalibrationPoint.isEmpty should be (false)
       newLinks.filter(_.linkId == 15171209).head.endCalibrationPoint.isEmpty should be (false)
+      newLinks.map(prettyPrint).foreach(println)
       val startCP = newLinks.filter(_.linkId == 15171208).head.startCalibrationPoint.get
       val endCP = newLinks.filter(_.linkId == 15171209).head.endCalibrationPoint.get
       startCP.segmentMValue should be (0.0)
@@ -477,13 +478,13 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     when(mockRoadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(any[Set[Long]])).thenReturn(
       (targets.map(roadAddressLinkToRoadLink), sources.map(roadAddressLinkToHistoryLink)))
     when(mockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
-    when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[BoundingRectangle])).thenReturn(Seq())
+    val targetLinks = targets.map(roadAddressLinkToRoadLink)
+    when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[BoundingRectangle])).thenReturn(targetLinks)
     val result = runWithRollback {
       RoadAddressDAO.create(sources.map(roadAddressLinkToRoadAddress(true)))
       roadAddressService.transferRoadAddress(sources, targets, User(0L, "foo", Configuration()))
     }
     sanityCheck(result)
-    val targetLinks = targets.map(roadAddressLinkToRoadLink)
     val linkResult = result.map(ra => RoadAddressLinkBuilder.build(targetLinks.find(_.linkId == ra.linkId).get, ra))
     val link456 = linkResult.find(_.linkId == 456L)
     val link457 = linkResult.find(_.linkId == 457L)
