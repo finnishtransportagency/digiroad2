@@ -127,7 +127,7 @@ object ProjectDAO {
 
   def updateRoadAddressProject(roadAddressProject: RoadAddressProject): Unit = {
     sqlu"""
-         update project set state = ${roadAddressProject.status.value}, name = ${roadAddressProject.name}, modified_by = '-' ,modified_date = sysdate where id = ${roadAddressProject.id}
+         update project set state = ${roadAddressProject.status.value}, name = ${roadAddressProject.name}, modified_by = '-' ,modified_date = sysdate, add_info=${roadAddressProject.additionalInfo} where id = ${roadAddressProject.id}
          """.execute
   }
 
