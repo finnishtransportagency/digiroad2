@@ -6,11 +6,14 @@ import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, RoadLinkService}
+import fi.liikennevirasto.viite.ViiteTierekisteriClient.{createJsonmessage, sendJsonMessage}
 import fi.liikennevirasto.viite.dao.ProjectState._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.{Delta, ProjectDeltaCalculator, RoadAddressFiller}
 import org.joda.time.DateTime
+import org.json4s.{DefaultFormats, Extraction}
+import org.json4s.jackson.Serialization
 import org.slf4j.LoggerFactory
 
 import scala.collection.mutable.ListBuffer
@@ -248,10 +251,25 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       (project, formInfo)
     }
   }
+  def getPreviewOfChanges(projectId:Long) :String= {
+    withDynTransaction {
+      try {
+        val delta = ProjectDeltaCalculator.delta(projectId)
+        if (addProjectDeltaToDB(delta, projectId)) {
+          val roadAddressChanges = RoadAddressChangesDAO.fetchRoadAddressChanges(Set(projectId))
+          implicit val formats = DefaultFormats + ChangeInfoRoadPartsSerializer + ChangeInfoItemSerializer + ChangeProjectSerializer
+          Serialization.write(Extraction.decompose(ViiteTierekisteriClient.RoadAddressDataModelConversion(roadAddressChanges)))
+        }
+        else ""
+      } catch {
+        case NonFatal(e) => ""
+      }
+    }
+  }
 
   def getRoadAddressChangesAndSendToTR(projectId: Set[Long]) = {
     val roadAddressChanges = RoadAddressChangesDAO.fetchRoadAddressChanges(projectId)
-    ViiteTierekisteriClient.sendRoadAddressChangeData(roadAddressChanges)
+    ViiteTierekisteriClient.sendJsonMessage(ViiteTierekisteriClient.RoadAddressDataModelConversion(roadAddressChanges))
   }
 
   def getProjectRoadLinks(projectId: Long, boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
