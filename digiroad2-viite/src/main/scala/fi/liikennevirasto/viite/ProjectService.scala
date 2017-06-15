@@ -325,7 +325,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       ProjectDAO.updateProjectLinkStatus(changed, linkStatus, userName)
       try {
         val delta = ProjectDeltaCalculator.delta(projectId)
-        addProjectDeltaToDB(delta,projectId)
+        setProjectDeltaToDB(delta,projectId)
         true
       } catch {
         case ex: RoadAddressException =>
@@ -372,9 +372,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   private def addProjectDeltaToDB(projectDelta:Delta,projectId:Long):Boolean= {
-    return  ProjectDAO.insertDeltaToRoadChangeTable(projectDelta,projectId)
+    ProjectDAO.insertDeltaToRoadChangeTable(projectDelta,projectId)
   }
 
+  private def setProjectDeltaToDB(projectDelta:Delta,projectId:Long):Boolean= {
+    ProjectDAO.clearRoadChangeTable(projectId)
+    ProjectDAO.insertDeltaToRoadChangeTable(projectDelta,projectId)
+  }
 
   private def toProjectAddressLink(ral: RoadAddressLinkLike): ProjectAddressLink = {
     ProjectAddressLink(ral.id, ral.linkId, ral.geometry, ral.length, ral.administrativeClass, ral.linkType, ral.roadLinkType,

@@ -205,7 +205,11 @@ object ProjectDAO {
   }
 
   def incrementCheckCounter(projectID:Long, increment: Long) = {
-    sqlu"""UPDATE project p0 SET check_counter=((SELECT check_counter FROM project p1 WHERE p0.ID = p1.ID)+$increment) WHERE id=$projectID""".execute
+    sqlu"""UPDATE project SET check_counter = check_counter + $increment WHERE id=$projectID""".execute
+  }
+
+  def clearRoadChangeTable(projectId: Long): Unit = {
+    sqlu"""DELETE FROM ROAD_ADDRESS_CHANGES WHERE project_id = $projectId""".execute
   }
 
   def insertDeltaToRoadChangeTable(delta: Delta, projectId: Long): Boolean= {

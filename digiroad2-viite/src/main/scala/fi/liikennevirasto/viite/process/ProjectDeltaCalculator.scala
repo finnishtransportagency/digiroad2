@@ -27,14 +27,16 @@ object ProjectDeltaCalculator {
 
   private def findTerminations(projectLinks: Map[RoadPart, Seq[ProjectLink]], currentAddresses: Map[RoadPart, Seq[RoadAddress]]) = {
     val terminations = projectLinks.map{case (part, pLinks) => part -> (pLinks, currentAddresses.getOrElse(part, Seq()))}.mapValues{ case (pll, ral) =>
-      ral.filter(r => pll.exists(pl => pl.linkId == r.linkId && pl.status == LinkStatus.Terminated))}.values.flatten.toSeq
-    validateTerminations(terminations)
-    terminations
+      ral.filter(r => pll.exists(pl => pl.linkId == r.linkId && pl.status == LinkStatus.Terminated))}
+    terminations.keySet.foreach(println)
+    terminations.filterNot(t => t._2.isEmpty).values.foreach(validateTerminations)
+    terminations.values.flatten.toSeq
   }
 
   private def validateTerminations(roadAddresses: Seq[RoadAddress]) = {
+    println(roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber)))
     if (roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber)).keySet.size != 1)
-      throw new RoadAddressException("Multiple road parts present in one termination set")
+      throw new RoadAddressException("Multiple or no road parts present in one termination set")
     val missingSegments = checker.checkAddressesHaveNoGaps(roadAddresses)
     if (missingSegments.nonEmpty)
       throw new RoadAddressException(s"Termination has gaps in between: ${missingSegments.mkString("\n")}") //TODO: terminate only part of the road part later

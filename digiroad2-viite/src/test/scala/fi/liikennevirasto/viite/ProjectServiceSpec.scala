@@ -395,4 +395,43 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       reservation
     }
   }
+
+  test("update change table on every road link change") {
+    var count = 0
+    val roadLink = RoadLink(5170939L,Seq(Point(535605.272,6982204.22,85.90899999999965))
+      ,540.3960283713503,State,99,TrafficDirection.AgainstDigitizing,UnknownLinkType,Some("25.06.2015 03:00:00"), Some("vvh_modified"),Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
+      InUse,NormalLinkInterface)
+    when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLink))
+    runWithRollback {
+      val countCurrentProjects = projectService.getRoadAddressAllProjects()
+      val id = 0
+      val addresses = List(ReservedRoadPart(5:Long, 5:Long, 205:Long, 5:Double, Discontinuity.apply("jatkuva"), 8:Long, None:Option[DateTime], None:Option[DateTime]),
+        ReservedRoadPart(5:Long, 5:Long, 206:Long, 5:Double, Discontinuity.apply("jatkuva"), 8:Long, None:Option[DateTime], None:Option[DateTime]))
+      val roadAddressProject = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", addresses, None)
+      val (saved, _, formLines, errMsg) = projectService.createRoadLinkProject(roadAddressProject)
+      errMsg should be ("ok")
+      formLines should have size (2)
+      val countAfterInsertProjects = projectService.getRoadAddressAllProjects()
+      count = countCurrentProjects.size + 1
+      countAfterInsertProjects.size should be (count)
+      projectService.projectLinkPublishable(saved.id) should be (false)
+      val projectLinks = ProjectDAO.getProjectLinks(saved.id).partition(_.roadPartNumber==205)
+      val linkIds205 = projectLinks._1.map(_.linkId).toSet
+      val linkIds206 = projectLinks._2.map(_.linkId).toSet
+
+      projectService.updateProjectLinkStatus(saved.id, linkIds205, LinkStatus.Terminated, "-")
+      projectService.projectLinkPublishable(saved.id) should be (false)
+
+      RoadAddressChangesDAO.fetchRoadAddressChanges(Set(saved.id)).foreach(println)
+
+      projectService.updateProjectLinkStatus(saved.id, linkIds206, LinkStatus.Terminated, "-")
+      projectService.projectLinkPublishable(saved.id) should be (true)
+
+      RoadAddressChangesDAO.fetchRoadAddressChanges(Set(saved.id)).foreach( ct =>
+        println(ct.changeInfo.source + " -> " + ct.changeInfo.target))
+
+      RoadAddressChangesDAO.fetchRoadAddressChanges(Set(saved.id)) should have size (2)
+    }
+    runWithRollback { projectService.getRoadAddressAllProjects() } should have size (count - 1)
+  }
 }
