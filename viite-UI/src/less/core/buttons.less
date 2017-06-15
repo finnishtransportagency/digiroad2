@@ -370,3 +370,16 @@
 	height: 30px;
 	background-color: @green;
 }
+.btn-show-changes {
+	height: 30px;
+	width: 80%;
+	margin-left: 40px;
+	border-color: @blue-darker;
+	background-color: @blue;
+
+	&:hover,
+	&:focus {
+		background-color: @blue-dark;
+		box-shadow: inset 0 1px 0 rgba(red(@blue-lighter), green(@blue-lighter), blue(@blue-lighter), .325), @btn-drop-shadow-hover;
+	}
+}

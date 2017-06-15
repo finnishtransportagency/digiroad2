@@ -164,7 +164,7 @@
         '<div class="edit-control-group choice-group">'+
         staticField('Lisätty järjestelmään', project.createdBy + ' ' + project.startDate)+
         staticField('Muokattu viimeksi', project.modifiedBy + ' ' + project.dateModified)+
-        '<div class="form-group editable form-editable-roadAddressProject" id="information-content"> '+
+        '<div class="form-group editable form-editable-roadAddressProject"> '+
         '<form id="roadAddressProject" class="input-unit-combination form-group form-horizontal roadAddressProject">'+
         '<label>Toimenpiteet</label>'+
         selection +

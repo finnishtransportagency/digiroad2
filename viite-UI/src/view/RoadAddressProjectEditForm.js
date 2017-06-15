@@ -43,6 +43,11 @@
         '<button class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button></div>';
     };
 
+    var showProjectChangeButton = function() {
+      return '<div class="project-form form-controls">' +
+        '<button class="show-changes btn btn-block btn-show-changes">Avaa ilmoituksen yhteenveto</button></div>';
+    };
+
     var actionButtons = function() {
       var html = '<div class="project-form form-controls" id="actionButtons">' +
         '<button class="update btn btn-save" disabled>Tallenna</button>' +
@@ -85,7 +90,7 @@
         '<div class="edit-control-group choice-group">'+
         staticField('Lisätty järjestelmään', project.createdBy + ' ' + project.startDate)+
         staticField('Muokattu viimeksi', project.modifiedBy + ' ' + project.dateModified)+
-        '<div class="form-group editable form-editable-roadAddressProject" id="information-content"> '+
+        '<div class="form-group editable form-editable-roadAddressProject"> '+
         '<form id="roadAddressProject" class="input-unit-combination form-group form-horizontal roadAddressProject">'+
         '<label>Toimenpiteet,' + selection  + '</label>' +
         '<div class="input-unit-combination">' +
@@ -132,8 +137,8 @@
           Project is publishable, remove spinner here to make sure
           every call from backend and reDraw() is finished before enable send to TR
         */
-        var publishButton = sendRoadAddressChangeButton();
-        rootElement.append(publishButton);
+        var projectChangesButton = showProjectChangeButton();
+        rootElement.append(projectChangesButton);
         applicationModel.removeSpinner();
       });
 
@@ -217,6 +222,13 @@
 
       rootElement.on('click', '.project-form button.send', function(){
         projectCollection.publishProject();
+      });
+
+      rootElement.on('click', '.project-form button.show-changes', function(){
+        // TODO: Open project changes table
+        $(this).hide();
+        var publishButton = sendRoadAddressChangeButton();
+        rootElement.append(publishButton);
       });
     };
     bindEvents();
