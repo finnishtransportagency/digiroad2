@@ -334,12 +334,12 @@
           jQuery('.modal-overlay').remove();
           if(!_.isUndefined(result.projectAddresses)) {
             eventbus.trigger('linkProperties:selectedProject', result.projectAddresses.linkId);
-            eventbus.trigger('roadAddressProject:openProject', result.project);
-            rootElement.html(selectedProjectLinkTemplate(currentProject, options, selectedProjectLink));
-            _.defer(function(){
-              applicationModel.selectLayer('roadAddressProject');
-            });
           }
+          eventbus.trigger('roadAddressProject:openProject', result.project);
+          rootElement.html(selectedProjectLinkTemplate(currentProject, options, selectedProjectLink));
+          _.defer(function(){
+            applicationModel.selectLayer('roadAddressProject');
+          });
         });
         if(_.isUndefined(currentProject) || currentProject.id === 0){
           projectCollection.createProject(data);

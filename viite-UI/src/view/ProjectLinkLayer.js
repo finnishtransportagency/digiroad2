@@ -246,7 +246,7 @@
 
     //Listen pointerMove and get pixel for displaying roadAddress feature info
     eventbus.on('map:mouseMoved', function (event, pixel) {
-      if (event.dragging || applicationModel.getSelectedLayer() !== 'roadAddressProject') {
+      if (event.dragging) {
         return;
       }
       displayRoadAddressInfo(event, pixel);
@@ -445,8 +445,8 @@ var isDefined=function(variable) {
     });
 
     eventbus.on('roadAddressProject:selected', function(projId) {
-      eventbus.once('roadAddressProject:projectFetched', function(id) {
-        projectCollection.fetch(map.getView().calculateExtent(map.getSize()),map.getView().getZoom(), id);
+      eventbus.once('roadAddressProject:projectFetched', function(projectInfo) {
+        projectCollection.fetch(map.getView().calculateExtent(map.getSize()),map.getView().getZoom(), projectInfo.id, projectInfo.publishable);
       });
       projectCollection.getProjectsWithLinksById(projId);
     });
