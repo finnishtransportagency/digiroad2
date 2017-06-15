@@ -87,9 +87,7 @@ object DefloatMapper {
             truncate(mapping.targetGeom, newTargetStartM, newTargetEndM))
       }
     }
-    val mappings = roadAddressMapping.filter(mapping => mapping.sourceLinkId == ra.linkId &&
-      mapping.matches(ra))
-    mappings.map(mapping => {
+    roadAddressMapping.filter(_.matches(ra)).map(mapping => {
       val adjMap = adjust(mapping, ra.startMValue, ra.endMValue)
       val (mappedStartM, mappedEndM) = (adjMap.targetStartM, adjMap.targetEndM)
       val (sideCode, mappedGeom, (mappedStartAddrM, mappedEndAddrM)) =
