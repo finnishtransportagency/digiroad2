@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, RoadLinkType}
 import fi.liikennevirasto.digiroad2.asset.SideCode
-import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.viite.switchSideCode
 import fi.liikennevirasto.viite.dao.RoadAddress
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
 import fi.liikennevirasto.viite.{MaxAllowedMValueError, MaxDistanceDiffAllowed, MinAllowedRoadAddressLength, NewRoadAddress}
@@ -126,10 +126,7 @@ object DefloatMapper {
 
   private def splitRoadAddressValues(roadAddress: RoadAddress, mapping: RoadAddressMapping): (Long, Long) = {
     // Check if the road address covers the whole mapping area
-
-    val (startM, endM) =
-
-      (mapping.sourceStartM, mapping.sourceEndM)
+    val (startM, endM) = (mapping.sourceStartM, mapping.sourceEndM)
     // The lengths may not be exactly equal: coefficient is to adjust that
     val coefficient = (roadAddress.endAddrMValue - roadAddress.startAddrMValue) / (roadAddress.endMValue - roadAddress.startMValue)
     roadAddress.sideCode match {
@@ -268,11 +265,6 @@ object DefloatMapper {
     (orderedSources, extendChainByGeometry(Seq(), preSortedTargets, startingSideCode))
   }
 
-  def switchSideCode(sideCode: SideCode) = {
-    // Switch between against and towards 2 -> 3, 3 -> 2
-    SideCode.apply(5-sideCode.value)
-  }
-
   /**
     * Check if the sequence of points are going in matching direction (best matching)
     * This means that the starting and ending points are closer to each other than vice versa
@@ -290,6 +282,12 @@ object DefloatMapper {
       GeometryUtils.areAdjacent(geom1.head, geom2.head)
   }
 
+  /**
+    * Measure summed distance between two geometries: head-to-head + tail-to-head vs. head-to-tail + tail-to-head
+    * @param geom1 Geometry 1
+    * @param geom2 Goemetry 2
+    * @return h2h distance, h2t distance sums
+    */
   private def distancesBetweenEndPoints(geom1: Seq[Point], geom2: Seq[Point]) = {
     (geom1.head.distance2DTo(geom2.head) + geom1.last.distance2DTo(geom2.last),
       geom1.last.distance2DTo(geom2.head) + geom1.head.distance2DTo(geom2.last))

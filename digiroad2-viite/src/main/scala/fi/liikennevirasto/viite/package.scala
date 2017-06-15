@@ -1,5 +1,7 @@
 package fi.liikennevirasto
 
+import fi.liikennevirasto.digiroad2.asset.SideCode
+
 package object viite {
   /* Tolerance in which we can allow MValues to be equal */
   val MaxAllowedMValueError = 0.001
@@ -23,4 +25,10 @@ package object viite {
   /* Maximum amount a road start / end may move until it is turned into a floating road address */
 
   val NewRoadAddress: Long = -1000L
+
+  def switchSideCode(sideCode: SideCode): SideCode = {
+    // Switch between against and towards 2 -> 3, 3 -> 2
+    SideCode.apply(5-sideCode.value)
+  }
+
 }
