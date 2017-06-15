@@ -1,7 +1,6 @@
 package fi.liikennevirasto.viite
 import java.util.Properties
 
-import fi.liikennevirasto.digiroad2.util.TierekisteriAuthPropertyReader
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.util.ViiteTierekisteriAuthPropertyReader
 import org.apache.http.client.methods.{HttpGet, HttpPost}
@@ -188,11 +187,9 @@ object ViiteTierekisteriClient {
     request.addHeader("X-Authorization", "Basic " + auth.getAuthInBase64)
     request.setEntity(createJsonmessage(trProject))
     val response = client.execute(request)
-    var errorMessage= TRErrorResponse("")
     try {
       val statusCode = response.getStatusLine.getStatusCode
-      if (statusCode>=400 && statusCode<500)
-      errorMessage = parse(StreamInput(response.getEntity.getContent)).extract[TRErrorResponse] // would be nice if we didn't need case class for parsing of one attribute
+      val errorMessage = parse(StreamInput(response.getEntity.getContent)).extractOpt[TRErrorResponse].getOrElse(TRErrorResponse("")) // would be nice if we didn't need case class for parsing of one attribute
       ProjectChangeStatus(trProject.id, statusCode, errorMessage.error_message)
     } catch {
       case NonFatal(e) => ProjectChangeStatus(trProject.id, ProjectState.Incomplete.value, "Lähetys tierekisteriin epäonnistui") // sending project to tierekisteri failed
