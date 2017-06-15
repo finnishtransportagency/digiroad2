@@ -182,4 +182,14 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
     }
   }
 
+  test("find road address by start or end address value") {
+    OracleDatabase.withDynSession {
+      val s = RoadAddressDAO.fetchByAddressStart(75, 1, Track.apply(2), 875)
+      val e = RoadAddressDAO.fetchByAddressEnd(75, 1, Track.apply(2), 995)
+      s.isEmpty should be(false)
+      e.isEmpty should be(false)
+      s should be(e)
+    }
+  }
+
 }

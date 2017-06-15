@@ -412,7 +412,7 @@
               if (lastFeatureToKeep.roadLinkType === floatingRoadLinkType) {
                 rootElement.html(templateFloatingEditMode(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
                 if (applicationModel.getSelectionType() === 'floating' && firstSelectedLinkProperty.roadLinkType === floatingRoadLinkType) {
-                  selectedLinkProperty.getLinkAdjacents(_.last(selectedLinkProperty.get()), firstSelectedLinkProperty);
+                  selectedLinkProperty.getLinkFloatingAdjacents(_.last(selectedLinkProperty.get()), firstSelectedLinkProperty);
                 }
                 $('#floatingEditModeForm').show();
               } else { //check if the before selected was a floating link and if the next one is unknown
@@ -435,7 +435,7 @@
               if (_.last(selectedLinkProperty.get()).roadLinkType === floatingRoadLinkType) {
                 applicationModel.toggleSelectionTypeFloating();
                 rootElement.html(templateFloatingEditMode(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
-                selectedLinkProperty.getLinkAdjacents(_.last(selectedLinkProperty.get()), firstSelectedLinkProperty);
+                selectedLinkProperty.getLinkFloatingAdjacents(_.last(selectedLinkProperty.get()), firstSelectedLinkProperty);
                 $('#floatingEditModeForm').show();
               } else {
                 rootElement.html(template(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
