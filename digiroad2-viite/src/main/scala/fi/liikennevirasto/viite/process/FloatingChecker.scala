@@ -47,10 +47,16 @@ class FloatingChecker(roadLinkService: RoadLinkService) {
     floatingSegments ++ floatings
   }
 
-  def checkRoad(roadNumber: Long) = {
+  def checkRoad(roadNumber: Long): List[RoadAddress] = {
     println(s"Checking road: $roadNumber")
-    val roadPartNumbers = RoadAddressDAO.getValidRoadParts(roadNumber)
-    roadPartNumbers.flatMap(checkRoadPart(roadNumber))
+    try {
+      val roadPartNumbers = RoadAddressDAO.getValidRoadParts(roadNumber)
+      roadPartNumbers.flatMap(checkRoadPart(roadNumber))
+    } catch {
+      case ex: AssertionError =>
+        println(s"Assert failed: ${ex.getMessage} on road $roadNumber on Floating Check")
+        List()
+    }
   }
 
   def checkRoadNetwork(username: String = ""): List[RoadAddress] = {
