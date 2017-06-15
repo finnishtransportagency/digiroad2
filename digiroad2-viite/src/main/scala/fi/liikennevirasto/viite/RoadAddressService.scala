@@ -559,9 +559,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
           r => s"${r.sourceLinkId}: ${r.sourceStartM}-${r.sourceEndM} -> ${r.targetLinkId}: ${r.targetStartM}-${r.targetEndM}").mkString(", ")
       )
     }
-    mapping.foreach(map =>
-      println(s"${map.sourceLinkId} -> ${map.targetLinkId}: ${map.sourceStartM}-${map.sourceEndM} -> ${map.targetStartM}-${map.targetEndM}")
-    )
     val sourceRoadAddresses = withDynSession {
       RoadAddressDAO.fetchByLinkId(sources.map(_.linkId).toSet, includeFloating = true,
         includeHistory = false)

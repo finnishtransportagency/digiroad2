@@ -345,7 +345,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       newLinks.filter(_.linkId == 15171209).head.startCalibrationPoint should be (None)
       newLinks.filter(_.linkId == 15171208).head.startCalibrationPoint.isEmpty should be (false)
       newLinks.filter(_.linkId == 15171209).head.endCalibrationPoint.isEmpty should be (false)
-      newLinks.map(prettyPrint).foreach(println)
       val startCP = newLinks.filter(_.linkId == 15171208).head.startCalibrationPoint.get
       val endCP = newLinks.filter(_.linkId == 15171209).head.endCalibrationPoint.get
       startCP.segmentMValue should be (0.0)

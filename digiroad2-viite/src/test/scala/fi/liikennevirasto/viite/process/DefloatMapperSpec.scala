@@ -43,7 +43,6 @@ class DefloatMapperSpec extends FunSuite with Matchers{
 
   test("test mapping complex situations") {
     val roadAddressSource = sources.map(roadAddressLinkToRoadAddress(true))
-    roadAddressSource.map(prettyPrint).foreach(println)
     // Note: this mapping doesn't make sense, it's only for unit testing on complex situation
     val mapping = Seq(
       RoadAddressMapping(1021200L, 1021217L, 0.0, 10.0, 2.214, 5.0, Seq(Point(0.0, 0.0), Point(0.0,10.0)), Seq(Point(0.0, 0.0), Point(0.0,10.0))),
@@ -130,7 +129,6 @@ class DefloatMapperSpec extends FunSuite with Matchers{
     mappings.exists(m => m.sourceEndM == 604.285 && m.targetEndM == 604.285) should be (true)
     mappings.size should be (1)
     val mapped = sources.map(roadAddressLinkToRoadAddress(true)).flatMap(DefloatMapper.mapRoadAddresses(mappings))
-    mapped.map(fi.liikennevirasto.viite.util.prettyPrint).foreach(println)
     mapped.exists(r =>
       mapped.filterNot(_ == r).exists(r2 =>
         !(r2.startAddrMValue >= r.endAddrMValue || r2.endAddrMValue <= r.startAddrMValue))

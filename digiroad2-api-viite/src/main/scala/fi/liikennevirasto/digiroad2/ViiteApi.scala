@@ -128,10 +128,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
   get("/roadlinks/multiSourceAdjacents") {
     val roadData = JSON.parseFull(params.getOrElse("roadData", "[]")).get.asInstanceOf[Seq[Map[String,Any]]]
-    println(params("roadData"))
-    roadData.foreach(r =>
-      r.foreach(x =>
-      println(x._1 + " => " + x._2)))
     if (roadData.isEmpty){
       Set.empty
     } else {
