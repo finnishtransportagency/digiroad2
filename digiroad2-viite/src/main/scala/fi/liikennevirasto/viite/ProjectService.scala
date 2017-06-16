@@ -16,11 +16,14 @@ import org.json4s.{DefaultFormats, Extraction}
 import org.json4s.jackson.Serialization
 import org.slf4j.LoggerFactory
 
+
+
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import scala.util.control.NonFatal
+import scala.util.parsing.json.JSON
 
 class ProjectService(roadAddressService: RoadAddressService, roadLinkService: RoadLinkService, eventbus: DigiroadEventBus) {
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
@@ -257,8 +260,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         val delta = ProjectDeltaCalculator.delta(projectId)
         if (addProjectDeltaToDB(delta, projectId)) {
           val roadAddressChanges = RoadAddressChangesDAO.fetchRoadAddressChanges(Set(projectId))
-          implicit val formats = DefaultFormats + ChangeInfoRoadPartsSerializer + ChangeInfoItemSerializer + ChangeProjectSerializer
-          Serialization.write(Extraction.decompose(ViiteTierekisteriClient.RoadAddressDataModelConversion(roadAddressChanges)))
+          implicit val formats = DefaultFormats
+         Serialization.write(Extraction.decompose(ViiteTierekisteriClient.RoadAddressDataModelConversion(roadAddressChanges)))
         }
         else ""
       } catch {
