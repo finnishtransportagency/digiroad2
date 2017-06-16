@@ -1,5 +1,5 @@
 (function (root) {
-  root.RoadAddressProjectEditForm = function(projectCollection, selectedProjectLinkProperty, projectLinkLayer) {
+  root.RoadAddressProjectEditForm = function(projectCollection, selectedProjectLinkProperty, projectLinkLayer, projectChangeTable) {
     var currentProject = false;
     var selectedProjectLink = false;
     var staticField = function(labelText, dataField) {
@@ -225,8 +225,8 @@
       });
 
       rootElement.on('click', '.project-form button.show-changes', function(){
-        // TODO: Open project changes table
         $(this).hide();
+        projectChangeTable.show();
         var publishButton = sendRoadAddressChangeButton();
         rootElement.append(publishButton);
       });
