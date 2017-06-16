@@ -228,7 +228,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     crossings.filterNot(_.floating).map { pedestrianCrossing =>
       Map("id" -> pedestrianCrossing.id,
         "point" -> Point(pedestrianCrossing.lon, pedestrianCrossing.lat),
-        geometryWKTForPointAssets(pedestrianCrossing.lon, pedestrianCrossing.lat),
+        geometryWKTForPoints(pedestrianCrossing.lon, pedestrianCrossing.lat),
         "linkId" -> pedestrianCrossing.linkId,
         "m_value" -> pedestrianCrossing.mValue,
         latestModificationTime(pedestrianCrossing.createdAt, pedestrianCrossing.modifiedAt),
@@ -240,7 +240,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     trafficLights.filterNot(_.floating).map { trafficLight =>
       Map("id" -> trafficLight.id,
         "point" -> Point(trafficLight.lon, trafficLight.lat),
-        geometryWKTForPointAssets(trafficLight.lon, trafficLight.lat),
+        geometryWKTForPoints(trafficLight.lon, trafficLight.lat),
         "linkId" -> trafficLight.linkId,
         "m_value" -> trafficLight.mValue,
         latestModificationTime(trafficLight.createdAt, trafficLight.modifiedAt),
@@ -252,7 +252,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     directionalTrafficSign.filterNot(_.floating).map { directionalTrafficSign =>
       Map("id" -> directionalTrafficSign.id,
         "point" -> Point(directionalTrafficSign.lon, directionalTrafficSign.lat),
-        geometryWKTForPointAssets(directionalTrafficSign.lon, directionalTrafficSign.lat),
+        geometryWKTForPoints(directionalTrafficSign.lon, directionalTrafficSign.lat),
         "linkId" -> directionalTrafficSign.linkId,
         "m_value" -> directionalTrafficSign.mValue,
         "bearing" -> GeometryUtils.calculateActualBearing( directionalTrafficSign.validityDirection,directionalTrafficSign.bearing),
@@ -313,7 +313,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
       "geometryWKT" -> ""
   }
 
-  def geometryWKTForPointAssets(lon: Double, lat: Double): (String, String) = {
+  def geometryWKTForPoints(lon: Double, lat: Double): (String, String) = {
     val geometryWKT = "POINT (" + lon + " " + lat + ")"
     "geometryWKT" -> geometryWKT
   }
@@ -322,7 +322,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     crossings.filterNot(_.floating).map { railwayCrossing =>
       Map("id" -> railwayCrossing.id,
         "point" -> Point(railwayCrossing.lon, railwayCrossing.lat),
-        geometryWKTForPointAssets(railwayCrossing.lon, railwayCrossing.lat),
+        geometryWKTForPoints(railwayCrossing.lon, railwayCrossing.lat),
         "linkId" -> railwayCrossing.linkId,
         "m_value" -> railwayCrossing.mValue,
         "safetyEquipment" -> railwayCrossing.safetyEquipment,
@@ -336,7 +336,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     obstacles.filterNot(_.floating).map { obstacle =>
       Map("id" -> obstacle.id,
         "point" -> Point(obstacle.lon, obstacle.lat),
-        geometryWKTForPointAssets(obstacle.lon, obstacle.lat),
+        geometryWKTForPoints(obstacle.lon, obstacle.lat),
         "linkId" -> obstacle.linkId,
         "m_value" -> obstacle.mValue,
         "obstacle_type" -> obstacle.obstacleType,
@@ -365,7 +365,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     servicePoints.map { asset =>
       Map("id" -> asset.id,
         "point" -> Point(asset.lon, asset.lat),
-        geometryWKTForPointAssets(asset.lon, asset.lat),
+        geometryWKTForPoints(asset.lon, asset.lat),
         "services" -> asset.services,
         latestModificationTime(asset.createdAt, asset.modifiedAt),
         lastModifiedBy(asset.createdBy, asset.modifiedBy))
@@ -376,7 +376,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     roadNodes.map { roadNode =>
       Map("nodeId" -> roadNode.nodeId,
           "nodeType" -> roadNode.formOfNode.value,
-          "point" -> Map("x" -> roadNode.geometry.x, "y" -> roadNode.geometry.y)
+          "point" -> Map("x" -> roadNode.geometry.x, "y" -> roadNode.geometry.y),
+          geometryWKTForPoints(roadNode.geometry.x, roadNode.geometry.y)
       )
     }
   }
