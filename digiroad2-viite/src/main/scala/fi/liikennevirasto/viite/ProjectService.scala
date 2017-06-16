@@ -254,20 +254,20 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       (project, formInfo)
     }
   }
-  def getPreviewOfChanges(projectId:Long) :String= {
+
+  def getChangeProject(projectId:Long): Option[ChangeProject] = {
     withDynTransaction {
       try {
         val delta = ProjectDeltaCalculator.delta(projectId)
         if (setProjectDeltaToDB(delta, projectId)) {
           val roadAddressChanges = RoadAddressChangesDAO.fetchRoadAddressChanges(Set(projectId))
-          implicit val formats = DefaultFormats
-         Serialization.write(Extraction.decompose(ViiteTierekisteriClient.RoadAddressDataModelConversion(roadAddressChanges)))
+          return Some(ViiteTierekisteriClient.RoadAddressDataModelConversion(roadAddressChanges))
         }
-        else ""
       } catch {
-        case NonFatal(e) => ""
+        case NonFatal(e) => logger.info(s"Change info not available for project $projectId: " + e.getMessage)
       }
     }
+    None
   }
 
   def getRoadAddressChangesAndSendToTR(projectId: Set[Long]) = {

@@ -159,7 +159,7 @@ object ViiteTierekisteriClient {
     val grouped = projects.groupBy(p => (p.id, p.ely, p.name, p.changeDate, p.user))
     if (grouped.keySet.size > 1)
       throw new IllegalArgumentException("Multiple projects, elys, users or change dates in single data set")
-     projects.tail.foldLeft(projects.head) { case (proj1, proj2) =>
+    projects.tail.foldLeft(projects.head) { case (proj1, proj2) =>
       proj1.copy(changeInfoSeq = proj1.changeInfoSeq ++ proj2.changeInfoSeq)
     }
   }
