@@ -299,6 +299,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val projectid = params("projectid").toLong
     projectService.getPreviewOfChanges(projectid)
   }
+
   post("/project/publish"){
     val user = userProvider.getCurrentUser()
     val projectId = params.get("projectId")

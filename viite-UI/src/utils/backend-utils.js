@@ -26,6 +26,11 @@
       };
     });
 
+
+
+
+
+
     this.updateProjectLinks = _.throttle(function(data, errorCallback) {
       $.ajax({
         contentType: "application/json",
@@ -158,6 +163,11 @@
       });
       return loadingProject;
     }, 1000);
+
+    this.getChangeTable = function(id,callback) {
+      $.getJSON('api/viite/project/getchangetable/'+id, callback);
+    };
+
 
     this.getUserRoles = function () {
       $.get('api/viite/user/roles', function (roles) {
