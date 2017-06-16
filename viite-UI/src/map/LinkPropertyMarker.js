@@ -24,21 +24,13 @@
         zIndex: 10
       });
 
-      // var boxStyleTest = new ol.style.Style({
-      //   image: new ol.style.Icon({
-      //     src: "images/link-properties/arrow-drop-red.svg"
-      //     // rotation: angle * Math.PI / 180
-      //   }),
-      //   zIndex: 10
-      // });
-
       var colorMap = {1:'red', 2:'pink', 3:'pink', 4:'blue', 5:'cyan', 6:'pink', 7:'grey', 8:'pink', 9:'pink', 10:'pink', 11:'grey' };
 
       var boxStyleDirectional = function(rl) {
         if(rl.roadClass in colorMap){
           return new ol.style.Style({
             image: new ol.style.Icon({
-              rotation: middlePoint.angleFromNorth* Math.PI / 180,
+              rotation: rl.sideCode === 3 ? middlePoint.angleFromNorth * Math.PI / 180 + Math.PI : middlePoint.angleFromNorth * Math.PI / 180,
               src: "images/link-properties/arrow-drop-"+colorMap[rl.roadClass]+".svg"
             }),
             zIndex: 10
@@ -46,7 +38,7 @@
         } else {
           return new ol.style.Style({
             image: new ol.style.Icon({
-              rotation: middlePoint.angleFromNorth* Math.PI / 180,
+              rotation: rl.sideCode === 3 ? middlePoint.angleFromNorth * Math.PI / 180 + Math.PI : middlePoint.angleFromNorth * Math.PI / 180,
               src: "images/link-properties/arrow-drop-grey.svg"
             }),
             zIndex: 10

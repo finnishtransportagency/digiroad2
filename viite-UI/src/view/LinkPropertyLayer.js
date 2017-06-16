@@ -20,6 +20,8 @@
     var noAnomaly=0;
     var noAddressAnomaly=1;
     var geometryChangedAnomaly=2;
+    var againstDigitizing = 3;
+    var towardsDigitizing = 2;
     var activeLayer = false;
 
     var indicatorLayer = new ol.layer.Vector({
@@ -492,9 +494,9 @@
         geometryChangedLayer.getSource().clear();
 
       if(map.getView().getZoom() >= zoomlevels.minZoomForAssets) {
-        //TODO get all not-unknown and not-floating and not-geometrychanged and apply their arrow-drop colors to respective rules
+
         var directionRoadMarker = _.filter(roadLinks, function(roadlink) {
-          return roadlink.roadLinkType === normalRoadLinkType && roadlink.anomaly !== noAddressAnomaly && roadlink.anomaly !== geometryChangedAnomaly;
+          return roadlink.roadLinkType !== floatingRoadLinkType && roadlink.anomaly !== noAddressAnomaly && roadlink.anomaly !== geometryChangedAnomaly && (roadlink.sideCode === againstDigitizing || roadlink.sideCode === towardsDigitizing);
         });
 
         var floatingRoadMarkers = _.filter(roadLinks, function(roadlink) {
@@ -525,21 +527,12 @@
         });
 
         var directionRMIds = _.pluck(directionRoadMarker, 'linkId');
-        var arrayTest = [];
-        _.each(roadLayer.layer.getSource().getFeatures(), function(feature){
-          if(_.contains(directionRMIds ,feature.roadLinkData.linkId)){
-            arrayTest.push(feature);
-          }
+
+        _.each(directionRoadMarker, function(directionlink) {
+          var marker = cachedMarker.createMarker(directionlink);
+          if(applicationModel.getCurrentAction() !== applicationModel.actionCalculated && !_.contains(linkIdsToRemove,marker.roadLinkData.linkId))
+            anomalousMarkerLayer.getSource().addFeature(marker);
         });
-
-        me.drawOneWaySigns(roadLayer.layer, directionRoadMarker);
-
-        //WIP direction marker
-        // _.each(directionRoadMarker, function(directionlink) {
-        //   var marker = cachedMarker.createMarker(directionlink);
-        //   if(applicationModel.getCurrentAction() !== applicationModel.actionCalculated && !_.contains(linkIdsToRemove,marker.roadLinkData.linkId))
-        //     anomalousMarkerLayer.getSource().addFeature(marker);
-        // });
 
         _.each(anomalousRoadMarkers, function(anomalouslink) {
           var marker = cachedMarker.createMarker(anomalouslink);
