@@ -353,7 +353,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     withDynTransaction {
       try {
         val delta=ProjectDeltaCalculator.delta(projectId)
-        if(!addProjectDeltaToDB(delta,projectId)) {return PublishResult(false, false, Some("Muutostaulun luonti epäonnistui. Tarkasta ely"))}
+        if(!setProjectDeltaToDB(delta,projectId)) {return PublishResult(false, false, Some("Muutostaulun luonti epäonnistui. Tarkasta ely"))}
         val trProjectStateMessage = getRoadAddressChangesAndSendToTR(Set(projectId))
         trProjectStateMessage.status match {
           case it if 200 until 300 contains it => {
@@ -369,10 +369,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         case NonFatal(e) =>  PublishResult(false, false, None)
       }
     }
-  }
-
-  private def addProjectDeltaToDB(projectDelta:Delta,projectId:Long):Boolean= {
-    RoadAddressChangesDAO.insertDeltaToRoadChangeTable(projectDelta,projectId)
   }
 
   private def setProjectDeltaToDB(projectDelta:Delta,projectId:Long):Boolean= {
@@ -418,8 +414,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def getProjectStatusFromTR(projectId: Long) = {
     ViiteTierekisteriClient.getProjectStatus(projectId.toString)
   }
-
-  val listOfExitStatuses=List(1,3,5) // closed, errorinTR,savedtotr magic numbers
 
   private def getStatusFromTRObject(trProject:Option[TRProjectStatus]):Option[ProjectState] = {
     trProject match {

@@ -34,7 +34,6 @@ object ProjectDeltaCalculator {
   }
 
   private def validateTerminations(roadAddresses: Seq[RoadAddress]) = {
-    println(roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber)))
     if (roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber)).keySet.size != 1)
       throw new RoadAddressException("Multiple or no road parts present in one termination set")
     val missingSegments = checker.checkAddressesHaveNoGaps(roadAddresses)
