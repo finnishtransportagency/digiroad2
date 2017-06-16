@@ -346,7 +346,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       ProjectDAO.updateProjectLinkStatus(changed, linkStatus, userName)
       try {
         val delta = ProjectDeltaCalculator.delta(projectId)
-        addProjectDeltaToDB(delta,projectId)
+        setProjectDeltaToDB(delta,projectId)
         true
       } catch {
         case ex: RoadAddressException =>
@@ -374,7 +374,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     withDynTransaction {
       try {
         val delta=ProjectDeltaCalculator.delta(projectId)
-        if(!addProjectDeltaToDB(delta,projectId)) {return PublishResult(false, false, Some("Muutostaulun luonti epäonnistui. Tarkasta ely"))}
+        if(!setProjectDeltaToDB(delta,projectId)) {return PublishResult(false, false, Some("Muutostaulun luonti epäonnistui. Tarkasta ely"))}
         val trProjectStateMessage = getRoadAddressChangesAndSendToTR(Set(projectId))
         trProjectStateMessage.status match {
           case it if 200 until 300 contains it => {
@@ -392,10 +392,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  private def addProjectDeltaToDB(projectDelta:Delta,projectId:Long):Boolean= {
-    return  ProjectDAO.insertDeltaToRoadChangeTable(projectDelta,projectId)
+  private def setProjectDeltaToDB(projectDelta:Delta,projectId:Long):Boolean= {
+    RoadAddressChangesDAO.clearRoadChangeTable(projectId)
+    RoadAddressChangesDAO.insertDeltaToRoadChangeTable(projectDelta,projectId)
   }
-
 
   private def toProjectAddressLink(ral: RoadAddressLinkLike): ProjectAddressLink = {
     ProjectAddressLink(ral.id, ral.linkId, ral.geometry, ral.length, ral.administrativeClass, ral.linkType, ral.roadLinkType,
@@ -435,8 +435,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def getProjectStatusFromTR(projectId: Long) = {
     ViiteTierekisteriClient.getProjectStatus(projectId.toString)
   }
-
-  val listOfExitStatuses=List(1,3,5) // closed, errorinTR,savedtotr magic numbers
 
   private def getStatusFromTRObject(trProject:Option[TRProjectStatus]):Option[ProjectState] = {
     trProject match {
