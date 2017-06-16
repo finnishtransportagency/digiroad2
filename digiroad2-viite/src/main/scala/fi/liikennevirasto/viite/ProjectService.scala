@@ -372,12 +372,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   private def addProjectDeltaToDB(projectDelta:Delta,projectId:Long):Boolean= {
-    ProjectDAO.insertDeltaToRoadChangeTable(projectDelta,projectId)
+    RoadAddressChangesDAO.insertDeltaToRoadChangeTable(projectDelta,projectId)
   }
 
   private def setProjectDeltaToDB(projectDelta:Delta,projectId:Long):Boolean= {
-    ProjectDAO.clearRoadChangeTable(projectId)
-    ProjectDAO.insertDeltaToRoadChangeTable(projectDelta,projectId)
+    RoadAddressChangesDAO.clearRoadChangeTable(projectId)
+    RoadAddressChangesDAO.insertDeltaToRoadChangeTable(projectDelta,projectId)
   }
 
   private def toProjectAddressLink(ral: RoadAddressLinkLike): ProjectAddressLink = {

@@ -2,6 +2,7 @@ package fi.liikennevirasto.viite.dao
 
 import fi.liikennevirasto.viite.RoadType
 import com.github.tototoshi.slick.MySQLJodaSupport._
+import fi.liikennevirasto.viite.process.{Delta, ProjectDeltaCalculator}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -93,31 +94,43 @@ object RoadAddressChangesDAO {
     }
   }
 
+  private def toRoadAddressChangeRecipient(row: RoadAddressChangeRow) = {
+    RoadAddressChangeRecipient(row.sourceRoadNumber, row.sourceTrackCode, row.sourceStartRoadPartNumber, row.sourceEndRoadPartNumber, row.sourceStartAddressM, row.sourceEndAddressM)
+  }
+  private def toRoadAddressChangeInfo(row: RoadAddressChangeRow) = {
+    val source = toRoadAddressChangeRecipient(row)
+    val target = toRoadAddressChangeRecipient(row)
+    RoadAddressChangeInfo(AddressChangeType.apply(row.changeType), source, target, Discontinuity.apply(row.discontinuity), RoadType.apply(row.roadType))
+  }
+
+  // TODO: cleanup after modification dates and modified by are populated correctly
+  private def getUserAndModDate(row: RoadAddressChangeRow): (String, DateTime) = {
+    val user = if (row.modifiedDate.isEmpty) {
+      row.createdBy
+    } else {
+      if (row.modifiedDate.get.isAfter(row.createdDate.get)) {
+        // modifiedBy currently always returns empty
+        row.createdBy
+      } else row.createdBy
+    }
+    val date = if (row.modifiedDate.isEmpty) {
+      row.createdDate.get
+    } else {
+      if (row.modifiedDate.get.isAfter(row.createdDate.get)) {
+        row.modifiedDate.get
+      } else row.createdDate.get
+    }
+    (user, date)
+  }
+
   private def queryList(query: String) = {
-    val tuples = Q.queryNA[RoadAddressChangeRow](query).list
-      tuples.groupBy(_.projectId).map{
-      case (projectId, changedRow) =>
-        val row = changedRow.head
-        val source = RoadAddressChangeRecipient(row.sourceRoadNumber, row.sourceTrackCode, row.sourceStartRoadPartNumber, row.sourceEndRoadPartNumber, row.sourceStartAddressM, row.sourceEndAddressM)
-        val target = RoadAddressChangeRecipient(row.targetRoadNumber, row.targetTrackCode, row.targetStartRoadPartNumber, row.targetEndRoadPartNumber, row.targetStartAddressM, row.targetEndAddressM)
-        val changeInfo = RoadAddressChangeInfo(AddressChangeType.apply(row.changeType), source, target, Discontinuity.apply(row.discontinuity), RoadType.apply(row.roadType))
-        val user = if(row.modifiedDate.isEmpty){
-          row.createdBy
-        } else {
-          if(row.modifiedDate.get.isAfter(row.createdDate.get)){
-           // modifiedBy currently always returns empty
-            row.createdBy
-          } else row.createdBy
-        }
-        val date = if(row.modifiedDate.isEmpty){
-          row.createdDate.get
-        } else {
-          if(row.modifiedDate.get.isAfter(row.createdDate.get)){
-            row.modifiedDate.get
-          } else row.createdDate.get
-        }
-        ProjectRoadAddressChange(row.projectId, row.projectName, row.ely, user, date, changeInfo, row.startDate.get)
-    }.toList
+    val resultList = Q.queryNA[RoadAddressChangeRow](query).list
+    resultList.map { row => {
+      val changeInfo = toRoadAddressChangeInfo(row)
+      val (user, date) = getUserAndModDate(row)
+      ProjectRoadAddressChange(row.projectId, row.projectName, row.ely, user, date, changeInfo, row.startDate.get)
+    }
+    }
   }
 
   def fetchRoadAddressChanges(projectIds: Set[Long]):List[ProjectRoadAddressChange] = {
@@ -134,4 +147,47 @@ object RoadAddressChangesDAO {
                       rac.new_start_addr_m, rac.new_end_addr_m, rac.new_discontinuity, rac.new_road_type"""
     queryList(query)
   }
+
+  def clearRoadChangeTable(projectId: Long): Unit = {
+    sqlu"""DELETE FROM ROAD_ADDRESS_CHANGES WHERE project_id = $projectId""".execute
+  }
+
+  def insertDeltaToRoadChangeTable(delta: Delta, projectId: Long): Boolean= {
+    val roadType = 9 //TODO missing
+    ProjectDAO.getRoadAddressProjectById(projectId) match {
+      case Some(project) => {
+        project.ely match {
+          case Some(ely) => {
+            val roadAddressChangePS = dynamicSession.prepareStatement("INSERT INTO ROAD_ADDRESS_CHANGES " +
+              "(project_id,change_type,old_road_number,new_road_number,old_road_part_number,new_road_part_number, " +
+              "old_track_code,new_track_code,old_start_addr_m,new_start_addr_m,old_end_addr_m,new_end_addr_m," +
+              "new_discontinuity,new_road_type,new_ely) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,? )")
+            ProjectDeltaCalculator.partition(delta.terminations).foreach { case (roadAddressSection) =>
+              roadAddressChangePS.setLong(1, projectId)
+              roadAddressChangePS.setLong(2, AddressChangeType.Termination.value)
+              roadAddressChangePS.setLong(3, roadAddressSection.roadNumber)
+              roadAddressChangePS.setLong(4, roadAddressSection.roadNumber)
+              roadAddressChangePS.setLong(5, roadAddressSection.roadPartNumberStart)
+              roadAddressChangePS.setLong(6, roadAddressSection.roadPartNumberStart)
+              roadAddressChangePS.setLong(7, roadAddressSection.track.value)
+              roadAddressChangePS.setLong(8, roadAddressSection.track.value)
+              roadAddressChangePS.setDouble(9, roadAddressSection.startMAddr)
+              roadAddressChangePS.setDouble(10, roadAddressSection.startMAddr)
+              roadAddressChangePS.setDouble(11, roadAddressSection.endMAddr)
+              roadAddressChangePS.setDouble(12, roadAddressSection.endMAddr)
+              roadAddressChangePS.setLong(13, roadAddressSection.discontinuity.value)
+              roadAddressChangePS.setLong(14, roadType)
+              roadAddressChangePS.setLong(15, ely)
+              roadAddressChangePS.addBatch()
+            }
+            roadAddressChangePS.executeBatch()
+            roadAddressChangePS.close()
+            true
+          }
+          case _=>  false
+        }
+      } case _=> false
+    }
+  }
+
 }

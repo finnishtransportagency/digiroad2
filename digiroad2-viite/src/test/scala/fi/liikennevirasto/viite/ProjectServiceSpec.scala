@@ -422,15 +422,10 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       projectService.updateProjectLinkStatus(saved.id, linkIds205, LinkStatus.Terminated, "-")
       projectService.projectLinkPublishable(saved.id) should be (false)
 
-      RoadAddressChangesDAO.fetchRoadAddressChanges(Set(saved.id)).foreach(println)
-
       projectService.updateProjectLinkStatus(saved.id, linkIds206, LinkStatus.Terminated, "-")
       projectService.projectLinkPublishable(saved.id) should be (true)
 
-      RoadAddressChangesDAO.fetchRoadAddressChanges(Set(saved.id)).foreach( ct =>
-        println(ct.changeInfo.source + " -> " + ct.changeInfo.target))
-
-      RoadAddressChangesDAO.fetchRoadAddressChanges(Set(saved.id)) should have size (2)
+      RoadAddressChangesDAO.fetchRoadAddressChanges(Set(saved.id)) should have size (5)
     }
     runWithRollback { projectService.getRoadAddressAllProjects() } should have size (count - 1)
   }
