@@ -101,7 +101,17 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
     val fetchRoadAddressesByBoundingBoxF = Future(fetchRoadAddressesByBoundingBox(boundingRectangle))
     val fetchVVHStartTime = System.currentTimeMillis()
+    //TODO maybe split complementedRoadLinks in (roadLinks, complementaryRoadLinks) and get rid of complementaryLinkIds. Pluck them linkids after (if needed)
     val (complementedRoadLinks, complementaryLinkIds) = fetchRoadLinksWithComplementary(boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads)
+    val changedRoadLinks = roadLinkService.getChangeInfoFromVVH(boundingRectangle, municipalities).partition(crl => complementaryLinkIds.contains(crl.oldId.get))._1
+    //TODO move resolveChangesByType to somewhere else
+    val resolveChangesByType = changedRoadLinks.map(crl =>
+      crl.changeType match {
+        case 1 => //TODO procced acording to changeType
+        case _ =>
+      }
+    )
+
     val linkIds = complementedRoadLinks.map(_.linkId).toSet
     val fetchVVHEndTime = System.currentTimeMillis()
     logger.info("End fetch vvh road links in %.3f sec".format((fetchVVHEndTime - fetchVVHStartTime) * 0.001))
@@ -490,23 +500,23 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   def getFloatingAdjacent(chainLinks: Set[Long], linkId: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Int): Seq[RoadAddressLink] = {
-      val adjacentAddresses = getAdjacentAddresses(chainLinks, linkId, roadNumber, roadPartNumber, Track.apply(trackCode))
-      val adjacentLinkIds = adjacentAddresses.map(_.linkId).toSet
-      val roadLinks = roadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(adjacentLinkIds)
-      val adjacentAddressLinks = roadLinks._1.map(rl => rl.linkId -> rl).toMap
-      val historyLinks = roadLinks._2.groupBy(rl => rl.linkId)
+    val adjacentAddresses = getAdjacentAddresses(chainLinks, linkId, roadNumber, roadPartNumber, Track.apply(trackCode))
+    val adjacentLinkIds = adjacentAddresses.map(_.linkId).toSet
+    val roadLinks = roadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(adjacentLinkIds)
+    val adjacentAddressLinks = roadLinks._1.map(rl => rl.linkId -> rl).toMap
+    val historyLinks = roadLinks._2.groupBy(rl => rl.linkId)
 
-      val anomaly2List = withDynSession{ RoadAddressDAO.getMissingRoadAddresses(adjacentLinkIds).filter(_.anomaly == Anomaly.GeometryChanged) }
+    val anomaly2List = withDynSession{ RoadAddressDAO.getMissingRoadAddresses(adjacentLinkIds).filter(_.anomaly == Anomaly.GeometryChanged) }
 
-      val floatingAdjacents = adjacentAddresses.filter(_.floating).map(ra =>
-        if (anomaly2List.exists(_.linkId == ra.linkId)) {
-          val rl = adjacentAddressLinks(ra.linkId)
-          RoadAddressLinkBuilder.build(rl, ra, true, Some(rl.geometry))
-        } else {
-          RoadAddressLinkBuilder.build(historyLinks(ra.linkId).head, ra)
-        }
-      )
-      floatingAdjacents
+    val floatingAdjacents = adjacentAddresses.filter(_.floating).map(ra =>
+      if (anomaly2List.exists(_.linkId == ra.linkId)) {
+        val rl = adjacentAddressLinks(ra.linkId)
+        RoadAddressLinkBuilder.build(rl, ra, true, Some(rl.geometry))
+      } else {
+        RoadAddressLinkBuilder.build(historyLinks(ra.linkId).head, ra)
+      }
+    )
+    floatingAdjacents
   }
 
   def getAdjacent(chainLinks: Set[Long], linkId: Long): Seq[RoadAddressLink] = {
