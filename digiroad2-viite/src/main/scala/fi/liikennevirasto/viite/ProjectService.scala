@@ -4,26 +4,20 @@ import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, RoadLinkService}
-import fi.liikennevirasto.viite.ViiteTierekisteriClient.{createJsonmessage, sendJsonMessage}
+import fi.liikennevirasto.digiroad2.util.RoadAddressException
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, RoadLinkService}
 import fi.liikennevirasto.viite.dao.ProjectState._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.{Delta, ProjectDeltaCalculator, RoadAddressFiller}
 import org.joda.time.DateTime
-import org.json4s.{DefaultFormats, Extraction}
-import org.json4s.jackson.Serialization
 import org.slf4j.LoggerFactory
-
-
 
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import scala.util.control.NonFatal
-import scala.util.parsing.json.JSON
 
 class ProjectService(roadAddressService: RoadAddressService, roadLinkService: RoadLinkService, eventbus: DigiroadEventBus) {
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
@@ -254,25 +248,25 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       (project, formInfo)
     }
   }
-  def getPreviewOfChanges(projectId:Long) :String= {
+
+  def getChangeProject(projectId:Long): Option[ChangeProject] = {
     withDynTransaction {
       try {
         val delta = ProjectDeltaCalculator.delta(projectId)
         if (setProjectDeltaToDB(delta, projectId)) {
           val roadAddressChanges = RoadAddressChangesDAO.fetchRoadAddressChanges(Set(projectId))
-          implicit val formats = DefaultFormats
-         Serialization.write(Extraction.decompose(ViiteTierekisteriClient.RoadAddressDataModelConversion(roadAddressChanges)))
+          return Some(ViiteTierekisteriClient.convertToChangeProject(roadAddressChanges))
         }
-        else ""
       } catch {
-        case NonFatal(e) => ""
+        case NonFatal(e) => logger.info(s"Change info not available for project $projectId: " + e.getMessage)
       }
     }
+    None
   }
 
   def getRoadAddressChangesAndSendToTR(projectId: Set[Long]) = {
     val roadAddressChanges = RoadAddressChangesDAO.fetchRoadAddressChanges(projectId)
-    ViiteTierekisteriClient.sendJsonMessage(ViiteTierekisteriClient.RoadAddressDataModelConversion(roadAddressChanges))
+    ViiteTierekisteriClient.sendChanges(roadAddressChanges)
   }
 
   def getProjectRoadLinks(projectId: Long, boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
@@ -433,7 +427,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def getProjectStatusFromTR(projectId: Long) = {
-    ViiteTierekisteriClient.getProjectStatus(projectId.toString)
+    ViiteTierekisteriClient.getProjectStatus(projectId)
   }
 
   private def getStatusFromTRObject(trProject:Option[TRProjectStatus]):Option[ProjectState] = {
