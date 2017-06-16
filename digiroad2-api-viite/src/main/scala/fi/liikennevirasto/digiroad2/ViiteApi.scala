@@ -13,7 +13,6 @@ import fi.liikennevirasto.viite.{ChangeProject, ProjectService, ReservedRoadPart
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.json4s._
-import org.json4s.jackson.Serialization
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.{NotFound, _}
 import org.slf4j.LoggerFactory
@@ -230,11 +229,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       case ex: IllegalArgumentException =>
         NotFound(s"Project id ${project.id} not found")
     }
-  }
-
-  private def changeProjectToJSON(changeProject: ChangeProject): String = {
-    implicit val formats = DefaultFormats
-    Serialization.write(Extraction.decompose(changeProject))
   }
 
   get("/roadlinks/roadaddress/project/all") {

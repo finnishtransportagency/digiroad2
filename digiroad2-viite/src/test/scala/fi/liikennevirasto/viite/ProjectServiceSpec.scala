@@ -396,7 +396,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
     }
   }
 
-  test("update change table on every road link change") {
+  test("get change table test with update change table on every road link change") {
     var count = 0
     val roadLink = RoadLink(5170939L,Seq(Point(535605.272,6982204.22,85.90899999999965))
       ,540.3960283713503,State,99,TrafficDirection.AgainstDigitizing,UnknownLinkType,Some("25.06.2015 03:00:00"), Some("vvh_modified"),Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
@@ -422,10 +422,36 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       projectService.updateProjectLinkStatus(saved.id, linkIds205, LinkStatus.Terminated, "-")
       projectService.projectLinkPublishable(saved.id) should be (false)
 
+      projectService.getChangeProject(saved.id).map(_.changeInfoSeq).getOrElse(Seq()) should have size (0)
+
       projectService.updateProjectLinkStatus(saved.id, linkIds206, LinkStatus.Terminated, "-")
       projectService.projectLinkPublishable(saved.id) should be (true)
 
-      RoadAddressChangesDAO.fetchRoadAddressChanges(Set(saved.id)) should have size (5)
+      val changeProjectOpt = projectService.getChangeProject(saved.id)
+      changeProjectOpt.map(_.changeInfoSeq).getOrElse(Seq()) should have size (5)
+
+      val change = changeProjectOpt.get
+
+      change.changeDate should be (roadAddressProject.startDate.toString("YYYY-MM-DD"))
+      change.ely should be (8)
+      change.user should be ("TestUser")
+      change.name should be ("TestProject")
+      change.changeInfoSeq.foreach(rac => {
+        val s = rac.source
+        val t = rac.target
+        val (sTie, sAosa, sAjr, sAet, sLet) = (s.roadNumber, s.startRoadPartNumber, s.trackCode, s.startAddressM, s.endAddressM)
+        val (tTie, tAosa, tAjr, tAet, tLet) = (t.roadNumber, t.startRoadPartNumber, t.trackCode, t.startAddressM, t.endAddressM)
+        sTie should be (tTie)
+        sAosa should be (tAosa)
+        sAjr should be (tAjr)
+        sAet should be (tAet)
+        sLet should be (tLet)
+      })
+
+      change.changeInfoSeq.foreach(_.changeType should be (AddressChangeType.Termination))
+      change.changeInfoSeq.foreach(_.discontinuity should be (Discontinuity.Continuous))
+      // TODO: When road types are properly generated
+      change.changeInfoSeq.foreach(_.roadType should be (RoadType.UnknownOwnerRoad))
     }
     runWithRollback { projectService.getRoadAddressAllProjects() } should have size (count - 1)
   }
