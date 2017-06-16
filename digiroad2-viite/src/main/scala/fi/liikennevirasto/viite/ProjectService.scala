@@ -258,7 +258,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     withDynTransaction {
       try {
         val delta = ProjectDeltaCalculator.delta(projectId)
-        if (addProjectDeltaToDB(delta, projectId)) {
+        if (setProjectDeltaToDB(delta, projectId)) {
           val roadAddressChanges = RoadAddressChangesDAO.fetchRoadAddressChanges(Set(projectId))
           implicit val formats = DefaultFormats
          Serialization.write(Extraction.decompose(ViiteTierekisteriClient.RoadAddressDataModelConversion(roadAddressChanges)))
