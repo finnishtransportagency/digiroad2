@@ -43,7 +43,10 @@
       allowComplementaryLinks: true,
       editControlLabels: { title: 'Rajoitus',
         enabled: 'Rajoitus',
-        disabled: 'Ei rajoitusta' }
+        disabled: 'Ei rajoitusta',
+        showUnit: true
+      },
+      label: new LinearAssetLabel()
     },
     {
       typeId: assetType.trailerTruckWeightLimit,
@@ -58,7 +61,10 @@
       allowComplementaryLinks: true,
       editControlLabels: { title: 'Rajoitus',
         enabled: 'Rajoitus',
-        disabled: 'Ei rajoitusta' }
+        disabled: 'Ei rajoitusta',
+        showUnit: true
+      },
+      label: new LinearAssetLabel()
     },
     {
       typeId: assetType.axleWeightLimit,
@@ -73,7 +79,10 @@
       allowComplementaryLinks: true,
       editControlLabels: { title: 'Rajoitus',
         enabled: 'Rajoitus',
-        disabled: 'Ei rajoitusta' }
+        disabled: 'Ei rajoitusta',
+        showUnit: true
+      },
+      label: new LinearAssetLabel()
     },
     {
       typeId: assetType.bogieWeightLimit,
@@ -88,7 +97,10 @@
       allowComplementaryLinks: true,
       editControlLabels: { title: 'Rajoitus',
         enabled: 'Rajoitus',
-        disabled: 'Ei rajoitusta' }
+        disabled: 'Ei rajoitusta',
+        showUnit: true
+      },
+      label: new LinearAssetLabel()
     },
     {
       typeId: assetType.heightLimit,
@@ -121,7 +133,10 @@
       allowComplementaryLinks: true,
       editControlLabels: { title: 'Rajoitus',
         enabled: 'Rajoitus',
-        disabled: 'Ei rajoitusta' }
+        disabled: 'Ei rajoitusta',
+        showUnit: true
+      },
+      label: new LinearAssetLabel()
     },
     {
       typeId: assetType.widthLimit,
@@ -134,9 +149,13 @@
       unit: 'cm',
       isSeparable: false,
       allowComplementaryLinks: true,
-      editControlLabels: { title: 'Rajoitus',
+      editControlLabels: {
+        title: 'Rajoitus',
         enabled: 'Rajoitus',
-        disabled: 'Ei rajoitusta' }
+        disabled: 'Ei rajoitusta',
+        showUnit: true
+      },
+      label: new LinearAssetLabel()
     },
     {
       typeId: assetType.litRoad,
@@ -239,8 +258,10 @@
       editControlLabels: {
         title: '',
         enabled: 'Liikennemäärä',
-        disabled: 'Ei tiedossa'
-      }
+        disabled: 'Ei tiedossa',
+        showUnit: true
+      },
+      label: new LinearAssetLabel()
     },
     {
       typeId: assetType.massTransitLane,
