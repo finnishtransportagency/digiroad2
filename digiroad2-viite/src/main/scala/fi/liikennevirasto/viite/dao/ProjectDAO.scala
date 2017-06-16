@@ -205,50 +205,8 @@ object ProjectDAO {
   }
 
   def incrementCheckCounter(projectID:Long, increment: Long) = {
-    sqlu"""UPDATE project p0 SET check_counter=((SELECT check_counter FROM project p1 WHERE p0.ID = p1.ID)+$increment) WHERE id=$projectID""".execute
+    sqlu"""UPDATE project SET check_counter = check_counter + $increment WHERE id=$projectID""".execute
   }
-
-  def insertDeltaToRoadChangeTable(delta: Delta, projectId: Long): Boolean= {
-    val roadType = 9 //TODO missing
-    getRoadAddressProjectById(projectId) match {
-      case Some(project) => {
-        project.ely match {
-          case Some(ely) => {
-            val roadAddressChangePS = dynamicSession.prepareStatement("INSERT INTO ROAD_ADDRESS_CHANGES " +
-              "(project_id,change_type,old_road_number,new_road_number,old_road_part_number,new_road_part_number, " +
-              "old_track_code,new_track_code,old_start_addr_m,new_start_addr_m,old_end_addr_m,new_end_addr_m," +
-              "new_discontinuity,new_road_type,new_ely) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,? )")
-            ProjectDeltaCalculator.partition(delta.terminations).foreach { case (roadAddressSection) =>
-              roadAddressChangePS.setLong(1, projectId)
-              roadAddressChangePS.setLong(2, AddressChangeType.Termination.value)
-              roadAddressChangePS.setLong(3, roadAddressSection.roadNumber)
-              roadAddressChangePS.setLong(4, roadAddressSection.roadNumber)
-              roadAddressChangePS.setLong(5, roadAddressSection.roadPartNumberStart)
-              roadAddressChangePS.setLong(6, roadAddressSection.roadPartNumberStart)
-              roadAddressChangePS.setLong(7, roadAddressSection.track.value)
-              roadAddressChangePS.setLong(8, roadAddressSection.track.value)
-              roadAddressChangePS.setDouble(9, roadAddressSection.startMAddr)
-              roadAddressChangePS.setDouble(10, roadAddressSection.startMAddr)
-              roadAddressChangePS.setDouble(11, roadAddressSection.endMAddr)
-              roadAddressChangePS.setDouble(12, roadAddressSection.endMAddr)
-              roadAddressChangePS.setLong(13, roadAddressSection.discontinuity.value)
-              roadAddressChangePS.setLong(14, roadType)
-              roadAddressChangePS.setLong(15, ely)
-              roadAddressChangePS.addBatch()
-            }
-            roadAddressChangePS.executeBatch()
-            roadAddressChangePS.close()
-            true
-          }
-          case _=>  false
-        }
-      } case _=> false
-    }
-  }
-
-
-
-
 
   def updateProjectLinkStatus(projectLinkIds: Set[Long], linkStatus: LinkStatus, userName: String): Unit = {
     val user = userName.replaceAll("[^A-Za-z0-9\\-]+", "")
