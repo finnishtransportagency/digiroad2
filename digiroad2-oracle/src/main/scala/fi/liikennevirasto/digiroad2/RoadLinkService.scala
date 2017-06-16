@@ -318,9 +318,9 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @return LinksId
     */
 
-    def getLinkIdsFromVVHWithComplementaryByPolygons(polygons: Seq[Polygon]) = {
-      polygons.flatMap(getLinkIdsFromVVHWithComplementaryByPolygon)
-    }
+  def getLinkIdsFromVVHWithComplementaryByPolygons(polygons: Seq[Polygon]) = {
+    polygons.flatMap(getLinkIdsFromVVHWithComplementaryByPolygon)
+  }
 
   /**
     * This method returns "real" and "complementary" link id by polygon.
@@ -674,6 +674,9 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   def getViiteRoadPartsFromVVH(linkIds: Set[Long], municipalities: Set[Int] = Set()) : Seq[RoadLink] =
     getViiteRoadLinksWithoutChangesFromVVH(linkIds, municipalities)._1
 
+  def getChangeInfoFromVVH(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[ChangeInfo] ={
+    Await.result(vvhClient.roadLinkChangeInfo.fetchByBoundsAndMunicipalitiesF(bounds, municipalities), atMost = Duration.Inf)
+  }
 
   /**
     * Gets road links and change data by municipality from VVH. Used to update cache

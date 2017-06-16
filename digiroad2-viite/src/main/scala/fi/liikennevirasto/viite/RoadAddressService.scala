@@ -595,6 +595,23 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
   }
 
+  /**
+    * This will annex all the valid ChangeInfo to the corresponding road address object
+    * The criteria for the annexation is the following:
+    *   .The changeInfo vvhTimestamp must be bigger than the RoadAddress vvhTimestamp
+    *   .Either the newId or the oldId from the Changeinfo must be equal to the linkId in the RoadAddress
+    * @param roadAddresses - Sequence of RoadAddresses
+    * @param changes - Sequence of ChangeInfo
+    * @return List of (RoadAddress, List of ChangeInfo)
+    */
+  def matchChangesWithRoadAddresses(roadAddresses: Seq[RoadAddress], changes: Seq[ChangeInfo]) = {
+    roadAddresses.map(ra => {
+      (ra, changes.filter(c => {
+        (c.newId.getOrElse(-1) == ra.linkId || c.oldId.getOrElse(-1) == ra.linkId) && c.vvhTimeStamp > ra.adjustedTimestamp
+      }))
+    })
+  }
+
 }
 
 case class RoadAddressMerge(merged: Set[Long], created: Seq[RoadAddress])
