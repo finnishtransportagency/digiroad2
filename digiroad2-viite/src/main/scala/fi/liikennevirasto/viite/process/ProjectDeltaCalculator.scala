@@ -28,7 +28,6 @@ object ProjectDeltaCalculator {
   private def findTerminations(projectLinks: Map[RoadPart, Seq[ProjectLink]], currentAddresses: Map[RoadPart, Seq[RoadAddress]]) = {
     val terminations = projectLinks.map{case (part, pLinks) => part -> (pLinks, currentAddresses.getOrElse(part, Seq()))}.mapValues{ case (pll, ral) =>
       ral.filter(r => pll.exists(pl => pl.linkId == r.linkId && pl.status == LinkStatus.Terminated))}
-    terminations.keySet.foreach(println)
     terminations.filterNot(t => t._2.isEmpty).values.foreach(validateTerminations)
     terminations.values.flatten.toSeq
   }
