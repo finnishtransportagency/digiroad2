@@ -74,6 +74,10 @@ object DefloatMapper {
       GeometryUtils.truncateGeometry3D(geometry, Math.min(d1, d2), Math.max(d1, d2))
     }
     def adjust(mapping: RoadAddressMapping, startM: Double, endM: Double) = {
+
+
+//
+      // THE BUG IS HERE
       if (mapping.sourceLinkId != mapping.targetLinkId)
         mapping
       else {
@@ -112,6 +116,7 @@ object DefloatMapper {
         case Some(cp) => if (cp.addressMValue == endAddrM) Some(cp.copy(linkId = adjMap.targetLinkId,
           segmentMValue = if (sideCode == SideCode.TowardsDigitizing) Math.max(startM, endM) else 0.0)) else None
       }
+      println(s"mapped ${ra.linkId} ${ra.startAddrMValue}-${ra.endAddrMValue} to ${startCP.map(_.addressMValue).getOrElse(startAddrM)}-${endCP.map(_.addressMValue).getOrElse(endAddrM)}")
       ra.copy(id = NewRoadAddress, linkId = adjMap.targetLinkId, startAddrMValue = startCP.map(_.addressMValue).getOrElse(startAddrM),
         endAddrMValue = endCP.map(_.addressMValue).getOrElse(endAddrM), floating = false,
         sideCode = sideCode, startMValue = startM, endMValue = endM, geom = mappedGeom, calibrationPoints = (startCP, endCP))
@@ -127,6 +132,7 @@ object DefloatMapper {
     val (startM, endM) = (mapping.sourceStartM, mapping.sourceEndM)
     // The lengths may not be exactly equal: coefficient is to adjust that
     val coefficient = (roadAddress.endAddrMValue - roadAddress.startAddrMValue) / (roadAddress.endMValue - roadAddress.startMValue)
+    println(coefficient, s"${roadAddress.startAddrMValue}-${roadAddress.endAddrMValue} / ${(roadAddress.endMValue - roadAddress.startMValue)} with ${startM} ${endM}")
     roadAddress.sideCode match {
       case SideCode.AgainstDigitizing =>
         (roadAddress.endAddrMValue - Math.round(endM*coefficient), roadAddress.endAddrMValue - Math.round(startM*coefficient))
