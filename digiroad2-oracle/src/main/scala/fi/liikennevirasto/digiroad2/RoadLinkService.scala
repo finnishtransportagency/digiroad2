@@ -928,7 +928,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
         propertyRows.functionalClassValue(linkId),
         propertyRows.linkTypeValue(linkId),
         propertyRows.trafficDirectionValue(linkId).getOrElse(TrafficDirection.UnknownDirection),
-        propertyRows.administrativeClassValue(linkId),
+        propertyRows.administrativeClassValue(linkId).getOrElse(Unknown), //TODO check if this get or else is ok
         modifiedAt.map(DateTimePropertyFormat.print),
         modifiedBy)
     }
@@ -950,7 +950,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
       RoadLink(link.linkId, link.geometry,
         GeometryUtils.geometryLength(link.geometry),
-        propertyRows.administrativeClassValue(link.linkId),
+        propertyRows.administrativeClassValue(link.linkId).getOrElse(link.administrativeClass),
         propertyRows.functionalClassValue(link.linkId),
         propertyRows.trafficDirectionValue(link.linkId).getOrElse(link.trafficDirection),
         propertyRows.linkTypeValue(link.linkId),
@@ -1001,9 +1001,9 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       trafficDirectionRowOption.map(trafficDirectionRow => TrafficDirection(trafficDirectionRow._2))
     }
 
-    def administrativeClassValue(linkId: Long): AdministrativeClass = {
+    def administrativeClassValue(linkId: Long): Option[AdministrativeClass] = {
       val administrativeRowOption = administrativeClassRowsByLinkId.get(linkId)
-      administrativeRowOption.map( ac => AdministrativeClass.apply(ac._2)).getOrElse(AdministrativeClass.apply(99))
+      administrativeRowOption.map( ac => AdministrativeClass.apply(ac._2))
     }
 
     def latestModifications(linkId: Long, optionalModification: Option[(DateTime, String)] = None): Option[(DateTime, String)] = {

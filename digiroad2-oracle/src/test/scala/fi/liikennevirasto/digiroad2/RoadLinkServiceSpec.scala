@@ -671,10 +671,6 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       val service = new TestService(mockVVHClient, mockEventBus)
       when(mockVVHClient.fetchByLinkId(5)).thenReturn(Some(vvhRoadLink5))
 
-
-      val roadLink = simulateQuery {
-        service.updateLinkProperties(5, 99, UnknownLinkType, TrafficDirection.TowardsDigitizing, Municipality, Option("testuser"), { _ => })
-      }
       val roadLinks = service.getRoadLinksFromVVH(91)
 
       // Return all road links (all are incomplete here)
