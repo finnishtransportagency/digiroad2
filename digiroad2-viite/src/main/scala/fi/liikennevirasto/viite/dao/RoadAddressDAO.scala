@@ -811,7 +811,7 @@ object RoadAddressDAO {
         case None => ""
       })
       addressPS.setString(11, createdBy.getOrElse(address.modifiedBy.getOrElse("-")))
-    val (p1, p2) = (address.geom.head, address.geom.last)
+      val (p1, p2) = (address.geom.head, address.geom.last)
       addressPS.setDouble(12, p1.x)
       addressPS.setDouble(13, p1.y)
       addressPS.setDouble(14, address.startAddrMValue)
@@ -830,7 +830,7 @@ object RoadAddressDAO {
   }
 
   def createLRMPosition(lrmPositionPS: PreparedStatement, id: Long, linkId: Long, sideCode: Int,
-                                startM: Double, endM: Double): Unit = {
+                        startM: Double, endM: Double): Unit = {
     lrmPositionPS.setLong(1, id)
     lrmPositionPS.setLong(2, linkId)
     lrmPositionPS.setLong(3, sideCode)
@@ -885,6 +885,6 @@ object RoadAddressDAO {
              on r.START_ADDR_M=ra.lol
              WHERE r.road_number=$roadNumber AND r.road_part_number=$roadPart AND
              (r.valid_from is null or r.valid_from <= sysdate) AND (r.valid_to is null or r.valid_to > sysdate) AND track_code in (0,1)"""
-     Q.queryNA[(Long,Long,Double,Long, DateTime, DateTime)](query).firstOption
-    }
+    Q.queryNA[(Long,Long,Double,Long, DateTime, DateTime)](query).firstOption
+  }
 }

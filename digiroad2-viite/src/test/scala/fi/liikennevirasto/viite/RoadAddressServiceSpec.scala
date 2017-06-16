@@ -3,13 +3,14 @@ package fi.liikennevirasto.viite
 import java.util.{Date, Properties}
 
 import fi.liikennevirasto.digiroad2.FeatureClass.AllOthers
-import fi.liikennevirasto.digiroad2.RoadLinkType.NormalRoadLinkType
+import fi.liikennevirasto.digiroad2.RoadLinkType.{FloatingRoadLinkType, NormalRoadLinkType}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{HistoryLinkInterface, NormalLinkInterface}
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.BothDirections
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.viite.util._
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
@@ -683,6 +684,32 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       myService.getRoadAddressesAfterCalculation(Seq("3611217","3611218"), targetIds, User(0L, "foo", Configuration()))
     }
     roadAddresses.size should be >0
+  }
+
+  test("Kokkolantie 2 + 1 segments to 2 segments mapping (2 links to 1 link)") {
+    runWithRollback {
+      val targetLinkData = createRoadAddressLink(0L, 1392315L, Seq(Point(336973.635, 7108605.965), Point(336994.491, 7108726.504)), 0, 0, 0, 0, 0, SideCode.Unknown,
+        Anomaly.NoAddressGiven)
+      val geom = Seq(Point(336991.162, 7108706.098), Point(336994.4909960086, 7108726.503976283))
+      val sourceLinkData0 = createRoadAddressLink(Sequences.nextViitePrimaryKeySeqValue, 1392315L, Seq(Point(336973.635, 7108605.965), Point(336994.491, 7108726.504)), 8, 412, 2, 3045, 3148, SideCode.TowardsDigitizing,
+        Anomaly.GeometryChanged)
+      val sourceLinkData1 = createRoadAddressLink(Sequences.nextViitePrimaryKeySeqValue, 1392326L, GeometryUtils.truncateGeometry2D(geom, 0.0, 15.753), 8, 412, 2, 3148, 3164, SideCode.TowardsDigitizing,
+        Anomaly.None)
+      val sourceLinkData2 = createRoadAddressLink(Sequences.nextViitePrimaryKeySeqValue, 1392326L, GeometryUtils.truncateGeometry2D(geom, 15.753, 20.676), 8, 412, 2, 3164, 3169, SideCode.TowardsDigitizing,
+        Anomaly.None, true, false)
+      val sourceLinks = Seq(sourceLinkData0, sourceLinkData1, sourceLinkData2).map(_.copy(roadLinkType = FloatingRoadLinkType))
+      val targetLinks = Seq(targetLinkData)
+      val roadAddressSeq = sourceLinks.map(roadAddressLinkToRoadAddress(true))
+      RoadAddressDAO.create(roadAddressSeq)
+      RoadAddressDAO.fetchByLinkId(Set(1392315L, 1392326L), true) should have size (3)
+      val roadLinks = targetLinks.map(roadAddressLinkToRoadLink)
+      val historyLinks = sourceLinks.map(roadAddressLinkToHistoryLink)
+      when(mockRoadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(any[Set[Long]])).thenReturn((roadLinks, historyLinks))
+      val roadAddresses = roadAddressService.getRoadAddressesAfterCalculation(Seq("1392326", "1392315"), Seq("1392315"), User(0L, "Teppo", Configuration()))
+      roadAddressService.transferFloatingToGap(Set(1392326, 1392315), Set(1392315), roadAddresses, "Teppo")
+
+      RoadAddressDAO.fetchByLinkId(Set(1392315L, 1392326L), false) should have size (1)
+    }
   }
 
   private def createRoadAddressLink(id: Long, linkId: Long, geom: Seq[Point], roadNumber: Long, roadPartNumber: Long, trackCode: Long,

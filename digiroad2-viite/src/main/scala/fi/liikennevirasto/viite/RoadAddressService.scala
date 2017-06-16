@@ -533,12 +533,17 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   def getRoadAddressesAfterCalculation(sources: Seq[String], targets: Seq[String], user: User): Seq[RoadAddress] = {
+    def adjustGeometry(ra: RoadAddress, link: RoadAddressLinkLike): RoadAddress = {
+      val geom = GeometryUtils.truncateGeometry3D(link.geometry, ra.startMValue, ra.endMValue)
+      ra.copy(geom = geom)
+    }
     val sourceRoadAddressLinks = sources.flatMap(rd => {
       getRoadAddressLink(rd.toLong)
     })
     val targetIds = targets.map(rd => rd.toLong).toSet
     val targetRoadAddressLinks = targetIds.toSeq.map(getTargetRoadLink)
-    transferRoadAddress(sourceRoadAddressLinks, targetRoadAddressLinks, user)
+    val targetLinkMap: Map[Long, RoadAddressLinkLike] = targetRoadAddressLinks.map(l => l.linkId -> l).toMap
+    transferRoadAddress(sourceRoadAddressLinks, targetRoadAddressLinks, user).map(ra => adjustGeometry(ra, targetLinkMap(ra.linkId)))
   }
 
   def transferFloatingToGap(sourceIds: Set[Long], targetIds: Set[Long], roadAddresses: Seq[RoadAddress], username: String): Unit = {
