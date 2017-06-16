@@ -18,7 +18,7 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink, RoadAddressLinkPartitioner}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
-import fi.liikennevirasto.viite.process.{LinkRoadAddressCalculator, RoadAddressFiller}
+import fi.liikennevirasto.viite.process.{DefloatMapper, LinkRoadAddressCalculator, RoadAddressFiller}
 import fi.liikennevirasto.viite.util.StaticTestData
 import org.joda.time.DateTime
 import org.mockito.ArgumentCaptor
@@ -692,23 +692,48 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
         Anomaly.NoAddressGiven)
       val geom = Seq(Point(336991.162, 7108706.098), Point(336994.4909960086, 7108726.503976283))
       val sourceLinkData0 = createRoadAddressLink(Sequences.nextViitePrimaryKeySeqValue, 1392315L, Seq(Point(336973.635, 7108605.965), Point(336994.491, 7108726.504)), 8, 412, 2, 3045, 3148, SideCode.TowardsDigitizing,
-        Anomaly.GeometryChanged)
+        Anomaly.GeometryChanged, true, false)
       val sourceLinkData1 = createRoadAddressLink(Sequences.nextViitePrimaryKeySeqValue, 1392326L, GeometryUtils.truncateGeometry2D(geom, 0.0, 15.753), 8, 412, 2, 3148, 3164, SideCode.TowardsDigitizing,
         Anomaly.None)
       val sourceLinkData2 = createRoadAddressLink(Sequences.nextViitePrimaryKeySeqValue, 1392326L, GeometryUtils.truncateGeometry2D(geom, 15.753, 20.676), 8, 412, 2, 3164, 3169, SideCode.TowardsDigitizing,
-        Anomaly.None, true, false)
+        Anomaly.None)
+      val sourceLinkDataC = createRoadAddressLink(Sequences.nextViitePrimaryKeySeqValue, 1392326L, geom, 0, 0, 0, 0, 0, SideCode.Unknown,
+        Anomaly.NoAddressGiven)
       val sourceLinks = Seq(sourceLinkData0, sourceLinkData1, sourceLinkData2).map(_.copy(roadLinkType = FloatingRoadLinkType))
+      val historyLinks = Seq(sourceLinkData0, sourceLinkDataC).map(roadAddressLinkToHistoryLink)
       val targetLinks = Seq(targetLinkData)
-      val roadAddressSeq = sourceLinks.map(roadAddressLinkToRoadAddress(true))
+      val roadAddressSeq = sourceLinks.map(roadAddressLinkToRoadAddress(true)).map{ ra =>
+        if (ra.startAddrMValue == 3148)
+          ra.copy(startMValue = 4.923, endMValue = 20.676)
+        else
+          ra
+      }
       RoadAddressDAO.create(roadAddressSeq)
+
+      // pre-checks
       RoadAddressDAO.fetchByLinkId(Set(1392315L, 1392326L), true) should have size (3)
+      RoadAddressDAO.fetchByLinkId(Set(1392315L, 1392326L), true).foreach(println)
+      val mapping = DefloatMapper.createAddressMap(sourceLinks, targetLinks)
+      mapping should have size (2)
+
       val roadLinks = targetLinks.map(roadAddressLinkToRoadLink)
-      val historyLinks = sourceLinks.map(roadAddressLinkToHistoryLink)
-      when(mockRoadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(any[Set[Long]])).thenReturn((roadLinks, historyLinks))
+      when(mockRoadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(Set(1392315L))).thenReturn((roadLinks, historyLinks.filter(_.linkId == 1392315L)))
+      when(mockRoadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(Set(1392326L))).thenReturn((Seq(), historyLinks.filter(_.linkId == 1392326L)))
       val roadAddresses = roadAddressService.getRoadAddressesAfterCalculation(Seq("1392326", "1392315"), Seq("1392315"), User(0L, "Teppo", Configuration()))
       roadAddressService.transferFloatingToGap(Set(1392326, 1392315), Set(1392315), roadAddresses, "Teppo")
 
-      RoadAddressDAO.fetchByLinkId(Set(1392315L, 1392326L), false) should have size (1)
+      val transferred = RoadAddressDAO.fetchByLinkId(Set(1392315L, 1392326L), false)
+      transferred should have size (1)
+      println(transferred.head)
+      transferred.head.linkId should be (1392315L)
+      transferred.head.roadNumber should be (8)
+      transferred.head.roadPartNumber should be (412)
+      transferred.head.track.value should be (2)
+      transferred.head.endCalibrationPoint should be (None)
+      transferred.head.startCalibrationPoint.isEmpty should be (false)
+      transferred.head.startAddrMValue should be (3045)
+      transferred.head.endAddrMValue should be (3169)
+      GeometryUtils.areAdjacent(transferred.head.geom, Seq(targetLinkData.geometry.head, targetLinkData.geometry.last)) should be (true)
     }
   }
 
