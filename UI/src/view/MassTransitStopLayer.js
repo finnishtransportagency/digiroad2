@@ -631,7 +631,10 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
           roadLayer.drawRoadLinks(roadCollection.getAll(), map.getView().getZoom());
           massTransitStopsCollection.fetchAssets( map.getView().calculateExtent(map.getSize()));
       });
-      roadCollection.fetch( map.getView().calculateExtent(map.getSize()));
+      if(massTransitStopsCollection.isComplementaryActive())
+        roadCollection.fetchWithComplementary(map.getView().calculateExtent(map.getSize()));
+      else
+        roadCollection.fetch( map.getView().calculateExtent(map.getSize()));
     }
   };
 
