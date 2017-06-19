@@ -14,6 +14,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.viite.util._
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.viite.dao.Discontinuity.Discontinuous
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink, RoadAddressLinkPartitioner}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
@@ -369,7 +370,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
   private def roadAddressLinkToRoadAddress(floating: Boolean)(l: RoadAddressLink) = {
     RoadAddress(l.id, l.roadNumber, l.roadPartNumber, Track.apply(l.trackCode.toInt), Discontinuity.apply(l.discontinuity.toInt),
-      l.startAddressM, l.endAddressM, Option(new DateTime(new Date())), None, None, 0, l.linkId, l.startMValue, l.endMValue, l.sideCode,
+      l.startAddressM, l.endAddressM, Option(new DateTime(new Date())), None, None, 0, l.linkId, l.startMValue, l.endMValue, l.sideCode, 0,
       (l.startCalibrationPoint, l.endCalibrationPoint), floating, l.geometry)
   }
 
@@ -713,4 +714,44 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
   }
 
+
+  test("verify the correct annexation of changeInfos to roadAddresses"){
+    val linkId1 = 12345L
+    val linkId2 = 67890L
+    val linkId3 = 98765L
+    val defaultVVTimestamp = 1459452603000L
+    val roadAddress = Seq(
+      RoadAddress(1, 1, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"),0, linkId1, 0.0, 9.8,
+        SideCode.TowardsDigitizing, 0, (None, None), true, Seq(Point(0.0, 0.0), Point(0.0, 9.8))),
+      RoadAddress(2, 1, 1, Track.Combined, Discontinuous, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"),0, linkId2, 0.0, 10.4,
+        SideCode.TowardsDigitizing, defaultVVTimestamp, (None, None), true, Seq(Point(0.0, 9.8), Point(0.0, 20.2))),
+      RoadAddress(2, 1, 1, Track.Combined, Discontinuous, 10L, 20L, Some(DateTime.parse("1901-01-01")), None, Option("tester"),0, linkId3, 0.0, 10.4,
+        SideCode.TowardsDigitizing, defaultVVTimestamp, (None, None), true, Seq(Point(0.0, 9.8), Point(0.0, 20.2)))
+    )
+
+    val changeInfo =
+      Seq(
+        ChangeInfo(Option(602156), Option(linkId2), 6798918, 1, Option(10.52131863), Option(106.62158114), Option(0.0), Option(96.166451179999996), defaultVVTimestamp+5L) ,
+        ChangeInfo(Option(linkId2), Option(602156), 6798918, 2, Option(10.52131863), Option(106.62158114), Option(0.0), Option(96.166451179999996), defaultVVTimestamp+5L) ,
+        ChangeInfo(Option(linkId2), Option(602156), 6798918, 3, Option(10.52131863), Option(106.62158114), Option(0.0), Option(96.166451179999996), defaultVVTimestamp) ,
+        ChangeInfo(Option(602156), Option(602156), 6798918, 4, Option(10.52131863), Option(106.62158114), Option(0.0), Option(96.166451179999996), defaultVVTimestamp) ,
+        ChangeInfo(Option(602156), Option(linkId1), 6798918, 5, Option(10.52131863), Option(106.62158114), Option(0.0), Option(96.166451179999996), defaultVVTimestamp+5L)
+      )
+    val matchedResults = roadAddressService.matchChangesWithRoadAddresses(roadAddress, changeInfo)
+
+    matchedResults.size should be(3)
+    val firstMatch = matchedResults.find(_._1.linkId == linkId1).get
+    val secondMatch = matchedResults.find(_._1.linkId == linkId2).get
+    val thirdMatch = matchedResults.find(_._1.linkId == linkId3).get
+
+    firstMatch._2.size should be (1)
+    firstMatch._2.head.changeType should be (5)
+    secondMatch._2.size should be (2)
+    secondMatch._2(0).changeType should be (1)
+    secondMatch._2(1).changeType should be (2)
+    thirdMatch._2.size should be (0)
+
+    matchedResults.flatMap(_._2).find(_.changeType == 3).isEmpty should be (true)
+
+  }
 }
