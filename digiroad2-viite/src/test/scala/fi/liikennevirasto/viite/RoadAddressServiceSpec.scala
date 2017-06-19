@@ -423,7 +423,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
   test("GetFloatingAdjacents road links on road 75 part 2 sourceLinkId 5176142") {
     val roadAddressService = new RoadAddressService(mockRoadLinkService,mockEventBus)
-    val road75FloatingAddresses = RoadAddress(367,75,2,Track.Combined,Discontinuity.Continuous,3532,3598,None,None,Some("tr"),70000389,5176142,0.0,65.259,SideCode.TowardsDigitizing,(None,None),true,List(Point(538889.668,6999800.979,0.0), Point(538912.266,6999862.199,0.0)))
+    val road75FloatingAddresses = RoadAddress(367,75,2,Track.Combined,Discontinuity.Continuous,3532,3598,None,None,Some("tr"),70000389,5176142,0.0,65.259,SideCode.TowardsDigitizing,0,(None,None),true,List(Point(538889.668,6999800.979,0.0), Point(538912.266,6999862.199,0.0)))
 
     when(mockRoadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(any[Set[Long]])).thenReturn(
       (Seq(), Stream()))
