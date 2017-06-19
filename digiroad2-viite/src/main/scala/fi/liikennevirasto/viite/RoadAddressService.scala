@@ -116,7 +116,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     //pure linkId based queries, maybe something related to the zoomLevel we are in map level.
     val fetchMissingRoadAddressStartTime = System.currentTimeMillis()
     val (floatingViiteRoadLinks, addresses, floating) = Await.result(fetchRoadAddressesByBoundingBoxF, Duration.Inf)
-    val resolveChangesByType = combineChanges(changedRoadLinks, addresses)
+    val resolveChanges = combineChangesByType(complementedRoadLinks, changedRoadLinks, addresses)
     val missingLinkIds = linkIds -- floating.keySet -- addresses.keySet
 
     val missedRL = withDynTransaction {
@@ -152,10 +152,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   //TODO 475
-  def combineChanges(changedRoadLinks: Seq[ChangeInfo], addresses: Map[Long, Seq[RoadAddress]]): Seq[RoadAddressLink] = {
+  //todo move it to new object class RoadAddressChangeInfoMapper
+  def combineChangesByType(roadlinks: Seq[RoadLink], changedRoadLinks: Seq[ChangeInfo], addresses: Map[Long, Seq[RoadAddress]]): Seq[RoadAddressLink] = {
     changedRoadLinks.map(crl =>
       crl.changeType match {
-        //TODO procced acording to changeType
         case 1 => Seq.empty[RoadAddressLink]
         case 2 => Seq.empty[RoadAddressLink]
         case _ => Seq.empty[RoadAddressLink]
