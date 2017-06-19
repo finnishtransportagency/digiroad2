@@ -43,9 +43,16 @@
 }
 .change-table {
   width: 100%;
+  overflow-y: auto;
+  display: block;
+  height: inherit;
+  position: absolute;
+}
+.change-table-dimensions {
+  width:1133px;
 }
 .project-change-table-dimension {
-  width: calc(100%/17);
+   width: 5.83%;;
   color: #5a5a57;
   font-weight: bold;
   height: 28px;
@@ -67,7 +74,7 @@
   height: 28px;
   font-size: 12px;
 }
-.project-changes tr:nth-child(even) {
+.project-changes tr:nth-child(odd) {
   background-color: #cbcbc9;
 }
 .change-borders-frames {
@@ -81,6 +88,8 @@
   width: 115px;
   border-right: 1px solid #a4a4a2;
   border-bottom: 1px solid #a4a4a2;
+  z-index: 1;
+  pointer-events: none;
 }
 #change-table-borders-source {
   position: absolute;
@@ -88,10 +97,14 @@
   width: 515px;
   border-right: 1px solid #a4a4a2;
   border-bottom: 1px solid #a4a4a2;
+  z-index: 1;
+  pointer-events: none;
 }
 #change-table-borders-target {
   position: absolute;
   height: @table-borders-height;
   width: 1135px;
   border-bottom: 1px solid #a4a4a2;
+  z-index: 1;
+  pointer-events: none;
 }
