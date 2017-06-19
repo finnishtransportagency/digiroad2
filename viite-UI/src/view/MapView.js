@@ -1,7 +1,8 @@
+//noinspection ThisExpressionReferencesGlobalObjectJS
 (function(root) {
   root.MapView = function(map, layers, instructionsPopup) {
     var isInitialized = false;
-    var centerMarkerLayer;
+    var centerMarkerLayer = new ol.source.Vector({});
 
     var showAssetZoomDialog = function() {
       instructionsPopup.show('Zoomaa lähemmäksi, jos haluat nähdä kohteita', 2000);
@@ -15,30 +16,43 @@
     };
 
     var mapMovedHandler = function(mapState) {
-      if (mapState.zoom < minZoomForContent()) {
-        if (isInitialized && mapState.hasZoomLevelChanged) {
-          showAssetZoomDialog();
-        }
+      if (mapState.zoom < minZoomForContent() && (isInitialized && mapState.hasZoomLevelChanged)) {
+        showAssetZoomDialog();
       }
     };
 
     var drawCenterMarker = function(position) {
-      var size = new OpenLayers.Size(16, 16);
-      var offset = new OpenLayers.Pixel(-(size.w / 2), -size.h / 2);
-      var icon = new OpenLayers.Icon('./images/center-marker.svg', size, offset);
+        //Create a new Feature with the exact point in the center of the map
+        var icon = new ol.Feature({
+          geometry: new ol.geom.Point(position)
+        });
 
-      centerMarkerLayer.clearMarkers();
-      var marker = new OpenLayers.Marker(new OpenLayers.LonLat(position.lon, position.lat), icon);
-      centerMarkerLayer.addMarker(marker);
-    };
+        //create the style of the icon of the 'Merkistse' Button
+        var styleIcon = new ol.style.Style({
+        image: new ol.style.Icon({
+          src: 'images/center-marker.svg'
+        })
+        });
+
+      //add Icon Style
+      icon.setStyle(styleIcon);
+      //clear the previous icon
+      centerMarkerLayer.clear();
+      //add icon to vector source
+      centerMarkerLayer.addFeature(icon);
+      };
+
+    var vectorLayer = new ol.layer.Vector({
+      source: centerMarkerLayer
+    });
+    vectorLayer.set('name','mapViewVectorLayer');
 
     var addCenterMarkerLayerToMap = function(map) {
-      centerMarkerLayer = new OpenLayers.Layer.Markers('centerMarker');
-      map.addLayer(centerMarkerLayer);
+      map.addLayer(vectorLayer);
     };
 
-    eventbus.on('application:initialized', function() {
-      var zoom = map.getZoom();
+    eventbus.on('application:initialized layer:fetched', function() {
+      var zoom = map.getView().getZoom();
       applicationModel.setZoomLevel(zoom);
       if (!zoomlevels.isInAssetZoomLevel(zoom)) {
         showAssetZoomDialog();
@@ -58,8 +72,9 @@
     });
 
     eventbus.on('coordinates:selected', function(position) {
-      if (geometrycalculator.isInBounds(map.getMaxExtent(), position.lon, position.lat)) {
-        map.setCenter(new OpenLayers.LonLat(position.lon, position.lat), zoomlevels.getAssetZoomLevelIfNotCloser(map.getZoom()));
+      if (geometrycalculator.isInBounds(map.getView().calculateExtent(map.getSize()), position.lon, position.lat)) {
+        map.getView().setCenter([position.lon, position.lat]);
+        map.getView().setZoom(zoomlevels.getAssetZoomLevelIfNotCloser(map.getView().getZoom()));
       } else {
         instructionsPopup.show('Koordinaatit eivät osu kartalle.', 3000);
       }
@@ -78,20 +93,45 @@
       applicationModel.setMinDirtyZoomLevel(minZoomForContent());
     }, this);
 
-    map.events.register('moveend', this, function() {
-      applicationModel.moveMap(map.getZoom(), map.getExtent());
+    eventbus.on('roadAddressProject:selected', function selectLayer(id, layer, previouslySelectedLayer) {
+      var layerToBeHidden = layers[previouslySelectedLayer];
+      var layerToBeShown = layers[layer];
+
+      if (layerToBeHidden) layerToBeHidden.hide(map);
+      layerToBeShown.show(map);
+      applicationModel.setMinDirtyZoomLevel(minZoomForContent());
+    }, this);
+
+    map.on('moveend', function() {
+      applicationModel.moveMap(map.getView().getZoom(), map.getLayers().getArray()[0].getExtent(), map.getView().getCenter());
     });
 
-    map.events.register('mousemove', map, function(event) {
-      eventbus.trigger('map:mouseMoved', event);
+    map.on('pointermove', function(event) {
+      var pixel = map.getEventPixel(event.originalEvent);
+      eventbus.trigger('map:mouseMoved', event, pixel);
     }, true);
 
-    map.events.register('click', map, function(event) {
-      eventbus.trigger('map:clicked', { x: event.xy.x, y: event.xy.y });
+    map.on('singleclick', function(event) {
+      eventbus.trigger('map:clicked', { x: event.coordinate.shift(), y: event.coordinate.shift() });
     });
 
     addCenterMarkerLayerToMap(map);
 
     setCursor(applicationModel.getSelectedTool());
+
+    //initial cursor when the map user is not dragging the map
+    map.getViewport().style.cursor = "initial";
+
+    //when the map is moving (the user is dragging the map)
+    //only work's when the developer options in the browser aren't open
+    map.on('pointerdrag', function(evt) {
+      map.getViewport().style.cursor = "move";
+    });
+
+    //when the map dragging stops the cursor value returns to the initial one
+    map.on('pointerup', function(evt) {
+      map.getViewport().style.cursor = "initial";
+    });
+
   };
 })(this);

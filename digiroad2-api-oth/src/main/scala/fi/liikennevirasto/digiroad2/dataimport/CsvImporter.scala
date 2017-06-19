@@ -54,7 +54,6 @@ trait CsvImporter {
   private val textFieldMappings = Map(
     "Pysäkin nimi" -> "nimi_suomeksi" ,
     "Ylläpitäjän tunnus" -> "yllapitajan_tunnus",
-    "LiVi-tunnus" -> "yllapitajan_koodi",
     "Matkustajatunnus" -> "matkustajatunnus",
     "Pysäkin nimi ruotsiksi" -> "nimi_ruotsiksi",
     "Liikennöintisuunta" -> "liikennointisuunta",
@@ -74,6 +73,8 @@ trait CsvImporter {
     "Sähköinen aikataulunäyttö" -> "sahkoinen_aikataulunaytto",
     "Valaistus" -> "valaistus",
     "Saattomahdollisuus henkilöautolla" -> "saattomahdollisuus_henkiloautolla",
+    "Korotettu" -> "korotettu",
+    "Roska-astia" -> "roska_astia",
     "Tietojen ylläpitäjä" -> stopAdministratorProperty
   )
 
@@ -153,7 +154,7 @@ trait CsvImporter {
   private def updateAssetByExternalIdLimitedByRoadType(externalId: Long, properties: Seq[SimpleProperty], roadTypeLimitations: Set[AdministrativeClass]): Either[AdministrativeClass, MassTransitStopWithProperties] = {
     class CsvImportMassTransitStop(val id: Long, val floating: Boolean, val roadLinkType: AdministrativeClass) extends FloatingAsset {}
     def massTransitStopTransformation(stop: PersistedMassTransitStop): (CsvImportMassTransitStop, Option[FloatingReason]) = {
-      val roadLink = vvhClient.fetchByLinkId(stop.linkId)
+      val roadLink = vvhClient.roadLinkData.fetchByLinkId(stop.linkId)
       val (floating, floatingReason) = massTransitStopService.isFloating(stop, roadLink)
       (new CsvImportMassTransitStop(stop.id, floating, roadLink.map(_.administrativeClass).getOrElse(Unknown)), floatingReason)
     }
@@ -177,14 +178,16 @@ trait CsvImporter {
   }
 
   def updateAsset(externalId: Long, properties: Seq[SimpleProperty], roadTypeLimitations: Set[AdministrativeClass]): ExcludedRoadLinkTypes = {
+    // Remove livi-id from properties, we don't want to change is with CSV
+    val propertiesWithoutLiviId = properties.filterNot(_.publicId == "yllapitajan_koodi")
     if(roadTypeLimitations.nonEmpty) {
-      val result: Either[AdministrativeClass, MassTransitStopWithProperties] = updateAssetByExternalIdLimitedByRoadType(externalId, properties, roadTypeLimitations)
+      val result: Either[AdministrativeClass, MassTransitStopWithProperties] = updateAssetByExternalIdLimitedByRoadType(externalId, propertiesWithoutLiviId, roadTypeLimitations)
       result match {
         case Left(roadLinkType) => List(roadLinkType)
         case _ => Nil
       }
     } else {
-      updateAssetByExternalId(externalId, properties)
+      updateAssetByExternalId(externalId, propertiesWithoutLiviId)
       Nil
     }
   }

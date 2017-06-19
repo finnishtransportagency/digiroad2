@@ -4,6 +4,10 @@ import java.net.URLEncoder
 import java.util
 import java.util.Properties
 
+import fi.liikennevirasto.digiroad2.roadaddress.oracle.RoadAddressDAO
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
+
+import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.{Point, Vector3d}
 import org.apache.http.NameValuePair
 import org.apache.http.client.entity.UrlEncodedFormEntity
@@ -13,6 +17,7 @@ import org.apache.http.message.BasicNameValuePair
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization
+import fi.liikennevirasto.digiroad2.roadaddress.oracle.RoadAddressDAO
 /**
   * A road consists of 1-2 tracks (fi: "ajorata"). 2 tracks are separated by a fence or grass for example.
   * Left and Right are relative to the advancing direction (direction of growing m values)
@@ -56,35 +61,75 @@ object RoadSide {
   case object Unknown extends RoadSide { def value = 0 }
 }
 
-/**
-  * Lanes 1-* are on a track.
-  */
-sealed trait Lane {
-  def value: Int
-}
-object Lane {
-  val values = Set(Main, ByPassOnLeft, AdditionalOnRight, Other)
+case class RoadAddress(municipalityCode: Option[String], road: Int, roadPart: Int, track: Track, mValue: Int, deviation: Option[Double])
+class RoadAddressException(response: String) extends RuntimeException(response)
 
-  def apply(intValue: Int): Lane = {
-    values.find(_.value == intValue).getOrElse(Unknown)
+/**
+  * A class to transform ETRS89-FI coordinates to road network addresses
+  */
+
+class GeometryTransform {
+  // see page 16: http://www.liikennevirasto.fi/documents/20473/143621/tieosoitej%C3%A4rjestelm%C3%A4.pdf/
+
+  lazy val roadAddressDao : RoadAddressDAO = {
+    new RoadAddressDAO()
   }
 
-  case object Main extends Lane { def value = 1 }
-  case object ByPassOnLeft extends Lane { def value = 2 }
-  case object AdditionalOnRight extends Lane { def value = 3 }
-  case object Other extends Lane { def value = 4 }
-  case object Unknown extends Lane { def value = 99 }
+  lazy val vkmGeometryTransform: VKMGeometryTransform = {
+    new VKMGeometryTransform()
+  }
+
+  def addressToCoords(road: Long, roadPart: Long, track: Track, mValue: Double) : Option[Point] = {
+    val addresslist = roadAddressDao.getRoadAddress(roadAddressDao.withRoadAddress(road, roadPart, track.value, mValue)).headOption
+
+    addresslist match {
+      case Some(address) =>
+        GeometryUtils.calculatePointFromLinearReference(address.geom, mValue-address.startAddrMValue)
+      case _ => None
+    }
+  }
+
+  def resolveAddressAndLocation(coord: Point, heading: Int, mValue: Double, linkId: Long, assetSideCode: Int, municipalityCode: Option[Int] = None, road: Option[Int] = None): (RoadAddress, RoadSide) = {
+    val roadAddress = roadAddressDao.getRoadAddress(roadAddressDao.withLinkIdAndMeasure(linkId, mValue.toLong, mValue.toLong, road)).headOption
+
+    //If there is no roadAddress in VIITE try to find it in VKM
+    if(roadAddress.isEmpty)
+      return vkmGeometryTransform.resolveAddressAndLocation(coord, heading, road)
+
+    val roadSide = roadAddress match {
+      case Some(addrSide) if (addrSide.sideCode.value == assetSideCode) => RoadSide.Right //TowardsDigitizing //
+      case Some(addrSide) if (addrSide.sideCode.value != assetSideCode) => RoadSide.Left //AgainstDigitizing //
+      case _ => RoadSide.Unknown
+    }
+
+    val address = roadAddress match {
+      case Some(addr) if (addr.track.eq(Track.Unknown)) => throw new RoadAddressException ("Invalid value for Track: %d".format( addr.track.value))
+      case Some(addr) => RoadAddress(Some(municipalityCode.toString), addr.roadNumber.toInt, addr.roadPartNumber.toInt, addr.track, (addr.startAddrMValue + (mValue - addr.startMValue)).toInt, None)
+      case None  => throw new RoadAddressException("No road address found")
+    }
+
+    (address, roadSide )
+  }
+
+  def resolveAddressAndLocation(linkId: Long, startM: Double, endM: Double, sideCode: SideCode) : Seq[ fi.liikennevirasto.digiroad2.roadaddress.oracle.RoadAddress] = {
+    val roadAddress = roadAddressDao.getByLinkIdAndMeasures(linkId, startM, endM)
+    roadAddress
+      .filter( road => compareSideCodes(sideCode, road))
+      .groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.sideCode)).map {
+      grouped =>
+        grouped._2.minBy(t => t.startMValue).copy(endMValue = grouped._2.maxBy(t => t.endMValue).endMValue)
+    }.toSeq
+  }
+
+  def compareSideCodes(sideCode: SideCode, roadAddress: fi.liikennevirasto.digiroad2.roadaddress.oracle.RoadAddress): Boolean = {
+    (sideCode == SideCode.BothDirections || sideCode == SideCode.Unknown || roadAddress.sideCode == SideCode.BothDirections || roadAddress.sideCode == SideCode.Unknown) || sideCode == roadAddress.sideCode
+  }
 }
 
-case class VKMError(content: Map[String, Any], url: String)
-case class RoadAddress(municipalityCode: Option[String], road: Int, roadPart: Int, track: Track, mValue: Int, deviation: Option[Double])
-class VKMClientException(response: String) extends RuntimeException(response)
+//TODO remove VKM when VIITE is 100% done
+class VKMGeometryTransform {
+  case class VKMError(content: Map[String, Any], url: String)
 
-/**
-  * A class to transform ETRS89-FI coordinates to road network addresses using Viitekehysmuunnin (VKM)
-  * HTTP service
-  */
-class GeometryTransform {
   protected implicit val jsonFormats: Formats = DefaultFormats
   private def VkmCoordinates = "koordinaatit"
   private def VkmRoad = "tie"
@@ -122,7 +167,7 @@ class GeometryTransform {
 
   def urlParams(paramMap: Map[String, Option[Any]]) = {
     paramMap.filter(entry => entry._2.nonEmpty).map(entry => URLEncoder.encode(entry._1, "UTF-8")
-       + "=" + URLEncoder.encode(entry._2.get.toString, "UTF-8")).mkString("&")
+      + "=" + URLEncoder.encode(entry._2.get.toString, "UTF-8")).mkString("&")
   }
 
   def urlParamsReverse(paramMap: Map[String, Any]) = {
@@ -190,11 +235,11 @@ class GeometryTransform {
                      distance: Option[Int] = None, track: Option[Track] = None, searchDistance: Option[Double] = None,
                      includePedestrian: Option[Boolean] = Option(false)) = {
     val params = Map(VkmRoad -> road, VkmRoadPart -> roadPart, VkmDistance -> distance, VkmTrackCode -> track.map(_.value),
-    "x" -> Option(coord.x), "y" -> Option(coord.y), VkmSearchRadius -> Some(searchDistance.getOrElse(DefaultToleranceMeters)),
+      "x" -> Option(coord.x), "y" -> Option(coord.y), VkmSearchRadius -> Some(searchDistance.getOrElse(DefaultToleranceMeters)),
       VkmRoadNumberInterval -> roadNumberInterval(includePedestrian, road))
     request(vkmUrl + urlParams(params)) match {
       case Left(address) => mapFields(address)
-      case Right(error) => throw new VKMClientException(error.toString)
+      case Right(error) => throw new RoadAddressException(error.toString)
     }
   }
 
@@ -208,7 +253,7 @@ class GeometryTransform {
     }
     post(vkmPostUrl, jsonParams(params.toList)) match {
       case Left(addresses) => extractRoadAddresses(addresses)
-      case Right(error) => throw new VKMClientException(error.toString)
+      case Right(error) => throw new RoadAddressException(error.toString)
     }
   }
 
@@ -216,7 +261,7 @@ class GeometryTransform {
     val params = Map(VkmRoad -> roadAddress.road, VkmRoadPart -> roadAddress.roadPart, VkmTrackCode -> roadAddress.track.value, VkmDistance -> roadAddress.mValue)
     request(vkmUrl + urlParamsReverse(params)) match {
       case Left(addressData) => mapCoordinates(addressData)
-      case Right(error) => throw new VKMClientException(error.toString)
+      case Right(error) => throw new RoadAddressException(error.toString)
     }
   }
 
@@ -250,7 +295,6 @@ class GeometryTransform {
         (addresses(1), RoadSide.Unknown)
       }
     }
-
   }
 
   private def extractRoadAddresses(data: List[Map[String, Any]]) = {
@@ -261,7 +305,7 @@ class GeometryTransform {
     val returnCode = data.getOrElse(VkmReturnCode, VkmReturnCodeOk)
     val error = data.get(VkmError)
     if (returnCode.toString.toInt == VkmReturnCodeError || error.nonEmpty)
-      throw new VKMClientException("VKM error: %s".format(data.getOrElse(VkmReturnErrorMessage, error.getOrElse(""))))
+      throw new RoadAddressException("VKM error: %s".format(data.getOrElse(VkmReturnErrorMessage, error.getOrElse(""))))
     val municipalityCode = data.get(VkmMunicipalityCode)
     val road = validateAndConvertToInt(VkmRoad, data)
     val roadPart = validateAndConvertToInt(VkmRoadPart, data)
@@ -269,7 +313,7 @@ class GeometryTransform {
     val mValue = validateAndConvertToInt(VkmDistance, data)
     val deviation = convertToDouble(data.get(VkmOffsetToGivenCoordinates))
     if (Track.apply(track).eq(Track.Unknown)) {
-      throw new VKMClientException("Invalid value for Track (%s): %d".format(VkmTrackCode, track))
+      throw new RoadAddressException("Invalid value for Track (%s): %d".format(VkmTrackCode, track))
     }
     RoadAddress(municipalityCode.map(_.toString), road, roadPart, Track.apply(track), mValue, deviation)
   }
@@ -278,7 +322,7 @@ class GeometryTransform {
     val returnCode = data.getOrElse(VkmReturnCode, VkmReturnCodeOk)
     val error = data.get(VkmError)
     if (returnCode.toString.toInt == VkmReturnCodeError || error.nonEmpty)
-      throw new VKMClientException("VKM error: %s".format(data.getOrElse(VkmReturnErrorMessage, error.getOrElse(""))))
+      throw new RoadAddressException("VKM error: %s".format(data.getOrElse(VkmReturnErrorMessage, error.getOrElse(""))))
     try {
       val roadAddresses = dig(data, Seq(VkmStartingPoint, VkmQueryRoadAddresses)).asInstanceOf[List[Map[String, Any]]]
       roadAddresses.map {
@@ -288,7 +332,7 @@ class GeometryTransform {
           Point(x,y)
       }
     } catch {
-      case ex: Exception => throw new VKMClientException("Could not convert response from VKM: %s".format(ex.getMessage))
+      case ex: Exception => throw new RoadAddressException("Could not convert response from VKM: %s".format(ex.getMessage))
     }
   }
 
@@ -302,7 +346,7 @@ class GeometryTransform {
   private def validateAndConvertToInt(fieldName: String, map: Map[String, Any]) = {
     def value = map.get(fieldName)
     if (value.isEmpty) {
-      throw new VKMClientException(
+      throw new RoadAddressException(
         "Missing mandatory field in response: %s".format(
           fieldName))
     }
@@ -310,10 +354,9 @@ class GeometryTransform {
       value.get.toString.toInt
     } catch {
       case e: NumberFormatException =>
-        throw new VKMClientException("Invalid value in response: %s, Int expected, got '%s'".format(fieldName, value.get))
+        throw new RoadAddressException("Invalid value in response: %s, Int expected, got '%s'".format(fieldName, value.get))
     }
   }
-
 
   private def convertToDouble(value: Option[Any]): Option[Double] = {
     value.map {
@@ -322,9 +365,9 @@ class GeometryTransform {
           x.toString.toDouble
         } catch {
           case e: NumberFormatException =>
-            throw new VKMClientException("Invalid value in response: Double expected, got '%s'".format(x))
+            throw new RoadAddressException("Invalid value in response: Double expected, got '%s'".format(x))
         }
-      case _ => throw new VKMClientException("Invalid value in response: Double expected, got '%s'".format(value.get))
+      case _ => throw new RoadAddressException("Invalid value in response: Double expected, got '%s'".format(value.get))
     }
   }
 }

@@ -1,15 +1,15 @@
 window.ModalConfirm = function(insertedText) {
 
     var confirmDiv =
-        '<div class="modal-overlay confirm-modal">' +
-            '<div class="modal-dialog">' +
-                '<div class="content">' + insertedText +
-                '</div>' +
-                '<div class="actions">' +
-                    '<button class="btn btn-secondary close">Sulje</button>' +
-                '</div>' +
-            '</div>' +
-        '</div>';
+      '<div class="modal-overlay confirm-modal">' +
+      '<div class="modal-dialog">' +
+      '<div class="content">' + insertedText +
+      '</div>' +
+      '<div class="actions">' +
+      '<button class="btn btn-secondary close">Sulje</button>' +
+      '</div>' +
+      '</div>' +
+      '</div>';
 
     var renderConfirmDialog = function() {
         jQuery('.container').append(confirmDiv);
@@ -30,6 +30,7 @@ window.ModalConfirm = function(insertedText) {
 
     var purge = function() {
         jQuery('.confirm-modal').remove();
+        applicationModel.removeSpinner();
     };
     show();
 };

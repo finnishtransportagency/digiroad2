@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Saturday, Sunday}
 import fi.liikennevirasto.digiroad2.linearasset._
+import fi.liikennevirasto.digiroad2.masstransitstop.MassTransitStopOperations
 import fi.liikennevirasto.digiroad2.pointasset.oracle._
 import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, Formats}
@@ -57,7 +58,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case e: Exception => 99
       }
     }
-    def extractBearing(massTransitStop: PersistedMassTransitStop): (String, Option[Int]) = { "suuntima" -> massTransitStop.bearing }
+    def extractBearing(massTransitStop: PersistedMassTransitStop): (String, Option[Int]) = { "suuntima" -> GeometryUtils.calculateActualBearing(massTransitStop.validityDirection.getOrElse(0), massTransitStop.bearing) }
     def extractExternalId(massTransitStop: PersistedMassTransitStop): (String, Long) = { "valtakunnallinen_id" -> massTransitStop.nationalId }
     def extractFloating(massTransitStop: PersistedMassTransitStop): (String, Boolean) = { "kelluvuus" -> massTransitStop.floating }
     def extractLinkId(massTransitStop: PersistedMassTransitStop): (String, Option[Long]) = { "link_id" -> Some(massTransitStop.linkId) }
@@ -72,6 +73,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
           "properties" -> Map(
             extractModifier(massTransitStop),
             latestModificationTime(massTransitStop.created.modificationTime, massTransitStop.modified.modificationTime),
+            lastModifiedBy(massTransitStop.created.modifier, massTransitStop.modified.modifier),
             extractBearing(massTransitStop),
             extractExternalId(massTransitStop),
             extractFloating(massTransitStop),
@@ -125,8 +127,24 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "startMeasure" -> speedLimit.startMeasure,
         "endMeasure" -> speedLimit.endMeasure,
         "linkId" -> speedLimit.linkId,
-        latestModificationTime(speedLimit.createdDateTime, speedLimit.modifiedDateTime)
-      )
+        latestModificationTime(speedLimit.createdDateTime, speedLimit.modifiedDateTime),
+        lastModifiedBy(speedLimit.createdBy, speedLimit.modifiedBy))
+    }
+  }
+
+  def speedLimitsChangesToApi(since: DateTime, speedLimits: Seq[ChangedSpeedLimit]) = {
+    speedLimits.map { case ChangedSpeedLimit(speedLimit, link) =>
+      Map("id" -> speedLimit.id,
+        "sideCode" -> speedLimit.sideCode.value,
+        "points" -> speedLimit.geometry,
+        geometryWKTForLinearAssets(speedLimit.geometry),
+        "value" -> speedLimit.value.fold(0)(_.value),
+        "startMeasure" -> speedLimit.startMeasure,
+        "endMeasure" -> speedLimit.endMeasure,
+        "linkId" -> speedLimit.linkId,
+        latestModificationTime(speedLimit.createdDateTime, speedLimit.modifiedDateTime),
+        lastModifiedBy(speedLimit.createdBy, speedLimit.modifiedBy),
+        "changeType" -> extractChangeType(since, speedLimit.expired, speedLimit.createdDateTime))
     }
   }
 
@@ -139,7 +157,16 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "trafficDirection" -> roadLink.trafficDirection.value,
         "linkType" -> roadLink.linkType.value,
         "modifiedAt" -> roadLink.modifiedAt,
-        "linkSource" -> roadLink.linkSource.value) ++ roadLink.attributes.filterNot(_._1 == "MTKID").filterNot(_._1 == "ROADNUMBER").filterNot(_._1 == "ROADPARTNUMBER")
+        lastModifiedBy(None, roadLink.modifiedBy),
+        "startNode" -> roadLink.attributes.get("STARTNODE"),
+        "endNode" -> roadLink.attributes.get("ENDNODE"),
+        "linkSource" -> roadLink.linkSource.value) ++ roadLink.attributes.filterNot(_._1 == "MTKID")
+                                                                         .filterNot(_._1 == "ROADNUMBER")
+                                                                         .filterNot(_._1 == "ROADPARTNUMBER")
+                                                                         .filterNot(_._1 == "STARTNODE")
+                                                                         .filterNot(_._1 == "ENDNODE")
+                                                                         .filterNot(_._1 == "MTKCLASS" && roadLink.linkSource.value == LinkGeomSource.ComplimentaryLinkInterface.value)
+
     }
   }
 
@@ -192,7 +219,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "linkId" -> asset.linkId,
         "startMeasure" -> asset.startMeasure,
         "endMeasure" -> asset.endMeasure,
-        latestModificationTime(asset.createdDateTime, asset.modifiedDateTime))
+        latestModificationTime(asset.createdDateTime, asset.modifiedDateTime),
+        lastModifiedBy(asset.createdBy, asset.modifiedBy))
     }
   }
 
@@ -200,10 +228,11 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     crossings.filterNot(_.floating).map { pedestrianCrossing =>
       Map("id" -> pedestrianCrossing.id,
         "point" -> Point(pedestrianCrossing.lon, pedestrianCrossing.lat),
-        geometryWKTForPointAssets(pedestrianCrossing.lon, pedestrianCrossing.lat),
+        geometryWKTForPoints(pedestrianCrossing.lon, pedestrianCrossing.lat),
         "linkId" -> pedestrianCrossing.linkId,
         "m_value" -> pedestrianCrossing.mValue,
-        latestModificationTime(pedestrianCrossing.createdAt, pedestrianCrossing.modifiedAt))
+        latestModificationTime(pedestrianCrossing.createdAt, pedestrianCrossing.modifiedAt),
+        lastModifiedBy(pedestrianCrossing.createdBy, pedestrianCrossing.modifiedBy))
     }
   }
 
@@ -211,10 +240,11 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     trafficLights.filterNot(_.floating).map { trafficLight =>
       Map("id" -> trafficLight.id,
         "point" -> Point(trafficLight.lon, trafficLight.lat),
-        geometryWKTForPointAssets(trafficLight.lon, trafficLight.lat),
+        geometryWKTForPoints(trafficLight.lon, trafficLight.lat),
         "linkId" -> trafficLight.linkId,
         "m_value" -> trafficLight.mValue,
-        latestModificationTime(trafficLight.createdAt, trafficLight.modifiedAt))
+        latestModificationTime(trafficLight.createdAt, trafficLight.modifiedAt),
+        lastModifiedBy(trafficLight.createdBy, trafficLight.modifiedBy))
     }
   }
 
@@ -222,13 +252,14 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     directionalTrafficSign.filterNot(_.floating).map { directionalTrafficSign =>
       Map("id" -> directionalTrafficSign.id,
         "point" -> Point(directionalTrafficSign.lon, directionalTrafficSign.lat),
-        geometryWKTForPointAssets(directionalTrafficSign.lon, directionalTrafficSign.lat),
+        geometryWKTForPoints(directionalTrafficSign.lon, directionalTrafficSign.lat),
         "linkId" -> directionalTrafficSign.linkId,
         "m_value" -> directionalTrafficSign.mValue,
-        "bearing" -> directionalTrafficSign.bearing,
+        "bearing" -> GeometryUtils.calculateActualBearing( directionalTrafficSign.validityDirection,directionalTrafficSign.bearing),
         "side_code" -> directionalTrafficSign.validityDirection,
         "text" -> directionalTrafficSign.text.map(_.split("\n").toSeq),
-        latestModificationTime(directionalTrafficSign.createdAt, directionalTrafficSign.modifiedAt))
+        latestModificationTime(directionalTrafficSign.createdAt, directionalTrafficSign.modifiedAt),
+        lastModifiedBy(directionalTrafficSign.createdBy, directionalTrafficSign.modifiedBy))
     }
   }
 
@@ -238,6 +269,32 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         .orElse(createdDateTime)
         .map(DateTimePropertyFormat.print)
         .getOrElse("")
+  }
+
+  def lastModifiedBy(createdBy: Option[String], modifiedBy: Option[String]): (String, Boolean) = {
+
+    val autoGeneratedValues = List("dr1conversion", "dr1_conversion", nonFixedUsers(modifiedBy), nonFixedUsers(createdBy), "automatic_correction", "excel_data_migration", "automatic_generation", "vvh_generated", "vvh_modified")
+
+    modifiedBy match {
+      case None => "generatedValue" -> false
+      case Some(value) if (value != null) =>
+        return "generatedValue" -> autoGeneratedValues.exists(agv => agv.equals(value))
+    }
+    createdBy match {
+      case None => "generatedValue" -> false
+      case Some(value) =>
+        "generatedValue" -> autoGeneratedValues.exists(agv => agv.equals(value))
+    }
+  }
+
+  def nonFixedUsers(userOption: Option[String])={
+    val nonFixedValues = List("split_speedlimit_", "batch_process_")
+    userOption match {
+      case Some(user) if(nonFixedValues.exists(nfv => user.startsWith(nfv))) =>
+        user
+      case _ =>
+        ""
+    }
   }
 
   def geometryWKTForLinearAssets(geometry: Seq[Point]): (String, String) =
@@ -256,7 +313,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
       "geometryWKT" -> ""
   }
 
-  def geometryWKTForPointAssets(lon: Double, lat: Double): (String, String) = {
+  def geometryWKTForPoints(lon: Double, lat: Double): (String, String) = {
     val geometryWKT = "POINT (" + lon + " " + lat + ")"
     "geometryWKT" -> geometryWKT
   }
@@ -265,12 +322,13 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     crossings.filterNot(_.floating).map { railwayCrossing =>
       Map("id" -> railwayCrossing.id,
         "point" -> Point(railwayCrossing.lon, railwayCrossing.lat),
-        geometryWKTForPointAssets(railwayCrossing.lon, railwayCrossing.lat),
+        geometryWKTForPoints(railwayCrossing.lon, railwayCrossing.lat),
         "linkId" -> railwayCrossing.linkId,
         "m_value" -> railwayCrossing.mValue,
         "safetyEquipment" -> railwayCrossing.safetyEquipment,
         "name" -> railwayCrossing.name,
-        latestModificationTime(railwayCrossing.createdAt, railwayCrossing.modifiedAt))
+        latestModificationTime(railwayCrossing.createdAt, railwayCrossing.modifiedAt),
+        lastModifiedBy(railwayCrossing.createdBy, railwayCrossing.modifiedBy))
     }
   }
 
@@ -278,11 +336,12 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     obstacles.filterNot(_.floating).map { obstacle =>
       Map("id" -> obstacle.id,
         "point" -> Point(obstacle.lon, obstacle.lat),
-        geometryWKTForPointAssets(obstacle.lon, obstacle.lat),
+        geometryWKTForPoints(obstacle.lon, obstacle.lat),
         "linkId" -> obstacle.linkId,
         "m_value" -> obstacle.mValue,
         "obstacle_type" -> obstacle.obstacleType,
-        latestModificationTime(obstacle.createdAt, obstacle.modifiedAt))
+        latestModificationTime(obstacle.createdAt, obstacle.modifiedAt),
+        lastModifiedBy(obstacle.createdBy, obstacle.modifiedBy))
     }
   }
 
@@ -297,7 +356,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "validityPeriods" -> manoeuvre.validityPeriods.map(toTimeDomain),
         "validityPeriodMinutes" -> manoeuvre.validityPeriods.map(toTimeDomainWithMinutes),
         "additionalInfo" -> manoeuvre.additionalInfo,
-        "modifiedDateTime" -> manoeuvre.modifiedDateTime)
+        "modifiedDateTime" -> manoeuvre.modifiedDateTime,
+        lastModifiedBy(None, Some(manoeuvre.modifiedBy)))
     }
   }
 
@@ -305,10 +365,46 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     servicePoints.map { asset =>
       Map("id" -> asset.id,
         "point" -> Point(asset.lon, asset.lat),
-        geometryWKTForPointAssets(asset.lon, asset.lat),
+        geometryWKTForPoints(asset.lon, asset.lat),
         "services" -> asset.services,
-        latestModificationTime(asset.createdAt, asset.modifiedAt))
+        latestModificationTime(asset.createdAt, asset.modifiedAt),
+        lastModifiedBy(asset.createdBy, asset.modifiedBy))
     }
+  }
+
+  def roadNodesToApi(roadNodes: Seq[VVHRoadNodes]) = {
+    roadNodes.map { roadNode =>
+      Map("nodeId" -> roadNode.nodeId,
+          "nodeType" -> roadNode.formOfNode.value,
+          "point" -> Map("x" -> roadNode.geometry.x, "y" -> roadNode.geometry.y),
+          geometryWKTForPoints(roadNode.geometry.x, roadNode.geometry.y)
+      )
+    }
+  }
+
+  private def extractChangeType(since: DateTime, expired: Boolean, createdDateTime: Option[DateTime]) = {
+    if (expired) {
+      "Remove"
+    } else if (createdDateTime.exists(_.isAfter(since))) {
+      "Add"
+    } else {
+      "Modify"
+    }
+  }
+
+  get("/changes/:assetType") {
+    contentType = formats("json")
+     val since = DateTime.parse(params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter"))))
+     val until = params.get("until") match {
+       case Some(dateValue) => DateTime.parse(dateValue)
+       case _ => DateTime.now()
+     }
+
+     val assetType = params("assetType")
+     assetType match {
+       case "speed_limits" => speedLimitsChangesToApi(since, speedLimitService.getChanged(since, until))
+       case _ => BadRequest("Invalid asset type")
+     }
   }
 
   get("/:assetType") {
@@ -347,6 +443,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case "road_link_properties" => roadLinkPropertiesToApi(roadLinkService.withRoadAddress(roadLinkService.getRoadLinksAndComplementaryLinksFromVVHByMunicipality(municipalityNumber)))
         case "manoeuvres" => manouvresToApi(manoeuvreService.getByMunicipality(municipalityNumber))
         case "service_points" => servicePointsToApi(servicePointService.getByMunicipality(municipalityNumber))
+        case "road_nodes" => roadNodesToApi(roadLinkService.getRoadNodesFromVVHByMunicipality(municipalityNumber))
         case _ => BadRequest("Invalid asset type")
       }
     } getOrElse {

@@ -27,45 +27,44 @@ class PolygonTools {
 
   /**
     *
-    * @param geometry jts Geometry
+    * @param geometries jts Geometries
     * @param boundingBox  BoundingRectangle
     * @return returns Sequence of JTS Polygons that are with in bounding box
     */
-  def geometryInterceptorToBoundingBox(geometry: Geometry, boundingBox: BoundingRectangle): Seq[Polygon] = {
+  def geometryInterceptorToBoundingBox(geometries: Seq[Geometry], boundingBox: BoundingRectangle): Seq[Polygon] = {
     val leftBottomP = boundingBox.leftBottom
     val rightTopP = boundingBox.rightTop
     val leftTopP = Point(leftBottomP.x, rightTopP.y)
     val rightBottom = Point(rightTopP.x, leftBottomP.y)
     val BoundingBoxAsPoly = geomBuilder.polygon(leftTopP.x, leftTopP.y, rightTopP.x, rightTopP.y, rightBottom.x, rightBottom.y, leftBottomP.x, leftBottomP.y)
-    val intersectionGeometry = geometry.intersection(BoundingBoxAsPoly)
-    if (intersectionGeometry.getGeometryType.toLowerCase.startsWith("polygon")) {
-      Seq(intersectionGeometry.asInstanceOf[Polygon])
-    } else if (intersectionGeometry.isEmpty) {
-      Seq.empty[Polygon]
-    } else if (intersectionGeometry.getGeometryType.toLowerCase.contains("multipolygon")) {
-      multiPolygonToPolygonSeq(intersectionGeometry.asInstanceOf[MultiPolygon])
-    } else
-      Seq.empty[Polygon]
-  }
-  /**
-    *
-    * @param geometrySeq sequence of polygons to be converted to strings
-    * @return sequence of strings compatible with VVH polygon query
-    */
-  def stringifyGeometryForVVHClient(geometrySeq: Seq[Polygon]): Seq[String] = {
-    var stringPolygonList = ListBuffer.empty[String]
-    for (geometry <- geometrySeq) {
-      var polygonString: String = "{rings:[["
-      if (geometry.getCoordinates.length > 0) {
-        for (point <- geometry.getCoordinates.dropRight(1)) {
-          // drop removes duplicates
-          polygonString += "[" + point.x + "," + point.y + "],"
-        }
-        polygonString = polygonString.dropRight(1) + "]]}"
-        stringPolygonList += polygonString
-      }
+
+    geometries.flatMap{
+      geometry =>
+      val intersectionGeometry = geometry.intersection(BoundingBoxAsPoly)
+      if (intersectionGeometry.isInstanceOf[Polygon]) {
+        polygonToPolygonSeq(intersectionGeometry.asInstanceOf[Polygon])
+      } else if (intersectionGeometry.isInstanceOf[MultiPolygon]) {
+        multiPolygonToPolygonSeq(intersectionGeometry.asInstanceOf[MultiPolygon])
+      } else
+        Seq.empty[Polygon]
     }
-    stringPolygonList
+  }
+
+  def getPolygonByArea(areaId: Int): Seq[Polygon] = {
+    val geometry = getAreaGeometry(areaId)
+
+    val polygon = geometry match {
+      case _ if geometry.getGeometryType.toLowerCase.startsWith("polygon") =>
+        Seq(geometry.asInstanceOf[Polygon])
+      case _ if geometry.getGeometryType.toLowerCase.startsWith("multipolygon") =>
+        multiPolygonToPolygonSeq(geometry.asInstanceOf[MultiPolygon])
+      case _ => Seq.empty[Polygon]
+    }
+    polygon
+  }
+
+  def getAreasGeometries(areadIds: Set[Int]): Seq[Geometry] ={
+    areadIds.map(getAreaGeometry).toSeq
   }
 
   def getAreaGeometry(areaId: Int): Geometry = {
@@ -76,6 +75,7 @@ class PolygonTools {
 
   private def multiPolygonToPolygonSeq (multiPoly: MultiPolygon): Seq[Polygon] ={
     var geomCounter=multiPoly.getNumGeometries
+
     var  listPolygons= ListBuffer.empty[Polygon]
     while (geomCounter>0)
     {
@@ -86,5 +86,16 @@ class PolygonTools {
       geomCounter-=1
     }
     listPolygons
+  }
+
+  private def polygonToPolygonSeq(polygon: Polygon) : Seq[Polygon] = {
+    def isPolygonEmpty(polygon: Polygon) = {
+      polygon.getNumPoints() > 0
+    }
+
+    if(isPolygonEmpty(polygon))
+      Seq(polygon)
+    else
+      Seq.empty[Polygon]
   }
 }

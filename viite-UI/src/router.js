@@ -3,11 +3,12 @@
     var Router = Backbone.Router.extend({
       initialize: function () {
         // Support legacy format for opening mass transit stop via ...#300289
-        this.route(/^(\d+)$/, function (nationalId) {
-          this.massTransitStop(nationalId);
+
+        this.route(/^(\d+)$/, function (layer) {
+          applicationModel.selectLayer(layer);
         });
 
-        this.route(/^([A-Za-z]+)$/, function (layer) {
+        this.route(/^([A-Za-z]+)\/?$/, function (layer) {
           applicationModel.selectLayer(layer);
         });
 
@@ -18,7 +19,8 @@
 
       routes: {
         'linkProperty/:linkId': 'linkProperty',
-        'linkProperty/mml/:mmlId': 'linkPropertyByMml'
+        'linkProperty/mml/:mmlId': 'linkPropertyByMml',
+        'roadAddressProject/:projectId' : 'roadAddressProject'
       },
 
       linkProperty: function (linkId) {
@@ -28,7 +30,8 @@
             models.selectedLinkProperty.open(response.linkId, response.id, true);
             eventbus.trigger('linkProperties:reselect');
           });
-          map.setCenter(new OpenLayers.LonLat(response.middlePoint.x, response.middlePoint.y), 12);
+          map.getView().setCenter([response.middlePoint.x, response.middlePoint.y]);
+          map.getView().setZoom(12);
         });
       },
 
@@ -38,8 +41,14 @@
           eventbus.once('linkProperties:available', function () {
             models.selectedLinkProperty.open(response.id);
           });
-          map.setCenter(new OpenLayers.LonLat(response.middlePoint.x, response.middlePoint.y), 12);
+          map.getView().setCenter([response.middlePoint.x, response.middlePoint.y]);
+          map.getView().setZoom(12);
         });
+      },
+
+      roadAddressProject: function (projectId) {
+        eventbus.trigger('roadAddressProject:openProject', {id: projectId});
+        applicationModel.selectLayer('roadAddressProject');
       }
     });
 
@@ -54,6 +63,10 @@
       router.navigate('linkProperty');
     });
 
+    eventbus.on('roadAddressProject:selected', function (id, layerName, selectedLayer) {
+      router.navigate('roadAddressProject/' + id);
+    });
+
     eventbus.on('linkProperties:selected', function (linkProperty) {
       if(!_.isEmpty(models.selectedLinkProperty.get())){
         if(_.isArray(linkProperty)){
@@ -65,14 +78,20 @@
     });
 
     eventbus.on('linkProperties:selectedProject', function (linkId) {
+      if (typeof linkId !== 'undefined') {
         router.navigate('linkProperty/' + linkId);
-      applicationModel.selectLayer('linkProperty');
-      backend.getRoadLinkByLinkId(linkId, function (response) {
-        map.setCenter(new OpenLayers.LonLat(response.middlePoint.x, response.middlePoint.y), 10);
-      });
+        applicationModel.selectLayer('linkProperty');
+        backend.getRoadLinkByLinkId(linkId, function (response) {
+          map.getView().setCenter([response.middlePoint.x, response.middlePoint.y]);
+          map.getView().setZoom(8);
+        });
+      }
     });
 
     eventbus.on('layer:selected', function (layer) {
+      if(layer.indexOf('/') === -1){
+        layer = layer.concat('/');
+      }
       router.navigate(layer);
     });
   };

@@ -47,7 +47,7 @@
 <script type="text/javascript" src="bower_components/bacon/dist/Bacon.js"></script>
 <script type="text/javascript" src="bower_components/bacon.jquery/dist/bacon.jquery.js"></script>
 <!-- @if NODE_ENV == 'DEVELOPMENT' -->
-<script type="text/javascript" src="components/OpenLayers.js"></script>
+<script type="text/javascript" src="components/ol3.js"></script>
 <script type="text/javascript" src="src/utils/eventbus.js"></script>
 <script type="text/javascript" src="src/utils/geometry-calculations.js"></script>
 <script type="text/javascript" src="src/utils/LocationInputParser.js"></script>
@@ -59,8 +59,8 @@
 <script type="text/javascript" src="src/utils/validity-directions.js"></script>
 <script type="text/javascript" src="src/view/TileMapCollection.js"></script>
 <script type="text/javascript" src="src/view/Layer.js"></script>
-<script type="text/javascript" src="src/view/RoadLayer.js"></script>
 <script type="text/javascript" src="src/view/RoadLayerSelectionStyle.js"></script>
+<script type="text/javascript" src="src/view/RoadLayer.js"></script>
 <script type="text/javascript" src="src/view/MapView.js"></script>
 <script type="text/javascript" src="src/view/MapOverlay.js"></script>
 <script type="text/javascript" src="src/view/CoordinatesDisplay.js"></script>
@@ -69,17 +69,20 @@
 <script type="text/javascript" src="src/view/InstructionsPopup.js"></script>
 <script type="text/javascript" src="src/view/EditModeDisclaimer.js"></script>
 <script type="text/javascript" src="src/view/ZoomBox.js"></script>
+<script type="text/javascript" src="src/view/MassTransitStopLayerStyles.js"></script>
 <script type="text/javascript" src="src/view/MassTransitStopLayer.js"></script>
-<script type="text/javascript" src="src/view/DoubleClickSelectControl.js"></script>
-<script type="text/javascript" src="src/view/BoxSelectControl.js"></script>
+<script type="text/javascript" src="src/view/SelectToolControl.js"></script>
 <script type="text/javascript" src="src/view/LinearAssetMassUpdate.js"></script>
 <script type="text/javascript" src="src/view/LinearAssetMassUpdateDialog.js"></script>
 <script type="text/javascript" src="src/utils/GeometryUtils.js"></script>
 <script type="text/javascript" src="src/utils/OpenLayersRule.js"></script>
+<script type="text/javascript" src="src/utils/StyleRule.js"></script>
 <script type="text/javascript" src="src/view/SpeedLimitLayer.js"></script>
 <script type="text/javascript" src="src/view/SpeedLimitMassUpdateDialog.js"></script>
 <script type="text/javascript" src="src/view/ManoeuvreStyle.js"></script>
 <script type="text/javascript" src="src/view/ManoeuvreLayer.js"></script>
+<script type="text/javascript" src="src/view/AssetLabel.js"></script>
+<script type="text/javascript" src="src/view/LinearAssetLabel.js"></script>
 <script type="text/javascript" src="src/view/LinearAssetLayer.js"></script>
 <script type="text/javascript" src="src/view/PointAssetLayer.js"></script>
 <script type="text/javascript" src="src/view/LinkPropertyLayer.js"></script>
@@ -138,7 +141,7 @@
 <script type="text/javascript" src="src/main.js"></script>
 <!-- @endif -->
 <!-- @if NODE_ENV == 'PRODUCTION' -->
-<script type="text/javascript" src="components/OpenLayers.js"></script>
+<script type="text/javascript" src="components/ol3.js"></script>
 <script type="text/javascript" src="js/digiroad2.min.js"></script>
 <!-- @endif -->
 </body>

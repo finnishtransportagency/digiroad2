@@ -1,87 +1,124 @@
 var RoadStyles = function() {
-  var styleMap = new OpenLayers.StyleMap({
-    "select": new OpenLayers.Style({
-      strokeWidth: 6,
-      strokeOpacity: 1,
-      strokeColor: "#5eaedf"
-    }),
-    "default": new OpenLayers.Style({
-      strokeWidth: 5,
-      strokeColor: "#a4a4a2",
-      strokeOpacity: 0.7
-    })
-  });
 
-  this.roadStyles = styleMap;
-  styleMap.styles.default.rules.push(new OpenLayers.Rule({
-    elseFilter: true,
-    symbolizer: styleMap.styles.default.defaultStyle
-  }));
+  var administrativeClassStyleRule = [
+    new StyleRule().where('administrativeClass').is('Private').use({ stroke: {color: '#0011bb' }}),
+    new StyleRule().where('administrativeClass').is('Municipality').use({ stroke: {color: '#11bb00' }}),
+    new StyleRule().where('administrativeClass').is('State').use({ stroke: {color: '#ff0000' }}),
+    new StyleRule().where('administrativeClass').is('Unknown').use({ stroke: {color: '#888' }})
+  ];
+
+  return {
+    provider: function () {
+        var defaultProvider = new StyleRuleProvider({ stroke: {width:5 , opacity: 0.7, color: "#a4a4a2" }});
+        var selectionProvider = new StyleRuleProvider({ stroke: {width: 6, opacity: 1, color: "#5eaedf" }});
+
+        if (applicationModel.isRoadTypeShown()){
+            defaultProvider.addRules(administrativeClassStyleRule);
+            return {
+              default: defaultProvider,
+              selection: selectionProvider
+            };
+        }
+        return {
+            default: defaultProvider,
+            selection: selectionProvider
+        };
+    }
+  };
 };
 
 (function(root) {
-  root.RoadLayer = function(map, roadCollection) {
+  root.RoadLayer = function(map, roadCollection,styler) {
     var vectorLayer;
-    var selectControl;
-    var layerStyleMaps = {};
-    var layerStyleMapProviders = {};
-    var layerStyleMapRules = {};
+    var roadTypeWithSpecifiedStyle = false;
+    var roadStyle = new RoadStyles();
     var layerMinContentZoomLevels = {};
+    var layerStyleProviders = {};
     var uiState = { zoomLevel: 9 };
+    var enabled = true;
 
-    function stylesUndefined() {
-      return _.isUndefined(layerStyleMaps[applicationModel.getSelectedLayer()]) &&
-        _.isUndefined(layerStyleMapProviders[applicationModel.getSelectedLayer()]);
+    var selectControl = new ol.interaction.Select({
+        layers : [vectorLayer],
+        condition: function(events){
+          return enabled &&ol.events.condition.singleClick(events);
+        },
+        style : function(feature) {
+           return roadStyle.provider().selection.getStyle(feature, {zoomLevel: uiState.zoomLevel});
+        }
+    });
+    map.addInteraction(selectControl);
+
+    var vectorSource = new ol.source.Vector({
+      strategy: ol.loadingstrategy.bbox
+    });
+
+    var setZoomLevel = function(zoom){
+      uiState.zoomLevel = zoom;
+    };
+
+    var getZoomLevel = function(){
+      return uiState.zoomLevel;
+    };
+
+    var clear = function() {
+      vectorSource.clear();
+    };
+
+    var createRoadLinkFeature = function(roadLink){
+      var points = _.map(roadLink.points, function(point) {
+        return [point.x, point.y];
+      });
+      return new ol.Feature(_.merge({}, roadLink, { geometry: new ol.geom.LineString(points)}));
+    };
+
+    var drawRoadLinks = function(roadLinks, zoom) {
+      setZoomLevel(zoom);
+      eventbus.trigger('roadLinks:beforeDraw');
+      vectorSource.clear();
+      var features = _.map(roadLinks, function(roadLink) {
+        return createRoadLinkFeature(roadLink);
+      });
+      vectorSource.addFeatures(features);
+      eventbus.trigger('roadLinks:afterDraw', roadLinks);
+    };
+
+    var drawRoadLink = function(roadLink){
+      var feature = createRoadLinkFeature(roadLink);
+      vectorSource.addFeatures(feature);
+    };
+
+    var setLayerSpecificStyleProvider = function(layer, provider) {
+      layerStyleProviders[layer] = provider;
+    };
+
+    var setLayerSpecificMinContentZoomLevel = function(layer, zoomLevel) {
+      layerMinContentZoomLevels[layer] = zoomLevel;
+    };
+
+    function getStyleProvider(){
+      if(stylesUndefined() || roadTypeWithSpecifiedStyle)
+        return roadStyle.provider().default;
+
+      var currentLayerProvider = layerStyleProviders[applicationModel.getSelectedLayer()]();
+
+      if(currentLayerProvider.default)
+        return currentLayerProvider.default;
+
+      return currentLayerProvider;
     }
 
-    var enableColorsOnRoadLayer = function() {
-      if (stylesUndefined()) {
-        var administrativeClassStyleLookup = {
-          Private: { strokeColor: '#0011bb' },
-          Municipality: { strokeColor: '#11bb00' },
-          State: { strokeColor: '#ff0000' },
-          Unknown: { strokeColor: '#888' }
-        };
-        vectorLayer.styleMap.addUniqueValueRules('default', 'administrativeClass', administrativeClassStyleLookup);
-      }
-    };
+    function vectorLayerStyle(feature) {
+      return getStyleProvider().getStyle(feature, {zoomLevel: uiState.zoomLevel});
+    }
 
-    var disableColorsOnRoadLayer = function() {
-      if (stylesUndefined()) {
-        vectorLayer.styleMap.styles.default.rules = [];
-      }
-    };
+    function toggleRoadTypeWithSpecifiedStyle(){
+      roadTypeWithSpecifiedStyle = !roadTypeWithSpecifiedStyle;
+      vectorSource.changed();
+    }
 
-    var changeRoadsWidthByZoomLevel = function() {
-      if (stylesUndefined()) {
-        var widthBase = 2 + (map.getZoom() - minimumContentZoomLevel());
-        var roadWidth = widthBase * widthBase;
-        if (applicationModel.isRoadTypeShown()) {
-          vectorLayer.styleMap.styles.default.defaultStyle.strokeWidth = roadWidth;
-          vectorLayer.styleMap.styles.select.defaultStyle.strokeWidth = roadWidth;
-        } else {
-          vectorLayer.styleMap.styles.default.defaultStyle.strokeWidth = 5;
-          vectorLayer.styleMap.styles.select.defaultStyle.strokeWidth = 7;
-        }
-      }
-    };
-
-    var usingLayerSpecificStyleProvider = function(action) {
-      if (!_.isUndefined(layerStyleMapProviders[applicationModel.getSelectedLayer()])) {
-        vectorLayer.styleMap = layerStyleMapProviders[applicationModel.getSelectedLayer()]();
-      }
-      action();
-    };
-
-    var toggleRoadType = function() {
-      if (applicationModel.isRoadTypeShown()) {
-        enableColorsOnRoadLayer();
-      } else {
-        disableColorsOnRoadLayer();
-      }
-      changeRoadsWidthByZoomLevel();
-      usingLayerSpecificStyleProvider(function() { vectorLayer.redraw(); });
-    };
+    function stylesUndefined() {
+      return _.isUndefined(layerStyleProviders[applicationModel.getSelectedLayer()]);
+    }
 
     var minimumContentZoomLevel = function() {
       if (!_.isUndefined(layerMinContentZoomLevels[applicationModel.getSelectedLayer()])) {
@@ -92,142 +129,73 @@ var RoadStyles = function() {
 
     var handleRoadsVisibility = function() {
       if (_.isObject(vectorLayer)) {
-        vectorLayer.setVisibility(map.getZoom() >= minimumContentZoomLevel());
+        vectorLayer.setVisible(map.getView().getZoom() >= minimumContentZoomLevel());
       }
     };
 
     var mapMovedHandler = function(mapState) {
-      if (mapState.zoom >= minimumContentZoomLevel()) {
-        changeRoadsWidthByZoomLevel();
-      } else {
-        vectorLayer.removeAllFeatures();
+      if (mapState.zoom < minimumContentZoomLevel()) {
+        vectorSource.clear();
         roadCollection.reset();
       }
       handleRoadsVisibility();
     };
 
-    var drawRoadLinks = function(roadLinks, zoom) {
-      uiState.zoomLevel = zoom;
-      eventbus.trigger('roadLinks:beforeDraw');
-      vectorLayer.removeAllFeatures();
-      var features = _.map(roadLinks, function(roadLink) {
-        var points = _.map(roadLink.points, function(point) {
-          return new OpenLayers.Geometry.Point(point.x, point.y);
-        });
-        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), roadLink);
-      });
-      usingLayerSpecificStyleProvider(function() {
-        vectorLayer.addFeatures(features);
-      });
-      eventbus.trigger('roadLinks:afterDraw', roadLinks);
-    };
+    vectorLayer = new ol.layer.Vector({
+      source: vectorSource,
+      style: vectorLayerStyle
+    });
 
-    var drawRoadLink = function(roadLink) {
-      var points = _.map(roadLink.points, function(point) {
-        return new OpenLayers.Geometry.Point(point.x, point.y);
-      });
-      var feature = new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), roadLink);
-      usingLayerSpecificStyleProvider(function() {
-        vectorLayer.addFeatures([feature]);
-      });
-    };
+    vectorLayer.set('name', 'road');
+    vectorLayer.setVisible(true);
 
-    var setLayerSpecificStyleMap = function(layer, styleMap) {
-      layerStyleMaps[layer] = styleMap;
-      if (applicationModel.getSelectedLayer() === layer) {
-        activateLayerStyleMap(layer);
-      }
-    };
-
-    var addUIStateDependentLookupToStyleMap = function(styleMap, renderingIntent, uiAttribute, lookup) {
-      styleMap.addUniqueValueRules(renderingIntent, uiAttribute, lookup, uiState);
-    };
-
-    var createZoomLevelFilter = function(zoomLevel) {
-      return new OpenLayers.Filter.Function({ evaluate: function() { return uiState.zoomLevel === zoomLevel; } });
-    };
-
-    var activateLayerStyleMap = function(layer) {
-      vectorLayer.styleMap = layerStyleMaps[layer] || new RoadStyles().roadStyles;
-    };
-
-    var setLayerSpecificStyleMapProvider = function(layer, provider) {
-      layerStyleMapProviders[layer] = provider;
-    };
-
-    var setLayerSpecificMinContentZoomLevel = function(layer, zoomLevel) {
-      layerMinContentZoomLevels[layer] = zoomLevel;
-    };
-
-    var redraw = function() {
-      usingLayerSpecificStyleProvider(function() {
-        vectorLayer.redraw();
-      });
-    };
-
-    var clear = function() {
-      vectorLayer.removeAllFeatures();
-    };
+    map.addLayer(vectorLayer);
 
     var selectRoadLink = function(roadLink) {
-      var feature = _.find(vectorLayer.features, function(feature) {
-        if (roadLink.linkId) return feature.attributes.linkId === roadLink.linkId;
-        else return feature.attributes.roadLinkId === roadLink.roadLinkId;
+      var feature = _.find(vectorLayer.getSource().getFeatures(), function(feature) {
+          if (roadLink.linkId) return feature.getProperties().linkId === roadLink.linkId;
+          else return feature.getProperties().roadLinkId === roadLink.roadLinkId;
       });
-      selectControl.unselectAll();
-      selectControl.select(feature);
+
+      var featureClone = feature.clone();
+      featureClone.setId(feature.getId());
+
+      addSelectionFeatures(featureClone);
     };
 
-    var toggleRoadTypeWithSpecifiedStyle = function () {
-      if (!stylesUndefined()) {
-        if (applicationModel.isRoadTypeShown()) {
-          vectorLayer.styleMap.styles.default.rules = layerStyleMapRules[applicationModel.getSelectedLayer()];
-        } else {
-          layerStyleMapRules[applicationModel.getSelectedLayer()] = vectorLayer.styleMap.styles.default.rules;
-          vectorLayer.styleMap.styles.default.rules = [];
-          vectorLayer.styleMap.styles.default.defaultStyle.strokeWidth = 5;
-          vectorLayer.styleMap.styles.select.defaultStyle.strokeWidth = 7;
-        }
-        vectorLayer.redraw();
-      }
+    var clearSelection = function(){
+      selectControl.getFeatures().clear();
     };
 
-    eventbus.on('asset:saved asset:updateCancelled asset:updateFailed', function() {
-      selectControl.unselectAll();
-    }, this);
+    var addSelectionFeatures = function(feature){
+      clearSelection();
+      selectControl.getFeatures().push(feature);
+    };
 
-    eventbus.on('road-type:selected', toggleRoadType, this);
+    var deactivateSelection = function() {
+      enabled = false;
+    };
+
+    var activateSelection = function() {
+      enabled = true;
+    };
 
     eventbus.on('map:moved', mapMovedHandler, this);
 
-    eventbus.on('layer:selected', function(layer) {
-      activateLayerStyleMap(layer);
-      toggleRoadType();
-    }, this);
-
-    vectorLayer = new OpenLayers.Layer.Vector("road", {
-      styleMap: new RoadStyles().roadStyles,
-      rendererOptions: {zIndexing: true}
-    });
-    vectorLayer.setVisibility(false);
-    selectControl = new OpenLayers.Control.SelectFeature(vectorLayer);
-    map.addLayer(vectorLayer);
-    toggleRoadType();
-
     return {
-      layer: vectorLayer,
-      redraw: redraw,
-      clear: clear,
-      selectRoadLink: selectRoadLink,
-      setLayerSpecificStyleMapProvider: setLayerSpecificStyleMapProvider,
-      setLayerSpecificStyleMap: setLayerSpecificStyleMap,
+      deactivateSelection: deactivateSelection,
+      activateSelection: activateSelection,
+      createRoadLinkFeature: createRoadLinkFeature,
       setLayerSpecificMinContentZoomLevel: setLayerSpecificMinContentZoomLevel,
-      addUIStateDependentLookupToStyleMap: addUIStateDependentLookupToStyleMap,
+      setLayerSpecificStyleProvider: setLayerSpecificStyleProvider,
       drawRoadLink: drawRoadLink,
       drawRoadLinks: drawRoadLinks,
-      createZoomLevelFilter: createZoomLevelFilter,
-      toggleRoadTypeWithSpecifiedStyle: toggleRoadTypeWithSpecifiedStyle,
-      uiState: uiState
+      selectRoadLink: selectRoadLink,
+      clear: clear,
+      clearSelection: clearSelection,
+      getZoomLevel: getZoomLevel,
+      layer: vectorLayer,
+      toggleRoadTypeWithSpecifiedStyle: toggleRoadTypeWithSpecifiedStyle
     };
   };
 })(this);

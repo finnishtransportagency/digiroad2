@@ -6,6 +6,8 @@ import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.viite.RoadType.PublicRoad
+// Used in debugging when needed.
+import fi.liikennevirasto.viite.util.prettyPrint
 import org.scalatest.{FunSuite, Matchers}
 
 /**
@@ -40,7 +42,7 @@ class RoadAddressLinkPartitionerSpec extends FunSuite with Matchers {
   )
 
   private def makeRoadAddressLink(id: Long, anomaly: Int, roadNumber: Long, roadPartNumber: Long, deltaX: Double = 0.0, deltaY: Double = 0.0) = {
-    RoadAddressLink(id, id, Seq(Point(id*10.0 + deltaX, anomaly*10.0 + deltaY), Point((id+1)*10.0 + deltaX, anomaly*10.0 + deltaY)), 10.0, State, SingleCarriageway, NormalRoadLinkType, InUse, NormalLinkInterface, PublicRoad, None, None, Map(), roadNumber, roadPartNumber, 1, 1, 1, id*10, (id+1)*10, "", "", 0.0, 10.0,SideCode.TowardsDigitizing, None, None, Anomaly.apply(anomaly))
+    RoadAddressLink(id, id, Seq(Point(id*10.0 + deltaX, anomaly*10.0 + deltaY), Point((id+1)*10.0 + deltaX, anomaly*10.0 + deltaY)), 10.0, State, SingleCarriageway, NormalRoadLinkType, InUse, NormalLinkInterface, PublicRoad, None, None, Map(), roadNumber, roadPartNumber, 1, 1, 1, id*10, (id+1)*10, "", "", 0.0, 10.0,SideCode.TowardsDigitizing, None, None, Anomaly.apply(anomaly), 0)
   }
 
   test("Partitions don't have differing anomalies") {
@@ -67,6 +69,29 @@ class RoadAddressLinkPartitionerSpec extends FunSuite with Matchers {
     val mod = add.copy(geometry = Seq(Point(10.0,21.0), Point(11.0,21.0)))
     val partitioned = RoadAddressLinkPartitioner.partition(roadAddressLinks ++ Seq(mod))
     partitioned.size should be (4)
+  }
+
+  test("Connected anomalous type NoAddressGiven & GeometryChanged roads are not combined") {
+    val add = makeRoadAddressLink(0, Anomaly.GeometryChanged.value, 0, 0, 1.0, 11.0)
+    val mod = add.copy(geometry = Seq(Point(10.0,21.0), Point(11.0,21.0)))
+    val partitioned = RoadAddressLinkPartitioner.partition(roadAddressLinks ++ Seq(mod))
+    partitioned.size should be (5)
+  }
+
+  test("Connected anomalous type GeometryChanged and floating roads are combined") {
+    val add = makeRoadAddressLink(0, Anomaly.GeometryChanged.value, 0, 0, 1.0, 11.0)
+    val mod = add.copy(geometry = Seq(Point(10.0,21.0), Point(11.0,21.0)),
+      roadNumber = 2, roadPartNumber=1, trackCode = 0, roadLinkType = RoadLinkType.FloatingRoadLinkType)
+    val add2 = makeRoadAddressLink(1536, Anomaly.None.value, 0, 0, 1.0, 11.0)
+    val mod2 = add2.copy(geometry = Seq(Point(11.0,21.0), Point(11.0,22.0)),
+      newGeometry = Option(Seq(Point(11.0,21.0), Point(11.0,25.0))),
+      roadLinkSource = LinkGeomSource.HistoryLinkInterface, roadLinkType = RoadLinkType.FloatingRoadLinkType,
+      startAddressM = 10, endAddressM = 20, roadNumber = 2, roadPartNumber=1, trackCode = 0)
+    val partitioned = RoadAddressLinkPartitioner.partition(roadAddressLinks ++ Seq(mod, mod2))
+    val group = partitioned.find(_.exists(r => r.roadNumber == 2))
+    partitioned.size should be (5)
+    group.nonEmpty should be (true)
+    group.get.size should be (2)
   }
 
   test("Connected floating + other roads are not combined") {

@@ -2,15 +2,20 @@
   root.ManoeuvreLayer = function(application, map, roadLayer, selectedManoeuvreSource, manoeuvresCollection, roadCollection) {
     var me = this;
     var layerName = 'manoeuvre';
-    var indicatorLayer = new OpenLayers.Layer.Boxes('adjacentLinkIndicators');
+    var indicatorVector = new ol.source.Vector({});
+    var indicatorLayer = new ol.layer.Vector({
+      source : indicatorVector
+    });
+    map.addLayer(indicatorLayer);
+    indicatorLayer.setVisible(false);
+
     var manoeuvreStyle = ManoeuvreStyle(roadLayer);
     var mode = "view";
 
     this.minZoomForContent = zoomlevels.minZoomForAssets;
     Layer.call(this, layerName, roadLayer);
     roadLayer.setLayerSpecificMinContentZoomLevel(layerName, me.minZoomForContent);
-    roadLayer.setLayerSpecificStyleMap(layerName, manoeuvreStyle.defaultStyleMap);
-
+    roadLayer.setLayerSpecificStyleProvider(layerName, manoeuvreStyle.getDefaultStyle);
 
     /*
      * ------------------------------------------
@@ -19,7 +24,7 @@
      */
 
     var show = function(map) {
-      map.addLayer(indicatorLayer);
+      indicatorLayer.setVisible(true);
       me.show(map);
     };
 
@@ -27,7 +32,8 @@
       unselectManoeuvre();
       me.stop();
       me.hide();
-      map.removeLayer(indicatorLayer);
+      indicatorLayer.setVisible(false);
+
     };
 
     /**
@@ -57,14 +63,14 @@
      * Overrides the Layer.js refreshView method
      */
     this.refreshView = function() {
-      manoeuvresCollection.fetch(map.getExtent(), map.getZoom(), draw);
+      manoeuvresCollection.fetch(map.getView().calculateExtent(map.getSize()),map.getView().getZoom(), draw);
     };
 
     /**
      * Overrides the Layer.js removeLayerFeatures method
      */
     this.removeLayerFeatures = function() {
-      indicatorLayer.clearMarkers();
+      indicatorLayer.getSource().clear();
     };
 
     /*
@@ -73,21 +79,47 @@
      * ------------------------------------------
      */
 
+    var enableSelect = function (event) {
+        return event.selected.length > 0 && roadCollection.get([event.selected[0].getProperties().linkId])[0].isCarTrafficRoad();
+    };
+
+
     /**
      * Selects a manoeuvre on the map. First checks that road link is a car traffic road.
      * Sets up the selection style and redraws the road layer. Sets up the selectedManoeuvreSource.
      * This variable is set as onSelect property in selectControl.
      * @param feature Selected OpenLayers feature (road link)
        */
-    var selectManoeuvre = function(feature) {
-      pastAdjacents = [];
-      if (roadCollection.get([feature.attributes.linkId])[0].isCarTrafficRoad()) {
-        roadLayer.setLayerSpecificStyleMap(layerName, manoeuvreStyle.selectionStyleMap);
-        selectedManoeuvreSource.open(feature.attributes.linkId);
+    var selectManoeuvre = function(event) {
+      if (event.selected.length > 0 && enableSelect(event)) {
+        selectManoeuvreFeatures(event.selected[0]);
+        selectedManoeuvreSource.open(event.selected[0].getProperties().linkId);
       } else {
+        _.each(event.deselected, function(feature){
+            feature.setStyle(manoeuvreStyle.getDefaultStyle().getStyle(feature, {zoomLevel: map.getView().getZoom()}));
+        });
         unselectManoeuvre();
       }
-      roadLayer.redraw();
+    };
+
+  /**
+   * Selects all features with the same id, and linkId. In order to for example
+   * not allow the selection of only the directional sign.
+   * @param features
+   */
+    var selectManoeuvreFeatures = function (features) {
+      var selectedFeatures = _.filter(roadLayer.layer.getSource().getFeatures(), function(feature) {
+          return feature.getProperties().linkId === features.getProperties().linkId;
+      });
+
+      if(selectedFeatures){
+          _.each(selectedFeatures, function(feature){
+              var style = manoeuvreStyle.getSelectedStyle().getStyle(feature, {zoomLevel: map.getView().getZoom()});
+              style.setStroke(_.merge(style.getStroke(), new ol.style.Stroke({color: '#00f'})));
+              feature.setStyle(style);
+          });
+      }
+      selectControl.addSelectionFeatures(selectedFeatures);
     };
 
     /**
@@ -96,144 +128,85 @@
      * This variable is set as onUnselect property in selectControl.
      */
     var unselectManoeuvre = function() {
+      selectControl.clear();
       selectedManoeuvreSource.close();
-      roadLayer.setLayerSpecificStyleMap(layerName, manoeuvreStyle.defaultStyleMap);
-      roadLayer.redraw();
-      highlightFeatures(null);
-      highlightOneWaySigns([]);
-      highlightOverlayFeatures([]);
-      highlightManoeuvreFeatures([]);
-      indicatorLayer.clearMarkers();
+      indicatorLayer.getSource().clear();
       selectedManoeuvreSource.setTargetRoadLink(null);
     };
 
-    /**
-     * Creates an OpenLayers selectControl and defines onSelect and onUnselect properties for it.
-     * The selectControl is then added as Layer.js this.selectControl value and as a control to the OpenLayers map.
-     */
-    var selectControl = new OpenLayers.Control.SelectFeature(roadLayer.layer, {
-      onSelect: selectManoeuvre,
-      onUnselect: unselectManoeuvre
+    var selectControl = new SelectToolControl(application, roadLayer.layer, map, {
+        style : function(feature){
+            return manoeuvreStyle.getDefaultStyle().getStyle(feature, {zoomLevel: map.getView().getZoom()});
+        },
+        onSelect: selectManoeuvre,
+        draggable : false,
+        enableSelect : enableSelect
     });
+
     this.selectControl = selectControl;
-    map.addControl(selectControl);
-
-    var highlightFeatures = function(linkId) {
-      _.each(roadLayer.layer.features, function(x) {
-        if (x.attributes.type === 'normal') {
-          if (linkId && (x.attributes.linkId === linkId)) {
-            selectControl.highlight(x);
-          } else {
-            selectControl.unhighlight(x);
-          }
-        }
-      });
-    };
-
-    var highlightOneWaySigns = function(linkIds) {
-      var isOneWaySign = function(feature) { return !_.isUndefined(feature.attributes.rotation); };
-
-      _.each(roadLayer.layer.features, function(x) {
-        if (isOneWaySign(x)) {
-          if (_.contains(linkIds, x.attributes.linkId)) {
-            selectControl.highlight(x);
-          } else {
-            selectControl.unhighlight(x);
-          }
-        }
-      });
-    };
-
-    var highlightOverlayFeatures = function(linkIds) {
-      _.each(roadLayer.layer.features, function(x) {
-        if (x.attributes.type === 'overlay') {
-          if (_.contains(linkIds, x.attributes.linkId)) {
-            selectControl.highlight(x);
-          } else {
-            selectControl.unhighlight(x);
-          }
-        }
-      });
-    };
-
-    var highlightIntermediateFeatures = function(linkIds) {
-      _.each(roadLayer.layer.features, function(x) {
-        if (x.attributes.type === 'intermediate') {
-          if (_.contains(linkIds, x.attributes.linkId)) {
-            selectControl.highlight(x);
-          } else {
-            selectControl.unhighlight(x);
-          }
-        }
-      });
-    };
-
-    var highlightManoeuvreFeatures = function(linkIds) {
-      _.each(roadLayer.layer.features, function(x) {
-        if (x.attributes.type !== 'normal') {
-          if (_.contains(linkIds, x.attributes.linkId)) {
-            selectControl.highlight(x);
-          } else {
-            selectControl.unhighlight(x);
-          }
-        }
-      });
-    };
 
     var createDashedLineFeatures = function(roadLinks) {
       return _.flatten(_.map(roadLinks, function(roadLink) {
         var points = _.map(roadLink.points, function(point) {
-          return new OpenLayers.Geometry.Point(point.x, point.y);
+          return [point.x, point.y];
         });
         var attributes = _.merge({}, roadLink, {
           type: 'overlay'
         });
-        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), attributes);
+        var feature = new ol.Feature(new ol.geom.LineString(points));
+        feature.setProperties(attributes);
+        return feature;
       }));
     };
 
     var createIntermediateFeatures = function(roadLinks) {
       return _.flatten(_.map(roadLinks, function(roadLink) {
         var points = _.map(roadLink.points, function(point) {
-          return new OpenLayers.Geometry.Point(point.x, point.y);
+          return [point.x, point.y];
         });
         var attributes = _.merge({}, roadLink, {
           type: 'intermediate'
         });
-        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), attributes);
+        var feature = new ol.Feature(new ol.geom.LineString(points));
+          feature.setProperties(attributes);
+          return feature;
       }));
     };
 
     var createMultipleFeatures = function(roadLinks) {
       return _.flatten(_.map(roadLinks, function(roadLink) {
         var points = _.map(roadLink.points, function(point) {
-          return new OpenLayers.Geometry.Point(point.x, point.y);
+          return [point.x, point.y];
         });
         var attributes = _.merge({}, roadLink, {
           type: 'multiple'
         });
-        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), attributes);
+        var feature = new ol.Feature(new ol.geom.LineString(points));
+        feature.setProperties(attributes);
+        return feature;
       }));
     };
 
     var createSourceDestinationFeatures = function(roadLinks) {
       return _.flatten(_.map(roadLinks, function(roadLink) {
         var points = _.map(roadLink.points, function(point) {
-          return new OpenLayers.Geometry.Point(point.x, point.y);
+          return [point.x, point.y];
         });
         var attributes = _.merge({}, roadLink, {
           type: 'sourceDestination'
         });
-        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points), attributes);
+        var feature = new ol.Feature(new ol.geom.LineString(points));
+        feature.setProperties(attributes);
+        return feature;
       }));
     };
 
     var destroySourceDestinationFeatures = function(roadLinks) {
       return _.flatten(_.map(roadLinks, function(roadLink) {
         var points = _.map(roadLink.points, function(point) {
-          return new OpenLayers.Geometry.Point(point.x, point.y);
+          return [point.x, point.y];
         });
-        return new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(points));
+        return new ol.Feature(new ol.geom.LineString(points));
       }));
     };
 
@@ -241,7 +214,7 @@
       var dashedRoadLinks = _.filter(roadLinks, function(roadLink) {
         return !_.isEmpty(roadLink.destinationOfManoeuvres);
       });
-      roadLayer.layer.addFeatures(createDashedLineFeatures(dashedRoadLinks));
+      roadLayer.layer.getSource().addFeatures(createDashedLineFeatures(dashedRoadLinks));
     };
 
     var drawIntermediateFeatures = function(roadLinks) {
@@ -249,14 +222,14 @@
         return !_.isEmpty(roadLink.intermediateManoeuvres) && _.isEmpty(roadLink.destinationOfManoeuvres) &&
           _.isEmpty(roadLink.manoeuvreSource);
       });
-      roadLayer.layer.addFeatures(createIntermediateFeatures(intermediateRoadLinks));
+      roadLayer.layer.getSource().addFeatures(createIntermediateFeatures(intermediateRoadLinks));
     };
 
     var drawMultipleSourceFeatures = function(roadLinks) {
       var multipleSourceRoadLinks = _.filter(roadLinks, function(roadLink) {
         return !_.isEmpty(roadLink.multipleSourceManoeuvres) && _.isEmpty(roadLink.sourceDestinationManoeuvres);
       });
-      roadLayer.layer.addFeatures(createMultipleFeatures(multipleSourceRoadLinks));
+      roadLayer.layer.getSource().addFeatures(createMultipleFeatures(multipleSourceRoadLinks));
     };
 
     var drawMultipleIntermediateFeatures = function(roadLinks) {
@@ -264,7 +237,7 @@
         return !_.isEmpty(roadLink.multipleIntermediateManoeuvres) && _.isEmpty(roadLink.destinationOfManoeuvres) &&
           _.isEmpty(roadLink.manoeuvreSource);
       });
-      roadLayer.layer.addFeatures(createMultipleFeatures(multipleIntermediateRoadLinks));
+      roadLayer.layer.getSource().addFeatures(createMultipleFeatures(multipleIntermediateRoadLinks));
     };
 
     var drawMultipleDestinationFeatures = function(roadLinks) {
@@ -272,35 +245,24 @@
         return !_.isEmpty(roadLink.multipleDestinationManoeuvres) &&
           _.isEmpty(roadLink.manoeuvreSource);
       });
-      roadLayer.layer.addFeatures(createMultipleFeatures(multipleDestinationRoadLinks));
+      roadLayer.layer.getSource().addFeatures(createMultipleFeatures(multipleDestinationRoadLinks));
     };
 
     var drawSourceDestinationFeatures = function(roadLinks) {
       var sourceDestinationRoadLinks = _.filter(roadLinks, function(roadLink) {
         return !_.isEmpty(roadLink.sourceDestinationManoeuvres);
       });
-      roadLayer.layer.addFeatures(createSourceDestinationFeatures(sourceDestinationRoadLinks));
+      roadLayer.layer.getSource().addFeatures(createSourceDestinationFeatures(sourceDestinationRoadLinks));
     };
 
     var reselectManoeuvre = function() {
       if (!selectedManoeuvreSource.isDirty()) {
         selectControl.activate();
       }
-      var originalOnSelectHandler = selectControl.onSelect;
-      selectControl.onSelect = function() {};
       if (selectedManoeuvreSource.exists()) {
         var manoeuvreSource = selectedManoeuvreSource.get();
 
-        var feature = _.find(roadLayer.layer.features, function(feature) {
-          return feature.attributes.linkId === selectedManoeuvreSource.getLinkId();
-        });
-
-        if (feature) {
-          selectControl.select(feature);
-        }
-
-        indicatorLayer.clearMarkers();
-
+        indicatorLayer.getSource().clear();
         var addedManoeuvre = manoeuvresCollection.getAddedManoeuvre();
 
         if(!application.isReadOnly()){
@@ -308,9 +270,6 @@
           if(!_.isEmpty(addedManoeuvre)) {
             if(!("adjacentLinks" in addedManoeuvre))
               addedManoeuvre.adjacentLinks = selectedManoeuvreSource.getAdjacents(addedManoeuvre.destLinkId);
-
-            highlightOverlayFeatures([addedManoeuvre.firstTargetLinkId, addedManoeuvre.destLinkId]);
-            highlightIntermediateFeatures(addedManoeuvre.intermediateLinkIds);
           }
 
           var manoeuvreAdjacentLinks = _.isEmpty(addedManoeuvre) ?  adjacentLinks(manoeuvreSource) : addedManoeuvre.adjacentLinks;
@@ -318,19 +277,14 @@
           markAdjacentFeatures(_.pluck(manoeuvreAdjacentLinks,'linkId'));
           drawIndicators(manoeuvreAdjacentLinks);
         }
-
         redrawRoadLayer();
-
-        highlightOneWaySigns([selectedManoeuvreSource.getLinkId()]);
-
       }
-      selectControl.onSelect = originalOnSelectHandler;
     };
 
     var draw = function() {
       selectControl.deactivate();
       var linksWithManoeuvres = manoeuvresCollection.getAll();
-      roadLayer.drawRoadLinks(linksWithManoeuvres, map.getZoom());
+      roadLayer.drawRoadLinks(linksWithManoeuvres, map.getView().getZoom());
       drawDashedLineFeatures(linksWithManoeuvres);
       drawIntermediateFeatures(linksWithManoeuvres);
       drawMultipleSourceFeatures(linksWithManoeuvres);
@@ -352,32 +306,56 @@
       selectControl.activate();
       eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
       selectedManoeuvreSource.setTargetRoadLink(null);
+      selectControl.removeFeatures(function(features){
+          return features && features.getProperties().linkId !== selectedManoeuvreSource.get().linkId;
+      });
+      draw();
+    };
+
+    var concludeManoeuvreSaved = function(eventListener) {
+      mode="consult";
+      selectControl.activate();
+      eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
+      selectedManoeuvreSource.setTargetRoadLink(null);
       draw();
     };
 
     var handleManoeuvreSaved = function(eventListener) {
-      manoeuvresCollection.fetch(map.getExtent(), map.getZoom(), function() {
-        concludeManoeuvreEdit(eventListener);
+      manoeuvresCollection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getZoom(), function() {
+        concludeManoeuvreSaved(eventListener);
         unselectManoeuvre();
       });
     };
 
     var drawIndicators = function(links) {
-      var markerTemplate = _.template('<span class="marker" style="margin-left: -1em; margin-top: -1em; position: absolute;"><%= marker %></span>');
-      var visibleLinks = _.filter(links, function (link) {
-        return typeof link.points != 'undefined';
-      });
-      var indicators = me.mapOverLinkMiddlePoints(links, function(link, middlePoint) {
-        var bounds = OpenLayers.Bounds.fromArray([middlePoint.x, middlePoint.y, middlePoint.x, middlePoint.y]);
-        var box = new OpenLayers.Marker.Box(bounds, "00000000");
-        $(box.div).html(markerTemplate(link));
-        $(box.div).css('overflow', 'visible');
-        return box;
-      });
+      var features = [];
 
-      _.forEach(indicators, function(indicator) {
-        indicatorLayer.addMarker(indicator);
-      });
+      var markerContainer = function(link, position) {
+        var style = new ol.style.Style({
+            image : new ol.style.Icon({
+                src: 'images/center-marker2.svg'
+            }),
+            text : new ol.style.Text({
+                text : link.marker,
+                fill: new ol.style.Fill({
+                    color: "#ffffff"
+                })
+            })
+        });
+        var marker = new ol.Feature({
+            geometry : new ol.geom.Point([position.x, position.y])
+        });
+        marker.setStyle(style);
+        features.push(marker);
+      };
+
+      var indicators = function() {
+        return me.mapOverLinkMiddlePoints(links, function(link, middlePoint) {
+          markerContainer(link, middlePoint);
+        });
+      };
+      indicators();
+      indicatorLayer.getSource().addFeatures(features);
     };
 
     var adjacentLinks = function(roadLink) {
@@ -410,13 +388,12 @@
     };
 
     var markAdjacentFeatures = function(adjacentLinkIds) {
-      _.forEach(roadLayer.layer.features, function(feature) {
-        feature.attributes.adjacent = feature.attributes.type === 'normal' && _.contains(adjacentLinkIds, feature.attributes.linkId);
+      _.forEach(roadLayer.layer.getSource().getFeatures(), function(feature) {
+        feature.getProperties().adjacent = feature.getProperties().type === 'normal' && _.contains(adjacentLinkIds, feature.getProperties().linkId);
       });
     };
 
     var redrawRoadLayer = function() {
-      roadLayer.redraw();
       indicatorLayer.setZIndex(1000);
     };
 
@@ -428,33 +405,29 @@
      * @param roadLink
      */
     var handleManoeuvreSourceLinkSelected = function(roadLink) {
-      indicatorLayer.clearMarkers();
+      indicatorLayer.getSource().clear();
       var aLinks = adjacentLinks(roadLink);
       var tLinks = nonAdjacentTargetLinks(roadLink);
       var adjacentLinkIds = _.pluck(aLinks, 'linkId');
       var targetLinkIds = _.pluck(tLinks, 'linkId');
 
-      highlightFeatures(roadLink.linkId);
-      highlightOneWaySigns([roadLink.linkId]);
-
       if(application.isReadOnly()){
         var allTargetLinkIds = manoeuvresCollection.getNextTargetRoadLinksBySourceLinkId(roadLink.linkId);
-        highlightManoeuvreFeatures(allTargetLinkIds);
+      //  highlightManoeuvreFeatures(allTargetLinkIds);
       }
 
       markAdjacentFeatures(application.isReadOnly() ? targetLinkIds : adjacentLinkIds);
 
       var destinationRoadLinkList = manoeuvresCollection.getDestinationRoadLinksBySource(selectedManoeuvreSource.get());
       manoeuvresCollection.getIntermediateRoadLinksBySource(selectedManoeuvreSource.get());
-      highlightOverlayFeatures(destinationRoadLinkList);
+     // highlightOverlayFeatures(destinationRoadLinkList);
       if (!application.isReadOnly()) {
         drawIndicators(tLinks);
         drawIndicators(aLinks);
       }
       redrawRoadLayer();
-
-      roadLayer.setLayerSpecificStyleMap(layerName, manoeuvreStyle.selectionStyleMap);
-      roadLayer.redraw();
+      //roadLayer.setLayerSpecificStyleProvider(layerName, manoeuvreStyle.getSelectedStyle);
+      //roadLayer.redraw();
     };
 
     var updateAdjacentLinkIndicators = function() {
@@ -465,7 +438,7 @@
           drawIndicators(nonAdjacentTargetLinks(selectedManoeuvreSource.get()));
         }
       } else {
-        indicatorLayer.clearMarkers();
+         indicatorLayer.getSource().clear();
       }
     };
 
@@ -474,7 +447,7 @@
       if (!application.isReadOnly()) {
         if(manoeuvre) {
 
-          indicatorLayer.clearMarkers();
+          indicatorLayer.getSource().clear();
           drawIndicators(manoeuvre.adjacentLinks);
           selectControl.deactivate();
 
@@ -489,12 +462,12 @@
 
           var linkIdLists = _.without(manoeuvre.linkIds, manoeuvre.sourceLinkId);
           var destLinkId = _.last(linkIdLists);
-          roadLayer.layer.addFeatures(createIntermediateFeatures(_.map(_.without(linkIdLists, destLinkId), function(linkId){
-            return roadCollection.getRoadLinkByLinkId(linkId).getData();
-          })));
 
-          roadLayer.layer.addFeatures(createDashedLineFeatures([roadCollection.getRoadLinkByLinkId(destLinkId).getData()]));
-          highlightOverlayFeatures([destLinkId]);
+          selectControl.addNewFeature(createIntermediateFeatures(_.map(_.without(linkIdLists, destLinkId), function(linkId){
+              return roadCollection.getRoadLinkByLinkId(linkId).getData();
+          })), false);
+
+          selectControl.addNewFeature(createDashedLineFeatures([roadCollection.getRoadLinkByLinkId(destLinkId).getData()]), false);
 
           selectedManoeuvreSource.setTargetRoadLink(manoeuvre.destLinkId);
 
@@ -504,7 +477,7 @@
           }
         }
       } else {
-        indicatorLayer.clearMarkers();
+        indicatorLayer.getSource().clear();
       }
 
     };
@@ -512,8 +485,7 @@
     var manoeuvreRemoveMarkers = function(data){
       mode="edit";
       if (!application.isReadOnly()) {
-        indicatorLayer.clearMarkers();
-        highlightManoeuvreFeatures(data.linkIds.slice(1));
+        indicatorLayer.getSource().clear();
       }
     };
 
@@ -536,7 +508,7 @@
       selectedManoeuvreSource.addLink(persisted, newDestLinkId);
 
       if (application.isReadOnly()) {
-        indicatorLayer.clearMarkers();
+        indicatorLayer.getSource().clear();
       }
     };
 

@@ -12,6 +12,7 @@ import slick.jdbc.StaticQuery.interpolation
 case class TrafficLight(id: Long, linkId: Long,
                               lon: Double, lat: Double,
                               mValue: Double, floating: Boolean,
+                              vvhTimeStamp: Long,
                               municipalityCode: Int,
                               createdBy: Option[String] = None,
                               createdAt: Option[DateTime] = None,
@@ -25,7 +26,7 @@ object OracleTrafficLightDao {
 
     val query =
       """
-        select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, a.municipality_code, a.created_by, a.created_date, a.modified_by, a.modified_date
+        select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code, a.created_by, a.created_date, a.modified_by, a.modified_date
         from asset a
         join asset_link al on a.id = al.asset_id
         join lrm_position pos on al.position_id = pos.id
@@ -41,25 +42,26 @@ object OracleTrafficLightDao {
       val point = r.nextBytesOption().map(bytesToPoint).get
       val mValue = r.nextDouble()
       val floating = r.nextBoolean()
+      val vvhTimeStamp = r.nextLong()
       val municipalityCode = r.nextInt()
       val createdBy = r.nextStringOption()
       val createdDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val modifiedBy = r.nextStringOption()
       val modifiedDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
 
-      TrafficLight(id, linkId, point.x, point.y, mValue, floating, municipalityCode, createdBy, createdDateTime, modifiedBy, modifiedDateTime)
+      TrafficLight(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, createdBy, createdDateTime, modifiedBy, modifiedDateTime)
     }
   }
 
-  def create(trafficLight: TrafficLightToBePersisted, username: String): Long = {
+  def create(trafficLight: TrafficLightToBePersisted, username: String, adjustedTimestamp: Long): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     sqlu"""
       insert all
         into asset(id, asset_type_id, created_by, created_date, municipality_code)
         values ($id, 280, $username, sysdate, ${trafficLight.municipalityCode})
-        into lrm_position(id, start_measure, link_id)
-        values ($lrmPositionId, ${trafficLight.mValue}, ${trafficLight.linkId})
+        into lrm_position(id, start_measure, link_id, adjusted_timestamp)
+        values ($lrmPositionId, ${trafficLight.mValue}, ${trafficLight.linkId}, $adjustedTimestamp)
 
         into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId)
@@ -70,18 +72,30 @@ object OracleTrafficLightDao {
     id
   }
 
-  def update(id: Long, trafficLight: TrafficLightToBePersisted) = {
+  def update(id: Long, trafficLight: TrafficLightToBePersisted, adjustedTimeStampOption: Option[Long] = None) = {
     sqlu""" update asset set municipality_code = ${trafficLight.municipalityCode} where id = $id """.execute
     updateAssetGeometry(id, Point(trafficLight.lon, trafficLight.lat))
     updateAssetModified(id, trafficLight.createdBy).execute
 
-    sqlu"""
-      update lrm_position
-       set
-       start_measure = ${trafficLight.mValue},
-       link_id = ${trafficLight.linkId}
-       where id = (select position_id from asset_link where asset_id = $id)
-    """.execute
+    adjustedTimeStampOption match {
+      case Some(adjustedTimeStamp) =>
+        sqlu"""
+          update lrm_position
+           set
+           start_measure = ${trafficLight.mValue},
+           link_id = ${trafficLight.linkId},
+           adjusted_timestamp = ${adjustedTimeStamp}
+           where id = (select position_id from asset_link where asset_id = $id)
+        """.execute
+      case _  =>
+        sqlu"""
+          update lrm_position
+           set
+           start_measure = ${trafficLight.mValue},
+           link_id = ${trafficLight.linkId}
+           where id = (select position_id from asset_link where asset_id = $id)
+        """.execute
+    }
     id
   }
 }

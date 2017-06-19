@@ -20,7 +20,7 @@ import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.{SimpleBusStop, _}
 import fi.liikennevirasto.digiroad2.util.VVHSerializer
 import fi.liikennevirasto.viite.{RoadAddressLinkBuilder, RoadAddressService}
-import fi.liikennevirasto.viite.dao.RoadAddress
+import fi.liikennevirasto.viite.dao.{RoadAddress, RoadAddressDAO}
 import org.joda.time._
 import org.slf4j.LoggerFactory
 import slick.jdbc.StaticQuery.interpolation
@@ -141,14 +141,14 @@ class AssetDataImporter {
     val roadLinks = linkIdSet.grouped(4000).flatMap(group =>
       // DEV complementary link load
       if (complementaryLinks)
-        vvhClientProd.getOrElse(vvhClient).complementaryData.fetchComplementaryRoadlinks(group)
+        vvhClientProd.getOrElse(vvhClient).complementaryData.fetchByLinkIds(group)
       else {
         // If in production or QA environment -> load complementary links, too
         if (vvhClientProd.isEmpty)
-          vvhClient.fetchByLinkIds(group) ++ vvhClient.complementaryData.fetchComplementaryRoadlinks(group)
+          vvhClient.roadLinkData.fetchByLinkIds(group) ++ vvhClient.complementaryData.fetchByLinkIds(group)
         else
           // If in DEV environment -> don't load complementary links at this stage (no data for them)
-          vvhClientProd.get.fetchByLinkIds(group) ++ vvhClientProd.get.complementaryData.fetchComplementaryRoadlinks(group)
+          vvhClientProd.get.roadLinkData.fetchByLinkIds(group) ++ vvhClientProd.get.complementaryData.fetchByLinkIds(group)
       }
     ).toSeq
 
@@ -160,7 +160,7 @@ class AssetDataImporter {
     print(s"${DateTime.now()} - ")
     println("Read %d road links from vvh".format(linkLengths.size))
 
-    val floatingLinks = vvhClient.historyData.fetchVVHRoadlinkHistory(roads.filterNot(r => linkLengths.get(r._1).isDefined).map(_._1).toSet).groupBy(_.linkId).mapValues(_.maxBy(_.endDate))
+    val floatingLinks = vvhClient.historyData.fetchVVHRoadLinkByLinkIds(roads.filterNot(r => linkLengths.get(r._1).isDefined).map(_._1).toSet).groupBy(_.linkId).mapValues(_.maxBy(_.endDate))
     print(s"${DateTime.now()} - ")
     println(floatingLinks.size + " links can be saved as floating addresses")
 
@@ -174,14 +174,6 @@ class AssetDataImporter {
       case (linkId, length) => adjust(lrmList.getOrElse(linkId, List()), length)
     }
 
-//    warningRows.foreach{
-//      warning =>
-//        val row = roads.find(r => r._16 == warning._1).get
-//        println("Suppressed row ID %d with reason 2: 'Values of the start and end fields are totally outside of the link geometry' (%.3f m) %s".format(warning._1, linkLengths.getOrElse(warning._2, Double.NaN), printRow(row)))
-//    }
-
-//    print(s"${DateTime.now()} - ")
-//    println("%d zero length segments removed".format(warningRows.size))
     print(s"${DateTime.now()} - ")
     println("%d segments with invalid link id removed".format(roads.filterNot(r => linkLengths.get(r._1).isDefined).size))
 
@@ -189,7 +181,7 @@ class AssetDataImporter {
       print(s"${DateTime.now()} - ")
       println("Converting link ids to DEV link ids")
       val mmlIdMaps = roadLinks.filter(_.attributes.get("MTKID").nonEmpty).map(rl => rl.attributes("MTKID").asInstanceOf[BigInt].longValue() -> rl.linkId).toMap
-      val links = mmlIdMaps.keys.toSet.grouped(4000).flatMap(grp => vvhClient.fetchByMmlIds(grp)).toSeq
+      val links = mmlIdMaps.keys.toSet.grouped(4000).flatMap(grp => vvhClient.roadLinkData.fetchByMmlIds(grp)).toSeq
       val fromMmlIdMap = links.map(rl => rl.attributes("MTKID").asInstanceOf[BigInt].longValue() -> rl.linkId).toMap
       val (differ, same) = fromMmlIdMap.map { case (mmlId, devLinkId) =>
         mmlIdMaps(mmlId) -> devLinkId
@@ -318,6 +310,45 @@ class AssetDataImporter {
         missing.foreach(service.createSingleMissingRoadAddress)
         println("Municipality %d: %d links added at time: %s".format(municipality, missing.size, DateTime.now().toString))
       })
+    }
+  }
+
+  def updateRoadAddressesGeometry(vvhClient: VVHClient, filterRoadAddresses: Boolean) = {
+    val eventBus = new DummyEventBus
+    val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer)
+    val service = new RoadAddressService(linkService, eventBus)
+    var counter = 0
+    var changed = 0
+    OracleDatabase.withDynTransaction {
+      val roadNumbers = Queries.getDistinctRoadNumbers(filterRoadAddresses)
+      roadNumbers.foreach(roadNumber =>{
+        counter +=1
+        println("Processing roadNumber %d (%d of %d) at time: %s".format(roadNumber, counter, roadNumbers.size,  DateTime.now().toString))
+        val linkIds = Queries.getLinkIdsByRoadNumber(roadNumber)
+        val roadLinksFromVVH = linkService.getCurrentAndComplementaryVVHRoadLinks(linkIds, false)
+        val addresses = RoadAddressDAO.fetchByLinkId(roadLinksFromVVH.map(_.linkId).toSet, false, true).groupBy(_.linkId)
+
+        roadLinksFromVVH.foreach(roadLink => {
+          val segmentsOnViiteDatabase = addresses.getOrElse(roadLink.linkId, Set())
+          segmentsOnViiteDatabase.foreach(segment =>{
+              val newGeom = GeometryUtils.truncateGeometry3D(roadLink.geometry, segment.startMValue, segment.endMValue)
+            if(!segment.geom.equals(Nil) && !newGeom.equals(Nil)) {
+
+              if (((segment.geom.head.distance2DTo(newGeom.head) > 1) && (segment.geom.head.distance2DTo(newGeom.last) > 1)) ||
+                ((segment.geom.last.distance2DTo(newGeom.head) > 1) && (segment.geom.last.distance2DTo(newGeom.last) > 1))) {
+                RoadAddressDAO.updateGeometry(segment.id, newGeom)
+                println("Changed geometry on roadAddress id " + segment.id + " and linkId ="+ segment.linkId)
+                changed +=1
+              }
+            }
+          })
+        })
+
+        println("RoadNumber:  %d: %d roadAddresses updated at time: %s".format(roadNumber, addresses.size, DateTime.now().toString))
+
+      })
+      println("Geometries changed count: %d", changed)
+
     }
   }
 

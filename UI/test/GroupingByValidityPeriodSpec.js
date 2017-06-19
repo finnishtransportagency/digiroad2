@@ -4,18 +4,26 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
   var assert = chai.assert;
 
   describe('when loading application with overlapping bus stops in different validity periods', function() {
-    before(function(done) { testHelpers.restartApplication(
-      function() { done(); });
+    var openLayersMap;
+    before(function(done) {
+      testHelpers.restartApplication(function(map) {
+        openLayersMap = map;
+        done();
+      });
     });
 
     it('only includes bus stops in the selected validity period to the group', function() {
-      var currentStop = $('[data-asset-id=300347]');
-      var futureStop = $('[data-asset-id=300348]');
 
-      expect(futureStop).to.be.hidden;
-      expect(currentStop).to.be.visible;
+      var features = testHelpers.getMassTransitStopFeatures(openLayersMap);
+      expect(features).to.have.length(1);
+      expect(features[0].getProperties().data.id).to.equal(300347);
 
-      expect(currentStop.find('.bus-basic-marker')).to.have.class('root');
+      expect(features[0].getProperties().data.group.assetGroup).to.have.length(2);
+
+      var featureFromGroup = _.find(features[0].getProperties().data.group.assetGroup, function(feature){
+          return feature.id === 300348;
+      });
+      expect([featureFromGroup]).to.have.length(1);
     });
 
     describe('and when selecting future validity period', function() {
@@ -24,18 +32,12 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
       });
 
       it('includes bus stops in future and current validity period', function() {
-        var currentStop = $('[data-asset-id=300347]');
-        var futureStop = $('[data-asset-id=300348]');
 
-        expect(futureStop).to.be.visible;
-        expect(currentStop).to.be.visible;
+        var features = testHelpers.getMassTransitStopFeatures(openLayersMap);
+        expect(features).to.have.length(2);
+        expect(features[0].getProperties().data.id).to.equal(300347);
+        expect(features[1].getProperties().data.id).to.equal(300348);
 
-        var currentStopMarker = currentStop.find('.bus-basic-marker');
-        var futureStopMarker = futureStop.find('.bus-basic-marker');
-
-        expect(currentStopMarker).to.have.class('root');
-        expect(futureStopMarker).not.to.have.class('root');
-        assert(currentStopMarker.offset().top > futureStopMarker.offset().top, 'Future stop is above current stop');
       });
 
       describe('and current validity period is deselected', function() {
@@ -44,13 +46,17 @@ define(['chai', 'TestHelpers'], function(chai, testHelpers) {
         });
 
         it('includes only bus stop in future', function() {
-          var currentStop = $('[data-asset-id=300347]');
-          var futureStop = $('[data-asset-id=300348]');
 
-          expect(futureStop).to.be.visible;
-          expect(currentStop).to.be.hidden;
+          var features = testHelpers.getMassTransitStopFeatures(openLayersMap);
+          expect(features).to.have.length(1);
+          expect(features[0].getProperties().data.id).to.equal(300348);
 
-          expect(futureStop.find('.bus-basic-marker')).to.have.class('root');
+          expect(features[0].getProperties().data.group.assetGroup).to.have.length(2);
+
+          var featureFromGroup = _.find(features[0].getProperties().data.group.assetGroup, function(feature){
+            return feature.id === 300347;
+          });
+          expect([featureFromGroup]).to.have.length(1);
         });
       });
     });

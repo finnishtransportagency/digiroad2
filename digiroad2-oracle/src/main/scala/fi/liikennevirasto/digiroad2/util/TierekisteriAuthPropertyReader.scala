@@ -27,7 +27,27 @@ class TierekisteriAuthPropertyReader {
     loadedKeyString
   }
 
+  private def getOldUsername: String = {
+    val loadedKeyString = properties.getProperty("tierekisteri.old.username")
+    println("u = "+loadedKeyString)
+    if (loadedKeyString == null)
+      throw new IllegalArgumentException("Missing TR username")
+    loadedKeyString
+  }
+
+  private def getOldPassword: String = {
+    val loadedKeyString = properties.getProperty("tierekisteri.old.password")
+    println("p = "+loadedKeyString)
+    if (loadedKeyString == null)
+      throw new IllegalArgumentException("Missing TR Password")
+    loadedKeyString
+  }
+
   def getAuthInBase64: String = {
     Base64.encodeBase64String((getUsername + ":" + getPassword).getBytes)
+  }
+
+  def getOldAuthInBase64: String = {
+    Base64.encodeBase64String((getOldUsername + ":" + getOldPassword).getBytes)
   }
 }

@@ -152,7 +152,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     verify(mockService).updateExistingById(Matchers.eq(1l), Matchers.eq(None), Matchers.eq(properties), Matchers.eq("CsvImportApiSpec"), anyObject())
   }
 
-  test("update asset LiVi id by CSV import", Tag("db")) {
+  test("Should not update asset LiVi id by CSV import (after Tierekisteri integration)", Tag("db")) {
     val mockService = MockitoSugar.mock[MassTransitStopService]
     val mockVVHClient = MockitoSugar.mock[VVHClient]
 
@@ -162,7 +162,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val csv = csvToInputStream(createCSV(Map("Valtakunnallinen ID" -> 1, "LiVi-tunnus" -> "Livi987654")))
 
     importer.importAssets(csv) should equal(ImportResult())
-    val properties = Set(SimpleProperty("yllapitajan_koodi", Seq(PropertyValue("Livi987654"))))
+    val properties = Set(SimpleProperty("yllapitajan_koodi", Seq(PropertyValue("Livi987654")))).filterNot(_.publicId == "yllapitajan_koodi")
     verify(mockService).updateExistingById(Matchers.eq(1l), Matchers.eq(None), Matchers.eq(properties), Matchers.eq("CsvImportApiSpec"), anyObject())
   }
 
@@ -211,7 +211,9 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     "valaistus" -> ("1", "2"),
     "saattomahdollisuus_henkiloautolla" -> ("1", "2"),
     "lisatiedot" -> ("qwer", "asdf"),
-    "tietojen_yllapitaja" -> ("1", "3")
+    "tietojen_yllapitaja" -> ("1", "3"),
+    "korotettu" -> ("1", "2"),
+    "roska_astia" -> ("1", "2")
   )
 
   test("update asset's properties in a generic manner", Tag("db")) {
@@ -226,7 +228,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     importer.importAssets(csv) should equal(ImportResult())
     val properties: Set[SimpleProperty] = exampleValues.map { case (key, value) =>
       SimpleProperty(key, Seq(PropertyValue(value._2)))
-    }.toSet
+    }.filterNot(_.publicId == "yllapitajan_koodi").toSet
 
     verify(mockService).updateExistingById(Matchers.eq(1l), Matchers.eq(None), Matchers.eq(properties), Matchers.eq("CsvImportApiSpec"), anyObject())
   }
@@ -270,9 +272,12 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   private def mockWithMassTransitStops(stops: Seq[(Long, AdministrativeClass)]): (MassTransitStopService, VVHClient) = {
 
     val mockVVHClient = MockitoSugar.mock[VVHClient]
-    val mockTierekisteriClient = MockitoSugar.mock[TierekisteriClient]
+    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+    val mockTierekisteriClient = MockitoSugar.mock[TierekisteriMassTransitStopClient]
+
+    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
     stops.foreach { case(id, administrativeClass) =>
-      when(mockVVHClient.fetchByLinkId(Matchers.eq(id))).thenReturn(Some(VVHRoadlink(id, 235, Nil, administrativeClass, TrafficDirection.BothDirections, FeatureClass.AllOthers)))
+      when(mockVVHRoadLinkClient.fetchByLinkId(Matchers.eq(id))).thenReturn(Some(VVHRoadlink(id, 235, Nil, administrativeClass, TrafficDirection.BothDirections, FeatureClass.AllOthers)))
     }
 
     val mockMassTransitStopDao = MockitoSugar.mock[MassTransitStopDao]
@@ -281,7 +286,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     class TestMassTransitStopService(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService) extends MassTransitStopService {
       override def withDynSession[T](f: => T): T = f
       override def withDynTransaction[T](f: => T): T = f
-      override val tierekisteriClient: TierekisteriClient = mockTierekisteriClient
+      override val tierekisteriClient: TierekisteriMassTransitStopClient = mockTierekisteriClient
       override val massTransitStopDao: MassTransitStopDao = mockMassTransitStopDao
       override val tierekisteriEnabled = true
     }
@@ -291,7 +296,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       when(mockMassTransitStopService.getByNationalId(Matchers.eq(id), anyObject(), anyObject())).thenAnswer(new Answer[Option[Object]] {
         override def answer(invocation: InvocationOnMock): Option[Object] = {
           val transformation: PersistedMassTransitStop => (Object, Object) = invocation.getArguments()(2).asInstanceOf[PersistedMassTransitStop => (Object, Object)]
-          val stop = PersistedMassTransitStop(id, id, id, Nil, 235, 0.0, 0.0, 0.0, None, None, None, false, Modification(None, None), Modification(None, None), Nil)
+          val stop = PersistedMassTransitStop(id, id, id, Nil, 235, 0.0, 0.0, 0.0, None, None, None, false, 0, 1, Modification(None, None), Modification(None, None), Nil)
           Some(transformation(stop)._1)
         }
       })

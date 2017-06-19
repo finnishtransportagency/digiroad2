@@ -12,6 +12,7 @@ import slick.jdbc.StaticQuery.interpolation
 case class RailwayCrossing(id: Long, linkId: Long,
                            lon: Double, lat: Double,
                            mValue: Double, floating: Boolean,
+                           vvhTimeStamp: Long,
                            municipalityCode: Int,
                            safetyEquipment: Int,
                            name: Option[String],
@@ -25,7 +26,7 @@ object OracleRailwayCrossingDao {
   def fetchByFilter(queryFilter: String => String): Seq[RailwayCrossing] = {
     val query =
       s"""
-        select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, a.municipality_code, ev.value,
+        select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code, ev.value,
         tpv.value_fi, a.created_by, a.created_date, a.modified_by, a.modified_date
         from asset a
         join asset_link al on a.id = al.asset_id
@@ -45,6 +46,7 @@ object OracleRailwayCrossingDao {
       val point = r.nextBytesOption().map(bytesToPoint).get
       val mValue = r.nextDouble()
       val floating = r.nextBoolean()
+      val vvhTimeStamp = r.nextLong()
       val municipalityCode = r.nextInt()
       val safetyEquipment = r.nextInt()
       val name = r.nextStringOption()
@@ -53,11 +55,11 @@ object OracleRailwayCrossingDao {
       val modifiedBy = r.nextStringOption()
       val modifiedDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
 
-      RailwayCrossing(id, linkId, point.x, point.y, mValue, floating, municipalityCode, safetyEquipment, name, createdBy, createdDateTime, modifiedBy, modifiedDateTime)
+      RailwayCrossing(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, safetyEquipment, name, createdBy, createdDateTime, modifiedBy, modifiedDateTime)
     }
   }
 
-  def create(asset: IncomingRailwayCrossing, mValue: Double, municipality: Int, username: String): Long = {
+  def create(asset: IncomingRailwayCrossing, mValue: Double, municipality: Int, username: String, adjustedTimestamp: Long): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     sqlu"""
@@ -65,8 +67,8 @@ object OracleRailwayCrossingDao {
         into asset(id, asset_type_id, created_by, created_date, municipality_code)
         values ($id, 230, $username, sysdate, $municipality)
 
-        into lrm_position(id, start_measure, link_id)
-        values ($lrmPositionId, $mValue, ${asset.linkId})
+        into lrm_position(id, start_measure, link_id, adjusted_timestamp)
+        values ($lrmPositionId, $mValue, ${asset.linkId}, $adjustedTimestamp)
 
         into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId)
@@ -79,7 +81,7 @@ object OracleRailwayCrossingDao {
     id
   }
 
-  def update(id: Long, railwayCrossing: IncomingRailwayCrossing, mValue: Double, municipality: Int, username: String) = {
+  def update(id: Long, railwayCrossing: IncomingRailwayCrossing, mValue: Double, municipality: Int, username: String, adjustedTimeStampOption: Option[Long] = None) = {
     sqlu""" update asset set municipality_code = $municipality where id = $id """.execute
     updateAssetModified(id, username).execute
     updateAssetGeometry(id, Point(railwayCrossing.lon, railwayCrossing.lat))
@@ -87,13 +89,25 @@ object OracleRailwayCrossingDao {
     deleteTextProperty(id, getNamePropertyId).execute
     railwayCrossing.name.foreach(insertTextProperty(id, getNamePropertyId, _).execute)
 
-    sqlu"""
-      update lrm_position
-       set
-       start_measure = $mValue,
-       link_id = ${railwayCrossing.linkId}
-       where id = (select position_id from asset_link where asset_id = $id)
-    """.execute
+    adjustedTimeStampOption match {
+      case Some(adjustedTimeStamp) =>
+        sqlu"""
+          update lrm_position
+           set
+           start_measure = $mValue,
+           link_id = ${railwayCrossing.linkId},
+           adjusted_timestamp = ${adjustedTimeStamp}
+           where id = (select position_id from asset_link where asset_id = $id)
+        """.execute
+      case _ =>
+        sqlu"""
+          update lrm_position
+           set
+           start_measure = $mValue,
+           link_id = ${railwayCrossing.linkId}
+           where id = (select position_id from asset_link where asset_id = $id)
+        """.execute
+    }
     id
   }
 

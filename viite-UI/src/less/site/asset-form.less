@@ -282,6 +282,13 @@
     margin-top: 10px;
   }
 
+  .control-label-projects-list {
+    width: @control-label-projects-list-width;
+    vertical-align: middle !important;
+    font-size: @font-size-large;
+    margin-left: 10px;
+  }
+
   .form-control.sub-control {
     width: auto;
   }
@@ -310,16 +317,13 @@
 
 
 #information-content {
-  a {
+  p {
     z-index: 1011;
-    color: @input-color-placeholder-dark;
-    text-decoration: underline;
-  }
-
-  a.incomplete-links, .unknown-speed-limits, .floating-stops, .floating-point-assets {
+    color: @gray-lighter;
     position:absolute;
-    right: 10px;
-    bottom: 145px;
-    text-transform: uppercase;
+    right: 30px;
+    bottom: 130px;
+    font-size:14px;
+    text-align: center;
   }
 }

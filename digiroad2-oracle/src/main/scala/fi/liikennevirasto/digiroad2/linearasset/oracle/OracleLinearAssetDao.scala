@@ -161,7 +161,8 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
         where a.asset_type_id = $assetTypeId and a.id = $id
         """.as[(Long, Double, Double)].list
 
-    val roadLinksByLinkId = vvhClient.fetchByLinkIds(links.map(_._1).toSet)
+    //TODO This sould be done in DAO object
+    val roadLinksByLinkId = vvhClient.roadLinkData.fetchByLinkIds(links.map(_._1).toSet)
 
     links.map { case (linkId, startMeasure, endMeasure) =>
       val vvhRoadLink = roadLinksByLinkId.find(_.linkId == linkId).getOrElse(throw new NoSuchElementException)
@@ -404,8 +405,10 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
   /**
     * Iterates a set of link ids with MaintenanceRoad asset type id and floating flag and returns linear assets. Used by LinearAssetService.getByRoadLinks
     */
-  def fetchMaintenancesByLinkIds(maintenanceRoadAssetTypeId: Int, linkIds: Seq[Long], includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
+  def fetchMaintenancesByLinkIds(maintenanceRoadAssetTypeId: Int, linkIds: Seq[Long], includeFloating: Boolean = false, includeExpire: Boolean = true ): Seq[PersistedLinearAsset] = {
     val floatingFilter = if (includeFloating) "" else "and a.floating = 0"
+    val expiredFilter = if (includeExpire) "" else "and (a.valid_to > sysdate or a.valid_to is null)"
+    val filter = floatingFilter ++ expiredFilter
 
     val assets = MassQuery.withIds(linkIds.toSet) { idTableName =>
       sql"""
@@ -421,7 +424,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
                 join #$idTableName i on i.id = pos.link_id
                 join property p on p.id = t.property_id
           where a.asset_type_id = #$maintenanceRoadAssetTypeId
-            #$floatingFilter
+          #$filter
          union
          select a.id, e.id, e.property_id, cast (e.value as varchar2 (30)), p.property_type, p.public_id, p.required,
                 pos.link_id, pos.side_code,
@@ -436,7 +439,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
                 join #$idTableName i on i.id = pos.link_id
                 join property p on p.id = e.property_id
           where a.asset_type_id = #$maintenanceRoadAssetTypeId
-            #$floatingFilter"""
+          #$filter"""
         .as[(Long, Long, Long, String, String, String, Boolean, Long, Int, Double, Double, Long, Option[DateTime], Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean)].list
     }
 
@@ -617,7 +620,8 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
         where a.asset_type_id = 20 and a.id = $id
         """.as[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[DateTime])].list
 
-    val roadLinksByLinkId = vvhClient.fetchByLinkIds(speedLimits.map(_._2).toSet)
+    //TODO This sould be done in DAO object
+    val roadLinksByLinkId = vvhClient.roadLinkData.fetchByLinkIds(speedLimits.map(_._2).toSet)
 
     speedLimits.map { case (assetId, linkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, geomModifiedDate) =>
       val vvhRoadLink = roadLinksByLinkId.find(_.linkId == linkId).getOrElse(throw new NoSuchElementException)
@@ -753,7 +757,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     */
   def createSpeedLimit(creator: String, linkId: Long, linkMeasures: (Double, Double), sideCode: SideCode, value: Int,
                        vvhTimeStamp: Long, municipalityValidation: (Int) => Unit): Option[Long] = {
-    municipalityValidation(vvhClient.fetchByLinkId(linkId).get.municipalityCode)
+    municipalityValidation(vvhClient.roadLinkData.fetchByLinkId(linkId).get.municipalityCode)
     createSpeedLimitWithoutDuplicates(creator, linkId, linkMeasures, sideCode, value, None, None, None, None)
   }
 
@@ -981,8 +985,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
   /**
     * Creates new linear asset. Return id of new asset. Used by LinearAssetService.createWithoutTransaction
     */
-  def createLinearAsset(typeId: Int, linkId: Long, expired: Boolean, sideCode: Int, startMeasure: Double,
-                        endMeasure: Double, username: String, vvhTimeStamp: Long = 0L,
+  def createLinearAsset(typeId: Int, linkId: Long, expired: Boolean, sideCode: Int, measures: Measures, username: String, vvhTimeStamp: Long = 0L, linkSource: Option[Int],
                         fromUpdate: Boolean = false,
                         createdByFromUpdate: Option[String] = Some(""),
                         createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now())): Long = {
@@ -995,8 +998,8 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
         into asset(id, asset_type_id, created_by, created_date, valid_to, modified_by, modified_date)
         values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $username, CURRENT_TIMESTAMP)
 
-        into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp)
-        values ($lrmPositionId, $startMeasure, $endMeasure, $linkId, $sideCode, CURRENT_TIMESTAMP, $vvhTimeStamp)
+        into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
+        values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, CURRENT_TIMESTAMP, $vvhTimeStamp, $linkSource)
 
         into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId)
@@ -1008,8 +1011,8 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
         into asset(id, asset_type_id, created_by, created_date, valid_to)
       values ($id, $typeId, $username, sysdate, #$validTo)
 
-      into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp)
-      values ($lrmPositionId, $startMeasure, $endMeasure, $linkId, $sideCode, CURRENT_TIMESTAMP, $vvhTimeStamp)
+      into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
+      values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, CURRENT_TIMESTAMP, $vvhTimeStamp, $linkSource)
 
       into asset_link(asset_id, position_id)
       values ($id, $lrmPositionId)
@@ -1102,7 +1105,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
   /**
     *  Updates prohibition value. Used by LinearAssetService.updateWithoutTransaction.
     */
-  def updateProhibitionValue(id: Long, value: Prohibitions, username: String): Option[Long] = {
+  def updateProhibitionValue(id: Long, value: Prohibitions, username: String, optMeasure: Option[Measures] = None ): Option[Long] = {
     Queries.updateAssetModified(id, username).first
 
     val prohibitionValueIds = sql"""select id from PROHIBITION_VALUE where asset_id = $id""".as[Int].list.mkString(",")
@@ -1113,6 +1116,10 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     }
 
     insertProhibitionValue(id, value)
+    optMeasure match {
+      case None => None
+      case Some(measure) => updateMValues(id, (measure.startMeasure, measure.endMeasure))
+    }
     Some(id)
   }
 
@@ -1169,6 +1176,16 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
     */
   def expireAllAssetsByTypeId (typeId: Int): Unit = {
     sqlu"update asset set valid_to = sysdate - 1/86400 where asset_type_id = $typeId".execute
+  }
+
+  /**
+    * When invoked will expire assets by Id.
+    * It is required that the invoker takes care of the transaction.
+    *
+    * @param id Represets the id of the Linear Asset
+    */
+  def expireAssetsById (id: Long): Unit = {
+    sqlu"update asset set valid_to = sysdate - 1/86400 where id = $id".execute
   }
 }
 

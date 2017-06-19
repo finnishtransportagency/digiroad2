@@ -1,9 +1,11 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.asset.AdministrativeClass
-import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
+import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, BoundingRectangle}
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.pointasset.oracle._
-import org.joda.time.DateTime
+import fi.liikennevirasto.digiroad2.user.User
+import org.slf4j.LoggerFactory
 
 case class IncomingObstacle(lon: Double, lat: Double, linkId: Long, obstacleType: Int) extends IncomingPointAsset
 
@@ -22,16 +24,44 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
   override def create(asset: IncomingObstacle, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass] = None): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat, 0), geometry)
     withDynTransaction {
-      OracleObstacleDao.create(asset, mValue, username, municipality)
+      OracleObstacleDao.create(asset, mValue, username, municipality, VVHClient.createVVHTimeStamp(5))
     }
   }
 
   override def update(id: Long, updatedAsset: IncomingObstacle, geometry: Seq[Point], municipality: Int, username: String): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat, 0), geometry)
     withDynTransaction {
-      OracleObstacleDao.update(id, updatedAsset, mValue, username, municipality)
+      OracleObstacleDao.update(id, updatedAsset, mValue, username, municipality, Some(VVHClient.createVVHTimeStamp(5)))
     }
     id
+  }
+
+  override def getByBoundingBox(user: User, bounds: BoundingRectangle) : Seq[PersistedAsset] = {
+    val (roadLinks, changeInfo) = roadLinkService.getRoadLinksAndChangesFromVVH(bounds)
+    super.getByBoundingBox(user, bounds, roadLinks, changeInfo, floatingAdjustment(adjustmentOperation, createOperation))
+  }
+
+  private def createOperation(asset: PersistedAsset, adjustment: AssetAdjustment): PersistedAsset = {
+    createPersistedAsset(asset, adjustment)
+  }
+
+  private def adjustmentOperation(persistedAsset: PersistedAsset, adjustment: AssetAdjustment): Long = {
+    val updated = IncomingObstacle(adjustment.lon, adjustment.lat, adjustment.linkId, persistedAsset.obstacleType)
+    OracleObstacleDao.update(adjustment.assetId, updated, adjustment.mValue, "vvh_generated", persistedAsset.municipalityCode, Some(adjustment.vvhTimeStamp))
+  }
+
+  override def getByMunicipality(municipalityCode: Int): Seq[PersistedAsset] = {
+    val (roadLinks, changeInfo) = roadLinkService.getRoadLinksAndChangesFromVVH(municipalityCode)
+    val mapRoadLinks = roadLinks.map(l => l.linkId -> l).toMap
+    getByMunicipality(municipalityCode, mapRoadLinks, roadLinks, changeInfo, floatingAdjustment(adjustmentOperation, createOperation))
+  }
+
+  private def createPersistedAsset[T](persistedStop: PersistedAsset, asset: AssetAdjustment) = {
+
+    new PersistedAsset(asset.assetId, asset.linkId, asset.lon, asset.lat,
+      asset.mValue, asset.floating, persistedStop.vvhTimeStamp, persistedStop.municipalityCode, persistedStop.obstacleType, persistedStop.createdBy,
+      persistedStop.createdAt, persistedStop.modifiedBy, persistedStop.modifiedAt)
+
   }
 
   def getFloatingObstacles(floating: Int, lastIdUpdate: Long, batchSize: Int): Seq[Obstacle] = {
@@ -41,7 +71,6 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
   def updateFloatingAsset(obstacleUpdated: Obstacle) = {
     OracleObstacleDao.updateFloatingAsset(obstacleUpdated)
   }
-
 }
 
 

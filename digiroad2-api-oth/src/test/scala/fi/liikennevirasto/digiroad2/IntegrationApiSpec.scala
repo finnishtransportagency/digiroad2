@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.asset.{Modification, SideCode, TrafficDirection}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset._
 import org.json4s.{DefaultFormats, Formats}
 import org.mockito.Mockito._
@@ -8,6 +8,7 @@ import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Tag}
 import org.scalatra.test.scalatest.ScalatraSuite
 import org.apache.commons.codec.binary.Base64
+import org.joda.time.DateTime
 import org.json4s.jackson.JsonMethods._
 import org.slf4j.LoggerFactory
 
@@ -15,7 +16,7 @@ import org.slf4j.LoggerFactory
 class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter{
   protected implicit val jsonFormats: Formats = DefaultFormats
   def stopWithLinkId(linkId: Long): PersistedMassTransitStop = {
-    PersistedMassTransitStop(1L, 2L, linkId, Seq(2, 3), 235, 1.0, 1.0, 1, None, None, None, floating = false, Modification(None, None), Modification(None, None), Seq())
+    PersistedMassTransitStop(1L, 2L, linkId, Seq(2, 3), 235, 1.0, 1.0, 1, None, None, None, floating = false, 0, 1, Modification(None, None), Modification(None, None), Seq())
   }
   val mockMassTransitStopService = MockitoSugar.mock[MassTransitStopService]
   when(mockMassTransitStopService.getByMunicipality(235)).thenReturn(Seq(stopWithLinkId(123L), stopWithLinkId(321L)))
@@ -99,7 +100,103 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
       "startMeasure" -> 0,
       "endMeasure" -> 1,
       "linkId" -> 2,
-      "muokattu_viimeksi" -> ""
+      "muokattu_viimeksi" -> "",
+      "generatedValue" -> false
+    )))
+  }
+
+  test("generatedValue returns true if creator is real user and modifier is automatically generated") {
+    integrationApi.speedLimitsToApi(Seq(SpeedLimit(1, 2, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(80)), Nil, 0, 1, Some("dr1conversion"), None, Some("K123456"), None, 0, None))) should be(Seq(Map(
+      "id" -> 1,
+      "sideCode" -> 1,
+      "points" -> Nil,
+      "geometryWKT" -> "",
+      "value" -> 80,
+      "startMeasure" -> 0,
+      "endMeasure" -> 1,
+      "linkId" -> 2,
+      "muokattu_viimeksi" -> "",
+      "generatedValue" -> true
+    )))
+  }
+
+  test("generatedValue returns true if creator is real user and modifier is automatically generated (contains fixed part of auto-generated value)") {
+    integrationApi.speedLimitsToApi(Seq(SpeedLimit(1, 2, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(80)), Nil, 0, 1, Some("split_speedlimit_1234"), None, Some("K123456"), None, 0, None))) should be(Seq(Map(
+      "id" -> 1,
+      "sideCode" -> 1,
+      "points" -> Nil,
+      "geometryWKT" -> "",
+      "value" -> 80,
+      "startMeasure" -> 0,
+      "endMeasure" -> 1,
+      "linkId" -> 2,
+      "muokattu_viimeksi" -> "",
+      "generatedValue" -> true
+    )))
+  }
+
+  test("generatedValue returns true if creator is automatically generated") {
+    integrationApi.speedLimitsToApi(Seq(SpeedLimit(1, 2, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(80)), Nil, 0, 1, None, None, Some("dr1conversion"), None, 0, None))) should be(Seq(Map(
+      "id" -> 1,
+      "sideCode" -> 1,
+      "points" -> Nil,
+      "geometryWKT" -> "",
+      "value" -> 80,
+      "startMeasure" -> 0,
+      "endMeasure" -> 1,
+      "linkId" -> 2,
+      "muokattu_viimeksi" -> "",
+      "generatedValue" -> true
+    )))
+  }
+
+  test("generatedValue returns true if creator is automatically generated (contains fixed part of auto-generated value)") {
+    integrationApi.speedLimitsToApi(Seq(SpeedLimit(1, 2, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(80)), Nil, 0, 1, None, None, Some("split_speedlimit_1234"), None, 0, None))) should be(Seq(Map(
+      "id" -> 1,
+      "sideCode" -> 1,
+      "points" -> Nil,
+      "geometryWKT" -> "",
+      "value" -> 80,
+      "startMeasure" -> 0,
+      "endMeasure" -> 1,
+      "linkId" -> 2,
+      "muokattu_viimeksi" -> "",
+      "generatedValue" -> true
+    )))
+  }
+
+  test("generatedValue returns false if creator is automatically generated and modifier is real user") {
+    integrationApi.speedLimitsToApi(Seq(SpeedLimit(1, 2, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(80)), Nil, 0, 1, Some("K123456"), None, Some("dr1conversion"), None, 0, None))) should be(Seq(Map(
+      "id" -> 1,
+      "sideCode" -> 1,
+      "points" -> Nil,
+      "geometryWKT" -> "",
+      "value" -> 80,
+      "startMeasure" -> 0,
+      "endMeasure" -> 1,
+      "linkId" -> 2,
+      "muokattu_viimeksi" -> "",
+      "generatedValue" -> false
+    )))
+  }
+
+  test("changeType validation returns 'add' if asset is create before the actual date") {
+    val changedSpeedLimits = ChangedSpeedLimit(
+      speedLimit = SpeedLimit(1, 2, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(80)), Nil, 0, 1, Some("modifiedByUser"), None, Some("createdByUser"), Some(DateTime.parse("2017-05-07T12:00Z")), 0, None),
+      link = RoadLink(12345, Seq(), 10.0, Municipality, 5, TrafficDirection.UnknownDirection, SingleCarriageway, None, None))
+
+    integrationApi.speedLimitsChangesToApi(DateTime.parse("2017-05-06T12:00Z"), Seq(changedSpeedLimits)) should be(Seq(Map(
+      "id" -> 1,
+      "sideCode" -> 1,
+      "points" -> Nil,
+      "geometryWKT" -> "",
+      "value" -> 80,
+      "startMeasure" -> 0.0,
+      "endMeasure" -> 1.0,
+      "linkId" -> 2,
+      "muokattu_viimeksi" -> "07.05.2017 12:00:00",
+      "generatedValue" -> false,
+      "changeType" -> "Add"
     )))
   }
 
