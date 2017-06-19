@@ -1,5 +1,5 @@
 (function(root) {
-  root.ProjectChangeTable = function(projectChangeInfoModel) {
+  root.ProjectChangeTable = function(projectChangeInfoModel, projectCollection) {
     var changeTable =
       $('<div class="change-table-frame"></div>');
     // Text about validation success hard-coded now
@@ -21,79 +21,64 @@
     function show(){
       $('.container').append(changeTable.toggle());
       bindEvents();
+      getChanges();
     }
 
     function hide() {
       changeTable.hide();
     }
 
-    // Dummy solution for testing
-    var projectChangeData = {
-      changeType: "Lakkautettu",
-      source_roadNumber: "test",
-      source_trackCode: "test",
-      source_startRoadPartNumber: "test",
-      source_startAddressM: "test",
-      source_endRoadPartNumber: "test",
-      source_endAddressM: "test",
-      target_roadNumber: "test",
-      target_trackCode: "test",
-      target_startRoadPartNumber: "test",
-      target_startAddressM: "test",
-      target_endRoadPartNumber: "test",
-      target_endAddressM: "test",
-      discontinuity: "test",
-      roadType: "test",
-      ely: 99
-    };
+    function getChanges() {
+      var currentProject = projectCollection.getCurrentProject();
+      projectChangeInfoModel.getChanges(currentProject.project.id);
+    }
 
     function bindEvents(){
-
-      var projectChanges = projectChangeInfoModel.getChanges();
-      console.log(projectChanges);
-      var htmlTable =
-        '<table class="change-table">' +
+      eventbus.once('projectChanges:fetched', function(projectChangeData){
+        var htmlTable =
+          '<table class="change-table">' +
           '<tr class="change-table-headers">' +
-            '<td class="project-change-table-dimension-first"></td>'+
-            '<td class="project-change-table-dimension">TIE</td>'+
-            '<td class="project-change-table-dimension">AJR</td>'+
-            '<td class="project-change-table-dimension">AOSA</td>'+
-            '<td class="project-change-table-dimension">AET</td>'+
-            '<td class="project-change-table-dimension">LOSA</td>'+
-            '<td class="project-change-table-dimension">LET</td>'+
-            '<td class="project-change-table-dimension">TIE</td>'+
-            '<td class="project-change-table-dimension">AJR</td>'+
-            '<td class="project-change-table-dimension">AOSA</td>'+
-            '<td class="project-change-table-dimension">AET</td>'+
-            '<td class="project-change-table-dimension">LOSA</td>'+
-            '<td class="project-change-table-dimension">LET</td>'+
-            '<td class="project-change-table-dimension">JATKUU</td>'+
-            '<td class="project-change-table-dimension">TIETYYPPI</td>'+
-            '<td class="project-change-table-dimension">ELY</td>'+
+          '<td class="project-change-table-dimension-first"></td>'+
+          '<td class="project-change-table-dimension">TIE</td>'+
+          '<td class="project-change-table-dimension">AJR</td>'+
+          '<td class="project-change-table-dimension">AOSA</td>'+
+          '<td class="project-change-table-dimension">AET</td>'+
+          '<td class="project-change-table-dimension">LOSA</td>'+
+          '<td class="project-change-table-dimension">LET</td>'+
+          '<td class="project-change-table-dimension">TIE</td>'+
+          '<td class="project-change-table-dimension">AJR</td>'+
+          '<td class="project-change-table-dimension">AOSA</td>'+
+          '<td class="project-change-table-dimension">AET</td>'+
+          '<td class="project-change-table-dimension">LOSA</td>'+
+          '<td class="project-change-table-dimension">LET</td>'+
+          '<td class="project-change-table-dimension">JATKUU</td>'+
+          '<td class="project-change-table-dimension">TIETYYPPI</td>'+
+          '<td class="project-change-table-dimension">ELY</td>'+
           '</tr>';
-          // TODO: Get every change object from backend and loop rows
+        _.each(projectChangeData.changeInfoSeq, function(changeInfoSeq) {
           htmlTable += '<tr class="change-table-data-row">' +
-            '<td class="project-change-table-dimension-first">' + projectChangeData.changeType + '</td>'+
-            '<td class="project-change-table-data-cell">' + projectChangeData.source_roadNumber + '</td>'+
-            '<td class="project-change-table-data-cell">' + projectChangeData.source_trackCode + '</td>'+
-            '<td class="project-change-table-data-cell">' + projectChangeData.source_startRoadPartNumber + '</td>'+
-            '<td class="project-change-table-data-cell">' + projectChangeData.source_startAddressM + '</td>'+
-            '<td class="project-change-table-data-cell">' + projectChangeData.source_endRoadPartNumber + '</td>'+
-            '<td class="project-change-table-data-cell">' + projectChangeData.source_endAddressM + '</td>'+
-            '<td class="project-change-table-data-cell">' + projectChangeData.target_roadNumber + '</td>'+
-            '<td class="project-change-table-data-cell">' + projectChangeData.target_trackCode + '</td>'+
-            '<td class="project-change-table-data-cell">' + projectChangeData.target_startRoadPartNumber + '</td>'+
-            '<td class="project-change-table-data-cell">' + projectChangeData.target_startAddressM + '</td>'+
-            '<td class="project-change-table-data-cell">' + projectChangeData.target_endRoadPartNumber + '</td>'+
-            '<td class="project-change-table-data-cell">' + projectChangeData.target_endAddressM + '</td>'+
-            '<td class="project-change-table-data-cell">' + projectChangeData.discontinuity + '</td>'+
-            '<td class="project-change-table-data-cell">' + projectChangeData.roadType + '</td>'+
-            '<td class="project-change-table-data-cell">' + projectChangeData.ely + '</td>'+
+            '<td class="project-change-table-dimension-first">' + changeInfoSeq.changeType + '</td>' +
+            '<td class="project-change-table-data-cell">' + changeInfoSeq.source.roadNumber + '</td>' +
+            '<td class="project-change-table-data-cell">' + changeInfoSeq.source.trackCode + '</td>' +
+            '<td class="project-change-table-data-cell">' + changeInfoSeq.source.startRoadPartNumber + '</td>' +
+            '<td class="project-change-table-data-cell">' + changeInfoSeq.source.startAddressM + '</td>' +
+            '<td class="project-change-table-data-cell">' + changeInfoSeq.source.endRoadPartNumber + '</td>' +
+            '<td class="project-change-table-data-cell">' + changeInfoSeq.source.endAddressM + '</td>' +
+            '<td class="project-change-table-data-cell">' + changeInfoSeq.target.roadNumber + '</td>' +
+            '<td class="project-change-table-data-cell">' + changeInfoSeq.target.trackCode + '</td>' +
+            '<td class="project-change-table-data-cell">' + changeInfoSeq.target.startRoadPartNumber + '</td>' +
+            '<td class="project-change-table-data-cell">' + changeInfoSeq.target.startAddressM + '</td>' +
+            '<td class="project-change-table-data-cell">' + changeInfoSeq.target.endRoadPartNumber + '</td>' +
+            '<td class="project-change-table-data-cell">' + changeInfoSeq.target.endAddressM + '</td>' +
+            '<td class="project-change-table-data-cell">' + changeInfoSeq.discontinuity + '</td>' +
+            '<td class="project-change-table-data-cell">' + changeInfoSeq.roadType + '</td>' +
+            '<td class="project-change-table-data-cell">' + projectChangeData.ely + '</td>' +
             '</tr>';
-
+        });
         htmlTable += '</table>';
 
-      $('.project-changes').html($(htmlTable));
+        $('.project-changes').html($(htmlTable));
+      });
 
       changeTable.on('click', 'button.close', function (){
         hide();
