@@ -132,8 +132,8 @@ Huomioita csv-tiedostosta:
 - Tiedoston tulee sis&auml;lt&auml;&auml; kaikki tietokent&auml;t, vaikka niit&auml; ei p&auml;ivitett&auml;isik&auml;&auml;n. Esimerkki:
 
 ```
-Valtakunnallinen ID;Pys&auml;kin nimi;Pys&auml;kin nimi ruotsiksi;Tietojen yll&auml;pit&auml;j&auml;;Liikenn&ouml;intisuunta;Yll&auml;pit&auml;j&auml;n tunnus;LiVi-tunnus;Matkustajatunnus;Pys&auml;kin tyyppi;Aikataulu;Katos;Mainoskatos;Penkki;Py&ouml;r&auml;teline;S&auml;hk&ouml;inen aikataulun&auml;ytt&ouml;;Valaistus;Saattomahdollisuus henkil&ouml;autolla;Lis&auml;tiedot;Korotettu;Roska-astia
-165280;pys&auml;kin nimi;stops namn;1;etel&auml;&auml;n;HSL321;LIVI098;09876;2,4;1;2;1;99;2;1;2;1;;; Lis&auml;tietokentt&auml;&auml;n saa sy&ouml;tt&auml;&auml; vapaata teksti&auml;, joka saa sis&auml;lt&auml;&auml; merkkej&auml;(;:!(&), numeroita(1234) ja kirjaimia(AMSKD).
+Valtakunnallinen ID;Pysäkin nimi;Pysäkin nimi ruotsiksi;Tietojen ylläpitäjä;Liikennöintisuunta;Ylläpitäjän tunnus;LiVi-tunnus;Matkustajatunnus;Pysäkin tyyppi;Aikataulu;Katos;Mainoskatos;Penkki;Pyöräteline;Sähköinen aikataulunäyttö;Valaistus;Saattomahdollisuus henkilöautolla;Lisätiedot;Korotettu;Roska-astia
+165280;pysäkin nimi;stops namn;1;etelään;HSL321;LIVI098;09876;2,4;1;2;1;99;2;1;2;1;;; Lisätietokenttään saa syöttää vapaata tekstiä, joka saa sisältää merkkejä(;:!(&), numeroita(1234) ja kirjaimia(AMSKD).
 ```
 - Tiedot on eroteltu puolipisteell&auml; (;).
 - Nimi suomeksi ja ruotsiksi, liikenn&ouml;intisuunta, yll&auml;pit&auml;j&auml;n tunnus, LiVi-tunnus ja matkustajatunnus luetaan merkkijonona.
