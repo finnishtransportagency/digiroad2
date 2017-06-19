@@ -217,12 +217,6 @@ class MassTransitStopDao {
     """.as[String].first
   }
 
-//  def getLinkSource(roadLinkId: Int): Int ={
-//    sql"""SELECT lrm_position.link_source
-//       |FROM lrm_position
-//       |INNER JOIN asset_link ON lrm_position.id = asset_link.position_id WHERE asset_link.ASSET_ID = $roadLinkId""".as[Int].first
-//  }
-
   def propertyDefaultValues(assetTypeId: Long): List[SimpleProperty] = {
     implicit val getDefaultValue = new GetResult[SimpleProperty] {
       def apply(r: PositionedResult) = {
