@@ -8,7 +8,8 @@
     var selectedProjectLinkProperty = new SelectedProjectLink(roadAddressProjectCollection);
     var linkPropertiesModel = new LinkPropertiesModel();
     var instructionsPopup = new InstructionsPopup($('.digiroad2'));
-    var projectChangeTable = new ProjectChangeTable();
+    var projectChangeInfoModel = new ProjectChangeInfoModel(backend);
+    var projectChangeTable = new ProjectChangeTable(projectChangeInfoModel);
 
     var models = {
       roadCollection: roadCollection,

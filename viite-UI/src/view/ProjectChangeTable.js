@@ -1,5 +1,5 @@
 (function(root) {
-  root.ProjectChangeTable = function() {
+  root.ProjectChangeTable = function(projectChangeInfoModel) {
     var changeTable =
       $('<div class="change-table-frame"></div>');
     // Text about validation success hard-coded now
@@ -49,6 +49,8 @@
 
     function bindEvents(){
 
+      var projectChanges = projectChangeInfoModel.getChanges();
+      console.log(projectChanges);
       var htmlTable =
         '<table class="change-table">' +
           '<tr class="change-table-headers">' +
