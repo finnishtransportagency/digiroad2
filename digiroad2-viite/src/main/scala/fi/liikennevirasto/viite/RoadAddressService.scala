@@ -106,7 +106,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val complementedRoadLinks = roadLinks++complementaryLinks
 
     //TODO use complementedRoadLinks instead of only roadLinks below. There is no complementary ids for changeInfo dealing (for now)
-    val changedRoadLinks = roadLinkService.getChangeInfoFromVVH(boundingRectangle, municipalities).partition(crl => roadLinks.contains(crl.oldId.get))._1
+    val changedRoadLinks = roadLinkService.getChangeInfoFromVVH(boundingRectangle, municipalities)
 
     val linkIds = complementedRoadLinks.map(_.linkId).toSet
     val fetchVVHEndTime = System.currentTimeMillis()
@@ -153,7 +153,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   //TODO 475 move it to new object class RoadAddressChangeInfoMapper
   def resolveChanges(roadlinks: Seq[RoadLink], changedRoadLinks: Seq[ChangeInfo], addresses: Map[Long, Seq[RoadAddress]]): Map[Long, Seq[RoadAddress]] = {
-    val changesWithRoadAddresses = addresses.values.map{adr => matchChangesWithRoadAddresses(adr, changedRoadLinks)}
+    val changesWithRoadAddresses = matchChangesWithRoadAddresses(addresses.flatMap(_._2).asInstanceOf[Seq[RoadAddress]], changedRoadLinks)
     changedRoadLinks.map(crl =>
       crl.changeType match {
         case 1 => Map()
