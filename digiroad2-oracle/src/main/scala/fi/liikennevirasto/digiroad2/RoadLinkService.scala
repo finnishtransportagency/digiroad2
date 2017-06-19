@@ -454,6 +454,13 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }
   }
 
+  def checkMMLId(vvhRoadLink: VVHRoadlink) : Option[Long] = {
+    vvhRoadLink.attributes.contains("MTKID") match {
+      case true => Some(vvhRoadLink.attributes("MTKID").asInstanceOf[BigInt].longValue())
+      case false => None
+    }
+  }
+
   /**
     * Saves road link property data from UI. Used by Digiroad2Api /linkproperties PUT endpoint.
     */
@@ -466,10 +473,10 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     vvhRoadLink.map { vvhRoadLink =>
       municipalityValidation(vvhRoadLink.municipalityCode)
       withDynTransaction {
-        setLinkProperty("traffic_direction", "traffic_direction", direction.value, linkId, username, Some(vvhRoadLink.trafficDirection.value), None, None)
-        if (functionalClass != FunctionalClass.Unknown) setLinkProperty("functional_class", "functional_class", functionalClass, linkId, username, None, None, None)
-        if (linkType != UnknownLinkType) setLinkProperty("link_type", "link_type", linkType.value, linkId, username, None, None, None)
-        setLinkProperty("administrative_class", "administrative_class", administrativeClass.value, linkId, username, None, None, None)
+        setLinkProperty("traffic_direction", "traffic_direction", "", direction.value, linkId, username, Some(vvhRoadLink.trafficDirection.value), None, None, None)
+        if (functionalClass != FunctionalClass.Unknown) setLinkProperty("functional_class", "functional_class", "", functionalClass, linkId, username, None, None, None, None)
+        if (linkType != UnknownLinkType) setLinkProperty("link_type", "link_type", "", linkType.value, linkId, username, None, None, None, None)
+        setLinkProperty("administrative_class", "administrative_class", "vvh_administrative_class", administrativeClass.value, linkId, username, None, None, None, checkMMLId(vvhRoadLink))
         val enrichedLink = enrichRoadLinksFromVVH(Seq(vvhRoadLink)).head
         if (enrichedLink.functionalClass != FunctionalClass.Unknown && enrichedLink.linkType != UnknownLinkType) {
           removeIncompleteness(linkId)
@@ -486,28 +493,33 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     vvhClient.fetchByLinkId(id).map(_.geometry)
   }
 
-  protected def setLinkProperty(table: String, column: String, value: Int, linkId: Long, username: Option[String],
+  protected def setLinkProperty(table: String, column: String, vvhColumn: String, value: Int, linkId: Long, username: Option[String],
                                 optionalVVHValue: Option[Int] = None, latestModifiedAt: Option[String],
-                                latestModifiedBy: Option[String]) = {
+                                latestModifiedBy: Option[String], mmlId: Option[Long]) = {
     val optionalExistingValue: Option[Int] = RoadLinkServiceDAO.getLinkProperty(table, column, linkId)
     (optionalExistingValue, optionalVVHValue) match {
       case (Some(existingValue), _) =>
-        RoadLinkServiceDAO.updateExistingLinkPropertyRow(table, column, linkId, username, existingValue, value)
-
+        vvhColumn.isEmpty match{
+          case true => RoadLinkServiceDAO.updateExistingLinkPropertyRow(table, column, linkId, username, existingValue, value, mmlId)
+          case _ => RoadLinkServiceDAO.updateExistingLinkPropertyRowWithVVHColumn(table, column, vvhColumn, linkId, username, existingValue, value, mmlId, optionalVVHValue)
+        }
       case (None, None) =>
-        insertLinkProperty(optionalExistingValue, optionalVVHValue, table, column, linkId, username, value, latestModifiedAt, latestModifiedBy)
+        insertLinkProperty(optionalExistingValue, optionalVVHValue, table, column, vvhColumn, linkId, username, value, latestModifiedAt, latestModifiedBy, mmlId)
 
       case (None, Some(vvhValue)) =>
         if (vvhValue != value) // only save if it overrides VVH provided value
-          insertLinkProperty(optionalExistingValue, optionalVVHValue, table, column, linkId, username, value, latestModifiedAt, latestModifiedBy)
+          insertLinkProperty(optionalExistingValue, optionalVVHValue, table, column, vvhColumn, linkId, username, value, latestModifiedAt, latestModifiedBy, mmlId)
     }
   }
 
   private def insertLinkProperty(optionalExistingValue: Option[Int], optionalVVHValue: Option[Int], table: String,
-                                 column: String, linkId: Long, username: Option[String], value: Int, latestModifiedAt: Option[String],
-                                 latestModifiedBy: Option[String]) = {
+                                 column: String, vvhColumn: String, linkId: Long, username: Option[String], value: Int, latestModifiedAt: Option[String],
+                                 latestModifiedBy: Option[String], mmlId: Option[Long]) = {
     if (latestModifiedAt.isEmpty) {
-      RoadLinkServiceDAO.insertNewLinkProperty(table, column, linkId, username, value)
+      vvhColumn.isEmpty match{
+        case true => RoadLinkServiceDAO.insertNewLinkProperty(table, column, linkId, username, value, mmlId)
+        case _ => RoadLinkServiceDAO.insertNewLinkPropertyWithVVHColumn(table, column, vvhColumn, linkId, username, value, mmlId, optionalVVHValue)
+      }
     } else{
       try {
         var parsedDate = ""
@@ -730,11 +742,12 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       val vvhTrafficDirection = vvhRoadLink.map(v => v.trafficDirection.value)
       // Separate auto-generated links from change info links: username should be empty for change info links
       val username = createUsernameForAutogenerated(roadLink.modifiedBy)
+      val mmlId = vvhRoadLink.map( v => checkMMLId(v)).get
 
-      if (roadLink.trafficDirection != TrafficDirection.UnknownDirection)  setLinkProperty("traffic_direction", "traffic_direction", roadLink.trafficDirection.value, roadLink.linkId, None, vvhTrafficDirection, roadLink.modifiedAt, roadLink.modifiedBy)
-      if (roadLink.functionalClass != FunctionalClass.Unknown) setLinkProperty("functional_class", "functional_class", roadLink.functionalClass, roadLink.linkId, username, None, roadLink.modifiedAt, roadLink.modifiedBy)
-      if (roadLink.linkType != UnknownLinkType) setLinkProperty("link_type", "link_type", roadLink.linkType.value, roadLink.linkId, username, None, roadLink.modifiedAt, roadLink.modifiedBy)
-      if (roadLink.administrativeClass != Unknown) setLinkProperty("administrative_class", "administrative_class", roadLink.administrativeClass.value, roadLink.linkId, username, None, roadLink.modifiedAt, roadLink.modifiedBy)
+      if (roadLink.trafficDirection != TrafficDirection.UnknownDirection)  setLinkProperty("traffic_direction", "traffic_direction", "", roadLink.trafficDirection.value, roadLink.linkId, None, vvhTrafficDirection, roadLink.modifiedAt, roadLink.modifiedBy, None)
+      if (roadLink.functionalClass != FunctionalClass.Unknown) setLinkProperty("functional_class", "functional_class", "", roadLink.functionalClass, roadLink.linkId, username, None, roadLink.modifiedAt, roadLink.modifiedBy, None)
+      if (roadLink.linkType != UnknownLinkType) setLinkProperty("link_type", "link_type", "", roadLink.linkType.value, roadLink.linkId, username, None, roadLink.modifiedAt, roadLink.modifiedBy, None)
+      if (roadLink.administrativeClass != Unknown) setLinkProperty("administrative_class", "administrative_class", "vvh_administrative_class", roadLink.administrativeClass.value, roadLink.linkId, username, None, roadLink.modifiedAt, roadLink.modifiedBy, mmlId)
     }
     withDynTransaction {
       adjustedRoadLinks.foreach(updateProperties)
@@ -928,7 +941,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
         propertyRows.functionalClassValue(linkId),
         propertyRows.linkTypeValue(linkId),
         propertyRows.trafficDirectionValue(linkId).getOrElse(TrafficDirection.UnknownDirection),
-        propertyRows.administrativeClassValue(linkId).getOrElse(Unknown), //TODO check if this get or else is ok
+        propertyRows.administrativeClassValue(linkId).getOrElse(Unknown),
         modifiedAt.map(DateTimePropertyFormat.print),
         modifiedBy)
     }
