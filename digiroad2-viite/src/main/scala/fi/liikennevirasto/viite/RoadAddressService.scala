@@ -116,8 +116,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     //pure linkId based queries, maybe something related to the zoomLevel we are in map level.
     val fetchMissingRoadAddressStartTime = System.currentTimeMillis()
     val (floatingViiteRoadLinks, addresses, floating) = Await.result(fetchRoadAddressesByBoundingBoxF, Duration.Inf)
-    val resolveChanges = combineChangesByType(complementedRoadLinks, changedRoadLinks, addresses)
-    val missingLinkIds = linkIds -- floating.keySet -- addresses.keySet
+    val complementedWithChangeAddresses = resolveChanges(complementedRoadLinks, changedRoadLinks, addresses)
+    val missingLinkIds = linkIds -- floating.keySet -- complementedWithChangeAddresses.keySet
 
     val missedRL = withDynTransaction {
       RoadAddressDAO.getMissingRoadAddresses(missingLinkIds)
@@ -130,7 +130,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val buildStartTime = System.currentTimeMillis()
     val viiteRoadLinks = complementedRoadLinks.map { rl =>
       val floaters = changedFloating.getOrElse(rl.linkId, Seq())
-      val ra = addresses.getOrElse(rl.linkId, Seq())
+      val ra = complementedWithChangeAddresses.getOrElse(rl.linkId, Seq())
       val missed = missedRL.getOrElse(rl.linkId, Seq())
       rl.linkId -> buildRoadAddressLink(rl, ra, missed, floaters)
     }.toMap
@@ -151,17 +151,16 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   }
 
-  //TODO 475
-  //todo move it to new object class RoadAddressChangeInfoMapper
-  def combineChangesByType(roadlinks: Seq[RoadLink], changedRoadLinks: Seq[ChangeInfo], addresses: Map[Long, Seq[RoadAddress]]): Seq[RoadAddressLink] = {
+  //TODO 475 move it to new object class RoadAddressChangeInfoMapper
+  def resolveChanges(roadlinks: Seq[RoadLink], changedRoadLinks: Seq[ChangeInfo], addresses: Map[Long, Seq[RoadAddress]]): Map[Long, Seq[RoadAddress]] = {
     changedRoadLinks.map(crl =>
       crl.changeType match {
-        case 1 => Seq.empty[RoadAddressLink]
-        case 2 => Seq.empty[RoadAddressLink]
-        case _ => Seq.empty[RoadAddressLink]
+        case 1 => Map()
+        case 2 => Map()
+        case _ => Map()
       }
     )
-    Seq.empty[RoadAddressLink]
+    Map()
   }
 
   /**
