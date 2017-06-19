@@ -57,11 +57,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   private def fetchRoadLinksWithComplementary(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
-                                              everything: Boolean = false, publicRoads: Boolean = false): (Seq[RoadLink], Set[Long]) = {
+                                              everything: Boolean = false, publicRoads: Boolean = false): (Seq[RoadLink], Seq[RoadLink]) = {
     val roadLinksF = Future(roadLinkService.getViiteRoadLinksFromVVH(boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads))
     val complementaryLinksF = Future(roadLinkService.getComplementaryRoadLinksFromVVH(boundingRectangle, municipalities))
     val (roadLinks, complementaryLinks) = Await.result(roadLinksF.zip(complementaryLinksF), Duration.Inf)
-    (roadLinks ++ complementaryLinks, complementaryLinks.map(_.linkId).toSet)
+    (roadLinks, complementaryLinks)
   }
 
   private def fetchRoadAddressesByBoundingBox(boundingRectangle: BoundingRectangle, fetchOnlyFloating: Boolean = false) = {
@@ -101,16 +101,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
     val fetchRoadAddressesByBoundingBoxF = Future(fetchRoadAddressesByBoundingBox(boundingRectangle))
     val fetchVVHStartTime = System.currentTimeMillis()
-    //TODO maybe split complementedRoadLinks in (roadLinks, complementaryRoadLinks) and get rid of complementaryLinkIds. Pluck them linkids after (if needed)
-    val (complementedRoadLinks, complementaryLinkIds) = fetchRoadLinksWithComplementary(boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads)
-    val changedRoadLinks = roadLinkService.getChangeInfoFromVVH(boundingRectangle, municipalities).partition(crl => complementaryLinkIds.contains(crl.oldId.get))._1
-    //TODO move resolveChangesByType to somewhere else
-    val resolveChangesByType = changedRoadLinks.map(crl =>
-      crl.changeType match {
-        case 1 => //TODO procced acording to changeType
-        case _ =>
-      }
-    )
+    val (roadLinks, complementaryLinks) = fetchRoadLinksWithComplementary(boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads)
+    val complementaryLinkIds = complementaryLinks.map(_.linkId)
+    val complementedRoadLinks = roadLinks++complementaryLinks
+
+    //TODO use complementedRoadLinks instead of only roadLinks below. There is no complementary ids for changeInfo dealing (for now)
+    val changedRoadLinks = roadLinkService.getChangeInfoFromVVH(boundingRectangle, municipalities).partition(crl => roadLinks.contains(crl.oldId.get))._1
 
     val linkIds = complementedRoadLinks.map(_.linkId).toSet
     val fetchVVHEndTime = System.currentTimeMillis()
@@ -120,6 +116,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     //pure linkId based queries, maybe something related to the zoomLevel we are in map level.
     val fetchMissingRoadAddressStartTime = System.currentTimeMillis()
     val (floatingViiteRoadLinks, addresses, floating) = Await.result(fetchRoadAddressesByBoundingBoxF, Duration.Inf)
+    val resolveChangesByType = combineChanges(changedRoadLinks, addresses)
     val missingLinkIds = linkIds -- floating.keySet -- addresses.keySet
 
     val missedRL = withDynTransaction {
@@ -152,6 +149,19 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
     returningTopology ++ missingFloating.flatMap(_._2)
 
+  }
+
+  //TODO 475
+  def combineChanges(changedRoadLinks: Seq[ChangeInfo], addresses: Map[Long, Seq[RoadAddress]]): Seq[RoadAddressLink] = {
+    changedRoadLinks.map(crl =>
+      crl.changeType match {
+        //TODO procced acording to changeType
+        case 1 => Seq.empty[RoadAddressLink]
+        case 2 => Seq.empty[RoadAddressLink]
+        case _ => Seq.empty[RoadAddressLink]
+      }
+    )
+    Seq.empty[RoadAddressLink]
   }
 
   /**
@@ -617,6 +627,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     * The criteria for the annexation is the following:
     *   .The changeInfo vvhTimestamp must be bigger than the RoadAddress vvhTimestamp
     *   .Either the newId or the oldId from the Changeinfo must be equal to the linkId in the RoadAddress
+    *
     * @param roadAddresses - Sequence of RoadAddresses
     * @param changes - Sequence of ChangeInfo
     * @return List of (RoadAddress, List of ChangeInfo)
