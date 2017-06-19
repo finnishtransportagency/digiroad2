@@ -153,6 +153,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   //TODO 475 move it to new object class RoadAddressChangeInfoMapper
   def resolveChanges(roadlinks: Seq[RoadLink], changedRoadLinks: Seq[ChangeInfo], addresses: Map[Long, Seq[RoadAddress]]): Map[Long, Seq[RoadAddress]] = {
+    val changesWithRoadAddresses = addresses.values.map{adr => matchChangesWithRoadAddresses(adr, changedRoadLinks)}
     changedRoadLinks.map(crl =>
       crl.changeType match {
         case 1 => Map()
