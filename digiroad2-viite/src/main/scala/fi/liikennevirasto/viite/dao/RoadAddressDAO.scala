@@ -154,8 +154,8 @@ object RoadAddressDAO {
                            startAddrMValue: Long, endAddrMValue: Long, sideCode: SideCode): (Option[CalibrationPoint], Option[CalibrationPoint]) = {
     sideCode match {
       case BothDirections => (None, None) // Invalid choice
-      case TowardsDigitizing => calibrations(calibrationCode, linkId, 0.0, endMValue-startMValue, startAddrMValue, endAddrMValue)
-      case AgainstDigitizing => calibrations(calibrationCode, linkId, endMValue-startMValue, 0.0, startAddrMValue, endAddrMValue)
+      case TowardsDigitizing => calibrations(calibrationCode, linkId, 0.0, Math.max(startMValue, endMValue), startAddrMValue, endAddrMValue)
+      case AgainstDigitizing => calibrations(calibrationCode, linkId, Math.max(startMValue, endMValue), 0.0, startAddrMValue, endAddrMValue)
       case Unknown => (None, None)  // Invalid choice
     }
   }

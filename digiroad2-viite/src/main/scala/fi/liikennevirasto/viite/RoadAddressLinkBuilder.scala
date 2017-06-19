@@ -223,6 +223,17 @@ object RoadAddressLinkBuilder {
     latestDateString
   }
 
+  def prettyPrint(l: RoadAddress): String = {
+
+    s"""${if (l.id == -1000) { "NEW!" } else { l.id }} link: ${l.linkId} ${setPrecision(l.startMValue)}-${setPrecision(l.endMValue)} road address: ${l.roadNumber}/${l.roadPartNumber}/${l.track.value}/${l.startAddrMValue}-${l.endAddrMValue} length: ${setPrecision(l.endMValue - l.startMValue)} dir: ${l.sideCode}
+       |${if (l.startCalibrationPoint.nonEmpty) { " <- " + l.startCalibrationPoint.get.addressMValue + " "} else ""}
+       |${if (l.endCalibrationPoint.nonEmpty) { " " + l.endCalibrationPoint.get.addressMValue + " ->"} else ""}
+     """.stripMargin.replace("\n", "")
+  }
+
+  private def setPrecision(d: Double) = {
+    BigDecimal(d).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
+  }
   /**
     * Fuse recursively
     *
@@ -231,6 +242,11 @@ object RoadAddressLinkBuilder {
     * @return road addresses fused in reverse order
     */
   private def fuseRoadAddressInGroup(unprocessed: Seq[RoadAddress], ready: Seq[RoadAddress] = Nil): Seq[RoadAddress] = {
+    println("ready:")
+    ready.map(prettyPrint).foreach(println)
+    println("unprocessed:")
+    unprocessed.map(prettyPrint).foreach(println)
+
     if (ready.isEmpty)
       fuseRoadAddressInGroup(unprocessed.tail, Seq(unprocessed.head))
     else if (unprocessed.isEmpty)

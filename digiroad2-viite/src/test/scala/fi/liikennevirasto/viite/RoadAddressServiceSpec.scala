@@ -690,26 +690,26 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     runWithRollback {
       val targetLinkData = createRoadAddressLink(0L, 1392315L, Seq(Point(336973.635, 7108605.965), Point(336994.491, 7108726.504)), 0, 0, 0, 0, 0, SideCode.Unknown,
         Anomaly.NoAddressGiven)
-      val geom = Seq(Point(336991.162, 7108706.098), Point(336994.4909960086, 7108726.503976283))
-      val sourceLinkData0 = createRoadAddressLink(Sequences.nextViitePrimaryKeySeqValue, 1392315L, Seq(Point(336973.635, 7108605.965), Point(336994.491, 7108726.504)), 8, 412, 2, 3045, 3148, SideCode.TowardsDigitizing,
+      val geom = Seq(Point(336991.162, 7108706.098), Point(336994.491, 7108726.504))
+      val sourceLinkData0 = createRoadAddressLink(Sequences.nextViitePrimaryKeySeqValue, 1392315L, Seq(Point(336973.635, 7108605.965), Point(336991.633, 7108709.155)), 8, 412, 2, 3045, 3148, SideCode.TowardsDigitizing,
         Anomaly.GeometryChanged, true, false)
       val sourceLinkData1 = createRoadAddressLink(Sequences.nextViitePrimaryKeySeqValue, 1392326L, GeometryUtils.truncateGeometry2D(geom, 0.0, 15.753), 8, 412, 2, 3148, 3164, SideCode.TowardsDigitizing,
         Anomaly.None)
       val sourceLinkData2 = createRoadAddressLink(Sequences.nextViitePrimaryKeySeqValue, 1392326L, GeometryUtils.truncateGeometry2D(geom, 15.753, 20.676), 8, 412, 2, 3164, 3169, SideCode.TowardsDigitizing,
-        Anomaly.None)
+        Anomaly.None, false, true)
       val sourceLinkDataC = createRoadAddressLink(Sequences.nextViitePrimaryKeySeqValue, 1392326L, geom, 0, 0, 0, 0, 0, SideCode.Unknown,
         Anomaly.NoAddressGiven)
       val sourceLinks = Seq(sourceLinkData0, sourceLinkData1, sourceLinkData2).map(_.copy(roadLinkType = FloatingRoadLinkType))
       val historyLinks = Seq(sourceLinkData0, sourceLinkDataC).map(roadAddressLinkToHistoryLink)
       val targetLinks = Seq(targetLinkData)
       val roadAddressSeq = sourceLinks.map(roadAddressLinkToRoadAddress(true)).map{ ra =>
-        if (ra.startAddrMValue == 3148)
-          ra.copy(startMValue = 4.923, endMValue = 20.676)
+        if (ra.startAddrMValue == 3164)
+          ra.copy(startMValue = 15.753, endMValue = 20.676,
+            calibrationPoints = (None, ra.calibrationPoints._2.map(_.copy(segmentMValue = 20.676))))
         else
           ra
       }
       RoadAddressDAO.create(roadAddressSeq)
-
       // pre-checks
       RoadAddressDAO.fetchByLinkId(Set(1392315L, 1392326L), true) should have size (3)
       RoadAddressDAO.fetchByLinkId(Set(1392315L, 1392326L), true).foreach(println)
@@ -724,12 +724,11 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
       val transferred = RoadAddressDAO.fetchByLinkId(Set(1392315L, 1392326L), false)
       transferred should have size (1)
-      println(transferred.head)
       transferred.head.linkId should be (1392315L)
       transferred.head.roadNumber should be (8)
       transferred.head.roadPartNumber should be (412)
       transferred.head.track.value should be (2)
-      transferred.head.endCalibrationPoint should be (None)
+      transferred.head.endCalibrationPoint.isEmpty should be (false)
       transferred.head.startCalibrationPoint.isEmpty should be (false)
       transferred.head.startAddrMValue should be (3045)
       transferred.head.endAddrMValue should be (3169)
