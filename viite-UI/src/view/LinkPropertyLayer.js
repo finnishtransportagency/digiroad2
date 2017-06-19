@@ -526,8 +526,6 @@
             floatingMarkerLayer.getSource().addFeature(marker);
         });
 
-        var directionRMIds = _.pluck(directionRoadMarker, 'linkId');
-
         _.each(directionRoadMarker, function(directionlink) {
           var marker = cachedMarker.createMarker(directionlink);
           if(applicationModel.getCurrentAction() !== applicationModel.actionCalculated && !_.contains(linkIdsToRemove,marker.roadLinkData.linkId))
