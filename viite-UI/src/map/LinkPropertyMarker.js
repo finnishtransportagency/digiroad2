@@ -30,7 +30,7 @@
         if(rl.roadClass in colorMap){
           return new ol.style.Style({
             image: new ol.style.Icon({
-              rotation: rl.sideCode === 3 ? middlePoint.angleFromNorth * Math.PI / 180 + Math.PI : middlePoint.angleFromNorth * Math.PI / 180,
+              rotation: rl.trackCode === 2 ? middlePoint.angleFromNorth * Math.PI / 180 + Math.PI : middlePoint.angleFromNorth * Math.PI / 180,
               src: "images/link-properties/arrow-drop-"+colorMap[rl.roadClass]+".svg"
             }),
             zIndex: 10
@@ -38,7 +38,7 @@
         } else {
           return new ol.style.Style({
             image: new ol.style.Icon({
-              rotation: rl.sideCode === 3 ? middlePoint.angleFromNorth * Math.PI / 180 + Math.PI : middlePoint.angleFromNorth * Math.PI / 180,
+              rotation: rl.trackCode === 2 ? middlePoint.angleFromNorth * Math.PI / 180 + Math.PI : middlePoint.angleFromNorth * Math.PI / 180,
               src: "images/link-properties/arrow-drop-grey.svg"
             }),
             zIndex: 10
