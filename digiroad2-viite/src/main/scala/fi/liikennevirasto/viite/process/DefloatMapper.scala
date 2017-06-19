@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, RoadLinkType}
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, RoadLinkType, VVHClient}
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.viite.switchSideCode
 import fi.liikennevirasto.viite.dao.RoadAddress
@@ -119,7 +119,8 @@ object DefloatMapper {
       }
       ra.copy(id = NewRoadAddress, linkId = adjMap.targetLinkId, startAddrMValue = startCP.map(_.addressMValue).getOrElse(startAddrM),
         endAddrMValue = endCP.map(_.addressMValue).getOrElse(endAddrM), floating = false,
-        sideCode = sideCode, startMValue = startM, endMValue = endM, geom = mappedGeom, calibrationPoints = (startCP, endCP))
+        sideCode = sideCode, startMValue = startM, endMValue = endM, geom = mappedGeom, calibrationPoints = (startCP, endCP),
+        adjustedTimestamp = VVHClient.createVVHTimeStamp(5))
     })
   }
 
