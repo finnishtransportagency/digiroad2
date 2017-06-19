@@ -348,8 +348,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     * Returns speed limits by municipality. Used by IntegrationApi speed_limits endpoint.
     */
   def get(municipality: Int): Seq[SpeedLimit] = {
-  //TODO precisa de ser alterado, este codigo está nos points
-    val (roadLinks, changes) = roadLinkServiceImplementation.getRoadLinksAndChangesFromVVH(municipality)
+    val (roadLinks, changes) = roadLinkServiceImplementation.getRoadLinksWithComplementaryAndChangesFromVVH(municipality)
     withDynTransaction {
       getFilledTopologyAndRoadLinks(roadLinks, changes)._1
     }

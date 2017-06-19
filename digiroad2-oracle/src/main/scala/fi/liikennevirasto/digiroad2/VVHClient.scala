@@ -914,6 +914,20 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRe
   }
 
   /**
+    * Returns VVH road links in municipality.
+    *
+    */
+  def queryByMunicipalities(municipalities: Int, extraFilter: Option[String] = None): Seq[VVHRoadlink] = {
+    val definition = layerDefinition(combineFiltersWithAnd(withMunicipalityFilter(Set(municipalities)), extraFilter))
+    val url = vvhRestApiEndPoint + roadLinkComplementaryService + "/FeatureServer/query?" +
+      s"layerDefs=$definition&geometryType=esriGeometryEnvelope&spatialRel=esriSpatialRelIntersects&" + queryParameters()
+
+    resolveComplementaryVVHFeatures(url) match {
+      case Left(features) => features.map(extractVVHFeature)
+      case Right(error) => throw new VVHClientException(error.toString)
+    }
+  }
+  /**
     * Returns VVH complementary road links in a municipality
     * Used by VVHClient.fetchByMunicipalityAndRoadNumbers.
     */
@@ -962,6 +976,9 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHClient(vvhRe
     Future(queryByBoundsAndMunicipalities(bounds, municipalities, Some(withMtkClassFilter(Set(12314)))))
   }
 
+  def fetchWalkwaysByMunicipalitiesF(municipalities: Int): Future[Seq[VVHRoadlink]] = {
+    Future(queryByMunicipalities(municipalities, Some(withMtkClassFilter(Set(12314)))))
+  }
 
   /**
     * Returns VVH road links. Uses Scala Future for concurrent operations.
