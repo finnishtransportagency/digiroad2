@@ -7,6 +7,7 @@
     function getChanges(projectID){
       backend.getChangeTable(projectID,function(changedata) {
         projectChanges= roadChangeAPIResultParser(changedata);
+        eventbus.trigger('projectChanges:fetched', projectChanges);
       });
     }
 
