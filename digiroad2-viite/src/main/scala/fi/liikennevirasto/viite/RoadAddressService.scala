@@ -105,6 +105,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val fetchVVHEndTime = System.currentTimeMillis()
     logger.info("End fetch vvh road links in %.3f sec".format((fetchVVHEndTime - fetchVVHStartTime) * 0.001))
 
+    //TODO: In the future when we are dealing with VVHChangeInfo we need to better evaluate when do we switch from bounding box queries to
+    //pure linkId based queries, maybe something related to the zoomLevel we are in map level.
     val fetchMissingRoadAddressStartTime = System.currentTimeMillis()
     val (floatingViiteRoadLinks, addresses, floating) = Await.result(fetchRoadAddressesByBoundingBoxF, Duration.Inf)
     val missingLinkIds = linkIds -- floating.keySet -- addresses.keySet
