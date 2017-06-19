@@ -11,7 +11,9 @@ import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.{Delta, ProjectDeltaCalculator, RoadAddressFiller}
 import org.joda.time.DateTime
+import org.json4s.{DefaultFormats, Extraction}
 import org.slf4j.LoggerFactory
+import org.json4s.jackson.{Json, Serialization}
 
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.ExecutionContext.Implicits.global

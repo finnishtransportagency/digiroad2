@@ -297,8 +297,31 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   get("/project/getchangetable/:projectid") {
     val projectid = params("projectid").toLong
-    projectService.getChangeProject(projectid)
+    projectService.getChangeProject(projectid) match {
+      case Some(project) => {
+        Map(
+          "id" -> project.id,
+          "ely" -> project.ely,
+          "user" -> project.user,
+          "name" -> project.name,
+          "changeDate" -> project.changeDate,
+          "changeInfoSeq"-> project.changeInfoSeq.map(changeInfo=>Map("changetype"->changeInfo.changeType.value, "roadType"->changeInfo.roadType.value, "discontinuity"->changeInfo.discontinuity.description, "source"->changeInfo.source, "target"->changeInfo.target)))
+      }
+    }
   }
+
+
+    def changeinfoSeq(changeinfo:Seq[RoadAddressChangeInfo]) :(String, Any) = {
+
+
+      null
+    }
+
+
+
+
+
+
 
   post("/project/publish"){
     val user = userProvider.getCurrentUser()
