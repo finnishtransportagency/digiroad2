@@ -94,7 +94,7 @@ object DefloatMapper {
     }
     roadAddressMapping.filter(_.matches(ra)).map(mapping => {
       val adjMap = adjust(mapping, ra.startMValue, ra.endMValue)
-      println("ra: " + ra.startAddrMValue + " - " + ra.endAddrMValue)
+      println("ra: " + ra.startAddrMValue + " - " + ra.endAddrMValue + s" (${ra.startMValue}-${ra.endMValue})")
       println(adjMap)
       val (mappedStartM, mappedEndM) = (adjMap.targetStartM, adjMap.targetEndM)
       val (sideCode, mappedGeom, (mappedStartAddrM, mappedEndAddrM)) =
