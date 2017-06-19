@@ -52,7 +52,6 @@ class DefloatMapperSpec extends FunSuite with Matchers{
     )
     val roadAddressTarget = roadAddressSource.flatMap(DefloatMapper.mapRoadAddresses(mapping))
     roadAddressTarget.size should be (4)
-    roadAddressTarget.map(prettyPrint).foreach(println)
     roadAddressTarget.find(r => r.linkId == 1021200L)
       .map(r => r.startMValue).getOrElse(Double.NaN) should be (0.0 +- .00001)
     roadAddressTarget.find(r => r.linkId == 1021200L)
