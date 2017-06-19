@@ -57,7 +57,7 @@
           '</tr>';
         _.each(projectChangeData.changeInfoSeq, function(changeInfoSeq) {
           htmlTable += '<tr class="change-table-data-row">' +
-            '<td class="project-change-table-dimension-first">' + changeInfoSeq.changeType + '</td>' +
+            '<td class="project-change-table-dimension-first">' + changeInfoSeq.changetype + '</td>' +
             '<td class="project-change-table-data-cell">' + changeInfoSeq.source.roadNumber + '</td>' +
             '<td class="project-change-table-data-cell">' + changeInfoSeq.source.trackCode + '</td>' +
             '<td class="project-change-table-data-cell">' + changeInfoSeq.source.startRoadPartNumber + '</td>' +
