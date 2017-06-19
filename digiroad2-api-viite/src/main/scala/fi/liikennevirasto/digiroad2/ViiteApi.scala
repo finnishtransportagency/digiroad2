@@ -24,7 +24,7 @@ import scala.util.{Left, Right}
   * Created by venholat on 25.8.2016.
   */
 
-case class NewAddressDataExtracted(sourceIds: Set[Long], targetIds: Set[Long], roadAddress: Seq[RoadAddressCreator])
+case class NewAddressDataExtracted(sourceIds: Set[Long], targetIds: Set[Long])
 
 
 case class RoadAddressProjectExtractor(id: Long, status: Long, name: String, startDate: String, additionalInfo: String,roadPartList: List[ReservedRoadPart])
@@ -174,11 +174,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   put("/roadlinks/roadaddress") {
     val data = parsedBody.extract[NewAddressDataExtracted]
-    val roadAddressData = data.roadAddress
     val sourceIds = data.sourceIds
     val targetIds = data.targetIds
     val user = userProvider.getCurrentUser()
-    val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
 
     val roadAddresses = roadAddressService.getRoadAddressesAfterCalculation(sourceIds.toSeq.map(_.toString), targetIds.toSeq.map(_.toString), user)
     try {
