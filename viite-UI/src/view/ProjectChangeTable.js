@@ -12,9 +12,31 @@
       '<div id ="change-table-borders-source"></div>' +
       '<div id ="change-table-borders-target"></div>');
     changeTable.append('<div class="change-table-sections">' +
-      '<label class="change-table-heading-label" style="width: 122px">Muutos</label>' +
+      '<label class="change-table-heading-label" style="width: 122px">Ilmoitus</label>' +
       '<label class="change-table-heading-label" style="width: 387px">Nykyosoite</label>' +
       '<label class="change-table-heading-label" style="width: 387px">Uusi osoite</label>');
+    changeTable.append('<div class="change-table-dimension-headers">' +
+      '<table class="change-table-dimensions">' +
+      '<tr>' +
+      '<td class="project-change-table-dimension-first"></td>'+
+      '<td class="project-change-table-dimension">TIE</td>'+
+      '<td class="project-change-table-dimension">AJR</td>'+
+      '<td class="project-change-table-dimension">AOSA</td>'+
+      '<td class="project-change-table-dimension">AET</td>'+
+      '<td class="project-change-table-dimension">LOSA</td>'+
+      '<td class="project-change-table-dimension">LET</td>'+
+      '<td class="project-change-table-dimension">TIE</td>'+
+      '<td class="project-change-table-dimension">AJR</td>'+
+      '<td class="project-change-table-dimension">AOSA</td>'+
+      '<td class="project-change-table-dimension">AET</td>'+
+      '<td class="project-change-table-dimension">LOSA</td>'+
+      '<td class="project-change-table-dimension">LET</td>'+
+      '<td class="project-change-table-dimension">JATKUU</td>'+
+      '<td class="project-change-table-dimension">TIETYYPPI</td>'+
+      '<td class="project-change-table-dimension">ELY</td>'+
+      '</tr>' +
+      '</table>' +
+      '</div>');
     changeTable.append('<div class="project-changes"></div>');
     changeTable.append('<div><button class="new btn btn-primary close" id="change-table-button-close">Sulje</button></div>');
 
@@ -35,26 +57,7 @@
 
     function bindEvents(){
       eventbus.once('projectChanges:fetched', function(projectChangeData){
-        var htmlTable =
-          '<table class="change-table">' +
-          '<tr class="change-table-headers">' +
-          '<td class="project-change-table-dimension-first"></td>'+
-          '<td class="project-change-table-dimension">TIE</td>'+
-          '<td class="project-change-table-dimension">AJR</td>'+
-          '<td class="project-change-table-dimension">AOSA</td>'+
-          '<td class="project-change-table-dimension">AET</td>'+
-          '<td class="project-change-table-dimension">LOSA</td>'+
-          '<td class="project-change-table-dimension">LET</td>'+
-          '<td class="project-change-table-dimension">TIE</td>'+
-          '<td class="project-change-table-dimension">AJR</td>'+
-          '<td class="project-change-table-dimension">AOSA</td>'+
-          '<td class="project-change-table-dimension">AET</td>'+
-          '<td class="project-change-table-dimension">LOSA</td>'+
-          '<td class="project-change-table-dimension">LET</td>'+
-          '<td class="project-change-table-dimension">JATKUU</td>'+
-          '<td class="project-change-table-dimension">TIETYYPPI</td>'+
-          '<td class="project-change-table-dimension">ELY</td>'+
-          '</tr>';
+        var htmlTable ='<table class="change-table">';
         _.each(projectChangeData.changeInfoSeq, function(changeInfoSeq) {
           htmlTable += '<tr class="change-table-data-row">' +
             '<td class="project-change-table-dimension-first">' + changeInfoSeq.changetype + '</td>' +
