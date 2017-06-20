@@ -22,5 +22,9 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     results.get(123).isEmpty should be (true)
     results.get(124).isEmpty should be (false)
     results(124).size should be (2)
+    results.values.flatten.exists(_.startAddrMValue == 0) should be (true)
+    results.values.flatten.exists(_.startAddrMValue == 1000) should be (true)
+    results.values.flatten.exists(_.endAddrMValue == 1000) should be (true)
+    results.values.flatten.exists(_.endAddrMValue == 1400) should be (true)
   }
 }

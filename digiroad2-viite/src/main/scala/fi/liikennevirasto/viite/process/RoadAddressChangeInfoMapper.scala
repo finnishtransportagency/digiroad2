@@ -48,7 +48,7 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
           mapRoadAddresses(mapping)(ra)
         else
           Seq(ra)))
-      applyChanges(changes.tail, mapped)
+      applyChanges(changes.tail, mapped.values.toSeq.flatten.groupBy(_.linkId))
     }
   }
 
