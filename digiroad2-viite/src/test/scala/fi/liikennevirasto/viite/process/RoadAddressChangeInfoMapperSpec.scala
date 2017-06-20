@@ -17,7 +17,10 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     val map = Seq(roadAddress, roadAddress2).groupBy(_.linkId)
     val changes = Seq(
       ChangeInfo(Some(123), Some(124), 123L, 2, Some(0.0), Some(1000.234), Some(399.648), Some(1399.882), 96400L),
-      ChangeInfo(Some(123), Some(123), 123L, 1, Some(0.0), Some(399.648), Some(0.0), Some(399.648), 96400L))
-    RoadAddressChangeInfoMapper.resolveChangesToMap(map, Seq(), changes).foreach(println)
+      ChangeInfo(Some(124), Some(124), 123L, 1, Some(0.0), Some(399.648), Some(0.0), Some(399.648), 96400L))
+    val results = RoadAddressChangeInfoMapper.resolveChangesToMap(map, Seq(), changes)
+    results.get(123).isEmpty should be (true)
+    results.get(124).isEmpty should be (false)
+    results(124).size should be (2)
   }
 }
