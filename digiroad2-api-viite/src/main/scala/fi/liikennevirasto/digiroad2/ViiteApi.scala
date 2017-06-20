@@ -295,36 +295,23 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       projectService.projectLinkPublishable(modification.projectId)))
   }
 
-  get("/project/getchangetable/:projectid") {
-    val projectid = params("projectid").toLong
-    projectService.getChangeProject(projectid) match {
-      case Some(project) => {
+  get("/project/getchangetable/:projectId") {
+    val projectId = params("projectId").toLong
+    projectService.getChangeProject(projectId).map(project =>
         Map(
           "id" -> project.id,
           "ely" -> project.ely,
           "user" -> project.user,
           "name" -> project.name,
           "changeDate" -> project.changeDate,
-          "changeInfoSeq"-> project.changeInfoSeq.map(changeInfo=>Map("changetype"->changeInfo.changeType.value, "roadType"->changeInfo.roadType.value, "discontinuity"->changeInfo.discontinuity.description, "source"->changeInfo.source, "target"->changeInfo.target)))
-      }
-      case None => {
-        PreconditionFailed()
-      }
-    }
+          "changeInfoSeq"-> project.changeInfoSeq.map(changeInfo=>
+            Map("changetype"->changeInfo.changeType.value, "roadType"->changeInfo.roadType.value,
+              "discontinuity"->changeInfo.discontinuity.description, "source"->changeInfo.source,
+              "target"->changeInfo.target)))
+    ).getOrElse(PreconditionFailed())
   }
 
-
-    def changeinfoSeq(changeinfo:Seq[RoadAddressChangeInfo]) :(String, Any) = {
-
-
-      null
-    }
-
-
-
-
-
-
+    def changeinfoSeq(changeinfo:Seq[RoadAddressChangeInfo]) :(String, Any) = ???
 
   post("/project/publish"){
     val user = userProvider.getCurrentUser()
