@@ -1,12 +1,12 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.ChangeInfo
+import fi.liikennevirasto.digiroad2.{ChangeInfo, Point}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.viite.RoadAddressService
 import fi.liikennevirasto.viite.dao.{RoadAddress, RoadAddressDAO}
 
-object RoadAddressChangeInfoMapper{
+object RoadAddressChangeInfoMapper extends RoadAddressMapper {
 
   /**
     * This will annex all the valid ChangeInfo to the corresponding road address object
@@ -26,23 +26,35 @@ object RoadAddressChangeInfoMapper{
     })
   }
 
-  def resolveChangesToMap(roadAddresses: Map[Long, Seq[RoadAddress]], changedRoadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Map[Long, Seq[RoadAddress]] = {
-    val changesWithRoadAddresses = matchChangesWithRoadAddresses(roadAddresses.flatMap(_._2).asInstanceOf[Seq[RoadAddress]], changes)
-    changesWithRoadAddresses.foreach(crl =>{
-      val roadAddress = Seq(crl._1)
-      roadAddress.map(ra => {
-        crl._2.foreach(change => change.changeType match {
-          case 1 | 2 => applyCombined(ra, change)
-          case _ => Map()
-        })
-        //TODO - return RoadAddress with all changes appllied
-        ra
-      })
+  private def createAddressMap(sources: Seq[ChangeInfo]): Seq[RoadAddressMapping] = {
+    val pseudoGeom = Seq(Point(0.0, 0.0), Point(1.0, 0.0))
+    sources.map(ci => {
+      ci.changeType match {
+        case 1 => RoadAddressMapping(ci.oldId.get, ci.newId.get, ci.oldStartMeasure.get, ci.oldEndMeasure.get,
+          ci.newStartMeasure.get, ci.newEndMeasure.get, pseudoGeom, pseudoGeom, Some(ci.vvhTimeStamp))
+        case 2 => RoadAddressMapping(ci.oldId.get, ci.newId.get, ci.oldStartMeasure.get, ci.oldEndMeasure.get,
+          ci.newStartMeasure.get, ci.newEndMeasure.get, pseudoGeom, pseudoGeom, Some(ci.vvhTimeStamp))
+      }
+    })
+  }
 
+  private def applyChanges(changes: Seq[Seq[ChangeInfo]], roadAddresses: Map[Long, Seq[RoadAddress]]): Map[Long, Seq[RoadAddress]] = {
+    if (changes.isEmpty)
+      roadAddresses
+    else {
+      val mapping = createAddressMap(changes.head)
+      val mapped = roadAddresses.mapValues(_.flatMap(ra =>
+        if (mapping.exists(_.matches(ra)))
+          mapRoadAddresses(mapping)(ra)
+        else
+          Seq(ra)))
+      applyChanges(changes.tail, mapped)
     }
-    )
+  }
 
-    Map()
+  def resolveChangesToMap(roadAddresses: Map[Long, Seq[RoadAddress]], changedRoadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Map[Long, Seq[RoadAddress]] = {
+    val groupedChanges = changes.groupBy(_.vvhTimeStamp).values.toSeq
+    applyChanges(groupedChanges.sortBy(_.head.vvhTimeStamp), roadAddresses)
   }
 
   def applyCombined(address : RoadAddress, change : ChangeInfo) : RoadAddress = {
