@@ -19,7 +19,7 @@ import fi.liikennevirasto.viite.dao.Discontinuity.Discontinuous
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink, RoadAddressLinkPartitioner}
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
-import fi.liikennevirasto.viite.process.{DefloatMapper, LinkRoadAddressCalculator, RoadAddressFiller}
+import fi.liikennevirasto.viite.process.{DefloatMapper, LinkRoadAddressCalculator, RoadAddressChangeInfoMapper, RoadAddressFiller}
 import fi.liikennevirasto.viite.util.StaticTestData
 import org.joda.time.DateTime
 import org.mockito.ArgumentCaptor
@@ -787,7 +787,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
         ChangeInfo(Option(602156), Option(602156), 6798918, 4, Option(10.52131863), Option(106.62158114), Option(0.0), Option(96.166451179999996), defaultVVTimestamp) ,
         ChangeInfo(Option(602156), Option(linkId1), 6798918, 5, Option(10.52131863), Option(106.62158114), Option(0.0), Option(96.166451179999996), defaultVVTimestamp+5L)
       )
-    val matchedResults = roadAddressService.matchChangesWithRoadAddresses(roadAddress, changeInfo)
+    val matchedResults = RoadAddressChangeInfoMapper.matchChangesWithRoadAddresses(roadAddress, changeInfo)
 
     matchedResults.size should be(3)
     val firstMatch = matchedResults.find(_._1.linkId == linkId1).get

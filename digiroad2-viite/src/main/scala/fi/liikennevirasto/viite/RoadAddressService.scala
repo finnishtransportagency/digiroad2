@@ -153,17 +153,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   }
 
-  //TODO 475 move it to new object class RoadAddressChangeInfoMapper
   def resolveChanges(roadlinks: Seq[RoadLink], changedRoadLinks: Seq[ChangeInfo], addresses: Map[Long, Seq[RoadAddress]]): Map[Long, Seq[RoadAddress]] = {
-    val changesWithRoadAddresses = matchChangesWithRoadAddresses(addresses.flatMap(_._2).asInstanceOf[Seq[RoadAddress]], changedRoadLinks)
-    changedRoadLinks.map(crl =>
-      crl.changeType match {
-        case 1 => Map()
-        case 2 => Map()
-        case _ => Map()
-      }
-    )
-    Map()
+    RoadAddressChangeInfoMapper.resolveChangesToMap(addresses, roadlinks, changedRoadLinks, this)
   }
 
   /**
@@ -623,25 +614,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       case a: Exception => logger.error(a.getMessage, a)
     }
   }
-
-  /**
-    * This will annex all the valid ChangeInfo to the corresponding road address object
-    * The criteria for the annexation is the following:
-    *   .The changeInfo vvhTimestamp must be bigger than the RoadAddress vvhTimestamp
-    *   .Either the newId or the oldId from the Changeinfo must be equal to the linkId in the RoadAddress
-    *
-    * @param roadAddresses - Sequence of RoadAddresses
-    * @param changes - Sequence of ChangeInfo
-    * @return List of (RoadAddress, List of ChangeInfo)
-    */
-  def matchChangesWithRoadAddresses(roadAddresses: Seq[RoadAddress], changes: Seq[ChangeInfo]) = {
-    roadAddresses.map(ra => {
-      (ra, changes.filter(c => {
-        (c.newId.getOrElse(-1) == ra.linkId || c.oldId.getOrElse(-1) == ra.linkId) && c.vvhTimeStamp > ra.adjustedTimestamp
-      }))
-    })
-  }
-
 }
 
 case class RoadAddressMerge(merged: Set[Long], created: Seq[RoadAddress])
