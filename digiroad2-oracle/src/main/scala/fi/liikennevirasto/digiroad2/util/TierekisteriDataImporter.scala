@@ -58,7 +58,7 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
               .filter(ra => vvhRoadlinks.exists(t => t.linkId == ra.linkId))
               .foreach { ra =>
                 val assetId = linearAssetService.dao.createLinearAsset(trafficVolumeId, ra.linkId, false, SideCode.BothDirections.value,
-                  Measures(ra.startMValue, ra.endMValue), "batch_process_trafficVolume", vvhClient.createVVHTimeStamp(5), Some(LinkGeomSource.NormalLinkInterface.value))
+                  Measures(ra.startMValue, ra.endMValue), "batch_process_trafficVolume", vvhClient.createVVHTimeStamp(), Some(LinkGeomSource.NormalLinkInterface.value))
                 println("\nCreated OTH traffic volume assets form TR data with assetId " + assetId)
 
                 linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, tr.kvl)
@@ -143,7 +143,7 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
                     ra.endMValue - (ra.endAddrMValue - trl.endMValue)
                   }
                 val assetId = linearAssetService.dao.createLinearAsset(lightingAssetId, ra.linkId, false, SideCode.BothDirections.value,
-                  Measures(newStartMValue, newEndMValue), "batch_process_lighting", vvhClient.createVVHTimeStamp(5), Some(LinkGeomSource.NormalLinkInterface.value))
+                  Measures(newStartMValue, newEndMValue), "batch_process_lighting", vvhClient.createVVHTimeStamp(), Some(LinkGeomSource.NormalLinkInterface.value))
 
                 linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, 1)
                 println("\nCreated OTH Lighting assets form TR data with assetId " + assetId)

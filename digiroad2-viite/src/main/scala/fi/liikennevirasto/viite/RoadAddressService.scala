@@ -106,6 +106,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val fetchVVHEndTime = System.currentTimeMillis()
     logger.info("End fetch vvh road links in %.3f sec".format((fetchVVHEndTime - fetchVVHStartTime) * 0.001))
 
+    //TODO: In the future when we are dealing with VVHChangeInfo we need to better evaluate when do we switch from bounding box queries to
+    //pure linkId based queries, maybe something related to the zoomLevel we are in map level.
     val fetchMissingRoadAddressStartTime = System.currentTimeMillis()
     val (floatingViiteRoadLinks, addresses, floating) = Await.result(fetchRoadAddressesByBoundingBoxF, Duration.Inf)
     val missingLinkIds = linkIds -- floating.keySet -- addresses.keySet
@@ -533,12 +535,17 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   def getRoadAddressesAfterCalculation(sources: Seq[String], targets: Seq[String], user: User): Seq[RoadAddress] = {
+    def adjustGeometry(ra: RoadAddress, link: RoadAddressLinkLike): RoadAddress = {
+      val geom = GeometryUtils.truncateGeometry3D(link.geometry, ra.startMValue, ra.endMValue)
+      ra.copy(geom = geom)
+    }
     val sourceRoadAddressLinks = sources.flatMap(rd => {
       getRoadAddressLink(rd.toLong)
     })
     val targetIds = targets.map(rd => rd.toLong).toSet
     val targetRoadAddressLinks = targetIds.toSeq.map(getTargetRoadLink)
-    transferRoadAddress(sourceRoadAddressLinks, targetRoadAddressLinks, user)
+    val targetLinkMap: Map[Long, RoadAddressLinkLike] = targetRoadAddressLinks.map(l => l.linkId -> l).toMap
+    transferRoadAddress(sourceRoadAddressLinks, targetRoadAddressLinks, user).map(ra => adjustGeometry(ra, targetLinkMap(ra.linkId)))
   }
 
   def transferFloatingToGap(sourceIds: Set[Long], targetIds: Set[Long], roadAddresses: Seq[RoadAddress], username: String): Unit = {
@@ -564,9 +571,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
 
     DefloatMapper.preTransferChecks(sourceRoadAddresses)
-
     val targetRoadAddresses = RoadAddressLinkBuilder.fuseRoadAddress(sourceRoadAddresses.flatMap(DefloatMapper.mapRoadAddresses(mapping)))
-    DefloatMapper.postTransferChecks(targetRoadAddresses)
+    DefloatMapper.postTransferChecks(targetRoadAddresses, sourceRoadAddresses)
 
     targetRoadAddresses
   }
@@ -593,6 +599,23 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     } catch {
       case a: Exception => logger.error(a.getMessage, a)
     }
+  }
+
+  /**
+    * This will annex all the valid ChangeInfo to the corresponding road address object
+    * The criteria for the annexation is the following:
+    *   .The changeInfo vvhTimestamp must be bigger than the RoadAddress vvhTimestamp
+    *   .Either the newId or the oldId from the Changeinfo must be equal to the linkId in the RoadAddress
+    * @param roadAddresses - Sequence of RoadAddresses
+    * @param changes - Sequence of ChangeInfo
+    * @return List of (RoadAddress, List of ChangeInfo)
+    */
+  def matchChangesWithRoadAddresses(roadAddresses: Seq[RoadAddress], changes: Seq[ChangeInfo]) = {
+    roadAddresses.map(ra => {
+      (ra, changes.filter(c => {
+        (c.newId.getOrElse(-1) == ra.linkId || c.oldId.getOrElse(-1) == ra.linkId) && c.vvhTimeStamp > ra.adjustedTimestamp
+      }))
+    })
   }
 
 }

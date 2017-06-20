@@ -217,7 +217,7 @@
       var lineBorder = new ol.style.Stroke({
         width: strokeWidth + borderWidth,
         color: borderColor,
-        lineCap: borderCap,
+        lineCap: borderCap
       });
       var middleLineWidth = strokeWidth;
       if(roadLinkData.id !== 0 && roadLinkData.administrativeClass == "Municipality"){
@@ -227,7 +227,7 @@
       var middleLine = new ol.style.Stroke({
         width: middleLineWidth,
         color: middleLineColor,
-        lineCap: middleLineCap,
+        lineCap: middleLineCap
       });
       var line = new ol.style.Stroke({
         width: strokeWidth,

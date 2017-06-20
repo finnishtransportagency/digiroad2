@@ -2,6 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2.asset.Asset._
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -861,6 +862,28 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       changedVVHRoadlinks.head.value should be(attributes.get("ROADNAME_SE").get.toString)
       changedVVHRoadlinks.head.createdAt should be(Some(DateTime.parse("2015-10-29T15:34:02.000Z")))
       changedVVHRoadlinks.head.changeType should be("Modify")
+    }
+  }
+
+  test("verify the output of change info") {
+    val oldLinkId = 1l
+    val newLinkId = 2l
+    val changeInfo = ChangeInfo(Some(oldLinkId), Some(newLinkId), 123l, 5, Some(0), Some(1), Some(0), Some(1), 144000000)
+    val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+    val mockVVHChangeInfoClient = MockitoSugar.mock[VVHChangeInfoClient]
+    val service = new TestService(mockVVHClient)
+    OracleDatabase.withDynTransaction {
+      when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+      when(mockVVHClient.roadLinkChangeInfo).thenReturn(mockVVHChangeInfoClient)
+      when(mockVVHChangeInfoClient.fetchByBoundsAndMunicipalitiesF(boundingBox, Set())).thenReturn(Promise.successful(Seq(changeInfo)).future)
+      val returnedChangeInfo = service.getChangeInfoFromVVH(boundingBox, Set())
+
+      returnedChangeInfo.size should be (1)
+      returnedChangeInfo.head.oldId.get should be(oldLinkId)
+      returnedChangeInfo.head.newId.get should be(newLinkId)
+      returnedChangeInfo.head.mmlId should be(123l)
     }
   }
 

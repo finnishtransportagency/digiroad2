@@ -10,9 +10,10 @@ import org.apache.http.NameValuePair
 import org.apache.http.client.entity.UrlEncodedFormEntity
 import org.apache.http.client.methods.{HttpGet, HttpPost}
 import org.apache.http.impl.client.HttpClientBuilder
+import org.joda.time.format.DateTimeFormat
 import org.apache.http.message.BasicNameValuePair
 import org.apache.http.util.EntityUtils
-import org.joda.time.format.DateTimeFormat
+import org.apache.http.NameValuePair
 import org.joda.time.{DateTime, DateTimeZone}
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
@@ -172,7 +173,13 @@ object ChangeType {
 }
 
 object VVHClient {
-  def createVVHTimeStamp(offsetHours: Int): Long = {
+  /**
+    * Create a pseudo VVH time stamp when an asset is created or updated and is on the current road geometry.
+    * This prevents change info from being applied to the recently created asset. Resolution is one day.
+    * @param offsetHours Offset to the timestamp. Defaults to 5 which reflects to VVH offset for batch runs.
+    * @return VVH timestamp for current date
+    */
+  def createVVHTimeStamp(offsetHours: Int = 5): Long = {
     val oneHourInMs = 60 * 60 * 1000L
     val utcTime = DateTime.now().minusHours(offsetHours).getMillis
     val curr = utcTime + DateTimeZone.getDefault.getOffset(utcTime)
@@ -194,7 +201,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
     }
   }
 
-  def createVVHTimeStamp(offsetHours: Int): Long = {
+  def createVVHTimeStamp(offsetHours: Int = 5): Long = {
     VVHClient.createVVHTimeStamp(offsetHours)
   }
 }
@@ -405,15 +412,15 @@ trait VVHClientOperations {
     *
     * @param offsetHours Number of hours since midnight to return current day as a VVH timestamp (UNIX time in ms)
     */
-  def createVVHTimeStamp(offsetHours: Int): Long = {
+  def createVVHTimeStamp(offsetHours: Int = 5): Long = {
     VVHClient.createVVHTimeStamp(offsetHours)
   }
 
   /**
     * Returns VVH road links by municipality.
     */
-  protected def queryByMunicipality(municipality: Int): Seq[VVHType] = {
-    val definition = layerDefinition(withMunicipalityFilter(Set(municipality)))
+  protected def queryByMunicipality(municipality: Int, filter: Option[String] = None): Seq[VVHType] = {
+    val definition = layerDefinition(combineFiltersWithAnd(withMunicipalityFilter(Set(municipality)), filter))
     val url = serviceUrl(definition, queryParameters())
 
     fetchVVHFeatures(url) match {
@@ -421,6 +428,7 @@ trait VVHClientOperations {
       case Right(error) => throw new VVHClientException(error.toString)
     }
   }
+
 
   /**
     * Returns VVH road links in bounding box area. Municipalities are optional.
@@ -848,7 +856,7 @@ class VVHChangeInfoClient(vvhRestApiEndPoint: String) extends VVHClientOperation
   protected override val serviceName = "Roadlink_ChangeInfo"
   protected override val linkGeomSource = LinkGeomSource.Unknown
 
-  protected override def defaultOutFields(): String = {
+  protected override def defaultOutFields() : String = {
     "OLD_ID,NEW_ID,MTKID,CHANGETYPE,OLD_START,OLD_END,NEW_START,NEW_END,CREATED_DATE,CONSTRUCTIONTYPE,STARTNODE,ENDNODE"
   }
 
@@ -947,13 +955,13 @@ class VVHRoadNodesClient(vvhRestApiEndPoint: String) extends VVHClientOperations
   }
 }
 
-class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvhRestApiEndPoint){
+class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvhRestApiEndPoint) {
 
   protected override val restApiEndPoint = vvhRestApiEndPoint
   protected override val serviceName = "Roadlink_complimentary"
-  protected override val linkGeomSource:LinkGeomSource = LinkGeomSource.ComplimentaryLinkInterface
+  protected override val linkGeomSource: LinkGeomSource = LinkGeomSource.ComplimentaryLinkInterface
 
-  override def defaultOutFields() : String = {
+  override def defaultOutFields(): String = {
     "MTKID,LINKID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,SURFACETYPE,SUBTYPE,CONSTRUCTIONTYPE"
   }
 
@@ -974,6 +982,9 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClie
   def fetchWalkwaysByBoundsAndMunicipalitiesF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[VVHRoadlink]] = {
     Future(queryByMunicipalitiesAndBounds(bounds, municipalities, Some(withMtkClassFilter(Set(12314)))))
   }
+
+  def fetchWalkwaysByMunicipalitiesF(municipality: Int): Future[Seq[VVHRoadlink]] =
+    Future(queryByMunicipality(municipality, Some(withMtkClassFilter(Set(12314)))))
 
   def updateVVHFeatures(complementaryFeatures: Map[String, Any]): Either[List[Map[String, Any]], VVHError] = {
     val url = vvhRestApiEndPoint + serviceName + "/FeatureServer/0/updateFeatures"
@@ -1006,10 +1017,9 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClie
       response.close()
     }
   }
-
 }
 
-class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvhRestApiEndPoint){
+class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvhRestApiEndPoint) {
 
   protected override val restApiEndPoint = vvhRestApiEndPoint
   protected override val serviceName = "Roadlink_data_history"
@@ -1025,7 +1035,7 @@ class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvh
       val optionalFeatureLayer = optionalLayers.flatMap { layers => layers.find { layer => layer.contains("features") } }
       optionalFeatureLayer.flatMap { featureLayer => featureLayer.get("features").map(_.asInstanceOf[List[Map[String, Any]]]) }
     }
-    else  {
+    else{
       content.get("features").map(_.asInstanceOf[List[Map[String, Any]]])
     }
     optionalFeatures.map(Left(_)).getOrElse(Right(VVHError(content, url)))

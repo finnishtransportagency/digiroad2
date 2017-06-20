@@ -15,10 +15,13 @@
     var pickRoadsLayerVector = new ol.source.Vector({});
     var simulationVector = new ol.source.Vector({});
     var geometryChangedVector = new ol.source.Vector({});
+    var normalRoadLinkType = 1;
     var floatingRoadLinkType=-1;
     var noAnomaly=0;
     var noAddressAnomaly=1;
     var geometryChangedAnomaly=2;
+    var againstDigitizing = 3;
+    var towardsDigitizing = 2;
     var activeLayer = false;
 
     var indicatorLayer = new ol.layer.Vector({
@@ -491,6 +494,11 @@
         geometryChangedLayer.getSource().clear();
 
       if(map.getView().getZoom() >= zoomlevels.minZoomForAssets) {
+
+        var directionRoadMarker = _.filter(roadLinks, function(roadlink) {
+          return roadlink.roadLinkType !== floatingRoadLinkType && roadlink.anomaly !== noAddressAnomaly && roadlink.anomaly !== geometryChangedAnomaly && (roadlink.sideCode === againstDigitizing || roadlink.sideCode === towardsDigitizing);
+        });
+
         var floatingRoadMarkers = _.filter(roadLinks, function(roadlink) {
           return roadlink.roadLinkType === floatingRoadLinkType;
         });
@@ -516,6 +524,12 @@
           marker = cachedLinkPropertyMarker.createMarker(middlefloating);
           if(applicationModel.getCurrentAction() !== applicationModel.actionCalculated && !_.contains(linkIdsToRemove,marker.roadLinkData.linkId))
             floatingMarkerLayer.getSource().addFeature(marker);
+        });
+
+        _.each(directionRoadMarker, function(directionlink) {
+          var marker = cachedMarker.createMarker(directionlink);
+          if(applicationModel.getCurrentAction() !== applicationModel.actionCalculated && !_.contains(linkIdsToRemove,marker.roadLinkData.linkId))
+            anomalousMarkerLayer.getSource().addFeature(marker);
         });
 
         _.each(anomalousRoadMarkers, function(anomalouslink) {
