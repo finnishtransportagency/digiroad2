@@ -307,6 +307,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           "changeDate" -> project.changeDate,
           "changeInfoSeq"-> project.changeInfoSeq.map(changeInfo=>Map("changetype"->changeInfo.changeType.value, "roadType"->changeInfo.roadType.value, "discontinuity"->changeInfo.discontinuity.description, "source"->changeInfo.source, "target"->changeInfo.target)))
       }
+      case None => {
+        PreconditionFailed()
+      }
     }
   }
 
