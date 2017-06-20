@@ -26,7 +26,7 @@ object RoadAddressChangeInfoMapper{
     })
   }
 
-  def resolveChangesToMap(roadAddresses: Map[Long, Seq[RoadAddress]], changedRoadLinks: Seq[RoadLink], changes: Seq[ChangeInfo], service: RoadAddressService): Map[Long, Seq[RoadAddress]] = {
+  def resolveChangesToMap(roadAddresses: Map[Long, Seq[RoadAddress]], changedRoadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Map[Long, Seq[RoadAddress]] = {
     val changesWithRoadAddresses = matchChangesWithRoadAddresses(roadAddresses.flatMap(_._2).asInstanceOf[Seq[RoadAddress]], changes)
     changesWithRoadAddresses.foreach(crl =>{
       val roadAddress = Seq(crl._1)
