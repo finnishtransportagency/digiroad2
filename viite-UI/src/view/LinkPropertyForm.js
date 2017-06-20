@@ -53,7 +53,8 @@
       [3, 'Kunnan katuosuus'],
       [4, 'Yleisen tien työmaa'],
       [5, 'Yksityistie'],
-      [9, 'Omistaja selvittämättä']
+      [9, 'Omistaja selvittämättä'],
+      [99,'Tuntematon']
     ];
 
     var discontinuities = [
@@ -68,6 +69,12 @@
       [0, 'Ei'],
       [-1, 'Kyllä']
     ];
+
+     function getRoadType(askedRoadType){
+      var RoadType = _.find(allRoadTypes, function(x){return x[0] === askedRoadType;});
+      return RoadType && RoadType[1];
+    }
+
 
     var getDiscontinuityType = function(discontinuity){
       var DiscontinuityType = _.find(discontinuities, function(x){return x[0] === discontinuity;});
@@ -692,5 +699,9 @@
       });
     };
     bindEvents();
+
+    return{
+      getRoadType: getRoadType
+    };
   };
 })(this);

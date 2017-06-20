@@ -57,6 +57,7 @@
 
     function bindEvents(){
       eventbus.once('projectChanges:fetched', function(projectChangeData){
+        var linkForm = new LinkPropertyForm(1)
         var htmlTable ='<table class="change-table">';
         _.each(projectChangeData.changeInfoSeq, function(changeInfoSeq) {
           htmlTable += '<tr class="change-table-data-row">' +
@@ -74,7 +75,7 @@
             '<td class="project-change-table-data-cell">' + changeInfoSeq.target.endRoadPartNumber + '</td>' +
             '<td class="project-change-table-data-cell">' + changeInfoSeq.target.endAddressM + '</td>' +
             '<td class="project-change-table-data-cell">' + changeInfoSeq.discontinuity + '</td>' +
-            '<td class="project-change-table-data-cell">' + changeInfoSeq.roadType + '</td>' +
+            '<td class="project-change-table-data-cell">' + linkForm.getRoadType(changeInfoSeq.roadType) + '</td>' +
             '<td class="project-change-table-data-cell">' + projectChangeData.ely + '</td>' +
             '</tr>';
         });
