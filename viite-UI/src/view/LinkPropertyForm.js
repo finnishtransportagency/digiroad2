@@ -53,7 +53,7 @@
       [3, 'Kunnan katuosuus'],
       [4, 'Yleisen tien työmaa'],
       [5, 'Yksityistie'],
-      [9, 'Tuntematon']
+      [9, 'Omistaja selvittämättä']
     ];
 
     var discontinuities = [
