@@ -31,7 +31,7 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
   override def update(id: Long, updatedAsset: IncomingObstacle, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat, 0), geometry)
     withDynTransaction {
-      OracleObstacleDao.update(id, updatedAsset, mValue, username, municipality, Some(VVHClient.createVVHTimeStamp(5)), linkSource)
+      OracleObstacleDao.update(id, updatedAsset, mValue, username, municipality, Some(VVHClient.createVVHTimeStamp()), linkSource)
     }
     id
   }
