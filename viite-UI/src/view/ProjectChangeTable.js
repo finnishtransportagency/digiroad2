@@ -12,9 +12,9 @@
       '<div id ="change-table-borders-source"></div>' +
       '<div id ="change-table-borders-target"></div>');
     changeTable.append('<div class="change-table-sections">' +
-      '<label class="change-table-heading-label" style="width: 122px">Ilmoitus</label>' +
-      '<label class="change-table-heading-label" style="width: 387px">Nykyosoite</label>' +
-      '<label class="change-table-heading-label" style="width: 387px">Uusi osoite</label>');
+      '<label class="change-table-heading-label" style="width: 117px">Ilmoitus</label>' +
+      '<label class="change-table-heading-label" style="width: 379px">Nykyosoite</label>' +
+      '<label class="change-table-heading-label" style="width: 379px">Uusi osoite</label>');
     changeTable.append('<div class="change-table-dimension-headers">' +
       '<table class="change-table-dimensions">' +
       '<tr>' +

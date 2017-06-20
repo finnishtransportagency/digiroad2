@@ -38,18 +38,16 @@
 #change-table-button-close {
   float: right;
   width: 100px;
-  margin-right: 7px;
+  margin-right: 17px;
   margin-top: 6px;
 }
 .change-table {
-  width: 100%;
-  overflow-y: auto;
+  width: 1116px; //1132px
   display: block;
   height: inherit;
-  position: absolute;
 }
 .change-table-dimensions {
-  width:1133px;
+  width:1115px;
 }
 .project-change-table-dimension {
   width: 66px;
@@ -67,6 +65,7 @@
 }
 .project-changes {
   height: @project-changes-height;
+  overflow-y: auto;
 }
 .project-change-table-data-cell {
   width: 66px;
@@ -85,7 +84,7 @@
 #change-table-borders-changetype {
   position: absolute;
   height: @table-borders-height;
-  width: 115px;
+  width: 125px;
   border-right: 1px solid #a4a4a2;
   border-bottom: 1px solid #a4a4a2;
   z-index: 1;
@@ -103,7 +102,7 @@
 #change-table-borders-target {
   position: absolute;
   height: @table-borders-height;
-  width: 1135px;
+  width: 1116px;
   border-bottom: 1px solid #a4a4a2;
   z-index: 1;
   pointer-events: none;
