@@ -12,6 +12,7 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.dao.CalibrationCode._
 import fi.liikennevirasto.viite.model.Anomaly
+import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
 import fi.liikennevirasto.viite.{ReservedRoadPart, RoadType}
 import org.joda.time.DateTime
@@ -102,6 +103,21 @@ case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
                        geom: Seq[Point]) extends BaseRoadAddress {
   val endCalibrationPoint = calibrationPoints._2
   val startCalibrationPoint = calibrationPoints._1
+
+  def splitAt(a: Double, b: Double): (Long, Long) = {
+    (addrAt(a), addrAt(b))
+  }
+
+  private def addrAt(a: Double) = {
+    val coefficient = (endAddrMValue - startAddrMValue) / (endMValue - startMValue)
+    sideCode match {
+      case SideCode.AgainstDigitizing =>
+        endAddrMValue - Math.round((a-startMValue) * coefficient)
+      case SideCode.TowardsDigitizing =>
+        startAddrMValue + Math.round((a-startMValue) * coefficient)
+      case _ => throw new InvalidAddressDataException(s"Bad sidecode $sideCode on road address $id (link $linkId)")
+    }
+  }
 }
 
 case class MissingRoadAddress(linkId: Long, startAddrMValue: Option[Long], endAddrMValue: Option[Long],

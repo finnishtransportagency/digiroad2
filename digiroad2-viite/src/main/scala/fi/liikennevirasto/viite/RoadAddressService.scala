@@ -571,9 +571,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
 
     DefloatMapper.preTransferChecks(sourceRoadAddresses)
-
+    sourceRoadAddresses.foreach(println)
     val targetRoadAddresses = RoadAddressLinkBuilder.fuseRoadAddress(sourceRoadAddresses.flatMap(DefloatMapper.mapRoadAddresses(mapping)))
-    DefloatMapper.postTransferChecks(targetRoadAddresses)
+    targetRoadAddresses.foreach(println)
+    DefloatMapper.postTransferChecks(targetRoadAddresses, sourceRoadAddresses)
 
     targetRoadAddresses
   }

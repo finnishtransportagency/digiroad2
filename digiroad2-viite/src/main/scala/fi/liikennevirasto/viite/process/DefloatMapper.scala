@@ -141,16 +141,8 @@ object DefloatMapper {
     if (withinTolerance(roadAddress.startMValue, mapping.sourceStartM) && withinTolerance(roadAddress.endMValue, mapping.sourceEndM))
       (roadAddress.startAddrMValue, roadAddress.endAddrMValue)
     else {
-      val (startM, endM) = (mapping.sourceStartM, mapping.sourceEndM)
-      // The lengths may not be exactly equal: coefficient is to adjust that
-      val coefficient = (roadAddress.endAddrMValue - roadAddress.startAddrMValue) / (roadAddress.endMValue - roadAddress.startMValue)
-      roadAddress.sideCode match {
-        case SideCode.AgainstDigitizing =>
-          (roadAddress.endAddrMValue - Math.round(endM * coefficient), roadAddress.endAddrMValue - Math.round(startM * coefficient))
-        case SideCode.TowardsDigitizing =>
-          (roadAddress.startAddrMValue + Math.round(startM * coefficient), roadAddress.startAddrMValue + Math.round(endM * coefficient))
-        case _ => throw new InvalidAddressDataException(s"Bad sidecode ${roadAddress.sideCode} on road address $roadAddress")
-      }
+      val (startM, endM) = GeometryUtils.overlap((roadAddress.startMValue, roadAddress.endMValue),(mapping.sourceStartM, mapping.sourceEndM)).get
+      roadAddress.splitAt(startM, endM)
     }
   }
 
@@ -311,7 +303,8 @@ object DefloatMapper {
     Math.abs(mValue1 - mValue2) < MinAllowedRoadAddressLength
   }
 
-  def postTransferChecks(seq: Seq[RoadAddress]): Unit = {
+  def postTransferChecks(seq: Seq[RoadAddress], source: Seq[RoadAddress]): Unit = {
+    val (addrMin, addrMax) = (source.map(_.startAddrMValue).min, source.map(_.endAddrMValue).max)
     if (seq.count(_.startCalibrationPoint.nonEmpty) > 1)
       throw new InvalidAddressDataException("Too many starting calibration points after transfer")
     if (seq.count(_.endCalibrationPoint.nonEmpty) > 1)
@@ -341,6 +334,14 @@ object DefloatMapper {
     val grouped = seq.groupBy(_.linkId).mapValues(_.groupBy(_.sideCode).keySet.size)
     if (grouped.exists{ case (_, sideCodes) => sideCodes > 1})
       throw new InvalidAddressDataException(s"Multiple sidecodes generated for links ${grouped.filter(_._2 > 1).keySet.mkString(", ")}")
+    if (!seq.exists(_.startAddrMValue == addrMin))
+      throw new InvalidAddressDataException(s"Generated address list does not start at $addrMin but ${seq.map(_.startAddrMValue).min}")
+    if (!seq.exists(_.endAddrMValue == addrMax))
+      throw new InvalidAddressDataException(s"Generated address list does not end at $addrMax but ${seq.map(_.endAddrMValue).max}")
+    if (!seq.forall(ra => ra.startAddrMValue == addrMin || seq.exists(_.endAddrMValue == ra.startAddrMValue)))
+      throw new InvalidAddressDataException(s"Generated address list was non-continuous")
+    if (!seq.forall(ra => ra.endAddrMValue == addrMax || seq.exists(_.startAddrMValue == ra.endAddrMValue)))
+      throw new InvalidAddressDataException(s"Generated address list was non-continuous")
   }
 
   def preTransferChecks(seq: Seq[RoadAddress]): Unit = {
@@ -400,7 +401,7 @@ case class RoadAddressMapping(sourceLinkId: Long, targetLinkId: Long, sourceStar
    */
   def matches(roadAddress: RoadAddress): Boolean = {
     sourceLinkId == roadAddress.linkId &&
-      GeometryUtils.overlapAmount((roadAddress.startMValue, roadAddress.endMValue), (sourceStartM, sourceEndM)) > 0.999
+      GeometryUtils.overlapAmount((roadAddress.startMValue, roadAddress.endMValue), (sourceStartM, sourceEndM)) > 0.001
   }
 
   val sourceDelta = sourceEndM - sourceStartM

@@ -135,6 +135,32 @@ class DefloatMapperSpec extends FunSuite with Matchers{
     ) should be (false)
   }
 
+  test("post transfer check passes on correct input") {
+    val seq = Seq(createRoadAddressLink(-1000, 2, Seq(), 1, 1, 0, 100, 104, SideCode.TowardsDigitizing, Anomaly.None)).map(roadAddressLinkToRoadAddress(false))
+    val org = Seq(createRoadAddressLink(1, 1, Seq(), 1, 1, 0, 100, 102, SideCode.TowardsDigitizing, Anomaly.None),
+      createRoadAddressLink(1, 2, Seq(), 1, 1, 0, 102, 104, SideCode.TowardsDigitizing, Anomaly.None)).map(roadAddressLinkToRoadAddress(false))
+    DefloatMapper.postTransferChecks(seq, org)
+  }
+
+  test("post transfer check fails if target addresses are missing") {
+    val seq = Seq(createRoadAddressLink(-1000, 2, Seq(), 1, 1, 0, 100, 104, SideCode.TowardsDigitizing, Anomaly.None)).map(roadAddressLinkToRoadAddress(false))
+    val org = Seq(createRoadAddressLink(1, 1, Seq(), 1, 1, 0, 100, 108, SideCode.TowardsDigitizing, Anomaly.None)).map(roadAddressLinkToRoadAddress(false))
+    val t = intercept[InvalidAddressDataException] {
+      DefloatMapper.postTransferChecks(seq, org)
+    }
+    t.getMessage should be ("Generated address list does not end at 108 but 104")
+  }
+
+  test("post transfer check fails if target addresses has a gap") {
+    val seq = Seq(createRoadAddressLink(-1000, 2, Seq(), 1, 1, 0, 100, 104, SideCode.TowardsDigitizing, Anomaly.None),
+      createRoadAddressLink(-1000, 2, Seq(), 1, 1, 0, 105, 108, SideCode.TowardsDigitizing, Anomaly.None)).map(roadAddressLinkToRoadAddress(false))
+    val org = Seq(createRoadAddressLink(1, 1, Seq(), 1, 1, 0, 100, 108, SideCode.TowardsDigitizing, Anomaly.None)).map(roadAddressLinkToRoadAddress(false))
+    val t = intercept[InvalidAddressDataException] {
+      DefloatMapper.postTransferChecks(seq, org)
+    }
+    t.getMessage should be ("Generated address list was non-continuous")
+  }
+
   private def createRoadAddressLink(id: Long, linkId: Long, geom: Seq[Point], roadNumber: Long, roadPartNumber: Long, trackCode: Long,
                                     startAddressM: Long, endAddressM: Long, sideCode: SideCode, anomaly: Anomaly, startCalibrationPoint: Boolean = false,
                                     endCalibrationPoint: Boolean = false) = {
