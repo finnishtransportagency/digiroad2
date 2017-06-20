@@ -69,6 +69,12 @@
       [-1, 'Kyllä']
     ];
 
+     function getRoadType(askedRoadType){
+      var RoadType = _.find(allRoadTypes, function(x){return x[0] === askedRoadType;});
+      return RoadType && RoadType[1];
+    }
+
+
     var getDiscontinuityType = function(discontinuity){
       var DiscontinuityType = _.find(discontinuities, function(x){return x[0] === discontinuity;});
       return DiscontinuityType && DiscontinuityType[1];
@@ -692,5 +698,9 @@
       });
     };
     bindEvents();
+
+    return{
+      getRoadType: getRoadType
+    };
   };
 })(this);

@@ -250,7 +250,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
     val errorMessageOpt=projectService.checkRoadAddressNumberAndSEParts(roadNumber, startPart, endPart)
     if (errorMessageOpt.isEmpty) {
-        projectService.checkReservability(roadNumber, startPart, endPart) match {
+      projectService.checkReservability(roadNumber, startPart, endPart) match {
         case Left(err) => Map("success"-> err, "roadparts" -> Seq.empty)
         case Right(reservedRoadParts) => {
           projectService.projDateValidation(reservedRoadParts, formatter.parseDateTime(projDate)) match {
@@ -293,9 +293,20 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       projectService.projectLinkPublishable(modification.projectId)))
   }
 
-  get("/project/getchangetable/:projectid") {
-    val projectid = params("projectid").toLong
-    projectService.getChangeProject(projectid)
+  get("/project/getchangetable/:projectId") {
+    val projectId = params("projectId").toLong
+    projectService.getChangeProject(projectId).map(project =>
+      Map(
+        "id" -> project.id,
+        "ely" -> project.ely,
+        "user" -> project.user,
+        "name" -> project.name,
+        "changeDate" -> project.changeDate,
+        "changeInfoSeq"-> project.changeInfoSeq.map(changeInfo=>
+          Map("changetype"->changeInfo.changeType.value, "roadType"->changeInfo.roadType.value,
+            "discontinuity"->changeInfo.discontinuity.description, "source"->changeInfo.source,
+            "target"->changeInfo.target)))
+    ).getOrElse(PreconditionFailed())
   }
 
   post("/project/publish"){
