@@ -1,5 +1,14 @@
 (function(root) {
   root.ProjectChangeTable = function(projectChangeInfoModel, projectCollection) {
+
+    var changeTypes = [
+      [1, 'Ennallaan'],
+      [2, 'Uusi'],
+      [3, 'Siirto'],
+      [4, 'Numerointi'],
+      [5, 'Lakkautus']
+    ];
+
     var changeTable =
       $('<div class="change-table-frame"></div>');
     // Text about validation success hard-coded now
@@ -12,9 +21,9 @@
       '<div id ="change-table-borders-source"></div>' +
       '<div id ="change-table-borders-target"></div>');
     changeTable.append('<div class="change-table-sections">' +
-      '<label class="change-table-heading-label" style="width: 122px">Ilmoitus</label>' +
-      '<label class="change-table-heading-label" style="width: 387px">Nykyosoite</label>' +
-      '<label class="change-table-heading-label" style="width: 387px">Uusi osoite</label>');
+      '<label class="change-table-heading-label" style="width: 117px">Ilmoitus</label>' +
+      '<label class="change-table-heading-label" style="width: 379px">Nykyosoite</label>' +
+      '<label class="change-table-heading-label" style="width: 379px">Uusi osoite</label>');
     changeTable.append('<div class="change-table-dimension-headers">' +
       '<table class="change-table-dimensions">' +
       '<tr>' +
@@ -50,6 +59,11 @@
       changeTable.hide();
     }
 
+    function getChangeType(type){
+      var changeType = _.find(changeTypes, function(y) { return y[0] === type; });
+      return changeType && changeType[1];
+    }
+
     function getChanges() {
       var currentProject = projectCollection.getCurrentProject();
       projectChangeInfoModel.getChanges(currentProject.project.id);
@@ -61,7 +75,7 @@
         var htmlTable ='<table class="change-table">';
         _.each(projectChangeData.changeInfoSeq, function(changeInfoSeq) {
           htmlTable += '<tr class="change-table-data-row">' +
-            '<td class="project-change-table-dimension-first">' + changeInfoSeq.changetype + '</td>' +
+            '<td class="project-change-table-dimension-first">' + getChangeType(changeInfoSeq.changetype) + '</td>' +
             '<td class="project-change-table-data-cell">' + changeInfoSeq.source.roadNumber + '</td>' +
             '<td class="project-change-table-data-cell">' + changeInfoSeq.source.trackCode + '</td>' +
             '<td class="project-change-table-data-cell">' + changeInfoSeq.source.startRoadPartNumber + '</td>' +
