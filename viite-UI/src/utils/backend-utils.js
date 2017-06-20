@@ -26,11 +26,6 @@
       };
     });
 
-
-
-
-
-
     this.updateProjectLinks = _.throttle(function(data, errorCallback) {
       $.ajax({
         contentType: "application/json",

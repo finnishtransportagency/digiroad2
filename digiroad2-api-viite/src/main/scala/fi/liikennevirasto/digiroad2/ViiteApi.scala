@@ -252,7 +252,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
     val errorMessageOpt=projectService.checkRoadAddressNumberAndSEParts(roadNumber, startPart, endPart)
     if (errorMessageOpt.isEmpty) {
-        projectService.checkReservability(roadNumber, startPart, endPart) match {
+      projectService.checkReservability(roadNumber, startPart, endPart) match {
         case Left(err) => Map("success"-> err, "roadparts" -> Seq.empty)
         case Right(reservedRoadParts) => {
           projectService.projDateValidation(reservedRoadParts, formatter.parseDateTime(projDate)) match {
@@ -298,20 +298,20 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   get("/project/getchangetable/:projectId") {
     val projectId = params("projectId").toLong
     projectService.getChangeProject(projectId).map(project =>
-        Map(
-          "id" -> project.id,
-          "ely" -> project.ely,
-          "user" -> project.user,
-          "name" -> project.name,
-          "changeDate" -> project.changeDate,
-          "changeInfoSeq"-> project.changeInfoSeq.map(changeInfo=>
-            Map("changetype"->changeInfo.changeType.value, "roadType"->changeInfo.roadType.value,
-              "discontinuity"->changeInfo.discontinuity.description, "source"->changeInfo.source,
-              "target"->changeInfo.target)))
+      Map(
+        "id" -> project.id,
+        "ely" -> project.ely,
+        "user" -> project.user,
+        "name" -> project.name,
+        "changeDate" -> project.changeDate,
+        "changeInfoSeq"-> project.changeInfoSeq.map(changeInfo=>
+          Map("changetype"->changeInfo.changeType.value, "roadType"->changeInfo.roadType.value,
+            "discontinuity"->changeInfo.discontinuity.description, "source"->changeInfo.source,
+            "target"->changeInfo.target)))
     ).getOrElse(PreconditionFailed())
   }
 
-    def changeinfoSeq(changeinfo:Seq[RoadAddressChangeInfo]) :(String, Any) = ???
+  def changeinfoSeq(changeinfo:Seq[RoadAddressChangeInfo]) :(String, Any) = ???
 
   post("/project/publish"){
     val user = userProvider.getCurrentUser()

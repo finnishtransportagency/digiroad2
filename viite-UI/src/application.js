@@ -10,7 +10,6 @@
     var instructionsPopup = new InstructionsPopup($('.digiroad2'));
     var projectChangeInfoModel = new ProjectChangeInfoModel(backend);
 
-
     var models = {
       roadCollection: roadCollection,
       roadAddressProjectCollection: roadAddressProjectCollection,
