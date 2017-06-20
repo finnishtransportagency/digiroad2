@@ -120,7 +120,7 @@ object DefloatMapper {
       ra.copy(id = NewRoadAddress, linkId = adjMap.targetLinkId, startAddrMValue = startCP.map(_.addressMValue).getOrElse(startAddrM),
         endAddrMValue = endCP.map(_.addressMValue).getOrElse(endAddrM), floating = false,
         sideCode = sideCode, startMValue = startM, endMValue = endM, geom = mappedGeom, calibrationPoints = (startCP, endCP),
-        adjustedTimestamp = VVHClient.createVVHTimeStamp(5))
+        adjustedTimestamp = VVHClient.createVVHTimeStamp())
     })
   }
 

@@ -581,7 +581,7 @@ trait LinearAssetOperations {
 
     //Create New Asset
     val newAssetIDcreate = createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, valueToUpdate, oldAsset.sideCode,
-      measures.getOrElse(Measures(oldAsset.startMeasure, oldAsset.endMeasure)), username, vvhClient.roadLinkData.createVVHTimeStamp(5), getLinkSource(oldAsset.linkId), true, oldAsset.createdBy, oldAsset.createdDateTime)
+      measures.getOrElse(Measures(oldAsset.startMeasure, oldAsset.endMeasure)), username, vvhClient.roadLinkData.createVVHTimeStamp(), getLinkSource(oldAsset.linkId), true, oldAsset.createdBy, oldAsset.createdDateTime)
 
       Some(newAssetIDcreate)
   }
@@ -616,7 +616,7 @@ trait LinearAssetOperations {
   def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String): Seq[Long] = {
     withDynTransaction {
       newLinearAssets.map { newAsset =>
-        createWithoutTransaction(typeId, newAsset.linkId, newAsset.value, newAsset.sideCode, Measures(newAsset.startMeasure, newAsset.endMeasure), username, vvhClient.roadLinkData.createVVHTimeStamp(5), getLinkSource(newAsset.linkId))
+        createWithoutTransaction(typeId, newAsset.linkId, newAsset.value, newAsset.sideCode, Measures(newAsset.startMeasure, newAsset.endMeasure), username, vvhClient.roadLinkData.createVVHTimeStamp(), getLinkSource(newAsset.linkId))
       }
     }
   }
@@ -764,7 +764,7 @@ trait LinearAssetOperations {
             filter(_.attributes.get("SURFACETYPE").contains(2)).
             map(roadLink => NewLinearAsset(roadLink.linkId, 0, GeometryUtils.geometryLength(roadLink.geometry), NumericValue(1), 1, 0, None))
           newAssets.foreach{ newAsset =>
-              createWithoutTransaction(assetTypeId, newAsset.linkId, newAsset.value, newAsset.sideCode, Measures(newAsset.startMeasure, newAsset.endMeasure), LinearAssetTypes.VvhGenerated, VVHClient.createVVHTimeStamp(5),
+              createWithoutTransaction(assetTypeId, newAsset.linkId, newAsset.value, newAsset.sideCode, Measures(newAsset.startMeasure, newAsset.endMeasure), LinearAssetTypes.VvhGenerated, VVHClient.createVVHTimeStamp(),
                 getLinkSource(newAsset.linkId))
             count = count + 1
           }

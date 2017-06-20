@@ -172,7 +172,13 @@ object ChangeType {
 }
 
 object VVHClient {
-  def createVVHTimeStamp(offsetHours: Int): Long = {
+  /**
+    * Create a pseudo VVH time stamp when an asset is created or updated and is on the current road geometry.
+    * This prevents change info from being applied to the recently created asset. Resolution is one day.
+    * @param offsetHours Offset to the timestamp. Defaults to 5 which reflects to VVH offset for batch runs.
+    * @return VVH timestamp for current date
+    */
+  def createVVHTimeStamp(offsetHours: Int = 5): Long = {
     val oneHourInMs = 60 * 60 * 1000L
     val utcTime = DateTime.now().minusHours(offsetHours).getMillis
     val curr = utcTime + DateTimeZone.getDefault.getOffset(utcTime)
@@ -194,7 +200,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
     }
   }
 
-  def createVVHTimeStamp(offsetHours: Int): Long = {
+  def createVVHTimeStamp(offsetHours: Int = 5): Long = {
     VVHClient.createVVHTimeStamp(offsetHours)
   }
 }
@@ -405,7 +411,7 @@ trait VVHClientOperations {
     *
     * @param offsetHours Number of hours since midnight to return current day as a VVH timestamp (UNIX time in ms)
     */
-  def createVVHTimeStamp(offsetHours: Int): Long = {
+  def createVVHTimeStamp(offsetHours: Int = 5): Long = {
     VVHClient.createVVHTimeStamp(offsetHours)
   }
 
