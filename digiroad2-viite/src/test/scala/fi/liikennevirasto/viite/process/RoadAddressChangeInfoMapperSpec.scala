@@ -9,7 +9,7 @@ import org.scalatest.{FunSuite, Matchers}
 
 
 class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
-  test("resolve") {
+  test("resolve simple case") {
     val roadAddress = RoadAddress(1, 1, 1, Track.RightSide, Discontinuity.Continuous, 0, 1000, Some(DateTime.now), None,
       None, 0L, 123L, 0.0, 1000.234, SideCode.AgainstDigitizing, 86400L, (None, None), false, Seq(Point(0.0, 0.0), Point(1000.234, 0.0)))
     val roadAddress2 = RoadAddress(1, 1, 1, Track.RightSide, Discontinuity.Continuous, 1000, 1400, Some(DateTime.now), None,
@@ -26,5 +26,6 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     results.values.flatten.exists(_.startAddrMValue == 1000) should be (true)
     results.values.flatten.exists(_.endAddrMValue == 1000) should be (true)
     results.values.flatten.exists(_.endAddrMValue == 1400) should be (true)
+    results.values.flatten.forall(_.adjustedTimestamp == 96400L) should be (true)
   }
 }
