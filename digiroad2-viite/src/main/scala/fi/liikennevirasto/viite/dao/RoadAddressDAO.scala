@@ -104,14 +104,6 @@ case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
   val startCalibrationPoint = calibrationPoints._1
 }
 
-case class RoadAddressCreator(administrativeClass : String, anomaly: Long, calibrationPoints: Seq[CalibrationPointCreator],
-                              constructionType: Long, discontinuity: Int, elyCode: Long, endAddressM : Long, endDate: String, endMValue: Double,
-                              id : Long, linkId: Long, linkType: Long, mmlId: Long, modifiedAt : String, modifiedBy: String, municipalityCode : Long, points: Seq[Point],
-                              roadClass : Long, roadLinkType: Long, roadNameFi: String, roadNumber : Long, roadPartNumber: Long,
-                              roadType: String, segmentId : Long, sideCode : Int, adjustedTimestamp: Long, startAddressM : Long, startDate:String, startMValue: Long, trackCode : Int)
-
-case class CalibrationPointCreator(point: Point, value: Int)
-
 case class MissingRoadAddress(linkId: Long, startAddrMValue: Option[Long], endAddrMValue: Option[Long],
                               roadType: RoadType, roadNumber: Option[Long], roadPartNumber: Option[Long],
                               startMValue: Option[Double], endMValue: Option[Double], anomaly: Anomaly)
