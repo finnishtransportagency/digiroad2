@@ -93,7 +93,7 @@
               '<td class="project-change-table-data-cell">' + changeInfoSeq.discontinuity + '</td>' +
               '<td class="project-change-table-data-cell">' + linkForm.getRoadType(changeInfoSeq.roadType) + '</td>' +
               '<td class="project-change-table-data-cell">' + projectChangeData.ely + '</td>' +
-              '</tr>'
+              '</tr>';
           } else {
             htmlTable+=
             '<td class="project-change-table-data-cell">' + "" + '</td>' +
