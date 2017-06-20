@@ -311,8 +311,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     ).getOrElse(PreconditionFailed())
   }
 
-  def changeinfoSeq(changeinfo:Seq[RoadAddressChangeInfo]) :(String, Any) = ???
-
   post("/project/publish"){
     val user = userProvider.getCurrentUser()
     val projectId = params.get("projectId")
