@@ -24,14 +24,14 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
   override def create(asset: IncomingObstacle, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass] = None, linkSource: LinkGeomSource): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat, 0), geometry)
     withDynTransaction {
-      OracleObstacleDao.create(asset, mValue, username, municipality, VVHClient.createVVHTimeStamp(5), linkSource)
+      OracleObstacleDao.create(asset, mValue, username, municipality, VVHClient.createVVHTimeStamp(), linkSource)
     }
   }
 
   override def update(id: Long, updatedAsset: IncomingObstacle, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat, 0), geometry)
     withDynTransaction {
-      OracleObstacleDao.update(id, updatedAsset, mValue, username, municipality, Some(VVHClient.createVVHTimeStamp(5)), linkSource)
+      OracleObstacleDao.update(id, updatedAsset, mValue, username, municipality, Some(VVHClient.createVVHTimeStamp()), linkSource)
     }
     id
   }
