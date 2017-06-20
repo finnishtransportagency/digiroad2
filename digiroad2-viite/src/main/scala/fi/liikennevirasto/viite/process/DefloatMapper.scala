@@ -29,7 +29,7 @@ object DefloatMapper {
      */
     def fuseAddressByLinkId(s: Seq[RoadAddressLink], fused: Seq[RoadAddressLink] = Seq()): Seq[RoadAddressLink] = {
       if (s.isEmpty)
-      // We collect them in reverse order because we're interested in the last one
+      // We collect them in reverse order because we're interested in the last one and .head is so much better
         fused.reverse
       else {
         val next = s.head
@@ -76,6 +76,8 @@ object DefloatMapper {
       GeometryUtils.truncateGeometry3D(geometry,
         startM, endM)
     }
+
+    // When mapping contains a larger span (sourceStart, sourceEnd) than the road address then split the mapping
     def adjust(mapping: RoadAddressMapping, startM: Double, endM: Double) = {
       if (withinTolerance(mapping.sourceStartM, startM) && withinTolerance(mapping.sourceEndM, endM))
         mapping
@@ -92,6 +94,7 @@ object DefloatMapper {
             truncate(mapping.targetGeom, newTargetStartM - geomTargetStartM, newTargetEndM - geomTargetStartM))
       }
     }
+
     roadAddressMapping.filter(_.matches(ra)).map(mapping => {
       val adjMap = adjust(mapping, ra.startMValue, ra.endMValue)
       val (mappedStartM, mappedEndM) = (adjMap.targetStartM, adjMap.targetEndM)
@@ -128,6 +131,12 @@ object DefloatMapper {
     BigDecimal(d).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
   }
 
+  /** Used when road address span is larger than mapping: road address must be split into smaller parts
+    *
+    * @param roadAddress Road address to split
+    * @param mapping Mapping entry that may or may not have smaller or larger span than road address
+    * @return A pair of address start and address end values this mapping and road address applies to
+    */
   private def splitRoadAddressValues(roadAddress: RoadAddress, mapping: RoadAddressMapping): (Long, Long) = {
     if (withinTolerance(roadAddress.startMValue, mapping.sourceStartM) && withinTolerance(roadAddress.endMValue, mapping.sourceEndM))
       (roadAddress.startAddrMValue, roadAddress.endAddrMValue)
@@ -194,25 +203,14 @@ object DefloatMapper {
     * @return
     */
   def orderRoadAddressLinks(sources: Seq[RoadAddressLink], targets: Seq[RoadAddressLink]): (Seq[RoadAddressLink], Seq[RoadAddressLink]) = {
-    /*
-      Calculate sidecode changes - if next road address link starts with the current (end) point
-      then side code remains the same. Otherwise it's reversed
-     */
-    def getSideCode(roadAddressLink: RoadAddressLink, previousSideCode: SideCode, currentPoint: Point) = {
-      val geom = roadAddressLink.geometry
-      if (GeometryUtils.areAdjacent(geom.head, currentPoint))
-        previousSideCode
-      else
-        switchSideCode(previousSideCode)
-    }
-    def touching(p: Point, points: Seq[Point]) = {
+    def countTouching(p: Point, points: Seq[Point]) = {
       points.count(x => (x-p).to2D().length() < MaxDistanceDiffAllowed)
     }
     def hasIntersection(roadLinks: Seq[RoadAddressLink]): Boolean = {
       val endPoints = roadLinks.map(rl =>GeometryUtils.geometryEndpoints(rl.geometry))
       val flattened = endPoints.flatMap(pp => Seq(pp._1, pp._2))
       !endPoints.forall(ep =>
-        touching(ep._1, flattened) < 3 && touching(ep._2, flattened) < 3
+        countTouching(ep._1, flattened) < 3 && countTouching(ep._2, flattened) < 3
       )
     }
     def extending(link: RoadAddressLink, ext: RoadAddressLink) = {
@@ -260,9 +258,10 @@ object DefloatMapper {
       case _ => throw new InvalidAddressDataException("Bad sidecode on source")
     }
 
-    if( hasIntersection(targets) )
+    if (hasIntersection(targets))
       throw new IllegalArgumentException("Non-contiguous road addressing")
 
+    // Partition target links by counting adjacency: anything that touches only the neighbor (and itself) is a starting or ending link
     val (endingLinks, middleLinks) = targets.partition(t => targets.count(t2 => GeometryUtils.areAdjacent(t.geometry, t2.geometry)) < 3)
     val preSortedTargets = endingLinks.sortBy(l => minDistanceBetweenEndPoints(Seq(startingPoint), l.geometry)) ++ middleLinks
     val startingSideCode = if (isDirectionMatch(orderedSources.head.geometry, preSortedTargets.head.geometry))
