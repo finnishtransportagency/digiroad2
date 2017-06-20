@@ -2,11 +2,12 @@
   root.ProjectChangeTable = function(projectChangeInfoModel, projectCollection) {
 
     var changeTypes = [
-      [1, 'Ennallaan'],
-      [2, 'Uusi'],
-      [3, 'Siirto'],
-      [4, 'Numerointi'],
-      [5, 'Lakkautettu']
+      'Käsittelemättä',
+      'Ennallaan',
+      'Uusi',
+      'Siirto',
+      'Numerointi',
+      'Lakkautettu'
     ];
 
     var changeTable =
@@ -60,8 +61,7 @@
     }
 
     function getChangeType(type){
-      var changeType = _.find(changeTypes, function(y) { return y[0] === type; });
-      return changeType && changeType[1];
+      return changeTypes[type];
     }
 
     function getChanges() {
