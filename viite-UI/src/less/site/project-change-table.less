@@ -38,20 +38,26 @@
 #change-table-button-close {
   float: right;
   width: 100px;
-  margin-right: 7px;
+  margin-right: 17px;
   margin-top: 6px;
 }
 .change-table {
-  width: 100%;
+  width: 1116px; //1132px
+  display: block;
+  height: inherit;
+}
+.change-table-dimensions {
+  width:1115px;
 }
 .project-change-table-dimension {
-  width: calc(100%/17);
+  width: 66px;
   color: #5a5a57;
   font-weight: bold;
   height: 28px;
   font-size: 12px;
 }
 .project-change-table-dimension-first {
+  width: 133px;
   padding-left: 10px;
   font-weight: bold;
   font-size: 12px;
@@ -59,14 +65,15 @@
 }
 .project-changes {
   height: @project-changes-height;
+  overflow-y: auto;
 }
 .project-change-table-data-cell {
-  width: calc(100%/17);
+  width: 66px;
   color: #5a5a57;
   height: 28px;
   font-size: 12px;
 }
-.change-table-data-row {
+.project-changes tr:nth-child(odd) {
   background-color: #cbcbc9;
 }
 .change-borders-frames {
@@ -77,9 +84,11 @@
 #change-table-borders-changetype {
   position: absolute;
   height: @table-borders-height;
-  width: 115px;
+  width: 125px;
   border-right: 1px solid #a4a4a2;
   border-bottom: 1px solid #a4a4a2;
+  z-index: 1;
+  pointer-events: none;
 }
 #change-table-borders-source {
   position: absolute;
@@ -87,10 +96,14 @@
   width: 515px;
   border-right: 1px solid #a4a4a2;
   border-bottom: 1px solid #a4a4a2;
+  z-index: 1;
+  pointer-events: none;
 }
 #change-table-borders-target {
   position: absolute;
   height: @table-borders-height;
-  width: 1135px;
+  width: 1116px;
   border-bottom: 1px solid #a4a4a2;
+  z-index: 1;
+  pointer-events: none;
 }

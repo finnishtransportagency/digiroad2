@@ -24,7 +24,7 @@ import scala.util.{Left, Right}
   * Created by venholat on 25.8.2016.
   */
 
-case class NewAddressDataExtracted(sourceIds: Set[Long], targetIds: Set[Long], roadAddress: Seq[RoadAddressCreator])
+case class NewAddressDataExtracted(sourceIds: Set[Long], targetIds: Set[Long])
 
 
 case class RoadAddressProjectExtractor(id: Long, status: Long, name: String, startDate: String, additionalInfo: String,roadPartList: List[ReservedRoadPart])
@@ -174,11 +174,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   put("/roadlinks/roadaddress") {
     val data = parsedBody.extract[NewAddressDataExtracted]
-    val roadAddressData = data.roadAddress
     val sourceIds = data.sourceIds
     val targetIds = data.targetIds
     val user = userProvider.getCurrentUser()
-    val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
 
     val roadAddresses = roadAddressService.getRoadAddressesAfterCalculation(sourceIds.toSeq.map(_.toString), targetIds.toSeq.map(_.toString), user)
     try {
@@ -252,7 +250,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
     val errorMessageOpt=projectService.checkRoadAddressNumberAndSEParts(roadNumber, startPart, endPart)
     if (errorMessageOpt.isEmpty) {
-        projectService.checkReservability(roadNumber, startPart, endPart) match {
+      projectService.checkReservability(roadNumber, startPart, endPart) match {
         case Left(err) => Map("success"-> err, "roadparts" -> Seq.empty)
         case Right(reservedRoadParts) => {
           projectService.projDateValidation(reservedRoadParts, formatter.parseDateTime(projDate)) match {
@@ -295,9 +293,20 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       projectService.projectLinkPublishable(modification.projectId)))
   }
 
-  get("/project/getchangetable/:projectid") {
-    val projectid = params("projectid").toLong
-    projectService.getChangeProject(projectid)
+  get("/project/getchangetable/:projectId") {
+    val projectId = params("projectId").toLong
+    projectService.getChangeProject(projectId).map(project =>
+      Map(
+        "id" -> project.id,
+        "ely" -> project.ely,
+        "user" -> project.user,
+        "name" -> project.name,
+        "changeDate" -> project.changeDate,
+        "changeInfoSeq"-> project.changeInfoSeq.map(changeInfo=>
+          Map("changetype"->changeInfo.changeType.value, "roadType"->changeInfo.roadType.value,
+            "discontinuity"->changeInfo.discontinuity.description, "source"->changeInfo.source,
+            "target"->changeInfo.target)))
+    ).getOrElse(PreconditionFailed())
   }
 
   post("/project/publish"){

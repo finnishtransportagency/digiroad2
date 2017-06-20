@@ -519,9 +519,9 @@
         return !_.isUndefined(source);
       });
 
-      var data = {'sourceIds': sourceDataIds, 'targetIds': targetDataIds, 'roadAddress': roadAddresses};
+      var data = {'sourceIds': sourceDataIds, 'targetIds': targetDataIds};
 
-      if(!_.isEmpty(data.sourceIds) && !_.isEmpty(data.targetIds) && !_.isEmpty(data.roadAddress)){
+      if(!_.isEmpty(data.sourceIds) && !_.isEmpty(data.targetIds)){
         backend.createRoadAddress(data, function(errorObject) {
           if (errorObject.status == INTERNAL_SERVER_ERROR_500 || errorObject.status == BAD_REQUEST) {
             eventbus.trigger('linkProperties:transferFailed', errorObject.status);

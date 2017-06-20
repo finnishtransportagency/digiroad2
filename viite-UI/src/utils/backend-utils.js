@@ -159,6 +159,11 @@
       return loadingProject;
     }, 1000);
 
+    this.getChangeTable = function(id,callback) {
+      $.getJSON('api/viite/project/getchangetable/'+id, callback);
+    };
+
+
     this.getUserRoles = function () {
       $.get('api/viite/user/roles', function (roles) {
         eventbus.trigger('roles:fetched', roles);

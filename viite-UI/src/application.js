@@ -8,7 +8,7 @@
     var selectedProjectLinkProperty = new SelectedProjectLink(roadAddressProjectCollection);
     var linkPropertiesModel = new LinkPropertiesModel();
     var instructionsPopup = new InstructionsPopup($('.digiroad2'));
-    var projectChangeTable = new ProjectChangeTable();
+    var projectChangeInfoModel = new ProjectChangeInfoModel(backend);
 
     var models = {
       roadCollection: roadCollection,
@@ -28,6 +28,7 @@
       linkPropertiesModel);
 
     var projectListModel = new ProjectListModel(roadAddressProjectCollection);
+    var projectChangeTable = new ProjectChangeTable(projectChangeInfoModel, models.roadAddressProjectCollection);
 
     NavigationPanel.initialize(
       $('#map-tools'),
