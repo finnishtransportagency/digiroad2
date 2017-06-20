@@ -7,6 +7,7 @@ import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries._
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
 import slick.jdbc.{StaticQuery, GetResult, PositionedResult}
 import slick.jdbc.StaticQuery.interpolation
 
@@ -19,14 +20,16 @@ case class Obstacle(id: Long, linkId: Long,
                     createdBy: Option[String] = None,
                     createdAt: Option[DateTime] = None,
                     modifiedBy: Option[String] = None,
-                    modifiedAt: Option[DateTime] = None) extends PersistedPointAsset
+                    modifiedAt: Option[DateTime] = None,
+                    linkSource: Int) extends PersistedPointAsset
 
 object OracleObstacleDao {
   // This works as long as there is only one (and exactly one) property (currently type) for obstacles and up to one value
   def fetchByFilter(queryFilter: String => String): Seq[Obstacle] = {
     val query =
       """
-        select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code, ev.value, a.created_by, a.created_date, a.modified_by, a.modified_date
+        select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code, ev.value, a.created_by, a.created_date, a.modified_by,
+        a.modified_date, pos.link_source
         from asset a
         join asset_link al on a.id = al.asset_id
         join lrm_position pos on al.position_id = pos.id
@@ -52,12 +55,13 @@ object OracleObstacleDao {
       val createdDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val modifiedBy = r.nextStringOption()
       val modifiedDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val linkSource = r.nextInt()
 
-      Obstacle(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, obstacleType, createdBy, createdDateTime, modifiedBy, modifiedDateTime)
+      Obstacle(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, obstacleType, createdBy, createdDateTime, modifiedBy, modifiedDateTime, linkSource)
     }
   }
 
-  def create(obstacle: IncomingObstacle, mValue: Double, username: String, municipality: Int, adjustmentTimestamp: Long): Long = {
+  def create(obstacle: IncomingObstacle, mValue: Double, username: String, municipality: Int, adjustmentTimestamp: Long, linkSource: LinkGeomSource): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     sqlu"""
@@ -65,8 +69,8 @@ object OracleObstacleDao {
         into asset(id, asset_type_id, created_by, created_date, municipality_code)
         values ($id, 220, $username, sysdate, $municipality)
 
-        into lrm_position(id, start_measure, link_id, adjusted_timestamp)
-        values ($lrmPositionId, $mValue, ${obstacle.linkId}, $adjustmentTimestamp)
+        into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source)
+        values ($lrmPositionId, $mValue, ${obstacle.linkId}, $adjustmentTimestamp, ${linkSource.value})
 
         into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId)
@@ -78,7 +82,7 @@ object OracleObstacleDao {
     id
   }
 
-  def update(id: Long, obstacle: IncomingObstacle, mValue: Double, username: String, municipality: Int, adjustedTimeStampOption: Option[Long] = None) = {
+  def update(id: Long, obstacle: IncomingObstacle, mValue: Double, username: String, municipality: Int, adjustedTimeStampOption: Option[Long] = None, linkSource: LinkGeomSource) = {
     sqlu""" update asset set municipality_code = $municipality where id = $id """.execute
     updateAssetModified(id, username).execute
     updateAssetGeometry(id, Point(obstacle.lon, obstacle.lat))
@@ -91,7 +95,8 @@ object OracleObstacleDao {
            set
            start_measure = $mValue,
            link_id = ${obstacle.linkId},
-           adjusted_timestamp = ${adjustedTimeStamp}
+           adjusted_timestamp = ${adjustedTimeStamp},
+           link_source = ${linkSource.value}
           where id = (select position_id from asset_link where asset_id = $id)
         """.execute
       case _ =>
@@ -99,7 +104,8 @@ object OracleObstacleDao {
           update lrm_position
            set
            start_measure = $mValue,
-           link_id = ${obstacle.linkId}
+           link_id = ${obstacle.linkId},
+           link_source = ${linkSource.value}
           where id = (select position_id from asset_link where asset_id = $id)
         """.execute
     }
@@ -111,7 +117,8 @@ object OracleObstacleDao {
     val query =
       """
         select * from (
-          select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code, ev.value, a.created_by, a.created_date, a.modified_by, a.modified_date
+          select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code, ev.value, a.created_by, a.created_date, a.modified_by, a.modified_date,
+          pos.link_source
             from asset a
             join asset_link al on a.id = al.asset_id
             join lrm_position pos on al.position_id = pos.id
