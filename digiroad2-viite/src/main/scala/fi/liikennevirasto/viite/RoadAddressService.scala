@@ -181,9 +181,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
     ))*/
 
-    RoadAddressChangeInfoMapper.resolveChangesToMap(addresses, roadlinks, changedRoadLinks)
+    val newRoads = RoadAddressChangeInfoMapper.resolveChangesToMap(addresses, roadlinks, changedRoadLinks)
+
     //TODO: save the new roadAddresses to database
     //TODO: update road address geometry for the new links
+    newRoads
   }
 
   /**

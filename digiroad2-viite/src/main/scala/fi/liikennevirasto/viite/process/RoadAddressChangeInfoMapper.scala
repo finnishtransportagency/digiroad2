@@ -37,6 +37,8 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
 
   def resolveChangesToMap(roadAddresses: Map[Long, Seq[RoadAddress]], changedRoadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Map[Long, Seq[RoadAddress]] = {
     val groupedChanges = changes.groupBy(_.vvhTimeStamp).values.toSeq
-    applyChanges(groupedChanges.sortBy(_.head.vvhTimeStamp), roadAddresses)
+    val appliedChanges = applyChanges(groupedChanges.sortBy(_.head.vvhTimeStamp), roadAddresses)
+    appliedChanges.map(change =>
+      change._1 -> appliedChanges(change._1).toList)
   }
 }
