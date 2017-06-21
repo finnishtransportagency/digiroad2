@@ -9,9 +9,9 @@
     };
 
     var administrativeClasses = [
-      ['State',  'Yksityisen omistama'],
+      ['State', 'Valtion omistama'],
       ['Municipality',  'Kunnan omistama'],
-      ['Private',  'Valtion omistama']
+      ['Private',  'Yksityisen omistama']
     ];
 
     var localizedTrafficDirections = {
