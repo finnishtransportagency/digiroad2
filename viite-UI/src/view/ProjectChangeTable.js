@@ -23,7 +23,7 @@
       '<div id ="change-table-borders-target"></div>');
     changeTable.append('<div class="change-table-sections">' +
       '<label class="change-table-heading-label" style="width: 117px">Ilmoitus</label>' +
-      '<label class="change-table-heading-label" style="width: 379px">Nykyosoite</label>' +
+      '<label class="change-table-heading-label" style="width: 478px">Nykyosoite</label>' +
       '<label class="change-table-heading-label" style="width: 379px">Uusi osoite</label>');
     changeTable.append('<div class="change-table-dimension-headers">' +
       '<table class="change-table-dimensions">' +
@@ -35,6 +35,9 @@
       '<td class="project-change-table-dimension">AET</td>'+
       '<td class="project-change-table-dimension">LOSA</td>'+
       '<td class="project-change-table-dimension">LET</td>'+
+      '<td class="project-change-table-dimension">JATKUU</td>'+
+      '<td class="project-change-table-dimension">TIETYYPPI</td>'+
+      '<td class="project-change-table-dimension">ELY</td>'+
       '<td class="project-change-table-dimension">TIE</td>'+
       '<td class="project-change-table-dimension">AJR</td>'+
       '<td class="project-change-table-dimension">AOSA</td>'+
@@ -81,10 +84,13 @@
             '<td class="project-change-table-data-cell">' + changeInfoSeq.source.startRoadPartNumber + '</td>' +
             '<td class="project-change-table-data-cell">' + changeInfoSeq.source.startAddressM + '</td>' +
             '<td class="project-change-table-data-cell">' + changeInfoSeq.source.endRoadPartNumber + '</td>' +
-            '<td class="project-change-table-data-cell">' + changeInfoSeq.source.endAddressM + '</td>';
+            '<td class="project-change-table-data-cell">' + changeInfoSeq.source.endAddressM + '</td>' +
+            '<td class="project-change-table-data-cell">' + changeInfoSeq.discontinuity + '</td>' +
+            '<td class="project-change-table-data-cell">' + linkForm.getRoadType(changeInfoSeq.roadType) + '</td>' +
+            '<td class="project-change-table-data-cell">' + projectChangeData.ely + '</td>';
           if(changeInfoSeq.changetype!==5){ //5=termination
             htmlTable+=
-            '<td class="project-change-table-data-cell">' + changeInfoSeq.target.roadNumber + '</td>'+
+              '<td class="project-change-table-data-cell">' + changeInfoSeq.target.roadNumber + '</td>'+
               '<td class="project-change-table-data-cell">' + changeInfoSeq.target.trackCode + '</td>' +
               '<td class="project-change-table-data-cell">' + changeInfoSeq.target.startRoadPartNumber + '</td>' +
               '<td class="project-change-table-data-cell">' + changeInfoSeq.target.startAddressM + '</td>' +
@@ -96,15 +102,16 @@
               '</tr>';
           } else {
             htmlTable+=
-            '<td class="project-change-table-data-cell">' + "" + '</td>' +
-            '<td class="project-change-table-data-cell">' + "" + '</td>' +
-            '<td class="project-change-table-data-cell">' + "" + '</td>' +
-            '<td class="project-change-table-data-cell">' + "" + '</td>' +
-            '<td class="project-change-table-data-cell">' + "" + '</td>' +
-            '<td class="project-change-table-data-cell">' + "" + '</td>' +
-            '<td class="project-change-table-data-cell">' + "" + '</td>' +
-            '<td class="project-change-table-data-cell">' + "" + '</td>' +
-            '</tr>';}
+              '<td class="project-change-table-data-cell">' + "" + '</td>' +
+              '<td class="project-change-table-data-cell">' + "" + '</td>' +
+              '<td class="project-change-table-data-cell">' + "" + '</td>' +
+              '<td class="project-change-table-data-cell">' + "" + '</td>' +
+              '<td class="project-change-table-data-cell">' + "" + '</td>' +
+              '<td class="project-change-table-data-cell">' + "" + '</td>' +
+              '<td class="project-change-table-data-cell">' + "" + '</td>' +
+              '<td class="project-change-table-data-cell">' + "" + '</td>' +
+              '<td class="project-change-table-data-cell">' + "" + '</td>' +
+              '</tr>';}
         });
         htmlTable += '</table>';
 

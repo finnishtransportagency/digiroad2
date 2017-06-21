@@ -42,22 +42,25 @@
   margin-top: 6px;
 }
 .change-table {
-  width: 1116px; //1132px
   display: block;
   height: inherit;
 }
-.change-table-dimensions {
-  width:1115px;
+.change-table td{
+
 }
 .project-change-table-dimension {
-  width: 66px;
+  width: 54.3px;
+  max-width: 54.3px;
   color: #5a5a57;
   font-weight: bold;
   height: 28px;
   font-size: 12px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .project-change-table-dimension-first {
-  width: 133px;
+  width: 128px;
   padding-left: 10px;
   font-weight: bold;
   font-size: 12px;
@@ -68,10 +71,14 @@
   overflow-y: auto;
 }
 .project-change-table-data-cell {
-  width: 66px;
   color: #5a5a57;
   height: 28px;
   font-size: 12px;
+  overflow: hidden;
+  white-space: nowrap;
+  width: 54.8px;
+  max-width: 54.8px;
+  text-overflow: ellipsis;
 }
 .project-changes tr:nth-child(odd) {
   background-color: #cbcbc9;
@@ -93,7 +100,7 @@
 #change-table-borders-source {
   position: absolute;
   height: @table-borders-height;
-  width: 515px;
+  width: 612px;
   border-right: 1px solid #a4a4a2;
   border-bottom: 1px solid #a4a4a2;
   z-index: 1;
