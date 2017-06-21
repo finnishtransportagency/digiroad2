@@ -172,20 +172,28 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   def resolveChanges(roadlinks: Seq[RoadLink], changedRoadLinks: Seq[ChangeInfo], addresses: Map[Long, Seq[RoadAddress]]): Map[Long, Seq[RoadAddress]] = {
-    val filtered = matchChangesWithRoadAddresses(addresses.values.flatten.toSeq, changedRoadLinks)
-    // Expiring roadAddresses when change_type = 1 and change_type = 2
-    /*filtered.foreach(f => f._2.foreach(change => change.changeType match {
-      case 1 | 2 =>
-        RoadAddressDAO.expireById(Set(f._1.linkId))
-      case _ =>
+    withDynTransaction {
+      // Expiring roadAddresses when change_type = 1 and change_type = 2
+      matchChangesWithRoadAddresses(addresses.values.flatten.toSeq, changedRoadLinks).foreach(f => f._2.foreach(change => change.changeType match {
+        case 1 | 2 =>
+          RoadAddressDAO.expireById(Set(f._2.head.oldId.get))
+        case _ =>
+      }
+      ))
+
+      val newRoads = RoadAddressChangeInfoMapper.resolveChangesToMap(addresses, roadlinks, changedRoadLinks)
+
+      newRoads.flatMap(road => {
+          Map(road._1 -> road._2.map(r =>
+            if (r.id == NewRoadAddress) {
+              val roadWithNewGeom = r.copy(geom = GeometryUtils.truncateGeometry3D(roadlinks.filter(link => link.linkId == r.linkId).head.geometry, r.startMValue, r.endMValue))
+              roadWithNewGeom.copy(id = RoadAddressDAO.create(Seq(roadWithNewGeom)).head)
+
+            }
+            else
+              r))
+      })
     }
-    ))*/
-
-    val newRoads = RoadAddressChangeInfoMapper.resolveChangesToMap(addresses, roadlinks, changedRoadLinks)
-
-    //TODO: save the new roadAddresses to database
-    //TODO: update road address geometry for the new links
-    newRoads
   }
 
   /**
