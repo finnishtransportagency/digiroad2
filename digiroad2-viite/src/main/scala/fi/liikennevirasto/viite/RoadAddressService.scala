@@ -153,9 +153,36 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   }
 
+  /**
+    * This will annex all the valid ChangeInfo to the corresponding road address object
+    * The criteria for the annexation is the following:
+    *   .The changeInfo vvhTimestamp must be bigger than the RoadAddress vvhTimestamp
+    *   .Either the newId or the oldId from the Changeinfo must be equal to the linkId in the RoadAddress
+    *
+    * @param roadAddresses - Sequence of RoadAddresses
+    * @param changes - Sequence of ChangeInfo
+    * @return List of (RoadAddress, List of ChangeInfo)
+    */
+  def matchChangesWithRoadAddresses(roadAddresses: Seq[RoadAddress], changes: Seq[ChangeInfo]) = {
+    roadAddresses.map(ra => {
+      (ra, changes.filter(c => {
+        (c.newId.getOrElse(-1) == ra.linkId || c.oldId.getOrElse(-1) == ra.linkId) && c.vvhTimeStamp > ra.adjustedTimestamp
+      }))
+    }).filter(ra => ra._2.size > 0)
+  }
+
   def resolveChanges(roadlinks: Seq[RoadLink], changedRoadLinks: Seq[ChangeInfo], addresses: Map[Long, Seq[RoadAddress]]): Map[Long, Seq[RoadAddress]] = {
-    //TODO: check which road address objects were lost when applying changes and expire them, then create the new ones in DB
+    val filtered = matchChangesWithRoadAddresses(addresses.values.flatten.toSeq, changedRoadLinks)
+    // Expiring roadAddresses when change_type = 1 and change_type = 2
+    /*filtered.foreach(f => f._2.foreach(change => change.changeType match {
+      case 1 | 2 =>
+        RoadAddressDAO.expireById(Set(f._1.linkId))
+      case _ =>
+    }
+    ))*/
+
     RoadAddressChangeInfoMapper.resolveChangesToMap(addresses, roadlinks, changedRoadLinks)
+    //TODO: save the new roadAddresses to database
     //TODO: update road address geometry for the new links
   }
 

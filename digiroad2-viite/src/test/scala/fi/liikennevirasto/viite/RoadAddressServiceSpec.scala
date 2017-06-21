@@ -789,7 +789,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
         ChangeInfo(Option(602156), Option(602156), 6798918, 4, Option(10.52131863), Option(106.62158114), Option(0.0), Option(96.166451179999996), defaultVVTimestamp) ,
         ChangeInfo(Option(602156), Option(linkId1), 6798918, 5, Option(10.52131863), Option(106.62158114), Option(0.0), Option(96.166451179999996), defaultVVTimestamp+5L)
       )
-    val matchedResults = RoadAddressChangeInfoMapper.matchChangesWithRoadAddresses(roadAddress, changeInfo)
+    val matchedResults = roadAddressService.matchChangesWithRoadAddresses(roadAddress, changeInfo)
 
     matchedResults.size should be(3)
     val firstMatch = matchedResults.find(_._1.linkId == linkId1).get
