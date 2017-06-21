@@ -1,6 +1,4 @@
 package fi.liikennevirasto.viite
-
-
 import fi.liikennevirasto.digiroad2.RoadLinkType.{FloatingRoadLinkType, UnknownRoadLinkType}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
@@ -109,6 +107,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     //TODO use complementedIds instead of only roadLinkIds below. There is no complementary ids for changeInfo dealing (for now)
     val changedRoadLinks = roadLinkService.getChangeInfoFromVVH(boundingRectangle, municipalities)
     val filteredChangedRoadLinks = changedRoadLinks.filter(crl => roadLinkIds.contains(crl.oldId.getOrElse(0)))
+    prettyPrint(filteredChangedRoadLinks)
     val linkIds = complementedRoadLinks.map(_.linkId).toSet
     val fetchVVHEndTime = System.currentTimeMillis()
     logger.info("End fetch vvh road links in %.3f sec".format((fetchVVHEndTime - fetchVVHStartTime) * 0.001))
@@ -644,7 +643,23 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       case a: Exception => logger.error(a.getMessage, a)
     }
   }
+  def prettyPrint(changes: Seq[ChangeInfo]) = {
+    def setPrecision(d: Double) = {
+      BigDecimal(d).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
+    }
+    def concatenate(l: ChangeInfo, s: String): String = {
+      val newS = s"""old id: ${l.oldId.getOrElse("MISS!")} new id: ${l.newId.getOrElse("MISS!")} old length: ${setPrecision(l.oldStartMeasure.getOrElse(0.0))}-${setPrecision(l.oldEndMeasure.getOrElse(0.0))} new length: ${setPrecision(l.newStartMeasure.getOrElse(0.0))}-${setPrecision(l.newEndMeasure.getOrElse(0.0))}
+     """
+      (s+ "\n" +newS)
+    }
+    val groupedChanges = changes.groupBy(_.changeType)
+
+    groupedChanges.foreach{ group =>
+      println(s"""changeType: ${group._1}""" + "\n" + group._2.foldLeft("")((r,c) => concatenate(c, r))+ "\n")
+    }
+  }
 }
+
 
 case class RoadAddressMerge(merged: Set[Long], created: Seq[RoadAddress])
 case class ReservedRoadPart(roadPartId: Long, roadNumber: Long, roadPartNumber: Long, length: Double, discontinuity: Discontinuity, ely: Long, startDate: Option[DateTime], endDate: Option[DateTime])
