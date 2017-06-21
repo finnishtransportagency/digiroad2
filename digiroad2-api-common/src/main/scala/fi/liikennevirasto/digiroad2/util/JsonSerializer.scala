@@ -88,7 +88,10 @@ class JsonSerializer extends VVHSerializer {
     val tmpFile = File.createTempFile("tmp", "cached")
     tmpFile.deleteOnExit()
 
-    write(objects, new FileWriter(tmpFile))
+    val fw = new FileWriter(tmpFile)
+    val jsonString = objects.map(go => write(go)).mkString("[", ",", "]")
+    fw.write(jsonString)
+    fw.close()
 
     if (file.exists())
       file.delete()
