@@ -184,18 +184,17 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
       val newRoads = RoadAddressChangeInfoMapper.resolveChangesToMap(addresses, roadlinks, changedRoadLinks)
 
-      newRoads.flatMap(road => {
-        Map(road._1 -> road._2.map(r =>
-          if (r.id == NewRoadAddress) {
-            val roadWithNewGeom = r.copy(id = RoadAddressDAO.getNextRoadAddressId, geom = GeometryUtils.truncateGeometry3D(roadlinks.filter(link => link.linkId == r.linkId).head.geometry, r.startMValue, r.endMValue))
-            RoadAddressDAO.create(Seq(roadWithNewGeom))
-            recalculateRoadAddresses(r.roadNumber.toInt, r.roadPartNumber.toInt)
-            roadWithNewGeom
-          }
-          else
-            r))
-      })
-    }
+      newRoads.mapValues(_.map(r =>
+        if (r.id == NewRoadAddress) {
+          val roadWithNewGeom = r.copy(id = RoadAddressDAO.getNextRoadAddressId, geom = GeometryUtils.truncateGeometry3D(roadlinks.filter(link => link.linkId == r.linkId).head.geometry, r.startMValue, r.endMValue))
+          RoadAddressDAO.create(Seq(roadWithNewGeom))
+          roadWithNewGeom
+        }
+        else
+          r))
+     newRoads.values.flatten.map(r => (r.roadNumber, r.roadPartNumber)).toSet.foreach{
+        case (roadNumber, roadPartNumber) => recalculateRoadAddresses(roadNumber.toInt, roadPartNumber.toInt)
+      }
   }
 
   /**
