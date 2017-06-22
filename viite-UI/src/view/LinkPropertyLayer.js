@@ -528,7 +528,7 @@
 
         _.each(directionRoadMarker, function(directionlink) {
           var marker = cachedMarker.createMarker(directionlink);
-          if(applicationModel.getCurrentAction() !== applicationModel.actionCalculated && !_.contains(linkIdsToRemove,marker.roadLinkData.linkId))
+          if(applicationModel.getCurrentAction() !== applicationModel.actionCalculated && !_.contains(linkIdsToRemove,marker.roadLinkData.linkId) && map.getView().getZoom() > zoomlevels.minZoomForDirectionalMarkers)
             anomalousMarkerLayer.getSource().addFeature(marker);
         });
 

@@ -528,7 +528,7 @@ trait LinearAssetOperations {
 
   private def updateProjected(toUpdate: Seq[PersistedLinearAsset], persisted: Map[Long, Seq[PersistedLinearAsset]]) = {
     def valueChanged(assetToPersist: PersistedLinearAsset, persistedLinearAsset: Option[PersistedLinearAsset]) = {
-      !persistedLinearAsset.exists(_.value.eq(assetToPersist.value))
+      !persistedLinearAsset.exists(_.value == assetToPersist.value)
     }
     def mValueChanged(assetToPersist: PersistedLinearAsset, persistedLinearAsset: Option[PersistedLinearAsset]) = {
       !persistedLinearAsset.exists(pl => pl.startMeasure == assetToPersist.startMeasure &&

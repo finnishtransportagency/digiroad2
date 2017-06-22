@@ -14,15 +14,19 @@ object DefloatMapper extends RoadAddressMapper {
                     endSourceLink: RoadAddressLink, endSourceM: Double,
                     startTargetLink: RoadAddressLink, startTargetM: Double,
                     endTargetLink: RoadAddressLink, endTargetM: Double): RoadAddressMapping = {
-      RoadAddressMapping(startSourceLink.linkId, startTargetLink.linkId, startSourceM,
-        if (startSourceLink.linkId == endSourceLink.linkId) endSourceM else Double.NaN,
-        startTargetM,
-        if (startTargetLink.linkId == endTargetLink.linkId) endTargetM else Double.NaN,
-        Seq(GeometryUtils.calculatePointFromLinearReference(startSourceLink.geometry, startSourceM).getOrElse(Point(Double.NaN, Double.NaN)),
-          GeometryUtils.calculatePointFromLinearReference(endSourceLink.geometry, endSourceM).getOrElse(Point(Double.NaN, Double.NaN))),
-        Seq(GeometryUtils.calculatePointFromLinearReference(startTargetLink.geometry, startTargetM).getOrElse(Point(Double.NaN, Double.NaN)),
-          GeometryUtils.calculatePointFromLinearReference(endTargetLink.geometry, endTargetM).getOrElse(Point(Double.NaN, Double.NaN)))
-      )
+      if (startSourceM > endSourceM)
+        formMapping(startSourceLink, endSourceM, endSourceLink, startSourceM,
+          startTargetLink, endTargetM, endTargetLink, startTargetM)
+      else
+        RoadAddressMapping(startSourceLink.linkId, startTargetLink.linkId, startSourceM,
+          if (startSourceLink.linkId == endSourceLink.linkId) endSourceM else Double.NaN,
+          startTargetM,
+          if (startTargetLink.linkId == endTargetLink.linkId) endTargetM else Double.NaN,
+          Seq(GeometryUtils.calculatePointFromLinearReference(startSourceLink.geometry, startSourceM).getOrElse(Point(Double.NaN, Double.NaN)),
+            GeometryUtils.calculatePointFromLinearReference(endSourceLink.geometry, endSourceM).getOrElse(Point(Double.NaN, Double.NaN))),
+          Seq(GeometryUtils.calculatePointFromLinearReference(startTargetLink.geometry, startTargetM).getOrElse(Point(Double.NaN, Double.NaN)),
+            GeometryUtils.calculatePointFromLinearReference(endTargetLink.geometry, endTargetM).getOrElse(Point(Double.NaN, Double.NaN)))
+        )
     }
     /* For mapping purposes we have to fuse all road addresses on link to get it right. Otherwise start of a segment
        is assumed to be the start of a road link

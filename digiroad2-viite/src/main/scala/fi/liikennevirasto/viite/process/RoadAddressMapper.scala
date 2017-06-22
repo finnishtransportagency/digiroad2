@@ -33,35 +33,30 @@ trait RoadAddressMapper {
       }
     }
 
-    roadAddressMapping.filter(_.matches(ra)).map(mapping => {
-      val adjMap = adjust(mapping, ra.startMValue, ra.endMValue)
-      val (mappedStartM, mappedEndM) = (adjMap.targetStartM, adjMap.targetEndM)
+    roadAddressMapping.filter(_.matches(ra)).map(m => adjust(m, ra.startMValue, ra.endMValue)).map(adjMap => {
       val (sideCode, mappedGeom, (mappedStartAddrM, mappedEndAddrM)) =
         if (isDirectionMatch(adjMap))
           (ra.sideCode, adjMap.targetGeom, splitRoadAddressValues(ra, adjMap))
         else {
           (switchSideCode(ra.sideCode), adjMap.targetGeom.reverse,
-            splitRoadAddressValues(ra, adjMap).swap)
+            splitRoadAddressValues(ra, adjMap))
         }
-      val (startM, endM, startAddrM, endAddrM) =
-        if (mappedStartM > mappedEndM)
-          (mappedEndM, mappedStartM, mappedEndAddrM, mappedStartAddrM)
-        else
-          (mappedStartM, mappedEndM, mappedStartAddrM, mappedEndAddrM)
+      val (startM, endM) = (Math.min(adjMap.targetEndM, adjMap.targetStartM), Math.max(adjMap.targetEndM, adjMap.targetStartM))
+
       val startCP = ra.startCalibrationPoint match {
         case None => None
-        case Some(cp) => if (cp.addressMValue == startAddrM) Some(cp.copy(linkId = adjMap.targetLinkId,
+        case Some(cp) => if (cp.addressMValue == mappedStartAddrM) Some(cp.copy(linkId = adjMap.targetLinkId,
           segmentMValue = if (sideCode == SideCode.AgainstDigitizing) Math.max(startM, endM) else 0.0)) else None
       }
       val endCP = ra.endCalibrationPoint match {
         case None => None
-        case Some(cp) => if (cp.addressMValue == endAddrM) Some(cp.copy(linkId = adjMap.targetLinkId,
+        case Some(cp) => if (cp.addressMValue == mappedEndAddrM) Some(cp.copy(linkId = adjMap.targetLinkId,
           segmentMValue = if (sideCode == SideCode.TowardsDigitizing) Math.max(startM, endM) else 0.0)) else None
       }
-      ra.copy(id = NewRoadAddress, linkId = adjMap.targetLinkId, startAddrMValue = startCP.map(_.addressMValue).getOrElse(startAddrM),
-        endAddrMValue = endCP.map(_.addressMValue).getOrElse(endAddrM), floating = false,
+      ra.copy(id = NewRoadAddress, linkId = adjMap.targetLinkId, startAddrMValue = startCP.map(_.addressMValue).getOrElse(mappedStartAddrM),
+        endAddrMValue = endCP.map(_.addressMValue).getOrElse(mappedEndAddrM), floating = false,
         sideCode = sideCode, startMValue = startM, endMValue = endM, geom = mappedGeom, calibrationPoints = (startCP, endCP),
-        adjustedTimestamp = mapping.vvhTimeStamp.getOrElse(VVHClient.createVVHTimeStamp()))
+        adjustedTimestamp = VVHClient.createVVHTimeStamp())
     })
   }
 
@@ -71,12 +66,12 @@ trait RoadAddressMapper {
     * @param mapping Mapping entry that may or may not have smaller or larger span than road address
     * @return A pair of address start and address end values this mapping and road address applies to
     */
-  def splitRoadAddressValues(roadAddress: RoadAddress, mapping: RoadAddressMapping): (Long, Long) = {
+  private def splitRoadAddressValues(roadAddress: RoadAddress, mapping: RoadAddressMapping): (Long, Long) = {
     if (withinTolerance(roadAddress.startMValue, mapping.sourceStartM) && withinTolerance(roadAddress.endMValue, mapping.sourceEndM))
       (roadAddress.startAddrMValue, roadAddress.endAddrMValue)
     else {
       val (startM, endM) = GeometryUtils.overlap((roadAddress.startMValue, roadAddress.endMValue),(mapping.sourceStartM, mapping.sourceEndM)).get
-      roadAddress.splitAt(startM, endM)
+      roadAddress.addressBetween(startM, endM)
     }
   }
 

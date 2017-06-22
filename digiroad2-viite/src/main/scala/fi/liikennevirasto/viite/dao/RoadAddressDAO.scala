@@ -104,8 +104,9 @@ case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
   val endCalibrationPoint = calibrationPoints._2
   val startCalibrationPoint = calibrationPoints._1
 
-  def splitAt(a: Double, b: Double): (Long, Long) = {
-    (addrAt(a), addrAt(b))
+  def addressBetween(a: Double, b: Double): (Long, Long) = {
+    val (addrA, addrB) = (addrAt(a), addrAt(b))
+    (Math.min(addrA,addrB), Math.max(addrA,addrB))
   }
 
   private def addrAt(a: Double) = {

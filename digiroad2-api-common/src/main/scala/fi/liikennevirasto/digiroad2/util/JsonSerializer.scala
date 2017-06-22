@@ -85,10 +85,24 @@ class JsonSerializer extends VVHSerializer {
   }
   override def writeCache(file: File, objects: Seq[Object]): Boolean = {
 
+    def writeObjects(objects: Seq[Object], fw: FileWriter): Unit = {
+      if (objects.nonEmpty) {
+        fw.write(write(objects.head))
+        if (objects.tail.nonEmpty) {
+          fw.write(",")
+          writeObjects(objects.tail, fw)
+        }
+      }
+    }
+
     val tmpFile = File.createTempFile("tmp", "cached")
     tmpFile.deleteOnExit()
 
-    write(objects, new FileWriter(tmpFile))
+    val fw = new FileWriter(tmpFile)
+    fw.write("[")
+    writeObjects(objects, fw)
+    fw.write("]")
+    fw.close()
 
     if (file.exists())
       file.delete()

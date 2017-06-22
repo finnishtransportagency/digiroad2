@@ -713,6 +713,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
           ra
       }
       RoadAddressDAO.create(roadAddressSeq)
+      RoadAddressDAO.createMissingRoadAddress(1392315, 0, 0, 2)
       // pre-checks
       RoadAddressDAO.fetchByLinkId(Set(1392315L, 1392326L), true) should have size (3)
       val mapping = DefloatMapper.createAddressMap(sourceLinks, targetLinks)

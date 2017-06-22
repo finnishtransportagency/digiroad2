@@ -22,8 +22,6 @@
     window.applicationModel = new ApplicationModel([
       selectedLinkProperty]);
 
-    EditModeDisclaimer.initialize(instructionsPopup);
-
     var assetGroups = groupAssets(
       linkPropertiesModel);
 
