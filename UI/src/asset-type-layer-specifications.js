@@ -272,7 +272,8 @@
         enabled: 'Talvinopeusrajoitus',
         disabled: 'Ei talvinopeusrajoitusta'
       },
-      possibleValues: [100, 80, 70, 60]
+      possibleValues: [100, 80, 70, 60],
+      label: new LinearAssetLabel()
     },
     {
       typeId: assetType.prohibition,
