@@ -13,6 +13,7 @@ import fi.liikennevirasto.viite.process._
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
+import scala.collection.immutable.SortedMap
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
@@ -655,15 +656,15 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     def setPrecision(d: Double) = {
       BigDecimal(d).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
     }
-    def concatenate(l: ChangeInfo, s: String): String = {
-      val newS = s"""old id: ${l.oldId.getOrElse("MISS!")} new id: ${l.newId.getOrElse("MISS!")} old length: ${setPrecision(l.oldStartMeasure.getOrElse(0.0))}-${setPrecision(l.oldEndMeasure.getOrElse(0.0))} new length: ${setPrecision(l.newStartMeasure.getOrElse(0.0))}-${setPrecision(l.newEndMeasure.getOrElse(0.0))}
+    def concatenate(c: ChangeInfo, s: String): String = {
+      val newS = s"""old id: ${c.oldId.getOrElse("MISS!")} new id: ${c.newId.getOrElse("MISS!")} old length: ${setPrecision(c.oldStartMeasure.getOrElse(0.0))}-${setPrecision(c.oldEndMeasure.getOrElse(0.0))} new length: ${setPrecision(c.newStartMeasure.getOrElse(0.0))}-${setPrecision(c.newEndMeasure.getOrElse(0.0))}
      """
       (s+ "\n" +newS)
     }
-    val groupedChanges = changes.groupBy(_.changeType)
 
+    val groupedChanges = SortedMap(changes.groupBy(_.changeType).toSeq:_*)
     groupedChanges.foreach{ group =>
-      println(s"""changeType: ${group._1}""" + "\n" + group._2.foldLeft("")((r,c) => concatenate(c, r))+ "\n")
+      println(s"""changeType: ${group._1}""" + "\n" + group._2.foldLeft("")((stream, nextChange) => concatenate(nextChange, stream))+ "\n")
     }
   }
 }
