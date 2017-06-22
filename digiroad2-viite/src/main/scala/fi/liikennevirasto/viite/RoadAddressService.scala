@@ -176,8 +176,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       // Expiring roadAddresses when change_type = 1 and change_type = 2
       matchChangesWithRoadAddresses(addresses.values.flatten.toSeq, changedRoadLinks).foreach(f => f._2.foreach(change => change.changeType match {
         case 1 | 2 =>
-          if(addresses.contains(f._2.head.oldId.get))
-            RoadAddressDAO.expireById(addresses.filter(a=> a._1 == f._2.head.oldId.get).head._2.map(roadAddress => roadAddress.id).toSet)
+          if (addresses.contains(f._2.head.oldId.get))
+            RoadAddressDAO.expireById(addresses.filter(a => a._1 == f._2.head.oldId.get).head._2.map(roadAddress => roadAddress.id).toSet)
         case _ =>
       }
       ))
@@ -192,9 +192,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         }
         else
           r))
-     newRoads.values.flatten.map(r => (r.roadNumber, r.roadPartNumber)).toSet.foreach{
+
+
+      newRoads.values.flatten.map(r => (r.roadNumber, r.roadPartNumber)).toSet.foreach {
         case (roadNumber, roadPartNumber) => recalculateRoadAddresses(roadNumber.toInt, roadPartNumber.toInt)
       }
+    }
   }
 
   /**
