@@ -256,6 +256,7 @@ window.LinearAssetLayer = function(params) {
       case 'Select':
         linearAssetCutter.deactivate();
         selectToolControl.deactivateDraw();
+        selectToolControl.activate();
         break;
       case 'Rectangle':
         linearAssetCutter.deactivate();
@@ -279,6 +280,7 @@ window.LinearAssetLayer = function(params) {
     eventListener.listenTo(eventbus, multiElementEvent('massUpdateSucceeded'), handleLinearAssetSaved);
     eventListener.listenTo(eventbus, singleElementEvents('valueChanged', 'separated'), linearAssetChanged);
     eventListener.listenTo(eventbus, singleElementEvents('cancelled', 'saved'), linearAssetCancelled);
+    eventListener.listenTo(eventbus, multiElementEvent('cancelled'), linearAssetCancelled);
     eventListener.listenTo(eventbus, singleElementEvents('selectByLinkId'), selectLinearAssetByLinkId);
     eventListener.listenTo(eventbus, multiElementEvent('massUpdateFailed'), cancelSelection);
     eventListener.listenTo(eventbus, 'complementaryLinks:show', showWithComplementary);
@@ -340,7 +342,9 @@ window.LinearAssetLayer = function(params) {
 
   var handleLinearAssetCancelled = function(eventListener) {
     selectToolControl.clear();
-    selectToolControl.activate();
+    if(application.getSelectedTool() !== 'Cut'){
+      selectToolControl.activate();
+    }
     eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
     redrawLinearAssets(collection.getAll());
   };

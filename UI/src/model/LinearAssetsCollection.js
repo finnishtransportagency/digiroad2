@@ -189,7 +189,7 @@
     this.cancelCreation = function() {
       dirty = false;
       splitLinearAssets = {};
-      eventbus.trigger(multiElementEvent('fetched'), self.getAll());
+      eventbus.trigger(multiElementEvent('cancelled'), self.getAll());
     };
 
     this.isDirty = function() {
