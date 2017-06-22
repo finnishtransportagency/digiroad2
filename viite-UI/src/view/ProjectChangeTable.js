@@ -22,31 +22,31 @@
       '<div id ="change-table-borders-source"></div>' +
       '<div id ="change-table-borders-target"></div>');
     changeTable.append('<div class="change-table-sections">' +
-      '<label class="change-table-heading-label" style="width: 117px">Ilmoitus</label>' +
-      '<label class="change-table-heading-label" style="width: 478px">Nykyosoite</label>' +
-      '<label class="change-table-heading-label" style="width: 379px">Uusi osoite</label>');
+      '<label class="change-table-heading-label" id="label-type">Ilmoitus</label>' +
+      '<label class="change-table-heading-label" id="label-source">Nykyosoite</label>' +
+      '<label class="change-table-heading-label" id="label-target">Uusi osoite</label>');
     changeTable.append('<div class="change-table-dimension-headers">' +
       '<table class="change-table-dimensions">' +
       '<tr>' +
-      '<td class="project-change-table-dimension-first" style="width: 128px;"></td>'+
-      '<td class="project-change-table-dimension">TIE</td>'+
-      '<td class="project-change-table-dimension">AJR</td>'+
-      '<td class="project-change-table-dimension">AOSA</td>'+
-      '<td class="project-change-table-dimension">AET</td>'+
-      '<td class="project-change-table-dimension">LOSA</td>'+
-      '<td class="project-change-table-dimension">LET</td>'+
-      '<td class="project-change-table-dimension">JATKUU</td>'+
-      '<td class="project-change-table-dimension" style="padding-right: 3px;">TIETYYPPI</td>'+
-      '<td class="project-change-table-dimension">ELY</td>'+
-      '<td class="project-change-table-dimension">TIE</td>'+
-      '<td class="project-change-table-dimension">AJR</td>'+
-      '<td class="project-change-table-dimension">AOSA</td>'+
-      '<td class="project-change-table-dimension">AET</td>'+
-      '<td class="project-change-table-dimension">LOSA</td>'+
-      '<td class="project-change-table-dimension">LET</td>'+
-      '<td class="project-change-table-dimension">JATKUU</td>'+
-      '<td class="project-change-table-dimension" style="padding-right: 4px;">TIETYYPPI</td>'+
-      '<td class="project-change-table-dimension" style="padding-right: 13px;">ELY</td>'+
+      '<td class="project-change-table-dimension-first"></td>' +
+      '<td class="project-change-table-dimension">TIE</td>' +
+      '<td class="project-change-table-dimension">AJR</td>' +
+      '<td class="project-change-table-dimension">AOSA</td>' +
+      '<td class="project-change-table-dimension">AET</td>' +
+      '<td class="project-change-table-dimension">LOSA</td>' +
+      '<td class="project-change-table-dimension">LET</td>' +
+      '<td class="project-change-table-dimension">JATKUU</td>' +
+      '<td class="project-change-table-dimension dimension-road-type">TIETYYPPI</td>' +
+      '<td class="project-change-table-dimension ">ELY</td>' +
+      '<td class="project-change-table-dimension">TIE</td>' +
+      '<td class="project-change-table-dimension">AJR</td>' +
+      '<td class="project-change-table-dimension">AOSA</td>' +
+      '<td class="project-change-table-dimension">AET</td>' +
+      '<td class="project-change-table-dimension">LOSA</td>' +
+      '<td class="project-change-table-dimension">LET</td>' +
+      '<td class="project-change-table-dimension">JATKUU</td>' +
+      '<td class="project-change-table-dimension dimension-road-type">TIETYYPPI</td>' +
+      '<td class="project-change-table-dimension dimension-last">ELY</td>' +
       '</tr>' +
       '</table>' +
       '</div>');
@@ -86,9 +86,9 @@
             '<td class="project-change-table-data-cell">' + changeInfoSeq.source.endRoadPartNumber + '</td>' +
             '<td class="project-change-table-data-cell">' + changeInfoSeq.source.endAddressM + '</td>' +
             '<td class="project-change-table-data-cell">' + changeInfoSeq.discontinuity + '</td>' +
-            '<td class="project-change-table-data-cell" style="padding-right: 5px;">' + linkForm.getRoadType(changeInfoSeq.roadType) + '</td>' +
+            '<td class="project-change-table-data-cell data-cell-road-type">' + linkForm.getRoadType(changeInfoSeq.roadType) + '</td>' +
             '<td class="project-change-table-data-cell">' + projectChangeData.ely + '</td>';
-          if(changeInfoSeq.changetype!==5){ //5=termination
+          if(changeInfoSeq.changetype!==4){ //5=termination
             htmlTable+=
               '<td class="project-change-table-data-cell">' + changeInfoSeq.target.roadNumber + '</td>'+
               '<td class="project-change-table-data-cell">' + changeInfoSeq.target.trackCode + '</td>' +
@@ -97,7 +97,7 @@
               '<td class="project-change-table-data-cell">' + changeInfoSeq.target.endRoadPartNumber + '</td>' +
               '<td class="project-change-table-data-cell">' + changeInfoSeq.target.endAddressM + '</td>' +
               '<td class="project-change-table-data-cell">' + changeInfoSeq.discontinuity + '</td>' +
-              '<td class="project-change-table-data-cell" style="padding-right: 5px;">' + linkForm.getRoadType(changeInfoSeq.roadType) + '</td>' +
+              '<td class="project-change-table-data-cell data-cell-road-type">' + linkForm.getRoadType(changeInfoSeq.roadType) + '</td>' +
               '<td class="project-change-table-data-cell">' + projectChangeData.ely + '</td>' +
               '</tr>';
           } else {
@@ -109,7 +109,7 @@
               '<td class="project-change-table-data-cell">' + "" + '</td>' +
               '<td class="project-change-table-data-cell">' + "" + '</td>' +
               '<td class="project-change-table-data-cell">' + "" + '</td>' +
-              '<td class="project-change-table-data-cell" style="padding-right: 5px;">' + "" + '</td>' +
+              '<td class="project-change-table-data-cell data-cell-road-type">' + "" + '</td>' +
               '<td class="project-change-table-data-cell">' + "" + '</td>' +
               '</tr>';}
         });
