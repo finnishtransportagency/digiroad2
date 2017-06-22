@@ -519,7 +519,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       projectService.projectLinkPublishable(saved.id) should be (true)
 
       val changeProjectOpt = projectService.getChangeProject(saved.id)
-      changeProjectOpt.map(_.changeInfoSeq).getOrElse(Seq()) should have size (93)
+      changeProjectOpt.map(_.changeInfoSeq).getOrElse(Seq()) should have size (5)
 
       val change = changeProjectOpt.get
 
