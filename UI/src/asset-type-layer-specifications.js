@@ -273,7 +273,8 @@
         disabled: 'Ei talvinopeusrajoitusta'
       },
       possibleValues: [100, 80, 70, 60],
-      label: new LinearAssetLabel()
+      label: new LinearAssetLabel(),
+      style : new WinterSpeedLimitStyle()
     },
     {
       typeId: assetType.prohibition,

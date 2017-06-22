@@ -222,7 +222,7 @@
        layerName: asset.layerName,
        multiElementEventCategory: asset.multiElementEventCategory,
        singleElementEventCategory: asset.singleElementEventCategory,
-       style: PiecewiseLinearAssetStyle(applicationModel),
+       style: asset.style || new PiecewiseLinearAssetStyle(),
        formElements: AssetFormElementsFactory.construct(asset),
        assetLabel: asset.label
      });
@@ -300,18 +300,19 @@
     var massTransitBox = new ActionPanelBoxes.AssetBox(selectedMassTransitStopModel);
     var speedLimitBox = new ActionPanelBoxes.SpeedLimitBox(selectedSpeedLimit);
     var manoeuvreBox = new ManoeuvreBox();
+    var winterSpeedLimits = new ActionPanelBoxes.WinterSpeedLimitBox(getLinearAsset(assetType.winterSpeedLimit).asset);
 
     return [
       [roadLinkBox],
-      [].concat(getLinearAsset(assetType.litRoad))
-          .concat(getLinearAsset(assetType.pavedRoad))
-          .concat(getLinearAsset(assetType.width))
-          .concat(getLinearAsset(assetType.numberOfLanes))
-          .concat(getLinearAsset(assetType.massTransitLane))
-          .concat(getLinearAsset(assetType.europeanRoads))
-          .concat(getLinearAsset(assetType.exitNumbers)),
-      [speedLimitBox]
-          .concat(getLinearAsset(assetType.winterSpeedLimit)),
+      [].concat(getLinearAsset(assetType.litRoad).box)
+          .concat(getLinearAsset(assetType.pavedRoad).box)
+          .concat(getLinearAsset(assetType.width).box)
+          .concat(getLinearAsset(assetType.numberOfLanes).box)
+          .concat(getLinearAsset(assetType.massTransitLane).box)
+          .concat(getLinearAsset(assetType.europeanRoads).box)
+          .concat(getLinearAsset(assetType.exitNumbers).box),
+      [speedLimitBox].concat(
+      [winterSpeedLimits]),
       [massTransitBox]
           .concat(getPointAsset(assetType.obstacles))
           .concat(getPointAsset(assetType.railwayCrossings))
@@ -319,27 +320,27 @@
           .concat(getPointAsset(assetType.pedestrianCrossings))
           .concat(getPointAsset(assetType.trafficLights))
           .concat(getPointAsset(assetType.servicePoints)),
-      [].concat(getLinearAsset(assetType.trafficVolume))
-          .concat(getLinearAsset(assetType.congestionTendency))
-          .concat(getLinearAsset(assetType.damagedByThaw)),
+      [].concat(getLinearAsset(assetType.trafficVolume).box)
+          .concat(getLinearAsset(assetType.congestionTendency).box)
+          .concat(getLinearAsset(assetType.damagedByThaw).box),
       [manoeuvreBox]
-        .concat(getLinearAsset(assetType.prohibition))
-        .concat(getLinearAsset(assetType.hazardousMaterialTransportProhibition))
-        .concat(getLinearAsset(assetType.totalWeightLimit))
-        .concat(getLinearAsset(assetType.trailerTruckWeightLimit))
-        .concat(getLinearAsset(assetType.axleWeightLimit))
-        .concat(getLinearAsset(assetType.bogieWeightLimit))
-        .concat(getLinearAsset(assetType.heightLimit))
-        .concat(getLinearAsset(assetType.lengthLimit))
-        .concat(getLinearAsset(assetType.widthLimit)),
-      [].concat(getLinearAsset(assetType.maintenanceRoad))
+        .concat(getLinearAsset(assetType.prohibition).box)
+        .concat(getLinearAsset(assetType.hazardousMaterialTransportProhibition).box)
+        .concat(getLinearAsset(assetType.totalWeightLimit).box)
+        .concat(getLinearAsset(assetType.trailerTruckWeightLimit).box)
+        .concat(getLinearAsset(assetType.axleWeightLimit).box)
+        .concat(getLinearAsset(assetType.bogieWeightLimit).box)
+        .concat(getLinearAsset(assetType.heightLimit).box)
+        .concat(getLinearAsset(assetType.lengthLimit).box)
+        .concat(getLinearAsset(assetType.widthLimit).box),
+      [].concat(getLinearAsset(assetType.maintenanceRoad).box)
     ];
 
     function getLinearAsset(typeId) {
       var asset = _.find(linearAssets, {typeId: typeId});
       if (asset) {
         var legendValues = [asset.editControlLabels.disabled, asset.editControlLabels.enabled];
-        return [new LinearAssetBox(asset.selectedLinearAsset, asset.layerName, asset.title, asset.className, legendValues, asset.editControlLabels.showUnit, asset.unit, asset.allowComplementaryLinks)];
+        return {asset : asset, box: [new LinearAssetBox(asset.selectedLinearAsset, asset.layerName, asset.title, asset.className, legendValues, asset.editControlLabels.showUnit, asset.unit, asset.allowComplementaryLinks)]};
       }
       return [];
     }
