@@ -7,7 +7,6 @@ import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.viite.RoadType.PublicRoad
 // Used in debugging when needed.
-import fi.liikennevirasto.viite.util.prettyPrint
 import org.scalatest.{FunSuite, Matchers}
 
 /**
