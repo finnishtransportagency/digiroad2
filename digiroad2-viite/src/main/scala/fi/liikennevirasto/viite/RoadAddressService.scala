@@ -165,26 +165,18 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     */
   def matchChangesWithRoadAddresses(roadAddresses: Seq[RoadAddress], changes: Seq[ChangeInfo]) = {
     roadAddresses.map(ra => {
-      (ra, changes.filter(c => {
-        (c.newId.getOrElse(-1) == ra.linkId || c.oldId.getOrElse(-1) == ra.linkId) && c.vvhTimeStamp > ra.adjustedTimestamp
-      }))
-    }).filter(ra => ra._2.size > 0)
+      (ra, changes.filter(c => c.affects(ra.linkId, ra.adjustedTimestamp)))
+    }).filter(ra => ra._2.nonEmpty)
   }
 
   def resolveChanges(roadlinks: Seq[RoadLink], changedRoadLinks: Seq[ChangeInfo], addresses: Map[Long, Seq[RoadAddress]]): Map[Long, Seq[RoadAddress]] = {
     withDynTransaction {
-      // Expiring roadAddresses when change_type = 1 and change_type = 2
-      matchChangesWithRoadAddresses(addresses.values.flatten.toSeq, changedRoadLinks).foreach(f => f._2.foreach(change => change.changeType match {
-        case 1 | 2 =>
-          if (addresses.contains(f._2.head.oldId.get))
-            RoadAddressDAO.expireById(addresses.filter(a => a._1 == f._2.head.oldId.get).head._2.map(roadAddress => roadAddress.id).toSet)
-        case _ =>
-      }
-      ))
 
-      val newRoads = RoadAddressChangeInfoMapper.resolveChangesToMap(addresses, roadlinks, changedRoadLinks)
+      val newRoadAddresses = RoadAddressChangeInfoMapper.resolveChangesToMap(addresses, roadlinks, changedRoadLinks)
 
-      val currentRoadAddresses = newRoads.mapValues(_.map(r =>
+      val changedRoadParts = newRoadAddresses.values.flatten.map(r => (r.roadNumber, r.roadPartNumber)).toSet
+
+      val savedRoadAddresses = newRoadAddresses.mapValues(_.map(r =>
         if (r.id == NewRoadAddress) {
           val roadWithNewGeom = r.copy(id = RoadAddressDAO.getNextRoadAddressId, geom = GeometryUtils.truncateGeometry3D(roadlinks.filter(link => link.linkId == r.linkId).head.geometry, r.startMValue, r.endMValue))
           RoadAddressDAO.create(Seq(roadWithNewGeom))
@@ -193,11 +185,14 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         else
           r))
 
+      val removedIds = addresses.values.flatten.filterNot(a =>
+        savedRoadAddresses.getOrElse(a.linkId, Seq()).exists(_.id == a.id)).map(_.id).toSet
+      removedIds.grouped(500).foreach(s => RoadAddressDAO.expireById(s))
 
-      newRoads.values.flatten.map(r => (r.roadNumber, r.roadPartNumber)).toSet.foreach {
-        case (roadNumber, roadPartNumber) => recalculateRoadAddresses(roadNumber.toInt, roadPartNumber.toInt)
-      }
-      currentRoadAddresses
+      changedRoadParts.foreach { case (roadNumber, roadPartNumber) =>
+        recalculateRoadAddresses(roadNumber.toInt, roadPartNumber.toInt) }
+
+      savedRoadAddresses
     }
   }
 
