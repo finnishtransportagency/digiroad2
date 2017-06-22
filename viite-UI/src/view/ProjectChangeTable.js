@@ -88,7 +88,7 @@
             '<td class="project-change-table-data-cell">' + changeInfoSeq.discontinuity + '</td>' +
             '<td class="project-change-table-data-cell data-cell-road-type">' + linkForm.getRoadType(changeInfoSeq.roadType) + '</td>' +
             '<td class="project-change-table-data-cell">' + projectChangeData.ely + '</td>';
-          if(changeInfoSeq.changetype!==4){ //5=termination
+          if(changeInfoSeq.changetype!==5){ //5=termination
             htmlTable+=
               '<td class="project-change-table-data-cell">' + changeInfoSeq.target.roadNumber + '</td>'+
               '<td class="project-change-table-data-cell">' + changeInfoSeq.target.trackCode + '</td>' +
