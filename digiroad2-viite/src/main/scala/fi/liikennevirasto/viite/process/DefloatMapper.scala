@@ -294,7 +294,7 @@ case class RoadAddressMapping(sourceLinkId: Long, targetLinkId: Long, sourceStar
    */
   def matches(roadAddress: RoadAddress): Boolean = {
     sourceLinkId == roadAddress.linkId &&
-      roadAddress.adjustedTimestamp < vvhTimeStamp.getOrElse(0L) &&
+      (vvhTimeStamp.isEmpty || roadAddress.adjustedTimestamp < vvhTimeStamp.get) &&
       GeometryUtils.overlapAmount((roadAddress.startMValue, roadAddress.endMValue), (sourceStartM, sourceEndM)) > 0.001
   }
 
