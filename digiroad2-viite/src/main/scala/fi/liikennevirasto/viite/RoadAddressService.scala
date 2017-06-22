@@ -119,7 +119,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val (floatingViiteRoadLinks, addresses, floating) = Await.result(fetchRoadAddressesByBoundingBoxF, Duration.Inf)
     val complementedWithChangeAddresses = resolveChanges(complementedRoadLinks, filteredChangedRoadLinks, addresses)
     //TODO sub complementedWithChangeAddresses to addresses
-    val missingLinkIds = linkIds -- floating.keySet -- addresses.keySet
+    val missingLinkIds = linkIds -- floating.keySet -- addresses.keySet -- complementedWithChangeAddresses.keySet
 
     val missedRL = withDynTransaction {
       RoadAddressDAO.getMissingRoadAddresses(missingLinkIds)
@@ -132,7 +132,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val buildStartTime = System.currentTimeMillis()
     val viiteRoadLinks = complementedRoadLinks.map { rl =>
       val floaters = changedFloating.getOrElse(rl.linkId, Seq())
-      val ra = addresses.getOrElse(rl.linkId, Seq())
+      val ra = complementedWithChangeAddresses.getOrElse(rl.linkId, Seq())
       val missed = missedRL.getOrElse(rl.linkId, Seq())
       rl.linkId -> buildRoadAddressLink(rl, ra, missed, floaters)
     }.toMap
@@ -176,7 +176,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       // Expiring roadAddresses when change_type = 1 and change_type = 2
       matchChangesWithRoadAddresses(addresses.values.flatten.toSeq, changedRoadLinks).foreach(f => f._2.foreach(change => change.changeType match {
         case 1 | 2 =>
-          RoadAddressDAO.expireById(Set(f._2.head.oldId.get))
+          if(addresses.contains(f._2.head.oldId.get))
+            RoadAddressDAO.expireById(addresses.filter(a=> a._1 == f._2.head.oldId.get).head._2.map(roadAddress => roadAddress.id).toSet)
         case _ =>
       }
       ))
@@ -184,14 +185,15 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       val newRoads = RoadAddressChangeInfoMapper.resolveChangesToMap(addresses, roadlinks, changedRoadLinks)
 
       newRoads.flatMap(road => {
-          Map(road._1 -> road._2.map(r =>
-            if (r.id == NewRoadAddress) {
-              val roadWithNewGeom = r.copy(geom = GeometryUtils.truncateGeometry3D(roadlinks.filter(link => link.linkId == r.linkId).head.geometry, r.startMValue, r.endMValue))
-              roadWithNewGeom.copy(id = RoadAddressDAO.create(Seq(roadWithNewGeom)).head)
-
-            }
-            else
-              r))
+        Map(road._1 -> road._2.map(r =>
+          if (r.id == NewRoadAddress) {
+            val roadWithNewGeom = r.copy(id = RoadAddressDAO.getNextRoadAddressId, geom = GeometryUtils.truncateGeometry3D(roadlinks.filter(link => link.linkId == r.linkId).head.geometry, r.startMValue, r.endMValue))
+            RoadAddressDAO.create(Seq(roadWithNewGeom))
+            recalculateRoadAddresses(r.roadNumber.toInt, r.roadPartNumber.toInt)
+            roadWithNewGeom
+          }
+          else
+            r))
       })
     }
   }
