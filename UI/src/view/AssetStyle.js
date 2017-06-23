@@ -13,7 +13,7 @@
       });
     };
 
-    me.getNewFeatureProperties = function(linearAssets){
+    var getNewFeatureProperties = function(linearAssets){
       var linearAssetsWithType = _.map(linearAssets, function(linearAsset) {
         var expired = _.isUndefined(linearAsset.value);
         var type =  isUnknown(linearAsset) ? { type: 'unknown' } : {type: 'line'};
@@ -23,17 +23,16 @@
         return GeometryUtils.offsetBySideCode(applicationModel.zoom.level, linearAsset);
       };
       var linearAssetsWithAdjustments = _.map(linearAssetsWithType, offsetBySideCode);
-      var sortedAssets = _.sortBy(linearAssetsWithAdjustments, function(asset) {
+      return _.sortBy(linearAssetsWithAdjustments, function(asset) {
         return asset.expired ? -1 : 1;
       });
-      return sortedAssets;
     };
 
     me.renderFeatures = function(linearAssets) {
-      return lineFeatures(me.getNewFeatureProperties(linearAssets)).concat(renderFeatures(linearAssets));
+      return lineFeatures(getNewFeatureProperties(linearAssets)).concat(renderFeatures(linearAssets));
     };
 
-    //For winter speed limits
+    //Used winter speed limits
     var renderFeatures = function(linearAssets) {
       var speedLimitsWithType = _.map(linearAssets, function(linearAsset) { return _.merge({}, linearAsset, { type: 'other' }); });
       var offsetBySideCode = function(linearAsset) {
@@ -44,13 +43,14 @@
       return dottedLineFeatures(speedLimitsSplitAt70kmh[true]);
     };
 
-    //For winter speed limits
+    //Used winter speed limits
     var dottedLineFeatures = function(linearAssets) {
       var solidLines = lineFeatures(linearAssets);
       var dottedOverlay = lineFeatures(_.map(linearAssets, function(linearAsset) { return _.merge({}, linearAsset, { type: 'overlay' }); }));
       return solidLines.concat(dottedOverlay);
     };
 
+    //Used winter speed limits
     var isUnknown = function(linearAsset) {
       return !_.isNumber(linearAsset.value);
     };

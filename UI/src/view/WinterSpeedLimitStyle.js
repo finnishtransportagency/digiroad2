@@ -64,7 +64,6 @@
       new StyleRule().where('zoomLevel').is(15).use({stroke: {width: 14}, pointRadius: 22})
     ];
 
-    //  new StyleRule().where('expired').is(true).use({stroke: {color: '#7f7f7c', opacity: 0.6}}),
     var typeSpecificStyleRules = [
       new StyleRule().where('type').is('overlay').use({stroke: {opacity: 1.0}}),
       new StyleRule().where('type').is('other').use({stroke: {opacity: 0.7}}),
