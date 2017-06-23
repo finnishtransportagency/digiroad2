@@ -27,8 +27,10 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
     else {
       val mapping = createAddressMap(changes.head).asInstanceOf[Seq[RoadAddressMapping]]
       val mapped = roadAddresses.mapValues(_.flatMap(ra =>
-        if (mapping.exists(_.matches(ra)))
-          mapRoadAddresses(mapping)(ra)
+        if (mapping.exists(_.matches(ra))) {
+          val changeVVHTimestamp = mapping.filter(m => m.sourceLinkId == ra.linkId || m.targetLinkId == ra.linkId).map(_.vvhTimeStamp.get).sortWith(_ > _).head
+          mapRoadAddresses(mapping)(ra).map(_.copy(adjustedTimestamp = changeVVHTimestamp))
+        }
         else
           Seq(ra)))
       applyChanges(changes.tail, mapped.values.toSeq.flatten.groupBy(_.linkId))
