@@ -421,7 +421,7 @@ var isDefined=function(variable) {
         feature.projectLinkData = projectLink;
         features.push(feature);
       });
-
+      directionMarkerLayer.getSource().clear();
       var directionRoadMarker = _.filter(projectLinks, function(projlink) {
         return projlink.roadLinkType !== floatingRoadLinkType && projlink.anomaly !== noAddressAnomaly && projlink.anomaly !== geometryChangedAnomaly && (projlink.sideCode === againstDigitizing || projlink.sideCode === towardsDigitizing);
       });

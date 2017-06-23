@@ -538,7 +538,7 @@
         _.each(directionRoadMarker, function(directionlink) {
           var marker = cachedMarker.createMarker(directionlink);
           if(map.getView().getZoom() > zoomlevels.minZoomForDirectionalMarkers)
-            anomalousMarkerLayer.getSource().addFeature(marker);
+            directionMarkerLayer.getSource().addFeature(marker);
         });
 
         _.each(anomalousRoadMarkers, function(anomalouslink) {
