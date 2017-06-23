@@ -3,9 +3,17 @@
     var layerName = 'roadAddressProject';
     var vectorLayer;
     var calibrationPointVector = new ol.source.Vector({});
+    var directionMarkerVector = new ol.source.Vector({});
+    var cachedMarker = null;
     var layerMinContentZoomLevels = {};
     var currentZoom = 0;
     var standardZIndex = 6;
+    var floatingRoadLinkType=-1;
+    var noAnomaly=0;
+    var noAddressAnomaly=1;
+    var geometryChangedAnomaly=2;
+    var againstDigitizing = 3;
+    var towardsDigitizing = 2;
     Layer.call(this, layerName, roadLayer);
     var project;
     var me = this;
@@ -31,6 +39,11 @@
     var calibrationPointLayer = new ol.layer.Vector({
       source: calibrationPointVector,
       name: 'calibrationPointLayer'
+    });
+
+    var directionMarkerLayer = new ol.layer.Vector({
+      source: directionMarkerVector,
+      name: 'directionMarkerLayer'
     });
 
     var styleFunction = function (feature, resolution){
@@ -72,9 +85,9 @@
 
     vectorLayer = new ol.layer.Vector({
       source: vectorSource,
+      name: layerName,
       style: styleFunction
     });
-    vectorLayer.set('name', layerName);
 
     var selectSingleClick = new ol.interaction.Select({
       layer: vectorLayer,
@@ -176,6 +189,12 @@
       if(selectSingleClick.getFeatures().getLength() !== 0){
         selectSingleClick.getFeatures().clear();
       }
+    };
+
+    var clearLayers = function(){
+      directionMarkerLayer.getSource().clear();
+      calibrationPointLayer.getSource().clear();
+      directionMarkerLayer.getSource().clear();
     };
 
     var highlightFeatures = function() {
@@ -402,6 +421,11 @@ var isDefined=function(variable) {
         feature.projectLinkData = projectLink;
         features.push(feature);
       });
+
+      var directionRoadMarker = _.filter(projectLinks, function(projlink) {
+        return projlink.roadLinkType !== floatingRoadLinkType && projlink.anomaly !== noAddressAnomaly && projlink.anomaly !== geometryChangedAnomaly && (projlink.sideCode === againstDigitizing || projlink.sideCode === towardsDigitizing);
+      });
+
       var actualPoints = me.drawCalibrationMarkers(calibrationPointLayer.source, projectLinks);
       _.each(actualPoints, function (actualPoint) {
         var calMarker = new CalibrationPoint(actualPoint.point);
@@ -486,10 +510,14 @@ var isDefined=function(variable) {
       clearHighlights();
     });
 
+    eventbus.on('map:clearLayers', clearLayers);
+
     vectorLayer.setVisible(true);
     calibrationPointLayer.setVisible(true);
+    directionMarkerLayer.setVisible(true);
     map.addLayer(vectorLayer);
     map.addLayer(calibrationPointLayer);
+    map.addLayer(directionMarkerLayer);
     return {
       show: show,
       hide: hideLayer,
