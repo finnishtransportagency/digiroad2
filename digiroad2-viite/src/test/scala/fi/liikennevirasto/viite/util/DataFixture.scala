@@ -180,7 +180,7 @@ object DataFixture {
         try {
           val changes = roadAddressService.resolveChanges(roadLinks, changedRoadLinks, roadAddresses.groupBy(_.linkId))
         } catch {
-          case e: IllegalArgumentException => println("ERR! -> " + e.getMessage)
+          case e: Exception => println("ERR! -> " + e)
         }
       }
 
