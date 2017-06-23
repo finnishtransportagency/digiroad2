@@ -3,11 +3,13 @@ package fi.liikennevirasto.digiroad2
 import java.util.Date
 
 import fi.liikennevirasto.digiroad2.Operation._
+import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
 import fi.liikennevirasto.digiroad2.asset.{Property, _}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.masstransitstop.MassTransitStopOperations
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries._
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle._
+import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.GeometryTransform
 import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, Interval, LocalDate}
@@ -72,6 +74,27 @@ trait MassTransitStopService extends PointAssetOperations {
   def withDynTransaction[T](f: => T): T
 
   def eventbus: DigiroadEventBus
+
+  override def getByBoundingBox(user: User, bounds: BoundingRectangle) : Seq[PersistedAsset] = {
+    val (roadLinks, changeInfo) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(bounds)
+    super.getByBoundingBox(user, bounds, roadLinks, Seq(), floatingAdjustment(adjustmentOperation, createOperation))
+  }
+
+  private def createOperation(asset: PersistedAsset, adjustment: AssetAdjustment): PersistedAsset = {
+    createPersistedAsset(asset, adjustment)
+  }
+
+  private def createPersistedAsset[T](persistedStop: PersistedAsset, asset: AssetAdjustment) = {
+
+    new PersistedAsset(asset.assetId, persistedStop.nationalId, asset.linkId, persistedStop.stopTypes, persistedStop.municipalityCode, asset.lon, asset.lat,
+      asset.mValue, persistedStop.validityDirection, persistedStop.bearing, persistedStop.validityPeriod, persistedStop.floating, persistedStop.vvhTimeStamp,
+      persistedStop.created, persistedStop.modified, persistedStop.propertyData, persistedStop.linkSource)
+  }
+  private def adjustmentOperation(persistedAsset: PersistedAsset, adjustment: AssetAdjustment): Long = {
+    val position = Some(Position(adjustment.lon, adjustment.lat, adjustment.linkId, persistedAsset.bearing))
+    updateExistingById(persistedAsset.id, position, persistedAsset.propertyData.map(a => SimpleProperty(a.publicId , a.values)).toSet, "a", () => _ )
+    persistedAsset.id
+  }
 
 
   def getByNationalId[T <: FloatingAsset](nationalId: Long, municipalityValidation: Int => Unit, persistedStopToFloatingStop: PersistedMassTransitStop => (T, Option[FloatingReason])): Option[T] = {
@@ -403,7 +426,7 @@ trait MassTransitStopService extends PointAssetOperations {
 
   private def updateExisting(queryFilter: String => String, optionalPosition: Option[Position],
                              properties: Set[SimpleProperty], username: String, municipalityValidation: Int => Unit): MassTransitStopWithProperties = {
-    withDynTransaction {
+   // withDynTransaction {
 
       if (MassTransitStopOperations.mixedStoptypes(properties))
         throw new IllegalArgumentException
@@ -489,7 +512,7 @@ trait MassTransitStopService extends PointAssetOperations {
       } else {
         update(asset, optionalPosition, username, mergedProperties, roadLink.get, operation)
       }
-    }
+    //}
   }
 
   /**
