@@ -168,7 +168,7 @@ object DataFixture {
     municipalities.foreach { municipality =>
       println("Start processing municipality %d".format(municipality))
 
-      //Obtain all RoadLink by municipality, complementary and change info from VVH
+      //Obtain all RoadLink by municipality and change info from VVH
       val (roadLinks, changedRoadLinks) = roadLinkService.reloadRoadLinksAndChangesFromVVH(municipality.toInt)
       println ("Total roadlink for municipality " + municipality + " -> " + roadLinks.size)
       println ("Total of changes for municipality " + municipality + " -> " + changedRoadLinks.size)
@@ -178,7 +178,7 @@ object DataFixture {
             RoadAddressDAO.fetchByLinkId(roadLinks.map(_.linkId).toSet)
         }
         try {
-          val changes = roadAddressService.resolveChanges(roadLinks, changedRoadLinks, roadAddresses.groupBy(_.linkId))
+          roadAddressService.resolveChanges(roadLinks, changedRoadLinks, roadAddresses.groupBy(_.linkId))
         } catch {
           case e: Exception => println("ERR! -> " + e)
         }
