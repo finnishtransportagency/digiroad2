@@ -61,7 +61,7 @@ trait RoadLinkCsvImporter {
     "Osoitenumerot vasemmalla loppu" -> "TO_LEFT",
     "Linkin tila" -> "CONSTRUCTIONTYPE"
   )
-  private val codeValueFielddMappings = Map(
+  private val codeValueFieldMappings = Map(
     "Tasosijainti" -> "VERTICALLEVEL"
   )
 
@@ -76,7 +76,7 @@ trait RoadLinkCsvImporter {
   private val mandatoryFields = "Linkin ID"
 
 
-  val mappings = textFieldMappings ++ intFieldMappings ++ codeValueFielddMappings
+  val mappings = textFieldMappings ++ intFieldMappings ++ codeValueFieldMappings
 
   val MandatoryParameters: Set[String] = mappings.keySet + mandatoryFields
 
@@ -126,7 +126,7 @@ trait RoadLinkCsvImporter {
   private def verifyValueCode(parameterName: String, parameterValue: String): ParsedLinkRow = {
     val autorizedValues = List(-11, -1, 0, 1, 2, 3, 4, 5, 10)
     if (autorizedValues.contains(parameterValue.toInt)) {
-      (Nil, List(LinkProperty(columnName = codeValueFielddMappings(parameterName), value = parameterValue.toString)))
+      (Nil, List(LinkProperty(columnName = codeValueFieldMappings(parameterName), value = parameterValue.toString)))
     } else
     (List(parameterName), Nil)
   }
@@ -146,7 +146,7 @@ trait RoadLinkCsvImporter {
         } else if (intFieldMappings.contains(key)) {
           val (malformedParameters, properties) = verifyValueType(key, value.toString)
           result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
-        } else if (codeValueFielddMappings.contains(key)) {
+        } else if (codeValueFieldMappings.contains(key)) {
           val (malformedParameters, properties) = verifyValueCode(key, value.toString)
           result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
         } else if (mandatoryFields.contains(key) && !value.toString.forall(_.isDigit)) {
