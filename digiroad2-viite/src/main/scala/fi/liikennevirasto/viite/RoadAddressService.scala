@@ -180,6 +180,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         if (r.id == NewRoadAddress) {
           val roadWithNewGeom = r.copy(id = RoadAddressDAO.getNextRoadAddressId, geom = GeometryUtils.truncateGeometry3D(roadlinks.filter(link => link.linkId == r.linkId).head.geometry, r.startMValue, r.endMValue))
           RoadAddressDAO.create(Seq(roadWithNewGeom))
+          println("New road address created> linkId: "+roadWithNewGeom.linkId+" id:"+roadWithNewGeom.id)
           roadWithNewGeom
         }
         else
@@ -187,7 +188,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
       val removedIds = addresses.values.flatten.filterNot(a =>
         savedRoadAddresses.getOrElse(a.linkId, Seq()).exists(_.id == a.id)).map(_.id).toSet
-      removedIds.grouped(500).foreach(s => RoadAddressDAO.expireById(s))
+      removedIds.grouped(500).foreach(s => {RoadAddressDAO.expireById(s)
+        println("Expired: "+s.mkString(","))
+      })
 
       changedRoadParts.foreach { case (roadNumber, roadPartNumber) =>
         recalculateRoadAddresses(roadNumber.toInt, roadPartNumber.toInt) }

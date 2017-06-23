@@ -171,7 +171,7 @@ object DataFixture {
       //Obtain all RoadLink by municipality, complementary and change info from VVH
       val (complementaryLinks, changedRoadLinks, roadLinks) = roadLinkService.getRoadLinksWithAllComplementaryAndChangesFromVVH(municipality.toInt)
       println ("Total roadlink for municipality " + municipality + " -> " + roadLinks.size)
-
+      println ("Total of changes for municipality " + municipality + " -> " + changedRoadLinks.size)
       if(roadLinks.nonEmpty) {
         //  Get road address from viite DB from the roadLinks ids
         val roadAddresses: List[RoadAddress] =  OracleDatabase.withDynTransaction {
