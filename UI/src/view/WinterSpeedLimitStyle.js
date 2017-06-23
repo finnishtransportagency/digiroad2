@@ -64,6 +64,7 @@
       new StyleRule().where('zoomLevel').is(15).use({stroke: {width: 14}, pointRadius: 22})
     ];
 
+    //  new StyleRule().where('expired').is(true).use({stroke: {color: '#7f7f7c', opacity: 0.6}}),
     var typeSpecificStyleRules = [
       new StyleRule().where('type').is('overlay').use({stroke: {opacity: 1.0}}),
       new StyleRule().where('type').is('other').use({stroke: {opacity: 0.7}}),
@@ -78,13 +79,5 @@
     me.browsingStyleProvider.addRules(overlayStyleRules);
     me.browsingStyleProvider.addRules(validityDirectionStyleRules);
     me.browsingStyleProvider.addRules(oneWayOverlayStyleRules);
-
-    var selectionStyle = new StyleRuleProvider({stroke: {opacity: 0.15}, graphic: {opacity: 0.3}});
-    selectionStyle.addRules(speedLimitStyleRules);
-    selectionStyle.addRules(speedLimitFeatureSizeRules);
-    selectionStyle.addRules(typeSpecificStyleRules);
-    selectionStyle.addRules(overlayStyleRules);
-    selectionStyle.addRules(validityDirectionStyleRules);
-    selectionStyle.addRules(oneWayOverlayStyleRules);
   };
 })(this);

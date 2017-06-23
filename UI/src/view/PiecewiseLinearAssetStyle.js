@@ -38,36 +38,6 @@
     me.browsingStyleProvider.addRules(oneWayRules);
     me.browsingStyleProvider.addRules(featureTypeRules);
 
-    //TODO Remove
-    // var lineFeatures = function(linearAssets) {
-    //   return _.flatten(_.map(linearAssets, function(linearAsset) {
-    //     var points = _.map(linearAsset.points, function(point) {
-    //       return [point.x, point.y];
-    //     });
-    //     var feature = new ol.Feature(new ol.geom.LineString(points));
-    //     feature.setProperties(linearAsset);
-    //     return feature;
-    //   }));
-    // };
-
-    // var getNewFeatureProperties = function(linearAssets){
-    //   var linearAssetsWithType = _.map(linearAssets, function(limit) {
-    //     var expired = _.isUndefined(limit.value);
-    //     return _.merge({}, limit, { type: 'line', expired: expired });
-    //   });
-    //   var offsetBySideCode = function(linearAsset) {
-    //     return GeometryUtils.offsetBySideCode(applicationModel.zoom.level, linearAsset);
-    //   };
-    //   var linearAssetsWithAdjustments = _.map(linearAssetsWithType, offsetBySideCode);
-    //   var sortedAssets = _.sortBy(linearAssetsWithAdjustments, function(asset) {
-    //     return asset.expired ? -1 : 1;
-    //   });
-    //   return sortedAssets;
-    // };
-    //
-    // var renderFeatures = function(linearAssets) {
-    //   return lineFeatures(getNewFeatureProperties(linearAssets));
-    // };
   };
 })(this);
 

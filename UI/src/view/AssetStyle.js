@@ -2,29 +2,22 @@
   root.AssetStyle = function() {
     var me = this;
 
-    var isUnknown = function(linearAsset) {
-      return !_.isNumber(linearAsset.value);
-    };
-
     var lineFeatures = function(linearAssets) {
       return _.map(linearAssets, function(linearAsset) {
         var points = _.map(linearAsset.points, function(point) {
           return [point.x, point.y];
         });
-        //For winter speed limits
-        var type = isUnknown(linearAsset) ? { type: 'unknown' } : {};
-
-        var attributes = _.merge(_.cloneDeep(_.omit(linearAsset, "geometry")), type);
         var feature = new ol.Feature(new ol.geom.LineString(points));
-        feature.setProperties(attributes);
+        feature.setProperties(linearAsset);
         return feature;
       });
     };
 
-    this.getNewFeatureProperties = function(linearAssets){
-      var linearAssetsWithType = _.map(linearAssets, function(limit) {
-        var expired = _.isUndefined(limit.value);
-        return _.merge({}, limit, { type: 'line', expired: expired });
+    me.getNewFeatureProperties = function(linearAssets){
+      var linearAssetsWithType = _.map(linearAssets, function(linearAsset) {
+        var expired = _.isUndefined(linearAsset.value);
+        var type =  isUnknown(linearAsset) ? { type: 'unknown' } : {type: 'line'};
+        return _.merge({}, linearAsset, { expired: expired }, type);
       });
       var offsetBySideCode = function(linearAsset) {
         return GeometryUtils.offsetBySideCode(applicationModel.zoom.level, linearAsset);
@@ -36,27 +29,30 @@
       return sortedAssets;
     };
 
-    var dottedLineFeatures = function(speedLimits) {
-      var solidLines = lineFeatures(speedLimits);
-      var dottedOverlay = lineFeatures(_.map(speedLimits, function(limit) { return _.merge({}, limit, { type: 'overlay' }); }));
+    me.renderFeatures = function(linearAssets) {
+      return lineFeatures(me.getNewFeatureProperties(linearAssets)).concat(renderFeatures(linearAssets));
+    };
+
+    //For winter speed limits
+    var renderFeatures = function(linearAssets) {
+      var speedLimitsWithType = _.map(linearAssets, function(linearAsset) { return _.merge({}, linearAsset, { type: 'other' }); });
+      var offsetBySideCode = function(linearAsset) {
+        return GeometryUtils.offsetBySideCode(applicationModel.zoom.level, linearAsset);
+      };
+      var speedLimitsWithAdjustments = _.map(speedLimitsWithType, offsetBySideCode);
+      var speedLimitsSplitAt70kmh = _.groupBy(speedLimitsWithAdjustments, function(linearAsset) { return linearAsset.value >= 70; });
+      return dottedLineFeatures(speedLimitsSplitAt70kmh[true]);
+    };
+
+    //For winter speed limits
+    var dottedLineFeatures = function(linearAssets) {
+      var solidLines = lineFeatures(linearAssets);
+      var dottedOverlay = lineFeatures(_.map(linearAssets, function(linearAsset) { return _.merge({}, linearAsset, { type: 'overlay' }); }));
       return solidLines.concat(dottedOverlay);
     };
 
-    this.renderFeatures = function(linearAssets) {
-      return lineFeatures(this.getNewFeatureProperties(linearAssets)).concat(renderFeatures(linearAssets));
-    };
-
-    var renderFeatures = function(speedLimits) {
-      var speedLimitsWithType = _.map(speedLimits, function(limit) { return _.merge({}, limit, { type: 'other' }); });
-      var offsetBySideCode = function(speedLimit) {
-        return GeometryUtils.offsetBySideCode(applicationModel.zoom.level, speedLimit);
-      };
-      var speedLimitsWithAdjustments = _.map(speedLimitsWithType, offsetBySideCode);
-      var speedLimitsSplitAt70kmh = _.groupBy(speedLimitsWithAdjustments, function(speedLimit) { return speedLimit.value >= 70; });
-      var lowSpeedLimits = speedLimitsSplitAt70kmh[false];
-      var highSpeedLimits = speedLimitsSplitAt70kmh[true];
-
-      return dottedLineFeatures(highSpeedLimits);
+    var isUnknown = function(linearAsset) {
+      return !_.isNumber(linearAsset.value);
     };
   };
 })(this);

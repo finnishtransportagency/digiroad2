@@ -179,9 +179,9 @@
 
 
     var expandedTemplate = [
-      '<div class="panel">',
+      '<div class="panel ' + asset.layerName +'">',
       '  <header class="panel-header expanded">',
-      '    Nopeusrajoitukset',
+      '    ' + asset.title + (asset.editControlLabels.showUnit ? ' ('+asset.unit+')': ''),
       '  </header>',
       '  <div class="panel-section panel-legend linear-asset-legend speed-limit-legend">',
       speedLimitLegendTemplate,

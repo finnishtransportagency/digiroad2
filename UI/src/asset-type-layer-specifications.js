@@ -270,7 +270,8 @@
       editControlLabels: {
         title: 'Rajoitus',
         enabled: 'Talvinopeusrajoitus',
-        disabled: 'Ei talvinopeusrajoitusta'
+        disabled: 'Ei talvinopeusrajoitusta',
+        showUnit: true
       },
       possibleValues: [100, 80, 70, 60],
       label: new LinearAssetLabel(),
