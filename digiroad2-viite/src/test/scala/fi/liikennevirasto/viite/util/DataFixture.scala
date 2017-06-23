@@ -177,7 +177,11 @@ object DataFixture {
         val roadAddresses: List[RoadAddress] =  OracleDatabase.withDynTransaction {
             RoadAddressDAO.fetchByLinkId(roadLinks.map(_.linkId).toSet)
         }
-        val changes = roadAddressService.resolveChanges(roadLinks, changedRoadLinks, roadAddresses.groupBy(_.linkId))
+        try {
+          val changes = roadAddressService.resolveChanges(roadLinks, changedRoadLinks, roadAddresses.groupBy(_.linkId))
+        } catch {
+          case e: IllegalArgumentException => println("ERR! -> " + e.getMessage)
+        }
       }
 
       println("End processing municipality %d".format(municipality))

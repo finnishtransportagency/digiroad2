@@ -375,20 +375,6 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }
   }
 
-  def getRoadLinksWithAllComplementaryAndChangesFromVVH(municipality: Int): (Seq[RoadLink], Seq[ChangeInfo], Seq[RoadLink])= {
-    val fut = for {
-      f1Result <- vvhClient.complementaryData.fetchByMunicipalitiesF(municipality)
-      f2Result <- vvhClient.roadLinkChangeInfo.fetchByMunicipalityF(municipality)
-      f3Result <- vvhClient.roadLinkData.fetchByMunicipalityF(municipality)
-    } yield (f1Result, f2Result, f3Result)
-
-    val (complementaryLinks, changes, links) = Await.result(fut, Duration.Inf)
-
-    withDynTransaction {
-      (enrichRoadLinksFromVVH(links, changes), changes, enrichRoadLinksFromVVH(complementaryLinks, changes))
-    }
-  }
-
   /**
     * This method returns road links and change data by municipality.
     *
