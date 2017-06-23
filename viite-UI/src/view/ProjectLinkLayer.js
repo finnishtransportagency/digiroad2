@@ -192,7 +192,6 @@
     };
 
     var clearLayers = function(){
-      directionMarkerLayer.getSource().clear();
       calibrationPointLayer.getSource().clear();
       directionMarkerLayer.getSource().clear();
     };
@@ -409,6 +408,7 @@ var isDefined=function(variable) {
 
     var redraw = function(){
       var editedLinks = _.map(projectCollection.getDirty(), function(editedLink) {return editedLink.id;});
+      cachedMarker = new LinkPropertyMarker(selectedProjectLinkProperty);
       var projectLinks = projectCollection.getAll();
       var features = [];
       _.map(projectLinks, function(projectLink) {
@@ -424,6 +424,12 @@ var isDefined=function(variable) {
 
       var directionRoadMarker = _.filter(projectLinks, function(projlink) {
         return projlink.roadLinkType !== floatingRoadLinkType && projlink.anomaly !== noAddressAnomaly && projlink.anomaly !== geometryChangedAnomaly && (projlink.sideCode === againstDigitizing || projlink.sideCode === towardsDigitizing);
+      });
+
+      _.each(directionRoadMarker, function(directionLink) {
+        var marker = cachedMarker.createMarker(directionLink);
+        if(map.getView().getZoom() > zoomlevels.minZoomForDirectionalMarkers)
+          directionMarkerLayer.getSource().addFeature(marker);
       });
 
       var actualPoints = me.drawCalibrationMarkers(calibrationPointLayer.source, projectLinks);
