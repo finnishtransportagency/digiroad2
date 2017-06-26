@@ -153,43 +153,26 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   }
 
-  /**
-    * This will annex all the valid ChangeInfo to the corresponding road address object
-    * The criteria for the annexation is the following:
-    *   .The changeInfo vvhTimestamp must be bigger than the RoadAddress vvhTimestamp
-    *   .Either the newId or the oldId from the Changeinfo must be equal to the linkId in the RoadAddress
-    *
-    * @param roadAddresses - Sequence of RoadAddresses
-    * @param changes - Sequence of ChangeInfo
-    * @return List of (RoadAddress, List of ChangeInfo)
-    */
-  def matchChangesWithRoadAddresses(roadAddresses: Seq[RoadAddress], changes: Seq[ChangeInfo]) = {
-    roadAddresses.map(ra => {
-      (ra, changes.filter(c => c.affects(ra.linkId, ra.adjustedTimestamp)))
-    }).filter(ra => ra._2.nonEmpty)
-  }
-
   def applyChanges(roadlinks: Seq[RoadLink], changedRoadLinks: Seq[ChangeInfo], addresses: Map[Long, Seq[RoadAddress]]): Map[Long, Seq[RoadAddress]] = {
     withDynTransaction {
 
       val newRoadAddresses = RoadAddressChangeInfoMapper.resolveChangesToMap(addresses, roadlinks, changedRoadLinks)
       val roadLinkMap = roadlinks.map(rl => rl.linkId -> rl).toMap
 
-      val savedRoadAddresses = newRoadAddresses.mapValues(_.map(r =>
+      val (addressesToCreate, unchanged) = newRoadAddresses.values.flatten.toSeq.partition(_.id == NewRoadAddress)
+      val savedRoadAddresses = addressesToCreate.map(r =>
         if (r.id == NewRoadAddress) {
-          val roadLink = roadLinkMap(r.linkId)
-          val roadWithNewGeom = r.copy(id = RoadAddressDAO.getNextRoadAddressId,
-            geom = GeometryUtils.truncateGeometry3D(roadLink.geometry,
+          r.copy(geom = GeometryUtils.truncateGeometry3D(roadLinkMap(r.linkId).geometry,
               r.startMValue, r.endMValue))
-          RoadAddressDAO.create(Seq(roadWithNewGeom))
-          logger.debug("New road address created> linkId: "+roadWithNewGeom.linkId+" id:"+roadWithNewGeom.id)
-          roadWithNewGeom
         }
         else
-          r))
+          r)
+      RoadAddressDAO.create(savedRoadAddresses)
+
+      val returnAddressMap = (unchanged ++ savedRoadAddresses).groupBy(_.linkId)
 
       val removedIds = addresses.values.flatten.filterNot(a =>
-        savedRoadAddresses.getOrElse(a.linkId, Seq()).exists(_.id == a.id)).map(_.id).toSet
+        returnAddressMap.getOrElse(a.linkId, Seq()).exists(_.id == a.id)).map(_.id).toSet
       removedIds.grouped(500).foreach(s => {RoadAddressDAO.expireById(s)
         logger.debug("Expired: "+s.mkString(","))
       })
@@ -199,7 +182,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
       changedRoadParts.foreach { change =>  recalculateRoadAddresses(change.roadNumber, change.roadPartNumber) }
 
-      savedRoadAddresses
+      returnAddressMap
     }
   }
 
