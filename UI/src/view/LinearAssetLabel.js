@@ -7,32 +7,33 @@
         var backgroundStyle = function (value) {
 
           var valueLength = value.toString().length;
+          var image = 'images/linearLabel_background.png';
 
-          if (valueLength > 6 || value < 0) {
-            return new ol.style.Style({
-              image: new ol.style.Icon(({
-                src: 'images/warningLabel.png'
-              }))
-            });
+          if (!correctValue(value)) {
+            image = 'images/warningLabel.png';
           }else if (valueLength > 4 && valueLength < 7) {
-            return new ol.style.Style({
-              image: new ol.style.Icon(({
-                src: 'images/linearLabel_background_large.png'
-              }))
-            });
+            image = 'images/linearLabel_background_large.png';
           }
+
           return new ol.style.Style({
             image: new ol.style.Icon(({
-              src: 'images/linearLabel_background.png'
+              src: image
             }))
           });
         };
 
         var textStyle = function(value) {
-          if (value.toString().length > 6  || value < 0){
+          if (!correctValue(value))
             return '';
-          }
           return "" + value;
+        };
+
+        var correctValue = function(value){
+          var valueLength = value.toString().length;
+          if(value)
+            if(valueLength > 6 || value < 0)
+              return false;
+            return true;
         };
 
         this.getStyle = function(value){
