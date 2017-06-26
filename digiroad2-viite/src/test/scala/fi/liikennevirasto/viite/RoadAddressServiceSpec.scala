@@ -804,7 +804,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     secondMatch._2(1).changeType should be (2)
     thirdMatch._2.size should be (0)
 
-    matchedResults.flatMap(_._2).find(_.changeType == 3).isEmpty should be (true)
+    matchedResults.flatMap(_._2).exists(_.changeType == 3) should be (false)
 
   }
 }

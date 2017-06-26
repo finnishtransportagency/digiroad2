@@ -173,10 +173,14 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     withDynTransaction {
 
       val newRoadAddresses = RoadAddressChangeInfoMapper.resolveChangesToMap(addresses, roadlinks, changedRoadLinks)
+      val roadLinkMap = roadlinks.map(rl => rl.linkId -> rl).toMap
 
       val savedRoadAddresses = newRoadAddresses.mapValues(_.map(r =>
         if (r.id == NewRoadAddress) {
-          val roadWithNewGeom = r.copy(id = RoadAddressDAO.getNextRoadAddressId, geom = GeometryUtils.truncateGeometry3D(roadlinks.filter(link => link.linkId == r.linkId).head.geometry, r.startMValue, r.endMValue))
+          val roadLink = roadLinkMap(r.linkId)
+          val roadWithNewGeom = r.copy(id = RoadAddressDAO.getNextRoadAddressId,
+            geom = GeometryUtils.truncateGeometry3D(roadLink.geometry,
+              r.startMValue, r.endMValue))
           RoadAddressDAO.create(Seq(roadWithNewGeom))
           logger.debug("New road address created> linkId: "+roadWithNewGeom.linkId+" id:"+roadWithNewGeom.id)
           roadWithNewGeom
