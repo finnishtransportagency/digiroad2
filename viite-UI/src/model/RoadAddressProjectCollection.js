@@ -7,7 +7,7 @@
     var currentProject;
     var fetchedProjectLinks = [];
     var roadAddressProjectLinks = [];
-    var projectLinksSaved = [];
+    var dirtyProjectLinkIds = [];
     var dirtyProjectLinks = [];
     var self = this;
     var STATUS_NOT_HANDLED = 0;
@@ -25,10 +25,6 @@
       return _.map(projectLinks(), function(projectLink) {
         return projectLink.getData();
       });
-    };
-
-    this.getSavedLinks = function(){
-      return projectLinksSaved;
     };
 
     this.reset = function(){
@@ -89,7 +85,7 @@
 
     this.revertLinkStatus = function () {
       var fetchedLinks = this.getAll();
-      dirtyProjectLinks.forEach(function (dirtyLink) {
+      dirtyProjectLinkIds.forEach(function (dirtyLink) {
         _.filter(fetchedLinks, {linkId: dirtyLink.id}).forEach(function (fetchedLink) {
           fetchedLink.status = dirtyLink.status;
         });
@@ -100,6 +96,7 @@
       roadAddressProjects = [];
       dirtyRoadPartList = [];
       currentRoadPartList = [];
+      dirtyProjectLinkIds = [];
       dirtyProjectLinks = [];
       projectinfo=undefined;
       backend.abortLoadingProject();
@@ -144,16 +141,14 @@
     };
 
 
-    this.saveProjectLinks = function(selectedProjectLink, currentProject) {
+    this.saveProjectLinks = function(toBeExpiredLinks) {
       console.log("Save Project Links called");
       applicationModel.addSpinner();
-      var linkIds = _.map(selectedProjectLink,function (t){
+      var linkIds = _.map(toBeExpiredLinks,function (t){
         if(!_.isUndefined(t.linkId)){
           return t.linkId;
         } else return t;
       });
-
-      projectLinksSaved = projectLinksSaved.concat(linkIds);
 
       var projectId = projectinfo.id;
 
@@ -258,16 +253,24 @@
     };
 
     this.setDirty = function(editedRoadLinks) {
-      dirtyProjectLinks = editedRoadLinks;
+      dirtyProjectLinkIds = editedRoadLinks;
       eventbus.trigger('roadAddress:projectLinksEdited');
     };
 
     this.getDirty = function() {
+      return dirtyProjectLinkIds;
+    };
+
+    this.setTmpExpired = function(editRoadLinks){
+      dirtyProjectLinks = editRoadLinks;
+    };
+
+    this.getTmpExpired = function(){
       return dirtyProjectLinks;
     };
 
     this.isDirty = function() {
-      return dirtyProjectLinks.length > 0;
+      return dirtyProjectLinkIds.length > 0;
     };
 
     function arrayIntersection(a, b, areEqualFunction) {
