@@ -11,7 +11,7 @@ object ImportLogService {
     OracleDatabase.withDynTransaction {
       val id = sql"""select primary_key_seq.nextval from dual""".as[Long].first
       sqlu"""
-        insert into import_log(id, content)
+        insert into import_log(id, content, import_type )
         values ($id, $content, $importType)
       """.execute
       id
