@@ -29,46 +29,71 @@
     };
 
     root.LinearAssetLabelMultiValues = function(){
-        var IMAGE_HEIGHT = 17;
-        var IMAGE_WIDTH = 28;
-        var IMAGE_MARGIN = 2;
-        var IMAGE_PADDING = 4;
-        var STICK_HEIGHT = 15;
-        var NATIONAL_ID_WIDTH = 45;
-        var EMPTY_IMAGE_TYPE = '99';
-        var styleScale = 1;
-        var imgMargin = 0;
-        var groupOffset = 0;
-
-
 
         AssetLabel.call(this);
+
         var me = this;
-
-        var i = 0;
-        //return _.map(_isEmpty())
-        //TODO Use something similar to code existant in MassTransitMarkesr.js, function createStopTypeStyles
-
-        var backgroundStyle = new ol.style.Style({
-            image: new ol.style.Icon(({
-                anchor: [20,15],
-                anchorXUnits: 'pixels',
-                anchorYUnits: 'pixels',
-                src: 'images/linearLabel_background.png',
-                scale: styleScale
-            }))
-        });
+        var IMAGE_HEIGHT = 27;
 
         this.getStyle = function(value){
-            return [backgroundStyle, new ol.style.Style({
-                text : new ol.style.Text({
-                    text : ""+value,
-                    fill: new ol.style.Fill({
-                        color: '#ffffff'
-                    }),
-                    font : '12px sans-serif'
-                })
-            })];
+          return createMultiStyles(value);
+        };
+
+        var createMultiStyles = function(value){
+          var i = 0;
+          var splitValues = value.split(/[\n,]+/);
+          var styles = [];
+          _.forEach(splitValues, function(values){
+            i++;
+            styles.push(backgroundStyle(values, i), textStyle(values, i));
+          });
+          return styles;
+        };
+
+        var backgroundStyle = function(value, i){
+
+          var image = 'images/linearLabel_background.png';
+          if(!correctValues(value))
+            image = 'images/warningLabel.png';
+
+          return new ol.style.Style({
+            image: new ol.style.Icon(({
+              anchor: [17, (i * IMAGE_HEIGHT) - 15],
+              anchorXUnits: 'pixels',
+              anchorYUnits: 'pixels',
+              src: image
+            }))
+          });
+        };
+
+        var textStyle = function(value, i) {
+
+          return new ol.style.Style({
+            text: new ol.style.Text(({
+              text: getTextValue(value),
+              offsetX: 0,
+              offsetY: (-i*IMAGE_HEIGHT)+IMAGE_HEIGHT,
+              textAlign: 'center',
+              fill: new ol.style.Fill({
+                color: '#ffffff'
+              }),
+              font : '12px sans-serif'
+            }))
+          });
+        };
+
+        var getTextValue = function(value) {
+          if(!correctValues(value))
+            return '';
+          return "" + value;
+        };
+
+        var correctValues = function(value){
+          var valueLength = value.toString().length;
+          if(value)
+            if(valueLength > 3 || !value.match(/^[0-9|Ee]/))
+              return false;
+          return true;
         };
 
         this.getValue = function(asset){
