@@ -161,12 +161,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
       val (addressesToCreate, unchanged) = newRoadAddresses.values.flatten.toSeq.partition(_.id == NewRoadAddress)
       val savedRoadAddresses = addressesToCreate.map(r =>
-        if (r.id == NewRoadAddress) {
           r.copy(geom = GeometryUtils.truncateGeometry3D(roadLinkMap(r.linkId).geometry,
-              r.startMValue, r.endMValue))
-        }
-        else
-          r)
+              r.startMValue, r.endMValue)))
+
       val ids = RoadAddressDAO.create(savedRoadAddresses).toSet ++ unchanged.map(_.id).toSet
 
       val removedIds = addresses.values.flatten.map(_.id).toSet -- ids
