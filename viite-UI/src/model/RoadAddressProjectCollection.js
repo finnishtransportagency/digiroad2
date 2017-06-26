@@ -144,11 +144,11 @@
     this.saveProjectLinks = function(toBeExpiredLinks) {
       console.log("Save Project Links called");
       applicationModel.addSpinner();
-      var linkIds = _.map(toBeExpiredLinks,function (t){
+      var linkIds = _.unique(_.map(toBeExpiredLinks,function (t){
         if(!_.isUndefined(t.linkId)){
           return t.linkId;
         } else return t;
-      });
+      }));
 
       var projectId = projectinfo.id;
 
