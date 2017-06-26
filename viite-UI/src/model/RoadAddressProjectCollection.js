@@ -270,7 +270,7 @@
     };
 
     this.isDirty = function() {
-      return dirtyProjectLinkIds.length > 0;
+      return dirtyProjectLinks.length > 0;
     };
 
     function arrayIntersection(a, b, areEqualFunction) {
