@@ -42,8 +42,8 @@ object DataFixture {
         val adjusted = LinkRoadAddressCalculator.recalculate(roads)
         assert(adjusted.size == roads.size) // Must not lose any
         val (changed, unchanged) = adjusted.partition(ra =>
-            roads.exists(oldra => ra.id == oldra.id && (oldra.startAddrMValue != ra.startAddrMValue || oldra.endAddrMValue != ra.endAddrMValue))
-          )
+          roads.exists(oldra => ra.id == oldra.id && (oldra.startAddrMValue != ra.startAddrMValue || oldra.endAddrMValue != ra.endAddrMValue))
+        )
         println(s"Road $roadNumber, part $partNumber: ${changed.size} updated, ${unchanged.size} kept unchanged")
         changed.foreach(addr => RoadAddressDAO.update(addr, None))
       } catch {
@@ -175,10 +175,10 @@ object DataFixture {
       if(roadLinks.nonEmpty) {
         //  Get road address from viite DB from the roadLinks ids
         val roadAddresses: List[RoadAddress] =  OracleDatabase.withDynTransaction {
-            RoadAddressDAO.fetchByLinkId(roadLinks.map(_.linkId).toSet)
+          RoadAddressDAO.fetchByLinkId(roadLinks.map(_.linkId).toSet)
         }
         try {
-          roadAddressService.resolveChanges(roadLinks, changedRoadLinks, roadAddresses.groupBy(_.linkId))
+          roadAddressService.applyChanges(roadLinks, changedRoadLinks, roadAddresses.groupBy(_.linkId))
         } catch {
           case e: Exception => println("ERR! -> " + e)
         }
