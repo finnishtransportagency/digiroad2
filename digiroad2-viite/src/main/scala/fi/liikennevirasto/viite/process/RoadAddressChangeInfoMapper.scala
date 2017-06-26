@@ -1,37 +1,35 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.{ChangeInfo, Point}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.user.UserProvider
-import fi.liikennevirasto.viite.RoadAddressService
-import fi.liikennevirasto.viite.dao.{RoadAddress, RoadAddressDAO}
+import fi.liikennevirasto.digiroad2.{ChangeInfo, Point}
+import fi.liikennevirasto.viite.dao.RoadAddress
+import org.slf4j.LoggerFactory
 
 object RoadAddressChangeInfoMapper extends RoadAddressMapper {
+  private val logger = LoggerFactory.getLogger(getClass)
 
-  private def createAddressMap(sources: Seq[ChangeInfo]): Seq[Any] = {
+  private def createAddressMap(sources: Seq[ChangeInfo]): Seq[RoadAddressMapping] = {
     val pseudoGeom = Seq(Point(0.0, 0.0), Point(1.0, 0.0))
     sources.map(ci => {
           ci.changeType match {
-            case 1 => {
-              RoadAddressMapping(ci.oldId.get, ci.newId.get, ci.oldStartMeasure.get, ci.oldEndMeasure.get,
-              ci.newStartMeasure.get, ci.newEndMeasure.get, pseudoGeom, pseudoGeom, Some(ci.vvhTimeStamp))
-              println("Change info> oldId: "+ci.oldId+" newId: "+ci.newId+" changeType: "+ci.changeType)
-            }
-            case 2 => {
-              RoadAddressMapping(ci.oldId.get, ci.newId.get, ci.oldStartMeasure.get, ci.oldEndMeasure.get,
-                ci.newStartMeasure.get, ci.newEndMeasure.get, pseudoGeom, pseudoGeom, Some(ci.vvhTimeStamp))
-              println("Change info> oldId: "+ci.oldId+" newId: "+ci.newId+" changeType: "+ci.changeType)
-            }
+            case 1 =>
+              logger.debug("Change info> oldId: "+ci.oldId+" newId: "+ci.newId+" changeType: "+ci.changeType)
+              Some(RoadAddressMapping(ci.oldId.get, ci.newId.get, ci.oldStartMeasure.get, ci.oldEndMeasure.get,
+              ci.newStartMeasure.get, ci.newEndMeasure.get, pseudoGeom, pseudoGeom, Some(ci.vvhTimeStamp)))
+            case 2 =>
+              logger.debug("Change info> oldId: "+ci.oldId+" newId: "+ci.newId+" changeType: "+ci.changeType)
+              Some(RoadAddressMapping(ci.oldId.get, ci.newId.get, ci.oldStartMeasure.get, ci.oldEndMeasure.get,
+                ci.newStartMeasure.get, ci.newEndMeasure.get, pseudoGeom, pseudoGeom, Some(ci.vvhTimeStamp)))
             case _ => None
           }
-        }).filter(c => !c.equals(None))
+        }).filter(c => c.isDefined).map(_.get)
   }
 
   private def applyChanges(changes: Seq[Seq[ChangeInfo]], roadAddresses: Map[Long, Seq[RoadAddress]]): Map[Long, Seq[RoadAddress]] = {
     if (changes.isEmpty)
       roadAddresses
     else {
-      val mapping = createAddressMap(changes.head).asInstanceOf[Seq[RoadAddressMapping]]
+      val mapping = createAddressMap(changes.head)
       val mapped = roadAddresses.mapValues(_.flatMap(ra =>
         if (mapping.exists(_.matches(ra))) {
           val changeVVHTimestamp = mapping.filter(m => m.sourceLinkId == ra.linkId || m.targetLinkId == ra.linkId).map(_.vvhTimeStamp.get).sortWith(_ > _).head
