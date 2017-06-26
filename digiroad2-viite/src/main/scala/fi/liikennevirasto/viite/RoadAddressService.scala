@@ -167,12 +167,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         }
         else
           r)
-      val ids = RoadAddressDAO.create(savedRoadAddresses).toSet
+      val ids = RoadAddressDAO.create(savedRoadAddresses).toSet ++ unchanged.map(_.id).toSet
 
-      val returnAddressMap = (unchanged ++ RoadAddressDAO.fetchByIdMassQuery(ids)).groupBy(_.linkId)
-
-      val removedIds = addresses.values.flatten.filterNot(a =>
-        returnAddressMap.getOrElse(a.linkId, Seq()).exists(_.id == a.id)).map(_.id).toSet
+      val removedIds = addresses.values.flatten.map(_.id).toSet -- ids
       removedIds.grouped(500).foreach(s => {RoadAddressDAO.expireById(s)
         logger.debug("Expired: "+s.mkString(","))
       })
@@ -181,7 +178,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
       changedRoadParts.foreach { case (road, roadParts) => roadParts.foreach(part => recalculateRoadAddresses(road, part)) }
 
-      returnAddressMap
+      // re-fetch after recalculation
+      RoadAddressDAO.fetchByIdMassQuery(ids).groupBy(_.linkId)
     }
   }
 
@@ -620,7 +618,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     targetRoadAddresses
   }
 
-  def recalculateRoadAddresses(roadNumber: Long, roadPartNumber: Long) = {
+  def recalculateRoadAddresses(roadNumber: Long, roadPartNumber: Long): Boolean = {
     try{
       val roads = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber, true)
       if (!roads.exists(_.floating)) {
@@ -633,6 +631,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
           )
           logger.info(s"Road $roadNumber, part $roadPartNumber: ${changed.size} updated, ${unchanged.size} kept unchanged")
           changed.foreach(addr => RoadAddressDAO.update(addr, None))
+          changed.nonEmpty
         } catch {
           case ex: InvalidAddressDataException => logger.error(s"!!! Road $roadNumber, part $roadPartNumber contains invalid address data - part skipped !!!", ex)
         }
@@ -642,6 +641,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     } catch {
       case a: Exception => logger.error(a.getMessage, a)
     }
+    false
   }
   def prettyPrint(changes: Seq[ChangeInfo]) = {
     def setPrecision(d: Double) = {
