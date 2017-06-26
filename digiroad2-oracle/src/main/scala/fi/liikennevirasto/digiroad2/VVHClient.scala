@@ -994,10 +994,6 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClie
   def fetchWalkwaysByMunicipalitiesF(municipality: Int): Future[Seq[VVHRoadlink]] =
     Future(queryByMunicipality(municipality, Some(withMtkClassFilter(Set(12314)))))
 
-  def fetchByMunicipalitiesF(municipality: Int): Future[Seq[VVHRoadlink]] = {
-    Future(queryByMunicipality(municipality))
-  }
-
   def updateVVHFeatures(complementaryFeatures: Map[String, Any]): Either[List[Map[String, Any]], VVHError] = {
     val url = vvhRestApiEndPoint + serviceName + "/FeatureServer/0/updateFeatures"
     val request = new HttpPost(url)
