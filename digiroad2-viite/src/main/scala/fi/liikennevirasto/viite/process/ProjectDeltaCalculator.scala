@@ -45,22 +45,24 @@ object ProjectDeltaCalculator {
 
   def partition(roadAddresses: Seq[RoadAddress]): Seq[RoadAddressSection] = {
     def combineTwo(r1: RoadAddress, r2: RoadAddress): Seq[RoadAddress] = {
-      if (r1.track == r2.track && r1.endAddrMValue == r2.startAddrMValue)
-        Seq(r1.copy(endAddrMValue = r2.endAddrMValue))
+      if (r1.endAddrMValue == r2.startAddrMValue && r1.discontinuity == Discontinuity.Continuous)
+        Seq(r1.copy(endAddrMValue = r2.endAddrMValue, discontinuity = r2.discontinuity))
       else
-        Seq(r1, r2)
+        Seq(r2, r1)
     }
     def combine(roadAddressSeq: Seq[RoadAddress], result: Seq[RoadAddress] = Seq()): Seq[RoadAddress] = {
       if (roadAddressSeq.isEmpty)
-        result
+        result.reverse
       else if (result.isEmpty)
         combine(roadAddressSeq.tail, Seq(roadAddressSeq.head))
       else
         combine(roadAddressSeq.tail, combineTwo(result.head, roadAddressSeq.head) ++ result.tail)
     }
-    val grouped = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track, ra.discontinuity))
-    grouped.mapValues(v => combine(v)).values.flatten.map(ra => RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
-      ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, RoadType.Unknown)).toSeq
+    val grouped = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
+    grouped.mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
+      RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
+      ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, RoadType.Unknown)
+    ).toSeq
   }
 }
 

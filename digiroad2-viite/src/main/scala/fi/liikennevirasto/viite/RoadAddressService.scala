@@ -249,12 +249,14 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       (RoadAddressDAO.fetchByLinkId(Set(id), true),
         RoadAddressDAO.getMissingRoadAddresses(Set(id)))
     }
+    val anomaly = missedRL.headOption.map(_.anomaly).getOrElse(Anomaly.None)
     val (roadLinks, vvhHistoryLinks) = roadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(Set(id))
-    (addresses.size, roadLinks.size) match {
-      case (0, 0) => List()
-      case (_, 0) => addresses.flatMap(a => vvhHistoryLinks.map(rl => RoadAddressLinkBuilder.build(rl, a)))
-      case (0, _) => missedRL.flatMap(a => roadLinks.map(rl => RoadAddressLinkBuilder.build(rl, a)))
-      case (_, _) => addresses.flatMap(a => roadLinks.map(rl => RoadAddressLinkBuilder.build(rl, a)))
+    (anomaly, addresses.size, roadLinks.size) match {
+      case (_, 0, 0) => List() // No road link currently exists and no addresses on this link id => ignore
+      case (Anomaly.GeometryChanged, _, _) => addresses.flatMap(a => vvhHistoryLinks.map(rl => RoadAddressLinkBuilder.build(rl, a)))
+      case (_, _, 0) => addresses.flatMap(a => vvhHistoryLinks.map(rl => RoadAddressLinkBuilder.build(rl, a)))
+      case (Anomaly.NoAddressGiven, 0, _) => missedRL.flatMap(a => roadLinks.map(rl => RoadAddressLinkBuilder.build(rl, a)))
+      case (_, _, _) => addresses.flatMap(a => roadLinks.map(rl => RoadAddressLinkBuilder.build(rl, a)))
     }
   }
 
