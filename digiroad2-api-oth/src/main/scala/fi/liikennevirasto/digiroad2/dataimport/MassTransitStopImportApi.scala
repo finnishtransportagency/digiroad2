@@ -82,7 +82,7 @@ class MassTransitStopImportApi extends ScalatraServlet with CorsSupport with Req
       params.get("limit-import-to-streets").map(_ => Municipality),
       params.get("limit-import-to-private-roads").map(_ => Private)
     ).flatten
-    val id = ImportLogService.save("Pysäkkien lataus on käynnissä. Päivitä sivu hetken kuluttua uudestaan.")
+    val id = ImportLogService.save("Pysäkkien lataus on käynnissä. Päivitä sivu hetken kuluttua uudestaan.", BUS_STOP_LOG)
     val user = userProvider.getCurrentUser()
     val csvFileInputStream = fileParams("csv-file").getInputStream
     fork {

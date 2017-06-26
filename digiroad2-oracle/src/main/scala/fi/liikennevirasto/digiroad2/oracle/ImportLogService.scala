@@ -7,12 +7,12 @@ import slick.jdbc.StaticQuery.interpolation
 object ImportLogService {
   val logger = LoggerFactory.getLogger(getClass)
 
-  def save(content: String): Long = {
+  def save(content: String, importType: String): Long = {
     OracleDatabase.withDynTransaction {
       val id = sql"""select primary_key_seq.nextval from dual""".as[Long].first
       sqlu"""
         insert into import_log(id, content)
-        values ($id, $content)
+        values ($id, $content, $importType)
       """.execute
       id
     }

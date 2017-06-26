@@ -39,7 +39,7 @@ class ImportDataApi extends ScalatraServlet with FileUploadSupport with JacksonJ
     if (!userProvider.getCurrentUser().isOperator()) {
       halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
     }
-    val id = ImportLogService.save("Kohteiden lataus on käynnissä. Päivitä sivu hetken kuluttua uudestaan.")
+    val id = ImportLogService.save("Kohteiden lataus on käynnissä. Päivitä sivu hetken kuluttua uudestaan.", ROAD_LINK_LOG)
     val csvFileInputStream = fileParams("csv-file").getInputStream
     try {
       val result = csvImporter.importLinkAttribute(csvFileInputStream)
