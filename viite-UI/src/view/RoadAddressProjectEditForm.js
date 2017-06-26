@@ -199,7 +199,7 @@
       });
 
       rootElement.on('change', '#dropDown', function() {
-        projectCollection.setDirty(_.map(selectedProjectLink, function(link) { return {'id':link.linkId, 'status':link.status}; }));
+        projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function(link) { return {'id':link.linkId, 'status':link.status}; })));
         rootElement.find('.project-form button.update').prop("disabled", false);
       });
 
