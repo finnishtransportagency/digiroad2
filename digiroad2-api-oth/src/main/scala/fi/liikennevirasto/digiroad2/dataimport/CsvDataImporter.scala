@@ -48,19 +48,23 @@ trait RoadLinkCsvImporter {
   type ParsedLinkRow = (MalformedParameters, ParsedProperties)
 
   private val administrativeClassLimitations: List[AdministrativeClass] = List(State)
+  private val autorizedValues: List[Int] = List(-11, -1, 0, 1, 2, 3, 4, 5, 10)
 
   private val intFieldMappings = Map(
     "Hallinnollinen luokka" -> "ADMINCLASS",
     "Toiminnallinen luokka" -> "functional_Class",
     "Liikennevirran suunta" -> "DIRECTIONTYPE",
     "Tielinkin tyyppi" -> "link_Type",
-    "Tasosijainti" -> "VERTICALLEVEL",
     "Kuntanumero" -> "MUNICIPALITYCODE",
     "Osoitenumerot oikealla alku" -> "FROM_RIGHT",
     "Osoitenumerot oikealla loppu" -> "TO_RIGHT",
     "Osoitenumerot vasemmalla alku" -> "FROM_LEFT",
     "Osoitenumerot vasemmalla loppu" -> "TO_LEFT",
     "Linkin tila" -> "CONSTRUCTIONTYPE"
+  )
+
+  private val codeValueFieldMappings = Map(
+    "Tasosijainti" -> "VERTICALLEVEL"
   )
 
   private val fieldInOTH = List("link_Type", "functional_Class")
@@ -74,7 +78,7 @@ trait RoadLinkCsvImporter {
   private val mandatoryFields = "Linkin ID"
 
 
-  val mappings = textFieldMappings ++ intFieldMappings
+  val mappings = textFieldMappings ++ intFieldMappings ++ codeValueFieldMappings
 
   val MandatoryParameters: Set[String] = mappings.keySet + mandatoryFields
 
@@ -121,6 +125,14 @@ trait RoadLinkCsvImporter {
     }
   }
 
+  private def verifyValueCode(parameterName: String, parameterValue: String): ParsedLinkRow = {
+    if (autorizedValues.contains(parameterValue.toInt)) {
+      (Nil, List(LinkProperty(columnName = codeValueFieldMappings(parameterName), value = parameterValue.toInt)))
+    } else {
+      (List(parameterName), Nil)
+    }
+  }
+
   private def linkRowToProperties(csvRowWithHeaders: Map[String, Any]): ParsedLinkRow = {
     csvRowWithHeaders.foldLeft(Nil: MalformedParameters, Nil: ParsedProperties) { (result, parameter) =>
       val (key, value) = parameter
@@ -135,6 +147,9 @@ trait RoadLinkCsvImporter {
           result.copy(_2 = LinkProperty(columnName = textFieldMappings(key), value = value) :: result._2)
         } else if (intFieldMappings.contains(key)) {
           val (malformedParameters, properties) = verifyValueType(key, value.toString)
+          result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
+        } else if (codeValueFieldMappings.contains(key)) {
+          val (malformedParameters, properties) = verifyValueCode(key, value.toString)
           result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
         } else if (mandatoryFields.contains(key) && !value.toString.forall(_.isDigit)) {
           result.copy(_1 = List(mandatoryFields) ::: result._1 , _2 = result._2)
