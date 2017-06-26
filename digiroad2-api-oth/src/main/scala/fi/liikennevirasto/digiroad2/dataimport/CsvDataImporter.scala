@@ -48,7 +48,7 @@ trait RoadLinkCsvImporter {
   type ParsedLinkRow = (MalformedParameters, ParsedProperties)
 
   private val administrativeClassLimitations: List[AdministrativeClass] = List(State)
-  private val autorizedValues: List[Int] = List(-11, -1, 0, 1, 2, 3, 4, 5, 10)
+  val autorizedValues: List[Int] = List(-11, -1, 0, 1, 2, 3, 4, 5, 10)
 
   private val intFieldMappings = Map(
     "Hallinnollinen luokka" -> "ADMINCLASS",
@@ -125,7 +125,7 @@ trait RoadLinkCsvImporter {
     }
   }
 
-  private def verifyValueCode(parameterName: String, parameterValue: String): ParsedLinkRow = {
+  def verifyValueCode(parameterName: String, parameterValue: String): ParsedLinkRow = {
     if (autorizedValues.contains(parameterValue.toInt)) {
       (Nil, List(LinkProperty(columnName = codeValueFieldMappings(parameterName), value = parameterValue.toInt)))
     } else {
