@@ -39,19 +39,18 @@
           return createMultiStyles(value);
         };
 
-        var createMultiStyles = function(value){
+        var createMultiStyles = function(values){
           var i = 0;
-          var splitValues = value.split(/[\n,]+/);
+          var splitValues = values.replace(/\s/g,'').split(/[\n,]+/);
           var styles = [];
-          _.forEach(splitValues, function(values){
+          _.forEach(splitValues, function(value){
             i++;
-            styles.push(backgroundStyle(values, i), textStyle(values, i));
+            styles.push(backgroundStyle(value, i), textStyle(value, i));
           });
           return styles;
         };
 
         var backgroundStyle = function(value, i){
-
           var image = 'images/linearLabel_background.png';
           if(!correctValues(value))
             image = 'images/warningLabel.png';
