@@ -334,6 +334,36 @@ object RoadAddressDAO {
     }
   }
 
+  def fetchByIdMassQuery(ids: Set[Long], includeFloating: Boolean = false, includeHistory: Boolean = true): List[RoadAddress] = {
+    MassQuery.withIds(ids) {
+      idTableName =>
+        val floating = if (!includeFloating)
+          "AND floating='0'"
+        else
+          ""
+        val history = if (!includeHistory)
+          "AND ra.end_date is null"
+        else
+          ""
+        val query =
+          s"""
+        select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
+        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
+        pos.side_code, pos.adjusted_timestamp,
+        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y
+        from road_address ra cross join
+        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
+        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
+        join lrm_position pos on ra.lrm_position_id = pos.id
+        join $idTableName i on i.id = ra.id
+        where t.id < t2.id $floating $history and
+          (valid_from is null or valid_from <= sysdate) and
+          (valid_to is null or valid_to > sysdate)
+      """
+        queryList(query)
+    }
+  }
+
   private def fetchByAddress(roadNumber: Long, roadPartNumber: Long, track: Track, startAddrM: Option[Long], endAddrM: Option[Long]) = {
     val startFilter = startAddrM.map(s => s" AND start_addr_m = $s").getOrElse("")
     val endFilter = endAddrM.map(e => s" AND end_addr_m = $e").getOrElse("")
@@ -828,11 +858,12 @@ object RoadAddressDAO {
       "TO_DATE(?, 'YYYY-MM-DD'), ?, sysdate, MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(" +
       "?,?,0.0,?,?,?,0.0,?)), ?, ?)")
     val ids = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= ${roadAddresses.size}""".as[Long].list
-    roadAddresses.zip(ids).foreach { case ((address), (lrmId)) =>
+    val savedIds = roadAddresses.zip(ids).map { case ((address), (lrmId)) =>
       createLRMPosition(lrmPositionPS, lrmId, address.linkId, address.sideCode.value, address.startMValue, address.endMValue, address.adjustedTimestamp)
-      addressPS.setLong(1, if (address.id == fi.liikennevirasto.viite.NewRoadAddress) {
+      val nextId = if (address.id == fi.liikennevirasto.viite.NewRoadAddress)
         Sequences.nextViitePrimaryKeySeqValue
-      } else address.id)
+      else address.id
+      addressPS.setLong(1, nextId)
       addressPS.setLong(2, lrmId)
       addressPS.setLong(3, address.roadNumber)
       addressPS.setLong(4, address.roadPartNumber)
@@ -859,12 +890,13 @@ object RoadAddressDAO {
       addressPS.setInt(18, if (address.floating) 1 else 0)
       addressPS.setInt(19, CalibrationCode.getFromAddress(address).value)
       addressPS.addBatch()
+      nextId
     }
     lrmPositionPS.executeBatch()
     addressPS.executeBatch()
     lrmPositionPS.close()
     addressPS.close()
-    roadAddresses.map(_.id)
+    savedIds
   }
 
   def createLRMPosition(lrmPositionPS: PreparedStatement, id: Long, linkId: Long, sideCode: Int,

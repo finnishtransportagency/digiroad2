@@ -2,7 +2,8 @@ package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.{ChangeInfo, Point}
-import fi.liikennevirasto.viite.dao.RoadAddress
+import fi.liikennevirasto.viite.RoadType
+import fi.liikennevirasto.viite.dao.{Discontinuity, RoadAddress}
 import org.slf4j.LoggerFactory
 
 object RoadAddressChangeInfoMapper extends RoadAddressMapper {
@@ -32,7 +33,7 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
       val mapping = createAddressMap(changes.head)
       val mapped = roadAddresses.mapValues(_.flatMap(ra =>
         if (mapping.exists(_.matches(ra))) {
-          val changeVVHTimestamp = mapping.filter(m => m.sourceLinkId == ra.linkId || m.targetLinkId == ra.linkId).map(_.vvhTimeStamp.get).sortWith(_ > _).head
+          val changeVVHTimestamp = mapping.head.vvhTimeStamp.get
           mapRoadAddresses(mapping)(ra).map(_.copy(adjustedTimestamp = changeVVHTimestamp))
         }
         else
@@ -42,9 +43,37 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
   }
 
   def resolveChangesToMap(roadAddresses: Map[Long, Seq[RoadAddress]], changedRoadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Map[Long, Seq[RoadAddress]] = {
+    val sections = partition(roadAddresses.values.toSeq.flatten)
+    val originalAddressSections = groupByRoadSection(sections, roadAddresses.values.toSeq.flatten)
+    preTransferCheckBySection(originalAddressSections)
     val groupedChanges = changes.groupBy(_.vvhTimeStamp).values.toSeq
     val appliedChanges = applyChanges(groupedChanges.sortBy(_.head.vvhTimeStamp), roadAddresses)
-    appliedChanges.map(change =>
-      change._1 -> appliedChanges(change._1).toList)
+    val result = postTransferCheckBySection(groupByRoadSection(sections, appliedChanges.values.toSeq.flatten), originalAddressSections)
+    result.values.toSeq.flatten.groupBy(_.linkId)
   }
+
+  private def groupByRoadSection(sections: Seq[RoadAddressSection],
+                                 roadAddresses: Seq[RoadAddress]): Map[RoadAddressSection, Seq[RoadAddress]] = {
+    sections.map(section => section -> roadAddresses.filter(section.includes)).toMap
+  }
+
+  private def preTransferCheckBySection(sections: Map[RoadAddressSection, Seq[RoadAddress]]) = {
+    sections.values.foreach(preTransferChecks)
+  }
+
+  private def postTransferCheckBySection(sections: Map[RoadAddressSection, Seq[RoadAddress]],
+                                         original: Map[RoadAddressSection, Seq[RoadAddress]]): Map[RoadAddressSection, Seq[RoadAddress]] = {
+    sections.map(s =>
+      try {
+        postTransferChecks(s)
+        s
+      } catch {
+        case ex: InvalidAddressDataException =>
+          logger.info(s"Invalid address data after transfer on ${s._1}, not applying changes")
+          s._1 -> original(s._1)
+      }
+    )
+  }
+
+
 }

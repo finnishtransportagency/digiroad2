@@ -153,11 +153,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   }
 
-  def applyChanges(roadlinks: Seq[RoadLink], changedRoadLinks: Seq[ChangeInfo], addresses: Map[Long, Seq[RoadAddress]]): Map[Long, Seq[RoadAddress]] = {
+  def applyChanges(roadLinks: Seq[RoadLink], changedRoadLinks: Seq[ChangeInfo], addresses: Map[Long, Seq[RoadAddress]]): Map[Long, Seq[RoadAddress]] = {
     withDynTransaction {
 
-      val newRoadAddresses = RoadAddressChangeInfoMapper.resolveChangesToMap(addresses, roadlinks, changedRoadLinks)
-      val roadLinkMap = roadlinks.map(rl => rl.linkId -> rl).toMap
+      val newRoadAddresses = RoadAddressChangeInfoMapper.resolveChangesToMap(addresses, roadLinks, changedRoadLinks)
+      val roadLinkMap = roadLinks.map(rl => rl.linkId -> rl).toMap
 
       val (addressesToCreate, unchanged) = newRoadAddresses.values.flatten.toSeq.partition(_.id == NewRoadAddress)
       val savedRoadAddresses = addressesToCreate.map(r =>
@@ -167,9 +167,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         }
         else
           r)
-      RoadAddressDAO.create(savedRoadAddresses)
+      val ids = RoadAddressDAO.create(savedRoadAddresses).toSet
 
-      val returnAddressMap = (unchanged ++ savedRoadAddresses).groupBy(_.linkId)
+      val returnAddressMap = (unchanged ++ RoadAddressDAO.fetchByIdMassQuery(ids)).groupBy(_.linkId)
 
       val removedIds = addresses.values.flatten.filterNot(a =>
         returnAddressMap.getOrElse(a.linkId, Seq()).exists(_.id == a.id)).map(_.id).toSet
@@ -177,10 +177,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         logger.debug("Expired: "+s.mkString(","))
       })
 
-      val changedRoadParts = newRoadAddresses.values.flatten.filterNot(a =>
-        addresses.getOrElse(a.linkId, Seq()).exists(_.id == a.id))
+      val changedRoadParts = addressesToCreate.map(a => a.roadNumber -> a.roadPartNumber).groupBy(_._1).mapValues(seq => seq.map(_._2).toSet)
 
-      changedRoadParts.foreach { change =>  recalculateRoadAddresses(change.roadNumber, change.roadPartNumber) }
+      changedRoadParts.foreach { case (road, roadParts) => roadParts.foreach(part => recalculateRoadAddresses(road, part)) }
 
       returnAddressMap
     }

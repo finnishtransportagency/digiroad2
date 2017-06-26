@@ -2,9 +2,10 @@ package fi.liikennevirasto.viite
 
 import java.util.{Date, Properties}
 
+import fi.liikennevirasto.digiroad2.ChangeType.{Unknown => _, _}
 import fi.liikennevirasto.digiroad2.FeatureClass.AllOthers
 import fi.liikennevirasto.digiroad2.RoadLinkType.{FloatingRoadLinkType, NormalRoadLinkType}
-import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.{ChangeType, _}
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{HistoryLinkInterface, NormalLinkInterface}
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.BothDirections
@@ -21,6 +22,7 @@ import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink, RoadAddressLink
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
 import fi.liikennevirasto.viite.process.{DefloatMapper, LinkRoadAddressCalculator, RoadAddressChangeInfoMapper, RoadAddressFiller}
 import fi.liikennevirasto.viite.util.StaticTestData
+import fi.liikennevirasto.viite.util._
 import org.joda.time.DateTime
 import org.mockito.ArgumentCaptor
 import org.mockito.Matchers._
@@ -739,6 +741,96 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     }
   }
 
+  test("Test change info on links 5622931, 5622953, 499914628 and 499914643 (will refuse transfer)") {
+    val n499914628Geom = Seq(Point(6733893, 332453), Point(6733990, 332420))
+    val n5622931Geom = Seq(Point(6733990, 332420), Point(6734010, 332412))
+    val n499914643Geom = Seq(Point(6734010, 332412), Point(6734148, 332339))
+    val n5622953Geom = Seq(Point(6734148, 332339), Point(6734173, 332309))
+
+    val o5622927Geom = GeometryUtils.truncateGeometry3D(n499914628Geom, 0.0349106, 93.90506222)
+    val o5622931Geom = Seq(Point(6734008.707,332412.780), Point(6734010.761,332411.959))
+    val o5622932Geom = GeometryUtils.truncateGeometry3D(n499914628Geom, 93.90506222, 103.78471484)
+    val o5622950Geom = GeometryUtils.truncateGeometry3D(n499914643Geom, 1.31962463, 157.72241408)
+    val o5622953Geom = n5622953Geom
+
+    runWithRollback {
+      val oldAddressLinks = Seq(
+        createRoadAddressLink(Sequences.nextViitePrimaryKeySeqValue, 5622927, o5622927Geom, 2825, 3, 0, 0, 101, SideCode.TowardsDigitizing, Anomaly.None, true, false),
+        createRoadAddressLink(Sequences.nextViitePrimaryKeySeqValue, 5622931, o5622931Geom, 2825, 3, 0, 101, 103, SideCode.TowardsDigitizing, Anomaly.None, false, false),
+        createRoadAddressLink(Sequences.nextViitePrimaryKeySeqValue, 5622932, o5622932Geom, 2825, 3, 0, 103, 113, SideCode.TowardsDigitizing, Anomaly.None, false, false),
+        createRoadAddressLink(Sequences.nextViitePrimaryKeySeqValue, 5622950, o5622950Geom, 2825, 3, 0, 113, 279, SideCode.TowardsDigitizing, Anomaly.None, false, false),
+        createRoadAddressLink(Sequences.nextViitePrimaryKeySeqValue, 5622953, o5622953Geom, 2825, 3, 0, 279, 321, SideCode.TowardsDigitizing, Anomaly.None, false, true) // end calibration point for testing
+      )
+
+      val addresses = oldAddressLinks.map(roadAddressLinkToRoadAddress(false))
+
+      val newLinks = Seq(
+        createRoadAddressLink(0, 499914628, n499914628Geom, 0, 0, 0, 0, 0, SideCode.TowardsDigitizing, Anomaly.None, false, false),
+        createRoadAddressLink(0, 499914643, n499914643Geom, 0, 0, 0, 0, 0, SideCode.TowardsDigitizing, Anomaly.None, false, false),
+        createRoadAddressLink(0, 5622931, n5622931Geom, 0, 0, 0, 0, 0, SideCode.TowardsDigitizing, Anomaly.None, false, false),
+        createRoadAddressLink(0, 5622953, n5622953Geom, 0, 0, 0, 0, 0, SideCode.TowardsDigitizing, Anomaly.None, false, false)
+      ).map(roadAddressLinkToRoadLink)
+      val changeTable = Seq(
+        createChangeTable(5622931, 5622931, ChangeType.ReplacedCommonPart, 0, 2.21200769, 19.59840118, 20.49478145, 1476478965000L),
+        createChangeTable(0, 5622931, ChangeType.ReplacedNewPart, 0, 0, 0, 19.59840118, 1476478965000L),
+        createChangeTable(5622927, 499914628, ChangeType.CombinedModifiedPart, 0, 93.90293074, 0.0349106, 93.90506222, 1476478965000L),
+        createChangeTable(5622932, 499914628, ChangeType.CombinedRemovedPart, 0, 19.46021513, 93.90506222, 103.78471484, 1476478965000L),
+        createChangeTable(5622950, 499914643, ChangeType.CombinedModifiedPart, 0, 156.4126127, 1.31962463, 157.72241408, 1476478965000L),
+        createChangeTable(5622931, 499914643, ChangeType.CombinedModifiedPart, 0, 2.21200769, 0.0, 1.31962463, 1476478965000L)
+      )
+
+      RoadAddressDAO.create(addresses)
+      val newAddresses = roadAddressService.applyChanges(newLinks, changeTable, addresses.groupBy(_.linkId))
+
+      // Test that this is not accepted as 101-103 is moved to locate after 103-113
+      newAddresses.values.toSeq.flatten.map(_.id).toSet should be (addresses.map(_.id).toSet)
+    }
+  }
+
+  test("Test change info on links 5622931, 5622953, 499914628 and 499914643 with only handled transitions") {
+    val n499914628Geom = Seq(Point(6733893, 332453), Point(6733990, 332420))
+    val n5622931Geom = Seq(Point(6733990, 332420), Point(6734010, 332412))
+    val n499914643Geom = Seq(Point(6734010, 332412), Point(6734148, 332339))
+    val n5622953Geom = Seq(Point(6734148, 332339), Point(6734173, 332309))
+
+    val o5622927Geom = GeometryUtils.truncateGeometry3D(n499914628Geom, 0.0349106, 93.90506222)
+    val o5622931Geom = Seq(Point(6734008.707,332412.780), Point(6734010.761,332411.959))
+    val o5622932Geom = GeometryUtils.truncateGeometry3D(n499914628Geom, 93.90506222, 103.78471484)
+    val o5622950Geom = GeometryUtils.truncateGeometry3D(n499914643Geom, 1.31962463, 157.72241408)
+    val o5622953Geom = n5622953Geom
+
+    runWithRollback {
+      val oldAddressLinks = Seq(
+        createRoadAddressLink(Sequences.nextViitePrimaryKeySeqValue, 5622927, o5622927Geom, 2825, 3, 0, 0, 101, SideCode.TowardsDigitizing, Anomaly.None, true, false),
+        createRoadAddressLink(Sequences.nextViitePrimaryKeySeqValue, 5622931, o5622931Geom, 2825, 3, 0, 101, 103, SideCode.TowardsDigitizing, Anomaly.None, false, false),
+        createRoadAddressLink(Sequences.nextViitePrimaryKeySeqValue, 5622932, o5622932Geom, 2825, 3, 0, 103, 113, SideCode.TowardsDigitizing, Anomaly.None, false, false),
+        createRoadAddressLink(Sequences.nextViitePrimaryKeySeqValue, 5622950, o5622950Geom, 2825, 3, 0, 113, 279, SideCode.TowardsDigitizing, Anomaly.None, false, false),
+        createRoadAddressLink(Sequences.nextViitePrimaryKeySeqValue, 5622953, o5622953Geom, 2825, 3, 0, 279, 321, SideCode.TowardsDigitizing, Anomaly.None, false, true) // end calibration point for testing
+      )
+
+      val addresses = oldAddressLinks.map(roadAddressLinkToRoadAddress(false))
+
+      val newLinks = Seq(
+        createRoadAddressLink(0, 499914628, n499914628Geom, 0, 0, 0, 0, 0, SideCode.TowardsDigitizing, Anomaly.None, false, false),
+        createRoadAddressLink(0, 499914643, n499914643Geom, 0, 0, 0, 0, 0, SideCode.TowardsDigitizing, Anomaly.None, false, false),
+        createRoadAddressLink(0, 5622931, n5622931Geom, 0, 0, 0, 0, 0, SideCode.TowardsDigitizing, Anomaly.None, false, false),
+        createRoadAddressLink(0, 5622953, n5622953Geom, 0, 0, 0, 0, 0, SideCode.TowardsDigitizing, Anomaly.None, false, false)
+      ).map(roadAddressLinkToRoadLink)
+      val changeTable = Seq(
+        createChangeTable(5622927, 499914628, ChangeType.CombinedModifiedPart, 0, 93.90293074, 0.0349106, 93.90506222, 1476478965000L),
+        createChangeTable(5622931, 499914628, ChangeType.CombinedRemovedPart, 0, GeometryUtils.geometryLength(o5622931Geom), 93.90506222, 103.78471484, 1476478965000L),
+        createChangeTable(5622950, 499914643, ChangeType.CombinedModifiedPart, 0, 156.4126127, 1.31962463, 157.72241408, 1476478965000L),
+        createChangeTable(5622932, 499914628, ChangeType.CombinedRemovedPart, 0, GeometryUtils.geometryLength(o5622932Geom), 0.0, 1.31962463, 1476478965000L)
+      )
+
+      RoadAddressDAO.create(addresses)
+      val newAddresses = roadAddressService.applyChanges(newLinks, changeTable, addresses.groupBy(_.linkId))
+      // should contain just the 5622953
+      newAddresses.values.toSeq.flatten.map(_.id).toSet.intersect(addresses.map(_.id).toSet) should have size (1)
+      newAddresses.get(5622953).isEmpty should be (false)
+    }
+  }
+
   private def createRoadAddressLink(id: Long, linkId: Long, geom: Seq[Point], roadNumber: Long, roadPartNumber: Long, trackCode: Long,
                                     startAddressM: Long, endAddressM: Long, sideCode: SideCode, anomaly: Anomaly, startCalibrationPoint: Boolean = false,
                                     endCalibrationPoint: Boolean = false) = {
@@ -750,6 +842,29 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       if (endCalibrationPoint) { Option(CalibrationPoint(linkId, if (sideCode == SideCode.AgainstDigitizing) 0.0 else length, endAddressM))} else None,
       anomaly, 0)
 
+  }
+
+  private def createChangeTable(oldId: Long, newId: Long, changeType: ChangeType, oldStart: Double, oldEnd: Double,
+                                newStart: Double, newEnd: Double, vvhTimeStamp: Long) = {
+    changeType match {
+      case CombinedRemovedPart | CombinedModifiedPart | ReplacedCommonPart =>
+        ChangeInfo(Some(oldId), Some(newId), newId, changeType.value, Some(oldStart), Some(oldEnd), Some(newStart),
+          Some(newEnd), vvhTimeStamp)
+      case ReplacedNewPart => ChangeInfo(None, Some(newId), newId, changeType.value, None, None, Some(newStart),
+        Some(newEnd), vvhTimeStamp)
+// TODO
+//      case ChangeType.Unknown =>
+//      case LenghtenedCommonPart =>
+//      case LengthenedNewPart =>
+//      case DividedModifiedPart =>
+//      case DividedNewPart =>
+//      case ShortenedCommonPart =>
+//      case ShortenedRemovedPart =>
+//      case Removed =>
+//      case New =>
+//      case ReplacedRemovedPart =>
+      case _ => throw new NotImplementedError("implement it")
+    }
   }
 
   private def sanityCheck(result: Seq[RoadAddress]) = {
