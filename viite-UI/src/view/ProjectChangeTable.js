@@ -16,8 +16,8 @@
     // TODO: handle status-text for real
     // TODO: table not responsive
     changeTable.append('<div class="change-table-header">Validointi ok. Alla näet muutokset projektissa.</div>');
-    changeTable.append('<button class="close wbtn-close"><span>Sulje </span>X</button>');
-    changeTable.append('<button class="max wbtn-max"><span>Suurenna </span>□</button>');
+    changeTable.append('<button class="close wbtn-close">Sulje <span>X</span></button>');
+    changeTable.append('<button class="max wbtn-max"><span id="buttonText">Suurenna </span><span id="sizeSymbol" style="font-size: 175%;font-weight: 900;">□</span></button>');
     changeTable.append('<div class="change-table-borders"></div>' +
       '<div id ="change-table-borders-changetype"></div>' +
       '<div id ="change-table-borders-source"></div>' +
@@ -52,7 +52,6 @@
       '</table>' +
       '</div>');
     changeTable.append('<div class="project-changes"></div>');
-    changeTable.append('<div><button class="new btn btn-primary close" id="change-table-button-close">Sulje</button></div>');
 
     function show(){
       $('.container').append(changeTable.toggle());
@@ -128,11 +127,13 @@
     changeTable.on('click', 'button.max', function (){
       if(windowMaximized) {
         $('.change-table-frame').height('260px');
-        $('.wbtn-max').text("Suurenna □");
+        $('[id=buttonText]').text("Suurenna ");
+        $('[id=sizeSymbol]').text("□");
         windowMaximized=false;
       } else {
-        $('.change-table-frame').height('800px');
-        $('.wbtn-max').text("Pienennä _");
+        $('.change-table-frame').height('80%');
+        $('[id=buttonText]').text("Pienennä ");
+        $('[id=sizeSymbol]').text("_");
         windowMaximized=true;
       }
     });
