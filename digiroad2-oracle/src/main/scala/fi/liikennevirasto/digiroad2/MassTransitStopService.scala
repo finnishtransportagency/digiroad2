@@ -92,7 +92,7 @@ trait MassTransitStopService extends PointAssetOperations {
   }
   private def adjustmentOperation(persistedAsset: PersistedAsset, adjustment: AssetAdjustment): Long = {
     val position = Some(Position(adjustment.lon, adjustment.lat, adjustment.linkId, persistedAsset.bearing))
-    updateExistingById(persistedAsset.id, position, persistedAsset.propertyData.map(a => SimpleProperty(a.publicId , a.values)).toSet, "a", () => _ )
+    updateExistingById(persistedAsset.id, position, persistedAsset.propertyData.map(a => SimpleProperty(a.publicId , a.values)).toSet, "a", () => _ , false)
     persistedAsset.id
   }
 
@@ -426,7 +426,7 @@ trait MassTransitStopService extends PointAssetOperations {
 
   private def updateExisting(queryFilter: String => String, optionalPosition: Option[Position],
                              properties: Set[SimpleProperty], username: String, municipalityValidation: Int => Unit): MassTransitStopWithProperties = {
-   // withDynTransaction {
+
 
       if (MassTransitStopOperations.mixedStoptypes(properties))
         throw new IllegalArgumentException
@@ -512,7 +512,6 @@ trait MassTransitStopService extends PointAssetOperations {
       } else {
         update(asset, optionalPosition, username, mergedProperties, roadLink.get, operation)
       }
-    //}
   }
 
   /**
@@ -556,9 +555,15 @@ trait MassTransitStopService extends PointAssetOperations {
     }
   }
 
-  def updateExistingById(id: Long, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: Int => Unit): MassTransitStopWithProperties = {
+  def updateExistingById(id: Long, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: Int => Unit, withTransaction: Boolean = true): MassTransitStopWithProperties = {
     val props = updatedProperties(properties.toSeq)
-    updateExisting(withId(id), optionalPosition, props.toSet, username, municipalityValidation)
+
+    if(withTransaction){
+      withDynTransaction {
+        updateExisting(withId(id), optionalPosition, props.toSet, username, municipalityValidation)
+      }
+    } else
+      updateExisting(withId(id), optionalPosition, props.toSet, username, municipalityValidation)
   }
 
   def updateAdministrativeClassValue(assetId: Long, administrativeClass: AdministrativeClass): Unit ={
