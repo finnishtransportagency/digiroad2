@@ -187,7 +187,7 @@ window.LinearAssetLayer = function(params) {
     var selectedAssets = selectedLinearAsset.get();
     var features = style.renderFeatures(selectedAssets);
     if(assetLabel)
-        features = features.concat(assetLabel.renderFeaturesByLinearAssets(selectedAssets, uiState.zoomLevel));
+        features = features.concat(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep(selectedLinearAsset.get()), offsetBySideCode), uiState.zoomLevel));
     selectToolControl.addSelectionFeatures(features);
   };
 
@@ -206,7 +206,7 @@ window.LinearAssetLayer = function(params) {
 
       var features = style.renderFeatures(selectedLinearAsset.get());
       if(assetLabel)
-         features = features.concat(assetLabel.renderFeaturesByLinearAssets(selectedLinearAsset.get(), uiState.zoomLevel));
+         features = features.concat(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep(selectedLinearAsset.get()), offsetBySideCode), uiState.zoomLevel));
       selectToolControl.addSelectionFeatures(features);
 
      LinearAssetMassUpdateDialog.show({
@@ -424,20 +424,21 @@ window.LinearAssetLayer = function(params) {
   var drawLinearAssets = function(linearAssets) {
     vectorSource.addFeatures(style.renderFeatures(linearAssets));
     if(assetLabel)
-      vectorSource.addFeatures(assetLabel.renderFeaturesByLinearAssets(linearAssets, uiState.zoomLevel));
+      vectorSource.addFeatures(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep(linearAssets), offsetBySideCode), uiState.zoomLevel));
+  };
+
+  var offsetBySideCode = function (linearAsset) {
+    return GeometryUtils.offsetBySideCode(applicationModel.zoom.level, linearAsset);
   };
 
   var decorateSelection = function () {
     if (selectedLinearAsset.exists()) {
       var features = style.renderFeatures(selectedLinearAsset.get());
       if(assetLabel)
-          features = features.concat(assetLabel.renderFeaturesByLinearAssets(selectedLinearAsset.get(), uiState.zoomLevel));
+          features = features.concat(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep(selectedLinearAsset.get()), offsetBySideCode), uiState.zoomLevel));
       selectToolControl.addSelectionFeatures(features);
 
       if (selectedLinearAsset.isSplitOrSeparated()) {
-        var offsetBySideCode = function (linearAsset) {
-          return GeometryUtils.offsetBySideCode(applicationModel.zoom.level, linearAsset);
-        };
         drawIndicators(_.map(_.cloneDeep(selectedLinearAsset.get()), offsetBySideCode));
       }
     }
