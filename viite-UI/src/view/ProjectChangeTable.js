@@ -16,7 +16,8 @@
     // TODO: handle status-text for real
     // TODO: table not responsive
     changeTable.append('<div class="change-table-header">Validointi ok. Alla näet muutokset projektissa.</div>');
-    changeTable.append('<button class="close btn-close">x</button>');
+    changeTable.append('<button class="close wbtn-close"><span>Sulje </span>X</button>');
+    changeTable.append('<button class="max wbtn-max"><span>Suurenna </span>□</button>');
     changeTable.append('<div class="change-table-borders"></div>' +
       '<div id ="change-table-borders-changetype"></div>' +
       '<div id ="change-table-borders-source"></div>' +
@@ -122,6 +123,19 @@
         hide();
       });
     }
+
+    var windowMaximized = false;
+    changeTable.on('click', 'button.max', function (){
+      if(windowMaximized) {
+        $('.change-table-frame').height('260px');
+        $('.wbtn-max').text("Suurenna □");
+        windowMaximized=false;
+      } else {
+        $('.change-table-frame').height('800px');
+        $('.wbtn-max').text("Pienennä _");
+        windowMaximized=true;
+      }
+    });
 
     return{
       show: show,
