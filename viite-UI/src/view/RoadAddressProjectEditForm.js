@@ -50,7 +50,7 @@
 
     var actionButtons = function() {
       var html = '<div class="project-form form-controls" id="actionButtons">' +
-        '<button class="update btn btn-save" disabled>Tallenna</button>' +
+        '<button class="update btn btn-save"' + (projectCollection.isDirty() ? '' : 'disabled') + '>Tallenna</button>' +
         '<button class="cancelLink btn btn-cancel">Peruuta</button>' +
         '</div>';
       return html;
@@ -195,11 +195,12 @@
 
       rootElement.on('click', '.project-form button.update', function() {
         currentProject = projectCollection.getCurrentProject();
-        projectCollection.saveProjectLinks(selectedProjectLink, currentProject);
+        projectCollection.saveProjectLinks(projectCollection.getTmpExpired());
       });
 
       rootElement.on('change', '#dropDown', function() {
         projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function(link) { return {'id':link.linkId, 'status':link.status}; })));
+        projectCollection.setTmpExpired(projectCollection.getTmpExpired().concat(selectedProjectLink));
         rootElement.find('.project-form button.update').prop("disabled", false);
       });
 
@@ -211,6 +212,7 @@
         if(projectCollection.isDirty()) {
           projectCollection.revertLinkStatus();
           projectCollection.setDirty([]);
+          projectCollection.setTmpExpired([]);
           projectLinkLayer.clearHighlights();
           $('.wrapper').remove();
           eventbus.trigger('roadAddress:projectLinksEdited');
