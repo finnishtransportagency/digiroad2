@@ -69,4 +69,17 @@ object ProjectDeltaCalculator {
 case class Delta(startDate: DateTime, terminations: Seq[RoadAddress])
 case class RoadPart(roadNumber: Long, roadPartNumber: Long)
 case class RoadAddressSection(roadNumber: Long, roadPartNumberStart: Long, roadPartNumberEnd: Long, track: Track,
-                              startMAddr: Long, endMAddr: Long, discontinuity: Discontinuity, roadType: RoadType)
+                              startMAddr: Long, endMAddr: Long, discontinuity: Discontinuity, roadType: RoadType) {
+  def includes(ra: RoadAddress): Boolean = {
+    // within the road number and parts included
+    ra.roadNumber == roadNumber && ra.roadPartNumber >= roadPartNumberStart && ra.roadPartNumber <= roadPartNumberEnd &&
+    // and on the same track
+    ra.track == track &&
+    // and not starting before this section start or after this section ends
+      !(ra.startAddrMValue < startMAddr && ra.roadPartNumber == roadPartNumberStart ||
+        ra.startAddrMValue > endMAddr && ra.roadPartNumber == roadPartNumberEnd) &&
+    // and not ending after this section ends or before this section starts
+      !(ra.endAddrMValue > endMAddr && ra.roadPartNumber == roadPartNumberEnd ||
+        ra.endAddrMValue < startMAddr && ra.roadPartNumber == roadPartNumberStart)
+  }
+}

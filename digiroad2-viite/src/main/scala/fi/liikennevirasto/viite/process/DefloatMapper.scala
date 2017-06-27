@@ -7,7 +7,7 @@ import fi.liikennevirasto.viite.dao.RoadAddress
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink}
 import fi.liikennevirasto.viite.{MaxAllowedMValueError, MaxDistanceDiffAllowed, MinAllowedRoadAddressLength, NewRoadAddress}
 
-object DefloatMapper {
+object DefloatMapper extends RoadAddressMapper {
 
   def createAddressMap(sources: Seq[RoadAddressLink], targets: Seq[RoadAddressLink]): Seq[RoadAddressMapping] = {
     def formMapping(startSourceLink: RoadAddressLink, startSourceM: Double,
@@ -73,76 +73,9 @@ object DefloatMapper {
     pairs.map(x => formMapping(x._1._1, x._1._2, x._2._1, x._2._2, x._3._1, x._3._2, x._4._1, x._4._2))
   }
 
-  def mapRoadAddresses(roadAddressMapping: Seq[RoadAddressMapping])(ra: RoadAddress): Seq[RoadAddress] = {
-    def truncate(geometry: Seq[Point], d1: Double, d2: Double) = {
-      val startM = Math.max(Math.min(d1, d2), 0.0)
-      val endM = Math.min(Math.max(d1, d2), GeometryUtils.geometryLength(geometry))
-      GeometryUtils.truncateGeometry3D(geometry,
-        startM, endM)
-    }
-
-    // When mapping contains a larger span (sourceStart, sourceEnd) than the road address then split the mapping
-    def adjust(mapping: RoadAddressMapping, startM: Double, endM: Double) = {
-      if (withinTolerance(mapping.sourceStartM, startM) && withinTolerance(mapping.sourceEndM, endM))
-        mapping
-      else {
-        val (newStartM, newEndM) =
-          (if (withinTolerance(startM, mapping.sourceStartM) || startM < mapping.sourceStartM) mapping.sourceStartM else startM,
-            if (withinTolerance(endM, mapping.sourceEndM) || endM > mapping.sourceEndM) mapping.sourceEndM else endM)
-        val (newTargetStartM, newTargetEndM) = (mapping.interpolate(newStartM), mapping.interpolate(newEndM))
-        val geomStartM = Math.min(mapping.sourceStartM, mapping.sourceEndM)
-        val geomTargetStartM = Math.min(mapping.interpolate(mapping.sourceStartM), mapping.interpolate(mapping.sourceEndM))
-        mapping.copy(sourceStartM = newStartM, sourceEndM = newEndM, sourceGeom =
-          truncate(mapping.sourceGeom, newStartM - geomStartM, newEndM - geomStartM),
-          targetStartM = newTargetStartM, targetEndM = newTargetEndM, targetGeom =
-            truncate(mapping.targetGeom, newTargetStartM - geomTargetStartM, newTargetEndM - geomTargetStartM))
-      }
-    }
-
-    roadAddressMapping.filter(_.matches(ra)).map(m => adjust(m, ra.startMValue, ra.endMValue)).map(adjMap => {
-      val (sideCode, mappedGeom, (mappedStartAddrM, mappedEndAddrM)) =
-        if (isDirectionMatch(adjMap))
-          (ra.sideCode, adjMap.targetGeom, splitRoadAddressValues(ra, adjMap))
-        else {
-          (switchSideCode(ra.sideCode), adjMap.targetGeom.reverse,
-            splitRoadAddressValues(ra, adjMap))
-        }
-      val (startM, endM) = (Math.min(adjMap.targetEndM, adjMap.targetStartM), Math.max(adjMap.targetEndM, adjMap.targetStartM))
-
-      val startCP = ra.startCalibrationPoint match {
-        case None => None
-        case Some(cp) => if (cp.addressMValue == mappedStartAddrM) Some(cp.copy(linkId = adjMap.targetLinkId,
-          segmentMValue = if (sideCode == SideCode.AgainstDigitizing) Math.max(startM, endM) else 0.0)) else None
-      }
-      val endCP = ra.endCalibrationPoint match {
-        case None => None
-        case Some(cp) => if (cp.addressMValue == mappedEndAddrM) Some(cp.copy(linkId = adjMap.targetLinkId,
-          segmentMValue = if (sideCode == SideCode.TowardsDigitizing) Math.max(startM, endM) else 0.0)) else None
-      }
-      ra.copy(id = NewRoadAddress, linkId = adjMap.targetLinkId, startAddrMValue = startCP.map(_.addressMValue).getOrElse(mappedStartAddrM),
-        endAddrMValue = endCP.map(_.addressMValue).getOrElse(mappedEndAddrM), floating = false,
-        sideCode = sideCode, startMValue = startM, endMValue = endM, geom = mappedGeom, calibrationPoints = (startCP, endCP),
-        adjustedTimestamp = VVHClient.createVVHTimeStamp())
-    })
-  }
 
   private def setPrecision(d: Double) = {
     BigDecimal(d).setScale(3, BigDecimal.RoundingMode.HALF_UP).toDouble
-  }
-
-  /** Used when road address span is larger than mapping: road address must be split into smaller parts
-    *
-    * @param roadAddress Road address to split
-    * @param mapping Mapping entry that may or may not have smaller or larger span than road address
-    * @return A pair of address start and address end values this mapping and road address applies to
-    */
-  private def splitRoadAddressValues(roadAddress: RoadAddress, mapping: RoadAddressMapping): (Long, Long) = {
-    if (withinTolerance(roadAddress.startMValue, mapping.sourceStartM) && withinTolerance(roadAddress.endMValue, mapping.sourceEndM))
-      (roadAddress.startAddrMValue, roadAddress.endAddrMValue)
-    else {
-      val (startM, endM) = GeometryUtils.overlap((roadAddress.startMValue, roadAddress.endMValue),(mapping.sourceStartM, mapping.sourceEndM)).get
-      roadAddress.addressBetween(startM, endM)
-    }
   }
 
   private def findStartLRMLocation(mValue: Double, links: Seq[RoadAddressLink]): (RoadAddressLink, Double) = {
@@ -262,127 +195,6 @@ object DefloatMapper {
     (orderedSources, extendChainByGeometry(Seq(), preSortedTargets, startingSideCode))
   }
 
-  /**
-    * Check if the sequence of points are going in matching direction (best matching)
-    * This means that the starting and ending points are closer to each other than vice versa
-    *
-    * @param geom1 Geometry one
-    * @param geom2 Geometry two
-    */
-  private def isDirectionMatch(geom1: Seq[Point], geom2: Seq[Point]): Boolean = {
-    val x = distancesBetweenEndPoints(geom1, geom2)
-    x._1 < x._2
-  }
-
-  private def isSideCodeChange(geom1: Seq[Point], geom2: Seq[Point]): Boolean = {
-    GeometryUtils.areAdjacent(geom1.last, geom2.last) ||
-      GeometryUtils.areAdjacent(geom1.head, geom2.head)
-  }
-
-  /**
-    * Measure summed distance between two geometries: head-to-head + tail-to-head vs. head-to-tail + tail-to-head
-    * @param geom1 Geometry 1
-    * @param geom2 Goemetry 2
-    * @return h2h distance, h2t distance sums
-    */
-  private def distancesBetweenEndPoints(geom1: Seq[Point], geom2: Seq[Point]) = {
-    (geom1.head.distance2DTo(geom2.head) + geom1.last.distance2DTo(geom2.last),
-      geom1.last.distance2DTo(geom2.head) + geom1.head.distance2DTo(geom2.last))
-  }
-
-  private def minDistanceBetweenEndPoints(geom1: Seq[Point], geom2: Seq[Point]) = {
-    val x = distancesBetweenEndPoints(geom1, geom2)
-    Math.min(x._1, x._2)
-  }
-
-  private def isDirectionMatch(r: RoadAddressMapping): Boolean = {
-    ((r.sourceStartM - r.sourceEndM) * (r.targetStartM - r.targetEndM)) > 0
-  }
-  private def withinTolerance(mValue1: Double, mValue2: Double) = {
-    Math.abs(mValue1 - mValue2) < MinAllowedRoadAddressLength
-  }
-
-  def postTransferChecks(seq: Seq[RoadAddress], source: Seq[RoadAddress]): Unit = {
-    val (addrMin, addrMax) = (source.map(_.startAddrMValue).min, source.map(_.endAddrMValue).max)
-    if (seq.count(_.startCalibrationPoint.nonEmpty) > 1)
-      throw new InvalidAddressDataException("Too many starting calibration points after transfer")
-    if (seq.count(_.endCalibrationPoint.nonEmpty) > 1)
-      throw new InvalidAddressDataException("Too many starting calibration points after transfer")
-    val startCPAddr = seq.find(_.startCalibrationPoint.nonEmpty)
-    val endCPAddr = seq.find(_.endCalibrationPoint.nonEmpty)
-    if (startCPAddr.nonEmpty) {
-      val (addr, cp) = (startCPAddr.get, startCPAddr.get.startCalibrationPoint.get)
-      if (addr.startAddrMValue != cp.addressMValue)
-        throw new InvalidAddressDataException(s"Start calibration point value mismatch in $cp")
-      if (seq.exists(_.startAddrMValue < cp.addressMValue))
-        throw new InvalidAddressDataException(s"Start calibration point not in the beginning of chain $cp")
-      if (addr.sideCode == SideCode.TowardsDigitizing && Math.abs(cp.segmentMValue) > 0.0 ||
-        addr.sideCode == SideCode.AgainstDigitizing && Math.abs(cp.segmentMValue - addr.endMValue) > MaxAllowedMValueError)
-        throw new InvalidAddressDataException(s"Start calibration point LRM mismatch in $cp, sideCode = ${addr.sideCode}, ${addr.startMValue}-${addr.endMValue}")
-    }
-    if (endCPAddr.nonEmpty) {
-      val (addr, cp) = (endCPAddr.get, endCPAddr.get.endCalibrationPoint.get)
-      if (addr.endAddrMValue != cp.addressMValue)
-        throw new InvalidAddressDataException(s"End calibration point value mismatch in $cp")
-      if (seq.exists(_.endAddrMValue > cp.addressMValue))
-        throw new InvalidAddressDataException(s"End calibration point not in the end of chain $cp")
-      if (addr.sideCode == SideCode.AgainstDigitizing && Math.abs(cp.segmentMValue) > 0.0 ||
-        addr.sideCode == SideCode.TowardsDigitizing && Math.abs(cp.segmentMValue - addr.endMValue) > MaxAllowedMValueError)
-        throw new InvalidAddressDataException(s"End calibration point LRM mismatch in $cp, sideCode = ${addr.sideCode}, ${addr.startMValue}-${addr.endMValue}")
-    }
-    val grouped = seq.groupBy(_.linkId).mapValues(_.groupBy(_.sideCode).keySet.size)
-    if (grouped.exists{ case (_, sideCodes) => sideCodes > 1})
-      throw new InvalidAddressDataException(s"Multiple sidecodes generated for links ${grouped.filter(_._2 > 1).keySet.mkString(", ")}")
-    if (!seq.exists(_.startAddrMValue == addrMin))
-      throw new InvalidAddressDataException(s"Generated address list does not start at $addrMin but ${seq.map(_.startAddrMValue).min}")
-    if (!seq.exists(_.endAddrMValue == addrMax))
-      throw new InvalidAddressDataException(s"Generated address list does not end at $addrMax but ${seq.map(_.endAddrMValue).max}")
-    if (!seq.forall(ra => ra.startAddrMValue == addrMin || seq.exists(_.endAddrMValue == ra.startAddrMValue)))
-      throw new InvalidAddressDataException(s"Generated address list was non-continuous")
-    if (!seq.forall(ra => ra.endAddrMValue == addrMax || seq.exists(_.startAddrMValue == ra.endAddrMValue)))
-      throw new InvalidAddressDataException(s"Generated address list was non-continuous")
-  }
-
-  def preTransferChecks(seq: Seq[RoadAddress]): Unit = {
-    if (seq.count(_.startCalibrationPoint.nonEmpty) > 1)
-      throw new IllegalArgumentException("Too many starting calibration points before transfer")
-    if (seq.count(_.endCalibrationPoint.nonEmpty) > 1)
-      throw new IllegalArgumentException("Too many starting calibration points before transfer")
-    val startCPAddr = seq.find(_.startCalibrationPoint.nonEmpty)
-    val endCPAddr = seq.find(_.endCalibrationPoint.nonEmpty)
-    if (startCPAddr.nonEmpty) {
-      val (addr, cp) = (startCPAddr.get, startCPAddr.get.startCalibrationPoint.get)
-      if (addr.startAddrMValue != cp.addressMValue)
-        throw new IllegalArgumentException(s"Start calibration point value mismatch in $cp")
-      if (seq.exists(_.startAddrMValue < cp.addressMValue))
-        throw new IllegalArgumentException("Start calibration point not in the first link of source")
-      if (addr.sideCode == SideCode.TowardsDigitizing && Math.abs(cp.segmentMValue) > 0.0 ||
-        addr.sideCode == SideCode.AgainstDigitizing && Math.abs(cp.segmentMValue - addr.endMValue) > MaxAllowedMValueError)
-        throw new IllegalArgumentException(s"Start calibration point LRM mismatch in $cp")
-    }
-    if (endCPAddr.nonEmpty) {
-      val (addr, cp) = (endCPAddr.get, endCPAddr.get.endCalibrationPoint.get)
-      if (addr.endAddrMValue != cp.addressMValue)
-        throw new IllegalArgumentException(s"End calibration point value mismatch in $cp")
-      if (seq.exists(_.endAddrMValue > cp.addressMValue))
-        throw new IllegalArgumentException("Start calibration point not in the last link of source")
-      if (Math.abs(cp.segmentMValue -
-        (addr.sideCode match {
-          case SideCode.AgainstDigitizing => 0.0
-          case SideCode.TowardsDigitizing => addr.endMValue
-          case _ => Double.NegativeInfinity
-        })
-      ) > MinAllowedRoadAddressLength)
-        throw new IllegalArgumentException(s"End calibration point LRM mismatch in $cp")
-    }
-    val grouped = seq.groupBy(_.linkId).mapValues(_.groupBy(_.sideCode).keySet.size)
-    if (grouped.exists{ case (_, sideCodes) => sideCodes > 1})
-      throw new IllegalArgumentException(s"Multiple sidecodes found for links ${grouped.filter(_._2 > 1).keySet.mkString(", ")}")
-    val tracks = seq.map(_.track).toSet
-    if (tracks.size > 1)
-      throw new IllegalArgumentException(s"Multiple track codes found ${tracks.mkString(", ")}")
-  }
-
   def invalidMapping(roadAddressMapping: RoadAddressMapping): Boolean = {
     roadAddressMapping.sourceStartM.isNaN || roadAddressMapping.sourceEndM.isNaN ||
       roadAddressMapping.targetStartM.isNaN || roadAddressMapping.targetEndM.isNaN
@@ -390,7 +202,8 @@ object DefloatMapper {
 }
 
 case class RoadAddressMapping(sourceLinkId: Long, targetLinkId: Long, sourceStartM: Double, sourceEndM: Double,
-                              targetStartM: Double, targetEndM: Double, sourceGeom: Seq[Point], targetGeom: Seq[Point]) {
+                              targetStartM: Double, targetEndM: Double, sourceGeom: Seq[Point], targetGeom: Seq[Point],
+                              vvhTimeStamp: Option[Long] = None) {
   override def toString: String = {
     s"$sourceLinkId -> $targetLinkId: $sourceStartM-$sourceEndM ->  $targetStartM-$targetEndM, $sourceGeom -> $targetGeom"
   }
@@ -400,6 +213,7 @@ case class RoadAddressMapping(sourceLinkId: Long, targetLinkId: Long, sourceStar
    */
   def matches(roadAddress: RoadAddress): Boolean = {
     sourceLinkId == roadAddress.linkId &&
+      (vvhTimeStamp.isEmpty || roadAddress.adjustedTimestamp < vvhTimeStamp.get) &&
       GeometryUtils.overlapAmount((roadAddress.startMValue, roadAddress.endMValue), (sourceStartM, sourceEndM)) > 0.001
   }
 
@@ -413,9 +227,9 @@ case class RoadAddressMapping(sourceLinkId: Long, targetLinkId: Long, sourceStar
     * @param mValue Source M value to map
     */
   def interpolate(mValue: Double): Double = {
-    if (withinTolerance(mValue, sourceStartM))
+    if (DefloatMapper.withinTolerance(mValue, sourceStartM))
       targetStartM
-    else if (withinTolerance(mValue, sourceEndM))
+    else if (DefloatMapper.withinTolerance(mValue, sourceEndM))
       targetEndM
     else {
       // Affine transformation: y = ax + b
@@ -423,9 +237,5 @@ case class RoadAddressMapping(sourceLinkId: Long, targetLinkId: Long, sourceStar
       val b = targetStartM - sourceStartM
       a * mValue + b
     }
-  }
-
-  private def withinTolerance(mValue1: Double, mValue2: Double) = {
-    Math.abs(mValue1 - mValue2) < MinAllowedRoadAddressLength
   }
 }

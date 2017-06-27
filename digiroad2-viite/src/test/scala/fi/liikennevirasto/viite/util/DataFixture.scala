@@ -2,10 +2,11 @@ package fi.liikennevirasto.viite.util
 
 import java.util.Properties
 
+import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.SqlScriptRunner
-import fi.liikennevirasto.digiroad2.{DummyEventBus, DummySerializer, RoadLinkService, VVHClient}
-import fi.liikennevirasto.viite.dao.RoadAddressDAO
+import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.viite.dao.{MunicipalityDAO, RoadAddress, RoadAddressDAO}
 import fi.liikennevirasto.viite.process.{ContinuityChecker, FloatingChecker, InvalidAddressDataException, LinkRoadAddressCalculator}
 import fi.liikennevirasto.viite.util.AssetDataImporter.Conversion
 import fi.liikennevirasto.viite.{RoadAddressLinkBuilder, RoadAddressService}
@@ -41,8 +42,8 @@ object DataFixture {
         val adjusted = LinkRoadAddressCalculator.recalculate(roads)
         assert(adjusted.size == roads.size) // Must not lose any
         val (changed, unchanged) = adjusted.partition(ra =>
-            roads.exists(oldra => ra.id == oldra.id && (oldra.startAddrMValue != ra.startAddrMValue || oldra.endAddrMValue != ra.endAddrMValue))
-          )
+          roads.exists(oldra => ra.id == oldra.id && (oldra.startAddrMValue != ra.startAddrMValue || oldra.endAddrMValue != ra.endAddrMValue))
+        )
         println(s"Road $roadNumber, part $partNumber: ${changed.size} updated, ${unchanged.size} kept unchanged")
         changed.foreach(addr => RoadAddressDAO.update(addr, None))
       } catch {
@@ -66,12 +67,19 @@ object DataFixture {
   def importRoadAddresses(isDevDatabase: Boolean): Unit = {
     println(s"\nCommencing road address import from conversion at time: ${DateTime.now()}")
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
-    val vvhClientProd = if (isDevDatabase) {
-      Some(new VVHClient(dr2properties.getProperty("digiroad2.VVHProdRestApiEndPoint", "http://172.17.204.39:6080/arcgis/rest/services/VVH_OTH/")))
+    val geometryAdjustedTimeStamp = dr2properties.getProperty("digiroad2.viite.importTimeStamp", "")
+    if (geometryAdjustedTimeStamp == "" || geometryAdjustedTimeStamp.toLong == 0L) {
+      println(s"****** Missing or bad value for digiroad2.viite.importTimeStamp in properties: '$geometryAdjustedTimeStamp' ******")
     } else {
-      None
+      println(s"****** Road address geometry timestamp is $geometryAdjustedTimeStamp ******")
+      val ts = geometryAdjustedTimeStamp.toLong
+      val vvhClientProd = if (isDevDatabase) {
+        Some(new VVHClient(dr2properties.getProperty("digiroad2.VVHProdRestApiEndPoint", "http://172.17.204.39:6080/arcgis/rest/services/VVH_OTH/")))
+      } else {
+        None
+      }
+      dataImporter.importRoadAddressData(Conversion.database(), vvhClient, vvhClientProd, ts)
     }
-    dataImporter.importRoadAddressData(Conversion.database(), vvhClient, vvhClientProd)
     println(s"Road address import complete at time: ${DateTime.now()}")
     println()
   }
@@ -153,6 +161,41 @@ object DataFixture {
     println()
   }
 
+  private def applyChangeInformationToRoadAddressLinks(): Unit = {
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+    val roadAddressService = new RoadAddressService(roadLinkService, new DummyEventBus)
+
+    //Get All Municipalities
+    val municipalities: Seq[Long] =
+      OracleDatabase.withDynTransaction {
+        MunicipalityDAO.getMunicipalityMapping.keySet.toSeq
+      }
+
+    //For each municipality get all VVH Roadlinks
+    municipalities.foreach { municipality =>
+      println("Start processing municipality %d".format(municipality))
+
+      //Obtain all RoadLink by municipality and change info from VVH
+      val (roadLinks, changedRoadLinks) = roadLinkService.reloadRoadLinksAndChangesFromVVH(municipality.toInt)
+      println ("Total roadlink for municipality " + municipality + " -> " + roadLinks.size)
+      println ("Total of changes for municipality " + municipality + " -> " + changedRoadLinks.size)
+      if(roadLinks.nonEmpty) {
+        //  Get road address from viite DB from the roadLinks ids
+        val roadAddresses: List[RoadAddress] =  OracleDatabase.withDynTransaction {
+          RoadAddressDAO.fetchByLinkId(roadLinks.map(_.linkId).toSet)
+        }
+        try {
+          roadAddressService.applyChanges(roadLinks, changedRoadLinks, roadAddresses.groupBy(_.linkId))
+        } catch {
+          case e: Exception => println("ERR! -> " + e)
+        }
+      }
+
+      println("End processing municipality %d".format(municipality))
+    }
+
+  }
+
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
@@ -189,6 +232,8 @@ object DataFixture {
         updateRoadAddressesGeometry(false)
       case Some ("import_road_address_change_test_data") =>
         importRoadAddressChangeTestData()
+      case Some ("apply_change_information_to_road_address_links") =>
+        applyChangeInformationToRoadAddressLinks()
       case _ => println("Usage: DataFixture import_road_addresses | recalculate_addresses | update_missing | " +
         "find_floating_road_addresses | import_complementary_road_address | fuse_multi_segment_road_addresses " +
         "| update_road_addresses_geometry_no_complementary | update_road_addresses_geometry | import_road_address_change_test_data")

@@ -66,14 +66,14 @@ case class ProjectFormLine(startingLinkId: Long, projectId: Long, roadNumber: Lo
 object ProjectDAO {
 
   def create(roadAddresses: Seq[ProjectLink]): Seq[Long] = {
-    val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure) values (?, ?, ?, ?, ?)")
+    val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure, adjusted_timestamp) values (?, ?, ?, ?, ?, ?)")
     val addressPS = dynamicSession.prepareStatement("insert into PROJECT_LINK (id, project_id, lrm_position_id, " +
       "road_number, road_part_number, " +
       "track_code, discontinuity_type, START_ADDR_M, END_ADDR_M, created_by, " +
       "calibration_points, status) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
     val ids = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= ${roadAddresses.size}""".as[Long].list
     roadAddresses.zip(ids).foreach { case ((address), (lrmId)) =>
-      RoadAddressDAO.createLRMPosition(lrmPositionPS, lrmId, address.linkId, address.sideCode.value, address.startMValue, address.endMValue)
+      RoadAddressDAO.createLRMPosition(lrmPositionPS, lrmId, address.linkId, address.sideCode.value, address.startMValue, address.endMValue, 0)
       addressPS.setLong(1, if (address.id == fi.liikennevirasto.viite.NewRoadAddress) {
         Sequences.nextViitePrimaryKeySeqValue
       } else address.id)

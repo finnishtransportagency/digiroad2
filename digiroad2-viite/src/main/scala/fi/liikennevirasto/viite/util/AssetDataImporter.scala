@@ -250,8 +250,8 @@ class AssetDataImporter {
     addressPS.close()
   }
 
-  def importRoadAddressData(conversionDatabase: DatabaseDef, vvhClient: VVHClient, vvhClientProd: Option[VVHClient]): Unit = {
-    val roadMaintainerElys = Seq(0, 1, 2, 3, 4, 8, 9, 10, 12, 14)
+  def importRoadAddressData(conversionDatabase: DatabaseDef, vvhClient: VVHClient, vvhClientProd: Option[VVHClient], geometryAdjusted: Long): Unit = {
+    val roadMaintainerElys = Seq(8)
 
     OracleDatabase.withDynTransaction {
       sqlu"""ALTER TABLE ROAD_ADDRESS DISABLE ALL TRIGGERS""".execute
@@ -263,6 +263,10 @@ class AssetDataImporter {
       // If running in DEV environment then include some testing complementary links
       if (vvhClientProd.nonEmpty)
         roadMaintainerElys.foreach(ely => importRoadAddressData(conversionDatabase, vvhClient, ely, complementaryLinks = true, None))
+
+      println(s"${DateTime.now()} - Updating geometry adjustment timestamp to $geometryAdjusted")
+      sqlu"""UPDATE LRM_POSITION
+        SET ADJUSTED_TIMESTAMP = $geometryAdjusted WHERE ID IN (SELECT LRM_POSITION_ID FROM ROAD_ADDRESS)""".execute
 
       println(s"${DateTime.now()} - Updating calibration point information")
       // both dates are open-ended or there is overlap (checked with inverse logic)
