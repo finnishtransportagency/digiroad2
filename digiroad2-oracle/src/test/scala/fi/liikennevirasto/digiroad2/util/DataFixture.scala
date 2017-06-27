@@ -79,7 +79,7 @@ object DataFixture {
     new GeometryTransform()
   }
   lazy val oracleLinearAssetDao : OracleLinearAssetDao = {
-    new OracleLinearAssetDao(vvhClient)
+    new OracleLinearAssetDao(vvhClient, roadLinkService)
   }
   lazy val roadAddressDao : RoadAddressDAO = {
     new RoadAddressDAO()
@@ -764,7 +764,7 @@ object DataFixture {
 
 
   def fillLaneAmountsMissingInRoadLink(): Unit = {
-    val dao = new OracleLinearAssetDao(null)
+    val dao = new OracleLinearAssetDao(null, null)
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
 
     lazy val linearAssetService: LinearAssetService = {
