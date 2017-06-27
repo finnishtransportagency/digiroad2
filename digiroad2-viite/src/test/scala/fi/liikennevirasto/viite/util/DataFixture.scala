@@ -67,12 +67,19 @@ object DataFixture {
   def importRoadAddresses(isDevDatabase: Boolean): Unit = {
     println(s"\nCommencing road address import from conversion at time: ${DateTime.now()}")
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
-    val vvhClientProd = if (isDevDatabase) {
-      Some(new VVHClient(dr2properties.getProperty("digiroad2.VVHProdRestApiEndPoint", "http://172.17.204.39:6080/arcgis/rest/services/VVH_OTH/")))
+    val geometryAdjustedTimeStamp = dr2properties.getProperty("digiroad2.viite.importTimeStamp", "")
+    if (geometryAdjustedTimeStamp == "" || geometryAdjustedTimeStamp.toLong == 0L) {
+      println(s"****** Missing or bad value for digiroad2.viite.importTimeStamp in properties: '$geometryAdjustedTimeStamp' ******")
     } else {
-      None
+      println(s"****** Road address geometry timestamp is $geometryAdjustedTimeStamp ******")
+      val ts = geometryAdjustedTimeStamp.toLong
+      val vvhClientProd = if (isDevDatabase) {
+        Some(new VVHClient(dr2properties.getProperty("digiroad2.VVHProdRestApiEndPoint", "http://172.17.204.39:6080/arcgis/rest/services/VVH_OTH/")))
+      } else {
+        None
+      }
+      dataImporter.importRoadAddressData(Conversion.database(), vvhClient, vvhClientProd, ts)
     }
-    dataImporter.importRoadAddressData(Conversion.database(), vvhClient, vvhClientProd)
     println(s"Road address import complete at time: ${DateTime.now()}")
     println()
   }

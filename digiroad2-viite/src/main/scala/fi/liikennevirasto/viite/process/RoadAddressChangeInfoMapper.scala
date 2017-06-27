@@ -57,8 +57,17 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
     sections.map(section => section -> roadAddresses.filter(section.includes)).toMap
   }
 
+  // TODO: Don't try to apply changes to invalid sections
   private def preTransferCheckBySection(sections: Map[RoadAddressSection, Seq[RoadAddress]]) = {
-    sections.values.foreach(preTransferChecks)
+    sections.values.map( seq =>
+      try {
+        preTransferChecks(seq)
+        true
+      } catch {
+        case ex: InvalidAddressDataException =>
+          logger.info(s"Section had invalid road data ${seq.head.roadNumber}/${seq.head.roadPartNumber}: ${ex.getMessage}")
+          false
+      })
   }
 
   private def postTransferCheckBySection(sections: Map[RoadAddressSection, Seq[RoadAddress]],
