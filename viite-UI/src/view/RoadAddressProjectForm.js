@@ -159,33 +159,6 @@
         '<header>' +
         titleWithProjectName(project.name) +
         '</header>' +
-        '<div class="wrapper read-only">'+
-        '<div class="form form-horizontal form-dark">'+
-        '<div class="edit-control-group choice-group">'+
-        staticField('Lisätty järjestelmään', project.createdBy + ' ' + project.startDate)+
-        staticField('Muokattu viimeksi', project.modifiedBy + ' ' + project.dateModified)+
-        '<div class="form-group editable form-editable-roadAddressProject"> '+
-        '<form id="roadAddressProject" class="input-unit-combination form-group form-horizontal roadAddressProject">'+
-        '<label>Toimenpiteet</label>'+
-        selection +
-        '<div class="input-unit-combination">' +
-        '<select class="form-control" id="dropDown" size="1">'+
-        '<option value="action1">Valitse</option>'+
-        '<option value="action2">Lakkautus</option>'+
-        '<option value="action3" disabled>Uusi</option>'+
-        '<option value="action4" disabled>Numeroinnin muutos</option>'+
-        '<option value="action5" disabled>Ennallaan</option>'+
-        '<option value="action6" disabled>Kalibrointiarvon muutos</option>'+
-        '<option value="action7" disabled>Siirto</option>'+
-        '<option value="action8" disabled>Kalibrointipisteen siirto</option>'+
-        '</select>'+
-        '</div>'+
-        '</form>' +
-        actionSelectedField()+
-        '</div>'+
-        '</div>' +
-        '</div>'+
-        '</div>'+
         '<footer></footer>');
     };
 
