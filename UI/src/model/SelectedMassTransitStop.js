@@ -277,6 +277,21 @@
         }
     };
 
+    var validateDirectionsForCreation = function () {
+      if(roadCollection) {
+        var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), currentAsset.payload.lon, currentAsset.payload.lat);
+        var directions_decode = {BothDirections: 1, TowardsDigitizing: 2, AgainstDigitizing: 3};
+        var roadLinkDirection = directions_decode[nearestLine.trafficDirection];
+        var stopDirection = get('validityDirection');
+
+        if(roadLinkDirection != 1)
+          return stopDirection != roadLinkDirection;
+        return true;
+      }else{
+        return false;
+      }
+    };
+
     var switchDirection = function() {
       var validityDirection = validitydirections.switchDirection(get('validityDirection'));
       setProperty('vaikutussuunta', [{ propertyValue: validityDirection }]);
@@ -458,7 +473,8 @@
       isAdminClassState: isAdminClassState,
       isAdministratorELY: isAdministratorELY,
       isAdministratorHSL: isAdministratorHSL,
-      validateDirectionsForSave : validateDirectionsForSave
+      validateDirectionsForSave : validateDirectionsForSave,
+      validateDirectionsForCreation: validateDirectionsForCreation
     };
   };
 
