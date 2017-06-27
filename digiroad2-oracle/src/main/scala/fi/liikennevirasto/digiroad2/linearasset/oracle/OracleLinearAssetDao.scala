@@ -161,7 +161,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
         where a.asset_type_id = $assetTypeId and a.id = $id
         """.as[(Long, Double, Double)].list
 
-    val roadLinksByLinkId = roadLinkService.fetchVVHRoadlinksAndComplementary(links.map(_._1).toSet)
+    val roadLinksByLinkId = vvhClient.complementaryData.fetchVVHRoadlinksAndComplementary(links.map(_._1).toSet)
 
     links.map { case (linkId, startMeasure, endMeasure) =>
       val vvhRoadLink = roadLinksByLinkId.find(_.linkId == linkId).getOrElse(throw new NoSuchElementException)
@@ -619,7 +619,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
         where a.asset_type_id = 20 and a.id = $id
         """.as[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[DateTime])].list
 
-    val roadLinksWithComplementaryByLinkId = roadLinkService.fetchVVHRoadlinksAndComplementary(speedLimits.map(_._2).toSet)
+    val roadLinksWithComplementaryByLinkId = vvhClient.complementaryData.fetchVVHRoadlinksAndComplementary(speedLimits.map(_._2).toSet)
 
     speedLimits.map { case (assetId, linkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, geomModifiedDate) =>
       val vvhRoadLink = roadLinksWithComplementaryByLinkId.find(_.linkId == linkId).getOrElse(throw new NoSuchElementException)
@@ -756,7 +756,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     */
   def createSpeedLimit(creator: String, linkId: Long, linkMeasures: Measures, sideCode: SideCode, value: Int,
                        vvhTimeStamp: Long, municipalityValidation: (Int) => Unit): Option[Long] = {
-    val roadlink = roadLinkService.fetchVVHRoadlinkAndComplementary(linkId)
+    val roadlink = vvhClient.complementaryData.fetchVVHRoadlinkAndComplementary(linkId)
     municipalityValidation(roadlink.get.municipalityCode)
     createSpeedLimitWithoutDuplicates(creator, linkId, linkMeasures, sideCode, value, None, None, None, None, roadlink.get.linkSource)
   }

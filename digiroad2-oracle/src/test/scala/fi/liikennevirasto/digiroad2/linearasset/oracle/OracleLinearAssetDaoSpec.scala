@@ -25,15 +25,17 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
 
   private def daoWithRoadLinks(roadLinks: Seq[VVHRoadlink]): OracleLinearAssetDao = {
     val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
 
-    when(mockVVHClient.fetchByLinkIds(roadLinks.map(_.linkId).toSet))
+    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockVVHRoadLinkClient.fetchByLinkIds(roadLinks.map(_.linkId).toSet))
       .thenReturn(roadLinks)
 
     when(mockRoadLinkService.fetchVVHRoadlinksAndComplementary(roadLinks.map(_.linkId).toSet))
       .thenReturn(roadLinks)
 
     roadLinks.foreach { roadLink =>
-      when(mockVVHClient.fetchByLinkId(roadLink.linkId)).thenReturn(Some(roadLink))
+      when(mockVVHRoadLinkClient.fetchByLinkId(roadLink.linkId)).thenReturn(Some(roadLink))
     }
 
     new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
@@ -42,7 +44,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
   private def truncateLinkGeometry(linkId: Long, startMeasure: Double, endMeasure: Double, vvhClient: VVHClient): Seq[Point] = {
-    val geometry = vvhClient.fetchByLinkId(linkId).get.geometry
+    val geometry = vvhClient.roadLinkData.fetchByLinkId(linkId).get.geometry
     GeometryUtils.truncateGeometry3D(geometry, startMeasure, endMeasure)
   }
 

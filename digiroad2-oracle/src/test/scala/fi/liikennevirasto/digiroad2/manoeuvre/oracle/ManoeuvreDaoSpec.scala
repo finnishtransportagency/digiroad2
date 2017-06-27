@@ -15,12 +15,14 @@ class ManoeuvreDaoSpec extends  FunSuite with Matchers {
 
   private def daoWithRoadLinks(roadLinks: Seq[VVHRoadlink]): ManoeuvreDao = {
     val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
 
-    when(mockVVHClient.fetchByLinkIds(roadLinks.map(_.linkId).toSet))
+    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockVVHRoadLinkClient.fetchByLinkIds(roadLinks.map(_.linkId).toSet))
       .thenReturn(roadLinks)
 
     roadLinks.foreach { roadLink =>
-      when(mockVVHClient.fetchByLinkId(roadLink.linkId)).thenReturn(Some(roadLink))
+      when(mockVVHRoadLinkClient.fetchByLinkId(roadLink.linkId)).thenReturn(Some(roadLink))
     }
 
     new ManoeuvreDao(mockVVHClient)

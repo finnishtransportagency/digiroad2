@@ -107,7 +107,8 @@
     });
 
     map.on('pointermove', function(event) {
-      eventbus.trigger('map:mouseMoved', event);
+      var pixel = map.getEventPixel(event.originalEvent);
+      eventbus.trigger('map:mouseMoved', event, pixel);
     }, true);
 
     map.on('singleclick', function(event) {

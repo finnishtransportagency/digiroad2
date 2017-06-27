@@ -99,6 +99,10 @@
       var width = 0;
 
       switch (zoomLevel) {
+        case 5 : {
+          width = 1;
+          break;
+        }
         case 6 : {
           width = 1;
           break;
@@ -108,35 +112,35 @@
           break;
         }
         case 8 : {
-          width = 3;
+          width = 2;
           break;
         }
         case 9 : {
-          width = 3;
+          width = 2;
           break;
         }
         case 10: {
-          width = 5;
+          width = 3;
           break;
         }
         case 11: {
-          width = 8;
+          width = 3;
           break;
         }
         case 12: {
-          width = 10;
+          width = 5;
           break;
         }
         case 13: {
-          width = 10;
+          width = 8;
           break;
         }
         case 14: {
-          width = 14;
+          width = 12;
           break;
         }
         case 15: {
-          width = 14;
+          width = 12;
           break;
         }
       }
@@ -213,7 +217,7 @@
       var lineBorder = new ol.style.Stroke({
         width: strokeWidth + borderWidth,
         color: borderColor,
-        lineCap: borderCap,
+        lineCap: borderCap
       });
       var middleLineWidth = strokeWidth;
       if(roadLinkData.id !== 0 && roadLinkData.administrativeClass == "Municipality"){
@@ -223,7 +227,7 @@
       var middleLine = new ol.style.Stroke({
         width: middleLineWidth,
         color: middleLineColor,
-        lineCap: middleLineCap,
+        lineCap: middleLineCap
       });
       var line = new ol.style.Stroke({
         width: strokeWidth,

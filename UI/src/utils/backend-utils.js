@@ -169,7 +169,7 @@
       });
     };
 
-    this.getPointAssets = latestResponseRequestor(function(boundingBox, endPointName) {
+    this.getPointAssetsWithComplementary = latestResponseRequestor(function(boundingBox, endPointName) {
       return {
         url: 'api/' + endPointName + '?bbox=' + boundingBox
       };
@@ -382,7 +382,7 @@
       function getJson(){
         $.getJSON("api/masstransitstopgapiurl?latitude=" + lati + "&longitude=" + longi+"&heading="+heading)
           .done(function (response) {
-            $(streetViewTemplatesgooglestreetview).replaceWith('<img id="streetViewTemplatesgooglestreetview" alt="Google StreetView-n&auml;kym&auml" src=' +response.gmapiurl +'>');
+            $('#streetViewTemplatesgooglestreetview').replaceWith('<img id="streetViewTemplatesgooglestreetview" alt="Google StreetView-n&auml;kym&auml" src=' +response.gmapiurl +'>');
           });
       }
       if (lati && longi && heading)

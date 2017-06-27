@@ -141,14 +141,14 @@ class AssetDataImporter {
     val roadLinks = linkIdSet.grouped(4000).flatMap(group =>
       // DEV complementary link load
       if (complementaryLinks)
-        vvhClientProd.getOrElse(vvhClient).complementaryData.fetchComplementaryRoadlinks(group)
+        vvhClientProd.getOrElse(vvhClient).complementaryData.fetchByLinkIds(group)
       else {
         // If in production or QA environment -> load complementary links, too
         if (vvhClientProd.isEmpty)
-          vvhClient.fetchByLinkIds(group) ++ vvhClient.complementaryData.fetchComplementaryRoadlinks(group)
+          vvhClient.roadLinkData.fetchByLinkIds(group) ++ vvhClient.complementaryData.fetchByLinkIds(group)
         else
           // If in DEV environment -> don't load complementary links at this stage (no data for them)
-          vvhClientProd.get.fetchByLinkIds(group) ++ vvhClientProd.get.complementaryData.fetchComplementaryRoadlinks(group)
+          vvhClientProd.get.roadLinkData.fetchByLinkIds(group) ++ vvhClientProd.get.complementaryData.fetchByLinkIds(group)
       }
     ).toSeq
 
@@ -160,7 +160,7 @@ class AssetDataImporter {
     print(s"${DateTime.now()} - ")
     println("Read %d road links from vvh".format(linkLengths.size))
 
-    val floatingLinks = vvhClient.historyData.fetchVVHRoadlinkHistory(roads.filterNot(r => linkLengths.get(r._1).isDefined).map(_._1).toSet).groupBy(_.linkId).mapValues(_.maxBy(_.endDate))
+    val floatingLinks = vvhClient.historyData.fetchVVHRoadLinkByLinkIds(roads.filterNot(r => linkLengths.get(r._1).isDefined).map(_._1).toSet).groupBy(_.linkId).mapValues(_.maxBy(_.endDate))
     print(s"${DateTime.now()} - ")
     println(floatingLinks.size + " links can be saved as floating addresses")
 
@@ -181,7 +181,7 @@ class AssetDataImporter {
       print(s"${DateTime.now()} - ")
       println("Converting link ids to DEV link ids")
       val mmlIdMaps = roadLinks.filter(_.attributes.get("MTKID").nonEmpty).map(rl => rl.attributes("MTKID").asInstanceOf[BigInt].longValue() -> rl.linkId).toMap
-      val links = mmlIdMaps.keys.toSet.grouped(4000).flatMap(grp => vvhClient.fetchByMmlIds(grp)).toSeq
+      val links = mmlIdMaps.keys.toSet.grouped(4000).flatMap(grp => vvhClient.roadLinkData.fetchByMmlIds(grp)).toSeq
       val fromMmlIdMap = links.map(rl => rl.attributes("MTKID").asInstanceOf[BigInt].longValue() -> rl.linkId).toMap
       val (differ, same) = fromMmlIdMap.map { case (mmlId, devLinkId) =>
         mmlIdMaps(mmlId) -> devLinkId
@@ -250,8 +250,8 @@ class AssetDataImporter {
     addressPS.close()
   }
 
-  def importRoadAddressData(conversionDatabase: DatabaseDef, vvhClient: VVHClient, vvhClientProd: Option[VVHClient]): Unit = {
-    val roadMaintainerElys = Seq(0, 1, 2, 3, 4, 8, 9, 10, 12, 14)
+  def importRoadAddressData(conversionDatabase: DatabaseDef, vvhClient: VVHClient, vvhClientProd: Option[VVHClient], geometryAdjusted: Long): Unit = {
+    val roadMaintainerElys = Seq(8)
 
     OracleDatabase.withDynTransaction {
       sqlu"""ALTER TABLE ROAD_ADDRESS DISABLE ALL TRIGGERS""".execute
@@ -263,6 +263,10 @@ class AssetDataImporter {
       // If running in DEV environment then include some testing complementary links
       if (vvhClientProd.nonEmpty)
         roadMaintainerElys.foreach(ely => importRoadAddressData(conversionDatabase, vvhClient, ely, complementaryLinks = true, None))
+
+      println(s"${DateTime.now()} - Updating geometry adjustment timestamp to $geometryAdjusted")
+      sqlu"""UPDATE LRM_POSITION
+        SET ADJUSTED_TIMESTAMP = $geometryAdjusted WHERE ID IN (SELECT LRM_POSITION_ID FROM ROAD_ADDRESS)""".execute
 
       println(s"${DateTime.now()} - Updating calibration point information")
       // both dates are open-ended or there is overlap (checked with inverse logic)

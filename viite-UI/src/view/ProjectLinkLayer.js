@@ -3,9 +3,17 @@
     var layerName = 'roadAddressProject';
     var vectorLayer;
     var calibrationPointVector = new ol.source.Vector({});
+    var directionMarkerVector = new ol.source.Vector({});
+    var cachedMarker = null;
     var layerMinContentZoomLevels = {};
     var currentZoom = 0;
     var standardZIndex = 6;
+    var floatingRoadLinkType=-1;
+    var noAnomaly=0;
+    var noAddressAnomaly=1;
+    var geometryChangedAnomaly=2;
+    var againstDigitizing = 3;
+    var towardsDigitizing = 2;
     Layer.call(this, layerName, roadLayer);
     var project;
     var me = this;
@@ -31,6 +39,11 @@
     var calibrationPointLayer = new ol.layer.Vector({
       source: calibrationPointVector,
       name: 'calibrationPointLayer'
+    });
+
+    var directionMarkerLayer = new ol.layer.Vector({
+      source: directionMarkerVector,
+      name: 'directionMarkerLayer'
     });
 
     var styleFunction = function (feature, resolution){
@@ -72,9 +85,9 @@
 
     vectorLayer = new ol.layer.Vector({
       source: vectorSource,
+      name: layerName,
       style: styleFunction
     });
-    vectorLayer.set('name', layerName);
 
     var selectSingleClick = new ol.interaction.Select({
       layer: vectorLayer,
@@ -114,6 +127,7 @@
       });
       selectedProjectLinkProperty.clean();
       $('.wrapper').remove();
+      $('#actionButtons').empty();
       if (!_.isUndefined(selection))
         selectedProjectLinkProperty.open(selection.projectLinkData.linkId, true);
     });
@@ -158,6 +172,14 @@
         selectedProjectLinkProperty.open(selection.projectLinkData.linkId);
     });
 
+    var revertSelectedChanges = function() {
+      if(projectCollection.isDirty()) {
+        projectCollection.revertLinkStatus();
+        projectCollection.setDirty([]);
+        eventbus.trigger('roadAddress:projectLinksEdited');
+      }
+    };
+
     var clearHighlights = function(){
       if(selectDoubleClick.getFeatures().getLength() !== 0){
         selectDoubleClick.getFeatures().clear();
@@ -165,6 +187,11 @@
       if(selectSingleClick.getFeatures().getLength() !== 0){
         selectSingleClick.getFeatures().clear();
       }
+    };
+
+    var clearLayers = function(){
+      calibrationPointLayer.getSource().clear();
+      directionMarkerLayer.getSource().clear();
     };
 
     var highlightFeatures = function() {
@@ -201,6 +228,19 @@
       highlightFeatures();
     });
 
+    eventbus.on('layer:selected', function(layer) {
+      if (layer === 'roadAddressProject') {
+        vectorLayer.setVisible(true);
+        calibrationPointLayer.setVisible(true);
+      } else {
+        clearHighlights();
+        var featuresToHighlight = [];
+        vectorLayer.setVisible(false);
+        calibrationPointLayer.setVisible(false);
+        eventbus.trigger('roadLinks:fetched');
+      }
+    });
+
     var zoomDoubleClickListener = function(event) {
       _.defer(function(){
         if(selectedProjectLinkProperty.get().length === 0 && applicationModel.getSelectedLayer() == 'roadAddressProject' && map.getView().getZoom() <= 13){
@@ -210,6 +250,64 @@
     };
     //This will control the double click zoom when there is no selection that activates
     map.on('dblclick', zoomDoubleClickListener);
+
+    var infoContainer = document.getElementById('popup');
+    var infoContent = document.getElementById('popup-content');
+
+    var overlay = new ol.Overlay(({
+      element: infoContainer
+    }));
+
+    map.addOverlay(overlay);
+
+    //Listen pointerMove and get pixel for displaying roadAddress feature info
+    eventbus.on('map:mouseMoved', function (event, pixel) {
+      if (event.dragging) {
+        return;
+      }
+      displayRoadAddressInfo(event, pixel);
+    });
+
+    var displayRoadAddressInfo = function(event, pixel) {
+
+      var featureAtPixel = map.forEachFeatureAtPixel(pixel, function (feature, vectorLayer) {
+        return feature;
+      });
+
+      //Ignore if target feature is marker
+      if(isDefined(featureAtPixel) && (isDefined(featureAtPixel.roadLinkData) || isDefined(featureAtPixel.projectLinkData))) {
+       var roadData;
+       var coordinate = map.getEventCoordinate(event.originalEvent);
+
+       if(isDefined(featureAtPixel.projectLinkData)) {
+         roadData = featureAtPixel.projectLinkData;
+       }
+       else {
+         roadData = featureAtPixel.roadLinkData;
+       }
+        if (roadData.roadNumber!==0 &&roadData.roadPartNumber!==0&&roadData.roadPartNumber!==99 ){
+       infoContent.innerHTML = '<p>' +
+          'Tienumero: ' + roadData.roadNumber + '<br>' +
+          'Tieosanumero: ' + roadData.roadPartNumber + '<br>' +
+          'Ajorata: ' + roadData.trackCode + '<br>' +
+          'AET: ' + roadData.startAddressM + '<br>' +
+          'LET: ' + roadData.endAddressM + '<br>' +'</p>';
+
+        } else {
+          infoContent.innerHTML = '<p>' +
+          'Tuntematon tien segmentti' +'</p>'; // road with no address
+        }
+
+       overlay.setPosition(coordinate);
+
+      } else {
+        overlay.setPosition(undefined);
+      }
+    };
+
+var isDefined=function(variable) {
+ return !_.isUndefined(variable);
+};
 
     //Add defined interactions to the map.
     map.addInteraction(selectSingleClick);
@@ -307,7 +405,8 @@
     };
 
     var redraw = function(){
-      var editedLinks = projectCollection.getDirty();
+      var editedLinks = _.map(projectCollection.getDirty(), function(editedLink) {return editedLink.id;});
+      cachedMarker = new LinkPropertyMarker(selectedProjectLinkProperty);
       var projectLinks = projectCollection.getAll();
       var features = [];
       _.map(projectLinks, function(projectLink) {
@@ -320,6 +419,17 @@
         feature.projectLinkData = projectLink;
         features.push(feature);
       });
+      directionMarkerLayer.getSource().clear();
+      var directionRoadMarker = _.filter(projectLinks, function(projlink) {
+        return projlink.roadLinkType !== floatingRoadLinkType && projlink.anomaly !== noAddressAnomaly && projlink.anomaly !== geometryChangedAnomaly && (projlink.sideCode === againstDigitizing || projlink.sideCode === towardsDigitizing);
+      });
+
+      _.each(directionRoadMarker, function(directionLink) {
+        var marker = cachedMarker.createMarker(directionLink);
+        if(map.getView().getZoom() > zoomlevels.minZoomForDirectionalMarkers)
+          directionMarkerLayer.getSource().addFeature(marker);
+      });
+
       var actualPoints = me.drawCalibrationMarkers(calibrationPointLayer.source, projectLinks);
       _.each(actualPoints, function (actualPoint) {
         var calMarker = new CalibrationPoint(actualPoint.point);
@@ -363,8 +473,8 @@
     });
 
     eventbus.on('roadAddressProject:selected', function(projId) {
-      eventbus.once('roadAddressProject:projectFetched', function(id) {
-        projectCollection.fetch(map.getView().calculateExtent(map.getSize()),map.getView().getZoom(), id);
+      eventbus.once('roadAddressProject:projectFetched', function(projectInfo) {
+        projectCollection.fetch(map.getView().calculateExtent(map.getSize()),map.getView().getZoom(), projectInfo.id, projectInfo.publishable);
       });
       projectCollection.getProjectsWithLinksById(projId);
     });
@@ -377,8 +487,8 @@
       redraw();
     });
 
-    eventbus.on('roadAddressProject:projectLinkSaved',function(projectId){
-      projectCollection.fetch(map.getView().calculateExtent(map.getSize()),map.getView().getZoom(), projectId);
+    eventbus.on('roadAddressProject:projectLinkSaved',function(projectId, isPublishable){
+      projectCollection.fetch(map.getView().calculateExtent(map.getSize()),map.getView().getZoom(), projectId, isPublishable);
     });
 
     eventbus.on('map:moved', mapMovedHandler, this);
@@ -404,13 +514,18 @@
       clearHighlights();
     });
 
+    eventbus.on('map:clearLayers', clearLayers);
+
     vectorLayer.setVisible(true);
     calibrationPointLayer.setVisible(true);
+    directionMarkerLayer.setVisible(true);
     map.addLayer(vectorLayer);
     map.addLayer(calibrationPointLayer);
+    map.addLayer(directionMarkerLayer);
     return {
       show: show,
-      hide: hideLayer
+      hide: hideLayer,
+      clearHighlights: clearHighlights
     };
   };
 

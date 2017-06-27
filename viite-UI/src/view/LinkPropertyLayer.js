@@ -10,31 +10,40 @@
     var indicatorVector = new ol.source.Vector({});
     var floatingMarkerVector = new ol.source.Vector({});
     var anomalousMarkerVector = new ol.source.Vector({});
+    var directionMarkerVector = new ol.source.Vector({});
     var calibrationPointVector = new ol.source.Vector({});
     var greenRoadLayerVector = new ol.source.Vector({});
     var pickRoadsLayerVector = new ol.source.Vector({});
     var simulationVector = new ol.source.Vector({});
     var geometryChangedVector = new ol.source.Vector({});
+    var normalRoadLinkType = 1;
     var floatingRoadLinkType=-1;
     var noAnomaly=0;
     var noAddressAnomaly=1;
     var geometryChangedAnomaly=2;
+    var againstDigitizing = 3;
+    var towardsDigitizing = 2;
     var activeLayer = false;
 
     var indicatorLayer = new ol.layer.Vector({
-      source: indicatorVector
+      source: indicatorVector,
+      name: 'indicatorLayer'
     });
-    indicatorLayer.set('name','indicatorLayer');
 
     var floatingMarkerLayer = new ol.layer.Vector({
-      source: floatingMarkerVector
+      source: floatingMarkerVector,
+      name: 'floatingMarkerLayer'
     });
-    floatingMarkerLayer.set('name','floatingMarkerLayer');
 
     var anomalousMarkerLayer = new ol.layer.Vector({
-      source: anomalousMarkerVector
+      source: anomalousMarkerVector,
+      name: 'anomalousMarkerLayer'
     });
-    anomalousMarkerLayer.set('name','anomalousMarkerLayer');
+    
+    var directionMarkerLayer = new ol.layer.Vector({
+      source: directionMarkerVector,
+      name: 'directionMarkerLayer'
+    });
 
     var geometryChangedLayer = new ol.layer.Vector({
       source: geometryChangedVector,
@@ -44,14 +53,14 @@
     });
 
     var calibrationPointLayer = new ol.layer.Vector({
-      source: calibrationPointVector
+      source: calibrationPointVector,
+      name: 'calibrationPointLayer'
     });
-    calibrationPointLayer.set('name','calibrationPointLayer');
 
     var greenRoadLayer = new ol.layer.Vector({
-      source: greenRoadLayerVector
+      source: greenRoadLayerVector,
+      name: 'greenRoadLayer'
     });
-    greenRoadLayer.set('name','greenRoadLayer');
 
     var greenRoads = function(Ol3Features, addToGreenLayer) {
       var features = [];
@@ -87,22 +96,23 @@
 
     var pickRoadsLayer = new ol.layer.Vector({
       source: pickRoadsLayerVector,
+      name: 'pickRoadsLayer',
       style: function(feature) {
         return styler.generateStyleByFeature(feature.roadLinkData,map.getView().getZoom());
       }
     });
-    pickRoadsLayer.set('name','pickRoadsLayer');
 
     var simulatedRoadsLayer = new ol.layer.Vector({
       source: simulationVector,
+      name: 'simulatedRoadsLayer',
       style: function(feature) {
         return styler.generateStyleByFeature(feature.roadLinkData,map.getView().getZoom());
       }
     });
-    simulatedRoadsLayer.set('name','simulatedRoadsLayer');
 
     map.addLayer(floatingMarkerLayer);
     map.addLayer(anomalousMarkerLayer);
+    map.addLayer(directionMarkerLayer);
     map.addLayer(geometryChangedLayer);
     map.addLayer(calibrationPointLayer);
     map.addLayer(indicatorLayer);
@@ -111,6 +121,7 @@
     map.addLayer(simulatedRoadsLayer);
     floatingMarkerLayer.setVisible(true);
     anomalousMarkerLayer.setVisible(true);
+    directionMarkerLayer.setVisible(true);
     geometryChangedLayer.setVisible(false);
     calibrationPointLayer.setVisible(true);
     indicatorLayer.setVisible(true);
@@ -376,6 +387,7 @@
     var clearLayers = function(){
       floatingMarkerLayer.getSource().clear();
       anomalousMarkerLayer.getSource().clear();
+      directionMarkerLayer.getSource().clear();
       calibrationPointLayer.getSource().clear();
       indicatorLayer.getSource().clear();
       greenRoadLayer.getSource().clear();
@@ -491,6 +503,11 @@
         geometryChangedLayer.getSource().clear();
 
       if(map.getView().getZoom() >= zoomlevels.minZoomForAssets) {
+
+        var directionRoadMarker = _.filter(roadLinks, function(roadlink) {
+          return roadlink.roadLinkType !== floatingRoadLinkType && roadlink.anomaly !== noAddressAnomaly && roadlink.anomaly !== geometryChangedAnomaly && (roadlink.sideCode === againstDigitizing || roadlink.sideCode === towardsDigitizing);
+        });
+
         var floatingRoadMarkers = _.filter(roadLinks, function(roadlink) {
           return roadlink.roadLinkType === floatingRoadLinkType;
         });
@@ -516,6 +533,12 @@
           marker = cachedLinkPropertyMarker.createMarker(middlefloating);
           if(applicationModel.getCurrentAction() !== applicationModel.actionCalculated && !_.contains(linkIdsToRemove,marker.roadLinkData.linkId))
             floatingMarkerLayer.getSource().addFeature(marker);
+        });
+
+        _.each(directionRoadMarker, function(directionlink) {
+          var marker = cachedMarker.createMarker(directionlink);
+          if(map.getView().getZoom() > zoomlevels.minZoomForDirectionalMarkers)
+            directionMarkerLayer.getSource().addFeature(marker);
         });
 
         _.each(anomalousRoadMarkers, function(anomalouslink) {

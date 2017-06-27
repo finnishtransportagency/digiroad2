@@ -2,10 +2,9 @@ package fi.liikennevirasto.digiroad2.util
 
 import java.io.{File, FileReader, FileWriter}
 import java.nio.file.Paths
-
 import java.nio.file.Files.copy
 
-import fi.liikennevirasto.digiroad2.ChangeInfo
+import fi.liikennevirasto.digiroad2.{ChangeInfo, VVHRoadNodes, NodeType}
 import fi.liikennevirasto.digiroad2.asset.{LinkType, TrafficDirection, _}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ValidityPeriodDayOfWeek}
 import org.json4s.JsonAST.{JInt, JString}
@@ -60,8 +59,15 @@ class JsonSerializer extends VVHSerializer {
       JInt(BigInt(constructionType.value))
   }))
 
+  case object NodeTypeSerializer extends CustomSerializer[NodeType](format => ( {
+    case JInt(typeInt) => NodeType(typeInt.toInt)
+  }, {
+    case nodeType: NodeType =>
+      JInt(BigInt(nodeType.value))
+  }))
+
   protected implicit val jsonFormats: Formats = DefaultFormats + SideCodeSerializer + TrafficDirectionSerializer +
-    LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + LinkGeomSourceSerializer + ConstructionTypeSerializer
+    LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer + LinkGeomSourceSerializer + ConstructionTypeSerializer + NodeTypeSerializer
 
   override def readCachedGeometry(file: File): Seq[RoadLink] = {
     val json = new FileReader(file)
@@ -72,12 +78,31 @@ class JsonSerializer extends VVHSerializer {
     val json = new FileReader(file)
     read[Seq[ChangeInfo]](json)
   }
+
+  override def readCachedNodes(file: File): Seq[VVHRoadNodes] = {
+    val json = new FileReader(file)
+    read[Seq[VVHRoadNodes]](json)
+  }
   override def writeCache(file: File, objects: Seq[Object]): Boolean = {
+
+    def writeObjects(objects: Seq[Object], fw: FileWriter): Unit = {
+      if (objects.nonEmpty) {
+        fw.write(write(objects.head))
+        if (objects.tail.nonEmpty) {
+          fw.write(",")
+          writeObjects(objects.tail, fw)
+        }
+      }
+    }
 
     val tmpFile = File.createTempFile("tmp", "cached")
     tmpFile.deleteOnExit()
 
-    write(objects, new FileWriter(tmpFile))
+    val fw = new FileWriter(tmpFile)
+    fw.write("[")
+    writeObjects(objects, fw)
+    fw.write("]")
+    fw.close()
 
     if (file.exists())
       file.delete()

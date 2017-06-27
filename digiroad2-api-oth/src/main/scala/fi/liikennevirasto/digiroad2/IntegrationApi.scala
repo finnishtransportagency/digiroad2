@@ -58,7 +58,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case e: Exception => 99
       }
     }
-    def extractBearing(massTransitStop: PersistedMassTransitStop): (String, Option[Int]) = { "suuntima" -> MassTransitStopOperations.calculateActualBearing(massTransitStop.validityDirection.getOrElse(0), massTransitStop.bearing) }
+    def extractBearing(massTransitStop: PersistedMassTransitStop): (String, Option[Int]) = { "suuntima" -> GeometryUtils.calculateActualBearing(massTransitStop.validityDirection.getOrElse(0), massTransitStop.bearing) }
     def extractExternalId(massTransitStop: PersistedMassTransitStop): (String, Long) = { "valtakunnallinen_id" -> massTransitStop.nationalId }
     def extractFloating(massTransitStop: PersistedMassTransitStop): (String, Boolean) = { "kelluvuus" -> massTransitStop.floating }
     def extractLinkId(massTransitStop: PersistedMassTransitStop): (String, Option[Long]) = { "link_id" -> Some(massTransitStop.linkId) }
@@ -158,10 +158,15 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "linkType" -> roadLink.linkType.value,
         "modifiedAt" -> roadLink.modifiedAt,
         lastModifiedBy(None, roadLink.modifiedBy),
+        "startNode" -> roadLink.attributes.get("STARTNODE"),
+        "endNode" -> roadLink.attributes.get("ENDNODE"),
         "linkSource" -> roadLink.linkSource.value) ++ roadLink.attributes.filterNot(_._1 == "MTKID")
                                                                          .filterNot(_._1 == "ROADNUMBER")
                                                                          .filterNot(_._1 == "ROADPARTNUMBER")
+                                                                         .filterNot(_._1 == "STARTNODE")
+                                                                         .filterNot(_._1 == "ENDNODE")
                                                                          .filterNot(_._1 == "MTKCLASS" && roadLink.linkSource.value == LinkGeomSource.ComplimentaryLinkInterface.value)
+
     }
   }
 
@@ -223,7 +228,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     crossings.filterNot(_.floating).map { pedestrianCrossing =>
       Map("id" -> pedestrianCrossing.id,
         "point" -> Point(pedestrianCrossing.lon, pedestrianCrossing.lat),
-        geometryWKTForPointAssets(pedestrianCrossing.lon, pedestrianCrossing.lat),
+        geometryWKTForPoints(pedestrianCrossing.lon, pedestrianCrossing.lat),
         "linkId" -> pedestrianCrossing.linkId,
         "m_value" -> pedestrianCrossing.mValue,
         latestModificationTime(pedestrianCrossing.createdAt, pedestrianCrossing.modifiedAt),
@@ -235,7 +240,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     trafficLights.filterNot(_.floating).map { trafficLight =>
       Map("id" -> trafficLight.id,
         "point" -> Point(trafficLight.lon, trafficLight.lat),
-        geometryWKTForPointAssets(trafficLight.lon, trafficLight.lat),
+        geometryWKTForPoints(trafficLight.lon, trafficLight.lat),
         "linkId" -> trafficLight.linkId,
         "m_value" -> trafficLight.mValue,
         latestModificationTime(trafficLight.createdAt, trafficLight.modifiedAt),
@@ -247,10 +252,10 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     directionalTrafficSign.filterNot(_.floating).map { directionalTrafficSign =>
       Map("id" -> directionalTrafficSign.id,
         "point" -> Point(directionalTrafficSign.lon, directionalTrafficSign.lat),
-        geometryWKTForPointAssets(directionalTrafficSign.lon, directionalTrafficSign.lat),
+        geometryWKTForPoints(directionalTrafficSign.lon, directionalTrafficSign.lat),
         "linkId" -> directionalTrafficSign.linkId,
         "m_value" -> directionalTrafficSign.mValue,
-        "bearing" -> directionalTrafficSign.bearing,
+        "bearing" -> GeometryUtils.calculateActualBearing( directionalTrafficSign.validityDirection,directionalTrafficSign.bearing),
         "side_code" -> directionalTrafficSign.validityDirection,
         "text" -> directionalTrafficSign.text.map(_.split("\n").toSeq),
         latestModificationTime(directionalTrafficSign.createdAt, directionalTrafficSign.modifiedAt),
@@ -308,7 +313,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
       "geometryWKT" -> ""
   }
 
-  def geometryWKTForPointAssets(lon: Double, lat: Double): (String, String) = {
+  def geometryWKTForPoints(lon: Double, lat: Double): (String, String) = {
     val geometryWKT = "POINT (" + lon + " " + lat + ")"
     "geometryWKT" -> geometryWKT
   }
@@ -317,7 +322,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     crossings.filterNot(_.floating).map { railwayCrossing =>
       Map("id" -> railwayCrossing.id,
         "point" -> Point(railwayCrossing.lon, railwayCrossing.lat),
-        geometryWKTForPointAssets(railwayCrossing.lon, railwayCrossing.lat),
+        geometryWKTForPoints(railwayCrossing.lon, railwayCrossing.lat),
         "linkId" -> railwayCrossing.linkId,
         "m_value" -> railwayCrossing.mValue,
         "safetyEquipment" -> railwayCrossing.safetyEquipment,
@@ -331,7 +336,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     obstacles.filterNot(_.floating).map { obstacle =>
       Map("id" -> obstacle.id,
         "point" -> Point(obstacle.lon, obstacle.lat),
-        geometryWKTForPointAssets(obstacle.lon, obstacle.lat),
+        geometryWKTForPoints(obstacle.lon, obstacle.lat),
         "linkId" -> obstacle.linkId,
         "m_value" -> obstacle.mValue,
         "obstacle_type" -> obstacle.obstacleType,
@@ -353,8 +358,6 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "additionalInfo" -> manoeuvre.additionalInfo,
         "modifiedDateTime" -> manoeuvre.modifiedDateTime,
         lastModifiedBy(None, Some(manoeuvre.modifiedBy)))
-
-
     }
   }
 
@@ -362,10 +365,20 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     servicePoints.map { asset =>
       Map("id" -> asset.id,
         "point" -> Point(asset.lon, asset.lat),
-        geometryWKTForPointAssets(asset.lon, asset.lat),
+        geometryWKTForPoints(asset.lon, asset.lat),
         "services" -> asset.services,
         latestModificationTime(asset.createdAt, asset.modifiedAt),
         lastModifiedBy(asset.createdBy, asset.modifiedBy))
+    }
+  }
+
+  def roadNodesToApi(roadNodes: Seq[VVHRoadNodes]) = {
+    roadNodes.map { roadNode =>
+      Map("nodeId" -> roadNode.nodeId,
+          "nodeType" -> roadNode.formOfNode.value,
+          "point" -> Map("x" -> roadNode.geometry.x, "y" -> roadNode.geometry.y),
+          geometryWKTForPoints(roadNode.geometry.x, roadNode.geometry.y)
+      )
     }
   }
 
@@ -430,6 +443,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         case "road_link_properties" => roadLinkPropertiesToApi(roadLinkService.withRoadAddress(roadLinkService.getRoadLinksAndComplementaryLinksFromVVHByMunicipality(municipalityNumber)))
         case "manoeuvres" => manouvresToApi(manoeuvreService.getByMunicipality(municipalityNumber))
         case "service_points" => servicePointsToApi(servicePointService.getByMunicipality(municipalityNumber))
+        case "road_nodes" => roadNodesToApi(roadLinkService.getRoadNodesFromVVHByMunicipality(municipalityNumber))
         case _ => BadRequest("Invalid asset type")
       }
     } getOrElse {

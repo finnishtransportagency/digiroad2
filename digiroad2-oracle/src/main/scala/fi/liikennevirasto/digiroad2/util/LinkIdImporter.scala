@@ -72,7 +72,7 @@ object LinkIdImporter {
                       where rownum <= $max
                 ) where rnum >= $min
           """.as[Long].list
-        val links = vvhClient.fetchByMmlIds(mmlIds.toSet)
+        val links = vvhClient.roadLinkData.fetchByMmlIds(mmlIds.toSet)
         links.foreach { link =>
           val mmlId = link.attributes("MTKID").asInstanceOf[BigInt].longValue()
           tempPS.setLong(1, mmlId)

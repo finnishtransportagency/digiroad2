@@ -4,8 +4,8 @@ import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, RoadLinkService}
+import fi.liikennevirasto.digiroad2.util.RoadAddressException
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, RoadLinkService}
 import fi.liikennevirasto.viite.dao.ProjectState._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink, RoadAddressLinkLike}
@@ -249,9 +249,24 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  def getChangeProject(projectId:Long): Option[ChangeProject] = {
+    withDynTransaction {
+      try {
+        val delta = ProjectDeltaCalculator.delta(projectId)
+        if (setProjectDeltaToDB(delta, projectId)) {
+          val roadAddressChanges = RoadAddressChangesDAO.fetchRoadAddressChanges(Set(projectId))
+          return Some(ViiteTierekisteriClient.convertToChangeProject(roadAddressChanges.sortBy(_.changeInfo.source.trackCode).sortBy(_.changeInfo.source.startAddressM).sortBy(_.changeInfo.source.startRoadPartNumber).sortBy(_.changeInfo.source.roadNumber)))
+        }
+      } catch {
+        case NonFatal(e) => logger.info(s"Change info not available for project $projectId: " + e.getMessage)
+      }
+    }
+    None
+  }
+
   def getRoadAddressChangesAndSendToTR(projectId: Set[Long]) = {
     val roadAddressChanges = RoadAddressChangesDAO.fetchRoadAddressChanges(projectId)
-    ViiteTierekisteriClient.sendRoadAddressChangeData(roadAddressChanges)
+    ViiteTierekisteriClient.sendChanges(roadAddressChanges)
   }
 
   def getProjectRoadLinks(projectId: Long, boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
@@ -325,7 +340,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       ProjectDAO.updateProjectLinkStatus(changed, linkStatus, userName)
       try {
         val delta = ProjectDeltaCalculator.delta(projectId)
-        addProjectDeltaToDB(delta,projectId)
+        setProjectDeltaToDB(delta,projectId)
         true
       } catch {
         case ex: RoadAddressException =>
@@ -353,7 +368,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     withDynTransaction {
       try {
         val delta=ProjectDeltaCalculator.delta(projectId)
-        if(!addProjectDeltaToDB(delta,projectId)) {return PublishResult(false, false, Some("Muutostaulun luonti epäonnistui. Tarkasta ely"))}
+        if(!setProjectDeltaToDB(delta,projectId)) {return PublishResult(false, false, Some("Muutostaulun luonti epäonnistui. Tarkasta ely"))}
         val trProjectStateMessage = getRoadAddressChangesAndSendToTR(Set(projectId))
         trProjectStateMessage.status match {
           case it if 200 until 300 contains it => {
@@ -371,10 +386,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  private def addProjectDeltaToDB(projectDelta:Delta,projectId:Long):Boolean= {
-    return  ProjectDAO.insertDeltaToRoadChangeTable(projectDelta,projectId)
+  private def setProjectDeltaToDB(projectDelta:Delta,projectId:Long):Boolean= {
+    RoadAddressChangesDAO.clearRoadChangeTable(projectId)
+    RoadAddressChangesDAO.insertDeltaToRoadChangeTable(projectDelta,projectId)
   }
-
 
   private def toProjectAddressLink(ral: RoadAddressLinkLike): ProjectAddressLink = {
     ProjectAddressLink(ral.id, ral.linkId, ral.geometry, ral.length, ral.administrativeClass, ral.linkType, ral.roadLinkType,
@@ -412,10 +427,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def getProjectStatusFromTR(projectId: Long) = {
-    ViiteTierekisteriClient.getProjectStatus(projectId.toString)
+    ViiteTierekisteriClient.getProjectStatus(projectId)
   }
-
-  val listOfExitStatuses=List(1,3,5) // closed, errorinTR,savedtotr magic numbers
 
   private def getStatusFromTRObject(trProject:Option[TRProjectStatus]):Option[ProjectState] = {
     trProject match {
@@ -462,7 +475,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     for(project<-listOfPendingProjects)
     {
       withDynSession {
-        checkProjectStatus(project)
+        val status = checkProjectStatus(project)
+        ProjectDAO.incrementCheckCounter(project, 1)
+        status
       }
     }
 
@@ -500,7 +515,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val delta = ProjectDeltaCalculator.delta(projectID)
       val changes = RoadAddressChangesDAO.fetchRoadAddressChanges(Set(projectID))
       val newLinks = delta.terminations.map(terminated => terminated.copy(id = NewRoadAddress,
-        endDate = Some(changes.head.changeDate)))
+        endDate = Some(changes.head.projectStartDate)))
       //Expiring old addresses
       roadAddressService.expireRoadAddresses(delta.terminations.map(_.id).toSet)
       //Creating new addresses with the applicable changes

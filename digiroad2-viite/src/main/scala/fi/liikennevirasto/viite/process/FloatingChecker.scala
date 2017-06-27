@@ -39,18 +39,24 @@ class FloatingChecker(roadLinkService: RoadLinkService) {
       movedRoadAddresses
     }
 
-    val roadAddressList = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber)
+    val roadAddressList = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber, includeFloating = true)
     assert(roadAddressList.groupBy(ra => (ra.roadNumber, ra.roadPartNumber)).keySet.size == 1, "Mixed roadparts present!")
     val roadLinks = roadLinkService.getCurrentAndComplementaryVVHRoadLinks(roadAddressList.map(_.linkId).toSet).groupBy(_.linkId)
     val floatingSegments = roadAddressList.filter(ra => roadLinks.get(ra.linkId).isEmpty || outsideOfGeometry(ra, roadLinks.getOrElse(ra.linkId, Seq())))
     val floatings = checkGeometryChangeOfSegments(roadAddressList, roadLinks)
-    floatingSegments ++ floatings
+    (floatingSegments ++ floatings).distinct
   }
 
-  def checkRoad(roadNumber: Long) = {
+  def checkRoad(roadNumber: Long): List[RoadAddress] = {
     println(s"Checking road: $roadNumber")
-    val roadPartNumbers = RoadAddressDAO.getValidRoadParts(roadNumber)
-    roadPartNumbers.flatMap(checkRoadPart(roadNumber))
+    try {
+      val roadPartNumbers = RoadAddressDAO.getValidRoadParts(roadNumber)
+      roadPartNumbers.flatMap(checkRoadPart(roadNumber))
+    } catch {
+      case ex: AssertionError =>
+        println(s"Assert failed: ${ex.getMessage} on road $roadNumber on Floating Check")
+        List()
+    }
   }
 
   def checkRoadNetwork(username: String = ""): List[RoadAddress] = {

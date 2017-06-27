@@ -24,12 +24,36 @@
         zIndex: 10
       });
 
+      var colorMap = {1:'red', 2:'orange', 3:'orange-light', 4:'blue', 5:'cyan', 6:'purple', 7:'grey', 8:'pink', 9:'pink', 10:'pink', 11:'grey' };
+
+      var boxStyleDirectional = function(rl) {
+        if(rl.roadClass in colorMap){
+          return new ol.style.Style({
+            image: new ol.style.Icon({
+              rotation: rl.sideCode === 3 ? middlePoint.angleFromNorth * Math.PI / 180 + Math.PI : middlePoint.angleFromNorth * Math.PI / 180,
+              src: "images/link-properties/arrow-drop-"+colorMap[rl.roadClass]+".svg"
+            }),
+            zIndex: 10
+          });
+        } else {
+          return new ol.style.Style({
+            image: new ol.style.Icon({
+              rotation: rl.sideCode === 3 ? middlePoint.angleFromNorth * Math.PI / 180 + Math.PI : middlePoint.angleFromNorth * Math.PI / 180,
+              src: "images/link-properties/arrow-drop-grey.svg"
+            }),
+            zIndex: 10
+          });
+        }
+      };
+
       if(roadlink.roadLinkType==-1){
         box.setStyle(boxStyleFloat);
-
-      } else {
+      } else if(roadlink.id===0 && roadlink.roadLinkType === 0){
         box.setStyle(boxStyleUnknown);
+      } else {
+        box.setStyle(boxStyleDirectional(roadlink));
       }
+
       box.id = roadlink.linkId;
       box.roadLinkData = roadlink;
       return box;

@@ -89,7 +89,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
   test("Create Road Address") {
     runWithRollback {
       val id = RoadAddressDAO.getNextRoadAddressId
-      val ra = Seq(RoadAddress(id, 1943845, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, (None, None), false,
+      val ra = Seq(RoadAddress(id, 1943845, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
         Seq(Point(0.0, 0.0), Point(0.0, 9.8))))
       val currentSize = RoadAddressDAO.fetchByRoadPart(ra.head.roadNumber, ra.head.roadPartNumber).size
       val returning = RoadAddressDAO.create(ra)
@@ -104,7 +104,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       val username = "testUser"
       val id = RoadAddressDAO.getNextRoadAddressId
-      val ra = Seq(RoadAddress(id, 1943845, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, (None, None), false,
+      val ra = Seq(RoadAddress(id, 1943845, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
         Seq(Point(0.0, 0.0), Point(0.0, 9.8))))
       val currentSize = RoadAddressDAO.fetchByRoadPart(ra.head.roadNumber, ra.head.roadPartNumber).size
       val returning = RoadAddressDAO.create(ra, Some(username))
@@ -120,7 +120,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
   test("Create Road Address With Calibration Point") {
     runWithRollback {
       val id = RoadAddressDAO.getNextRoadAddressId
-      val ra = Seq(RoadAddress(id, 1943845, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"),0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing,
+      val ra = Seq(RoadAddress(id, 1943845, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"),0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0,
         (Some(CalibrationPoint(12345L, 0.0, 0L)), None), false,
         Seq(Point(0.0, 0.0), Point(0.0, 9.8))))
       val returning = RoadAddressDAO.create(ra)
@@ -131,7 +131,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
     }
     runWithRollback {
       val id = RoadAddressDAO.getNextRoadAddressId
-      val ra = Seq(RoadAddress(id, 1943845, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"),0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing,
+      val ra = Seq(RoadAddress(id, 1943845, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"),0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0,
         (Some(CalibrationPoint(12345L, 0.0, 0L)), Some(CalibrationPoint(12345L, 9.8, 10L))), false,
         Seq(Point(0.0, 0.0), Point(0.0, 9.8))))
       val returning = RoadAddressDAO.create(ra)
@@ -157,7 +157,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
     val localRoadAddressService = new RoadAddressService(localMockRoadLinkService,localMockEventBus)
     runWithRollback {
       val id = RoadAddressDAO.getNextRoadAddressId
-      val toBeMergedRoadAddresses = Seq(RoadAddress(id, 1943845, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"),0, 6556558L, 0.0, 9.8, SideCode.TowardsDigitizing, (None, None), false,
+      val toBeMergedRoadAddresses = Seq(RoadAddress(id, 1943845, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"),0, 6556558L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
         Seq(Point(0.0, 0.0), Point(0.0, 9.8))))
       localRoadAddressService.mergeRoadAddressInTX(RoadAddressMerge(Set(1L), toBeMergedRoadAddresses))
     }
@@ -179,6 +179,16 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
       dbResult.foreach{ date =>
         date.getMillis should be >= beforeCallMethodDatetime.getMillis
       }
+    }
+  }
+
+  test("find road address by start or end address value") {
+    OracleDatabase.withDynSession {
+      val s = RoadAddressDAO.fetchByAddressStart(75, 1, Track.apply(2), 875)
+      val e = RoadAddressDAO.fetchByAddressEnd(75, 1, Track.apply(2), 995)
+      s.isEmpty should be(false)
+      e.isEmpty should be(false)
+      s should be(e)
     }
   }
 

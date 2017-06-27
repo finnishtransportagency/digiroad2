@@ -339,7 +339,7 @@
       var asset = _.find(linearAssets, {typeId: typeId});
       if (asset) {
         var legendValues = [asset.editControlLabels.disabled, asset.editControlLabels.enabled];
-        return [new LinearAssetBox(asset.selectedLinearAsset, asset.layerName, asset.title, asset.className, legendValues, asset.editControlLabels.showUnit, asset.unit)];
+        return [new LinearAssetBox(asset.selectedLinearAsset, asset.layerName, asset.title, asset.className, legendValues, asset.editControlLabels.showUnit, asset.unit, asset.allowComplementaryLinks)];
       }
       return [];
     }
@@ -347,7 +347,7 @@
     function getPointAsset(typeId) {
       var asset = _.find(pointAssets, {typeId: typeId});
       if (asset) {
-        return [PointAssetBox(asset.selectedPointAsset, asset.title, asset.layerName, asset.legendValues)];
+        return [PointAssetBox(asset.selectedPointAsset, asset.title, asset.layerName, asset.legendValues, asset.allowComplementaryLinks)];
       }
       return [];
     }

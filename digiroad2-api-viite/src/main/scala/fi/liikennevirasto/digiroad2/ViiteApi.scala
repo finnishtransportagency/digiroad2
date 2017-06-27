@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.RoadAddressException
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink, RoadAddressLinkPartitioner}
-import fi.liikennevirasto.viite.{ProjectService, ReservedRoadPart, RoadAddressService}
+import fi.liikennevirasto.viite.{ChangeProject, ProjectService, ReservedRoadPart, RoadAddressService}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.json4s._
@@ -24,7 +24,7 @@ import scala.util.{Left, Right}
   * Created by venholat on 25.8.2016.
   */
 
-case class NewAddressDataExtracted(sourceIds: Set[Long], targetIds: Set[Long], roadAddress: Seq[RoadAddressCreator])
+case class NewAddressDataExtracted(sourceIds: Set[Long], targetIds: Set[Long])
 
 
 case class RoadAddressProjectExtractor(id: Long, status: Long, name: String, startDate: String, additionalInfo: String,roadPartList: List[ReservedRoadPart])
@@ -53,6 +53,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   val logger = LoggerFactory.getLogger(getClass)
   protected implicit val jsonFormats: Formats = DefaultFormats + DiscontinuitySerializer
+  JSON.globalNumberParser = {
+    in =>
+      try in.toLong catch { case _: NumberFormatException => in.toDouble }
+  }
 
   before() {
     contentType = formats("json") + "; charset=utf-8"
@@ -105,37 +109,40 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
 
   get("/roadlinks/adjacent") {
-    val data = JSON.parseFull(params.get("roadData").get).get.asInstanceOf[Map[String,Any]]
-    val chainLinks = data.get("selectedLinks").get.asInstanceOf[Seq[Double]].map(rl => {
-      rl.toLong
-    }).toSet[Long]
-    val linkId = data.get("linkId").get.asInstanceOf[Double].toLong
-    val roadNumber = data.get("roadNumber").get.asInstanceOf[Double].toLong
-    val roadPartNumber = data.get("roadPartNumber").get.asInstanceOf[Double].toLong
-    val trackCode = data.get("trackCode").get.asInstanceOf[Double].toLong
+    val data = JSON.parseFull(params.getOrElse("roadData", "{}")).get.asInstanceOf[Map[String,Any]]
+    val chainLinks = data("selectedLinks").asInstanceOf[Seq[Long]].toSet
+    val linkId = data("linkId").asInstanceOf[Long]
+    val roadNumber = data("roadNumber").asInstanceOf[Long]
+    val roadPartNumber = data("roadPartNumber").asInstanceOf[Long]
+    val trackCode = data("trackCode").asInstanceOf[Long].toInt
 
     roadAddressService.getFloatingAdjacent(chainLinks, linkId, roadNumber, roadPartNumber, trackCode).map(roadAddressLinkToApi)
   }
 
+  get("/roadlinks/adjacent/target") {
+    val data = JSON.parseFull(params.getOrElse("roadData", "{}")).get.asInstanceOf[Map[String,Any]]
+    val chainLinks = data("selectedLinks").asInstanceOf[Seq[Long]].toSet
+    val linkId = data("linkId").asInstanceOf[Long]
+
+    roadAddressService.getAdjacent(chainLinks, linkId).map(roadAddressLinkToApi)
+  }
   get("/roadlinks/multiSourceAdjacents") {
-    val roadData = JSON.parseFull(params.get("roadData").get).get.asInstanceOf[Seq[Map[String,Any]]]
+    val roadData = JSON.parseFull(params.getOrElse("roadData", "[]")).get.asInstanceOf[Seq[Map[String,Any]]]
     if (roadData.isEmpty){
       Set.empty
     } else {
-      val adjacents:Seq[RoadAddressLink] = {
+      val adjacents: Seq[RoadAddressLink] = {
         roadData.flatMap(rd => {
-          val chainLinks = rd.get("selectedLinks").get.asInstanceOf[Seq[Double]].map(rl => {
-            rl.toLong
-          }).toSet[Long]
-          val linkId = rd.get("linkId").get.asInstanceOf[Double].toLong
-          val roadNumber = rd.get("roadNumber").get.asInstanceOf[Double].toLong
-          val roadPartNumber = rd.get("roadPartNumber").get.asInstanceOf[Double].toLong
-          val trackCode = rd.get("trackCode").get.asInstanceOf[Double].toLong
+          val chainLinks = rd("selectedLinks").asInstanceOf[Seq[Long]].toSet
+          val linkId = rd("linkId").asInstanceOf[Long]
+          val roadNumber = rd("roadNumber").asInstanceOf[Long]
+          val roadPartNumber = rd("roadPartNumber").asInstanceOf[Long]
+          val trackCode = rd("trackCode").asInstanceOf[Long].toInt
           roadAddressService.getFloatingAdjacent(chainLinks, linkId,
             roadNumber, roadPartNumber, trackCode)
         })
       }
-      val linkIds: Seq[Long] = roadData.map(rd => rd.get("linkId").get.asInstanceOf[Double].toLong)
+      val linkIds: Seq[Long] = roadData.map(rd => rd("linkId").asInstanceOf[Long])
       val result = adjacents.filter(adj => {
         !linkIds.contains(adj.linkId)
       }).distinct
@@ -167,11 +174,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   put("/roadlinks/roadaddress") {
     val data = parsedBody.extract[NewAddressDataExtracted]
-    val roadAddressData = data.roadAddress
     val sourceIds = data.sourceIds
     val targetIds = data.targetIds
     val user = userProvider.getCurrentUser()
-    val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
 
     val roadAddresses = roadAddressService.getRoadAddressesAfterCalculation(sourceIds.toSeq.map(_.toString), targetIds.toSeq.map(_.toString), user)
     try {
@@ -206,7 +211,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
 
 
-    put("/roadlinks/roadaddress/project/save"){
+  put("/roadlinks/roadaddress/project/save"){
     val project = parsedBody.extract[RoadAddressProjectExtractor]
     val user = userProvider.getCurrentUser()
     val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
@@ -215,7 +220,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     try {
       val (projectSaved, addr, _, success) = projectService.saveRoadLinkProject(roadAddressProject)
       val info = projectService.getProjectsWithReservedRoadParts(projectSaved.id)._2
-      Map("project" -> projectToApi(projectSaved), "projectAddresses" -> addr, "formInfo" -> info,
+      val trPreview= projectService.getChangeProject(project.id)
+      Map("project" -> projectToApi(projectSaved), "projectAddresses" -> addr, "formInfo" -> info, "trPreview"->trPreview,
         "success" -> success)
     } catch {
       case ex: IllegalArgumentException =>
@@ -232,7 +238,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val (projects, projectLinks) = projectService.getProjectsWithReservedRoadParts(projectId)
     val project = Seq(projects).map(roadAddressProjectToApi)
     val projectsWithLinkId = project.head
-    Map("projects" -> projectsWithLinkId,"linkId" -> projectLinks.headOption.map(_.startingLinkId), "projectLinks" -> projectLinks)
+    val publishable = projectService.projectLinkPublishable(projectId) && projectLinks.nonEmpty
+    Map("project" -> projectsWithLinkId,"linkId" -> projectLinks.headOption.map(_.startingLinkId), "projectLinks" -> projectLinks, "publishable" -> publishable)
   }
 
   get("/roadlinks/roadaddress/project/validatereservedlink/"){
@@ -243,7 +250,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
     val errorMessageOpt=projectService.checkRoadAddressNumberAndSEParts(roadNumber, startPart, endPart)
     if (errorMessageOpt.isEmpty) {
-        projectService.checkReservability(roadNumber, startPart, endPart) match {
+      projectService.checkReservability(roadNumber, startPart, endPart) match {
         case Left(err) => Map("success"-> err, "roadparts" -> Seq.empty)
         case Right(reservedRoadParts) => {
           projectService.projDateValidation(reservedRoadParts, formatter.parseDateTime(projDate)) match {
@@ -284,6 +291,22 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       LinkStatus.apply(modification.newStatus), user.username)
     Map("projectId" -> modification.projectId, "publishable" -> (updated &&
       projectService.projectLinkPublishable(modification.projectId)))
+  }
+
+  get("/project/getchangetable/:projectId") {
+    val projectId = params("projectId").toLong
+    projectService.getChangeProject(projectId).map(project =>
+      Map(
+        "id" -> project.id,
+        "ely" -> project.ely,
+        "user" -> project.user,
+        "name" -> project.name,
+        "changeDate" -> project.changeDate,
+        "changeInfoSeq"-> project.changeInfoSeq.map(changeInfo=>
+          Map("changetype"->changeInfo.changeType.value, "roadType"->changeInfo.roadType.value,
+            "discontinuity"->changeInfo.discontinuity.description, "source"->changeInfo.source,
+            "target"->changeInfo.target)))
+    ).getOrElse(PreconditionFailed())
   }
 
   post("/project/publish"){

@@ -145,6 +145,11 @@ Tieosoitteelliset kadut erottuvat kartalla muista tieosoitesegmenteist&auml; sit
 
 _Tieosoitteellinen katu, merkattuna mustalla v&auml;rityksell&auml; tienumeron v&auml;rityksen lis&auml;ksi._
 
+Kun hiiren vie tieosoiteverkon p&auml;&auml;lle, tulee kartalle n&auml;kyviin "infolaatikko", joka kertoo kyseisen tieosoitesegmentin tienumeron, tieosanumeron, ajoratakoodin, alkuet&auml;isyyden ja loppuet&auml;isyyden.
+
+![Hover](k35.JPG)
+
+_Infolaatikko, kun hiiri on viety tieosoitesegmentin p&auml;&auml;lle._
 
 4.1 Kohteiden valinta
 --------------------------
@@ -292,6 +297,7 @@ Tarkistetaan ominaisuustietotaulusta, onko kohteen vieress&auml; lis&auml;&auml;
 
 ![korjaus](k27.JPG)
 
+
 __Vaihe 3__
 
 Kun Valinta valmis -painiketta on painettu, sovellus muuttaa piirtoj&auml;rjestyksen sitten, ett&auml; mustat tuntemattomat kohteet piirtyv&auml;t p&auml;&auml;limm&auml;iseksi. 
@@ -376,7 +382,7 @@ _Tallentamisen yhteydess&auml; sovellus zoomaa varatun tieosan alkuun. Tie 71 os
 
 Varauksen yhteydess&auml; j&auml;rjestelm&auml; tekee varattaville tieosille tarkistukset:
 
-- Onko varattava tieosa olemassa
+- Onko varattava tieosa olemassa projektin voimaantulop&auml;iv&auml;n&auml;
 - Onko varattava tieosa vapaana, eik&auml; varattuna mihink&auml;&auml;n toiseen projektiin
 
 Virheellisist&auml; varausyrityksist&auml; j&auml;rjestelm&auml; antaa asianmukaisen virheilmoituksen. Alla olevassa kuvissa on erilaisista virheilmoituksista, joiden mukaan k&auml;ytt&auml;j&auml;n tulee korjata varausta. __K&auml;ytt&auml;j&auml;n tulee huomioida, ett&auml; varauksen yhteydess&auml; kaikki kent&auml;t (TIE, AOSA, LOSA) tulee t&auml;ytt&auml;&auml;, tai k&auml;ytt&auml;j&auml; saa virheilmoituksen!__
@@ -398,7 +404,11 @@ _Tieosaa ei ole olemassa._
 
 _Tieosaa ei ole olemassa._
 
-9.1. Olemassa olevan tieosoiteprojektin avaaminen Tieosoiteprojektit -listalta
+![Uusi tieosoiteprojekti](k40.JPG)
+
+_Ilmoitus, jos varattava tieosa ei ole voimassa p&auml;iv&auml;n&auml;, jolloin projekti tulee voimaan._
+
+9.1 Olemassa olevan tieosoiteprojektin avaaminen Tieosoiteprojektit -listalta
 --------------------------
 
 Tallennetun tieosoiteprojektin saa auki Tieosoiteprojektit -listalta painamalla Avaa -painiketta. Avaamisen yhteydess&auml; sovellus zoomaa varatun tieosan alkuun, jotta k&auml;ytt&auml;j&auml; p&auml;&auml;see projektin alueelle.
@@ -408,4 +418,40 @@ Tieosoiteprojektit -listalla n&auml;kyv&auml;t kaikkien k&auml;ytt&auml;jien pro
 ![Uusi tieosoiteprojekti](k26.JPG)
 
 _Tieosoiteprojektit -listaus._
+
+10. Muutoksien tekeminen tieosoiteprojektissa
+--------------------------
+
+(T&auml;ll&auml; hetkell&auml; toteutettuna vain tieosan lakkauttaminen)
+
+Tieosoiteprojektissa p&auml;&auml;see tekem&auml;&auml;n muutoksia klikkaamalla Seuraava-painiketta tieosoitemuutosprojektin perustietojen lomakkeella. T&auml;m&auml;n j&auml;lkeen sovellus muuttaa varatut tieosat muokattaviksi kohteiksi, jotka n&auml;kyv&auml;t kartalla keltaisella v&auml;rill&auml;.
+
+Projektitilassa vain keltaisella n&auml;kyvi&auml;, projektiin varattuja tieosia voi valita klikkaamalla. Kaikkien tieosien tietoja p&auml;&auml;see kuitenkin n&auml;kem&auml;&auml;n viem&auml;ll&auml; hiiren kartalla tieosoitesegmentin p&auml;&auml;lle, jolloin segmentin infolaatikko tulee n&auml;kyviin.
+
+![Aihio](k36.JPG)
+
+_Projektissa muokattavissa olevat varatut tieosat n&auml;kyv&auml;t kartalla keltaisella v&auml;rill&auml;. Projektin nimi on "Tie 14967 osa 1 lakkautus", joka n&auml;kyy oikeassa yl&auml;kulmassa._
+
+Kun keltaista, muokattavaa kohdetta klikkaa kartala, muuttuu valittu osuus vihre&auml;ksi ja tulee oikeaan laitaan alasvetovalikko, josta voi valita kohteelle teht&auml;v&auml;n toimenpiteen (esim. lakkautus). Kerran klikkaamalla valitaan kartalta homogeeninen jakso, tuplaklikkaus valitsee yhden tieosoitesegmentin verran (tielinkin mittainen osuus).
+
+![Valittu kohde](k37.JPG)
+
+_Kun keltaista, muokattavissa olevaa kohdetta klikataan, tulee oikeaan laitaan n&auml;kyviin tieosoitemuutosprojektin mahdolliset toimenpiteet._
+
+Muutokset tallennetaan oikean alakulman Tallenna-painikkeesta. Ennen tallennusta, voi muutokset perua Peruuta-painikkeesta.
+
+10.1 Muutosilmoituksen l&auml;hett&auml;minen Tierekisteriin
+--------------------------
+
+Muutosilmoitus vied&auml;&auml;n Tierekisteriin klikkaamalla oikean alakulman vihre&auml;&auml; Tee tieosoitemuutosilmoitus -painiketta. Painikkeen painamisen j&auml;lkeen sovellus ilmoittaa muutosilmoituksen tekemisest&auml; "Muutosilmoitus l&auml;hetetty Tierekisteriin." -viestill&auml;.
+
+![Muutosilmoituksen painike](k38.JPG)
+
+_Muutosilmoituspainike oikeassa alakulmassa._
+
+Kun muutosilmoitus on l&auml;hetetty, muuttuu projektilistauksessa ko. projektin Tila-tieto statukselle "L&auml;hetetty tierekisteriin" (1). Viite-sovellus tarkistaa 10 minuutin v&auml;lein Tierekisterist&auml;, onko muutos viety Tierekisteriss&auml; loppuun asti. Kun t&auml;m&auml; on tehty, muuttuu Tila-tieto statukselle "Viety tierekisteriin" (2). T&auml;ll&ouml;in tieosoiteprojekti on viety onnistuneesti Tierekisteriin, ja se on valmis.
+
+![Tila-statuksia](k39.JPG)
+
+_Tila-statuksia tieosoiteprojektit -listassa._
 

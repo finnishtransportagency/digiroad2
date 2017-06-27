@@ -81,9 +81,9 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
         eventbus.on('roadAddressProject:fetched',function (){
           var ol3Feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 1717275);
           testHelpers.selectSingleFeatureByInteraction(openLayersMap, ol3Feature, testHelpers.getSingleClickNameProjectLinkLayer());
-            done();
+          done();
         });
-          testHelpers.clickNextButton();
+        testHelpers.clickNextButton();
       });
 
       it('Check if the project link was selected ', function(){
@@ -99,6 +99,22 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
         expect(featureFromProjectLayerNotReserved).to.not.be.undefined;
         expect(featureFromProjectLayerNotReserved.projectLinkData.linkId).to.be.equal(499896971);
         expect(featureFromProjectLayerNotReserved.projectLinkData.status).to.be.equal(99);
+      });
+    });
+
+    describe('when clicking Peruuta button', function() {
+      before(function (done) {
+        var ol3Feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 1717275);
+        testHelpers.selectSingleFeatureByInteraction(openLayersMap, ol3Feature, testHelpers.getSingleClickNameProjectLinkLayer());
+        // Click Cancel (Peruuta)
+        $('.cancelLink').click();
+        done();
+      });
+
+      it('Check if it change to the road form', function(){
+        $('.project-form button.next:visible').prop('disabled', false);
+        $('.project-form button.next:visible').attr('disabled', false);
+        assert($('.project-form:visible').length > 0, "Form didn't open.");
       });
     });
 

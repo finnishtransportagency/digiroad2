@@ -24,7 +24,7 @@
     });
 
     function vectorLayerStyle(feature) {
-      return styler.generateStyleByFeature(feature.roadLinkData, currentZoom-2);
+      return styler.generateStyleByFeature(feature.roadLinkData, currentZoom);
     }
 
     var loadFeatures = function (features) {

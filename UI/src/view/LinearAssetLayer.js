@@ -187,7 +187,7 @@ window.LinearAssetLayer = function(params) {
     var selectedAssets = selectedLinearAsset.get();
     var features = style.renderFeatures(selectedAssets);
     if(assetLabel)
-        features = features.concat(assetLabel.renderFeaturesByLinearAssets(selectedAssets, uiState.zoomLevel));
+        features = features.concat(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep(selectedLinearAsset.get()), offsetBySideCode), uiState.zoomLevel));
     selectToolControl.addSelectionFeatures(features);
   };
 
@@ -206,7 +206,7 @@ window.LinearAssetLayer = function(params) {
 
       var features = style.renderFeatures(selectedLinearAsset.get());
       if(assetLabel)
-         features = features.concat(assetLabel.renderFeaturesByLinearAssets(selectedLinearAsset.get(), uiState.zoomLevel));
+         features = features.concat(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep(selectedLinearAsset.get()), offsetBySideCode), uiState.zoomLevel));
       selectToolControl.addSelectionFeatures(features);
 
      LinearAssetMassUpdateDialog.show({
@@ -250,10 +250,13 @@ window.LinearAssetLayer = function(params) {
   var changeTool = function(tool) {
     switch(tool) {
       case 'Cut':
+        selectToolControl.deactivate();
         linearAssetCutter.activate();
         break;
       case 'Select':
         linearAssetCutter.deactivate();
+        selectToolControl.deactivateDraw();
+        selectToolControl.activate();
         break;
       case 'Rectangle':
         linearAssetCutter.deactivate();
@@ -277,6 +280,7 @@ window.LinearAssetLayer = function(params) {
     eventListener.listenTo(eventbus, multiElementEvent('massUpdateSucceeded'), handleLinearAssetSaved);
     eventListener.listenTo(eventbus, singleElementEvents('valueChanged', 'separated'), linearAssetChanged);
     eventListener.listenTo(eventbus, singleElementEvents('cancelled', 'saved'), linearAssetCancelled);
+    eventListener.listenTo(eventbus, multiElementEvent('cancelled'), linearAssetCancelled);
     eventListener.listenTo(eventbus, singleElementEvents('selectByLinkId'), selectLinearAssetByLinkId);
     eventListener.listenTo(eventbus, multiElementEvent('massUpdateFailed'), cancelSelection);
     eventListener.listenTo(eventbus, 'complementaryLinks:show', showWithComplementary);
@@ -338,7 +342,9 @@ window.LinearAssetLayer = function(params) {
 
   var handleLinearAssetCancelled = function(eventListener) {
     selectToolControl.clear();
-    selectToolControl.activate();
+    if(application.getSelectedTool() !== 'Cut'){
+      selectToolControl.activate();
+    }
     eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
     redrawLinearAssets(collection.getAll());
   };
@@ -418,20 +424,21 @@ window.LinearAssetLayer = function(params) {
   var drawLinearAssets = function(linearAssets) {
     vectorSource.addFeatures(style.renderFeatures(linearAssets));
     if(assetLabel)
-      vectorSource.addFeatures(assetLabel.renderFeaturesByLinearAssets(linearAssets, uiState.zoomLevel));
+      vectorSource.addFeatures(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep(linearAssets), offsetBySideCode), uiState.zoomLevel));
+  };
+
+  var offsetBySideCode = function (linearAsset) {
+    return GeometryUtils.offsetBySideCode(applicationModel.zoom.level, linearAsset);
   };
 
   var decorateSelection = function () {
     if (selectedLinearAsset.exists()) {
       var features = style.renderFeatures(selectedLinearAsset.get());
       if(assetLabel)
-          features = features.concat(assetLabel.renderFeaturesByLinearAssets(selectedLinearAsset.get(), uiState.zoomLevel));
+          features = features.concat(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep(selectedLinearAsset.get()), offsetBySideCode), uiState.zoomLevel));
       selectToolControl.addSelectionFeatures(features);
 
       if (selectedLinearAsset.isSplitOrSeparated()) {
-        var offsetBySideCode = function (linearAsset) {
-          return GeometryUtils.offsetBySideCode(applicationModel.zoom.level, linearAsset);
-        };
         drawIndicators(_.map(_.cloneDeep(selectedLinearAsset.get()), offsetBySideCode));
       }
     }

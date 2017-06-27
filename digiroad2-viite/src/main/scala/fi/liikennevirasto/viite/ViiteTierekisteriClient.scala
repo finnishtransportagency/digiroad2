@@ -1,7 +1,6 @@
 package fi.liikennevirasto.viite
 import java.util.Properties
 
-import fi.liikennevirasto.digiroad2.util.TierekisteriAuthPropertyReader
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.util.ViiteTierekisteriAuthPropertyReader
 import org.apache.http.client.methods.{HttpGet, HttpPost}
@@ -12,6 +11,7 @@ import org.json4s.{CustomSerializer, DefaultFormats, Extraction, StreamInput}
 import org.joda.time.format.DateTimeFormat
 import org.json4s.JsonAST._
 import org.json4s.jackson.JsonMethods.parse
+import org.slf4j.LoggerFactory
 
 import scala.util.control.NonFatal
 case class TRProjectStatus(id:Option[Long], trProjectId:Option[Long], trSubProjectId:Option[Long], trTrackingCode:Option[Long],
@@ -27,6 +27,7 @@ case class TRstatusresponse(id_tr_projekti:Option[Long], projekti:Option[Long],i
 
 case class ChangeProject(id:Long, name:String, user:String, ely:Long, changeDate:String, changeInfoSeq:Seq[RoadAddressChangeInfo])
 case class ProjectChangeStatus(projectId: Long, status: Int, reason: String)
+case class TRErrorResponse(error_message:String)
 
 
 case object ChangeProjectSerializer extends CustomSerializer[ChangeProject](format => ({
@@ -140,6 +141,7 @@ object ViiteTierekisteriClient {
     props.load(getClass.getResourceAsStream("/digiroad2.properties"))
     props
   }
+  val logger = LoggerFactory.getLogger(getClass)
 
   private def getRestEndPoint: String = {
     val isTREnabled = properties.getProperty("digiroad2.tierekisteri.enabled") == "true"
@@ -152,54 +154,60 @@ object ViiteTierekisteriClient {
     loadedKeyString
   }
 
-  def sendRoadAddressChangeData(changeData: List[ProjectRoadAddressChange]): ProjectChangeStatus= {
+  def convertToChangeProject(changeData: List[ProjectRoadAddressChange]): ChangeProject= {
     val projects = changeData.map(cd => {
       convertChangeDataToChangeProject(cd)
     })
     val grouped = projects.groupBy(p => (p.id, p.ely, p.name, p.changeDate, p.user))
     if (grouped.keySet.size > 1)
       throw new IllegalArgumentException("Multiple projects, elys, users or change dates in single data set")
-    val project = projects.tail.foldLeft(projects.head) { case (proj1, proj2) =>
+    projects.tail.foldLeft(projects.head) { case (proj1, proj2) =>
       proj1.copy(changeInfoSeq = proj1.changeInfoSeq ++ proj2.changeInfoSeq)
     }
-    sendJsonMessage(project)
   }
 
   private def convertChangeDataToChangeProject(changeData: ProjectRoadAddressChange): ChangeProject = {
     val changeInfo = changeData.changeInfo
     ChangeProject(changeData.projectId, changeData.projectName.getOrElse(""), changeData.user, changeData.ely,
-      DateTimeFormat.forPattern("yyyy-MM-dd").print(changeData.changeDate), Seq(changeInfo))
+      DateTimeFormat.forPattern("yyyy-MM-dd").print(changeData.projectStartDate), Seq(changeInfo))
   }
 
   private val auth = new ViiteTierekisteriAuthPropertyReader
 
   private val client = HttpClientBuilder.create().build
 
-  def createJsonmessage(trProject:ChangeProject) = {
+  def createJsonmessage(trProject:ChangeProject): StringEntity = {
     implicit val formats = DefaultFormats + ChangeInfoRoadPartsSerializer + ChangeInfoItemSerializer + ChangeProjectSerializer
     val json = Serialization.write(Extraction.decompose(trProject))
     new StringEntity(json, ContentType.APPLICATION_JSON)
   }
 
+  def sendChanges(changes: List[ProjectRoadAddressChange]): ProjectChangeStatus = {
+    sendJsonMessage(convertToChangeProject(changes))
+  }
+
   def sendJsonMessage(trProject:ChangeProject): ProjectChangeStatus ={
+    implicit val formats = DefaultFormats
     val request = new HttpPost(getRestEndPoint+"addresschange/")
     request.addHeader("X-Authorization", "Basic " + auth.getAuthInBase64)
     request.setEntity(createJsonmessage(trProject))
     val response = client.execute(request)
     try {
-    val statusCode = response.getStatusLine.getStatusCode
-    val reason = response.getStatusLine.getReasonPhrase
-    ProjectChangeStatus(trProject.id, statusCode, reason)
+      val statusCode = response.getStatusLine.getStatusCode
+      val errorMessage = parse(StreamInput(response.getEntity.getContent)).extractOpt[TRErrorResponse].getOrElse(TRErrorResponse("")) // would be nice if we didn't need case class for parsing of one attribute
+      ProjectChangeStatus(trProject.id, statusCode, errorMessage.error_message)
     } catch {
-      case NonFatal(e) => ProjectChangeStatus(trProject.id, ProjectState.Incomplete.value, "Lähetys tierekisteriin epäonnistui") // sending project to tierekisteri failed
+      case NonFatal(e) =>
+        logger.error(s"Submit to Tierekisteri failed: ${e.getMessage}", e)
+        ProjectChangeStatus(trProject.id, ProjectState.Incomplete.value, "Lähetys tierekisteriin epäonnistui") // sending project to tierekisteri failed
     } finally {
       response.close()
     }
   }
 
-  def getProjectStatus(projectid:String): Map[String,Any] = {
+  def getProjectStatus(projectId: Long): Map[String,Any] = {
     implicit val formats = DefaultFormats
-    val request = new HttpGet(getRestEndPoint + "addresschange/" + projectid)
+    val request = new HttpGet(getRestEndPoint + "addresschange/" + projectId)
     request.addHeader("X-Authorization", "Basic " + auth.getAuthInBase64)
     val response = client.execute(request)
     try {
@@ -224,7 +232,9 @@ object ViiteTierekisteriClient {
         "success" -> "true"
       )
     } catch {
-      case NonFatal(e) => Map("success" -> "false")
+      case NonFatal(e) =>
+        logger.error(s"GET from Tierekisteri failed for project ${projectId}: ${e.getMessage}", e)
+        Map("success" -> "false")
     } finally {
       response.close()
     }

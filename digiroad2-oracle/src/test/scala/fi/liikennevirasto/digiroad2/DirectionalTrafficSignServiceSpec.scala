@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
@@ -21,7 +22,7 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
     username = "Hannu",
     configuration = Configuration(authorizedMunicipalities = Set(235)))
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-  when(mockRoadLinkService.getRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(
+  when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(
     Seq(
     VVHRoadlink(1611317, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
@@ -49,7 +50,7 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
   test("Create new") {
     runWithRollback {
       val now = DateTime.now()
-      val id = service.create(IncomingDirectionalTrafficSign(2, 0.0, 388553075, 3, Some("HELSINKI:HELSINGFORS;;;;1;1;"), Some(0) ), "jakke", Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 235)
+      val id = service.create(IncomingDirectionalTrafficSign(2, 0.0, 388553075, 3, Some("HELSINKI:HELSINGFORS;;;;1;1;"), Some(0) ), "jakke", Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 235, linkSource = NormalLinkInterface)
       val assets = service.getPersistedAssetsByIds(Set(id))
 
 
@@ -108,7 +109,7 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
       beforeUpdate.text should equal(Some("HELSINKI:HELSINGFORS;;;;1;1;"))
       beforeUpdate.validityDirection should equal(2)
 
-      service.update(id = 600053, IncomingDirectionalTrafficSign(100, 0, 123, 3, Some("New text"), Some(0)), linkGeometry, 91, "test")
+      service.update(id = 600053, IncomingDirectionalTrafficSign(100, 0, 123, 3, Some("New text"), Some(0)), linkGeometry, 91, "test", linkSource = NormalLinkInterface)
 
       val afterUpdate = service.getByMunicipality(91).find(_.id == 600053).get
       afterUpdate.id should equal(600053)

@@ -1,5 +1,5 @@
 (function (root) {
-  root.RoadAddressProjectEditForm = function(projectCollection, selectedProjectLinkProperty) {
+  root.RoadAddressProjectEditForm = function(projectCollection, selectedProjectLinkProperty, projectLinkLayer, projectChangeTable) {
     var currentProject = false;
     var selectedProjectLink = false;
     var staticField = function(labelText, dataField) {
@@ -40,16 +40,17 @@
         '</div>');
 
       return '<div class="project-form form-controls">' +
-        '<button class="send btn btn-block btn-send" disabled>Tee tieosoitteenmuutosilmoitus</button></div>';
+        '<button class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button></div>';
     };
 
-    var terminationButtons = function() {
-      var html = '<div class="project-form form-controls">' +
-        '<button class="update btn btn-save"';
-      if (!selectedProjectLink)
-        html = html + "disabled";
-      html = html +
-        '>Tallenna</button>' +
+    var showProjectChangeButton = function() {
+      return '<div class="project-form form-controls">' +
+        '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button></div>';
+    };
+
+    var actionButtons = function() {
+      var html = '<div class="project-form form-controls" id="actionButtons">' +
+        '<button class="update btn btn-save"' + (projectCollection.isDirty() ? '' : 'disabled') + '>Tallenna</button>' +
         '<button class="cancelLink btn btn-cancel">Peruuta</button>' +
         '</div>';
       return html;
@@ -89,12 +90,12 @@
         '<div class="edit-control-group choice-group">'+
         staticField('Lisätty järjestelmään', project.createdBy + ' ' + project.startDate)+
         staticField('Muokattu viimeksi', project.modifiedBy + ' ' + project.dateModified)+
-        '<div class="form-group editable form-editable-roadAddressProject" id="information-content"> '+
+        '<div class="form-group editable form-editable-roadAddressProject"> '+
         '<form id="roadAddressProject" class="input-unit-combination form-group form-horizontal roadAddressProject">'+
         '<label>Toimenpiteet,' + selection  + '</label>' +
         '<div class="input-unit-combination">' +
         '<select class="form-control" id="dropDown" size="1">'+
-        '<option value="action1">Valitse</option>'+
+        '<option selected disabled hidden>Valitse</option>'+
         '<option value="action2"' + (status == 1 ? ' selected' : '') + '>Lakkautus</option>'+
         '<option value="action3" disabled>Uusi</option>'+
         '<option value="action4" disabled>Numeroinnin muutos</option>'+
@@ -110,7 +111,7 @@
         '</div>' +
         '</div>'+
         '</div>'+
-        '<footer>' + terminationButtons() + '</footer>');
+        '<footer>' + actionButtons() + '</footer>');
     };
 
     var bindEvents = function() {
@@ -124,22 +125,21 @@
 
       });
 
-      eventbus.on('layer:selected', function(layer) {
-        if(layer !== 'roadAddressProject') {
-          $('.wrapper').remove();
-        }
-      });
-
       eventbus.on('projectLink:clicked', function(selected) {
         selectedProjectLink = selected;
         currentProject = projectCollection.getCurrentProject();
         clearInformationContent();
-        rootElement.html(selectedProjectLinkTemplate(currentProject, options, selectedProjectLink));
+        rootElement.html(selectedProjectLinkTemplate(currentProject.project, options, selectedProjectLink));
       });
 
-      eventbus.on('roadAddress:linksSaved', function() {
-        // Projectinfo is not undefined and publishable is something like true.
-        rootElement.find('.project-form .btn-send').prop("disabled", false);
+      eventbus.on('roadAddressProject:publishable', function() {
+        /*
+          Project is publishable, remove spinner here to make sure
+          every call from backend and reDraw() is finished before enable send to TR
+        */
+        var projectChangesButton = showProjectChangeButton();
+        rootElement.append(projectChangesButton);
+        applicationModel.removeSpinner();
       });
 
       eventbus.on('roadAddress:projectFailed', function() {
@@ -162,14 +162,14 @@
       });
 
       eventbus.on('roadAddress:projectLinksUpdated',function(data){
-        applicationModel.removeSpinner();
         rootElement.html('');
         if (typeof data !== 'undefined' && typeof data.publishable !== 'undefined' && data.publishable) {
-          console.log(data);
-          var publishButton = sendRoadAddressChangeButton();
-          rootElement.append(publishButton);
+          eventbus.trigger('roadAddressProject:projectLinkSaved', data.id, data.publishable);
         }
-        eventbus.trigger('roadAddressProject:projectLinkSaved', data.projectId);
+        else {
+          eventbus.trigger('roadAddressProject:projectLinkSaved', data.id, data.publishable);
+          applicationModel.removeSpinner();
+        }
       });
 
       eventbus.on('roadAddress:projectSentSuccess', function() {
@@ -195,11 +195,13 @@
 
       rootElement.on('click', '.project-form button.update', function() {
         currentProject = projectCollection.getCurrentProject();
-        projectCollection.saveProjectLinks(selectedProjectLink, currentProject);
+        projectCollection.saveProjectLinks(projectCollection.getTmpExpired());
       });
 
       rootElement.on('change', '#dropDown', function() {
-          projectCollection.setDirty(_.map(selectedProjectLink, function(link) { return link.linkId; }));
+        projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function(link) { return {'id':link.linkId, 'status':link.status}; })));
+        projectCollection.setTmpExpired(projectCollection.getTmpExpired().concat(selectedProjectLink));
+        rootElement.find('.project-form button.update').prop("disabled", false);
       });
 
       rootElement.on('change', '.form-group', function() {
@@ -207,13 +209,28 @@
       });
 
       rootElement.on('click', '.project-form button.cancelLink', function(){
-        projectCollection.setDirty([]);
-        eventbus.trigger('projectLink:clicked', []);
-        $('.wrapper').remove();
+        if(projectCollection.isDirty()) {
+          projectCollection.revertLinkStatus();
+          projectCollection.setDirty([]);
+          projectCollection.setTmpExpired([]);
+          projectLinkLayer.clearHighlights();
+          $('.wrapper').remove();
+          eventbus.trigger('roadAddress:projectLinksEdited');
+        } else {
+          eventbus.trigger('roadAddress:openProject', projectCollection.getCurrentProject());
+          eventbus.trigger('roadLinks:refreshView');
+        }
       });
 
       rootElement.on('click', '.project-form button.send', function(){
         projectCollection.publishProject();
+      });
+
+      rootElement.on('click', '.project-form button.show-changes', function(){
+        $(this).hide();
+        projectChangeTable.show();
+        var publishButton = sendRoadAddressChangeButton();
+        rootElement.append(publishButton);
       });
     };
     bindEvents();

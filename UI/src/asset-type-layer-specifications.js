@@ -40,9 +40,13 @@
       className: 'total-weight-limit',
       unit: 'kg',
       isSeparable: false,
+      allowComplementaryLinks: true,
       editControlLabels: { title: 'Rajoitus',
         enabled: 'Rajoitus',
-        disabled: 'Ei rajoitusta' }
+        disabled: 'Ei rajoitusta',
+        showUnit: true
+      },
+      label: new LinearAssetLabel()
     },
     {
       typeId: assetType.trailerTruckWeightLimit,
@@ -54,9 +58,13 @@
       className: 'trailer-truck-weight-limit',
       unit: 'kg',
       isSeparable: false,
+      allowComplementaryLinks: true,
       editControlLabels: { title: 'Rajoitus',
         enabled: 'Rajoitus',
-        disabled: 'Ei rajoitusta' }
+        disabled: 'Ei rajoitusta',
+        showUnit: true
+      },
+      label: new LinearAssetLabel()
     },
     {
       typeId: assetType.axleWeightLimit,
@@ -68,9 +76,13 @@
       className: 'axle-weight-limit',
       unit: 'kg',
       isSeparable: false,
+      allowComplementaryLinks: true,
       editControlLabels: { title: 'Rajoitus',
         enabled: 'Rajoitus',
-        disabled: 'Ei rajoitusta' }
+        disabled: 'Ei rajoitusta',
+        showUnit: true
+      },
+      label: new LinearAssetLabel()
     },
     {
       typeId: assetType.bogieWeightLimit,
@@ -82,9 +94,13 @@
       className: 'bogie-weight-limit',
       unit: 'kg',
       isSeparable: false,
+      allowComplementaryLinks: true,
       editControlLabels: { title: 'Rajoitus',
         enabled: 'Rajoitus',
-        disabled: 'Ei rajoitusta' }
+        disabled: 'Ei rajoitusta',
+        showUnit: true
+      },
+      label: new LinearAssetLabel()
     },
     {
       typeId: assetType.heightLimit,
@@ -96,9 +112,13 @@
       className: 'height-limit',
       unit: 'cm',
       isSeparable: false,
+      allowComplementaryLinks: true,
       editControlLabels: { title: 'Rajoitus',
         enabled: 'Rajoitus',
-        disabled: 'Ei rajoitusta' }
+        disabled: 'Ei rajoitusta',
+        showUnit: true
+      },
+      label: new LinearAssetLabel()
     },
     {
       typeId: assetType.lengthLimit,
@@ -110,9 +130,13 @@
       className: 'length-limit',
       unit: 'cm',
       isSeparable: false,
+      allowComplementaryLinks: true,
       editControlLabels: { title: 'Rajoitus',
         enabled: 'Rajoitus',
-        disabled: 'Ei rajoitusta' }
+        disabled: 'Ei rajoitusta',
+        showUnit: true
+      },
+      label: new LinearAssetLabel()
     },
     {
       typeId: assetType.widthLimit,
@@ -124,9 +148,14 @@
       className: 'width-limit',
       unit: 'cm',
       isSeparable: false,
-      editControlLabels: { title: 'Rajoitus',
+      allowComplementaryLinks: true,
+      editControlLabels: {
+        title: 'Rajoitus',
         enabled: 'Rajoitus',
-        disabled: 'Ei rajoitusta' }
+        disabled: 'Ei rajoitusta',
+        showUnit: true
+      },
+      label: new LinearAssetLabel()
     },
     {
       typeId: assetType.litRoad,
@@ -138,6 +167,7 @@
       newTitle: 'Uusi valaistus',
       className: 'lit-road',
       isSeparable: false,
+      allowComplementaryLinks: true,
       editControlLabels: {
         title: 'Valaistus',
         enabled: 'Valaistus',
@@ -154,6 +184,7 @@
       newTitle: 'Uusi kelirikko',
       className: 'road-damaged-by-thaw',
       isSeparable: false,
+      allowComplementaryLinks: true,
       editControlLabels: {
         title: 'Kelirikko',
         enabled: 'Kelirikko',
@@ -170,6 +201,7 @@
       className: 'road-width',
       unit: 'cm',
       isSeparable: false,
+      allowComplementaryLinks: true,
       editControlLabels: {
         title: 'Leveys',
         enabled: 'Leveys tiedossa',
@@ -188,6 +220,7 @@
       newTitle: 'Uusi ruuhkautumisherkkä tie',
       className: 'congestion-tendency',
       isSeparable: false,
+      allowComplementaryLinks: false,
       editControlLabels: {
         title: 'Herkkyys',
         enabled: 'Ruuhkaantumisherkkä',
@@ -204,6 +237,7 @@
       newTitle: 'Uusi päällyste',
       className: 'paved-road',
       isSeparable: false,
+      allowComplementaryLinks: true,
       editControlLabels: {
         title: 'Päällyste',
         enabled: 'Päällyste',
@@ -220,11 +254,14 @@
       className: 'traffic-volume',
       unit: 'ajoneuvoa/vuorokausi',
       isSeparable: false,
+      allowComplementaryLinks: false,
       editControlLabels: {
         title: '',
         enabled: 'Liikennemäärä',
-        disabled: 'Ei tiedossa'
-      }
+        disabled: 'Ei tiedossa',
+        showUnit: true
+      },
+      label: new LinearAssetLabel()
     },
     {
       typeId: assetType.massTransitLane,
@@ -236,6 +273,7 @@
       newTitle: 'Uusi joukkoliikennekaista',
       className: 'mass-transit-lane',
       isSeparable: true,
+      allowComplementaryLinks: true,
       editControlLabels: {
         title: 'Kaista',
         enabled: 'Joukkoliikennekaista',
@@ -252,6 +290,7 @@
       className: 'winter-speed-limits',
       unit: 'km/h',
       isSeparable: true,
+      allowComplementaryLinks: true,
       editControlLabels: {
         title: 'Rajoitus',
         enabled: 'Talvinopeusrajoitus',
@@ -268,6 +307,7 @@
       newTitle: 'Uusi ajoneuvokohtainen rajoitus',
       className: 'prohibition',
       isSeparable: true,
+      allowComplementaryLinks: true,
       editControlLabels: {
         title: 'Rajoitus',
         enabled: 'Rajoitus',
@@ -283,6 +323,7 @@
       newTitle: 'Uusi VAK-rajoitus',
       className: 'hazardousMaterialTransportProhibition',
       isSeparable: true,
+      allowComplementaryLinks: true,
       editControlLabels: {
         title: 'VAK-rajoitus',
         enabled: 'Rajoitus',
@@ -299,6 +340,7 @@
       className: 'european-road',
       unit: '',
       isSeparable: false,
+      allowComplementaryLinks: false,
       editControlLabels: {
         title: '',
         enabled: 'Eurooppatienumero(t)',
@@ -315,6 +357,7 @@
       className: 'exit-number',
       unit: '',
       isSeparable: false,
+      allowComplementaryLinks: false,
       editControlLabels: {
         title: '',
         enabled: 'Liittymänumero(t)',
@@ -331,6 +374,7 @@
       className: 'maintenanceRoad',
       isSeparable: false,
       unit: '',
+      allowComplementaryLinks: true,
       editControlLabels: {
         title: '',
         enabled: 'Huoltotie',
@@ -358,11 +402,13 @@
       className: 'lane-count',
       unit: 'kpl / suunta',
       isSeparable: true,
+      allowComplementaryLinks: true,
       editControlLabels: {
         title: 'Lukumäärä',
         enabled: 'Kaistojen lukumäärä / suunta',
         disabled: 'Ei tietoa'
-      }
+      },
+      label: new LinearAssetLabel()
     }
   ];
 
@@ -375,6 +421,7 @@
       typeId: assetType.pedestrianCrossings,
       layerName: 'pedestrianCrossings',
       title: 'Suojatie',
+      allowComplementaryLinks: true,
       newAsset: {  },
       legendValues: [
         {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Suojatie'},
@@ -390,6 +437,7 @@
       typeId: assetType.obstacles,
       layerName: 'obstacles',
       title: 'Esterakennelma',
+      allowComplementaryLinks: true,
       newAsset: { obstacleType: 1 },
       legendValues: [
         {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Suljettu yhteys'},
@@ -406,6 +454,7 @@
       typeId: assetType.railwayCrossings,
       layerName: 'railwayCrossings',
       title: 'Rautatien tasoristeys',
+      allowComplementaryLinks: true,
       newAsset: { safetyEquipment: 1 },
       legendValues: [
         {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Rautatien tasoristeys'},
@@ -421,6 +470,7 @@
       typeId: assetType.directionalTrafficSigns,
       layerName: 'directionalTrafficSigns',
       title: 'Opastustaulu',
+      allowComplementaryLinks: false,
       newAsset: { validityDirection: 2 },
       legendValues: [
         {symbolUrl: 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow-directional-traffic-sign.svg', label: 'Opastustaulu'},
@@ -436,6 +486,7 @@
       typeId: assetType.servicePoints,
       layerName: 'servicePoints',
       title: 'Palvelupiste',
+      allowComplementaryLinks: false,
       newAsset: { services: [] },
       legendValues: [
         {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Palvelupiste'}
@@ -450,6 +501,7 @@
       typeId: assetType.trafficLights,
       layerName: 'trafficLights',
       title: 'Liikennevalo',
+      allowComplementaryLinks: true,
       newAsset: {  },
       legendValues: [
         {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Liikennevalo'},
