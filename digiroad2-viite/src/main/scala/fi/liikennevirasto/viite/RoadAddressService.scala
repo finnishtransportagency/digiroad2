@@ -108,7 +108,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     //TODO use complementedIds instead of only roadLinkIds below. There is no complementary ids for changeInfo dealing (for now)
     val changedRoadLinks = roadLinkService.getChangeInfoFromVVH(boundingRectangle, municipalities)
     val filteredChangedRoadLinks = changedRoadLinks.filter(crl => roadLinkIds.contains(crl.oldId.getOrElse(0)))
-    prettyPrint(filteredChangedRoadLinks)
     val linkIds = complementedRoadLinks.map(_.linkId).toSet
     val fetchVVHEndTime = System.currentTimeMillis()
     logger.info("End fetch vvh road links in %.3f sec".format((fetchVVHEndTime - fetchVVHStartTime) * 0.001))
@@ -118,8 +117,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val fetchMissingRoadAddressStartTime = System.currentTimeMillis()
     val (floatingViiteRoadLinks, addresses, floating) = Await.result(fetchRoadAddressesByBoundingBoxF, Duration.Inf)
     val complementedWithChangeAddresses = applyChanges(complementedRoadLinks, filteredChangedRoadLinks, addresses)
-    //TODO sub complementedWithChangeAddresses to addresses
-    val missingLinkIds = linkIds -- floating.keySet -- addresses.keySet -- complementedWithChangeAddresses.keySet
+    val missingLinkIds = linkIds -- floating.keySet -- complementedWithChangeAddresses.keySet
 
     val missedRL = withDynTransaction {
       RoadAddressDAO.getMissingRoadAddresses(missingLinkIds)
