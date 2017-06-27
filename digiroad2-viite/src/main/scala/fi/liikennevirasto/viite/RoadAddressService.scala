@@ -107,10 +107,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
     //TODO use complementedIds instead of only roadLinkIds below. There is no complementary ids for changeInfo dealing (for now)
     val changedRoadLinks = roadLinkService.getChangeInfoFromVVH(boundingRectangle, municipalities)
-    val filteredChangedRoadLinks = changedRoadLinks.filter(crl => roadLinkIds.contains(crl.oldId.getOrElse(0)))
-    val linkIds = complementedRoadLinks.map(_.linkId).toSet
     val fetchVVHEndTime = System.currentTimeMillis()
     logger.info("End fetch vvh road links in %.3f sec".format((fetchVVHEndTime - fetchVVHStartTime) * 0.001))
+    val filteredChangedRoadLinks = changedRoadLinks.filter(crl => roadLinkIds.contains(crl.oldId.getOrElse(0)))
+    val linkIds = complementedRoadLinks.map(_.linkId).toSet
 
     //TODO: In the future when we are dealing with VVHChangeInfo we need to better evaluate when do we switch from bounding box queries to
     //pure linkId based queries, maybe something related to the zoomLevel we are in map level.
@@ -142,7 +142,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     eventbus.publish("roadAddress:persistMissingRoadAddress", changeSet.missingRoadAddresses)
     eventbus.publish("roadAddress:persistAdjustments", changeSet.adjustedMValues)
     eventbus.publish("roadAddress:floatRoadAddress", changeSet.toFloatingAddressIds)
-
 
     val returningTopology = filledTopology.filter(link => !complementaryLinkIds.contains(link.linkId) ||
       complementaryLinkFilter(roadNumberLimits, municipalities, everything, publicRoads)(link))
