@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, VVHClient}
 import fi.liikennevirasto.digiroad2.asset.SideCode
-import fi.liikennevirasto.viite.dao.RoadAddress
+import fi.liikennevirasto.viite.dao.{CalibrationPoint, RoadAddress}
 import fi.liikennevirasto.viite._
 
 trait RoadAddressMapper {
@@ -77,35 +77,29 @@ trait RoadAddressMapper {
 
   def postTransferChecks(seq: Seq[RoadAddress], source: Seq[RoadAddress]): Unit = {
     val (addrMin, addrMax) = (source.map(_.startAddrMValue).min, source.map(_.endAddrMValue).max)
-    if (seq.count(_.startCalibrationPoint.nonEmpty) > 1)
-      throw new InvalidAddressDataException("Too many starting calibration points after transfer")
-    if (seq.count(_.endCalibrationPoint.nonEmpty) > 1)
-      throw new InvalidAddressDataException("Too many starting calibration points after transfer")
-    val startCPAddr = seq.find(_.startCalibrationPoint.nonEmpty)
-    val endCPAddr = seq.find(_.endCalibrationPoint.nonEmpty)
-    if (startCPAddr.nonEmpty) {
-      val (addr, cp) = (startCPAddr.get, startCPAddr.get.startCalibrationPoint.get)
-      if (addr.startAddrMValue != cp.addressMValue)
-        throw new InvalidAddressDataException(s"Start calibration point value mismatch in $cp")
-      if (seq.exists(_.startAddrMValue < cp.addressMValue))
-        throw new InvalidAddressDataException(s"Start calibration point not in the beginning of chain $cp")
-      if (addr.sideCode == SideCode.TowardsDigitizing && Math.abs(cp.segmentMValue) > 0.0 ||
-        addr.sideCode == SideCode.AgainstDigitizing && Math.abs(cp.segmentMValue - addr.endMValue) > MaxAllowedMValueError)
-        throw new InvalidAddressDataException(s"Start calibration point LRM mismatch in $cp, sideCode = ${addr.sideCode}, ${addr.startMValue}-${addr.endMValue}")
+    commonPostTransferChecks(seq, addrMin, addrMax)
+  }
+
+  def postTransferChecks(s: (RoadAddressSection, Seq[RoadAddress])): Unit = {
+    val (section, seq) = s
+    if (seq.groupBy(_.linkId).exists{ case (_, addresses) =>
+        partition(addresses).size > 1})
+      throw new InvalidAddressDataException(s"Address gaps generated for links ${seq.groupBy(_.linkId).filter{ case (_, addresses) =>
+        partition(addresses).size > 1}.keySet.mkString(", ")}")
+    commonPostTransferChecks(seq, section.startMAddr, section.endMAddr)
+  }
+
+  protected def commonPostTransferChecks(seq: Seq[RoadAddress], addrMin: Long, addrMax: Long): Unit = {
+    calibrationPointCountCheck(false, seq)
+    seq.find(_.startCalibrationPoint.nonEmpty) match {
+      case Some(addr) => startCalibrationPointCheck(addr, addr.startCalibrationPoint.get, seq)
+      case _ =>
     }
-    if (endCPAddr.nonEmpty) {
-      val (addr, cp) = (endCPAddr.get, endCPAddr.get.endCalibrationPoint.get)
-      if (addr.endAddrMValue != cp.addressMValue)
-        throw new InvalidAddressDataException(s"End calibration point value mismatch in $cp")
-      if (seq.exists(_.endAddrMValue > cp.addressMValue))
-        throw new InvalidAddressDataException(s"End calibration point not in the end of chain $cp")
-      if (addr.sideCode == SideCode.AgainstDigitizing && Math.abs(cp.segmentMValue) > 0.0 ||
-        addr.sideCode == SideCode.TowardsDigitizing && Math.abs(cp.segmentMValue - addr.endMValue) > MaxAllowedMValueError)
-        throw new InvalidAddressDataException(s"End calibration point LRM mismatch in $cp, sideCode = ${addr.sideCode}, ${addr.startMValue}-${addr.endMValue}")
+    seq.find(_.endCalibrationPoint.nonEmpty) match {
+      case Some(addr) => endCalibrationPointCheck(addr, addr.endCalibrationPoint.get, seq)
+      case _ =>
     }
-    val grouped = seq.groupBy(_.linkId).mapValues(_.groupBy(_.sideCode).keySet.size)
-    if (grouped.exists{ case (_, sideCodes) => sideCodes > 1})
-      throw new InvalidAddressDataException(s"Multiple sidecodes generated for links ${grouped.filter(_._2 > 1).keySet.mkString(", ")}")
+    checkSingleSideCodeForLink(false, seq.groupBy(_.linkId))
     if (!seq.exists(_.startAddrMValue == addrMin))
       throw new InvalidAddressDataException(s"Generated address list does not start at $addrMin but ${seq.map(_.startAddrMValue).min}")
     if (!seq.exists(_.endAddrMValue == addrMax))
@@ -114,90 +108,63 @@ trait RoadAddressMapper {
       throw new InvalidAddressDataException(s"Generated address list was non-continuous")
     if (!seq.forall(ra => ra.endAddrMValue == addrMax || seq.exists(_.startAddrMValue == ra.endAddrMValue)))
       throw new InvalidAddressDataException(s"Generated address list was non-continuous")
+
   }
 
-  def postTransferChecks(s: (RoadAddressSection, Seq[RoadAddress])): Unit = {
-    val (section, seq) = s
-    if (seq.count(_.startCalibrationPoint.nonEmpty) > 1)
-      throw new InvalidAddressDataException("Too many starting calibration points after transfer")
-    if (seq.count(_.endCalibrationPoint.nonEmpty) > 1)
-      throw new InvalidAddressDataException("Too many starting calibration points after transfer")
-    val startCPAddr = seq.find(_.startCalibrationPoint.nonEmpty)
-    val endCPAddr = seq.find(_.endCalibrationPoint.nonEmpty)
-    if (startCPAddr.nonEmpty) {
-      val (addr, cp) = (startCPAddr.get, startCPAddr.get.startCalibrationPoint.get)
-      if (addr.startAddrMValue != cp.addressMValue)
-        throw new InvalidAddressDataException(s"Start calibration point value mismatch in $cp")
-      if (seq.exists(_.startAddrMValue < cp.addressMValue))
-        throw new InvalidAddressDataException(s"Start calibration point not in the beginning of chain $cp")
-      if (addr.sideCode == SideCode.TowardsDigitizing && Math.abs(cp.segmentMValue) > 0.0 ||
-        addr.sideCode == SideCode.AgainstDigitizing && Math.abs(cp.segmentMValue - addr.endMValue) > MaxAllowedMValueError)
-        throw new InvalidAddressDataException(s"Start calibration point LRM mismatch in $cp, sideCode = ${addr.sideCode}, ${addr.startMValue}-${addr.endMValue}")
-    }
-    if (endCPAddr.nonEmpty) {
-      val (addr, cp) = (endCPAddr.get, endCPAddr.get.endCalibrationPoint.get)
-      if (addr.endAddrMValue != cp.addressMValue)
-        throw new InvalidAddressDataException(s"End calibration point value mismatch in $cp")
-      if (seq.exists(_.endAddrMValue > cp.addressMValue))
-        throw new InvalidAddressDataException(s"End calibration point not in the end of chain $cp")
-      if (addr.sideCode == SideCode.AgainstDigitizing && Math.abs(cp.segmentMValue) > 0.0 ||
-        addr.sideCode == SideCode.TowardsDigitizing && Math.abs(cp.segmentMValue - addr.endMValue) > MaxAllowedMValueError)
-        throw new InvalidAddressDataException(s"End calibration point LRM mismatch in $cp, sideCode = ${addr.sideCode}, ${addr.startMValue}-${addr.endMValue}")
-    }
-    val grouped = seq.groupBy(_.linkId)
-    if (grouped.mapValues(_.groupBy(_.sideCode).keySet.size).exists{ case (_, sideCodes) => sideCodes > 1})
-      throw new InvalidAddressDataException(s"Multiple sidecodes generated for links ${grouped.mapValues(_.groupBy(_.sideCode).keySet.size).filter(_._2 > 1).keySet.mkString(", ")}")
-    if (grouped.exists{ case (_, addresses) =>
-        partition(addresses).size > 1})
-      throw new InvalidAddressDataException(s"Address gaps generated for links ${grouped.filter{ case (_, addresses) =>
-        partition(addresses).size > 1}.keySet.mkString(", ")}")
-    if (!seq.exists(_.startAddrMValue == section.startMAddr))
-      throw new InvalidAddressDataException(s"Generated address list does not start at ${section.startMAddr} but ${seq.map(_.startAddrMValue).min}")
-    if (!seq.exists(_.endAddrMValue == section.endMAddr))
-      throw new InvalidAddressDataException(s"Generated address list does not end at ${section.endMAddr} but ${seq.map(_.endAddrMValue).max}")
-    if (!seq.forall(ra => ra.startAddrMValue == section.startMAddr || seq.exists(_.endAddrMValue == ra.startAddrMValue)))
-      throw new InvalidAddressDataException(s"Generated address list was non-continuous")
-    if (!seq.forall(ra => ra.endAddrMValue == section.endMAddr || seq.exists(_.startAddrMValue == ra.endAddrMValue)))
-      throw new InvalidAddressDataException(s"Generated address list was non-continuous")
-  }
   def preTransferChecks(seq: Seq[RoadAddress]): Unit = {
-    if (seq.count(_.startCalibrationPoint.nonEmpty) > 1)
-      throw new IllegalArgumentException("Too many starting calibration points before transfer")
-    if (seq.count(_.endCalibrationPoint.nonEmpty) > 1)
-      throw new IllegalArgumentException("Too many starting calibration points before transfer")
-    val startCPAddr = seq.find(_.startCalibrationPoint.nonEmpty)
-    val endCPAddr = seq.find(_.endCalibrationPoint.nonEmpty)
-    if (startCPAddr.nonEmpty) {
-      val (addr, cp) = (startCPAddr.get, startCPAddr.get.startCalibrationPoint.get)
-      if (addr.startAddrMValue != cp.addressMValue)
-        throw new IllegalArgumentException(s"Start calibration point value mismatch in $cp")
-      if (seq.exists(_.startAddrMValue < cp.addressMValue))
-        throw new IllegalArgumentException("Start calibration point not in the first link of source")
-      if (addr.sideCode == SideCode.TowardsDigitizing && Math.abs(cp.segmentMValue) > 0.0 ||
-        addr.sideCode == SideCode.AgainstDigitizing && Math.abs(cp.segmentMValue - addr.endMValue) > MaxAllowedMValueError)
-        throw new IllegalArgumentException(s"Start calibration point LRM mismatch in $cp")
+    calibrationPointCountCheck(true, seq)
+    seq.find(_.startCalibrationPoint.nonEmpty) match {
+      case Some(addr) => startCalibrationPointCheck(addr, addr.startCalibrationPoint.get, seq)
+      case _ =>
     }
-    if (endCPAddr.nonEmpty) {
-      val (addr, cp) = (endCPAddr.get, endCPAddr.get.endCalibrationPoint.get)
-      if (addr.endAddrMValue != cp.addressMValue)
-        throw new IllegalArgumentException(s"End calibration point value mismatch in $cp")
-      if (seq.exists(_.endAddrMValue > cp.addressMValue))
-        throw new IllegalArgumentException("Start calibration point not in the last link of source")
-      if (Math.abs(cp.segmentMValue -
-        (addr.sideCode match {
-          case SideCode.AgainstDigitizing => 0.0
-          case SideCode.TowardsDigitizing => addr.endMValue
-          case _ => Double.NegativeInfinity
-        })
-      ) > MinAllowedRoadAddressLength)
-        throw new IllegalArgumentException(s"End calibration point LRM mismatch in $cp")
+    seq.find(_.endCalibrationPoint.nonEmpty) match {
+      case Some(addr) => endCalibrationPointCheck(addr, addr.endCalibrationPoint.get, seq)
+      case _ =>
     }
-    val grouped = seq.groupBy(_.linkId).mapValues(_.groupBy(_.sideCode).keySet.size)
-    if (grouped.exists{ case (_, sideCodes) => sideCodes > 1})
-      throw new IllegalArgumentException(s"Multiple sidecodes found for links ${grouped.filter(_._2 > 1).keySet.mkString(", ")}")
+    checkSingleSideCodeForLink(false, seq.groupBy(_.linkId))
     val tracks = seq.map(_.track).toSet
     if (tracks.size > 1)
       throw new IllegalArgumentException(s"Multiple track codes found ${tracks.mkString(", ")}")
+  }
+
+  protected def startCalibrationPointCheck(addr: RoadAddress, cp: CalibrationPoint, seq: Seq[RoadAddress]): Unit = {
+    if (addr.startAddrMValue != cp.addressMValue)
+      throw new IllegalArgumentException(s"Start calibration point value mismatch in $cp")
+    if (seq.exists(_.startAddrMValue < cp.addressMValue))
+      throw new IllegalArgumentException("Start calibration point not in the first link of source")
+    if (addr.sideCode == SideCode.TowardsDigitizing && Math.abs(cp.segmentMValue) > 0.0 ||
+      addr.sideCode == SideCode.AgainstDigitizing && Math.abs(cp.segmentMValue - addr.endMValue) > MaxAllowedMValueError)
+      throw new IllegalArgumentException(s"Start calibration point LRM mismatch in $cp")
+  }
+
+  protected def endCalibrationPointCheck(addr: RoadAddress, cp: CalibrationPoint, seq: Seq[RoadAddress]): Unit = {
+    if (addr.endAddrMValue != cp.addressMValue)
+      throw new IllegalArgumentException(s"End calibration point value mismatch in $cp")
+    if (seq.exists(_.endAddrMValue > cp.addressMValue))
+      throw new IllegalArgumentException("Start calibration point not in the last link of source")
+    if (Math.abs(cp.segmentMValue -
+      (addr.sideCode match {
+        case SideCode.AgainstDigitizing => 0.0
+        case SideCode.TowardsDigitizing => addr.endMValue
+        case _ => Double.NegativeInfinity
+      })
+    ) > MinAllowedRoadAddressLength)
+      throw new IllegalArgumentException(s"End calibration point LRM mismatch in $cp")
+  }
+
+  protected def calibrationPointCountCheck(before: Boolean, seq: Seq[RoadAddress]): Unit = {
+    val str = if (before) "before" else "after"
+    if (seq.count(_.startCalibrationPoint.nonEmpty) > 1)
+      throw new InvalidAddressDataException(s"Too many starting calibration points $str transfer")
+    if (seq.count(_.endCalibrationPoint.nonEmpty) > 1)
+      throw new InvalidAddressDataException(s"Too many starting calibration points $str transfer")
+  }
+
+  protected def checkSingleSideCodeForLink(before: Boolean, grouped: Map[Long, Seq[RoadAddress]]): Unit = {
+    val str = if (before) "found" else "generated"
+    if (grouped.mapValues(_.groupBy(_.sideCode).keySet.size).exists{ case (_, sideCodes) => sideCodes > 1})
+      throw new InvalidAddressDataException(s"Multiple side codes $str for links ${grouped.mapValues(_.groupBy(_.sideCode).keySet.size).filter(_._2 > 1).keySet.mkString(", ")}")
+
   }
 
   /**
