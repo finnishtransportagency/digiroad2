@@ -937,11 +937,6 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     * Updates speed limit value. Used by SpeedLimitService.updateValues, SpeedLimitService.split and SpeedLimitService.separate.
     */
   def updateSpeedLimitValue(id: Long, value: Int, username: String, municipalityValidation: Int => Unit): Option[Long] = {
-    //def validateMunicipalities(vvhLinks: Seq[(Long, Double, Seq[Point], Int, LinkGeomSource)]): Unit = {
-    //  vvhLinks.foreach(vvhLink => municipalityValidation(vvhLink._4))
-    //}
-
-    //validateMunicipalities(getLinksWithLengthFromVVH(20, id))
     val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply("rajoitus").first
     val assetsUpdated = Queries.updateAssetModified(id, username).first
     val propertiesUpdated = Queries.updateSingleChoiceProperty(id, propertyId, value.toLong).first

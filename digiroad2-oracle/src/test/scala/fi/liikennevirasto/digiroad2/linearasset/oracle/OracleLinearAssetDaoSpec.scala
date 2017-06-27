@@ -32,9 +32,6 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
     when(mockRoadLinkService.fetchVVHRoadlinksAndComplementary(roadLinks.map(_.linkId).toSet))
       .thenReturn(roadLinks)
 
-    //when(mockVVHClient.complementaryData.fetchComplementaryRoadlink(roadLinks.map(_.linkId).head))
-    //  .thenReturn(roadLinks.headOption)
-
     roadLinks.foreach { roadLink =>
       when(mockVVHClient.fetchByLinkId(roadLink.linkId)).thenReturn(Some(roadLink))
     }

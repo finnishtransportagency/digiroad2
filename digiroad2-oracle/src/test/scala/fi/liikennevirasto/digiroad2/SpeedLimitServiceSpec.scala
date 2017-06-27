@@ -1328,7 +1328,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       sqlu"""insert into asset_link (asset_id, position_id) values (3, 3)""".execute
       sqlu"""insert into single_choice_value (asset_id, enumerated_value_id, property_id) values (3,(select id from enumerated_value where value = 50),(select id from property where public_id = 'rajoitus'))""".execute
 
-      when(mockRoadLinkService.getRoadLinksAndCompelemtnaryByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
+      when(mockRoadLinkService.getRoadLinksAndComplementaryByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
 
       val result = service.getChanged(DateTime.parse("2016-11-01T12:00Z"), DateTime.parse("2016-11-02T12:00Z"))
       result.length should be(1)

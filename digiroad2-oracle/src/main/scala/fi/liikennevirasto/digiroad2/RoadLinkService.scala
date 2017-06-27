@@ -146,7 +146,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @param linkIds
     * @return Road links
     */
-  def getRoadLinksAndCompelemtnaryByLinkIdsFromVVH(linkIds: Set[Long], newTransaction: Boolean = true): Seq[RoadLink] = {
+  def getRoadLinksAndComplementaryByLinkIdsFromVVH(linkIds: Set[Long], newTransaction: Boolean = true): Seq[RoadLink] = {
     val vvhRoadLinks = fetchVVHRoadlinksAndComplementary(linkIds)
     if (newTransaction)
       withDynTransaction {
