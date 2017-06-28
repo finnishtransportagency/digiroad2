@@ -160,14 +160,17 @@ case class TierekisteriMassTransitStop(nationalId: Long,
 
 trait TierekisteriAssetData {
   val roadNumber: Long
-  val roadPartNumber: Long
-  val starMValue: Double
-  val endMValue: Double
+  val startRoadPartNumber: Long
+  val endRoadPartNumber: Long
+  val startAddressMValue: Long
+  val endAddressMValue: Long
 }
 
-case class TierekisteriTrafficData(roadNumber: Long, roadPartNumber: Long, starMValue: Double, endMValue: Double, kvl: Int) extends TierekisteriAssetData
+case class TierekisteriTrafficData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
+                                   startAddressMValue: Long, endAddressMValue: Long, kvl: Int) extends TierekisteriAssetData
 
-case class TierekisteriLighting(roadNumber: Long, roadPartNumber: Long, endRoadPartNumber: Long, starMValue: Double, endMValue: Double) extends TierekisteriAssetData
+case class TierekisteriLighting(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
+                                track: Track, startAddressMValue: Long, endAddressMValue: Long) extends TierekisteriAssetData
 
 case class TierekisteriError(content: Map[String, Any], url: String)
 
@@ -552,9 +555,10 @@ trait TierekisteriAssetDataClient extends TierekisteriClient {
   private val serviceName = "tietolajit/"
   protected val trRoadNumber = "TIE"
   protected val trRoadPartNumber = "OSA"
+  protected val trEndRoadPartNumber = "LOSA"
   protected val trStartMValue = "ETAISYYS"
   protected val trEndMValue = "LET"
-  protected val trEndRoadPartNumber = "LOSA"
+  protected val trTrackCode = "PUOLI"
 
   private val serviceUrl : String = tierekisteriRestApiEndPoint + serviceName
   private def serviceUrl(assetType: String, roadNumber: Long) : String = serviceUrl + assetType + "/" + roadNumber
@@ -629,10 +633,11 @@ class TierekisteriTrafficVolumeAsset(trEndPoint: String, trEnable: Boolean, http
     val kvl = convertToInt(getMandatoryFieldValue(data, trKVL)).get
     val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
     val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
+    val endRoadPartNumber = convertToLong(getMandatoryFieldValue(data, trEndRoadPartNumber)).getOrElse(roadPartNumber)
     val starMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
-    val endMValue = convertToDouble(getMandatoryFieldValue(data, trEndMValue)).get
+    val endMValue = convertToLong(getMandatoryFieldValue(data, trEndMValue)).get
 
-    TierekisteriTrafficData(roadNumber, roadPartNumber, starMValue, endMValue, kvl)
+    TierekisteriTrafficData(roadNumber, roadPartNumber, endRoadPartNumber, starMValue, endMValue, kvl)
   }
 }
 
@@ -646,11 +651,12 @@ class TierekisteriLightingAsset(trEndPoint: String, trEnable: Boolean, httpClien
     //Mandatory field
     val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
     val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
-    val endRoadPartNumber = convertToLong(getMandatoryFieldValue(data, trEndRoadPartNumber)).get
+    val endRoadPartNumber = convertToLong(getMandatoryFieldValue(data, trEndRoadPartNumber)).getOrElse(roadPartNumber)
     val starMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
-    val endMValue = convertToDouble(getMandatoryFieldValue(data, trEndMValue)).get
+    val endMValue = convertToLong(getMandatoryFieldValue(data, trEndMValue)).get
+    val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
 
-    TierekisteriLighting(roadNumber, roadPartNumber, endRoadPartNumber, starMValue, endMValue)
+    TierekisteriLighting(roadNumber, roadPartNumber, endRoadPartNumber, track, starMValue, endMValue)
   }
 }
 

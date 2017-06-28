@@ -38,15 +38,15 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
         println("\nFetch Traffic Volume by Road Number " + roadNumber)
         val trTrafficVolume = tierekisteriTrafficVolumeAsset.fetchActiveAssetData(trafficVolumeTR, roadNumber)
 
-        trTrafficVolume.foreach { tr => println("\nTR: roadNumber, roadPartNumber, start, end and kvt " + tr.roadNumber + " " + tr.roadPartNumber + " " + tr.starMValue + " " + tr.endMValue + " " + tr.kvl) }
+        trTrafficVolume.foreach { tr => println("\nTR: roadNumber, roadPartNumber, start, end and kvt " + tr.roadNumber + " " + tr.startRoadPartNumber + " " + tr.startAddressMValue + " " + tr.endAddressMValue + " " + tr.kvl) }
 
-        val r = trTrafficVolume.groupBy(trTrafficVolume => (trTrafficVolume.roadNumber, trTrafficVolume.roadPartNumber, trTrafficVolume.starMValue, trTrafficVolume.endMValue)).map(_._2.head)
+        val r = trTrafficVolume.groupBy(trTrafficVolume => (trTrafficVolume.roadNumber, trTrafficVolume.startRoadPartNumber, trTrafficVolume.startAddressMValue, trTrafficVolume.endAddressMValue)).map(_._2.head)
 
         r.foreach { tr =>
           OracleDatabase.withDynTransaction {
 
-            println("\nFetch road addresses to link ids using Viite, trRoadNumber, roadPartNumber start and end " + tr.roadNumber + " " + tr.roadPartNumber + " " + tr.starMValue + " " + tr.endMValue)
-            val roadAddresses = roadAddressDao.getRoadAddressesFiltered(tr.roadNumber, tr.roadPartNumber, tr.starMValue, tr.endMValue)
+            println("\nFetch road addresses to link ids using Viite, trRoadNumber, roadPartNumber start and end " + tr.roadNumber + " " + tr.startRoadPartNumber + " " + tr.startAddressMValue + " " + tr.endAddressMValue)
+            val roadAddresses = roadAddressDao.getRoadAddressesFiltered(tr.roadNumber, tr.startRoadPartNumber, tr.startAddressMValue, tr.endAddressMValue)
 
             val roadAddressLinks = roadAddresses.map(ra => ra.linkId).toSet
             val vvhRoadlinks = roadLinkService.fetchVVHRoadlinks(roadAddressLinks)
@@ -118,14 +118,14 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
         println("\nFetch Lighting by Road Number " + roadNumber)
         val trLighting = tierekisteriLightingAsset.fetchActiveAssetData(lightingTR, roadNumber)
 
-        trLighting.foreach { tr => println("\nTR: roadNumber, roadPartNumber, start and end: " + tr.roadNumber + " " + tr.roadPartNumber + " " + tr.starMValue + " " + tr.endMValue) }
+        trLighting.foreach { tr => println("\nTR: roadNumber, roadPartNumber, start and end: " + tr.roadNumber + " " + tr.startRoadPartNumber + " " + tr.startAddressMValue + " " + tr.endAddressMValue) }
 
-        val newTRLighting = trLighting.groupBy(trLighting => (trLighting.roadNumber, trLighting.roadPartNumber, trLighting.starMValue, trLighting.endMValue)).map(_._2.head)
+        val newTRLighting = trLighting.groupBy(trLighting => (trLighting.roadNumber, trLighting.startRoadPartNumber, trLighting.startAddressMValue, trLighting.endAddressMValue)).map(_._2.head)
 
         newTRLighting.foreach { trl =>
           OracleDatabase.withDynTransaction {
-            println("\nFetch road addresses to link ids using Viite, trRoadNumber, roadPartNumber, start, end and endRoadPartNumber " + trl.roadNumber + " " + trl.roadPartNumber + " " + trl.starMValue + " " + trl.endMValue + " " + trl.endRoadPartNumber)
-            val roadAddresses = roadAddressDao.getRoadAddressesFiltered(trl.roadNumber, trl.roadPartNumber, trl.starMValue, trl.endMValue)
+            println("\nFetch road addresses to link ids using Viite, trRoadNumber, roadPartNumber, start, end and endRoadPartNumber " + trl.roadNumber + " " + trl.startRoadPartNumber + " " + trl.startAddressMValue + " " + trl.endAddressMValue + " " + trl.endRoadPartNumber)
+            val roadAddresses = roadAddressDao.getRoadAddressesFiltered(trl.roadNumber, trl.startRoadPartNumber, trl.startAddressMValue, trl.endAddressMValue)
             val roadAddressLinks = roadAddresses.map(ra => ra.linkId).toSet
             val vvhRoadlinks = roadLinkService.fetchVVHRoadlinks(roadAddressLinks).filter(_.administrativeClass == State)
 
@@ -140,17 +140,17 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
               .filter(ra => vvhRoadlinks.exists(_.linkId == ra.linkId))
               .foreach { ra =>
                 val newStartMValue =
-                  if (ra.startAddrMValue >= trl.starMValue) {
+                  if (ra.startAddrMValue >= trl.startAddressMValue) {
                     ra.startMValue
                   } else {
-                    (trl.starMValue - ra.startAddrMValue) + ra.startMValue
+                    (trl.startAddressMValue - ra.startAddrMValue) + ra.startMValue
                   }
 
                 if (trl.roadPartNumber.equals(trl.endRoadPartNumber)) {
-                  if (ra.endAddrMValue <= trl.endMValue) {
+                  if (ra.endAddrMValue <= trl.endAddressMValue) {
                     createLinearAsset(ra.linkId, Measures(newStartMValue, ra.endMValue))
                   } else {
-                    val newEndMValue = ra.endMValue - (ra.endAddrMValue - trl.endMValue)
+                    val newEndMValue = ra.endMValue - (ra.endAddrMValue - trl.endAddressMValue)
                     createLinearAsset(ra.linkId, Measures(newStartMValue, newEndMValue))
                   }
                 } else {
