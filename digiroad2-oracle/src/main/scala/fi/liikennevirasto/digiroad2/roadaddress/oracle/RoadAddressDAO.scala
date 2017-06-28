@@ -95,6 +95,20 @@ class RoadAddressDAO {
     queryList(query)
   }
 
+  def getRoadNumberChangesByDate(startDate: Option[DateTime]) : Seq[RoadAddress] = {
+    val query =
+      s"""
+			 select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
+       ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.start_date, ra.end_date, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
+       pos.side_code, ra.floating
+       from road_address ra
+       join lrm_position pos on ra.lrm_position_id = pos.id
+			 where ra.start_date >= CAST(TO_TIMESTAMP_TZ(REPLACE(REPLACE($startDate, 'T', ''), 'Z', ''), 'YYYY-MM-DD HH24:MI:SS.FFTZH:TZM') AS DATE)
+		  """
+
+    queryRoadAddresses(query)
+  }
+
   implicit val getTrack = GetResult[Track](r => Track.apply(r.nextInt()))
 
   private def queryList(query: String) = {
