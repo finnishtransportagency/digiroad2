@@ -76,7 +76,7 @@ trait MassTransitStopService extends PointAssetOperations {
   def eventbus: DigiroadEventBus
 
   override def getByBoundingBox(user: User, bounds: BoundingRectangle) : Seq[PersistedAsset] = {
-    val (roadLinks, changeInfo) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(bounds)
+    val roadLinks = roadLinkService.getRoadLinksWithComplementaryFromVVH(bounds)
     super.getByBoundingBox(user, bounds, roadLinks, Seq(), floatingAdjustment(adjustmentOperation, createOperation))
   }
 
@@ -388,8 +388,11 @@ trait MassTransitStopService extends PointAssetOperations {
   def getByMunicipality(municipalityCode: Int, enrichWithTR: Boolean): Seq[PersistedAsset] = {
     if (enrichWithTR)
       getByMunicipality(municipalityCode)
-    else
-      super.getByMunicipality(municipalityCode)
+    else {
+      val roadLinks = roadLinkService.getRoadLinksWithComplementaryFromVVH(municipalityCode)
+      val mapRoadLinks = roadLinks.map(l => l.linkId -> l).toMap
+      super.getByMunicipality(municipalityCode, mapRoadLinks, roadLinks, Seq(), floatingAdjustment(adjustmentOperation, createOperation))
+    }
   }
 
   private def withNationalId(nationalId: Long)(query: String): String = {
@@ -419,14 +422,14 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 
   override def getByMunicipality(municipalityCode: Int): Seq[PersistedMassTransitStop] = {
-    val assets = super.getByMunicipality(municipalityCode)
+    val roadLinks = roadLinkService.getRoadLinksWithComplementaryFromVVH(municipalityCode)
+    val mapRoadLinks = roadLinks.map(l => l.linkId -> l).toMap
+    val assets = super.getByMunicipality(municipalityCode, mapRoadLinks, roadLinks, Seq(), floatingAdjustment(adjustmentOperation, createOperation))
     assets.flatMap(a => enrichStopIfInTierekisteri(Some(a))._1)
   }
 
-
   private def updateExisting(queryFilter: String => String, optionalPosition: Option[Position],
                              properties: Set[SimpleProperty], username: String, municipalityValidation: Int => Unit): MassTransitStopWithProperties = {
-
 
       if (MassTransitStopOperations.mixedStoptypes(properties))
         throw new IllegalArgumentException
@@ -442,7 +445,7 @@ trait MassTransitStopService extends PointAssetOperations {
 
       val roadLink = fetchRoadLinkAndComplementary(linkId)
       val (municipalityCode, geometry) = roadLink
-        .map{ x => (x.municipalityCode, x.geometry) }
+        .map { x => (x.municipalityCode, x.geometry) }
         .getOrElse(throw new NoSuchElementException)
 
       // Enrich properties with old administrator, if administrator value is empty in CSV import
@@ -456,7 +459,7 @@ trait MassTransitStopService extends PointAssetOperations {
         val administrationProperty = verifiedProperties.find(_.publicId == MassTransitStopOperations.AdministratorInfoPublicId)
         val elyAdministrated = administrationProperty.exists(_.values.headOption.exists(_.propertyValue == MassTransitStopOperations.CentralELYPropertyValue))
         val hslAdministrated = administrationProperty.exists(_.values.headOption.exists(_.propertyValue == MassTransitStopOperations.HSLPropertyValue))
-        if  ( (!(elyAdministrated || hslAdministrated) || isVirtualBusStop) && MassTransitStopOperations.liviIdValueOption(asset.propertyData).exists(_.propertyValue != "")) {
+        if ((!(elyAdministrated || hslAdministrated) || isVirtualBusStop) && MassTransitStopOperations.liviIdValueOption(asset.propertyData).exists(_.propertyValue != "")) {
           updatePropertiesForAsset(id, verifiedProperties.toSeq, roadLink.get.administrativeClass, asset.nationalId, None)
         } else {
           updatePropertiesForAsset(id, verifiedProperties.toSeq, roadLink.get.administrativeClass, asset.nationalId, MassTransitStopOperations.liviIdValueOption(asset.propertyData))
@@ -494,7 +497,7 @@ trait MassTransitStopService extends PointAssetOperations {
         case (false, false, _) => Operation.Noop
       }
 
-      if(optionalPosition.isDefined && operation == Operation.Update) {
+      if (optionalPosition.isDefined && operation == Operation.Update) {
         val position = optionalPosition.get
         val assetPoint = Point(asset.lon, asset.lat)
         val newPoint = Point(position.lon, position.lat)
@@ -557,7 +560,6 @@ trait MassTransitStopService extends PointAssetOperations {
 
   def updateExistingById(id: Long, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: Int => Unit, withTransaction: Boolean = true): MassTransitStopWithProperties = {
     val props = updatedProperties(properties.toSeq)
-
     if(withTransaction){
       withDynTransaction {
         updateExisting(withId(id), optionalPosition, props.toSet, username, municipalityValidation)
