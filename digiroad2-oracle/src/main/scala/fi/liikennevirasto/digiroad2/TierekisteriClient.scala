@@ -167,7 +167,7 @@ trait TierekisteriAssetData {
 
 case class TierekisteriTrafficData(roadNumber: Long, roadPartNumber: Long, starMValue: Double, endMValue: Double, kvl: Int) extends TierekisteriAssetData
 
-case class TierekisteriLighting(roadNumber: Long, roadPartNumber: Long, starMValue: Double, endMValue: Double) extends TierekisteriAssetData
+case class TierekisteriLighting(roadNumber: Long, roadPartNumber: Long, endRoadPartNumber: Long, starMValue: Double, endMValue: Double) extends TierekisteriAssetData
 
 case class TierekisteriError(content: Map[String, Any], url: String)
 
@@ -554,6 +554,7 @@ trait TierekisteriAssetDataClient extends TierekisteriClient {
   protected val trRoadPartNumber = "OSA"
   protected val trStartMValue = "ETAISYYS"
   protected val trEndMValue = "LET"
+  protected val trEndRoadPartNumber = "LOSA"
 
   private val serviceUrl : String = tierekisteriRestApiEndPoint + serviceName
   private def serviceUrl(assetType: String, roadNumber: Long) : String = serviceUrl + assetType + "/" + roadNumber
@@ -645,10 +646,11 @@ class TierekisteriLightingAsset(trEndPoint: String, trEnable: Boolean, httpClien
     //Mandatory field
     val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
     val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
+    val endRoadPartNumber = convertToLong(getMandatoryFieldValue(data, trEndRoadPartNumber)).get
     val starMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
     val endMValue = convertToDouble(getMandatoryFieldValue(data, trEndMValue)).get
 
-    TierekisteriLighting(roadNumber, roadPartNumber, starMValue, endMValue)
+    TierekisteriLighting(roadNumber, roadPartNumber, endRoadPartNumber, starMValue, endMValue)
   }
 }
 

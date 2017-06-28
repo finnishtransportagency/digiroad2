@@ -73,31 +73,41 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
 
 
   def importLitRoadAsset(tierekisteriLightingAsset: TierekisteriLightingAsset) = {
-    println("\nExpiring litRoad From OTH Database Only with administrativeClass == State")
-    //Get All Municipalities
-    val municipalities: Seq[Int] =
-      OracleDatabase.withDynSession {
-        Queries.getMunicipalities
-      }
 
-    municipalities.foreach { municipality =>
-      println("\nStart processing municipality %d".format(municipality))
-      val roadLinksWithStateFilter = roadLinkService.getVVHRoadLinksF(municipality).filter(_.administrativeClass == State).map(_.linkId)
+    def createLinearAsset(linkId: Long, measures: Measures) = {
+      val assetId = linearAssetService.dao.createLinearAsset(lightingAssetId, linkId, false, SideCode.BothDirections.value,
+        measures, "batch_process_lighting", vvhClient.createVVHTimeStamp(), Some(LinkGeomSource.NormalLinkInterface.value))
 
-      OracleDatabase.withDynTransaction {
-        oracleLinearAssetDao.fetchLinearAssetsByLinkIds(lightingAssetId, roadLinksWithStateFilter, LinearAssetTypes.numericValuePropertyId).map { persistedLinearAsset =>
-          oracleLinearAssetDao.expireAssetsById(persistedLinearAsset.id)
-          println("Asset with Id: " + persistedLinearAsset.id + " Expired.")
-        }
-      }
-      println("\nEnd processing municipality %d".format(municipality))
+      linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, 1)
+      println("\nCreated OTH Lighting assets form TR data with assetId " + assetId)
     }
-    println("\nLighting data Expired")
+
+//    println("\nExpiring litRoad From OTH Database Only with administrativeClass == State")
+//    //Get All Municipalities
+//    val municipalities: Seq[Int] =
+//      OracleDatabase.withDynSession {
+//        Queries.getMunicipalities
+//      }
+//
+//    municipalities.foreach { municipality =>
+//      println("\nStart processing municipality %d".format(municipality))
+//      val roadLinksWithStateFilter = roadLinkService.getVVHRoadLinksF(municipality).filter(_.administrativeClass == State).map(_.linkId)
+//
+//      OracleDatabase.withDynTransaction {
+//        oracleLinearAssetDao.fetchLinearAssetsByLinkIds(lightingAssetId, roadLinksWithStateFilter, LinearAssetTypes.numericValuePropertyId).map { persistedLinearAsset =>
+//          oracleLinearAssetDao.expireAssetsById(persistedLinearAsset.id)
+//          println("Asset with Id: " + persistedLinearAsset.id + " Expired.")
+//        }
+//      }
+//      println("\nEnd processing municipality %d".format(municipality))
+//    }
+//    println("\nLighting data Expired")
 
     println("\nFetch Road Numbers From Viite")
-    val roadNumbers = OracleDatabase.withDynSession {
-      roadAddressDao.getRoadNumbers()
-    }
+//    val roadNumbers = OracleDatabase.withDynSession {
+//      roadAddressDao.getRoadNumbers()
+      val roadNumbers = Seq(87)
+//    }
     println("\nEnd of Fetch ")
 
     println("roadNumbers: ")
@@ -114,7 +124,7 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
 
         newTRLighting.foreach { trl =>
           OracleDatabase.withDynTransaction {
-            println("\nFetch road addresses to link ids using Viite, trRoadNumber, roadPartNumber start and end " + trl.roadNumber + " " + trl.roadPartNumber + " " + trl.starMValue + " " + trl.endMValue)
+            println("\nFetch road addresses to link ids using Viite, trRoadNumber, roadPartNumber, start, end and endRoadPartNumber " + trl.roadNumber + " " + trl.roadPartNumber + " " + trl.starMValue + " " + trl.endMValue + " " + trl.endRoadPartNumber)
             val roadAddresses = roadAddressDao.getRoadAddressesFiltered(trl.roadNumber, trl.roadPartNumber, trl.starMValue, trl.endMValue)
             val roadAddressLinks = roadAddresses.map(ra => ra.linkId).toSet
             val vvhRoadlinks = roadLinkService.fetchVVHRoadlinks(roadAddressLinks).filter(_.administrativeClass == State)
@@ -136,17 +146,53 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
                     (trl.starMValue - ra.startAddrMValue) + ra.startMValue
                   }
 
-                val newEndMValue =
-                  if (trl.endMValue <= ra.endAddrMValue) {
-                    ra.endMValue
+                if (trl.roadPartNumber.equals(trl.endRoadPartNumber)) {
+                  if (ra.endAddrMValue <= trl.endMValue) {
+                    createLinearAsset(ra.linkId, Measures(newStartMValue, ra.endMValue))
                   } else {
-                    ra.endMValue - (ra.endAddrMValue - trl.endMValue)
+                    val newEndMValue = ra.endMValue - (ra.endAddrMValue - trl.endMValue)
+                    createLinearAsset(ra.linkId, Measures(newStartMValue, newEndMValue))
                   }
-                val assetId = linearAssetService.dao.createLinearAsset(lightingAssetId, ra.linkId, false, SideCode.BothDirections.value,
-                  Measures(newStartMValue, newEndMValue), "batch_process_lighting", vvhClient.createVVHTimeStamp(), Some(LinkGeomSource.NormalLinkInterface.value))
+                } else {
+                  createLinearAsset(ra.linkId, Measures(newStartMValue, ra.endMValue))
+                  var roadPartNumberCount = trl.roadPartNumber + 1
 
-                linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, 1)
-                println("\nCreated OTH Lighting assets form TR data with assetId " + assetId)
+                  while (roadPartNumberCount != trl.endRoadPartNumber) {
+                    val trLTEst = trLighting
+                    val intermTRL = trLTEst.find(intermTrl => intermTrl.roadPartNumber == roadPartNumberCount)
+
+                    intermTRL.map { iTRL =>
+                      val iRoadAddresses = roadAddressDao.getRoadAddressesFiltered(iTRL.roadNumber, iTRL.roadPartNumber, iTRL.starMValue, iTRL.endMValue)
+                      val iRoadAddressLinks = iRoadAddresses.map(ira => ira.linkId).toSet
+                      val iVvhRoadlinks = roadLinkService.fetchVVHRoadlinks(iRoadAddressLinks).filter(_.administrativeClass == State)
+
+                      iRoadAddresses
+                        .filter(iRA => iVvhRoadlinks.exists(_.linkId == iRA.linkId))
+                        .map { iRA => createLinearAsset(iRA.linkId, Measures(iRA.startMValue, iRA.endMValue))
+                        }
+                    }
+
+                    roadPartNumberCount = roadPartNumberCount + 1
+                  }
+
+//                  trLighting.find(endTRL => endTRL.roadPartNumber == trl.endRoadPartNumber) map {
+//                    endTRL =>
+//                      val endRoadAddresses = roadAddressDao.getRoadAddressesFiltered(endTRL.roadNumber, endTRL.roadPartNumber, endTRL.starMValue, endTRL.endMValue)
+//                      val endRoadAddressLinks = endRoadAddresses.map(endRA => endRA.linkId).toSet
+//                      val endVvhRoadlinks = roadLinkService.fetchVVHRoadlinks(endRoadAddressLinks).filter(_.administrativeClass == State)
+//
+//                      endRoadAddresses
+//                        .filter(endRA => endVvhRoadlinks.exists(_.linkId == endRA.linkId))
+//                        .map { endRA =>
+//                          if (trl.endMValue <= endRA.endAddrMValue) {
+////                            createLinearAsset(ra.linkId, Measures(newStartMValue, ra.endMValue))
+////                          } else {
+////                            val newEndMValue = endRA.endMValue - (endRA.endAddrMValue - trl.endMValue)
+////                            createLinearAsset(ra.linkId, Measures(newStartMValue, newEndMValue))
+//                          }
+//                        }
+//                  }
+                }
               }
           }
         }
