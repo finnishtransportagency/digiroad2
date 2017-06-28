@@ -146,7 +146,7 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
                     (trl.startAddressMValue - ra.startAddrMValue) + ra.startMValue
                   }
 
-                if (trl.roadPartNumber.equals(trl.endRoadPartNumber)) {
+                if (trl.startRoadPartNumber.equals(trl.endRoadPartNumber)) {
                   if (ra.endAddrMValue <= trl.endAddressMValue) {
                     createLinearAsset(ra.linkId, Measures(newStartMValue, ra.endMValue))
                   } else {
@@ -155,14 +155,14 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
                   }
                 } else {
                   createLinearAsset(ra.linkId, Measures(newStartMValue, ra.endMValue))
-                  var roadPartNumberCount = trl.roadPartNumber + 1
+                  var roadPartNumberCount = trl.startRoadPartNumber + 1
 
                   while (roadPartNumberCount != trl.endRoadPartNumber) {
                     val trLTEst = trLighting
-                    val intermTRL = trLTEst.find(intermTrl => intermTrl.roadPartNumber == roadPartNumberCount)
+                    val intermTRL = trLTEst.find(intermTrl => intermTrl.startRoadPartNumber == roadPartNumberCount)
 
                     intermTRL.map { iTRL =>
-                      val iRoadAddresses = roadAddressDao.getRoadAddressesFiltered(iTRL.roadNumber, iTRL.roadPartNumber, iTRL.starMValue, iTRL.endMValue)
+                      val iRoadAddresses = roadAddressDao.getRoadAddressesFiltered(iTRL.roadNumber, iTRL.startRoadPartNumber, iTRL.startAddressMValue, iTRL.endAddressMValue)
                       val iRoadAddressLinks = iRoadAddresses.map(ira => ira.linkId).toSet
                       val iVvhRoadlinks = roadLinkService.fetchVVHRoadlinks(iRoadAddressLinks).filter(_.administrativeClass == State)
 
