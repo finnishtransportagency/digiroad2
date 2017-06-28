@@ -10,20 +10,19 @@ object RoadLinkServiceDAO {
   private val AdministrativeClass = "administrative_class"
   private val VVHAdministrativeClass = "vvh_administrative_class"
 
-  def updateExistingLinkPropertyRow(table: String, column: String, linkId: Long, username: Option[String], existingValue: Int, value: Int, mmlId: Option[Long]) = {
+  def updateExistingLinkPropertyRow(table: String, column: String, linkId: Long, username: Option[String], existingValue: Int, value: Int) = {
     if (existingValue != value) {
       sqlu"""update #$table
                  set #$column = $value,
-                     mml_id = $mmlId,
                      modified_date = current_timestamp,
                      modified_by = $username
                  where link_id = $linkId""".execute
     }
   }
 
-  def insertNewLinkProperty(table: String, column: String, linkId: Long, username: Option[String], value: Int, mml_id: Option[Long]) = {
-    sqlu"""insert into #$table (id, link_id, #$column, modified_by, mml_id )
-                   select primary_key_seq.nextval, $linkId, $value, $username, $mml_id
+  def insertNewLinkProperty(table: String, column: String, linkId: Long, username: Option[String], value: Int) = {
+    sqlu"""insert into #$table (id, link_id, #$column, modified_by )
+                   select primary_key_seq.nextval, $linkId, $value, $username
                    from dual
                    where not exists (select * from #$table where link_id = $linkId)""".execute
   }
@@ -60,7 +59,7 @@ object RoadLinkServiceDAO {
   }
 
   def updateFunctionalClass(linkId: Long, username: Option[String], existingValue: Int, value: Int) = {
-    updateExistingLinkPropertyRow(FunctionalClass, FunctionalClass, linkId, username, existingValue, value, None)
+    updateExistingLinkPropertyRow(FunctionalClass, FunctionalClass, linkId, username, existingValue, value)
   }
 
   def deleteExistingLinkPropertyRow(table: String, column: String, linkId: Long) = {
@@ -73,19 +72,19 @@ object RoadLinkServiceDAO {
   }
 
   def updateLinkType(linkId: Long, username: Option[String], existingValue: Int, value: Int) = {
-    updateExistingLinkPropertyRow(LinkType, LinkType, linkId, username, existingValue, value, None)
+    updateExistingLinkPropertyRow(LinkType, LinkType, linkId, username, existingValue, value)
   }
 
   def insertFunctionalClass(linkId: Long, username: Option[String], value: Int) = {
-    insertNewLinkProperty(FunctionalClass, FunctionalClass, linkId, username, value, None)
+    insertNewLinkProperty(FunctionalClass, FunctionalClass, linkId, username, value)
   }
 
   def insertTrafficDirection(linkId: Long, username: Option[String], value: Int) = {
-    insertNewLinkProperty(TrafficDirection, TrafficDirection, linkId, username, value, None)
+    insertNewLinkProperty(TrafficDirection, TrafficDirection, linkId, username, value)
   }
 
   def insertLinkType(linkId: Long, username: Option[String], value: Int) = {
-    insertNewLinkProperty(LinkType, LinkType, linkId, username, value, None)
+    insertNewLinkProperty(LinkType, LinkType, linkId, username, value)
   }
 
   def getFunctionalClassValue(linkId: Long) = {

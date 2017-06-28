@@ -455,9 +455,9 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   def checkMMLId(vvhRoadLink: VVHRoadlink) : Option[Long] = {
-    vvhRoadLink.attributes.contains("MTKID") match {
-      case true => Some(vvhRoadLink.attributes("MTKID").asInstanceOf[BigInt].longValue())
-      case false => None
+    vvhRoadLink.attributes("MTKID") match {
+      case Some(mmlId) => Some(mmlId.asInstanceOf[BigInt].longValue())
+      case _ => None
     }
   }
 
@@ -500,7 +500,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     (optionalExistingValue, optionalVVHValue) match {
       case (Some(existingValue), _) =>
         vvhColumn.isEmpty match{
-          case true => RoadLinkServiceDAO.updateExistingLinkPropertyRow(table, column, linkId, username, existingValue, value, mmlId)
+          case true => RoadLinkServiceDAO.updateExistingLinkPropertyRow(table, column, linkId, username, existingValue, value)
           case _ => RoadLinkServiceDAO.updateExistingLinkPropertyRowWithVVHColumn(table, column, vvhColumn, linkId, username, existingValue, value, mmlId, optionalVVHValue)
         }
       case (None, None) =>
@@ -517,7 +517,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
                                  latestModifiedBy: Option[String], mmlId: Option[Long]) = {
     if (latestModifiedAt.isEmpty) {
       vvhColumn.isEmpty match{
-        case true => RoadLinkServiceDAO.insertNewLinkProperty(table, column, linkId, username, value, mmlId)
+        case true => RoadLinkServiceDAO.insertNewLinkProperty(table, column, linkId, username, value)
         case _ => RoadLinkServiceDAO.insertNewLinkPropertyWithVVHColumn(table, column, vvhColumn, linkId, username, value, mmlId, optionalVVHValue)
       }
     } else{
