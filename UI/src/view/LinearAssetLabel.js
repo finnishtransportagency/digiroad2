@@ -41,7 +41,7 @@
 
         var createMultiStyles = function(values){
           var i = 0;
-          var splitValues = values.replace(/\s/g,'').split(/[\n,]+/);
+          var splitValues = values.replace(/[ \t\f\v]/g,'').split(/[\n,]+/);
           var styles = [];
           _.forEach(splitValues, function(value){
             i++;
@@ -84,7 +84,7 @@
         var getTextValue = function(value) {
           if(!correctValues(value))
             return '';
-          return "" + value;
+          return '' + value;
         };
 
         var correctValues = function(value){
