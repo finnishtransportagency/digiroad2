@@ -128,7 +128,9 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "endMeasure" -> speedLimit.endMeasure,
         "linkId" -> speedLimit.linkId,
         latestModificationTime(speedLimit.createdDateTime, speedLimit.modifiedDateTime),
-        lastModifiedBy(speedLimit.createdBy, speedLimit.modifiedBy))
+        lastModifiedBy(speedLimit.createdBy, speedLimit.modifiedBy),
+        "linkSource" -> speedLimit.linkSource.value
+      )
     }
   }
 
@@ -220,7 +222,9 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "startMeasure" -> asset.startMeasure,
         "endMeasure" -> asset.endMeasure,
         latestModificationTime(asset.createdDateTime, asset.modifiedDateTime),
-        lastModifiedBy(asset.createdBy, asset.modifiedBy))
+        lastModifiedBy(asset.createdBy, asset.modifiedBy),
+        "linkSource" -> asset.linkSource.value
+      )
     }
   }
 
