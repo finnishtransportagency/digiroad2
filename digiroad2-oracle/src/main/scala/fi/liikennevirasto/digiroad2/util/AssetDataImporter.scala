@@ -349,13 +349,13 @@ class AssetDataImporter {
       val roadLinkLength = GeometryUtils.geometryLength(roadLinks.find(_.linkId == linkId).get.geometry)
       val expandedSegments = expandSegments(segments, validExceptions.filter(_._2 == linkId).map(_._4))
       val expandedExceptions = expandExceptions(validExceptions.filter(_._2 == linkId), segments.map(_._7))
+      val roadLinkSource = roadLinks.find(_.linkId == linkId).get.linkSource
 
       expandedSegments.groupBy(_._7).flatMap { case (sideCode, segmentsPerSide) =>
         val prohibitionResults = parseProhibitionValues(segmentsPerSide, expandedExceptions, linkId, sideCode)
         val linearAssets = prohibitionResults.filter(_.isRight).map(_.right.get) match {
           case Nil => Nil
-          case prohibitionValues => Seq(Right(PersistedLinearAsset(0l, linkId, sideCode, Some(Prohibitions(prohibitionValues)), 0.0, roadLinkLength, None, None, None, None, false, 190, 0, None, LinkGeomSource.Unknown)))
-         //TODO : Check linkSource value
+          case prohibitionValues => Seq(Right(PersistedLinearAsset(0l, linkId, sideCode, Some(Prohibitions(prohibitionValues)), 0.0, roadLinkLength, None, None, None, None, false, 190, 0, None, roadLinkSource)))
         }
         val parseErrors = prohibitionResults.filter(_.isLeft).map(_.left.get).map(Left(_))
         linearAssets ++ parseErrors
