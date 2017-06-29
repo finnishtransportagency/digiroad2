@@ -5,7 +5,7 @@ import java.text.DecimalFormat
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing, Unknown}
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.util.Track
@@ -100,7 +100,7 @@ case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
                        discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
                        endDate: Option[DateTime] = None, modifiedBy: Option[String] = None, lrmPositionId : Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode, adjustedTimestamp: Long,
                        calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false,
-                       geom: Seq[Point]) extends BaseRoadAddress {
+                       geom: Seq[Point], linkGeomSource: LinkGeomSource) extends BaseRoadAddress {
   val endCalibrationPoint = calibrationPoints._2
   val startCalibrationPoint = calibrationPoints._1
 
@@ -224,11 +224,12 @@ object RoadAddressDAO {
       val y = r.nextDouble()
       val x2 = r.nextDouble()
       val y2 = r.nextDouble()
+      val geomSource = LinkGeomSource.apply(r.nextInt)
 
       RoadAddress(id, roadNumber, roadPartNumber, Track.apply(trackCode), Discontinuity.apply(discontinuity),
         startAddrMValue, endAddrMValue, startDate, endDate, createdBy, lrmPositionId, linkId, startMValue, endMValue,
         SideCode.apply(sideCode), adjustedTimestamp, calibrations(CalibrationCode.apply(calibrationCode), linkId, startMValue, endMValue, startAddrMValue,
-          endAddrMValue, SideCode.apply(sideCode)), floating, Seq(Point(x,y), Point(x2,y2)))
+          endAddrMValue, SideCode.apply(sideCode)), floating, Seq(Point(x,y), Point(x2,y2)), geomSource)
     }
   }
 
@@ -851,7 +852,7 @@ object RoadAddressDAO {
   }
 
   def create(roadAddresses: Seq[RoadAddress], createdBy : Option[String] = None): Seq[Long] = {
-    val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure, adjusted_timestamp) values (?, ?, ?, ?, ?, ?)")
+    val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure, adjusted_timestamp, link_source) values (?, ?, ?, ?, ?, ?, ?)")
     val addressPS = dynamicSession.prepareStatement("insert into ROAD_ADDRESS (id, lrm_position_id, road_number, road_part_number, " +
       "track_code, discontinuity, START_ADDR_M, END_ADDR_M, start_date, end_date, created_by, " +
       "VALID_FROM, geometry, floating, calibration_points) values (?, ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), " +
@@ -859,7 +860,8 @@ object RoadAddressDAO {
       "?,?,0.0,?,?,?,0.0,?)), ?, ?)")
     val ids = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= ${roadAddresses.size}""".as[Long].list
     val savedIds = roadAddresses.zip(ids).map { case ((address), (lrmId)) =>
-      createLRMPosition(lrmPositionPS, lrmId, address.linkId, address.sideCode.value, address.startMValue, address.endMValue, address.adjustedTimestamp)
+      createLRMPosition(lrmPositionPS, lrmId, address.linkId, address.sideCode.value, address.startMValue,
+        address.endMValue, address.adjustedTimestamp, address.linkGeomSource.value)
       val nextId = if (address.id == fi.liikennevirasto.viite.NewRoadAddress)
         Sequences.nextViitePrimaryKeySeqValue
       else address.id
@@ -900,13 +902,14 @@ object RoadAddressDAO {
   }
 
   def createLRMPosition(lrmPositionPS: PreparedStatement, id: Long, linkId: Long, sideCode: Int,
-                        startM: Double, endM: Double, adjustedTimestamp : Long): Unit = {
+                        startM: Double, endM: Double, adjustedTimestamp : Long, geomSource: Int): Unit = {
     lrmPositionPS.setLong(1, id)
     lrmPositionPS.setLong(2, linkId)
     lrmPositionPS.setLong(3, sideCode)
     lrmPositionPS.setDouble(4, startM)
     lrmPositionPS.setDouble(5, endM)
     lrmPositionPS.setDouble(6, adjustedTimestamp)
+    lrmPositionPS.setInt(7, geomSource)
     lrmPositionPS.addBatch()
   }
 
