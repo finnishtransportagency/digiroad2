@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.RoadAddressException
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink, RoadAddressLinkPartitioner}
+import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink, RoadAddressLinkPartitioner, ProjectLinkPartitioner}
 import fi.liikennevirasto.viite.{ChangeProject, ProjectService, ReservedRoadPart, RoadAddressService}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
@@ -359,7 +359,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       case _ => projectService.getProjectRoadLinks(projectId, boundingRectangle, Seq((1, 19999)), Set())
     }
 
-    val partitionedRoadLinks = RoadAddressLinkPartitioner.partition(viiteRoadLinks)
+    val partitionedRoadLinks = ProjectLinkPartitioner.partition(viiteRoadLinks)
     partitionedRoadLinks.map {
       _.map(projectAddressLinkToApi)
     }

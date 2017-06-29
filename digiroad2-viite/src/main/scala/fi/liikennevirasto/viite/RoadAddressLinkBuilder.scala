@@ -78,9 +78,14 @@ object RoadAddressLinkBuilder {
 
     val geom = roadLink.geometry
     val length = GeometryUtils.geometryLength(geom)
+    val roadNumber = Option(projectLink.roadNumber).getOrElse(roadLink.attributes.get("ROADNUMBER")).asInstanceOf[Option[Long]].getOrElse(0l)
+    val roadPartNumber = Option(projectLink.roadPartNumber).getOrElse(roadLink.attributes.get("ROADPARTNUMBER")).asInstanceOf[Option[Long]].getOrElse(0l)
+
+    val trackCode = Option(projectLink.track.value).getOrElse(roadLink.attributes.get("TRACKCODE")).asInstanceOf[Option[Int]].getOrElse(99)
+
     ProjectAddressLink(projectLink.id, roadLink.linkId, geom,
       length, roadLink.administrativeClass, roadLink.linkType, roadLinkType, roadLink.constructionType, roadLink.linkSource, getRoadType(roadLink.administrativeClass, roadLink.linkType), extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
-      roadLink.attributes, projectLink.roadNumber, projectLink.roadPartNumber, projectLink.track.value, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), projectLink.discontinuity.value,
+      roadLink.attributes, roadNumber, roadPartNumber, trackCode, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), projectLink.discontinuity.value,
       projectLink.startAddrMValue, projectLink.endAddrMValue, projectLink.startMValue, projectLink.endMValue,
       projectLink.sideCode,
       projectLink.calibrationPoints._1,
