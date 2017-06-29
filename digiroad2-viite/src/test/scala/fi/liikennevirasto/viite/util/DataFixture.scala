@@ -172,11 +172,11 @@ object DataFixture {
       }
 
     //For each municipality get all VVH Roadlinks
-    municipalities.foreach { municipality =>
+    municipalities.sorted.foreach { municipality =>
       println("Start processing municipality %d".format(municipality))
 
       //Obtain all RoadLink by municipality and change info from VVH
-      val (roadLinks, changedRoadLinks) = roadLinkService.reloadRoadLinksAndChangesFromVVH(municipality.toInt)
+      val (roadLinks, changedRoadLinks) = roadLinkService.getRoadLinksAndChangesFromVVH(municipality.toInt)
       println ("Total roadlink for municipality " + municipality + " -> " + roadLinks.size)
       println ("Total of changes for municipality " + municipality + " -> " + changedRoadLinks.size)
       if(roadLinks.nonEmpty) {
@@ -185,9 +185,16 @@ object DataFixture {
           RoadAddressDAO.fetchByLinkId(roadLinks.map(_.linkId).toSet)
         }
         try {
-          roadAddressService.applyChanges(roadLinks, changedRoadLinks, roadAddresses.groupBy(_.linkId))
+          val groupedAddresses = roadAddresses.groupBy(_.linkId)
+          val timestamps = groupedAddresses.mapValues(_.map(_.adjustedTimestamp).min)
+          val affectingChanges = changedRoadLinks.filter(ci =>
+            ci.oldId.nonEmpty && timestamps.get(ci.oldId.get).nonEmpty &&
+              ci.affects(ci.oldId.get, timestamps(ci.oldId.get)))
+          println ("Affecting changes for municipality " + municipality + " -> " + affectingChanges.size)
+
+          roadAddressService.applyChanges(roadLinks, affectingChanges, groupedAddresses)
         } catch {
-          case e: Exception => println("ERR! -> " + e)
+          case e: Exception => println("ERR! -> " + e.getMessage)
         }
       }
 
