@@ -166,11 +166,32 @@ trait TierekisteriAssetData {
   val endAddressMValue: Long
 }
 
+case class AddressSection(roadNumber: Long, roadPartNumber: Long, track: Track, startAddressMValue: Long, endAddressMValue: Option[Long])
+
 case class TierekisteriTrafficData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
                                    startAddressMValue: Long, endAddressMValue: Long, kvl: Int) extends TierekisteriAssetData
 
 case class TierekisteriLighting(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
-                                track: Track, startAddressMValue: Long, endAddressMValue: Long) extends TierekisteriAssetData
+                                track: Track, startAddressMValue: Long, endAddressMValue: Long) extends TierekisteriAssetData {
+  val getRoadAddressSections: Seq[AddressSection] = {
+    Seq(AddressSection(roadNumber, startRoadPartNumber, track, startAddressMValue,
+      if (endRoadPartNumber == startRoadPartNumber)
+        Some(endAddressMValue)
+      else
+        None)) ++ {
+      if (startRoadPartNumber != endRoadPartNumber)
+        (startRoadPartNumber until endRoadPartNumber).tail.map(part => AddressSection(roadNumber, part, track, 0L, None))
+      else
+        Seq[AddressSection]()
+    } ++
+      {
+        if (endRoadPartNumber == startRoadPartNumber)
+          Seq[AddressSection]()
+        else
+          Seq(AddressSection(roadNumber, endRoadPartNumber, track, 0L, Some(endAddressMValue)))
+      }
+  }
+}
 
 case class TierekisteriError(content: Map[String, Any], url: String)
 
@@ -400,7 +421,7 @@ class TierekisteriMassTransitStopClient(trEndPoint: String, trEnabled: Boolean, 
 
   /**
     * Returns the anwser to the question "Is Tierekisteri Enabled?".
- *
+    *
     * @return Type: Boolean - If TR client is enabled
     */
   def isTREnabled : Boolean = {
