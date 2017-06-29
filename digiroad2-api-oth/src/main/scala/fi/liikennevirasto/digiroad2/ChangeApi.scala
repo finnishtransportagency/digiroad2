@@ -4,9 +4,10 @@ import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset.{SideCode, TrafficDirection}
 import fi.liikennevirasto.digiroad2.linearasset.{PieceWiseLinearAsset, SpeedLimit}
+import fi.liikennevirasto.digiroad2.roadaddress.oracle.ChangedRoadAddress
 import org.joda.time.DateTime
 import org.json4s.{DefaultFormats, Formats}
-import org.scalatra.ScalatraServlet
+import org.scalatra.{BadRequest, ScalatraServlet}
 import org.scalatra.json.JacksonJsonSupport
 
 
@@ -20,9 +21,15 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
 
   get("/:assetType") {
     contentType = formats("json")
-    val since = DateTime.parse(params("since"))
-    val until = DateTime.parse(params("until"))
-    params("assetType") match {
+    val since = DateTime.parse(params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter"))))
+    val assteType = params("assetType")
+    val until = params.get("until") match {
+      case Some(dateValue) => DateTime.parse(dateValue)
+      case None if assteType == "road_numbers" => DateTime.now()
+      case _ => halt(BadRequest("Missing mandatory 'until' parameter"))
+    }
+
+    assteType match {
       case "speed_limits"                => speedLimitsToGeoJson(since, speedLimitService.getChanged(since, until))
       case "total_weight_limits"         => linearAssetsToGeoJson(since, linearAssetService.getChanged(30, since, until))
       case "trailer_truck_weight_limits" => linearAssetsToGeoJson(since, linearAssetService.getChanged(40, since, until))
@@ -32,7 +39,7 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
       case "length_limits"               => linearAssetsToGeoJson(since, linearAssetService.getChanged(80, since, until))
       case "width_limits"                => linearAssetsToGeoJson(since, linearAssetService.getChanged(90, since, until))
       case "road_names"                  => vvhRoadLinkToGeoJson(roadLinkService.getChanged(since, until))
-      case "road_numbers"                => roadAddressesService.getChanged(since)
+      case "road_numbers"                => roadNumberToGeoJson(roadAddressesService.getChanged(since))
     }
   }
 
@@ -147,6 +154,52 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
       "type" -> "FeatureCollection",
       "features" ->
         changedRoadlinks.map { case ChangedVVHRoadlink(link, value, createdAt, changeType) =>
+          Map(
+            "type" -> "Feature",
+            "id" -> link.linkId,
+            "geometry" -> Map(
+              "type" -> "LineString",
+              "coordinates" -> link.geometry.map(p => Seq(p.x, p.y, p.z))
+            ),
+            "properties" ->
+              Map(
+                "value" -> value,
+                "link" -> Map(
+                  "type" -> "Feature",
+                  "id" -> link.linkId,
+                  "geometry" -> Map(
+                    "type" -> "LineString",
+                    "coordinates" -> link.geometry.map(p => Seq(p.x, p.y, p.z))
+                  ),
+                  "properties" -> Map(
+                    "functionalClass" -> link.functionalClass,
+                    "type" -> link.linkType.value,
+                    "length" -> link.length
+                  )
+                ),
+                "sideCode" -> (link.trafficDirection match {
+                  case TrafficDirection.AgainstDigitizing =>
+                    SideCode.AgainstDigitizing.value
+                  case TrafficDirection.TowardsDigitizing =>
+                    SideCode.TowardsDigitizing.value
+                  case _ =>
+                    SideCode.BothDirections.value
+                }),
+                "startMeasure" -> 0,
+                "endMeasure" -> link.geometry.length,
+                "modifiedAt" -> link.modifiedAt,
+                "createdAt" -> createdAt.map(DateTimePropertyFormat.print(_)),
+                "changeType" -> changeType
+              )
+          )
+        }
+    )
+
+  private def roadNumberToGeoJson(changedRoadAddress: Seq[ChangedRoadAddress]) =
+    Map(
+      "type" -> "FeatureCollection",
+      "features" ->
+        changedRoadAddress.map { case ChangedRoadAddress(link, value, createdAt, changeType) =>
           Map(
             "type" -> "Feature",
             "id" -> link.linkId,

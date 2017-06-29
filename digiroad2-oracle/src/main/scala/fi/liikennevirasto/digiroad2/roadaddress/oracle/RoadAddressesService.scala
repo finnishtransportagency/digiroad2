@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.util.VVHSerializer
 import org.joda.time.{DateTime, DateTimeZone}
 import org.slf4j.LoggerFactory
 
-case class ChangedRoadAddress(address: RoadAddress, value: Long, createdAt: String, changeType: String, link: RoadLink)
+case class ChangedRoadAddress(link: RoadLink, value: Long, createdAt: String, changeType: String)
 
 class RoadAddressesService(val eventbus: DigiroadEventBus, roadLinkServiceImplementation: RoadLinkService) {
 
@@ -29,14 +29,13 @@ class RoadAddressesService(val eventbus: DigiroadEventBus, roadLinkServiceImplem
     val roadLinks = roadLinkServiceImplementation.getRoadLinksAndComplementaryByLinkIdsFromVVH(roadAddresses.map(_.linkId).toSet)
     val roadLinksWithoutWalkways = roadLinks.filterNot(_.linkType == CycleOrPedestrianPath).filterNot(_.linkType == TractorRoad)
 
-    roadAddresses.map { roadAddress =>
+    roadAddresses.flatMap { roadAddress =>
       roadLinksWithoutWalkways.find(_.linkId == roadAddress.linkId).map { roadLink =>
         ChangedRoadAddress(
-          address = roadAddress,
+          link = roadLink,
           value = roadAddress.roadNumber,
           createdAt = roadAddress.startDate.get.toString(),
-          changeType = "Modify",
-          link = roadLink
+          changeType = "Modify"
         )
       }
     }
