@@ -12,10 +12,11 @@ import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkProperties}
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
+import fi.liikennevirasto.digiroad2.roadaddress.oracle.{RoadAddress, RoadAddressDAO}
 import fi.liikennevirasto.digiroad2.roadlinkservice.oracle.RoadLinkServiceDAO
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.{VVHRoadLinkHistoryProcessor, VVHSerializer}
-import org.joda.time.{DateTimeZone, DateTime}
+import org.joda.time.{DateTime, DateTimeZone}
 import org.joda.time.format.ISODateTimeFormat
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
