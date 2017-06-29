@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.GeometryUtils
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.State
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.viite.RoadAddressLinkBuilder
@@ -90,7 +90,7 @@ object RoadAddressFiller {
     Seq(MissingRoadAddress(roadLink.linkId, None, None, PublicRoad, None, None, Some(0.0), Some(roadLink.length), isPublicRoad(roadLink) match {
       case true => Anomaly.NoAddressGiven
       case false => Anomaly.None
-    }))
+    },Seq.empty[Point]))
   }
 
   private def buildMissingRoadAddress(rl: RoadLink, roadAddrSeq: Seq[MissingRoadAddress]): Seq[RoadAddressLink] = {
