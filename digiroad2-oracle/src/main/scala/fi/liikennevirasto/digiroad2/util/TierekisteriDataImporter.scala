@@ -82,32 +82,31 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
       println("\nCreated OTH Lighting assets form TR data with assetId " + assetId)
     }
 
-//    println("\nExpiring litRoad From OTH Database Only with administrativeClass == State")
-//    //Get All Municipalities
-//    val municipalities: Seq[Int] =
-//      OracleDatabase.withDynSession {
-//        Queries.getMunicipalities
-//      }
-//
-//    municipalities.foreach { municipality =>
-//      println("\nStart processing municipality %d".format(municipality))
-//      val roadLinksWithStateFilter = roadLinkService.getVVHRoadLinksF(municipality).filter(_.administrativeClass == State).map(_.linkId)
-//
-//      OracleDatabase.withDynTransaction {
-//        oracleLinearAssetDao.fetchLinearAssetsByLinkIds(lightingAssetId, roadLinksWithStateFilter, LinearAssetTypes.numericValuePropertyId).map { persistedLinearAsset =>
-//          oracleLinearAssetDao.expireAssetsById(persistedLinearAsset.id)
-//          println("Asset with Id: " + persistedLinearAsset.id + " Expired.")
-//        }
-//      }
-//      println("\nEnd processing municipality %d".format(municipality))
-//    }
-//    println("\nLighting data Expired")
+    println("\nExpiring litRoad From OTH Database Only with administrativeClass == State")
+    //Get All Municipalities
+    val municipalities: Seq[Int] =
+      OracleDatabase.withDynSession {
+        Queries.getMunicipalities
+      }
+
+    municipalities.foreach { municipality =>
+      println("\nStart processing municipality %d".format(municipality))
+      val roadLinksWithStateFilter = roadLinkService.getVVHRoadLinksF(municipality).filter(_.administrativeClass == State).map(_.linkId)
+
+      OracleDatabase.withDynTransaction {
+        oracleLinearAssetDao.fetchLinearAssetsByLinkIds(lightingAssetId, roadLinksWithStateFilter, LinearAssetTypes.numericValuePropertyId).map { persistedLinearAsset =>
+          oracleLinearAssetDao.expireAssetsById(persistedLinearAsset.id)
+          println("Asset with Id: " + persistedLinearAsset.id + " Expired.")
+        }
+      }
+      println("\nEnd processing municipality %d".format(municipality))
+    }
+    println("\nLighting data Expired")
 
     println("\nFetch Road Numbers From Viite")
-//    val roadNumbers = OracleDatabase.withDynSession {
-//      roadAddressDao.getRoadNumbers()
-      val roadNumbers = Seq(87)
-//    }
+    val roadNumbers = OracleDatabase.withDynSession {
+      roadAddressDao.getRoadNumbers()
+    }
     println("\nEnd of Fetch ")
 
     println("roadNumbers: ")
@@ -124,76 +123,87 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
 
         newTRLighting.foreach { trl =>
           OracleDatabase.withDynTransaction {
-            println("\nFetch road addresses to link ids using Viite, trRoadNumber, roadPartNumber, start, end and endRoadPartNumber " + trl.roadNumber + " " + trl.startRoadPartNumber + " " + trl.startAddressMValue + " " + trl.endAddressMValue + " " + trl.endRoadPartNumber)
-            val roadAddresses = roadAddressDao.getRoadAddressesFiltered(trl.roadNumber, trl.startRoadPartNumber, trl.startAddressMValue, trl.endAddressMValue)
-            val roadAddressLinks = roadAddresses.map(ra => ra.linkId).toSet
-            val vvhRoadlinks = roadLinkService.fetchVVHRoadlinks(roadAddressLinks).filter(_.administrativeClass == State)
+            println("\nFetch road addresses to link ids using Viite, trRoadNumber, roadPartNumber, start, end and endRoadPartNumber " + trl.roadNumber + " " + trl.startRoadPartNumber + " " + trl.endRoadPartNumber + " " + trl.startAddressMValue + " " + trl.endAddressMValue)
 
-            println("roadAddresses fetched: ")
-            roadAddresses
-              .filter(ra => vvhRoadlinks.exists(_.linkId == ra.linkId))
-              .foreach { ra =>
-                println(ra.linkId)
-              }
+            val roadAddressSections = trl.getRoadAddressSections
+            val roadNumberTRL = roadAddressSections.head.roadNumber
+            val startRoadPartNumberTRL = roadAddressSections.head.roadPartNumber
+            val endRoadPartNumberTRL = roadAddressSections.last.roadPartNumber
+            val startAddressMValueTRL = roadAddressSections.head.startAddressMValue
+            val endAddressMValueTRL_LAST = roadAddressSections.last.endAddressMValue.getOrElse(trl.endAddressMValue)
+            val endAddressMValueTRL_HEAD = roadAddressSections.head.endAddressMValue.getOrElse(trl.endAddressMValue)
+            val trackTRL = roadAddressSections.head.track
 
-            roadAddresses
-              .filter(ra => vvhRoadlinks.exists(_.linkId == ra.linkId))
-              .foreach { ra =>
-                val newStartMValue =
-                  if (ra.startAddrMValue >= trl.startAddressMValue) {
-                    ra.startMValue
-                  } else {
-                    (trl.startAddressMValue - ra.startAddrMValue) + ra.startMValue
-                  }
+            if (roadAddressSections.size == 1) {
+              //Only One Single Part
+              val roadAddressesWithSinglePart = roadAddressDao.getRoadAddress(roadAddressDao.withRoadAddressSinglePart(roadNumberTRL, startRoadPartNumberTRL, trackTRL.value, startAddressMValueTRL, endAddressMValueTRL_HEAD))
+              val roadAddressLinks = roadAddressesWithSinglePart.map(ra => ra.linkId).toSet
+              val vvhRoadlinks = roadLinkService.fetchVVHRoadlinks(roadAddressLinks).filter(_.administrativeClass == State)
 
-                if (trl.startRoadPartNumber.equals(trl.endRoadPartNumber)) {
-                  if (ra.endAddrMValue <= trl.endAddressMValue) {
-                    createLinearAsset(ra.linkId, Measures(newStartMValue, ra.endMValue))
-                  } else {
-                    val newEndMValue = ra.endMValue - (ra.endAddrMValue - trl.endAddressMValue)
-                    createLinearAsset(ra.linkId, Measures(newStartMValue, newEndMValue))
-                  }
-                } else {
-                  createLinearAsset(ra.linkId, Measures(newStartMValue, ra.endMValue))
-                  var roadPartNumberCount = trl.startRoadPartNumber + 1
+              roadAddressesWithSinglePart
+                .filter(ra => vvhRoadlinks.exists(_.linkId == ra.linkId))
+                .foreach { ra =>
 
-                  while (roadPartNumberCount != trl.endRoadPartNumber) {
-                    val trLTEst = trLighting
-                    val intermTRL = trLTEst.find(intermTrl => intermTrl.startRoadPartNumber == roadPartNumberCount)
-
-                    intermTRL.map { iTRL =>
-                      val iRoadAddresses = roadAddressDao.getRoadAddressesFiltered(iTRL.roadNumber, iTRL.startRoadPartNumber, iTRL.startAddressMValue, iTRL.endAddressMValue)
-                      val iRoadAddressLinks = iRoadAddresses.map(ira => ira.linkId).toSet
-                      val iVvhRoadlinks = roadLinkService.fetchVVHRoadlinks(iRoadAddressLinks).filter(_.administrativeClass == State)
-
-                      iRoadAddresses
-                        .filter(iRA => iVvhRoadlinks.exists(_.linkId == iRA.linkId))
-                        .map { iRA => createLinearAsset(iRA.linkId, Measures(iRA.startMValue, iRA.endMValue))
-                        }
+                  val newStartMValue =
+                    if (ra.startAddrMValue >= startAddressMValueTRL) {
+                      ra.startMValue
+                    } else {
+                      (startAddressMValueTRL - ra.startAddrMValue) + ra.startMValue
                     }
 
-                    roadPartNumberCount = roadPartNumberCount + 1
+                  if (ra.endAddrMValue <= endAddressMValueTRL_HEAD) {
+                    createLinearAsset(ra.linkId, Measures(newStartMValue, ra.endMValue))
+                  } else {
+                    val newEndMValue = ra.endMValue - (ra.endAddrMValue - endAddressMValueTRL_HEAD)
+                    createLinearAsset(ra.linkId, Measures(newStartMValue, newEndMValue))
                   }
-
-//                  trLighting.find(endTRL => endTRL.roadPartNumber == trl.endRoadPartNumber) map {
-//                    endTRL =>
-//                      val endRoadAddresses = roadAddressDao.getRoadAddressesFiltered(endTRL.roadNumber, endTRL.roadPartNumber, endTRL.starMValue, endTRL.endMValue)
-//                      val endRoadAddressLinks = endRoadAddresses.map(endRA => endRA.linkId).toSet
-//                      val endVvhRoadlinks = roadLinkService.fetchVVHRoadlinks(endRoadAddressLinks).filter(_.administrativeClass == State)
-//
-//                      endRoadAddresses
-//                        .filter(endRA => endVvhRoadlinks.exists(_.linkId == endRA.linkId))
-//                        .map { endRA =>
-//                          if (trl.endMValue <= endRA.endAddrMValue) {
-////                            createLinearAsset(ra.linkId, Measures(newStartMValue, ra.endMValue))
-////                          } else {
-////                            val newEndMValue = endRA.endMValue - (endRA.endAddrMValue - trl.endMValue)
-////                            createLinearAsset(ra.linkId, Measures(newStartMValue, newEndMValue))
-//                          }
-//                        }
-//                  }
                 }
-              }
+
+            } else if (roadAddressSections.size == 2) {
+              //Only two parts
+              val roadAddressesWithEndPart = roadAddressDao.getRoadAddress(roadAddressDao.withRoadAddressTwoParts(roadNumberTRL, startRoadPartNumberTRL, endRoadPartNumberTRL, trackTRL.value, startAddressMValueTRL, endAddressMValueTRL_LAST))
+              val roadAddressLinks = roadAddressesWithEndPart.map(ra => ra.linkId).toSet
+              val vvhRoadlinks = roadLinkService.fetchVVHRoadlinks(roadAddressLinks).filter(_.administrativeClass == State)
+
+              roadAddressesWithEndPart
+                .filter(rawep => vvhRoadlinks.exists(_.linkId == rawep.linkId))
+                .foreach { rawep =>
+
+                  if ((rawep.startAddrMValue < startAddressMValueTRL) && (rawep.roadPartNumber == startRoadPartNumberTRL)) {
+                    val newStartMValue = (startAddressMValueTRL - rawep.startAddrMValue) + rawep.startMValue
+                    createLinearAsset(rawep.linkId, Measures(newStartMValue, rawep.endMValue))
+
+                  } else if ((rawep.endAddrMValue > endAddressMValueTRL_LAST) && (rawep.roadPartNumber == trl.endRoadPartNumber)) {
+                    val newEndMValue = rawep.endMValue - (rawep.endAddrMValue - endAddressMValueTRL_LAST)
+                    createLinearAsset(rawep.linkId, Measures(rawep.startMValue, newEndMValue))
+
+                  } else {
+                    createLinearAsset(rawep.linkId, Measures(rawep.startMValue, rawep.endMValue))
+                  }
+                }
+
+            } else {
+              //Multiple Parts Between First and Last Parts
+              val roadAddressesWithMediumEndPart = roadAddressDao.getRoadAddress(roadAddressDao.withRoadAddressMultiParts(roadNumberTRL, startRoadPartNumberTRL, endRoadPartNumberTRL, trackTRL.value, startAddressMValueTRL, endAddressMValueTRL_LAST))
+              val roadAddressLinks = roadAddressesWithMediumEndPart.map(ra => ra.linkId).toSet
+              val vvhRoadlinks = roadLinkService.fetchVVHRoadlinks(roadAddressLinks).filter(_.administrativeClass == State)
+
+              roadAddressesWithMediumEndPart
+                .filter(rawep => vvhRoadlinks.exists(_.linkId == rawep.linkId))
+                .foreach { rawmep =>
+                  if ((rawmep.startAddrMValue < startAddressMValueTRL) && (rawmep.roadPartNumber == startRoadPartNumberTRL)) {
+                    val newStartMValue = (startAddressMValueTRL - rawmep.startAddrMValue) + rawmep.startMValue
+                    createLinearAsset(rawmep.linkId, Measures(newStartMValue, rawmep.endMValue))
+
+                  } else if ((rawmep.endAddrMValue > endAddressMValueTRL_LAST) && (rawmep.roadPartNumber == endRoadPartNumberTRL)) {
+                    val newEndMValue = rawmep.endMValue - (rawmep.endAddrMValue - endAddressMValueTRL_LAST)
+                    createLinearAsset(rawmep.linkId, Measures(rawmep.startMValue, newEndMValue))
+
+                  } else {
+                    createLinearAsset(rawmep.linkId, Measures(rawmep.startMValue, rawmep.endMValue))
+                  }
+                }
+            }
           }
         }
     }

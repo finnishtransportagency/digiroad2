@@ -30,12 +30,13 @@ class RoadAddressDAO {
            from road_address ra
            join lrm_position pos on ra.lrm_position_id = pos.id"""
 
-    queryList(queryFilter(query) + " and (ra.valid_to > sysdate or ra.valid_to is null) ")
+    queryList(queryFilter(query))
   }
 
   def withRoadAddress(road: Long, roadPart: Long, track: Int, mValue: Double)(query: String): String = {
     query + s" WHERE ra.road_number = $road AND ra.road_part_number = $roadPart " +
-      s"  AND ra.track_code = $track AND ra.start_addr_M <= $mValue AND ra.end_addr_M > $mValue"
+      s"  AND ra.track_code = $track AND ra.start_addr_M <= $mValue AND ra.end_addr_M > $mValue" +
+      s" and (ra.valid_to > sysdate or ra.valid_to is null) "
   }
 
   def withLinkIdAndMeasure(linkId: Long, startM: Long, endM: Long, road: Option[Int] = None)(query: String): String = {
@@ -44,7 +45,60 @@ class RoadAddressDAO {
       case Some(road) => "AND road_number = " + road
       case (_) => " "
     }
-    query + s" WHERE pos.link_id = $linkId AND pos.start_Measure <= $startM AND pos.end_Measure > $endM " + qfilter
+    query + s" WHERE pos.link_id = $linkId AND pos.start_Measure <= $startM AND pos.end_Measure > $endM " +
+      s" and (ra.valid_to > sysdate or ra.valid_to is null) " + qfilter
+  }
+
+  def withRoadAddressSinglePart(roadNumber: Long, startRoadPartNumber: Long, track: Int, startM: Double, endM: Double, optFloating: Option[Int] = None)(query: String): String = {
+    val floating = optFloating match {
+      case Some(floatingValue) => "ra.floating = " + floatingValue + ""
+      case None => ""
+    }
+
+    query + s" where ra.road_number = $roadNumber " +
+      s" AND (ra.road_part_number = $startRoadPartNumber AND ra.end_addr_m >= $startM AND ra.start_addr_m <= $endM) " +
+      s" AND ra.TRACK_CODE = $track " +
+      s" AND (ra.valid_to IS NULL OR ra.valid_to > sysdate) " +
+      s" AND (ra.valid_from IS NULL OR ra.valid_from <= sysdate) " + floating +
+      s" ORDER BY ra.road_number, ra.road_part_number, ra.track_code, ra.start_addr_m "
+  }
+
+  def withRoadAddressTwoParts(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long, track: Int, startM: Double, endM: Double, optFloating: Option[Int] = None)(query: String): String = {
+    val floating = optFloating match {
+      case Some(floatingValue) => "ra.floating = " + floatingValue + ""
+      case None => ""
+    }
+
+    query + s" where ra.road_number = $roadNumber " +
+      s" AND ((ra.road_part_number = $startRoadPartNumber AND ra.end_addr_m >= $startM) OR (ra.road_part_number = $endRoadPartNumber AND ra.start_addr_m <= $endM)) " +
+      s" AND ra.TRACK_CODE = $track " +
+      s" AND (ra.valid_to IS NULL OR ra.valid_to > sysdate) AND (ra.valid_from IS NULL OR ra.valid_from <= sysdate) " + floating +
+      s" ORDER BY ra.road_number, ra.road_part_number, ra.track_code, ra.start_addr_m "
+  }
+
+  def withRoadAddressMultiParts(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long, track: Int, startM: Double, endM: Double, optFloating: Option[Int] = None)(query: String): String = {
+    val floating = optFloating match {
+      case Some(floatingValue) => "ra.floating = " + floatingValue + ""
+      case None => ""
+    }
+
+
+    println(query + s" where ra.road_number = $roadNumber " +
+      s" AND ((ra.road_part_number = $startRoadPartNumber AND ra.end_addr_m >= $startM) " +
+      s" OR (ra.road_part_number = $endRoadPartNumber AND ra.start_addr_m <= $endM) " +
+      s" OR ((ra.road_part_number > $startRoadPartNumber) AND (ra.road_part_number < $endRoadPartNumber))) " +
+      s" AND ra.TRACK_CODE = $track " +
+      s" AND (ra.valid_to IS NULL OR ra.valid_to > sysdate) AND (ra.valid_from IS NULL OR ra.valid_from <= sysdate) " + floating +
+      s" ORDER BY ra.road_number, ra.road_part_number, ra.track_code, ra.start_addr_m " )
+
+
+    query + s" where ra.road_number = $roadNumber " +
+      s" AND ((ra.road_part_number = $startRoadPartNumber AND ra.end_addr_m >= $startM) " +
+      s" OR (ra.road_part_number = $endRoadPartNumber AND ra.start_addr_m <= $endM) " +
+      s" OR ((ra.road_part_number > $startRoadPartNumber) AND (ra.road_part_number < $endRoadPartNumber))) " +
+      s" AND ra.TRACK_CODE = $track " +
+      s" AND (ra.valid_to IS NULL OR ra.valid_to > sysdate) AND (ra.valid_from IS NULL OR ra.valid_from <= sysdate) " + floating +
+      s" ORDER BY ra.road_number, ra.road_part_number, ra.track_code, ra.start_addr_m "
   }
 
   def getRoadNumbers(): Seq[Long] = {
@@ -92,28 +146,6 @@ class RoadAddressDAO {
 			 $where
 		  """
 
-    queryList(query)
-  }
-
-  def fetchByRoadPart(roadNumber: Long, roadPartNumber: Long, includeFloating: Boolean = false): List[RoadAddress] = {
-    val floating = if (!includeFloating)
-      "floating='0' AND"
-    else
-      ""
-    // valid_to > sysdate because we may expire and query the data again in same transaction
-    val query =
-      s"""
-        select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
-         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.start_date, ra.end_date, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
-         pos.side_code, ra.floating, t.X, t.Y, t2.X, t2.Y
-        from road_address ra cross join
-        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
-        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
-        join lrm_position pos on ra.lrm_position_id = pos.id
-        where $floating road_number = $roadNumber AND road_part_number = $roadPartNumber and t.id < t2.id AND
-        (valid_to IS NULL OR valid_to > sysdate) AND (valid_from IS NULL OR valid_from <= sysdate)
-        ORDER BY road_number, road_part_number, track_code, start_addr_m
-      """
     queryList(query)
   }
 
