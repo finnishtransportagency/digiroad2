@@ -34,6 +34,7 @@
 
         var me = this;
         var IMAGE_HEIGHT = 27;
+        var IMAGE_ADJUSTMENT = 15;
 
         this.getStyle = function(value){
           return createMultiStyles(value);
@@ -57,7 +58,7 @@
 
           return new ol.style.Style({
             image: new ol.style.Icon(({
-              anchor: [17, (i * IMAGE_HEIGHT) - 15],
+              anchor: [IMAGE_ADJUSTMENT+2, (i * IMAGE_HEIGHT) - IMAGE_ADJUSTMENT],
               anchorXUnits: 'pixels',
               anchorYUnits: 'pixels',
               src: image
@@ -89,9 +90,9 @@
 
         var correctValues = function(value){
           var valueLength = value.toString().length;
-          if(value)
-            if(valueLength > 3 || !value.match(/^[0-9|Ee]/))
-              return false;
+          if(value){
+            return value.match(/^[0-9|Ee]/) && valueLength < 4;
+          }
           return true;
         };
 
