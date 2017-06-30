@@ -72,10 +72,8 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       val address = RoadAddressDAO.fetchByLinkId(Set(5170942)).head
       RoadAddressDAO.update(address, Some(Seq(Point(50200, 7630000.0, 0.0), Point(50210, 7630000.0, 10.0))))
-      RoadAddressDAO.fetchByBoundingBox(BoundingRectangle(Point(50202, 7620000), Point(50205, 7640000)), false).
-        _1.exists(_.id == address.id) should be (true)
-      RoadAddressDAO.fetchByBoundingBox(BoundingRectangle(Point(50212, 7620000), Point(50215, 7640000)), false).
-        _1.exists(_.id == address.id) should be (false)
+      RoadAddressDAO.fetchRoadAddressesByBoundingBox(BoundingRectangle(Point(50202, 7620000), Point(50205, 7640000)), false).exists(_.id == address.id) should be (true)
+      RoadAddressDAO.fetchRoadAddressesByBoundingBox(BoundingRectangle(Point(50212, 7620000), Point(50215, 7640000)), false).exists(_.id == address.id) should be (false)
     }
   }
 

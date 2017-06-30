@@ -127,8 +127,7 @@ case class MissingRoadAddress(linkId: Long, startAddrMValue: Option[Long], endAd
 
 object RoadAddressDAO {
 
-  // TODO: Remove Missing Road Address Search from here - it's never returning anything and not expected to be used
-  def fetchByBoundingBox(boundingRectangle: BoundingRectangle, fetchOnlyFloating: Boolean): (Seq[RoadAddress], Seq[MissingRoadAddress]) = {
+  def fetchRoadAddressesByBoundingBox(boundingRectangle: BoundingRectangle, fetchOnlyFloating: Boolean): (Seq[RoadAddress]) = {
     val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),
       boundingRectangle.rightTop - boundingRectangle.diagonal.scale(.15))
     val filter = OracleDatabase.boundingBoxFilter(extendedBoundingRectangle, "geometry")
@@ -154,9 +153,29 @@ object RoadAddressDAO {
           (valid_from is null or valid_from <= sysdate) and
           (valid_to is null or valid_to > sysdate)
       """
-    (queryList(query), Seq())
+    (queryList(query))
   }
 
+  def fetchMissingRoadAddressesByBoundingBox(boundingRectangle: BoundingRectangle): (Seq[MissingRoadAddress]) = {
+    val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),
+      boundingRectangle.rightTop - boundingRectangle.diagonal.scale(.15))
+    val filter = OracleDatabase.boundingBoxFilter(extendedBoundingRectangle, "geometry")
+
+    val query = s"""
+        select link_id, start_addr_m, end_addr_m, road_number, road_part_number, anomaly_code, start_m, end_m
+        (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(geometry)) t WHERE id = 1) as X,
+        (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(geometry)) t WHERE id = 1) as Y,
+        (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(geometry)) t WHERE id = 2) as X2,
+        (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(geometry)) t WHERE id = 2) as Y2,
+        from missing_road_address
+        where $filter
+      """
+
+    Q.queryNA[(Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Double], Option[Double], Int, Double, Double, Double, Double)](query).list.map {
+      case (linkId, startAddrM, endAddrM, road, roadPart, startM, endM, anomaly, x, y, x2, y2) =>
+        MissingRoadAddress(linkId, startAddrM, endAddrM, RoadType.UnknownOwnerRoad ,road, roadPart, startM, endM, Anomaly.apply(anomaly),Seq(Point(x, y), Point(x2, y2)))
+    }
+  }
 
   private def logger = LoggerFactory.getLogger(getClass)
 

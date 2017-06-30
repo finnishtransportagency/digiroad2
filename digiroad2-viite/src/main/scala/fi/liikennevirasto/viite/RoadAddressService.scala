@@ -65,7 +65,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   private def fetchRoadAddressesByBoundingBox(boundingRectangle: BoundingRectangle, fetchOnlyFloating: Boolean = false) = {
     val (floatingAddresses, nonFloatingAddresses) = withDynTransaction {
-      RoadAddressDAO.fetchByBoundingBox(boundingRectangle, fetchOnlyFloating)._1.partition(_.floating)
+      RoadAddressDAO.fetchRoadAddressesByBoundingBox(boundingRectangle, fetchOnlyFloating).partition(_.floating)
     }
 
     val floating = floatingAddresses.groupBy(_.linkId)
@@ -80,6 +80,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       rl.linkId -> buildFloatingRoadAddressLink(rl, ra)
     }.toMap
     (floatingViiteRoadLinks, addresses, floating)
+  }
+
+  private def fetchMissingRoadAddressesByBoundingBox(boundingRectangle: BoundingRectangle, fetchOnlyFloating: Boolean = false) = {
+    withDynTransaction {
+      RoadAddressDAO.fetchMissingRoadAddressesByBoundingBox(boundingRectangle).groupBy(_.linkId)
+    }
   }
 
   def buildFloatingRoadAddressLink(rl: VVHHistoryRoadLink, roadAddrSeq: Seq[RoadAddress]): Seq[RoadAddressLink] = {
@@ -146,6 +152,55 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
     val returningTopology = filledTopology.filter(link => !complementaryLinkIds.contains(link.linkId) ||
       complementaryLinkFilter(roadNumberLimits, municipalities, everything, publicRoads)(link))
+
+    returningTopology ++ missingFloating.flatMap(_._2)
+
+  }
+
+  def getRoadAddressLinksByLinkId(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int]): Seq[RoadAddressLink] = {
+
+    val fetchRoadAddressesByBoundingBoxF = Future(fetchRoadAddressesByBoundingBox(boundingRectangle))
+    val fetchMissingRoadAddressesByBoundingBoxF = Future(fetchMissingRoadAddressesByBoundingBox(boundingRectangle))
+    val fetchVVHStartTime = System.currentTimeMillis()
+
+    val (floatingViiteRoadLinks, addresses, floating) = Await.result(fetchRoadAddressesByBoundingBoxF, Duration.Inf)
+    val missingViiteRoadAddress = Await.result(fetchMissingRoadAddressesByBoundingBoxF, Duration.Inf)
+    val changedRoadLinks = roadLinkService.getChangeInfoFromVVH(boundingRectangle, municipalities)
+    val fetchVVHEndTime = System.currentTimeMillis()
+    logger.info("End fetch vvh road links in %.3f sec".format((fetchVVHEndTime - fetchVVHStartTime) * 0.001))
+
+    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(addresses.keySet ++ missingViiteRoadAddress.keySet)
+
+    val linkIds = roadLinks.map(_.linkId).toSet
+
+    val fetchMissingRoadAddressStartTime = System.currentTimeMillis()
+
+    val filteredChangedRoadLinks = changedRoadLinks.filter(crl => crl.oldId.exists(id =>
+      addresses.keySet.contains(id) || linkIds.contains(id)))
+    val complementedWithChangeAddresses = applyChanges(roadLinks, filteredChangedRoadLinks, addresses)
+
+    val fetchMissingRoadAddressEndTime = System.currentTimeMillis()
+    logger.info("End fetch missing and floating road address in %.3f sec".format((fetchMissingRoadAddressEndTime - fetchMissingRoadAddressStartTime) * 0.001))
+
+    val (changedFloating, missingFloating) = floatingViiteRoadLinks.partition(ral => linkIds.contains(ral._1))
+
+    val buildStartTime = System.currentTimeMillis()
+    val viiteRoadLinks = roadLinks.map { rl =>
+      val floaters = changedFloating.getOrElse(rl.linkId, Seq())
+      val ra = complementedWithChangeAddresses.getOrElse(rl.linkId, Seq())
+      val missed = missingViiteRoadAddress.getOrElse(rl.linkId, Seq())
+      rl.linkId -> buildRoadAddressLink(rl, ra, missed, floaters)
+    }.toMap
+    val buildEndTime = System.currentTimeMillis()
+    logger.info("End building road address in %.3f sec".format((buildEndTime - buildStartTime) * 0.001))
+
+    val (filledTopology, changeSet) = RoadAddressFiller.fillTopology(roadLinks, viiteRoadLinks)
+
+    eventbus.publish("roadAddress:persistMissingRoadAddress", changeSet.missingRoadAddresses)
+    eventbus.publish("roadAddress:persistAdjustments", changeSet.adjustedMValues)
+    eventbus.publish("roadAddress:floatRoadAddress", changeSet.toFloatingAddressIds)
+
+    val returningTopology = filledTopology
 
     returningTopology ++ missingFloating.flatMap(_._2)
 
