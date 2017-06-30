@@ -21,7 +21,7 @@ case class RailwayCrossing(id: Long, linkId: Long,
                            createdAt: Option[DateTime] = None,
                            modifiedBy: Option[String] = None,
                            modifiedAt: Option[DateTime] = None,
-                           linkSource: LinkGeomSource) extends PersistedPointAsset
+                           linkSource: Int) extends PersistedPointAsset
 
 object OracleRailwayCrossingDao {
   // This works as long as there are only two properties of different types for railway crossings
@@ -58,7 +58,7 @@ object OracleRailwayCrossingDao {
       val modifiedDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val linkSource = r.nextInt()
 
-      RailwayCrossing(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, safetyEquipment, name, createdBy, createdDateTime, modifiedBy, modifiedDateTime, linkSource = LinkGeomSource(linkSource))
+      RailwayCrossing(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, safetyEquipment, name, createdBy, createdDateTime, modifiedBy, modifiedDateTime, linkSource = linkSource)
     }
   }
 
