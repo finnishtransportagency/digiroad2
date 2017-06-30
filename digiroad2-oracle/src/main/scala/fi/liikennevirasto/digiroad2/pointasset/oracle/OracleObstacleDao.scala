@@ -21,7 +21,7 @@ case class Obstacle(id: Long, linkId: Long,
                     createdAt: Option[DateTime] = None,
                     modifiedBy: Option[String] = None,
                     modifiedAt: Option[DateTime] = None,
-                    linkSource: LinkGeomSource) extends PersistedPointAsset
+                    linkSource: Int) extends PersistedPointAsset
 
 object OracleObstacleDao {
   // This works as long as there is only one (and exactly one) property (currently type) for obstacles and up to one value
@@ -57,7 +57,7 @@ object OracleObstacleDao {
       val modifiedDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val linkSource = r.nextInt()
 
-      Obstacle(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, obstacleType, createdBy, createdDateTime, modifiedBy, modifiedDateTime, LinkGeomSource(linkSource))
+      Obstacle(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, obstacleType, createdBy, createdDateTime, modifiedBy, modifiedDateTime, linkSource)
     }
   }
 

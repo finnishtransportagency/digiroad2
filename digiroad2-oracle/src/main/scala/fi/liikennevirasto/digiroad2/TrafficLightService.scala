@@ -50,7 +50,7 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
 
   private def adjustmentOperation(persistedAsset: PersistedAsset, adjustment: AssetAdjustment): Long = {
     OracleTrafficLightDao.update(adjustment.assetId, TrafficLightToBePersisted(adjustment.linkId,
-      adjustment.lon, adjustment.lat, adjustment.mValue, persistedAsset.municipalityCode, "vvh_generated"), Some(adjustment.vvhTimeStamp), persistedAsset.linkSource)
+      adjustment.lon, adjustment.lat, adjustment.mValue, persistedAsset.municipalityCode, "vvh_generated"), Some(adjustment.vvhTimeStamp), LinkGeomSource.apply(persistedAsset.linkSource))
   }
 
   override def getByMunicipality(municipalityCode: Int): Seq[PersistedAsset] = {
