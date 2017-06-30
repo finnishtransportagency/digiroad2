@@ -92,7 +92,7 @@ trait MassTransitStopService extends PointAssetOperations {
   }
   private def adjustmentOperation(persistedAsset: PersistedAsset, adjustment: AssetAdjustment): Long = {
     val position = Some(Position(adjustment.lon, adjustment.lat, adjustment.linkId, persistedAsset.bearing))
-    updateExistingById(persistedAsset.id, position, persistedAsset.propertyData.map(a => SimpleProperty(a.publicId , a.values)).toSet, "a", () => _ , false)
+    updateExistingById(persistedAsset.id, position, persistedAsset.propertyData.map(prop => SimpleProperty(prop.publicId , prop.values)).toSet, "vvh_generated", () => _ , false)
     persistedAsset.id
   }
 
@@ -390,7 +390,7 @@ trait MassTransitStopService extends PointAssetOperations {
       getByMunicipality(municipalityCode)
     else {
       val roadLinks = roadLinkService.getRoadLinksWithComplementaryFromVVH(municipalityCode)
-      val mapRoadLinks = roadLinks.map(l => l.linkId -> l).toMap
+      val mapRoadLinks = roadLinks.map(roadLink => roadLink.linkId -> roadLink).toMap
       super.getByMunicipality(municipalityCode, mapRoadLinks, roadLinks, Seq(), floatingAdjustment(adjustmentOperation, createOperation))
     }
   }
@@ -423,7 +423,7 @@ trait MassTransitStopService extends PointAssetOperations {
 
   override def getByMunicipality(municipalityCode: Int): Seq[PersistedMassTransitStop] = {
     val roadLinks = roadLinkService.getRoadLinksWithComplementaryFromVVH(municipalityCode)
-    val mapRoadLinks = roadLinks.map(l => l.linkId -> l).toMap
+    val mapRoadLinks = roadLinks.map(roadLink => roadLink.linkId -> roadLink).toMap
     val assets = super.getByMunicipality(municipalityCode, mapRoadLinks, roadLinks, Seq(), floatingAdjustment(adjustmentOperation, createOperation))
     assets.flatMap(a => enrichStopIfInTierekisteri(Some(a))._1)
   }
