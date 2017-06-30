@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.{IncomingDirectionalTrafficSign, PersistedPo
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 
@@ -22,7 +23,7 @@ case class DirectionalTrafficSign(id: Long, linkId: Long,
                                   modifiedBy: Option[String] = None,
                                   modifiedAt: Option[DateTime] = None,
                                   geometry: Seq[Point] = Nil,
-                                  linkSource: Int) extends PersistedPointAsset
+                                  linkSource: LinkGeomSource) extends PersistedPointAsset
 
 object OracleDirectionalTrafficSignDao {
   def fetchByFilter(queryFilter: String => String): Seq[DirectionalTrafficSign] = {
@@ -58,7 +59,7 @@ object OracleDirectionalTrafficSignDao {
       val bearing = r.nextIntOption()
       val linkSource = r.nextInt()
 
-      DirectionalTrafficSign(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, validityDirection, text, bearing, createdBy, createdDateTime, modifiedBy, modifiedDateTime, linkSource = linkSource)
+      DirectionalTrafficSign(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, validityDirection, text, bearing, createdBy, createdDateTime, modifiedBy, modifiedDateTime, linkSource = LinkGeomSource(linkSource))
     }
   }
 

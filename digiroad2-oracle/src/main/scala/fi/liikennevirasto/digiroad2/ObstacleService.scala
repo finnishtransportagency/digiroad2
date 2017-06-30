@@ -47,7 +47,7 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
 
   private def adjustmentOperation(persistedAsset: PersistedAsset, adjustment: AssetAdjustment): Long = {
     val updated = IncomingObstacle(adjustment.lon, adjustment.lat, adjustment.linkId, persistedAsset.obstacleType)
-    OracleObstacleDao.update(adjustment.assetId, updated, adjustment.mValue, "vvh_generated", persistedAsset.municipalityCode, Some(adjustment.vvhTimeStamp), LinkGeomSource.apply(persistedAsset.linkSource))
+    OracleObstacleDao.update(adjustment.assetId, updated, adjustment.mValue, "vvh_generated", persistedAsset.municipalityCode, Some(adjustment.vvhTimeStamp), persistedAsset.linkSource)
   }
 
   override def getByMunicipality(municipalityCode: Int): Seq[PersistedAsset] = {
