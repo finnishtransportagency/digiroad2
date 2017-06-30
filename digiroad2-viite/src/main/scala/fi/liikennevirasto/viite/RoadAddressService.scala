@@ -160,7 +160,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       val (addressesToCreate, unchanged) = newRoadAddresses.values.flatten.toSeq.partition(_.id == NewRoadAddress)
       val savedRoadAddresses = addressesToCreate.map(r =>
           r.copy(geom = GeometryUtils.truncateGeometry3D(roadLinkMap(r.linkId).geometry,
-              r.startMValue, r.endMValue)))
+              r.startMValue, r.endMValue), linkGeomSource = roadLinkMap(r.linkId).linkSource))
 
       val ids = RoadAddressDAO.create(savedRoadAddresses).toSet ++ unchanged.map(_.id).toSet
 
@@ -573,7 +573,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   def getRoadAddressesAfterCalculation(sources: Seq[String], targets: Seq[String], user: User): Seq[RoadAddress] = {
     def adjustGeometry(ra: RoadAddress, link: RoadAddressLinkLike): RoadAddress = {
       val geom = GeometryUtils.truncateGeometry3D(link.geometry, ra.startMValue, ra.endMValue)
-      ra.copy(geom = geom)
+      ra.copy(geom = geom, linkGeomSource = link.roadLinkSource)
     }
     val sourceRoadAddressLinks = sources.flatMap(rd => {
       getRoadAddressLink(rd.toLong)
