@@ -306,7 +306,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   def getUniqueRoadAddressLink(id: Long) = getRoadAddressLink(id)
 
-  def roadClass(roadAddressLink: RoadAddressLinkLike) = {
+  def roadClass(roadNumber: Long) = {
     val C1 = new Contains(1 to 39)
     val C2 = new Contains(40 to 99)
     val C3 = new Contains(100 to 999)
@@ -320,8 +320,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val C10 = new Contains(62001 to 62999)
     val C11 = new Contains(9900 to 9999)
     try {
-      val roadNumber: Int = roadAddressLink.roadNumber.toInt
-      roadNumber match {
+      val roadNum: Int = roadNumber.toInt
+      roadNum match {
         case C1() => HighwayClass
         case C2() => MainRoadClass
         case C3() => RegionalClass
