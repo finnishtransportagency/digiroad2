@@ -417,6 +417,29 @@ object RoadAddressDAO {
     queryList(query)
   }
 
+  def fetchByRoad(roadNumber: Long, includeFloating: Boolean = false) = {
+    val floating = if (!includeFloating)
+      "floating='0' AND"
+    else
+      ""
+    // valid_to > sysdate because we may expire and query the data again in same transaction
+    val query =
+      s"""
+        select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
+        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
+        pos.side_code, pos.adjusted_timestamp,
+        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source
+        from road_address ra cross join
+        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
+        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
+        join lrm_position pos on ra.lrm_position_id = pos.id
+        where $floating road_number = $roadNumber AND t.id < t2.id AND
+        (valid_to IS NULL OR valid_to > sysdate) AND (valid_from IS NULL OR valid_from <= sysdate)
+        ORDER BY road_number, road_part_number, track_code, start_addr_m
+      """
+    queryList(query)
+  }
+
   def fetchMultiSegmentLinkIds(roadNumber: Long) = {
     val query =
       s"""
@@ -712,6 +735,12 @@ object RoadAddressDAO {
     }
   }
 
+  def updateLRM(id: Long, geometrySource: LinkGeomSource): Boolean = {
+    sqlu"""
+           UPDATE LRM_POSITION SET link_source = ${geometrySource.value} WHERE id = $id
+      """.execute
+    true
+  }
   /**
     * Create the value for geometry field, using the updateSQL above.
     *
