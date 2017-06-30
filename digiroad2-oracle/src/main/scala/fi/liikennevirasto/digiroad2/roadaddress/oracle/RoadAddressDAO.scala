@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.Point
 import slick.jdbc.{GetResult, StaticQuery => Q}
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing, Unknown}
 import fi.liikennevirasto.digiroad2.util.Track
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -13,7 +14,21 @@ import slick.jdbc.StaticQuery.interpolation
 
 case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track, discontinuity: Int, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
                        endDate: Option[DateTime] = None, lrmPositionId: Long, linkId: Long,
-                       startMValue: Double, endMValue: Double, sideCode: SideCode, floating: Boolean = false, geom: Seq[Point])
+                       startMValue: Double, endMValue: Double, sideCode: SideCode, floating: Boolean = false, geom: Seq[Point]) {
+  def addressMValueToLRM(addrMValue: Long): Double = {
+    if (addrMValue < startAddrMValue || addrMValue > endAddrMValue)
+      Double.NaN
+    else
+    // Linear approximation: addrM = a*mValue + b <=> mValue = (addrM - b) / a
+    sideCode match {
+      case TowardsDigitizing => (addrMValue-startAddrMValue)*lrmLength/addressLength + startMValue
+      case AgainstDigitizing => endMValue - (addrMValue-startAddrMValue)*lrmLength/addressLength
+      case _ => Double.NaN
+    }
+  }
+  private val addressLength: Long = endAddrMValue - startAddrMValue
+  private val lrmLength: Double = Math.abs(endMValue - startMValue)
+}
 
 class RoadAddressDAO {
 
@@ -49,21 +64,26 @@ class RoadAddressDAO {
       s" and (ra.valid_to > sysdate or ra.valid_to is null) " + qfilter
   }
 
-  def withRoadAddressSinglePart(roadNumber: Long, startRoadPartNumber: Long, track: Int, startM: Double, endM: Double, optFloating: Option[Int] = None)(query: String): String = {
+  def withRoadAddressSinglePart(roadNumber: Long, startRoadPartNumber: Long, track: Int, startM: Long, endM: Option[Long], optFloating: Option[Int] = None)(query: String): String = {
     val floating = optFloating match {
       case Some(floatingValue) => "ra.floating = " + floatingValue + ""
       case None => ""
     }
 
+    val endAddr = endM match {
+      case Some(endValue) => s"AND ra.start_addr_m <= $endValue"
+      case _ => ""
+    }
+
     query + s" where ra.road_number = $roadNumber " +
-      s" AND (ra.road_part_number = $startRoadPartNumber AND ra.end_addr_m >= $startM AND ra.start_addr_m <= $endM) " +
+      s" AND (ra.road_part_number = $startRoadPartNumber AND ra.end_addr_m >= $startM $endAddr) " +
       s" AND ra.TRACK_CODE = $track " +
       s" AND (ra.valid_to IS NULL OR ra.valid_to > sysdate) " +
       s" AND (ra.valid_from IS NULL OR ra.valid_from <= sysdate) " + floating +
       s" ORDER BY ra.road_number, ra.road_part_number, ra.track_code, ra.start_addr_m "
   }
 
-  def withRoadAddressTwoParts(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long, track: Int, startM: Double, endM: Double, optFloating: Option[Int] = None)(query: String): String = {
+  def withRoadAddressTwoParts(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long, track: Int, startM: Long, endM: Long, optFloating: Option[Int] = None)(query: String): String = {
     val floating = optFloating match {
       case Some(floatingValue) => "ra.floating = " + floatingValue + ""
       case None => ""

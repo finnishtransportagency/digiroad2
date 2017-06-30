@@ -579,7 +579,7 @@ trait TierekisteriAssetDataClient extends TierekisteriClient {
   protected val trEndRoadPartNumber = "LOSA"
   protected val trStartMValue = "ETAISYYS"
   protected val trEndMValue = "LET"
-  protected val trTrackCode = "PUOLI"
+  protected val trTrackCode = "AJORATA"
 
   private val serviceUrl : String = tierekisteriRestApiEndPoint + serviceName
   private def serviceUrl(assetType: String, roadNumber: Long) : String = serviceUrl + assetType + "/" + roadNumber
