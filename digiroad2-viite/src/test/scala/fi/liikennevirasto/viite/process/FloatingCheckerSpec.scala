@@ -17,9 +17,9 @@ class FloatingCheckerSpec  extends FunSuite with Matchers{
     val geometry = Seq(Point(0.0, 0.0), Point(60.0, 0.0), Point(60.0, 9.844))
     val roadAddressSeq = Seq(
       RoadAddress(1L, 12L, 1, Track.RightSide, Discontinuity.Continuous, 5L, 60L, None, None, None, 1L, 123, 0.0, 54.948,
-        SideCode.TowardsDigitizing, 0L, (None, None), false, GeometryUtils.truncateGeometry2D(geometry, 0.0, 54.948)),
+        SideCode.TowardsDigitizing, 0L, (None, None), false, GeometryUtils.truncateGeometry2D(geometry, 0.0, 54.948), LinkGeomSource.NormalLinkInterface),
       RoadAddress(2L, 12L, 1, Track.RightSide, Discontinuity.Continuous, 60L, 75L, None, None, None, 1L, 123, 54.948, 69.844,
-        SideCode.TowardsDigitizing, 0L, (None, None), false, GeometryUtils.truncateGeometry2D(geometry, 54.948, 69.844))
+        SideCode.TowardsDigitizing, 0L, (None, None), false, GeometryUtils.truncateGeometry2D(geometry, 54.948, 69.844), LinkGeomSource.NormalLinkInterface)
     )
     val link = RoadLink(12L, geometry, 69.844, State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None,
       Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
@@ -37,9 +37,9 @@ class FloatingCheckerSpec  extends FunSuite with Matchers{
     val geometry = Seq(Point(0.0, 0.0), Point(60.0, 0.0), Point(60.0, 9.844))
     val roadAddressSeq = Seq(
       RoadAddress(1L, 12L, 1, Track.RightSide, Discontinuity.Continuous, 5L, 60L, None, None, None, 1L, 123, 0.0, 54.948,
-        SideCode.TowardsDigitizing, 0L, (None, None), false, GeometryUtils.truncateGeometry2D(geometry, 0.0, 54.948)),
+        SideCode.TowardsDigitizing, 0L, (None, None), false, GeometryUtils.truncateGeometry2D(geometry, 0.0, 54.948), LinkGeomSource.NormalLinkInterface),
       RoadAddress(2L, 12L, 1, Track.RightSide, Discontinuity.Continuous, 60L, 75L, None, None, None, 1L, 123, 54.948, 69.844,
-        SideCode.TowardsDigitizing, 0L, (None, None), false, GeometryUtils.truncateGeometry2D(geometry, 54.948, 69.844))
+        SideCode.TowardsDigitizing, 0L, (None, None), false, GeometryUtils.truncateGeometry2D(geometry, 54.948, 69.844), LinkGeomSource.NormalLinkInterface)
     )
     val link = RoadLink(12L, geometry, 69.844, State, 1, TrafficDirection.TowardsDigitizing, Motorway, None, None,
       Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
