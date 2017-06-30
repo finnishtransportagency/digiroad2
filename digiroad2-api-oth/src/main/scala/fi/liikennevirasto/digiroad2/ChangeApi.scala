@@ -234,7 +234,7 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
                 "startMeasure" -> 0,
                 "endMeasure" -> link.geometry.length,
                 "modifiedAt" -> link.modifiedAt,
-                "createdAt" -> createdAt.map(DateTimePropertyFormat.print(_)),
+                "createdAt" -> createdAt,
                 "changeType" -> changeType
               )
           )

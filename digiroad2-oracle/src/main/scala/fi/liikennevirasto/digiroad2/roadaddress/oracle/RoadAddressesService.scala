@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2.roadaddress.oracle
 
 import fi.liikennevirasto.digiroad2.FeatureClass.TractorRoad
+import fi.liikennevirasto.digiroad2.asset.Asset.DateTimePropertyFormat
 import fi.liikennevirasto.digiroad2.asset.CycleOrPedestrianPath
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, RoadLinkService}
@@ -34,7 +35,10 @@ class RoadAddressesService(val eventbus: DigiroadEventBus, roadLinkServiceImplem
         ChangedRoadAddress(
           link = roadLink,
           value = roadAddress.roadNumber,
-          createdAt = roadAddress.startDate.get.toString(),
+          createdAt = roadAddress.startDate match {
+            case Some(date) => DateTimePropertyFormat.print(date.getMillis)
+            case _ => ""
+          },
           changeType = "Modify"
         )
       }
