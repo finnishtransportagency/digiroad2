@@ -1,6 +1,7 @@
 package fi.liikennevirasto.viite.dao
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.ComplimentaryLinkInterface
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -141,6 +142,21 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
       fetch.head should be (3)
     }
   }
+
+  test("Create Road Address with complementary source") {
+    runWithRollback {
+      val id = RoadAddressDAO.getNextRoadAddressId
+      val ra = Seq(RoadAddress(id, 1943845, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")),
+        None, Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
+        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.ComplimentaryLinkInterface))
+      val returning = RoadAddressDAO.create(ra)
+      returning.nonEmpty should be (true)
+      returning.head should be (id)
+      sql"""SELECT link_source FROM ROAD_ADDRESS ra JOIN LRM_POSITION pos ON (ra.lrm_position_id = pos.id) WHERE ra.id = $id"""
+        .as[Int].first should be (ComplimentaryLinkInterface.value)
+    }
+  }
+
 
   test("Delete Road Addresses") {
     runWithRollback {
