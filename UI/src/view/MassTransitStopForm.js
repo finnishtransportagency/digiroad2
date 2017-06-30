@@ -338,9 +338,9 @@
           streetViewHandler.update();
         });
 
-        if (!_.isNumber(selectedMassTransitStopModel.get('nationalId'))) {
-            element.attr("disabled", true);
-            element.attr('title','Pysäkin suuntaa ei voi vaihtaa, koska pysäkki on yksisuuntaisella tielinkillä.');
+        if(!selectedMassTransitStopModel.validateDirectionsForCreation()){
+          element.attr("disabled", true);
+          element.attr('title','Pysäkin suuntaa ei voi vaihtaa, koska pysäkki on yksisuuntaisella tielinkillä.');
         }
 
         if(property.values && property.values[0]) {
