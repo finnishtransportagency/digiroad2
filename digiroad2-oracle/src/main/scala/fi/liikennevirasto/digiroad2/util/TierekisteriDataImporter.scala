@@ -94,7 +94,7 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
       val roadLinksWithStateFilter = roadLinkService.getVVHRoadLinksF(municipality).filter(_.administrativeClass == State).map(_.linkId)
 
       OracleDatabase.withDynTransaction {
-        oracleLinearAssetDao.fetchLinearAssetsByLinkIds(lightingAssetId, roadLinksWithStateFilter, LinearAssetTypes.numericValuePropertyId).map { persistedLinearAsset =>
+        oracleLinearAssetDao.fetchLinearAssetsByLinkIds(lightingAssetId, roadLinksWithStateFilter, LinearAssetTypes.numericValuePropertyId).foreach { persistedLinearAsset =>
           oracleLinearAssetDao.expireAssetsById(persistedLinearAsset.id)
           println("Asset with Id: " + persistedLinearAsset.id + " Expired.")
         }
@@ -110,10 +110,10 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
     println("\nEnd of Fetch ")
 
     println("roadNumbers: ")
-    roadNumbers.foreach(ra => println(ra))
+    println(roadNumbers.mkString("\n"))
 
     roadNumbers.foreach {
-      case roadNumber =>
+      roadNumber =>
         println("\nFetch Lighting by Road Number " + roadNumber)
         val trLighting = tierekisteriLightingAsset.fetchActiveAssetData(lightingTR, roadNumber)
 

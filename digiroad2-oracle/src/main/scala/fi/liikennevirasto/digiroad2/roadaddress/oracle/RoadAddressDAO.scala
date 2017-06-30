@@ -82,16 +82,6 @@ class RoadAddressDAO {
       case None => ""
     }
 
-
-    println(query + s" where ra.road_number = $roadNumber " +
-      s" AND ((ra.road_part_number = $startRoadPartNumber AND ra.end_addr_m >= $startM) " +
-      s" OR (ra.road_part_number = $endRoadPartNumber AND ra.start_addr_m <= $endM) " +
-      s" OR ((ra.road_part_number > $startRoadPartNumber) AND (ra.road_part_number < $endRoadPartNumber))) " +
-      s" AND ra.TRACK_CODE = $track " +
-      s" AND (ra.valid_to IS NULL OR ra.valid_to > sysdate) AND (ra.valid_from IS NULL OR ra.valid_from <= sysdate) " + floating +
-      s" ORDER BY ra.road_number, ra.road_part_number, ra.track_code, ra.start_addr_m " )
-
-
     query + s" where ra.road_number = $roadNumber " +
       s" AND ((ra.road_part_number = $startRoadPartNumber AND ra.end_addr_m >= $startM) " +
       s" OR (ra.road_part_number = $endRoadPartNumber AND ra.start_addr_m <= $endM) " +
