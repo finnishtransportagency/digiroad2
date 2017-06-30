@@ -36,12 +36,25 @@ class RoadAddressesService(val eventbus: DigiroadEventBus, roadLinkServiceImplem
           link = roadLink,
           value = roadAddress.roadNumber,
           createdAt = roadAddress.startDate match {
-            case Some(date) => DateTimePropertyFormat.print(date.getMillis)
-            case _ => ""
+            case Some(dataValue) => DateTimePropertyFormat.print(dataValue)
+            case None => ""
           },
           changeType = "Modify"
         )
       }
     }
+//    roadAddresses.flatMap { roadAddress =>
+//      roadLinksWithoutWalkways.find(_.linkId == roadAddress.linkId).map { roadLink =>
+//        ChangedRoadAddress(
+//          link = roadLink,
+//          value = roadAddress.roadNumber,
+//          createdAt = roadAddress.startDate match {
+//            case Some(dataValue) => DateTimePropertyFormat.print(dataValue)
+//            case None => ""
+//          },
+//          changeType = "Modify"
+//        )
+//      }
+//    }
   }
 }

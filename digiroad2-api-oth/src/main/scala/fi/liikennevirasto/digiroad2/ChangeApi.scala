@@ -23,7 +23,9 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
     contentType = formats("json")
     val since = DateTime.parse(params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter"))))
     val assteType = params("assetType")
+
     val until = params.get("until") match {
+      case Some(dateValue) if assteType == "road_numbers" => halt(BadRequest("'until' parameter is not allowed"))
       case Some(dateValue) => DateTime.parse(dateValue)
       case None if assteType == "road_numbers" => DateTime.now()
       case _ => halt(BadRequest("Missing mandatory 'until' parameter"))
@@ -229,13 +231,15 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
                   case TrafficDirection.TowardsDigitizing =>
                     SideCode.TowardsDigitizing.value
                   case _ =>
-                    SideCode.BothDirections.value
-                }),
-                "startMeasure" -> 0,
-                "endMeasure" -> link.geometry.length,
-                "modifiedAt" -> link.modifiedAt,
-                "createdAt" -> createdAt,
-                "changeType" -> changeType
+                    SideCode.BothDirections.value})
+//                }),
+//                "startMeasure" -> road.startMeasure,
+//                "endMeasure" -> road.endMeasure,
+//                "createdBy" -> road.createdBy,
+//                "modifiedAt" -> road.modifiedDateTime.map(DateTimePropertyFormat.print(_)),
+//                "createdAt" -> road.createdDateTime.map(DateTimePropertyFormat.print(_)),
+//                "modifiedBy" -> road.modifiedBy,
+//                "changeType" -> extractChangeType(since, road.expired, road.createdDateTime)
               )
           )
         }
