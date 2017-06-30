@@ -153,6 +153,7 @@
       roadLayer.layer.setOpacity(opacity);
       floatingMarkerLayer.setOpacity(opacity);
       anomalousMarkerLayer.setOpacity(opacity);
+      directionMarkerLayer.setOpacity(opacity);
     };
 
     /**
@@ -183,7 +184,7 @@
      * The event holds the selected features in the events.selected and the deselected in event.deselected.
      */
     selectDoubleClick.on('select',function(event) {
-      var visibleFeatures = getVisibleFeatures(true, true, true);
+      var visibleFeatures = getVisibleFeatures(true, true, true, false, false, true);
       if(selectSingleClick.getFeatures().getLength() !== 0){
         selectSingleClick.getFeatures().clear();
       }
@@ -256,7 +257,7 @@
      * sending them to the selectedLinkProperty.open for further processing.
      */
     selectSingleClick.on('select',function(event) {
-      var visibleFeatures = getVisibleFeatures(true, true, true, true, true);
+      var visibleFeatures = getVisibleFeatures(true, true, true, true, true, true);
       if (selectDoubleClick.getFeatures().getLength() !== 0) {
         selectDoubleClick.getFeatures().clear();
       }
@@ -362,14 +363,15 @@
       addFeaturesToSelection(ol3Features);
     });
 
-    var getVisibleFeatures = function(withRoads, withAnomalyMarkers, withFloatingMarkers, withGreenRoads, withPickRoads){
+    var getVisibleFeatures = function(withRoads, withAnomalyMarkers, withFloatingMarkers, withGreenRoads, withPickRoads, withDirectionalMarkers){
       var extent = map.getView().calculateExtent(map.getSize());
       var visibleRoads = withRoads ? roadLayer.layer.getSource().getFeaturesInExtent(extent) : [];
       var visibleAnomalyMarkers =  withAnomalyMarkers ? anomalousMarkerLayer.getSource().getFeaturesInExtent(extent) : [];
       var visibleFloatingMarkers =  withFloatingMarkers ? floatingMarkerLayer.getSource().getFeaturesInExtent(extent) : [];
       var visibleGreenRoadLayer = withGreenRoads ? greenRoadLayer.getSource().getFeaturesInExtent(extent) : [];
       var visiblePickRoadsLayer = withGreenRoads ? pickRoadsLayer.getSource().getFeaturesInExtent(extent) : [];
-      return visibleRoads.concat(visibleAnomalyMarkers).concat(visibleFloatingMarkers).concat(visibleGreenRoadLayer);
+      var visibleDirectionalMarkers = withDirectionalMarkers ? directionMarkerLayer.getSource().getFeaturesInExtent(extent) : [];
+      return visibleRoads.concat(visibleAnomalyMarkers).concat(visibleFloatingMarkers).concat(visibleGreenRoadLayer).concat(visibleDirectionalMarkers);
     };
 
     /**
@@ -614,7 +616,7 @@
     };
 
     var reselectRoadLink = function(targetFeature, adjacents) {
-      var visibleFeatures = getVisibleFeatures(true, true, true, true, true);
+      var visibleFeatures = getVisibleFeatures(true, true, true, true, true, true);
       var indicators = adjacents;
       indicatorLayer.getSource().clear();
       if(indicators.length !== 0){
@@ -813,7 +815,7 @@
       });
 
       eventListener.listenTo(eventbus, 'roadLinks:unSelectIndicators', function (originalFeature) {
-        var visibleFeatures = getVisibleFeatures(true,true,true, true);
+        var visibleFeatures = getVisibleFeatures(true,true,true,true);
         clearIndicators();
         greenRoadLayerVector.clear();
         clearHighlights();

@@ -5,7 +5,7 @@ import java.util.Date
 import fi.liikennevirasto.digiroad2.RoadLinkType.NormalRoadLinkType
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
-import fi.liikennevirasto.digiroad2.asset.{ConstructionType, LinkType, SideCode, State}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.dao.{CalibrationPoint, Discontinuity, RoadAddress}
@@ -176,7 +176,7 @@ class DefloatMapperSpec extends FunSuite with Matchers{
 
   private def roadAddressLinkToRoadAddress(floating: Boolean)(l: RoadAddressLink) = {
     RoadAddress(l.id, l.roadNumber, l.roadPartNumber, Track.apply(l.trackCode.toInt), Discontinuity.apply(l.discontinuity.toInt),
-      l.startAddressM, l.endAddressM, Option(new DateTime(new Date())), None, None, 0, l.linkId, l.startMValue, l.endMValue, l.sideCode, l.attributes.get("ADJUSTED_TIMESTAMP").getOrElse(0L).asInstanceOf[Long],
-      (l.startCalibrationPoint, l.endCalibrationPoint), floating, l.geometry)
+      l.startAddressM, l.endAddressM, Option(new DateTime(new Date())), None, None, 0, l.linkId, l.startMValue, l.endMValue, l.sideCode, l.attributes.getOrElse("ADJUSTED_TIMESTAMP", 0L).asInstanceOf[Long],
+      (l.startCalibrationPoint, l.endCalibrationPoint), floating, l.geometry, l.roadLinkSource)
   }
 }
