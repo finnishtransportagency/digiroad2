@@ -17,7 +17,7 @@ import org.slf4j.LoggerFactory
 class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter{
   protected implicit val jsonFormats: Formats = DefaultFormats
   def stopWithLinkId(linkId: Long): PersistedMassTransitStop = {
-    PersistedMassTransitStop(1L, 2L, linkId, Seq(2, 3), 235, 1.0, 1.0, 1, None, None, None, floating = false, 0, Modification(None, None), Modification(None, None), Seq(), NormalLinkInterface)
+    PersistedMassTransitStop(1L, 2L, linkId, Seq(2, 3), 235, 1.0, 1.0, 1, None, None, None, floating = false, 0, Modification(None, None), Modification(None, None), Seq(), NormalLinkInterface.value)
   }
   val mockMassTransitStopService = MockitoSugar.mock[MassTransitStopService]
   when(mockMassTransitStopService.getByMunicipality(235)).thenReturn(Seq(stopWithLinkId(123L), stopWithLinkId(321L)))
@@ -102,7 +102,8 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
       "endMeasure" -> 1,
       "linkId" -> 2,
       "muokattu_viimeksi" -> "",
-      "generatedValue" -> false
+      "generatedValue" -> false,
+      "linkSource" -> 1
     )))
   }
 
@@ -117,7 +118,8 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
       "endMeasure" -> 1,
       "linkId" -> 2,
       "muokattu_viimeksi" -> "",
-      "generatedValue" -> true
+      "generatedValue" -> true,
+      "linkSource" -> 1
     )))
   }
 
@@ -132,7 +134,8 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
       "endMeasure" -> 1,
       "linkId" -> 2,
       "muokattu_viimeksi" -> "",
-      "generatedValue" -> true
+      "generatedValue" -> true,
+      "linkSource" -> 1
     )))
   }
 
@@ -147,7 +150,8 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
       "endMeasure" -> 1,
       "linkId" -> 2,
       "muokattu_viimeksi" -> "",
-      "generatedValue" -> true
+      "generatedValue" -> true,
+      "linkSource" -> 1
     )))
   }
 
@@ -162,7 +166,8 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
       "endMeasure" -> 1,
       "linkId" -> 2,
       "muokattu_viimeksi" -> "",
-      "generatedValue" -> true
+      "generatedValue" -> true,
+      "linkSource" -> 1
     )))
   }
 
@@ -177,7 +182,8 @@ class IntegrationApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
       "endMeasure" -> 1,
       "linkId" -> 2,
       "muokattu_viimeksi" -> "",
-      "generatedValue" -> false
+      "generatedValue" -> false,
+      "linkSource" -> 1
     )))
   }
 

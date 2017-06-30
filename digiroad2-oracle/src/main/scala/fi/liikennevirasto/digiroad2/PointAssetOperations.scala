@@ -51,7 +51,7 @@ trait PersistedPointAsset extends PointAsset with IncomingPointAsset {
   val mValue: Double
   val floating: Boolean
   val vvhTimeStamp: Long
-  val linkSource: LinkGeomSource
+  val linkSource: Int
 }
 
 trait PointAssetOperations {
@@ -190,7 +190,7 @@ trait PointAssetOperations {
   }
 
   def getByMunicipality(municipalityCode: Int): Seq[PersistedAsset] = {
-    val (roadLinks, changes) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipalityCode)
+    val roadLinks = roadLinkService.getRoadLinksWithComplementaryFromVVH(municipalityCode)
     val mapRoadLinks = roadLinks.map(l => l.linkId -> l).toMap
     getByMunicipality(municipalityCode, mapRoadLinks, roadLinks, Seq(), (_, _, _, _, _) => None)
   }

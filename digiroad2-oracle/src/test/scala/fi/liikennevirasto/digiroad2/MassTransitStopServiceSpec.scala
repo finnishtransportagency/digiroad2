@@ -1167,7 +1167,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
         TierekisteriMassTransitStop(2, "2", RoadAddress(None, 1, 1, Track.Combined, 1, None), TRRoadSide.Unknown, StopType.Combined,
           false, equipments = Equipment.values.map(equip => equip -> e).toMap, None, None, None, "KX12356", None, None, None, new Date))
       )
-      when(mockRoadLinkService.getRoadLinksFromVVH(any[Int])).thenReturn(vvhRoadLinks.map(toRoadLink))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[Int])).thenReturn(vvhRoadLinks.map(toRoadLink))
 
       runWithRollback {
         val stops = RollbackMassTransitStopServiceWithTierekisteri.getByMunicipality(235)
@@ -1177,7 +1177,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
         val equipments = trStops.map(t => t.propertyData.filter(p => equipmentPublicIds.contains(p.publicId)))
         equipments.forall(_.forall(p => p.values.nonEmpty && p.values.head.propertyValue == v)) should be(true)
       }
-      verify(mockRoadLinkService, times(1)).getRoadLinksFromVVH(any[Int])
+      verify(mockRoadLinkService, times(1)).getRoadLinksWithComplementaryFromVVH(any[Int])
       verify(mockTierekisteriClient, Mockito.atLeast(1)).fetchMassTransitStop(any[String])
     }
   }

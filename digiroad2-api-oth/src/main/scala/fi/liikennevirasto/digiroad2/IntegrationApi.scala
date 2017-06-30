@@ -223,7 +223,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "endMeasure" -> asset.endMeasure,
         latestModificationTime(asset.createdDateTime, asset.modifiedDateTime),
         lastModifiedBy(asset.createdBy, asset.modifiedBy),
-        "linkSource" -> asset.linkSource.value
+        "linkSource" -> asset.linkSource
       )
     }
   }
@@ -237,7 +237,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "m_value" -> pedestrianCrossing.mValue,
         latestModificationTime(pedestrianCrossing.createdAt, pedestrianCrossing.modifiedAt),
         lastModifiedBy(pedestrianCrossing.createdBy, pedestrianCrossing.modifiedBy),
-        "linkSource" -> pedestrianCrossing.linkSource.value)
+        "linkSource" -> pedestrianCrossing.linkSource)
     }
   }
 
@@ -250,7 +250,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "m_value" -> trafficLight.mValue,
         latestModificationTime(trafficLight.createdAt, trafficLight.modifiedAt),
         lastModifiedBy(trafficLight.createdBy, trafficLight.modifiedBy),
-        "linkSource" -> trafficLight.linkSource.value)
+        "linkSource" -> trafficLight.linkSource)
     }
   }
 
@@ -266,7 +266,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "text" -> directionalTrafficSign.text.map(_.split("\n").toSeq),
         latestModificationTime(directionalTrafficSign.createdAt, directionalTrafficSign.modifiedAt),
         lastModifiedBy(directionalTrafficSign.createdBy, directionalTrafficSign.modifiedBy),
-        "linkSource" -> directionalTrafficSign.linkSource.value)
+        "linkSource" -> directionalTrafficSign.linkSource)
     }
   }
 
@@ -336,7 +336,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "name" -> railwayCrossing.name,
         latestModificationTime(railwayCrossing.createdAt, railwayCrossing.modifiedAt),
         lastModifiedBy(railwayCrossing.createdBy, railwayCrossing.modifiedBy),
-        "linkSource" -> railwayCrossing.linkSource.value)
+        "linkSource" -> railwayCrossing.linkSource)
     }
   }
 
@@ -350,7 +350,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "obstacle_type" -> obstacle.obstacleType,
         latestModificationTime(obstacle.createdAt, obstacle.modifiedAt),
         lastModifiedBy(obstacle.createdBy, obstacle.modifiedBy),
-        "linkSource" -> obstacle.linkSource.value)
+        "linkSource" -> obstacle.linkSource)
     }
   }
 
