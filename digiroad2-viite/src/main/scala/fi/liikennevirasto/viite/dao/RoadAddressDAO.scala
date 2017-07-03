@@ -127,13 +127,18 @@ case class MissingRoadAddress(linkId: Long, startAddrMValue: Option[Long], endAd
 
 object RoadAddressDAO {
 
-  def fetchRoadAddressesByBoundingBox(boundingRectangle: BoundingRectangle, fetchOnlyFloating: Boolean): (Seq[RoadAddress]) = {
+  def fetchRoadAddressesByBoundingBox(boundingRectangle: BoundingRectangle, fetchOnlyFloating: Boolean, onlyNormalRoads: Boolean = false): (Seq[RoadAddress]) = {
     val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),
       boundingRectangle.rightTop - boundingRectangle.diagonal.scale(.15))
     val filter = OracleDatabase.boundingBoxFilter(extendedBoundingRectangle, "geometry")
 
     val floatingFilter = fetchOnlyFloating match {
       case true => " and ra.floating = 1"
+      case false => ""
+    }
+
+    var normalRoadsFilter = onlyNormalRoads match {
+      case true => " and pos.link_source = 1"
       case false => ""
     }
 
@@ -149,11 +154,11 @@ object RoadAddressDAO {
         link_source
         from road_address ra
         join lrm_position pos on ra.lrm_position_id = pos.id
-        where $filter $floatingFilter and
+        where $filter $floatingFilter $normalRoadsFilter and
           (valid_from is null or valid_from <= sysdate) and
           (valid_to is null or valid_to > sysdate)
       """
-    (queryList(query))
+    queryList(query)
   }
 
   def fetchMissingRoadAddressesByBoundingBox(boundingRectangle: BoundingRectangle): (Seq[MissingRoadAddress]) = {

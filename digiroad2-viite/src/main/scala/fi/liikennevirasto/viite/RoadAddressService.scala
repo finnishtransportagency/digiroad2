@@ -63,9 +63,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     (roadLinks, complementaryLinks)
   }
 
-  private def fetchRoadAddressesByBoundingBox(boundingRectangle: BoundingRectangle, fetchOnlyFloating: Boolean = false) = {
+  private def fetchRoadAddressesByBoundingBox(boundingRectangle: BoundingRectangle, fetchOnlyFloating: Boolean = false, onlyNormalRoads : Boolean= false) = {
     val (floatingAddresses, nonFloatingAddresses) = withDynTransaction {
-      RoadAddressDAO.fetchRoadAddressesByBoundingBox(boundingRectangle, fetchOnlyFloating).partition(_.floating)
+      RoadAddressDAO.fetchRoadAddressesByBoundingBox(boundingRectangle, fetchOnlyFloating, onlyNormalRoads).partition(_.floating)
     }
 
     val floating = floatingAddresses.groupBy(_.linkId)
@@ -159,7 +159,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   def getRoadAddressLinksByLinkId(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int]): Seq[RoadAddressLink] = {
 
-    val fetchRoadAddressesByBoundingBoxF = Future(fetchRoadAddressesByBoundingBox(boundingRectangle))
+    val fetchRoadAddressesByBoundingBoxF = Future(fetchRoadAddressesByBoundingBox(boundingRectangle, false, true))
     val fetchMissingRoadAddressesByBoundingBoxF = Future(fetchMissingRoadAddressesByBoundingBox(boundingRectangle))
     val fetchVVHStartTime = System.currentTimeMillis()
 
@@ -168,7 +168,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val changedRoadLinks = roadLinkService.getChangeInfoFromVVH(boundingRectangle, municipalities)
 
 
-    val roadLinks = roadLinkService.getViiteCurrentLinksFromVVH(addresses.keySet ++ missingViiteRoadAddress.keySet)
+    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(addresses.keySet ++ missingViiteRoadAddress.keySet)
 
     val fetchVVHEndTime = System.currentTimeMillis()
     logger.info("End fetch vvh road links in %.3f sec".format((fetchVVHEndTime - fetchVVHStartTime) * 0.001))
