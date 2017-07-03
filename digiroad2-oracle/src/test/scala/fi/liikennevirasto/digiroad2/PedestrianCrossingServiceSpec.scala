@@ -125,7 +125,7 @@ class PedestrianCrossingServiceSpec extends FunSuite with Matchers {
         municipalityCode = 235,
         createdBy = Some("jakke"),
         createdAt = asset.createdAt,
-        linkSource = NormalLinkInterface.value
+        linkSource = NormalLinkInterface
       ))
     }
   }

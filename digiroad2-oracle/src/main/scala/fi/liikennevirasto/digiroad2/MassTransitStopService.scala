@@ -34,7 +34,7 @@ case class PersistedMassTransitStop(id: Long, nationalId: Long, linkId: Long, st
                                     validityDirection: Option[Int], bearing: Option[Int],
                                     validityPeriod: Option[String], floating: Boolean, vvhTimeStamp: Long,
                                     created: Modification, modified: Modification,
-                                    propertyData: Seq[Property], linkSource: Int) extends PersistedPointAsset with TimeStamps
+                                    propertyData: Seq[Property], linkSource: LinkGeomSource) extends PersistedPointAsset with TimeStamps
 
 case class MassTransitStopRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], linkId: Long, bearing: Option[Int],
                               validityDirection: Int, validFrom: Option[LocalDate], validTo: Option[LocalDate], property: PropertyRow,
@@ -358,7 +358,7 @@ trait MassTransitStopService extends PointAssetOperations {
         municipalityCode = row.municipalityCode, lon = point.x, lat = point.y, mValue = mValue,
         validityDirection = Some(row.validityDirection), bearing = row.bearing,
         validityPeriod = validityPeriod, floating = row.persistedFloating, vvhTimeStamp = vvhTimeStamp, created = row.created, modified = row.modified,
-        propertyData = properties, linkSource = linkSource)
+        propertyData = properties, linkSource = LinkGeomSource(linkSource))
     }.values.toSeq
   }
 

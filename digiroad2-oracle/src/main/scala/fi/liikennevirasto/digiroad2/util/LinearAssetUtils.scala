@@ -1,8 +1,8 @@
 package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.ChangeInfo
-import fi.liikennevirasto.digiroad2.asset.{SideCode, TrafficDirection}
-import fi.liikennevirasto.digiroad2.linearasset.{PieceWiseLinearAsset, PersistedLinearAsset, RoadLink, LinearAsset}
+import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode, TrafficDirection}
+import fi.liikennevirasto.digiroad2.linearasset.{LinearAsset, PersistedLinearAsset, PieceWiseLinearAsset, RoadLink}
 
 object LinearAssetUtils {
   /**
@@ -52,6 +52,6 @@ object LinearAssetUtils {
       geometry = Seq(), expired = persisted.expired, startMeasure = persisted.startMeasure, endMeasure = persisted.endMeasure,
       endpoints = Set(), modifiedBy = persisted.modifiedBy, modifiedDateTime = persisted.modifiedDateTime, createdBy =
         persisted.createdBy, createdDateTime = persisted.createdDateTime, typeId = persisted.typeId, trafficDirection =
-        TrafficDirection.UnknownDirection, vvhTimeStamp = persisted.vvhTimeStamp, geomModifiedDate = persisted.geomModifiedDate)
+        TrafficDirection.UnknownDirection, vvhTimeStamp = persisted.vvhTimeStamp, geomModifiedDate = persisted.geomModifiedDate, linkSource = persisted.linkSource)
   }
 }

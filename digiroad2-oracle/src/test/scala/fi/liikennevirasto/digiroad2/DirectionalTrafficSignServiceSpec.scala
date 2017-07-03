@@ -73,7 +73,7 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
     }
   }
   test("Expire directional traffic sign") {
-    when(mockRoadLinkService.getRoadLinksFromVVH(235)).thenReturn(Seq(
+    when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(235)).thenReturn(Seq(
       VVHRoadlink(388553074, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
 
     runWithRollback {
@@ -89,9 +89,9 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
 
   test("Update directional traffic sign") {
     val linkGeometry = Seq(Point(0.0, 0.0), Point(200.0, 0.0))
-    when(mockRoadLinkService.getRoadLinksFromVVH(235)).thenReturn(Seq(
+    when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(235)).thenReturn(Seq(
       VVHRoadlink(1611317, 235, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
-    when(mockRoadLinkService.getRoadLinksFromVVH(91)).thenReturn(Seq(
+    when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(91)).thenReturn(Seq(
       VVHRoadlink(123, 91, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink))
 
     runWithRollback {
