@@ -3,19 +3,17 @@ package fi.liikennevirasto.viite.dao
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.ComplimentaryLinkInterface
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, RoadLinkService}
 import fi.liikennevirasto.viite.dao.Discontinuity.Discontinuous
-import fi.liikennevirasto.viite.{NewRoadAddress, ReservedRoadPart, RoadAddressMerge, RoadAddressService}
+import fi.liikennevirasto.viite.{RoadAddressMerge, RoadAddressService}
 import org.joda.time.DateTime
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import slick.jdbc.{StaticQuery => Q}
 
 
@@ -96,6 +94,25 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
       returning.head should be (id)
       val newSize = currentSize + 1
       RoadAddressDAO.fetchByRoadPart(ra.head.roadNumber, ra.head.roadPartNumber) should have size(newSize)
+    }
+  }
+
+  test("Adding geometry to missing roadaddress") {
+    runWithRollback {
+      val id = RoadAddressDAO.getNextRoadAddressId
+      sqlu"""
+           insert into missing_road_address (link_id, start_addr_m, end_addr_m,anomaly_code, start_m)
+           values ($id, 0, 1, 1, 1)
+           """.execute
+      sqlu"""UPDATE MISSING_ROAD_ADDRESS
+        SET geometry= MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(
+             6699381,396898,0,0.0,6699382,396898,0,2))
+        WHERE link_id = ${id}""".execute
+      val query= s"""select Count(geometry)
+                 from missing_road_address ra
+                 WHERE ra.link_id=$id AND geometry IS NOT NULL
+      """
+      Q.queryNA[Int](query).firstOption should be (Some(1))
     }
   }
 
