@@ -107,7 +107,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
     //TODO use complementedIds instead of only roadLinkIds below. There is no complementary ids for changeInfo dealing (for now)
     val changedRoadLinks = roadLinkService.getChangeInfoFromVVH(boundingRectangle, municipalities)
-    prettyPrint(changedRoadLinks)
     val fetchVVHEndTime = System.currentTimeMillis()
     logger.info("End fetch vvh road links in %.3f sec".format((fetchVVHEndTime - fetchVVHStartTime) * 0.001))
     val linkIds = complementedRoadLinks.map(_.linkId).toSet

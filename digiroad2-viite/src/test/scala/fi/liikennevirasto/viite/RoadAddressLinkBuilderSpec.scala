@@ -185,7 +185,7 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers{
     }
   }
 
-  test("Correct build for ProjectAddressLink partitioner") {
+  test("Building ProjectAddressLink partitioner") {
     val unknownProjectLink = ProjectLink(0,0,0,Track.Unknown,Discontinuity.Continuous,0,0,None,None,None,0,0,0.0,0.0,SideCode.Unknown,(None,None),false, List(),0,NotHandled,UnknownOwnerRoad)
     val projectLinks =
       Map(
