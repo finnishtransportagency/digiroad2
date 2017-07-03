@@ -77,8 +77,8 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
     val properties1 = Set(SimpleProperty("nimi_suomeksi", Seq(PropertyValue("UpdatedAssetName"))))
     val properties2 = Set(SimpleProperty("nimi_suomeksi", Seq(PropertyValue("Asset2Name"))))
-    verify(mockService).updateExistingById(Matchers.eq(1l), Matchers.eq(None), Matchers.eq(properties1), Matchers.eq("CsvImportApiSpec"), anyObject())
-    verify(mockService).updateExistingById(Matchers.eq(2l), Matchers.eq(None), Matchers.eq(properties2), Matchers.eq("CsvImportApiSpec"), anyObject())
+    verify(mockService).updateExistingById(Matchers.eq(1l), Matchers.eq(None), Matchers.eq(properties1), Matchers.eq("CsvImportApiSpec"), anyObject(), anyBoolean())
+    verify(mockService).updateExistingById(Matchers.eq(2l), Matchers.eq(None), Matchers.eq(properties2), Matchers.eq("CsvImportApiSpec"), anyObject(), anyBoolean())
   }
 
   test("do not update name if field is empty in CSV", Tag("db")) {
@@ -94,7 +94,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val result = importer.importAssets(inputStream)
     result should equal(ImportResult())
 
-    verify(mockService).updateExistingById(Matchers.eq(1l), Matchers.eq(None), Matchers.eq(Set.empty), Matchers.eq("CsvImportApiSpec"), anyObject())
+    verify(mockService).updateExistingById(Matchers.eq(1l), Matchers.eq(None), Matchers.eq(Set.empty), Matchers.eq("CsvImportApiSpec"), anyObject(), anyBoolean())
   }
 
   test("validation fails if type is undefined", Tag("db")) {
@@ -136,7 +136,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     importer.importAssets(csv) should equal(ImportResult())
 
     val properties = Set(SimpleProperty("pysakin_tyyppi", Seq(PropertyValue("4"), PropertyValue("3"), PropertyValue("2"), PropertyValue("1"))))
-    verify(mockService).updateExistingById(Matchers.eq(1l), Matchers.eq(None), Matchers.eq(properties), Matchers.eq("CsvImportApiSpec"), anyObject())
+    verify(mockService).updateExistingById(Matchers.eq(1l), Matchers.eq(None), Matchers.eq(properties), Matchers.eq("CsvImportApiSpec"), anyObject(), anyBoolean())
   }
 
   test("update asset admin id by CSV import", Tag("db")) {
@@ -150,7 +150,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
     importer.importAssets(csv) should equal(ImportResult())
     val properties = Set(SimpleProperty("yllapitajan_tunnus", Seq(PropertyValue("NewAdminId"))))
-    verify(mockService).updateExistingById(Matchers.eq(1l), Matchers.eq(None), Matchers.eq(properties), Matchers.eq("CsvImportApiSpec"), anyObject())
+    verify(mockService).updateExistingById(Matchers.eq(1l), Matchers.eq(None), Matchers.eq(properties), Matchers.eq("CsvImportApiSpec"), anyObject(), anyBoolean())
   }
 
   test("Should not update asset LiVi id by CSV import (after Tierekisteri integration)", Tag("db")) {
@@ -164,7 +164,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
     importer.importAssets(csv) should equal(ImportResult())
     val properties = Set(SimpleProperty("yllapitajan_koodi", Seq(PropertyValue("Livi987654")))).filterNot(_.publicId == "yllapitajan_koodi")
-    verify(mockService).updateExistingById(Matchers.eq(1l), Matchers.eq(None), Matchers.eq(properties), Matchers.eq("CsvImportApiSpec"), anyObject())
+    verify(mockService).updateExistingById(Matchers.eq(1l), Matchers.eq(None), Matchers.eq(properties), Matchers.eq("CsvImportApiSpec"), anyObject(), anyBoolean())
   }
 
   test("update asset stop code by CSV import", Tag("db")) {
@@ -178,7 +178,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
     importer.importAssets(csv) should equal(ImportResult())
     val properties = Set(SimpleProperty("matkustajatunnus", Seq(PropertyValue("H156"))))
-    verify(mockService).updateExistingById(Matchers.eq(1l), Matchers.eq(None), Matchers.eq(properties), Matchers.eq("CsvImportApiSpec"), anyObject())
+    verify(mockService).updateExistingById(Matchers.eq(1l), Matchers.eq(None), Matchers.eq(properties), Matchers.eq("CsvImportApiSpec"), anyObject(), anyBoolean())
   }
 
   test("update additional information by CSV import", Tag("db")) {
@@ -192,7 +192,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
     importer.importAssets(csv) should equal(ImportResult())
     val properties = Set(SimpleProperty("lisatiedot", Seq(PropertyValue("Updated additional info"))))
-    verify(mockService).updateExistingById(Matchers.eq(1l), Matchers.eq(None), Matchers.eq(properties), Matchers.eq("CsvImportApiSpec"), anyObject())
+    verify(mockService).updateExistingById(Matchers.eq(1l), Matchers.eq(None), Matchers.eq(properties), Matchers.eq("CsvImportApiSpec"), anyObject(), anyBoolean())
   }
 
   val exampleValues = Map(
@@ -231,7 +231,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       SimpleProperty(key, Seq(PropertyValue(value._2)))
     }.filterNot(_.publicId == "yllapitajan_koodi").toSet
 
-    verify(mockService).updateExistingById(Matchers.eq(1l), Matchers.eq(None), Matchers.eq(properties), Matchers.eq("CsvImportApiSpec"), anyObject())
+    verify(mockService).updateExistingById(Matchers.eq(1l), Matchers.eq(None), Matchers.eq(properties), Matchers.eq("CsvImportApiSpec"), anyObject(), anyBoolean())
   }
 
   test("raise an error when updating non-existent asset", Tag("db")) {
@@ -267,7 +267,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     result should equal(ImportResult(
       incompleteAssets = List(IncompleteAsset(missingParameters = List("Pysäkin nimi"), csvRow = importer.rowToString(defaultValues - "Pysäkin nimi" ++ Map("Valtakunnallinen ID" -> 1))))))
 
-    verify(mockService, never).updateExistingById(anyLong(), anyObject(), anyObject(), anyString(), anyObject())
+    verify(mockService, never).updateExistingById(anyLong(), anyObject(), anyObject(), anyString(), anyObject(), anyBoolean())
   }
 
   private def mockWithMassTransitStops(stops: Seq[(Long, AdministrativeClass)]): (MassTransitStopService, VVHClient) = {
@@ -328,7 +328,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     result should equal(ImportResult(
       excludedAssets = List(ExcludedAsset(affectedRoadLinkType = "State", csvRow = importer.rowToString(defaultValues ++ assetFields)))))
 
-    verify(mockMassTransitStopService, never).updateExistingById(anyLong(), anyObject(), anyObject(), anyString(), anyObject())
+    verify(mockMassTransitStopService, never).updateExistingById(anyLong(), anyObject(), anyObject(), anyString(), anyObject(), anyBoolean())
   }
 
   test("update asset on street when import is limited to streets") {
@@ -341,7 +341,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     result should equal(ImportResult())
 
     val properties = Set(SimpleProperty("nimi_suomeksi", Seq(PropertyValue("NewName"))))
-    verify(mockMassTransitStopService).updateExistingById(Matchers.eq(1l), Matchers.eq(None), Matchers.eq(properties), Matchers.eq("CsvImportApiSpec"), anyObject())
+    verify(mockMassTransitStopService).updateExistingById(Matchers.eq(1l), Matchers.eq(None), Matchers.eq(properties), Matchers.eq("CsvImportApiSpec"), anyObject(), anyBoolean())
   }
 
   test("update asset on roads and streets when import is limited to roads and streets") {
@@ -355,8 +355,8 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
     val properties1 = Set(SimpleProperty("nimi_suomeksi", Seq(PropertyValue("NewName1"))))
     val properties2 = Set(SimpleProperty("nimi_suomeksi", Seq(PropertyValue("NewName2"))))
-    verify(mockMassTransitStopService).updateExistingById(Matchers.eq(1l), Matchers.eq(None), Matchers.eq(properties1), Matchers.eq("CsvImportApiSpec"), anyObject())
-    verify(mockMassTransitStopService).updateExistingById(Matchers.eq(2l), Matchers.eq(None), Matchers.eq(properties2), Matchers.eq("CsvImportApiSpec"), anyObject())
+    verify(mockMassTransitStopService).updateExistingById(Matchers.eq(1l), Matchers.eq(None), Matchers.eq(properties1), Matchers.eq("CsvImportApiSpec"), anyObject(), anyBoolean())
+    verify(mockMassTransitStopService).updateExistingById(Matchers.eq(2l), Matchers.eq(None), Matchers.eq(properties2), Matchers.eq("CsvImportApiSpec"), anyObject(), anyBoolean())
   }
 
   test("ignore updates on all other road types than private roads when import is limited to private roads") {
@@ -373,7 +373,7 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       excludedAssets = List(ExcludedAsset(affectedRoadLinkType = "State", csvRow = csvImporter.rowToString(defaultValues ++ assetOnRoadFields)),
         ExcludedAsset(affectedRoadLinkType = "Municipality", csvRow = csvImporter.rowToString(defaultValues ++ assetOnStreetFields)))))
 
-    verify(mockMassTransitStopService, never).updateExistingById(anyLong(), anyObject(), anyObject(), anyString(), anyObject())
+    verify(mockMassTransitStopService, never).updateExistingById(anyLong(), anyObject(), anyObject(), anyString(), anyObject(), anyBoolean())
   }
 
   private def csvToInputStream(csv: String): InputStream = new ByteArrayInputStream(csv.getBytes())

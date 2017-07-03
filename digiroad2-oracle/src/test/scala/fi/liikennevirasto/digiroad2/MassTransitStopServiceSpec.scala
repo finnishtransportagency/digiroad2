@@ -166,7 +166,12 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   test("Get stops by bounding box") {
     runWithRollback {
       val vvhRoadLink = VVHRoadlink(11, 235, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
-      val id = RollbackMassTransitStopService.create(NewMassTransitStop(5.0, 0.0, 1l, 2, Nil), "masstransitstopservice_spec", vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass), linkSource = NormalLinkInterface)
+      val id = RollbackMassTransitStopService.create(NewMassTransitStop(5.0, 0.0, 1l, 2,
+        Seq(
+          SimpleProperty("tietojen_yllapitaja", Seq(PropertyValue("1"))),
+          SimpleProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
+          SimpleProperty("vaikutussuunta", Seq(PropertyValue("2")))
+        )), "masstransitstopservice_spec", vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass), linkSource = NormalLinkInterface)
       val stops = RollbackMassTransitStopService.getByBoundingBox(
         userWithKauniainenAuthorization, BoundingRectangle(Point(0.0, 0.0), Point(10.0, 10.0)))
       stops.map(_.id) should be(Seq(id))
@@ -1264,6 +1269,23 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val liviIdentifierProperty = stop.get.propertyData.find(p => p.publicId == "yllapitajan_koodi").get
       liviIdentifierProperty.values.isEmpty should be(true)
       showStatusCode should be(true)
+    }
+  }
+
+  test("auto correct geometry with bounding box less than 3m") {
+    runWithRollback {
+      val vvhRoadLink = VVHRoadlink(11, 235, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
+      val id = RollbackMassTransitStopService.create(NewMassTransitStop(5.0, 1.0, 1l, 2,
+        Seq(
+          SimpleProperty("tietojen_yllapitaja", Seq(PropertyValue("1"))),
+          SimpleProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
+          SimpleProperty("vaikutussuunta", Seq(PropertyValue("2")))
+        )), "masstransitstopservice_spec", vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass), linkSource = NormalLinkInterface)
+      val stops = RollbackMassTransitStopService.getByBoundingBox(
+        userWithKauniainenAuthorization, BoundingRectangle(Point(0.0, 0.0), Point(10.0, 10.0)))
+      val asset = stops.find(_.id == id)
+      asset.get.lon should be(5.0)
+      asset.get.lat should be(0.0)
     }
   }
 
