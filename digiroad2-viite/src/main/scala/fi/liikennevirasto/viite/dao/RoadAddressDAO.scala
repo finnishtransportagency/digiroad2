@@ -579,15 +579,14 @@ object RoadAddressDAO {
 
   def createMissingRoadAddress (mra: MissingRoadAddress) = {
     val (p1, p2) = (mra.geom.head, mra.geom.last)
-    val startAddrMValue = mra.startAddrMValue.getOrElse(0).asInstanceOf[Long]
-    val endAddrMValue = mra.endAddrMValue.getOrElse(0).asInstanceOf[Long]
+
     sqlu"""
            insert into missing_road_address
            (select ${mra.linkId}, ${mra.startAddrMValue}, ${mra.endAddrMValue},
              ${mra.roadNumber}, ${mra.roadPartNumber}, ${mra.anomaly.value},
              ${mra.startMValue}, ${mra.endMValue},
              MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),
-             MDSYS.SDO_ORDINATE_ARRAY(${p1.x},${p1.y},0.0,${startAddrMValue},${p2.x},${p2.y},0.0,${endAddrMValue}))
+             MDSYS.SDO_ORDINATE_ARRAY(${p1.x},${p1.y},0.0,0.0,${p2.x},${p2.y},0.0,0.0))
               FROM dual WHERE NOT EXISTS (SELECT * FROM MISSING_ROAD_ADDRESS WHERE link_id = ${mra.linkId}) AND
               NOT EXISTS (SELECT * FROM ROAD_ADDRESS ra JOIN LRM_POSITION pos ON (pos.id = lrm_position_id)
                 WHERE link_id = ${mra.linkId} AND (valid_to IS NULL OR valid_to > sysdate) ))
