@@ -1,20 +1,19 @@
 package fi.liikennevirasto.viite.dao
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.ComplimentaryLinkInterface
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, RoadLinkService}
 import fi.liikennevirasto.viite.dao.Discontinuity.Discontinuous
-import fi.liikennevirasto.viite.{NewRoadAddress, ReservedRoadPart, RoadAddressMerge, RoadAddressService}
+import fi.liikennevirasto.viite.{RoadAddressMerge, RoadAddressService}
 import org.joda.time.DateTime
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import slick.jdbc.{StaticQuery => Q}
 
 
@@ -90,7 +89,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       val id = RoadAddressDAO.getNextRoadAddressId
       val ra = Seq(RoadAddress(id, 1943845, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
-        Seq(Point(0.0, 0.0), Point(0.0, 9.8))))
+        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface))
       val currentSize = RoadAddressDAO.fetchByRoadPart(ra.head.roadNumber, ra.head.roadPartNumber).size
       val returning = RoadAddressDAO.create(ra)
       returning.nonEmpty should be (true)
@@ -100,12 +99,31 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Adding geometry to missing roadaddress") {
+    runWithRollback {
+      val id = RoadAddressDAO.getNextRoadAddressId
+      sqlu"""
+           insert into missing_road_address (link_id, start_addr_m, end_addr_m,anomaly_code, start_m)
+           values ($id, 0, 1, 1, 1)
+           """.execute
+      sqlu"""UPDATE MISSING_ROAD_ADDRESS
+        SET geometry= MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(
+             6699381,396898,0,0.0,6699382,396898,0,2))
+        WHERE link_id = ${id}""".execute
+      val query= s"""select Count(geometry)
+                 from missing_road_address ra
+                 WHERE ra.link_id=$id AND geometry IS NOT NULL
+      """
+      Q.queryNA[Int](query).firstOption should be (Some(1))
+    }
+  }
+
   test("Create Road Address with username") {
     runWithRollback {
       val username = "testUser"
       val id = RoadAddressDAO.getNextRoadAddressId
       val ra = Seq(RoadAddress(id, 1943845, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
-        Seq(Point(0.0, 0.0), Point(0.0, 9.8))))
+        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface))
       val currentSize = RoadAddressDAO.fetchByRoadPart(ra.head.roadNumber, ra.head.roadPartNumber).size
       val returning = RoadAddressDAO.create(ra, Some(username))
       returning.nonEmpty should be (true)
@@ -122,7 +140,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
       val id = RoadAddressDAO.getNextRoadAddressId
       val ra = Seq(RoadAddress(id, 1943845, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"),0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0,
         (Some(CalibrationPoint(12345L, 0.0, 0L)), None), false,
-        Seq(Point(0.0, 0.0), Point(0.0, 9.8))))
+        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface))
       val returning = RoadAddressDAO.create(ra)
       returning.nonEmpty should be (true)
       returning.head should be (id)
@@ -133,7 +151,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
       val id = RoadAddressDAO.getNextRoadAddressId
       val ra = Seq(RoadAddress(id, 1943845, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"),0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0,
         (Some(CalibrationPoint(12345L, 0.0, 0L)), Some(CalibrationPoint(12345L, 9.8, 10L))), false,
-        Seq(Point(0.0, 0.0), Point(0.0, 9.8))))
+        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface))
       val returning = RoadAddressDAO.create(ra)
       returning.nonEmpty should be (true)
       returning.head should be (id)
@@ -141,6 +159,21 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
       fetch.head should be (3)
     }
   }
+
+  test("Create Road Address with complementary source") {
+    runWithRollback {
+      val id = RoadAddressDAO.getNextRoadAddressId
+      val ra = Seq(RoadAddress(id, 1943845, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")),
+        None, Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
+        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.ComplimentaryLinkInterface))
+      val returning = RoadAddressDAO.create(ra)
+      returning.nonEmpty should be (true)
+      returning.head should be (id)
+      sql"""SELECT link_source FROM ROAD_ADDRESS ra JOIN LRM_POSITION pos ON (ra.lrm_position_id = pos.id) WHERE ra.id = $id"""
+        .as[Int].first should be (ComplimentaryLinkInterface.value)
+    }
+  }
+
 
   test("Delete Road Addresses") {
     runWithRollback {
@@ -158,7 +191,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       val id = RoadAddressDAO.getNextRoadAddressId
       val toBeMergedRoadAddresses = Seq(RoadAddress(id, 1943845, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"),0, 6556558L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
-        Seq(Point(0.0, 0.0), Point(0.0, 9.8))))
+        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface))
       localRoadAddressService.mergeRoadAddressInTX(RoadAddressMerge(Set(1L), toBeMergedRoadAddresses))
     }
   }

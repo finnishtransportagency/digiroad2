@@ -160,7 +160,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       val (addressesToCreate, unchanged) = newRoadAddresses.values.flatten.toSeq.partition(_.id == NewRoadAddress)
       val savedRoadAddresses = addressesToCreate.map(r =>
           r.copy(geom = GeometryUtils.truncateGeometry3D(roadLinkMap(r.linkId).geometry,
-              r.startMValue, r.endMValue)))
+              r.startMValue, r.endMValue), linkGeomSource = roadLinkMap(r.linkId).linkSource))
 
       val ids = RoadAddressDAO.create(savedRoadAddresses).toSet ++ unchanged.map(_.id).toSet
 
@@ -299,7 +299,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     if (roadLinks.isEmpty) {
       throw new InvalidAddressDataException(s"Can't find road link for target link id $linkId")
     } else{
-      RoadAddressLinkBuilder.build(roadLinks.head, MissingRoadAddress(linkId = linkId, None, None, RoadType.Unknown, None, None, None, None, anomaly = Anomaly.NoAddressGiven))
+      RoadAddressLinkBuilder.build(roadLinks.head, MissingRoadAddress(linkId = linkId, None, None, RoadType.Unknown, None, None, None, None, anomaly = Anomaly.NoAddressGiven,Seq.empty[Point]))
     }
   }
 
@@ -406,7 +406,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       if(float && nonEmptyTargetLinkGeometry(roadLink, addressGeometry)){
         println("Floating and update geometry id %d (link id %d)".format(address.id, address.linkId))
         RoadAddressDAO.changeRoadAddressFloating(float = true, address.id, addressGeometry)
-        val missing = new MissingRoadAddress(address.linkId, Some(address.startAddrMValue), Some(address.endAddrMValue), RoadAddressLinkBuilder.getRoadType(roadLink.get.administrativeClass, UnknownLinkType), None,None,Some(address.startMValue) ,Some(address.endMValue),Anomaly.GeometryChanged)
+        val missing = new MissingRoadAddress(address.linkId, Some(address.startAddrMValue), Some(address.endAddrMValue), RoadAddressLinkBuilder.getRoadType(roadLink.get.administrativeClass, UnknownLinkType), None,None,Some(address.startMValue) ,Some(address.endMValue),Anomaly.GeometryChanged,Seq.empty[Point])
         RoadAddressDAO.createMissingRoadAddress(missing.linkId, missing.startAddrMValue.getOrElse(0), missing.endAddrMValue.getOrElse(0), missing.anomaly.value, missing.startMValue.get, missing.endMValue.get)
       } else if (!nonEmptyTargetLinkGeometry(roadLink, addressGeometry)) {
         println("Floating id %d (link id %d)".format(address.id, address.linkId))
@@ -573,7 +573,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   def getRoadAddressesAfterCalculation(sources: Seq[String], targets: Seq[String], user: User): Seq[RoadAddress] = {
     def adjustGeometry(ra: RoadAddress, link: RoadAddressLinkLike): RoadAddress = {
       val geom = GeometryUtils.truncateGeometry3D(link.geometry, ra.startMValue, ra.endMValue)
-      ra.copy(geom = geom)
+      ra.copy(geom = geom, linkGeomSource = link.roadLinkSource)
     }
     val sourceRoadAddressLinks = sources.flatMap(rd => {
       getRoadAddressLink(rd.toLong)

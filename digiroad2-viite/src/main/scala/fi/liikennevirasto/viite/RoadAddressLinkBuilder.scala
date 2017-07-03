@@ -324,7 +324,7 @@ object RoadAddressLinkBuilder {
         nextSegment.track, discontinuity, startAddrMValue,
         endAddrMValue, nextSegment.startDate, nextSegment.endDate, nextSegment.modifiedBy, nextSegment.lrmPositionId, nextSegment.linkId,
         startMValue, endMValue,
-        nextSegment.sideCode, nextSegment.adjustedTimestamp, calibrationPoints, false, combinedGeometry))
+        nextSegment.sideCode, nextSegment.adjustedTimestamp, calibrationPoints, false, combinedGeometry, nextSegment.linkGeomSource))
 
     } else Seq(nextSegment, previousSegment)
 
