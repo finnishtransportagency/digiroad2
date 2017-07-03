@@ -123,7 +123,7 @@ case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
 
 case class MissingRoadAddress(linkId: Long, startAddrMValue: Option[Long], endAddrMValue: Option[Long],
                               roadType: RoadType, roadNumber: Option[Long], roadPartNumber: Option[Long],
-                              startMValue: Option[Double], endMValue: Option[Double], anomaly: Anomaly)
+                              startMValue: Option[Double], endMValue: Option[Double], anomaly: Anomaly,geom: Seq[Point])
 
 object RoadAddressDAO {
 
@@ -558,7 +558,7 @@ object RoadAddressDAO {
            insert into missing_road_address
            (select ${missingRoadAddress.linkId}, ${missingRoadAddress.startAddrMValue}, ${missingRoadAddress.endAddrMValue},
              ${missingRoadAddress.roadNumber}, ${missingRoadAddress.roadPartNumber}, ${missingRoadAddress.anomaly.value},
-             ${missingRoadAddress.startMValue}, ${missingRoadAddress.endMValue} FROM dual
+             ${missingRoadAddress.startMValue}, ${missingRoadAddress.endMValue}, NULL FROM dual
             WHERE NOT EXISTS (SELECT * FROM MISSING_ROAD_ADDRESS WHERE link_id = ${missingRoadAddress.linkId}) AND
               NOT EXISTS (SELECT * FROM ROAD_ADDRESS ra JOIN LRM_POSITION pos ON (pos.id = lrm_position_id)
                 WHERE link_id = ${missingRoadAddress.linkId} AND (valid_to IS NULL OR valid_to > sysdate) ))
@@ -632,7 +632,7 @@ object RoadAddressDAO {
             FROM missing_road_address $where"""
       Q.queryNA[(Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Double], Option[Double], Int)](query).list.map {
         case (linkId, startAddrM, endAddrM, road, roadPart, startM, endM, anomaly) =>
-          MissingRoadAddress(linkId, startAddrM, endAddrM, RoadType.UnknownOwnerRoad ,road, roadPart, startM, endM, Anomaly.apply(anomaly))
+          MissingRoadAddress(linkId, startAddrM, endAddrM, RoadType.UnknownOwnerRoad ,road, roadPart, startM, endM, Anomaly.apply(anomaly),Seq.empty[Point])
       }
     }
   }
@@ -645,7 +645,7 @@ object RoadAddressDAO {
             FROM missing_road_address mra join $idTableName i on i.id = mra.link_id"""
         Q.queryNA[(Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Double], Option[Double], Int)](query).list.map {
           case (linkId, startAddrM, endAddrM, road, roadPart, startM, endM, anomaly) =>
-            MissingRoadAddress(linkId, startAddrM, endAddrM, RoadType.UnknownOwnerRoad, road, roadPart, startM, endM, Anomaly.apply(anomaly))
+            MissingRoadAddress(linkId, startAddrM, endAddrM, RoadType.UnknownOwnerRoad, road, roadPart, startM, endM, Anomaly.apply(anomaly),Seq.empty[Point])
         }
     }
   }
