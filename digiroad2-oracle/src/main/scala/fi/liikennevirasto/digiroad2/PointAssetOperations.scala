@@ -51,7 +51,7 @@ trait PersistedPointAsset extends PointAsset with IncomingPointAsset {
   val mValue: Double
   val floating: Boolean
   val vvhTimeStamp: Long
-  val linkSource: Int
+  val linkSource: LinkGeomSource
 }
 
 trait PointAssetOperations {

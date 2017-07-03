@@ -47,7 +47,7 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService) extends Po
 
   private def adjustmentOperation(persistedAsset: PersistedAsset, adjustment: AssetAdjustment): Long = {
     OraclePedestrianCrossingDao.update(adjustment.assetId, PedestrianCrossingToBePersisted(adjustment.linkId,
-      adjustment.lon, adjustment.lat, adjustment.mValue, persistedAsset.municipalityCode, "vvh_generated"), Some(adjustment.vvhTimeStamp), LinkGeomSource(persistedAsset.linkSource))
+      adjustment.lon, adjustment.lat, adjustment.mValue, persistedAsset.municipalityCode, "vvh_generated"), Some(adjustment.vvhTimeStamp), persistedAsset.linkSource)
   }
 
   override def getByMunicipality(municipalityCode: Int): Seq[PersistedAsset] = {

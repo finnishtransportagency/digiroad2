@@ -63,6 +63,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     def extractFloating(massTransitStop: PersistedMassTransitStop): (String, Boolean) = { "kelluvuus" -> massTransitStop.floating }
     def extractLinkId(massTransitStop: PersistedMassTransitStop): (String, Option[Long]) = { "link_id" -> Some(massTransitStop.linkId) }
     def extractMvalue(massTransitStop: PersistedMassTransitStop): (String, Option[Double]) = { "m_value" -> Some(massTransitStop.mValue) }
+    def extractLinkSource(massTransitStop: PersistedMassTransitStop) : (String, Option[Int]) = { "linkSource" -> Some(massTransitStop.linkSource.value) }
     Map(
       "type" -> "FeatureCollection",
       "features" -> input.map {
@@ -79,6 +80,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
             extractFloating(massTransitStop),
             extractLinkId(massTransitStop),
             extractMvalue(massTransitStop),
+            extractLinkSource(massTransitStop),
             extractPropertyValue("pysakin_tyyppi", massTransitStop.propertyData, propertyValuesToIntList),
             extractPropertyValue("nimi_suomeksi", massTransitStop.propertyData, propertyValuesToString),
             extractPropertyValue("nimi_ruotsiksi", massTransitStop.propertyData, propertyValuesToString),
@@ -146,7 +148,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "linkId" -> speedLimit.linkId,
         latestModificationTime(speedLimit.createdDateTime, speedLimit.modifiedDateTime),
         lastModifiedBy(speedLimit.createdBy, speedLimit.modifiedBy),
-        "changeType" -> extractChangeType(since, speedLimit.expired, speedLimit.createdDateTime))
+        "changeType" -> extractChangeType(since, speedLimit.expired, speedLimit.createdDateTime),
+        "linkSource" -> speedLimit.linkSource.value)
     }
   }
 
@@ -223,7 +226,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "endMeasure" -> asset.endMeasure,
         latestModificationTime(asset.createdDateTime, asset.modifiedDateTime),
         lastModifiedBy(asset.createdBy, asset.modifiedBy),
-        "linkSource" -> asset.linkSource
+        "linkSource" -> asset.linkSource.value
       )
     }
   }
@@ -237,7 +240,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "m_value" -> pedestrianCrossing.mValue,
         latestModificationTime(pedestrianCrossing.createdAt, pedestrianCrossing.modifiedAt),
         lastModifiedBy(pedestrianCrossing.createdBy, pedestrianCrossing.modifiedBy),
-        "linkSource" -> pedestrianCrossing.linkSource)
+        "linkSource" -> pedestrianCrossing.linkSource.value)
     }
   }
 
@@ -250,7 +253,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "m_value" -> trafficLight.mValue,
         latestModificationTime(trafficLight.createdAt, trafficLight.modifiedAt),
         lastModifiedBy(trafficLight.createdBy, trafficLight.modifiedBy),
-        "linkSource" -> trafficLight.linkSource)
+        "linkSource" -> trafficLight.linkSource.value)
     }
   }
 
@@ -266,7 +269,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "text" -> directionalTrafficSign.text.map(_.split("\n").toSeq),
         latestModificationTime(directionalTrafficSign.createdAt, directionalTrafficSign.modifiedAt),
         lastModifiedBy(directionalTrafficSign.createdBy, directionalTrafficSign.modifiedBy),
-        "linkSource" -> directionalTrafficSign.linkSource)
+        "linkSource" -> directionalTrafficSign.linkSource.value)
     }
   }
 
@@ -336,7 +339,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "name" -> railwayCrossing.name,
         latestModificationTime(railwayCrossing.createdAt, railwayCrossing.modifiedAt),
         lastModifiedBy(railwayCrossing.createdBy, railwayCrossing.modifiedBy),
-        "linkSource" -> railwayCrossing.linkSource)
+        "linkSource" -> railwayCrossing.linkSource.value)
     }
   }
 
@@ -350,7 +353,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         "obstacle_type" -> obstacle.obstacleType,
         latestModificationTime(obstacle.createdAt, obstacle.modifiedAt),
         lastModifiedBy(obstacle.createdBy, obstacle.modifiedBy),
-        "linkSource" -> obstacle.linkSource)
+        "linkSource" -> obstacle.linkSource.value)
     }
   }
 

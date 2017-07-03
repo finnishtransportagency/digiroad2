@@ -34,7 +34,7 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
 
   private def adjustmentOperation(persistedAsset: PersistedAsset, adjustment: AssetAdjustment): Long = {
     val updatedAsset = IncomingRailwayCrossing(adjustment.lon, adjustment.lat, adjustment.linkId, persistedAsset.safetyEquipment, persistedAsset.name)
-    OracleRailwayCrossingDao.update(adjustment.assetId, updatedAsset, adjustment.mValue, persistedAsset.municipalityCode, "vvh_generated", Some(adjustment.vvhTimeStamp), LinkGeomSource(persistedAsset.linkSource))
+    OracleRailwayCrossingDao.update(adjustment.assetId, updatedAsset, adjustment.mValue, persistedAsset.municipalityCode, "vvh_generated", Some(adjustment.vvhTimeStamp), persistedAsset.linkSource)
   }
 
   override def getByMunicipality(municipalityCode: Int): Seq[PersistedAsset] = {
