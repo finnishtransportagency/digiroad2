@@ -40,7 +40,24 @@
       };
       var speedLimitsWithAdjustments = _.map(speedLimitsWithType, offsetBySideCode);
       var speedLimitsSplitAt70kmh = _.groupBy(speedLimitsWithAdjustments, function(linearAsset) { return linearAsset.value >= 70; });
-      return dottedLineFeatures(speedLimitsSplitAt70kmh[true]);
+      return dottedLineFeatures(speedLimitsSplitAt70kmh[true]).concat(limitSigns(speedLimitsWithAdjustments));
+    };
+
+    //Used winter speed limits -for icons features
+    var limitSigns = function(speedLimits) {
+      return _.map(speedLimits, function(speedLimit) {
+        var points = _.map(speedLimit.points, function(point) {
+          return [point.x, point.y];
+        });
+        var road = new ol.geom.LineString(points);
+        var signPosition = GeometryUtils.calculateMidpointOfLineString(road);
+        var type = isUnknown(speedLimit) ? { type: 'unknown' } : {};
+        var attributes = _.merge(_.cloneDeep(_.omit(speedLimit, "geometry")), type);
+
+        var feature = new ol.Feature(new ol.geom.Point([signPosition.x, signPosition.y]));
+        feature.setProperties(attributes);
+        return feature;
+      });
     };
 
     //Used winter speed limits

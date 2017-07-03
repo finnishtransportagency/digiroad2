@@ -274,7 +274,6 @@
         showUnit: true
       },
       possibleValues: [100, 80, 70, 60],
-      label: new LinearAssetLabel(),
       style : new WinterSpeedLimitStyle()
     },
     {

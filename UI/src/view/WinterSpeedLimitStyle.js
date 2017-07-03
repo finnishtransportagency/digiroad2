@@ -46,12 +46,11 @@
       createZoomDependentOneWayRule(14, {stroke: {width: 8}}),
       createZoomDependentOneWayRule(15, {stroke: {width: 8}})
     ];
-
     var speedLimitStyleRules = [
-      new StyleRule().where('value').is(60).use({stroke: {color: '#0011bb', fill: '#0011bb'}}),
-      new StyleRule().where('value').is(70).use({stroke: {color: '#00ccdd', fill: '#00ccdd'}}),
-      new StyleRule().where('value').is(80).use({stroke: {color: '#ff0000', fill: '#ff0000'}}),
-      new StyleRule().where('value').is(100).use({stroke: {color: '#11bb00', fill: '#11bb00'}})
+      new StyleRule().where('value').is(60).use({ stroke: { color: '#0011bb', fill: '#0011bb'}, icon: {src:  'images/speed-limits/60.svg'}}),
+      new StyleRule().where('value').is(70).use({ stroke: { color: '#00ccdd', fill: '#00ccdd'}, icon: {src:  'images/speed-limits/70.svg'}}),
+      new StyleRule().where('value').is(80).use({ stroke: { color: '#ff0000', fill: '#ff0000'}, icon: {src:  'images/speed-limits/80.svg'}}),
+      new StyleRule().where('value').is(100).use({ stroke: { color: '#11bb00', fill: '#11bb00'}, icon: {src:  'images/speed-limits/100.svg'}})
     ];
 
     var speedLimitFeatureSizeRules = [
@@ -63,6 +62,17 @@
       new StyleRule().where('zoomLevel').is(14).use({stroke: {width: 14}, pointRadius: 22}),
       new StyleRule().where('zoomLevel').is(15).use({stroke: {width: 14}, pointRadius: 22})
     ];
+
+    var speedLimitImageSizeRules = [
+      new StyleRule().where('zoomLevel').is(9).and('type').isNot('unknown').use({ icon: {scale: 0.8}}),
+      new StyleRule().where('zoomLevel').is(10).and('type').isNot('unknown').use({ icon: {scale: 1}}),
+      new StyleRule().where('zoomLevel').is(11).and('type').isNot('unknown').use({ icon: {scale: 1.3}}),
+      new StyleRule().where('zoomLevel').is(12).and('type').isNot('unknown').use({ icon: {scale: 1.6}}),
+      new StyleRule().where('zoomLevel').is(13).and('type').isNot('unknown').use({ icon: {scale: 1.8}}),
+      new StyleRule().where('zoomLevel').is(14).and('type').isNot('unknown').use({ icon: {scale: 2}}),
+      new StyleRule().where('zoomLevel').is(15).and('type').isNot('unknown').use({ icon: {scale: 2.2}})
+    ];
+
 
     var typeSpecificStyleRules = [
       new StyleRule().where('type').is('overlay').use({stroke: {opacity: 1.0}}),
@@ -78,5 +88,6 @@
     me.browsingStyleProvider.addRules(overlayStyleRules);
     me.browsingStyleProvider.addRules(validityDirectionStyleRules);
     me.browsingStyleProvider.addRules(oneWayOverlayStyleRules);
+    me.browsingStyleProvider.addRules(speedLimitImageSizeRules);
   };
 })(this);
