@@ -4,13 +4,13 @@ import fi.liikennevirasto.digiroad2.FeatureClass.TractorRoad
 import fi.liikennevirasto.digiroad2.asset.Asset.DateTimePropertyFormat
 import fi.liikennevirasto.digiroad2.asset.CycleOrPedestrianPath
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, RoadLinkService}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, RoadLinkService}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.VVHSerializer
 import org.joda.time.{DateTime, DateTimeZone}
 import org.slf4j.LoggerFactory
 
-case class ChangedRoadAddress(link: RoadLink, value: Long, createdAt: String, changeType: String)
+case class ChangedRoadAddress(roadAddress : RoadAddress, link: RoadLink)
 
 class RoadAddressesService(val eventbus: DigiroadEventBus, roadLinkServiceImplementation: RoadLinkService) {
 
@@ -24,7 +24,7 @@ class RoadAddressesService(val eventbus: DigiroadEventBus, roadLinkServiceImplem
 
     val roadAddresses =
       withDynTransaction {
-        roadAddressDAO.getRoadNumberChangesByDate(startDate)
+        roadAddressDAO.getRoadAddress(roadAddressDAO.withStartDate(startDate))
       }
 
     val roadLinks = roadLinkServiceImplementation.getRoadLinksAndComplementaryByLinkIdsFromVVH(roadAddresses.map(_.linkId).toSet)
@@ -33,28 +33,31 @@ class RoadAddressesService(val eventbus: DigiroadEventBus, roadLinkServiceImplem
     roadAddresses.flatMap { roadAddress =>
       roadLinksWithoutWalkways.find(_.linkId == roadAddress.linkId).map { roadLink =>
         ChangedRoadAddress(
-          link = roadLink,
-          value = roadAddress.roadNumber,
-          createdAt = roadAddress.startDate match {
-            case Some(dataValue) => DateTimePropertyFormat.print(dataValue)
-            case None => ""
-          },
-          changeType = "Modify"
+          roadAddress = RoadAddress(
+            id = roadAddress.id,
+            roadNumber = roadAddress.roadNumber,
+            roadPartNumber = roadAddress.roadPartNumber,
+            track = roadAddress.track,
+            discontinuity = roadAddress.discontinuity,
+            startAddrMValue = roadAddress.startAddrMValue,
+            endAddrMValue = roadAddress.endAddrMValue,
+            startDate = roadAddress.startDate,
+            endDate = roadAddress.endDate,
+            lrmPositionId = roadAddress.lrmPositionId,
+            linkId = roadAddress.linkId,
+            startMValue = roadAddress.startMValue,
+            endMValue = roadAddress.endMValue,
+            sideCode = roadAddress.sideCode,
+            floating = roadAddress.floating,
+            geom = GeometryUtils.truncateGeometry3D(roadLink.geometry, roadAddress.startMValue, roadAddress.endMValue),
+            expired = roadAddress.expired,
+            createdBy = roadAddress.createdBy,
+            createdDate = roadAddress.createdDate,
+            modifiedDate = roadAddress.modifiedDate
+          ),
+          link = roadLink
         )
       }
     }
-//    roadAddresses.flatMap { roadAddress =>
-//      roadLinksWithoutWalkways.find(_.linkId == roadAddress.linkId).map { roadLink =>
-//        ChangedRoadAddress(
-//          link = roadLink,
-//          value = roadAddress.roadNumber,
-//          createdAt = roadAddress.startDate match {
-//            case Some(dataValue) => DateTimePropertyFormat.print(dataValue)
-//            case None => ""
-//          },
-//          changeType = "Modify"
-//        )
-//      }
-//    }
   }
 }

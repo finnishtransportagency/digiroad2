@@ -41,7 +41,7 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
       case "length_limits"               => linearAssetsToGeoJson(since, linearAssetService.getChanged(80, since, until))
       case "width_limits"                => linearAssetsToGeoJson(since, linearAssetService.getChanged(90, since, until))
       case "road_names"                  => vvhRoadLinkToGeoJson(roadLinkService.getChanged(since, until))
-      case "road_numbers"                => roadNumberToGeoJson(roadAddressesService.getChanged(since))
+      case "road_numbers"                => roadNumberToGeoJson(since, roadAddressesService.getChanged(since))
     }
   }
 
@@ -197,21 +197,21 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
         }
     )
 
-  private def roadNumberToGeoJson(changedRoadAddress: Seq[ChangedRoadAddress]) =
+  private def roadNumberToGeoJson(since: DateTime, changedRoadAddress: Seq[ChangedRoadAddress]) =
     Map(
       "type" -> "FeatureCollection",
       "features" ->
-        changedRoadAddress.map { case ChangedRoadAddress(link, value, createdAt, changeType) =>
+        changedRoadAddress.map { case ChangedRoadAddress(road, link) =>
           Map(
             "type" -> "Feature",
-            "id" -> link.linkId,
+            "id" -> road.id,
             "geometry" -> Map(
               "type" -> "LineString",
-              "coordinates" -> link.geometry.map(p => Seq(p.x, p.y, p.z))
+              "coordinates" -> road.geom.map(p => Seq(p.x, p.y, p.z))
             ),
             "properties" ->
               Map(
-                "value" -> value,
+                "value" -> road.roadNumber,
                 "link" -> Map(
                   "type" -> "Feature",
                   "id" -> link.linkId,
@@ -231,15 +231,14 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
                   case TrafficDirection.TowardsDigitizing =>
                     SideCode.TowardsDigitizing.value
                   case _ =>
-                    SideCode.BothDirections.value})
-//                }),
-//                "startMeasure" -> road.startMeasure,
-//                "endMeasure" -> road.endMeasure,
-//                "createdBy" -> road.createdBy,
-//                "modifiedAt" -> road.modifiedDateTime.map(DateTimePropertyFormat.print(_)),
-//                "createdAt" -> road.createdDateTime.map(DateTimePropertyFormat.print(_)),
-//                "modifiedBy" -> road.modifiedBy,
-//                "changeType" -> extractChangeType(since, road.expired, road.createdDateTime)
+                    road.sideCode.value
+                }),
+                "startMeasure" -> road.startMValue,
+                "endMeasure" -> road.endMValue,
+                "createdBy" -> road.createdBy,
+                "modifiedAt" -> road.modifiedDate.map(DateTimePropertyFormat.print(_)),
+                "createdAt" -> road.createdDate.map(DateTimePropertyFormat.print(_)),
+                "changeType" -> extractChangeType(since, road.expired, road.createdDate)
               )
           )
         }
