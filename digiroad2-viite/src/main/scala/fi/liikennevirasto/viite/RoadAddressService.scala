@@ -166,22 +166,20 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val (floatingViiteRoadLinks, addresses, floating) = Await.result(fetchRoadAddressesByBoundingBoxF, Duration.Inf)
     val missingViiteRoadAddress = Await.result(fetchMissingRoadAddressesByBoundingBoxF, Duration.Inf)
     val changedRoadLinks = roadLinkService.getChangeInfoFromVVH(boundingRectangle, municipalities)
+
+
+    val roadLinks = roadLinkService.getViiteCurrentLinksFromVVH(addresses.keySet ++ missingViiteRoadAddress.keySet)
+
     val fetchVVHEndTime = System.currentTimeMillis()
     logger.info("End fetch vvh road links in %.3f sec".format((fetchVVHEndTime - fetchVVHStartTime) * 0.001))
 
-    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(addresses.keySet ++ missingViiteRoadAddress.keySet)
-
     val linkIds = roadLinks.map(_.linkId).toSet
-
-    val fetchMissingRoadAddressStartTime = System.currentTimeMillis()
 
     val filteredChangedRoadLinks = changedRoadLinks.filter(crl => crl.oldId.exists(id =>
       addresses.keySet.contains(id) || linkIds.contains(id)))
     val complementedWithChangeAddresses = applyChanges(roadLinks, filteredChangedRoadLinks, addresses)
 
     val fetchMissingRoadAddressEndTime = System.currentTimeMillis()
-    logger.info("End fetch missing and floating road address in %.3f sec".format((fetchMissingRoadAddressEndTime - fetchMissingRoadAddressStartTime) * 0.001))
-
     val (changedFloating, missingFloating) = floatingViiteRoadLinks.partition(ral => linkIds.contains(ral._1))
 
     val buildStartTime = System.currentTimeMillis()

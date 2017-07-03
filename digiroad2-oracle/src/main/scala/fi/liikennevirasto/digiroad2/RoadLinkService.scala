@@ -628,6 +628,17 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }
   }
 
+  def getViiteCurrentLinksFromVVH(roadAddressesLinkIds: Set[Long]): (Seq[RoadLink]) = {
+    val fut = for{
+      f1Result <- vvhClient.roadLinkData.fetchByLinkIdsF(roadAddressesLinkIds)
+    } yield (f1Result)
+    val currentData = Await.result(fut, Duration.Inf)
+
+    withDynTransaction {
+      enrichRoadLinksFromVVH(currentData, Seq())
+    }
+  }
+
   def getRoadLinksHistoryFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()) : Seq[RoadLink] = {
     val (historyRoadLinks, roadlinks) = Await.result(vvhClient.historyData.fetchByMunicipalitiesAndBoundsF(bounds, municipalities).zip(vvhClient.roadLinkData.fetchByMunicipalitiesAndBoundsF(bounds, municipalities)), atMost = Duration.Inf)
     val linkprocessor = new VVHRoadLinkHistoryProcessor()
