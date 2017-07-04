@@ -301,6 +301,7 @@
     var speedLimitBox = new ActionPanelBoxes.SpeedLimitBox(selectedSpeedLimit);
     var manoeuvreBox = new ManoeuvreBox();
     var winterSpeedLimits = new ActionPanelBoxes.WinterSpeedLimitBox(_.find(linearAssets, {typeId: assetType.winterSpeedLimit}));
+    var serviceRoadBox = new ActionPanelBoxes.ServiceRoadBox(_.find(linearAssets, {typeId: assetType.maintenanceRoad}));
 
     return [
       [roadLinkBox],
@@ -333,7 +334,7 @@
         .concat(getLinearAsset(assetType.heightLimit))
         .concat(getLinearAsset(assetType.lengthLimit))
         .concat(getLinearAsset(assetType.widthLimit)),
-      [].concat(getLinearAsset(assetType.maintenanceRoad))
+      [].concat([serviceRoadBox])
     ];
 
     function getLinearAsset(typeId) {
