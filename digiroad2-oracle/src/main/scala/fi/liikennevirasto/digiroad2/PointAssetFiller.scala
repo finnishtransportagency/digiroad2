@@ -95,7 +95,7 @@ object PointAssetFiller {
   def snapPersistedAssetToRoadLink(asset: PersistedPointAsset, roadLink: RoadLink): Option[AssetAdjustment] = {
     val point = Point(asset.lon, asset.lat)
     GeometryUtils.calculatePointFromLinearReference(roadLink.geometry, asset.mValue) match {
-      case Some(road) if(point.distance2DTo(road) >= 0.5) =>
+      case Some(road) if(point.distance2DTo(road) >= 0.005) =>
         val roadLength = GeometryUtils.geometryLength(roadLink.geometry)
         val mValue = if(asset.mValue > roadLength) roadLength else asset.mValue
         correctGeometry(asset.id, roadLink, mValue, roadLink.attributes.getOrElse("LAST_EDITED_DATE",
