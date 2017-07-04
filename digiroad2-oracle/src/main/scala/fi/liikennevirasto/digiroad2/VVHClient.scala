@@ -565,11 +565,12 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
                                   fieldSelection: Option[String],
                                   fetchGeometry: Boolean,
                                   resultTransition: (Map[String, Any], List[List[Double]]) => T,
-                                  filter: Set[Long] => String): Seq[T] = {
+                                  filter: Set[Long] => String,
+                                  publicRoadsFilter: String = ""): Seq[T] = {
     val batchSize = 1000
     val idGroups: List[Set[Long]] = linkIds.grouped(batchSize).toList
     idGroups.par.flatMap { ids =>
-      val definition = layerDefinition(filter(ids), fieldSelection)
+      val definition = layerDefinition(combineFiltersWithAnd(filter(ids), publicRoadsFilter), fieldSelection)
       val url = serviceUrl(definition, queryParameters(fetchGeometry))
 
       fetchVVHFeatures(url) match {
@@ -688,6 +689,10 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
     withFilter("LINKID", linkIds)
   }
 
+  protected def withPublicRoadsFilter(): String = {
+    withFilter("ADMINCLASS", Set(1))
+  }
+
   protected def withMmlIdFilter(mmlIds: Set[Long]): String = {
     withFilter("MTKID", mmlIds)
   }
@@ -760,8 +765,8 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
     * Used by VVHClient.fetchByLinkId, RoadLinkService.fetchVVHRoadlinks, SpeedLimitService.purgeUnknown, PointAssetOperations.getFloatingAssets,
     * OracleLinearAssetDao.getLinksWithLengthFromVVH, OracleLinearAssetDao.getSpeedLimitLinksById AssetDataImporter.importEuropeanRoads and AssetDataImporter.importProhibitions
     */
-  def fetchByLinkIds(linkIds: Set[Long]): Seq[VVHRoadlink] = {
-    queryByLinkIds(linkIds, None, true, extractRoadLinkFeature, withLinkIdFilter)
+  def fetchByLinkIds(linkIds: Set[Long], onlyPublicRoads : Boolean = false): Seq[VVHRoadlink] = {
+    queryByLinkIds(linkIds, None, true, extractRoadLinkFeature, withLinkIdFilter, withPublicRoadsFilter)
   }
 
   def fetchByLinkIdsF(linkIds: Set[Long]) = {

@@ -129,8 +129,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @param linkIds
     * @return Road links
     */
-  def getRoadLinksByLinkIdsFromVVH(linkIds: Set[Long], newTransaction: Boolean = true): Seq[RoadLink] = {
-    val vvhRoadLinks = fetchVVHRoadlinks(linkIds)
+  def getRoadLinksByLinkIdsFromVVH(linkIds: Set[Long], newTransaction: Boolean = true, onlyPublicRoads : Boolean = false): Seq[RoadLink] = {
+    val vvhRoadLinks = fetchVVHRoadlinks(linkIds, onlyPublicRoads)
     if (newTransaction)
       withDynTransaction {
         enrichRoadLinksFromVVH(vvhRoadLinks)
@@ -224,8 +224,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @param linkIds
     * @return VVHRoadLinks
     */
-  def fetchVVHRoadlinks(linkIds: Set[Long]): Seq[VVHRoadlink] = {
-    if (linkIds.nonEmpty) vvhClient.roadLinkData.fetchByLinkIds(linkIds)
+  def fetchVVHRoadlinks(linkIds: Set[Long], onlyPublicRoads : Boolean = false): Seq[VVHRoadlink] = {
+    if (linkIds.nonEmpty) vvhClient.roadLinkData.fetchByLinkIds(linkIds, onlyPublicRoads)
     else Seq.empty[VVHRoadlink]
   }
 
