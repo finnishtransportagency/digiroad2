@@ -79,18 +79,18 @@ object RoadAddressLinkBuilder {
     val geom = roadLink.geometry
     val length = GeometryUtils.geometryLength(geom)
     val roadNumber = projectLink.roadNumber match {
-      case 0 => roadLink.attributes.get("ROADNUMBER").getOrElse(projectLink.roadNumber).asInstanceOf[Number].longValue()
+      case 0 => roadLink.attributes.getOrElse("ROADNUMBER", projectLink.roadNumber).asInstanceOf[Number].longValue()
       case _ => projectLink.roadNumber
     }
     val roadPartNumber = projectLink.roadPartNumber match {
-      case 0 => roadLink.attributes.get("ROADPARTNUMBER").getOrElse(projectLink.roadPartNumber).asInstanceOf[Number].longValue()
+      case 0 => roadLink.attributes.getOrElse("ROADPARTNUMBER", projectLink.roadPartNumber).asInstanceOf[Number].longValue()
       case _ => projectLink.roadPartNumber
     }
     val trackCode = projectLink.track.value match {
-      case 99 => roadLink.attributes.get("TRACKCODE").getOrElse(projectLink.track.value).asInstanceOf[Number].longValue()
+      case 99 => roadLink.attributes.getOrElse("TRACKCODE", projectLink.track.value).asInstanceOf[Number].longValue()
       case _ => projectLink.track.value.toLong
     }
-    val roadName = roadLink.attributes.getOrElse("ROADNAME_FI",roadLink.attributes.getOrElse("ROADNAME_SE", "none")).toString
+    val roadName = roadLink.attributes.getOrElse("ROADNAME_FI", roadLink.attributes.getOrElse("ROADNAME_SE", "none")).toString
     val municipalityCode = roadLink.attributes.getOrElse("MUNICIPALITYCODE",0).asInstanceOf[Number].intValue()
 
     ProjectAddressLink(projectLink.id, roadLink.linkId, geom,
