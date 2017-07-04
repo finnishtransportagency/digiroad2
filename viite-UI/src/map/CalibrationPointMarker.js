@@ -18,7 +18,7 @@
 
     var calibrationPointMarkerStyle = new ol.style.Style({
       image: new ol.style.Icon({
-        src: "images/calibration-point.svg",
+        img: "images/calibration-point.svg",
         anchor: [0.5, 1]
       })
     });
