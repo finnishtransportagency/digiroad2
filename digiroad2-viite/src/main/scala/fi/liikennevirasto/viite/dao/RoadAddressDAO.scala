@@ -127,7 +127,19 @@ case class MissingRoadAddress(linkId: Long, startAddrMValue: Option[Long], endAd
 
 object RoadAddressDAO {
 
-  def fetchRoadAddressesByBoundingBox(boundingRectangle: BoundingRectangle, fetchOnlyFloating: Boolean, onlyNormalRoads: Boolean = false): (Seq[RoadAddress]) = {
+  protected def withRoadNumbersFilter(roadNumbers: Seq[(Int, Int)], filter: String = ""): String = {
+    if (roadNumbers.isEmpty)
+      return s" and  ($filter)"
+
+    val limit = roadNumbers.head
+    val filterAdd = s"""(ra.road_number >= ${limit._1} and ra.road_number <= ${limit._2})"""
+    if (filter == "")
+      withRoadNumbersFilter(roadNumbers.tail,  filterAdd)
+    else
+      withRoadNumbersFilter(roadNumbers.tail,  s"""$filter OR $filterAdd""")
+  }
+
+  def fetchRoadAddressesByBoundingBox(boundingRectangle: BoundingRectangle, fetchOnlyFloating: Boolean, onlyNormalRoads: Boolean = false, roadNumberLimits: Seq[(Int, Int)] = Seq()): (Seq[RoadAddress]) = {
     val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),
       boundingRectangle.rightTop - boundingRectangle.diagonal.scale(.15))
     val filter = OracleDatabase.boundingBoxFilter(extendedBoundingRectangle, "geometry")
@@ -137,8 +149,13 @@ object RoadAddressDAO {
       case false => ""
     }
 
-    var normalRoadsFilter = onlyNormalRoads match {
+    val normalRoadsFilter = onlyNormalRoads match {
       case true => " and pos.link_source = 1"
+      case false => ""
+    }
+
+    val roadNumbersFilter = roadNumberLimits.nonEmpty match {
+      case true => withRoadNumbersFilter(roadNumberLimits)
       case false => ""
     }
 
@@ -154,7 +171,7 @@ object RoadAddressDAO {
         link_source
         from road_address ra
         join lrm_position pos on ra.lrm_position_id = pos.id
-        where $filter $floatingFilter $normalRoadsFilter and
+        where $filter $floatingFilter $normalRoadsFilter $roadNumbersFilter and
           (valid_from is null or valid_from <= sysdate) and
           (valid_to is null or valid_to > sysdate)
       """
