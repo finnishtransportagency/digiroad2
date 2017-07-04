@@ -161,9 +161,8 @@ object MassTransitStopOperations {
     administrationFromProperties.flatMap(_.values.headOption.map(_.propertyValue)) match {
       case Some(value) => properties
       case None =>
-        val adminValueFromAsset = assetProperties.find(_.publicId == AdministratorInfoPublicId).flatMap(prop => prop.values.headOption).get.propertyValue
-        val oldAdministrationProperty = Seq(SimpleProperty(AdministratorInfoPublicId, Seq(PropertyValue(adminValueFromAsset))))
-        properties ++ oldAdministrationProperty
+        properties.filterNot(p => p.publicId == AdministratorInfoPublicId) ++ assetProperties.find(_.publicId == AdministratorInfoPublicId).
+          map( p => SimpleProperty(AdministratorInfoPublicId, p.values))
     }
   }
 
