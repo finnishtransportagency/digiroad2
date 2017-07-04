@@ -553,15 +553,18 @@ object RoadAddressDAO {
         WHERE id = ${roadAddress.id}""".execute
   }
 
-  def createMissingRoadAddress (missingRoadAddress: MissingRoadAddress) = {
+  def createMissingRoadAddress (mra: MissingRoadAddress) = {
+    val (p1, p2) = (mra.geom.head, mra.geom.last)
     sqlu"""
            insert into missing_road_address
-           (select ${missingRoadAddress.linkId}, ${missingRoadAddress.startAddrMValue}, ${missingRoadAddress.endAddrMValue},
-             ${missingRoadAddress.roadNumber}, ${missingRoadAddress.roadPartNumber}, ${missingRoadAddress.anomaly.value},
-             ${missingRoadAddress.startMValue}, ${missingRoadAddress.endMValue}, NULL FROM dual
-            WHERE NOT EXISTS (SELECT * FROM MISSING_ROAD_ADDRESS WHERE link_id = ${missingRoadAddress.linkId}) AND
+           (select ${mra.linkId}, ${mra.startAddrMValue}, ${mra.endAddrMValue},
+             ${mra.roadNumber}, ${mra.roadPartNumber}, ${mra.anomaly.value},
+             ${mra.startMValue}, ${mra.endMValue},
+             MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),
+             MDSYS.SDO_ORDINATE_ARRAY(${p1.x},${p1.y},0.0,0.0,${p2.x},${p2.y},0.0,0.0))
+              FROM dual WHERE NOT EXISTS (SELECT * FROM MISSING_ROAD_ADDRESS WHERE link_id = ${mra.linkId}) AND
               NOT EXISTS (SELECT * FROM ROAD_ADDRESS ra JOIN LRM_POSITION pos ON (pos.id = lrm_position_id)
-                WHERE link_id = ${missingRoadAddress.linkId} AND (valid_to IS NULL OR valid_to > sysdate) ))
+                WHERE link_id = ${mra.linkId} AND (valid_to IS NULL OR valid_to > sysdate) ))
            """.execute
   }
 
@@ -628,11 +631,15 @@ object RoadAddressDAO {
         case false => s""" where link_id in (${linkIds.mkString(",")})"""
       }
       val query =
-        s"""SELECT link_id, start_addr_m, end_addr_m, road_number, road_part_number, start_m, end_m, anomaly_code
+        s"""SELECT link_id, start_addr_m, end_addr_m, road_number, road_part_number, start_m, end_m, anomaly_code,
+           (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(geometry)) t WHERE id = 1) as X,
+           (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(geometry)) t WHERE id = 1) as Y,
+           (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(geometry)) t WHERE id = 2) as X2,
+           (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(geometry)) t WHERE id = 2) as Y2
             FROM missing_road_address $where"""
-      Q.queryNA[(Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Double], Option[Double], Int)](query).list.map {
-        case (linkId, startAddrM, endAddrM, road, roadPart, startM, endM, anomaly) =>
-          MissingRoadAddress(linkId, startAddrM, endAddrM, RoadType.UnknownOwnerRoad ,road, roadPart, startM, endM, Anomaly.apply(anomaly),Seq.empty[Point])
+      Q.queryNA[(Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Double], Option[Double], Int, Double, Double, Double, Double)](query).list.map {
+        case (linkId, startAddrM, endAddrM, road, roadPart, startM, endM, anomaly, x1, y1, x2, y2) =>
+          MissingRoadAddress(linkId, startAddrM, endAddrM, RoadType.UnknownOwnerRoad ,road, roadPart, startM, endM, Anomaly.apply(anomaly), Seq(Point(x1, y1),Point(x2, y2)))
       }
     }
   }
@@ -641,11 +648,15 @@ object RoadAddressDAO {
     MassQuery.withIds(linkIds) {
       idTableName =>
         val query =
-          s"""SELECT link_id, start_addr_m, end_addr_m, road_number, road_part_number, start_m, end_m, anomaly_code
+          s"""SELECT link_id, start_addr_m, end_addr_m, road_number, road_part_number, start_m, end_m, anomaly_code,
+             (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(geometry)) t WHERE id = 1) as X,
+             (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(geometry)) t WHERE id = 1) as Y,
+             (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(geometry)) t WHERE id = 2) as X2,
+             (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(geometry)) t WHERE id = 2) as Y2
             FROM missing_road_address mra join $idTableName i on i.id = mra.link_id"""
-        Q.queryNA[(Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Double], Option[Double], Int)](query).list.map {
-          case (linkId, startAddrM, endAddrM, road, roadPart, startM, endM, anomaly) =>
-            MissingRoadAddress(linkId, startAddrM, endAddrM, RoadType.UnknownOwnerRoad, road, roadPart, startM, endM, Anomaly.apply(anomaly),Seq.empty[Point])
+        Q.queryNA[(Long, Option[Long], Option[Long], Option[Long], Option[Long], Option[Double], Option[Double], Int, Double, Double, Double, Double)](query).list.map {
+          case (linkId, startAddrM, endAddrM, road, roadPart, startM, endM, anomaly, x1, y1, x2, y2) =>
+            MissingRoadAddress(linkId, startAddrM, endAddrM, RoadType.UnknownOwnerRoad, road, roadPart, startM, endM, Anomaly.apply(anomaly), Seq(Point(x1, y1),Point(x2, y2)))
         }
     }
   }
