@@ -114,6 +114,16 @@
               width: 8
             })
           });
+        } else if(feature.projectLinkData.status === 99){
+          return new ol.style.Style({
+            fill: new ol.style.Fill({
+              color: 'rgba(0, 255, 0, 0.75)'
+            }),
+            stroke: new ol.style.Stroke({
+              color: 'rgba(0, 255, 0, 0.95)',
+              width: 8
+            })
+          });
         }
       }
     });
@@ -123,7 +133,10 @@
     selectSingleClick.on('select',function(event) {
       // TODO: allow selection for non-addressed road links
       var selection = _.find(event.selected, function (selectionTarget) {
-        return !_.isUndefined(selectionTarget.projectLinkData) && selectionTarget.projectLinkData.status === 0;
+        return (!_.isUndefined(selectionTarget.projectLinkData) && (
+            (selectionTarget.projectLinkData.status === 0) ||
+            (selectionTarget.projectLinkData.anomaly==noAddressAnomaly && selectionTarget.projectLinkData.roadLinkType!=floatingRoadLinkType))
+        );
       });
       selectedProjectLinkProperty.clean();
       $('.wrapper').remove();
@@ -157,6 +170,16 @@
               width: 8
             })
           });
+        } else if(feature.projectLinkData.status === 99) {
+          return new ol.style.Style({
+            fill: new ol.style.Fill({
+              color: 'rgba(0, 255, 0, 0.75)'
+            }),
+            stroke: new ol.style.Stroke({
+              color: 'rgba(0, 255, 0, 0.95)',
+              width: 8
+            })
+          });
         }
       }
     });
@@ -166,7 +189,10 @@
     selectDoubleClick.on('select',function(event) {
       // TODO: allow selection for non-addressed road links
       var selection = _.find(event.selected, function (selectionTarget) {
-        return !_.isUndefined(selectionTarget.projectLinkData) && selectionTarget.projectLinkData.status === 0;
+        return (!_.isUndefined(selectionTarget.projectLinkData) && (
+            (selectionTarget.projectLinkData.status === 0) ||
+            (selectionTarget.projectLinkData.anomaly==noAddressAnomaly && selectionTarget.projectLinkData.roadLinkType!=floatingRoadLinkType))
+          );
       });
       if (!_.isUndefined(selection))
         selectedProjectLinkProperty.open(selection.projectLinkData.linkId);
