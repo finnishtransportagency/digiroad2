@@ -55,19 +55,19 @@ _T&auml;h&auml;n joku hieno kuva sitten, kun esim. liittym&auml;t tierekisteriin
 2.1 Viite-sovelluksen yhteydet muihin j&auml;rjestelmiin
 --------------------------
 
-###V&auml;yl&auml;verkon hallinta (VVH)###
+##V&auml;yl&auml;verkon hallinta (VVH)##
 
 Viite-sovelluksessa pohja-aineistona oleva geometria tulee Liikenneviraston V&auml;yl&auml;verkon hallinnan (VVH) sovelluksessa. VVH-sovellukseen ladataan p&auml;ivitt&auml;in Maanmittauslaitokselta p&auml;ivitykset Maastotietokannan (MTK) keskilinja-aineistoon, jolloin my&ouml;s Viite-sovelluksessa on k&auml;yt&ouml;ss&auml; uusi keskilinjageometria joka p&auml;iv&auml;.
 
-###Digiroad: Ominaisuustietojen hallinta###
+##Digiroad: Ominaisuustietojen hallinta##
 
 Molemmissa sovelluksissa on k&auml;yt&ouml;ss&auml; sama, V&auml;yl&auml;verkon hallinnan tarjoama keskilinjageometria.
 
 Lis&auml;ksi OTH-sovellus hy&ouml;dynt&auml;&auml; Viitteen tieosoitetietoja, jotka n&auml;ytet&auml;&auml;n OTH:ssa tielinkin ominaisuustietona.
 
-###Liikenneviraston Tierekisteri###
+##Liikenneviraston Tierekisteri##
 
-_T&auml;ydennet&auml;&auml;n my&ouml;hemmin..._
+_T&auml;ydennet&auml;&auml;n my&ouml;hemmin, kun tieosoitemuutosty&ouml;kalu on pidemm&auml;ll&auml;._
 
 2.2 Tiedon rakentuminen Viite-sovelluksessa
 --------------------------
@@ -159,11 +159,11 @@ Kohteita voi valita klikkaamalla kartalta. Klikkaamalla kerran, sovellus valitse
 
 _Tieosan valinta._
 
-Tuplaklikkaus valitsee yhden tieosoitesegmentin. Tieosoitesegmentti on tielinkin mittainen tai sit&auml; lyhyempi osuus tieosoitetta. Valittu tieosoitesegmentti korostuu kartalla (3), ja sen tiedot tulevat n&auml;kyviin karttaikkunan oikeaan laitaan ominaisuustieton&auml;kym&auml;&auml;n (4).
+Tuplaklikkaus valitsee yhden tielinkin mittaisen osuuden tieosoitteesta. Valittu osuus korostuu kartalla (3), ja sen tiedot tulevat n&auml;kyviin karttaikkunan oikeaan laitaan ominaisuustieton&auml;kym&auml;&auml;n (4).
 
 ![Tieosoitesegmentin valinta](k7.JPG)
 
-_Tieosoitesegmentin valinta._
+_Tielinkin mittaisen osuuden valinta._
 
 
 ##Tieosoitteen ominaisuustiedot##
@@ -261,9 +261,35 @@ Muut rakenteilla olevat kohteet n&auml;kyv&auml;t k&auml;ytt&ouml;liittym&auml;s
 
 _Rakenteilla oleva kohde, jonka hallinnollisen luokan arvo on jokin muu kuin 1=Valtion omistama._
 
-7. Geometriasta irti olevat tieosoitesegmentit
+
+7. Automatiikka Viite-sovelluksessa
 --------------------------
-Geometriasta irti olevilla tieosoitesegmenteilla tarkoitetaan sellaisia segmentteja jotka eiv&auml;t l&ouml;yd&auml; omaa tielinkin ID:ta vastaavaa lineaarilokaatiota k&auml;yt&ouml;ss&auml; olevista linkeist&auml;.
+Viite-sovelluksessa on muutamia automatiikan tekemi&auml; yleistyksi&auml; tai korjauksia. Automatiikka ei muuta mit&auml;&auml;n sellaisia tietoja, jotka muuttaisivat varsinaisesti tieosoitteita. Automatiikan tekem&auml;t muutokset liittyv&auml;t siihen, ett&auml; tieosoiteverkkoa yll&auml;pidet&auml;&auml;n keskilinjageometrian p&auml;&auml;ll&auml;, ja tuon keskilinjageometrian yll&auml;pidosta vastaa Maanmittauslaitos. Tietyt automaattiset toimenpiteet helpottavat tieosoiteverkon yll&auml;pit&auml;j&auml;&auml; varsinaisessa tieosoiteverkon hallinnassa.
+
+##7.1 Tieosoitesegmenttien yhdistely tielinkin mittaisiksi osuuksiksi##
+
+Kun k&auml;ytt&auml;j&auml; klikkaa kartalla kohteita tuplaklikkaamalla (luku 4.1), on pienin valittava yksikk&ouml; tielinkin mittainen osuus tieosoiteverkosta, koska tielinkki on pienin mahdollinen yksikk&ouml; Maanmittauslaitoksen yll&auml;pit&auml;m&auml;ll&auml; linkkiverkolla.
+
+T&auml;t&auml; varten j&auml;rjestelm&auml; tekee automaattista yhdistely&auml;:
+
+- Ne kohteet, joiden tielinkin ID, tie, tieosa, ajorata ja alkup&auml;iv&auml;m&auml;&auml;r&auml; ovat samoja (=tieosoitehistoria yhtenev&auml;), on yhdistetty tietokannassa yhdeksi tieosoitesegmentiksi
+- Ne kohteet, joiden tielinkin ID, tie, tieosa, ajorata ovat samoja, mutta alkup&auml;iv&auml;m&auml;&auml;r&auml; ei ole sama (=tieosoitehistoria erilainen) ovat tietokannassa edelleen erillisi&auml; rivej&auml;, mutta k&auml;ytt&ouml;liittym&auml;ss&auml; ne ovat valittavissa vain tielinkin mittaisena osuutena. T&auml;ll&auml; varmistetaan, ett&auml; k&auml;ytt&ouml;liittym&auml; toimii k&auml;ytt&auml;j&auml;n kannalta loogisesti, eli aina on valittavissa tielinkin mittainen osuus, mutta tieosoitehistoria s&auml;ilytet&auml;&auml;n tietokantatasolla.
+
+##7.2 Tieosoitesegmenttien automaattinen korjaus jatkuvasti p&auml;ivittyv&auml;ll&auml; linkkigeometrialla##
+
+Viite-sovellus p&auml;ivitt&auml;&auml; automaattisesti tieosoitesegmentit takaisin ajantasaiselle keskilinjalle, kun MML on tehnyt pieni&auml; tarkennuksia keskilinjageometriaan. T&auml;ss&auml; luvussa on kuvattu tapaukset, joissa Viite-sovellus osaa tehd&auml; korjaukset automaattisesti. Ne tapaukset, joissa korjaus ei tapahdu automaattisesti, segmentit irtoavat geometriasta ja ne on korjattava manuaalisesti (luvut 8 ja 9).
+
+Automatiikka tekee korjaukset, kun...
+
+1. __Tielinkki pitenee tai lyhenee alle metrin:__ Viite-sovellus lyhent&auml;&auml;/pident&auml;&auml; tieosoitesegmentti&auml; automaattisesti muutoksen verran
+1. __Maanmittauslaitos yhdistelee tielinkkej&auml;, esimerkiksi poistamalla tonttiliittymi&auml; maanteiden varsilta:__ Tieosoitesegmentit siirret&auml;&auml;n uudelle geometrialle automaattisesti V&auml;yl&auml;verkon hallinnan (VVH) tarjoaman tielinkkien muutosrajapinnan avulla.
+
+
+8. Geometriasta irti olevat tieosoitesegmentit
+--------------------------
+Geometriasta irti olevilla tieosoitesegmenteilla tarkoitetaan sellaisia segmenttej&auml;, joiden alla oleva tielinkkien geometria on muuttunut niin paljon, ett&auml; ne eiv&auml;t en&auml;&auml; sovi geometrialle. Vaikka maastossa ei tapahtuisi muutoksia, Maanmittauslaitos tekee tarkennuksia geometriaan, jolloin keskilinjan sijainti vastaa paremmin maastoa.
+
+Geometriasta irti olevien tieosoitesegmenttien m&auml;&auml;r&auml;&auml;n vaikuttaa se, kuinka suuri osa niist&auml; on voitu korjata automatiikan avulla. Automatiikasta voi lukea k&auml;ytt&ouml;ohjeen luvusta 7.
 
 Geometriasta irti olevan segmentin tunnistaa keltaisesta korostuksesta. Lis&auml;ksi jokaisella tieosoitesegmentilla on punainen huomiolippu. Segmentin voi valita huomiolippua tai keltaista korostusta klikkaamalla (1).  
 
@@ -271,11 +297,13 @@ Geometriasta irti olevan segmentin tunnistaa keltaisesta korostuksesta. Lis&auml
 
 _Geometriasta irti olevia tieosoitesegmenttej&auml;. Segmentin tiedot saa n&auml;kyviin klikkaamalla segmentin keltaista korostetta tai punaista huomiolippua._
 
+Jos keltaisen v&auml;rin alla ei n&auml;y mustaa tieosoitesegmentti&auml;, tarkoittaa t&auml;m&auml; sit&auml;, ett&auml; alla muuttuneen tielinkin ID on edelleen sama, kuin keltaisen tieosoitesegmentin tielinkin ID (muutos yli 1 metrin, mutta linkki ID s&auml;ilynyt). Musta, tuntematon segmentti tulee kuitenkin n&auml;kyviin, kun k&auml;ytt&auml;j&auml; aloittaa geometriasta irti olevan tieosoitesegmentin korjaamisen (luku 9).
+
 Keltaisten kohteiden valinta toimii yksinkertaisemmin, kuin muiden tieosoitesegmenttien. Sek&auml; klikkaamalla kerran ett&auml; tuplaklikkaus valitsevat molemmat ruudulta n&auml;kyv&auml;n osuuden kyseisest&auml; tieosasta, eli osuuden jolla on sama tienumero, tieosanumero ja ajoratakoodi. T&auml;m&auml; sen vuoksi, ett&auml; kohteiden korjaaminen sujuu tehokkaammin, kun valinta tapahtuu aina koko keltaiselle osuudelle tieosasta. Kohdetta valitessa kannattaa olla huolellinen, ett&auml; klikatessa osuu keltaiseen korostukseen eik&auml; tuntemattomaan tielinkkiin (musta kohde). 
 
 Valitun kohteen tiedot tulevat n&auml;kyviin ominaisuustieton&auml;kym&auml;&auml;n. Geometriasta irti olevalla kohteella on ominaisuustieton&auml;kym&auml;ss&auml; huomiolaatikko joka varoittaa tien geometrian muuttuneen (2).
 
-8. Geometriasta irti olevien tieosoitesegmenttien korjaaminen takaisin geometrialle
+9. Geometriasta irti olevien tieosoitesegmenttien korjaaminen takaisin geometrialle
 --------------------------
 
 Geometriasta irti olevien tieosoitesegmenttien korjausta varten k&auml;ytt&auml;j&auml;n tulee siirty&auml; muokkaustilaan. Korjausprosessissa geometriasta irti olevat tieosoitesegmentit kiinnitet&auml;&auml;n takaisin geometriaan kertomalla niille uudet tielinkit, joihin ne kiinnittyv&auml;t.
@@ -331,7 +359,7 @@ Korjauksen j&auml;lkeen tieosoiteverkko on ehe&auml;. Tallentamisen j&auml;lkeen
 ![korjaus](k33.JPG)
 
 
-8.1 Siirron ep&auml;onnistuminen
+9.1 Siirron ep&auml;onnistuminen
 --------------------------
 
 Jos vaiheen 4 siirto ei onnistu, sovellus ilmoittaa t&auml;st&auml; k&auml;ytt&auml;j&auml;lle. T&auml;ll&ouml;in taustaj&auml;rjestelm&auml; ei osaa siirt&auml;&auml; tieosoitesegmenttej&auml; uudelle geometrialle, eik&auml; siirron tietoja tallenneta tietokantaan. N&auml;m&auml; kohteet voi j&auml;tt&auml;&auml; toistaiseksi korjaamatta, ja k&auml;ytt&auml;j&auml;n tulisi ilmoittaa niist&auml; j&auml;rjestelm&auml;tukeen, jotta sovelluksen toimintaa voidaan kehitt&auml;&auml;.
@@ -343,7 +371,7 @@ _Ilmoitus siirron ep&auml;onnistumisesta._
 Ep&auml;onnistuneen siirron j&auml;lkeen ty&ouml;skentely&auml; voi jatkaa toisella kohteella klikkaamalla Peruuta-painiketta kaksi kertaa.
 
 
-9. Tieosoiteprojektin tekeminen
+10. Tieosoiteprojektin tekeminen
 --------------------------
 
 Uuden tieosoiteprojektin tekeminen aloitetaan klikkaamalla vasemman yl&auml;kulman painiketta Tieosoiteprojektit (1) ja avautuvasta ikkunasta painiketta Uusi tieosoiteprojekti (2).
@@ -408,7 +436,7 @@ _Tieosaa ei ole olemassa._
 
 _Ilmoitus, jos varattava tieosa ei ole voimassa p&auml;iv&auml;n&auml;, jolloin projekti tulee voimaan._
 
-9.1 Olemassa olevan tieosoiteprojektin avaaminen Tieosoiteprojektit -listalta
+10.1 Olemassa olevan tieosoiteprojektin avaaminen Tieosoiteprojektit -listalta
 --------------------------
 
 Tallennetun tieosoiteprojektin saa auki Tieosoiteprojektit -listalta painamalla Avaa -painiketta. Avaamisen yhteydess&auml; sovellus zoomaa varatun tieosan alkuun, jotta k&auml;ytt&auml;j&auml; p&auml;&auml;see projektin alueelle.
@@ -419,7 +447,7 @@ Tieosoiteprojektit -listalla n&auml;kyv&auml;t kaikkien k&auml;ytt&auml;jien pro
 
 _Tieosoiteprojektit -listaus._
 
-10. Muutoksien tekeminen tieosoiteprojektissa
+11. Muutoksien tekeminen tieosoiteprojektissa
 --------------------------
 
 (T&auml;ll&auml; hetkell&auml; toteutettuna vain tieosan lakkauttaminen)
@@ -440,7 +468,25 @@ _Kun keltaista, muokattavissa olevaa kohdetta klikataan, tulee oikeaan laitaan n
 
 Muutokset tallennetaan oikean alakulman Tallenna-painikkeesta. Ennen tallennusta, voi muutokset perua Peruuta-painikkeesta.
 
-10.1 Muutosilmoituksen l&auml;hett&auml;minen Tierekisteriin
+11.1 Muutosilmoituksien tarkastelu taulukkon&auml;kym&auml;ss&auml;
+--------------------------
+
+Kun k&auml;ytt&auml;j&auml; on tehnyt valituille tieosoitteille kaikki muutokset, tulee n&auml;yt&ouml;n oikeaan alakulmaan mahdollisuus avata muutosilmoitus taulukkona (1). "Avaa projektin yhteenvetotaulukko" -painiketta klikkaamalla avautuu taulukkon&auml;kym&auml;, joka kertoo projektissa olevien tieosoitteiden vanhan ja uuden tilanteen muutosilmoituksittain. Taulukon saa suurennettua ja pienennetty&auml; sek&auml; suljettua taulukon oikeasta yl&auml;kulmasta (2).
+
+![Avaus](k41.JPG)
+
+_Taulukon avaus._
+
+![Taulukko](k42.JPG)
+
+_Taulukko muutosilmoituksesta._
+
+Taulukossa rivit on j&auml;rjestetty suurimasta pienimp&auml;&auml;n tieosoitteen mukaan (tie, tieosa, alkuet&auml;isyys, ajorata), jotta saman tien tieosuudet ovat taulukossa per&auml;kk&auml;in suurimmasta pienimp&auml;&auml;.
+
+_Kuva t&auml;h&auml;n, kun taulukon bugi korjattu._
+
+
+11.2 Muutosilmoituksen l&auml;hett&auml;minen Tierekisteriin
 --------------------------
 
 Muutosilmoitus vied&auml;&auml;n Tierekisteriin klikkaamalla oikean alakulman vihre&auml;&auml; Tee tieosoitemuutosilmoitus -painiketta. Painikkeen painamisen j&auml;lkeen sovellus ilmoittaa muutosilmoituksen tekemisest&auml; "Muutosilmoitus l&auml;hetetty Tierekisteriin." -viestill&auml;.
