@@ -132,7 +132,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       roadAddressLinks.foreach { links =>
         RoadAddressDAO.createMissingRoadAddress(
           MissingRoadAddress(links.linkId, Some(links.startAddressM), Some(links.endAddressM), RoadType.PublicRoad, Some(links.roadNumber),
-            Some(links.roadPartNumber), None, None, Anomaly.NoAddressGiven))
+            Some(links.roadPartNumber), None, None, Anomaly.NoAddressGiven, Seq(Point(374668.195, 6676884.282, 24.48399999999674),Point(374643.384, 6676882.176, 24.42399999999907))))
       }
       val linksFromDB = getSpecificMissingRoadAddresses(roadAddressLinks(0).linkId)
       RoadAddressDAO.getMissingRoadAddresses(Set()) should have size(oldMissingRA)
@@ -170,6 +170,24 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       roadAddressLink.head.linkId should be(linkId)
       roadAddressLink.head.attributes.contains("MUNICIPALITYCODE") should be (true)
       roadAddressLink.head.attributes.get("MUNICIPALITYCODE") should be (Some(municipalityId))
+    }
+  }
+
+  test("check MissingRoadAddres geometry is created correctly") {
+    runWithRollback {
+      val geom = Seq(Point(374668.195, 6676884.282, 0.0),Point(374643.384, 6676882.176, 0.0))
+      val raLink = RoadAddressLink(0, 1611616, geom, 297.7533188814259, State, SingleCarriageway, NormalRoadLinkType,
+                    InUse, NormalLinkInterface, RoadType.PrivateRoadType,  Some("22.09.2016 14:51:28"), Some("dr1_conversion"),
+                    Map("linkId" -> 1611605, "segmentId" -> 63298), 1, 3, 0, 0, 0, 0, 0, "", "", 0.0, 0.0, SideCode.Unknown,
+                    None, None, Anomaly.None, 0)
+
+      RoadAddressDAO.createMissingRoadAddress(
+      MissingRoadAddress(raLink.linkId, Some(raLink.startAddressM), Some(raLink.endAddressM), RoadType.PublicRoad,
+        Some(raLink.roadNumber), Some(raLink.roadPartNumber), None, None, Anomaly.NoAddressGiven, geom))
+
+      RoadAddressDAO.getMissingRoadAddresses(Set(raLink.linkId)).foreach { mra =>
+        mra.geom should be(geom)
+      }
     }
   }
 
@@ -375,7 +393,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   private def roadAddressLinkToRoadAddress(floating: Boolean)(l: RoadAddressLink) = {
     RoadAddress(l.id, l.roadNumber, l.roadPartNumber, Track.apply(l.trackCode.toInt), Discontinuity.apply(l.discontinuity.toInt),
       l.startAddressM, l.endAddressM, Option(new DateTime(new Date())), None, None, 0, l.linkId, l.startMValue, l.endMValue, l.sideCode, 0,
-      (l.startCalibrationPoint, l.endCalibrationPoint), floating, l.geometry)
+      (l.startCalibrationPoint, l.endCalibrationPoint), floating, l.geometry, LinkGeomSource.NormalLinkInterface)
   }
 
   test("recalculate one track road with single part") {
@@ -428,7 +446,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 
   test("GetFloatingAdjacents road links on road 75 part 2 sourceLinkId 5176142") {
     val roadAddressService = new RoadAddressService(mockRoadLinkService,mockEventBus)
-    val road75FloatingAddresses = RoadAddress(367,75,2,Track.Combined,Discontinuity.Continuous,3532,3598,None,None,Some("tr"),70000389,5176142,0.0,65.259,SideCode.TowardsDigitizing,0,(None,None),true,List(Point(538889.668,6999800.979,0.0), Point(538912.266,6999862.199,0.0)))
+    val road75FloatingAddresses = RoadAddress(367,75,2,Track.Combined,Discontinuity.Continuous,3532,3598,None,None,Some("tr"),70000389,5176142,0.0,65.259,SideCode.TowardsDigitizing,0,(None,None),true,List(Point(538889.668,6999800.979,0.0), Point(538912.266,6999862.199,0.0)), LinkGeomSource.NormalLinkInterface)
 
     when(mockRoadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(any[Set[Long]])).thenReturn(
       (Seq(), Stream()))

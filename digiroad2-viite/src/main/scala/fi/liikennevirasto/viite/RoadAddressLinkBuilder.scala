@@ -78,18 +78,32 @@ object RoadAddressLinkBuilder {
 
     val geom = roadLink.geometry
     val length = GeometryUtils.geometryLength(geom)
+    val roadNumber = projectLink.roadNumber match {
+      case 0 => roadLink.attributes.get("ROADNUMBER").getOrElse(projectLink.roadNumber).asInstanceOf[Number].longValue()
+      case _ => projectLink.roadNumber
+    }
+    val roadPartNumber = projectLink.roadPartNumber match {
+      case 0 => roadLink.attributes.get("ROADPARTNUMBER").getOrElse(projectLink.roadPartNumber).asInstanceOf[Number].longValue()
+      case _ => projectLink.roadPartNumber
+    }
+    val trackCode = projectLink.track.value match {
+      case 99 => roadLink.attributes.get("TRACKCODE").getOrElse(projectLink.track.value).asInstanceOf[Number].longValue()
+      case _ => projectLink.track.value.toLong
+    }
+    val roadName = roadLink.attributes.getOrElse("ROADNAME_FI",roadLink.attributes.getOrElse("ROADNAME_SE", "none")).toString
+    val municipalityCode = roadLink.attributes.getOrElse("MUNICIPALITYCODE",0).asInstanceOf[Number].intValue()
+
     ProjectAddressLink(projectLink.id, roadLink.linkId, geom,
-      length, roadLink.administrativeClass, roadLink.linkType, roadLinkType, roadLink.constructionType, roadLink.linkSource, getRoadType(roadLink.administrativeClass, roadLink.linkType), extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
-      roadLink.attributes, projectLink.roadNumber, projectLink.roadPartNumber, projectLink.track.value, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), projectLink.discontinuity.value,
+      length, roadLink.administrativeClass, roadLink.linkType, roadLinkType, roadLink.constructionType, roadLink.linkSource, getRoadType(roadLink.administrativeClass, roadLink.linkType), roadName, municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
+      roadLink.attributes, roadNumber, roadPartNumber, trackCode, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), projectLink.discontinuity.value,
       projectLink.startAddrMValue, projectLink.endAddrMValue, projectLink.startMValue, projectLink.endMValue,
       projectLink.sideCode,
       projectLink.calibrationPoints._1,
       projectLink.calibrationPoints._2,Anomaly.None, projectLink.lrmPositionId, projectLink.status)
-
   }
 
   def build(roadLink: RoadLink, missingAddress: MissingRoadAddress) = {
-    val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry, missingAddress.startMValue.getOrElse(0.0), missingAddress.endMValue.getOrElse(roadLink.length))
+    val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry, missingAddress.startMValue.getOrElse(0.0), roadLink.length)
     val length = GeometryUtils.geometryLength(geom)
     val roadLinkRoadNumber = roadLink.attributes.get(RoadNumber).map(toIntNumber).getOrElse(0)
     val roadLinkRoadPartNumber = roadLink.attributes.get(RoadPartNumber).map(toIntNumber).getOrElse(0)
@@ -310,7 +324,7 @@ object RoadAddressLinkBuilder {
         nextSegment.track, discontinuity, startAddrMValue,
         endAddrMValue, nextSegment.startDate, nextSegment.endDate, nextSegment.modifiedBy, nextSegment.lrmPositionId, nextSegment.linkId,
         startMValue, endMValue,
-        nextSegment.sideCode, nextSegment.adjustedTimestamp, calibrationPoints, false, combinedGeometry))
+        nextSegment.sideCode, nextSegment.adjustedTimestamp, calibrationPoints, false, combinedGeometry, nextSegment.linkGeomSource))
 
     } else Seq(nextSegment, previousSegment)
 
