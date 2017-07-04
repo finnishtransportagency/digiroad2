@@ -168,7 +168,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val changedRoadLinks = roadLinkService.getChangeInfoFromVVH(boundingRectangle, municipalities)
 
 
-    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(addresses.keySet ++ missingViiteRoadAddress.keySet, true, true)
+    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(addresses.keySet ++ missingViiteRoadAddress.keySet)
 
     val fetchVVHEndTime = System.currentTimeMillis()
     logger.info("End fetch vvh road links in %.3f sec".format((fetchVVHEndTime - fetchVVHStartTime) * 0.001))
