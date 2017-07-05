@@ -92,7 +92,6 @@
     var selectSingleClick = new ol.interaction.Select({
       layer: vectorLayer,
       condition: ol.events.condition.singleClick,
-      //The new/temporary layer needs to have a style function as well, we define it here.
       style: function(feature, resolution) {
         if (feature.projectLinkData.status === 0){
           return new ol.style.Style({
@@ -131,7 +130,6 @@
     selectSingleClick.set('name','selectSingleClickInteractionPLL');
 
     selectSingleClick.on('select',function(event) {
-      // TODO: allow selection for non-addressed road links
       var selection = _.find(event.selected, function (selectionTarget) {
         return (!_.isUndefined(selectionTarget.projectLinkData) && (
             (selectionTarget.projectLinkData.status === 0) ||
@@ -148,7 +146,6 @@
     var selectDoubleClick = new ol.interaction.Select({
       layer: vectorLayer,
       condition: ol.events.condition.doubleClick,
-      //The new/temporary layer needs to have a style function as well, we define it here.
       style: function(feature, resolution) {
         if(feature.projectLinkData.status === 0) {
           return new ol.style.Style({
@@ -170,7 +167,7 @@
               width: 8
             })
           });
-        } else if(feature.projectLinkData.status === 99) {
+        } else if(feature.projectLinkData.anomaly === 1 && feature.projectLinkData.status === 99) {
           return new ol.style.Style({
             fill: new ol.style.Fill({
               color: 'rgba(0, 255, 0, 0.75)'
@@ -187,7 +184,6 @@
     selectDoubleClick.set('name','selectDoubleClickInteractionPLL');
 
     selectDoubleClick.on('select',function(event) {
-      // TODO: allow selection for non-addressed road links
       var selection = _.find(event.selected, function (selectionTarget) {
         return (!_.isUndefined(selectionTarget.projectLinkData) && (
             (selectionTarget.projectLinkData.status === 0) ||
