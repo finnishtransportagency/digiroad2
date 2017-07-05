@@ -22,16 +22,16 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
   get("/:assetType") {
     contentType = formats("json")
     val since = DateTime.parse(params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter"))))
-    val assteType = params("assetType")
+    val assetType = params("assetType")
 
     val until = params.get("until") match {
-      case Some(dateValue) if assteType == "road_numbers" => halt(BadRequest("'until' parameter is not allowed"))
+      case Some(dateValue) if assetType == "road_numbers" => halt(BadRequest("'until' parameter is not allowed"))
       case Some(dateValue) => DateTime.parse(dateValue)
-      case None if assteType == "road_numbers" => DateTime.now()
+      case None if assetType == "road_numbers" => DateTime.now()
       case _ => halt(BadRequest("Missing mandatory 'until' parameter"))
     }
 
-    assteType match {
+    assetType match {
       case "speed_limits"                => speedLimitsToGeoJson(since, speedLimitService.getChanged(since, until))
       case "total_weight_limits"         => linearAssetsToGeoJson(since, linearAssetService.getChanged(30, since, until))
       case "trailer_truck_weight_limits" => linearAssetsToGeoJson(since, linearAssetService.getChanged(40, since, until))
