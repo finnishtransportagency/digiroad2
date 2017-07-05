@@ -42,7 +42,7 @@
 
     var calibrationPointPicture = $('' +
       '<div class="legend-entry">' +
-      '<div class="label">Kalibrointipiste</div>' +
+      '<div class="label">Etäisyyslukema</div>' +
       '</div>' +
       '<div class="calibration-point-image"></div>');
 
