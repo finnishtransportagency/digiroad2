@@ -132,7 +132,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       roadAddressLinks.foreach { links =>
         RoadAddressDAO.createMissingRoadAddress(
           MissingRoadAddress(links.linkId, Some(links.startAddressM), Some(links.endAddressM), RoadType.PublicRoad, Some(links.roadNumber),
-            Some(links.roadPartNumber), None, None, Anomaly.NoAddressGiven,Seq.empty[Point]))
+            Some(links.roadPartNumber), None, None, Anomaly.NoAddressGiven, Seq(Point(374668.195, 6676884.282, 24.48399999999674),Point(374643.384, 6676882.176, 24.42399999999907))))
       }
       val linksFromDB = getSpecificMissingRoadAddresses(roadAddressLinks(0).linkId)
       RoadAddressDAO.getMissingRoadAddresses(Set()) should have size(oldMissingRA)
@@ -170,6 +170,24 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       roadAddressLink.head.linkId should be(linkId)
       roadAddressLink.head.attributes.contains("MUNICIPALITYCODE") should be (true)
       roadAddressLink.head.attributes.get("MUNICIPALITYCODE") should be (Some(municipalityId))
+    }
+  }
+
+  test("check MissingRoadAddres geometry is created correctly") {
+    runWithRollback {
+      val geom = Seq(Point(374668.195, 6676884.282, 0.0),Point(374643.384, 6676882.176, 0.0))
+      val raLink = RoadAddressLink(0, 1611616, geom, 297.7533188814259, State, SingleCarriageway, NormalRoadLinkType,
+                    InUse, NormalLinkInterface, RoadType.PrivateRoadType,  Some("22.09.2016 14:51:28"), Some("dr1_conversion"),
+                    Map("linkId" -> 1611605, "segmentId" -> 63298), 1, 3, 0, 0, 0, 0, 0, "", "", 0.0, 0.0, SideCode.Unknown,
+                    None, None, Anomaly.None, 0)
+
+      RoadAddressDAO.createMissingRoadAddress(
+      MissingRoadAddress(raLink.linkId, Some(raLink.startAddressM), Some(raLink.endAddressM), RoadType.PublicRoad,
+        Some(raLink.roadNumber), Some(raLink.roadPartNumber), None, None, Anomaly.NoAddressGiven, geom))
+
+      RoadAddressDAO.getMissingRoadAddresses(Set(raLink.linkId)).foreach { mra =>
+        mra.geom should be(geom)
+      }
     }
   }
 

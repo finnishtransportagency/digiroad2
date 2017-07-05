@@ -24,6 +24,7 @@ Alla olevaan taulukkoon on kerrottu kenttien nimet molemmilla tavoilla, sek&auml
 |Kohdeluokka (MTKCLASS)|Koodiarvo|Suravagessa k&auml;yt&ouml;ss&auml; vain luokka 12314 K&auml;vely- ja/tai py&ouml;r&auml;tie<BR>|
 |Tienumero (ROADNUMBER)|Kokonaisluku||
 |Tieosanumero (ROADPARTNUMBER)|Kokonaisluku||
+|Ajoratakoodi (TRACK_CODE)|Kokonaisluku|K&auml;yt&auml;nn&ouml;ss&auml; arvo 0, 1 tai 2|
 |P&auml;&auml;llystetieto (SURFACETYPE)|Koodiarvo|0 Tuntematon<BR>1 Ei p&auml;&auml;llystett&auml;<BR>2 Kestop&auml;&auml;llyste|
 |Sijaintitarkkuus (HORIZONTALACCURACY)|Koodiarvo|Ei k&auml;yt&ouml;ss&auml; Suravagessa<BR>500 0,5 m<BR>800 0,8 m<BR>1000 1 m<BR>10000 10 m<BR>100000 100m<BR>12500 12,5 m<BR>15000 15 m<BR>2000 2 m<BR>20000 20 m<BR>25000 25 m<BR>3000 3 m<BR>30000 30 m<BR>4000 4 m<BR>5000 5 m<BR>7500 7,5 m<BR>8000 8 m<BR>80000 80 m<BR>0 Ei m&auml;&auml;ritelty|
 |Korkeustarkkuus (VERTICALACCURACY)|Koodiarvo|Ei k&auml;yt&ouml;sss&auml; Suravagessa<BR>500 0,5 m<BR>800 0,8 m<BR>1000 1 m<BR>10000 10 m<BR>100000 100m<BR>12500 12,5 m<BR>15000 15 m<BR>2000 2 m<BR>20000 20 m<BR>25000 25 m<BR>3000 3 m<BR>30000 30 m<BR>4000 4 m<BR>5000 5 m<BR>7500 7,5 m<BR>8000 8 m<BR>80000 80 m<BR>1 Ei m&auml;&auml;ritelty<BR>100001 KM 10 m<BR>201 KM 2 m<BR>250001 KM 25 m|

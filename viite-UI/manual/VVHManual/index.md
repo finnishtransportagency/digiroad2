@@ -490,6 +490,7 @@ Muut ominaisuustiedot:
 |Kohdeluokka (MTKCLASS)|Koodiarvo|Valitaan alasvetovalikosta tai annetaan koodiarvo. Vastaa MML:n kohdeluokkaa. VVH:ssa annetaan vain arvoja null ja 12314 K&auml;vely- ja/tai py&ouml;r&auml;tie|null|
 |Tienumero (ROADNUMBER)|Kokonaisluku||null|
 |Tieosanumero (ROADPARTNUMBER)|Kokonaisluku||null|
+|Ajoratakoodi (TRACK_CODE)|Kokonaisluku||null|
 |P&auml;&auml;llystetieto (SURFACETYPE)|Koodiarvo|Valitaan alasvetovalikosta tai annetaan koodiarvo|null|
 |Sijaintitarkkuus (HORIZONTALACCURACY)|Koodiarvo|Valitaan alasvetovalikosta, esim. 0,5 m tai annetaan koodiarvo|null|
 |Korkeustarkkuus (VERTICALACCURACY)|Koodiarvo|Valitaan alasvetovalikosta, esim. 0,5 m tai annetaan koodiarvo|null|

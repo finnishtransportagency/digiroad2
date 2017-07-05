@@ -582,9 +582,14 @@
 
       function disableFormIfTRMassTransitStopHasEndDate(properties) {
 
-        var isBusStopExpired = _.some(properties, function(property){
-          return property.publicId === 'viimeinen_voimassaolopaiva' &&
-              _.some(property.values, function(value){ return value.propertyValue !== ""; });
+        var expiryDate = selectedMassTransitStopModel.getEndDate();
+        var todaysDate = moment().format('YYYY-MM-DD');
+
+        var isBusStopExpired = _.some(properties, function (property) {
+          return todaysDate > expiryDate && property.publicId === 'viimeinen_voimassaolopaiva' &&
+            _.some(property.values, function (value) {
+              return value.propertyValue !== "";
+            });
         });
 
         if (isBusStopExpired && isTRMassTransitStop)  {
