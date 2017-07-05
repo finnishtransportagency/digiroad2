@@ -1,5 +1,6 @@
 role :app, %w{web@gateway}
 role :web, %w{web@gateway}
+set :grunt_target, 'staging'
 server 'gateway', user: 'web', roles: %w{web app}
 
 namespace :deploy do
