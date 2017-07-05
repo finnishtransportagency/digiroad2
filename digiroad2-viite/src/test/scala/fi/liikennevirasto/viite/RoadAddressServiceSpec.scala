@@ -177,7 +177,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     runWithRollback {
       val geom = Seq(Point(374668.195, 6676884.282, 0.0),Point(374643.384, 6676882.176, 0.0))
       val raLink = RoadAddressLink(0, 1611616, geom, 297.7533188814259, State, SingleCarriageway, NormalRoadLinkType,
-                    InUse, NormalLinkInterface, RoadType.PrivateRoadType,  Some("22.09.2016 14:51:28"), Some("dr1_conversion"),
+                    InUse, NormalLinkInterface, RoadType.PrivateRoadType, "Vt5", BigInt(0), Some("22.09.2016 14:51:28"), Some("dr1_conversion"),
                     Map("linkId" -> 1611605, "segmentId" -> 63298), 1, 3, 0, 0, 0, 0, 0, "", "", 0.0, 0.0, SideCode.Unknown,
                     None, None, Anomaly.None, 0)
 
