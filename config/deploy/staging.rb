@@ -1,6 +1,7 @@
 role :app, %w{web@gateway}
 role :web, %w{web@gateway}
 server 'gateway', user: 'web', roles: %w{web app}
+set :grunt_target, 'staging'
 
 namespace :deploy do
   task :start_vallu_server do
