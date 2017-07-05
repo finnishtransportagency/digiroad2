@@ -27,59 +27,32 @@ object RoadLinkServiceDAO {
                    where not exists (select * from #$table where link_id = $linkId)""".execute
   }
 
-  def insertNewLinkProperties(table: String, column: String, vvhColumn: String, linkId: Long, username: Option[String], value: Int, mml_id: Option[Long], optionalVVHValue: Option[Int]) = {
-    sqlu"""insert into #$table (id, link_id, #$column, modified_by, mml_id, vvh_administrative_class )
+  def insertNewAdministrativeClass(table: String, column: String, vvhColumn: String, linkId: Long, username: Option[String], value: Int, mml_id: Option[Long], optionalVVHValue: Option[Int]) = {
+    sqlu"""insert into #$table (id, link_id, #$column, created_by, mml_id, #$vvhColumn )
                    select primary_key_seq.nextval, $linkId, $value, $username, $mml_id, $optionalVVHValue
                    from dual
                    where not exists (select * from #$table where link_id = $linkId)""".execute
   }
 
 
-  def updateExistingLinkPropertyRows(table: String, column: String, vvhColumn: String, linkId: Long, username: Option[String], existingValue: Int, value: Int, mmlId: Option[Long], optionalVVHValue: Option[Int]) = {
-    (optionalVVHValue.getOrElse(None), mmlId.getOrElse(None))  match {
-      case (None, None) => updateExistingLinkPropertyRow(table, column, linkId, username, existingValue, value)
-      case (None,  mmlValue)  if existingValue != value => updateAllTableWithMMLId(table, column, linkId, username, existingValue, value, mmlId)
-      case (vvhValue, None)  if existingValue != value => updateTableWithVVHField(table, column, vvhColumn, linkId, username, existingValue, value, optionalVVHValue)
-      case (vvhValue, mmlValue) => updateAllTableFields(table, column, vvhColumn, linkId, username, existingValue, value, mmlId, optionalVVHValue)
-    }
+  def updateExistingAdministrativeClass(table: String, column: String, vvhColumn: String, linkId: Long, username: Option[String], existingValue: Int, value: Int, mmlId: Option[Long], optionalVVHValue: Option[Int]) = {
+    expireExistingLinkPropertyRow(table, linkId, username)
+    insertValues(table, column, vvhColumn, linkId, username, existingValue, value, mmlId, optionalVVHValue)
   }
 
-  def updateAllTableFields(table: String, column: String, vvhColumn: String, linkId: Long, username: Option[String], existingValue: Int, value: Int, mmlId: Option[Long], optionalVVHValue: Option[Int]) = {
-      sqlu"""update #$table
-               set #$column = $value,
-                   mml_id = $mmlId,
-                   modified_date = current_timestamp,
-                   modified_by = $username,
-                   #$vvhColumn = $optionalVVHValue
-               where link_id = $linkId""".execute
+  def insertValues(table: String, column: String, vvhColumn: String, linkId: Long, username: Option[String], existingValue: Int, value: Int, mmlId: Option[Long], optionalVVHValue: Option[Int]) = {
+    sqlu"""insert into #$table (id, link_id, #$column, modified_by, mml_id, #$vvhColumn )
+                   select primary_key_seq.nextval, $linkId, $value, $username, $mmlId, $optionalVVHValue
+                   from dual
+                   where exists (select * from #$table where link_id = $linkId)""".execute
   }
-
-  def updateAllTableWithMMLId(table: String, column: String,linkId: Long, username: Option[String], existingValue: Int, value: Int, mmlId: Option[Long]) = {
-    sqlu"""update #$table
-               set #$column = $value,
-                   mml_id = $mmlId,
-                   modified_date = current_timestamp,
-                   modified_by = $username,
-               where link_id = $linkId""".execute
-  }
-
-  def updateTableWithVVHField(table: String, column: String, vvhColumn: String, linkId: Long, username: Option[String], existingValue: Int, value: Int, optionalVVHValue: Option[Int]) = {
-    sqlu"""update #$table
-               set #$column = $value,
-                   modified_date = current_timestamp,
-                   modified_by = $username,
-                   #$vvhColumn = $optionalVVHValue
-               where link_id = $linkId""".execute
-  }
-
   def getLinkProperty(table: String, column: String, linkId: Long) = {
     sql"""select #$column from #$table where link_id = $linkId""".as[Int].firstOption
   }
 
   def expireExistingLinkPropertyRow(table: String, linkId: Long, username: Option[String]) = {
     sqlu"""update #$table
-                 set valid_to = current_timestamp,
-                     modified_date = current_timestamp,
+                 set valid_to = current_timestamp - 1,
                      modified_by = $username
                  where link_id = $linkId""".execute
   }
@@ -126,11 +99,11 @@ object RoadLinkServiceDAO {
   }
 
   def updateAdministrativeClass(linkId: Long, username: Option[String], existingValue: Int, value: Int, mmlId: Option[Long], optionalVVHValue: Option[Int]) = {
-    updateExistingLinkPropertyRows(AdministrativeClass, AdministrativeClass, VVHAdministrativeClass, linkId, username, existingValue, value, mmlId, optionalVVHValue)
+    updateExistingAdministrativeClass(AdministrativeClass, AdministrativeClass, VVHAdministrativeClass, linkId, username, existingValue, value, mmlId, optionalVVHValue)
   }
 
   def insertAdministrativeClass(linkId: Long, username: Option[String], value: Int, mmlId: Option[Long], optionalVVHValue: Option[Int]) = {
-    insertNewLinkProperties(AdministrativeClass, AdministrativeClass, VVHAdministrativeClass, linkId, username, value, mmlId, optionalVVHValue)
+    insertNewAdministrativeClass(AdministrativeClass, AdministrativeClass, VVHAdministrativeClass, linkId, username, value, mmlId, optionalVVHValue)
   }
 
   def getAdministrativeClassValue(linkId: Long) = {

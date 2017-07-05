@@ -15,7 +15,7 @@ import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.roadlinkservice.oracle.RoadLinkServiceDAO
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.{VVHRoadLinkHistoryProcessor, VVHSerializer}
-import org.joda.time.{DateTimeZone, DateTime}
+import org.joda.time.{DateTime, DateTimeZone}
 import org.joda.time.format.ISODateTimeFormat
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -499,9 +499,9 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     val optionalExistingValue: Option[Int] = RoadLinkServiceDAO.getLinkProperty(table, column, linkId)
     (optionalExistingValue, optionalVVHValue) match {
       case (Some(existingValue), _) =>
-        vvhColumn.isEmpty match{
-          case true => RoadLinkServiceDAO.updateExistingLinkPropertyRow(table, column, linkId, username, existingValue, value)
-          case _ => RoadLinkServiceDAO.updateExistingLinkPropertyRows(table, column, vvhColumn, linkId, username, existingValue, value, mmlId, optionalVVHValue)
+        table match{
+          case "administrative_class" => RoadLinkServiceDAO.updateExistingAdministrativeClass(table, column, vvhColumn, linkId, username, existingValue, value, mmlId, optionalVVHValue)
+          case _ => RoadLinkServiceDAO.updateExistingLinkPropertyRow(table, column, linkId, username, existingValue, value)
         }
       case (None, None) =>
         insertLinkProperty(optionalExistingValue, optionalVVHValue, table, column, vvhColumn, linkId, username, value, latestModifiedAt, latestModifiedBy, mmlId)
@@ -516,9 +516,9 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
                                  column: String, vvhColumn: String, linkId: Long, username: Option[String], value: Int, latestModifiedAt: Option[String],
                                  latestModifiedBy: Option[String], mmlId: Option[Long]) = {
     if (latestModifiedAt.isEmpty) {
-      vvhColumn.isEmpty match{
-        case true => RoadLinkServiceDAO.insertNewLinkProperty(table, column, linkId, username, value)
-        case _ => RoadLinkServiceDAO.insertNewLinkProperties(table, column, vvhColumn, linkId, username, value, mmlId, optionalVVHValue)
+      table match{
+        case "administrative_class" => RoadLinkServiceDAO.insertNewAdministrativeClass(table, column, vvhColumn, linkId, username, value, mmlId, optionalVVHValue)
+        case _ =>  RoadLinkServiceDAO.insertNewLinkProperty(table, column, linkId, username, value)
       }
     } else{
       try {
@@ -548,13 +548,12 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     sql"""select i.id, t.link_id, t.traffic_direction, t.modified_date, t.modified_by,
           f.link_id, f.functional_class, f.modified_date, f.modified_by,
           l.link_id, l.link_type, l.modified_date, l.modified_by,
-          a.link_id, a.administrative_class, a.modified_date, a.modified_by
+          a.link_id, a.administrative_class, a.created_date, a.created_by
             from #$idTableName i
             left join traffic_direction t on i.id = t.link_id
             left join functional_class f on i.id = f.link_id
             left join link_type l on i.id = l.link_id
-            left join administrative_class a on i.id = a.link_id
-
+            left join administrative_class a on i.id = a.link_id where a.valid_to is null
       """.as[(Long, Option[Long], Option[Int], Option[DateTime], Option[String],
       Option[Long], Option[Int], Option[DateTime], Option[String],
       Option[Long], Option[Int], Option[DateTime], Option[String],
