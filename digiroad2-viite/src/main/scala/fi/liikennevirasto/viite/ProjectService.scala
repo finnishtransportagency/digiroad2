@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.util.RoadAddressException
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, RoadLinkService}
 import fi.liikennevirasto.viite.dao.ProjectState._
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink, RoadAddressLinkLike}
+import fi.liikennevirasto.viite.model.{ProjectAddressLink, ProjectAddressLinkLike, RoadAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.{Delta, ProjectDeltaCalculator, RoadAddressFiller}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -406,7 +406,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       case _ => fuseProjectLinks(projectLinks)
     }
 
-    Some(RoadAddressLinkBuilder.build(rl, pl))
+    Some(RoadAddressLinkBuilder.projectBuild(rl, pl))
   }
 
   private def fuseProjectLinks(links: Seq[ProjectLink]) = {
