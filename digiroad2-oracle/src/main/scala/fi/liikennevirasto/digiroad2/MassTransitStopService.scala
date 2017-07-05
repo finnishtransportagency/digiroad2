@@ -503,12 +503,22 @@ trait MassTransitStopService extends PointAssetOperations {
         val newPoint = Point(position.lon, position.lat)
         val assetDistance = assetPoint.distance2DTo(newPoint)
         if (assetDistance > MaxMovementDistanceMeters) {
+          val newInventoryDateValue =
+            asset.propertyData.filter(_.publicId == MassTransitStopOperations.InventoryDateId).map(prop =>
+              Property(prop.id, prop.publicId, prop.propertyType, prop.required, Seq())
+            )
+          val newPropertyData = asset.propertyData.filterNot(_.publicId == MassTransitStopOperations.InventoryDateId) ++ newInventoryDateValue
+          val newAsset = asset.copy(propertyData = newPropertyData)
+
           //Expire the old asset
-          expireMassTransitStop(username, asset)
+          expireMassTransitStop(username, newAsset)
+
+          //Remove the InventoryDate Property to used the actual instead the old value when create a new asset
+          val mergedPropertiesWithOutInventoryDate = mergedProperties.filterNot(_.publicId == MassTransitStopOperations.InventoryDateId)
 
           //Create a new asset
           create(NewMassTransitStop(position.lon, position.lat, linkId, position.bearing.getOrElse(asset.bearing.get),
-            mergedProperties), username, newPoint, geometry, municipalityCode, Some(roadLink.get.administrativeClass), roadLink.get.linkSource)
+            mergedPropertiesWithOutInventoryDate), username, newPoint, geometry, municipalityCode, Some(roadLink.get.administrativeClass), roadLink.get.linkSource)
         } else {
           update(asset, optionalPosition, username, mergedProperties, roadLink.get, operation)
         }
