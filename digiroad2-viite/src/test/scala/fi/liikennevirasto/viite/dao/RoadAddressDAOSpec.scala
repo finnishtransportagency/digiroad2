@@ -75,6 +75,23 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Fetch missing road address by boundingBox"){
+    runWithRollback {
+      val boundingBox = BoundingRectangle(Point(6699381, 396898), Point(6699382, 396898))
+      sqlu"""
+           insert into missing_road_address (link_id, start_addr_m, end_addr_m,anomaly_code, start_m, end_m, geometry)
+           values (1943845, 0, 1, 1, 0, 34.944, MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(6699381,396898,0,0.0,6699382,396898,0,2)))
+           """.execute
+
+      val missingRoadAddresses = RoadAddressDAO.fetchMissingRoadAddressesByBoundingBox(boundingBox)
+      val addedValue = missingRoadAddresses.find(p => p.linkId == 1943845).get
+      addedValue should not be None
+      addedValue.geom.nonEmpty should be (true)
+      addedValue.startAddrMValue.get should be (0)
+      addedValue.endAddrMValue.get should be (1)
+    }
+  }
+
 
   test("Set road address to floating and update the geometry as well") {
     runWithRollback {
@@ -99,7 +116,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
 
   test("Adding geometry to missing roadaddress") {
     runWithRollback {
-      val id = RoadAddressDAO.getNextRoadAddressId
+      val id = 1943845
       sqlu"""
            insert into missing_road_address (link_id, start_addr_m, end_addr_m,anomaly_code, start_m)
            values ($id, 0, 1, 1, 1)
