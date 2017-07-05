@@ -114,7 +114,7 @@
               width: 8
             })
           });
-        } else if(feature.projectLinkData.status === 99){
+        } else if(feature.projectLinkData.anomaly === 1 && feature.projectLinkData.status === 99){
           return new ol.style.Style({
             fill: new ol.style.Fill({
               color: 'rgba(0, 255, 0, 0.75)'
