@@ -16,6 +16,8 @@ trait RoadAddressLinkLike extends PolyLine {
   def constructionType: ConstructionType
   def roadLinkSource: LinkGeomSource
   def roadType: RoadType
+  def roadName: String
+  def municipalityCode: BigInt
   def modifiedAt: Option[String]
   def modifiedBy: Option[String]
   def attributes: Map[String, Any]
