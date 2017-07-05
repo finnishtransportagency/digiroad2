@@ -1,12 +1,19 @@
 package fi.liikennevirasto.viite
 
+import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
-import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
-import fi.liikennevirasto.digiroad2.asset.TrafficDirection.TowardsDigitizing
+import fi.liikennevirasto.digiroad2.asset.{SideCode, State, UnknownLinkType, LinkGeomSource}
+import fi.liikennevirasto.digiroad2.asset.TrafficDirection.{BothDirections, TowardsDigitizing}
+import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
+import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite.dao.Discontinuity.Discontinuous
-import fi.liikennevirasto.viite.dao.{CalibrationPoint, Discontinuity, RoadAddress}
+import fi.liikennevirasto.digiroad2.util.Track.Combined
+import fi.liikennevirasto.viite.RoadType.UnknownOwnerRoad
+import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous}
+import fi.liikennevirasto.viite.dao.LinkStatus.NotHandled
+import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import org.joda.time.DateTime
 import org.scalatest.{Assertions, FunSuite, Matchers}
@@ -176,6 +183,40 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers{
       )
       RoadAddressLinkBuilder.fuseRoadAddress(roadAddress) should have size (1)
     }
+  }
+
+  test("Building ProjectAddressLink partitioner") {
+    val unknownProjectLink = ProjectLink(0,0,0,Track.Unknown,Discontinuity.Continuous,0,0,None,None,None,0,0,0.0,0.0,SideCode.Unknown,(None,None),false, List(),0,NotHandled,UnknownOwnerRoad)
+    val projectLinks =
+      Map(
+        1717380l -> ProjectLink(1270,0,0,Track.apply(99), Continuous,1021,1028,None,None,None,70001448,1717380,0.0,6.0,AgainstDigitizing,(None,None),false,List(),1227,NotHandled,UnknownOwnerRoad),
+        1717374l -> ProjectLink(1259,1130,0,Combined, Continuous,959,1021,None,None,None,70001437,1717374,0.0,61.0,AgainstDigitizing,(None,None),false,List(),1227,NotHandled,UnknownOwnerRoad)
+      )
+
+    val roadLinks = Seq(
+      RoadLink(1717380,List(Point(358594.785,6678940.735,57.788000000000466), Point(358599.713,6678945.133,57.78100000000268)),6.605118318435748,State,99,BothDirections,UnknownLinkType,Some("14.10.2016 21:15:13"),Some("vvh_modified"),Map("TO_RIGHT" -> 104, "LAST_EDITED_DATE" -> BigInt("1476468913000"), "FROM_LEFT" -> 103, "MTKHEREFLIP" -> 1, "MTKID" -> 362888804, "ROADNAME_FI" -> "Evitskogintie", "STARTNODE" -> 1729826, "VERTICALACCURACY" -> 201, "ENDNODE" -> 1729824, "VALIDFROM" -> BigInt("1379548800000"), "CONSTRUCTIONTYPE" -> 0, "SURFACETYPE" -> 2, "MTKCLASS" -> 12122, "ROADPARTNUMBER" -> 4, "points" -> List(Map("x" -> 358594.785, "y" -> 6678940.735, "z" -> 57.788000000000466, "m" -> 0), Map("x" -> 358599.713, "y" -> 6678945.133, "z" -> 57.78100000000268, "m" -> 6.605100000000675)), "TO_LEFT" -> 103, "geometryWKT" -> "LINESTRING ZM (358594.785 6678940.735 57.788000000000466 0, 358599.713 6678945.133 57.78100000000268 6.605100000000675)", "VERTICALLEVEL" -> 0, "ROADNAME_SE" -> "Evitskogsvägen", "MUNICIPALITYCODE" -> BigInt(257), "FROM_RIGHT" -> 104, "CREATED_DATE" -> BigInt("1446132842000"), "GEOMETRY_EDITED_DATE" -> BigInt("1476468913000"), "HORIZONTALACCURACY" -> 3000, "ROADNUMBER" -> 1130),InUse,NormalLinkInterface),
+      RoadLink(1717374,List(Point(358599.713,6678945.133,57.78100000000268), Point(358601.644,6678946.448,57.771999999997206), Point(358621.812,6678964.766,57.41000000000349), Point(358630.04,6678971.657,57.10099999999511), Point(358638.064,6678977.863,56.78599999999278), Point(358647.408,6678984.55,56.31399999999849)),61.948020518025565,State,99,BothDirections,UnknownLinkType,Some("14.10.2016 21:15:13"),Some("vvh_modified"),Map("TO_RIGHT" -> 98, "LAST_EDITED_DATE" -> BigInt("1476468913000"), "FROM_LEFT" -> 101, "MTKHEREFLIP" -> 1, "MTKID" -> 362888798, "STARTNODE" -> 1729824, "VERTICALACCURACY" -> 201, "ENDNODE" -> 1729819, "VALIDFROM" -> BigInt("1379548800000"), "CONSTRUCTIONTYPE" -> 0, "SURFACETYPE" -> 2, "MTKCLASS" -> 12122, "points" -> List(Map("x" -> 358599.713, "y" -> 6678945.133, "z" -> 57.78100000000268, "m" -> 0), Map("x" -> 358601.644, "y" -> 6678946.448, "z" -> 57.771999999997206, "m" -> 2.336200000005192), Map("x" -> 358621.812, "y" -> 6678964.766, "z" -> 57.41000000000349, "m" -> 29.581399999995483), Map("x" -> 358630.04, "y" -> 6678971.657, "z" -> 57.10099999999511, "m" -> 40.31380000000354), Map("x" -> 358638.064, "y" -> 6678977.863, "z" -> 56.78599999999278, "m" -> 50.45780000000377), Map("x" -> 358647.408, "y" -> 6678984.55, "z" -> 56.31399999999849, "m" -> 61.94800000000396)), "TO_LEFT" -> 97, "geometryWKT" -> "LINESTRING ZM (358599.713 6678945.133 57.78100000000268 0, 358601.644 6678946.448 57.771999999997206 2.336200000005192, 358621.812 6678964.766 57.41000000000349 29.581399999995483, 358630.04 6678971.657 57.10099999999511 40.31380000000354, 358638.064 6678977.863 56.78599999999278 50.45780000000377, 358647.408 6678984.55 56.31399999999849 61.94800000000396)", "VERTICALLEVEL" -> 0, "ROADNAME_SE" -> "Evitskogsvägen", "MUNICIPALITYCODE" -> BigInt(0), "FROM_RIGHT" -> 102, "CREATED_DATE" -> BigInt("1446132842000"), "GEOMETRY_EDITED_DATE" -> BigInt("1476468913000"), "HORIZONTALACCURACY" -> 3000, "ROADNUMBER" -> 1130),InUse,NormalLinkInterface)
+    )
+    val projectRoadLinks = roadLinks.map {
+      rl =>
+        val pl = projectLinks.getOrElse(rl.linkId, unknownProjectLink)
+        rl.linkId -> RoadAddressLinkBuilder.build(rl, pl)
+    }
+    projectRoadLinks should have size (2)
+    val pal1 = projectRoadLinks.head._2
+    val pal2 = projectRoadLinks.tail.head._2
+
+    pal1.roadNumber should be (1130)
+    pal1.roadPartNumber should be (4)
+    pal1.trackCode should be (99)
+    pal1.roadName should be ("Evitskogintie")
+    pal1.municipalityCode should be (BigInt(257))
+
+    pal2.roadNumber should be (1130)
+    pal2.roadPartNumber should be (0)
+    pal2.trackCode should be (0)
+    pal2.roadName should be ("Evitskogsvägen")
+    pal2.municipalityCode should be (BigInt(0))
   }
 
 }

@@ -176,6 +176,10 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     getCachedRoadLinksAndChanges(municipality)._1
   }
 
+  def getRoadLinksWithComplementaryFromVVH(municipality: Int): Seq[RoadLink] = {
+    getCachedRoadLinksWithComplementaryAndChanges(municipality)._1
+  }
+
   def getRoadLinksFromVVHFuture(municipality: Int): Future[Seq[RoadLink]] = {
     Future(getRoadLinksFromVVH(municipality))
   }
