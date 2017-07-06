@@ -141,14 +141,20 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
                   if (ra.startAddrMValue >= startAddr) {
                     ra.startMValue
                   } else {
-                    ra.addressMValueToLRM(startAddr)
+                    ra.addressMValueToLRM(startAddr) match {
+                      case Some(startValue) => startValue
+                      case None => return
+                    }
                   }
 
                 val newEndMValue =
                   if (ra.endAddrMValue <= endAddr.getOrElse(ra.endAddrMValue)) {
                     ra.endMValue
                   } else {
-                    ra.addressMValueToLRM(endAddr.get)
+                    ra.addressMValueToLRM(endAddr.get) match {
+                      case Some(endValue) => endValue
+                      case None => return
+                    }
                   }
                 createLinearAsset(ra.linkId, Measures(newStartMValue, newEndMValue))
               }

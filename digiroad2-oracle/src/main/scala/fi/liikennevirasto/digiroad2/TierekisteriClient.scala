@@ -180,16 +180,10 @@ case class TierekisteriLighting(roadNumber: Long, startRoadPartNumber: Long, end
       else
         None)) ++ {
       if (startRoadPartNumber != endRoadPartNumber)
-        (startRoadPartNumber until endRoadPartNumber).tail.map(part => AddressSection(roadNumber, part, track, 0L, None))
+        (startRoadPartNumber until endRoadPartNumber).tail.map(part => AddressSection(roadNumber, part, track, 0L, None)) ++ Seq(AddressSection(roadNumber, endRoadPartNumber, track, 0L, Some(endAddressMValue)))
       else
         Seq[AddressSection]()
-    } ++
-      {
-        if (endRoadPartNumber == startRoadPartNumber)
-          Seq[AddressSection]()
-        else
-          Seq(AddressSection(roadNumber, endRoadPartNumber, track, 0L, Some(endAddressMValue)))
-      }
+    }
   }
 }
 

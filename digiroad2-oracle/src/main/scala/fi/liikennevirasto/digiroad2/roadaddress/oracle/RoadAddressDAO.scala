@@ -15,15 +15,15 @@ import slick.jdbc.StaticQuery.interpolation
 case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track, discontinuity: Int, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
                        endDate: Option[DateTime] = None, lrmPositionId: Long, linkId: Long,
                        startMValue: Double, endMValue: Double, sideCode: SideCode, floating: Boolean = false, geom: Seq[Point]) {
-  def addressMValueToLRM(addrMValue: Long): Double = {
+  def addressMValueToLRM(addrMValue: Long): Option[Double] = {
     if (addrMValue < startAddrMValue || addrMValue > endAddrMValue)
-      Double.NaN
+      None
     else
     // Linear approximation: addrM = a*mValue + b <=> mValue = (addrM - b) / a
     sideCode match {
-      case TowardsDigitizing => (addrMValue-startAddrMValue)*lrmLength/addressLength + startMValue
-      case AgainstDigitizing => endMValue - (addrMValue-startAddrMValue)*lrmLength/addressLength
-      case _ => Double.NaN
+      case TowardsDigitizing => Some((addrMValue - startAddrMValue) * lrmLength / addressLength + startMValue)
+      case AgainstDigitizing => Some(endMValue - (addrMValue - startAddrMValue) * lrmLength / addressLength)
+      case _ => None
     }
   }
   private val addressLength: Long = endAddrMValue - startAddrMValue
