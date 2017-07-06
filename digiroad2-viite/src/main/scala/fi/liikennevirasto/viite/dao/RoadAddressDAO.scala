@@ -127,14 +127,35 @@ case class MissingRoadAddress(linkId: Long, startAddrMValue: Option[Long], endAd
 
 object RoadAddressDAO {
 
-  // TODO: Remove Missing Road Address Search from here - it's never returning anything and not expected to be used
-  def fetchByBoundingBox(boundingRectangle: BoundingRectangle, fetchOnlyFloating: Boolean): (Seq[RoadAddress], Seq[MissingRoadAddress]) = {
+  protected def withRoadNumbersFilter(roadNumbers: Seq[(Int, Int)], filter: String = ""): String = {
+    if (roadNumbers.isEmpty)
+      return s" and  ($filter)"
+
+    val limit = roadNumbers.head
+    val filterAdd = s"""(ra.road_number >= ${limit._1} and ra.road_number <= ${limit._2})"""
+    if (filter == "")
+      withRoadNumbersFilter(roadNumbers.tail,  filterAdd)
+    else
+      withRoadNumbersFilter(roadNumbers.tail,  s"""$filter OR $filterAdd""")
+  }
+
+  def fetchRoadAddressesByBoundingBox(boundingRectangle: BoundingRectangle, fetchOnlyFloating: Boolean, onlyNormalRoads: Boolean = false, roadNumberLimits: Seq[(Int, Int)] = Seq()): (Seq[RoadAddress]) = {
     val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),
       boundingRectangle.rightTop - boundingRectangle.diagonal.scale(.15))
     val filter = OracleDatabase.boundingBoxFilter(extendedBoundingRectangle, "geometry")
 
     val floatingFilter = fetchOnlyFloating match {
       case true => " and ra.floating = 1"
+      case false => ""
+    }
+
+    val normalRoadsFilter = onlyNormalRoads match {
+      case true => " and pos.link_source = 1"
+      case false => ""
+    }
+
+    val roadNumbersFilter = roadNumberLimits.nonEmpty match {
+      case true => withRoadNumbersFilter(roadNumberLimits)
       case false => ""
     }
 
@@ -150,13 +171,33 @@ object RoadAddressDAO {
         link_source
         from road_address ra
         join lrm_position pos on ra.lrm_position_id = pos.id
-        where $filter $floatingFilter and
+        where $filter $floatingFilter $normalRoadsFilter $roadNumbersFilter and
           (valid_from is null or valid_from <= sysdate) and
           (valid_to is null or valid_to > sysdate)
       """
-    (queryList(query), Seq())
+    queryList(query)
   }
 
+  def fetchMissingRoadAddressesByBoundingBox(boundingRectangle: BoundingRectangle): (Seq[MissingRoadAddress]) = {
+    val extendedBoundingRectangle = BoundingRectangle(boundingRectangle.leftBottom + boundingRectangle.diagonal.scale(.15),
+      boundingRectangle.rightTop - boundingRectangle.diagonal.scale(.15))
+    val filter = OracleDatabase.boundingBoxFilter(extendedBoundingRectangle, "geometry")
+
+    val query = s"""
+        select link_id, start_addr_m, end_addr_m, road_number, road_part_number, anomaly_code, start_m, end_m,
+        (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(geometry)) t WHERE id = 1) as X,
+        (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(geometry)) t WHERE id = 1) as Y,
+        (SELECT X FROM TABLE(SDO_UTIL.GETVERTICES(geometry)) t WHERE id = 2) as X2,
+        (SELECT Y FROM TABLE(SDO_UTIL.GETVERTICES(geometry)) t WHERE id = 2) as Y2
+        from missing_road_address
+        where $filter
+      """
+
+    Q.queryNA[(Long, Option[Long], Option[Long], Option[Long], Option[Long], Int, Option[Double], Option[Double],Double, Double, Double, Double)](query).list.map {
+      case (linkId, startAddrM, endAddrM, road, roadPart,anomaly, startM, endM, x, y, x2, y2) =>
+        MissingRoadAddress(linkId, startAddrM, endAddrM, RoadType.UnknownOwnerRoad ,road, roadPart, startM, endM, Anomaly.apply(anomaly),Seq(Point(x, y), Point(x2, y2)))
+    }
+  }
 
   private def logger = LoggerFactory.getLogger(getClass)
 
@@ -555,6 +596,7 @@ object RoadAddressDAO {
 
   def createMissingRoadAddress (mra: MissingRoadAddress) = {
     val (p1, p2) = (mra.geom.head, mra.geom.last)
+
     sqlu"""
            insert into missing_road_address
            (select ${mra.linkId}, ${mra.startAddrMValue}, ${mra.endAddrMValue},

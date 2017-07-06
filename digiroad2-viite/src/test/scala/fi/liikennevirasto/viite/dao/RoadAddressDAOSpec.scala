@@ -70,10 +70,25 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
     runWithRollback {
       val address = RoadAddressDAO.fetchByLinkId(Set(5170942)).head
       RoadAddressDAO.update(address, Some(Seq(Point(50200, 7630000.0, 0.0), Point(50210, 7630000.0, 10.0))))
-      RoadAddressDAO.fetchByBoundingBox(BoundingRectangle(Point(50202, 7620000), Point(50205, 7640000)), false).
-        _1.exists(_.id == address.id) should be (true)
-      RoadAddressDAO.fetchByBoundingBox(BoundingRectangle(Point(50212, 7620000), Point(50215, 7640000)), false).
-        _1.exists(_.id == address.id) should be (false)
+      RoadAddressDAO.fetchRoadAddressesByBoundingBox(BoundingRectangle(Point(50202, 7620000), Point(50205, 7640000)), false).exists(_.id == address.id) should be (true)
+      RoadAddressDAO.fetchRoadAddressesByBoundingBox(BoundingRectangle(Point(50212, 7620000), Point(50215, 7640000)), false).exists(_.id == address.id) should be (false)
+    }
+  }
+
+  test("Fetch missing road address by boundingBox"){
+    runWithRollback {
+      val boundingBox = BoundingRectangle(Point(6699381, 396898), Point(6699382, 396898))
+      sqlu"""
+           insert into missing_road_address (link_id, start_addr_m, end_addr_m,anomaly_code, start_m, end_m, geometry)
+           values (1943845, 0, 1, 1, 0, 34.944, MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(6699381,396898,0,0.0,6699382,396898,0,2)))
+           """.execute
+
+      val missingRoadAddresses = RoadAddressDAO.fetchMissingRoadAddressesByBoundingBox(boundingBox)
+      val addedValue = missingRoadAddresses.find(p => p.linkId == 1943845).get
+      addedValue should not be None
+      addedValue.geom.nonEmpty should be (true)
+      addedValue.startAddrMValue.get should be (0)
+      addedValue.endAddrMValue.get should be (1)
     }
   }
 
@@ -101,7 +116,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
 
   test("Adding geometry to missing roadaddress") {
     runWithRollback {
-      val id = RoadAddressDAO.getNextRoadAddressId
+      val id = 1943845
       sqlu"""
            insert into missing_road_address (link_id, start_addr_m, end_addr_m,anomaly_code, start_m)
            values ($id, 0, 1, 1, 1)
