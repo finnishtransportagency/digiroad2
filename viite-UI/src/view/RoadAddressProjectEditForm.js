@@ -114,6 +114,16 @@
         '<footer>' + actionButtons() + '</footer>');
     };
 
+    var emptyTemplate = function(project) {
+      var selection = selectedData(selectedProjectLink);
+
+      return _.template('' +
+        '<header>' +
+        titleWithProjectName(project.name) +
+        '</header>' +
+        '<footer></footer>');
+    };
+
     var bindEvents = function() {
 
       var rootElement = $('#feature-attributes');
@@ -162,7 +172,6 @@
       });
 
       eventbus.on('roadAddress:projectLinksUpdated',function(data){
-        rootElement.html('');
         if (typeof data !== 'undefined' && typeof data.publishable !== 'undefined' && data.publishable) {
           eventbus.trigger('roadAddressProject:projectLinkSaved', data.id, data.publishable);
         }
@@ -196,6 +205,7 @@
       rootElement.on('click', '.project-form button.update', function() {
         currentProject = projectCollection.getCurrentProject();
         projectCollection.saveProjectLinks(projectCollection.getTmpExpired());
+        rootElement.html(emptyTemplate(currentProject.project));
       });
 
       rootElement.on('change', '#dropDown', function() {
