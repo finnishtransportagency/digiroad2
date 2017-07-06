@@ -336,7 +336,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       case DrawRoadPartsOnly =>
         //        roadAddressService.getRoadParts(boundingRectangle, Seq((1, 19999)), municipalities)
         Seq()
-      case DrawPublicRoads => roadAddressService.getRoadAddressLinks(boundingRectangle, Seq((1, 19999), (40000,49999)), municipalities, publicRoads = false)
+      case DrawPublicRoads => roadAddressService.getRoadAddressLinksByLinkId(boundingRectangle, Seq((1, 19999), (40000,49999)), municipalities)
       case DrawAllRoads => roadAddressService.getRoadAddressLinks(boundingRectangle, Seq(), municipalities, everything = true)
       case _ => roadAddressService.getRoadAddressLinks(boundingRectangle, Seq((1, 19999)), municipalities)
     }
@@ -368,7 +368,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val C1 = new Contains(-10 to 3)
     val C2 = new Contains(4 to 5)
     val C3 = new Contains(6 to 10)
-    val C4 = new Contains(10 to 16)
+    val C4 = new Contains(11 to 16)
     try {
       val level: Int = zoomLevel.toInt
       level match {

@@ -369,7 +369,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
                pos.start_measure, pos.end_measure,
                a.created_by, a.created_date, a.modified_by, a.modified_date,
                case when a.valid_to <= sysdate then 1 else 0 end as expired,
-               pos.adjusted_timestamp, pos.modified_date, pos.link_source
+               pos.adjusted_timestamp, pos.modified_date, pvp.start_minute, pvp.end_minute, pv.additional_info, pos.link_source
           from asset a
           join asset_link al on a.id = al.asset_id
           join lrm_position pos on al.position_id = pos.id
@@ -380,22 +380,23 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
           where a.asset_type_id = $prohibitionAssetTypeId
           and (a.valid_to >= sysdate or a.valid_to is null)
           #$floatingFilter"""
-        .as[(Long, Long, Int, Long, Int, Option[Int], Option[Int], Option[Int], Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Long, Option[DateTime], Int)].list
+        .as[(Long, Long, Int, Long, Int, Option[Int], Option[Int], Option[Int], Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Long, Option[DateTime], Option[Int], Option[Int], String, Int)].list
     }
 
     val groupedByAssetId = assets.groupBy(_._1)
     val groupedByProhibitionId = groupedByAssetId.mapValues(_.groupBy(_._4))
 
     groupedByProhibitionId.map { case (assetId, rowsByProhibitionId) =>
-      val (_, linkId, sideCode, _, _, _, _, _, _, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, vvhTimeStamp, geomModifiedDate, linkSource) = groupedByAssetId(assetId).head
+      val (_, linkId, sideCode, _, _, _, _, _, _, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, vvhTimeStamp, geomModifiedDate, _, _, _, linkSource) = groupedByAssetId(assetId).head
       val prohibitionValues = rowsByProhibitionId.keys.toSeq.sorted.map { prohibitionId =>
         val rows = rowsByProhibitionId(prohibitionId)
         val prohibitionType = rows.head._5
         val exceptions = rows.flatMap(_._9).toSet
+        val prohibitionAdditionalInfo = rows.head._21
         val validityPeriods = rows.filter(_._6.isDefined).map { case row =>
-          ValidityPeriod(row._7.get, row._8.get, ValidityPeriodDayOfWeek(row._6.get))
+          ValidityPeriod(row._7.get, row._8.get, ValidityPeriodDayOfWeek(row._6.get), row._19.get, row._20.get)
         }.toSet
-        ProhibitionValue(prohibitionType, validityPeriods, exceptions)
+        ProhibitionValue(prohibitionType, validityPeriods, exceptions, prohibitionAdditionalInfo)
       }
       PersistedLinearAsset(assetId, linkId, sideCode, Some(Prohibitions(prohibitionValues)), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, prohibitionAssetTypeId, vvhTimeStamp, geomModifiedDate, LinkGeomSource.apply(linkSource))
     }.toSeq

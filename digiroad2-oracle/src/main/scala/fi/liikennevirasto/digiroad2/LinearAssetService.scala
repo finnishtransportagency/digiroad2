@@ -496,10 +496,14 @@ trait LinearAssetOperations {
     }
     val (toInsert, toUpdate) = newLinearAssets.partition(_.id == 0L)
     withDynTransaction {
-      val grouped = toUpdate.groupBy(a => getValuePropertyId(a.value, a.typeId)).filterKeys(!_.equals(""))
       val prohibitions = toUpdate.filter(a =>
         Set(LinearAssetTypes.ProhibitionAssetTypeId, LinearAssetTypes.HazmatTransportProhibitionAssetTypeId).contains(a.typeId))
-      val persisted = (grouped.flatMap(group => dao.fetchLinearAssetsByIds(group._2.map(_.id).toSet, group._1)).toSeq ++
+      val toUpdateText = toUpdate.filter(a =>
+        Set(LinearAssetTypes.EuropeanRoadAssetTypeId, LinearAssetTypes.ExitNumberAssetTypeId).contains(a.typeId))
+      val groupedNum = toUpdate.filterNot(a => toUpdateText.contains(a)).groupBy(a => getValuePropertyId(a.value, a.typeId)).filterKeys(!_.equals(""))
+      val groupedText= toUpdateText.groupBy(a => getValuePropertyId(a.value, a.typeId)).filterKeys(!_.equals(""))
+      val persisted = (groupedNum.flatMap(group => dao.fetchLinearAssetsByIds(group._2.map(_.id).toSet, group._1)).toSeq ++
+        groupedText.flatMap(group => dao.fetchAssetsWithTextualValuesByIds(group._2.map(_.id).toSet, group._1)).toSeq ++
         dao.fetchProhibitionsByIds(LinearAssetTypes.ProhibitionAssetTypeId, prohibitions.map(_.id).toSet) ++
         dao.fetchProhibitionsByIds(LinearAssetTypes.HazmatTransportProhibitionAssetTypeId, prohibitions.map(_.id).toSet)).groupBy(_.id)
       updateProjected(toUpdate, persisted)

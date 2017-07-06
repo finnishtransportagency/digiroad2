@@ -200,7 +200,7 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers{
     val projectRoadLinks = roadLinks.map {
       rl =>
         val pl = projectLinks.getOrElse(rl.linkId, unknownProjectLink)
-        rl.linkId -> RoadAddressLinkBuilder.build(rl, pl)
+        rl.linkId -> RoadAddressLinkBuilder.projectBuild(rl, pl)
     }
     projectRoadLinks should have size (2)
     val pal1 = projectRoadLinks.head._2
