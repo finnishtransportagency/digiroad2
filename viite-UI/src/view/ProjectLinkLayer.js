@@ -123,6 +123,16 @@
               width: 8
             })
           });
+        } else if (feature.projectLinkData.roadClass === 99){
+          return new ol.style.Style({
+            fill: new ol.style.Fill({
+              color: 'rgba(0, 255, 0, 0.75)'
+            }),
+            stroke: new ol.style.Stroke({
+              color: 'rgba(0, 255, 0, 0.95)',
+              width: 8
+            })
+          });
         }
       }
     });
@@ -133,7 +143,7 @@
       var selection = _.find(event.selected, function (selectionTarget) {
         return (!_.isUndefined(selectionTarget.projectLinkData) && (
             (selectionTarget.projectLinkData.status === 0) ||
-            (selectionTarget.projectLinkData.anomaly==noAddressAnomaly && selectionTarget.projectLinkData.roadLinkType!=floatingRoadLinkType))
+            (selectionTarget.projectLinkData.anomaly==noAddressAnomaly && selectionTarget.projectLinkData.roadLinkType!=floatingRoadLinkType) || selectionTarget.projectLinkData.roadClass === 99)
         );
       });
       selectedProjectLinkProperty.clean();
@@ -177,6 +187,16 @@
               width: 8
             })
           });
+        } else if (feature.projectLinkData.roadClass === 99){
+          return new ol.style.Style({
+            fill: new ol.style.Fill({
+              color: 'rgba(0, 255, 0, 0.75)'
+            }),
+            stroke: new ol.style.Stroke({
+              color: 'rgba(0, 255, 0, 0.95)',
+              width: 8
+            })
+          });
         }
       }
     });
@@ -187,7 +207,7 @@
       var selection = _.find(event.selected, function (selectionTarget) {
         return (!_.isUndefined(selectionTarget.projectLinkData) && (
             (selectionTarget.projectLinkData.status === 0) ||
-            (selectionTarget.projectLinkData.anomaly==noAddressAnomaly && selectionTarget.projectLinkData.roadLinkType!=floatingRoadLinkType))
+            (selectionTarget.projectLinkData.anomaly==noAddressAnomaly && selectionTarget.projectLinkData.roadLinkType!=floatingRoadLinkType) || selectionTarget.projectLinkData.roadClass === 99)
           );
       });
       if (!_.isUndefined(selection))
