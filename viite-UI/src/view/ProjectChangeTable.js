@@ -119,6 +119,10 @@
       });
 
       changeTable.on('click', 'button.close', function (){
+        $('.project-changes').height('110px');
+        $('[id=change-table-borders-target]').height('180px');
+        $('[id=change-table-borders-source]').height('180px');
+        $('[id=change-table-borders-changetype]').height('180px');
         hide();
       });
     }
@@ -127,11 +131,19 @@
     changeTable.on('click', 'button.max', function (){
       if(windowMaximized) {
         $('.change-table-frame').height('260px');
+        $('.project-changes').height('110px');
+        $('[id=change-table-borders-target]').height('180px');
+        $('[id=change-table-borders-source]').height('180px');
+        $('[id=change-table-borders-changetype]').height('180px');
         $('[id=buttonText]').text("Suurenna ");
         $('[id=sizeSymbol]').text("□");
         windowMaximized=false;
       } else {
         $('.change-table-frame').height('80%');
+        $('.project-changes').height('560px');
+        $('[id=change-table-borders-target]').height('670px');
+        $('[id=change-table-borders-source]').height('670px');
+        $('[id=change-table-borders-changetype]').height('670px');
         $('[id=buttonText]').text("Pienennä ");
         $('[id=sizeSymbol]').text("_");
         windowMaximized=true;
