@@ -21,7 +21,6 @@ class TierekisteriAuthPropertyReader {
 
   private def getPassword: String = {
     val loadedKeyString = properties.getProperty("tierekisteri.password")
-    println("p = "+loadedKeyString)
     if (loadedKeyString == null)
       throw new IllegalArgumentException("Missing TR Password")
     loadedKeyString
@@ -37,7 +36,6 @@ class TierekisteriAuthPropertyReader {
 
   private def getOldPassword: String = {
     val loadedKeyString = properties.getProperty("tierekisteri.old.password")
-    println("p = "+loadedKeyString)
     if (loadedKeyString == null)
       throw new IllegalArgumentException("Missing TR Password")
     loadedKeyString

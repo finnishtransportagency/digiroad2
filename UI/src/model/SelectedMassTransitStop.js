@@ -364,6 +364,10 @@
       return getPropertyValue({ propertyData: getProperties() }, 'kellumisen_syy');
     };
 
+    var getEndDate = function(){
+      return getPropertyValue({ propertyData: getProperties() }, 'viimeinen_voimassaolopaiva');
+    };
+
     var get = function(key) {
       if (exists()) {
         return currentAsset.payload[key];
@@ -474,7 +478,8 @@
       isAdministratorELY: isAdministratorELY,
       isAdministratorHSL: isAdministratorHSL,
       validateDirectionsForSave : validateDirectionsForSave,
-      validateDirectionsForCreation: validateDirectionsForCreation
+      validateDirectionsForCreation: validateDirectionsForCreation,
+      getEndDate: getEndDate
     };
   };
 
