@@ -54,4 +54,9 @@ class VVHClientSpec extends FunSuite with Matchers{
     val result= vvhClient.roadLinkChangeInfo.fetchByPolygon(geomBuilder.polygon())
     result.size should be (0)
   }
+  test("Fetch changes with by bounding box and municipalities") {
+    val vvhClient= new VVHClient(properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+    val result= vvhClient.roadLinkChangeInfo.fetchByBoundsAndMunicipalities(BoundingRectangle(Point(532578.3338013917,6993401.605560873,0.0),Point(532978.3338013917,6994261.605560873,0.0)), Set.empty[Int])
+    result.size should be >1
+  }
 }

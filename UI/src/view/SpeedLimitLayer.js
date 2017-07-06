@@ -289,6 +289,8 @@ window.SpeedLimitLayer = function(params) {
     eventListener.listenTo(eventbus, 'speedLimits:drawSpeedLimitsHistory', drawSpeedLimitsHistory);
     eventListener.listenTo(eventbus, 'speedLimits:hideSpeedLimitsHistory', hideSpeedLimitsHistory);
     eventListener.listenTo(eventbus, 'speedLimits:showSpeedLimitsHistory', showSpeedLimitsHistory);
+    eventListener.listenTo(eventbus, 'speedLimits:hideSpeedLimitsComplementary', hideSpeedLimitsComplementary);
+    eventListener.listenTo(eventbus, 'speedLimits:showSpeedLimitsComplementary', showSpeedLimitsComplementary);
   };
 
   var showSpeedLimitsHistory = function() {
@@ -300,6 +302,17 @@ window.SpeedLimitLayer = function(params) {
     isActive = false;
     vectorLayerHistory.getSource().clear();
   };
+
+  var showSpeedLimitsComplementary = function() {
+      collection.activeComplementary(true);
+      me.refreshView();
+  };
+
+  var hideSpeedLimitsComplementary = function() {
+    collection.activeComplementary(false);
+    me.refreshView();
+  };
+
 
   var indexOf = function (layers, layer) {
     var length = layers.getLength();

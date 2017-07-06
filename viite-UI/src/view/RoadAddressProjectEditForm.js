@@ -50,7 +50,7 @@
 
     var actionButtons = function() {
       var html = '<div class="project-form form-controls" id="actionButtons">' +
-        '<button class="update btn btn-save" disabled>Tallenna</button>' +
+        '<button class="update btn btn-save"' + (projectCollection.isDirty() ? '' : 'disabled') + '>Tallenna</button>' +
         '<button class="cancelLink btn btn-cancel">Peruuta</button>' +
         '</div>';
       return html;
@@ -114,6 +114,16 @@
         '<footer>' + actionButtons() + '</footer>');
     };
 
+    var emptyTemplate = function(project) {
+      var selection = selectedData(selectedProjectLink);
+
+      return _.template('' +
+        '<header>' +
+        titleWithProjectName(project.name) +
+        '</header>' +
+        '<footer></footer>');
+    };
+
     var bindEvents = function() {
 
       var rootElement = $('#feature-attributes');
@@ -162,7 +172,6 @@
       });
 
       eventbus.on('roadAddress:projectLinksUpdated',function(data){
-        rootElement.html('');
         if (typeof data !== 'undefined' && typeof data.publishable !== 'undefined' && data.publishable) {
           eventbus.trigger('roadAddressProject:projectLinkSaved', data.id, data.publishable);
         }
@@ -195,11 +204,13 @@
 
       rootElement.on('click', '.project-form button.update', function() {
         currentProject = projectCollection.getCurrentProject();
-        projectCollection.saveProjectLinks(selectedProjectLink, currentProject);
+        projectCollection.saveProjectLinks(projectCollection.getTmpExpired());
+        rootElement.html(emptyTemplate(currentProject.project));
       });
 
       rootElement.on('change', '#dropDown', function() {
-        projectCollection.setDirty(_.map(selectedProjectLink, function(link) { return {'id':link.linkId, 'status':link.status}; }));
+        projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function(link) { return {'id':link.linkId, 'status':link.status}; })));
+        projectCollection.setTmpExpired(projectCollection.getTmpExpired().concat(selectedProjectLink));
         rootElement.find('.project-form button.update').prop("disabled", false);
       });
 
@@ -211,6 +222,7 @@
         if(projectCollection.isDirty()) {
           projectCollection.revertLinkStatus();
           projectCollection.setDirty([]);
+          projectCollection.setTmpExpired([]);
           projectLinkLayer.clearHighlights();
           $('.wrapper').remove();
           eventbus.trigger('roadAddress:projectLinksEdited');

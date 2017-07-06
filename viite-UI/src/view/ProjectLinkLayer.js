@@ -92,7 +92,6 @@
     var selectSingleClick = new ol.interaction.Select({
       layer: vectorLayer,
       condition: ol.events.condition.singleClick,
-      //The new/temporary layer needs to have a style function as well, we define it here.
       style: function(feature, resolution) {
         if (feature.projectLinkData.status === 0){
           return new ol.style.Style({
@@ -114,6 +113,26 @@
               width: 8
             })
           });
+        } else if(feature.projectLinkData.anomaly === 1 && feature.projectLinkData.status === 99){
+          return new ol.style.Style({
+            fill: new ol.style.Fill({
+              color: 'rgba(0, 255, 0, 0.75)'
+            }),
+            stroke: new ol.style.Stroke({
+              color: 'rgba(0, 255, 0, 0.95)',
+              width: 8
+            })
+          });
+        } else if (feature.projectLinkData.roadClass === 99){
+          return new ol.style.Style({
+            fill: new ol.style.Fill({
+              color: 'rgba(0, 255, 0, 0.75)'
+            }),
+            stroke: new ol.style.Stroke({
+              color: 'rgba(0, 255, 0, 0.95)',
+              width: 8
+            })
+          });
         }
       }
     });
@@ -121,11 +140,12 @@
     selectSingleClick.set('name','selectSingleClickInteractionPLL');
 
     selectSingleClick.on('select',function(event) {
-      // TODO: allow selection for non-addressed road links
       var selection = _.find(event.selected, function (selectionTarget) {
-        return !_.isUndefined(selectionTarget.projectLinkData) && selectionTarget.projectLinkData.status === 0;
+        return (!_.isUndefined(selectionTarget.projectLinkData) && (
+            (selectionTarget.projectLinkData.status === 0) ||
+            (selectionTarget.projectLinkData.anomaly==noAddressAnomaly && selectionTarget.projectLinkData.roadLinkType!=floatingRoadLinkType) || selectionTarget.projectLinkData.roadClass === 99)
+        );
       });
-      revertSelectedChanges();
       selectedProjectLinkProperty.clean();
       $('.wrapper').remove();
       $('#actionButtons').empty();
@@ -136,7 +156,6 @@
     var selectDoubleClick = new ol.interaction.Select({
       layer: vectorLayer,
       condition: ol.events.condition.doubleClick,
-      //The new/temporary layer needs to have a style function as well, we define it here.
       style: function(feature, resolution) {
         if(feature.projectLinkData.status === 0) {
           return new ol.style.Style({
@@ -158,6 +177,26 @@
               width: 8
             })
           });
+        } else if(feature.projectLinkData.anomaly === 1 && feature.projectLinkData.status === 99) {
+          return new ol.style.Style({
+            fill: new ol.style.Fill({
+              color: 'rgba(0, 255, 0, 0.75)'
+            }),
+            stroke: new ol.style.Stroke({
+              color: 'rgba(0, 255, 0, 0.95)',
+              width: 8
+            })
+          });
+        } else if (feature.projectLinkData.roadClass === 99){
+          return new ol.style.Style({
+            fill: new ol.style.Fill({
+              color: 'rgba(0, 255, 0, 0.75)'
+            }),
+            stroke: new ol.style.Stroke({
+              color: 'rgba(0, 255, 0, 0.95)',
+              width: 8
+            })
+          });
         }
       }
     });
@@ -165,11 +204,12 @@
     selectDoubleClick.set('name','selectDoubleClickInteractionPLL');
 
     selectDoubleClick.on('select',function(event) {
-      // TODO: allow selection for non-addressed road links
       var selection = _.find(event.selected, function (selectionTarget) {
-        return !_.isUndefined(selectionTarget.projectLinkData) && selectionTarget.projectLinkData.status === 0;
+        return (!_.isUndefined(selectionTarget.projectLinkData) && (
+            (selectionTarget.projectLinkData.status === 0) ||
+            (selectionTarget.projectLinkData.anomaly==noAddressAnomaly && selectionTarget.projectLinkData.roadLinkType!=floatingRoadLinkType) || selectionTarget.projectLinkData.roadClass === 99)
+          );
       });
-      revertSelectedChanges();
       if (!_.isUndefined(selection))
         selectedProjectLinkProperty.open(selection.projectLinkData.linkId);
     });

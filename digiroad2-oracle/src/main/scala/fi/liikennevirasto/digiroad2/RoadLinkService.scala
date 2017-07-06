@@ -140,6 +140,22 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   /**
+    * ATENTION Use this method always with transation not with session
+    * This method returns road links by link ids.
+    *
+    * @param linkIds
+    * @return Road links
+    */
+  def getRoadLinksAndComplementaryByLinkIdsFromVVH(linkIds: Set[Long], newTransaction: Boolean = true): Seq[RoadLink] = {
+    val vvhRoadLinks = fetchVVHRoadlinksAndComplementary(linkIds)
+    if (newTransaction)
+      withDynTransaction {
+        enrichRoadLinksFromVVH(vvhRoadLinks)
+      }
+    else
+      enrichRoadLinksFromVVH(vvhRoadLinks)
+  }
+  /**
     * This method returns VVH road links that had changed between two dates.
     *
     * @param since
@@ -158,6 +174,10 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     */
   def getRoadLinksFromVVH(municipality: Int): Seq[RoadLink] = {
     getCachedRoadLinksAndChanges(municipality)._1
+  }
+
+  def getRoadLinksWithComplementaryFromVVH(municipality: Int): Seq[RoadLink] = {
+    getCachedRoadLinksWithComplementaryAndChanges(municipality)._1
   }
 
   def getRoadLinksFromVVHFuture(municipality: Int): Future[Seq[RoadLink]] = {
@@ -609,6 +629,17 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
     withDynTransaction {
       (enrichRoadLinksFromVVH(currentData ++ complementaryData, Seq()), uniqueHistoryData)
+    }
+  }
+
+  def getViiteCurrentLinksFromVVH(roadAddressesLinkIds: Set[Long]): (Seq[RoadLink]) = {
+    val fut = for{
+      f1Result <- vvhClient.roadLinkData.fetchByLinkIdsF(roadAddressesLinkIds)
+    } yield (f1Result)
+    val currentData = Await.result(fut, Duration.Inf)
+
+    withDynTransaction {
+      enrichRoadLinksFromVVH(currentData, Seq())
     }
   }
 

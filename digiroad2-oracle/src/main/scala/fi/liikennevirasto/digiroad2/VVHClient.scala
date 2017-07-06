@@ -63,7 +63,14 @@ case class VVHRoadlink(linkId: Long, municipalityCode: Int, geometry: Seq[Point]
 
 case class ChangeInfo(oldId: Option[Long], newId: Option[Long], mmlId: Long, changeType: Int,
                       oldStartMeasure: Option[Double], oldEndMeasure: Option[Double], newStartMeasure: Option[Double],
-                      newEndMeasure: Option[Double], vvhTimeStamp: Long = 0L)
+                      newEndMeasure: Option[Double], vvhTimeStamp: Long = 0L) {
+  def isOldId(id: Long): Boolean = {
+    oldId.nonEmpty && oldId.get == id
+  }
+  def affects(id: Long, assetVvhTimeStamp: Long): Boolean = {
+    isOldId(id) && assetVvhTimeStamp < vvhTimeStamp
+  }
+}
 
 case class VVHHistoryRoadLink(linkId: Long, municipalityCode: Int, geometry: Seq[Point], administrativeClass: AdministrativeClass,
                               trafficDirection: TrafficDirection, featureClass: FeatureClass, createdDate:BigInt, endDate: BigInt, attributes: Map[String, Any] = Map())

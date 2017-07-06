@@ -7,7 +7,6 @@ import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.viite.RoadType.PublicRoad
 // Used in debugging when needed.
-import fi.liikennevirasto.viite.util.prettyPrint
 import org.scalatest.{FunSuite, Matchers}
 
 /**
@@ -42,7 +41,7 @@ class RoadAddressLinkPartitionerSpec extends FunSuite with Matchers {
   )
 
   private def makeRoadAddressLink(id: Long, anomaly: Int, roadNumber: Long, roadPartNumber: Long, deltaX: Double = 0.0, deltaY: Double = 0.0) = {
-    RoadAddressLink(id, id, Seq(Point(id*10.0 + deltaX, anomaly*10.0 + deltaY), Point((id+1)*10.0 + deltaX, anomaly*10.0 + deltaY)), 10.0, State, SingleCarriageway, NormalRoadLinkType, InUse, NormalLinkInterface, PublicRoad, None, None, Map(), roadNumber, roadPartNumber, 1, 1, 1, id*10, (id+1)*10, "", "", 0.0, 10.0,SideCode.TowardsDigitizing, None, None, Anomaly.apply(anomaly), 0)
+    RoadAddressLink(id, id, Seq(Point(id*10.0 + deltaX, anomaly*10.0 + deltaY), Point((id+1)*10.0 + deltaX, anomaly*10.0 + deltaY)), 10.0, State, SingleCarriageway, NormalRoadLinkType, InUse, NormalLinkInterface, PublicRoad, "Vt5", BigInt(0),None, None, Map(), roadNumber, roadPartNumber, 1, 1, 1, id*10, (id+1)*10, "", "", 0.0, 10.0,SideCode.TowardsDigitizing, None, None, Anomaly.apply(anomaly), 0)
   }
 
   test("Partitions don't have differing anomalies") {

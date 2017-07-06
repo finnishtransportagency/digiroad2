@@ -7,6 +7,7 @@
     var self = this;
     var splitSpeedLimits = {};
     var separatedLimit = {};
+    var isComplementaryActive = false;
 
     var maintainSelectedSpeedLimitChain = function(collection) {
       if (!selection) return collection;
@@ -24,8 +25,14 @@
       return collectionWithoutGroup.concat(_.isEmpty(groupWithoutSelection) ? [] : [groupWithoutSelection]).concat([selection.get()]);
     };
 
+    var filterComplementaries = function (speedLimits) {
+      if(isComplementaryActive)
+         return speedLimits;
+      return _.map(speedLimits, function(speedLimitFilter) { return _.where(speedLimitFilter, {linkSource: 1});});
+    };
+
     this.getAll = function() {
-      return maintainSelectedSpeedLimitChain(speedLimits);
+      return maintainSelectedSpeedLimitChain(filterComplementaries(speedLimits));
     };
 
     this.getAllHistory = function() {
@@ -211,6 +218,14 @@
       separatedLimit.B = limitB;
       return [limitA, limitB];
     };
+
+    this.activeComplementary = function(enable) {
+      isComplementaryActive = enable;
+    };
+
+    function complementaryIsActive() {
+       return isComplementaryActive;
+    }
 
   };
 })(this);

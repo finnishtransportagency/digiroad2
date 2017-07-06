@@ -139,7 +139,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         "bearing" -> stop.bearing,
         "validityPeriod" -> stop.validityPeriod,
         "floating" -> stop.floating,
-        "linkSource" -> stop.linkSource)
+        "linkSource" -> stop.linkSource.value)
     }
   }
 
@@ -791,7 +791,8 @@ Returns empty result as Json message, not as page not found
             "modifiedBy" -> link.modifiedBy,
             "modifiedAt" -> link.modifiedDateTime,
             "createdBy" -> link.createdBy,
-            "createdAt" -> link.createdDateTime
+            "createdAt" -> link.createdDateTime,
+            "linkSource" -> link.linkSource.value
           )
         }
       }
