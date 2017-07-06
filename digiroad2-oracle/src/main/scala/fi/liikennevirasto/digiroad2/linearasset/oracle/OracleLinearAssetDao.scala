@@ -1130,6 +1130,8 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
             insertValue(assetId, prop.publicId, prop.value)
           case "single_choice" =>
             insertEnumeratedValue(assetId, prop.publicId, prop.value.toInt)
+          case "checkbox" =>
+            insertValue(assetId, prop.publicId, prop.value.toInt)
         }
       })
     }

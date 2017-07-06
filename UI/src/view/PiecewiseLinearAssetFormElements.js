@@ -254,8 +254,8 @@
 
   function maintenanceRoadFormElement() {
     var template =  _.template(
-        '<label class="control-label"><%= label %> </label> ' +
-        '  <select <%- disabled %> class="form-control <%- className %>" id="<%= id %>"><%= optionTags %></select>');
+         '<label class="control-label"><%= label %> </label> ' +
+         '  <select <%- disabled %> class="form-control <%- className %>" id="<%= id %>"><%= optionTags %></select>');
 
     return {
       inputElementValue: inputElementValue,
@@ -296,12 +296,13 @@
                   '    value="' + currentValue + '" ' + disabled + ' onclick="">';
 
             case "checkbox" :
+              var checked = values.value === parseInt(currentValue) ? " checked" : "";
               return ' ' +
                   '<label class="control-label">' + values.name + '</label>' +
                   '<input ' +
-                  '    type="checkbox" ' + ' name="checkbox"' +
+                  '    type="checkbox" ' +
                   '    class="form-control ' + className + '" id="' + values.id + '"' +
-                  '    value="2" ' + disabled + ' onclick="">';
+                  checked + disabled + ' onclick="">';
           }});
         return '<form class="input-unit-combination form-group form-horizontal ' + className +'">'+template_aux.join(' ')+'</form>';
     }
@@ -310,7 +311,7 @@
            return _.map(input, function (propElement) {
              var mapping = {"SELECT" : "single_choice", "INPUT": "text"};
              var type = propElement.type;
-             var checkboxValue = propElement.checked? 1: 0
+             var checkboxValue = propElement.checked? 1: 0;
 
              var value = type === 'checkbox' ? checkboxValue : propElement.value;
 
