@@ -503,6 +503,8 @@
         anomalousMarkerLayer.getSource().clear();
       if(geometryChangedLayer.getSource() !== null)
         geometryChangedLayer.getSource().clear();
+      if(directionMarkerLayer.getSource() !== null)
+        directionMarkerLayer.getSource().clear();
 
       if(map.getView().getZoom() >= zoomlevels.minZoomForAssets) {
 
