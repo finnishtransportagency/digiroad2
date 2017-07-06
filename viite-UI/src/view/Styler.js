@@ -45,7 +45,7 @@
             case 5 : return 'rgba(51, 204, 204, 0.65)';
             case 6 : return 'rgba(224, 29, 217, 0.65)';
             case 7 : return 'rgba(0, 204, 221, 0.65)';
-            case 8 : return 'rgba(136, 136, 136, 0.65)';
+            case 8 : return 'rgba(252, 109, 160, 0.65)';
             case 9 : return 'rgba(255, 85, 221, 0.65)';
             case 10 : return 'rgba(255, 85, 221, 0.65)';
             case 11 : return 'rgba(68, 68, 68, 0.75)';
