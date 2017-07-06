@@ -110,6 +110,8 @@
         });
 
         return _.map(newCurrentValue, function(current){
+
+         // <h2 class="form-control-static">' + valueString(value).replace(/[\n\r]+/g, '<br>') + '</h2>'
             var value = singleChoiceValuesConversion(current, possibleValues);
             return ' <label class="control-label">' + current.propertyName + ': </label>' +
                   '  <p class="form-control-static">' + valueString(value).replace(/[\n\r]+/g, '<br>') + '</p>';
@@ -296,13 +298,17 @@
                   '    value="' + currentValue + '" ' + disabled + ' onclick="">';
 
             case "checkbox" :
-              var checked = values.value === parseInt(currentValue) ? " checked" : "";
+              var checked = 1 === parseInt(currentValue) ? " checked" : "";
               return ' ' +
                   '<label class="control-label">' + values.name + '</label>' +
                   '<input ' +
                   '    type="checkbox" ' +
                   '    class="form-control ' + className + '" id="' + values.id + '"' +
                   checked + disabled + ' onclick="">';
+
+            case "header" :
+              return ' ' +
+                  '<h2>' + values.name + '</h2>';
           }});
         return '<form class="input-unit-combination form-group form-horizontal ' + className +'">'+template_aux.join(' ')+'</form>';
     }

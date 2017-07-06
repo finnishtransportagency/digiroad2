@@ -141,6 +141,10 @@ form.maintenanceRoad-a,
 form.maintenanceRoad-b {
   width: 300px;
 
+  #huoltotie_tiehoitokunta::after {
+    content: " - Remember this";
+  }
+
   .control-label {
     width: 100px !important;
   }
@@ -149,11 +153,18 @@ form.maintenanceRoad-b {
     height: 15px;
     margin-left: -87px;
     display: initial;
+    box-shadow: none !important;
   }
 
   .form-control {
     width: 190px !important;
     margin-top: 6px !important;
+  }
+
+  h2 {
+    color: WHITE;
+    font-family: sans-serif;
+    margin-top: 42px;
   }
 
   p {
@@ -175,6 +186,11 @@ form.maintenanceRoad-b {
   .form-control {
     width: 170px !important;
     margin-top: 6px !important;
+  }
+
+  h2 {
+    font-family: sans-serif;
+    margin-top: 42px;
   }
 
   input[type=checkbox] {
