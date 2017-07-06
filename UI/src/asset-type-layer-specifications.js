@@ -368,7 +368,8 @@
         {'name': "Postitoimipaikka", 'propType': 'text', 'id': "huoltotie_postitoimipaikka"},
         {'name': "Puhelin 1", 'propType': 'text', 'id': "huoltotie_puh1"},
         {'name': "Puhelin 2", 'propType': 'text', 'id': "huoltotie_puh2"},
-        {'name': "Lisätietoa", 'propType': 'text', 'id': "huoltotie_lisatieto"}],
+        {'name': "Lisätietoa", 'propType': 'text', 'id': "huoltotie_lisatieto"},
+        {'name': "Tarkistettu", 'propType': 'checkbox', 'id': "huoltotie_tarkistettu"}],
       style: new MaintenanceRoadStyle()
     },
     {
