@@ -370,7 +370,8 @@
         {'name': "Puhelin 2", 'propType': 'text', 'id': "huoltotie_puh2"},
         {'name': "Lisätietoa", 'propType': 'text', 'id': "huoltotie_lisatieto"},
         {'name': "Tarkistettu", 'propType': 'checkbox', 'id': "huoltotie_tarkistettu"}],
-      style: new MaintenanceRoadStyle()
+      style: new MaintenanceRoadStyle(),
+      label : new ServiceRoadLabel()
     },
     {
       typeId: assetType.numberOfLanes,
