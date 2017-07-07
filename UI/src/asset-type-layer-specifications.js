@@ -370,7 +370,7 @@
         {'name': "Puhelin 1", 'propType': 'text', 'id': "huoltotie_puh1"},
         {'name': "Puhelin 2", 'propType': 'text', 'id': "huoltotie_puh2"},
         {'name': "Lisätietoa", 'propType': 'text', 'id': "huoltotie_lisatieto"},
-        {'name': "Tarkistettu", 'propType': 'checkbox', 'id': "huoltotie_tarkistettu", value: [{typeId: 0, title: '"Ei tarkistettu'}, {typeId: 1, title: 'Tarkistettu'}]}],
+        {'name': "Tarkistettu", 'propType': 'checkbox', 'id': "huoltotie_tarkistettu", value: [{typeId: 0, title: 'Ei tarkistettu'}, {typeId: 1, title: 'Tarkistettu'}]}],
       style: new MaintenanceRoadStyle(),
       label : new ServiceRoadLabel()
     },

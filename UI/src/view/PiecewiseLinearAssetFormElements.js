@@ -111,7 +111,7 @@
 
         return _.map(newCurrentValue, function(current){
             if(current.propertyType == "header")
-              return ' <h2 class="form-control-static">' + current.propertyName + '</h2>'
+              return ' <h2 class="form-control-static">' + current.propertyName + '</h2>';
 
             var value = singleChoiceValuesConversion(current, possibleValues);
             return ' <label class="control-label">' + current.propertyName + ': </label>' +

@@ -35,11 +35,11 @@
     };
 
     var validateValue = function (value) {
-      return  obtainValue(value) ? 'images/linearLabel_largeText_blue.png' : 'images/linearLabel_largeText.png';
+      return (obtainValue(value) == 1) ? 'images/linearLabel_largeText_blue.png' : 'images/linearLabel_largeText.png';
     };
 
     var validateText = function(value){
-      return obtainValue(value) ?  'Tarkistettu' : 'Ei tarkistettu';
+      return (obtainValue(value) == 1) ?  'Tarkistettu' : 'Ei tarkistettu';
     };
   };
 })(this);
