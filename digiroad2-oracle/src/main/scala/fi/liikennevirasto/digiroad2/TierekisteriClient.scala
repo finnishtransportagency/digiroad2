@@ -179,9 +179,11 @@ case class TierekisteriLighting(roadNumber: Long, startRoadPartNumber: Long, end
         Some(endAddressMValue)
       else
         None)) ++ {
-      if (startRoadPartNumber != endRoadPartNumber)
-        (startRoadPartNumber until endRoadPartNumber).tail.map(part => AddressSection(roadNumber, part, track, 0L, None)) ++ Seq(AddressSection(roadNumber, endRoadPartNumber, track, 0L, Some(endAddressMValue)))
-      else
+      if (startRoadPartNumber != endRoadPartNumber) {
+        val roadPartNumberSortedList = List(startRoadPartNumber, endRoadPartNumber).sorted
+        (roadPartNumberSortedList.head until roadPartNumberSortedList.last).tail.map(part => AddressSection(roadNumber, part, track, 0L, None)) ++
+          Seq(AddressSection(roadNumber, endRoadPartNumber, track, 0L, Some(endAddressMValue)))
+      } else
         Seq[AddressSection]()
     }
   }
