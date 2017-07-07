@@ -110,8 +110,8 @@
         });
 
         return _.map(newCurrentValue, function(current){
-
-         // <h2 class="form-control-static">' + valueString(value).replace(/[\n\r]+/g, '<br>') + '</h2>'
+//if(current.propType == "checkbox") return
+  //        ' <h2 class="form-control-static">' + valueString(value).replace(/[\n\r]+/g, '<br>') + '</h2>'
             var value = singleChoiceValuesConversion(current, possibleValues);
             return ' <label class="control-label">' + current.propertyName + ': </label>' +
                   '  <p class="form-control-static">' + valueString(value).replace(/[\n\r]+/g, '<br>') + '</p>';
@@ -315,16 +315,14 @@
 
       function inputElementValue(input) {
            return _.map(input, function (propElement) {
-             var mapping = {"SELECT" : "single_choice", "INPUT": "text"};
              var type = propElement.type;
              var checkboxValue = propElement.checked? 1: 0;
-
              var value = type === 'checkbox' ? checkboxValue : propElement.value;
 
              return{
                   'publicId': propElement.id,
                   'value': value,
-                  'propertyType': mapping[String(propElement.tagName)]
+                  'propertyType': type
               };
           });
       }
