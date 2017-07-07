@@ -22,16 +22,9 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
   get("/:assetType") {
     contentType = formats("json")
     val since = DateTime.parse(params.get("since").getOrElse(halt(BadRequest("Missing mandatory 'since' parameter"))))
-    val assetType = params("assetType")
+    val until = DateTime.parse(params.get("until").getOrElse(halt(BadRequest("Missing mandatory 'until' parameter"))))
 
-    val until = params.get("until") match {
-      case Some(dateValue) if assetType == "road_numbers" => halt(BadRequest("'until' parameter is not allowed"))
-      case Some(dateValue) => DateTime.parse(dateValue)
-      case None if assetType == "road_numbers" => DateTime.now()
-      case _ => halt(BadRequest("Missing mandatory 'until' parameter"))
-    }
-
-    assetType match {
+    params("assetType") match {
       case "speed_limits"                => speedLimitsToGeoJson(since, speedLimitService.getChanged(since, until))
       case "total_weight_limits"         => linearAssetsToGeoJson(since, linearAssetService.getChanged(30, since, until))
       case "trailer_truck_weight_limits" => linearAssetsToGeoJson(since, linearAssetService.getChanged(40, since, until))
@@ -41,7 +34,7 @@ class ChangeApi extends ScalatraServlet with JacksonJsonSupport with Authenticat
       case "length_limits"               => linearAssetsToGeoJson(since, linearAssetService.getChanged(80, since, until))
       case "width_limits"                => linearAssetsToGeoJson(since, linearAssetService.getChanged(90, since, until))
       case "road_names"                  => vvhRoadLinkToGeoJson(roadLinkService.getChanged(since, until))
-      case "road_numbers"                => roadNumberToGeoJson(since, roadAddressesService.getChanged(since))
+      case "road_numbers"                => roadNumberToGeoJson(since, roadAddressesService.getChanged(since, until))
     }
   }
 

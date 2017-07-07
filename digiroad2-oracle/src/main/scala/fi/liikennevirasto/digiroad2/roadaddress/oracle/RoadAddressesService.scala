@@ -19,12 +19,12 @@ class RoadAddressesService(val eventbus: DigiroadEventBus, roadLinkServiceImplem
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
 
-  def getChanged(startDate: DateTime): Seq[ChangedRoadAddress] = {
+  def getChanged(sinceDate: DateTime, untilDate: DateTime): Seq[ChangedRoadAddress] = {
     val roadAddressDAO = new RoadAddressDAO()
 
     val roadAddresses =
       withDynTransaction {
-        roadAddressDAO.getRoadAddress(roadAddressDAO.withStartDate(startDate))
+        roadAddressDAO.getRoadAddress(roadAddressDAO.withBetweenDates(sinceDate, untilDate))
       }
 
     val roadLinks = roadLinkServiceImplementation.getRoadLinksAndComplementaryByLinkIdsFromVVH(roadAddresses.map(_.linkId).toSet)
