@@ -106,12 +106,13 @@
             var arrayValue =  _.find(currentValue, function (value) {
                 return (property.id == value.publicId);
             });
-            return {propertyName: property.name, propertyValue: arrayValue};
+            return {propertyName: property.name, propertyValue: arrayValue, propertyType: property.propType };
         });
 
         return _.map(newCurrentValue, function(current){
-//if(current.propType == "checkbox") return
-  //        ' <h2 class="form-control-static">' + valueString(value).replace(/[\n\r]+/g, '<br>') + '</h2>'
+            if(current.propertyType == "header")
+              return ' <h2 class="form-control-static">' + current.propertyName + '</h2>'
+
             var value = singleChoiceValuesConversion(current, possibleValues);
             return ' <label class="control-label">' + current.propertyName + ': </label>' +
                   '  <p class="form-control-static">' + valueString(value).replace(/[\n\r]+/g, '<br>') + '</p>';
@@ -315,7 +316,7 @@
 
       function inputElementValue(input) {
            return _.map(input, function (propElement) {
-             var type = propElement.type;
+             var type = propElement.type === "select-one" ? "single_choice" : propElement.type;
              var checkboxValue = propElement.checked? 1: 0;
              var value = type === 'checkbox' ? checkboxValue : propElement.value;
 

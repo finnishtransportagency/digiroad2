@@ -1128,7 +1128,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient) {
         prop.propertyType match {
           case PropertyTypes.Text =>
             insertValue(assetId, prop.publicId, prop.value)
-          case "select-one" | PropertyTypes.CheckBox =>
+          case PropertyTypes.SingleChoice | PropertyTypes.CheckBox =>
             insertEnumeratedValue(assetId, prop.publicId, prop.value.toInt)
         }
       })
