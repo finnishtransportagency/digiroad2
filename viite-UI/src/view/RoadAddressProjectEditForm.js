@@ -97,7 +97,7 @@
         '<select class="form-control" id="dropDown" size="1">'+
         '<option selected disabled hidden>Valitse</option>'+
         '<option value="lakkautus"' + (status == 1 ? ' selected' : '') + '>Lakkautus</option>'+
-        '<option value="uusi">Uusi</option>'+
+        '<option value="uusi"' + (selected[0].roadNumber == 0 ? ' ' : ' disabled')+'>Uusi</option>'+
         '<option value="action4" disabled>Numeroinnin muutos</option>'+
         '<option value="action5" disabled>Ennallaan</option>'+
         '<option value="action6" disabled>Kalibrointiarvon muutos</option>'+
