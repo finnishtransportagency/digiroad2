@@ -503,6 +503,8 @@
         anomalousMarkerLayer.getSource().clear();
       if(geometryChangedLayer.getSource() !== null)
         geometryChangedLayer.getSource().clear();
+      if(directionMarkerLayer.getSource() !== null)
+        directionMarkerLayer.getSource().clear();
 
       if(map.getView().getZoom() >= zoomlevels.minZoomForAssets) {
 
@@ -761,6 +763,10 @@
           feature.roadLinkData = road;
           simulatedOL3Features.push(feature);
           afterTransferLinks.push(road);
+          var marker = cachedMarker.createMarker(feature.roadLinkData);
+          if(map.getView().getZoom() > zoomlevels.minZoomForDirectionalMarkers) {
+            simulatedRoadsLayer.getSource().addFeature(marker);
+          }
         });
 
         var actualPoints =  me.drawCalibrationMarkers(calibrationPointLayer.source, newRoads);
