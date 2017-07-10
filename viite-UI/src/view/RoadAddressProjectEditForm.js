@@ -117,11 +117,11 @@
 
     var newRoadAddressInfo = function(){
       return '<div class="form-group new-road-address" hidden>' +
-        '<div><label></label></div><div><label style = "margin-top: 50px">Tieosoite tiedot</label></div>' +
+        '<div><label></label></div><div><label style = "margin-top: 50px">TIEOSOITTEEN TIEDOT</label></div>' +
         addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('AJR')+ addSmallLabel('ELY')  + addSmallLabel('JATKUU')+
         '</div>' +
         '<div class="form-group new-road-address" hidden>' +
-        addSmallInputNumber('tie') + addSmallInputNumber('osa') + addSmallInputNumber('ajr')+  addSmallInputNumber('ely') +addSelect()+
+        addSmallInputNumber('tie') + addSmallInputNumber('osa') + addSmallInputNumber('ajr')+  addSmallInputNumberDisabled('ely', selectedProjectLink[0].elyCode) +addSelect()+
         '</div>';
     };
 
@@ -144,6 +144,10 @@
       //Validate only number characters on "onkeypress" including TAB and backspace
       return '<input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode == 8 || event.keyCode == 9)' +
         '" class="form-control small-input roadAddressProject" id="'+id+'" value="'+(_.isUndefined(value)? '' : value )+'" onclick=""/>';
+    };
+
+    var addSmallInputNumberDisabled = function(id, value){
+      return '<input type="text" class="form-control small-input roadAddressProject" id="'+id+'" value="'+(_.isUndefined(value)? '' : value )+'" readonly="readonly"/>';
     };
 
     var emptyTemplate = function(project) {
