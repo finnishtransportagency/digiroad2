@@ -44,6 +44,10 @@ Alla olevaan taulukkoon on kerrottu kenttien nimet molemmilla tavoilla, sek&auml
 |Tien nimi (ruotsi) (ROADNAME_SE)|Tekstikentt&auml;||
 |Tien nimi (saame) (ROADNAME_SM)|Tekstikentt&auml;||
 |MTKHEREFLIP|Koodiarvo|0 Ei k&auml;&auml;nnetty<BR>1 K&auml;&auml;nnetty|
+|CUST_CLASS|Tekstikentt&auml;||
+|CUST_ID_STR|Tekstikentt&auml;||
+|CUST_ID_NUM|Kokonaisluku||
+|CUST_OWNER|Koodiarvo|Kuntanumero geometrian omistavan kunnan mukaan|
 
 ![Koodiarvot](k55.png)
 
