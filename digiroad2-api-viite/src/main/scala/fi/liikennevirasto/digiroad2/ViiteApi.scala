@@ -279,18 +279,19 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   put("/roadlinks/roadaddress/project/savenewroadlink") {
     val projID = params("projID").toLong
-    try {
-      val projectlink = parsedBody.extract[ProjectLink]
-      val errorMessage = projectService.addNewLinkToProject(projectlink, projID)
+    try { //check for validity
+      val projectlinksafe = parsedBody.extract[ProjectLink]
+    } catch {
+      case NonFatal(e) => BadRequest("Missing mandatory ProjectLink parameter")
+    }
+      val projectLink = parsedBody.extract[ProjectLink]
+      val errorMessage = projectService.addNewLinkToProject(projectLink, projID)
       if (errorMessage == "") {
         Map("success" -> "true")
       } else {
         Map("success" -> "false",
           "errormessage" -> errorMessage)
       }
-    } catch {
-     case NonFatal(e) => BadRequest("Missing mandatory ProjectLink parameter")
-    }
   }
 
     get("/project/roadlinks"){

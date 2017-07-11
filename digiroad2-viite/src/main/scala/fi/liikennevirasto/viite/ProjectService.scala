@@ -129,17 +129,17 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def addNewLinkToProject(projectLink:ProjectLink, roadAddressProjectID :Long):String = {
     ProjectDAO.getRoadAddressProjectById(roadAddressProjectID) match {
       case Some(project) =>{
-    checkNewRoadAddressNumberAndPart (projectLink.roadNumber, projectLink.roadPartNumber, projectLink.projectId) match {
-    case Some (errorMessage) => errorMessage
-    case None => {
-    val newProjectLink = ProjectLink (NewRoadAddress, projectLink.roadNumber, projectLink.roadPartNumber, projectLink.track, projectLink.discontinuity, projectLink.startAddrMValue,
-    projectLink.endAddrMValue, Some (project.startDate), None, Some (project.createdBy), - 1, projectLink.linkId, projectLink.startMValue, projectLink.endMValue, projectLink.sideCode,
-    (None, None), projectLink.floating, projectLink.geom, roadAddressProjectID, projectLink.status, projectLink.roadType, projectLink.linkGeomSource)
-    ProjectDAO.create (Seq (newProjectLink) )
-      ""
-    }
-    }
-    }
+        checkNewRoadAddressNumberAndPart (projectLink.roadNumber, projectLink.roadPartNumber, projectLink.projectId) match {
+          case Some (errorMessage) => errorMessage
+          case None => {
+            val newProjectLink = ProjectLink (NewRoadAddress, projectLink.roadNumber, projectLink.roadPartNumber, projectLink.track, projectLink.discontinuity, projectLink.startAddrMValue,
+              projectLink.endAddrMValue, Some (project.startDate), None, Some (project.createdBy), - 1, projectLink.linkId, projectLink.startMValue, projectLink.endMValue, projectLink.sideCode,
+              (None, None), projectLink.floating, projectLink.geom, roadAddressProjectID, projectLink.status, projectLink.roadType, projectLink.linkGeomSource)
+            ProjectDAO.create (Seq (newProjectLink) )
+            ""
+          }
+        }
+      }
       case None =>  "Projektikoodilla ei löytynyt projektia"
     }
 

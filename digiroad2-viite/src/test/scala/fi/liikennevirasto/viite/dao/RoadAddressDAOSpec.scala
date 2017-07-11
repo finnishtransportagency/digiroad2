@@ -240,4 +240,13 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
     }
   }
 
+  test("New roadnumber and roadpart number reservable") {
+       runWithRollback {
+
+      val test=   RoadAddressDAO.isNewRoadPartUsed(5,3,1)
+         val test2=2
+    }
+  }
+
+
 }
