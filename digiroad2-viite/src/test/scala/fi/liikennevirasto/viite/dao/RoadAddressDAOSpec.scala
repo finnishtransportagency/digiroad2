@@ -3,11 +3,12 @@ package fi.liikennevirasto.viite.dao
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.ComplimentaryLinkInterface
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, RoadLinkService}
 import fi.liikennevirasto.viite.dao.Discontinuity.Discontinuous
-import fi.liikennevirasto.viite.{RoadAddressMerge, RoadAddressService}
+import fi.liikennevirasto.viite.{ReservedRoadPart, RoadAddressMerge, RoadAddressService}
 import org.joda.time.DateTime
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
@@ -240,13 +241,47 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
     }
   }
 
-  test("New roadnumber and roadpart number reservable") {
+  test("New roadnumber and roadpart not number reservable") {
        runWithRollback {
-
-      val test=   RoadAddressDAO.isNewRoadPartUsed(5,3,1)
-         val test2=2
+         val id = Sequences.nextViitePrimaryKeySeqValue
+         val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
+         ProjectDAO.createRoadAddressProject(rap)
+      val reserved=   RoadAddressDAO.isNewRoadPartUsed(5,205,id)
+         reserved.size should be >=(1)
     }
   }
 
+  test("New roadnumber and roadpart number not reservable future") {
+    runWithRollback {
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
+      ProjectDAO.createRoadAddressProject(rap)
+      val reserved=   RoadAddressDAO.isNewRoadPartUsed(5,205,id)
+      reserved.size should be >=(1)
+    }
+  }
 
+  test("New roadnumber and roadpart number  reserved") {
+    runWithRollback {
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
+      ProjectDAO.createRoadAddressProject(rap)
+      val reserved=   RoadAddressDAO.isNewRoadPartUsed(1234567899,1,id)
+      reserved.size should be (0)
+    }
+  }
+
+  test("Terminated road reservation") {
+    runWithRollback {
+      val idr = RoadAddressDAO.getNextRoadAddressId
+      val ra = Seq(RoadAddress(idr, 1943845, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
+        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface))
+      RoadAddressDAO.create(ra)
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
+      ProjectDAO.createRoadAddressProject(rap)
+      val reserved=   RoadAddressDAO.isNewRoadPartUsed(1943845,1,id)
+      reserved.size should be (0)
+    }
+  }
 }
