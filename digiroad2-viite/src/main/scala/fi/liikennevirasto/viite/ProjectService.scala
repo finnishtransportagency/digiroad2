@@ -255,7 +255,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         val delta = ProjectDeltaCalculator.delta(projectId)
         if (setProjectDeltaToDB(delta, projectId)) {
           val roadAddressChanges = RoadAddressChangesDAO.fetchRoadAddressChanges(Set(projectId))
-          return Some(ViiteTierekisteriClient.convertToChangeProject(roadAddressChanges.sortBy(_.changeInfo.source.trackCode).sortBy(_.changeInfo.source.startAddressM).sortBy(_.changeInfo.source.startRoadPartNumber).sortBy(_.changeInfo.source.roadNumber)))
+          return Some(ViiteTierekisteriClient.convertToChangeProject(roadAddressChanges.sortBy(r => (r.changeInfo.source.trackCode, r.changeInfo.source.startAddressM, r.changeInfo.source.startRoadPartNumber, r.changeInfo.source.roadNumber))))
         }
       } catch {
         case NonFatal(e) => logger.info(s"Change info not available for project $projectId: " + e.getMessage)
@@ -386,9 +386,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  private def setProjectDeltaToDB(projectDelta:Delta,projectId:Long):Boolean= {
+  private def setProjectDeltaToDB(projectDelta:Delta, projectId:Long):Boolean= {
     RoadAddressChangesDAO.clearRoadChangeTable(projectId)
-    RoadAddressChangesDAO.insertDeltaToRoadChangeTable(projectDelta,projectId)
+    RoadAddressChangesDAO.insertDeltaToRoadChangeTable(projectDelta, projectId)
   }
 
   private def toProjectAddressLink(ral: RoadAddressLinkLike): ProjectAddressLink = {

@@ -21,13 +21,23 @@ object ProjectDeltaCalculator {
     if (terminations.size != currentAddresses.values.flatten.size)
       throw new RoadAddressException(s"Road address count did not match: ${terminations.size} terminated, ${currentAddresses.values.flatten.size} addresses found")
     // TODO: Find transfers, etc etc
-    // TODO: group by continuity and road type (TR data type) as well
-    Delta(project.startDate, terminations)
+    val roadTypeTerminations = terminations.map {
+      t =>
+        val plRoadType = projectLinks.getOrElse(RoadPart(t.roadNumber, t.roadPartNumber), Seq()).headOption.get.roadType
+        t.copy(roadType = plRoadType)
+    }
+
+    Delta(project.startDate, roadTypeTerminations.sortBy(t => (t.discontinuity.value, t.roadType.value)))
   }
 
-  private def findTerminations(projectLinks: Map[RoadPart, Seq[ProjectLink]], currentAddresses: Map[RoadPart, Seq[RoadAddress]]) = {
-    val terminations = projectLinks.map{case (part, pLinks) => part -> (pLinks, currentAddresses.getOrElse(part, Seq()))}.mapValues{ case (pll, ral) =>
-      ral.filter(r => pll.exists(pl => pl.linkId == r.linkId && pl.status == LinkStatus.Terminated))}
+  private def findTerminations(projectLinks: Map[RoadPart, Seq[ProjectLink]], currentAddresses: Map[RoadPart, Seq[RoadAddress]]) :Seq[RoadAddress] = {
+    val terminations = projectLinks.map{case (part, pLinks) => part -> (pLinks, currentAddresses.getOrElse(part, Seq()))}.mapValues{ case (pll, ra) =>
+      val relatedWithChanges = ra.map{r =>
+      val relatedLink = pll.filter(pl => pl.linkId == r.linkId && pl.status == LinkStatus.Terminated).headOption.get
+        r.copy(roadType = relatedLink.roadType)
+        }
+      relatedWithChanges
+      }
     terminations.filterNot(t => t._2.isEmpty).values.foreach(validateTerminations)
     terminations.values.flatten.toSeq
   }
@@ -61,7 +71,7 @@ object ProjectDeltaCalculator {
     val grouped = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
     grouped.mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
       RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
-      ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, RoadType.Unknown)
+      ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType)
     ).toSeq
   }
 }
