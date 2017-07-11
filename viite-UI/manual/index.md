@@ -132,7 +132,7 @@ Katuosoitteella haku: Katuosoitteesta hakukentt&auml;&auml;n voi sy&ouml;tt&auml
 
 Tieosoiteverkko tulee n&auml;kyviin, kun zoomaa tasolle, jossa mittakaavajanassa on 2 km. T&auml;st&auml; tasosta ja sit&auml; l&auml;hemp&auml;&auml; piirret&auml;&auml;n kartalle valtatiet, kantatiet, seututiet, yhdystiet ja numeroidut kadut. Kun zoomaa tasolle, jossa mittakaavajanassa on suurempi 100 metri&auml; (100 metrin mittakaavajanoja on kaksi kappaletta), tulevat n&auml;kyviin kaikki tieverkon kohteet.
 
-Tieosoiteverkko on v&auml;rikoodattu tienumeroiden mukaan. Vasemman yl&auml;kulman selitteess&auml; on kerrottu kunkin v&auml;rikoodin tienumerot. Lis&auml;ksi kartalle piirtyv&auml;t kalibrointipisteet, eli ne kohdat, joissa vaihtuu tieosa tai ajoratakoodi. Tieverkon kasvusuunta n&auml;kyy kartalla pisaran mallisena nuolena.
+Tieosoiteverkko on v&auml;rikoodattu tienumeroiden mukaan. Vasemman yl&auml;kulman selitteess&auml; on kerrottu kunkin v&auml;rikoodin tienumerot. Lis&auml;ksi kartalle piirtyv&auml;t et&auml;isyyslukemasymbolit, eli ne kohdat, joissa vaihtuu tieosa tai ajoratakoodi. Tieverkon kasvusuunta n&auml;kyy kartalla pisaran mallisena nuolena.
 
 ![Mittakaavajanassa 2km](k4.JPG)
 
@@ -180,15 +180,15 @@ Tieosoitteilla on seuraavat ominaisuustiedot:
 |Tienumero|Tieosoiteverkon mukainen tienumero. L&auml;ht&ouml;aineistona Tierekisterin tieosoitteet 2.1.2017.||
 |Tieosanumero|Tieosoiteverkon mukainen tieosanumero. L&auml;ht&ouml;aineistona Tierekisterin tieosoitteet 2.1.2017.||
 |Ajorata|Tieosoiteverkon mukainen ajoratakoodi. L&auml;ht&ouml;aineistona Tierekisterin tieosoitteet 2.1.2017.||
-|Alkuet&auml;isyys**|Tieosoiteverkon kalibrointipisteiden avulla laskettu alkuet&auml;isyys. Kalibrointipisteen kohdalla alkuet&auml;isyyden l&auml;ht&ouml;aineistona on Tierekisterin tieosoitteet 2.1.2017.|X|
-|Loppuet&auml;isyys**|Tieosoiteverkon kalibrointipisteiden avulla laskettu loppuet&auml;isyys. Kalibrointipisteen kohdalla loppuet&auml;isyyden l&auml;ht&ouml;aineistona on Tierekisterin tieosoitteet 2.1.2017.|X|
+|Alkuet&auml;isyys**|Tieosoiteverkon et&auml;isyyslukemien avulla laskettu alkuet&auml;isyys. Et&auml;isyyslukeman kohdalla alkuet&auml;isyyden l&auml;ht&ouml;aineistona on Tierekisterin tieosoitteet 2.1.2017.|X|
+|Loppuet&auml;isyys**|Tieosoiteverkon et&auml;isyyslukemien avulla laskettu loppuet&auml;isyys. Et&auml;isyyslukeman kohdalla loppuet&auml;isyyden l&auml;ht&ouml;aineistona on Tierekisterin tieosoitteet 2.1.2017.|X|
 |ELY|Liikenneviraston ELY-numero.|X|
 |Tietyyppi|Muodostetaan Maanmittauslaitoksen hallinnollinen luokka -tiedoista, kts. taulukko alempana. Jos valitulla tieosalla on useita tietyyppej&auml;, ne kerrotaan ominaisuustietotaulussa pilkulla erotettuna.|X|
 |Jatkuvuus|Tieosoiteverkon mukainen jatkuvuus-tieto. L&auml;ht&ouml;aineistona Tierekisterin tieosoitteet 2.1.2017.|X|
 
 *)Muokattu viimeksi -tiedoissa vvh_modified tarkoittaa, ett&auml; muutos on tullut Maanmittauslaitokselta joko geometriaan tai geometrian ominaisuustietoihin. Muokattu viimeksi -p&auml;iv&auml;t ovat kaikki v&auml;hint&auml;&auml;n 29.10.2015, koska tuolloin on tehty Maanmittauslaitoksen geometrioista alkulataus VVH:n tietokantaan.
 
-**)Tieosoiteverkon kalibrointipisteet (tieosan alku- ja loppupisteet sek&auml; ajoratakoodin vaihtuminen) m&auml;&auml;rittelev&auml;t mitatut alku- ja loppuet&auml;isyydet. Kalibrointipiste v&auml;lill&auml; alku- ja loppuet&auml;isyydet lasketaan tieosoitesegmenttikohtaisesti Viite-sovelluksessa.
+**)Tieosoiteverkon et&auml;isyyslukemat (tieosan alku- ja loppupisteet sek&auml; ajoratakoodin vaihtuminen) m&auml;&auml;rittelev&auml;t mitatut alku- ja loppuet&auml;isyydet. Et&auml;isyyslukemien v&auml;lill&auml; alku- ja loppuet&auml;isyydet lasketaan tieosoitesegmenttikohtaisesti Viite-sovelluksessa.
 
 __Tietyypin muodostaminen Viite-sovelluksessa__
 
@@ -357,7 +357,7 @@ Siirron j&auml;lkeen sovellus pyyt&auml;&auml; (1) k&auml;ytt&auml;j&auml;&auml;
 
 __Vaihe 6__
 
-Korjauksen j&auml;lkeen tieosoiteverkko on ehe&auml;. Tallentamisen j&auml;lkeen tieosoitesegmenttien kalibrointipisteet ja kalibrointipisteiden kohdalla olevat alku- ja loppuet&auml;isyysarvot ovat s&auml;ilyneet ennallaan. Kohteet ovat vain saaneet uudet tielinkit, joihin niiden lineaarilokaatio on kiinnitetty.
+Korjauksen j&auml;lkeen tieosoiteverkko on ehe&auml;. Tallentamisen j&auml;lkeen tieosoitesegmenttien et&auml;isyyslukemat ja niiden kohdalla olevat alku- ja loppuet&auml;isyysarvot ovat s&auml;ilyneet ennallaan. Kohteet ovat vain saaneet uudet tielinkit, joihin niiden lineaarilokaatio on kiinnitetty.
 
 ![korjaus](k33.JPG)
 
@@ -471,7 +471,33 @@ _Kun keltaista, muokattavissa olevaa kohdetta klikataan, tulee oikeaan laitaan n
 
 Muutokset tallennetaan oikean alakulman Tallenna-painikkeesta. Ennen tallennusta, voi muutokset perua Peruuta-painikkeesta.
 
-11.1 Muutosilmoituksien tarkastelu taulukkon&auml;kym&auml;ss&auml;
+11.1 Toimenpiteet tieosoiteprojektissa
+--------------------------
+
+11.11 Lakkautus
+--------------------------
+
+11.12 Uusi
+--------------------------
+
+Toimenpiteell&auml; m&auml;&auml;ritet&auml;&auml;n uusi tieosoite tieosoitteettomille linkeille. Tieosoitteettomia harmaita linkkej&auml; voi valita kerta- tai tuplaklikkauksella kuten muitakin tielinkkej&auml;. Tuplaklikkaus valitsee yhden tielinkin. Kertaklikkaus valitsee homogeenisen jakson jossa k&auml;ytet&auml;&auml;n VVH:n tienumeron ja tieosanumeroa. Tienumeron tai tieosanumeron puuttuessa valinnassa k&auml;ytet&auml;&auml;n tienime&auml;.
+
+11.13 Numeroinnnin muutos
+--------------------------
+
+11.14 Ennallaan
+--------------------------
+
+11.15 Kalibrointiarvon muutos
+--------------------------
+
+11.16 Siirto
+--------------------------
+
+11.17 Kalibrointipisteen siirto
+--------------------------
+
+11.2 Muutosilmoituksien tarkastelu taulukkon&auml;kym&auml;ss&auml;
 --------------------------
 
 Kun k&auml;ytt&auml;j&auml; on tehnyt valituille tieosoitteille kaikki muutokset, tulee n&auml;yt&ouml;n oikeaan alakulmaan mahdollisuus avata muutosilmoitus taulukkona (1). "Avaa projektin yhteenvetotaulukko" -painiketta klikkaamalla avautuu taulukkon&auml;kym&auml;, joka kertoo projektissa olevien tieosoitteiden vanhan ja uuden tilanteen muutosilmoituksittain. Taulukon saa suurennettua ja pienennetty&auml; sek&auml; suljettua taulukon oikeasta yl&auml;kulmasta (2).
@@ -489,7 +515,7 @@ Taulukossa rivit on j&auml;rjestetty suurimasta pienimp&auml;&auml;n tieosoittee
 _Kuva t&auml;h&auml;n, kun taulukon bugi korjattu._
 
 
-11.2 Muutosilmoituksen l&auml;hett&auml;minen Tierekisteriin
+11.3 Muutosilmoituksen l&auml;hett&auml;minen Tierekisteriin
 --------------------------
 
 Muutosilmoitus vied&auml;&auml;n Tierekisteriin klikkaamalla oikean alakulman vihre&auml;&auml; Tee tieosoitemuutosilmoitus -painiketta. Painikkeen painamisen j&auml;lkeen sovellus ilmoittaa muutosilmoituksen tekemisest&auml; "Muutosilmoitus l&auml;hetetty Tierekisteriin." -viestill&auml;.
@@ -503,4 +529,12 @@ Kun muutosilmoitus on l&auml;hetetty, muuttuu projektilistauksessa ko. projektin
 ![Tila-statuksia](k39.JPG)
 
 _Tila-statuksia tieosoiteprojektit -listassa._
+
+xx.x Sanasto
+--------------------------
+ominaisuustieton&auml;kym&auml; == lomake
+homogeeninen jakso
+et&auml;isyyslukema
+
+
 

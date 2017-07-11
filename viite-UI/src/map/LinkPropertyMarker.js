@@ -24,7 +24,7 @@
         zIndex: 10
       });
 
-      var colorMap = {1:'red', 2:'orange', 3:'orange-light', 4:'blue', 5:'cyan', 6:'purple', 7:'grey', 8:'pink', 9:'pink', 10:'pink', 11:'grey' };
+      var colorMap = {1:'red', 2:'orange', 3:'orange-light', 4:'blue', 5:'cyan', 6:'purple', 7:'cyan', 8:'pink', 9:'pink', 10:'pink', 11:'grey' };
 
       var boxStyleDirectional = function(rl) {
         if(rl.roadClass in colorMap){

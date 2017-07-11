@@ -74,7 +74,8 @@ input[type="checkbox"]:focus {
 // input[type="tel"]
 // input[type="color"]
 
-.form-control {
+.form-control,
+.form-select-control{
   display: block;
   width: 100%;
   height: (@line-height-modifier * 5) + 2; // Height at least of their button counterparts: line-height + padding + border
@@ -290,6 +291,11 @@ form.roadAddressProject .form-control{
   margin-top: 6px !important;
 }
 
+form.roadAddressProject .form-select-control{
+  width: 100px !important;
+  margin-top: 6px !important;
+}
+
 form.roadAddressProject p {
   width: 60%;
 }
@@ -414,7 +420,7 @@ form.roadAddressProject p {
     color: @gray-lighter;
   }
 
-  .form-control {
+  .form-control, .form-select-control {
     border-color: @input-border-dark;
     color: @input-color-dark;
     background-color: @input-bg-dark;
