@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.RoadAddressException
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink, RoadAddressLinkPartitioner, ProjectLinkPartitioner}
+import fi.liikennevirasto.viite.model.{ProjectAddressLink, ProjectLinkPartitioner, RoadAddressLink, RoadAddressLinkPartitioner}
 import fi.liikennevirasto.viite.{ChangeProject, ProjectService, ReservedRoadPart, RoadAddressService}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
@@ -17,6 +17,7 @@ import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.{NotFound, _}
 import org.slf4j.LoggerFactory
 
+import scala.util.control.NonFatal
 import scala.util.parsing.json._
 import scala.util.{Left, Right}
 
@@ -276,19 +277,23 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  put("/roadlinks/roadaddress/project/validatenewroadlink"){
+  put("/roadlinks/roadaddress/project/savenewroadlink") {
     val projID = params("projID").toLong
-    val projectlink= ProjectLink(null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null) //TODO has to catch these
-    val errorMessage=projectService.addNewLinkToProject(projectlink,projID)
-   if (errorMessage==""){
-     Map("success"->"true")
-   } else {
-     Map("success"->"false",
-       "errormessage"->errorMessage)
-   }
+    try {
+      val projectlink = parsedBody.extract[ProjectLink]
+      val errorMessage = projectService.addNewLinkToProject(projectlink, projID)
+      if (errorMessage == "") {
+        Map("success" -> "true")
+      } else {
+        Map("success" -> "false",
+          "errormessage" -> errorMessage)
+      }
+    } catch {
+     case NonFatal(e) => BadRequest("Missing mandatory ProjectLink parameter")
+    }
   }
 
-  get("/project/roadlinks"){
+    get("/project/roadlinks"){
     response.setHeader("Access-Control-Allow-Headers", "*")
 
     val user = userProvider.getCurrentUser()
