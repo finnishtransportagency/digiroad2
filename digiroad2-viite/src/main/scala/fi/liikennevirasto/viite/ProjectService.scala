@@ -253,7 +253,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     withDynTransaction {
       try {
         val delta = ProjectDeltaCalculator.delta(projectId)
-        if (setProjectDeltaToDB(delta, projectId)) {
+        //TODO would be better to give roadType to ProjectLinks table instead of calling vvh here
+        val vvhRoadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(delta.terminations.map(_.linkId).toSet, false)
+        val filledTerminations = enrichTerminations(delta.terminations, vvhRoadLinks)
+
+        if (setProjectDeltaToDB(delta.copy(terminations = filledTerminations), projectId)) {
           val roadAddressChanges = RoadAddressChangesDAO.fetchRoadAddressChanges(Set(projectId))
           return Some(ViiteTierekisteriClient.convertToChangeProject(roadAddressChanges.sortBy(r => (r.changeInfo.source.trackCode, r.changeInfo.source.startAddressM, r.changeInfo.source.startRoadPartNumber, r.changeInfo.source.roadNumber))))
         }
@@ -262,6 +266,16 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       }
     }
     None
+  }
+
+  def enrichTerminations(terminations: Seq[RoadAddress], roadlinks: Seq[RoadLink]): Seq[RoadAddress] = {
+    val withRoadType = terminations.map{
+      r =>
+        val relatedRoadLink = roadlinks.filter{rl => rl.linkId == r.linkId}.headOption.get
+        val roadType = RoadAddressLinkBuilder.getRoadType(relatedRoadLink.administrativeClass, relatedRoadLink.linkType)
+        r.copy(roadType = roadType)
+    }
+    withRoadType
   }
 
   def getRoadAddressChangesAndSendToTR(projectId: Set[Long]) = {
