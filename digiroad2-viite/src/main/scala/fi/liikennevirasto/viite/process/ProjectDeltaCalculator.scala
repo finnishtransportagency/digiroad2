@@ -21,23 +21,19 @@ object ProjectDeltaCalculator {
     if (terminations.size != currentAddresses.values.flatten.size)
       throw new RoadAddressException(s"Road address count did not match: ${terminations.size} terminated, ${currentAddresses.values.flatten.size} addresses found")
     // TODO: Find transfers, etc etc
-    val roadTypeTerminations = terminations.map {
-      t =>
-        val plRoadType = projectLinks.getOrElse(RoadPart(t.roadNumber, t.roadPartNumber), Seq()).headOption.get.roadType
-        t.copy(roadType = plRoadType)
-    }
+//    val roadTypeTerminations = terminations.map {
+//      t =>
+//        val plRoadType = projectLinks.getOrElse(RoadPart(t.roadNumber, t.roadPartNumber), Seq()).headOption.get.roadType
+//        t.copy(roadType = plRoadType)
+//    }
 
-    Delta(project.startDate, roadTypeTerminations.sortBy(t => (t.discontinuity.value, t.roadType.value)))
+    Delta(project.startDate, terminations.sortBy(t => (t.discontinuity.value, t.roadType.value)))
   }
 
-  private def findTerminations(projectLinks: Map[RoadPart, Seq[ProjectLink]], currentAddresses: Map[RoadPart, Seq[RoadAddress]]) :Seq[RoadAddress] = {
+  private def findTerminations(projectLinks: Map[RoadPart, Seq[ProjectLink]], currentAddresses: Map[RoadPart, Seq[RoadAddress]]) = {
     val terminations = projectLinks.map{case (part, pLinks) => part -> (pLinks, currentAddresses.getOrElse(part, Seq()))}.mapValues{ case (pll, ra) =>
-      val relatedWithChanges = ra.map{r =>
-      val relatedLink = pll.filter(pl => pl.linkId == r.linkId && pl.status == LinkStatus.Terminated).headOption.get
-        r.copy(roadType = relatedLink.roadType)
-        }
-      relatedWithChanges
-      }
+      ra.filter(r => pll.exists(pl => pl.linkId == r.linkId && pl.status == LinkStatus.Terminated))
+    }
     terminations.filterNot(t => t._2.isEmpty).values.foreach(validateTerminations)
     terminations.values.flatten.toSeq
   }

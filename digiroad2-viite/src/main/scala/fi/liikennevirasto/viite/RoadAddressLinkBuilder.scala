@@ -343,9 +343,6 @@ object RoadAddressLinkBuilder {
         } else
           previousSegment.discontinuity
       }
-      val roadType = {
-
-      }
 
       Seq(RoadAddress(tempId, nextSegment.roadNumber, nextSegment.roadPartNumber, RoadType.Unknown,
         nextSegment.track, discontinuity, startAddrMValue,
