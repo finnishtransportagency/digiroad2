@@ -127,12 +127,12 @@
 
     var addSelect = function(){
       return '<select class="form-select-control" id="DiscontinuityDropdown" size="1">'+
-      '<option value = "action5" selected disabled hidden>Jatkuva</option>'+
-      '<option value="action1" >Tien loppu</option>'+
-      '<option value="action2" >Epäjatkuva</option>'+
-      '<option value="action3" >ELY:n raja</option>'+
-      '<option value="action4" >Lievä epäjatkuvuus</option>'+
-      '<option value="action5">Jatkuva</option>'+
+      '<option value = "action5" selected disabled hidden>5 Jatkuva</option>'+
+      '<option value="action1" >1 Tien loppu</option>'+
+      '<option value="action2" >2 Epäjatkuva</option>'+
+      '<option value="action3" >3 ELY:n raja</option>'+
+      '<option value="action4" >4 Lievä epäjatkuvuus</option>'+
+      '<option value="action5" >5 Jatkuva</option>'+
       '</select>';
     };
 
@@ -143,7 +143,7 @@
     var addSmallInputNumber = function(id, value){
       //Validate only number characters on "onkeypress" including TAB and backspace
       return '<input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode == 8 || event.keyCode == 9)' +
-        '" class="form-control small-input roadAddressProject" id="'+id+'" value="'+(_.isUndefined(value)? '' : value )+'" onclick=""/>';
+        '"class="form-control small-input roadAddressProject" id="'+id+'" value="'+(_.isUndefined(value)? '' : value )+'" onclick=""/>';
     };
 
     var addSmallInputNumberDisabled = function(id, value){
@@ -175,7 +175,23 @@
         selectedProjectLink = selected;
         currentProject = projectCollection.getCurrentProject();
         clearInformationContent();
-        rootElement.html(selectedProjectLinkTemplate(currentProject.project, options, selectedProjectLink));
+        rootElement.html(selectedProjectLinkTemplate(currentProject.project, options, selectedProjectLink)).find("input").on('keyup', function () {
+          var rootElement = $('#feature-attributes');
+          var inputs = rootElement.find('input');
+          var filled = true;
+
+          for (var i = 0; i < inputs.length; i++) {
+            if (inputs[i].type === 'text' && (!inputs[i].value || inputs[i].value === '0')) {
+              filled = false;
+            }
+          }
+
+          if (filled) {
+            rootElement.find('.project-form button.update').prop("disabled", false);
+          } else {
+            rootElement.find('.project-form button.update').prop("disabled", true);
+          }
+        });
       });
 
       eventbus.on('roadAddressProject:publishable', function() {
