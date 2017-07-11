@@ -240,7 +240,7 @@
 
       rootElement.on('click', '.project-form button.update', function() {
         currentProject = projectCollection.getCurrentProject();
-        projectCollection.saveProjectLinks(projectCollection.getTmpExpired());
+        projectCollection.saveProjectLinks(projectCollection.getTmpExpired(), $('[id=dropDown] :selected').val());
         rootElement.html(emptyTemplate(currentProject.project));
       });
 
@@ -254,6 +254,10 @@
           rootElement.find('.project-form button.update').prop("disabled", false);
         }
         else if(this.value == "uusi"){
+          projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
+            return {'id': link.linkId, 'status': link.status};
+          })));
+          projectCollection.setTmpExpired(projectCollection.getTmpExpired().concat(selectedProjectLink));
           rootElement.find('.new-road-address').prop("hidden", false);
         }
       });

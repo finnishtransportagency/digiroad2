@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -17,6 +17,7 @@ import scala.collection.mutable.ListBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
+import scala.util.Random
 import scala.util.control.NonFatal
 
 class ProjectService(roadAddressService: RoadAddressService, roadLinkService: RoadLinkService, eventbus: DigiroadEventBus) {
@@ -333,11 +334,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   }
 
-  def updateProjectLinkStatus(projectId: Long, linkIds: Set[Long], linkStatus: LinkStatus, userName: String): Boolean = {
+  def updateProjectLinkStatus(projectId: Long, linkIds: Set[Long], linkStatus: LinkStatus, userName: String, operation:String): Boolean = {
     withDynTransaction{
       val projectLinks = ProjectDAO.getProjectLinks(projectId)
       val changed = projectLinks.filter(pl => linkIds.contains(pl.linkId)).map(_.id).toSet
       ProjectDAO.updateProjectLinkStatus(changed, linkStatus, userName)
+      if(operation == "uusi"){
+        ProjectDAO.updateProjectLinkSideCode(changed, userName)
+      }
       try {
         val delta = ProjectDeltaCalculator.delta(projectId)
         setProjectDeltaToDB(delta,projectId)

@@ -141,7 +141,7 @@
     };
 
 
-    this.saveProjectLinks = function(toBeExpiredLinks) {
+    this.saveProjectLinks = function(toBeExpiredLinks, operation) {
       console.log("Save Project Links called");
       applicationModel.addSpinner();
       var linkIds = _.unique(_.map(toBeExpiredLinks,function (t){
@@ -152,7 +152,7 @@
 
       var projectId = projectinfo.id;
 
-      var data = {'linkIds': linkIds, 'projectId': projectId, 'newStatus': STATUS_TERMINATED};
+      var data = {'linkIds': linkIds, 'projectId': projectId, 'newStatus': STATUS_TERMINATED, 'operation': operation};
 
       if(!_.isEmpty(linkIds) && typeof projectId !== 'undefined' && projectId !== 0){
         backend.updateProjectLinks(data, function(errorObject) {

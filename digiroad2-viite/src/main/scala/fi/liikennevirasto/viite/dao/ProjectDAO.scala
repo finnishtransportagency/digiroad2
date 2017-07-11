@@ -12,6 +12,8 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{StaticQuery => Q}
 
+import scala.util.Random
+
 sealed trait ProjectState{
   def value: Int
   def description: String
@@ -64,6 +66,8 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
 case class ProjectFormLine(startingLinkId: Long, projectId: Long, roadNumber: Long, roadPartNumber: Long, roadLength: Long, ely : Long, discontinuity: String)
 
 object ProjectDAO {
+
+  val allowedSideCodes = List(SideCode.TowardsDigitizing, SideCode.AgainstDigitizing)
 
   def create(roadAddresses: Seq[ProjectLink]): Seq[Long] = {
     val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure, adjusted_timestamp, link_source) values (?, ?, ?, ?, ?, ?, ?)")
@@ -216,6 +220,17 @@ object ProjectDAO {
         Q.updateNA(sql).execute
     }
   }
+
+  def updateProjectLinkSideCode(projectLinkIds: Set[Long], userName: String): Unit = {
+    val user = userName.replaceAll("[^A-Za-z0-9\\-]+", "")
+    val randomSideCode = allowedSideCodes(new Random(System.currentTimeMillis()).nextInt(allowedSideCodes.length))
+        MassQuery.withIds(projectLinkIds) {
+          s: String =>
+            val sql = s"UPDATE LRM_POSITION SET SIDE_CODE = ${randomSideCode.value}, MODIFIED_BY='$user' WHERE ID IN (SELECT LRM_POSITION_ID FROM PROJECT_LINK WHERE ID IN (SELECT ID FROM $s))"
+            Q.updateNA(sql).execute
+        }
+  }
+
 
   def updateProjectStatus(projectID:Long,state:ProjectState,errorMessage:String) {
     val projectstate=state.value
