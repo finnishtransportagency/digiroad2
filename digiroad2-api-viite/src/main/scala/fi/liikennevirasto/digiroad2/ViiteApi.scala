@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.RoadAddressException
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, ProjectLinkPartitioner, RoadAddressLink, RoadAddressLinkPartitioner}
-import fi.liikennevirasto.viite.{ChangeProject, ProjectService, ReservedRoadPart, RoadAddressService}
+import fi.liikennevirasto.viite.{ProjectService, ReservedRoadPart, RoadAddressService}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.json4s._
@@ -49,7 +49,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   val DrawRoadPartsOnly = 2
   val DrawPublicRoads = 3
   val DrawAllRoads = 4
-
+  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
 
   val logger = LoggerFactory.getLogger(getClass)
@@ -285,6 +285,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       case NonFatal(e) => BadRequest("Missing mandatory ProjectLink parameter")
     }
       val projectLink = parsedBody.extract[ProjectLink]
+    withDynTransaction {
       val errorMessage = projectService.addNewLinkToProject(projectLink, projID)
       if (errorMessage == "") {
         Map("success" -> "true")
@@ -292,6 +293,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         Map("success" -> "false",
           "errormessage" -> errorMessage)
       }
+    }
   }
 
     get("/project/roadlinks"){

@@ -142,7 +142,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       }
       case None =>  "Projektikoodilla ei löytynyt projektia"
     }
-
   }
 
   /**
