@@ -84,26 +84,26 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
       }
     }
 
-//    println("\nExpiring litRoad From OTH Database Only with administrativeClass == State")
-//    //Get All Municipalities
-//    val municipalities: Seq[Int] =
-//      OracleDatabase.withDynSession {
-//        Queries.getMunicipalities
-//      }
-//
-//    municipalities.foreach { municipality =>
-//      println("\nStart processing municipality %d".format(municipality))
-//      val roadLinksWithStateFilter = roadLinkService.getVVHRoadLinksF(municipality).filter(_.administrativeClass == State).map(_.linkId)
-//
-//      OracleDatabase.withDynTransaction {
-//        oracleLinearAssetDao.fetchLinearAssetsByLinkIds(lightingAssetId, roadLinksWithStateFilter, LinearAssetTypes.numericValuePropertyId).foreach { persistedLinearAsset =>
-//          oracleLinearAssetDao.expireAssetsById(persistedLinearAsset.id)
-//          println("Asset with Id: " + persistedLinearAsset.id + " Expired.")
-//        }
-//      }
-//      println("\nEnd processing municipality %d".format(municipality))
-//    }
-//    println("\nLighting data Expired")
+    println("\nExpiring litRoad From OTH Database Only with administrativeClass == State")
+    //Get All Municipalities
+    val municipalities: Seq[Int] =
+      OracleDatabase.withDynSession {
+        Queries.getMunicipalities
+      }
+
+    municipalities.foreach { municipality =>
+      println("\nStart processing municipality %d".format(municipality))
+      val roadLinksWithStateFilter = roadLinkService.getVVHRoadLinksF(municipality).filter(_.administrativeClass == State).map(_.linkId)
+
+      OracleDatabase.withDynTransaction {
+        oracleLinearAssetDao.fetchLinearAssetsByLinkIds(lightingAssetId, roadLinksWithStateFilter, LinearAssetTypes.numericValuePropertyId).foreach { persistedLinearAsset =>
+          oracleLinearAssetDao.expireAssetsById(persistedLinearAsset.id)
+          println("Asset with Id: " + persistedLinearAsset.id + " Expired.")
+        }
+      }
+      println("\nEnd processing municipality %d".format(municipality))
+    }
+    println("\nLighting data Expired")
 
     println("\nFetch Road Numbers From Viite")
 //    val roadNumbers = OracleDatabase.withDynSession {
