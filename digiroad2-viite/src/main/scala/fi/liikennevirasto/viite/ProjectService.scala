@@ -340,7 +340,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val changed = projectLinks.filter(pl => linkIds.contains(pl.linkId)).map(_.id).toSet
       ProjectDAO.updateProjectLinkStatus(changed, linkStatus, userName)
       if(operation == "uusi"){
-        ProjectDAO.updateProjectLinkSideCode(changed, userName)
+        ProjectDAO.updateProjectLinkSideCode(changed)
       }
       try {
         val delta = ProjectDeltaCalculator.delta(projectId)

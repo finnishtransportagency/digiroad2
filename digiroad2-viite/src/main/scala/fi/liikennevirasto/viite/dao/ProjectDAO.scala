@@ -221,14 +221,10 @@ object ProjectDAO {
     }
   }
 
-  def updateProjectLinkSideCode(projectLinkIds: Set[Long], userName: String): Unit = {
-    val user = userName.replaceAll("[^A-Za-z0-9\\-]+", "")
+  def updateProjectLinkSideCode(projectLinkIds: Set[Long]): Unit = {
     val randomSideCode = allowedSideCodes(new Random(System.currentTimeMillis()).nextInt(allowedSideCodes.length))
-        MassQuery.withIds(projectLinkIds) {
-          s: String =>
-            val sql = s"UPDATE LRM_POSITION SET SIDE_CODE = ${randomSideCode.value}, MODIFIED_BY='$user' WHERE ID IN (SELECT LRM_POSITION_ID FROM PROJECT_LINK WHERE ID IN (SELECT ID FROM $s))"
-            Q.updateNA(sql).execute
-        }
+              val sql = s"UPDATE LRM_POSITION SET SIDE_CODE = ${randomSideCode.value}, MODIFIED_DATE=sysdate WHERE LINK_ID IN (${projectLinkIds.mkString(",")})"
+              Q.updateNA(sql).execute
   }
 
 
