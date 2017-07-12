@@ -227,7 +227,6 @@ object ProjectDAO {
               Q.updateNA(sql).execute
   }
 
-
   def updateProjectStatus(projectID:Long,state:ProjectState,errorMessage:String) {
     val projectstate=state.value
     sqlu""" update project set state=$projectstate, status_info=$errorMessage  WHERE id=$projectID""".execute
