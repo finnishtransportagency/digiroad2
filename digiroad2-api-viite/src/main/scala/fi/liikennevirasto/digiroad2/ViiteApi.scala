@@ -493,7 +493,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "sideCode" -> projectAddressLink.sideCode.value,
       "linkType" -> projectAddressLink.linkType.value,
       "roadLinkSource" ->  projectAddressLink.roadLinkSource.value,
-      "status" -> projectAddressLink.status.value
+      "status" -> projectAddressLink.status.value,
+      "length" -> projectAddressLink.length
     )
   }
 

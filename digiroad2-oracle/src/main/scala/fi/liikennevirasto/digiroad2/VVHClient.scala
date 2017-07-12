@@ -57,7 +57,7 @@ object NodeType {
 case class VVHRoadlink(linkId: Long, municipalityCode: Int, geometry: Seq[Point],
                        administrativeClass: AdministrativeClass, trafficDirection: TrafficDirection,
                        featureClass: FeatureClass, modifiedAt: Option[DateTime] = None, attributes: Map[String, Any] = Map(),
-                       constructionType: ConstructionType = ConstructionType.InUse, linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface) extends RoadLinkLike {
+                       constructionType: ConstructionType = ConstructionType.InUse, linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, geometryLength: Double = 0.0) extends RoadLinkLike {
   def roadNumber: Option[String] = attributes.get("ROADNUMBER").map(_.toString)
 }
 
@@ -485,7 +485,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
   protected override val linkGeomSource:LinkGeomSource = LinkGeomSource.NormalLinkInterface
 
   protected override def defaultOutFields(): String = {
-    "MTKID,LINKID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,SURFACETYPE,END_DATE,STARTNODE,ENDNODE"
+    "MTKID,LINKID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,SURFACETYPE,END_DATE,STARTNODE,ENDNODE,GEOMETRYLENGTH"
   }
 
   protected override def mapFields(content: Map[String, Any], url: String): Either[List[Map[String, Any]], VVHError] = {
@@ -599,6 +599,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
     val linkId = attributes("LINKID").asInstanceOf[BigInt].longValue()
     val municipalityCode = attributes("MUNICIPALITYCODE").asInstanceOf[BigInt].toInt
     val mtkClass = attributes("MTKCLASS")
+    val geometryLength = attributes("GEOMETRYLENGTH").asInstanceOf[Double]
     val featureClassCode = if (mtkClass != null) // Complementary geometries have no MTK Class
       attributes("MTKCLASS").asInstanceOf[BigInt].intValue()
     else
@@ -607,7 +608,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
 
     VVHRoadlink(linkId, municipalityCode, linkGeometry, extractAdministrativeClass(attributes),
       extractTrafficDirection(attributes), featureClass, extractModifiedAt(attributes),
-      extractAttributes(attributes) ++ linkGeometryForApi ++ linkGeometryWKTForApi, extractConstructionType(attributes), linkGeomSource)
+      extractAttributes(attributes) ++ linkGeometryForApi ++ linkGeometryWKTForApi, extractConstructionType(attributes), linkGeomSource, geometryLength)
 
   }
 
@@ -865,7 +866,7 @@ class VVHChangeInfoClient(vvhRestApiEndPoint: String) extends VVHClientOperation
   protected override val linkGeomSource = LinkGeomSource.Unknown
 
   protected override def defaultOutFields() : String = {
-    "OLD_ID,NEW_ID,MTKID,CHANGETYPE,OLD_START,OLD_END,NEW_START,NEW_END,CREATED_DATE,CONSTRUCTIONTYPE,STARTNODE,ENDNODE"
+    "OLD_ID,NEW_ID,MTKID,CHANGETYPE,OLD_START,OLD_END,NEW_START,NEW_END,CREATED_DATE,CONSTRUCTIONTYPE,STARTNODE,ENDNODE,GEOMETRYLENGTH"
   }
 
   protected override def mapFields(content: Map[String, Any], url: String): Either[List[Map[String, Any]], VVHError] = {
@@ -926,7 +927,7 @@ class VVHRoadNodesClient(vvhRestApiEndPoint: String) extends VVHClientOperations
   protected override val linkGeomSource = LinkGeomSource.Unknown
 
   protected override def defaultOutFields(): String = {
-    "OBJECTID,NODEID,FORMOFNODE,MUNICIPALITYCODE"
+    "OBJECTID,NODEID,FORMOFNODE,MUNICIPALITYCODE,GEOMETRYLENGTH"
   }
 
   protected override def mapFields(content: Map[String, Any], url: String): Either[List[Map[String, Any]], VVHError] = {
@@ -970,7 +971,7 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClie
   protected override val linkGeomSource: LinkGeomSource = LinkGeomSource.ComplimentaryLinkInterface
 
   override def defaultOutFields(): String = {
-    "MTKID,LINKID,OBJECTID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,SURFACETYPE,SUBTYPE,CONSTRUCTIONTYPE"
+    "MTKID,LINKID,OBJECTID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,SURFACETYPE,SUBTYPE,CONSTRUCTIONTYPE,GEOMETRYLENGTH"
   }
 
   private def createFormParams(complementaryFeatures: Map[String, Any]): ArrayList[NameValuePair] = {
@@ -1034,7 +1035,7 @@ class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvh
   protected override val linkGeomSource = LinkGeomSource.HistoryLinkInterface
 
   protected override def defaultOutFields() : String = {
-    "MTKID,LINKID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,SURFACETYPE,END_DATE,LINKID_NEW,OBJECTID,CREATED_DATE,CONSTRUCTIONTYPE"
+    "MTKID,LINKID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,SURFACETYPE,END_DATE,LINKID_NEW,OBJECTID,CREATED_DATE,CONSTRUCTIONTYPE,GEOMETRYLENGTH"
   }
 
   protected override def mapFields(content: Map[String, Any], url: String): Either[List[Map[String, Any]], VVHError] = {
