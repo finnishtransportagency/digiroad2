@@ -202,4 +202,12 @@ class ProjectLinkDaoSpec  extends FunSuite with Matchers {
       project should be (Some("TestProject"))
     }
   }
+
+  test("Confirm update of LRM_Position side code"){
+    runWithRollback {
+     val sampleLinkId = sql"""SELECT pos.Link_id FROM lrm_position pos Inner Join Project_Link pl On pl.LRM_POSITION_ID = pos.ID""".as[Long].first
+      ProjectDAO.updateProjectLinkSideCode(Set(sampleLinkId))
+      sql"""SELECT pos.Link_id FROM lrm_position pos Inner Join Project_Link pl On pl.LRM_POSITION_ID = pos.ID ORDER BY pos.MODIFIED_DATE DESC""".as[Long].first should be(sampleLinkId)
+    }
+  }
 }
