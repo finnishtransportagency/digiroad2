@@ -121,7 +121,7 @@
         addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('AJR')+ addSmallLabel('ELY')  + addSmallLabel('JATKUU')+
         '</div>' +
         '<div class="form-group new-road-address" hidden>' +
-        addSmallInputNumber('tie') + addSmallInputNumber('osa') + addSmallInputNumber('ajr')+  addSmallInputNumberDisabled('ely', selectedProjectLink[0].elyCode) +addSelect()+
+        addSmallInputNumber('tie',selectedProjectLink[0].roadNumber) + addSmallInputNumber('osa',selectedProjectLink[0].roadPartNumber) + addSmallInputNumber('ajr', selectedProjectLink[0].trackCode)+  addSmallInputNumberDisabled('ely', selectedProjectLink[0].elyCode) +addSelect()+
         '</div>';
     };
 
