@@ -75,11 +75,13 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
   def importLitRoadAsset(tierekisteriLightingAsset: TierekisteriLightingAsset): Unit = {
 
     def createLinearAsset(linkId: Long, measures: Measures) = {
-      val assetId = linearAssetService.dao.createLinearAsset(lightingAssetId, linkId, false, SideCode.BothDirections.value,
-        measures, "batch_process_lighting", vvhClient.createVVHTimeStamp(), Some(LinkGeomSource.NormalLinkInterface.value))
+      if (measures.startMeasure != measures.endMeasure) {
+        val assetId = linearAssetService.dao.createLinearAsset(lightingAssetId, linkId, false, SideCode.BothDirections.value,
+          measures, "batch_process_lighting", vvhClient.roadLinkData.createVVHTimeStamp(), Some(LinkGeomSource.NormalLinkInterface.value))
 
-      linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, 1)
-      println(s"Created OTH Lighting assets for $linkId from TR data with assetId $assetId")
+        linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, 1)
+        println(s"Created OTH Lighting assets for $linkId from TR data with assetId $assetId")
+      }
     }
 
     println("\nExpiring litRoad From OTH Database Only with administrativeClass == State")
@@ -104,9 +106,10 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
     println("\nLighting data Expired")
 
     println("\nFetch Road Numbers From Viite")
-    val roadNumbers = OracleDatabase.withDynSession {
-      roadAddressDao.getRoadNumbers()
-    }
+//    val roadNumbers = OracleDatabase.withDynSession {
+//      roadAddressDao.getRoadNumbers()
+//    }
+    val roadNumbers = Seq(56)
     println("\nEnd of Fetch ")
 
     println("roadNumbers: ")

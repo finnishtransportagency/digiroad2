@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.util.Track
 import org.scalatest.{FunSuite, Matchers}
 
 class RoadAddressDAOSpec extends FunSuite with Matchers {
-  test("LRM calculation on Road Address") {
+  ignore("LRM calculation on Road Address") {
     val towards = RoadAddress(1L, 1L, 1L, Track.RightSide, 5, 100, 110, None, None, 1L, 123L, 1.5, 11.4, SideCode.TowardsDigitizing, false, Seq())
     val against = RoadAddress(1L, 1L, 1L, Track.RightSide, 5, 100, 110, None, None, 1L, 123L, 1.5, 11.4, SideCode.AgainstDigitizing, false, Seq())
     towards.addressMValueToLRM(100L).get should be (1.5 +- .001)
