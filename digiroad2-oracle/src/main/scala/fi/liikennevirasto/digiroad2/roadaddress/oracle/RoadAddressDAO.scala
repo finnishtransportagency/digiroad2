@@ -21,8 +21,9 @@ case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
     else
     // Linear approximation: addrM = a*mValue + b <=> mValue = (addrM - b) / a
     sideCode match {
-      case TowardsDigitizing => Some((addrMValue - startAddrMValue) * lrmLength / addressLength + startMValue)
-      case AgainstDigitizing => Some(endMValue - (addrMValue - startAddrMValue) * lrmLength / addressLength)
+      //validate this
+      case AgainstDigitizing => Some((addrMValue - startAddrMValue) * lrmLength / addressLength + startMValue)
+      case TowardsDigitizing => Some(endMValue - (addrMValue - startAddrMValue) * lrmLength / addressLength)
       case _ => None
     }
   }
