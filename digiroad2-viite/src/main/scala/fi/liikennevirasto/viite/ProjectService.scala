@@ -270,10 +270,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   def enrichTerminations(terminations: Seq[RoadAddress], roadlinks: Seq[RoadLink]): Seq[RoadAddress] = {
     val withRoadType = terminations.map{
-      r =>
-        val relatedRoadLink = roadlinks.filter{rl => rl.linkId == r.linkId}.headOption.get
-        val roadType = RoadAddressLinkBuilder.getRoadType(relatedRoadLink.administrativeClass, relatedRoadLink.linkType)
-        r.copy(roadType = roadType)
+      t =>
+        val relatedRoadLink = roadlinks.filter(rl => rl.linkId == t.linkId).headOption
+        relatedRoadLink match {
+          case None => t
+          case Some(rl) =>
+            val roadType = RoadAddressLinkBuilder.getRoadType(rl.administrativeClass, rl.linkType)
+            t.copy(roadType = roadType)
+        }
     }
     withRoadType
   }
