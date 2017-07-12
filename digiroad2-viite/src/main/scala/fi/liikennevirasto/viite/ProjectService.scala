@@ -52,16 +52,16 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * Checks that new road address is not already reserved (currently only checks roadaddresstable)
     * @param roadNumber road number
     * @param roadPart road part number
-    * @param projectId project id
+    * @param project  roadaddress project needed for id and error message
     * @return
     */
-  def checkNewRoadAddressNumberAndPart(roadNumber: Long, roadPart: Long, projectId :Long): Option[String] = {
+  def checkNewRoadAddressNumberAndPart(roadNumber: Long, roadPart: Long, project :RoadAddressProject): Option[String] = {
     withDynTransaction {
-      val roadAddresses = RoadAddressDAO.isNewRoadPartUsed(roadNumber, roadPart, projectId)
+      val roadAddresses = RoadAddressDAO.isNewRoadPartUsed(roadNumber, roadPart, project.id)
       if (roadAddresses.isEmpty) {
         None
       } else {
-       Some("Tieosa on jo käytössä") //message to user if address is already in use
+       Some(s"TIE $roadNumber OSA $roadPart on jo olemassa projektin alkupäivänä ${project.startDate}, tarkista tiedot.") //message to user if address is already in use
       }
     }
   }
@@ -129,7 +129,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def addNewLinkToProject(projectLink:ProjectLink, roadAddressProjectID :Long):String = {
     ProjectDAO.getRoadAddressProjectById(roadAddressProjectID) match {
       case Some(project) =>{
-        checkNewRoadAddressNumberAndPart (projectLink.roadNumber, projectLink.roadPartNumber, projectLink.projectId) match {
+        checkNewRoadAddressNumberAndPart (projectLink.roadNumber, projectLink.roadPartNumber, project) match {
           case Some (errorMessage) => errorMessage
           case None => {
             val newProjectLink = ProjectLink (NewRoadAddress, projectLink.roadNumber, projectLink.roadPartNumber, projectLink.track, projectLink.discontinuity, projectLink.startAddrMValue,

@@ -454,28 +454,6 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
     }
   }
 
-  test("Check for new roadaddress reservation") {
-    var count = 0
-    runWithRollback {
-      val countCurrentProjects = projectService.getRoadAddressAllProjects()
-      val id = 0
-      val addresses:List[ReservedRoadPart]= List(ReservedRoadPart(5:Long, 203:Long, 203:Long, 5:Double, Discontinuity.apply("jatkuva"), 8:Long, None:Option[DateTime], None:Option[DateTime]))
-      val roadAddressProject = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", addresses, None)
-      projectService.createRoadLinkProject(roadAddressProject)
-      val countAfterInsertProjects = projectService.getRoadAddressAllProjects()
-      count = countCurrentProjects.size + 1
-      countAfterInsertProjects.size should be (count)
-      val project = projectService.getRoadAddressSingleProject(id)
-      project.size should be(1)
-      project.head.name should be ("TestProject")
-    }
-    runWithRollback {
-      projectService.getRoadAddressAllProjects().size should be (count-1)
-    }
-  }
-
-
-
   test("get the project with it's reserved road parts") {
     var projectId = 0L
     val roadNumber = 1943845
@@ -569,7 +547,6 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
     }
     runWithRollback { projectService.getRoadAddressAllProjects() } should have size (count - 1)
   }
-
   test("add nonexisting roadlink to project"){
     runWithRollback {
       val idr = RoadAddressDAO.getNextRoadAddressId
