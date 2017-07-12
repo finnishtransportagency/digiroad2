@@ -445,8 +445,8 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       count = countCurrentProjects.size + 1
       countAfterInsertProjects.size should be (count)
       val project = projectService.getRoadAddressSingleProject(id)
-      project.size should be(1)
-      project.head.name should be ("TestProject")
+      project.size should be(2)
+      project.map(_.name) should contain ("TestProject")
     }
     runWithRollback {
       projectService.getRoadAddressAllProjects().size should be (count-1)

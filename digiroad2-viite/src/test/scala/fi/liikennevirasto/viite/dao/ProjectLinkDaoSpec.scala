@@ -28,17 +28,20 @@ class ProjectLinkDaoSpec  extends FunSuite with Matchers {
       roadAddress.sideCode, roadAddress.calibrationPoints, floating = false, roadAddress.geom, project.id, LinkStatus.NotHandled, RoadType.PublicRoad)
   }
 
-  def addprojects(): Unit = {
-    sqlu"""insert into project (id,state,name,ely,created_by, start_date) VALUES (1,0,'testproject',1,'automatedtest', sysdate)""".execute
-    sqlu"""insert into project (id,state,name,ely,created_by, start_date) VALUES (2,0,'testproject2',1,'automatedtest', sysdate)""".execute
+  def addprojects(): Seq[Long] = {
+    val projectId1 = sql"""SELECT VIITE_PROJECT_SEQ.nextval FROM DUAL""".as[Long].first
+    val projectId2 = sql"""SELECT VIITE_PROJECT_SEQ.nextval FROM DUAL""".as[Long].first
+    sqlu"""insert into project (id,state,name,ely,created_by, start_date) VALUES ($projectId1,0,'testproject',1,'automatedtest', sysdate)""".execute
+    sqlu"""insert into project (id,state,name,ely,created_by, start_date) VALUES ($projectId2,0,'testproject2',1,'automatedtest', sysdate)""".execute
+    Seq(projectId1,projectId2)
   }
 
   test("Add two links that are not reserved") {
     OracleDatabase.withDynTransaction {
-      addprojects()
+      val projectIds = addprojects()
       /*Insert links to project*/
-      sqlu"""insert into project_link (id,project_id,track_code,discontinuity_type,road_number,road_part_number,start_addr_M,end_addr_M,lrm_position_id,created_by) VALUES (1,1,1,0,1,1,1,1,20000286,'automatedtest')""".execute
-      sqlu"""insert into project_link (id,project_id,track_code,discontinuity_type,road_number,road_part_number,start_addr_M,end_addr_M,lrm_position_id,created_by) VALUES (2,2,1,0,1,1,1,1,20000287,'automatedtest')""".execute
+      sqlu"""insert into project_link (id,project_id,track_code,discontinuity_type,road_number,road_part_number,start_addr_M,end_addr_M,lrm_position_id,created_by) VALUES (viite_general_seq.nextval,${projectIds.head},1,0,1,1,1,1,20000286,'automatedtest')""".execute
+      sqlu"""insert into project_link (id,project_id,track_code,discontinuity_type,road_number,road_part_number,start_addr_M,end_addr_M,lrm_position_id,created_by) VALUES (viite_general_seq.nextval,${projectIds.tail.head},1,0,1,1,1,1,20000287,'automatedtest')""".execute
       sql"""SELECT COUNT(*) FROM project_link WHERE created_by = 'automatedtest'""".as[Long].first should be(2L)
       dynamicSession.rollback()
     }
