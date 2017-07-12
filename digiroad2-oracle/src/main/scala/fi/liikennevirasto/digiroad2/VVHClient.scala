@@ -232,6 +232,14 @@ trait VVHClientOperations {
 
   lazy val logger = LoggerFactory.getLogger(getClass)
 
+  protected def anyToDouble(number: Any): Option[Double] = number match {
+    case bi: BigInt => Some(bi.toDouble)
+    case i: Int => Some(i.toDouble)
+    case l: Long => Some(l.toDouble)
+    case d: Double => Some(d)
+    case _ => None
+  }
+
   protected def withFilter[T](attributeName: String, ids: Set[T]): String = {
     val filter =
       if (ids.isEmpty) {
@@ -599,7 +607,8 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
     val linkId = attributes("LINKID").asInstanceOf[BigInt].longValue()
     val municipalityCode = attributes("MUNICIPALITYCODE").asInstanceOf[BigInt].toInt
     val mtkClass = attributes("MTKCLASS")
-    val geometryLength = attributes("GEOMETRYLENGTH").asInstanceOf[Double]
+    val geometryLength = anyToDouble(attributes("GEOMETRYLENGTH")).getOrElse(throw new VVHClientException("Invalid Geometry length"))
+
     val featureClassCode = if (mtkClass != null) // Complementary geometries have no MTK Class
       attributes("MTKCLASS").asInstanceOf[BigInt].intValue()
     else
