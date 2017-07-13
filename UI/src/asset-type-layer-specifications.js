@@ -347,7 +347,8 @@
         title: '',
         enabled: 'Eurooppatienumero(t)',
         disabled: 'Ei eurooppatienumeroa'
-      }
+      },
+      label: new LinearAssetLabelMultiValues()
     },
     {
       typeId: assetType.exitNumbers,
@@ -364,7 +365,8 @@
         title: '',
         enabled: 'Liittymänumero(t)',
         disabled: 'Ei liittymänumeroa'
-      }
+      },
+      label: new LinearAssetLabelMultiValues()
     },
     {
       typeId: assetType.maintenanceRoad,
