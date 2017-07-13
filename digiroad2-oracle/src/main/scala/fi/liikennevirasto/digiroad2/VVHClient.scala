@@ -381,10 +381,14 @@ trait VVHClientOperations {
   }
 
   protected def extractFeatureGeometry(feature: Map[String, Any]): List[List[Double]] = {
-    val geometry = feature("geometry").asInstanceOf[Map[String, Any]]
-    val paths = geometry("paths").asInstanceOf[List[List[List[Double]]]]
-    paths.reduceLeft((geom, nextPart) => geom ++ nextPart.tail)
+    if(feature.contains("geometry")) {
+      val geometry = feature("geometry").asInstanceOf[Map[String, Any]]
+      val paths = geometry("paths").asInstanceOf[List[List[List[Double]]]]
+      paths.reduceLeft((geom, nextPart) => geom ++ nextPart.tail)
+    }
+    else List.empty
   }
+
 
   protected def extractModifiedAt(attributes: Map[String, Any]): Option[DateTime] = {
     def compareDateMillisOptions(a: Option[Long], b: Option[Long]): Option[Long] = {
@@ -607,7 +611,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
     val linkId = attributes("LINKID").asInstanceOf[BigInt].longValue()
     val municipalityCode = attributes("MUNICIPALITYCODE").asInstanceOf[BigInt].toInt
     val mtkClass = attributes("MTKCLASS")
-    val geometryLength = anyToDouble(attributes("GEOMETRYLENGTH")).getOrElse(throw new VVHClientException("Invalid Geometry length"))
+    val geometryLength = anyToDouble(attributes("GEOMETRYLENGTH")).getOrElse(0.0)
 
     val featureClassCode = if (mtkClass != null) // Complementary geometries have no MTK Class
       attributes("MTKCLASS").asInstanceOf[BigInt].intValue()
@@ -683,7 +687,8 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
       "END_DATE",
       "OBJECTID",
       "STARTNODE",
-      "ENDNODE").contains(x)
+      "ENDNODE",
+      "CUST_OWNER").contains(x)
     }.filter { case (_, value) =>
       value != null
     }
@@ -875,7 +880,7 @@ class VVHChangeInfoClient(vvhRestApiEndPoint: String) extends VVHClientOperation
   protected override val linkGeomSource = LinkGeomSource.Unknown
 
   protected override def defaultOutFields() : String = {
-    "OLD_ID,NEW_ID,MTKID,CHANGETYPE,OLD_START,OLD_END,NEW_START,NEW_END,CREATED_DATE,CONSTRUCTIONTYPE,STARTNODE,ENDNODE,GEOMETRYLENGTH"
+    "OLD_ID,NEW_ID,MTKID,CHANGETYPE,OLD_START,OLD_END,NEW_START,NEW_END,CREATED_DATE,CONSTRUCTIONTYPE,STARTNODE,ENDNODE"
   }
 
   protected override def mapFields(content: Map[String, Any], url: String): Either[List[Map[String, Any]], VVHError] = {
@@ -936,7 +941,7 @@ class VVHRoadNodesClient(vvhRestApiEndPoint: String) extends VVHClientOperations
   protected override val linkGeomSource = LinkGeomSource.Unknown
 
   protected override def defaultOutFields(): String = {
-    "OBJECTID,NODEID,FORMOFNODE,MUNICIPALITYCODE,GEOMETRYLENGTH"
+    "OBJECTID,NODEID,FORMOFNODE,MUNICIPALITYCODE"
   }
 
   protected override def mapFields(content: Map[String, Any], url: String): Either[List[Map[String, Any]], VVHError] = {
@@ -980,7 +985,7 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClie
   protected override val linkGeomSource: LinkGeomSource = LinkGeomSource.ComplimentaryLinkInterface
 
   override def defaultOutFields(): String = {
-    "MTKID,LINKID,OBJECTID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,SURFACETYPE,SUBTYPE,CONSTRUCTIONTYPE,GEOMETRYLENGTH"
+    "MTKID,LINKID,OBJECTID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,SURFACETYPE,SUBTYPE,CONSTRUCTIONTYPE,CUST_OWNER,GEOMETRYLENGTH"
   }
 
   private def createFormParams(complementaryFeatures: Map[String, Any]): ArrayList[NameValuePair] = {
