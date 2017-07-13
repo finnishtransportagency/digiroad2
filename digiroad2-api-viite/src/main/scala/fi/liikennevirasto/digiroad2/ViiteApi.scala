@@ -8,8 +8,8 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.RoadAddressException
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink, RoadAddressLinkPartitioner, ProjectLinkPartitioner}
-import fi.liikennevirasto.viite.{ChangeProject, ProjectService, ReservedRoadPart, RoadAddressService}
+import fi.liikennevirasto.viite.model.{ProjectAddressLink, ProjectLinkPartitioner, RoadAddressLink, RoadAddressLinkPartitioner}
+import fi.liikennevirasto.viite.{ProjectService, ReservedRoadPart, RoadAddressService}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.json4s._
@@ -17,6 +17,7 @@ import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.{NotFound, _}
 import org.slf4j.LoggerFactory
 
+import scala.util.control.NonFatal
 import scala.util.parsing.json._
 import scala.util.{Left, Right}
 
@@ -48,7 +49,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   val DrawRoadPartsOnly = 2
   val DrawPublicRoads = 3
   val DrawAllRoads = 4
-
+  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
 
   val logger = LoggerFactory.getLogger(getClass)
@@ -263,7 +264,39 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       Map("success"-> errorMessageOpt.get)
   }
 
-  get("/project/roadlinks"){
+  get("/roadlinks/roadaddress/project/validatenewroadlink"){
+    val roadNumber = params("roadNumber").toLong
+    val part = params("part").toLong
+    val projID = params("projID").toLong
+    val errorMessageOpt=projectService.checkNewRoadAddressNumberAndPart(roadNumber, part, projID)
+    errorMessageOpt match {
+      case Some(error) =>
+        Map("success"->"false",
+          "errormessage"->error)
+      case None => Map("success"->"true")
+    }
+  }
+
+  put("/roadlinks/roadaddress/project/savenewroadlink") {
+    val projID = params("projID").toLong
+    try { //check for validity
+      val projectlinksafe = parsedBody.extract[ProjectLink]
+    } catch {
+      case NonFatal(e) => BadRequest("Missing mandatory ProjectLink parameter")
+    }
+      val projectLink = parsedBody.extract[ProjectLink]
+    withDynTransaction {
+      val errorMessage = projectService.addNewLinkToProject(projectLink, projID)
+      if (errorMessage == "") {
+        Map("success" -> "true")
+      } else {
+        Map("success" -> "false",
+          "errormessage" -> errorMessage)
+      }
+    }
+  }
+
+    get("/project/roadlinks"){
     response.setHeader("Access-Control-Allow-Headers", "*")
 
     val user = userProvider.getCurrentUser()

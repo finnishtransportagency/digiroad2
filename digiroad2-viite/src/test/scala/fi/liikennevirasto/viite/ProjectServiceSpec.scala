@@ -7,6 +7,7 @@ import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, RoadLinkService, _}
@@ -453,6 +454,28 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
     }
   }
 
+  test("Check for new roadaddress reservation") {
+    var count = 0
+    runWithRollback {
+      val countCurrentProjects = projectService.getRoadAddressAllProjects()
+      val id = 0
+      val addresses:List[ReservedRoadPart]= List(ReservedRoadPart(5:Long, 203:Long, 203:Long, 5:Double, Discontinuity.apply("jatkuva"), 8:Long, None:Option[DateTime], None:Option[DateTime]))
+      val roadAddressProject = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", addresses, None)
+      projectService.createRoadLinkProject(roadAddressProject)
+      val countAfterInsertProjects = projectService.getRoadAddressAllProjects()
+      count = countCurrentProjects.size + 1
+      countAfterInsertProjects.size should be (count)
+      val project = projectService.getRoadAddressSingleProject(id)
+      project.size should be(1)
+      project.head.name should be ("TestProject")
+    }
+    runWithRollback {
+      projectService.getRoadAddressAllProjects().size should be (count-1)
+    }
+  }
+
+
+
   test("get the project with it's reserved road parts") {
     var projectId = 0L
     val roadNumber = 1943845
@@ -545,5 +568,19 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       change.changeInfoSeq.foreach(_.roadType should be (RoadType.UnknownOwnerRoad))
     }
     runWithRollback { projectService.getRoadAddressAllProjects() } should have size (count - 1)
+  }
+
+  test("add nonexisting roadlink to project"){
+    runWithRollback {
+      val idr = RoadAddressDAO.getNextRoadAddressId
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
+      val projectLink= toProjectLink(rap)(RoadAddress(idr, 1943845, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
+        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface))
+      ProjectDAO.createRoadAddressProject(rap)
+      projectService.addNewLinkToProject(projectLink, id)
+     val links= ProjectDAO.getProjectLinks(id)
+      links.size should be (1)
+    }
   }
 }
