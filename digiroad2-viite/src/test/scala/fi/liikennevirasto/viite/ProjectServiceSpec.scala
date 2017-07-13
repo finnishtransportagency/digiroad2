@@ -571,7 +571,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       val message=  projectService.addNewLinkToProject(projectLink, id)
         val links = ProjectDAO.getProjectLinks(id)
         links.size should be(0)
-        message should be ("TIE 5 OSA 203 on jo olemassa projektin alkupäivänä 13.07.2017, tarkista tiedot.")
+        message should be ("TIE 5 OSA 203 on jo olemassa projektin alkupäivänä 03.03.1972, tarkista tiedot.")
       }
     }
 

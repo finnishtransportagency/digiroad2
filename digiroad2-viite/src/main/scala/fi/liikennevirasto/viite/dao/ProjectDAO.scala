@@ -144,7 +144,7 @@ object ProjectDAO {
           FROM project $where"""
     Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String, Option[Long], Option[String])](query).list.map {
       case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo, ely, statusInfo) =>
-        RoadAddressProject(id, ProjectState.apply(state), name, createdBy, start_date, modifiedBy, createdDate, modifiedDate, addInfo, List.empty[ReservedRoadPart], statusInfo, ely)
+        RoadAddressProject(id, ProjectState.apply(state), name, createdBy,createdDate, modifiedBy, start_date, modifiedDate, addInfo, List.empty[ReservedRoadPart], statusInfo, ely)
     }.headOption
   }
 
