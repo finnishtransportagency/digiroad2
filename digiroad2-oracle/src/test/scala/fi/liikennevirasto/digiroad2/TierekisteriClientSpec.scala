@@ -11,6 +11,7 @@ import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet}
 import org.apache.http.conn.{ConnectTimeoutException, HttpHostConnectException}
 import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.{CloseableHttpClient, HttpClientBuilder}
+import org.joda.time.DateTime
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import org.mockito.Matchers.any
@@ -32,6 +33,12 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
 
   lazy val tierekisteriTrafficVolumeAsset: TierekisteriTrafficVolumeAsset = {
     new TierekisteriTrafficVolumeAsset(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+      HttpClientBuilder.create().build())
+  }
+
+  lazy val tierekisteriRoadWidthAsset: TierekisteriRoadWidth = {
+    new TierekisteriRoadWidth(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
       dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
       HttpClientBuilder.create().build())
   }
@@ -385,13 +392,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
     }
   }
 
-  test("fetch from tierekisteri active trafic volume with fieldCode and roadNumber") {
-    assume(testConnection)
-    val assets = tierekisteriTrafficVolumeAsset.fetchActiveAssetData("tl201", 45)
 
-    assets.size should be (1)
-    assets.map(_.kvl) should contain (1)
-  }
 
   test("fetch from tierekisteri active trafic volume with fieldCode, roadNumber and roadPartNumber") {
     assume(testConnection)
@@ -472,4 +473,20 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
     sections.last should be (AddressSection(4L, 204L, Track.RightSide, 0L, Some(6584L)))
   }
 
+  test("fetch from tierekisteri active road width with fieldCode and roadNumber") {
+    assume(testConnection)
+    val assets = tierekisteriRoadWidthAsset.fetchActiveAssetData("tl136", 45)
+
+    assets.size should not be (0)
+    assets.map(_.alev) should contain (1)
+  }
+
+  test("fetch from tierekisteri changes road width with fieldCode and roadNumber") {
+    assume(testConnection)
+
+    val assets = tierekisteriRoadWidthAsset.fetchHistoryAssetData("tl136", 45, Some((new DateTime).withYear(2016).withMonthOfYear(1).withDayOfMonth(1)))
+
+    assets.size should not be (1)
+    assets.map(_.alev) should be (1150)
+  }
 }

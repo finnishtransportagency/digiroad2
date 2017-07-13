@@ -171,6 +171,9 @@ case class AddressSection(roadNumber: Long, roadPartNumber: Long, track: Track, 
 case class TierekisteriTrafficData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
                                    startAddressMValue: Long, endAddressMValue: Long, kvl: Int) extends TierekisteriAssetData
 
+case class TierekisteriRoadWidthData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
+                                     startAddressMValue: Long, endAddressMValue: Long, alev: Int) extends TierekisteriAssetData
+
 case class TierekisteriLighting(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
                                 track: Track, startAddressMValue: Long, endAddressMValue: Long) extends TierekisteriAssetData {
   val getRoadAddressSections: Seq[AddressSection] = {
@@ -578,12 +581,27 @@ trait TierekisteriAssetDataClient extends TierekisteriClient {
   protected val trTrackCode = "AJORATA"
 
   private val serviceUrl : String = tierekisteriRestApiEndPoint + serviceName
+
+  def queryString(changeDate: Option[DateTime]) : String = {
+    changeDate match {
+      case Some(value) => "?muutospvm="+changeDate.get.toString("YYYY-MM-DD") + "%20" + changeDate.get.toString("hh:mm:ss")
+      case _ => ""
+    }
+  }
+
   private def serviceUrl(assetType: String, roadNumber: Long) : String = serviceUrl + assetType + "/" + roadNumber
   private def serviceUrl(assetType: String, roadNumber: Long, roadPartNumber: Long) : String = serviceUrl + assetType + "/" + roadNumber + "/" + roadPartNumber
   private def serviceUrl(assetType: String, roadNumber: Long, roadPartNumber: Long, startDistance: Int) : String =
     serviceUrl + assetType + "/" + roadNumber + "/" + roadPartNumber + "/" + startDistance
   private def serviceUrl(assetType: String, roadNumber: Long, roadPartNumber: Long, startDistance: Int, endPart: Int, endDistance: Int) : String =
     serviceUrl + assetType + "/" + roadNumber + "/" + roadPartNumber + "/" + startDistance + "/" + endPart + "/" + endDistance
+
+  private def serviceHistoryUrl(assetType: String, roadNumber: Long, changeDate:  Option[DateTime]) : String = serviceUrl + assetType + "/" + roadNumber + queryString(changeDate)
+  private def serviceHistoryUrl(assetType: String, roadNumber: Long, roadPartNumber: Long, changeDate: Option[DateTime]) : String = serviceUrl + assetType + "/" + roadNumber + "/" + roadPartNumber + queryString(changeDate)
+  private def serviceHistoryUrl(assetType: String, roadNumber: Long, roadPartNumber: Long, startDistance: Int, changeDate: Option[DateTime]) : String =
+    serviceUrl + assetType + "/" + roadNumber + "/" + roadPartNumber + "/" + startDistance + queryString(changeDate)
+  private def serviceHistoryUrl(assetType: String, roadNumber: Long, roadPartNumber: Long, startDistance: Int, endPart: Int, endDistance: Int, changeDate: Option[DateTime]) : String =
+    serviceUrl + assetType + "/" + roadNumber + "/" + roadPartNumber + "/" + startDistance + "/" + endPart + "/" + endDistance + queryString(changeDate)
 
   /**
     * Return all asset data currently active from Tierekisteri
@@ -635,6 +653,51 @@ trait TierekisteriAssetDataClient extends TierekisteriClient {
       case Right(error) => throw new TierekisteriClientException("Tierekisteri error: " + error.content.get("error").get.toString)
     }
   }
+
+  def fetchHistoryAssetData(assetType: String, roadNumber: Long, changeDate:  Option[DateTime]): Seq[TierekisteriType] = {
+    request[Map[String,List[Map[String, Any]]]](serviceHistoryUrl(assetType, roadNumber, changeDate)) match {
+      case Left(content) => {
+        content("Data").map{
+          asset => mapFields(asset)
+        }
+      }
+      case Right(null) => Seq()
+      case Right(error) => throw new TierekisteriClientException("Tierekisteri error: " + error.content.get("error").get.toString)
+    }
+  }
+
+  def fetchHistoryAssetData(assetType: String, roadNumber: Long, roadPartNumber: Long, changeDate: Option[DateTime]): Seq[TierekisteriType] = {
+    request[Map[String,List[Map[String, Any]]]](serviceHistoryUrl(assetType, roadNumber, roadPartNumber, changeDate)) match {
+      case Left(content) =>
+        content("Data").map{
+          asset => mapFields(asset)
+        }
+      case Right(null) => Seq()
+      case Right(error) => throw new TierekisteriClientException("Tierekisteri error: " + error.content.get("error").get.toString)
+    }
+  }
+
+  def fetchHistoryAssetData(assetType: String, roadNumber: Long, roadPartNumber: Long, startDistance: Int, changeDate: Option[DateTime]): Seq[TierekisteriType] = {
+    request[Map[String,List[Map[String, Any]]]](serviceHistoryUrl(assetType, roadNumber, roadPartNumber, startDistance, changeDate)) match {
+      case Left(content) =>
+        content("Data").map{
+          asset => mapFields(asset)
+        }
+      case Right(null) => Seq()
+      case Right(error) => throw new TierekisteriClientException("Tierekisteri error: " + error.content.get("error").get.toString)
+    }
+  }
+
+  def fetchHistoryAssetData(assetType: String, roadNumber: Long, roadPartNumber: Long, startDistance: Int, endPart: Int, endDistance: Int, changeDate: Option[DateTime]): Seq[TierekisteriType] = {
+    request[Map[String,List[Map[String, Any]]]](serviceHistoryUrl(assetType, roadNumber, roadPartNumber, startDistance, endPart, endDistance, changeDate)) match {
+      case Left(content) =>
+        content("Data").map{
+          asset => mapFields(asset)
+        }
+      case Right(null) => Seq()
+      case Right(error) => throw new TierekisteriClientException("Tierekisteri error: " + error.content.get("error").get.toString)
+    }
+  }
 }
 
 class TierekisteriTrafficVolumeAsset(trEndPoint: String, trEnable: Boolean, httpClient: CloseableHttpClient) extends TierekisteriAssetDataClient {
@@ -674,6 +737,27 @@ class TierekisteriLightingAsset(trEndPoint: String, trEnable: Boolean, httpClien
     val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
 
     TierekisteriLighting(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue)
+  }
+}
+
+class TierekisteriRoadWidth(trEndPoint: String, trEnable: Boolean, httpClient: CloseableHttpClient) extends TierekisteriAssetDataClient{
+  override def tierekisteriRestApiEndPoint: String = trEndPoint
+  override def tierekisteriEnabled: Boolean = trEnable
+  override def client: CloseableHttpClient = httpClient
+  type TierekisteriType = TierekisteriRoadWidthData
+
+  private val trALEV = "ALEV"
+
+  override def mapFields(data: Map[String, Any]): TierekisteriRoadWidthData = {
+    //Mandatory field
+    val alev = convertToInt(getMandatoryFieldValue(data, trALEV)).get * 10 //To convert to cm
+    val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
+    val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
+    val endRoadPartNumber = convertToLong(getMandatoryFieldValue(data, trEndRoadPartNumber)).getOrElse(roadPartNumber)
+    val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
+    val endMValue = convertToLong(getMandatoryFieldValue(data, trEndMValue)).get
+
+    TierekisteriRoadWidthData(roadNumber, roadPartNumber, endRoadPartNumber, startMValue, endMValue, alev)
   }
 }
 
