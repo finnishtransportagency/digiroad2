@@ -611,7 +611,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
     val linkId = attributes("LINKID").asInstanceOf[BigInt].longValue()
     val municipalityCode = attributes("MUNICIPALITYCODE").asInstanceOf[BigInt].toInt
     val mtkClass = attributes("MTKCLASS")
-    val geometryLength = anyToDouble(attributes("GEOMETRYLENGTH")).getOrElse(throw new VVHClientException("Invalid Geometry length"))
+    val geometryLength = anyToDouble(attributes("GEOMETRYLENGTH")).getOrElse(0.0)
 
     val featureClassCode = if (mtkClass != null) // Complementary geometries have no MTK Class
       attributes("MTKCLASS").asInstanceOf[BigInt].intValue()
@@ -880,7 +880,7 @@ class VVHChangeInfoClient(vvhRestApiEndPoint: String) extends VVHClientOperation
   protected override val linkGeomSource = LinkGeomSource.Unknown
 
   protected override def defaultOutFields() : String = {
-    "OLD_ID,NEW_ID,MTKID,CHANGETYPE,OLD_START,OLD_END,NEW_START,NEW_END,CREATED_DATE,CONSTRUCTIONTYPE,STARTNODE,ENDNODE,GEOMETRYLENGTH"
+    "OLD_ID,NEW_ID,MTKID,CHANGETYPE,OLD_START,OLD_END,NEW_START,NEW_END,CREATED_DATE,CONSTRUCTIONTYPE,STARTNODE,ENDNODE"
   }
 
   protected override def mapFields(content: Map[String, Any], url: String): Either[List[Map[String, Any]], VVHError] = {
@@ -941,7 +941,7 @@ class VVHRoadNodesClient(vvhRestApiEndPoint: String) extends VVHClientOperations
   protected override val linkGeomSource = LinkGeomSource.Unknown
 
   protected override def defaultOutFields(): String = {
-    "OBJECTID,NODEID,FORMOFNODE,MUNICIPALITYCODE,GEOMETRYLENGTH"
+    "OBJECTID,NODEID,FORMOFNODE,MUNICIPALITYCODE"
   }
 
   protected override def mapFields(content: Map[String, Any], url: String): Either[List[Map[String, Any]], VVHError] = {
