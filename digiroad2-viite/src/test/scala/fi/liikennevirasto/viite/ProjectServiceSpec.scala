@@ -556,8 +556,25 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
         Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface))
       ProjectDAO.createRoadAddressProject(rap)
       projectService.addNewLinkToProject(projectLink, id)
-     val links= ProjectDAO.getProjectLinks(id)
-      links.size should be (1)
+      val links = ProjectDAO.getProjectLinks(id)
+      links.size should be(1)
     }
   }
+    test("error message when reserving already used road number&part") {
+      runWithRollback {
+        val idr = RoadAddressDAO.getNextRoadAddressId
+        val id = Sequences.nextViitePrimaryKeySeqValue
+        val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("1972-03-03"), DateTime.parse("2700-01-01"), "Some additional info", List.empty[ReservedRoadPart], None)
+        val projectLink = toProjectLink(rap)(RoadAddress(idr, 5, 203, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
+          Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface))
+        ProjectDAO.createRoadAddressProject(rap)
+      val message=  projectService.addNewLinkToProject(projectLink, id)
+        val links = ProjectDAO.getProjectLinks(id)
+        links.size should be(0)
+        message should be ("TIE 5 OSA 203 on jo olemassa projektin alkupäivänä 13.07.2017, tarkista tiedot.")
+      }
+    }
+
+
+
 }

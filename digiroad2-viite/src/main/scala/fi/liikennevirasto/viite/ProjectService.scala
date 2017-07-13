@@ -12,6 +12,7 @@ import fi.liikennevirasto.viite.model.{ProjectAddressLink, ProjectAddressLinkLik
 import fi.liikennevirasto.viite.process.{Delta, ProjectDeltaCalculator, RoadAddressFiller}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
+import org.joda.time.format.DateTimeFormat
 
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -61,7 +62,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       if (roadAddresses.isEmpty) {
         None
       } else {
-       Some(s"TIE $roadNumber OSA $roadPart on jo olemassa projektin alkupäivänä ${project.startDate}, tarkista tiedot.") //message to user if address is already in use
+        val fmt = DateTimeFormat.forPattern("dd.MM.yyyy")
+
+       Some(s"TIE $roadNumber OSA $roadPart on jo olemassa projektin alkupäivänä ${project.startDate.toString(fmt)}, tarkista tiedot.") //message to user if address is already in use
       }
     }
   }
