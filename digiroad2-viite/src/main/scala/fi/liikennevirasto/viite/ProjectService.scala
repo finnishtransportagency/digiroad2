@@ -309,7 +309,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def enrichTerminations(terminations: Seq[RoadAddress], roadlinks: Seq[RoadLink]): Seq[RoadAddress] = {
-    val withRoadType = terminations.map{
+    val withRoadType = terminations.par.map{
       t =>
         val relatedRoadLink = roadlinks.filter(rl => rl.linkId == t.linkId).headOption
         relatedRoadLink match {
@@ -319,7 +319,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             t.copy(roadType = roadType)
         }
     }
-    withRoadType
+    withRoadType.toList
   }
 
   def getRoadAddressChangesAndSendToTR(projectId: Set[Long]) = {
