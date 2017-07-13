@@ -153,7 +153,6 @@ object RoadAddressChangesDAO {
   }
 
   def insertDeltaToRoadChangeTable(delta: Delta, projectId: Long): Boolean= {
-    val roadType = 9 //TODO missing
     ProjectDAO.getRoadAddressProjectById(projectId) match {
       case Some(project) => {
         project.ely match {
@@ -176,7 +175,7 @@ object RoadAddressChangesDAO {
               roadAddressChangePS.setDouble(11, roadAddressSection.endMAddr)
               roadAddressChangePS.setDouble(12, roadAddressSection.endMAddr)
               roadAddressChangePS.setLong(13, roadAddressSection.discontinuity.value)
-              roadAddressChangePS.setLong(14, roadType)
+              roadAddressChangePS.setLong(14, roadAddressSection.roadType.value)
               roadAddressChangePS.setLong(15, ely)
               roadAddressChangePS.addBatch()
             }

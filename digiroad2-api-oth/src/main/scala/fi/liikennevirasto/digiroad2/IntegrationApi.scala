@@ -165,6 +165,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
         lastModifiedBy(None, roadLink.modifiedBy),
         "startNode" -> roadLink.attributes.get("STARTNODE"),
         "endNode" -> roadLink.attributes.get("ENDNODE"),
+        "cust_owner" -> roadLink.attributes.get("CUST_OWNER"),
         "linkSource" -> roadLink.linkSource.value) ++ roadLink.attributes.filterNot(_._1 == "MTKID")
                                                                          .filterNot(_._1 == "ROADNUMBER")
                                                                          .filterNot(_._1 == "ROADPARTNUMBER")

@@ -381,10 +381,14 @@ trait VVHClientOperations {
   }
 
   protected def extractFeatureGeometry(feature: Map[String, Any]): List[List[Double]] = {
-    val geometry = feature("geometry").asInstanceOf[Map[String, Any]]
-    val paths = geometry("paths").asInstanceOf[List[List[List[Double]]]]
-    paths.reduceLeft((geom, nextPart) => geom ++ nextPart.tail)
+    if(feature.contains("geometry")) {
+      val geometry = feature("geometry").asInstanceOf[Map[String, Any]]
+      val paths = geometry("paths").asInstanceOf[List[List[List[Double]]]]
+      paths.reduceLeft((geom, nextPart) => geom ++ nextPart.tail)
+    }
+    else List.empty
   }
+
 
   protected def extractModifiedAt(attributes: Map[String, Any]): Option[DateTime] = {
     def compareDateMillisOptions(a: Option[Long], b: Option[Long]): Option[Long] = {
@@ -683,7 +687,8 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
       "END_DATE",
       "OBJECTID",
       "STARTNODE",
-      "ENDNODE").contains(x)
+      "ENDNODE",
+      "CUST_OWNER").contains(x)
     }.filter { case (_, value) =>
       value != null
     }
@@ -980,7 +985,7 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClie
   protected override val linkGeomSource: LinkGeomSource = LinkGeomSource.ComplimentaryLinkInterface
 
   override def defaultOutFields(): String = {
-    "MTKID,LINKID,OBJECTID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,SURFACETYPE,SUBTYPE,CONSTRUCTIONTYPE,GEOMETRYLENGTH"
+    "MTKID,LINKID,OBJECTID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,SURFACETYPE,SUBTYPE,CONSTRUCTIONTYPE,CUST_OWNER,GEOMETRYLENGTH"
   }
 
   private def createFormParams(complementaryFeatures: Map[String, Any]): ArrayList[NameValuePair] = {

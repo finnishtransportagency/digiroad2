@@ -106,10 +106,9 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
     println("\nLighting data Expired")
 
     println("\nFetch Road Numbers From Viite")
-//    val roadNumbers = OracleDatabase.withDynSession {
-//      roadAddressDao.getRoadNumbers()
-//    }
-    val roadNumbers = Seq(56)
+    val roadNumbers = OracleDatabase.withDynSession {
+      roadAddressDao.getRoadNumbers()
+    }
     println("\nEnd of Fetch ")
 
     println("roadNumbers: ")

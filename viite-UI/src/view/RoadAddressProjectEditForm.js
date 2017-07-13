@@ -97,7 +97,7 @@
         '<select class="form-control" id="dropDown" size="1">'+
         '<option selected disabled hidden>Valitse</option>'+
         '<option value="lakkautus"' + (status == 1 ? ' selected' : '') + '>Lakkautus</option>'+
-        '<option value="uusi"' + (selected[0].roadNumber === 0 ? ' ' : ' disabled')+'>Uusi</option>'+
+        '<option value="uusi"' + (selected[0].status !== 0 && selected[0].status !== 1 ? ' ' : ' disabled')+'>Uusi</option>'+
         '<option value="action4" disabled>Numeroinnin muutos</option>'+
         '<option value="action5" disabled>Ennallaan</option>'+
         '<option value="action6" disabled>Kalibrointiarvon muutos</option>'+
@@ -120,19 +120,18 @@
         '<div><label></label></div><div><label style = "margin-top: 50px">TIEOSOITTEEN TIEDOT</label></div>' +
         addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('AJR')+ addSmallLabel('ELY')  + addSmallLabel('JATKUU')+
         '</div>' +
-        '<div class="form-group new-road-address" hidden>' +
-        addSmallInputNumber('tie') + addSmallInputNumber('osa') + addSmallInputNumber('ajr')+  addSmallInputNumberDisabled('ely', selectedProjectLink[0].elyCode) +addSelect()+
+        '<div class="form-group new-road-address" hidden>'+ addSmallInputNumber('tie',(selectedProjectLink[0].roadNumber !== 0 ? selectedProjectLink[0].roadNumber : '')) + addSmallInputNumber('osa',(selectedProjectLink[0].roadPartNumber !== 0 ? selectedProjectLink[0].roadPartNumber : '')) + addSmallInputNumber('ajr',(selectedProjectLink[0].trackCode !== 99 ? selectedProjectLink[0].trackCode : '')) + addSmallInputNumberDisabled('ely', selectedProjectLink[0].elyCode) +addSelect()+
         '</div>';
     };
 
     var addSelect = function(){
       return '<select class="form-select-control" id="DiscontinuityDropdown" size="1">'+
-      '<option value = "action5" selected disabled hidden>Jatkuva</option>'+
-      '<option value="action1" >Tien loppu</option>'+
-      '<option value="action2" >Epäjatkuva</option>'+
-      '<option value="action3" >ELY:n raja</option>'+
-      '<option value="action4" >Lievä epäjatkuvuus</option>'+
-      '<option value="action5">Jatkuva</option>'+
+      '<option value = "action5" selected disabled hidden>5 Jatkuva</option>'+
+      '<option value="action1" >1 Tien loppu</option>'+
+      '<option value="action2" >2 Epäjatkuva</option>'+
+      '<option value="action3" >3 ELY:n raja</option>'+
+      '<option value="action4" >4 Lievä epäjatkuvuus</option>'+
+      '<option value="action5" >5 Jatkuva</option>'+
       '</select>';
     };
 
@@ -143,7 +142,7 @@
     var addSmallInputNumber = function(id, value){
       //Validate only number characters on "onkeypress" including TAB and backspace
       return '<input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode == 8 || event.keyCode == 9)' +
-        '" class="form-control small-input roadAddressProject" id="'+id+'" value="'+(_.isUndefined(value)? '' : value )+'" onclick=""/>';
+        '"class="form-control small-input roadAddressProject" id="'+id+'" value="'+(_.isUndefined(value)? '' : value )+'" onclick=""/>';
     };
 
     var addSmallInputNumberDisabled = function(id, value){
@@ -175,7 +174,23 @@
         selectedProjectLink = selected;
         currentProject = projectCollection.getCurrentProject();
         clearInformationContent();
-        rootElement.html(selectedProjectLinkTemplate(currentProject.project, options, selectedProjectLink));
+        rootElement.html(selectedProjectLinkTemplate(currentProject.project, options, selectedProjectLink)).find("input").on('keyup', function () {
+          var rootElement = $('#feature-attributes');
+          var inputs = rootElement.find('input');
+          var filled = true;
+
+          for (var i = 0; i < inputs.length; i++) {
+            if (inputs[i].type === 'text' && (!inputs[i].value || inputs[i].value === '0')) {
+              filled = false;
+            }
+          }
+
+          if (filled) {
+            rootElement.find('.project-form button.update').prop("disabled", false);
+          } else {
+            rootElement.find('.project-form button.update').prop("disabled", true);
+          }
+        });
       });
 
       eventbus.on('roadAddressProject:publishable', function() {
