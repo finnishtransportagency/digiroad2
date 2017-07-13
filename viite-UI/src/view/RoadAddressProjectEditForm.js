@@ -159,6 +159,25 @@
         '<footer></footer>');
     };
 
+    var checkInputs = function () {
+        var rootElement = $('#feature-attributes');
+        var inputs = rootElement.find('input');
+        var filled = true;
+        for (var i = 0; i < inputs.length; i++) {
+            if (inputs[i].type === 'text' &&
+                (!inputs[i].value ||
+                (inputs[i].id !== 'ajr' && inputs[i].value === '0') ||
+                (inputs[i].id === 'ajr' && inputs[i].value === '99'))) {
+                filled = false;
+            }
+        }
+        if (filled) {
+            rootElement.find('.project-form button.update').prop("disabled", false);
+        } else {
+            rootElement.find('.project-form button.update').prop("disabled", true);
+        }
+    };
+
     var bindEvents = function() {
 
       var rootElement = $('#feature-attributes');
@@ -174,23 +193,8 @@
         selectedProjectLink = selected;
         currentProject = projectCollection.getCurrentProject();
         clearInformationContent();
-        rootElement.html(selectedProjectLinkTemplate(currentProject.project, options, selectedProjectLink)).find("input").on('keyup', function () {
-          var rootElement = $('#feature-attributes');
-          var inputs = rootElement.find('input');
-          var filled = true;
-
-          for (var i = 0; i < inputs.length; i++) {
-            if (inputs[i].type === 'text' && (!inputs[i].value || inputs[i].value === '0')) {
-              filled = false;
-            }
-          }
-
-          if (filled) {
-            rootElement.find('.project-form button.update').prop("disabled", false);
-          } else {
-            rootElement.find('.project-form button.update').prop("disabled", true);
-          }
-        });
+        rootElement.html(selectedProjectLinkTemplate(currentProject.project, options, selectedProjectLink));
+        checkInputs();
       });
 
       eventbus.on('roadAddressProject:publishable', function() {
@@ -301,6 +305,11 @@
         var publishButton = sendRoadAddressChangeButton();
         rootElement.append(publishButton);
       });
+
+      rootElement.on('keyup','.form-control.small-input', function () {
+         checkInputs();
+      });
+
     };
     bindEvents();
   };
