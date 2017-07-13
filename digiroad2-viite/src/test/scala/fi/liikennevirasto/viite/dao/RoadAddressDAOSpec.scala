@@ -8,8 +8,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, RoadLinkService}
 import fi.liikennevirasto.viite.dao.Discontinuity.Discontinuous
-import fi.liikennevirasto.viite.{ReservedRoadPart, RoadAddressMerge, RoadAddressService}
-import fi.liikennevirasto.viite.{RoadAddressMerge, RoadAddressService, RoadType}
+import fi.liikennevirasto.viite.{ReservedRoadPart,RoadAddressMerge, RoadAddressService, RoadType}
 import org.joda.time.DateTime
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
@@ -275,7 +274,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
   test("Terminated road reservation") {
     runWithRollback {
       val idr = RoadAddressDAO.getNextRoadAddressId
-      val ra = Seq(RoadAddress(idr, 1943845, 1, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
+      val ra = Seq(RoadAddress(idr, 1943845, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
         Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface))
       RoadAddressDAO.create(ra)
       val id = Sequences.nextViitePrimaryKeySeqValue
