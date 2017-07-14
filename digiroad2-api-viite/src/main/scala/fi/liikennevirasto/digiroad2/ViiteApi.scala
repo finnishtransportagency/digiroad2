@@ -264,19 +264,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       Map("success"-> errorMessageOpt.get)
   }
 
-  get("/roadlinks/roadaddress/project/validatenewroadlink"){
-    val roadNumber = params("roadNumber").toLong
-    val part = params("part").toLong
-    val projID = params("projID").toLong
-    val errorMessageOpt=projectService.checkNewRoadAddressNumberAndPart(roadNumber, part, projID)
-    errorMessageOpt match {
-      case Some(error) =>
-        Map("success"->"false",
-          "errormessage"->error)
-      case None => Map("success"->"true")
-    }
-  }
-
   put("/roadlinks/roadaddress/project/savenewroadlink") {
     val projID = params("projID").toLong
     try { //check for validity
