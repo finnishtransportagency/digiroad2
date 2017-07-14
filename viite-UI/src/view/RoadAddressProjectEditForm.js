@@ -126,12 +126,12 @@
 
     var addSelect = function(){
       return '<select class="form-select-control" id="DiscontinuityDropdown" size="1">'+
-      '<option value = "action5" selected disabled hidden>5 Jatkuva</option>'+
-      '<option value="action1" >1 Tien loppu</option>'+
-      '<option value="action2" >2 Epäjatkuva</option>'+
-      '<option value="action3" >3 ELY:n raja</option>'+
-      '<option value="action4" >4 Lievä epäjatkuvuus</option>'+
-      '<option value="action5" >5 Jatkuva</option>'+
+      '<option value = "5" selected disabled hidden>5 Jatkuva</option>'+
+      '<option value="1" >1 Tien loppu</option>'+
+      '<option value="2" >2 Epäjatkuva</option>'+
+      '<option value="3" >3 ELY:n raja</option>'+
+      '<option value="4" >4 Lievä epäjatkuvuus</option>'+
+      '<option value="5" >5 Jatkuva</option>'+
       '</select>';
     };
 
@@ -255,7 +255,13 @@
 
       rootElement.on('click', '.project-form button.update', function() {
         currentProject = projectCollection.getCurrentProject();
-        projectCollection.saveProjectLinks(projectCollection.getTmpExpired());
+        if( $('[id=dropDown] :selected').val() == 'lakkautus') {
+          projectCollection.saveProjectLinks(projectCollection.getTmpExpired());
+        }
+        else if( $('[id=dropDown] :selected').val() === 'uusi'){
+
+          projectCollection.createProjectLinks(projectCollection.getTmpExpired());
+        }
         rootElement.html(emptyTemplate(currentProject.project));
       });
 
@@ -269,6 +275,7 @@
           rootElement.find('.project-form button.update').prop("disabled", false);
         }
         else if(this.value == "uusi"){
+          projectCollection.setTmpExpired(projectCollection.getTmpExpired().concat(selectedProjectLink));
           rootElement.find('.new-road-address').prop("hidden", false);
         }
       });
