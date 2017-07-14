@@ -282,8 +282,25 @@ class MassTransitStopDao {
     sqlu"""Delete From Asset Where id = $assetId""".execute
   }
 
-  def updateLrmPosition(id: Long, mValue: Double, linkId: Long, linkSource: LinkGeomSource) {
-    sqlu"""
+  def updateLrmPosition(id: Long, mValue: Double, linkId: Long, linkSource: LinkGeomSource, adjustedTimeStampOption: Option[Long] = None) {
+    adjustedTimeStampOption match {
+      case Some(adjustedTimeStamp) =>
+        sqlu"""
+           update lrm_position
+            set start_measure = $mValue,
+            end_measure = $mValue,
+            link_id = $linkId,
+            link_source = ${linkSource.value},
+            adjusted_timestamp = ${adjustedTimeStamp}
+           where id = (
+            select lrm.id
+            from asset a
+            join asset_link al on al.asset_id = a.id
+            join lrm_position lrm on lrm.id = al.position_id
+            where a.id = $id)
+      """.execute
+      case _ =>
+        sqlu"""
            update lrm_position
            set start_measure = $mValue, end_measure = $mValue, link_id = $linkId, link_source = ${linkSource.value}
            where id = (
@@ -293,6 +310,7 @@ class MassTransitStopDao {
             join lrm_position lrm on lrm.id = al.position_id
             where a.id = $id)
       """.execute
+    }
   }
 
   def insertLrmPosition(id: Long, mValue: Double, linkId: Long, linkSource: LinkGeomSource) {
