@@ -222,7 +222,7 @@
        layerName: asset.layerName,
        multiElementEventCategory: asset.multiElementEventCategory,
        singleElementEventCategory: asset.singleElementEventCategory,
-       style: PiecewiseLinearAssetStyle(applicationModel),
+       style: asset.style || new PiecewiseLinearAssetStyle(),
        formElements: AssetFormElementsFactory.construct(asset),
        assetLabel: asset.label
      });
@@ -300,6 +300,7 @@
     var massTransitBox = new ActionPanelBoxes.AssetBox(selectedMassTransitStopModel);
     var speedLimitBox = new ActionPanelBoxes.SpeedLimitBox(selectedSpeedLimit);
     var manoeuvreBox = new ManoeuvreBox();
+    var winterSpeedLimits = new ActionPanelBoxes.WinterSpeedLimitBox(_.find(linearAssets, {typeId: assetType.winterSpeedLimit}));
 
     return [
       [roadLinkBox],
@@ -310,8 +311,8 @@
           .concat(getLinearAsset(assetType.massTransitLane))
           .concat(getLinearAsset(assetType.europeanRoads))
           .concat(getLinearAsset(assetType.exitNumbers)),
-      [speedLimitBox]
-          .concat(getLinearAsset(assetType.winterSpeedLimit)),
+      [speedLimitBox].concat(
+      [winterSpeedLimits]),
       [massTransitBox]
           .concat(getPointAsset(assetType.obstacles))
           .concat(getPointAsset(assetType.railwayCrossings))

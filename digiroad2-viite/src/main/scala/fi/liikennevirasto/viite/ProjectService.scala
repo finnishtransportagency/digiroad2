@@ -12,6 +12,7 @@ import fi.liikennevirasto.viite.model.{ProjectAddressLink, ProjectAddressLinkLik
 import fi.liikennevirasto.viite.process.{Delta, ProjectDeltaCalculator, RoadAddressFiller}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
+import org.joda.time.format.DateTimeFormat
 
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -55,18 +56,18 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * Checks that new road address is not already reserved (currently only checks roadaddresstable)
     * @param roadNumber road number
     * @param roadPart road part number
-    * @param projectId project id
+    * @param project  roadaddress project needed for id and error message
     * @return
     */
-  def checkNewRoadAddressNumberAndPart(roadNumber: Long, roadPart: Long, projectId :Long): Option[String] = {
-    //withDynTransaction {
-      val roadAddresses = RoadAddressDAO.isNewRoadPartUsed(roadNumber, roadPart, projectId)
+  def checkNewRoadAddressNumberAndPart(roadNumber: Long, roadPart: Long, project :RoadAddressProject): Option[String] = {
+      val roadAddresses = RoadAddressDAO.isNewRoadPartUsed(roadNumber, roadPart, project.id)
       if (roadAddresses.isEmpty) {
         None
       } else {
-       Some("Tieosa on jo käytössä") //message to user if address is already in use
+        val fmt = DateTimeFormat.forPattern("dd.MM.yyyy")
+
+        Some(s"TIE $roadNumber OSA $roadPart on jo olemassa projektin alkupäivänä ${project.startDate.toString(fmt)}, tarkista tiedot.") //message to user if address is already in use
       }
-    //}
   }
 
   private def createNewProjectToDB(roadAddressProject: RoadAddressProject): RoadAddressProject = {
@@ -134,7 +135,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val randomSideCode = allowedSideCodes(new Random(System.currentTimeMillis()).nextInt(allowedSideCodes.length))
       ProjectDAO.getRoadAddressProjectById(roadAddressProjectID) match {
         case Some(project) => {
-          checkNewRoadAddressNumberAndPart(newRoadNumber, newRoadPartNumber, project.id) match {
+          checkNewRoadAddressNumberAndPart(newRoadNumber, newRoadPartNumber, project) match {
             case Some(errorMessage) => errorMessage
             case None => {
               val newProjectLinks = roadLinks.map(projectLink => {

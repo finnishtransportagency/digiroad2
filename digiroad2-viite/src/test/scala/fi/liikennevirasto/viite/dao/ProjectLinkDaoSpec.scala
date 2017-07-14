@@ -172,7 +172,7 @@ class ProjectLinkDaoSpec  extends FunSuite with Matchers {
         case Some(project) =>
           project.name should be("newname")
           project.additionalInfo should be("updated info")
-          project.createdDate should be(DateTime.parse("1901-01-01"))
+          project.startDate should be(DateTime.parse("1901-01-02"))
           project.dateModified.getMillis should be > DateTime.parse("1901-01-03").getMillis + 100000000
         case None => None should be(RoadAddressProject)
       }

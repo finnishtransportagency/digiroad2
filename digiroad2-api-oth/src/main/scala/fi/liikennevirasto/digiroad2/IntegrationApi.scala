@@ -171,6 +171,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
                                                                          .filterNot(_._1 == "ROADPARTNUMBER")
                                                                          .filterNot(_._1 == "STARTNODE")
                                                                          .filterNot(_._1 == "ENDNODE")
+                                                                         .filterNot(_._1 == "CUST_OWNER")
                                                                          .filterNot(_._1 == "MTKCLASS" && roadLink.linkSource.value == LinkGeomSource.ComplimentaryLinkInterface.value)
 
     }

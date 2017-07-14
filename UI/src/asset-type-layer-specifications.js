@@ -294,9 +294,11 @@
       editControlLabels: {
         title: 'Rajoitus',
         enabled: 'Talvinopeusrajoitus',
-        disabled: 'Ei talvinopeusrajoitusta'
+        disabled: 'Ei talvinopeusrajoitusta',
+        showUnit: true
       },
-      possibleValues: [100, 80, 70, 60]
+      possibleValues: [100, 80, 70, 60],
+      style : new WinterSpeedLimitStyle()
     },
     {
       typeId: assetType.prohibition,
@@ -345,7 +347,8 @@
         title: '',
         enabled: 'Eurooppatienumero(t)',
         disabled: 'Ei eurooppatienumeroa'
-      }
+      },
+      label: new LinearAssetLabelMultiValues()
     },
     {
       typeId: assetType.exitNumbers,
@@ -362,7 +365,8 @@
         title: '',
         enabled: 'Liittymänumero(t)',
         disabled: 'Ei liittymänumeroa'
-      }
+      },
+      label: new LinearAssetLabelMultiValues()
     },
     {
       typeId: assetType.maintenanceRoad,
