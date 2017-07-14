@@ -130,7 +130,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   /**
     * Used when adding road address that does not have previous address
     */
-  def addNewLinksToProject(roadLinks: Seq[ProjectAddressLink], roadAddressProjectID :Long, newRoadNumber : Long, newRoadPartNumber: Long, newTrackCode: Long, newDiscontinuity: Long):String = {
+  def addNewLinksToProject(projectAddressLinks: Seq[ProjectAddressLink], roadAddressProjectID :Long, newRoadNumber : Long, newRoadPartNumber: Long, newTrackCode: Long, newDiscontinuity: Long):String = {
 
       val randomSideCode = allowedSideCodes(new Random(System.currentTimeMillis()).nextInt(allowedSideCodes.length))
       ProjectDAO.getRoadAddressProjectById(roadAddressProjectID) match {
@@ -138,11 +138,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           checkNewRoadAddressNumberAndPart(newRoadNumber, newRoadPartNumber, project) match {
             case Some(errorMessage) => errorMessage
             case None => {
-              val newProjectLinks = roadLinks.map(projectLink => {
-                ProjectLink(NewRoadAddress, newRoadNumber, newRoadPartNumber, Track.apply(newTrackCode.toInt), Discontinuity.apply(newDiscontinuity.toInt), projectLink.startAddressM,
-                  projectLink.endAddressM, Some(project.startDate), None, Some(project.createdBy), -1, projectLink.linkId, projectLink.startMValue, projectLink.endMValue, randomSideCode,
-                  (projectLink.startCalibrationPoint, projectLink.endCalibrationPoint), false, projectLink.geometry, roadAddressProjectID, projectLink.status, projectLink.roadType, projectLink.roadLinkSource)
-              })
+              val newProjectLinks = RoadAddressFiller.fillNewRoadAddress(project, projectAddressLinks, roadAddressProjectID, newRoadNumber, newRoadPartNumber, newTrackCode, newDiscontinuity, randomSideCode)
               ProjectDAO.create(newProjectLinks)
               ""
             }
@@ -172,7 +168,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         s"TIE ${roadAddress.roadNumber} OSA: ${roadAddress.roadPartNumber}"
       } else "").filterNot(_ == "")
     if (errors.nonEmpty)
-      Some(s"Seuraavia tieosia ei löytynyt tietokannasta: ${errors.mkString(", ")}")1
+      Some(s"Seuraavia tieosia ei löytynyt tietokannasta: ${errors.mkString(", ")}")
     else {
       val elyErrors = project.reservedParts.map(roadAddress =>
         if (project.ely.nonEmpty && roadAddress.ely != project.ely.get) {
@@ -640,35 +636,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             }
         }.toList
         withRoadType
-//      case CalibrationPoint =>
-//        val groupedRoadAddresses = roadAdddresses.groupBy {r => (r.roadNumber, r.roadPartNumber, r.track.value)}
-//
-//        val withCalibrationPoints: Seq[RoadAddress] = groupedRoadAddresses.flatMap{
-//          case (key, gra) =>
-//
-//              val startSegment = gra.minBy(_.startAddrMValue)
-//              val endSegment = gra.maxBy(_.startAddrMValue)
-//            gra.map{
-//              ra =>
-//                val relatedRoadLink = roadLinks.filter(rl => rl.linkId == ra.linkId).headOption
-//
-//              relatedRoadLink match {
-//                case None => ra
-//                case Some(rl) =>
-//                  //                case class CalibrationPoint(linkId: Long, segmentMValue: Double, addressMValue: Long)
-//                  val startCalibrationPoint = if(ra.lrmPositionId == startSegment.lrmPositionId)
-//                    Option(CalibrationPoint(rl.linkId,0.0,ra.startAddrMValue))
-//                  else None
-//                  val endCalibrationPoint = if(ra.lrmPositionId == endSegment.lrmPositionId)
-//                    Option(CalibrationPoint(rl.linkId,rl.length,ra.endAddrMValue))
-//                  else None
-//
-//                  val cps = (startCalibrationPoint, endCalibrationPoint)
-//                  ra.copy(calibrationPoints = cps)
-//              }
-//            }
-//        }.toSeq
-//        withCalibrationPoints
     }
     fetchedAddresses
   }

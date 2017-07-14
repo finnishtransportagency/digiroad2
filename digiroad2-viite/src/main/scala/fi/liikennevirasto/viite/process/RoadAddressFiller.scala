@@ -1,11 +1,12 @@
 package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
-import fi.liikennevirasto.digiroad2.asset.State
+import fi.liikennevirasto.digiroad2.asset.{SideCode, State}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.RoadAddressLinkBuilder
 import fi.liikennevirasto.viite.RoadType.PublicRoad
-import fi.liikennevirasto.viite.dao.MissingRoadAddress
+import fi.liikennevirasto.viite.dao.{Discontinuity, MissingRoadAddress, ProjectLink, RoadAddressProject}
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLink}
 import fi.liikennevirasto.viite._
 
@@ -137,6 +138,19 @@ object RoadAddressFiller {
       }
       existingSegments ++ adjustedSegments
     }
+  }
+
+  def fillNewRoadAddress(project: RoadAddressProject, projectAddressLinks: Seq[ProjectAddressLink], roadAddressProjectID :Long, newRoadNumber : Long, newRoadPartNumber: Long, newTrackCode: Long, newDiscontinuity: Long, randomSideCode: SideCode): Seq[ProjectLink] = {
+
+    //TODO 1. order this nonAddressed new projectlinks somewhat like DefloatMapper.orderRoadAddressLinks(so we can know which one is at start/end of chain)
+
+    //TODO 2. after 1. apply the fold function for the ordered project links to get the new addressMValues for each(to get all needed values for CalibrationPoints)
+
+    projectAddressLinks.map(pal => {
+      ProjectLink(NewRoadAddress, newRoadNumber, newRoadPartNumber, Track.apply(newTrackCode.toInt), Discontinuity.apply(newDiscontinuity.toInt), pal.startAddressM,
+        pal.endAddressM, Some(project.startDate), None, Some(project.createdBy), -1, pal.linkId, pal.startMValue, pal.endMValue, randomSideCode,
+        (pal.startCalibrationPoint, pal.endCalibrationPoint), false, pal.geometry, roadAddressProjectID, pal.status, pal.roadType, pal.roadLinkSource)
+    })
   }
 
 }
