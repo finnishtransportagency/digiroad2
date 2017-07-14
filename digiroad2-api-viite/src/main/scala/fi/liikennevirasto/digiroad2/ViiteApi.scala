@@ -27,6 +27,7 @@ import scala.util.{Left, Right}
 
 case class NewAddressDataExtracted(sourceIds: Set[Long], targetIds: Set[Long])
 
+case class NewRoadAddressExtractor(linkIds: Set[Long], projectId: Long, newRoadNumber: Long, newRoadPartNumber : Long, newTrackCode: Long, newDiscontinuity :Long)
 
 case class RoadAddressProjectExtractor(id: Long, status: Long, name: String, startDate: String, additionalInfo: String,roadPartList: List[ReservedRoadPart])
 
@@ -264,29 +265,18 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       Map("success"-> errorMessageOpt.get)
   }
 
-  get("/roadlinks/roadaddress/project/validatenewroadlink"){
-    val roadNumber = params("roadNumber").toLong
-    val part = params("part").toLong
-    val projID = params("projID").toLong
-    val errorMessageOpt=projectService.checkNewRoadAddressNumberAndPart(roadNumber, part, projID)
-    errorMessageOpt match {
-      case Some(error) =>
-        Map("success"->"false",
-          "errormessage"->error)
-      case None => Map("success"->"true")
-    }
-  }
-
   put("/roadlinks/roadaddress/project/savenewroadlink") {
-    val projID = params("projID").toLong
     try { //check for validity
-      val projectlinksafe = parsedBody.extract[ProjectLink]
+      val projectlinksafe = parsedBody.extract[NewRoadAddressExtractor]
     } catch {
       case NonFatal(e) => BadRequest("Missing mandatory ProjectLink parameter")
     }
-      val projectLink = parsedBody.extract[ProjectLink]
+      val projectLink = parsedBody.extract[NewRoadAddressExtractor]
+
+
+      val roadLinks = projectService.getProjectRoadLinksByLinkIds(projectLink.projectId, projectLink.linkIds)
     withDynTransaction {
-      val errorMessage = projectService.addNewLinkToProject(projectLink, projID)
+      val errorMessage = projectService.addNewLinksToProject(roadLinks, projectLink.projectId, projectLink.newRoadNumber, projectLink.newRoadPartNumber, projectLink.newTrackCode, projectLink.newDiscontinuity)
       if (errorMessage == "") {
         Map("success" -> "true")
       } else {

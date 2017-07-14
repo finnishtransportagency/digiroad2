@@ -143,6 +143,26 @@
         });
     });
 
+    this.insertNewRoadLink = _.throttle(function(data, success, failure) {
+      var Json = {
+        linkIds : data[0],
+        projectId : data[1],
+        newRoadNumber : data[2],
+        newRoadPartNumber : data[3],
+        newTrackCode : data[4],
+        newDiscontinuity : data[5]
+      };
+      $.ajax({
+        contentType: "application/json",
+        type: "PUT",
+        url: "api/viite/roadlinks/roadaddress/project/savenewroadlink",
+        data: JSON.stringify(Json),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    }, 1000);
+
     this.getRoadAddressProjects = _.throttle(function(callback) {
       return $.getJSON('api/viite/roadlinks/roadaddress/project/all', function(data) {
         return _.isFunction(callback) && callback(data);

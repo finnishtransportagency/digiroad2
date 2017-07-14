@@ -200,6 +200,32 @@
       });
     };
 
+    this.createProjectLinks = function(toBeCreatedLinks) {
+      console.log("Create Project Links called");
+      applicationModel.addSpinner();
+      var linkIds = _.unique(_.map(toBeCreatedLinks,function (t){
+        if(!_.isUndefined(t.linkId)){
+          return t.linkId;
+        } else return t;
+      }));
+      var projectId = projectinfo.id;
+
+      var data = [linkIds,
+        projectId,
+        Number($('#roadAddressProject').find('#tie')[0].value),
+        Number($('#roadAddressProject').find('#osa')[0].value),
+        Number($('#roadAddressProject').find('#ajr')[0].value),
+        Number($('#roadAddressProject').find('#DiscontinuityDropdown')[0].value)
+      ];
+
+      backend.insertNewRoadLink(data, function(successObject) {
+        applicationModel.removeSpinner();
+        if (!successObject.success) {
+            eventbus.trigger('roadAddress:projectLinksCreateFailed', successObject.message);
+          }
+        });
+    };
+
     this.publishProject = function() {
       backend.sendProjectToTR(projectinfo.id, function(result) {
         console.log("Success");
