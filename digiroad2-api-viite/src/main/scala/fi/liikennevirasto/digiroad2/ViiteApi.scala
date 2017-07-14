@@ -27,6 +27,7 @@ import scala.util.{Left, Right}
 
 case class NewAddressDataExtracted(sourceIds: Set[Long], targetIds: Set[Long])
 
+case class NewRoadAddressExtractor(linkIds: Set[Long], projectId: Long, newRoadNumber: Long, newRoadPartNumber : Long, newTrackCode: Long, newDiscontinuity :Long)
 
 case class RoadAddressProjectExtractor(id: Long, status: Long, name: String, startDate: String, additionalInfo: String,roadPartList: List[ReservedRoadPart])
 
@@ -278,15 +279,17 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
 
   put("/roadlinks/roadaddress/project/savenewroadlink") {
-    val projID = params("projID").toLong
     try { //check for validity
-      val projectlinksafe = parsedBody.extract[ProjectLink]
+      val projectlinksafe = parsedBody.extract[NewRoadAddressExtractor]
     } catch {
       case NonFatal(e) => BadRequest("Missing mandatory ProjectLink parameter")
     }
-      val projectLink = parsedBody.extract[ProjectLink]
+      val projectLink = parsedBody.extract[NewRoadAddressExtractor]
+
+
+      val roadLinks = projectService.getProjectRoadLinksByLinkIds(projectLink.projectId, projectLink.linkIds)
     withDynTransaction {
-      val errorMessage = projectService.addNewLinkToProject(projectLink, projID)
+      val errorMessage = projectService.addNewLinksToProject(roadLinks, projectLink.projectId, projectLink.newRoadNumber, projectLink.newRoadPartNumber, projectLink.newTrackCode, projectLink.newDiscontinuity)
       if (errorMessage == "") {
         Map("success" -> "true")
       } else {

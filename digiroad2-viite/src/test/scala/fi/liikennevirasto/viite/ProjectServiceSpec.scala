@@ -13,6 +13,7 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, RoadLinkService, _}
 import fi.liikennevirasto.viite.dao.Discontinuity.Discontinuous
 import fi.liikennevirasto.viite.dao.{Discontinuity, ProjectState, RoadAddressProject, _}
+import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.ProjectDeltaCalculator
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.HttpGet
@@ -84,6 +85,14 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
       roadAddress.endDate, modifiedBy=Option(project.createdBy), 0L, roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
       roadAddress.sideCode, roadAddress.calibrationPoints, floating=false, roadAddress.geom, project.id, LinkStatus.NotHandled, RoadType.PublicRoad)
+  }
+
+  private def toProjectAddressLink(ral: RoadAddressLinkLike): ProjectAddressLink = {
+    ProjectAddressLink(ral.id, ral.linkId, ral.geometry, ral.length, ral.administrativeClass, ral.linkType, ral.roadLinkType,
+      ral.constructionType, ral.roadLinkSource, ral.roadType, ral.roadName, ral.municipalityCode, ral.modifiedAt, ral.modifiedBy,
+      ral.attributes, ral.roadNumber, ral.roadPartNumber, ral.trackCode, ral.elyCode, ral.discontinuity,
+      ral.startAddressM, ral.endAddressM, ral.startMValue, ral.endMValue, ral.sideCode, ral.startCalibrationPoint, ral.endCalibrationPoint,
+      ral.anomaly, ral.lrmPositionId, LinkStatus.Unknown)
   }
 
   test ("create road link project without road parts") {
@@ -578,7 +587,16 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       val projectLink= toProjectLink(rap)(RoadAddress(idr, 1943845, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
         Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface))
       ProjectDAO.createRoadAddressProject(rap)
-      projectService.addNewLinkToProject(projectLink, id)
+
+      val p = ProjectAddressLink(idr, projectLink.linkId, projectLink.geom,
+        1, AdministrativeClass.apply(1), LinkType.apply(1), RoadLinkType.apply(1), ConstructionType.apply(1), projectLink.linkGeomSource, RoadType.PublicUnderConstructionRoad, "", 111, Some(""), Some("vvh_modified"),
+        null, projectLink.roadNumber, projectLink.roadPartNumber, 2, -1, projectLink.discontinuity.value,
+        projectLink.startAddrMValue, projectLink.endAddrMValue, projectLink.startMValue, projectLink.endMValue,
+        projectLink.sideCode,
+        projectLink.calibrationPoints._1,
+        projectLink.calibrationPoints._2,Anomaly.None, projectLink.lrmPositionId, projectLink.status)
+
+      projectService.addNewLinksToProject(Seq(p), id, projectLink.roadNumber, projectLink.roadPartNumber, projectLink.track.value.toLong, projectLink.discontinuity.value.toLong)
      val links= ProjectDAO.getProjectLinks(id)
       links.size should be (1)
     }
