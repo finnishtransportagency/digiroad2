@@ -144,12 +144,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                   (projectLink.startCalibrationPoint, projectLink.endCalibrationPoint), false, projectLink.geometry, roadAddressProjectID, projectLink.status, projectLink.roadType, projectLink.roadLinkSource)
               })
               ProjectDAO.create(newProjectLinks)
+              ""
             }
           }
         }
         case None => "Projektikoodilla ei löytynyt projektia"
       }
-    ""
   }
 
   /**
