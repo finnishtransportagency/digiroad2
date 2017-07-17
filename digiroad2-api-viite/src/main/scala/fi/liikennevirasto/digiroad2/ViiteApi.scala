@@ -238,7 +238,14 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     } catch {
       case NonFatal(e) => BadRequest("Missing mandatory ProjectLink parameter")
     }
-   projectService.changeDirection(parsedBody.extract[Seq[Long]])
+  val errormessage= projectService.changeDirection(parsedBody.extract[Seq[Long]])
+    if (errormessage=="")
+      {
+        Map("success" -> "true")
+      } else
+      {
+        Map("success" -> "true","errorMessage"->errormessage)
+      }
   }
 
 
