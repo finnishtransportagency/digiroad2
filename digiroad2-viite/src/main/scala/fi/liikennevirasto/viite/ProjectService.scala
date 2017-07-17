@@ -151,6 +151,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         case None => "Projektikoodilla ei löytynyt projektia"
       }
   }
+  def updateProjectLinks(): Unit = {
+    //check that project links are reserved to project
+    //update project links
+    }
 
   /**
     * Adds reserved road links (from road parts) to a road address project. Reservability is check before this.
