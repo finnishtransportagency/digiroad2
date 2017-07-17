@@ -94,7 +94,7 @@ class GeometryTransform {
 
     //If there is no roadAddress in VIITE try to find it in VKM
     if(roadAddress.isEmpty)
-      return vkmGeometryTransform.resolveAddressAndLocation(coord, heading, road)
+      return vkmGeometryTransform.resolveAddressAndLocation(coord, heading, road, None, SideCode.apply(assetSideCode) )
 
     val roadSide = roadAddress match {
       case Some(addrSide) if (addrSide.sideCode.value == assetSideCode) => RoadSide.Right //TowardsDigitizing //
@@ -272,15 +272,20 @@ class VKMGeometryTransform {
     * @param heading Geographical heading in degrees (North = 0, West = 90, ...)
     * @param road Road we want to find (optional)
     * @param roadPart Road part we want to find (optional)
+    * @param sideCode The side code
     */
   def resolveAddressAndLocation(coord: Point, heading: Int, road: Option[Int] = None,
-                                roadPart: Option[Int] = None,
+                                roadPart: Option[Int] = None, sideCode: SideCode,
                                 includePedestrian: Option[Boolean] = Option(false)): (RoadAddress, RoadSide) = {
     if (road.isEmpty || roadPart.isEmpty) {
       val roadAddress = coordToAddress(coord, road, roadPart, includePedestrian = includePedestrian)
-      resolveAddressAndLocation(coord, heading, Option(roadAddress.road), Option(roadAddress.roadPart))
+      resolveAddressAndLocation(coord, heading, Option(roadAddress.road), Option(roadAddress.roadPart), sideCode)
     } else {
-      val rad = (90-heading)*Math.PI/180.0
+      val degrees = sideCode match{
+        case SideCode.AgainstDigitizing => 90-heading+180
+        case _ => 90-heading
+      }
+      val rad = degrees * Math.PI/180.0
       val stepVector = Vector3d(3*Math.cos(rad), 3*Math.sin(rad), 0.0)
       val behind = coord - stepVector
       val front = coord + stepVector
