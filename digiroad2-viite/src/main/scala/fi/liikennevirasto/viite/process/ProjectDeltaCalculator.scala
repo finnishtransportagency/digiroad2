@@ -77,7 +77,7 @@ groupedProjectLinks.flatMap(v => {
           val endValue = lastEndM + lengths.find(rpl => {
             rpl.roadNumber == l.roadNumber && rpl.roadPartNumber == l.roadPartNumber
           }).get.geometryLength
-          val updatedProjectLink = l.copy(startMValue = lastEndM, endMValue = endValue)
+          val updatedProjectLink = l.copy(startMValue = lastEndM, endMValue = endValue, startAddrMValue = Math.round(lastEndM), endAddrMValue = Math.round(endValue))
           lastEndM = endValue
           updatedProjectLink
         })

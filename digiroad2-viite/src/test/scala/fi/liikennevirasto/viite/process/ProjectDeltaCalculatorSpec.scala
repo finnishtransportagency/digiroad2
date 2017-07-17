@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.util.Track
@@ -20,7 +20,7 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
     ProjectLink(roadAddress.id, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track,
       roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
       roadAddress.endDate, modifiedBy=Option(project.createdBy), 0L, roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
-      roadAddress.sideCode, roadAddress.calibrationPoints, floating=false, roadAddress.geom, project.id, LinkStatus.NotHandled, RoadType.PublicRoad)
+      roadAddress.sideCode, roadAddress.calibrationPoints, floating=false, roadAddress.geom, project.id, LinkStatus.NotHandled, RoadType.PublicRoad, roadAddress.linkGeomSource, 0.0)
   }
 
 
@@ -51,14 +51,20 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
     output(0).id should be(idRoad0)
     output(0).startMValue should be(0.0)
     output(0).endMValue should be(baseLength)
+    output(0).startAddrMValue should be(Math.round(output(0).startMValue))
+    output(0).endAddrMValue should be(Math.round(output(0).endMValue))
 
     output(1).id should be(idRoad1)
     output(1).startMValue should be(baseLength)
     output(1).endMValue should be(baseLength*2)
+    output(1).startAddrMValue should be(Math.round(output(1).startMValue))
+    output(1).endAddrMValue should be(Math.round(output(1).endMValue))
 
     output(2).id should be(idRoad2)
     output(2).startMValue should be(baseLength*2)
     output(2).endMValue should be(baseLength*3)
+    output(2).startAddrMValue should be(Math.round(output(2).startMValue))
+    output(2).endAddrMValue should be(Math.round(output(2).endMValue))
   }
 
 }

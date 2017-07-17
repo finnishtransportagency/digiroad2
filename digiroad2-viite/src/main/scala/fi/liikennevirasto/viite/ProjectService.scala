@@ -5,11 +5,11 @@ import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, RoadLinkService}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, RoadLinkService}
 import fi.liikennevirasto.viite.dao.ProjectState._
 import fi.liikennevirasto.viite.dao.{ProjectDAO, RoadAddressDAO, _}
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, ProjectAddressLinkLike, RoadAddressLink, RoadAddressLinkLike}
-import fi.liikennevirasto.viite.process.{Delta, ProjectDeltaCalculator, RoadAddressFiller}
+import fi.liikennevirasto.viite.process.{Delta, ProjectDeltaCalculator, RoadAddressFiller, RoadPartLengths}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 import org.joda.time.format.DateTimeFormat
@@ -141,9 +141,18 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               val newProjectLinks = roadLinks.map(projectLink => {
                 ProjectLink(NewRoadAddress, newRoadNumber, newRoadPartNumber, Track.apply(newTrackCode.toInt), Discontinuity.apply(newDiscontinuity.toInt), projectLink.startAddressM,
                   projectLink.endAddressM, Some(project.startDate), None, Some(project.createdBy), -1, projectLink.linkId, projectLink.startMValue, projectLink.endMValue, randomSideCode,
-                  (projectLink.startCalibrationPoint, projectLink.endCalibrationPoint), false, projectLink.geometry, roadAddressProjectID, projectLink.status, projectLink.roadType, projectLink.roadLinkSource)
+                  (projectLink.startCalibrationPoint, projectLink.endCalibrationPoint), false, projectLink.geometry, roadAddressProjectID, projectLink.status, projectLink.roadType, projectLink.roadLinkSource, projectLink.length)
               })
-              ProjectDAO.create(newProjectLinks)
+              //Determine geometries for the mValues and addressMValues
+              val geometries = newProjectLinks.groupBy(_.linkId).map(v => {
+                val projectLinkSequence = v._2
+                val roadPartLengths = projectLinkSequence.map(link => {
+                  new RoadPartLengths(link.roadNumber, link.roadPartNumber, link.geometryLength)
+                })
+                v._1 -> roadPartLengths
+              })
+              val linksWithMValues = ProjectDeltaCalculator.determineMValues(newProjectLinks,geometries)
+              ProjectDAO.create(linksWithMValues)
               ""
             }
           }
@@ -164,7 +173,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
         roadAddress.endDate, modifiedBy=Option(project.createdBy), 0L, roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
         roadAddress.sideCode, roadAddress.calibrationPoints, floating=false, roadAddress.geom, project.id,
-        LinkStatus.NotHandled, roadTypeMap.getOrElse(roadAddress.linkId, RoadType.Unknown))
+        LinkStatus.NotHandled, roadTypeMap.getOrElse(roadAddress.linkId, RoadType.Unknown),roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geom))
     }
     //TODO: Check that there are no floating road addresses present when starting
     val errors = project.reservedParts.map(roadAddress =>
