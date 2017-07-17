@@ -151,6 +151,17 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         case None => "Projektikoodilla ei löytynyt projektia"
       }
   }
+  def changeDirection(projectLink:Seq[Long]): String = {
+    try {
+    ProjectDAO.flipProjectLinksSideCodes(projectLink)
+    ""
+    } catch{
+     case NonFatal(e) =>
+    "Päivitys ei onnistunut"
+    }
+
+
+    }
 
   /**
     * Adds reserved road links (from road parts) to a road address project. Reservability is check before this.

@@ -231,6 +231,25 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
+
+  put("roadlinks/roadaddress/project/directionchangenewroadlink"){
+    try { //check for validity
+      val projectlinksafe = parsedBody.extract[Seq[Long]]
+    } catch {
+      case NonFatal(e) => BadRequest("Missing mandatory ProjectLink parameter")
+    }
+  val errormessage= projectService.changeDirection(parsedBody.extract[Seq[Long]])
+    if (errormessage=="")
+      {
+        Map("success" -> "true")
+      } else
+      {
+        Map("success" -> "true","errorMessage"->errormessage)
+      }
+  }
+
+
+
   get("/roadlinks/roadaddress/project/all") {
     projectService.getRoadAddressAllProjects().map(roadAddressProjectToApi)
   }
