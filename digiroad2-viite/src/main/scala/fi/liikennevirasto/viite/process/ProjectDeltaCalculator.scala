@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.viite.RoadType
-import fi.liikennevirasto.viite.dao._
+import fi.liikennevirasto.viite.dao.{ProjectLink, _}
 import org.joda.time.DateTime
 
 /**
@@ -65,6 +65,53 @@ object ProjectDeltaCalculator {
       ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType)
     ).toSeq
   }
+
+  def determineMValues(projectLinks: Seq[ProjectLink], geometryLengthList: Map[Long, Seq[RoadPartLengths]]): Seq[ProjectLink] = {
+    val groupedProjectLinks = projectLinks.groupBy(_.linkId)
+groupedProjectLinks.flatMap(v => {
+      if(geometryLengthList.keySet.contains(v._1)){
+        val links = orderProjectLinks(v._2)
+        var lastEndM = 0.0
+        links.map(l => {
+          val lengths = geometryLengthList.get(l.linkId).get
+          val endValue = lastEndM + lengths.find(rpl => {
+            rpl.roadNumber == l.roadNumber && rpl.roadPartNumber == l.roadPartNumber
+          }).get.geometryLength
+          val updatedProjectLink = l.copy(startMValue = lastEndM, endMValue = endValue)
+          lastEndM = endValue
+          updatedProjectLink
+        })
+      } else {
+        orderProjectLinks(v._2)
+      }
+    }).toSeq
+
+
+  }
+
+  def orderProjectLinks(unorderedProjectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
+    def extending(link: ProjectLink, ext: ProjectLink) = {
+      link.roadNumber == ext.roadNumber && link.roadPartNumber == ext.roadPartNumber &&
+        link.track == ext.track
+    }
+    def extendChainByAddress(ordered: Seq[ProjectLink], unordered: Seq[ProjectLink]): Seq[ProjectLink] = {
+      if (ordered.isEmpty)
+        return extendChainByAddress(Seq(unordered.head), unordered.tail)
+      if (unordered.isEmpty)
+        return ordered
+      val (next, rest) = unordered.partition(u => extending(ordered.last, u))
+      if (next.nonEmpty)
+        extendChainByAddress(ordered ++ next, rest)
+      else {
+        val (previous, rest) = unordered.partition(u => extending(u, ordered.head))
+        if (previous.isEmpty)
+          throw new IllegalArgumentException("Non-contiguous road addressing")
+        else
+          extendChainByAddress(previous ++ ordered, rest)
+      }
+    }
+    extendChainByAddress(Seq(unorderedProjectLinks.head), unorderedProjectLinks.tail)
+  }
 }
 
 case class Delta(startDate: DateTime, terminations: Seq[RoadAddress])
@@ -84,3 +131,4 @@ case class RoadAddressSection(roadNumber: Long, roadPartNumberStart: Long, roadP
         ra.endAddrMValue < startMAddr && ra.roadPartNumber == roadPartNumberStart)
   }
 }
+case class RoadPartLengths(roadNumber: Long, roadPartNumber: Long, geometryLength: Double)
