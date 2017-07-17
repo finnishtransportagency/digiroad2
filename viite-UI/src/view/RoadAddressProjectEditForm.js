@@ -164,10 +164,7 @@
         var inputs = rootElement.find('input');
         var filled = true;
         for (var i = 0; i < inputs.length; i++) {
-            if (inputs[i].type === 'text' &&
-                (!inputs[i].value ||
-                (inputs[i].id !== 'ajr' && inputs[i].value === '0') ||
-                (inputs[i].id === 'ajr' && inputs[i].value === '99'))) {
+            if (inputs[i].type === 'text' && !inputs[i].value) {
                 filled = false;
             }
         }
