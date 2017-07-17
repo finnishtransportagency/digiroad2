@@ -62,27 +62,27 @@ object ProjectDeltaCalculator {
     val grouped = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
     grouped.mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
       RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
-      ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType)
+        ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType)
     ).toSeq
   }
 
-  def determineMValues(projectLinks: Seq[ProjectLink], geometryLengthList: Map[Long, Seq[RoadPartLengths]]): Seq[ProjectLink] = {
-    val groupedProjectLinks = projectLinks.groupBy(_.linkId)
-groupedProjectLinks.flatMap(v => {
-      if(geometryLengthList.keySet.contains(v._1)){
-        val links = orderProjectLinks(v._2)
-        var lastEndM = 0.0
+  def determineMValues(projectLinks: Seq[ProjectLink], geometryLengthList: Map[RoadPartBasis, Seq[RoadPartLengths]]): Seq[ProjectLink] = {
+    val groupedProjectLinks = projectLinks.groupBy(record => (record.roadNumber, record.roadPartNumber))
+    groupedProjectLinks.flatMap(gpl => {
+      var lastEndM = 0.0
+      val roadPartId = new RoadPartBasis(gpl._1._1, gpl._1._2)
+      if(geometryLengthList.keySet.contains(roadPartId)){
+        val links = orderProjectLinks(gpl._2)
         links.map(l => {
-          val lengths = geometryLengthList.get(l.linkId).get
-          val endValue = lastEndM + lengths.find(rpl => {
-            rpl.roadNumber == l.roadNumber && rpl.roadPartNumber == l.roadPartNumber
-          }).get.geometryLength
+          val lengths = geometryLengthList.get(roadPartId).get
+          val foundGeomLength = lengths.find(_.linkId == l.linkId).get
+          val endValue = lastEndM + foundGeomLength.geometryLength
           val updatedProjectLink = l.copy(startMValue = lastEndM, endMValue = endValue, startAddrMValue = Math.round(lastEndM), endAddrMValue = Math.round(endValue))
           lastEndM = endValue
           updatedProjectLink
         })
       } else {
-        orderProjectLinks(v._2)
+        orderProjectLinks(gpl._2)
       }
     }).toSeq
 
@@ -121,14 +121,15 @@ case class RoadAddressSection(roadNumber: Long, roadPartNumberStart: Long, roadP
   def includes(ra: RoadAddress): Boolean = {
     // within the road number and parts included
     ra.roadNumber == roadNumber && ra.roadPartNumber >= roadPartNumberStart && ra.roadPartNumber <= roadPartNumberEnd &&
-    // and on the same track
-    ra.track == track &&
-    // and not starting before this section start or after this section ends
+      // and on the same track
+      ra.track == track &&
+      // and not starting before this section start or after this section ends
       !(ra.startAddrMValue < startMAddr && ra.roadPartNumber == roadPartNumberStart ||
         ra.startAddrMValue > endMAddr && ra.roadPartNumber == roadPartNumberEnd) &&
-    // and not ending after this section ends or before this section starts
+      // and not ending after this section ends or before this section starts
       !(ra.endAddrMValue > endMAddr && ra.roadPartNumber == roadPartNumberEnd ||
         ra.endAddrMValue < startMAddr && ra.roadPartNumber == roadPartNumberStart)
   }
 }
-case class RoadPartLengths(roadNumber: Long, roadPartNumber: Long, geometryLength: Double)
+case class RoadPartBasis (roadNumber: Long, roadPartNumber: Long)
+case class RoadPartLengths(linkId: Long, geometryLength: Double)

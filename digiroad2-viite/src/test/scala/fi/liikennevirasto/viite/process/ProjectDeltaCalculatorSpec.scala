@@ -11,9 +11,6 @@ import org.joda.time.DateTime
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 
-/**
-  * Created by pedrosag on 14-07-2017.
-  */
 class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
 
   private def toProjectLink(project: RoadAddressProject)(roadAddress: RoadAddress): ProjectLink = {
@@ -40,9 +37,10 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
       Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface))
 
     val projectLinkSeq = Seq(projectLink0, projectLink1, projectLink2)
-    var linkLengths: Map[Long, Seq[RoadPartLengths]] = Map.empty
+    var linkLengths: Map[RoadPartBasis, Seq[RoadPartLengths]] = Map.empty
     projectLinkSeq.foreach(pl => {
-      linkLengths = linkLengths + (pl.linkId -> Seq(RoadPartLengths(pl.roadNumber, pl.roadPartNumber, baseLength)))
+      val index = new RoadPartBasis(pl.roadNumber, pl.roadPartNumber)
+      linkLengths = linkLengths + ( index -> Seq(RoadPartLengths(pl.linkId, baseLength)))
     })
 
     val output = ProjectDeltaCalculator.determineMValues(projectLinkSeq, linkLengths)

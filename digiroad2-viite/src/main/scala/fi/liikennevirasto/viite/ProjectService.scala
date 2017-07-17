@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, RoadLinkSe
 import fi.liikennevirasto.viite.dao.ProjectState._
 import fi.liikennevirasto.viite.dao.{ProjectDAO, RoadAddressDAO, _}
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, ProjectAddressLinkLike, RoadAddressLink, RoadAddressLinkLike}
-import fi.liikennevirasto.viite.process.{Delta, ProjectDeltaCalculator, RoadAddressFiller, RoadPartLengths}
+import fi.liikennevirasto.viite.process._
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 import org.joda.time.format.DateTimeFormat
@@ -144,12 +144,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                   (projectLink.startCalibrationPoint, projectLink.endCalibrationPoint), false, projectLink.geometry, roadAddressProjectID, projectLink.status, projectLink.roadType, projectLink.roadLinkSource, projectLink.length)
               })
               //Determine geometries for the mValues and addressMValues
-              val geometries = newProjectLinks.groupBy(_.linkId).map(v => {
+              val geometries = newProjectLinks.groupBy(record => (record.roadNumber, record.roadPartNumber)).map(v => {
                 val projectLinkSequence = v._2
                 val roadPartLengths = projectLinkSequence.map(link => {
-                  new RoadPartLengths(link.roadNumber, link.roadPartNumber, link.geometryLength)
+                  new RoadPartLengths(link.linkId, link.geometryLength)
                 })
-                v._1 -> roadPartLengths
+                new RoadPartBasis(v._1._1, v._1._2) -> roadPartLengths
               })
               val linksWithMValues = ProjectDeltaCalculator.determineMValues(newProjectLinks,geometries)
               ProjectDAO.create(linksWithMValues)
