@@ -59,7 +59,13 @@
         borderWidth = 3;
         lineColor = 'rgba(56, 56, 54, 1)';
       }
-      if (status === 0 || status === 1) {
+
+      if (status === 2) {
+        borderWidth = 5;
+        lineColor = 'rgba(252, 109, 160, 1)';
+      }
+
+      if (status === 0 || status === 1 || status  === 2) {
         var strokeWidth = styler.strokeWidthByZoomLevel(currentZoom, feature.projectLinkData.roadLinkType, feature.projectLinkData.anomaly, feature.projectLinkData.roadLinkSource, false, feature.projectLinkData.constructionType);
         var borderCap = 'round';
 
@@ -93,7 +99,7 @@
       layer: vectorLayer,
       condition: ol.events.condition.singleClick,
       style: function(feature, resolution) {
-        if (feature.projectLinkData.status === 0){
+        if (feature.projectLinkData.status === 0 || feature.projectLinkData.status === 2){
           return new ol.style.Style({
             fill: new ol.style.Fill({
               color: 'rgba(0, 255, 0, 0.75)'
@@ -103,7 +109,7 @@
               width: 8
             })
           });
-        } else if(feature.projectLinkData.status === 1){
+        } else if(feature.projectLinkData.status === 1 ){
           return new ol.style.Style({
             fill: new ol.style.Fill({
               color: 'rgba(0, 0, 0, 0.75)'
@@ -142,7 +148,7 @@
     selectSingleClick.on('select',function(event) {
       var selection = _.find(event.selected, function (selectionTarget) {
         return (!_.isUndefined(selectionTarget.projectLinkData) && (
-            (selectionTarget.projectLinkData.status === 0) ||
+            (selectionTarget.projectLinkData.status === 0 || selectionTarget.projectLinkData.status === 2 ) ||
             (selectionTarget.projectLinkData.anomaly==noAddressAnomaly && selectionTarget.projectLinkData.roadLinkType!=floatingRoadLinkType) || selectionTarget.projectLinkData.roadClass === 99)
         );
       });
@@ -157,7 +163,7 @@
       layer: vectorLayer,
       condition: ol.events.condition.doubleClick,
       style: function(feature, resolution) {
-        if(feature.projectLinkData.status === 0) {
+        if(feature.projectLinkData.status === 0 || feature.projectLinkData.status === 2) {
           return new ol.style.Style({
             fill: new ol.style.Fill({
               color: 'rgba(0, 255, 0, 0.75)'
@@ -206,7 +212,7 @@
     selectDoubleClick.on('select',function(event) {
       var selection = _.find(event.selected, function (selectionTarget) {
         return (!_.isUndefined(selectionTarget.projectLinkData) && (
-            (selectionTarget.projectLinkData.status === 0) ||
+            (selectionTarget.projectLinkData.status === 0 || selectionTarget.projectLinkData.status === 2) ||
             (selectionTarget.projectLinkData.anomaly==noAddressAnomaly && selectionTarget.projectLinkData.roadLinkType!=floatingRoadLinkType) || selectionTarget.projectLinkData.roadClass === 99)
           );
       });
