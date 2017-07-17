@@ -217,7 +217,7 @@ object ProjectDAO {
     }
   }
 
-  def updateProjectLink(projectLinkIds: Seq[Long]): Unit = {
+  def flipProjectLinksSideCodes(projectLinkIds: Seq[Long]): Unit = {
    val links=projectLinkIds.mkString(",")
     val sql = "update lrm_position set side_code = (CASE side_code WHEN 2 THEN 3 ELSE 2 END) where id in (select lrm_position.id from project_link join " +
       s"LRM_Position on project_link.LRM_POSITION_ID = lrm_position.id where side_code = 2 or side_code = 3 and project_link.id in($links))"

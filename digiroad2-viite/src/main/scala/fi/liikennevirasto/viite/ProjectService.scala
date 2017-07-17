@@ -151,8 +151,16 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         case None => "Projektikoodilla ei löytynyt projektia"
       }
   }
-  def changeDirection(projectLink:Seq[Long], direction:Int): Unit = {
-   // ProjectDAO.updateProjectLinkStatus()
+  def changeDirection(projectLink:Seq[Long]): String = {
+    try {
+    ProjectDAO.flipProjectLinksSideCodes(projectLink)
+    ""
+    } catch{
+     case NonFatal(e) =>
+    "Päivitys ei onnistunut"
+    }
+
+
     }
 
   /**
