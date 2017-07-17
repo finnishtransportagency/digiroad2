@@ -673,13 +673,11 @@ trait LinearAssetOperations {
       changeSet.adjustedSideCodes.foreach { adjustment =>
         dao.updateSideCode(adjustment.assetId, adjustment.sideCode)
       }
-      var ids = changeSet.expiredAssetIds.toSeq
+
+      val ids = changeSet.expiredAssetIds.toSeq
       if (ids.nonEmpty)
         logger.info("Expiring ids " + ids.mkString(", "))
-      withDynTransaction {
-        ids.foreach(dao.updateExpiration(_, expired = true, LinearAssetTypes.VvhGenerated))
-        ids
-      }
+      ids.foreach(dao.updateExpiration(_, expired = true, LinearAssetTypes.VvhGenerated))
     }
   }
 
