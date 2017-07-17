@@ -120,7 +120,7 @@
         '<div><label></label></div><div><label style = "margin-top: 50px">TIEOSOITTEEN TIEDOT</label></div>' +
         addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('AJR')+ addSmallLabel('ELY')  + addSmallLabel('JATKUU')+
         '</div>' +
-        '<div class="form-group new-road-address" hidden>'+ addSmallInputNumber('tie',(selectedProjectLink[0].roadNumber !== 0 ? selectedProjectLink[0].roadNumber : '')) + addSmallInputNumber('osa',(selectedProjectLink[0].roadPartNumber !== 0 ? selectedProjectLink[0].roadPartNumber : '')) + addSmallInputNumber('ajr',(selectedProjectLink[0].trackCode !== 99 ? selectedProjectLink[0].trackCode : '')) + addSmallInputNumberDisabled('ely', selectedProjectLink[0].elyCode) +addSelect()+
+        '<div class="form-group new-road-address" hidden>'+ addSmallInputNumber('tie',(selectedProjectLink[0].roadNumber !== 0 ? selectedProjectLink[0].roadNumber : '')) + addSmallInputNumber('osa',(selectedProjectLink[0].roadPartNumber !== 0 ? selectedProjectLink[0].roadPartNumber : '')) + addSmallInputNumber('ajr',(selectedProjectLink[0].trackCode !== 99 ? selectedProjectLink[0].trackCode : '')) + addSmallInputNumberDisabled('ely', selectedProjectLink[0].elyCode) +addSelect() + changeDirection() +
         '</div>';
     };
 
@@ -133,6 +133,10 @@
       '<option value="4" >4 Lievä epäjatkuvuus</option>'+
       '<option value="5" >5 Jatkuva</option>'+
       '</select>';
+    };
+
+    var changeDirection = function () {
+      return '</br><button disabled class="form-group changeDirection btn btn-primary">Käännä kasvusuunta</button>';
     };
 
     var addSmallLabel = function(label){
@@ -254,16 +258,28 @@
         new ModalConfirm(error);
       });
 
+      eventbus.on('roadAddress:projectLinksCreateSuccess', function () {
+        rootElement.find('.changeDirection').prop("disabled", false);
+      });
+
+      eventbus.on('roadAddress:changeDirectionFailed', function(error) {
+            new ModalConfirm(error);
+      });
+
+      rootElement.on('click','.changeDirection', function () {
+          projectCollection.changeNewProjectLinkDirection(projectCollection.getTmpExpired());
+      });
+
       rootElement.on('click', '.project-form button.update', function() {
         currentProject = projectCollection.getCurrentProject();
         if( $('[id=dropDown] :selected').val() == 'lakkautus') {
           projectCollection.saveProjectLinks(projectCollection.getTmpExpired());
+          rootElement.html(emptyTemplate(currentProject.project));
         }
         else if( $('[id=dropDown] :selected').val() === 'uusi'){
 
           projectCollection.createProjectLinks(projectCollection.getTmpExpired());
         }
-        rootElement.html(emptyTemplate(currentProject.project));
       });
 
       rootElement.on('change', '#dropDown', function() {

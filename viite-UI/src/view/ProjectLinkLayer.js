@@ -446,6 +446,14 @@ var isDefined=function(variable) {
       vectorLayer.getSource().clear();
     };
 
+    eventbus.on('projectLink:projectLinksCreateSuccess', function () {
+      projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1, undefined);
+    });
+
+    eventbus.on('changeProjectDirection:clicked', function () {
+      projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1, undefined);
+    });
+
     var redraw = function(){
       var editedLinks = _.map(projectCollection.getDirty(), function(editedLink) {return editedLink.id;});
       cachedMarker = new LinkPropertyMarker(selectedProjectLinkProperty);
@@ -522,6 +530,7 @@ var isDefined=function(variable) {
     });
 
     eventbus.on('roadAddressProject:fetched', function() {
+      applicationModel.removeSpinner();
       redraw();
     });
 

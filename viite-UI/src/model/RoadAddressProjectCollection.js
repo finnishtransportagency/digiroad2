@@ -219,10 +219,27 @@
       ];
 
       backend.insertNewRoadLink(data, function(successObject) {
-        applicationModel.removeSpinner();
         if (!successObject.success) {
-            eventbus.trigger('roadAddress:projectLinksCreateFailed', successObject.message);
-          }
+          eventbus.trigger('roadAddress:projectLinksCreateFailed', successObject.message);
+          applicationModel.removeSpinner();
+        } else {
+          eventbus.trigger('projectLink:projectLinksCreateSuccess');
+          eventbus.trigger('roadAddress:projectLinksCreateSuccess');
+        }
+      });
+    };
+
+    this.changeNewProjectLinkDirection = function (){
+      var linkIds = [_.map(dirtyProjectLinks, function (project) {
+          return project.linkId;
+      }) ];
+       backend.directionChangeNewRoadlink(linkIds, function(successObject) {
+           if (!successObject.success) {
+            eventbus.trigger('roadAddress:changeDirectionFailed', result.errorMessage);
+               applicationModel.removeSpinner();
+           } else {
+               eventbus.trigger('changeProjectDirection:clicked');
+           }
         });
     };
 
