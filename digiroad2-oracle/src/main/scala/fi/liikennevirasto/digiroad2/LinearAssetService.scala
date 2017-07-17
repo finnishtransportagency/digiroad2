@@ -438,7 +438,7 @@ trait LinearAssetOperations {
             persistedLinearAsset.startMeasure, persistedLinearAsset.endMeasure,
             endPoints, persistedLinearAsset.modifiedBy, persistedLinearAsset.modifiedDateTime,
             persistedLinearAsset.createdBy, persistedLinearAsset.createdDateTime, persistedLinearAsset.typeId, roadLink.trafficDirection,
-            persistedLinearAsset.vvhTimeStamp, persistedLinearAsset.geomModifiedDate, persistedLinearAsset.linkSource)
+            persistedLinearAsset.vvhTimeStamp, persistedLinearAsset.geomModifiedDate, persistedLinearAsset.linkSource, roadLink.administrativeClass)
           ,
           link = roadLink
         )

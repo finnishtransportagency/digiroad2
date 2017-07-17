@@ -622,7 +622,8 @@ Returns empty result as Json message, not as page not found
           "modifiedBy" -> link.modifiedBy,
           "modifiedAt" -> link.modifiedDateTime,
           "createdBy" -> link.createdBy,
-          "createdAt" -> link.createdDateTime
+          "createdAt" -> link.createdDateTime,
+          "administrativeClass" -> link.administrativeClass.value
         )
       }
     }
