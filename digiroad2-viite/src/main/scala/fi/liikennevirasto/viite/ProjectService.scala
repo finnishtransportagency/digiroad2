@@ -151,9 +151,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         case None => "Projektikoodilla ei löytynyt projektia"
       }
   }
-  def updateProjectLinks(): Unit = {
-    //check that project links are reserved to project
-    //update project links
+  def changeDirection(projectLink:Seq[Long], direction:Int): Unit = {
+   // ProjectDAO.updateProjectLinkStatus()
     }
 
   /**
