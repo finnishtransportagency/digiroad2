@@ -166,26 +166,42 @@ trait TierekisteriAssetData {
   val endAddressMValue: Long
 }
 
-case class AddressSection(roadNumber: Long, roadPartNumber: Long, track: Track, startAddressMValue: Long, endAddressMValue: Option[Long])
+case class AddressSection(roadNumber: Long, roadPartNumber: Long, track: Track, assetValue: Int, startAddressMValue: Long, endAddressMValue: Option[Long])
 
 case class TierekisteriTrafficData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
                                    startAddressMValue: Long, endAddressMValue: Long, kvl: Int) extends TierekisteriAssetData
 
 case class TierekisteriRoadWidthData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
-                                     startAddressMValue: Long, endAddressMValue: Long, alev: Int) extends TierekisteriAssetData
-
-case class TierekisteriLighting(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
-                                track: Track, startAddressMValue: Long, endAddressMValue: Long) extends TierekisteriAssetData {
+                                     track: Track, startAddressMValue: Long, endAddressMValue: Long, assetValue: Int) extends TierekisteriAssetData {
+  //TODO reuse the method
   val getRoadAddressSections: Seq[AddressSection] = {
-    Seq(AddressSection(roadNumber, startRoadPartNumber, track, startAddressMValue,
+    Seq(AddressSection(roadNumber, startRoadPartNumber, track, assetValue, startAddressMValue,
       if (endRoadPartNumber == startRoadPartNumber)
         Some(endAddressMValue)
       else
         None)) ++ {
       if (startRoadPartNumber != endRoadPartNumber) {
         val roadPartNumberSortedList = List(startRoadPartNumber, endRoadPartNumber).sorted
-        (roadPartNumberSortedList.head until roadPartNumberSortedList.last).tail.map(part => AddressSection(roadNumber, part, track, 0L, None)) ++
-          Seq(AddressSection(roadNumber, endRoadPartNumber, track, 0L, Some(endAddressMValue)))
+        (roadPartNumberSortedList.head until roadPartNumberSortedList.last).tail.map(part => AddressSection(roadNumber, part, track, assetValue, 0L, None)) ++
+          Seq(AddressSection(roadNumber, endRoadPartNumber, track, assetValue, 0L, Some(endAddressMValue)))
+      } else
+        Seq[AddressSection]()
+    }
+  }
+}
+
+case class TierekisteriLighting(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
+                                track: Track, startAddressMValue: Long, endAddressMValue: Long) extends TierekisteriAssetData {
+  val getRoadAddressSections: Seq[AddressSection] = {
+    Seq(AddressSection(roadNumber, startRoadPartNumber, track, 1, startAddressMValue,
+      if (endRoadPartNumber == startRoadPartNumber)
+        Some(endAddressMValue)
+      else
+        None)) ++ {
+      if (startRoadPartNumber != endRoadPartNumber) {
+        val roadPartNumberSortedList = List(startRoadPartNumber, endRoadPartNumber).sorted
+        (roadPartNumberSortedList.head until roadPartNumberSortedList.last).tail.map(part => AddressSection(roadNumber, part, track, 1, 0L, None)) ++
+          Seq(AddressSection(roadNumber, endRoadPartNumber, track, 1, 0L, Some(endAddressMValue)))
       } else
         Seq[AddressSection]()
     }
@@ -750,14 +766,15 @@ class TierekisteriRoadWidth(trEndPoint: String, trEnable: Boolean, httpClient: C
 
   override def mapFields(data: Map[String, Any]): TierekisteriRoadWidthData = {
     //Mandatory field
-    val alev = convertToInt(getMandatoryFieldValue(data, trALEV)).get * 10 //To convert to cm
+    val assetValue = convertToInt(getMandatoryFieldValue(data, trALEV)).get * 10 //To convert to cm
     val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
     val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
     val endRoadPartNumber = convertToLong(getMandatoryFieldValue(data, trEndRoadPartNumber)).getOrElse(roadPartNumber)
     val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
     val endMValue = convertToLong(getMandatoryFieldValue(data, trEndMValue)).get
+    val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
 
-    TierekisteriRoadWidthData(roadNumber, roadPartNumber, endRoadPartNumber, startMValue, endMValue, alev)
+    TierekisteriRoadWidthData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue, assetValue)
   }
 }
 
