@@ -3,7 +3,7 @@
     initialize: bindEvents
   };
 
-  function bindEvents(selectedLinearAsset, eventCategory, formElements, newTitle, title) {
+  function bindEvents(selectedLinearAsset, eventCategory, formElements, newTitle, title, editConstrains) {
     var rootElement = $('#feature-attributes');
 
     eventbus.on(events('selected', 'cancelled'), function() {
@@ -19,7 +19,7 @@
       rootElement.find('#separate-limit').on('click', function() { selectedLinearAsset.separate(); });
       rootElement.find('.form-controls.linear-asset button.save').on('click', function() { selectedLinearAsset.save(); });
       rootElement.find('.form-controls.linear-asset button.cancel').on('click', function() { selectedLinearAsset.cancel(); });
-      toggleMode(applicationModel.isReadOnly());
+      toggleMode(editConstrains(selectedLinearAsset) || applicationModel.isReadOnly());
     });
     eventbus.on(events('unselect'), function() {
       rootElement.empty();

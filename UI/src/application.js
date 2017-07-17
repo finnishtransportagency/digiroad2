@@ -204,7 +204,8 @@
        linearAsset.singleElementEventCategory,
        AssetFormElementsFactory.construct(linearAsset),
        linearAsset.newTitle,
-       linearAsset.title);
+       linearAsset.title,
+       linearAsset.editConstrains || function() {return false;});
     });
 
     _.forEach(pointAssets, function(pointAsset) {
@@ -224,7 +225,8 @@
        singleElementEventCategory: asset.singleElementEventCategory,
        style: PiecewiseLinearAssetStyle(applicationModel),
        formElements: AssetFormElementsFactory.construct(asset),
-       assetLabel: asset.label
+       assetLabel: asset.label,
+       editConstrains : asset.editConstrains || function() {return false;}
      });
      return acc;
     }, {});

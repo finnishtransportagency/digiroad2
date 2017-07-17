@@ -208,7 +208,10 @@
         disabled: 'Leveys ei tiedossa',
         showUnit: true
       },
-      label: new LinearAssetLabel()
+      label: new LinearAssetLabel(),
+      editConstrains : function(selectedAsset) {
+        return selectedAsset.administrativeClass ? selectedAsset.administrativeClass === 2 : selectedAsset.getAdministrativeClass() === 2;
+      }
     },
     {
       typeId: assetType.congestionTendency,

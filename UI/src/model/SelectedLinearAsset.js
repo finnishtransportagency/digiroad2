@@ -212,6 +212,11 @@
       return selection.length === 1 ? getProperty('createdAt') : null;
     };
 
+    this.getAdministrativeClass = function() {
+      var value = getProperty('administrativeClass');
+      return _.isNull(value) ? undefined : value;
+    };
+
     this.get = function() {
       return selection;
     };
