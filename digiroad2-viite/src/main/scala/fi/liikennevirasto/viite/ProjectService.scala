@@ -60,8 +60,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @return
     */
   def checkNewRoadAddressNumberAndPart(roadNumber: Long, roadPart: Long, project :RoadAddressProject): Option[String] = {
-      val roadAddresses = RoadAddressDAO.isNewRoadPartUsed(roadNumber, roadPart, project.id)
-      if (roadAddresses.isEmpty) {
+      val projectLinks = ProjectDAO.isNewRoadPartLinkUsed(roadNumber, roadPart, project.id)
+      if (projectLinks.isEmpty) {
         None
       } else {
         val fmt = DateTimeFormat.forPattern("dd.MM.yyyy")

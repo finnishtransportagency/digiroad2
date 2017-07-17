@@ -173,6 +173,19 @@ object ProjectDAO {
     Q.queryNA[String](query).firstOption
   }
 
+
+  def isNewRoadPartLinkUsed(roadNumber: Long, roadPartNumber: Long, projectId: Long) = {
+    val query =
+      s"""
+		select prol.id
+         from project_link prol
+         join lrm_position pos on prol.lrm_position_id = pos.id
+         where prol.project_id!=$projectId AND prol.road_number = $roadNumber AND prol.road_part_number = $roadPartNumber
+         ORDER BY prol.road_number, prol.road_part_number, prol.track_code, prol.start_addr_m
+      """
+    Q.queryNA[Long](query).list
+  }
+
   def getProjectStatus(projectID: Long): Option[ProjectState] = {
     val query =
       s""" SELECT state
