@@ -210,6 +210,7 @@
             (selectionTarget.projectLinkData.anomaly==noAddressAnomaly && selectionTarget.projectLinkData.roadLinkType!=floatingRoadLinkType) || selectionTarget.projectLinkData.roadClass === 99)
           );
       });
+      selectedProjectLinkProperty.clean();
       if (!_.isUndefined(selection))
         selectedProjectLinkProperty.open(selection.projectLinkData.linkId);
     });
@@ -448,6 +449,7 @@ var isDefined=function(variable) {
 
     eventbus.on('projectLink:projectLinksCreateSuccess', function () {
       projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1, undefined);
+
     });
 
     eventbus.on('changeProjectDirection:clicked', function () {
@@ -529,7 +531,7 @@ var isDefined=function(variable) {
       projectCollection.getProjectsWithLinksById(projId);
     });
 
-    eventbus.on('roadAddressProject:fetched', function() {
+    eventbus.on('roadAddressProject:fetched', function(newSelection) {
       applicationModel.removeSpinner();
       redraw();
     });

@@ -232,7 +232,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
 
 
-  put("roadlinks/roadaddress/project/directionchangenewroadlink"){
+  put("/roadlinks/roadaddress/project/directionchangenewroadlink"){
+
     try { //check for validity
       val projectlinksafe = parsedBody.extract[Seq[Long]]
     } catch {

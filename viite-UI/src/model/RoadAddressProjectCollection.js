@@ -229,8 +229,9 @@
       });
     };
 
-    this.changeNewProjectLinkDirection = function (){
-      var linkIds = [_.map(dirtyProjectLinks, function (project) {
+    this.changeNewProjectLinkDirection = function (selectedLinks){
+      applicationModel.addSpinner();
+      var linkIds = [_.map(selectedLinks, function (project) {
           return project.linkId;
       }) ];
        backend.directionChangeNewRoadlink(linkIds, function(successObject) {

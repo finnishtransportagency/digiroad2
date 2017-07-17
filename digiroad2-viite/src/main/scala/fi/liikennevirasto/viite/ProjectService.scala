@@ -152,15 +152,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       }
   }
   def changeDirection(projectLink:Seq[Long]): String = {
-    try {
-    ProjectDAO.flipProjectLinksSideCodes(projectLink)
-    ""
-    } catch{
-     case NonFatal(e) =>
-    "Päivitys ei onnistunut"
+    withDynTransaction {
+      try {
+        ProjectDAO.flipProjectLinksSideCodes(projectLink)
+        ""
+      } catch {
+        case NonFatal(e) =>
+          "Päivitys ei onnistunut"
+      }
     }
-
-
     }
 
   /**
