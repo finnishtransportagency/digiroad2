@@ -85,14 +85,20 @@ object DataFixture {
     new RoadAddressDAO()
   }
 
-  lazy val tierekisteriTrafficVolumeAsset : TierekisteriTrafficVolumeAsset = {
-    new TierekisteriTrafficVolumeAsset(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+  lazy val tierekisteriTrafficVolumeAsset : TierekisteriTrafficVolumeAssetClient = {
+    new TierekisteriTrafficVolumeAssetClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
       getProperty("digiroad2.tierekisteri.enabled").toBoolean,
       HttpClientBuilder.create().build())
   }
 
-  lazy val tierekisteriLightingAsset : TierekisteriLightingAsset = {
-    new TierekisteriLightingAsset(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+  lazy val tierekisteriLightingAsset : TierekisteriLightingAssetClient = {
+    new TierekisteriLightingAssetClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+      getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+      HttpClientBuilder.create().build())
+  }
+
+  lazy val tierekisteriRoadWidthAsset : TierekisteriRoadWidthAssetClient = {
+    new TierekisteriRoadWidthAssetClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
       getProperty("digiroad2.tierekisteri.enabled").toBoolean,
       HttpClientBuilder.create().build())
   }
@@ -891,6 +897,17 @@ object DataFixture {
     tierekisteriDataImporter.importLitRoadAsset(tierekisteriLightingAsset)
 
     println("LitRoad import complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
+  def importAllRoadWidthDataFromTR() {
+    println("\nStart RoadWidth import at time: ")
+    println(DateTime.now())
+
+    tierekisteriDataImporter.importRoadWidthAsset(tierekisteriRoadWidthAsset)
+
+    println("RoadWidth import complete at time: ")
     println(DateTime.now())
     println("\n")
   }
