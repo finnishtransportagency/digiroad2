@@ -60,12 +60,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @return
     */
   def checkNewRoadAddressNumberAndPart(roadNumber: Long, roadPart: Long, project :RoadAddressProject): Option[String] = {
-      val projectLinks = ProjectDAO.isNewRoadPartLinkUsed(roadNumber, roadPart, project.id)
+      val projectLinks = RoadAddressDAO.isNewRoadPartUsed(roadNumber, roadPart, project.id)
       if (projectLinks.isEmpty) {
         None
       } else {
         val fmt = DateTimeFormat.forPattern("dd.MM.yyyy")
-
         Some(s"TIE $roadNumber OSA $roadPart on jo olemassa projektin alkupäivänä ${project.startDate.toString(fmt)}, tarkista tiedot.") //message to user if address is already in use
       }
   }
@@ -138,13 +137,20 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           checkNewRoadAddressNumberAndPart(newRoadNumber, newRoadPartNumber, project) match {
             case Some(errorMessage) => errorMessage
             case None => {
-              val newProjectLinks = roadLinks.map(projectLink => {
-                ProjectLink(NewRoadAddress, newRoadNumber, newRoadPartNumber, Track.apply(newTrackCode.toInt), Discontinuity.apply(newDiscontinuity.toInt), projectLink.startAddressM,
-                  projectLink.endAddressM, Some(project.startDate), None, Some(project.createdBy), -1, projectLink.linkId, projectLink.startMValue, projectLink.endMValue, randomSideCode,
-                  (projectLink.startCalibrationPoint, projectLink.endCalibrationPoint), false, projectLink.geometry, roadAddressProjectID, projectLink.status, projectLink.roadType, projectLink.roadLinkSource)
-              })
-              ProjectDAO.create(newProjectLinks)
-              ""
+              val reserved = ProjectDAO.roadPartReservedByProject(newRoadNumber, newRoadPartNumber, project.id, true)
+              reserved match {
+                case Some(projectname) =>
+                  val fmt = DateTimeFormat.forPattern("dd.MM.yyyy")
+                  (s"TIE $newRoadNumber OSA $newRoadPartNumber on jo olemassa projektin alkupäivänä ${project.startDate.toString(fmt)}, tarkista tiedot")
+                case None =>
+                  val newProjectLinks = roadLinks.map(projectLink => {
+                    ProjectLink(NewRoadAddress, newRoadNumber, newRoadPartNumber, Track.apply(newTrackCode.toInt), Discontinuity.apply(newDiscontinuity.toInt), projectLink.startAddressM,
+                      projectLink.endAddressM, Some(project.startDate), None, Some(project.createdBy), -1, projectLink.linkId, projectLink.startMValue, projectLink.endMValue, randomSideCode,
+                      (projectLink.startCalibrationPoint, projectLink.endCalibrationPoint), false, projectLink.geometry, roadAddressProjectID, projectLink.status, projectLink.roadType, projectLink.roadLinkSource)
+                  })
+                  ProjectDAO.create(newProjectLinks)
+                  ""
+              }
             }
           }
         }

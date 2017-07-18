@@ -162,28 +162,16 @@ object ProjectDAO {
     }
   }
 
-  def roadPartReservedByProject(roadNumber: Long, roadPart: Long): Option[String] = {
+  def roadPartReservedByProject(roadNumber: Long, roadPart: Long, projectId: Long = 0, withProjectId: Boolean = false): Option[String] = {
     val states = ProjectState.nonActiveStates.mkString(",")
+    val filter = if(withProjectId && projectId !=0) s" AND project_id = ${projectId} " else ""
     val query =
       s"""SELECT p.name
               FROM project p
            INNER JOIN project_link l
            ON l.PROJECT_ID =  p.ID
-           WHERE l.road_number=$roadNumber AND road_part_number=$roadPart AND p.state NOT IN ($states) AND rownum < 2 """
+           WHERE l.road_number=$roadNumber AND road_part_number=$roadPart AND p.state NOT IN ($states) $filter AND rownum < 2 """
     Q.queryNA[String](query).firstOption
-  }
-
-
-  def isNewRoadPartLinkUsed(roadNumber: Long, roadPartNumber: Long, projectId: Long) = {
-    val query =
-      s"""
-		select prol.id
-         from project_link prol
-         join lrm_position pos on prol.lrm_position_id = pos.id
-         where prol.project_id!=$projectId AND prol.road_number = $roadNumber AND prol.road_part_number = $roadPartNumber
-         ORDER BY prol.road_number, prol.road_part_number, prol.track_code, prol.start_addr_m
-      """
-    Q.queryNA[Long](query).list
   }
 
   def getProjectStatus(projectID: Long): Option[ProjectState] = {
