@@ -164,7 +164,7 @@ object ProjectDAO {
 
   def roadPartReservedByProject(roadNumber: Long, roadPart: Long, projectId: Long = 0, withProjectId: Boolean = false): Option[String] = {
     val states = ProjectState.nonActiveStates.mkString(",")
-    val filter = if(withProjectId && projectId !=0) s" AND project_id = ${projectId} " else ""
+    val filter = if(withProjectId && projectId !=0) s" AND project_id != ${projectId} " else ""
     val query =
       s"""SELECT p.name
               FROM project p
