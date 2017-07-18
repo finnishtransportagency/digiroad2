@@ -626,7 +626,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       val message1project1 =  projectService.addNewLinksToProject(Seq(p), id, projectLink.roadNumber, projectLink.roadPartNumber, projectLink.track.value.toLong, projectLink.discontinuity.value.toLong)
       val links = ProjectDAO.getProjectLinks(id)
       links.size should be(0)
-      message1project1 should be ("TIE 5 OSA 203 on jo olemassa projektin alkupäivänä 03.03.1972, tarkista tiedot")
+      message1project1 should be ("TIE 5 OSA 203 on jo olemassa projektin alkupäivänä 03.03.1972, tarkista tiedot") //check that it is reserved in roadaddress table
 
       val message1project2=  projectService.addNewLinksToProject(Seq(p), id+1, projectLink2.roadNumber, projectLink2.roadPartNumber, projectLink2.track.value.toLong, projectLink2.discontinuity.value.toLong)
       val links2 = ProjectDAO.getProjectLinks(id+1)
@@ -636,7 +636,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       val message2project1 =  projectService.addNewLinksToProject(Seq(p), id, projectLink3.roadNumber, projectLink3.roadPartNumber, projectLink3.track.value.toLong, projectLink3.discontinuity.value.toLong)
       val links3 = ProjectDAO.getProjectLinks(id)
       links3.size should be(0)
-      message2project1 should be ("TIE 5 OSA 999 on jo olemassa projektin alkupäivänä 03.03.1972, tarkista tiedot")
+      message2project1 should be ("TIE 5 OSA 999 on jo varattuna projektissa TestProject, tarkista tiedot")
 
       val message2project2=  projectService.addNewLinksToProject(Seq(p), id+1, projectLink2.roadNumber, projectLink2.roadPartNumber, projectLink2.track.value.toLong, projectLink2.discontinuity.value.toLong)
       val links4 = ProjectDAO.getProjectLinks(id+1)
