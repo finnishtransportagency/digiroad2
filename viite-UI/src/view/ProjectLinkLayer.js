@@ -66,7 +66,7 @@
 
       if (status === newRoadAddressStatus) {
         borderWidth = 5;
-        lineColor = 'rgba(252, 109, 160, 1)';
+        lineColor = 'rgba(255, 85, 221, 0.7)';
       }
 
       if (status === notHandledStatus || status === terminatedStatus || status  === newRoadAddressStatus) {
