@@ -38,7 +38,7 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
     var linkLengths: Map[RoadPartBasis, Seq[RoadPartLengths]] = Map.empty
     projectLinkSeq.foreach(pl => {
       val index = new RoadPartBasis(pl.roadNumber, pl.roadPartNumber)
-      linkLengths = linkLengths + ( index -> Seq(RoadPartLengths(pl.linkId, baseLength)))
+      linkLengths = linkLengths + ( index -> Seq(RoadPartLengths(pl.linkId, baseLength)).++(linkLengths.getOrElse(index,Seq.empty)))
     })
 
     val output = ProjectDeltaCalculator.determineMValues(projectLinkSeq, linkLengths)
@@ -51,16 +51,16 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
     output(0).endAddrMValue should be(Math.round(output(0).endMValue))
 
     output(1).id should be(idRoad1)
-    output(1).startMValue should be(baseLength)
-    output(1).endMValue should be(baseLength*2)
-    output(1).startAddrMValue should be(Math.round(output(1).startMValue))
-    output(1).endAddrMValue should be(Math.round(output(1).endMValue))
+    output(1).startMValue should be(0.0)
+    output(1).endMValue should be(baseLength)
+    output(1).startAddrMValue should be(Math.round(baseLength))
+    output(1).endAddrMValue should be(Math.round(baseLength*2))
 
     output(2).id should be(idRoad2)
-    output(2).startMValue should be(baseLength*2)
-    output(2).endMValue should be(baseLength*3)
-    output(2).startAddrMValue should be(Math.round(output(2).startMValue))
-    output(2).endAddrMValue should be(Math.round(output(2).endMValue))
+    output(2).startMValue should be(0.0)
+    output(2).endMValue should be(baseLength)
+    output(2).startAddrMValue should be(Math.round(baseLength*2))
+    output(2).endAddrMValue should be(Math.round(baseLength*3))
   }
 
   test("addressMValues N MValues calculation for new road addresses") {
@@ -81,10 +81,11 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
       Seq(Point(0.0, 9.8), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface))
 
     val projectLinkSeq = Seq(projectLink0, projectLink1, projectLink2, projectLink3)
-    val seqLengths:Seq[RoadPartLengths] = projectLinkSeq.map(pl => {
-      RoadPartLengths(pl.linkId, pl.geometryLength)
+    var linkLengths: Map[RoadPartBasis, Seq[RoadPartLengths]] = Map.empty
+    projectLinkSeq.foreach(pl => {
+      val index = new RoadPartBasis(pl.roadNumber, pl.roadPartNumber)
+      linkLengths = linkLengths + ( index -> Seq(RoadPartLengths(pl.linkId, pl.geometryLength)).++(linkLengths.getOrElse(index,Seq.empty)))
     })
-    val linkLengths:Map[RoadPartBasis, Seq[RoadPartLengths]] = Map(RoadPartBasis(projectLink0.roadNumber, projectLink0.roadPartNumber) -> seqLengths)
 
     val output = ProjectDeltaCalculator.determineMValues(projectLinkSeq, linkLengths)
     output.length should be(4)

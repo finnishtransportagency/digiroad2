@@ -79,7 +79,7 @@ object ProjectDeltaCalculator {
           val lengths = geometryLengthList.get(roadPartId).get
           val foundGeomLength = lengths.find(_.linkId == l.linkId).get
           val endValue = lastEndM + foundGeomLength.geometryLength
-          val updatedProjectLink = l.copy(startMValue = lastEndM, endMValue = endValue, startAddrMValue = Math.round(lastEndM), endAddrMValue = Math.round(endValue))
+          val updatedProjectLink = l.copy(startMValue = 0.0, endMValue = foundGeomLength.geometryLength, startAddrMValue = Math.round(lastEndM), endAddrMValue = Math.round(endValue))
           lastEndM = endValue
           updatedProjectLink
         })
