@@ -1,5 +1,7 @@
 package fi.liikennevirasto.viite.process
 
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.dao.{ProjectLink, _}
@@ -94,6 +96,24 @@ object ProjectDeltaCalculator {
       link.roadNumber == ext.roadNumber && link.roadPartNumber == ext.roadPartNumber &&
         link.track == ext.track
     }
+    def extendChainByGeometry(ordered: Seq[ProjectLink], unordered: Seq[ProjectLink], sideCode: SideCode): Seq[ProjectLink] = {
+      // First link gets the assigned side code
+      if (ordered.isEmpty)
+        return extendChainByGeometry(Seq(unordered.head.copy(sideCode=sideCode)), unordered.tail, sideCode)
+      if (unordered.isEmpty) {
+        return ordered
+      }
+      // Find a road address link that continues from current last link
+      unordered.find(ral => GeometryUtils.areAdjacent(ral.geom, ordered.last.geom)) match {
+        case Some(link) =>
+          val sideCode = if (isSideCodeChange(link.geom, ordered.last.geom))
+            switchSideCode(ordered.last.sideCode)
+          else
+            ordered.last.sideCode
+          extendChainByGeometry(ordered ++ Seq(link.copy(sideCode=sideCode)), unordered.filterNot(link.equals), sideCode)
+        case _ => throw new InvalidAddressDataException("Non-contiguous road target geometry")
+      }
+    }
     def extendChainByAddress(ordered: Seq[ProjectLink], unordered: Seq[ProjectLink]): Seq[ProjectLink] = {
       if (ordered.isEmpty)
         return extendChainByAddress(Seq(unordered.head), unordered.tail)
@@ -110,8 +130,22 @@ object ProjectDeltaCalculator {
           extendChainByAddress(previous ++ ordered, rest)
       }
     }
-    extendChainByAddress(Seq(unorderedProjectLinks.head), unorderedProjectLinks.tail)
+
+    val orderedByAddress =  extendChainByAddress(Seq(unorderedProjectLinks.head), unorderedProjectLinks.tail)
+    val orderedByGeometry = extendChainByGeometry(Seq(), orderedByAddress, orderedByAddress.head.sideCode)
+    orderedByGeometry
   }
+
+  def isSideCodeChange(geom1: Seq[Point], geom2: Seq[Point]): Boolean = {
+    GeometryUtils.areAdjacent(geom1.last, geom2.last) ||
+      GeometryUtils.areAdjacent(geom1.head, geom2.head)
+  }
+
+  def switchSideCode(sideCode: SideCode): SideCode = {
+    // Switch between against and towards 2 -> 3, 3 -> 2
+    SideCode.apply(5-sideCode.value)
+  }
+
 }
 
 case class Delta(startDate: DateTime, terminations: Seq[RoadAddress])
