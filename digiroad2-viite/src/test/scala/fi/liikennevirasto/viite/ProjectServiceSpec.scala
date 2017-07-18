@@ -598,6 +598,31 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       links.size should be (1)
     }
   }
+  test("Change roadlink direction"){
+    runWithRollback {
+      val idr = RoadAddressDAO.getNextRoadAddressId
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
+      val projectLink= toProjectLink(rap)(RoadAddress(idr, 1943845, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
+        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface))
+      ProjectDAO.createRoadAddressProject(rap)
+
+      val p = ProjectAddressLink(idr, projectLink.linkId, projectLink.geom,
+        1, AdministrativeClass.apply(1), LinkType.apply(1), RoadLinkType.apply(1), ConstructionType.apply(1), projectLink.linkGeomSource, RoadType.PublicUnderConstructionRoad, "", 111, Some(""), Some("vvh_modified"),
+        null, projectLink.roadNumber, projectLink.roadPartNumber, 2, -1, projectLink.discontinuity.value,
+        projectLink.startAddrMValue, projectLink.endAddrMValue, projectLink.startMValue, projectLink.endMValue,
+        projectLink.sideCode,
+        projectLink.calibrationPoints._1,
+        projectLink.calibrationPoints._2,Anomaly.None, projectLink.lrmPositionId, projectLink.status)
+
+      projectService.addNewLinksToProject(Seq(p), id, projectLink.roadNumber, projectLink.roadPartNumber, projectLink.track.value.toLong, projectLink.discontinuity.value.toLong)
+      projectService.changeDirection(Seq(idr))
+      val links= ProjectDAO.getProjectLinks(id)
+      links.size should be (1)
+      links.head.sideCode should be (SideCode.AgainstDigitizing)
+    }
+  }
+
     test("error message when reserving already used road number&part") {
       runWithRollback {
         val idr = RoadAddressDAO.getNextRoadAddressId
