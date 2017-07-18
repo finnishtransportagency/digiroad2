@@ -154,6 +154,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def changeDirection(projectLink:Seq[Long]): String = {
     try {
       withDynTransaction {
+        val projectId= ProjectDAO.projectLinksExist(projectLink)
+        if (projectId.size!=projectLink.size)
+          return "Kaikkia linkkejä ei löytynyt"
+        if (projectId.toSeq.size!=1){
+         return "Linkit kuuluvat useampaan projektiin"
+        }
         ProjectDAO.flipProjectLinksSideCodes(projectLink)
         ""
       }
