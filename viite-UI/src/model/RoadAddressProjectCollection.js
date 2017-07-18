@@ -21,6 +21,10 @@
       return _.flatten(fetchedProjectLinks);
     };
 
+    this.getProjectLinks = function() {
+      return _.flatten(fetchedProjectLinks);
+    };
+
     this.getAll = function () {
       return _.map(projectLinks(), function(projectLink) {
         return projectLink.getData();
@@ -231,10 +235,10 @@
 
     this.changeNewProjectLinkDirection = function (selectedLinks){
       applicationModel.addSpinner();
-      var linkIds = [_.map(selectedLinks, function (project) {
-          return project.linkId;
+      var ids = [_.map(selectedLinks, function (project) {
+          return project.id;
       }) ];
-       backend.directionChangeNewRoadlink(linkIds, function(successObject) {
+       backend.directionChangeNewRoadlink(ids, function(successObject) {
            if (!successObject.success) {
             eventbus.trigger('roadAddress:changeDirectionFailed', result.errorMessage);
                applicationModel.removeSpinner();

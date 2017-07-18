@@ -460,12 +460,23 @@ var isDefined=function(variable) {
 
     eventbus.on('changeProjectDirection:clicked', function () {
       projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1, undefined);
+      redraw();
     });
 
     var redraw = function(){
-      var editedLinks = _.map(projectCollection.getDirty(), function(editedLink) {return editedLink.id;});
+      var editedLinks;
       cachedMarker = new LinkPropertyMarker(selectedProjectLinkProperty);
       var projectLinks = projectCollection.getAll();
+
+      var ids = {};
+        _.each(selectedProjectLinkProperty.get(), function (sel) { ids[sel.linkId] = true; });
+
+        selectedProjectLinkProperty.setCurrent(_.filter(projectCollection.getProjectLinks(), function (projectLink) {
+          return ids[projectLink.getData().linkId];
+      }));
+
+      editedLinks = _.map(projectCollection.getDirty(), function(editedLink) {return editedLink.id;});
+
       var features = [];
       _.map(projectLinks, function(projectLink) {
         var points = _.map(projectLink.points, function (point) {

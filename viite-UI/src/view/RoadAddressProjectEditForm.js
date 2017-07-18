@@ -107,9 +107,7 @@
         '</div>'+
         newRoadAddressInfo() +
         '</form>' +
-        '<div hidden class="form-group changeDirectionDiv">' +
         changeDirection() +
-        '</div>' +
         actionSelectedField()+
         '</div>'+
         '</div>' +
@@ -139,7 +137,13 @@
     };
 
     var changeDirection = function () {
-      return '<button class="form-group changeDirection btn btn-primary">Käännä kasvusuunta</button>';
+      var hidden = '';
+      if (selectedProjectLink[0].id === 0){
+        hidden = 'hidden';
+      }
+      return '<div ' + hidden + ' class="form-group changeDirectionDiv">' +
+          '<button class="form-group changeDirection btn btn-primary">Käännä kasvusuunta</button>' +
+          '</div>';
     };
 
     var addSmallLabel = function(label){
@@ -270,7 +274,7 @@
       });
 
       rootElement.on('click','.changeDirection', function () {
-          projectCollection.changeNewProjectLinkDirection(selectedProjectLink);
+          projectCollection.changeNewProjectLinkDirection(selectedProjectLinkProperty.get());
       });
 
       rootElement.on('click', '.project-form button.update', function() {
