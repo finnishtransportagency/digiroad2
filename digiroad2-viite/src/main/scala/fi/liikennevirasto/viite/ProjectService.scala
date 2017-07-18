@@ -141,7 +141,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               val newProjectLinks = roadLinks.map(projectLink => {
                 ProjectLink(NewRoadAddress, newRoadNumber, newRoadPartNumber, Track.apply(newTrackCode.toInt), Discontinuity.apply(newDiscontinuity.toInt), projectLink.startAddressM,
                   projectLink.endAddressM, Some(project.startDate), None, Some(project.createdBy), -1, projectLink.linkId, projectLink.startMValue, projectLink.endMValue, randomSideCode,
-                  (projectLink.startCalibrationPoint, projectLink.endCalibrationPoint), false, projectLink.geometry, roadAddressProjectID, projectLink.status, projectLink.roadType, projectLink.roadLinkSource, projectLink.length)
+                  (projectLink.startCalibrationPoint, projectLink.endCalibrationPoint), false, projectLink.geometry, roadAddressProjectID, LinkStatus.New, projectLink.roadType, projectLink.roadLinkSource, projectLink.length)
               })
               //Determine geometries for the mValues and addressMValues
               val geometries = newProjectLinks.groupBy(record => (record.roadNumber, record.roadPartNumber)).map(v => {
