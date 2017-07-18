@@ -152,15 +152,22 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       }
   }
   def changeDirection(projectLink:Seq[Long]): String = {
-    withDynTransaction {
-      try {
+    try {
+      withDynTransaction {
+        val projectId= ProjectDAO.projectLinksExist(projectLink)
+        if (projectId.size!=projectLink.size)
+          return "Kaikkia linkkejä ei löytynyt"
+        if (projectId.forall(_ !=projectId.head)){
+         return "Linkit kuuluvat useampaan projektiin"
+        }
         ProjectDAO.flipProjectLinksSideCodes(projectLink)
         ""
-      } catch {
-        case NonFatal(e) =>
-          "Päivitys ei onnistunut"
       }
+    } catch{
+     case NonFatal(e) =>
+    "Päivitys ei onnistunut"
     }
+
     }
 
   /**
