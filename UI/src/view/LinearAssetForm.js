@@ -19,7 +19,8 @@
       rootElement.find('#separate-limit').on('click', function() { selectedLinearAsset.separate(); });
       rootElement.find('.form-controls.linear-asset button.save').on('click', function() { selectedLinearAsset.save(); });
       rootElement.find('.form-controls.linear-asset button.cancel').on('click', function() { selectedLinearAsset.cancel(); });
-      toggleMode(editConstrains(selectedLinearAsset) || applicationModel.isReadOnly());
+      var selectedAssets = _.filter(selectedLinearAsset.get(), function(selected) { return editConstrains(selected) ; });
+      toggleMode( !_.isEmpty(selectedAssets) || applicationModel.isReadOnly());
     });
     eventbus.on(events('unselect'), function() {
       rootElement.empty();

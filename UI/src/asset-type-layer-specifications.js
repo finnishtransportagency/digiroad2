@@ -174,7 +174,8 @@
         disabled: 'Ei valaistusta'
       },
       editConstrains : function(selectedAsset) {
-        return selectedAsset.administrativeClass ? selectedAsset.administrativeClass === 2 : selectedAsset.getAdministrativeClass() === 2;
+        //check if administrative class is State
+        return selectedAsset.administrativeClass === 2;
       }
     },
     {
@@ -213,7 +214,8 @@
       },
       label: new LinearAssetLabel(),
       editConstrains : function(selectedAsset) {
-        return selectedAsset.administrativeClass ? selectedAsset.administrativeClass === 2 : selectedAsset.getAdministrativeClass() === 2;
+        //check if administrative class is State
+        return selectedAsset.administrativeClass === 2;
       }
     },
     {
