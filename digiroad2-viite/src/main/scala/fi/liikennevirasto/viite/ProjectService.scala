@@ -61,14 +61,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @return
     */
   def checkNewRoadAddressNumberAndPart(roadNumber: Long, roadPart: Long, project :RoadAddressProject): Option[String] = {
-      val roadAddresses = RoadAddressDAO.isNewRoadPartUsed(roadNumber, roadPart, project.id)
-      if (roadAddresses.isEmpty) {
-        None
-      } else {
-        val fmt = DateTimeFormat.forPattern("dd.MM.yyyy")
+    val roadAddresses = RoadAddressDAO.isNewRoadPartUsed(roadNumber, roadPart, project.id)
+    if (roadAddresses.isEmpty) {
+      None
+    } else {
+      val fmt = DateTimeFormat.forPattern("dd.MM.yyyy")
 
-        Some(s"TIE $roadNumber OSA $roadPart on jo olemassa projektin alkupäivänä ${project.startDate.toString(fmt)}, tarkista tiedot.") //message to user if address is already in use
-      }
+      Some(s"TIE $roadNumber OSA $roadPart on jo olemassa projektin alkupäivänä ${project.startDate.toString(fmt)}, tarkista tiedot.") //message to user if address is already in use
+    }
   }
 
   private def createNewProjectToDB(roadAddressProject: RoadAddressProject): RoadAddressProject = {
@@ -132,20 +132,36 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     */
   def addNewLinksToProject(projectAddressLinks: Seq[ProjectAddressLink], roadAddressProjectID :Long, newRoadNumber : Long, newRoadPartNumber: Long, newTrackCode: Long, newDiscontinuity: Long):String = {
 
-      val randomSideCode = allowedSideCodes(new Random(System.currentTimeMillis()).nextInt(allowedSideCodes.length))
-      ProjectDAO.getRoadAddressProjectById(roadAddressProjectID) match {
-        case Some(project) => {
-          checkNewRoadAddressNumberAndPart(newRoadNumber, newRoadPartNumber, project) match {
-            case Some(errorMessage) => errorMessage
-            case None => {
-              val newProjectLinks = RoadAddressFiller.fillNewRoadAddress(project, projectAddressLinks, roadAddressProjectID, newRoadNumber, newRoadPartNumber, newTrackCode, newDiscontinuity, randomSideCode)
-              ProjectDAO.create(newProjectLinks)
-              ""
-            }
+    val randomSideCode = allowedSideCodes(new Random(System.currentTimeMillis()).nextInt(allowedSideCodes.length))
+    ProjectDAO.getRoadAddressProjectById(roadAddressProjectID) match {
+      case Some(project) => {
+        checkNewRoadAddressNumberAndPart(newRoadNumber, newRoadPartNumber, project) match {
+          case Some(errorMessage) => errorMessage
+          case None => {
+            val newProjectLinks = RoadAddressFiller.fillNewRoadAddress(project, projectAddressLinks, roadAddressProjectID, newRoadNumber, newRoadPartNumber, newTrackCode, newDiscontinuity, randomSideCode)
+            //Assuming we already have the newProjectLinks with correct Mvalues
+            val test = newProjectLinks.groupBy(record => (record.roadNumber, record.roadPartNumber)).flatMap(group => {
+              val groupedLinks = group._2
+              val first = groupedLinks.sortBy(_.endAddrMValue).head
+              val last = groupedLinks.sortBy(_.endAddrMValue).last
+              val alteredFirst = first.copy(calibrationPoints = (Option(new CalibrationPoint(first.linkId, first.startMValue, first.startAddrMValue)), Option.empty[CalibrationPoint]))
+              val alteredLast = last.copy(calibrationPoints = (Option.empty[CalibrationPoint], Option(new CalibrationPoint(last.linkId, last.endMValue, last.endAddrMValue))))
+              //TODO: we are missing the currently not understood calibration points when switching the track codes
+              groupedLinks.map(gl => {
+                if (gl.linkId == first.linkId && gl.roadNumber == first.roadNumber && gl.roadPartNumber == first.roadPartNumber){
+                  alteredFirst
+                } else if (gl.linkId == last.linkId && gl.roadNumber == last.roadNumber && gl.roadPartNumber == last.roadPartNumber){
+                  alteredLast
+                } else gl
+              })
+            }).asInstanceOf[Seq[ProjectLink]]
+            ProjectDAO.create(newProjectLinks)
+            ""
           }
         }
-        case None => "Projektikoodilla ei löytynyt projektia"
       }
+      case None => "Projektikoodilla ei löytynyt projektia"
+    }
   }
 
   /**
