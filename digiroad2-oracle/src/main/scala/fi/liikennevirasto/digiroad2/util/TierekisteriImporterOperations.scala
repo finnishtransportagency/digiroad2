@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.util
 
 
-import fi.liikennevirasto.digiroad2.{TierekisteriAssetDataClient, TierekisteriLightingAssetClient, _}
+import fi.liikennevirasto.digiroad2.{TierekisteriAssetDataClient, TierekisteriLightingAssetClient, TierekisteriRoadWidthAssetClient, _}
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode, State}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
@@ -28,7 +28,7 @@ trait TierekisteriImporterOperations {
 
   def getValue(tierekisteriAssetDataType: TierekisteriAssetDataType) : Int
 
-  def getRoadAddressSections(tierekisteriAssetData: TierekisteriAssetData): Seq[AddressSection] = {
+  def getRoadAddressSections(tierekisteriAssetData: TierekisteriAssetDataType): Seq[AddressSection] = {
     Seq(AddressSection(tierekisteriAssetData.roadNumber, tierekisteriAssetData.startRoadPartNumber, tierekisteriAssetData.track, getValue(tierekisteriAssetData), tierekisteriAssetData.startAddressMValue,
       if (tierekisteriAssetData.endRoadPartNumber == tierekisteriAssetData.startRoadPartNumber)
         Some(tierekisteriAssetData.endAddressMValue)
@@ -42,7 +42,6 @@ trait TierekisteriImporterOperations {
         Seq[AddressSection]()
     }
   }
-
 
   def importAsset(typeId: Int) = {
     println("\nExpiring " + assetName + " From OTH Database Only with administrativeClass == State")
@@ -82,7 +81,7 @@ trait TierekisteriImporterOperations {
 
         trAsset.foreach { tr => println(s"TR: address ${tr.roadNumber}/${tr.startRoadPartNumber}-${tr.endRoadPartNumber}/${tr.track.value}/${tr.startAddressMValue}-${tr.endAddressMValue}") }
 
-        trAsset.flatMap(getRoadAddressSections).foreach { section =>
+        trAsset.map(_.asInstanceOf[TierekisteriAssetDataType]).flatMap(getRoadAddressSections).foreach { section =>
           OracleDatabase.withDynTransaction {
             println(s"Fetch road addresses to link ids using Viite: R:${section.roadNumber} P:${section.roadPartNumber} T:${section.track.value} ADDRM:${section.startAddressMValue}-${section.endAddressMValue.map(_.toString).getOrElse("")}")
 
@@ -107,7 +106,7 @@ trait TierekisteriImporterOperations {
                   } else {
                     ra.addressMValueToLRM(startAddr) match {
                       case Some(startValue) => startValue
-                      case None => return
+                      case None => 0
                     }
                   }
 
@@ -117,7 +116,7 @@ trait TierekisteriImporterOperations {
                   } else {
                     ra.addressMValueToLRM(endAddr.get) match {
                       case Some(endValue) => endValue
-                      case None => return
+                      case None => 0
                     }
                   }
                 createLinearAsset(ra.linkId, typeId, Measures(newStartMValue, newEndMValue), assetValue)
@@ -157,11 +156,12 @@ class LitRoadImporterOperations(vvhClientImp: VVHClient, oracleLinearAssetDao: O
   override def getValue(tierekisteriLightingData: TierekisteriAssetDataType): Int = {
     1
   }
+
+  override def tierekisteriClient: TierekisteriLightingAssetClient = ???
 }
 
 class RoadWidthImporterOperations(vvhClientImp: VVHClient, oracleLinearAssetDao: OracleLinearAssetDao,
                                   roadAddressDaoImp: RoadAddressDAO, linearAssetServiceImp: LinearAssetService) extends TierekisteriImporterOperations {
-
   override def vvhClient = vvhClientImp
   lazy val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
   override def roadAddressDao = roadAddressDaoImp
@@ -182,7 +182,9 @@ class RoadWidthImporterOperations(vvhClientImp: VVHClient, oracleLinearAssetDao:
     }
   }
 
-  override def getValue(tierekisteriAssetData: TierekisteriRoadWidthData): Int = {
+  override def getValue(tierekisteriAssetData: TierekisteriAssetDataType): Int = {
     tierekisteriAssetData.assetValue
   }
+
+  override def tierekisteriClient: TierekisteriRoadWidthAssetClient = ???
 }
