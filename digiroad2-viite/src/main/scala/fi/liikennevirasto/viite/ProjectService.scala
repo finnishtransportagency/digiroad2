@@ -65,7 +65,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         None
       } else {
         val fmt = DateTimeFormat.forPattern("dd.MM.yyyy")
-        Some(s"TIE $roadNumber OSA $roadPart on jo olemassa projektin alkupäivänä ${project.startDate.toString(fmt)}, tarkista tiedot.") //message to user if address is already in use
+        Some(s"TIE $roadNumber OSA $roadPart on jo olemassa projektin alkupäivänä ${project.startDate.toString(fmt)}, tarkista tiedot") //message to user if address is already in use
       }
   }
 
