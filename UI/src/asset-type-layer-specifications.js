@@ -175,7 +175,7 @@
       },
       editConstrains : function(selectedAsset) {
         //check if administrative class is State
-        return selectedAsset.administrativeClass === 2;
+        return selectedAsset.administrativeClass === 1;
       }
     },
     {
@@ -215,7 +215,7 @@
       label: new LinearAssetLabel(),
       editConstrains : function(selectedAsset) {
         //check if administrative class is State
-        return selectedAsset.administrativeClass === 2;
+        return selectedAsset.administrativeClass === 1;
       }
     },
     {
