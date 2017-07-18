@@ -157,7 +157,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         val projectId= ProjectDAO.projectLinksExist(projectLink)
         if (projectId.size!=projectLink.size)
           return "Kaikkia linkkejä ei löytynyt"
-        if (projectId.toSeq.size!=1){
+        if (projectId.forall(_ !=projectId.head)){
          return "Linkit kuuluvat useampaan projektiin"
         }
         ProjectDAO.flipProjectLinksSideCodes(projectLink)

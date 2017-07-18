@@ -652,8 +652,9 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       ProjectDAO.createRoadAddressProject(rap)
       val addresses = RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(rap))
       ProjectDAO.create(addresses)
-      val (lrmid,linkid)= sql"select LRM_POSITION_ID,ID from PROJECT_LINK where PROJECT_LINK.PROJECT_ID = $id".as[(Long,Long)].first
-      val errorMessage=  projectService.changeDirection(Seq(linkid))
+      val links=ProjectDAO.getProjectLinks(id)
+      val lrmidlinkid= sql"select LRM_POSITION_ID,ID from PROJECT_LINK where PROJECT_LINK.PROJECT_ID = $id".as[(Long,Long)]
+      val errorMessage=  projectService.changeDirection(links.map(l => l.id))
       errorMessage should be("")
     }
   }
