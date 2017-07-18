@@ -17,7 +17,7 @@ import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization
 import fi.liikennevirasto.digiroad2.roadaddress.oracle.RoadAddressDAO
-import fi.liikennevirasto.digiroad2.roadaddress.oracle.{RoadAddress => RoadAddressByDigitalization}
+import fi.liikennevirasto.digiroad2.roadaddress.oracle.{RoadAddress => RoadAddressDTO}
 /**
   * A road consists of 1-2 tracks (fi: "ajorata"). 2 tracks are separated by a fence or grass for example.
   * Left and Right are relative to the advancing direction (direction of growing m values)
@@ -91,14 +91,14 @@ class GeometryTransform {
 
   def resolveAddressAndLocation(coord: Point, heading: Int, mValue: Double, linkId: Long, assetSideCode: Int, municipalityCode: Option[Int] = None, road: Option[Int] = None): (RoadAddress, RoadSide) = {
 
-    def againstDigitizing(addr: RoadAddressByDigitalization) = {
+    def againstDigitizing(addr: RoadAddressDTO) = {
       val addressLength: Long = addr.endAddrMValue - addr.startAddrMValue
       val lrmLength: Double = Math.abs(addr.endMValue - addr.startMValue)
       val newMValue = (addr.endAddrMValue - ((mValue-addr.startMValue) * addressLength / lrmLength)).toInt
       RoadAddress(Some(municipalityCode.toString), addr.roadNumber.toInt, addr.roadPartNumber.toInt, addr.track, newMValue, None)
     }
 
-    def towardsDigitizing (addr: RoadAddressByDigitalization) = {
+    def towardsDigitizing (addr: RoadAddressDTO) = {
       val addressLength: Long = addr.endAddrMValue - addr.startAddrMValue
       val lrmLength: Double = Math.abs(addr.endMValue - addr.startMValue)
       val newMValue = (((mValue-addr.startMValue) * addressLength) / lrmLength + addr.startAddrMValue).toInt
