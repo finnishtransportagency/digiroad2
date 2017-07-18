@@ -141,7 +141,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               reserved match {
                 case Some(projectname) =>
                   val fmt = DateTimeFormat.forPattern("dd.MM.yyyy")
-                  (s"TIE $newRoadNumber OSA $newRoadPartNumber on jo olemassa projektin alkupäivänä ${project.startDate.toString(fmt)}, tarkista tiedot")
+                  (s"TIE $newRoadNumber OSA $newRoadPartNumber on jo varattuna projektissa $projectname, tarkista tiedot")
                 case None =>
                   val newProjectLinks = roadLinks.map(projectLink => {
                     ProjectLink(NewRoadAddress, newRoadNumber, newRoadPartNumber, Track.apply(newTrackCode.toInt), Discontinuity.apply(newDiscontinuity.toInt), projectLink.startAddressM,
