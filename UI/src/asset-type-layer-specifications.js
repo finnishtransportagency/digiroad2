@@ -172,6 +172,9 @@
         title: 'Valaistus',
         enabled: 'Valaistus',
         disabled: 'Ei valaistusta'
+      },
+      editConstrains : function(selectedAsset) {
+        return selectedAsset.administrativeClass ? selectedAsset.administrativeClass === 2 : selectedAsset.getAdministrativeClass() === 2;
       }
     },
     {
