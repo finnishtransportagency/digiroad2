@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.{DigiroadEventBus, RoadLinkService}
 import fi.liikennevirasto.viite.dao.ProjectState._
 import fi.liikennevirasto.viite.dao.{ProjectDAO, RoadAddressDAO, _}
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, ProjectAddressLinkLike, RoadAddressLink, RoadAddressLinkLike}
-import fi.liikennevirasto.viite.process.{Delta, ProjectDeltaCalculator, RoadAddressFiller}
+import fi.liikennevirasto.viite.process._
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 import org.joda.time.format.DateTimeFormat
@@ -167,6 +167,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
          return "Linkit kuuluvat useampaan projektiin"
         }
         ProjectDAO.flipProjectLinksSideCodes(projectLink)
+        ProjectDAO.getProjectLinksById(projectLink)
+          .groupBy(l => (l.roadNumber, l.roadPartNumber, l.projectId))
+          .map(link => recalculateProjectLinks(link._1._1, link._1._2, link._1._3))
         ""
       }
     } catch{
@@ -647,5 +650,32 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       throw new RuntimeException(s"Project state not at Saved2TR: $newState")
     }
   }
+
+  def recalculateProjectLinks(roadNumber: Long, roadPartNumber: Long, projectId: Long): Boolean = {
+    try{
+      val roads = ProjectDAO.fetchByProjectNewRoadPart(roadNumber, roadPartNumber, projectId, true)
+      if (!roads.exists(_.floating)) {
+        try {
+          val adjusted = ProjectLinkCalculator.recalculate(roads)
+          assert(adjusted.size == roads.size)
+          // Must not lose any
+          val (changed, unchanged) = adjusted.partition(ra =>
+            roads.exists(oldra => ra.id == oldra.id && (oldra.startAddrMValue != ra.startAddrMValue || oldra.endAddrMValue != ra.endAddrMValue))
+          )
+          logger.info(s"Road $roadNumber, part $roadPartNumber: ${changed.size} updated, ${unchanged.size} kept unchanged")
+          changed.foreach(link => ProjectDAO.update(link))
+          changed.nonEmpty
+        } catch {
+          case ex: InvalidAddressDataException => logger.error(s"!!! Road $roadNumber, part $roadPartNumber contains invalid address data - part skipped !!!", ex)
+        }
+      } else {
+        logger.info(s"Not recalculating $roadNumber / $roadPartNumber because floating segments were found")
+      }
+    } catch {
+      case a: Exception => logger.error(a.getMessage, a)
+    }
+    false
+  }
+
   case class PublishResult(validationSuccess: Boolean, sendSuccess: Boolean, errorMessage: Option[String])
 }
