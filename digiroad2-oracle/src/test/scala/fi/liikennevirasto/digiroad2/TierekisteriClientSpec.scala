@@ -51,6 +51,12 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
       HttpClientBuilder.create().build())
   }
 
+  lazy val tierekisteriTrafficSignAsset: TierekisteriTrafficSignAssetClient = {
+    new TierekisteriTrafficSignAssetClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+      HttpClientBuilder.create().build())
+  }
+
   lazy val litRoadImporterOperations: LitRoadImporterOperations = {
     new LitRoadImporterOperations()
   }
@@ -498,6 +504,27 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
 
     assets.size should not be (1)
     assets.map(_.assetValue) should be (1150)
+  }
+
+  test("Fetch Traffic Signs from Tierekisteri by fieldCode, roadNumber") {
+    assume(testConnection)
+    val assets = tierekisteriTrafficSignAsset.fetchActiveAssetData(45)
+
+    assets.size should not be (0)
+  }
+
+  test("Fetch Traffic Signs from Tierekisteri by fieldCode, roadNumber, roadPartNumber") {
+    assume(testConnection)
+    val assets = tierekisteriTrafficSignAsset.fetchActiveAssetData(45, 1)
+
+    assets.size should not be (0)
+  }
+
+  test("Fetch Traffic Signs from Tierekisteri by fieldCode, roadNumber, roadPartNumber, startDistance") {
+    assume(testConnection)
+    val assets = tierekisteriTrafficSignAsset.fetchActiveAssetData(45, 1, 1)
+
+    assets.size should not be (0)
   }
 
   test("road with assets get values works on single part") {

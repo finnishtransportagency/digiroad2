@@ -177,6 +177,9 @@ case class TierekisteriRoadWidthData(roadNumber: Long, startRoadPartNumber: Long
 case class TierekisteriLightingData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
                                 track: Track, startAddressMValue: Long, endAddressMValue: Long) extends TierekisteriAssetData
 
+case class TierekisteriTrafficSignData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
+                                    track: Track, startAddressMValue: Long, endAddressMValue: Long, assetNumber: Int, assetValue: String) extends TierekisteriAssetData
+
 case class TierekisteriError(content: Map[String, Any], url: String)
 
 class TierekisteriClientException(response: String) extends RuntimeException(response)
@@ -752,6 +755,28 @@ class TierekisteriRoadWidthAssetClient(trEndPoint: String, trEnable: Boolean, ht
     val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
 
     TierekisteriRoadWidthData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue, assetValue)
+  }
+}
+
+class TierekisteriTrafficSignAssetClient(trEndPoint: String, trEnable: Boolean, httpClient: CloseableHttpClient) extends TierekisteriAssetDataClient{
+  override def tierekisteriRestApiEndPoint: String = trEndPoint
+  override def tierekisteriEnabled: Boolean = trEnable
+  override def client: CloseableHttpClient = httpClient
+  type TierekisteriType = TierekisteriTrafficSignData
+
+  override val trAssetType = "tl506"
+  private val trLMNUMERO = "LMNUMERO"
+  private val trLMTEKSTI = "LMTEKSTI"
+
+  override def mapFields(data: Map[String, Any]): TierekisteriTrafficSignData = {
+    val assetValue = getFieldValue(data, trLMTEKSTI).getOrElse("")
+    val assetNumber = convertToInt(getMandatoryFieldValue(data, trLMNUMERO)).get
+    val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
+    val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
+    val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
+    val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
+
+    TierekisteriTrafficSignData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, assetNumber, assetValue)
   }
 }
 

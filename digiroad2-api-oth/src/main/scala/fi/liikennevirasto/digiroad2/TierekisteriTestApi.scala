@@ -79,6 +79,7 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
   val trafficVolumeTRCode = "tl201"
   val lightingTRCode = "tl167"
   val roadWidthTRCode = "tl136"
+  val trafficSignTRCode ="tl506"
 
   val trafficVolume: Map[String,List[Map[String, Any]]] ={
     Map(
@@ -129,6 +130,21 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
             "OSA" -> 1,                      //Road part number
             "ETAISYYS" -> 0,                 //Start distance
             "LET" -> 0                       //End distance
+          )
+        )
+    )
+  }
+
+  val trafficSign: Map[String,List[Map[String, Any]]] ={
+    Map(
+      "Data" ->
+        List(
+          Map(
+            "TIE" -> 45,                     //Road number
+            "OSA" -> 1,                      //Road part number
+            "ETAISYYS" -> 1,                 //Start distance
+            "LMNUMERO" -> 361,               //Speed Limit
+            "LMTEKSTI" -> "80"               //Speed Limit Value
           )
         )
     )
@@ -219,6 +235,8 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
       lighting
     } else if (fieldCode == roadWidthTRCode) {
       roadWidth
+    } else if (fieldCode == trafficSignTRCode) {
+      trafficSign
     }
   }
 
@@ -230,6 +248,8 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
       trafficVolume
     } else if (fieldCode == lightingTRCode) {
       lighting
+    } else if (fieldCode == trafficSignTRCode) {
+      trafficSign
     }
   }
 
@@ -241,6 +261,8 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
       trafficVolume
     } else if (fieldCode == lightingTRCode) {
       lighting
+    } else if (fieldCode == trafficSignTRCode) {
+      trafficSign
     }
   }
 
