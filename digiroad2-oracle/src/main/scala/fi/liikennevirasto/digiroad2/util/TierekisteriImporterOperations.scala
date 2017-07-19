@@ -1,21 +1,37 @@
 package fi.liikennevirasto.digiroad2.util
 
 
+import java.util.Properties
 import fi.liikennevirasto.digiroad2.{TierekisteriAssetDataClient, TierekisteriLightingAssetClient, TierekisteriRoadWidthAssetClient, _}
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode, State}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.roadaddress.oracle.RoadAddressDAO
+import org.apache.http.impl.client.HttpClientBuilder
 
 case class AddressSection(roadNumber: Long, roadPartNumber: Long, track: Track, assetValue: Int, startAddressMValue: Long, endAddressMValue: Option[Long])
 
 trait TierekisteriImporterOperations {
-  def roadLinkService: RoadLinkService
-  def vvhClient: VVHClient
-  def dao: OracleLinearAssetDao
-  def roadAddressDao: RoadAddressDAO
-  def linearAssetService: LinearAssetService
+  val eventbus = new DummyEventBus
+  lazy val dr2properties: Properties = {
+    val props = new Properties()
+    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
+    props
+  }
+  lazy val roadLinkService = new RoadLinkService(vvhClient, eventbus, new DummySerializer)
+  lazy val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHServiceHost"))
+  lazy val dao: OracleLinearAssetDao = new OracleLinearAssetDao(vvhClient, roadLinkService)
+  lazy val roadAddressDao : RoadAddressDAO = new RoadAddressDAO()
+  lazy val linearAssetService: LinearAssetService = new LinearAssetService(roadLinkService, eventbus)
+
+  def getProperty(name: String) = {
+    val property = dr2properties.getProperty(name)
+    if(property != null)
+      property
+    else
+      throw new RuntimeException(s"cannot find property $name")
+  }
 
   def tierekisteriClient: TierekisteriClientType
 
@@ -24,7 +40,15 @@ trait TierekisteriImporterOperations {
   type TierekisteriClientType <: TierekisteriAssetDataClient
   type TierekisteriAssetDataType <: TierekisteriAssetData
 
-  def createLinearAsset(linkId: Long, typeId: Int, measures: Measures, newValue: Int)
+  def createLinearAsset(linkId: Long, typeId: Int, measures: Measures, assetValue: Int) = {
+    if (measures.startMeasure != measures.endMeasure) {
+      val assetId = linearAssetService.dao.createLinearAsset(typeId, linkId, false, SideCode.BothDirections.value,
+        measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(LinkGeomSource.NormalLinkInterface.value))
+
+      linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, assetValue)
+      println(s"Created OTH " + assetName + " assets for $linkId from TR data with assetId $assetId")
+    }
+  }
 
   def getValue(tierekisteriAssetDataType: TierekisteriAssetDataType) : Int
 
@@ -43,7 +67,7 @@ trait TierekisteriImporterOperations {
     }
   }
 
-  def importAsset(typeId: Int) = {
+  def importAsset(typeId: Int): Unit = {
     println("\nExpiring " + assetName + " From OTH Database Only with administrativeClass == State")
     //Get All Municipalities
     val municipalities: Seq[Int] =
@@ -106,7 +130,7 @@ trait TierekisteriImporterOperations {
                   } else {
                     ra.addressMValueToLRM(startAddr) match {
                       case Some(startValue) => startValue
-                      case None => 0
+                      case None => return
                     }
                   }
 
@@ -116,7 +140,7 @@ trait TierekisteriImporterOperations {
                   } else {
                     ra.addressMValueToLRM(endAddr.get) match {
                       case Some(endValue) => endValue
-                      case None => 0
+                      case None => return
                     }
                   }
                 createLinearAsset(ra.linkId, typeId, Measures(newStartMValue, newEndMValue), assetValue)
@@ -129,62 +153,35 @@ trait TierekisteriImporterOperations {
   }
 }
 
-class LitRoadImporterOperations(vvhClientImp: VVHClient, oracleLinearAssetDao: OracleLinearAssetDao,
-                                roadAddressDaoImp: RoadAddressDAO, linearAssetServiceImp: LinearAssetService) extends TierekisteriImporterOperations {
+class LitRoadImporterOperations extends TierekisteriImporterOperations {
 
-  override def vvhClient = vvhClientImp
-  lazy val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
-  override def roadAddressDao = roadAddressDaoImp
-  override def dao: OracleLinearAssetDao = new OracleLinearAssetDao(vvhClient, roadLinkService)
-  override def linearAssetService = linearAssetServiceImp
+  override def tierekisteriClient = new TierekisteriLightingAssetClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+    getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+    HttpClientBuilder.create().build())
 
   override def assetName = "lighting"
   override type TierekisteriClientType = TierekisteriLightingAssetClient
   override type TierekisteriAssetDataType = TierekisteriLightingData
 
-  override def createLinearAsset(linkId: Long, typeId: Int, measures: Measures, assetValue: Int) = {
-    val assetValue = 1
-    if (measures.startMeasure != measures.endMeasure) {
-      val assetId = linearAssetService.dao.createLinearAsset(typeId, linkId, false, SideCode.BothDirections.value,
-        measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(LinkGeomSource.NormalLinkInterface.value))
-
-      linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, assetValue)
-      println(s"Created OTH " + assetName + " assets for $linkId from TR data with assetId $assetId")
-    }
-  }
-
   override def getValue(tierekisteriLightingData: TierekisteriAssetDataType): Int = {
     1
   }
 
-  override def tierekisteriClient: TierekisteriLightingAssetClient = ???
 }
 
-class RoadWidthImporterOperations(vvhClientImp: VVHClient, oracleLinearAssetDao: OracleLinearAssetDao,
-                                  roadAddressDaoImp: RoadAddressDAO, linearAssetServiceImp: LinearAssetService) extends TierekisteriImporterOperations {
-  override def vvhClient = vvhClientImp
-  lazy val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
-  override def roadAddressDao = roadAddressDaoImp
-  override def dao: OracleLinearAssetDao = new OracleLinearAssetDao(vvhClient, roadLinkService)
-  override def linearAssetService = linearAssetServiceImp
+class RoadWidthImporterOperations extends TierekisteriImporterOperations {
+
+  override def tierekisteriClient = new TierekisteriRoadWidthAssetClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+    getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+    HttpClientBuilder.create().build())
+
   override def assetName = "roadWidth"
 
   override type TierekisteriClientType = TierekisteriRoadWidthAssetClient
   override type TierekisteriAssetDataType = TierekisteriRoadWidthData
 
-  override def createLinearAsset(linkId: Long, typeId: Int, measures: Measures, assetValue: Int) = {
-    if (measures.startMeasure != measures.endMeasure) {
-      val assetId = linearAssetService.dao.createLinearAsset(typeId, linkId, false, SideCode.BothDirections.value,
-        measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(LinkGeomSource.NormalLinkInterface.value))
-
-      linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, assetValue)
-      println(s"Created OTH " + assetName + " assets for $linkId from TR data with assetId $assetId")
-    }
-  }
-
   override def getValue(tierekisteriAssetData: TierekisteriAssetDataType): Int = {
     tierekisteriAssetData.assetValue
   }
 
-  override def tierekisteriClient: TierekisteriRoadWidthAssetClient = ???
 }

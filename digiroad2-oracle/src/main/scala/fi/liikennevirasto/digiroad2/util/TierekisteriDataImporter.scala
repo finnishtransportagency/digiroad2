@@ -17,10 +17,10 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
   val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
 
   lazy val litRoadImporterOperations: LitRoadImporterOperations = {
-    new LitRoadImporterOperations(vvhClient, oracleLinearAssetDao, roadAddressDao, linearAssetService)
+    new LitRoadImporterOperations()
   }
   lazy val roadWidthImporterOperations: RoadWidthImporterOperations = {
-    new RoadWidthImporterOperations(vvhClient, oracleLinearAssetDao, roadAddressDao, linearAssetService)
+    new RoadWidthImporterOperations()
   }
 
   def importTrafficVolumeAsset(tierekisteriTrafficVolumeAsset: TierekisteriTrafficVolumeAssetClient) = {
@@ -78,11 +78,13 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
   }
 
 
-  def importLitRoadAsset(tierekisteriLightingAsset: TierekisteriLightingAssetClient): Unit = {
-    litRoadImporterOperations.importAsset(roadWidthAssetId)
+  def importLitRoadAsset(): Unit = {
+    litRoadImporterOperations.importAsset(lightingAssetId)
+
     }
 
-  def importRoadWidthAsset(tierekisteriRoadWidthAsset: TierekisteriRoadWidthAssetClient): Unit = {
+
+  def importRoadWidthAsset(): Unit = {
     roadWidthImporterOperations.importAsset(roadWidthAssetId)
   }
 }

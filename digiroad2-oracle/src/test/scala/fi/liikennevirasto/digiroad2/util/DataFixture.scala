@@ -894,7 +894,7 @@ object DataFixture {
     println("\nStart LitRoad import at time: ")
     println(DateTime.now())
 
-    tierekisteriDataImporter.importLitRoadAsset(tierekisteriLightingAsset)
+    tierekisteriDataImporter.importLitRoadAsset
 
     println("LitRoad import complete at time: ")
     println(DateTime.now())
@@ -905,7 +905,7 @@ object DataFixture {
     println("\nStart RoadWidth import at time: ")
     println(DateTime.now())
 
-    tierekisteriDataImporter.importRoadWidthAsset(tierekisteriRoadWidthAsset)
+    tierekisteriDataImporter.importRoadWidthAsset
 
     println("RoadWidth import complete at time: ")
     println(DateTime.now())
@@ -997,6 +997,8 @@ object DataFixture {
         importAllTrafficVolumeDataFromTR()
       case Some("import_all_litRoad_from_TR_to_OTH") =>
         importAllLitRoadDataFromTR()
+      case Some("import_all_roadWidth_from_TR_to_OTH") =>
+        importAllRoadWidthDataFromTR()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
@@ -1004,7 +1006,7 @@ object DataFixture {
         " generate_floating_obstacles | import_VVH_RoadLinks_by_municipalities | " +
         " check_unknown_speedlimits | set_transitStops_floating_reason | verify_roadLink_administrative_class_changed | set_TR_bus_stops_without_OTH_LiviId |" +
         " check_TR_bus_stops_without_OTH_LiviId | check_bus_stop_matching_between_OTH_TR | listing_bus_stops_with_side_code_conflict_with_roadLink_direction |" +
-        " fill_lane_amounts_in_missing_road_links | import_all_trafficVolume_from_TR_to_OTH | import_all_litRoad_from_TR_to_OTH")
+        " fill_lane_amounts_in_missing_road_links | import_all_trafficVolume_from_TR_to_OTH | import_all_litRoad_from_TR_to_OTH | import_all_roadWidth_from_TR_to_OTH")
     }
   }
 }
