@@ -173,7 +173,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     })
   }
 
-  private def addCalibrationMarkers(linksWithMValues: Seq[ProjectLink]): Seq[ProjectLink] = {
+  def addCalibrationMarkers(linksWithMValues: Seq[ProjectLink]): Seq[ProjectLink] = {
     linksWithMValues.groupBy(record => (record.roadNumber, record.roadPartNumber)).flatMap(group => {
       val groupedLinks = group._2
       val first = groupedLinks.sortBy(_.endAddrMValue).head
