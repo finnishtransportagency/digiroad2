@@ -149,7 +149,7 @@ object RoadAddressFiller {
     projectAddressLinks.map(pal => {
       ProjectLink(NewRoadAddress, newRoadNumber, newRoadPartNumber, Track.apply(newTrackCode.toInt), Discontinuity.apply(newDiscontinuity.toInt), pal.startAddressM,
         pal.endAddressM, Some(project.startDate), None, Some(project.createdBy), -1, pal.linkId, pal.startMValue, pal.endMValue, randomSideCode,
-        (pal.startCalibrationPoint, pal.endCalibrationPoint), false, pal.geometry, roadAddressProjectID, pal.status, pal.roadType, pal.roadLinkSource)
+        (pal.startCalibrationPoint, pal.endCalibrationPoint), false, pal.geometry, roadAddressProjectID, pal.status, pal.roadType, pal.roadLinkSource, pal.length)
     })
   }
 

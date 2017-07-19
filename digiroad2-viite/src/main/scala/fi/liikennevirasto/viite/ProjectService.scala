@@ -149,31 +149,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                       (projectLink.startCalibrationPoint, projectLink.endCalibrationPoint), false, projectLink.geometry, roadAddressProjectID, LinkStatus.New, projectLink.roadType, projectLink.roadLinkSource, projectLink.length)
                   })
                   //Determine geometries for the mValues and addressMValues
-                  val geometries = newProjectLinks.groupBy(record => (record.roadNumber, record.roadPartNumber)).map(v => {
-                    val projectLinkSequence = v._2
-                    val roadPartLengths = projectLinkSequence.map(link => {
-                      new RoadPartLengths(link.linkId, link.geometryLength)
-                    })
-                    new RoadPartBasis(v._1._1, v._1._2) -> roadPartLengths
-                  })
+                  val geometries = determineGeometries(newProjectLinks)
                   val linksWithMValues = ProjectDeltaCalculator.determineMValues(newProjectLinks,geometries)
-                  val newsLinksWithCalibration = newProjectLinks.groupBy(record => (record.roadNumber, record.roadPartNumber)).flatMap(group => {
-                    val groupedLinks = group._2
-                    val first = groupedLinks.sortBy(_.endAddrMValue).head
-                    val last = groupedLinks.sortBy(_.endAddrMValue).last
-                    groupedLinks.map(gl => {
-                      if (groupedLinks.size == 1) { //first and last are the same then
-                        first.copy(calibrationPoints = (Option(new CalibrationPoint(first.linkId, first.startMValue, first.startAddrMValue)), Option(new CalibrationPoint(last.linkId, last.endMValue, last.endAddrMValue))))
-                      } else {
-                        if (gl.linkId == first.linkId && gl.roadNumber == first.roadNumber && gl.roadPartNumber == first.roadPartNumber) {
-                          first.copy(calibrationPoints = (Option(new CalibrationPoint(first.linkId, first.startMValue, first.startAddrMValue)), Option.empty[CalibrationPoint]))
-                        } else if (gl.linkId == last.linkId && gl.roadNumber == last.roadNumber && gl.roadPartNumber == last.roadPartNumber) {
-                          last.copy(calibrationPoints = (Option.empty[CalibrationPoint], Option(new CalibrationPoint(last.linkId, last.endMValue, last.endAddrMValue))))
-                        } else gl
-                      }
-                    })
-                  }).asInstanceOf[Seq[ProjectLink]]
-                  ProjectDAO.create(linksWithMValues)
+
+                  val newsLinksWithCalibration = addCalibrationMarkers(linksWithMValues)
+                  ProjectDAO.create(newsLinksWithCalibration)
                   ""
               }
             }
@@ -182,6 +162,37 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         case None => "Projektikoodilla ei löytynyt projektia"
       }
   }
+
+  private def determineGeometries(newProjectLinks: Seq[ProjectLink]):Map[RoadPartBasis, Seq[RoadPartLengths]] = {
+    newProjectLinks.groupBy(record => (record.roadNumber, record.roadPartNumber)).map(v => {
+      val projectLinkSequence = v._2
+      val roadPartLengths = projectLinkSequence.map(link => {
+        new RoadPartLengths(link.linkId, link.geometryLength)
+      })
+      new RoadPartBasis(v._1._1, v._1._2) -> roadPartLengths
+    })
+  }
+
+  private def addCalibrationMarkers(linksWithMValues: Seq[ProjectLink]): Seq[ProjectLink] = {
+    linksWithMValues.groupBy(record => (record.roadNumber, record.roadPartNumber)).flatMap(group => {
+      val groupedLinks = group._2
+      val first = groupedLinks.sortBy(_.endAddrMValue).head
+      val last = groupedLinks.sortBy(_.endAddrMValue).last
+      groupedLinks.map(gl => {
+        if (groupedLinks.size == 1) { //first and last are the same then
+          first.copy(calibrationPoints = (Option(new CalibrationPoint(first.linkId, first.startMValue, first.startAddrMValue)), Option(new CalibrationPoint(last.linkId, last.endMValue, last.endAddrMValue))))
+        } else {
+          if (gl.linkId == first.linkId && gl.roadNumber == first.roadNumber && gl.roadPartNumber == first.roadPartNumber) {
+            first.copy(calibrationPoints = (Option(new CalibrationPoint(first.linkId, first.startMValue, first.startAddrMValue)), Option.empty[CalibrationPoint]))
+          } else if (gl.linkId == last.linkId && gl.roadNumber == last.roadNumber && gl.roadPartNumber == last.roadPartNumber) {
+            last.copy(calibrationPoints = (Option.empty[CalibrationPoint], Option(new CalibrationPoint(last.linkId, last.endMValue, last.endAddrMValue))))
+          } else gl
+        }
+      })
+    }).asInstanceOf[Seq[ProjectLink]]
+  }
+
+
   def changeDirection(projectLink:Seq[Long]): String = {
     try {
       withDynTransaction {
