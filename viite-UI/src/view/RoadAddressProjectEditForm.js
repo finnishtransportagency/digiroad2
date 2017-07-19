@@ -254,6 +254,10 @@
         new ModalConfirm(error);
       });
 
+      eventbus.on('roadAddress:projectLinksSaveFailed', function (result) {
+        new ModalConfirm(result.toString());
+      });
+
       rootElement.on('click', '.project-form button.update', function() {
         currentProject = projectCollection.getCurrentProject();
         if( $('[id=dropDown] :selected').val() == 'lakkautus') {

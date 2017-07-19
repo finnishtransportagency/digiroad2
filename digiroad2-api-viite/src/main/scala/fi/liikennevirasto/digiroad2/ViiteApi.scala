@@ -278,9 +278,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     withDynTransaction {
       val errorMessage = projectService.addNewLinksToProject(roadLinks, projectLink.projectId, projectLink.newRoadNumber, projectLink.newRoadPartNumber, projectLink.newTrackCode, projectLink.newDiscontinuity)
       if (errorMessage == "") {
-        Map("success" -> "true")
+        Map("success" -> true)
       } else {
-        Map("success" -> "false",
+        Map("success" -> false,
           "errormessage" -> errorMessage)
       }
     }

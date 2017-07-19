@@ -594,32 +594,54 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
         projectLink.calibrationPoints._2,Anomaly.None, projectLink.lrmPositionId, projectLink.status)
 
       projectService.addNewLinksToProject(Seq(p), id, projectLink.roadNumber, projectLink.roadPartNumber, projectLink.track.value.toLong, projectLink.discontinuity.value.toLong)
-     val links= ProjectDAO.getProjectLinks(id)
+      val links= ProjectDAO.getProjectLinks(id)
       links.size should be (1)
     }
   }
-    test("error message when reserving already used road number&part") {
-      runWithRollback {
-        val idr = RoadAddressDAO.getNextRoadAddressId
-        val id = Sequences.nextViitePrimaryKeySeqValue
-        val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("1972-03-03"), DateTime.parse("2700-01-01"), "Some additional info", List.empty[ReservedRoadPart], None)
-        val projectLink = toProjectLink(rap)(RoadAddress(idr, 5, 203, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
-          Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface))
-        ProjectDAO.createRoadAddressProject(rap)
+  test("error message when reserving already used road number&part (in other project ids). Empty error message if same road number&part but == proj id ") {
+    runWithRollback {
+      val idr = RoadAddressDAO.getNextRoadAddressId
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("1972-03-03"), DateTime.parse("2700-01-01"), "Some additional info", List.empty[ReservedRoadPart], None)
+      val projectLink = toProjectLink(rap)(RoadAddress(idr, 5, 203, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
+        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface))
+      ProjectDAO.createRoadAddressProject(rap)
 
-        val p = ProjectAddressLink(idr, projectLink.linkId, projectLink.geom,
-          1, AdministrativeClass.apply(1), LinkType.apply(1), RoadLinkType.apply(1), ConstructionType.apply(1), projectLink.linkGeomSource, RoadType.PublicUnderConstructionRoad, "", 111, Some(""), Some("vvh_modified"),
-          null, projectLink.roadNumber, projectLink.roadPartNumber, 2, -1, projectLink.discontinuity.value,
-          projectLink.startAddrMValue, projectLink.endAddrMValue, projectLink.startMValue, projectLink.endMValue,
-          projectLink.sideCode,
-          projectLink.calibrationPoints._1,
-          projectLink.calibrationPoints._2,Anomaly.None, projectLink.lrmPositionId, projectLink.status)
+      val rap2 = RoadAddressProject(id+1, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("1972-03-04"), DateTime.parse("2700-01-01"), "Some additional info", List.empty[ReservedRoadPart], None)
+      val projectLink2 = toProjectLink(rap2)(RoadAddress(idr, 5, 999, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
+        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface))
+      ProjectDAO.createRoadAddressProject(rap2)
 
+      val projectLink3 = toProjectLink(rap)(RoadAddress(idr, 5, 999, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
+        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface))
 
-        val message=  projectService.addNewLinksToProject(Seq(p), id, projectLink.roadNumber, projectLink.roadPartNumber, projectLink.track.value.toLong, projectLink.discontinuity.value.toLong)
-        val links = ProjectDAO.getProjectLinks(id)
-        links.size should be(0)
-        message should be ("TIE 5 OSA 203 on jo olemassa projektin alkupäivänä 03.03.1972, tarkista tiedot.")
-      }
+      val p = ProjectAddressLink(idr, projectLink.linkId, projectLink.geom,
+        1, AdministrativeClass.apply(1), LinkType.apply(1), RoadLinkType.apply(1), ConstructionType.apply(1), projectLink.linkGeomSource, RoadType.PublicUnderConstructionRoad, "", 111, Some(""), Some("vvh_modified"),
+        null, projectLink.roadNumber, projectLink.roadPartNumber, 2, -1, projectLink.discontinuity.value,
+        projectLink.startAddrMValue, projectLink.endAddrMValue, projectLink.startMValue, projectLink.endMValue,
+        projectLink.sideCode,
+        projectLink.calibrationPoints._1,
+        projectLink.calibrationPoints._2,Anomaly.None, projectLink.lrmPositionId, projectLink.status)
+
+      val message1project1 =  projectService.addNewLinksToProject(Seq(p), id, projectLink.roadNumber, projectLink.roadPartNumber, projectLink.track.value.toLong, projectLink.discontinuity.value.toLong)
+      val links = ProjectDAO.getProjectLinks(id)
+      links.size should be(0)
+      message1project1 should be ("TIE 5 OSA 203 on jo olemassa projektin alkupäivänä 03.03.1972, tarkista tiedot") //check that it is reserved in roadaddress table
+
+      val message1project2=  projectService.addNewLinksToProject(Seq(p), id+1, projectLink2.roadNumber, projectLink2.roadPartNumber, projectLink2.track.value.toLong, projectLink2.discontinuity.value.toLong)
+      val links2 = ProjectDAO.getProjectLinks(id+1)
+      links2.size should be(1)
+      message1project2 should be ("")
+
+      val message2project1 =  projectService.addNewLinksToProject(Seq(p), id, projectLink3.roadNumber, projectLink3.roadPartNumber, projectLink3.track.value.toLong, projectLink3.discontinuity.value.toLong)
+      val links3 = ProjectDAO.getProjectLinks(id)
+      links3.size should be(0)
+      message2project1 should be ("TIE 5 OSA 999 on jo varattuna projektissa TestProject, tarkista tiedot")
+
+      val message2project2=  projectService.addNewLinksToProject(Seq(p), id+1, projectLink2.roadNumber, projectLink2.roadPartNumber, projectLink2.track.value.toLong, projectLink2.discontinuity.value.toLong)
+      val links4 = ProjectDAO.getProjectLinks(id+1)
+      links4.size should be(2)
+      message2project2 should be ("")
     }
+  }
 }
