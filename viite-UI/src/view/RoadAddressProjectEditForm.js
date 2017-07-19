@@ -275,6 +275,9 @@
 
       rootElement.on('click','.changeDirection', function () {
           projectCollection.changeNewProjectLinkDirection(selectedProjectLinkProperty.get());
+
+      eventbus.on('roadAddress:projectLinksSaveFailed', function (result) {
+        new ModalConfirm(result.toString());
       });
 
       rootElement.on('click', '.project-form button.update', function() {

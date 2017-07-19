@@ -221,7 +221,6 @@
         Number($('#roadAddressProject').find('#ajr')[0].value),
         Number($('#roadAddressProject').find('#DiscontinuityDropdown')[0].value)
       ];
-
       backend.insertNewRoadLink(data, function(successObject) {
         if (!successObject.success) {
           eventbus.trigger('roadAddress:projectLinksCreateFailed', successObject.message);
