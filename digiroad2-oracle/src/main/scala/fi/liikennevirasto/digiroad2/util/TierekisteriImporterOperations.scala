@@ -20,7 +20,9 @@ trait TierekisteriImporterOperations {
     props
   }
   lazy val roadLinkService = new RoadLinkService(vvhClient, eventbus, new DummySerializer)
-  lazy val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHServiceHost"))
+  lazy val vvhClient: VVHClient = {
+    new VVHClient(getProperty("digiroad2.VVHRestApiEndPoint"))
+  }
   lazy val dao: OracleLinearAssetDao = new OracleLinearAssetDao(vvhClient, roadLinkService)
   lazy val roadAddressDao : RoadAddressDAO = new RoadAddressDAO()
   lazy val linearAssetService: LinearAssetService = new LinearAssetService(roadLinkService, eventbus)
@@ -46,7 +48,7 @@ trait TierekisteriImporterOperations {
         measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(LinkGeomSource.NormalLinkInterface.value))
 
       linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, assetValue)
-      println(s"Created OTH " + assetName + " assets for $linkId from TR data with assetId $assetId")
+      println(s"Created OTH " + assetName + " assets for " + linkId + " from TR data with assetId " + assetId)
     }
   }
 
