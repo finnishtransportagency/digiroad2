@@ -138,7 +138,7 @@
         };
     };
 
-  root.LinkPropertyLayer = function(map, roadLayer, selectedLinkProperty, roadCollection, linkPropertiesModel, applicationModel) {
+  root.LinkPropertyLayer = function(map, roadLayer, selectedLinkProperty, roadCollection, linkPropertiesModel, applicationModel, roadAddressInfoPopup) {
     var layerName = 'linkProperty';
     Layer.call(this, layerName, roadLayer);
     var me = this;
@@ -398,12 +398,14 @@
     };
 
     var show = function(map) {
+      roadAddressInfoPopup.start();
       me.show(map);
     };
 
     var hideLayer = function() {
       unselectRoadLink();
       historyLayer.clear();
+      roadAddressInfoPopup.stop();
       me.stop();
       me.hide();
     };

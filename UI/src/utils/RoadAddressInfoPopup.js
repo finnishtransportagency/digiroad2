@@ -17,13 +17,22 @@
         var infoContainer = document.getElementById('popup');
         var infoContent = document.getElementById('popup-content');
 
-        eventbus.on('map:mouseMoved', function (event) {
+        var run = function (event) {
             if (canDisplayRoadAddressInfo())
                 displayRoadAddressInfoPopup(event);
-        });
+        };
+
+        var start = function(){
+            eventbus.on('map:mouseMoved', run);
+        };
+
+        var stop = function(){
+            eventbus.off('map:mouseMoved', run);
+        };
 
         var canDisplayRoadAddressInfo = function(){
-            return RoadAddressInfoData.roles && _.contains(RoadAddressInfoData.roles, 'operator') && RoadAddressInfoData.isExperimental;
+            return RoadAddressInfoData.roles &&
+                (_.contains(RoadAddressInfoData.roles, 'operator') || _.contains(RoadAddressInfoData.roles, 'busStopMaintainer'))
         };
 
         var overlay = new ol.Overlay(({
@@ -71,7 +80,10 @@
             overlay.setPosition(map.getEventCoordinate(event.originalEvent));
         };
 
-        return {};
+        return {
+            start: start,
+            stop: stop
+        };
     }
 
 })(this);

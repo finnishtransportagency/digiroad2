@@ -197,7 +197,6 @@
     if (withTileMaps) { new TileMapCollection(map); }
     var roadLayer = new RoadLayer(map, models.roadCollection);
 
-    new RoadAddressInfoPopup(map);
     new LinkPropertyForm(models.selectedLinkProperty);
     new ManoeuvreForm(models.selectedManoeuvreSource);
     _.forEach(linearAssets, function(linearAsset) {
@@ -212,6 +211,8 @@
     _.forEach(pointAssets, function(pointAsset) {
      PointAssetForm.initialize(pointAsset.selectedPointAsset, pointAsset.layerName, pointAsset.formLabels);
     });
+
+    var roadAddressInfoPopup = new RoadAddressInfoPopup(map);
 
     var linearAssetLayers = _.reduce(linearAssets, function(acc, asset) {
      acc[asset.layerName] = new LinearAssetLayer({
@@ -249,7 +250,7 @@
 
     var layers = _.merge({
       road: roadLayer,
-      linkProperty: new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel),
+      linkProperty: new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel, roadAddressInfoPopup),
        massTransitStop: new MassTransitStopLayer(map, models.roadCollection, mapOverlay, new AssetGrouping(applicationModel), roadLayer),
        speedLimit: new SpeedLimitLayer({
        map: map,
