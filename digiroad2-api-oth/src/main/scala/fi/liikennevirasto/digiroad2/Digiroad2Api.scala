@@ -67,6 +67,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     case s: SideCode => JInt(s.value)
   }))
 
+  case object LinkGeomSourceSerializer extends CustomSerializer[LinkGeomSource](format => ({
+    case JInt(lg) => LinkGeomSource.apply(lg.toInt)
+  }, {
+    case lg: LinkGeomSource => JInt(lg.value)
+  }))
+
   case object TrafficDirectionSerializer extends CustomSerializer[TrafficDirection](format => ( {
     case JString(direction) => TrafficDirection(direction)
   }, {
@@ -85,7 +91,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     case lt: LinkType => JInt(BigInt(lt.value))
   }))
 
-  protected implicit val jsonFormats: Formats = DefaultFormats + DateTimeSerializer + SideCodeSerializer + TrafficDirectionSerializer + LinkTypeSerializer + DayofWeekSerializer
+  protected implicit val jsonFormats: Formats = DefaultFormats + DateTimeSerializer + LinkGeomSourceSerializer + SideCodeSerializer + TrafficDirectionSerializer + LinkTypeSerializer + DayofWeekSerializer
 
   before() {
     contentType = formats("json") + "; charset=utf-8"
