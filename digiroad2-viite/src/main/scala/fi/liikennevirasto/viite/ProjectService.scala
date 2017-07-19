@@ -255,9 +255,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         return Some(s"Seuraavat tieosat ovat eri ELY-numerolla kuin projektin muut osat: ${errors.mkString(", ")}")
       val addresses = project.reservedParts.flatMap { roadaddress =>
         val addressesOnPart = RoadAddressDAO.fetchByRoadPart(roadaddress.roadNumber, roadaddress.roadPartNumber, false)
-        val roadlinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(addressesOnPart.map(_.linkId).toSet, false)
-        val mapping = roadlinks.map(rl => rl.linkId -> RoadAddressLinkBuilder.getRoadType(rl.administrativeClass, rl.linkType)).toMap
-        withFetchedDataFromVVH(addressesOnPart, roadlinks, CalibrationPoint).map(toProjectLink(mapping))
+        val mapping = roadLinkService.getRoadLinksByLinkIdsFromVVH(addressesOnPart.map(_.linkId).toSet, false)
+          .map(rl => rl.linkId -> RoadAddressLinkBuilder.getRoadType(rl.administrativeClass, rl.linkType)).toMap
+        addressesOnPart.map(toProjectLink(mapping))
       }
       val ely = project.reservedParts.map(_.ely)
       if (ely.distinct.size > 1) {
