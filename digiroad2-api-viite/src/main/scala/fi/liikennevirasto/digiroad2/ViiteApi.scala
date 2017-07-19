@@ -242,10 +242,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   val errormessage= projectService.changeDirection(parsedBody.extract[Seq[Long]])
     if (errormessage=="")
       {
-        Map("success" -> "true")
+        Map("success" -> true)
       } else
       {
-        Map("success" -> "true","errorMessage"->errormessage)
+        Map("success" -> false,"errorMessage"->errormessage)
       }
   }
 
