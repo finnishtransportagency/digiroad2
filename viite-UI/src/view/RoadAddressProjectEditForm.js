@@ -107,6 +107,7 @@
         '</div>'+
         newRoadAddressInfo() +
         '</form>' +
+        changeDirection() +
         actionSelectedField()+
         '</div>'+
         '</div>' +
@@ -120,7 +121,7 @@
         '<div><label></label></div><div><label style = "margin-top: 50px">TIEOSOITTEEN TIEDOT</label></div>' +
         addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('AJR')+ addSmallLabel('ELY')  + addSmallLabel('JATKUU')+
         '</div>' +
-        '<div class="form-group new-road-address" hidden>'+ addSmallInputNumber('tie',(selectedProjectLink[0].roadNumber !== 0 ? selectedProjectLink[0].roadNumber : '')) + addSmallInputNumber('osa',(selectedProjectLink[0].roadPartNumber !== 0 ? selectedProjectLink[0].roadPartNumber : '')) + addSmallInputNumber('ajr',(selectedProjectLink[0].trackCode !== 99 ? selectedProjectLink[0].trackCode : '')) + addSmallInputNumberDisabled('ely', selectedProjectLink[0].elyCode) +addSelect()+
+        '<div class="form-group new-road-address" hidden>'+ addSmallInputNumber('tie',(selectedProjectLink[0].roadNumber !== 0 ? selectedProjectLink[0].roadNumber : '')) + addSmallInputNumber('osa',(selectedProjectLink[0].roadPartNumber !== 0 ? selectedProjectLink[0].roadPartNumber : '')) + addSmallInputNumber('ajr',(selectedProjectLink[0].trackCode !== 99 ? selectedProjectLink[0].trackCode : '')) + addSmallInputNumberDisabled('ely', selectedProjectLink[0].elyCode) +addSelect() +
         '</div>';
     };
 
@@ -133,6 +134,16 @@
       '<option value="4" >4 Lievä epäjatkuvuus</option>'+
       '<option value="5" >5 Jatkuva</option>'+
       '</select>';
+    };
+
+    var changeDirection = function () {
+      var hidden = '';
+      if (selectedProjectLink[0].id === 0){
+        hidden = 'hidden';
+      }
+      return '<div ' + hidden + ' class="form-group changeDirectionDiv">' +
+          '<button class="form-group changeDirection btn btn-primary">Käännä kasvusuunta</button>' +
+          '</div>';
     };
 
     var addSmallLabel = function(label){
@@ -159,6 +170,22 @@
         '<footer></footer>');
     };
 
+    var checkInputs = function () {
+        var rootElement = $('#feature-attributes');
+        var inputs = rootElement.find('input');
+        var filled = true;
+        for (var i = 0; i < inputs.length; i++) {
+            if (inputs[i].type === 'text' && !inputs[i].value) {
+                filled = false;
+            }
+        }
+        if (filled) {
+            rootElement.find('.project-form button.update').prop("disabled", false);
+        } else {
+            rootElement.find('.project-form button.update').prop("disabled", true);
+        }
+    };
+
     var bindEvents = function() {
 
       var rootElement = $('#feature-attributes');
@@ -174,23 +201,8 @@
         selectedProjectLink = selected;
         currentProject = projectCollection.getCurrentProject();
         clearInformationContent();
-        rootElement.html(selectedProjectLinkTemplate(currentProject.project, options, selectedProjectLink)).find("input").on('keyup', function () {
-          var rootElement = $('#feature-attributes');
-          var inputs = rootElement.find('input');
-          var filled = true;
-
-          for (var i = 0; i < inputs.length; i++) {
-            if (inputs[i].type === 'text' && (!inputs[i].value || inputs[i].value === '0')) {
-              filled = false;
-            }
-          }
-
-          if (filled) {
-            rootElement.find('.project-form button.update').prop("disabled", false);
-          } else {
-            rootElement.find('.project-form button.update').prop("disabled", true);
-          }
-        });
+        rootElement.html(selectedProjectLinkTemplate(currentProject.project, options, selectedProjectLink));
+        checkInputs();
       });
 
       eventbus.on('roadAddressProject:publishable', function() {
@@ -253,16 +265,31 @@
         new ModalConfirm(error);
       });
 
+      eventbus.on('roadAddress:projectLinksCreateSuccess', function () {
+        rootElement.find('.changeDirectionDiv').prop("hidden", false);
+      });
+
+      eventbus.on('roadAddress:changeDirectionFailed', function(error) {
+            new ModalConfirm(error);
+      });
+
+      rootElement.on('click','.changeDirection', function () {
+          projectCollection.changeNewProjectLinkDirection(selectedProjectLinkProperty.get());
+      });
+
+      eventbus.on('roadAddress:projectLinksSaveFailed', function (result) {
+        new ModalConfirm(result.toString());
+      });
+
       rootElement.on('click', '.project-form button.update', function() {
         currentProject = projectCollection.getCurrentProject();
         if( $('[id=dropDown] :selected').val() == 'lakkautus') {
           projectCollection.saveProjectLinks(projectCollection.getTmpExpired());
+          rootElement.html(emptyTemplate(currentProject.project));
         }
         else if( $('[id=dropDown] :selected').val() === 'uusi'){
-
-          projectCollection.createProjectLinks(projectCollection.getTmpExpired());
+          projectCollection.createProjectLinks(selectedProjectLink);
         }
-        rootElement.html(emptyTemplate(currentProject.project));
       });
 
       rootElement.on('change', '#dropDown', function() {
@@ -308,6 +335,11 @@
         var publishButton = sendRoadAddressChangeButton();
         rootElement.append(publishButton);
       });
+
+      rootElement.on('keyup','.form-control.small-input', function () {
+         checkInputs();
+      });
+
     };
     bindEvents();
   };

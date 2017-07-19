@@ -5,7 +5,7 @@ import com.vividsolutions.jts.geom.{MultiPolygon, Polygon}
 import fi.liikennevirasto.digiroad2.ChangeType._
 import fi.liikennevirasto.digiroad2.GeometryUtils.Projection
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{MValueAdjustment, SideCodeAdjustment}
+import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MValueAdjustment, SideCodeAdjustment}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
@@ -656,6 +656,28 @@ trait LinearAssetOperations {
   def drop(ids: Set[Long]): Unit = {
     withDynTransaction {
       dao.floatLinearAssets(ids)
+    }
+  }
+
+  def updateChangeSet(changeSet: ChangeSet) : Unit = {
+    withDynTransaction {
+      dao.floatLinearAssets(changeSet.droppedAssetIds)
+
+      if (changeSet.adjustedMValues.nonEmpty)
+        logger.info("Saving adjustments for asset/link ids=" + changeSet.adjustedMValues.map(a => "" + a.assetId + "/" + a.linkId).mkString(", "))
+
+      changeSet.adjustedMValues.foreach { adjustment =>
+        dao.updateMValues(adjustment.assetId, (adjustment.startMeasure, adjustment.endMeasure))
+      }
+
+      changeSet.adjustedSideCodes.foreach { adjustment =>
+        dao.updateSideCode(adjustment.assetId, adjustment.sideCode)
+      }
+
+      val ids = changeSet.expiredAssetIds.toSeq
+      if (ids.nonEmpty)
+        logger.info("Expiring ids " + ids.mkString(", "))
+      ids.foreach(dao.updateExpiration(_, expired = true, LinearAssetTypes.VvhGenerated))
     }
   }
 

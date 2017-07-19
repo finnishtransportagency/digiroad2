@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.roadaddress.oracle.RoadAddressDAO
 
 
@@ -141,7 +142,12 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
 
                 val newStartMValue =
                   if (ra.startAddrMValue >= startAddr) {
-                    ra.startMValue
+                    ra.sideCode match {
+                      case TowardsDigitizing => ra.startMValue
+                      case AgainstDigitizing => ra.endMValue
+                      case _ => return
+                    }
+
                   } else {
                     ra.addressMValueToLRM(startAddr) match {
                       case Some(startValue) => startValue
@@ -151,14 +157,18 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
 
                 val newEndMValue =
                   if (ra.endAddrMValue <= endAddr.getOrElse(ra.endAddrMValue)) {
-                    ra.endMValue
+                    ra.sideCode match {
+                      case TowardsDigitizing => ra.endMValue
+                      case AgainstDigitizing => ra.startMValue
+                      case _ => return
+                    }
                   } else {
                     ra.addressMValueToLRM(endAddr.get) match {
                       case Some(endValue) => endValue
                       case None => return
                     }
                   }
-                createLinearAsset(ra.linkId, Measures(newStartMValue, newEndMValue))
+                createLinearAsset(ra.linkId, if(newStartMValue < newEndMValue) Measures(newStartMValue, newEndMValue) else Measures(newEndMValue, newStartMValue))
               }
           }
         }
