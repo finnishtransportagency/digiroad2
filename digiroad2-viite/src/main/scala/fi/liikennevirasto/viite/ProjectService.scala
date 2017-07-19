@@ -166,6 +166,18 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   /**
+    * This will run through all the project links that are to be created and simply add calibration points to the links
+    * whose track code change from one another.
+    * @param processed ProjectLinks that were run through
+    * @param unprocessed ProjectLinks that still were not through
+    * @return all the processed ProjectLinks with calibration points
+    */
+  private def addCalibrationPoints(processed: Seq[ProjectLink], unprocessed: Seq[ProjectLink]): Seq[ProjectLink] = {
+
+    processed
+  }
+
+  /**
     * Adds reserved road links (from road parts) to a road address project. Reservability is check before this.
     *
     * @param project
