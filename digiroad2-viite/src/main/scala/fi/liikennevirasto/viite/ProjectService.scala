@@ -60,13 +60,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @return
     */
   def checkNewRoadAddressNumberAndPart(roadNumber: Long, roadPart: Long, project :RoadAddressProject): Option[String] = {
-      val roadAddresses = RoadAddressDAO.isNewRoadPartUsed(roadNumber, roadPart, project.id)
-      if (roadAddresses.isEmpty) {
+      val projectLinks = RoadAddressDAO.isNewRoadPartUsed(roadNumber, roadPart, project.id)
+      if (projectLinks.isEmpty) {
         None
       } else {
         val fmt = DateTimeFormat.forPattern("dd.MM.yyyy")
-
-        Some(s"TIE $roadNumber OSA $roadPart on jo olemassa projektin alkupäivänä ${project.startDate.toString(fmt)}, tarkista tiedot.") //message to user if address is already in use
+        Some(s"TIE $roadNumber OSA $roadPart on jo olemassa projektin alkupäivänä ${project.startDate.toString(fmt)}, tarkista tiedot") //message to user if address is already in use
       }
   }
 
@@ -138,28 +137,53 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           checkNewRoadAddressNumberAndPart(newRoadNumber, newRoadPartNumber, project) match {
             case Some(errorMessage) => errorMessage
             case None => {
-              val newProjectLinks = roadLinks.map(projectLink => {
-                ProjectLink(NewRoadAddress, newRoadNumber, newRoadPartNumber, Track.apply(newTrackCode.toInt), Discontinuity.apply(newDiscontinuity.toInt), projectLink.startAddressM,
-                  projectLink.endAddressM, Some(project.startDate), None, Some(project.createdBy), -1, projectLink.linkId, projectLink.startMValue, projectLink.endMValue, randomSideCode,
-                  (projectLink.startCalibrationPoint, projectLink.endCalibrationPoint), false, projectLink.geometry, roadAddressProjectID, LinkStatus.New, projectLink.roadType, projectLink.roadLinkSource, projectLink.length)
-              })
-              //Determine geometries for the mValues and addressMValues
-              val geometries = newProjectLinks.groupBy(record => (record.roadNumber, record.roadPartNumber)).map(v => {
-                val projectLinkSequence = v._2
-                val roadPartLengths = projectLinkSequence.map(link => {
-                  new RoadPartLengths(link.linkId, link.geometryLength)
-                })
-                new RoadPartBasis(v._1._1, v._1._2) -> roadPartLengths
-              })
-              val linksWithMValues = ProjectDeltaCalculator.determineMValues(newProjectLinks,geometries)
-              ProjectDAO.create(linksWithMValues)
-              ""
+              val reserved = ProjectDAO.roadPartReservedByProject(newRoadNumber, newRoadPartNumber, project.id, true)
+              reserved match {
+                case Some(projectname) =>
+                  val fmt = DateTimeFormat.forPattern("dd.MM.yyyy")
+                  (s"TIE $newRoadNumber OSA $newRoadPartNumber on jo varattuna projektissa $projectname, tarkista tiedot")
+                case None =>
+                  val newProjectLinks = roadLinks.map(projectLink => {
+                    ProjectLink(NewRoadAddress, newRoadNumber, newRoadPartNumber, Track.apply(newTrackCode.toInt), Discontinuity.apply(newDiscontinuity.toInt), projectLink.startAddressM,
+                      projectLink.endAddressM, Some(project.startDate), None, Some(project.createdBy), -1, projectLink.linkId, projectLink.startMValue, projectLink.endMValue, randomSideCode,
+                      (projectLink.startCalibrationPoint, projectLink.endCalibrationPoint), false, projectLink.geometry, roadAddressProjectID, LinkStatus.New, projectLink.roadType, projectLink.roadLinkSource, projectLink.length)
+                  })
+                  //Determine geometries for the mValues and addressMValues
+                  val geometries = newProjectLinks.groupBy(record => (record.roadNumber, record.roadPartNumber)).map(v => {
+                    val projectLinkSequence = v._2
+                    val roadPartLengths = projectLinkSequence.map(link => {
+                      new RoadPartLengths(link.linkId, link.geometryLength)
+                    })
+                    new RoadPartBasis(v._1._1, v._1._2) -> roadPartLengths
+                  })
+                  val linksWithMValues = ProjectDeltaCalculator.determineMValues(newProjectLinks,geometries)
+                  ProjectDAO.create(linksWithMValues)
+                  ""
+              }
             }
           }
         }
         case None => "Projektikoodilla ei löytynyt projektia"
       }
   }
+  def changeDirection(projectLink:Seq[Long]): String = {
+    try {
+      withDynTransaction {
+        val projectId= ProjectDAO.projectLinksExist(projectLink)
+        if (projectId.size!=projectLink.size)
+          return "Kaikkia linkkejä ei löytynyt"
+        if (projectId.forall(_ !=projectId.head)){
+         return "Linkit kuuluvat useampaan projektiin"
+        }
+        ProjectDAO.flipProjectLinksSideCodes(projectLink)
+        ""
+      }
+    } catch{
+     case NonFatal(e) =>
+    "Päivitys ei onnistunut"
+    }
+
+    }
 
   /**
     * Adds reserved road links (from road parts) to a road address project. Reservability is check before this.
