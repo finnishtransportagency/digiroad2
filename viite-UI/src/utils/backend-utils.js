@@ -163,6 +163,18 @@
       });
     }, 1000);
 
+      this.directionChangeNewRoadlink = _.throttle(function (data, success, failure) {
+          $.ajax({
+              contentType: "application/json",
+              type: "PUT",
+              url: "api/viite/roadlinks/roadaddress/project/directionchangenewroadlink",
+              data: JSON.stringify(data[0]),
+              dataType: "json",
+              success: success,
+              error: failure
+          });
+      }, 1000);
+
     this.getRoadAddressProjects = _.throttle(function(callback) {
       return $.getJSON('api/viite/roadlinks/roadaddress/project/all', function(data) {
         return _.isFunction(callback) && callback(data);

@@ -219,6 +219,23 @@ object ProjectDAO {
     }
   }
 
+  def flipProjectLinksSideCodes(projectLinkIds: Seq[Long]): Unit = {
+   val links=projectLinkIds.mkString(",")
+    val sql = "update lrm_position set side_code = (CASE side_code WHEN 2 THEN 3 ELSE 2 END) where id in (select lrm_position.id from project_link join " +
+      s"LRM_Position on project_link.LRM_POSITION_ID = lrm_position.id where (side_code = 2 or side_code = 3) and project_link.id in($links))"
+    Q.updateNA(sql).execute}
+
+  def projectLinksExist(projectLinkIds: Seq[Long]):List[Long] =
+  {
+    val links=projectLinkIds.mkString(",")
+    val query= s"""
+         SELECT Project_id
+         FROM Project_link
+         WHERE ID IN ($links)
+       """
+    Q.queryNA[Long](query).list
+  }
+
   def updateProjectStatus(projectID:Long,state:ProjectState,errorMessage:String) {
     val projectstate=state.value
     sqlu""" update project set state=$projectstate, status_info=$errorMessage  WHERE id=$projectID""".execute
@@ -232,6 +249,7 @@ object ProjectDAO {
        """
     Q.queryNA[Long](query).list
   }
+
 
   def removeProjectLinksById(projectLinkIds: Set[Long])= {
     val query =

@@ -21,6 +21,10 @@
       return _.flatten(fetchedProjectLinks);
     };
 
+    this.getProjectLinks = function() {
+      return _.flatten(fetchedProjectLinks);
+    };
+
     this.getAll = function () {
       return _.map(projectLinks(), function(projectLink) {
         return projectLink.getData();
@@ -218,10 +222,28 @@
         Number($('#roadAddressProject').find('#DiscontinuityDropdown')[0].value)
       ];
       backend.insertNewRoadLink(data, function(successObject) {
-        applicationModel.removeSpinner();
         if (!successObject.success) {
-            eventbus.trigger('roadAddress:projectLinksSaveFailed', successObject.errormessage);
-          }
+          eventbus.trigger('roadAddress:projectLinksCreateFailed', successObject.message);
+          applicationModel.removeSpinner();
+        } else {
+          eventbus.trigger('projectLink:projectLinksCreateSuccess');
+          eventbus.trigger('roadAddress:projectLinksCreateSuccess');
+        }
+      });
+    };
+
+    this.changeNewProjectLinkDirection = function (selectedLinks){
+      applicationModel.addSpinner();
+      var ids = [_.map(selectedLinks, function (project) {
+          return project.id;
+      }) ];
+       backend.directionChangeNewRoadlink(ids, function(successObject) {
+           if (!successObject.success) {
+            eventbus.trigger('roadAddress:changeDirectionFailed', result.errorMessage);
+               applicationModel.removeSpinner();
+           } else {
+               eventbus.trigger('changeProjectDirection:clicked');
+           }
         });
     };
 
