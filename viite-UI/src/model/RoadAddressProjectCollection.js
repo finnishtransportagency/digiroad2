@@ -223,7 +223,7 @@
       ];
       backend.insertNewRoadLink(data, function(successObject) {
         if (!successObject.success) {
-          eventbus.trigger('roadAddress:projectLinksCreateFailed', successObject.message);
+          new ModalConfirm(successObject.errormessage);
           applicationModel.removeSpinner();
         } else {
           eventbus.trigger('projectLink:projectLinksCreateSuccess');
@@ -239,7 +239,7 @@
       }) ];
        backend.directionChangeNewRoadlink(ids, function(successObject) {
            if (!successObject.success) {
-            eventbus.trigger('roadAddress:changeDirectionFailed', result.errorMessage);
+            eventbus.trigger('roadAddress:changeDirectionFailed', result.errormessage);
                applicationModel.removeSpinner();
            } else {
                eventbus.trigger('changeProjectDirection:clicked');
