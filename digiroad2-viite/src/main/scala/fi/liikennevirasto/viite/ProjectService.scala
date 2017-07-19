@@ -139,23 +139,24 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           case Some(errorMessage) => errorMessage
           case None => {
             val newProjectLinks = RoadAddressFiller.fillNewRoadAddress(project, projectAddressLinks, roadAddressProjectID, newRoadNumber, newRoadPartNumber, newTrackCode, newDiscontinuity, randomSideCode)
-            //Assuming we already have the newProjectLinks with correct Mvalues
-            val test = newProjectLinks.groupBy(record => (record.roadNumber, record.roadPartNumber)).flatMap(group => {
+            val newsLinksWithCalibration = newProjectLinks.groupBy(record => (record.roadNumber, record.roadPartNumber)).flatMap(group => {
               val groupedLinks = group._2
               val first = groupedLinks.sortBy(_.endAddrMValue).head
               val last = groupedLinks.sortBy(_.endAddrMValue).last
-              val alteredFirst = first.copy(calibrationPoints = (Option(new CalibrationPoint(first.linkId, first.startMValue, first.startAddrMValue)), Option.empty[CalibrationPoint]))
-              val alteredLast = last.copy(calibrationPoints = (Option.empty[CalibrationPoint], Option(new CalibrationPoint(last.linkId, last.endMValue, last.endAddrMValue))))
-              //TODO: we are missing the currently not understood calibration points when switching the track codes
+              //TODO VIITE-568 we are missing the currently not understood calibration points when switching the track codes
               groupedLinks.map(gl => {
-                if (gl.linkId == first.linkId && gl.roadNumber == first.roadNumber && gl.roadPartNumber == first.roadPartNumber){
-                  alteredFirst
-                } else if (gl.linkId == last.linkId && gl.roadNumber == last.roadNumber && gl.roadPartNumber == last.roadPartNumber){
-                  alteredLast
-                } else gl
+                if (groupedLinks.size == 1) { //first and last are the same then
+                  first.copy(calibrationPoints = (Option(new CalibrationPoint(first.linkId, first.startMValue, first.startAddrMValue)), Option(new CalibrationPoint(last.linkId, last.endMValue, last.endAddrMValue))))
+                } else {
+                  if (gl.linkId == first.linkId && gl.roadNumber == first.roadNumber && gl.roadPartNumber == first.roadPartNumber) {
+                    first.copy(calibrationPoints = (Option(new CalibrationPoint(first.linkId, first.startMValue, first.startAddrMValue)), Option.empty[CalibrationPoint]))
+                  } else if (gl.linkId == last.linkId && gl.roadNumber == last.roadNumber && gl.roadPartNumber == last.roadPartNumber) {
+                    last.copy(calibrationPoints = (Option.empty[CalibrationPoint], Option(new CalibrationPoint(last.linkId, last.endMValue, last.endAddrMValue))))
+                  } else gl
+                }
               })
             }).asInstanceOf[Seq[ProjectLink]]
-            ProjectDAO.create(newProjectLinks)
+            ProjectDAO.create(newsLinksWithCalibration)
             ""
           }
         }
