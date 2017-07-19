@@ -143,7 +143,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               val groupedLinks = group._2
               val first = groupedLinks.sortBy(_.endAddrMValue).head
               val last = groupedLinks.sortBy(_.endAddrMValue).last
-              //TODO VIITE-568 we are missing the currently not understood calibration points when switching the track codes
               groupedLinks.map(gl => {
                 if (groupedLinks.size == 1) { //first and last are the same then
                   first.copy(calibrationPoints = (Option(new CalibrationPoint(first.linkId, first.startMValue, first.startAddrMValue)), Option(new CalibrationPoint(last.linkId, last.endMValue, last.endAddrMValue))))
@@ -165,6 +164,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  //TODO VIITE-568
   /**
     * This will run through all the project links that are to be created and simply add calibration points to the links
     * whose track code change from one another.
