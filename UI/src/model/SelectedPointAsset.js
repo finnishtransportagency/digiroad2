@@ -1,5 +1,5 @@
 (function(root) {
-  root.SelectedPointAsset = function(backend, assetName) {
+  root.SelectedPointAsset = function(backend, assetName, roadCollection) {
     var current = null;
     var dirty = false;
     var originalAsset;
@@ -16,7 +16,8 @@
       cancel: cancel,
       close: close,
       exists: exists,
-      isSelected: isSelected
+      isSelected: isSelected,
+      getAdministrativeClass: getAdministrativeClass
     };
 
     function place(asset) {
@@ -103,6 +104,11 @@
 
     function isSelected(asset) {
       return getId() === asset.id;
+    }
+
+    function getAdministrativeClass(){
+      var value = roadCollection.getRoadLinkByLinkId(current.linkId).getData().administrativeClass;
+      return _.isNull(value) ? undefined : value;
     }
   };
 })(this);

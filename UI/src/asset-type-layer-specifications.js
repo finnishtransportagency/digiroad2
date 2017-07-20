@@ -26,7 +26,8 @@
     europeanRoads: 260,
     exitNumbers: 270,
     trafficLights: 280,
-    maintenanceRoad: 290
+    maintenanceRoad: 290,
+    trafficSigns: 300
   };
 
   root.linearAssetSpecs = [
@@ -215,7 +216,7 @@
       label: new LinearAssetLabel(),
       editConstrains : function(selectedAsset) {
         //check if administrative class is State
-        return selectedAsset.administrativeClass === 1;
+        return true;
       }
     },
     {
@@ -520,6 +521,27 @@
         manyFloatingAssetsLabel: 'liikennevalot',
         newAssetLabel: 'liikennevalo'
       }
+    /* },
+    {
+      typeId: assetType.trafficSigns,
+      layerName: 'trafficSigns',
+      title: 'Liikennemerkit',
+      allowComplementaryLinks: true,
+      newAsset: {  },
+      legendValues: [
+        {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Liikennemerkit'},
+        {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}
+      ],
+      formLabels: {
+        singleFloatingAssetLabel: 'liikennemerkitxxx',
+        manyFloatingAssetsLabel: 'liikennemerkitxx',
+        newAssetLabel: 'liikennemerkit'
+      },
+        editConstrains : function(selectedAsset) {
+        //check if administrative class is State
+        return selectedAsset.getAdministrativeClass() === "State";
+      }
+      }*/
     }
   ];
 })(this);

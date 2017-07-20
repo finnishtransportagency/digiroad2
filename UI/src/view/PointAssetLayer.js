@@ -9,7 +9,8 @@
       selectedAsset = params.selectedAsset,
       mapOverlay = params.mapOverlay,
       layerName = params.layerName,
-      newAsset = params.newAsset;
+      newAsset = params.newAsset,
+      editConstrains = params.editConstrains;
 
     Layer.call(this, layerName, roadLayer);
     var me = this;
@@ -40,8 +41,8 @@
 
     function pointAssetOnSelect(feature) {
       if(feature.selected.length > 0 && feature.deselected.length === 0){
-        selectedAsset.open(feature.selected[0].getProperties());
-        toggleMode(application.isReadOnly());
+          selectedAsset.open(feature.selected[0].getProperties());
+        toggleMode(editConstrains(selectedAsset) || application.isReadOnly());
       }
       else {
         if(feature.deselected.length > 0 && !selectedAsset.isDirty()) {
