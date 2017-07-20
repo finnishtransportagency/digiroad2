@@ -1,10 +1,13 @@
 package fi.liikennevirasto.viite.dao
+import java.sql.Timestamp
+
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.viite.dao.CalibrationCode.{AtBeginning, AtBoth, AtEnd, No}
 import fi.liikennevirasto.viite.{ReservedRoadPart, RoadType}
 import fi.liikennevirasto.viite.process.{Delta, ProjectDeltaCalculator}
 import org.joda.time.DateTime
@@ -122,9 +125,54 @@ object ProjectDAO {
       startMValue, endMValue, sideCode , lrmPositionId, createdBy, modifiedBy, linkId, length, calibrationPoints, status, roadType, source) =>
         ProjectLink(projectLinkId, roadNumber, roadPartNumber, Track.apply(trackCode), Discontinuity.apply(discontinuityType),
           startAddrM, endAddrM, None, None, None, lrmPositionId, linkId, startMValue, endMValue, SideCode.apply(sideCode.toInt),
-          (None, None), false, Seq.empty[Point], projectId, LinkStatus.apply(status), RoadType.apply(roadType),LinkGeomSource.apply(source),length)
+          calibrations(CalibrationCode.apply(calibrationPoints.toInt),linkId,startMValue,endMValue,startAddrM,endAddrM),
+          false, Seq.empty[Point], projectId, LinkStatus.apply(status), RoadType.apply(roadType),LinkGeomSource.apply(source),length)
     }
   }
+
+  def getProjectLinksById(projectLinkId: Seq[Long]): List[ProjectLink] = {
+    val query =
+      s"""select PROJECT_LINK.ID, PROJECT_LINK.PROJECT_ID, PROJECT_LINK.TRACK_CODE, PROJECT_LINK.DISCONTINUITY_TYPE,
+          PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.START_ADDR_M, PROJECT_LINK.END_ADDR_M,
+          LRM_POSITION.START_MEASURE, LRM_POSITION.END_MEASURE, LRM_POSITION.SIDE_CODE, PROJECT_LINK.LRM_POSITION_ID,
+          PROJECT_LINK.CREATED_BY, PROJECT_LINK.MODIFIED_BY, lrm_position.link_id,
+          (LRM_POSITION.END_MEASURE - LRM_POSITION.START_MEASURE) as length, PROJECT_LINK.CALIBRATION_POINTS, PROJECT_LINK.STATUS,
+          PROJECT_LINK.ROAD_TYPE, LRM_POSITION.LINK_SOURCE as source
+                from PROJECT_LINK join LRM_POSITION
+                on LRM_POSITION.ID = PROJECT_LINK.LRM_POSITION_ID
+                where project_link.id in (${projectLinkId.mkString(",")}) order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
+    Q.queryNA[(Long, Long, Int, Int, Long, Long, Long, Long, Long, Long, Long, Long, String, String, Long, Double, Long, Int, Int, Int)](query).list.map {
+      case (projectLinkId, projectId, trackCode, discontinuityType, roadNumber, roadPartNumber, startAddrM, endAddrM,
+      startMValue, endMValue, sideCode , lrmPositionId, createdBy, modifiedBy, linkId, length, calibrationPoints, status, roadType, source) =>
+        ProjectLink(projectLinkId, roadNumber, roadPartNumber, Track.apply(trackCode), Discontinuity.apply(discontinuityType),
+          startAddrM, endAddrM, None, None, None, lrmPositionId, linkId, startMValue, endMValue, SideCode.apply(sideCode.toInt),
+          calibrations(CalibrationCode.apply(calibrationPoints.toInt),linkId,startMValue,endMValue,startAddrM,endAddrM),
+          false, Seq.empty[Point], projectId, LinkStatus.apply(status), RoadType.apply(roadType),LinkGeomSource.apply(source),length)
+    }
+  }
+
+  def fetchByProjectNewRoadPart(roadNumber: Long, roadPartNumber: Long, projectId: Long, b: Boolean) = {
+    val filter = s"PROJECT_LINK.ROAD_NUMBER = $roadNumber AND PROJECT_LINK.ROAD_PART_NUMBER = $roadPartNumber AND"
+    val query =
+      s"""select PROJECT_LINK.ID, PROJECT_LINK.PROJECT_ID, PROJECT_LINK.TRACK_CODE, PROJECT_LINK.DISCONTINUITY_TYPE,
+          PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.START_ADDR_M, PROJECT_LINK.END_ADDR_M,
+          LRM_POSITION.START_MEASURE, LRM_POSITION.END_MEASURE, LRM_POSITION.SIDE_CODE, PROJECT_LINK.LRM_POSITION_ID,
+          PROJECT_LINK.CREATED_BY, PROJECT_LINK.MODIFIED_BY, lrm_position.link_id,
+          (LRM_POSITION.END_MEASURE - LRM_POSITION.START_MEASURE) as length, PROJECT_LINK.CALIBRATION_POINTS, PROJECT_LINK.STATUS,
+          PROJECT_LINK.ROAD_TYPE, LRM_POSITION.LINK_SOURCE as source
+                from PROJECT_LINK join LRM_POSITION
+                on LRM_POSITION.ID = PROJECT_LINK.LRM_POSITION_ID
+                where $filter (PROJECT_LINK.PROJECT_ID = $projectId ) order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
+    Q.queryNA[(Long, Long, Int, Int, Long, Long, Long, Long, Long, Long, Long, Long, String, String, Long, Double, Long, Int, Int, Int)](query).list.map {
+      case (projectLinkId, projectId, trackCode, discontinuityType, roadNumber, roadPartNumber, startAddrM, endAddrM,
+      startMValue, endMValue, sideCode , lrmPositionId, createdBy, modifiedBy, linkId, length, calibrationPoints, status, roadType, source) =>
+        ProjectLink(projectLinkId, roadNumber, roadPartNumber, Track.apply(trackCode), Discontinuity.apply(discontinuityType),
+          startAddrM, endAddrM, None, None, None, lrmPositionId, linkId, startMValue, endMValue, SideCode.apply(sideCode.toInt),
+          calibrations(CalibrationCode.apply(calibrationPoints.toInt),linkId,startMValue,endMValue,startAddrM,endAddrM),
+          false, Seq.empty[Point], projectId, LinkStatus.apply(status), RoadType.apply(roadType),LinkGeomSource.apply(source),length)
+    }
+  }
+
 
   def updateRoadAddressProject(roadAddressProject: RoadAddressProject): Unit = {
     sqlu"""
@@ -258,4 +306,20 @@ object ProjectDAO {
        """
     Q.updateNA(query).first
   }
+
+  def toTimeStamp(dateTime: Option[DateTime]) = {
+    dateTime.map(dt => new Timestamp(dt.getMillis))
+  }
+
+  private def calibrations(calibrationCode: CalibrationCode, linkId: Long, segmentStartMValue: Double, segmentEndMValue: Double,
+                           startAddrMValue: Long, endAddrMValue: Long): (Option[CalibrationPoint], Option[CalibrationPoint]) = {
+    calibrationCode match {
+      case No => (None, None)
+      case AtEnd => (None, Some(CalibrationPoint(linkId, segmentEndMValue, endAddrMValue)))
+      case AtBeginning => (Some(CalibrationPoint(linkId, segmentStartMValue, startAddrMValue)), None)
+      case AtBoth => (Some(CalibrationPoint(linkId, segmentStartMValue, startAddrMValue)),
+        Some(CalibrationPoint(linkId, segmentEndMValue, endAddrMValue)))
+    }
+  }
+
 }
