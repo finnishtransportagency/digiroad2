@@ -306,7 +306,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
   test ("update ProjectStatus when TR saved")
   {
     val sent2TRState=ProjectState.apply(2) //notfinnished
-  val savedState=ProjectState.apply(5)
+    val savedState=ProjectState.apply(5)
     val projectId=0
     val addresses = List(ReservedRoadPart(5:Long, 203:Long, 203:Long, 5:Double, Discontinuity.apply("jatkuva"), 8:Long, None:Option[DateTime], None:Option[DateTime]))
     val roadAddressProject = RoadAddressProject(projectId, ProjectState.apply(2), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(), None)
