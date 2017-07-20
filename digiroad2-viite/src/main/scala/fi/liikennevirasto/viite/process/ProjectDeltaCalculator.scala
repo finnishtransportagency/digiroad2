@@ -1,8 +1,10 @@
 package fi.liikennevirasto.viite.process
 
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.viite.RoadType
-import fi.liikennevirasto.viite.dao._
+import fi.liikennevirasto.viite.dao.{ProjectLink, _}
 import org.joda.time.DateTime
 
 /**
@@ -62,9 +64,101 @@ object ProjectDeltaCalculator {
     val grouped = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
     grouped.mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
       RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
-      ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType)
+        ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType)
     ).toSeq
   }
+
+  def determineMValues(projectLinks: Seq[ProjectLink], geometryLengthList: Map[RoadPartBasis, Seq[RoadPartLengths]]): Seq[ProjectLink] = {
+    val groupedProjectLinks = projectLinks.groupBy(record => (record.roadNumber, record.roadPartNumber))
+    groupedProjectLinks.flatMap(gpl => {
+      var lastEndM = 0.0
+      val roadPartId = new RoadPartBasis(gpl._1._1, gpl._1._2)
+      if(geometryLengthList.keySet.contains(roadPartId)){
+        val links = orderProjectLinksByGeometry(gpl._2)
+        links.map(l => {
+          val lengths = geometryLengthList.get(roadPartId).get
+          val foundGeomLength = lengths.find(_.linkId == l.linkId).get
+          val endValue = lastEndM + foundGeomLength.geometryLength
+          val updatedProjectLink = l.copy(startMValue = 0.0, endMValue = foundGeomLength.geometryLength, startAddrMValue = Math.round(lastEndM), endAddrMValue = Math.round(endValue))
+          lastEndM = endValue
+          updatedProjectLink
+        })
+      } else {
+        orderProjectLinksByGeometry(gpl._2)
+      }
+    }).toSeq
+
+
+  }
+
+  def orderProjectLinksByGeometry(list:Seq[ProjectLink]): Seq[ProjectLink] = {
+
+    def recursiveSort(sortList: Seq[ProjectLink]) : Seq[ProjectLink] = {
+      list.find(l => GeometryUtils.areAdjacent(l.geom.head, sortList.last.geom.last)) match {
+        case Some(prj) => recursiveSort(sortList ++ Seq(prj))
+        case _ => sortList
+      }
+    }
+
+    val firstGeom = list.find(p => !list.exists(l => GeometryUtils.areAdjacent(p.geom.head, l.geom.last)))
+    recursiveSort(Seq(firstGeom.get))
+  }
+
+  def orderProjectLinks(unorderedProjectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
+    def extending(link: ProjectLink, ext: ProjectLink) = {
+      link.roadNumber == ext.roadNumber && link.roadPartNumber == ext.roadPartNumber &&
+        link.track == ext.track
+    }
+    def extendChainByGeometry(ordered: Seq[ProjectLink], unordered: Seq[ProjectLink], sideCode: SideCode): Seq[ProjectLink] = {
+      // First link gets the assigned side code
+      if (ordered.isEmpty)
+        return extendChainByGeometry(Seq(unordered.head.copy(sideCode=sideCode)), unordered.tail, sideCode)
+      if (unordered.isEmpty) {
+        return ordered
+      }
+      // Find a road address link that continues from current last link
+      unordered.find(ral => GeometryUtils.areAdjacent(ral.geom, ordered.last.geom)) match {
+        case Some(link) =>
+          val sideCode = if (isSideCodeChange(link.geom, ordered.last.geom))
+            switchSideCode(ordered.last.sideCode)
+          else
+            ordered.last.sideCode
+          extendChainByGeometry(ordered ++ Seq(link.copy(sideCode=sideCode)), unordered.filterNot(link.equals), sideCode)
+        case _ => throw new InvalidAddressDataException("Non-contiguous road target geometry")
+      }
+    }
+    def extendChainByAddress(ordered: Seq[ProjectLink], unordered: Seq[ProjectLink]): Seq[ProjectLink] = {
+      if (ordered.isEmpty)
+        return extendChainByAddress(Seq(unordered.head), unordered.tail)
+      if (unordered.isEmpty)
+        return ordered
+      val (next, rest) = unordered.partition(u => extending(ordered.last, u))
+      if (next.nonEmpty)
+        extendChainByAddress(ordered ++ next, rest)
+      else {
+        val (previous, rest) = unordered.partition(u => extending(u, ordered.head))
+        if (previous.isEmpty)
+          throw new IllegalArgumentException("Non-contiguous road addressing")
+        else
+          extendChainByAddress(previous ++ ordered, rest)
+      }
+    }
+
+    val orderedByAddress =  extendChainByAddress(Seq(unorderedProjectLinks.head), unorderedProjectLinks.tail)
+    val orderedByGeometry = extendChainByGeometry(Seq(), orderedByAddress, orderedByAddress.head.sideCode)
+    orderedByGeometry
+  }
+
+  def isSideCodeChange(geom1: Seq[Point], geom2: Seq[Point]): Boolean = {
+    GeometryUtils.areAdjacent(geom1.last, geom2.last) ||
+      GeometryUtils.areAdjacent(geom1.head, geom2.head)
+  }
+
+  def switchSideCode(sideCode: SideCode): SideCode = {
+    // Switch between against and towards 2 -> 3, 3 -> 2
+    SideCode.apply(5-sideCode.value)
+  }
+
 }
 
 case class Delta(startDate: DateTime, terminations: Seq[RoadAddress])
@@ -74,13 +168,15 @@ case class RoadAddressSection(roadNumber: Long, roadPartNumberStart: Long, roadP
   def includes(ra: RoadAddress): Boolean = {
     // within the road number and parts included
     ra.roadNumber == roadNumber && ra.roadPartNumber >= roadPartNumberStart && ra.roadPartNumber <= roadPartNumberEnd &&
-    // and on the same track
-    ra.track == track &&
-    // and not starting before this section start or after this section ends
+      // and on the same track
+      ra.track == track &&
+      // and not starting before this section start or after this section ends
       !(ra.startAddrMValue < startMAddr && ra.roadPartNumber == roadPartNumberStart ||
         ra.startAddrMValue > endMAddr && ra.roadPartNumber == roadPartNumberEnd) &&
-    // and not ending after this section ends or before this section starts
+      // and not ending after this section ends or before this section starts
       !(ra.endAddrMValue > endMAddr && ra.roadPartNumber == roadPartNumberEnd ||
         ra.endAddrMValue < startMAddr && ra.roadPartNumber == roadPartNumberStart)
   }
 }
+case class RoadPartBasis (roadNumber: Long, roadPartNumber: Long)
+case class RoadPartLengths(linkId: Long, geometryLength: Double)
