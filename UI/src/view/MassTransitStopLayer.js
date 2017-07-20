@@ -1,4 +1,4 @@
-window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGrouping, roadLayer) {
+window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGrouping, roadLayer, roadAddressInfoPopup) {
   var layerName = 'massTransitStop';
   Layer.call(this, layerName, roadLayer);
   var me = this;
@@ -644,6 +644,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     startListening();
     assetLayer.setVisible(true);
     registerRoadLinkFetched();
+    roadAddressInfoPopup.start();
     me.show(map);
   };
 
@@ -665,6 +666,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     selectControl.clear();
     assetLayer.setVisible(false);
     stopListening();
+    roadAddressInfoPopup.stop();
     me.stop();
     me.hide();
   };
