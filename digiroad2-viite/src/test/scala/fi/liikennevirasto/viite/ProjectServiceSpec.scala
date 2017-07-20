@@ -679,4 +679,20 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       errorMessage should be("")
     }
   }
+
+  test("Project link direction change") {
+    runWithRollback {
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
+      ProjectDAO.createRoadAddressProject(rap)
+      val addresses = RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(rap))
+      ProjectDAO.create(addresses)
+      val links=ProjectDAO.getProjectLinks(id)
+      projectService.changeDirection(links.map(l => l.id))
+      val changedLinks = ProjectDAO.getProjectLinksById(links.map{l => l.id})
+      links.head.sideCode should not be(changedLinks.head.sideCode)
+      links.head.endMValue should be(changedLinks.last.endMValue)
+      links.last.endMValue should be(changedLinks.head.endMValue)
+    }
+  }
 }
