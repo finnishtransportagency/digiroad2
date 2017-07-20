@@ -244,7 +244,8 @@
        style: PointAssetStyle(asset.layerName),
        mapOverlay: mapOverlay,
        layerName: asset.layerName,
-       newAsset: asset.newAsset
+       newAsset: asset.newAsset,
+       roadAddressInfoPopup: roadAddressInfoPopup
      });
      return acc;
     }, {});

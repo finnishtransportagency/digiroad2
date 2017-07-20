@@ -9,7 +9,8 @@
       selectedAsset = params.selectedAsset,
       mapOverlay = params.mapOverlay,
       layerName = params.layerName,
-      newAsset = params.newAsset;
+      newAsset = params.newAsset,
+      roadAddressInfoPopup = params.roadAddressInfoPopup;
 
     Layer.call(this, layerName, roadLayer);
     var me = this;
@@ -287,6 +288,7 @@
 
     function show(map) {
       vectorLayer.setVisible(true);
+      roadAddressInfoPopup.start();
       me.refreshView();
       me.show(map);
     }
@@ -300,6 +302,7 @@
     function hide() {
       selectedAsset.close();
       vectorLayer.setVisible(false);
+      roadAddressInfoPopup.stop();
       me.stop();
       me.hide();
     }

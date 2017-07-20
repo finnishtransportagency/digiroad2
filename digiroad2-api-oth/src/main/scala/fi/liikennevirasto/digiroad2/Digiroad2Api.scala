@@ -596,9 +596,9 @@ Returns empty result as Json message, not as page not found
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
       if(user.isServiceRoadMaintainer())
-        mapLinearAssets(linearAssetService.getByIntersectedBoundingBox(typeId, user.configuration.authorizedAreas, boundingRectangle, municipalities))
+        mapLinearAssets(linearAssetService.withRoadAddress(linearAssetService.getByIntersectedBoundingBox(typeId, user.configuration.authorizedAreas, boundingRectangle, municipalities)))
       else
-        mapLinearAssets(linearAssetService.getByBoundingBox(typeId, boundingRectangle, municipalities))
+        mapLinearAssets(linearAssetService.withRoadAddress(linearAssetService.getByBoundingBox(typeId, boundingRectangle, municipalities)))
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
     }
