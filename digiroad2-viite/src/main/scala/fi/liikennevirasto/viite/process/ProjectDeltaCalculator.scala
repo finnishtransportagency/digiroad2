@@ -74,7 +74,7 @@ object ProjectDeltaCalculator {
       var lastEndM = 0.0
       val roadPartId = new RoadPartBasis(gpl._1._1, gpl._1._2)
       if(geometryLengthList.keySet.contains(roadPartId)){
-        val links = orderProjectLinks(gpl._2)
+        val links = orderProjectLinksByGeometry(gpl._2)
         links.map(l => {
           val lengths = geometryLengthList.get(roadPartId).get
           val foundGeomLength = lengths.find(_.linkId == l.linkId).get
@@ -84,11 +84,24 @@ object ProjectDeltaCalculator {
           updatedProjectLink
         })
       } else {
-        orderProjectLinks(gpl._2)
+        orderProjectLinksByGeometry(gpl._2)
       }
     }).toSeq
 
 
+  }
+
+  def orderProjectLinksByGeometry(list:Seq[ProjectLink]): Seq[ProjectLink] = {
+
+    def recursiveSort(sortList: Seq[ProjectLink]) : Seq[ProjectLink] = {
+      list.find(l => GeometryUtils.areAdjacent(l.geom.head, sortList.last.geom.last)) match {
+        case Some(prj) => recursiveSort(sortList ++ Seq(prj))
+        case _ => sortList
+      }
+    }
+
+    val firstGeom = list.find(p => !list.exists(l => GeometryUtils.areAdjacent(p.geom.head, l.geom.last)))
+    recursiveSort(Seq(firstGeom.get))
   }
 
   def orderProjectLinks(unorderedProjectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
