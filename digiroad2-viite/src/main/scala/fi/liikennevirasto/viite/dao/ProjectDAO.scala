@@ -173,20 +173,6 @@ object ProjectDAO {
     }
   }
 
-  def update(projectLink: ProjectLink) : Unit = {
-    val startTS = toTimeStamp(projectLink.startDate)
-    val endTS = toTimeStamp(projectLink.endDate)
-    sqlu"""UPDATE ROAD_ADDRESS
-        SET road_number = ${projectLink.roadNumber},
-           road_part_number= ${projectLink.roadPartNumber},
-           track_code = ${projectLink.track.value},
-           discontinuity= ${projectLink.discontinuity.value},
-           START_ADDR_M= ${projectLink.startAddrMValue},
-           END_ADDR_M= ${projectLink.endAddrMValue},
-           start_date= $startTS,
-           end_date= $endTS
-        WHERE id = ${projectLink.id}""".execute
-  }
 
   def updateRoadAddressProject(roadAddressProject: RoadAddressProject): Unit = {
     sqlu"""
