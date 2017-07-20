@@ -792,7 +792,7 @@
           });
         });
         simulatedRoadsLayer.getSource().addFeatures(simulatedOL3Features);
-        roadLayer.layer.getSource().addFeatures(simulatedOL3Features);
+        roadLayer.layer.getSource().addFeatures(simulatedRoadsLayer);
       });
 
       eventListener.listenTo(eventbus, 'roadLink:editModeAdjacents', function() {

@@ -718,7 +718,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     fetchedAddresses
   }
 
-
   def recalculateMValues(projectLinks: Seq[ProjectLink]) ={
      var lastEndM = 0.0
     projectLinks.map(l => {
