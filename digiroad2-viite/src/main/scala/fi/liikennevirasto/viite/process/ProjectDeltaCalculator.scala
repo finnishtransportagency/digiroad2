@@ -87,8 +87,6 @@ object ProjectDeltaCalculator {
         orderProjectLinksByGeometry(gpl._2)
       }
     }).toSeq
-
-
   }
 
   def orderProjectLinksByGeometry(list:Seq[ProjectLink]): Seq[ProjectLink] = {

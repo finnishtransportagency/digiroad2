@@ -203,9 +203,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
          return "Linkit kuuluvat useampaan projektiin"
         }
         ProjectDAO.flipProjectLinksSideCodes(projectLink)
-        ProjectDAO.getProjectLinksById(projectLink)
-          .groupBy(l => (l.roadNumber, l.roadPartNumber, l.projectId))
-          .map(link => recalculateProjectLinks(link._1._1, link._1._2, link._1._3))
+        recalculateMValues(ProjectDAO.getProjectLinksById(projectLink).reverse).map(link => ProjectDAO.updateMValues(link))
         ""
       }
     } catch{
@@ -721,30 +719,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
 
-  def recalculateProjectLinks(roadNumber: Long, roadPartNumber: Long, projectId: Long): Boolean = {
-    try{
-      val roads = ProjectDAO.fetchByProjectNewRoadPart(roadNumber, roadPartNumber, projectId, true)
-      if (!roads.exists(_.floating)) {
-        try {
-          val adjusted = ProjectLinkCalculator.recalculate(roads)
-          assert(adjusted.size == roads.size)
-          // Must not lose any
-          val (changed, unchanged) = adjusted.partition(ra =>
-            roads.exists(oldra => ra.id == oldra.id && (oldra.startAddrMValue != ra.startAddrMValue || oldra.endAddrMValue != ra.endAddrMValue))
-          )
-          logger.info(s"Road $roadNumber, part $roadPartNumber: ${changed.size} updated, ${unchanged.size} kept unchanged")
-          changed.foreach(link => ProjectDAO.update(link))
-          changed.nonEmpty
-        } catch {
-          case ex: InvalidAddressDataException => logger.error(s"!!! Road $roadNumber, part $roadPartNumber contains invalid address data - part skipped !!!", ex)
-        }
-      } else {
-        logger.info(s"Not recalculating $roadNumber / $roadPartNumber because floating segments were found")
-      }
-    } catch {
-      case a: Exception => logger.error(a.getMessage, a)
-    }
-    false
+  def recalculateMValues(projectLinks: Seq[ProjectLink]) ={
+     var lastEndM = 0.0
+    projectLinks.map(l => {
+      val endValue = lastEndM + l.geometryLength
+      val updatedProjectLink = l.copy(startMValue = 0.0, endMValue = l.geometryLength, startAddrMValue = Math.round(lastEndM), endAddrMValue = Math.round(endValue))
+      lastEndM = endValue
+      updatedProjectLink
+    })
+
   }
 
   case class PublishResult(validationSuccess: Boolean, sendSuccess: Boolean, errorMessage: Option[String])
