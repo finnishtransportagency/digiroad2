@@ -227,7 +227,8 @@
        singleElementEventCategory: asset.singleElementEventCategory,
        style: asset.style || new PiecewiseLinearAssetStyle(),
        formElements: AssetFormElementsFactory.construct(asset),
-       assetLabel: asset.label
+       assetLabel: asset.label,
+       roadAddressInfoPopup: roadAddressInfoPopup
      });
      return acc;
     }, {});

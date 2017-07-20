@@ -8,7 +8,8 @@ window.LinearAssetLayer = function(params) {
       singleElementEventCategory = params.singleElementEventCategory,
       style = params.style,
       layerName = params.layerName,
-      assetLabel = params.assetLabel;
+      assetLabel = params.assetLabel,
+      roadAddressInfoPopup = params.roadAddressInfoPopup;
 
 
   Layer.call(this, layerName, roadLayer);
@@ -452,6 +453,7 @@ window.LinearAssetLayer = function(params) {
     vectorLayer.setVisible(true);
     indicatorLayer.setVisible(true);
     me.refreshView();
+    roadAddressInfoPopup.start();
     me.show(map);
   };
 
@@ -464,6 +466,7 @@ window.LinearAssetLayer = function(params) {
     selectToolControl.clear();
     selectedLinearAsset.close();
     isComplementaryChecked = false;
+    roadAddressInfoPopup.stop();
     me.refreshView();
   };
 

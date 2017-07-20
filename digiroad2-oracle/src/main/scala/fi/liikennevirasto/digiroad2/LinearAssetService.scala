@@ -177,7 +177,17 @@ trait LinearAssetOperations {
 
     eventBus.publish("linearAssets:saveProjectedLinearAssets", newAssets)
 
-    filledTopology
+    withRoadAddress(filledTopology)
+  }
+
+  def withRoadAddress(pieceWiseLinearAssets: Seq[PieceWiseLinearAsset]): Seq[PieceWiseLinearAsset] ={
+    val addressData = roadLinkService.getRoadAddressesByLinkIds(pieceWiseLinearAssets.map(_.linkId).toSet).map(a => (a.linkId, a)).toMap
+    pieceWiseLinearAssets.map(pa =>
+      if (addressData.contains(pa.linkId))
+        pa.copy(attributes = pa.attributes ++ addressData(pa.linkId).asAttributes)
+      else
+        pa
+    )
   }
 
   def getPavingAssetChanges(existingLinearAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink],

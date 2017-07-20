@@ -435,6 +435,20 @@ Returns empty result as Json message, not as page not found
     }
   }
 
+  private def extractIntValue(pieceWiseLinearAsset: PieceWiseLinearAsset, value: String) = {
+    pieceWiseLinearAsset.attributes.get(value) match {
+      case Some(x) => x.asInstanceOf[Int]
+      case _ => None
+    }
+  }
+
+  private def extractLongValue(pieceWiseLinearAsset: PieceWiseLinearAsset, value: String) = {
+    pieceWiseLinearAsset.attributes.get(value) match {
+      case Some(x) => x.asInstanceOf[Long]
+      case _ => None
+    }
+  }
+
   get("/roadlinks") {
     response.setHeader("Access-Control-Allow-Headers", "*")
     val user = userProvider.getCurrentUser()
@@ -622,7 +636,12 @@ Returns empty result as Json message, not as page not found
           "modifiedBy" -> link.modifiedBy,
           "modifiedAt" -> link.modifiedDateTime,
           "createdBy" -> link.createdBy,
-          "createdAt" -> link.createdDateTime
+          "createdAt" -> link.createdDateTime,
+          "roadPartNumber" -> extractLongValue(link, "VIITE_ROAD_PART_NUMBER"),
+          "roadNumber" -> extractLongValue(link, "VIITE_ROAD_NUMBER"),
+          "track" -> extractIntValue(link, "VIITE_TRACK"),
+          "startAddrMValue" -> extractLongValue(link, "VIITE_START_ADDR"),
+          "endAddrMValue" ->  extractLongValue(link, "VIITE_END_ADDR")
         )
       }
     }
