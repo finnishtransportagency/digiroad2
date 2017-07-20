@@ -349,6 +349,10 @@
       return $.getJSON('api/directionalTrafficSigns/floating');
     };
 
+    this.getFloatingTrafficSigns = function() {
+      return $.getJSON('api/trafficSigns/floating');
+    };
+
     this.createAsset = function (data, errorCallback) {
       eventbus.trigger('asset:creating');
       $.ajax({

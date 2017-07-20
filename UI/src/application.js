@@ -105,12 +105,14 @@
       var selectedObstacle = getSelectedPointAsset(pointAssets, 'obstacles');
       var selectedRailwayCrossing =  getSelectedPointAsset(pointAssets, 'railwayCrossings');
       var selectedDirectionalTrafficSign = getSelectedPointAsset(pointAssets, 'directionalTrafficSigns');
+      var selectedTrafficSign = getSelectedPointAsset(pointAssets, 'trafficSigns');
       new URLRouter(map, backend, _.merge({}, models,
           { selectedPedestrianCrossing: selectedPedestrianCrossing },
           { selectedTrafficLight: selectedTrafficLight },
           { selectedObstacle: selectedObstacle },
           { selectedRailwayCrossing: selectedRailwayCrossing },
-          { selectedDirectionalTrafficSign: selectedDirectionalTrafficSign  }
+          { selectedDirectionalTrafficSign: selectedDirectionalTrafficSign },
+          { selectedTrafficSign: selectedTrafficSign }
       ));
       eventbus.trigger('application:initialized');
     }
@@ -336,6 +338,7 @@
         .concat(getLinearAsset(assetType.lengthLimit))
         .concat(getLinearAsset(assetType.widthLimit)),
       [].concat(getLinearAsset(assetType.maintenanceRoad))
+        .concat(getPointAsset(assetType.trafficSigns))
     ];
 
     function getLinearAsset(typeId) {

@@ -43,7 +43,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val pedestrianCrossingService: PedestrianCrossingService = Digiroad2Context.pedestrianCrossingService,
                    val userProvider: UserProvider = Digiroad2Context.userProvider,
                    val assetPropertyService: AssetPropertyService = Digiroad2Context.assetPropertyService,
-                   val trafficLightService: TrafficLightService = Digiroad2Context.trafficLightService)
+                   val trafficLightService: TrafficLightService = Digiroad2Context.trafficLightService,
+                   val trafficSignService: TrafficSignService = Digiroad2Context.trafficSignService)
   extends ScalatraServlet
     with JacksonJsonSupport
     with CorsSupport
@@ -1015,6 +1016,13 @@ Returns empty result as Json message, not as page not found
   post("/trafficLights")(createNewPointAsset(trafficLightService))
   put("/trafficLights/:id")(updatePointAsset(trafficLightService))
   delete("/trafficLights/:id")(deletePointAsset(trafficLightService))
+
+  get("/trafficSigns")(getPointAssets(trafficSignService))
+  get("/trafficSigns/:id")(getPointAssetById(trafficSignService))
+  get("/trafficSigns/floating")(getFloatingPointAssets(trafficSignService))
+  post("/trafficSigns")(createNewPointAsset(trafficSignService))
+  put("/trafficSigns/:id")(updatePointAsset(trafficSignService))
+  delete("/trafficSigns/:id")(deletePointAsset(trafficSignService))
 
   private def getPointAssets(service: PointAssetOperations): Seq[service.PersistedAsset] = {
     val user = userProvider.getCurrentUser()
