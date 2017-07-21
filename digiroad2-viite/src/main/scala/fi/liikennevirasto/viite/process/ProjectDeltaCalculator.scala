@@ -114,7 +114,6 @@ object ProjectDeltaCalculator {
       geometry1EndPoints._2.distance2DTo(geometry2Endpoints._1) < epsilon ||
         geometry1EndPoints._2.distance2DTo(geometry2Endpoints._2) < epsilon
     }
-    println(s"""linkId: ${linkId}  isLeftAdjacent: ${isLeftAdjacent} + isRightAdjacent: ${isRightAdjacent}"""+ "\n")
     isLeftAdjacent && isRightAdjacent
   }
 
