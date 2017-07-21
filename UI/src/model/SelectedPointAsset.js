@@ -106,8 +106,8 @@
       return getId() === asset.id;
     }
 
-    function getAdministrativeClass(){
-      var value = roadCollection.getRoadLinkByLinkId(current.linkId).getData().administrativeClass;
+    function getAdministrativeClass(linkId){
+      var value = roadCollection.getRoadLinkByLinkId(linkId ? linkId : current.linkId).getData().administrativeClass;
       return _.isNull(value) ? undefined : value;
     }
   };

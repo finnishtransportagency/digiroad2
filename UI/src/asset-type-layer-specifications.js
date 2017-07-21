@@ -521,7 +521,7 @@
         manyFloatingAssetsLabel: 'liikennevalot',
         newAssetLabel: 'liikennevalo'
       }
-    /* },
+    },
     {
       typeId: assetType.trafficSigns,
       layerName: 'trafficSigns',
@@ -541,7 +541,6 @@
         //check if administrative class is State
         return selectedAsset.getAdministrativeClass() === "State";
       }
-      }*/
     }
   ];
 })(this);

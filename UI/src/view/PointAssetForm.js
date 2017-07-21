@@ -5,16 +5,15 @@
 
   function bindEvents(selectedAsset, layerName, localizedTexts, editConstrains, roadCollection, applicationModel) {
     var rootElement = $('#feature-attributes');
-    var editContraintFn = editConstrains;
 
     eventbus.on('application:readOnly', function(readOnly) {
       if(applicationModel.getSelectedLayer() == layerName && (!_.isEmpty(roadCollection.getAll()) && !_.isNull(selectedAsset.getId())))
-        toggleMode(rootElement, (editContraintFn && editContraintFn(selectedAsset)) || readOnly);
+        toggleMode(rootElement, (editConstrains && editConstrains(selectedAsset)) || readOnly);
     });
 
     eventbus.on(layerName + ':selected ' + layerName + ':cancelled roadLinks:fetched', function() {
       if (!_.isEmpty(roadCollection.getAll()) && !_.isNull(selectedAsset.getId())) {
-        renderForm(rootElement, selectedAsset, localizedTexts, editContraintFn, roadCollection);
+        renderForm(rootElement, selectedAsset, localizedTexts, editConstrains, roadCollection);
         toggleMode(rootElement, editConstrains(selectedAsset) || applicationModel.isReadOnly());
         if (layerName == 'servicePoints') {
           rootElement.find('button#save-button').prop('disabled', true);
