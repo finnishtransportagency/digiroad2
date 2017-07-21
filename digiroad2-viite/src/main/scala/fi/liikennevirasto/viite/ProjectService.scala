@@ -1,11 +1,13 @@
 package fi.liikennevirasto.viite
 
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing, Unknown}
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, RoadLinkService}
+import fi.liikennevirasto.viite.dao.CalibrationCode.{AtBeginning, AtBoth, AtEnd, No}
 import fi.liikennevirasto.viite.dao.ProjectState._
 import fi.liikennevirasto.viite.dao.{ProjectDAO, RoadAddressDAO, _}
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, ProjectAddressLinkLike, RoadAddressLink, RoadAddressLinkLike}
@@ -131,7 +133,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     */
   def addNewLinksToProject(projectAddressLinks: Seq[ProjectAddressLink], roadAddressProjectID :Long, newRoadNumber : Long, newRoadPartNumber: Long, newTrackCode: Long, newDiscontinuity: Long):String = {
 
-      val randomSideCode = allowedSideCodes(new Random(System.currentTimeMillis()).nextInt(allowedSideCodes.length))
+      val randomSideCode = SideCode.TowardsDigitizing
       ProjectDAO.getRoadAddressProjectById(roadAddressProjectID) match {
         case Some(project) => {
           checkNewRoadAddressNumberAndPart(newRoadNumber, newRoadPartNumber, project) match {
@@ -177,19 +179,43 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     linksWithMValues.groupBy(record => (record.roadNumber, record.roadPartNumber)).flatMap(group => {
       val groupedLinks = group._2
       val first = groupedLinks.sortBy(_.endAddrMValue).head
+      val firstWithCalibration = first.copy(calibrationPoints = calibrations(CalibrationCode.AtBeginning, first.linkId, first.startMValue, first.endMValue, first.startAddrMValue, first.endAddrMValue, first.sideCode))
       val last = groupedLinks.sortBy(_.endAddrMValue).last
+      val lastWithCalibration = last.copy(calibrationPoints = calibrations(CalibrationCode.AtEnd, last.linkId, last.startMValue, last.endMValue, last.startAddrMValue, last.endAddrMValue, last.sideCode))
       groupedLinks.map(gl => {
         if (groupedLinks.size == 1) { //first and last are the same then
-          first.copy(calibrationPoints = (Option(new CalibrationPoint(first.linkId, first.startMValue, first.startAddrMValue)), Option(new CalibrationPoint(last.linkId, last.endMValue, last.endAddrMValue))))
-        } else {
+          first.copy(calibrationPoints = calibrations(CalibrationCode.AtBoth, first.linkId, first.startMValue, first.endMValue, first.startAddrMValue, first.endAddrMValue, first.sideCode))
+        }
+          else {
           if (gl.linkId == first.linkId && gl.roadNumber == first.roadNumber && gl.roadPartNumber == first.roadPartNumber) {
-            first.copy(calibrationPoints = (Option(new CalibrationPoint(first.linkId, first.startMValue, first.startAddrMValue)), Option.empty[CalibrationPoint]))
+            firstWithCalibration
           } else if (gl.linkId == last.linkId && gl.roadNumber == last.roadNumber && gl.roadPartNumber == last.roadPartNumber) {
-            last.copy(calibrationPoints = (Option.empty[CalibrationPoint], Option(new CalibrationPoint(last.linkId, last.endMValue, last.endAddrMValue))))
+            lastWithCalibration
           } else gl
         }
       })
     }).asInstanceOf[Seq[ProjectLink]]
+  }
+
+  private def calibrations(calibrationCode: CalibrationCode, linkId: Long, startMValue: Double, endMValue: Double,
+                           startAddrMValue: Long, endAddrMValue: Long, sideCode: SideCode): (Option[CalibrationPoint], Option[CalibrationPoint]) = {
+    sideCode match {
+      case BothDirections => (None, None) // Invalid choice
+      case TowardsDigitizing => calibrations(calibrationCode, linkId, 0.0, Math.max(startMValue, endMValue), startAddrMValue, endAddrMValue)
+      case AgainstDigitizing => calibrations(calibrationCode, linkId, Math.max(startMValue, endMValue), 0.0, startAddrMValue, endAddrMValue)
+      case Unknown => (None, None)  // Invalid choice
+    }
+  }
+
+  private def calibrations(calibrationCode: CalibrationCode, linkId: Long, segmentStartMValue: Double, segmentEndMValue: Double,
+                           startAddrMValue: Long, endAddrMValue: Long): (Option[CalibrationPoint], Option[CalibrationPoint]) = {
+    calibrationCode match {
+      case No => (None, None)
+      case AtEnd => (None, Some(CalibrationPoint(linkId, segmentEndMValue, endAddrMValue)))
+      case AtBeginning => (Some(CalibrationPoint(linkId, segmentStartMValue, startAddrMValue)), None)
+      case AtBoth => (Some(CalibrationPoint(linkId, segmentStartMValue, startAddrMValue)),
+        Some(CalibrationPoint(linkId, segmentEndMValue, endAddrMValue)))
+    }
   }
 
 

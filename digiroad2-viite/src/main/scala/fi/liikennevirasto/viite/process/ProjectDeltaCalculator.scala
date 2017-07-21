@@ -76,17 +76,28 @@ object ProjectDeltaCalculator {
     def linkTopologyByGeomEndPoints(sortedList: Seq[ProjectLink], unprocessed: Seq[ProjectLink]) : Seq[ProjectLink] = {
       unprocessed.find(l => GeometryUtils.areAdjacent(l.geom, sortedList.last.geom)) match {
         case Some(prj) =>
-          println(prj)
-          val unp = unprocessed.filterNot(u => u.linkId == prj.linkId)
-          linkTopologyByGeomEndPoints(sortedList ++ Seq(prj), unp)
+          val changedPrj = invertSideCode(prj.geom, sortedList.last.geom) match {
+            case true => prj.copy(sideCode = if(sortedList.last.sideCode == SideCode.TowardsDigitizing) SideCode.AgainstDigitizing else SideCode.TowardsDigitizing)
+            case _ => prj.copy(sideCode = sortedList.last.sideCode)
+          }
+          val unp = unprocessed.filterNot(u => u.linkId == changedPrj.linkId)
+          linkTopologyByGeomEndPoints(sortedList ++ Seq(changedPrj), unp)
         case _ => sortedList
       }
     }
 
+    def invertSideCode(geom1 : Seq[Point], geom2 : Seq[Point]): Boolean = {
+      GeometryUtils.areAdjacent(geom1.head, geom2.head) || GeometryUtils.areAdjacent(geom1.last, geom2.last)
+    }
+
+
     val linksAtEnd = list.filterNot(e =>  linkAdjacentInBothEnds(e.linkId, e.geom, list.filterNot(l =>l.linkId ==e.linkId).map(_.geom)))
     //TODO which one of the possible ones (ones at the borders) should be the first? discover by sideCode? How?
-    val possibleFirst = linksAtEnd.head
-    val rest = list.filterNot(_.linkId == possibleFirst.linkId)
+    val rest = list.filterNot(_.linkId == linksAtEnd.head.linkId )
+    val possibleFirst = rest.exists(p => GeometryUtils.areAdjacent(p.geom.head, linksAtEnd.head.geom.head) || GeometryUtils.areAdjacent(p.geom.last, linksAtEnd.head.geom.head)) match {
+      case true => linksAtEnd.head.copy(sideCode = SideCode.AgainstDigitizing)
+      case _ => linksAtEnd.head
+    }
     linkTopologyByGeomEndPoints(Seq(possibleFirst), rest)
   }
 
