@@ -406,10 +406,16 @@ object NumericalLimitFiller {
       (segments, changeSet)
   }
 
+  private def expireShortSegmentsGeometry(roadLink: RoadLink, assets: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
+    val (linearSegments, shortSegments) = assets.partition(a => (a.endMeasure - a.startMeasure) >= 2)
+    val expiredAssetIds = shortSegments.map(_.id).toSet
+    (linearSegments, changeSet.copy(expiredAssetIds = changeSet.expiredAssetIds ++ expiredAssetIds))
+  }
 
   def fillTopology(topology: Seq[RoadLink], linearAssets: Map[Long, Seq[PersistedLinearAsset]], typeId: Int): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val fillOperations: Seq[(RoadLink, Seq[PersistedLinearAsset], ChangeSet) => (Seq[PersistedLinearAsset], ChangeSet)] = Seq(
       expireSegmentsOutsideGeometry,
+      expireShortSegmentsGeometry,
       fuse(typeId),
       combine(typeId),
       capSegmentsThatOverflowGeometry,
