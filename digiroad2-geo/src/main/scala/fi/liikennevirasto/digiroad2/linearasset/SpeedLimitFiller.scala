@@ -10,7 +10,7 @@ object SpeedLimitFiller {
   private val Epsilon = 1E-6 /* Smallest mvalue difference we can tolerate to be "equal to zero". One micrometer.
                                 See https://en.wikipedia.org/wiki/Floating_point#Accuracy_problems
                              */
-  private val MinAllowedSpeedLimitLength = 3.0
+  private val MinAllowedSpeedLimitLength = 2.0
 
   private def adjustSegment(segment: SpeedLimit, roadLink: RoadLink): (SpeedLimit, Seq[MValueAdjustment]) = {
     val startError = segment.startMeasure

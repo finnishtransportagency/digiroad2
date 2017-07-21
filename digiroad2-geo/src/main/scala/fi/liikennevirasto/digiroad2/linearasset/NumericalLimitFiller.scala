@@ -9,6 +9,7 @@ import org.joda.time.DateTime
 object NumericalLimitFiller {
   val AllowedTolerance = 0.5
   val MaxAllowedError = 0.01
+  val MinAllowedLength = 2.0
 
   private def modifiedSort(left: PersistedLinearAsset, right: PersistedLinearAsset) = {
     val leftStamp = left.modifiedDateTime.orElse(left.createdDateTime)
@@ -406,16 +407,16 @@ object NumericalLimitFiller {
       (segments, changeSet)
   }
 
-  private def expireShortSegmentsGeometry(roadLink: RoadLink, assets: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
-    val (linearSegments, shortSegments) = assets.partition(a => (a.endMeasure - a.startMeasure) >= 2)
-    val expiredAssetIds = shortSegments.map(_.id).toSet
-    (linearSegments, changeSet.copy(expiredAssetIds = changeSet.expiredAssetIds ++ expiredAssetIds))
+  private def dropShortSegments(roadLink: RoadLink, assets: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
+    val (shortSegments, linearSegments) = assets.partition(a => (a.endMeasure - a.startMeasure) < MinAllowedLength && roadLink.length >= MinAllowedLength )
+    val droppedAssetIds = shortSegments.map(_.id).toSet
+    (linearSegments, changeSet.copy(droppedAssetIds = changeSet.droppedAssetIds ++ droppedAssetIds))
   }
 
   def fillTopology(topology: Seq[RoadLink], linearAssets: Map[Long, Seq[PersistedLinearAsset]], typeId: Int): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val fillOperations: Seq[(RoadLink, Seq[PersistedLinearAsset], ChangeSet) => (Seq[PersistedLinearAsset], ChangeSet)] = Seq(
       expireSegmentsOutsideGeometry,
-      expireShortSegmentsGeometry,
+      dropShortSegments,
       fuse(typeId),
       combine(typeId),
       capSegmentsThatOverflowGeometry,
