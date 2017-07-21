@@ -10,6 +10,7 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.CalibrationCode.{AtBeginning, AtBoth, AtEnd, No}
 import fi.liikennevirasto.viite.{ReservedRoadPart, RoadType}
 import fi.liikennevirasto.viite.process.{Delta, ProjectDeltaCalculator}
+import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -125,7 +126,7 @@ object ProjectDAO {
       startMValue, endMValue, sideCode , lrmPositionId, createdBy, modifiedBy, linkId, length, calibrationPoints, status, roadType, source) =>
         ProjectLink(projectLinkId, roadNumber, roadPartNumber, Track.apply(trackCode), Discontinuity.apply(discontinuityType),
           startAddrM, endAddrM, None, None, None, lrmPositionId, linkId, startMValue, endMValue, SideCode.apply(sideCode.toInt),
-          calibrations(CalibrationCode.apply(calibrationPoints.toInt),linkId,startMValue,endMValue,startAddrM,endAddrM),
+          CalibrationPointsUtils.calibrations(CalibrationCode.apply(calibrationPoints.toInt),linkId,startMValue,endMValue,startAddrM,endAddrM, SideCode.apply(sideCode.toInt)),
           false, Seq.empty[Point], projectId, LinkStatus.apply(status), RoadType.apply(roadType),LinkGeomSource.apply(source),length)
     }
   }
@@ -146,7 +147,7 @@ object ProjectDAO {
       startMValue, endMValue, sideCode , lrmPositionId, createdBy, modifiedBy, linkId, length, calibrationPoints, status, roadType, source) =>
         ProjectLink(projectLinkId, roadNumber, roadPartNumber, Track.apply(trackCode), Discontinuity.apply(discontinuityType),
           startAddrM, endAddrM, None, None, None, lrmPositionId, linkId, startMValue, endMValue, SideCode.apply(sideCode.toInt),
-          calibrations(CalibrationCode.apply(calibrationPoints.toInt),linkId,startMValue,endMValue,startAddrM,endAddrM),
+          CalibrationPointsUtils.calibrations(CalibrationCode.apply(calibrationPoints.toInt),linkId,startMValue,endMValue,startAddrM,endAddrM, SideCode.apply(sideCode.toInt)),
           false, Seq.empty[Point], projectId, LinkStatus.apply(status), RoadType.apply(roadType),LinkGeomSource.apply(source),length)
     }
   }
@@ -168,7 +169,7 @@ object ProjectDAO {
       startMValue, endMValue, sideCode , lrmPositionId, createdBy, modifiedBy, linkId, length, calibrationPoints, status, roadType, source) =>
         ProjectLink(projectLinkId, roadNumber, roadPartNumber, Track.apply(trackCode), Discontinuity.apply(discontinuityType),
           startAddrM, endAddrM, None, None, None, lrmPositionId, linkId, startMValue, endMValue, SideCode.apply(sideCode.toInt),
-          calibrations(CalibrationCode.apply(calibrationPoints.toInt),linkId,startMValue,endMValue,startAddrM,endAddrM),
+          CalibrationPointsUtils.calibrations(CalibrationCode.apply(calibrationPoints.toInt),linkId,startMValue,endMValue,startAddrM,endAddrM, SideCode.apply(sideCode.toInt)),
           false, Seq.empty[Point], projectId, LinkStatus.apply(status), RoadType.apply(roadType),LinkGeomSource.apply(source),length)
     }
   }
@@ -313,16 +314,5 @@ object ProjectDAO {
 
   def toTimeStamp(dateTime: Option[DateTime]) = {
     dateTime.map(dt => new Timestamp(dt.getMillis))
-  }
-
-  private def calibrations(calibrationCode: CalibrationCode, linkId: Long, segmentStartMValue: Double, segmentEndMValue: Double,
-                           startAddrMValue: Long, endAddrMValue: Long): (Option[CalibrationPoint], Option[CalibrationPoint]) = {
-    calibrationCode match {
-      case No => (None, None)
-      case AtEnd => (None, Some(CalibrationPoint(linkId, segmentEndMValue, endAddrMValue)))
-      case AtBeginning => (Some(CalibrationPoint(linkId, segmentStartMValue, startAddrMValue)), None)
-      case AtBoth => (Some(CalibrationPoint(linkId, segmentStartMValue, startAddrMValue)),
-        Some(CalibrationPoint(linkId, segmentEndMValue, endAddrMValue)))
-    }
   }
 }

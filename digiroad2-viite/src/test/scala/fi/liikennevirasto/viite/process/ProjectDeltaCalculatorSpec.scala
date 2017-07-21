@@ -96,7 +96,7 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
     outputCP(3).calibrationPoints should be(None, None)
 
     outputCP(4).id should be(idRoad1)
-    outputCP(4).calibrationPoints should be(None,Some(CalibrationPoint(12346,9.799999999999997,40)))
+    outputCP(4).calibrationPoints should be(None,Some(CalibrationPoint(12346,9.799999999999997,30)))
 
     outputCP(0).id should be(idRoad4)
     outputCP(0).calibrationPoints should be(Some(CalibrationPoint(12349,0.0,0)),Some(CalibrationPoint(12349,3.0,3)))
