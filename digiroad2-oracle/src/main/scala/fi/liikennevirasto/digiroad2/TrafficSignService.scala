@@ -1,22 +1,22 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, AdministrativeClass}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
-import fi.liikennevirasto.digiroad2.pointasset.oracle.{OracleObstacleDao, OracleTrafficSignDao, TrafficSign}
+import fi.liikennevirasto.digiroad2.pointasset.oracle.{PersistedTrafficSign, OracleTrafficSignDao}
 import fi.liikennevirasto.digiroad2.user.User
 
-case class IncomingTrafficSign(lon: Double, lat: Double, linkId: Long, signType: Int, value: Option[String], additionalInfo: Option[String]) extends IncomingPointAsset
+case class IncomingTrafficSign(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimpleProperty]) extends IncomingPointAsset
 
 class TrafficSignService(val roadLinkService: RoadLinkService) extends PointAssetOperations {
   type IncomingAsset = IncomingTrafficSign
-  type PersistedAsset = TrafficSign
+  type PersistedAsset = PersistedTrafficSign
 
   override def typeId: Int = 300
 
-  override def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[TrafficSign] = OracleTrafficSignDao.fetchByFilter(queryFilter)
+  override def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[PersistedTrafficSign] = OracleTrafficSignDao.fetchByFilter(queryFilter)
 
-  override def setFloating(persistedAsset: TrafficSign, floating: Boolean) = {
+  override def setFloating(persistedAsset: PersistedTrafficSign, floating: Boolean): PersistedTrafficSign = {
     persistedAsset.copy(floating = floating)
   }
 
@@ -45,8 +45,11 @@ class TrafficSignService(val roadLinkService: RoadLinkService) extends PointAsse
   }
 
   private def adjustmentOperation(persistedAsset: PersistedAsset, adjustment: AssetAdjustment): Long = {
-    val updated = IncomingTrafficSign(adjustment.lon, adjustment.lat, adjustment.linkId, persistedAsset.signType, persistedAsset.value, persistedAsset.additionalInfo)
-    OracleTrafficSignDao.update(adjustment.assetId, updated, adjustment.mValue, persistedAsset.municipalityCode, "vvh_generated", Some(adjustment.vvhTimeStamp), persistedAsset.linkSource)
+    val updated = IncomingTrafficSign(adjustment.lon, adjustment.lat, adjustment.linkId,
+      persistedAsset.propertyData.map(prop => SimpleProperty(prop.publicId, prop.values)).toSet)
+
+    OracleTrafficSignDao.update(adjustment.assetId, updated, adjustment.mValue, persistedAsset.municipalityCode,
+      "vvh_generated", Some(adjustment.vvhTimeStamp), persistedAsset.linkSource)
   }
 
   override def getByMunicipality(municipalityCode: Int): Seq[PersistedAsset] = {
@@ -57,7 +60,7 @@ class TrafficSignService(val roadLinkService: RoadLinkService) extends PointAsse
 
   private def createPersistedAsset[T](persistedStop: PersistedAsset, asset: AssetAdjustment) = {
     new PersistedAsset(asset.assetId, asset.linkId, asset.lon, asset.lat,
-      asset.mValue, asset.floating, persistedStop.vvhTimeStamp, persistedStop.municipalityCode, persistedStop.signType, persistedStop.value, persistedStop.additionalInfo, persistedStop.createdBy,
+      asset.mValue, asset.floating, persistedStop.vvhTimeStamp, persistedStop.municipalityCode, persistedStop.propertyData, persistedStop.createdBy,
       persistedStop.createdAt, persistedStop.modifiedBy, persistedStop.modifiedAt, persistedStop.linkSource)
   }
 
