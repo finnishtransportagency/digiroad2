@@ -6,11 +6,14 @@ import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.dao.{ProjectLink, _}
 import org.joda.time.DateTime
+import org.slf4j.LoggerFactory
 
 /**
   * Calculate the effective change between the project and the current road address data
   */
 object ProjectDeltaCalculator {
+
+  val logger = LoggerFactory.getLogger(getClass)
   val checker = new ContinuityChecker(null) // We don't need road link service here
   def delta(projectId: Long): Delta = {
     val projectOpt = ProjectDAO.getRoadAddressProjectById(projectId)
@@ -89,17 +92,56 @@ object ProjectDeltaCalculator {
     }).toSeq
   }
 
-  def orderProjectLinksByGeometry(list:Seq[ProjectLink]): Seq[ProjectLink] = {
+  //Subtrair os endpoints first - second
+  //Se valor < 0 então comparar last com last,
+  //Se valor > 0 comparar normalmente
 
+  def orderProjectLinksByGeometry(list:Seq[ProjectLink]): Seq[ProjectLink] = {
+    def geomDelta(first: Point, last: Point): Double = {
+      (first.x - last.x) + (first.y - last.y) + (first.z - last.z)
+    }
+    //Old reliable recursive sorter
     def recursiveSort(sortList: Seq[ProjectLink]) : Seq[ProjectLink] = {
+      logger.info("Entered recursiveSort with "+ sortList.length + " ammount of Items being them: " + sortList.toString() + " elements to sort." )
       list.find(l => GeometryUtils.areAdjacent(l.geom.head, sortList.last.geom.last)) match {
         case Some(prj) => recursiveSort(sortList ++ Seq(prj))
         case _ => sortList
       }
     }
 
+
+    //TODO: I need some tweaking here, I get stuck in a endless loop
+    def recursiveSortWithComparison(sortList: Seq[ProjectLink], comparisonDirection: Double) : Seq[ProjectLink] = {
+      logger.info("Entered recursiveSortWithComparison with " + sortList.toString() + " elements to sort and " + comparisonDirection + " as a direction value." )
+      if(comparisonDirection > 0) {
+        list.find(l => GeometryUtils.areAdjacent(l.geom.head, sortList.last.geom.last)) match {
+          case Some(prj) => {
+            val (first, last) = GeometryUtils.geometryEndpoints(prj.geom)
+            recursiveSortWithComparison(sortList ++ Seq(prj),geomDelta(first,last))
+          }
+          case _ => sortList
+        }
+      } else if(comparisonDirection < 0) {
+        list.find(l => GeometryUtils.areAdjacent(l.geom.last, sortList.last.geom.last)) match {
+          case Some(prj) => {
+            recursiveSortWithComparison(sortList ++ Seq(prj), 0)
+          }
+          case _ => sortList
+        }
+      } else {
+        list.find(l => GeometryUtils.areAdjacent(l.geom.head, sortList.last.geom.head)) match {
+          case Some(prj) =>
+            recursiveSortWithComparison(sortList ++ Seq(prj), 0)
+          case _ => sortList
+        }
+      }
+
+    }
+
     val firstGeom = list.find(p => !list.exists(l => GeometryUtils.areAdjacent(p.geom.head, l.geom.last)))
+    val (first, last) = GeometryUtils.geometryEndpoints(firstGeom.get.geom)
     recursiveSort(Seq(firstGeom.get))
+    //    recursiveSortWithComparison(Seq(firstGeom.get), geomDelta(first,last))
   }
 
   def orderProjectLinks(unorderedProjectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
