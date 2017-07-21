@@ -39,7 +39,6 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
     val idRoad3 = 3L
     val idRoad4 = 4L
     val projectId = 1
-    //addressMValues and MValues unknown before calculation
     val rap = RoadAddressProject(projectId, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("1972-03-03"), DateTime.parse("2700-01-01"), "Some additional info", List.empty[ReservedRoadPart], None)
     val projectLink0 = toProjectLink(rap)(RoadAddress(idRoad0, 5, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, 12345L, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), false,
       Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface))
@@ -53,7 +52,6 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
       Seq(Point(0.0, 42.8), Point(0.0, 39.8)), LinkGeomSource.NormalLinkInterface))
 
     val projectLinkSeq = Seq(projectLink0, projectLink1, projectLink2, projectLink3, projectLink4)
-//    val projectLinkSeq = Seq(projectLink0, projectLink1, projectLink2, projectLink3)
     var linkLengths: Map[RoadPartBasis, Seq[RoadPartLengths]] = Map.empty
     projectLinkSeq.foreach(pl => {
       val index = new RoadPartBasis(pl.roadNumber, pl.roadPartNumber)
