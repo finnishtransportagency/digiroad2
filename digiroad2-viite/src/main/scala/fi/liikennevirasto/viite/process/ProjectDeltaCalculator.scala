@@ -87,8 +87,6 @@ object ProjectDeltaCalculator {
         orderProjectLinksByGeometry(gpl._2)
       }
     }).toSeq
-
-
   }
 
   def orderProjectLinksByGeometry(list:Seq[ProjectLink]): Seq[ProjectLink] = {
@@ -117,7 +115,13 @@ object ProjectDeltaCalculator {
         return ordered
       }
       // Find a road address link that continues from current last link
-      unordered.find(ral => GeometryUtils.areAdjacent(ral.geom, ordered.last.geom)) match {
+      unordered.find { ral =>
+        unordered.exists(
+          un => un.linkId != ral.linkId && GeometryUtils.areAdjacent(un.geom, ral.geom)
+        ) || ordered.exists(
+          un => un.linkId != ral.linkId && GeometryUtils.areAdjacent(un.geom, ral.geom)
+        )
+      } match {
         case Some(link) =>
           val sideCode = if (isSideCodeChange(link.geom, ordered.last.geom))
             switchSideCode(ordered.last.sideCode)
@@ -158,7 +162,6 @@ object ProjectDeltaCalculator {
     // Switch between against and towards 2 -> 3, 3 -> 2
     SideCode.apply(5-sideCode.value)
   }
-
 }
 
 case class Delta(startDate: DateTime, terminations: Seq[RoadAddress])

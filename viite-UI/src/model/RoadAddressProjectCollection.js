@@ -239,7 +239,7 @@
       }) ];
        backend.directionChangeNewRoadlink(ids, function(successObject) {
            if (!successObject.success) {
-            eventbus.trigger('roadAddress:changeDirectionFailed', result.errormessage);
+            eventbus.trigger('roadAddress:changeDirectionFailed', successObject.errorMessage);
                applicationModel.removeSpinner();
            } else {
                eventbus.trigger('changeProjectDirection:clicked');

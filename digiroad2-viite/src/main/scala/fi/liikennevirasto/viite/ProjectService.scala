@@ -203,6 +203,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
          return "Linkit kuuluvat useampaan projektiin"
         }
         ProjectDAO.flipProjectLinksSideCodes(projectLink)
+        recalculateMValues(ProjectDAO.getProjectLinksById(projectLink).reverse).map(link => ProjectDAO.updateMValues(link))
         ""
       }
     } catch{
@@ -715,6 +716,17 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         withRoadType
     }
     fetchedAddresses
+  }
+
+  def recalculateMValues(projectLinks: Seq[ProjectLink]) ={
+     var lastEndM = 0.0
+    projectLinks.map(l => {
+      val endValue = lastEndM + l.geometryLength
+      val updatedProjectLink = l.copy(startMValue = 0.0, endMValue = l.geometryLength, startAddrMValue = Math.round(lastEndM), endAddrMValue = Math.round(endValue))
+      lastEndM = endValue
+      updatedProjectLink
+    })
+
   }
 
   case class PublishResult(validationSuccess: Boolean, sendSuccess: Boolean, errorMessage: Option[String])
