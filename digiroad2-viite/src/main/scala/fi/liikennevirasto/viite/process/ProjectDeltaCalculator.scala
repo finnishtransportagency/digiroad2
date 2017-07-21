@@ -71,13 +71,49 @@ object ProjectDeltaCalculator {
     ).toSeq
   }
 
+  def orderProjectLinksTopologyByGeometry(list:Seq[ProjectLink]): Seq[ProjectLink] = {
+
+    def linkTopologyByGeomEndPoints(sortedList: Seq[ProjectLink], unprocessed: Seq[ProjectLink]) : Seq[ProjectLink] = {
+      unprocessed.find(l => GeometryUtils.areAdjacent(l.geom, sortedList.last.geom)) match {
+        case Some(prj) =>
+          println(prj)
+          val unp = unprocessed.filterNot(u => u.linkId == prj.linkId)
+          linkTopologyByGeomEndPoints(sortedList ++ Seq(prj), unp)
+        case _ => sortedList
+      }
+    }
+
+    val linksAtEnd = list.filterNot(e =>  linkAdjacentInBothEnds(e.linkId, e.geom, list.filterNot(l =>l.linkId ==e.linkId).map(_.geom)))
+    //TODO which one of the possible ones (ones at the borders) should be the first? discover by sideCode? How?
+    val possibleFirst = linksAtEnd.head
+    val rest = list.filterNot(_.linkId == possibleFirst.linkId)
+    linkTopologyByGeomEndPoints(Seq(possibleFirst), rest)
+  }
+
+  def linkAdjacentInBothEnds(linkId: Long, geometry1: Seq[Point], geometries: Seq[Seq[Point]]): Boolean = {
+    val epsilon = 0.01
+    val geometry1EndPoints = GeometryUtils.geometryEndpoints(geometry1)
+    val isLeftAdjacent = geometries.exists { g =>
+      val geometry2Endpoints = GeometryUtils.geometryEndpoints(g)
+      geometry1EndPoints._1.distance2DTo(geometry2Endpoints._1) < epsilon ||
+        geometry1EndPoints._1.distance2DTo(geometry2Endpoints._2) < epsilon
+    }
+    val isRightAdjacent = geometries.exists { g =>
+      val geometry2Endpoints = GeometryUtils.geometryEndpoints(g)
+      geometry1EndPoints._2.distance2DTo(geometry2Endpoints._1) < epsilon ||
+        geometry1EndPoints._2.distance2DTo(geometry2Endpoints._2) < epsilon
+    }
+    println(s"""linkId: ${linkId}  isLeftAdjacent: ${isLeftAdjacent} + isRightAdjacent: ${isRightAdjacent}"""+ "\n")
+    isLeftAdjacent && isRightAdjacent
+  }
+
   def determineMValues(projectLinks: Seq[ProjectLink], geometryLengthList: Map[RoadPartBasis, Seq[RoadPartLengths]]): Seq[ProjectLink] = {
     val groupedProjectLinks = projectLinks.groupBy(record => (record.roadNumber, record.roadPartNumber))
     groupedProjectLinks.flatMap(gpl => {
       var lastEndM = 0.0
       val roadPartId = new RoadPartBasis(gpl._1._1, gpl._1._2)
       if(geometryLengthList.keySet.contains(roadPartId)){
-        val links = orderProjectLinksByGeometry(gpl._2)
+        val links = orderProjectLinksTopologyByGeometry(gpl._2)
         links.map(l => {
           val lengths = geometryLengthList.get(roadPartId).get
           val foundGeomLength = lengths.find(_.linkId == l.linkId).get
@@ -87,11 +123,13 @@ object ProjectDeltaCalculator {
           updatedProjectLink
         })
       } else {
-        orderProjectLinksByGeometry(gpl._2)
+        orderProjectLinksTopologyByGeometry(gpl._2)
       }
     }).toSeq
   }
 
+/*
+//TODO remove before merging to master
   //Subtrair os endpoints first - second
   //Se valor < 0 então comparar last com last,
   //Se valor > 0 comparar normalmente
@@ -143,6 +181,7 @@ object ProjectDeltaCalculator {
     recursiveSort(Seq(firstGeom.get))
     //    recursiveSortWithComparison(Seq(firstGeom.get), geomDelta(first,last))
   }
+  */
 
   def orderProjectLinks(unorderedProjectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
     def extending(link: ProjectLink, ext: ProjectLink) = {
@@ -158,9 +197,7 @@ object ProjectDeltaCalculator {
       }
       // Find a road address link that continues from current last link
       unordered.find { ral =>
-        unordered.exists(
-          un => un.linkId != ral.linkId && GeometryUtils.areAdjacent(un.geom, ral.geom)
-        ) || ordered.exists(
+        (unordered++ordered).exists(
           un => un.linkId != ral.linkId && GeometryUtils.areAdjacent(un.geom, ral.geom)
         )
       } match {
