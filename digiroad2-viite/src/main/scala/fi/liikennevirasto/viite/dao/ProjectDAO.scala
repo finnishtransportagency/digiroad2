@@ -174,9 +174,8 @@ object ProjectDAO {
   }
 
   def updateMValues(projectLink: ProjectLink): Unit = {
-      sqlu"""update project_link set start_addr_m = ${projectLink.startAddrMValue}, end_addr_m = ${projectLink.endAddrMValue} where id = ${projectLink.id}
+      sqlu"""update project_link set modified_date = sysdate, start_addr_m = ${projectLink.startAddrMValue}, end_addr_m = ${projectLink.endAddrMValue} where id = ${projectLink.id}
           """.execute
-        sqlu"""update lrm_position set start_measure = ${projectLink.startMValue}, end_measure = ${projectLink.endMValue}  where id = ${projectLink.lrmPositionId}""".execute
   }
 
   def updateRoadAddressProject(roadAddressProject: RoadAddressProject): Unit = {
