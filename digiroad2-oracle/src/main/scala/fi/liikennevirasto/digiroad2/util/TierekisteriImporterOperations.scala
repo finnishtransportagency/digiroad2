@@ -157,7 +157,6 @@ trait TierekisteriImporterOperations {
 
 
   def importValues(typeId: Int, roadNumber: Long, roadPart: Long): Unit = {
-    println(s"ImportValues for RN: $roadNumber and RPN: $roadPart")
     val trAsset = tierekisteriClient.fetchActiveAssetData(roadNumber, roadPart)
 
     trAsset.foreach { tr => println(s"TR: address ${tr.roadNumber}/${tr.startRoadPartNumber}-${tr.endRoadPartNumber}/${tr.track.value}/${tr.startAddressMValue}-${tr.endAddressMValue}") }
@@ -234,8 +233,6 @@ trait TierekisteriImporterOperations {
                 .foreach { ra =>
                   val ids = linearAssetService.dao.getIds(typeId, ra.linkId)
                   if (ids.nonEmpty) {
-                    println("Expired assets with ids: ")
-                    ids.foreach { id => println(id) }
                     println(s"Expire asset of link id " + ra.linkId)
                     linearAssetService.dao.expireAssetsBySection(typeId, ra.linkId)
                   }
