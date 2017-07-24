@@ -35,7 +35,11 @@
 </header>
 <div class="container">
     <div id="contentMap">
-      <div id="mapdiv"></div>
+      <div id="mapdiv">
+          <div id="popup" class="ol-popup">
+              <div id="popup-content"></div>
+          </div>
+      </div>
       <div class="crosshair crosshair-center"></div>
       <div class="crosshair crosshair-top"></div>
       <div class="crosshair crosshair-bottom"></div>
@@ -70,6 +74,7 @@
 <script type="text/javascript" src="src/utils/environment-utils.js"></script>
 <script type="text/javascript" src="src/utils/zoom-levels.js"></script>
 <script type="text/javascript" src="src/utils/validity-directions.js"></script>
+<script type="text/javascript" src="src/utils/RoadAddressInfoPopup.js"></script>
 <script type="text/javascript" src="src/view/TileMapCollection.js"></script>
 <script type="text/javascript" src="src/view/Layer.js"></script>
 <script type="text/javascript" src="src/view/RoadLayerSelectionStyle.js"></script>
