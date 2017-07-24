@@ -32,7 +32,7 @@
 
         var canDisplayRoadAddressInfo = function(){
             return RoadAddressInfoData.roles &&
-                (_.contains(RoadAddressInfoData.roles, 'operator') || _.contains(RoadAddressInfoData.roles, 'busStopMaintainer'))
+                (_.contains(RoadAddressInfoData.roles, 'operator') || _.contains(RoadAddressInfoData.roles, 'busStopMaintainer'));
         };
 
         var overlay = new ol.Overlay(({
@@ -84,6 +84,6 @@
             start: start,
             stop: stop
         };
-    }
+    };
 
 })(this);
