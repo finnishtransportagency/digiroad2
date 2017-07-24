@@ -17,7 +17,8 @@
       close: close,
       exists: exists,
       isSelected: isSelected,
-      getAdministrativeClass: getAdministrativeClass
+      getAdministrativeClass: getAdministrativeClass,
+      checkSelectedSign: checkSelectedSign
     };
 
     function place(asset) {
@@ -110,5 +111,17 @@
       var value = roadCollection.getRoadLinkByLinkId(linkId ? linkId : current.linkId).getData().administrativeClass;
       return _.isNull(value) ? undefined : value;
     }
+
+    function getSelectedTrafficSignValue() {
+      return parseInt(_.first(_.find(current.propertyData, function(prop){return prop.publicId === "liikennemerkki_tyyppi";}).values).propertyValue);
+    }
+
+    function checkSelectedSign(trafficSignsShowing){
+      if (current && (!_.contains(trafficSignsShowing, getSelectedTrafficSignValue()) &&
+        getSelectedTrafficSignValue() !== undefined)) {
+        close();
+      }
+    }
+
   };
 })(this);

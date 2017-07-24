@@ -27,13 +27,17 @@
 
      var filterTrafficSigns = function (asset) {
        return _.filter(asset, function (asset) {
-         return _.contains(getTrafficSignsToShow(), parseInt(_.first(_.find(asset.propertyData, function(prop){return prop.publicId === "liikennemerkki_tyyppi";}).values).propertyValue));
+         var existingValue = _.first(_.find(asset.propertyData, function(prop){return prop.publicId === "liikennemerkki_tyyppi";}).values);
+         if(!existingValue)
+           return false;
+         return _.contains(getTrafficSignsToShow(), parseInt(existingValue.propertyValue));
        });
      };
 
     var setTrafficSigns = function(trafficSign, isShowing) {
       if(trafficSignsShowing[trafficSign] !== isShowing) {
         trafficSignsShowing[trafficSign] = isShowing;
+        eventbus.trigger('trafficSigns:signsChanged', getTrafficSignsToShow());
       }
     };
 
