@@ -1,15 +1,18 @@
 package fi.liikennevirasto.viite
 
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing, Unknown}
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, RoadLinkService}
+import fi.liikennevirasto.viite.dao.CalibrationCode.{AtBeginning, AtBoth, AtEnd, No}
 import fi.liikennevirasto.viite.dao.ProjectState._
 import fi.liikennevirasto.viite.dao.{ProjectDAO, RoadAddressDAO, _}
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, ProjectAddressLinkLike, RoadAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process._
+import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 import org.joda.time.format.DateTimeFormat
@@ -131,7 +134,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     */
   def addNewLinksToProject(projectAddressLinks: Seq[ProjectAddressLink], roadAddressProjectID :Long, newRoadNumber : Long, newRoadPartNumber: Long, newTrackCode: Long, newDiscontinuity: Long):String = {
 
-      val randomSideCode = allowedSideCodes(new Random(System.currentTimeMillis()).nextInt(allowedSideCodes.length))
+      val randomSideCode = SideCode.TowardsDigitizing
       ProjectDAO.getRoadAddressProjectById(roadAddressProjectID) match {
         case Some(project) => {
           checkNewRoadAddressNumberAndPart(newRoadNumber, newRoadPartNumber, project) match {
@@ -177,21 +180,23 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     linksWithMValues.groupBy(record => (record.roadNumber, record.roadPartNumber)).flatMap(group => {
       val groupedLinks = group._2
       val first = groupedLinks.sortBy(_.endAddrMValue).head
+      val firstWithCalibration = first.copy(calibrationPoints = CalibrationPointsUtils.calibrations(CalibrationCode.AtBeginning, first))
       val last = groupedLinks.sortBy(_.endAddrMValue).last
+      val lastWithCalibration = last.copy(calibrationPoints = CalibrationPointsUtils.calibrations(CalibrationCode.AtEnd, last))
       groupedLinks.map(gl => {
         if (groupedLinks.size == 1) { //first and last are the same then
-          first.copy(calibrationPoints = (Option(new CalibrationPoint(first.linkId, first.startMValue, first.startAddrMValue)), Option(new CalibrationPoint(last.linkId, last.endMValue, last.endAddrMValue))))
-        } else {
+          first.copy(calibrationPoints = CalibrationPointsUtils.calibrations(CalibrationCode.AtBoth, first))
+        }
+          else {
           if (gl.linkId == first.linkId && gl.roadNumber == first.roadNumber && gl.roadPartNumber == first.roadPartNumber) {
-            first.copy(calibrationPoints = (Option(new CalibrationPoint(first.linkId, first.startMValue, first.startAddrMValue)), Option.empty[CalibrationPoint]))
+            firstWithCalibration
           } else if (gl.linkId == last.linkId && gl.roadNumber == last.roadNumber && gl.roadPartNumber == last.roadPartNumber) {
-            last.copy(calibrationPoints = (Option.empty[CalibrationPoint], Option(new CalibrationPoint(last.linkId, last.endMValue, last.endAddrMValue))))
+            lastWithCalibration
           } else gl
         }
       })
     }).asInstanceOf[Seq[ProjectLink]]
   }
-
 
   def changeDirection(projectLink:Seq[Long]): String = {
     try {
