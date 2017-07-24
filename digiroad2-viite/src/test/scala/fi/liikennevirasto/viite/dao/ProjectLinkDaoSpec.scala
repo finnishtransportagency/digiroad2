@@ -1,5 +1,7 @@
 package fi.liikennevirasto.viite.dao
 import java.sql.SQLException
+
+import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.viite._
@@ -25,7 +27,7 @@ class ProjectLinkDaoSpec  extends FunSuite with Matchers {
     ProjectLink(id = NewRoadAddress, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track,
       roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
       roadAddress.endDate, modifiedBy = Option(project.createdBy), 0L, roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
-      roadAddress.sideCode, roadAddress.calibrationPoints, floating = false, roadAddress.geom, project.id, LinkStatus.NotHandled, RoadType.PublicRoad)
+      roadAddress.sideCode, roadAddress.calibrationPoints, floating = false, roadAddress.geom, project.id, LinkStatus.NotHandled, RoadType.PublicRoad, roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geom))
   }
 
   def addprojects(): Unit = {
@@ -73,7 +75,7 @@ class ProjectLinkDaoSpec  extends FunSuite with Matchers {
   }
 
   test("create road address project with project links") {
-    val address=ReservedRoadPart(5:Long, 203:Long, 203:Long, 5.5:Double, Discontinuity.apply("jatkuva"), 8:Long, None:Option[DateTime], None:Option[DateTime])
+    val address = ReservedRoadPart(5: Long, 203: Long, 203: Long, 5.5: Double, Discontinuity.apply("jatkuva"), 8: Long, None: Option[DateTime], None: Option[DateTime])
     runWithRollback {
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(address), None)
@@ -88,7 +90,7 @@ class ProjectLinkDaoSpec  extends FunSuite with Matchers {
   }
 
   test("get projects waiting TR response") {
-    val address=ReservedRoadPart(5:Long, 203:Long, 203:Long, 5.5:Double, Discontinuity.apply("jatkuva"), 8:Long, None:Option[DateTime], None:Option[DateTime])
+    val address = ReservedRoadPart(5: Long, 203: Long, 203: Long, 5.5: Double, Discontinuity.apply("jatkuva"), 8: Long, None: Option[DateTime], None: Option[DateTime])
     runWithRollback {
       val waitingCountp = ProjectDAO.getProjectsWithWaitingTRStatus().length
       val id = Sequences.nextViitePrimaryKeySeqValue
@@ -99,9 +101,9 @@ class ProjectLinkDaoSpec  extends FunSuite with Matchers {
     }
   }
 
-  test("check the removal of project links"){
-    val address=ReservedRoadPart(5:Long, 203:Long, 203:Long, 5.5:Double, Discontinuity.apply("jatkuva"), 8:Long, None:Option[DateTime], None:Option[DateTime])
-    runWithRollback{
+  test("check the removal of project links") {
+    val address = ReservedRoadPart(5: Long, 203: Long, 203: Long, 5.5: Double, Discontinuity.apply("jatkuva"), 8: Long, None: Option[DateTime], None: Option[DateTime])
+    runWithRollback {
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(address), None)
       ProjectDAO.createRoadAddressProject(rap)
@@ -198,8 +200,27 @@ class ProjectLinkDaoSpec  extends FunSuite with Matchers {
       ProjectDAO.createRoadAddressProject(rap)
       val addresses = RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(rap))
       ProjectDAO.create(addresses)
-      val project= ProjectDAO.roadPartReservedByProject(5,203)
-      project should be (Some("TestProject"))
+      val project = ProjectDAO.roadPartReservedByProject(5, 203)
+      project should be(Some("TestProject"))
+    }
+  }
+  test("Change roadaddress direction") {
+    runWithRollback {
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
+      ProjectDAO.createRoadAddressProject(rap)
+      val addresses = RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(rap))
+      ProjectDAO.create(addresses)
+      val (lrmid,linkid)= sql"select LRM_POSITION_ID,ID from PROJECT_LINK where PROJECT_LINK.PROJECT_ID = $id".as[(Long,Long)].first
+      val projectid= sql"select LRM_POSITION_ID from PROJECT_LINK where PROJECT_LINK.PROJECT_ID = $id".as[Long].first
+      val psidecode=sql"select side_code from LRM_Position WHERE id=$lrmid".as[Int].first
+      psidecode should be (2)
+      ProjectDAO.flipProjectLinksSideCodes(Seq(linkid))
+      val nsidecode=sql"select side_code from LRM_Position WHERE id=$lrmid".as[Int].first
+      nsidecode should be (3)
+      ProjectDAO.flipProjectLinksSideCodes(Seq(linkid))
+      val bsidecode=sql"select side_code from LRM_Position WHERE id=$lrmid".as[Int].first
+      bsidecode should be (2)
     }
   }
 }

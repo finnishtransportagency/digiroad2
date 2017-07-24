@@ -220,6 +220,7 @@
             (selectionTarget.projectLinkData.anomaly==noAddressAnomaly && selectionTarget.projectLinkData.roadLinkType!=floatingRoadLinkType) || selectionTarget.projectLinkData.roadClass === 99)
           );
       });
+      selectedProjectLinkProperty.clean();
       if (!_.isUndefined(selection))
         selectedProjectLinkProperty.open(selection.projectLinkData.linkId);
     });
@@ -456,9 +457,23 @@ var isDefined=function(variable) {
       vectorLayer.getSource().clear();
     };
 
+    eventbus.on('projectLink:projectLinksCreateSuccess', function () {
+      projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1, undefined);
+
+    });
+
+    eventbus.on('changeProjectDirection:clicked', function () {
+      projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1, undefined);
+    });
+
     var redraw = function(){
+      var ids = {};
+        _.each(selectedProjectLinkProperty.get(), function (sel) { ids[sel.linkId] = true; });
+
+        selectedProjectLinkProperty.setCurrent(_.filter(projectCollection.getProjectLinks(), function (projectLink) {
+          return ids[projectLink.getData().linkId];
+      }));
       var editedLinks = _.map(projectCollection.getDirty(), function(editedLink) {return editedLink.id;});
-      cachedMarker = new LinkPropertyMarker(selectedProjectLinkProperty);
       var projectLinks = projectCollection.getAll();
       var features = [];
       _.map(projectLinks, function(projectLink) {
@@ -472,6 +487,7 @@ var isDefined=function(variable) {
         features.push(feature);
       });
       directionMarkerLayer.getSource().clear();
+      cachedMarker = new LinkPropertyMarker(selectedProjectLinkProperty);
       var directionRoadMarker = _.filter(projectLinks, function(projlink) {
         return projlink.roadLinkType !== floatingRoadLinkType && projlink.anomaly !== noAddressAnomaly && projlink.anomaly !== geometryChangedAnomaly && (projlink.sideCode === againstDigitizing || projlink.sideCode === towardsDigitizing);
       });
@@ -531,7 +547,8 @@ var isDefined=function(variable) {
       projectCollection.getProjectsWithLinksById(projId);
     });
 
-    eventbus.on('roadAddressProject:fetched', function() {
+    eventbus.on('roadAddressProject:fetched', function(newSelection) {
+      applicationModel.removeSpinner();
       redraw();
     });
 

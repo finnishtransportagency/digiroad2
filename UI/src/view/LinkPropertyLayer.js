@@ -145,6 +145,7 @@
     var currentRenderIntent = 'default';
     var linkPropertyLayerStyles = LinkPropertyLayerStyles(roadLayer);
     var isComplementaryActive = false;
+    var extraEventListener = _.extend({running: false}, eventbus);
 
     this.minZoomForContent = zoomlevels.minZoomForRoadLinks;
 
@@ -328,13 +329,20 @@
       eventListener.listenTo(eventbus, 'roadLinks:historyFetched', draw);
       eventListener.listenTo(eventbus, 'linkProperties:dataset:changed', draw);
       eventListener.listenTo(eventbus, 'linkProperties:updateFailed', cancelSelection);
-      eventListener.listenTo(eventbus, 'roadLinkComplementary:show', showRoadLinksWithComplementary);
-      eventListener.listenTo(eventbus, 'roadLinkComplementary:hide', hideRoadLinksWithComplementary);
       eventListener.listenTo(eventbus, 'linkProperties:selected linkProperties:multiSelected', function(link) {
         verifyClickEvent(link);
         redrawSelected();
         currentRenderIntent = 'select';
       });
+    };
+
+    var startListeningExtraEvents = function(){
+      extraEventListener.listenTo(eventbus, 'roadLinkComplementary:show', showRoadLinksWithComplementary);
+      extraEventListener.listenTo(eventbus, 'roadLinkComplementary:hide', hideRoadLinksWithComplementary);
+    };
+
+    var stopListeningExtraEvents = function(){
+      extraEventListener.stopListening(eventbus);
     };
 
     var cancelSelection = function() {
@@ -399,6 +407,7 @@
 
     var show = function(map) {
       roadAddressInfoPopup.start();
+      startListeningExtraEvents();
       me.show(map);
     };
 
@@ -406,6 +415,7 @@
       unselectRoadLink();
       historyLayer.clear();
       roadAddressInfoPopup.stop();
+      stopListeningExtraEvents();
       me.stop();
       me.hide();
     };
