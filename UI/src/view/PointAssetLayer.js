@@ -207,6 +207,14 @@
       eventListener.listenTo(eventbus, 'withComplementary:show', showWithComplementary);
       eventListener.listenTo(eventbus, 'withComplementary:hide', hideComplementary);
     }
+    eventbus.on( layerName + ':changeSigns', function(trafficSignData){
+      setTrafficSigns(trafficSignData[0], trafficSignData[1]);
+    });
+
+    var setTrafficSigns = function(trafficSign, isShowing) {
+      collection.setTrafficSigns(trafficSign, isShowing);
+      me.refreshView();
+    };
 
     function handleCreationCancelled() {
       mapOverlay.hide();

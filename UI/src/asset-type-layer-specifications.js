@@ -216,7 +216,7 @@
       label: new LinearAssetLabel(),
       editConstrains : function(selectedAsset) {
         //check if administrative class is State
-        return true;
+        return selectedAsset.administrativeClass === 1;
       }
     },
     {
@@ -528,14 +528,10 @@
       title: 'Liikennemerkit',
       allowComplementaryLinks: true,
       newAsset: {  },
-      legendValues: [
-        {symbolUrl: 'images/point-assets/point_blue.svg', label: 'Liikennemerkit'},
-        {symbolUrl: 'images/point-assets/point_red.svg', label: 'Geometrian ulkopuolella'}
-      ],
       formLabels: {
-        singleFloatingAssetLabel: 'liikennemerkitxxx',
-        manyFloatingAssetsLabel: 'liikennemerkitxx',
-        newAssetLabel: 'liikennemerkit'
+        singleFloatingAssetLabel: 'liikennemerkin',
+        manyFloatingAssetsLabel: 'liikennemerkit',
+        newAssetLabel: 'liikennemerkki'
       },
         editConstrains : function(selectedAsset) {
         //check if administrative class is State
