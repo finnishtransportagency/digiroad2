@@ -6,13 +6,14 @@ import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.roadaddress.oracle.RoadAddressDAO
+import org.joda.time.DateTime
 
 
 class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: OracleLinearAssetDao,
                                roadAddressDao: RoadAddressDAO, linearAssetService: LinearAssetService) {
 
   val trafficVolumeId = 170
-  val lightingAssetId = 100
+  val litRoadAssetId = 100
   val roadWidthAssetId = 120
   val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
 
@@ -79,12 +80,15 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
 
 
   def importLitRoadAsset(): Unit = {
-    litRoadImporterOperations.importAsset(lightingAssetId)
-
-    }
+    litRoadImporterOperations.importAsset(litRoadAssetId)
+  }
 
 
   def importRoadWidthAsset(): Unit = {
     roadWidthImporterOperations.importAsset(roadWidthAssetId)
+  }
+
+  def updateLitRoadAsset(assetId: Int, lastUpdate: DateTime): Unit = {
+    litRoadImporterOperations.updateAsset(litRoadAssetId, lastUpdate)
   }
 }
