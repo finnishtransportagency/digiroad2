@@ -1196,9 +1196,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
               join asset_link al on (a.id = al.asset_id)
               join lrm_position lp on (al.position_id = lp.id)
               where (a.asset_type_id = $assetType and  lp.link_id = $linkId)""".as[(Long)].list
-
     ids
   }
-
 }
 
