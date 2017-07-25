@@ -917,23 +917,30 @@ object DataFixture {
     println("\n")
   }
 
-  def updateLitRoadAssetIdDataFromTR(): Unit ={
-    val litRoadAssetId = 100
-
+  def updateLitRoadDataFromTR(): Unit ={
     println("\nStart lighting update at: ")
     println(DateTime.now())
 
-    val lastUpdate = OracleDatabase.withDynSession{
-      assetDao.getLastExecutionDate(litRoadAssetId, "batch_process_lighting")
-    }
+    tierekisteriDataImporter.updateLitRoadAsset()
 
-    tierekisteriDataImporter.updateLitRoadAsset(litRoadAssetId, lastUpdate)
-
-    println("RoadWidth import complete at time: ")
+    println("lLighting update complete at time: ")
     println(DateTime.now())
     println("\n")
 
   }
+
+  def updateRoadWidthDataFromTR(): Unit = {
+    println("\nStart roadWidth update at: ")
+    println(DateTime.now())
+
+    tierekisteriDataImporter.updateRoadWidthAsset()
+
+    println("RoadWidth update complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
+
 
 
   def main(args:Array[String]) : Unit = {
@@ -1024,7 +1031,9 @@ object DataFixture {
       case Some("import_all_roadWidth_from_TR_to_OTH") =>
         importAllRoadWidthDataFromTR()
       case Some("update_litRoad_from_TR_to_OTH") =>
-        updateLitRoadAssetIdDataFromTR()
+        updateLitRoadDataFromTR()
+      case Some("update_roadWidth_from_TR_to_OTH") =>
+        updateRoadWidthDataFromTR()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
