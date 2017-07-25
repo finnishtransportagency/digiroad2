@@ -463,7 +463,7 @@ Projektitilassa vain keltaisella n&auml;kyvi&auml;, projektiin varattuja tieosia
 
 _Projektissa muokattavissa olevat varatut tieosat n&auml;kyv&auml;t kartalla keltaisella v&auml;rill&auml;. Projektin nimi on "Tie 14967 osa 1 lakkautus", joka n&auml;kyy oikeassa yl&auml;kulmassa._
 
-Kun keltaista, muokattavaa kohdetta klikkaa kartala, muuttuu valittu osuus vihre&auml;ksi ja tulee oikeaan laitaan alasvetovalikko, josta voi valita kohteelle teht&auml;v&auml;n toimenpiteen (esim. lakkautus). Kerran klikkaamalla valitaan kartalta homogeeninen jakso, tuplaklikkaus valitsee yhden tieosoitesegmentin verran (tielinkin mittainen osuus).
+Kun keltaista, muokattavaa kohdetta klikkaa kartalla, muuttuu valittu osuus vihre&auml;ksi ja tulee oikeaan laitaan alasvetovalikko, josta voi valita kohteelle teht&auml;v&auml;n toimenpiteen (esim. lakkautus). Kerran klikkaamalla valitaan kartalta homogeeninen jakso, tuplaklikkaus valitsee yhden tieosoitesegmentin verran (tielinkin mittainen osuus).
 
 ![Valittu kohde](k37.JPG)
 
@@ -505,13 +505,13 @@ Tallennuksen j&auml;lkeen tielinkit joilla on uusi tieosoite p&auml;ivittyv&auml
 
 _Uuden tieosoitteen linkit piirtyv&auml;t kartalle pinkill&auml;. Tieosan voi valita klikkaamalla jolloin se korostuu vihre&auml;ll&auml;._
 
-Uuden tieosoitteen linkit piirtyv&auml;t kartalle pinkill&auml; (1). Tieosan alku- ja loppupisteiss&auml; sijaitsee automaattisesti et&auml;isyyslukema-symbolit. Uudelle tieosoitteelle m&auml;&auml;rittyy aluksi satunnainen kasvusuunta, joka n&auml;kyy kartalla pinkkien nuolien suunnasta.
+Uuden tieosoitteen linkit piirtyv&auml;t kartalle pinkill&auml; (1). Tieosan alku- ja loppupisteisiin sijoitetaan automaattisesti et&auml;isyyslukema-symbolit. Viite laskee uudelle tieosuudelle automaattisesti my&ouml;s linkkien m-arvot k&auml;ytt&auml;en VVH:n tietoja. Uudelle tieosoitteelle m&auml;&auml;rittyy aluksi satunnainen kasvusuunta, joka n&auml;kyy kartalla pinkkien nuolien suunnasta.
 
 ![Kasvusuunnan vaihto](k47.JPG)
 
 _Valittuna olevan uuden tieosoitteen vaikutussuntaa vaihtuu lomakkeen 'K&auml;&auml;nn&auml; vaikutussuunta'-nappulasta._
 
-Tallenuksen j&auml;lkeen lomakkeelle ilmestyy nappi (1) jolla voi vaihtaa valitun tieosan kasvusuunnan. 
+Tallenuksen j&auml;lkeen lomakkeelle ilmestyy nappi (1) jolla voi vaihtaa valitun tieosan kasvusuunnan. Kasvusuuntaa vaihtaessa my&ouml;s m-arvot p&auml;ivittyv&auml;t automaattisesti.
 
 11.13 Numeroinnnin muutos
 --------------------------
