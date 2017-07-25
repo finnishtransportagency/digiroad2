@@ -91,21 +91,21 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
 
 
   def importLitRoadAsset(): Unit = {
-    litRoadImporterOperations.importAsset(litRoadAssetId)
+    litRoadImporterOperations.importAssets()
   }
 
 
   def importRoadWidthAsset(): Unit = {
-    roadWidthImporterOperations.importAsset(roadWidthAssetId)
+    roadWidthImporterOperations.importAssets()
   }
 
   def updateLitRoadAsset(): Unit = {
     val lastUpdate = obtainLastExecutionDate(litRoadImporterOperations.assetName, litRoadAssetId)
-    litRoadImporterOperations.updateAsset(litRoadAssetId, lastUpdate)
+    litRoadImporterOperations.updateAssets(lastUpdate)
   }
 
   def updateRoadWidthAsset(): Unit = {
     val lastUpdate = obtainLastExecutionDate(roadWidthImporterOperations.assetName, roadWidthAssetId)
-    roadWidthImporterOperations.updateAsset(roadWidthAssetId, lastUpdate)
+    roadWidthImporterOperations.updateAssets(lastUpdate)
   }
 }

@@ -458,10 +458,10 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
 
   test("lighting assets are split properly") {
     val trl = TierekisteriLightingData(4L, 203L, 208L, Track.RightSide, 3184L, 6584L)
-    val sections = litRoadImporterOperations.getRoadAddressSections(trl)
+    val sections = litRoadImporterOperations.getRoadAddressSections(trl).map(_._1)
     sections.size should be (6)
-    sections.head should be (AddressSection(4L, 203L, Track.RightSide, 1, 3184L, None))
-    sections.last should be (AddressSection(4L, 208L, Track.RightSide, 1, 0L, Some(6584L)))
+    sections.head should be (AddressSection(4L, 203L, Track.RightSide, 3184L, None))
+    sections.last should be (AddressSection(4L, 208L, Track.RightSide,  0L, Some(6584L)))
     val middleParts = sections.filterNot(s => s.roadPartNumber==203L || s.roadPartNumber==208L)
     middleParts.forall(s => s.track == Track.RightSide) should be (true)
     middleParts.forall(s => s.startAddressMValue == 0L) should be (true)
@@ -470,17 +470,17 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
 
   test("lighting assets split works on single part") {
     val trl = TierekisteriLightingData(4L, 203L, 203L, Track.RightSide, 3184L, 6584L)
-    val sections = litRoadImporterOperations.getRoadAddressSections(trl)
+    val sections = litRoadImporterOperations.getRoadAddressSections(trl).map(_._1)
     sections.size should be (1)
-    sections.head should be (AddressSection(4L, 203L, Track.RightSide, 1, 3184L, Some(6584L)))
+    sections.head should be (AddressSection(4L, 203L, Track.RightSide, 3184L, Some(6584L)))
   }
 
   test("lighting assets split works on two parts") {
     val trl = TierekisteriLightingData(4L, 203L, 204L, Track.RightSide, 3184L, 6584L)
     val sections = litRoadImporterOperations.getRoadAddressSections(trl)
     sections.size should be (2)
-    sections.head should be (AddressSection(4L, 203L, Track.RightSide, 1, 3184L, None))
-    sections.last should be (AddressSection(4L, 204L, Track.RightSide, 1, 0L, Some(6584L)))
+    sections.head should be (AddressSection(4L, 203L, Track.RightSide, 3184L, None))
+    sections.last should be (AddressSection(4L, 204L, Track.RightSide, 0L, Some(6584L)))
   }
 
   test("fetch from tierekisteri active road width with fieldCode and roadNumber") {
@@ -505,6 +505,6 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
     val trl = TierekisteriRoadWidthData(4L, 203L, 203L, Track.RightSide, 3184L, 6584L, assetValue)
     val sections = roadWidthImporterOperations.getRoadAddressSections(trl)
     sections.size should be (1)
-    sections.head should be (AddressSection(4L, 203L, Track.RightSide, assetValue, 3184L, Some(6584L)))
+    sections.head should be ((AddressSection(4L, 203L, Track.RightSide, 3184L, Some(6584L)), trl))
   }
 }

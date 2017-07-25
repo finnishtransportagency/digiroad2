@@ -5,17 +5,18 @@ import java.util.Properties
 
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.{TierekisteriAssetDataClient, TierekisteriLightingAssetClient, TierekisteriRoadWidthAssetClient, _}
-import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode, State}
+import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LinkGeomSource, SideCode, State}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.roadaddress.oracle.RoadAddressDAO
+import fi.liikennevirasto.digiroad2.roadaddress.oracle.{RoadAddressDAO, RoadAddress => ViiteRoadAddress}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 
-case class AddressSection(roadNumber: Long, roadPartNumber: Long, track: Track, assetValue: Int, startAddressMValue: Long, endAddressMValue: Option[Long])
+case class AddressSection(roadNumber: Long, roadPartNumber: Long, track: Track, startAddressMValue: Long, endAddressMValue: Option[Long])
 
-trait TierekisteriImporterOperations {
+trait TierekisteriAssetImporterOperations {
+
   val eventbus = new DummyEventBus
   lazy val dr2properties: Properties = {
     val props = new Properties()
@@ -37,263 +38,283 @@ trait TierekisteriImporterOperations {
       throw new RuntimeException(s"cannot find property $name")
   }
 
-  def tierekisteriClient: TierekisteriClientType
+  def typeId: Int
+
+  def withDynSession[T](f: => T): T
+
+  def withDynTransaction[T](f: => T): T
+
+  val tierekisteriClient: TierekisteriClientType
 
   protected def assetName: String = ""
 
   type TierekisteriClientType <: TierekisteriAssetDataClient
-  type TierekisteriAssetDataType <: TierekisteriAssetData
+  type TierekisteriAssetData = tierekisteriClient.TierekisteriType
 
-  def createLinearAsset(linkId: Long, typeId: Int, measures: Measures, assetValue: Int) = {
+  protected def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData): Unit
+
+  //TODO Add protected to this method
+  def getRoadAddressSections(trAssetData: TierekisteriAssetData): Seq[(AddressSection, TierekisteriAssetData)] = {
+    Seq((AddressSection(trAssetData.roadNumber, trAssetData.startRoadPartNumber, trAssetData.track, trAssetData.startAddressMValue,
+      if (trAssetData.endRoadPartNumber == trAssetData.startRoadPartNumber)
+        Some(trAssetData.endAddressMValue)
+      else
+        None), trAssetData)) ++ {
+      if (trAssetData.startRoadPartNumber != trAssetData.endRoadPartNumber) {
+        val roadPartNumberSortedList = List(trAssetData.startRoadPartNumber, trAssetData.endRoadPartNumber).sorted
+        (roadPartNumberSortedList.head until roadPartNumberSortedList.last).tail.map(part =>
+          (AddressSection(trAssetData.roadNumber, part, trAssetData.track, 0L, None), trAssetData)) ++
+          Seq((AddressSection(trAssetData.roadNumber, trAssetData.endRoadPartNumber, trAssetData.track, 0L, Some(trAssetData.endAddressMValue)), trAssetData))
+      } else
+        Seq[(AddressSection, TierekisteriAssetData)]()
+    }
+  }
+
+  protected def getAllMunicipalities(): Seq[Int] = {
+    withDynSession {
+      Queries.getMunicipalities
+    }
+  }
+
+  protected def getAllViiteRoadNumbers(): Seq[Long] = {
+    println("\nFetch Road Numbers From Viite")
+    val roadNumbers = withDynSession {
+      roadAddressDao.getRoadNumbers()
+    }
+
+    println("Road Numbers Fetched:")
+    println(roadNumbers.mkString("\n"))
+
+    roadNumbers
+  }
+
+  protected def calculateStartLrmByAddress(startAddress:  ViiteRoadAddress, section: AddressSection): Option[Double] =
+  {
+    if (startAddress.startAddrMValue >= section.startAddressMValue)
+      startAddress.sideCode match {
+        case TowardsDigitizing => Some(startAddress.startMValue)
+        case AgainstDigitizing => Some(startAddress.endMValue)
+        case _ => None
+      }
+    else
+      startAddress.addressMValueToLRM(section.startAddressMValue)
+
+  }
+
+  protected def calculateEndLrmByAddress(endAddress: ViiteRoadAddress, section: AddressSection) = {
+    if (endAddress.endAddrMValue <= section.endAddressMValue.getOrElse(endAddress.endAddrMValue))
+      endAddress.sideCode match {
+        case TowardsDigitizing => endAddress.endMValue
+        case AgainstDigitizing => endAddress.startMValue
+        case _ => None
+      }
+    else
+      endAddress.addressMValueToLRM(section.endAddressMValue.get)
+  }
+
+  protected def getAllViiteRoadAddress(section: AddressSection) = {
+    val addresses = roadAddressDao.getRoadAddress(roadAddressDao.withRoadAddressSinglePart(section.roadNumber, section.roadPartNumber, section.track.value, section.startAddressMValue, section.endAddressMValue))
+    val vvhRoadLinks = roadLinkService.fetchVVHRoadlinks(addresses.map(ra => ra.linkId).toSet).filter(_.administrativeClass == State)
+    addresses.filter(ra => vvhRoadLinks.exists(_.linkId == ra.linkId))
+  }
+
+  protected def getAllViiteRoadAddress(roadNumber: Long, roadPart: Long) = {
+    val addresses = roadAddressDao.getRoadAddress(roadAddressDao.withRoadNumber(roadNumber, roadPart))
+    val roadAddressLinks = addresses.map(ra => ra.linkId).toSet
+    val vvhRoadLinks = roadLinkService.fetchVVHRoadlinks(roadAddressLinks).filter(_.administrativeClass == State)
+    addresses.filter(ra => vvhRoadLinks.exists(_.linkId == ra.linkId))
+  }
+
+  protected def getAllTierekisteriAddressSections(roadNumber: Long) = {
+    println("\nFetch Tierekisteri " + assetName + " by Road Number " + roadNumber)
+    val trAsset = tierekisteriClient.fetchActiveAssetData(roadNumber)
+
+    trAsset.foreach { tr => println(s"TR: address ${tr.roadNumber}/${tr.startRoadPartNumber}-${tr.endRoadPartNumber}/${tr.track.value}/${tr.startAddressMValue}-${tr.endAddressMValue}") }
+    trAsset.map(_.asInstanceOf[TierekisteriAssetData]).flatMap(getRoadAddressSections)
+  }
+
+  protected def getAllTierekisteriHistoryAddressSection(roadNumber: Long, lastExecution: DateTime) = {
+    println("\nFetch " + assetName + " History by Road Number " + roadNumber)
+    val trAsset = tierekisteriClient.fetchHistoryAssetData(roadNumber, Some(lastExecution))
+
+    trAsset.foreach { tr => println(s"TR: address ${tr.roadNumber}/${tr.startRoadPartNumber}-${tr.endRoadPartNumber}/${tr.track.value}/${tr.startAddressMValue}-${tr.endAddressMValue}") }
+    trAsset.map(_.asInstanceOf[TierekisteriAssetData]).flatMap(getRoadAddressSections)
+  }
+
+  protected def getAllTierekisteriAddressSections(roadNumber: Long, roadPart: Long) = {
+    println("\nFetch Tierekisteri " + assetName + " by Road Number " + roadNumber)
+    val trAsset = tierekisteriClient.fetchActiveAssetData(roadNumber, roadPart)
+
+    trAsset.foreach { tr => println(s"TR: address ${tr.roadNumber}/${tr.startRoadPartNumber}-${tr.endRoadPartNumber}/${tr.track.value}/${tr.startAddressMValue}-${tr.endAddressMValue}") }
+    trAsset.map(_.asInstanceOf[TierekisteriAssetData]).flatMap(getRoadAddressSections)
+  }
+
+  protected def expireAssets(linkIds: Seq[Long]): Unit = {
+    dao.expireAssetByTypeAndLinkId(typeId, linkIds)
+  }
+
+  protected def expireAssets(municipality: Int, administrativeClass: Option[AdministrativeClass] = None): Unit = {
+    println("\nStart assets expiration in municipality %d".format(municipality))
+    val roadLinksWithStateFilter = administrativeClass match {
+      case Some(state) => roadLinkService.getVVHRoadLinksF(municipality).filter(_.administrativeClass == state).map(_.linkId)
+      case _ => roadLinkService.getVVHRoadLinksF(municipality).map(_.linkId)
+    }
+
+    expireAssets(roadLinksWithStateFilter);
+
+    println("\nEnd assets expiration in municipality %d".format(municipality))
+  }
+
+  def importAssets(): Unit = {
+    //Expire all asset in state roads in all the municipalities
+    val municipalities = getAllMunicipalities()
+    municipalities.foreach { municipality =>
+      expireAssets(municipality, Some(State))
+    }
+
+    val roadNumbers = getAllViiteRoadNumbers()
+
+    roadNumbers.foreach {
+      roadNumber =>
+        //Fetch asset from Tierekisteri and then generates the sections foreach returned asset
+        //For example if Tierekisteri returns
+        //One asset with start part = 2, end part = 5, start address = 10, end address 20
+        //We will generate the middle parts and return a AddressSection for each one
+        val trAddressSections = getAllTierekisteriAddressSections(roadNumber)
+
+        //For each section creates a new OTH asset
+        trAddressSections.foreach {
+          case (section, trAssetData) =>
+            withDynTransaction {
+              createAsset(section, trAssetData)
+            }
+        }
+    }
+  }
+
+  def updateAssets(lastExecution: DateTime): Unit = {
+    val roadNumbers = getAllViiteRoadNumbers()
+
+    roadNumbers.foreach {
+      roadNumber =>
+        //Fetch asset changes from Tierekisteri and then generates the sections foreach returned asset change
+        //For example if Tierekisteri returns
+        //One asset with start part = 2, end part = 5, start address = 10, end address 20
+        //We will generate the middle parts and return a AddressSection for each one
+        val trHistoryAddressSections = getAllTierekisteriHistoryAddressSection(roadNumber, lastExecution)
+
+        withDynTransaction {
+          //Expire all the sections that have changes in tierekisteri
+          val expiredSections = trHistoryAddressSections.foldLeft(Seq.empty[Long]) {
+            case (sections, (section, trAssetData)) =>
+              //If the road part number was already process we ignore it
+              if(sections.contains(section.roadPartNumber)) {
+                sections
+              } else {
+                //Get all existing road address in viite and expire all the assets on top of this roads
+                val address = getAllViiteRoadAddress(section.roadNumber, section.roadPartNumber)
+                expireAssets(address.map(_.linkId))
+                sections ++ Seq(section.roadPartNumber)
+              }
+          }
+
+          //Creates the assets on top of the expired sections
+          expiredSections.foreach{
+            roadPart =>
+              //Fetch asset from Tierekisteri and then generates the sections foreach returned asset
+              val trAddressSections = getAllTierekisteriAddressSections(roadNumber, roadPart)
+              trAddressSections.foreach {
+                case (section, trAssetData) =>
+                createAsset(section, trAssetData)
+              }
+          }
+        }
+    }
+  }
+}
+
+trait TierekisteriLinearAssetImporterOperations extends TierekisteriAssetImporterOperations{
+
+  protected def calculateMeasures(roadAddress: ViiteRoadAddress, section: AddressSection): Option[Measures] = {
+    val startAddrMValueCandidate = calculateStartLrmByAddress(roadAddress, section)
+    val endAddrMValueCandidate = calculateStartLrmByAddress(roadAddress, section)
+
+    (startAddrMValueCandidate, endAddrMValueCandidate) match {
+      case (Some(startAddrMValue), Some(endAddrMValue)) if(startAddrMValue <= endAddrMValue) => Some(Measures(startAddrMValue, endAddrMValue))
+      case (Some(startAddrMValue), Some(endAddrMValue)) => Some(Measures(endAddrMValue, startAddrMValue))
+      case _ => None
+    }
+  }
+
+  protected def createLinearAsset(linkId: Long, measures: Measures, trAssetData: TierekisteriAssetData)
+
+  protected override def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData): Unit = {
+    println(s"Fetch Road Addresses from Viite: R:${section.roadNumber} P:${section.roadPartNumber} T:${section.track.value} ADDRM:${section.startAddressMValue}-${section.endAddressMValue.map(_.toString).getOrElse("")}")
+
+    //Returns all the match Viite road address for the given section
+    val addresses = getAllViiteRoadAddress(section)
+
+    addresses
+      .foreach { ra  =>
+        val linkId = ra.linkId
+        calculateMeasures(ra, section).map {
+          measures =>
+            createLinearAsset(linkId, measures, trAssetData)
+        }
+      }
+  }
+}
+
+trait TierekisteriPointAssetImporterOperations extends TierekisteriAssetImporterOperations{
+  //TODO implement point asset
+  protected override def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData): Unit = {
+
+  }
+
+}
+
+class LitRoadImporterOperations extends TierekisteriLinearAssetImporterOperations {
+
+  override def typeId: Int = 100
+  override def assetName = "lighting"
+  override type TierekisteriClientType = TierekisteriLightingAssetClient
+  override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  override val tierekisteriClient = new TierekisteriLightingAssetClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+    getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+    HttpClientBuilder.create().build())
+
+  override protected def createLinearAsset(linkId: Long, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
     if (measures.startMeasure != measures.endMeasure) {
       val assetId = linearAssetService.dao.createLinearAsset(typeId, linkId, false, SideCode.BothDirections.value,
         measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(LinkGeomSource.NormalLinkInterface.value))
 
-      linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, assetValue)
-      println(s"Created OTH $assetName assets for $linkId from TR data with assetId $assetId")
-    }
-  }
-
-  def getValue(tierekisteriAssetDataType: TierekisteriAssetDataType) : Int
-
-  def getRoadAddressSections(tierekisteriAssetData: TierekisteriAssetDataType): Seq[AddressSection] = {
-    Seq(AddressSection(tierekisteriAssetData.roadNumber, tierekisteriAssetData.startRoadPartNumber, tierekisteriAssetData.track, getValue(tierekisteriAssetData), tierekisteriAssetData.startAddressMValue,
-      if (tierekisteriAssetData.endRoadPartNumber == tierekisteriAssetData.startRoadPartNumber)
-        Some(tierekisteriAssetData.endAddressMValue)
-      else
-        None)) ++ {
-      if (tierekisteriAssetData.startRoadPartNumber != tierekisteriAssetData.endRoadPartNumber) {
-        val roadPartNumberSortedList = List(tierekisteriAssetData.startRoadPartNumber, tierekisteriAssetData.endRoadPartNumber).sorted
-        (roadPartNumberSortedList.head until roadPartNumberSortedList.last).tail.map(part => AddressSection(tierekisteriAssetData.roadNumber, part, tierekisteriAssetData.track, getValue(tierekisteriAssetData), 0L, None)) ++
-          Seq(AddressSection(tierekisteriAssetData.roadNumber, tierekisteriAssetData.endRoadPartNumber, tierekisteriAssetData.track, getValue(tierekisteriAssetData), 0L, Some(tierekisteriAssetData.endAddressMValue)))
-      } else
-        Seq[AddressSection]()
-    }
-  }
-
-  def importAsset(typeId: Int): Unit = {
-    println("\nExpiring " + assetName + " From OTH Database Only with administrativeClass == State")
-    //Get All Municipalities
-    val municipalities: Seq[Int] =
-    OracleDatabase.withDynSession {
-      Queries.getMunicipalities
-    }
-
-    municipalities.foreach { municipality =>
-      println("\nStart processing municipality %d".format(municipality))
-      val roadLinksWithStateFilter = roadLinkService.getVVHRoadLinksF(municipality).filter(_.administrativeClass == State).map(_.linkId)
-
-      OracleDatabase.withDynTransaction {
-        dao.fetchLinearAssetsByLinkIds(typeId, roadLinksWithStateFilter, LinearAssetTypes.numericValuePropertyId).foreach { persistedLinearAsset =>
-          dao.expireAssetsById(persistedLinearAsset.id)
-          println("Asset with Id: " + persistedLinearAsset.id + " Expired.")
-        }
-      }
-      println("\nEnd processing municipality %d".format(municipality))
-    }
-    println("\n" + assetName + " data Expired")
-
-    println("\nFetch Road Numbers From Viite")
-    val roadNumbers = OracleDatabase.withDynSession {
-      roadAddressDao.getRoadNumbers()
-    }
-    println("\nEnd of Fetch ")
-
-    println("roadNumbers: ")
-    println(roadNumbers.mkString("\n"))
-
-    roadNumbers.foreach {
-      roadNumber =>
-        println("\nFetch " + assetName + " by Road Number " + roadNumber)
-        val trAsset = tierekisteriClient.fetchActiveAssetData(roadNumber)
-
-        trAsset.foreach { tr => println(s"TR: address ${tr.roadNumber}/${tr.startRoadPartNumber}-${tr.endRoadPartNumber}/${tr.track.value}/${tr.startAddressMValue}-${tr.endAddressMValue}") }
-
-        trAsset.map(_.asInstanceOf[TierekisteriAssetDataType]).flatMap(getRoadAddressSections).foreach { section =>
-          OracleDatabase.withDynTransaction {
-            println(s"Fetch road addresses to link ids using Viite: R:${section.roadNumber} P:${section.roadPartNumber} T:${section.track.value} ADDRM:${section.startAddressMValue}-${section.endAddressMValue.map(_.toString).getOrElse("")}")
-
-            val road = section.roadNumber
-            val roadPart = section.roadPartNumber
-            val startAddr = section.startAddressMValue
-            val endAddr = section.endAddressMValue
-            val track = section.track
-            val assetValue = section.assetValue
-
-            val addresses = roadAddressDao.getRoadAddress(roadAddressDao.withRoadAddressSinglePart(road, roadPart, track.value, startAddr, endAddr))
-            val roadAddressLinks = addresses.map(ra => ra.linkId).toSet
-            val vvhRoadLinks = roadLinkService.fetchVVHRoadlinks(roadAddressLinks).filter(_.administrativeClass == State)
-
-            addresses
-              .filter(ra => vvhRoadLinks.exists(_.linkId == ra.linkId))
-              .foreach { ra =>
-
-                val newStartMValue =
-                  if (ra.startAddrMValue >= startAddr) {
-                    ra.sideCode match {
-                      case TowardsDigitizing => ra.startMValue
-                      case AgainstDigitizing => ra.endMValue
-                      case _ => return
-                    }
-
-                  } else {
-                    ra.addressMValueToLRM(startAddr) match {
-                      case Some(startValue) => startValue
-                      case None => return
-                    }
-                  }
-
-                val newEndMValue =
-                  if (ra.endAddrMValue <= endAddr.getOrElse(ra.endAddrMValue)) {
-                    ra.sideCode match {
-                      case TowardsDigitizing => ra.endMValue
-                      case AgainstDigitizing => ra.startMValue
-                      case _ => return
-                    }
-                  } else {
-                    ra.addressMValueToLRM(endAddr.get) match {
-                      case Some(endValue) => endValue
-                      case None => return
-                    }
-                  }
-                createLinearAsset(ra.linkId, typeId, if(newStartMValue < newEndMValue) Measures(newStartMValue, newEndMValue) else Measures(newEndMValue, newStartMValue), assetValue)
-              }
-          }
-        }
-    }
-    println("\nEnd of " + assetName + " fetch")
-    println("End of creation OTH " + assetName + " assets form TR data")
-  }
-
-
-  def importValues(typeId: Int, roadNumber: Long, roadPart: Long): Unit = {
-    val trAsset = tierekisteriClient.fetchActiveAssetData(roadNumber, roadPart)
-
-    trAsset.foreach { tr => println(s"TR: address ${tr.roadNumber}/${tr.startRoadPartNumber}-${tr.endRoadPartNumber}/${tr.track.value}/${tr.startAddressMValue}-${tr.endAddressMValue}") }
-
-    trAsset.map(_.asInstanceOf[TierekisteriAssetDataType]).flatMap(getRoadAddressSections).foreach { section =>
-      println(s"Fetch road addresses to link ids using Viite: R:${section.roadNumber} P:${section.roadPartNumber} T:${section.track.value} ADDRM:${section.startAddressMValue}-${section.endAddressMValue.map(_.toString).getOrElse("")}")
-
-      val road = section.roadNumber
-      val roadPart = section.roadPartNumber
-      val startAddr = section.startAddressMValue
-      val endAddr = section.endAddressMValue
-      val track = section.track
-      val assetValue = section.assetValue
-
-      val addresses = roadAddressDao.getRoadAddress(roadAddressDao.withRoadAddressSinglePart(road, roadPart, track.value, startAddr, endAddr))
-      val roadAddressLinks = addresses.map(ra => ra.linkId).toSet
-      val vvhRoadLinks = roadLinkService.fetchVVHRoadlinks(roadAddressLinks).filter(_.administrativeClass == State)
-
-      addresses
-        .filter(ra => vvhRoadLinks.exists(_.linkId == ra.linkId))
-        .foreach { ra =>
-
-          val newStartMValue =
-            if (ra.startAddrMValue >= startAddr) {
-              ra.sideCode match {
-                case TowardsDigitizing => ra.startMValue
-                case AgainstDigitizing => ra.endMValue
-                case _ => return
-              }
-
-            } else {
-              ra.addressMValueToLRM(startAddr) match {
-                case Some(startValue) => startValue
-                case None => return
-              }
-            }
-
-          val newEndMValue =
-            if (ra.endAddrMValue <= endAddr.getOrElse(ra.endAddrMValue)) {
-              ra.sideCode match {
-                case TowardsDigitizing => ra.endMValue
-                case AgainstDigitizing => ra.startMValue
-                case _ => return
-              }
-            } else {
-              ra.addressMValueToLRM(endAddr.get) match {
-                case Some(endValue) => endValue
-                case None => return
-              }
-            }
-          createLinearAsset(ra.linkId, typeId, if(newStartMValue < newEndMValue) Measures(newStartMValue, newEndMValue) else Measures(newEndMValue, newStartMValue), assetValue)
-        }
-    }
-  }
-
-  def updateAsset(typeId: Int, lastUpdate: DateTime) : Unit = {
-    val roadNumbers = OracleDatabase.withDynSession {
-      roadAddressDao.getRoadNumbers()
-    }
-
-    roadNumbers.foreach {
-      roadNumber =>
-        println("\nFetch " + assetName + " by Road Number " + roadNumber)
-        val trAsset = tierekisteriClient.fetchHistoryAssetData(roadNumber, Some(lastUpdate))
-
-        trAsset.foreach { tr => println(s"TR: address ${tr.roadNumber}/${tr.startRoadPartNumber}-${tr.endRoadPartNumber}/${tr.track.value}/${tr.startAddressMValue}-${tr.endAddressMValue}") }
-        OracleDatabase.withDynTransaction {
-          val sections = trAsset.map(_.asInstanceOf[TierekisteriAssetDataType]).flatMap(getRoadAddressSections).foldLeft(Seq.empty[Long]) { (sectionNumbers, section) =>
-            if (sectionNumbers.contains(section.roadPartNumber))
-              sectionNumbers
-
-            else {
-              println(s"Fetch road addresses to link ids using Viite - to expire: R:${section.roadNumber} P:${section.roadPartNumber} T:${section.track.value} ADDRM:${section.startAddressMValue}-${section.endAddressMValue.map(_.toString).getOrElse("")}")
-              val road = section.roadNumber
-              val roadPart = section.roadPartNumber
-
-              val addresses = roadAddressDao.getRoadAddress(roadAddressDao.withRoadNumber(road, roadPart))
-              val roadAddressLinks = addresses.map(ra => ra.linkId).toSet
-              val vvhRoadLinks = roadLinkService.fetchVVHRoadlinks(roadAddressLinks).filter(_.administrativeClass == State)
-
-              addresses
-                .filter(ra => vvhRoadLinks.exists(_.linkId == ra.linkId))
-                .foreach { ra =>
-                  val ids = linearAssetService.dao.getIds(typeId, ra.linkId)
-                  if (ids.nonEmpty) {
-                    println(s"Expire asset of link id " + ra.linkId)
-                    linearAssetService.dao.expireAssetsBySection(typeId, ra.linkId)
-                  }
-                }
-              sectionNumbers ++ Seq(section.roadPartNumber)
-            }
-          }
-          sections.foreach(section => importValues(typeId, roadNumber, section))
-        }
+      linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, 1)
+      println(s"Created OTH " + assetName + " assets for $linkId from TR data with assetId $assetId")
     }
   }
 }
 
-class LitRoadImporterOperations extends TierekisteriImporterOperations {
+class RoadWidthImporterOperations extends TierekisteriLinearAssetImporterOperations {
 
-  override def tierekisteriClient = new TierekisteriLightingAssetClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
-    getProperty("digiroad2.tierekisteri.enabled").toBoolean,
-    HttpClientBuilder.create().build())
-
-  override def assetName = "lighting"
-  override type TierekisteriClientType = TierekisteriLightingAssetClient
-  override type TierekisteriAssetDataType = TierekisteriLightingData
-
-  override def getValue(tierekisteriLightingData: TierekisteriAssetDataType): Int = {
-    1
-  }
-
-}
-
-class RoadWidthImporterOperations extends TierekisteriImporterOperations {
-
-  override def tierekisteriClient = new TierekisteriRoadWidthAssetClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
-    getProperty("digiroad2.tierekisteri.enabled").toBoolean,
-    HttpClientBuilder.create().build())
-
+  override def typeId: Int = 100
   override def assetName = "roadWidth"
-
   override type TierekisteriClientType = TierekisteriRoadWidthAssetClient
-  override type TierekisteriAssetDataType = TierekisteriRoadWidthData
+  override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
-  override def getValue(tierekisteriAssetData: TierekisteriAssetDataType): Int = {
-    tierekisteriAssetData.assetValue
+  override val tierekisteriClient = new TierekisteriRoadWidthAssetClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+    getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+    HttpClientBuilder.create().build())
+
+  override protected def createLinearAsset(linkId: Long, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
+    if (measures.startMeasure != measures.endMeasure) {
+      val assetId = linearAssetService.dao.createLinearAsset(typeId, linkId, false, SideCode.BothDirections.value,
+        measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(LinkGeomSource.NormalLinkInterface.value))
+
+      linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, trAssetData.assetValue)
+      println(s"Created OTH " + assetName + " assets for $linkId from TR data with assetId $assetId")
+    }
   }
 
 }
