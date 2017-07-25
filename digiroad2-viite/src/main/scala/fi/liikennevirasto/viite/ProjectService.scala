@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, RoadLinkService}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, RoadLinkService, VVHRoadlink}
 import fi.liikennevirasto.viite.dao.ProjectState._
 import fi.liikennevirasto.viite.dao.{ProjectDAO, RoadAddressDAO, _}
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, ProjectAddressLinkLike, RoadAddressLink, RoadAddressLinkLike}
@@ -27,7 +27,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
 
   val logger = LoggerFactory.getLogger(getClass)
-
+  case class PreFillInfo(RoadNumber:BigInt, RoadPart:BigInt)
   val allowedSideCodes = List(SideCode.TowardsDigitizing, SideCode.AgainstDigitizing)
 
   /**
@@ -81,6 +81,22 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     if (roadAddressProject.id==newRoadAddressProject) return None
     withDynTransaction {
       return ProjectDAO.getRoadAddressProjectById(roadAddressProject.id)
+    }
+  }
+
+  def fetchPrefillfromVVH(linkId: Long): Either[String,PreFillInfo] = {
+    val vvhRoadLinks = roadLinkService.fetchVVHRoadlinks(Set(linkId))
+    if (vvhRoadLinks.isEmpty) {
+      Left("Link could not be found in VVH")
+    }
+    else {
+      val vvhlink = vvhRoadLinks.head
+      (vvhlink.attributes.get("ROADNUMBER"), vvhlink.attributes.get("ROADPARTNUMBER")) match {
+        case (Some(roadnumber:BigInt), Some(roadpartnumber:BigInt)) => {
+          return Right(PreFillInfo(roadnumber,roadpartnumber))
+        }
+        case _ => return Left("Link does not contain valid prefill info")
+      }
     }
   }
 
