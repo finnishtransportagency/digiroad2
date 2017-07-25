@@ -8,12 +8,12 @@ import slick.jdbc.{StaticQuery => Q}
 
 
 class OracleAssetDao {
-  def getLastExecutionDate(typeId: Int, createddBy: String): DateTime = {
+  def getLastExecutionDate(typeId: Int, createdBy: String): DateTime = {
     sql"""
       select MAX(a.created_date)
       from asset a
-      where a.created_by = $createddBy
-        and a.type_type_id = $typeId
+      where a.created_by = $createdBy
+        and a.asset_type_id = $typeId
     """.as[DateTime].first
   }
 }

@@ -575,7 +575,7 @@ trait TierekisteriAssetDataClient extends TierekisteriClient {
 
   def queryString(changeDate: Option[DateTime]) : String = {
     changeDate match {
-      case Some(value) => "?muutospvm="+changeDate.get.toString("YYYY-MM-DD") + "%20" + changeDate.get.toString("hh:mm:ss")
+      case Some(value) => "?muutospvm="+changeDate.get.toString("yyyy-MM-dd") + "%20" + changeDate.get.toString("hh:mm:ss")
       case _ => ""
     }
   }

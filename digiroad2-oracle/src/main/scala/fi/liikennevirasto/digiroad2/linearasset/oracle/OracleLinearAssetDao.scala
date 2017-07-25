@@ -1182,5 +1182,21 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   def expireAssetsById (id: Long): Unit = {
     sqlu"update asset set valid_to = sysdate - 1/86400 where id = $id".execute
   }
+
+  def expireAssetsBySection(assetType: Int, linkId: Long): Unit = {
+    sqlu"""update asset set valid_to = sysdate
+           where ( asset.id in ( select a.id from asset a
+              join asset_link al on (a.id = al.asset_id)
+              join lrm_position lp on (al.position_id = lp.id)
+              where (a.asset_type_id = $assetType and  lp.link_id = $linkId)))""".execute
+  }
+
+  def getIds (assetType: Int, linkId: Long): Seq[Long] = {
+    val ids = sql""" select a.id from asset a
+              join asset_link al on (a.id = al.asset_id)
+              join lrm_position lp on (al.position_id = lp.id)
+              where (a.asset_type_id = $assetType and  lp.link_id = $linkId)""".as[(Long)].list
+    ids
+  }
 }
 

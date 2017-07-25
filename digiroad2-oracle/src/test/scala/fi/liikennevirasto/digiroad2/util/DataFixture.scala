@@ -4,6 +4,7 @@ import java.util.Properties
 
 import com.googlecode.flyway.core.Flyway
 import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.asset.oracle.OracleAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.masstransitstop.MassTransitStopOperations
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{MassTransitStopDao, Queries}
@@ -101,6 +102,10 @@ object DataFixture {
     new TierekisteriRoadWidthAssetClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
       getProperty("digiroad2.tierekisteri.enabled").toBoolean,
       HttpClientBuilder.create().build())
+  }
+
+  lazy val assetDao : OracleAssetDao = {
+    new OracleAssetDao()
   }
 
   def getProperty(name: String) = {
@@ -913,6 +918,32 @@ object DataFixture {
     println("\n")
   }
 
+  def updateLitRoadDataFromTR(): Unit ={
+    println("\nStart lighting update at: ")
+    println(DateTime.now())
+
+    tierekisteriDataImporter.updateLitRoadAsset()
+
+    println("lLighting update complete at time: ")
+    println(DateTime.now())
+    println("\n")
+
+  }
+
+  def updateRoadWidthDataFromTR(): Unit = {
+    println("\nStart roadWidth update at: ")
+    println(DateTime.now())
+
+    tierekisteriDataImporter.updateRoadWidthAsset()
+
+    println("RoadWidth update complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
+
+
+
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
@@ -1000,6 +1031,10 @@ object DataFixture {
         importAllLitRoadDataFromTR()
       case Some("import_all_roadWidth_from_TR_to_OTH") =>
         importAllRoadWidthDataFromTR()
+      case Some("update_litRoad_from_TR_to_OTH") =>
+        updateLitRoadDataFromTR()
+      case Some("update_roadWidth_from_TR_to_OTH") =>
+        updateRoadWidthDataFromTR()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
@@ -1007,7 +1042,8 @@ object DataFixture {
         " generate_floating_obstacles | import_VVH_RoadLinks_by_municipalities | " +
         " check_unknown_speedlimits | set_transitStops_floating_reason | verify_roadLink_administrative_class_changed | set_TR_bus_stops_without_OTH_LiviId |" +
         " check_TR_bus_stops_without_OTH_LiviId | check_bus_stop_matching_between_OTH_TR | listing_bus_stops_with_side_code_conflict_with_roadLink_direction |" +
-        " fill_lane_amounts_in_missing_road_links | import_all_trafficVolume_from_TR_to_OTH | import_all_litRoad_from_TR_to_OTH | import_all_roadWidth_from_TR_to_OTH")
+        " fill_lane_amounts_in_missing_road_links | import_all_trafficVolume_from_TR_to_OTH | import_all_litRoad_from_TR_to_OTH | import_all_roadWidth_from_TR_to_OTH |" +
+        " update_litRoad_from_TR_to_OTH")
     }
   }
 }

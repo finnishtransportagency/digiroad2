@@ -5,14 +5,16 @@ import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.asset.oracle.OracleAssetDao
 import fi.liikennevirasto.digiroad2.roadaddress.oracle.RoadAddressDAO
+import org.joda.time.DateTime
 
 
 class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: OracleLinearAssetDao,
                                roadAddressDao: RoadAddressDAO, linearAssetService: LinearAssetService) {
 
   val trafficVolumeId = 170
-  val lightingAssetId = 100
+  val litRoadAssetId = 100
   val roadWidthAssetId = 120
   val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
 
@@ -21,6 +23,16 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
   }
   lazy val roadWidthImporterOperations: RoadWidthImporterOperations = {
     new RoadWidthImporterOperations()
+  }
+
+  lazy val assetDao : OracleAssetDao = {
+    new OracleAssetDao()
+  }
+
+  def obtainLastExecutionDate(assetName: String, assetId: Int): DateTime = {
+    OracleDatabase.withDynSession{
+      assetDao.getLastExecutionDate(assetId, s"batch_process_$assetName")
+    }
   }
 
   def importTrafficVolumeAsset(tierekisteriTrafficVolumeAsset: TierekisteriTrafficVolumeAssetClient) = {
@@ -79,12 +91,21 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
 
 
   def importLitRoadAsset(): Unit = {
-    litRoadImporterOperations.importAsset(lightingAssetId)
-
-    }
+    litRoadImporterOperations.importAsset(litRoadAssetId)
+  }
 
 
   def importRoadWidthAsset(): Unit = {
     roadWidthImporterOperations.importAsset(roadWidthAssetId)
+  }
+
+  def updateLitRoadAsset(): Unit = {
+    val lastUpdate = obtainLastExecutionDate(litRoadImporterOperations.assetName, litRoadAssetId)
+    litRoadImporterOperations.updateAsset(litRoadAssetId, lastUpdate)
+  }
+
+  def updateRoadWidthAsset(): Unit = {
+    val lastUpdate = obtainLastExecutionDate(roadWidthImporterOperations.assetName, roadWidthAssetId)
+    roadWidthImporterOperations.updateAsset(roadWidthAssetId, lastUpdate)
   }
 }
