@@ -264,6 +264,10 @@ Returns empty result as Json message, not as page not found
     assetPropertyService.getEnumeratedPropertyValues(params("assetTypeId").toLong)
   }
 
+  get("/getAssetTypeMetadata/:assetTypeId") {
+    assetPropertyService.getAssetTypeMetadata(params("assetTypeId").toLong)
+  }
+
   private def massTransitStopPositionParameters(parsedBody: JValue): (Option[Double], Option[Double], Option[Long], Option[Int]) = {
     val lon = (parsedBody \ "lon").extractOpt[Double]
     val lat = (parsedBody \ "lat").extractOpt[Double]
