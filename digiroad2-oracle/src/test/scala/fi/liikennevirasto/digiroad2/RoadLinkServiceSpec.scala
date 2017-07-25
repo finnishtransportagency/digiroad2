@@ -102,7 +102,10 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Override administrative class") {
     OracleDatabase.withDynTransaction {
       val mockVVHClient = MockitoSugar.mock[VVHClient]
-      when(mockVVHClient.fetchByLinkId(1l))
+      val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+
+      when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+      when(mockVVHRoadLinkClient.fetchByLinkId(1l))
         .thenReturn(Some(VVHRoadlink(1l, 91, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
       val service = new TestService(mockVVHClient)
       val roadLink = service.updateLinkProperties(1, 5, PedestrianZone, TrafficDirection.UnknownDirection, Private, Option("testuser"), { _ => })
@@ -749,7 +752,7 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       when(mockVVHRoadLinkClient.fetchByMunicipalityF(91)).thenReturn(Promise.successful(Seq(vvhRoadLink1, vvhRoadLink2, vvhRoadLink3, vvhRoadLink4, vvhRoadLink5, vvhRoadLink6)).future)
       when(mockVVHChangeInfoClient.fetchByMunicipalityF(91)).thenReturn(Promise.successful(Nil).future)
       val service = new TestService(mockVVHClient, mockEventBus)
-      when(mockVVHClient.fetchByLinkId(5)).thenReturn(Some(vvhRoadLink5))
+      when(mockVVHRoadLinkClient.fetchByLinkId(5)).thenReturn(Some(vvhRoadLink5))
 
       val roadLinks = service.getRoadLinksFromVVH(91)
 
