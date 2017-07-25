@@ -159,7 +159,12 @@
         '<header>' +
         titleWithProjectName(project.name) +
         '</header>' +
-        '<footer></footer>');
+        '<footer>'+ showProjectChangeButton() +'</footer>');
+    };
+
+    var showProjectChangeButton = function() {
+      return '<div class="project-form form-controls">' +
+        '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button></div>';
     };
 
     var addSmallLabel = function(label){
