@@ -4,7 +4,7 @@ import java.util.Properties
 import javax.sql.DataSource
 
 import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.pointasset.oracle.{Obstacle, OracleObstacleDao}
@@ -14,6 +14,7 @@ import Database.dynamicSession
 import _root_.oracle.sql.STRUCT
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries._
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
@@ -132,7 +133,7 @@ class AssetDataImporter {
     val roadsByLinkId = roads.foldLeft(Map.empty[Long, (Long, String)]) { (m, road) => m + (road._1 -> road) }
 
     val vvhClient = new VVHClient(vvhHost)
-    val vvhLinks = vvhClient.fetchByLinkIds(roadsByLinkId.keySet)
+    val vvhLinks = vvhClient.roadLinkData.fetchByLinkIds(roadsByLinkId.keySet)
     val linksByLinkId = vvhLinks.foldLeft(Map.empty[Long, VVHRoadlink]) { (m, link) => m + (link.linkId -> link) }
 
     val roadsWithLinks = roads.map { road => (road, linksByLinkId.get(road._1)) }
@@ -214,7 +215,7 @@ class AssetDataImporter {
 
     println(s"*** Fetched ${prohibitions.length} prohibitions from conversion database in ${humanReadableDurationSince(startTime)}")
 
-    val roadLinks = vvhClient.fetchByLinkIds(prohibitions.map(_._2).toSet)
+    val roadLinks = vvhClient.roadLinkData.fetchByLinkIds(prohibitions.map(_._2).toSet)
 
     val conversionResults = convertToProhibitions(prohibitions, roadLinks, exceptions)
     println(s"*** Importing ${prohibitions.length} prohibitions")
@@ -348,12 +349,13 @@ class AssetDataImporter {
       val roadLinkLength = GeometryUtils.geometryLength(roadLinks.find(_.linkId == linkId).get.geometry)
       val expandedSegments = expandSegments(segments, validExceptions.filter(_._2 == linkId).map(_._4))
       val expandedExceptions = expandExceptions(validExceptions.filter(_._2 == linkId), segments.map(_._7))
+      val roadLinkSource = roadLinks.find(_.linkId == linkId).get.linkSource
 
       expandedSegments.groupBy(_._7).flatMap { case (sideCode, segmentsPerSide) =>
         val prohibitionResults = parseProhibitionValues(segmentsPerSide, expandedExceptions, linkId, sideCode)
         val linearAssets = prohibitionResults.filter(_.isRight).map(_.right.get) match {
           case Nil => Nil
-          case prohibitionValues => Seq(Right(PersistedLinearAsset(0l, linkId, sideCode, Some(Prohibitions(prohibitionValues)), 0.0, roadLinkLength, None, None, None, None, false, 190, 0, None)))
+          case prohibitionValues => Seq(Right(PersistedLinearAsset(0l, linkId, sideCode, Some(Prohibitions(prohibitionValues)), 0.0, roadLinkLength, None, None, None, None, false, 190, 0, None, roadLinkSource)))
         }
         val parseErrors = prohibitionResults.filter(_.isLeft).map(_.left.get).map(Left(_))
         linearAssets ++ parseErrors
@@ -376,7 +378,7 @@ class AssetDataImporter {
                pe.type,
                pos.start_measure, pos.end_measure,
                a.created_by, a.created_date, a.modified_by, a.modified_date,
-               case when a.valid_to <= sysdate then 1 else 0 end as expired, pvp.start_minute, pvp.end_minute
+               case when a.valid_to <= sysdate then 1 else 0 end as expired, pvp.start_minute, pvp.end_minute, pos.link_source
           from asset a
           join asset_link al on a.id = al.asset_id
           join lrm_position pos on al.position_id = pos.id
@@ -387,14 +389,14 @@ class AssetDataImporter {
           where a.asset_type_id = $prohibitionAssetTypeId
           and (a.valid_to >= sysdate or a.valid_to is null)
           #$floatingFilter"""
-        .as[(Long, Long, Int, Long, Int, Option[Int], Option[Int], Option[Int], Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Int)].list
+        .as[(Long, Long, Int, Long, Int, Option[Int], Option[Int], Option[Int], Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Int, Int)].list
     }
 
     val groupedByAssetId = assets.groupBy(_._1)
     val groupedByProhibitionId = groupedByAssetId.mapValues(_.groupBy(_._4))
 
     groupedByProhibitionId.map { case (assetId, rowsByProhibitionId) =>
-      val (_, linkId, sideCode, _, _, _, _, _, _, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, _, _) = groupedByAssetId(assetId).head
+      val (_, linkId, sideCode, _, _, _, _, _, _, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, _, _, linkSource) = groupedByAssetId(assetId).head
       val prohibitionValues = rowsByProhibitionId.keys.toSeq.sorted.map { prohibitionId =>
         val rows = rowsByProhibitionId(prohibitionId)
         val prohibitionType = rows.head._5
@@ -405,7 +407,7 @@ class AssetDataImporter {
         ProhibitionValue(prohibitionType, validityPeriods, exceptions)
       }
       // TODO: when linear assets get included in change history
-      PersistedLinearAsset(assetId, linkId, sideCode, Some(Prohibitions(prohibitionValues)), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, prohibitionAssetTypeId, 0, None)
+      PersistedLinearAsset(assetId, linkId, sideCode, Some(Prohibitions(prohibitionValues)), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, prohibitionAssetTypeId, 0, None, LinkGeomSource.apply(linkSource))
     }.toSeq
   }
 
@@ -512,7 +514,7 @@ class AssetDataImporter {
 
         println(s"*** Fetching from VVH with municipality: $municipalityCode")
 
-        val flippedLinks = vvhClient.queryByMunicipality(municipalityCode)
+        val flippedLinks = vvhClient.roadLinkData.fetchByMunicipality(municipalityCode)
           .filter(isHereFlipped)
           .filterNot(link => processedLinkIds.contains(link.linkId))
 
@@ -633,11 +635,11 @@ class AssetDataImporter {
   }
 
   private def splitSpeedLimits(chunkStart: Long, chunkEnd: Long) = {
-    val dao = new OracleLinearAssetDao(null)
+    val dao = new OracleLinearAssetDao(null, null)
 
     withDynTransaction {
       val speedLimitLinks = sql"""
-            select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure
+            select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, pos.link_source
             from asset a
             join asset_link al on a.id = al.asset_id
             join lrm_position pos on al.position_id = pos.id
@@ -648,11 +650,11 @@ class AssetDataImporter {
             and floating = 0
             and (select count(*) from asset_link where asset_id = a.id) > 1
             and a.id between $chunkStart and $chunkEnd
-          """.as[(Long, Long, Int, Option[Int], Double, Double)].list
+          """.as[(Long, Long, Int, Option[Int], Double, Double, Int)].list
 
       speedLimitLinks.foreach { speedLimitLink =>
-        val (id, linkId, sideCode, value, startMeasure, endMeasure) = speedLimitLink
-        dao.forceCreateLinearAsset(s"split_speedlimit_$id", 20, linkId, (startMeasure, endMeasure), SideCode(sideCode), value, (id, value) => dao.insertEnumeratedValue(id, "rajoitus", value), None, None, None, None)
+        val (id, linkId, sideCode, value, startMeasure, endMeasure, linkSource) = speedLimitLink
+        dao.forceCreateLinearAsset(s"split_speedlimit_$id", 20, linkId, Measures(startMeasure, endMeasure), SideCode(sideCode), value, (id, value) => dao.insertEnumeratedValue(id, "rajoitus", value), None, None, None, None, LinkGeomSource.apply(linkSource))
       }
       println(s"created ${speedLimitLinks.length} new single link speed limits")
 
@@ -663,11 +665,11 @@ class AssetDataImporter {
   }
 
   private def splitLinearAssets(typeId: Int, chunkStart: Long, chunkEnd: Long) = {
-    val dao = new OracleLinearAssetDao(null)
+    val dao = new OracleLinearAssetDao(null, null)
 
     withDynTransaction {
       val linearAssetLinks = sql"""
-            select a.id, pos.link_id, pos.side_code, pos.start_measure, pos.end_measure, n.value
+            select a.id, pos.link_id, pos.side_code, pos.start_measure, pos.end_measure, n.value, pos.link_source
             from asset a
             join asset_link al on a.id = al.asset_id
             join lrm_position pos on al.position_id = pos.id
@@ -676,10 +678,10 @@ class AssetDataImporter {
             and floating = 0
             and (select count(*) from asset_link where asset_id = a.id) > 1
             and a.id between $chunkStart and $chunkEnd
-          """.as[(Long, Long, Int, Double, Double, Option[Int])].list
+          """.as[(Long, Long, Int, Double, Double, Option[Int], Int)].list
 
-      linearAssetLinks.foreach { case (id, linkId, sideCode, startMeasure, endMeasure, value) =>
-        dao.forceCreateLinearAsset(s"split_linearasset_$id", typeId, linkId, (startMeasure, endMeasure), SideCode(sideCode), value, (id, value) => dao.insertValue(id, "mittarajoitus", value), None, None, None, None)
+      linearAssetLinks.foreach { case (id, linkId, sideCode, startMeasure, endMeasure, value, linkSource) =>
+        dao.forceCreateLinearAsset(s"split_linearasset_$id", typeId, linkId, Measures(startMeasure, endMeasure), SideCode(sideCode), value, (id, value) => dao.insertValue(id, "mittarajoitus", value), None, None, None, None, linkSource = LinkGeomSource.apply(linkSource))
       }
 
       println(s"created ${linearAssetLinks.length} new single link linear assets")
@@ -901,8 +903,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
     def getPropertyId: Long = {
       StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("esterakennelma").first
     }
-
-    val id = OracleObstacleDao.create(incomingObstacle, 0.0, "test_data", 749, 0)
+    val id = OracleObstacleDao.create(incomingObstacle, 0.0, "test_data", 749, 0, NormalLinkInterface)
     sqlu"""update asset set floating = 1 where id = $id""".execute
     id
   }
@@ -946,7 +947,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
     val linkIdGroups = lrmList.keys.toSet.grouped(500) // Mapping LinkId -> Id
 
     val linkLengths = linkIdGroups.flatMap (
-      linkIds => vvhClient.fetchByLinkIds(linkIds).map(roadLink => roadLink.linkId -> GeometryUtils.geometryLength(roadLink.geometry))
+      linkIds => vvhClient.roadLinkData.fetchByLinkIds(linkIds).map(roadLink => roadLink.linkId -> GeometryUtils.geometryLength(roadLink.geometry))
     ).toMap
     print(s"${DateTime.now()} - ")
     println("Read %d road links from vvh".format(linkLengths.size))
@@ -1068,7 +1069,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
         val startTime = DateTime.now()
         println(s"*** Processing municipality: $municipalityCode")
         val listOfStops = getMTStopsWOAddresses(municipalityCode, idAddressFi, idAddressSe)
-        val roadLinks = vvhClient.fetchByLinkIds(listOfStops.map(_._2).toSet)
+        val roadLinks = vvhClient.roadLinkData.fetchByLinkIds(listOfStops.map(_._2).toSet)
         listOfStops.foreach { stops =>
           roadLinks.foreach { rlinks =>
             if (rlinks.linkId == stops._2) {
@@ -1092,7 +1093,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
       municipalitiesone.foreach { municipalityCode =>
         println(s"*** Processing municipality: $municipalityCode")
         val listOfStops = getMTStopsMissingOneAddress(municipalityCode, idAddressFi, idAddressSe)
-        val roadLinks = vvhClient.fetchByLinkIds(listOfStops.map(_._2).toSet)
+        val roadLinks = vvhClient.roadLinkData.fetchByLinkIds(listOfStops.map(_._2).toSet)
         val finstops=getFinnishStopAddressRSe(municipalityCode, idAddressFi, idAddressSe)
         val swedishstops= getSwedishStopAddressRFi(municipalityCode, idAddressFi, idAddressSe)
         listOfStops.foreach { stops =>   //stop_1:asset_id, stop_2:link_id

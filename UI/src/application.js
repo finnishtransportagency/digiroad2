@@ -83,6 +83,7 @@
         assetGroups
     );
 
+    RoadAddressInfoDataInitializer.initialize(isExperimental);
     MassTransitStopForm.initialize(backend);
     SpeedLimitForm.initialize(selectedSpeedLimit);
     WorkListView.initialize(backend);
@@ -211,6 +212,8 @@
      PointAssetForm.initialize(pointAsset.selectedPointAsset, pointAsset.layerName, pointAsset.formLabels);
     });
 
+    var roadAddressInfoPopup = new RoadAddressInfoPopup(map);
+
     var linearAssetLayers = _.reduce(linearAssets, function(acc, asset) {
      acc[asset.layerName] = new LinearAssetLayer({
        map: map,
@@ -222,9 +225,10 @@
        layerName: asset.layerName,
        multiElementEventCategory: asset.multiElementEventCategory,
        singleElementEventCategory: asset.singleElementEventCategory,
-       style: PiecewiseLinearAssetStyle(applicationModel),
+       style: asset.style || new PiecewiseLinearAssetStyle(),
        formElements: AssetFormElementsFactory.construct(asset),
-       assetLabel: asset.label
+       assetLabel: asset.label,
+       roadAddressInfoPopup: roadAddressInfoPopup
      });
      return acc;
     }, {});
@@ -240,15 +244,16 @@
        style: PointAssetStyle(asset.layerName),
        mapOverlay: mapOverlay,
        layerName: asset.layerName,
-       newAsset: asset.newAsset
+       newAsset: asset.newAsset,
+       roadAddressInfoPopup: roadAddressInfoPopup
      });
      return acc;
     }, {});
 
     var layers = _.merge({
       road: roadLayer,
-      linkProperty: new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel),
-       massTransitStop: new MassTransitStopLayer(map, models.roadCollection, mapOverlay, new AssetGrouping(applicationModel), roadLayer),
+      linkProperty: new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel, roadAddressInfoPopup),
+       massTransitStop: new MassTransitStopLayer(map, models.roadCollection, mapOverlay, new AssetGrouping(applicationModel), roadLayer, roadAddressInfoPopup),
        speedLimit: new SpeedLimitLayer({
        map: map,
        application: applicationModel,
@@ -300,6 +305,7 @@
     var massTransitBox = new ActionPanelBoxes.AssetBox(selectedMassTransitStopModel);
     var speedLimitBox = new ActionPanelBoxes.SpeedLimitBox(selectedSpeedLimit);
     var manoeuvreBox = new ManoeuvreBox();
+    var winterSpeedLimits = new ActionPanelBoxes.WinterSpeedLimitBox(_.find(linearAssets, {typeId: assetType.winterSpeedLimit}));
 
     return [
       [roadLinkBox],
@@ -310,8 +316,8 @@
           .concat(getLinearAsset(assetType.massTransitLane))
           .concat(getLinearAsset(assetType.europeanRoads))
           .concat(getLinearAsset(assetType.exitNumbers)),
-      [speedLimitBox]
-          .concat(getLinearAsset(assetType.winterSpeedLimit)),
+      [speedLimitBox].concat(
+      [winterSpeedLimits]),
       [massTransitBox]
           .concat(getPointAsset(assetType.obstacles))
           .concat(getPointAsset(assetType.railwayCrossings))
@@ -339,7 +345,7 @@
       var asset = _.find(linearAssets, {typeId: typeId});
       if (asset) {
         var legendValues = [asset.editControlLabels.disabled, asset.editControlLabels.enabled];
-        return [new LinearAssetBox(asset.selectedLinearAsset, asset.layerName, asset.title, asset.className, legendValues, asset.editControlLabels.showUnit, asset.unit)];
+        return [new LinearAssetBox(asset.selectedLinearAsset, asset.layerName, asset.title, asset.className, legendValues, asset.editControlLabels.showUnit, asset.unit, asset.allowComplementaryLinks)];
       }
       return [];
     }
@@ -347,7 +353,7 @@
     function getPointAsset(typeId) {
       var asset = _.find(pointAssets, {typeId: typeId});
       if (asset) {
-        return [PointAssetBox(asset.selectedPointAsset, asset.title, asset.layerName, asset.legendValues)];
+        return [PointAssetBox(asset.selectedPointAsset, asset.title, asset.layerName, asset.legendValues, asset.allowComplementaryLinks)];
       }
       return [];
     }

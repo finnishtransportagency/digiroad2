@@ -7,6 +7,9 @@ module.exports = function(grunt) {
       development: {
         NODE_ENV: 'DEVELOPMENT'
       },
+      staging: {
+        NODE_ENV: 'STAGING'
+      },
       production: {
         NODE_ENV: 'PRODUCTION'
       }
@@ -31,7 +34,7 @@ module.exports = function(grunt) {
       },
       dist: {
         files: {
-          'dist/js/<%= pkg.name %>.js': ['UI/src/view/AssetLabel.js', 'UI/src/view/LinearAssetLabel.js', 'UI/src/**/*.js', '!**/ol-custom.js'],
+          'dist/js/<%= pkg.name %>.js': ['UI/src/utils/StyleRule.js', 'UI/src/view/AssetStyle.js', 'UI/src/view/WinterSpeedLimitStyle.js', 'UI/src/view/AssetLabel.js', 'UI/src/view/LinearAssetLabel.js', 'UI/src/**/*.js', '!**/ol-custom.js'],
           'dist-viite/js/<%= viitepkg.name %>.js': ['viite-UI/src/**/*.js', '!**/ol-custom.js']
         }
       }
@@ -298,6 +301,8 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-preprocess');
   grunt.loadNpmTasks('grunt-exec');
 
+  var target = grunt.option('target') || 'production';
+
   grunt.registerTask('server', ['env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'less:development', 'less:viitedev', 'watch:oth']);
 
   grunt.registerTask('viite', ['env:development', 'configureProxies:viite', 'preprocess:development', 'connect:viite', 'less:viitedev', 'watch:viite']);
@@ -308,7 +313,7 @@ module.exports = function(grunt) {
 
   grunt.registerTask('default', ['jshint', 'env:production', 'exec:prepare_openlayers', 'exec:oth_build_openlayers', 'exec:viite_build_openlayers', 'configureProxies:oth', 'preprocess:production', 'connect:oth', 'mocha:unit', 'mocha:integration', 'clean', 'less:production', 'less:viiteprod', 'concat', 'uglify', 'cachebreaker']);
 
-  grunt.registerTask('deploy', ['clean', 'env:production', 'exec:prepare_openlayers', 'exec:oth_build_openlayers', 'exec:viite_build_openlayers', 'preprocess:production', 'less:production', 'less:viiteprod', 'concat', 'uglify', 'cachebreaker', 'save_deploy_info']);
+  grunt.registerTask('deploy', ['clean', 'env:'+target, 'exec:prepare_openlayers', 'exec:oth_build_openlayers', 'exec:viite_build_openlayers', 'preprocess:production', 'less:production', 'less:viiteprod', 'concat', 'uglify', 'cachebreaker', 'save_deploy_info']);
 
   grunt.registerTask('integration-test', ['jshint', 'env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'mocha:integration']);
 

@@ -81,9 +81,9 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
         eventbus.on('roadAddressProject:fetched',function (){
           var ol3Feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 1717275);
           testHelpers.selectSingleFeatureByInteraction(openLayersMap, ol3Feature, testHelpers.getSingleClickNameProjectLinkLayer());
-            done();
+          done();
         });
-          testHelpers.clickNextButton();
+        testHelpers.clickNextButton();
       });
 
       it('Check if the project link was selected ', function(){
@@ -99,6 +99,49 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
         expect(featureFromProjectLayerNotReserved).to.not.be.undefined;
         expect(featureFromProjectLayerNotReserved.projectLinkData.linkId).to.be.equal(499896971);
         expect(featureFromProjectLayerNotReserved.projectLinkData.status).to.be.equal(99);
+      });
+
+      it('Check if project link data is filled', function () {
+
+        //Check if when there is no data the inputs are empty
+          var feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 499897070);
+          testHelpers.selectSingleFeatureByInteraction(openLayersMap, feature, testHelpers.getSingleClickNameProjectLinkLayer());
+          expect(feature).to.not.be.undefined;
+          expect(feature.projectLinkData.linkId).to.be.equal(499897070);
+          expect($('#dropdown').val('uusi').is(':disabled')).to.be.false;
+          $('#dropDown').val('uusi').change();
+          var inputsEmpty = ($('#tie').val().length === 0 && $('#osa').val().length === 0 && $('#ajr').val().length === 0);
+          expect(inputsEmpty).to.be.true;
+          //Check if Tallenna is disabled
+          expect($('.update.btn.btn-save').is(':disabled')).to.be.true;
+
+          //Check if the values are filled in the input fields when data is valid
+          feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 1717395);
+          testHelpers.selectSingleFeatureByInteraction(openLayersMap, feature, testHelpers.getSingleClickNameProjectLinkLayer());
+          expect(feature).to.not.be.undefined;
+          expect(feature.projectLinkData.linkId).to.be.equal(1717395);
+          expect($('#dropdown').val('uusi').is(':disabled')).to.be.false;
+          $('#dropDown').val('uusi').change();
+          inputsEmpty = ($('#tie').val().length === 0 && $('#osa').val().length === 0 && $('#ajr').val().length === 0);
+          expect(inputsEmpty).to.be.false;
+          //Check if Tallenna is enabled
+          expect($('.update.btn.btn-save').is(':disabled')).to.be.false;
+      });
+    });
+
+    describe('when clicking Peruuta button', function() {
+      before(function (done) {
+        var ol3Feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 1717275);
+        testHelpers.selectSingleFeatureByInteraction(openLayersMap, ol3Feature, testHelpers.getSingleClickNameProjectLinkLayer());
+        // Click Cancel (Peruuta)
+        $('.cancelLink').click();
+        done();
+      });
+
+      it('Check if it change to the road form', function(){
+        $('.project-form button.next:visible').prop('disabled', false);
+        $('.project-form button.next:visible').attr('disabled', false);
+        assert($('.project-form:visible').length > 0, "Form didn't open.");
       });
     });
 

@@ -79,7 +79,7 @@ object DataFixture {
     new GeometryTransform()
   }
   lazy val oracleLinearAssetDao : OracleLinearAssetDao = {
-    new OracleLinearAssetDao(vvhClient)
+    new OracleLinearAssetDao(vvhClient, roadLinkService)
   }
   lazy val roadAddressDao : RoadAddressDAO = {
     new RoadAddressDAO()
@@ -418,7 +418,7 @@ object DataFixture {
 
     if(assets.length > 0){
 
-      val roadLinks = vvhClient.fetchByLinkIds(assets.map(_._2).toSet)
+      val roadLinks = vvhClient.roadLinkData.fetchByLinkIds(assets.map(_._2).toSet)
 
       assets.foreach {
         _ match {
@@ -448,7 +448,7 @@ object DataFixture {
 
     if(assets.length > 0){
       //Get All RoadLinks from VVH by asset link ids
-      val roadLinks = vvhClient.fetchByLinkIds(assets.map(_._2).toSet)
+      val roadLinks = vvhClient.roadLinkData.fetchByLinkIds(assets.map(_._2).toSet)
 
       assets.foreach{
         _ match {
@@ -585,7 +585,7 @@ object DataFixture {
 
     if (assets.length > 0) {
 
-      val roadLinks = vvhClient.fetchByLinkIds(assets.map(_._2).toSet)
+      val roadLinks = vvhClient.roadLinkData.fetchByLinkIds(assets.map(_._2).toSet)
 
       assets.foreach {
         _ match {
@@ -657,7 +657,7 @@ object DataFixture {
       persistedStop = massTransitStopService.getByMunicipality(municipality, false)
 
       //Get all road links from VVH
-      val roadLinks = vvhClient.fetchByLinkIds(persistedStop.map(_.linkId).toSet)
+      val roadLinks = vvhClient.roadLinkData.fetchByLinkIds(persistedStop.map(_.linkId).toSet)
 
       persistedStop.foreach { stop =>
         // Validate if OTH stop are known in Tierekisteri and if is maintained by ELY
@@ -684,8 +684,11 @@ object DataFixture {
 
           try {
             //Create missed Bus Stop at the Tierekisteri
-            if(!dryRun)
-              massTransitStopService.executeTierekisteriOperation(Operation.Create, adjustedStop, roadLinkByLinkId => roadLinks.find(r => r.linkId == roadLinkByLinkId), None, None)
+            if(!dryRun) {
+              withDynSession {
+                massTransitStopService.executeTierekisteriOperation(Operation.Create, adjustedStop, roadLinkByLinkId => roadLinks.find(r => r.linkId == roadLinkByLinkId), None, None)
+              }
+            }
           } catch {
             case roadAddrError: RoadAddressException => println("Bus stop with national Id: "+adjustedStop.nationalId+" returns the following error: "+roadAddrError.getMessage)
             case tre: TierekisteriClientException => println("Bus stop with national Id: "+adjustedStop.nationalId+" returns the following error: "+tre.getMessage)
@@ -764,7 +767,7 @@ object DataFixture {
 
 
   def fillLaneAmountsMissingInRoadLink(): Unit = {
-    val dao = new OracleLinearAssetDao(null)
+    val dao = new OracleLinearAssetDao(null, null)
     val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
 
     lazy val linearAssetService: LinearAssetService = {

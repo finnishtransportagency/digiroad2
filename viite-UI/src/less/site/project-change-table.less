@@ -1,0 +1,132 @@
+// Styles used in project change table //
+
+.change-table-frame {
+  bottom: 115px;
+  height: 260px;
+  max-width: 1135px;
+  width: auto;
+  position: absolute;
+  background-color: #e3e3e1;
+  left: 315px;
+  right: 472px;
+
+}
+.change-table-header {
+  padding: 10px;
+  border-bottom: 1px solid #171717;
+  border-top-left-radius: 3px;
+  border-top-right-radius: 3px;
+  color: #fff;
+  background-color: #282826;
+  font-size: 150%;
+  font-weight: bold;
+}
+.change-table-sections {
+  color: #5a5a57;
+  font-weight: bold;
+  height: @change-table-sections-height;
+  font-size: 15px;
+  background-color: #cbcbc9;
+}
+.change-table-heading-label {
+  font-size: 13px;
+  height: 30px;
+  margin-top: 10px;
+  margin-left: 10px;
+  display: inline-block;
+  float: left;
+  text-transform: none;
+}
+#change-table-button-close {
+  float: right;
+  width: 100px;
+  margin-right: 17px;
+  margin-top: 6px;
+}
+.change-table {
+  display: block;
+  height: inherit;
+}
+.project-change-table-dimension {
+  width: 4.5em;
+  color: #5a5a57;
+  font-weight: bold;
+  height: 28px;
+  font-size: 12px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.project-change-table-dimension-first {
+  width: 11em;
+  padding-left: 10px;
+  font-weight: bold;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+.project-changes {
+  height: @project-changes-height;
+  overflow-y: auto;
+}
+.project-change-table-data-cell {
+  color: #5a5a57;
+  height: 28px;
+  font-size: 12px;
+  overflow: hidden;
+  width: 4.5em;
+  max-width: 4.5em;
+  text-overflow: ellipsis;
+  word-wrap: break-word;
+}
+.project-changes tr:nth-child(odd) {
+  background-color: #cbcbc9;
+}
+.change-borders-frames {
+  position: absolute;
+  width: 100%;
+  height: 145px;
+}
+#change-table-borders-changetype {
+  position: absolute;
+  height: @table-borders-height;
+  width: 125px;
+  border-right: 1px solid #a4a4a2;
+  border-bottom: 1px solid #a4a4a2;
+  z-index: 1;
+  pointer-events: none;
+}
+#change-table-borders-source {
+  position: absolute;
+  height: @table-borders-height;
+  width: 612px;
+  border-right: 1px solid #a4a4a2;
+  border-bottom: 1px solid #a4a4a2;
+  z-index: 1;
+  pointer-events: none;
+}
+#change-table-borders-target {
+  position: absolute;
+  height: @table-borders-height;
+  width: 1116px;
+  border-bottom: 1px solid #a4a4a2;
+  z-index: 1;
+  pointer-events: none;
+}
+#label-type {
+  width: 9em;
+}
+#label-source {
+  width: 37em;
+}
+#label-target {
+  width: 37em;
+}
+.data-cell-road-type {
+  padding-right: 5px;
+}
+.dimension-road-type {
+  padding-right: 3px;
+}
+.dimension-last {
+  padding-right: 13px;
+}

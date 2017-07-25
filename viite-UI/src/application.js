@@ -8,6 +8,7 @@
     var selectedProjectLinkProperty = new SelectedProjectLink(roadAddressProjectCollection);
     var linkPropertiesModel = new LinkPropertiesModel();
     var instructionsPopup = new InstructionsPopup($('.digiroad2'));
+    var projectChangeInfoModel = new ProjectChangeInfoModel(backend);
 
     var models = {
       roadCollection: roadCollection,
@@ -21,12 +22,11 @@
     window.applicationModel = new ApplicationModel([
       selectedLinkProperty]);
 
-    EditModeDisclaimer.initialize(instructionsPopup);
-
     var assetGroups = groupAssets(
       linkPropertiesModel);
 
     var projectListModel = new ProjectListModel(roadAddressProjectCollection);
+    var projectChangeTable = new ProjectChangeTable(projectChangeInfoModel, models.roadAddressProjectCollection);
 
     NavigationPanel.initialize(
       $('#map-tools'),
@@ -40,16 +40,16 @@
 
     backend.getUserRoles();
     backend.getStartupParametersWithCallback(function (startupParameters) {
-      startApplication(backend, models, tileMaps, startupParameters);
+      startApplication(backend, models, tileMaps, startupParameters, projectChangeTable);
     });
   };
 
-  var startApplication = function(backend, models, withTileMaps, startupParameters) {
+  var startApplication = function(backend, models, withTileMaps, startupParameters, projectChangeTable) {
     setupProjections();
     fetch('components/WMTSCapabilities.xml', {credentials: "include"}).then(function(response) {
       return response.text();
     }).then(function(arcConfig) {
-      var map = setupMap(backend, models, withTileMaps, startupParameters, arcConfig);
+      var map = setupMap(backend, models, withTileMaps, startupParameters, arcConfig, projectChangeTable);
       new URLRouter(map, backend, models);
       eventbus.trigger('application:initialized');
     });
@@ -76,7 +76,7 @@
     return map;
   };
 
-  var setupMap = function(backend, models, withTileMaps, startupParameters, arcConfig) {
+  var setupMap = function(backend, models, withTileMaps, startupParameters, arcConfig, projectChangeTable) {
     var tileMaps = new TileMapCollection(map, arcConfig);
 
     var map = createOpenLayersMap(startupParameters, tileMaps.layers);
@@ -89,7 +89,7 @@
     new LinkPropertyForm(models.selectedLinkProperty);
 
     new RoadAddressProjectForm(models.roadAddressProjectCollection);
-    new RoadAddressProjectEditForm(models.roadAddressProjectCollection, models.selectedProjectLinkProperty);
+    new RoadAddressProjectEditForm(models.roadAddressProjectCollection, models.selectedProjectLinkProperty, projectLinkLayer, projectChangeTable);
 
     var layers = _.merge({
       road: roadLayer,

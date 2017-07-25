@@ -13,6 +13,7 @@ import org.scalatest.{FunSuite, Matchers}
 import slick.jdbc.StaticQuery.interpolation
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 
 class TrafficLightServiceSpec  extends FunSuite with Matchers {
   def toRoadLink(l: VVHRoadlink) = {
@@ -37,7 +38,7 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(service.dataSource)(test)
 
   test("Can fetch by bounding box") {
-    when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(), Nil))
+    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(), Nil))
 
     runWithRollback {
       val result = service.getByBoundingBox(testUser, BoundingRectangle(Point(374101, 6677437), Point(374102, 6677438))).head
@@ -50,7 +51,7 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
   }
 
   test("Can fetch by municipality") {
-    when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(235)).thenReturn((Seq(
+    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(235)).thenReturn((Seq(
       VVHRoadlink(1611387, 235, Seq(Point(0.0, 0.0), Point(200.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink), Nil))
 
     runWithRollback {
@@ -75,7 +76,7 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
   test("Create new") {
     runWithRollback {
       val now = DateTime.now()
-      val id = service.create(IncomingTrafficLight(2, 0.0, 388553075), "jakke", Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 235)
+      val id = service.create(IncomingTrafficLight(2, 0.0, 388553075), "jakke", Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 235, linkSource = NormalLinkInterface)
       val assets = service.getPersistedAssetsByIds(Set(id))
 
       assets.size should be(1)
@@ -94,16 +95,17 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
         vvhTimeStamp = asset.vvhTimeStamp,
         municipalityCode = 235,
         createdBy = Some("jakke"),
-        createdAt = asset.createdAt
+        createdAt = asset.createdAt,
+        linkSource = NormalLinkInterface
       ))
     }
   }
 
   test("Update traffic light") {
     val linkGeometry = Seq(Point(0.0, 0.0), Point(200.0, 0.0))
-    when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(235)).thenReturn((Seq(
+    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(235)).thenReturn((Seq(
       VVHRoadlink(1611387, 235, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink), Nil))
-    when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(91)).thenReturn((Seq(
+    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(91)).thenReturn((Seq(
       VVHRoadlink(123, 91, linkGeometry, Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink), Nil))
 
     runWithRollback {
@@ -119,7 +121,7 @@ class TrafficLightServiceSpec  extends FunSuite with Matchers {
       beforeUpdate.modifiedBy should equal(None)
       beforeUpdate.modifiedAt should equal(None)
 
-      service.update(id = 600070, IncomingTrafficLight(100, 0, 123), linkGeometry, 91, "test")
+      service.update(id = 600070, IncomingTrafficLight(100, 0, 123), linkGeometry, 91, "test", linkSource = NormalLinkInterface)
 
       val afterUpdate = service.getByMunicipality(91).find(_.id == 600070).get
       afterUpdate.id should equal(600070)

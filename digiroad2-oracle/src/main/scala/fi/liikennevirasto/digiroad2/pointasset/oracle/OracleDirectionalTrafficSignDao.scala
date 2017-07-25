@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.{IncomingDirectionalTrafficSign, PersistedPo
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 
@@ -21,14 +22,15 @@ case class DirectionalTrafficSign(id: Long, linkId: Long,
                                   createdAt: Option[DateTime] = None,
                                   modifiedBy: Option[String] = None,
                                   modifiedAt: Option[DateTime] = None,
-                                  geometry: Seq[Point] = Nil) extends PersistedPointAsset
+                                  geometry: Seq[Point] = Nil,
+                                  linkSource: LinkGeomSource) extends PersistedPointAsset
 
 object OracleDirectionalTrafficSignDao {
   def fetchByFilter(queryFilter: String => String): Seq[DirectionalTrafficSign] = {
     val query =
       s"""
         select a.id, lrm.link_id, a.geometry, lrm.start_measure, a.floating, lrm.adjusted_timestamp, a.municipality_code, lrm.side_code,
-        tpv.value_fi, a.created_by, a.created_date, a.modified_by, a.modified_date, a.bearing
+        tpv.value_fi, a.created_by, a.created_date, a.modified_by, a.modified_date, a.bearing, lrm.link_source
         from asset a
         join asset_link al on a.id = al.asset_id
         join lrm_position lrm on al.position_id = lrm.id
@@ -55,8 +57,9 @@ object OracleDirectionalTrafficSignDao {
       val modifiedBy = r.nextStringOption()
       val modifiedDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val bearing = r.nextIntOption()
+      val linkSource = r.nextInt()
 
-      DirectionalTrafficSign(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, validityDirection, text, bearing, createdBy, createdDateTime, modifiedBy, modifiedDateTime)
+      DirectionalTrafficSign(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, validityDirection, text, bearing, createdBy, createdDateTime, modifiedBy, modifiedDateTime, linkSource = LinkGeomSource(linkSource))
     }
   }
 

@@ -7,6 +7,7 @@
         "value": 40,
         "sideCode": 1,
         "startMeasure": 0,
+        "linkSource": 1,
         "points": [
           {
             "x": 0.0,
@@ -24,6 +25,7 @@
         "value": 40,
         "sideCode": 1,
         "startMeasure": 10,
+        "linkSource": 1,
         "points": [
           {
             "x": 0.0,
@@ -41,6 +43,7 @@
         "value": 40,
         "sideCode": 1,
         "startMeasure": 0,
+        "linkSource": 1,
         "points": [
           {
             "x": 0.0,

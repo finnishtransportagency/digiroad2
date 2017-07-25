@@ -67,6 +67,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     case s: SideCode => JInt(s.value)
   }))
 
+  case object LinkGeomSourceSerializer extends CustomSerializer[LinkGeomSource](format => ({
+    case JInt(lg) => LinkGeomSource.apply(lg.toInt)
+  }, {
+    case lg: LinkGeomSource => JInt(lg.value)
+  }))
+
   case object TrafficDirectionSerializer extends CustomSerializer[TrafficDirection](format => ( {
     case JString(direction) => TrafficDirection(direction)
   }, {
@@ -91,7 +97,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     case ac: AdministrativeClass => JString(ac.toString)
   }))
 
-  protected implicit val jsonFormats: Formats = DefaultFormats + DateTimeSerializer + SideCodeSerializer + TrafficDirectionSerializer + LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer
+  protected implicit val jsonFormats: Formats = DefaultFormats + DateTimeSerializer + LinkGeomSourceSerializer + SideCodeSerializer + TrafficDirectionSerializer + LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer
 
   before() {
     contentType = formats("json") + "; charset=utf-8"
@@ -145,7 +151,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         "bearing" -> stop.bearing,
         "validityPeriod" -> stop.validityPeriod,
         "floating" -> stop.floating,
-        "linkSource" -> stop.linkSource)
+        "linkSource" -> stop.linkSource.value)
     }
   }
 
@@ -294,12 +300,12 @@ Returns empty result as Json message, not as page not found
   }
 
   private def createMassTransitStop(lon: Double, lat: Double, linkId: Long, bearing: Int, properties: Seq[SimpleProperty]): Long = {
-    val roadLink = vvhClient.fetchRoadLinkOrComplementaryFromVVH(linkId).getOrElse(throw new NoSuchElementException)
-    massTransitStopService.create(NewMassTransitStop(lon, lat, linkId, bearing, properties, roadLink.linkSource.value), userProvider.getCurrentUser().username, roadLink.geometry, roadLink.municipalityCode, Some(roadLink.administrativeClass))
+    val roadLink = roadLinkService.fetchVVHRoadlinkAndComplementary(linkId).getOrElse(throw new NoSuchElementException)
+    massTransitStopService.create(NewMassTransitStop(lon, lat, linkId, bearing, properties), userProvider.getCurrentUser().username, roadLink.geometry, roadLink.municipalityCode, Some(roadLink.administrativeClass),  roadLink.linkSource)
   }
 
   private def validateUserRights(linkId: Long) = {
-    val authorized: Boolean = vvhClient.fetchRoadLinkOrComplementaryFromVVH(linkId).map(_.municipalityCode).exists(userProvider.getCurrentUser().isAuthorizedToWrite)
+    val authorized: Boolean = roadLinkService.fetchVVHRoadlinkAndComplementary(linkId).map(_.municipalityCode).exists(userProvider.getCurrentUser().isAuthorizedToWrite)
     if (!authorized) halt(Unauthorized("User not authorized"))
   }
 
@@ -436,6 +442,20 @@ Returns empty result as Json message, not as page not found
 
   private def extractLongValue(roadLink: RoadLink, value: String) = {
     roadLink.attributes.get(value) match {
+      case Some(x) => x.asInstanceOf[Long]
+      case _ => None
+    }
+  }
+
+  private def extractIntValue(pieceWiseLinearAsset: PieceWiseLinearAsset, value: String) = {
+    pieceWiseLinearAsset.attributes.get(value) match {
+      case Some(x) => x.asInstanceOf[Int]
+      case _ => None
+    }
+  }
+
+  private def extractLongValue(pieceWiseLinearAsset: PieceWiseLinearAsset, value: String) = {
+    pieceWiseLinearAsset.attributes.get(value) match {
       case Some(x) => x.asInstanceOf[Long]
       case _ => None
     }
@@ -590,9 +610,9 @@ Returns empty result as Json message, not as page not found
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
       if(user.isServiceRoadMaintainer())
-        mapLinearAssets(linearAssetService.getByIntersectedBoundingBox(typeId, user.configuration.authorizedAreas, boundingRectangle, municipalities))
+        mapLinearAssets(linearAssetService.withRoadAddress(linearAssetService.getByIntersectedBoundingBox(typeId, user.configuration.authorizedAreas, boundingRectangle, municipalities)))
       else
-        mapLinearAssets(linearAssetService.getByBoundingBox(typeId, boundingRectangle, municipalities))
+        mapLinearAssets(linearAssetService.withRoadAddress(linearAssetService.getByBoundingBox(typeId, boundingRectangle, municipalities)))
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
     }
@@ -630,7 +650,12 @@ Returns empty result as Json message, not as page not found
           "modifiedBy" -> link.modifiedBy,
           "modifiedAt" -> link.modifiedDateTime,
           "createdBy" -> link.createdBy,
-          "createdAt" -> link.createdDateTime
+          "createdAt" -> link.createdDateTime,
+          "roadPartNumber" -> extractLongValue(link, "VIITE_ROAD_PART_NUMBER"),
+          "roadNumber" -> extractLongValue(link, "VIITE_ROAD_NUMBER"),
+          "track" -> extractIntValue(link, "VIITE_TRACK"),
+          "startAddrMValue" -> extractLongValue(link, "VIITE_START_ADDR"),
+          "endAddrMValue" ->  extractLongValue(link, "VIITE_END_ADDR")
         )
       }
     }
@@ -799,7 +824,8 @@ Returns empty result as Json message, not as page not found
             "modifiedBy" -> link.modifiedBy,
             "modifiedAt" -> link.modifiedDateTime,
             "createdBy" -> link.createdBy,
-            "createdAt" -> link.createdDateTime
+            "createdAt" -> link.createdDateTime,
+            "linkSource" -> link.linkSource.value
           )
         }
       }
@@ -953,7 +979,7 @@ Returns empty result as Json message, not as page not found
 
     manoeuvreIds.foreach { manoeuvreId =>
       val sourceRoadLinkId = manoeuvreService.getSourceRoadLinkIdById(manoeuvreId)
-      validateUserMunicipalityAccess(user)(vvhClient.fetchByLinkId(sourceRoadLinkId).get.municipalityCode)
+      validateUserMunicipalityAccess(user)(vvhClient.roadLinkData.fetchByLinkId(sourceRoadLinkId).get.municipalityCode)
       manoeuvreService.deleteManoeuvre(user.username, manoeuvreId)
     }
   }
@@ -968,7 +994,7 @@ Returns empty result as Json message, not as page not found
 
     manoeuvreUpdates.foreach { case (id, updates) =>
       val sourceRoadLinkId = manoeuvreService.getSourceRoadLinkIdById(id)
-      validateUserMunicipalityAccess(user)(vvhClient.fetchByLinkId(sourceRoadLinkId).get.municipalityCode)
+      validateUserMunicipalityAccess(user)(vvhClient.roadLinkData.fetchByLinkId(sourceRoadLinkId).get.municipalityCode)
       manoeuvreService.updateManoeuvre(user.username, id, updates)
     }
   }
@@ -1056,9 +1082,9 @@ Returns empty result as Json message, not as page not found
       halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     val id = params("id").toLong
     val updatedAsset = (parsedBody \ "asset").extract[service.IncomingAsset]
-    roadLinkService.getRoadLinkFromVVH(updatedAsset.linkId) match {
+    roadLinkService.getRoadLinkAndComplementaryFromVVH(updatedAsset.linkId) match {
       case None => halt(NotFound(s"Roadlink with mml id ${updatedAsset.linkId} does not exist"))
-      case Some(link) => service.update(id, updatedAsset, link.geometry, link.municipalityCode, user.username)
+      case Some(link) => service.update(id, updatedAsset, link.geometry, link.municipalityCode, user.username, link.linkSource)
     }
   }
 
@@ -1067,9 +1093,9 @@ Returns empty result as Json message, not as page not found
     if (user.isServiceRoadMaintainer())
       halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     val asset = (parsedBody \ "asset").extract[service.IncomingAsset]
-    for (link <- vvhClient.fetchByLinkId(asset.linkId)) {
+    for (link <- roadLinkService.fetchVVHRoadlinkAndComplementary(asset.linkId)) {
       validateUserMunicipalityAccess(user)(link.municipalityCode)
-      service.create(asset, user.username, link.geometry, link.municipalityCode, Some(link.administrativeClass))
+      service.create(asset, user.username, link.geometry, link.municipalityCode, Some(link.administrativeClass), link.linkSource)
     }
   }
 

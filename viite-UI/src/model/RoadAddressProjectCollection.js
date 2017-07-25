@@ -7,7 +7,7 @@
     var currentProject;
     var fetchedProjectLinks = [];
     var roadAddressProjectLinks = [];
-    var projectLinksSaved = [];
+    var dirtyProjectLinkIds = [];
     var dirtyProjectLinks = [];
     var self = this;
     var STATUS_NOT_HANDLED = 0;
@@ -21,14 +21,14 @@
       return _.flatten(fetchedProjectLinks);
     };
 
+    this.getProjectLinks = function() {
+      return _.flatten(fetchedProjectLinks);
+    };
+
     this.getAll = function () {
       return _.map(projectLinks(), function(projectLink) {
         return projectLink.getData();
       });
-    };
-
-    this.getSavedLinks = function(){
-      return projectLinksSaved;
     };
 
     this.reset = function(){
@@ -77,14 +77,22 @@
 
     this.getProjectsWithLinksById = function (projectId) {
       return backend.getProjectsWithLinksById(projectId, function (result) {
-        roadAddressProjects = result.projects;
-        currentProject = result.projects;
-        roadAddressProjectLinks = result.projectLinks;
+        roadAddressProjects = result.project;
+        currentProject = result;
         projectinfo = {
-          id: result.projects.id,
-          publishable: false
+          id: result.project.id,
+          publishable: result.publishable
         };
-        eventbus.trigger('roadAddressProject:projectFetched', projectinfo.id);
+        eventbus.trigger('roadAddressProject:projectFetched', projectinfo);
+      });
+    };
+
+    this.revertLinkStatus = function () {
+      var fetchedLinks = this.getAll();
+      dirtyProjectLinkIds.forEach(function (dirtyLink) {
+        _.filter(fetchedLinks, {linkId: dirtyLink.id}).forEach(function (fetchedLink) {
+          fetchedLink.status = dirtyLink.status;
+        });
       });
     };
 
@@ -92,6 +100,7 @@
       roadAddressProjects = [];
       dirtyRoadPartList = [];
       currentRoadPartList = [];
+      dirtyProjectLinkIds = [];
       dirtyProjectLinks = [];
       projectinfo=undefined;
       backend.abortLoadingProject();
@@ -101,9 +110,9 @@
       var projectid = 0;
       if (projectinfo !== undefined) {
         projectid = projectinfo.id;
-      } else if (currentProject!==undefined && currentProject.id!==undefined)
+      } else if (currentProject!==undefined && currentProject.project.id!==undefined)
       {
-        projectid=currentProject.id;
+        projectid=currentProject.project.id;
       }
       var dataJson = {
         id: projectid,
@@ -125,7 +134,7 @@
           };
           eventbus.trigger('roadAddress:projectSaved', result);
           dirtyRoadPartList = [];
-          currentProject = result.project;
+          currentProject = result;
         }
         else {
           eventbus.trigger('roadAddress:projectValidationFailed', result);
@@ -136,16 +145,14 @@
     };
 
 
-    this.saveProjectLinks = function(selectedProjectLink, currentProject) {
+    this.saveProjectLinks = function(toBeExpiredLinks) {
       console.log("Save Project Links called");
       applicationModel.addSpinner();
-      var linkIds = _.map(selectedProjectLink,function (t){
+      var linkIds = _.unique(_.map(toBeExpiredLinks,function (t){
         if(!_.isUndefined(t.linkId)){
           return t.linkId;
         } else return t;
-      });
-
-      projectLinksSaved = projectLinksSaved.concat(linkIds);
+      }));
 
       var projectId = projectinfo.id;
 
@@ -187,7 +194,7 @@
           };
           eventbus.trigger('roadAddress:projectSaved', result);
           dirtyRoadPartList = [];
-          currentProject = result.project;
+          currentProject = result;
         }
         else {
           eventbus.trigger('roadAddress:projectValidationFailed', result);
@@ -195,6 +202,49 @@
       }, function () {
         eventbus.trigger('roadAddress:projectFailed');
       });
+    };
+
+    this.createProjectLinks = function(toBeCreatedLinks) {
+      console.log("Create Project Links called");
+      applicationModel.addSpinner();
+      var linkIds = _.unique(_.map(toBeCreatedLinks,function (t){
+        if(!_.isUndefined(t.linkId)){
+          return t.linkId;
+        } else return t;
+      }));
+      var projectId = projectinfo.id;
+
+      var data = [linkIds,
+        projectId,
+        Number($('#roadAddressProject').find('#tie')[0].value),
+        Number($('#roadAddressProject').find('#osa')[0].value),
+        Number($('#roadAddressProject').find('#ajr')[0].value),
+        Number($('#roadAddressProject').find('#DiscontinuityDropdown')[0].value)
+      ];
+      backend.insertNewRoadLink(data, function(successObject) {
+        if (!successObject.success) {
+          new ModalConfirm(successObject.errormessage);
+          applicationModel.removeSpinner();
+        } else {
+          eventbus.trigger('projectLink:projectLinksCreateSuccess');
+          eventbus.trigger('roadAddress:projectLinksCreateSuccess');
+        }
+      });
+    };
+
+    this.changeNewProjectLinkDirection = function (selectedLinks){
+      applicationModel.addSpinner();
+      var ids = [_.map(selectedLinks, function (project) {
+          return project.id;
+      }) ];
+       backend.directionChangeNewRoadlink(ids, function(successObject) {
+           if (!successObject.success) {
+            eventbus.trigger('roadAddress:changeDirectionFailed', successObject.errorMessage);
+               applicationModel.removeSpinner();
+           } else {
+               eventbus.trigger('changeProjectDirection:clicked');
+           }
+        });
     };
 
     this.publishProject = function() {
@@ -250,14 +300,25 @@
     };
 
     this.setDirty = function(editedRoadLinks) {
-      dirtyProjectLinks = editedRoadLinks;
+      dirtyProjectLinkIds = editedRoadLinks;
       eventbus.trigger('roadAddress:projectLinksEdited');
     };
 
     this.getDirty = function() {
+      return dirtyProjectLinkIds;
+    };
+
+    this.setTmpExpired = function(editRoadLinks){
+      dirtyProjectLinks = editRoadLinks;
+    };
+
+    this.getTmpExpired = function(){
       return dirtyProjectLinks;
     };
 
+    this.isDirty = function() {
+      return dirtyProjectLinks.length > 0;
+    };
 
     function arrayIntersection(a, b, areEqualFunction) {
       return _.filter(a, function(aElem) {

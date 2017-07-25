@@ -11,6 +11,19 @@
             m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
     })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
   </script>
+  <!-- @if NODE_ENV == 'STAGING' -->
+  <!-- Hotjar tracking code -->
+  <script>
+      (function(h,o,t,j,a,r){
+          h.hj=h.hj||function(){(h.hj.q=h.hj.q||[]).push(arguments)};
+          h._hjSettings={hjid:511409,hjsv:5};
+          a=o.getElementsByTagName('head')[0];
+          r=o.createElement('script');r.async=1;
+          r.src=t+h._hjSettings.hjid+j+h._hjSettings.hjsv;
+          a.appendChild(r);
+      })(window,document,'//static.hotjar.com/c/hotjar-','.js?sv=');
+  </script>
+  <!-- @endif -->
   <title>Digiroad</title>
 </head>
 <body class="digiroad2">
@@ -22,7 +35,11 @@
 </header>
 <div class="container">
     <div id="contentMap">
-      <div id="mapdiv"></div>
+      <div id="mapdiv">
+          <div id="popup" class="ol-popup">
+              <div id="popup-content"></div>
+          </div>
+      </div>
       <div class="crosshair crosshair-center"></div>
       <div class="crosshair crosshair-top"></div>
       <div class="crosshair crosshair-bottom"></div>
@@ -57,6 +74,7 @@
 <script type="text/javascript" src="src/utils/environment-utils.js"></script>
 <script type="text/javascript" src="src/utils/zoom-levels.js"></script>
 <script type="text/javascript" src="src/utils/validity-directions.js"></script>
+<script type="text/javascript" src="src/utils/RoadAddressInfoPopup.js"></script>
 <script type="text/javascript" src="src/view/TileMapCollection.js"></script>
 <script type="text/javascript" src="src/view/Layer.js"></script>
 <script type="text/javascript" src="src/view/RoadLayerSelectionStyle.js"></script>
@@ -78,6 +96,8 @@
 <script type="text/javascript" src="src/utils/OpenLayersRule.js"></script>
 <script type="text/javascript" src="src/utils/StyleRule.js"></script>
 <script type="text/javascript" src="src/view/SpeedLimitLayer.js"></script>
+<script type="text/javascript" src="src/view/AssetStyle.js"></script>
+<script type="text/javascript" src="src/view/WinterSpeedLimitStyle.js"></script>
 <script type="text/javascript" src="src/view/SpeedLimitMassUpdateDialog.js"></script>
 <script type="text/javascript" src="src/view/ManoeuvreStyle.js"></script>
 <script type="text/javascript" src="src/view/ManoeuvreLayer.js"></script>
@@ -139,6 +159,10 @@
 <script type="text/javascript" src="src/assetgrouping/asset-grouping.js"></script>
 <script type="text/javascript" src="src/analytics.js"></script>
 <script type="text/javascript" src="src/main.js"></script>
+<!-- @endif -->
+<!-- @if NODE_ENV == 'STAGING' -->
+<script type="text/javascript" src="components/ol3.js"></script>
+<script type="text/javascript" src="js/digiroad2.min.js"></script>
 <!-- @endif -->
 <!-- @if NODE_ENV == 'PRODUCTION' -->
 <script type="text/javascript" src="components/ol3.js"></script>

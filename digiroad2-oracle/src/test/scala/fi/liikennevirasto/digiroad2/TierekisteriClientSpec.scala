@@ -445,4 +445,31 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
     assets.size should be (1)
   }
 
+  test("lighting assets are split properly") {
+    val trl = TierekisteriLighting(4L, 203L, 208L, Track.RightSide, 3184L, 6584L)
+    val sections = trl.getRoadAddressSections
+    sections.size should be (6)
+    sections.head should be (AddressSection(4L, 203L, Track.RightSide, 3184L, None))
+    sections.last should be (AddressSection(4L, 208L, Track.RightSide, 0L, Some(6584L)))
+    val middleParts = sections.filterNot(s => s.roadPartNumber==203L || s.roadPartNumber==208L)
+    middleParts.forall(s => s.track == Track.RightSide) should be (true)
+    middleParts.forall(s => s.startAddressMValue == 0L) should be (true)
+    middleParts.forall(s => s.endAddressMValue.isEmpty) should be (true)
+  }
+
+  test("lighting assets split works on single part") {
+    val trl = TierekisteriLighting(4L, 203L, 203L, Track.RightSide, 3184L, 6584L)
+    val sections = trl.getRoadAddressSections
+    sections.size should be (1)
+    sections.head should be (AddressSection(4L, 203L, Track.RightSide, 3184L, Some(6584L)))
+  }
+
+  test("lighting assets split works on two parts") {
+    val trl = TierekisteriLighting(4L, 203L, 204L, Track.RightSide, 3184L, 6584L)
+    val sections = trl.getRoadAddressSections
+    sections.size should be (2)
+    sections.head should be (AddressSection(4L, 203L, Track.RightSide, 3184L, None))
+    sections.last should be (AddressSection(4L, 204L, Track.RightSide, 0L, Some(6584L)))
+  }
+
 }

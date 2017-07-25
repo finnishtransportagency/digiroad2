@@ -4,11 +4,7 @@
     var cachedDirectionArrow = null;
 
     var defaultMarkerGraphics = {
-      externalGraphic: 'images/calibration-point.png',
-      graphicWidth: 16,
-      graphicHeight: 30,
-      graphicXOffset: -8,
-      graphicYOffset: -30
+      externalGraphic: "images/calibration-point.svg"
     };
 
     var createCalibrationPointMarker = function() {
@@ -21,7 +17,7 @@
 
     var calibrationPointMarkerStyle = new ol.style.Style({
       image: new ol.style.Icon({
-        src: "images/calibration-point.png",
+        src: "images/calibration-point.svg",
         anchor: [0.5, 1]
       })
     });

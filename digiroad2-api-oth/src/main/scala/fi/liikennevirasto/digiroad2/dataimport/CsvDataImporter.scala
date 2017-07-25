@@ -48,19 +48,23 @@ trait RoadLinkCsvImporter {
   type ParsedLinkRow = (MalformedParameters, ParsedProperties)
 
   private val administrativeClassLimitations: List[AdministrativeClass] = List(State)
+  val autorizedValues: List[Int] = List(-11, -1, 0, 1, 2, 3, 4, 5, 10)
 
   private val intFieldMappings = Map(
     "Hallinnollinen luokka" -> "ADMINCLASS",
     "Toiminnallinen luokka" -> "functional_Class",
     "Liikennevirran suunta" -> "DIRECTIONTYPE",
     "Tielinkin tyyppi" -> "link_Type",
-    "Tasosijainti" -> "VERTICALLEVEL",
     "Kuntanumero" -> "MUNICIPALITYCODE",
     "Osoitenumerot oikealla alku" -> "FROM_RIGHT",
     "Osoitenumerot oikealla loppu" -> "TO_RIGHT",
     "Osoitenumerot vasemmalla alku" -> "FROM_LEFT",
     "Osoitenumerot vasemmalla loppu" -> "TO_LEFT",
     "Linkin tila" -> "CONSTRUCTIONTYPE"
+  )
+
+  private val codeValueFieldMappings = Map(
+    "Tasosijainti" -> "VERTICALLEVEL"
   )
 
   private val fieldInOTH = List("link_Type", "functional_Class")
@@ -74,7 +78,7 @@ trait RoadLinkCsvImporter {
   private val mandatoryFields = "Linkin ID"
 
 
-  val mappings = textFieldMappings ++ intFieldMappings
+  val mappings = textFieldMappings ++ intFieldMappings ++ codeValueFieldMappings
 
   val MandatoryParameters: Set[String] = mappings.keySet + mandatoryFields
 
@@ -107,8 +111,9 @@ trait RoadLinkCsvImporter {
   }
 
   def updateRoadLinkInVVH(roadLinkVVHAttribute: CsvRoadLinkRow): Option[Long] = {
-    val mapProperties = roadLinkVVHAttribute.properties.map { prop => prop.columnName -> prop.value }.toMap
-    vvhClient.complementaryData.updateVVHFeatures(mapProperties ++ Map("OBJECTID" -> roadLinkVVHAttribute.objectID)) match {
+    val timeStamps = new java.util.Date().getTime
+    val mapProperties = roadLinkVVHAttribute.properties.map { prop => prop.columnName -> prop.value }.toMap ++ Map("LAST_EDITED_DATE" -> timeStamps) ++ Map("OBJECTID" -> roadLinkVVHAttribute.objectID)
+    vvhClient.complementaryData.updateVVHFeatures(mapProperties) match {
       case Right(error) => Some(roadLinkVVHAttribute.linkId)
       case _ => None
     }
@@ -118,6 +123,14 @@ trait RoadLinkCsvImporter {
     parameterValue.forall(_.isDigit) match {
       case true => (Nil, List(LinkProperty(columnName = intFieldMappings(parameterName), value = parameterValue.toInt)))
       case false => (List(parameterName), Nil)
+    }
+  }
+
+  def verifyValueCode(parameterName: String, parameterValue: String): ParsedLinkRow = {
+    if (autorizedValues.contains(parameterValue.toInt)) {
+      (Nil, List(LinkProperty(columnName = codeValueFieldMappings(parameterName), value = parameterValue.toInt)))
+    } else {
+      (List(parameterName), Nil)
     }
   }
 
@@ -135,6 +148,9 @@ trait RoadLinkCsvImporter {
           result.copy(_2 = LinkProperty(columnName = textFieldMappings(key), value = value) :: result._2)
         } else if (intFieldMappings.contains(key)) {
           val (malformedParameters, properties) = verifyValueType(key, value.toString)
+          result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
+        } else if (codeValueFieldMappings.contains(key)) {
+          val (malformedParameters, properties) = verifyValueCode(key, value.toString)
           result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
         } else if (mandatoryFields.contains(key) && !value.toString.forall(_.isDigit)) {
           result.copy(_1 = List(mandatoryFields) ::: result._1 , _2 = result._2)
@@ -163,7 +179,7 @@ trait RoadLinkCsvImporter {
     })
     csvReader.allWithHeaders().foldLeft(ImportResult()) { (result, row) =>
       def getCompletaryVVHInfo(linkId: Long) = {
-        vvhClient.complementaryData.fetchComplementaryRoadlink(linkId) match {
+        vvhClient.complementaryData.fetchByLinkId(linkId) match {
           case Some(vvhRoadlink) => (vvhRoadlink.attributes.get("OBJECTID"), vvhRoadlink.administrativeClass.value)
           case _ => None
         }

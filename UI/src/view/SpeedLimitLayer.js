@@ -7,6 +7,7 @@ window.SpeedLimitLayer = function(params) {
       style = params.style,
       layerName = 'speedLimit';
   var isActive = false;
+  var extraEventListener = _.extend({running: false}, eventbus);
 
   Layer.call(this, layerName, roadLayer);
   this.activateSelection = function() {
@@ -291,6 +292,15 @@ window.SpeedLimitLayer = function(params) {
     eventListener.listenTo(eventbus, 'speedLimits:showSpeedLimitsHistory', showSpeedLimitsHistory);
   };
 
+  var startListeningExtraEvents = function(){
+    extraEventListener.listenTo(eventbus, 'speedLimits:hideSpeedLimitsComplementary', hideSpeedLimitsComplementary);
+    extraEventListener.listenTo(eventbus, 'speedLimits:showSpeedLimitsComplementary', showSpeedLimitsComplementary);
+  };
+
+  var stopListeningExtraEvents = function(){
+    extraEventListener.stopListening(eventbus);
+  };
+
   var showSpeedLimitsHistory = function() {
     collection.fetchHistory(map.getView().calculateExtent(map.getSize()));
   };
@@ -300,6 +310,17 @@ window.SpeedLimitLayer = function(params) {
     isActive = false;
     vectorLayerHistory.getSource().clear();
   };
+
+  var showSpeedLimitsComplementary = function() {
+      collection.activeComplementary(true);
+      me.refreshView();
+  };
+
+  var hideSpeedLimitsComplementary = function() {
+    collection.activeComplementary(false);
+    me.refreshView();
+  };
+
 
   var indexOf = function (layers, layer) {
     var length = layers.getLength();
@@ -500,6 +521,7 @@ window.SpeedLimitLayer = function(params) {
   };
 
   var show = function(map) {
+    startListeningExtraEvents();
     vectorLayer.setVisible(true);
     indicatorLayer.setVisible(true);
     me.show(map);
@@ -512,6 +534,7 @@ window.SpeedLimitLayer = function(params) {
     vectorLayer.setVisible(false);
     vectorLayerHistory.setVisible(false);
     indicatorLayer.setVisible(false);
+    stopListeningExtraEvents();
     me.stop();
     me.hide();
   };

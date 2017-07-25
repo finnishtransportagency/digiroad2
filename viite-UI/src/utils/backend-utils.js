@@ -58,6 +58,12 @@
       });
     }, 1000);
 
+    this.getTargetAdjacent = _.throttle(function(roadData, callback) {
+      return $.getJSON('api/viite/roadlinks/adjacent/target?roadData=' +JSON.stringify(roadData), function(data) {
+        return _.isFunction(callback) && callback(data);
+      });
+    }, 1000);
+
     this.getAdjacentsFromMultipleSources = _.throttle(function(roadData, callback) {
       return $.getJSON('api/viite/roadlinks/multiSourceAdjacents?roadData=' +JSON.stringify(roadData), function(data) {
         return _.isFunction(callback) && callback(data);
@@ -137,6 +143,38 @@
         });
     });
 
+    this.insertNewRoadLink = _.throttle(function(data, success, failure) {
+      var Json = {
+        linkIds : data[0],
+        projectId : data[1],
+        newRoadNumber : data[2],
+        newRoadPartNumber : data[3],
+        newTrackCode : data[4],
+        newDiscontinuity : data[5]
+      };
+      $.ajax({
+        contentType: "application/json",
+        type: "PUT",
+        url: "api/viite/roadlinks/roadaddress/project/savenewroadlink",
+        data: JSON.stringify(Json),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    }, 1000);
+
+      this.directionChangeNewRoadlink = _.throttle(function (data, success, failure) {
+          $.ajax({
+              contentType: "application/json",
+              type: "PUT",
+              url: "api/viite/roadlinks/roadaddress/project/directionchangenewroadlink",
+              data: JSON.stringify(data[0]),
+              dataType: "json",
+              success: success,
+              error: failure
+          });
+      }, 1000);
+
     this.getRoadAddressProjects = _.throttle(function(callback) {
       return $.getJSON('api/viite/roadlinks/roadaddress/project/all', function(data) {
         return _.isFunction(callback) && callback(data);
@@ -152,6 +190,11 @@
       });
       return loadingProject;
     }, 1000);
+
+    this.getChangeTable = function(id,callback) {
+      $.getJSON('api/viite/project/getchangetable/'+id, callback);
+    };
+
 
     this.getUserRoles = function () {
       $.get('api/viite/user/roles', function (roles) {
@@ -316,6 +359,14 @@
 
     this.withGetRoadLinkByLinkId = function(returnData){
       self.getRoadLinkByLinkId = function(linkId, callback){
+        callback(returnData);
+        return returnData;
+      };
+      return self;
+    };
+
+    this.withGetTargetAdjacent = function(returnData){
+      self.getTargetAdjacent = function(linkId, callback){
         callback(returnData);
         return returnData;
       };

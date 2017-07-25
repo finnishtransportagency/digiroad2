@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 import slick.jdbc.StaticQuery.interpolation
 
@@ -17,7 +18,8 @@ case class TrafficLight(id: Long, linkId: Long,
                               createdBy: Option[String] = None,
                               createdAt: Option[DateTime] = None,
                               modifiedBy: Option[String] = None,
-                              modifiedAt: Option[DateTime] = None) extends PersistedPointAsset
+                              modifiedAt: Option[DateTime] = None,
+                              linkSource: LinkGeomSource) extends PersistedPointAsset
 
 case class TrafficLightToBePersisted(linkId: Long, lon: Double, lat: Double, mValue: Double, municipalityCode: Int, createdBy: String)
 
@@ -26,7 +28,8 @@ object OracleTrafficLightDao {
 
     val query =
       """
-        select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code, a.created_by, a.created_date, a.modified_by, a.modified_date
+        select a.id, pos.link_id, a.geometry, pos.start_measure, a.floating, pos.adjusted_timestamp, a.municipality_code, a.created_by, a.created_date, a.modified_by, a.modified_date,
+        pos.link_source
         from asset a
         join asset_link al on a.id = al.asset_id
         join lrm_position pos on al.position_id = pos.id
@@ -48,20 +51,22 @@ object OracleTrafficLightDao {
       val createdDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val modifiedBy = r.nextStringOption()
       val modifiedDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
+      val linkSource = r.nextInt()
 
-      TrafficLight(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, createdBy, createdDateTime, modifiedBy, modifiedDateTime)
+      TrafficLight(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, createdBy, createdDateTime, modifiedBy, modifiedDateTime, linkSource = LinkGeomSource(linkSource))
     }
   }
 
-  def create(trafficLight: TrafficLightToBePersisted, username: String, adjustedTimestamp: Long): Long = {
+  def create(trafficLight: TrafficLightToBePersisted, username: String, adjustedTimestamp: Long, linkSource: LinkGeomSource): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     sqlu"""
       insert all
         into asset(id, asset_type_id, created_by, created_date, municipality_code)
         values ($id, 280, $username, sysdate, ${trafficLight.municipalityCode})
-        into lrm_position(id, start_measure, link_id, adjusted_timestamp)
-        values ($lrmPositionId, ${trafficLight.mValue}, ${trafficLight.linkId}, $adjustedTimestamp)
+
+        into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source)
+        values ($lrmPositionId, ${trafficLight.mValue}, ${trafficLight.linkId}, $adjustedTimestamp, ${linkSource.value})
 
         into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId)
@@ -72,7 +77,7 @@ object OracleTrafficLightDao {
     id
   }
 
-  def update(id: Long, trafficLight: TrafficLightToBePersisted, adjustedTimeStampOption: Option[Long] = None) = {
+  def update(id: Long, trafficLight: TrafficLightToBePersisted, adjustedTimeStampOption: Option[Long] = None, linkSource: LinkGeomSource) = {
     sqlu""" update asset set municipality_code = ${trafficLight.municipalityCode} where id = $id """.execute
     updateAssetGeometry(id, Point(trafficLight.lon, trafficLight.lat))
     updateAssetModified(id, trafficLight.createdBy).execute
@@ -84,7 +89,8 @@ object OracleTrafficLightDao {
            set
            start_measure = ${trafficLight.mValue},
            link_id = ${trafficLight.linkId},
-           adjusted_timestamp = ${adjustedTimeStamp}
+           adjusted_timestamp = ${adjustedTimeStamp},
+           link_source = ${linkSource.value}
            where id = (select position_id from asset_link where asset_id = $id)
         """.execute
       case _  =>
@@ -92,7 +98,8 @@ object OracleTrafficLightDao {
           update lrm_position
            set
            start_measure = ${trafficLight.mValue},
-           link_id = ${trafficLight.linkId}
+           link_id = ${trafficLight.linkId},
+           link_source = ${linkSource.value}
            where id = (select position_id from asset_link where asset_id = $id)
         """.execute
     }

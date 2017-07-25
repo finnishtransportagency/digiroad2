@@ -8,7 +8,8 @@ window.LinearAssetLayer = function(params) {
       singleElementEventCategory = params.singleElementEventCategory,
       style = params.style,
       layerName = params.layerName,
-      assetLabel = params.assetLabel;
+      assetLabel = params.assetLabel,
+      roadAddressInfoPopup = params.roadAddressInfoPopup;
 
 
   Layer.call(this, layerName, roadLayer);
@@ -16,6 +17,7 @@ window.LinearAssetLayer = function(params) {
   me.minZoomForContent = zoomlevels.minZoomForAssets;
 
   var isComplementaryChecked = false;
+  var extraEventListener = _.extend({running: false}, eventbus);
 
   var singleElementEvents = function() {
     return _.map(arguments, function(argument) { return singleElementEventCategory + ':' + argument; }).join(' ');
@@ -187,7 +189,7 @@ window.LinearAssetLayer = function(params) {
     var selectedAssets = selectedLinearAsset.get();
     var features = style.renderFeatures(selectedAssets);
     if(assetLabel)
-        features = features.concat(assetLabel.renderFeaturesByLinearAssets(selectedAssets, uiState.zoomLevel));
+        features = features.concat(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep(selectedLinearAsset.get()), offsetBySideCode), uiState.zoomLevel));
     selectToolControl.addSelectionFeatures(features);
   };
 
@@ -206,7 +208,7 @@ window.LinearAssetLayer = function(params) {
 
       var features = style.renderFeatures(selectedLinearAsset.get());
       if(assetLabel)
-         features = features.concat(assetLabel.renderFeaturesByLinearAssets(selectedLinearAsset.get(), uiState.zoomLevel));
+         features = features.concat(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep(selectedLinearAsset.get()), offsetBySideCode), uiState.zoomLevel));
       selectToolControl.addSelectionFeatures(features);
 
      LinearAssetMassUpdateDialog.show({
@@ -256,6 +258,7 @@ window.LinearAssetLayer = function(params) {
       case 'Select':
         linearAssetCutter.deactivate();
         selectToolControl.deactivateDraw();
+        selectToolControl.activate();
         break;
       case 'Rectangle':
         linearAssetCutter.deactivate();
@@ -279,10 +282,18 @@ window.LinearAssetLayer = function(params) {
     eventListener.listenTo(eventbus, multiElementEvent('massUpdateSucceeded'), handleLinearAssetSaved);
     eventListener.listenTo(eventbus, singleElementEvents('valueChanged', 'separated'), linearAssetChanged);
     eventListener.listenTo(eventbus, singleElementEvents('cancelled', 'saved'), linearAssetCancelled);
+    eventListener.listenTo(eventbus, multiElementEvent('cancelled'), linearAssetCancelled);
     eventListener.listenTo(eventbus, singleElementEvents('selectByLinkId'), selectLinearAssetByLinkId);
     eventListener.listenTo(eventbus, multiElementEvent('massUpdateFailed'), cancelSelection);
-    eventListener.listenTo(eventbus, 'complementaryLinks:show', showWithComplementary);
-    eventListener.listenTo(eventbus, 'complementaryLinks:hide', hideComplementary);
+  };
+
+  var startListeningExtraEvents = function(){
+    extraEventListener.listenTo(eventbus, 'complementaryLinks:show', showWithComplementary);
+    extraEventListener.listenTo(eventbus, 'complementaryLinks:hide', hideComplementary);
+  };
+
+  var stopListeningExtraEvents = function(){
+    extraEventListener.stopListening(eventbus);
   };
 
   var selectLinearAssetByLinkId = function(linkId) {
@@ -340,7 +351,9 @@ window.LinearAssetLayer = function(params) {
 
   var handleLinearAssetCancelled = function(eventListener) {
     selectToolControl.clear();
-    selectToolControl.activate();
+    if(application.getSelectedTool() !== 'Cut'){
+      selectToolControl.activate();
+    }
     eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
     redrawLinearAssets(collection.getAll());
   };
@@ -420,20 +433,21 @@ window.LinearAssetLayer = function(params) {
   var drawLinearAssets = function(linearAssets) {
     vectorSource.addFeatures(style.renderFeatures(linearAssets));
     if(assetLabel)
-      vectorSource.addFeatures(assetLabel.renderFeaturesByLinearAssets(linearAssets, uiState.zoomLevel));
+      vectorSource.addFeatures(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep(linearAssets), offsetBySideCode), uiState.zoomLevel));
+  };
+
+  var offsetBySideCode = function (linearAsset) {
+    return GeometryUtils.offsetBySideCode(applicationModel.zoom.level, linearAsset);
   };
 
   var decorateSelection = function () {
     if (selectedLinearAsset.exists()) {
       var features = style.renderFeatures(selectedLinearAsset.get());
       if(assetLabel)
-          features = features.concat(assetLabel.renderFeaturesByLinearAssets(selectedLinearAsset.get(), uiState.zoomLevel));
+          features = features.concat(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep(selectedLinearAsset.get()), offsetBySideCode), uiState.zoomLevel));
       selectToolControl.addSelectionFeatures(features);
 
       if (selectedLinearAsset.isSplitOrSeparated()) {
-        var offsetBySideCode = function (linearAsset) {
-          return GeometryUtils.offsetBySideCode(applicationModel.zoom.level, linearAsset);
-        };
         drawIndicators(_.map(_.cloneDeep(selectedLinearAsset.get()), offsetBySideCode));
       }
     }
@@ -444,9 +458,11 @@ window.LinearAssetLayer = function(params) {
   };
 
   var show = function(map) {
+    startListeningExtraEvents();
     vectorLayer.setVisible(true);
     indicatorLayer.setVisible(true);
     me.refreshView();
+    roadAddressInfoPopup.start();
     me.show(map);
   };
 
@@ -459,6 +475,7 @@ window.LinearAssetLayer = function(params) {
     selectToolControl.clear();
     selectedLinearAsset.close();
     isComplementaryChecked = false;
+    roadAddressInfoPopup.stop();
     me.refreshView();
   };
 
@@ -467,6 +484,7 @@ window.LinearAssetLayer = function(params) {
     vectorLayer.setVisible(false);
     indicatorLayer.setVisible(false);
     selectedLinearAsset.close();
+    stopListeningExtraEvents();
     me.stop();
     me.hide();
   };

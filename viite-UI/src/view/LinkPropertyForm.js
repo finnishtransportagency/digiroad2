@@ -69,6 +69,12 @@
       [-1, 'Kyllä']
     ];
 
+     function getRoadType(askedRoadType){
+      var RoadType = _.find(allRoadTypes, function(x){return x[0] === askedRoadType;});
+      return RoadType && RoadType[1];
+    }
+
+
     var getDiscontinuityType = function(discontinuity){
       var DiscontinuityType = _.find(discontinuities, function(x){return x[0] === discontinuity;});
       return DiscontinuityType && DiscontinuityType[1];
@@ -412,7 +418,7 @@
               if (lastFeatureToKeep.roadLinkType === floatingRoadLinkType) {
                 rootElement.html(templateFloatingEditMode(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
                 if (applicationModel.getSelectionType() === 'floating' && firstSelectedLinkProperty.roadLinkType === floatingRoadLinkType) {
-                  selectedLinkProperty.getLinkAdjacents(_.last(selectedLinkProperty.get()), firstSelectedLinkProperty);
+                  selectedLinkProperty.getLinkFloatingAdjacents(_.last(selectedLinkProperty.get()), firstSelectedLinkProperty);
                 }
                 $('#floatingEditModeForm').show();
               } else { //check if the before selected was a floating link and if the next one is unknown
@@ -435,7 +441,7 @@
               if (_.last(selectedLinkProperty.get()).roadLinkType === floatingRoadLinkType) {
                 applicationModel.toggleSelectionTypeFloating();
                 rootElement.html(templateFloatingEditMode(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
-                selectedLinkProperty.getLinkAdjacents(_.last(selectedLinkProperty.get()), firstSelectedLinkProperty);
+                selectedLinkProperty.getLinkFloatingAdjacents(_.last(selectedLinkProperty.get()), firstSelectedLinkProperty);
                 $('#floatingEditModeForm').show();
               } else {
                 rootElement.html(template(options, firstSelectedLinkProperty)(firstSelectedLinkProperty));
@@ -692,5 +698,9 @@
       });
     };
     bindEvents();
+
+    return{
+      getRoadType: getRoadType
+    };
   };
 })(this);

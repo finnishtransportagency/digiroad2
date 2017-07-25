@@ -15,7 +15,6 @@ import fi.liikennevirasto.digiroad2.user.User
 import org.joda.time.{DateTime, Interval, LocalDate}
 import org.joda.time.format.ISODateTimeFormat
 import org.slf4j.LoggerFactory
-
 import scala.language.reflectiveCalls
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParameter, StaticQuery => Q}
@@ -218,12 +217,6 @@ class MassTransitStopDao {
     """.as[String].first
   }
 
-  def getLinkSource(roadLinkId: Int): Int ={
-    sql"""SELECT lrm_position.link_source
-       |FROM lrm_position
-       |INNER JOIN asset_link ON lrm_position.id = asset_link.position_id WHERE asset_link.ASSET_ID = $roadLinkId""".as[Int].first
-  }
-
   def propertyDefaultValues(assetTypeId: Long): List[SimpleProperty] = {
     implicit val getDefaultValue = new GetResult[SimpleProperty] {
       def apply(r: PositionedResult) = {
@@ -289,10 +282,16 @@ class MassTransitStopDao {
     sqlu"""Delete From Asset Where id = $assetId""".execute
   }
 
-  def updateLrmPosition(id: Long, mValue: Double, linkId: Long, linkSource: Option[Int]) {
-    sqlu"""
+  def updateLrmPosition(id: Long, mValue: Double, linkId: Long, linkSource: LinkGeomSource, adjustedTimeStampOption: Option[Long] = None) {
+    adjustedTimeStampOption match {
+      case Some(adjustedTimeStamp) =>
+        sqlu"""
            update lrm_position
-           set start_measure = $mValue, end_measure = $mValue, link_id = $linkId, link_source = $linkSource
+            set start_measure = $mValue,
+            end_measure = $mValue,
+            link_id = $linkId,
+            link_source = ${linkSource.value},
+            adjusted_timestamp = ${adjustedTimeStamp}
            where id = (
             select lrm.id
             from asset a
@@ -300,12 +299,24 @@ class MassTransitStopDao {
             join lrm_position lrm on lrm.id = al.position_id
             where a.id = $id)
       """.execute
+      case _ =>
+        sqlu"""
+           update lrm_position
+           set start_measure = $mValue, end_measure = $mValue, link_id = $linkId, link_source = ${linkSource.value}
+           where id = (
+            select lrm.id
+            from asset a
+            join asset_link al on al.asset_id = a.id
+            join lrm_position lrm on lrm.id = al.position_id
+            where a.id = $id)
+      """.execute
+    }
   }
 
-  def insertLrmPosition(id: Long, mValue: Double, linkId: Long, linkSource: Option[Int]) {
+  def insertLrmPosition(id: Long, mValue: Double, linkId: Long, linkSource: LinkGeomSource) {
     sqlu"""
            insert into lrm_position (id, start_measure, end_measure, link_id, link_source)
-           values ($id, $mValue, $mValue, $linkId, $linkSource)
+           values ($id, $mValue, $mValue, $linkId, ${linkSource.value})
       """.execute
   }
 

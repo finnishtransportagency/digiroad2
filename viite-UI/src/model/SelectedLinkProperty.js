@@ -126,7 +126,7 @@
           return extractDataForDisplay([feature]);
         });
 
-        if(!applicationModel.isReadOnly() && get()[0].roadLinkType === floatingRoadLinkType){
+        if(!applicationModel.isReadOnly() && get()[0] && get()[0].roadLinkType === floatingRoadLinkType){
           addToFeaturesToKeep(data4Display);
         }
         if(!_.isEmpty(featuresToKeep) && !isLinkIdInFeaturesToKeep(linkId)){
@@ -273,6 +273,68 @@
     };
 
     var getLinkAdjacents = function(link) {
+      var linkIds = {};
+      var chainLinks = [];
+      _.each(current, function (link) {
+        if (!_.isUndefined(link))
+          chainLinks.push(link.getData().linkId);
+      });
+      _.each(targets, function (link) {
+        chainLinks.push(link.linkId);
+      });
+      var data = {
+        "selectedLinks": _.uniq(chainLinks), "linkId": parseInt(link.linkId), "roadNumber": parseInt(link.roadNumber),
+        "roadPartNumber": parseInt(link.roadPartNumber), "trackCode": parseInt(link.trackCode)
+      };
+
+      if (!applicationModel.isReadOnly() && applicationModel.getSelectionType() !== 'all'){
+        applicationModel.addSpinner();
+        backend.getTargetAdjacent(data, function (adjacents) {
+          applicationModel.removeSpinner();
+          if (!_.isEmpty(adjacents)){
+            linkIds = adjacents;
+          }
+          applicationModel.setCurrentAction(applicationModel.actionCalculating);
+          if (!applicationModel.isReadOnly()) {
+            var rejectedRoads = _.reject(get().concat(featuresToKeep), function(link){
+              return link.segmentId === "" || link.anomaly === geometryChangedAnomaly;
+            });
+            var selectedLinkIds = _.map(rejectedRoads, function (roads) {
+              return roads.linkId;
+            });
+            var filteredPreviousAdjacents = _.filter(adjacents, function(adj){
+              return !_.contains(_.pluck(previousAdjacents, 'linkId'), adj.linkId);
+            }).concat(previousAdjacents);
+            var filteredAdjacents = _.filter(filteredPreviousAdjacents, function(prvAdj){
+              return !_.contains(selectedLinkIds, prvAdj.linkId);
+            });
+            previousAdjacents = filteredAdjacents;
+            var markedRoads = {
+              "adjacents": _.map(applicationModel.getSelectionType() === 'floating' ? _.reject(filteredAdjacents, function(t){
+                  return t.roadLinkType != floatingRoadLinkType;
+                }) :filteredAdjacents, function (a, index) {
+                return _.merge({}, a, {"marker": markers[index]});
+              }), "links": link
+            };
+            if(applicationModel.getSelectionType() === 'floating') {
+              eventbus.trigger("adjacents:floatingAdded", markedRoads.adjacents);
+              if(_.isEmpty(markedRoads.adjacents)){
+                applicationModel.setContinueButton(true);
+              }
+            }
+            else {
+              eventbus.trigger("adjacents:added", markedRoads.links, markedRoads.adjacents);
+            }
+            if(applicationModel.getSelectionType() !== 'unknown'){
+              eventbus.trigger('adjacents:startedFloatingTransfer');
+            }
+          }
+        });
+      }
+      return linkIds;
+    };
+
+    var getLinkFloatingAdjacents = function(link) {
       var linkIds = {};
       var chainLinks = [];
       _.each(current, function (link) {
@@ -457,9 +519,9 @@
         return !_.isUndefined(source);
       });
 
-      var data = {'sourceIds': sourceDataIds, 'targetIds': targetDataIds, 'roadAddress': roadAddresses};
+      var data = {'sourceIds': sourceDataIds, 'targetIds': targetDataIds};
 
-      if(!_.isEmpty(data.sourceIds) && !_.isEmpty(data.targetIds) && !_.isEmpty(data.roadAddress)){
+      if(!_.isEmpty(data.sourceIds) && !_.isEmpty(data.targetIds)){
         backend.createRoadAddress(data, function(errorObject) {
           if (errorObject.status == INTERNAL_SERVER_ERROR_500 || errorObject.status == BAD_REQUEST) {
             eventbus.trigger('linkProperties:transferFailed', errorObject.status);
@@ -724,6 +786,7 @@
       addToFeaturesToKeep: addToFeaturesToKeep,
       clearFeaturesToKeep: clearFeaturesToKeep,
       transferringCalculation: transferringCalculation,
+      getLinkFloatingAdjacents: getLinkFloatingAdjacents,
       getLinkAdjacents: getLinkAdjacents,
       close: close,
       open: open,

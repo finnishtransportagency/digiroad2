@@ -14,31 +14,37 @@ import org.scalatest.{FunSuite, Matchers, Tag}
 import org.scalatest.mock.MockitoSugar
 import org.scalatest._
 import Matchers._
-
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import slick.jdbc.StaticQuery.interpolation
 
 class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
   val roadLink = VVHRoadlink(388562360, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.BothDirections, AllOthers)
+  val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
 
   private def daoWithRoadLinks(roadLinks: Seq[VVHRoadlink]): OracleLinearAssetDao = {
     val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
 
-    when(mockVVHClient.fetchByLinkIds(roadLinks.map(_.linkId).toSet))
+    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    when(mockVVHRoadLinkClient.fetchByLinkIds(roadLinks.map(_.linkId).toSet))
+      .thenReturn(roadLinks)
+
+    when(mockRoadLinkService.fetchVVHRoadlinksAndComplementary(roadLinks.map(_.linkId).toSet))
       .thenReturn(roadLinks)
 
     roadLinks.foreach { roadLink =>
-      when(mockVVHClient.fetchByLinkId(roadLink.linkId)).thenReturn(Some(roadLink))
+      when(mockVVHRoadLinkClient.fetchByLinkId(roadLink.linkId)).thenReturn(Some(roadLink))
     }
 
-    new OracleLinearAssetDao(mockVVHClient)
+    new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
   }
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback()(test)
 
   private def truncateLinkGeometry(linkId: Long, startMeasure: Double, endMeasure: Double, vvhClient: VVHClient): Seq[Point] = {
-    val geometry = vvhClient.fetchByLinkId(linkId).get.geometry
+    val geometry = vvhClient.roadLinkData.fetchByLinkId(linkId).get.geometry
     GeometryUtils.truncateGeometry3D(geometry, startMeasure, endMeasure)
   }
 
@@ -119,7 +125,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
       val roadLinks = Seq(
         RoadLink(1610980, List(Point(0.0, 0.0), Point(40.0, 0.0)), 40.0, Municipality, 1, TrafficDirection.UnknownDirection, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
         RoadLink(1610951, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.UnknownDirection, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))))
-      val dao = new OracleLinearAssetDao(MockitoSugar.mock[VVHClient])
+      val dao = new OracleLinearAssetDao(MockitoSugar.mock[VVHClient], MockitoSugar.mock[RoadLinkService])
       dao.floatLinearAssets(Set(300100, 300101))
       val (speedLimits, _) = dao.getSpeedLimitLinksByRoadLinks(roadLinks)
       speedLimits.map(_.id) should equal(Seq(200352))
@@ -135,7 +141,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
         RoadLink(1611558, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.UnknownDirection, CableFerry, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
         RoadLink(1611558, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 1, TrafficDirection.UnknownDirection, UnknownLinkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       )
-      val dao = new OracleLinearAssetDao(MockitoSugar.mock[VVHClient])
+      val dao = new OracleLinearAssetDao(MockitoSugar.mock[VVHClient], MockitoSugar.mock[RoadLinkService])
 
       val speedLimits = dao.getSpeedLimitLinksByRoadLinks(roadLinks)
 
@@ -150,7 +156,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
         RoadLink(1611558, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 7, TrafficDirection.UnknownDirection, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235))),
         RoadLink(1611558, List(Point(0.0, 0.0), Point(370.0, 0.0)), 370.0, Municipality, 8, TrafficDirection.UnknownDirection, MultipleCarriageway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
       )
-      val dao = new OracleLinearAssetDao(MockitoSugar.mock[VVHClient])
+      val dao = new OracleLinearAssetDao(MockitoSugar.mock[VVHClient], MockitoSugar.mock[RoadLinkService])
 
       val speedLimits = dao.getSpeedLimitLinksByRoadLinks(roadLinks)
 
@@ -161,13 +167,14 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
   test("speed limit creation fails if speed limit is already defined on link segment") {
     runWithRollback {
       val roadLink = VVHRoadlink(123, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
+      when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(123)).thenReturn(Some(roadLink))
       val dao = daoWithRoadLinks(List(roadLink))
       val id = simulateQuery {
-        dao.createSpeedLimit("test", 123, (0.0, 100.0), SideCode.BothDirections, 40, 0, _ => ())
+        dao.createSpeedLimit("test", 123, Measures(0.0, 100.0), SideCode.BothDirections, 40, 0, _ => ())
       }
       id shouldBe defined
       val id2 = simulateQuery {
-        dao.createSpeedLimit("test", 123, (0.0, 100.0), SideCode.BothDirections, 40, 0, _ => ())
+        dao.createSpeedLimit("test", 123, Measures(0.0, 100.0), SideCode.BothDirections, 40, 0, _ => ())
       }
       id2 shouldBe None
     }
@@ -176,17 +183,18 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
   test("speed limit creation succeeds when speed limit is already defined on segment iff speed limits have opposing sidecodes") {
     runWithRollback {
       val roadLink = VVHRoadlink(123, 0, List(Point(0.0, 0.0), Point(0.0, 200.0)), Municipality, TrafficDirection.UnknownDirection, AllOthers)
+      when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(123)).thenReturn(Some(roadLink))
       val dao = daoWithRoadLinks(List(roadLink))
       val id = simulateQuery {
-        dao.createSpeedLimit("test", 123, (0.0, 100.0), SideCode.TowardsDigitizing, 40, 0, _ => ())
+        dao.createSpeedLimit("test", 123, Measures(0.0, 100.0), SideCode.TowardsDigitizing, 40, 0, _ => ())
       }
       id shouldBe defined
       val id2 = simulateQuery {
-        dao.createSpeedLimit("test", 123, (0.0, 100.0), SideCode.AgainstDigitizing, 40, 0, _ => ())
+        dao.createSpeedLimit("test", 123, Measures(0.0, 100.0), SideCode.AgainstDigitizing, 40, 0, _ => ())
       }
       id2 shouldBe defined
       val id3 = simulateQuery {
-        dao.createSpeedLimit("test", 123, (0.0, 100.0), SideCode.BothDirections, 40, 0, _ => ())
+        dao.createSpeedLimit("test", 123, Measures(0.0, 100.0), SideCode.BothDirections, 40, 0, _ => ())
       }
       id3 shouldBe None
     }
@@ -211,11 +219,12 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
       val roadLink = VVHRoadlink(linkId, 0, Nil, Municipality, TrafficDirection.UnknownDirection, AllOthers)
       val dao = daoWithRoadLinks(List(roadLink))
 
-      dao.createSpeedLimit("test", linkId, (11.0, 16.0), SideCode.BothDirections, 40, 0, _ => ())
+      when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(linkId)).thenReturn(Some(roadLink))
+      dao.createSpeedLimit("test", linkId, Measures(11.0, 16.0), SideCode.BothDirections, 40, 0, _ => ())
       dao.purgeFromUnknownSpeedLimits(linkId, 84.121)
       sql"""select link_id from unknown_speed_limit where link_id = $linkId""".as[Long].firstOption should be(Some(linkId))
 
-      dao.createSpeedLimit("test", linkId, (20.0, 54.0), SideCode.BothDirections, 40, 0, _ => ())
+      dao.createSpeedLimit("test", linkId, Measures(20.0, 54.0), SideCode.BothDirections, 40, 0, _ => ())
       dao.purgeFromUnknownSpeedLimits(linkId, 84.121)
       sql"""select link_id from unknown_speed_limit where link_id = $linkId""".as[Long].firstOption should be(None)
     }
@@ -274,7 +283,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
   }
 
   test("fetch simple prohibition without validity periods or exceptions") {
-    val dao = new OracleLinearAssetDao(null)
+    val dao = new OracleLinearAssetDao(null, null)
     val linkId = 1l
     val fixtureProhibitionValues = Set(ProhibitionValue(typeId = 10, validityPeriods = Set.empty, exceptions = Set.empty, null))
 
@@ -292,7 +301,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
   }
 
   test("fetch prohibition with validity period") {
-    val dao = new OracleLinearAssetDao(null)
+    val dao = new OracleLinearAssetDao(null, null)
     val linkId = 1l
     val fixtureProhibitionValues = Set(ProhibitionValue(typeId = 10, Set(ValidityPeriod(12, 16, Weekday)), exceptions = Set.empty, null))
 
@@ -310,7 +319,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
   }
 
   test("fetch prohibition with validity period and exceptions") {
-    val dao = new OracleLinearAssetDao(null)
+    val dao = new OracleLinearAssetDao(null, null)
     val linkId = 1l
     val fixtureProhibitionValues = Set(
       ProhibitionValue(typeId = 10, Set(ValidityPeriod(12, 16, Weekday)), exceptions = Set(1, 2, 3), null))
@@ -329,7 +338,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
   }
 
   test("fetch prohibition with validity period, exceptions and additional information") {
-    val dao = new OracleLinearAssetDao(null)
+    val dao = new OracleLinearAssetDao(null, null)
     val linkId = 1l
     val fixtureProhibitionValues = Set(
       ProhibitionValue(typeId = 10, Set(ValidityPeriod(12, 16, Weekday)), exceptions = Set(1, 2, 3), "test value string"))
@@ -348,7 +357,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
   }
 
   test("fetch multiple prohibitions") {
-    val dao = new OracleLinearAssetDao(null)
+    val dao = new OracleLinearAssetDao(null, null)
     val linkId1 = 1l
     val linkId2 = 2l
     val linkId3 = 3l
@@ -389,7 +398,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
 
   test("speed limit mass query") {
     val ids = Seq.range(1L, 500L).toSet
-    val dao = new OracleLinearAssetDao(null)
+    val dao = new OracleLinearAssetDao(null, null)
     runWithRollback {
       dao.getCurrentSpeedLimitsByLinkIds(Option(ids))
     }
@@ -397,7 +406,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
 
   test("speed limit mass query gives correct amount of results") {
     val ids = Seq.range(1610929L, 1611759L).toSet // in test fixture this contains > 400 speed limits
-    val dao = new OracleLinearAssetDao(null)
+    val dao = new OracleLinearAssetDao(null, null)
     ids.size >= dao.MassQueryThreshold should be (true) // This should be high number enough
     runWithRollback {
       val count = dao.getCurrentSpeedLimitsByLinkIds(Option(ids)).size
@@ -410,7 +419,7 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
 
   test("speed limit no mass query") {
     val ids = Seq.range(1L, 2L).toSet
-    val dao = new OracleLinearAssetDao(null)
+    val dao = new OracleLinearAssetDao(null, null)
     runWithRollback {
       dao.getCurrentSpeedLimitsByLinkIds(Option(ids))
     }
@@ -418,21 +427,21 @@ class OracleLinearAssetDaoSpec extends FunSuite with Matchers {
 
   test("speed limit empty set must not crash") {
     val ids = Set():Set[Long]
-    val dao = new OracleLinearAssetDao(null)
+    val dao = new OracleLinearAssetDao(null, null)
     runWithRollback {
       dao.getCurrentSpeedLimitsByLinkIds(Option(ids))
     }
   }
 
   test("speed limit no set must not crash") {
-    val dao = new OracleLinearAssetDao(null)
+    val dao = new OracleLinearAssetDao(null, null)
     runWithRollback {
       dao.getCurrentSpeedLimitsByLinkIds(None)
     }
   }
 
   test("all entities should be expired") {
-    val dao = new OracleLinearAssetDao(null)
+    val dao = new OracleLinearAssetDao(null, null)
     val typeId = 110
     val linkId = 99999
     runWithRollback {

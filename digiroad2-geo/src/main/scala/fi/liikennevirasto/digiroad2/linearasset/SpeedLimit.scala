@@ -18,7 +18,8 @@ case class SpeedLimit(id: Long,
                       createdDateTime: Option[DateTime],
                       vvhTimeStamp: Long,
                       geomModifiedDate: Option[DateTime],
-                      expired: Boolean = false) extends LinearAsset
+                      expired: Boolean = false,
+                      linkSource: LinkGeomSource) extends LinearAsset
 
 case class NewLimit(linkId: Long, startMeasure: Double, endMeasure: Double)
 case class SpeedLimitTimeStamps(id: Long, created: Modification, modified: Modification) extends TimeStamps

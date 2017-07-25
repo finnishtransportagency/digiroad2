@@ -13,7 +13,7 @@
     ];
 
     var unknownFunctionalClassDefaultRules = [
-      new StyleRule().where('functionalClass').is(99).use({ stroke : { color: '#888', opacity: 0.6}})
+      new StyleRule().where('functionalClass').is(99).use({ stroke: { color: '#000', opacity: 0.6}, icon: { src: 'images/link-properties/arrow-drop-black.svg' } })
     ];
 
     var zoomLevelRules = [

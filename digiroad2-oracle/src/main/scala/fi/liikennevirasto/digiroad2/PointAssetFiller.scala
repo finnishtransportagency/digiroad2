@@ -1,8 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
-import fi.liikennevirasto.digiroad2.util.MunicipalityCodeImporter
-import org.joda.time.DateTime
 
 object PointAssetFiller {
 
@@ -95,12 +93,16 @@ object PointAssetFiller {
   }
 
   def snapPersistedAssetToRoadLink(asset: PersistedPointAsset, roadLink: RoadLink): Option[AssetAdjustment] = {
-    // Adjust for geometry, "snap to road link": First find the closest point on road link (as mValue), then update
-    // point reference
     val point = Point(asset.lon, asset.lat)
-    val lrm = GeometryUtils.calculateLinearReferenceFromPoint(point, roadLink.geometry)
-    correctGeometry(asset.id, roadLink, lrm, roadLink.attributes.getOrElse("LAST_EDITED_DATE",
-      roadLink.attributes.getOrElse("CREATED_DATE", BigInt(0))).asInstanceOf[BigInt].longValue())
+    GeometryUtils.calculatePointFromLinearReference(roadLink.geometry, asset.mValue) match {
+      case Some(road) if(point.distance2DTo(road) >= 0.005) =>
+        val roadLength = GeometryUtils.geometryLength(roadLink.geometry)
+        val mValue = if(asset.mValue > roadLength) roadLength else asset.mValue
+        correctGeometry(asset.id, roadLink, mValue, roadLink.attributes.getOrElse("LAST_EDITED_DATE",
+          roadLink.attributes.getOrElse("CREATED_DATE", BigInt(0))).asInstanceOf[BigInt].longValue())
+      case _ =>
+        None
+    }
   }
 
   private def correctValuesAndGeometry(asset: PersistedPointAsset, roadLinks: Seq[RoadLink], changeInfo: ChangeInfo, adjustmentOption: Option[AssetAdjustment]) = {
