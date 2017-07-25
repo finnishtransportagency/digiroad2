@@ -191,7 +191,12 @@ trait TierekisteriImporterOperations {
 
           val newStartMValue =
             if (ra.startAddrMValue >= startAddr) {
-              ra.startMValue
+              ra.sideCode match {
+                case TowardsDigitizing => ra.startMValue
+                case AgainstDigitizing => ra.endMValue
+                case _ => return
+              }
+
             } else {
               ra.addressMValueToLRM(startAddr) match {
                 case Some(startValue) => startValue
@@ -201,14 +206,18 @@ trait TierekisteriImporterOperations {
 
           val newEndMValue =
             if (ra.endAddrMValue <= endAddr.getOrElse(ra.endAddrMValue)) {
-              ra.endMValue
+              ra.sideCode match {
+                case TowardsDigitizing => ra.endMValue
+                case AgainstDigitizing => ra.startMValue
+                case _ => return
+              }
             } else {
               ra.addressMValueToLRM(endAddr.get) match {
                 case Some(endValue) => endValue
                 case None => return
               }
             }
-          createLinearAsset(ra.linkId, typeId, Measures(newStartMValue, newEndMValue), assetValue)
+          createLinearAsset(ra.linkId, typeId, if(newStartMValue < newEndMValue) Measures(newStartMValue, newEndMValue) else Measures(newEndMValue, newStartMValue), assetValue)
         }
     }
   }

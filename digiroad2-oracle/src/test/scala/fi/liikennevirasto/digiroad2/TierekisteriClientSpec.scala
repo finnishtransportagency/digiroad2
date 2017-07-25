@@ -500,7 +500,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
     assets.map(_.assetValue) should be (1150)
   }
 
-  test("road with assets get values works on single part") {
+  test("road width assets get values works on single part") {
     val assetValue = 10
     val trl = TierekisteriRoadWidthData(4L, 203L, 203L, Track.RightSide, 3184L, 6584L, assetValue)
     val sections = roadWidthImporterOperations.getRoadAddressSections(trl)

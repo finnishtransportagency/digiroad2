@@ -3,7 +3,7 @@
     initialize: bindEvents
   };
 
-  function bindEvents(selectedLinearAsset, eventCategory, formElements, newTitle, title, editConstrains) {
+  function bindEvents(selectedLinearAsset, eventCategory, formElements, newTitle, title, editConstrains, layerName) {
     var rootElement = $('#feature-attributes');
 
     eventbus.on(events('selected', 'cancelled'), function() {
@@ -19,13 +19,16 @@
       rootElement.find('#separate-limit').on('click', function() { selectedLinearAsset.separate(); });
       rootElement.find('.form-controls.linear-asset button.save').on('click', function() { selectedLinearAsset.save(); });
       rootElement.find('.form-controls.linear-asset button.cancel').on('click', function() { selectedLinearAsset.cancel(); });
-      var selectedAssets = _.filter(selectedLinearAsset.get(), function(selected) { return editConstrains(selected) ; });
-      toggleMode( !_.isEmpty(selectedAssets) || applicationModel.isReadOnly());
+      toggleMode( validateAdministrativeClass(selectedLinearAsset, editConstrains) || applicationModel.isReadOnly());
     });
     eventbus.on(events('unselect'), function() {
       rootElement.empty();
     });
-    eventbus.on('application:readOnly', toggleMode);
+    eventbus.on('application:readOnly', function(readOnly){
+      if(layerName === 'roadWidth') {
+        toggleMode(validateAdministrativeClass(selectedLinearAsset, editConstrains) || readOnly);
+      }
+    });
     eventbus.on(events('valueChanged'), function(selectedLinearAsset) {
       rootElement.find('.form-controls.linear-asset button.save').attr('disabled', !selectedLinearAsset.isSaveable());
       rootElement.find('.form-controls.linear-asset button.cancel').attr('disabled', false);
@@ -121,4 +124,12 @@
         '</div>');
     }
   }
+
+  function validateAdministrativeClass(selectedLinearAsset, editConstrains){
+    var selectedAssets = _.filter(selectedLinearAsset.get(), function (selected) {
+      return editConstrains(selected);
+    });
+    return !_.isEmpty(selectedAssets)
+  }
+
 })(this);

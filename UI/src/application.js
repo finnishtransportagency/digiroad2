@@ -205,7 +205,8 @@
        AssetFormElementsFactory.construct(linearAsset),
        linearAsset.newTitle,
        linearAsset.title,
-       linearAsset.editConstrains || function() {return false;});
+       linearAsset.editConstrains || function() {return false;},
+       linearAsset.layerName );
     });
 
     _.forEach(pointAssets, function(pointAsset) {
