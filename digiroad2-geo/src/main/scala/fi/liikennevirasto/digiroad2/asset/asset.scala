@@ -78,6 +78,10 @@ object AdministrativeClass {
   def apply(value: Int): AdministrativeClass = {
     values.find(_.value == value).getOrElse(Unknown)
   }
+
+  def apply(stringValue: String): AdministrativeClass = {
+    values.find(_.toString == stringValue).getOrElse(Unknown)
+  }
 }
 case object State extends AdministrativeClass { def value = 1 }
 case object Municipality extends AdministrativeClass { def value = 2 }
