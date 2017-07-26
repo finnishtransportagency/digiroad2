@@ -25,7 +25,7 @@
       rootElement.empty();
     });
     eventbus.on('application:readOnly', function(readOnly){
-      if(layerName === 'roadWidth') {
+      if(layerName ===  applicationModel.getSelectedLayer()) {
         toggleMode(validateAdministrativeClass(selectedLinearAsset, editConstrains) || readOnly);
       }
     });
