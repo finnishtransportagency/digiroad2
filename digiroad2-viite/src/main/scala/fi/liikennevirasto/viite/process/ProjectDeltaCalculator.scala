@@ -25,9 +25,11 @@ object ProjectDeltaCalculator {
     val terminations = findTerminations(projectLinks, currentAddresses)
     if (terminations.size != currentAddresses.values.flatten.size)
       throw new RoadAddressException(s"Road address count did not match: ${terminations.size} terminated, ${currentAddresses.values.flatten.size} addresses found")
+    val newCreations = findNewCreations(projectLinks)
+
     // TODO: Find transfers, etc etc
 
-    Delta(project.startDate, terminations.sortBy(t => (t.discontinuity.value, t.roadType.value)))
+    Delta(project.startDate, terminations.sortBy(t => (t.discontinuity.value, t.roadType.value)), newCreations.sortBy(t => (t.discontinuity.value, t.roadType.value)))
   }
 
   private def findTerminations(projectLinks: Map[RoadPart, Seq[ProjectLink]], currentAddresses: Map[RoadPart, Seq[RoadAddress]]) = {
@@ -36,6 +38,10 @@ object ProjectDeltaCalculator {
     }
     terminations.filterNot(t => t._2.isEmpty).values.foreach(validateTerminations)
     terminations.values.flatten.toSeq
+  }
+
+  private def findNewCreations(projectLinks: Map[RoadPart, Seq[ProjectLink]]) = {
+    projectLinks.flatMap(_._2).filter(_.status == LinkStatus.New).asInstanceOf[Seq[ProjectLink]]
   }
 
   private def validateTerminations(roadAddresses: Seq[RoadAddress]) = {
@@ -198,7 +204,7 @@ object ProjectDeltaCalculator {
   }
 }
 
-case class Delta(startDate: DateTime, terminations: Seq[RoadAddress])
+case class Delta(startDate: DateTime, terminations: Seq[RoadAddress], newRoads: Seq[ProjectLink] = Seq.empty[ProjectLink])
 case class RoadPart(roadNumber: Long, roadPartNumber: Long)
 case class RoadAddressSection(roadNumber: Long, roadPartNumberStart: Long, roadPartNumberEnd: Long, track: Track,
                               startMAddr: Long, endMAddr: Long, discontinuity: Discontinuity, roadType: RoadType) {
