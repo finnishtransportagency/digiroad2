@@ -51,12 +51,18 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
       HttpClientBuilder.create().build())
   }
 
-  lazy val litRoadImporterOperations: LitRoadImporterOperations = {
-    new LitRoadImporterOperations()
+  lazy val tierekisteriTrafficSignAsset: TierekisteriTrafficSignAssetClient = {
+    new TierekisteriTrafficSignAssetClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+      HttpClientBuilder.create().build())
   }
 
-  lazy val roadWidthImporterOperations: RoadWidthImporterOperations = {
-    new RoadWidthImporterOperations()
+  lazy val litRoadImporterOperations: LitRoadTierekisteriImporter = {
+    new LitRoadTierekisteriImporter()
+  }
+
+  lazy val roadWidthImporterOperations: RoadWidthTierekisteriImporter = {
+    new RoadWidthTierekisteriImporter()
   }
 
   lazy val connectedToTierekisteri = testConnection
@@ -500,7 +506,28 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
     assets.map(_.assetValue) should be (1150)
   }
 
-  test("road width assets get values works on single part") {
+  test("Fetch Traffic Signs from Tierekisteri by fieldCode, roadNumber") {
+    assume(testConnection)
+    val assets = tierekisteriTrafficSignAsset.fetchActiveAssetData(45)
+
+    assets.size should not be (0)
+  }
+
+  test("Fetch Traffic Signs from Tierekisteri by fieldCode, roadNumber, roadPartNumber") {
+    assume(testConnection)
+    val assets = tierekisteriTrafficSignAsset.fetchActiveAssetData(45, 1)
+
+    assets.size should not be (0)
+  }
+
+  test("Fetch Traffic Signs from Tierekisteri by fieldCode, roadNumber, roadPartNumber, startDistance") {
+    assume(testConnection)
+    val assets = tierekisteriTrafficSignAsset.fetchActiveAssetData(45, 1, 1)
+
+    assets.size should not be (0)
+  }
+
+  test("road with assets get values works on single part") {
     val assetValue = 10
     val trl = TierekisteriRoadWidthData(4L, 203L, 203L, Track.RightSide, 3184L, 6584L, assetValue)
     val sections = roadWidthImporterOperations.getRoadAddressSections(trl)

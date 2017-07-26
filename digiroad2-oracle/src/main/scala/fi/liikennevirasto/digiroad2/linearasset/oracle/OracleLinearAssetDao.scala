@@ -1173,39 +1173,6 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     sqlu"update asset set valid_to = sysdate - 1/86400 where asset_type_id = $typeId".execute
   }
 
-  /**
-    * When invoked will expire assets by Id.
-    * It is required that the invoker takes care of the transaction.
-    *
-    * @param id Represets the id of the Linear Asset
-    */
-  def expireAssetsById (id: Long): Unit = {
-    sqlu"update asset set valid_to = sysdate - 1/86400 where id = $id".execute
-  }
-
-  def expireAssetByTypeAndLinkId(typeId: Long, linkIds: Seq[Long]): Unit = {
-    MassQuery.withIds(linkIds.toSet) { idTableName =>
-      sqlu"""
-         update asset set valid_to = sysdate - 1/86400 where id = (
-          select id
-          from asset a
-          join asset_link al on al.asset_id = a.id
-          join lrm_position lrm on lrm.id = al.position_id
-          join  #$idTableName i on i.id = pos.link_id
-          where a.asset_type_id = $typeId AND (a.valid_to IS NULL OR a.valid_to >= CURRENT_TIMESTAMP ) AND a.floating = 0
-         )
-      """.execute
-    }
-  }
-
-  def expireAssetsBySection(assetType: Int, linkId: Long): Unit = {
-    sqlu"""update asset set valid_to = sysdate
-           where ( asset.id in ( select a.id from asset a
-              join asset_link al on (a.id = al.asset_id)
-              join lrm_position lp on (al.position_id = lp.id)
-              where (a.asset_type_id = $assetType and  lp.link_id = $linkId)))""".execute
-  }
-
   def getIds (assetType: Int, linkId: Long): Seq[Long] = {
     val ids = sql""" select a.id from asset a
               join asset_link al on (a.id = al.asset_id)
