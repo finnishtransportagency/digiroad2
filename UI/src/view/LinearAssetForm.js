@@ -129,7 +129,7 @@
     var selectedAssets = _.filter(selectedLinearAsset.get(), function (selected) {
       return editConstrains(selected);
     });
-    return !_.isEmpty(selectedAssets)
+    return !_.isEmpty(selectedAssets);
   }
 
 })(this);
