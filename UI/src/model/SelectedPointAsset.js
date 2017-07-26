@@ -4,7 +4,6 @@
     var dirty = false;
     var originalAsset;
     var endPointName = assetName;
-    var modifiedProperties = [];
     return {
       open: open,
       getId: getId,
