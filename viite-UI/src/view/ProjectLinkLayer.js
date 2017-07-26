@@ -158,7 +158,7 @@
       });
       selectedProjectLinkProperty.clean();
       $('.wrapper').remove();
-      $('#actionButtons').empty();
+      $('#actionButtons').html('<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button><button disabled id ="send-button" class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button>');
       if (!_.isUndefined(selection))
         selectedProjectLinkProperty.open(selection.projectLinkData.linkId, true);
     });
@@ -374,7 +374,7 @@ var isDefined=function(variable) {
         vectorSource.clear();
         eventbus.trigger('map:clearLayers');
       } else if (mapState.selectedLayer == layerName){
-        projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1, undefined);
+        projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1, undefined, projectCollection.getPublishableStatus());
         handleRoadsVisibility();
       }
     };
@@ -458,12 +458,11 @@ var isDefined=function(variable) {
     };
 
     eventbus.on('projectLink:projectLinksCreateSuccess', function () {
-      projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1, undefined);
-
+      projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1, undefined, projectCollection.getPublishableStatus());
     });
 
     eventbus.on('changeProjectDirection:clicked', function () {
-      projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1, undefined);
+      projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1, undefined, projectCollection.getPublishableStatus());
     });
 
     var redraw = function(){

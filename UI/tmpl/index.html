@@ -35,7 +35,11 @@
 </header>
 <div class="container">
     <div id="contentMap">
-      <div id="mapdiv"></div>
+      <div id="mapdiv">
+          <div id="popup" class="ol-popup">
+              <div id="popup-content"></div>
+          </div>
+      </div>
       <div class="crosshair crosshair-center"></div>
       <div class="crosshair crosshair-top"></div>
       <div class="crosshair crosshair-bottom"></div>
@@ -70,6 +74,7 @@
 <script type="text/javascript" src="src/utils/environment-utils.js"></script>
 <script type="text/javascript" src="src/utils/zoom-levels.js"></script>
 <script type="text/javascript" src="src/utils/validity-directions.js"></script>
+<script type="text/javascript" src="src/utils/RoadAddressInfoPopup.js"></script>
 <script type="text/javascript" src="src/view/TileMapCollection.js"></script>
 <script type="text/javascript" src="src/view/Layer.js"></script>
 <script type="text/javascript" src="src/view/RoadLayerSelectionStyle.js"></script>
@@ -93,11 +98,13 @@
 <script type="text/javascript" src="src/view/SpeedLimitLayer.js"></script>
 <script type="text/javascript" src="src/view/AssetStyle.js"></script>
 <script type="text/javascript" src="src/view/WinterSpeedLimitStyle.js"></script>
+<script type="text/javascript" src="src/view/MaintenanceRoadStyle.js"></script>
 <script type="text/javascript" src="src/view/SpeedLimitMassUpdateDialog.js"></script>
 <script type="text/javascript" src="src/view/ManoeuvreStyle.js"></script>
 <script type="text/javascript" src="src/view/ManoeuvreLayer.js"></script>
 <script type="text/javascript" src="src/view/AssetLabel.js"></script>
 <script type="text/javascript" src="src/view/LinearAssetLabel.js"></script>
+<script type="text/javascript" src="src/view/ServiceRoadLabel.js"></script>
 <script type="text/javascript" src="src/view/LinearAssetLayer.js"></script>
 <script type="text/javascript" src="src/view/PointAssetLayer.js"></script>
 <script type="text/javascript" src="src/view/LinkPropertyLayer.js"></script>

@@ -2,6 +2,7 @@
   root.RoadAddressProjectEditForm = function(projectCollection, selectedProjectLinkProperty, projectLinkLayer, projectChangeTable) {
     var currentProject = false;
     var selectedProjectLink = false;
+    var backend=new Backend();
     var staticField = function(labelText, dataField) {
       var field;
       field = '<div class="form-group">' +
@@ -33,19 +34,15 @@
 
     var sendRoadAddressChangeButton = function() {
 
-      $('#information-content').html('' +
-        '<div class="form form-horizontal">' +
-        '<p>' + 'Validointi ok. Voit tehdä tieosoitteenmuutosilmoituksen' + '<br>' +
-        'tai jatkaa muokkauksia.' + '</p>' +
-        '</div>');
-
       return '<div class="project-form form-controls">' +
-        '<button class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button></div>';
+        '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
+        '<button id ="send-button" class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button></div>';
     };
 
     var showProjectChangeButton = function() {
       return '<div class="project-form form-controls">' +
-        '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button></div>';
+        '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
+        '<button disabled id ="send-button" class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button></div>';
     };
 
     var actionButtons = function() {
@@ -121,9 +118,22 @@
         '<div><label></label></div><div><label style = "margin-top: 50px">TIEOSOITTEEN TIEDOT</label></div>' +
         addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('AJR')+ addSmallLabel('ELY')  + addSmallLabel('JATKUU')+
         '</div>' +
-        '<div class="form-group new-road-address" hidden>'+ addSmallInputNumber('tie',(selectedProjectLink[0].roadNumber !== 0 ? selectedProjectLink[0].roadNumber : '')) + addSmallInputNumber('osa',(selectedProjectLink[0].roadPartNumber !== 0 ? selectedProjectLink[0].roadPartNumber : '')) + addSmallInputNumber('ajr',(selectedProjectLink[0].trackCode !== 99 ? selectedProjectLink[0].trackCode : '')) + addSmallInputNumberDisabled('ely', selectedProjectLink[0].elyCode) +addSelect() +
+        '<div class="form-group new-road-address" id="new-address-input1" hidden>'+ addSmallInputNumber('tie',(selectedProjectLink[0].roadNumber !== 0 ? selectedProjectLink[0].roadNumber : '')) + addSmallInputNumber('osa',(selectedProjectLink[0].roadPartNumber !== 0 ? selectedProjectLink[0].roadPartNumber : '')) + addSmallInputNumber('ajr',(selectedProjectLink[0].trackCode !== 99 ? selectedProjectLink[0].trackCode : '')) + addSmallInputNumberDisabled('ely', selectedProjectLink[0].elyCode) +addSelect() +
         '</div>';
     };
+
+    function replaceAddressInfo()
+    {
+      if (selectedProjectLink[0].roadNumber === 0 && selectedProjectLink[0].roadPartNumber === 0 && selectedProjectLink[0].trackCode === 99 )
+      {
+        backend.getNonOverridenVVHValuesForLink(selectedProjectLink[0].linkId, function (response) {
+          if (response.success) {
+            $('#tie').val(response.roadNumber);
+            $('#osa').val(response.roadPartNumber);
+          }
+        });
+      }
+    }
 
     var addSelect = function(){
       return '<select class="form-select-control" id="DiscontinuityDropdown" size="1">'+
@@ -167,7 +177,11 @@
         '<header>' +
         titleWithProjectName(project.name) +
         '</header>' +
-        '<footer></footer>');
+        '<footer>'+showProjectChangeButton()+'</footer>');
+    };
+
+    var isProjectPublishable = function(){
+      return projectCollection.getPublishableStatus();
     };
 
     var checkInputs = function () {
@@ -202,17 +216,8 @@
         currentProject = projectCollection.getCurrentProject();
         clearInformationContent();
         rootElement.html(selectedProjectLinkTemplate(currentProject.project, options, selectedProjectLink));
+        replaceAddressInfo();
         checkInputs();
-      });
-
-      eventbus.on('roadAddressProject:publishable', function() {
-        /*
-          Project is publishable, remove spinner here to make sure
-          every call from backend and reDraw() is finished before enable send to TR
-        */
-        var projectChangesButton = showProjectChangeButton();
-        rootElement.append(projectChangesButton);
-        applicationModel.removeSpinner();
       });
 
       eventbus.on('roadAddress:projectFailed', function() {
@@ -330,10 +335,20 @@
       });
 
       rootElement.on('click', '.project-form button.show-changes', function(){
-        $(this).hide();
+        $(this).empty();
         projectChangeTable.show();
         var publishButton = sendRoadAddressChangeButton();
-        rootElement.append(publishButton);
+        var projectChangesButton = showProjectChangeButton();
+        if(isProjectPublishable()) {
+          $('#information-content').html('' +
+            '<div class="form form-horizontal">' +
+            '<p>' + 'Validointi ok. Voit tehdä tieosoitteenmuutosilmoituksen' + '<br>' +
+            'tai jatkaa muokkauksia.' + '</p>' +
+            '</div>');
+          $('footer').html(publishButton);
+        }
+        else
+          $('footer').html(projectChangesButton);
       });
 
       rootElement.on('keyup','.form-control.small-input', function () {

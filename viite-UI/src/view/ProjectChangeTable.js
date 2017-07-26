@@ -122,6 +122,8 @@
         $('[id=change-table-borders-target]').height('180px');
         $('[id=change-table-borders-source]').height('180px');
         $('[id=change-table-borders-changetype]').height('180px');
+        $('#information-content').empty();
+        $('#send-button').attr('disabled', true);
         hide();
       });
     }

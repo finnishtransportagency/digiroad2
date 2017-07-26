@@ -270,6 +270,29 @@
   }
 }
 
+.service-road-legend {
+  .legend-entry {
+    @labelWidth: 25px;
+    .label {
+      position: relative;
+      display: inline-block;
+      margin-bottom: 0;
+    }
+
+    .service-road-0 { .linear-asset-legend-entry(@service-road-0, @linear-asset-node-5); }
+    .service-road-1 { .linear-asset-legend-entry(@service-road-1, @linear-asset-node-3); }
+    .service-road-2 {  .linear-asset-legend-entry(@service-road-2, @linear-asset-node-2); }
+    .service-road-3 {  .linear-asset-legend-entry(@service-road-3, @linear-asset-node-1); }
+    .service-road-4 {  .linear-asset-legend-entry(@service-road-4, @linear-asset-node-4); }
+  }
+  .check-box-container{
+    input {
+      position: relative;
+      top: 2px;
+    }
+  }
+}
+
 .functional-class-legend {
   .legend-entry {
     @labelWidth: 25px;
