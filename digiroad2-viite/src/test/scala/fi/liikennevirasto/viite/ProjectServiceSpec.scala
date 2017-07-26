@@ -682,7 +682,6 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
   }
 
   test("parsePrefillData no-link from vvh") {
-
     projectService.parsePrefillData(Seq.empty[VVHRoadlink]) should be (Left("Link could not be found in VVH"))
   }
 

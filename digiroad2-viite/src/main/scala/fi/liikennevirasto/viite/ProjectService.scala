@@ -86,7 +86,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   def fetchPrefillfromVVH(linkId: Long): Either[String,PreFillInfo] = {
     parsePrefillData(roadLinkService.fetchVVHRoadlinks(Set(linkId)))
-
   }
 
   def parsePrefillData(vvhRoadLinks:Seq[VVHRoadlink]): Either[String,PreFillInfo] = {
@@ -102,8 +101,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       }
     }
   }
-
-
 
   def checkReservability(roadNumber: Long, startPart: Long, endPart: Long): Either[String, Seq[ReservedRoadPart]] = {
     withDynTransaction {
@@ -146,7 +143,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-
   /**
     * Used when adding road address that does not have previous address
     */
@@ -187,6 +183,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         case None => "Projektikoodilla ei löytynyt projektia"
       }
   }
+
   def changeDirection(projectLink:Seq[Long]): String = {
     try {
       withDynTransaction {
