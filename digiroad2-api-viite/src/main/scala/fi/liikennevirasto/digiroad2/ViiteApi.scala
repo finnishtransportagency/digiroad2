@@ -110,7 +110,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  get("/roadlinkfromvvh/:linkId") {
+  get("/roadlinks/project/prefillfromvvh/:linkId") {
     val linkId = params("linkId").toLong
     projectService.fetchPrefillfromVVH(linkId) match {
       case Right(preFillInfo) => {

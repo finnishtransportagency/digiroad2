@@ -3,6 +3,7 @@ package fi.liikennevirasto.viite
 import java.net.ConnectException
 import java.util.Properties
 
+import fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
@@ -678,5 +679,22 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       val errorMessage=  projectService.changeDirection(links.map(l => l.id))
       errorMessage should be("")
     }
+  }
+
+  test("parsePrefillData no-link from vvh") {
+
+    projectService.parsePrefillData(Seq.empty[VVHRoadlink]) should be (Left("Link could not be found in VVH"))
+  }
+
+  test("parsePrefillData contains correct info") {
+    val attributes1 = Map("ROADNUMBER" -> BigInt(100), "ROADPARTNUMBER" -> BigInt(100))
+    val newRoadLink1 = VVHRoadlink(1, 2, List(Point(0.0, 0.0), Point(20.0, 0.0)), AdministrativeClass.apply(1),TrafficDirection.BothDirections, FeatureClass.DrivePath, None, attributes1)
+    projectService.parsePrefillData(Seq(newRoadLink1)) should be (Right(PreFillInfo(100,100)))
+  }
+
+  test("parsePrefillData incomplete data") {
+    val attributes1 = Map("ROADNUMBER" -> BigInt(2))
+    val newRoadLink1 = VVHRoadlink(1, 2, List(Point(0.0, 0.0), Point(20.0, 0.0)), AdministrativeClass.apply(1),TrafficDirection.BothDirections, FeatureClass.DrivePath, None, attributes1)
+    projectService.parsePrefillData(Seq(newRoadLink1)) should be (Left("Link does not contain valid prefill info"))
   }
 }

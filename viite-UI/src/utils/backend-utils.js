@@ -47,7 +47,7 @@
     }, 1000);
 
     this.getNonOverridenVVHValuesForLink = _.throttle(function(linkId, callback) {
-      return $.getJSON('api/viite/roadlinkfromvvh/' + linkId, function(data) {
+      return $.getJSON('api/viite/roadlinks/project/prefillfromvvh/' + linkId, function(data) {
         return _.isFunction(callback) && callback(data);
       });
     }, 1000);

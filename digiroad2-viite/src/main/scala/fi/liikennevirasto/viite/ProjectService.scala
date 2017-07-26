@@ -20,6 +20,7 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import scala.util.Random
 import scala.util.control.NonFatal
+case class PreFillInfo(RoadNumber:BigInt, RoadPart:BigInt)
 
 class ProjectService(roadAddressService: RoadAddressService, roadLinkService: RoadLinkService, eventbus: DigiroadEventBus) {
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
@@ -27,7 +28,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
 
   val logger = LoggerFactory.getLogger(getClass)
-  case class PreFillInfo(RoadNumber:BigInt, RoadPart:BigInt)
   val allowedSideCodes = List(SideCode.TowardsDigitizing, SideCode.AgainstDigitizing)
 
   /**
@@ -85,10 +85,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def fetchPrefillfromVVH(linkId: Long): Either[String,PreFillInfo] = {
-    val vvhRoadLinks = roadLinkService.fetchVVHRoadlinks(Set(linkId))
+    parsePrefillData(roadLinkService.fetchVVHRoadlinks(Set(linkId)))
+
+  }
+
+  def parsePrefillData(vvhRoadLinks:Seq[VVHRoadlink]): Either[String,PreFillInfo] = {
     if (vvhRoadLinks.isEmpty) {
-      Left("Link could not be found in VVH")
-    }
+      Left("Link could not be found in VVH")    }
     else {
       val vvhlink = vvhRoadLinks.head
       (vvhlink.attributes.get("ROADNUMBER"), vvhlink.attributes.get("ROADPARTNUMBER")) match {
@@ -99,6 +102,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       }
     }
   }
+
+
 
   def checkReservability(roadNumber: Long, startPart: Long, endPart: Long): Either[String, Seq[ReservedRoadPart]] = {
     withDynTransaction {
