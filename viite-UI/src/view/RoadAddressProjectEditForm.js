@@ -34,19 +34,15 @@
 
     var sendRoadAddressChangeButton = function() {
 
-      $('#information-content').html('' +
-        '<div class="form form-horizontal">' +
-        '<p>' + 'Validointi ok. Voit tehdä tieosoitteenmuutosilmoituksen' + '<br>' +
-        'tai jatkaa muokkauksia.' + '</p>' +
-        '</div>');
-
       return '<div class="project-form form-controls">' +
-        '<button class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button></div>';
+        '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
+        '<button id ="send-button" class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button></div>';
     };
 
     var showProjectChangeButton = function() {
       return '<div class="project-form form-controls">' +
-        '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button></div>';
+        '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
+        '<button disabled id ="send-button" class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button></div>';
     };
 
     var actionButtons = function() {
@@ -181,7 +177,11 @@
         '<header>' +
         titleWithProjectName(project.name) +
         '</header>' +
-        '<footer></footer>');
+        '<footer>'+showProjectChangeButton()+'</footer>');
+    };
+
+    var isProjectPublishable = function(){
+      return projectCollection.getPublishableStatus();
     };
 
     var checkInputs = function () {
@@ -218,16 +218,6 @@
         rootElement.html(selectedProjectLinkTemplate(currentProject.project, options, selectedProjectLink));
         replaceAddressInfo();
         checkInputs();
-      });
-
-      eventbus.on('roadAddressProject:publishable', function() {
-        /*
-          Project is publishable, remove spinner here to make sure
-          every call from backend and reDraw() is finished before enable send to TR
-        */
-        var projectChangesButton = showProjectChangeButton();
-        rootElement.append(projectChangesButton);
-        applicationModel.removeSpinner();
       });
 
       eventbus.on('roadAddress:projectFailed', function() {
@@ -345,10 +335,20 @@
       });
 
       rootElement.on('click', '.project-form button.show-changes', function(){
-        $(this).hide();
+        $(this).empty();
         projectChangeTable.show();
         var publishButton = sendRoadAddressChangeButton();
-        rootElement.append(publishButton);
+        var projectChangesButton = showProjectChangeButton();
+        if(isProjectPublishable()) {
+          $('#information-content').html('' +
+            '<div class="form form-horizontal">' +
+            '<p>' + 'Validointi ok. Voit tehdä tieosoitteenmuutosilmoituksen' + '<br>' +
+            'tai jatkaa muokkauksia.' + '</p>' +
+            '</div>');
+          $('footer').html(publishButton);
+        }
+        else
+          $('footer').html(projectChangesButton);
       });
 
       rootElement.on('keyup','.form-control.small-input', function () {

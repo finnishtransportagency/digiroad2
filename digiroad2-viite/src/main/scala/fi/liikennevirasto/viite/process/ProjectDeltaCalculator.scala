@@ -23,9 +23,6 @@ object ProjectDeltaCalculator {
     val projectLinks = ProjectDAO.getProjectLinks(projectId).groupBy(l => RoadPart(l.roadNumber,l.roadPartNumber))
     val currentAddresses = projectLinks.keySet.map(r => r -> RoadAddressDAO.fetchByRoadPart(r.roadNumber, r.roadPartNumber, true)).toMap
     val terminations = findTerminations(projectLinks, currentAddresses)
-    if (terminations.size != currentAddresses.values.flatten.size)
-      throw new RoadAddressException(s"Road address count did not match: ${terminations.size} terminated, ${currentAddresses.values.flatten.size} addresses found")
-    // TODO: Find transfers, etc etc
 
     Delta(project.startDate, terminations.sortBy(t => (t.discontinuity.value, t.roadType.value)))
   }
