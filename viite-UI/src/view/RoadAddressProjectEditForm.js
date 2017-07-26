@@ -2,6 +2,7 @@
   root.RoadAddressProjectEditForm = function(projectCollection, selectedProjectLinkProperty, projectLinkLayer, projectChangeTable) {
     var currentProject = false;
     var selectedProjectLink = false;
+    var backend=new Backend();
     var staticField = function(labelText, dataField) {
       var field;
       field = '<div class="form-group">' +
@@ -121,9 +122,22 @@
         '<div><label></label></div><div><label style = "margin-top: 50px">TIEOSOITTEEN TIEDOT</label></div>' +
         addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('AJR')+ addSmallLabel('ELY')  + addSmallLabel('JATKUU')+
         '</div>' +
-        '<div class="form-group new-road-address" hidden>'+ addSmallInputNumber('tie',(selectedProjectLink[0].roadNumber !== 0 ? selectedProjectLink[0].roadNumber : '')) + addSmallInputNumber('osa',(selectedProjectLink[0].roadPartNumber !== 0 ? selectedProjectLink[0].roadPartNumber : '')) + addSmallInputNumber('ajr',(selectedProjectLink[0].trackCode !== 99 ? selectedProjectLink[0].trackCode : '')) + addSmallInputNumberDisabled('ely', selectedProjectLink[0].elyCode) +addSelect() +
+        '<div class="form-group new-road-address" id="new-address-input1" hidden>'+ addSmallInputNumber('tie',(selectedProjectLink[0].roadNumber !== 0 ? selectedProjectLink[0].roadNumber : '')) + addSmallInputNumber('osa',(selectedProjectLink[0].roadPartNumber !== 0 ? selectedProjectLink[0].roadPartNumber : '')) + addSmallInputNumber('ajr',(selectedProjectLink[0].trackCode !== 99 ? selectedProjectLink[0].trackCode : '')) + addSmallInputNumberDisabled('ely', selectedProjectLink[0].elyCode) +addSelect() +
         '</div>';
     };
+
+    function replaceAddressInfo()
+    {
+      if (selectedProjectLink[0].roadNumber === 0 && selectedProjectLink[0].roadPartNumber === 0 && selectedProjectLink[0].trackCode === 99 )
+      {
+        backend.getNonOverridenVVHValuesForLink(selectedProjectLink[0].linkId, function (response) {
+          if (response.success) {
+            $('#tie').val(response.roadNumber);
+            $('#osa').val(response.roadPartNumber);
+          }
+        });
+      }
+    }
 
     var addSelect = function(){
       return '<select class="form-select-control" id="DiscontinuityDropdown" size="1">'+
@@ -202,6 +216,7 @@
         currentProject = projectCollection.getCurrentProject();
         clearInformationContent();
         rootElement.html(selectedProjectLinkTemplate(currentProject.project, options, selectedProjectLink));
+        replaceAddressInfo();
         checkInputs();
       });
 

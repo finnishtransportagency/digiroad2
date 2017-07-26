@@ -115,7 +115,20 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         roadLink.length / 2.0)) ++ projectAddressLinkToApi(roadLink)
     }
     else {
-      NotFound("Road link with link ID " + linkId + " not found")
+      Map("success"->false, "reason"->("Link " + linkId + " not found"))
+    }
+  }
+
+
+  get("/roadlinks/project/prefillfromvvh/:linkId") {
+    val linkId = params("linkId").toLong
+    projectService.fetchPrefillfromVVH(linkId) match {
+      case Right(preFillInfo) => {
+        Map("success"->true,"roadNumber"->preFillInfo.RoadNumber,"roadPartNumber"->preFillInfo.RoadPart)
+      }
+      case Left(failuremessage) => {
+        Map("success"->false,"reason"->failuremessage)
+      }
     }
   }
 
@@ -442,6 +455,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   def roadAddressLinkToApi(roadAddressLink: RoadAddressLink): Map[String, Any] = {
     Map(
+      "success"->true,
       "segmentId" -> roadAddressLink.id,
       "id" -> roadAddressLink.id,
       "linkId" -> roadAddressLink.linkId,

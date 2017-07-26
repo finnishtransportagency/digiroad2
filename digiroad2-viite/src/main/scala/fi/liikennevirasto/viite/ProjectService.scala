@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
+import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, RoadLinkService, VVHRoadlink}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, RoadLinkService}
 import fi.liikennevirasto.viite.dao.CalibrationCode.{AtBeginning, AtBoth, AtEnd, No}
 import fi.liikennevirasto.viite.dao.ProjectState._
@@ -23,6 +24,7 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import scala.util.Random
 import scala.util.control.NonFatal
+case class PreFillInfo(RoadNumber:BigInt, RoadPart:BigInt)
 
 class ProjectService(roadAddressService: RoadAddressService, roadLinkService: RoadLinkService, eventbus: DigiroadEventBus) {
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
@@ -30,7 +32,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
 
   val logger = LoggerFactory.getLogger(getClass)
-
   val allowedSideCodes = List(SideCode.TowardsDigitizing, SideCode.AgainstDigitizing)
 
   /**
@@ -85,6 +86,24 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     if (roadAddressProject.id==newRoadAddressProject) return None
     withDynTransaction {
       return ProjectDAO.getRoadAddressProjectById(roadAddressProject.id)
+    }
+  }
+
+  def fetchPrefillfromVVH(linkId: Long): Either[String,PreFillInfo] = {
+    parsePrefillData(roadLinkService.fetchVVHRoadlinks(Set(linkId)))
+  }
+
+  def parsePrefillData(vvhRoadLinks:Seq[VVHRoadlink]): Either[String,PreFillInfo] = {
+    if (vvhRoadLinks.isEmpty) {
+      Left("Link could not be found in VVH")    }
+    else {
+      val vvhlink = vvhRoadLinks.head
+      (vvhlink.attributes.get("ROADNUMBER"), vvhlink.attributes.get("ROADPARTNUMBER")) match {
+        case (Some(roadnumber:BigInt), Some(roadpartnumber:BigInt)) => {
+          return Right(PreFillInfo(roadnumber,roadpartnumber))
+        }
+        case _ => return Left("Link does not contain valid prefill info")
+      }
     }
   }
 
