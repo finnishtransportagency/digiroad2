@@ -126,7 +126,7 @@
         '</div>';
     };
 
-    function replaceaddressinfo()
+    function replaceAddressInfo()
     {
       if (selectedProjectLink[0].roadNumber === 0 && selectedProjectLink[0].roadPartNumber === 0 && selectedProjectLink[0].trackCode === 99 )
       {
@@ -216,7 +216,7 @@
         currentProject = projectCollection.getCurrentProject();
         clearInformationContent();
         rootElement.html(selectedProjectLinkTemplate(currentProject.project, options, selectedProjectLink));
-        replaceaddressinfo();
+        replaceAddressInfo();
         checkInputs();
       });
 
