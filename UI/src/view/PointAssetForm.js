@@ -128,6 +128,11 @@
       selectedAsset.set({ services: newServices });
     });
 
+    rootElement.find('.form-traffic-sign select').on('change', function (event) {
+      var eventTarget = $(event.currentTarget);
+      selectedAsset.set({trafficSign: parseInt(eventTarget.val(), 10)});
+    });
+
     rootElement.find('.form-service').on('change', '.select-service-type-extension', function(event) {
       var serviceId = parseInt($(event.currentTarget).data('service-id'), 10);
       var newTypeExtension = parseInt($(event.currentTarget).val(), 10);
@@ -237,6 +242,67 @@
     ]
   };
 
+  var signTypes = {
+    1: 'Nopeusrajoitus',
+    2: 'Nopeusrajoitus Päättyy',
+    3: 'Nopeusrajoitusalue',
+    4: 'Nopeusrajoitusalue Päättyy',
+    5: 'Taajama',
+    6: 'Taajama Päättyy',
+    7: 'Suojatie',
+    8: 'Suurin Sallittu Pituus',
+    9: 'Varoitus',
+    10: 'Vasemmalle Kääntyminen Kielletty',
+    11: 'Oikealle Kääntyminen Kielletty',
+    12: 'U-Käännös Kielletty'
+  };
+
+  var sortAndFilterTrafficSignProperties = function(properties) {
+    var propertyOrdering = [
+      'liikennemerkki_tyyppi',
+      'liikennemerkki_arvo',
+      'liikennemerkki_lisatieto'];
+
+    return _.sortBy(properties, function(property) {
+      return _.indexOf(propertyOrdering, property.publicId);
+    }).filter(function(property){
+      return _.indexOf(propertyOrdering, property.publicId) >= 0;
+    });
+  };
+
+  var textHandler = function (property) {
+    var propertyValue = (property.values.length === 0) ? '' : property.values[0].propertyValue;
+    return '' +
+        '    <div class="form-group editable form-traffic-sign">' +
+        '        <label class="control-label">' + property.localizedName + '</label>' +
+        '        <p class="form-control-static">' + (propertyValue || '–') + '</p>' +
+        '        <input type="text" class="form-control" value="' + propertyValue + '">' +
+        '    </div>';
+  };
+
+  var singleChoiceHandler = function (property) {
+    var propertyValue = (property.values.length === 0) ? '' : property.values[0].propertyValue;
+    return '' +
+        '    <div class="form-group editable form-traffic-sign">' +
+        '      <label class="control-label">' + property.localizedName + '</label>' +
+        '      <p class="form-control-static">' + signTypes[(propertyValue || '–')] + '</p>' +
+        '      <select class="form-control" style="display:none">  ' +
+        '        <option value="1" ' + (propertyValue === 1 ? 'selected' : '') + '>Nopeusrajoitus</option>' +
+        '        <option value="2" ' + (propertyValue === 2 ? 'selected' : '') + '>Nopeusrajoitus Päättyy</option>' +
+        '        <option value="3" ' + (propertyValue === 3 ? 'selected' : '') + '>Nopeusrajoitusalue</option>' +
+        '        <option value="4" ' + (propertyValue === 4 ? 'selected' : '') + '>Nopeusrajoitusalue Päättyy</option>' +
+        '        <option value="5" ' + (propertyValue === 5 ? 'selected' : '') + '>Taajama</option>' +
+        '        <option value="6" ' + (propertyValue === 6 ? 'selected' : '') + '>Taajama Päättyy</option>' +
+        '        <option value="7" ' + (propertyValue === 7 ? 'selected' : '') + '>Suojatie</option>' +
+        '        <option value="8" ' + (propertyValue === 8 ? 'selected' : '') + '>Suurin Sallittu Pituus</option>' +
+        '        <option value="9" ' + (propertyValue === 9 ? 'selected' : '') + '>Varoitus</option>' +
+        '        <option value="10" ' + (propertyValue === 10 ? 'selected' : '') + '>Vasemmalle Kääntyminen Kielletty</option>' +
+        '        <option value="11" ' + (propertyValue === 11 ? 'selected' : '') + '>Oikealle Kääntyminen Kielletty</option>' +
+        '        <option value="12" ' + (propertyValue === 12 ? 'selected' : '') + '>U-Käännös Kielletty</option>' +
+        '      </select>' +
+        '    </div>';
+  };
+
   function renderValueElement(asset) {
     if (asset.obstacleType) {
       return '' +
@@ -284,12 +350,27 @@
         .join('');
 
       return '' +
-        '    <div class="form-group editable form-service">' +
-        '      <ul>' +
-               services +
-               renderNewServiceElement() +
-        '      </ul>' +
-        '    </div>';
+          '    <div class="form-group editable form-service">' +
+          '      <ul>' +
+          services +
+          renderNewServiceElement() +
+          '      </ul>' +
+          '    </div>';
+    } else if (asset.propertyData) {
+      var allTrafficSignProperties = asset.propertyData;
+      var trafficSignSortedProperties = sortAndFilterTrafficSignProperties(allTrafficSignProperties);
+
+      var components = _.map(trafficSignSortedProperties, function (feature) {
+        feature.localizedName = window.localizedStrings[feature.publicId];
+        var propertyType = feature.propertyType;
+
+        if (propertyType === "text") {
+          return textHandler(feature);
+        } else if (propertyType === "single_choice") {
+          return singleChoiceHandler(feature);
+        }
+      });
+      return '' + components;
     } else {
       return '';
     }

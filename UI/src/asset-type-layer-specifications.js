@@ -527,7 +527,11 @@
       layerName: 'trafficSigns',
       title: 'Liikennemerkit',
       allowComplementaryLinks: true,
-      newAsset: {  },
+      newAsset: { propertyData: [
+        {'name': 'Tyyppi', 'propertyType': 'single_choice', 'publicId': "liikennemerkki_tyyppi", values: []},
+        {'name': "Arvo", 'propertyType': 'text', 'publicId': "liikennemerkki_arvo", values: []},
+        {'name': "Lisatieto", 'propertyType': 'text', 'publicId': "liikennemerkki_lisatieto", values: []}
+      ]},
       formLabels: {
         singleFloatingAssetLabel: 'liikennemerkin',
         manyFloatingAssetsLabel: 'liikennemerkit',
@@ -535,7 +539,8 @@
       },
         editConstrains : function(selectedAsset) {
         //check if administrative class is State
-        return selectedAsset.getAdministrativeClass() === "State";
+        //return selectedAsset.getAdministrativeClass() === "State";
+          return false;
       }
     }
   ];
