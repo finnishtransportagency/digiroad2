@@ -8,6 +8,50 @@ import fi.liikennevirasto.digiroad2.user.User
 
 case class IncomingTrafficSign(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimpleProperty]) extends IncomingPointAsset
 
+sealed trait TrafficSignTypeGroup {
+  def value: Int
+}
+object TrafficSignTypeGroup {
+  val values = Set(Unknown, SpeedLimits, PedestrianCrossing, MaximumRestrictions, GeneralWarningSigns, TurningRestrictions)
+
+  def apply(intValue: Int): TrafficSignTypeGroup = {
+    values.find(_.value == intValue).getOrElse(Unknown)
+  }
+
+  case object SpeedLimits extends TrafficSignTypeGroup { def value = 1  }
+  case object PedestrianCrossing extends TrafficSignTypeGroup { def value = 2 }
+  case object MaximumRestrictions extends TrafficSignTypeGroup { def value = 3 }
+  case object GeneralWarningSigns extends TrafficSignTypeGroup { def value = 4 }
+  case object TurningRestrictions extends TrafficSignTypeGroup { def value = 5 }
+  case object Unknown extends TrafficSignTypeGroup { def value = 99 }
+}
+
+sealed trait TrafficSignType {
+  def value: Int
+  def group: TrafficSignTypeGroup
+}
+object TrafficSignType {
+  val values = Set(Unknown, SpeedLimit, EndSpeedLimit, SpeedLimitZone, EndSpeedLimitZone, UrbanArea, EndUrbanArea, PedestrianCrossing, MaximumLength, Warning, NoLeftTurn, NoRightTurn, NoUTurn)
+
+  def apply(intValue: Int): TrafficSignType = {
+    values.find(_.value == intValue).getOrElse(Unknown)
+  }
+
+  case object SpeedLimit extends TrafficSignType { def value = 1;  def group = TrafficSignTypeGroup.SpeedLimits; }
+  case object EndSpeedLimit extends TrafficSignType { def value = 2;  def group = TrafficSignTypeGroup.SpeedLimits; }
+  case object SpeedLimitZone extends TrafficSignType { def value = 3;  def group = TrafficSignTypeGroup.SpeedLimits; }
+  case object EndSpeedLimitZone extends TrafficSignType { def value = 4;  def group = TrafficSignTypeGroup.SpeedLimits; }
+  case object UrbanArea extends TrafficSignType { def value = 5;  def group = TrafficSignTypeGroup.SpeedLimits; }
+  case object EndUrbanArea extends TrafficSignType { def value = 6;  def group = TrafficSignTypeGroup.SpeedLimits; }
+  case object PedestrianCrossing extends TrafficSignType { def value = 7;  def group = TrafficSignTypeGroup.PedestrianCrossing; }
+  case object MaximumLength extends TrafficSignType { def value = 8;  def group = TrafficSignTypeGroup.MaximumRestrictions; }
+  case object Warning extends TrafficSignType { def value = 9;  def group = TrafficSignTypeGroup.GeneralWarningSigns; }
+  case object NoLeftTurn extends TrafficSignType { def value = 10;  def group = TrafficSignTypeGroup.TurningRestrictions; }
+  case object NoRightTurn extends TrafficSignType { def value = 11;  def group = TrafficSignTypeGroup.TurningRestrictions; }
+  case object NoUTurn extends TrafficSignType { def value = 12;  def group = TrafficSignTypeGroup.TurningRestrictions; }
+  case object Unknown extends TrafficSignType { def value = 99;  def group = TrafficSignTypeGroup.Unknown; }
+}
+
 class TrafficSignService(val roadLinkService: RoadLinkService) extends PointAssetOperations {
   type IncomingAsset = IncomingTrafficSign
   type PersistedAsset = PersistedTrafficSign
