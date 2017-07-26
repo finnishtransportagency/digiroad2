@@ -463,7 +463,7 @@ Projektitilassa vain keltaisella n&auml;kyvi&auml;, projektiin varattuja tieosia
 
 _Projektissa muokattavissa olevat varatut tieosat n&auml;kyv&auml;t kartalla keltaisella v&auml;rill&auml;. Projektin nimi on "Tie 14967 osa 1 lakkautus", joka n&auml;kyy oikeassa yl&auml;kulmassa._
 
-Kun keltaista, muokattavaa kohdetta klikkaa kartala, muuttuu valittu osuus vihre&auml;ksi ja tulee oikeaan laitaan alasvetovalikko, josta voi valita kohteelle teht&auml;v&auml;n toimenpiteen (esim. lakkautus). Kerran klikkaamalla valitaan kartalta homogeeninen jakso, tuplaklikkaus valitsee yhden tieosoitesegmentin verran (tielinkin mittainen osuus).
+Kun keltaista, muokattavaa kohdetta klikkaa kartalla, muuttuu valittu osuus vihre&auml;ksi ja tulee oikeaan laitaan alasvetovalikko, josta voi valita kohteelle teht&auml;v&auml;n toimenpiteen (esim. lakkautus). Kerran klikkaamalla valitaan kartalta homogeeninen jakso, tuplaklikkaus valitsee yhden tieosoitesegmentin verran (tielinkin mittainen osuus).
 
 ![Valittu kohde](k37.JPG)
 
@@ -480,7 +480,38 @@ Muutokset tallennetaan oikean alakulman Tallenna-painikkeesta. Ennen tallennusta
 11.12 Uusi
 --------------------------
 
-Toimenpiteell&auml; m&auml;&auml;ritet&auml;&auml;n uusi tieosoite tieosoitteettomille linkeille. Tieosoitteettomia harmaita linkkej&auml; voi valita kerta- tai tuplaklikkauksella kuten muitakin tielinkkej&auml;. Tuplaklikkaus valitsee yhden tielinkin. Kertaklikkaus valitsee homogeenisen jakson jossa k&auml;ytet&auml;&auml;n VVH:n tienumeron ja tieosanumeroa. Tienumeron tai tieosanumeron puuttuessa valinnassa k&auml;ytet&auml;&auml;n tienime&auml;.
+Toimenpiteell&auml; m&auml;&auml;ritet&auml;&auml;n uusi tieosoite tieosoitteettomille linkeille. Tieosoitteettomia linkkej&auml;, jotka piirtyv&auml;t kartalle harmaina, voi valita kerta- tai tuplaklikkauksella kuten muitakin tielinkkej&auml;. Tuplaklikkaus valitsee yhden tielinkin. Kertaklikkaus valitsee homogeenisen jakson jossa k&auml;ytet&auml;&auml;n VVH:n tienumeroa ja tieosanumeroa. Tienumeron tai tieosanumeron puuttuessa valinnassa k&auml;ytet&auml;&auml;n tienime&auml;.
+
+Valitut harmaat tielinkit n&auml;kyv&auml;t kartalla vihre&auml;ll&auml; korostettuna. Kun valitaan Toimenpiteet-alasvetovalikosta 'Uusi' (1) lomakkeelle avautuvat kent&auml;t uuden tieosoitteen tiedoille (2). Jos valitulla tieosuudella on jo olemassa VVH:ssa tienumero ja tieosanumero, ne esit&auml;yttyv&auml;t kenttiin automattisesti [esit&auml;ytt&ouml; TOTEUTUKSESSA].
+
+![Uusi tieosoite](k43.png)
+
+_Kun toimenpidevalikosta valitaan 'Uusi', oikeaan laitaan ilmestyy n&auml;kyviin kent&auml;t uuden tieosoitteen sy&ouml;tt&auml;mist&auml; varten._
+
+Muutokset tallennetaan Tallenna-painikkeella. Ennen tallennusta, muutokset voi perua Peruuta-painikkeesta. Kaikilla lomakkeen kentill&auml; tulee olla arvo ennen kuin tallentaminen on mahdollista.
+K&auml;ytt&ouml;liittym&auml; varoittaa virheilmoituksella jos uusi tieosoite on jo olemassa projektin alkup&auml;iv&auml;n&auml; tai se on varattuna toisessa tieosoiteprojektissa.
+
+![Tieosoite on jo olemassa](k44.JPG)
+
+_Tieosoite on jo olemassa projektin alkup&auml;iv&auml;n&auml;._
+
+![Tieosoite on jo projektissa](k45.JPG)
+
+_Tieosoite on jo varattuna toisessa projektissa nimelt&auml; 'Uusi tieosoiteprojekti'._
+
+Tallennuksen j&auml;lkeen tielinkit joilla on uusi tieosoite p&auml;ivittyv&auml;t karttan&auml;kym&auml;&auml;n. Valitut linkit s&auml;ilyv&auml;t vihre&auml;ll&auml; korostettuna. Valinnan voi purkaa klikkaamalla jotakin tyhj&auml;&auml; (tielinkit&ouml;nt&auml;) kohtaa karttan&auml;kym&auml;ss&auml; tai valitsemalle toisen tielinkin. Valinnan voi palauttaa klikkaamalla uuden tieosoitteen omaavaa tieosaa.
+
+![Uusi tieosoite pinkilla](k46.JPG)
+
+_Uuden tieosoitteen linkit piirtyv&auml;t kartalle pinkill&auml;. Tieosan voi valita klikkaamalla jolloin se korostuu vihre&auml;ll&auml;._
+
+Uuden tieosoitteen linkit piirtyv&auml;t kartalle pinkill&auml; (1). Tieosan alku- ja loppupisteisiin sijoitetaan automaattisesti et&auml;isyyslukema-symbolit. Viite laskee uudelle tieosuudelle automaattisesti my&ouml;s linkkien m-arvot k&auml;ytt&auml;en VVH:n tietoja. Uudelle tieosoitteelle m&auml;&auml;rittyy aluksi satunnainen kasvusuunta, joka n&auml;kyy kartalla pinkkien nuolien suunnasta.
+
+![Kasvusuunnan vaihto](k47.JPG)
+
+_Valittuna olevan uuden tieosoitteen vaikutussuntaa vaihtuu lomakkeen 'K&auml;&auml;nn&auml; vaikutussuunta'-nappulasta._
+
+Tallenuksen j&auml;lkeen lomakkeelle ilmestyy nappi (1) jolla voi vaihtaa valitun tieosan kasvusuunnan. Kasvusuuntaa vaihtaessa my&ouml;s m-arvot p&auml;ivittyv&auml;t automaattisesti.
 
 11.13 Numeroinnnin muutos
 --------------------------

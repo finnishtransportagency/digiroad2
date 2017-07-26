@@ -19,7 +19,7 @@ import org.scalatra._
 import org.scalatra.json._
 import org.slf4j.LoggerFactory
 
-case class LinkProperties(linkId: Long, functionalClass: Int, linkType: LinkType, trafficDirection: TrafficDirection)
+case class LinkProperties(linkId: Long, functionalClass: Int, linkType: LinkType, trafficDirection: TrafficDirection, administrativeClass: AdministrativeClass)
 
 case class ExistingLinearAsset(id: Long, linkId: Long)
 
@@ -91,7 +91,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     case lt: LinkType => JInt(BigInt(lt.value))
   }))
 
-  protected implicit val jsonFormats: Formats = DefaultFormats + DateTimeSerializer + LinkGeomSourceSerializer + SideCodeSerializer + TrafficDirectionSerializer + LinkTypeSerializer + DayofWeekSerializer
+  case object AdministrativeClassSerializer extends CustomSerializer[AdministrativeClass](format => ( {
+    case JString(administrativeClass) => AdministrativeClass(administrativeClass)
+  }, {
+    case ac: AdministrativeClass => JString(ac.toString)
+  }))
+
+  protected implicit val jsonFormats: Formats = DefaultFormats + DateTimeSerializer + LinkGeomSourceSerializer + SideCodeSerializer + TrafficDirectionSerializer + LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer
 
   before() {
     contentType = formats("json") + "; charset=utf-8"
@@ -256,6 +262,10 @@ Returns empty result as Json message, not as page not found
 
   get("/enumeratedPropertyValues/:assetTypeId") {
     assetPropertyService.getEnumeratedPropertyValues(params("assetTypeId").toLong)
+  }
+
+  get("/getAssetTypeMetadata/:assetTypeId") {
+    assetPropertyService.getAssetTypeMetadata(params("assetTypeId").toLong)
   }
 
   private def massTransitStopPositionParameters(parsedBody: JValue): (Option[Double], Option[Double], Option[Long], Option[Int]) = {
@@ -441,6 +451,20 @@ Returns empty result as Json message, not as page not found
     }
   }
 
+  private def extractIntValue(pieceWiseLinearAsset: PieceWiseLinearAsset, value: String) = {
+    pieceWiseLinearAsset.attributes.get(value) match {
+      case Some(x) => x.asInstanceOf[Int]
+      case _ => None
+    }
+  }
+
+  private def extractLongValue(pieceWiseLinearAsset: PieceWiseLinearAsset, value: String) = {
+    pieceWiseLinearAsset.attributes.get(value) match {
+      case Some(x) => x.asInstanceOf[Long]
+      case _ => None
+    }
+  }
+
   get("/roadlinks") {
     response.setHeader("Access-Control-Allow-Headers", "*")
     val user = userProvider.getCurrentUser()
@@ -511,7 +535,9 @@ Returns empty result as Json message, not as page not found
     val user = userProvider.getCurrentUser()
     def municipalityValidation(municipalityCode: Int) = validateUserMunicipalityAccess(user)(municipalityCode)
     properties.map { prop =>
-      roadLinkService.updateLinkProperties(prop.linkId, prop.functionalClass, prop.linkType, prop.trafficDirection, Option(user.username), municipalityValidation).map { roadLink =>
+      if (prop.administrativeClass == State)
+        halt(BadRequest("The Value Inserted in Administrative Class is not allowed."))
+      roadLinkService.updateLinkProperties(prop.linkId, prop.functionalClass, prop.linkType, prop.trafficDirection, prop.administrativeClass, Option(user.username), municipalityValidation).map { roadLink =>
         Map("linkId" -> roadLink.linkId,
           "points" -> roadLink.geometry,
           "administrativeClass" -> roadLink.administrativeClass.toString,
@@ -588,9 +614,9 @@ Returns empty result as Json message, not as page not found
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
       if(user.isServiceRoadMaintainer())
-        mapLinearAssets(linearAssetService.getByIntersectedBoundingBox(typeId, user.configuration.authorizedAreas, boundingRectangle, municipalities))
+        mapLinearAssets(linearAssetService.withRoadAddress(linearAssetService.getByIntersectedBoundingBox(typeId, user.configuration.authorizedAreas, boundingRectangle, municipalities)))
       else
-        mapLinearAssets(linearAssetService.getByBoundingBox(typeId, boundingRectangle, municipalities))
+        mapLinearAssets(linearAssetService.withRoadAddress(linearAssetService.getByBoundingBox(typeId, boundingRectangle, municipalities)))
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
     }
@@ -628,7 +654,12 @@ Returns empty result as Json message, not as page not found
           "modifiedBy" -> link.modifiedBy,
           "modifiedAt" -> link.modifiedDateTime,
           "createdBy" -> link.createdBy,
-          "createdAt" -> link.createdDateTime
+          "createdAt" -> link.createdDateTime,
+          "roadPartNumber" -> extractLongValue(link, "VIITE_ROAD_PART_NUMBER"),
+          "roadNumber" -> extractLongValue(link, "VIITE_ROAD_NUMBER"),
+          "track" -> extractIntValue(link, "VIITE_TRACK"),
+          "startAddrMValue" -> extractLongValue(link, "VIITE_START_ADDR"),
+          "endAddrMValue" ->  extractLongValue(link, "VIITE_END_ADDR")
         )
       }
     }

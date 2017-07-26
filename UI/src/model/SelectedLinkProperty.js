@@ -140,6 +140,7 @@
     var setTrafficDirection = _.partial(setLinkProperty, 'trafficDirection');
     var setFunctionalClass = _.partial(setLinkProperty, 'functionalClass');
     var setLinkType = _.partial(setLinkProperty, 'linkType');
+    var setAdministrativeClass = _.partial(setLinkProperty, 'administrativeClass');
 
     var get = function() {
       return _.map(current, function(roadLink) {
@@ -161,6 +162,7 @@
       setTrafficDirection: setTrafficDirection,
       setFunctionalClass: setFunctionalClass,
       setLinkType: setLinkType,
+      setAdministrativeClass: setAdministrativeClass,
       get: get,
       count: count,
       openMultiple: openMultiple

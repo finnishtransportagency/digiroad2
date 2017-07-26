@@ -10,6 +10,15 @@
         });
     };
 
+    this.getAssetTypeMetadata = function(assetTypeId) {
+      $.getJSON('api/getAssetTypeMetadata/'+ assetTypeId, function (getAssetTypeMetadata) {
+        eventbus.trigger('getAssetTypeMetadata:fetched', getAssetTypeMetadata);
+      })
+          .fail(function () {
+            console.log("error");
+          });
+    };
+
     this.getRoadLinks = createCallbackRequestor(function(boundingBox) {
       return {
         url: 'api/roadlinks?bbox=' + boundingBox

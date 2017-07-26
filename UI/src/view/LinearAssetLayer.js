@@ -8,7 +8,8 @@ window.LinearAssetLayer = function(params) {
       singleElementEventCategory = params.singleElementEventCategory,
       style = params.style,
       layerName = params.layerName,
-      assetLabel = params.assetLabel;
+      assetLabel = params.assetLabel,
+      roadAddressInfoPopup = params.roadAddressInfoPopup;
 
 
   Layer.call(this, layerName, roadLayer);
@@ -16,6 +17,7 @@ window.LinearAssetLayer = function(params) {
   me.minZoomForContent = zoomlevels.minZoomForAssets;
 
   var isComplementaryChecked = false;
+  var extraEventListener = _.extend({running: false}, eventbus);
 
   var singleElementEvents = function() {
     return _.map(arguments, function(argument) { return singleElementEventCategory + ':' + argument; }).join(' ');
@@ -283,8 +285,15 @@ window.LinearAssetLayer = function(params) {
     eventListener.listenTo(eventbus, multiElementEvent('cancelled'), linearAssetCancelled);
     eventListener.listenTo(eventbus, singleElementEvents('selectByLinkId'), selectLinearAssetByLinkId);
     eventListener.listenTo(eventbus, multiElementEvent('massUpdateFailed'), cancelSelection);
-    eventListener.listenTo(eventbus, 'complementaryLinks:show', showWithComplementary);
-    eventListener.listenTo(eventbus, 'complementaryLinks:hide', hideComplementary);
+  };
+
+  var startListeningExtraEvents = function(){
+    extraEventListener.listenTo(eventbus, 'complementaryLinks:show', showWithComplementary);
+    extraEventListener.listenTo(eventbus, 'complementaryLinks:hide', hideComplementary);
+  };
+
+  var stopListeningExtraEvents = function(){
+    extraEventListener.stopListening(eventbus);
   };
 
   var selectLinearAssetByLinkId = function(linkId) {
@@ -449,9 +458,11 @@ window.LinearAssetLayer = function(params) {
   };
 
   var show = function(map) {
+    startListeningExtraEvents();
     vectorLayer.setVisible(true);
     indicatorLayer.setVisible(true);
     me.refreshView();
+    roadAddressInfoPopup.start();
     me.show(map);
   };
 
@@ -464,6 +475,7 @@ window.LinearAssetLayer = function(params) {
     selectToolControl.clear();
     selectedLinearAsset.close();
     isComplementaryChecked = false;
+    roadAddressInfoPopup.stop();
     me.refreshView();
   };
 
@@ -472,6 +484,7 @@ window.LinearAssetLayer = function(params) {
     vectorLayer.setVisible(false);
     indicatorLayer.setVisible(false);
     selectedLinearAsset.close();
+    stopListeningExtraEvents();
     me.stop();
     me.hide();
   };
