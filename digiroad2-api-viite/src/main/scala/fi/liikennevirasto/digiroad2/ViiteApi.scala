@@ -98,6 +98,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   get("/roadlinks/:linkId") {
     val linkId = params("linkId").toLong
     val roadLinks = roadAddressService.getRoadAddressLink(linkId)
+    val projectLinks = projectService.getProjectRoadLinksByLinkIds(Set(linkId))
     if (roadLinks.nonEmpty) {
       val roadLink = roadLinks.tail.foldLeft(roadLinks.head) { case (a, b) =>
         a.copy(startAddressM = Math.min(a.startAddressM, b.startAddressM), endAddressM = Math.max(a.endAddressM, b.endAddressM),
@@ -105,7 +106,15 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       }
       Map("middlePoint" -> GeometryUtils.calculatePointFromLinearReference(roadLink.geometry,
         roadLink.length / 2.0)) ++ roadAddressLinkToApi(roadLink)
-    } else {
+    } else if(projectLinks.nonEmpty){
+      val roadLink = projectLinks.tail.foldLeft(projectLinks.head) { case (a, b) =>
+        a.copy(startAddressM = Math.min(a.startAddressM, b.startAddressM), endAddressM = Math.max(a.endAddressM, b.endAddressM),
+          startMValue = Math.min(a.startMValue, b.endMValue))
+      }
+      Map("middlePoint" -> GeometryUtils.calculatePointFromLinearReference(roadLink.geometry,
+        roadLink.length / 2.0)) ++ projectAddressLinkToApi(roadLink)
+    }
+    else {
       NotFound("Road link with link ID " + linkId + " not found")
     }
   }
@@ -294,7 +303,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       val projectLink = parsedBody.extract[NewRoadAddressExtractor]
 
 
-      val roadLinks = projectService.getProjectRoadLinksByLinkIds(projectLink.projectId, projectLink.linkIds)
+      val roadLinks = projectService.getProjectRoadLinksByLinkIds(projectLink.linkIds)
     withDynTransaction {
       val errorMessage = projectService.addNewLinksToProject(roadLinks, projectLink.projectId, projectLink.newRoadNumber, projectLink.newRoadPartNumber, projectLink.newTrackCode, projectLink.newDiscontinuity)
       if (errorMessage == "") {
