@@ -123,7 +123,7 @@
         $('[id=change-table-borders-source]').height('180px');
         $('[id=change-table-borders-changetype]').height('180px');
         $('#information-content').empty();
-        $('#send-button').remove();
+        $('#send-button').attr('disabled', true);
         hide();
       });
     }

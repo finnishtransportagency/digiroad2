@@ -62,6 +62,7 @@
               return new ProjectLinkModel(projectLink);
             });
           });
+          publishableProject = isPublishable;
           eventbus.trigger('roadAddressProject:fetched', self.getAll());
         });
     };
