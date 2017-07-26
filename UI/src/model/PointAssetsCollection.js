@@ -27,7 +27,7 @@
 
      var filterTrafficSigns = function (asset) {
        return _.filter(asset, function (asset) {
-         var existingValue = _.first(_.find(asset.propertyData, function(prop){return prop.publicId === "liikennemerkki_tyyppi";}).values);
+         var existingValue = _.first(_.find(asset.propertyData, function(prop){return prop.publicId === "trafficSigns_type";}).values);
          if(!existingValue)
            return false;
          return _.contains(getTrafficSignsToShow(), parseInt(existingValue.propertyValue));

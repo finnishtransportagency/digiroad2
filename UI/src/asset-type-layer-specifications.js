@@ -528,9 +528,9 @@
       title: 'Liikennemerkit',
       allowComplementaryLinks: true,
       newAsset: { propertyData: [
-        {'name': 'Tyyppi', 'propertyType': 'single_choice', 'publicId': "liikennemerkki_tyyppi", values: []},
-        {'name': "Arvo", 'propertyType': 'text', 'publicId': "liikennemerkki_arvo", values: []},
-        {'name': "Lisatieto", 'propertyType': 'text', 'publicId': "liikennemerkki_lisatieto", values: []}
+        {'name': 'Tyyppi', 'propertyType': 'single_choice', 'publicId': "trafficSigns_type", values: []},
+        {'name': "Arvo", 'propertyType': 'text', 'publicId': "trafficSigns_value", values: []},
+        {'name': "Lisatieto", 'propertyType': 'text', 'publicId': "trafficSigns_info", values: []}
       ]},
       formLabels: {
         singleFloatingAssetLabel: 'liikennemerkin',

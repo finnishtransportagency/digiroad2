@@ -113,7 +113,7 @@
     }
 
     function getSelectedTrafficSignValue() {
-      return parseInt(_.first(_.find(current.propertyData, function(prop){return prop.publicId === "liikennemerkki_tyyppi";}).values).propertyValue);
+      return parseInt(_.first(_.find(current.propertyData, function(prop){return prop.publicId === "trafficSigns_type";}).values).propertyValue);
     }
 
     function checkSelectedSign(trafficSignsShowing){

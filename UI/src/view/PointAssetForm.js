@@ -259,9 +259,9 @@
 
   var sortAndFilterTrafficSignProperties = function(properties) {
     var propertyOrdering = [
-      'liikennemerkki_tyyppi',
-      'liikennemerkki_arvo',
-      'liikennemerkki_lisatieto'];
+      'trafficSigns_type',
+      'trafficSigns_value',
+      'trafficSigns_info'];
 
     return _.sortBy(properties, function(property) {
       return _.indexOf(propertyOrdering, property.publicId);
