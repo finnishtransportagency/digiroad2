@@ -18,11 +18,11 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
   val roadWidthAssetId = 120
   val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
 
-  lazy val litRoadImporterOperations: LitRoadImporterOperations = {
-    new LitRoadImporterOperations()
+  lazy val litRoadImporterOperations: LitRoadTierekisteriImporter = {
+    new LitRoadTierekisteriImporter()
   }
-  lazy val roadWidthImporterOperations: RoadWidthImporterOperations = {
-    new RoadWidthImporterOperations()
+  lazy val roadWidthImporterOperations: RoadWidthTierekisteriImporter = {
+    new RoadWidthTierekisteriImporter()
   }
 
   lazy val assetDao : OracleAssetDao = {
@@ -89,11 +89,9 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
     println("\nEnd of creation OTH traffic volume assets form TR data")
   }
 
-
   def importLitRoadAsset(): Unit = {
     litRoadImporterOperations.importAssets()
   }
-
 
   def importRoadWidthAsset(): Unit = {
     roadWidthImporterOperations.importAssets()

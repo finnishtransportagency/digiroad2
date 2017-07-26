@@ -57,12 +57,12 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
       HttpClientBuilder.create().build())
   }
 
-  lazy val litRoadImporterOperations: LitRoadImporterOperations = {
-    new LitRoadImporterOperations()
+  lazy val litRoadImporterOperations: LitRoadTierekisteriImporter = {
+    new LitRoadTierekisteriImporter()
   }
 
-  lazy val roadWidthImporterOperations: RoadWidthImporterOperations = {
-    new RoadWidthImporterOperations()
+  lazy val roadWidthImporterOperations: RoadWidthTierekisteriImporter = {
+    new RoadWidthTierekisteriImporter()
   }
 
   lazy val connectedToTierekisteri = testConnection
