@@ -1027,7 +1027,7 @@ Returns empty result as Json message, not as page not found
   get("/trafficSigns")(getPointAssets(trafficSignService))
   get("/trafficSigns/:id")(getPointAssetById(trafficSignService))
   get("/trafficSigns/floating")(getFloatingPointAssets(trafficSignService))
-  post("/trafficSigns")(createNewPointAsset(trafficSignService, Some(trafficSignTypeId)))
+  post("/trafficSigns")(createNewPointAsset(trafficSignService))
   put("/trafficSigns/:id")(updatePointAsset(trafficSignService))
   delete("/trafficSigns/:id")(deletePointAsset(trafficSignService))
 

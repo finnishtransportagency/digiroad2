@@ -4,6 +4,7 @@
     var dirty = false;
     var originalAsset;
     var endPointName = assetName;
+    var modifiedProperties = [];
     return {
       open: open,
       getId: getId,
@@ -18,7 +19,8 @@
       exists: exists,
       isSelected: isSelected,
       getAdministrativeClass: getAdministrativeClass,
-      checkSelectedSign: checkSelectedSign
+      checkSelectedSign: checkSelectedSign,
+      setPropertyByPublicId: setPropertyByPublicId
     };
 
     function place(asset) {
@@ -121,6 +123,15 @@
         getSelectedTrafficSignValue() !== undefined)) {
         close();
       }
+    }
+
+    function setPropertyByPublicId(propertyPublicId, propertyValue) {
+      dirty = true;
+      _.map(current.propertyData, function (prop) {
+        if (prop.publicId === propertyPublicId) {
+          prop.values[0] = [{propertyValue: propertyValue, propertyDisplayValue: ''}];
+        }
+      });
     }
 
   };
