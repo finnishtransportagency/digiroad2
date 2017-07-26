@@ -274,9 +274,9 @@ trait PointAssetTierekisteriImporterOperations extends TierekisteriAssetImporter
     println(s"Fetch Road Addresses from Viite: R:${section.roadNumber} P:${section.roadPartNumber} T:${section.track.value} ADDRM:${section.startAddressMValue}-${section.endAddressMValue.map(_.toString).getOrElse("")}")
 
     //Returns all the match Viite road address for the given section
-    val addresses = getAllViiteRoadAddress(section)
+    val roadAddressLink = getAllViiteRoadAddress(section)
 
-    addresses
+    roadAddressLink
       .foreach { case (ra, roadlink) =>
         calculateStartLrmByAddress(ra, section).map{
           mValue =>

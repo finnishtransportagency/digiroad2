@@ -198,15 +198,15 @@ object OracleTrafficSignDao {
   }
 
   private def getSignTypePropertyId: Long = {
-    StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("liikennemerkki_tyyppi").first
+    StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("trafficSigns_type").first
   }
 
   private def getValuePropertyId: Long = {
-    StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("liikennemerkki_arvo").first
+    StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("trafficSigns_value").first
   }
 
   private def getAdditionalInfoPropertyId: Long = {
-    StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("liikennemerkki_lisatieto").first
+    StaticQuery.query[String, Long](Queries.propertyIdByPublicId).apply("trafficSigns_info").first
   }
 
   def assetRowToProperty(assetRows: Iterable[TrafficSignRow]): Seq[Property] = {

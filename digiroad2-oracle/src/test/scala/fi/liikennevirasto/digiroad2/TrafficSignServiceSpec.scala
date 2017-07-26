@@ -79,9 +79,9 @@ class TrafficSignServiceSpec extends FunSuite with Matchers {
   test("Create new Traffic Sign") {
     runWithRollback {
       val properties = Set(
-        SimpleProperty("liikennemerkki_tyyppi", List(PropertyValue("1"))),
-        SimpleProperty("liikennemerkki_arvo", List(PropertyValue("80"))),
-        SimpleProperty("liikennemerkki_lisatieto", List(PropertyValue("Additional Info for test"))))
+        SimpleProperty("trafficSigns_type", List(PropertyValue("1"))),
+        SimpleProperty("trafficSigns_value", List(PropertyValue("80"))),
+        SimpleProperty("trafficSigns_info", List(PropertyValue("Additional Info for test"))))
       val id = service.create(IncomingTrafficSign(2.0, 0.0, 388553075, properties), testUser.username, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 235, linkSource = NormalLinkInterface)
 
       val assets = service.getPersistedAssetsByIds(Set(id))
@@ -97,9 +97,9 @@ class TrafficSignServiceSpec extends FunSuite with Matchers {
       asset.mValue should be(2)
       asset.floating should be(false)
       asset.municipalityCode should be(235)
-      asset.propertyData.find(p => p.publicId == "liikennemerkki_tyyppi").get.values.head.propertyValue should be ("1")
-      asset.propertyData.find(p => p.publicId == "liikennemerkki_arvo").get.values.head.propertyValue should be ("80")
-      asset.propertyData.find(p => p.publicId == "liikennemerkki_lisatieto").get.values.head.propertyValue should be ("Additional Info for test")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue should be ("1")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.propertyValue should be ("80")
+      asset.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.propertyValue should be ("Additional Info for test")
       asset.createdBy should be(Some(testUser.username))
       asset.createdAt shouldBe defined
     }
@@ -110,17 +110,17 @@ class TrafficSignServiceSpec extends FunSuite with Matchers {
       val trafficSign = service.getById(600073).get
 
       val updatedProperties = Set(
-        SimpleProperty("liikennemerkki_tyyppi", List(PropertyValue("2"))),
-        SimpleProperty("liikennemerkki_arvo", List(PropertyValue("90"))),
-        SimpleProperty("liikennemerkki_lisatieto", List(PropertyValue("Updated Additional Info for test"))))
+        SimpleProperty("trafficSigns_type", List(PropertyValue("2"))),
+        SimpleProperty("trafficSigns_value", List(PropertyValue("90"))),
+        SimpleProperty("trafficSigns_info", List(PropertyValue("Updated Additional Info for test"))))
       val updated = IncomingTrafficSign(trafficSign.lon, trafficSign.lat, trafficSign.linkId, updatedProperties)
 
       service.update(trafficSign.id, updated, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 235, "unit_test", linkSource = NormalLinkInterface)
       val updatedTrafficSign = service.getById(600073).get
 
-      updatedTrafficSign.propertyData.find(p => p.publicId == "liikennemerkki_tyyppi").get.values.head.propertyValue should be ("2")
-      updatedTrafficSign.propertyData.find(p => p.publicId == "liikennemerkki_arvo").get.values.head.propertyValue should be ("90")
-      updatedTrafficSign.propertyData.find(p => p.publicId == "liikennemerkki_lisatieto").get.values.head.propertyValue should be ("Updated Additional Info for test")
+      updatedTrafficSign.propertyData.find(p => p.publicId == "trafficSigns_type").get.values.head.propertyValue should be ("2")
+      updatedTrafficSign.propertyData.find(p => p.publicId == "trafficSigns_value").get.values.head.propertyValue should be ("90")
+      updatedTrafficSign.propertyData.find(p => p.publicId == "trafficSigns_info").get.values.head.propertyValue should be ("Updated Additional Info for test")
       updatedTrafficSign.id should equal(updatedTrafficSign.id)
       updatedTrafficSign.modifiedBy should equal(Some("unit_test"))
       updatedTrafficSign.modifiedAt shouldBe defined
