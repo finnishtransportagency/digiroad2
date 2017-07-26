@@ -114,7 +114,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       Map("middlePoint" -> GeometryUtils.calculatePointFromLinearReference(roadLink.geometry,
         roadLink.length / 2.0)) ++ projectAddressLinkToApi(roadLink)
     }
-
     else {
       NotFound("Road link with link ID " + linkId + " not found")
     }
