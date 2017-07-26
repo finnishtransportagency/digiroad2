@@ -6,7 +6,7 @@ import java.util.Properties
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset.oracle.OracleAssetDao
 import fi.liikennevirasto.digiroad2.{TierekisteriAssetDataClient, TierekisteriLightingAssetClient, TierekisteriRoadWidthAssetClient, _}
-import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LinkGeomSource, SideCode, State}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -296,16 +296,30 @@ class TrafficSignTierekisteriImporter extends PointAssetTierekisteriImporterOper
     getProperty("digiroad2.tierekisteri.enabled").toBoolean,
     HttpClientBuilder.create().build())
 
-  //private def create
+  private val typePublicId = "trafficSigns_type"
+  private val valuePublicId = "trafficSigns_value"
+  private val infoPublicId = "trafficSigns_info"
 
-  private def createAdditionalInfoAssets(): Unit = {
-    
+  private val additionalInfoTypeGroups = Set(TrafficSignTypeGroup.GeneralWarningSigns, TrafficSignTypeGroup.TurningRestrictions)
+
+  private def generateProperties(trAssetData: TierekisteriAssetData) = {
+    val trafficType = trAssetData.assetType.trafficSignType
+    val typeProperty = SimpleProperty(typePublicId, Seq(PropertyValue(trafficType.value.toString)))
+    val valueProperty = additionalInfoTypeGroups.exists(group => group == trafficType.group) match {
+      case true => SimpleProperty(infoPublicId, Seq(PropertyValue(trAssetData.assetValue)))
+      case _ => SimpleProperty(valuePublicId, Seq(PropertyValue(trAssetData.assetValue)))
+    }
+
+    Set(typeProperty, valueProperty)
   }
 
   override protected def createPointAsset(vvhRoadlink: VVHRoadlink, mValue: Double, trAssetData: TierekisteriAssetData): Unit = {
-    val point = GeometryUtils.calculatePointFromLinearReference(vvhRoadlink.geometry, mValue)
-
-    //OracleTrafficSignDao.create(, mValue, username, municipality, VVHClient.createVVHTimeStamp(), vvhRoadlink.linkSource)
+    GeometryUtils.calculatePointFromLinearReference(vvhRoadlink.geometry, mValue).map{
+      point =>
+        val trafficSign = IncomingTrafficSign(point.x, point.y, vvhRoadlink.linkId, generateProperties(trAssetData))
+        OracleTrafficSignDao.create(trafficSign, mValue, "batch_process_trafficSigns", vvhRoadlink.municipalityCode,
+          VVHClient.createVVHTimeStamp(), vvhRoadlink.linkSource)
+    }
   }
 }
 
