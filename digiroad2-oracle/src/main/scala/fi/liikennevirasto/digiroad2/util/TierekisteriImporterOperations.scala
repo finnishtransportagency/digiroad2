@@ -298,11 +298,9 @@ class TrafficSignTierekisteriImporter extends PointAssetTierekisteriImporterOper
 
   //private def create
 
-  private def createAdditionInfoAssets(): Unit = {
-
+  private def createAdditionalInfoAssets(): Unit = {
+    
   }
-
-
 
   override protected def createPointAsset(vvhRoadlink: VVHRoadlink, mValue: Double, trAssetData: TierekisteriAssetData): Unit = {
     val point = GeometryUtils.calculatePointFromLinearReference(vvhRoadlink.geometry, mValue)

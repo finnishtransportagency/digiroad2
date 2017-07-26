@@ -125,6 +125,36 @@ object TRRoadSide {
   case object Unknown extends TRRoadSide { def value = "ei_tietoa"; def propertyValues = Set(0) }
 }
 
+
+/**
+  * Values for traffic sign types enumeration
+  */
+sealed trait TRTrafficSignType {
+  def value: Int
+  def trafficSignType: TrafficSignType
+}
+object TRTrafficSignType {
+  val values = Set(SpeedLimit, EndSpeedLimit, SpeedLimitZone, EndSpeedLimitZone, UrbanArea, EndUrbanArea, PedestrianCrossing, PedestrianCrossing, MaximumLength, Warning, NoLeftTurn, NoRightTurn, NoUTurn)
+
+  def apply(value: Int): TRTrafficSignType = {
+    values.find(_.value == value).getOrElse(Unknown)
+  }
+
+  case object SpeedLimit extends TRTrafficSignType { def value = 361;  def trafficSignType = TrafficSignType.SpeedLimit; }
+  case object EndSpeedLimit extends TRTrafficSignType { def value = 362;  def trafficSignType = TrafficSignType.EndSpeedLimit; }
+  case object SpeedLimitZone extends TRTrafficSignType { def value = 363;  def trafficSignType = TrafficSignType.SpeedLimitZone; }
+  case object EndSpeedLimitZone extends TRTrafficSignType { def value = 364;  def trafficSignType = TrafficSignType.EndSpeedLimitZone; }
+  case object UrbanArea extends TRTrafficSignType { def value = 571;  def trafficSignType = TrafficSignType.UrbanArea; }
+  case object EndUrbanArea extends TRTrafficSignType { def value = 572;  def trafficSignType = TrafficSignType.EndUrbanArea; }
+  case object PedestrianCrossing extends TRTrafficSignType { def value = 511;  def trafficSignType = TrafficSignType.PedestrianCrossing; }
+  case object MaximumLength extends TRTrafficSignType { def value = 343;  def trafficSignType = TrafficSignType.MaximumLength; }
+  case object Warning extends TRTrafficSignType { def value = 189;  def trafficSignType = TrafficSignType.Warning; }
+  case object NoLeftTurn extends TRTrafficSignType { def value = 332;  def trafficSignType = TrafficSignType.NoLeftTurn; }
+  case object NoRightTurn extends TRTrafficSignType { def value = 333;  def trafficSignType = TrafficSignType.NoRightTurn; }
+  case object NoUTurn extends TRTrafficSignType { def value = 334;  def trafficSignType = TrafficSignType.NoUTurn; }
+  case object Unknown extends TRTrafficSignType { def value = 999999;  def trafficSignType = TrafficSignType.Unknown; }
+}
+
 sealed trait Operation {
   def value: Int
 }
@@ -178,7 +208,7 @@ case class TierekisteriLightingData(roadNumber: Long, startRoadPartNumber: Long,
                                 track: Track, startAddressMValue: Long, endAddressMValue: Long) extends TierekisteriAssetData
 
 case class TierekisteriTrafficSignData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
-                                    track: Track, startAddressMValue: Long, endAddressMValue: Long, assetNumber: Int, assetValue: String) extends TierekisteriAssetData
+                                    track: Track, startAddressMValue: Long, endAddressMValue: Long, assetType: TRTrafficSignType, assetValue: String) extends TierekisteriAssetData
 
 case class TierekisteriError(content: Map[String, Any], url: String)
 
@@ -776,7 +806,7 @@ class TierekisteriTrafficSignAssetClient(trEndPoint: String, trEnable: Boolean, 
     val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
     val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
 
-    TierekisteriTrafficSignData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, assetNumber, assetValue)
+    TierekisteriTrafficSignData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, TRTrafficSignType.apply(assetNumber), assetValue)
   }
 }
 
