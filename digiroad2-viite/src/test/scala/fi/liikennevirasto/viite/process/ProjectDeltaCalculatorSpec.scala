@@ -55,7 +55,7 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
       linkLengths = linkLengths + ( index -> Seq(RoadPartLengths(pl.linkId, pl.geometryLength)).++(linkLengths.getOrElse(index,Seq.empty)))
     })
 
-    val output = ProjectDeltaCalculator.determineMValues(projectLinkSeq, linkLengths)
+    val output = ProjectDeltaCalculator.determineMValues(projectLinkSeq, linkLengths, Seq())
     output.length should be(4)
 
     output(0).id should be(idRoad0)

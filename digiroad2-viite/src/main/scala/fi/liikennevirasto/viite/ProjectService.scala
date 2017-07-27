@@ -151,7 +151,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   /**
     * Used when adding road address that does not have previous address
     */
-  def addNewLinksToProject(projectAddressLinks: Seq[ProjectAddressLink], roadAddressProjectID :Long, newRoadNumber : Long, newRoadPartNumber: Long, newTrackCode: Long, newDiscontinuity: Long):String = {
+  def addNewLinksToProject(projectAddressLinks: Seq[ProjectAddressLink], roadAddressProjectID :Long, newRoadNumber : Long, newRoadPartNumber: Long, newTrackCode: Long, newDiscontinuity: Long, linksInProject: Seq[ProjectAddressLink]):String = {
 
       val randomSideCode = SideCode.TowardsDigitizing
       ProjectDAO.getRoadAddressProjectById(roadAddressProjectID) match {
@@ -170,9 +170,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                       projectLink.endAddressM, Some(project.startDate), None, Some(project.createdBy), -1, projectLink.linkId, projectLink.startMValue, projectLink.endMValue, randomSideCode,
                       (projectLink.startCalibrationPoint, projectLink.endCalibrationPoint), false, projectLink.geometry, roadAddressProjectID, LinkStatus.New, projectLink.roadType, projectLink.roadLinkSource, projectLink.length)
                   })
+                  val existingLinks = linksInProject.map(projectLink => {
+              ProjectLink(projectLink.id, newRoadNumber, newRoadPartNumber, Track.apply(newTrackCode.toInt), Discontinuity.apply(newDiscontinuity.toInt), projectLink.startAddressM,
+              projectLink.endAddressM, Some(project.startDate), None, Some(project.createdBy), -1, projectLink.linkId, projectLink.startMValue, projectLink.endMValue, randomSideCode,
+              (projectLink.startCalibrationPoint, projectLink.endCalibrationPoint), false, projectLink.geometry, roadAddressProjectID, LinkStatus.New, projectLink.roadType, projectLink.roadLinkSource, projectLink.length)
+              })
                   //Determine geometries for the mValues and addressMValues
                   val geometries = determineGeometries(newProjectLinks)
-                  val linksWithMValues = ProjectDeltaCalculator.determineMValues(newProjectLinks,geometries)
+                  val linksWithMValues = ProjectDeltaCalculator.determineMValues(newProjectLinks,geometries, existingLinks)
 
                   val newsLinksWithCalibration = addCalibrationMarkers(linksWithMValues)
                   ProjectDAO.create(newsLinksWithCalibration)

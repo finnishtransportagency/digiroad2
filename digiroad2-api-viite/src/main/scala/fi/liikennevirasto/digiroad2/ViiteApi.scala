@@ -314,11 +314,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       case NonFatal(e) => BadRequest("Missing mandatory ProjectLink parameter")
     }
       val projectLink = parsedBody.extract[NewRoadAddressExtractor]
-
-
+      val linksInProject = projectService.getProjectRoadLinksByLinkIds(withDynTransaction {ProjectDAO.fetchByProjectNewRoadPart(projectLink.newRoadNumber,projectLink.newRoadPartNumber,projectLink.projectId, false).map(l => l.linkId).toSet})
       val roadLinks = projectService.getProjectRoadLinksByLinkIds(projectLink.linkIds)
     withDynTransaction {
-      val errorMessage = projectService.addNewLinksToProject(roadLinks, projectLink.projectId, projectLink.newRoadNumber, projectLink.newRoadPartNumber, projectLink.newTrackCode, projectLink.newDiscontinuity)
+      val errorMessage = projectService.addNewLinksToProject(roadLinks, projectLink.projectId, projectLink.newRoadNumber, projectLink.newRoadPartNumber, projectLink.newTrackCode, projectLink.newDiscontinuity, linksInProject)
       if (errorMessage == "") {
         Map("success" -> true)
       } else {
