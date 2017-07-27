@@ -26,9 +26,6 @@ object ProjectDeltaCalculator {
     if (terminations.size != currentAddresses.values.flatten.size)
       throw new RoadAddressException(s"Road address count did not match: ${terminations.size} terminated, ${currentAddresses.values.flatten.size} addresses found")
     val newCreations = findNewCreations(projectLinks)
-
-    // TODO: Find transfers, etc etc
-
     Delta(project.startDate, terminations.sortBy(t => (t.discontinuity.value, t.roadType.value)), newCreations.sortBy(t => (t.discontinuity.value, t.roadType.value)))
   }
 
