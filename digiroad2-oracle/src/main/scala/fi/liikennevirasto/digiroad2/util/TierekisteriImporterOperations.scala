@@ -169,7 +169,9 @@ trait TierekisteriAssetImporterOperations {
     //Expire all asset in state roads in all the municipalities
     val municipalities = getAllMunicipalities()
     municipalities.foreach { municipality =>
-      expireAssets(municipality, Some(State))
+      withDynTransaction{
+        expireAssets(municipality, Some(State))
+      }
     }
 
     val roadNumbers = getAllViiteRoadNumbers()
@@ -181,6 +183,8 @@ trait TierekisteriAssetImporterOperations {
         //One asset with start part = 2, end part = 5, start address = 10, end address 20
         //We will generate the middle parts and return a AddressSection for each one
         val trAddressSections = getAllTierekisteriAddressSections(roadNumber)
+
+        println("tr size = "+trAddressSections.size)
 
         //For each section creates a new OTH asset
         trAddressSections.foreach {
@@ -278,7 +282,7 @@ trait PointAssetTierekisteriImporterOperations extends TierekisteriAssetImporter
 
     roadAddressLink
       .foreach { case (ra, roadlink) =>
-        calculateStartLrmByAddress(ra, section).map{
+        ra.addressMValueToLRM(section.startAddressMValue).map{
           mValue =>
             createPointAsset(ra, roadlink.get, mValue, trAssetData)
         }
@@ -314,12 +318,13 @@ class TrafficSignTierekisteriImporter extends PointAssetTierekisteriImporterOper
   }
 
   override protected def createPointAsset(roadAddress: ViiteRoadAddress, vvhRoadlink: VVHRoadlink, mValue: Double, trAssetData: TierekisteriAssetData): Unit = {
-    GeometryUtils.calculatePointFromLinearReference(vvhRoadlink.geometry, mValue).map{
-      point =>
-        val trafficSign = IncomingTrafficSign(point.x, point.y, vvhRoadlink.linkId, generateProperties(trAssetData), roadAddress.sideCode.value, Some(GeometryUtils.calculateBearing(vvhRoadlink.geometry)))
-        OracleTrafficSignDao.create(trafficSign, mValue, "batch_process_trafficSigns", vvhRoadlink.municipalityCode,
-          VVHClient.createVVHTimeStamp(), vvhRoadlink.linkSource)
-    }
+    if(trAssetData.assetType != TRTrafficSignType.Unknown)
+      GeometryUtils.calculatePointFromLinearReference(vvhRoadlink.geometry, mValue).map{
+        point =>
+          val trafficSign = IncomingTrafficSign(point.x, point.y, vvhRoadlink.linkId, generateProperties(trAssetData), roadAddress.sideCode.value, Some(GeometryUtils.calculateBearing(vvhRoadlink.geometry)))
+          OracleTrafficSignDao.create(trafficSign, mValue, "batch_process_trafficSigns", vvhRoadlink.municipalityCode,
+            VVHClient.createVVHTimeStamp(), vvhRoadlink.linkSource)
+      }
   }
 }
 
