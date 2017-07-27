@@ -334,7 +334,7 @@
           '        <p class="form-control-static">' + (asset.name || '–') + '</p>' +
           '        <input type="text" class="form-control" value="' + (asset.name || '')  + '">' +
           '    </div>';
-      } else if (asset.validityDirection) {
+      } else if (asset.validityDirection && !asset.propertyData) {
         return '' +
             '  <div class="form-group editable form-directional-traffic-sign">' +
             '      <label class="control-label">Teksti</label>' +
@@ -362,17 +362,27 @@
       var allTrafficSignProperties = asset.propertyData;
       var trafficSignSortedProperties = sortAndFilterTrafficSignProperties(allTrafficSignProperties);
 
-      var components = _.map(trafficSignSortedProperties, function (feature) {
+      var components = _.reduce(_.map(trafficSignSortedProperties, function (feature) {
         feature.localizedName = window.localizedStrings[feature.publicId];
         var propertyType = feature.propertyType;
 
-        if (propertyType === "text") {
+        if (propertyType === "text")
           return textHandler(feature);
-        } else if (propertyType === "single_choice") {
+
+        if (propertyType === "single_choice")
           return singleChoiceHandler(feature);
-        }
-      });
-      return '' + components;
+
+      }), function(prev, curr) { return prev + curr; }, '');
+
+      if(asset.validityDirection)
+        return components +
+            '    <div class="form-group editable form-directional-traffic-sign edit-only">' +
+            '      <label class="control-label">Vaikutussuunta</label>' +
+            '      <button id="change-validity-direction" class="form-control btn btn-secondary btn-block">Vaihda suuntaa</button>' +
+            '    </div>';
+
+      return components;
+
     } else {
       return '';
     }

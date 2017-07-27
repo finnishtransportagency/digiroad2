@@ -527,7 +527,7 @@
       layerName: 'trafficSigns',
       title: 'Liikennemerkit',
       allowComplementaryLinks: true,
-      newAsset: { propertyData: [
+      newAsset: { validityDirection: 2, propertyData: [
         {'name': 'Tyyppi', 'propertyType': 'single_choice', 'publicId': "trafficSigns_type", values: []},
         {'name': "Arvo", 'propertyType': 'text', 'publicId': "trafficSigns_value", values: []},
         {'name': "Lisatieto", 'propertyType': 'text', 'publicId': "trafficSigns_info", values: []}
