@@ -68,6 +68,109 @@ object ProjectDeltaCalculator {
     ).toSeq
   }
 
+  def isSplitLink(project1:ProjectLink, project2:ProjectLink, linksList:Seq[ProjectLink]): Boolean = {
+    (GeometryUtils.areSame(project1.geom.head, project2.geom.head) || GeometryUtils.areSame(project1.geom.last, project2.geom.last)) && linksList.filter(l => l.linkId == project1.linkId).isEmpty
+  }
+
+  def trackCodeChangeInOtherLink(result: Seq[ProjectLink], firstLinkList: Seq[ProjectLink], secondLinkList: Seq[ProjectLink]): Seq[ProjectLink] = {
+    if (!firstLinkList.isEmpty && !secondLinkList.isEmpty) {
+      firstLinkList.head match {
+        case prj => {
+          val r = secondLinkList.foldLeft(result) { (newList, secondPrj) => {
+            isSplitLink(prj, secondPrj, newList)
+            match {
+              case true => newList:+ prj
+              case _ => newList
+            }
+          }}
+          return trackCodeChangeInOtherLink((result ++ r).distinct, firstLinkList.tail, secondLinkList.filterNot(op => r.exists(_.linkId == op.linkId)))
+        }
+      }
+    }
+    return result
+  }
+
+  def getRoadLinkBefore(combinedLinks: Seq[ProjectLink], links: Seq[ProjectLink]): Option[ProjectLink] = {
+    combinedLinks.find(l => {
+      GeometryUtils.areSame(links.head.geom.head, l.geom.last)
+    })
+  }
+
+  def getRoadLinkAfter(combinedLinks: Seq[ProjectLink], links: Seq[ProjectLink]): Option[ProjectLink] = {
+    combinedLinks.find(l => {
+      GeometryUtils.areSame(links.last.geom.last, l.geom.head)
+    })
+  }
+
+  def getLength(projectLink: Option[ProjectLink]): Double = {
+    projectLink match {
+      case Some(proj) => proj.geometryLength
+      case None => 0
+    }
+  }
+
+  def updateBeforeAfter(projBefore:Option[ProjectLink], projAfter: Option[ProjectLink], values:(Double,Double)): Unit = {
+
+    projBefore match {
+      case Some(p) => ProjectDAO.updateMValuesLinkId(p.copy(endAddrMValue = values._2.toLong))
+      case None =>
+    }
+    projAfter match {
+      case Some(p) => ProjectDAO.updateMValuesLinkId(p.copy(startAddrMValue = values._1.toLong))
+      case None =>
+    }
+  }
+
+  def trackCodeChangeLengths(linkList: Seq[ProjectLink], otherProjectLinks:Seq[ProjectLink]):Seq[ProjectLink] = {
+
+    //if (!otherProjectLinks.isEmpty) {
+
+      val newLinks = trackCodeChangeInOtherLink(Seq(), linkList,otherProjectLinks)  match {
+        case list if !list.isEmpty => list
+        case _ => return linkList
+      }
+
+      val existingLinksToChange = trackCodeChangeInOtherLink(Seq(), otherProjectLinks, linkList).filterNot(el => newLinks.exists(_.linkId == el.linkId))
+      val combinedLinks = otherProjectLinks.filterNot(op => (existingLinksToChange ++ newLinks).exists(_.linkId == op.linkId))
+      val roadLinkBefore = getRoadLinkBefore(combinedLinks, existingLinksToChange)
+      val roadLinkAfter = getRoadLinkAfter(combinedLinks,existingLinksToChange)
+      val newMValues = calculateLengths(newLinks, existingLinksToChange,getLength(roadLinkBefore),getLength(roadLinkAfter))
+
+      updateBeforeAfter(roadLinkBefore,roadLinkAfter,newMValues)
+      ProjectDAO.updateMValuesLinkId(existingLinksToChange.head.copy(startAddrMValue = newMValues._1.toLong))
+      ProjectDAO.updateMValuesLinkId(existingLinksToChange.last.copy(endAddrMValue = newMValues._2.toLong))
+
+      val t = newLinks.map(l => {
+        if (l.linkId == newLinks.head.linkId) l.copy(startAddrMValue = newMValues._1.toLong)
+        if (l.linkId == newLinks.last.linkId) l.copy(endAddrMValue = newMValues._2.toLong)
+        else {
+          l.copy(calibrationPoints = (None,None))
+        }
+      })
+      t
+
+    //} else {
+    //  linkList
+    //}
+  }
+
+  def getSplitStart(combinedLinks: Seq[ProjectLink], otherLinks: Seq[ProjectLink]): Double = {
+    otherLinks.map(link => {
+      combinedLinks.find(comb => {
+        GeometryUtils.areAdjacent(comb.geom.last, link.geom.head)
+      })
+    }) match {
+      case list if list.size > 0 => list.head.get.startMValue
+      case _ => 0
+    }
+  }
+
+  def calculateLengths(newLinks: Seq[ProjectLink], existingLinks:Seq[ProjectLink], beforeLength: Double, afterLength: Double): (Double,Double) = {
+    val newLinkLength = newLinks.foldLeft(0.0){(sum,length) => {sum + length.geometryLength}}
+    val existingLinkLength = existingLinks.foldLeft(0.0){(sum,length) => {sum + length.geometryLength}}
+    (beforeLength,(newLinkLength + existingLinkLength)/2 + beforeLength)
+  }
+
   def orderProjectLinksTopologyByGeometry(list:Seq[ProjectLink]): Seq[ProjectLink] = {
 
     def linkTopologyByGeomEndPoints(sortedList: Seq[ProjectLink], unprocessed: Seq[ProjectLink]) : Seq[ProjectLink] = {
@@ -114,14 +217,14 @@ object ProjectDeltaCalculator {
     isLeftAdjacent && isRightAdjacent
   }
 
-  def determineMValues(projectLinks: Seq[ProjectLink], geometryLengthList: Map[RoadPartBasis, Seq[RoadPartLengths]]): Seq[ProjectLink] = {
+  def determineMValues(projectLinks: Seq[ProjectLink], geometryLengthList: Map[RoadPartBasis, Seq[RoadPartLengths]], linksInProject: Seq [ProjectLink]): Seq[ProjectLink] = {
     val groupedProjectLinks = projectLinks.groupBy(record => (record.roadNumber, record.roadPartNumber))
     groupedProjectLinks.flatMap(gpl => {
       var lastEndM = 0.0
       val roadPartId = new RoadPartBasis(gpl._1._1, gpl._1._2)
       if(geometryLengthList.keySet.contains(roadPartId)){
         val links = orderProjectLinksTopologyByGeometry(gpl._2)
-        links.map(l => {
+        val linksToCheck= links.map(l => {
           val lengths = geometryLengthList.get(roadPartId).get
           val foundGeomLength = lengths.find(_.linkId == l.linkId).get
           val endValue = lastEndM + foundGeomLength.geometryLength
@@ -129,6 +232,7 @@ object ProjectDeltaCalculator {
           lastEndM = endValue
           updatedProjectLink
         })
+        trackCodeChangeLengths(linksToCheck, linksInProject)
       } else {
         orderProjectLinksTopologyByGeometry(gpl._2)
       }

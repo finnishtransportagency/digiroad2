@@ -157,6 +157,10 @@ object GeometryUtils {
     point1.distance2DTo(point2) < epsilon
   }
 
+  def areSame(point1: Point, point2: Point): Boolean = {
+    point1.x == point2.x && point1.y == point2.y && point1.z == point2.z
+  }
+
   def segmentByMinimumDistance(point: Point, segments: Seq[Point]): (Point, Point) = {
     val partitions = segments.init.zip(segments.tail)
     partitions.minBy { p => minimumDistance(point, p) }
