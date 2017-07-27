@@ -245,6 +245,7 @@
        mapOverlay: mapOverlay,
        layerName: asset.layerName,
        newAsset: asset.newAsset,
+       assetLabel: asset.label,
        editConstrains : asset.editConstrains || function() {return false;}
      });
      return acc;

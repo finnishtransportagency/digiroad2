@@ -10,7 +10,8 @@
       mapOverlay = params.mapOverlay,
       layerName = params.layerName,
       newAsset = params.newAsset,
-      editConstrains = params.editConstrains;
+      editConstrains = params.editConstrains,
+      assetLabel = params.assetLabel;
 
     Layer.call(this, layerName, roadLayer);
     var me = this;
@@ -116,7 +117,7 @@
       if (!asset.floating && asset.geometry && asset.geometry.length > 0){
         var bearing = determineBearing(asset);
         rotation = validitydirections.calculateRotation(bearing, asset.validityDirection);
-      } else if (layerName == 'directionalTrafficSigns'){
+      } else if (layerName == 'directionalTrafficSigns' || layerName == 'trafficSigns'){
         rotation = validitydirections.calculateRotation(asset.bearing, asset.validityDirection);
       }
       return rotation;
@@ -127,7 +128,7 @@
       if (!asset.floating && asset.geometry && asset.geometry.length > 0){
         var nearestLine = geometrycalculator.findNearestLine([{ points: asset.geometry }], asset.lon, asset.lat);
         bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
-      } else if (layerName == 'directionalTrafficSigns'){
+      } else if (layerName == 'directionalTrafficSigns' || layerName == 'trafficSigns'){
         bearing = asset.bearing;
       }
       return bearing;
@@ -155,6 +156,8 @@
           var features = _.map(assets, createFeature);
           selectControl.clear();
           vectorLayer.getSource().addFeatures(features);
+          if(assetLabel)
+            vectorLayer.getSource().addFeatures(assetLabel.renderFeaturesByPointAssets(assets, map.getView().getZoom()));
           applySelection();
         }
       });

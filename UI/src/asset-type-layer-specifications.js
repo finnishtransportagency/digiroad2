@@ -532,6 +532,7 @@
         {'name': "Arvo", 'propertyType': 'text', 'publicId': "trafficSigns_value", values: []},
         {'name': "Lisatieto", 'propertyType': 'text', 'publicId': "trafficSigns_info", values: []}
       ]},
+      label: new TrafficSignLabel(),
       formLabels: {
         singleFloatingAssetLabel: 'liikennemerkin',
         manyFloatingAssetsLabel: 'liikennemerkit',
