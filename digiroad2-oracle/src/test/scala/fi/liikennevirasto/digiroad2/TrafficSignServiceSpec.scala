@@ -82,7 +82,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers {
         SimpleProperty("trafficSigns_type", List(PropertyValue("1"))),
         SimpleProperty("trafficSigns_value", List(PropertyValue("80"))),
         SimpleProperty("trafficSigns_info", List(PropertyValue("Additional Info for test"))))
-      val id = service.create(IncomingTrafficSign(2.0, 0.0, 388553075, properties), testUser.username, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 235, linkSource = NormalLinkInterface)
+      val id = service.create(IncomingTrafficSign(2.0, 0.0, 388553075, properties, 1, None), testUser.username, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 235, linkSource = NormalLinkInterface)
 
       val assets = service.getPersistedAssetsByIds(Set(id))
 
@@ -113,7 +113,7 @@ class TrafficSignServiceSpec extends FunSuite with Matchers {
         SimpleProperty("trafficSigns_type", List(PropertyValue("2"))),
         SimpleProperty("trafficSigns_value", List(PropertyValue("90"))),
         SimpleProperty("trafficSigns_info", List(PropertyValue("Updated Additional Info for test"))))
-      val updated = IncomingTrafficSign(trafficSign.lon, trafficSign.lat, trafficSign.linkId, updatedProperties)
+      val updated = IncomingTrafficSign(trafficSign.lon, trafficSign.lat, trafficSign.linkId, updatedProperties, 1, None)
 
       service.update(trafficSign.id, updated, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 235, "unit_test", linkSource = NormalLinkInterface)
       val updatedTrafficSign = service.getById(600073).get

@@ -483,7 +483,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
 
   test("lighting assets split works on two parts") {
     val trl = TierekisteriLightingData(4L, 203L, 204L, Track.RightSide, 3184L, 6584L)
-    val sections = litRoadImporterOperations.getRoadAddressSections(trl)
+    val sections = litRoadImporterOperations.getRoadAddressSections(trl).map(_._1)
     sections.size should be (2)
     sections.head should be (AddressSection(4L, 203L, Track.RightSide, 3184L, None))
     sections.last should be (AddressSection(4L, 204L, Track.RightSide, 0L, Some(6584L)))

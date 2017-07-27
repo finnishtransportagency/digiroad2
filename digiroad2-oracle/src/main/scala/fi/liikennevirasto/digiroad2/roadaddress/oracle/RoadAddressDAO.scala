@@ -48,8 +48,8 @@ class RoadAddressDAO {
     queryList(queryFilter(query))
   }
 
-  def withRoadNumber(road: Long, roadPart:Long)(query: String): String = {
-    query + s" WHERE ra.road_number = $road AND ra.road_part_number = $roadPart and (ra.valid_to > sysdate or ra.valid_to is null) and ra.floating = 0"
+  def withRoadNumber(road: Long, roadPart:Long, track: Int)(query: String): String = {
+    query + s" WHERE ra.road_number = $road AND ra.TRACK_CODE = $track AND ra.road_part_number = $roadPart and (ra.valid_to > sysdate or ra.valid_to is null) and ra.floating = 0"
   }
 
   def withRoadAddress(road: Long, roadPart: Long, track: Int, mValue: Double)(query: String): String = {

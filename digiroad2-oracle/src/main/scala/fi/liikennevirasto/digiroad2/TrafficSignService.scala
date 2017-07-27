@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.pointasset.oracle.{PersistedTrafficSign, OracleTrafficSignDao}
 import fi.liikennevirasto.digiroad2.user.User
 
-case class IncomingTrafficSign(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimpleProperty]) extends IncomingPointAsset
+case class IncomingTrafficSign(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimpleProperty], validityDirection: Int, bearing: Option[Int]) extends IncomingPointAsset
 
 sealed trait TrafficSignTypeGroup {
   def value: Int
@@ -90,7 +90,8 @@ class TrafficSignService(val roadLinkService: RoadLinkService) extends PointAsse
 
   private def adjustmentOperation(persistedAsset: PersistedAsset, adjustment: AssetAdjustment): Long = {
     val updated = IncomingTrafficSign(adjustment.lon, adjustment.lat, adjustment.linkId,
-      persistedAsset.propertyData.map(prop => SimpleProperty(prop.publicId, prop.values)).toSet)
+      persistedAsset.propertyData.map(prop => SimpleProperty(prop.publicId, prop.values)).toSet,
+      persistedAsset.validityDirection, persistedAsset.bearing)
 
     OracleTrafficSignDao.update(adjustment.assetId, updated, adjustment.mValue, persistedAsset.municipalityCode,
       "vvh_generated", Some(adjustment.vvhTimeStamp), persistedAsset.linkSource)
@@ -105,7 +106,8 @@ class TrafficSignService(val roadLinkService: RoadLinkService) extends PointAsse
   private def createPersistedAsset[T](persistedStop: PersistedAsset, asset: AssetAdjustment) = {
     new PersistedAsset(asset.assetId, asset.linkId, asset.lon, asset.lat,
       asset.mValue, asset.floating, persistedStop.vvhTimeStamp, persistedStop.municipalityCode, persistedStop.propertyData, persistedStop.createdBy,
-      persistedStop.createdAt, persistedStop.modifiedBy, persistedStop.modifiedAt, persistedStop.linkSource)
+      persistedStop.createdAt, persistedStop.modifiedBy, persistedStop.modifiedAt, persistedStop.validityDirection, persistedStop.bearing,
+      persistedStop.linkSource)
   }
 
 }

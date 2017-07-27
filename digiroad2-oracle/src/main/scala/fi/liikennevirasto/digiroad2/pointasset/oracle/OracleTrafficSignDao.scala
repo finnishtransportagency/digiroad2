@@ -22,6 +22,8 @@ case class PersistedTrafficSign(id: Long, linkId: Long,
                                 createdAt: Option[DateTime] = None,
                                 modifiedBy: Option[String] = None,
                                 modifiedAt: Option[DateTime] = None,
+                                validityDirection: Int,
+                                bearing: Option[Int],
                                 linkSource: LinkGeomSource) extends PersistedPointAsset
 
 
@@ -31,6 +33,8 @@ case class TrafficSignRow(id: Long, linkId: Long,
                           vvhTimeStamp: Long,
                           municipalityCode: Int,
                           property: PropertyRow,
+                          validityDirection: Int,
+                          bearing: Option[Int],
                           createdBy: Option[String] = None,
                           createdAt: Option[DateTime] = None,
                           modifiedBy: Option[String] = None,
@@ -48,7 +52,8 @@ object OracleTrafficSignDao {
                 when ev.name_fi is not null then ev.name_fi
                 when tpv.value_fi is not null then tpv.value_fi
                 else null
-               end as display_value, a.created_by, a.created_date, a.modified_by, a.modified_date, lp.link_source
+               end as display_value, a.created_by, a.created_date, a.modified_by, a.modified_date, lp.link_source, a.bearing,
+               lp.side_code
         from asset a
         join asset_link al on a.id = al.asset_id
         join lrm_position lp on al.position_id = lp.id
@@ -71,7 +76,7 @@ object OracleTrafficSignDao {
       id -> PersistedTrafficSign(id = row.id, linkId = row.linkId, lon = row.lon, lat = row.lat, mValue = row.mValue,
         floating = row.floating, vvhTimeStamp = row.vvhTimeStamp, municipalityCode = row.municipalityCode, properties,
         createdBy = row.createdBy, createdAt = row.createdAt, modifiedBy = row.modifiedBy, modifiedAt = row.modifiedAt,
-        linkSource = row.linkSource)
+        linkSource = row.linkSource, validityDirection = row.validityDirection, bearing = row.bearing)
     }.values.toSeq
   }
 
@@ -102,8 +107,10 @@ object OracleTrafficSignDao {
       val modifiedBy = r.nextStringOption()
       val modifiedAt = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val linkSource = r.nextInt()
+      val bearing = r.nextIntOption()
+      val validityDirection = r.nextInt()
 
-      TrafficSignRow(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, property, createdBy, createdAt, modifiedBy, modifiedAt, LinkGeomSource(linkSource))
+      TrafficSignRow(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, property, validityDirection, bearing, createdBy, createdAt, modifiedBy, modifiedAt, LinkGeomSource(linkSource))
     }
   }
 
@@ -112,11 +119,11 @@ object OracleTrafficSignDao {
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     sqlu"""
       insert all
-        into asset(id, asset_type_id, created_by, created_date, municipality_code)
-        values ($id, 300, $username, sysdate, $municipality)
+        into asset(id, asset_type_id, created_by, created_date, municipality_code, bearing)
+        values ($id, 300, $username, sysdate, $municipality, ${trafficSign.bearing})
 
-        into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source)
-        values ($lrmPositionId, $mValue, ${trafficSign.linkId}, $adjustmentTimestamp, ${linkSource.value})
+        into lrm_position(id, start_measure, link_id, adjusted_timestamp, link_source, side_code)
+        values ($lrmPositionId, $mValue, ${trafficSign.linkId}, $adjustmentTimestamp, ${linkSource.value}, ${trafficSign.validityDirection})
 
         into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId)
@@ -138,7 +145,7 @@ object OracleTrafficSignDao {
 
   def update(id: Long, trafficSign: IncomingTrafficSign, mValue: Double, municipality: Int,
              username: String, adjustedTimeStampOption: Option[Long] = None, linkSource: LinkGeomSource) = {
-    sqlu""" update asset set municipality_code = $municipality where id = $id """.execute
+    sqlu""" update asset set municipality_code = $municipality, bearing=${trafficSign.bearing} where id = $id """.execute
     updateAssetModified(id, username).execute
     updateAssetGeometry(id, Point(trafficSign.lon, trafficSign.lat))
 
@@ -158,6 +165,7 @@ object OracleTrafficSignDao {
            set
            start_measure = $mValue,
            link_id = ${trafficSign.linkId},
+           side_code = ${trafficSign.validityDirection},
            adjusted_timestamp = ${adjustedTimeStamp},
            link_source = ${linkSource.value}
            where id = (select position_id from asset_link where asset_id = $id)
@@ -168,6 +176,7 @@ object OracleTrafficSignDao {
            set
            start_measure = $mValue,
            link_id = ${trafficSign.linkId},
+           side_code = ${trafficSign.validityDirection},
            link_source = ${linkSource.value}
            where id = (select position_id from asset_link where asset_id = $id)
         """.execute

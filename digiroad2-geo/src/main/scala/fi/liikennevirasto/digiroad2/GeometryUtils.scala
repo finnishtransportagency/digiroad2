@@ -258,6 +258,15 @@ object GeometryUtils {
     }
   }
 
+  def calculateBearing(geom: Seq[Point]): Int = {
+    //TODO Test bearing calculation
+    val points = geometryEndpoints(geom)
+    val startPoint = points._1
+    val endPoint = points._2
+    val rad = Math.atan2(startPoint.x - endPoint.x, startPoint.y - endPoint.y)
+    (180 + (rad * (180 / Math.PI))).asInstanceOf[Int]
+  }
+
   /**
     * Returns top-left and bottom-right corners for a minimal box that contains all given points
     * @param points point cloud
