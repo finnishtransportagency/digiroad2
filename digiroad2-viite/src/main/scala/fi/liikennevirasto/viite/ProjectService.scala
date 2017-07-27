@@ -397,7 +397,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def getChangeProject(projectId:Long): Option[ChangeProject] = {
-    withDynTransaction {
+    val changeProjectData = withDynTransaction {
       try {
         val delta = ProjectDeltaCalculator.delta(projectId)
         //TODO would be better to give roadType to ProjectLinks table instead of calling vvh here
@@ -406,13 +406,16 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
         if (setProjectDeltaToDB(delta.copy(terminations = filledTerminations), projectId)) {
           val roadAddressChanges = RoadAddressChangesDAO.fetchRoadAddressChanges(Set(projectId))
-          return Some(ViiteTierekisteriClient.convertToChangeProject(roadAddressChanges.sortBy(r => (r.changeInfo.source.trackCode, r.changeInfo.source.startAddressM, r.changeInfo.source.startRoadPartNumber, r.changeInfo.source.roadNumber))))
+          Some(ViiteTierekisteriClient.convertToChangeProject(roadAddressChanges.sortBy(r => (r.changeInfo.source.trackCode, r.changeInfo.source.startAddressM, r.changeInfo.source.startRoadPartNumber, r.changeInfo.source.roadNumber))))
         }
       } catch {
-        case NonFatal(e) => logger.info(s"Change info not available for project $projectId: " + e.getMessage)
+        case NonFatal(e) => {
+          logger.info(s"Change info not available for project $projectId: " + e.getMessage)
+          Option.empty[ChangeProject]
+        }
       }
     }
-    None
+    changeProjectData.asInstanceOf[Option[ChangeProject]]
   }
 
   def enrichTerminations(terminations: Seq[RoadAddress], roadlinks: Seq[RoadLink]): Seq[RoadAddress] = {
@@ -574,7 +577,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   private def setProjectDeltaToDB(projectDelta:Delta, projectId:Long):Boolean= {
     RoadAddressChangesDAO.clearRoadChangeTable(projectId)
-    RoadAddressChangesDAO.insertDeltaToRoadChangeTable(projectDelta, projectId)
+    val batchInsertionResult = RoadAddressChangesDAO.insertDeltaToRoadChangeTable(projectDelta, projectId)
+    projectDelta.newRoads.foreach (newRoad => {
+      RoadAddressChangesDAO.insertNewRoadChange(newRoad)
+    })
+    batchInsertionResult
   }
 
   private def toProjectAddressLink(ral: RoadAddressLinkLike): ProjectAddressLink = {
