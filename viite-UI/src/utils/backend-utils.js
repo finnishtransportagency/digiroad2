@@ -2,11 +2,19 @@
   root.Backend = function() {
     var self = this;
     var  loadingProject;
+
     this.getRoadLinks = createCallbackRequestor(function(params) {
       var zoom = params.zoom;
       var boundingBox = params.boundingBox;
       return {
         url: 'api/viite/roadlinks?zoom=' + zoom + '&bbox=' + boundingBox
+      };
+    });
+
+    this.getSuravageLinks = createCallbackRequestor(function(params) {
+      var boundingBox = params.boundingBox;
+      return {
+        url: 'api/viite/roadlinks/suravage?bbox=' + boundingBox
       };
     });
 

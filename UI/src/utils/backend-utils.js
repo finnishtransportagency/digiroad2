@@ -26,7 +26,7 @@
     });
 
     this.getHistoryRoadLinks = createCallbackRequestor(function(boundingBox) {
-      return {
+        return {
         url: 'api/roadlinks/history?bbox=' + boundingBox
       };
     });

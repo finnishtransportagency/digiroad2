@@ -1,4 +1,145 @@
 (function(root) {
+
+
+  var SuravageLayer = function(map, roadCollection){
+    var vectorSource = new ol.source.Vector({ strategy: ol.loadingstrategy.bbox });
+    var vectorLayer;
+    var layerStyleProviders = {};
+    var layerMinContentZoomLevels = {};
+    var uiState = { zoomLevel: 9 };
+    var isActive = true;
+
+    var setZoomLevel = function(zoom){
+      uiState.zoomLevel = zoom;
+    };
+
+    var drawRoadLinks = function(roadLinks, zoom) {
+      setZoomLevel(zoom);
+      vectorSource.clear();
+      var features = _.map(roadLinks, function(roadLink) {
+        return createRoadLinkFeature(roadLink);
+      });
+      vectorSource.addFeatures(features);
+    };
+
+    var drawRoadLink = function(roadLink){
+      var feature = createRoadLinkFeature(roadLink);
+      vectorSource.addFeatures(feature);
+    };
+
+    var createRoadLinkFeature = function(roadLink){
+      var points = _.map(roadLink.points, function(point) {
+        return [point.x, point.y];
+      });
+      return new ol.Feature(_.merge({}, roadLink, { geometry: new ol.geom.LineString(points)}));
+    };
+
+    var setLayerSpecificStyleProvider = function(layer, provider) {
+      layerStyleProviders[layer] = provider;
+    };
+
+    var clear = function() {
+      vectorSource.clear();
+    };
+
+    function stylesUndefined() {
+      return _.isUndefined(layerStyleProviders[applicationModel.getSelectedLayer()]);
+    }
+
+    var minimumContentZoomLevel = function() {
+      if (!_.isUndefined(layerMinContentZoomLevels[applicationModel.getSelectedLayer()])) {
+        return layerMinContentZoomLevels[applicationModel.getSelectedLayer()];
+      }
+      return zoomlevels.minZoomForRoadLinks;
+    };
+
+    var mapMovedHandler = function(mapState) {
+      if(isActive){
+        if (mapState.zoom < minimumContentZoomLevel()) {
+          vectorSource.clear();
+          roadCollection.resetHistory();
+        }
+        handleRoadsVisibility();
+      }
+    };
+
+    var handleRoadsVisibility = function() {
+      if (_.isObject(vectorLayer)) {
+        vectorLayer.setVisible(map.getView().getZoom() >= minimumContentZoomLevel());
+      }
+    };
+
+    var refreshView = function(){
+      if(isActive)
+        roadCollection.fetchHistory(map.getView().calculateExtent(map.getSize()));
+    };
+
+    var showLayer = function(){
+      vectorLayer.setVisible(true);
+    };
+
+    var vectorLayerStyle = function(feature) {
+      var currentLayerProvider = layerStyleProviders[applicationModel.getSelectedLayer()]();
+      if(currentLayerProvider.default)
+        return currentLayerProvider.default.getStyle(feature, {zoomLevel: uiState.zoomLevel});
+      return currentLayerProvider.getStyle(feature, {zoomLevel: uiState.zoomLevel});
+    };
+
+    var hideLayer = function(){
+      vectorLayer.setVisible(false);
+    };
+
+    vectorLayer = new ol.layer.Vector({
+      source: vectorSource,
+      style: vectorLayerStyle
+    });
+
+    var findLayerIndexByName = function(map, name){
+      var layers = map.getLayers().getArray();
+      for (var i = 0; i < layers.length; i++) {
+        if (name === layers[i].get('name')) {
+          return i;
+        }
+      }
+      return -1;
+    };
+
+    var addLayerBehind = function(map, layer, name){
+      var idx = findLayerIndexByName(map, name);
+      map.getLayers().insertAt(idx, layer);
+    };
+
+    vectorLayer.set('name', 'historyDataLayer');
+    addLayerBehind(map, vectorLayer, 'road');
+    vectorLayer.setVisible(false);
+
+    eventbus.on('roadLinkHistory:show', function(){
+      isActive = true;
+      roadCollection.fetchHistory(map.getView().calculateExtent(map.getSize()));
+      showLayer();
+    });
+
+    eventbus.on('roadLinkHistory:hide', function(){
+      isActive = false;
+      hideLayer();
+    });
+
+    eventbus.on('map:moved', mapMovedHandler, this);
+
+    return {
+      uiState: uiState,
+      layer: vectorLayer,
+      clear: clear,
+      setLayerSpecificStyleProvider: setLayerSpecificStyleProvider,
+      drawRoadLink: drawRoadLink,
+      drawRoadLinks: drawRoadLinks,
+      show: showLayer,
+      hide: hideLayer,
+      refreshView: refreshView
+    };
+  };
+
+
   root.LinkPropertyLayer = function(map, roadLayer, selectedLinkProperty, roadCollection, linkPropertiesModel, applicationModel,styler) {
     var layerName = 'linkProperty';
     var cachedLinkPropertyMarker = null;
@@ -24,6 +165,15 @@
     var againstDigitizing = 3;
     var towardsDigitizing = 2;
     var activeLayer = false;
+
+    var suravageLayer = new SuravageLayer(map, roadCollection);
+   /* var suravageLayerStyles = LinkPropertyLayerStyles(suravageLayer);
+    suravageLayer.setLayerSpecificStyleProvider(layerName, function(){
+      var styleProvider = suravageLayerStyles.getDatasetSpecificStyle(linkPropertiesModel.getDataset(), 'suravage');
+      if(styleProvider)
+        return styleProvider[currentRenderIntent];
+      return undefined;
+    });*/
 
     var indicatorLayer = new ol.layer.Vector({
       source: indicatorVector,
@@ -103,6 +253,15 @@
     });
 
     var simulatedRoadsLayer = new ol.layer.Vector({
+      source: simulationVector,
+      name: 'simulatedRoadsLayer',
+      style: function(feature) {
+        return styler.generateStyleByFeature(feature.roadLinkData,map.getView().getZoom());
+      }
+    });
+
+
+    var suravageRoadsLayer = new ol.layer.Vector({
       source: simulationVector,
       name: 'simulatedRoadsLayer',
       style: function(feature) {
@@ -495,8 +654,11 @@
       cachedMarker = new LinkPropertyMarker(selectedLinkProperty);
       removeSelectInteractions();
       var roadLinks = roadCollection.getAll();
-      var linkIdsToRemove = applicationModel.getCurrentAction() !== applicationModel.actionCalculated ? [] : selectedLinkProperty.linkIdsToExclude();
+      var suravageroadLink= roadCollection.getAllSuravage();
 
+      suravageLayer.drawRoadLinks(suravageroadLink, map.getView().getZoom());
+      suravageLayer.layer.getSource().addFeatures();
+      var linkIdsToRemove = applicationModel.getCurrentAction() !== applicationModel.actionCalculated ? [] : selectedLinkProperty.linkIdsToExclude();
       if(floatingMarkerLayer.getSource() !== null)
         floatingMarkerLayer.getSource().clear();
       if(anomalousMarkerLayer.getSource() !== null)
@@ -599,7 +761,10 @@
       //Generalize the zoom levels as the resolutions and zoom levels differ between map tile sources
       roadCollection.reset();
       roadCollection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getZoom());
+      roadCollection.fetchSuravage(map.getView().calculateExtent(map.getSize()));
+      suravageLayer.layer.changed();
       roadLayer.layer.changed();
+
     };
 
     this.isDirty = function() {
