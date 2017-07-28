@@ -10,6 +10,7 @@
     var dirtyProjectLinkIds = [];
     var dirtyProjectLinks = [];
     var self = this;
+    var publishableProject = false;
     var STATUS_NOT_HANDLED = 0;
     var STATUS_TERMINATED = 1;
     var BAD_REQUEST_400 = 400;
@@ -61,10 +62,8 @@
               return new ProjectLinkModel(projectLink);
             });
           });
+          publishableProject = isPublishable;
           eventbus.trigger('roadAddressProject:fetched', self.getAll());
-          if(isPublishable) {
-            eventbus.trigger('roadAddressProject:publishable');
-          }
         });
     };
 
@@ -83,6 +82,7 @@
           id: result.project.id,
           publishable: result.publishable
         };
+        publishableProject = result.publishable;
         eventbus.trigger('roadAddressProject:projectFetched', projectinfo);
       });
     };
@@ -344,6 +344,10 @@
 
     this.getCurrentProject = function(){
       return currentProject;
+    };
+
+    this.getPublishableStatus = function () {
+      return publishableProject;
     };
 
 
