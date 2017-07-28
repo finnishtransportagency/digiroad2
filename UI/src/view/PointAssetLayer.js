@@ -169,9 +169,9 @@
 
     function applySelection() {
       if (selectedAsset.exists()) {
-        var feature = _.find(vectorLayer.getSource().getFeatures(), function(feature) { return selectedAsset.isSelected(feature.getProperties());});
+        var feature = _.filter(vectorLayer.getSource().getFeatures(), function(feature) { return selectedAsset.isSelected(feature.getProperties());});
         if (feature) {
-          selectControl.addSelectionFeatures([feature]);
+          selectControl.addSelectionFeatures(feature);
         }
       }
     }

@@ -56,22 +56,28 @@
       })];
     };
 
-    var checkValue = function(asset){
+    var getProperty = function(asset, publicId){
+      return _.first(_.find(asset.propertyData, function(prop){return prop.publicId === publicId;}).values);
+    };
+
+    var handleValue = function(asset){
       propertyText = '';
-      var trafficSignValue = parseInt(_.first(_.find(asset.propertyData, function(prop){return prop.publicId === "trafficSigns_type";}).values).propertyValue);
-        if(trafficSignValue < 7 || trafficSignValue == 8)
+      if(_.isUndefined(getProperty(asset, "trafficSigns_type")))
+        return;
+      var trafficSignType = parseInt(getProperty(asset, "trafficSigns_type").propertyValue);
+        if(trafficSignType < 7 || trafficSignType == 8)
           setProperty(asset);
-      return trafficSignValue;
+      return trafficSignType;
     };
 
     var setProperty = function(asset) {
-      var existingValue = _.first(_.find(asset.propertyData, function(prop){return prop.publicId === "trafficSigns_value";}).values);
+      var existingValue = getProperty(asset, "trafficSigns_value");
       if(existingValue)
         propertyText = existingValue.propertyValue;
     };
 
     this.getValue = function(asset){
-     return checkValue(asset);
+     return handleValue(asset);
     };
   };
 
