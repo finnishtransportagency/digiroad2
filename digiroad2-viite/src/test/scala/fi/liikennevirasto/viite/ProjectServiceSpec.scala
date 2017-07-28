@@ -661,13 +661,6 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
     }
   }
 
-  test("error message when sidecode flip fails with incorrect id") {
-    runWithRollback {
-    val errorMessage=  projectService.changeDirection(RoadAddressDAO.getNextRoadAddressId, 0, 0)
-      errorMessage should be("Kaikkia linkkejä ei löytynyt")
-    }
-  }
-
   test("flipping success message") {
     runWithRollback {
       val id = Sequences.nextViitePrimaryKeySeqValue
