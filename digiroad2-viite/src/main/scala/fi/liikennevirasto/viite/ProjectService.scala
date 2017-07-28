@@ -217,17 +217,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }).asInstanceOf[Seq[ProjectLink]]
   }
 
-  def changeDirection(projectLink:Seq[Long]): String = {
+  def changeDirection(projectId : Long, roadNumber : Long, roadPartNumber : Long): String = {
     try {
       withDynTransaction {
-        val projectId= ProjectDAO.projectLinksExist(projectLink)
-        if (projectId.size!=projectLink.size)
-          return "Kaikkia linkkejä ei löytynyt"
-        if (projectId.forall(_ !=projectId.head)){
+        val projectLinkIds= ProjectDAO.projectLinksExist(projectId, roadNumber, roadPartNumber)
+        if (projectLinkIds.forall(_ !=projectLinkIds.head)){
          return "Linkit kuuluvat useampaan projektiin"
         }
-        ProjectDAO.flipProjectLinksSideCodes(projectLink)
-        recalculateMValues(ProjectDAO.getProjectLinksById(projectLink).reverse).map(link => ProjectDAO.updateMValues(link))
+        ProjectDAO.flipProjectLinksSideCodes(projectId, roadNumber, roadPartNumber)
+        recalculateMValues(ProjectDAO.fetchByProjectNewRoadPart(roadNumber, roadPartNumber, projectId).reverse).map(link => ProjectDAO.updateMValues(link))
         ""
       }
     } catch{

@@ -663,7 +663,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
 
   test("error message when sidecode flip fails with incorrect id") {
     runWithRollback {
-    val errorMessage=  projectService.changeDirection(Seq(RoadAddressDAO.getNextRoadAddressId))
+    val errorMessage=  projectService.changeDirection(RoadAddressDAO.getNextRoadAddressId, 0, 0)
       errorMessage should be("Kaikkia linkkejä ei löytynyt")
     }
   }
@@ -676,7 +676,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       val addresses = RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(rap))
       ProjectDAO.create(addresses)
       val links=ProjectDAO.getProjectLinks(id)
-      val errorMessage=  projectService.changeDirection(links.map(l => l.id))
+      val errorMessage=  projectService.changeDirection(id, 5, 203)
       errorMessage should be("")
     }
   }
@@ -689,7 +689,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       val addresses = RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(rap))
       ProjectDAO.create(addresses)
       val links=ProjectDAO.getProjectLinks(id)
-      projectService.changeDirection(links.map(l => l.id))
+      projectService.changeDirection(id, 5, 203)
       val changedLinks = ProjectDAO.getProjectLinksById(links.map{l => l.id})
       links.head.sideCode should not be(changedLinks.head.sideCode)
       links.head.endMValue should be(changedLinks.last.endMValue)

@@ -215,10 +215,10 @@ class ProjectLinkDaoSpec  extends FunSuite with Matchers {
       val projectid= sql"select LRM_POSITION_ID from PROJECT_LINK where PROJECT_LINK.PROJECT_ID = $id".as[Long].first
       val psidecode=sql"select side_code from LRM_Position WHERE id=$lrmid".as[Int].first
       psidecode should be (2)
-      ProjectDAO.flipProjectLinksSideCodes(Seq(linkid))
+      ProjectDAO.flipProjectLinksSideCodes(id, 5, 203)
       val nsidecode=sql"select side_code from LRM_Position WHERE id=$lrmid".as[Int].first
       nsidecode should be (3)
-      ProjectDAO.flipProjectLinksSideCodes(Seq(linkid))
+      ProjectDAO.flipProjectLinksSideCodes(id, 5, 203)
       val bsidecode=sql"select side_code from LRM_Position WHERE id=$lrmid".as[Int].first
       bsidecode should be (2)
     }

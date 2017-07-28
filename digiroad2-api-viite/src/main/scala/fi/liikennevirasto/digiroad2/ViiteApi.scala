@@ -29,6 +29,8 @@ case class NewAddressDataExtracted(sourceIds: Set[Long], targetIds: Set[Long])
 
 case class NewRoadAddressExtractor(linkIds: Set[Long], projectId: Long, newRoadNumber: Long, newRoadPartNumber : Long, newTrackCode: Long, newDiscontinuity :Long)
 
+case class ProjectRoadAddressInfo(projectId : Long, roadNumber: Long, roadPartNumber :Long)
+
 case class RoadAddressProjectExtractor(id: Long, status: Long, name: String, startDate: String, additionalInfo: String,roadPartList: List[ReservedRoadPart])
 
 case class RoadAddressProjectLinkUpdate(linkIds: Seq[Long], projectId: Long, newStatus: Int)
@@ -257,11 +259,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   put("/roadlinks/roadaddress/project/directionchangenewroadlink"){
 
     try { //check for validity
-      val projectlinksafe = parsedBody.extract[Seq[Long]]
+      val projectlinksafe = parsedBody.extract[ProjectRoadAddressInfo]
     } catch {
       case NonFatal(e) => BadRequest("Missing mandatory ProjectLink parameter")
     }
-  val errormessage= projectService.changeDirection(parsedBody.extract[Seq[Long]])
+    val roadInfo = parsedBody.extract[ProjectRoadAddressInfo]
+
+    val errormessage= projectService.changeDirection(roadInfo.projectId, roadInfo.roadNumber, roadInfo.roadPartNumber)
     if (errormessage=="")
       {
         Map("success" -> true)
@@ -314,11 +318,14 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       case NonFatal(e) => BadRequest("Missing mandatory ProjectLink parameter")
     }
       val projectLink = parsedBody.extract[NewRoadAddressExtractor]
-
-
       val roadLinks = projectService.getProjectRoadLinksByLinkIds(projectLink.linkIds)
+    val linksInProject = projectService.getProjectRoadLinksByLinkIds(withDynTransaction {ProjectDAO.fetchByProjectNewRoadPart(projectLink.newRoadNumber,projectLink.newRoadPartNumber,projectLink.projectId, false).map(l => l.linkId).toSet})
     withDynTransaction {
-      val errorMessage = projectService.addNewLinksToProject(roadLinks, projectLink.projectId, projectLink.newRoadNumber, projectLink.newRoadPartNumber, projectLink.newTrackCode, projectLink.newDiscontinuity)
+      //Deleting all existent roads for same road_number and road_part_number, in order to recalculate the full road if it is already in project
+      if(linksInProject.nonEmpty){
+        ProjectDAO.removeProjectLinksByProjectAndRoadNumber(projectLink.projectId, projectLink.newRoadNumber, projectLink.newRoadPartNumber)
+      }
+      val errorMessage = projectService.addNewLinksToProject(roadLinks ++ linksInProject, projectLink.projectId, projectLink.newRoadNumber, projectLink.newRoadPartNumber, projectLink.newTrackCode, projectLink.newDiscontinuity)
       if (errorMessage == "") {
         Map("success" -> true)
       } else {
