@@ -245,6 +245,9 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       sqlu"""UPDATE Project_link set status = 1""".execute
       val terminations = ProjectDeltaCalculator.delta(saved.id).terminations
       terminations should have size (66)
+      sqlu"""UPDATE Project_link set status = 2""".execute
+      val newCreations = ProjectDeltaCalculator.delta(saved.id).newRoads
+      newCreations should have size (66)
       val sections = ProjectDeltaCalculator.partition(terminations)
       sections should have size (2)
       sections.exists(_.track == Track.LeftSide) should be(true)
