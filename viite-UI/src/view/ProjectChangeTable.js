@@ -10,6 +10,9 @@
       'Lakkautettu'
     ];
 
+    var newLinkStatus = 2;
+    var terminatedLinkStatus = 5;
+    
     var changeTable =
       $('<div class="change-table-frame"></div>');
     // Text about validation success hard-coded now
@@ -76,7 +79,7 @@
       eventbus.once('projectChanges:fetched', function(projectChangeData){
         var htmlTable ='<table class="change-table">';
         _.each(projectChangeData.changeInfoSeq, function(changeInfoSeq) {
-          if(changeInfoSeq.changetype === 2){
+          if(changeInfoSeq.changetype === newLinkStatus){
             htmlTable += '<tr class="change-table-data-row">' +
               '<td class="project-change-table-dimension-first">' + getChangeType(changeInfoSeq.changetype) + '</td>' +
               '<td class="project-change-table-data-cell"></td>' +
@@ -99,7 +102,7 @@
               '<td class="project-change-table-data-cell data-cell-road-type">'+ changeInfoSeq.roadType + '</td>' +
               '<td class="project-change-table-data-cell">' + projectChangeData.ely + '</td>' +
               '</tr>';
-          } else if (changeInfoSeq.changetype === 5) {
+          } else if (changeInfoSeq.changetype === terminatedLinkStatus) {
             htmlTable += '<tr class="change-table-data-row">' +
               '<td class="project-change-table-dimension-first">' + getChangeType(changeInfoSeq.changetype) + '</td>' +
               '<td class="project-change-table-data-cell">' + changeInfoSeq.source.roadNumber + '</td>' +
