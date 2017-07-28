@@ -3,10 +3,10 @@ package fi.liikennevirasto.digiroad2.util
 
 import java.util.Properties
 
-import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset.oracle.OracleAssetDao
 import fi.liikennevirasto.digiroad2.{TierekisteriAssetDataClient, TierekisteriLightingAssetClient, TierekisteriRoadWidthAssetClient, _}
-import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.asset.{SideCode, _}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -184,8 +184,6 @@ trait TierekisteriAssetImporterOperations {
         //We will generate the middle parts and return a AddressSection for each one
         val trAddressSections = getAllTierekisteriAddressSections(roadNumber)
 
-        println("tr size = "+trAddressSections.size)
-
         //For each section creates a new OTH asset
         trAddressSections.foreach {
           case (section, trAssetData) =>
@@ -317,11 +315,24 @@ class TrafficSignTierekisteriImporter extends PointAssetTierekisteriImporterOper
     Set(typeProperty, valueProperty)
   }
 
+  private def getSideCode(raSideCode: SideCode, roadSide: RoadSide): SideCode = {
+    roadSide match {
+      case RoadSide.Right => raSideCode
+      case RoadSide.Left => raSideCode match {
+        case TowardsDigitizing => SideCode.AgainstDigitizing
+        case AgainstDigitizing => SideCode.TowardsDigitizing
+        case _ => SideCode.BothDirections
+      }
+      case _ => SideCode.BothDirections
+    }
+  }
+
   override protected def createPointAsset(roadAddress: ViiteRoadAddress, vvhRoadlink: VVHRoadlink, mValue: Double, trAssetData: TierekisteriAssetData): Unit = {
     if(trAssetData.assetType != TRTrafficSignType.Unknown)
       GeometryUtils.calculatePointFromLinearReference(vvhRoadlink.geometry, mValue).map{
         point =>
-          val trafficSign = IncomingTrafficSign(point.x, point.y, vvhRoadlink.linkId, generateProperties(trAssetData), roadAddress.sideCode.value, Some(GeometryUtils.calculateBearing(vvhRoadlink.geometry)))
+          val trafficSign = IncomingTrafficSign(point.x, point.y, vvhRoadlink.linkId, generateProperties(trAssetData),
+            getSideCode(roadAddress.sideCode, trAssetData.roadSide).value, Some(GeometryUtils.calculateBearing(vvhRoadlink.geometry)))
           OracleTrafficSignDao.create(trafficSign, mValue, "batch_process_trafficSigns", vvhRoadlink.municipalityCode,
             VVHClient.createVVHTimeStamp(), vvhRoadlink.linkSource)
       }

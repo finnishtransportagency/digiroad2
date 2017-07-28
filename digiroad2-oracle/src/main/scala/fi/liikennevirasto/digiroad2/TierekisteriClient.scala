@@ -208,7 +208,7 @@ case class TierekisteriLightingData(roadNumber: Long, startRoadPartNumber: Long,
                                 track: Track, startAddressMValue: Long, endAddressMValue: Long) extends TierekisteriAssetData
 
 case class TierekisteriTrafficSignData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
-                                    track: Track, startAddressMValue: Long, endAddressMValue: Long, assetType: TRTrafficSignType, assetValue: String) extends TierekisteriAssetData
+                                    track: Track, startAddressMValue: Long, endAddressMValue: Long, roadSide: RoadSide, assetType: TRTrafficSignType, assetValue: String) extends TierekisteriAssetData
 
 case class TierekisteriError(content: Map[String, Any], url: String)
 
@@ -797,6 +797,7 @@ class TierekisteriTrafficSignAssetClient(trEndPoint: String, trEnable: Boolean, 
   override val trAssetType = "tl506"
   private val trLMNUMERO = "LMNUMERO"
   private val trLMTEKSTI = "LMTEKSTI"
+  private val trPUOLI = "PUOLI"
 
   override def mapFields(data: Map[String, Any]): TierekisteriTrafficSignData = {
     val assetValue = getFieldValue(data, trLMTEKSTI).getOrElse("")
@@ -805,8 +806,9 @@ class TierekisteriTrafficSignAssetClient(trEndPoint: String, trEnable: Boolean, 
     val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
     val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
     val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
+    val roadSide = convertToInt(getMandatoryFieldValue(data, trPUOLI)).map(RoadSide.apply).getOrElse(RoadSide.Unknown)
 
-    TierekisteriTrafficSignData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, TRTrafficSignType.apply(assetNumber), assetValue)
+    TierekisteriTrafficSignData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, TRTrafficSignType.apply(assetNumber), assetValue)
   }
 }
 
