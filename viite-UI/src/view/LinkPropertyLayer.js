@@ -261,14 +261,9 @@
     });
 
 
-    var suravageRoadsLayer = new ol.layer.Vector({
-      source: simulationVector,
-      name: 'simulatedRoadsLayer',
-      style: function(feature) {
-        return styler.generateStyleByFeature(feature.roadLinkData,map.getView().getZoom());
-      }
-    });
 
+
+   // map.addLayer(SuravageLayer);
     map.addLayer(floatingMarkerLayer);
     map.addLayer(anomalousMarkerLayer);
     map.addLayer(directionMarkerLayer);
@@ -657,7 +652,7 @@
       var suravageroadLink= roadCollection.getAllSuravage();
 
       suravageLayer.drawRoadLinks(suravageroadLink, map.getView().getZoom());
-      suravageLayer.layer.getSource().addFeatures();
+     // suravageLayer.layer.getSource().addFeatures();
       var linkIdsToRemove = applicationModel.getCurrentAction() !== applicationModel.actionCalculated ? [] : selectedLinkProperty.linkIdsToExclude();
       if(floatingMarkerLayer.getSource() !== null)
         floatingMarkerLayer.getSource().clear();
