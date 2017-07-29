@@ -1,10 +1,14 @@
 package fi.liikennevirasto.digiroad2
 
 import java.util.Properties
-import com.vividsolutions.jts.geom.{GeometryFactory}
+
+import com.vividsolutions.jts.geom.GeometryFactory
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import org.geotools.geometry.jts.GeometryBuilder
 import org.scalatest.{FunSuite, Matchers}
+
+import scala.concurrent.Await
+import scala.concurrent.duration.Duration
 
 class VVHClientSpec extends FunSuite with Matchers{
   lazy val properties: Properties = {
@@ -59,4 +63,12 @@ class VVHClientSpec extends FunSuite with Matchers{
     val result= vvhClient.roadLinkChangeInfo.fetchByBoundsAndMunicipalities(BoundingRectangle(Point(532578.3338013917,6993401.605560873,0.0),Point(532978.3338013917,6994261.605560873,0.0)), Set.empty[Int])
     result.size should be >1
   }
+  /**
+    * Test for Suravage API
+    */
+  test("Fetch suravage by boundingbox"){ //When writing this test no test area was provided in VVH documentation, so area might fail because area has no links anymore
+    val vvhClient= new VVHClient(properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+    Await.result(vvhClient.suravageData.fetchSuravageByunicipalitiesAndBoundsF(BoundingRectangle(Point(445000, 7000000),Point(446000, 7005244)), Set(931)), Duration.Inf).size should be > 0
+  }
 }
+

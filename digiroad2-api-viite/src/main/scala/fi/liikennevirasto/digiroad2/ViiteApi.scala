@@ -95,6 +95,20 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
   }
 
+
+  get("/roadlinks/suravage") {
+    response.setHeader("Access-Control-Allow-Headers", "*")
+
+    val user = userProvider.getCurrentUser()
+    val municipalities: Set[Int] = if (user.isViiteUser()) Set() else user.configuration.authorizedMunicipalities
+
+    val zoomLevel = chooseDrawType(params.getOrElse("zoom", "5"))
+
+    params.get("bbox")
+      .map(getSuravageRoadLinksFromVVH(municipalities, zoomLevel))
+      .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
+  }
+
   get("/roadlinks/:linkId") {
     val linkId = params("linkId").toLong
     val roadLinks = roadAddressService.getRoadAddressLink(linkId)
@@ -411,6 +425,19 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       _.map(roadAddressLinkToApi)
     }
   }
+
+  private def getSuravageRoadLinksFromVVH(municipalities: Set[Int], zoomLevel: Int)(bbox: String): Seq[Seq[Map[String, Any]]] = {
+    val boundingRectangle = constructBoundingRectangle(bbox)
+    val viiteRoadLinks = roadAddressService.getRoadAddressLinks(boundingRectangle, Seq((1, 19999)), municipalities)
+
+   // might need project partitioner
+    val partitionedRoadLinks = RoadAddressLinkPartitioner.partition(viiteRoadLinks)
+    partitionedRoadLinks.map {
+      _.map(roadAddressLinkToApi)
+    }
+  }
+
+
 
   private def getProjectLinks(projectId: Long, zoomLevel: Int)(bbox: String): Seq[Seq[Map[String, Any]]] = {
     val boundingRectangle = constructBoundingRectangle(bbox)
