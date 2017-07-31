@@ -211,7 +211,7 @@
     });
 
     _.forEach(pointAssets, function(pointAsset ) {
-     PointAssetForm.initialize(pointAsset.selectedPointAsset, pointAsset.layerName, pointAsset.formLabels, pointAsset.editConstrains, roadCollection, applicationModel);
+     PointAssetForm.initialize(pointAsset.selectedPointAsset, pointAsset.layerName, pointAsset.formLabels, pointAsset.editConstrains || function() {return false;}, roadCollection, applicationModel);
     });
 
     var linearAssetLayers = _.reduce(linearAssets, function(acc, asset) {

@@ -538,12 +538,10 @@
         manyFloatingAssetsLabel: 'liikennemerkit',
         newAssetLabel: 'liikennemerkki'
       },
-        editConstrains : function(selectedAsset) {
-        //check if administrative class is State
-        //return selectedAsset.getAdministrativeClass() === "State";
-          //TODO Validate This Please
-          return false;
-      }
+       editConstrains : function(selectedAsset, linkId) {
+       // check if administrative class is State
+          return selectedAsset.getAdministrativeClass(linkId) === "State";
+     }
     }
   ];
 })(this);

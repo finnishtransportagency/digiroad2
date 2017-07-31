@@ -43,7 +43,6 @@
     function pointAssetOnSelect(feature) {
       if(feature.selected.length > 0 && feature.deselected.length === 0){
           selectedAsset.open(feature.selected[0].getProperties());
-        toggleMode(editConstrains(selectedAsset) || application.isReadOnly());
       }
       else {
         if(feature.deselected.length > 0 && !selectedAsset.isDirty()) {
