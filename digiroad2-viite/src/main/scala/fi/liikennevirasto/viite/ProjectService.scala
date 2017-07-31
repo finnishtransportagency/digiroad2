@@ -407,15 +407,16 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         if (setProjectDeltaToDB(delta.copy(terminations = filledTerminations), projectId)) {
           val roadAddressChanges = RoadAddressChangesDAO.fetchRoadAddressChanges(Set(projectId))
           Some(ViiteTierekisteriClient.convertToChangeProject(roadAddressChanges.sortBy(r => (r.changeInfo.source.trackCode, r.changeInfo.source.startAddressM, r.changeInfo.source.startRoadPartNumber, r.changeInfo.source.roadNumber))))
+        } else {
+          None
         }
       } catch {
-        case NonFatal(e) => {
+        case NonFatal(e) =>
           logger.info(s"Change info not available for project $projectId: " + e.getMessage)
-          Option.empty[ChangeProject]
-        }
+          None
       }
     }
-    changeProjectData.asInstanceOf[Option[ChangeProject]]
+    changeProjectData
   }
 
   def enrichTerminations(terminations: Seq[RoadAddress], roadlinks: Seq[RoadLink]): Seq[RoadAddress] = {
