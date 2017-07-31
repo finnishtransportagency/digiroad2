@@ -1454,6 +1454,14 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }._1
   }
 
+  def getSuravageLinksFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[RoadLink] = {
+    val vvhRoadLinks = Await.result(vvhClient.suravageData.fetchSuravageByunicipalitiesAndBoundsF(bounds, municipalities), atMost = Duration.create(1, TimeUnit.HOURS))
+    withDynTransaction {
+      (enrichRoadLinksFromVVH(vvhRoadLinks, Seq.empty[ChangeInfo]), Seq.empty[ChangeInfo])
+    }._1
+  }
+
+
   def getComplementaryRoadLinksFromVVH(municipality: Int): Seq[RoadLink] = {
     val vvhRoadLinks = Await.result(vvhClient.complementaryData.fetchByMunicipalityF(municipality), Duration.create(1, TimeUnit.HOURS))
     withDynTransaction {

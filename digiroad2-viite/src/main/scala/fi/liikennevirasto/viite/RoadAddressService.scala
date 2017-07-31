@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite
 import fi.liikennevirasto.digiroad2.RoadLinkType.{FloatingRoadLinkType, UnknownRoadLinkType}
-import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.{asset, _}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -107,9 +107,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val fetchRoadAddressesByBoundingBoxF = Future(fetchRoadAddressesByBoundingBox(boundingRectangle))
     val fetchVVHStartTime = System.currentTimeMillis()
     val (roadLinks, complementaryLinks) = fetchRoadLinksWithComplementary(boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads)
+    val suravageLinks= roadLinkService.getSuravageLinksFromVVH(boundingRectangle,municipalities)
     val complementaryLinkIds = complementaryLinks.map(_.linkId)
     val roadLinkIds = roadLinks.map(_.linkId)
-    val complementedRoadLinks = roadLinks++complementaryLinks
+    val complementedRoadLinks = roadLinks++complementaryLinks++suravageLinks
 
     //TODO use complementedIds instead of only roadLinkIds below. There is no complementary ids for changeInfo dealing (for now)
     val changedRoadLinks = roadLinkService.getChangeInfoFromVVH(boundingRectangle, municipalities)
@@ -266,6 +267,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       eventbus.publish("roadAddress:mergeRoadAddress", RoadAddressMerge(removed, roadAddressesToRegister))
     if (floaters.nonEmpty) {
       floaters.map(_.copy(anomaly = Anomaly.GeometryChanged, newGeometry = Option(rl.geometry)))
+   /* } else if (rl.linkSource.value==LinkGeomSource.SuravageLinkInterface.value){
+      RoadAddressLinkBuilder.build(rl, Seq.empty[MissingRoadAddress].head)
+      */
     } else {
       fusedRoadAddresses.map(ra => {
         RoadAddressLinkBuilder.build(rl, ra)
