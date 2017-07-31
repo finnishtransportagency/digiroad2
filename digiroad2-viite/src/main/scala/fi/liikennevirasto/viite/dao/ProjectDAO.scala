@@ -152,7 +152,7 @@ object ProjectDAO {
     }
   }
 
-  def fetchByProjectNewRoadPart(roadNumber: Long, roadPartNumber: Long, projectId: Long, b: Boolean) = {
+  def fetchByProjectNewRoadPart(roadNumber: Long, roadPartNumber: Long, projectId: Long, b: Boolean= false) = {
     val filter = s"PROJECT_LINK.ROAD_NUMBER = $roadNumber AND PROJECT_LINK.ROAD_PART_NUMBER = $roadPartNumber AND"
     val query =
       s"""select PROJECT_LINK.ID, PROJECT_LINK.PROJECT_ID, PROJECT_LINK.TRACK_CODE, PROJECT_LINK.DISCONTINUITY_TYPE,
@@ -272,19 +272,21 @@ object ProjectDAO {
     }
   }
 
-  def flipProjectLinksSideCodes(projectLinkIds: Seq[Long]): Unit = {
-   val links=projectLinkIds.mkString(",")
-    val sql = "update lrm_position set side_code = (CASE side_code WHEN 2 THEN 3 ELSE 2 END) where id in (select lrm_position.id from project_link join " +
-      s"LRM_Position on project_link.LRM_POSITION_ID = lrm_position.id where (side_code = 2 or side_code = 3) and project_link.id in($links))"
-    Q.updateNA(sql).execute}
+  def flipProjectLinksSideCodes(projectId : Long, roadNumber : Long, roadPartNumber : Long): Unit = {
+    val updateLRM = "update lrm_position set side_code = (CASE side_code WHEN 2 THEN 3 ELSE 2 END)" +
+      " where id in (select lrm_position.id from project_link join " +
+      s"LRM_Position on project_link.LRM_POSITION_ID = lrm_position.id where (side_code = 2 or side_code = 3) and project_link.project_id = $projectId and project_link.road_number = $roadNumber and project_link.road_part_number = $roadPartNumber)"
+    Q.updateNA(updateLRM).execute
+    val updateProjectLink = s"update project_link set calibration_points = (CASE calibration_points WHEN 0 THEN 0 WHEN 1 THEN 2 WHEN 2 THEN 1 ELSE 3 END) where project_link.project_id = $projectId and project_link.road_number = $roadNumber and project_link.road_part_number = $roadPartNumber"
+    Q.updateNA(updateProjectLink).execute
+  }
 
-  def projectLinksExist(projectLinkIds: Seq[Long]):List[Long] =
+  def projectLinksExist(projectId: Long, roadNumber: Long, roadPartNumber: Long):List[Long] =
   {
-    val links=projectLinkIds.mkString(",")
     val query= s"""
          SELECT Project_id
          FROM Project_link
-         WHERE ID IN ($links)
+         WHERE project_id = $projectId and road_number = $roadNumber and road_part_number = $roadPartNumber
        """
     Q.queryNA[Long](query).list
   }
@@ -308,6 +310,14 @@ object ProjectDAO {
     val query =
       s"""
          DELETE FROM Project_Link WHERE id IN (${projectLinkIds.mkString(",")})
+       """
+    Q.updateNA(query).first
+  }
+
+  def removeProjectLinksByProjectAndRoadNumber(projectId : Long, roadNumber:Long, roadPartNumber:Long) = {
+    val query =
+      s"""
+         DELETE FROM Project_Link WHERE project_id = ${projectId} and road_number = ${roadNumber} and road_part_number = ${roadPartNumber}
        """
     Q.updateNA(query).first
   }
