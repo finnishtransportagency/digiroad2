@@ -702,11 +702,6 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       val links3 = ProjectDAO.getProjectLinks(id)
       links3.size should be(0)
       message2project1 should be ("TIE 5 OSA 999 on jo varattuna projektissa TestProject, tarkista tiedot")
-
-      val message2project2=  projectService.addNewLinksToProject(Seq(p), id+1, projectLink2.roadNumber, projectLink2.roadPartNumber, projectLink2.track.value.toLong, projectLink2.discontinuity.value.toLong)
-      val links4 = ProjectDAO.getProjectLinks(id+1)
-      links4.size should be(2)
-      message2project2 should be ("")
     }
   }
 
@@ -718,7 +713,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       val addresses = RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(rap))
       ProjectDAO.create(addresses)
       val links=ProjectDAO.getProjectLinks(id)
-      val errorMessage=  projectService.changeDirection(id, 5, 203)
+      val errorMessage=  projectService.changeDirection(id, 5, 203).getOrElse("")
       errorMessage should be("")
     }
   }

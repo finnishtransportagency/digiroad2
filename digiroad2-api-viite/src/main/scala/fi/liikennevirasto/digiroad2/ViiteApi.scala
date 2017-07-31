@@ -265,13 +265,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
     val roadInfo = parsedBody.extract[ProjectRoadAddressInfo]
 
-    val errormessage= projectService.changeDirection(roadInfo.projectId, roadInfo.roadNumber, roadInfo.roadPartNumber)
-    if (errormessage=="")
+    val errorMessage= projectService.changeDirection(roadInfo.projectId, roadInfo.roadNumber, roadInfo.roadPartNumber).getOrElse("")
+    if (errorMessage.equals(""))
       {
         Map("success" -> true)
       } else
       {
-        Map("success" -> false,"errorMessage"->errormessage)
+        Map("success" -> false,"errorMessage"->errorMessage)
       }
   }
 

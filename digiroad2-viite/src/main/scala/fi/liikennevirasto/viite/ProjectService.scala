@@ -222,23 +222,22 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }).asInstanceOf[Seq[ProjectLink]]
   }
 
-  def changeDirection(projectId : Long, roadNumber : Long, roadPartNumber : Long): String = {
+  def changeDirection(projectId : Long, roadNumber : Long, roadPartNumber : Long): Option[String] = {
     try {
       withDynTransaction {
         val projectLinkIds= ProjectDAO.projectLinksExist(projectId, roadNumber, roadPartNumber)
         if (projectLinkIds.forall(_ !=projectLinkIds.head)){
-         return "Linkit kuuluvat useampaan projektiin"
+         return Some("Linkit kuuluvat useampaan projektiin")
         }
         ProjectDAO.flipProjectLinksSideCodes(projectId, roadNumber, roadPartNumber)
         recalculateMValues(ProjectDAO.fetchByProjectNewRoadPart(roadNumber, roadPartNumber, projectId).reverse).map(link => ProjectDAO.updateMValues(link))
-        ""
+        None
       }
     } catch{
      case NonFatal(e) =>
-    "Päivitys ei onnistunut"
+       Some("Päivitys ei onnistunut")
     }
-
-    }
+  }
 
   //TODO VIITE-568
   /**
