@@ -41,5 +41,9 @@
     var validateText = function(value){
       return (obtainValue(value) == 1) ?  'Tarkistettu' : 'Ei tarkistettu';
     };
+
+    this.isVisibleZoom = function(zoomLevel){
+      return zoomLevel >= 10;
+    };
   };
 })(this);
