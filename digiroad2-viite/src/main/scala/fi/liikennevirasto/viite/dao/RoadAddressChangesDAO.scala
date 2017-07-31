@@ -1,9 +1,11 @@
 package fi.liikennevirasto.viite.dao
 
+import java.sql.PreparedStatement
+
 import fi.liikennevirasto.viite.RoadType
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.viite.process.{Delta, ProjectDeltaCalculator}
+import fi.liikennevirasto.viite.process.{Delta, ProjectDeltaCalculator, RoadAddressSection}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
@@ -154,6 +156,25 @@ object RoadAddressChangesDAO {
   }
 
   def insertDeltaToRoadChangeTable(delta: Delta, projectId: Long): Boolean= {
+    def addToBatch(roadAddressSection: RoadAddressSection, ely: Long, addressChangeType: AddressChangeType, roadAddressChangePS: PreparedStatement) = {
+      roadAddressChangePS.setLong(1, projectId)
+      roadAddressChangePS.setLong(2, addressChangeType.value)
+      roadAddressChangePS.setLong(3, roadAddressSection.roadNumber)
+      roadAddressChangePS.setLong(4, roadAddressSection.roadNumber)
+      roadAddressChangePS.setLong(5, roadAddressSection.roadPartNumberStart)
+      roadAddressChangePS.setLong(6, roadAddressSection.roadPartNumberStart)
+      roadAddressChangePS.setLong(7, roadAddressSection.track.value)
+      roadAddressChangePS.setLong(8, roadAddressSection.track.value)
+      roadAddressChangePS.setDouble(9, roadAddressSection.startMAddr)
+      roadAddressChangePS.setDouble(10, roadAddressSection.startMAddr)
+      roadAddressChangePS.setDouble(11, roadAddressSection.endMAddr)
+      roadAddressChangePS.setDouble(12, roadAddressSection.endMAddr)
+      roadAddressChangePS.setLong(13, roadAddressSection.discontinuity.value)
+      roadAddressChangePS.setLong(14, roadAddressSection.roadType.value)
+      roadAddressChangePS.setLong(15, ely)
+      roadAddressChangePS.addBatch()
+    }
+
     val startTime = System.currentTimeMillis()
     logger.info("Starting delta insertion in ChangeTable ")
     ProjectDAO.getRoadAddressProjectById(projectId) match {
@@ -165,22 +186,10 @@ object RoadAddressChangesDAO {
               "old_track_code,new_track_code,old_start_addr_m,new_start_addr_m,old_end_addr_m,new_end_addr_m," +
               "new_discontinuity,new_road_type,new_ely) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,? )")
             ProjectDeltaCalculator.partition(delta.terminations).foreach { case (roadAddressSection) =>
-              roadAddressChangePS.setLong(1, projectId)
-              roadAddressChangePS.setLong(2, AddressChangeType.Termination.value)
-              roadAddressChangePS.setLong(3, roadAddressSection.roadNumber)
-              roadAddressChangePS.setLong(4, roadAddressSection.roadNumber)
-              roadAddressChangePS.setLong(5, roadAddressSection.roadPartNumberStart)
-              roadAddressChangePS.setLong(6, roadAddressSection.roadPartNumberStart)
-              roadAddressChangePS.setLong(7, roadAddressSection.track.value)
-              roadAddressChangePS.setLong(8, roadAddressSection.track.value)
-              roadAddressChangePS.setDouble(9, roadAddressSection.startMAddr)
-              roadAddressChangePS.setDouble(10, roadAddressSection.startMAddr)
-              roadAddressChangePS.setDouble(11, roadAddressSection.endMAddr)
-              roadAddressChangePS.setDouble(12, roadAddressSection.endMAddr)
-              roadAddressChangePS.setLong(13, roadAddressSection.discontinuity.value)
-              roadAddressChangePS.setLong(14, roadAddressSection.roadType.value)
-              roadAddressChangePS.setLong(15, ely)
-              roadAddressChangePS.addBatch()
+              addToBatch(roadAddressSection, ely, AddressChangeType.Termination, roadAddressChangePS)
+            }
+            ProjectDeltaCalculator.projectLinkPartition(delta.newRoads).foreach { case (roadAddressSection) =>
+              addToBatch(roadAddressSection, ely, AddressChangeType.New, roadAddressChangePS)
             }
             roadAddressChangePS.executeBatch()
             roadAddressChangePS.close()

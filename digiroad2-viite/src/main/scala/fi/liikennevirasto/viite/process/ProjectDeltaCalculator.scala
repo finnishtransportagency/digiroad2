@@ -49,24 +49,34 @@ object ProjectDeltaCalculator {
       throw new RoadAddressException(s"Termination has gaps in between: ${missingSegments.mkString("\n")}") //TODO: terminate only part of the road part later
   }
 
-  // TODO: When other than terminations are handled we partition also project links: section should include road type
-  def projectLinkPartition(projectLinks: Seq[ProjectLink]): Seq[RoadAddressSection] = ???
+  def projectLinkPartition(projectLinks: Seq[ProjectLink]): Seq[RoadAddressSection] = {
+    val grouped = projectLinks.groupBy(projectLink => (projectLink.roadNumber, projectLink.roadPartNumber, projectLink.track, projectLink.roadType))
+    grouped.mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
+      RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
+        ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType)
+    ).toSeq
+  }
+
+  private def combineTwo[T <: BaseRoadAddress](r1: T, r2: T): Seq[T] = {
+    if (r1.endAddrMValue == r2.startAddrMValue && r1.discontinuity == Discontinuity.Continuous)
+      r1 match {
+        case x: RoadAddress => Seq(x.copy(endAddrMValue = r2.endAddrMValue, discontinuity = r2.discontinuity).asInstanceOf[T])
+        case x: ProjectLink => Seq(x.copy(endAddrMValue = r2.endAddrMValue, discontinuity = r2.discontinuity).asInstanceOf[T])
+      }
+    else
+      Seq(r2, r1)
+  }
+
+  private def combine[T <: BaseRoadAddress](roadAddressSeq: Seq[T], result: Seq[T] = Seq()): Seq[T] = {
+    if (roadAddressSeq.isEmpty)
+      result.reverse
+    else if (result.isEmpty)
+      combine(roadAddressSeq.tail, Seq(roadAddressSeq.head))
+    else
+      combine(roadAddressSeq.tail, combineTwo(result.head, roadAddressSeq.head) ++ result.tail)
+  }
 
   def partition(roadAddresses: Seq[RoadAddress]): Seq[RoadAddressSection] = {
-    def combineTwo(r1: RoadAddress, r2: RoadAddress): Seq[RoadAddress] = {
-      if (r1.endAddrMValue == r2.startAddrMValue && r1.discontinuity == Discontinuity.Continuous)
-        Seq(r1.copy(endAddrMValue = r2.endAddrMValue, discontinuity = r2.discontinuity))
-      else
-        Seq(r2, r1)
-    }
-    def combine(roadAddressSeq: Seq[RoadAddress], result: Seq[RoadAddress] = Seq()): Seq[RoadAddress] = {
-      if (roadAddressSeq.isEmpty)
-        result.reverse
-      else if (result.isEmpty)
-        combine(roadAddressSeq.tail, Seq(roadAddressSeq.head))
-      else
-        combine(roadAddressSeq.tail, combineTwo(result.head, roadAddressSeq.head) ++ result.tail)
-    }
     val grouped = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
     grouped.mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
       RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,

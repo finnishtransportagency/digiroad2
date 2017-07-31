@@ -578,9 +578,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   private def setProjectDeltaToDB(projectDelta:Delta, projectId:Long):Boolean= {
     RoadAddressChangesDAO.clearRoadChangeTable(projectId)
     val batchInsertionResult = RoadAddressChangesDAO.insertDeltaToRoadChangeTable(projectDelta, projectId)
-    projectDelta.newRoads.foreach (newRoad => {
-      RoadAddressChangesDAO.insertNewRoadChange(newRoad)
-    })
     batchInsertionResult
   }
 
