@@ -31,7 +31,10 @@
     };
 
     var obtainValue = function(value){
-      return _.find(value, function(val) { return val.publicId === 'huoltotie_tarkistettu'; }).value;
+      var property = _.find(value, function(val) { return val.publicId === 'huoltotie_tarkistettu'; });
+      if(property)
+        return property.value;
+      return 0;
     };
 
     var validateValue = function (value) {
