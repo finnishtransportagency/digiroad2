@@ -319,13 +319,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
       val projectLink = parsedBody.extract[NewRoadAddressExtractor]
       val roadLinks = projectService.getProjectRoadLinksByLinkIds(projectLink.linkIds)
-    val linksInProject = projectService.getProjectRoadLinksByLinkIds(withDynTransaction {ProjectDAO.fetchByProjectNewRoadPart(projectLink.newRoadNumber,projectLink.newRoadPartNumber,projectLink.projectId, false).map(l => l.linkId).toSet})
     withDynTransaction {
-      //Deleting all existent roads for same road_number and road_part_number, in order to recalculate the full road if it is already in project
-      if(linksInProject.nonEmpty){
-        ProjectDAO.removeProjectLinksByProjectAndRoadNumber(projectLink.projectId, projectLink.newRoadNumber, projectLink.newRoadPartNumber)
-      }
-      val errorMessage = projectService.addNewLinksToProject(roadLinks ++ linksInProject, projectLink.projectId, projectLink.newRoadNumber, projectLink.newRoadPartNumber, projectLink.newTrackCode, projectLink.newDiscontinuity)
+      val errorMessage = projectService.addNewLinksToProject(roadLinks, projectLink.projectId, projectLink.newRoadNumber, projectLink.newRoadPartNumber, projectLink.newTrackCode, projectLink.newDiscontinuity)
       if (errorMessage == "") {
         Map("success" -> true)
       } else {
