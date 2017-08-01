@@ -152,7 +152,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * Used when adding road address that does not have previous address
     */
   def addNewLinksToProject(projectAddressLinks: Seq[ProjectAddressLink], roadAddressProjectID :Long, newRoadNumber : Long, newRoadPartNumber: Long, newTrackCode: Long, newDiscontinuity: Long):String = {
-    val linksInProject = getProjectRoadLinksByLinkIds(ProjectDAO.fetchByProjectNewRoadPart(newRoadNumber,newRoadPartNumber,roadAddressProjectID, false).map(l => l.linkId).toSet, roadAddressProjectID, false)
+    val linksInProject = getProjectRoadLinksByLinkIdsByProject(ProjectDAO.fetchByProjectNewRoadPart(newRoadNumber,newRoadPartNumber,roadAddressProjectID, false).map(l => l.linkId).toSet, roadAddressProjectID, false)
     //Deleting all existent roads for same road_number and road_part_number, in order to recalculate the full road if it is already in project
     // TODO - In Viite-568 we need to extract existent roadLinks from database and not only from VVH, because we need already inserted values on m-values and trackCodes
     if(linksInProject.nonEmpty){
@@ -464,7 +464,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   }
 
-  def getProjectRoadLinksByLinkIds(linkIdsToGet : Set[Long], projectId: Long, newTransaction : Boolean = true): Seq[ProjectAddressLink] = {
+  def getProjectRoadLinksByLinkIdsByProject(linkIdsToGet : Set[Long], projectId: Long, newTransaction : Boolean = true): Seq[ProjectAddressLink] = {
 
     if(linkIdsToGet.isEmpty)
       return Seq()
@@ -473,14 +473,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val complementedRoadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIdsToGet, newTransaction)
     val fetchVVHEndTime = System.currentTimeMillis()
     logger.info("End fetch vvh road links in %.3f sec".format((fetchVVHEndTime - fetchVVHStartTime) * 0.001))
-    val fetchProjectLinks = withDynTransaction {ProjectDAO.getProjectLinks(projectId)}
+    val fetchProjectLinks = withDynTransaction {ProjectDAO.getProjectLinks(projectId).groupBy(_.linkId)}
 
     val projectRoadLinks = complementedRoadLinks.map {
       rl =>
-        fetchProjectLinks.find(p => p.linkId == rl.linkId) match {
-          case Some(prj) =>  rl.linkId -> RoadAddressLinkBuilder.projectBuild(rl, prj)
-        }
-    }.toMap
+        val pl = fetchProjectLinks.getOrElse(rl.linkId, Seq())
+          rl.linkId -> buildProjectRoadLink(rl, pl)
+    }.toMap.mapValues(_.get)
+
     RoadAddressFiller.fillProjectTopology(complementedRoadLinks, projectRoadLinks)
     //filledProjectLinks.map(toProjectAddressLink)
   }
