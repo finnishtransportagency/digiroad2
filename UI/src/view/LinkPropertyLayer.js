@@ -281,7 +281,12 @@
           dashedLineFeature: roadLink[dashedLineFeature],
           linkId: roadLink.linkId,
           type: 'overlay',
-          linkType: roadLink.linkType
+          linkType: roadLink.linkType,
+          roadNumber: roadLink.roadNumber,
+          roadPartNumber: roadLink.roadPartNumber,
+          track: roadLink.track,
+          startAddrMValue: roadLink.startAddrMValue,
+          endAddrMValue: roadLink.endAddrMValue
         });
         return feature;
       }));
