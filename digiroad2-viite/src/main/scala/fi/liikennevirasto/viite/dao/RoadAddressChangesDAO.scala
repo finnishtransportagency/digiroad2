@@ -202,12 +202,4 @@ object RoadAddressChangesDAO {
       } case _=> false
     }
   }
-
-  def insertNewRoadChange(newRoad: ProjectLink): Unit = {
-    val projects = ProjectDAO.getRoadAddressProjectById(newRoad.projectId)
-    if (!projects.isEmpty) {
-        sqlu"""INSERT INTO ROAD_ADDRESS_CHANGES (project_id,change_type,old_road_number,new_road_number,old_road_part_number,new_road_part_number, old_track_code,new_track_code,old_start_addr_m,new_start_addr_m,old_end_addr_m,new_end_addr_m, new_discontinuity,new_road_type,new_ely)  values (${newRoad.projectId}, ${AddressChangeType.New.value}, ${newRoad.roadNumber}, ${newRoad.roadNumber}, ${newRoad.startAddrMValue}, ${newRoad.startAddrMValue}, ${newRoad.track.value}, ${newRoad.track.value}, ${newRoad.startMValue}, ${newRoad.startMValue}, ${newRoad.endMValue}, ${newRoad.endMValue}, ${newRoad.discontinuity.value}, ${newRoad.roadType.value}, ${projects.get.ely.get})""".execute
-    }
-  }
-
 }
