@@ -107,7 +107,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
 
   def getRoadAddressLinks(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
-                          everything: Boolean = false, publicRoads: Boolean = false,fetchSuravage:Boolean = false): Seq[RoadAddressLink] = {
+                          everything: Boolean = false, publicRoads: Boolean = false): Seq[RoadAddressLink] = {
     def complementaryLinkFilter(roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
                                 everything: Boolean = false, publicRoads: Boolean = false)(roadAddressLink: RoadAddressLink) = {
       everything || publicRoads || roadNumberLimits.exists {
@@ -132,7 +132,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     //pure linkId based queries, maybe something related to the zoomLevel we are in map level.
     val fetchMissingRoadAddressStartTime = System.currentTimeMillis()
     val (floatingViiteRoadLinks, addresses, floating) = Await.result(fetchRoadAddressesByBoundingBoxF, Duration.Inf)
-    val suravageRoadAddresses= if (fetchSuravage)getSurravageRoadLinkAddresses(boundingRectangle,municipalities) else Seq.empty[RoadAddressLink]
     val filteredChangedRoadLinks = changedRoadLinks.filter(crl => crl.oldId.exists(id =>
       addresses.keySet.contains(id) || roadLinkIds.contains(id)))
     val complementedWithChangeAddresses = applyChanges(complementedRoadLinks, filteredChangedRoadLinks, addresses)
@@ -165,7 +164,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val returningTopology = filledTopology.filter(link => !complementaryLinkIds.contains(link.linkId) ||
       complementaryLinkFilter(roadNumberLimits, municipalities, everything, publicRoads)(link))
 
-    returningTopology ++ missingFloating.flatMap(_._2)++suravageRoadAddresses
+    returningTopology ++ missingFloating.flatMap(_._2)
 
   }
 
@@ -278,9 +277,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       eventbus.publish("roadAddress:mergeRoadAddress", RoadAddressMerge(removed, roadAddressesToRegister))
     if (floaters.nonEmpty) {
       floaters.map(_.copy(anomaly = Anomaly.GeometryChanged, newGeometry = Option(rl.geometry)))
-   /* } else if (rl.linkSource.value==LinkGeomSource.SuravageLinkInterface.value){
-      RoadAddressLinkBuilder.build(rl, Seq.empty[MissingRoadAddress].head)
-      */
     } else {
       fusedRoadAddresses.map(ra => {
         RoadAddressLinkBuilder.build(rl, ra)
