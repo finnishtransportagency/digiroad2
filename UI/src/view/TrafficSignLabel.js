@@ -23,7 +23,7 @@
       return new ol.style.Style({
         image: new ol.style.Icon(({
           src: image,
-          anchor : [0.58, 1]
+          anchor : [0.5, 1]
         }))
       });
     };
@@ -50,7 +50,7 @@
             color: '#000000'
           }),
           font : 'bold 12px sans-serif',
-          offsetX: -3,
+          offsetX: 0,
           offsetY : -45
         })
       })];

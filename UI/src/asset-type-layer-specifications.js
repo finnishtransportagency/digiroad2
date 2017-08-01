@@ -528,7 +528,7 @@
       title: 'Liikennemerkit',
       allowComplementaryLinks: true,
       newAsset: { validityDirection: 2, propertyData: [
-        {'name': 'Tyyppi', 'propertyType': 'single_choice', 'publicId': "trafficSigns_type", values: []},
+        {'name': 'Tyyppi', 'propertyType': 'single_choice', 'publicId': "trafficSigns_type", values: [ [ {propertyValue: 1} ] ] },
         {'name': "Arvo", 'propertyType': 'text', 'publicId': "trafficSigns_value", values: []},
         {'name': "Lisatieto", 'propertyType': 'text', 'publicId': "trafficSigns_info", values: []}
       ]},
