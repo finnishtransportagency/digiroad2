@@ -279,7 +279,7 @@
       });
 
       rootElement.on('click','.changeDirection', function () {
-          projectCollection.changeNewProjectLinkDirection(selectedProjectLinkProperty.get());
+          projectCollection.changeNewProjectLinkDirection(projectCollection.getCurrentProject().project.id, selectedProjectLinkProperty.get());
       });
 
       eventbus.on('roadAddress:projectLinksSaveFailed', function (result) {

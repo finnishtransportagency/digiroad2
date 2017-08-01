@@ -126,6 +126,8 @@
       });
 
       var propertyValue = _.find(property.value, function(value){
+        if(!current.propertyValue)
+          return false;
         return value.typeId == current.propertyValue.value;
       });
 
