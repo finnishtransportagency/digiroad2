@@ -70,7 +70,7 @@ class RoadAddressDAO {
 
   def withRoadAddressSinglePart(roadNumber: Long, startRoadPartNumber: Long, track: Int, startM: Long, endM: Option[Long], optFloating: Option[Int] = None)(query: String): String = {
     val floating = optFloating match {
-      case Some(floatingValue) => "ra.floating = " + floatingValue + ""
+      case Some(floatingValue) => s"AND ra.floating = $floatingValue"
       case None => ""
     }
 

@@ -379,7 +379,7 @@ class RoadWidthTierekisteriImporter extends LinearAssetTierekisteriImporterOpera
         measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value))
 
       linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, trAssetData.assetValue)
-      println(s"Created OTH " + assetName + " assets for $linkId from TR data with assetId $assetId")
+      println(s"Created OTH $assetName assets for ${vvhRoadlink.linkId} from TR data with assetId $assetId")
     }
   }
 
