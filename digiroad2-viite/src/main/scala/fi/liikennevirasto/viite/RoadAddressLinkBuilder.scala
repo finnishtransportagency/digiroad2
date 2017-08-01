@@ -1,11 +1,11 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.RoadLinkType.{ComplementaryRoadLinkType, FloatingRoadLinkType, NormalRoadLinkType, UnknownRoadLinkType}
+import fi.liikennevirasto.digiroad2.RoadLinkType.{apply => _, _}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, VVHHistoryRoadLink}
+import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.viite.RoadType._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLink}
@@ -141,30 +141,34 @@ object RoadAddressLinkBuilder {
       missingAddress.roadPartNumber.getOrElse(roadLinkRoadPartNumber), Track.Unknown.value, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), Discontinuity.Continuous.value,
       0, 0, "", "", 0.0, length, SideCode.Unknown, None, None, missingAddress.anomaly, 0)
   }
-/*
-  def buildSuravageRoadAddressLink(roadLink: RoadLink): RoadAddressLink = {
-    if (roadLink.linkId==499972931)
-    {
-      val boo=true
-    }
-    val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry, roadLink.startMValue.getOrElse(0.0), missingAddress.endMValue.getOrElse(roadLink.length))
+
+
+  def buildSuravageRoadAddressLink(roadLink: VVHRoadlink): RoadAddressLink = {
+    val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry,  0.0, 0)
+    val suravageLinkType=SuravageRoadLink
     val length = GeometryUtils.geometryLength(geom)
     val roadLinkRoadNumber = roadLink.attributes.getOrElse("ROADNUMBER",0).asInstanceOf[BigInt].longValue()
     val roadLinkRoadPartNumber = roadLink.attributes.getOrElse("ROADPARTNUMBER",0).asInstanceOf[BigInt].longValue()
-    //  val roadLinkRoadNumber = roadLink.attributes.get(RoadNumber).map(toIntNumber).getOrElse(0)
-    // val roadLinkRoadPartNumber = roadLink.attributes.get(RoadPartNumber).map(toIntNumber).getOrElse(0)
     val roadName = roadLink.attributes.getOrElse("ROADNAME_FI", roadLink.attributes.getOrElse("ROADNAME_SE", "none")).toString
     val municipalityCode = roadLink.attributes.getOrElse("MUNICIPALITYCODE",0).asInstanceOf[Number].intValue()
+    val anomalyType= {if (roadLinkRoadNumber!=0 && roadLinkRoadPartNumber!=0) Anomaly.None else Anomaly.NoAddressGiven}
     RoadAddressLink(0, roadLink.linkId, geom,
-      length, roadLink.administrativeClass, roadLink.linkType, UnknownRoadLinkType, roadLink.constructionType, roadLink.linkSource, getRoadType(roadLink.administrativeClass, roadLink.linkType),
+      length, roadLink.administrativeClass, getLinkType(roadLink), SuravageRoadLink, roadLink.constructionType, roadLink.linkSource, getRoadType(roadLink.administrativeClass, getLinkType(roadLink)),
       roadName, municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
-      roadLink.attributes, missingAddress.roadNumber.getOrElse(roadLinkRoadNumber),
-      missingAddress.roadPartNumber.getOrElse(roadLinkRoadPartNumber), Track.Unknown.value, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), Discontinuity.Continuous.value,
-      0, 0, "", "", 0.0, length, SideCode.Unknown, None, None, missingAddress.anomaly, 0)
+      roadLink.attributes,roadLinkRoadNumber,
+      roadLinkRoadPartNumber, Track.Unknown.value, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), Discontinuity.Continuous.value,
+      0, 0, "", "", 0.0, length, SideCode.Unknown, None, None, anomalyType, 0)
   }
-  */
 
 
+  def getLinkType(roadLink: VVHRoadlink): LinkType ={  //similar logic used in roadlinkservice
+    roadLink.featureClass match {
+      case FeatureClass.TractorRoad => TractorRoad
+      case FeatureClass.DrivePath => SingleCarriageway
+      case FeatureClass.CycleOrPedestrianPath => CycleOrPedestrianPath
+      case _=> UnknownLinkType
+    }
+  }
 
   def build(historyRoadLink: VVHHistoryRoadLink, roadAddress: RoadAddress): RoadAddressLink = {
 

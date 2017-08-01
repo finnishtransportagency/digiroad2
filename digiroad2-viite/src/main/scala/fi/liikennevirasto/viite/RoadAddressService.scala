@@ -95,8 +95,19 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     })
   }
 
+
+
+  def getSurravageRoadLinkAddresses(boundingRectangle: BoundingRectangle,municipalities: Set[Int]) :Seq[RoadAddressLink]= {
+    val suravageLinks= roadLinkService.getSuravageLinksFromVVH(boundingRectangle,municipalities)
+   suravageLinks.map( suravage=>RoadAddressLinkBuilder.buildSuravageRoadAddressLink(suravage))
+  }
+
+
+
+
+
   def getRoadAddressLinks(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
-                          everything: Boolean = false, publicRoads: Boolean = false): Seq[RoadAddressLink] = {
+                          everything: Boolean = false, publicRoads: Boolean = false,fetchSuravage:Boolean = false): Seq[RoadAddressLink] = {
     def complementaryLinkFilter(roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
                                 everything: Boolean = false, publicRoads: Boolean = false)(roadAddressLink: RoadAddressLink) = {
       everything || publicRoads || roadNumberLimits.exists {
@@ -107,10 +118,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val fetchRoadAddressesByBoundingBoxF = Future(fetchRoadAddressesByBoundingBox(boundingRectangle))
     val fetchVVHStartTime = System.currentTimeMillis()
     val (roadLinks, complementaryLinks) = fetchRoadLinksWithComplementary(boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads)
-    val suravageLinks= roadLinkService.getSuravageLinksFromVVH(boundingRectangle,municipalities)
     val complementaryLinkIds = complementaryLinks.map(_.linkId)
     val roadLinkIds = roadLinks.map(_.linkId)
-    val complementedRoadLinks = roadLinks++complementaryLinks++suravageLinks
+    val complementedRoadLinks = roadLinks++complementaryLinks
 
     //TODO use complementedIds instead of only roadLinkIds below. There is no complementary ids for changeInfo dealing (for now)
     val changedRoadLinks = roadLinkService.getChangeInfoFromVVH(boundingRectangle, municipalities)
@@ -122,6 +132,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     //pure linkId based queries, maybe something related to the zoomLevel we are in map level.
     val fetchMissingRoadAddressStartTime = System.currentTimeMillis()
     val (floatingViiteRoadLinks, addresses, floating) = Await.result(fetchRoadAddressesByBoundingBoxF, Duration.Inf)
+    val suravageRoadAddresses= if (fetchSuravage)getSurravageRoadLinkAddresses(boundingRectangle,municipalities) else Seq.empty[RoadAddressLink]
     val filteredChangedRoadLinks = changedRoadLinks.filter(crl => crl.oldId.exists(id =>
       addresses.keySet.contains(id) || roadLinkIds.contains(id)))
     val complementedWithChangeAddresses = applyChanges(complementedRoadLinks, filteredChangedRoadLinks, addresses)
@@ -154,7 +165,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val returningTopology = filledTopology.filter(link => !complementaryLinkIds.contains(link.linkId) ||
       complementaryLinkFilter(roadNumberLimits, municipalities, everything, publicRoads)(link))
 
-    returningTopology ++ missingFloating.flatMap(_._2)
+    returningTopology ++ missingFloating.flatMap(_._2)++suravageRoadAddresses
 
   }
 
