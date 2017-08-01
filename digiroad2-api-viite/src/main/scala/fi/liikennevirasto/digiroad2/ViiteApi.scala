@@ -1,6 +1,7 @@
 package fi.liikennevirasto.digiroad2
 
 import java.text.SimpleDateFormat
+import java.util.concurrent.TimeUnit
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
@@ -16,7 +17,9 @@ import org.json4s._
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.{NotFound, _}
 import org.slf4j.LoggerFactory
-
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration.Duration
+import scala.concurrent.{Await, Future}
 import scala.util.control.NonFatal
 import scala.util.parsing.json._
 import scala.util.{Left, Right}
@@ -402,10 +405,22 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         //        roadAddressService.getRoadParts(boundingRectangle, Seq((1, 19999)), municipalities)
         Seq()
       case DrawPublicRoads => roadAddressService.getRoadAddressLinksByLinkId(boundingRectangle, Seq((1, 19999), (40000,49999)), municipalities)
-      case DrawAllRoads => roadAddressService.getRoadAddressLinks(boundingRectangle, Seq(), municipalities, everything = true)
-      case _ => roadAddressService.getRoadAddressLinks(boundingRectangle, Seq((1, 19999)), municipalities)
+      case DrawAllRoads =>
+         val combinedFuture =for{
+          f1Result <- Future(roadAddressService.getRoadAddressLinks(boundingRectangle, Seq(), municipalities, everything = true))
+          f2Result <- Future(roadAddressService.getSurravageRoadLinkAddresses(boundingRectangle, municipalities))
+        } yield (f1Result, f2Result)
+        val (roadlinkList,suravageList) =Await.result(combinedFuture, Duration.Inf)
+        suravageList ++ roadlinkList
+      case _ => {
+      val combinedFuture=  for{
+          fRoadlink <- Future(roadAddressService.getRoadAddressLinks(boundingRectangle, Seq((1, 19999)), municipalities))
+          fSuravage <- Future(roadAddressService.getSurravageRoadLinkAddresses(boundingRectangle, municipalities))
+        } yield (fRoadlink, fSuravage)
+        val (roadlinkList,suravageList) =Await.result(combinedFuture, Duration.Inf)
+        suravageList ++ roadlinkList
+      }
     }
-
     val partitionedRoadLinks = RoadAddressLinkPartitioner.partition(viiteRoadLinks)
     partitionedRoadLinks.map {
       _.map(roadAddressLinkToApi)
