@@ -406,14 +406,14 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         Seq()
       case DrawPublicRoads => roadAddressService.getRoadAddressLinksByLinkId(boundingRectangle, Seq((1, 19999), (40000,49999)), municipalities)
       case DrawAllRoads =>
-         val combinedFuture =for{
+        val combinedFuture =for{
           f1Result <- Future(roadAddressService.getRoadAddressLinks(boundingRectangle, Seq(), municipalities, everything = true))
           f2Result <- Future(roadAddressService.getSurravageRoadLinkAddresses(boundingRectangle, municipalities))
         } yield (f1Result, f2Result)
         val (roadlinkList,suravageList) =Await.result(combinedFuture, Duration.Inf)
         suravageList ++ roadlinkList
       case _ => {
-      val combinedFuture=  for{
+        val combinedFuture=  for{
           fRoadlink <- Future(roadAddressService.getRoadAddressLinks(boundingRectangle, Seq((1, 19999)), municipalities))
           fSuravage <- Future(roadAddressService.getSurravageRoadLinkAddresses(boundingRectangle, municipalities))
         } yield (fRoadlink, fSuravage)
@@ -434,9 +434,27 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         Seq()
       case DrawRoadPartsOnly =>
         Seq()
-      case DrawPublicRoads => projectService.getProjectRoadLinks(projectId, boundingRectangle, Seq((1, 19999), (40000,49999)), Set(), publicRoads = false)
-      case DrawAllRoads => projectService.getProjectRoadLinks(projectId, boundingRectangle, Seq(), Set(), everything = true)
-      case _ => projectService.getProjectRoadLinks(projectId, boundingRectangle, Seq((1, 19999)), Set())
+      case DrawPublicRoads =>
+        val combinedFuture=  for{
+          fProjectLink <- Future(projectService.getProjectRoadLinks(projectId, boundingRectangle, Seq((1, 19999), (40000,49999)), Set(), publicRoads = false))
+          fSuravage <- Future(roadAddressService.getSurravageRoadLinkAddresses(boundingRectangle, Set()))
+        } yield (fProjectLink, fSuravage)
+        val (projectLinkList,suravageList) =Await.result(combinedFuture, Duration.Inf)
+        projectService.roadAddressLinkToProjectAddressLink(suravageList) ++ projectLinkList
+      case DrawAllRoads =>
+        val combinedFuture=  for{
+          fProjectLink <-  Future(projectService.getProjectRoadLinks(projectId, boundingRectangle, Seq(), Set(), everything = true))
+          fSuravage <- Future(roadAddressService.getSurravageRoadLinkAddresses(boundingRectangle, Set()))
+        } yield (fProjectLink, fSuravage)
+        val (projectLinkList,suravageList) =Await.result(combinedFuture, Duration.Inf)
+        projectService.roadAddressLinkToProjectAddressLink(suravageList) ++ projectLinkList
+      case _ =>
+        val combinedFuture=  for{
+          fProjectLink <- Future(projectService.getProjectRoadLinks(projectId, boundingRectangle, Seq((1, 19999)), Set()))
+          fSuravage <- Future(roadAddressService.getSurravageRoadLinkAddresses(boundingRectangle, Set()))
+        } yield (fProjectLink, fSuravage)
+        val (projectLinkList,suravageList) =Await.result(combinedFuture, Duration.Inf)
+        projectService.roadAddressLinkToProjectAddressLink(suravageList) ++ projectLinkList
     }
 
     val partitionedRoadLinks = ProjectLinkPartitioner.partition(viiteRoadLinks)
