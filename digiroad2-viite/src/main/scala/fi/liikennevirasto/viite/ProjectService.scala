@@ -185,13 +185,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       }
   }
 
-  private def determineGeometries(newProjectLinks: Seq[ProjectLink]):Map[RoadPartBasis, Seq[RoadPartLengths]] = {
+  private def determineGeometries(newProjectLinks: Seq[ProjectLink]):Map[RoadPart, Seq[RoadLinkLength]] = {
     newProjectLinks.groupBy(record => (record.roadNumber, record.roadPartNumber)).map(v => {
       val projectLinkSequence = v._2
       val roadPartLengths = projectLinkSequence.map(link => {
-        new RoadPartLengths(link.linkId, link.geometryLength)
+        RoadLinkLength(link.linkId, link.geometryLength)
       })
-      new RoadPartBasis(v._1._1, v._1._2) -> roadPartLengths
+      RoadPart(v._1._1, v._1._2) -> roadPartLengths
     })
   }
 

@@ -131,15 +131,15 @@ object ProjectDeltaCalculator {
     isLeftAdjacent && isRightAdjacent
   }
 
-  def determineMValues(projectLinks: Seq[ProjectLink], geometryLengthList: Map[RoadPartBasis, Seq[RoadPartLengths]]): Seq[ProjectLink] = {
+  def determineMValues(projectLinks: Seq[ProjectLink], geometryLengthList: Map[RoadPart, Seq[RoadLinkLength]]): Seq[ProjectLink] = {
     val groupedProjectLinks = projectLinks.groupBy(record => (record.roadNumber, record.roadPartNumber))
     groupedProjectLinks.flatMap(gpl => {
       var lastEndM = 0.0
-      val roadPartId = new RoadPartBasis(gpl._1._1, gpl._1._2)
+      val roadPartId = RoadPart(gpl._1._1, gpl._1._2)
       if(geometryLengthList.keySet.contains(roadPartId)){
         val links = orderProjectLinksTopologyByGeometry(gpl._2)
         links.map(l => {
-          val lengths = geometryLengthList.get(roadPartId).get
+          val lengths = geometryLengthList(roadPartId)
           val foundGeomLength = lengths.find(_.linkId == l.linkId).get
           val endValue = lastEndM + foundGeomLength.geometryLength
           val updatedProjectLink = l.copy(startMValue = 0.0, endMValue = foundGeomLength.geometryLength, startAddrMValue = Math.round(lastEndM), endAddrMValue = Math.round(endValue))
@@ -229,5 +229,4 @@ case class RoadAddressSection(roadNumber: Long, roadPartNumberStart: Long, roadP
         ra.endAddrMValue < startMAddr && ra.roadPartNumber == roadPartNumberStart)
   }
 }
-case class RoadPartBasis (roadNumber: Long, roadPartNumber: Long)
-case class RoadPartLengths(linkId: Long, geometryLength: Double)
+case class RoadLinkLength(linkId: Long, geometryLength: Double)
