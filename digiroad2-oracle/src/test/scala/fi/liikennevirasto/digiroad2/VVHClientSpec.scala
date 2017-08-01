@@ -68,7 +68,7 @@ class VVHClientSpec extends FunSuite with Matchers{
     */
   test("Fetch suravage by boundingbox"){ //When writing this test no test area was provided in VVH documentation, so area might fail because area has no links anymore
     val vvhClient= new VVHClient(properties.getProperty("digiroad2.VVHRestApiEndPoint"))
-    Await.result(vvhClient.suravageData.fetchSuravageByunicipalitiesAndBoundsF(BoundingRectangle(Point(445000, 7000000),Point(446000, 7005244)), Set(931)), Duration.Inf).size should be > 0
+    Await.result(vvhClient.suravageData.fetchSuravageByMunicipalitiesAndBoundsF(BoundingRectangle(Point(445000, 7000000),Point(446000, 7005244)), Set(931)), Duration.Inf).size should be > 0
   }
 }
 
