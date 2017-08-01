@@ -144,8 +144,7 @@ object RoadAddressLinkBuilder {
 
 
   def buildSuravageRoadAddressLink(roadLink: VVHRoadlink): RoadAddressLink = {
-    val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry,  0.0, 0)
-    val suravageLinkType=SuravageRoadLink
+    val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry,  0.0, roadLink.geometryLength)
     val length = GeometryUtils.geometryLength(geom)
     val roadLinkRoadNumber = roadLink.attributes.getOrElse("ROADNUMBER",0).asInstanceOf[BigInt].longValue()
     val roadLinkRoadPartNumber = roadLink.attributes.getOrElse("ROADPARTNUMBER",0).asInstanceOf[BigInt].longValue()
