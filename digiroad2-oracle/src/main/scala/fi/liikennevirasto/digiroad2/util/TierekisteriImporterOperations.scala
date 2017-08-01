@@ -160,7 +160,7 @@ trait TierekisteriAssetImporterOperations {
       case _ => roadLinkService.getVVHRoadLinksF(municipality).map(_.linkId)
     }
 
-    expireAssets(roadLinksWithStateFilter);
+    expireAssets(roadLinksWithStateFilter)
 
     println("\nEnd assets expiration in municipality %d".format(municipality))
   }
