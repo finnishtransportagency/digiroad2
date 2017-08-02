@@ -26,12 +26,16 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
 
 
   test("Should require correct authentication", Tag("db")) {
-    get("/235/100") {
+    get("/235/lighting") {
       status should equal(401)
     }
     getWithBasicUserAuth("/235/lighting", "nonexisting", "incorrect") {
       status should equal(401)
     }
+    //TODO: Check this request
+//    getWithBasicUserAuth("/235/lighting", "kalpa", "kalpa") {
+//      status should equal(200)
+//    }
   }
 
   test("encode lighting limit") {
