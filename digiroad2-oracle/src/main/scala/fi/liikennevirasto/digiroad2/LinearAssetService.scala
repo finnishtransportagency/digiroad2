@@ -169,13 +169,16 @@ trait LinearAssetOperations {
 
     val expiredAssetIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet ++
       changeSet.expiredAssetIds ++ expiredPavingAssetIds
+
     val mValueAdjustments = newAndUpdatedPavingAssets.filter(_.id != 0).map( a =>
       MValueAdjustment(a.id, a.linkId, a.startMeasure, a.endMeasure)
     )
     eventBus.publish("linearAssets:update", changeSet.copy(expiredAssetIds = expiredAssetIds.filterNot(_ == 0L),
       adjustedMValues = changeSet.adjustedMValues ++ mValueAdjustments))
 
-    eventBus.publish("linearAssets:saveProjectedLinearAssets", newAssets)
+    //Remove the asset ids ajusted in the "linearAssets:update" otherwise if the "linearAssets:saveProjectedLinearAssets" is executed after the "linearAssets:update"
+    //it will update the mValues to the previous ones
+    eventBus.publish("linearAssets:saveProjectedLinearAssets", newAssets.filterNot(a => changeSet.adjustedMValues.exists(_.assetId == a.id)))
 
     filledTopology
   }
