@@ -29,11 +29,20 @@ class MunicipalityApi(val linearAssetService: LinearAssetService) extends Scalat
       .orElse(textualParameter.map(TextualValue))
   }
 
-  private def extractNewLinearAssets(typeId: Int, value: JValue) = {
-    typeId match {
-      case _ =>
-        value.extractOpt[Seq[NewNumericValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, NumericValue(x.value), x.sideCode, 0, None))
-    }
+  private def extractNewLinearAssets(typeId: Int, value: JValue): NewLinearAsset = {
+//    typeId match {
+//      case _ =>
+//        value.extractOpt[Seq[NewNumericValueAsset]].get/*OrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, NumericValue(x.value), x.sideCode, 0, None))*/
+//    }
+    val linkId = (value \ "linkId").extract[Long]
+    val startMeasure = (value \ "startMeasure").extract[Double]
+    val geometryTimestamp = (value \ "geometryTimestamp").extract[Long]
+    val endMeasure = (value \ "endMeasure").extract[Double]
+    val assetValue = (value \ "value").extract[Int]
+    val sideCode = (value \ "sideCode").extract[Int]
+
+    NewLinearAsset(linkId, startMeasure, endMeasure, NumericValue(assetValue), sideCode, geometryTimestamp, None)
+
   }
 
   def linearAssetsToApi(linearAssets: Seq[PersistedLinearAsset]): Seq[Map[String, Any]] = {
@@ -51,26 +60,25 @@ class MunicipalityApi(val linearAssetService: LinearAssetService) extends Scalat
     }
   }
 
+  def getAssetTypeId(assetType: String): Int = {
+    assetType match {
+      case "lighting" => 100
+      case _ => halt(BadRequest("Invalid asset type"))
+    }
+  }
+
   get("/:municipalityCode/:assetType") {
     contentType = formats("json")
     val municipalityCode = params("municipalityCode").toInt
-    val assetType = params("assetType")
-
-    assetType match {
-      case "lighting" => linearAssetsToApi(linearAssetService.getAssetsByMunicipality(100, municipalityCode).filterNot(_.id == 0))
-      case _ => BadRequest("Invalid asset type")
-    }
+    val assetTypeId = getAssetTypeId(params("assetType"))
+    linearAssetsToApi(linearAssetService.getAssetsByMunicipality(assetTypeId, municipalityCode).filterNot(_.id == 0))
   }
 
   get("/:municipalityCode/:assetType/:assetId") {
     contentType = formats("json")
-    val municipalityCode = params("municipalityCode").toInt
-    val assetType = params("assetType")
     val assetId = params("assetId").toInt
-    assetType match {
-      case "lighting" => linearAssetsToApi(linearAssetService.getPersistedAssetsByIds(100, Set(assetId)).filterNot(_.id == 0))
-      case _ => BadRequest("Invalid asset type")
-    }
+    val assetTypeId = getAssetTypeId(params("assetType"))
+    linearAssetsToApi(linearAssetService.getPersistedAssetsByIds(assetTypeId, Set(assetId)).filterNot(_.id == 0))
   }
 
   post("/:municipalityCode/:assetType"){
@@ -78,31 +86,18 @@ class MunicipalityApi(val linearAssetService: LinearAssetService) extends Scalat
     val linkId = (parsedBody \ "linkId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'linkId' parameter")))
     val startMeasure = (parsedBody \ "startMeasure").extractOrElse[Double](halt(BadRequest("Missing mandatory 'startMeasure' parameter")))
     val geometryTimestamp = (parsedBody \ "geometryTimestamp").extractOrElse[Long](halt(BadRequest("Missing mandatory 'geometryTimestamp' parameter")))
-
-    val assetType = params("assetType")
+    val assetTypeId = getAssetTypeId(params("assetType"))
     val municipalityCode = params("municipalityCode").toInt
-
-    val newLinearAssets = assetType match {
-      case "lighting" => extractNewLinearAssets(100, parsedBody)
-      case _ => BadRequest("Invalid asset type")
-    }
-    println("-----breakpoint-----------")
-    //linearassetservice.create(newLinearAssets, municipalityCode)
-
+    val newLinearAssets = extractNewLinearAssets(assetTypeId, parsedBody)
   }
 
   put("/:municipalityCode/:assetType/:assetId"){
+    contentType = formats("json")
     val linkId = (parsedBody \ "linkId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'linkId' parameter")))
     val startMeasure = (parsedBody \ "startMeasure").extractOrElse[Double](halt(BadRequest("Missing mandatory 'startMeasure' parameter")))
     val geometryTimestamp = (parsedBody \ "geometryTimestamp").extractOrElse[Long](halt(BadRequest("Missing mandatory 'geometryTimestamp' parameter")))
-
-    val assetType = params("assetType")
-    val municipalityCode = params("municipalityCode").toInt
-
-    val newLinearAssets = assetType match {
-      case "lighting" => extractNewLinearAssets(100, parsedBody)
-      case _ => BadRequest("Invalid asset type")
-    }
+    val assetTypeId = getAssetTypeId(params("assetType"))
+    val assetId = params("assetId").toLong
 
   }
 
@@ -110,14 +105,7 @@ class MunicipalityApi(val linearAssetService: LinearAssetService) extends Scalat
     val municipalityCode = params("municipalityCode").toInt
     val assetType = params("assetType")
     val assetId = params("assetId").toInt
-
-    val typeId = assetType match {
-  //    case "lighting" => linearAssetsToApi(100, municipalityCode)
-      case _ => BadRequest("Invalid asset type")
-    }
-
-    //TODO
-    //linearservice.delete(municipalityCode, typeId, assetId)
-
   }
+
+
 }
