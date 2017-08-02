@@ -111,6 +111,25 @@ trait LinearAssetOperations {
     LinearAssetPartitioner.partition(linearAssets, roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
 
+  def getAssetsByMunicipality(typeId: Int, municipality: Int): Seq[PersistedLinearAsset] = {
+    val (roadLinks, changes) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality)
+    val roadLink: Seq[RoadLink] = roadLinks.filter(_.functionalClass > 4 || typeId != LinearAssetTypes.MaintenanceRoadAssetTypeId)
+    val linkIds = roadLink.map(_.linkId)
+    val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(changes, roadLinks)
+    withDynTransaction {
+      typeId match {
+        case LinearAssetTypes.ProhibitionAssetTypeId | LinearAssetTypes.HazmatTransportProhibitionAssetTypeId =>
+          dao.fetchProhibitionsByLinkIds(typeId, linkIds ++ removedLinkIds, includeFloating = false)
+        case LinearAssetTypes.EuropeanRoadAssetTypeId | LinearAssetTypes.ExitNumberAssetTypeId =>
+          dao.fetchAssetsWithTextualValuesByLinkIds(typeId, linkIds ++ removedLinkIds, LinearAssetTypes.getValuePropertyId(typeId))
+        case LinearAssetTypes.MaintenanceRoadAssetTypeId =>
+          dao.fetchMaintenancesByLinkIds(typeId, linkIds ++ removedLinkIds, includeFloating = false)
+        case _ =>
+          dao.fetchLinearAssetsByLinkIds(typeId, linkIds ++ removedLinkIds, LinearAssetTypes.numericValuePropertyId)
+      }
+    }.filterNot(_.expired)
+  }
+
   /**
     * Returns linear assets by municipality. Used by all IntegrationApi linear asset endpoints (except speed limits).
     *

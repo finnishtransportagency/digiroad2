@@ -36,33 +36,14 @@ class MunicipalityApi(val linearAssetService: LinearAssetService) extends Scalat
     }
   }
 
-  def linearAssetsToApi(typeId: Int, municipalityNumber: Int): Seq[Map[String, Any]] = {
-    def isUnknown(asset: PieceWiseLinearAsset) = asset.id == 0
-    val linearAssets: Seq[PieceWiseLinearAsset] = linearAssetService.getByMunicipality(typeId, municipalityNumber).filterNot(isUnknown)
+  def linearAssetsToApi(linearAssets: Seq[PersistedLinearAsset]): Seq[Map[String, Any]] = {
     linearAssets.map { asset =>
       Map("id" -> asset.id,
         "value" -> asset.value,
         "linkId" -> asset.linkId,
         "startMeasure" -> asset.startMeasure,
         "endMeasure" -> asset.endMeasure,
-        "side_code" -> asset.sideCode.value,
-        "modifiedAt" -> asset.modifiedDateTime,
-        "createdAt" -> asset.createdDateTime,
-        "geometryTimestamp" -> asset.vvhTimeStamp
-      )
-    }
-  }
-
-  def linearAssetsToApi(typeId: Int, municipalityNumber: Int, assetId: Int): Seq[Map[String, Any]] = {
-    def isUnknown(asset: PieceWiseLinearAsset) = asset.id == 0
-    val linearAssets: Seq[PieceWiseLinearAsset] = linearAssetService.getByMunicipality(typeId, municipalityNumber).filterNot(isUnknown)
-    linearAssets.map { asset =>
-      Map("id" -> asset.id,
-        "value" -> asset.value,
-        "linkId" -> asset.linkId,
-        "startMeasure" -> asset.startMeasure,
-        "endMeasure" -> asset.endMeasure,
-        "side_code" -> asset.sideCode.value,
+        "side_code" -> asset.sideCode,
         "modifiedAt" -> asset.modifiedDateTime,
         "createdAt" -> asset.createdDateTime,
         "geometryTimestamp" -> asset.vvhTimeStamp
@@ -74,8 +55,9 @@ class MunicipalityApi(val linearAssetService: LinearAssetService) extends Scalat
     contentType = formats("json")
     val municipalityCode = params("municipalityCode").toInt
     val assetType = params("assetType")
+
     assetType match {
-      case "lighting" => linearAssetsToApi(100, municipalityCode)
+      case "lighting" => linearAssetsToApi(linearAssetService.getAssetsByMunicipality(100, municipalityCode).filterNot(_.id == 0))
       case _ => BadRequest("Invalid asset type")
     }
   }
@@ -86,7 +68,7 @@ class MunicipalityApi(val linearAssetService: LinearAssetService) extends Scalat
     val assetType = params("assetType")
     val assetId = params("assetId").toInt
     assetType match {
-      case "lighting" => linearAssetsToApi(100, municipalityCode, assetId)
+      case "lighting" => linearAssetsToApi(linearAssetService.getPersistedAssetsByIds(100, Set(assetId)).filterNot(_.id == 0))
       case _ => BadRequest("Invalid asset type")
     }
   }
@@ -130,7 +112,7 @@ class MunicipalityApi(val linearAssetService: LinearAssetService) extends Scalat
     val assetId = params("assetId").toInt
 
     val typeId = assetType match {
-      case "lighting" => linearAssetsToApi(100, municipalityCode)
+  //    case "lighting" => linearAssetsToApi(100, municipalityCode)
       case _ => BadRequest("Invalid asset type")
     }
 
@@ -138,6 +120,4 @@ class MunicipalityApi(val linearAssetService: LinearAssetService) extends Scalat
     //linearservice.delete(municipalityCode, typeId, assetId)
 
   }
-
-
 }
