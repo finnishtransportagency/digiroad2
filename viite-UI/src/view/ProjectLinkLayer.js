@@ -4,6 +4,7 @@
     var vectorLayer;
     var calibrationPointVector = new ol.source.Vector({});
     var directionMarkerVector = new ol.source.Vector({});
+    var suravageRoadVector = new ol.source.Vector({});
     var cachedMarker = null;
     var layerMinContentZoomLevels = {};
     var currentZoom = 0;
@@ -26,7 +27,11 @@
     var vectorSource = new ol.source.Vector({
       loader: function(extent, resolution, projection) {
         var zoom = Math.log(1024/resolution) / Math.log(2);
-        var features = _.map(projectCollection.getAll(), function(projectLink) {
+
+        var nonSuravageRoads = _.filter(projectCollection.getAll(), function(projectRoad){
+          return projectRoad.roadLinkSource !== 3;
+        });
+        var features = _.map(nonSuravageRoads, function(projectLink) {
           var points = _.map(projectLink.points, function(point) {
             return [point.x, point.y];
           });
@@ -48,6 +53,14 @@
     var directionMarkerLayer = new ol.layer.Vector({
       source: directionMarkerVector,
       name: 'directionMarkerLayer'
+    });
+
+    var suravageRoadProjectLayer = new ol.layer.Vector({
+      source: suravageRoadVector,
+      name:'suravageRoadProjectLayer',
+      style: function(feature) {
+        return styler.generateStyleByFeature(feature.projectLinkData, map.getView().getZoom());
+      }
     });
 
     var styleFunction = function (feature, resolution){
@@ -100,10 +113,10 @@
     });
 
     var selectSingleClick = new ol.interaction.Select({
-      layer: vectorLayer,
+      layer: [vectorLayer, suravageRoadProjectLayer],
       condition: ol.events.condition.singleClick,
       style: function(feature, resolution) {
-        if (feature.projectLinkData.status === notHandledStatus || feature.projectLinkData.status === newRoadAddressStatus){
+        if (feature.projectLinkData.status === notHandledStatus || feature.projectLinkData.status === newRoadAddressStatus || feature.projectLinkData.roadLinkSource === 3){
           return new ol.style.Style({
             fill: new ol.style.Fill({
               color: 'rgba(0, 255, 0, 0.75)'
@@ -153,7 +166,8 @@
       var selection = _.find(event.selected, function (selectionTarget) {
         return (!_.isUndefined(selectionTarget.projectLinkData) && (
             (selectionTarget.projectLinkData.status === notHandledStatus || selectionTarget.projectLinkData.status === newRoadAddressStatus ) ||
-            (selectionTarget.projectLinkData.anomaly==noAddressAnomaly && selectionTarget.projectLinkData.roadLinkType!=floatingRoadLinkType) || selectionTarget.projectLinkData.roadClass === 99)
+            (selectionTarget.projectLinkData.anomaly==noAddressAnomaly && selectionTarget.projectLinkData.roadLinkType!=floatingRoadLinkType) ||
+            selectionTarget.projectLinkData.roadClass === 99 || selectionTarget.projectLinkData.roadLinkSource === 3)
         );
       });
       selectedProjectLinkProperty.clean();
@@ -164,10 +178,10 @@
     });
 
     var selectDoubleClick = new ol.interaction.Select({
-      layer: vectorLayer,
+      layer: [vectorLayer, suravageRoadProjectLayer],
       condition: ol.events.condition.doubleClick,
       style: function(feature, resolution) {
-        if(feature.projectLinkData.status === notHandledStatus || feature.projectLinkData.status === newRoadAddressStatus) {
+        if(feature.projectLinkData.status === notHandledStatus || feature.projectLinkData.status === newRoadAddressStatus || feature.projectLinkData.roadLinkSource === 3) {
           return new ol.style.Style({
             fill: new ol.style.Fill({
               color: 'rgba(0, 255, 0, 0.75)'
@@ -217,7 +231,8 @@
       var selection = _.find(event.selected, function (selectionTarget) {
         return (!_.isUndefined(selectionTarget.projectLinkData) && (
             (selectionTarget.projectLinkData.status === notHandledStatus || selectionTarget.projectLinkData.status === newRoadAddressStatus) ||
-            (selectionTarget.projectLinkData.anomaly==noAddressAnomaly && selectionTarget.projectLinkData.roadLinkType!=floatingRoadLinkType) || selectionTarget.projectLinkData.roadClass === 99)
+            (selectionTarget.projectLinkData.anomaly==noAddressAnomaly && selectionTarget.projectLinkData.roadLinkType!=floatingRoadLinkType) ||
+            selectionTarget.projectLinkData.roadClass === 99 || selectionTarget.projectLinkData.roadLinkSource === 3)
           );
       });
       selectedProjectLinkProperty.clean();
@@ -245,11 +260,13 @@
     var clearLayers = function(){
       calibrationPointLayer.getSource().clear();
       directionMarkerLayer.getSource().clear();
+      suravageRoadProjectLayer.getSource().clear();
     };
 
     var highlightFeatures = function() {
       clearHighlights();
       var featuresToHighlight = [];
+      var suravageFeaturesToHighlight = [];
       _.each(vectorLayer.getSource().getFeatures(), function(feature) {
         var canIHighlight = !_.isUndefined(feature.projectLinkData.linkId) ?
           selectedProjectLinkProperty.isSelected(feature.projectLinkData.linkId) : false;
@@ -257,8 +274,20 @@
           featuresToHighlight.push(feature);
         }
       });
-      if(featuresToHighlight.length !== 0)
+      if(featuresToHighlight.length !== 0) {
         addFeaturesToSelection(featuresToHighlight);
+      } else {
+        _.each(suravageRoadProjectLayer.getSource().getFeatures(), function(feature) {
+          var canIHighlight = !_.isUndefined(feature.projectLinkData.linkId) ?
+            selectedProjectLinkProperty.isSelected(feature.projectLinkData.linkId) : false;
+          if(canIHighlight){
+            suravageFeaturesToHighlight.push(feature);
+          }
+        });
+        if(suravageFeaturesToHighlight.length !== 0){
+          addFeaturesToSelection(suravageFeaturesToHighlight);
+        }
+      }
     };
 
     /**
@@ -473,7 +502,24 @@ var isDefined=function(variable) {
           return ids[projectLink.getData().linkId];
       }));
       var editedLinks = _.map(projectCollection.getDirty(), function(editedLink) {return editedLink.id;});
-      var projectLinks = projectCollection.getAll();
+      
+      var separated = _.partition(projectCollection.getAll(), function(projectRoad){
+        return projectRoad.roadLinkSource === 3;
+      });
+      var suravageProjectRoads = separated[0];
+      var suravageFeatures = [];
+      _.map(suravageProjectRoads, function(projectLink) {
+        var points = _.map(projectLink.points, function (point) {
+          return [point.x, point.y];
+        });
+        var feature = new ol.Feature({
+          geometry: new ol.geom.LineString(points)
+        });
+        feature.projectLinkData = projectLink;
+        suravageFeatures.push(feature);
+      });
+      suravageRoadProjectLayer.getSource().addFeatures(suravageFeatures);
+      var projectLinks = separated[1];
       var features = [];
       _.map(projectLinks, function(projectLink) {
         var points = _.map(projectLink.points, function (point) {
@@ -584,10 +630,16 @@ var isDefined=function(variable) {
 
     eventbus.on('map:clearLayers', clearLayers);
 
+    eventbus.on('suravageProjectRoads:toggleVisibility', function(visibility) {
+      suravageRoadProjectLayer.setVisible(visibility);
+    });
+
     vectorLayer.setVisible(true);
+    suravageRoadProjectLayer.setVisible(true);
     calibrationPointLayer.setVisible(true);
     directionMarkerLayer.setVisible(true);
     map.addLayer(vectorLayer);
+    map.addLayer(suravageRoadProjectLayer);
     map.addLayer(calibrationPointLayer);
     map.addLayer(directionMarkerLayer);
     return {
