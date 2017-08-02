@@ -451,15 +451,15 @@ Returns empty result as Json message, not as page not found
     }
   }
 
-  private def extractIntValue(pieceWiseLinearAsset: PieceWiseLinearAsset, value: String) = {
-    pieceWiseLinearAsset.attributes.get(value) match {
+  private def extractIntValue(attributes: Map[String, Any], value: String) = {
+    attributes.get(value) match {
       case Some(x) => x.asInstanceOf[Int]
       case _ => None
     }
   }
 
-  private def extractLongValue(pieceWiseLinearAsset: PieceWiseLinearAsset, value: String) = {
-    pieceWiseLinearAsset.attributes.get(value) match {
+  private def extractLongValue(attributes: Map[String, Any], value: String) = {
+    attributes.get(value) match {
       case Some(x) => x.asInstanceOf[Long]
       case _ => None
     }
@@ -655,11 +655,11 @@ Returns empty result as Json message, not as page not found
           "modifiedAt" -> link.modifiedDateTime,
           "createdBy" -> link.createdBy,
           "createdAt" -> link.createdDateTime,
-          "roadPartNumber" -> extractLongValue(link, "VIITE_ROAD_PART_NUMBER"),
-          "roadNumber" -> extractLongValue(link, "VIITE_ROAD_NUMBER"),
-          "track" -> extractIntValue(link, "VIITE_TRACK"),
-          "startAddrMValue" -> extractLongValue(link, "VIITE_START_ADDR"),
-          "endAddrMValue" ->  extractLongValue(link, "VIITE_END_ADDR")
+          "roadPartNumber" -> extractLongValue(link.attributes, "VIITE_ROAD_PART_NUMBER"),
+          "roadNumber" -> extractLongValue(link.attributes, "VIITE_ROAD_NUMBER"),
+          "track" -> extractIntValue(link.attributes, "VIITE_TRACK"),
+          "startAddrMValue" -> extractLongValue(link.attributes, "VIITE_START_ADDR"),
+          "endAddrMValue" ->  extractLongValue(link.attributes, "VIITE_END_ADDR")
         )
       }
     }
@@ -814,7 +814,7 @@ Returns empty result as Json message, not as page not found
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      speedLimitService.get(boundingRectangle, municipalities).map { linkPartition =>
+      speedLimitService.withRoadAddress(speedLimitService.get(boundingRectangle, municipalities)).map { linkPartition =>
         linkPartition.map { link =>
           Map(
             "id" -> (if (link.id == 0) None else Some(link.id)),
@@ -829,7 +829,12 @@ Returns empty result as Json message, not as page not found
             "modifiedAt" -> link.modifiedDateTime,
             "createdBy" -> link.createdBy,
             "createdAt" -> link.createdDateTime,
-            "linkSource" -> link.linkSource.value
+            "linkSource" -> link.linkSource.value,
+            "roadPartNumber" -> extractLongValue(link.attributes, "VIITE_ROAD_PART_NUMBER"),
+            "roadNumber" -> extractLongValue(link.attributes, "VIITE_ROAD_NUMBER"),
+            "track" -> extractIntValue(link.attributes, "VIITE_TRACK"),
+            "startAddrMValue" -> extractLongValue(link.attributes, "VIITE_START_ADDR"),
+            "endAddrMValue" ->  extractLongValue(link.attributes, "VIITE_END_ADDR")
           )
         }
       }
