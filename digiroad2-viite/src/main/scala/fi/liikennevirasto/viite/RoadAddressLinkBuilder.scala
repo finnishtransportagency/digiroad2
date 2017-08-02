@@ -54,11 +54,6 @@ object RoadAddressLinkBuilder {
   }
 
   def build(roadLink: RoadLink, roadAddress: RoadAddress, floating: Boolean = false, newGeometry: Option[Seq[Point]] = None) = {
-    if (roadLink.linkId==499972931)
-    {
-      val boo=true
-    }
-
     val roadLinkType = (floating, roadLink.linkSource) match {
       case (true, _) => FloatingRoadLinkType
       case (false, LinkGeomSource.ComplimentaryLinkInterface) => ComplementaryRoadLinkType
@@ -146,17 +141,19 @@ object RoadAddressLinkBuilder {
   def buildSuravageRoadAddressLink(roadLink: VVHRoadlink): RoadAddressLink = {
     val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry,  0.0, roadLink.geometryLength)
     val length = GeometryUtils.geometryLength(geom)
+    val sideCode= if (roadLink.trafficDirection==TrafficDirection.TowardsDigitizing) SideCode.TowardsDigitizing else if(roadLink.trafficDirection==TrafficDirection.AgainstDigitizing) SideCode.AgainstDigitizing
+    else if(roadLink.trafficDirection==TrafficDirection.BothDirections) SideCode.BothDirections else SideCode.Unknown
     val roadLinkRoadNumber = roadLink.attributes.getOrElse("ROADNUMBER",0).asInstanceOf[BigInt].longValue()
     val roadLinkRoadPartNumber = roadLink.attributes.getOrElse("ROADPARTNUMBER",0).asInstanceOf[BigInt].longValue()
     val roadName = roadLink.attributes.getOrElse("ROADNAME_FI", roadLink.attributes.getOrElse("ROADNAME_SE", "none")).toString
-    val municipalityCode = roadLink.attributes.getOrElse("MUNICIPALITYCODE",0).asInstanceOf[Number].intValue()
+    val municipalityCode = roadLink.municipalityCode
     val anomalyType= {if (roadLinkRoadNumber!=0 && roadLinkRoadPartNumber!=0) Anomaly.None else Anomaly.NoAddressGiven}
     RoadAddressLink(0, roadLink.linkId, geom,
       length, roadLink.administrativeClass, getLinkType(roadLink), SuravageRoadLink, roadLink.constructionType, roadLink.linkSource, getRoadType(roadLink.administrativeClass, getLinkType(roadLink)),
       roadName, municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
       roadLink.attributes,roadLinkRoadNumber,
       roadLinkRoadPartNumber, Track.Unknown.value, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), Discontinuity.Continuous.value,
-      0, 0, "", "", 0.0, length, SideCode.Unknown, None, None, anomalyType, 0)
+      0, 0, "", "", 0.0, length, sideCode, None, None, anomalyType, 0)
   }
 
 

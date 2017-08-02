@@ -407,9 +407,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       case DrawPublicRoads => roadAddressService.getRoadAddressLinksByLinkId(boundingRectangle, Seq((1, 19999), (40000,49999)), municipalities)
       case DrawAllRoads =>
         val combinedFuture =for{
-          f1Result <- Future(roadAddressService.getRoadAddressLinks(boundingRectangle, Seq(), municipalities, everything = true))
-          f2Result <- Future(roadAddressService.getSurravageRoadLinkAddresses(boundingRectangle, municipalities))
-        } yield (f1Result, f2Result)
+          fRoadLink <- Future(roadAddressService.getRoadAddressLinks(boundingRectangle, Seq(), municipalities, everything = true))
+          fSuravage <- Future(roadAddressService.getSurravageRoadLinkAddresses(boundingRectangle, municipalities))
+        } yield (fRoadLink, fSuravage)
         val (roadlinkList,suravageList) =Await.result(combinedFuture, Duration.Inf)
         suravageList ++ roadlinkList
       case _ => {
