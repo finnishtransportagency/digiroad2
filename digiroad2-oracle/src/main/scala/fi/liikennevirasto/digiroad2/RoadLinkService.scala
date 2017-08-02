@@ -46,7 +46,7 @@ object RoadLinkType{
   case object NormalRoadLinkType extends RoadLinkType { def value = 1 }
   case object ComplementaryRoadLinkType extends RoadLinkType { def value = 3 }
   case object FloatingRoadLinkType extends RoadLinkType { def value = -1 }
-  case object SuravageRoadLink extends RoadLinkType { def value =4}
+  case object SuravageRoadLink extends RoadLinkType { def value = 4}
 }
 
 /**
