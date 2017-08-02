@@ -48,11 +48,11 @@ class MunicipalityApi(val linearAssetService: LinearAssetService) extends Scalat
   def linearAssetsToApi(linearAssets: Seq[PersistedLinearAsset]): Seq[Map[String, Any]] = {
     linearAssets.map { asset =>
       Map("id" -> asset.id,
-        "value" -> asset.value,
+        "value" -> asset.value.get.toJson,
         "linkId" -> asset.linkId,
         "startMeasure" -> asset.startMeasure,
         "endMeasure" -> asset.endMeasure,
-        "side_code" -> asset.sideCode,
+        "sideCode" -> asset.sideCode,
         "modifiedAt" -> asset.modifiedDateTime,
         "createdAt" -> asset.createdDateTime,
         "geometryTimestamp" -> asset.vvhTimeStamp
