@@ -59,7 +59,7 @@ class MunicipalityApi(val linearAssetService: LinearAssetService) extends Scalat
 
   private def extractNewLinearAssets(typeId: Int, value: JValue) = {
     typeId match {
-      case _ => value.extractOpt[Seq[NewNumericOrTextualValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, NumericOrTextualValue(x.properties), x.sideCode, 0, None))
+      case _ => value.extractOpt[Seq[NewNumericOrTextualValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, NumericValue(x.properties.map(_.value).head.toInt), x.sideCode, 0, None))
     }
   }
 
@@ -114,6 +114,7 @@ class MunicipalityApi(val linearAssetService: LinearAssetService) extends Scalat
     val assetTypeId = getAssetTypeId(params("assetType"))
     val municipalityCode = params("municipalityCode").toInt
     val newLinearAssets = extractNewLinearAssets(assetTypeId, parsedBody)
+    linearAssetService.create(newLinearAssets, assetTypeId, user.username)
   }
 
   put("/:municipalityCode/:assetType/:assetId"){
