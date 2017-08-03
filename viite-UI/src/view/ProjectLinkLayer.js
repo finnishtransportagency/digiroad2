@@ -497,6 +497,7 @@ var isDefined=function(variable) {
           directionMarkerLayer.getSource().addFeature(marker);
       });
 
+      calibrationPointLayer.getSource().clear();
       var actualPoints = me.drawCalibrationMarkers(calibrationPointLayer.source, projectLinks);
       _.each(actualPoints, function (actualPoint) {
         var calMarker = new CalibrationPoint(actualPoint.point);

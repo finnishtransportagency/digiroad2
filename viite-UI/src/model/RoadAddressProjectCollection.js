@@ -232,12 +232,10 @@
       });
     };
 
-    this.changeNewProjectLinkDirection = function (selectedLinks){
+    this.changeNewProjectLinkDirection = function (projectId, selectedLinks){
       applicationModel.addSpinner();
-      var ids = [_.map(selectedLinks, function (project) {
-          return project.id;
-      }) ];
-       backend.directionChangeNewRoadlink(ids, function(successObject) {
+      var data = [projectId, selectedLinks[0].roadNumber, selectedLinks[0].roadPartNumber] ;
+       backend.directionChangeNewRoadlink(data, function(successObject) {
            if (!successObject.success) {
             eventbus.trigger('roadAddress:changeDirectionFailed', successObject.errorMessage);
                applicationModel.removeSpinner();

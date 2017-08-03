@@ -64,6 +64,25 @@ class RoadAddressDAO {
       s" and (ra.valid_to > sysdate or ra.valid_to is null) " + qfilter
   }
 
+  def withRoadAddressAllParts(roadNumber: Long, startRoadPartNumber: Long, track: Int, startM: Long, endM: Option[Long], optFloating: Option[Int] = None)(query: String): String = {
+    val floating = optFloating match {
+      case Some(floatingValue) => "ra.floating = " + floatingValue + ""
+      case None => ""
+    }
+
+    val addressMValueFilter = endM match {
+      case Some(endValue) => s"AND ((ra.start_addr_M <= $startM AND ra.end_addr_M >= $startM) OR (ra.start_addr_M <= $endValue AND ra.end_addr_M >= $endValue))"
+      case _ => s"AND ra.start_addr_M <= $startM AND ra.end_addr_M >= $startM"
+    }
+
+    query + s" where ra.road_number = $roadNumber " +
+      s" AND ra.road_part_number = $startRoadPartNumber $addressMValueFilter " +
+      s" AND ra.TRACK_CODE = $track " +
+      s" AND (ra.valid_to IS NULL OR ra.valid_to > sysdate) " +
+      s" AND (ra.valid_from IS NULL OR ra.valid_from <= sysdate) " + floating +
+      s" ORDER BY ra.road_number, ra.road_part_number, ra.track_code, ra.start_addr_m "
+  }
+
   def withRoadAddressSinglePart(roadNumber: Long, startRoadPartNumber: Long, track: Int, startM: Long, endM: Option[Long], optFloating: Option[Int] = None)(query: String): String = {
     val floating = optFloating match {
       case Some(floatingValue) => "ra.floating = " + floatingValue + ""

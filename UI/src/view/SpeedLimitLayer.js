@@ -5,7 +5,8 @@ window.SpeedLimitLayer = function(params) {
       selectedSpeedLimit = params.selectedSpeedLimit,
       roadLayer = params.roadLayer,
       style = params.style,
-      layerName = 'speedLimit';
+      layerName = 'speedLimit',
+      roadAddressInfoPopup= params.roadAddressInfoPopup;
   var isActive = false;
   var extraEventListener = _.extend({running: false}, eventbus);
 
@@ -524,6 +525,7 @@ window.SpeedLimitLayer = function(params) {
     startListeningExtraEvents();
     vectorLayer.setVisible(true);
     indicatorLayer.setVisible(true);
+    roadAddressInfoPopup.start();
     me.show(map);
   };
 
@@ -535,6 +537,7 @@ window.SpeedLimitLayer = function(params) {
     vectorLayerHistory.setVisible(false);
     indicatorLayer.setVisible(false);
     stopListeningExtraEvents();
+    roadAddressInfoPopup.stop();
     me.stop();
     me.hide();
   };
