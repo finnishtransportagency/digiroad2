@@ -5,7 +5,7 @@ import java.text.SimpleDateFormat
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import fi.liikennevirasto.digiroad2.user.UserProvider
+import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.digiroad2.util.RoadAddressException
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, ProjectLinkPartitioner, RoadAddressLink, RoadAddressLinkPartitioner}
@@ -219,9 +219,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   post("/roadlinks/roadaddress/project/create"){
     val project = parsedBody.extract[RoadAddressProjectExtractor]
     val user = userProvider.getCurrentUser()
-    val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
-    val roadAddressProject= RoadAddressProject(project.id, ProjectState.apply(project.status), project.name,
-      user.username, DateTime.now(), "-", formatter.parseDateTime(project.startDate), DateTime.now(), project.additionalInfo, project.roadPartList, None)
+    val roadAddressProject = ProjectConverter.toRoadAddressProject(project, user)
     try {
       val (projectSaved, addr, info, success) = projectService.createRoadLinkProject(roadAddressProject)
       Map("project" -> projectToApi(projectSaved), "projectAddresses" -> addr, "formInfo" -> info,
@@ -312,21 +310,22 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
 
   put("/roadlinks/roadaddress/project/savenewroadlink") {
-    try { //check for validity
-      val projectlinksafe = parsedBody.extract[NewRoadAddressExtractor]
-    } catch {
-      case NonFatal(e) => BadRequest("Missing mandatory ProjectLink parameter")
-    }
+    try {
       val projectLink = parsedBody.extract[NewRoadAddressExtractor]
       val roadLinks = projectService.getProjectRoadLinksByLinkIds(projectLink.linkIds)
-    withDynTransaction {
-      val errorMessage = projectService.addNewLinksToProject(roadLinks, projectLink.projectId, projectLink.newRoadNumber, projectLink.newRoadPartNumber, projectLink.newTrackCode, projectLink.newDiscontinuity)
-      if (errorMessage == "") {
-        Map("success" -> true)
-      } else {
-        Map("success" -> false,
-          "errormessage" -> errorMessage)
+      withDynTransaction {
+        val errorMessage = projectService.addNewLinksToProject(roadLinks, projectLink.projectId, projectLink.newRoadNumber, projectLink.newRoadPartNumber, projectLink.newTrackCode, projectLink.newDiscontinuity)
+        if (errorMessage == "") {
+          Map("success" -> true)
+        } else {
+          Map("success" -> false,
+            "errormessage" -> errorMessage)
+        }
       }
+    } catch {
+      case e: MappingException  =>
+        logger.warn("Exception saving road links in project", e)
+        BadRequest("Missing mandatory ProjectLink parameter")
     }
   }
 
@@ -602,3 +601,12 @@ case object DiscontinuitySerializer extends CustomSerializer[Discontinuity](form
 }, {
   case s: Discontinuity => JString(s.description)
 }))
+
+object ProjectConverter {
+  def toRoadAddressProject(project: RoadAddressProjectExtractor, user: User): RoadAddressProject = {
+    val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
+    RoadAddressProject(project.id, ProjectState.apply(project.status),
+      if (project.name.length > 32) project.name.substring(0, 32).trim else project.name.trim,
+      user.username, DateTime.now(), "-", formatter.parseDateTime(project.startDate), DateTime.now(), project.additionalInfo, project.roadPartList, None)
+  }
+}

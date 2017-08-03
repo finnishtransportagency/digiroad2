@@ -1,16 +1,17 @@
 package fi.liikennevirasto.viite.dao
 
+import java.sql.PreparedStatement
+
 import fi.liikennevirasto.viite.RoadType
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import fi.liikennevirasto.viite.process.{Delta, ProjectDeltaCalculator}
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.viite.process.{Delta, ProjectDeltaCalculator, RoadAddressSection}
 import org.joda.time.DateTime
+import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
-/**
-  * Created by pedrosag on 16-05-2017.
-  */
 
 sealed trait AddressChangeType {
   def value: Int
@@ -49,9 +50,9 @@ case class RoadAddressChangeRecipient(roadNumber: Option[Long], trackCode: Optio
 case class RoadAddressChangeInfo(changeType: AddressChangeType, source: RoadAddressChangeRecipient, target: RoadAddressChangeRecipient, discontinuity: Discontinuity, roadType: RoadType)
 case class ProjectRoadAddressChange(projectId: Long, projectName: Option[String], ely: Long, user: String, changeDate: DateTime, changeInfo: RoadAddressChangeInfo, projectStartDate: DateTime)
 case class RoadAddressChangeRow(projectId:Long, projectName:Option[String], createdBy:String, createdDate:Option[DateTime], startDate:Option[DateTime], modifiedBy:String, modifiedDate:Option[DateTime], ely:Long, changeType :Int, sourceRoadNumber:Option[Long],
-                                 sourceTrackCode :Option[Long],sourceStartRoadPartNumber:Option[Long], sourceEndRoadPartNumber:Option[Long], sourceStartAddressM:Option[Long], sourceEndAddressM:Option[Long],
-                                 targetRoadNumber:Option[Long], targetTrackCode:Option[Long], targetStartRoadPartNumber:Option[Long], targetEndRoadPartNumber:Option[Long], targetStartAddressM:Option[Long],
-                                 targetEndAddressM:Option[Long], discontinuity: Int, roadType: Int)
+                                sourceTrackCode :Option[Long],sourceStartRoadPartNumber:Option[Long], sourceEndRoadPartNumber:Option[Long], sourceStartAddressM:Option[Long], sourceEndAddressM:Option[Long],
+                                targetRoadNumber:Option[Long], targetTrackCode:Option[Long], targetStartRoadPartNumber:Option[Long], targetEndRoadPartNumber:Option[Long], targetStartAddressM:Option[Long],
+                                targetEndAddressM:Option[Long], discontinuity: Int, roadType: Int)
 
 object RoadAddressChangesDAO {
 
@@ -93,6 +94,8 @@ object RoadAddressChangesDAO {
         targetEndAddressM:Option[Long], discontinuity: Int, roadType: Int)
     }
   }
+
+  val logger = LoggerFactory.getLogger(getClass)
 
   private def toRoadAddressChangeRecipient(row: RoadAddressChangeRow) = {
     RoadAddressChangeRecipient(row.sourceRoadNumber, row.sourceTrackCode, row.sourceStartRoadPartNumber, row.sourceEndRoadPartNumber, row.sourceStartAddressM, row.sourceEndAddressM)
@@ -145,7 +148,7 @@ object RoadAddressChangesDAO {
                       $withProjectIds
                       Group By p.id, p.name, p.created_by, p.created_date, p.start_date, p.modified_by, p.modified_date, rac.new_ely, rac.change_type, rac.old_road_number, rac.old_track_code, rac.old_start_addr_m, rac.old_end_addr_m, rac.new_road_number, rac.new_track_code,
                       rac.new_start_addr_m, rac.new_end_addr_m, rac.new_discontinuity, rac.new_road_type, rac.OLD_ROAD_PART_NUMBER ORDER BY rac.old_road_number, rac.OLD_ROAD_PART_NUMBER, rac.old_start_addr_m, rac.old_track_code DESC"""
-  queryList(query)
+    queryList(query)
   }
 
   def clearRoadChangeTable(projectId: Long): Unit = {
@@ -153,6 +156,27 @@ object RoadAddressChangesDAO {
   }
 
   def insertDeltaToRoadChangeTable(delta: Delta, projectId: Long): Boolean= {
+    def addToBatch(roadAddressSection: RoadAddressSection, ely: Long, addressChangeType: AddressChangeType, roadAddressChangePS: PreparedStatement) = {
+      roadAddressChangePS.setLong(1, projectId)
+      roadAddressChangePS.setLong(2, addressChangeType.value)
+      roadAddressChangePS.setLong(3, roadAddressSection.roadNumber)
+      roadAddressChangePS.setLong(4, roadAddressSection.roadNumber)
+      roadAddressChangePS.setLong(5, roadAddressSection.roadPartNumberStart)
+      roadAddressChangePS.setLong(6, roadAddressSection.roadPartNumberStart)
+      roadAddressChangePS.setLong(7, roadAddressSection.track.value)
+      roadAddressChangePS.setLong(8, roadAddressSection.track.value)
+      roadAddressChangePS.setDouble(9, roadAddressSection.startMAddr)
+      roadAddressChangePS.setDouble(10, roadAddressSection.startMAddr)
+      roadAddressChangePS.setDouble(11, roadAddressSection.endMAddr)
+      roadAddressChangePS.setDouble(12, roadAddressSection.endMAddr)
+      roadAddressChangePS.setLong(13, roadAddressSection.discontinuity.value)
+      roadAddressChangePS.setLong(14, roadAddressSection.roadType.value)
+      roadAddressChangePS.setLong(15, ely)
+      roadAddressChangePS.addBatch()
+    }
+
+    val startTime = System.currentTimeMillis()
+    logger.info("Starting delta insertion in ChangeTable ")
     ProjectDAO.getRoadAddressProjectById(projectId) match {
       case Some(project) => {
         project.ely match {
@@ -162,25 +186,15 @@ object RoadAddressChangesDAO {
               "old_track_code,new_track_code,old_start_addr_m,new_start_addr_m,old_end_addr_m,new_end_addr_m," +
               "new_discontinuity,new_road_type,new_ely) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,? )")
             ProjectDeltaCalculator.partition(delta.terminations).foreach { case (roadAddressSection) =>
-              roadAddressChangePS.setLong(1, projectId)
-              roadAddressChangePS.setLong(2, AddressChangeType.Termination.value)
-              roadAddressChangePS.setLong(3, roadAddressSection.roadNumber)
-              roadAddressChangePS.setLong(4, roadAddressSection.roadNumber)
-              roadAddressChangePS.setLong(5, roadAddressSection.roadPartNumberStart)
-              roadAddressChangePS.setLong(6, roadAddressSection.roadPartNumberStart)
-              roadAddressChangePS.setLong(7, roadAddressSection.track.value)
-              roadAddressChangePS.setLong(8, roadAddressSection.track.value)
-              roadAddressChangePS.setDouble(9, roadAddressSection.startMAddr)
-              roadAddressChangePS.setDouble(10, roadAddressSection.startMAddr)
-              roadAddressChangePS.setDouble(11, roadAddressSection.endMAddr)
-              roadAddressChangePS.setDouble(12, roadAddressSection.endMAddr)
-              roadAddressChangePS.setLong(13, roadAddressSection.discontinuity.value)
-              roadAddressChangePS.setLong(14, roadAddressSection.roadType.value)
-              roadAddressChangePS.setLong(15, ely)
-              roadAddressChangePS.addBatch()
+              addToBatch(roadAddressSection, ely, AddressChangeType.Termination, roadAddressChangePS)
+            }
+            ProjectDeltaCalculator.projectLinkPartition(delta.newRoads).foreach { case (roadAddressSection) =>
+              addToBatch(roadAddressSection, ely, AddressChangeType.New, roadAddressChangePS)
             }
             roadAddressChangePS.executeBatch()
             roadAddressChangePS.close()
+            val endTime = System.currentTimeMillis()
+            logger.info("Ended delta insertion in ChangeTable in %.3f sec".format((endTime - startTime)*0.001))
             true
           }
           case _=>  false
@@ -188,5 +202,4 @@ object RoadAddressChangesDAO {
       } case _=> false
     }
   }
-
 }

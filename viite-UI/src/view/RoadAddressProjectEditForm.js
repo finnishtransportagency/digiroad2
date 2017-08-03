@@ -104,7 +104,7 @@
         '</div>'+
         newRoadAddressInfo() +
         '</form>' +
-        changeDirection() +
+        changeDirection()+
         actionSelectedField()+
         '</div>'+
         '</div>' +
@@ -147,11 +147,7 @@
     };
 
     var changeDirection = function () {
-      var hidden = '';
-      if (selectedProjectLink[0].id === 0){
-        hidden = 'hidden';
-      }
-      return '<div ' + hidden + ' class="form-group changeDirectionDiv">' +
+      return '<div hidden class="form-group changeDirectionDiv" style="margin-top:15px">' +
           '<button class="form-group changeDirection btn btn-primary">Käännä kasvusuunta</button>' +
           '</div>';
     };
@@ -216,6 +212,9 @@
         currentProject = projectCollection.getCurrentProject();
         clearInformationContent();
         rootElement.html(selectedProjectLinkTemplate(currentProject.project, options, selectedProjectLink));
+        if(selectedProjectLink[0].id !== 0){
+          rootElement.find('.changeDirectionDiv').prop("hidden", false);
+        }
         replaceAddressInfo();
         checkInputs();
       });
@@ -309,6 +308,8 @@
         else if(this.value == "uusi"){
           projectCollection.setTmpExpired(projectCollection.getTmpExpired().concat(selectedProjectLink));
           rootElement.find('.new-road-address').prop("hidden", false);
+          if(selectedProjectLink[0].id !== 0)
+            rootElement.find('.changeDirectionDiv').prop("hidden", false);
         }
       });
 

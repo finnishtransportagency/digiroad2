@@ -21,10 +21,13 @@ object ProjectDeltaCalculator {
       throw new IllegalArgumentException("Project not found")
     val project = projectOpt.get
     val projectLinks = ProjectDAO.getProjectLinks(projectId).groupBy(l => RoadPart(l.roadNumber,l.roadPartNumber))
-    val currentAddresses = projectLinks.keySet.map(r => r -> RoadAddressDAO.fetchByRoadPart(r.roadNumber, r.roadPartNumber, true)).toMap
+    val currentAddresses = projectLinks.filter(_._2.exists(_.status != LinkStatus.New)).keySet.map(r => r -> RoadAddressDAO.fetchByRoadPart(r.roadNumber, r.roadPartNumber, true)).toMap
     val terminations = findTerminations(projectLinks, currentAddresses)
-
-    Delta(project.startDate, terminations.sortBy(t => (t.discontinuity.value, t.roadType.value)))
+    val newCreations = findNewCreations(projectLinks)
+    if (terminations.size != currentAddresses.values.flatten.size)
+      throw new RoadAddressException(s"Road address count did not match: ${terminations.size} terminated, " +
+        s"(and ${newCreations.size } created), ${currentAddresses.values.flatten.size} addresses found")
+    Delta(project.startDate, terminations.sortBy(t => (t.discontinuity.value, t.roadType.value)), newCreations.sortBy(t => (t.discontinuity.value, t.roadType.value)))
   }
 
   private def findTerminations(projectLinks: Map[RoadPart, Seq[ProjectLink]], currentAddresses: Map[RoadPart, Seq[RoadAddress]]) = {
@@ -35,6 +38,10 @@ object ProjectDeltaCalculator {
     terminations.values.flatten.toSeq
   }
 
+  private def findNewCreations(projectLinks: Map[RoadPart, Seq[ProjectLink]]) = {
+    projectLinks.values.flatten.filter(_.status == LinkStatus.New).toSeq
+  }
+
   private def validateTerminations(roadAddresses: Seq[RoadAddress]) = {
     if (roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber)).keySet.size != 1)
       throw new RoadAddressException("Multiple or no road parts present in one termination set")
@@ -43,24 +50,34 @@ object ProjectDeltaCalculator {
       throw new RoadAddressException(s"Termination has gaps in between: ${missingSegments.mkString("\n")}") //TODO: terminate only part of the road part later
   }
 
-  // TODO: When other than terminations are handled we partition also project links: section should include road type
-  def projectLinkPartition(projectLinks: Seq[ProjectLink]): Seq[RoadAddressSection] = ???
+  def projectLinkPartition(projectLinks: Seq[ProjectLink]): Seq[RoadAddressSection] = {
+    val grouped = projectLinks.groupBy(projectLink => (projectLink.roadNumber, projectLink.roadPartNumber, projectLink.track, projectLink.roadType))
+    grouped.mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
+      RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
+        ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType)
+    ).toSeq
+  }
+
+  private def combineTwo[T <: BaseRoadAddress](r1: T, r2: T): Seq[T] = {
+    if (r1.endAddrMValue == r2.startAddrMValue && r1.discontinuity == Discontinuity.Continuous)
+      r1 match {
+        case x: RoadAddress => Seq(x.copy(endAddrMValue = r2.endAddrMValue, discontinuity = r2.discontinuity).asInstanceOf[T])
+        case x: ProjectLink => Seq(x.copy(endAddrMValue = r2.endAddrMValue, discontinuity = r2.discontinuity).asInstanceOf[T])
+      }
+    else
+      Seq(r2, r1)
+  }
+
+  private def combine[T <: BaseRoadAddress](roadAddressSeq: Seq[T], result: Seq[T] = Seq()): Seq[T] = {
+    if (roadAddressSeq.isEmpty)
+      result.reverse
+    else if (result.isEmpty)
+      combine(roadAddressSeq.tail, Seq(roadAddressSeq.head))
+    else
+      combine(roadAddressSeq.tail, combineTwo(result.head, roadAddressSeq.head) ++ result.tail)
+  }
 
   def partition(roadAddresses: Seq[RoadAddress]): Seq[RoadAddressSection] = {
-    def combineTwo(r1: RoadAddress, r2: RoadAddress): Seq[RoadAddress] = {
-      if (r1.endAddrMValue == r2.startAddrMValue && r1.discontinuity == Discontinuity.Continuous)
-        Seq(r1.copy(endAddrMValue = r2.endAddrMValue, discontinuity = r2.discontinuity))
-      else
-        Seq(r2, r1)
-    }
-    def combine(roadAddressSeq: Seq[RoadAddress], result: Seq[RoadAddress] = Seq()): Seq[RoadAddress] = {
-      if (roadAddressSeq.isEmpty)
-        result.reverse
-      else if (result.isEmpty)
-        combine(roadAddressSeq.tail, Seq(roadAddressSeq.head))
-      else
-        combine(roadAddressSeq.tail, combineTwo(result.head, roadAddressSeq.head) ++ result.tail)
-    }
     val grouped = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
     grouped.mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
       RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
@@ -235,7 +252,7 @@ object ProjectDeltaCalculator {
     val groupedProjectLinks = projectLinks.groupBy(record => (record.roadNumber, record.roadPartNumber))
     groupedProjectLinks.flatMap(gpl => {
       var lastEndM = 0.0
-      val roadPartId = new RoadPartBasis(gpl._1._1, gpl._1._2)
+      val roadPartId = RoadPart(gpl._1._1, gpl._1._2)
       if(geometryLengthList.keySet.contains(roadPartId)){
         val links = orderProjectLinksTopologyByGeometry(gpl._2)
         val linksToCheck= links.map(l => {
@@ -313,7 +330,7 @@ object ProjectDeltaCalculator {
   }
 }
 
-case class Delta(startDate: DateTime, terminations: Seq[RoadAddress])
+case class Delta(startDate: DateTime, terminations: Seq[RoadAddress], newRoads: Seq[ProjectLink] = Seq.empty[ProjectLink])
 case class RoadPart(roadNumber: Long, roadPartNumber: Long)
 case class RoadAddressSection(roadNumber: Long, roadPartNumberStart: Long, roadPartNumberEnd: Long, track: Track,
                               startMAddr: Long, endMAddr: Long, discontinuity: Discontinuity, roadType: RoadType) {
@@ -330,5 +347,4 @@ case class RoadAddressSection(roadNumber: Long, roadPartNumberStart: Long, roadP
         ra.endAddrMValue < startMAddr && ra.roadPartNumber == roadPartNumberStart)
   }
 }
-case class RoadPartBasis (roadNumber: Long, roadPartNumber: Long)
-case class RoadPartLengths(linkId: Long, geometryLength: Double)
+case class RoadLinkLength(linkId: Long, geometryLength: Double)
