@@ -114,32 +114,6 @@
     var suravageRoadLinks = function() {
       return _.flatten(roadLinkGroupsSuravage);
     };
-
-    var getSelectedSuravageRoadLinks = function() {
-      return _.filter(suravageRoadLinks, function(roadLink) {
-        return roadLink.isSelected();
-      });
-    };
-
-    this.fetchSuravage = function (boundingBox) {
-      backend.getSuravageLinks(boundingBox, function (fetchedSuravageLinks) {
-        var selectedIds = _.map(getSelectedRoadLinksHistory(), function(roadLink) {
-          return roadLink.getId();
-        });
-        var fetchedRoadLinkModels = _.map(fetchedSuravageLinks, function(roadLinkGroup) {
-          return _.map(roadLinkGroup, function(roadLink) {
-            return new RoadLinkModel(roadLink);
-          });
-        });
-        roadLinkGroupsSuravage = _.reject(fetchedRoadLinkModels, function(roadLinkGroupSuravage) {
-          return _.some(roadLinkGroupSuravage, function(roadLink) {
-            _.contains(selectedIds, roadLink.getId());
-          });
-        }).concat(getSelectedSuravageRoadLinks());
-        eventbus.trigger('roadLinks:suravageFetched');
-      });
-    };
-
     this.getRoadsForMassTransitStops = function() {
       return _.chain(roadLinks())
         .filter(function(roadLink) {
@@ -149,12 +123,6 @@
           return roadLink.getData();
         })
         .value();
-    };
-
-    this.getAllSuravage = function() {
-      return _.map(suravageRoadLinks(), function(roadLinksuravage){
-        return roadLinksuravage.getData();
-      });
     };
 
     this.getRoadLinkByLinkId = function (linkId) {

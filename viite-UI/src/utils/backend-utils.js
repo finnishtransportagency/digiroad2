@@ -11,13 +11,6 @@
       };
     });
 
-    this.getSuravageLinks = createCallbackRequestor(function(params) {
-      var boundingBox = params.boundingBox;
-      return {
-        url: 'api/viite/roadlinks/suravage?bbox=' + boundingBox
-      };
-    });
-
     this.abortLoadingProject=(function() {
       if (loadingProject)
       {

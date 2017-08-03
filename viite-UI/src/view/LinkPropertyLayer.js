@@ -1,5 +1,4 @@
 (function(root) {
-
   root.LinkPropertyLayer = function(map, roadLayer, selectedLinkProperty, roadCollection, linkPropertiesModel, applicationModel,styler) {
     var layerName = 'linkProperty';
     var cachedLinkPropertyMarker = null;
@@ -618,10 +617,8 @@
       //Generalize the zoom levels as the resolutions and zoom levels differ between map tile sources
       roadCollection.reset();
       roadCollection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getZoom());
-      roadCollection.fetchSuravage(map.getView().calculateExtent(map.getSize()));
       suravageRoadLayer.changed();
       roadLayer.layer.changed();
-
     };
 
     this.isDirty = function() {
