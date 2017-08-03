@@ -91,15 +91,28 @@
           });
         }).concat(getSelectedRoadLinks());
         roadLinkGroupsSuravage = _.filter(roadLinkGroups, function(group){
-          return _.some(group, function (roadLink) {
+          if(_.isArray(group)){
+            return _.some(group, function (roadLink) {
               if (roadLink!==null)
-            return roadLink.getData().roadLinkSource === 3;
-          });
+                  return roadLink.getData().roadLinkSource === 3;
+                else
+                  return false;
+            });
+          } else {
+            return group.getData().roadLinkSource === 3;
+          }
         });
         var nonSuravageRoadLinkGroups = _.reject(roadLinkGroups, function(group){
-          return _.some(group, function (roadLink) {
-            return roadLink.getData().roadLinkSource === 3;
-          });
+          if(_.isArray(group)){
+            return _.some(group, function (roadLink) {
+              if (roadLink!==null)
+                return roadLink.getData().roadLinkSource === 3;
+              else
+                return false;
+            });
+          } else {
+            return group.getData().roadLinkSource === 3;
+          }
         });
         roadLinkGroups = nonSuravageRoadLinkGroups;
         eventbus.trigger('roadLinks:fetched', nonSuravageRoadLinkGroups);
