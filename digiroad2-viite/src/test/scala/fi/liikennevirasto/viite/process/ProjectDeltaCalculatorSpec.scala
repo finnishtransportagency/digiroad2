@@ -49,10 +49,10 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
       Seq(Point(0.0, 9.8), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface))
 
     val projectLinkSeq = Seq(projectLink0, projectLink1, projectLink2, projectLink3)
-    var linkLengths: Map[RoadPartBasis, Seq[RoadPartLengths]] = Map.empty
+    var linkLengths: Map[RoadPart, Seq[RoadLinkLength]] = Map.empty
     projectLinkSeq.foreach(pl => {
-      val index = new RoadPartBasis(pl.roadNumber, pl.roadPartNumber)
-      linkLengths = linkLengths + ( index -> Seq(RoadPartLengths(pl.linkId, pl.geometryLength)).++(linkLengths.getOrElse(index,Seq.empty)))
+      val index = RoadPart(pl.roadNumber, pl.roadPartNumber)
+      linkLengths = linkLengths + ( index -> Seq(RoadLinkLength(pl.linkId, pl.geometryLength)).++(linkLengths.getOrElse(index,Seq.empty)))
     })
 
     val output = ProjectDeltaCalculator.determineMValues(projectLinkSeq, linkLengths)

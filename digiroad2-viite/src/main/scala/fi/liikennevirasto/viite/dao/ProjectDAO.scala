@@ -322,6 +322,19 @@ object ProjectDAO {
     Q.updateNA(query).first
   }
 
+  def removeProjectLinksByLinkId(projectId: Long, linkIds: Set[Long]): Int = {
+    if (linkIds.size > 100) {
+      linkIds.grouped(100).map(g => removeProjectLinksByLinkId(projectId, g)).sum
+    } else {
+      val query =
+        s"""
+         DELETE FROM Project_Link WHERE project_id = $projectId AND EXISTS
+         (SELECT 1 FROM LRM_POSITION pos WHERE pos.id = LRM_POSITION_ID AND pos.link_id IN (${linkIds.mkString(",")}))
+       """
+      Q.updateNA(query).first
+    }
+  }
+
   def toTimeStamp(dateTime: Option[DateTime]) = {
     dateTime.map(dt => new Timestamp(dt.getMillis))
   }
