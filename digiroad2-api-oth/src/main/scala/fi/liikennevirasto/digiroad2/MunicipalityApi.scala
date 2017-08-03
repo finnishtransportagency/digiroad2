@@ -1,20 +1,48 @@
 package fi.liikennevirasto.digiroad2
 
-import fi.liikennevirasto.digiroad2.asset.{Modification, TimeStamps}
+import fi.liikennevirasto.digiroad2.asset.Asset.DateTimePropertyFormat
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset._
-import org.json4s.{DefaultFormats, Formats, JValue}
+import org.joda.time.DateTime
 import org.scalatra.{BadRequest, ScalatraServlet}
 import org.scalatra.json.JacksonJsonSupport
+import org.json4s._
+
+case class NewNumericOrTextualValueAsset(linkId: Long, startMeasure: Double, endMeasure: Double, properties: Seq[AssetProperties], sideCode: Int)
 
 class MunicipalityApi(val linearAssetService: LinearAssetService) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport {
 
   override def baseAuth: String = "municipality."
   override val realm: String = "Municipality API"
 
-  protected implicit val jsonFormats: Formats = DefaultFormats
+  case object DateTimeSerializer extends CustomSerializer[DateTime](format => ( {
+    case _ => throw new NotImplementedError("DateTime deserialization")
+  }, {
+    case d: DateTime => JString(d.toString(DateTimePropertyFormat))
+  }))
+
+  case object SideCodeSerializer extends CustomSerializer[SideCode](format => ( {
+    null
+  }, {
+    case s: SideCode => JInt(s.value)
+  }))
+
+  case object LinkGeomSourceSerializer extends CustomSerializer[LinkGeomSource](format => ({
+    case JInt(lg) => LinkGeomSource.apply(lg.toInt)
+  }, {
+    case lg: LinkGeomSource => JInt(lg.value)
+  }))
+
+  case object TrafficDirectionSerializer extends CustomSerializer[TrafficDirection](format => ( {
+    case JString(direction) => TrafficDirection(direction)
+  }, {
+    case t: TrafficDirection => JString(t.toString)
+  }))
+
+  protected implicit val jsonFormats: Formats = DefaultFormats + DateTimeSerializer + LinkGeomSourceSerializer + SideCodeSerializer + TrafficDirectionSerializer
 
   case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
-  case class NewNumericValueAsset(linkId: Long, startMeasure: Double, endMeasure: Double, value: Int, sideCode: Int)
+
 
   before() {
     basicAuth
@@ -29,26 +57,16 @@ class MunicipalityApi(val linearAssetService: LinearAssetService) extends Scalat
       .orElse(textualParameter.map(TextualValue))
   }
 
-  private def extractNewLinearAssets(typeId: Int, value: JValue): NewLinearAsset = {
-//    typeId match {
-//      case _ =>
-//        value.extractOpt[Seq[NewNumericValueAsset]].get/*OrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, NumericValue(x.value), x.sideCode, 0, None))*/
-//    }
-    val linkId = (value \ "linkId").extract[Long]
-    val startMeasure = (value \ "startMeasure").extract[Double]
-    val geometryTimestamp = (value \ "geometryTimestamp").extract[Long]
-    val endMeasure = (value \ "endMeasure").extract[Double]
-    val assetValue = (value \ "value").extract[Int]
-    val sideCode = (value \ "sideCode").extract[Int]
-
-    NewLinearAsset(linkId, startMeasure, endMeasure, NumericValue(assetValue), sideCode, geometryTimestamp, None)
-
+  private def extractNewLinearAssets(typeId: Int, value: JValue) = {
+    typeId match {
+      case _ => value.extractOpt[Seq[NewNumericOrTextualValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, NumericOrTextualValue(x.properties), x.sideCode, 0, None))
+    }
   }
 
   def linearAssetsToApi(linearAssets: Seq[PersistedLinearAsset]): Seq[Map[String, Any]] = {
     linearAssets.map { asset =>
       Map("id" -> asset.id,
-        "value" -> asset.value.get.toJson,
+        "properties" -> Seq(Map("value" -> asset.value.map(_.toJson), "name" -> getAssetName(asset.typeId))),
         "linkId" -> asset.linkId,
         "startMeasure" -> asset.startMeasure,
         "endMeasure" -> asset.endMeasure,
@@ -64,6 +82,13 @@ class MunicipalityApi(val linearAssetService: LinearAssetService) extends Scalat
     assetType match {
       case "lighting" => 100
       case _ => halt(BadRequest("Invalid asset type"))
+    }
+  }
+
+  def getAssetName(assetTypeId: Int): String = {
+    assetTypeId match {
+      case 100 => "lighting"
+      case _ => "asset"
     }
   }
 
@@ -83,9 +108,9 @@ class MunicipalityApi(val linearAssetService: LinearAssetService) extends Scalat
 
   post("/:municipalityCode/:assetType"){
     contentType = formats("json")
-    val linkId = (parsedBody \ "linkId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'linkId' parameter")))
-    val startMeasure = (parsedBody \ "startMeasure").extractOrElse[Double](halt(BadRequest("Missing mandatory 'startMeasure' parameter")))
-    val geometryTimestamp = (parsedBody \ "geometryTimestamp").extractOrElse[Long](halt(BadRequest("Missing mandatory 'geometryTimestamp' parameter")))
+//    val linkId = (parsedBody \ "linkId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'linkId' parameter")))
+//    val startMeasure = (parsedBody \ "startMeasure").extractOrElse[Double](halt(BadRequest("Missing mandatory 'startMeasure' parameter")))
+//    val geometryTimestamp = (parsedBody \ "geometryTimestamp").extractOrElse[Long](halt(BadRequest("Missing mandatory 'geometryTimestamp' parameter")))
     val assetTypeId = getAssetTypeId(params("assetType"))
     val municipalityCode = params("municipalityCode").toInt
     val newLinearAssets = extractNewLinearAssets(assetTypeId, parsedBody)
