@@ -6,7 +6,9 @@
       var middlePoint = calculateMiddlePoint(roadlink);
       var bounds = getBounds(middlePoint.x, middlePoint.y);
       var box = new ol.Feature({
-        geometry: new ol.geom.Point([middlePoint.x, middlePoint.y])
+        geometry: new ol.geom.Point([middlePoint.x, middlePoint.y]),
+        linkId : roadlink.linkId,
+        type : "marker"
       });
 
       var boxStyleFloat = new ol.style.Style({

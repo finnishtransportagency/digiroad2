@@ -559,7 +559,7 @@
           newRoadLinkData.sideCode = 99;
           newRoadLinkData.linkType = 99;
           newRoadLinkData.constructionType = 0;
-          newRoadLinkData.roadLinkType = "";
+          newRoadLinkData.roadLinkType = 0;
           newRoadLinkData.id = 0;
           newRoadLinkData.startAddressM = "";
           newRoadLinkData.endAddressM = "";
