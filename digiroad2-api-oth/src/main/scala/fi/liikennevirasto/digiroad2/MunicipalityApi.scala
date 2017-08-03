@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.asset.Asset.DateTimePropertyFormat
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset._
+import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import org.joda.time.DateTime
 import org.scalatra.{BadRequest, ScalatraServlet}
 import org.scalatra.json.JacksonJsonSupport
@@ -108,11 +109,16 @@ class MunicipalityApi(val linearAssetService: LinearAssetService) extends Scalat
 
   post("/:municipalityCode/:assetType"){
     contentType = formats("json")
-//    val linkId = (parsedBody \ "linkId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'linkId' parameter")))
-//    val startMeasure = (parsedBody \ "startMeasure").extractOrElse[Double](halt(BadRequest("Missing mandatory 'startMeasure' parameter")))
-//    val geometryTimestamp = (parsedBody \ "geometryTimestamp").extractOrElse[Long](halt(BadRequest("Missing mandatory 'geometryTimestamp' parameter")))
     val assetTypeId = getAssetTypeId(params("assetType"))
     val municipalityCode = params("municipalityCode").toInt
+
+    val linkId = (parsedBody \ "linkId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'linkId' parameter")))
+    val startMeasure = (parsedBody \ "startMeasure").extractOrElse[Double](halt(BadRequest("Missing mandatory 'startMeasure' parameter")))
+    val geometryTimestamp = (parsedBody \ "geometryTimestamp").extractOrElse[Long](halt(BadRequest("Missing mandatory 'geometryTimestamp' parameter")))
+
+    if (linearAssetService.getPersistedAssetsByLinkIds(assetTypeId, Seq(linkId)).nonEmpty)
+      halt(BadRequest("Already exists an asset on that linkId"))
+
     val newLinearAssets = extractNewLinearAssets(assetTypeId, parsedBody)
     linearAssetService.create(newLinearAssets, assetTypeId, user.username)
   }
