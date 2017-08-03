@@ -92,6 +92,7 @@
         }).concat(getSelectedRoadLinks());
         roadLinkGroupsSuravage = _.filter(roadLinkGroups, function(group){
           return _.some(group, function (roadLink) {
+              if (roadLink!==null)
             return roadLink.getData().roadLinkSource === 3;
           });
         });
