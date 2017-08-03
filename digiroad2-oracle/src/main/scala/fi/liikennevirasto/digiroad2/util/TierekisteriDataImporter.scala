@@ -132,7 +132,7 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
             val endAddr = section.endAddressMValue
             val track = section.track
 
-            val addresses = roadAddressDao.getRoadAddress(roadAddressDao.withRoadAddressAllParts(road, roadPart, track.value, startAddr, endAddr))
+            val addresses = roadAddressDao.getRoadAddress(roadAddressDao.withRoadAddressSinglePart(road, roadPart, track.value, startAddr, endAddr))
             val roadAddressLinks = addresses.map(ra => ra.linkId).toSet
             val vvhRoadLinks = roadLinkService.fetchVVHRoadlinks(roadAddressLinks).filter(_.administrativeClass == State)
 
