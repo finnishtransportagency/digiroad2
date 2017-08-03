@@ -43,7 +43,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   test("encode lighting limit") {
     municipalityApi.linearAssetsToApi(Seq(PersistedLinearAsset(1, 2, SideCode.BothDirections.value, Some(NumericValue(1)), 0, 1, None, None, None, None, false, 100, 0, None, linkSource = NormalLinkInterface))) should be(Seq(Map(
       "id" -> 1,
-      "value" -> 1,
+      "properties" -> Seq(Map("value" -> Some(1), "name" -> "lighting")),
       "linkId" -> 2,
       "startMeasure" -> 0,
       "endMeasure" -> 1,
