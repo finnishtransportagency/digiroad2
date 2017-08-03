@@ -97,7 +97,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
 
 
-  def getSurravageRoadLinkAddresses(boundingRectangle: BoundingRectangle,municipalities: Set[Int]) :Seq[RoadAddressLink]= {
+  def getSuravageRoadLinkAddresses(boundingRectangle: BoundingRectangle, municipalities: Set[Int]) :Seq[RoadAddressLink]= {
     val suravageLinks= roadLinkService.getSuravageLinksFromVVH(boundingRectangle,municipalities)
     suravageLinks.map( suravage=>RoadAddressLinkBuilder.buildSuravageRoadAddressLink(suravage))
   }
@@ -105,7 +105,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   def getRoadAddressLinksWithSuravage(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],everything: Boolean = false) :Seq[RoadAddressLink] ={
     val combinedFuture =for{
       fRoadLink <- Future(getRoadAddressLinks(boundingRectangle, Seq(), municipalities, everything))
-      fSuravage <- Future(getSurravageRoadLinkAddresses(boundingRectangle, municipalities))
+      fSuravage <- Future(getSuravageRoadLinkAddresses(boundingRectangle, municipalities))
     } yield (fRoadLink, fSuravage)
     val (roadLinkList,suravageList) =Await.result(combinedFuture, Duration.Inf)
     suravageList ++ roadLinkList

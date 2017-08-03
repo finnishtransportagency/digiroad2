@@ -396,6 +396,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  def getProjectLinksWithSuravage(roadAddressService: RoadAddressService,projectId:Long, boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int], everything: Boolean = false, publicRoads: Boolean=false): Seq[ProjectAddressLink] ={
+    val combinedFuture=  for{
+      fProjectLink <-  Future(getProjectRoadLinks(projectId, boundingRectangle, Seq(), Set(), everything = true))
+      fSuravage <- Future(roadAddressService.getSuravageRoadLinkAddresses(boundingRectangle, Set()))
+    } yield (fProjectLink, fSuravage)
+    val (projectLinkList,suravageList) =Await.result(combinedFuture, Duration.Inf)
+    roadAddressLinkToProjectAddressLink(suravageList) ++ projectLinkList
+  }
+
   def getChangeProject(projectId:Long): Option[ChangeProject] = {
     withDynTransaction {
       try {
