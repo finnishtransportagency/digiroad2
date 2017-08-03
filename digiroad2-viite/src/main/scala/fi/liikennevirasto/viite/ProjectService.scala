@@ -163,7 +163,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               reserved match {
                 case Some(projectname) =>
                   val fmt = DateTimeFormat.forPattern("dd.MM.yyyy")
-                  (s"TIE $newRoadNumber OSA $newRoadPartNumber on jo varattuna projektissa $projectname, tarkista tiedot")
+                  s"TIE $newRoadNumber OSA $newRoadPartNumber on jo varattuna projektissa $projectname, tarkista tiedot"
                 case None =>
                   val newProjectLinks = projectAddressLinks.map(projectLink => {
                     ProjectLink(NewRoadAddress, newRoadNumber, newRoadPartNumber, Track.apply(newTrackCode.toInt), Discontinuity.apply(newDiscontinuity.toInt), projectLink.startAddressM,
@@ -175,6 +175,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                   val linksWithMValues = ProjectDeltaCalculator.determineMValues(newProjectLinks,geometries)
 
                   val newsLinksWithCalibration = addCalibrationMarkers(linksWithMValues)
+                  ProjectDAO.removeProjectLinksByLinkId(roadAddressProjectID, newProjectLinks.map(_.linkId).toSet)
                   ProjectDAO.create(newsLinksWithCalibration)
                   ""
               }
