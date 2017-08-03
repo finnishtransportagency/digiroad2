@@ -1,18 +1,21 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
-import fi.liikennevirasto.digiroad2.asset.{SideCode, TrafficDirection}
-import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, PersistedLinearAsset, PieceWiseLinearAsset, SpeedLimit}
+import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
+import fi.liikennevirasto.digiroad2.linearasset._
 import org.apache.commons.codec.binary.Base64
 import org.json4s.{DefaultFormats, Formats}
-import org.scalatest.mock.MockitoSugar
 import org.scalatest.{BeforeAndAfter, FunSuite, Tag}
 import org.scalatra.test.scalatest.ScalatraSuite
+import org.mockito.Matchers._
+import org.mockito.Mockito._
+import org.scalatest.mock.MockitoSugar
 
 class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter{
   protected implicit val jsonFormats: Formats = DefaultFormats
 
   val mockLinearAssetService = MockitoSugar.mock[LinearAssetService]
+  when(mockLinearAssetService.getAssetsByMunicipality(any[Int], any[Int])).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 0, None, LinkGeomSource.NormalLinkInterface)))
 
   private val municipalityApi = new MunicipalityApi(mockLinearAssetService)
   addServlet(municipalityApi, "/*")
@@ -32,10 +35,9 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
     getWithBasicUserAuth("/235/lighting", "nonexisting", "incorrect") {
       status should equal(401)
     }
-    //TODO: Check this request
-//    getWithBasicUserAuth("/235/lighting", "kalpa", "kalpa") {
-//      status should equal(200)
-//    }
+    getWithBasicUserAuth("/235/lighting", "kalpa", "kalpa") {
+      status should equal(200)
+    }
   }
 
   test("encode lighting limit") {

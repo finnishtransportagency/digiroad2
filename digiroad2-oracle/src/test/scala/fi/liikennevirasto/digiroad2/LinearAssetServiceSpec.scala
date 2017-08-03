@@ -2014,8 +2014,16 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       val newAsset = ServiceWithDao.getPersistedAssetsByIds(100, newAssetId.toSet)
 
       when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[String])).thenReturn(List(newAsset.head))
-      PassThroughService.getAssetsByMunicipality(100, 235)
-      verify(mockLinearAssetDao).fetchLinearAssetsByLinkIds(100, Seq(1l), "mittarajoitus")
+      val assets = PassThroughService.getAssetsByMunicipality(100, 235)
+
+      assets.length should be (1)
+      assets.foreach { asset =>
+        asset.linkId should be (1)
+        asset.value.get should be(NumericValue(1))
+        asset.startMeasure should be(0)
+        asset.endMeasure should be (20)
+        asset.typeId should be (100)
+      }
     }
   }
 }
