@@ -405,21 +405,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         //        roadAddressService.getRoadParts(boundingRectangle, Seq((1, 19999)), municipalities)
         Seq()
       case DrawPublicRoads => roadAddressService.getRoadAddressLinksByLinkId(boundingRectangle, Seq((1, 19999), (40000,49999)), municipalities)
-      case DrawAllRoads =>
-        val combinedFuture =for{
-          fRoadLink <- Future(roadAddressService.getRoadAddressLinks(boundingRectangle, Seq(), municipalities, everything = true))
-          fSuravage <- Future(roadAddressService.getSurravageRoadLinkAddresses(boundingRectangle, municipalities))
-        } yield (fRoadLink, fSuravage)
-        val (roadlinkList,suravageList) =Await.result(combinedFuture, Duration.Inf)
-        suravageList ++ roadlinkList
-      case _ => {
-        val combinedFuture=  for{
-          fRoadlink <- Future(roadAddressService.getRoadAddressLinks(boundingRectangle, Seq((1, 19999)), municipalities))
-          fSuravage <- Future(roadAddressService.getSurravageRoadLinkAddresses(boundingRectangle, municipalities))
-        } yield (fRoadlink, fSuravage)
-        val (roadlinkList,suravageList) =Await.result(combinedFuture, Duration.Inf)
-        suravageList ++ roadlinkList
-      }
+      case DrawAllRoads =>roadAddressService.getRoadAddressLinksWithSuravage(boundingRectangle,roadNumberLimits=Seq(),municipalities,everything = true)
+      case _ => roadAddressService.getRoadAddressLinksWithSuravage(boundingRectangle,roadNumberLimits=Seq((1, 19999)),municipalities)
     }
     val partitionedRoadLinks = RoadAddressLinkPartitioner.partition(viiteRoadLinks)
     partitionedRoadLinks.map {
