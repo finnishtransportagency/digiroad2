@@ -212,7 +212,7 @@
         currentProject = projectCollection.getCurrentProject();
         clearInformationContent();
         rootElement.html(selectedProjectLinkTemplate(currentProject.project, options, selectedProjectLink));
-        if(selectedProjectLink[0].id != 0){
+        if(selectedProjectLink[0].id !== 0){
           rootElement.find('.changeDirectionDiv').prop("hidden", false);
         }
         replaceAddressInfo();
