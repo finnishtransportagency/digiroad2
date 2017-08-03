@@ -192,7 +192,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                   val linksWithMValues = ProjectDeltaCalculator.determineMValues(newProjectLinks ++ existingLinks,geometries, existingLinks.filterNot(exl => projectAddressLinks.exists(_.linkId == exl.linkId )))
                   val newLinksWithCalibration = addCalibrationMarkers(linksWithMValues)
                   ProjectDAO.removeProjectLinksByLinkId(roadAddressProjectID, newProjectLinks.map(_.linkId).toSet)
-                  ProjectDAO.create(newLinksWithCalibration))
+                  ProjectDAO.create(newLinksWithCalibration)
                   ""
               }
             }
