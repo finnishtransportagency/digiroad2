@@ -691,17 +691,20 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
         projectLink.calibrationPoints._1,
         projectLink.calibrationPoints._2, Anomaly.None, projectLink.lrmPositionId, projectLink.status)
 
-      val message1project1 = projectService.addNewLinksToProject(Seq(p), id, projectLink.roadNumber, projectLink.roadPartNumber, projectLink.track.value.toLong, projectLink.discontinuity.value.toLong)
+      val message1project1 = projectService.addNewLinksToProject(Seq(p), id, projectLink.roadNumber,
+        projectLink.roadPartNumber, projectLink.track.value.toLong, projectLink.discontinuity.value.toLong).getOrElse("")
       val links = ProjectDAO.getProjectLinks(id)
       links.size should be(0)
       message1project1 should be("TIE 5 OSA 203 on jo olemassa projektin alkupäivänä 03.03.1972, tarkista tiedot") //check that it is reserved in roadaddress table
 
-      val message1project2 = projectService.addNewLinksToProject(Seq(p), id + 1, projectLink2.roadNumber, projectLink2.roadPartNumber, projectLink2.track.value.toLong, projectLink2.discontinuity.value.toLong)
+      val message1project2 = projectService.addNewLinksToProject(Seq(p), id + 1, projectLink2.roadNumber,
+        projectLink2.roadPartNumber, projectLink2.track.value.toLong, projectLink2.discontinuity.value.toLong)
       val links2 = ProjectDAO.getProjectLinks(id + 1)
       links2.size should be(1)
-      message1project2 should be("")
+      message1project2 should be(None)
 
-      val message2project1 = projectService.addNewLinksToProject(Seq(p), id, projectLink3.roadNumber, projectLink3.roadPartNumber, projectLink3.track.value.toLong, projectLink3.discontinuity.value.toLong)
+      val message2project1 = projectService.addNewLinksToProject(Seq(p), id, projectLink3.roadNumber,
+        projectLink3.roadPartNumber, projectLink3.track.value.toLong, projectLink3.discontinuity.value.toLong).getOrElse("")
       val links3 = ProjectDAO.getProjectLinks(id)
       links3.size should be(0)
       message2project1 should be("TIE 5 OSA 999 on jo varattuna projektissa TestProject, tarkista tiedot")
@@ -711,7 +714,8 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
   test("flipping success message") {
     runWithRollback {
       val id = Sequences.nextViitePrimaryKeySeqValue
-      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
+      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
+        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
       ProjectDAO.createRoadAddressProject(rap)
       val addresses = RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(rap))
       ProjectDAO.create(addresses)
