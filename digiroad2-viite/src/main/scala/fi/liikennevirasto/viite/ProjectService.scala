@@ -148,19 +148,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def getSideCode(links: Seq[ProjectAddressLink]): SideCode = {
-    if (links.isEmpty) {
-      SideCode.TowardsDigitizing
-    } else {
-      links.head.sideCode
-    }
-  }
-
   /**
     * Used when adding road address that does not have previous address
     */
   def addNewLinksToProject(projectAddressLinks: Seq[ProjectAddressLink], roadAddressProjectID :Long, newRoadNumber : Long, newRoadPartNumber: Long, newTrackCode: Long, newDiscontinuity: Long):String = {
-    val linksInProject = getProjectRoadLinksByLinkIdsByProject(ProjectDAO.fetchByProjectNewRoadPart(newRoadNumber,newRoadPartNumber,roadAddressProjectID, false).map(l => l.linkId).toSet, roadAddressProjectID, false)
+    val linksInProject = getLinksByProjectLinkId(ProjectDAO.fetchByProjectNewRoadPart(newRoadNumber,newRoadPartNumber,roadAddressProjectID, false).map(l => l.linkId).toSet, roadAddressProjectID, false)
     //Deleting all existent roads for same road_number and road_part_number, in order to recalculate the full road if it is already in project
     if(linksInProject.nonEmpty){
       ProjectDAO.removeProjectLinksByProjectAndRoadNumber(roadAddressProjectID, newRoadNumber, newRoadPartNumber)
@@ -475,7 +467,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   }
 
-  def getProjectRoadLinksByLinkIdsByProject(linkIdsToGet : Set[Long], projectId: Long, newTransaction : Boolean = true): Seq[ProjectAddressLink] = {
+  def getLinksByProjectLinkId(linkIdsToGet : Set[Long], projectId: Long, newTransaction : Boolean = true): Seq[ProjectAddressLink] = {
 
     if(linkIdsToGet.isEmpty)
       return Seq()
@@ -493,7 +485,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }.toMap.mapValues(_.get)
 
     RoadAddressFiller.fillProjectTopology(complementedRoadLinks, projectRoadLinks)
-    //filledProjectLinks.map(toProjectAddressLink)
   }
 
   def getProjectRoadLinks(projectId: Long, boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
