@@ -220,16 +220,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       groupedLinks.map(gl => {
         if (groupedLinks.size == 1) { //first and last are the same then
           first.copy(calibrationPoints = CalibrationPointsUtils.calibrations(CalibrationCode.AtBoth, first))
-        }
-          else {
+        } else {
           if (gl.linkId == first.linkId && gl.roadNumber == first.roadNumber && gl.roadPartNumber == first.roadPartNumber) {
             firstWithCalibration
           } else if (gl.linkId == last.linkId && gl.roadNumber == last.roadNumber && gl.roadPartNumber == last.roadPartNumber) {
             lastWithCalibration
-          } else gl
+          } else gl.copy(calibrationPoints = (None, None))
         }
       })
-    }).asInstanceOf[Seq[ProjectLink]]
+    }).toSeq
   }
 
   def changeDirection(projectId : Long, roadNumber : Long, roadPartNumber : Long): Option[String] = {

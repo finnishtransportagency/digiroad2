@@ -112,7 +112,7 @@ object ProjectDeltaCalculator {
       (Math.round(start), Math.round((linkLength1 + linkLength2) / 2 + start))
     }
 
-    def recalculateMidlePoints(list: Seq[ProjectLink], start: Double): Seq[ProjectLink] = {
+    def recalculateMiddlePoints(list: Seq[ProjectLink], start: Double): Seq[ProjectLink] = {
       var startM = start
       list.map(l => {
         val end = startM + l.geometryLength
@@ -127,7 +127,7 @@ object ProjectDeltaCalculator {
       if (links.size == 1) {
         Seq(links.head.copy(startAddrMValue = values._1.toLong, endAddrMValue = values._2.toLong))
       } else {
-        recalculateMidlePoints(sorted, values._1).map(l => {
+        recalculateMiddlePoints(sorted, values._1).map(l => {
           if (l.linkId == sorted.last.linkId) {
             l.copy(endAddrMValue = values._2.toLong, calibrationPoints = (None, None))
           } else if (l.linkId == sorted.head.linkId) {
@@ -255,8 +255,8 @@ object ProjectDeltaCalculator {
       val roadPartId = RoadPart(gpl._1._1, gpl._1._2)
       if(geometryLengthList.keySet.contains(roadPartId)){
         val links = orderProjectLinksTopologyByGeometry(gpl._2)
-        val linksToCheck= links.map(l => {
-          val lengths = geometryLengthList.get(roadPartId).get
+        val linksToCheck = links.map(l => {
+          val lengths = geometryLengthList(roadPartId)
           val foundGeomLength = lengths.find(_.linkId == l.linkId).get
           val endValue = lastEndM + foundGeomLength.geometryLength
           val updatedProjectLink = l.copy(startMValue = 0.0, endMValue = foundGeomLength.geometryLength, startAddrMValue = Math.round(lastEndM), endAddrMValue = Math.round(endValue))
