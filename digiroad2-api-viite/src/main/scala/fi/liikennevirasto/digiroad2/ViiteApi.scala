@@ -1,7 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
 import java.text.SimpleDateFormat
-import java.util.concurrent.TimeUnit
 
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
@@ -17,9 +16,7 @@ import org.json4s._
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.{NotFound, _}
 import org.slf4j.LoggerFactory
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
+
 import scala.util.control.NonFatal
 import scala.util.parsing.json._
 import scala.util.{Left, Right}
