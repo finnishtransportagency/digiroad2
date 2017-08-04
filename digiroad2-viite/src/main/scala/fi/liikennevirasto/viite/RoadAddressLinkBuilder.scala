@@ -143,8 +143,8 @@ object RoadAddressLinkBuilder {
     val length = GeometryUtils.geometryLength(geom)
     val sideCode= if (roadLink.trafficDirection==TrafficDirection.TowardsDigitizing) SideCode.TowardsDigitizing else if(roadLink.trafficDirection==TrafficDirection.AgainstDigitizing) SideCode.AgainstDigitizing
     else if(roadLink.trafficDirection==TrafficDirection.BothDirections) SideCode.BothDirections else SideCode.Unknown
-    val roadLinkRoadNumber = roadLink.attributes.getOrElse("ROADNUMBER",0).asInstanceOf[BigInt].longValue()
-    val roadLinkRoadPartNumber = roadLink.attributes.getOrElse("ROADPARTNUMBER",0).asInstanceOf[BigInt].longValue()
+    val roadLinkRoadNumber = roadLink.attributes.getOrElse("ROADNUMBER",0:BigInt).asInstanceOf[BigInt].longValue()
+    val roadLinkRoadPartNumber = roadLink.attributes.getOrElse("ROADPARTNUMBER",0:BigInt).asInstanceOf[BigInt].longValue()
     val roadName = roadLink.attributes.getOrElse("ROADNAME_FI", roadLink.attributes.getOrElse("ROADNAME_SE", "none")).toString
     val municipalityCode = roadLink.municipalityCode
     val anomalyType= {if (roadLinkRoadNumber!=0 && roadLinkRoadPartNumber!=0) Anomaly.None else Anomaly.NoAddressGiven}
