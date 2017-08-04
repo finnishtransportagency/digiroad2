@@ -116,9 +116,6 @@ class MunicipalityApi(val linearAssetService: LinearAssetService) extends Scalat
     val startMeasure = (parsedBody \ "startMeasure").extractOrElse[Double](halt(BadRequest("Missing mandatory 'startMeasure' parameter")))
     val geometryTimestamp = (parsedBody \ "geometryTimestamp").extractOrElse[Long](halt(BadRequest("Missing mandatory 'geometryTimestamp' parameter")))
 
-    if (linearAssetService.getPersistedAssetsByLinkIds(assetTypeId, Seq(linkId)).nonEmpty)
-      halt(BadRequest("Already exists an asset on that linkId"))
-
     val newLinearAssets = extractNewLinearAssets(assetTypeId, parsedBody)
     linearAssetService.create(newLinearAssets, assetTypeId, user.username)
   }

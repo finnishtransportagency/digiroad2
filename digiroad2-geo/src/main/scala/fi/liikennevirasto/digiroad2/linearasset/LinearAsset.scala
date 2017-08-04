@@ -28,9 +28,6 @@ case class MaintenanceRoad(maintenanceRoad: Seq[Properties]) extends Value{
 case class Prohibitions(prohibitions: Seq[ProhibitionValue]) extends Value {
   override def toJson: Any = prohibitions
 }
-case class NumericOrTextualValue(properties: Seq[AssetProperties]) extends Value {
-  override def toJson: Any = properties
-}
 
 case class AssetProperties(name: String, value: String)
 
