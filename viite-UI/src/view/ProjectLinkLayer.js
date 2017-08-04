@@ -38,6 +38,7 @@
           var feature =  new ol.Feature({ geometry: new ol.geom.LineString(points)
           });
           feature.projectLinkData = projectLink;
+          feature.linkId = projectLink.linkId;
           return feature;
         });
         loadFeatures(features);
@@ -288,6 +289,14 @@
           addFeaturesToSelection(suravageFeaturesToHighlight);
         }
       }
+
+      var result = _.filter(directionMarkerLayer.getSource().getFeatures(), function(item) {
+        return _.find(featuresToHighlight, {linkId: item.id});
+      });
+
+      _.each(result, function(featureMarker){
+        selectSingleClick.getFeatures().push(featureMarker);
+      });
     };
 
     /**
@@ -502,7 +511,7 @@ var isDefined=function(variable) {
           return ids[projectLink.getData().linkId];
       }));
       var editedLinks = _.map(projectCollection.getDirty(), function(editedLink) {return editedLink.id;});
-      
+
       var separated = _.partition(projectCollection.getAll(), function(projectRoad){
         return projectRoad.roadLinkSource === 3;
       });
@@ -529,20 +538,32 @@ var isDefined=function(variable) {
           geometry: new ol.geom.LineString(points)
         });
         feature.projectLinkData = projectLink;
+        feature.linkId = projectLink.linkId;
         features.push(feature);
       });
+
       directionMarkerLayer.getSource().clear();
       cachedMarker = new LinkPropertyMarker(selectedProjectLinkProperty);
       var directionRoadMarker = _.filter(projectLinks, function(projlink) {
         return projlink.roadLinkType !== floatingRoadLinkType && projlink.anomaly !== noAddressAnomaly && projlink.anomaly !== geometryChangedAnomaly && (projlink.sideCode === againstDigitizing || projlink.sideCode === towardsDigitizing);
       });
 
+      var featuresToRemove = [];
+      _.each(selectSingleClick.getFeatures().getArray(), function (feature) {
+        if(feature.getProperties().type && feature.getProperties().type === "marker")
+          featuresToRemove.push(feature);
+      });
+      _.each(featuresToRemove, function(feature){
+        selectSingleClick.getFeatures().remove(feature);
+      });
       _.each(directionRoadMarker, function(directionLink) {
         var marker = cachedMarker.createMarker(directionLink);
         if(map.getView().getZoom() > zoomlevels.minZoomForDirectionalMarkers)
           directionMarkerLayer.getSource().addFeature(marker);
+          selectSingleClick.getFeatures().push(marker);
       });
 
+      calibrationPointLayer.getSource().clear();
       var actualPoints = me.drawCalibrationMarkers(calibrationPointLayer.source, projectLinks);
       _.each(actualPoints, function (actualPoint) {
         var calMarker = new CalibrationPoint(actualPoint.point);

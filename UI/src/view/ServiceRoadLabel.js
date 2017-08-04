@@ -31,7 +31,10 @@
     };
 
     var obtainValue = function(value){
-      return _.find(value, function(val) { return val.publicId === 'huoltotie_tarkistettu'; }).value;
+      var property = _.find(value, function(val) { return val.publicId === 'huoltotie_tarkistettu'; });
+      if(property)
+        return property.value;
+      return 0;
     };
 
     var validateValue = function (value) {
@@ -40,6 +43,10 @@
 
     var validateText = function(value){
       return (obtainValue(value) == 1) ?  'Tarkistettu' : 'Ei tarkistettu';
+    };
+
+    this.isVisibleZoom = function(zoomLevel){
+      return zoomLevel >= 10;
     };
   };
 })(this);

@@ -261,7 +261,8 @@
        selectedSpeedLimit: models.selectedSpeedLimit,
        backend: backend,
        style: SpeedLimitStyle(applicationModel),
-       roadLayer: roadLayer
+       roadLayer: roadLayer,
+       roadAddressInfoPopup: roadAddressInfoPopup
        }),
        manoeuvre: new ManoeuvreLayer(applicationModel, map, roadLayer, models.selectedManoeuvreSource, models.manoeuvresCollection, models.roadCollection)
 

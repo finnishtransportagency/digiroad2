@@ -245,6 +245,9 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       sqlu"""UPDATE Project_link set status = 1""".execute
       val terminations = ProjectDeltaCalculator.delta(saved.id).terminations
       terminations should have size (66)
+      sqlu"""UPDATE Project_link set status = 2""".execute
+      val newCreations = ProjectDeltaCalculator.delta(saved.id).newRoads
+      newCreations should have size (66)
       val sections = ProjectDeltaCalculator.partition(terminations)
       sections should have size (2)
       sections.exists(_.track == Track.LeftSide) should be(true)
@@ -557,7 +560,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       projectService.updateProjectLinkStatus(saved.id, linkIds205, LinkStatus.Terminated, "-")
       projectService.projectLinkPublishable(saved.id) should be(false)
 
-      projectService.getChangeProject(saved.id).map(_.changeInfoSeq).getOrElse(Seq()) should have size (2)
+      projectService.getChangeProject(saved.id).map(_.changeInfoSeq).getOrElse(Seq()) should have size (0)
 
       projectService.updateProjectLinkStatus(saved.id, linkIds206, LinkStatus.Terminated, "-")
       projectService.projectLinkPublishable(saved.id) should be(true)
@@ -614,6 +617,55 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       links.size should be (1)
     }
   }
+
+  test("add two consecutive roadlinks to project road number & road part") {
+    val roadlink = RoadLink(5175306, Seq(Point(535602.222, 6982200.25, 89.9999), Point(535605.272, 6982204.22, 85.90899999999965))
+      , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
+      InUse, NormalLinkInterface)
+    when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(5175306L))).thenReturn(Seq(roadlink))
+    runWithRollback {
+
+      val idr1 = RoadAddressDAO.getNextRoadAddressId
+      val idr2 = RoadAddressDAO.getNextRoadAddressId
+      val idr3 = RoadAddressDAO.getNextRoadAddressId
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
+      ProjectDAO.createRoadAddressProject(rap)
+
+      val projectLink1 = toProjectLink(rap)(RoadAddress(idr1, 1943845, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, 5175306L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
+        Seq(Point(535602.222, 6982200.25, 89.9999),Point(535605.272, 6982204.22, 85.90899999999965)), LinkGeomSource.NormalLinkInterface))
+
+      val projectLink2 = toProjectLink(rap)(RoadAddress(idr2, 1943845, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, 1610976L, 0.0, 5.8, SideCode.TowardsDigitizing, 0, (None, None), false,
+        Seq(Point(535605.272, 6982204.22, 85.90899999999965), Point(535608.555, 6982204.33, 86.90)), LinkGeomSource.NormalLinkInterface))
+
+
+      val p1 = ProjectAddressLink(idr1, projectLink1.linkId, projectLink1.geom,
+        1, AdministrativeClass.apply(1), LinkType.apply(1), RoadLinkType.apply(1), ConstructionType.apply(1), projectLink1.linkGeomSource, RoadType.PublicUnderConstructionRoad, "", 111, Some(""), Some("vvh_modified"),
+        null, projectLink1.roadNumber, projectLink1.roadPartNumber, 2, -1, projectLink1.discontinuity.value,
+        projectLink1.startAddrMValue, projectLink1.endAddrMValue, projectLink1.startMValue, projectLink1.endMValue,
+        projectLink1.sideCode,
+        projectLink1.calibrationPoints._1,
+        projectLink1.calibrationPoints._2, Anomaly.None, projectLink1.lrmPositionId, projectLink1.status)
+
+      val p2 = ProjectAddressLink(idr2, projectLink2.linkId, projectLink2.geom,
+        1, AdministrativeClass.apply(1), LinkType.apply(1), RoadLinkType.apply(1), ConstructionType.apply(1), projectLink2.linkGeomSource, RoadType.PublicUnderConstructionRoad, "", 111, Some(""), Some("vvh_modified"),
+        null, projectLink2.roadNumber, projectLink2.roadPartNumber, 2, -1, projectLink2.discontinuity.value,
+        projectLink2.startAddrMValue, projectLink2.endAddrMValue, projectLink2.startMValue, projectLink2.endMValue,
+        projectLink2.sideCode,
+        projectLink2.calibrationPoints._1,
+        projectLink2.calibrationPoints._2, Anomaly.None, projectLink2.lrmPositionId, projectLink2.status)
+
+      projectService.addNewLinksToProject(Seq(p1), id, projectLink1.roadNumber, projectLink1.roadPartNumber, projectLink1.track.value.toLong, projectLink1.discontinuity.value.toLong)
+      val links= ProjectDAO.getProjectLinks(id)
+      links.size should be (1)
+
+
+      projectService.addNewLinksToProject(Seq(p2), id, projectLink2.roadNumber, projectLink2.roadPartNumber, projectLink2.track.value.toLong, projectLink2.discontinuity.value.toLong)
+      val linksAfter = ProjectDAO.getProjectLinks(id)
+      linksAfter.size should be (2)
+    }
+  }
+
   test("error message when reserving already used road number&part (in other project ids). Empty error message if same road number&part but == proj id ") {
     runWithRollback {
       val idr = RoadAddressDAO.getNextRoadAddressId
@@ -653,18 +705,6 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       val links3 = ProjectDAO.getProjectLinks(id)
       links3.size should be(0)
       message2project1 should be ("TIE 5 OSA 999 on jo varattuna projektissa TestProject, tarkista tiedot")
-
-      val message2project2=  projectService.addNewLinksToProject(Seq(p), id+1, projectLink2.roadNumber, projectLink2.roadPartNumber, projectLink2.track.value.toLong, projectLink2.discontinuity.value.toLong)
-      val links4 = ProjectDAO.getProjectLinks(id+1)
-      links4.size should be(2)
-      message2project2 should be ("")
-    }
-  }
-
-  test("error message when sidecode flip fails with incorrect id") {
-    runWithRollback {
-    val errorMessage=  projectService.changeDirection(Seq(RoadAddressDAO.getNextRoadAddressId))
-      errorMessage should be("Kaikkia linkkejä ei löytynyt")
     }
   }
 
@@ -676,7 +716,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       val addresses = RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(rap))
       ProjectDAO.create(addresses)
       val links=ProjectDAO.getProjectLinks(id)
-      val errorMessage=  projectService.changeDirection(links.map(l => l.id))
+      val errorMessage=  projectService.changeDirection(id, 5, 203).getOrElse("")
       errorMessage should be("")
     }
   }
@@ -689,7 +729,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       val addresses = RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(rap))
       ProjectDAO.create(addresses)
       val links=ProjectDAO.getProjectLinks(id)
-      projectService.changeDirection(links.map(l => l.id))
+      projectService.changeDirection(id, 5, 203)
       val changedLinks = ProjectDAO.getProjectLinksById(links.map{l => l.id})
       links.head.sideCode should not be(changedLinks.head.sideCode)
       links.head.endMValue should be(changedLinks.last.endMValue)

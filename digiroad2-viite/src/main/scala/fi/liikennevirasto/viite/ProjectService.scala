@@ -152,7 +152,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * Used when adding road address that does not have previous address
     */
   def addNewLinksToProject(projectAddressLinks: Seq[ProjectAddressLink], roadAddressProjectID :Long, newRoadNumber : Long, newRoadPartNumber: Long, newTrackCode: Long, newDiscontinuity: Long):String = {
-
+    val linksInProject = getProjectRoadLinksByLinkIds(ProjectDAO.fetchByProjectNewRoadPart(newRoadNumber,newRoadPartNumber,roadAddressProjectID, false).map(l => l.linkId).toSet, false)
+    //Deleting all existent roads for same road_number and road_part_number, in order to recalculate the full road if it is already in project
+    // TODO - In Viite-568 we need to extract existent roadLinks from database and not only from VVH, because we need already inserted values on m-values and trackCodes
+    if(linksInProject.nonEmpty){
+      ProjectDAO.removeProjectLinksByProjectAndRoadNumber(roadAddressProjectID, newRoadNumber, newRoadPartNumber)
+    }
       val randomSideCode = SideCode.TowardsDigitizing
       ProjectDAO.getRoadAddressProjectById(roadAddressProjectID) match {
         case Some(project) => {
@@ -163,9 +168,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               reserved match {
                 case Some(projectname) =>
                   val fmt = DateTimeFormat.forPattern("dd.MM.yyyy")
-                  (s"TIE $newRoadNumber OSA $newRoadPartNumber on jo varattuna projektissa $projectname, tarkista tiedot")
+                  s"TIE $newRoadNumber OSA $newRoadPartNumber on jo varattuna projektissa $projectname, tarkista tiedot"
                 case None =>
-                  val newProjectLinks = projectAddressLinks.map(projectLink => {
+                  val newProjectLinks = (projectAddressLinks ++ linksInProject).map(projectLink => {
                     ProjectLink(NewRoadAddress, newRoadNumber, newRoadPartNumber, Track.apply(newTrackCode.toInt), Discontinuity.apply(newDiscontinuity.toInt), projectLink.startAddressM,
                       projectLink.endAddressM, Some(project.startDate), None, Some(project.createdBy), -1, projectLink.linkId, projectLink.startMValue, projectLink.endMValue, randomSideCode,
                       (projectLink.startCalibrationPoint, projectLink.endCalibrationPoint), false, projectLink.geometry, roadAddressProjectID, LinkStatus.New, projectLink.roadType, projectLink.roadLinkSource, projectLink.length)
@@ -175,6 +180,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                   val linksWithMValues = ProjectDeltaCalculator.determineMValues(newProjectLinks,geometries)
 
                   val newsLinksWithCalibration = addCalibrationMarkers(linksWithMValues)
+                  ProjectDAO.removeProjectLinksByLinkId(roadAddressProjectID, newProjectLinks.map(_.linkId).toSet)
                   ProjectDAO.create(newsLinksWithCalibration)
                   ""
               }
@@ -185,13 +191,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       }
   }
 
-  private def determineGeometries(newProjectLinks: Seq[ProjectLink]):Map[RoadPartBasis, Seq[RoadPartLengths]] = {
+  private def determineGeometries(newProjectLinks: Seq[ProjectLink]):Map[RoadPart, Seq[RoadLinkLength]] = {
     newProjectLinks.groupBy(record => (record.roadNumber, record.roadPartNumber)).map(v => {
       val projectLinkSequence = v._2
       val roadPartLengths = projectLinkSequence.map(link => {
-        new RoadPartLengths(link.linkId, link.geometryLength)
+        RoadLinkLength(link.linkId, link.geometryLength)
       })
-      new RoadPartBasis(v._1._1, v._1._2) -> roadPartLengths
+      RoadPart(v._1._1, v._1._2) -> roadPartLengths
     })
   }
 
@@ -217,25 +223,22 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }).asInstanceOf[Seq[ProjectLink]]
   }
 
-  def changeDirection(projectLink:Seq[Long]): String = {
+  def changeDirection(projectId : Long, roadNumber : Long, roadPartNumber : Long): Option[String] = {
     try {
       withDynTransaction {
-        val projectId= ProjectDAO.projectLinksExist(projectLink)
-        if (projectId.size!=projectLink.size)
-          return "Kaikkia linkkejä ei löytynyt"
-        if (projectId.forall(_ !=projectId.head)){
-         return "Linkit kuuluvat useampaan projektiin"
+        val projectLinkIds= ProjectDAO.projectLinksExist(projectId, roadNumber, roadPartNumber)
+        if (projectLinkIds.forall(_ !=projectLinkIds.head)){
+         return Some("Linkit kuuluvat useampaan projektiin")
         }
-        ProjectDAO.flipProjectLinksSideCodes(projectLink)
-        recalculateMValues(ProjectDAO.getProjectLinksById(projectLink).reverse).map(link => ProjectDAO.updateMValues(link))
-        ""
+        ProjectDAO.flipProjectLinksSideCodes(projectId, roadNumber, roadPartNumber)
+        recalculateMValues(ProjectDAO.fetchByProjectNewRoadPart(roadNumber, roadPartNumber, projectId).reverse).map(link => ProjectDAO.updateMValues(link))
+        None
       }
     } catch{
      case NonFatal(e) =>
-    "Päivitys ei onnistunut"
+       Some("Päivitys ei onnistunut")
     }
-
-    }
+  }
 
   //TODO VIITE-568
   /**
@@ -406,7 +409,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def getChangeProject(projectId:Long): Option[ChangeProject] = {
-    withDynTransaction {
+    val changeProjectData = withDynTransaction {
       try {
         val delta = ProjectDeltaCalculator.delta(projectId)
         //TODO would be better to give roadType to ProjectLinks table instead of calling vvh here
@@ -415,13 +418,17 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
         if (setProjectDeltaToDB(delta.copy(terminations = filledTerminations), projectId)) {
           val roadAddressChanges = RoadAddressChangesDAO.fetchRoadAddressChanges(Set(projectId))
-          return Some(ViiteTierekisteriClient.convertToChangeProject(roadAddressChanges.sortBy(r => (r.changeInfo.source.trackCode, r.changeInfo.source.startAddressM, r.changeInfo.source.startRoadPartNumber, r.changeInfo.source.roadNumber))))
+          Some(ViiteTierekisteriClient.convertToChangeProject(roadAddressChanges.sortBy(r => (r.changeInfo.source.trackCode, r.changeInfo.source.startAddressM, r.changeInfo.source.startRoadPartNumber, r.changeInfo.source.roadNumber))))
+        } else {
+          None
         }
       } catch {
-        case NonFatal(e) => logger.info(s"Change info not available for project $projectId: " + e.getMessage)
+        case NonFatal(e) =>
+          logger.info(s"Change info not available for project $projectId: " + e.getMessage)
+          None
       }
     }
-    None
+    changeProjectData
   }
 
   def enrichTerminations(terminations: Seq[RoadAddress], roadlinks: Seq[RoadLink]): Seq[RoadAddress] = {
@@ -443,10 +450,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     ViiteTierekisteriClient.sendChanges(roadAddressChanges)
   }
 
-  def getProjectRoadLinksByLinkIds(linkIdsToGet : Set[Long]): Seq[ProjectAddressLink] = {
+  def getProjectRoadLinksByLinkIds(linkIdsToGet : Set[Long], newTransaction : Boolean = true): Seq[ProjectAddressLink] = {
+
+    if(linkIdsToGet.isEmpty)
+      return Seq()
 
     val fetchVVHStartTime = System.currentTimeMillis()
-    val complementedRoadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIdsToGet)
+    val complementedRoadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIdsToGet, newTransaction)
     val fetchVVHEndTime = System.currentTimeMillis()
     logger.info("End fetch vvh road links in %.3f sec".format((fetchVVHEndTime - fetchVVHStartTime) * 0.001))
 
@@ -586,7 +596,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   private def setProjectDeltaToDB(projectDelta:Delta, projectId:Long):Boolean= {
     RoadAddressChangesDAO.clearRoadChangeTable(projectId)
-    RoadAddressChangesDAO.insertDeltaToRoadChangeTable(projectDelta, projectId)
+    val batchInsertionResult = RoadAddressChangesDAO.insertDeltaToRoadChangeTable(projectDelta, projectId)
+    batchInsertionResult
   }
 
   private def toProjectAddressLink(ral: RoadAddressLinkLike): ProjectAddressLink = {
