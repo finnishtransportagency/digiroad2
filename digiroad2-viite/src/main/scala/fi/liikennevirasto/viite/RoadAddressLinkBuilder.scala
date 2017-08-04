@@ -1,11 +1,11 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.RoadLinkType.{ComplementaryRoadLinkType, FloatingRoadLinkType, NormalRoadLinkType, UnknownRoadLinkType}
+import fi.liikennevirasto.digiroad2.RoadLinkType.{apply => _, _}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, VVHHistoryRoadLink}
+import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.viite.RoadType._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLink}
@@ -135,6 +135,35 @@ object RoadAddressLinkBuilder {
       roadLink.attributes, missingAddress.roadNumber.getOrElse(roadLinkRoadNumber),
       missingAddress.roadPartNumber.getOrElse(roadLinkRoadPartNumber), Track.Unknown.value, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), Discontinuity.Continuous.value,
       0, 0, "", "", 0.0, length, SideCode.Unknown, None, None, missingAddress.anomaly, 0)
+  }
+
+
+  def buildSuravageRoadAddressLink(roadLink: VVHRoadlink): RoadAddressLink = {
+    val geom = GeometryUtils.truncateGeometry3D(roadLink.geometry,  0.0, roadLink.geometryLength)
+    val length = GeometryUtils.geometryLength(geom)
+    val sideCode= if (roadLink.trafficDirection==TrafficDirection.TowardsDigitizing) SideCode.TowardsDigitizing else if(roadLink.trafficDirection==TrafficDirection.AgainstDigitizing) SideCode.AgainstDigitizing
+    else if(roadLink.trafficDirection==TrafficDirection.BothDirections) SideCode.BothDirections else SideCode.Unknown
+    val roadLinkRoadNumber = roadLink.attributes.getOrElse("ROADNUMBER",0).asInstanceOf[BigInt].longValue()
+    val roadLinkRoadPartNumber = roadLink.attributes.getOrElse("ROADPARTNUMBER",0).asInstanceOf[BigInt].longValue()
+    val roadName = roadLink.attributes.getOrElse("ROADNAME_FI", roadLink.attributes.getOrElse("ROADNAME_SE", "none")).toString
+    val municipalityCode = roadLink.municipalityCode
+    val anomalyType= {if (roadLinkRoadNumber!=0 && roadLinkRoadPartNumber!=0) Anomaly.None else Anomaly.NoAddressGiven}
+    RoadAddressLink(0, roadLink.linkId, geom,
+      length, roadLink.administrativeClass, getLinkType(roadLink), SuravageRoadLink, roadLink.constructionType, roadLink.linkSource, getRoadType(roadLink.administrativeClass, getLinkType(roadLink)),
+      roadName, municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
+      roadLink.attributes,roadLinkRoadNumber,
+      roadLinkRoadPartNumber, Track.Unknown.value, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), Discontinuity.Continuous.value,
+      0, 0, "", "", 0.0, length, sideCode, None, None, anomalyType, 0)
+  }
+
+
+  def getLinkType(roadLink: VVHRoadlink): LinkType ={  //similar logic used in roadlinkservice
+    roadLink.featureClass match {
+      case FeatureClass.TractorRoad => TractorRoad
+      case FeatureClass.DrivePath => SingleCarriageway
+      case FeatureClass.CycleOrPedestrianPath => CycleOrPedestrianPath
+      case _=> UnknownLinkType
+    }
   }
 
   def build(historyRoadLink: VVHHistoryRoadLink, roadAddress: RoadAddress): RoadAddressLink = {

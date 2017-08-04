@@ -2,8 +2,8 @@ package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
-import fi.liikennevirasto.digiroad2.asset.{SideCode, State, UnknownLinkType, LinkGeomSource}
+import fi.liikennevirasto.digiroad2.{FeatureClass, GeometryUtils, Point, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.{BothDirections, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
@@ -118,6 +118,28 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers{
       //Changed fuseRoadAddress size from 3 to 2 the reasoning behind it is that although we cannot fuse  1 and 2, there is nothing stopping us from fusing 2,3 and 4
       RoadAddressLinkBuilder.fuseRoadAddress(roadAddress) should have size (2)
     }
+  }
+
+  test("Suravage link builder") {
+      val newLinkId1 = 5000
+      val municipalityCode = 564
+      val administrativeClass = Municipality
+      val trafficDirection = TrafficDirection.TowardsDigitizing
+      val attributes1 = Map("ROADNUMBER" -> BigInt(99),"ROADPARTNUMBER"->BigInt(24))
+      val suravageAddress=RoadAddressLinkBuilder.buildSuravageRoadAddressLink(VVHRoadlink(newLinkId1, municipalityCode, List(Point(1.0, 0.0), Point(20.0, 1.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1,ConstructionType.UnderConstruction,LinkGeomSource.SuravageLinkInterface,30))
+
+    suravageAddress.linkId should be (newLinkId1)
+    suravageAddress.administrativeClass should be (administrativeClass)
+    suravageAddress.constructionType should be (ConstructionType.UnderConstruction)
+    suravageAddress.sideCode should be (SideCode.TowardsDigitizing)
+    suravageAddress.roadNumber should be (99)
+    suravageAddress.roadPartNumber should be (24)
+    suravageAddress.startMValue should be (0)
+    suravageAddress.endMValue should be (19.026297590440446)
+    suravageAddress.roadLinkSource should be (LinkGeomSource.SuravageLinkInterface)
+    suravageAddress.elyCode should be (12)
+    suravageAddress.municipalityCode should be (municipalityCode)
+    suravageAddress.geometry.size should be (2)
   }
 
   test("Fuse road address should combine geometries and address values with starting calibration point - real life scenario") {

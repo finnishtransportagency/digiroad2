@@ -200,6 +200,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
   lazy val complementaryData: VVHComplementaryClient = new VVHComplementaryClient(vvhRestApiEndPoint)
   lazy val historyData: VVHHistoryClient = new VVHHistoryClient(vvhRestApiEndPoint)
   lazy val roadNodesData: VVHRoadNodesClient = new VVHRoadNodesClient(vvhRestApiEndPoint)
+  lazy val suravageData: VVHSuravageClient = new VVHSuravageClient((vvhRestApiEndPoint))
 
   def fetchRoadLinkByLinkId(linkId: Long): Option[VVHRoadlink] = {
     roadLinkData.fetchByLinkId(linkId) match {
@@ -518,6 +519,8 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
     val linkStatus = extractAttributes(attributes).getOrElse("CONSTRUCTIONTYPE", BigInt(0)).asInstanceOf[BigInt]
     linkStatus == ConstructionType.InUse.value || linkStatus == ConstructionType.Planned.value || linkStatus == ConstructionType.UnderConstruction.value
   }
+
+
 
   /**
     * Returns VVH road links in bounding box area. Municipalities are optional.
@@ -1109,5 +1112,20 @@ class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvh
 
   def fetchVVHRoadLinkByLinkIdsF(linkIds: Set[Long] = Set()): Future[Seq[VVHHistoryRoadLink]] = {
     Future(fetchVVHRoadLinkByLinkIds(linkIds))
+  }
+}
+
+class VVHSuravageClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvhRestApiEndPoint) {
+
+  protected override val restApiEndPoint = vvhRestApiEndPoint
+  protected override val serviceName = "Roadlink_suravage"
+  protected override val linkGeomSource: LinkGeomSource = LinkGeomSource.SuravageLinkInterface
+
+  override def defaultOutFields(): String = {
+    "LINKID,OBJECTID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,SURFACETYPE,SUBTYPE,CONSTRUCTIONTYPE,CUST_OWNER,GEOMETRYLENGTH"
+  }
+
+  def fetchSuravageByMunicipalitiesAndBoundsF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[VVHRoadlink]] = {
+    Future(queryByMunicipalitiesAndBounds(bounds, municipalities, None))
   }
 }

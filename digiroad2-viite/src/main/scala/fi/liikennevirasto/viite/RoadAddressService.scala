@@ -1,5 +1,5 @@
 package fi.liikennevirasto.viite
-import fi.liikennevirasto.digiroad2.RoadLinkType.{FloatingRoadLinkType, UnknownRoadLinkType}
+import fi.liikennevirasto.digiroad2.RoadLinkType.UnknownRoadLinkType
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLink, RoadAddressLinkLike}
-import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
+import fi.liikennevirasto.viite.process.RoadAddressFiller.{AddressChangeSet, LRMValueAdjustment}
 import fi.liikennevirasto.viite.process._
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -95,6 +95,29 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     })
   }
 
+
+
+  def getSuravageRoadLinkAddresses(boundingRectangle: BoundingRectangle, municipalities: Set[Int]) :Seq[RoadAddressLink]= {
+    val suravageLinks= roadLinkService.getSuravageLinksFromVVH(boundingRectangle,municipalities)
+    suravageLinks.map( suravage=>RoadAddressLinkBuilder.buildSuravageRoadAddressLink(suravage))
+  }
+
+  def getRoadAddressLinksWithSuravage(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],everything: Boolean = false) :Seq[RoadAddressLink] ={
+    val combinedFuture =for{
+      fRoadLink <- Future(getRoadAddressLinks(boundingRectangle, Seq(), municipalities, everything))
+      fSuravage <- Future(getSuravageRoadLinkAddresses(boundingRectangle, municipalities))
+    } yield (fRoadLink, fSuravage)
+    val (roadLinkList,suravageList) =Await.result(combinedFuture, Duration.Inf)
+    suravageList ++ roadLinkList
+  }
+
+  private def withTiming[T](f: => T, s: String): T = {
+    val startTime = System.currentTimeMillis()
+    val t = f
+    logger.info(s.format((System.currentTimeMillis() - startTime) * 0.001))
+    t
+  }
+
   def getRoadAddressLinks(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
                           everything: Boolean = false, publicRoads: Boolean = false): Seq[RoadAddressLink] = {
     def complementaryLinkFilter(roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
@@ -103,57 +126,59 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         case (start, stop) => roadAddressLink.roadNumber >= start && roadAddressLink.roadNumber <= stop
       }
     }
-
-    val fetchRoadAddressesByBoundingBoxF = Future(fetchRoadAddressesByBoundingBox(boundingRectangle))
-    val fetchVVHStartTime = System.currentTimeMillis()
-    val (roadLinks, complementaryLinks) = fetchRoadLinksWithComplementary(boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads)
-    val complementaryLinkIds = complementaryLinks.map(_.linkId)
-    val roadLinkIds = roadLinks.map(_.linkId)
-    val complementedRoadLinks = roadLinks++complementaryLinks
-
     //TODO use complementedIds instead of only roadLinkIds below. There is no complementary ids for changeInfo dealing (for now)
-    val changedRoadLinks = roadLinkService.getChangeInfoFromVVH(boundingRectangle, municipalities)
-    val fetchVVHEndTime = System.currentTimeMillis()
-    logger.info("End fetch vvh road links in %.3f sec".format((fetchVVHEndTime - fetchVVHStartTime) * 0.001))
-    val linkIds = complementedRoadLinks.map(_.linkId).toSet
+    val combinedFuture=
+      for {
+        changedRoadLinksF<- Future(roadLinkService.getChangeInfoFromVVH(boundingRectangle, municipalities))
+        complementaryFuture <- Future (fetchRoadLinksWithComplementary(boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads))
+        fetchRoadAddressesByBoundingBoxF <- Future(fetchRoadAddressesByBoundingBox(boundingRectangle))
+      }  yield( changedRoadLinksF, complementaryFuture,fetchRoadAddressesByBoundingBoxF)
+    val (changedRoadLinks,((roadLinks, complementaryLinks)),(floatingViiteRoadLinks, addresses, floating)) =
+      withTiming(
+        Await.result(combinedFuture, Duration.Inf), "End fetch vvh road links in %.3f sec"
+      )
+    val complementaryLinkIds = complementaryLinks.map(_.linkId)
+    val normalRoadLinkIds = roadLinks.map(_.linkId)
+    val allRoadLinks = roadLinks++complementaryLinks
+    val linkIds = (complementaryLinkIds ++ normalRoadLinkIds).toSet
 
     //TODO: In the future when we are dealing with VVHChangeInfo we need to better evaluate when do we switch from bounding box queries to
     //pure linkId based queries, maybe something related to the zoomLevel we are in map level.
-    val fetchMissingRoadAddressStartTime = System.currentTimeMillis()
-    val (floatingViiteRoadLinks, addresses, floating) = Await.result(fetchRoadAddressesByBoundingBoxF, Duration.Inf)
     val filteredChangedRoadLinks = changedRoadLinks.filter(crl => crl.oldId.exists(id =>
-      addresses.keySet.contains(id) || roadLinkIds.contains(id)))
-    val complementedWithChangeAddresses = applyChanges(complementedRoadLinks, filteredChangedRoadLinks, addresses)
-    val missingLinkIds = linkIds -- floating.keySet -- complementedWithChangeAddresses.keySet
-
-    val missedRL = withDynTransaction {
+      addresses.keySet.contains(id) || normalRoadLinkIds.contains(id)))
+    val allRoadAddressesAfterChangeTable = applyChanges(allRoadLinks, filteredChangedRoadLinks, addresses)
+    val missingLinkIds = linkIds -- floating.keySet -- allRoadAddressesAfterChangeTable.keySet
+    val missedRL = withTiming(withDynTransaction {
       RoadAddressDAO.getMissingRoadAddresses(missingLinkIds)
-    }.groupBy(_.linkId)
-    val fetchMissingRoadAddressEndTime = System.currentTimeMillis()
-    logger.info("End fetch missing and floating road address in %.3f sec".format((fetchMissingRoadAddressEndTime - fetchMissingRoadAddressStartTime) * 0.001))
-
+    }.groupBy(_.linkId), "End finding missing road addresses in %.3f sec")
     val (changedFloating, missingFloating) = floatingViiteRoadLinks.partition(ral => linkIds.contains(ral._1))
+    val roadAddressLinkMap = createRoadAddressLinkMap(allRoadLinks, changedFloating, allRoadAddressesAfterChangeTable, missedRL)
 
-    val buildStartTime = System.currentTimeMillis()
-    val viiteRoadLinks = complementedRoadLinks.map { rl =>
-      val floaters = changedFloating.getOrElse(rl.linkId, Seq())
-      val ra = complementedWithChangeAddresses.getOrElse(rl.linkId, Seq())
-      val missed = missedRL.getOrElse(rl.linkId, Seq())
-      rl.linkId -> buildRoadAddressLink(rl, ra, missed, floaters)
-    }.toMap
-    val buildEndTime = System.currentTimeMillis()
-    logger.info("End building road address in %.3f sec".format((buildEndTime - buildStartTime) * 0.001))
+    val (filledTopology, changeSet) = RoadAddressFiller.fillTopology(allRoadLinks, roadAddressLinkMap)
 
-    val (filledTopology, changeSet) = RoadAddressFiller.fillTopology(complementedRoadLinks, viiteRoadLinks)
-
-    eventbus.publish("roadAddress:persistMissingRoadAddress", changeSet.missingRoadAddresses)
-    eventbus.publish("roadAddress:persistAdjustments", changeSet.adjustedMValues)
-    eventbus.publish("roadAddress:floatRoadAddress", changeSet.toFloatingAddressIds)
-
+    publishChangeSet(changeSet)
     val returningTopology = filledTopology.filter(link => !complementaryLinkIds.contains(link.linkId) ||
       complementaryLinkFilter(roadNumberLimits, municipalities, everything, publicRoads)(link))
 
     returningTopology ++ missingFloating.flatMap(_._2)
+
+  }
+
+  private def publishChangeSet(changeSet: AddressChangeSet): Unit = {
+    eventbus.publish("roadAddress:persistMissingRoadAddress", changeSet.missingRoadAddresses)
+    eventbus.publish("roadAddress:persistAdjustments", changeSet.adjustedMValues)
+    eventbus.publish("roadAddress:floatRoadAddress", changeSet.toFloatingAddressIds)
+  }
+
+  private def createRoadAddressLinkMap(roadLinks: Seq[RoadLink], toFloating: Map[Long, Seq[RoadAddressLink]],
+                                       addresses: Map[Long, Seq[RoadAddress]],
+                                       missedRL: Map[Long, List[MissingRoadAddress]]): Map[Long, Seq[RoadAddressLink]] = {
+    roadLinks.map { rl =>
+      val floaters = toFloating.getOrElse(rl.linkId, Seq())
+      val ra = addresses.getOrElse(rl.linkId, Seq())
+      val missed = missedRL.getOrElse(rl.linkId, Seq())
+      rl.linkId -> buildRoadAddressLink(rl, ra, missed, floaters)
+    }.toMap
 
   }
 
@@ -212,8 +237,8 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
       val (addressesToCreate, unchanged) = newRoadAddresses.values.flatten.toSeq.partition(_.id == NewRoadAddress)
       val savedRoadAddresses = addressesToCreate.map(r =>
-          r.copy(geom = GeometryUtils.truncateGeometry3D(roadLinkMap(r.linkId).geometry,
-              r.startMValue, r.endMValue), linkGeomSource = roadLinkMap(r.linkId).linkSource))
+        r.copy(geom = GeometryUtils.truncateGeometry3D(roadLinkMap(r.linkId).geometry,
+          r.startMValue, r.endMValue), linkGeomSource = roadLinkMap(r.linkId).linkSource))
 
       val ids = RoadAddressDAO.create(savedRoadAddresses).toSet ++ unchanged.map(_.id).toSet
 
