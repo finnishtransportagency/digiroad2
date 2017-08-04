@@ -524,7 +524,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
         setLinkProperty("traffic_direction", "traffic_direction", "", direction.value, linkId, username, Some(vvhRoadLink.trafficDirection.value), None, None, None)
         if (functionalClass != FunctionalClass.Unknown) setLinkProperty("functional_class", "functional_class", "", functionalClass, linkId, username, None, None, None, None)
         if (linkType != UnknownLinkType) setLinkProperty("link_type", "link_type", "", linkType.value, linkId, username, None, None, None, None)
-        setLinkProperty("administrative_class", "administrative_class", "vvh_administrative_class", administrativeClass.value, linkId, username, Some(vvhRoadLink.administrativeClass.value), None, None, checkMMLId(vvhRoadLink))
+        if (vvhRoadLink.administrativeClass != State) setLinkProperty("administrative_class", "administrative_class", "vvh_administrative_class", administrativeClass.value, linkId, username, Some(vvhRoadLink.administrativeClass.value), None, None, checkMMLId(vvhRoadLink))
         val enrichedLink = enrichRoadLinksFromVVH(Seq(vvhRoadLink)).head
         if (enrichedLink.functionalClass != FunctionalClass.Unknown && enrichedLink.linkType != UnknownLinkType) {
           removeIncompleteness(linkId)
