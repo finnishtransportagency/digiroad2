@@ -376,6 +376,7 @@
        else {
          roadData = featureAtPixel.roadLinkData;
        }
+       //TODO roadData !== null is there for test having no info ready (race condition where hower often looses) should be somehow resolved
         if ( roadData !== null || (roadData.roadNumber!==0 &&roadData.roadPartNumber!==0&&roadData.roadPartNumber!==99 )){
        infoContent.innerHTML = '<p>' +
           'Tienumero: ' + roadData.roadNumber + '<br>' +
