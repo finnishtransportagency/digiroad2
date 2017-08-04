@@ -139,21 +139,21 @@ object ProjectDeltaCalculator {
       }
     }
 
-    def invertList(list1: Seq[ProjectLink], list2: Seq[ProjectLink]): Seq[ProjectLink] = {
-      if (list1.size == 1) {
-        list1.map(_ => list1.head.copy(startAddrMValue = list2.head.startAddrMValue, endAddrMValue = list2.head.endAddrMValue))
+    def invertList(listToInvert: Seq[ProjectLink], listToCompare: Seq[ProjectLink]): Seq[ProjectLink] = {
+      if (listToInvert.size == 1) {
+        listToInvert.map(_ => listToInvert.head.copy(startAddrMValue = listToCompare.head.startAddrMValue, endAddrMValue = listToCompare.head.endAddrMValue))
       } else {
-        if (GeometryUtils.areAdjacent(list1.head.geom.head, list2.last.geom.head) && list1.head.startAddrMValue != list2.head.startAddrMValue) {
-          list1.map(l => {
-            if (l.linkId == list1.head.linkId) l.copy(startAddrMValue = list2.head.startAddrMValue) else l
+        if (GeometryUtils.areAdjacent(listToInvert.head.geom.head, listToCompare.last.geom.head) && listToInvert.head.startAddrMValue != listToCompare.head.startAddrMValue) {
+          listToInvert.map(l => {
+            if (l.linkId == listToInvert.head.linkId) l.copy(startAddrMValue = listToCompare.head.startAddrMValue) else l
           })
         }
-        else if (GeometryUtils.areAdjacent(list1.last.geom.head, list2.head.geom.head) && list1.last.endAddrMValue != list2.last.endAddrMValue) {
-          list1.map(l => {
-            if (l.linkId == list1.last.linkId) l.copy(endAddrMValue = list2.last.endAddrMValue) else l
+        else if (GeometryUtils.areAdjacent(listToInvert.last.geom.head, listToCompare.head.geom.head) && listToInvert.last.endAddrMValue != listToCompare.last.endAddrMValue) {
+          listToInvert.map(l => {
+            if (l.linkId == listToInvert.last.linkId) l.copy(endAddrMValue = listToCompare.last.endAddrMValue) else l
           })
         } else {
-          list1
+          listToInvert
         }
       }
     }
