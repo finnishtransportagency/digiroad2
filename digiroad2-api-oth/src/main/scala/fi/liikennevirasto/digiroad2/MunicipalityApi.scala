@@ -9,7 +9,7 @@ import org.scalatra.{BadRequest, ScalatraServlet}
 import org.scalatra.json.JacksonJsonSupport
 import org.json4s._
 
-case class NewNumericOrTextualValueAsset(linkId: Long, startMeasure: Double, endMeasure: Double, properties: Seq[AssetProperties], sideCode: Int)
+case class NewNumericOrTextualValueAsset(linkId: Long, startMeasure: Double, endMeasure: Double, properties: Seq[AssetProperties], sideCode: Int, geometryTimstamp: Long)
 
 class MunicipalityApi(val linearAssetService: LinearAssetService) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport {
 
@@ -60,7 +60,7 @@ class MunicipalityApi(val linearAssetService: LinearAssetService) extends Scalat
 
   private def extractNewLinearAssets(typeId: Int, value: JValue) = {
     typeId match {
-      case _ => value.extractOpt[Seq[NewNumericOrTextualValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, NumericValue(x.properties.map(_.value).head.toInt), x.sideCode, 0, None))
+      case _ => value.extractOpt[Seq[NewNumericOrTextualValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, NumericValue(x.properties.map(_.value).head.toInt), x.sideCode, x.geometryTimstamp, None))
     }
   }
 
@@ -117,7 +117,7 @@ class MunicipalityApi(val linearAssetService: LinearAssetService) extends Scalat
     val geometryTimestamp = (parsedBody \ "geometryTimestamp").extractOrElse[Long](halt(BadRequest("Missing mandatory 'geometryTimestamp' parameter")))
 
     val newLinearAssets = extractNewLinearAssets(assetTypeId, parsedBody)
-    linearAssetService.create(newLinearAssets, assetTypeId, user.username)
+    linearAssetService.create(newLinearAssets, assetTypeId, user.username, geometryTimestamp)
   }
 
   put("/:municipalityCode/:assetType/:assetId"){
@@ -135,6 +135,4 @@ class MunicipalityApi(val linearAssetService: LinearAssetService) extends Scalat
     val assetType = params("assetType")
     val assetId = params("assetId").toInt
   }
-
-
 }
