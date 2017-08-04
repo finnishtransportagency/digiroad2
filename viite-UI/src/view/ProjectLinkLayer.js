@@ -376,14 +376,13 @@
        else {
          roadData = featureAtPixel.roadLinkData;
        }
-        if (roadData.roadNumber!==0 &&roadData.roadPartNumber!==0&&roadData.roadPartNumber!==99 ){
+        if ( roadData !== null || (roadData.roadNumber!==0 &&roadData.roadPartNumber!==0&&roadData.roadPartNumber!==99 )){
        infoContent.innerHTML = '<p>' +
           'Tienumero: ' + roadData.roadNumber + '<br>' +
           'Tieosanumero: ' + roadData.roadPartNumber + '<br>' +
           'Ajorata: ' + roadData.trackCode + '<br>' +
           'AET: ' + roadData.startAddressM + '<br>' +
           'LET: ' + roadData.endAddressM + '<br>' +'</p>';
-
         } else {
           infoContent.innerHTML = '<p>' +
           'Tuntematon tien segmentti' +'</p>'; // road with no address
