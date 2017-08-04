@@ -929,6 +929,17 @@ object DataFixture {
     println("\n")
   }
 
+  def importAllSpeedLimitDataFromTR(): Unit ={
+    println("\nStart Speed Limits import at time: ")
+    println(DateTime.now())
+
+    tierekisteriDataImporter.importSpeedLimits()
+
+    println("Speed Limits import complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
   def updateLitRoadDataFromTR(): Unit ={
     println("\nStart lighting update at: ")
     println(DateTime.now())
@@ -1059,7 +1070,8 @@ object DataFixture {
         updateRoadWidthDataFromTR()
       case Some("update_trafficSigns_from_TR_to_OTH") =>
         updateTrafficSignDataFromTR()
-
+      case Some("import_all_speedLimits_from_TR_to_OTH") =>
+        importAllSpeedLimitDataFromTR()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
