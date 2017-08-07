@@ -19,8 +19,8 @@ trait AuthenticatedApiSpec extends FunSuite with ScalatraSuite {
     put(uri, body, headers = authenticateAndGetHeader(username) + ("Content-type" -> "application/json") ++ headers)(f)
   }
 
-  def deleteWithUserAuth[A](uri: String, username: String = "test")(f: => A): A = {
-    delete(uri, headers = authenticateAndGetHeader(username))(f)
+  def deleteWithUserAuth[A](uri: String,  headers: Map[String, String] = Map(), username: String = "test")(f: => A): A = {
+    delete(uri, headers = authenticateAndGetHeader(username) ++ headers)(f)
   }
 
   def authenticateAndGetHeader(username: String): Map[String, String] = {

@@ -19,6 +19,9 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   val mockLinearAssetService = MockitoSugar.mock[LinearAssetService]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   when(mockLinearAssetService.getAssetsByMunicipality(any[Int], any[Int])).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 0, None, LinkGeomSource.NormalLinkInterface)))
+  when(mockLinearAssetService.getPersistedAssetsByIds(any[Int], any[Set[Long]])).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 0, None, LinkGeomSource.NormalLinkInterface)))
+  when(mockLinearAssetService.getPersistedAssetsByLinkIds(any[Int], any[Seq[Long]])).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 0, None, LinkGeomSource.NormalLinkInterface)))
+  when(mockRoadLinkService.getRoadLinkGeometry(any[Long])).thenReturn(Option(Seq(Point(0,0), Point(0,500))))
 
   private val municipalityApi = new MunicipalityApi(mockLinearAssetService, mockRoadLinkService)
   addServlet(municipalityApi, "/*")
@@ -50,7 +53,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   }
 
   test("create new asset without link id", Tag("db")) {
-    val requestPayload = """{"id": 0, "startMeasure": 0, "createdAt": 2, "geometryTimestamp": 0, "endMeasure": 200, "sideCode": 1}"""
+    val requestPayload = """{"id": 1, "startMeasure": 0, "createdAt": 2, "geometryTimestamp": 0, "endMeasure": 200, "sideCode": 1}"""
 
     postJsonWithUserAuth("/235/lighting", requestPayload.getBytes, getAuthorizationHeader("kalpa", "kalpa")) {
       status should be (422)
@@ -58,7 +61,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   }
 
   test("create new asset without a valid SideCode", Tag("db")) {
-    val requestPayload = """[{"id": 0, "linkId": 1, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47", "geometryTimestamp": 0, "endMeasure": 200, "sideCode": 4, "properties" : [{"value" : 1, "name" : "lighting"}]}]"""
+    val requestPayload = """[{"id": 1, "linkId": 1, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47", "geometryTimestamp": 0, "endMeasure": 200, "sideCode": 4, "properties" : [{"value" : 1, "name" : "lighting"}]}]"""
 
     postJsonWithUserAuth("/235/lighting", requestPayload.getBytes, getAuthorizationHeader("kalpa", "kalpa")) {
       status should be (422)
@@ -66,13 +69,17 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   }
 
   test("create new asset without valid properties", Tag("db")) {
-    val requestPayload = """[{"id": 0, "linkId": 1, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47", "geometryTimestamp": 0, "endMeasure": 200, "sideCode": 4, "properties" : []}]"""
+    val requestPayload = """[{"id": 1, "linkId": 1, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47", "geometryTimestamp": 0, "endMeasure": 200, "sideCode": 4, "properties" : []}]"""
 
     postJsonWithUserAuth("/235/lighting", requestPayload.getBytes, getAuthorizationHeader("kalpa", "kalpa")) {
       status should be (400)
     }
   }
-
+  test("delete asset", Tag("db")){
+    deleteWithUserAuth("/235/lighting/1", getAuthorizationHeader("kalpa", "")) {
+      status should be (401)
+    }
+  }
 
   test("encode lighting limit") {
     municipalityApi.linearAssetsToApi(Seq(PersistedLinearAsset(1, 2, SideCode.BothDirections.value, Some(NumericValue(1)), 0, 1, None, None, None, None, false, 100, 0, None, linkSource = NormalLinkInterface))) should be(Seq(Map(
