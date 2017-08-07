@@ -27,7 +27,7 @@ import scala.util.{Left, Right}
 
 case class NewAddressDataExtracted(sourceIds: Set[Long], targetIds: Set[Long])
 
-case class NewRoadAddressExtractor(linkIds: Set[Long], projectId: Long, newRoadNumber: Long, newRoadPartNumber : Long, newTrackCode: Long, newDiscontinuity :Long)
+case class NewRoadAddressExtractor(linkIds: Set[Long], projectId: Long, newRoadNumber: Long, newRoadPartNumber : Long, newTrackCode: Long, newDiscontinuity :Long, roadEly: Long)
 
 case class ProjectRoadAddressInfo(projectId : Long, roadNumber: Long, roadPartNumber :Long)
 
@@ -314,12 +314,18 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       val projectLink = parsedBody.extract[NewRoadAddressExtractor]
       val roadLinks = projectService.getProjectRoadLinksByLinkIds(projectLink.linkIds)
       withDynTransaction {
-        val errorMessage = projectService.addNewLinksToProject(roadLinks, projectLink.projectId, projectLink.newRoadNumber, projectLink.newRoadPartNumber, projectLink.newTrackCode, projectLink.newDiscontinuity)
-        if (errorMessage == "") {
-          Map("success" -> true)
+        val elyUpdateErrorMessage = projectService.setProjectEly(projectLink.projectId, projectLink.roadEly)
+        if(elyUpdateErrorMessage == "") {
+          val errorMessage = projectService.addNewLinksToProject(roadLinks, projectLink.projectId, projectLink.newRoadNumber, projectLink.newRoadPartNumber, projectLink.newTrackCode, projectLink.newDiscontinuity)
+          if (errorMessage == "") {
+            Map("success" -> true)
+          } else {
+            Map("success" -> false,
+              "errormessage" -> errorMessage)
+          }
         } else {
           Map("success" -> false,
-            "errormessage" -> errorMessage)
+            "errormessage" -> elyUpdateErrorMessage)
         }
       }
     } catch {

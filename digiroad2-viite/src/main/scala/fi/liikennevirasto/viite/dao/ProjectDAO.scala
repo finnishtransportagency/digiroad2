@@ -185,9 +185,23 @@ object ProjectDAO {
          """.execute
   }
 
-  def updateProjectELY(roadAddressProject: RoadAddressProject, ely: Long): Unit = {
+  def getProjectEly(roadAddressProjectId: Long): Option[Long] = {
+    val query =
+      s"""
+         SELECT ELY
+         FROM project
+         WHERE id=$roadAddressProjectId
+       """
+    Q.queryNA[Long](query).firstOption match
+    {
+      case Some(number) => Some(number)
+      case None => Some(-1)
+    }
+  }
+
+  def updateProjectEly(roadAddressProjectId: Long, ely: Long): Unit = {
     sqlu"""
-       update project set ely = $ely, modified_date = sysdate where id =  ${roadAddressProject.id}
+       update project set ely = $ely, modified_date = sysdate where id =  ${roadAddressProjectId}
       """.execute
   }
 
