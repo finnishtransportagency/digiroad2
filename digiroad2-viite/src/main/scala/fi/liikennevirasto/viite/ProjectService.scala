@@ -124,6 +124,18 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  def deleteRoadPartFromProject(projectid: Long, roadNumber: Long, roadPart: Long): Long = {
+    withDynTransaction {
+        val reserved = ProjectDAO.deleteRoadPartFromProject(id, roadNumber, roadPart)
+        reserved match {
+          case Some(projectname) => return Left(s"TIE $roadNumber OSA $roadPart on jo varattuna projektissa $projectname, tarkista tiedot")
+          case None =>
+
+        }
+      Right(listOfAddressParts)
+    }
+  }
+
   def projDateValidation(reservedParts:Seq[ReservedRoadPart], projDate:DateTime): Option[String] = {
     reservedParts.foreach( part => {
       if(part.startDate.nonEmpty && part.startDate.get.isAfter(projDate)) return Option(s"Tieosalla TIE ${part.roadNumber} OSA ${part.roadPartNumber} alkupäivämäärä ${part.startDate.get.toString("dd.MM.yyyy")} on uudempi kuin tieosoiteprojektin alkupäivämäärä ${projDate.toString("dd.MM.yyyy")}, tarkista tiedot.")
@@ -388,10 +400,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val formInfo: Seq[ProjectFormLine] = groupedAddresses.map(addressGroup => {
         val endAddressM = addressGroup._2.last.endAddrMValue
         val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(addressGroup._2.head.linkId), false)
+        val isRoadPartDirty = addressGroup._2.exists(_.status != LinkStatus.NotHandled)
         val addressFormLine = ProjectFormLine(addressGroup._2.head.linkId, project.id,
           addressGroup._2.head.roadNumber, addressGroup._2.head.roadPartNumber, endAddressM,
           MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(roadLink.head.municipalityCode, -1),
-          addressGroup._2.last.discontinuity.description)
+          addressGroup._2.last.discontinuity.description, isRoadPartDirty)
         addressFormLine
       })
 

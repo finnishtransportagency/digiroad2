@@ -66,7 +66,7 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
                        calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false,
                        geom: Seq[Point], projectId: Long, status: LinkStatus, roadType: RoadType, linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, geometryLength: Double) extends BaseRoadAddress
 
-case class ProjectFormLine(startingLinkId: Long, projectId: Long, roadNumber: Long, roadPartNumber: Long, roadLength: Long, ely : Long, discontinuity: String)
+case class ProjectFormLine(startingLinkId: Long, projectId: Long, roadNumber: Long, roadPartNumber: Long, roadLength: Long, ely : Long, discontinuity: String, isDirty: Boolean = false)
 
 object ProjectDAO {
 
@@ -175,7 +175,7 @@ object ProjectDAO {
   }
 
   def updateMValues(projectLink: ProjectLink): Unit = {
-      sqlu"""update project_link set modified_date = sysdate, start_addr_m = ${projectLink.startAddrMValue}, end_addr_m = ${projectLink.endAddrMValue} where id = ${projectLink.id}
+    sqlu"""update project_link set modified_date = sysdate, start_addr_m = ${projectLink.startAddrMValue}, end_addr_m = ${projectLink.endAddrMValue} where id = ${projectLink.id}
           """.execute
   }
 
@@ -228,6 +228,14 @@ object ProjectDAO {
     Q.queryNA[String](query).firstOption
   }
 
+  def deleteRoadPartFromProject(projectId: Long, roadNumber: Long, roadPart: Long): Option[String] = {
+      val query =
+        s"""
+         DELETE FROM Project_Link WHERE project_id = ${projectId} and road_number = ${roadNumber} and road_part_number = ${roadPart}
+       """
+      Q.updateNA(query).first
+  }
+
   def getProjectStatus(projectID: Long): Option[ProjectState] = {
     val query =
       s""" SELECT state
@@ -249,7 +257,7 @@ object ProjectDAO {
          WHERE id=$projectID
        """
     Q.queryNA[Long](query).firstOption match
-       {
+    {
       case Some(number) => Some(number)
       case None => Some(0)
     }
@@ -296,7 +304,7 @@ object ProjectDAO {
     sqlu""" update project set state=$projectstate, status_info=$errorMessage  WHERE id=$projectID""".execute
   }
 
-  def getProjectsWithWaitingTRStatus(): List[Long]={
+  def getProjectsWithWaitingTRStatus(): List[Long] = {
     val query= s"""
          SELECT id
          FROM project
@@ -306,7 +314,7 @@ object ProjectDAO {
   }
 
 
-  def removeProjectLinksById(projectLinkIds: Set[Long])= {
+  def removeProjectLinksById(projectLinkIds: Set[Long]) = {
     val query =
       s"""
          DELETE FROM Project_Link WHERE id IN (${projectLinkIds.mkString(",")})
