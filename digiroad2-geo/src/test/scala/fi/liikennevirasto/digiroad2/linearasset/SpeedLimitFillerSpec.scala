@@ -22,6 +22,37 @@ class SpeedLimitFillerSpec extends FunSuite with Matchers {
     roadLink(linkId, geometry).copy(trafficDirection = trafficDirection)
   }
 
+  test("drop speedlimit segments less than 2 meters"){
+    val roadLink = RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, AdministrativeClass.apply(1), FunctionalClass.Unknown,
+      TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
+    val assets = Seq(
+      SpeedLimit(1, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(80)), Seq(Point(0.0, 0.0),
+        Point(1.9, 0.0)), 0.0, 1.9, None, None, None, None, 0, None, linkSource = NormalLinkInterface),
+    SpeedLimit(2, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(80)), Seq(Point(1.0, 0.0),
+      Point(3.0, 0.0)), 2.0, 4.0, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
+    )
+
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(roadLink), Map(1L -> assets))
+    filledTopology should have size 2
+    filledTopology.map(_.id) should not contain (1)
+    changeSet.droppedAssetIds should have size 1
+    changeSet.droppedAssetIds.head should be (1)
+  }
+
+  test("Don't drop speedlimit segments less than 2 meters on a road link with length less that 2 meters"){
+    val roadLink = RoadLink(1, Seq(Point(0.0, 0.0), Point(1.9, 0.0)), 1.9, AdministrativeClass.apply(1), FunctionalClass.Unknown,
+      TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
+    val assets = Seq(
+      SpeedLimit(1, 1, SideCode.BothDirections, TrafficDirection.BothDirections, Some(NumericValue(80)), Seq(Point(0.0, 0.0),
+        Point(1.9, 0.0)), 0.0, 1.9, None, None, None, None, 0, None, linkSource = NormalLinkInterface)
+    )
+
+    val (filledTopology, changeSet) = SpeedLimitFiller.fillTopology(Seq(roadLink), Map(1L -> assets))
+    filledTopology should have size 1
+    filledTopology.map(_.id) should be (Seq(1))
+    changeSet.droppedAssetIds should have size 0
+  }
+
   test("drop segment outside of link geometry") {
     val topology = Seq(
       roadLink(2, Seq(Point(1.0, 0.0), Point(2.0, 0.0))))
