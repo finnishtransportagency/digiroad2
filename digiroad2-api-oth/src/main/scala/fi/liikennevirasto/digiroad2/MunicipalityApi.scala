@@ -177,7 +177,7 @@ class MunicipalityApi(val linearAssetService: LinearAssetService, val roadLinkSe
     val linkId = (parsedBody \ "linkId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'linkId' parameter")))
     (parsedBody \ "startMeasure").extractOrElse[Double](halt(BadRequest("Missing mandatory 'startMeasure' parameter")))
     (parsedBody \ "geometryTimestamp").extractOrElse[Long](halt(BadRequest("Missing mandatory 'geometryTimestamp' parameter")))
-    val properties = (parsedBody \ "properties").extractOrElse[Seq[AssetProperties]](halt(BadRequest("Criar mensagem ")))
+    val properties = (parsedBody \ "properties").extractOrElse[Seq[AssetProperties]](halt(BadRequest("Missing asset properties")))
 
     val assetById = linearAssetService.getPersistedAssetsByIds(assetTypeId, Set(params("assetId").toLong))
     if(assetById.isEmpty) halt(UnprocessableEntity("Asset not found."))
@@ -194,7 +194,7 @@ class MunicipalityApi(val linearAssetService: LinearAssetService, val roadLinkSe
         case true => linearAssetService.updateWithNewMeasures(Seq(oldAsset.id), newAsset.value, user.username, Some(Measures(newAsset.startMeasure, newAsset.endMeasure)), Some(newAsset.vvhTimeStamp)).head
         case _ =>  linearAssetService.updateWithTimeStamp(Seq(oldAsset.id), newAsset.value, user.username, Some(newAsset.vvhTimeStamp)).head
       }
-      case _ => halt(UnprocessableEntity("The geometryTimestamp of the existing asset is newer than the given asset."))
+      case _ => halt(UnprocessableEntity("The geometryTimestamp of the existing asset is newer than the given asset. Asset was not updated."))
     }
     linearAssetsToApi(linearAssetService.getPersistedAssetsByIds(assetTypeId, Set(newPersistedAsset)))
   }
