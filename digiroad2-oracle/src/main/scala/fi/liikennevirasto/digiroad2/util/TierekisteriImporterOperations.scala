@@ -368,12 +368,33 @@ class SpeedLimitsTierekisteriImporter extends LinearAssetTierekisteriImporterOpe
     }
     else {
       //TODO change this
-      val sortedAssets = if(invert) sectionAssets.sortBy(- _.startAddressMValue) else sectionAssets.sortBy(_.startAddressMValue)
+      val sortedAssets = sectionAssets.sortBy(_.startAddressMValue)//if(invert) sectionAssets.sortBy(- _.startAddressMValue) else sectionAssets.sortBy(_.startAddressMValue)
       val first = Seq((AddressSection(ra.roadNumber, ra.roadPartNumber, ra.track, ra.startAddrMValue, Some(sortedAssets.head.startAddressMValue)), None))
       val last = Seq((AddressSection(ra.roadNumber, ra.roadPartNumber, ra.track, sortedAssets.last.startAddressMValue, Some(ra.endAddrMValue)), Some(sortedAssets.last)))
       val intermediate = sortedAssets.zip(sortedAssets.tail).map{
         case (firstAsset, lastAsset) =>
           (AddressSection(ra.roadNumber, ra.roadPartNumber, ra.track, firstAsset.startAddressMValue, Some(lastAsset.startAddressMValue)), Some(firstAsset))
+      }
+      first ++ intermediate ++ last
+    }
+  }
+
+  private def invertedSplitRoadAddressBySigns(ra: ViiteRoadAddress, trAssets: Seq[TierekisteriAssetData], invert: Boolean = false): Seq[(AddressSection, Option[TierekisteriAssetData])] = {
+    val roadSide = if(invert) RoadSide.Left else RoadSide.Right
+    val sectionAssets = trAssets.filter(trAddr => trAddr.assetType != TRTrafficSignType.Unknown &&
+      trAddr.assetType.trafficSignType.group == TrafficSignTypeGroup.SpeedLimits &&
+      trAddr.endRoadPartNumber == ra.roadPartNumber && trAddr.startAddressMValue >= ra.startAddrMValue &&
+      trAddr.startAddressMValue <= ra.endAddrMValue && Seq(roadSide).map(_.value).contains(trAddr.roadSide.value))
+    if(sectionAssets.isEmpty) {
+      Seq((AddressSection(ra.roadNumber, ra.roadPartNumber, ra.track, ra.startAddrMValue, Some(ra.endAddrMValue)), None))
+    }
+    else {
+      val sortedAssets = sectionAssets.sortBy(- _.startAddressMValue)
+      val first = Seq((AddressSection(ra.roadNumber, ra.roadPartNumber, ra.track, sortedAssets.head.startAddressMValue, Some(ra.endAddrMValue)), None))
+      val last = Seq((AddressSection(ra.roadNumber, ra.roadPartNumber, ra.track, ra.startAddrMValue, Some(sortedAssets.last.startAddressMValue)), Some(sortedAssets.last)))
+      val intermediate = sortedAssets.zip(sortedAssets.tail).map{
+        case (firstAsset, lastAsset) =>
+          (AddressSection(ra.roadNumber, ra.roadPartNumber, ra.track, lastAsset.startAddressMValue, Some(firstAsset.startAddressMValue)), Some(firstAsset))
       }
       first ++ intermediate ++ last
     }
@@ -441,12 +462,11 @@ class SpeedLimitsTierekisteriImporter extends LinearAssetTierekisteriImporterOpe
               }
           }
 
-
           val viiteRoadAddress2 = getAllViiteRoadAddress(roadNumber, Seq(Track.LeftSide, Track.Combined)).sortBy(r => (- r._1.roadPartNumber, -r._1.startAddrMValue))
 
           viiteRoadAddress2.foldLeft[Option[tierekisteriClient.TierekisteriType]](None){
             case (trAsset, (roadAddress: ViiteRoadAddress, roadLink: Option[VVHRoadlink])) =>
-              splitRoadAddressBySigns(roadAddress, trAssets, true).foldLeft(trAsset){
+              invertedSplitRoadAddressBySigns(roadAddress, trAssets, true).foldLeft(trAsset){
                 case (previousTrAsset, (addressSection: AddressSection, beginTrAsset)) =>
                   val currentTrAssetSign = beginTrAsset.orElse(previousTrAsset)
                   createSpeedLimit(roadAddress, addressSection, currentTrAssetSign, roadLink)
