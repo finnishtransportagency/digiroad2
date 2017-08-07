@@ -293,11 +293,15 @@
     var parseroadpartinfoToresultRow = function () {
       var listContent = '';
       _.each(currentRoadPartList, function (row) {
-          listContent += addSmallLabel(row.roadNumber) + addSmallLabel(row.roadPartNumber) + addSmallLabel(row.length) + addSmallLabel(row.discontinuity) + addSmallLabel(row.ely) +
-            '</div>';
+          listContent += '<div style="display:inline-block;">'+ deleteButton()+ addSmallLabel(row.roadNumber) + addSmallLabel(row.roadPartNumber) + addSmallLabel(row.length) + addSmallLabel(row.discontinuity) + addSmallLabel(row.ely) +'</div>';
         }
       );
       return listContent;
+    };
+
+
+    var deleteButton = function(){
+      return '<button class="delete btn-delete">X</button>';
     };
 
 

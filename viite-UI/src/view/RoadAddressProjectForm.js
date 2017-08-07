@@ -105,10 +105,9 @@
         '</form>' +
         ' </div>'+
         '</div>' + '<div class = "form-result">'  +'<label >' + 'PROJEKTIIN VALITUT TIEOSAT:' + '</label>'+
-        '<div style="margin-left: 15px;">' +
-        '</div>'+
+        '<div style="margin-left: 20px;">' +
         addSmallLabel('TIE')+ addSmallLabel('OSA')+ addSmallLabel('PITUUS')+ addSmallLabel('JATKUU')+ addSmallLabel('ELY')+
-
+        '</div>'+
         '<div id ="roadpartList">'+
         '</div></div>' +
 
@@ -146,8 +145,9 @@
         '</div>' +
         '<div class = "form-result">' +
         '<label >PROJEKTIIN VALITUT TIEOSAT:</label>'+
-        '<div style="margin-left: 15px;">' +'</div>'+
+        '<div style="margin-left: 20px;">'+
         addSmallLabel('TIE')+ addSmallLabel('OSA')+ addSmallLabel('PITUUS')+ addSmallLabel('JATKUU')+ addSmallLabel('ELY')+
+        '</div>'+
         '<div id ="roadpartList">'+
         formInfo +
         '</div></div></div></div>'+
@@ -172,6 +172,10 @@
 
     var addSmallLabel = function(label){
       return '<label class="control-label-small">'+label+'</label>';
+    };
+
+    var deleteButton = function(index){
+      return '<button id="'+index+'" class="delete btn-delete">X</button>';
     };
 
     var addSmallInputNumber = function(id, value){
@@ -228,8 +232,9 @@
         currentProject = result.project;
         projectCollection.clearRoadAddressProjects();
         var text = '';
+        var index = 0;
         _.each(result.projectLinks, function(line){  //TODO later list of already saved roadlinks has to be saved in  roadaddressprojectcollection.currentRoadSegmentList for reserve button to function properly now saved links are cleared when newones are reserved
-          text += '<div>' +
+          text += '<div style="display:inline-block;">' + deleteButton(index++) +
             addSmallLabel(line.roadNumber)+
             addSmallLabel(line.roadPartNumber)+ addSmallLabel(line.roadLength)+ addSmallLabel(line.discontinuity)+ addSmallLabel(line.ely) +
             '</div>';
@@ -271,8 +276,9 @@
         eventbus.once('roadAddress:projectSaved', function (result) {
           currentProject = result.project;
           var text = '';
+          var index = 0;
           _.each(result.formInfo, function(line){
-            text += '<div>' + ' '+
+            text += '<div style="display:inline-block;">' + ' '+ deleteButton(index++) +
               addSmallLabel(line.roadNumber)+ addSmallLabel(line.roadPartNumber)+ addSmallLabel(line.roadLength)+ addSmallLabel(line.discontinuity)+ addSmallLabel(line.ely) +
               '</div>';
           });
