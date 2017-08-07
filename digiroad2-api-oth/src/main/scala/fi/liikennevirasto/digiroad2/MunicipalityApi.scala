@@ -119,7 +119,7 @@ class MunicipalityApi(val linearAssetService: LinearAssetService, val roadLinkSe
       )
   }
 
-  def validateMeasures(measure: Set[Double], typeId: Int, linkId: Long) = {
+  def validateMeasures(measure: Set[Double], typeId: Int, linkId: Long): Unit = {
     val roadGeometry = roadLinkService.getRoadLinkGeometry(linkId).getOrElse(halt(UnprocessableEntity("Link id is not valid or doesn't exist.")))
     val roadLength = GeometryUtils.geometryLength(roadGeometry)
     measure.foreach( m => if(m < 0 || m > roadLength) halt(UnprocessableEntity("The measure can not be less than 0 and greater than the length of the road. ")))
@@ -160,7 +160,11 @@ class MunicipalityApi(val linearAssetService: LinearAssetService, val roadLinkSe
     validateAssetProperties(assetTypeId, properties)
     val newLinearAssets = extractNewLinearAssets(assetTypeId, parsedBody)
     validateSideCodes(newLinearAssets)
-    linearAssetService.create(newLinearAssets, assetTypeId, user.username, geometryTimestamp)
+    newLinearAssets.foreach{
+      newAsset => validateMeasures(Set(newAsset.startMeasure, newAsset.endMeasure), assetTypeId, linkId.toLong)
+    }
+    val assetsIds = linearAssetService.create(newLinearAssets, assetTypeId, user.username, geometryTimestamp)
+    linearAssetsToApi(linearAssetService.getPersistedAssetsByIds(assetTypeId, assetsIds.toSet))
   }
 
   put("/:municipalityCode/:assetType/:assetId"){
