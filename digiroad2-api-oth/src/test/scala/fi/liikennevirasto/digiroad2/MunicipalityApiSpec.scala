@@ -15,9 +15,10 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   protected implicit val jsonFormats: Formats = DefaultFormats
 
   val mockLinearAssetService = MockitoSugar.mock[LinearAssetService]
+  val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   when(mockLinearAssetService.getAssetsByMunicipality(any[Int], any[Int])).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 0, None, LinkGeomSource.NormalLinkInterface)))
 
-  private val municipalityApi = new MunicipalityApi(mockLinearAssetService)
+  private val municipalityApi = new MunicipalityApi(mockLinearAssetService, mockRoadLinkService)
   addServlet(municipalityApi, "/*")
 
   def getWithBasicUserAuth[A](uri: String, username: String, password: String)(f: => A): A = {

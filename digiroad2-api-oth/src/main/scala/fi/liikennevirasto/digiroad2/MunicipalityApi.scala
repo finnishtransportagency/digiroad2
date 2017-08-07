@@ -12,7 +12,7 @@ import org.json4s._
 
 case class NewNumericOrTextualValueAsset(linkId: Long, startMeasure: Double, endMeasure: Double, properties: Seq[AssetProperties], sideCode: Int, geometryTimestamp: Long)
 
-class MunicipalityApi(val linearAssetService: LinearAssetService) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport {
+class MunicipalityApi(val linearAssetService: LinearAssetService, val roadLinkService: RoadLinkService) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport {
 
   override def baseAuth: String = "municipality."
   override val realm: String = "Municipality API"
@@ -48,15 +48,6 @@ class MunicipalityApi(val linearAssetService: LinearAssetService) extends Scalat
 
   before() {
     basicAuth
-  }
-
-  private def extractLinearAssetValue(value: JValue): Option[Value] = {
-    val numericValue = value.extractOpt[Int]
-    val textualParameter = value.extractOpt[String]
-
-    numericValue
-      .map(NumericValue)
-      .orElse(textualParameter.map(TextualValue))
   }
 
   private def extractNewLinearAssets(typeId: Int, value: JValue) = {
@@ -128,6 +119,13 @@ class MunicipalityApi(val linearAssetService: LinearAssetService) extends Scalat
       )
   }
 
+  def validateMeasures(measure: Set[Double], typeId: Int, linkId: Long) = {
+    val roadGeometry = roadLinkService.getRoadLinkGeometry(linkId).getOrElse(halt(UnprocessableEntity("Link id is not valid or doesn't exist.")))
+    val roadLength = GeometryUtils.geometryLength(roadGeometry)
+    measure.foreach( m => if(m < 0 || m > roadLength) halt(UnprocessableEntity("The measure can not be less than 0 and greater than the length of the road. ")))
+    if(measure.head == measure.last)halt(UnprocessableEntity("The start and end measure should not be equal for a linear asset."))
+  }
+
   get("/:municipalityCode/:assetType") {
     contentType = formats("json")
     val municipalityCode = params("municipalityCode").toInt
@@ -167,11 +165,34 @@ class MunicipalityApi(val linearAssetService: LinearAssetService) extends Scalat
 
   put("/:municipalityCode/:assetType/:assetId"){
     contentType = formats("json")
-    val linkId = (parsedBody \ "linkId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'linkId' parameter")))
-    val startMeasure = (parsedBody \ "startMeasure").extractOrElse[Double](halt(BadRequest("Missing mandatory 'startMeasure' parameter")))
-    val geometryTimestamp = (parsedBody \ "geometryTimestamp").extractOrElse[Long](halt(BadRequest("Missing mandatory 'geometryTimestamp' parameter")))
+
+    if(!params.contains("municipalityCode"))
+      halt(BadRequest("Municipality code not found."))
+
     val assetTypeId = getAssetTypeId(params("assetType"))
-    val assetId = params("assetId").toLong
+    val linkId = (parsedBody \ "linkId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'linkId' parameter")))
+    (parsedBody \ "startMeasure").extractOrElse[Double](halt(BadRequest("Missing mandatory 'startMeasure' parameter")))
+    (parsedBody \ "geometryTimestamp").extractOrElse[Long](halt(BadRequest("Missing mandatory 'geometryTimestamp' parameter")))
+    val properties = (parsedBody \ "properties").extractOrElse[Seq[AssetProperties]](halt(BadRequest("Criar mensagem ")))
+
+    val assetById = linearAssetService.getPersistedAssetsByIds(assetTypeId, Set(params("assetId").toLong))
+    if(assetById.isEmpty) halt(UnprocessableEntity("Asset not found."))
+    val newAsset = extractNewLinearAssets(assetTypeId, parsedBody).head
+
+    validateMeasures(Set(newAsset.startMeasure, newAsset.endMeasure), assetTypeId, linkId.toLong)
+    validateAssetProperties(assetTypeId, properties)
+    validateSideCodes(Seq(newAsset))
+
+    val oldAsset = linearAssetService.getPersistedAssetsByLinkIds(assetTypeId, Seq(assetById.head.linkId)).head
+
+    val newPersistedAsset = newAsset.vvhTimeStamp >= oldAsset.vvhTimeStamp match {
+      case true => oldAsset.startMeasure != newAsset.startMeasure || oldAsset.endMeasure != newAsset.endMeasure match {
+        case true => linearAssetService.updateWithNewMeasures(Seq(oldAsset.id), newAsset.value, user.username, Some(Measures(newAsset.startMeasure, newAsset.endMeasure)), Some(newAsset.vvhTimeStamp)).head
+        case _ =>  linearAssetService.updateWithTimeStamp(Seq(oldAsset.id), newAsset.value, user.username, Some(newAsset.vvhTimeStamp)).head
+      }
+      case _ => oldAsset.linkId
+    }
+    linearAssetsToApi(linearAssetService.getPersistedAssetsByIds(assetTypeId, Set(newPersistedAsset)))
   }
 
   delete("/:municipalityCode/:assetType/:assetId"){
