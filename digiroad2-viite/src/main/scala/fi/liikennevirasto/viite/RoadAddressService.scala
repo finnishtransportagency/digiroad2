@@ -18,7 +18,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 
-class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEventBus) {
+class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEventBus, tempService: Boolean = false) {
 
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
@@ -146,7 +146,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     //pure linkId based queries, maybe something related to the zoomLevel we are in map level.
     val filteredChangedRoadLinks = changedRoadLinks.filter(crl => crl.oldId.exists(id =>
       addresses.keySet.contains(id) || normalRoadLinkIds.contains(id)))
-    val allRoadAddressesAfterChangeTable = applyChanges(allRoadLinks, filteredChangedRoadLinks, addresses)
+    val allRoadAddressesAfterChangeTable = applyChanges(allRoadLinks, if (!tempService) filteredChangedRoadLinks else Seq(), addresses)
     val missingLinkIds = linkIds -- floating.keySet -- allRoadAddressesAfterChangeTable.keySet
     val missedRL = withTiming(withDynTransaction {
       RoadAddressDAO.getMissingRoadAddresses(missingLinkIds)
@@ -202,7 +202,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
     val filteredChangedRoadLinks = changedRoadLinks.filter(crl => crl.oldId.exists(id =>
       addresses.keySet.contains(id) || linkIds.contains(id)))
-    val complementedWithChangeAddresses = applyChanges(roadLinks, filteredChangedRoadLinks, addresses)
+    val complementedWithChangeAddresses = applyChanges(roadLinks, if (!tempService) filteredChangedRoadLinks else Seq(), addresses)
 
     val fetchMissingRoadAddressEndTime = System.currentTimeMillis()
     val (changedFloating, missingFloating) = floatingViiteRoadLinks.partition(ral => linkIds.contains(ral._1))

@@ -153,7 +153,7 @@ object Digiroad2Context {
   eventbus.subscribe(roadAddressFloater, "roadAddress:floatRoadAddress")
 
   lazy val roadAddressService: RoadAddressService = {
-    new RoadAddressService(roadLinkService, eventbus)
+    new RoadAddressService(roadLinkService, eventbus, properties.getProperty("digiroad2.VVHRoadlink_temp", "false").toBoolean)
   }
 
   lazy val projectService: ProjectService = {
