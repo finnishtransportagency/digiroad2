@@ -94,7 +94,30 @@ class MunicipalityApi(val linearAssetService: LinearAssetService) extends Scalat
     }
   }
 
-  def validateSideCodes(assets: Seq[NewLinearAsset]) = {
+  def extractPropertyValue(key: String, properties: Seq[AssetProperties], transformation: ( (String, Seq[String])=> Any)): (String, Any) = {
+    val values = properties.filter { property => property.name == key }.map { property =>
+      property.value
+    }
+    key -> transformation(key, values)
+  }
+  def propertyValuesToIntList(key: String, values: Seq[String]): Seq[Int] = { values.map(_.toInt) }
+  def propertyValuesToString(key: String, values: Seq[String]): String = { values.mkString }
+  def firstPropertyValueToInt(key: String, values: Seq[String]): Int = {
+    try {
+      values.headOption.map(_.toInt).get
+    } catch {
+      case e: Exception => halt(BadRequest(s"The property values for the property with name $key are not valid."))
+    }
+  }
+
+  def validateAssetProperties(assetTypeId: Int, properties:Seq[AssetProperties]):(String, Any) = {
+    assetTypeId match {
+      case 100 => extractPropertyValue("lighting", properties, firstPropertyValueToInt)
+      case _ => ("", None)
+    }
+  }
+
+  def validateSideCodes(assets: Seq[NewLinearAsset]) : Unit = {
     assets.map( _.sideCode )
       .foreach( sc =>
         if( !SideCode.values.map(_.value).contains(sc))
@@ -118,14 +141,22 @@ class MunicipalityApi(val linearAssetService: LinearAssetService) extends Scalat
 
   post("/:municipalityCode/:assetType"){
     contentType = formats("json")
+
+    if(!params.contains("municipalityCode"))
+      halt(BadRequest("Municipality code not found."))
+
     val assetTypeId = getAssetTypeId(params("assetType"))
-    if(params.contains("municipalityCode"))halt(BadRequest("Missing mandatory 'linkId' parameter"))
     val municipalityCode = params("municipalityCode").toInt
 
     val linkId = (parsedBody \ "linkId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'linkId' parameter")))
     val startMeasure = (parsedBody \ "startMeasure").extractOrElse[Double](halt(BadRequest("Missing mandatory 'startMeasure' parameter")))
     val geometryTimestamp = (parsedBody \ "geometryTimestamp").extractOrElse[Long](halt(BadRequest("Missing mandatory 'geometryTimestamp' parameter")))
+    val properties = (parsedBody \ "properties").extractOrElse[Seq[AssetProperties]](halt(BadRequest("Criar mensagem ")))
 
+    if(properties.isEmpty)
+      halt(BadRequest("The property with name  doesn't exist or is not valid for this type of asset."))
+
+    validateAssetProperties(assetTypeId, properties)
     val newLinearAssets = extractNewLinearAssets(assetTypeId, parsedBody)
     validateSideCodes(newLinearAssets)
     linearAssetService.create(newLinearAssets, assetTypeId, user.username, geometryTimestamp)
