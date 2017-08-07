@@ -200,8 +200,18 @@ class MunicipalityApi(val linearAssetService: LinearAssetService, val roadLinkSe
   }
 
   delete("/:municipalityCode/:assetType/:assetId"){
-    val municipalityCode = params("municipalityCode").toInt
-    val assetType = params("assetType")
-    val assetId = params("assetId").toInt
+
+    if(!params.contains("municipalityCode"))
+      halt(BadRequest("Municipality code not found."))
+
+    val assetType = getAssetTypeId(params("assetType"))
+    val assetId = params("assetId").toLong
+
+    val asset = linearAssetService.getPersistedAssetsByIds(assetType, Set(assetId))
+    if(asset.isEmpty)
+      halt(UnprocessableEntity("Asset not found."))
+
+    linearAssetService.expireAsset(assetType, assetId, user.username, expired = true)
+
   }
 }

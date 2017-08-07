@@ -514,6 +514,12 @@ trait LinearAssetOperations {
     }
   }
 
+  def expireAsset(typeId: Int, id: Long, username: String, expired : Boolean) = {
+    withDynTransaction {
+      dao.updateExpiration(id, expired, username)
+    }
+  }
+
   /**
     * Sets the linear asset value to None for numeric value properies.
     * Used by Digiroad2Api /linearassets POST endpoint.
