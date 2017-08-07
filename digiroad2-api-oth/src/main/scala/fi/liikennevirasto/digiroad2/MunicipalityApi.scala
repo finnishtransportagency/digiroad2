@@ -110,9 +110,12 @@ class MunicipalityApi(val linearAssetService: LinearAssetService) extends Scalat
     }
   }
 
-  def validateAssetProperties(assetTypeId: Int, properties:Seq[AssetProperties]):(String, Any) = {
+  def validateAssetProperties(assetTypeId: Int, properties:Seq[AssetProperties]):Unit = {
     assetTypeId match {
-      case 100 => extractPropertyValue("lighting", properties, firstPropertyValueToInt)
+      case 100 =>
+        val value = extractPropertyValue("lighting", properties, firstPropertyValueToInt)
+        if(value._2 != 1)
+          halt(BadRequest(s"The property values for the property with name lighting are not valid."))
       case _ => ("", None)
     }
   }
@@ -148,13 +151,13 @@ class MunicipalityApi(val linearAssetService: LinearAssetService) extends Scalat
     val assetTypeId = getAssetTypeId(params("assetType"))
     val municipalityCode = params("municipalityCode").toInt
 
-    val linkId = (parsedBody \ "linkId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'linkId' parameter")))
+    val linkId = (parsedBody \ "linkId").extractOrElse[Int](halt(UnprocessableEntity("Missing mandatory 'linkId' parameter")))
     val startMeasure = (parsedBody \ "startMeasure").extractOrElse[Double](halt(BadRequest("Missing mandatory 'startMeasure' parameter")))
     val geometryTimestamp = (parsedBody \ "geometryTimestamp").extractOrElse[Long](halt(BadRequest("Missing mandatory 'geometryTimestamp' parameter")))
-    val properties = (parsedBody \ "properties").extractOrElse[Seq[AssetProperties]](halt(BadRequest("Criar mensagem ")))
+    val properties = (parsedBody \ "properties").extractOrElse[Seq[AssetProperties]](halt(BadRequest("Missing asset properties")))
 
     if(properties.isEmpty)
-      halt(BadRequest("The property with name  doesn't exist or is not valid for this type of asset."))
+      halt(BadRequest("Missing asset properties values"))
 
     validateAssetProperties(assetTypeId, properties)
     val newLinearAssets = extractNewLinearAssets(assetTypeId, parsedBody)
@@ -169,7 +172,6 @@ class MunicipalityApi(val linearAssetService: LinearAssetService) extends Scalat
     val geometryTimestamp = (parsedBody \ "geometryTimestamp").extractOrElse[Long](halt(BadRequest("Missing mandatory 'geometryTimestamp' parameter")))
     val assetTypeId = getAssetTypeId(params("assetType"))
     val assetId = params("assetId").toLong
-
   }
 
   delete("/:municipalityCode/:assetType/:assetId"){
