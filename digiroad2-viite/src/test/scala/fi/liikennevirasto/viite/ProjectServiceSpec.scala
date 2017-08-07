@@ -88,7 +88,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
     ProjectLink(id = NewRoadAddress, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track,
       roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
       roadAddress.endDate, modifiedBy=Option(project.createdBy), 0L, roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
-      roadAddress.sideCode, roadAddress.calibrationPoints, floating = false, roadAddress.geom, project.id, LinkStatus.NotHandled, RoadType.PublicRoad, roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geom))
+      roadAddress.sideCode, roadAddress.calibrationPoints, floating = false, roadAddress.geometry, project.id, LinkStatus.NotHandled, RoadType.PublicRoad, roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry))
   }
 
   private def toProjectAddressLink(ral: RoadAddressLinkLike): ProjectAddressLink = {
@@ -375,7 +375,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       RoadAddressDAO.create(ra)
       val roadsBeforeChanges = RoadAddressDAO.fetchByLinkId(Set(linkId)).head
 
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(linkId))).thenReturn(Seq(RoadLink(linkId, ra.head.geom, 9.8, State, 1, TrafficDirection.BothDirections,
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(linkId))).thenReturn(Seq(RoadLink(linkId, ra.head.geometry, 9.8, State, 1, TrafficDirection.BothDirections,
         Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(167)))))
       //Creation of test project with test links
       val project = RoadAddressProject(projectId, ProjectState.Incomplete, "testiprojekti", "Test", DateTime.now(), "Test",
@@ -512,7 +512,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       val id = RoadAddressDAO.getNextRoadAddressId
       val ra = Seq(RoadAddress(id, roadNumber, roadPartNumber, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 0, linkId, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
         Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface))
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(linkId))).thenReturn(Seq(RoadLink(linkId, ra.head.geom, 9.8, State, 1, TrafficDirection.BothDirections,
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(linkId))).thenReturn(Seq(RoadLink(linkId, ra.head.geometry, 9.8, State, 1, TrafficDirection.BothDirections,
         Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(167)))))
       RoadAddressDAO.create(ra)
 
@@ -604,7 +604,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
         Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface))
       ProjectDAO.createRoadAddressProject(rap)
 
-      val p = ProjectAddressLink(idr, projectLink.linkId, projectLink.geom,
+      val p = ProjectAddressLink(idr, projectLink.linkId, projectLink.geometry,
         1, AdministrativeClass.apply(1), LinkType.apply(1), RoadLinkType.apply(1), ConstructionType.apply(1), projectLink.linkGeomSource, RoadType.PublicUnderConstructionRoad, "", 111, Some(""), Some("vvh_modified"),
         null, projectLink.roadNumber, projectLink.roadPartNumber, 2, -1, projectLink.discontinuity.value,
         projectLink.startAddrMValue, projectLink.endAddrMValue, projectLink.startMValue, projectLink.endMValue,
@@ -639,7 +639,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
         Seq(Point(535605.272, 6982204.22, 85.90899999999965), Point(535608.555, 6982204.33, 86.90)), LinkGeomSource.NormalLinkInterface))
 
 
-      val p1 = ProjectAddressLink(idr1, projectLink1.linkId, projectLink1.geom,
+      val p1 = ProjectAddressLink(idr1, projectLink1.linkId, projectLink1.geometry,
         1, AdministrativeClass.apply(1), LinkType.apply(1), RoadLinkType.apply(1), ConstructionType.apply(1), projectLink1.linkGeomSource, RoadType.PublicUnderConstructionRoad, "", 111, Some(""), Some("vvh_modified"),
         null, projectLink1.roadNumber, projectLink1.roadPartNumber, 2, -1, projectLink1.discontinuity.value,
         projectLink1.startAddrMValue, projectLink1.endAddrMValue, projectLink1.startMValue, projectLink1.endMValue,
@@ -647,7 +647,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
         projectLink1.calibrationPoints._1,
         projectLink1.calibrationPoints._2, Anomaly.None, projectLink1.lrmPositionId, projectLink1.status)
 
-      val p2 = ProjectAddressLink(idr2, projectLink2.linkId, projectLink2.geom,
+      val p2 = ProjectAddressLink(idr2, projectLink2.linkId, projectLink2.geometry,
         1, AdministrativeClass.apply(1), LinkType.apply(1), RoadLinkType.apply(1), ConstructionType.apply(1), projectLink2.linkGeomSource, RoadType.PublicUnderConstructionRoad, "", 111, Some(""), Some("vvh_modified"),
         null, projectLink2.roadNumber, projectLink2.roadPartNumber, 2, -1, projectLink2.discontinuity.value,
         projectLink2.startAddrMValue, projectLink2.endAddrMValue, projectLink2.startMValue, projectLink2.endMValue,
@@ -683,7 +683,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       val projectLink3 = toProjectLink(rap)(RoadAddress(idr, 5, 999, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
         Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface))
 
-      val p = ProjectAddressLink(idr, projectLink.linkId, projectLink.geom,
+      val p = ProjectAddressLink(idr, projectLink.linkId, projectLink.geometry,
         1, AdministrativeClass.apply(1), LinkType.apply(1), RoadLinkType.apply(1), ConstructionType.apply(1), projectLink.linkGeomSource, RoadType.PublicUnderConstructionRoad, "", 111, Some(""), Some("vvh_modified"),
         null, projectLink.roadNumber, projectLink.roadPartNumber, 2, -1, projectLink.discontinuity.value,
         projectLink.startAddrMValue, projectLink.endAddrMValue, projectLink.startMValue, projectLink.endMValue,

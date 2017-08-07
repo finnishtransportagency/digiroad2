@@ -336,7 +336,7 @@ object RoadAddressLinkBuilder {
 
       if(nextSegment.sideCode.value != previousSegment.sideCode.value)
         throw new InvalidAddressDataException(s"Road Address ${nextSegment.id} and Road Address ${previousSegment.id} cannot have different side codes.")
-      val combinedGeometry: Seq[Point] = GeometryUtils.truncateGeometry3D(Seq(previousSegment.geom.head, nextSegment.geom.last), startMValue, endMValue)
+      val combinedGeometry: Seq[Point] = GeometryUtils.truncateGeometry3D(Seq(previousSegment.geometry.head, nextSegment.geometry.last), startMValue, endMValue)
       val discontinuity = {
         if(nextSegment.endMValue > previousSegment.endMValue) {
           nextSegment.discontinuity
