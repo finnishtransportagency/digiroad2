@@ -24,6 +24,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   when(mockLinearAssetService.getPersistedAssetsByLinkIds(any[Int], any[Seq[Long]])).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 1, None, LinkGeomSource.NormalLinkInterface)))
   when(mockLinearAssetService.updateWithNewMeasures(Seq(any[Long]), any[Value], any[String], any[Option[Measures]], any[Option[Long]])).thenReturn(Seq(3.toLong))
   when(mockLinearAssetService.updateWithTimeStamp(Seq(any[Long]), any[Value], any[String], any[Option[Long]])).thenReturn(Seq(3.toLong))
+  when(mockLinearAssetService.create(Seq(any[NewLinearAsset]), any[Int], any[String], any[Long])).thenReturn(Seq(1.toLong))
 
   private val municipalityApi = new MunicipalityApi(mockLinearAssetService, mockRoadLinkService)
   addServlet(municipalityApi, "/*")
@@ -70,6 +71,14 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
     }
   }
 
+  test("create new asset", Tag("db")) {
+    val requestPayload = """[{"id": 1, "linkId": 1, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47", "geometryTimestamp": 0, "endMeasure": 200, "sideCode": 1, "properties" : [{"value" : 1, "name" : "lighting"}]}]"""
+
+    postJsonWithUserAuth("/235/lighting", requestPayload.getBytes, getAuthorizationHeader("kalpa", "kalpa")) {
+      status should be (200)
+    }
+  }
+
   test("create new asset without valid properties", Tag("db")) {
     val requestPayload = """[{"id": 1, "linkId": 1, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47", "geometryTimestamp": 0, "endMeasure": 200, "sideCode": 4, "properties" : []}]"""
 
@@ -77,24 +86,25 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
       status should be (400)
     }
   }
-  test("delete asset", Tag("db")){
-    deleteWithUserAuth("/235/lighting/1", getAuthorizationHeader("kalpa", "")) {
-      status should be (401)
+
+  test("asset is not created if the asset is longer than the road"){
+    val requestPayload = """[{"id": 1, "linkId": 1, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47", "geometryTimestamp": 2, "endMeasure": 1000, "sideCode": 1, "properties" : [{"value" : 1, "name" : "lighting"}]}]"""
+    postJsonWithUserAuth("/235/lighting", requestPayload.getBytes, getAuthorizationHeader("kalpa", "kalpa")) {
+      status should equal(422)
     }
   }
 
-  test("encode lighting limit") {
-    municipalityApi.linearAssetsToApi(Seq(PersistedLinearAsset(1, 2, SideCode.BothDirections.value, Some(NumericValue(1)), 0, 1, None, None, None, None, false, 100, 0, None, linkSource = NormalLinkInterface))) should be(Seq(Map(
-      "id" -> 1,
-      "properties" -> Seq(Map("value" -> Some(1), "name" -> "lighting")),
-      "linkId" -> 2,
-      "startMeasure" -> 0,
-      "endMeasure" -> 1,
-      "sideCode" -> 1,
-      "modifiedAt" -> None,
-      "createdAt" -> None,
-      "geometryTimestamp" -> 0
-    )))
+  test("asset is not created if one measure is less than 0"){
+    val requestPayload = """[{"id": 1, "linkId": 1, "startMeasure": -1, "createdAt": "01.08.2017 14:33:47", "geometryTimestamp": 2, "endMeasure": 200, "sideCode": 1, "properties" : [{"value" : 1, "name" : "lighting"}]}]"""
+    postJsonWithUserAuth("/235/lighting", requestPayload.getBytes, getAuthorizationHeader("kalpa", "kalpa")) {
+      status should equal(422)
+    }
+  }
+
+  test("delete asset with wrong authentication", Tag("db")){
+    deleteWithUserAuth("/235/lighting/1", getAuthorizationHeader("kalpa", "")) {
+      status should be (401)
+    }
   }
 
   test("asset is updated with newer timestamp and differing measures"){
@@ -137,5 +147,19 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
     putJsonWithUserAuth("/235/lighting/1", requestPayload.getBytes, getAuthorizationHeader("kalpa", "kalpa")) {
       status should equal(422)
     }
+  }
+
+  test("encode lighting limit") {
+    municipalityApi.linearAssetsToApi(Seq(PersistedLinearAsset(1, 2, SideCode.BothDirections.value, Some(NumericValue(1)), 0, 1, None, None, None, None, false, 100, 0, None, linkSource = NormalLinkInterface))) should be(Seq(Map(
+      "id" -> 1,
+      "properties" -> Seq(Map("value" -> Some(1), "name" -> "lighting")),
+      "linkId" -> 2,
+      "startMeasure" -> 0,
+      "endMeasure" -> 1,
+      "sideCode" -> 1,
+      "modifiedAt" -> None,
+      "createdAt" -> None,
+      "geometryTimestamp" -> 0
+    )))
   }
 }
