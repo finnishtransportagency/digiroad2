@@ -19,7 +19,7 @@ import org.scalatra._
 import org.scalatra.json._
 import org.slf4j.LoggerFactory
 
-case class LinkProperties(linkId: Long, functionalClass: Int, linkType: LinkType, trafficDirection: TrafficDirection)
+case class LinkProperties(linkId: Long, functionalClass: Int, linkType: LinkType, trafficDirection: TrafficDirection, administrativeClass: AdministrativeClass)
 
 case class ExistingLinearAsset(id: Long, linkId: Long)
 
@@ -67,6 +67,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     case s: SideCode => JInt(s.value)
   }))
 
+  case object LinkGeomSourceSerializer extends CustomSerializer[LinkGeomSource](format => ({
+    case JInt(lg) => LinkGeomSource.apply(lg.toInt)
+  }, {
+    case lg: LinkGeomSource => JInt(lg.value)
+  }))
+
   case object TrafficDirectionSerializer extends CustomSerializer[TrafficDirection](format => ( {
     case JString(direction) => TrafficDirection(direction)
   }, {
@@ -85,7 +91,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     case lt: LinkType => JInt(BigInt(lt.value))
   }))
 
-  protected implicit val jsonFormats: Formats = DefaultFormats + DateTimeSerializer + SideCodeSerializer + TrafficDirectionSerializer + LinkTypeSerializer + DayofWeekSerializer
+  case object AdministrativeClassSerializer extends CustomSerializer[AdministrativeClass](format => ( {
+    case JString(administrativeClass) => AdministrativeClass(administrativeClass)
+  }, {
+    case ac: AdministrativeClass => JString(ac.toString)
+  }))
+
+  protected implicit val jsonFormats: Formats = DefaultFormats + DateTimeSerializer + LinkGeomSourceSerializer + SideCodeSerializer + TrafficDirectionSerializer + LinkTypeSerializer + DayofWeekSerializer + AdministrativeClassSerializer
 
   before() {
     contentType = formats("json") + "; charset=utf-8"
@@ -139,7 +151,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         "bearing" -> stop.bearing,
         "validityPeriod" -> stop.validityPeriod,
         "floating" -> stop.floating,
-        "linkSource" -> stop.linkSource)
+        "linkSource" -> stop.linkSource.value)
     }
   }
 
@@ -250,6 +262,10 @@ Returns empty result as Json message, not as page not found
 
   get("/enumeratedPropertyValues/:assetTypeId") {
     assetPropertyService.getEnumeratedPropertyValues(params("assetTypeId").toLong)
+  }
+
+  get("/getAssetTypeMetadata/:assetTypeId") {
+    assetPropertyService.getAssetTypeMetadata(params("assetTypeId").toLong)
   }
 
   private def massTransitStopPositionParameters(parsedBody: JValue): (Option[Double], Option[Double], Option[Long], Option[Int]) = {
@@ -435,6 +451,20 @@ Returns empty result as Json message, not as page not found
     }
   }
 
+  private def extractIntValue(attributes: Map[String, Any], value: String) = {
+    attributes.get(value) match {
+      case Some(x) => x.asInstanceOf[Int]
+      case _ => None
+    }
+  }
+
+  private def extractLongValue(attributes: Map[String, Any], value: String) = {
+    attributes.get(value) match {
+      case Some(x) => x.asInstanceOf[Long]
+      case _ => None
+    }
+  }
+
   get("/roadlinks") {
     response.setHeader("Access-Control-Allow-Headers", "*")
     val user = userProvider.getCurrentUser()
@@ -505,7 +535,7 @@ Returns empty result as Json message, not as page not found
     val user = userProvider.getCurrentUser()
     def municipalityValidation(municipalityCode: Int) = validateUserMunicipalityAccess(user)(municipalityCode)
     properties.map { prop =>
-      roadLinkService.updateLinkProperties(prop.linkId, prop.functionalClass, prop.linkType, prop.trafficDirection, Option(user.username), municipalityValidation).map { roadLink =>
+      roadLinkService.updateLinkProperties(prop.linkId, prop.functionalClass, prop.linkType, prop.trafficDirection, prop.administrativeClass, Option(user.username), municipalityValidation).map { roadLink =>
         Map("linkId" -> roadLink.linkId,
           "points" -> roadLink.geometry,
           "administrativeClass" -> roadLink.administrativeClass.toString,
@@ -582,9 +612,9 @@ Returns empty result as Json message, not as page not found
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
       if(user.isServiceRoadMaintainer())
-        mapLinearAssets(linearAssetService.getByIntersectedBoundingBox(typeId, user.configuration.authorizedAreas, boundingRectangle, municipalities))
+        mapLinearAssets(linearAssetService.withRoadAddress(linearAssetService.getByIntersectedBoundingBox(typeId, user.configuration.authorizedAreas, boundingRectangle, municipalities)))
       else
-        mapLinearAssets(linearAssetService.getByBoundingBox(typeId, boundingRectangle, municipalities))
+        mapLinearAssets(linearAssetService.withRoadAddress(linearAssetService.getByBoundingBox(typeId, boundingRectangle, municipalities)))
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
     }
@@ -622,7 +652,12 @@ Returns empty result as Json message, not as page not found
           "modifiedBy" -> link.modifiedBy,
           "modifiedAt" -> link.modifiedDateTime,
           "createdBy" -> link.createdBy,
-          "createdAt" -> link.createdDateTime
+          "createdAt" -> link.createdDateTime,
+          "roadPartNumber" -> extractLongValue(link.attributes, "VIITE_ROAD_PART_NUMBER"),
+          "roadNumber" -> extractLongValue(link.attributes, "VIITE_ROAD_NUMBER"),
+          "track" -> extractIntValue(link.attributes, "VIITE_TRACK"),
+          "startAddrMValue" -> extractLongValue(link.attributes, "VIITE_START_ADDR"),
+          "endAddrMValue" ->  extractLongValue(link.attributes, "VIITE_END_ADDR")
         )
       }
     }
@@ -777,7 +812,7 @@ Returns empty result as Json message, not as page not found
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      speedLimitService.get(boundingRectangle, municipalities).map { linkPartition =>
+      speedLimitService.withRoadAddress(speedLimitService.get(boundingRectangle, municipalities)).map { linkPartition =>
         linkPartition.map { link =>
           Map(
             "id" -> (if (link.id == 0) None else Some(link.id)),
@@ -792,7 +827,12 @@ Returns empty result as Json message, not as page not found
             "modifiedAt" -> link.modifiedDateTime,
             "createdBy" -> link.createdBy,
             "createdAt" -> link.createdDateTime,
-            "linkSource" -> link.linkSource.value
+            "linkSource" -> link.linkSource.value,
+            "roadPartNumber" -> extractLongValue(link.attributes, "VIITE_ROAD_PART_NUMBER"),
+            "roadNumber" -> extractLongValue(link.attributes, "VIITE_ROAD_NUMBER"),
+            "track" -> extractIntValue(link.attributes, "VIITE_TRACK"),
+            "startAddrMValue" -> extractLongValue(link.attributes, "VIITE_START_ADDR"),
+            "endAddrMValue" ->  extractLongValue(link.attributes, "VIITE_END_ADDR")
           )
         }
       }

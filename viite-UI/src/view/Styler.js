@@ -26,16 +26,21 @@
      * @param roadClass The roadLink roadClass.
      * @param anomaly The roadLink anomaly value (if 1 then this is an anomalous roadlink).
      * @param constructionType The roadLink constructionType.
+     * @param roadLinkType Describes what is the type of the roadLink.
+     * @param gapTransfering Indicates if said link is in a gapTransfering process.
+     * @param roadLinkSource Indicates what is the source of said road.
      * @returns {string} The default solid color of a line in the RGBA format.
      */
-    var generateStrokeColor = function (roadClass, anomaly, constructionType, roadLinkType, gapTransfering) {
+    var generateStrokeColor = function (roadClass, anomaly, constructionType, roadLinkType, gapTransfering, roadLinkSource) {
       if (anomaly !== 1) {
         if(roadLinkType === -1){
-          if(constructionType === 1  ) {
+          if(constructionType === 1) {
             return 'rgba(164, 164, 162, 0.65)';
           } else {
             return 'rgba(247, 254, 46, 0.45)';
           }
+        } else  if(roadLinkSource === LINKSOURCE_SURAVAGE) {
+          return 'rgba(211, 175, 246, 0.65)';
         } else {
           switch (roadClass) {
             case 1 : return 'rgba(255, 0, 0, 0.65)';
@@ -45,7 +50,7 @@
             case 5 : return 'rgba(51, 204, 204, 0.65)';
             case 6 : return 'rgba(224, 29, 217, 0.65)';
             case 7 : return 'rgba(0, 204, 221, 0.65)';
-            case 8 : return 'rgba(136, 136, 136, 0.65)';
+            case 8 : return 'rgba(252, 109, 160, 0.65)';
             case 9 : return 'rgba(255, 85, 221, 0.65)';
             case 10 : return 'rgba(255, 85, 221, 0.65)';
             case 11 : return 'rgba(68, 68, 68, 0.75)';
@@ -75,7 +80,9 @@
      */
     var determineZIndex = function (roadLinkType, anomaly, roadLinkSource, projectLinkStatus){
       var zIndex = 0;
-      if(roadLinkSource === LINKSOURCE_COMPLEM){
+      if(roadLinkSource === LINKSOURCE_SURAVAGE) {
+        zIndex = 9;
+      } else if(roadLinkSource === LINKSOURCE_COMPLEM){
         zIndex = 8;
       } else if (anomaly === 0) {
         if (roadLinkType === LINKTYPE_UNKNOWN)
@@ -185,7 +192,7 @@
     var generateStyleByFeature = function(roadLinkData, currentZoom, notSelection){
       var strokeWidth = strokeWidthByZoomLevel(currentZoom, roadLinkData.roadLinkType, roadLinkData.anomaly, roadLinkData.roadLinkSource, notSelection, roadLinkData.constructionType);
       //Gray line behind all of the styles present in the layer.
-      var underLineColor = generateStrokeColor(99, roadLinkData.anomaly, roadLinkData.constructionType, roadLinkData.roadLinkType, roadLinkData.gapTransfering);
+      var underLineColor = generateStrokeColor(99, roadLinkData.anomaly, roadLinkData.constructionType, roadLinkData.roadLinkType, roadLinkData.gapTransfering, roadLinkData.roadLinkSource);
       //If the line we need to generate is a dashed line, middleLineColor will be the white one sitting behind the dashed/colored line and above the border and grey lines
       var middleLineColor;
       var adminClassColor;
@@ -194,7 +201,7 @@
       var borderCap;
       var middleLineCap;
       var adminClassWidth;
-      var lineColor = generateStrokeColor(roadLinkData.roadClass, roadLinkData.anomaly, roadLinkData.constructionType, roadLinkData.roadLinkType, roadLinkData.gapTransfering);
+      var lineColor = generateStrokeColor(roadLinkData.roadClass, roadLinkData.anomaly, roadLinkData.constructionType, roadLinkData.roadLinkType, roadLinkData.gapTransfering, roadLinkData.roadLinkSource);
       if(roadLinkData.roadClass >= 7 && roadLinkData.roadClass <= 10 ){
         borderColor = lineColor;
         middleLineColor = generateStrokeColor(98,  roadLinkData.anomaly, roadLinkData.constructionType, roadLinkData.roadLinkType, roadLinkData.gapTransfering);

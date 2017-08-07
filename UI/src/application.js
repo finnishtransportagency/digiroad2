@@ -83,6 +83,7 @@
         assetGroups
     );
 
+    RoadAddressInfoDataInitializer.initialize(isExperimental);
     MassTransitStopForm.initialize(backend);
     SpeedLimitForm.initialize(selectedSpeedLimit);
     WorkListView.initialize(backend);
@@ -211,6 +212,8 @@
      PointAssetForm.initialize(pointAsset.selectedPointAsset, pointAsset.layerName, pointAsset.formLabels);
     });
 
+    var roadAddressInfoPopup = new RoadAddressInfoPopup(map);
+
     var linearAssetLayers = _.reduce(linearAssets, function(acc, asset) {
      acc[asset.layerName] = new LinearAssetLayer({
        map: map,
@@ -222,9 +225,10 @@
        layerName: asset.layerName,
        multiElementEventCategory: asset.multiElementEventCategory,
        singleElementEventCategory: asset.singleElementEventCategory,
-       style: PiecewiseLinearAssetStyle(applicationModel),
+       style: asset.style || new PiecewiseLinearAssetStyle(),
        formElements: AssetFormElementsFactory.construct(asset),
-       assetLabel: asset.label
+       assetLabel: asset.label,
+       roadAddressInfoPopup: roadAddressInfoPopup
      });
      return acc;
     }, {});
@@ -240,15 +244,16 @@
        style: PointAssetStyle(asset.layerName),
        mapOverlay: mapOverlay,
        layerName: asset.layerName,
-       newAsset: asset.newAsset
+       newAsset: asset.newAsset,
+       roadAddressInfoPopup: roadAddressInfoPopup
      });
      return acc;
     }, {});
 
     var layers = _.merge({
       road: roadLayer,
-      linkProperty: new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel),
-       massTransitStop: new MassTransitStopLayer(map, models.roadCollection, mapOverlay, new AssetGrouping(applicationModel), roadLayer),
+      linkProperty: new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel, roadAddressInfoPopup),
+       massTransitStop: new MassTransitStopLayer(map, models.roadCollection, mapOverlay, new AssetGrouping(applicationModel), roadLayer, roadAddressInfoPopup),
        speedLimit: new SpeedLimitLayer({
        map: map,
        application: applicationModel,
@@ -256,7 +261,8 @@
        selectedSpeedLimit: models.selectedSpeedLimit,
        backend: backend,
        style: SpeedLimitStyle(applicationModel),
-       roadLayer: roadLayer
+       roadLayer: roadLayer,
+       roadAddressInfoPopup: roadAddressInfoPopup
        }),
        manoeuvre: new ManoeuvreLayer(applicationModel, map, roadLayer, models.selectedManoeuvreSource, models.manoeuvresCollection, models.roadCollection)
 
@@ -300,6 +306,8 @@
     var massTransitBox = new ActionPanelBoxes.AssetBox(selectedMassTransitStopModel);
     var speedLimitBox = new ActionPanelBoxes.SpeedLimitBox(selectedSpeedLimit);
     var manoeuvreBox = new ManoeuvreBox();
+    var winterSpeedLimits = new ActionPanelBoxes.WinterSpeedLimitBox(_.find(linearAssets, {typeId: assetType.winterSpeedLimit}));
+    var serviceRoadBox = new ActionPanelBoxes.ServiceRoadBox(_.find(linearAssets, {typeId: assetType.maintenanceRoad}));
 
     return [
       [roadLinkBox],
@@ -310,8 +318,8 @@
           .concat(getLinearAsset(assetType.massTransitLane))
           .concat(getLinearAsset(assetType.europeanRoads))
           .concat(getLinearAsset(assetType.exitNumbers)),
-      [speedLimitBox]
-          .concat(getLinearAsset(assetType.winterSpeedLimit)),
+      [speedLimitBox].concat(
+      [winterSpeedLimits]),
       [massTransitBox]
           .concat(getPointAsset(assetType.obstacles))
           .concat(getPointAsset(assetType.railwayCrossings))
@@ -332,7 +340,7 @@
         .concat(getLinearAsset(assetType.heightLimit))
         .concat(getLinearAsset(assetType.lengthLimit))
         .concat(getLinearAsset(assetType.widthLimit)),
-      [].concat(getLinearAsset(assetType.maintenanceRoad))
+      [].concat([serviceRoadBox])
     ];
 
     function getLinearAsset(typeId) {

@@ -19,7 +19,7 @@ case class TrafficLight(id: Long, linkId: Long,
                               createdAt: Option[DateTime] = None,
                               modifiedBy: Option[String] = None,
                               modifiedAt: Option[DateTime] = None,
-                              linkSource: Int) extends PersistedPointAsset
+                              linkSource: LinkGeomSource) extends PersistedPointAsset
 
 case class TrafficLightToBePersisted(linkId: Long, lon: Double, lat: Double, mValue: Double, municipalityCode: Int, createdBy: String)
 
@@ -53,7 +53,7 @@ object OracleTrafficLightDao {
       val modifiedDateTime = r.nextTimestampOption().map(timestamp => new DateTime(timestamp))
       val linkSource = r.nextInt()
 
-      TrafficLight(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, createdBy, createdDateTime, modifiedBy, modifiedDateTime, linkSource = linkSource)
+      TrafficLight(id, linkId, point.x, point.y, mValue, floating, vvhTimeStamp, municipalityCode, createdBy, createdDateTime, modifiedBy, modifiedDateTime, linkSource = LinkGeomSource(linkSource))
     }
   }
 

@@ -287,7 +287,8 @@
       var styleMaps = {
         'functional-class': {
           'default': roadClassDefaultStyleMap,
-          'select': roadClassSelectionStyleMap
+          'select': roadClassSelectionStyleMap,
+          'suravage':roadClassDefaultStyleMap
         }
       };
       return styleMaps[dataset][renderIntent];

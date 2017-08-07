@@ -38,13 +38,13 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
     1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
   when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(roadLinkWithLinkSource), Nil))
-  when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[Int])).thenReturn((List(roadLinkWithLinkSource), Nil))
+  when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[Int])).thenReturn((List(roadLinkWithLinkSource), Nil))
   when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[Long], any[Boolean])).thenReturn(Some(roadLinkWithLinkSource))
 
 
   val mockLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
   when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(30, Seq(1), "mittarajoitus"))
-    .thenReturn(Seq(PersistedLinearAsset(1, 1, 1, Some(NumericValue(40000)), 0.4, 9.6, None, None, None, None, false, 30, 0, None)))
+    .thenReturn(Seq(PersistedLinearAsset(1, 1, 1, Some(NumericValue(40000)), 0.4, 9.6, None, None, None, None, false, 30, 0, None, LinkGeomSource.NormalLinkInterface)))
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val linearAssetDao = new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
 
@@ -458,7 +458,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       sqlu"""insert into asset_link (asset_id, position_id) values (3,3)""".execute
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) values (3,3,(select id from property where public_id = 'mittarajoitus'),1)""".execute
 
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[Int])).thenReturn((newRoadLinks, changeInfo))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[Int])).thenReturn((newRoadLinks, changeInfo))
 
       linearAssetService.getByMunicipality(assetTypeId, municipalityCode)
 
@@ -1623,7 +1623,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
   test("Paving asset changes: outdated") {
     def createPaving(id: Long, linkId: Long, value: Option[Value], vvhTimeStamp: Long) = {
       PersistedLinearAsset(id, linkId, SideCode.BothDirections.value,
-        value, 0.0, 20.0, None, None, None, None, expired = false, 110, vvhTimeStamp, None)
+        value, 0.0, 20.0, None, None, None, None, expired = false, 110, vvhTimeStamp, None, LinkGeomSource.NormalLinkInterface)
     }
     val municipalityCode = 564
     val roadLinks = createRoadLinks(municipalityCode)
@@ -1660,7 +1660,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
   test("Paving asset changes: override not affected") {
     def createPaving(id: Long, linkId: Long, value: Option[Value], vvhTimeStamp: Long) = {
       PersistedLinearAsset(id, linkId, SideCode.BothDirections.value,
-        value, 0.0, 20.0, None, None, None, None, expired = false, 110, vvhTimeStamp, None)
+        value, 0.0, 20.0, None, None, None, None, expired = false, 110, vvhTimeStamp, None, LinkGeomSource.NormalLinkInterface)
     }
     val municipalityCode = 564
     val roadLinks = createRoadLinks(municipalityCode)
@@ -1693,7 +1693,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
   test("Paving asset changes: stability test") {
     def createPaving(id: Long, linkId: Long, value: Option[Value], vvhTimeStamp: Long) = {
       PersistedLinearAsset(id, linkId, SideCode.BothDirections.value,
-        value, 0.0, 20.0, None, None, None, None, expired = false, 110, vvhTimeStamp, None)
+        value, 0.0, 20.0, None, None, None, None, expired = false, 110, vvhTimeStamp, None, LinkGeomSource.NormalLinkInterface)
     }
     val municipalityCode = 564
     val roadLinks = createRoadLinks(municipalityCode)

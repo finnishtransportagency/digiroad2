@@ -9,12 +9,13 @@
       selectedAsset = params.selectedAsset,
       mapOverlay = params.mapOverlay,
       layerName = params.layerName,
-      newAsset = params.newAsset;
+      newAsset = params.newAsset,
+      roadAddressInfoPopup = params.roadAddressInfoPopup;
 
     Layer.call(this, layerName, roadLayer);
     var me = this;
     me.minZoomForContent = zoomlevels.minZoomForAssets;
-
+    var extraEventListener = _.extend({running: false}, eventbus);
     var vectorSource = new ol.source.Vector();
     var vectorLayer = new ol.layer.Vector({
        source : vectorSource,
@@ -203,9 +204,16 @@
       eventListener.listenTo(eventbus, layerName + ':unselected', handleUnSelected);
       eventListener.listenTo(eventbus, layerName + ':changed', handleChanged);
       eventListener.listenTo(eventbus, 'application:readOnly', toggleMode);
-      eventListener.listenTo(eventbus, 'withComplementary:show', showWithComplementary);
-      eventListener.listenTo(eventbus, 'withComplementary:hide', hideComplementary);
     }
+
+    var startListeningExtraEvents = function(){
+      extraEventListener.listenTo(eventbus, 'withComplementary:show', showWithComplementary);
+      extraEventListener.listenTo(eventbus, 'withComplementary:hide', hideComplementary);
+    };
+
+    var stopListeningExtraEvents = function(){
+      extraEventListener.stopListening(eventbus);
+    };
 
     function handleCreationCancelled() {
       mapOverlay.hide();
@@ -286,7 +294,9 @@
     }
 
     function show(map) {
+      startListeningExtraEvents();
       vectorLayer.setVisible(true);
+      roadAddressInfoPopup.start();
       me.refreshView();
       me.show(map);
     }
@@ -300,6 +310,8 @@
     function hide() {
       selectedAsset.close();
       vectorLayer.setVisible(false);
+      roadAddressInfoPopup.stop();
+      stopListeningExtraEvents();
       me.stop();
       me.hide();
     }

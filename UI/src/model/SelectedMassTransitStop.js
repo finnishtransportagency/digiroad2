@@ -262,19 +262,34 @@
     };
 
     var validateDirectionsForSave = function () {
-        if(roadCollection) {
-            var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), currentAsset.payload.lon, currentAsset.payload.lat);
-            var linkId = nearestLine.linkId;
+      if(roadCollection){
+        var roadLinkDirection = getRoadLinkDirection();
+        var massTransitStopDirection =  currentAsset.payload.validityDirection;
+        return roadLinkDirection === 1 || roadLinkDirection === massTransitStopDirection;
+      }else{
+        return false;
+      }
+    };
 
-            var massTransitStopDirection =  currentAsset.payload.validityDirection;
-            if (!currentAsset.linkId)
-                currentAsset.linkId = linkId;
-            var directions_decode = {BothDirections: 1, TowardsDigitizing: 2, AgainstDigitizing: 3};
-            var roadLinkDirection = directions_decode[nearestLine.trafficDirection];
-            return roadLinkDirection === 1 || roadLinkDirection === massTransitStopDirection;
-        }else{
-          return false;
-        }
+    var validateDirectionsForCreation = function () {
+      if(roadCollection){
+        var roadLinkDirection = getRoadLinkDirection();
+        var massTransitStopDirection = currentAsset.payload.validityDirection;
+        if(roadLinkDirection != 1)
+          return massTransitStopDirection != roadLinkDirection;
+        return true;
+      }else{
+        return false;
+      }
+    };
+
+    var getRoadLinkDirection = function(){
+      var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), currentAsset.payload.lon, currentAsset.payload.lat);
+      var linkId = nearestLine.linkId;
+      if (!currentAsset.linkId)
+        currentAsset.linkId = linkId;
+      var directions_decode = {BothDirections: 1, TowardsDigitizing: 2, AgainstDigitizing: 3};
+      return directions_decode[nearestLine.trafficDirection];
     };
 
     var switchDirection = function() {
@@ -347,6 +362,10 @@
 
     var getFloatingReason = function(){
       return getPropertyValue({ propertyData: getProperties() }, 'kellumisen_syy');
+    };
+
+    var getEndDate = function(){
+      return getPropertyValue({ propertyData: getProperties() }, 'viimeinen_voimassaolopaiva');
     };
 
     var get = function(key) {
@@ -458,7 +477,9 @@
       isAdminClassState: isAdminClassState,
       isAdministratorELY: isAdministratorELY,
       isAdministratorHSL: isAdministratorHSL,
-      validateDirectionsForSave : validateDirectionsForSave
+      validateDirectionsForSave : validateDirectionsForSave,
+      validateDirectionsForCreation: validateDirectionsForCreation,
+      getEndDate: getEndDate
     };
   };
 

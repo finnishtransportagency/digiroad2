@@ -6,10 +6,12 @@
     var projectinfo;
     var currentProject;
     var fetchedProjectLinks = [];
+    var fetchedSuravageProjectLinks = [];
     var roadAddressProjectLinks = [];
     var dirtyProjectLinkIds = [];
     var dirtyProjectLinks = [];
     var self = this;
+    var publishableProject = false;
     var STATUS_NOT_HANDLED = 0;
     var STATUS_TERMINATED = 1;
     var BAD_REQUEST_400 = 400;
@@ -21,6 +23,18 @@
       return _.flatten(fetchedProjectLinks);
     };
 
+    var projectSuravageLinks = function () {
+      return _.flatten(fetchedSuravageProjectLinks);
+    };
+
+    this.getProjectLinks = function() {
+      return _.flatten(fetchedProjectLinks);
+    };
+    
+    this.getSuravageProjectLinks = function(){
+      return _.flatten(fetchedSuravageProjectLinks);
+    };
+
     this.getAll = function () {
       return _.map(projectLinks(), function(projectLink) {
         return projectLink.getData();
@@ -29,6 +43,10 @@
 
     this.reset = function(){
       fetchedProjectLinks = [];
+    };
+    
+    this.resetSuravage = function () {
+      fetchedSuravageProjectLinks = [];
     };
 
     this.getMultiSelectIds = function (linkId) {
@@ -57,9 +75,16 @@
               return new ProjectLinkModel(projectLink);
             });
           });
-          eventbus.trigger('roadAddressProject:fetched', self.getAll());
-          if(isPublishable) {
-            eventbus.trigger('roadAddressProject:publishable');
+          publishableProject = isPublishable;
+
+          var separated = _.partition(self.getAll(), function(projectRoad){
+            return projectRoad.roadLinkSource === 3;
+          });
+          fetchedSuravageProjectLinks = separated[0];
+          var nonSuravageProjectRoads = separated[1];
+          eventbus.trigger('roadAddressProject:fetched', nonSuravageProjectRoads);
+          if(fetchedSuravageProjectLinks.length !== 0){
+            eventbus.trigger('suravageroadAddressProject:fetched',fetchedSuravageProjectLinks);
           }
         });
     };
@@ -79,6 +104,7 @@
           id: result.project.id,
           publishable: result.publishable
         };
+        publishableProject = result.publishable;
         eventbus.trigger('roadAddressProject:projectFetched', projectinfo);
       });
     };
@@ -200,6 +226,47 @@
       });
     };
 
+    this.createProjectLinks = function(toBeCreatedLinks) {
+      console.log("Create Project Links called");
+      applicationModel.addSpinner();
+      var linkIds = _.unique(_.map(toBeCreatedLinks,function (t){
+        if(!_.isUndefined(t.linkId)){
+          return t.linkId;
+        } else return t;
+      }));
+      var projectId = projectinfo.id;
+
+      var data = [linkIds,
+        projectId,
+        Number($('#roadAddressProject').find('#tie')[0].value),
+        Number($('#roadAddressProject').find('#osa')[0].value),
+        Number($('#roadAddressProject').find('#ajr')[0].value),
+        Number($('#roadAddressProject').find('#DiscontinuityDropdown')[0].value)
+      ];
+      backend.insertNewRoadLink(data, function(successObject) {
+        if (!successObject.success) {
+          new ModalConfirm(successObject.errormessage);
+          applicationModel.removeSpinner();
+        } else {
+          eventbus.trigger('projectLink:projectLinksCreateSuccess');
+          eventbus.trigger('roadAddress:projectLinksCreateSuccess');
+        }
+      });
+    };
+
+    this.changeNewProjectLinkDirection = function (projectId, selectedLinks){
+      applicationModel.addSpinner();
+      var data = [projectId, selectedLinks[0].roadNumber, selectedLinks[0].roadPartNumber] ;
+       backend.directionChangeNewRoadlink(data, function(successObject) {
+           if (!successObject.success) {
+            eventbus.trigger('roadAddress:changeDirectionFailed', successObject.errorMessage);
+               applicationModel.removeSpinner();
+           } else {
+               eventbus.trigger('changeProjectDirection:clicked');
+           }
+        });
+    };
+
     this.publishProject = function() {
       backend.sendProjectToTR(projectinfo.id, function(result) {
         console.log("Success");
@@ -297,6 +364,10 @@
 
     this.getCurrentProject = function(){
       return currentProject;
+    };
+
+    this.getPublishableStatus = function () {
+      return publishableProject;
     };
 
 

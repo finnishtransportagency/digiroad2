@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite.util
 
 import java.util.Properties
 
-import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.SqlScriptRunner
 import fi.liikennevirasto.digiroad2._
@@ -172,11 +172,11 @@ object DataFixture {
       }
 
     //For each municipality get all VVH Roadlinks
-    municipalities.foreach { municipality =>
+    municipalities.par.foreach { municipality =>
       println("Start processing municipality %d".format(municipality))
 
       //Obtain all RoadLink by municipality and change info from VVH
-      val (roadLinks, changedRoadLinks) = roadLinkService.reloadRoadLinksAndChangesFromVVH(municipality.toInt)
+      val (roadLinks, changedRoadLinks) = roadLinkService.getRoadLinksAndChangesFromVVH(municipality.toInt)
       println ("Total roadlink for municipality " + municipality + " -> " + roadLinks.size)
       println ("Total of changes for municipality " + municipality + " -> " + changedRoadLinks.size)
       if(roadLinks.nonEmpty) {
@@ -185,9 +185,16 @@ object DataFixture {
           RoadAddressDAO.fetchByLinkId(roadLinks.map(_.linkId).toSet)
         }
         try {
-          roadAddressService.applyChanges(roadLinks, changedRoadLinks, roadAddresses.groupBy(_.linkId))
+          val groupedAddresses = roadAddresses.groupBy(_.linkId)
+          val timestamps = groupedAddresses.mapValues(_.map(_.adjustedTimestamp).min)
+          val affectingChanges = changedRoadLinks.filter(ci =>
+            ci.oldId.nonEmpty && timestamps.get(ci.oldId.get).nonEmpty &&
+              ci.affects(ci.oldId.get, timestamps(ci.oldId.get)))
+          println ("Affecting changes for municipality " + municipality + " -> " + affectingChanges.size)
+
+          roadAddressService.applyChanges(roadLinks, affectingChanges, groupedAddresses)
         } catch {
-          case e: Exception => println("ERR! -> " + e)
+          case e: Exception => println("ERR! -> " + e.getMessage)
         }
       }
 
@@ -196,6 +203,39 @@ object DataFixture {
 
   }
 
+  private def updateRoadAddressGeometrySource(): Unit = {
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+
+    //Get All Roads
+    val roads: Seq[Long] =
+      OracleDatabase.withDynTransaction {
+        RoadAddressDAO.getCurrentValidRoadNumbers()
+      }
+
+    //For each municipality get all VVH Roadlinks
+    roads.par.foreach { road =>
+      println("%d: Fetch road addresses for road #%d".format(road, road))
+      OracleDatabase.withDynTransaction {
+        val roadAddressSeq = RoadAddressDAO.fetchByRoad(road)
+        // Floating addresses are ignored
+        val linkIds = roadAddressSeq.map(_.linkId).toSet
+        println("%d: %d address rows fetched on %d links".format(road, roadAddressSeq.size, linkIds.size))
+        val cacLinks = roadLinkService.getCurrentAndComplementaryVVHRoadLinks(linkIds)
+          .map(rl => rl.linkId -> rl.linkSource).toMap
+        // If not present in current and complementary, check the historic links, too
+        val vvhHistoryLinks = roadLinkService.getViiteRoadLinksHistoryFromVVH(linkIds -- cacLinks.keySet)
+          .map(rl => rl.linkId -> LinkGeomSource.HistoryLinkInterface).toMap
+        val vvhLinks = cacLinks ++ vvhHistoryLinks
+        val updated = roadAddressSeq
+          .filterNot(ra => vvhLinks.getOrElse(ra.linkId, ra.linkGeomSource) == ra.linkGeomSource)
+          .count(ra =>
+            RoadAddressDAO.updateLRM(ra.lrmPositionId, vvhLinks(ra.linkId))
+          )
+        println("%d: %d addresses updated".format(road, updated))
+      }
+    }
+
+  }
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
@@ -234,9 +274,12 @@ object DataFixture {
         importRoadAddressChangeTestData()
       case Some ("apply_change_information_to_road_address_links") =>
         applyChangeInformationToRoadAddressLinks()
+      case Some ("update_road_address_link_source") =>
+        updateRoadAddressGeometrySource()
       case _ => println("Usage: DataFixture import_road_addresses | recalculate_addresses | update_missing | " +
         "find_floating_road_addresses | import_complementary_road_address | fuse_multi_segment_road_addresses " +
-        "| update_road_addresses_geometry_no_complementary | update_road_addresses_geometry | import_road_address_change_test_data")
+        "| update_road_addresses_geometry_no_complementary | update_road_addresses_geometry | import_road_address_change_test_data "+
+        "| apply_change_information_to_road_address_links | update_road_address_link_source")
     }
   }
 }

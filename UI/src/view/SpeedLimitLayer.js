@@ -5,8 +5,10 @@ window.SpeedLimitLayer = function(params) {
       selectedSpeedLimit = params.selectedSpeedLimit,
       roadLayer = params.roadLayer,
       style = params.style,
-      layerName = 'speedLimit';
+      layerName = 'speedLimit',
+      roadAddressInfoPopup= params.roadAddressInfoPopup;
   var isActive = false;
+  var extraEventListener = _.extend({running: false}, eventbus);
 
   Layer.call(this, layerName, roadLayer);
   this.activateSelection = function() {
@@ -289,8 +291,15 @@ window.SpeedLimitLayer = function(params) {
     eventListener.listenTo(eventbus, 'speedLimits:drawSpeedLimitsHistory', drawSpeedLimitsHistory);
     eventListener.listenTo(eventbus, 'speedLimits:hideSpeedLimitsHistory', hideSpeedLimitsHistory);
     eventListener.listenTo(eventbus, 'speedLimits:showSpeedLimitsHistory', showSpeedLimitsHistory);
-    eventListener.listenTo(eventbus, 'speedLimits:hideSpeedLimitsComplementary', hideSpeedLimitsComplementary);
-    eventListener.listenTo(eventbus, 'speedLimits:showSpeedLimitsComplementary', showSpeedLimitsComplementary);
+  };
+
+  var startListeningExtraEvents = function(){
+    extraEventListener.listenTo(eventbus, 'speedLimits:hideSpeedLimitsComplementary', hideSpeedLimitsComplementary);
+    extraEventListener.listenTo(eventbus, 'speedLimits:showSpeedLimitsComplementary', showSpeedLimitsComplementary);
+  };
+
+  var stopListeningExtraEvents = function(){
+    extraEventListener.stopListening(eventbus);
   };
 
   var showSpeedLimitsHistory = function() {
@@ -513,8 +522,10 @@ window.SpeedLimitLayer = function(params) {
   };
 
   var show = function(map) {
+    startListeningExtraEvents();
     vectorLayer.setVisible(true);
     indicatorLayer.setVisible(true);
+    roadAddressInfoPopup.start();
     me.show(map);
   };
 
@@ -525,6 +536,8 @@ window.SpeedLimitLayer = function(params) {
     vectorLayer.setVisible(false);
     vectorLayerHistory.setVisible(false);
     indicatorLayer.setVisible(false);
+    stopListeningExtraEvents();
+    roadAddressInfoPopup.stop();
     me.stop();
     me.hide();
   };

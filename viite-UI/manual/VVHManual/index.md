@@ -490,6 +490,7 @@ Muut ominaisuustiedot:
 |Kohdeluokka (MTKCLASS)|Koodiarvo|Valitaan alasvetovalikosta tai annetaan koodiarvo. Vastaa MML:n kohdeluokkaa. VVH:ssa annetaan vain arvoja null ja 12314 K&auml;vely- ja/tai py&ouml;r&auml;tie|null|
 |Tienumero (ROADNUMBER)|Kokonaisluku||null|
 |Tieosanumero (ROADPARTNUMBER)|Kokonaisluku||null|
+|Ajoratakoodi (TRACK_CODE)|Kokonaisluku||null|
 |P&auml;&auml;llystetieto (SURFACETYPE)|Koodiarvo|Valitaan alasvetovalikosta tai annetaan koodiarvo|null|
 |Sijaintitarkkuus (HORIZONTALACCURACY)|Koodiarvo|Valitaan alasvetovalikosta, esim. 0,5 m tai annetaan koodiarvo|null|
 |Korkeustarkkuus (VERTICALACCURACY)|Koodiarvo|Valitaan alasvetovalikosta, esim. 0,5 m tai annetaan koodiarvo|null|
@@ -509,7 +510,10 @@ Muut ominaisuustiedot:
 |Tien nimi (ruotsi) (ROADNAME_SE)|Tekstikentt&auml;||null|
 |Tien nimi (saame) (ROADNAME_SM)|Tekstikentt&auml;||null|
 |MTKHEREFLIP|Koodiarvo|T&auml;ydennet&auml;&auml;n automaattisesti, checkin k&auml;&auml;nt&auml;&auml; geometrian digitointisuunnan tarvittaessa, jotta se vastaa ns. Here-flip -s&auml;&auml;nt&ouml;&auml;. Kentt&auml; tulee mukaan vasta checkin-vaiheessa||
-
+|CUST_CLASS|Tekstikentt&auml;|K&auml;yt&ouml;ss&auml; Tampereen t&auml;ydent&auml;vill&auml; geometrioilla, ei Suravagessa||
+|CUST_ID_STR|Tekstikentt&auml;|K&auml;yt&ouml;ss&auml; Tampereen t&auml;ydent&auml;vill&auml; geometrioilla, ei Suravagessa||
+|CUST_ID_NUM|Kokonaisluku|K&auml;yt&ouml;ss&auml; Tampereen t&auml;ydent&auml;vill&auml; geometrioilla, ei Suravagessa||
+|CUST_OWNER|Koodiarvo|K&auml;yt&ouml;ss&auml; Tampereen t&auml;ydent&auml;vill&auml; geometrioilla, ei Suravagessa||
 
 3.4.5 Ty&ouml;solmun ominaisuustiedot
 --------------------------

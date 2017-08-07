@@ -5,18 +5,34 @@ import org.joda.time.DateTime
 import fi.liikennevirasto.digiroad2.Point
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing, Unknown}
 import fi.liikennevirasto.digiroad2.util.Track
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 
 
 case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track, discontinuity: Int, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
-                       endDate: Option[DateTime] = None, lrmPositionId: Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode, floating: Boolean = false,
-                       geom: Seq[Point], expired: Boolean, createdBy: Option[String], createdDate: Option[DateTime], modifiedDate: Option[DateTime])
+                       endDate: Option[DateTime] = None, lrmPositionId: Long, linkId: Long,
+                       startMValue: Double, endMValue: Double, sideCode: SideCode, floating: Boolean = false, geom: Seq[Point],
+                       expired: Boolean, createdBy: Option[String], createdDate: Option[DateTime], modifiedDate: Option[DateTime]) {
+  def addressMValueToLRM(addrMValue: Long): Option[Double] = {
+    if (addrMValue < startAddrMValue || addrMValue > endAddrMValue)
+      None
+    else
+    // Linear approximation: addrM = a*mValue + b <=> mValue = (addrM - b) / a
+    sideCode match {
+      case TowardsDigitizing => Some((addrMValue - startAddrMValue) * lrmLength / addressLength + startMValue)
+      case AgainstDigitizing => Some(endMValue - (addrMValue - startAddrMValue) * lrmLength / addressLength)
+      case _ => None
+    }
+  }
+  private val addressLength: Long = endAddrMValue - startAddrMValue
+  private val lrmLength: Double = Math.abs(endMValue - startMValue)
+}
 
 case class RoadAddressRow(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track, discontinuity: Int, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
-                       endDate: Option[DateTime] = None, lrmPositionId: Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode, floating: Boolean = false,
-                       geom: Seq[Point], expired: Boolean, createdBy: Option[String], createdDate: Option[DateTime], modifiedDate: Option[DateTime])
+                          endDate: Option[DateTime] = None, lrmPositionId: Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode, floating: Boolean = false,
+                          geom: Seq[Point], expired: Boolean, createdBy: Option[String], createdDate: Option[DateTime], modifiedDate: Option[DateTime])
 
 class RoadAddressDAO {
 
@@ -50,12 +66,59 @@ class RoadAddressDAO {
       case (_) => " "
     }
     query + s" WHERE pos.link_id = $linkId AND pos.start_Measure <= $startM AND pos.end_Measure > $endM " +
-            s" and (ra.valid_to > sysdate or ra.valid_to is null)" + qfilter
+      s" and (ra.valid_to > sysdate or ra.valid_to is null) " + qfilter
+  }
+
+  def withRoadAddressSinglePart(roadNumber: Long, startRoadPartNumber: Long, track: Int, startM: Long, endM: Option[Long], optFloating: Option[Int] = None)(query: String): String = {
+    val floating = optFloating match {
+      case Some(floatingValue) => "ra.floating = " + floatingValue + ""
+      case None => ""
+    }
+
+    val endAddr = endM match {
+      case Some(endValue) => s"AND ra.start_addr_m <= $endValue"
+      case _ => ""
+    }
+
+    query + s" where ra.road_number = $roadNumber " +
+      s" AND (ra.road_part_number = $startRoadPartNumber AND ra.end_addr_m >= $startM $endAddr) " +
+      s" AND ra.TRACK_CODE = $track " +
+      s" AND (ra.valid_to IS NULL OR ra.valid_to > sysdate) " +
+      s" AND (ra.valid_from IS NULL OR ra.valid_from <= sysdate) " + floating +
+      s" ORDER BY ra.road_number, ra.road_part_number, ra.track_code, ra.start_addr_m "
+  }
+
+  def withRoadAddressTwoParts(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long, track: Int, startM: Long, endM: Long, optFloating: Option[Int] = None)(query: String): String = {
+    val floating = optFloating match {
+      case Some(floatingValue) => "ra.floating = " + floatingValue + ""
+      case None => ""
+    }
+
+    query + s" where ra.road_number = $roadNumber " +
+      s" AND ((ra.road_part_number = $startRoadPartNumber AND ra.end_addr_m >= $startM) OR (ra.road_part_number = $endRoadPartNumber AND ra.start_addr_m <= $endM)) " +
+      s" AND ra.TRACK_CODE = $track " +
+      s" AND (ra.valid_to IS NULL OR ra.valid_to > sysdate) AND (ra.valid_from IS NULL OR ra.valid_from <= sysdate) " + floating +
+      s" ORDER BY ra.road_number, ra.road_part_number, ra.track_code, ra.start_addr_m "
+  }
+
+  def withRoadAddressMultiParts(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long, track: Int, startM: Double, endM: Double, optFloating: Option[Int] = None)(query: String): String = {
+    val floating = optFloating match {
+      case Some(floatingValue) => "ra.floating = " + floatingValue + ""
+      case None => ""
+    }
+
+    query + s" where ra.road_number = $roadNumber " +
+      s" AND ((ra.road_part_number = $startRoadPartNumber AND ra.end_addr_m >= $startM) " +
+      s" OR (ra.road_part_number = $endRoadPartNumber AND ra.start_addr_m <= $endM) " +
+      s" OR ((ra.road_part_number > $startRoadPartNumber) AND (ra.road_part_number < $endRoadPartNumber))) " +
+      s" AND ra.TRACK_CODE = $track " +
+      s" AND (ra.valid_to IS NULL OR ra.valid_to > sysdate) AND (ra.valid_from IS NULL OR ra.valid_from <= sysdate) " + floating +
+      s" ORDER BY ra.road_number, ra.road_part_number, ra.track_code, ra.start_addr_m "
   }
 
   def withBetweenDates(sinceDate: DateTime, untilDate: DateTime)(query: String): String = {
     query + s" WHERE ra.start_date >= CAST(TO_TIMESTAMP_TZ(REPLACE(REPLACE('$sinceDate', 'T', ''), 'Z', ''), 'YYYY-MM-DD HH24:MI:SS.FFTZH:TZM') AS DATE)" +
-            s" AND ra.start_date <= CAST(TO_TIMESTAMP_TZ(REPLACE(REPLACE('$untilDate', 'T', ''), 'Z', ''), 'YYYY-MM-DD HH24:MI:SS.FFTZH:TZM') AS DATE)"
+      s" AND ra.start_date <= CAST(TO_TIMESTAMP_TZ(REPLACE(REPLACE('$untilDate', 'T', ''), 'Z', ''), 'YYYY-MM-DD HH24:MI:SS.FFTZH:TZM') AS DATE)"
 
   }
 

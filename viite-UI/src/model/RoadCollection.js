@@ -58,6 +58,7 @@
 
   root.RoadCollection = function(backend) {
     var roadLinkGroups = [];
+    var roadLinkGroupsSuravage = [];
     var tmpRoadLinkGroups = [];
     var tmpRoadAddresses = [];
     var tmpNewRoadAddresses = [];
@@ -68,9 +69,8 @@
       return _.flatten(roadLinkGroups);
     };
 
-
     var getSelectedRoadLinks = function() {
-      return _.filter(roadLinks(), function(roadLink) {
+      return _.filter(roadLinks().concat(suravageRoadLinks()), function(roadLink) {
         return roadLink.isSelected() && roadLink.getData().anomaly === 0;
       });
     };
@@ -90,7 +90,34 @@
             _.contains(selectedIds, roadLink.getId());
           });
         }).concat(getSelectedRoadLinks());
-        eventbus.trigger('roadLinks:fetched', roadLinkGroups);
+        roadLinkGroupsSuravage = _.filter(roadLinkGroups, function(group){
+          if(_.isArray(group)){
+            return _.some(group, function (roadLink) {
+              if (roadLink!==null)
+                  return roadLink.getData().roadLinkSource === 3;
+                else
+                  return false;
+            });
+          } else {
+            return group.getData().roadLinkSource === 3;
+          }
+        });
+        var nonSuravageRoadLinkGroups = _.reject(roadLinkGroups, function(group){
+          if(_.isArray(group)){
+            return _.some(group, function (roadLink) {
+              if (roadLink!==null)
+                return roadLink.getData().roadLinkSource === 3;
+              else
+                return false;
+            });
+          } else {
+            return group.getData().roadLinkSource === 3;
+          }
+        });
+        roadLinkGroups = nonSuravageRoadLinkGroups;
+        eventbus.trigger('roadLinks:fetched', nonSuravageRoadLinkGroups);
+        if(roadLinkGroupsSuravage.length !== 0)
+          eventbus.trigger('suravageRoadLinks:fetched', roadLinkGroupsSuravage);
         if(applicationModel.isProjectButton()){
           eventbus.trigger('linkProperties:highlightSelectedProject', applicationModel.getProjectFeature());
           applicationModel.setProjectButton(false);
@@ -98,6 +125,9 @@
       });
     };
 
+    var suravageRoadLinks = function() {
+      return _.flatten(roadLinkGroupsSuravage);
+    };
     this.getRoadsForMassTransitStops = function() {
       return _.chain(roadLinks())
         .filter(function(roadLink) {
@@ -146,8 +176,29 @@
       });
     };
 
+    this.getSuravageByLinkId = function(ids) {
+      var segments = _.filter(suravageRoadLinks(), function (road){
+        return road.getData().linkId == ids;
+      });
+      return segments;
+    };
+
+    this.getSuravageById = function(ids) {
+      return _.map(ids, function(id) {
+        return _.find(suravageRoadLinks(), function(road) { return road.getData().id === id; });
+      });
+    };
+
     this.getGroup = function(id) {
       return _.find(roadLinkGroups, function(roadLinkGroup) {
+        return _.some(roadLinkGroup, function(roadLink) {
+          return roadLink.getId() === id;
+        });
+      });
+    };
+
+    this.getSuravageGroup = function(id) {
+      return _.find(roadLinkGroupsSuravage, function(roadLinkGroup) {
         return _.some(roadLinkGroup, function(roadLink) {
           return roadLink.getId() === id;
         });
@@ -162,8 +213,25 @@
       });
     };
 
+    this.getSuravageGroupByLinkId = function (linkId) {
+      return _.find(roadLinkGroupsSuravage, function(roadLinkGroup) {
+        return _.some(roadLinkGroup, function(roadLink) {
+          return roadLink.getData().linkId === linkId;
+        });
+      });
+    };
+
+
     this.getGroupById = function (id) {
       return _.find(roadLinkGroups, function(roadLinkGroup) {
+        return _.some(roadLinkGroup, function(roadLink) {
+          return roadLink.getData().id === id;
+        });
+      });
+    };
+
+    this.getSuravageGroupById = function (id) {
+      return _.find(roadLinkGroupsSuravage, function(roadLinkGroup) {
         return _.some(roadLinkGroup, function(roadLink) {
           return roadLink.getData().id === id;
         });

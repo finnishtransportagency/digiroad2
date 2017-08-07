@@ -27,12 +27,14 @@
         '</div>';
     };
 
-    var inputFieldRequired = function(labelText, id, placeholder, value) {
-      var field = '<div class="form-group input-required">' +
+    var inputFieldRequired = function(labelText, id, placeholder, value, maxLength) {
+      var lengthLimit = '';
+      if (maxLength)
+        lengthLimit = 'maxlength="' + maxLength + '"';
+      return '<div class="form-group input-required">' +
         '<label class="control-label required">' + labelText + '</label>' +
-        '<input type="text" class="form-control" id = "'+id+'" placeholder = "'+placeholder+'" value="'+value+'"/>' +
+        '<input type="text" class="form-control" id = "'+id+'"'+lengthLimit+' placeholder = "'+placeholder+'" value="'+value+'"/>' +
         '</div>';
-      return field;
     };
 
     var title = function() {
@@ -89,7 +91,7 @@
         staticField('Muokattu viimeksi', '-') +
         '<div class="form-group editable form-editable-roadAddressProject"> ' +
         '<form  id="roadAddressProject"  class="input-unit-combination form-group form-horizontal roadAddressProject">' +
-        inputFieldRequired('*Nimi', 'nimi', '', '') +
+        inputFieldRequired('*Nimi', 'nimi', '', '', 32) +
         inputFieldRequired('*Alkupvm', 'alkupvm', 'pp.kk.vvvv', '') +
         largeInputField() +
         '<div class="form-group">' +
@@ -127,7 +129,7 @@
         '<div class="form-group editable form-editable-roadAddressProject"> '+
 
         '<form id="roadAddressProject" class="input-unit-combination form-group form-horizontal roadAddressProject">'+
-        inputFieldRequired('*Nimi', 'nimi', '', project.name) +
+        inputFieldRequired('*Nimi', 'nimi', '', project.name, 32) +
         inputFieldRequired('*Alkupvm', 'alkupvm', 'pp.kk.vvvv', project.startDate)+
         largeInputField(project.additionalInfo)+
         '<div class="form-group">' +
@@ -159,7 +161,13 @@
         '<header>' +
         titleWithProjectName(project.name) +
         '</header>' +
-        '<footer></footer>');
+        '<footer>'+ showProjectChangeButton() +'</footer>');
+    };
+
+    var showProjectChangeButton = function() {
+      return '<div class="project-form form-controls">' +
+        '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
+        '<button disabled id ="send-button" class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button></div>';
     };
 
     var addSmallLabel = function(label){
