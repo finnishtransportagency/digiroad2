@@ -752,4 +752,18 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
     val newRoadLink1 = VVHRoadlink(1, 2, List(Point(0.0, 0.0), Point(20.0, 0.0)), AdministrativeClass.apply(1),TrafficDirection.BothDirections, FeatureClass.DrivePath, None, attributes1)
     projectService.parsePrefillData(Seq(newRoadLink1)) should be (Left("Link does not contain valid prefill info"))
   }
+
+  test("changing project ELY") {
+    runWithRollback {
+      val roadAddressProject = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None, Some(-1L))
+      val (project, projLinkOpt, formLines, str) = projectService.createRoadLinkProject(roadAddressProject)
+      project.ely.get should be(-1)
+      val result = projectService.setProjectEly(project.id, 2)
+      result should be ("")
+      val result2 = projectService.setProjectEly(project.id, 2)
+      result2 should be ("")
+      val result3 = projectService.setProjectEly(project.id, 3)
+      result3 == "" should be (false)
+    }
+  }
 }
