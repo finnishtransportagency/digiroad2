@@ -317,12 +317,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         val elyUpdateErrorMessage = projectService.setProjectEly(projectLink.projectId, projectLink.roadEly)
         if(elyUpdateErrorMessage == "") {
           val errorMessage = projectService.addNewLinksToProject(roadLinks, projectLink.projectId, projectLink.newRoadNumber, projectLink.newRoadPartNumber, projectLink.newTrackCode, projectLink.newDiscontinuity)
-          if (errorMessage == "") {
-            Map("success" -> true)
-          } else {
-            Map("success" -> false,
-              "errormessage" -> errorMessage)
-          }
+          Map("success" -> errorMessage.isEmpty,
+            "errormessage" -> errorMessage.orNull)
         } else {
           Map("success" -> false,
             "errormessage" -> elyUpdateErrorMessage)
