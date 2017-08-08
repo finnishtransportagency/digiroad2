@@ -1,13 +1,12 @@
 package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.linearasset.GraphPartitioner
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.dao.{ProjectLink, _}
-import fi.liikennevirasto.viite.model.ProjectAddressLinkLike
-import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
 
@@ -88,123 +87,6 @@ object ProjectDeltaCalculator {
     ).toSeq
   }
 
-  def trackCodeChangeLengths(linkList: Seq[ProjectLink], otherProjectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
-
-    def checkAdj(link1: ProjectLink, link2: ProjectLink): Boolean = {
-      (GeometryUtils.areAdjacent(link1.geometry.head, link2.geometry.last) || GeometryUtils.areAdjacent(link1.geometry.last, link2.geometry.head))
-    }
-
-    def findLastAdj(list1: Seq[ProjectLink], list2: Seq[ProjectLink]): Seq[ProjectLink] = {
-      if (list1.length == 0 || list2.length == 0) Nil
-      else
-        checkAdj(list1.head, list2.head) match {
-          case true => Seq(list1.head) ++ findLastAdj(list1.tail, list2)
-          case _ => findLastAdj(list1, list2.tail)
-        }
-    }
-
-    def calculateMValues(track1: Seq[ProjectLink], track2: Seq[ProjectLink], start: Long): (Double, Double) = {
-      val linkLength1 = track1.foldLeft(0.0) { (sum, length) => {
-        sum + length.geometryLength
-      }
-      }
-      val linkLength2 = track2.foldLeft(0.0) { (sum, length) => {
-        sum + length.geometryLength
-      }
-      }
-      (Math.round(start), Math.round((linkLength1 + linkLength2) / 2 + start))
-    }
-
-    def recalculateMiddlePoints(list: Seq[ProjectLink], start: Double): Seq[ProjectLink] = {
-      var startM = start
-      list.map(l => {
-        val end = startM + l.geometryLength
-        val rec = l.copy(startAddrMValue = Math.round(startM), endAddrMValue = Math.round(end))
-        startM = end
-        rec
-      })
-    }
-
-    def updateMValues(links: Seq[ProjectLink], values: (Double, Double)): Seq[ProjectLink] = {
-      val sorted = links.sortBy(_.startAddrMValue)
-      if (links.size == 1) {
-        Seq(links.head.copy(startAddrMValue = values._1.toLong, endAddrMValue = values._2.toLong))
-      } else {
-        recalculateMiddlePoints(sorted, values._1).map(l => {
-          if (l.linkId == sorted.last.linkId) {
-            l.copy(endAddrMValue = values._2.toLong, calibrationPoints = (None, None))
-          } else if (l.linkId == sorted.head.linkId) {
-            l.copy(startAddrMValue = values._1.toLong, calibrationPoints = (None, None))
-          } else {
-            l.copy(calibrationPoints = (None, None))
-          }
-        })
-      }
-    }
-
-    def invertList(listToInvert: Seq[ProjectLink], listToCompare: Seq[ProjectLink]): Seq[ProjectLink] = {
-      if (listToInvert.size == 1) {
-        listToInvert.map(_ => listToInvert.head.copy(startAddrMValue = listToCompare.head.startAddrMValue, endAddrMValue = listToCompare.head.endAddrMValue))
-      } else {
-        if (GeometryUtils.areAdjacent(listToInvert.head.geometry.head, listToCompare.last.geometry.head) && listToInvert.head.startAddrMValue != listToCompare.head.startAddrMValue) {
-          listToInvert.map(l => {
-            if (l.linkId == listToInvert.head.linkId) l.copy(startAddrMValue = listToCompare.head.startAddrMValue) else l
-          })
-        }
-        else if (GeometryUtils.areAdjacent(listToInvert.last.geometry.head, listToCompare.head.geometry.head) && listToInvert.last.endAddrMValue != listToCompare.last.endAddrMValue) {
-          listToInvert.map(l => {
-            if (l.linkId == listToInvert.last.linkId) l.copy(endAddrMValue = listToCompare.last.endAddrMValue) else l
-          })
-        } else {
-          listToInvert
-        }
-      }
-    }
-
-    val rightLinks = linkList.filter(_.track == Track.RightSide)
-    val leftLinks = linkList.filter(_.track == Track.LeftSide)
-    val otherLinks = linkList.filterNot(l => (rightLinks ++ leftLinks).exists(_.linkId == l.linkId)).sortBy(_.startAddrMValue)
-    val firstCombRight = findLastAdj(otherLinks, rightLinks)
-    val firstCombLeft = findLastAdj(otherLinks, leftLinks)
-
-    if (rightLinks.nonEmpty && leftLinks.nonEmpty) {
-      val startValue = firstCombRight.find(fcr => firstCombLeft.exists(_.linkId == fcr.linkId)) match {
-        case Some(prj) => prj.endAddrMValue
-        case None => 0
-      }
-      val mValues = calculateMValues(rightLinks, leftLinks, startValue)
-      if (startValue > 0 && (rightLinks.size == 1 || leftLinks.size == 1)) {
-        firstCombRight.last.copy(startAddrMValue = mValues._2.toLong)
-      }
-      val changedLinks = (updateMValues(invertList(leftLinks, rightLinks), mValues) ++ updateMValues(invertList(rightLinks, leftLinks), mValues))
-      linkList.map(l => {
-        if (firstCombRight.length == 2 && l.linkId == firstCombRight.last.linkId) {
-          l.copy(startAddrMValue = mValues._2.toLong)
-        } else if (firstCombLeft.length == 2 && l.linkId == firstCombLeft.last.linkId) {
-          l.copy(startAddrMValue = mValues._2.toLong)
-        } else {
-          changedLinks.find(_.linkId == l.linkId) match {
-            case Some(link) => link
-            case None => l
-          }
-        }
-      })
-    } else {
-      linkList
-    }
-  }
-
-  def getSplitStart(combinedLinks: Seq[ProjectLink], otherLinks: Seq[ProjectLink]): Double = {
-    otherLinks.map(link => {
-      combinedLinks.find(comb => {
-        GeometryUtils.areAdjacent(comb.geometry.last, link.geometry.head)
-      })
-    }) match {
-      case list if list.size > 0 => list.head.get.startMValue
-      case _ => 0
-    }
-  }
-
   /**
     * Order list of geometrically continuous Project Links so that the chain is traversable from end to end
     * in this sequence and side code
@@ -218,21 +100,33 @@ object ProjectDeltaCalculator {
     }
 
     def recursiveFindAndExtend(sortedList: Seq[ProjectLink], unprocessed: Seq[ProjectLink]) : Seq[ProjectLink] = {
-      val headExtend = unprocessed.find(l => GeometryUtils.areAdjacent(l.geometry, sortedList.head.geometry))
-      if (headExtend.nonEmpty) {
-        val ext = headExtend match {
-          case Some(pl) if isInvertSideCode(headExtend.get.geometry, sortedList.head.geometry) =>  pl.copy(sideCode = switchSideCode(sortedList.head.sideCode))
-          case Some(pl) => pl
+      println("***")
+      sortedList.foreach(println)
+      println("-")
+      unprocessed.foreach(println)
+      println("***")
+      val head = sortedList.head
+      val last = sortedList.last
+      val (headPoint, endPoint) = (
+        head.sideCode match {
+          case SideCode.AgainstDigitizing => head.geometry.last
+          case _ => head.geometry.head
+        },
+        last.sideCode match {
+          case SideCode.AgainstDigitizing => last.geometry.head
+          case _ => last.geometry.last
         }
+      )
+      val headExtend = unprocessed.find(l => GeometryUtils.areAdjacent(l.geometry, headPoint))
+      if (headExtend.nonEmpty) {
+        val ext = headExtend.get
+        println(s"${ext.geometry} match head ${headPoint}")
         recursiveFindAndExtend(Seq(ext)++sortedList, unprocessed.filterNot(p => p.linkId == ext.linkId))
       } else {
-        val tailExtend = unprocessed.find(l => GeometryUtils.areAdjacent(l.geometry, sortedList.last.geometry))
+        val tailExtend = unprocessed.find(l => GeometryUtils.areAdjacent(l.geometry, endPoint))
         if (tailExtend.nonEmpty) {
-          val ext = headExtend match {
-            case Some(pl) if isInvertSideCode(headExtend.get.geometry, sortedList.last.geometry) =>  pl.copy(sideCode = switchSideCode(sortedList.last.sideCode))
-            case Some(pl) => pl
-            case _ => throw new InvalidAddressDataException("Non-contiguous road")
-          }
+          val ext = tailExtend.get
+          println(s"${ext.geometry} match last ${endPoint}")
           recursiveFindAndExtend(sortedList++Seq(ext), unprocessed.filterNot(p => p.linkId == ext.linkId))
         } else {
           sortedList
@@ -242,22 +136,6 @@ object ProjectDeltaCalculator {
     recursiveFindAndExtend(Seq(list.head), list.tail)
   }
 
-  def linkAdjacentInBothEnds(linkId: Long, geometry1: Seq[Point], geometries: Seq[Seq[Point]]): Boolean = {
-    val epsilon = 0.01
-    val geometry1EndPoints = GeometryUtils.geometryEndpoints(geometry1)
-    val isLeftAdjacent = geometries.exists { g =>
-      val geometry2Endpoints = GeometryUtils.geometryEndpoints(g)
-      geometry1EndPoints._1.distance2DTo(geometry2Endpoints._1) < epsilon ||
-        geometry1EndPoints._1.distance2DTo(geometry2Endpoints._2) < epsilon
-    }
-    val isRightAdjacent = geometries.exists { g =>
-      val geometry2Endpoints = GeometryUtils.geometryEndpoints(g)
-      geometry1EndPoints._2.distance2DTo(geometry2Endpoints._1) < epsilon ||
-        geometry1EndPoints._2.distance2DTo(geometry2Endpoints._2) < epsilon
-    }
-    isLeftAdjacent && isRightAdjacent
-  }
-
   def determineMValues(projectLinks: Seq[ProjectLink], geometryLengthList: Map[RoadPart, Seq[RoadLinkLength]], linksInProject: Seq [ProjectLink]): Seq[ProjectLink] = {
     def makeStartCP(projectLink: ProjectLink) = {
       Some(CalibrationPoint(projectLink.linkId, if (projectLink.sideCode == SideCode.TowardsDigitizing) 0.0 else projectLink.geometryLength, projectLink.startAddrMValue))
@@ -265,57 +143,69 @@ object ProjectDeltaCalculator {
     def makeEndCP(projectLink: ProjectLink) = {
       Some(CalibrationPoint(projectLink.linkId, if (projectLink.sideCode == SideCode.AgainstDigitizing) 0.0 else projectLink.geometryLength, projectLink.endAddrMValue))
     }
-    def assignCalibrationPoints(ready: Seq[ProjectLink], unprocessed: Seq[ProjectLink]): Seq[ProjectLink] = {
-      // If first one
-      if (ready.isEmpty) {
-        val link = unprocessed.head
-        // If only one
-        if (unprocessed.size == 1)
-          Seq(link.copy(calibrationPoints = (makeStartCP(link), makeEndCP(link))))
-        else
-          assignCalibrationPoints(Seq(link.copy(calibrationPoints = (makeStartCP(link), None))), unprocessed.tail)
-        // If last one
-      } else if (unprocessed.tail.isEmpty) {
-        val link = unprocessed.head
-        ready ++ Seq(link.copy(calibrationPoints = (None, makeEndCP(link))))
+    def assignCalibrationPoints(ready: Seq[ProjectLink], unprocessed: Seq[ProjectLink], reverse: Boolean = false): Seq[ProjectLink] = {
+      if (reverse) {
+        println("Reverse!")
+        assignCalibrationPoints(ready.reverse, unprocessed.reverse, reverse = false)
       } else {
-        assignCalibrationPoints(ready ++ Seq(unprocessed.head), unprocessed.tail)
+        // If first one
+        if (ready.isEmpty) {
+          val link = unprocessed.head
+          // If only one
+          if (unprocessed.size == 1)
+            Seq(link.copy(calibrationPoints = (makeStartCP(link), makeEndCP(link))))
+          else
+            assignCalibrationPoints(Seq(link.copy(calibrationPoints = (makeStartCP(link), None))), unprocessed.tail, reverse)
+          // If last one
+        } else if (unprocessed.tail.isEmpty) {
+          val link = unprocessed.head
+          ready ++ Seq(link.copy(calibrationPoints = (None, makeEndCP(link))))
+        } else {
+          assignCalibrationPoints(ready ++ Seq(unprocessed.head), unprocessed.tail, reverse)
+        }
       }
     }
-    def assignLinkValues(section: CombinedSection, startMValue: Long, endMValue: Long): Seq[ProjectLink] = {
+    def assignLinkValues(section: CombinedSection, startMValue: Long, endMValue: Long, reverse: Boolean = false): Seq[ProjectLink] = {
+      if (section.right.links.head.sideCode == SideCode.AgainstDigitizing && startMValue < endMValue) {
+        return assignLinkValues(section, endMValue, startMValue, reverse = true)
+      }
       val coeff = (endMValue - startMValue).toDouble / section.right.links.map(_.geometryLength).sum
       val runningLength = section.right.links.scanLeft(startMValue.toDouble){case (value, plink) =>
         value + coeff*plink.geometryLength
       }
       val rightLinks = section.right.links.zip(runningLength.zip(runningLength.tail)).map { case (plink, (start, end)) =>
-        plink.copy(startAddrMValue = start.toLong, endAddrMValue = end.toLong)
+        plink.copy(startAddrMValue = Math.min(start.toLong, end.toLong), endAddrMValue = Math.max(start.toLong, end.toLong),
+          startMValue = 0.0, endMValue = plink.geometryLength)
       }
       if (section.right == section.left)
-        assignCalibrationPoints(Seq(), rightLinks)
+        assignCalibrationPoints(Seq(), rightLinks, reverse)
       else {
         val coeffL = (endMValue - startMValue).toDouble / section.left.links.map(_.geometryLength).sum
         val runningLengthL = section.left.links.scanLeft(startMValue.toDouble){case (value, plink) =>
           value + coeffL*plink.geometryLength
         }
-        assignCalibrationPoints(Seq(), rightLinks) ++
+        assignCalibrationPoints(Seq(), rightLinks, reverse) ++
           assignCalibrationPoints(Seq(),
             section.left.links.zip(runningLengthL.zip(runningLengthL.tail)).map { case (plink, (start, end)) =>
-              plink.copy(startAddrMValue = start.toLong, endAddrMValue = end.toLong)
-            })
+              plink.copy(startAddrMValue = Math.min(start.toLong, end.toLong), endAddrMValue = Math.max(start.toLong, end.toLong),
+                startMValue = 0.0, endMValue = plink.geometryLength)
+            }, reverse)
       }
     }
+    projectLinks.foreach(println)
+    geometryLengthList.foreach(println)
+    linksInProject.foreach(println)
     val groupedProjectLinks = projectLinks.groupBy(record => (record.roadNumber, record.roadPartNumber))
     groupedProjectLinks.flatMap(gpl => {
-      var lastEndM = 0.0
       val roadPartId = RoadPart(gpl._1._1, gpl._1._2)
       if(geometryLengthList.keySet.contains(roadPartId)){
         val linkPartitions = DeltaPartitioner.partition(gpl._2).map(orderProjectLinksTopologyByGeometry)
 
-        linkPartitions.map(orderProjectLinks).foreach { lp =>
+        linkPartitions.foreach { lp =>
           println("Partition")
           lp.foreach(pl => println(s"${pl.linkId}, ${pl.geometry.head}-${pl.geometry.last}"))
         }
-        val sections = linkPartitions.map(orderProjectLinks).map(lp =>
+        val sections = linkPartitions.map(lp =>
           TrackSection(lp.head.roadNumber, lp.head.roadPartNumber, lp.head.track, lp.head.geometry.head, lp.last.geometry.last,
             lp.map(_.geometryLength).sum, lp)
         )
@@ -369,13 +259,25 @@ object ProjectDeltaCalculator {
                                unprocessed: Seq[CombinedSection]): Seq[CombinedSection] = {
       if (unprocessed.isEmpty)
         return sortedList
-      val sorted = unprocessed.sortBy(ts =>
-        Math.min(GeometryUtils.minimumDistance(ts.startGeometry, listEndPoints(sortedList)),
-          GeometryUtils.minimumDistance(ts.endGeometry, listEndPoints(sortedList)))
+      val head = sortedList.head
+      val last = sortedList.last
+      val (headPoint, endPoint) = (
+        head.sideCode match {
+          case SideCode.AgainstDigitizing => head.endGeometry
+          case _ => head.startGeometry
+        },
+        last.sideCode match {
+          case SideCode.AgainstDigitizing => last.startGeometry
+          case _ => last.endGeometry
+        }
       )
+      val sorted = unprocessed.sortBy { ts =>
+        Math.min((headPoint - ts.addressEndGeometry).length(),
+          (endPoint - ts.addressStartGeometry).length())
+      }
       val next = sorted.head
-      if (GeometryUtils.minimumDistance(next.startGeometry, listEndPoints(sortedList)) <
-        GeometryUtils.minimumDistance(next.endGeometry, listEndPoints(sortedList)))
+      if ((next.addressStartGeometry - endPoint).length() <
+        (next.addressEndGeometry - headPoint).length())
         recursiveFindAndExtendCombined(sortedList ++ Seq(next), sorted.tail)
       else
         recursiveFindAndExtendCombined(Seq(next) ++ sortedList, sorted.tail)
@@ -384,7 +286,7 @@ object ProjectDeltaCalculator {
     val combined = combineTracks(sections)
     combined.foreach{ cs =>
       println()
-      println(s"${cs.right.roadNumber} ${cs.right.roadPartNumber}, ${cs.right.track}: ${cs.startGeometry}-${cs.endGeometry}")
+      println(s"${cs.right.roadNumber} ${cs.right.roadPartNumber}, ${cs.right.track}: ${cs.startGeometry}-${cs.endGeometry} ${cs.sideCode}")
       if (cs.right.track != Track.Combined)
         println(s"${cs.left.roadNumber} ${cs.left.roadPartNumber}, ${cs.left.track}: ${cs.startGeometry}-${cs.endGeometry}")
       println((cs.right.links ++ cs.left.links).distinct.map(_.linkId).mkString(", "))
@@ -393,21 +295,15 @@ object ProjectDeltaCalculator {
   }
 
   def orderProjectLinks(unorderedProjectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
-    def extending(link: ProjectLink, ext: ProjectLink) = {
+    def isExtending(link: ProjectLink, ext: ProjectLink) = {
       link.roadNumber == ext.roadNumber && link.roadPartNumber == ext.roadPartNumber &&
         link.track == ext.track
     }
     def continueSeqWith(seq: Seq[ProjectLink], plink: ProjectLink): Seq[ProjectLink] = {
-      if (GeometryUtils.areAdjacent(plink.geometry, seq.head.geometry.head)) {
-        if (GeometryUtils.areAdjacent(seq.head.geometry.head, plink.geometry.last))
-          Seq(plink)++seq
-        else
-          Seq(plink) ++ seq
+      if (GeometryUtils.areAdjacent(plink.geometry, seq.head.geometry)) {
+        Seq(plink) ++ seq
       } else {
-        if (GeometryUtils.areAdjacent(seq.last.geometry.last, plink.geometry.head))
-          seq ++ Seq(plink)
-        else
-          seq ++ Seq(plink.copy(sideCode = switchSideCode(plink.sideCode), geometry = plink.geometry.reverse))
+        seq ++ Seq(plink)
       }
     }
     def extendChainByGeometry(ordered: Seq[ProjectLink], unordered: Seq[ProjectLink], sideCode: SideCode): Seq[ProjectLink] = {
@@ -434,11 +330,11 @@ object ProjectDeltaCalculator {
         return extendChainByAddress(Seq(unordered.head), unordered.tail)
       if (unordered.isEmpty)
         return ordered
-      val (next, rest) = unordered.partition(u => extending(ordered.last, u))
+      val (next, rest) = unordered.partition(u => isExtending(ordered.last, u))
       if (next.nonEmpty)
         extendChainByAddress(ordered ++ next, rest)
       else {
-        val (previous, rest) = unordered.partition(u => extending(u, ordered.head))
+        val (previous, rest) = unordered.partition(u => isExtending(u, ordered.head))
         if (previous.isEmpty)
           throw new IllegalArgumentException("Non-contiguous road addressing")
         else
@@ -482,7 +378,23 @@ case class RoadAddressSection(roadNumber: Long, roadPartNumberStart: Long, roadP
 case class RoadLinkLength(linkId: Long, geometryLength: Double)
 case class TrackSection(roadNumber: Long, roadPartNumber: Long, track: Track, startGeometry: Point, endGeometry: Point,
                         geometryLength: Double, links: Seq[ProjectLink])
-case class CombinedSection(startGeometry: Point, endGeometry: Point, geometryLength: Double, left: TrackSection, right: TrackSection)
+case class CombinedSection(startGeometry: Point, endGeometry: Point, geometryLength: Double, left: TrackSection, right: TrackSection) {
+  lazy val sideCode: SideCode = {
+    if (GeometryUtils.areAdjacent(startGeometry, right.links.head.geometry.head))
+      right.links.head.sideCode
+    else
+      SideCode.apply(5-right.links.head.sideCode.value)
+  }
+  lazy val addressStartGeometry: Point = sideCode match {
+    case AgainstDigitizing => endGeometry
+    case _ => startGeometry
+  }
+
+  lazy val addressEndGeometry: Point = sideCode match {
+    case AgainstDigitizing => startGeometry
+    case _ => endGeometry
+  }
+}
 
 object DeltaPartitioner extends GraphPartitioner {
 
