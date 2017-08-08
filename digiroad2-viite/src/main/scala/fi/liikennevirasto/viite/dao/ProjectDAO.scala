@@ -228,7 +228,7 @@ object ProjectDAO {
     Q.queryNA[String](query).firstOption
   }
 
-  def deleteRoadPartFromProject(projectId: Long, roadNumber: Long, roadPart: Long): Option[String] = {
+  def deleteRoadPartFromProject(projectId: Long, roadNumber: Long, roadPart: Long): Int = {
       val query =
         s"""
          DELETE FROM Project_Link WHERE project_id = ${projectId} and road_number = ${roadNumber} and road_part_number = ${roadPart}

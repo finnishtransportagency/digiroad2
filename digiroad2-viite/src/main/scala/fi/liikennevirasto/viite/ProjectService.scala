@@ -126,13 +126,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   def deleteRoadPartFromProject(projectid: Long, roadNumber: Long, roadPart: Long): Long = {
     withDynTransaction {
-        val reserved = ProjectDAO.deleteRoadPartFromProject(id, roadNumber, roadPart)
-        reserved match {
-          case Some(projectname) => return Left(s"TIE $roadNumber OSA $roadPart on jo varattuna projektissa $projectname, tarkista tiedot")
-          case None =>
-
-        }
-      Right(listOfAddressParts)
+        ProjectDAO.deleteRoadPartFromProject(projectid, roadNumber, roadPart)
     }
   }
 

@@ -309,25 +309,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       Map("success"-> errorMessageOpt.get)
   }
 
-  put("/roadlinks/roadaddress/project/deleteRoadPart") {
-    try {
-      val projectLink = parsedBody.extract[ProjectRoadAddressInfo]
-      withDynTransaction {
-        val errorMessage = projectService.deletePartFromProject(projectLink.projectId, projectLink.roadNumber, projectLink.roadPartNumber)
-        if (errorMessage == "") {
-          Map("success" -> true)
-        } else {
-          Map("success" -> false,
-            "errormessage" -> errorMessage)
-        }
-      }
-    } catch {
-      case e: MappingException  =>
-        logger.warn("Exception deleting road part in project", e)
-        BadRequest("Missing mandatory ProjectLink parameter")
-    }
-  }
-
   put("/roadlinks/roadaddress/project/savenewroadlink") {
     try {
       val projectLink = parsedBody.extract[NewRoadAddressExtractor]
