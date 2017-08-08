@@ -163,7 +163,7 @@
             publishable: false
           };
           eventbus.trigger('roadAddress:projectSaved', result);
-          dirtyRoadPartList = [];
+          dirtyRoadPartList = result.formInfo;
           currentProject = result;
         }
         else {

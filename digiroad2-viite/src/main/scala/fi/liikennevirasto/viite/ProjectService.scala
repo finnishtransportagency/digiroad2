@@ -292,12 +292,17 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         pl =>
           project.reservedParts.exists(rp => rp.roadNumber == pl.roadNumber && rp.roadPartNumber == pl.roadPartNumber)
       }
+      val newProjectLinks = addresses.filterNot{
+        ad => projectLinks.exists(pl => pl.roadNumber == ad.roadNumber && pl.roadPartNumber == ad.roadPartNumber)
+      }
       val ely = project.reservedParts.map(_.ely)
       if (ely.distinct.size > 1) {
         Some(s"Tieosat ovat eri ELYistä")
       } else {
-        ProjectDAO.removeProjectLinksById(deletedParts.map(_.id).toSet, deletedParts.map(_.lrmPositionId).toSet)
-        ProjectDAO.create(addresses)
+        if(deletedParts.nonEmpty) {
+          ProjectDAO.removeProjectLinksById(deletedParts.map(_.id).toSet, deletedParts.map(_.lrmPositionId).toSet)
+        }
+        ProjectDAO.create(newProjectLinks)
         if (project.ely.isEmpty)
           ProjectDAO.updateProjectELY(project, ely.head)
         None
