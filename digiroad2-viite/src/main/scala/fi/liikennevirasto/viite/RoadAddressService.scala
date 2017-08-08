@@ -735,6 +735,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
 
 case class RoadAddressMerge(merged: Set[Long], created: Seq[RoadAddress])
-case class ReservedRoadPart(roadPartId: Long, roadNumber: Long, roadPartNumber: Long, length: Double, discontinuity: Discontinuity, ely: Long, startDate: Option[DateTime], endDate: Option[DateTime])
+case class ReservedRoadPart(roadPartId: Long, roadNumber: Long, roadPartNumber: Long, roadLength: Double, discontinuity: Discontinuity, ely: Long, startDate: Option[DateTime], endDate: Option[DateTime])
 
 

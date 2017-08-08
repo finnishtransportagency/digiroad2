@@ -566,7 +566,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "roadPartNumber" -> reservedRoadPart.roadPartNumber,
       "roadPartId" -> reservedRoadPart.roadPartId,
       "ely" -> reservedRoadPart.ely,
-      "length" -> reservedRoadPart.length,
+      "roadLength" -> reservedRoadPart.roadLength,
       "discontinuity" -> reservedRoadPart.discontinuity.description
     )
   }
