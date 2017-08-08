@@ -1,14 +1,11 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
-import fi.liikennevirasto.digiroad2.linearasset.GraphPartitioner
 import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.dao.{CalibrationPoint, Discontinuity, ProjectLink, RoadAddress}
-import fi.liikennevirasto.viite.process.SectionPartitioner.{clusterLinks, linksFromCluster}
-import fi.liikennevirasto.digiroad2.linearasset.GraphPartitioner
 
 object ProjectSectionCalculator {
   /**
@@ -18,36 +15,25 @@ object ProjectSectionCalculator {
     * @return Ordered list of project links
     */
   def orderProjectLinksTopologyByGeometry(list:Seq[ProjectLink]): Seq[ProjectLink] = {
+    // Calculates the new end point from geometry that is not the oldEndPoint
     def getNewEndPoint(geometry: Seq[Point], oldEndPoint: Point): Point = {
       val s = Seq(geometry.head, geometry.last)
       s.maxBy(p => (oldEndPoint - p).length())
     }
 
-    def isInvertSideCode(geom1 : Seq[Point], geom2 : Seq[Point]): Boolean = {
-      GeometryUtils.areAdjacent(geom1.head, geom2.head) || GeometryUtils.areAdjacent(geom1.last, geom2.last)
-    }
-
+    // Finds either a project link that continues from current head; or end; or returns the whole bunch back
     def recursiveFindAndExtend(sortedList: Seq[ProjectLink], unprocessed: Seq[ProjectLink], head: Point, end: Point) : Seq[ProjectLink] = {
-      println("***")
-      println(s"Head = ${head.x}, ${head.y}; end = ${end.x}, ${end.y}")
-      println("-")
-      sortedList.foreach(println)
-      println("-.-")
-      unprocessed.foreach(println)
-      println("***")
       val headExtend = unprocessed.find(l => GeometryUtils.areAdjacent(l.geometry, head))
       if (headExtend.nonEmpty) {
         val ext = headExtend.get
-        println(s"${ext.geometry} match head ${head}")
         recursiveFindAndExtend(Seq(ext)++sortedList, unprocessed.filterNot(p => p.linkId == ext.linkId), getNewEndPoint(ext.geometry, head), end)
       } else {
         val tailExtend = unprocessed.find(l => GeometryUtils.areAdjacent(l.geometry, end))
         if (tailExtend.nonEmpty) {
           val ext = tailExtend.get
-          println(s"${ext.geometry} match last ${end}")
           recursiveFindAndExtend(sortedList++Seq(ext), unprocessed.filterNot(p => p.linkId == ext.linkId), head, getNewEndPoint(ext.geometry, end))
         } else {
-          sortedList
+          sortedList ++ unprocessed
         }
       }
     }
@@ -59,6 +45,13 @@ object ProjectSectionCalculator {
     recursiveFindAndExtend(Seq(list.head), list.tail, headPoint, endPoint)
   }
 
+  /**
+    * Calculates the address M values for the given set of project links and assigns them calibration points where applicable
+    * @param projectLinks List of new addressed links in project
+    * @param geometryLengthList to be removed (TODO)
+    * @param linksInProject Other links in project, used as a guidance (TODO)
+    * @return Sequence of project links with address values and calibration points.
+    */
   def determineMValues(projectLinks: Seq[ProjectLink], geometryLengthList: Map[RoadPart, Seq[RoadLinkLength]], linksInProject: Seq [ProjectLink]): Seq[ProjectLink] = {
     def makeStartCP(projectLink: ProjectLink) = {
       Some(CalibrationPoint(projectLink.linkId, if (projectLink.sideCode == TowardsDigitizing) 0.0 else projectLink.geometryLength, projectLink.startAddrMValue))
@@ -68,26 +61,27 @@ object ProjectSectionCalculator {
     }
     def assignCalibrationPoints(ready: Seq[ProjectLink], unprocessed: Seq[ProjectLink], reverse: Boolean = false): Seq[ProjectLink] = {
       if (reverse) {
-        println("Reverse!")
-        assignCalibrationPoints(ready.reverse, unprocessed.reverse, reverse = false)
+        assignCalibrationPoints(ready.reverse, unprocessed.reverse)
       } else {
         // If first one
         if (ready.isEmpty) {
           val link = unprocessed.head
-          // If only one
+          // If there is only one link in section we put two calibration points in it
           if (unprocessed.size == 1)
             Seq(link.copy(calibrationPoints = (makeStartCP(link), makeEndCP(link))))
           else
-            assignCalibrationPoints(Seq(link.copy(calibrationPoints = (makeStartCP(link), None))), unprocessed.tail, reverse)
+            assignCalibrationPoints(Seq(link.copy(calibrationPoints = (makeStartCP(link), None))), unprocessed.tail)
           // If last one
         } else if (unprocessed.tail.isEmpty) {
           val link = unprocessed.head
           ready ++ Seq(link.copy(calibrationPoints = (None, makeEndCP(link))))
         } else {
-          assignCalibrationPoints(ready ++ Seq(unprocessed.head), unprocessed.tail, reverse)
+          // a middle one, add to sequence and continue
+          assignCalibrationPoints(ready ++ Seq(unprocessed.head), unprocessed.tail)
         }
       }
     }
+    // Set address values to section
     def assignLinkValues(section: CombinedSection, startMValue: Long, endMValue: Long, reverse: Boolean = false): Seq[ProjectLink] = {
       if (section.right.links.head.sideCode == AgainstDigitizing && startMValue < endMValue) {
         return assignLinkValues(section, endMValue, startMValue, reverse = true)
@@ -96,10 +90,13 @@ object ProjectSectionCalculator {
       val runningLength = section.right.links.scanLeft(startMValue.toDouble){case (value, plink) =>
         value + coeff*plink.geometryLength
       }
+      // Calculate address values to right track
       val rightLinks = section.right.links.zip(runningLength.zip(runningLength.tail)).map { case (plink, (start, end)) =>
-        plink.copy(startAddrMValue = Math.min(start.toLong, end.toLong), endAddrMValue = Math.max(start.toLong, end.toLong),
+        plink.copy(startAddrMValue = Math.min(Math.round(start), Math.round(end)),
+          endAddrMValue = Math.max(Math.round(start), Math.round(end)),
           startMValue = 0.0, endMValue = plink.geometryLength)
       }
+      // Check if this is a combined track
       if (section.right == section.left)
         assignCalibrationPoints(Seq(), rightLinks, reverse)
       else {
@@ -107,27 +104,22 @@ object ProjectSectionCalculator {
         val runningLengthL = section.left.links.scanLeft(startMValue.toDouble){case (value, plink) =>
           value + coeffL*plink.geometryLength
         }
+        // Calculate left track values
         assignCalibrationPoints(Seq(), rightLinks, reverse) ++
           assignCalibrationPoints(Seq(),
             section.left.links.zip(runningLengthL.zip(runningLengthL.tail)).map { case (plink, (start, end)) =>
-              plink.copy(startAddrMValue = Math.min(start.toLong, end.toLong), endAddrMValue = Math.max(start.toLong, end.toLong),
+              plink.copy(startAddrMValue = Math.min(Math.round(start), Math.round(end)),
+                endAddrMValue = Math.max(Math.round(start), Math.round(end)),
                 startMValue = 0.0, endMValue = plink.geometryLength)
             }, reverse)
       }
     }
-    projectLinks.foreach(println)
-    geometryLengthList.foreach(println)
-    linksInProject.foreach(println)
     val groupedProjectLinks = projectLinks.groupBy(record => (record.roadNumber, record.roadPartNumber))
     groupedProjectLinks.flatMap(gpl => {
       val roadPartId = RoadPart(gpl._1._1, gpl._1._2)
       if(geometryLengthList.keySet.contains(roadPartId)){
         val linkPartitions = SectionPartitioner.partition(gpl._2).map(orderProjectLinksTopologyByGeometry)
 
-        linkPartitions.foreach { lp =>
-          println("Partition")
-          lp.foreach(pl => println(s"${pl.linkId}, ${pl.geometry.head}-${pl.geometry.last}"))
-        }
         val sections = linkPartitions.map(lp =>
           TrackSection(lp.head.roadNumber, lp.head.roadPartNumber, lp.head.track, lp.map(_.geometryLength).sum, lp)
         )
@@ -143,6 +135,13 @@ object ProjectSectionCalculator {
     }).toSeq
   }
 
+  /**
+    * Turn track sections into an ordered sequence of combined sections so that they can be addressed in that order.
+    * Combined section has two tracks (left and right) of project links which are the same if it is a combined track.
+    * Right one is the one where we assign the direction should they ever disagree.
+    * @param sections
+    * @return
+    */
   def orderTrackSectionsByGeometry(sections: Seq[TrackSection]): Seq[CombinedSection] = {
     def reverseSection(section: TrackSection): TrackSection = {
       section.copy(links =
@@ -157,13 +156,14 @@ object ProjectSectionCalculator {
         ))
     }
 
+    // TODO: Ramps work differently, may have only right tracks? Or combined?
     def combineTracks(tracks: Seq[TrackSection]): Seq[CombinedSection] = {
       val (combined, others) = tracks.partition(_.track == Track.Combined)
       if (others.isEmpty)
         return combined.map(ts => CombinedSection(ts.startGeometry, ts.endGeometry, ts.geometryLength, ts, ts))
       val (left, right) = others.partition(_.track == Track.LeftSide)
       if (left.size != right.size)
-        throw new InvalidAddressDataException("Non-matching left/right tracks")
+        throw new InvalidAddressDataException(s"Non-matching left/right tracks on road ${others.head.roadNumber} part ${others.head.roadPartNumber}")
       val pick = right.head
       val pair = closest(pick, left)
       val combo = if ((pick.startGeometry - pair.startGeometry).length() > (pick.startGeometry - pair.endGeometry).length())
@@ -202,16 +202,14 @@ object ProjectSectionCalculator {
     }
 
     val combined = combineTracks(sections)
-    combined.foreach{ cs =>
-      println()
-      println(s"${cs.right.roadNumber} ${cs.right.roadPartNumber}, ${cs.right.track}: ${cs.startGeometry}-${cs.endGeometry} ${cs.sideCode}")
-      if (cs.right.track != Track.Combined)
-        println(s"${cs.left.roadNumber} ${cs.left.roadPartNumber}, ${cs.left.track}: ${cs.startGeometry}-${cs.endGeometry}")
-      println((cs.right.links ++ cs.left.links).distinct.map(_.linkId).mkString(", "))
-    }
     recursiveFindAndExtendCombined(Seq(combined.head), combined.tail)
   }
 
+  /**
+    * Order project links by address (if exists) and geometry.
+    * @param unorderedProjectLinks Bag of project links
+    * @return Ordered sequence of project links
+    */
   def orderProjectLinks(unorderedProjectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
     def isExtending(link: ProjectLink, ext: ProjectLink) = {
       link.roadNumber == ext.roadNumber && link.roadPartNumber == ext.roadPartNumber &&
