@@ -18,10 +18,6 @@ import org.joda.time.DateTime
 
 case class AddressSection(roadNumber: Long, roadPartNumber: Long, track: Track, startAddressMValue: Long, endAddressMValue: Option[Long])
 
-object TierekisteriAssetImporterOperations{
-
-}
-
 trait TierekisteriAssetImporterOperations {
 
   val eventbus = new DummyEventBus
@@ -270,7 +266,7 @@ trait LinearAssetTierekisteriImporterOperations extends TierekisteriAssetImporte
     }
   }
 
-  protected def createLinearAsset(vvhRoadlink: VVHRoadlink, measures: Measures, trAssetData: TierekisteriAssetData)
+  protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData)
 
   protected override def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData): Unit = {
     println(s"Fetch Road Addresses from Viite: R:${section.roadNumber} P:${section.roadPartNumber} T:${section.track.value} ADDRM:${section.startAddressMValue}-${section.endAddressMValue.map(_.toString).getOrElse("")}")
@@ -282,7 +278,7 @@ trait LinearAssetTierekisteriImporterOperations extends TierekisteriAssetImporte
       .foreach { case (ra, roadlink) =>
         calculateMeasures(ra, section).map {
           measures =>
-            createLinearAsset(roadlink.get, measures, trAssetData)
+            createLinearAsset(roadlink.get, ra, section, measures, trAssetData)
         }
       }
   }
@@ -396,17 +392,9 @@ class SpeedLimitsTierekisteriImporter extends LinearAssetTierekisteriImporterOpe
       roadLink =>
         calculateMeasures(roadAddress, addressSection).map {
           measures =>
-            //Should create the invalid and/or unknow speedlimit
             trAssetOption.map {
               trAsset  =>
-                val speedLimit = getSpeedLimitValue(trAsset)
-                if (measures.startMeasure != measures.endMeasure) {
-                  val assetId = linearAssetService.dao.createLinearAsset(typeId, roadLink.linkId, false, getSideCode(roadAddress.sideCode, trAsset.roadSide).value,
-                    measures, "batch_process_speedlimit", vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink.linkSource.value))
-
-                  linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, speedLimit.getOrElse(-1))
-                  println(s"Created OTH Speed Limit assets for road ${roadLink.linkId} from TR data with assetId $assetId")
-                }
+                createLinearAsset(roadLink, roadAddress, addressSection, measures, trAsset)
             }
         }
     }
@@ -448,13 +436,13 @@ class SpeedLimitsTierekisteriImporter extends LinearAssetTierekisteriImporterOpe
   override def importAssets(): Unit = {
     //Expire all asset in state roads in all the municipalities
     val municipalities = getAllMunicipalities()
-    /*municipalities.foreach { municipality =>
+    municipalities.foreach { municipality =>
       withDynTransaction{
         expireAssets(municipality, Some(State))
       }
-    }*/
+    }
 
-    val roadNumbers = Seq(484)//getAllViiteRoadNumbers()
+    val roadNumbers = getAllViiteRoadNumbers()
 
     roadNumbers.foreach {
       roadNumber =>
@@ -470,12 +458,15 @@ class SpeedLimitsTierekisteriImporter extends LinearAssetTierekisteriImporterOpe
     }
   }
 
-  override protected def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData): Unit = {
+  override protected def createLinearAsset(roadLink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData) = {
+    val speedLimit = getSpeedLimitValue(trAssetData)
+    if (measures.startMeasure != measures.endMeasure) {
+      val assetId = linearAssetService.dao.createLinearAsset(typeId, roadLink.linkId, false, getSideCode(roadAddress.sideCode, trAssetData.roadSide).value,
+        measures, "batch_process_speedlimit", vvhClient.roadLinkData.createVVHTimeStamp(), Some(roadLink.linkSource.value))
 
-  }
-
-  override protected def createLinearAsset(vvhRoadlink: VVHRoadlink, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
-
+      linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, speedLimit.getOrElse(-1))
+      println(s"Created OTH Speed Limit assets for road ${roadLink.linkId} from TR data with assetId $assetId")
+    }
   }
 }
 
@@ -544,7 +535,7 @@ class LitRoadTierekisteriImporter extends LinearAssetTierekisteriImporterOperati
     getProperty("digiroad2.tierekisteri.enabled").toBoolean,
     HttpClientBuilder.create().build())
 
-  override protected def createLinearAsset(vvhRoadlink: VVHRoadlink, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
+  override protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
     if (measures.startMeasure != measures.endMeasure) {
       val assetId = linearAssetService.dao.createLinearAsset(typeId, vvhRoadlink.linkId, false, SideCode.BothDirections.value,
         measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value))
@@ -567,7 +558,7 @@ class RoadWidthTierekisteriImporter extends LinearAssetTierekisteriImporterOpera
     getProperty("digiroad2.tierekisteri.enabled").toBoolean,
     HttpClientBuilder.create().build())
 
-  override protected def createLinearAsset(vvhRoadlink: VVHRoadlink, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
+  override protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
     if (measures.startMeasure != measures.endMeasure) {
       val assetId = linearAssetService.dao.createLinearAsset(typeId, vvhRoadlink.linkId, false, SideCode.BothDirections.value,
         measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value))
