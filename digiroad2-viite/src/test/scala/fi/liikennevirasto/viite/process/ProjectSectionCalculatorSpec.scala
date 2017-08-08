@@ -54,8 +54,6 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     val output = ProjectSectionCalculator.determineMValues(projectLinkSeq, Seq())
     output.length should be(4)
 
-    output.foreach(println)
-
     output.foreach(o =>
       o.sideCode == SideCode.TowardsDigitizing || o.id ==  idRoad1 && o.sideCode == SideCode.AgainstDigitizing should be (true)
     )
@@ -129,7 +127,6 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
 
     val projectLinkSeq = Seq(projectLink0, projectLink1, projectLink2, projectLink3, projectLink4, projectLink5, projectLink6, projectLink7, projectLink8)
     val output = ProjectSectionCalculator.determineMValues(projectLinkSeq, Seq()).sortBy(_.linkId)
-    output.foreach(println)
     output.length should be(9)
     output.foreach(pl => pl.sideCode == TowardsDigitizing should be (true))
     val start = output.find(_.id==idRoad0).get
@@ -198,7 +195,6 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       pl => pl.copy(sideCode = SideCode.AgainstDigitizing)
     )
     val output = ProjectSectionCalculator.determineMValues(projectLinkSeq, Seq()).sortBy(_.linkId)
-    output.foreach(println)
     output.length should be(9)
     output.foreach(pl => pl.sideCode == AgainstDigitizing should be (true))
     val start = output.find(_.id==idRoad0).get
@@ -245,7 +241,6 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
 
     val projectLinkSeq = Seq(projectLink0, projectLink1, projectLink2, projectLink3)
     val output = ProjectSectionCalculator.determineMValues(projectLinkSeq, Seq()).sortBy(_.linkId)
-    output.foreach(println)
     output.length should be(4)
     output.foreach(pl => pl.sideCode == AgainstDigitizing || pl.id % 2 == 0 should be (true))
     output.foreach(pl => pl.sideCode == TowardsDigitizing || pl.id % 2 != 0 should be (true))
