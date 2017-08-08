@@ -80,7 +80,7 @@ object ProjectSectionCalculator {
           ready ++ Seq(link.copy(calibrationPoints = (None, makeEndCP(link))))
         } else {
           // a middle one, add to sequence and continue
-          assignCalibrationPoints(ready ++ Seq(unprocessed.head), unprocessed.tail)
+          assignCalibrationPoints(ready ++ Seq(unprocessed.head.copy(calibrationPoints = (None, None))), unprocessed.tail)
         }
       }
     }
