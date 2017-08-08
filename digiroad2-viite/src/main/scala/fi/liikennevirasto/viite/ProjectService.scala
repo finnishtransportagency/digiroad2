@@ -185,7 +185,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                 )
                 //Determine geometries for the mValues and addressMValues
                 val geometries = determineGeometries(combinedLinks.toSeq)
-                val linksWithMValues = ProjectDeltaCalculator.determineMValues(combinedLinks.toSeq, geometries,
+                val linksWithMValues = ProjectSectionCalculator.determineMValues(combinedLinks.toSeq, geometries,
                   existingLinks.filterKeys(linkId => newProjectLinks.keySet.contains(linkId)).values.toSeq)
                 val newLinksWithCalibration = addCalibrationMarkers(linksWithMValues)
                 ProjectDAO.removeProjectLinksByLinkId(roadAddressProjectID, newProjectLinks.keySet)
