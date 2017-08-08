@@ -777,9 +777,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       logger.info("ProjectId: " + currentProjectId + " Ely is \"" + currentProjectEly + "\" no need to update")
       ""
     } else {
-      logger.error("Cannot update project to another ELY, current road can't be added")
-      //TODO: translate or find a suitable message in Finnish
-      "Error: Cannot update project to another ELY, current road can't be added"
+      logger.error(s"The project can not handle multiple ELY areas (the project ELY range is ${currentProjectEly}). Recording was discarded.")
+      s"Projektissa ei voi käsitellä useita ELY-alueita (projektin ELY-alue on ${currentProjectEly}). Tallennus hylättiin."
     }
   }
 
