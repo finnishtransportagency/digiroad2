@@ -6,8 +6,12 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.dao.{CalibrationPoint, Discontinuity, ProjectLink, RoadAddress}
+import org.slf4j.LoggerFactory
 
 object ProjectSectionCalculator {
+
+  val logger = LoggerFactory.getLogger(getClass)
+
   /**
     * Order list of geometrically continuous Project Links so that the chain is traversable from end to end
     * in this sequence and side code
@@ -48,11 +52,10 @@ object ProjectSectionCalculator {
   /**
     * Calculates the address M values for the given set of project links and assigns them calibration points where applicable
     * @param projectLinks List of new addressed links in project
-    * @param geometryLengthList to be removed (TODO)
     * @param linksInProject Other links in project, used as a guidance (TODO)
     * @return Sequence of project links with address values and calibration points.
     */
-  def determineMValues(projectLinks: Seq[ProjectLink], geometryLengthList: Map[RoadPart, Seq[RoadLinkLength]], linksInProject: Seq [ProjectLink]): Seq[ProjectLink] = {
+  def determineMValues(projectLinks: Seq[ProjectLink], linksInProject: Seq [ProjectLink]): Seq[ProjectLink] = {
     def makeStartCP(projectLink: ProjectLink) = {
       Some(CalibrationPoint(projectLink.linkId, if (projectLink.sideCode == TowardsDigitizing) 0.0 else projectLink.geometryLength, projectLink.startAddrMValue))
     }
@@ -116,10 +119,8 @@ object ProjectSectionCalculator {
     }
     val groupedProjectLinks = projectLinks.groupBy(record => (record.roadNumber, record.roadPartNumber))
     groupedProjectLinks.flatMap(gpl => {
-      val roadPartId = RoadPart(gpl._1._1, gpl._1._2)
-      if(geometryLengthList.keySet.contains(roadPartId)){
-        val linkPartitions = SectionPartitioner.partition(gpl._2).map(orderProjectLinksTopologyByGeometry)
-
+      val linkPartitions = SectionPartitioner.partition(gpl._2).map(orderProjectLinksTopologyByGeometry)
+      try {
         val sections = linkPartitions.map(lp =>
           TrackSection(lp.head.roadNumber, lp.head.roadPartNumber, lp.head.track, lp.map(_.geometryLength).sum, lp)
         )
@@ -127,10 +128,13 @@ object ProjectSectionCalculator {
         val mValues = ordSections.scanLeft(0.0) { case (mValue, sec) =>
           mValue + sec.geometryLength
         }
-        ordSections.zip(mValues.zip(mValues.tail)).flatMap { case (section, (start, end)) => assignLinkValues(section, start.toLong, end.toLong) }
-
-      } else {
-        orderProjectLinksTopologyByGeometry(gpl._2)
+        ordSections.zip(mValues.zip(mValues.tail)).flatMap { case (section, (start, end)) =>
+          assignLinkValues(section, start.toLong, end.toLong)
+        }
+      } catch {
+        case ex: InvalidAddressDataException =>
+          logger.info(s"Can't calculate road/road part ${gpl._1}/${gpl._2}: " + ex.getMessage)
+          gpl._2
       }
     }).toSeq
   }
