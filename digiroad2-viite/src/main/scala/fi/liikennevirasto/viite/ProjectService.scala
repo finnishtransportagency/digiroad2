@@ -758,17 +758,17 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   }
 
-  def setProjectEly(currentProjectId:Long, newEly: Long): String = {
+  def setProjectEly(currentProjectId:Long, newEly: Long): Option[String] = {
     val currentProjectEly = getProjectEly(currentProjectId)
     if (currentProjectEly == -1) {
       ProjectDAO.updateProjectEly(currentProjectId, newEly)
-      ""
+      None
     } else if (currentProjectEly == newEly){
       logger.info("ProjectId: " + currentProjectId + " Ely is \"" + currentProjectEly + "\" no need to update")
-      ""
+      None
     } else {
       logger.error(s"The project can not handle multiple ELY areas (the project ELY range is ${currentProjectEly}). Recording was discarded.")
-      s"Projektissa ei voi käsitellä useita ELY-alueita (projektin ELY-alue on ${currentProjectEly}). Tallennus hylättiin."
+      Some(s"Projektissa ei voi käsitellä useita ELY-alueita (projektin ELY-alue on ${currentProjectEly}). Tallennus hylättiin.")
     }
   }
 

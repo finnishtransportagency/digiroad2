@@ -763,11 +763,11 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       val (project, projLinkOpt, formLines, str) = projectService.createRoadLinkProject(roadAddressProject)
       project.ely.get should be(-1)
       val result = projectService.setProjectEly(project.id, 2)
-      result should be ("")
+      result should be (None)
       val result2 = projectService.setProjectEly(project.id, 2)
-      result2 should be ("")
+      result2 should be (None)
       val result3 = projectService.setProjectEly(project.id, 3)
-      result3 == "" should be (false)
+      result3.isEmpty should be (false)
     }
   }
 }
