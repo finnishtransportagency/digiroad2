@@ -133,7 +133,7 @@ object ProjectSectionCalculator {
         }
       } catch {
         case ex: InvalidAddressDataException =>
-          logger.info(s"Can't calculate road/road part ${gpl._1}/${gpl._2}: " + ex.getMessage)
+          logger.info(s"Can't calculate road/road part ${gpl._1._1}/${gpl._1._2}: " + ex.getMessage)
           gpl._2
       }
     }).toSeq
