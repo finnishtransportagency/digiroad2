@@ -348,12 +348,11 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         .map(getProjectLinks(projectId, zoomLevel))
         .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
   }
-
-  put("/roadlinks/roadaddress/project/updateroadlinks"){
+  put("/project/roadlinks"){
     val user = userProvider.getCurrentUser()
 
     val modification = parsedBody.extract[RoadAddressProjectLinkUpdate]
-    val updated = projectService.updateProjectLinks(modification.projectId, modification.linkIds.toSet,
+    val updated = projectService.updateProjectLinkStatus(modification.projectId, modification.linkIds.toSet,
       LinkStatus.apply(modification.newStatus), user.username)
     Map("projectId" -> modification.projectId, "publishable" -> (updated &&
       projectService.projectLinkPublishable(modification.projectId)))

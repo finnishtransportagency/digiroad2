@@ -228,14 +228,6 @@ object ProjectDAO {
     Q.queryNA[String](query).firstOption
   }
 
-  def deleteRoadPartFromProject(projectId: Long, roadNumber: Long, roadPart: Long): Int = {
-      val query =
-        s"""
-         DELETE FROM Project_Link WHERE project_id = ${projectId} and road_number = ${roadNumber} and road_part_number = ${roadPart}
-       """
-      Q.updateNA(query).first
-  }
-
   def getProjectStatus(projectID: Long): Option[ProjectState] = {
     val query =
       s""" SELECT state
@@ -314,12 +306,19 @@ object ProjectDAO {
   }
 
 
-  def removeProjectLinksById(projectLinkIds: Set[Long]) = {
+  def removeProjectLinksById(projectLinkIds: Set[Long], lrmPositionIds: Set[Long]) = {
     val query =
       s"""
          DELETE FROM Project_Link WHERE id IN (${projectLinkIds.mkString(",")})
        """
-    Q.updateNA(query).first
+    Q.updateNA(query).list
+
+    val queryLrm =
+      s"""
+         DELETE FROM LRM_POSITION WHERE id IN (${lrmPositionIds.mkString(",")})
+       """
+    Q.updateNA(queryLrm).list
+
   }
 
   def removeProjectLinksByProjectAndRoadNumber(projectId : Long, roadNumber:Long, roadPartNumber:Long) = {

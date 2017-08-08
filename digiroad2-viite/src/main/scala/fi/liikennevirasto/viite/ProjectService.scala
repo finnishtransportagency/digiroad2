@@ -124,12 +124,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def deleteRoadPartFromProject(projectid: Long, roadNumber: Long, roadPart: Long): Long = {
-    withDynTransaction {
-        ProjectDAO.deleteRoadPartFromProject(projectid, roadNumber, roadPart)
-    }
-  }
-
   def projDateValidation(reservedParts:Seq[ReservedRoadPart], projDate:DateTime): Option[String] = {
     reservedParts.foreach( part => {
       if(part.startDate.nonEmpty && part.startDate.get.isAfter(projDate)) return Option(s"Tieosalla TIE ${part.roadNumber} OSA ${part.roadPartNumber} alkupäivämäärä ${part.startDate.get.toString("dd.MM.yyyy")} on uudempi kuin tieosoiteprojektin alkupäivämäärä ${projDate.toString("dd.MM.yyyy")}, tarkista tiedot.")
@@ -293,10 +287,16 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           .map(rl => rl.linkId -> RoadAddressLinkBuilder.getRoadType(rl.administrativeClass, rl.linkType)).toMap
         addressesOnPart.map(toProjectLink(mapping))
       }
+      val projectLinks = ProjectDAO.getProjectLinks(project.id)
+      val deletedParts = projectLinks.filterNot{
+        pl =>
+          project.reservedParts.exists(rp => rp.roadNumber == pl.roadNumber && rp.roadPartNumber == pl.roadPartNumber)
+      }
       val ely = project.reservedParts.map(_.ely)
       if (ely.distinct.size > 1) {
         Some(s"Tieosat ovat eri ELYistä")
       } else {
+        ProjectDAO.removeProjectLinksById(deletedParts.map(_.id).toSet, deletedParts.map(_.lrmPositionId).toSet)
         ProjectDAO.create(addresses)
         if (project.ely.isEmpty)
           ProjectDAO.updateProjectELY(project, ely.head)
@@ -547,7 +547,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def roadAddressLinkToProjectAddressLink(roadAddresses: Seq[RoadAddressLink]): Seq[ProjectAddressLink]= {
     roadAddresses.map(toProjectAddressLink)
   }
-  def updateProjectLinks(projectId: Long, linkIds: Set[Long], linkStatus: LinkStatus, userName: String): Boolean = {
+  def updateProjectLinkStatus(projectId: Long, linkIds: Set[Long], linkStatus: LinkStatus, userName: String): Boolean = {
     withDynTransaction{
       val projectLinks = ProjectDAO.getProjectLinks(projectId)
       val changed = projectLinks.filter(pl => linkIds.contains(pl.linkId)).map(_.id).toSet
