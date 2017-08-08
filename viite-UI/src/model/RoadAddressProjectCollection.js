@@ -340,6 +340,10 @@
       return dirtyProjectLinks;
     };
 
+    this.setCurrentRoadPartList = function(parts){
+      currentRoadPartList = parts;
+    };
+
     this.isDirty = function() {
       return dirtyProjectLinks.length > 0;
     };

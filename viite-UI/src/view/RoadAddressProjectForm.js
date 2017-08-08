@@ -231,6 +231,7 @@
       eventbus.on('roadAddress:openProject', function(result) {
         currentProject = result.project;
         projectCollection.clearRoadAddressProjects();
+        projectCollection.setCurrentRoadPartList(result.projectLinks);
         var text = '';
         var index = 0;
         _.each(result.projectLinks, function(line){  //TODO later list of already saved roadlinks has to be saved in  roadaddressprojectcollection.currentRoadSegmentList for reserve button to function properly now saved links are cleared when newones are reserved

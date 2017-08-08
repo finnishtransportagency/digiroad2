@@ -312,7 +312,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       countAfterInsertProjects.size should be(count)
       projectService.projectLinkPublishable(saved.id) should be(false)
       val linkIds = ProjectDAO.getProjectLinks(saved.id).map(_.linkId).toSet
-      projectService.updateProjectLinkStatus(saved.id, linkIds, LinkStatus.Terminated, "-")
+      projectService.updateProjectLinks(saved.id, linkIds, LinkStatus.Terminated, "-")
       projectService.projectLinkPublishable(saved.id) should be(true)
     }
     runWithRollback {
@@ -557,12 +557,12 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       val linkIds205 = projectLinks._1.map(_.linkId).toSet
       val linkIds206 = projectLinks._2.map(_.linkId).toSet
 
-      projectService.updateProjectLinkStatus(saved.id, linkIds205, LinkStatus.Terminated, "-")
+      projectService.updateProjectLinks(saved.id, linkIds205, LinkStatus.Terminated, "-")
       projectService.projectLinkPublishable(saved.id) should be(false)
 
       projectService.getChangeProject(saved.id).map(_.changeInfoSeq).getOrElse(Seq()) should have size (0)
 
-      projectService.updateProjectLinkStatus(saved.id, linkIds206, LinkStatus.Terminated, "-")
+      projectService.updateProjectLinks(saved.id, linkIds206, LinkStatus.Terminated, "-")
       projectService.projectLinkPublishable(saved.id) should be(true)
 
       val changeProjectOpt = projectService.getChangeProject(saved.id)
