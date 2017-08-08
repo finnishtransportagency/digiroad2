@@ -93,7 +93,7 @@ trait BaseRoadAddress {
   def sideCode: SideCode
   def calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint])
   def floating: Boolean
-  def geom: Seq[Point]
+  def geometry: Seq[Point]
 }
 
 // Note: Geometry on road address is not directed: it isn't guaranteed to have a direction of digitization or road addressing
@@ -101,7 +101,7 @@ case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, roadTyp
                        discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
                        endDate: Option[DateTime] = None, modifiedBy: Option[String] = None, lrmPositionId : Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode, adjustedTimestamp: Long,
                        calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false,
-                       geom: Seq[Point], linkGeomSource: LinkGeomSource) extends BaseRoadAddress {
+                       geometry: Seq[Point], linkGeomSource: LinkGeomSource) extends BaseRoadAddress {
   val endCalibrationPoint = calibrationPoints._2
   val startCalibrationPoint = calibrationPoints._1
 
@@ -964,7 +964,7 @@ object RoadAddressDAO {
         case None => ""
       })
       addressPS.setString(11, createdBy.getOrElse(address.modifiedBy.getOrElse("-")))
-      val (p1, p2) = (address.geom.head, address.geom.last)
+      val (p1, p2) = (address.geometry.head, address.geometry.last)
       addressPS.setDouble(12, p1.x)
       addressPS.setDouble(13, p1.y)
       addressPS.setDouble(14, address.startAddrMValue)
