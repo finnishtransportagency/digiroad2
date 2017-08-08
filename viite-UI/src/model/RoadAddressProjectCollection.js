@@ -6,6 +6,7 @@
     var projectinfo;
     var currentProject;
     var fetchedProjectLinks = [];
+    var fetchedSuravageProjectLinks = [];
     var roadAddressProjectLinks = [];
     var dirtyProjectLinkIds = [];
     var dirtyProjectLinks = [];
@@ -22,8 +23,16 @@
       return _.flatten(fetchedProjectLinks);
     };
 
+    var projectSuravageLinks = function () {
+      return _.flatten(fetchedSuravageProjectLinks);
+    };
+
     this.getProjectLinks = function() {
       return _.flatten(fetchedProjectLinks);
+    };
+    
+    this.getSuravageProjectLinks = function(){
+      return _.flatten(fetchedSuravageProjectLinks);
     };
 
     this.getAll = function () {
@@ -34,6 +43,10 @@
 
     this.reset = function(){
       fetchedProjectLinks = [];
+    };
+    
+    this.resetSuravage = function () {
+      fetchedSuravageProjectLinks = [];
     };
 
     this.getMultiSelectIds = function (linkId) {
@@ -63,7 +76,16 @@
             });
           });
           publishableProject = isPublishable;
-          eventbus.trigger('roadAddressProject:fetched', self.getAll());
+
+          var separated = _.partition(self.getAll(), function(projectRoad){
+            return projectRoad.roadLinkSource === 3;
+          });
+          fetchedSuravageProjectLinks = separated[0];
+          var nonSuravageProjectRoads = separated[1];
+          eventbus.trigger('roadAddressProject:fetched', nonSuravageProjectRoads);
+          if(fetchedSuravageProjectLinks.length !== 0){
+            eventbus.trigger('suravageroadAddressProject:fetched',fetchedSuravageProjectLinks);
+          }
         });
     };
 

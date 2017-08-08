@@ -93,8 +93,8 @@
         '<div class="input-unit-combination">' +
         '<select class="form-control" id="dropDown" size="1">'+
         '<option selected disabled hidden>Valitse</option>'+
-        '<option value="lakkautus"' + (status == 1 ? ' selected' : '') + '>Lakkautus</option>'+
-        '<option value="uusi"' + (selected[0].status !== 0 && selected[0].status !== 1 ? ' ' : ' disabled')+'>Uusi</option>'+
+        '<option value="lakkautus"' + (status == 1 ? ' selected' : selected[0].roadLinkSource === 3 ? 'disabled' : '') + '>Lakkautus</option>'+
+        '<option value="uusi"' + (selected[0].status !== 0 && selected[0].status !== 1 && selected[0].roadLinkSource !== 3 ? ' ' : ' disabled')+'>Uusi</option>'+
         '<option value="action4" disabled>Numeroinnin muutos</option>'+
         '<option value="action5" disabled>Ennallaan</option>'+
         '<option value="action6" disabled>Kalibrointiarvon muutos</option>'+
@@ -212,9 +212,6 @@
         currentProject = projectCollection.getCurrentProject();
         clearInformationContent();
         rootElement.html(selectedProjectLinkTemplate(currentProject.project, options, selectedProjectLink));
-        if(selectedProjectLink[0].id !== 0){
-          rootElement.find('.changeDirectionDiv').prop("hidden", false);
-        }
         replaceAddressInfo();
         checkInputs();
       });
@@ -299,6 +296,7 @@
       rootElement.on('change', '#dropDown', function() {
         if(this.value == "lakkautus") {
           rootElement.find('.new-road-address').prop("hidden", true);
+          rootElement.find('.changeDirectionDiv').prop("hidden", true);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
             return {'id': link.linkId, 'status': link.status};
           })));

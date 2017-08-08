@@ -2,6 +2,7 @@
   root.Backend = function() {
     var self = this;
     var  loadingProject;
+
     this.getRoadLinks = createCallbackRequestor(function(params) {
       var zoom = params.zoom;
       var boundingBox = params.boundingBox;

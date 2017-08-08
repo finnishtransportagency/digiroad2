@@ -450,14 +450,15 @@ Tieosoiteprojektit -listalla n&auml;kyv&auml;t kaikkien k&auml;ytt&auml;jien pro
 
 _Tieosoiteprojektit -listaus._
 
-11. Muutoksien tekeminen tieosoiteprojektissa
+11. Muutosten tekeminen tieosoiteprojektissa
 --------------------------
 
-(T&auml;ll&auml; hetkell&auml; toteutettuna vain tieosan lakkauttaminen)
 
-Tieosoiteprojektissa p&auml;&auml;see tekem&auml;&auml;n muutoksia klikkaamalla Seuraava-painiketta tieosoitemuutosprojektin perustietojen lomakkeella. T&auml;m&auml;n j&auml;lkeen sovellus muuttaa varatut tieosat muokattaviksi kohteiksi, jotka n&auml;kyv&auml;t kartalla keltaisella v&auml;rill&auml;.
+Tieosoiteprojektissa on mahdollista tehd&auml; seuraavia muutoksia eli toimenpiteit&auml;: lakkautus (tieosoitteen lakkautus), uusi (lis&auml;t&auml;&auml;n uusi tieosoite), numeroinnin muutos [ei viel&auml; toteutettu], ennallaan [ei viel&auml; toteutettu], kalibrointiarvon muutos [ei viel&auml; toteutettu], siirto [ei viel&auml; toteutettu] ja kalibrointipisteen siirto [ei viel&auml; toteutettu].  My&ouml;s tieosoitteen kasvusuunnan voi k&auml;&auml;nt&auml;&auml;. Seuraavissa kappaleissa kuvataan jokaisen toimenpiteen teko Viitteess&auml;.
 
-Projektitilassa vain keltaisella n&auml;kyvi&auml;, projektiin varattuja tieosia voi valita klikkaamalla. Kaikkien tieosien tietoja p&auml;&auml;see kuitenkin n&auml;kem&auml;&auml;n viem&auml;ll&auml; hiiren kartalla tieosoitesegmentin p&auml;&auml;lle, jolloin segmentin infolaatikko tulee n&auml;kyviin.
+Tieosoiteprojektissa muutostoimenpiteit&auml; p&auml;&auml;see tekem&auml;&auml;n klikkaamalla Seuraava-painiketta tieosoitemuutosprojektin perustietojen lomakkeella. T&auml;m&auml;n j&auml;lkeen sovellus muuttaa varatut tieosat muokattaviksi kohteiksi. Mik&auml;li toimenpiteen&auml; lis&auml;t&auml;&auml;n uusi tieosoite, k&auml;ytt&auml;j&auml; klikkaa projektin perustietojen lomakkeella Seuraava-painiketta ja valitsee sitten tieosoitteistettavan linkin kartalta.
+
+Projektitilassa, vain projektiin varattuja tieosia voi valita klikkaamalla (pl. uuden tiosoitteen lis&auml;&auml;minen). Kaikkien tieosien tietoja p&auml;&auml;see kuitenkin n&auml;kem&auml;&auml;n viem&auml;ll&auml; hiiren kartalla tieosoitesegmentin p&auml;&auml;lle, jolloin segmentin infolaatikko tulee n&auml;kyviin.
 
 ![Aihio](k36.JPG)
 
@@ -474,17 +475,17 @@ Muutokset tallennetaan oikean alakulman Tallenna-painikkeesta. Ennen tallennusta
 11.1 Toimenpiteet tieosoiteprojektissa
 --------------------------
 
-11.11 Lakkautus
+11.1.1 Lakkautus
 --------------------------
 
-11.12 Uusi
+11.1.2 Uusi
 --------------------------
 
-Toimenpiteell&auml; m&auml;&auml;ritet&auml;&auml;n uusi tieosoite tieosoitteettomille linkeille. Tieosoitteettomia linkkej&auml;, jotka piirtyv&auml;t kartalle harmaina, voi valita kerta- tai tuplaklikkauksella kuten muitakin tielinkkej&auml;. Tuplaklikkaus valitsee yhden tielinkin. Kertaklikkaus valitsee homogeenisen jakson jossa k&auml;ytet&auml;&auml;n VVH:n tienumeroa ja tieosanumeroa. Tienumeron tai tieosanumeron puuttuessa valinnassa k&auml;ytet&auml;&auml;n tienime&auml;.
+Toimenpiteell&auml; m&auml;&auml;ritet&auml;&auml;n uusi tieosoite tieosoitteettomille linkeille. Tieosoitteettomia linkkej&auml;, jotka piirtyv&auml;t kartalle harmaina, voi valita kerta- tai tuplaklikkauksella kuten muitakin tielinkkej&auml;. Tuplaklikkaus valitsee yhden tielinkin. Kertaklikkaus valitsee homogeenisen jakson, jossa k&auml;ytet&auml;&auml;n VVH:n tienumeroa ja tieosanumeroa. Tienumeron tai tieosanumeron puuttuessa valinnassa k&auml;ytet&auml;&auml;n tienime&auml;.
 
-Valitut harmaat tielinkit n&auml;kyv&auml;t kartalla vihre&auml;ll&auml; korostettuna. Kun valitaan Toimenpiteet-alasvetovalikosta 'Uusi' (1) lomakkeelle avautuvat kent&auml;t uuden tieosoitteen tiedoille (2). Jos valitulla tieosuudella on jo olemassa VVH:ssa tienumero ja tieosanumero, ne esit&auml;yttyv&auml;t kenttiin automattisesti [esit&auml;ytt&ouml; TOTEUTUKSESSA].
+Valitut harmaat tielinkit n&auml;kyv&auml;t kartalla vihre&auml;ll&auml; korostettuna. Kun valitaan Toimenpiteet-alasvetovalikosta 'Uusi' (1) lomakkeelle avautuvat kent&auml;t uuden tieosoitteen tiedoille (2). Jos valitulla tieosuudella on jo olemassa VVH:ssa tienumero ja tieosanumero, ne esit&auml;yttyv&auml;t kenttiin automattisesti.
 
-![Uusi tieosoite](k43.png)
+![Uusi tieosoite](k43.JPG)
 
 _Kun toimenpidevalikosta valitaan 'Uusi', oikeaan laitaan ilmestyy n&auml;kyviin kent&auml;t uuden tieosoitteen sy&ouml;tt&auml;mist&auml; varten._
 
@@ -499,33 +500,35 @@ _Tieosoite on jo olemassa projektin alkup&auml;iv&auml;n&auml;._
 
 _Tieosoite on jo varattuna toisessa projektissa nimelt&auml; 'Uusi tieosoiteprojekti'._
 
-Tallennuksen j&auml;lkeen tielinkit joilla on uusi tieosoite p&auml;ivittyv&auml;t karttan&auml;kym&auml;&auml;n. Valitut linkit s&auml;ilyv&auml;t vihre&auml;ll&auml; korostettuna. Valinnan voi purkaa klikkaamalla jotakin tyhj&auml;&auml; (tielinkit&ouml;nt&auml;) kohtaa karttan&auml;kym&auml;ss&auml; tai valitsemalle toisen tielinkin. Valinnan voi palauttaa klikkaamalla uuden tieosoitteen omaavaa tieosaa.
-
-![Uusi tieosoite pinkilla](k46.JPG)
-
-_Uuden tieosoitteen linkit piirtyv&auml;t kartalle pinkill&auml;. Tieosan voi valita klikkaamalla jolloin se korostuu vihre&auml;ll&auml;._
-
-Uuden tieosoitteen linkit piirtyv&auml;t kartalle pinkill&auml; (1). Tieosan alku- ja loppupisteisiin sijoitetaan automaattisesti et&auml;isyyslukema-symbolit. Viite laskee uudelle tieosuudelle automaattisesti my&ouml;s linkkien m-arvot k&auml;ytt&auml;en VVH:n tietoja. Uudelle tieosoitteelle m&auml;&auml;rittyy aluksi satunnainen kasvusuunta, joka n&auml;kyy kartalla pinkkien nuolien suunnasta.
+Tallennuksen j&auml;lkeen linkit s&auml;ilyv&auml;t kartalla vihre&auml;ll&auml; korostettuna ja pinkit suuntanuolet piirtyv&auml;t p&auml;&auml;llimm&auml;iseksi. Valinnan voi purkaa klikkaamalla jotakin tyhj&auml;&auml; (tielinkit&ouml;nt&auml;) kohtaa karttan&auml;kym&auml;ss&auml; tai valitsemalle toisen tielinkin. Valinnan voi palauttaa klikkaamalla uuden tieosoitteen omaavaa tieosaa. Lis&auml;ksi, lomakkeelle ilmestyy K&auml;&auml;nn&auml; kasvusuunta -painike (1), jolla voi vaihtaa valitun tieosan kasvusuunnan. Kasvusuuntaa vaihtaessa my&ouml;s m-arvot p&auml;ivittyv&auml;t automaattisesti. 
 
 ![Kasvusuunnan vaihto](k47.JPG)
 
 _Valittuna olevan uuden tieosoitteen vaikutussuntaa vaihtuu lomakkeen 'K&auml;&auml;nn&auml; vaikutussuunta'-nappulasta._
 
-Tallenuksen j&auml;lkeen lomakkeelle ilmestyy nappi (1) jolla voi vaihtaa valitun tieosan kasvusuunnan. Kasvusuuntaa vaihtaessa my&ouml;s m-arvot p&auml;ivittyv&auml;t automaattisesti.
 
-11.13 Numeroinnnin muutos
+Uuden tieosoitteen linkit piirtyv&auml;t kartalle pinkill&auml; (2). Tieosan alku- ja loppupisteisiin sijoitetaan automaattisesti et&auml;isyyslukema-symbolit. Viite laskee uudelle tieosuudelle automaattisesti my&ouml;s linkkien m-arvot k&auml;ytt&auml;en VVH:n tietoja. Uudelle tieosoitteelle m&auml;&auml;rittyy aluksi satunnainen kasvusuunta, joka n&auml;kyy kartalla pinkkien nuolien suunnasta.
+
+![Uusi tieosoite pinkilla](k46.JPG)
+
+_Uuden tieosoitteen linkit piirtyv&auml;t kartalle pinkill&auml;. Tieosan voi valita klikkaamalla, jolloin se korostuu vihre&auml;ll&auml;._
+
+
+Tallennettuun tieosoitteeseen voi jatkaa uusien linkkien lis&auml;&auml;mist&auml; vaiheittain. Ensin valitaan tallennetun tieosan jatkeeksi seuraava linkki ja sitten valitaan lomakkeelta toimenpide "uusi" ja annetaan linkeille sama tieosoite (TIE= tienumero, OSA=tieosanumero, AJR=ajoratakoodi). ELY ja Jatkuu arvot Viite t&auml;ytt&auml;&auml; automaattisesti. Tallennetaan lis&auml;ykset. Projektin voi my&ouml;s tallentaa, sulkea ja jatkaa lis&auml;yst&auml; samaan tieosoitteeseen my&ouml;hemmin. Kasvusuunta lis&auml;tylle osuudelle m&auml;&auml;r&auml;ytyy aiemmin osoitteistettujen linkkien mukaan ja sit&auml; voi edelleen k&auml;&auml;nt&auml;&auml; K&auml;&auml;nn&auml; kasvusuunta-painikkeella. M-arvot p&auml;ivittyv&auml;t koko tieosalle, jolle on annettu sama tieosoite.
+
+11.1.3 Numeroinnnin muutos
 --------------------------
 
-11.14 Ennallaan
+11.1.4 Ennallaan
 --------------------------
 
-11.15 Kalibrointiarvon muutos
+11.1.5 Kalibrointiarvon muutos
 --------------------------
 
-11.16 Siirto
+11.1.6 Siirto
 --------------------------
 
-11.17 Kalibrointipisteen siirto
+11.1.7 Kalibrointipisteen siirto
 --------------------------
 
 11.2 Muutosilmoituksien tarkastelu taulukkon&auml;kym&auml;ss&auml;
