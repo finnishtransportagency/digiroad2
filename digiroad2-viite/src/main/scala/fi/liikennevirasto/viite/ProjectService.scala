@@ -60,13 +60,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @return
     */
   def checkNewRoadAddressNumberAndPart(roadNumber: Long, roadPart: Long, project :RoadAddressProject): Option[String] = {
-      val projectLinks = RoadAddressDAO.isNewRoadPartUsed(roadNumber, roadPart, project.id)
-      if (projectLinks.isEmpty) {
-        None
-      } else {
-        val fmt = DateTimeFormat.forPattern("dd.MM.yyyy")
-        Some(s"TIE $roadNumber OSA $roadPart on jo olemassa projektin alkupäivänä ${project.startDate.toString(fmt)}, tarkista tiedot") //message to user if address is already in use
-      }
+    val projectLinks = RoadAddressDAO.isNewRoadPartUsed(roadNumber, roadPart, project.id)
+    if (projectLinks.isEmpty) {
+      None
+    } else {
+      val fmt = DateTimeFormat.forPattern("dd.MM.yyyy")
+      Some(s"TIE $roadNumber OSA $roadPart on jo olemassa projektin alkupäivänä ${project.startDate.toString(fmt)}, tarkista tiedot") //message to user if address is already in use
+    }
   }
 
   private def createNewProjectToDB(roadAddressProject: RoadAddressProject): RoadAddressProject = {
@@ -205,8 +205,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         None
       }
     } catch{
-     case NonFatal(e) =>
-       Some("Päivitys ei onnistunut")
+      case NonFatal(e) =>
+        Some("Päivitys ei onnistunut")
     }
   }
 
@@ -214,6 +214,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   /**
     * This will run through all the project links that are to be created and simply add calibration points to the links
     * whose track code change from one another.
+    *
     * @param processed ProjectLinks that were run through
     * @param unprocessed ProjectLinks that still were not through
     * @return all the processed ProjectLinks with calibration points
@@ -263,7 +264,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       } else {
         ProjectDAO.create(addresses)
         if (project.ely.isEmpty)
-          ProjectDAO.updateProjectELY(project, ely.head)
+          ProjectDAO.updateProjectEly(project.id, ely.head)
         None
       }
     }
@@ -747,7 +748,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def recalculateMValues(projectLinks: Seq[ProjectLink]) ={
-     var lastEndM = 0.0
+    var lastEndM = 0.0
     projectLinks.map(l => {
       val endValue = lastEndM + l.geometryLength
       val updatedProjectLink = l.copy(startMValue = 0.0, endMValue = l.geometryLength, startAddrMValue = Math.round(lastEndM), endAddrMValue = Math.round(endValue))
@@ -755,6 +756,24 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       updatedProjectLink
     })
 
+  }
+
+  def setProjectEly(currentProjectId:Long, newEly: Long): Option[String] = {
+    val currentProjectEly = getProjectEly(currentProjectId)
+    if (currentProjectEly == -1) {
+      ProjectDAO.updateProjectEly(currentProjectId, newEly)
+      None
+    } else if (currentProjectEly == newEly){
+      logger.info("ProjectId: " + currentProjectId + " Ely is \"" + currentProjectEly + "\" no need to update")
+      None
+    } else {
+      logger.error(s"The project can not handle multiple ELY areas (the project ELY range is ${currentProjectEly}). Recording was discarded.")
+      Some(s"Projektissa ei voi käsitellä useita ELY-alueita (projektin ELY-alue on ${currentProjectEly}). Tallennus hylättiin.")
+    }
+  }
+
+  def getProjectEly(projectId: Long): Long = {
+      ProjectDAO.getProjectEly(projectId).get
   }
 
   case class PublishResult(validationSuccess: Boolean, sendSuccess: Boolean, errorMessage: Option[String])

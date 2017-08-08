@@ -157,7 +157,8 @@
         newRoadNumber : data[2],
         newRoadPartNumber : data[3],
         newTrackCode : data[4],
-        newDiscontinuity : data[5]
+        newDiscontinuity : data[5],
+        roadEly: data[6]
       };
       $.ajax({
         contentType: "application/json",

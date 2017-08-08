@@ -223,4 +223,15 @@ class ProjectLinkDaoSpec  extends FunSuite with Matchers {
       bsidecode should be (2)
     }
   }
+
+  test("change project Ely DAO") {
+    runWithRollback {
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
+      ProjectDAO.createRoadAddressProject(rap)
+      ProjectDAO.getRoadAddressProjectById(id).nonEmpty should be(true)
+      ProjectDAO.updateProjectEly(id, 100)
+      ProjectDAO.getProjectEly(id).get should be (100)
+    }
+  }
 }
