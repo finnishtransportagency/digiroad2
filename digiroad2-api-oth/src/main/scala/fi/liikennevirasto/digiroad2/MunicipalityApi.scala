@@ -52,11 +52,11 @@ class MunicipalityApi(val linearAssetService: LinearAssetService, val roadLinkSe
 
   private def extractNewLinearAssets(typeId: Int, value: JValue) = {
     typeId match {
-      case _ => value.extractOpt[Seq[NewNumericOrTextualValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, NumericValue(x.properties.map(_.value).head.toInt), x.sideCode, x.geometryTimestamp, None))
+      case _ => value.extractOpt[Seq[NewNumericOrTextualValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, NumericValue(x.properties.map(_.value).head.toInt), x.sideCode , x.geometryTimestamp, None))
     }
   }
 
-  def linearAssetsToApi(linearAssets: Seq[PersistedLinearAsset]): Seq[Map[String, Any]] = {
+  def linearAssetsToApi(linearAssets: Seq[PersistedLinearAsset], municipalityCode: Long): Seq[Map[String, Any]] = {
     linearAssets.map { asset =>
       Map("id" -> asset.id,
         "properties" -> Seq(Map("value" -> asset.value.map(_.toJson), "name" -> getAssetName(asset.typeId))),
@@ -66,7 +66,9 @@ class MunicipalityApi(val linearAssetService: LinearAssetService, val roadLinkSe
         "sideCode" -> asset.sideCode,
         "modifiedAt" -> asset.modifiedDateTime,
         "createdAt" -> asset.createdDateTime,
-        "geometryTimestamp" -> asset.vvhTimeStamp
+        "geometryTimestamp" -> asset.vvhTimeStamp,
+        "municipalityCode" -> municipalityCode,
+        "assetType" -> asset.typeId
       )
     }
   }
@@ -101,11 +103,11 @@ class MunicipalityApi(val linearAssetService: LinearAssetService, val roadLinkSe
     }
   }
 
-  def validateAssetProperties(assetTypeId: Int, properties:Seq[AssetProperties]):Unit = {
+  def validateAssetPropertyValue(assetTypeId: Int, properties:Seq[AssetProperties]):Unit = {
     assetTypeId match {
       case 100 =>
         val value = extractPropertyValue("lighting", properties, firstPropertyValueToInt)
-        if(value._2 != 1)
+        if(!Seq(0,1).contains(value._2))
           halt(BadRequest(s"The property values for the property with name lighting are not valid."))
       case _ => ("", None)
     }
@@ -137,7 +139,7 @@ class MunicipalityApi(val linearAssetService: LinearAssetService, val roadLinkSe
       halt(NotFound("Municipality code not found."))
 
     val assetTypeId = getAssetTypeId(params("assetType"))
-    linearAssetsToApi(linearAssetService.getAssetsByMunicipality(assetTypeId, municipalityCode).filterNot(_.id == 0).filterNot(_.expired))
+    linearAssetsToApi(linearAssetService.getAssetsByMunicipality(assetTypeId, municipalityCode).filterNot(_.id == 0).filterNot(_.expired), municipalityCode)
   }
 
   get("/:municipalityCode/:assetType/:assetId") {
@@ -152,7 +154,7 @@ class MunicipalityApi(val linearAssetService: LinearAssetService, val roadLinkSe
     if(linearAssetService.getMunicipalityById(municipalityCode).isEmpty)
       halt(NotFound("Municipality code not found."))
 
-    linearAssetsToApi(linearAssetService.getPersistedAssetsByIds(assetTypeId, Set(assetId)).filterNot(_.expired)).headOption match {
+    linearAssetsToApi(linearAssetService.getPersistedAssetsByIds(assetTypeId, Set(assetId)).filterNot(_.expired), municipalityCode).headOption match {
       case Some(value) => value
       case _ => halt(NotFound("Asset not found"))
     }
@@ -177,14 +179,14 @@ class MunicipalityApi(val linearAssetService: LinearAssetService, val roadLinkSe
     if(properties.isEmpty)
       halt(BadRequest("Missing asset properties values"))
 
-    validateAssetProperties(assetTypeId, properties)
+    validateAssetPropertyValue(assetTypeId, properties)
     val newLinearAssets = extractNewLinearAssets(assetTypeId, parsedBody)
     validateSideCodes(newLinearAssets)
     newLinearAssets.foreach{
       newAsset => validateMeasures(Set(newAsset.startMeasure, newAsset.endMeasure), assetTypeId, linkId.toLong)
     }
     val assetsIds = linearAssetService.create(newLinearAssets, assetTypeId, user.username, geometryTimestamp)
-    linearAssetsToApi(linearAssetService.getPersistedAssetsByIds(assetTypeId, assetsIds.toSet)).headOption match {
+    linearAssetsToApi(linearAssetService.getPersistedAssetsByIds(assetTypeId, assetsIds.toSet).filterNot(_.expired), municipalityCode).headOption match {
       case Some(value) => value
       case _ => halt(NotFound("Asset not found"))
     }
@@ -206,15 +208,15 @@ class MunicipalityApi(val linearAssetService: LinearAssetService, val roadLinkSe
     (parsedBody \ "geometryTimestamp").extractOrElse[Long](halt(BadRequest("Missing mandatory 'geometryTimestamp' parameter")))
     val properties = (parsedBody \ "properties").extractOrElse[Seq[AssetProperties]](halt(BadRequest("Missing asset properties")))
 
-    val assetById = linearAssetService.getPersistedAssetsByIds(assetTypeId, Set(params("assetId").toLong))
+    val assetById = linearAssetService.getPersistedAssetsByIds(assetTypeId, Set(params("assetId").toLong)).filterNot(_.expired)
     if(assetById.isEmpty) halt(UnprocessableEntity("Asset not found."))
     val newAsset = extractNewLinearAssets(assetTypeId, parsedBody).head
 
     validateMeasures(Set(newAsset.startMeasure, newAsset.endMeasure), assetTypeId, linkId.toLong)
-    validateAssetProperties(assetTypeId, properties)
+    validateAssetPropertyValue(assetTypeId, properties)
     validateSideCodes(Seq(newAsset))
 
-    val oldAsset = linearAssetService.getPersistedAssetsByLinkIds(assetTypeId, Seq(assetById.head.linkId)).head
+    val oldAsset = linearAssetService.getPersistedAssetsByIds(assetTypeId, Set(params("assetId").toLong)).head
 
     val newPersistedAsset = newAsset.vvhTimeStamp >= oldAsset.vvhTimeStamp match {
       case true => oldAsset.startMeasure != newAsset.startMeasure || oldAsset.endMeasure != newAsset.endMeasure match {
@@ -223,7 +225,7 @@ class MunicipalityApi(val linearAssetService: LinearAssetService, val roadLinkSe
       }
       case _ => halt(UnprocessableEntity("The geometryTimestamp of the existing asset is newer than the given asset. Asset was not updated."))
     }
-    linearAssetsToApi(linearAssetService.getPersistedAssetsByIds(assetTypeId, Set(newPersistedAsset))).headOption match {
+    linearAssetsToApi(linearAssetService.getPersistedAssetsByIds(assetTypeId, Set(newPersistedAsset)).filterNot(_.expired), municipalityCode).headOption match {
       case Some(value) => value
       case _ => halt(NotFound("Asset not found"))
     }
@@ -241,7 +243,7 @@ class MunicipalityApi(val linearAssetService: LinearAssetService, val roadLinkSe
     val assetType = getAssetTypeId(params("assetType"))
     val assetId = params("assetId").toLong
 
-    val asset = linearAssetService.getPersistedAssetsByIds(assetType, Set(assetId))
+    val asset = linearAssetService.getPersistedAssetsByIds(assetType, Set(assetId)).filterNot(_.expired)
     if(asset.isEmpty)
       halt(UnprocessableEntity("Asset not found."))
 

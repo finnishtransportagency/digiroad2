@@ -25,6 +25,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   when(mockLinearAssetService.updateWithNewMeasures(Seq(any[Long]), any[Value], any[String], any[Option[Measures]], any[Option[Long]])).thenReturn(Seq(3.toLong))
   when(mockLinearAssetService.updateWithTimeStamp(Seq(any[Long]), any[Value], any[String], any[Option[Long]])).thenReturn(Seq(3.toLong))
   when(mockLinearAssetService.create(Seq(any[NewLinearAsset]), any[Int], any[String], any[Long])).thenReturn(Seq(1.toLong))
+  when(mockLinearAssetService.getMunicipalityById(any[Long])).thenReturn(Seq(235.toLong))
 
   private val municipalityApi = new MunicipalityApi(mockLinearAssetService, mockRoadLinkService)
   addServlet(municipalityApi, "/*")
@@ -150,7 +151,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   }
 
   test("encode lighting limit") {
-    municipalityApi.linearAssetsToApi(Seq(PersistedLinearAsset(1, 2, SideCode.BothDirections.value, Some(NumericValue(1)), 0, 1, None, None, None, None, false, 100, 0, None, linkSource = NormalLinkInterface))) should be(Seq(Map(
+    municipalityApi.linearAssetsToApi(Seq(PersistedLinearAsset(1, 2, SideCode.BothDirections.value, Some(NumericValue(1)), 0, 1, None, None, None, None, false, 100, 0, None, linkSource = NormalLinkInterface)), 235) should be(Seq(Map(
       "id" -> 1,
       "properties" -> Seq(Map("value" -> Some(1), "name" -> "lighting")),
       "linkId" -> 2,
@@ -159,7 +160,9 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
       "sideCode" -> 1,
       "modifiedAt" -> None,
       "createdAt" -> None,
-      "geometryTimestamp" -> 0
+      "geometryTimestamp" -> 0,
+      "municipalityCode" -> 235,
+      "assetType" -> 100
     )))
   }
 }
