@@ -27,7 +27,7 @@ import scala.util.{Left, Right}
 
 case class NewAddressDataExtracted(sourceIds: Set[Long], targetIds: Set[Long])
 
-case class NewRoadAddressExtractor(linkIds: Set[Long], projectId: Long, newRoadNumber: Long, newRoadPartNumber : Long, newTrackCode: Long, newDiscontinuity :Long, roadEly: Long)
+case class NewRoadAddressExtractor(linkIds: Set[Long], projectId: Long, newRoadNumber: Long, newRoadPartNumber : Long, newTrackCode: Long, newDiscontinuity :Long, roadEly: Long, roadLinkSource: Long)
 
 case class ProjectRoadAddressInfo(projectId : Long, roadNumber: Long, roadPartNumber :Long)
 
@@ -312,7 +312,11 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   put("/roadlinks/roadaddress/project/savenewroadlink") {
     try {
       val projectLink = parsedBody.extract[NewRoadAddressExtractor]
-      val roadLinks = projectService.getProjectRoadLinksByLinkIds(projectLink.linkIds)
+      val roadLinks = if(projectLink.roadLinkSource == LinkGeomSource.SuravageLinkInterface.value) {
+        projectService.getProjectSuravageRoadLinksByLinkIds(projectLink.linkIds)
+      } else {
+        projectService.getProjectRoadLinksByLinkIds(projectLink.linkIds)
+      }
       withDynTransaction {
         projectService.setProjectEly(projectLink.projectId, projectLink.roadEly) match {
           case Some(errorMessage) => Map("success" -> false, "errormessage" -> errorMessage)
@@ -328,6 +332,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       case e: MappingException  =>
         logger.warn("Exception saving road links in project", e)
         BadRequest("Missing mandatory ProjectLink parameter")
+      case e:Exception => {
+        println(e.toString)
+        e
+      }
     }
   }
 

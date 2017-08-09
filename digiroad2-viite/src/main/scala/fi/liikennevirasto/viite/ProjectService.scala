@@ -460,6 +460,18 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   }
 
+  def getProjectSuravageRoadLinksByLinkIds(linkIdsToGet : Set[Long]): Seq[ProjectAddressLink] = {
+    if(linkIdsToGet.isEmpty)
+      Seq()
+    else {
+      val fetchVVHStartTime = System.currentTimeMillis()
+      val suravageRoadLinks = roadAddressService.getSuravageRoadLinkAddressesByLinkIds(linkIdsToGet)
+      val fetchVVHEndTime = System.currentTimeMillis()
+      logger.info("End fetch vvh road links in %.3f sec".format((fetchVVHEndTime - fetchVVHStartTime) * 0.001))
+      suravageRoadLinks.map(toProjectAddressLink)
+    }
+  }
+
   def getLinksByProjectLinkId(linkIdsToGet : Set[Long], projectId: Long, newTransaction : Boolean = true): Seq[ProjectAddressLink] = {
 
     if(linkIdsToGet.isEmpty)

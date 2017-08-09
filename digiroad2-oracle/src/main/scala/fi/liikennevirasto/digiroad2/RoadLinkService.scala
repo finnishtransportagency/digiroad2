@@ -353,10 +353,10 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     */
   def getLinkIdsFromVVHWithComplementaryByPolygon(polygon :Polygon): Seq[Long] = {
 
-     val fut = for {
-       f1Result <- vvhClient.roadLinkData.fetchLinkIdsByPolygonF(polygon)
-       f2Result <- vvhClient.complementaryData.fetchLinkIdsByPolygonF(polygon)
-     } yield (f1Result, f2Result)
+    val fut = for {
+      f1Result <- vvhClient.roadLinkData.fetchLinkIdsByPolygonF(polygon)
+      f2Result <- vvhClient.complementaryData.fetchLinkIdsByPolygonF(polygon)
+    } yield (f1Result, f2Result)
 
     val (complementaryResult, result) = Await.result(fut, Duration.Inf)
     complementaryResult ++ result
@@ -390,7 +390,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       f3Result <- vvhClient.roadLinkData.fetchByMunicipalityF(municipalities)
     } yield (f1Result, f2Result, f3Result)
 
-     val (complementaryLinks, changes, links) = Await.result(fut, Duration.Inf)
+    val (complementaryLinks, changes, links) = Await.result(fut, Duration.Inf)
 
     withDynTransaction {
       (enrichRoadLinksFromVVH(links, changes), changes, enrichRoadLinksFromVVH(complementaryLinks, changes))
@@ -929,7 +929,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
   def getRoadNodesFromVVHByMunicipality(municipality: Int): Seq[VVHRoadNodes] = {
     Await.result(getRoadNodesFromVVHFuture(municipality), Duration.Inf)
-}
+  }
 
   /**
     * Checks if road link is not complete. Used by RoadLinkService.enrichRoadLinksFromVVH.
@@ -1458,6 +1458,10 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
   def getSuravageLinksFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadlink] = {
     Await.result(vvhClient.suravageData.fetchSuravageByMunicipalitiesAndBoundsF(bounds, municipalities), atMost = Duration.create(1, TimeUnit.HOURS))
+  }
+
+  def getSuravageLinksByLinkIdsFromVVH(linkIdsToGet: Set[Long]): Seq[VVHRoadlink] = {
+    Await.result(vvhClient.suravageData.fetchSuravageByLinkIdsF(linkIdsToGet), atMost = Duration.create(1, TimeUnit.HOURS))
   }
 
 

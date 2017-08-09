@@ -95,10 +95,13 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     })
   }
 
-
-
   def getSuravageRoadLinkAddresses(boundingRectangle: BoundingRectangle, municipalities: Set[Int]) :Seq[RoadAddressLink]= {
     val suravageLinks= roadLinkService.getSuravageLinksFromVVH(boundingRectangle,municipalities)
+    suravageLinks.map( suravage=>RoadAddressLinkBuilder.buildSuravageRoadAddressLink(suravage))
+  }
+
+  def getSuravageRoadLinkAddressesByLinkIds(linkIdsToGet: Set[Long]): Seq[RoadAddressLink] = {
+    val suravageLinks = roadLinkService.getSuravageLinksByLinkIdsFromVVH(linkIdsToGet)
     suravageLinks.map( suravage=>RoadAddressLinkBuilder.buildSuravageRoadAddressLink(suravage))
   }
 

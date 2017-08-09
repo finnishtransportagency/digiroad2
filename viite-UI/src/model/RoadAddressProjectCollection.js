@@ -250,7 +250,8 @@
         Number($('#roadAddressProject').find('#osa')[0].value),
         Number($('#roadAddressProject').find('#ajr')[0].value),
         Number($('#roadAddressProject').find('#DiscontinuityDropdown')[0].value),
-        Number($('#roadAddressProject').find('#ely')[0].value)
+        Number($('#roadAddressProject').find('#ely')[0].value),
+        Number(_.first(toBeCreatedLinks).roadLinkSource)
       ];
       backend.insertNewRoadLink(data, function(successObject) {
         if (!successObject.success) {

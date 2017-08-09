@@ -1128,4 +1128,8 @@ class VVHSuravageClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vv
   def fetchSuravageByMunicipalitiesAndBoundsF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[VVHRoadlink]] = {
     Future(queryByMunicipalitiesAndBounds(bounds, municipalities, None))
   }
+
+  def fetchSuravageByLinkIdsF(linkIds: Set[Long] = Set()): Future[Seq[VVHRoadlink]] = {
+    Future(queryByLinkIds(linkIds, None, true, extractRoadLinkFeature, withLinkIdFilter))
+  }
 }

@@ -78,6 +78,8 @@
         status = status[0];
       else
         status = 0;
+      var enableUusi = selected[0].status !== 0 && selected[0].status !== 1 && selected[0].roadLinkSource === 3;
+      var lakkautusStatus = status == 1 ? ' selected' : selected[0].roadLinkSource === 3 ? 'disabled' : '';
       return _.template('' +
         '<header>' +
         titleWithProjectName(project.name) +
@@ -93,8 +95,8 @@
         '<div class="input-unit-combination">' +
         '<select class="form-control" id="dropDown" size="1">'+
         '<option selected disabled hidden>Valitse</option>'+
-        '<option value="lakkautus"' + (status == 1 ? ' selected' : selected[0].roadLinkSource === 3 ? 'disabled' : '') + '>Lakkautus</option>'+
-        '<option value="uusi"' + (selected[0].status !== 0 && selected[0].status !== 1 && selected[0].roadLinkSource !== 3 ? ' ' : ' disabled')+'>Uusi</option>'+
+        '<option value="lakkautus"' + (lakkautusStatus) + '>Lakkautus</option>'+
+        '<option value="uusi"' + (enableUusi ? ' ' : ' disabled')+'>Uusi</option>'+
         '<option value="action4" disabled>Numeroinnin muutos</option>'+
         '<option value="action5" disabled>Ennallaan</option>'+
         '<option value="action6" disabled>Kalibrointiarvon muutos</option>'+
