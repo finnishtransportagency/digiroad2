@@ -300,7 +300,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         Some(s"Tieosat ovat eri ELYistä")
       } else {
         if(deletedParts.nonEmpty) {
-          ProjectDAO.removeProjectLinksById(deletedParts.map(_.id).toSet, deletedParts.map(_.lrmPositionId).toSet)
+          ProjectDAO.removeProjectLinksById(deletedParts.map(_.id).toSet)
         }
         ProjectDAO.create(newProjectLinks)
         if (project.ely.isEmpty)

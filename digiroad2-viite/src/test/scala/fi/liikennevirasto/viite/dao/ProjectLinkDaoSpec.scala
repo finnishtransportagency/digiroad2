@@ -111,7 +111,7 @@ class ProjectLinkDaoSpec  extends FunSuite with Matchers {
       ProjectDAO.create(addresses)
       ProjectDAO.getRoadAddressProjectById(id).nonEmpty should be(true)
       val projectLinks = ProjectDAO.getProjectLinks(id)
-      ProjectDAO.removeProjectLinksById(projectLinks.map(_.id).toSet, projectLinks.map(_.lrmPositionId).toSet)
+      ProjectDAO.removeProjectLinksById(projectLinks.map(_.id).toSet)
       ProjectDAO.getProjectLinks(id).nonEmpty should be(false)
     }
   }
