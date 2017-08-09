@@ -124,7 +124,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   get("/roadlinks/project/prefillfromvvh/:linkId") {
     val linkId = params("linkId").toLong
-    projectService.fetchPrefillfromVVH(linkId) match {
+    projectService.fetchPreFillFromVVH(linkId) match {
       case Right(preFillInfo) => {
         Map("success"->true,"roadNumber"->preFillInfo.RoadNumber,"roadPartNumber"->preFillInfo.RoadPart)
       }
@@ -294,12 +294,12 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val endPart = params("endPart").toLong
     val projDate = params("projDate").toString
     val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
-    val errorMessageOpt=projectService.checkRoadAddressNumberAndSEParts(roadNumber, startPart, endPart)
+    val errorMessageOpt=projectService.checkRoadPartsExist(roadNumber, startPart, endPart)
     if (errorMessageOpt.isEmpty) {
-      projectService.checkReservability(roadNumber, startPart, endPart) match {
+      projectService.checkRoadPartsReservable(roadNumber, startPart, endPart) match {
         case Left(err) => Map("success"-> err, "roadparts" -> Seq.empty)
         case Right(reservedRoadParts) => {
-          projectService.projDateValidation(reservedRoadParts, formatter.parseDateTime(projDate)) match {
+          projectService.validateProjectDate(reservedRoadParts, formatter.parseDateTime(projDate)) match {
             case Some(errMsg) => Map("success"-> errMsg)
             case None => Map("success" -> "ok", "roadparts" -> reservedRoadParts.map(reservedRoadPartToApi))
           }
@@ -350,7 +350,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         .map(getProjectLinks(projectId, zoomLevel))
         .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
   }
-
   put("/project/roadlinks"){
     val user = userProvider.getCurrentUser()
 
@@ -569,7 +568,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "roadPartNumber" -> reservedRoadPart.roadPartNumber,
       "roadPartId" -> reservedRoadPart.roadPartId,
       "ely" -> reservedRoadPart.ely,
-      "length" -> reservedRoadPart.length,
+      "roadLength" -> reservedRoadPart.roadLength,
       "discontinuity" -> reservedRoadPart.discontinuity.description
     )
   }

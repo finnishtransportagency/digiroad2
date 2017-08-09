@@ -16,10 +16,16 @@ import slick.jdbc.StaticQuery.interpolation
   */
 class ProjectLinkDaoSpec  extends FunSuite with Matchers {
 
+  private final val lock: String = "LOCK OBJECT"
+
   def runWithRollback(f: => Unit): Unit = {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
-      f
-      dynamicSession.rollback()
+    // Prevent deadlocks in DB because we create and delete links in tests and don't handle the project ids properly
+    // TODO: create projects with unique ids so we don't get into transaction deadlocks in tests
+    lock.synchronized {
+      Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+        f
+        dynamicSession.rollback()
+      }
     }
   }
 
