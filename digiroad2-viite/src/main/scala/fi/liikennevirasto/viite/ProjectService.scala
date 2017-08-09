@@ -352,6 +352,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     withDynTransaction {
       if (roadAddressProject.reservedParts.isEmpty) { //roadaddresses to update is empty
         ProjectDAO.updateRoadAddressProject(roadAddressProject)
+        ProjectDAO.removeProjectLinksByProject(roadAddressProject.id)
         val (forminfo, createdlink) = createFormOfReservedLinksToSavedRoadParts(roadAddressProject)
         (roadAddressProject, createdlink, forminfo, "ok")
       } else {

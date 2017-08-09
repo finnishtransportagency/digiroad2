@@ -279,6 +279,7 @@
           currentProject = result.project;
           var text = '';
           var index = 0;
+          projectCollection.setCurrentRoadPartList(result.formInfo);
           _.each(result.formInfo, function(line){
             var button = deleteButton(index++);
             text += '<div style="display:inline-block;">'  + button +
@@ -299,6 +300,26 @@
           projectCollection.saveProject(data);
         }
       });
+
+      var fillForm = function(list){
+        var text = '';
+        var index = 0;
+
+        _.each(list, function (line) {
+          text += '<div style="display:inline-block;">' + deleteButton(index++) +
+            addSmallLabel(line.roadNumber) +
+            addSmallLabel(line.roadPartNumber) + addSmallLabel(line.roadLength) + addSmallLabel(line.discontinuity) + addSmallLabel(line.ely) +
+            '</div>';
+        });
+        rootElement.html(openProjectTemplate(currentProject, text));
+        applicationModel.setProjectButton(true);
+        applicationModel.setProjectFeature(currentProject.id);
+        applicationModel.setOpenProject(true);
+        activeLayer = true;
+        rootElement.find('.btn-reserve').prop("disabled", false);
+        rootElement.find('.btn-save').prop("disabled", false);
+        rootElement.find('.btn-next').prop("disabled", false);
+      };
 
       rootElement.on('click', '.btn-reserve', function() {
         var data;
@@ -328,22 +349,7 @@
 
       var removePart = function(id){
         projectCollection.deleteRoadPartFromList(id);
-        var text = '';
-        var index = 0;
-        _.each(projectCollection.getDirtyRoadParts(), function (line) {
-          text += '<div style="display:inline-block;">' + deleteButton(index++) +
-            addSmallLabel(line.roadNumber) +
-            addSmallLabel(line.roadPartNumber) + addSmallLabel(line.roadLength) + addSmallLabel(line.discontinuity) + addSmallLabel(line.ely) +
-            '</div>';
-        });
-        rootElement.html(openProjectTemplate(currentProject, text));
-        applicationModel.setProjectButton(true);
-        applicationModel.setProjectFeature(currentProject.id);
-        applicationModel.setOpenProject(true);
-        activeLayer = true;
-        rootElement.find('.btn-reserve').prop("disabled", false);
-        rootElement.find('.btn-save').prop("disabled", false);
-        rootElement.find('.btn-next').prop("disabled", false);
+        fillForm(projectCollection.getDirtyRoadParts());
       };
 
 
@@ -375,7 +381,15 @@
 
 
       rootElement.on('click', '.project-form button.cancel', function(){
-        if (activeLayer) {
+        if(!_.isEqual(projectCollection.getDirtyRoadParts(), projectCollection.getCurrentRoadPartList())){
+          new GenericConfirmPopup('Haluatko varmasti peruuttaa? Mahdolliset tallentamattomat muutokset häviävät', {
+            successCallback: function () {
+              projectCollection.setCurrentRoadPartList(projectCollection.getCurrentRoadPartList());
+              fillForm(projectCollection.getCurrentRoadPartList());
+            }
+          });
+        }
+        else if (activeLayer) {
           new GenericConfirmPopup('Haluatko varmasti peruuttaa? Mahdolliset tallentamattomat muutokset häviävät', {
             successCallback: function () {
               applicationModel.setOpenProject(false);

@@ -315,7 +315,7 @@
     };
 
 
-    var addToCurrentRoadPartList = function (queryresult) {
+    var addToDirtyRoadPartList = function (queryresult) {
       var qRoadparts = [];
       _.each(queryresult.roadparts, function (row) {
         qRoadparts.push(row);
@@ -328,7 +328,6 @@
         _.remove(qRoadparts, row);
       });
       _.each(qRoadparts, function (row) {
-        currentRoadPartList.push(row);
         dirtyRoadPartList.push(row);
       });
     };
@@ -348,6 +347,10 @@
 
     this.getDirtyRoadParts = function () {
       return dirtyRoadPartList;
+    };
+
+    this.getCurrentRoadPartList = function(){
+      return currentRoadPartList;
     };
 
     this.setTmpExpired = function(editRoadLinks){
@@ -379,7 +382,7 @@
       if (validationResult.success !== "ok") {
         eventbus.trigger('roadAddress:projectValidationFailed', validationResult);
       } else {
-        addToCurrentRoadPartList(validationResult);
+        addToDirtyRoadPartList(validationResult);
         updateFormInfo(parseRoadPartInfoToResultRow());
         eventbus.trigger('roadAddress:projectValidationSucceed');
       }

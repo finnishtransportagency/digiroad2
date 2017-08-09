@@ -329,6 +329,14 @@ object ProjectDAO {
     Q.updateNA(query).first
   }
 
+  def removeProjectLinksByProject(projectId : Long) = {
+    val query =
+      s"""
+         DELETE FROM Project_Link WHERE project_id = ${projectId}
+       """
+    Q.updateNA(query).first
+  }
+
   def removeProjectLinksByLinkId(projectId: Long, linkIds: Set[Long]): Int = {
     if (linkIds.size > 100) {
       linkIds.grouped(100).map(g => removeProjectLinksByLinkId(projectId, g)).sum
