@@ -741,6 +741,28 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
     }
   }
 
+  test("Yet another Project link direction change") {
+    runWithRollback {
+/*      in ProjectServiceSpec:
+*       * create a new road address project with multiple links and track codes
+*       * call ProjectService.changeDirection for that part
+*       * check that the total address lengths are the same
+*       * validate that the address values are consistent (tracks have the same start/end)
+  */
+      /**
+        * Before change:
+        * trackCode 0 -> |--- (0,1137) ---|
+        * trackCode 1 -> |--- (1337, 1958) ---|
+        * trackCode 2 -> |--- (1337, 1958) ---|
+        * trackCode 0 -> |--- (1958, 3213) ---|
+        */
+      val links=ProjectDAO.getProjectLinks(7081807)
+      projectService.changeDirection(7081807, 77997, 1)
+      val changedLinks = ProjectDAO.getProjectLinksById(links.map{l => l.id})
+
+    }
+  }
+
   test("parsePrefillData no-link from vvh") {
     projectService.parsePrefillData(Seq.empty[VVHRoadlink]) should be (Left("Link could not be found in VVH"))
   }
