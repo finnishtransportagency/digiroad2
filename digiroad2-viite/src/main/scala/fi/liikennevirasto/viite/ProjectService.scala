@@ -26,7 +26,7 @@ import scala.util.Random
 import scala.util.control.NonFatal
 case class PreFillInfo(RoadNumber:BigInt, RoadPart:BigInt)
 
-class ProjectService(roadAddressService: RoadAddressService, roadLinkService: RoadLinkService, eventbus: DigiroadEventBus) {
+class ProjectService(roadAddressService: RoadAddressService, roadLinkService: RoadLinkService, eventbus: DigiroadEventBus, tempServiceEnabled: Boolean = false) {
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
@@ -90,7 +90,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def fetchPrefillfromVVH(linkId: Long): Either[String,PreFillInfo] = {
-    parsePrefillData(roadLinkService.fetchVVHRoadlinks(Set(linkId)))
+    parsePrefillData(roadLinkService.fetchVVHRoadlinks(Set(linkId),tempServiceEnabled))
   }
 
   def parsePrefillData(vvhRoadLinks:Seq[VVHRoadlink]): Either[String,PreFillInfo] = {
@@ -136,7 +136,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     RoadAddressDAO.getRoadPartInfo(roadnumber, roadpart) match {
       case Some((roadpartid, linkid, lenght, discontinuity, startDate, endDate)) => {
         val enrichment = false
-        val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(linkid), enrichment)
+        val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(linkid), enrichment,tempServiceEnabled)
         val ely: Option[Long] = roadLink.headOption.map(rl => MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(rl.municipalityCode, 0))
         ely match {
           case Some(value) if ely.nonEmpty && ely.get != 0 => (roadpartid, linkid, lenght, Discontinuity.apply(discontinuity.toInt).description, value, Option(startDate), Option(endDate), true)
@@ -283,7 +283,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         return Some(s"Seuraavat tieosat ovat eri ELY-numerolla kuin projektin muut osat: ${errors.mkString(", ")}")
       val addresses = project.reservedParts.flatMap { roadaddress =>
         val addressesOnPart = RoadAddressDAO.fetchByRoadPart(roadaddress.roadNumber, roadaddress.roadPartNumber, false)
-        val mapping = roadLinkService.getRoadLinksByLinkIdsFromVVH(addressesOnPart.map(_.linkId).toSet, false)
+        val mapping = roadLinkService.getRoadLinksByLinkIdsFromVVH(addressesOnPart.map(_.linkId).toSet, false,tempServiceEnabled)
           .map(rl => rl.linkId -> RoadAddressLinkBuilder.getRoadType(rl.administrativeClass, rl.linkType)).toMap
         addressesOnPart.map(toProjectLink(mapping))
       }
@@ -306,7 +306,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }.toSeq.sortBy(_._1._2)(Ordering[Long])
     val adddressestoform = groupedAddresses.map(addressGroup => {
       val lastAddressM = addressGroup._2.last.endAddrMValue
-      val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(addressGroup._2.last.linkId), false)
+      val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(addressGroup._2.last.linkId), false,tempServiceEnabled)
       val addressFormLine = ProjectFormLine(addressGroup._2.last.linkId, project.id, addressGroup._1._1,
         addressGroup._1._2, lastAddressM, MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(roadLink.head.municipalityCode, -1),
         addressGroup._2.last.discontinuity.description)
@@ -387,7 +387,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       }.toSeq.sortBy(_._1._2)(Ordering[Long])
       val formInfo: Seq[ProjectFormLine] = groupedAddresses.map(addressGroup => {
         val endAddressM = addressGroup._2.last.endAddrMValue
-        val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(addressGroup._2.head.linkId), false)
+        val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(addressGroup._2.head.linkId), false,tempServiceEnabled)
         val addressFormLine = ProjectFormLine(addressGroup._2.head.linkId, project.id,
           addressGroup._2.head.roadNumber, addressGroup._2.head.roadPartNumber, endAddressM,
           MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(roadLink.head.municipalityCode, -1),
@@ -413,7 +413,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       try {
         val delta = ProjectDeltaCalculator.delta(projectId)
         //TODO would be better to give roadType to ProjectLinks table instead of calling vvh here
-        val vvhRoadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(delta.terminations.map(_.linkId).toSet, false)
+        val vvhRoadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(delta.terminations.map(_.linkId).toSet, false,tempServiceEnabled)
         val filledTerminations = withFetchedDataFromVVH(delta.terminations, vvhRoadLinks, RoadType)
 
         if (setProjectDeltaToDB(delta.copy(terminations = filledTerminations), projectId)) {
@@ -456,7 +456,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       return Seq()
 
     val fetchVVHStartTime = System.currentTimeMillis()
-    val complementedRoadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIdsToGet, newTransaction)
+    val complementedRoadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIdsToGet, newTransaction,tempServiceEnabled)
     val fetchVVHEndTime = System.currentTimeMillis()
     logger.info("End fetch vvh road links in %.3f sec".format((fetchVVHEndTime - fetchVVHStartTime) * 0.001))
 

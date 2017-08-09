@@ -23,7 +23,7 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     .thenReturn(Seq(vvhRoadLink(1611419, 235), vvhRoadLink(1611412, 235), vvhRoadLink(1611410, 235)) )
   when(mockRoadLinkService.getRoadLinksFromVVH(municipality = 235))
     .thenReturn(Seq(vvhRoadLink(123, 235), vvhRoadLink(125, 235), vvhRoadLink(124, 235), vvhRoadLink(233, 235), vvhRoadLink(234, 235,  Seq(Point(15, 0), Point(20, 0)))))
-  when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean]))
+  when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean]))
     .thenReturn(Seq(vvhRoadLink(1611420, 235), vvhRoadLink(1611411, 235)))
 
   val manoeuvreService = new ManoeuvreService(mockRoadLinkService)

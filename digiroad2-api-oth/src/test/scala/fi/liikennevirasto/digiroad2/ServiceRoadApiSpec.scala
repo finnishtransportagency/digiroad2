@@ -17,7 +17,7 @@ class ServiceRoadApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockLinearAssetService = MockitoSugar.mock[LinearAssetOperations]
   val serviceRoadAPI = new ServiceRoadAPI(mockLinearAssetService, mockRoadLinkService)
-  when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLink))
+  when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink))
   when(mockLinearAssetService.getActiveMaintenanceRoadByPolygon(any[Int], any[Int])).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(MaintenanceRoad(Seq())), 0, 10, None, None, None, None, false, 30, 0, None, LinkGeomSource.NormalLinkInterface)))
 
    addServlet(serviceRoadAPI, "/*")

@@ -329,7 +329,7 @@ class AssetDataImporter {
         counter +=1
         println("Processing roadNumber %d (%d of %d) at time: %s".format(roadNumber, counter, roadNumbers.size,  DateTime.now().toString))
         val linkIds = Queries.getLinkIdsByRoadNumber(roadNumber)
-        val roadLinksFromVVH = linkService.getCurrentAndComplementaryVVHRoadLinks(linkIds, false)
+        val roadLinksFromVVH = linkService.getCurrentAndComplementaryRoadLinksFromVVH(linkIds, false)
         val addresses = RoadAddressDAO.fetchByLinkId(roadLinksFromVVH.map(_.linkId).toSet, false, true).groupBy(_.linkId)
 
         roadLinksFromVVH.foreach(roadLink => {
