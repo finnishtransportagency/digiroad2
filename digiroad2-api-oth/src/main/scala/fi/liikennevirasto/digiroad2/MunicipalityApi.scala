@@ -128,26 +128,46 @@ class MunicipalityApi(val linearAssetService: LinearAssetService, val roadLinkSe
 
   get("/:municipalityCode/:assetType") {
     contentType = formats("json")
+
+    if(!params.contains("municipalityCode"))
+      halt(BadRequest("Missing municipality code."))
+
     val municipalityCode = params("municipalityCode").toInt
+    if(linearAssetService.getMunicipalityById(municipalityCode).isEmpty)
+      halt(NotFound("Municipality code not found."))
+
     val assetTypeId = getAssetTypeId(params("assetType"))
-    linearAssetsToApi(linearAssetService.getAssetsByMunicipality(assetTypeId, municipalityCode).filterNot(_.id == 0))
+    linearAssetsToApi(linearAssetService.getAssetsByMunicipality(assetTypeId, municipalityCode).filterNot(_.id == 0).filterNot(_.expired))
   }
 
   get("/:municipalityCode/:assetType/:assetId") {
     contentType = formats("json")
     val assetId = params("assetId").toInt
     val assetTypeId = getAssetTypeId(params("assetType"))
-    linearAssetsToApi(linearAssetService.getPersistedAssetsByIds(assetTypeId, Set(assetId)).filterNot(_.id == 0))
+
+    if(!params.contains("municipalityCode"))
+      halt(BadRequest("Missing municipality code."))
+
+    val municipalityCode = params("municipalityCode").toInt
+    if(linearAssetService.getMunicipalityById(municipalityCode).isEmpty)
+      halt(NotFound("Municipality code not found."))
+
+    linearAssetsToApi(linearAssetService.getPersistedAssetsByIds(assetTypeId, Set(assetId)).filterNot(_.expired)).headOption match {
+      case Some(value) => value
+      case _ => halt(NotFound("Asset not found"))
+    }
   }
 
   post("/:municipalityCode/:assetType"){
     contentType = formats("json")
+    val assetTypeId = getAssetTypeId(params("assetType"))
 
     if(!params.contains("municipalityCode"))
-      halt(BadRequest("Municipality code not found."))
+      halt(BadRequest("Missing municipality code."))
 
-    val assetTypeId = getAssetTypeId(params("assetType"))
     val municipalityCode = params("municipalityCode").toInt
+    if(linearAssetService.getMunicipalityById(municipalityCode).isEmpty)
+      halt(NotFound("Municipality code not found."))
 
     val linkId = (parsedBody \ "linkId").extractOrElse[Int](halt(UnprocessableEntity("Missing mandatory 'linkId' parameter")))
     val startMeasure = (parsedBody \ "startMeasure").extractOrElse[Double](halt(BadRequest("Missing mandatory 'startMeasure' parameter")))
@@ -164,14 +184,21 @@ class MunicipalityApi(val linearAssetService: LinearAssetService, val roadLinkSe
       newAsset => validateMeasures(Set(newAsset.startMeasure, newAsset.endMeasure), assetTypeId, linkId.toLong)
     }
     val assetsIds = linearAssetService.create(newLinearAssets, assetTypeId, user.username, geometryTimestamp)
-    linearAssetsToApi(linearAssetService.getPersistedAssetsByIds(assetTypeId, assetsIds.toSet))
+    linearAssetsToApi(linearAssetService.getPersistedAssetsByIds(assetTypeId, assetsIds.toSet)).headOption match {
+      case Some(value) => value
+      case _ => halt(NotFound("Asset not found"))
+    }
   }
 
   put("/:municipalityCode/:assetType/:assetId"){
     contentType = formats("json")
 
     if(!params.contains("municipalityCode"))
-      halt(BadRequest("Municipality code not found."))
+      halt(BadRequest("Missing municipality code."))
+
+    val municipalityCode = params("municipalityCode").toInt
+    if(linearAssetService.getMunicipalityById(municipalityCode).isEmpty)
+      halt(NotFound("Municipality code not found."))
 
     val assetTypeId = getAssetTypeId(params("assetType"))
     val linkId = (parsedBody \ "linkId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'linkId' parameter")))
@@ -196,13 +223,20 @@ class MunicipalityApi(val linearAssetService: LinearAssetService, val roadLinkSe
       }
       case _ => halt(UnprocessableEntity("The geometryTimestamp of the existing asset is newer than the given asset. Asset was not updated."))
     }
-    linearAssetsToApi(linearAssetService.getPersistedAssetsByIds(assetTypeId, Set(newPersistedAsset)))
+    linearAssetsToApi(linearAssetService.getPersistedAssetsByIds(assetTypeId, Set(newPersistedAsset))).headOption match {
+      case Some(value) => value
+      case _ => halt(NotFound("Asset not found"))
+    }
   }
 
   delete("/:municipalityCode/:assetType/:assetId"){
 
     if(!params.contains("municipalityCode"))
-      halt(BadRequest("Municipality code not found."))
+      halt(BadRequest("Missing municipality code."))
+
+    val municipalityCode = params("municipalityCode").toInt
+    if(linearAssetService.getMunicipalityById(municipalityCode).isEmpty)
+      halt(NotFound("Municipality code not found."))
 
     val assetType = getAssetTypeId(params("assetType"))
     val assetId = params("assetId").toLong

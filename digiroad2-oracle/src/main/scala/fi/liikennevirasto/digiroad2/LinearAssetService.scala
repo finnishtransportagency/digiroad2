@@ -857,6 +857,12 @@ trait LinearAssetOperations {
     val vVHLinkIds = roadLinkService.getLinkIdsFromVVHWithComplementaryByPolygons(polygon)
     getPersistedAssetsByLinkIds(typeId, vVHLinkIds)
   }
+
+  def getMunicipalityById (id: Long): Seq[Long]={
+    withDynTransaction {
+      dao.getMunicipalityById(id)
+    }
+  }
 }
 
 class LinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetOperations {
