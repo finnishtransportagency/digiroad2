@@ -140,8 +140,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       enrichRoadLinksFromVVH(vvhRoadLinks)
   }
 
-  def getViiteRoadLinksByLinkIdsFromVVH(linkIds: Set[Long], newTransaction: Boolean = true, FrozenTimeVVHAPIServiceEnabled:Boolean =false): Seq[RoadLink] = {
-    val vvhRoadLinks = fetchViiteVVHRoadlinks(linkIds,FrozenTimeVVHAPIServiceEnabled)
+  def getViiteRoadLinksByLinkIdsFromVVH(linkIds: Set[Long], newTransaction: Boolean = true, frozenTimeVVHAPIServiceEnabled:Boolean =false): Seq[RoadLink] = {
+    val vvhRoadLinks = fetchViiteVVHRoadlinks(linkIds,frozenTimeVVHAPIServiceEnabled)
     if (newTransaction)
       withDynTransaction {
         enrichRoadLinksFromVVH(vvhRoadLinks)
@@ -245,8 +245,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     else Seq.empty[VVHRoadlink]
   }
 
-  def fetchViiteVVHRoadlinks(linkIds: Set[Long], FrozenTimeVVHAPIServiceEnabled:Boolean =false): Seq[VVHRoadlink] = {
-    if (linkIds.nonEmpty) {if(FrozenTimeVVHAPIServiceEnabled){vvhClient.roadLinkDataTemp.fetchByLinkIds(linkIds)} else vvhClient.roadLinkData.fetchByLinkIds(linkIds) }
+  def fetchViiteVVHRoadlinks(linkIds: Set[Long], frozenTimeVVHAPIServiceEnabled:Boolean =false): Seq[VVHRoadlink] = {
+    if (linkIds.nonEmpty) {if(frozenTimeVVHAPIServiceEnabled){vvhClient.roadLinkDataTemp.fetchByLinkIds(linkIds)} else vvhClient.roadLinkData.fetchByLinkIds(linkIds) }
     else Seq.empty[VVHRoadlink]
   }
 
@@ -328,15 +328,15 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }
   }
 
-  def getRoadLinksAndChangesFromVVHWithFrozenTimeAPI(bounds: BoundingRectangle, municipalities: Set[Int] = Set(), FrozenTimeVVHAPIServiceEnabled:Boolean = false): (Seq[RoadLink], Seq[ChangeInfo])= {
-    val (changes, links) =
-      if (FrozenTimeVVHAPIServiceEnabled)
-        Await.result(Future(Seq.empty[ChangeInfo]).zip(vvhClient.roadLinkDataTemp.fetchByMunicipalitiesAndBoundsF(bounds, municipalities)), atMost = Duration.Inf)
-      else
-        Await.result(vvhClient.roadLinkChangeInfo.fetchByBoundsAndMunicipalitiesF(bounds, municipalities).zip(vvhClient.roadLinkData.fetchByMunicipalitiesAndBoundsF(bounds, municipalities)), atMost = Duration.Inf)
-    withDynTransaction {
-      (enrichRoadLinksFromVVH(links, changes), changes)
-    }
+  def getRoadLinksAndChangesFromVVHWithFrozenTimeAPI(bounds: BoundingRectangle, municipalities: Set[Int] = Set(), frozenTimeVVHAPIServiceEnabled:Boolean = false): (Seq[RoadLink], Seq[ChangeInfo])= {
+   if (frozenTimeVVHAPIServiceEnabled) {
+     val (changes, links) =
+       Await.result(Future(Seq.empty[ChangeInfo]).zip(vvhClient.roadLinkDataTemp.fetchByMunicipalitiesAndBoundsF(bounds, municipalities)), atMost = Duration.Inf)
+     withDynTransaction {
+       (enrichRoadLinksFromVVH(links, changes), changes)
+     }
+   } else
+       getRoadLinksAndChangesFromVVH(bounds,municipalities)
   }
 
   def getRoadLinksAndChangesFromVVHWithPolygon(polygon :Polygon): (Seq[RoadLink], Seq[ChangeInfo])= {
@@ -664,10 +664,10 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       Nil
   }
 
-  def getViiteCurrentAndHistoryRoadLinksFromVVH(roadAddressesLinkIds: Set[Long], FrozenTimeVVHAPIServiceEnabled : Boolean = false): (Seq[RoadLink], Seq[VVHHistoryRoadLink]) = {
+  def getViiteCurrentAndHistoryRoadLinksFromVVH(roadAddressesLinkIds: Set[Long], frozenTimeVVHAPIServiceEnabled : Boolean = false): (Seq[RoadLink], Seq[VVHHistoryRoadLink]) = {
     val fut = for{
       f1Result <- vvhClient.historyData.fetchVVHRoadLinkByLinkIdsF(roadAddressesLinkIds)
-      f2Result <- if(FrozenTimeVVHAPIServiceEnabled)vvhClient.roadLinkDataTemp.fetchByLinkIdsF(roadAddressesLinkIds) else {vvhClient.roadLinkData.fetchByLinkIdsF(roadAddressesLinkIds)}
+      f2Result <- if(frozenTimeVVHAPIServiceEnabled)vvhClient.roadLinkDataTemp.fetchByLinkIdsF(roadAddressesLinkIds) else {vvhClient.roadLinkData.fetchByLinkIdsF(roadAddressesLinkIds)}
       f3Result <- vvhClient.complementaryData.fetchByLinkIdsF(roadAddressesLinkIds)
     } yield (f1Result, f2Result, f3Result)
 
@@ -723,10 +723,10 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     */
   def getViiteRoadLinksFromVVH(bounds: BoundingRectangle, roadNumbers: Seq[(Int, Int)],
                                municipalities: Set[Int] = Set(),
-                               publicRoads: Boolean, FrozenTimeVVHAPIServiceEnabled:Boolean): Seq[RoadLink] = {
+                               publicRoads: Boolean, frozenTimeVVHAPIServiceEnabled:Boolean): Seq[RoadLink] = {
     val links = Await.result(
 
-      if(FrozenTimeVVHAPIServiceEnabled)
+      if(frozenTimeVVHAPIServiceEnabled)
       vvhClient.roadLinkDataTemp.fetchByRoadNumbersBoundsAndMunicipalitiesF(bounds, municipalities, roadNumbers, publicRoads)
     else
       vvhClient.roadLinkData.fetchByRoadNumbersBoundsAndMunicipalitiesF(bounds, municipalities, roadNumbers, publicRoads),
@@ -742,8 +742,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     *
     * @param municipality A integer, representative of the municipality Id.
     */
-  def getViiteRoadLinksFromVVHByMunicipality(municipality: Int, FrozenTimeVVHAPIServiceEnabled:Boolean =false): Seq[RoadLink] = {
-    val links = if(FrozenTimeVVHAPIServiceEnabled){vvhClient.roadLinkDataTemp.fetchByMunicipality(municipality)} else vvhClient.roadLinkData.fetchByMunicipality(municipality)
+  def getViiteRoadLinksFromVVHByMunicipality(municipality: Int, frozenTimeVVHAPIServiceEnabled:Boolean =false): Seq[RoadLink] = {
+    val links = if(frozenTimeVVHAPIServiceEnabled){vvhClient.roadLinkDataTemp.fetchByMunicipality(municipality)} else vvhClient.roadLinkData.fetchByMunicipality(municipality)
     withDynTransaction {
       (enrichRoadLinksFromVVH(links, Seq()), Seq())._1
     }
@@ -757,11 +757,11 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   def getViiteRoadLinksFromVVH(bounds: BoundingRectangle, roadNumbers: Seq[(Int, Int)], municipalities: Set[Int],
-                               everything: Boolean, publicRoads: Boolean, FrozenTimeVVHAPIServiceEnabled:Boolean) : Seq[RoadLink] =
+                               everything: Boolean, publicRoads: Boolean, frozenTimeVVHAPIServiceEnabled:Boolean) : Seq[RoadLink] =
     if (bounds.area < 1E6)
       getViiteRoadLinksAndChangesFromVVH(bounds, roadNumbers, municipalities, everything, publicRoads)._1
     else
-      getViiteRoadLinksFromVVH(bounds, roadNumbers, municipalities, publicRoads,FrozenTimeVVHAPIServiceEnabled)
+      getViiteRoadLinksFromVVH(bounds, roadNumbers, municipalities, publicRoads,frozenTimeVVHAPIServiceEnabled)
 
   def getViiteRoadPartsFromVVH(linkIds: Set[Long], municipalities: Set[Int] = Set()) : Seq[RoadLink] =
     getViiteRoadLinksWithoutChangesFromVVH(linkIds, municipalities)._1
@@ -1496,20 +1496,20 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }._1)
   }
 
-  def getViiteCurrentAndComplementaryRoadLinksFromVVH(municipality: Int, roadNumbers: Seq[(Int, Int)], FrozenTimeVVHAPIServiceEnabled: Boolean = false): Seq[RoadLink] = {
+  def getViiteCurrentAndComplementaryRoadLinksFromVVH(municipality: Int, roadNumbers: Seq[(Int, Int)], frozenTimeVVHAPIServiceEnabled: Boolean = false): Seq[RoadLink] = {
     val complementaryF = vvhClient.complementaryData.fetchByMunicipalityAndRoadNumbersF(municipality, roadNumbers)
-    val currentF = if (FrozenTimeVVHAPIServiceEnabled) vvhClient.roadLinkDataTemp.fetchByMunicipalityAndRoadNumbersF(municipality, roadNumbers) else vvhClient.roadLinkData.fetchByMunicipalityAndRoadNumbersF(municipality, roadNumbers)
+    val currentF = if (frozenTimeVVHAPIServiceEnabled) vvhClient.roadLinkDataTemp.fetchByMunicipalityAndRoadNumbersF(municipality, roadNumbers) else vvhClient.roadLinkData.fetchByMunicipalityAndRoadNumbersF(municipality, roadNumbers)
     val (compLinks, vvhRoadLinks) = Await.result(complementaryF.zip(currentF), atMost = Duration.create(1, TimeUnit.HOURS))
     (enrichRoadLinksFromVVH(compLinks ++ vvhRoadLinks, Seq.empty[ChangeInfo]), Seq.empty[ChangeInfo])._1
   }
 
-  def getCurrentAndComplementaryVVHRoadLinks(linkIds: Set[Long], FrozenTimeVVHAPIServiceEnabled : Boolean = false): Seq[VVHRoadlink] = {
-    val roadLinks= if(FrozenTimeVVHAPIServiceEnabled) vvhClient.roadLinkDataTemp.fetchByLinkIds(linkIds) else vvhClient.roadLinkData.fetchByLinkIds(linkIds)
+  def getCurrentAndComplementaryVVHRoadLinks(linkIds: Set[Long], frozenTimeVVHAPIServiceEnabled : Boolean = false): Seq[VVHRoadlink] = {
+    val roadLinks= if(frozenTimeVVHAPIServiceEnabled) vvhClient.roadLinkDataTemp.fetchByLinkIds(linkIds) else vvhClient.roadLinkData.fetchByLinkIds(linkIds)
     vvhClient.complementaryData.fetchByLinkIds(linkIds) ++ roadLinks
   }
 
-  def getCurrentAndComplementaryRoadLinksFromVVH(linkIds: Set[Long], newTransaction: Boolean = true, FrozenTimeVVHAPIServiceEnabled : Boolean = false ): Seq[RoadLink] = {
-    val roadLinks= if(FrozenTimeVVHAPIServiceEnabled) vvhClient.roadLinkDataTemp.fetchByLinkIds(linkIds) else vvhClient.roadLinkData.fetchByLinkIds(linkIds)
+  def getCurrentAndComplementaryRoadLinksFromVVH(linkIds: Set[Long], newTransaction: Boolean = true, frozenTimeVVHAPIServiceEnabled : Boolean = false ): Seq[RoadLink] = {
+    val roadLinks= if(frozenTimeVVHAPIServiceEnabled) vvhClient.roadLinkDataTemp.fetchByLinkIds(linkIds) else vvhClient.roadLinkData.fetchByLinkIds(linkIds)
     val roadLinksVVH = vvhClient.complementaryData.fetchByLinkIds(linkIds) ++ roadLinks
     if (newTransaction)
       withDynTransaction {

@@ -201,7 +201,7 @@ class VVHClient(vvhRestApiEndPoint: String) {
   lazy val complementaryData: VVHComplementaryClient = new VVHComplementaryClient(vvhRestApiEndPoint)
   lazy val historyData: VVHHistoryClient = new VVHHistoryClient(vvhRestApiEndPoint)
   lazy val roadNodesData: VVHRoadNodesClient = new VVHRoadNodesClient(vvhRestApiEndPoint)
-  lazy val suravageData: VVHSuravageClient = new VVHSuravageClient((vvhRestApiEndPoint))
+  lazy val suravageData: VVHSuravageClient = new VVHSuravageClient(vvhRestApiEndPoint)
 
   def fetchRoadLinkByLinkId(linkId: Long): Option[VVHRoadlink] = {
     roadLinkData.fetchByLinkId(linkId) match {
