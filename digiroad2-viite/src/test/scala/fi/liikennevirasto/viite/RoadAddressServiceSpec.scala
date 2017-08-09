@@ -292,12 +292,12 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       addressList should have size (1)
       val address = addressList.head
       address.floating should be (false)
-      address.geom shouldNot be (roadLink.geometry)
+      address.geometry shouldNot be (roadLink.geometry)
       roadAddressService.checkRoadAddressFloatingWithoutTX(Set(address.id))
       dynamicSession.rollback()
       val addressUpdated = RoadAddressDAO.queryById(Set(address.id)).head
-      addressUpdated.geom shouldNot be (address.geom)
-      addressUpdated.geom should be(roadLink.geometry)
+      addressUpdated.geometry shouldNot be (address.geometry)
+      addressUpdated.geometry should be(roadLink.geometry)
       addressUpdated.floating should be (false)
     }
   }
@@ -312,7 +312,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       roadAddressService.checkRoadAddressFloatingWithoutTX(Set(address.id))
       dynamicSession.rollback()
       val addressUpdated = RoadAddressDAO.queryById(Set(address.id)).head
-      addressUpdated.geom should be (address.geom)
+      addressUpdated.geometry should be (address.geometry)
       addressUpdated.floating should be (true)
     }
   }
@@ -755,7 +755,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       transferred.head.startCalibrationPoint.isEmpty should be (false)
       transferred.head.startAddrMValue should be (3045)
       transferred.head.endAddrMValue should be (3169)
-      GeometryUtils.areAdjacent(transferred.head.geom, Seq(targetLinkData.geometry.head, targetLinkData.geometry.last)) should be (true)
+      GeometryUtils.areAdjacent(transferred.head.geometry, Seq(targetLinkData.geometry.head, targetLinkData.geometry.last)) should be (true)
     }
   }
 

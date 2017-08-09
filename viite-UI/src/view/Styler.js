@@ -32,16 +32,16 @@
      * @returns {string} The default solid color of a line in the RGBA format.
      */
     var generateStrokeColor = function (roadClass, anomaly, constructionType, roadLinkType, gapTransfering, roadLinkSource) {
-      if (anomaly !== 1) {
+      if(roadLinkSource === LINKSOURCE_SURAVAGE) {
+        return 'rgba(211, 175, 246, 0.65)';
+      } else if (anomaly !== 1) {
         if(roadLinkType === -1){
           if(constructionType === 1) {
             return 'rgba(164, 164, 162, 0.65)';
           } else {
             return 'rgba(247, 254, 46, 0.45)';
           }
-        } else  if(roadLinkSource === LINKSOURCE_SURAVAGE) {
-          return 'rgba(211, 175, 246, 0.65)';
-        } else {
+        } else  {
           switch (roadClass) {
             case 1 : return 'rgba(255, 0, 0, 0.65)';
             case 2 : return 'rgba(255, 102, 0, 0.65)';
@@ -204,13 +204,13 @@
       var lineColor = generateStrokeColor(roadLinkData.roadClass, roadLinkData.anomaly, roadLinkData.constructionType, roadLinkData.roadLinkType, roadLinkData.gapTransfering, roadLinkData.roadLinkSource);
       if(roadLinkData.roadClass >= 7 && roadLinkData.roadClass <= 10 ){
         borderColor = lineColor;
-        middleLineColor = generateStrokeColor(98,  roadLinkData.anomaly, roadLinkData.constructionType, roadLinkData.roadLinkType, roadLinkData.gapTransfering);
+        middleLineColor = generateStrokeColor(98,  roadLinkData.anomaly, roadLinkData.constructionType, roadLinkData.roadLinkType, roadLinkData.gapTransfering, roadLinkData.roadLinkSource);
         lineCap  = 'butt';
         middleLineCap = 'butt';
         borderCap = 'round';
       } else if (roadLinkData.roadClass == 99 && roadLinkData.constructionType == 1) {
         borderColor = lineColor;
-        middleLineColor = generateStrokeColor(97, roadNormalType, roadNormalType, roadLinkData.roadLinkType, roadLinkData.gapTransfering);
+        middleLineColor = generateStrokeColor(97, roadNormalType, roadNormalType, roadLinkData.roadLinkType, roadLinkData.gapTransfering, roadLinkData.roadLinkSource);
         lineCap = 'butt';
         middleLineCap = 'butt';
         borderCap = 'round';
@@ -228,7 +228,7 @@
       });
       var middleLineWidth = strokeWidth;
       if(roadLinkData.id !== 0 && roadLinkData.administrativeClass == "Municipality"){
-        adminClassColor = generateStrokeColor(97, roadNormalType, roadNormalType, roadLinkData.roadLinkType, roadLinkData.gapTransfering);
+        adminClassColor = generateStrokeColor(97, roadNormalType, roadNormalType, roadLinkData.roadLinkType, roadLinkData.gapTransfering, roadLinkData.roadLinkSource);
         adminClassWidth = middleLineWidth+7;
       }
       var middleLine = new ol.style.Stroke({
