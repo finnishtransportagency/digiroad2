@@ -200,7 +200,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
          return Some("Linkit kuuluvat useampaan projektiin")
         }
         ProjectDAO.flipProjectLinksSideCodes(projectId, roadNumber, roadPartNumber)
-        recalculateMValues(ProjectDAO.fetchByProjectNewRoadPart(roadNumber, roadPartNumber, projectId).reverse).foreach(
+        val projectLinks = ProjectDAO.getProjectLinksById(projectLinkIds)
+        val projectLinksWithFixedTopology = ProjectSectionCalculator.determineMValues(projectLinks, Seq.empty[ProjectLink])
+        recalculateMValues(projectLinksWithFixedTopology).foreach(
           link => ProjectDAO.updateMValues(link))
         None
       }
