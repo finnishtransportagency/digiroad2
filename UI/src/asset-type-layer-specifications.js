@@ -533,12 +533,13 @@
         {'name': "Lisatieto", 'propertyType': 'text', 'publicId': "trafficSigns_info", values: []}
       ]},
       label: new TrafficSignLabel(),
+      collection: TrafficSignsCollection,
       formLabels: {
         singleFloatingAssetLabel: 'liikennemerkin',
         manyFloatingAssetsLabel: 'liikennemerkit',
         newAssetLabel: 'liikennemerkki'
       },
-       editConstrains : function(selectedAsset, linkId) {
+      editConstrains : function(selectedAsset, linkId) {
        // check if administrative class is State
           return selectedAsset.getAdministrativeClass(linkId) === "State";
      }

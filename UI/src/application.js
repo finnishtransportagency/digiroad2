@@ -22,7 +22,7 @@
     });
 
     var pointAssets = _.map(pointAssetSpecs, function(spec) {
-      var collection = new PointAssetsCollection(backend, spec.layerName);
+      var collection = _.isUndefined(spec.collection ) ?  new PointAssetsCollection(backend, spec.layerName) : new spec.collection(backend, spec.layerName) ;
       var selectedPointAsset = new SelectedPointAsset(backend, spec.layerName, roadCollection);
       return _.merge({}, spec, {
         collection: collection,

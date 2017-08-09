@@ -8,23 +8,23 @@
 
     var backgroundStyle = function (value) {
 
-      var image = 'images/speedLimitSign.png';
-
-      if(value == 7){
-        image = 'images/crossingSign.png';
-      }
-      if(value == 9){
-        image = 'images/warningSign.png';
-      }
-      if(value > 9 ){
-        image = 'images/turningSign.png';
-      }
-
       return new ol.style.Style({
         image: new ol.style.Icon(({
-          src: image,
+          src: getImage(value),
           anchor : [0.5, 1]
         }))
+      });
+    };
+
+    var getImage = function(value) {
+      var images = {
+        'images/speedLimitSign.png':  {signValue:[1, 2, 3, 4, 5, 6, 8]},
+        'images/crossingSign.png':    {signValue:[7]},
+        'images/warningSign.png':     {signValue:[9]},
+        'images/turningSign.png':     {signValue:[10, 11, 12]}
+      };
+      return _.findKey(images, function(image) {
+        return _.contains(image.signValue, value);
       });
     };
 
@@ -36,9 +36,8 @@
 
     var correctValue = function(value){
       var valueLength = value.toString().length;
-      if(value)
-        if(valueLength > 3 || value < 0)
-          return false;
+      if(!value || (valueLength > 3 || value < 0))
+        return false;
       return true;
     };
 
