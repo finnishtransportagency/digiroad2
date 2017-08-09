@@ -328,7 +328,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     }
   }
 
-  def getViiteRoadLinksAndChangesFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set(), tempServiceEnabled:Boolean = false): (Seq[RoadLink], Seq[ChangeInfo])= {
+  def getRoadLinksAndChangesFromVVHWithFrozenTimeAPI(bounds: BoundingRectangle, municipalities: Set[Int] = Set(), tempServiceEnabled:Boolean = false): (Seq[RoadLink], Seq[ChangeInfo])= {
     val (changes, links) =
       if (tempServiceEnabled)
         Await.result(Future(Seq.empty[ChangeInfo]).zip(vvhClient.roadLinkDataTemp.fetchByMunicipalitiesAndBoundsF(bounds, municipalities)), atMost = Duration.Inf)

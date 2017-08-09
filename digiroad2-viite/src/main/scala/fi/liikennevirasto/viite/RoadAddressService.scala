@@ -630,7 +630,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val pointCloud = chainRoadLinks.map(_.geometry).map(GeometryUtils.geometryEndpoints).flatMap(x => Seq(x._1, x._2))
     val boundingPoints = GeometryUtils.boundingRectangleCorners(pointCloud)
     val boundingRectangle = BoundingRectangle(boundingPoints._1 + Vector3d(-.1, .1, 0.0), boundingPoints._2 + Vector3d(.1, -.1, 0.0))
-    val connectedLinks =  roadLinkService.getViiteRoadLinksAndChangesFromVVH(boundingRectangle,Set(),tempServiceEnabled)._1
+    val connectedLinks =  roadLinkService.getRoadLinksAndChangesFromVVHWithFrozenTimeAPI(boundingRectangle,Set(),tempServiceEnabled)._1
       .filterNot(rl => chainLinks.contains(rl.linkId))
       .filter{rl =>
         val endPoints = GeometryUtils.geometryEndpoints(rl.geometry)
