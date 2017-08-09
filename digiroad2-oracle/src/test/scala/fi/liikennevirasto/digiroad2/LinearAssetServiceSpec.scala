@@ -13,7 +13,7 @@ import org.geotools.geometry.jts.GeometryBuilder
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.mockito.ArgumentCaptor
-import org.mockito.Matchers.{any, _}
+import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
@@ -37,7 +37,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
   val roadLinkWithLinkSource = RoadLink(
     1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
     1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
-  when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((List(roadLinkWithLinkSource), Nil))
+  when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(roadLinkWithLinkSource), Nil))
   when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[Int])).thenReturn((List(roadLinkWithLinkSource), Nil))
   when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[Long], any[Boolean])).thenReturn(Some(roadLinkWithLinkSource))
 
@@ -508,7 +508,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       sqlu"""insert into asset_link (asset_id, position_id) values (1,1)""".execute
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) values (1,1,(select id from property where public_id = 'mittarajoitus'),1)""".execute
 
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((List(oldRoadLink), Nil))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(oldRoadLink), Nil))
       val before = service.getByBoundingBox(assetTypeId, boundingBox).toList
 
       before.length should be (1)
@@ -517,7 +517,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       before.head.map(_.startMeasure should be (0))
       before.head.map(_.endMeasure should be (25))
 
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((newRoadLinks, changeInfo))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((newRoadLinks, changeInfo))
       val after = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
 
       after.length should be (3)
@@ -584,7 +584,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       sqlu"""insert into asset_link (asset_id, position_id) values (1,1)""".execute
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) values (1,1,(select id from property where public_id = 'mittarajoitus'), 1)""".execute
 
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((List(oldRoadLink), Nil))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(oldRoadLink), Nil))
       val before = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
 
       before.length should be (3)
@@ -595,7 +595,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       beforeByValue(Some(NumericValue(1))).length should be (1)
       beforeByValue(None).length should be (2)
 
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((newRoadLinks, changeInfo))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((newRoadLinks, changeInfo))
       val after = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
 
       after.length should be (5)
@@ -665,7 +665,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       sqlu"""insert into asset_link (asset_id, position_id) values (3,3)""".execute
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) values (3,3,(select id from property where public_id = 'mittarajoitus'),1)""".execute
 
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((oldRoadLinks, Nil))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((oldRoadLinks, Nil))
       val before = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
 
       before.length should be (3)
@@ -686,7 +686,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       linearAssets3.head.endMeasure should be (5)
 
 
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((List(newRoadLink), changeInfo))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfo))
       val after = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
 
 //      after.foreach(println)
@@ -743,7 +743,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       sqlu"""insert into asset_link (asset_id, position_id) values (1, 1)""".execute
       sqlu"""insert into text_property_value(id, asset_id, property_id, value_fi, created_date, created_by) values (1, 1, (select id from property where public_id='eurooppatienumero'), 'E666' || chr(10) || 'E667', sysdate, 'dr2_test_data')""".execute
 
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((List(oldRoadLink), Nil))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(oldRoadLink), Nil))
       val before = service.getByBoundingBox(assetTypeId, boundingBox).toList
 
       before.length should be (1)
@@ -752,7 +752,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       before.head.map(_.startMeasure should be (0))
       before.head.map(_.endMeasure should be (25))
 
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((newRoadLinks, changeInfo))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((newRoadLinks, changeInfo))
       val after = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
 
       after.length should be (3)
@@ -820,7 +820,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       sqlu"""insert into asset_link (asset_id, position_id) values (3,3)""".execute
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) values (3,3,(select id from property where public_id = 'mittarajoitus'),60)""".execute
 
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((oldRoadLinks, Nil))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((oldRoadLinks, Nil))
       val before = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
 
       before.length should be (4)
@@ -836,7 +836,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       linearAssets2.filter(l => l.id > 0).head.startMeasure should be (0)
       linearAssets2.filter(l => l.id > 0).head.endMeasure should be (5)
 
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((List(newRoadLink), changeInfo))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfo))
       val after = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
 //      after.foreach(println)
       after.length should be(4)
@@ -894,7 +894,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       sqlu"""insert into asset_link (asset_id, position_id) values (3,3)""".execute
       sqlu"""insert into prohibition_value (id, asset_id, type) values (3,3,24)""".execute
 
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((oldRoadLinks, Nil))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((oldRoadLinks, Nil))
       val before = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
 
       before.length should be (4)
@@ -910,7 +910,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       linearAssets2.filter(l => l.id > 0).head.startMeasure should be (0)
       linearAssets2.filter(l => l.id > 0).head.endMeasure should be (5)
 
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((List(newRoadLink), changeInfo))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfo))
       val after = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
 
 //      after.foreach(println)
@@ -982,7 +982,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       sqlu"""insert into prohibition_exception (id, prohibition_value_id, type) values (600012, 3, 10)""".execute
 
 
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((oldRoadLinks, Nil))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((oldRoadLinks, Nil))
       val before = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
 
       before.length should be (4)
@@ -999,7 +999,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       linearAssets2.filter(l => l.id > 0).head.startMeasure should be (0)
       linearAssets2.filter(l => l.id > 0).head.endMeasure should be (5)
 
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((List(newRoadLink), changeInfo))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfo))
       val after = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
 //      after.foreach(println)
       after.length should be(4)
@@ -1162,14 +1162,14 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
 
 
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((oldRoadLinks, Nil))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((oldRoadLinks, Nil))
       val before = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
 
       val beforeByLinkId = before.groupBy(_.linkId)
       val linearAssets1 = beforeByLinkId(oldLinkId1)
       linearAssets1.length should be (3)
 
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((List(newRoadLink), changeInfo))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfo))
       val after = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
 
 //      after.foreach(println)
@@ -1226,7 +1226,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     val newRoadLink = RoadLink(newLinkId, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes)
 
     runWithRollback {
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((List(newRoadLink), Nil))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), Nil))
       when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[String])).thenReturn(List())
 
       val createdAsset = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
@@ -1262,7 +1262,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     )
 
     runWithRollback {
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((List(newRoadLink), changeInfoSeq))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfoSeq))
       when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[String])).thenReturn(List())
 
       service.getByBoundingBox(assetTypeId, boundingBox)
@@ -1305,7 +1305,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       val newAssetId = ServiceWithDao.create(Seq(NewLinearAsset(newLinkId, 0, 20, NumericValue(1), 1, 0, None)), assetTypeId, "testuser")
       val newAsset = ServiceWithDao.getPersistedAssetsByIds(assetTypeId, newAssetId.toSet)
 
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((List(newRoadLink), Nil))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), Nil))
       when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[String])).thenReturn(newAsset)
 
       val existingAssets = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
@@ -1351,7 +1351,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     )
 
     runWithRollback {
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((List(newRoadLink2, newRoadLink1, newRoadLink0), changeInfoSeq))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink2, newRoadLink1, newRoadLink0), changeInfoSeq))
       when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[String])).thenReturn(List())
 
       val existingAssets = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
@@ -1382,7 +1382,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     )
 
     runWithRollback {
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((List(), changeInfoSeq))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(), changeInfoSeq))
       when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[String])).thenReturn(List())
 
       val createdAsset = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
@@ -1416,7 +1416,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     )
 
     runWithRollback {
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((List(newRoadLink), changeInfoSeq))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfoSeq))
       when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[String])).thenReturn(List())
 
       val createdAsset = service.getByBoundingBox(differentAssetTypeId, boundingBox).toList.flatten
@@ -1448,7 +1448,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     val newRoadLink = RoadLink(newLinkId, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes)
 
     runWithRollback {
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((List(newRoadLink), Nil))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), Nil))
       when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[String])).thenReturn(List())
 
       val createdAsset = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
@@ -1485,7 +1485,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       val newAssetId = ServiceWithDao.create(Seq(NewLinearAsset(newLinkId, 0, 20, NumericValue(1), 1, 0, None)), assetTypeId, "testuser")
       val newAsset = ServiceWithDao.getPersistedAssetsByIds(assetTypeId, newAssetId.toSet)
 
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((List(newRoadLink), changeInfoSeq))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfoSeq))
       when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[String])).thenReturn(List(newAsset.head))
 
       val createdAsset = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten.filter(_.value.isDefined)
@@ -1760,7 +1760,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       sqlu"""insert into asset_link (asset_id, position_id) values (1,1)""".execute
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) (SELECT 1, 1, id, 4779 FROM PROPERTY WHERE PUBLIC_ID = 'mittarajoitus')""".execute
 
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((roadLinks, changeInfo))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((roadLinks, changeInfo))
       val before = service.getByBoundingBox(assetTypeId, boundingBox, Set(municipalityCode))
       before should have size(2)
 
@@ -1819,7 +1819,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       val assets = service.getPersistedAssetsByIds(assetTypeId, Set(1L))
       assets should have size(1)
 
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((roadLinks, changeInfo))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((roadLinks, changeInfo))
       val after = service.getByBoundingBox(assetTypeId, boundingBox, Set(municipalityCode))
       after should have size(1)
 
@@ -1870,7 +1870,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       sqlu"""insert into asset_link (asset_id, position_id) values (3, 3)""".execute
       sqlu"""insert into number_property_value (id, asset_id, property_id, value) values (3, 3, (select id from property where public_id = 'mittarajoitus'), 1000)""".execute
 
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
 
       val result = service.getChanged(heightLimitAssetId, DateTime.parse("2016-11-01T12:00Z"), DateTime.parse("2016-11-02T12:00Z"))
       result.length should be(1)
@@ -1890,7 +1890,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     val totalWeightLimitAssetId = 30
 
     OracleDatabase.withDynTransaction {
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink1))
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLink1))
 
       //Linear assets that have been changed in OTH between given date values Before Update
       val resultBeforeUpdate = service.getChanged(totalWeightLimitAssetId, DateTime.parse("2016-11-01T12:00Z"), DateTime.now().plusDays(1))
@@ -1950,7 +1950,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     )
 
     OracleDatabase.withDynTransaction {
-      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((roadLinks, changeInfo))
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((roadLinks, changeInfo))
       val newAsset1 = NewLinearAsset(linkId1, 0.0, 20, NumericValue(2017), 1, 234567, None)
       val id1 = service.create(Seq(newAsset1), assetTypeId, "KX2")
 

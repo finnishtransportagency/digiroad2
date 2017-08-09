@@ -263,7 +263,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
         where $filter and (ra.valid_to > sysdate or ra.valid_to is null) order by ra.id asc"""
       val (linkId, endM) = StaticQuery.queryNA[(Long, Double)](query).firstOption.get
       val roadLink = RoadLink(linkId, Seq(Point(0.0, 0.0), Point(endM + .5, 0.0)), endM + .5, Municipality, 1, TrafficDirection.TowardsDigitizing, Freeway, Some(modificationDate), Some(modificationUser), attributes = Map("MUNICIPALITYCODE" -> BigInt(235)))
-      when(localMockRoadLinkService.getViiteRoadLinksFromVVH(any[BoundingRectangle], any[Seq[(Int,Int)]], any[Set[Int]], any[Boolean], any[Boolean])).thenReturn(Seq(roadLink))
+      when(localMockRoadLinkService.getViiteRoadLinksFromVVH(any[BoundingRectangle], any[Seq[(Int,Int)]], any[Set[Int]], any[Boolean], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink))
       when(localMockRoadLinkService.getComplementaryRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq.empty)
       when(localMockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq.empty)
       when(localMockRoadLinkService.getChangeInfoFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq.empty)
@@ -411,7 +411,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     val history = StaticTestData.road1130HistoryLinks
     val roadAddressService = new RoadAddressService(mockRoadLinkService,mockEventBus)
     when(mockRoadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(any[Set[Long]],any[Boolean])).thenReturn((StaticTestData.road1130Links, StaticTestData.road1130HistoryLinks))
-    when(mockRoadLinkService.getViiteRoadLinksFromVVH(BoundingRectangle(Point(351714,6674367),Point(361946,6681967)), Seq((1,50000)), Set(), false, true)).thenReturn(links)
+    when(mockRoadLinkService.getViiteRoadLinksFromVVH(BoundingRectangle(Point(351714,6674367),Point(361946,6681967)), Seq((1,50000)), Set(), false, true, false)).thenReturn(links)
     when(mockRoadLinkService.getComplementaryRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq())
     when(mockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(history)
     when(mockRoadLinkService.getChangeInfoFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq.empty)
@@ -478,8 +478,8 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       ChangeInfo(Some(5176151),None,441179434,8,Some(0.0),Some(11.41471577),None,None,1455274504000L)
     )
 
-    when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean],any[Boolean])).thenReturn(road75TargetLink)
-    when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((roadLinks, changeInfo))
+    when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean],any[Boolean])).thenReturn(road75TargetLink)
+    when(mockRoadLinkService.getViiteRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]],any[Boolean])).thenReturn((roadLinks, changeInfo))
 
     val result = roadAddressService.getAdjacent(Set(road75TargetLink.head.linkId),road75TargetLink.head.linkId)
     result.size should be (3)
