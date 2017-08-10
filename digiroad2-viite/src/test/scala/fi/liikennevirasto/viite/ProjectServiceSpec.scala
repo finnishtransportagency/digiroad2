@@ -31,6 +31,7 @@ import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 
+import scala.collection.immutable.SortedMap
 import scala.util.parsing.json.JSON
 
 class ProjectServiceSpec  extends FunSuite with Matchers {
@@ -759,23 +760,15 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
     }
   }
 
-//  test("Project link direction change") {
-//    runWithRollback {
-//      val id = Sequences.nextViitePrimaryKeySeqValue
-//      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
-//      ProjectDAO.createRoadAddressProject(rap)
-//      val addresses = RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(rap))
-//      ProjectDAO.create(addresses)
-//      val links=ProjectDAO.getProjectLinks(id)
-//      projectService.changeDirection(id, 5, 203)
-//      val changedLinks = ProjectDAO.getProjectLinksById(links.map{l => l.id})
-//      links.head.sideCode should not be(changedLinks.head.sideCode)
-//      links.head.endMValue should be(changedLinks.last.endMValue)
-//      links.last.endMValue should be(changedLinks.head.endMValue)
-//    }
-//  }
+  test("Project link direction change") {
+    def prettyPrint(links: List[ProjectLink]) = {
 
-  test("Yet another Project link direction change") {
+      val sortedLinks = links.sortBy(_.id)
+      sortedLinks.foreach{ link =>
+        println(s""" trackCode ${link.track.value} -> |--- (${link.startAddrMValue}, ${link.endAddrMValue}) ---|""")
+      }
+      println("\n Total length:" + sortedLinks.map(_.geometryLength).sum)
+    }
 
     runWithRollback {
       val points6117675 = "[{\"x\": 347362.773,\"y\": 6689481.461,\"z\": 67.55100000000675}, {\"x\": 347362.685,\"y\": 6689482.757,\"z\": 67.42900000000373}, {\"x\": 347361.105,\"y\": 6689506.288,\"z\": 66.12099999999919}, {\"x\": 347357.894,\"y\": 6689536.08,\"z\": 65.97999999999593}, {\"x\": 347356.682,\"y\": 6689566.328,\"z\": 66.05199999999604}, {\"x\": 347356.982,\"y\": 6689596.011,\"z\": 66.38800000000629}, {\"x\": 347359.306,\"y\": 6689619.386,\"z\": 66.45799999999872}, {\"x\": 347362.853,\"y\": 6689631.277,\"z\": 66.1649999999936}, {\"x\": 347369.426,\"y\": 6689645.863,\"z\": 65.88700000000244}, {\"x\": 347372.682,\"y\": 6689657.912,\"z\": 66.06600000000617}, {\"x\": 347371.839,\"y\": 6689672.648,\"z\": 66.73399999999674}, {\"x\": 347368.015,\"y\": 6689689.588,\"z\": 67.28399999999965}, {\"x\": 347361.671,\"y\": 6689711.619,\"z\": 68.07300000000396}, {\"x\": 347356.726,\"y\": 6689730.288,\"z\": 68.57300000000396}, {\"x\": 347350.081,\"y\": 6689751.062,\"z\": 69.09399999999732}, {\"x\": 347343.06,\"y\": 6689773.574,\"z\": 68.86900000000605}, {\"x\": 347337.186,\"y\": 6689793.763,\"z\": 68.30999999999767}, {\"x\": 347328.501,\"y\": 6689814.216,\"z\": 67.84900000000198}, {\"x\": 347320.495,\"y\": 6689828.259,\"z\": 67.35000000000582}, {\"x\": 347308.837,\"y\": 6689849.704,\"z\": 66.91300000000047}, {\"x\": 347297.244,\"y\": 6689866.546,\"z\": 66.88499999999476}, {\"x\": 347282.117,\"y\": 6689886.857,\"z\": 66.67999999999302}, {\"x\": 347268.669,\"y\": 6689905.865,\"z\": 66.65899999999965}, {\"x\": 347253.307,\"y\": 6689927.723,\"z\": 66.75400000000081}, {\"x\": 347238.302,\"y\": 6689951.051,\"z\": 66.63099999999395}, {\"x\": 347224.587,\"y\": 6689973.39,\"z\": 66.65200000000186}, {\"x\": 347211.253,\"y\": 6689997.583,\"z\": 66.38800000000629}, {\"x\": 347205.387,\"y\": 6690009.305,\"z\": 66.6030000000028}, {\"x\": 347202.742,\"y\": 6690023.57,\"z\": 66.18600000000151}, {\"x\": 347204.208,\"y\": 6690034.352,\"z\": 65.58400000000256}, {\"x\": 347208.566,\"y\": 6690044.173,\"z\": 65.14599999999336}, {\"x\": 347216.713,\"y\": 6690056.021,\"z\": 64.80599999999686}, {\"x\": 347220.291,\"y\": 6690066.224,\"z\": 64.93600000000151}, {\"x\": 347222.248,\"y\": 6690080.454,\"z\": 65.24400000000605}, {\"x\": 347220.684,\"y\": 6690096.777,\"z\": 65.56500000000233}, {\"x\": 347217.723,\"y\": 6690116.388,\"z\": 65.8920000000071}\n\t\t\t]"
@@ -830,50 +823,26 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
         6638304l -> geom6638304
       )
 
-      /**
-        * Before change:
-        * pl1 trackCode 0 -> |--- (0,1337) ---|
-        * pl2 trackCode 1 -> |--- (1337, 1958) ---|
-        * pl3 trackCode 2 -> |--- (1337, 1958) ---|
-        * pl4 trackCode 0 -> |--- (1958, 3213) ---|
-        */
       val links=ProjectDAO.getProjectLinks(7081807)
       val geomToLinks:List[ProjectLink] = links.map(l => l.copy(geometry = mappedGeoms(l.linkId)))
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(links.map(_.linkId).toSet, false)).thenReturn(geomToLinks.map(toRoadLink))
       projectService.changeDirection(7081807, 77997, 1)
       val changedLinks = ProjectDAO.getProjectLinksById(links.map{l => l.id})
 
-      /**
-        * After change:
-        * npl1 trackCode 0 -> |--- (1876,3213) ---|
-        * npl2 trackCode 1 -> |--- (1255, 1876) ---|
-        * npl3 trackCode 2 -> |--- (1255, 1876) ---|
-        * npl4 trackCode 0 -> |--- (0, 1255) ---|
-        */
-      val pl4 = links.maxBy(_.endAddrMValue)
-      val npl4 = changedLinks.minBy(_.endAddrMValue)
-      val pl3 = links.filter(_.track == Track.apply(2)).maxBy(_.endAddrMValue)
-      val npl3 = changedLinks.filter(_.track == Track.apply(2)).maxBy(_.endAddrMValue)
-      val pl2 = links.filter(_.track == Track.apply(1)).maxBy(_.endAddrMValue)
-      val npl2 = changedLinks.filter(_.track == Track.apply(1)).maxBy(_.endAddrMValue)
-      val pl1 = links.minBy(_.endAddrMValue)
-      val npl1 = changedLinks.maxBy(_.endAddrMValue)
+      prettyPrint(links)
+      prettyPrint(changedLinks)
 
-      pl1.id should be (npl1.id)
-      pl2.id should be (npl2.id)
-      pl3.id should be (npl3.id)
-      pl4.id should be (npl4.id)
+      val linksFirst = links.sortBy(_.id).head
+      val linksLast = links.sortBy(_.id).reverse.head
+      val changedLinksFirst = changedLinks.sortBy(_.id).head
+      val changedLinksLast = changedLinks.sortBy(_.id).reverse.head
 
-      npl1.endAddrMValue should be (3213)
-      npl2.endAddrMValue should be (1876)
-      npl3.endAddrMValue should be (1876)
-      npl4.endAddrMValue should be (1255)
-
-      npl1.startAddrMValue should be (1876)
-      npl2.startAddrMValue should be (1255)
-      npl3.startAddrMValue should be (1255)
-      npl4.startAddrMValue should be (0)
-
+      linksFirst.id should be (changedLinksFirst.id)
+      linksLast.id should be (changedLinksLast.id)
+      linksLast.geometryLength should be (changedLinks.sortBy(_.id).reverse.head.geometryLength)
+      linksLast.endMValue should be (changedLinks.sortBy(_.id).reverse.head.endMValue)
+      linksFirst.endMValue should be (changedLinksFirst.endMValue)
+      linksLast.endMValue should be (changedLinksLast.endMValue)
     }
   }
 
