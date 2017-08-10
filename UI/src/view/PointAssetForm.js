@@ -61,14 +61,9 @@
     selectedAsset.set({name: eventTarget.val()});
   });
 
-  rootElement.find('.form-directional-traffic-sign textarea').on('keyup', function (event) {
-    var eventTarget = $(event.currentTarget);
-    selectedAsset.set({text: eventTarget.val()});
-  });
-
-  rootElement.find('.linear-asset.form textarea').on('keyup', function (event) {
-    var eventTarget = $(event.currentTarget);
-    selectedAsset.set({text: eventTarget.val()});
+  rootElement.find('.linear-asset.form textarea, .form-directional-traffic-sign textarea').on('keyup', function (event) {
+      var eventTarget = $(event.currentTarget);
+      selectedAsset.set({text: eventTarget.val()});
   });
 
   rootElement.find('.form-service textarea').on('input change', function (event) {
@@ -244,20 +239,20 @@
     ]
   };
 
-  var signTypes = {
-    1: 'Nopeusrajoitus',
-    2: 'Nopeusrajoitus Päättyy',
-    3: 'Nopeusrajoitusalue',
-    4: 'Nopeusrajoitusalue Päättyy',
-    5: 'Taajama',
-    6: 'Taajama Päättyy',
-    7: 'Suojatie',
-    8: 'Suurin Sallittu Pituus',
-    9: 'Varoitus',
-    10: 'Vasemmalle Kääntyminen Kielletty',
-    11: 'Oikealle Kääntyminen Kielletty',
-    12: 'U-Käännös Kielletty'
-  };
+  var signTypes = [
+    {value: 1, label:'Nopeusrajoitus'},
+    {value: 2,  label: 'Nopeusrajoitus Päättyy'},
+    {value: 3, label:'Nopeusrajoitusalue'},
+    {value: 4, label:'Nopeusrajoitusalue Päättyy'},
+    {value: 5, label:'Taajama'},
+    {value: 6, label:'Taajama Päättyy'},
+    {value: 7, label:'Suojatie'},
+    {value: 8, label:'Suurin Sallittu Pituus'},
+    {value: 9, label:'Varoitus'},
+    {value: 10, label:'Vasemmalle Kääntyminen Kielletty'},
+    {value: 11, label:'Oikealle Kääntyminen Kielletty'},
+    {value: 12, label:'U-Käännös Kielletty'}
+  ];
 
   var sortAndFilterTrafficSignProperties = function(properties) {
     var propertyOrdering = [
@@ -283,24 +278,17 @@
   };
 
   var singleChoiceHandler = function (property) {
-    var propertyValue = (property.values.length === 0) ? '' : property.values[0].propertyValue;
+    var propertyValue = (property.values.length === 0) ? '' : _.first(property.values).propertyValue;
+    var propertyDisplayValue = (property.values.length === 0) ? '' : _.first(property.values).propertyDisplayValue;
+    var trafficSignOptions = _.map(signTypes, function(signType) {
+      return $('<option>', {value: signType.value, selected: propertyValue == signType.value, text: signType.label})[0].outerHTML;
+    }).join('');
     return '' +
         '    <div class="form-group editable form-traffic-sign">' +
         '      <label class="control-label">' + property.localizedName + '</label>' +
-        '      <p class="form-control-static">' + signTypes[(propertyValue || '–')] + '</p>' +
+        '      <p class="form-control-static">' + (propertyDisplayValue || '-') + '</p>' +
         '      <select class="form-control" style="display:none" id="' + property.publicId + '">  ' +
-        '        <option value="1" ' + (propertyValue == 1 ? 'selected' : '') + '>Nopeusrajoitus</option>' +
-        '        <option value="2" ' + (propertyValue == 2 ? 'selected' : '') + '>Nopeusrajoitus Päättyy</option>' +
-        '        <option value="3" ' + (propertyValue == 3 ? 'selected' : '') + '>Nopeusrajoitusalue</option>' +
-        '        <option value="4" ' + (propertyValue == 4 ? 'selected' : '') + '>Nopeusrajoitusalue Päättyy</option>' +
-        '        <option value="5" ' + (propertyValue == 5 ? 'selected' : '') + '>Taajama</option>' +
-        '        <option value="6" ' + (propertyValue == 6 ? 'selected' : '') + '>Taajama Päättyy</option>' +
-        '        <option value="7" ' + (propertyValue == 7 ? 'selected' : '') + '>Suojatie</option>' +
-        '        <option value="8" ' + (propertyValue == 8 ? 'selected' : '') + '>Suurin Sallittu Pituus</option>' +
-        '        <option value="9" ' + (propertyValue == 9 ? 'selected' : '') + '>Varoitus</option>' +
-        '        <option value="10" ' + (propertyValue == 10 ? 'selected' : '') + '>Vasemmalle Kääntyminen Kielletty</option>' +
-        '        <option value="11" ' + (propertyValue == 11 ? 'selected' : '') + '>Oikealle Kääntyminen Kielletty</option>' +
-        '        <option value="12" ' + (propertyValue == 12 ? 'selected' : '') + '>U-Käännös Kielletty</option>' +
+        trafficSignOptions +
         '      </select>' +
         '    </div>';
   };
