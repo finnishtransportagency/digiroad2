@@ -492,7 +492,7 @@ trait VVHClientOperations {
 
 
 class VVHRoadLinkClientTempServicePoint(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvhRestApiEndPoint){
-  protected override val serviceName = "Roadlink_data"
+  protected override val serviceName = "Roadlink_temp"
 }
 
 
