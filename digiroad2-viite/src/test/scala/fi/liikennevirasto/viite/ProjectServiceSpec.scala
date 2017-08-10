@@ -117,6 +117,21 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
         "ROADNUMBER" -> BigInt(ral.roadNumber), "ROADPARTNUMBER" -> BigInt(ral.roadPartNumber)),
       ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
   }
+  private def toRoadLink(ral: ProjectAddressLink): RoadLink = {
+    RoadLink(ral.linkId, ral.geometry, ral.length, ral.administrativeClass, 1,
+      (ral.sideCode, Track.apply(ral.trackCode.toInt)) match {
+        case (_, Track.Combined) => TrafficDirection.BothDirections
+        case (TowardsDigitizing, Track.RightSide) => TrafficDirection.TowardsDigitizing
+        case (TowardsDigitizing, Track.LeftSide) => TrafficDirection.AgainstDigitizing
+        case (AgainstDigitizing, Track.RightSide) => TrafficDirection.AgainstDigitizing
+        case (AgainstDigitizing, Track.LeftSide) => TrafficDirection.TowardsDigitizing
+        case (_, _) => TrafficDirection.UnknownDirection
+      }, ral.linkType, ral.modifiedAt, ral.modifiedBy, Map(
+        "MUNICIPALITYCODE" -> BigInt(749), "VERTICALLEVEL" -> BigInt(1), "SURFACETYPE" -> BigInt(1),
+        "ROADNUMBER" -> BigInt(ral.roadNumber), "ROADPARTNUMBER" -> BigInt(ral.roadPartNumber)),
+      ral.constructionType, ral.roadLinkSource)
+  }
+
   test("create road link project without road parts") {
     runWithRollback {
       val roadAddressProject = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
@@ -835,6 +850,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
         RoadType.PublicRoad, "X", 749, None, None, Map.empty, 75, 2, 0L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom552),
         SideCode.TowardsDigitizing, None, None, Anomaly.None, 0L, LinkStatus.New)
       val addresses = Seq(addProjectAddressLink512, addProjectAddressLink552)
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(addresses.map(_.linkId).toSet, true)).thenReturn(addresses.map(toRoadLink))
       projectService.addNewLinksToProject(addresses, id, 75, 2, 0L, 5L) should be (None)
       val links=ProjectDAO.getProjectLinks(id)
       val sideCodes = links.map(l => l.id -> l.sideCode).toMap
@@ -850,11 +866,12 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
         RoadType.PublicRoad, "X", 749, None, None, Map.empty, 75, 2, 0L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom584),
         SideCode.TowardsDigitizing, None, None, Anomaly.None, 0L, LinkStatus.New)
 
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(addresses.map(_.linkId).toSet, false)).thenReturn(links.map(toRoadLink))
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(addresses.map(_.linkId).toSet, false)).thenReturn(addresses.map(toRoadLink))
       projectService.addNewLinksToProject(Seq(addProjectAddressLink584), id, 75, 2, 0L, 5L) should be (None)
 
       val linksAfter=ProjectDAO.getProjectLinks(id)
       linksAfter should have size (links.size + 1)
+      linksAfter.foreach(println)
       linksAfter.find(_.linkId == addProjectAddressLink584.linkId).map(_.sideCode) should be (Some(AgainstDigitizing))
 
     }
