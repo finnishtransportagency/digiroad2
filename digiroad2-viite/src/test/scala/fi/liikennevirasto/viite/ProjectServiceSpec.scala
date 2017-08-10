@@ -713,6 +713,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
 
   test("flipping success message") {
     runWithRollback {
+      //TODO: create a mock result for RoadLinkService.getRoadLinksByLinkIdsFromVVH(linkIdsToGet, newTransaction)
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
         "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
@@ -720,8 +721,8 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       val addresses = RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(rap))
       ProjectDAO.create(addresses)
       val links=ProjectDAO.getProjectLinks(id)
-      val errorMessage=  projectService.changeDirection(id, 5, 203).getOrElse("")
-      errorMessage should be("")
+      val errorMessage = projectService.changeDirection(id, 5, 203)
+      errorMessage should be(None)
     }
   }
 

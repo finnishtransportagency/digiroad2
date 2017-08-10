@@ -195,19 +195,23 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def changeDirection(projectId : Long, roadNumber : Long, roadPartNumber : Long): Option[String] = {
     try {
       withDynTransaction {
-        val projectLinkIds= ProjectDAO.projectLinksExist(projectId, roadNumber, roadPartNumber)
+        val projectLinkIds = ProjectDAO.projectLinksExist(projectId, roadNumber, roadPartNumber)
         if (!projectLinkIds.contains(projectLinkIds.head)){
          return Some("Linkit kuuluvat useampaan projektiin")
         }
         ProjectDAO.flipProjectLinksSideCodes(projectId, roadNumber, roadPartNumber)
         val projectLinks = ProjectDAO.getProjectLinks(projectId)
-        val projectLinksWithFixedTopology = ProjectSectionCalculator.determineMValues(projectLinks, Seq.empty[ProjectLink])
+        val projectAddressLinks = getLinksByProjectLinkId(projectLinks.map(_.linkId).toSet, projectId).map(pal =>
+          pal.linkId -> pal.geometry).toMap
+        val projectLinksWithFixedTopology = ProjectSectionCalculator.determineMValues(
+          projectLinks.map(pl => pl.copy(geometry = projectAddressLinks(pl.linkId))), Seq.empty[ProjectLink])
         recalculateMValues(projectLinksWithFixedTopology).foreach(
           link => ProjectDAO.updateMValues(link))
         None
       }
     } catch{
       case NonFatal(e) =>
+        logger.info("Direction change failed", e)
         Some("Päivitys ei onnistunut")
     }
   }
