@@ -775,24 +775,53 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
     }
   }
 
-  test("Yet another Project link direction change") {
+  ignore("Yet another Project link direction change") {
     runWithRollback {
-/*      in ProjectServiceSpec:
-*       * create a new road address project with multiple links and track codes
-*       * call ProjectService.changeDirection for that part
-*       * check that the total address lengths are the same
-*       * validate that the address values are consistent (tracks have the same start/end)
-  */
       /**
         * Before change:
-        * trackCode 0 -> |--- (0,1137) ---|
-        * trackCode 1 -> |--- (1337, 1958) ---|
-        * trackCode 2 -> |--- (1337, 1958) ---|
-        * trackCode 0 -> |--- (1958, 3213) ---|
+        * pl1 trackCode 0 -> |--- (0,1337) ---|
+        * pl2 trackCode 1 -> |--- (1337, 1958) ---|
+        * pl3 trackCode 2 -> |--- (1337, 1958) ---|
+        * pl4 trackCode 0 -> |--- (1958, 3213) ---|
         */
       val links=ProjectDAO.getProjectLinks(7081807)
+
+      //TODO apply mock projectaddresslinks for specific links
+//      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(addresses.map(_.linkId).toSet, true)).thenReturn(addresses.map(toRoadLink))
+
       projectService.changeDirection(7081807, 77997, 1)
       val changedLinks = ProjectDAO.getProjectLinksById(links.map{l => l.id})
+
+      /**
+        * After change:
+        * npl1 trackCode 0 -> |--- (1876,3213) ---|
+        * npl2 trackCode 1 -> |--- (1255, 1876) ---|
+        * npl3 trackCode 2 -> |--- (1255, 1876) ---|
+        * npl4 trackCode 0 -> |--- (0, 1255) ---|
+        */
+      val pl4 = links.maxBy(_.endAddrMValue)
+      val npl4 = changedLinks.minBy(_.endAddrMValue)
+      val pl3 = links.filter(_.track == Track.apply(2)).maxBy(_.endAddrMValue)
+      val npl3 = changedLinks.filter(_.track == Track.apply(2)).maxBy(_.endAddrMValue)
+      val pl2 = links.filter(_.track == Track.apply(1)).maxBy(_.endAddrMValue)
+      val npl2 = changedLinks.filter(_.track == Track.apply(1)).maxBy(_.endAddrMValue)
+      val pl1 = links.minBy(_.endAddrMValue)
+      val npl1 = changedLinks.maxBy(_.endAddrMValue)
+
+      pl1.id should be (npl1.id)
+      pl2.id should be (npl2.id)
+      pl3.id should be (npl3.id)
+      pl4.id should be (npl4.id)
+
+      npl1.endAddrMValue should be (3213)
+      npl2.endAddrMValue should be (1876)
+      npl3.endAddrMValue should be (1876)
+      npl4.endAddrMValue should be (1255)
+
+      npl1.startAddrMValue should be (1876)
+      npl2.startAddrMValue should be (1255)
+      npl3.startAddrMValue should be (1255)
+      npl4.startAddrMValue should be (0)
 
     }
   }
