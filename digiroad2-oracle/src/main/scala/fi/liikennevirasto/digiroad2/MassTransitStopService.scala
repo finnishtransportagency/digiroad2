@@ -90,9 +90,9 @@ trait MassTransitStopService extends PointAssetOperations {
       asset.mValue, persistedStop.validityDirection, persistedStop.bearing, persistedStop.validityPeriod, persistedStop.floating, persistedStop.vvhTimeStamp,
       persistedStop.created, persistedStop.modified, persistedStop.propertyData, persistedStop.linkSource)
   }
+
   private def adjustmentOperation(persistedAsset: PersistedAsset, adjustment: AssetAdjustment): Long = {
-    val position = Some(Position(adjustment.lon, adjustment.lat, adjustment.linkId, persistedAsset.bearing))
-    updateExistingById(persistedAsset.id, position, persistedAsset.propertyData.map(prop => SimpleProperty(prop.publicId , prop.values)).toSet, "vvh_generated", () => _ , false)
+    updateAjustedGeometry(adjustment, persistedAsset.linkSource)
     persistedAsset.id
   }
 
@@ -430,6 +430,7 @@ trait MassTransitStopService extends PointAssetOperations {
 
   private def updateExisting(queryFilter: String => String, optionalPosition: Option[Position],
                              properties: Set[SimpleProperty], username: String, municipalityValidation: Int => Unit): MassTransitStopWithProperties = {
+    withDynTransaction {
 
       if (MassTransitStopOperations.mixedStoptypes(properties))
         throw new IllegalArgumentException
@@ -525,6 +526,20 @@ trait MassTransitStopService extends PointAssetOperations {
       } else {
         update(asset, optionalPosition, username, mergedProperties, roadLink.get, operation)
       }
+    }
+  }
+
+  /**
+    * Update asset ajusted geometry
+    *
+    * @param adjustment
+    * @param linkSource
+    * @return
+    */
+  private def updateAjustedGeometry(adjustment: AssetAdjustment, linkSource: LinkGeomSource) = {
+    massTransitStopDao.updateAssetLastModified(adjustment.assetId, "vvh_generated")
+    massTransitStopDao.updateLrmPosition(adjustment.assetId, adjustment.mValue, adjustment.linkId, linkSource, Some(adjustment.vvhTimeStamp))
+    updateAssetGeometry(adjustment.assetId, Point(adjustment.lon, adjustment.lat))
   }
 
   /**
@@ -568,14 +583,9 @@ trait MassTransitStopService extends PointAssetOperations {
     }
   }
 
-  def updateExistingById(id: Long, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: Int => Unit, withTransaction: Boolean = true): MassTransitStopWithProperties = {
+  def updateExistingById(id: Long, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: Int => Unit): MassTransitStopWithProperties = {
     val props = updatedProperties(properties.toSeq)
-    if(withTransaction){
-      withDynTransaction {
-        updateExisting(withId(id), optionalPosition, props.toSet, username, municipalityValidation)
-      }
-    } else
-      updateExisting(withId(id), optionalPosition, props.toSet, username, municipalityValidation)
+    updateExisting(withId(id), optionalPosition, props.toSet, username, municipalityValidation)
   }
 
   def updateAdministrativeClassValue(assetId: Long, administrativeClass: AdministrativeClass): Unit ={

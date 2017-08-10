@@ -6,7 +6,9 @@
       var middlePoint = calculateMiddlePoint(roadlink);
       var bounds = getBounds(middlePoint.x, middlePoint.y);
       var box = new ol.Feature({
-        geometry: new ol.geom.Point([middlePoint.x, middlePoint.y])
+        geometry: new ol.geom.Point([middlePoint.x, middlePoint.y]),
+        linkId : roadlink.linkId,
+        type : "marker"
       });
 
       var boxStyleFloat = new ol.style.Style({
@@ -27,7 +29,16 @@
       var colorMap = {1:'red', 2:'orange', 3:'orange-light', 4:'blue', 5:'cyan', 6:'purple', 7:'cyan', 8:'pink', 9:'pink', 10:'pink', 11:'grey' };
 
       var boxStyleDirectional = function(rl) {
-        if(rl.roadClass in colorMap){
+        if(rl.status === 2){
+          return new ol.style.Style({
+            image: new ol.style.Icon({
+              rotation: rl.sideCode === 3 ? middlePoint.angleFromNorth * Math.PI / 180 + Math.PI : middlePoint.angleFromNorth * Math.PI / 180,
+              src: "images/link-properties/arrow-drop-pink-light.svg"
+            }),
+            zIndex: 10
+          });
+        }
+        else if(rl.roadClass in colorMap){
           return new ol.style.Style({
             image: new ol.style.Icon({
               rotation: rl.sideCode === 3 ? middlePoint.angleFromNorth * Math.PI / 180 + Math.PI : middlePoint.angleFromNorth * Math.PI / 180,

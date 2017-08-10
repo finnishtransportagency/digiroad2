@@ -4,7 +4,6 @@ import java.net.URLEncoder
 import java.util
 import java.util.Properties
 
-import fi.liikennevirasto.digiroad2.roadaddress.oracle.RoadAddressDAO
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 
 import fi.liikennevirasto.digiroad2.asset.SideCode
@@ -18,6 +17,7 @@ import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization
 import fi.liikennevirasto.digiroad2.roadaddress.oracle.RoadAddressDAO
+import fi.liikennevirasto.digiroad2.roadaddress.oracle.{RoadAddress => RoadAddressDTO}
 /**
   * A road consists of 1-2 tracks (fi: "ajorata"). 2 tracks are separated by a fence or grass for example.
   * Left and Right are relative to the advancing direction (direction of growing m values)
@@ -90,11 +90,26 @@ class GeometryTransform {
   }
 
   def resolveAddressAndLocation(coord: Point, heading: Int, mValue: Double, linkId: Long, assetSideCode: Int, municipalityCode: Option[Int] = None, road: Option[Int] = None): (RoadAddress, RoadSide) = {
+
+    def againstDigitizing(addr: RoadAddressDTO) = {
+      val addressLength: Long = addr.endAddrMValue - addr.startAddrMValue
+      val lrmLength: Double = Math.abs(addr.endMValue - addr.startMValue)
+      val newMValue = (addr.endAddrMValue - ((mValue-addr.startMValue) * addressLength / lrmLength)).toInt
+      RoadAddress(Some(municipalityCode.toString), addr.roadNumber.toInt, addr.roadPartNumber.toInt, addr.track, newMValue, None)
+    }
+
+    def towardsDigitizing (addr: RoadAddressDTO) = {
+      val addressLength: Long = addr.endAddrMValue - addr.startAddrMValue
+      val lrmLength: Double = Math.abs(addr.endMValue - addr.startMValue)
+      val newMValue = (((mValue-addr.startMValue) * addressLength) / lrmLength + addr.startAddrMValue).toInt
+      RoadAddress(Some(municipalityCode.toString), addr.roadNumber.toInt, addr.roadPartNumber.toInt, addr.track, newMValue, None)
+    }
+
     val roadAddress = roadAddressDao.getRoadAddress(roadAddressDao.withLinkIdAndMeasure(linkId, mValue.toLong, mValue.toLong, road)).headOption
 
     //If there is no roadAddress in VIITE try to find it in VKM
     if(roadAddress.isEmpty)
-      return vkmGeometryTransform.resolveAddressAndLocation(coord, heading, road)
+      return vkmGeometryTransform.resolveAddressAndLocation(coord, heading, SideCode.apply(assetSideCode), road)
 
     val roadSide = roadAddress match {
       case Some(addrSide) if (addrSide.sideCode.value == assetSideCode) => RoadSide.Right //TowardsDigitizing //
@@ -103,9 +118,12 @@ class GeometryTransform {
     }
 
     val address = roadAddress match {
-      case Some(addr) if (addr.track.eq(Track.Unknown)) => throw new RoadAddressException ("Invalid value for Track: %d".format( addr.track.value))
-      case Some(addr) => RoadAddress(Some(municipalityCode.toString), addr.roadNumber.toInt, addr.roadPartNumber.toInt, addr.track, (addr.startAddrMValue + (mValue - addr.startMValue)).toInt, None)
-      case None  => throw new RoadAddressException("No road address found")
+      case Some(addr) if (addr.track.eq(Track.Unknown)) => throw new RoadAddressException("Invalid value for Track: %d".format(addr.track.value))
+      case Some(addr) if (addr.sideCode.value != assetSideCode) =>
+        if (assetSideCode == SideCode.AgainstDigitizing.value) towardsDigitizing(addr) else againstDigitizing(addr)
+      case Some(addr) =>
+        if (assetSideCode == SideCode.TowardsDigitizing.value) towardsDigitizing(addr) else againstDigitizing(addr)
+      case None => throw new RoadAddressException("No road address found")
     }
 
     (address, roadSide )
@@ -272,15 +290,20 @@ class VKMGeometryTransform {
     * @param heading Geographical heading in degrees (North = 0, West = 90, ...)
     * @param road Road we want to find (optional)
     * @param roadPart Road part we want to find (optional)
+    * @param sideCode The side code
     */
-  def resolveAddressAndLocation(coord: Point, heading: Int, road: Option[Int] = None,
+  def resolveAddressAndLocation(coord: Point, heading: Int, sideCode: SideCode, road: Option[Int] = None,
                                 roadPart: Option[Int] = None,
                                 includePedestrian: Option[Boolean] = Option(false)): (RoadAddress, RoadSide) = {
     if (road.isEmpty || roadPart.isEmpty) {
       val roadAddress = coordToAddress(coord, road, roadPart, includePedestrian = includePedestrian)
-      resolveAddressAndLocation(coord, heading, Option(roadAddress.road), Option(roadAddress.roadPart))
+      resolveAddressAndLocation(coord, heading, sideCode, Option(roadAddress.road), Option(roadAddress.roadPart))
     } else {
-      val rad = (90-heading)*Math.PI/180.0
+      val degrees = sideCode match{
+        case SideCode.AgainstDigitizing => 90-heading+180
+        case _ => 90-heading
+      }
+      val rad = degrees * Math.PI/180.0
       val stepVector = Vector3d(3*Math.cos(rad), 3*Math.sin(rad), 0.0)
       val behind = coord - stepVector
       val front = coord + stepVector

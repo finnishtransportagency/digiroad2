@@ -55,7 +55,7 @@ trait RoadAddressMapper {
       }
       ra.copy(id = NewRoadAddress, linkId = adjMap.targetLinkId, startAddrMValue = startCP.map(_.addressMValue).getOrElse(mappedStartAddrM),
         endAddrMValue = endCP.map(_.addressMValue).getOrElse(mappedEndAddrM), floating = false,
-        sideCode = sideCode, startMValue = startM, endMValue = endM, geom = mappedGeom, calibrationPoints = (startCP, endCP),
+        sideCode = sideCode, startMValue = startM, endMValue = endM, geometry = mappedGeom, calibrationPoints = (startCP, endCP),
         adjustedTimestamp = VVHClient.createVVHTimeStamp())
     })
   }

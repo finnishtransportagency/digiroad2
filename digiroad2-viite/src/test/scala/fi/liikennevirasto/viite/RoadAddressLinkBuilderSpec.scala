@@ -2,8 +2,8 @@ package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
-import fi.liikennevirasto.digiroad2.asset.{SideCode, State, UnknownLinkType, LinkGeomSource}
+import fi.liikennevirasto.digiroad2.{FeatureClass, GeometryUtils, Point, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.TrafficDirection.{BothDirections, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset.SideCode.AgainstDigitizing
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
@@ -120,6 +120,28 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers{
     }
   }
 
+  test("Suravage link builder") {
+      val newLinkId1 = 5000
+      val municipalityCode = 564
+      val administrativeClass = Municipality
+      val trafficDirection = TrafficDirection.TowardsDigitizing
+      val attributes1 = Map("ROADNUMBER" -> BigInt(99),"ROADPARTNUMBER"->BigInt(24))
+      val suravageAddress=RoadAddressLinkBuilder.buildSuravageRoadAddressLink(VVHRoadlink(newLinkId1, municipalityCode, List(Point(1.0, 0.0), Point(20.0, 1.0)), administrativeClass, trafficDirection, FeatureClass.DrivePath, None, attributes1,ConstructionType.UnderConstruction,LinkGeomSource.SuravageLinkInterface,30))
+
+    suravageAddress.linkId should be (newLinkId1)
+    suravageAddress.administrativeClass should be (administrativeClass)
+    suravageAddress.constructionType should be (ConstructionType.UnderConstruction)
+    suravageAddress.sideCode should be (SideCode.TowardsDigitizing)
+    suravageAddress.roadNumber should be (99)
+    suravageAddress.roadPartNumber should be (24)
+    suravageAddress.startMValue should be (0)
+    suravageAddress.endMValue should be (19.026297590440446)
+    suravageAddress.roadLinkSource should be (LinkGeomSource.SuravageLinkInterface)
+    suravageAddress.elyCode should be (12)
+    suravageAddress.municipalityCode should be (municipalityCode)
+    suravageAddress.geometry.size should be (2)
+  }
+
   test("Fuse road address should combine geometries and address values with starting calibration point - real life scenario") {
     val geom = Seq(Point(379483.273,6672835.486), Point(379556.289,6673054.073))
     val roadAddress = Seq(
@@ -134,8 +156,8 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers{
     val fused = fusedList.head
     fused.startMValue should be (0.0)
     fused.endMValue should be (230.776)
-    fused.geom.last should be (Point(379556.289,6673054.073))
-    fused.geom should have size(2)
+    fused.geometry.last should be (Point(379556.289,6673054.073))
+    fused.geometry should have size(2)
     fused.startAddrMValue should be (679L)
     fused.endAddrMValue should be (923L)
     fused.track should be (Track.RightSide)
@@ -158,8 +180,8 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers{
     val fused = fusedList.head
     fused.startMValue should be (0.0)
     fused.endMValue should be (230.776)
-    fused.geom.last should be (Point(379556.289,6673054.073))
-    fused.geom should have size(2)
+    fused.geometry.last should be (Point(379556.289,6673054.073))
+    fused.geometry should have size(2)
     fused.startAddrMValue should be (679L)
     fused.endAddrMValue should be (920L)
     fused.track should be (Track.RightSide)
@@ -186,11 +208,11 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers{
   }
 
   test("Building ProjectAddressLink partitioner") {
-    val unknownProjectLink = ProjectLink(0,0,0,Track.Unknown,Discontinuity.Continuous,0,0,None,None,None,0,0,0.0,0.0,SideCode.Unknown,(None,None),false, List(),0,NotHandled,UnknownOwnerRoad)
+    val unknownProjectLink = ProjectLink(0,0,0,Track.Unknown,Discontinuity.Continuous,0,0,None,None,None,0,0,0.0,0.0,SideCode.Unknown,(None,None),false, List(),0,NotHandled,UnknownOwnerRoad, LinkGeomSource.NormalLinkInterface, 0.0)
     val projectLinks =
       Map(
-        1717380l -> ProjectLink(1270,0,0,Track.apply(99), Continuous,1021,1028,None,None,None,70001448,1717380,0.0,6.0,AgainstDigitizing,(None,None),false,List(),1227,NotHandled,UnknownOwnerRoad),
-        1717374l -> ProjectLink(1259,1130,0,Combined, Continuous,959,1021,None,None,None,70001437,1717374,0.0,61.0,AgainstDigitizing,(None,None),false,List(),1227,NotHandled,UnknownOwnerRoad)
+        1717380l -> ProjectLink(1270,0,0,Track.apply(99), Continuous,1021,1028,None,None,None,70001448,1717380,0.0,6.0,AgainstDigitizing,(None,None),false,List(),1227,NotHandled,UnknownOwnerRoad, LinkGeomSource.NormalLinkInterface, 0.0),
+        1717374l -> ProjectLink(1259,1130,0,Combined, Continuous,959,1021,None,None,None,70001437,1717374,0.0,61.0,AgainstDigitizing,(None,None),false,List(),1227,NotHandled,UnknownOwnerRoad, LinkGeomSource.NormalLinkInterface, 0.0)
       )
 
     val roadLinks = Seq(

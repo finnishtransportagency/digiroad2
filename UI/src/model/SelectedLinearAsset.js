@@ -252,7 +252,7 @@
 
     function getRequiredFields(properties){
       return _.filter(properties, function (property) {
-        return (property.publicId === "huoltotie_kayttooikeus") || (property.publicId === "huoltotie_huoltovastuu") || (property.publicId === "huoltotie_tiehoitokunta");
+        return (property.publicId === "huoltotie_kayttooikeus") || (property.publicId === "huoltotie_huoltovastuu");
       });
     }
 
