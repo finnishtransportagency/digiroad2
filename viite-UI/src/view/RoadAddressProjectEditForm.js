@@ -78,7 +78,7 @@
         status = status[0];
       else
         status = 0;
-      var enableUusi = selected[0].status !== 0 && selected[0].status !== 1 && selected[0].roadLinkSource === 3;
+      var enableUusi = (selected[0].status !== 0 && selected[0].status !== 1)|| selected[0].roadLinkSource === 3;
       var lakkautusStatus = status == 1 ? ' selected' : selected[0].roadLinkSource === 3 ? 'disabled' : '';
       return _.template('' +
         '<header>' +
