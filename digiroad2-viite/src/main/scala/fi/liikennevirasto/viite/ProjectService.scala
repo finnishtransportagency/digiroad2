@@ -212,8 +212,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         val projectLinks = ProjectDAO.getProjectLinks(projectId)
         val projectAddressLinksGeom = getLinksByProjectLinkId(projectLinks.map(_.linkId).toSet, projectId).map(pal =>
           pal.linkId -> pal.geometry).toMap
-        val adjLinks = projectLinks.map(pl => pl.copy(geometry = projectAddressLinks(pl.linkId),
-          geometryLength = GeometryUtils.geometryLength(projectAddressLinks(pl.linkId)),
+        val adjLinks = projectLinks.map(pl => pl.copy(geometry = projectAddressLinksGeom(pl.linkId),
+          geometryLength = GeometryUtils.geometryLength(projectAddressLinksGeom(pl.linkId)),
           calibrationPoints = (None, None), startAddrMValue = 0L, endAddrMValue = 0L
         ))
         val projectLinksWithFixedTopology = ProjectSectionCalculator.determineMValues(
