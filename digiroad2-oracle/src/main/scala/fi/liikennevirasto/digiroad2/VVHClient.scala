@@ -196,7 +196,7 @@ object VVHClient {
 
 class VVHClient(vvhRestApiEndPoint: String) {
   lazy val roadLinkData: VVHRoadLinkClient = new VVHRoadLinkClient(vvhRestApiEndPoint)
-  lazy val roadLinkDataTemp: VVHRoadLinkClient = new VVHRoadLinkClientTempServicePoint(vvhRestApiEndPoint)
+  lazy val frozenTimeRoadLinkData: VVHRoadLinkClient = new VVHFrozenTimeRoadLinkClientServicePoint(vvhRestApiEndPoint)
   lazy val roadLinkChangeInfo: VVHChangeInfoClient = new VVHChangeInfoClient(vvhRestApiEndPoint)
   lazy val complementaryData: VVHComplementaryClient = new VVHComplementaryClient(vvhRestApiEndPoint)
   lazy val historyData: VVHHistoryClient = new VVHHistoryClient(vvhRestApiEndPoint)
@@ -491,7 +491,7 @@ trait VVHClientOperations {
 }
 
 
-class VVHRoadLinkClientTempServicePoint(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvhRestApiEndPoint){
+class VVHFrozenTimeRoadLinkClientServicePoint(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvhRestApiEndPoint){
   protected override val serviceName = "Roadlink_temp"
 }
 

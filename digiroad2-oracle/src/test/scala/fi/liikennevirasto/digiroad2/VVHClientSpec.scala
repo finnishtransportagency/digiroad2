@@ -76,10 +76,10 @@ class VVHClientSpec extends FunSuite with Matchers{
   */
 
   test("Frozen In Time API test ") {
-    val frozenApiEnabled = properties.getProperty("digiroad2.VVHRoadlink_temp")
+    val frozenApiEnabled = properties.getProperty("digiroad2.VVHRoadlink.frozen")
     if (frozenApiEnabled=="true") { //Api only exists in QA and Production
       val vvhClient= new VVHClient(properties.getProperty("digiroad2.VVHRestApiEndPoint"))
-      val result= vvhClient.roadLinkDataTemp.fetchByBounds(BoundingRectangle(Point(445000, 7000000),Point(446000, 7005244)))
+      val result= vvhClient.frozenTimeRoadLinkData.fetchByBounds(BoundingRectangle(Point(445000, 7000000),Point(446000, 7005244)))
       result.size should be >1
     }
   }

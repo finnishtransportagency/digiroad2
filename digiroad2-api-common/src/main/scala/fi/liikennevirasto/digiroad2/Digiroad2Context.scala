@@ -153,11 +153,11 @@ object Digiroad2Context {
   eventbus.subscribe(roadAddressFloater, "roadAddress:floatRoadAddress")
 
   lazy val roadAddressService: RoadAddressService = {
-    new RoadAddressService(roadLinkService, eventbus, properties.getProperty("digiroad2.VVHRoadlink_temp", "false").toBoolean)
+    new RoadAddressService(roadLinkService, eventbus, properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
   }
 
   lazy val projectService: ProjectService = {
-    new ProjectService(roadAddressService, roadLinkService, eventbus,properties.getProperty("digiroad2.VVHRoadlink_temp", "false").toBoolean)
+    new ProjectService(roadAddressService, roadLinkService, eventbus,properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
   }
 
   lazy val authenticationTestModeEnabled: Boolean = {
