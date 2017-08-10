@@ -202,6 +202,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def changeDirection(projectId : Long, roadNumber : Long, roadPartNumber : Long): Option[String] = {
+    RoadAddressLinkBuilder.municipalityRoadMaintainerMapping // make sure it is populated outside of this TX
     try {
       withDynTransaction {
         val projectLinkIds = ProjectDAO.projectLinksExist(projectId, roadNumber, roadPartNumber)
@@ -210,7 +211,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         }
         ProjectDAO.flipProjectLinksSideCodes(projectId, roadNumber, roadPartNumber)
         val projectLinks = ProjectDAO.getProjectLinks(projectId)
-        val projectAddressLinksGeom = getLinksByProjectLinkId(projectLinks.map(_.linkId).toSet, projectId).map(pal =>
+        val projectAddressLinksGeom = getLinksByProjectLinkId(projectLinks.map(_.linkId).toSet, projectId, false).map(pal =>
           pal.linkId -> pal.geometry).toMap
         val adjLinks = projectLinks.map(pl => pl.copy(geometry = projectAddressLinksGeom(pl.linkId),
           geometryLength = GeometryUtils.geometryLength(projectAddressLinksGeom(pl.linkId)),
