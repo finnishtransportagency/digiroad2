@@ -153,7 +153,16 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     if(linksInProject.nonEmpty){
       ProjectDAO.removeProjectLinksByProjectAndRoadNumber(roadAddressProjectID, newRoadNumber, newRoadPartNumber)
     }
-    val randomSideCode = SideCode.TowardsDigitizing
+    val randomSideCode =
+      linksInProject.map(l => l -> projectAddressLinks.find(n => GeometryUtils.areAdjacent(l.geometry, n.geometry))).toMap.find { case (l, n) => n.nonEmpty }.map {
+        case (l, Some(n)) =>
+          if (GeometryUtils.areAdjacent(l.geometry.head, n.geometry.last) ||
+            GeometryUtils.areAdjacent(l.geometry.last, n.geometry.head))
+            l.sideCode
+          else
+            switchSideCode(l.sideCode)
+        case _ => SideCode.TowardsDigitizing
+      }.getOrElse(SideCode.TowardsDigitizing)
     ProjectDAO.getRoadAddressProjectById(roadAddressProjectID) match {
       case Some(project) => {
         checkNewRoadAddressNumberAndPart(newRoadNumber, newRoadPartNumber, project) match {
@@ -456,9 +465,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       return Seq()
 
     val fetchVVHStartTime = System.currentTimeMillis()
-    println(linkIdsToGet, newTransaction)
     val complementedRoadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIdsToGet, newTransaction)
-    println(complementedRoadLinks)
     val fetchVVHEndTime = System.currentTimeMillis()
     logger.info("End fetch vvh road links in %.3f sec".format((fetchVVHEndTime - fetchVVHStartTime) * 0.001))
     val fetchProjectLinks = ProjectDAO.getProjectLinks(projectId).groupBy(_.linkId)

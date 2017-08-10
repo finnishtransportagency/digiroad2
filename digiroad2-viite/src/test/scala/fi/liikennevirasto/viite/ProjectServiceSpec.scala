@@ -871,9 +871,10 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
 
       val linksAfter=ProjectDAO.getProjectLinks(id)
       linksAfter should have size (links.size + 1)
-      linksAfter.foreach(println)
       linksAfter.find(_.linkId == addProjectAddressLink584.linkId).map(_.sideCode) should be (Some(AgainstDigitizing))
-
+      linksAfter.find(_.linkId == 5176512).get.endAddrMValue should be (2003)
+      linksAfter.find(_.linkId == 5176512).get.startAddrMValue should be (892)
+      linksAfter.find(_.linkId == 5176584).get.startAddrMValue should be (0)
     }
   }
 }
