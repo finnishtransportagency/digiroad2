@@ -11,6 +11,7 @@ import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
+import fi.liikennevirasto.digiroad2.pointasset.oracle.RailwayCrossing
 import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, PolygonTools}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -65,7 +66,7 @@ trait LinearAssetOperations {
     municipalityCode
   }
 
-  private def getLinkSource(linkId: Long): Option[Int] = {
+  protected def getLinkSource(linkId: Long): Option[Int] = {
     val roadlink = roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId, newTransaction = false)
     roadlink match {
       case Some(result) =>
@@ -502,15 +503,15 @@ trait LinearAssetOperations {
     }
   }
 
-  def updateWithTimeStamp(ids: Seq[Long], value: Value, username: String, vvhTimeStamp: Option[Long] = None): Seq[Long] = {
+  def updateWithTimeStamp(ids: Seq[Long], value: Value, username: String, vvhTimeStamp: Option[Long] = None, sideCode: Option[Int] = None): Seq[Long] = {
     withDynTransaction {
-      updateWithoutTransaction(ids, value, username, None, vvhTimeStamp)
+      updateWithoutTransaction(ids, value, username, None, vvhTimeStamp, sideCode)
     }
   }
 
-  def updateWithNewMeasures(ids: Seq[Long], value: Value, username: String, measures: Option[Measures], vvhTimeStamp: Option[Long] = None ): Seq[Long] = {
+  def updateWithNewMeasures(ids: Seq[Long], value: Value, username: String, measures: Option[Measures], vvhTimeStamp: Option[Long] = None , sideCode: Option[Int] = None): Seq[Long] = {
     withDynTransaction {
-      updateWithoutTransaction(ids, value, username, measures, vvhTimeStamp)
+      updateWithoutTransaction(ids, value, username, measures, vvhTimeStamp, sideCode)
     }
   }
 
@@ -620,7 +621,7 @@ trait LinearAssetOperations {
     * Mark VALID_TO field of old asset to sysdate and create a new asset.
     * Copy all the data from old asset except the properties that changed, modifiedBy and modifiedAt.
     */
-  private def updateValueByExpiration(assetId: Long, valueToUpdate: Value, valuePropertyId: String, username: String, measures: Option[Measures], vvhTimeStamp: Option[Long]): Option[Long] = {
+  protected def updateValueByExpiration(assetId: Long, valueToUpdate: Value, valuePropertyId: String, username: String, measures: Option[Measures], vvhTimeStamp: Option[Long], sideCode: Option[Int]): Option[Long] = {
     //Get Old Asset
     val oldAsset =
       valueToUpdate match {
@@ -637,7 +638,7 @@ trait LinearAssetOperations {
     dao.updateExpiration(assetId, expired = true, username)
 
     //Create New Asset
-    val newAssetIDcreate = createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, valueToUpdate, oldAsset.sideCode,
+    val newAssetIDcreate = createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, valueToUpdate, sideCode.getOrElse(oldAsset.sideCode),
       measures.getOrElse(Measures(oldAsset.startMeasure, oldAsset.endMeasure)), username, vvhTimeStamp.getOrElse(vvhClient.roadLinkData.createVVHTimeStamp()), getLinkSource(oldAsset.linkId), true, oldAsset.createdBy, oldAsset.createdDateTime)
 
       Some(newAssetIDcreate)
@@ -757,7 +758,7 @@ trait LinearAssetOperations {
     }
   }
 
-  private def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, measures: Option[Measures] = None, vvhTimeStamp: Option[Long] = None): Seq[Long] = {
+  private def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, measures: Option[Measures] = None, vvhTimeStamp: Option[Long] = None, sideCode: Option[Int] = None): Seq[Long] = {
     if (ids.isEmpty)
       return ids
 
@@ -768,23 +769,23 @@ trait LinearAssetOperations {
       val typeId = assetTypeById(id)
       value match {
         case NumericValue(intValue) =>
-          updateValueByExpiration(id, NumericValue(intValue), LinearAssetTypes.numericValuePropertyId, username, measures, vvhTimeStamp)
+          updateValueByExpiration(id, NumericValue(intValue), LinearAssetTypes.numericValuePropertyId, username, measures, vvhTimeStamp, sideCode)
         case TextualValue(textValue) =>
-          updateValueByExpiration(id, TextualValue(textValue), LinearAssetTypes.getValuePropertyId(typeId), username, measures, vvhTimeStamp)
+          updateValueByExpiration(id, TextualValue(textValue), LinearAssetTypes.getValuePropertyId(typeId), username, measures, vvhTimeStamp, sideCode)
         case prohibitions: Prohibitions =>
           dao.updateProhibitionValue(id, prohibitions, username, measures)
         case maintenanceRoad: MaintenanceRoad =>
           val missingProperties = validateRequiredProperties(typeId, maintenanceRoad)
           if (missingProperties.nonEmpty)
             throw new MissingMandatoryPropertyException(missingProperties)
-          updateValueByExpiration(id, maintenanceRoad, LinearAssetTypes.MaintenanceRoadAssetTypeId.toString(), username, measures, vvhTimeStamp)
+          updateValueByExpiration(id, maintenanceRoad, LinearAssetTypes.MaintenanceRoadAssetTypeId.toString(), username, measures, vvhTimeStamp, sideCode)
         case _ =>
           Some(id)
       }
     }
   }
 
-  private def createWithoutTransaction(typeId: Int, linkId: Long, value: Value, sideCode: Int, measures: Measures, username: String, vvhTimeStamp: Long, linkSource: Option[Int], fromUpdate: Boolean = false,
+  protected def createWithoutTransaction(typeId: Int, linkId: Long, value: Value, sideCode: Int, measures: Measures, username: String, vvhTimeStamp: Long, linkSource: Option[Int], fromUpdate: Boolean = false,
                                        createdByFromUpdate: Option[String] = Some(""),
                                        createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now())): Long = {
     val id = dao.createLinearAsset(typeId, linkId, expired = false, sideCode, measures, username,
