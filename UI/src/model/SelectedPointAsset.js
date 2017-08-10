@@ -1,5 +1,5 @@
 (function(root) {
-  root.SelectedPointAsset = function(backend, assetName) {
+  root.SelectedPointAsset = function(backend, assetName, roadCollection) {
     var current = null;
     var dirty = false;
     var originalAsset;
@@ -16,7 +16,10 @@
       cancel: cancel,
       close: close,
       exists: exists,
-      isSelected: isSelected
+      isSelected: isSelected,
+      getAdministrativeClass: getAdministrativeClass,
+      checkSelectedSign: checkSelectedSign,
+      setPropertyByPublicId: setPropertyByPublicId
     };
 
     function place(asset) {
@@ -104,5 +107,31 @@
     function isSelected(asset) {
       return getId() === asset.id;
     }
+
+    function getAdministrativeClass(linkId){
+      var value = roadCollection.getRoadLinkByLinkId(linkId ? linkId : current.linkId).getData().administrativeClass;
+      return _.isNull(value) ? undefined : value;
+    }
+
+    function getSelectedTrafficSignValue() {
+      return parseInt(_.first(_.find(current.propertyData, function(prop){return prop.publicId === "trafficSigns_type";}).values).propertyValue);
+    }
+
+    function checkSelectedSign(trafficSignsShowing){
+      if (current && (!_.contains(trafficSignsShowing, getSelectedTrafficSignValue()) &&
+        getSelectedTrafficSignValue() !== undefined)) {
+        close();
+      }
+    }
+
+    function setPropertyByPublicId(propertyPublicId, propertyValue) {
+      dirty = true;
+      _.map(current.propertyData, function (prop) {
+        if (prop.publicId === propertyPublicId) {
+          prop.values[0] = [{propertyValue: propertyValue, propertyDisplayValue: ''}];
+        }
+      });
+    }
+
   };
 })(this);

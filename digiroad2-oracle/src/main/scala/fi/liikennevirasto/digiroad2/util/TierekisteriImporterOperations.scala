@@ -3,13 +3,14 @@ package fi.liikennevirasto.digiroad2.util
 
 import java.util.Properties
 
-import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset.oracle.OracleAssetDao
 import fi.liikennevirasto.digiroad2.{TierekisteriAssetDataClient, TierekisteriLightingAssetClient, TierekisteriRoadWidthAssetClient, _}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.pointasset.oracle.OracleTrafficSignDao
 import fi.liikennevirasto.digiroad2.roadaddress.oracle.{RoadAddressDAO, RoadAddress => ViiteRoadAddress}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
@@ -183,8 +184,6 @@ trait TierekisteriAssetImporterOperations {
         //We will generate the middle parts and return a AddressSection for each one
         val trAddressSections = getAllTierekisteriAddressSections(roadNumber)
 
-        println("tr size = "+trAddressSections.size)
-
         //For each section creates a new OTH asset
         trAddressSections.foreach {
           case (section, trAssetData) =>
@@ -228,7 +227,7 @@ trait TierekisteriAssetImporterOperations {
               val trAddressSections = getAllTierekisteriAddressSections(roadNumber, roadPart)
               trAddressSections.foreach {
                 case (section, trAssetData) =>
-                  createAsset(section, trAssetData)
+                createAsset(section, trAssetData)
               }
           }
         }
@@ -289,6 +288,57 @@ trait PointAssetTierekisteriImporterOperations extends TierekisteriAssetImporter
   }
 }
 
+class TrafficSignTierekisteriImporter extends PointAssetTierekisteriImporterOperations {
+  override def typeId: Int = 300
+  override def assetName = "trafficSigns"
+  override type TierekisteriClientType = TierekisteriTrafficSignAssetClient
+  override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  override val tierekisteriClient = new TierekisteriTrafficSignAssetClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+    getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+    HttpClientBuilder.create().build())
+
+  private val typePublicId = "trafficSigns_type"
+  private val valuePublicId = "trafficSigns_value"
+  private val infoPublicId = "trafficSigns_info"
+
+  private val additionalInfoTypeGroups = Set(TrafficSignTypeGroup.GeneralWarningSigns, TrafficSignTypeGroup.TurningRestrictions)
+
+  private def generateProperties(trAssetData: TierekisteriAssetData) = {
+    val trafficType = trAssetData.assetType.trafficSignType
+    val typeProperty = SimpleProperty(typePublicId, Seq(PropertyValue(trafficType.value.toString)))
+    val valueProperty = additionalInfoTypeGroups.exists(group => group == trafficType.group) match {
+      case true => SimpleProperty(infoPublicId, Seq(PropertyValue(trAssetData.assetValue)))
+      case _ => SimpleProperty(valuePublicId, Seq(PropertyValue(trAssetData.assetValue)))
+    }
+
+    Set(typeProperty, valueProperty)
+  }
+
+  private def getSideCode(raSideCode: SideCode, roadSide: RoadSide): SideCode = {
+    roadSide match {
+      case RoadSide.Right => raSideCode
+      case RoadSide.Left => raSideCode match {
+        case TowardsDigitizing => SideCode.AgainstDigitizing
+        case AgainstDigitizing => SideCode.TowardsDigitizing
+        case _ => SideCode.BothDirections
+      }
+      case _ => SideCode.BothDirections
+    }
+  }
+
+  override protected def createPointAsset(roadAddress: ViiteRoadAddress, vvhRoadlink: VVHRoadlink, mValue: Double, trAssetData: TierekisteriAssetData): Unit = {
+    if(trAssetData.assetType != TRTrafficSignType.Unknown)
+      GeometryUtils.calculatePointFromLinearReference(vvhRoadlink.geometry, mValue).map{
+        point =>
+          val trafficSign = IncomingTrafficSign(point.x, point.y, vvhRoadlink.linkId, generateProperties(trAssetData),
+            getSideCode(roadAddress.sideCode, trAssetData.roadSide).value, Some(GeometryUtils.calculateBearing(vvhRoadlink.geometry)))
+          OracleTrafficSignDao.create(trafficSign, mValue, "batch_process_trafficSigns", vvhRoadlink.municipalityCode,
+            VVHClient.createVVHTimeStamp(), vvhRoadlink.linkSource)
+      }
+  }
+}
+
 class LitRoadTierekisteriImporter extends LinearAssetTierekisteriImporterOperations {
 
   override def typeId: Int = 100
@@ -313,7 +363,7 @@ class LitRoadTierekisteriImporter extends LinearAssetTierekisteriImporterOperati
 
 class RoadWidthTierekisteriImporter extends LinearAssetTierekisteriImporterOperations {
 
-  override def typeId: Int = 100
+  override def typeId: Int = 120
   override def assetName = "roadWidth"
   override type TierekisteriClientType = TierekisteriRoadWidthAssetClient
   override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
@@ -329,7 +379,7 @@ class RoadWidthTierekisteriImporter extends LinearAssetTierekisteriImporterOpera
         measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value))
 
       linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, trAssetData.assetValue)
-      println(s"Created OTH " + assetName + " assets for $linkId from TR data with assetId $assetId")
+      println(s"Created OTH $assetName assets for ${vvhRoadlink.linkId} from TR data with assetId $assetId")
     }
   }
 

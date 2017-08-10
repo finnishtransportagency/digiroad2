@@ -43,7 +43,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val pedestrianCrossingService: PedestrianCrossingService = Digiroad2Context.pedestrianCrossingService,
                    val userProvider: UserProvider = Digiroad2Context.userProvider,
                    val assetPropertyService: AssetPropertyService = Digiroad2Context.assetPropertyService,
-                   val trafficLightService: TrafficLightService = Digiroad2Context.trafficLightService)
+                   val trafficLightService: TrafficLightService = Digiroad2Context.trafficLightService,
+                   val trafficSignService: TrafficSignService = Digiroad2Context.trafficSignService)
   extends ScalatraServlet
     with JacksonJsonSupport
     with CorsSupport
@@ -53,6 +54,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val trafficVolumeTypeid=170
     val roadWidthTypeId = 120
     val lightingTypeId = 100
+    val trafficSignTypeId = 300
 
     val logger = LoggerFactory.getLogger(getClass)
   // Somewhat arbitrarily chosen limit for bounding box (Math.abs(y1 - y2) * Math.abs(x1 - x2))
@@ -954,7 +956,7 @@ Returns empty result as Json message, not as page not found
   }
 
   private def validateAdministrativeClass(typeId: Int)(administrativeClass: AdministrativeClass): Unit  = {
-    if ((typeId == lightingTypeId || typeId == roadWidthTypeId) && administrativeClass == State)
+    if ((typeId == lightingTypeId || typeId == roadWidthTypeId || typeId == trafficSignTypeId ) && administrativeClass == State)
       halt(BadRequest("Modification restriction for this asset on state roads"))
   }
 
@@ -1056,6 +1058,13 @@ Returns empty result as Json message, not as page not found
   put("/trafficLights/:id")(updatePointAsset(trafficLightService))
   delete("/trafficLights/:id")(deletePointAsset(trafficLightService))
 
+  get("/trafficSigns")(getPointAssets(trafficSignService))
+  get("/trafficSigns/:id")(getPointAssetById(trafficSignService))
+  get("/trafficSigns/floating")(getFloatingPointAssets(trafficSignService))
+  post("/trafficSigns")(createNewPointAsset(trafficSignService))
+  put("/trafficSigns/:id")(updatePointAsset(trafficSignService))
+  delete("/trafficSigns/:id")(deletePointAsset(trafficSignService))
+
   private def getPointAssets(service: PointAssetOperations): Seq[service.PersistedAsset] = {
     val user = userProvider.getCurrentUser()
     if (user.isServiceRoadMaintainer())
@@ -1110,13 +1119,18 @@ Returns empty result as Json message, not as page not found
     }
   }
 
-  private def createNewPointAsset(service: PointAssetOperations)(implicit m: Manifest[service.IncomingAsset]) = {
+  private def createNewPointAsset(service: PointAssetOperations, optTypeID: Option[Int] = None)(implicit m: Manifest[service.IncomingAsset]) = {
     val user = userProvider.getCurrentUser()
     if (user.isServiceRoadMaintainer())
       halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     val asset = (parsedBody \ "asset").extract[service.IncomingAsset]
+
     for (link <- roadLinkService.fetchVVHRoadlinkAndComplementary(asset.linkId)) {
       validateUserMunicipalityAccess(user)(link.municipalityCode)
+      optTypeID match {
+        case Some(typeId) => validateAdministrativeClass(typeId)(link.administrativeClass)
+        case _ => None
+      }
       service.create(asset, user.username, link.geometry, link.municipalityCode, Some(link.administrativeClass), link.linkSource)
     }
   }
