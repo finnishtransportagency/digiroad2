@@ -14,6 +14,7 @@ import fi.liikennevirasto.viite.dao.CalibrationCode._
 import fi.liikennevirasto.viite.model.Anomaly
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
+import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import fi.liikennevirasto.viite.{ReservedRoadPart, RoadType}
 import org.joda.time.DateTime
 import org.joda.time.format.ISODateTimeFormat
@@ -92,7 +93,7 @@ trait BaseRoadAddress {
   def sideCode: SideCode
   def calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint])
   def floating: Boolean
-  def geom: Seq[Point]
+  def geometry: Seq[Point]
 }
 
 // Note: Geometry on road address is not directed: it isn't guaranteed to have a direction of digitization or road addressing
@@ -100,7 +101,7 @@ case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, roadTyp
                        discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
                        endDate: Option[DateTime] = None, modifiedBy: Option[String] = None, lrmPositionId : Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode, adjustedTimestamp: Long,
                        calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false,
-                       geom: Seq[Point], linkGeomSource: LinkGeomSource) extends BaseRoadAddress {
+                       geometry: Seq[Point], linkGeomSource: LinkGeomSource) extends BaseRoadAddress {
   val endCalibrationPoint = calibrationPoints._2
   val startCalibrationPoint = calibrationPoints._1
 
@@ -201,26 +202,6 @@ object RoadAddressDAO {
 
   private def logger = LoggerFactory.getLogger(getClass)
 
-  private def calibrations(calibrationCode: CalibrationCode, linkId: Long, startMValue: Double, endMValue: Double,
-                           startAddrMValue: Long, endAddrMValue: Long, sideCode: SideCode): (Option[CalibrationPoint], Option[CalibrationPoint]) = {
-    sideCode match {
-      case BothDirections => (None, None) // Invalid choice
-      case TowardsDigitizing => calibrations(calibrationCode, linkId, 0.0, Math.max(startMValue, endMValue), startAddrMValue, endAddrMValue)
-      case AgainstDigitizing => calibrations(calibrationCode, linkId, Math.max(startMValue, endMValue), 0.0, startAddrMValue, endAddrMValue)
-      case Unknown => (None, None)  // Invalid choice
-    }
-  }
-
-  private def calibrations(calibrationCode: CalibrationCode, linkId: Long, segmentStartMValue: Double, segmentEndMValue: Double,
-                           startAddrMValue: Long, endAddrMValue: Long): (Option[CalibrationPoint], Option[CalibrationPoint]) = {
-    calibrationCode match {
-      case No => (None, None)
-      case AtEnd => (None, Some(CalibrationPoint(linkId, segmentEndMValue, endAddrMValue)))
-      case AtBeginning => (Some(CalibrationPoint(linkId, segmentStartMValue, startAddrMValue)), None)
-      case AtBoth => (Some(CalibrationPoint(linkId, segmentStartMValue, startAddrMValue)),
-        Some(CalibrationPoint(linkId, segmentEndMValue, endAddrMValue)))
-    }
-  }
   val formatter = ISODateTimeFormat.dateOptionalTimeParser()
 
   def dateTimeParse(string: String) = {
@@ -270,7 +251,7 @@ object RoadAddressDAO {
 
       RoadAddress(id, roadNumber, roadPartNumber, RoadType.Unknown, Track.apply(trackCode), Discontinuity.apply(discontinuity),
         startAddrMValue, endAddrMValue, startDate, endDate, createdBy, lrmPositionId, linkId, startMValue, endMValue,
-        SideCode.apply(sideCode), adjustedTimestamp, calibrations(CalibrationCode.apply(calibrationCode), linkId, startMValue, endMValue, startAddrMValue,
+        SideCode.apply(sideCode), adjustedTimestamp, CalibrationPointsUtils.calibrations(CalibrationCode.apply(calibrationCode), linkId, startMValue, endMValue, startAddrMValue,
           endAddrMValue, SideCode.apply(sideCode)), floating, Seq(Point(x,y), Point(x2,y2)), geomSource)
     }
   }
@@ -983,7 +964,7 @@ object RoadAddressDAO {
         case None => ""
       })
       addressPS.setString(11, createdBy.getOrElse(address.modifiedBy.getOrElse("-")))
-      val (p1, p2) = (address.geom.head, address.geom.last)
+      val (p1, p2) = (address.geometry.head, address.geometry.last)
       addressPS.setDouble(12, p1.x)
       addressPS.setDouble(13, p1.y)
       addressPS.setDouble(14, address.startAddrMValue)

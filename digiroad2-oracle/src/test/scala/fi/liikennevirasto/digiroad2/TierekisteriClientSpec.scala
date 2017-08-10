@@ -51,6 +51,14 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
       HttpClientBuilder.create().build())
   }
 
+  lazy val litRoadImporterOperations: LitRoadTierekisteriImporter = {
+    new LitRoadTierekisteriImporter()
+  }
+
+  lazy val roadWidthImporterOperations: RoadWidthTierekisteriImporter = {
+    new RoadWidthTierekisteriImporter()
+  }
+
   lazy val tierekisteriTrafficSignAsset: TierekisteriTrafficSignAssetClient = {
     new TierekisteriTrafficSignAssetClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
       dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,

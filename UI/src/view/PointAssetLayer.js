@@ -10,13 +10,14 @@
       mapOverlay = params.mapOverlay,
       layerName = params.layerName,
       newAsset = params.newAsset,
+      roadAddressInfoPopup = params.roadAddressInfoPopup,
       editConstrains = params.editConstrains,
       assetLabel = params.assetLabel;
 
     Layer.call(this, layerName, roadLayer);
     var me = this;
     me.minZoomForContent = zoomlevels.minZoomForAssets;
-
+    var extraEventListener = _.extend({running: false}, eventbus);
     var vectorSource = new ol.source.Vector();
     var vectorLayer = new ol.layer.Vector({
        source : vectorSource,
@@ -206,8 +207,6 @@
       eventListener.listenTo(eventbus, layerName + ':unselected', handleUnSelected);
       eventListener.listenTo(eventbus, layerName + ':changed', handleChanged);
       eventListener.listenTo(eventbus, 'application:readOnly', toggleMode);
-      eventListener.listenTo(eventbus, 'withComplementary:show', showWithComplementary);
-      eventListener.listenTo(eventbus, 'withComplementary:hide', hideComplementary);
     }
     eventbus.on( layerName + ':changeSigns', function(trafficSignData){
       setTrafficSigns(trafficSignData[0], trafficSignData[1]);
@@ -220,6 +219,15 @@
     var setTrafficSigns = function(trafficSign, isShowing) {
       collection.setTrafficSigns(trafficSign, isShowing);
       me.refreshView();
+    };
+
+    var startListeningExtraEvents = function(){
+      extraEventListener.listenTo(eventbus, 'withComplementary:show', showWithComplementary);
+      extraEventListener.listenTo(eventbus, 'withComplementary:hide', hideComplementary);
+    };
+
+    var stopListeningExtraEvents = function(){
+      extraEventListener.stopListening(eventbus);
     };
 
     function handleCreationCancelled() {
@@ -301,7 +309,9 @@
     }
 
     function show(map) {
+      startListeningExtraEvents();
       vectorLayer.setVisible(true);
+      roadAddressInfoPopup.start();
       me.refreshView();
       me.show(map);
     }
@@ -315,6 +325,8 @@
     function hide() {
       selectedAsset.close();
       vectorLayer.setVisible(false);
+      roadAddressInfoPopup.stop();
+      stopListeningExtraEvents();
       me.stop();
       me.hide();
     }

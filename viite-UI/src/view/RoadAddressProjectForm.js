@@ -27,12 +27,14 @@
         '</div>';
     };
 
-    var inputFieldRequired = function(labelText, id, placeholder, value) {
-      var field = '<div class="form-group input-required">' +
+    var inputFieldRequired = function(labelText, id, placeholder, value, maxLength) {
+      var lengthLimit = '';
+      if (maxLength)
+        lengthLimit = 'maxlength="' + maxLength + '"';
+      return '<div class="form-group input-required">' +
         '<label class="control-label required">' + labelText + '</label>' +
-        '<input type="text" class="form-control" id = "'+id+'" placeholder = "'+placeholder+'" value="'+value+'"/>' +
+        '<input type="text" class="form-control" id = "'+id+'"'+lengthLimit+' placeholder = "'+placeholder+'" value="'+value+'"/>' +
         '</div>';
-      return field;
     };
 
     var title = function() {
@@ -89,7 +91,7 @@
         staticField('Muokattu viimeksi', '-') +
         '<div class="form-group editable form-editable-roadAddressProject"> ' +
         '<form  id="roadAddressProject"  class="input-unit-combination form-group form-horizontal roadAddressProject">' +
-        inputFieldRequired('*Nimi', 'nimi', '', '') +
+        inputFieldRequired('*Nimi', 'nimi', '', '', 32) +
         inputFieldRequired('*Alkupvm', 'alkupvm', 'pp.kk.vvvv', '') +
         largeInputField() +
         '<div class="form-group">' +
@@ -103,10 +105,9 @@
         '</form>' +
         ' </div>'+
         '</div>' + '<div class = "form-result">'  +'<label >' + 'PROJEKTIIN VALITUT TIEOSAT:' + '</label>'+
-        '<div style="margin-left: 15px;">' +
-        '</div>'+
+        '<div style="margin-left: 20px;">' +
         addSmallLabel('TIE')+ addSmallLabel('OSA')+ addSmallLabel('PITUUS')+ addSmallLabel('JATKUU')+ addSmallLabel('ELY')+
-
+        '</div>'+
         '<div id ="roadpartList">'+
         '</div></div>' +
 
@@ -127,7 +128,7 @@
         '<div class="form-group editable form-editable-roadAddressProject"> '+
 
         '<form id="roadAddressProject" class="input-unit-combination form-group form-horizontal roadAddressProject">'+
-        inputFieldRequired('*Nimi', 'nimi', '', project.name) +
+        inputFieldRequired('*Nimi', 'nimi', '', project.name, 32) +
         inputFieldRequired('*Alkupvm', 'alkupvm', 'pp.kk.vvvv', project.startDate)+
         largeInputField(project.additionalInfo)+
         '<div class="form-group">' +
@@ -144,8 +145,9 @@
         '</div>' +
         '<div class = "form-result">' +
         '<label >PROJEKTIIN VALITUT TIEOSAT:</label>'+
-        '<div style="margin-left: 15px;">' +'</div>'+
+        '<div style="margin-left: 20px;">'+
         addSmallLabel('TIE')+ addSmallLabel('OSA')+ addSmallLabel('PITUUS')+ addSmallLabel('JATKUU')+ addSmallLabel('ELY')+
+        '</div>'+
         '<div id ="roadpartList">'+
         formInfo +
         '</div></div></div></div>'+
@@ -159,11 +161,21 @@
         '<header>' +
         titleWithProjectName(project.name) +
         '</header>' +
-        '<footer></footer>');
+        '<footer>'+ showProjectChangeButton() +'</footer>');
+    };
+
+    var showProjectChangeButton = function() {
+      return '<div class="project-form form-controls">' +
+        '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
+        '<button disabled id ="send-button" class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button></div>';
     };
 
     var addSmallLabel = function(label){
       return '<label class="control-label-small">'+label+'</label>';
+    };
+
+    var deleteButton = function(index){
+      return '<button id="'+index+'" class="delete btn-delete">X</button>';
     };
 
     var addSmallInputNumber = function(id, value){
@@ -219,9 +231,12 @@
       eventbus.on('roadAddress:openProject', function(result) {
         currentProject = result.project;
         projectCollection.clearRoadAddressProjects();
+        projectCollection.setCurrentRoadPartList(result.projectLinks);
         var text = '';
-        _.each(result.projectLinks, function(line){  //TODO later list of already saved roadlinks has to be saved in  roadaddressprojectcollection.currentRoadSegmentList for reserve button to function properly now saved links are cleared when newones are reserved
-          text += '<div>' +
+        var index = 0;
+        _.each(result.projectLinks, function(line){
+          var button = deleteButton(index++);
+          text += '<div style="display:inline-block;">'  + button +
             addSmallLabel(line.roadNumber)+
             addSmallLabel(line.roadPartNumber)+ addSmallLabel(line.roadLength)+ addSmallLabel(line.discontinuity)+ addSmallLabel(line.ely) +
             '</div>';
@@ -263,8 +278,11 @@
         eventbus.once('roadAddress:projectSaved', function (result) {
           currentProject = result.project;
           var text = '';
+          var index = 0;
+          projectCollection.setCurrentRoadPartList(result.formInfo);
           _.each(result.formInfo, function(line){
-            text += '<div>' + ' '+
+            var button = deleteButton(index++);
+            text += '<div style="display:inline-block;">'  + button +
               addSmallLabel(line.roadNumber)+ addSmallLabel(line.roadPartNumber)+ addSmallLabel(line.roadLength)+ addSmallLabel(line.discontinuity)+ addSmallLabel(line.ely) +
               '</div>';
           });
@@ -283,6 +301,26 @@
         }
       });
 
+      var fillForm = function(list){
+        var text = '';
+        var index = 0;
+
+        _.each(list, function (line) {
+          text += '<div style="display:inline-block;">' + deleteButton(index++) +
+            addSmallLabel(line.roadNumber) +
+            addSmallLabel(line.roadPartNumber) + addSmallLabel(line.roadLength) + addSmallLabel(line.discontinuity) + addSmallLabel(line.ely) +
+            '</div>';
+        });
+        rootElement.html(openProjectTemplate(currentProject, text));
+        applicationModel.setProjectButton(true);
+        applicationModel.setProjectFeature(currentProject.id);
+        applicationModel.setOpenProject(true);
+        activeLayer = true;
+        rootElement.find('.btn-reserve').prop("disabled", false);
+        rootElement.find('.btn-save').prop("disabled", false);
+        rootElement.find('.btn-next').prop("disabled", false);
+      };
+
       rootElement.on('click', '.btn-reserve', function() {
         var data;
         var lists = $('.roadAddressProject');
@@ -294,6 +332,26 @@
         projectCollection.checkIfReserved(data);
         return false;
       });
+
+      rootElement.on('click', '.btn-delete', function() {
+        var id = this.id;
+        if(projectCollection.getDirtyRoadParts()[id].isDirty){
+          new GenericConfirmPopup('Haluatko varmasti poistaa tieosan varauksen ja siihen mahdollisesti tehdyt tieosoitemuutokset?', {
+            successCallback: function () {
+              removePart(id);
+            }
+          });
+        }
+        else {
+          removePart(id);
+        }
+      });
+
+      var removePart = function(id){
+        projectCollection.deleteRoadPartFromList(id);
+        fillForm(projectCollection.getDirtyRoadParts());
+      };
+
 
       rootElement.on('change', '.form-group', function() {
         rootElement.find('.action-selected-field').prop("hidden", false);
@@ -323,7 +381,15 @@
 
 
       rootElement.on('click', '.project-form button.cancel', function(){
-        if (activeLayer) {
+        if(!_.isEqual(projectCollection.getDirtyRoadParts(), projectCollection.getCurrentRoadPartList())){
+          new GenericConfirmPopup('Haluatko varmasti peruuttaa? Mahdolliset tallentamattomat muutokset häviävät', {
+            successCallback: function () {
+              projectCollection.setCurrentRoadPartList(projectCollection.getCurrentRoadPartList());
+              fillForm(projectCollection.getCurrentRoadPartList());
+            }
+          });
+        }
+        else if (activeLayer) {
           new GenericConfirmPopup('Haluatko varmasti peruuttaa? Mahdolliset tallentamattomat muutokset häviävät', {
             successCallback: function () {
               applicationModel.setOpenProject(false);

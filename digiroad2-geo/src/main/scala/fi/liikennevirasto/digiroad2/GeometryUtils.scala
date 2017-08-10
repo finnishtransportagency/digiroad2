@@ -147,6 +147,13 @@ object GeometryUtils {
       geometry2Endpoints._2.distance2DTo(geometry1EndPoints._2) < epsilon
   }
 
+  def areAdjacent(geometry1: Seq[Point], geometry2: Point): Boolean = {
+    val epsilon = 0.01
+    val geometry1EndPoints = GeometryUtils.geometryEndpoints(geometry1)
+    geometry2.distance2DTo(geometry1EndPoints._1) < epsilon ||
+      geometry2.distance2DTo(geometry1EndPoints._2) < epsilon
+  }
+
   def geometryMoved(maxDistanceDiffAllowed: Double)(geometry1: Seq[Point], geometry2: Seq[Point]): Boolean = {
     !(geometry1.nonEmpty && geometry2.nonEmpty &&
       withinTolerance(GeometryUtils.geometryEndpoints(geometry1), GeometryUtils.geometryEndpoints(geometry2), maxDistanceDiffAllowed))

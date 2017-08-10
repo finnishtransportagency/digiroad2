@@ -87,6 +87,17 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     }
   }
 
+  def withRoadAddress(pieceWiseLinearAssets: Seq[Seq[SpeedLimit]]): Seq[Seq[SpeedLimit]] ={
+    val addressData = roadLinkServiceImplementation.getRoadAddressesByLinkIds(pieceWiseLinearAssets.flatMap(pwa => pwa.map(_.linkId)).toSet).map(a => (a.linkId, a)).toMap
+    pieceWiseLinearAssets.map(
+      _.map(pwa =>
+        if (addressData.contains(pwa.linkId))
+          pwa.copy(attributes = pwa.attributes ++ addressData(pwa.linkId).asAttributes)
+        else
+          pwa
+      ))
+  }
+
   /**
     * Returns speed limits history for Digiroad2Api /history speedlimits GET endpoint.
     */

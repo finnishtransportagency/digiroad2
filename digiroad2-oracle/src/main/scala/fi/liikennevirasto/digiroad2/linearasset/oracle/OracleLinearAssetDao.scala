@@ -1068,7 +1068,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     value.maintenanceRoad.foreach { prop =>
       val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply(prop.publicId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + prop.publicId + " not found"))
       prop.propertyType match {
-        case "text" => {
+        case PropertyTypes.Text => {
           if (textPropertyValueDoesNotExist(assetId, propertyId) && prop.value.nonEmpty) {
             Queries.insertTextProperty(assetId, propertyId, prop.value).first
           } else if (prop.value.isEmpty) {
@@ -1077,7 +1077,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
             Queries.updateTextProperty(assetId, propertyId, prop.value).firstOption.getOrElse(throw new IllegalArgumentException("Property Text Update: " + prop.publicId + " not found"))
           }
         }
-        case "single_choice" => {
+        case PropertyTypes.SingleChoice | PropertyTypes.CheckBox => {
           if (singleChoiceValueDoesNotExist(assetId, propertyId)) {
             Queries.insertSingleChoiceProperty(assetId, propertyId, prop.value.toInt).first
           } else {
@@ -1121,9 +1121,9 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     def insertMaintenanceRoadValue(assetId: Long, value: MaintenanceRoad): Unit = {
       value.maintenanceRoad.filter(finalProps => finalProps.value != "").foreach(prop => {
         prop.propertyType match {
-          case "text" =>
+          case PropertyTypes.Text =>
             insertValue(assetId, prop.publicId, prop.value)
-          case "single_choice" =>
+          case PropertyTypes.SingleChoice | PropertyTypes.CheckBox =>
             insertEnumeratedValue(assetId, prop.publicId, prop.value.toInt)
         }
       })

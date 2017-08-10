@@ -6,7 +6,7 @@ import java.util.Properties
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset.oracle.OracleAssetDao
 import fi.liikennevirasto.digiroad2.{TierekisteriAssetDataClient, TierekisteriLightingAssetClient, TierekisteriRoadWidthAssetClient, _}
-import fi.liikennevirasto.digiroad2.asset.{SideCode, _}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -160,7 +160,7 @@ trait TierekisteriAssetImporterOperations {
       case _ => roadLinkService.getVVHRoadLinksF(municipality).map(_.linkId)
     }
 
-    expireAssets(roadLinksWithStateFilter)
+    expireAssets(roadLinksWithStateFilter);
 
     println("\nEnd assets expiration in municipality %d".format(municipality))
   }
@@ -363,7 +363,7 @@ class LitRoadTierekisteriImporter extends LinearAssetTierekisteriImporterOperati
 
 class RoadWidthTierekisteriImporter extends LinearAssetTierekisteriImporterOperations {
 
-  override def typeId: Int = 100
+  override def typeId: Int = 120
   override def assetName = "roadWidth"
   override type TierekisteriClientType = TierekisteriRoadWidthAssetClient
   override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)

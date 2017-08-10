@@ -10,6 +10,9 @@
       'Lakkautettu'
     ];
 
+    var newLinkStatus = 2;
+    var terminatedLinkStatus = 5;
+    
     var changeTable =
       $('<div class="change-table-frame"></div>');
     // Text about validation success hard-coded now
@@ -76,18 +79,18 @@
       eventbus.once('projectChanges:fetched', function(projectChangeData){
         var htmlTable ='<table class="change-table">';
         _.each(projectChangeData.changeInfoSeq, function(changeInfoSeq) {
-          htmlTable += '<tr class="change-table-data-row">' +
-            '<td class="project-change-table-dimension-first">' + getChangeType(changeInfoSeq.changetype) + '</td>' +
-            '<td class="project-change-table-data-cell">' + changeInfoSeq.source.roadNumber + '</td>' +
-            '<td class="project-change-table-data-cell">' + changeInfoSeq.source.trackCode + '</td>' +
-            '<td class="project-change-table-data-cell">' + changeInfoSeq.source.startRoadPartNumber + '</td>' +
-            '<td class="project-change-table-data-cell">' + changeInfoSeq.source.startAddressM + '</td>' +
-            '<td class="project-change-table-data-cell">' + changeInfoSeq.source.endRoadPartNumber + '</td>' +
-            '<td class="project-change-table-data-cell">' + changeInfoSeq.source.endAddressM + '</td>' +
-            '<td class="project-change-table-data-cell">' + changeInfoSeq.discontinuity + '</td>' +
-            '<td class="project-change-table-data-cell data-cell-road-type">' + changeInfoSeq.roadType + '</td>' +
-            '<td class="project-change-table-data-cell">' + projectChangeData.ely + '</td>';
-          if(changeInfoSeq.changetype!==5){ //5=termination
+          if(changeInfoSeq.changetype === newLinkStatus){
+            htmlTable += '<tr class="change-table-data-row">' +
+              '<td class="project-change-table-dimension-first">' + getChangeType(changeInfoSeq.changetype) + '</td>' +
+              '<td class="project-change-table-data-cell"></td>' +
+              '<td class="project-change-table-data-cell"></td>' +
+              '<td class="project-change-table-data-cell"></td>' +
+              '<td class="project-change-table-data-cell"></td>' +
+              '<td class="project-change-table-data-cell"></td>' +
+              '<td class="project-change-table-data-cell"></td>' +
+              '<td class="project-change-table-data-cell"></td>' +
+              '<td class="project-change-table-data-cell data-cell-road-type"></td>' +
+              '<td class="project-change-table-data-cell"></td>';
             htmlTable+=
               '<td class="project-change-table-data-cell">' + changeInfoSeq.target.roadNumber + '</td>'+
               '<td class="project-change-table-data-cell">' + changeInfoSeq.target.trackCode + '</td>' +
@@ -99,18 +102,31 @@
               '<td class="project-change-table-data-cell data-cell-road-type">'+ changeInfoSeq.roadType + '</td>' +
               '<td class="project-change-table-data-cell">' + projectChangeData.ely + '</td>' +
               '</tr>';
-          } else {
-            htmlTable+=
-              '<td class="project-change-table-data-cell">' + "" + '</td>' +
-              '<td class="project-change-table-data-cell">' + "" + '</td>' +
-              '<td class="project-change-table-data-cell">' + "" + '</td>' +
-              '<td class="project-change-table-data-cell">' + "" + '</td>' +
-              '<td class="project-change-table-data-cell">' + "" + '</td>' +
-              '<td class="project-change-table-data-cell">' + "" + '</td>' +
-              '<td class="project-change-table-data-cell">' + "" + '</td>' +
-              '<td class="project-change-table-data-cell data-cell-road-type">' + "" + '</td>' +
-              '<td class="project-change-table-data-cell">' + "" + '</td>' +
-              '</tr>';}
+          } else if (changeInfoSeq.changetype === terminatedLinkStatus) {
+            htmlTable += '<tr class="change-table-data-row">' +
+              '<td class="project-change-table-dimension-first">' + getChangeType(changeInfoSeq.changetype) + '</td>' +
+              '<td class="project-change-table-data-cell">' + changeInfoSeq.source.roadNumber + '</td>' +
+              '<td class="project-change-table-data-cell">' + changeInfoSeq.source.trackCode + '</td>' +
+              '<td class="project-change-table-data-cell">' + changeInfoSeq.source.startRoadPartNumber + '</td>' +
+              '<td class="project-change-table-data-cell">' + changeInfoSeq.source.startAddressM + '</td>' +
+              '<td class="project-change-table-data-cell">' + changeInfoSeq.source.endRoadPartNumber + '</td>' +
+              '<td class="project-change-table-data-cell">' + changeInfoSeq.source.endAddressM + '</td>' +
+              '<td class="project-change-table-data-cell">' + changeInfoSeq.discontinuity + '</td>' +
+              '<td class="project-change-table-data-cell data-cell-road-type">' + changeInfoSeq.roadType + '</td>' +
+              '<td class="project-change-table-data-cell">' + projectChangeData.ely + '</td>';
+
+            htmlTable +=
+              '<td class="project-change-table-data-cell"></td>' +
+              '<td class="project-change-table-data-cell"></td>' +
+              '<td class="project-change-table-data-cell"></td>' +
+              '<td class="project-change-table-data-cell"></td>' +
+              '<td class="project-change-table-data-cell"></td>' +
+              '<td class="project-change-table-data-cell"></td>' +
+              '<td class="project-change-table-data-cell"></td>' +
+              '<td class="project-change-table-data-cell data-cell-road-type"></td>' +
+              '<td class="project-change-table-data-cell"></td>' +
+              '</tr>';
+          }
         });
         htmlTable += '</table>';
 
@@ -122,6 +138,8 @@
         $('[id=change-table-borders-target]').height('180px');
         $('[id=change-table-borders-source]').height('180px');
         $('[id=change-table-borders-changetype]').height('180px');
+        $('#information-content').empty();
+        $('#send-button').attr('disabled', true);
         hide();
       });
     }
