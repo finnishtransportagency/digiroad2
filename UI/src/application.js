@@ -205,7 +205,9 @@
        linearAsset.singleElementEventCategory,
        AssetFormElementsFactory.construct(linearAsset),
        linearAsset.newTitle,
-       linearAsset.title);
+       linearAsset.title,
+       linearAsset.editConstrains || function() {return false;},
+       linearAsset.layerName );
     });
 
     _.forEach(pointAssets, function(pointAsset) {
@@ -228,7 +230,8 @@
        style: asset.style || new PiecewiseLinearAssetStyle(),
        formElements: AssetFormElementsFactory.construct(asset),
        assetLabel: asset.label,
-       roadAddressInfoPopup: roadAddressInfoPopup
+       roadAddressInfoPopup: roadAddressInfoPopup,
+       editConstrains : asset.editConstrains || function() {return false;}
      });
      return acc;
     }, {});

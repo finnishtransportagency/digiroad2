@@ -172,6 +172,10 @@
         title: 'Valaistus',
         enabled: 'Valaistus',
         disabled: 'Ei valaistusta'
+      },
+      editConstrains : function(selectedAsset) {
+        //check if administrative class is State
+        return selectedAsset.administrativeClass === 1;
       }
     },
     {
@@ -208,7 +212,11 @@
         disabled: 'Leveys ei tiedossa',
         showUnit: true
       },
-      label: new LinearAssetLabel()
+      label: new LinearAssetLabel(),
+      editConstrains : function(selectedAsset) {
+        //check if administrative class is State
+        return selectedAsset.administrativeClass === 1;
+      }
     },
     {
       typeId: assetType.congestionTendency,

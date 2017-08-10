@@ -51,6 +51,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     with GZipSupport {
     val serviceRoadTypeid=290
     val trafficVolumeTypeid=170
+    val roadWidthTypeId = 120
+    val lightingTypeId = 100
+
     val logger = LoggerFactory.getLogger(getClass)
   // Somewhat arbitrarily chosen limit for bounding box (Math.abs(y1 - y2) * Math.abs(x1 - x2))
   val MAX_BOUNDING_BOX = 100000000
@@ -657,7 +660,8 @@ Returns empty result as Json message, not as page not found
           "roadNumber" -> extractLongValue(link.attributes, "VIITE_ROAD_NUMBER"),
           "track" -> extractIntValue(link.attributes, "VIITE_TRACK"),
           "startAddrMValue" -> extractLongValue(link.attributes, "VIITE_START_ADDR"),
-          "endAddrMValue" ->  extractLongValue(link.attributes, "VIITE_END_ADDR")
+          "endAddrMValue" ->  extractLongValue(link.attributes, "VIITE_END_ADDR"),
+          "administrativeClass" -> link.administrativeClass.value
         )
       }
     }
@@ -701,6 +705,7 @@ Returns empty result as Json message, not as page not found
     }
   }
 
+
   post("/linearassets") {
     val user = userProvider.getCurrentUser()
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
@@ -713,9 +718,14 @@ Returns empty result as Json message, not as page not found
     val newLinearAssets = extractNewLinearAssets(typeId, parsedBody \ "newLimits")
     val existingLinkIds = linearAssetService.getPersistedAssetsByIds(typeId, existingAssets).map(_.linkId)
     val linkIds = newLinearAssets.map(_.linkId) ++ existingLinkIds
-    roadLinkService.fetchVVHRoadlinks(linkIds.toSet)
+    val roadLinks = roadLinkService.fetchVVHRoadlinks(linkIds.toSet)
+    roadLinks
       .map(_.municipalityCode)
       .foreach(validateUserMunicipalityAccess(user))
+
+    roadLinks
+      .map(_.administrativeClass)
+      .foreach(validateAdministrativeClass(typeId))
 
     val updatedNumericalIds = if (valueOption.nonEmpty) {
       try {
@@ -941,6 +951,11 @@ Returns empty result as Json message, not as page not found
     if (!user.hasEarlyAccess() || !user.isAuthorizedToWrite(municipality)) {
       halt(Unauthorized("User not authorized"))
     }
+  }
+
+  private def validateAdministrativeClass(typeId: Int)(administrativeClass: AdministrativeClass): Unit  = {
+    if ((typeId == lightingTypeId || typeId == roadWidthTypeId) && administrativeClass == State)
+      halt(BadRequest("Modification restriction for this asset on state roads"))
   }
 
   get("/manoeuvres") {
