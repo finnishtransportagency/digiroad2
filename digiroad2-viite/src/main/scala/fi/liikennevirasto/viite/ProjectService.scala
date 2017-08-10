@@ -135,7 +135,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         val ely: Option[Long] = roadLink.headOption.map(rl => MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(rl.municipalityCode, 0))
         ely match {
           case Some(value) if value != 0 =>
-            Some(ReservedRoadPart(roadpartid, roadnumber, roadpart, lenght, Discontinuity.apply(discontinuity.toInt), value, Some(startDate), Some(endDate)))
+            Some(ReservedRoadPart(roadpartid, roadnumber, roadpart, lenght, Discontinuity.apply(discontinuity.toInt), value, Option(startDate), Option(endDate)))
           case _ => None
         }
       }
