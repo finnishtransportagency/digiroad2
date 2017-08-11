@@ -498,10 +498,9 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
     var count = 0
     runWithRollback {
       val countCurrentProjects = projectService.getRoadAddressAllProjects()
-      val id = 0
       val addresses: List[ReservedRoadPart] = List(ReservedRoadPart(5: Long, 203: Long, 203: Long, 5: Double, Discontinuity.apply("jatkuva"), 8: Long, None: Option[DateTime], None: Option[DateTime]))
-      val roadAddressProject = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", addresses, None)
-      projectService.createRoadLinkProject(roadAddressProject)
+      val roadAddressProject = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", addresses, None)
+      val id = projectService.createRoadLinkProject(roadAddressProject)._1.id
       val countAfterInsertProjects = projectService.getRoadAddressAllProjects()
       count = countCurrentProjects.size + 1
       countAfterInsertProjects.size should be(count)
@@ -518,10 +517,9 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
     var count = 0
     runWithRollback {
       val countCurrentProjects = projectService.getRoadAddressAllProjects()
-      val id = 0
       val addresses: List[ReservedRoadPart] = List(ReservedRoadPart(5: Long, 203: Long, 203: Long, 5: Double, Discontinuity.apply("jatkuva"), 8: Long, None: Option[DateTime], None: Option[DateTime]))
-      val roadAddressProject = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", addresses, None)
-      projectService.createRoadLinkProject(roadAddressProject)
+      val roadAddressProject = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", addresses, None)
+      val id = projectService.createRoadLinkProject(roadAddressProject)._1.id
       val countAfterInsertProjects = projectService.getRoadAddressAllProjects()
       count = countCurrentProjects.size + 1
       countAfterInsertProjects.size should be(count)
@@ -742,21 +740,6 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       val links3 = ProjectDAO.getProjectLinks(id)
       links3.size should be(0)
       message2project1 should be("TIE 5 OSA 999 on jo varattuna projektissa TestProject, tarkista tiedot")
-    }
-  }
-
-  test("flipping success message") {
-    runWithRollback {
-      //TODO: create a mock result for RoadLinkService.getRoadLinksByLinkIdsFromVVH(linkIdsToGet, newTransaction)
-      val id = Sequences.nextViitePrimaryKeySeqValue
-      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
-        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
-      ProjectDAO.createRoadAddressProject(rap)
-      val addresses = RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(rap))
-      ProjectDAO.create(addresses)
-      val links=ProjectDAO.getProjectLinks(id)
-      val errorMessage = projectService.changeDirection(id, 5, 203)
-      errorMessage should be(None)
     }
   }
 
