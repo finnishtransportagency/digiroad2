@@ -176,7 +176,7 @@ object DataFixture {
       println("Start processing municipality %d".format(municipality))
 
       //Obtain all RoadLink by municipality and change info from VVH
-      val (roadLinks, changedRoadLinks) = roadLinkService.getRoadLinksAndChangesFromVVH(municipality.toInt)
+      val (roadLinks, changedRoadLinks) = roadLinkService.getFrozenViiteRoadLinksAndChangesFromVVH(municipality.toInt,properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
       println ("Total roadlink for municipality " + municipality + " -> " + roadLinks.size)
       println ("Total of changes for municipality " + municipality + " -> " + changedRoadLinks.size)
       if(roadLinks.nonEmpty) {

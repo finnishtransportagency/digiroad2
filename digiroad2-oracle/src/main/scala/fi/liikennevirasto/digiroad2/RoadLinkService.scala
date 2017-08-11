@@ -433,6 +433,12 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     getCachedRoadLinksAndChanges(municipality)
   }
 
+  def getFrozenViiteRoadLinksAndChangesFromVVH(municipality: Int, frozenTimeVVHAPIServiceEnabled: Boolean =false ): (Seq[RoadLink], Seq[ChangeInfo])= {
+    getCachedRoadLinksAndChanges(municipality)
+  }
+
+
+
   def getRoadLinksWithComplementaryAndChangesFromVVH(municipality: Int): (Seq[RoadLink], Seq[ChangeInfo])= {
     getCachedRoadLinksWithComplementaryAndChanges(municipality)
   }
