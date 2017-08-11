@@ -68,7 +68,7 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
                        geometry: Seq[Point], projectId: Long, status: LinkStatus, roadType: RoadType, linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, geometryLength: Double)
   extends BaseRoadAddress with PolyLine
 
-case class ProjectFormLine(startingLinkId: Long, projectId: Long, roadNumber: Long, roadPartNumber: Long, roadLength: Long, ely : Long, discontinuity: String)
+case class ProjectFormLine(startingLinkId: Long, projectId: Long, roadNumber: Long, roadPartNumber: Long, roadLength: Long, ely : Long, discontinuity: String, isDirty: Boolean = false)
 
 object ProjectDAO {
 
@@ -286,7 +286,7 @@ object ProjectDAO {
          WHERE id=$projectID
        """
     Q.queryNA[Long](query).firstOption match
-       {
+    {
       case Some(number) => Some(number)
       case None => Some(0)
     }
@@ -335,7 +335,7 @@ object ProjectDAO {
     sqlu""" update project set state=$projectstate, status_info=$errorMessage  WHERE id=$projectID""".execute
   }
 
-  def getProjectsWithWaitingTRStatus(): List[Long]={
+  def getProjectsWithWaitingTRStatus(): List[Long] = {
     val query= s"""
          SELECT id
          FROM project
@@ -344,34 +344,63 @@ object ProjectDAO {
     Q.queryNA[Long](query).list
   }
 
-
-  def removeProjectLinksById(projectLinkIds: Set[Long])= {
-    val query =
-      s"""
-         DELETE FROM Project_Link WHERE id IN (${projectLinkIds.mkString(",")})
+  private def deleteProjectLinks(ids: Set[Long]): Int = {
+    if (ids.size > 900)
+      ids.grouped(900).map(deleteProjectLinks).sum
+    else {
+      val deleteLinks =
+        s"""
+         DELETE FROM PROJECT_LINK WHERE id IN (${ids.mkString(",")})
        """
-    Q.updateNA(query).first
+      val count = Q.updateNA(deleteLinks).first
+      val deleteLrm =
+        s"""
+         DELETE FROM LRM_POSITION WHERE id IN (SELECT lrm_position_id from PROJECT_LINK where id in (${ids.mkString(",")}))
+       """
+      Q.updateNA(deleteLrm).execute
+      count
+    }
   }
 
-  def removeProjectLinksByProjectAndRoadNumber(projectId : Long, roadNumber:Long, roadPartNumber:Long) = {
-    val query =
-      s"""
-         DELETE FROM Project_Link WHERE project_id = ${projectId} and road_number = ${roadNumber} and road_part_number = ${roadPartNumber}
-       """
-    Q.updateNA(query).first
+  def removeProjectLinksById(projectLinkIds: Set[Long]): Int = {
+    if (projectLinkIds.nonEmpty)
+      deleteProjectLinks(projectLinkIds)
+    else
+      0
+  }
+
+  private def removeProjectLinks(projectId: Long, roadNumber: Option[Long], roadPartNumber: Option[Long],
+                                 linkIds: Set[Long] = Set()): Int = {
+    if (linkIds.size > 900) {
+      linkIds.grouped(900).map(g => removeProjectLinks(projectId, roadNumber, roadPartNumber, g)).sum
+    } else {
+      val roadFilter = roadNumber.map(l => s"AND road_number = $l").getOrElse("")
+      val roadPartFilter = roadPartNumber.map(l => s"AND road_part_number = $l").getOrElse("")
+      val linkIdFilter = if (linkIds.isEmpty) {
+        ""
+      } else {
+        s"AND pos.LINK_ID IN (${linkIds.mkString(",")})"
+      }
+      val query = s"""SELECT pl.id FROM PROJECT_LINK pl JOIN LRM_POSITION pos ON (pl.lrm_position_id = pos.id) WHERE
+        project_id = $projectId $roadFilter $roadPartFilter $linkIdFilter"""
+      val ids = Q.queryNA[Long](query).iterator.toSet
+      if (ids.nonEmpty)
+        deleteProjectLinks(ids)
+      else
+        0
+    }
+  }
+
+  def removeProjectLinksByProjectAndRoadNumber(projectId: Long, roadNumber: Long, roadPartNumber: Long): Int = {
+    removeProjectLinks(projectId, Some(roadNumber), Some(roadPartNumber))
+  }
+
+  def removeProjectLinksByProject(projectId : Long): Int = {
+    removeProjectLinks(projectId, None, None)
   }
 
   def removeProjectLinksByLinkId(projectId: Long, linkIds: Set[Long]): Int = {
-    if (linkIds.size > 100) {
-      linkIds.grouped(100).map(g => removeProjectLinksByLinkId(projectId, g)).sum
-    } else {
-      val query =
-        s"""
-         DELETE FROM Project_Link WHERE project_id = $projectId AND EXISTS
-         (SELECT 1 FROM LRM_POSITION pos WHERE pos.id = LRM_POSITION_ID AND pos.link_id IN (${linkIds.mkString(",")}))
-       """
-      Q.updateNA(query).first
-    }
+    removeProjectLinks(projectId, None, None, linkIds)
   }
 
   def toTimeStamp(dateTime: Option[DateTime]) = {

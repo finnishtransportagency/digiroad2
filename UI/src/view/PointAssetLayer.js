@@ -10,7 +10,9 @@
       mapOverlay = params.mapOverlay,
       layerName = params.layerName,
       newAsset = params.newAsset,
-      roadAddressInfoPopup = params.roadAddressInfoPopup;
+      roadAddressInfoPopup = params.roadAddressInfoPopup,
+      editConstrains = params.editConstrains,
+      assetLabel = params.assetLabel;
 
     Layer.call(this, layerName, roadLayer);
     var me = this;
@@ -41,8 +43,7 @@
 
     function pointAssetOnSelect(feature) {
       if(feature.selected.length > 0 && feature.deselected.length === 0){
-        selectedAsset.open(feature.selected[0].getProperties());
-        toggleMode(application.isReadOnly());
+          selectedAsset.open(feature.selected[0].getProperties());
       }
       else {
         if(feature.deselected.length > 0 && !selectedAsset.isDirty()) {
@@ -72,7 +73,7 @@
 
         function dragAlongNearestLink(feature) {
           if (selectedAsset.isSelected(feature.features.getArray()[0].getProperties())) {
-            var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), feature.coordinate[0], feature.coordinate[1]);
+            var nearestLine = geometrycalculator.findNearestLine(excludeRoadByAdminClass(roadCollection.getRoadsForMassTransitStops()), feature.coordinate[0], feature.coordinate[1]);
             if (nearestLine) {
               var newPosition = geometrycalculator.nearestPointOnLine(nearestLine, { x: feature.coordinate[0], y: feature.coordinate[1]});
               roadLayer.selectRoadLink(roadCollection.getRoadLinkByLinkId(nearestLine.linkId).getData());
@@ -116,7 +117,7 @@
       if (!asset.floating && asset.geometry && asset.geometry.length > 0){
         var bearing = determineBearing(asset);
         rotation = validitydirections.calculateRotation(bearing, asset.validityDirection);
-      } else if (layerName == 'directionalTrafficSigns'){
+      } else if (layerName == 'directionalTrafficSigns' || layerName == 'trafficSigns'){
         rotation = validitydirections.calculateRotation(asset.bearing, asset.validityDirection);
       }
       return rotation;
@@ -127,7 +128,7 @@
       if (!asset.floating && asset.geometry && asset.geometry.length > 0){
         var nearestLine = geometrycalculator.findNearestLine([{ points: asset.geometry }], asset.lon, asset.lat);
         bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
-      } else if (layerName == 'directionalTrafficSigns'){
+      } else if (layerName == 'directionalTrafficSigns' || layerName == 'trafficSigns'){
         bearing = asset.bearing;
       }
       return bearing;
@@ -155,6 +156,8 @@
           var features = _.map(assets, createFeature);
           selectControl.clear();
           vectorLayer.getSource().addFeatures(features);
+          if(assetLabel)
+            vectorLayer.getSource().addFeatures(assetLabel.renderFeaturesByPointAssets(assets, map.getView().getZoom()));
           applySelection();
         }
       });
@@ -166,9 +169,9 @@
 
     function applySelection() {
       if (selectedAsset.exists()) {
-        var feature = _.find(vectorLayer.getSource().getFeatures(), function(feature) { return selectedAsset.isSelected(feature.getProperties());});
+        var feature = _.filter(vectorLayer.getSource().getFeatures(), function(feature) { return selectedAsset.isSelected(feature.getProperties());});
         if (feature) {
-          selectControl.addSelectionFeatures([feature]);
+          selectControl.addSelectionFeatures(feature);
         }
       }
     }
@@ -205,6 +208,18 @@
       eventListener.listenTo(eventbus, layerName + ':changed', handleChanged);
       eventListener.listenTo(eventbus, 'application:readOnly', toggleMode);
     }
+    eventbus.on( layerName + ':changeSigns', function(trafficSignData){
+      setTrafficSigns(trafficSignData[0], trafficSignData[1]);
+    });
+
+    eventbus.on( layerName + ':signsChanged', function(trafficSignsShowing) {
+      selectedAsset.checkSelectedSign(trafficSignsShowing);
+    });
+
+    var setTrafficSigns = function(trafficSign, isShowing) {
+      collection.setTrafficSigns(trafficSign, isShowing);
+      me.refreshView();
+    };
 
     var startListeningExtraEvents = function(){
       extraEventListener.listenTo(eventbus, 'withComplementary:show', showWithComplementary);
@@ -259,7 +274,7 @@
     function createNewAsset(coordinates) {
       var selectedLon = coordinates.x;
       var selectedLat = coordinates.y;
-      var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), selectedLon, selectedLat);
+      var nearestLine = geometrycalculator.findNearestLine(excludeRoadByAdminClass(roadCollection.getRoadsForMassTransitStops()), selectedLon, selectedLat);
       var projectionOnNearestLine = geometrycalculator.nearestPointOnLine(nearestLine, { x: selectedLon, y: selectedLat });
       var bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
 
@@ -314,6 +329,12 @@
       stopListeningExtraEvents();
       me.stop();
       me.hide();
+    }
+
+    function excludeRoadByAdminClass(roadCollection) {
+      return _.filter(roadCollection, function (roads) {
+        return !editConstrains(selectedAsset, roads.linkId);
+      });
     }
 
     return {

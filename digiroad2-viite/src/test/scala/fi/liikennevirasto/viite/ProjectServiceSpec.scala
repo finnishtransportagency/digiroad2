@@ -235,28 +235,28 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
   test("Validate road part dates with project date - startDate") {
     val projDate = DateTime.parse("2015-01-01")
     val addresses = List(ReservedRoadPart(5: Long, 5: Long, 205: Long, 5: Double, Discontinuity.apply("jatkuva"), 8: Long, Option(DateTime.parse("2017-01-01")): Option[DateTime], None: Option[DateTime]))
-    val errorMsg = projectService.projDateValidation(addresses, projDate)
+    val errorMsg = projectService.validateProjectDate(addresses, projDate)
     errorMsg should not be (None)
   }
 
   test("Validate road part dates with project date - startDate valid") {
     val projDate = DateTime.parse("2015-01-01")
     val addresses = List(ReservedRoadPart(5: Long, 5: Long, 205: Long, 5: Double, Discontinuity.apply("jatkuva"), 8: Long, Option(DateTime.parse("2010-01-01")): Option[DateTime], None: Option[DateTime]))
-    val errorMsg = projectService.projDateValidation(addresses, projDate)
+    val errorMsg = projectService.validateProjectDate(addresses, projDate)
     errorMsg should be(None)
   }
 
   test("Validate road part dates with project date - startDate and endDate") {
     val projDate = DateTime.parse("2015-01-01")
     val addresses = List(ReservedRoadPart(5: Long, 5: Long, 205: Long, 5: Double, Discontinuity.apply("jatkuva"), 8: Long, Option(DateTime.parse("2010-01-01")): Option[DateTime], Option(DateTime.parse("2017-01-01")): Option[DateTime]))
-    val errorMsg = projectService.projDateValidation(addresses, projDate)
+    val errorMsg = projectService.validateProjectDate(addresses, projDate)
     errorMsg should not be (None)
   }
 
   test("Validate road part dates with project date - startDate and endDate valid") {
     val projDate = DateTime.parse("2018-01-01")
     val addresses = List(ReservedRoadPart(5: Long, 5: Long, 205: Long, 5: Double, Discontinuity.apply("jatkuva"), 8: Long, Option(DateTime.parse("2010-01-01")): Option[DateTime], Option(DateTime.parse("2017-01-01")): Option[DateTime]))
-    val errorMsg = projectService.projDateValidation(addresses, projDate)
+    val errorMsg = projectService.validateProjectDate(addresses, projDate)
     errorMsg should be(None)
   }
 
@@ -455,15 +455,15 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
         Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface))
       val rb = Seq(RoadAddress(id2, roadNumber, roadEndPart, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
         Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface))
-      val shouldNotExist = projectService.checkRoadAddressNumberAndSEParts(roadNumber, roadStartPart, roadEndPart)
+      val shouldNotExist = projectService.checkRoadPartsExist(roadNumber, roadStartPart, roadEndPart)
       shouldNotExist.get should be("Tienumeroa ei ole olemassa, tarkista tiedot")
       RoadAddressDAO.create(ra)
-      val roadNumberShouldNotExist = projectService.checkRoadAddressNumberAndSEParts(roadNumber, roadStartPart + 1, roadEndPart)
+      val roadNumberShouldNotExist = projectService.checkRoadPartsExist(roadNumber, roadStartPart + 1, roadEndPart)
       roadNumberShouldNotExist.get should be("Tiellä ei ole olemassa valittua alkuosaa, tarkista tiedot")
-      val endingPartShouldNotExist = projectService.checkRoadAddressNumberAndSEParts(roadNumber, roadStartPart, roadEndPart)
+      val endingPartShouldNotExist = projectService.checkRoadPartsExist(roadNumber, roadStartPart, roadEndPart)
       endingPartShouldNotExist.get should be("Tiellä ei ole olemassa valittua loppuosaa, tarkista tiedot")
       RoadAddressDAO.create(rb)
-      val allIsOk = projectService.checkRoadAddressNumberAndSEParts(roadNumber, roadStartPart, roadEndPart)
+      val allIsOk = projectService.checkRoadPartsExist(roadNumber, roadStartPart, roadEndPart)
       allIsOk should be(None)
     }
   }
@@ -480,14 +480,14 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       val id1 = RoadAddressDAO.getNextRoadAddressId
       val ra = Seq(RoadAddress(id1, roadNumber, roadStartPart, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
         Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface))
-      val reservation = projectService.checkReservability(roadNumber, roadStartPart, roadEndPart)
+      val reservation = projectService.checkRoadPartsReservable(roadNumber, roadStartPart, roadEndPart)
       reservation.right.get.size should be(0)
       RoadAddressDAO.create(ra)
       val id2 = RoadAddressDAO.getNextRoadAddressId
       val rb = Seq(RoadAddress(id2, roadNumber, roadEndPart, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
         Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface))
       RoadAddressDAO.create(rb)
-      val reservationAfterB = projectService.checkReservability(roadNumber, roadStartPart, roadEndPart)
+      val reservationAfterB = projectService.checkRoadPartsReservable(roadNumber, roadStartPart, roadEndPart)
       reservationAfterB.right.get.size should be(2)
       reservationAfterB.right.get.map(_.roadNumber).distinct.size should be(1)
       reservationAfterB.right.get.map(_.roadNumber).distinct.head should be(roadNumber)
@@ -849,19 +849,19 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
   }
 
   test("parsePrefillData no-link from vvh") {
-    projectService.parsePrefillData(Seq.empty[VVHRoadlink]) should be (Left("Link could not be found in VVH"))
+    projectService.parsePreFillData(Seq.empty[VVHRoadlink]) should be (Left("Link could not be found in VVH"))
   }
 
   test("parsePrefillData contains correct info") {
     val attributes1 = Map("ROADNUMBER" -> BigInt(100), "ROADPARTNUMBER" -> BigInt(100))
     val newRoadLink1 = VVHRoadlink(1, 2, List(Point(0.0, 0.0), Point(20.0, 0.0)), AdministrativeClass.apply(1),TrafficDirection.BothDirections, FeatureClass.DrivePath, None, attributes1)
-    projectService.parsePrefillData(Seq(newRoadLink1)) should be (Right(PreFillInfo(100,100)))
+    projectService.parsePreFillData(Seq(newRoadLink1)) should be (Right(PreFillInfo(100,100)))
   }
 
   test("parsePrefillData incomplete data") {
     val attributes1 = Map("ROADNUMBER" -> BigInt(2))
     val newRoadLink1 = VVHRoadlink(1, 2, List(Point(0.0, 0.0), Point(20.0, 0.0)), AdministrativeClass.apply(1),TrafficDirection.BothDirections, FeatureClass.DrivePath, None, attributes1)
-    projectService.parsePrefillData(Seq(newRoadLink1)) should be (Left("Link does not contain valid prefill info"))
+    projectService.parsePreFillData(Seq(newRoadLink1)) should be (Left("Link does not contain valid prefill info"))
   }
 
   test("changing project ELY") {

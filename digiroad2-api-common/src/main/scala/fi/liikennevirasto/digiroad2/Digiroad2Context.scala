@@ -245,6 +245,10 @@ object Digiroad2Context {
     new DirectionalTrafficSignService(roadLinkService)
   }
 
+  lazy val trafficSignService: TrafficSignService = {
+    new TrafficSignService(roadLinkService)
+  }
+
   lazy val manoeuvreService = {
     new ManoeuvreService(roadLinkService)
   }

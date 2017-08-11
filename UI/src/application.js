@@ -22,8 +22,8 @@
     });
 
     var pointAssets = _.map(pointAssetSpecs, function(spec) {
-      var collection = new PointAssetsCollection(backend, spec.layerName);
-      var selectedPointAsset = new SelectedPointAsset(backend, spec.layerName);
+      var collection = _.isUndefined(spec.collection ) ?  new PointAssetsCollection(backend, spec.layerName) : new spec.collection(backend, spec.layerName) ;
+      var selectedPointAsset = new SelectedPointAsset(backend, spec.layerName, roadCollection);
       return _.merge({}, spec, {
         collection: collection,
         selectedPointAsset: selectedPointAsset
@@ -92,26 +92,28 @@
       backend.getAssetPropertyNamesWithCallback(function(assetPropertyNames) {
         localizedStrings = assetPropertyNames;
         window.localizedStrings = assetPropertyNames;
-        startApplication(backend, models, linearAssets, pointAssets, tileMaps, startupParameters);
+        startApplication(backend, models, linearAssets, pointAssets, tileMaps, startupParameters, roadCollection);
       });
     });
   };
 
-  var startApplication = function(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters) {
+  var startApplication = function(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters, roadCollection) {
     if (localizedStrings) {
       setupProjections();
-      var map = setupMap(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters);
+      var map = setupMap(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters, roadCollection);
       var selectedPedestrianCrossing = getSelectedPointAsset(pointAssets, 'pedestrianCrossings');
       var selectedTrafficLight = getSelectedPointAsset(pointAssets, 'trafficLights');
       var selectedObstacle = getSelectedPointAsset(pointAssets, 'obstacles');
       var selectedRailwayCrossing =  getSelectedPointAsset(pointAssets, 'railwayCrossings');
       var selectedDirectionalTrafficSign = getSelectedPointAsset(pointAssets, 'directionalTrafficSigns');
+      var selectedTrafficSign = getSelectedPointAsset(pointAssets, 'trafficSigns');
       new URLRouter(map, backend, _.merge({}, models,
           { selectedPedestrianCrossing: selectedPedestrianCrossing },
           { selectedTrafficLight: selectedTrafficLight },
           { selectedObstacle: selectedObstacle },
           { selectedRailwayCrossing: selectedRailwayCrossing },
-          { selectedDirectionalTrafficSign: selectedDirectionalTrafficSign  }
+          { selectedDirectionalTrafficSign: selectedDirectionalTrafficSign },
+          { selectedTrafficSign: selectedTrafficSign }
       ));
       eventbus.trigger('application:initialized');
     }
@@ -129,7 +131,7 @@
     jQuery('.container').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
   };
 
-  var bindEvents = function(linearAssetSpecs, pointAssetSpecs) {
+  var bindEvents = function(linearAssetSpecs, pointAssetSpecs, roadCollection) {
     var singleElementEventNames = _.pluck(linearAssetSpecs, 'singleElementEventCategory');
     var multiElementEventNames = _.pluck(linearAssetSpecs, 'multiElementEventCategory');
     var linearAssetSavingEvents = _.map(singleElementEventNames, function(name) { return name + ':saving'; }).join(' ');
@@ -187,7 +189,7 @@
     return map;
   };
 
-  var setupMap = function(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters) {
+  var setupMap = function(backend, models, linearAssets, pointAssets, withTileMaps, startupParameters, roadCollection) {
     var tileMaps = new TileMapCollection(map, "");
 
     var map = createOpenLayersMap(startupParameters, tileMaps.layers);
@@ -205,11 +207,13 @@
        linearAsset.singleElementEventCategory,
        AssetFormElementsFactory.construct(linearAsset),
        linearAsset.newTitle,
-       linearAsset.title);
+       linearAsset.title,
+       linearAsset.editConstrains || function() {return false;},
+       linearAsset.layerName );
     });
 
-    _.forEach(pointAssets, function(pointAsset) {
-     PointAssetForm.initialize(pointAsset.selectedPointAsset, pointAsset.layerName, pointAsset.formLabels);
+    _.forEach(pointAssets, function(pointAsset ) {
+     PointAssetForm.initialize(pointAsset.selectedPointAsset, pointAsset.layerName, pointAsset.formLabels, pointAsset.editConstrains || function() {return false;}, roadCollection, applicationModel);
     });
 
     var roadAddressInfoPopup = new RoadAddressInfoPopup(map);
@@ -228,7 +232,8 @@
        style: asset.style || new PiecewiseLinearAssetStyle(),
        formElements: AssetFormElementsFactory.construct(asset),
        assetLabel: asset.label,
-       roadAddressInfoPopup: roadAddressInfoPopup
+       roadAddressInfoPopup: roadAddressInfoPopup,
+       editConstrains : asset.editConstrains || function() {return false;}
      });
      return acc;
     }, {});
@@ -245,7 +250,8 @@
        mapOverlay: mapOverlay,
        layerName: asset.layerName,
        newAsset: asset.newAsset,
-       roadAddressInfoPopup: roadAddressInfoPopup
+       roadAddressInfoPopup: roadAddressInfoPopup,
+       editConstrains : asset.editConstrains || function() {return false;}
      });
      return acc;
     }, {});
@@ -326,6 +332,7 @@
           .concat(getPointAsset(assetType.directionalTrafficSigns))
           .concat(getPointAsset(assetType.pedestrianCrossings))
           .concat(getPointAsset(assetType.trafficLights))
+          .concat(getPointAsset(assetType.trafficSigns))
           .concat(getPointAsset(assetType.servicePoints)),
       [].concat(getLinearAsset(assetType.trafficVolume))
           .concat(getLinearAsset(assetType.congestionTendency))
