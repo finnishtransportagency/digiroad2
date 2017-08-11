@@ -837,14 +837,29 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       prettyPrint(changedLinks)
 
       val linksFirst = links.sortBy(_.id).head
-      val linksLast = links.sortBy(_.id).reverse.head
+      val linksLast = links.sortBy(_.id).last
       val changedLinksFirst = changedLinks.sortBy(_.id).head
-      val changedLinksLast = changedLinks.sortBy(_.id).reverse.head
+      val changedLinksLast = changedLinks.sortBy(_.id).last
+
+      links.sortBy(_.id).zip(changedLinks.sortBy(_.id)).foreach{
+        case (oldLink, newLink) =>
+          println(s"${oldLink.linkId}: AJR ${oldLink.track.value} ${oldLink.startAddrMValue}-${oldLink.endAddrMValue} " +
+            s"-> AJR ${newLink.track.value} ${newLink.startAddrMValue}-${newLink.endAddrMValue}")
+          oldLink.startAddrMValue should be ((linksLast.endAddrMValue - newLink.endAddrMValue) +- 1)
+          oldLink.endAddrMValue should be ((linksLast.endAddrMValue - newLink.startAddrMValue) +- 1)
+          val trackChangeCorrect = (oldLink.track, newLink.track) match {
+            case (Track.Combined, Track.Combined) => true
+            case (Track.RightSide, Track.LeftSide) => true
+            case (Track.LeftSide, Track.RightSide) => true
+            case _ => false
+          }
+          trackChangeCorrect should be (true)
+      }
 
       linksFirst.id should be (changedLinksFirst.id)
       linksLast.id should be (changedLinksLast.id)
-      linksLast.geometryLength should be (changedLinks.sortBy(_.id).reverse.head.geometryLength)
-      linksLast.endMValue should be (changedLinks.sortBy(_.id).reverse.head.endMValue)
+      linksLast.geometryLength should be (changedLinks.sortBy(_.id).last.geometryLength)
+      linksLast.endMValue should be (changedLinks.sortBy(_.id).last.endMValue)
       linksFirst.endMValue should be (changedLinksFirst.endMValue)
       linksLast.endMValue should be (changedLinksLast.endMValue)
     }

@@ -217,9 +217,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           geometryLength = GeometryUtils.geometryLength(projectAddressLinksGeom(pl.linkId)),
           calibrationPoints = (None, None), startAddrMValue = 0L, endAddrMValue = 0L
         ))
-        val projectLinksWithFixedTopology = ProjectSectionCalculator.determineMValues(
-          adjLinks, Seq.empty[ProjectLink])
-        recalculateMValues(projectLinksWithFixedTopology).foreach(
+        ProjectSectionCalculator.determineMValues(adjLinks, Seq.empty[ProjectLink]).foreach(
           link => ProjectDAO.updateMValues(link))
         None
       }
