@@ -326,6 +326,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }.toSeq
   }
 
+  // Boolean  (frozenTimeVVHAPIServiceEnabled)  should be added if we start using this method  for disabling changeAPI and switch to frozentime VVH API)
   def getCoarseRoadParts(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int]) = {
     val addresses = withDynTransaction {
       RoadAddressDAO.fetchPartsByRoadNumbers(boundingRectangle, roadNumberLimits, coarse = true).groupBy(_.linkId)
