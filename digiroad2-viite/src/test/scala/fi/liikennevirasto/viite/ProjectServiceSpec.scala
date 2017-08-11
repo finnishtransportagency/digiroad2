@@ -104,30 +104,27 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       ral.anomaly, ral.lrmPositionId, LinkStatus.Unknown)
   }
 
+  private def extractTrafficDirection(sideCode: SideCode, track: Track): TrafficDirection = {
+    (sideCode, track) match {
+      case (_, Track.Combined) => TrafficDirection.BothDirections
+      case (TowardsDigitizing, Track.RightSide) => TrafficDirection.TowardsDigitizing
+      case (TowardsDigitizing, Track.LeftSide) => TrafficDirection.AgainstDigitizing
+      case (AgainstDigitizing, Track.RightSide) => TrafficDirection.AgainstDigitizing
+      case (AgainstDigitizing, Track.LeftSide) => TrafficDirection.TowardsDigitizing
+      case (_, _) => TrafficDirection.UnknownDirection
+    }
+  }
+
   private def toRoadLink(ral: ProjectLink): RoadLink = {
     RoadLink(ral.linkId, ral.geometry, ral.geometryLength, State, 1,
-      (ral.sideCode, ral.track) match {
-        case (_, Track.Combined) => TrafficDirection.BothDirections
-        case (TowardsDigitizing, Track.RightSide) => TrafficDirection.TowardsDigitizing
-        case (TowardsDigitizing, Track.LeftSide) => TrafficDirection.AgainstDigitizing
-        case (AgainstDigitizing, Track.RightSide) => TrafficDirection.AgainstDigitizing
-        case (AgainstDigitizing, Track.LeftSide) => TrafficDirection.TowardsDigitizing
-        case (_, _) => TrafficDirection.UnknownDirection
-      }, Motorway, None, None, Map(
+      extractTrafficDirection(ral.sideCode, ral.track), Motorway, None, None, Map(
         "MUNICIPALITYCODE" -> BigInt(749), "VERTICALLEVEL" -> BigInt(1), "SURFACETYPE" -> BigInt(1),
         "ROADNUMBER" -> BigInt(ral.roadNumber), "ROADPARTNUMBER" -> BigInt(ral.roadPartNumber)),
       ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
   }
   private def toRoadLink(ral: ProjectAddressLink): RoadLink = {
     RoadLink(ral.linkId, ral.geometry, ral.length, ral.administrativeClass, 1,
-      (ral.sideCode, Track.apply(ral.trackCode.toInt)) match {
-        case (_, Track.Combined) => TrafficDirection.BothDirections
-        case (TowardsDigitizing, Track.RightSide) => TrafficDirection.TowardsDigitizing
-        case (TowardsDigitizing, Track.LeftSide) => TrafficDirection.AgainstDigitizing
-        case (AgainstDigitizing, Track.RightSide) => TrafficDirection.AgainstDigitizing
-        case (AgainstDigitizing, Track.LeftSide) => TrafficDirection.TowardsDigitizing
-        case (_, _) => TrafficDirection.UnknownDirection
-      }, ral.linkType, ral.modifiedAt, ral.modifiedBy, Map(
+      extractTrafficDirection(ral.sideCode, Track.apply(ral.trackCode.toInt)), ral.linkType, ral.modifiedAt, ral.modifiedBy, Map(
         "MUNICIPALITYCODE" -> BigInt(749), "VERTICALLEVEL" -> BigInt(1), "SURFACETYPE" -> BigInt(1),
         "ROADNUMBER" -> BigInt(ral.roadNumber), "ROADPARTNUMBER" -> BigInt(ral.roadPartNumber)),
       ral.constructionType, ral.roadLinkSource)
