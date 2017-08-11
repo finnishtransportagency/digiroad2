@@ -197,8 +197,12 @@ object ProjectDAO {
     }
   }
 
+  // TODO: Dangerous method, refactor or remove
   def updateAddrMValuesLinkId(projectLink: ProjectLink): Unit = {
-    sqlu"""update project_link set modified_date = sysdate, start_addr_m = ${projectLink.startAddrMValue}, end_addr_m = ${projectLink.endAddrMValue} where project_id = ${projectLink.projectId} and road_number = ${projectLink.roadNumber} and road_part_number = ${projectLink.roadPartNumber} and lrm_position_id = (select id from lrm_position where link_id = ${projectLink.linkId} and rownum = 1)
+    sqlu"""update project_link set modified_date = sysdate, start_addr_m = ${projectLink.startAddrMValue},
+            end_addr_m = ${projectLink.endAddrMValue} where project_id = ${projectLink.projectId} and
+            road_number = ${projectLink.roadNumber} and road_part_number = ${projectLink.roadPartNumber} and
+            lrm_position_id = (select id from lrm_position where link_id = ${projectLink.linkId} and rownum = 1)
           """.execute
 
   }
