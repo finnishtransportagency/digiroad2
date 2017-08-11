@@ -313,17 +313,15 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     try {
       val projectLink = parsedBody.extract[NewRoadAddressExtractor]
       val roadLinks = projectService.getProjectRoadLinksByLinkIds(projectLink.linkIds)
-      withDynTransaction {
         projectService.setProjectEly(projectLink.projectId, projectLink.roadEly) match {
           case Some(errorMessage) => Map("success" -> false, "errormessage" -> errorMessage)
           case None => {
             projectService.addNewLinksToProject(roadLinks, projectLink.projectId, projectLink.newRoadNumber, projectLink.newRoadPartNumber, projectLink.newTrackCode, projectLink.newDiscontinuity) match {
               case Some(errorMessage) => Map("success" -> false, "errormessage" -> errorMessage)
-              case None => Map ("success" -> true)
+              case None => Map ("success" -> true, "publishable" -> projectService.projectLinkPublishable(projectLink.projectId))
             }
           }
         }
-      }
     } catch {
       case e: MappingException  =>
         logger.warn("Exception saving road links in project", e)

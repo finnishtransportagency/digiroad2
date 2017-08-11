@@ -152,9 +152,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     def newProjectLink(projectAddressLink: ProjectAddressLink, project: RoadAddressProject, sideCode: SideCode): ProjectLink = {
       toProjectLink(projectAddressLink, NewRoadAddress, Track.apply(newTrackCode.toInt), project, sideCode)
     }
+
     def existingProjectLink(projectAddressLink: ProjectAddressLink, project: RoadAddressProject, sideCode: SideCode): ProjectLink = {
       toProjectLink(projectAddressLink, projectAddressLink.id, Track.apply(projectAddressLink.trackCode.toInt), project, sideCode)
     }
+
     def toProjectLink(projectAddressLink: ProjectAddressLink, id: Long, track: Track, project: RoadAddressProject,
                       sideCode: SideCode): ProjectLink = {
       ProjectLink(id, newRoadNumber, newRoadPartNumber, track,
@@ -166,41 +168,49 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         projectAddressLink.roadLinkSource, projectAddressLink.length)
 
     }
-    val linksInProject = getLinksByProjectLinkId(ProjectDAO.fetchByProjectNewRoadPart(newRoadNumber,newRoadPartNumber,
-      roadAddressProjectID, false).map(l => l.linkId).toSet, roadAddressProjectID, false)
-    //Deleting all existent roads for same road_number and road_part_number, in order to recalculate the full road if it is already in project
-    if(linksInProject.nonEmpty){
-      ProjectDAO.removeProjectLinksByProjectAndRoadNumber(roadAddressProjectID, newRoadNumber, newRoadPartNumber)
-    }
-    val randomSideCode = SideCode.TowardsDigitizing
-    ProjectDAO.getRoadAddressProjectById(roadAddressProjectID) match {
-      case Some(project) =>
-        checkNewRoadPartAvailableForProject(newRoadNumber, newRoadPartNumber, project) match {
-          case Some(errorMessage) => Some(errorMessage)
-          case None => {
-            val reservedTo = ProjectDAO.roadPartReservedByProject(newRoadNumber, newRoadPartNumber, project.id, withProjectId = true)
-            reservedTo match {
-              case Some(projectName) =>
-                Some(s"TIE $newRoadNumber OSA $newRoadPartNumber on jo varattuna projektissa $projectName, tarkista tiedot")
-              case None =>
-                val newProjectLinks = projectAddressLinks.map(projectLink => { projectLink.linkId ->
-                  newProjectLink(projectLink, project, randomSideCode)}).toMap
-                val existingLinks = linksInProject.map(projectLink => { projectLink.linkId ->
-                  existingProjectLink(projectLink, project, randomSideCode)}).toMap
-                val combinedLinks = (newProjectLinks.keySet ++ existingLinks.keySet).map(
-                  linkId => newProjectLinks.getOrElse(linkId, existingLinks(linkId))
-                )
-                //Determine geometries for the mValues and addressMValues
-                val linksWithMValues = ProjectSectionCalculator.determineMValues(combinedLinks.toSeq,
-                  existingLinks.filterKeys(linkId => newProjectLinks.keySet.contains(linkId)).values.toSeq)
-                ProjectDAO.removeProjectLinksByLinkId(roadAddressProjectID, newProjectLinks.keySet)
-                ProjectDAO.create(linksWithMValues ++ combinedLinks.filterNot(link =>
-                  linksWithMValues.exists(_.linkId == link.linkId)))
-                None
+    withDynTransaction {
+
+     val linksInProject = getLinksByProjectLinkId(ProjectDAO.fetchByProjectNewRoadPart(newRoadNumber, newRoadPartNumber,
+       roadAddressProjectID, false).map(l => l.linkId).toSet, roadAddressProjectID, false)
+
+      //Deleting all existent roads for same road_number and road_part_number, in order to recalculate the full road if it is already in project
+      if (linksInProject.nonEmpty) {
+        ProjectDAO.removeProjectLinksByProjectAndRoadNumber(roadAddressProjectID, newRoadNumber, newRoadPartNumber)
+      }
+      val randomSideCode = SideCode.TowardsDigitizing
+      ProjectDAO.getRoadAddressProjectById(roadAddressProjectID) match {
+        case Some(project) =>
+          checkNewRoadPartAvailableForProject(newRoadNumber, newRoadPartNumber, project) match {
+            case Some(errorMessage) => Some(errorMessage)
+            case None => {
+              val reservedTo = ProjectDAO.roadPartReservedByProject(newRoadNumber, newRoadPartNumber, project.id, withProjectId = true)
+              reservedTo match {
+                case Some(projectName) =>
+                  Some(s"TIE $newRoadNumber OSA $newRoadPartNumber on jo varattuna projektissa $projectName, tarkista tiedot")
+                case None =>
+                  val newProjectLinks = projectAddressLinks.map(projectLink => {
+                    projectLink.linkId ->
+                      newProjectLink(projectLink, project, randomSideCode)
+                  }).toMap
+                  val existingLinks = linksInProject.map(projectLink => {
+                    projectLink.linkId ->
+                      existingProjectLink(projectLink, project, randomSideCode)
+                  }).toMap
+                  val combinedLinks = (newProjectLinks.keySet ++ existingLinks.keySet).map(
+                    linkId => newProjectLinks.getOrElse(linkId, existingLinks(linkId))
+                  )
+                  //Determine geometries for the mValues and addressMValues
+                  val linksWithMValues = ProjectSectionCalculator.determineMValues(combinedLinks.toSeq,
+                    existingLinks.filterKeys(linkId => newProjectLinks.keySet.contains(linkId)).values.toSeq)
+                  ProjectDAO.removeProjectLinksByLinkId(roadAddressProjectID, newProjectLinks.keySet)
+                  ProjectDAO.create(linksWithMValues ++ combinedLinks.filterNot(link =>
+                    linksWithMValues.exists(_.linkId == link.linkId)))
+                  None
+              }
             }
           }
-        }
-      case None => Some("Projektikoodilla ei löytynyt projektia")
+        case None => Some("Projektikoodilla ei löytynyt projektia")
+      }
     }
   }
 
@@ -775,16 +785,18 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def setProjectEly(currentProjectId:Long, newEly: Long): Option[String] = {
-    val currentProjectEly = getProjectEly(currentProjectId)
-    if (currentProjectEly == -1) {
-      ProjectDAO.updateProjectEly(currentProjectId, newEly)
-      None
-    } else if (currentProjectEly == newEly){
-      logger.info("ProjectId: " + currentProjectId + " Ely is \"" + currentProjectEly + "\" no need to update")
-      None
-    } else {
-      logger.error(s"The project can not handle multiple ELY areas (the project ELY range is ${currentProjectEly}). Recording was discarded.")
-      Some(s"Projektissa ei voi käsitellä useita ELY-alueita (projektin ELY-alue on ${currentProjectEly}). Tallennus hylättiin.")
+    withDynTransaction {
+      val currentProjectEly = getProjectEly(currentProjectId)
+      if (currentProjectEly == -1) {
+        ProjectDAO.updateProjectEly(currentProjectId, newEly)
+        None
+      } else if (currentProjectEly == newEly) {
+        logger.info("ProjectId: " + currentProjectId + " Ely is \"" + currentProjectEly + "\" no need to update")
+        None
+      } else {
+        logger.error(s"The project can not handle multiple ELY areas (the project ELY range is ${currentProjectEly}). Recording was discarded.")
+        Some(s"Projektissa ei voi käsitellä useita ELY-alueita (projektin ELY-alue on ${currentProjectEly}). Tallennus hylättiin.")
+      }
     }
   }
 
