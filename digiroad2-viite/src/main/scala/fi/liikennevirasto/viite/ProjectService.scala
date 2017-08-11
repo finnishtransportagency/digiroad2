@@ -218,7 +218,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           calibrationPoints = (None, None), startAddrMValue = 0L, endAddrMValue = 0L
         ))
         ProjectSectionCalculator.determineMValues(adjLinks, Seq.empty[ProjectLink]).foreach(
-          link => ProjectDAO.updateMValues(link))
+          link => ProjectDAO.updateAddrMValues(link))
         None
       }
     } catch{

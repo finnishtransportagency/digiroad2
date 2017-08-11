@@ -748,7 +748,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
 
       val sortedLinks = links.sortBy(_.id)
       sortedLinks.foreach{ link =>
-        println(s""" trackCode ${link.track.value} -> |--- (${link.startAddrMValue}, ${link.endAddrMValue}) ---|""")
+        println(s""" trackCode ${link.track.value} -> |--- (${link.startAddrMValue}, ${link.endAddrMValue}) ---|  MValue = """ + (link.endMValue-link.startMValue))
       }
       println("\n Total length:" + sortedLinks.map(_.geometryLength).sum)
     }
@@ -816,8 +816,8 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       projectService.changeDirection(7081807, 77997, 1)
       val changedLinks = ProjectDAO.getProjectLinksById(links.map{l => l.id})
 
-      prettyPrint(links)
-      prettyPrint(changedLinks)
+//      prettyPrint(links)
+//      prettyPrint(changedLinks)
 
       val linksFirst = links.sortBy(_.id).head
       val linksLast = links.sortBy(_.id).last
