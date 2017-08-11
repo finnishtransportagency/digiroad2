@@ -138,6 +138,7 @@
       }
       var dataJson = {
         id: projectid,
+        projectEly: currentProject.project.ely,
         status: 1,
         name: data[0].value,
         startDate: data[1].value,
@@ -148,7 +149,8 @@
                   roadLength: part.roadLength,
                   roadNumber: part.roadNumber,
                   roadPartId: 0,
-                  roadPartNumber: part.roadPartNumber
+                  roadPartNumber: part.roadPartNumber,
+                  startingLinkId: part.startingLinkId
                   };
         })
       };

@@ -141,6 +141,16 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       enrichRoadLinksFromVVH(vvhRoadLinks)
   }
 
+  def getSuravageRoadLinksByLinkIdsFromVVH(linkIds: Set[Long], newTransaction: Boolean = true): Seq[RoadLink] = {
+    val vvhSuravageLinks = fetchSuravageLinksByLinkIdsFromVVH(linkIds)
+    if (newTransaction)
+      withDynTransaction {
+        enrichRoadLinksFromVVH(vvhSuravageLinks)
+      }
+    else
+      enrichRoadLinksFromVVH(vvhSuravageLinks)
+  }
+
   /**
     * ATENTION Use this method always with transation not with session
     * This method returns road links by link ids.
@@ -413,7 +423,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
   /**
     * This method is utilized to find adjacent links of a road link.
-
+    *
     * @param bounds
     * @param bounds2
     * @return Road links and change data
@@ -1460,7 +1470,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     Await.result(vvhClient.suravageData.fetchSuravageByMunicipalitiesAndBoundsF(bounds, municipalities), atMost = Duration.create(1, TimeUnit.HOURS))
   }
 
-  def getSuravageLinksByLinkIdsFromVVH(linkIdsToGet: Set[Long]): Seq[VVHRoadlink] = {
+  def fetchSuravageLinksByLinkIdsFromVVH(linkIdsToGet: Set[Long]): Seq[VVHRoadlink] = {
     Await.result(vvhClient.suravageData.fetchSuravageByLinkIdsF(linkIdsToGet), atMost = Duration.create(1, TimeUnit.HOURS))
   }
 

@@ -31,7 +31,7 @@ case class NewRoadAddressExtractor(linkIds: Set[Long], projectId: Long, newRoadN
 
 case class ProjectRoadAddressInfo(projectId : Long, roadNumber: Long, roadPartNumber :Long)
 
-case class RoadAddressProjectExtractor(id: Long, status: Long, name: String, startDate: String, additionalInfo: String,roadPartList: List[ReservedRoadPart])
+case class RoadAddressProjectExtractor(id: Long, projectEly: Long, status: Long, name: String, startDate: String, additionalInfo: String,roadPartList: List[ReservedRoadPart])
 
 case class RoadAddressProjectLinkUpdate(linkIds: Seq[Long], projectId: Long, newStatus: Int)
 class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
@@ -99,7 +99,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   get("/roadlinks/:linkId") {
     val linkId = params("linkId").toLong
-    val roadLinks = roadAddressService.getRoadAddressLink(linkId)
+    val roadLinks = roadAddressService.getRoadAddressLink(linkId) ++ roadAddressService.getSuravageRoadLinkAddressesByLinkIds(Set(linkId))
     val projectLinks = projectService.getProjectRoadLinksByLinkIds(Set(linkId))
     if (roadLinks.nonEmpty) {
       val roadLink = roadLinks.tail.foldLeft(roadLinks.head) { case (a, b) =>
@@ -240,7 +240,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val user = userProvider.getCurrentUser()
     val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
     val roadAddressProject= RoadAddressProject(project.id, ProjectState.apply(project.status), project.name,
-      user.username, DateTime.now(), "-", formatter.parseDateTime(project.startDate), DateTime.now(), project.additionalInfo, project.roadPartList, None)
+      user.username, DateTime.now(), "-", formatter.parseDateTime(project.startDate), DateTime.now(), project.additionalInfo, project.roadPartList, None, Some(project.projectEly))
     try {
       val (projectSaved, addr, _, success) = projectService.saveRoadLinkProject(roadAddressProject)
       val info = projectService.getProjectsWithReservedRoadParts(projectSaved.id)._2
@@ -552,7 +552,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "startDate" -> { if (roadAddressProject.startDate==null){null} else {formatToString(roadAddressProject.startDate.toString)}},
       "modifiedBy" -> roadAddressProject.modifiedBy,
       "additionalInfo" -> roadAddressProject.additionalInfo,
-      "statusInfo" -> roadAddressProject.statusInfo
+      "statusInfo" -> roadAddressProject.statusInfo,
+      "ely" -> roadAddressProject.ely.getOrElse(-1)
     )
   }
 

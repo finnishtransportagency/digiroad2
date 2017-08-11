@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -237,14 +237,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         LinkStatus.NotHandled, roadTypeMap.getOrElse(roadAddress.linkId, RoadType.Unknown),roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry))
     }
     //TODO: Check that there are no floating road addresses present when starting
-    validateReservations(project.reservedParts, project.ely).orElse {
+    val projectLinks = ProjectDAO.getProjectLinks(project.id)
+    validateReservations(project.reservedParts, project.ely, projectLinks).orElse {
       val addresses = project.reservedParts.flatMap { roadaddress =>
         val addressesOnPart = RoadAddressDAO.fetchByRoadPart(roadaddress.roadNumber, roadaddress.roadPartNumber, false)
         val mapping = roadLinkService.getRoadLinksByLinkIdsFromVVH(addressesOnPart.map(_.linkId).toSet, false)
           .map(rl => rl.linkId -> RoadAddressLinkBuilder.getRoadType(rl.administrativeClass, rl.linkType)).toMap
         addressesOnPart.map(toProjectLink(mapping))
       }
-      val projectLinks = ProjectDAO.getProjectLinks(project.id)
       val linksOnRemovedParts = projectLinks.filterNot(pl => project.reservedParts.exists(_.holds(pl)))
       val newProjectLinks = addresses.filterNot {
         ad => projectLinks.exists(pl => pl.roadNumber == ad.roadNumber && pl.roadPartNumber == ad.roadPartNumber)
@@ -259,11 +259,19 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  private def validateReservations(reservedRoadParts: Seq[ReservedRoadPart], projectEly: Option[Long]): Option[String] = {
-    val errors = reservedRoadParts.flatMap(roadAddress =>
-      if (!RoadAddressDAO.roadPartExists(roadAddress.roadNumber, roadAddress.roadPartNumber)) {
-        Some(s"TIE ${roadAddress.roadNumber} OSA: ${roadAddress.roadPartNumber}")
-      } else None)
+  private def validateReservations(reservedRoadParts: Seq[ReservedRoadPart], projectEly: Option[Long], projectLinks: List[ProjectLink]): Option[String] = {
+    val errors = reservedRoadParts.flatMap(ra => {
+      val roadPartExistsInAddresses = RoadAddressDAO.roadPartExists(ra.roadNumber, ra.roadPartNumber)
+      val projectLink = projectLinks.find(p => {
+        ra.roadNumber == p.roadNumber && ra.roadPartNumber == p.roadPartNumber &&
+          ra.discontinuity == p.discontinuity && ra.startDate == p.startDate &&
+          ra.endDate == p.endDate
+      })
+      if ((!roadPartExistsInAddresses) && !existsInSuravageOrNew(projectLink)) {
+        Some(s"TIE ${ra.roadNumber} OSA: ${ra.roadPartNumber}")
+      } else
+        None
+    })
     val elyErrors = reservedRoadParts.flatMap(roadAddress =>
       if (projectEly.getOrElse(roadAddress.ely) != roadAddress.ely) {
         Some(s"TIE ${roadAddress.roadNumber} OSA: ${roadAddress.roadPartNumber} (ELY != ${projectEly.get})")
@@ -284,17 +292,37 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  private def existsInSuravageOrNew(projectLink: Option[ProjectLink]): Boolean = {
+    if (projectLink.isEmpty) {
+      false
+    } else {
+      val link = projectLink.get
+      if (link.linkGeomSource != LinkGeomSource.SuravageLinkInterface) {
+        link.status == LinkStatus.New
+      } else{
+        if(roadLinkService.fetchSuravageLinksByLinkIdsFromVVH(Set(link.linkId)).isEmpty) {
+          false
+        } else true
+      }
+    }
+  }
+
   private def createFormOfReservedLinksToSavedRoadParts(project: RoadAddressProject): (Seq[ProjectFormLine], Option[ProjectLink]) = {
     val createdAddresses = ProjectDAO.getProjectLinks(project.id)
     val groupedAddresses = createdAddresses.groupBy { address =>
       (address.roadNumber, address.roadPartNumber)
     }.toSeq.sortBy(_._1._2)(Ordering[Long])
     val adddressestoform = groupedAddresses.map(addressGroup => {
-      val lastAddressM = addressGroup._2.last.endAddrMValue
-      val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(addressGroup._2.last.linkId), false)
-      val addressFormLine = ProjectFormLine(addressGroup._2.last.linkId, project.id, addressGroup._1._1,
+      val lastAddress = addressGroup._2.last
+      val lastAddressM = lastAddress.endAddrMValue
+      val roadLink = if(lastAddress.linkGeomSource == LinkGeomSource.SuravageLinkInterface) {
+        roadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(Set(lastAddress.linkId), false)
+      } else {
+        roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(lastAddress.linkId), false)
+      }
+      val addressFormLine = ProjectFormLine(lastAddress.linkId, project.id, addressGroup._1._1,
         addressGroup._1._2, lastAddressM, MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(roadLink.head.municipalityCode, -1),
-        addressGroup._2.last.discontinuity.description)
+        lastAddress.discontinuity.description)
       //TODO:case class RoadAddressProjectFormLine(projectId: Long, roadNumber: Long, roadPartNumber: Long, RoadLength: Long, ely : Long, discontinuity: String)
       addressFormLine
     })
@@ -366,14 +394,18 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   def getProjectsWithReservedRoadParts(projectId: Long): (RoadAddressProject, Seq[ProjectFormLine]) = {
     withDynTransaction {
-      val project:RoadAddressProject = ProjectDAO.getRoadAddressProjects(projectId).head
+      val project: RoadAddressProject = ProjectDAO.getRoadAddressProjects(projectId).head
       val createdAddresses = ProjectDAO.getProjectLinks(project.id)
       val groupedAddresses = createdAddresses.groupBy { address =>
         (address.roadNumber, address.roadPartNumber)
       }.toSeq.sortBy(_._1._2)(Ordering[Long])
       val formInfo: Seq[ProjectFormLine] = groupedAddresses.map(addressGroup => {
         val endAddressM = addressGroup._2.last.endAddrMValue
-        val roadLink = roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(addressGroup._2.head.linkId), false)
+        val roadLink = if(addressGroup._2.head.linkGeomSource == LinkGeomSource.SuravageLinkInterface){
+          roadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(Set(addressGroup._2.head.linkId), false)
+        } else {
+          roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(addressGroup._2.head.linkId), false)
+        }
         val isRoadPartDirty = addressGroup._2.exists(_.status != LinkStatus.NotHandled)
         val addressFormLine = ProjectFormLine(addressGroup._2.head.linkId, project.id,
           addressGroup._2.head.roadNumber, addressGroup._2.head.roadPartNumber, endAddressM,
@@ -381,7 +413,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           addressGroup._2.last.discontinuity.description, isRoadPartDirty)
         addressFormLine
       })
-
       (project, formInfo)
     }
   }
