@@ -940,6 +940,17 @@ object DataFixture {
     println("\n")
   }
 
+  def importAllMassTransitLaneDataFromTR(): Unit ={
+    println("\nStart MassTransitLane import at time: ")
+    println(DateTime.now())
+
+    tierekisteriDataImporter.importMassTransitLaneAsset
+
+    println("MassTransitLane import complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
   def updateLitRoadDataFromTR(): Unit ={
     println("\nStart lighting update at: ")
     println(DateTime.now())
@@ -981,6 +992,18 @@ object DataFixture {
     tierekisteriDataImporter.updatePavedRoadAsset()
 
     println("PavedRoad update complete at time: ")
+    println(DateTime.now())
+    println("\n")
+
+  }
+
+  def updateMassTransitLaneAssetDataFromTR(): Unit ={
+    println("\nStart MassTransitLane update at: ")
+    println(DateTime.now())
+
+    tierekisteriDataImporter.updateMassTransitLaneAsset()
+
+    println("MassTransitLane update complete at time: ")
     println(DateTime.now())
     println("\n")
 
@@ -1078,6 +1101,8 @@ object DataFixture {
         importAllTrafficSignDataFromTR()
       case Some("import_all_pavedRoad_from_TR_to_OTH") =>
         importAllPavedRoadDataFromTR()
+      case Some("import_all_massTRansitLane_from_TR_to_OTH") =>
+        importAllMassTransitLaneDataFromTR()
       case Some("update_litRoad_from_TR_to_OTH") =>
         updateLitRoadDataFromTR()
       case Some("update_roadWidth_from_TR_to_OTH") =>
@@ -1086,6 +1111,8 @@ object DataFixture {
         updateTrafficSignDataFromTR()
       case Some("update_pavedRoad_from_TR_to_OTH") =>
         updatePavedRoadDataFromTR()
+      case Some("update_massTransitLane_from_TR_to_OTH") =>
+        updateMassTransitLaneAssetDataFromTR()
 
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
@@ -1095,8 +1122,8 @@ object DataFixture {
         " check_unknown_speedlimits | set_transitStops_floating_reason | verify_roadLink_administrative_class_changed | set_TR_bus_stops_without_OTH_LiviId |" +
         " check_TR_bus_stops_without_OTH_LiviId | check_bus_stop_matching_between_OTH_TR | listing_bus_stops_with_side_code_conflict_with_roadLink_direction |" +
         " fill_lane_amounts_in_missing_road_links | import_all_trafficVolume_from_TR_to_OTH | import_all_litRoad_from_TR_to_OTH | import_all_roadWidth_from_TR_to_OTH |" +
-        " import_all_trafficSigns_from_TR_to_OTH | import_all_pavedRoad_from_TR_to_OTH | update_litRoad_from_TR_to_OTH | update_roadWidth_from_TR_to_OTH |" +
-        " update_trafficSigns_from_TR_to_OTH | update_pavedRoad_from_TR_to_OTH")
+        " import_all_trafficSigns_from_TR_to_OTH | import_all_pavedRoad_from_TR_to_OTH | import_all_pavedRoad_from_TR_to_OTH | update_litRoad_from_TR_to_OTH | " +
+        " update_roadWidth_from_TR_to_OTH | update_trafficSigns_from_TR_to_OTH | update_pavedRoad_from_TR_to_OTH | update_massTransitLane_from_TR_to_OTH")
     }
   }
 }

@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2.util
 
 import java.util.Properties
 
+import fi.liikennevirasto.digiroad2.TRLaneArrangementType.MassTransitLane
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset.oracle.OracleAssetDao
 import fi.liikennevirasto.digiroad2.{TierekisteriAssetDataClient, TierekisteriLightingAssetClient, TierekisteriRoadWidthAssetClient, _}
@@ -333,7 +334,7 @@ class TrafficSignTierekisteriImporter extends PointAssetTierekisteriImporterOper
         point =>
           val trafficSign = IncomingTrafficSign(point.x, point.y, vvhRoadlink.linkId, generateProperties(trAssetData),
             getSideCode(roadAddress.sideCode, trAssetData.roadSide).value, Some(GeometryUtils.calculateBearing(vvhRoadlink.geometry)))
-          OracleTrafficSignDao.create(trafficSign, mValue, "batch_process_trafficSigns", vvhRoadlink.municipalityCode,
+          OracleTrafficSignDao.create(trafficSign, mValue, "batch_process_" + assetName, vvhRoadlink.municipalityCode,
             VVHClient.createVVHTimeStamp(), vvhRoadlink.linkSource)
       }
   }
@@ -398,6 +399,29 @@ class PavedRoadTierekisteriImporter extends LinearAssetTierekisteriImporterOpera
 
   override protected def createLinearAsset(vvhRoadlink: VVHRoadlink, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
     if (measures.startMeasure != measures.endMeasure) {
+      val assetId = linearAssetService.dao.createLinearAsset(typeId, vvhRoadlink.linkId, false, SideCode.BothDirections.value,
+        measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value))
+
+      linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, 1)
+      println(s"Created OTH $assetName assets for ${vvhRoadlink.linkId} from TR data with assetId $assetId")
+    }
+  }
+}
+
+class MassTransitLaneTierekisteriImporter extends LinearAssetTierekisteriImporterOperations {
+
+  override def typeId: Int = 160
+  override def assetName = "massTransitLane"
+  override type TierekisteriClientType = TierekisteriMassTransitLaneAssetClient
+  override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+
+  override val tierekisteriClient = new TierekisteriMassTransitLaneAssetClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+    getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+    HttpClientBuilder.create().build())
+
+  override protected def createLinearAsset(vvhRoadlink: VVHRoadlink, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
+    if (measures.startMeasure != measures.endMeasure && trAssetData.assetType == MassTransitLane) {
       val assetId = linearAssetService.dao.createLinearAsset(typeId, vvhRoadlink.linkId, false, SideCode.BothDirections.value,
         measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value))
 
