@@ -1,9 +1,11 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.linearasset._
+import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
+import org.joda.time.DateTime
 
 
-class OnOffLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus) extends LinearAssetService(roadLinkServiceImpl, eventBusImpl){
+class OnOffLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus, dao: OracleLinearAssetDao) extends LinearAssetService(roadLinkServiceImpl, eventBusImpl){
 
   override def updateValueByExpiration(assetId: Long, valueToUpdate: Value, valuePropertyId: String, username: String, measures: Option[Measures], vvhTimeStamp: Option[Long], sideCode: Option[Int]): Option[Long] = {
     //Get Old Asset
@@ -27,7 +29,7 @@ class OnOffLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl
           superm =>
             if (superm.startMeasure - superm.endMeasure != 0)
               createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, valueToUpdate, sideCode.getOrElse(oldAsset.sideCode),
-                superm, username, vvhTimeStamp.getOrElse(vvhClient.roadLinkData.createVVHTimeStamp()), getLinkSource(oldAsset.linkId), true, oldAsset.createdBy, oldAsset.createdDateTime)
+                superm, username, vvhTimeStamp.getOrElse(vvhClient.roadLinkData.createVVHTimeStamp()), getLinkSource(oldAsset.linkId), true, oldAsset.createdBy, Some(oldAsset.createdDateTime.getOrElse(DateTime.now())))
         }
     }
     None
