@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit
 
 import akka.actor.{Actor, ActorSystem, Props}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
+import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, SpeedLimit, UnknownSpeedLimit}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.MassTransitStopDao
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
@@ -189,6 +190,10 @@ object Digiroad2Context {
     new VVHClient(getProperty("digiroad2.VVHRestApiEndPoint"))
   }
 
+  lazy val linearAssetDao: OracleLinearAssetDao = {
+    new OracleLinearAssetDao(vvhClient, roadLinkService)
+  }
+
   lazy val tierekisteriClient: TierekisteriMassTransitStopClient = {
     new TierekisteriMassTransitStopClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
       getProperty("digiroad2.tierekisteri.enabled").toBoolean,
@@ -223,6 +228,10 @@ object Digiroad2Context {
 
   lazy val linearAssetService: LinearAssetService = {
     new LinearAssetService(roadLinkService, eventbus)
+  }
+
+  lazy val onOffLinearAssetService: OnOffLinearAssetService = {
+    new OnOffLinearAssetService(roadLinkService, eventbus, linearAssetDao)
   }
 
   lazy val pedestrianCrossingService: PedestrianCrossingService = {
