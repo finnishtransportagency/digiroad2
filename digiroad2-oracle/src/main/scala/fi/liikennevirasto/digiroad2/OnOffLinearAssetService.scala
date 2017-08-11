@@ -24,12 +24,12 @@ class OnOffLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl
     dao.updateExpiration(assetId, expired = true, username)
 
     measures.map {
-      m =>
-        Seq(Measures(oldAsset.startMeasure, m.startMeasure), Measures(m.endMeasure, oldAsset.endMeasure)).map {
-          superm =>
-            if (superm.startMeasure - superm.endMeasure != 0)
+      measure =>
+        Seq(Measures(oldAsset.startMeasure, measure.startMeasure), Measures(measure.endMeasure, oldAsset.endMeasure)).map {
+          m =>
+            if (m.startMeasure - m.endMeasure != 0)
               createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, valueToUpdate, sideCode.getOrElse(oldAsset.sideCode),
-                superm, username, vvhTimeStamp.getOrElse(vvhClient.roadLinkData.createVVHTimeStamp()), getLinkSource(oldAsset.linkId), true, oldAsset.createdBy, Some(oldAsset.createdDateTime.getOrElse(DateTime.now())))
+                m, username, vvhTimeStamp.getOrElse(vvhClient.roadLinkData.createVVHTimeStamp()), getLinkSource(oldAsset.linkId), true, oldAsset.createdBy, Some(oldAsset.createdDateTime.getOrElse(DateTime.now())))
         }
     }
     None
