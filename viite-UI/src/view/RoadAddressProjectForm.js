@@ -397,11 +397,12 @@
       });
 
       rootElement.on('click', '.project-form button.cancel', function(){
-        if (hasNewRoadParts) {
+        if (currentProject && hasNewRoadParts) {
           hasNewRoadParts = false;
           projectCollection.setReservedDirtyRoadParts([]);
+          fillForm(projectCollection.getCurrentRoadPartList(), projectCollection.getReservedDirtyRoadParts());
         }
-        if(!_.isEqual(projectCollection.getDirtyRoadParts(), projectCollection.getCurrentRoadPartList())){
+        else if(!_.isEqual(projectCollection.getDirtyRoadParts(), projectCollection.getCurrentRoadPartList())){
           new GenericConfirmPopup('Haluatko varmasti peruuttaa? Mahdolliset tallentamattomat muutokset häviävät', {
             successCallback: function () {
               projectCollection.setCurrentRoadPartList(projectCollection.getCurrentRoadPartList());

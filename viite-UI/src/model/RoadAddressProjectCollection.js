@@ -326,7 +326,7 @@
         qRoadparts.push(row);
       });
 
-      var sameElements = arrayIntersection(qRoadparts, dirtyRoadPartList, function (arrayarow, arraybrow) {
+      var sameElements = arrayIntersection(qRoadparts, reservedDirtyRoadPartList, function (arrayarow, arraybrow) {
         return arrayarow.roadPartId === arraybrow.roadPartId;
       });
       _.each(sameElements, function (row) {
