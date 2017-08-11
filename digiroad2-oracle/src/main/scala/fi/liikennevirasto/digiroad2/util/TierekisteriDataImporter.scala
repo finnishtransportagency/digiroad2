@@ -20,6 +20,7 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
   val trafficSignsId = 300
   val pavedRoadAssetId = 110
   val massTransitLaneAssetId = 160
+  val damagedByThawAssetId = 130
 
   val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
 
@@ -41,6 +42,10 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
 
   lazy val massTransitLaneImporterOperations: MassTransitLaneTierekisteriImporter = {
     new MassTransitLaneTierekisteriImporter()
+  }
+
+  lazy val damagedByThawAssetImporterOperations: DamagedByThawAssetTierekisteriImporter = {
+    new DamagedByThawAssetTierekisteriImporter()
   }
 
   lazy val assetDao : OracleAssetDao = {
@@ -150,5 +155,14 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
   def updateMassTransitLaneAsset(): Unit = {
     val lastUpdate = obtainLastExecutionDate(massTransitLaneImporterOperations.assetName, massTransitLaneAssetId)
     massTransitLaneImporterOperations.updateAssets(lastUpdate)
+  }
+
+  def importDamagedByThawAsset(): Unit = {
+    damagedByThawAssetImporterOperations.importAssets()
+  }
+
+  def updateDamagedByThawAsset(): Unit = {
+    val lastUpdate = obtainLastExecutionDate(damagedByThawAssetImporterOperations.assetName, massTransitLaneAssetId)
+    damagedByThawAssetImporterOperations.updateAssets(lastUpdate)
   }
 }

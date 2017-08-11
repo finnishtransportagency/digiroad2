@@ -430,3 +430,26 @@ class MassTransitLaneTierekisteriImporter extends LinearAssetTierekisteriImporte
     }
   }
 }
+
+class DamagedByThawAssetTierekisteriImporter extends LinearAssetTierekisteriImporterOperations {
+
+  override def typeId: Int = 130
+  override def assetName = "damagedByThaw"
+  override type TierekisteriClientType = TierekisteriDamagedByThawAssetClient
+  override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+
+  override val tierekisteriClient = new TierekisteriDamagedByThawAssetClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+    getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+    HttpClientBuilder.create().build())
+
+  override protected def createLinearAsset(vvhRoadlink: VVHRoadlink, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
+    if (measures.startMeasure != measures.endMeasure && trAssetData.assetType == MassTransitLane) {
+      val assetId = linearAssetService.dao.createLinearAsset(typeId, vvhRoadlink.linkId, false, SideCode.BothDirections.value,
+        measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value))
+
+      linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, 1)
+      println(s"Created OTH $assetName assets for ${vvhRoadlink.linkId} from TR data with assetId $assetId")
+    }
+  }
+}
