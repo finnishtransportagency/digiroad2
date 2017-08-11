@@ -398,7 +398,7 @@ class PavedRoadTierekisteriImporter extends LinearAssetTierekisteriImporterOpera
     HttpClientBuilder.create().build())
 
   override protected def createLinearAsset(vvhRoadlink: VVHRoadlink, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
-    if (measures.startMeasure != measures.endMeasure) {
+    if ((measures.startMeasure != measures.endMeasure) && (trAssetData.pavementType != TRPavedRoadType.Unknown)) {
       val assetId = linearAssetService.dao.createLinearAsset(typeId, vvhRoadlink.linkId, false, SideCode.BothDirections.value,
         measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value))
 

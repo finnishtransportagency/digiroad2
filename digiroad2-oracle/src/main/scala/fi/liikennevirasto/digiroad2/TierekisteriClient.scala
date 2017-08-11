@@ -155,6 +155,27 @@ object TRTrafficSignType {
   case object Unknown extends TRTrafficSignType { def value = 999999;  def trafficSignType = TrafficSignType.Unknown; }
 }
 
+/**
+  * Values for PavementRoad types enumeration
+  */
+sealed trait TRPavedRoadType {
+  def value: Int
+  def pavedRoadType: String
+}
+object TRPavedRoadType {
+  val values = Set(CementConcrete, Cobblestone, HardAsphalt, SoftAsphalt)
+
+  def apply(value: Int): TRPavedRoadType = {
+    values.find(_.value == value).getOrElse(Unknown)
+  }
+
+  case object CementConcrete extends TRPavedRoadType { def value = 1; def pavedRoadType = "Cement Concrete";}
+  case object Cobblestone extends TRPavedRoadType { def value = 2; def pavedRoadType = "Cobblestone";}
+  case object HardAsphalt extends TRPavedRoadType { def value = 10; def pavedRoadType = "Hard Asphalt";}
+  case object SoftAsphalt extends TRPavedRoadType { def value = 20; def pavedRoadType = "Soft Asphalt";}
+  case object Unknown extends TRPavedRoadType { def value = 99;  def pavedRoadType = "Unknown";}
+}
+
 sealed trait Operation {
   def value: Int
 }
@@ -236,7 +257,7 @@ case class TierekisteriTrafficSignData(roadNumber: Long, startRoadPartNumber: Lo
                                     track: Track, startAddressMValue: Long, endAddressMValue: Long, roadSide: RoadSide, assetType: TRTrafficSignType, assetValue: String) extends TierekisteriAssetData
 
 case class TierekisteriPavedRoadData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
-                                    track: Track, startAddressMValue: Long, endAddressMValue: Long, pavementType: Int) extends TierekisteriAssetData
+                                    track: Track, startAddressMValue: Long, endAddressMValue: Long, pavementType: TRPavedRoadType) extends TierekisteriAssetData
 
 case class TierekisteriMassTransitLaneData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
                                      track: Track, startAddressMValue: Long, endAddressMValue: Long, assetType: TRLaneArrangementType) extends TierekisteriAssetData
@@ -865,7 +886,7 @@ class TierekisteriPavedRoadAssetClient(trEndPoint: String, trEnable: Boolean, ht
     val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
     val pavementType = convertToInt(getMandatoryFieldValue(data, trPAALLUOK)).get
 
-    TierekisteriPavedRoadData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue, pavementType)
+    TierekisteriPavedRoadData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue, TRPavedRoadType.apply(pavementType))
   }
 }
 

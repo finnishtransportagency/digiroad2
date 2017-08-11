@@ -80,6 +80,7 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
   val lightingTRCode = "tl167"
   val roadWidthTRCode = "tl136"
   val trafficSignTRCode ="tl506"
+  val pavedRoadTRCode ="tl137"
 
   val trafficVolume: Map[String,List[Map[String, Any]]] ={
     Map(
@@ -105,9 +106,11 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
             "TIETOLAJI" -> trafficVolumeTRCode,
             "TIE" -> 45,
             "OSA" -> 1,
+            "LOSA" -> 1,
             "ETAISYYS" -> 0,
             "LET" -> 0,
-            "ALEV" -> 115
+            "ALEV" -> 115,
+            "AJORATA" -> 0
           )
         )
     )
@@ -128,8 +131,10 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
             "TIETOLAJI" -> lightingTRCode,   //Field code
             "TIE" -> 45,                     //Road number
             "OSA" -> 1,                      //Road part number
+            "LOSA" -> 1,                      //End Road part number
             "ETAISYYS" -> 0,                 //Start distance
-            "LET" -> 0                       //End distance
+            "LET" -> 0,                       //End distance
+            "AJORATA" -> 0                    //Track Code
           )
         )
     )
@@ -145,6 +150,24 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
             "ETAISYYS" -> 1,                 //Start distance
             "LMNUMERO" -> 361,               //Speed Limit
             "LMTEKSTI" -> "80"               //Speed Limit Value
+          )
+        )
+    )
+  }
+
+  val pavedRoad: Map[String,List[Map[String, Any]]] ={
+    Map(
+      "Data" ->
+        List(
+          Map(
+            "TIETOLAJI" -> pavedRoadTRCode,   //Field code
+            "TIE" -> 45,                     //Road number
+            "OSA" -> 1,                      //Road part number
+            "LOSA" -> 1,                      //End Road part number
+            "ETAISYYS" -> 0,                 //Start distance
+            "LET" -> 0,                       //End distance
+            "AJORATA" -> 0,                   //Track Code
+            "PAALLUOK" -> 1                   //Pavement Type
           )
         )
     )
@@ -237,7 +260,10 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
       roadWidth
     } else if (fieldCode == trafficSignTRCode) {
       trafficSign
+    } else if (fieldCode == pavedRoadTRCode) {
+      pavedRoad
     }
+
   }
 
   get("/tietolajit/:fieldCode/:roadNumber/:roadPartNumber") {
@@ -250,6 +276,8 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
       lighting
     } else if (fieldCode == trafficSignTRCode) {
       trafficSign
+    } else if (fieldCode == pavedRoadTRCode) {
+      pavedRoad
     }
   }
 
@@ -263,6 +291,8 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
       lighting
     } else if (fieldCode == trafficSignTRCode) {
       trafficSign
+    } else if (fieldCode == pavedRoadTRCode) {
+      pavedRoad
     }
   }
 
@@ -274,6 +304,8 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
       trafficVolume
     } else if (fieldCode == lightingTRCode) {
       lighting
+    } else if (fieldCode == pavedRoadTRCode) {
+      pavedRoad
     }
   }
 }
