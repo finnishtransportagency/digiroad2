@@ -826,8 +826,6 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
 
       links.sortBy(_.id).zip(changedLinks.sortBy(_.id)).foreach{
         case (oldLink, newLink) =>
-          println(s"${oldLink.linkId}: AJR ${oldLink.track.value} ${oldLink.startAddrMValue}-${oldLink.endAddrMValue} " +
-            s"-> AJR ${newLink.track.value} ${newLink.startAddrMValue}-${newLink.endAddrMValue}")
           oldLink.startAddrMValue should be ((linksLast.endAddrMValue - newLink.endAddrMValue) +- 1)
           oldLink.endAddrMValue should be ((linksLast.endAddrMValue - newLink.startAddrMValue) +- 1)
           val trackChangeCorrect = (oldLink.track, newLink.track) match {
@@ -902,10 +900,12 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
         SideCode.TowardsDigitizing, None, None, Anomaly.None, 0L, LinkStatus.New)
       val addresses = Seq(addProjectAddressLink512, addProjectAddressLink552)
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(addresses.map(_.linkId).toSet, true)).thenReturn(addresses.map(toRoadLink))
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(addresses.map(_.linkId).toSet, false)).thenReturn(addresses.map(toRoadLink))
       projectService.addNewLinksToProject(addresses, id, 75, 2, 0L, 5L) should be (None)
       val links=ProjectDAO.getProjectLinks(id)
+      links.map(_.linkId).toSet should be (addresses.map(_.linkId).toSet)
       val sideCodes = links.map(l => l.id -> l.sideCode).toMap
-      projectService.changeDirection(id, 75, 2)
+      projectService.changeDirection(id, 75, 2) should be (None)
       val changedLinks = ProjectDAO.getProjectLinksById(links.map{l => l.id})
       changedLinks.foreach(cl => cl.sideCode should not be (sideCodes(cl.id)))
 
