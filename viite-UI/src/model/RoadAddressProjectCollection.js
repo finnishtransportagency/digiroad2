@@ -142,7 +142,15 @@
         name: data[0].value,
         startDate: data[1].value,
         additionalInfo: data[2].value,
-        roadPartList: dirtyRoadPartList
+        roadPartList: _.map(dirtyRoadPartList, function(part){
+          return {discontinuity: part.discontinuity,
+                  ely: part.ely,
+                  roadLength: part.roadLength,
+                  roadNumber: part.roadNumber,
+                  roadPartId: 0,
+                  roadPartNumber: part.roadPartNumber
+                  };
+        })
       };
 
       backend.saveRoadAddressProject(dataJson, function (result) {
@@ -155,7 +163,7 @@
             publishable: false
           };
           eventbus.trigger('roadAddress:projectSaved', result);
-          dirtyRoadPartList = [];
+          dirtyRoadPartList = result.formInfo;
           currentProject = result;
         }
         else {
@@ -215,7 +223,7 @@
             publishable: false
           };
           eventbus.trigger('roadAddress:projectSaved', result);
-          dirtyRoadPartList = [];
+          dirtyRoadPartList = result.formInfo;
           currentProject = result;
         }
         else {
@@ -291,33 +299,42 @@
       $("#roadpartList").append($("#roadpartList").html(formInfo));
     };
 
-    var parseroadpartinfoToresultRow = function () {
+    var parseRoadPartInfoToResultRow = function () {
       var listContent = '';
-      _.each(currentRoadPartList, function (row) {
-          listContent += addSmallLabel(row.roadNumber) + addSmallLabel(row.roadPartNumber) + addSmallLabel(row.length) + addSmallLabel(row.discontinuity) + addSmallLabel(row.ely) +
-            '</div>';
+      var index = 0;
+      _.each(dirtyRoadPartList, function (row) {
+        var button = deleteButton(index++);
+          listContent += '<div style="display:inline-block;">'+ button+ addSmallLabel(row.roadNumber) + addSmallLabel(row.roadPartNumber) + addSmallLabel(row.roadLength) + addSmallLabel(row.discontinuity) + addSmallLabel(row.ely) +'</div>';
         }
       );
       return listContent;
     };
 
 
-    var addToCurrentRoadPartList = function (queryresult) {
+    var deleteButton = function(index){
+      return '<button id ="'+index+'" class="delete btn-delete">X</button>';
+    };
+
+
+    var addToDirtyRoadPartList = function (queryresult) {
       var qRoadparts = [];
       _.each(queryresult.roadparts, function (row) {
         qRoadparts.push(row);
       });
 
-      var sameElements = arrayIntersection(qRoadparts, currentRoadPartList, function (arrayarow, arraybrow) {
+      var sameElements = arrayIntersection(qRoadparts, dirtyRoadPartList, function (arrayarow, arraybrow) {
         return arrayarow.roadPartId === arraybrow.roadPartId;
       });
       _.each(sameElements, function (row) {
         _.remove(qRoadparts, row);
       });
       _.each(qRoadparts, function (row) {
-        currentRoadPartList.push(row);
         dirtyRoadPartList.push(row);
       });
+    };
+
+    this.deleteRoadPartFromList = function(id){
+      dirtyRoadPartList.splice(parseInt(id), 1);
     };
 
     this.setDirty = function(editedRoadLinks) {
@@ -329,12 +346,25 @@
       return dirtyProjectLinkIds;
     };
 
+    this.getDirtyRoadParts = function () {
+      return dirtyRoadPartList;
+    };
+
+    this.getCurrentRoadPartList = function(){
+      return currentRoadPartList;
+    };
+
     this.setTmpExpired = function(editRoadLinks){
       dirtyProjectLinks = editRoadLinks;
     };
 
     this.getTmpExpired = function(){
       return dirtyProjectLinks;
+    };
+
+    this.setCurrentRoadPartList = function(parts){
+      currentRoadPartList = parts.slice(0);
+      dirtyRoadPartList = parts.slice(0);
     };
 
     this.isDirty = function() {
@@ -353,8 +383,8 @@
       if (validationResult.success !== "ok") {
         eventbus.trigger('roadAddress:projectValidationFailed', validationResult);
       } else {
-        addToCurrentRoadPartList(validationResult);
-        updateFormInfo(parseroadpartinfoToresultRow());
+        addToDirtyRoadPartList(validationResult);
+        updateFormInfo(parseRoadPartInfoToResultRow());
         eventbus.trigger('roadAddress:projectValidationSucceed');
       }
     });

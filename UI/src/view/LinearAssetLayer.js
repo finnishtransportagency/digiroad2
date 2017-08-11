@@ -9,7 +9,8 @@ window.LinearAssetLayer = function(params) {
       style = params.style,
       layerName = params.layerName,
       assetLabel = params.assetLabel,
-      roadAddressInfoPopup = params.roadAddressInfoPopup;
+      roadAddressInfoPopup = params.roadAddressInfoPopup,
+      editConstrains = params.editConstrains;
 
 
   Layer.call(this, layerName, roadLayer);
@@ -201,7 +202,7 @@ window.LinearAssetLayer = function(params) {
 
   var showDialog = function (linearAssets) {
       linearAssets = _.filter(linearAssets, function(asset){
-          return asset && !(asset.geometry instanceof ol.geom.Point);
+          return asset && !(asset.geometry instanceof ol.geom.Point) && !editConstrains(asset);
       });
 
       selectedLinearAsset.openMultiple(linearAssets);

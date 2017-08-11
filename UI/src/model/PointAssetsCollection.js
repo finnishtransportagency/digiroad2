@@ -1,33 +1,31 @@
 (function(root) {
   root.PointAssetsCollection = function(backend, endPointName) {
     var isComplementaryActive = false;
+    var me = this;
 
-    var filterComplementaries = function (assets) {
+    this.filterComplementaries = function (assets) {
       if(isComplementaryActive)
         return assets;
       return _.where(assets, {linkSource: 1});
     };
 
-    function fetch(boundingBox) {
+    this.fetch = function(boundingBox) {
       return backend.getPointAssetsWithComplementary(boundingBox, endPointName)
         .then(function(assets) {
           eventbus.trigger('pointAssets:fetched');
-          return filterComplementaries(assets);
+          return me.filterComplementaries(assets);
         });
-    }
-
-    function activeComplementary(enable) {
-      isComplementaryActive = enable;
-    }
-
-    function complementaryIsActive() {
-      return isComplementaryActive;
-    }
-
-    return {
-      fetch: fetch,
-      activeComplementary : activeComplementary,
-      complementaryIsActive : complementaryIsActive
     };
+
+    this.activeComplementary = function(enable) {
+      isComplementaryActive = enable;
+    };
+
+    this.complementaryIsActive= function() {
+      return isComplementaryActive;
+    };
+
+    this.setTrafficSigns = function(){};
+
   };
 })(this);
