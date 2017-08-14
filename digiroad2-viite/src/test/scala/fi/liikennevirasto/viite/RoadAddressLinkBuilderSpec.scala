@@ -156,8 +156,8 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers{
     val fused = fusedList.head
     fused.startMValue should be (0.0)
     fused.endMValue should be (230.776)
-    fused.geom.last should be (Point(379556.289,6673054.073))
-    fused.geom should have size(2)
+    fused.geometry.last should be (Point(379556.289,6673054.073))
+    fused.geometry should have size(2)
     fused.startAddrMValue should be (679L)
     fused.endAddrMValue should be (923L)
     fused.track should be (Track.RightSide)
@@ -180,8 +180,8 @@ class RoadAddressLinkBuilderSpec extends FunSuite with Matchers{
     val fused = fusedList.head
     fused.startMValue should be (0.0)
     fused.endMValue should be (230.776)
-    fused.geom.last should be (Point(379556.289,6673054.073))
-    fused.geom should have size(2)
+    fused.geometry.last should be (Point(379556.289,6673054.073))
+    fused.geometry should have size(2)
     fused.startAddrMValue should be (679L)
     fused.endAddrMValue should be (920L)
     fused.track should be (Track.RightSide)

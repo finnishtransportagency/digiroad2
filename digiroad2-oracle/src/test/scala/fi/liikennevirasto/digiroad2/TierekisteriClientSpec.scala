@@ -4,13 +4,16 @@ import java.net.ConnectException
 import java.text.SimpleDateFormat
 import java.util.{Date, Properties}
 
-import fi.liikennevirasto.digiroad2.util.{RoadAddress, Track}
+import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
+import fi.liikennevirasto.digiroad2.roadaddress.oracle.RoadAddressDAO
+import fi.liikennevirasto.digiroad2.util._
 import org.apache.http.{ProtocolVersion, StatusLine}
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.{CloseableHttpResponse, HttpGet}
 import org.apache.http.conn.{ConnectTimeoutException, HttpHostConnectException}
 import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.{CloseableHttpClient, HttpClientBuilder}
+import org.joda.time.DateTime
 import org.scalatest.mock.MockitoSugar
 import org.scalatest.{FunSuite, Matchers}
 import org.mockito.Matchers.any
@@ -30,14 +33,34 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
       HttpClientBuilder.create().build())
   }
 
-  lazy val tierekisteriTrafficVolumeAsset: TierekisteriTrafficVolumeAsset = {
-    new TierekisteriTrafficVolumeAsset(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+  lazy val tierekisteriTrafficVolumeAsset: TierekisteriTrafficVolumeAssetClient = {
+    new TierekisteriTrafficVolumeAssetClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
       dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
       HttpClientBuilder.create().build())
   }
 
-  lazy val tierekisteriLightingAsset: TierekisteriLightingAsset = {
-    new TierekisteriLightingAsset(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+  lazy val tierekisteriRoadWidthAsset: TierekisteriRoadWidthAssetClient = {
+    new TierekisteriRoadWidthAssetClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+      HttpClientBuilder.create().build())
+  }
+
+  lazy val tierekisteriLightingAsset: TierekisteriLightingAssetClient = {
+    new TierekisteriLightingAssetClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+      HttpClientBuilder.create().build())
+  }
+
+  lazy val litRoadImporterOperations: LitRoadTierekisteriImporter = {
+    new LitRoadTierekisteriImporter()
+  }
+
+  lazy val roadWidthImporterOperations: RoadWidthTierekisteriImporter = {
+    new RoadWidthTierekisteriImporter()
+  }
+
+  lazy val tierekisteriTrafficSignAsset: TierekisteriTrafficSignAssetClient = {
+    new TierekisteriTrafficSignAssetClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
       dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
       HttpClientBuilder.create().build())
   }
@@ -385,91 +408,95 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
     }
   }
 
-  test("fetch from tierekisteri active trafic volume with fieldCode and roadNumber") {
-    assume(testConnection)
-    val assets = tierekisteriTrafficVolumeAsset.fetchActiveAssetData("tl201", 45)
 
-    assets.size should be (1)
-    assets.map(_.kvl) should contain (1)
-  }
 
   test("fetch from tierekisteri active trafic volume with fieldCode, roadNumber and roadPartNumber") {
     assume(testConnection)
-    val assets = tierekisteriTrafficVolumeAsset.fetchActiveAssetData("tl201", 45, 1)
+    val assets = tierekisteriTrafficVolumeAsset.fetchActiveAssetData(45, 1)
 
     assets.size should be (1)
-    assets.map(_.kvl) should contain (1)
+    assets.map(_.assetValue) should contain (1)
   }
 
   test("fetch from tierekisteri active trafic volume with fieldCode, roadNumber, roadPartNumber and startDistance") {
     assume(testConnection)
-    val assets = tierekisteriTrafficVolumeAsset.fetchActiveAssetData("tl201", 45, 1, 0)
+    val assets = tierekisteriTrafficVolumeAsset.fetchActiveAssetData( 45, 1, 0)
 
     assets.size should be (1)
-    assets.map(_.kvl) should contain (1)
+    assets.map(_.assetValue) should contain (1)
   }
 
   test("fetch from tierekisteri active trafic volume with fieldCode, roadNumber, roadPartNumber, startDistance, endPart and endDistance") {
     assume(testConnection)
-    val assets = tierekisteriTrafficVolumeAsset.fetchActiveAssetData("tl201", 45, 1, 0, 0, 100)
+    val assets = tierekisteriTrafficVolumeAsset.fetchActiveAssetData(45, 1, 0, 0, 100)
 
     assets.size should be (1)
-    assets.map(_.kvl) should contain (1)
+    assets.map(_.assetValue) should contain (1)
   }
 
   test("fetch from tierekisteri active Lighting with fieldCode and roadNumber") {
     assume(testConnection)
-    val assets = tierekisteriLightingAsset.fetchActiveAssetData("tl167", 45)
+    val assets = tierekisteriLightingAsset.fetchActiveAssetData( 45)
 
     assets.size should be (1)
   }
 
   test("fetch from tierekisteri active Lighting with fieldCode, roadNumber and roadPartNumber") {
     assume(testConnection)
-    val assets = tierekisteriLightingAsset.fetchActiveAssetData("tl167", 45, 1)
+    val assets = tierekisteriLightingAsset.fetchActiveAssetData( 45, 1)
 
     assets.size should be (1)
   }
 
   test("fetch from tierekisteri active Lighting with fieldCode, roadNumber, roadPartNumber and startDistance") {
     assume(testConnection)
-    val assets = tierekisteriLightingAsset.fetchActiveAssetData("tl167", 45, 1, 0)
+    val assets = tierekisteriLightingAsset.fetchActiveAssetData(45, 1, 0)
 
     assets.size should be (1)
   }
 
   test("fetch from tierekisteri active Lighting with fieldCode, roadNumber, roadPartNumber, startDistance, endPart and endDistance") {
     assume(testConnection)
-    val assets = tierekisteriLightingAsset.fetchActiveAssetData("tl167", 45, 1, 0, 0, 100)
+    val assets = tierekisteriLightingAsset.fetchActiveAssetData(45, 1, 0, 0, 100)
 
     assets.size should be (1)
   }
 
-  test("lighting assets are split properly") {
-    val trl = TierekisteriLighting(4L, 203L, 208L, Track.RightSide, 3184L, 6584L)
-    val sections = trl.getRoadAddressSections
-    sections.size should be (6)
-    sections.head should be (AddressSection(4L, 203L, Track.RightSide, 3184L, None))
-    sections.last should be (AddressSection(4L, 208L, Track.RightSide, 0L, Some(6584L)))
-    val middleParts = sections.filterNot(s => s.roadPartNumber==203L || s.roadPartNumber==208L)
-    middleParts.forall(s => s.track == Track.RightSide) should be (true)
-    middleParts.forall(s => s.startAddressMValue == 0L) should be (true)
-    middleParts.forall(s => s.endAddressMValue.isEmpty) should be (true)
+  test("fetch from tierekisteri active road width with fieldCode and roadNumber") {
+    assume(testConnection)
+    val assets = tierekisteriRoadWidthAsset.fetchActiveAssetData(45)
+
+    assets.size should not be (0)
+    assets.map(_.assetValue) should contain (1)
   }
 
-  test("lighting assets split works on single part") {
-    val trl = TierekisteriLighting(4L, 203L, 203L, Track.RightSide, 3184L, 6584L)
-    val sections = trl.getRoadAddressSections
-    sections.size should be (1)
-    sections.head should be (AddressSection(4L, 203L, Track.RightSide, 3184L, Some(6584L)))
+  test("fetch from tierekisteri changes road width with fieldCode and roadNumber") {
+    assume(testConnection)
+
+    val assets = tierekisteriRoadWidthAsset.fetchHistoryAssetData(45, Some((new DateTime).withYear(2016).withMonthOfYear(1).withDayOfMonth(1)))
+
+    assets.size should not be (1)
+    assets.map(_.assetValue) should be (1150)
   }
 
-  test("lighting assets split works on two parts") {
-    val trl = TierekisteriLighting(4L, 203L, 204L, Track.RightSide, 3184L, 6584L)
-    val sections = trl.getRoadAddressSections
-    sections.size should be (2)
-    sections.head should be (AddressSection(4L, 203L, Track.RightSide, 3184L, None))
-    sections.last should be (AddressSection(4L, 204L, Track.RightSide, 0L, Some(6584L)))
+  test("Fetch Traffic Signs from Tierekisteri by fieldCode, roadNumber") {
+    assume(testConnection)
+    val assets = tierekisteriTrafficSignAsset.fetchActiveAssetData(45)
+
+    assets.size should not be (0)
   }
 
+  test("Fetch Traffic Signs from Tierekisteri by fieldCode, roadNumber, roadPartNumber") {
+    assume(testConnection)
+    val assets = tierekisteriTrafficSignAsset.fetchActiveAssetData(45, 1)
+
+    assets.size should not be (0)
+  }
+
+  test("Fetch Traffic Signs from Tierekisteri by fieldCode, roadNumber, roadPartNumber, startDistance") {
+    assume(testConnection)
+    val assets = tierekisteriTrafficSignAsset.fetchActiveAssetData(45, 1, 1)
+
+    assets.size should not be (0)
+  }
 }

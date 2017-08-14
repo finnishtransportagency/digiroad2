@@ -93,7 +93,7 @@ trait BaseRoadAddress {
   def sideCode: SideCode
   def calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint])
   def floating: Boolean
-  def geom: Seq[Point]
+  def geometry: Seq[Point]
 }
 
 // Note: Geometry on road address is not directed: it isn't guaranteed to have a direction of digitization or road addressing
@@ -101,7 +101,7 @@ case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, roadTyp
                        discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
                        endDate: Option[DateTime] = None, modifiedBy: Option[String] = None, lrmPositionId : Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode, adjustedTimestamp: Long,
                        calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false,
-                       geom: Seq[Point], linkGeomSource: LinkGeomSource) extends BaseRoadAddress {
+                       geometry: Seq[Point], linkGeomSource: LinkGeomSource) extends BaseRoadAddress {
   val endCalibrationPoint = calibrationPoints._2
   val startCalibrationPoint = calibrationPoints._1
 
@@ -964,7 +964,7 @@ object RoadAddressDAO {
         case None => ""
       })
       addressPS.setString(11, createdBy.getOrElse(address.modifiedBy.getOrElse("-")))
-      val (p1, p2) = (address.geom.head, address.geom.last)
+      val (p1, p2) = (address.geometry.head, address.geometry.last)
       addressPS.setDouble(12, p1.x)
       addressPS.setDouble(13, p1.y)
       addressPS.setDouble(14, address.startAddrMValue)
@@ -1028,7 +1028,7 @@ object RoadAddressDAO {
     if (Q.queryNA[Int](query).first>0) true else false
   }
 
-  def getRoadPartInfo(roadNumber:Long, roadPart:Long): Option[(Long,Long,Double,Long,DateTime,DateTime)] =
+  def getRoadPartInfo(roadNumber:Long, roadPart:Long): Option[(Long,Long,Double,Long,Option[DateTime],Option[DateTime])] =
   {
     val query = s"""SELECT r.id, l.link_id, r.end_addr_M, r.discontinuity,
                 (Select Max(ra.start_date) from road_address ra Where r.ROAD_PART_NUMBER = ra.ROAD_PART_NUMBER and r.ROAD_NUMBER = ra.ROAD_NUMBER) as start_date,
@@ -1041,6 +1041,6 @@ object RoadAddressDAO {
              on r.START_ADDR_M=ra.lol
              WHERE r.road_number=$roadNumber AND r.road_part_number=$roadPart AND
              (r.valid_from is null or r.valid_from <= sysdate) AND (r.valid_to is null or r.valid_to > sysdate) AND track_code in (0,1)"""
-    Q.queryNA[(Long,Long,Double,Long, DateTime, DateTime)](query).firstOption
+    Q.queryNA[(Long,Long,Double,Long, Option[DateTime], Option[DateTime])](query).firstOption
   }
 }

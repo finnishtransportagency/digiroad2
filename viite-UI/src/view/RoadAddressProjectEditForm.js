@@ -212,9 +212,6 @@
         currentProject = projectCollection.getCurrentProject();
         clearInformationContent();
         rootElement.html(selectedProjectLinkTemplate(currentProject.project, options, selectedProjectLink));
-        if(selectedProjectLink[0].id !== 0){
-          rootElement.find('.changeDirectionDiv').prop("hidden", false);
-        }
         replaceAddressInfo();
         checkInputs();
       });
@@ -299,6 +296,7 @@
       rootElement.on('change', '#dropDown', function() {
         if(this.value == "lakkautus") {
           rootElement.find('.new-road-address').prop("hidden", true);
+          rootElement.find('.changeDirectionDiv').prop("hidden", true);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
             return {'id': link.linkId, 'status': link.status};
           })));

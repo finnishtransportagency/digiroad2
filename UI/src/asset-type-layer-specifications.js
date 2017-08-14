@@ -26,7 +26,8 @@
     europeanRoads: 260,
     exitNumbers: 270,
     trafficLights: 280,
-    maintenanceRoad: 290
+    maintenanceRoad: 290,
+    trafficSigns: 300
   };
 
   root.linearAssetSpecs = [
@@ -172,6 +173,10 @@
         title: 'Valaistus',
         enabled: 'Valaistus',
         disabled: 'Ei valaistusta'
+      },
+      editConstrains : function(selectedAsset) {
+        //check if administrative class is State
+        return selectedAsset.administrativeClass === 1;
       }
     },
     {
@@ -208,7 +213,11 @@
         disabled: 'Leveys ei tiedossa',
         showUnit: true
       },
-      label: new LinearAssetLabel()
+      label: new LinearAssetLabel(),
+      editConstrains : function(selectedAsset) {
+        //check if administrative class is State
+        return selectedAsset.administrativeClass === 1;
+      }
     },
     {
       typeId: assetType.congestionTendency,
@@ -520,6 +529,28 @@
         manyFloatingAssetsLabel: 'liikennevalot',
         newAssetLabel: 'liikennevalo'
       }
+    },
+    {
+      typeId: assetType.trafficSigns,
+      layerName: 'trafficSigns',
+      title: 'Liikennemerkit',
+      allowComplementaryLinks: true,
+      newAsset: { validityDirection: 2, propertyData: [
+        {'name': 'Tyyppi', 'propertyType': 'single_choice', 'publicId': "trafficSigns_type", values: [ [ {propertyValue: 1} ] ] },
+        {'name': "Arvo", 'propertyType': 'text', 'publicId': "trafficSigns_value", values: []},
+        {'name': "Lisatieto", 'propertyType': 'text', 'publicId': "trafficSigns_info", values: []}
+      ]},
+      label: new TrafficSignLabel(),
+      collection: TrafficSignsCollection,
+      formLabels: {
+        singleFloatingAssetLabel: 'liikennemerkin',
+        manyFloatingAssetsLabel: 'liikennemerkit',
+        newAssetLabel: 'liikennemerkki'
+      },
+      editConstrains : function(selectedAsset, linkId) {
+       // check if administrative class is State
+          return selectedAsset.getAdministrativeClass(linkId) === "State";
+     }
     }
   ];
 })(this);

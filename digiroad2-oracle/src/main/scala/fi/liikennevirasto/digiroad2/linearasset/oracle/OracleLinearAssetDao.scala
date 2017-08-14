@@ -1173,14 +1173,12 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     sqlu"update asset set valid_to = sysdate - 1/86400 where asset_type_id = $typeId".execute
   }
 
-  /**
-    * When invoked will expire assets by Id.
-    * It is required that the invoker takes care of the transaction.
-    *
-    * @param id Represets the id of the Linear Asset
-    */
-  def expireAssetsById (id: Long): Unit = {
-    sqlu"update asset set valid_to = sysdate - 1/86400 where id = $id".execute
+  def getIds (assetType: Int, linkId: Long): Seq[Long] = {
+    val ids = sql""" select a.id from asset a
+              join asset_link al on (a.id = al.asset_id)
+              join lrm_position lp on (al.position_id = lp.id)
+              where (a.asset_type_id = $assetType and  lp.link_id = $linkId)""".as[(Long)].list
+    ids
   }
 }
 

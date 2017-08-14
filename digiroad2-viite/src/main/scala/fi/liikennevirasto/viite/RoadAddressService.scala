@@ -237,7 +237,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
       val (addressesToCreate, unchanged) = newRoadAddresses.values.flatten.toSeq.partition(_.id == NewRoadAddress)
       val savedRoadAddresses = addressesToCreate.map(r =>
-        r.copy(geom = GeometryUtils.truncateGeometry3D(roadLinkMap(r.linkId).geometry,
+        r.copy(geometry = GeometryUtils.truncateGeometry3D(roadLinkMap(r.linkId).geometry,
           r.startMValue, r.endMValue), linkGeomSource = roadLinkMap(r.linkId).linkSource))
 
       val ids = RoadAddressDAO.create(savedRoadAddresses).toSet ++ unchanged.map(_.id).toSet
@@ -308,7 +308,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       min.copy(startAddrMValue = Math.min(min.startAddrMValue, max.startAddrMValue),
         endAddrMValue = Math.max(min.endAddrMValue, max.endAddrMValue),
         startMValue = min.startMValue, endMValue = max.endMValue,
-        geom = Seq(min.geom.head, max.geom.last))
+        geometry = Seq(min.geometry.head, max.geometry.last))
     }
   }
 
@@ -491,7 +491,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         println("Floating id %d (link id %d)".format(address.id, address.linkId))
         RoadAddressDAO.changeRoadAddressFloating(float = true, address.id, None)
       } else {
-        if (!GeometryUtils.areAdjacent(addressGeometry.get, address.geom)) {
+        if (!GeometryUtils.areAdjacent(addressGeometry.get, address.geometry)) {
           println("Updating geometry for id %d (link id %d)".format(address.id, address.linkId))
           RoadAddressDAO.changeRoadAddressFloating(float = false, address.id, addressGeometry)
         }
@@ -652,7 +652,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   def getRoadAddressesAfterCalculation(sources: Seq[String], targets: Seq[String], user: User): Seq[RoadAddress] = {
     def adjustGeometry(ra: RoadAddress, link: RoadAddressLinkLike): RoadAddress = {
       val geom = GeometryUtils.truncateGeometry3D(link.geometry, ra.startMValue, ra.endMValue)
-      ra.copy(geom = geom, linkGeomSource = link.roadLinkSource)
+      ra.copy(geometry = geom, linkGeomSource = link.roadLinkSource)
     }
     val sourceRoadAddressLinks = sources.flatMap(rd => {
       getRoadAddressLink(rd.toLong)
@@ -736,6 +736,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
 
 case class RoadAddressMerge(merged: Set[Long], created: Seq[RoadAddress])
-case class ReservedRoadPart(roadPartId: Long, roadNumber: Long, roadPartNumber: Long, length: Double, discontinuity: Discontinuity, ely: Long, startDate: Option[DateTime], endDate: Option[DateTime])
+case class ReservedRoadPart(roadPartId: Long, roadNumber: Long, roadPartNumber: Long, roadLength: Double,
+                            discontinuity: Discontinuity, ely: Long, startDate: Option[DateTime], endDate: Option[DateTime]) {
+  def holds(baseRoadAddress: BaseRoadAddress): Boolean = {
+    roadNumber == baseRoadAddress.roadNumber && roadPartNumber == baseRoadAddress.roadPartNumber
+  }
+}
 
 

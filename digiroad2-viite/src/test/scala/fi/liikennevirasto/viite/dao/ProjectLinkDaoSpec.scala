@@ -16,10 +16,16 @@ import slick.jdbc.StaticQuery.interpolation
   */
 class ProjectLinkDaoSpec  extends FunSuite with Matchers {
 
+  private final val lock: String = "LOCK OBJECT"
+
   def runWithRollback(f: => Unit): Unit = {
-    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
-      f
-      dynamicSession.rollback()
+    // Prevent deadlocks in DB because we create and delete links in tests and don't handle the project ids properly
+    // TODO: create projects with unique ids so we don't get into transaction deadlocks in tests
+    lock.synchronized {
+      Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+        f
+        dynamicSession.rollback()
+      }
     }
   }
 
@@ -27,7 +33,7 @@ class ProjectLinkDaoSpec  extends FunSuite with Matchers {
     ProjectLink(id = NewRoadAddress, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track,
       roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
       roadAddress.endDate, modifiedBy = Option(project.createdBy), 0L, roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
-      roadAddress.sideCode, roadAddress.calibrationPoints, floating = false, roadAddress.geom, project.id, LinkStatus.NotHandled, RoadType.PublicRoad, roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geom))
+      roadAddress.sideCode, roadAddress.calibrationPoints, floating = false, roadAddress.geometry, project.id, LinkStatus.NotHandled, RoadType.PublicRoad, roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry))
   }
 
   def addprojects(): Unit = {
@@ -221,6 +227,17 @@ class ProjectLinkDaoSpec  extends FunSuite with Matchers {
       ProjectDAO.flipProjectLinksSideCodes(id, 5, 203)
       val bsidecode=sql"select side_code from LRM_Position WHERE id=$lrmid".as[Int].first
       bsidecode should be (2)
+    }
+  }
+
+  test("change project Ely DAO") {
+    runWithRollback {
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
+      ProjectDAO.createRoadAddressProject(rap)
+      ProjectDAO.getRoadAddressProjectById(id).nonEmpty should be(true)
+      ProjectDAO.updateProjectEly(id, 100)
+      ProjectDAO.getProjectEly(id).get should be (100)
     }
   }
 }

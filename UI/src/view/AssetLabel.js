@@ -9,11 +9,19 @@
         };
 
         this.getCoordinate = function(point){
-            return [point.x, point.y];
+          return (!_.isUndefined(point.x) ? [point.x, point.y] : [point.lon, point.lat]);
         };
 
         this.createFeature = function(point){
-            return new ol.Feature(new ol.geom.Point(me.getCoordinate(point)));
+          if(_.isArray(point))
+            return new ol.Feature(new ol.geom.Point(point));
+          return new ol.Feature(new ol.geom.Point(me.getCoordinate(point)));
+        };
+
+        this.renderFeaturesByPointAssets = function(pointAssets, zoomLevel){
+            return me.renderFeatures(pointAssets, zoomLevel, function(asset){
+              return me.getCoordinate(asset);
+            });
         };
 
         this.renderFeaturesByLinearAssets = function(linearAssets, zoomLevel){
@@ -35,6 +43,7 @@
                         var style = me.getStyle(assetValue);
                         var feature = me.createFeature(getPoint(asset));
                         feature.setStyle(style);
+                        feature.setProperties(asset);
                         return feature;
                     }
                 }).
