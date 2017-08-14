@@ -70,5 +70,18 @@ class VVHClientSpec extends FunSuite with Matchers{
     val vvhClient= new VVHClient(properties.getProperty("digiroad2.VVHRestApiEndPoint"))
     Await.result(vvhClient.suravageData.fetchSuravageByMunicipalitiesAndBoundsF(BoundingRectangle(Point(445000, 7000000),Point(446000, 7005244)), Set(931)), Duration.Inf).size should be > 0
   }
+
+  /**
+    * Test for frozen december 15.12.2016 VVH API: No test cases writen to documentation so test might fail for not having any links
+  */
+
+  test("Frozen In Time API test ") {
+    val frozenApiEnabled = properties.getProperty("digiroad2.VVHRoadlink.frozen")
+    if (frozenApiEnabled=="true") { //Api only exists in QA and Production
+      val vvhClient= new VVHClient(properties.getProperty("digiroad2.VVHRestApiEndPoint"))
+      val result= vvhClient.frozenTimeRoadLinkData.fetchByBounds(BoundingRectangle(Point(445000, 7000000),Point(446000, 7005244)))
+      result.size should be >1
+    }
+  }
 }
 
