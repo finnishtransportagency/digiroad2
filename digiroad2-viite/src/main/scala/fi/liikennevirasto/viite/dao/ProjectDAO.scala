@@ -197,14 +197,8 @@ object ProjectDAO {
     }
   }
 
-  def updateMValuesLinkId(projectLink: ProjectLink): Unit = {
-    sqlu"""update project_link set modified_date = sysdate, start_addr_m = ${projectLink.startAddrMValue}, end_addr_m = ${projectLink.endAddrMValue} where project_id = ${projectLink.projectId} and road_number = ${projectLink.roadNumber} and road_part_number = ${projectLink.roadPartNumber} and lrm_position_id = (select id from lrm_position where link_id = ${projectLink.linkId} and rownum = 1)
-          """.execute
-
-  }
-
-  def updateMValues(projectLink: ProjectLink): Unit = {
-    sqlu"""update project_link set modified_date = sysdate, start_addr_m = ${projectLink.startAddrMValue}, end_addr_m = ${projectLink.endAddrMValue} where id = ${projectLink.id}
+  def updateAddrMValues(projectLink: ProjectLink): Unit = {
+      sqlu"""update project_link set modified_date = sysdate, start_addr_m = ${projectLink.startAddrMValue}, end_addr_m = ${projectLink.endAddrMValue} where id = ${projectLink.id}
           """.execute
   }
 
@@ -320,7 +314,9 @@ object ProjectDAO {
       " where id in (select lrm_position.id from project_link join " +
       s"LRM_Position on project_link.LRM_POSITION_ID = lrm_position.id where (side_code = 2 or side_code = 3) and project_link.project_id = $projectId and project_link.road_number = $roadNumber and project_link.road_part_number = $roadPartNumber)"
     Q.updateNA(updateLRM).execute
-    val updateProjectLink = s"update project_link set calibration_points = (CASE calibration_points WHEN 0 THEN 0 WHEN 1 THEN 2 WHEN 2 THEN 1 ELSE 3 END) where project_link.project_id = $projectId and project_link.road_number = $roadNumber and project_link.road_part_number = $roadPartNumber"
+    val updateProjectLink = s"update project_link set calibration_points = (CASE calibration_points WHEN 0 THEN 0 WHEN 1 THEN 2 WHEN 2 THEN 1 ELSE 3 END), " +
+      s"track_code = (CASE track_code WHEN 0 THEN 0 WHEN 1 THEN 2 WHEN 2 THEN 1 ELSE 3 END) " +
+      s"where project_link.project_id = $projectId and project_link.road_number = $roadNumber and project_link.road_part_number = $roadPartNumber"
     Q.updateNA(updateProjectLink).execute
   }
 

@@ -236,7 +236,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       val roadLinkMap = roadLinks.map(rl => rl.linkId -> rl).toMap
 
       val (addressesToCreate, unchanged) = newRoadAddresses.values.flatten.toSeq.partition(_.id == NewRoadAddress)
-      val savedRoadAddresses = addressesToCreate.map(r =>
+      val savedRoadAddresses = addressesToCreate.filter(r => roadLinkMap.contains(r.linkId)).map(r =>
         r.copy(geometry = GeometryUtils.truncateGeometry3D(roadLinkMap(r.linkId).geometry,
           r.startMValue, r.endMValue), linkGeomSource = roadLinkMap(r.linkId).linkSource))
 
