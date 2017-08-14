@@ -472,7 +472,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       return Seq()
 
     val fetchVVHStartTime = System.currentTimeMillis()
-    val complementedRoadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIdsToGet, newTransaction)
+    val complementedRoadLinks = roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(linkIdsToGet, newTransaction, frozenTimeVVHAPIServiceEnabled)
     val fetchVVHEndTime = System.currentTimeMillis()
     logger.info("End fetch vvh road links in %.3f sec".format((fetchVVHEndTime - fetchVVHStartTime) * 0.001))
     val fetchProjectLinks = ProjectDAO.getProjectLinks(projectId).groupBy(_.linkId)
