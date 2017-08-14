@@ -72,13 +72,16 @@ object DataFixture {
       println(s"****** Missing or bad value for digiroad2.viite.importTimeStamp in properties: '$geometryAdjustedTimeStamp' ******")
     } else {
       println(s"****** Road address geometry timestamp is $geometryAdjustedTimeStamp ******")
-      val ts = geometryAdjustedTimeStamp.toLong
       val vvhClientProd = if (isDevDatabase) {
         Some(new VVHClient(dr2properties.getProperty("digiroad2.VVHProdRestApiEndPoint", "http://172.17.204.39:6080/arcgis/rest/services/VVH_OTH/")))
       } else {
         None
       }
-      dataImporter.importRoadAddressData(Conversion.database(), vvhClient, vvhClientProd, ts)
+      val importOptions = ImportOptions(
+        onlyComplementaryLinks = false,
+        useFrozenLinkService = dr2properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean,
+        geometryAdjustedTimeStamp.toLong)
+      dataImporter.importRoadAddressData(Conversion.database(), vvhClient, vvhClientProd, importOptions)
     }
     println(s"Road address import complete at time: ${DateTime.now()}")
     println()
