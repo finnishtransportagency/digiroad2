@@ -249,6 +249,7 @@
        style: PointAssetStyle(asset.layerName),
        mapOverlay: mapOverlay,
        layerName: asset.layerName,
+       assetLabel: asset.label,
        newAsset: asset.newAsset,
        roadAddressInfoPopup: roadAddressInfoPopup,
        editConstrains : asset.editConstrains || function() {return false;}
