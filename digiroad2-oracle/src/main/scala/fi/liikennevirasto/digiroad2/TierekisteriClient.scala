@@ -193,29 +193,30 @@ object Operation {
   case object Noop extends Operation { def value = 3 }
 }
 
-sealed trait TRLaneArrangementType {
+sealed trait TRAssetType {
   def value: Int
 }
 object TRLaneArrangementType {
   val values = Set(MassTransitLane)
 
-  def apply(value: Int): TRLaneArrangementType = {
+  def apply(value: Int): TRAssetType = {
     values.find(_.value == value).getOrElse(Unknown)
   }
 
-  case object MassTransitLane extends TRLaneArrangementType { def value = 5; }
-  case object Unknown extends TRLaneArrangementType { def value = 99; }
+  case object MassTransitLane extends TRAssetType { def value = 5; }
+  case object Unknown extends TRAssetType { def value = 99; }
 }
+
 
 object TRDamagedByThaw {
   val values = Set(DamagedByThaw)
 
-  def apply(value: Int): TRLaneArrangementType = {
+  def apply(value: Int): TRAssetType = {
     values.find(_.value == value).getOrElse(Unknown)
   }
 
-  case object DamagedByThaw extends TRLaneArrangementType { def value = 1; }
-  case object Unknown extends TRLaneArrangementType { def value = 99; }
+  case object DamagedByThaw extends TRAssetType { def value = 1; }
+  case object Unknown extends TRAssetType { def value = 99; }
 }
 
 case class TierekisteriMassTransitStop(nationalId: Long,
@@ -260,10 +261,10 @@ case class TierekisteriPavedRoadData(roadNumber: Long, startRoadPartNumber: Long
                                     track: Track, startAddressMValue: Long, endAddressMValue: Long, pavementType: TRPavedRoadType) extends TierekisteriAssetData
 
 case class TierekisteriMassTransitLaneData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
-                                     track: Track, startAddressMValue: Long, endAddressMValue: Long, assetType: TRLaneArrangementType) extends TierekisteriAssetData
+                                     track: Track, startAddressMValue: Long, endAddressMValue: Long, assetType: TRAssetType) extends TierekisteriAssetData
 
 case class TierekisteriDamagedByThawData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
-                                           track: Track, startAddressMValue: Long, endAddressMValue: Long, assetType: TRLaneArrangementType) extends TierekisteriAssetData
+                                           track: Track, startAddressMValue: Long, endAddressMValue: Long, assetType: TRAssetType) extends TierekisteriAssetData
 
 case class TierekisteriError(content: Map[String, Any], url: String)
 

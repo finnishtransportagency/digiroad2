@@ -3,6 +3,7 @@ package fi.liikennevirasto.digiroad2.util
 
 import java.util.Properties
 
+import fi.liikennevirasto.digiroad2.TRDamagedByThaw.DamagedByThaw
 import fi.liikennevirasto.digiroad2.TRLaneArrangementType.MassTransitLane
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset.oracle.OracleAssetDao
@@ -444,7 +445,7 @@ class DamagedByThawAssetTierekisteriImporter extends LinearAssetTierekisteriImpo
     HttpClientBuilder.create().build())
 
   override protected def createLinearAsset(vvhRoadlink: VVHRoadlink, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
-    if (measures.startMeasure != measures.endMeasure && trAssetData.assetType == MassTransitLane) {
+    if (measures.startMeasure != measures.endMeasure && trAssetData.assetType == DamagedByThaw) {
       val assetId = linearAssetService.dao.createLinearAsset(typeId, vvhRoadlink.linkId, false, SideCode.BothDirections.value,
         measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value))
 

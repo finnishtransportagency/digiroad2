@@ -162,7 +162,7 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
   }
 
   def updateDamagedByThawAsset(): Unit = {
-    val lastUpdate = obtainLastExecutionDate(damagedByThawAssetImporterOperations.assetName, massTransitLaneAssetId)
+    val lastUpdate = obtainLastExecutionDate(damagedByThawAssetImporterOperations.assetName, damagedByThawAssetId)
     damagedByThawAssetImporterOperations.updateAssets(lastUpdate)
   }
 }
