@@ -1,28 +1,22 @@
 package fi.liikennevirasto.viite
 
-import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing, Unknown}
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
-import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, RoadLinkService, VVHRoadlink}
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, RoadLinkService}
-import fi.liikennevirasto.viite.dao.CalibrationCode.{AtBeginning, AtBoth, AtEnd, No}
 import fi.liikennevirasto.viite.dao.ProjectState._
 import fi.liikennevirasto.viite.dao.{ProjectDAO, RoadAddressDAO, _}
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process._
-import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import org.joda.time.DateTime
-import org.slf4j.LoggerFactory
 import org.joda.time.format.DateTimeFormat
+import org.slf4j.LoggerFactory
 
-import scala.collection.mutable.ListBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
-import scala.util.Random
 import scala.util.control.NonFatal
 case class PreFillInfo(RoadNumber:BigInt, RoadPart:BigInt)
 
@@ -262,8 +256,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
     //TODO: Check that there are no floating road addresses present when starting
     val projectLinks = ProjectDAO.getProjectLinks(project.id)
-    validateReservations(project.reservedParts, project.ely, projectLinks).orElse {
-    validateReservations(project.reservedParts, project.ely, project.id).orElse {
+    validateReservations(project.reservedParts, project.ely, project.id, projectLinks).orElse {
       val addresses = project.reservedParts.flatMap { roadaddress =>
         val addressesOnPart = RoadAddressDAO.fetchByRoadPart(roadaddress.roadNumber, roadaddress.roadPartNumber, false)
         val mapping = roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(addressesOnPart.map(_.linkId).toSet, false,frozenTimeVVHAPIServiceEnabled)
@@ -284,9 +277,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  private def validateReservations(reservedRoadParts: Seq[ReservedRoadPart], projectEly: Option[Long], projectLinks: List[ProjectLink]): Option[String] = {
-    val errors = reservedRoadParts.flatMap(ra => {
-      val roadPartExistsInAddresses = RoadAddressDAO.roadPartExists(ra.roadNumber, ra.roadPartNumber)
+  private def validateReservations(reservedRoadParts: Seq[ReservedRoadPart], projectEly: Option[Long], projectId: Long, projectLinks: List[ProjectLink]): Option[String] = {
+    val errors = reservedRoadParts.flatMap{ra =>
+      val roadPartExistsInAddresses = RoadAddressDAO.roadPartExists(ra.roadNumber, ra.roadPartNumber) ||
+        ProjectDAO.projectLinksExist(projectId, ra.roadNumber, ra.roadPartNumber).nonEmpty
       val projectLink = projectLinks.find(p => {
         ra.roadNumber == p.roadNumber && ra.roadPartNumber == p.roadPartNumber &&
           ra.discontinuity == p.discontinuity && ra.startDate == p.startDate &&
@@ -296,12 +290,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         Some(s"TIE ${ra.roadNumber} OSA: ${ra.roadPartNumber}")
       } else
         None
-    })
-  private def validateReservations(reservedRoadParts: Seq[ReservedRoadPart], projectEly: Option[Long], projectId: Long): Option[String] = {
-    val errors = reservedRoadParts.flatMap(roadAddress =>
-      if (!RoadAddressDAO.roadPartExists(roadAddress.roadNumber, roadAddress.roadPartNumber) && ProjectDAO.projectLinksExist(projectId,roadAddress.roadNumber, roadAddress.roadPartNumber).isEmpty) {
-        Some(s"TIE ${roadAddress.roadNumber} OSA: ${roadAddress.roadPartNumber}")
-      } else None)
+    }
     val elyErrors = reservedRoadParts.flatMap(roadAddress =>
       if (projectEly.getOrElse(roadAddress.ely) != roadAddress.ely) {
         Some(s"TIE ${roadAddress.roadNumber} OSA: ${roadAddress.roadPartNumber} (ELY != ${projectEly.get})")
@@ -342,16 +331,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val groupedAddresses = createdAddresses.groupBy { address =>
       (address.roadNumber, address.roadPartNumber)
     }.toSeq.sortBy(_._1._2)(Ordering[Long])
-    val adddressestoform = groupedAddresses.map(addressGroup => {
-      val lastAddressM = addressGroup._2.last.endAddrMValue
-      val roadLink = roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(Set(addressGroup._2.last.linkId), false,frozenTimeVVHAPIServiceEnabled)
-      val addressFormLine = ProjectFormLine(addressGroup._2.last.linkId, project.id, addressGroup._1._1,
+    val reservedRoadPartsToUI = groupedAddresses.map(addressGroup => {
       val lastAddress = addressGroup._2.last
       val lastAddressM = lastAddress.endAddrMValue
       val roadLink = if(lastAddress.linkGeomSource == LinkGeomSource.SuravageLinkInterface) {
         roadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(Set(lastAddress.linkId), false)
       } else {
-        roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(lastAddress.linkId), false)
+        roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(Set(addressGroup._2.last.linkId), false, frozenTimeVVHAPIServiceEnabled)
       }
       val addressFormLine = ProjectFormLine(lastAddress.linkId, project.id, addressGroup._1._1,
         addressGroup._1._2, lastAddressM, MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(roadLink.head.municipalityCode, -1),
@@ -360,7 +346,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       addressFormLine
     })
     val addresses = createdAddresses.headOption
-    (adddressestoform, addresses)
+    (reservedRoadPartsToUI, addresses)
   }
 
   private def createNewRoadLinkProject(roadAddressProject: RoadAddressProject) = {
@@ -434,11 +420,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       }.toSeq.sortBy(_._1._2)(Ordering[Long])
       val formInfo: Seq[ProjectFormLine] = groupedAddresses.map(addressGroup => {
         val endAddressM = addressGroup._2.last.endAddrMValue
-        val roadLink = roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(Set(addressGroup._2.head.linkId), false,frozenTimeVVHAPIServiceEnabled)
         val roadLink = if(addressGroup._2.head.linkGeomSource == LinkGeomSource.SuravageLinkInterface){
           roadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(Set(addressGroup._2.head.linkId), false)
         } else {
-          roadLinkService.getRoadLinksByLinkIdsFromVVH(Set(addressGroup._2.head.linkId), false)
+          roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(Set(addressGroup._2.head.linkId), false, frozenTimeVVHAPIServiceEnabled)
         }
         val isRoadPartDirty = addressGroup._2.exists(_.status != LinkStatus.NotHandled)
         val addressFormLine = ProjectFormLine(addressGroup._2.head.linkId, project.id,
@@ -574,8 +559,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       ProjectDAO.getProjectLinks(projectId).groupBy(_.linkId)
     })
     val fetchVVHStartTime = System.currentTimeMillis()
-    val (complementedRoadLinks, complementaryLinkIds) = fetchRoadLinksWithComplementary(boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads)
-    val linkIds = complementedRoadLinks.map(_.linkId).toSet
+    val (complementedRoadLinks, suravageLinks) = fetchRoadLinksWithComplementaryAndSuravage(boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads)
+    val complementaryLinkIds = complementedRoadLinks.filter(_.linkSource == LinkGeomSource.ComplimentaryLinkInterface)
+    val linkIds = complementedRoadLinks.map(_.linkId).toSet ++ suravageLinks.map(_.linkId).toSet
     val fetchVVHEndTime = System.currentTimeMillis()
     logger.info("End fetch vvh road links in %.3f sec".format((fetchVVHEndTime - fetchVVHStartTime) * 0.001))
 
@@ -592,12 +578,18 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
     val buildStartTime = System.currentTimeMillis()
 
-    val projectRoadLinks = complementedRoadLinks.map {
+    val projectRoadLinks = (complementedRoadLinks.map {
       rl =>
         val pl = projectLinks.getOrElse(rl.linkId, Seq())
         rl.linkId -> buildProjectRoadLink(rl, pl)
-    }.filterNot { case (_, optPAL) => optPAL.isEmpty}.toMap.mapValues(_.get)
+    } ++
+      suravageLinks.map {
+        sl =>
+          val pl = projectLinks.getOrElse(sl.linkId, Seq())
+          sl.linkId -> buildProjectRoadLink(sl, pl)
+      }).filterNot { case (_, optPAL) => optPAL.isEmpty}.toMap.mapValues(_.get)
 
+    // TODO: Handle suravage in filler too
     val filledProjectLinks = RoadAddressFiller.fillProjectTopology(complementedRoadLinks, projectRoadLinks)
 
     val nonProjectRoadLinks = complementedRoadLinks.filterNot(rl => projectRoadLinks.keySet.contains(rl.linkId))
@@ -692,13 +684,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       ral.anomaly, ral.lrmPositionId, LinkStatus.Unknown)
   }
 
-  private def buildProjectRoadLink(rl: RoadLink, projectLinks: Seq[ProjectLink]): Option[ProjectAddressLink] = {
+  private def buildProjectRoadLink(rl: RoadLinkLike, projectLinks: Seq[ProjectLink]): Option[ProjectAddressLink] = {
     val pl = projectLinks.size match {
       case 0 => return None
       case 1 => projectLinks.head
       case _ => fuseProjectLinks(projectLinks)
     }
-
+    println(s"Building ${rl.linkId}, ${rl.linkSource}")
     Some(RoadAddressLinkBuilder.projectBuild(rl, pl))
   }
 
@@ -709,6 +701,18 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val (startM, endM, startA, endA) = (links.map(_.startMValue).min, links.map(_.endMValue).max,
       links.map(_.startAddrMValue).min, links.map(_.endAddrMValue).max)
     links.head.copy(startMValue = startM, endMValue = endM, startAddrMValue = startA, endAddrMValue = endA)
+  }
+
+  private def fetchRoadLinksWithComplementaryAndSuravage(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
+                                              everything: Boolean = false, publicRoads: Boolean = false): (Seq[RoadLink], Seq[VVHRoadlink]) = {
+    val combinedFuture=  for{
+      fStandard <- Future(roadLinkService.getViiteRoadLinksFromVVH(boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads,frozenTimeVVHAPIServiceEnabled))
+      fComplementary <- Future(roadLinkService.getComplementaryRoadLinksFromVVH(boundingRectangle, municipalities))
+      fSuravage <- Future(roadLinkService.getSuravageLinksFromVVH(boundingRectangle,municipalities))
+    } yield (fStandard, fComplementary, fSuravage)
+
+    val (roadLinks, complementaryLinks, suravageLinks) = Await.result(combinedFuture, Duration.Inf)
+    (roadLinks ++ complementaryLinks, suravageLinks)
   }
 
   private def fetchRoadLinksWithComplementary(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],

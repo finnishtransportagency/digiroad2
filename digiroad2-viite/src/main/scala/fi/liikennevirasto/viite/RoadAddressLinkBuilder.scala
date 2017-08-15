@@ -1,11 +1,12 @@
 package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2.RoadLinkType.{apply => _, _}
-import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, _}
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{Unknown => _, apply => _, _}
 import fi.liikennevirasto.viite.RoadType._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLink}
@@ -73,11 +74,15 @@ object RoadAddressLinkBuilder {
 
   }
 
-  def projectBuild(roadLink: RoadLink, projectLink: ProjectLink): ProjectAddressLink = {
-    val roadLinkType = if (roadLink.linkSource==LinkGeomSource.ComplimentaryLinkInterface)
-      ComplementaryRoadLinkType
-    else
-      NormalRoadLinkType
+  def projectBuild(roadLink: RoadLinkLike, projectLink: ProjectLink): ProjectAddressLink = {
+    val roadLinkType = roadLink.linkSource match {
+      case NormalLinkInterface => NormalRoadLinkType
+      case ComplimentaryLinkInterface => ComplementaryRoadLinkType
+      case SuravageLinkInterface => SuravageRoadLink
+      case FrozenLinkInterface => NormalRoadLinkType
+      case HistoryLinkInterface => FloatingRoadLinkType
+      case LinkGeomSource.Unknown => UnknownRoadLinkType
+    }
 
     val geom = roadLink.geometry
     val length = GeometryUtils.geometryLength(geom)
@@ -96,8 +101,14 @@ object RoadAddressLinkBuilder {
     val roadName = roadLink.attributes.getOrElse("ROADNAME_FI", roadLink.attributes.getOrElse("ROADNAME_SE", "none")).toString
     val municipalityCode = roadLink.attributes.getOrElse("MUNICIPALITYCODE",0).asInstanceOf[Number].intValue()
 
+    val linkType = roadLink match {
+      case rl: RoadLink => rl.linkType
+      case _ => UnknownLinkType
+    }
+
     ProjectAddressLink(projectLink.id, roadLink.linkId, geom,
-      length, roadLink.administrativeClass, roadLink.linkType, roadLinkType, roadLink.constructionType, roadLink.linkSource, getRoadType(roadLink.administrativeClass, roadLink.linkType), roadName, municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
+      length, roadLink.administrativeClass, linkType, roadLinkType, roadLink.constructionType, roadLink.linkSource,
+      getRoadType(roadLink.administrativeClass, linkType), roadName, municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
       roadLink.attributes, roadNumber, roadPartNumber, trackCode, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), projectLink.discontinuity.value,
       projectLink.startAddrMValue, projectLink.endAddrMValue, projectLink.startMValue, projectLink.endMValue,
       projectLink.sideCode,

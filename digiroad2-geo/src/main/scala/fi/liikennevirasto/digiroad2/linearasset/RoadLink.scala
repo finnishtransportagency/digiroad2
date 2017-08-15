@@ -13,6 +13,8 @@ trait RoadLinkLike {
   def trafficDirection: TrafficDirection
   def roadNumber: Option[String]
   def linkSource: LinkGeomSource
+  def attributes: Map[String, Any]
+  def constructionType: ConstructionType
 }
 
 case class RoadLinkProperties(linkId: Long,
