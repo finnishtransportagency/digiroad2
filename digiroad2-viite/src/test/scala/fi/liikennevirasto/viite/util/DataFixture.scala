@@ -72,13 +72,16 @@ object DataFixture {
       println(s"****** Missing or bad value for digiroad2.viite.importTimeStamp in properties: '$geometryAdjustedTimeStamp' ******")
     } else {
       println(s"****** Road address geometry timestamp is $geometryAdjustedTimeStamp ******")
-      val ts = geometryAdjustedTimeStamp.toLong
       val vvhClientProd = if (isDevDatabase) {
         Some(new VVHClient(dr2properties.getProperty("digiroad2.VVHProdRestApiEndPoint", "http://172.17.204.39:6080/arcgis/rest/services/VVH_OTH/")))
       } else {
         None
       }
-      dataImporter.importRoadAddressData(Conversion.database(), vvhClient, vvhClientProd, ts)
+      val importOptions = ImportOptions(
+        onlyComplementaryLinks = false,
+        useFrozenLinkService = dr2properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean,
+        geometryAdjustedTimeStamp.toLong)
+      dataImporter.importRoadAddressData(Conversion.database(), vvhClient, vvhClientProd, importOptions)
     }
     println(s"Road address import complete at time: ${DateTime.now()}")
     println()
@@ -176,7 +179,7 @@ object DataFixture {
       println("Start processing municipality %d".format(municipality))
 
       //Obtain all RoadLink by municipality and change info from VVH
-      val (roadLinks, changedRoadLinks) = roadLinkService.getRoadLinksAndChangesFromVVH(municipality.toInt)
+      val (roadLinks, changedRoadLinks) = roadLinkService.getFrozenViiteRoadLinksAndChangesFromVVH(municipality.toInt,properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
       println ("Total roadlink for municipality " + municipality + " -> " + roadLinks.size)
       println ("Total of changes for municipality " + municipality + " -> " + changedRoadLinks.size)
       if(roadLinks.nonEmpty) {

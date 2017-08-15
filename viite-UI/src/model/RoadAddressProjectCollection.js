@@ -2,6 +2,7 @@
   root.RoadAddressProjectCollection = function(backend) {
     var roadAddressProjects = [];
     var currentRoadPartList = [];
+    var reservedDirtyRoadPartList = [];
     var dirtyRoadPartList = [];
     var projectinfo;
     var currentProject;
@@ -143,7 +144,7 @@
         name: data[0].value,
         startDate: data[1].value,
         additionalInfo: data[2].value,
-        roadPartList: _.map(dirtyRoadPartList, function(part){
+        roadPartList: _.map(dirtyRoadPartList.concat(reservedDirtyRoadPartList), function(part){
           return {discontinuity: part.discontinuity,
                   ely: part.ely,
                   roadLength: part.roadLength,
@@ -300,24 +301,27 @@
 
     var updateFormInfo = function (formInfo) {
       $("#roadpartList").append($("#roadpartList").html(formInfo));
+      $("#newReservedRoads").append($("#newReservedRoads").html(formInfo));
     };
 
     var parseRoadPartInfoToResultRow = function () {
       var listContent = '';
       var index = 0;
-      _.each(dirtyRoadPartList, function (row) {
-        var button = deleteButton(index++);
+      _.each(reservedDirtyRoadPartList, function (row) {
+        var button = deleteButton(index++, row.roadNumber, row.roadPartNumber);
           listContent += '<div style="display:inline-block;">'+ button+ addSmallLabel(row.roadNumber) + addSmallLabel(row.roadPartNumber) + addSmallLabel(row.roadLength) + addSmallLabel(row.discontinuity) + addSmallLabel(row.ely) +'</div>';
         }
       );
       return listContent;
     };
 
-
-    var deleteButton = function(index){
-      return '<button id ="'+index+'" class="delete btn-delete">X</button>';
+    this.getDeleteButton = function (index, roadNumber, roadPartNumber) {
+        return deleteButton(index, roadNumber, roadPartNumber);
     };
 
+    var deleteButton = function(index, roadNumber, roadPartNumber){
+        return '<button roadNumber="'+roadNumber+'" roadPartNumber="'+roadPartNumber+'" id="'+index+'" class="delete btn-delete">X</button>';
+    };
 
     var addToDirtyRoadPartList = function (queryresult) {
       var qRoadparts = [];
@@ -325,19 +329,21 @@
         qRoadparts.push(row);
       });
 
-      var sameElements = arrayIntersection(qRoadparts, dirtyRoadPartList, function (arrayarow, arraybrow) {
+      var sameElements = arrayIntersection(qRoadparts, reservedDirtyRoadPartList, function (arrayarow, arraybrow) {
         return arrayarow.roadPartId === arraybrow.roadPartId;
       });
       _.each(sameElements, function (row) {
         _.remove(qRoadparts, row);
       });
       _.each(qRoadparts, function (row) {
-        dirtyRoadPartList.push(row);
+        reservedDirtyRoadPartList.push(row);
       });
     };
 
-    this.deleteRoadPartFromList = function(id){
-      dirtyRoadPartList.splice(parseInt(id), 1);
+    this.deleteRoadPartFromList = function(list, roadNumber, roadPartNumber){
+        return _.filter(list,function (dirty) {
+            return !(dirty.roadNumber.toString() === roadNumber && dirty.roadPartNumber.toString() === roadPartNumber);
+        });
     };
 
     this.setDirty = function(editedRoadLinks) {
@@ -351,6 +357,18 @@
 
     this.getDirtyRoadParts = function () {
       return dirtyRoadPartList;
+    };
+
+    this.setDirtyRoadParts = function (list) {
+        dirtyRoadPartList = list;
+    };
+
+    this.getReservedDirtyRoadParts = function () {
+      return reservedDirtyRoadPartList;
+    };
+
+    this.setReservedDirtyRoadParts = function (list) {
+        reservedDirtyRoadPartList = list;
     };
 
     this.getCurrentRoadPartList = function(){
@@ -403,8 +421,6 @@
     this.getPublishableStatus = function () {
       return publishableProject;
     };
-
-
 
     this.checkIfReserved = function (data) {
       return backend.checkIfRoadpartReserved(data[3].value === '' ? 0 : parseInt(data[3].value), data[4].value === '' ? 0 : parseInt(data[4].value), data[5].value === '' ? 0 : parseInt(data[5].value), data[1].value);

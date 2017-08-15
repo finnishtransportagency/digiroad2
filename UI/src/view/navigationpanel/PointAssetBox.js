@@ -10,6 +10,25 @@
 
     var editModeToggle = new EditModeToggleButton(toolSelection);
 
+    var trafficSignPanel = (layerName == 'trafficSigns') ?
+            '<div class="panel-section">' +
+              '<div class="checkbox">' +
+                '<label><input name="speedLimits" type="checkbox" /> Nopeusrajoitukset</label> <br>' +
+              '</div>' +
+              '<div class="checkbox">' +
+                '<label><input name="pedestrianCrossings" type="checkbox" /> Suojatiet</label> <br>' +
+              '</div>' +
+              '<div class="checkbox">' +
+                '<label><input name="maximumLengths" type="checkbox" /> Suurin sallittu pituus</label> <br>' +
+              '</div>' +
+              '<div class="checkbox">' +
+                '<label><input name="generalWarnings" type="checkbox" /> Varoitukset</label> <br>' +
+              '</div>' +
+              '<div class="checkbox">' +
+                '<label><input name="turningRestrictions" type="checkbox" /> Kääntymiskiellot</label>' +
+              '</div>' +
+            '</div>' : "";
+
     var complementaryCheckBox = allowComplementaryLinks ?
             '<div class="panel-section">' +
               '<div class="check-box-container">' +
@@ -23,8 +42,8 @@
         '</div>';
     }).join('');
 
-    var legend = '<div class="panel-section panel-legend limit-legend">' + legendTemplate + '</div>';
-    var panel = $('<div class="panel"><header class="panel-header expanded">' + title + '</header>' + legend + complementaryCheckBox + '</div>');
+    var legend = legendTemplate !== "" ? '<div class="panel-section panel-legend limit-legend">' + legendTemplate + '</div>' : "";
+    var panel = $('<div class="panel"><header class="panel-header expanded">' + title + '</header>' + legend + trafficSignPanel + complementaryCheckBox + '</div>');
     panel.append(toolSelection.element);
 
     element.append(panel);
@@ -50,6 +69,23 @@
         }
       }
     });
+
+    var trafficSignHandler = function(event) {
+        var el = $(event.currentTarget);
+        var trafficSignType = el.prop('name');
+        if (el.prop('checked')) {
+          eventbus.trigger('trafficSigns:changeSigns', [trafficSignType, true]);
+        } else {
+          if (applicationModel.isDirty()) {
+            el.prop('checked', true);
+            new Confirm();
+          } else {
+            eventbus.trigger('trafficSigns:changeSigns', [trafficSignType, false]);
+          }
+        }
+    };
+
+    element.find('.checkbox').find('input[type=checkbox]').change(trafficSignHandler);
 
     return {
       title: title,

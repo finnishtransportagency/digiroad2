@@ -20,11 +20,11 @@ case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
       None
     else
     // Linear approximation: addrM = a*mValue + b <=> mValue = (addrM - b) / a
-    sideCode match {
-      case TowardsDigitizing => Some((addrMValue - startAddrMValue) * lrmLength / addressLength + startMValue)
-      case AgainstDigitizing => Some(endMValue - (addrMValue - startAddrMValue) * lrmLength / addressLength)
-      case _ => None
-    }
+      sideCode match {
+        case TowardsDigitizing => Some((addrMValue - startAddrMValue) * lrmLength / addressLength + startMValue)
+        case AgainstDigitizing => Some(endMValue - (addrMValue - startAddrMValue) * lrmLength / addressLength)
+        case _ => None
+      }
   }
   private val addressLength: Long = endAddrMValue - startAddrMValue
   private val lrmLength: Double = Math.abs(endMValue - startMValue)
@@ -53,6 +53,10 @@ class RoadAddressDAO {
     queryList(queryFilter(query))
   }
 
+  def withRoadNumber(road: Long, roadPart:Long, track: Int)(query: String): String = {
+    query + s" WHERE ra.road_number = $road AND ra.TRACK_CODE = $track AND ra.road_part_number = $roadPart and (ra.valid_to > sysdate or ra.valid_to is null) and ra.floating = 0"
+  }
+
   def withRoadAddress(road: Long, roadPart: Long, track: Int, mValue: Double)(query: String): String = {
     query + s" WHERE ra.road_number = $road AND ra.road_part_number = $roadPart " +
       s"  AND ra.track_code = $track AND ra.start_addr_M <= $mValue AND ra.end_addr_M > $mValue" +
@@ -71,7 +75,7 @@ class RoadAddressDAO {
 
   def withRoadAddressSinglePart(roadNumber: Long, startRoadPartNumber: Long, track: Int, startM: Long, endM: Option[Long], optFloating: Option[Int] = None)(query: String): String = {
     val floating = optFloating match {
-      case Some(floatingValue) => "ra.floating = " + floatingValue + ""
+      case Some(floatingValue) => s"AND ra.floating = $floatingValue"
       case None => ""
     }
 

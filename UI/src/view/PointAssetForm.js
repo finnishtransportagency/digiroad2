@@ -3,21 +3,24 @@
     initialize: bindEvents
   };
 
-  function bindEvents(selectedAsset, layerName, localizedTexts) {
+  function bindEvents(selectedAsset, layerName, localizedTexts, editConstrains, roadCollection, applicationModel) {
     var rootElement = $('#feature-attributes');
 
     eventbus.on('application:readOnly', function(readOnly) {
-      toggleMode(rootElement, readOnly);
+      if(applicationModel.getSelectedLayer() == layerName && (!_.isEmpty(roadCollection.getAll()) && !_.isNull(selectedAsset.getId())))
+        toggleMode(rootElement, (editConstrains && editConstrains(selectedAsset)) || readOnly);
     });
 
-    eventbus.on(layerName + ':selected ' + layerName + ':cancelled', function() {
-      renderForm(rootElement, selectedAsset, localizedTexts);
-      toggleMode(rootElement, applicationModel.isReadOnly());
-      if(layerName == 'servicePoints'){
-        rootElement.find('button#save-button').prop('disabled', true);
-        rootElement.find('button#cancel-button').prop('disabled', false);
-      }else{
-        rootElement.find('.form-controls button').prop('disabled', !selectedAsset.isDirty());
+    eventbus.on(layerName + ':selected ' + layerName + ':cancelled roadLinks:fetched', function() {
+      if (!_.isEmpty(roadCollection.getAll()) && !_.isNull(selectedAsset.getId())) {
+        renderForm(rootElement, selectedAsset, localizedTexts, editConstrains, roadCollection);
+        toggleMode(rootElement, editConstrains(selectedAsset) || applicationModel.isReadOnly());
+        if (layerName == 'servicePoints') {
+          rootElement.find('button#save-button').prop('disabled', true);
+          rootElement.find('button#cancel-button').prop('disabled', false);
+        } else {
+          rootElement.find('.form-controls button').prop('disabled', !selectedAsset.isDirty());
+        }
       }
     });
 
@@ -38,60 +41,55 @@
     });
   }
 
-  function renderForm(rootElement, selectedAsset, localizedTexts) {
+  function renderForm(rootElement, selectedAsset, localizedTexts, editConstrains, roadCollection) {
     var id = selectedAsset.getId();
 
-    var title = selectedAsset.isNew() ? "Uusi " + localizedTexts.newAssetLabel : 'ID: ' + id;
-    var header = '<header><span>' + title + '</span>' + renderButtons() + '</header>';
-    var form = renderAssetFormElements(selectedAsset, localizedTexts);
-    var footer = '<footer>' + renderButtons() + '</footer>';
+  var title = selectedAsset.isNew() ? "Uusi " + localizedTexts.newAssetLabel : 'ID: ' + id;
+  var header = '<header><span>' + title + '</span>' + renderButtons() + '</header>';
+  var form = renderAssetFormElements(selectedAsset, localizedTexts);
+  var footer = '<footer>' + renderButtons() + '</footer>';
 
-    rootElement.html(header + form + footer);
+  rootElement.html(header + form + footer);
 
-    rootElement.find('input[type="checkbox"]').on('change', function(event) {
+  rootElement.find('input[type="checkbox"]').on('change', function (event) {
+    var eventTarget = $(event.currentTarget);
+    selectedAsset.set({toBeDeleted: eventTarget.prop('checked')});
+  });
+
+  rootElement.find('input[type="text"]').on('input change', function (event) {
+    var eventTarget = $(event.currentTarget);
+    selectedAsset.set({name: eventTarget.val()});
+  });
+
+  rootElement.find('.linear-asset.form textarea, .form-directional-traffic-sign textarea').on('keyup', function (event) {
       var eventTarget = $(event.currentTarget);
-      selectedAsset.set({ toBeDeleted: eventTarget.prop('checked') });
-    });
+      selectedAsset.set({text: eventTarget.val()});
+  });
 
-    rootElement.find('input[type="text"]').on('input change', function(event) {
-      var eventTarget = $(event.currentTarget);
-      selectedAsset.set({ name: eventTarget.val() });
-    });
-    
-    rootElement.find('.form-directional-traffic-sign textarea').on('keyup', function(event) {
-      var eventTarget = $(event.currentTarget);
-      selectedAsset.set({ text: eventTarget.val() });
-    });
+  rootElement.find('.form-service textarea').on('input change', function (event) {
+    var serviceId = parseInt($(event.currentTarget).data('service-id'), 10);
+    selectedAsset.set({services: modifyService(selectedAsset.get().services, serviceId, {additionalInfo: $(event.currentTarget).val()})});
+  });
 
-    rootElement.find('.linear-asset.form textarea').on('keyup', function(event) {
-      var eventTarget = $(event.currentTarget);
-      selectedAsset.set({ text: eventTarget.val() });
-    });
+  rootElement.find('.service-name').on('input change', function (event) {
+    var serviceId = parseInt($(event.currentTarget).data('service-id'), 10);
+    selectedAsset.set({services: modifyService(selectedAsset.get().services, serviceId, {name: $(event.currentTarget).val()})});
+  });
 
-    rootElement.find('.form-service textarea').on('input change', function(event) {
-      var serviceId = parseInt($(event.currentTarget).data('service-id'), 10);
-      selectedAsset.set({services: modifyService(selectedAsset.get().services, serviceId, {additionalInfo: $(event.currentTarget).val()})});
-    });
+  rootElement.find('.service-parking-place-count').on('input change', function (event) {
+    var serviceId = parseInt($(event.currentTarget).data('service-id'), 10);
+    selectedAsset.set({services: modifyService(selectedAsset.get().services, serviceId, {parkingPlaceCount: parseInt($(event.currentTarget).val(), 10)})});
+  });
 
-    rootElement.find('.service-name').on('input change', function(event) {
-      var serviceId = parseInt($(event.currentTarget).data('service-id'), 10);
-      selectedAsset.set({services: modifyService(selectedAsset.get().services, serviceId, {name: $(event.currentTarget).val()})});
-    });
-
-    rootElement.find('.service-parking-place-count').on('input change', function(event) {
-      var serviceId = parseInt($(event.currentTarget).data('service-id'), 10);
-      selectedAsset.set({services: modifyService(selectedAsset.get().services, serviceId, {parkingPlaceCount: parseInt($(event.currentTarget).val(), 10)})});
-    });
-
-    rootElement.find('.form-service').on('change', '.select-service-type', function(event) {
-      var newServiceType = parseInt($(event.currentTarget).val(), 10);
-      var serviceId = parseInt($(event.currentTarget).data('service-id'), 10);
-      var services = modifyService(selectedAsset.get().services, serviceId, {serviceType: newServiceType});
-      selectedAsset.set({services: services});
-      renderForm(rootElement, selectedAsset, localizedTexts);
-      toggleMode(rootElement, applicationModel.isReadOnly());
-      rootElement.find('.form-controls button').prop('disabled', !selectedAsset.isDirty());
-    });
+  rootElement.find('.form-service').on('change', '.select-service-type', function (event) {
+    var newServiceType = parseInt($(event.currentTarget).val(), 10);
+    var serviceId = parseInt($(event.currentTarget).data('service-id'), 10);
+    var services = modifyService(selectedAsset.get().services, serviceId, {serviceType: newServiceType});
+    selectedAsset.set({services: services});
+    renderForm(rootElement, selectedAsset, localizedTexts, editConstrains, roadCollection);
+    toggleMode(rootElement, editConstrains(selectedAsset) || applicationModel.isReadOnly());
+    rootElement.find('.form-controls button').prop('disabled', !selectedAsset.isDirty());
+  });
 
     function modifyService(services, id, modifications) {
       return _.map(services, function(service) {
@@ -111,8 +109,8 @@
       var generatedId = services.length;
       var newServices = services.concat({id: generatedId, assetId: assetId, serviceType: newServiceType});
       selectedAsset.set({services: newServices});
-      renderForm(rootElement, selectedAsset, localizedTexts);
-      toggleMode(rootElement, applicationModel.isReadOnly());
+      renderForm(rootElement, selectedAsset, localizedTexts, editConstrains, roadCollection);
+      toggleMode(rootElement, editConstrains(selectedAsset) || applicationModel.isReadOnly());
       rootElement.find('.form-controls button').prop('disabled', !selectedAsset.isDirty());
     });
 
@@ -123,6 +121,13 @@
       var services = selectedAsset.get().services;
       var newServices = _.reject(services, { id: serviceId });
       selectedAsset.set({ services: newServices });
+    });
+
+    rootElement.find('.form-traffic-sign input[type=text],select').on('change', function (event) {
+      var eventTarget = $(event.currentTarget);
+      var propertyPublicId = eventTarget.attr('id');
+      var propertyValue = $(event.currentTarget).val();
+      selectedAsset.setPropertyByPublicId(propertyPublicId, propertyValue);
     });
 
     rootElement.find('.form-service').on('change', '.select-service-type-extension', function(event) {
@@ -234,6 +239,60 @@
     ]
   };
 
+  var signTypes = [
+    {value: 1, label:'Nopeusrajoitus'},
+    {value: 2,  label: 'Nopeusrajoitus Päättyy'},
+    {value: 3, label:'Nopeusrajoitusalue'},
+    {value: 4, label:'Nopeusrajoitusalue Päättyy'},
+    {value: 5, label:'Taajama'},
+    {value: 6, label:'Taajama Päättyy'},
+    {value: 7, label:'Suojatie'},
+    {value: 8, label:'Suurin Sallittu Pituus'},
+    {value: 9, label:'Varoitus'},
+    {value: 10, label:'Vasemmalle Kääntyminen Kielletty'},
+    {value: 11, label:'Oikealle Kääntyminen Kielletty'},
+    {value: 12, label:'U-Käännös Kielletty'}
+  ];
+
+  var sortAndFilterTrafficSignProperties = function(properties) {
+    var propertyOrdering = [
+      'trafficSigns_type',
+      'trafficSigns_value',
+      'trafficSigns_info'];
+
+    return _.sortBy(properties, function(property) {
+      return _.indexOf(propertyOrdering, property.publicId);
+    }).filter(function(property){
+      return _.indexOf(propertyOrdering, property.publicId) >= 0;
+    });
+  };
+
+  var textHandler = function (property) {
+    var propertyValue = (property.values.length === 0) ? '' : property.values[0].propertyValue;
+    return '' +
+        '    <div class="form-group editable form-traffic-sign">' +
+        '        <label class="control-label">' + property.localizedName + '</label>' +
+        '        <p class="form-control-static">' + (propertyValue || '–') + '</p>' +
+        '        <input type="text" class="form-control" id="' + property.publicId + '" value="' + propertyValue + '">' +
+        '    </div>';
+  };
+
+  var singleChoiceHandler = function (property) {
+    var propertyValue = (property.values.length === 0) ? '' : _.first(property.values).propertyValue;
+    var propertyDisplayValue = (property.values.length === 0) ? '' : _.first(property.values).propertyDisplayValue;
+    var trafficSignOptions = _.map(signTypes, function(signType) {
+      return $('<option>', {value: signType.value, selected: propertyValue == signType.value, text: signType.label})[0].outerHTML;
+    }).join('');
+    return '' +
+        '    <div class="form-group editable form-traffic-sign">' +
+        '      <label class="control-label">' + property.localizedName + '</label>' +
+        '      <p class="form-control-static">' + (propertyDisplayValue || '-') + '</p>' +
+        '      <select class="form-control" style="display:none" id="' + property.publicId + '">  ' +
+        trafficSignOptions +
+        '      </select>' +
+        '    </div>';
+  };
+
   function renderValueElement(asset) {
     if (asset.obstacleType) {
       return '' +
@@ -263,7 +322,7 @@
           '        <p class="form-control-static">' + (asset.name || '–') + '</p>' +
           '        <input type="text" class="form-control" value="' + (asset.name || '')  + '">' +
           '    </div>';
-      } else if (asset.validityDirection) {
+      } else if (asset.validityDirection && !asset.propertyData) {
         return '' +
             '  <div class="form-group editable form-directional-traffic-sign">' +
             '      <label class="control-label">Teksti</label>' +
@@ -281,12 +340,37 @@
         .join('');
 
       return '' +
-        '    <div class="form-group editable form-service">' +
-        '      <ul>' +
-               services +
-               renderNewServiceElement() +
-        '      </ul>' +
-        '    </div>';
+          '    <div class="form-group editable form-service">' +
+          '      <ul>' +
+          services +
+          renderNewServiceElement() +
+          '      </ul>' +
+          '    </div>';
+    } else if (asset.propertyData) {
+      var allTrafficSignProperties = asset.propertyData;
+      var trafficSignSortedProperties = sortAndFilterTrafficSignProperties(allTrafficSignProperties);
+
+      var components = _.reduce(_.map(trafficSignSortedProperties, function (feature) {
+        feature.localizedName = window.localizedStrings[feature.publicId];
+        var propertyType = feature.propertyType;
+
+        if (propertyType === "text")
+          return textHandler(feature);
+
+        if (propertyType === "single_choice")
+          return singleChoiceHandler(feature);
+
+      }), function(prev, curr) { return prev + curr; }, '');
+
+      if(asset.validityDirection)
+        return components +
+            '    <div class="form-group editable form-directional-traffic-sign edit-only">' +
+            '      <label class="control-label">Vaikutussuunta</label>' +
+            '      <button id="change-validity-direction" class="form-control btn btn-secondary btn-block">Vaihda suuntaa</button>' +
+            '    </div>';
+
+      return components;
+
     } else {
       return '';
     }

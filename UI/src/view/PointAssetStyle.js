@@ -32,6 +32,12 @@
     else if (layerName === 'servicePoints') {
       return [];
     }
+    else if (layerName === 'trafficSigns') {
+      featureTypeRules = [
+        new StyleRule().where('floating').is(false).use({ icon: {  src: 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow.svg'} } ),
+        new StyleRule().where('floating').is(true).use({ icon: {  src: 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow-warning.svg'} } )
+      ];
+    }
     else {
         featureTypeRules = [
             new StyleRule().where('floating').is(false).use({

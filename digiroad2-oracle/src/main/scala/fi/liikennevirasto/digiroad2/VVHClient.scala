@@ -196,11 +196,12 @@ object VVHClient {
 
 class VVHClient(vvhRestApiEndPoint: String) {
   lazy val roadLinkData: VVHRoadLinkClient = new VVHRoadLinkClient(vvhRestApiEndPoint)
+  lazy val frozenTimeRoadLinkData: VVHRoadLinkClient = new VVHFrozenTimeRoadLinkClientServicePoint(vvhRestApiEndPoint)
   lazy val roadLinkChangeInfo: VVHChangeInfoClient = new VVHChangeInfoClient(vvhRestApiEndPoint)
   lazy val complementaryData: VVHComplementaryClient = new VVHComplementaryClient(vvhRestApiEndPoint)
   lazy val historyData: VVHHistoryClient = new VVHHistoryClient(vvhRestApiEndPoint)
   lazy val roadNodesData: VVHRoadNodesClient = new VVHRoadNodesClient(vvhRestApiEndPoint)
-  lazy val suravageData: VVHSuravageClient = new VVHSuravageClient((vvhRestApiEndPoint))
+  lazy val suravageData: VVHSuravageClient = new VVHSuravageClient(vvhRestApiEndPoint)
 
   def fetchRoadLinkByLinkId(linkId: Long): Option[VVHRoadlink] = {
     roadLinkData.fetchByLinkId(linkId) match {
@@ -488,6 +489,12 @@ trait VVHClientOperations {
   }
 
 }
+
+
+class VVHFrozenTimeRoadLinkClientServicePoint(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvhRestApiEndPoint){
+  protected override val serviceName = "Roadlink_temp"
+}
+
 
 class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
 
