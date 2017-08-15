@@ -104,7 +104,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   def getRoadAddressLinksWithSuravage(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],everything: Boolean = false) :Seq[RoadAddressLink] ={
     val combinedFuture =for{
-      fRoadLink <- Future(getRoadAddressLinks(boundingRectangle, Seq(), municipalities, everything,frozenTimeVVHAPIServiceEnabled))
+      fRoadLink <- Future(getRoadAddressLinks(boundingRectangle, Seq(), municipalities, everything))
       fSuravage <- Future(getSuravageRoadLinkAddresses(boundingRectangle, municipalities))
     } yield (fRoadLink, fSuravage)
     val (roadLinkList,suravageList) =Await.result(combinedFuture, Duration.Inf)
@@ -120,8 +120,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   def getRoadAddressLinks(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
                           everything: Boolean = false, publicRoads: Boolean = false): Seq[RoadAddressLink] = {
-    def complementaryLinkFilter(roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],
-                                everything: Boolean = false, publicRoads: Boolean = false)(roadAddressLink: RoadAddressLink) = {
+    def complementaryLinkFilter(roadAddressLink: RoadAddressLink) = {
       everything || publicRoads || roadNumberLimits.exists {
         case (start, stop) => roadAddressLink.roadNumber >= start && roadAddressLink.roadNumber <= stop
       }
@@ -158,7 +157,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
     publishChangeSet(changeSet)
     val returningTopology = filledTopology.filter(link => !complementaryLinkIds.contains(link.linkId) ||
-      complementaryLinkFilter(roadNumberLimits, municipalities, everything, publicRoads)(link))
+      complementaryLinkFilter(link))
 
     returningTopology ++ missingFloating.flatMap(_._2)
 
