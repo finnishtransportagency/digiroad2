@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.digiroad2.util.RoadAddressException
 import fi.liikennevirasto.viite.dao._
-import fi.liikennevirasto.viite.model.{ProjectAddressLink, ProjectLinkPartitioner, RoadAddressLink, RoadAddressLinkPartitioner}
+import fi.liikennevirasto.viite.model._
 import fi.liikennevirasto.viite.{ProjectService, ReservedRoadPart, RoadAddressService}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
@@ -101,24 +101,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val linkId = params("linkId").toLong
     val roadLinks = roadAddressService.getRoadAddressLink(linkId) ++ roadAddressService.getSuravageRoadLinkAddressesByLinkIds(Set(linkId))
     val projectLinks = projectService.getProjectRoadLinksByLinkIds(Set(linkId))
-    if (roadLinks.nonEmpty) {
-      val roadLink = roadLinks.tail.foldLeft(roadLinks.head) { case (a, b) =>
-        a.copy(startAddressM = Math.min(a.startAddressM, b.startAddressM), endAddressM = Math.max(a.endAddressM, b.endAddressM),
-          startMValue = Math.min(a.startMValue, b.endMValue))
-      }
-      Map("middlePoint" -> GeometryUtils.calculatePointFromLinearReference(roadLink.geometry,
-        roadLink.length / 2.0)) ++ roadAddressLinkToApi(roadLink)
-    } else if(projectLinks.nonEmpty){
-      val roadLink = projectLinks.tail.foldLeft(projectLinks.head) { case (a, b) =>
-        a.copy(startAddressM = Math.min(a.startAddressM, b.startAddressM), endAddressM = Math.max(a.endAddressM, b.endAddressM),
-          startMValue = Math.min(a.startMValue, b.endMValue))
-      }
-      Map("middlePoint" -> GeometryUtils.calculatePointFromLinearReference(roadLink.geometry,
-        roadLink.length / 2.0)) ++ projectAddressLinkToApi(roadLink)
-    }
-    else {
-      Map("success"->false, "reason"->("Link " + linkId + " not found"))
-    }
+    foldSegments(roadLinks).orElse(foldSegments(projectLinks)).map(midPoint).getOrElse(
+      Map("success"->false, "reason"->("Link " + linkId + " not found")))
   }
 
 
@@ -253,7 +237,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-
   put("/roadlinks/roadaddress/project/directionchangenewroadlink"){
 
     try { //check for validity
@@ -272,8 +255,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       Map("success" -> false,"errorMessage"->errorMessage)
     }
   }
-
-
 
   get("/roadlinks/roadaddress/project/all") {
     projectService.getRoadAddressAllProjects().map(roadAddressProjectToApi)
@@ -347,9 +328,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val zoomLevel = chooseDrawType(params.getOrElse("zoom", "5"))
     val projectId: Long = params.get("id") match {
       case Some (s) if s != "" && s.toLong != 0 => s.toLong
-      case _ =>
-
-        0L
+      case _ => 0L
     }
     if (projectId == 0)
       BadRequest("Missing mandatory 'id' parameter")
@@ -462,7 +441,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     BoundingRectangle(Point(BBOXList(0), BBOXList(1)), Point(BBOXList(2), BBOXList(3)))
   }
 
-  def roadAddressLinkToApi(roadAddressLink: RoadAddressLink): Map[String, Any] = {
+  private def roadAddressLinkLikeToApi(roadAddressLink: RoadAddressLinkLike): Map[String, Any] = {
     Map(
       "success"->true,
       "segmentId" -> roadAddressLink.id,
@@ -488,8 +467,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "startAddressM" -> roadAddressLink.startAddressM,
       "endAddressM" -> roadAddressLink.endAddressM,
       "discontinuity" -> roadAddressLink.discontinuity,
-      "startDate" -> roadAddressLink.startDate,
-      "endDate" -> roadAddressLink.endDate,
       "anomaly" -> roadAddressLink.anomaly.value,
       "roadLinkType" -> roadAddressLink.roadLinkType.value,
       "constructionType" ->roadAddressLink.constructionType.value,
@@ -497,46 +474,23 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "endMValue" -> roadAddressLink.endMValue,
       "sideCode" -> roadAddressLink.sideCode.value,
       "linkType" -> roadAddressLink.linkType.value,
-      "roadLinkSource" ->  roadAddressLink.roadLinkSource.value,
+      "roadLinkSource" ->  roadAddressLink.roadLinkSource.value
+    )
+  }
+
+  def roadAddressLinkToApi(roadAddressLink: RoadAddressLink): Map[String, Any] = {
+    roadAddressLinkLikeToApi(roadAddressLink) ++
+    Map(
+      "startDate" -> roadAddressLink.startDate,
+      "endDate" -> roadAddressLink.endDate,
       "newGeometry" -> roadAddressLink.newGeometry
     )
   }
 
   def projectAddressLinkToApi(projectAddressLink: ProjectAddressLink): Map[String, Any] = {
+    roadAddressLinkLikeToApi(projectAddressLink) ++
     Map(
-      "segmentId" -> projectAddressLink.id,
-      "id" -> projectAddressLink.id,
-      "linkId" -> projectAddressLink.linkId,
-      "mmlId" -> projectAddressLink.attributes.get("MTKID"),
-      "points" -> projectAddressLink.geometry,
-      "calibrationPoints" -> Seq(calibrationPoint(projectAddressLink.geometry, projectAddressLink.startCalibrationPoint),
-        calibrationPoint(projectAddressLink.geometry, projectAddressLink.endCalibrationPoint)),
-      "administrativeClass" -> projectAddressLink.administrativeClass.toString,
-      "roadClass" -> roadAddressService.roadClass(projectAddressLink.roadNumber),
-      "roadType" -> projectAddressLink.roadType.displayValue,
-      "modifiedAt" -> projectAddressLink.modifiedAt,
-      "modifiedBy" -> projectAddressLink.modifiedBy,
-      "municipalityCode" -> projectAddressLink.attributes.get("MUNICIPALITYCODE"),
-      "roadNameFi" -> projectAddressLink.attributes.get("ROADNAME_FI"),
-      "roadNameSe" -> projectAddressLink.attributes.get("ROADNAME_SE"),
-      "roadNameSm" -> projectAddressLink.attributes.get("ROADNAME_SM"),
-      "roadNumber" -> projectAddressLink.roadNumber,
-      "roadPartNumber" -> projectAddressLink.roadPartNumber,
-      "elyCode" -> projectAddressLink.elyCode,
-      "trackCode" -> projectAddressLink.trackCode,
-      "startAddressM" -> projectAddressLink.startAddressM,
-      "endAddressM" -> projectAddressLink.endAddressM,
-      "discontinuity" -> projectAddressLink.discontinuity,
-      "anomaly" -> projectAddressLink.anomaly.value,
-      "roadLinkType" -> projectAddressLink.roadLinkType.value,
-      "constructionType" ->projectAddressLink.constructionType.value,
-      "startMValue" -> projectAddressLink.startMValue,
-      "endMValue" -> projectAddressLink.endMValue,
-      "sideCode" -> projectAddressLink.sideCode.value,
-      "linkType" -> projectAddressLink.linkType.value,
-      "roadLinkSource" ->  projectAddressLink.roadLinkSource.value,
-      "status" -> projectAddressLink.status.value,
-      "length" -> projectAddressLink.length
+      "status" -> projectAddressLink.status.value
     )
   }
 
@@ -547,6 +501,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "statusDescription" -> roadAddressProject.status.description,
       "name" -> roadAddressProject.name,
       "createdBy" -> roadAddressProject.createdBy,
+      //TODO: force non-null in database by constraint, remove null checks here. Merge this with below method.
       "createdDate" -> { if (roadAddressProject.createdDate==null){null} else {roadAddressProject.createdDate.toString}},
       "dateModified" -> { if (roadAddressProject.dateModified==null){null} else {formatToString(roadAddressProject.dateModified.toString)}},
       "startDate" -> { if (roadAddressProject.startDate==null){null} else {formatToString(roadAddressProject.startDate.toString)}},
@@ -580,6 +535,30 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "roadLength" -> reservedRoadPart.roadLength,
       "discontinuity" -> reservedRoadPart.discontinuity.description
     )
+  }
+
+  // Fold segments on same link together
+  // TODO: add here start / end dates unique values?
+  private def foldSegments[T <: RoadAddressLinkLike](links: Seq[T]): Option[T] = {
+    if (links.nonEmpty)
+      Some(links.tail.foldLeft(links.head) {
+        case (a: RoadAddressLink, b) =>
+          a.copy(startAddressM = Math.min(a.startAddressM, b.startAddressM), endAddressM = Math.max(a.endAddressM, b.endAddressM),
+            startMValue = Math.min(a.startMValue, b.endMValue)).asInstanceOf[T]
+        case (a: ProjectAddressLink, b) =>
+          a.copy(startAddressM = Math.min(a.startAddressM, b.startAddressM), endAddressM = Math.max(a.endAddressM, b.endAddressM),
+            startMValue = Math.min(a.startMValue, b.endMValue)).asInstanceOf[T]
+      })
+    else
+      None
+  }
+
+  private def midPoint(link: RoadAddressLinkLike) = {
+    Map("middlePoint" -> GeometryUtils.calculatePointFromLinearReference(link.geometry,
+      link.length / 2.0)) ++ (link match {
+      case l: RoadAddressLink => roadAddressLinkToApi(l)
+      case l: ProjectAddressLink => projectAddressLinkToApi(l)
+    })
   }
 
   def formatToString(entryDate: String): String = {
