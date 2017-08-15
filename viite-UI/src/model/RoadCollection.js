@@ -196,15 +196,6 @@
         });
       });
     };
-
-    this.getSuravageGroup = function(id) {
-      return _.find(roadLinkGroupsSuravage, function(roadLinkGroup) {
-        return _.some(roadLinkGroup, function(roadLink) {
-          return roadLink.getId() === id;
-        });
-      });
-    };
-
     this.getGroupByLinkId = function (linkId) {
       return _.find(roadLinkGroups, function(roadLinkGroup) {
         return _.some(roadLinkGroup, function(roadLink) {
