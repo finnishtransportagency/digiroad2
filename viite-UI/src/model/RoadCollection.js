@@ -149,6 +149,12 @@
       });
     };
 
+    this.getSuravageLinks = function() {
+      return _.map(_.flatten(roadLinkGroupsSuravage), function(roadLink) {
+        return roadLink.getData();
+      });
+    };
+
     this.getAllTmp = function(){
       return tmpRoadAddresses;
     };
