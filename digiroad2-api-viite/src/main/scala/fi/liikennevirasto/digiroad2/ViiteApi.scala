@@ -206,7 +206,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val roadAddressProject = ProjectConverter.toRoadAddressProject(project, user)
     try {
       val (projectSaved, addr, info, success) = projectService.createRoadLinkProject(roadAddressProject)
-      Map("project" -> projectToApi(projectSaved), "projectAddresses" -> addr, "formInfo" -> info,
+      Map("project" -> roadAddressProjectToApi(projectSaved), "projectAddresses" -> addr, "formInfo" -> info,
         "success" -> success)
     } catch {
       case ex: IllegalArgumentException => BadRequest(s"A project with id ${project.id} has already been created")
@@ -229,7 +229,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       val (projectSaved, addr, _, success) = projectService.saveRoadLinkProject(roadAddressProject)
       val info = projectService.getProjectsWithReservedRoadParts(projectSaved.id)._2
       val trPreview= projectService.getChangeProject(project.id)
-      Map("project" -> projectToApi(projectSaved), "projectAddresses" -> addr, "formInfo" -> info, "trPreview"->trPreview,
+      Map("project" -> roadAddressProjectToApi(projectSaved), "projectAddresses" -> addr, "formInfo" -> info, "trPreview"->trPreview,
         "success" -> success)
     } catch {
       case ex: IllegalArgumentException =>
@@ -495,33 +495,18 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   def roadAddressProjectToApi(roadAddressProject: RoadAddressProject): Map[String, Any] = {
     Map(
       "id" -> roadAddressProject.id,
+      "name" -> roadAddressProject.name,
+      "createdBy" -> roadAddressProject.createdBy,
+      "createdDate" -> formatToString(roadAddressProject.createdDate.toString),
+      "dateModified" -> formatToString(roadAddressProject.dateModified.toString),
+      "startDate" -> formatToString(roadAddressProject.startDate.toString),
+      "modifiedBy" -> roadAddressProject.modifiedBy,
+      "additionalInfo" -> roadAddressProject.additionalInfo,
+      "status" -> roadAddressProject.status,
       "statusCode" -> roadAddressProject.status.value,
       "statusDescription" -> roadAddressProject.status.description,
-      "name" -> roadAddressProject.name,
-      "createdBy" -> roadAddressProject.createdBy,
-      //TODO: force non-null in database by constraint, remove null checks here. Merge this with below method.
-      "createdDate" -> { if (roadAddressProject.createdDate==null){null} else {roadAddressProject.createdDate.toString}},
-      "dateModified" -> { if (roadAddressProject.dateModified==null){null} else {formatToString(roadAddressProject.dateModified.toString)}},
-      "startDate" -> { if (roadAddressProject.startDate==null){null} else {formatToString(roadAddressProject.startDate.toString)}},
-      "modifiedBy" -> roadAddressProject.modifiedBy,
-      "additionalInfo" -> roadAddressProject.additionalInfo,
       "statusInfo" -> roadAddressProject.statusInfo,
       "ely" -> roadAddressProject.ely.getOrElse(-1)
-    )
-  }
-
-  def projectToApi(roadAddressProject: RoadAddressProject) : Map[String, Any] = {
-    val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
-    Map(
-      "id" -> roadAddressProject.id,
-      "dateModified" -> roadAddressProject.dateModified.toString(formatter),
-      "startDate" -> roadAddressProject.startDate.toString(formatter),
-      "additionalInfo" -> roadAddressProject.additionalInfo,
-      "createdBy" -> roadAddressProject.createdBy,
-      "modifiedBy" -> roadAddressProject.modifiedBy,
-      "name" -> roadAddressProject.name,
-      "status" -> roadAddressProject.status,
-      "statusInfo" -> roadAddressProject.statusInfo
     )
   }
 
