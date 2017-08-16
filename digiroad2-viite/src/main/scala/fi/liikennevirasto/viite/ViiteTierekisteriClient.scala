@@ -206,52 +206,49 @@ object ViiteTierekisteriClient {
   }
 
   def getProjectStatus(projectId: Long): Map[String,Any] = {
-    implicit val formats = DefaultFormats
-    val request = new HttpGet(getRestEndPoint + "addresschange/" + projectId)
-    request.addHeader("X-Authorization", "Basic " + auth.getAuthInBase64)
-    val response = client.execute(request)
-    try {
-      val receivedData = responseMapper(parse(StreamInput(response.getEntity.getContent)).extract[TRstatusresponse])
-      Map(
-        "id" -> receivedData.id,
-        "id_tr_projekti" -> receivedData.trProjectId.getOrElse("null"),
-        "projekti" -> receivedData.trSubProjectId.getOrElse("null"),
-        "tunnus" -> receivedData.trTrackingCode.getOrElse("null"),
-        "status" -> receivedData.status.getOrElse("null"),
-        "name" -> receivedData.name.getOrElse("null"),
-        "change_date" -> receivedData.changeDate.getOrElse("null"),
-        "ely" -> receivedData.ely.getOrElse("null"),
-        "muutospvm" -> receivedData.trModifiedDate.getOrElse("null"),
-        "user" -> receivedData.user.getOrElse("null"),
-        "published_date" -> receivedData.trPublishedDate.getOrElse("null"),
-        "job_number" -> receivedData.trJobNumber.getOrElse("null"),
-        "error_message" -> receivedData.errorMessage.getOrElse("null"),
-        "start_time" -> receivedData.trProcessingStarted.getOrElse("null"),
-        "end_time" -> receivedData.trProcessingEnded.getOrElse("null"),
-        "error_code" -> receivedData.errorCode.getOrElse("null"),
-        "success" -> "true"
-      )
-    } catch {
-      case NonFatal(e) =>
-        logger.error(s"GET from Tierekisteri failed for project ${projectId}: ${e.getMessage}", e)
+    getProjectStatusObject(projectId) match {
+      case Some(receivedData) =>
+        Map(
+          "id" -> receivedData.id,
+          "id_tr_projekti" -> receivedData.trProjectId.getOrElse("null"),
+          "projekti" -> receivedData.trSubProjectId.getOrElse("null"),
+          "tunnus" -> receivedData.trTrackingCode.getOrElse("null"),
+          "status" -> receivedData.status.getOrElse("null"),
+          "name" -> receivedData.name.getOrElse("null"),
+          "change_date" -> receivedData.changeDate.getOrElse("null"),
+          "ely" -> receivedData.ely.getOrElse("null"),
+          "muutospvm" -> receivedData.trModifiedDate.getOrElse("null"),
+          "user" -> receivedData.user.getOrElse("null"),
+          "published_date" -> receivedData.trPublishedDate.getOrElse("null"),
+          "job_number" -> receivedData.trJobNumber.getOrElse("null"),
+          "error_message" -> receivedData.errorMessage.getOrElse("null"),
+          "start_time" -> receivedData.trProcessingStarted.getOrElse("null"),
+          "end_time" -> receivedData.trProcessingEnded.getOrElse("null"),
+          "error_code" -> receivedData.errorCode.getOrElse("null"),
+          "success" -> "true"
+        )
+      case _ =>
         Map("success" -> "false")
-    } finally {
-      response.close()
     }
   }
 
-  def getProjectStatusObject(projectid:Long): Option[TRProjectStatus] = {
+  def getProjectStatusObject(projectId:Long): Option[TRProjectStatus] = {
+    fetchTRProjectStatus(projectId).map(responseMapper)
+  }
+
+  private def fetchTRProjectStatus(projectId: Long): Option[TRstatusresponse] = {
     implicit val formats = DefaultFormats
-    val request = new HttpGet(s"${getRestEndPoint}addresschange/$projectid")
+    val request = new HttpGet(s"${getRestEndPoint}addresschange/$projectId")
     request.addHeader("X-Authorization", "Basic " + auth.getAuthInBase64)
 
     val response = client.execute(request)
     try {
       val  receivedData = parse(StreamInput(response.getEntity.getContent)).extract[TRstatusresponse]
-      response.close()
-      Option(responseMapper(receivedData))
+      Option(receivedData)
     } catch {
-      case NonFatal(e) => None
+      case NonFatal(e) =>
+        logger.error(s"GET from Tierekisteri failed for project $projectId: ${e.getMessage}", e)
+        None
     }finally {
       response.close()
     }

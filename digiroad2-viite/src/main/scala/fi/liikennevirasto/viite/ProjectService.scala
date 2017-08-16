@@ -478,7 +478,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def enrichTerminations(terminations: Seq[RoadAddress], roadlinks: Seq[RoadLink]): Seq[RoadAddress] = {
     val withRoadType = terminations.par.map{
       t =>
-        val relatedRoadLink = roadlinks.filter(rl => rl.linkId == t.linkId).headOption
+        val relatedRoadLink = roadlinks.find(rl => rl.linkId == t.linkId)
         relatedRoadLink match {
           case None => t
           case Some(rl) =>
