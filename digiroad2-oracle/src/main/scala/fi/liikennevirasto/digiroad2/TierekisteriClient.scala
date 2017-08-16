@@ -193,30 +193,33 @@ object Operation {
   case object Noop extends Operation { def value = 3 }
 }
 
-sealed trait TRAssetType {
+sealed trait TRLaneArrangementType {
   def value: Int
 }
 object TRLaneArrangementType {
   val values = Set(MassTransitLane)
 
-  def apply(value: Int): TRAssetType = {
+  def apply(value: Int): TRLaneArrangementType = {
     values.find(_.value == value).getOrElse(Unknown)
   }
 
-  case object MassTransitLane extends TRAssetType { def value = 5; }
-  case object Unknown extends TRAssetType { def value = 99; }
+  case object MassTransitLane extends TRLaneArrangementType { def value = 5; }
+  case object Unknown extends TRLaneArrangementType { def value = 99; }
 }
 
+sealed trait TRDamagedByThaw {
+  def value: Int
+}
 
 object TRDamagedByThaw {
   val values = Set(DamagedByThaw)
 
-  def apply(value: Int): TRAssetType = {
+  def apply(value: Int): TRDamagedByThaw = {
     values.find(_.value == value).getOrElse(Unknown)
   }
 
-  case object DamagedByThaw extends TRAssetType { def value = 1; }
-  case object Unknown extends TRAssetType { def value = 99; }
+  case object DamagedByThaw extends TRDamagedByThaw { def value = 1; }
+  case object Unknown extends TRDamagedByThaw { def value = 99; }
 }
 
 case class TierekisteriMassTransitStop(nationalId: Long,
@@ -261,10 +264,10 @@ case class TierekisteriPavedRoadData(roadNumber: Long, startRoadPartNumber: Long
                                     track: Track, startAddressMValue: Long, endAddressMValue: Long, pavementType: TRPavedRoadType) extends TierekisteriAssetData
 
 case class TierekisteriMassTransitLaneData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
-                                     track: Track, startAddressMValue: Long, endAddressMValue: Long, assetType: TRAssetType) extends TierekisteriAssetData
+                                     track: Track, startAddressMValue: Long, endAddressMValue: Long, laneType: TRLaneArrangementType) extends TierekisteriAssetData
 
 case class TierekisteriDamagedByThawData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
-                                           track: Track, startAddressMValue: Long, endAddressMValue: Long, assetType: TRAssetType) extends TierekisteriAssetData
+                                           track: Track, startAddressMValue: Long, endAddressMValue: Long, assetType: TRDamagedByThaw) extends TierekisteriAssetData
 
 case class TierekisteriError(content: Map[String, Any], url: String)
 
@@ -908,9 +911,9 @@ class TierekisteriMassTransitLaneAssetClient(trEndPoint: String, trEnable: Boole
     val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
     val endMValue = convertToLong(getMandatoryFieldValue(data, trEndMValue)).get
     val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
-    val assetType = convertToInt(getMandatoryFieldValue(data, trKAISTATY)).get
+    val laneType = convertToInt(getMandatoryFieldValue(data, trKAISTATY)).get
 
-    TierekisteriMassTransitLaneData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue, TRLaneArrangementType.apply(assetType))
+    TierekisteriMassTransitLaneData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue, TRLaneArrangementType.apply(laneType))
   }
 }
 
@@ -933,7 +936,7 @@ class TierekisteriDamagedByThawAssetClient(trEndPoint: String, trEnable: Boolean
     val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
     val assetType = convertToInt(getMandatoryFieldValue(data, trKRAJT)).get
 
-    TierekisteriDamagedByThawData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue, TRLaneArrangementType.apply(assetType))
+    TierekisteriDamagedByThawData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue, TRDamagedByThaw.apply(assetType))
   }
 }
 
