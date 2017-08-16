@@ -24,6 +24,8 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
   val linearAssetDao = new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
   val mockTrImporter: TierekisteriDataImporter = MockitoSugar.mock[TierekisteriDataImporter]
   val mockTRPavedRoadClient: TierekisteriPavedRoadAssetClient = MockitoSugar.mock[TierekisteriPavedRoadAssetClient]
+  val mockTRDamageByThawClient: TierekisteriDamagedByThawAssetClient = MockitoSugar.mock[TierekisteriDamagedByThawAssetClient]
+
 
   lazy val roadWidthImporterOperations: RoadWidthTierekisteriImporter = {
     new RoadWidthTierekisteriImporter()
@@ -79,6 +81,16 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     override lazy val vvhClient: VVHClient = mockVVHClient
     override def withDynTransaction[T](f: => T): T = f
   }
+
+  class TestDamageByThawOperations extends DamagedByThawAssetTierekisteriImporter {
+    override lazy val assetDao: OracleAssetDao = mockAssetDao
+    override lazy val roadAddressDao: RoadAddressDAO = mockRoadAddressDAO
+    override val tierekisteriClient: TierekisteriDamagedByThawAssetClient = mockTRDamageByThawClient
+    override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
+    override lazy val vvhClient: VVHClient = mockVVHClient
+    override def withDynTransaction[T](f: => T): T = f
+  }
+
 
   test("assets splited are split properly") {
     val trl = TierekisteriLightingData(4L, 203L, 208L, Track.RightSide, 3184L, 6584L)
@@ -475,7 +487,6 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     }
   }
 
-
   test("Should not create asset with TR type Unknown") {
     TestTransactions.runWithRollback() {
 
@@ -503,6 +514,35 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       testPavedRoad.importAssets()
       val asset = linearAssetDao.fetchLinearAssetsByLinkIds(testPavedRoad.typeId, Seq(5001), LinearAssetTypes.numericValuePropertyId)
       asset.length should be(0)
+    }
+  }
+  test("Should create asset with TR type valid") {
+    TestTransactions.runWithRollback() {
+
+      val testDamageByThaw = new TestDamageByThawOperations
+      val roadNumber = 4L
+      val startRoadPartNumber = 200L
+      val endRoadPartNumber = 200L
+      val startAddressMValue = 0L
+      val endAddressMValue = 250L
+
+      val tr = TierekisteriDamagedByThawData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, startAddressMValue, endAddressMValue, TRDamagedByThaw.DamagedByThaw)
+      val ra = ViiteRoadAddress(1L, roadNumber, startRoadPartNumber, Track.RightSide, 5, 100, endAddressMValue, None, None, 1L, 5001, 0, 300, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
+
+      val vvhRoadLink = VVHRoadlink(5001, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
+
+      when(mockAssetDao.getMunicipalities).thenReturn(Seq())
+      when(mockRoadAddressDAO.getRoadNumbers()).thenReturn(Seq(roadNumber))
+      when(mockTRDamageByThawClient.fetchActiveAssetData(any[Long])).thenReturn(Seq(tr))
+      when(mockRoadAddressDAO.withRoadAddressSinglePart(any[Long], any[Long], any[Int], any[Long], any[Option[Long]], any[Option[Int]])(any[String])).thenReturn("")
+      when(mockRoadAddressDAO.getRoadAddress(any[String => String].apply)).thenReturn(Seq(ra))
+      when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+      when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
+      when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
+
+      testDamageByThaw.importAssets()
+      val asset = linearAssetDao.fetchLinearAssetsByLinkIds(testDamageByThaw.typeId, Seq(5001), LinearAssetTypes.numericValuePropertyId)
+      asset.length should be(1)
     }
   }
 }
