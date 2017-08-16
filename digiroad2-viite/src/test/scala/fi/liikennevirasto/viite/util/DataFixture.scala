@@ -33,6 +33,8 @@ object DataFixture {
 
   lazy val continuityChecker = new ContinuityChecker(new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer))
 
+  private lazy val geometryFrozen: Boolean = dr2properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean
+
   private def loopRoadParts(roadNumber: Int) = {
     var partNumberOpt = RoadAddressDAO.fetchNextRoadPartNumber(roadNumber, 0)
     while (partNumberOpt.nonEmpty) {
@@ -239,6 +241,11 @@ object DataFixture {
     }
 
   }
+
+  private def showFreezeInfo() = {
+    println("Road link geometry freeze is active; exiting without changes")
+  }
+
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
@@ -257,6 +264,8 @@ object DataFixture {
     }
 
     args.headOption match {
+      case Some ("find_floating_road_addresses")  if geometryFrozen =>
+        showFreezeInfo()
       case Some ("find_floating_road_addresses") =>
         findFloatingRoadAddresses()
       case Some ("import_road_addresses") =>
@@ -265,18 +274,28 @@ object DataFixture {
         importComplementaryRoadAddress()
       case Some ("recalculate_addresses") =>
         recalculate()
+      case Some ("update_missing") if geometryFrozen =>
+        showFreezeInfo()
       case Some ("update_missing") =>
         updateMissingRoadAddresses()
       case Some("fuse_multi_segment_road_addresses") =>
         combineMultipleSegmentsOnLinks()
+      case Some("update_road_addresses_geometry_no_complementary") if geometryFrozen =>
+        showFreezeInfo()
       case Some("update_road_addresses_geometry_no_complementary") =>
         updateRoadAddressesGeometry(true)
+      case Some("update_road_addresses_geometry") if geometryFrozen =>
+        showFreezeInfo()
       case Some("update_road_addresses_geometry") =>
         updateRoadAddressesGeometry(false)
       case Some ("import_road_address_change_test_data") =>
         importRoadAddressChangeTestData()
+      case Some ("apply_change_information_to_road_address_links") if geometryFrozen =>
+        showFreezeInfo()
       case Some ("apply_change_information_to_road_address_links") =>
         applyChangeInformationToRoadAddressLinks()
+      case Some ("update_road_address_link_source") if geometryFrozen =>
+        showFreezeInfo()
       case Some ("update_road_address_link_source") =>
         updateRoadAddressGeometrySource()
       case _ => println("Usage: DataFixture import_road_addresses | recalculate_addresses | update_missing | " +
