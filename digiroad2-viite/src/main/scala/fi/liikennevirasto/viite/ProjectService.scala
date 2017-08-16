@@ -1,5 +1,6 @@
 package fi.liikennevirasto.viite
 
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.SuravageLinkInterface
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
@@ -442,7 +443,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       fSuravage <- Future(roadAddressService.getSuravageRoadLinkAddresses(boundingRectangle, Set()))
     } yield (fProjectLink, fSuravage)
     val (projectLinkList,suravageList) =Await.result(combinedFuture, Duration.Inf)
-    roadAddressLinkToProjectAddressLink(suravageList) ++ projectLinkList
+    val projectSuravageLinkIds = projectLinkList.filter(_.roadLinkSource == SuravageLinkInterface).map(_.linkId).toSet
+    roadAddressLinkToProjectAddressLink(suravageList.filterNot(s => projectSuravageLinkIds.contains(s.linkId))) ++
+      projectLinkList
   }
 
   def getChangeProject(projectId:Long): Option[ChangeProject] = {
@@ -607,7 +610,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
     val returningTopology = filledTopology.filter(link => !complementaryLinkIds.contains(link.linkId) ||
       complementaryLinkFilter(roadNumberLimits, municipalities, everything, publicRoads)(link))
-
     returningTopology.map(toProjectAddressLink) ++ filledProjectLinks
 
   }
