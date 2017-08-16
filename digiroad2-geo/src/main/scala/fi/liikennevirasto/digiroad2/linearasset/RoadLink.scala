@@ -9,6 +9,7 @@ trait RoadLinkLike {
   def linkId: Long
   def municipalityCode: Int
   def geometry: Seq[Point]
+  def length: Double
   def administrativeClass: AdministrativeClass
   def trafficDirection: TrafficDirection
   def roadNumber: Option[String]

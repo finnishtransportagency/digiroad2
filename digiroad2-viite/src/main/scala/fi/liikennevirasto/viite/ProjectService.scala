@@ -560,7 +560,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     })
     val fetchVVHStartTime = System.currentTimeMillis()
     val (complementedRoadLinks, suravageLinks) = fetchRoadLinksWithComplementaryAndSuravage(boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads)
-    val complementaryLinkIds = complementedRoadLinks.filter(_.linkSource == LinkGeomSource.ComplimentaryLinkInterface)
+    val complementaryLinkIds = complementedRoadLinks.filter(_.linkSource == LinkGeomSource.ComplimentaryLinkInterface).map(_.linkId)
     val linkIds = complementedRoadLinks.map(_.linkId).toSet ++ suravageLinks.map(_.linkId).toSet
     val fetchVVHEndTime = System.currentTimeMillis()
     logger.info("End fetch vvh road links in %.3f sec".format((fetchVVHEndTime - fetchVVHStartTime) * 0.001))
@@ -589,8 +589,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           sl.linkId -> buildProjectRoadLink(sl, pl)
       }).filterNot { case (_, optPAL) => optPAL.isEmpty}.toMap.mapValues(_.get)
 
-    // TODO: Handle suravage in filler too
-    val filledProjectLinks = RoadAddressFiller.fillProjectTopology(complementedRoadLinks, projectRoadLinks)
+    val filledProjectLinks = RoadAddressFiller.fillProjectTopology(complementedRoadLinks ++ suravageLinks, projectRoadLinks)
 
     val nonProjectRoadLinks = complementedRoadLinks.filterNot(rl => projectRoadLinks.keySet.contains(rl.linkId))
 
@@ -691,7 +690,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       case _ => fuseProjectLinks(projectLinks)
     }
     println(s"Building ${rl.linkId}, ${rl.linkSource}")
-    Some(RoadAddressLinkBuilder.projectBuild(rl, pl))
+    Some(ProjectAddressLinkBuilder.build(rl, pl))
   }
 
   private def fuseProjectLinks(links: Seq[ProjectLink]) = {

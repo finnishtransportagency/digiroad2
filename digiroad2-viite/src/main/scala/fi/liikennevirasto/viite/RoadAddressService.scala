@@ -188,11 +188,12 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
     val fetchRoadAddressesByBoundingBoxF = Future(fetchRoadAddressesByBoundingBox(boundingRectangle, false, true, roadNumberLimits))
     val fetchMissingRoadAddressesByBoundingBoxF = Future(fetchMissingRoadAddressesByBoundingBox(boundingRectangle))
+    val changedRoadLinksF = roadLinkService.getChangeInfoFromVVHF(boundingRectangle, municipalities)
     val fetchVVHStartTime = System.currentTimeMillis()
 
     val (floatingViiteRoadLinks, addresses, floating) = Await.result(fetchRoadAddressesByBoundingBoxF, Duration.Inf)
     val missingViiteRoadAddress = Await.result(fetchMissingRoadAddressesByBoundingBoxF, Duration.Inf)
-    val changedRoadLinks = roadLinkService.getChangeInfoFromVVH(boundingRectangle, municipalities)
+    val changedRoadLinks = Await.result(changedRoadLinksF, Duration.Inf)
 
 
     val roadLinks = roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(addresses.keySet ++ missingViiteRoadAddress.keySet,newTransaction,frozenTimeVVHAPIServiceEnabled)

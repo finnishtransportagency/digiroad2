@@ -784,7 +784,11 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     getViiteRoadLinksWithoutChangesFromVVH(linkIds, municipalities)._1
 
   def getChangeInfoFromVVH(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[ChangeInfo] ={
-    Await.result(vvhClient.roadLinkChangeInfo.fetchByBoundsAndMunicipalitiesF(bounds, municipalities), atMost = Duration.Inf)
+    Await.result(getChangeInfoFromVVHF(bounds, municipalities), atMost = Duration.Inf)
+  }
+
+  def getChangeInfoFromVVHF(bounds: BoundingRectangle, municipalities: Set[Int]): Future[Seq[ChangeInfo]] ={
+    vvhClient.roadLinkChangeInfo.fetchByBoundsAndMunicipalitiesF(bounds, municipalities)
   }
 
   /**
