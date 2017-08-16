@@ -691,7 +691,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       case 1 => projectLinks.head
       case _ => fuseProjectLinks(projectLinks)
     }
-    println(s"Building ${rl.linkId}, ${rl.linkSource}")
     Some(ProjectAddressLinkBuilder.build(rl, pl))
   }
 
