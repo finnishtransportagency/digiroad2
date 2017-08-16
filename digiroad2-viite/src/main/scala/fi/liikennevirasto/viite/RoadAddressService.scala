@@ -186,16 +186,16 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   def getRoadAddressLinksByLinkId(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int]): Seq[RoadAddressLink] = {
 
+    val fetchAddrStartTime = System.currentTimeMillis()
     val fetchRoadAddressesByBoundingBoxF = Future(fetchRoadAddressesByBoundingBox(boundingRectangle, false, true, roadNumberLimits))
     val fetchMissingRoadAddressesByBoundingBoxF = Future(fetchMissingRoadAddressesByBoundingBox(boundingRectangle))
     val changedRoadLinksF = roadLinkService.getChangeInfoFromVVHF(boundingRectangle, municipalities)
-    val fetchVVHStartTime = System.currentTimeMillis()
 
     val (floatingViiteRoadLinks, addresses, floating) = Await.result(fetchRoadAddressesByBoundingBoxF, Duration.Inf)
     val missingViiteRoadAddress = Await.result(fetchMissingRoadAddressesByBoundingBoxF, Duration.Inf)
-    val changedRoadLinks = Await.result(changedRoadLinksF, Duration.Inf)
+    logger.info("End fetch addresses in %.3f sec".format((System.currentTimeMillis() - fetchAddrStartTime) * 0.001))
 
-
+    val fetchVVHStartTime = System.currentTimeMillis()
     val roadLinks = roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(addresses.keySet ++ missingViiteRoadAddress.keySet,newTransaction,frozenTimeVVHAPIServiceEnabled)
 
     val fetchVVHEndTime = System.currentTimeMillis()
@@ -203,8 +203,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
     val linkIds = roadLinks.map(_.linkId).toSet
 
-    val filteredChangedRoadLinks = changedRoadLinks.filter(crl => crl.oldId.exists(id =>
+    val filteredChangedRoadLinks = Await.result(changedRoadLinksF, Duration.Inf).filter(crl => crl.oldId.exists(id =>
       addresses.keySet.contains(id) || linkIds.contains(id)))
+    logger.info("End change info in %.3f sec".format((System.currentTimeMillis() - fetchVVHEndTime) * 0.001))
+
     val complementedWithChangeAddresses = applyChanges(roadLinks, if (!frozenTimeVVHAPIServiceEnabled) filteredChangedRoadLinks else Seq(), addresses)
 
     val fetchMissingRoadAddressEndTime = System.currentTimeMillis()
