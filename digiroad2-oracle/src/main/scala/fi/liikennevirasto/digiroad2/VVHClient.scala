@@ -468,10 +468,6 @@ trait VVHClientOperations {
     queryByMunicipalitiesAndBounds(bounds, municipalities, None)
   }
 
-  protected def queryByMunicipalitiesAndBounds(bounds: BoundingRectangle): Seq[VVHType] = {
-    queryByMunicipalitiesAndBounds(bounds, Set[Int](), None)
-  }
-
   /**
     * Returns VVH road links in polygon area.
     */

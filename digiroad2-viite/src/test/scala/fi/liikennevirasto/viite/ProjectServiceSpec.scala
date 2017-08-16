@@ -210,7 +210,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       val roadAddressProject = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", addresses, None)
       val savedProject = projectService.createRoadLinkProject(roadAddressProject)._1
       val startingLinkId = ProjectDAO.getProjectLinks(savedProject.id).filter(_.track == Track.LeftSide).minBy(_.startAddrMValue).linkId
-      val boundingRectangle = roadLinkService.fetchViiteVVHRoadlinks(Set(startingLinkId)).map { vrl =>
+      val boundingRectangle = roadLinkService.fetchVVHRoadlinks(Set(startingLinkId)).map { vrl =>
         val x = vrl.geometry.map(l => l.x)
         val y = vrl.geometry.map(l => l.y)
 
