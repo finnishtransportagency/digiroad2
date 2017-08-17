@@ -83,6 +83,7 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
   val laneArragementTRCode ="tl161"
   val pavedRoadTRCode ="tl137"
   val damagedByThawTRCode = "tl162"
+  val europeanRoadTRCode ="tl130"
 
   val trafficVolume: Map[String,List[Map[String, Any]]] ={
     Map(
@@ -163,6 +164,24 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
         List(
           Map(
             "TIETOLAJI" -> pavedRoadTRCode,   //Field code
+            "TIE" -> 45,                     //Road number
+            "OSA" -> 1,                      //Road part number
+            "LOSA" -> 1,                      //End Road part number
+            "ETAISYYS" -> 0,                 //Start distance
+            "LET" -> 0,                       //End distance
+            "AJORATA" -> 0,                   //Track Code
+            "PAALLUOK" -> 1                   //Pavement Type
+          )
+        )
+    )
+  }
+
+  val europeanRoad: Map[String,List[Map[String, Any]]] ={
+    Map(
+      "Data" ->
+        List(
+          Map(
+            "TIETOLAJI" -> europeanRoadTRCode,   //Field code
             "TIE" -> 45,                     //Road number
             "OSA" -> 1,                      //Road part number
             "LOSA" -> 1,                      //End Road part number
@@ -302,6 +321,8 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
       pavedRoad
     } else if (fieldCode == damagedByThawTRCode) {
       damagedByThaw
+    } else if (fieldCode == europeanRoadTRCode) {
+      europeanRoad
     }
   }
 
@@ -321,6 +342,8 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
       damagedByThaw
     } else if (fieldCode == laneArragementTRCode) {
       massTransitLane
+    } else if (fieldCode == europeanRoadTRCode) {
+      europeanRoad
     }
   }
 
@@ -340,6 +363,8 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
       damagedByThaw
     } else if (fieldCode == laneArragementTRCode) {
       massTransitLane
+    } else if (fieldCode == europeanRoadTRCode) {
+      europeanRoad
     }
   }
 
@@ -357,6 +382,8 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
       damagedByThaw
     } else if (fieldCode == laneArragementTRCode) {
       massTransitLane
+    } else if (fieldCode == europeanRoadTRCode) {
+      europeanRoad
     }
   }
 }
