@@ -542,6 +542,7 @@
       ]},
       label: new TrafficSignLabel(),
       collection: TrafficSignsCollection,
+      allowGrouping: true,
       formLabels: {
         singleFloatingAssetLabel: 'liikennemerkin',
         manyFloatingAssetsLabel: 'liikennemerkit',
