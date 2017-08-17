@@ -248,9 +248,12 @@
        selectedAsset: asset.selectedPointAsset,
        style: PointAssetStyle(asset.layerName),
        mapOverlay: mapOverlay,
+       assetLabel: asset.label,
        layerName: asset.layerName,
        newAsset: asset.newAsset,
        roadAddressInfoPopup: roadAddressInfoPopup,
+       allowGrouping: asset.allowGrouping,
+       assetGrouping: new AssetGrouping(applicationModel),
        editConstrains : asset.editConstrains || function() {return false;}
      });
      return acc;
