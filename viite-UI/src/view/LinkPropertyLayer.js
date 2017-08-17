@@ -26,6 +26,7 @@
     var geometryChangedAnomaly=2;
     var againstDigitizing = 3;
     var towardsDigitizing = 2;
+    var linkSourceSuravage=3;
     var activeLayer = false;
 
     var indicatorLayer = new ol.layer.Vector({
@@ -513,7 +514,7 @@
       cachedMarker = new LinkPropertyMarker(selectedLinkProperty);
       removeSelectInteractions();
       var roadLinks = roadCollection.getAll();
-
+      var suravageLinks=roadCollection.getSuravageLinks();
       var linkIdsToRemove = applicationModel.getCurrentAction() !== applicationModel.actionCalculated ? [] : selectedLinkProperty.linkIdsToExclude();
       if(floatingMarkerLayer.getSource() !== null)
         floatingMarkerLayer.getSource().clear();
@@ -536,6 +537,15 @@
 
         var anomalousRoadMarkers = _.filter(roadLinks, function(roadlink) {
           return roadlink.anomaly === noAddressAnomaly;
+        });
+        var suravageRoadMarkers = _.filter(suravageLinks, function(roadlink) {
+          return roadlink.roadLinkSource === linkSourceSuravage;
+        });
+
+        _.each(suravageRoadMarkers, function(directionLink) {
+          var marker = cachedMarker.createMarker(directionLink);
+          if(map.getView().getZoom() > zoomlevels.minZoomForDirectionalMarkers)
+            directionMarkerLayer.getSource().addFeature(marker);
         });
 
         var geometryChangedRoadMarkers = _.filter(roadLinks, function(roadlink){

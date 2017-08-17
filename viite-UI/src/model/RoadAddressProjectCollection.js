@@ -139,6 +139,7 @@
       }
       var dataJson = {
         id: projectid,
+        projectEly: currentProject.project.ely,
         status: 1,
         name: data[0].value,
         startDate: data[1].value,
@@ -149,7 +150,8 @@
                   roadLength: part.roadLength,
                   roadNumber: part.roadNumber,
                   roadPartId: 0,
-                  roadPartNumber: part.roadPartNumber
+                  roadPartNumber: part.roadPartNumber,
+                  startingLinkId: part.startingLinkId
                   };
         })
       };
@@ -251,7 +253,8 @@
         Number($('#roadAddressProject').find('#osa')[0].value),
         Number($('#roadAddressProject').find('#ajr')[0].value),
         Number($('#roadAddressProject').find('#DiscontinuityDropdown')[0].value),
-        Number($('#roadAddressProject').find('#ely')[0].value)
+        Number($('#roadAddressProject').find('#ely')[0].value),
+        Number(_.first(toBeCreatedLinks).roadLinkSource)
       ];
       backend.insertNewRoadLink(data, function(successObject) {
         if (!successObject.success) {
