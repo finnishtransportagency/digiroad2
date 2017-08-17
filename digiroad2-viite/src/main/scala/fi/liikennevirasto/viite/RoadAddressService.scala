@@ -189,14 +189,15 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val fetchAddrStartTime = System.currentTimeMillis()
     val fetchRoadAddressesByBoundingBoxF = Future(fetchRoadAddressesByBoundingBox(boundingRectangle, false, true, roadNumberLimits))
     val fetchMissingRoadAddressesByBoundingBoxF = Future(fetchMissingRoadAddressesByBoundingBox(boundingRectangle))
-    val changedRoadLinksF = roadLinkService.getChangeInfoFromVVHF(boundingRectangle, municipalities)
 
     val (floatingViiteRoadLinks, addresses, floating) = Await.result(fetchRoadAddressesByBoundingBoxF, Duration.Inf)
     val missingViiteRoadAddress = Await.result(fetchMissingRoadAddressesByBoundingBoxF, Duration.Inf)
     logger.info("End fetch addresses in %.3f sec".format((System.currentTimeMillis() - fetchAddrStartTime) * 0.001))
 
+    val addressLinkIds = addresses.keySet ++ missingViiteRoadAddress.keySet
     val fetchVVHStartTime = System.currentTimeMillis()
-    val roadLinks = roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(addresses.keySet ++ missingViiteRoadAddress.keySet,newTransaction,frozenTimeVVHAPIServiceEnabled)
+    val changedRoadLinksF = roadLinkService.getChangeInfoFromVVHF(addressLinkIds)
+    val roadLinks = roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(addressLinkIds,newTransaction,frozenTimeVVHAPIServiceEnabled)
 
     val fetchVVHEndTime = System.currentTimeMillis()
     logger.info("End fetch vvh road links in %.3f sec".format((fetchVVHEndTime - fetchVVHStartTime) * 0.001))
@@ -204,12 +205,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val linkIds = roadLinks.map(_.linkId).toSet
 
     val filteredChangedRoadLinks = Await.result(changedRoadLinksF, Duration.Inf).filter(crl => crl.oldId.exists(id =>
-      addresses.keySet.contains(id) || linkIds.contains(id)))
+      linkIds.contains(id)))
     logger.info("End change info in %.3f sec".format((System.currentTimeMillis() - fetchVVHEndTime) * 0.001))
 
     val complementedWithChangeAddresses = applyChanges(roadLinks, if (!frozenTimeVVHAPIServiceEnabled) filteredChangedRoadLinks else Seq(), addresses)
 
-    val fetchMissingRoadAddressEndTime = System.currentTimeMillis()
     val (changedFloating, missingFloating) = floatingViiteRoadLinks.partition(ral => linkIds.contains(ral._1))
 
     val buildStartTime = System.currentTimeMillis()

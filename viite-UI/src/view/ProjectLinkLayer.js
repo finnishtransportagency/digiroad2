@@ -4,6 +4,7 @@
     var vectorLayer;
     var calibrationPointVector = new ol.source.Vector({});
     var directionMarkerVector = new ol.source.Vector({});
+    var suravageProjectDirectionMarkerVector = new ol.source.Vector({});
     var suravageRoadVector = new ol.source.Vector({});
     var cachedMarker = null;
     var layerMinContentZoomLevels = {};
@@ -62,6 +63,11 @@
       style: function(feature) {
         return styler.generateStyleByFeature(feature.projectLinkData, map.getView().getZoom());
       }
+    });
+
+    var suravageProjectDirectionMarkerLayer =  new ol.layer.Vector({
+      source: suravageProjectDirectionMarkerVector,
+      name: 'suravageProjectDirectionMarkerLayer'
     });
 
     var styleFunction = function (feature, resolution){
@@ -166,9 +172,9 @@
     selectSingleClick.on('select',function(event) {
       var selection = _.find(event.selected, function (selectionTarget) {
         return (!_.isUndefined(selectionTarget.projectLinkData) && (
-            (selectionTarget.projectLinkData.status === notHandledStatus || selectionTarget.projectLinkData.status === newRoadAddressStatus ) ||
-            (selectionTarget.projectLinkData.anomaly==noAddressAnomaly && selectionTarget.projectLinkData.roadLinkType!=floatingRoadLinkType) ||
-            selectionTarget.projectLinkData.roadClass === 99 || selectionTarget.projectLinkData.roadLinkSource === 3)
+          (selectionTarget.projectLinkData.status === notHandledStatus || selectionTarget.projectLinkData.status === newRoadAddressStatus ) ||
+          (selectionTarget.projectLinkData.anomaly==noAddressAnomaly && selectionTarget.projectLinkData.roadLinkType!=floatingRoadLinkType) ||
+          selectionTarget.projectLinkData.roadClass === 99 || selectionTarget.projectLinkData.roadLinkSource === 3)
         );
       });
       selectedProjectLinkProperty.clean();
@@ -231,10 +237,10 @@
     selectDoubleClick.on('select',function(event) {
       var selection = _.find(event.selected, function (selectionTarget) {
         return (!_.isUndefined(selectionTarget.projectLinkData) && (
-            (selectionTarget.projectLinkData.status === notHandledStatus || selectionTarget.projectLinkData.status === newRoadAddressStatus) ||
-            (selectionTarget.projectLinkData.anomaly==noAddressAnomaly && selectionTarget.projectLinkData.roadLinkType!=floatingRoadLinkType) ||
-            selectionTarget.projectLinkData.roadClass === 99 || selectionTarget.projectLinkData.roadLinkSource === 3)
-          );
+          (selectionTarget.projectLinkData.status === notHandledStatus || selectionTarget.projectLinkData.status === newRoadAddressStatus) ||
+          (selectionTarget.projectLinkData.anomaly==noAddressAnomaly && selectionTarget.projectLinkData.roadLinkType!=floatingRoadLinkType) ||
+          selectionTarget.projectLinkData.roadClass === 99 || selectionTarget.projectLinkData.roadLinkSource === 3)
+        );
       });
       selectedProjectLinkProperty.clean();
       if (!_.isUndefined(selection))
@@ -261,6 +267,7 @@
     var clearLayers = function(){
       calibrationPointLayer.getSource().clear();
       directionMarkerLayer.getSource().clear();
+      suravageProjectDirectionMarkerLayer.getSource().clear();
       suravageRoadProjectLayer.getSource().clear();
     };
 
@@ -288,6 +295,16 @@
         if(suravageFeaturesToHighlight.length !== 0){
           addFeaturesToSelection(suravageFeaturesToHighlight);
         }
+
+        var suravageResult = _.filter(suravageProjectDirectionMarkerLayer.getSource().getFeatures(), function(item) {
+          return _.find(suravageFeaturesToHighlight, function(sf) {
+            return sf.projectLinkData.linkId === item.roadLinkData.linkId;
+          });
+        });
+
+        _.each(suravageResult, function(featureMarker){
+          selectSingleClick.getFeatures().push(featureMarker);
+        });
       }
 
       var result = _.filter(directionMarkerLayer.getSource().getFeatures(), function(item) {
@@ -367,38 +384,40 @@
 
       //Ignore if target feature is marker
       if(isDefined(featureAtPixel) && (isDefined(featureAtPixel.roadLinkData) || isDefined(featureAtPixel.projectLinkData))) {
-       var roadData;
-       var coordinate = map.getEventCoordinate(event.originalEvent);
+        var roadData;
+        var coordinate = map.getEventCoordinate(event.originalEvent);
 
-       if(isDefined(featureAtPixel.projectLinkData)) {
-         roadData = featureAtPixel.projectLinkData;
-       }
-       else {
-         roadData = featureAtPixel.roadLinkData;
-       }
-       //TODO roadData !== null is there for test having no info ready (race condition where hower often looses) should be somehow resolved
-        if ( roadData !== null || (roadData.roadNumber!==0 &&roadData.roadPartNumber!==0&&roadData.roadPartNumber!==99 )){
-       infoContent.innerHTML = '<p>' +
-          'Tienumero: ' + roadData.roadNumber + '<br>' +
-          'Tieosanumero: ' + roadData.roadPartNumber + '<br>' +
-          'Ajorata: ' + roadData.trackCode + '<br>' +
-          'AET: ' + roadData.startAddressM + '<br>' +
-          'LET: ' + roadData.endAddressM + '<br>' +'</p>';
-        } else {
-          infoContent.innerHTML = '<p>' +
-          'Tuntematon tien segmentti' +'</p>'; // road with no address
+        if(isDefined(featureAtPixel.projectLinkData)) {
+          roadData = featureAtPixel.projectLinkData;
+        }
+        else {
+          roadData = featureAtPixel.roadLinkData;
+        }
+        //TODO roadData !== null is there for test having no info ready (race condition where hower often looses) should be somehow resolved
+        if (infoContent !== null) {
+          if (roadData !== null || (roadData.roadNumber !== 0 && roadData.roadPartNumber !== 0 && roadData.roadPartNumber !== 99 )) {
+            infoContent.innerHTML = '<p>' +
+              'Tienumero: ' + roadData.roadNumber + '<br>' +
+              'Tieosanumero: ' + roadData.roadPartNumber + '<br>' +
+              'Ajorata: ' + roadData.trackCode + '<br>' +
+              'AET: ' + roadData.startAddressM + '<br>' +
+              'LET: ' + roadData.endAddressM + '<br>' + '</p>';
+          } else {
+            infoContent.innerHTML = '<p>' +
+              'Tuntematon tien segmentti' + '</p>'; // road with no address
+          }
         }
 
-       overlay.setPosition(coordinate);
+        overlay.setPosition(coordinate);
 
       } else {
         overlay.setPosition(undefined);
       }
     };
 
-var isDefined=function(variable) {
- return !_.isUndefined(variable);
-};
+    var isDefined=function(variable) {
+      return !_.isUndefined(variable);
+    };
 
     //Add defined interactions to the map.
     map.addInteraction(selectSingleClick);
@@ -505,10 +524,10 @@ var isDefined=function(variable) {
 
     var redraw = function(){
       var ids = {};
-        _.each(selectedProjectLinkProperty.get(), function (sel) { ids[sel.linkId] = true; });
+      _.each(selectedProjectLinkProperty.get(), function (sel) { ids[sel.linkId] = true; });
 
-        selectedProjectLinkProperty.setCurrent(_.filter(projectCollection.getProjectLinks(), function (projectLink) {
-          return ids[projectLink.getData().linkId];
+      selectedProjectLinkProperty.setCurrent(_.filter(projectCollection.getProjectLinks(), function (projectLink) {
+        return ids[projectLink.getData().linkId];
       }));
       var editedLinks = _.map(projectCollection.getDirty(), function(editedLink) {return editedLink.id;});
 
@@ -517,6 +536,8 @@ var isDefined=function(variable) {
       });
       var suravageProjectRoads = separated[0];
       var suravageFeatures = [];
+      suravageProjectDirectionMarkerLayer.getSource().clear();
+
       _.map(suravageProjectRoads, function(projectLink) {
         var points = _.map(projectLink.points, function (point) {
           return [point.x, point.y];
@@ -527,7 +548,30 @@ var isDefined=function(variable) {
         feature.projectLinkData = projectLink;
         suravageFeatures.push(feature);
       });
+
+      cachedMarker = new LinkPropertyMarker(selectedProjectLinkProperty);
+      var suravageDirectionRoadMarker = _.filter(suravageProjectRoads, function(projectLink) {
+        return projectLink.roadLinkType !== floatingRoadLinkType && projectLink.anomaly !== noAddressAnomaly && projectLink.anomaly !== geometryChangedAnomaly && (projectLink.sideCode === againstDigitizing || projectLink.sideCode === towardsDigitizing);
+      });
+
+      var suravageFeaturesToRemove = [];
+      _.each(selectSingleClick.getFeatures().getArray(), function (feature) {
+        if(feature.getProperties().type && feature.getProperties().type === "marker")
+          suravageFeaturesToRemove.push(feature);
+      });
+      _.each(suravageFeaturesToRemove, function(feature){
+        selectSingleClick.getFeatures().remove(feature);
+      });
+
+      _.each(suravageDirectionRoadMarker, function(directionLink) {
+        var marker = cachedMarker.createMarker(directionLink);
+        if(map.getView().getZoom() > zoomlevels.minZoomForDirectionalMarkers)
+          suravageProjectDirectionMarkerLayer.getSource().addFeature(marker);
+        selectSingleClick.getFeatures().push(marker);
+      });
+      
       suravageRoadProjectLayer.getSource().addFeatures(suravageFeatures);
+
       var projectLinks = separated[1];
       var features = [];
       _.map(projectLinks, function(projectLink) {
@@ -544,8 +588,8 @@ var isDefined=function(variable) {
 
       directionMarkerLayer.getSource().clear();
       cachedMarker = new LinkPropertyMarker(selectedProjectLinkProperty);
-      var directionRoadMarker = _.filter(projectLinks, function(projlink) {
-        return projlink.roadLinkType !== floatingRoadLinkType && projlink.anomaly !== noAddressAnomaly && projlink.anomaly !== geometryChangedAnomaly && (projlink.sideCode === againstDigitizing || projlink.sideCode === towardsDigitizing);
+      var directionRoadMarker = _.filter(projectLinks, function(projectLink) {
+        return projectLink.roadLinkType !== floatingRoadLinkType && projectLink.anomaly !== noAddressAnomaly && projectLink.anomaly !== geometryChangedAnomaly && (projectLink.sideCode === againstDigitizing || projectLink.sideCode === towardsDigitizing);
       });
 
       var featuresToRemove = [];
@@ -560,7 +604,7 @@ var isDefined=function(variable) {
         var marker = cachedMarker.createMarker(directionLink);
         if(map.getView().getZoom() > zoomlevels.minZoomForDirectionalMarkers)
           directionMarkerLayer.getSource().addFeature(marker);
-          selectSingleClick.getFeatures().push(marker);
+        selectSingleClick.getFeatures().push(marker);
       });
 
       calibrationPointLayer.getSource().clear();
@@ -616,6 +660,9 @@ var isDefined=function(variable) {
     eventbus.on('roadAddressProject:fetched', function(newSelection) {
       applicationModel.removeSpinner();
       redraw();
+      _.defer(function(){
+        highlightFeatures();
+      });
     });
 
     eventbus.on('roadAddress:projectLinksEdited',function(){
@@ -629,20 +676,20 @@ var isDefined=function(variable) {
     eventbus.on('map:moved', mapMovedHandler, this);
 
     eventbus.on('layer:selected', function(layer, previouslySelectedLayer) {
-     //TODO create proper system for layer changes and needed calls
-     if (layer !== 'roadAddressProject') {
-       deactivateSelectInteractions(true);
-       removeSelectInteractions();
-     }
-     else {
-       activateSelectInteractions(true);
-       addSelectInteractions();
-     }
-     if (previouslySelectedLayer === 'roadAddressProject') {
-       clearProjectLinkLayer();
-       hideLayer();
-       removeSelectInteractions();
-     }
+      //TODO create proper system for layer changes and needed calls
+      if (layer !== 'roadAddressProject') {
+        deactivateSelectInteractions(true);
+        removeSelectInteractions();
+      }
+      else {
+        activateSelectInteractions(true);
+        addSelectInteractions();
+      }
+      if (previouslySelectedLayer === 'roadAddressProject') {
+        clearProjectLinkLayer();
+        hideLayer();
+        removeSelectInteractions();
+      }
     });
 
     eventbus.on('roadAddressProject:deselectFeaturesSelected', function(){
@@ -653,16 +700,19 @@ var isDefined=function(variable) {
 
     eventbus.on('suravageProjectRoads:toggleVisibility', function(visibility) {
       suravageRoadProjectLayer.setVisible(visibility);
+      suravageProjectDirectionMarkerLayer.setVisible(visibility);
     });
 
     vectorLayer.setVisible(true);
     suravageRoadProjectLayer.setVisible(true);
     calibrationPointLayer.setVisible(true);
     directionMarkerLayer.setVisible(true);
+    suravageProjectDirectionMarkerLayer.setVisible(true);
     map.addLayer(vectorLayer);
     map.addLayer(suravageRoadProjectLayer);
     map.addLayer(calibrationPointLayer);
     map.addLayer(directionMarkerLayer);
+    map.addLayer(suravageProjectDirectionMarkerLayer);
     return {
       show: show,
       hide: hideLayer,

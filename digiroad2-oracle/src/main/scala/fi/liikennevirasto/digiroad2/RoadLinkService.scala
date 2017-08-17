@@ -775,6 +775,10 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     vvhClient.roadLinkChangeInfo.fetchByBoundsAndMunicipalitiesF(bounds, municipalities)
   }
 
+  def getChangeInfoFromVVHF(linkIds: Set[Long]): Future[Seq[ChangeInfo]] ={
+    vvhClient.roadLinkChangeInfo.fetchByLinkIdsF(linkIds)
+  }
+
   /**
     * Gets road links and change data by municipality from VVH. Used to update cache
     */
