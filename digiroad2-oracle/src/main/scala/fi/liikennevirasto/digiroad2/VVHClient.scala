@@ -219,9 +219,10 @@ trait VVHClientOperations {
 
   type VVHType
 
-  protected val linkGeomSource :LinkGeomSource
+  protected val linkGeomSource: LinkGeomSource
   protected def restApiEndPoint: String
   protected def serviceName: String
+  protected val disableGeometry: Boolean
 
   case class VVHError(content: Map[String, Any], url: String)
   class VVHClientException(response: String) extends RuntimeException(response)
@@ -307,8 +308,8 @@ trait VVHClientOperations {
   }
 
   protected def queryParameters(fetchGeometry: Boolean = true): String = {
-    if (fetchGeometry) "returnGeometry=true&returnZ=true&returnM=true&geometryPrecision=3&f=pjson"
-    else "f=pjson"
+    if (fetchGeometry && !disableGeometry) "returnGeometry=true&returnZ=true&returnM=true&geometryPrecision=3&f=pjson"
+    else "returnGeometry=false&f=pjson"
   }
 
   protected def serviceUrl = restApiEndPoint + serviceName + "/FeatureServer/query"
@@ -493,6 +494,7 @@ trait VVHClientOperations {
 
 class VVHFrozenTimeRoadLinkClientServicePoint(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvhRestApiEndPoint){
   protected override val serviceName = "Roadlink_temp"
+  protected override val disableGeometry = false
 }
 
 
@@ -503,6 +505,7 @@ class VVHRoadLinkClient(vvhRestApiEndPoint: String) extends VVHClientOperations{
   protected override val restApiEndPoint = vvhRestApiEndPoint
   protected override val serviceName = "Roadlink_data"
   protected override val linkGeomSource:LinkGeomSource = LinkGeomSource.NormalLinkInterface
+  protected override val disableGeometry = false
 
   protected override def defaultOutFields(): String = {
     "MTKID,LINKID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,SURFACETYPE,END_DATE,STARTNODE,ENDNODE,GEOMETRYLENGTH"
@@ -888,8 +891,9 @@ class VVHChangeInfoClient(vvhRestApiEndPoint: String) extends VVHClientOperation
   protected override val restApiEndPoint = vvhRestApiEndPoint
   protected override val serviceName = "Roadlink_ChangeInfo"
   protected override val linkGeomSource = LinkGeomSource.Unknown
+  protected override val disableGeometry = true
 
-  protected override def defaultOutFields() : String = {
+  protected override def defaultOutFields(): String = {
     "OLD_ID,NEW_ID,MTKID,CHANGETYPE,OLD_START,OLD_END,NEW_START,NEW_END,CREATED_DATE,CONSTRUCTIONTYPE,STARTNODE,ENDNODE"
   }
 
@@ -900,7 +904,7 @@ class VVHChangeInfoClient(vvhRestApiEndPoint: String) extends VVHClientOperation
     optionalFeatures.map(Left(_)).getOrElse(Right(VVHError(content, url)))
   }
 
-  protected override def extractVVHFeature(feature: Map[String, Any]) : ChangeInfo = {
+  protected override def extractVVHFeature(feature: Map[String, Any]): ChangeInfo = {
     val attributes = extractFeatureAttributes(feature)
 
     val oldId = Option(attributes("OLD_ID").asInstanceOf[BigInt]).map(_.longValue())
@@ -932,14 +936,41 @@ class VVHChangeInfoClient(vvhRestApiEndPoint: String) extends VVHClientOperation
     Future(queryByMunicipality(municipality))
   }
 
-  def fetchByPolygon(polygon: Polygon) : Seq[ChangeInfo] = {
+  def fetchByPolygon(polygon: Polygon): Seq[ChangeInfo] = {
     queryByPolygons(polygon)
   }
 
-  def fetchByPolygonF(polygon: Polygon) : Future[Seq[ChangeInfo]] = {
+  def fetchByPolygonF(polygon: Polygon): Future[Seq[ChangeInfo]] = {
     Future(queryByPolygons(polygon))
   }
 
+  def fetchByLinkIdsF(linkIds: Set[Long]): Future[Seq[ChangeInfo]] = {
+    Future(fetchByLinkIds(linkIds))
+  }
+
+  /**
+    * Fetch change information where given link id is in the old_id list (source)
+    *
+    * @param linkIds Link ids to check as sources
+    * @return ChangeInfo for given links
+    */
+  def fetchByLinkIds(linkIds: Set[Long]): Seq[ChangeInfo] = {
+    queryByLinkIds(linkIds)
+  }
+
+  protected def queryByLinkIds(linkIds: Set[Long]): Seq[ChangeInfo] = {
+    val batchSize = 1000
+    val idGroups: List[Set[Long]] = linkIds.grouped(batchSize).toList
+    idGroups.par.flatMap { ids =>
+      val definition = layerDefinition(withFilter("OLD_ID", ids))
+      val url = serviceUrl(definition, queryParameters(false))
+
+      fetchVVHFeatures(url) match {
+        case Left(features) => features.map(extractVVHFeature)
+        case Right(error) => throw new VVHClientException(error.toString)
+      }
+    }.toList
+  }
 }
 
 class VVHRoadNodesClient(vvhRestApiEndPoint: String) extends VVHClientOperations {
@@ -949,6 +980,7 @@ class VVHRoadNodesClient(vvhRestApiEndPoint: String) extends VVHClientOperations
   protected override val restApiEndPoint = vvhRestApiEndPoint
   protected override val serviceName = "Roadnode_data"
   protected override val linkGeomSource = LinkGeomSource.Unknown
+  protected override val disableGeometry = false
 
   protected override def defaultOutFields(): String = {
     "OBJECTID,NODEID,FORMOFNODE,MUNICIPALITYCODE"
@@ -993,6 +1025,7 @@ class VVHComplementaryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClie
   protected override val restApiEndPoint = vvhRestApiEndPoint
   protected override val serviceName = "Roadlink_complimentary"
   protected override val linkGeomSource: LinkGeomSource = LinkGeomSource.ComplimentaryLinkInterface
+  protected override val disableGeometry = false
 
   override def defaultOutFields(): String = {
     "MTKID,LINKID,OBJECTID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,SURFACETYPE,SUBTYPE,CONSTRUCTIONTYPE,CUST_OWNER,GEOMETRYLENGTH"
@@ -1057,6 +1090,7 @@ class VVHHistoryClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vvh
   protected override val restApiEndPoint = vvhRestApiEndPoint
   protected override val serviceName = "Roadlink_data_history"
   protected override val linkGeomSource = LinkGeomSource.HistoryLinkInterface
+  protected override val disableGeometry = false
 
   protected override def defaultOutFields() : String = {
     "MTKID,LINKID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,CONSTRUCTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,SURFACETYPE,END_DATE,LINKID_NEW,OBJECTID,CREATED_DATE,CONSTRUCTIONTYPE,GEOMETRYLENGTH"
@@ -1127,6 +1161,7 @@ class VVHSuravageClient(vvhRestApiEndPoint: String) extends VVHRoadLinkClient(vv
   protected override val restApiEndPoint = vvhRestApiEndPoint
   protected override val serviceName = "Roadlink_suravage"
   protected override val linkGeomSource: LinkGeomSource = LinkGeomSource.SuravageLinkInterface
+  protected override val disableGeometry = false
 
   override def defaultOutFields(): String = {
     "LINKID,OBJECTID,MTKHEREFLIP,MUNICIPALITYCODE,VERTICALLEVEL,HORIZONTALACCURACY,VERTICALACCURACY,MTKCLASS,ADMINCLASS,DIRECTIONTYPE,ROADNAME_FI,ROADNAME_SM,ROADNAME_SE,FROM_LEFT,TO_LEFT,FROM_RIGHT,TO_RIGHT,LAST_EDITED_DATE,ROADNUMBER,ROADPARTNUMBER,VALIDFROM,GEOMETRY_EDITED_DATE,CREATED_DATE,SURFACETYPE,SUBTYPE,CONSTRUCTIONTYPE,CUST_OWNER,GEOMETRYLENGTH"
