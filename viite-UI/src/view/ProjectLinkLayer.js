@@ -394,16 +394,18 @@
           roadData = featureAtPixel.roadLinkData;
         }
         //TODO roadData !== null is there for test having no info ready (race condition where hower often looses) should be somehow resolved
-        if ( roadData !== null || (roadData.roadNumber!==0 &&roadData.roadPartNumber!==0&&roadData.roadPartNumber!==99 )){
-          infoContent.innerHTML = '<p>' +
-            'Tienumero: ' + roadData.roadNumber + '<br>' +
-            'Tieosanumero: ' + roadData.roadPartNumber + '<br>' +
-            'Ajorata: ' + roadData.trackCode + '<br>' +
-            'AET: ' + roadData.startAddressM + '<br>' +
-            'LET: ' + roadData.endAddressM + '<br>' +'</p>';
-        } else {
-          infoContent.innerHTML = '<p>' +
-            'Tuntematon tien segmentti' +'</p>'; // road with no address
+        if (infoContent !== null) {
+          if (roadData !== null || (roadData.roadNumber !== 0 && roadData.roadPartNumber !== 0 && roadData.roadPartNumber !== 99 )) {
+            infoContent.innerHTML = '<p>' +
+              'Tienumero: ' + roadData.roadNumber + '<br>' +
+              'Tieosanumero: ' + roadData.roadPartNumber + '<br>' +
+              'Ajorata: ' + roadData.trackCode + '<br>' +
+              'AET: ' + roadData.startAddressM + '<br>' +
+              'LET: ' + roadData.endAddressM + '<br>' + '</p>';
+          } else {
+            infoContent.innerHTML = '<p>' +
+              'Tuntematon tien segmentti' + '</p>'; // road with no address
+          }
         }
 
         overlay.setPosition(coordinate);
@@ -660,7 +662,7 @@
       redraw();
       _.defer(function(){
         highlightFeatures();
-      })
+      });
     });
 
     eventbus.on('roadAddress:projectLinksEdited',function(){
