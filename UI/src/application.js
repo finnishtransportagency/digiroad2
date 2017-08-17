@@ -248,7 +248,6 @@
        selectedAsset: asset.selectedPointAsset,
        style: PointAssetStyle(asset.layerName),
        mapOverlay: mapOverlay,
-       assetLabel: asset.label,
        layerName: asset.layerName,
        assetLabel: asset.label,
        newAsset: asset.newAsset,
