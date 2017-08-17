@@ -271,14 +271,15 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       val changed = saved.copy(reservedParts = addresses)
       projectService.saveRoadLinkProject(changed)
       val countAfterInsertProjects = projectService.getRoadAddressAllProjects()
+      val projectLinks = ProjectDAO.fetchByProjectNewRoadPart(5, 205, saved.id)
       count = countCurrentProjects.size + 1
       countAfterInsertProjects.size should be(count)
       sqlu"""UPDATE Project_link set status = 1""".execute
       val terminations = ProjectDeltaCalculator.delta(saved.id).terminations
-      terminations should have size (66)
+      terminations should have size (projectLinks.size)
       sqlu"""UPDATE Project_link set status = 2""".execute
       val newCreations = ProjectDeltaCalculator.delta(saved.id).newRoads
-      newCreations should have size (66)
+      newCreations should have size (projectLinks.size)
       val sections = ProjectDeltaCalculator.partition(terminations)
       sections should have size (2)
       sections.exists(_.track == Track.LeftSide) should be(true)
@@ -304,11 +305,12 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       val changed = saved.copy(reservedParts = addresses)
       projectService.saveRoadLinkProject(changed)
       val countAfterInsertProjects = projectService.getRoadAddressAllProjects()
+      val projectLinks = ProjectDAO.fetchByProjectNewRoadPart(5, 205, saved.id)
       count = countCurrentProjects.size + 1
       countAfterInsertProjects.size should be(count)
       sqlu"""UPDATE Project_link set status = 1""".execute
       val terminations = ProjectDeltaCalculator.delta(saved.id).terminations
-      terminations should have size (66)
+      terminations should have size (projectLinks.size)
       val modTerminations = terminations.map(t =>
         if (t.endAddrMValue == 4529)
           t.copy(discontinuity = Discontinuity.MinorDiscontinuity)
