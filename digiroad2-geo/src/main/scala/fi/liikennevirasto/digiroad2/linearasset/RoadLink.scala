@@ -5,10 +5,9 @@ import fi.liikennevirasto.digiroad2.asset._
 
 import scala.util.Try
 
-trait RoadLinkLike {
+trait RoadLinkLike extends PolyLine{
   def linkId: Long
   def municipalityCode: Int
-  def geometry: Seq[Point]
   def length: Double
   def administrativeClass: AdministrativeClass
   def trafficDirection: TrafficDirection
@@ -31,18 +30,16 @@ case class RoadLink(linkId: Long, geometry: Seq[Point],
                     functionalClass: Int, trafficDirection: TrafficDirection,
                     linkType: LinkType, modifiedAt: Option[String], modifiedBy: Option[String],
                     attributes: Map[String, Any] = Map(), constructionType: ConstructionType = ConstructionType.InUse,
-                    linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface ) extends PolyLine with RoadLinkLike {
-
-  val Roadlink_SurfaceType_Unknown = 0
-  val Roadlink_SurfaceType_None = 1
-  val Roadlink_SurfaceType_Paved = 2
+                    linkSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface) extends RoadLinkLike {
 
   def municipalityCode: Int = attributes("MUNICIPALITYCODE").asInstanceOf[BigInt].intValue
   def verticalLevel : Int = attributes("VERTICALLEVEL").asInstanceOf[BigInt].intValue
   def surfaceType : Int = attributes("SURFACETYPE").asInstanceOf[BigInt].intValue
   def roadNumber: Option[String] = attributes.get("ROADNUMBER").map(_.toString)
-  def isPaved : Boolean = surfaceType == Roadlink_SurfaceType_Paved
-  def isNotPaved : Boolean = surfaceType == Roadlink_SurfaceType_None
+
+  //TODO isPaved = !isNotPaved = SurfaceType.apply(surfaceType) match {case SurfaceType.Paved => true case _ => false
+  def isPaved : Boolean = surfaceType == SurfaceType.Paved.value
+  def isNotPaved : Boolean = surfaceType == SurfaceType.None.value
 
   def roadIdentifier: Option[Either[Int, String]] = {
     Try(Left(attributes("ROADNUMBER").asInstanceOf[BigInt].intValue()))
@@ -60,4 +57,21 @@ case class RoadLink(linkId: Long, geometry: Seq[Point],
   }
 
   private def getStringAttribute(name: String) = attributes(name).asInstanceOf[String]
+}
+
+sealed trait SurfaceType {
+  def value: Int
+}
+
+object SurfaceType {
+  val values = Set(Unknown, None, Paved)
+
+  def apply(intValue: Int): SurfaceType = {
+    values.find(_.value == intValue).getOrElse(None)
+  }
+
+  case object Unknown extends SurfaceType { def value = 0 }
+  case object None extends SurfaceType { def value = 1 }
+  case object Paved extends SurfaceType { def value = 2 }
+
 }

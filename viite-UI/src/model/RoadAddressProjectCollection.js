@@ -261,6 +261,7 @@
           new ModalConfirm(successObject.errormessage);
           applicationModel.removeSpinner();
         } else {
+          publishableProject = successObject.publishable;
           eventbus.trigger('projectLink:projectLinksCreateSuccess');
           eventbus.trigger('roadAddress:projectLinksCreateSuccess');
         }

@@ -231,7 +231,7 @@ object ProjectDAO {
   def getRoadAddressProjectById(id: Long): Option[RoadAddressProject] = {
     val where = s""" where id =${id}"""
     val query =
-      s"""SELECT id, state, name, created_by, created_date, start_date, modified_by, modified_date, add_info, ely, status_info
+      s"""SELECT id, state, name, created_by, created_date, start_date, modified_by, COALESCE(modified_date, created_date), add_info, ely, status_info
           FROM project $where"""
     Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String, Option[Long], Option[String])](query).list.map {
       case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo, ely, statusInfo) =>
@@ -242,10 +242,10 @@ object ProjectDAO {
   def getRoadAddressProjects(projectId: Long = 0): List[RoadAddressProject] = {
     val filter = projectId match {
       case 0 => ""
-      case _ => s""" where id =${projectId}"""
+      case _ => s""" where id =$projectId """
     }
     val query =
-      s"""SELECT id, state, name, created_by, created_date, start_date, modified_by, modified_date, add_info, status_info, ely
+      s"""SELECT id, state, name, created_by, created_date, start_date, modified_by, COALESCE(modified_date, created_date), add_info, status_info, ely
           FROM project $filter order by name, id """
     Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String, Option[String], Option[Long])](query).list.map {
       case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo, statusInfo, ely) =>

@@ -30,7 +30,7 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 case class IncompleteLink(linkId: Long, municipalityCode: Int, administrativeClass: AdministrativeClass)
 case class RoadLinkChangeSet(adjustedRoadLinks: Seq[RoadLink], incompleteLinks: Seq[IncompleteLink])
-case class ChangedVVHRoadlink(link: RoadLink, value: String, createdAt: Option[DateTime], changeType: String)
+case class ChangedVVHRoadlink(link: RoadLink, value: String, createdAt: Option[DateTime], changeType: String /*TODO create and use ChangeType case object*/)
 
 sealed trait RoadLinkType {
   def value: Int
@@ -151,8 +151,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       enrichRoadLinksFromVVH(vvhSuravageLinks)
   }
 
-  def getViiteRoadLinksByLinkIdsFromVVH(linkIds: Set[Long], newTransaction: Boolean = true, frozenTimeVVHAPIServiceEnabled:Boolean =false): Seq[RoadLink] = {
-    val vvhRoadLinks = fetchViiteVVHRoadlinks(linkIds,frozenTimeVVHAPIServiceEnabled)
+  def getViiteRoadLinksByLinkIdsFromVVH(linkIds: Set[Long], newTransaction: Boolean = true, frozenTimeVVHAPIServiceEnabled:Boolean = false): Seq[RoadLink] = {
+    val vvhRoadLinks = fetchVVHRoadlinks(linkIds, frozenTimeVVHAPIServiceEnabled)
     if (newTransaction)
       withDynTransaction {
         enrichRoadLinksFromVVH(vvhRoadLinks)
@@ -250,13 +250,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @param linkIds
     * @return VVHRoadLinks
     */
-  def fetchVVHRoadlinks(linkIds: Set[Long]): Seq[VVHRoadlink] = {
-    if (linkIds.nonEmpty)
-      vvhClient.roadLinkData.fetchByLinkIds(linkIds)
-    else Seq.empty[VVHRoadlink]
-  }
-
-  def fetchViiteVVHRoadlinks(linkIds: Set[Long], frozenTimeVVHAPIServiceEnabled:Boolean =false): Seq[VVHRoadlink] = {
+  def fetchVVHRoadlinks(linkIds: Set[Long], frozenTimeVVHAPIServiceEnabled:Boolean = false): Seq[VVHRoadlink] = {
     if (linkIds.nonEmpty) {if(frozenTimeVVHAPIServiceEnabled){vvhClient.frozenTimeRoadLinkData.fetchByLinkIds(linkIds)} else vvhClient.roadLinkData.fetchByLinkIds(linkIds) }
     else Seq.empty[VVHRoadlink]
   }
@@ -286,23 +280,13 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   }
 
   /**
-    * This method returns VVH road links by bounding box.  Utilized to find the closest road link of a point.
-    *
-    * @param bounds
-    * @return VVHRoadLinks
-    */
-  def getVVHRoadLinks(bounds: BoundingRectangle): Seq[VVHRoadlink] = {
-    vvhClient.roadLinkData.fetchByMunicipalitiesAndBounds(bounds, Set())
-  }
-
-  /**
     * This method returns VVH road links by bounding box and municipalities. Utilized to find the closest road link of a point.
     *
     * @param bounds
     * @param municipalities
     * @return VVHRoadLinks
     */
-  def getVVHRoadLinks(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[VVHRoadlink] = {
+  def getVVHRoadLinks(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[VVHRoadlink] = {
     vvhClient.roadLinkData.fetchByMunicipalitiesAndBounds(bounds, municipalities)
   }
 
@@ -331,7 +315,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @param municipalities
     * @return Road links and change data
     */
-  def getRoadLinksAndChangesFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): (Seq[RoadLink], Seq[ChangeInfo])= {
+  def getRoadLinksAndChangesFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): (Seq[RoadLink], Seq[ChangeInfo]) = {
     val (changes, links) =
       Await.result(vvhClient.roadLinkChangeInfo.fetchByBoundsAndMunicipalitiesF(bounds, municipalities).zip(vvhClient.roadLinkData.fetchByMunicipalitiesAndBoundsF(bounds, municipalities)), atMost = Duration.Inf)
     withDynTransaction {
@@ -1048,10 +1032,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     val propertyRows = fetchRoadLinkPropertyRows(oldLinkIds.toSet)
 
     oldLinkIds.map { linkId =>
-
       val latestModification = propertyRows.latestModifications(linkId)
       val (modifiedAt, modifiedBy) = (latestModification.map(_._1), latestModification.map(_._2))
-
 
       RoadLinkProperties(linkId,
         propertyRows.functionalClassValue(linkId),
