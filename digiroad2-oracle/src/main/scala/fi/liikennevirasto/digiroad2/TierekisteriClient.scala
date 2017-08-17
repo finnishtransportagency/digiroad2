@@ -207,21 +207,6 @@ object TRLaneArrangementType {
   case object Unknown extends TRLaneArrangementType { def value = 99; }
 }
 
-sealed trait TRDamagedByThaw {
-  def value: Int
-}
-
-object TRDamagedByThaw {
-  val values = Set(DamagedByThaw)
-
-  def apply(value: Int): TRDamagedByThaw = {
-    values.find(_.value == value).getOrElse(Unknown)
-  }
-
-  case object DamagedByThaw extends TRDamagedByThaw { def value = 1; }
-  case object Unknown extends TRDamagedByThaw { def value = 99; }
-}
-
 case class TierekisteriMassTransitStop(nationalId: Long,
                                        liviId: String,
                                        roadAddress: RoadAddress,
@@ -267,7 +252,7 @@ case class TierekisteriMassTransitLaneData(roadNumber: Long, startRoadPartNumber
                                      track: Track, startAddressMValue: Long, endAddressMValue: Long, laneType: TRLaneArrangementType) extends TierekisteriAssetData
 
 case class TierekisteriDamagedByThawData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
-                                           track: Track, startAddressMValue: Long, endAddressMValue: Long, assetType: TRDamagedByThaw) extends TierekisteriAssetData
+                                           track: Track, startAddressMValue: Long, endAddressMValue: Long) extends TierekisteriAssetData
 
 case class TierekisteriError(content: Map[String, Any], url: String)
 
@@ -924,7 +909,6 @@ class TierekisteriDamagedByThawAssetClient(trEndPoint: String, trEnable: Boolean
   type TierekisteriType = TierekisteriDamagedByThawData
 
   override val trAssetType = "tl162"
-  private val trKRAJT = "KRAJT"
 
   override def mapFields(data: Map[String, Any]): TierekisteriDamagedByThawData = {
     //Mandatory field
@@ -934,9 +918,8 @@ class TierekisteriDamagedByThawAssetClient(trEndPoint: String, trEnable: Boolean
     val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
     val endMValue = convertToLong(getMandatoryFieldValue(data, trEndMValue)).get
     val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
-    val assetType = convertToInt(getMandatoryFieldValue(data, trKRAJT)).get
 
-    TierekisteriDamagedByThawData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue, TRDamagedByThaw.apply(assetType))
+    TierekisteriDamagedByThawData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue)
   }
 }
 

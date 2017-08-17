@@ -180,14 +180,13 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
       "Data" ->
         List(
           Map(
-            "TIETOLAJI" -> pavedRoadTRCode,   //Field code
-            "TIE" -> 45,                     //Road number
-            "OSA" -> 1,                      //Road part number
-            "LOSA" -> 1,                      //End Road part number
-            "ETAISYYS" -> 0,                 //Start distance
-            "LET" -> 0,                       //End distance
-            "AJORATA" -> 0,                   //Track Code
-            "KRAJT" -> 1                   //Pavement Type
+            "TIETOLAJI" -> damagedByThawTRCode,   //Field code
+            "TIE" -> 45,                          //Road number
+            "OSA" -> 1,                           //Road part number
+            "LOSA" -> 1,                          //End Road part number
+            "ETAISYYS" -> 0,                      //Start distance
+            "LET" -> 0,                           //End distance
+            "AJORATA" -> 0                        //Track Code
           )
         )
     )

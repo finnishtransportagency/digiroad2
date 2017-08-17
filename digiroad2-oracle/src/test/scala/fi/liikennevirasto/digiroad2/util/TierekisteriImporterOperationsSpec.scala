@@ -18,13 +18,13 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
   val mockAssetDao: OracleAssetDao = MockitoSugar.mock[OracleAssetDao]
   val mockRoadAddressDAO: RoadAddressDAO = MockitoSugar.mock[RoadAddressDAO]
   val mockTRClient: TierekisteriLightingAssetClient = MockitoSugar.mock[TierekisteriLightingAssetClient]
-  val mockMassTransitLaneTRClient: TierekisteriMassTransitLaneAssetClient = MockitoSugar.mock[TierekisteriMassTransitLaneAssetClient]
   val mockRoadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockVVHClient: VVHClient = MockitoSugar.mock[VVHClient]
   val mockVVHRoadLinkClient: VVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
   val linearAssetDao = new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
   val mockTrImporter: TierekisteriDataImporter = MockitoSugar.mock[TierekisteriDataImporter]
   val mockTRPavedRoadClient: TierekisteriPavedRoadAssetClient = MockitoSugar.mock[TierekisteriPavedRoadAssetClient]
+  val mockMassTransitLaneTRClient: TierekisteriMassTransitLaneAssetClient = MockitoSugar.mock[TierekisteriMassTransitLaneAssetClient]
   val mockTRDamageByThawClient: TierekisteriDamagedByThawAssetClient = MockitoSugar.mock[TierekisteriDamagedByThawAssetClient]
 
 
@@ -34,10 +34,6 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
 
   lazy val litRoadImporterOperations: LitRoadTierekisteriImporter = {
     new LitRoadTierekisteriImporter()
-  }
-
-  lazy val massTransitLaneImporterOperations: MassTransitLaneTierekisteriImporter = {
-    new MassTransitLaneTierekisteriImporter()
   }
 
   lazy val tierekisteriAssetImporterOperations: TestTierekisteriAssetImporterOperations = {
@@ -87,6 +83,16 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     override def withDynTransaction[T](f: => T): T = f
   }
 
+  class TestMassTransitLaneOperations extends MassTransitLaneTierekisteriImporter {
+
+    override lazy val assetDao: OracleAssetDao = mockAssetDao
+    override lazy val roadAddressDao: RoadAddressDAO = mockRoadAddressDAO
+    override val tierekisteriClient: TierekisteriMassTransitLaneAssetClient = mockMassTransitLaneTRClient
+    override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
+    override lazy val vvhClient: VVHClient = mockVVHClient
+    override def withDynTransaction[T](f: => T): T = f
+  }
+
   class TestDamageByThawOperations extends DamagedByThawAssetTierekisteriImporter {
     override lazy val assetDao: OracleAssetDao = mockAssetDao
     override lazy val roadAddressDao: RoadAddressDAO = mockRoadAddressDAO
@@ -95,7 +101,6 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     override lazy val vvhClient: VVHClient = mockVVHClient
     override def withDynTransaction[T](f: => T): T = f
   }
-
 
   test("assets splited are split properly") {
     val trl = TierekisteriLightingData(4L, 203L, 208L, Track.RightSide, 3184L, 6584L)
@@ -412,16 +417,6 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     }
   }
 
-  class TestMassTransitLaneOperations extends MassTransitLaneTierekisteriImporter {
-
-    override lazy val assetDao: OracleAssetDao = mockAssetDao
-    override lazy val roadAddressDao: RoadAddressDAO = mockRoadAddressDAO
-    override val tierekisteriClient: TierekisteriMassTransitLaneAssetClient = mockMassTransitLaneTRClient
-    override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
-    override lazy val vvhClient: VVHClient = mockVVHClient
-    override def withDynTransaction[T](f: => T): T = f
-  }
-
   test("import assets (massTransitLane) from TR to OTH"){
     TestTransactions.runWithRollback() {
 
@@ -454,7 +449,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     }
   }
 
-  test("update assets (litRoad) from TR to OTH"){
+  test("update assets (massTransitLane) from TR to OTH"){
     TestTransactions.runWithRollback() {
 
       val testMassTransitLane = new TestMassTransitLaneOperations
@@ -623,7 +618,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       val startAddressMValue = 0L
       val endAddressMValue = 250L
 
-      val tr = TierekisteriDamagedByThawData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, startAddressMValue, endAddressMValue, TRDamagedByThaw.DamagedByThaw)
+      val tr = TierekisteriDamagedByThawData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, startAddressMValue, endAddressMValue)
       val ra = ViiteRoadAddress(1L, roadNumber, startRoadPartNumber, Track.RightSide, 5, 100, endAddressMValue, None, None, 1L, 5001, 0, 300, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
 
       val vvhRoadLink = VVHRoadlink(5001, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
