@@ -242,11 +242,11 @@ object ProjectDAO {
   def getRoadAddressProjects(projectId: Long = 0): List[RoadAddressProject] = {
     val filter = projectId match {
       case 0 => ""
-      case _ => s""" id =${projectId} AND """
+      case _ => s""" where id =$projectId """
     }
     val query =
-      s"""SELECT id, state, name, created_by, created_date, start_date, modified_by, modified_date, add_info, status_info, ely
-          FROM project where $filter created_date is not null and modified_date is not null and start_date is not null order by name, id """
+      s"""SELECT id, state, name, created_by, created_date, start_date, modified_by, COALESCE(modified_date, created_date), add_info, status_info, ely
+          FROM project $filter order by name, id """
     Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String, Option[String], Option[Long])](query).list.map {
       case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo, statusInfo, ely) =>
         RoadAddressProject(id, ProjectState.apply(state), name, createdBy, createdDate, modifiedBy, start_date, modifiedDate, addInfo, List.empty[ReservedRoadPart], statusInfo, ely)
