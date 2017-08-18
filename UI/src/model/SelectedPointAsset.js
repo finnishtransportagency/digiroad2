@@ -111,11 +111,10 @@
     function getAdministrativeClass(linkId){
       if(current && current.administrativeClass && !linkId)
         return current.administrativeClass;
-      else {
-        var road = roadCollection.getRoadLinkByLinkId(linkId);
-        var administrativeClass = road ? road.getData().administrativeClass : null;
-        return _.isNull(administrativeClass) || _.isUndefined(administrativeClass) ? undefined : administrativeClass;
-      }
+      var road = roadCollection.getRoadLinkByLinkId(linkId);
+      var administrativeClass = road ? road.getData().administrativeClass : null;
+      return _.isNull(administrativeClass) || _.isUndefined(administrativeClass) ? undefined : administrativeClass;
+
     }
 
     function getSelectedTrafficSignValue() {
