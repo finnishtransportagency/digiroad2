@@ -775,33 +775,31 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val listOfPendingProjects=getProjectsPendingInTR()
     for(project<-listOfPendingProjects)
     {
-      withDynSession {
-        logger.info(s"Checking status for $project")
-        val status = checkProjectStatus(project)
-        logger.info(s"Status if $status")
-        ProjectDAO.incrementCheckCounter(project, 1)
-        status
+      try {
+        withDynSession {
+          logger.info(s"Checking status for $project")
+          val newStatus = checkAndUpdateProjectStatus(project)
+          logger.info(s"new status is $newStatus")
+        }
+      } catch {
+        case t: Throwable => logger.warn(s"Couldn't update project $project", t)
       }
     }
 
   }
 
-  private def checkProjectStatus(projectID: Long): ProjectState =
+  private def checkAndUpdateProjectStatus(projectID: Long): ProjectState =
   {
-    val projectStatus=ProjectDAO.getProjectStatus(projectID)
-    if (projectStatus.isDefined)
-    {
-      val currentState = projectStatus.getOrElse(ProjectState.Unknown)
+    ProjectDAO.getProjectStatus(projectID).map { currentState =>
+      logger.info(s"Current status is $currentState")
       val trProjectState = ViiteTierekisteriClient.getProjectStatusObject(projectID)
       val newState = getStatusFromTRObject(trProjectState).getOrElse(ProjectState.Unknown)
       val errorMessage = getTRErrorMessage(trProjectState)
       logger.info(s"TR returned project status for $projectID: $currentState -> $newState, errMsg: $errorMessage")
-      val updatedStatus = updateProjectStatusIfNeeded(currentState,newState,errorMessage,projectID)
+      val updatedStatus = updateProjectStatusIfNeeded(currentState, newState, errorMessage, projectID)
       updateRoadAddressWithProject(newState, projectID)
       updatedStatus
-    } else {
-      ProjectState.Unknown
-    }
+    }.getOrElse(ProjectState.Unknown)
   }
 
   private def mapTRstateToViiteState(trState:String): Option[ProjectState] ={
