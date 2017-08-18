@@ -109,7 +109,7 @@
     }
 
     function getAdministrativeClass(linkId){
-      if(current && current.administrativeClass)
+      if(current && current.administrativeClass && !linkId)
         return current.administrativeClass;
       else {
         var road = roadCollection.getRoadLinkByLinkId(linkId);
