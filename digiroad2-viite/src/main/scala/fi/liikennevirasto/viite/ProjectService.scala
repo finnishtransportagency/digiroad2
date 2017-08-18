@@ -776,7 +776,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     for(project<-listOfPendingProjects)
     {
       withDynSession {
+        logger.info(s"Checking status for $project")
         val status = checkProjectStatus(project)
+        logger.info(s"Status if $status")
         ProjectDAO.incrementCheckCounter(project, 1)
         status
       }
@@ -784,7 +786,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   }
 
-  private def checkProjectStatus(projectID: Long) =
+  private def checkProjectStatus(projectID: Long): ProjectState =
   {
     val projectStatus=ProjectDAO.getProjectStatus(projectID)
     if (projectStatus.isDefined)
@@ -793,9 +795,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val trProjectState = ViiteTierekisteriClient.getProjectStatusObject(projectID)
       val newState = getStatusFromTRObject(trProjectState).getOrElse(ProjectState.Unknown)
       val errorMessage = getTRErrorMessage(trProjectState)
+      logger.info(s"TR returned project status for $projectID: $currentState -> $newState, errMsg: $errorMessage")
       val updatedStatus = updateProjectStatusIfNeeded(currentState,newState,errorMessage,projectID)
       updateRoadAddressWithProject(newState, projectID)
       updatedStatus
+    } else {
+      ProjectState.Unknown
     }
   }
 
