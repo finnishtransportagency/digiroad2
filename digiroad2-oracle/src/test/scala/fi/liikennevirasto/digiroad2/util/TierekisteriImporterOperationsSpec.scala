@@ -51,7 +51,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     //Creating this new methods because is protected visibility on the trait
     def getRoadAddressSectionsTest(trAsset: TierekisteriAssetData): Seq[(AddressSection, TierekisteriAssetData)] = super.getRoadAddressSections(trAsset)
     def getAllViiteRoadAddressTest(section: AddressSection) = super.getAllViiteRoadAddress(section)
-    def getAllViiteRoadAddressTest(roadNumber: Long, roadPart: Long, track: Track) = super.getAllViiteRoadAddress(roadNumber, roadPart, track)
+    def getAllViiteRoadAddressTest(roadNumber: Long, roadPart: Long) = super.getAllViiteRoadAddress(roadNumber, roadPart)
     def expireAssetsTest(linkIds: Seq[Long]): Unit = super.expireAssets(linkIds)
     def calculateStartLrmByAddressTest(startAddress: ViiteRoadAddress, section: AddressSection): Option[Double] = super.calculateStartLrmByAddress(startAddress, section)
     def calculateEndLrmByAddressTest(endAddress: ViiteRoadAddress, section: AddressSection): Option[Double] = super.calculateEndLrmByAddress(endAddress, section)

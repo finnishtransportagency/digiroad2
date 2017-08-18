@@ -118,8 +118,8 @@ trait TierekisteriAssetImporterOperations {
     addresses.map(ra => (ra, vvhRoadLinks.find(_.linkId == ra.linkId))).filter(_._2.isDefined)
   }
 
-  protected def getAllViiteRoadAddress(roadNumber: Long, roadPart: Long, track: Track) = {
-    val addresses = roadAddressDao.getRoadAddress(roadAddressDao.withRoadNumber(roadNumber, roadPart, track.value))
+  protected def getAllViiteRoadAddress(roadNumber: Long, roadPart: Long) = {
+    val addresses = roadAddressDao.getRoadAddress(roadAddressDao.withRoadNumber(roadNumber, roadPart))
     val roadAddressLinks = addresses.map(ra => ra.linkId).toSet
     val vvhRoadLinks = roadLinkService.fetchVVHRoadlinks(roadAddressLinks).filter(_.administrativeClass == State)
     addresses.map(ra => (ra, vvhRoadLinks.find(_.linkId == ra.linkId))).filter(_._2.isDefined)
@@ -214,7 +214,7 @@ trait TierekisteriAssetImporterOperations {
                 sections
               } else {
                 //Get all existing road address in viite and expire all the assets on top of this roads
-                val roadAddressLink = getAllViiteRoadAddress(section.roadNumber, section.roadPartNumber, section.track)
+                val roadAddressLink = getAllViiteRoadAddress(section.roadNumber, section.roadPartNumber)
                 expireAssets(roadAddressLink.map(_._1.linkId))
                 sections ++ Seq(section.roadPartNumber)
               }
