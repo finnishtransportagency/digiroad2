@@ -16,6 +16,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService, val 
 
   override def baseAuth: String = "municipality."
   override val realm: String = "Municipality API"
+  val lighting: Int = 100
 
   case object DateTimeSerializer extends CustomSerializer[DateTime](format => ( {
     case _ => throw new NotImplementedError("DateTime deserialization")
@@ -75,14 +76,14 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService, val 
 
   def getAssetTypeId(assetType: String): Int = {
     assetType match {
-      case "lighting" => 100
+      case "lighting" => lighting
       case _ => halt(NotFound("Asset type not found"))
     }
   }
 
   def getAssetName(assetTypeId: Int): String = {
     assetTypeId match {
-      case 100 => "lighting"
+      case lighting => "lighting"
       case _ => "asset"
     }
   }
@@ -105,7 +106,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService, val 
 
   def validateAssetPropertyValue(assetTypeId: Int, properties:Seq[AssetProperties]):Unit = {
     assetTypeId match {
-      case 100 =>
+      case lighting =>
         val value = extractPropertyValue("lighting", properties, firstPropertyValueToInt)
         if(!Seq(0,1).contains(value._2))
           halt(BadRequest(s"The property values for the property with name lighting are not valid."))
