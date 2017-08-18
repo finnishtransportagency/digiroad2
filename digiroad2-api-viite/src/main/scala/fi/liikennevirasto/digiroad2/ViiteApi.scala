@@ -312,8 +312,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         logger.warn("Exception saving road links in project", e)
         BadRequest("Missing mandatory ProjectLink parameter")
       case e:Exception => {
-        println(e.toString)
-        e
+        logger.error(e.toString, e)
+        InternalServerError(e.toString)
       }
     }
   }
