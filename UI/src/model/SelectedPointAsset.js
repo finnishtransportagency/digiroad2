@@ -109,8 +109,13 @@
     }
 
     function getAdministrativeClass(linkId){
-      var value = roadCollection.getRoadLinkByLinkId(linkId ? linkId : current.linkId).getData().administrativeClass;
-      return _.isNull(value) ? undefined : value;
+      if(current && current.administrativeClass)
+        return current.administrativeClass;
+      else {
+        var road = roadCollection.getRoadLinkByLinkId(linkId);
+        var administrativeClass = road ? road.getData().administrativeClass : null;
+        return _.isNull(administrativeClass) || _.isUndefined(administrativeClass) ? undefined : administrativeClass;
+      }
     }
 
     function getSelectedTrafficSignValue() {
