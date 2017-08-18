@@ -24,23 +24,32 @@ object ProjectSectionCalculator {
       val s = Seq(geometry.head, geometry.last)
       s.maxBy(p => (oldEndPoint - p).length())
     }
-
+    def setSideCode(growing: SideCode, point: Point, newLink: ProjectLink): Seq[ProjectLink] = {
+      if (GeometryUtils.areAdjacent(newLink.geometry.head, point))
+        Seq(newLink.copy(sideCode = growing))
+      else
+        Seq(newLink.copy(sideCode = switchSideCode(growing)))
+    }
     // Finds either a project link that continues from current head; or end; or returns the whole bunch back
     def recursiveFindAndExtend(sortedList: Seq[ProjectLink], unprocessed: Seq[ProjectLink], head: Point, end: Point) : Seq[ProjectLink] = {
       val headExtend = unprocessed.find(l => GeometryUtils.areAdjacent(l.geometry, head))
       if (headExtend.nonEmpty) {
         val ext = headExtend.get
-        recursiveFindAndExtend(Seq(ext)++sortedList, unprocessed.filterNot(p => p.linkId == ext.linkId), getNewEndPoint(ext.geometry, head), end)
+        recursiveFindAndExtend(setSideCode(AgainstDigitizing, head, ext)++sortedList, unprocessed.filterNot(p => p.linkId == ext.linkId), getNewEndPoint(ext.geometry, head), end)
       } else {
         val tailExtend = unprocessed.find(l => GeometryUtils.areAdjacent(l.geometry, end))
         if (tailExtend.nonEmpty) {
           val ext = tailExtend.get
-          recursiveFindAndExtend(sortedList++Seq(ext), unprocessed.filterNot(p => p.linkId == ext.linkId), head, getNewEndPoint(ext.geometry, end))
+          recursiveFindAndExtend(sortedList++setSideCode(TowardsDigitizing, end, ext), unprocessed.filterNot(p => p.linkId == ext.linkId), head, getNewEndPoint(ext.geometry, end))
         } else {
           sortedList ++ unprocessed
         }
       }
     }
+    // TODO: When tracks that cross themselves are accepted the logic comes here. Now just return the list unchanged.
+    if (GeometryUtils.isCyclic(list))
+      return list
+
     val head = list.head
     val (headPoint, endPoint) = head.sideCode match {
       case AgainstDigitizing => (head.geometry.last, head.geometry.head)
@@ -116,7 +125,7 @@ object ProjectSectionCalculator {
     }
     val groupedProjectLinks = projectLinks.groupBy(record => (record.roadNumber, record.roadPartNumber))
     groupedProjectLinks.flatMap(gpl => {
-      val linkPartitions = SectionPartitioner.partition(gpl._2).map(orderProjectLinksTopologyByGeometry)
+      val linkPartitions = SectionPartitioner.partition(gpl._2).map(_.sortBy(_.endAddrMValue)).map(orderProjectLinksTopologyByGeometry)
       try {
         val sections = linkPartitions.map(lp =>
           TrackSection(lp.head.roadNumber, lp.head.roadPartNumber, lp.head.track, lp.map(_.geometryLength).sum, lp)
@@ -204,64 +213,6 @@ object ProjectSectionCalculator {
 
     val combined = combineTracks(sections)
     recursiveFindAndExtendCombined(Seq(combined.head), combined.tail)
-  }
-
-  /**
-    * Order project links by address (if exists) and geometry.
-    * @param unorderedProjectLinks Bag of project links
-    * @return Ordered sequence of project links
-    */
-  def orderProjectLinks(unorderedProjectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
-    def isExtending(link: ProjectLink, ext: ProjectLink) = {
-      link.roadNumber == ext.roadNumber && link.roadPartNumber == ext.roadPartNumber &&
-        link.track == ext.track
-    }
-    def continueSeqWith(seq: Seq[ProjectLink], plink: ProjectLink): Seq[ProjectLink] = {
-      if (GeometryUtils.areAdjacent(plink.geometry, seq.head.geometry)) {
-        Seq(plink) ++ seq
-      } else {
-        seq ++ Seq(plink)
-      }
-    }
-    def extendChainByGeometry(ordered: Seq[ProjectLink], unordered: Seq[ProjectLink], sideCode: SideCode): Seq[ProjectLink] = {
-      // First link gets the assigned side code
-      if (ordered.isEmpty)
-        return extendChainByGeometry(Seq(unordered.head.copy(sideCode=sideCode)), unordered.tail, sideCode)
-      if (unordered.isEmpty) {
-        return ordered
-      }
-      // Find a road address link that continues from current last link
-      unordered.find { ral =>
-        Seq(ordered.head, ordered.last).exists(
-          un => un.linkId != ral.linkId && GeometryUtils.areAdjacent(un.geometry, ral.geometry)
-        )
-      } match {
-        case Some(link) =>
-          val seq = continueSeqWith(ordered, link)
-          extendChainByGeometry(seq, unordered.filterNot(link.equals), link.sideCode)
-        case _ => throw new InvalidAddressDataException("Non-contiguous road target geometry")
-      }
-    }
-    def extendChainByAddress(ordered: Seq[ProjectLink], unordered: Seq[ProjectLink]): Seq[ProjectLink] = {
-      if (ordered.isEmpty)
-        return extendChainByAddress(Seq(unordered.head), unordered.tail)
-      if (unordered.isEmpty)
-        return ordered
-      val (next, rest) = unordered.partition(u => isExtending(ordered.last, u))
-      if (next.nonEmpty)
-        extendChainByAddress(ordered ++ next, rest)
-      else {
-        val (previous, rest) = unordered.partition(u => isExtending(u, ordered.head))
-        if (previous.isEmpty)
-          throw new IllegalArgumentException("Non-contiguous road addressing")
-        else
-          extendChainByAddress(previous ++ ordered, rest)
-      }
-    }
-
-    val orderedByAddress =  extendChainByAddress(Seq(unorderedProjectLinks.head), unorderedProjectLinks.tail)
-    val orderedByGeometry = extendChainByGeometry(Seq(), orderedByAddress, orderedByAddress.head.sideCode)
-    orderedByGeometry
   }
 
   def switchSideCode(sideCode: SideCode): SideCode = {
