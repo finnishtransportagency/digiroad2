@@ -775,14 +775,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val listOfPendingProjects=getProjectsPendingInTR()
     for(project<-listOfPendingProjects)
     {
-      withDynSession {
-        logger.info(s"Checking status for $project")
-        try {
+      try {
+        withDynSession {
+          logger.info(s"Checking status for $project")
           val newStatus = checkAndUpdateProjectStatus(project)
           logger.info(s"new status is $newStatus")
-        } catch {
-          case t: Throwable => logger.warn(s"Couldn't update project $project", t)
         }
+      } catch {
+        case t: Throwable => logger.warn(s"Couldn't update project $project", t)
       }
     }
 
