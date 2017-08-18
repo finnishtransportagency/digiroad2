@@ -70,20 +70,24 @@
       pixelDelta: 256,
       setActive: true,
       condition: function(mapBrowserEvent) {
-        if(mapBrowserEvent.type == ol.events.EventType.KEYDOWN) {
+        //TODO  should add/override KEYDOWN attr to collection events to get rid of magic strings
+        if(mapBrowserEvent.type ==  'keydown') {
           var keyEvent = mapBrowserEvent.originalEvent;
           var keyCode = keyEvent.keyCode;
         }
-        if(keyCode == ol.events.KeyCode.SHIFT){
-          map.getViewport().style.cursor = "copy";
-          var cenas = this;
+        //TODO  should add/override KEYDOWN attr to collection events to get rid of magic numbers
+        if(keyCode == 16){
+          alert("pressed SHIFT key!");
+          eventbus.trigger('keydown', 'Copy');
+        } else {
+          alert("pressed other than SHIFT key!");
         }
       }
     })
   ]);
 
   interactions.push(new ol.interaction.DragZoom({
-      duration: 1800,
+      duration: 1500,
       condition: function(mapBrowserEvent) {
         var originalEvent = mapBrowserEvent.originalEvent;
         return (
@@ -92,24 +96,10 @@
         !originalEvent.shiftKey);
       }
     })
-  //   new ol.interaction.KeyboardPan({
-  //   duration: 90,
-  //   pixelDelta: 256,
-  //   setActive: true,
-  //   condition: function(mapBrowserEvent) {
-  //     if(mapBrowserEvent.type == ol.events.EventType.KEYDOWN) {
-  //       var keyEvent = mapBrowserEvent.originalEvent;
-  //       var keyCode = keyEvent.keyCode;
-  //     }
-  //     if(keyCode == ol.events.KeyCode.SHIFT){
-  //       map.getViewport().style.cursor = "copy";
-  //       var cenas = this;
-  //     }
-  //   }
-  // })
   );
   var createOpenLayersMap = function(startupParameters, layers) {
     var map = new ol.Map({
+      keyboardEventTarget: document,
       interactions: interactions,
       target: 'mapdiv',
       layers: layers,
