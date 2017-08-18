@@ -369,6 +369,10 @@
         enabled: 'Eurooppatienumero(t)',
         disabled: 'Ei eurooppatienumeroa'
       },
+      editConstrains : function(selectedAsset) {
+        //check if administrative class is State
+        return selectedAsset.administrativeClass === 1;
+      },
       label: new LinearAssetLabelMultiValues()
     },
     {
