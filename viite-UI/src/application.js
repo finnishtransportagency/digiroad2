@@ -61,8 +61,23 @@
     jQuery('.container').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
   };
 
+  var interactions = ol.interaction.defaults({
+    shiftDragZoom: false
+  });
+  interactions.push(new ol.interaction.DragZoom({
+    duration: 1800,
+    condition: function(mapBrowserEvent) {
+      var originalEvent = mapBrowserEvent.originalEvent;
+      return (
+      originalEvent.ctrlKey &&
+      !(originalEvent.metaKey || originalEvent.altKey) &&
+      !originalEvent.shiftKey);
+    }
+  }));
+
   var createOpenLayersMap = function(startupParameters, layers) {
     var map = new ol.Map({
+      interactions: interactions,
       target: 'mapdiv',
       layers: layers,
       view: new ol.View({

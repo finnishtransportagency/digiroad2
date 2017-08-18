@@ -63,7 +63,7 @@
     }, this);
 
     var setCursor = function(tool) {
-      var cursor = {'Select': 'default', 'Add': 'crosshair', 'Cut': 'pointer'};
+      var cursor = {'Select': 'default', 'Add': 'crosshair', 'Cut': 'pointer', 'Copy': 'copy'};
       $('.olMap').css('cursor', cursor[tool]);
     };
 
@@ -131,6 +131,13 @@
     //when the map dragging stops the cursor value returns to the initial one
     map.on('pointerup', function(evt) {
       map.getViewport().style.cursor = "initial";
+    });
+
+    //when the shift button is pressed the cursor should change to copy cursor
+    map.on('shiftKey', function(evt) {
+      //WIP
+      map.getViewport().style.cursor = "copy";
+      setCursor('Copy');
     });
 
   };
