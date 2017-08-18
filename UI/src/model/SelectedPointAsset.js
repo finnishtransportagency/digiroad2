@@ -131,7 +131,7 @@
           prop.values[0] = [{propertyValue: propertyValue, propertyDisplayValue: ''}];
         }
       });
+      eventbus.trigger(assetName + ':changed');
     }
-
   };
 })(this);

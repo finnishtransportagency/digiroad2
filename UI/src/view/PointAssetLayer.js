@@ -12,7 +12,9 @@
       newAsset = params.newAsset,
       roadAddressInfoPopup = params.roadAddressInfoPopup,
       editConstrains = params.editConstrains,
-      assetLabel = params.assetLabel;
+      assetLabel = params.assetLabel,
+      allowGrouping = params.allowGrouping,
+      assetGrouping = params.assetGrouping;
 
     Layer.call(this, layerName, roadLayer);
     var me = this;
@@ -23,7 +25,8 @@
        source : vectorSource,
        style : function(feature){
            return style.browsingStyleProvider.getStyle(feature);
-       }
+       },
+      renderBuffer: 300
     });
     vectorLayer.set('name', layerName);
     vectorLayer.setOpacity(1);
@@ -153,7 +156,7 @@
           withDeactivatedSelectControl(function() {
             me.removeLayerFeatures();
           });
-          var features = _.map(assets, createFeature);
+          var features = (!allowGrouping) ? _.map(assets, createFeature) : getGroupedFeatures(assets);
           selectControl.clear();
           vectorLayer.getSource().addFeatures(features);
           if(assetLabel)
@@ -161,6 +164,17 @@
           applySelection();
         }
       });
+    };
+
+    var getGroupedFeatures = function (assets) {
+      var assetGroups = assetGrouping.groupByDistance(assets, map.getView().getZoom());
+      var modifiedAssets = _.forEach(assetGroups, function (assetGroup) {
+        _.map(assetGroup, function (asset) {
+          asset.lon = _.head(assetGroup).lon;
+          asset.lat = _.head(assetGroup).lat;
+        });
+      });
+      return _.map(_.flatten(modifiedAssets), createFeature);
     };
 
     this.removeLayerFeatures = function() {

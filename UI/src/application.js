@@ -252,6 +252,8 @@
        assetLabel: asset.label,
        newAsset: asset.newAsset,
        roadAddressInfoPopup: roadAddressInfoPopup,
+       allowGrouping: asset.allowGrouping,
+       assetGrouping: new AssetGrouping(applicationModel),
        editConstrains : asset.editConstrains || function() {return false;}
      });
      return acc;
