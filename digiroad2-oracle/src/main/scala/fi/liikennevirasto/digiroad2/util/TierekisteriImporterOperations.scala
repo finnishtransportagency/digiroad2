@@ -496,13 +496,12 @@ class MassTransitLaneTierekisteriImporter extends LinearAssetTierekisteriImporte
   }
 
   override protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
-    if (trAssetData.laneType == MassTransitLane) {
 
       val assetId = linearAssetService.dao.createLinearAsset(typeId, vvhRoadlink.linkId, false, roadAddress.sideCode.value,
         measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value))
 
       linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, 1)
       println(s"Created OTH $assetName assets for ${vvhRoadlink.linkId} from TR data with assetId $assetId")
-    }
+
   }
 }
