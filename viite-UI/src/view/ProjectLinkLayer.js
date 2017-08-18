@@ -186,7 +186,9 @@
 
     var selectDoubleClick = new ol.interaction.Select({
       layer: [vectorLayer, suravageRoadProjectLayer],
-      condition: ol.events.condition.doubleClick,
+      condition: function(mapBrowserEvent){
+        return (ol.events.condition.doubleClick(mapBrowserEvent) && ol.events.condition.shiftKeyOnly(mapBrowserEvent)) || ol.events.condition.doubleClick(mapBrowserEvent);
+      },
       style: function(feature, resolution) {
         if(feature.projectLinkData.status === notHandledStatus || feature.projectLinkData.status === newRoadAddressStatus || feature.projectLinkData.roadLinkSource === 3) {
           return new ol.style.Style({
@@ -235,17 +237,40 @@
     selectDoubleClick.set('name','selectDoubleClickInteractionPLL');
 
     selectDoubleClick.on('select',function(event) {
+      var shiftPressed = event.mapBrowserEvent.originalEvent.shiftKey;
       var selection = _.find(event.selected, function (selectionTarget) {
         return (!_.isUndefined(selectionTarget.projectLinkData) && (
           (selectionTarget.projectLinkData.status === notHandledStatus || selectionTarget.projectLinkData.status === newRoadAddressStatus) ||
-          (selectionTarget.projectLinkData.anomaly==noAddressAnomaly && selectionTarget.projectLinkData.roadLinkType!=floatingRoadLinkType) ||
+          (selectionTarget.projectLinkData.anomaly == noAddressAnomaly && selectionTarget.projectLinkData.roadLinkType != floatingRoadLinkType) ||
           selectionTarget.projectLinkData.roadClass === 99 || selectionTarget.projectLinkData.roadLinkSource === 3)
         );
       });
-      selectedProjectLinkProperty.clean();
-      if (!_.isUndefined(selection))
-        selectedProjectLinkProperty.open(selection.projectLinkData.linkId);
+      if (shiftPressed) {
+        if(!_.isUndefined(selection) && canItBeAddToSelection(selection.projectLinkData)){
+          var selectedLinkIds = _.map(selectedProjectLinkProperty.get(), function(selected){
+            return selected.linkId;
+          });
+          if(_.contains(selectedLinkIds, selection.projectLinkData.linkId)){
+            selectedLinkIds = _.without(selectedLinkIds, selection.projectLinkData.linkId);
+          } else {
+            selectedLinkIds = selectedLinkIds.concat(selection.projectLinkData.linkId);
+          }
+          selectedProjectLinkProperty.clean();
+          selectedProjectLinkProperty.openShift(selectedLinkIds);
+        }
+      } else {
+        selectedProjectLinkProperty.clean();
+        if (!_.isUndefined(selection))
+          selectedProjectLinkProperty.open(selection.projectLinkData.linkId);
+      }
     });
+
+    var canItBeAddToSelection = function(selectionData) {
+      var currentlySelectedSample = _.first(selectedProjectLinkProperty.get());
+      var noRoadAddressData = selectionData.roadNumber === 0 && selectionData.roadPartNumber === 0 && selectionData.trackCode === 99;
+      var roadAddressDataSameAsSelection = selectionData.roadNumber !== currentlySelectedSample.roadNumber && selectionData.roadPartNumber !== currentlySelectedSample.roadPartNumber && selectionData.track !== currentlySelectedSample.track;
+      return noRoadAddressData || roadAddressDataSameAsSelection;
+    };
 
     var revertSelectedChanges = function() {
       if(projectCollection.isDirty()) {
@@ -357,7 +382,8 @@
       });
     };
     //This will control the double click zoom when there is no selection that activates
-    map.on('dblclick', zoomDoubleClickListener);
+    //TODO: this dblclick event creates lot's of interference with the selection, I requeire help.
+    //map.on('dblclick', zoomDoubleClickListener);
 
     var infoContainer = document.getElementById('popup');
     var infoContent = document.getElementById('popup-content');
@@ -569,7 +595,7 @@
           suravageProjectDirectionMarkerLayer.getSource().addFeature(marker);
         selectSingleClick.getFeatures().push(marker);
       });
-      
+
       suravageRoadProjectLayer.getSource().addFeatures(suravageFeatures);
 
       var projectLinks = separated[1];

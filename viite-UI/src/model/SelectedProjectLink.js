@@ -14,6 +14,13 @@
       }
       eventbus.trigger('projectLink:clicked', get());
     };
+
+    var openShift = function(linkIds) {
+      ids = linkIds;
+      current = projectLinkCollection.getByLinkId(linkIds);
+      eventbus.trigger('projectLink:clicked', get());
+    };
+
     var get = function() {
       return _.map(current, function(projectLink) {
         return projectLink.getData();
@@ -37,6 +44,7 @@
 
     return {
       open: open,
+      openShift: openShift,
       get: get,
       clean: clean,
       close: close,
