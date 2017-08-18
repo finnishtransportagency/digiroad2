@@ -62,19 +62,52 @@
   };
 
   var interactions = ol.interaction.defaults({
-    shiftDragZoom: false
-  });
-  interactions.push(new ol.interaction.DragZoom({
-    duration: 1800,
-    condition: function(mapBrowserEvent) {
-      var originalEvent = mapBrowserEvent.originalEvent;
-      return (
-      originalEvent.ctrlKey &&
-      !(originalEvent.metaKey || originalEvent.altKey) &&
-      !originalEvent.shiftKey);
-    }
-  }));
+    shiftDragZoom: false,
+    keyboard: false
+  }).extend([
+    new ol.interaction.KeyboardPan({
+      duration: 90,
+      pixelDelta: 256,
+      setActive: true,
+      condition: function(mapBrowserEvent) {
+        if(mapBrowserEvent.type == ol.events.EventType.KEYDOWN) {
+          var keyEvent = mapBrowserEvent.originalEvent;
+          var keyCode = keyEvent.keyCode;
+        }
+        if(keyCode == ol.events.KeyCode.SHIFT){
+          map.getViewport().style.cursor = "copy";
+          var cenas = this;
+        }
+      }
+    })
+  ]);
 
+  interactions.push(new ol.interaction.DragZoom({
+      duration: 1800,
+      condition: function(mapBrowserEvent) {
+        var originalEvent = mapBrowserEvent.originalEvent;
+        return (
+        originalEvent.ctrlKey &&
+        !(originalEvent.metaKey || originalEvent.altKey) &&
+        !originalEvent.shiftKey);
+      }
+    })
+  //   new ol.interaction.KeyboardPan({
+  //   duration: 90,
+  //   pixelDelta: 256,
+  //   setActive: true,
+  //   condition: function(mapBrowserEvent) {
+  //     if(mapBrowserEvent.type == ol.events.EventType.KEYDOWN) {
+  //       var keyEvent = mapBrowserEvent.originalEvent;
+  //       var keyCode = keyEvent.keyCode;
+  //     }
+  //     if(keyCode == ol.events.KeyCode.SHIFT){
+  //       map.getViewport().style.cursor = "copy";
+  //       var cenas = this;
+  //     }
+  //   }
+  // })
+  );
   var createOpenLayersMap = function(startupParameters, layers) {
     var map = new ol.Map({
       interactions: interactions,
@@ -88,6 +121,9 @@
       })
     });
     map.setProperties({extent : [-548576, 6291456, 1548576, 8388608]});
+
+
+    // keyHandler.activate();
     return map;
   };
 

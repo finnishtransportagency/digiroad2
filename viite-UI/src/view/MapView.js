@@ -134,11 +134,15 @@
     });
 
     //when the shift button is pressed the cursor should change to copy cursor
-    map.on('shiftKey', function(evt) {
-      //WIP
-      map.getViewport().style.cursor = "copy";
-      setCursor('Copy');
-    });
+    // map.on('key', function(evt) {
+    //   var code = evt.originalEvent.keycode;
+    //   var evento = evt.browserEvent.shiftKey;
+    //   if (evt.keyCode == keys.SHIFT){
+    //     //evt.browserEvent.shiftKey
+    //   map.getViewport().style.cursor = "copy";
+    //   setCursor('Copy');
+    //   }
+    // });
 
   };
 })(this);
