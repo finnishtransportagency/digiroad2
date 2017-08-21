@@ -973,6 +973,17 @@ object DataFixture {
     println("\n")
   }
 
+  def importAllWinterSpeedLimitDataFromTR(): Unit ={
+    println("\nStart WinterSpeedLimit import at time: ")
+    println(DateTime.now())
+
+    tierekisteriDataImporter.importWinterSpeedLimitAsset
+
+    println("WinterSpeedLimit import complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
   def updateLitRoadDataFromTR(): Unit ={
     println("\nStart lighting update at: ")
     println(DateTime.now())
@@ -1050,6 +1061,18 @@ object DataFixture {
     tierekisteriDataImporter.updateEuropeanRoadAsset()
 
     println("EuropeanRoad update complete at time: ")
+    println(DateTime.now())
+    println("\n")
+
+  }
+
+  def updateWinterSpeedLimitDataFromTR(): Unit ={
+    println("\nStart WinterSpeedLimit update at: ")
+    println(DateTime.now())
+
+    tierekisteriDataImporter.updateWinterSpeedLimitAsset()
+
+    println("WinterSpeedLimit update complete at time: ")
     println(DateTime.now())
     println("\n")
 
@@ -1153,6 +1176,8 @@ object DataFixture {
         importAllDamagedByThawDataFromTR()
       case Some("import_all_europeanRoad_from_TR_to_OTH") =>
         importAllEuropeanRoadDataFromTR()
+      case Some("import_all_winterSpeedLimit_from_TR_to_OTH") =>
+        importAllWinterSpeedLimitDataFromTR()
       case Some("update_litRoad_from_TR_to_OTH") =>
         updateLitRoadDataFromTR()
       case Some("update_roadWidth_from_TR_to_OTH") =>
@@ -1167,6 +1192,8 @@ object DataFixture {
         updateDamagedByThawAssetDataFromTR()
       case Some("update_europeanRoad_from_TR_to_OTH") =>
         updateEuropeanRoadDataFromTR()
+      case Some("update_winterSpeedLimit_from_TR_to_OTH") =>
+        updateWinterSpeedLimitDataFromTR()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
@@ -1176,8 +1203,9 @@ object DataFixture {
         " check_TR_bus_stops_without_OTH_LiviId | check_bus_stop_matching_between_OTH_TR | listing_bus_stops_with_side_code_conflict_with_roadLink_direction |" +
         " fill_lane_amounts_in_missing_road_links | import_all_trafficVolume_from_TR_to_OTH | import_all_litRoad_from_TR_to_OTH | import_all_roadWidth_from_TR_to_OTH |" +
         " import_all_trafficSigns_from_TR_to_OTH | import_all_pavedRoad_from_TR_to_OTH | import_all_massTransitLane_from_TR_to_OTH | update_litRoad_from_TR_to_OTH | " +
-        " update_roadWidth_from_TR_to_OTH | update_trafficSigns_from_TR_to_OTH | update_pavedRoad_from_TR_to_OTH | update_massTransitLane_from_TR_to_OTH" +
-        " import_all_damagedByThaw_from_TR_to_OTH | update_damagedByThaw_from_TR_to_OTH | import_all_europeanRoad_from_TR_to_OTH | update_europeanRoad_from_TR_to_OTH")
+        " update_roadWidth_from_TR_to_OTH | update_trafficSigns_from_TR_to_OTH | update_pavedRoad_from_TR_to_OTH | update_massTransitLane_from_TR_to_OTH | " +
+        " import_all_damagedByThaw_from_TR_to_OTH | update_damagedByThaw_from_TR_to_OTH | import_all_europeanRoad_from_TR_to_OTH | update_europeanRoad_from_TR_to_OTH | " +
+        " import_all_winterSpeedLimit_from_TR_to_OTH | update_winterSpeedLimit_from_TR_to_OTH")
     }
   }
 }

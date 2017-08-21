@@ -84,6 +84,7 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
   val pavedRoadTRCode ="tl137"
   val damagedByThawTRCode = "tl162"
   val europeanRoadTRCode ="tl130"
+  val winterSpeedLimitTRCode ="tl169"
 
   val trafficVolume: Map[String,List[Map[String, Any]]] ={
     Map(
@@ -188,7 +189,7 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
             "ETAISYYS" -> 0,                 //Start distance
             "LET" -> 0,                       //End distance
             "AJORATA" -> 0,                   //Track Code
-            "PAALLUOK" -> 1                   //Pavement Type
+            "EURONRO" -> 65                   //European Road Number
           )
         )
     )
@@ -223,6 +224,24 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
             "ETAISYYS" -> 0,                        //Start distance
             "LET" -> 0,                             //End distance
             "KAISTATY" -> 5                         //Lane type
+          )
+        )
+    )
+  }
+
+  val winterSpeedLimit: Map[String,List[Map[String, Any]]] ={
+    Map(
+      "Data" ->
+        List(
+          Map(
+            "TIETOLAJI" -> winterSpeedLimitTRCode,   //Field code
+            "TIE" -> 45,                     //Road number
+            "OSA" -> 1,                      //Road part number
+            "LOSA" -> 1,                      //End Road part number
+            "ETAISYYS" -> 0,                 //Start distance
+            "LET" -> 0,                       //End distance
+            "AJORATA" -> 0,                   //Track Code
+            "TALVINOP" -> 80                   //winter speed Limit Value
           )
         )
     )
@@ -323,6 +342,8 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
       damagedByThaw
     } else if (fieldCode == europeanRoadTRCode) {
       europeanRoad
+    } else if (fieldCode == winterSpeedLimitTRCode) {
+      winterSpeedLimit
     }
   }
 
@@ -344,6 +365,8 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
       massTransitLane
     } else if (fieldCode == europeanRoadTRCode) {
       europeanRoad
+    } else if (fieldCode == winterSpeedLimitTRCode) {
+      winterSpeedLimit
     }
   }
 
@@ -365,6 +388,8 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
       massTransitLane
     } else if (fieldCode == europeanRoadTRCode) {
       europeanRoad
+    } else if (fieldCode == winterSpeedLimitTRCode) {
+      winterSpeedLimit
     }
   }
 
@@ -384,6 +409,8 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
       massTransitLane
     } else if (fieldCode == europeanRoadTRCode) {
       europeanRoad
+    } else if (fieldCode == winterSpeedLimitTRCode) {
+      winterSpeedLimit
     }
   }
 }
