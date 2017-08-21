@@ -8,10 +8,9 @@
     var populatedPoints = [];
 
     var backgroundStyle = function (value, counter) {
-
       return new ol.style.Style({
         image: new ol.style.Icon(({
-          src: getImage(value),
+          src: isSignWithValue(value) ? correctValue(propertyText) ? getImage(value) : 'images/traffic-signs/badValue.png' : getImage(value),
           anchor : [0.5, 1+(counter)]
         }))
       });
@@ -27,22 +26,22 @@
     };
 
     var getImage = function (value) {
-        var images = {
-          'images/traffic-signs/speedLimitSign.png':              {signValue: [1, 8]},
-          'images/traffic-signs/endOfSpeedLimitSign.png':         {signValue: [2]},
-          'images/traffic-signs/speedLimitZoneSign.png':          {signValue: [3]},
-          'images/traffic-signs/endOfSpeedLimitZoneSign.png':     {signValue: [4]},
-          'images/traffic-signs/urbanAreaSign.png':               {signValue: [5]},
-          'images/traffic-signs/endOfUrbanAreaSign.png':          {signValue: [6]},
-          'images/traffic-signs/crossingSign.png':                {signValue: [7]},
-          'images/traffic-signs/warningSign.png':                 {signValue: [9]},
-          'images/traffic-signs/turningRestrictionLeftSign.png':  {signValue: [10]},
-          'images/traffic-signs/turningRestrictionRightSign.png': {signValue: [11]},
-          'images/traffic-signs/uTurnRestrictionSign.png':        {signValue: [12]}
-        };
-        return _.findKey(images, function (image) {
-          return _.contains(image.signValue, value);
-        });
+      var images = {
+        'images/traffic-signs/speedLimitSign.png':              {signValue: [1, 8]},
+        'images/traffic-signs/endOfSpeedLimitSign.png':         {signValue: [2]},
+        'images/traffic-signs/speedLimitZoneSign.png':          {signValue: [3]},
+        'images/traffic-signs/endOfSpeedLimitZoneSign.png':     {signValue: [4]},
+        'images/traffic-signs/urbanAreaSign.png':               {signValue: [5]},
+        'images/traffic-signs/endOfUrbanAreaSign.png':          {signValue: [6]},
+        'images/traffic-signs/crossingSign.png':                {signValue: [7]},
+        'images/traffic-signs/warningSign.png':                 {signValue: [9]},
+        'images/traffic-signs/turningRestrictionLeftSign.png':  {signValue: [10]},
+        'images/traffic-signs/turningRestrictionRightSign.png': {signValue: [11]},
+        'images/traffic-signs/uTurnRestrictionSign.png':        {signValue: [12]}
+      };
+      return _.findKey(images, function (image) {
+        return _.contains(image.signValue, value);
+      });
     };
 
     var textStyle = function (value) {
@@ -52,8 +51,7 @@
     };
 
     var correctValue = function (value) {
-      var valueLength = value.toString().length;
-      if (!value || (valueLength > 3 || value < 0) || value > 120)
+      if (!value || (value > 120 || value < 0))
         return false;
       return true;
     };
@@ -102,7 +100,7 @@
     };
 
     this.createFeature = function(point){
-        return new ol.Feature(new ol.geom.Point(point));
+      return new ol.Feature(new ol.geom.Point(point));
     };
 
     var getProperty = function (asset, publicId) {
@@ -116,9 +114,13 @@
       if (_.isUndefined(getProperty(asset, "trafficSigns_type")))
         return;
       var trafficSignType = parseInt(getProperty(asset, "trafficSigns_type").propertyValue);
-      if (trafficSignType < 7 || trafficSignType == 8)
+      if (isSignWithValue)
         setProperty(asset);
       return trafficSignType;
+    };
+
+    var isSignWithValue = function(trafficSignType){
+      return trafficSignType < 5 || trafficSignType == 8;
     };
 
     var setProperty = function (asset) {
@@ -136,7 +138,7 @@
     };
 
     var isInProximity = function (pointA, pointB) {
-      return Math.sqrt(geometrycalculator.getSquaredDistanceBetweenPoints(pointA, pointB.coordinate)) < 6;
+      return Math.sqrt(geometrycalculator.getSquaredDistanceBetweenPoints(pointA, pointB.coordinate)) < 3;
     };
 
     this.getCoordinateForGrouping = function(point){
@@ -146,7 +148,7 @@
         populatedPoints.push({coordinate: assetCoordinate, counter: 1});
       }else{
         var populatedPoint = _.find(populatedPoints, function (p) {
-         return isInProximity(point, p);
+          return isInProximity(point, p);
         });
         if (!_.isUndefined(populatedPoint)) {
           assetCoordinate = populatedPoint.coordinate;

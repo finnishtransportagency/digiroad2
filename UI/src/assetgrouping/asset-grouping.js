@@ -1,10 +1,10 @@
 (function (root) {
-  root.AssetGrouping = function(applicationModel) {
+  root.AssetGrouping = function(assetGroupingDistance) {
     var doGroupingByDistance = function(items, zoomLevel) {
       var result = [];
       var item;
       var findProximityStops = function(x) {
-        return geometrycalculator.getSquaredDistanceBetweenPoints(x, item) < applicationModel.assetGroupingDistance;
+        return geometrycalculator.getSquaredDistanceBetweenPoints(x, item) < assetGroupingDistance;
       };
       while (_.isEmpty(items) === false) {
         item = _.first(items);
@@ -25,7 +25,7 @@
 
       return _.chain(uiAssets)
         .filter(function(uiAsset) {
-          return calculateDistanceToBackendAsset(uiAsset) < applicationModel.assetGroupingDistance;
+          return calculateDistanceToBackendAsset(uiAsset) < assetGroupingDistance;
         })
         .sortBy(calculateDistanceToBackendAsset)
         .head()
