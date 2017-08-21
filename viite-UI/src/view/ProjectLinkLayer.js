@@ -376,7 +376,7 @@
       }
     });
 
-    var zoomDoubleClickListener = function(event, a, b, c) {
+    var zoomDoubleClickListener = function(event) {
       _.defer(function(){
         if(selectedProjectLinkProperty.get().length === 0 && applicationModel.getSelectedLayer() == 'roadAddressProject' && map.getView().getZoom() <= 13){
           map.getView().setZoom(map.getView().getZoom()+1);
