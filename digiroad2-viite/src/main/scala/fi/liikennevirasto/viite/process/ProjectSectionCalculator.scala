@@ -47,7 +47,7 @@ object ProjectSectionCalculator {
       }
     }
     // TODO: When tracks that cross themselves are accepted the logic comes here. Now just return the list unchanged.
-    if (GeometryUtils.isCyclic(list))
+    if (GeometryUtils.isNonLinear(list))
       return list
 
     val head = list.head
@@ -65,6 +65,23 @@ object ProjectSectionCalculator {
     * @return Sequence of project links with address values and calibration points.
     */
   def determineMValues(projectLinks: Seq[ProjectLink], linksInProject: Seq [ProjectLink]): Seq[ProjectLink] = {
+    // Sort: smallest endAddrMValue is first but zero does not count.
+    def addressSort(projectLink1: ProjectLink, projectLink2: ProjectLink): Boolean = {
+      // Test if exactly one already was in project -> prefer them for starting points.
+      if (linksInProject.exists(lip => lip.linkId == projectLink1.linkId) ^ linksInProject.exists(lip => lip.linkId == projectLink2.linkId)) {
+        linksInProject.exists(lip => lip.linkId == projectLink1.linkId)
+      } else {
+        if (projectLink1.endAddrMValue != projectLink2.endAddrMValue) {
+          if (projectLink1.endAddrMValue == 0)
+            false
+          else {
+            projectLink1.endAddrMValue < projectLink2.endAddrMValue || projectLink2.endAddrMValue == 0
+          }
+        } else {
+          projectLink1.linkId < projectLink2.linkId
+        }
+      }
+    }
     def makeStartCP(projectLink: ProjectLink) = {
       Some(CalibrationPoint(projectLink.linkId, if (projectLink.sideCode == TowardsDigitizing) 0.0 else projectLink.geometryLength, projectLink.startAddrMValue))
     }
@@ -125,7 +142,7 @@ object ProjectSectionCalculator {
     }
     val groupedProjectLinks = projectLinks.groupBy(record => (record.roadNumber, record.roadPartNumber))
     groupedProjectLinks.flatMap(gpl => {
-      val linkPartitions = SectionPartitioner.partition(gpl._2).map(_.sortBy(_.endAddrMValue)).map(orderProjectLinksTopologyByGeometry)
+      val linkPartitions = SectionPartitioner.partition(gpl._2).map(_.sortWith(addressSort)).map(orderProjectLinksTopologyByGeometry)
       try {
         val sections = linkPartitions.map(lp =>
           TrackSection(lp.head.roadNumber, lp.head.roadPartNumber, lp.head.track, lp.map(_.geometryLength).sum, lp)
@@ -153,9 +170,13 @@ object ProjectSectionCalculator {
     * @return
     */
   def orderTrackSectionsByGeometry(sections: Seq[TrackSection]): Seq[CombinedSection] = {
+    def reverseCombinedSection(section: CombinedSection): CombinedSection = {
+      section.copy(left = reverseSection(section.left), right = reverseSection(section.right))
+    }
+
     def reverseSection(section: TrackSection): TrackSection = {
       section.copy(links =
-        section.links.map(l => l.copy(geometry = l.geometry.reverse, sideCode = switchSideCode(l.sideCode))))
+        section.links.map(l => l.copy(sideCode = switchSideCode(l.sideCode))).reverse)
     }
 
     def closest(section: TrackSection, candidates: Seq[TrackSection]): TrackSection = {
@@ -176,7 +197,14 @@ object ProjectSectionCalculator {
         throw new InvalidAddressDataException(s"Non-matching left/right tracks on road ${others.head.roadNumber} part ${others.head.roadPartNumber}")
       val pick = right.head
       val pair = closest(pick, left)
-      val combo = if ((pick.startGeometry - pair.startGeometry).length() > (pick.startGeometry - pair.endGeometry).length())
+      val pickVector = pick.endGeometry - pick.startGeometry
+      val pairVector = pair.endGeometry - pair.startGeometry
+      // Test if tracks are going opposite directions and if they touch each other but don't have same direction
+      val (oppositeDirections, mustReverse) = (pickVector.dot(pairVector) < 0,
+        GeometryUtils.areAdjacent(pick.startGeometry, pair.endGeometry) ||
+        GeometryUtils.areAdjacent(pick.endGeometry, pair.startGeometry))
+      // If tracks are not headed the same direction (less than 90 degree angle) and are not connected then reverse
+      val combo = if (oppositeDirections || mustReverse)
         CombinedSection(pick.startGeometry, pick.endGeometry, (pick.geometryLength + pair.geometryLength)/2.0, reverseSection(pair), pick)
       else
         CombinedSection(pick.startGeometry, pick.endGeometry, (pick.geometryLength + pair.geometryLength)/2.0, pair, pick)
@@ -200,10 +228,16 @@ object ProjectSectionCalculator {
         }
       )
       val sorted = unprocessed.sortBy { ts =>
-        Math.min((headPoint - ts.addressEndGeometry).length(),
-          (endPoint - ts.addressStartGeometry).length())
+        Math.min(
+          Math.min((headPoint - ts.addressEndGeometry).length(),
+            (endPoint - ts.addressStartGeometry).length()),
+          Math.min((endPoint - ts.addressEndGeometry).length(),
+            (headPoint - ts.addressStartGeometry).length()))
       }
-      val next = sorted.head
+      val next = Seq(sorted.head, reverseCombinedSection(sorted.head)).minBy(ts =>
+        Math.min((headPoint - ts.addressEndGeometry).length(),
+        (endPoint - ts.addressStartGeometry).length()))
+
       if ((next.addressStartGeometry - endPoint).length() <
         (next.addressEndGeometry - headPoint).length())
         recursiveFindAndExtendCombined(sortedList ++ Seq(next), sorted.tail)

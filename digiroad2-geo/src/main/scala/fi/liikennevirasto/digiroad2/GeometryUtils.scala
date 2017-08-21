@@ -302,14 +302,14 @@ object GeometryUtils {
     (Point(left, top), Point(right, bottom))
   }
 
-  def isCyclic(polyLines: Seq[PolyLine]): Boolean = {
+  def isNonLinear(polyLines: Seq[PolyLine]): Boolean = {
     if (polyLines.isEmpty)
       false
     else {
       val (p1, p2) = geometryEndpoints(polyLines.head.geometry)
       polyLines.count(p => areAdjacent(p.geometry, p1, 1.0)) > 2 ||
         polyLines.count(p => areAdjacent(p.geometry, p2, 1.0)) > 2 ||
-        isCyclic(polyLines.tail)
+        isNonLinear(polyLines.tail)
     }
   }
 

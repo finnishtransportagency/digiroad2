@@ -19,12 +19,19 @@ trait AddressLinkBuilder {
   val ComplementarySubType = 3
   val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
 
-  lazy val municipalityMapping = OracleDatabase.withDynSession {
+  lazy val municipalityMapping = if (OracleDatabase.isWithinSession)
     MunicipalityDAO.getMunicipalityMapping
-  }
-  lazy val municipalityRoadMaintainerMapping = OracleDatabase.withDynSession {
-    MunicipalityDAO.getMunicipalityRoadMaintainers
-  }
+  else
+    OracleDatabase.withDynSession {
+      MunicipalityDAO.getMunicipalityMapping
+    }
+
+  lazy val municipalityRoadMaintainerMapping = if (OracleDatabase.isWithinSession)
+      MunicipalityDAO.getMunicipalityRoadMaintainers
+    else
+      OracleDatabase.withDynSession {
+        MunicipalityDAO.getMunicipalityRoadMaintainers
+      }
 
   def getRoadType(administrativeClass: AdministrativeClass, linkType: LinkType): RoadType = {
     (administrativeClass, linkType) match {
