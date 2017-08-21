@@ -38,7 +38,7 @@
     };
 
     var cleanIds = function(){
-      ids = []
+      ids = [];
     };
 
     var close = function(){
