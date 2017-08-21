@@ -258,7 +258,17 @@ case class TierekisteriEuropeanRoadData(roadNumber: Long, startRoadPartNumber: L
                                      track: Track, startAddressMValue: Long, endAddressMValue: Long, assetValue: String) extends TierekisteriAssetData
 
 case class TierekisteriWinterSpeedLimitData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
-                                        track: Track, startAddressMValue: Long, endAddressMValue: Long, assetValue: Int) extends TierekisteriAssetData
+                                        track: Track, startAddressMValue: Long, endAddressMValue: Long, speedLimit: Int) extends TierekisteriAssetData
+
+case class TierekisteriHeightLimitData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
+                                       track: Track, startAddressMValue: Long, endAddressMValue: Long, height: Int) extends TierekisteriAssetData
+
+case class TierekisteriWidthLimitData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
+                                       track: Track, startAddressMValue: Long, endAddressMValue: Long, width: Int) extends TierekisteriAssetData
+
+case class TierekisteriWeightLimitData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
+                                      track: Track, startAddressMValue: Long, endAddressMValue: Long,
+                                       totalWeight: Option[Int], trailerTruckWeight: Option[Int], axleWeight: Option[Int], bogieWeight: Option[Int]) extends TierekisteriAssetData
 
 case class TierekisteriError(content: Map[String, Any], url: String)
 
@@ -978,6 +988,85 @@ class TierekisteriWinterSpeedLimitAssetClient(trEndPoint: String, trEnable: Bool
     val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
 
     TierekisteriWinterSpeedLimitData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue, assetValue)
+  }
+}
+
+class TierekisteriHeightLimitAssetClient(trEndPoint: String, trEnable: Boolean, httpClient: CloseableHttpClient) extends TierekisteriAssetDataClient{
+  override def tierekisteriRestApiEndPoint: String = trEndPoint
+  override def tierekisteriEnabled: Boolean = trEnable
+  override def client: CloseableHttpClient = httpClient
+  type TierekisteriType = TierekisteriHeightLimitData
+
+  override val trAssetType = "tl263"
+  private val trHeight = "ALIKKO"
+
+  override def mapFields(data: Map[String, Any]): TierekisteriHeightLimitData = {
+    val heightValue = convertToInt(getFieldValue(data, trHeight)).get
+
+    //Mandatory field
+    val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
+    val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
+    val endRoadPartNumber = convertToLong(getMandatoryFieldValue(data, trEndRoadPartNumber)).getOrElse(roadPartNumber)
+    val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
+    val endMValue = convertToLong(getMandatoryFieldValue(data, trEndMValue)).get
+    val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
+
+    TierekisteriHeightLimitData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue, heightValue)
+  }
+}
+
+class TierekisteriWidthLimitAssetClient(trEndPoint: String, trEnable: Boolean, httpClient: CloseableHttpClient) extends TierekisteriAssetDataClient{
+  override def tierekisteriRestApiEndPoint: String = trEndPoint
+  override def tierekisteriEnabled: Boolean = trEnable
+  override def client: CloseableHttpClient = httpClient
+  type TierekisteriType = TierekisteriWidthLimitData
+
+  override val trAssetType = "tl264"
+  private val trWidth = "MAXLEV"
+
+  override def mapFields(data: Map[String, Any]): TierekisteriWidthLimitData = {
+    val widthValue = convertToInt(getFieldValue(data, trWidth)).get
+
+    //Mandatory field
+    val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
+    val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
+    val endRoadPartNumber = convertToLong(getMandatoryFieldValue(data, trEndRoadPartNumber)).getOrElse(roadPartNumber)
+    val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
+    val endMValue = convertToLong(getMandatoryFieldValue(data, trEndMValue)).get
+    val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
+
+    TierekisteriWidthLimitData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue, widthValue)
+  }
+}
+
+class TierekisteriWeightLimitAssetClient(trEndPoint: String, trEnable: Boolean, httpClient: CloseableHttpClient) extends TierekisteriAssetDataClient{
+  override def tierekisteriRestApiEndPoint: String = trEndPoint
+  override def tierekisteriEnabled: Boolean = trEnable
+  override def client: CloseableHttpClient = httpClient
+  type TierekisteriType = TierekisteriWeightLimitData
+
+  override val trAssetType = "tl261"
+  private val trTotalWeight = "AJONPAINO"
+  private val trTrailerTruckWeight = "YHDPAINO"
+  private val trAxleWeight = "AKSPAINO"
+  private val trBogieWeight = "TELIPAINO"
+
+  override def mapFields(data: Map[String, Any]): TierekisteriWeightLimitData = {
+    val trTotalWeightValue = convertToInt(getFieldValue(data, trTotalWeight))
+    val trTrailerTruckWeightValue = convertToInt(getFieldValue(data, trTrailerTruckWeight))
+    val trAxleWeightValue = convertToInt(getFieldValue(data, trAxleWeight))
+    val trBogieWeightValue = convertToInt(getFieldValue(data, trBogieWeight))
+
+    //Mandatory field
+    val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
+    val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
+    val endRoadPartNumber = convertToLong(getMandatoryFieldValue(data, trEndRoadPartNumber)).getOrElse(roadPartNumber)
+    val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
+    val endMValue = convertToLong(getMandatoryFieldValue(data, trEndMValue)).get
+    val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
+
+    TierekisteriWeightLimitData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue,
+      trTotalWeightValue, trTrailerTruckWeightValue, trAxleWeightValue, trBogieWeightValue)
   }
 }
 

@@ -89,6 +89,24 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
       HttpClientBuilder.create().build())
   }
 
+  lazy val tierekisteriWeightLimitAsset: TierekisteriWeightLimitAssetClient = {
+    new TierekisteriWeightLimitAssetClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+      HttpClientBuilder.create().build())
+  }
+
+  lazy val tierekisteriHeightLimitAsset: TierekisteriHeightLimitAssetClient = {
+    new TierekisteriHeightLimitAssetClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+      HttpClientBuilder.create().build())
+  }
+
+  lazy val tierekisteriWidthLimitAsset: TierekisteriWidthLimitAssetClient = {
+    new TierekisteriWidthLimitAssetClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+      HttpClientBuilder.create().build())
+  }
+
   lazy val connectedToTierekisteri = testConnection
 
   private def testConnection: Boolean = {
@@ -375,7 +393,6 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
     thrown.getMessage should be ("Tierekisteri error: 500: N/A")
   }
 
-
   test("Returning only mandatory fields from Tierekisteri should be accepted") {
     val httpClient = MockitoSugar.mock[CloseableHttpClient]
     val trClient =  new TierekisteriMassTransitStopClient(
@@ -431,8 +448,6 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
       TierekisteriBusStopMarshaller.findStopType(Seq(x)) should be(StopType.Unknown)
     }
   }
-
-
 
   test("fetch from tierekisteri active trafic volume with fieldCode, roadNumber and roadPartNumber") {
     assume(testConnection)
@@ -491,7 +506,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
     val assets = tierekisteriRoadWidthAsset.fetchActiveAssetData(45)
 
     assets.size should not be (0)
-    assets.map(_.assetValue) should contain (1)
+    assets.map(_.assetValue) should contain (1150)
   }
 
   test("fetch from tierekisteri changes road width with fieldCode and roadNumber") {
@@ -499,8 +514,7 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
 
     val assets = tierekisteriRoadWidthAsset.fetchHistoryAssetData(45, Some((new DateTime).withYear(2016).withMonthOfYear(1).withDayOfMonth(1)))
 
-    assets.size should not be (1)
-    assets.map(_.assetValue) should be (1150)
+    assets.size should be (0)
   }
 
   test("Fetch Traffic Signs from Tierekisteri by fieldCode, roadNumber") {
@@ -635,4 +649,89 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
 
     assets.size should be (1)
   }
+
+  test("fetch from tierekisteri active Height Limit with fieldCode and roadNumber") {
+    assume(testConnection)
+    val assets = tierekisteriHeightLimitAsset.fetchActiveAssetData(45)
+
+    assets.size should be (1)
+  }
+
+  test("fetch from tierekisteri active Height Limit Limit with fieldCode, roadNumber and roadPartNumber") {
+    assume(testConnection)
+    val assets = tierekisteriHeightLimitAsset.fetchActiveAssetData(45, 1)
+
+    assets.size should be (1)
+  }
+
+  test("fetch from tierekisteri active Height Limit with fieldCode, roadNumber, roadPartNumber and startDistance") {
+    assume(testConnection)
+    val assets = tierekisteriHeightLimitAsset.fetchActiveAssetData(45, 1, 0)
+
+    assets.size should be (1)
+  }
+
+  test("fetch from tierekisteri active Height Limit with fieldCode, roadNumber, roadPartNumber, startDistance, endPart and endDistance") {
+    assume(testConnection)
+    val assets = tierekisteriHeightLimitAsset.fetchActiveAssetData(45, 1, 0, 0, 100)
+
+    assets.size should be (1)
+  }
+
+  test("fetch from tierekisteri active Width Limit with fieldCode and roadNumber") {
+    assume(testConnection)
+    val assets = tierekisteriWidthLimitAsset.fetchActiveAssetData(45)
+
+    assets.size should be (1)
+  }
+
+  test("fetch from tierekisteri active Width Limit Limit with fieldCode, roadNumber and roadPartNumber") {
+    assume(testConnection)
+    val assets = tierekisteriWidthLimitAsset.fetchActiveAssetData( 45, 1)
+
+    assets.size should be (1)
+  }
+
+  test("fetch from tierekisteri active Width Limit with fieldCode, roadNumber, roadPartNumber and startDistance") {
+    assume(testConnection)
+    val assets = tierekisteriWidthLimitAsset.fetchActiveAssetData(45, 1, 0)
+
+    assets.size should be (1)
+  }
+
+  test("fetch from tierekisteri active Width Limit with fieldCode, roadNumber, roadPartNumber, startDistance, endPart and endDistance") {
+    assume(testConnection)
+    val assets = tierekisteriWidthLimitAsset.fetchActiveAssetData(45, 1, 0, 0, 100)
+
+    assets.size should be (1)
+  }
+
+  test("fetch from tierekisteri active Weight Limit with fieldCode and roadNumber") {
+    assume(testConnection)
+    val assets = tierekisteriWeightLimitAsset.fetchActiveAssetData(45)
+
+    assets.size should be (1)
+  }
+
+  test("fetch from tierekisteri active Weight Limit Limit with fieldCode, roadNumber and roadPartNumber") {
+    assume(testConnection)
+    val assets = tierekisteriWeightLimitAsset.fetchActiveAssetData( 45, 1)
+
+    assets.size should be (1)
+  }
+
+  test("fetch from tierekisteri active Weight Limit with fieldCode, roadNumber, roadPartNumber and startDistance") {
+    assume(testConnection)
+    val assets = tierekisteriWeightLimitAsset.fetchActiveAssetData(45, 1, 0)
+
+    assets.size should be (1)
+  }
+
+  test("fetch from tierekisteri active Weight Limit with fieldCode, roadNumber, roadPartNumber, startDistance, endPart and endDistance") {
+    assume(testConnection)
+    val assets = tierekisteriWeightLimitAsset.fetchActiveAssetData(45, 1, 0, 0, 100)
+
+    assets.size should be (1)
+  }
+
 }

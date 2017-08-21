@@ -79,12 +79,15 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
   val trafficVolumeTRCode = "tl201"
   val lightingTRCode = "tl167"
   val roadWidthTRCode = "tl136"
-  val trafficSignTRCode ="tl506"
-  val laneArragementTRCode ="tl161"
-  val pavedRoadTRCode ="tl137"
+  val trafficSignTRCode = "tl506"
+  val laneArragementTRCode = "tl161"
+  val pavedRoadTRCode = "tl137"
   val damagedByThawTRCode = "tl162"
-  val europeanRoadTRCode ="tl130"
-  val winterSpeedLimitTRCode ="tl169"
+  val europeanRoadTRCode = "tl130"
+  val winterSpeedLimitTRCode = "tl169"
+  val heightLimitTRCode = "tl263"
+  val widthLimitTRCode = "tl264"
+  val weightLimitTRCode = "tl261"
 
   val trafficVolume: Map[String,List[Map[String, Any]]] ={
     Map(
@@ -94,7 +97,9 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
               "TIETOLAJI" -> trafficVolumeTRCode,   //Field code
               "TIE" -> 45,                          //Road number
               "OSA" -> 1,                           //Road part number
+              "LOSA" -> 2,
               "ETAISYYS" -> 0,                      //Start distance
+              "AJORATA" -> 0,
               "LET" -> 0,                           //End distance
               "KVL" -> 1                            //placeholder value for traffic volume
             )
@@ -151,6 +156,8 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
           Map(
             "TIE" -> 45,                     //Road number
             "OSA" -> 1,                      //Road part number
+            "AJORATA" -> 0,
+            "PUOLI" -> 0,
             "ETAISYYS" -> 1,                 //Start distance
             "LMNUMERO" -> 361,               //Speed Limit
             "LMTEKSTI" -> "80"               //Speed Limit Value
@@ -212,7 +219,6 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
     )
   }
 
-
   val massTransitLane: Map[String,List[Map[String, Any]]] ={
     Map(
       "Data" ->
@@ -221,6 +227,8 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
             "TIETOLAJI" -> laneArragementTRCode,   //Field code
             "TIE" -> 45,                            //Road number
             "OSA" -> 1,                             //Road part number
+            "LOSA" -> 2,
+            "AJORATA" -> 0,
             "ETAISYYS" -> 0,                        //Start distance
             "LET" -> 0,                             //End distance
             "KAISTATY" -> 5                         //Lane type
@@ -242,6 +250,63 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
             "LET" -> 0,                       //End distance
             "AJORATA" -> 0,                   //Track Code
             "TALVINOP" -> 80                   //winter speed Limit Value
+          )
+        )
+    )
+  }
+
+  val heighLimit: Map[String,List[Map[String, Any]]] ={
+    Map(
+      "Data" ->
+        List(
+          Map(
+            "TIETOLAJI" -> heightLimitTRCode,   //Field code
+            "TIE" -> 45,                     //Road number
+            "OSA" -> 1,                      //Road part number
+            "LOSA" -> 1,                      //End Road part number
+            "ETAISYYS" -> 0,                 //Start distance
+            "LET" -> 0,                       //End distance
+            "AJORATA" -> 0,                   //Track Code
+            "ALIKKO" -> 200                   //height speed Limit Value
+          )
+        )
+    )
+  }
+
+  val widthLimit: Map[String,List[Map[String, Any]]] ={
+    Map(
+      "Data" ->
+        List(
+          Map(
+            "TIETOLAJI" -> widthLimitTRCode,   //Field code
+            "TIE" -> 45,                     //Road number
+            "OSA" -> 1,                      //Road part number
+            "LOSA" -> 1,                      //End Road part number
+            "ETAISYYS" -> 0,                 //Start distance
+            "LET" -> 0,                       //End distance
+            "AJORATA" -> 0,                   //Track Code
+            "MAXLEV" -> 150                   //width speed Limit Value
+          )
+        )
+    )
+  }
+
+  val weightLimit: Map[String,List[Map[String, Any]]] ={
+    Map(
+      "Data" ->
+        List(
+          Map(
+            "TIETOLAJI" -> weightLimitTRCode,   //Field code
+            "TIE" -> 45,                     //Road number
+            "OSA" -> 1,                      //Road part number
+            "LOSA" -> 1,                      //End Road part number
+            "ETAISYYS" -> 0,                 //Start distance
+            "LET" -> 0,                       //End distance
+            "AJORATA" -> 0,                   //Track Code
+            "AJONPAINO" -> 150,               //total weight limit value
+            "YHDPAINO" -> 150,                //trailer truck weight limit value
+            "AKSPAINO" -> 150,                //axle weight limit value
+            "TELIPAINO" -> 150                //bogie weight limit value
           )
         )
     )
@@ -288,7 +353,6 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
       body.get(field).getOrElse(halt(BadRequest("Malformed 'mass transit stop' parameter")))
     }
 
-
     halt(NoContent())
   }
 
@@ -326,25 +390,38 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
     if(!headerContainsAuth(request.headers)) halt(BadRequest("401 Unauthorized"))
 
     val fieldCode = params("fieldCode")
-    if (fieldCode == trafficVolumeTRCode) {
-      trafficVolume
-    } else if (fieldCode == lightingTRCode) {
-      lighting
-    } else if (fieldCode == roadWidthTRCode) {
-      roadWidth
-    } else if (fieldCode == trafficSignTRCode) {
-      trafficSign
-    } else if (fieldCode == laneArragementTRCode) {
-      massTransitLane
-    } else if (fieldCode == pavedRoadTRCode) {
-      pavedRoad
-    } else if (fieldCode == damagedByThawTRCode) {
-      damagedByThaw
-    } else if (fieldCode == europeanRoadTRCode) {
-      europeanRoad
-    } else if (fieldCode == winterSpeedLimitTRCode) {
-      winterSpeedLimit
+    val changeDate = params.get("muutospvm")
+    if(!changeDate.isEmpty) {
+      Map("Data" -> List())
+    }else{
+      if (fieldCode == trafficVolumeTRCode) {
+        trafficVolume
+      } else if (fieldCode == lightingTRCode) {
+        lighting
+      } else if (fieldCode == roadWidthTRCode) {
+        roadWidth
+      } else if (fieldCode == trafficSignTRCode) {
+        trafficSign
+      } else if (fieldCode == laneArragementTRCode) {
+        massTransitLane
+      } else if (fieldCode == pavedRoadTRCode) {
+        pavedRoad
+      } else if (fieldCode == damagedByThawTRCode) {
+        damagedByThaw
+      } else if (fieldCode == europeanRoadTRCode) {
+        europeanRoad
+      } else if (fieldCode == winterSpeedLimitTRCode) {
+        winterSpeedLimit
+      } else if (fieldCode == heightLimitTRCode) {
+        heighLimit
+      } else if (fieldCode == widthLimitTRCode) {
+        widthLimit
+      } else if (fieldCode == weightLimitTRCode){
+        weightLimit
+      }
     }
+
+
   }
 
   get("/tietolajit/:fieldCode/:roadNumber/:roadPartNumber") {
@@ -367,6 +444,12 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
       europeanRoad
     } else if (fieldCode == winterSpeedLimitTRCode) {
       winterSpeedLimit
+    } else if (fieldCode == heightLimitTRCode) {
+      heighLimit
+    } else if (fieldCode == widthLimitTRCode) {
+      widthLimit
+    } else if (fieldCode == weightLimitTRCode){
+      weightLimit
     }
   }
 
@@ -390,6 +473,12 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
       europeanRoad
     } else if (fieldCode == winterSpeedLimitTRCode) {
       winterSpeedLimit
+    } else if (fieldCode == heightLimitTRCode) {
+      heighLimit
+    } else if (fieldCode == widthLimitTRCode) {
+      widthLimit
+    } else if (fieldCode == weightLimitTRCode){
+      weightLimit
     }
   }
 
@@ -411,6 +500,12 @@ class TierekisteriTestApi extends ScalatraServlet with JacksonJsonSupport {
       europeanRoad
     } else if (fieldCode == winterSpeedLimitTRCode) {
       winterSpeedLimit
+    } else if (fieldCode == heightLimitTRCode) {
+      heighLimit
+    } else if (fieldCode == widthLimitTRCode) {
+      widthLimit
+    } else if (fieldCode == weightLimitTRCode){
+      weightLimit
     }
   }
 }
