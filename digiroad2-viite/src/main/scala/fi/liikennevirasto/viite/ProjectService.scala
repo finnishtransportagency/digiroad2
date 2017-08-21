@@ -1,6 +1,7 @@
 package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.SuravageLinkInterface
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
@@ -167,8 +168,20 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         (projectAddressLink.startCalibrationPoint, projectAddressLink.endCalibrationPoint), floating = false,
         projectAddressLink.geometry, roadAddressProjectID, LinkStatus.New, projectAddressLink.roadType,
         projectAddressLink.roadLinkSource, projectAddressLink.length)
-
     }
+
+    def matchSideCodes(newLink: ProjectAddressLink, existingLink: ProjectAddressLink): SideCode = {
+      val (startP, endP) = existingLink.sideCode match {
+        case AgainstDigitizing => GeometryUtils.geometryEndpoints(existingLink.geometry).swap
+        case _ => GeometryUtils.geometryEndpoints(existingLink.geometry)
+      }
+      if (GeometryUtils.areAdjacent(newLink.geometry.head, endP) ||
+        GeometryUtils.areAdjacent(newLink.geometry.last, startP))
+        SideCode.TowardsDigitizing
+      else
+        SideCode.AgainstDigitizing
+    }
+
     withDynTransaction {
     val linksInProject = getLinksByProjectLinkId(ProjectDAO.fetchByProjectNewRoadPart(newRoadNumber,newRoadPartNumber,
       roadAddressProjectID, false).map(l => l.linkId).toSet, roadAddressProjectID, false)
@@ -179,11 +192,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val randomSideCode =
       linksInProject.map(l => l -> projectAddressLinks.find(n => GeometryUtils.areAdjacent(l.geometry, n.geometry))).toMap.find { case (l, n) => n.nonEmpty }.map {
         case (l, Some(n)) =>
-          if (GeometryUtils.areAdjacent(l.geometry.head, n.geometry.last) ||
-            GeometryUtils.areAdjacent(l.geometry.last, n.geometry.head))
-            l.sideCode
-          else
-            switchSideCode(l.sideCode)
+          matchSideCodes(n, l)
         case _ => SideCode.TowardsDigitizing
       }.getOrElse(SideCode.TowardsDigitizing)
     ProjectDAO.getRoadAddressProjectById(roadAddressProjectID) match {
