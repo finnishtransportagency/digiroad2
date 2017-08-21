@@ -182,6 +182,7 @@
       $('#actionButtons').html('<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button><button disabled id ="send-button" class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button>');
       if (!_.isUndefined(selection))
         selectedProjectLinkProperty.open(selection.projectLinkData.linkId, true);
+      else selectedProjectLinkProperty.cleanIds();
     });
 
     var selectDoubleClick = new ol.interaction.Select({
@@ -262,6 +263,7 @@
         selectedProjectLinkProperty.clean();
         if (!_.isUndefined(selection))
           selectedProjectLinkProperty.open(selection.projectLinkData.linkId);
+        else selectedProjectLinkProperty.cleanIds();
       }
     });
 
@@ -374,7 +376,7 @@
       }
     });
 
-    var zoomDoubleClickListener = function(event) {
+    var zoomDoubleClickListener = function(event, a, b, c) {
       _.defer(function(){
         if(selectedProjectLinkProperty.get().length === 0 && applicationModel.getSelectedLayer() == 'roadAddressProject' && map.getView().getZoom() <= 13){
           map.getView().setZoom(map.getView().getZoom()+1);
@@ -382,8 +384,7 @@
       });
     };
     //This will control the double click zoom when there is no selection that activates
-    //TODO: this dblclick event creates lot's of interference with the selection, I requeire help.
-    //map.on('dblclick', zoomDoubleClickListener);
+    map.on('dblclick', zoomDoubleClickListener);
 
     var infoContainer = document.getElementById('popup');
     var infoContent = document.getElementById('popup-content');

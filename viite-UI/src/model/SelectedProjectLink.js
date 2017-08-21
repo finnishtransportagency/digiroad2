@@ -37,6 +37,10 @@
       current = [];
     };
 
+    var cleanIds = function(){
+      ids = []
+    };
+
     var close = function(){
       current = [];
       eventbus.trigger('layer:enableButtons', true);
@@ -47,6 +51,7 @@
       openShift: openShift,
       get: get,
       clean: clean,
+      cleanIds: cleanIds,
       close: close,
       isSelected: isSelected,
       setCurrent: setCurrent
