@@ -170,13 +170,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         projectAddressLink.roadLinkSource, projectAddressLink.length)
     }
 
-    def matchSideCodes(newLink: ProjectAddressLink, savedLink: ProjectAddressLink): SideCode = {
-      val (startP, endP) = savedLink.sideCode match {
-        case AgainstDigitizing => GeometryUtils.geometryEndpoints(savedLink.geometry).swap
-        case _ => GeometryUtils.geometryEndpoints(savedLink.geometry)
+    def matchSideCodes(newLink: ProjectAddressLink, existingLink: ProjectAddressLink): SideCode = {
+      val (startP, endP) = existingLink.sideCode match {
+        case AgainstDigitizing => GeometryUtils.geometryEndpoints(existingLink.geometry).swap
+        case _ => GeometryUtils.geometryEndpoints(existingLink.geometry)
       }
-      if (GeometryUtils.areAdjacent(savedLink.geometry.head, endP) ||
-        GeometryUtils.areAdjacent(savedLink.geometry.last, startP))
+      if (GeometryUtils.areAdjacent(newLink.geometry.head, endP) ||
+        GeometryUtils.areAdjacent(newLink.geometry.last, startP))
         SideCode.TowardsDigitizing
       else
         SideCode.AgainstDigitizing
