@@ -269,7 +269,7 @@ object TierekisteriDataImporter {
       val operation = args(0)
       val assetType = args(1)
 
-      val availableAssetTypes = tierekisteriDataImporters.keySet ++ Set("trafficVolume")
+      val availableAssetTypes = tierekisteriDataImporters.keySet
 
       if(availableAssetTypes.contains(assetType)){
         operation match {
