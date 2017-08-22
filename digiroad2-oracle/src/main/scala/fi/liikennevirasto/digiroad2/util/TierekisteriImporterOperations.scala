@@ -169,6 +169,14 @@ trait TierekisteriAssetImporterOperations {
     println("\nEnd assets expiration in municipality %d".format(municipality))
   }
 
+  def getAssetTypeId() = {
+    typeId
+  }
+
+  def getAssetName() = {
+    assetName
+  }
+
   def importAssets(): Unit = {
     //Expire all asset in state roads in all the municipalities
     val municipalities = getAllMunicipalities()
