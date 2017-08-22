@@ -12,6 +12,7 @@ import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDi
 import fi.liikennevirasto.digiroad2.asset.oracle.OracleAssetDao
 import fi.liikennevirasto.digiroad2.roadaddress.oracle.RoadAddressDAO
 import fi.liikennevirasto.digiroad2.util.DataFixture.getClass
+import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 
@@ -52,6 +53,12 @@ object TierekisteriDataImporter {
 
   lazy val roadAddressDao : RoadAddressDAO = {
     new RoadAddressDAO()
+  }
+
+  lazy val tierekisteriTrafficVolumeAssetClient: TierekisteriTrafficVolumeAssetClient = {
+    new TierekisteriTrafficVolumeAssetClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+      HttpClientBuilder.create().build())
   }
 
   lazy val litRoadImporterOperations: LitRoadTierekisteriImporter = {
@@ -200,7 +207,7 @@ object TierekisteriDataImporter {
 
     tierekisteriAssetImporter.importAssets()
 
-    println(s"$assetType import complete at time: ")
+    println(s"$assetType import complete at: ")
     println(DateTime.now())
     println("\n")
   }
@@ -218,7 +225,7 @@ object TierekisteriDataImporter {
 
     tierekisteriAssetImporter.updateAssets(lastExecutionDate)
 
-    println(s"$assetType update complete at time: ")
+    println(s"$assetType update complete at: ")
     println(DateTime.now())
     println("\n")
   }
@@ -271,6 +278,15 @@ object TierekisteriDataImporter {
           case "update" =>
             val lastExecutionDate = getDateFromArgs(args)
             updateAssets(tierekisteriDataImporters.get(assetType).get, lastExecutionDate)
+          case _ =>
+            println(s"Operation '$operation' is not supported.")
+        }
+      }else if(assetType == "trafficVolume"){
+        operation match {
+          case "import" =>
+            importTrafficVolumeAsset(tierekisteriTrafficVolumeAssetClient)
+          case _ =>
+            println(s"Operation '$operation' is not supported.")
         }
       }else{
         println(s"The asset type $assetType is not supported")
