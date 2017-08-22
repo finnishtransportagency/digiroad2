@@ -106,9 +106,6 @@
       })
     });
     map.setProperties({extent : [-548576, 6291456, 1548576, 8388608]});
-
-
-    // keyHandler.activate();
     return map;
   };
 
