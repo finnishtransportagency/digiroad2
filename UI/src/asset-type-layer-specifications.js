@@ -543,6 +543,7 @@
       label: new TrafficSignLabel(),
       collection: TrafficSignsCollection,
       allowGrouping: true,
+      groupingDistance: 9,
       formLabels: {
         singleFloatingAssetLabel: 'liikennemerkin',
         manyFloatingAssetsLabel: 'liikennemerkit',
