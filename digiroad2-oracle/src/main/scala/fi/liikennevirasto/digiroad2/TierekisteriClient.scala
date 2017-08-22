@@ -946,11 +946,11 @@ class TierekisteriEuropeanRoadAssetClient(trEndPoint: String, trEnable: Boolean,
   type TierekisteriType = TierekisteriEuropeanRoadData
 
   override val trAssetType = "tl130"
-  private val trEURONRO = "EURONRO"
+  private val trEuropeanRoadNumber = "EURONRO"
 
   override def mapFields(data: Map[String, Any]): TierekisteriEuropeanRoadData = {
     val assetValue =
-      getFieldValue(data, trEURONRO) match {
+      getFieldValue(data, trEuropeanRoadNumber) match {
         case Some(value) => value
         case None => " "
       }
