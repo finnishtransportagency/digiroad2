@@ -591,63 +591,65 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     }
   }
 
-//  test("Should allow all asset\"") {
-//    TestTransactions.runWithRollback() {
-//
-//      val testTierekisteriAsset = new TestTierekisteriAssetImporterOperations
-//      val roadNumber = 4L
-//      val roadPartNumber = 1L
-//      val startSection = 50
-//      val endSection = 350
-//      val startRoadPartNumber = 200L
-//      val endRoadPartNumber = 200L
-//      val date = DateTime.now()
-//
-//      val tr = Seq(TierekisteriPavedRoadData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, startSection, endSection, TRPavedRoadType.CementConcrete),
-//                  TierekisteriPavedRoadData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, startSection, endSection, TRPavedRoadType.HardAsphalt),
-//                  TierekisteriPavedRoadData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.LeftSide, startSection, endSection, TRPavedRoadType.Unknown))
-//
-//      when(mockTierekisteriAssetDataClient.fetchActiveAssetData(roadNumber)).thenReturn(tr)
-//      val filterAsset = testTierekisteriAsset.getAllTierekisteriAddressSectionsTest(roadNumber)
-//      filterAsset.length should be(3)
-//
-//      when(mockTierekisteriAssetDataClient.fetchActiveAssetData(roadNumber, roadPartNumber)).thenReturn(tr)
-//      val assetFetch = testTierekisteriAsset.getAllTierekisteriAddressSectionsTest(roadNumber, roadPartNumber)
-//      assetFetch.length should be(3)
-//
-//      when(mockTierekisteriAssetDataClient.fetchHistoryAssetData(roadNumber, Some(date))).thenReturn(tr)
-//      val assetHist = testTierekisteriAsset.getAllTierekisteriHistoryAddressSectionTest(roadNumber, date)
-//      assetHist.length should be(3)
-//    }
-//  }
+  test("Should allow all asset\"") {
+    TestTransactions.runWithRollback() {
 
-//  test("Should exclude all assets\"") {
-//    TestTransactions.runWithRollback() {
-//
-//      val testPavedRoad = new TestTierekisteriAssetImporterOperationsFilterAll
-//      val roadNumber = 4L
-//      val roadPartNumber = 1L
-//      val startSection = 50
-//      val endSection = 350
-//      val date = DateTime.now()
-//
-//      val tr = Seq(TierekisteriLightingData(roadNumber, 100L, 200L, Track.RightSide, startSection, endSection),
-//        TierekisteriLightingData(roadNumber, 200L, 300L, Track.RightSide, startSection, endSection),
-//        TierekisteriLightingData(roadNumber, 100L, 200L, Track.LeftSide, startSection, endSection))
-//
-//      when(mockTRClient.fetchActiveAssetData(roadNumber)).thenReturn(tr)
-//      val filterAsset = testPavedRoad.getAllTierekisteriAddressSectionsTest(roadNumber)
-//      filterAsset.length should be(0)
-//
-//      when(mockTRClient.fetchActiveAssetData(roadNumber, roadPartNumber)).thenReturn(tr)
-//      val assetFetch = testPavedRoad.getAllTierekisteriAddressSectionsTest(roadNumber, roadPartNumber)
-//      assetFetch.length should be(0)
-//
-//      when(mockTRClient.fetchHistoryAssetData(roadNumber, Some(date))).thenReturn(tr)
-//      val assetHist = testPavedRoad.getAllTierekisteriHistoryAddressSectionTest(roadNumber, date)
-//      assetHist.length should be(0)
-//    }
-//  }
+      val testTierekisteriAsset = new TestTierekisteriAssetImporterOperations
+      val roadNumber = 4L
+      val roadPartNumber = 1L
+      val startSection = 50
+      val endSection = 350
+      val startRoadPartNumber = 200L
+      val endRoadPartNumber = 200L
+      val date = DateTime.now()
+
+      val tr = Seq(TierekisteriLightingData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, startSection, endSection),
+        TierekisteriLightingData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, startSection, endSection),
+        TierekisteriLightingData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.LeftSide, startSection, endSection))
+
+      when(mockTRClient.fetchActiveAssetData(roadNumber)).thenReturn(tr)
+      val filterAsset = testTierekisteriAsset.getAllTierekisteriAddressSectionsTest(roadNumber)
+      filterAsset.length should be(3)
+
+      when(mockTRClient.fetchActiveAssetData(roadNumber, roadPartNumber)).thenReturn(tr)
+      val assetFetch = testTierekisteriAsset.getAllTierekisteriAddressSectionsTest(roadNumber, roadPartNumber)
+      assetFetch.length should be(3)
+
+      when(mockTRClient.fetchHistoryAssetData(roadNumber, Some(date))).thenReturn(tr)
+      val assetHist = testTierekisteriAsset.getAllTierekisteriHistoryAddressSectionTest(roadNumber, date)
+      assetHist.length should be(3)
+    }
+  }
+
+  test("Should exclude all assets\"") {
+    TestTransactions.runWithRollback() {
+
+      val testTierekisteriAsset = new TestTierekisteriAssetImporterOperationsFilterAll
+      val roadNumber = 4L
+      val roadPartNumber = 1L
+      val startSection = 50
+      val endSection = 350
+      val startRoadPartNumber = 200L
+      val endRoadPartNumber = 200L
+      val date = DateTime.now()
+
+      val tr = Seq(TierekisteriLightingData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, startSection, endSection),
+        TierekisteriLightingData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, startSection, endSection),
+        TierekisteriLightingData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.LeftSide, startSection, endSection))
+
+      when(mockTRClient.fetchActiveAssetData(roadNumber)).thenReturn(tr)
+      val filterAsset = testTierekisteriAsset.getAllTierekisteriAddressSectionsTest(roadNumber)
+      filterAsset.length should be(0)
+
+      when(mockTRClient.fetchActiveAssetData(roadNumber, roadPartNumber)).thenReturn(tr)
+      val assetFetch = testTierekisteriAsset.getAllTierekisteriAddressSectionsTest(roadNumber, roadPartNumber)
+      assetFetch.length should be(0)
+
+      when(mockTRClient.fetchHistoryAssetData(roadNumber, Some(date))).thenReturn(tr)
+      val assetHist = testTierekisteriAsset.getAllTierekisteriHistoryAddressSectionTest(roadNumber, date)
+      assetHist.length should be(0)
+    }
+  }
 
   test("Should not create/update asset (massTransitLane) with TR type Unknown\"") {
     TestTransactions.runWithRollback() {
