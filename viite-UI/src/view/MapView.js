@@ -3,6 +3,7 @@
   root.MapView = function(map, layers, instructionsPopup) {
     var isInitialized = false;
     var centerMarkerLayer = new ol.source.Vector({});
+    var oldCursorStyle = "initial";
 
     var showAssetZoomDialog = function() {
       instructionsPopup.show('Zoomaa lähemmäksi, jos haluat nähdä kohteita', 2000);
@@ -130,14 +131,18 @@
 
     //when the map dragging stops the cursor value returns to the initial one
     map.on('pointerup', function(evt) {
-      map.getViewport().style.cursor = "initial";
+      map.getViewport().style.cursor = oldCursorStyle;
     });
 
     eventbus.on('keydown', function(tool){
-      if(map.getViewport().style.cursor == tool)
+      if(map.getViewport().style.cursor == tool){
         map.getViewport().style.cursor = "initial";
-      else
+        oldCursorStyle = "initial";
+      }
+      else {
         map.getViewport().style.cursor = tool;
+        oldCursorStyle = tool;
+      }
     });
 
   };
