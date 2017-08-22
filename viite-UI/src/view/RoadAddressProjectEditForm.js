@@ -1,5 +1,9 @@
 (function (root) {
   root.RoadAddressProjectEditForm = function(projectCollection, selectedProjectLinkProperty, projectLinkLayer, projectChangeTable) {
+    var STATUS_NOT_HANDLED = 0;
+    var STATUS_TERMINATED = 1;
+    var STATUS_AS_IS = 4;
+
     var currentProject = false;
     var selectedProjectLink = false;
     var backend=new Backend();
@@ -98,7 +102,7 @@
         '<option value="lakkautus"' + (terminationState) + '>Lakkautus</option>'+
         '<option value="uusi"' + (enableStatusNew ? ' ' : ' disabled')+'>Uusi</option>'+
         '<option value="action4" disabled>Numeroinnin muutos</option>'+
-        '<option value="action5" disabled>Ennallaan</option>'+
+        '<option value="ennallaan">Ennallaan</option>'+
         '<option value="action6" disabled>Kalibrointiarvon muutos</option>'+
         '<option value="action7" disabled>Siirto</option>'+
         '<option value="action8" disabled>Kalibrointipisteen siirto</option>'+
@@ -287,11 +291,15 @@
       rootElement.on('click', '.project-form button.update', function() {
         currentProject = projectCollection.getCurrentProject();
         if( $('[id=dropDown] :selected').val() == 'lakkautus') {
-          projectCollection.saveProjectLinks(projectCollection.getTmpExpired());
+          projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), STATUS_TERMINATED);
           rootElement.html(emptyTemplate(currentProject.project));
         }
         else if( $('[id=dropDown] :selected').val() === 'uusi'){
           projectCollection.createProjectLinks(selectedProjectLink);
+        }
+        else if( $('[id=dropDown] :selected').val() === 'ennallaan'){
+          projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), STATUS_AS_IS);
+          rootElement.html(emptyTemplate(currentProject.project));
         }
       });
 
@@ -302,14 +310,17 @@
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
             return {'id': link.linkId, 'status': link.status};
           })));
-          projectCollection.setTmpExpired(projectCollection.getTmpExpired().concat(selectedProjectLink));
+          projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
           rootElement.find('.project-form button.update').prop("disabled", false);
         }
         else if(this.value == "uusi"){
-          projectCollection.setTmpExpired(projectCollection.getTmpExpired().concat(selectedProjectLink));
+          projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
           rootElement.find('.new-road-address').prop("hidden", false);
           if(selectedProjectLink[0].id !== 0)
             rootElement.find('.changeDirectionDiv').prop("hidden", false);
+        }
+        else if(this.value == "ennallaan"){
+          projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
         }
       });
 
@@ -321,7 +332,7 @@
         if(projectCollection.isDirty()) {
           projectCollection.revertLinkStatus();
           projectCollection.setDirty([]);
-          projectCollection.setTmpExpired([]);
+          projectCollection.setTmpDirty([]);
           projectLinkLayer.clearHighlights();
           $('.wrapper').remove();
           eventbus.trigger('roadAddress:projectLinksEdited');
