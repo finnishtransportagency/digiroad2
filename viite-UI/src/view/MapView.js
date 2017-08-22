@@ -22,17 +22,17 @@
     };
 
     var drawCenterMarker = function(position) {
-        //Create a new Feature with the exact point in the center of the map
-        var icon = new ol.Feature({
-          geometry: new ol.geom.Point(position)
-        });
+      //Create a new Feature with the exact point in the center of the map
+      var icon = new ol.Feature({
+        geometry: new ol.geom.Point(position)
+      });
 
-        //create the style of the icon of the 'Merkistse' Button
-        var styleIcon = new ol.style.Style({
+      //create the style of the icon of the 'Merkistse' Button
+      var styleIcon = new ol.style.Style({
         image: new ol.style.Icon({
           src: 'images/center-marker.svg'
         })
-        });
+      });
 
       //add Icon Style
       icon.setStyle(styleIcon);
@@ -40,7 +40,7 @@
       centerMarkerLayer.clear();
       //add icon to vector source
       centerMarkerLayer.addFeature(icon);
-      };
+    };
 
     var vectorLayer = new ol.layer.Vector({
       source: centerMarkerLayer
@@ -110,7 +110,7 @@
       var pixel = map.getEventPixel(event.originalEvent);
       eventbus.trigger('map:mouseMoved', event, pixel);
     }, true);
-
+    
     map.on('singleclick', function(event) {
       eventbus.trigger('map:clicked', { x: event.coordinate.shift(), y: event.coordinate.shift() });
     });
@@ -134,7 +134,10 @@
     });
 
     eventbus.on('keydown', function(tool){
-      setCursor(tool);
+      if(map.getViewport().style.cursor == tool)
+        map.getViewport().style.cursor = "initial";
+      else
+        map.getViewport().style.cursor = tool;
     });
 
   };

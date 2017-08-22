@@ -70,16 +70,11 @@
       pixelDelta: 256,
       setActive: true,
       condition: function(mapBrowserEvent) {
-        //TODO  should add/override KEYDOWN attr to collection events to get rid of magic strings
         if(mapBrowserEvent.type ==  'keydown' && mapBrowserEvent.originalEvent.shiftKey) {
           var keyEvent = mapBrowserEvent.originalEvent;
           var keyCode = keyEvent.keyCode;
-          //TODO  should add/override KEYDOWN attr to collection events to get rid of magic numbers
           if (keyCode == 16) {
-            // alert("pressed SHIFT key!");
-            eventbus.trigger('keydown', 'Copy');
-          } else {
-            // alert("pressed other than SHIFT key!");
+            eventbus.trigger('keydown', "copy");
           }
         }
       }
