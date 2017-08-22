@@ -866,7 +866,7 @@ class TierekisteriPavedRoadAssetClient(trEndPoint: String, trEnable: Boolean, ht
   type TierekisteriType = TierekisteriPavedRoadData
 
   override val trAssetType = "tl137"
-  private val trPAALLUOK = "PAALLUOK"
+  private val trPavementType = "PAALLUOK"
 
   override def mapFields(data: Map[String, Any]): TierekisteriPavedRoadData = {
     //Mandatory field
@@ -876,7 +876,7 @@ class TierekisteriPavedRoadAssetClient(trEndPoint: String, trEnable: Boolean, ht
     val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
     val endMValue = convertToLong(getMandatoryFieldValue(data, trEndMValue)).get
     val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
-    val pavementType = convertToInt(getMandatoryFieldValue(data, trPAALLUOK)).get
+    val pavementType = convertToInt(getMandatoryFieldValue(data, trPavementType)).get
 
     TierekisteriPavedRoadData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue, TRPavedRoadType.apply(pavementType))
   }
@@ -889,7 +889,7 @@ class TierekisteriMassTransitLaneAssetClient(trEndPoint: String, trEnable: Boole
   type TierekisteriType = TierekisteriMassTransitLaneData
 
   override val trAssetType = "tl161"
-  private val trKAISTATY = "KAISTATY"
+  private val trLaneType = "KAISTATY"
 
   override def mapFields(data: Map[String, Any]): TierekisteriMassTransitLaneData = {
     //Mandatory field
@@ -899,7 +899,7 @@ class TierekisteriMassTransitLaneAssetClient(trEndPoint: String, trEnable: Boole
     val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
     val endMValue = convertToLong(getMandatoryFieldValue(data, trEndMValue)).get
     val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
-    val laneType = convertToInt(getMandatoryFieldValue(data, trKAISTATY)).get
+    val laneType = convertToInt(getMandatoryFieldValue(data, trLaneType)).get
 
     TierekisteriMassTransitLaneData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue, TRLaneArrangementType.apply(laneType))
   }
