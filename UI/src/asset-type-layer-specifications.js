@@ -47,7 +47,11 @@
         disabled: 'Ei rajoitusta',
         showUnit: true
       },
-      label: new LinearAssetLabel()
+      label: new LinearAssetLabel(),
+      editConstrains : function(selectedAsset) {
+        //check if administrative class is State
+        return selectedAsset.administrativeClass === 1;
+      }
     },
     {
       typeId: assetType.trailerTruckWeightLimit,
@@ -65,7 +69,11 @@
         disabled: 'Ei rajoitusta',
         showUnit: true
       },
-      label: new LinearAssetLabel()
+      label: new LinearAssetLabel(),
+      editConstrains : function(selectedAsset) {
+        //check if administrative class is State
+        return selectedAsset.administrativeClass === 1;
+      }
     },
     {
       typeId: assetType.axleWeightLimit,
@@ -83,7 +91,11 @@
         disabled: 'Ei rajoitusta',
         showUnit: true
       },
-      label: new LinearAssetLabel()
+      label: new LinearAssetLabel(),
+      editConstrains : function(selectedAsset) {
+        //check if administrative class is State
+        return selectedAsset.administrativeClass === 1;
+      }
     },
     {
       typeId: assetType.bogieWeightLimit,
@@ -101,7 +113,11 @@
         disabled: 'Ei rajoitusta',
         showUnit: true
       },
-      label: new LinearAssetLabel()
+      label: new LinearAssetLabel(),
+      editConstrains : function(selectedAsset) {
+        //check if administrative class is State
+        return selectedAsset.administrativeClass === 1;
+      }
     },
     {
       typeId: assetType.heightLimit,
@@ -119,7 +135,11 @@
         disabled: 'Ei rajoitusta',
         showUnit: true
       },
-      label: new LinearAssetLabel()
+      label: new LinearAssetLabel(),
+      editConstrains : function(selectedAsset) {
+        //check if administrative class is State
+        return selectedAsset.administrativeClass === 1;
+      }
     },
     {
       typeId: assetType.lengthLimit,
@@ -137,7 +157,11 @@
         disabled: 'Ei rajoitusta',
         showUnit: true
       },
-      label: new LinearAssetLabel()
+      label: new LinearAssetLabel(),
+      editConstrains : function(selectedAsset) {
+        //check if administrative class is State
+        return selectedAsset.administrativeClass === 1;
+      }
     },
     {
       typeId: assetType.widthLimit,
@@ -156,7 +180,11 @@
         disabled: 'Ei rajoitusta',
         showUnit: true
       },
-      label: new LinearAssetLabel()
+      label: new LinearAssetLabel(),
+      editConstrains : function(selectedAsset) {
+        //check if administrative class is State
+        return selectedAsset.administrativeClass === 1;
+      }
     },
     {
       typeId: assetType.litRoad,
@@ -319,7 +347,11 @@
         showUnit: true
       },
       possibleValues: [100, 80, 70, 60],
-      style : new WinterSpeedLimitStyle()
+      style : new WinterSpeedLimitStyle(),
+      editConstrains : function(selectedAsset) {
+        //check if administrative class is State
+        return selectedAsset.administrativeClass === 1;
+      }
     },
     {
       typeId: assetType.prohibition,
