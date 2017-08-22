@@ -24,7 +24,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
   val linearAssetDao = new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
   val mockTrImporter: TierekisteriDataImporter = MockitoSugar.mock[TierekisteriDataImporter]
   val mockTRPavedRoadClient: TierekisteriPavedRoadAssetClient = MockitoSugar.mock[TierekisteriPavedRoadAssetClient]
-  val mockMassTransitLaneTRClient: TierekisteriMassTransitLaneAssetClient = MockitoSugar.mock[TierekisteriMassTransitLaneAssetClient]
+  val mockMassTransitLaneClient: TierekisteriMassTransitLaneAssetClient = MockitoSugar.mock[TierekisteriMassTransitLaneAssetClient]
   val mockTRDamageByThawClient: TierekisteriDamagedByThawAssetClient = MockitoSugar.mock[TierekisteriDamagedByThawAssetClient]
   val mockTREuropeanRoadClient: TierekisteriEuropeanRoadAssetClient = MockitoSugar.mock[TierekisteriEuropeanRoadAssetClient]
   val mockTRWinterSpeedLimitClient: TierekisteriWinterSpeedLimitAssetClient = MockitoSugar.mock[TierekisteriWinterSpeedLimitAssetClient]
@@ -83,16 +83,24 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
     override lazy val vvhClient: VVHClient = mockVVHClient
     override def withDynTransaction[T](f: => T): T = f
+
+    def getAllTierekisteriAddressSectionsTest(roadNumber: Long) = super.getAllTierekisteriAddressSections(roadNumber: Long)
+    def getAllTierekisteriAddressSectionsTest(roadNumber: Long, roadPart: Long) = super.getAllTierekisteriAddressSections(roadNumber: Long)
+    def getAllTierekisteriHistoryAddressSectionTest(roadNumber: Long, lastExecution: DateTime) = super.getAllTierekisteriHistoryAddressSection(roadNumber: Long, lastExecution: DateTime)
   }
 
   class TestMassTransitLaneOperations extends MassTransitLaneTierekisteriImporter {
 
     override lazy val assetDao: OracleAssetDao = mockAssetDao
     override lazy val roadAddressDao: RoadAddressDAO = mockRoadAddressDAO
-    override val tierekisteriClient: TierekisteriMassTransitLaneAssetClient = mockMassTransitLaneTRClient
+    override val tierekisteriClient: TierekisteriMassTransitLaneAssetClient = mockMassTransitLaneClient
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
     override lazy val vvhClient: VVHClient = mockVVHClient
     override def withDynTransaction[T](f: => T): T = f
+
+    def getAllTierekisteriAddressSectionsTest(roadNumber: Long) = super.getAllTierekisteriAddressSections(roadNumber: Long)
+    def getAllTierekisteriAddressSectionsTest(roadNumber: Long, roadPart: Long) = super.getAllTierekisteriAddressSections(roadNumber: Long)
+    def getAllTierekisteriHistoryAddressSectionTest(roadNumber: Long, lastExecution: DateTime) = super.getAllTierekisteriHistoryAddressSection(roadNumber: Long, lastExecution: DateTime)
   }
 
   class TestDamageByThawOperations extends DamagedByThawAssetTierekisteriImporter {
@@ -454,7 +462,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
 
       when(mockAssetDao.getMunicipalities).thenReturn(Seq())
       when(mockRoadAddressDAO.getRoadNumbers()).thenReturn(Seq(roadNumber))
-      when(mockMassTransitLaneTRClient.fetchActiveAssetData(any[Long])).thenReturn(Seq(tr))
+      when(mockMassTransitLaneClient.fetchActiveAssetData(any[Long])).thenReturn(Seq(tr))
       when(mockRoadAddressDAO.withRoadAddressSinglePart(any[Long], any[Long], any[Int], any[Long], any[Option[Long]], any[Option[Int]])(any[String])).thenReturn("")
       when(mockRoadAddressDAO.getRoadAddress(any[String => String].apply)).thenReturn(Seq(ra))
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
@@ -497,9 +505,9 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
 
       when(mockAssetDao.getMunicipalities).thenReturn(Seq())
       when(mockRoadAddressDAO.getRoadNumbers()).thenReturn(Seq(roadNumber))
-      when(mockMassTransitLaneTRClient.fetchActiveAssetData(any[Long])).thenReturn(Seq(tr))
-      when(mockMassTransitLaneTRClient.fetchHistoryAssetData(any[Long], any[Option[DateTime]])).thenReturn(Seq(trHist))
-      when(mockMassTransitLaneTRClient.fetchActiveAssetData(any[Long], any[Long])).thenReturn(Seq(trHist))
+      when(mockMassTransitLaneClient.fetchActiveAssetData(any[Long])).thenReturn(Seq(tr))
+      when(mockMassTransitLaneClient.fetchHistoryAssetData(any[Long], any[Option[DateTime]])).thenReturn(Seq(trHist))
+      when(mockMassTransitLaneClient.fetchActiveAssetData(any[Long], any[Long])).thenReturn(Seq(trHist))
 
       when(mockRoadAddressDAO.withRoadAddressSinglePart(any[Long], any[Long], any[Int], any[Long], any[Option[Long]], any[Option[Int]])(any[String])).thenReturn("")
       when(mockRoadAddressDAO.getRoadAddress(any[String => String].apply)).thenReturn(Seq(ra))
@@ -599,35 +607,61 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     }
   }
 
-  test("Should not create asset with TR type Unknown") {
+  test("Should not create/update asset (pavedRoad) with TR type Unknown\"") {
     TestTransactions.runWithRollback() {
 
       val testPavedRoad = new TestPavedRoadOperations
       val roadNumber = 4L
       val startRoadPartNumber = 200L
       val endRoadPartNumber = 200L
-      val startAddressMValue = 0L
-      val endAddressMValue = 250L
+      val roadPartNumber = 1L
+      val startSection = 50
+      val endSection = 350
+      val date = DateTime.now( )
 
-      val tr = TierekisteriPavedRoadData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, startAddressMValue, endAddressMValue, TRPavedRoadType.Unknown)
-      val ra = ViiteRoadAddress(1L, roadNumber, startRoadPartNumber, Track.RightSide, 5, 100, endAddressMValue, None, None, 1L, 5001, 0, 300, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
+      val tr = TierekisteriPavedRoadData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, startSection, endSection, TRPavedRoadType.apply(30))
 
-      val vvhRoadLink = VVHRoadlink(5001, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
+      when(mockTRPavedRoadClient.fetchActiveAssetData(roadNumber)).thenReturn(Seq(tr))
+      val asset = testPavedRoad.getAllTierekisteriAddressSectionsTest(roadNumber)
+      asset.length should be (0)
 
-      when(mockAssetDao.getMunicipalities).thenReturn(Seq())
-      when(mockRoadAddressDAO.getRoadNumbers()).thenReturn(Seq(roadNumber))
-      when(mockTRPavedRoadClient.fetchActiveAssetData(any[Long])).thenReturn(Seq(tr))
-      when(mockRoadAddressDAO.withRoadAddressSinglePart(any[Long], any[Long], any[Int], any[Long], any[Option[Long]], any[Option[Int]])(any[String])).thenReturn("")
-      when(mockRoadAddressDAO.getRoadAddress(any[String => String].apply)).thenReturn(Seq(ra))
-      when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-      when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
-      when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
+      when(mockTRPavedRoadClient.fetchActiveAssetData(roadNumber, roadPartNumber)).thenReturn(Seq(tr))
+      val assetFetch = testPavedRoad.getAllTierekisteriAddressSectionsTest(roadNumber)
+      assetFetch.length should be (0)
 
-      testPavedRoad.importAssets()
-      val asset = linearAssetDao.fetchLinearAssetsByLinkIds(testPavedRoad.typeId, Seq(5001), LinearAssetTypes.numericValuePropertyId)
-      asset.length should be(0)
+      when(mockTRPavedRoadClient.fetchHistoryAssetData(roadNumber, Some(date))).thenReturn(Seq(tr))
+      val assetHist = testPavedRoad.getAllTierekisteriHistoryAddressSectionTest(roadNumber, date)
+      assetHist.length should be (0)
     }
   }
+
+  test("Should not create/update asset (massTransitLane) with TR type Unknown\"") {
+    TestTransactions.runWithRollback() {
+
+      val testMassTransitLane = new TestMassTransitLaneOperations
+      val roadNumber = 4L
+      val startRoadPartNumber = 200L
+      val endRoadPartNumber = 200L
+      val roadPartNumber = 1L
+      val startSection = 50
+      val endSection = 350
+      val date = DateTime.now( )
+
+      val tr = TierekisteriMassTransitLaneData(roadNumber, startRoadPartNumber, endRoadPartNumber, Track.RightSide, startSection, endSection, TRLaneArrangementType.apply(1))
+      when(mockMassTransitLaneClient.fetchActiveAssetData(roadNumber)).thenReturn(Seq(tr))
+      val filterAsset = testMassTransitLane.getAllTierekisteriAddressSectionsTest(roadNumber)
+      filterAsset.length should be (0)
+
+      when(mockMassTransitLaneClient.fetchActiveAssetData(roadNumber, roadPartNumber)).thenReturn(Seq(tr))
+      val assetFetch = testMassTransitLane.getAllTierekisteriAddressSectionsTest(roadNumber)
+      assetFetch.length should be (0)
+
+      when(mockMassTransitLaneClient.fetchHistoryAssetData(roadNumber, Some(date))).thenReturn(Seq(tr))
+      val assetHist = testMassTransitLane.getAllTierekisteriHistoryAddressSectionTest(roadNumber, date)
+      assetHist.length should be (0)
+    }
+  }
+
   test("Should create asset with TR type valid") {
     TestTransactions.runWithRollback() {
 

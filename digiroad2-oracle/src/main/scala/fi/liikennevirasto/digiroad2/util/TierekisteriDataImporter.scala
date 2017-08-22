@@ -46,8 +46,8 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
     new MassTransitLaneTierekisteriImporter()
   }
 
-  lazy val damagedByThawAssetImporterOperations: DamagedByThawAssetTierekisteriImporter = {
-    new DamagedByThawAssetTierekisteriImporter()
+  lazy val damagedByThawAssetImporterOperations: DamagedByThawTierekisteriImporter = {
+    new DamagedByThawTierekisteriImporter()
   }
 
   lazy val europeanRoadImporterOperations: EuropeanRoadTierekisteriImporter = {
