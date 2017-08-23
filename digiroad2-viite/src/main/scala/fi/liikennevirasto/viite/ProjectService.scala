@@ -842,6 +842,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  // TODO: remove when saving road type to project link table
   def withFetchedDataFromVVH(roadAdddresses: Seq[RoadAddress], roadLinks: Seq[RoadLink], Type: Object): Seq[RoadAddress] = {
     val fetchedAddresses = Type match {
       case RoadType =>
