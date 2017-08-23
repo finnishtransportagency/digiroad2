@@ -20,6 +20,7 @@
     var terminatedStatus = 1;
     var newRoadAddressStatus = 2;
     var unknownStatus = 99;
+    var unchangedStatus = 4;
     Layer.call(this, layerName, roadLayer);
     var project;
     var me = this;
@@ -174,7 +175,8 @@
         return (!_.isUndefined(selectionTarget.projectLinkData) && (
           (selectionTarget.projectLinkData.status === notHandledStatus || selectionTarget.projectLinkData.status === newRoadAddressStatus ) ||
           (selectionTarget.projectLinkData.anomaly==noAddressAnomaly && selectionTarget.projectLinkData.roadLinkType!=floatingRoadLinkType) ||
-          selectionTarget.projectLinkData.roadClass === 99 || selectionTarget.projectLinkData.roadLinkSource === 3)
+          selectionTarget.projectLinkData.roadClass === 99 || selectionTarget.projectLinkData.roadLinkSource === 3 ||
+            selectionTarget.projectLinkData.status === unchangedStatus)
         );
       });
       selectedProjectLinkProperty.clean();
@@ -239,7 +241,8 @@
         return (!_.isUndefined(selectionTarget.projectLinkData) && (
           (selectionTarget.projectLinkData.status === notHandledStatus || selectionTarget.projectLinkData.status === newRoadAddressStatus) ||
           (selectionTarget.projectLinkData.anomaly==noAddressAnomaly && selectionTarget.projectLinkData.roadLinkType!=floatingRoadLinkType) ||
-          selectionTarget.projectLinkData.roadClass === 99 || selectionTarget.projectLinkData.roadLinkSource === 3)
+          selectionTarget.projectLinkData.roadClass === 99 || selectionTarget.projectLinkData.roadLinkSource === 3 ||
+            selectionTarget.projectLinkData.status === unchangedStatus)
         );
       });
       selectedProjectLinkProperty.clean();

@@ -2,7 +2,7 @@
   root.RoadAddressProjectEditForm = function(projectCollection, selectedProjectLinkProperty, projectLinkLayer, projectChangeTable) {
     var STATUS_NOT_HANDLED = 0;
     var STATUS_TERMINATED = 1;
-    var STATUS_AS_IS = 4;
+    var STATUS_UNCHANGED = 4;
 
     var currentProject = false;
     var selectedProjectLink = false;
@@ -202,6 +202,12 @@
         }
     };
 
+    var changeDropDownValue = function (statusCode) {
+      if (statusCode === STATUS_UNCHANGED) {
+        $("#dropDown").val('ennallaan').change();
+      }
+    };
+
     var bindEvents = function() {
 
       var rootElement = $('#feature-attributes');
@@ -220,6 +226,8 @@
         rootElement.html(selectedProjectLinkTemplate(currentProject.project, options, selectedProjectLink));
         replaceAddressInfo();
         checkInputs();
+        // Change selected value in dropdown according to project link status
+        changeDropDownValue(selectedProjectLink[0].status);
       });
 
       eventbus.on('roadAddress:projectFailed', function() {
@@ -298,7 +306,7 @@
           projectCollection.createProjectLinks(selectedProjectLink);
         }
         else if( $('[id=dropDown] :selected').val() === 'ennallaan'){
-          projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), STATUS_AS_IS);
+          projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), STATUS_UNCHANGED);
           rootElement.html(emptyTemplate(currentProject.project));
         }
       });
