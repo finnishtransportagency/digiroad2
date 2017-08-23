@@ -460,9 +460,29 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, idRoad2, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), false,
       Seq(Point(28, 1), Point(28, 10)), LinkGeomSource.NormalLinkInterface))
     val list = List(projectLink0, projectLink1, projectLink2)
-    val ordered = ProjectSectionCalculator.determineMValues(list, list.reverse.tail)
+    val ordered = ProjectSectionCalculator.determineMValues(list, Seq())
     val left = ordered.find(_.linkId == idRoad1).get
     val right = ordered.find(_.linkId == idRoad2).get
     left.sideCode == right.sideCode should be (false)
+  }
+
+  test("Unchanged + New project links are calculated properly") {
+    // Left track = 85.308 meters
+    val idRoad0 = 0L //   U>
+    val idRoad1 = 1L //   U>
+    val idRoad2 = 2L //   N>
+    val projectLink0 = toProjectLink(rap)(RoadAddress(idRoad0, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
+      0L, 8L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, idRoad0, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (Some(CalibrationPoint(idRoad0, 0.0, 0L)), None), false,
+      Seq(Point(20.0, 10.0), Point(28, 10)), LinkGeomSource.NormalLinkInterface)).copy(status = LinkStatus.UnChanged)
+    val projectLink1 = toProjectLink(rap)(RoadAddress(idRoad1, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
+      8L, 17L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, idRoad1, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, Some(CalibrationPoint(idRoad0, 9.0, 17L))), false,
+      Seq(Point(28, 10), Point(28, 19)), LinkGeomSource.NormalLinkInterface)).copy(status = LinkStatus.UnChanged)
+    val projectLink2 = toProjectLink(rap)(RoadAddress(idRoad2, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
+      0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, idRoad2, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), false,
+      Seq(Point(28, 19), Point(28, 30)), LinkGeomSource.NormalLinkInterface)).copy(status = LinkStatus.New)
+    val list = List(projectLink0, projectLink1, projectLink2)
+    val (created, unchanged) = list.partition(_.status == LinkStatus.New)
+    val ordered = ProjectSectionCalculator.determineMValues(created, unchanged)
+    ordered.foreach(println)
   }
 }

@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDi
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.RoadType
-import fi.liikennevirasto.viite.dao.{CalibrationPoint, Discontinuity, ProjectLink, RoadAddress}
+import fi.liikennevirasto.viite.dao._
 import org.slf4j.LoggerFactory
 
 object ProjectSectionCalculator {
@@ -60,16 +60,16 @@ object ProjectSectionCalculator {
 
   /**
     * Calculates the address M values for the given set of project links and assigns them calibration points where applicable
-    * @param projectLinks List of new addressed links in project
-    * @param linksInProject Other links in project, used as a guidance (TODO)
+    * @param newProjectLinks List of new addressed links in project
+    * @param oldProjectLinks Other links in project, used as a guidance (TODO)
     * @return Sequence of project links with address values and calibration points.
     */
-  def determineMValues(projectLinks: Seq[ProjectLink], linksInProject: Seq [ProjectLink]): Seq[ProjectLink] = {
+  def determineMValues(newProjectLinks: Seq[ProjectLink], oldProjectLinks: Seq [ProjectLink]): Seq[ProjectLink] = {
     // Sort: smallest endAddrMValue is first but zero does not count.
     def addressSort(projectLink1: ProjectLink, projectLink2: ProjectLink): Boolean = {
       // Test if exactly one already was in project -> prefer them for starting points.
-      if (linksInProject.exists(lip => lip.linkId == projectLink1.linkId) ^ linksInProject.exists(lip => lip.linkId == projectLink2.linkId)) {
-        linksInProject.exists(lip => lip.linkId == projectLink1.linkId)
+      if (oldProjectLinks.exists(lip => lip.linkId == projectLink1.linkId) ^ oldProjectLinks.exists(lip => lip.linkId == projectLink2.linkId)) {
+        oldProjectLinks.exists(lip => lip.linkId == projectLink1.linkId)
       } else {
         if (projectLink1.endAddrMValue != projectLink2.endAddrMValue) {
           if (projectLink1.endAddrMValue == 0)
@@ -140,17 +140,18 @@ object ProjectSectionCalculator {
             })
       }
     }
-    val groupedProjectLinks = projectLinks.groupBy(record => (record.roadNumber, record.roadPartNumber))
+    val groupedProjectLinks = newProjectLinks.groupBy(record => (record.roadNumber, record.roadPartNumber))
     groupedProjectLinks.flatMap(gpl => {
       val linkPartitions = SectionPartitioner.partition(gpl._2).map(_.sortWith(addressSort)).map(orderProjectLinksTopologyByGeometry)
       try {
         val sections = linkPartitions.map(lp =>
           TrackSection(lp.head.roadNumber, lp.head.roadPartNumber, lp.head.track, lp.map(_.geometryLength).sum, lp)
         )
-        val ordSections = orderTrackSectionsByGeometry(sections)
-        val mValues = ordSections.scanLeft(0.0) { case (mValue, sec) =>
-          mValue + sec.geometryLength
-        }
+        val existingSections = SectionPartitioner.partition(oldProjectLinks).map(_.sortWith(addressSort)).map(lp =>
+          TrackSection(lp.head.roadNumber, lp.head.roadPartNumber, lp.head.track, lp.map(_.geometryLength).sum, lp)
+        )
+        val ordSections = orderTrackSectionsByGeometry(sections ++ existingSections)
+        val mValues = calculateSectionAddressValues(ordSections)
         ordSections.zip(mValues.zip(mValues.tail)).flatMap { case (section, (start, end)) =>
           assignLinkValues(section, start.toLong, end.toLong)
         }
@@ -161,6 +162,27 @@ object ProjectSectionCalculator {
       }
     }).toSeq
   }
+
+  private def calculateSectionAddressValues(sections: Seq[CombinedSection]): Seq[Double] = {
+    // Return fixed value for this section if it has one
+    def fixedValue(param: (CombinedSection, Option[CombinedSection])): Option[Double] = {
+      val (currentSection, nextSection) = param
+      (currentSection.linkStatus, nextSection.map(_.linkStatus)) match {
+        case (LinkStatus.UnChanged, _) => Some(currentSection.endAddrM)
+        case (_, Some(LinkStatus.UnChanged)) => nextSection.map(_.startAddrM)
+        case (_, _) => None
+      }
+    }
+    // Create equally long sequence with optionality
+    val following = sections.tail.map(cs => Some(cs)) ++ Seq(None)
+    sections.zip(following).scanLeft(0.0) { case (mValue, sec) =>
+      fixedValue(sec) match {
+        case None => mValue + sec._1.geometryLength
+        case Some(fixedValue) => fixedValue
+      }
+    }
+  }
+
 
   /**
     * Turn track sections into an ordered sequence of combined sections so that they can be addressed in that order.
@@ -298,5 +320,11 @@ case class CombinedSection(startGeometry: Point, endGeometry: Point, geometryLen
     case AgainstDigitizing => startGeometry
     case _ => endGeometry
   }
+
+  lazy val linkStatus: LinkStatus = right.links.head.status
+
+  lazy val startAddrM: Long = right.links.map(_.startAddrMValue).min
+
+  lazy val endAddrM: Long = right.links.map(_.endAddrMValue).max
 }
 
