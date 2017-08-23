@@ -471,10 +471,10 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     val idRoad1 = 1L //   U>
     val idRoad2 = 2L //   N>
     val projectLink0 = toProjectLink(rap)(RoadAddress(idRoad0, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
-      0L, 8L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, idRoad0, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (Some(CalibrationPoint(idRoad0, 0.0, 0L)), None), false,
+      0L, 9L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, idRoad0, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (Some(CalibrationPoint(idRoad0, 0.0, 0L)), None), false,
       Seq(Point(20.0, 10.0), Point(28, 10)), LinkGeomSource.NormalLinkInterface)).copy(status = LinkStatus.UnChanged)
     val projectLink1 = toProjectLink(rap)(RoadAddress(idRoad1, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
-      8L, 17L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, idRoad1, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, Some(CalibrationPoint(idRoad0, 9.0, 17L))), false,
+      9L, 19L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, idRoad1, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, Some(CalibrationPoint(idRoad0, 9.0, 17L))), false,
       Seq(Point(28, 10), Point(28, 19)), LinkGeomSource.NormalLinkInterface)).copy(status = LinkStatus.UnChanged)
     val projectLink2 = toProjectLink(rap)(RoadAddress(idRoad2, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
       0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, idRoad2, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), false,
@@ -483,8 +483,8 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     val (created, unchanged) = list.partition(_.status == LinkStatus.New)
     val ordered = ProjectSectionCalculator.determineMValues(created, unchanged)
     val road2 = ordered.find(_.linkId == idRoad2).get
-    road2.startAddrMValue should be (17L)
-    road2.endAddrMValue should be (28L)
+    road2.startAddrMValue should be (19L)
+    road2.endAddrMValue should be (30L)
     road2.calibrationPoints._1 should be (None)
     road2.calibrationPoints._2.nonEmpty should be (true)
     ordered.count(_.calibrationPoints._2.nonEmpty) should be (1)
