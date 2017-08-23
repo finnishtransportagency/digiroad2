@@ -209,4 +209,25 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
      """.execute
   }
 
+  def getUncheckedMaintenanceRoad(optionalArea: Option[Set[Int]]): Map[Option[Int],List[Long]] = {
+    val uncheckedQuery = """
+          Select pos.link_id, a.area
+          from asset a
+          join asset_link al on a.id = al.asset_id
+          join lrm_position pos on al.position_id = pos.id
+          left join property p on a.asset_type_id = p.asset_type_id and public_id = 'huoltotie_tarkistettu'
+          left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id
+          left join enumerated_value e on e.id = s.enumerated_value_id and e.value = 0
+          where a.asset_type_id = 290
+          and(valid_to is NULL OR valid_to > CURRENT_TIMESTAMP)"""
+
+    val sql = optionalArea match {
+      case Some(area) => uncheckedQuery + s" and a.area in ($area)"
+      case _ => uncheckedQuery
+    }
+
+    Q.queryNA[(Long, Option[Int])](sql).list
+      .groupBy(_._2).mapValues(x => x.map(_._1))
+  }
+
 }
