@@ -255,13 +255,9 @@ object ProjectDAO {
 
   def roadPartReservedByProject(roadNumber: Long, roadPart: Long, projectId: Long = 0, withProjectId: Boolean = false): Option[String] = {
     val states = ProjectState.nonActiveStates.mkString(",")
-    val filter = if(withProjectId && projectId !=0) s" AND project_id != ${projectId} " else ""
+    val filter = if(withProjectId && projectId !=0) s" p.id != $projectId AND " else ""
     val query =
-      s"""SELECT p.name
-              FROM project p
-           INNER JOIN project_link l
-           ON l.PROJECT_ID =  p.ID
-           WHERE l.road_number=$roadNumber AND road_part_number=$roadPart AND p.state NOT IN ($states) $filter AND rownum < 2 """
+    s"""SELECT p.name FROM PROJECT p WHERE $filter state NOT IN ($states) AND EXISTS (SELECT * FROM PROJECT_LINK pl WHERE ROAD_NUMBER = $roadNumber AND ROAD_PART_NUMBER = $roadPart AND pl.project_id = p.id)"""
     Q.queryNA[String](query).firstOption
   }
 

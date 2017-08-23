@@ -214,8 +214,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         if (linksInProject.nonEmpty) {
           ProjectDAO.removeProjectLinksByProjectAndRoadNumber(roadAddressProjectID, newRoadNumber, newRoadPartNumber)
         }
+        val newValidAddresses = projectAddressLinks.foldLeft(linksInProject)((withAddedLinks, next) => continuousToPart(next, (projectAddressLinks ++ linksInProject).filterNot(l => l.linkId == next.linkId), withAddedLinks))
+
         val randomSideCode =
-          linksInProject.map(l => l -> projectAddressLinks.find(n => GeometryUtils.areAdjacent(l.geometry, n.geometry))).toMap.find { case (l, n) => n.nonEmpty }.map {
+          newValidAddresses.map(l => l -> projectAddressLinks.find(n => GeometryUtils.areAdjacent(l.geometry, n.geometry))).toMap.find { case (l, n) => n.nonEmpty }.map {
             case (l, Some(n)) =>
               matchSideCodes(n, l)
             case _ => SideCode.TowardsDigitizing
@@ -229,7 +231,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         }).toMap
         if (GeometryUtils.isNonLinear(newProjectLinks.values.toSeq))
           throw new ProjectValidationException("Valittu tiegeometria sisältää haarautumia ja pitää käsitellä osina. Tallennusta ei voi tehdä.")
-        val existingLinks = linksInProject.map(projectLink => {
+        val existingLinks = newValidAddresses.map(projectLink => {
           projectLink.linkId ->
             existingProjectLink(projectLink, project, randomSideCode)
         }).toMap
@@ -247,6 +249,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     } catch {
       case ex: ProjectValidationException => Some(ex.getMessage)
     }
+  }
+
+  def continuousToPart(newPal: ProjectAddressLink, possiblePals: Seq[ProjectAddressLink], pals: Seq[ProjectAddressLink]): Seq[ProjectAddressLink] = {
+    val adjacent = possiblePals.find(p => GeometryUtils.areAdjacent(newPal.geometry, p.geometry))
+    if (adjacent.isEmpty)
+      throw new ProjectValidationException(s"Some new roads are not adjacent")
+    pals++adjacent
   }
 
   def changeDirection(projectId : Long, roadNumber : Long, roadPartNumber : Long): Option[String] = {

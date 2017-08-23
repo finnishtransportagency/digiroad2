@@ -451,7 +451,7 @@ object RoadAddressDAO {
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
         join lrm_position pos on ra.lrm_position_id = pos.id
-        where  pro.id=$projectId AND road_number = $roadNumber AND road_part_number = $roadPartNumber and t.id < t2.id AND (ra.END_DATE IS NULL OR ra.END_DATE>=pro.START_DATE)
+        where road_number = $roadNumber AND road_part_number = $roadPartNumber and t.id < t2.id AND (pro.id!=$projectId OR (ra.END_DATE IS NULL OR ra.END_DATE>=pro.START_DATE))
         ORDER BY road_number, road_part_number, track_code, start_addr_m
       """
     queryList(query)
