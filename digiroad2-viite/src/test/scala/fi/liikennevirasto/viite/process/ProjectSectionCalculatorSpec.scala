@@ -467,7 +467,6 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
   }
 
   test("Unchanged + New project links are calculated properly") {
-    // Left track = 85.308 meters
     val idRoad0 = 0L //   U>
     val idRoad1 = 1L //   U>
     val idRoad2 = 2L //   N>
@@ -483,6 +482,11 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     val list = List(projectLink0, projectLink1, projectLink2)
     val (created, unchanged) = list.partition(_.status == LinkStatus.New)
     val ordered = ProjectSectionCalculator.determineMValues(created, unchanged)
-    ordered.foreach(println)
+    val road2 = ordered.find(_.linkId == idRoad2).get
+    road2.startAddrMValue should be (17L)
+    road2.endAddrMValue should be (28L)
+    road2.calibrationPoints._1 should be (None)
+    road2.calibrationPoints._2.nonEmpty should be (true)
+    ordered.count(_.calibrationPoints._2.nonEmpty) should be (1)
   }
 }
