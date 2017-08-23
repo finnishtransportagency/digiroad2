@@ -362,6 +362,10 @@
       return $.getJSON('api/trafficSigns/floating');
     };
 
+    this.getUncheckedMaintenanceRoad = function() {
+      //return $.getJSON('api/directionalTrafficSigns/floating');
+    };
+
     this.createAsset = function (data, errorCallback) {
       eventbus.trigger('asset:creating');
       $.ajax({

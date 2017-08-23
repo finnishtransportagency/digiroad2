@@ -35,6 +35,7 @@
         'railwayCrossings/:id': 'railwayCrossings',
         'directionalTrafficSigns/:id': 'directionalTrafficSigns',
         'trafficSigns/:id': 'trafficSigns',
+        'maintenanceRoad/:linkId': 'maintenanceRoad',
         'work-list/speedLimit': 'speedLimitWorkList',
         'work-list/linkProperty': 'linkPropertyWorkList',
         'work-list/massTransitStop': 'massTransitStopWorkList',
@@ -43,7 +44,8 @@
         'work-list/obstacles': 'obstacleWorkList',
         'work-list/railwayCrossings': 'railwayCrossingWorkList',
         'work-list/directionalTrafficSigns': 'directionalTrafficSignsWorkList',
-        'work-list/trafficSigns': 'trafficSigntWorkList'
+        'work-list/trafficSigns': 'trafficSigntWorkList',
+        'work-list/maintenanceRoad': 'maintenanceRoadWorkList'
       },
 
       massTransitStop: function (id) {
@@ -189,6 +191,10 @@
 
       directionalTrafficSignsWorkList: function () {
         eventbus.trigger('workList:select', 'directionalTrafficSigns', backend.getFloatingDirectionalTrafficSigns());
+      },
+
+      maintenanceRoadWorkList: function () {
+        eventbus.trigger('workList:select', 'maintenanceRoad', backend.getUncheckedMaintenanceRoad());
       }
     });
 

@@ -50,7 +50,8 @@
       obstacles: 'Geometrian ulkopuolelle jääneet esterakennelmat',
       railwayCrossings: 'Geometrian ulkopuolelle jääneet rautatien tasoristeykset',
       directionalTrafficSigns: 'Geometrian ulkopuolelle jääneet opastustaulut',
-      trafficSigns: 'Geometrian ulkopuolelle jääneet liikennevalot'
+      trafficSigns: 'Geometrian ulkopuolelle jääneet liikennevalot',
+      maintenanceRoad: 'needs to be choosen'
     };
     $('#work-list').html('' +
       '<div style="overflow: auto;">' +

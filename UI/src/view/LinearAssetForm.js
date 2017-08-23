@@ -46,6 +46,15 @@
     function events() {
       return _.map(arguments, function(argument) { return eventCategory + ':' + argument; }).join(' ');
     }
+
+    eventbus.on('layer:selected', function(layer) {
+      if(layerName === 'maintenanceRoad' && layerName === layer) {
+        renderLinktoWorkList(layer);
+      }
+       else {
+        $('#information-content .form[data-layer-name="' + layerName +'"]').remove();
+       }
+    });
   }
 
   function template(selectedLinearAsset, formElements, newTitle, title) {
@@ -115,15 +124,12 @@
            '</footer>';
   }
 
-  function renderLinktoWorkList() {
-    var notRendered = !$('#work-list-link').length;
-    if(notRendered) {
+  var renderLinktoWorkList = function renderLinktoWorkList(layerName) {
       $('#information-content').append('' +
-        '<div class="form form-horizontal">' +
-          '<a id="work-list-link" class="unknown-linear-assets" href="#work-list/speedLimit">Tuntemattomien nopeusrajoitusten lista</a>' +
-        '</div>');
-    }
-  }
+          '<div class="form form-horizontal" data-layer-name="' + layerName + '">' +
+          '<a id="unchecked-links" class="unchecked-linear-assets" href="#work-list/' + layerName + '">Tuntemattomien nopeusrajoitusten lista</a>' +
+          '</div>');
+  };
 
   function validateAdministrativeClass(selectedLinearAsset, editConstrains){
     var selectedAssets = _.filter(selectedLinearAsset.get(), function (selected) {
