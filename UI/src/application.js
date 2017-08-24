@@ -253,7 +253,7 @@
        newAsset: asset.newAsset,
        roadAddressInfoPopup: roadAddressInfoPopup,
        allowGrouping: asset.allowGrouping,
-       assetGrouping: new AssetGrouping(applicationModel),
+       assetGrouping: new AssetGrouping(asset.groupingDistance),
        editConstrains : asset.editConstrains || function() {return false;}
      });
      return acc;
@@ -262,7 +262,7 @@
     var layers = _.merge({
       road: roadLayer,
       linkProperty: new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel, roadAddressInfoPopup),
-       massTransitStop: new MassTransitStopLayer(map, models.roadCollection, mapOverlay, new AssetGrouping(applicationModel), roadLayer, roadAddressInfoPopup),
+       massTransitStop: new MassTransitStopLayer(map, models.roadCollection, mapOverlay, new AssetGrouping(36), roadLayer, roadAddressInfoPopup),
        speedLimit: new SpeedLimitLayer({
        map: map,
        application: applicationModel,
