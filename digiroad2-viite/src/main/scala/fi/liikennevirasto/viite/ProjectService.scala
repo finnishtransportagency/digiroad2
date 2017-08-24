@@ -257,6 +257,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         if (!projectLinkIds.contains(projectLinkIds.head)){
           return Some("Linkit kuuluvat useampaan projektiin")
         }
+        // TODO: Check that status != UnChanged, throw exception if check fails
         ProjectDAO.flipProjectLinksSideCodes(projectId, roadNumber, roadPartNumber)
         val projectLinks = ProjectDAO.getProjectLinks(projectId)
         val projectAddressLinksGeom = getLinksByProjectLinkId(projectLinks.map(_.linkId).toSet, projectId, false).map(pal =>
@@ -488,12 +489,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       try {
         val delta = ProjectDeltaCalculator.delta(projectId)
         //TODO would be better to give roadType to ProjectLinks table instead of calling vvh here
-        val vvhRoadLinks = roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(delta.terminations.map(_.linkId).toSet, false,frozenTimeVVHAPIServiceEnabled)
+        val linkIds = (delta.terminations ++ delta.unChanged).map(_.linkId).toSet
+        val vvhRoadLinks = roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(linkIds, false, frozenTimeVVHAPIServiceEnabled)
+          .map(rl => rl.linkId -> rl).toMap
         val filledTerminations = withFetchedDataFromVVH(delta.terminations, vvhRoadLinks, RoadType)
+        val filledUnChanged = withFetchedDataFromVVH(delta.unChanged, vvhRoadLinks, RoadType)
 
-        if (setProjectDeltaToDB(delta.copy(terminations = filledTerminations), projectId)) {
+        if (setProjectDeltaToDB(delta.copy(terminations = filledTerminations, unChanged = filledUnChanged), projectId)) {
           val roadAddressChanges = RoadAddressChangesDAO.fetchRoadAddressChanges(Set(projectId))
-          Some(ViiteTierekisteriClient.convertToChangeProject(roadAddressChanges.sortBy(r => (r.changeInfo.source.trackCode, r.changeInfo.source.startAddressM, r.changeInfo.source.startRoadPartNumber, r.changeInfo.source.roadNumber))))
+          Some(ViiteTierekisteriClient.convertToChangeProject(roadAddressChanges))
         } else {
           None
         }
@@ -864,13 +868,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def withFetchedDataFromVVH(roadAdddresses: Seq[RoadAddress], roadLinks: Seq[RoadLink], Type: Object): Seq[RoadAddress] = {
+  // TODO: remove when saving road type to project link table
+  def withFetchedDataFromVVH(roadAdddresses: Seq[RoadAddress], roadLinks: Map[Long, RoadLink], Type: Object): Seq[RoadAddress] = {
     val fetchedAddresses = Type match {
       case RoadType =>
         val withRoadType: Seq[RoadAddress] = roadAdddresses.par.map {
           ra =>
-            val relatedRoadLink = roadLinks.filter(rl => rl.linkId == ra.linkId).headOption
-            relatedRoadLink match {
+            roadLinks.get(ra.linkId) match {
               case None => ra
               case Some(rl) =>
                 val roadType = RoadAddressLinkBuilder.getRoadType(rl.administrativeClass, rl.linkType)
@@ -878,6 +882,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             }
         }.toList
         withRoadType
+      case _ => roadAdddresses
     }
     fetchedAddresses
   }
