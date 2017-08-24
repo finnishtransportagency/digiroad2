@@ -9,6 +9,17 @@ import org.joda.time.DateTime
 
 class OnOffLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: DigiroadEventBus, dao: OracleLinearAssetDao) extends LinearAssetService(roadLinkServiceImpl, eventBusImpl){
 
+  override def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String, vvhTimeStamp: Long = vvhClient.roadLinkData.createVVHTimeStamp()): Seq[Long] = {
+    withDynTransaction {
+      newLinearAssets.flatMap{ newAsset =>
+        if (newAsset.value.toJson == 1) {
+          Some(createWithoutTransaction(typeId, newAsset.linkId, newAsset.value, newAsset.sideCode, Measures(newAsset.startMeasure, newAsset.endMeasure), username, vvhTimeStamp, getLinkSource(newAsset.linkId)))
+        } else {
+          None
+        }
+      }
+    }
+  }
   override def updateValueByExpiration(assetId: Long, valueToUpdate: Value, valuePropertyId: String, username: String, measures: Option[Measures], vvhTimeStamp: Option[Long], sideCode: Option[Int]): Option[Long] = {
     val measure = measures.getOrElse(throw new NoSuchElementException("Missing measures from asset."))
 
