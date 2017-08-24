@@ -92,23 +92,32 @@ object NumericalLimitFiller {
     * @param changeSet
     * @return
     */
-  def adjustTwoWaySegments(roadLink: RoadLink, assets: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
-    val twoWaySegments = assets.filter(_.sideCode == 1).sortWith(modifiedSort)
-    if (twoWaySegments.length == 1 && assets.forall(_.sideCode == 1)) {
-      val asset = twoWaySegments.head
-      val (adjustedAsset, mValueAdjustments) = adjustAsset(asset, roadLink)
-      (Seq(adjustedAsset), changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ mValueAdjustments))
-    } else {
-      if (twoWaySegments.length > 1) {
-        val asset = twoWaySegments.head
-        val rest = twoWaySegments.tail
-        val (updatedAsset, newChangeSet) = extend(asset, rest, changeSet)
-        val (adjustedAsset, mValueAdjustments) = adjustAsset(updatedAsset, roadLink)
-        (rest.filterNot(p => newChangeSet.expiredAssetIds.contains(p.id)) ++ Seq(adjustedAsset),
-          newChangeSet.copy(adjustedMValues = newChangeSet.adjustedMValues ++ mValueAdjustments))
-      } else {
-        (assets, changeSet)
-      }
+  def adjustAnyWaySegments(roadLink: RoadLink, sidecode: Int, assets: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
+
+        val anyWaySegments = assets.filter(_.sideCode == sidecode).sortWith(modifiedSort)
+        if (anyWaySegments.length == 1 && assets.forall(_.sideCode == sidecode)) {
+          val asset = anyWaySegments.head
+          val (adjustedAsset, mValueAdjustments) = adjustAsset(asset, roadLink)
+          (Seq(adjustedAsset), changeSet.copy(adjustedMValues = changeSet.adjustedMValues ++ mValueAdjustments))
+        } else {
+          if (anyWaySegments.length > 1) {
+            val asset = anyWaySegments.head
+            val rest = anyWaySegments.tail
+            val (updatedAsset, newChangeSet) = extend(asset, rest, changeSet)
+            val (adjustedAsset, mValueAdjustments) = adjustAsset(updatedAsset, roadLink)
+            (rest.filterNot(p => newChangeSet.expiredAssetIds.contains(p.id)) ++ Seq(adjustedAsset),
+              newChangeSet.copy(adjustedMValues = newChangeSet.adjustedMValues ++ mValueAdjustments))
+          } else {
+            (assets, changeSet)
+          }
+        }
+  }
+
+  def adjustSegments(roadLink: RoadLink, assets: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
+     assets.groupBy(_.sideCode).foldLeft((Seq[PersistedLinearAsset](), changeSet)) {
+           case ((resultAssets, change),(sidecode, assets)) =>
+     val (adjustAssets, changes) = adjustAnyWaySegments(roadLink, sidecode, assets, change)
+             (resultAssets++adjustAssets, changes)
     }
   }
 
@@ -163,8 +172,14 @@ object NumericalLimitFiller {
     (segments ++ generated, changeSet)
   }
 
-  private def combine(typeId: Int)(roadLink: RoadLink, segments: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
+  private def combine(roadLink: RoadLink, segments: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
 
+    def replaceUnknownAssetIds(asset: PersistedLinearAsset, pseudoId: Long) = {
+      asset.id match {
+        case 0 => asset.copy(id = pseudoId)
+        case _ => asset
+      }
+    }
     /**
       * Pick the latest asset for each single piece and create SegmentPiece objects for those
       */
@@ -187,6 +202,18 @@ object NumericalLimitFiller {
       * @return Sequence of segment pieces (1 or 2 segment pieces in sequence)
       */
     def combineEqualValues(segmentPieces: Seq[SegmentPiece], segments: Seq[PersistedLinearAsset]): Seq[SegmentPiece] = {
+      def chooseSegment(seg1 :SegmentPiece, seg2: SegmentPiece): Seq[SegmentPiece] = {
+        val sl1 = segments.find(_.id == seg1.assetId).get
+        val sl2 = segments.find(_.id == seg2.assetId).get
+        if (sl1.startMeasure.equals(sl2.startMeasure) && sl1.endMeasure.equals(sl2.endMeasure)) {
+          val winner = segments.filter(l => l.id == seg1.assetId || l.id == seg2.assetId).sortBy(s =>
+            s.endMeasure - s.startMeasure).head
+          Seq(segmentPieces.head.copy(assetId = winner.id, sideCode = SideCode.BothDirections))
+        } else {
+          segmentPieces
+        }
+      }
+
       if (segmentPieces.size < 2)
         return segmentPieces
 
@@ -194,17 +221,14 @@ object NumericalLimitFiller {
       val seg2 = segmentPieces.last
       (seg1.value, seg2.value) match {
         case (Some(v1), Some(v2)) =>
-          val sl1 = segments.find(_.id == seg1.assetId).get
-          val sl2 = segments.find(_.id == seg2.assetId).get
-          if (v1.equals(v2) && sl1.startMeasure.equals(sl2.startMeasure) && sl1.endMeasure.equals(sl2.endMeasure)) {
-            val winner = segments.filter(l => l.id == seg1.assetId || l.id == seg2.assetId).sortBy(s =>
-              s.endMeasure - s.startMeasure).head
-            Seq(segmentPieces.head.copy(assetId = winner.id, sideCode = SideCode.BothDirections))
-          } else {
+          if (v1.equals(v2)) {
+            chooseSegment(seg1, seg2)
+          } else
             segmentPieces
-          }
         case (Some(v1), None) => Seq(segmentPieces.head.copy(sideCode = SideCode.BothDirections))
         case (None, Some(v2)) => Seq(segmentPieces.last.copy(sideCode = SideCode.BothDirections))
+        case (None, None) =>
+          chooseSegment(seg1, seg2)
         case _ => segmentPieces
       }
     }
@@ -223,7 +247,7 @@ object NumericalLimitFiller {
       val rest = sorted.tail
       if (rest.nonEmpty) {
         val next = rest.find(sp => sp.startM == current.endM && sp.sideCode == current.sideCode &&
-          sp.value == current.value)
+          sp.value.getOrElse(None) == current.value)
         if (next.nonEmpty) {
           return extendOrDivide(Seq(current.copy(endM = next.get.endM)) ++ rest.filterNot(sp => sp.equals(next.get)), segments)
         }
@@ -272,60 +296,29 @@ object NumericalLimitFiller {
         processed ++ Seq(modified)
       }
     }
+    val assets = segments.zipWithIndex.map(n => replaceUnknownAssetIds(n._1, 0L-n._2))
+    val pointsOfInterest = (assets.map(_.startMeasure) ++ assets.map(_.endMeasure)).distinct.sorted
+    if (pointsOfInterest.length < 2)
+      return (assets, changeSet)
 
-    if (typeId == 140) {
-      val pointsOfInterest = (segments.map(_.startMeasure) ++ segments.map(_.endMeasure)).distinct.sorted
-      if (pointsOfInterest.length < 2)
-        return (segments, changeSet)
+    val pieces = pointsOfInterest.zip(pointsOfInterest.tail)
+    val segmentPieces = pieces.flatMap(p => squash(p._1, p._2, assets)).sortBy(_.assetId)
+    val combinedSegmentPieces = segmentPieces.groupBy(_.startM).flatMap(n => combineEqualValues(n._2, assets))
+    val segmentsAndOrphanPieces = combinedSegmentPieces.groupBy(_.assetId).map(n => extendOrDivide(n._2.toSeq, assets.find(_.id == n._1).get))
+    val combinedSegment = segmentsAndOrphanPieces.keys.toSeq
+    val newSegments = combinedSegment.flatMap(sl => generateLimitsForOrphanSegments(sl, segmentsAndOrphanPieces.getOrElse(sl, Seq()).sortBy(_.startM)))
 
-      val pieces = pointsOfInterest.zip(pointsOfInterest.tail)
-      val segmentPieces = pieces.flatMap(p => squash(p._1, p._2, segments)).sortBy(_.assetId)
-      val combinedSegmentPieces = segmentPieces.groupBy(_.startM).flatMap(n => combineEqualValues(n._2, segments))
-      val segmentsAndOrphanPieces = combinedSegmentPieces.groupBy(_.assetId).map(n => extendOrDivide(n._2.toSeq, segments.find(_.id == n._1).get))
-      val combinedSegment = segmentsAndOrphanPieces.keys.toSeq
-      val newSegments = combinedSegment.flatMap(sl => generateLimitsForOrphanSegments(sl, segmentsAndOrphanPieces.getOrElse(sl, Seq()).sortBy(_.startM)))
+    val changedSideCodes = combinedSegment.filter(cl =>
+      assets.exists(sl => sl.id == cl.id && !sl.sideCode.equals(cl.sideCode))).
+      map(sl => SideCodeAdjustment(sl.id, SideCode(sl.sideCode)))
+    val resultingNumericalLimits = combinedSegment ++ newSegments
+    val expiredIds = assets.map(_.id).toSet.--(resultingNumericalLimits.map(_.id).toSet)
 
-      val changedSideCodes = combinedSegment.filter(cl =>
-        segments.exists(sl => sl.id == cl.id && !sl.sideCode.equals(cl.sideCode))).
-        map(sl => SideCodeAdjustment(sl.id, SideCode(sl.sideCode)))
-      val resultingNumericalLimits = combinedSegment ++ newSegments
-      val expiredIds = segments.map(_.id).toSet.--(resultingNumericalLimits.map(_.id).toSet)
+    val returnSegments = cleanNumericalLimitIds(resultingNumericalLimits, Seq())
+    (returnSegments, changeSet.copy(expiredAssetIds = changeSet.expiredAssetIds ++ expiredIds, adjustedSideCodes = changeSet.adjustedSideCodes ++ changedSideCodes))
 
-      val returnSegments = cleanNumericalLimitIds(resultingNumericalLimits, Seq())
-      (returnSegments, changeSet.copy(expiredAssetIds = changeSet.expiredAssetIds ++ expiredIds, adjustedSideCodes = changeSet.adjustedSideCodes ++ changedSideCodes))
-    } else {
-      (segments, changeSet)
-    }
   }
 
-  private def fuse(typeId: Int)(roadLink: RoadLink, segments: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
-    if (typeId == 140) {
-      val sortedList = segments.sortBy(_.startMeasure)
-      if (segments.nonEmpty) {
-        val origin = sortedList.head
-        val target = sortedList.tail.find(sl => Math.abs(sl.startMeasure - origin.endMeasure) < MaxAllowedError &&
-          sl.value.equals(origin.value) && sl.sideCode.equals(origin.sideCode))
-        if (target.nonEmpty) {
-          // pick id if it already has one regardless of which one is newer
-          val toBeFused = Seq(origin, target.get).sortWith(modifiedSort)
-          val newId = toBeFused.find(_.id > 0).map(_.id).getOrElse(0L)
-          val modified = toBeFused.head.copy(id = newId, startMeasure = origin.startMeasure, endMeasure = target.get.endMeasure)
-          val expiredId = Set(origin.id, target.get.id) -- Set(modified.id, 0L) // never attempt to expire id zero
-          val mValueAdjustment = Seq(MValueAdjustment(modified.id, modified.linkId, modified.startMeasure, modified.endMeasure))
-          // Replace origin and target with this new item in the list and recursively call itself again
-          fuse(typeId)(roadLink, Seq(modified) ++ sortedList.tail.filterNot(sl => Set(origin, target.get).contains(sl)),
-            changeSet.copy(expiredAssetIds = changeSet.expiredAssetIds ++ expiredId, adjustedMValues = changeSet.adjustedMValues.filter(_.assetId > 0) ++ mValueAdjustment))
-        } else {
-          val fused = fuse(typeId)(roadLink, sortedList.tail, changeSet)
-          (Seq(origin) ++ fused._1, fused._2)
-        }
-      } else {
-        (segments, changeSet)
-      }
-    } else {
-      (segments, changeSet)
-    }
-  }
   case class SegmentPiece(assetId: Long, startM: Double, endM: Double, sideCode: SideCode, value: Option[Value])
 
   private def toLinearAsset(dbAssets: Seq[PersistedLinearAsset], roadLink: RoadLink): Seq[PieceWiseLinearAsset] = {
@@ -417,11 +410,10 @@ object NumericalLimitFiller {
     val fillOperations: Seq[(RoadLink, Seq[PersistedLinearAsset], ChangeSet) => (Seq[PersistedLinearAsset], ChangeSet)] = Seq(
       expireSegmentsOutsideGeometry,
       dropShortSegments,
-      fuse(typeId),
-      combine(typeId),
       capSegmentsThatOverflowGeometry,
       expireOverlappingSegments,
-      adjustTwoWaySegments,
+      adjustSegments,
+      combine,
       adjustSegmentSideCodes,
       generateTwoSidedNonExistingLinearAssets(typeId),
       generateOneSidedNonExistingLinearAssets(SideCode.TowardsDigitizing, typeId),
