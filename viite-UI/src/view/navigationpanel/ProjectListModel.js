@@ -63,6 +63,7 @@
           html += '</table>';
           $('#project-list').html($(html));
           $('[id*="open-project"]').click(function(event) {
+            eventbus.trigger("Opening_road_address_project_" + event.currentTarget.value);
             projectCollection.getProjectsWithLinksById(parseInt(event.currentTarget.value)).then(function(result){
               setTimeout(function(){}, 0);
               eventbus.trigger('roadAddress:openProject', result);
