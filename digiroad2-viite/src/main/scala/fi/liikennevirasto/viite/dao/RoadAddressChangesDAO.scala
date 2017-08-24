@@ -137,17 +137,19 @@ object RoadAddressChangesDAO {
   }
 
   def fetchRoadAddressChanges(projectIds: Set[Long]):List[ProjectRoadAddressChange] = {
-
-    val projectIdsString = projectIds.mkString(", ")
-    val withProjectIds = projectIds.isEmpty match {
-      case true => return List()
-      case false => s""" where rac.project_id in ($projectIdsString)"""
-    }
-    val query = s"""Select p.id as project_id, p.name, p.created_by, p.created_date, p.start_date, p.modified_by, p.modified_date, rac.new_ely, rac.change_type, rac.old_road_number, rac.old_track_code, Min(rac.old_road_part_number) as old_start_road_part_number, Max(rac.old_road_part_number) as old_end_road_part_number, rac.old_start_addr_m, rac.old_end_addr_m, rac.new_road_number, rac.new_track_code, Min(rac.new_road_part_number) as new_start_road_part_number, Max(rac.new_road_part_number) as new_end_road_part_number, rac.new_start_addr_m, rac.new_end_addr_m, rac.new_discontinuity, rac.new_road_type
-                      From Road_Address_Changes rac Inner Join Project p on rac.project_id = p.id
-                      $withProjectIds
-                      Group By p.id, p.name, p.created_by, p.created_date, p.start_date, p.modified_by, p.modified_date, rac.new_ely, rac.change_type, rac.old_road_number, rac.old_track_code, rac.old_start_addr_m, rac.old_end_addr_m, rac.new_road_number, rac.new_track_code,
-                      rac.new_start_addr_m, rac.new_end_addr_m, rac.new_discontinuity, rac.new_road_type, rac.OLD_ROAD_PART_NUMBER ORDER BY rac.old_road_number, rac.OLD_ROAD_PART_NUMBER, rac.old_start_addr_m, rac.old_track_code DESC"""
+    if (projectIds.isEmpty)
+      return List()
+    val projectIdsString = projectIds.mkString(",")
+    val withProjectIds = s""" where rac.project_id in ($projectIdsString)"""
+    val query = s"""Select p.id as project_id, p.name, p.created_by, p.created_date, p.start_date, p.modified_by,
+                p.modified_date, rac.new_ely, rac.change_type, rac.old_road_number, rac.old_track_code,
+                rac.old_road_part_number, rac.old_road_part_number,
+                rac.old_start_addr_m, rac.old_end_addr_m, rac.new_road_number, rac.new_track_code,
+                rac.new_road_part_number, rac.new_road_part_number,
+                rac.new_start_addr_m, rac.new_end_addr_m, rac.new_discontinuity, rac.new_road_type
+                From Road_Address_Changes rac Inner Join Project p on rac.project_id = p.id
+                $withProjectIds
+                ORDER BY rac.old_road_number, rac.OLD_ROAD_PART_NUMBER, rac.old_start_addr_m, rac.old_track_code DESC"""
     queryList(query)
   }
 
