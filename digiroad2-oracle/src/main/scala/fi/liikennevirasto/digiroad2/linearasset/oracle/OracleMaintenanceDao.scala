@@ -1,18 +1,16 @@
 package fi.liikennevirasto.digiroad2.linearasset.oracle
 
-import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Queries, Sequences}
+import fi.liikennevirasto.digiroad2.asset.{PropertyTypes, LinkGeomSource}
+import fi.liikennevirasto.digiroad2.linearasset.{Properties, MaintenanceRoad, PersistedLinearAsset}
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Sequences, Queries}
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
+import fi.liikennevirasto.digiroad2.{Measures, RoadLinkService, VVHClient}
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database
 import Database.dynamicSession
-import _root_.oracle.sql.STRUCT
+import slick.jdbc.{StaticQuery => Q}
 import com.github.tototoshi.slick.MySQLJodaSupport._
-import org.slf4j.LoggerFactory
 import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParameter, StaticQuery => Q}
 
 class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLinkService) {
 
@@ -130,6 +128,43 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
 
   def expireAllMaintenanceAssets(typeId: Int): Unit = {
     sqlu"update asset set valid_to = sysdate - 1/86400 where asset_type_id = $typeId".execute
+  }
+
+
+  /**
+    * Updates MaintenanceRoad property. Used by MaintenanceService.updateProjected.
+    */
+  def updateMaintenanceRoadValue(assetId: Long, value: MaintenanceRoad, username: String): Option[Long] = {
+    value.maintenanceRoad.foreach { prop =>
+      val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply(prop.publicId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + prop.publicId + " not found"))
+      prop.propertyType match {
+        case PropertyTypes.Text => {
+          if (textPropertyValueDoesNotExist(assetId, propertyId) && prop.value.nonEmpty) {
+            Queries.insertTextProperty(assetId, propertyId, prop.value).first
+          } else if (prop.value.isEmpty) {
+            Queries.deleteTextProperty(assetId, propertyId).execute
+          } else {
+            Queries.updateTextProperty(assetId, propertyId, prop.value).firstOption.getOrElse(throw new IllegalArgumentException("Property Text Update: " + prop.publicId + " not found"))
+          }
+        }
+        case PropertyTypes.SingleChoice | PropertyTypes.CheckBox => {
+          if (singleChoiceValueDoesNotExist(assetId, propertyId)) {
+            Queries.insertSingleChoiceProperty(assetId, propertyId, prop.value.toInt).first
+          } else {
+            Queries.updateSingleChoiceProperty(assetId, propertyId, prop.value.toInt).firstOption.getOrElse(throw new IllegalArgumentException("Property Single Choice Update: " + prop.publicId + " not found"))
+          }
+        }
+      }
+    }
+    Some(assetId)
+  }
+
+  private def textPropertyValueDoesNotExist(assetId: Long, propertyId: Long) = {
+    Q.query[(Long, Long), Long](Queries.existsTextProperty).apply((assetId, propertyId)).firstOption.isEmpty
+  }
+
+  private def singleChoiceValueDoesNotExist(assetId: Long, propertyId: Long) = {
+    Q.query[(Long, Long), Long](Queries.existsSingleChoiceProperty).apply((assetId, propertyId)).firstOption.isEmpty
   }
 
   /**

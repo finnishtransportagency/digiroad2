@@ -224,6 +224,10 @@ object Digiroad2Context {
     new ProductionMassTransitStopService(eventbus, roadLinkService)
   }
 
+  lazy val maintenanceRoadService: MaintenanceService = {
+    new MaintenanceService(roadLinkService, eventbus)
+  }
+
   lazy val linearAssetService: LinearAssetService = {
     new LinearAssetService(roadLinkService, eventbus)
   }

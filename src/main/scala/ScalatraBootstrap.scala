@@ -17,7 +17,8 @@ ScalatraBootstrap extends LifeCycle {
       Digiroad2Context.servicePointService,
       Digiroad2Context.vvhClient,
       Digiroad2Context.massTransitStopService,
-      Digiroad2Context.linearAssetService
+      Digiroad2Context.linearAssetService,
+      Digiroad2Context.maintenanceRoadService
     ), "/api/*")
     context.mount(new SessionApi, "/api/auth/*")
     context.mount(new UserConfigurationApi, "/api/userconfig/*")
@@ -30,7 +31,7 @@ ScalatraBootstrap extends LifeCycle {
     context.mount(new ChangeApi(), "/api/changes/*")
     context.mount(new ViiteApi(Digiroad2Context.roadLinkService, Digiroad2Context.vvhClient,
       Digiroad2Context.roadAddressService, Digiroad2Context.projectService), "/api/viite/*")
-    context.mount(new ServiceRoadAPI(Digiroad2Context.linearAssetService, Digiroad2Context.roadLinkService ), "/api/livi/*")
+    context.mount(new ServiceRoadAPI(Digiroad2Context.maintenanceRoadService, Digiroad2Context.roadLinkService ), "/api/livi/*")
     if (!Digiroad2Context.getProperty("digiroad2.tierekisteri.enabled").toBoolean) {
       context.mount(new TierekisteriTestApi, "/api/tierekisteri/*")
       context.mount(new ViiteTierekisteriTestApi, "/api/trrest/*")

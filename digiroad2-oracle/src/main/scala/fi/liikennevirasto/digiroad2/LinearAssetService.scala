@@ -65,7 +65,7 @@ trait LinearAssetOperations {
     municipalityCode
   }
 
-  private def getLinkSource(linkId: Long): Option[Int] = {
+  protected def getLinkSource(linkId: Long): Option[Int] = {
     val roadlink = roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId, newTransaction = false)
     roadlink match {
       case Some(result) =>
@@ -123,10 +123,10 @@ trait LinearAssetOperations {
     getByRoadLinks(typeId, roadLinks, change)
   }
 
-  private def getByRoadLinks(typeId: Int, roadLinksExist: Seq[RoadLink], changes: Seq[ChangeInfo]): Seq[PieceWiseLinearAsset] = {
+  protected def getByRoadLinks(typeId: Int, roadLinksExist: Seq[RoadLink], changes: Seq[ChangeInfo]): Seq[PieceWiseLinearAsset] = {
 
     // Filter high functional classes from maintenance roads
-    val roadLinks: Seq[RoadLink] = roadLinksExist.filter(_.functionalClass > 4 || typeId != LinearAssetTypes.MaintenanceRoadAssetTypeId)
+    val roadLinks: Seq[RoadLink] = roadLinksExist
     val linkIds = roadLinks.map(_.linkId)
     val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(changes, roadLinks)
     val existingAssets =
@@ -136,8 +136,6 @@ trait LinearAssetOperations {
             dao.fetchProhibitionsByLinkIds(typeId, linkIds ++ removedLinkIds, includeFloating = false)
           case LinearAssetTypes.EuropeanRoadAssetTypeId | LinearAssetTypes.ExitNumberAssetTypeId =>
             dao.fetchAssetsWithTextualValuesByLinkIds(typeId, linkIds ++ removedLinkIds, LinearAssetTypes.getValuePropertyId(typeId))
-          case LinearAssetTypes.MaintenanceRoadAssetTypeId =>
-            dao.fetchMaintenancesByLinkIds(typeId, linkIds ++ removedLinkIds, includeFloating = false)
           case _ =>
             dao.fetchLinearAssetsByLinkIds(typeId, linkIds ++ removedLinkIds, LinearAssetTypes.numericValuePropertyId)
         }
@@ -250,7 +248,7 @@ trait LinearAssetOperations {
   /**
     * Uses VVH ChangeInfo API to map OTH linear asset information from old road links to new road links after geometry changes.
     */
-  private def fillNewRoadLinksWithPreviousAssetsData(roadLinks: Seq[RoadLink], assetsToUpdate: Seq[PersistedLinearAsset],
+  protected def fillNewRoadLinksWithPreviousAssetsData(roadLinks: Seq[RoadLink], assetsToUpdate: Seq[PersistedLinearAsset],
                                                      currentAssets: Seq[PersistedLinearAsset], changes: Seq[ChangeInfo]) : Seq[PersistedLinearAsset] ={
     val (replacementChanges, otherChanges) = changes.partition(isReplacementChange)
     val reverseLookupMap = replacementChanges.filterNot(c=>c.oldId.isEmpty || c.newId.isEmpty).map(c => c.newId.get -> c).groupBy(_._1).mapValues(_.map(_._2))
@@ -400,23 +398,12 @@ trait LinearAssetOperations {
           dao.fetchAssetsWithTextualValuesByIds(ids, LinearAssetTypes.getValuePropertyId(typeId))
         case LinearAssetTypes.ProhibitionAssetTypeId | LinearAssetTypes.HazmatTransportProhibitionAssetTypeId =>
           dao.fetchProhibitionsByIds(typeId, ids)
-        case LinearAssetTypes.MaintenanceRoadAssetTypeId =>
-          dao.fetchMaintenancesByIds(typeId, ids)
         case _ =>
           dao.fetchLinearAssetsByIds(ids, LinearAssetTypes.getValuePropertyId(typeId))
       }
     }
   }
 
-  def getPersistedAssetsByLinkIds(typeId: Int, linkIds: Seq[Long]): Seq[PersistedLinearAsset] = {
-    withDynTransaction {
-      typeId match {
-        case LinearAssetTypes.MaintenanceRoadAssetTypeId =>
-          dao.fetchMaintenancesByLinkIds(typeId, linkIds, includeExpire = false)
-        case _ => Seq.empty[PersistedLinearAsset]
-      }
-    }
-  }
 
   /**
     * This method returns linear assets that have been changed in OTH between given date values. It is used by TN-ITS ChangeApi.
@@ -504,8 +491,8 @@ trait LinearAssetOperations {
         case Some(TextualValue(textValue)) =>
           LinearAssetTypes.getValuePropertyId(typeId)
         case Some(prohibitions: Prohibitions) => ""
-        case Some(maintenanceRoad: MaintenanceRoad) => ""
         case None => ""
+        case _ => ""
       }
     }
     val (toInsert, toUpdate) = newLinearAssets.partition(_.id == 0L)
@@ -534,9 +521,8 @@ trait LinearAssetOperations {
             dao.insertValue(id, LinearAssetTypes.getValuePropertyId(linearAsset.typeId), textValue)
           case Some(prohibitions: Prohibitions) =>
             dao.insertProhibitionValue(id, prohibitions)
-          case Some(maintenanceRoad: MaintenanceRoad) =>
-            dao.insertMaintenanceRoadValue(id, maintenanceRoad)
           case None => None
+          case _ => None
         }
       }
       if (newLinearAssets.nonEmpty)
@@ -544,7 +530,7 @@ trait LinearAssetOperations {
     }
   }
 
-  private def updateProjected(toUpdate: Seq[PersistedLinearAsset], persisted: Map[Long, Seq[PersistedLinearAsset]]) = {
+  protected def updateProjected(toUpdate: Seq[PersistedLinearAsset], persisted: Map[Long, Seq[PersistedLinearAsset]]) = {
     def valueChanged(assetToPersist: PersistedLinearAsset, persistedLinearAsset: Option[PersistedLinearAsset]) = {
       !persistedLinearAsset.exists(_.value == assetToPersist.value)
     }
@@ -567,8 +553,6 @@ trait LinearAssetOperations {
             dao.updateValue(id, textValue, LinearAssetTypes.getValuePropertyId(linearAsset.typeId), LinearAssetTypes.VvhGenerated)
           case Some(prohibitions: Prohibitions) =>
             dao.updateProhibitionValue(id, prohibitions, LinearAssetTypes.VvhGenerated)
-          case Some(maintenancesRoad: MaintenanceRoad) =>
-            dao.updateMaintenanceRoadValue(id, maintenancesRoad, LinearAssetTypes.VvhGenerated)
           case _ => None
         }
       }
@@ -581,7 +565,7 @@ trait LinearAssetOperations {
     * Mark VALID_TO field of old asset to sysdate and create a new asset.
     * Copy all the data from old asset except the properties that changed, modifiedBy and modifiedAt.
     */
-  private def updateValueByExpiration(assetId: Long, valueToUpdate: Value, valuePropertyId: String, username: String, measures: Option[Measures]): Option[Long] = {
+  protected def updateValueByExpiration(assetId: Long, valueToUpdate: Value, valuePropertyId: String, username: String, measures: Option[Measures]): Option[Long] = {
     //Get Old Asset
     val oldAsset =
       valueToUpdate match {
@@ -589,8 +573,6 @@ trait LinearAssetOperations {
           dao.fetchLinearAssetsByIds(Set(assetId), valuePropertyId).head
         case TextualValue(textValue) =>
           dao.fetchAssetsWithTextualValuesByIds(Set(assetId), valuePropertyId).head
-        case maintenanceRoad: MaintenanceRoad =>
-          dao.fetchMaintenancesByIds(valuePropertyId.toInt, Set(assetId)).head
         case _ => return None
       }
 
@@ -718,7 +700,7 @@ trait LinearAssetOperations {
     }
   }
 
-  private def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, measures: Option[Measures] = None): Seq[Long] = {
+  protected def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, measures: Option[Measures] = None): Seq[Long] = {
     if (ids.isEmpty)
       return ids
 
@@ -734,18 +716,13 @@ trait LinearAssetOperations {
           updateValueByExpiration(id, TextualValue(textValue), LinearAssetTypes.getValuePropertyId(typeId), username, measures)
         case prohibitions: Prohibitions =>
           dao.updateProhibitionValue(id, prohibitions, username, measures)
-        case maintenanceRoad: MaintenanceRoad =>
-          val missingProperties = validateRequiredProperties(typeId, maintenanceRoad)
-          if (missingProperties.nonEmpty)
-            throw new MissingMandatoryPropertyException(missingProperties)
-          updateValueByExpiration(id, maintenanceRoad, LinearAssetTypes.MaintenanceRoadAssetTypeId.toString(), username, measures)
         case _ =>
           Some(id)
       }
     }
   }
 
-  private def createWithoutTransaction(typeId: Int, linkId: Long, value: Value, sideCode: Int, measures: Measures, username: String, vvhTimeStamp: Long, linkSource: Option[Int], fromUpdate: Boolean = false,
+  protected def createWithoutTransaction(typeId: Int, linkId: Long, value: Value, sideCode: Int, measures: Measures, username: String, vvhTimeStamp: Long, linkSource: Option[Int], fromUpdate: Boolean = false,
                                        createdByFromUpdate: Option[String] = Some(""),
                                        createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now())): Long = {
     val id = dao.createLinearAsset(typeId, linkId, expired = false, sideCode, measures, username,
@@ -757,21 +734,9 @@ trait LinearAssetOperations {
         dao.insertValue(id, LinearAssetTypes.getValuePropertyId(typeId), textValue)
       case prohibitions: Prohibitions =>
         dao.insertProhibitionValue(id, prohibitions)
-      case maintenanceRoad: MaintenanceRoad =>
-        val missingProperties = validateRequiredProperties(typeId, maintenanceRoad)
-        if (missingProperties.nonEmpty)
-          throw new MissingMandatoryPropertyException(missingProperties)
-        dao.insertMaintenanceRoadValue(id, maintenanceRoad)
+      case _ => None
     }
     id
-  }
-
-  private def validateRequiredProperties(typeId: Int, maintenanceRoad: MaintenanceRoad): Set[String] = {
-    val mandatoryProperties: Map[String, String] = dao.getRequiredProperties(typeId)
-    val nonEmptyMandatoryProperties: Seq[Properties] = maintenanceRoad.maintenanceRoad.filter { property =>
-      mandatoryProperties.contains(property.publicId) && property.value.nonEmpty
-    }
-    mandatoryProperties.keySet -- nonEmptyMandatoryProperties.map(_.publicId).toSet
   }
 
   /**
@@ -811,12 +776,6 @@ trait LinearAssetOperations {
         }
       }
     }
-  }
-
-  def getActiveMaintenanceRoadByPolygon(areaId: Int, typeId: Int): Seq[PersistedLinearAsset] = {
-    val polygon= polygonTools.getPolygonByArea(areaId)
-    val vVHLinkIds = roadLinkService.getLinkIdsFromVVHWithComplementaryByPolygons(polygon)
-    getPersistedAssetsByLinkIds(typeId, vVHLinkIds)
   }
 }
 

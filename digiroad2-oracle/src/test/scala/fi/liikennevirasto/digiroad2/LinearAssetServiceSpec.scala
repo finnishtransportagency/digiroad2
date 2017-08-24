@@ -66,8 +66,6 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     override def polygonTools: PolygonTools = mockPolygonTools
   }
 
-  val geomFact= new GeometryFactory()
-  val geomBuilder = new GeometryBuilder(geomFact)
 
   def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(PassThroughService.dataSource)(test)
 
@@ -159,58 +157,6 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Create new maintenanceRoad") {
-    val prop1 = Properties("huoltotie_kayttooikeus", "single_choice", "1")
-    val prop2 = Properties("huoltotie_huoltovastuu", "single_choice", "2")
-    val prop3 = Properties("huoltotie_tiehoitokunta", "text", "text")
-
-    val propertiesSeq :Seq[Properties] = List(prop1, prop2, prop3)
-
-    val maintenanceRoad = MaintenanceRoad(propertiesSeq)
-    runWithRollback {
-      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, maintenanceRoad, 1, 0, None)), 290, "testuser")
-      newAssets.length should be(1)
-
-      val asset = linearAssetDao.fetchMaintenancesByLinkIds(290, Seq(388562360l)).head
-      asset.value should be (Some(maintenanceRoad))
-      asset.expired should be (false)
-    }
-  }
-
-  test("update new maintenanceRoad") {
-    val propIns1 = Properties("huoltotie_kayttooikeus", "single_choice", "1")
-    val propIns2 = Properties("huoltotie_huoltovastuu", "single_choice", "2")
-    val propIns3 = Properties("huoltotie_postinumero", "text", "text prop3")
-    val propIns4 = Properties("huoltotie_puh1" , "text", "text prop4")
-    val propIns5 = Properties("huoltotie_tiehoitokunta", "text", "text")
-
-    val propIns :Seq[Properties] = List(propIns1, propIns2, propIns3, propIns4, propIns5)
-    val maintenanceRoadIns = MaintenanceRoad(propIns)
-
-    val propUpd1 = Properties("huoltotie_kayttooikeus", "single_choice", "4")
-    val propUpd2 = Properties("huoltotie_huoltovastuu", "single_choice", "1")
-    val propUpd3 = Properties("huoltotie_postinumero", "text",  "text prop3 Update")
-    val propUpd4 = Properties("huoltotie_puh1" , "text", "")
-    val propUpd5 = Properties("huoltotie_tiehoitokunta", "text", "text")
-    val propUpd6 = Properties("huoltotie_puh2" , "text", "text prop puh2")
-
-    val propUpd :Seq[Properties] = List(propUpd1, propUpd2, propUpd3, propUpd4, propUpd5, propUpd6)
-    val maintenanceRoadUpd = MaintenanceRoad(propUpd)
-
-    val maintenanceRoadFetch = MaintenanceRoad(propUpd.filterNot(_.publicId == "huoltotie_puh1"))
-
-    runWithRollback {
-      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, maintenanceRoadIns, 1, 0, None)), 290, "testuser")
-      newAssets.length should be(1)
-
-      val updAssets = ServiceWithDao.update(Seq(newAssets.head), maintenanceRoadUpd, "testuser")
-      updAssets.length should be(1)
-
-      val asset = linearAssetDao.fetchMaintenancesByLinkIds(290, Seq(388562360l)).filterNot(_.expired).head
-      asset.value should be (Some(maintenanceRoadFetch))
-      asset.expired should be (false)
-    }
-  }
 
   test("Create new prohibition") {
     val prohibition = Prohibitions(Seq(ProhibitionValue(4, Set.empty, Set.empty, null)))
@@ -223,27 +169,6 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Should delete maintenanceRoad asset"){
-    val prop1 = Properties("huoltotie_kayttooikeus", "single_choice", "1")
-    val prop2 = Properties("huoltotie_huoltovastuu", "single_choice", "2")
-    val prop3 = Properties("huoltotie_tiehoitokunta", "text", "text")
-
-    val propertiesSeq :Seq[Properties] = List(prop1, prop2, prop3)
-
-    val maintenanceRoad = MaintenanceRoad(propertiesSeq)
-    runWithRollback {
-      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, maintenanceRoad, 1, 0, None)), 290, "testuser")
-      newAssets.length should be(1)
-      var asset = linearAssetDao.fetchMaintenancesByIds(290,Set(newAssets.head),false).head
-      asset.value should be (Some(maintenanceRoad))
-      asset.expired should be (false)
-
-      val assetId : Seq[Long] = List(asset.id)
-      val deleted = ServiceWithDao.expire( assetId , "testuser")
-      asset = linearAssetDao.fetchMaintenancesByIds(290,Set(newAssets.head),false).head
-      asset.expired should be (true)
-    }
-  }
 
   test("adjust linear asset to cover whole link when the difference in asset length and link length is less than maximum allowed error") {
     val linearAssets = PassThroughService.getByBoundingBox(30, BoundingRectangle(Point(0.0, 0.0), Point(1.0, 1.0))).head
@@ -1969,41 +1894,6 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       after.flatten.forall(_.id != 0) should be (true)
       dynamicSession.rollback()
 
-    }
-  }
-
-  test("Fetch all Active Maintenance Road By Polygon") {
-
-    val prop1 = Properties("huoltotie_kayttooikeus", "single_choice", "1")
-    val prop2 = Properties("huoltotie_huoltovastuu", "single_choice", "2")
-    val prop3 = Properties("huoltotie_tiehoitokunta", "text", "text")
-
-    val propertiesSeq :Seq[Properties] = List(prop1, prop2, prop3)
-
-    when(mockPolygonTools.getAreaGeometry(any[Int])).thenReturn(geomBuilder.polygon(24.2, 60.5, 24.8, 60.5, 24.8, 59, 24.2, 59))
-    when(mockRoadLinkService.getLinkIdsFromVVHWithComplementaryByPolygons(any[Seq[Polygon]])).thenReturn(Seq(388562360l))
-
-    val maintenanceRoad = MaintenanceRoad(propertiesSeq)
-    runWithRollback {
-      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, maintenanceRoad, 1, 0, None)), 290, "testuser")
-      newAssets.length should be(1)
-
-      val assets = ServiceWithDao.getActiveMaintenanceRoadByPolygon(1, 290)
-      assets.map { asset =>
-        asset.linkId should be(388562360l)
-        asset.startMeasure should be(0)
-        asset.endMeasure should be(20)
-        asset.value.get.asInstanceOf[MaintenanceRoad].maintenanceRoad.length should be(3)
-      }
-    }
-  }
-
-  test("Fetch Active Maintenance Road By Polygon, with an empty result") {
-
-    when(mockRoadLinkService.getLinkIdsFromVVHWithComplementaryByPolygons(Seq(geomBuilder.polygon(24.2, 60.5, 24.8, 60.5, 24.8, 59, 24.2, 59)))).thenReturn(Seq(388562360l))
-    OracleDatabase.withDynTransaction {
-      val assets = ServiceWithDao.getActiveMaintenanceRoadByPolygon(1, 290)
-      assets.length should be(0)
     }
   }
 }
