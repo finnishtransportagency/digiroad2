@@ -4,16 +4,20 @@ import java.net.ConnectException
 import java.util.Properties
 
 import fi.liikennevirasto.digiroad2
+import fi.liikennevirasto.digiroad2.RoadLinkType.UnknownRoadLinkType
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
+import fi.liikennevirasto.digiroad2.asset.TrafficDirection.BothDirections
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, RoadLinkService, _}
-import fi.liikennevirasto.viite.dao.Discontinuity.Discontinuous
+import fi.liikennevirasto.viite.RoadType.PrivateRoadType
+import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous}
+import fi.liikennevirasto.viite.dao.ProjectState.Incomplete
 import fi.liikennevirasto.viite.dao.{Discontinuity, ProjectState, RoadAddressProject, _}
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, ProjectAddressLinkLike, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.ProjectDeltaCalculator
@@ -962,6 +966,27 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       projectService.addNewLinksToProject(addresses, id, 75, 2, 0L, 5L) should be (Some("Valittu tiegeometria sisältää haarautumia ja pitää käsitellä osina. Tallennusta ei voi tehdä."))
       val links=ProjectDAO.getProjectLinks(id)
       links.size should be (0)
+    }
+  }
+
+  ignore("New roaddress connecting to existing part should be saved"){
+    //1.create one project with some part roadnumber 5 and roadpart 206
+    //2.add one new roadaddress to roadnumber 5 , roadpart 206 adjacent to existing part
+    //2.1. all same unchanged roadnumber, roadpart should be send?
+
+    runWithRollback {
+
+      //1.
+      val roadAddressProject = RoadAddressProject(0, Incomplete, "ProjectTwo", "silari", DateTime.parse("2017-08-24"), "-", DateTime.parse("2017-08-24"), DateTime.parse("2017-08-24"), "", List(ReservedRoadPart(36, 5, 206, 4750.0, Continuous, 8, None, None)), None, None)
+      val roadlink = RoadLink(5168573,List(Point(532427.945,6998488.475,98.09900000000198), Point(532407.802,6998526.524,99.08999999999651), Point(532395.164,6998549.616,99.33800000000338)),69.37603285427855,State,99,BothDirections,UnknownLinkType,Some("25.11.2013 02:00:00"),Some("vvh_modified"),Map("TO_RIGHT" -> 2819, "FROM_LEFT" -> 2816, "MTKHEREFLIP" -> 0, "MTKID" -> 318855481, "ROADNAME_FI" -> "Viitonen", "STARTNODE" -> 5180307, "VERTICALACCURACY" -> 201, "ENDNODE" -> 5180251, "VALIDFROM" -> 1385337600000l, "CONSTRUCTIONTYPE" -> 0, "SURFACETYPE" -> 2, "MTKCLASS" -> 12121, "ROADPARTNUMBER" -> 206, "points" -> List(Map("x" -> 532427.945, "y" -> 6998488.475, "z" -> 98.09900000000198, "m" -> 0), Map("x" -> 532407.802, "y" -> 6998526.524, "z" -> 99.08999999999651, "m" -> 43.051900000005844), Map("x" -> 532395.164, "y" -> 6998549.616, "z" -> 99.33800000000338, "m" -> 69.37600000000384)), "TO_LEFT" -> 2820, "VERTICALLEVEL" -> 0, "MUNICIPALITYCODE" -> 749, "FROM_RIGHT" -> 2815, "CREATED_DATE" -> 1446132842000l, "HORIZONTALACCURACY" -> 2000, "ROADNUMBER" -> 5),InUse,NormalLinkInterface)
+      when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean],any[Boolean])).thenReturn(Seq(roadlink))
+      projectService.createRoadLinkProject(roadAddressProject)
+
+      //2.
+      val pal = ProjectAddressLink(0,5168574,List(Point(532385.504,6998545.88,99.06200000000536), Point(532395.164,6998549.616,99.33800000000338)),10.35728226922293,Private,UnknownLinkType,UnknownRoadLinkType,InUse,NormalLinkInterface,PrivateRoadType,"Kaupantie",749,Some("29.10.2015 15:34:02"),Some("vvh_modified"),Map("MTKHEREFLIP" -> 1, "MTKID" -> 1284934873, "ROADNAME_FI" -> "Kaupantie", "STARTNODE" -> 5180300, "VERTICALACCURACY" -> 201, "ENDNODE" -> 5180251, "VALIDFROM" -> 1385337600000l, "CONSTRUCTIONTYPE" -> 0, "SURFACETYPE" -> 2, "MTKCLASS" -> 12132, "points" -> List(Map("x" -> 532385.504, "y" -> 6998545.88, "z" -> 99.06200000000536, "m" -> 0), Map("x" -> 532395.164, "y" -> 6998549.616, "z" -> 99.33800000000338, "m" -> 10.357300000003306)), "VERTICALLEVEL" -> 0, "MUNICIPALITYCODE" -> 749, "CREATED_DATE" -> 1446132842000l, "HORIZONTALACCURACY" -> 2000),0,0,99,8,5,0,0,0.0,10.35728226922293,SideCode.Unknown,None,None,Anomaly.None,0,LinkStatus.New)
+//      projectService.addNewLinksToProject(Seq(pal), projectLink.projectId, projectLink.newRoadNumber, projectLink.newRoadPartNumber, projectLink.newTrackCode, projectLink.newDiscontinuity)
+      //TODO WIP viite-500 and viite-428 should be merged here in order to add the rest as unchanged. Also the method <put("/roadlinks/roadaddress/project/savenewroadlink") {> In api needs some refactor
+
     }
   }
 }

@@ -214,11 +214,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         if (linksInProject.nonEmpty) {
           ProjectDAO.removeProjectLinksByProjectAndRoadNumber(roadAddressProjectID, newRoadNumber, newRoadPartNumber)
         }
-        val isNewConnectingToPart = projectAddressLinks.map{
+        val connectedNewParts = projectAddressLinks.map{
           pal =>
             linksInProject.find(l => GeometryUtils.areAdjacent(l.geometry, pal.geometry))
         }
-        if(isNewConnectingToPart.isEmpty)
+        if(connectedNewParts.isEmpty)
           throw new ProjectValidationException(s"Some new roads are not adjacent")
         val newValidAddresses = projectAddressLinks.foldLeft(linksInProject)((withAddedLinks, next) => continuousToPart(next, (projectAddressLinks ++ linksInProject).filterNot(l => l.linkId == next.linkId), withAddedLinks))
 
