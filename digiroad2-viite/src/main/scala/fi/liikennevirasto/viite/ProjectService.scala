@@ -237,6 +237,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           linkId => newProjectLinks.getOrElse(linkId, existingLinks(linkId))
         )
         //Determine geometries for the mValues and addressMValues
+        // TODO: check if this should be called with params (newProjectLinks, existingLinks)
         val linksWithMValues = ProjectSectionCalculator.determineMValues(combinedLinks.toSeq,
           existingLinks.filterKeys(linkId => newProjectLinks.keySet.contains(linkId)).values.toSeq)
         ProjectDAO.removeProjectLinksByLinkId(roadAddressProjectID, newProjectLinks.keySet)
@@ -503,7 +504,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         }
       } catch {
         case NonFatal(e) =>
-          logger.info(s"Change info not available for project $projectId: " + e.getMessage,e)
+          logger.info(s"Change info not available for project $projectId: " + e.getMessage)
           None
       }
     }

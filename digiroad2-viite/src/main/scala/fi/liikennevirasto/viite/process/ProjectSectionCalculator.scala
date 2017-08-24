@@ -88,28 +88,25 @@ object ProjectSectionCalculator {
     def makeEndCP(projectLink: ProjectLink) = {
       Some(CalibrationPoint(projectLink.linkId, if (projectLink.sideCode == AgainstDigitizing) 0.0 else projectLink.geometryLength, projectLink.endAddrMValue))
     }
-    def assignCalibrationPoints(ready: Seq[ProjectLink], unprocessed: Seq[ProjectLink], reverse: Boolean = false): Seq[ProjectLink] = {
-      if (reverse) {
-        assignCalibrationPoints(ready.reverse, unprocessed.reverse)
+    def assignCalibrationPoints(ready: Seq[ProjectLink], unprocessed: Seq[ProjectLink]): Seq[ProjectLink] = {
+      // If first one
+      if (ready.isEmpty) {
+        val link = unprocessed.head
+        // If there is only one link in section we put two calibration points in it
+        if (unprocessed.size == 1)
+          Seq(link.copy(calibrationPoints = (makeStartCP(link), makeEndCP(link))))
+        else
+          assignCalibrationPoints(Seq(link.copy(calibrationPoints = (makeStartCP(link), None))), unprocessed.tail)
+        // If last one
+      } else if (unprocessed.tail.isEmpty) {
+        val link = unprocessed.head
+        ready ++ Seq(link.copy(calibrationPoints = (None, makeEndCP(link))))
       } else {
-        // If first one
-        if (ready.isEmpty) {
-          val link = unprocessed.head
-          // If there is only one link in section we put two calibration points in it
-          if (unprocessed.size == 1)
-            Seq(link.copy(calibrationPoints = (makeStartCP(link), makeEndCP(link))))
-          else
-            assignCalibrationPoints(Seq(link.copy(calibrationPoints = (makeStartCP(link), None))), unprocessed.tail)
-          // If last one
-        } else if (unprocessed.tail.isEmpty) {
-          val link = unprocessed.head
-          ready ++ Seq(link.copy(calibrationPoints = (None, makeEndCP(link))))
-        } else {
-          // a middle one, add to sequence and continue
-          assignCalibrationPoints(ready ++ Seq(unprocessed.head.copy(calibrationPoints = (None, None))), unprocessed.tail)
-        }
+        // a middle one, add to sequence and continue
+        assignCalibrationPoints(ready ++ Seq(unprocessed.head.copy(calibrationPoints = (None, None))), unprocessed.tail)
       }
     }
+
     def eliminateExpiredCalibrationPoints(roadPartLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
       val tracks = roadPartLinks.groupBy(_.track)
       tracks.mapValues{ links =>
@@ -174,13 +171,17 @@ object ProjectSectionCalculator {
       }
     }
     val groupedProjectLinks = newProjectLinks.groupBy(record => (record.roadNumber, record.roadPartNumber))
-    groupedProjectLinks.flatMap(gpl => {
-      val linkPartitions = SectionPartitioner.partition(gpl._2).map(_.sortWith(addressSort)).map(orderProjectLinksTopologyByGeometry)
+    val groupedOldLinks = oldProjectLinks.groupBy(record => (record.roadNumber, record.roadPartNumber))
+    val group = (groupedProjectLinks.keySet ++ groupedOldLinks.keySet).map(k =>
+      k -> (groupedProjectLinks.getOrElse(k, Seq()), groupedOldLinks.getOrElse(k, Seq())))
+    group.flatMap { case (part, (projectLinks, oldLinks)) => {
+      val linkPartitions = SectionPartitioner.partition(projectLinks).map(_.sortWith(addressSort)).map(orderProjectLinksTopologyByGeometry)
+      val oldLinkPartitions = SectionPartitioner.partition(oldLinks).map(_.sortWith(addressSort))
       try {
         val sections = linkPartitions.map(lp =>
           TrackSection(lp.head.roadNumber, lp.head.roadPartNumber, lp.head.track, lp.map(_.geometryLength).sum, lp)
         )
-        val existingSections = SectionPartitioner.partition(oldProjectLinks).map(_.sortWith(addressSort)).map(lp =>
+        val existingSections = oldLinkPartitions.map(lp =>
           TrackSection(lp.head.roadNumber, lp.head.roadPartNumber, lp.head.track, lp.map(_.geometryLength).sum, lp)
         )
         val ordSections = orderTrackSectionsByGeometry(sections ++ existingSections)
@@ -191,10 +192,11 @@ object ProjectSectionCalculator {
         eliminateExpiredCalibrationPoints(links)
       } catch {
         case ex: InvalidAddressDataException =>
-          logger.info(s"Can't calculate road/road part ${gpl._1._1}/${gpl._1._2}: " + ex.getMessage)
-          gpl._2
+          logger.info(s"Can't calculate road/road part ${part._1}/${part._2}: " + ex.getMessage)
+          projectLinks ++ oldLinks
       }
-    }).toSeq
+    }
+    }.toSeq
   }
 
   private def calculateSectionAddressValues(sections: Seq[CombinedSection]): Seq[Double] = {
