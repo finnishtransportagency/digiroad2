@@ -47,7 +47,7 @@ sealed trait LinkStatus {
 }
 
 object LinkStatus {
-  val values = Set(NotHandled, Terminated, New, UnChanged, Unknown,Unchanged)
+  val values = Set(NotHandled, Terminated, New, UnChanged, Unknown)
   case object NotHandled extends LinkStatus {def value = 0}
   case object Terminated extends LinkStatus {def value = 1}
   case object New extends LinkStatus {def value = 2}

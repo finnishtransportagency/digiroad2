@@ -193,7 +193,7 @@ object RoadAddressChangesDAO {
             ProjectDeltaCalculator.projectLinkPartition(delta.newRoads).foreach { case (roadAddressSection) =>
               addToBatch(roadAddressSection, ely, AddressChangeType.New, roadAddressChangePS)
             }
-            ProjectDeltaCalculator.projectLinkPartition(delta.unchanged).foreach { case (roadAddressSection) =>
+            ProjectDeltaCalculator.partition(delta.unChanged).foreach { case (roadAddressSection) =>
               addToBatch(roadAddressSection, ely, AddressChangeType.Unchanged, roadAddressChangePS)
             }
             roadAddressChangePS.executeBatch()

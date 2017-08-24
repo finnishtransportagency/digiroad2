@@ -212,7 +212,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       val linkIds205 = projectLinks._1.map(_.linkId).toSet
       val linkIds206 = projectLinks._2.map(_.linkId).toSet
 
-      projectService.updateProjectLinkStatus(savedProject.id, linkIds205, LinkStatus.Unchanged, "-")
+      projectService.updateProjectLinkStatus(savedProject.id, linkIds205, LinkStatus.UnChanged, "-")
       projectService.projectLinkPublishable(savedProject.id) should be(false)
 
       projectService.updateProjectLinkStatus(savedProject.id, linkIds206, LinkStatus.Terminated, "-")

@@ -503,7 +503,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         }
       } catch {
         case NonFatal(e) =>
-          logger.info(s"Change info not available for project $projectId: " + e.getMessage)
+          logger.info(s"Change info not available for project $projectId: " + e.getMessage,e)
           None
       }
     }
