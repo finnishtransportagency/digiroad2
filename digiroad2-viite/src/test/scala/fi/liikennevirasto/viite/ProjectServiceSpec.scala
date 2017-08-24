@@ -215,37 +215,15 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       projectService.updateProjectLinkStatus(savedProject.id, linkIds205, LinkStatus.Unchanged, "-")
       projectService.projectLinkPublishable(savedProject.id) should be(false)
 
-      projectService.getChangeProject(savedProject.id).map(_.changeInfoSeq).getOrElse(Seq()) should have size (0)
-
       projectService.updateProjectLinkStatus(savedProject.id, linkIds206, LinkStatus.Terminated, "-")
-      //projectService.projectLinkPublishable(savedProject.id) should be(true)
+      projectService.projectLinkPublishable(savedProject.id) should be(true)
 
       val changeProjectOpt = projectService.getChangeProject(savedProject.id)
       //changeProjectOpt.map(_.changeInfoSeq).getOrElse(Seq()) should have size (5)
 
       val change = changeProjectOpt.get
-/*
-      change.ely should be(8)
-      change.user should be("TestUser")
-      change.name should be("TestProject")
-      change.changeInfoSeq.foreach(rac => {
-        val s = rac.source
-        val t = rac.target
-        val (sTie, sAosa, sAjr, sAet, sLet) = (s.roadNumber, s.startRoadPartNumber, s.trackCode, s.startAddressM, s.endAddressM)
-        val (tTie, tAosa, tAjr, tAet, tLet) = (t.roadNumber, t.startRoadPartNumber, t.trackCode, t.startAddressM, t.endAddressM)
-        sTie should be(tTie)
-        sAosa should be(tAosa)
-        sAjr should be(tAjr)
-        sAet should be(tAet)
-        sLet should be(tLet)
-      })
 
-      change.changeInfoSeq.foreach(_.changeType should be(AddressChangeType.Termination))
-      change.changeInfoSeq.foreach(_.discontinuity should be(Discontinuity.Continuous))
-      // TODO: When road types are properly generated
-      change.changeInfoSeq.foreach(_.roadType should be(RoadType.UnknownOwnerRoad))
-      */
-      val test=1
+      change.changeInfoSeq.size should be (5)
     }
     runWithRollback {
       projectService.getRoadAddressAllProjects()

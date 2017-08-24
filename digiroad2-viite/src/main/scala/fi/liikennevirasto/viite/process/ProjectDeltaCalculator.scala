@@ -21,10 +21,11 @@ object ProjectDeltaCalculator {
     val currentAddresses = projectLinks.filter(_._2.exists(_.status != LinkStatus.New)).keySet.map(r => r -> RoadAddressDAO.fetchByRoadPart(r.roadNumber, r.roadPartNumber, true)).toMap
     val terminations = findTerminations(projectLinks, currentAddresses)
     val newCreations = findNewCreations(projectLinks)
-    if (terminations.size != currentAddresses.values.flatten.size)
+    val unchanged= findUnChanged(projectLinks)
+    if ( unchanged.isEmpty && terminations.size != currentAddresses.values.flatten.size )
       throw new RoadAddressException(s"Road address count did not match: ${terminations.size} terminated, " +
         s"(and ${newCreations.size } created), ${currentAddresses.values.flatten.size} addresses found")
-    Delta(project.startDate, terminations.sortBy(t => (t.discontinuity.value, t.roadType.value)), newCreations.sortBy(t => (t.discontinuity.value, t.roadType.value)))
+    Delta(project.startDate, terminations.sortBy(t => (t.discontinuity.value, t.roadType.value)), newCreations.sortBy(t => (t.discontinuity.value, t.roadType.value)),unchanged.sortBy(t => (t.discontinuity.value, t.roadType.value)))
   }
 
   private def findTerminations(projectLinks: Map[RoadPart, Seq[ProjectLink]], currentAddresses: Map[RoadPart, Seq[RoadAddress]]) = {
@@ -37,6 +38,10 @@ object ProjectDeltaCalculator {
 
   private def findNewCreations(projectLinks: Map[RoadPart, Seq[ProjectLink]]) = {
     projectLinks.values.flatten.filter(_.status == LinkStatus.New).toSeq
+  }
+
+  private def findUnChanged(projectLinks: Map[RoadPart, Seq[ProjectLink]]) = {
+    projectLinks.values.flatten.filter(_.status == LinkStatus.Unchanged).toSeq
   }
 
   private def validateTerminations(roadAddresses: Seq[RoadAddress]) = {
@@ -84,5 +89,5 @@ object ProjectDeltaCalculator {
 
 }
 
-case class Delta(startDate: DateTime, terminations: Seq[RoadAddress], newRoads: Seq[ProjectLink] = Seq.empty[ProjectLink])
+case class Delta(startDate: DateTime, terminations: Seq[RoadAddress], newRoads: Seq[ProjectLink] = Seq.empty[ProjectLink], unchanged: Seq[ProjectLink] = Seq.empty[ProjectLink])
 case class RoadPart(roadNumber: Long, roadPartNumber: Long)
