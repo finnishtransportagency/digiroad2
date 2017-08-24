@@ -47,10 +47,7 @@ object ProjectDeltaCalculator {
   private def validateTerminations(roadAddresses: Seq[RoadAddress]) = {
     if (roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber)).keySet.size != 1)
       throw new RoadAddressException("Multiple or no road parts present in one termination set")
-    val missingSegments = checker.checkAddressesHaveNoGaps(roadAddresses)
-    if (missingSegments.nonEmpty)
-      throw new RoadAddressException(s"Termination has gaps in between: ${missingSegments.mkString("\n")}") //TODO: terminate only part of the road part later
-  }
+   }
 
   def projectLinkPartition(projectLinks: Seq[ProjectLink]): Seq[RoadAddressSection] = {
     val grouped = projectLinks.groupBy(projectLink => (projectLink.roadNumber, projectLink.roadPartNumber, projectLink.track, projectLink.roadType))
