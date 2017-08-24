@@ -83,7 +83,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService, val 
 
   def getAssetName(assetTypeId: Int): String = {
     assetTypeId match {
-      case lighting => "lighting"
+      case `lighting` => "lighting"
       case _ => "asset"
     }
   }
@@ -106,7 +106,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService, val 
 
   def validateAssetPropertyValue(assetTypeId: Int, properties:Seq[AssetProperties]):Unit = {
     assetTypeId match {
-      case lighting =>
+      case `lighting` =>
         val value = extractPropertyValue("lighting", properties, firstPropertyValueToInt)
         if(!Seq(0,1).contains(value._2))
           halt(BadRequest(s"The property values for the property with name lighting are not valid."))
@@ -117,7 +117,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService, val 
   def validateSideCodes(assets: Seq[NewLinearAsset]) : Unit = {
     assets.map( _.sideCode )
       .foreach( sc =>
-        if( !SideCode.values.map(_.value).contains(sc))
+        if( SideCode.apply(sc) == SideCode.Unknown)
           halt(UnprocessableEntity("Side code doesn't have a valid code."))
       )
   }
@@ -223,13 +223,9 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService, val 
     val oldAsset = onOffLinearAssetService.getPersistedAssetsByIds(assetTypeId, Set(params("assetId").toLong)).head
 
     val newPersistedAsset = newAsset.vvhTimeStamp >= oldAsset.vvhTimeStamp match {
-      case true => oldAsset.startMeasure != newAsset.startMeasure || oldAsset.endMeasure != newAsset.endMeasure match {
        case true =>
           onOffLinearAssetService.updateWithNewMeasures(Seq(oldAsset.id), newAsset.value, user.username, Some(Measures(newAsset.startMeasure, newAsset.endMeasure)), Some(newAsset.vvhTimeStamp), Some(newAsset.sideCode))
-        case _ =>
-          onOffLinearAssetService.updateWithTimeStamp(Seq(oldAsset.id), newAsset.value, user.username, Some(newAsset.vvhTimeStamp), Some(newAsset.sideCode))
-      }
-      case _ => halt(UnprocessableEntity("The geometryTimestamp of the existing asset is newer than the given asset. Asset was not updated."))
+       case _ => halt(UnprocessableEntity("The geometryTimestamp of the existing asset is newer than the given asset. Asset was not updated."))
     }
     newPersistedAsset.headOption match {
       case Some(asset) => linearAssetsToApi(onOffLinearAssetService.getPersistedAssetsByIds(assetTypeId, newPersistedAsset.toSet).filterNot(_.expired), municipalityCode).headOption match {

@@ -20,18 +20,26 @@ class OnOffLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl
         case _ => return None
       }
 
+    measures.foreach { measure =>
+      if ((measure.startMeasure == oldAsset.startMeasure) && (measure.endMeasure == oldAsset.endMeasure) && oldAsset.value.contains(valueToUpdate) && vvhTimeStamp.contains(oldAsset.vvhTimeStamp))
+        return Some(assetId)
+    }
+
     //Expire the old asset
     dao.updateExpiration(assetId, expired = true, username)
 
     measures.map {
       measure =>
-        Seq(Measures(oldAsset.startMeasure, measure.startMeasure), Measures(measure.endMeasure, oldAsset.endMeasure)).map {
-          m =>
-            if (m.startMeasure - m.endMeasure > 0.01)
-              createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, valueToUpdate, sideCode.getOrElse(oldAsset.sideCode),
-                m, username, vvhTimeStamp.getOrElse(vvhClient.roadLinkData.createVVHTimeStamp()), getLinkSource(oldAsset.linkId), true, oldAsset.createdBy, Some(oldAsset.createdDateTime.getOrElse(DateTime.now())))
+        if (valueToUpdate.toJson == 0){
+          Seq(Measures(oldAsset.startMeasure, measure.startMeasure), Measures(measure.endMeasure, oldAsset.endMeasure)).map {
+            m =>
+              if (m.endMeasure - m.startMeasure > 0.01)
+                createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, valueToUpdate, sideCode.getOrElse(oldAsset.sideCode),
+                  m, username, vvhTimeStamp.getOrElse(vvhClient.roadLinkData.createVVHTimeStamp()), getLinkSource(oldAsset.linkId), true, oldAsset.createdBy, Some(oldAsset.createdDateTime.getOrElse(DateTime.now())))
+          }
         }
+        createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, valueToUpdate, sideCode.getOrElse(oldAsset.sideCode),
+          measure, username, vvhTimeStamp.getOrElse(vvhClient.roadLinkData.createVVHTimeStamp()), getLinkSource(oldAsset.linkId), true, oldAsset.createdBy, Some(oldAsset.createdDateTime.getOrElse(DateTime.now())))
     }
-    None
   }
 }
