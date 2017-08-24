@@ -134,15 +134,16 @@
       map.getViewport().style.cursor = oldCursorStyle;
     });
 
-    eventbus.on('keydown', function(tool){
-      if(map.getViewport().style.cursor == tool){
+    $('body').on('keydown', function(evt){
+      if(evt.shiftKey && oldCursorStyle!= "copy") {
+        map.getViewport().style.cursor = "copy";
+        oldCursorStyle = "copy";
+      }
+    });
+
+    $('body').on('keyup', function(evt){
         map.getViewport().style.cursor = "initial";
-        oldCursorStyle = "initial";
-      }
-      else {
-        map.getViewport().style.cursor = tool;
-        oldCursorStyle = tool;
-      }
+        oldCursorStyle="initial";
     });
 
   };

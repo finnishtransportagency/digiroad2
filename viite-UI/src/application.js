@@ -62,24 +62,8 @@
   };
 
   var interactions = ol.interaction.defaults({
-    shiftDragZoom: false,
-    keyboard: false
-  }).extend([
-    new ol.interaction.KeyboardPan({
-      duration: 90,
-      pixelDelta: 256,
-      setActive: true,
-      condition: function(mapBrowserEvent) {
-        if(mapBrowserEvent.type ==  'keydown' && mapBrowserEvent.originalEvent.shiftKey) {
-          var keyEvent = mapBrowserEvent.originalEvent;
-          var keyCode = keyEvent.keyCode;
-          if (keyCode == 16) {
-            eventbus.trigger('keydown', "copy");
-          }
-        }
-      }
-    })
-  ]);
+    shiftDragZoom: false
+  });
 
   interactions.push(new ol.interaction.DragZoom({
       duration: 1500,
