@@ -61,7 +61,7 @@ object ProjectSectionCalculator {
   /**
     * Calculates the address M values for the given set of project links and assigns them calibration points where applicable
     * @param newProjectLinks List of new addressed links in project
-    * @param oldProjectLinks Other links in project, used as a guidance (TODO)
+    * @param oldProjectLinks Other links in project, used as a guidance
     * @return Sequence of project links with address values and calibration points.
     */
   def determineMValues(newProjectLinks: Seq[ProjectLink], oldProjectLinks: Seq [ProjectLink]): Seq[ProjectLink] = {
@@ -110,6 +110,39 @@ object ProjectSectionCalculator {
         }
       }
     }
+    def eliminateExpiredCalibrationPoints(roadPartLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
+      val tracks = roadPartLinks.groupBy(_.track)
+      tracks.mapValues{ links =>
+        links.map{ l =>
+          val calibrationPoints =
+            l.calibrationPoints match {
+              case (None, None) => l.calibrationPoints
+              case (Some(st), None) =>
+                if (links.exists(_.endAddrMValue == st.addressMValue))
+                  (None, None)
+                else
+                  l.calibrationPoints
+              case (None, Some(en)) =>
+                if (links.exists(_.startAddrMValue == en.addressMValue))
+                  (None, None)
+                else
+                  l.calibrationPoints
+              case (Some(st), Some(en)) =>
+                (
+                  if (links.exists(_.endAddrMValue == st.addressMValue))
+                    None
+                  else
+                    Some(st),
+                  if (links.exists(_.startAddrMValue == en.addressMValue))
+                    None
+                  else
+                    Some(en)
+                )
+            }
+          l.copy(calibrationPoints = calibrationPoints)
+        }
+      }.values.flatten.toSeq
+    }
     // Set address values to section
     def assignLinkValues(section: CombinedSection, startMValue: Long, endMValue: Long): Seq[ProjectLink] = {
       val coeff = (endMValue - startMValue).toDouble / section.right.links.map(_.geometryLength).sum
@@ -152,9 +185,10 @@ object ProjectSectionCalculator {
         )
         val ordSections = orderTrackSectionsByGeometry(sections ++ existingSections)
         val mValues = calculateSectionAddressValues(ordSections)
-        ordSections.zip(mValues.zip(mValues.tail)).flatMap { case (section, (start, end)) =>
+        val links = ordSections.zip(mValues.zip(mValues.tail)).flatMap { case (section, (start, end)) =>
           assignLinkValues(section, start.toLong, end.toLong)
         }
+        eliminateExpiredCalibrationPoints(links)
       } catch {
         case ex: InvalidAddressDataException =>
           logger.info(s"Can't calculate road/road part ${gpl._1._1}/${gpl._1._2}: " + ex.getMessage)
