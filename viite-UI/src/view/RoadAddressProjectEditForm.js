@@ -172,7 +172,7 @@
       var selection = selectedData(selectedProjectLink);
 
       return _.template('' +
-        '<header>' +
+        '<header style ="display:-webkit-inline-box;">' +
         titleWithProjectName(project.name) +
         '</header>' +
         '<footer>'+showProjectChangeButton()+'</footer>');
