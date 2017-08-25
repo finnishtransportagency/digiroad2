@@ -218,10 +218,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         if(newProjectLinksGroups.size > 1)
           throw new ProjectValidationException(s"Some new roads have unmatched Number, Part, Track")
 
-        val newValidAddresses = projectAddressLinks.foldLeft(linksInProject)((withAddedLinks, next) => continuousToPart(next, (projectAddressLinks ++ linksInProject).filterNot(l => l.linkId == next.linkId), withAddedLinks))
-
+        val validAddresses = projectAddressLinks.foldLeft(linksInProject)((withAddedLinks, next) => continuousToPart(next, (projectAddressLinks ++ linksInProject).filterNot(l => l.linkId == next.linkId), withAddedLinks))
+        val (newValidAddresses, existingValidAddresses) = validAddresses.partition(_.status == LinkStatus.New)
         val randomSideCode =
-          newValidAddresses.map(l => l -> projectAddressLinks.find(n => GeometryUtils.areAdjacent(l.geometry, n.geometry))).toMap.find { case (l, n) => n.nonEmpty }.map {
+          validAddresses.map(l => l -> projectAddressLinks.find(n => GeometryUtils.areAdjacent(l.geometry, n.geometry))).toMap.find { case (l, n) => n.nonEmpty }.map {
             case (l, Some(n)) =>
               matchSideCodes(n, l)
             case _ => SideCode.TowardsDigitizing
@@ -229,13 +229,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         val project = fetchProject(roadAddressProjectID)
         checkAvailable(newRoadNumber, newRoadPartNumber, project)
         checkNotReserved(newRoadNumber, newRoadPartNumber, project)
-        val newProjectLinks = projectAddressLinks.map(projectLink => {
+        val newProjectLinks = newValidAddresses.map(projectLink => {
           projectLink.linkId ->
             newProjectLink(projectLink, project, randomSideCode)
         }).toMap
         if (GeometryUtils.isNonLinear(newProjectLinks.values.toSeq))
           throw new ProjectValidationException("Valittu tiegeometria sisältää haarautumia ja pitää käsitellä osina. Tallennusta ei voi tehdä.")
-        val existingLinks = newValidAddresses.map(projectLink => {
+        val existingLinks = existingValidAddresses.map(projectLink => {
           projectLink.linkId ->
             existingProjectLink(projectLink, project, randomSideCode)
         }).toMap
@@ -256,10 +256,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def continuousToPart(newPal: ProjectAddressLink, possiblePals: Seq[ProjectAddressLink], pals: Seq[ProjectAddressLink]): Seq[ProjectAddressLink] = {
-    val adjacent = possiblePals.find(p => GeometryUtils.areAdjacent(newPal.geometry, p.geometry))
-    if (adjacent.isEmpty)
+    val adjacentToSome = possiblePals.find(p => GeometryUtils.areAdjacent(newPal.geometry, p.geometry))
+    if (adjacentToSome.isEmpty)
       throw new ProjectValidationException(s"Some new roads are not adjacent")
-    pals++adjacent
+    pals++adjacentToSome
   }
 
   def changeDirection(projectId : Long, roadNumber : Long, roadPartNumber : Long): Option[String] = {
