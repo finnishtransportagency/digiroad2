@@ -43,14 +43,15 @@
     };
 
     var titleWithProjectName = function(projectName) {
-      return '<span class ="edit-mode-title">'+projectName+'<button id="editProject_"'+ currentProject.id +' class="btn-edit-project" style="visibility:hidden;"></button></span>' +
+      return '<span class ="edit-mode-title">'+projectName+'<button id="editProject_'+ currentProject.id +'" ' +
+        'class="btn-edit-project" style="visibility:hidden;" value="' + currentProject.id + '"></button></span>' +
         '<span id="closeProject" class="rightSideSpan" style="visibility:hidden;">Sulje Projekti</span>';
     };
 
     var actionButtons = function(ready) {
       var html = '<div class="project-form form-controls" id="actionButtons">' +
         '<button id="generalNext" class="save btn btn-save" style="width:auto;">Jatka Toimenpiteisiin</button>' +
-        '<button class="cancel btn btn-cancel">Peruuta</button>' +
+        '<button class="cancel btn btn-cancel">Poistu</button>' +
         '</div>';
       return html;
     };
@@ -313,6 +314,9 @@
         applicationModel.setOpenProject(true);
         activeLayer = true;
         projectCollection.clearRoadAddressProjects();
+        _.defer(function(){
+          $('#generalNext').prop('disabled', true);
+        });
       });
 
       eventbus.on('roadAddress:openProject', function(result) {
@@ -340,6 +344,7 @@
         activeLayer = true;
         rootElement.find('.btn-reserve').prop("disabled", false);
         rootElement.find('.btn-next').prop("disabled", false);
+        applicationModel.removeSpinner();
       });
 
       eventbus.on('roadAddress:projectValidationFailed', function (result) {
@@ -361,6 +366,18 @@
         applicationModel.removeSpinner();
       });
 
+      rootElement.on('click', '[id^=editProject]', currentProject, function(eventObject){
+        applicationModel.addSpinner();
+        projectCollection.getProjectsWithLinksById(parseInt(eventObject.currentTarget.value)).then(function(result){
+          rootElement.empty();
+          setTimeout(function(){}, 0);
+          eventbus.trigger('roadAddress:openProject', result);
+          if(applicationModel.isReadOnly()) {
+            $('.edit-mode-btn:visible').click();
+          }
+        });
+      });
+
       rootElement.on('click', '#generalNext', function() {
         if(currentProject.isDirty){
           saveChanges();
@@ -371,9 +388,13 @@
           nextStage();
         }
       });
-      
+
       function textFieldChangeHandler(eventData) {
         if(currentProject) {
+          currentProject.isDirty = true;
+        }
+        if($('#nimi').text() !== "" && $('#alkupvm').text() !== "" && $('#generalNext').is(':disabled')){
+          $('#generalNext').prop('disabled', false);
           currentProject.isDirty = true;
         }
       }
@@ -450,7 +471,7 @@
           fillForm(projectCollection.getCurrentRoadPartList(), projectCollection.getReservedDirtyRoadParts());
         }
         else if(!_.isEqual(projectCollection.getDirtyRoadParts(), projectCollection.getCurrentRoadPartList())){
-          new GenericConfirmPopup('Haluatko varmasti peruuttaa? Mahdolliset tallentamattomat muutokset häviävät', {
+          new GenericConfirmPopup('Haluatko sulkea projektin ja lalata alkuun? \r\nProjekti tallennetaan keskeneräiseksi.\r\nTallentamattomat muutokset häviävät.', {
             successCallback: function () {
               projectCollection.setCurrentRoadPartList(projectCollection.getCurrentRoadPartList());
               fillForm(projectCollection.getCurrentRoadPartList(), projectCollection.getReservedDirtyRoadParts());
@@ -458,7 +479,7 @@
           });
         }
         else if (activeLayer) {
-          new GenericConfirmPopup('Haluatko varmasti peruuttaa? Mahdolliset tallentamattomat muutokset häviävät', {
+          new GenericConfirmPopup('Haluatko sulkea projektin ja lalata alkuun? \r\nProjekti tallennetaan keskeneräiseksi.\r\nTallentamattomat muutokset häviävät.', {
             successCallback: function () {
               applicationModel.setOpenProject(false);
               rootElement.find('header').toggle();
