@@ -411,7 +411,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     val starAddress = 0
     val endAddress = 500
     val trAssets = Seq(TierekisteriTrafficSignData(roadNumber, roadPart, roadPart, Track.RightSide, 40, 40, RoadSide.Right, TRTrafficSignType.SpeedLimit, "80"))
-    val roadAddress = ViiteRoadAddress(1L, roadNumber, roadPart, Track.RightSide, 5, startAddressMValue, endAddressMValue, None, None, 1L, 5001,starAddress, endAddress, SideCode.TowardsDigitizing, false, Seq())
+    val roadAddress = ViiteRoadAddress(1L, roadNumber, roadPart, Track.RightSide, 5, startAddressMValue, endAddressMValue, None, None, 1L, 5001,starAddress, endAddress, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
 
     val sections = speedLimitsTierekisteriImporter.testSplitRoadAddressSectionBySigns(trAssets, roadAddress, RoadSide.Right)
 
@@ -443,7 +443,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       TierekisteriTrafficSignData(roadNumber, roadPart, roadPart, Track.RightSide, 40, 40, RoadSide.Right, TRTrafficSignType.SpeedLimit, "80"),
       TierekisteriTrafficSignData(roadNumber, roadPart, roadPart, Track.RightSide, 70, 70, RoadSide.Right, TRTrafficSignType.SpeedLimit, "90")
     )
-    val roadAddress = ViiteRoadAddress(1L, roadNumber, roadPart, Track.RightSide, 5, startAddressMValue, endAddressMValue, None, None, 1L, 5001,starAddress, endAddress, SideCode.TowardsDigitizing, false, Seq())
+    val roadAddress = ViiteRoadAddress(1L, roadNumber, roadPart, Track.RightSide, 5, startAddressMValue, endAddressMValue, None, None, 1L, 5001,starAddress, endAddress, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
 
     val sections = speedLimitsTierekisteriImporter.testSplitRoadAddressSectionBySigns(trAssets, roadAddress, RoadSide.Right)
 
@@ -479,7 +479,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     val starAddress = 0
     val endAddress = 500
     val trAssets = Seq(TierekisteriTrafficSignData(roadNumber, roadPart, roadPart, Track.LeftSide, 40, 40, RoadSide.Left, TRTrafficSignType.SpeedLimit, "80"))
-    val roadAddress = ViiteRoadAddress(1L, roadNumber, roadPart, Track.LeftSide, 5, startAddressMValue, endAddressMValue, None, None, 1L, 5001,starAddress, endAddress, SideCode.TowardsDigitizing, false, Seq())
+    val roadAddress = ViiteRoadAddress(1L, roadNumber, roadPart, Track.LeftSide, 5, startAddressMValue, endAddressMValue, None, None, 1L, 5001,starAddress, endAddress, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
 
     val sections = speedLimitsTierekisteriImporter.testSplitRoadAddressSectionBySigns(trAssets, roadAddress, RoadSide.Left)
 
@@ -511,7 +511,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       TierekisteriTrafficSignData(roadNumber, roadPart, roadPart, Track.LeftSide, 40, 40, RoadSide.Left, TRTrafficSignType.SpeedLimit, "80"),
       TierekisteriTrafficSignData(roadNumber, roadPart, roadPart, Track.LeftSide, 70, 70, RoadSide.Left, TRTrafficSignType.SpeedLimit, "90")
     )
-    val roadAddress = ViiteRoadAddress(1L, roadNumber, roadPart, Track.LeftSide, 5, startAddressMValue, endAddressMValue, None, None, 1L, 5001,starAddress, endAddress, SideCode.TowardsDigitizing, false, Seq())
+    val roadAddress = ViiteRoadAddress(1L, roadNumber, roadPart, Track.LeftSide, 5, startAddressMValue, endAddressMValue, None, None, 1L, 5001,starAddress, endAddress, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
 
     val sections = speedLimitsTierekisteriImporter.testSplitRoadAddressSectionBySigns(trAssets, roadAddress, RoadSide.Left)
 
