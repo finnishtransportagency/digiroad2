@@ -447,7 +447,7 @@
         enabled: 'Nopeusrajoitus',
         disabled: 'Tuntematon'
       },
-      label: new LinearAssetLabel()
+      label: new SpeedLimitAssetLabel()
     }
   ];
 
