@@ -61,25 +61,9 @@
     jQuery('.container').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
   };
 
-  var interactions = ol.interaction.defaults({
-    shiftDragZoom: false
-  });
-
-  interactions.push(new ol.interaction.DragZoom({
-      duration: 1500,
-      condition: function(mapBrowserEvent) {
-        var originalEvent = mapBrowserEvent.originalEvent;
-        return (
-        originalEvent.ctrlKey &&
-        !(originalEvent.metaKey || originalEvent.altKey) &&
-        !originalEvent.shiftKey);
-      }
-    })
-  );
   var createOpenLayersMap = function(startupParameters, layers) {
     var map = new ol.Map({
       keyboardEventTarget: document,
-      interactions: interactions,
       target: 'mapdiv',
       layers: layers,
       view: new ol.View({
@@ -89,6 +73,26 @@
         resolutions: [2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1, 0.5, 0.25, 0.125, 0.0625]
       })
     });
+
+    var ctrldragZoom = new ol.interaction.DragZoom({
+      duration: 1500,
+      condition: function(mapBrowserEvent) {
+        var originalEvent = mapBrowserEvent.originalEvent;
+        return (
+        originalEvent.ctrlKey &&
+        !(originalEvent.metaKey || originalEvent.altKey) &&
+        !originalEvent.shiftKey);
+      }
+    });
+    var shiftDragZoomModifier = new ol.interaction.DragZoom({
+      condition: ol.interaction.defaults({
+        shiftDragZoom: false
+      })
+    });
+    shiftDragZoomModifier.setActive(true);
+    ctrldragZoom.setActive(true);
+    map.addInteraction(shiftDragZoomModifier);
+    map.addInteraction(ctrldragZoom);
     map.setProperties({extent : [-548576, 6291456, 1548576, 8388608]});
     return map;
   };
