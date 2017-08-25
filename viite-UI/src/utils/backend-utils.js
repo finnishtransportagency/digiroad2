@@ -2,6 +2,7 @@
   root.Backend = function() {
     var self = this;
     var  loadingProject;
+
     this.getRoadLinks = createCallbackRequestor(function(params) {
       var zoom = params.zoom;
       var boundingBox = params.boundingBox;
@@ -42,6 +43,12 @@
 
     this.getRoadLinkByLinkId = _.throttle(function(linkId, callback) {
       return $.getJSON('api/viite/roadlinks/' + linkId, function(data) {
+        return _.isFunction(callback) && callback(data);
+      });
+    }, 1000);
+
+    this.getNonOverridenVVHValuesForLink = _.throttle(function(linkId, callback) {
+      return $.getJSON('api/viite/roadlinks/project/prefillfromvvh/' + linkId, function(data) {
         return _.isFunction(callback) && callback(data);
       });
     }, 1000);
@@ -142,6 +149,45 @@
           eventbus.trigger('roadPartsValidation:checkRoadParts', x);
         });
     });
+
+    this.insertNewRoadLink = _.throttle(function(data, success, failure) {
+      var Json = {
+        linkIds : data[0],
+        projectId : data[1],
+        newRoadNumber : data[2],
+        newRoadPartNumber : data[3],
+        newTrackCode : data[4],
+        newDiscontinuity : data[5],
+        roadEly: data[6],
+        roadLinkSource: data[7]
+      };
+      $.ajax({
+        contentType: "application/json",
+        type: "PUT",
+        url: "api/viite/roadlinks/roadaddress/project/savenewroadlink",
+        data: JSON.stringify(Json),
+        dataType: "json",
+        success: success,
+        error: failure
+      });
+    }, 1000);
+
+      this.directionChangeNewRoadlink = _.throttle(function (data, success, failure) {
+        var Json = {
+          projectId : data[0],
+          roadNumber : data[1],
+          roadPartNumber : data[2]
+        };
+          $.ajax({
+              contentType: "application/json",
+              type: "PUT",
+              url: "api/viite/roadlinks/roadaddress/project/directionchangenewroadlink",
+              data: JSON.stringify(Json),
+              dataType: "json",
+              success: success,
+              error: failure
+          });
+      }, 1000);
 
     this.getRoadAddressProjects = _.throttle(function(callback) {
       return $.getJSON('api/viite/roadlinks/roadaddress/project/all', function(data) {

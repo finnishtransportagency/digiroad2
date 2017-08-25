@@ -9,6 +9,7 @@ import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, SpeedLimi
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.MassTransitStopDao
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.roadaddress.oracle.RoadAddressesService
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.util.JsonSerializer
 import fi.liikennevirasto.digiroad2.vallu.ValluSender
@@ -33,10 +34,14 @@ class LinearAssetUpdater(linearAssetService: LinearAssetService) extends Actor {
   }
 
   def persistLinearAssetChanges(changeSet: ChangeSet) {
+    //TODO just for test propose
+    /*
     linearAssetService.drop(changeSet.droppedAssetIds)
     linearAssetService.persistMValueAdjustments(changeSet.adjustedMValues)
     linearAssetService.persistSideCodeAdjustments(changeSet.adjustedSideCodes)
     linearAssetService.expire(changeSet.expiredAssetIds.toSeq, LinearAssetTypes.VvhGenerated)
+    */
+    linearAssetService.updateChangeSet(changeSet);
   }
 }
 
@@ -113,9 +118,12 @@ object Digiroad2Context {
   val system = ActorSystem("Digiroad2")
   import system.dispatcher
   system.scheduler.schedule(FiniteDuration(2, TimeUnit.MINUTES),FiniteDuration(10, TimeUnit.MINUTES)) { //first query after 2 mins, then every 10 mins
-    projectService.updateProjectsWaitingResponseFromTR()
+    try {
+      projectService.updateProjectsWaitingResponseFromTR()
+    } catch {
+      case ex: Exception => System.err.println("Exception at TR checks: " + ex.getMessage)
+    }
   }
-
 
   val vallu = system.actorOf(Props[ValluActor], name = "vallu")
   eventbus.subscribe(vallu, "asset:saved")
@@ -149,11 +157,11 @@ object Digiroad2Context {
   eventbus.subscribe(roadAddressFloater, "roadAddress:floatRoadAddress")
 
   lazy val roadAddressService: RoadAddressService = {
-    new RoadAddressService(roadLinkService, eventbus)
+    new RoadAddressService(roadLinkService, eventbus, properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
   }
 
   lazy val projectService: ProjectService = {
-    new ProjectService(roadAddressService, roadLinkService, eventbus)
+    new ProjectService(roadAddressService, roadLinkService, eventbus,properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
   }
 
   lazy val authenticationTestModeEnabled: Boolean = {
@@ -193,6 +201,11 @@ object Digiroad2Context {
   lazy val roadLinkService: RoadLinkService = {
     new RoadLinkService(vvhClient, eventbus, new JsonSerializer)
   }
+
+  lazy val roadAddressesService: RoadAddressesService = {
+    new RoadAddressesService(eventbus, roadLinkService)
+  }
+
   lazy val revision: String = {
     revisionInfo.getProperty("digiroad2.revision")
   }

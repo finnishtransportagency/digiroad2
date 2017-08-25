@@ -9,7 +9,7 @@ object ProjectLinkPartitioner extends GraphPartitioner {
   def partition[T <: ProjectAddressLinkLike](links: Seq[T]): Seq[Seq[T]] = {
     val linkGroups = links.groupBy { link => (
       link.anomaly, link.roadNumber, link.roadPartNumber, link.trackCode,
-      link.roadLinkType.equals(RoadLinkType.FloatingRoadLinkType), link.roadLinkSource.equals(LinkGeomSource.ComplimentaryLinkInterface),
+      link.roadLinkType.equals(RoadLinkType.FloatingRoadLinkType), link.roadLinkSource.equals(LinkGeomSource.ComplimentaryLinkInterface), link.roadLinkSource.equals(LinkGeomSource.SuravageLinkInterface),
       link.roadName, link.municipalityCode
       )
     }

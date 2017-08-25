@@ -19,6 +19,9 @@
         return projectLink.getData();
       });
     };
+    var setCurrent = function(newSelection) {
+      current = newSelection;
+    };
     var isSelected = function(linkId) {
       return _.contains(ids, linkId);
     };
@@ -37,7 +40,8 @@
       get: get,
       clean: clean,
       close: close,
-      isSelected: isSelected
+      isSelected: isSelected,
+      setCurrent: setCurrent
     };
   };
 })(this);

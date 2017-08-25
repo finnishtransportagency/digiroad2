@@ -182,12 +182,212 @@
     };
   };
 
+  ActionPanelBoxes.WinterSpeedLimitBox = function(asset) {
+    var speedLimits = [100, 80, 70, 60];
+    var speedLimitLegendTemplate = _.map(speedLimits, function(speedLimit) {
+      return '<div class="legend-entry">' +
+        '<div class="label">' + speedLimit + '</div>' +
+        '<div class="symbol linear speed-limit-' + speedLimit + '" />' +
+        '</div>';
+    }).join('');
+
+    var complementaryLinkCheckBox = asset.allowComplementaryLinks ? [
+        '<div class="check-box-container">' +
+        '<input id="complementaryLinkCheckBox" type="checkbox" /> <lable>Näytä täydentävä geometria</lable>' +
+        '</div>' +
+        '</div>'
+      ].join('') : '';
+
+
+    var expandedTemplate = [
+      '<div class="panel ' + asset.layerName +'">',
+      '  <header class="panel-header expanded">',
+      '    ' + asset.title + (asset.editControlLabels.showUnit ? ' ('+asset.unit+')': ''),
+      '  </header>',
+      '  <div class="panel-section panel-legend linear-asset-legend speed-limit-legend">',
+      speedLimitLegendTemplate,
+      complementaryLinkCheckBox,
+      '  </div>',
+      '</div>'].join('');
+
+    var elements = {
+      expanded: $(expandedTemplate)
+    };
+
+    var toolSelection = new ToolSelection([
+      new Tool('Select', selectToolIcon, asset.selectedLinearAsset),
+      new Tool('Cut', cutToolIcon, asset.selectedLinearAsset),
+      new Tool('Rectangle', rectangleToolIcon, asset.selectedLinearAsset),
+      new Tool('Polygon', polygonToolIcon, asset.selectedLinearAsset)
+    ]);
+    var editModeToggle = new EditModeToggleButton(toolSelection);
+    var userRoles;
+
+    var bindExternalEventHandlers = function() {
+      eventbus.on('roles:fetched', function(roles) {
+        userRoles = roles;
+        if (_.contains(roles, 'operator') || _.contains(roles, 'premium')) {
+          toolSelection.reset();
+          elements.expanded.append(toolSelection.element);
+          elements.expanded.append(editModeToggle.element);
+        }
+      });
+      eventbus.on('application:readOnly', function(readOnly) {
+        elements.expanded.find('.panel-header').toggleClass('edit', !readOnly);
+      });
+    };
+
+    bindExternalEventHandlers();
+
+    var element = $('<div class="panel-group winter-speed-limits"/>')
+      .append(elements.expanded)
+      .hide();
+
+    function show() {
+      if (editModeToggle.hasNoRolesPermission(userRoles)) {
+        editModeToggle.reset();
+      } else {
+        editModeToggle.toggleEditMode(applicationModel.isReadOnly());
+      }
+      element.show();
+    }
+
+    function hide() {
+      element.hide();
+    }
+
+    elements.expanded.find('#complementaryLinkCheckBox').on('change', function (event) {
+      if ($(event.currentTarget).prop('checked')) {
+        eventbus.trigger('complementaryLinks:show');
+      } else {
+        if (applicationModel.isDirty()) {
+          $(event.currentTarget).prop('checked', true);
+          new Confirm();
+        } else {
+          eventbus.trigger('complementaryLinks:hide');
+        }
+      }
+    });
+
+    return {
+      title: asset.title,
+      layerName: asset.layerName,
+      element: element,
+      show: show,
+      hide: hide
+    };
+  };
+
+
   var executeOrShowConfirmDialog = function(f) {
     if (applicationModel.isDirty()) {
       new Confirm();
     } else {
       f();
     }
+  };
+
+  ActionPanelBoxes.ServiceRoadBox = function(asset) {
+    var serviceRoadValues = [
+      [ 0, 'Tieoikeus'],
+      [ 1, 'Tiekunnan osakkuus'],
+      [ 2, 'LiVin hallinnoimalla maa-alueella'],
+      [ 3, 'Kevyen liikenteen väylä'],
+      [ 4, 'Tuntematon']
+    ];
+    var serviceRoadLegendTemplate = _.map(serviceRoadValues, function(serviceRoadValue) {
+      return '<div class="legend-entry">' +
+        '<div class="label">' + serviceRoadValue[1] + '</div>' +
+        '<div class="symbol linear service-road-' + serviceRoadValue[0] + '" />' +
+        '</div>';
+    }).join('');
+
+    var complementaryLinkCheckBox = asset.allowComplementaryLinks ? [
+        '  <div class="panel-section roadLink-complementary-checkbox">' +
+        '<div class="check-box-container">' +
+        '<input id="complementaryLinkCheckBox" type="checkbox" /> <lable>Näytä täydentävä geometria</lable>' +
+        '</div>' +
+        '</div>'
+      ].join('') : '';
+
+
+    var expandedTemplate = [
+      '<div class="panel ' + asset.layerName +'">',
+      '  <header class="panel-header expanded">',
+      '    ' + asset.title + (asset.editControlLabels.showUnit ? ' ('+asset.unit+')': ''),
+      '  </header>',
+      '  <div class="panel-section panel-legend linear-asset-legend service-road-legend">',
+      serviceRoadLegendTemplate,
+      '  </div>',
+      complementaryLinkCheckBox,
+      '</div>'].join('');
+
+    var elements = {
+      expanded: $(expandedTemplate)
+    };
+
+    var toolSelection = new ToolSelection([
+      new Tool('Select', selectToolIcon, asset.selectedLinearAsset),
+      new Tool('Cut', cutToolIcon, asset.selectedLinearAsset),
+      new Tool('Rectangle', rectangleToolIcon, asset.selectedLinearAsset),
+      new Tool('Polygon', polygonToolIcon, asset.selectedLinearAsset)
+    ]);
+    var editModeToggle = new EditModeToggleButton(toolSelection);
+    var userRoles;
+
+    var bindExternalEventHandlers = function() {
+      eventbus.on('roles:fetched', function(roles) {
+        userRoles = roles;
+        if (_.contains(roles, 'operator') || _.contains(roles, 'premium')) {
+          toolSelection.reset();
+          elements.expanded.append(toolSelection.element);
+          elements.expanded.append(editModeToggle.element);
+        }
+      });
+      eventbus.on('application:readOnly', function(readOnly) {
+        elements.expanded.find('.panel-header').toggleClass('edit', !readOnly);
+      });
+    };
+
+    bindExternalEventHandlers();
+
+    var element = $('<div class="panel-group service-road"/>')
+      .append(elements.expanded)
+      .hide();
+
+    function show() {
+      if (editModeToggle.hasNoRolesPermission(userRoles)) {
+        editModeToggle.reset();
+      } else {
+        editModeToggle.toggleEditMode(applicationModel.isReadOnly());
+      }
+      element.show();
+    }
+
+    function hide() {
+      element.hide();
+    }
+
+    elements.expanded.find('#complementaryLinkCheckBox').on('change', function (event) {
+      if ($(event.currentTarget).prop('checked')) {
+        eventbus.trigger('complementaryLinks:show');
+      } else {
+        if (applicationModel.isDirty()) {
+          $(event.currentTarget).prop('checked', true);
+          new Confirm();
+        } else {
+          eventbus.trigger('complementaryLinks:hide');
+        }
+      }
+    });
+
+    return {
+      title: asset.title,
+      layerName: asset.layerName,
+      element: element,
+      show: show,
+      hide: hide
+    };
   };
 
   ActionPanelBoxes.AssetBox = function(selectedMassTransitStopModel) {

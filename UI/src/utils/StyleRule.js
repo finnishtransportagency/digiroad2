@@ -9,13 +9,18 @@
             return expression.compare(expression.getValue(obj));
         };
 
-        var generateExpression = function(property, propertyValue){
-            var expression = propertyValue ?
-                {getValue: function(){return propertyValue;}} :
-                {getValue: function(obj){return obj[property];}};
-            expressionFn.push(expression);
-            return expression;
+        var generateExpression = function(property, propertyValue) {
+
+          var expression = _.isFunction(property)?
+            {getValue: property} :
+            (propertyValue ?
+              {getValue: function() {return propertyValue;}} :
+              {getValue: function(obj) {return obj[property];}}
+            );
+          expressionFn.push(expression);
+          return expression;
         };
+
 
         this.where = function(property, propertyValue){
             generateExpression(property, propertyValue);

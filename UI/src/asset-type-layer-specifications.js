@@ -304,9 +304,11 @@
       editControlLabels: {
         title: 'Rajoitus',
         enabled: 'Talvinopeusrajoitus',
-        disabled: 'Ei talvinopeusrajoitusta'
+        disabled: 'Ei talvinopeusrajoitusta',
+        showUnit: true
       },
-      possibleValues: [100, 80, 70, 60]
+      possibleValues: [100, 80, 70, 60],
+      style : new WinterSpeedLimitStyle()
     },
     {
       typeId: assetType.prohibition,
@@ -355,7 +357,8 @@
         title: '',
         enabled: 'Eurooppatienumero(t)',
         disabled: 'Ei eurooppatienumeroa'
-      }
+      },
+      label: new LinearAssetLabelMultiValues()
     },
     {
       typeId: assetType.exitNumbers,
@@ -372,7 +375,8 @@
         title: '',
         enabled: 'Liittymänumero(t)',
         disabled: 'Ei liittymänumeroa'
-      }
+      },
+      label: new LinearAssetLabelMultiValues()
     },
     {
       typeId: assetType.maintenanceRoad,
@@ -391,16 +395,20 @@
         disabled: 'Ei huoltotietä'
       },
       possibleValues: [
-        {'name': 'Käyttöoikeus', 'propType': 'single_choice', 'id': "huoltotie_kayttooikeus", value: [{typeId: 1, title: 'Tieoikeus'},{typeId: 2, title: 'Tiekunnan osakkuus'},{typeId: 3, title: 'LiVin hallinnoimalla maa-alueella'},{typeId: 4, title: 'Huoltoreittikäytössä olevat kevyen liikenteen väylät (ei rautatieliikennealuetta) väylä'},{typeId: 99, title: 'Tuntematon'}]},
+        {'name': 'Käyttöoikeus', 'propType': 'single_choice', 'id': "huoltotie_kayttooikeus", value: [{typeId: 1, title: 'Tieoikeus'},{typeId: 2, title: 'Tiekunnan osakkuus'},{typeId: 3, title: 'LiVin hallinnoimalla maa-alueella'},{typeId: 4, title: 'Kevyen liikenteen väylä'},{typeId: 99, title: 'Tuntematon'}]},
         {'name': 'Huoltovastuu', 'propType': 'single_choice', 'id': "huoltotie_huoltovastuu", value: [{typeId: 1, title: 'LiVi'}, {typeId: 2, title: 'Muu'}, {typeId: 99, title: 'Ei tietoa'}]},
         {'name': "Tiehoitokunta", 'propType': 'text', 'id': "huoltotie_tiehoitokunta" },
+        {'name': "Yhteyshenkilö", 'propType': 'header' },
         {'name': "Nimi", 'propType': 'text', 'id': "huoltotie_nimi" },
         {'name': "Osoite", 'propType': 'text', 'id': "huoltotie_osoite"},
         {'name': "Postinumero", 'propType': 'text', 'id': "huoltotie_postinumero"},
         {'name': "Postitoimipaikka", 'propType': 'text', 'id': "huoltotie_postitoimipaikka"},
         {'name': "Puhelin 1", 'propType': 'text', 'id': "huoltotie_puh1"},
         {'name': "Puhelin 2", 'propType': 'text', 'id': "huoltotie_puh2"},
-        {'name': "Lisätietoa", 'propType': 'text', 'id': "huoltotie_lisatieto"}]
+        {'name': "Lisätietoa", 'propType': 'text', 'id': "huoltotie_lisatieto"},
+        {'name': "Tarkistettu", 'propType': 'checkbox', 'id': "huoltotie_tarkistettu", value: [{typeId: 0, title: 'Ei tarkistettu'}, {typeId: 1, title: 'Tarkistettu'}]}],
+      style: new MaintenanceRoadStyle(),
+      label : new ServiceRoadLabel()
     },
     {
       typeId: assetType.numberOfLanes,
@@ -546,17 +554,20 @@
       title: 'Liikennemerkit',
       allowComplementaryLinks: true,
       newAsset: { validityDirection: 2, propertyData: [
-        {'name': 'Tyyppi', 'propertyType': 'single_choice', 'publicId': "trafficSigns_type", values: []},
+        {'name': 'Tyyppi', 'propertyType': 'single_choice', 'publicId': "trafficSigns_type", values: [ [ {propertyValue: 1} ] ] },
         {'name': "Arvo", 'propertyType': 'text', 'publicId': "trafficSigns_value", values: []},
         {'name': "Lisatieto", 'propertyType': 'text', 'publicId': "trafficSigns_info", values: []}
       ]},
       label: new TrafficSignLabel(),
+      collection: TrafficSignsCollection,
+      allowGrouping: true,
+      groupingDistance: 9,
       formLabels: {
         singleFloatingAssetLabel: 'liikennemerkin',
         manyFloatingAssetsLabel: 'liikennemerkit',
         newAssetLabel: 'liikennemerkki'
       },
-       editConstrains : function(selectedAsset, linkId) {
+      editConstrains : function(selectedAsset, linkId) {
        // check if administrative class is State
           return selectedAsset.getAdministrativeClass(linkId) === "State";
      }

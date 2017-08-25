@@ -97,6 +97,8 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
   when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary((1611071l))).thenReturn(Some(VVHRoadlink(1611071l, 91,  List(Point(0.0, 0.0), Point(117.318, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
+  when(mockRoadLinkService.getRoadAddressesByLinkIds(any[Set[Long]])).thenReturn(Seq())
+
   val testObstacleService = new ObstacleService(mockRoadLinkService)
   val testRailwayCrossingService = new RailwayCrossingService(mockRoadLinkService)
   val testDirectionalTrafficSignService = new DirectionalTrafficSignService(mockRoadLinkService)

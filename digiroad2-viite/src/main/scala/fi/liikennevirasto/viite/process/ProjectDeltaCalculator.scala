@@ -1,14 +1,16 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
-import fi.liikennevirasto.viite.RoadType
-import fi.liikennevirasto.viite.dao._
+import fi.liikennevirasto.digiroad2.util.RoadAddressException
+import fi.liikennevirasto.viite.dao.{ProjectLink, _}
 import org.joda.time.DateTime
+import org.slf4j.LoggerFactory
 
 /**
   * Calculate the effective change between the project and the current road address data
   */
 object ProjectDeltaCalculator {
+
+  val logger = LoggerFactory.getLogger(getClass)
   val checker = new ContinuityChecker(null) // We don't need road link service here
   def delta(projectId: Long): Delta = {
     val projectOpt = ProjectDAO.getRoadAddressProjectById(projectId)
@@ -16,13 +18,13 @@ object ProjectDeltaCalculator {
       throw new IllegalArgumentException("Project not found")
     val project = projectOpt.get
     val projectLinks = ProjectDAO.getProjectLinks(projectId).groupBy(l => RoadPart(l.roadNumber,l.roadPartNumber))
-    val currentAddresses = projectLinks.keySet.map(r => r -> RoadAddressDAO.fetchByRoadPart(r.roadNumber, r.roadPartNumber, true)).toMap
+    val currentAddresses = projectLinks.filter(_._2.exists(_.status != LinkStatus.New)).keySet.map(r => r -> RoadAddressDAO.fetchByRoadPart(r.roadNumber, r.roadPartNumber, true)).toMap
     val terminations = findTerminations(projectLinks, currentAddresses)
+    val newCreations = findNewCreations(projectLinks)
     if (terminations.size != currentAddresses.values.flatten.size)
-      throw new RoadAddressException(s"Road address count did not match: ${terminations.size} terminated, ${currentAddresses.values.flatten.size} addresses found")
-    // TODO: Find transfers, etc etc
-
-    Delta(project.startDate, terminations.sortBy(t => (t.discontinuity.value, t.roadType.value)))
+      throw new RoadAddressException(s"Road address count did not match: ${terminations.size} terminated, " +
+        s"(and ${newCreations.size } created), ${currentAddresses.values.flatten.size} addresses found")
+    Delta(project.startDate, terminations.sortBy(t => (t.discontinuity.value, t.roadType.value)), newCreations.sortBy(t => (t.discontinuity.value, t.roadType.value)))
   }
 
   private def findTerminations(projectLinks: Map[RoadPart, Seq[ProjectLink]], currentAddresses: Map[RoadPart, Seq[RoadAddress]]) = {
@@ -33,6 +35,10 @@ object ProjectDeltaCalculator {
     terminations.values.flatten.toSeq
   }
 
+  private def findNewCreations(projectLinks: Map[RoadPart, Seq[ProjectLink]]) = {
+    projectLinks.values.flatten.filter(_.status == LinkStatus.New).toSeq
+  }
+
   private def validateTerminations(roadAddresses: Seq[RoadAddress]) = {
     if (roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber)).keySet.size != 1)
       throw new RoadAddressException("Multiple or no road parts present in one termination set")
@@ -41,46 +47,42 @@ object ProjectDeltaCalculator {
       throw new RoadAddressException(s"Termination has gaps in between: ${missingSegments.mkString("\n")}") //TODO: terminate only part of the road part later
   }
 
-  // TODO: When other than terminations are handled we partition also project links: section should include road type
-  def projectLinkPartition(projectLinks: Seq[ProjectLink]): Seq[RoadAddressSection] = ???
+  def projectLinkPartition(projectLinks: Seq[ProjectLink]): Seq[RoadAddressSection] = {
+    val grouped = projectLinks.groupBy(projectLink => (projectLink.roadNumber, projectLink.roadPartNumber, projectLink.track, projectLink.roadType))
+    grouped.mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
+      RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
+        ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType)
+    ).toSeq
+  }
+
+  private def combineTwo[T <: BaseRoadAddress](r1: T, r2: T): Seq[T] = {
+    if (r1.endAddrMValue == r2.startAddrMValue && r1.discontinuity == Discontinuity.Continuous)
+      r1 match {
+        case x: RoadAddress => Seq(x.copy(endAddrMValue = r2.endAddrMValue, discontinuity = r2.discontinuity).asInstanceOf[T])
+        case x: ProjectLink => Seq(x.copy(endAddrMValue = r2.endAddrMValue, discontinuity = r2.discontinuity).asInstanceOf[T])
+      }
+    else
+      Seq(r2, r1)
+  }
+
+  private def combine[T <: BaseRoadAddress](roadAddressSeq: Seq[T], result: Seq[T] = Seq()): Seq[T] = {
+    if (roadAddressSeq.isEmpty)
+      result.reverse
+    else if (result.isEmpty)
+      combine(roadAddressSeq.tail, Seq(roadAddressSeq.head))
+    else
+      combine(roadAddressSeq.tail, combineTwo(result.head, roadAddressSeq.head) ++ result.tail)
+  }
 
   def partition(roadAddresses: Seq[RoadAddress]): Seq[RoadAddressSection] = {
-    def combineTwo(r1: RoadAddress, r2: RoadAddress): Seq[RoadAddress] = {
-      if (r1.endAddrMValue == r2.startAddrMValue && r1.discontinuity == Discontinuity.Continuous)
-        Seq(r1.copy(endAddrMValue = r2.endAddrMValue, discontinuity = r2.discontinuity))
-      else
-        Seq(r2, r1)
-    }
-    def combine(roadAddressSeq: Seq[RoadAddress], result: Seq[RoadAddress] = Seq()): Seq[RoadAddress] = {
-      if (roadAddressSeq.isEmpty)
-        result.reverse
-      else if (result.isEmpty)
-        combine(roadAddressSeq.tail, Seq(roadAddressSeq.head))
-      else
-        combine(roadAddressSeq.tail, combineTwo(result.head, roadAddressSeq.head) ++ result.tail)
-    }
     val grouped = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
     grouped.mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
       RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
-      ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType)
+        ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType)
     ).toSeq
   }
+
 }
 
-case class Delta(startDate: DateTime, terminations: Seq[RoadAddress])
+case class Delta(startDate: DateTime, terminations: Seq[RoadAddress], newRoads: Seq[ProjectLink] = Seq.empty[ProjectLink])
 case class RoadPart(roadNumber: Long, roadPartNumber: Long)
-case class RoadAddressSection(roadNumber: Long, roadPartNumberStart: Long, roadPartNumberEnd: Long, track: Track,
-                              startMAddr: Long, endMAddr: Long, discontinuity: Discontinuity, roadType: RoadType) {
-  def includes(ra: RoadAddress): Boolean = {
-    // within the road number and parts included
-    ra.roadNumber == roadNumber && ra.roadPartNumber >= roadPartNumberStart && ra.roadPartNumber <= roadPartNumberEnd &&
-    // and on the same track
-    ra.track == track &&
-    // and not starting before this section start or after this section ends
-      !(ra.startAddrMValue < startMAddr && ra.roadPartNumber == roadPartNumberStart ||
-        ra.startAddrMValue > endMAddr && ra.roadPartNumber == roadPartNumberEnd) &&
-    // and not ending after this section ends or before this section starts
-      !(ra.endAddrMValue > endMAddr && ra.roadPartNumber == roadPartNumberEnd ||
-        ra.endAddrMValue < startMAddr && ra.roadPartNumber == roadPartNumberStart)
-  }
-}

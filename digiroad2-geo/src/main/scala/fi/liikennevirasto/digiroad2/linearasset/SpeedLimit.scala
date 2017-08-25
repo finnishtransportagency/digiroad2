@@ -19,7 +19,8 @@ case class SpeedLimit(id: Long,
                       vvhTimeStamp: Long,
                       geomModifiedDate: Option[DateTime],
                       expired: Boolean = false,
-                      linkSource: LinkGeomSource) extends LinearAsset
+                      linkSource: LinkGeomSource,
+                      attributes: Map[String, Any] = Map()) extends LinearAsset
 
 case class NewLimit(linkId: Long, startMeasure: Double, endMeasure: Double)
 case class SpeedLimitTimeStamps(id: Long, created: Modification, modified: Modification) extends TimeStamps

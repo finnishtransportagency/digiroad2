@@ -97,7 +97,7 @@ class AssetDataImporter {
 
   case class LRMPos(id: Long, linkId: Long, startM: Double, endM: Double)
 
-  private def importRoadAddressData(conversionDatabase: DatabaseDef, vvhClient: VVHClient, ely: Int, complementaryLinks: Boolean,
+  private def importRoadAddressData(conversionDatabase: DatabaseDef, vvhClient: VVHClient, ely: Int, importOptions: ImportOptions,
                                     vvhClientProd: Option[VVHClient]): Unit = {
     def printRow(r: (Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, Long, String, Option[String], String, String, Long, Double, Double, Double, Double)): String ={
       s"""linkid: %d, alku: %d, loppu: %d, tie: %d, aosa: %d, ajr: %d, ely: %d, tietyyppi: %d, jatkuu: %d, aet: %d, let: %d, alkupvm: %s, loppupvm: %s, kayttaja: %s, muutospvm or rekisterointipvm: %s""".
@@ -109,7 +109,7 @@ class AssetDataImporter {
       lrmPos.map(lrm => lrm.copy(startM = lrm.startM * coefficient, endM = lrm.endM * coefficient))
     }
     val roads = conversionDatabase.withDynSession {
-      if (complementaryLinks)
+      if (importOptions.onlyComplementaryLinks)
         sql"""select linkid, alku, loppu,
             tie, aosa, ajr,
             ely, tietyyppi,
@@ -138,16 +138,18 @@ class AssetDataImporter {
     println("Total of %d link ids".format(lrmList.keys.size))
     val linkIdSet = lrmList.keys.toSet // Mapping LinkId -> Id
 
+    val vvhRoadLinkClient = if (importOptions.useFrozenLinkService) vvhClient.frozenTimeRoadLinkData else vvhClient.roadLinkData
     val roadLinks = linkIdSet.grouped(4000).flatMap(group =>
       // DEV complementary link load
-      if (complementaryLinks)
+      if (importOptions.onlyComplementaryLinks)
+        // Import only complementary links
         vvhClientProd.getOrElse(vvhClient).complementaryData.fetchByLinkIds(group)
       else {
         // If in production or QA environment -> load complementary links, too
         if (vvhClientProd.isEmpty)
-          vvhClient.roadLinkData.fetchByLinkIds(group) ++ vvhClient.complementaryData.fetchByLinkIds(group)
+          vvhRoadLinkClient.fetchByLinkIds(group) ++ vvhClient.complementaryData.fetchByLinkIds(group)
         else
-          // If in DEV environment -> don't load complementary links at this stage (no data for them)
+        // If in DEV environment -> don't load complementary links at this stage (no data for them)
           vvhClientProd.get.roadLinkData.fetchByLinkIds(group) ++ vvhClientProd.get.complementaryData.fetchByLinkIds(group)
       }
     ).toSeq
@@ -250,23 +252,26 @@ class AssetDataImporter {
     addressPS.close()
   }
 
-  def importRoadAddressData(conversionDatabase: DatabaseDef, vvhClient: VVHClient, vvhClientProd: Option[VVHClient], geometryAdjusted: Long): Unit = {
-    val roadMaintainerElys = Seq(8)
+  def importRoadAddressData(conversionDatabase: DatabaseDef, vvhClient: VVHClient, vvhClientProd: Option[VVHClient],
+                            importOptions: ImportOptions): Unit = {
+    val roadMaintainerElys = Seq(0, 1, 2, 3, 4, 8, 9, 10, 12, 14)
 
     OracleDatabase.withDynTransaction {
       sqlu"""ALTER TABLE ROAD_ADDRESS DISABLE ALL TRIGGERS""".execute
       sqlu"""DELETE FROM ROAD_ADDRESS""".execute
-      sqlu"""DELETE FROM LRM_POSITION WHERE NOT EXISTS (SELECT POSITION_ID FROM ASSET_LINK WHERE POSITION_ID=LRM_POSITION.ID)""".execute
+      sqlu"""DELETE FROM LRM_POSITION WHERE
+            NOT EXISTS (SELECT LRM_POSITION_ID FROM PROJECT_LINK WHERE LRM_POSITION_ID=LRM_POSITION.ID) AND
+            NOT EXISTS (SELECT POSITION_ID FROM ASSET_LINK WHERE POSITION_ID=LRM_POSITION.ID)""".execute
       println (s"${DateTime.now ()} - Old address data removed")
 
-      roadMaintainerElys.foreach(ely => importRoadAddressData(conversionDatabase, vvhClient, ely, complementaryLinks = false, vvhClientProd))
+      roadMaintainerElys.foreach(ely => importRoadAddressData(conversionDatabase, vvhClient, ely, importOptions, vvhClientProd))
       // If running in DEV environment then include some testing complementary links
       if (vvhClientProd.nonEmpty)
-        roadMaintainerElys.foreach(ely => importRoadAddressData(conversionDatabase, vvhClient, ely, complementaryLinks = true, None))
+        roadMaintainerElys.foreach(ely => importRoadAddressData(conversionDatabase, vvhClient, ely, importOptions.copy(onlyComplementaryLinks = true), None))
 
-      println(s"${DateTime.now()} - Updating geometry adjustment timestamp to $geometryAdjusted")
+      println(s"${DateTime.now()} - Updating geometry adjustment timestamp to ${importOptions.geometryAdjustedTimeStamp}")
       sqlu"""UPDATE LRM_POSITION
-        SET ADJUSTED_TIMESTAMP = $geometryAdjusted WHERE ID IN (SELECT LRM_POSITION_ID FROM ROAD_ADDRESS)""".execute
+        SET ADJUSTED_TIMESTAMP = ${importOptions.geometryAdjustedTimeStamp} WHERE ID IN (SELECT LRM_POSITION_ID FROM ROAD_ADDRESS)""".execute
 
       println(s"${DateTime.now()} - Updating calibration point information")
       // both dates are open-ended or there is overlap (checked with inverse logic)
@@ -329,17 +334,17 @@ class AssetDataImporter {
         counter +=1
         println("Processing roadNumber %d (%d of %d) at time: %s".format(roadNumber, counter, roadNumbers.size,  DateTime.now().toString))
         val linkIds = Queries.getLinkIdsByRoadNumber(roadNumber)
-        val roadLinksFromVVH = linkService.getCurrentAndComplementaryVVHRoadLinks(linkIds, false)
+        val roadLinksFromVVH = linkService.getCurrentAndComplementaryRoadLinksFromVVH(linkIds, false)
         val addresses = RoadAddressDAO.fetchByLinkId(roadLinksFromVVH.map(_.linkId).toSet, false, true).groupBy(_.linkId)
 
         roadLinksFromVVH.foreach(roadLink => {
           val segmentsOnViiteDatabase = addresses.getOrElse(roadLink.linkId, Set())
           segmentsOnViiteDatabase.foreach(segment =>{
               val newGeom = GeometryUtils.truncateGeometry3D(roadLink.geometry, segment.startMValue, segment.endMValue)
-            if(!segment.geom.equals(Nil) && !newGeom.equals(Nil)) {
+            if(!segment.geometry.equals(Nil) && !newGeom.equals(Nil)) {
 
-              if (((segment.geom.head.distance2DTo(newGeom.head) > 1) && (segment.geom.head.distance2DTo(newGeom.last) > 1)) ||
-                ((segment.geom.last.distance2DTo(newGeom.head) > 1) && (segment.geom.last.distance2DTo(newGeom.last) > 1))) {
+              if (((segment.geometry.head.distance2DTo(newGeom.head) > 1) && (segment.geometry.head.distance2DTo(newGeom.last) > 1)) ||
+                ((segment.geometry.last.distance2DTo(newGeom.head) > 1) && (segment.geometry.last.distance2DTo(newGeom.last) > 1))) {
                 RoadAddressDAO.updateGeometry(segment.id, newGeom)
                 println("Changed geometry on roadAddress id " + segment.id + " and linkId ="+ segment.linkId)
                 changed +=1
@@ -373,4 +378,6 @@ class AssetDataImporter {
   }
 
 }
+
+case class ImportOptions(onlyComplementaryLinks: Boolean, useFrozenLinkService: Boolean, geometryAdjustedTimeStamp: Long)
 

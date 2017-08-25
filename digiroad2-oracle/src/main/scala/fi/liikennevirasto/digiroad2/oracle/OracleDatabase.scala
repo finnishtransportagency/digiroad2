@@ -55,6 +55,10 @@ object OracleDatabase {
     }
   }
 
+  def isWithinSession: Boolean = {
+    transactionOpen.get()
+  }
+
   def setSessionLanguage() {
     sqlu"""alter session set nls_language = 'american'""".execute
   }

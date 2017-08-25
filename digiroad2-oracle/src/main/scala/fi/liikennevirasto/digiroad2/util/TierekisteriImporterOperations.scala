@@ -7,7 +7,7 @@ import javax.naming.OperationNotSupportedException
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset.oracle.OracleAssetDao
 import fi.liikennevirasto.digiroad2.{TierekisteriAssetDataClient, TierekisteriLightingAssetClient, TierekisteriRoadWidthAssetClient, _}
-import fi.liikennevirasto.digiroad2.asset.{SideCode, _}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -126,8 +126,8 @@ trait TierekisteriAssetImporterOperations {
     addresses.map(ra => (ra, vvhRoadLinks.find(_.linkId == ra.linkId))).filter(_._2.isDefined)
   }
 
-  protected def getAllViiteRoadAddress(roadNumber: Long, roadPart: Long, track: Track) = {
-    val addresses = roadAddressDao.getRoadAddress(roadAddressDao.withRoadNumber(roadNumber, roadPart, track.value))
+  protected def getAllViiteRoadAddress(roadNumber: Long, roadPart: Long) = {
+    val addresses = roadAddressDao.getRoadAddress(roadAddressDao.withRoadNumber(roadNumber, roadPart))
     val roadAddressLinks = addresses.map(ra => ra.linkId).toSet
     val vvhRoadLinks = roadLinkService.fetchVVHRoadlinks(roadAddressLinks).filter(_.administrativeClass == State)
     addresses.map(ra => (ra, vvhRoadLinks.find(_.linkId == ra.linkId))).filter(_._2.isDefined)
@@ -230,7 +230,7 @@ trait TierekisteriAssetImporterOperations {
                 sections
               } else {
                 //Get all existing road address in viite and expire all the assets on top of this roads
-                val roadAddressLink = getAllViiteRoadAddress(section.roadNumber, section.roadPartNumber, section.track)
+                val roadAddressLink = getAllViiteRoadAddress(section.roadNumber, section.roadPartNumber)
                 expireAssets(roadAddressLink.map(_._1.linkId))
                 sections ++ Seq(section.roadPartNumber)
               }
@@ -510,7 +510,23 @@ class TrafficSignTierekisteriImporter extends PointAssetTierekisteriImporterOper
     }
   }
 
-  override protected def createPointAsset(roadAddress: ViiteRoadAddress, vvhRoadlink: VVHRoadlink, mValue: Double, trAssetData: TierekisteriAssetData): Unit = {
+  protected override def getAllTierekisteriAddressSections(roadNumber: Long) = {
+    println("\nFetch Tierekisteri " + assetName + " by Road Number " + roadNumber)
+    val trAsset = tierekisteriClient.fetchActiveAssetData(roadNumber).filter(_.assetType != TRTrafficSignType.Unknown)
+
+    trAsset.foreach { tr => println(s"TR: address ${tr.roadNumber}/${tr.startRoadPartNumber}-${tr.endRoadPartNumber}/${tr.track.value}/${tr.startAddressMValue}-${tr.endAddressMValue}") }
+    trAsset.map(_.asInstanceOf[TierekisteriAssetData]).flatMap(getRoadAddressSections)
+  }
+
+  protected override def getAllTierekisteriAddressSections(roadNumber: Long, roadPart: Long): Seq[(AddressSection, TierekisteriAssetData)] = {
+    println("\nFetch Tierekisteri " + assetName + " by Road Number " + roadNumber)
+    val trAsset = tierekisteriClient.fetchActiveAssetData(roadNumber, roadPart).filter(_.assetType != TRTrafficSignType.Unknown)
+
+    trAsset.foreach { tr => println(s"TR: address ${tr.roadNumber}/${tr.startRoadPartNumber}-${tr.endRoadPartNumber}/${tr.track.value}/${tr.startAddressMValue}-${tr.endAddressMValue}") }
+    trAsset.map(_.asInstanceOf[TierekisteriAssetData]).flatMap(getRoadAddressSections)
+  }
+
+  protected override def createPointAsset(roadAddress: ViiteRoadAddress, vvhRoadlink: VVHRoadlink, mValue: Double, trAssetData: TierekisteriAssetData): Unit = {
     if(supportedTrafficSigns.contains(trAssetData.assetType))
       GeometryUtils.calculatePointFromLinearReference(vvhRoadlink.geometry, mValue).map{
         point =>
@@ -546,7 +562,7 @@ class LitRoadTierekisteriImporter extends LinearAssetTierekisteriImporterOperati
 
 class RoadWidthTierekisteriImporter extends LinearAssetTierekisteriImporterOperations {
 
-  override def typeId: Int = 100
+  override def typeId: Int = 120
   override def assetName = "roadWidth"
   override type TierekisteriClientType = TierekisteriRoadWidthAssetClient
   override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
@@ -562,7 +578,7 @@ class RoadWidthTierekisteriImporter extends LinearAssetTierekisteriImporterOpera
         measures, "batch_process_" + assetName, vvhClient.roadLinkData.createVVHTimeStamp(), Some(vvhRoadlink.linkSource.value))
 
       linearAssetService.dao.insertValue(assetId, LinearAssetTypes.numericValuePropertyId, trAssetData.assetValue)
-      println(s"Created OTH " + assetName + " assets for $linkId from TR data with assetId $assetId")
+      println(s"Created OTH $assetName assets for ${vvhRoadlink.linkId} from TR data with assetId $assetId")
     }
   }
 

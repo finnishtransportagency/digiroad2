@@ -10,19 +10,23 @@
       mapOverlay = params.mapOverlay,
       layerName = params.layerName,
       newAsset = params.newAsset,
+      roadAddressInfoPopup = params.roadAddressInfoPopup,
       editConstrains = params.editConstrains,
-      assetLabel = params.assetLabel;
+      assetLabel = params.assetLabel,
+      allowGrouping = params.allowGrouping,
+      assetGrouping = params.assetGrouping;
 
     Layer.call(this, layerName, roadLayer);
     var me = this;
     me.minZoomForContent = zoomlevels.minZoomForAssets;
-
+    var extraEventListener = _.extend({running: false}, eventbus);
     var vectorSource = new ol.source.Vector();
     var vectorLayer = new ol.layer.Vector({
        source : vectorSource,
        style : function(feature){
            return style.browsingStyleProvider.getStyle(feature);
-       }
+       },
+      renderBuffer: 300
     });
     vectorLayer.set('name', layerName);
     vectorLayer.setOpacity(1);
@@ -42,7 +46,10 @@
 
     function pointAssetOnSelect(feature) {
       if(feature.selected.length > 0 && feature.deselected.length === 0){
-          selectedAsset.open(feature.selected[0].getProperties());
+          var properties = feature.selected[0].getProperties();
+          var administrativeClass = obtainAdministrativeClass(properties);
+          var asset = _.merge({}, properties, {administrativeClass: administrativeClass});
+          selectedAsset.open(asset);
       }
       else {
         if(feature.deselected.length > 0 && !selectedAsset.isDirty()) {
@@ -105,8 +112,9 @@
     function createFeature(asset) {
       var rotation = determineRotation(asset);
       var bearing = determineBearing(asset);
+      var administrativeClass = obtainAdministrativeClass(asset);
       var feature =  new ol.Feature({geometry : new ol.geom.Point([asset.lon, asset.lat])});
-      var obj = _.merge({}, asset, {rotation: rotation, bearing: bearing}, feature.getProperties());
+      var obj = _.merge({}, asset, {rotation: rotation, bearing: bearing, administrativeClass: administrativeClass}, feature.getProperties());
       feature.setProperties(obj);
       return feature;
     }
@@ -152,7 +160,7 @@
           withDeactivatedSelectControl(function() {
             me.removeLayerFeatures();
           });
-          var features = _.map(assets, createFeature);
+          var features = (!allowGrouping) ? _.map(assets, createFeature) : getGroupedFeatures(assets);
           selectControl.clear();
           vectorLayer.getSource().addFeatures(features);
           if(assetLabel)
@@ -161,6 +169,21 @@
         }
       });
     };
+
+    var getGroupedFeatures = function (assets) {
+      var assetGroups = assetGrouping.groupByDistance(assets, map.getView().getZoom());
+      var modifiedAssets = _.forEach(assetGroups, function (assetGroup) {
+        _.map(assetGroup, function (asset) {
+          asset.lon = _.head(assetGroup).lon;
+          asset.lat = _.head(assetGroup).lat;
+        });
+      });
+      return _.map(_.flatten(modifiedAssets), createFeature);
+    };
+
+    function obtainAdministrativeClass(asset){
+      return selectedAsset.getAdministrativeClass(asset.linkId);
+    }
 
     this.removeLayerFeatures = function() {
       vectorLayer.getSource().clear();
@@ -206,8 +229,6 @@
       eventListener.listenTo(eventbus, layerName + ':unselected', handleUnSelected);
       eventListener.listenTo(eventbus, layerName + ':changed', handleChanged);
       eventListener.listenTo(eventbus, 'application:readOnly', toggleMode);
-      eventListener.listenTo(eventbus, 'withComplementary:show', showWithComplementary);
-      eventListener.listenTo(eventbus, 'withComplementary:hide', hideComplementary);
     }
     eventbus.on( layerName + ':changeSigns', function(trafficSignData){
       setTrafficSigns(trafficSignData[0], trafficSignData[1]);
@@ -220,6 +241,15 @@
     var setTrafficSigns = function(trafficSign, isShowing) {
       collection.setTrafficSigns(trafficSign, isShowing);
       me.refreshView();
+    };
+
+    var startListeningExtraEvents = function(){
+      extraEventListener.listenTo(eventbus, 'withComplementary:show', showWithComplementary);
+      extraEventListener.listenTo(eventbus, 'withComplementary:hide', hideComplementary);
+    };
+
+    var stopListeningExtraEvents = function(){
+      extraEventListener.stopListening(eventbus);
     };
 
     function handleCreationCancelled() {
@@ -245,7 +275,7 @@
 
     function handleChanged() {
       var asset = selectedAsset.get();
-      var newAsset = _.merge({}, asset, {rotation: determineRotation(asset), bearing: determineBearing(asset)});
+      var newAsset = _.merge({}, asset, {rotation: determineRotation(asset), bearing: determineBearing(asset), administrativeClass: obtainAdministrativeClass(asset)});
       _.find(vectorLayer.getSource().getFeatures(), {values_: {id: newAsset.id}}).values_= newAsset;
       var featureRedraw = _.find(vectorLayer.getSource().getFeatures(), function(feature) {
           return feature.getProperties().id === newAsset.id;
@@ -269,15 +299,16 @@
       var nearestLine = geometrycalculator.findNearestLine(excludeRoadByAdminClass(roadCollection.getRoadsForMassTransitStops()), selectedLon, selectedLat);
       var projectionOnNearestLine = geometrycalculator.nearestPointOnLine(nearestLine, { x: selectedLon, y: selectedLat });
       var bearing = geometrycalculator.getLineDirectionDegAngle(nearestLine);
+      var administrativeClass = obtainAdministrativeClass(nearestLine);
 
-      var asset = createAssetWithPosition(selectedLat, selectedLon, nearestLine, projectionOnNearestLine, bearing);
+      var asset = createAssetWithPosition(selectedLat, selectedLon, nearestLine, projectionOnNearestLine, bearing, administrativeClass);
 
       vectorLayer.getSource().addFeature(createFeature(asset));
       selectedAsset.place(asset);
       mapOverlay.show();
     }
 
-    function createAssetWithPosition(selectedLat, selectedLon, nearestLine, projectionOnNearestLine, bearing) {
+    function createAssetWithPosition(selectedLat, selectedLon, nearestLine, projectionOnNearestLine, bearing, administrativeClass) {
       var isServicePoint = newAsset.services;
 
       return _.merge({}, newAsset, isServicePoint ? {
@@ -291,7 +322,8 @@
         linkId: nearestLine.linkId,
         id: 0,
         geometry: [nearestLine.start, nearestLine.end],
-        bearing: bearing
+        bearing: bearing,
+        administrativeClass: administrativeClass
       });
     }
 
@@ -301,7 +333,9 @@
     }
 
     function show(map) {
+      startListeningExtraEvents();
       vectorLayer.setVisible(true);
+      roadAddressInfoPopup.start();
       me.refreshView();
       me.show(map);
     }
@@ -315,6 +349,8 @@
     function hide() {
       selectedAsset.close();
       vectorLayer.setVisible(false);
+      roadAddressInfoPopup.stop();
+      stopListeningExtraEvents();
       me.stop();
       me.hide();
     }

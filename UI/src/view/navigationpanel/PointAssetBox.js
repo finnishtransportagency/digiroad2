@@ -12,20 +12,20 @@
 
     var trafficSignPanel = (layerName == 'trafficSigns') ?
             '<div class="panel-section">' +
-              '<div class="traffic-sign-checkbox">' +
-                '<lable><input name="speedLimits" type="checkbox" /> Nopeusrajoitukset</lable> <br>' +
+              '<div class="checkbox">' +
+                '<label><input name="speedLimits" type="checkbox" /> Nopeusrajoitukset</label> <br>' +
               '</div>' +
-              '<div class="traffic-sign-checkbox">' +
-                '<lable><input name="pedestrianCrossings" type="checkbox" /> Suojatiet</lable> <br>' +
+              '<div class="checkbox">' +
+                '<label><input name="pedestrianCrossings" type="checkbox" /> Suojatiet</label> <br>' +
               '</div>' +
-              '<div class="traffic-sign-checkbox">' +
-                '<lable><input name="maximumLengths" type="checkbox" /> Suurin sallittu pituus</lable> <br>' +
+              '<div class="checkbox">' +
+                '<label><input name="maximumLengths" type="checkbox" /> Suurin sallittu pituus</label> <br>' +
               '</div>' +
-              '<div class="traffic-sign-checkbox">' +
-                '<lable><input name="generalWarnings" type="checkbox" /> Varoitukset</lable> <br>' +
+              '<div class="checkbox">' +
+                '<label><input name="generalWarnings" type="checkbox" /> Varoitukset</label> <br>' +
               '</div>' +
-              '<div class="traffic-sign-checkbox">' +
-                '<lable><input name="turningRestrictions" type="checkbox" /> Kääntymiskiellot</lable>' +
+              '<div class="checkbox">' +
+                '<label><input name="turningRestrictions" type="checkbox" /> Kääntymiskiellot</label>' +
               '</div>' +
             '</div>' : "";
 
@@ -42,7 +42,7 @@
         '</div>';
     }).join('');
 
-    var legend = '<div class="panel-section panel-legend limit-legend">' + legendTemplate + '</div>';
+    var legend = legendTemplate !== "" ? '<div class="panel-section panel-legend limit-legend">' + legendTemplate + '</div>' : "";
     var panel = $('<div class="panel"><header class="panel-header expanded">' + title + '</header>' + legend + trafficSignPanel + complementaryCheckBox + '</div>');
     panel.append(toolSelection.element);
 
@@ -85,7 +85,7 @@
         }
     };
 
-    element.find('.traffic-sign-checkbox').find('input[type=checkbox]').change(trafficSignHandler);
+    element.find('.checkbox').find('input[type=checkbox]').change(trafficSignHandler);
 
     return {
       title: title,

@@ -109,8 +109,12 @@
     }
 
     function getAdministrativeClass(linkId){
-      var value = roadCollection.getRoadLinkByLinkId(linkId ? linkId : current.linkId).getData().administrativeClass;
-      return _.isNull(value) ? undefined : value;
+      if(current && current.administrativeClass && !linkId)
+        return current.administrativeClass;
+      var road = roadCollection.getRoadLinkByLinkId(linkId);
+      var administrativeClass = road ? road.getData().administrativeClass : null;
+      return _.isNull(administrativeClass) || _.isUndefined(administrativeClass) ? undefined : administrativeClass;
+
     }
 
     function getSelectedTrafficSignValue() {
@@ -131,7 +135,7 @@
           prop.values[0] = [{propertyValue: propertyValue, propertyDisplayValue: ''}];
         }
       });
+      eventbus.trigger(assetName + ':changed');
     }
-
   };
 })(this);
