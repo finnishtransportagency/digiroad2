@@ -979,20 +979,16 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
   }
 
   test("New roaddress connecting to existing part should be saved") {
-
     val projectId = 0
     val rap = RoadAddressProject(projectId, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"),
       "TestUser", DateTime.parse("1972-03-03"), DateTime.parse("2700-01-01"), "Some additional info",
       List.empty[ReservedRoadPart], None)
-
     val idRoad0 = 0L //   U>
     val idRoad1 = 1L //   U>
     val idRoad2 = 2L //   N>
-
     //                     |N
     //                    _|U
     //                    U
-
     val projectLink0 = toProjectLink(rap)(RoadAddress(idRoad0, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
         0L, 9L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, idRoad0, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (Some(CalibrationPoint(idRoad0, 0.0, 0L)), None), false,
         Seq(Point(20.0, 10.0), Point(28, 10)), LinkGeomSource.NormalLinkInterface)).copy(status = LinkStatus.UnChanged)
@@ -1004,7 +1000,6 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       Seq(Point(28, 19), Point(28, 30)), LinkGeomSource.NormalLinkInterface)).copy(status = LinkStatus.New)
 
     val projectLinks = List(projectLink0, projectLink1, projectLink2)
-    val projectLinkids = projectLinks.toSet
     val roadlink0 = toRoadLink(projectLink0)
     val roadlink1 = toRoadLink(projectLink1)
     val roadlink2 = toRoadLink(projectLink2)
@@ -1016,11 +1011,16 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
     val projectAddressLinks = Seq(pal0, pal1, pal2)
     runWithRollback {
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean],any[Boolean])).thenReturn(roadLinks)
-      projectService.createRoadLinkProject(rap)
-      projectService.addNewLinksToProject(projectAddressLinks, projectLink0.projectId, projectLink0.roadNumber, projectLink0.roadPartNumber, projectLink0.track.value, projectLink0.discontinuity.value)
+      val project = projectService.createRoadLinkProject(rap)
+      val createdProject = ProjectDAO.getRoadAddressProjects(project._1.id).head
+      projectService.addNewLinksToProject(projectAddressLinks, createdProject.id, projectLink0.roadNumber, projectLink0.roadPartNumber, projectLink0.track.value, projectLink0.discontinuity.value)
 
-      val projectLinks = ProjectDAO.getProjectLinks(projectLink0.projectId)
-      val projectLinksSize = projectLinks.size
+      val savedProjectLinks = ProjectDAO.getProjectLinks(createdProject.id).sortBy(_.startAddrMValue)
+      val (newLinks, existingLinks) = savedProjectLinks.partition(_.status == LinkStatus.New)
+      savedProjectLinks.size should be (projectLinks.size)
+      savedProjectLinks(0).calibrationPoints should be (Some(CalibrationPoint(2,11.0,0)), None)
+      savedProjectLinks(1).calibrationPoints should be (None, None)
+      savedProjectLinks(2).calibrationPoints should be (None, Some(CalibrationPoint(0,0.0,28)))
     }
 
   }

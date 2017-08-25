@@ -166,7 +166,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         projectAddressLink.endAddressM, Some(project.startDate), None, Some(project.createdBy), -1,
         projectAddressLink.linkId, projectAddressLink.startMValue, projectAddressLink.endMValue, sideCode,
         (projectAddressLink.startCalibrationPoint, projectAddressLink.endCalibrationPoint), floating = false,
-        projectAddressLink.geometry, roadAddressProjectID, LinkStatus.New, projectAddressLink.roadType,
+        projectAddressLink.geometry, roadAddressProjectID, projectAddressLink.status, projectAddressLink.roadType,
         projectAddressLink.roadLinkSource, projectAddressLink.length)
     }
 
