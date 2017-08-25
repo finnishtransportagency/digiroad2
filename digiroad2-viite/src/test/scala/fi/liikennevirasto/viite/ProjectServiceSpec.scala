@@ -988,6 +988,11 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
     val idRoad0 = 0L //   U>
     val idRoad1 = 1L //   U>
     val idRoad2 = 2L //   N>
+
+    //                     |N
+    //                    _|U
+    //                    U
+
     val projectLink0 = toProjectLink(rap)(RoadAddress(idRoad0, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
         0L, 9L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, idRoad0, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (Some(CalibrationPoint(idRoad0, 0.0, 0L)), None), false,
         Seq(Point(20.0, 10.0), Point(28, 10)), LinkGeomSource.NormalLinkInterface)).copy(status = LinkStatus.UnChanged)
@@ -1015,7 +1020,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       projectService.addNewLinksToProject(projectAddressLinks, projectLink0.projectId, projectLink0.roadNumber, projectLink0.roadPartNumber, projectLink0.track.value, projectLink0.discontinuity.value)
 
       val projectLinks = ProjectDAO.getProjectLinks(projectLink0.projectId)
-
+      val projectLinksSize = projectLinks.size
     }
 
   }
