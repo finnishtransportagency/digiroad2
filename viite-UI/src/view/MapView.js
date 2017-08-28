@@ -4,6 +4,7 @@
     var isInitialized = false;
     var centerMarkerLayer = new ol.source.Vector({});
     var oldCursorStyle = "initial";
+    var enableShiftModifier = false;
 
     var showAssetZoomDialog = function() {
       instructionsPopup.show('Zoomaa lähemmäksi, jos haluat nähdä kohteita', 2000);
@@ -92,6 +93,7 @@
       if (layerToBeHidden) layerToBeHidden.hide(map);
       layerToBeShown.show(map);
       applicationModel.setMinDirtyZoomLevel(minZoomForContent());
+      enableShiftModifier = (layer === "roadAddressProject");
     }, this);
 
     eventbus.on('roadAddressProject:selected', function selectLayer(id, layer, previouslySelectedLayer) {
@@ -131,19 +133,18 @@
 
     //when the map dragging stops the cursor value returns to the initial one
     map.on('pointerup', function(evt) {
-      map.getViewport().style.cursor = oldCursorStyle;
+      map.getViewport().style.cursor = "initial";
     });
 
     $('body').on('keydown', function(evt){
-      if(evt.shiftKey && oldCursorStyle!= "copy") {
+      console.log(evt.shiftKey + " " + enableShiftModifier);
+      if(evt.shiftKey && enableShiftModifier)
         map.getViewport().style.cursor = "copy";
-        oldCursorStyle = "copy";
-      }
     });
 
     $('body').on('keyup', function(evt){
+      if(evt.which === 16) // shift key up
         map.getViewport().style.cursor = "initial";
-        oldCursorStyle="initial";
     });
 
   };
