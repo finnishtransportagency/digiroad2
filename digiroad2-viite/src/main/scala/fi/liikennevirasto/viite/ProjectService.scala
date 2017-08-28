@@ -328,7 +328,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         None
     }
     val elyErrors = reservedRoadParts.flatMap(roadAddress =>
-      if (projectEly.getOrElse(roadAddress.ely) != roadAddress.ely) {
+      if ((projectEly.getOrElse(roadAddress.ely) != roadAddress.ely) && projectEly.get != -1) {
         Some(s"TIE ${roadAddress.roadNumber} OSA: ${roadAddress.roadPartNumber} (ELY != ${projectEly.get})")
       } else None)
     if (errors.nonEmpty)
