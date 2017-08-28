@@ -3,7 +3,6 @@
   root.MapView = function(map, layers, instructionsPopup) {
     var isInitialized = false;
     var centerMarkerLayer = new ol.source.Vector({});
-    var oldCursorStyle = "initial";
     var enableShiftModifier = false;
 
     var showAssetZoomDialog = function() {
@@ -137,7 +136,6 @@
     });
 
     $('body').on('keydown', function(evt){
-      console.log(evt.shiftKey + " " + enableShiftModifier);
       if(evt.shiftKey && enableShiftModifier)
         map.getViewport().style.cursor = "copy";
     });

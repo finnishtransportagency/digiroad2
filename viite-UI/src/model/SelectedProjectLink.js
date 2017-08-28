@@ -16,9 +16,19 @@
     };
 
     var openShift = function(linkIds) {
-      ids = linkIds;
-      current = projectLinkCollection.getByLinkId(linkIds);
-      eventbus.trigger('projectLink:clicked', get());
+      if (linkIds.length === 0) {
+        cleanIds();
+        close();
+      } else {
+        var added = _.difference(linkIds, ids);
+        ids = linkIds;
+        current = _.filter(current, function(link) {
+          return _.contains(linkIds, link.getData().linkId);
+          }
+        );
+        current = current.concat(projectLinkCollection.getByLinkId(added));
+        eventbus.trigger('projectLink:clicked', get());
+      }
     };
 
     var get = function() {

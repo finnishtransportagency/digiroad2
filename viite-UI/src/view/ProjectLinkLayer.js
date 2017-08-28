@@ -170,6 +170,7 @@
     selectSingleClick.set('name','selectSingleClickInteractionPLL');
 
     selectSingleClick.on('select',function(event) {
+      var shiftPressed = event.mapBrowserEvent.originalEvent.shiftKey;
       var selection = _.find(event.selected, function (selectionTarget) {
         return (!_.isUndefined(selectionTarget.projectLinkData) && (
           (selectionTarget.projectLinkData.status === notHandledStatus || selectionTarget.projectLinkData.status === newRoadAddressStatus ) ||
@@ -177,12 +178,28 @@
           selectionTarget.projectLinkData.roadClass === 99 || selectionTarget.projectLinkData.roadLinkSource === 3)
         );
       });
-      selectedProjectLinkProperty.clean();
-      $('.wrapper').remove();
-      $('#actionButtons').html('<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button><button disabled id ="send-button" class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button>');
-      if (!_.isUndefined(selection))
-        selectedProjectLinkProperty.open(selection.projectLinkData.linkId, true);
-      else selectedProjectLinkProperty.cleanIds();
+      if (shiftPressed && !_.isUndefined(selectedProjectLinkProperty.get())) {
+        if(!_.isUndefined(selection) && canItBeAddToSelection(selection.projectLinkData)){
+          var clickedIds = projectCollection.getMultiSelectIds(selection.projectLinkData.linkId);
+          var previouslySelectedIds = _.map(selectedProjectLinkProperty.get(), function(selected){
+            return selected.linkId;
+          });
+          if(_.contains(previouslySelectedIds, selection.projectLinkData.linkId)){
+            previouslySelectedIds = _.without(previouslySelectedIds, clickedIds);
+          } else {
+            previouslySelectedIds = _.union(previouslySelectedIds, clickedIds)
+          }
+          selectedProjectLinkProperty.openShift(previouslySelectedIds);
+        }
+        highlightFeatures();
+      } else {
+        selectedProjectLinkProperty.clean();
+        $('.wrapper').remove();
+        $('#actionButtons').html('<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button><button disabled id ="send-button" class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button>');
+        if (!_.isUndefined(selection))
+          selectedProjectLinkProperty.open(selection.projectLinkData.linkId, true);
+        else selectedProjectLinkProperty.cleanIds();
+      }
     });
 
     var selectDoubleClick = new ol.interaction.Select({
@@ -246,7 +263,7 @@
           selectionTarget.projectLinkData.roadClass === 99 || selectionTarget.projectLinkData.roadLinkSource === 3)
         );
       });
-      if (shiftPressed) {
+      if (shiftPressed && !_.isUndefined(selectedProjectLinkProperty.get())) {
         if(!_.isUndefined(selection) && canItBeAddToSelection(selection.projectLinkData)){
           var selectedLinkIds = _.map(selectedProjectLinkProperty.get(), function(selected){
             return selected.linkId;
@@ -256,9 +273,9 @@
           } else {
             selectedLinkIds = selectedLinkIds.concat(selection.projectLinkData.linkId);
           }
-          selectedProjectLinkProperty.clean();
           selectedProjectLinkProperty.openShift(selectedLinkIds);
         }
+        highlightFeatures();
       } else {
         selectedProjectLinkProperty.clean();
         if (!_.isUndefined(selection))
@@ -269,9 +286,9 @@
 
     var canItBeAddToSelection = function(selectionData) {
       var currentlySelectedSample = _.first(selectedProjectLinkProperty.get());
-      var noRoadAddressData = selectionData.roadNumber === 0 && selectionData.roadPartNumber === 0 && selectionData.trackCode === 99;
-      var roadAddressDataSameAsSelection = selectionData.roadNumber !== currentlySelectedSample.roadNumber && selectionData.roadPartNumber !== currentlySelectedSample.roadPartNumber && selectionData.track !== currentlySelectedSample.track;
-      return noRoadAddressData || roadAddressDataSameAsSelection;
+      return selectionData.roadNumber === currentlySelectedSample.roadNumber &&
+        selectionData.roadPartNumber === currentlySelectedSample.roadPartNumber &&
+        selectionData.trackCode === currentlySelectedSample.trackCode;
     };
 
     var revertSelectedChanges = function() {
@@ -378,7 +395,8 @@
 
     var zoomDoubleClickListener = function(event) {
       _.defer(function(){
-        if(selectedProjectLinkProperty.get().length === 0 && applicationModel.getSelectedLayer() == 'roadAddressProject' && map.getView().getZoom() <= 13){
+        if(!event.shiftKey && selectedProjectLinkProperty.get().length === 0 &&
+          applicationModel.getSelectedLayer() == 'roadAddressProject' && map.getView().getZoom() <= 13){
           map.getView().setZoom(map.getView().getZoom()+1);
         }
       });
@@ -553,9 +571,6 @@
       var ids = {};
       _.each(selectedProjectLinkProperty.get(), function (sel) { ids[sel.linkId] = true; });
 
-      selectedProjectLinkProperty.setCurrent(_.filter(projectCollection.getProjectLinks(), function (projectLink) {
-        return ids[projectLink.getData().linkId];
-      }));
       var editedLinks = _.map(projectCollection.getDirty(), function(editedLink) {return editedLink.id;});
 
       var separated = _.partition(projectCollection.getAll(), function(projectRoad){
