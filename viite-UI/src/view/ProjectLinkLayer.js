@@ -170,7 +170,8 @@
     selectSingleClick.set('name','selectSingleClickInteractionPLL');
 
     selectSingleClick.on('select',function(event) {
-      var shiftPressed = event.mapBrowserEvent.originalEvent.shiftKey;
+      var shiftPressed = event.mapBrowserEvent !== undefined ?
+        event.mapBrowserEvent.originalEvent.shiftKey : false;
       var selection = _.find(event.selected, function (selectionTarget) {
         return (!_.isUndefined(selectionTarget.projectLinkData) && (
           (selectionTarget.projectLinkData.status === notHandledStatus || selectionTarget.projectLinkData.status === newRoadAddressStatus ) ||
@@ -187,7 +188,7 @@
           if(_.contains(previouslySelectedIds, selection.projectLinkData.linkId)){
             previouslySelectedIds = _.without(previouslySelectedIds, clickedIds);
           } else {
-            previouslySelectedIds = _.union(previouslySelectedIds, clickedIds)
+            previouslySelectedIds = _.union(previouslySelectedIds, clickedIds);
           }
           selectedProjectLinkProperty.openShift(previouslySelectedIds);
         }
