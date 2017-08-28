@@ -26,14 +26,31 @@ class DirectionalTrafficSignService(val roadLinkService: RoadLinkService) extend
 
   override def create(asset: IncomingDirectionalTrafficSign, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass] = None, linkSource: LinkGeomSource): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat, 0), geometry)
-    withDynTransaction {
-      OracleDirectionalTrafficSignDao.create(asset, mValue, municipality ,username)
+    GeometryUtils.calculatePointFromLinearReference(geometry, mValue) match {
+      case Some(point) =>
+        val assetWithNewPoints = asset.copy(lon = point.x, lat = point.y)
+        withDynTransaction {
+          OracleDirectionalTrafficSignDao.create(assetWithNewPoints, mValue, municipality ,username)
+        }
+      case None =>
+        withDynTransaction {
+          OracleDirectionalTrafficSignDao.create(asset, mValue, municipality ,username)
+        }
     }
   }
+
   override def update(id: Long, updatedAsset: IncomingDirectionalTrafficSign, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat, 0), geometry)
-    withDynTransaction {
-      OracleDirectionalTrafficSignDao.update(id, updatedAsset, mValue, municipality, username)
+    GeometryUtils.calculatePointFromLinearReference(geometry, mValue) match {
+      case Some(point) =>
+        val updatedAssetNewPoints = updatedAsset.copy(lon = point.x, lat = point.y)
+        withDynTransaction {
+          OracleDirectionalTrafficSignDao.update(id, updatedAssetNewPoints, mValue, municipality, username)
+        }
+      case None =>
+        withDynTransaction {
+          OracleDirectionalTrafficSignDao.update(id, updatedAsset, mValue, municipality, username)
+        }
     }
     id
   }

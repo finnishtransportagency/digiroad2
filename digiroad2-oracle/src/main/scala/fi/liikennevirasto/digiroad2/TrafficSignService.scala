@@ -66,15 +66,31 @@ class TrafficSignService(val roadLinkService: RoadLinkService) extends PointAsse
 
   override def create(asset: IncomingTrafficSign, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass] = None, linkSource: LinkGeomSource): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat, 0), geometry)
-    withDynTransaction {
-      OracleTrafficSignDao.create(asset, mValue, username, municipality, VVHClient.createVVHTimeStamp(), linkSource)
+    GeometryUtils.calculatePointFromLinearReference(geometry, mValue) match {
+      case Some(point) =>
+        val assetWithNewPoints = asset.copy(lon = point.x, lat = point.y)
+        withDynTransaction {
+          OracleTrafficSignDao.create(assetWithNewPoints, mValue, username, municipality, VVHClient.createVVHTimeStamp(), linkSource)
+        }
+      case None =>
+        withDynTransaction {
+          OracleTrafficSignDao.create(asset, mValue, username, municipality, VVHClient.createVVHTimeStamp(), linkSource)
+        }
     }
   }
 
   override def update(id: Long, updatedAsset: IncomingTrafficSign, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat, 0), geometry)
-    withDynTransaction {
-      OracleTrafficSignDao.update(id, updatedAsset, mValue, municipality, username, Some(VVHClient.createVVHTimeStamp()), linkSource)
+    GeometryUtils.calculatePointFromLinearReference(geometry, mValue) match {
+      case Some(point) =>
+        val updatedAssetNewPoints = updatedAsset.copy(lon = point.x, lat = point.y)
+        withDynTransaction {
+          OracleTrafficSignDao.update(id, updatedAssetNewPoints, mValue, municipality, username, Some(VVHClient.createVVHTimeStamp()), linkSource)
+        }
+      case None =>
+        withDynTransaction {
+          OracleTrafficSignDao.update(id, updatedAsset, mValue, municipality, username, Some(VVHClient.createVVHTimeStamp()), linkSource)
+        }
     }
     id
   }

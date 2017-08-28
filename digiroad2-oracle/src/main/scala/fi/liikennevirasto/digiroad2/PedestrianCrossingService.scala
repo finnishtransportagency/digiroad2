@@ -23,15 +23,29 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService) extends Po
 
   override def create(asset: IncomingPedestrianCrossing, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass] = None, linkSource: LinkGeomSource): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat, 0), geometry)
-    withDynTransaction {
-      OraclePedestrianCrossingDao.create(PedestrianCrossingToBePersisted(asset.linkId, asset.lon, asset.lat, mValue, municipality, username), username, VVHClient.createVVHTimeStamp(), linkSource)
+    GeometryUtils.calculatePointFromLinearReference(geometry, mValue) match {
+      case Some(point) =>
+        withDynTransaction {
+          OraclePedestrianCrossingDao.create(PedestrianCrossingToBePersisted(asset.linkId, point.x, point.y, mValue, municipality, username), username, VVHClient.createVVHTimeStamp(), linkSource)
+        }
+      case None =>
+        withDynTransaction {
+          OraclePedestrianCrossingDao.create(PedestrianCrossingToBePersisted(asset.linkId, asset.lon, asset.lat, mValue, municipality, username), username, VVHClient.createVVHTimeStamp(), linkSource)
+        }
     }
   }
 
   override def update(id: Long, updatedAsset: IncomingAsset, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat, 0), geometry)
-    withDynTransaction {
-      OraclePedestrianCrossingDao.update(id, PedestrianCrossingToBePersisted(updatedAsset.linkId, updatedAsset.lon, updatedAsset.lat, mValue, municipality, username), Some(VVHClient.createVVHTimeStamp()), linkSource)
+    GeometryUtils.calculatePointFromLinearReference(geometry, mValue) match {
+      case Some(point) =>
+        withDynTransaction {
+          OraclePedestrianCrossingDao.update(id, PedestrianCrossingToBePersisted(updatedAsset.linkId, point.x, point.y, mValue, municipality, username), Some(VVHClient.createVVHTimeStamp()), linkSource)
+        }
+      case None =>
+        withDynTransaction {
+          OraclePedestrianCrossingDao.update(id, PedestrianCrossingToBePersisted(updatedAsset.linkId, updatedAsset.lon, updatedAsset.lat, mValue, municipality, username), Some(VVHClient.createVVHTimeStamp()), linkSource)
+        }
     }
     id
   }
