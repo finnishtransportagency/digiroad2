@@ -45,7 +45,7 @@
     var titleWithProjectName = function(projectName) {
       return '<span class ="edit-mode-title">'+projectName+'<button id="editProject_'+ currentProject.id +'" ' +
         'class="btn-edit-project" style="visibility:hidden;" value="' + currentProject.id + '"></button></span>' +
-        '<span id="closeProject" class="rightSideSpan" style="visibility:hidden;">Sulje Projekti</span>';
+        '<span id="closeProjectSpan" class="rightSideSpan" style="visibility:hidden;">Sulje Projekti</span>';
     };
 
     var actionButtons = function(ready) {
@@ -282,7 +282,7 @@
           _.defer(function(){
             applicationModel.selectLayer('roadAddressProject');
             $('[id^=editProject]').css('visibility', 'visible');
-            $('#closeProject').css('visibility', 'visible');
+            $('#closeProjectSpan').css('visibility', 'visible');
           });
         });
         if(_.isUndefined(currentProject) || currentProject.id === 0){
@@ -464,14 +464,31 @@
         }
       });
 
-      rootElement.on('click', '.project-form button.cancel', function(){
+     var displayCloseConfirmMessage = function(popupMessage, changeLayerMode) {
+       new GenericConfirmPopup(popupMessage, {
+         successCallback: function () {
+           applicationModel.setOpenProject(false);
+           rootElement.find('header').toggle();
+           rootElement.find('.wrapper').toggle();
+           rootElement.find('footer').toggle();
+           projectCollection.clearRoadAddressProjects();
+           eventbus.trigger('layer:enableButtons', true);
+           if(changeLayerMode){
+             applicationModel.selectLayer('linkProperty');
+           }
+         }
+       });
+      };
+
+      rootElement.on('click', '.project-form button.cancel', function(eventData){
+        var defaultPopupMessage = 'Haluatko sulkea projektin ja lalata alkuun? \r\nProjekti tallennetaan keskeneräiseksi.\r\nTallentamattomat muutokset häviävät.';
         if (currentProject && hasNewRoadParts) {
           hasNewRoadParts = false;
           projectCollection.setReservedDirtyRoadParts([]);
           fillForm(projectCollection.getCurrentRoadPartList(), projectCollection.getReservedDirtyRoadParts());
         }
         else if(!_.isEqual(projectCollection.getDirtyRoadParts(), projectCollection.getCurrentRoadPartList())){
-          new GenericConfirmPopup('Haluatko sulkea projektin ja lalata alkuun? \r\nProjekti tallennetaan keskeneräiseksi.\r\nTallentamattomat muutokset häviävät.', {
+          new GenericConfirmPopup(defaultPopupMessage, {
             successCallback: function () {
               projectCollection.setCurrentRoadPartList(projectCollection.getCurrentRoadPartList());
               fillForm(projectCollection.getCurrentRoadPartList(), projectCollection.getReservedDirtyRoadParts());
@@ -479,20 +496,14 @@
           });
         }
         else if (activeLayer) {
-          new GenericConfirmPopup('Haluatko sulkea projektin ja lalata alkuun? \r\nProjekti tallennetaan keskeneräiseksi.\r\nTallentamattomat muutokset häviävät.', {
-            successCallback: function () {
-              applicationModel.setOpenProject(false);
-              rootElement.find('header').toggle();
-              rootElement.find('.wrapper').toggle();
-              rootElement.find('footer').toggle();
-              projectCollection.clearRoadAddressProjects();
-              eventbus.trigger('layer:enableButtons', true);
-            }
-          });
+          displayCloseConfirmMessage(defaultPopupMessage);
         } else {
           eventbus.trigger('roadAddress:openProject', projectCollection.getCurrentProject());
           eventbus.trigger('roadLinks:refreshView');
         }
+      });
+      rootElement.on('click', '#closeProjectSpan', function(){
+        displayCloseConfirmMessage("Haluatko sulkea projektin ja lalata alkuun? \r\nProjekti tallennetaan keskeneräiseksi.", true);
       });
 
       rootElement.on('change', '.input-required', function() {

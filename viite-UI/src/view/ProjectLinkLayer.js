@@ -676,7 +676,7 @@
     eventbus.on('map:moved', mapMovedHandler, this);
 
     eventbus.on('layer:selected', function(layer, previouslySelectedLayer) {
-      //TODO create proper system for layer changes and needed calls
+      //TODO: there might be room for improvement on this, but I am not seeing it
       if (layer !== 'roadAddressProject') {
         deactivateSelectInteractions(true);
         removeSelectInteractions();
@@ -687,6 +687,7 @@
       }
       if (previouslySelectedLayer === 'roadAddressProject') {
         clearProjectLinkLayer();
+        clearLayers();
         hideLayer();
         removeSelectInteractions();
       }

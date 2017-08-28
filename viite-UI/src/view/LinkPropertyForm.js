@@ -604,6 +604,13 @@
       eventbus.on('linkProperties:changed', function() {
         rootElement.find('.link-properties button').attr('disabled', false);
       });
+
+      eventbus.on('layer:selected', function(layer, previouslySelectedLayer){
+        if(layer === "linkProperty"){
+          processEmptyness();
+        }
+      });
+
       eventbus.on('linkProperties:unselected', function() {
         if(('all' === applicationModel.getSelectionType() || 'floating' === applicationModel.getSelectionType()) && !applicationModel.isProjectOpen()){
           processEmptyness();
