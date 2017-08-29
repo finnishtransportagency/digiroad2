@@ -20,6 +20,7 @@
     var terminatedStatus = 1;
     var newRoadAddressStatus = 2;
     var unknownStatus = 99;
+    var unchangedStatus = 4;
     Layer.call(this, layerName, roadLayer);
     var project;
     var me = this;
@@ -83,13 +84,17 @@
         borderWidth = 3;
         lineColor = 'rgba(56, 56, 54, 1)';
       }
+      if (status === unchangedStatus) {
+        borderWidth = 5;
+        lineColor = 'rgba(0, 0, 255, 1)';
+      }
 
       if (status === newRoadAddressStatus) {
         borderWidth = 5;
         lineColor = 'rgba(255, 85, 221, 0.7)';
       }
 
-      if (status === notHandledStatus || status === terminatedStatus || status  === newRoadAddressStatus) {
+      if (status === notHandledStatus || status === terminatedStatus || status  === newRoadAddressStatus || status === unchangedStatus) {
         var strokeWidth = styler.strokeWidthByZoomLevel(currentZoom, feature.projectLinkData.roadLinkType, feature.projectLinkData.anomaly, feature.projectLinkData.roadLinkSource, false, feature.projectLinkData.constructionType);
         var borderCap = 'round';
 
@@ -176,7 +181,8 @@
         return (!_.isUndefined(selectionTarget.projectLinkData) && (
           (selectionTarget.projectLinkData.status === notHandledStatus || selectionTarget.projectLinkData.status === newRoadAddressStatus ) ||
           (selectionTarget.projectLinkData.anomaly==noAddressAnomaly && selectionTarget.projectLinkData.roadLinkType!=floatingRoadLinkType) ||
-          selectionTarget.projectLinkData.roadClass === 99 || selectionTarget.projectLinkData.roadLinkSource === 3)
+          selectionTarget.projectLinkData.roadClass === 99 || selectionTarget.projectLinkData.roadLinkSource === 3 ||
+            selectionTarget.projectLinkData.status === unchangedStatus)
         );
       });
       if (shiftPressed && !_.isUndefined(selectedProjectLinkProperty.get())) {
@@ -260,8 +266,9 @@
       var selection = _.find(event.selected, function (selectionTarget) {
         return (!_.isUndefined(selectionTarget.projectLinkData) && (
           (selectionTarget.projectLinkData.status === notHandledStatus || selectionTarget.projectLinkData.status === newRoadAddressStatus) ||
-          (selectionTarget.projectLinkData.anomaly == noAddressAnomaly && selectionTarget.projectLinkData.roadLinkType != floatingRoadLinkType) ||
-          selectionTarget.projectLinkData.roadClass === 99 || selectionTarget.projectLinkData.roadLinkSource === 3)
+          (selectionTarget.projectLinkData.anomaly==noAddressAnomaly && selectionTarget.projectLinkData.roadLinkType!=floatingRoadLinkType) ||
+          selectionTarget.projectLinkData.roadClass === 99 || selectionTarget.projectLinkData.roadLinkSource === 3 ||
+            selectionTarget.projectLinkData.status === unchangedStatus)
         );
       });
       if (shiftPressed && !_.isUndefined(selectedProjectLinkProperty.get())) {
@@ -572,11 +579,21 @@
       var ids = {};
       _.each(selectedProjectLinkProperty.get(), function (sel) { ids[sel.linkId] = true; });
 
-      var editedLinks = _.map(projectCollection.getDirty(), function(editedLink) {return editedLink.id;});
+      var editedLinks = _.map(projectCollection.getDirty(), function(editedLink) {return editedLink;});
 
       var separated = _.partition(projectCollection.getAll(), function(projectRoad){
         return projectRoad.roadLinkSource === 3;
       });
+      var toBeTerminated = _.partition(editedLinks, function(link){
+        return link.status === terminatedStatus;
+      });
+      var toBeUnchanged = _.partition(editedLinks, function(link){
+        return link.status === unchangedStatus;
+      });
+
+      var toBeTerminatedLinkIds = _.pluck(toBeTerminated[0], 'id');
+      var toBeUnchangedLinkIds = _.pluck(toBeUnchanged[0], 'id');
+
       var suravageProjectRoads = separated[0];
       var suravageFeatures = [];
       suravageProjectDirectionMarkerLayer.getSource().clear();
@@ -659,23 +676,38 @@
 
       calibrationPointLayer.setZIndex(standardZIndex + 2);
       var partitioned = _.partition(features, function(feature) {
-        return (!_.isUndefined(feature.projectLinkData.linkId) && _.contains(editedLinks, feature.projectLinkData.linkId));
+        return (!_.isUndefined(feature.projectLinkData.linkId) && _.contains(_.pluck(editedLinks, 'id'), feature.projectLinkData.linkId));
       });
       features = [];
       _.each(partitioned[0], function(feature) {
-        var editedLink = (!_.isUndefined(feature.projectLinkData.linkId) && _.contains(editedLinks, feature.projectLinkData.linkId));
-        if(editedLink){
-          feature.projectLinkData.status = terminatedStatus;
-          feature.setStyle(new ol.style.Style({
-            fill: new ol.style.Fill({
-              color: 'rgba(56, 56, 54, 1)'
-            }),
-            stroke: new ol.style.Stroke({
-              color: 'rgba(56, 56, 54, 1)',
-              width: 8
-            })
-          }));
-          features.push(feature);
+        var editedLink = (!_.isUndefined(feature.projectLinkData.linkId) && _.contains(_.pluck(editedLinks, 'id'), feature.projectLinkData.linkId));
+        if(editedLink) {
+          if (_.contains(toBeTerminatedLinkIds, feature.projectLinkData.linkId)) {
+            feature.projectLinkData.status = terminatedStatus;
+            feature.setStyle(new ol.style.Style({
+              fill: new ol.style.Fill({
+                color: 'rgba(56, 56, 54, 1)'
+              }),
+              stroke: new ol.style.Stroke({
+                color: 'rgba(56, 56, 54, 1)',
+                width: 8
+              })
+            }));
+            features.push(feature);
+          }
+          else if (_.contains(toBeUnchangedLinkIds, feature.projectLinkData.linkId)) {
+            feature.projectLinkData.status = unchangedStatus;
+            feature.setStyle(new ol.style.Style({
+              fill: new ol.style.Fill({
+                color: 'rgba(0, 0, 255, 1)'
+              }),
+              stroke: new ol.style.Stroke({
+                color: 'rgba(0, 0, 255, 1)',
+                width: 8
+              })
+            }));
+            features.push(feature);
+          }
         }
       });
       if(features.length !== 0)
