@@ -381,7 +381,7 @@
       }
     };
 
-    var processEmptyness = function(){
+    var addOpenProjectButton = function(){
       var rootElement = $('#feature-attributes');
       rootElement.empty();
       var emptyFormDiv = '<div class="form-initial-state" id="emptyFormDiv">' +
@@ -399,7 +399,7 @@
     var bindEvents = function() {
       var rootElement = $('#feature-attributes');
 
-      processEmptyness();
+      addOpenProjectButton();
 
       var switchMode = function (readOnly){
         toggleMode(readOnly);
@@ -606,20 +606,20 @@
 
       eventbus.on('layer:selected', function(layer, previouslySelectedLayer){
         if(layer === "linkProperty"){
-          processEmptyness();
+          addOpenProjectButton();
         }
       });
 
       eventbus.on('roadLayer:toggleProjectSelectionInForm', function(layer){
         if(layer === "linkProperty"){
-          processEmptyness();
+          addOpenProjectButton();
           $('#formProjectButton').click();
         }
       });
 
       eventbus.on('linkProperties:unselected', function() {
         if(('all' === applicationModel.getSelectionType() || 'floating' === applicationModel.getSelectionType()) && !applicationModel.isProjectOpen()){
-          processEmptyness();
+          addOpenProjectButton();
         }
       });
       eventbus.on('application:readOnly', toggleMode);
