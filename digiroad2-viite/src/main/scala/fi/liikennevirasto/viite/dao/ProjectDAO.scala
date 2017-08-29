@@ -116,7 +116,8 @@ object ProjectDAO {
 
 
   def updateProjectLinksToDB( projectLinks: Seq[ProjectLink]): Unit ={
-    val projectLinkPS = dynamicSession.prepareStatement("update project_link SET roadNumber = ?,   roadPartNumber = ?, track=?, discontinuity = ?, startAddrMvalue,endAddrMValue=?,startDate=?,enddate=?,modifiedBy=?,lrmPositionId=?,linkId=?,startMValue=?,endMvalue=?, sidecode=?  where id = ?")
+    val projectLinkPS = dynamicSession.prepareStatement("update project_link SET ROAD_NUMBER = ?,  ROAD_PART_NUMBER = ?, TRACK_CODE=?, DISCONTINUITY_TYPE = ?, START_ADDR_M=?, END_ADDR_M=? ,MODIFIED_BY=?,LRM_POSITION_ID=?, sidecode=?, calibrationPoints=?,projectid=?  WHERE id = ?")
+    val lrmPS = dynamicSession.prepareStatement("update LRM_POSITION  SET SIDE_CODE=?, WHERE LINK_ID = ?")
     for (projectLink <-projectLinks){
       projectLinkPS.setLong(1,projectLink.roadNumber)
       projectLinkPS.setLong(2,projectLink.roadPartNumber)
@@ -124,16 +125,15 @@ object ProjectDAO {
       projectLinkPS.setInt(4,projectLink.discontinuity.value)
       projectLinkPS.setLong(5,projectLink.startAddrMValue)
       projectLinkPS.setLong(6,projectLink.endAddrMValue)
-      projectLinkPS.setDate(7, new java.sql.Date(projectLink.startDate.orNull.toDate.getTime))
-      projectLinkPS.setDate(8 ,new java.sql.Date(projectLink.endDate.orNull.toDate.getTime))
-      projectLinkPS.setString(9,projectLink.modifiedBy.getOrElse(""))
-      projectLinkPS.setLong(10,projectLink.lrmPositionId)
-      projectLinkPS.setLong(11,projectLink.linkId)
-      projectLinkPS.setDouble(12,projectLink.startMValue)
-      projectLinkPS.setDouble(13,projectLink.endMValue)
-      projectLinkPS.setInt(14,projectLink.sideCode.value)
-      projectLinkPS.setInt(15, CalibrationCode.getFromAddress(projectLink)   //.calibrations(CalibrationCode.apply(calibrationPoints.toInt))
-
+/*   //add sysdate for modifieddate
+      projectLinkPS.setDate(8 ,new java.sql.Date(projectLink.endDate.orNull.toDate.getTime))*/
+      projectLinkPS.setString(7,projectLink.modifiedBy.getOrElse(""))
+      projectLinkPS.setLong(8,projectLink.lrmPositionId)
+      projectLinkPS.setInt(12,projectLink.sideCode.value)
+      projectLinkPS.setLong(13, projectLink.projectId)   //.calibrations(CalibrationCode.apply(calibrationPoints.toInt))
+      projectLinkPS.setInt(14, CalibrationCode.getFromProjectLink(projectLink).value)
+      projectLinkPS.setInt(15, projectLink.status.value)
+      projectLinkPS.setInt(15, projectLink.roadType.value)
     }
   }
 
