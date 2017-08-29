@@ -800,7 +800,7 @@ class TierekisteriTrafficSignAssetClient(trEndPoint: String, trEnable: Boolean, 
   private val trPUOLI = "PUOLI"
 
   override def mapFields(data: Map[String, Any]): TierekisteriTrafficSignData = {
-    val assetValue = getFieldValue(data, trLMTEKSTI).getOrElse("")
+    val assetValue = getFieldValue(data, trLMTEKSTI).getOrElse("").trim
     //TODO remove the orElse and ignrore the all row when we give support for that on TierekisteriClient base implementation
     val assetNumber = convertToInt(getFieldValue(data, trLMNUMERO).orElse(Some("99"))).get
     val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get

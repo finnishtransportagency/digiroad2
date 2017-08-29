@@ -57,6 +57,10 @@ class RoadAddressDAO {
     query + s" WHERE ra.road_number = $road AND ra.TRACK_CODE = $track AND ra.road_part_number = $roadPart and (ra.valid_to > sysdate or ra.valid_to is null) and ra.floating = 0"
   }
 
+  def withRoadNumber(road: Long, trackCodes: Set[Int])(query: String): String = {
+    query + s" WHERE ra.road_number = $road AND ra.TRACK_CODE in (${trackCodes.mkString(",")}) AND (ra.valid_to > sysdate or ra.valid_to is null) AND ra.floating = 0"
+  }
+
   def withRoadNumber(road: Long, roadPart:Long)(query: String): String = {
     query + s" WHERE ra.road_number = $road AND ra.road_part_number = $roadPart and (ra.valid_to > sysdate or ra.valid_to is null) and ra.floating = 0"
   }
