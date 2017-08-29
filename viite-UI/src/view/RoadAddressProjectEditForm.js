@@ -69,7 +69,7 @@
           ' OSA ' + '<span class="project-edit">' + link.roadPartNumber + '</span>' +
           ' AJR ' + '<span class="project-edit">' + link.trackCode + '</span>' +
           ' M:  ' + '<span class="project-edit">' + startM + ' - ' + endM + '</span>' +
-          selected.length > 1 ? ' (' + selected.length + ' linkkiä)' : '' +
+           (selected.length > 1 ? ' (' + selected.length + ' linkkiä)' : '')+
           '</div>' +
           '</div>';
       }
