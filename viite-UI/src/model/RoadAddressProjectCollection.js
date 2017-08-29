@@ -300,6 +300,10 @@
       return '<label class="control-label-small">' + label + '</label>';
     };
 
+    var addSmallLabelWithIds = function(label, id){
+      return '<label class="control-label-small" id='+ id+'>'+label+'</label>';
+    };
+
     var updateFormInfo = function (formInfo) {
       $("#roadpartList").append($("#roadpartList").html(formInfo));
       $("#newReservedRoads").append($("#newReservedRoads").html(formInfo));
@@ -310,7 +314,7 @@
       var index = 0;
       _.each(reservedDirtyRoadPartList, function (row) {
         var button = deleteButton(index++, row.roadNumber, row.roadPartNumber);
-          listContent += '<div style="display:inline-block;">'+ button+ addSmallLabel(row.roadNumber) + addSmallLabel(row.roadPartNumber) + addSmallLabel(row.roadLength) + addSmallLabel(row.discontinuity) + addSmallLabel(row.ely) +'</div>';
+          listContent += '<div style="display:inline-block;">'+ button+ addSmallLabelWithIds(row.roadNumber,'reservedRoadNumber') + addSmallLabelWithIds(row.roadPartNumber, 'reservedRoadPartNumber') + addSmallLabelWithIds(row.roadLength, 'reservedRoadLength') + addSmallLabelWithIds(row.discontinuity, 'reservedDiscontinuity') + addSmallLabelWithIds(row.ely, 'reservedEly') +'</div>';
         }
       );
       return listContent;

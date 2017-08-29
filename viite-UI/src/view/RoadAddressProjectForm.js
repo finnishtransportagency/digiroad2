@@ -103,7 +103,7 @@
         '</form>' +
         ' </div>'+
         '</div>' + '<div class = "form-result">'  +'<label >' + 'PROJEKTIIN VALITUT TIEOSAT:' + '</label>'+
-        '<div style="margin-left: 20px;">' +
+        '<div>' +
         addSmallLabel('TIE')+ addSmallLabel('OSA')+ addSmallLabel('PITUUS')+ addSmallLabel('JATKUU')+ addSmallLabel('ELY')+
         '</div>'+
         '<div id ="roadpartList">'+
@@ -177,6 +177,10 @@
       return '<label class="control-label-small">'+label+'</label>';
     };
 
+    var addSmallLabelWithIds = function(label, id){
+      return '<label class="control-label-small" id='+ id+'>'+label+'</label>';
+    };
+
     var addSmallInputNumber = function(id, value){
       //Validate only number characters on "onkeypress" including TAB and backspace
       return '<input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode == 8 || event.keyCode == 9)' +
@@ -228,7 +232,7 @@
         _.each(list, function (line) {
           text += '<div style="display:inline-block;">' + projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber) +
             addSmallLabel(line.roadNumber) +
-            addSmallLabel(line.roadPartNumber) + addSmallLabel(line.roadLength) + addSmallLabel(line.discontinuity) + addSmallLabel(line.ely) +
+            addSmallLabelWithIds(line.roadPartNumber,'reservedRoadPartNumber') + addSmallLabelWithIds(line.roadLength,'reservedRoadLength') + addSmallLabelWithIds(line.discontinuity, 'reservedDiscontinuity') + addSmallLabelWithIds(line.ely,'reservedEly') +
             '</div>';
         });
         return text;
@@ -293,6 +297,32 @@
         }
       };
 
+      var createNewProject = function() {
+        var data = $('#roadAddressProject').get(0);
+        applicationModel.addSpinner();
+        eventbus.once('roadAddress:projectSaved', function (result) {
+          currentProject = result.project;
+          currentProject.isDirty = false;
+          jQuery('.modal-overlay').remove();
+          if(!_.isUndefined(result.projectAddresses)) {
+            eventbus.trigger('linkProperties:selectedProject', result.projectAddresses.linkId);
+          }
+          eventbus.trigger('roadAddressProject:openProject', result.project);
+          rootElement.html(selectedProjectLinkTemplate(currentProject, options, selectedProjectLink));
+          _.defer(function(){
+            applicationModel.selectLayer('roadAddressProject');
+            $('[id^=editProject]').css('visibility', 'visible');
+            $('#closeProjectSpan').css('visibility', 'visible');
+          });
+        });
+        if(_.isUndefined(currentProject) || currentProject.id === 0){
+          projectCollection.setDirtyRoadParts(projectCollection.getReservedDirtyRoadParts());
+          projectCollection.createProject(data);
+        } else {
+          projectCollection.saveProject(data);
+        }
+      };
+
       var fillForm = function (currParts, newParts) {
         if (newParts.length === 0) hasNewRoadParts = false;
         rootElement.html(openProjectTemplate(currentProject, writeHtmlList(currParts), writeHtmlList(newParts)));
@@ -306,7 +336,10 @@
       };
 
       eventbus.on('roadAddress:newProject', function() {
-        currentProject=undefined; //clears old data
+        currentProject = {
+          id: 0,
+          isDirty:false
+        }; //clears old data
         $("#roadAddressProject").html("");
         rootElement.html(newProjectTemplate());
         jQuery('.modal-overlay').remove();
@@ -353,8 +386,8 @@
       });
 
       eventbus.on('roadAddress:projectValidationSucceed', function () {
-        rootElement.find('.btn-next').prop("disabled", formIsInvalid(rootElement));
-        rootElement.find('.btn-save').prop("disabled", formIsInvalid(rootElement));
+        rootElement.find('#generalNext').prop("disabled", formIsInvalid(rootElement));
+        currentProject.isDirty = true;
         hasNewRoadParts = true;
       });
 
@@ -380,10 +413,14 @@
 
       rootElement.on('click', '#generalNext', function() {
         if(currentProject.isDirty){
-          saveChanges();
-          _.defer(function(){
-            nextStage();
-          });
+          if(currentProject.id === 0){
+            createNewProject();
+          } else {
+            saveChanges();
+            _.defer(function(){
+              nextStage();
+            });
+          }
         } else {
           nextStage();
         }
@@ -438,30 +475,6 @@
 
       rootElement.on('change', '.form-group', function() {
         rootElement.find('.action-selected-field').prop("hidden", false);
-      });
-
-      rootElement.on('click', '.project-form button.next', function(){
-        var data = $('#roadAddressProject').get(0);
-        applicationModel.addSpinner();
-        eventbus.once('roadAddress:projectSaved', function (result) {
-          currentProject = result.project;
-          currentProject.isDirty = false;
-          jQuery('.modal-overlay').remove();
-          if(!_.isUndefined(result.projectAddresses)) {
-            eventbus.trigger('linkProperties:selectedProject', result.projectAddresses.linkId);
-          }
-          eventbus.trigger('roadAddressProject:openProject', result.project);
-          rootElement.html(selectedProjectLinkTemplate(currentProject, options, selectedProjectLink));
-          _.defer(function(){
-            applicationModel.selectLayer('roadAddressProject');
-          });
-        });
-        if(_.isUndefined(currentProject) || currentProject.id === 0){
-          projectCollection.setDirtyRoadParts(projectCollection.getReservedDirtyRoadParts());
-          projectCollection.createProject(data);
-        } else {
-          projectCollection.saveProject(data);
-        }
       });
 
      var displayCloseConfirmMessage = function(popupMessage, changeLayerMode) {
