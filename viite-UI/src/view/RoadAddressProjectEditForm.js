@@ -251,6 +251,7 @@
       });
 
       eventbus.on('roadAddress:projectLinksUpdated',function(data){
+        eventbus.trigger('projectChangeTable:refresh');
         if (typeof data !== 'undefined' && typeof data.publishable !== 'undefined' && data.publishable) {
           eventbus.trigger('roadAddressProject:projectLinkSaved', data.id, data.publishable);
         }
