@@ -500,16 +500,8 @@
           projectCollection.setReservedDirtyRoadParts([]);
           fillForm(projectCollection.getCurrentRoadPartList(), projectCollection.getReservedDirtyRoadParts());
         }
-        else if(!_.isEqual(projectCollection.getDirtyRoadParts(), projectCollection.getCurrentRoadPartList())){
-          new GenericConfirmPopup(defaultPopupMessage, {
-            successCallback: function () {
-              projectCollection.setCurrentRoadPartList(projectCollection.getCurrentRoadPartList());
-              fillForm(projectCollection.getCurrentRoadPartList(), projectCollection.getReservedDirtyRoadParts());
-            }
-          });
-        }
         else if (activeLayer) {
-          displayCloseConfirmMessage(defaultPopupMessage);
+          displayCloseConfirmMessage(defaultPopupMessage, true);
         } else {
           eventbus.trigger('roadAddress:openProject', projectCollection.getCurrentProject());
           eventbus.trigger('roadLinks:refreshView');

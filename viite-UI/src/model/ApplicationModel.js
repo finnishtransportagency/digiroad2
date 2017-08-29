@@ -139,6 +139,8 @@
           selectedLayer = layer;
           setSelectedTool('Select');
           eventbus.trigger('layer:selected', layer, previouslySelectedLayer);
+        } else if(layer === 'linkProperty') {
+          eventbus.trigger('roadLayer:toggleProjectSelectionInForm', layer);
         }
       },
       getSelectedLayer: function() {

@@ -393,7 +393,6 @@
         $('[id=projectListButton]').click();
         return false;
       });
-      // alert("The form is empty, from startup application");
     };
 
 
@@ -608,6 +607,13 @@
       eventbus.on('layer:selected', function(layer, previouslySelectedLayer){
         if(layer === "linkProperty"){
           processEmptyness();
+        }
+      });
+
+      eventbus.on('roadLayer:toggleProjectSelectionInForm', function(layer){
+        if(layer === "linkProperty"){
+          processEmptyness();
+          $('#formProjectButton').click();
         }
       });
 
