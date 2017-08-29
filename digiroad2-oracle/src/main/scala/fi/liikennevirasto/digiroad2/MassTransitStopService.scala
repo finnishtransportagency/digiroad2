@@ -568,10 +568,11 @@ trait MassTransitStopService extends PointAssetOperations {
       val position = optionalPosition.get
       val point = Point(position.lon, position.lat)
       val mValue = calculateLinearReferenceFromPoint(point, roadLink.geometry)
+      val newPoint = GeometryUtils.calculatePointFromLinearReference(roadLink.geometry, mValue).getOrElse(point)
       massTransitStopDao.updateLrmPosition(id, mValue, roadLink.linkId, roadLink.linkSource)
       massTransitStopDao.updateBearing(id, position)
       massTransitStopDao.updateMunicipality(id, roadLink.municipalityCode)
-      updateAssetGeometry(id, point)
+      updateAssetGeometry(id, newPoint)
     }
     val tierekisteriLiviId = MassTransitStopOperations.liviIdValueOption(persistedStop.propertyData).map(_.propertyValue) // Using the saved LiviId if any
     val modifiedAsset = fetchPointAssets(withId(id)).headOption // Reload from database
@@ -630,9 +631,10 @@ trait MassTransitStopService extends PointAssetOperations {
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     val nationalId = massTransitStopDao.getNationalBusStopId
     val mValue = calculateLinearReferenceFromPoint(point, geometry)
+    val newAssetPoint = GeometryUtils.calculatePointFromLinearReference(geometry, mValue).getOrElse(Point(asset.lon, asset.lat))
     val floating = !PointAssetOperations.coordinatesWithinThreshold(Some(point), GeometryUtils.calculatePointFromLinearReference(geometry, mValue))
     massTransitStopDao.insertLrmPosition(lrmPositionId, mValue, asset.linkId, linkSource)
-    massTransitStopDao.insertAsset(assetId, nationalId, asset.lon, asset.lat, asset.bearing, username, municipality, floating)
+    massTransitStopDao.insertAsset(assetId, nationalId, newAssetPoint.x, newAssetPoint.y, asset.bearing, username, municipality, floating)
     massTransitStopDao.insertAssetLink(assetId, lrmPositionId)
 
     val properties = updatedProperties(asset.properties)
