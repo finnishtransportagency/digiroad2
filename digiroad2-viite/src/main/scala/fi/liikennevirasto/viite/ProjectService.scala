@@ -330,14 +330,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         None
     }
     val elyErrors = reservedRoadParts.flatMap(roadAddress =>
-      if (projectEly.getOrElse(roadAddress.ely) != roadAddress.ely) {
+      if (projectEly.filterNot(l => l == -1L).getOrElse(roadAddress.ely) != roadAddress.ely) {
         Some(s"TIE ${roadAddress.roadNumber} OSA: ${roadAddress.roadPartNumber} (ELY != ${projectEly.get})")
       } else None)
     if (errors.nonEmpty)
       Some(s"Seuraavia tieosia ei löytynyt tietokannasta: ${errors.mkString(", ")}")
     else {
       if (elyErrors.nonEmpty)
-        Some(s"Seuraavat tieosat ovat eri ELY-numerolla kuin projektin muut osat: ${errors.mkString(", ")}")
+        Some(s"Seuraavat tieosat ovat eri ELY-numerolla kuin projektin muut osat: ${elyErrors.mkString(", ")}")
       else {
         val ely = reservedRoadParts.map(_.ely)
         if (ely.distinct.size > 1) {

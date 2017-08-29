@@ -250,11 +250,7 @@ object ProjectDAO {
          FROM project
          WHERE id=$roadAddressProjectId
        """
-    Q.queryNA[Long](query).firstOption match
-    {
-      case Some(number) => Some(number)
-      case None => Some(-1)
-    }
+    Q.queryNA[Long](query).firstOption
   }
 
   def updateProjectEly(roadAddressProjectId: Long, ely: Long): Unit = {
@@ -263,14 +259,20 @@ object ProjectDAO {
       """.execute
   }
 
-  def getRoadAddressProjectById(id: Long): Option[RoadAddressProject] = {
-    val where = s""" where id =${id}"""
+  def getRoadAddressProjectById(projectId: Long): Option[RoadAddressProject] = {
+    val where = s""" where id =${projectId}"""
     val query =
       s"""SELECT id, state, name, created_by, created_date, start_date, modified_by, COALESCE(modified_date, created_date), add_info, ely, status_info
           FROM project $where"""
     Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String, Option[Long], Option[String])](query).list.map {
-      case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo, ely, statusInfo) =>
-        RoadAddressProject(id, ProjectState.apply(state), name, createdBy,createdDate, modifiedBy, start_date, modifiedDate, addInfo, List.empty[ReservedRoadPart], statusInfo, ely)
+      case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo,
+      ely, statusInfo) if ely.contains(-1L) =>
+        RoadAddressProject(id, ProjectState.apply(state), name, createdBy,createdDate, modifiedBy, start_date, modifiedDate,
+          addInfo, List.empty[ReservedRoadPart], statusInfo, None)
+      case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo,
+      ely, statusInfo) =>
+        RoadAddressProject(id, ProjectState.apply(state), name, createdBy,createdDate, modifiedBy, start_date, modifiedDate,
+          addInfo, List.empty[ReservedRoadPart], statusInfo, ely)
     }.headOption
   }
 

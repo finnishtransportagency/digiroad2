@@ -1,17 +1,14 @@
 package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.util.RoadAddressException
-import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.dao.{ProjectLink, _}
 import org.joda.time.DateTime
-import org.slf4j.LoggerFactory
 
 /**
   * Calculate the effective change between the project and the current road address data
   */
 object ProjectDeltaCalculator {
 
-  val logger = LoggerFactory.getLogger(getClass)
   val checker = new ContinuityChecker(null) // We don't need road link service here
   def delta(projectId: Long): Delta = {
     val projectOpt = ProjectDAO.getRoadAddressProjectById(projectId)
@@ -19,11 +16,11 @@ object ProjectDeltaCalculator {
       throw new IllegalArgumentException("Project not found")
     val project = projectOpt.get
     val projectLinks = ProjectDAO.getProjectLinks(projectId).groupBy(l => RoadPart(l.roadNumber,l.roadPartNumber))
-    val currentAddresses = projectLinks.filter(_._2.exists(_.status != LinkStatus.New)).keySet.map(r => r -> RoadAddressDAO.fetchByRoadPart(r.roadNumber, r.roadPartNumber, true)).toMap
+    val currentAddresses = projectLinks.filter(_._2.exists(_.status != LinkStatus.New)).keySet.map(r =>
+      r -> RoadAddressDAO.fetchByRoadPart(r.roadNumber, r.roadPartNumber, includeFloating = true)).toMap
     val terminations = findTerminations(projectLinks, currentAddresses)
     val newCreations = findNewCreations(projectLinks)
     val unChanged = findUnChanged(projectLinks, currentAddresses)
-    val unChangednoCurrentAddress = findUnChanged(projectLinks)
     if (terminations.size + unChanged.size != currentAddresses.values.flatten.size)
       throw new RoadAddressException(s"Road address count did not match: ${terminations.size} terminated, " +
         s"${unChanged.size} kept unchanged, " +
@@ -47,10 +44,6 @@ object ProjectDeltaCalculator {
 
   private def findNewCreations(projectLinks: Map[RoadPart, Seq[ProjectLink]]) = {
     projectLinks.values.flatten.filter(_.status == LinkStatus.New).toSeq
-  }
-
-  private def findUnChanged(projectLinks: Map[RoadPart, Seq[ProjectLink]]) = {
-    projectLinks.values.flatten.filter(_.status == LinkStatus.UnChanged).toSeq
   }
 
   private def validateTerminations(roadAddresses: Seq[RoadAddress]) = {

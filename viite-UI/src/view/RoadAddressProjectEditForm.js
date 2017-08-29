@@ -69,6 +69,7 @@
           ' OSA ' + '<span class="project-edit">' + link.roadPartNumber + '</span>' +
           ' AJR ' + '<span class="project-edit">' + link.trackCode + '</span>' +
           ' M:  ' + '<span class="project-edit">' + startM + ' - ' + endM + '</span>' +
+          selected.length > 1 ? ' (' + selected.length + ' linkkiä)' : '' +
           '</div>' +
           '</div>';
       }
@@ -316,7 +317,7 @@
           rootElement.find('.new-road-address').prop("hidden", true);
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
-            return {'id': link.linkId, 'status': link.status};
+            return {'id': link.linkId, 'status': STATUS_TERMINATED};
           })));
           projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
           rootElement.find('.project-form button.update').prop("disabled", false);
@@ -328,6 +329,9 @@
             rootElement.find('.changeDirectionDiv').prop("hidden", false);
         }
         else if(this.value == "ennallaan"){
+          projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
+            return {'id': link.linkId, 'status': STATUS_UNCHANGED};
+          })));
           projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
         }
       });

@@ -27,7 +27,8 @@
     exitNumbers: 270,
     trafficLights: 280,
     maintenanceRoad: 290,
-    trafficSigns: 300
+    trafficSigns: 300,
+    trSpeedLimits: 310
   };
 
   root.linearAssetSpecs = [
@@ -430,7 +431,24 @@
   ];
 
   root.experimentalLinearAssetSpecs = [
-  // In future this array could be use to include another experimental Linear
+    {
+      typeId: assetType.trSpeedLimits,
+      singleElementEventCategory: 'trSpeedLimit',
+      multiElementEventCategory: 'trSpeedLimits',
+      layerName: 'trSpeedLimits',
+      title: 'Tierekisteri nopeusrajoitus',
+      newTitle: 'Uusi nopeusrajoitus',
+      className: 'tr-speed-limits',
+      unit: 'km/h',
+      isSeparable: true,
+      allowComplementaryLinks: false,
+      editControlLabels: {
+        title: '',
+        enabled: 'Nopeusrajoitus',
+        disabled: 'Tuntematon'
+      },
+      label: new SpeedLimitAssetLabel()
+    }
   ];
 
   root.pointAssetSpecs = [
