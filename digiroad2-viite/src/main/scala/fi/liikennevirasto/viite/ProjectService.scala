@@ -665,6 +665,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       try {
         val delta = ProjectDeltaCalculator.delta(projectId)
         setProjectDeltaToDB(delta,projectId)
+        if(linkStatus==LinkStatus.Terminated){
+          val changedLinks= projectLinks.filter(pl => linkIds.contains(pl.linkId))
+        ProjectSectionCalculator.determineMValues(changedLinks,)
+        }
         true
       } catch {
         case ex: RoadAddressException =>

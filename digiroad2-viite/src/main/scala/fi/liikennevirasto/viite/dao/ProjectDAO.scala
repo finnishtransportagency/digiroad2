@@ -12,6 +12,7 @@ import fi.liikennevirasto.viite.dao.CalibrationCode.{AtBeginning, AtBoth, AtEnd,
 import fi.liikennevirasto.viite.{ReservedRoadPart, RoadType}
 import fi.liikennevirasto.viite.process.{Delta, ProjectDeltaCalculator}
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
+import oracle.net.aso.p
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -105,7 +106,40 @@ object ProjectDAO {
     roadAddresses.map(_.id)
   }
 
+  /*
+  id: Long, roadNumber: Long, roadPartNumber: Long, track: Track,
+                       discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
+                       endDate: Option[DateTime] = None, modifiedBy: Option[String] = None, lrmPositionId : Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
+                       calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false,
+                       geometry: Seq[Point], projectId: Long, status: LinkStatus, roadType: RoadType, linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, geometryLength: Double
+   */
+
+
+  def updateProjectLinksToDB( projectLinks: Seq[ProjectLink]): Unit ={
+    val projectLinkPS = dynamicSession.prepareStatement("update project_link SET roadNumber = ?,   roadPartNumber = ?, track=?, discontinuity = ?, startAddrMvalue,endAddrMValue=?,startDate=?,enddate=?,modifiedBy=?,lrmPositionId=?,linkId=?,startMValue=?,endMvalue=?, sidecode=?  where id = ?")
+    for (projectLink <-projectLinks){
+      projectLinkPS.setLong(1,projectLink.roadNumber)
+      projectLinkPS.setLong(2,projectLink.roadPartNumber)
+      projectLinkPS.setInt(3,projectLink.track.value )
+      projectLinkPS.setInt(4,projectLink.discontinuity.value)
+      projectLinkPS.setLong(5,projectLink.startAddrMValue)
+      projectLinkPS.setLong(6,projectLink.endAddrMValue)
+      projectLinkPS.setDate(7, new java.sql.Date(projectLink.startDate.orNull.toDate.getTime))
+      projectLinkPS.setDate(8 ,new java.sql.Date(projectLink.endDate.orNull.toDate.getTime))
+      projectLinkPS.setString(9,projectLink.modifiedBy.getOrElse(""))
+      projectLinkPS.setLong(10,projectLink.lrmPositionId)
+      projectLinkPS.setLong(11,projectLink.linkId)
+      projectLinkPS.setDouble(12,projectLink.startMValue)
+      projectLinkPS.setDouble(13,projectLink.endMValue)
+      projectLinkPS.setInt(14,projectLink.sideCode.value)
+      projectLinkPS.setInt(15, CalibrationCode.getFromAddress(projectLink)   //.calibrations(CalibrationCode.apply(calibrationPoints.toInt))
+
+    }
+  }
+
+
   def createRoadAddressProject(roadAddressProject: RoadAddressProject): Unit = {
+    val test = roadAddressProject.startDate
     sqlu"""
          insert into project (id, state, name, ely, created_by, created_date, start_date ,modified_by, modified_date, add_info)
          values (${roadAddressProject.id}, ${roadAddressProject.status.value}, ${roadAddressProject.name}, -1, ${roadAddressProject.createdBy}, sysdate ,${roadAddressProject.startDate}, '-' , sysdate, ${roadAddressProject.additionalInfo})

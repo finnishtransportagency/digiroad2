@@ -68,6 +68,18 @@ object CalibrationCode {
     }
   }
 
+
+
+
+  def getFromProjectLink(projectLink: ProjectLink): CalibrationCode = {
+    (projectLink.calibrationPoints._1.isEmpty, projectLink.calibrationPoints._2.isEmpty) match {
+      case (true, true)   => No
+      case (true, false)  => AtEnd
+      case (false, true)  => AtBeginning
+      case (false, false) => AtBoth
+    }
+  }
+
   case object No extends CalibrationCode { def value = 0 }
   case object AtEnd extends CalibrationCode { def value = 1 }
   case object AtBeginning extends CalibrationCode { def value = 2 }
