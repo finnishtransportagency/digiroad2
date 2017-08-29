@@ -21,17 +21,26 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
     persistedAsset.copy(floating = floating)
   }
 
+  private def setAssetPosition(asset: IncomingAsset, geometry: Seq[Point], mValue: Double): IncomingAsset = {
+    GeometryUtils.calculatePointFromLinearReference(geometry, mValue) match {
+      case Some(point) =>
+        asset.copy(lon = point.x, lat = point.y)
+      case _ =>
+        asset
+    }
+  }
+
   override def create(asset: IncomingObstacle, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass] = None, linkSource: LinkGeomSource): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat, 0), geometry)
     withDynTransaction {
-      OracleObstacleDao.create(asset, mValue, username, municipality, VVHClient.createVVHTimeStamp(), linkSource)
+      OracleObstacleDao.create(setAssetPosition(asset, geometry, mValue), mValue, username, municipality, VVHClient.createVVHTimeStamp(), linkSource)
     }
   }
 
   override def update(id: Long, updatedAsset: IncomingObstacle, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat, 0), geometry)
     withDynTransaction {
-      OracleObstacleDao.update(id, updatedAsset, mValue, username, municipality, Some(VVHClient.createVVHTimeStamp()), linkSource)
+      OracleObstacleDao.update(id, setAssetPosition(updatedAsset, geometry, mValue), mValue, username, municipality, Some(VVHClient.createVVHTimeStamp()), linkSource)
     }
     id
   }

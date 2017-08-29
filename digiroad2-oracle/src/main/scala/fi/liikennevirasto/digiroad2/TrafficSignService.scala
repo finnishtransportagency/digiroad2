@@ -58,6 +58,15 @@ class TrafficSignService(val roadLinkService: RoadLinkService) extends PointAsse
 
   override def typeId: Int = 300
 
+  private def setAssetPosition(asset: IncomingAsset, geometry: Seq[Point], mValue: Double): IncomingAsset = {
+    GeometryUtils.calculatePointFromLinearReference(geometry, mValue) match {
+      case Some(point) =>
+        asset.copy(lon = point.x, lat = point.y)
+      case _ =>
+        asset
+    }
+  }
+
   override def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[PersistedTrafficSign] = OracleTrafficSignDao.fetchByFilter(queryFilter)
 
   override def setFloating(persistedAsset: PersistedTrafficSign, floating: Boolean): PersistedTrafficSign = {
@@ -67,14 +76,14 @@ class TrafficSignService(val roadLinkService: RoadLinkService) extends PointAsse
   override def create(asset: IncomingTrafficSign, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass] = None, linkSource: LinkGeomSource): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat, 0), geometry)
     withDynTransaction {
-      OracleTrafficSignDao.create(asset, mValue, username, municipality, VVHClient.createVVHTimeStamp(), linkSource)
+      OracleTrafficSignDao.create(setAssetPosition(asset, geometry, mValue), mValue, username, municipality, VVHClient.createVVHTimeStamp(), linkSource)
     }
   }
 
   override def update(id: Long, updatedAsset: IncomingTrafficSign, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat, 0), geometry)
     withDynTransaction {
-      OracleTrafficSignDao.update(id, updatedAsset, mValue, municipality, username, Some(VVHClient.createVVHTimeStamp()), linkSource)
+      OracleTrafficSignDao.update(id, setAssetPosition(updatedAsset, geometry, mValue), mValue, municipality, username, Some(VVHClient.createVVHTimeStamp()), linkSource)
     }
     id
   }
