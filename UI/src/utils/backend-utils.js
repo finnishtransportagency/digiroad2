@@ -97,6 +97,12 @@
       });
     }, 1000);
 
+    // this.getLinearAssetById = _.throttle(function(Id, callback) {
+    //   return $.getJSON('api/linearAsset/unchecked/' + Id, function(data) {
+    //     return _.isFunction(callback) && callback(data);
+    //   });
+    // }, 1000);
+
     this.getRoadLinkByMmlId = _.throttle(function(mmlId, callback) {
       return $.getJSON('api/roadlinks/mml/' + mmlId, function(data) {
         return _.isFunction(callback) && callback(data);
@@ -189,6 +195,12 @@
         url: 'api/'+ endPointName + '/' + id
       };
     });
+
+     this.getLinearAssetById = latestResponseRequestor(function(id, endPointName) {
+       return {
+         url: 'api/linearAsset/unchecked/' + id
+       };
+     });
 
     this.createPointAsset = function(asset, endPointName) {
       return $.ajax({
@@ -362,8 +374,8 @@
       return $.getJSON('api/trafficSigns/floating');
     };
 
-    this.getUncheckedMaintenanceRoad = function() {
-      //return $.getJSON('api/directionalTrafficSigns/floating');
+    this.getLinearAssetUnchecked = function(typeId) {
+      return $.getJSON('api/linearAsset/unchecked?typeId=' + typeId);
     };
 
     this.createAsset = function (data, errorCallback) {

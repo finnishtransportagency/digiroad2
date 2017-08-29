@@ -110,6 +110,18 @@
         });
       },
 
+      maintenanceRoad: function (id) {
+        applicationModel.selectLayer('maintenanceRoad');
+        backend.getLinearAssetById(id, 'maintenanceRoad').then(function (result) {
+          eventbus.once('maintenanceRoads:fetched', function() {
+            console.log('fetch for '+result.id);
+            var linearAsset = models.selectedMaintenanceRoad.getLinearAsset(result.id);
+            models.selectedMaintenanceRoad.open(linearAsset);
+          });
+          mapCenterAndZoom(result.middlePoint.x, result.middlePoint.y, 12);
+        });
+      },
+
       pedestrianCrossings: function (id) {
         applicationModel.selectLayer('pedestrianCrossings');
         backend.getPointAssetById(id, 'pedestrianCrossings').then(function (result) {
@@ -194,7 +206,7 @@
       },
 
       maintenanceRoadWorkList: function () {
-        eventbus.trigger('workList:select', 'maintenanceRoad', backend.getUncheckedMaintenanceRoad());
+        eventbus.trigger('workList:select', 'maintenanceRoad', backend.getLinearAssetUnchecked(290));
       }
     });
 

@@ -525,6 +525,19 @@ Returns empty result as Json message, not as page not found
     roadLinkService.getIncompleteLinks(includedMunicipalities)
   }
 
+  get("/linearAsset/unchecked") {
+    val user = userProvider.getCurrentUser()
+    val includedAreas = user.isOperator() match {
+      case true => None
+      case false => Some(user.configuration.authorizedAreas)
+    }
+    val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
+    if(typeId == maintenanceRoadService.maintenanceRoadAssetTypeId)
+      maintenanceRoadService.getUncheckedLinearAssets(includedAreas)
+    else
+      BadRequest("Missing mandatory 'bbox' parameter")
+  }
+
   get("/roadlinks/complementaries"){
     response.setHeader("Access-Control-Allow-Headers", "*")
 
@@ -1092,6 +1105,18 @@ Returns empty result as Json message, not as page not found
         validateUserMunicipalityAccess(user)(foundAsset.municipalityCode)
         foundAsset
     }
+  }
+
+  get("/linearAsset/unchecked/:id")(getLinearAssetById(290, linearAssetService))
+
+  private def getLinearAssetById(typeId: Int, service: LinearAssetOperations) = {
+    val user = userProvider.getCurrentUser()
+    if (!user.isServiceRoadMaintainer() && !user.isOperator)
+      halt(Unauthorized("User is not authorized to alter serviceroad assets"))
+      val (id, pointInfo) = service.getLinearMiddlePointById(typeId, params("id").toLong)
+      pointInfo.map {
+        case middlePoint => Map("success"->true, "id" -> id, "middlePoint" -> middlePoint)
+      }.getOrElse(Map("success:" ->false, "Reason"->"Id not found or invalid input"))
   }
 
   private def getFloatingPointAssets(service: PointAssetOperations) = {

@@ -971,17 +971,6 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     Some(id)
   }
 
-    def insertMaintenanceRoadValue(assetId: Long, value: MaintenanceRoad): Unit = {
-      value.maintenanceRoad.filter(finalProps => finalProps.value != "").foreach(prop => {
-        prop.propertyType match {
-          case PropertyTypes.Text =>
-            insertValue(assetId, prop.publicId, prop.value)
-          case PropertyTypes.SingleChoice | PropertyTypes.CheckBox =>
-            insertEnumeratedValue(assetId, prop.publicId, prop.value.toInt)
-        }
-      })
-    }
-
   def getRequiredProperties(typeId: Int): Map[String, String] ={
     val requiredProperties =
       sql"""select public_id, property_type from property where asset_type_id = $typeId and required = 1""".as[(String, String)].iterator.toMap
@@ -1032,6 +1021,21 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
               join lrm_position lp on (al.position_id = lp.id)
               where (a.asset_type_id = $assetType and  lp.link_id = $linkId)""".as[(Long)].list
     ids
+  }
+
+  def getAssetLrmPosition(typeId: Long, assetId: Long): Option[( Long, Double, Double)] = {
+    val lrmInfo =
+      sql"""
+          select lrm.link_Id, lrm.start_measure, lrm.end_measure
+          from asset a
+          join asset_link al on al.asset_id = a.id
+          join lrm_position lrm on lrm.id = al.position_id
+          where a.asset_type_id = $typeId
+          and (a.valid_to IS NULL OR a.valid_to >= CURRENT_TIMESTAMP )
+          and a.floating = 0
+          and a.id = $assetId
+      """.as[(Long, Double, Double)].firstOption
+    lrmInfo
   }
 }
 

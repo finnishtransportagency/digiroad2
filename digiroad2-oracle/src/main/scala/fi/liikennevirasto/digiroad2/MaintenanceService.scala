@@ -199,4 +199,12 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
       maintenanceDAO.fetchMaintenancesByLinkIds(maintenanceRoadAssetTypeId, linkIds, includeExpire = false)
     }
   }
+
+  override def getUncheckedLinearAssets(areas: Option[Set[Int]]): Map[String, Map[String ,List[Long]]] ={
+    val unchecked = withDynTransaction {
+      maintenanceDAO.getUncheckedMaintenanceRoad(areas)
+
+    }.groupBy(_._2).mapValues(x => x.map(_._1))
+    Map("Unchecked" -> unchecked )
+  }
 }

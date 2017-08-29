@@ -123,6 +123,22 @@ trait LinearAssetOperations {
     getByRoadLinks(typeId, roadLinks, change)
   }
 
+  def getLinearMiddlePointById(typeId: Int, assetId: Long): (Long, Option[Point])  = {
+    val optLrmInfo = withDynTransaction {
+      dao.getAssetLrmPosition(typeId, assetId)
+    }
+    val roadLinks: Option[RoadLinkLike] = optLrmInfo.flatMap( x => roadLinkService.getRoadLinkFromVVH(x._1))
+
+      val middePoint = (optLrmInfo, roadLinks) match {
+      case (Some(lrmInfo), Some(road)) =>
+        GeometryUtils.calculatePointFromLinearReference(road.geometry, lrmInfo._2 + (lrmInfo._3 - lrmInfo._2) / 2.0)
+      case _ => None
+    }
+    (assetId, middePoint)
+  }
+
+  protected def getUncheckedLinearAssets(areas: Option[Set[Int]]): Map[String, Map[String,List[Long]]]
+
   protected def getByRoadLinks(typeId: Int, roadLinksExist: Seq[RoadLink], changes: Seq[ChangeInfo]): Seq[PieceWiseLinearAsset] = {
 
     // Filter high functional classes from maintenance roads
@@ -785,7 +801,9 @@ class LinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   override def eventBus: DigiroadEventBus = eventBusImpl
   override def vvhClient: VVHClient = roadLinkServiceImpl.vvhClient
   override def polygonTools : PolygonTools = new PolygonTools()
-}
+
+  override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
+  }
 
 class MissingMandatoryPropertyException(val missing: Set[String]) extends RuntimeException {
 }

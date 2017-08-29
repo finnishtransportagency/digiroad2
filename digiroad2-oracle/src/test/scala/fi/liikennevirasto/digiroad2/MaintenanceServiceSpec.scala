@@ -47,6 +47,8 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
     override def eventBus: DigiroadEventBus = mockEventBus
     override def vvhClient: VVHClient = mockVVHClient
     override def polygonTools: PolygonTools = mockPolygonTools
+
+    override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
   }
 
   object ServiceWithDao extends MaintenanceService(mockRoadLinkService, mockEventBus) {
