@@ -2,6 +2,7 @@
   root.RoadAddressProjectEditForm = function(projectCollection, selectedProjectLinkProperty, projectLinkLayer, projectChangeTable) {
     var STATUS_NOT_HANDLED = 0;
     var STATUS_TERMINATED = 1;
+    var STATUS_NEW_LINK = 2;
     var STATUS_UNCHANGED = 4;
 
     var currentProject = false;
@@ -204,8 +205,16 @@
     };
 
     var changeDropDownValue = function (statusCode) {
+      var rootElement = $('#feature-attributes');
       if (statusCode === STATUS_UNCHANGED) {
         $("#dropDown").val('ennallaan').change();
+      }
+      else if(statusCode === STATUS_NEW_LINK){
+        $("#dropDown").val('uusi').change();
+        projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
+        rootElement.find('.new-road-address').prop("hidden", false);
+        if(selectedProjectLink[0].id !== 0)
+          rootElement.find('.changeDirectionDiv').prop("hidden", false);
       }
     };
 
