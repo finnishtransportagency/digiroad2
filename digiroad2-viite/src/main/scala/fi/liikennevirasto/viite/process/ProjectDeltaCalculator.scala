@@ -21,10 +21,7 @@ object ProjectDeltaCalculator {
     val terminations = findTerminations(projectLinks, currentAddresses)
     val newCreations = findNewCreations(projectLinks)
     val unChanged = findUnChanged(projectLinks, currentAddresses)
-    if (terminations.size + unChanged.size != currentAddresses.values.flatten.size)
-      throw new RoadAddressException(s"Road address count did not match: ${terminations.size} terminated, " +
-        s"${unChanged.size} kept unchanged, " +
-        s"(and ${newCreations.size } created), ${currentAddresses.values.flatten.size} addresses found")
+
     Delta(project.startDate, terminations, newCreations, unChanged)
   }
 
