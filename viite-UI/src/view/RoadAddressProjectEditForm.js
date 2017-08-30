@@ -3,6 +3,7 @@
     var STATUS_NOT_HANDLED = 0;
     var STATUS_TERMINATED = 1;
     var STATUS_UNCHANGED = 4;
+    var STATUS_TRANSFER = 5;
 
     var currentProject = false;
     var selectedProjectLink = false;
@@ -100,12 +101,12 @@
         '<div class="input-unit-combination">' +
         '<select class="form-control" id="dropDown" size="1">'+
         '<option selected disabled hidden>Valitse</option>'+
-        '<option value="lakkautus"' + (terminationState) + '>Lakkautus</option>'+
-        '<option value="uusi"' + (enableStatusNew ? ' ' : ' disabled')+'>Uusi</option>'+
-        '<option value="action4" disabled>Numeroinnin muutos</option>'+
         '<option value="ennallaan">Ennallaan</option>'+
+        '<option value="siirto"' + (selected[0].id !== 0 ? ' ' : ' disabled') + '>Siirto</option>'+
+        '<option value="uusi"' + (enableStatusNew ? ' ' : ' disabled')+'>Uusi</option>'+
+        '<option value="lakkautus"' + (terminationState) + '>Lakkautus</option>'+
+        '<option value="action4" disabled>Numeroinnin muutos</option>'+
         '<option value="action6" disabled>Kalibrointiarvon muutos</option>'+
-        '<option value="action7" disabled>Siirto</option>'+
         '<option value="action8" disabled>Kalibrointipisteen siirto</option>'+
         '</select>'+
         '</div>'+
@@ -125,7 +126,14 @@
         '<div><label></label></div><div><label style = "margin-top: 50px">TIEOSOITTEEN TIEDOT</label></div>' +
         addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('AJR')+ addSmallLabel('ELY')  + addSmallLabel('JATKUU')+
         '</div>' +
-        '<div class="form-group new-road-address" id="new-address-input1" hidden>'+ addSmallInputNumber('tie',(selectedProjectLink[0].roadNumber !== 0 ? selectedProjectLink[0].roadNumber : '')) + addSmallInputNumber('osa',(selectedProjectLink[0].roadPartNumber !== 0 ? selectedProjectLink[0].roadPartNumber : '')) + addSmallInputNumber('ajr',(selectedProjectLink[0].trackCode !== 99 ? selectedProjectLink[0].trackCode : '')) + addSmallInputNumberDisabled('ely', selectedProjectLink[0].elyCode) +addSelect() +
+        '<div class="form-group new-road-address" id="new-address-input1" hidden>'+
+          addSmallInputNumber('tie',(selectedProjectLink[0].roadNumber !== 0 ? selectedProjectLink[0].roadNumber : '')) +
+          addSmallInputNumber('osa',(selectedProjectLink[0].roadPartNumber !== 0 ? selectedProjectLink[0].roadPartNumber : '')) +
+          addSmallInputNumber('ajr',(selectedProjectLink[0].trackCode !== 99 ? selectedProjectLink[0].trackCode : '')) +
+          addSmallInputNumberDisabled('ely', selectedProjectLink[0].elyCode) +
+          addSelect() +
+          addSmallLabel('TIETYYPPI') +
+          roadTypeDropdown() +
         '</div>';
     };
 
@@ -141,6 +149,18 @@
         });
       }
     }
+
+    var roadTypeDropdown = function() {
+      return '<select class="form-control" id="roadTypeDropDown" size = "1" style="width: auto !important; display: inline">' +
+              '<option value = "1">1 Yleinen tie</option>'+
+              '<option value = "2">2 Lauttaväylä yleisellä tiellä</option>'+
+              '<option value = "3">3 Kunnan katuosuus</option>'+
+              '<option value = "4">4 Yleisen tien työmaa</option>'+
+              '<option value = "5">5 Yksityistie</option>'+
+              '<option value = "9">9 Omistaja selvittämättä</option>' +
+              '<option value = "99">99 Ei määritelty</option>' +
+              '</select>';
+    };
 
     var addSelect = function(){
       return '<select class="form-select-control" id="DiscontinuityDropdown" size="1">'+
@@ -207,6 +227,7 @@
       if (statusCode === STATUS_UNCHANGED) {
         $("#dropDown").val('ennallaan').change();
       }
+      $('#roadTypeDropDown').val(selectedProjectLink[0].roadTypeId);
     };
 
     var bindEvents = function() {
@@ -329,10 +350,18 @@
             rootElement.find('.changeDirectionDiv').prop("hidden", false);
         }
         else if(this.value == "ennallaan"){
+          rootElement.find('.new-road-address').prop("hidden", true);
+          rootElement.find('.changeDirectionDiv').prop("hidden", true);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
             return {'id': link.linkId, 'status': STATUS_UNCHANGED};
           })));
           projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
+        }
+        else if(this.value == "siirto") {
+          projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
+          rootElement.find('.new-road-address').prop("hidden", false);
+          if(selectedProjectLink[0].id !== 0)
+              rootElement.find('.changeDirectionDiv').prop("hidden", false);
         }
       });
 
