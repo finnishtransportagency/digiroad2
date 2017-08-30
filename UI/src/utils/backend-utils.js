@@ -19,9 +19,9 @@
           });
     };
 
-    this.getRoadLinks = createCallbackRequestor(function(boundingBox) {
+    this.getRoadLinks = createCallbackRequestorWithParameters(function(boundingBox, withRoadAddress) {
       return {
-        url: 'api/roadlinks?bbox=' + boundingBox
+        url: 'api/roadlinks?bbox=' + boundingBox + '&withRoadAddress=' + withRoadAddress
       };
     });
 
@@ -219,9 +219,9 @@
       });
     }, 1000);
 
-    this.getLinearAssets = latestResponseRequestor(function(boundingBox, typeId) {
+    this.getLinearAssets = latestResponseRequestor(function(boundingBox, typeId, withRoadAddress) {
       return {
-        url: 'api/linearassets?bbox=' + boundingBox + '&typeId=' + typeId
+        url: 'api/linearassets?bbox=' + boundingBox + '&typeId=' + typeId + '&withRoadAddress=' + withRoadAddress
       };
     });
 
@@ -446,6 +446,13 @@
       };
     }
 
+    function createCallbackRequestorWithParameters(getParameters) {
+      var requestor = latestResponseRequestor(getParameters);
+      return function(parameter, withRoadAddress, callback) {
+        requestor(parameter, withRoadAddress).then(callback);
+      };
+    }
+
     function latestResponseRequestor(getParameters) {
       var deferred;
       var requests = new Bacon.Bus();
@@ -462,7 +469,7 @@
     }
 
     this.withRoadLinkData = function (roadLinkData) {
-      self.getRoadLinks = function(boundingBox, callback) {
+      self.getRoadLinks = function(boundingBox, withRoadAddress, callback) {
         callback(roadLinkData);
         eventbus.trigger('roadLinks:fetched');
       };

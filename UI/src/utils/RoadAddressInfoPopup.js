@@ -18,7 +18,7 @@
           $('<div class="info-check-box-container">' +
          '<div class="checkbox-wrapper">'+
          '<div class="checkbox">' +
-         '<label><input type="checkbox"/>Infoboksi</label>' +
+         '<label><input type="checkbox"/>Tieosoiteinfo</label>' +
          '</div>' +
          '</div>' +
          '</div>');
@@ -37,12 +37,14 @@
         element.find('.checkbox').find('input[type=checkbox]').on('change', function (event) {
           if ($(event.currentTarget).prop('checked')) {
             setShowPopup(true);
+            eventbus.trigger('toggleWithRoadAddress', 'true');
           } else {
             if (applicationModel.isDirty()) {
               $(event.currentTarget).prop('checked', true);
               new Confirm();
             } else {
               setShowPopup(false);
+              eventbus.trigger('toggleWithRoadAddress', 'false');
             }
           }
         });

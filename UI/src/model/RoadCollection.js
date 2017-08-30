@@ -59,6 +59,7 @@
   root.RoadCollection = function(backend) {
     var roadLinkGroups = [];
     var roadLinkGroupsHistory = [];
+    var withRoadAddress = 'false';
 
     var roadLinks = function() {
       return _.flatten(roadLinkGroups);
@@ -81,20 +82,20 @@
     };
 
     this.fetch = function(boundingBox) {
-      backend.getRoadLinks(boundingBox, function(fetchedRoadLinks) {
-        var selectedIds = _.map(getSelectedRoadLinks(), function(roadLink) {
-          return roadLink.getId();
-        });
-        var fetchedRoadLinkModels = _.map(fetchedRoadLinks, function(roadLinkGroup) {
+      backend.getRoadLinks(boundingBox, withRoadAddress, function(fetchedRoadLinks) {
+          var selectedIds = _.map(getSelectedRoadLinks(), function(roadLink) {
+            return roadLink.getId();
+          });
+          var fetchedRoadLinkModels = _.map(fetchedRoadLinks, function(roadLinkGroup) {
             return _.map(roadLinkGroup, function(roadLink) {
               return new RoadLinkModel(roadLink);
             });
-        });
-        roadLinkGroups = _.reject(fetchedRoadLinkModels, function(roadLinkGroup) {
-          return _.some(roadLinkGroup, function(roadLink) {
-            _.contains(selectedIds, roadLink.getId());
           });
-        }).concat(getSelectedRoadLinks());
+          roadLinkGroups = _.reject(fetchedRoadLinkModels, function(roadLinkGroup) {
+            return _.some(roadLinkGroup, function(roadLink) {
+              _.contains(selectedIds, roadLink.getId());
+            });
+          }).concat(getSelectedRoadLinks());
         eventbus.trigger('roadLinks:fetched');
       });
     };
@@ -185,6 +186,10 @@
 
     this.resetHistory = function(){
       roadLinkGroupsHistory = [];
+    };
+
+    this.toggleWithRoadAddress = function(set) {
+      withRoadAddress = set;
     };
   };
 })(this);

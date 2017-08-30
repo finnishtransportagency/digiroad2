@@ -6,6 +6,7 @@
     var self = this;
     var splitLinearAssets = {};
     var separatedLimit = {};
+    var withRoadAddress = 'false';
 
     var singleElementEvent = function(eventName) {
       return singleElementEventCategory + ':' + eventName;
@@ -42,7 +43,7 @@
     };
 
     this.fetch = function(boundingBox) {
-      return fetch(boundingBox, backend.getLinearAssets(boundingBox, typeId));
+      return fetch(boundingBox, backend.getLinearAssets(boundingBox, typeId, withRoadAddress));
     };
 
     this.fetchAssetsWithComplementary = function(boundingBox) {
@@ -212,6 +213,10 @@
       separatedLimit.A = limitA;
       separatedLimit.B = limitB;
       return [limitA, limitB];
+    };
+
+    this.toggleWithRoadAddress = function(set) {
+      withRoadAddress = set;
     };
 
   };

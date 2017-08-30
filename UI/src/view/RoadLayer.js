@@ -181,6 +181,10 @@ var RoadStyles = function() {
     };
 
     eventbus.on('map:moved', mapMovedHandler, this);
+    eventbus.on('toggleWithRoadAddress', function(set){
+      roadCollection.toggleWithRoadAddress(set);
+      eventbus.trigger('roadLinks:changed');
+    });
 
     return {
       deactivateSelection: deactivateSelection,
