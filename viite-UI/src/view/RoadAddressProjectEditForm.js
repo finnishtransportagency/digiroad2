@@ -5,6 +5,7 @@
     var STATUS_NEW = 2;
     var STATUS_TRANSFER = 3;
     var STATUS_UNCHANGED = 4;
+    var STATUS_NUMBERING = 5;
 
     var currentProject = false;
     var selectedProjectLink = false;
@@ -108,7 +109,7 @@
         '<option value="uusi"' + (enableStatusNew ? ' ' : ' disabled')+'>Uusi</option>'+
         '<option value="lakkautus"' + (terminationState) + '>Lakkautus</option>'+
         '<option value="numerointi"' + (toEdit ? ' ' : ' disabled') + '>Numerointi</option>'+
-        '<option value="palautus">Palautus aihioksi tai tieosoitteettomaksi</option>' +
+        '<option value="palautus"' + (toEdit ? ' ' : ' disabled') + '>Palautus aihioksi tai tieosoitteettomaksi</option>' +
         '</select>'+
         '</div>'+
         newRoadAddressInfo() +
@@ -327,15 +328,19 @@
           rootElement.html(emptyTemplate(currentProject.project));
         }
         else if( $('[id=dropDown] :selected').val() === 'siirto'){
-          projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), STATUS_TRANSFER);
+          projectCollection.createProjectLinks(projectCollection.getTmpDirty());
           rootElement.html(emptyTemplate(currentProject.project));
         }
         else if( $('[id=dropDown] :selected').val() === 'uusi'){
           projectCollection.createProjectLinks(selectedProjectLink);
         }
         else if( $('[id=dropDown] :selected').val() === 'ennallaan'){
-          projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), STATUS_UNCHANGED);
+          projectCollection.createProjectLinks(projectCollection.getTmpDirty());
           rootElement.html(emptyTemplate(currentProject.project));
+        }
+        else if( $('[id=dropDown] :selected').val() === 'numerointi'){
+            projectCollection.createProjectLinks(projectCollection.getTmpDirty());
+            rootElement.html(emptyTemplate(currentProject.project));
         }
         else if( $('[id=dropDown] :selected').val() === 'palautus'){
           projectCollection.revertChangesRoadlink(selectedProjectLink);
@@ -344,6 +349,9 @@
       });
 
       rootElement.on('change', '#dropDown', function() {
+        $('#ajr').prop('disabled',false);
+        $('#discontinuityDropdown').prop('disabled',false);
+        $('#roadTypeDropDown').prop('disabled',false);
         if(this.value == "lakkautus") {
           rootElement.find('.new-road-address').prop("hidden", true);
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
@@ -376,9 +384,22 @@
           if(selectedProjectLink[0].id !== 0)
               rootElement.find('.changeDirectionDiv').prop("hidden", false);
         }
+        else if(this.value == "numerointi") {
+            $('#ajr').prop('disabled',true);
+            $('#discontinuityDropdown').prop('disabled',true);
+            $('#roadTypeDropDown').prop('disabled',true);
+            projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
+                return {'id': link.linkId, 'status': STATUS_NUMBERING};
+            })));
+            projectCollection.setTmpDirty(projectCollection.getDirty());
+            rootElement.find('.new-road-address').prop("hidden", false);
+            rootElement.find('.changeDirectionDiv').prop("hidden", false);
+            rootElement.find('.project-form button.update').prop("disabled", false);
+        }
         else if(this.value == "palautus") {
           rootElement.find('.new-road-address').prop("hidden", true);
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
+          rootElement.find('.project-form button.update').prop("disabled", false);
         }
       });
 
