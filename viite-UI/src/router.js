@@ -80,7 +80,7 @@
     eventbus.on('linkProperties:selectedProject', function (linkId) {
       if (typeof linkId !== 'undefined') {
         router.navigate('linkProperty/' + linkId);
-        applicationModel.selectLayer('linkProperty');
+        applicationModel.selectLayer('linkProperty', false);
         backend.getRoadLinkByLinkId(linkId, function (response) {
           map.getView().setCenter([response.middlePoint.x, response.middlePoint.y]);
           map.getView().setZoom(8);

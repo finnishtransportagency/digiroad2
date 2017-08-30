@@ -487,7 +487,7 @@
            projectCollection.clearRoadAddressProjects();
            eventbus.trigger('layer:enableButtons', true);
            if(changeLayerMode){
-             applicationModel.selectLayer('linkProperty');
+             applicationModel.selectLayer('linkProperty', true);
            }
          }
        });

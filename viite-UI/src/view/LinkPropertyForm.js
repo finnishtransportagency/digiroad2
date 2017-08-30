@@ -604,8 +604,8 @@
         rootElement.find('.link-properties button').attr('disabled', false);
       });
 
-      eventbus.on('layer:selected', function(layer, previouslySelectedLayer){
-        if(layer === "linkProperty"){
+      eventbus.on('layer:selected', function(layer, previouslySelectedLayer, toggleStart){
+        if(layer === "linkProperty" && toggleStart){
           addOpenProjectButton();
         }
       });
