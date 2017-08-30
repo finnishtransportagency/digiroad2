@@ -159,7 +159,8 @@
         newTrackCode : data[4],
         newDiscontinuity : data[5],
         roadEly: data[6],
-        roadLinkSource: data[7]
+        roadLinkSource: data[7],
+        roadType: data[8]
       };
       $.ajax({
         contentType: "application/json",
