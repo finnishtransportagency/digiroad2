@@ -1,5 +1,6 @@
 package fi.liikennevirasto.viite.dao
-import java.sql.Timestamp
+import java.sql.{Timestamp, Types}
+import java.util.Date
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.Point
@@ -115,26 +116,39 @@ object ProjectDAO {
    */
 
 
-  def updateProjectLinksToDB( projectLinks: Seq[ProjectLink]): Unit ={
-    val projectLinkPS = dynamicSession.prepareStatement("update project_link SET ROAD_NUMBER = ?,  ROAD_PART_NUMBER = ?, TRACK_CODE=?, DISCONTINUITY_TYPE = ?, START_ADDR_M=?, END_ADDR_M=? ,MODIFIED_BY=?,LRM_POSITION_ID=?, sidecode=?, calibrationPoints=?,projectid=?  WHERE id = ?")
-    val lrmPS = dynamicSession.prepareStatement("update LRM_POSITION  SET SIDE_CODE=?, WHERE LINK_ID = ?")
-    for (projectLink <-projectLinks){
+  def updateProjectLinksToDB( projectLinks: Seq[ProjectLink], modifier:String): Unit ={
+    val projectLinkPS = dynamicSession.prepareStatement("UPDATE project_link SET ROAD_NUMBER = ?,  ROAD_PART_NUMBER = ?, TRACK_CODE=?, DISCONTINUITY_TYPE = ?, START_ADDR_M=?, END_ADDR_M=?, MODIFIED_DATE= ? , MODIFIED_BY= ?, LRM_POSITION_ID= ?, PROJECT_ID= ? , CALIBRATION_POINTS= ? , STATUS=?,  ROAD_TYPE=? WHERE id = ?")
+    val lrmPS = dynamicSession.prepareStatement("UPDATE LRM_POSITION SET SIDE_CODE=?, START_MEASURE=?, END_MEASURE=?, LANE_CODE=?, MODIFIED_DATE=? WHERE LINK_ID = ?")
+
+    for (projectLink <-projectLinks)
+    {
       projectLinkPS.setLong(1,projectLink.roadNumber)
       projectLinkPS.setLong(2,projectLink.roadPartNumber)
       projectLinkPS.setInt(3,projectLink.track.value )
       projectLinkPS.setInt(4,projectLink.discontinuity.value)
       projectLinkPS.setLong(5,projectLink.startAddrMValue)
       projectLinkPS.setLong(6,projectLink.endAddrMValue)
-/*   //add sysdate for modifieddate
-      projectLinkPS.setDate(8 ,new java.sql.Date(projectLink.endDate.orNull.toDate.getTime))*/
-      projectLinkPS.setString(7,projectLink.modifiedBy.getOrElse(""))
-      projectLinkPS.setLong(8,projectLink.lrmPositionId)
-      projectLinkPS.setInt(12,projectLink.sideCode.value)
-      projectLinkPS.setLong(13, projectLink.projectId)   //.calibrations(CalibrationCode.apply(calibrationPoints.toInt))
-      projectLinkPS.setInt(14, CalibrationCode.getFromProjectLink(projectLink).value)
-      projectLinkPS.setInt(15, projectLink.status.value)
-      projectLinkPS.setInt(15, projectLink.roadType.value)
+      projectLinkPS.setDate(7 ,new java.sql.Date(new Date().getTime))
+      projectLinkPS.setString(8,modifier)
+      projectLinkPS.setLong(9,projectLink.lrmPositionId)
+      projectLinkPS.setLong(10, projectLink.projectId)
+      projectLinkPS.setInt(11, CalibrationCode.getFromProjectLink(projectLink).value)
+      projectLinkPS.setInt(12, projectLink.status.value)
+      projectLinkPS.setInt(13, projectLink.roadType.value)
+      projectLinkPS.setLong(14, projectLink.id)
+      projectLinkPS.addBatch()
+      lrmPS.setInt(1,projectLink.sideCode.value)
+      lrmPS.setDouble(2,projectLink.startMValue)
+      lrmPS.setDouble(3,projectLink.endMValue)
+      lrmPS.setInt(4,projectLink.track.value)
+      lrmPS.setDate(5 ,new java.sql.Date(new Date().getTime))
+      lrmPS.setLong(6,projectLink.linkId)
+      lrmPS.addBatch()
     }
+    projectLinkPS.executeBatch()
+    lrmPS.executeBatch()
+    lrmPS.close()
+    projectLinkPS.close()
   }
 
 

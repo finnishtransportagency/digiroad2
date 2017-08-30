@@ -661,14 +661,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     withDynTransaction{
       val projectLinks = ProjectDAO.getProjectLinks(projectId)
       val changed = projectLinks.filter(pl => linkIds.contains(pl.linkId)).map(_.id).toSet
+      if(linkStatus==LinkStatus.Terminated){
+        val changedLinks= projectLinks.filter(pl => linkIds.contains(pl.linkId))
+        val updatedProjectLinks=ProjectSectionCalculator.determineMValues(changedLinks,projectLinks.filter(pl=> linkStatus.value!=0))
+        ProjectDAO.updateProjectLinksToDB(updatedProjectLinks,userName)
+      } else
       ProjectDAO.updateProjectLinkStatus(changed, linkStatus, userName)
       try {
         val delta = ProjectDeltaCalculator.delta(projectId)
         setProjectDeltaToDB(delta,projectId)
-        if(linkStatus==LinkStatus.Terminated){
-          val changedLinks= projectLinks.filter(pl => linkIds.contains(pl.linkId))
-        ProjectSectionCalculator.determineMValues(changedLinks,)
-        }
         true
       } catch {
         case ex: RoadAddressException =>
