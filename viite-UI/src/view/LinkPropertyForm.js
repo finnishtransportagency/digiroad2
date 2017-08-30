@@ -385,7 +385,7 @@
       var rootElement = $('#feature-attributes');
       rootElement.empty();
       var emptyFormDiv = '<div class="form-initial-state" id="emptyFormDiv">' +
-        '<span class="header-noposition">Aloita valitsemalla projeckti.</span>' +
+        '<span class="header-noposition">Aloita valitsemalla projekti.</span>' +
         '<button id="formProjectButton" class="action-mode-btn btn btn-block btn-primary">Tieosoiteprojektit</button>' +
         '</div>';
       rootElement.append(emptyFormDiv);
