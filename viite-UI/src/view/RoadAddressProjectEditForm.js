@@ -2,8 +2,9 @@
   root.RoadAddressProjectEditForm = function(projectCollection, selectedProjectLinkProperty, projectLinkLayer, projectChangeTable) {
     var STATUS_NOT_HANDLED = 0;
     var STATUS_TERMINATED = 1;
+    var STATUS_NEW = 2;
+    var STATUS_TRANSFER = 3;
     var STATUS_UNCHANGED = 4;
-    var STATUS_TRANSFER = 5;
 
     var currentProject = false;
     var selectedProjectLink = false;
@@ -84,8 +85,9 @@
         status = status[0];
       else
         status = 0;
-      var enableStatusNew = (selected[0].status !== 0 && selected[0].status !== 1)|| selected[0].roadLinkSource === 3;
-      var terminationState = status == 1 ? ' selected' : selected[0].roadLinkSource === 3 ? 'disabled' : '';
+      var enableStatusNew = (selected[0].status !== STATUS_NOT_HANDLED && selected[0].status !== STATUS_TERMINATED)|| selected[0].roadLinkSource === 3;
+      var terminationState = status == STATUS_TERMINATED ? ' selected' : selected[0].roadLinkSource === 3 ? 'disabled' : '';
+      var toEdit = selected[0].id !== 0;
       return _.template('' +
         '<header>' +
         titleWithProjectName(project.name) +
@@ -102,12 +104,11 @@
         '<select class="form-control" id="dropDown" size="1">'+
         '<option selected disabled hidden>Valitse</option>'+
         '<option value="ennallaan">Ennallaan</option>'+
-        '<option value="siirto"' + (selected[0].id !== 0 ? ' ' : ' disabled') + '>Siirto</option>'+
+        '<option value="siirto"' + (toEdit ? ' ' : ' disabled') + '>Siirto</option>'+
         '<option value="uusi"' + (enableStatusNew ? ' ' : ' disabled')+'>Uusi</option>'+
         '<option value="lakkautus"' + (terminationState) + '>Lakkautus</option>'+
-        '<option value="action4" disabled>Numeroinnin muutos</option>'+
-        '<option value="action6" disabled>Kalibrointiarvon muutos</option>'+
-        '<option value="action8" disabled>Kalibrointipisteen siirto</option>'+
+        '<option value="numerointi"' + (toEdit ? ' ' : ' disabled') + '>Numerointi</option>'+
+        '<option value="palautus">Palautus aihioksi tai tieosoitteettomaksi</option>' +
         '</select>'+
         '</div>'+
         newRoadAddressInfo() +
@@ -163,7 +164,7 @@
     };
 
     var addSelect = function(){
-      return '<select class="form-select-control" id="DiscontinuityDropdown" size="1">'+
+      return '<select class="form-select-control" id="discontinuityDropdown" size="1">'+
       '<option value = "5" selected disabled hidden>5 Jatkuva</option>'+
       '<option value="1" >1 Tien loppu</option>'+
       '<option value="2" >2 Epäjatkuva</option>'+
@@ -227,6 +228,7 @@
       if (statusCode === STATUS_UNCHANGED) {
         $("#dropDown").val('ennallaan').change();
       }
+      $('#discontinuityDropdown').val(selectedProjectLink[selectedProjectLink.length - 1].discontinuity);
       $('#roadTypeDropDown').val(selectedProjectLink[0].roadTypeId);
     };
 
@@ -324,11 +326,19 @@
           projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), STATUS_TERMINATED);
           rootElement.html(emptyTemplate(currentProject.project));
         }
+        else if( $('[id=dropDown] :selected').val() === 'siirto'){
+          projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), STATUS_TRANSFER);
+          rootElement.html(emptyTemplate(currentProject.project));
+        }
         else if( $('[id=dropDown] :selected').val() === 'uusi'){
           projectCollection.createProjectLinks(selectedProjectLink);
         }
         else if( $('[id=dropDown] :selected').val() === 'ennallaan'){
           projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), STATUS_UNCHANGED);
+          rootElement.html(emptyTemplate(currentProject.project));
+        }
+        else if( $('[id=dropDown] :selected').val() === 'palautus'){
+          projectCollection.revertChangesRoadlink(selectedProjectLink);
           rootElement.html(emptyTemplate(currentProject.project));
         }
       });
@@ -358,10 +368,17 @@
           projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
         }
         else if(this.value == "siirto") {
-          projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
+          projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
+              return {'id': link.linkId, 'status': STATUS_TRANSFER};
+          })));
+          projectCollection.setTmpDirty(projectCollection.getDirty());
           rootElement.find('.new-road-address').prop("hidden", false);
           if(selectedProjectLink[0].id !== 0)
               rootElement.find('.changeDirectionDiv').prop("hidden", false);
+        }
+        else if(this.value == "palautus") {
+          rootElement.find('.new-road-address').prop("hidden", true);
+          rootElement.find('.changeDirectionDiv').prop("hidden", true);
         }
       });
 

@@ -41,6 +41,20 @@
       });
     }, 1000);
 
+    this.revertChangesRoadlink = _.throttle(function(data, errorCallback) {
+        $.ajax({
+            contentType: "application/json",
+            type: "PUT",
+            url: "api/viite/project/revertchangesroadlink",
+            data: JSON.stringify(data),
+            dataType: "json",
+            success: function (data) {
+                //eventbus.trigger('roadAddress:projectLinksUpdated', data);
+            },
+            error: errorCallback
+        });
+    }, 1000);
+
     this.getRoadLinkByLinkId = _.throttle(function(linkId, callback) {
       return $.getJSON('api/viite/roadlinks/' + linkId, function(data) {
         return _.isFunction(callback) && callback(data);

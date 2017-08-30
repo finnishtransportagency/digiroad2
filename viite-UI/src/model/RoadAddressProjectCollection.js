@@ -175,6 +175,10 @@
       });
     };
 
+    this.revertChangesRoadlink = function (links) {
+      backend.revertChangesRoadlink(links);
+    };
+
 
     this.saveProjectLinks = function(toBeUpdatedDirtyLinks, statusCode) {
       console.log("Save Project Links called");
@@ -250,7 +254,7 @@
         Number($('#roadAddressProject').find('#tie')[0].value),
         Number($('#roadAddressProject').find('#osa')[0].value),
         Number($('#roadAddressProject').find('#ajr')[0].value),
-        Number($('#roadAddressProject').find('#DiscontinuityDropdown')[0].value),
+        Number($('#roadAddressProject').find('#discontinuityDropdown')[0].value),
         Number($('#roadAddressProject').find('#ely')[0].value),
         Number(_.first(toBeCreatedLinks).roadLinkSource)
       ];
