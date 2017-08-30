@@ -150,7 +150,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * Used when adding road address that does not have previous address
     */
   def addNewLinksToProject(projectAddressLinks: Seq[ProjectAddressLink], roadAddressProjectID: Long, newRoadNumber: Long,
-                           newRoadPartNumber: Long, newTrackCode: Long, newDiscontinuity: Long): Option[String] = {
+                           newRoadPartNumber: Long, newTrackCode: Long, newDiscontinuity: Long, newRoadType: Long = RoadType.Unknown.value): Option[String] = {
     def newProjectLink(projectAddressLink: ProjectAddressLink, project: RoadAddressProject, sideCode: SideCode): ProjectLink = {
       toProjectLink(projectAddressLink, NewRoadAddress, Track.apply(newTrackCode.toInt), project, sideCode)
     }
@@ -166,7 +166,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         projectAddressLink.endAddressM, Some(project.startDate), None, Some(project.createdBy), -1,
         projectAddressLink.linkId, projectAddressLink.startMValue, projectAddressLink.endMValue, sideCode,
         (projectAddressLink.startCalibrationPoint, projectAddressLink.endCalibrationPoint), floating = false,
-        projectAddressLink.geometry, roadAddressProjectID, LinkStatus.New, projectAddressLink.roadType,
+        projectAddressLink.geometry, roadAddressProjectID, LinkStatus.New, RoadType.apply(newRoadType.toInt),
         projectAddressLink.roadLinkSource, projectAddressLink.length)
     }
 
@@ -233,16 +233,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           projectLink.linkId ->
             existingProjectLink(projectLink, project, randomSideCode)
         }).toMap
-        val combinedLinks = (newProjectLinks.keySet ++ existingLinks.keySet).map(
+        val combinedLinks = (newProjectLinks.keySet ++ existingLinks.keySet).toSeq.distinct.map(
           linkId => newProjectLinks.getOrElse(linkId, existingLinks(linkId))
         )
         //Determine geometries for the mValues and addressMValues
         // TODO: check if this should be called with params (newProjectLinks, existingLinks)
-        val linksWithMValues = ProjectSectionCalculator.determineMValues(combinedLinks.toSeq,
-          existingLinks.filterKeys(linkId => newProjectLinks.keySet.contains(linkId)).values.toSeq)
-        ProjectDAO.removeProjectLinksByLinkId(roadAddressProjectID, newProjectLinks.keySet)
-        ProjectDAO.create(linksWithMValues ++ combinedLinks.filterNot(link =>
-          linksWithMValues.exists(_.linkId == link.linkId)))
+        val linksWithMValues = ProjectSectionCalculator.determineMValues(combinedLinks,
+          Seq())
+        ProjectDAO.removeProjectLinksByLinkId(roadAddressProjectID, combinedLinks.map(c => c.linkId).toSet)
+        ProjectDAO.create(linksWithMValues)
         None
       }
     } catch {
