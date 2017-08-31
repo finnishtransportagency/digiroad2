@@ -17,6 +17,15 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
 
   override def typeId: Int = 230
 
+  private def setAssetPosition(asset: IncomingAsset, geometry: Seq[Point], mValue: Double): IncomingAsset = {
+    GeometryUtils.calculatePointFromLinearReference(geometry, mValue) match {
+      case Some(point) =>
+        asset.copy(lon = point.x, lat = point.y)
+      case _ =>
+        asset
+    }
+  }
+
   override def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[RailwayCrossing] = OracleRailwayCrossingDao.fetchByFilter(queryFilter)
 
   override def setFloating(persistedAsset: RailwayCrossing, floating: Boolean) = {
@@ -53,14 +62,14 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
   override def create(asset: IncomingRailwayCrossing, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass] = None, linkSource: LinkGeomSource): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat, 0), geometry)
     withDynTransaction {
-      OracleRailwayCrossingDao.create(asset, mValue, municipality, username, VVHClient.createVVHTimeStamp(), linkSource)
+      OracleRailwayCrossingDao.create(setAssetPosition(asset, geometry, mValue), mValue, municipality, username, VVHClient.createVVHTimeStamp(), linkSource)
     }
   }
 
   override def update(id: Long, updatedAsset: IncomingRailwayCrossing, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat, 0), geometry)
     withDynTransaction {
-      OracleRailwayCrossingDao.update(id, updatedAsset, mValue, municipality, username, Some(VVHClient.createVVHTimeStamp()), linkSource)
+      OracleRailwayCrossingDao.update(id, setAssetPosition(updatedAsset, geometry, mValue), mValue, municipality, username, Some(VVHClient.createVVHTimeStamp()), linkSource)
     }
     id
   }
