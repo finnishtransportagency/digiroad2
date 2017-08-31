@@ -407,8 +407,10 @@
     };
 
     this.setCurrentRoadPartList = function(parts){
-      currentRoadPartList = parts.slice(0);
-      dirtyRoadPartList = parts.slice(0);
+      if(!_.isUndefined(parts)) {
+        currentRoadPartList = parts.slice(0);
+        dirtyRoadPartList = parts.slice(0);
+      }
     };
 
     this.isDirty = function() {

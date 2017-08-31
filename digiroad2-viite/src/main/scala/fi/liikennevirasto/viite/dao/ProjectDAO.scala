@@ -315,9 +315,10 @@ object ProjectDAO {
     }
   }
 
-  def updateProjectLinkValues (projectId: Long, projectLink: ProjectAddressLink) ={
-    val updateProjectLink = s"update project_link set road_number = ${projectLink.roadNumber} and road_part_number = ${projectLink.roadPartNumber} and track_code = ${projectLink.trackCode} " +
-      s"and discontinuity = ${projectLink.discontinuity} and road_type = ${projectLink.roadType.value} where id in (select plink.id from project_link plink join lrm_position on lrm_position.id = plink.lrm_position_id where lrm_position.link_id =${projectLink.linkId} )"
+  def updateProjectLinkValues (projectId: Long, projectLink: RoadAddress) ={
+    val updateProjectLink = s"update project_link set project_link.road_number = ${projectLink.roadNumber}, project_link.road_part_number = ${projectLink.roadPartNumber}, project_link.track_code = ${projectLink.track.value}, " +
+      s" project_link.discontinuity_type = ${projectLink.discontinuity.value}, project_link.road_type = ${projectLink.roadType.value}, project_link.status = 0 where id in (select plink.id from project_link plink join lrm_position on lrm_position.id = plink.lrm_position_id where lrm_position.link_id =${projectLink.linkId} )"
+    Q.updateNA(updateProjectLink).execute
   }
 
   def flipProjectLinksSideCodes(projectId : Long, roadNumber : Long, roadPartNumber : Long): Unit = {

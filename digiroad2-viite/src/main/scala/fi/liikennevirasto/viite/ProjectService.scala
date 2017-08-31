@@ -259,7 +259,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           //recalculateMValues
         }
         else if (link.status == LinkStatus.Terminated.value || link.status == LinkStatus.Transfer.value ){
-          val roadLink = getProjectRoadLinksByLinkIds(Set(link.linkId),  false)
+          val roadLink = RoadAddressDAO.fetchByLinkId(Set(link.linkId),  false, false)
           ProjectDAO.updateProjectLinkValues(projectId, roadLink.head)
         }
       })
