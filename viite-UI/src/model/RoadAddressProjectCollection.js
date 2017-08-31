@@ -186,8 +186,12 @@
             return {'linkId': link.linkId, 'status': link.status};
           })
         };
-        backend.revertChangesRoadlink(data, function (success, error) {
-          if (error.status == INTERNAL_SERVER_ERROR_500 || error.status == BAD_REQUEST_400) {
+        backend.revertChangesRoadlink(data, function (response) {
+          if (response.status == 'success') {
+            applicationModel.removeSpinner();
+            getProjectsWithLinksById(currentProject.project.id);
+          }
+          else if (response.status == INTERNAL_SERVER_ERROR_500 || response.status == BAD_REQUEST_400) {
             eventbus.trigger('roadAddress:projectLinksUpdateFailed', error.status);
           }
         });
