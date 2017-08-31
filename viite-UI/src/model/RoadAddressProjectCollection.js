@@ -176,7 +176,17 @@
     };
 
     this.revertChangesRoadlink = function (links) {
-      backend.revertChangesRoadlink(links);
+      if(!_.isEmpty(links)) {
+        var data = {
+          'projectId': currentProject.project.id,
+          'roadNumber': links[0].roadNumber,
+          'roadPartNumber': links[0].roadPartNumber,
+          'links': _.map(links, function (link) {
+            return {'linkId': link.linkId, 'status': link.status};
+          })
+        };
+        backend.revertChangesRoadlink(data);
+      }
     };
 
 

@@ -22,6 +22,8 @@ import scala.concurrent.{Await, Future}
 import scala.util.control.NonFatal
 case class PreFillInfo(RoadNumber:BigInt, RoadPart:BigInt)
 
+case class LinkToRevert(linkId: Long, status: Long)
+
 class ProjectService(roadAddressService: RoadAddressService, roadLinkService: RoadLinkService, eventbus: DigiroadEventBus, frozenTimeVVHAPIServiceEnabled: Boolean = false) {
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
@@ -247,6 +249,17 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     } catch {
       case ex: ProjectValidationException => Some(ex.getMessage)
     }
+  }
+
+  def revertLinks(projectId: Long, roadNumber:Long, roadPartNumber: Long, links: List[LinkToRevert]) :Option[String] = {
+    withDynTransaction{
+      links.foreach(link =>{
+        if(link.status == LinkStatus.New.value){
+
+        }
+      })
+    }
+    return Some("")
   }
 
   def changeDirection(projectId : Long, roadNumber : Long, roadPartNumber : Long): Option[String] = {

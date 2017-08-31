@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.digiroad2.util.RoadAddressException
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model._
-import fi.liikennevirasto.viite.{ProjectService, ReservedRoadPart, RoadAddressService}
+import fi.liikennevirasto.viite.{LinkToRevert, ProjectService, ReservedRoadPart, RoadAddressService}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.json4s._
@@ -28,6 +28,8 @@ import scala.util.{Left, Right}
 case class NewAddressDataExtracted(sourceIds: Set[Long], targetIds: Set[Long])
 
 case class NewRoadAddressExtractor(linkIds: Set[Long], projectId: Long, newRoadNumber: Long, newRoadPartNumber : Long, newTrackCode: Long, newDiscontinuity :Long, roadEly: Long, roadLinkSource: Long, roadType: Long)
+
+case class RevertRoadLinksExtractor(projectId: Long, roadNumber: Long, roadPartNumber: Long, links: List[LinkToRevert])
 
 case class ProjectRoadAddressInfo(projectId : Long, roadNumber: Long, roadPartNumber :Long)
 
@@ -313,6 +315,20 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       case e: MappingException  =>
         logger.warn("Exception saving road links in project", e)
         BadRequest("Missing mandatory ProjectLink parameter")
+      case e:Exception => {
+        logger.error(e.toString, e)
+        InternalServerError(e.toString)
+      }
+    }
+  }
+
+  put("/roadlinks/roadaddress/project/revertchangesroadlink") {
+    try {
+      val linksToRevert = parsedBody.extract[RevertRoadLinksExtractor]
+      if(linksToRevert.links.nonEmpty){
+        projectService.revertLinks(linksToRevert.projectId, linksToRevert.links)
+      }
+    } catch {
       case e:Exception => {
         logger.error(e.toString, e)
         InternalServerError(e.toString)
