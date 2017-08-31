@@ -177,6 +177,7 @@
 
     this.revertChangesRoadlink = function (links) {
       if(!_.isEmpty(links)) {
+        applicationModel.addSpinner();
         var data = {
           'projectId': currentProject.project.id,
           'roadNumber': links[0].roadNumber,
@@ -185,7 +186,11 @@
             return {'linkId': link.linkId, 'status': link.status};
           })
         };
-        backend.revertChangesRoadlink(data);
+        backend.revertChangesRoadlink(data, function (success, error) {
+          if (error.status == INTERNAL_SERVER_ERROR_500 || error.status == BAD_REQUEST_400) {
+            eventbus.trigger('roadAddress:projectLinksUpdateFailed', error.status);
+          }
+        });
       }
     };
 

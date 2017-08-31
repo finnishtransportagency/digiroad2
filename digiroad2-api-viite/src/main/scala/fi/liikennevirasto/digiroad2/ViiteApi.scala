@@ -326,7 +326,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     try {
       val linksToRevert = parsedBody.extract[RevertRoadLinksExtractor]
       if(linksToRevert.links.nonEmpty){
-        projectService.revertLinks(linksToRevert.projectId, linksToRevert.links)
+        projectService.revertLinks(linksToRevert.projectId, linksToRevert.roadNumber, linksToRevert.roadPartNumber, linksToRevert.links)
       }
     } catch {
       case e:Exception => {

@@ -255,7 +255,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     withDynTransaction{
       links.foreach(link =>{
         if(link.status == LinkStatus.New.value){
-
+          ProjectDAO.removeProjectLinksByProjectAndRoadNumber(projectId, roadNumber, roadPartNumber) //match {
+           // case 0 =>
+           // case _ =>
+          //}
         }
       })
     }
