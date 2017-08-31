@@ -31,6 +31,7 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
   when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(roadLinkWithLinkSource), Nil))
   when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[Int])).thenReturn((List(roadLinkWithLinkSource), Nil))
   when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[Long], any[Boolean])).thenReturn(Some(roadLinkWithLinkSource))
+  when(mockPolygonTools.getAreaByGeometry(Seq(any[Point]), Measures(any[Double],any[Double]), None )).thenReturn(1)
 
   val mockLinearAssetDao = MockitoSugar.mock[OracleLinearAssetDao]
   val mockMaintenanceDao = MockitoSugar.mock[OracleMaintenanceDao]
@@ -184,7 +185,6 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
     val maintenanceChecked = MaintenanceRoad(List(prop1, prop2, prop4))
     runWithRollback {
       //asset created on area 1
-      when(mockPolygonTools.getAreaByGeometry(Seq(any[Point]), Measures(any[Double],any[Double]), None )).thenReturn(1)
       val uncheckedAsset1 = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, maintenanceUnchecked, 1, 0, None)), maintenanceRoadAssetTypeId, "testuser")
       val checkedAsset1 = ServiceWithDao.create(Seq(NewLinearAsset(388562361l, 0, 20, maintenanceChecked, 1, 0, None)), maintenanceRoadAssetTypeId, "testuser")
       //asset created on area 2

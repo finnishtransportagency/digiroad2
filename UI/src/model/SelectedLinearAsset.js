@@ -42,7 +42,6 @@
     };
 
     this.getLinearAsset = function(id) {
-
      return collection.getById(id);
     };
 

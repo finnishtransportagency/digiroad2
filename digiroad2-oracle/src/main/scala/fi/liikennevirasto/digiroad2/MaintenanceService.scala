@@ -34,9 +34,10 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
         logger.info("Updated ids/linkids " + toUpdate.map(a => (a.id, a.linkId)))
 
       toInsert.foreach { maintenanceAsset =>
-        val area = getAssetArea(maintenanceAsset.linkId, Measures(maintenanceAsset.startMeasure, maintenanceAsset.endMeasure))
+        val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(maintenanceAsset.linkId, newTransaction = false)
+        val area = getAssetArea(roadLink, Measures(maintenanceAsset.startMeasure, maintenanceAsset.endMeasure))
         val id = maintenanceDAO.createLinearAsset(maintenanceAsset.typeId, maintenanceAsset.linkId, maintenanceAsset.expired, maintenanceAsset.sideCode,
-          Measures(maintenanceAsset.startMeasure, maintenanceAsset.endMeasure), maintenanceAsset.createdBy.getOrElse(LinearAssetTypes.VvhGenerated), maintenanceAsset.vvhTimeStamp, getLinkSource(maintenanceAsset.linkId), area = area)
+          Measures(maintenanceAsset.startMeasure, maintenanceAsset.endMeasure), maintenanceAsset.createdBy.getOrElse(LinearAssetTypes.VvhGenerated), maintenanceAsset.vvhTimeStamp, getLinkSource(roadLink), area = area)
         maintenanceAsset.value match {
           case Some(maintenanceRoad) =>
             maintenanceDAO.insertMaintenanceRoadValue(id, maintenanceRoad.asInstanceOf[MaintenanceRoad])
@@ -71,7 +72,7 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
         }
         if (mValueChanged(maintenanceAsset, persistedLinearAsset)) dao.updateMValues(maintenanceAsset.id, (maintenanceAsset.startMeasure, maintenanceAsset.endMeasure), maintenanceAsset.vvhTimeStamp)
         if (sideCodeChanged(maintenanceAsset, persistedLinearAsset)) dao.updateSideCode(maintenanceAsset.id, SideCode(maintenanceAsset.sideCode))
-        val area = getAssetArea(maintenanceAsset.linkId, Measures(maintenanceAsset.startMeasure, maintenanceAsset.endMeasure))
+        val area = getAssetArea(roadLinkService.getRoadLinkAndComplementaryFromVVH(maintenanceAsset.linkId, newTransaction = false), Measures(maintenanceAsset.startMeasure, maintenanceAsset.endMeasure))
         dao.updateArea(maintenanceAsset.id, area)
       }
     }
@@ -110,9 +111,10 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   override protected def createWithoutTransaction(typeId: Int, linkId: Long, value: Value, sideCode: Int, measures: Measures, username: String, vvhTimeStamp: Long, linkSource: Option[Int], fromUpdate: Boolean = false,
                                        createdByFromUpdate: Option[String] = Some(""),
                                        createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now())): Long = {
-    val area = getAssetArea(linkId, measures)
+    val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId, newTransaction = false)
+    val area = getAssetArea(roadLink, measures)
     val id = maintenanceDAO.createLinearAsset(maintenanceRoadAssetTypeId, linkId, expired = false, sideCode, measures, username,
-      vvhTimeStamp, linkSource, fromUpdate, createdByFromUpdate, createdDateTimeFromUpdate, area = area)
+      vvhTimeStamp, getLinkSource(roadLink), fromUpdate, createdByFromUpdate, createdDateTimeFromUpdate, area = area)
 
     val missingProperties = validateRequiredProperties(value.asInstanceOf[MaintenanceRoad])
     if (missingProperties.nonEmpty)
@@ -136,9 +138,11 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     getPersistedAssetsByLinkIds(vVHLinkIds)
   }
 
-  def getAssetArea(linkId: Long, measures: Measures): Int = {
-    val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId, false).getOrElse(throw new IllegalArgumentException("Roadlink not found"))
-    polygonTools.getAreaByGeometry(roadLink.geometry, measures, None)
+  def getAssetArea(roadLink: Option[RoadLink], measures: Measures, area: Option[Seq[Int]] = None): Int = {
+    roadLink match {
+      case Some(road) => polygonTools.getAreaByGeometry(road.geometry, measures, area)
+      case None => throw new IllegalArgumentException("Roadlink not found")
+    }
   }
 
   override protected def getByRoadLinks(typeId: Int, roadLinksExist: Seq[RoadLink], changes: Seq[ChangeInfo]): Seq[PieceWiseLinearAsset] = {
@@ -192,6 +196,13 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     filledTopology
   }
 
+  protected def getLinkSource(roadlink: Option[RoadLink]): Option[Int] = {
+    roadlink match {
+      case Some(result) =>
+        Some(roadlink.get.linkSource.value)
+      case _ => None
+    }
+  }
 
   /**
     * Returns Maintenance assets by asset type and asset ids.

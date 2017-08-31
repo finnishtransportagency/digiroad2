@@ -4,11 +4,11 @@
       var countString = totalCount ? ' (yhteensä ' + totalCount + ' kpl)' : '';
       return $('<h2/>').html(municipalityName + countString);
     };
-    var tableHeaderRow = function(administrativeClass) {
-      return $('<caption/>').html(administrativeClass);
+    var tableHeaderRow = function(headerName) {
+      return $('<caption/>').html(headerName);
     };
-    var tableContentRows = function(linkIds) {
-      return _.map(linkIds, function(item) {
+    var tableContentRows = function(Ids) {
+      return _.map(Ids, function(item) {
         return $('<tr/>').append($('<td/>').append(typeof item.id !== 'undefined' ? assetLink(item) : idLink(item)));
       });
     };
@@ -26,12 +26,12 @@
         workListItem.append(floatingValidator);
       return workListItem;
     };
-    var tableForGroupingValues = function(values, linkIds, count) {
-      if (!linkIds || linkIds.length === 0) return '';
+    var tableForGroupingValues = function(values, Ids, count) {
+      if (!Ids || Ids.length === 0) return '';
       var countString = count ? ' (' + count + ' kpl)' : '';
       return $('<table/>').addClass('table')
-          .append(tableHeaderRow(values + countString))
-        .append(tableContentRows(linkIds));
+        .append(tableHeaderRow(values + countString))
+        .append(tableContentRows(Ids));
     };
 
     if(layerName === 'maintenanceRoad') {
@@ -61,7 +61,7 @@
       railwayCrossings: 'Geometrian ulkopuolelle jääneet rautatien tasoristeykset',
       directionalTrafficSigns: 'Geometrian ulkopuolelle jääneet opastustaulut',
       trafficSigns: 'Geometrian ulkopuolelle jääneet liikennevalot',
-      maintenanceRoad: ''
+      maintenanceRoad: 'Tarkistamattomien huoltoteiden lista'
     };
     $('#work-list').html('' +
       '<div style="overflow: auto;">' +

@@ -801,15 +801,11 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   /**
     * Updates asset area in db.
     **/
-  def updateArea(id: Long, area: Int): Unit = {
+  def updateArea(assetId: Long, area: Int): Unit = {
     sqlu"""
       update asset
       set area = $area
-        modified_date = CURRENT_TIMESTAMP
-      where id = (
-        select lrm.id
-          from asset a
-          where a.id = $id
+      where id = $assetId
     """.execute
   }
   /**
