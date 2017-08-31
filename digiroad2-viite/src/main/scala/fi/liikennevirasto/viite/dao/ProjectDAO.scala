@@ -9,6 +9,7 @@ import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.CalibrationCode.{AtBeginning, AtBoth, AtEnd, No}
+import fi.liikennevirasto.viite.model.ProjectAddressLink
 import fi.liikennevirasto.viite.{ReservedRoadPart, RoadType}
 import fi.liikennevirasto.viite.process.{Delta, ProjectDeltaCalculator}
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
@@ -312,6 +313,11 @@ object ProjectDAO {
         val sql = s"UPDATE PROJECT_LINK SET STATUS = ${linkStatus.value}, MODIFIED_BY='$user' WHERE ID IN (SELECT ID FROM $s)"
         Q.updateNA(sql).execute
     }
+  }
+
+  def updateProjectLinkValues (projectId: Long, projectLink: ProjectAddressLink) ={
+    val updateProjectLink = s"update project_link set road_number = ${projectLink.roadNumber} and road_part_number = ${projectLink.roadPartNumber} and track_code = ${projectLink.trackCode} " +
+      s"and discontinuity = ${projectLink.discontinuity} and road_type = ${projectLink.roadType.value} where id in (select plink.id from project_link plink join lrm_position on lrm_position.id = plink.lrm_position_id where lrm_position.link_id =${projectLink.linkId} )"
   }
 
   def flipProjectLinksSideCodes(projectId : Long, roadNumber : Long, roadPartNumber : Long): Unit = {
