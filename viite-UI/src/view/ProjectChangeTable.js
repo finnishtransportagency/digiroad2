@@ -189,6 +189,11 @@
       }
     });
 
+    eventbus.on('projectChangeTable:refresh', function() {
+      bindEvents();
+      getChanges();
+    });
+
     return{
       show: show,
       hide: hide,

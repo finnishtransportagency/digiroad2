@@ -2,10 +2,16 @@
   root.RoadAddressProjectEditForm = function(projectCollection, selectedProjectLinkProperty, projectLinkLayer, projectChangeTable) {
     var STATUS_NOT_HANDLED = 0;
     var STATUS_TERMINATED = 1;
-    var STATUS_NEW = 2;
+    var STATUS_NEW_LINK = 2;
     var STATUS_TRANSFER = 3;
     var STATUS_UNCHANGED = 4;
     var STATUS_NUMBERING = 5;
+    var ACTION_TERMINATE = "terminate";
+    var ACTION_NEW_LINK = "new";
+    var ACTION_TRANSFER = "transfer";
+    var ACTION_UNCHANGED = "unchanged";
+    var ACTION_NUMBERING= "numbering";
+    var ACTION_REVERT = "revert";
 
     var currentProject = false;
     var selectedProjectLink = false;
@@ -104,12 +110,12 @@
         '<div class="input-unit-combination">' +
         '<select class="form-control" id="dropDown" size="1">'+
         '<option selected disabled hidden>Valitse</option>'+
-        '<option value="ennallaan">Ennallaan</option>'+
-        '<option value="siirto"' + (toEdit ? ' ' : ' disabled') + '>Siirto</option>'+
-        '<option value="uusi"' + (enableStatusNew ? ' ' : ' disabled')+'>Uusi</option>'+
-        '<option value="lakkautus"' + (terminationState) + '>Lakkautus</option>'+
-        '<option value="numerointi"' + (toEdit ? ' ' : ' disabled') + '>Numerointi</option>'+
-        '<option value="palautus"' + (toEdit ? ' ' : ' disabled') + '>Palautus aihioksi tai tieosoitteettomaksi</option>' +
+        '<option value='+ACTION_UNCHANGED+'>Ennallaan</option>'+
+        '<option value='+ ACTION_TRANSFER + ' ' + (toEdit ? ' ' : ' disabled') + '>Siirto</option>'+
+        '<option value='+ ACTION_NEW_LINK + ' ' + (enableStatusNew ? ' ' : ' disabled')+'>Uusi</option>'+
+        '<option value= '+ ACTION_TERMINATE + ' ' + (terminationState) + '>Lakkautus</option>'+
+        '<option value='+ ACTION_NUMBERING + ' ' + (toEdit ? ' ' : ' disabled') + '>Numerointi</option>'+
+        '<option value='+ ACTION_REVERT + ' ' + (toEdit ? ' ' : ' disabled') + '>Palautus aihioksi tai tieosoitteettomaksi</option>' +
         '</select>'+
         '</div>'+
         newRoadAddressInfo() +
@@ -240,17 +246,25 @@
     };
 
     var changeDropDownValue = function (statusCode) {
+      var rootElement = $('#feature-attributes');
       if (statusCode === STATUS_UNCHANGED) {
-        $("#dropDown").val('ennallaan').change();
+        $("#dropDown").val(ACTION_UNCHANGED).change();
+      }
+      else if(statusCode === STATUS_NEW_LINK){
+        $("#dropDown").val(ACTION_NEW_LINK).change();
+        projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
+        rootElement.find('.new-road-address').prop("hidden", false);
+        if(selectedProjectLink[0].id !== 0)
+          rootElement.find('.changeDirectionDiv').prop("hidden", false);
       }
       $('#discontinuityDropdown').val(selectedProjectLink[selectedProjectLink.length - 1].discontinuity);
       $('#roadTypeDropDown').val(selectedProjectLink[0].roadTypeId);
     };
-    
+
     var fillDistanceValues = function(selectedLinks) {
       _.map(selectedLinks, function (link) {
           console.log('');
-      })  
+      })
     };
 
     var bindEvents = function() {
@@ -296,6 +310,8 @@
       });
 
       eventbus.on('roadAddress:projectLinksUpdated',function(data){
+        eventbus.trigger('projectChangeTable:refresh');
+        projectCollection.setTmpDirty([]);
         if (typeof data !== 'undefined' && typeof data.publishable !== 'undefined' && data.publishable) {
           eventbus.trigger('roadAddressProject:projectLinkSaved', data.id, data.publishable);
         }
@@ -327,6 +343,8 @@
       });
 
       eventbus.on('roadAddress:projectLinksCreateSuccess', function () {
+        eventbus.trigger('projectChangeTable:refresh');
+        projectCollection.setTmpDirty([]);
         rootElement.find('.changeDirectionDiv').prop("hidden", false);
       });
 
@@ -344,26 +362,26 @@
 
       rootElement.on('click', '.project-form button.update', function() {
         currentProject = projectCollection.getCurrentProject();
-        if( $('[id=dropDown] :selected').val() == 'lakkautus') {
+        if( $('[id=dropDown] :selected').val() == ACTION_TERMINATE) {
           projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), STATUS_TERMINATED);
           rootElement.html(emptyTemplate(currentProject.project));
         }
-        else if( $('[id=dropDown] :selected').val() === 'siirto'){
+        else if( $('[id=dropDown] :selected').val() === ACTION_TRANSFER){
           projectCollection.createProjectLinks(projectCollection.getTmpDirty());
           rootElement.html(emptyTemplate(currentProject.project));
         }
-        else if( $('[id=dropDown] :selected').val() === 'uusi'){
+        else if( $('[id=dropDown] :selected').val() === ACTION_NEW_LINK){
           projectCollection.createProjectLinks(selectedProjectLink);
         }
-        else if( $('[id=dropDown] :selected').val() === 'ennallaan'){
+        else if( $('[id=dropDown] :selected').val() === ACTION_UNCHANGED){
           projectCollection.createProjectLinks(projectCollection.getTmpDirty());
           rootElement.html(emptyTemplate(currentProject.project));
         }
-        else if( $('[id=dropDown] :selected').val() === 'numerointi'){
+        else if( $('[id=dropDown] :selected').val() === ACTION_NUMBERING){
             projectCollection.createProjectLinks(projectCollection.getTmpDirty());
             rootElement.html(emptyTemplate(currentProject.project));
         }
-        else if( $('[id=dropDown] :selected').val() === 'palautus'){
+        else if( $('[id=dropDown] :selected').val() === ACTION_REVERT){
           projectCollection.revertChangesRoadlink(selectedProjectLink);
           rootElement.html(emptyTemplate(currentProject.project));
         }
@@ -373,7 +391,7 @@
         $('#ajr').prop('disabled',false);
         $('#discontinuityDropdown').prop('disabled',false);
         $('#roadTypeDropDown').prop('disabled',false);
-        if(this.value == "lakkautus") {
+        if(this.value == ACTION_TERMINATE) {
           rootElement.find('.new-road-address').prop("hidden", true);
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
@@ -382,14 +400,14 @@
           projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
           rootElement.find('.project-form button.update').prop("disabled", false);
         }
-        else if(this.value == "uusi"){
+        else if(this.value == ACTION_NEW_LINK){
           projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
           rootElement.find('.new-road-address').prop("hidden", false);
           if(selectedProjectLink[0].id !== 0)
             rootElement.find('.changeDirectionDiv').prop("hidden", false);
             rootElement.find('.distanceValue').prop("hidden", false);
         }
-        else if(this.value == "ennallaan"){
+        else if(this.value == ACTION_UNCHANGED){
           rootElement.find('.new-road-address').prop("hidden", true);
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
@@ -397,7 +415,7 @@
           })));
           projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
         }
-        else if(this.value == "siirto") {
+        else if(this.value == ACTION_TRANSFER) {
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
               return {'id': link.linkId, 'status': STATUS_TRANSFER};
           })));
@@ -406,7 +424,7 @@
           if(selectedProjectLink[0].id !== 0)
               rootElement.find('.changeDirectionDiv').prop("hidden", false);
         }
-        else if(this.value == "numerointi") {
+        else if(this.value == ACTION_NUMBERING) {
             $('#ajr').prop('disabled',true);
             $('#discontinuityDropdown').prop('disabled',true);
             $('#roadTypeDropDown').prop('disabled',true);
@@ -418,7 +436,7 @@
             rootElement.find('.changeDirectionDiv').prop("hidden", false);
             rootElement.find('.project-form button.update').prop("disabled", false);
         }
-        else if(this.value == "palautus") {
+        else if(this.value == ACTION_REVERT) {
           rootElement.find('.new-road-address').prop("hidden", true);
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
           rootElement.find('.project-form button.update').prop("disabled", false);

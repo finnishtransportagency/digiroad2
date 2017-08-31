@@ -128,23 +128,13 @@
       layer: [vectorLayer, suravageRoadProjectLayer],
       condition: ol.events.condition.singleClick,
       style: function(feature, resolution) {
-        if (feature.projectLinkData.status === notHandledStatus || feature.projectLinkData.status === newRoadAddressStatus || feature.projectLinkData.roadLinkSource === 3){
+        if(projectLinkStatusIn(feature.projectLinkData, [notHandledStatus, newRoadAddressStatus,terminatedStatus, unchangedStatus]) || feature.projectLinkData.roadLinkSource === 3){
           return new ol.style.Style({
             fill: new ol.style.Fill({
               color: 'rgba(0, 255, 0, 0.75)'
             }),
             stroke: new ol.style.Stroke({
               color: 'rgba(0, 255, 0, 0.95)',
-              width: 8
-            })
-          });
-        } else if(feature.projectLinkData.status === terminatedStatus ){
-          return new ol.style.Style({
-            fill: new ol.style.Fill({
-              color: 'rgba(0, 0, 0, 0.75)'
-            }),
-            stroke: new ol.style.Stroke({
-              color: 'rgba(0, 0, 0, 0.95)',
               width: 8
             })
           });
@@ -179,10 +169,9 @@
         event.mapBrowserEvent.originalEvent.shiftKey : false;
       var selection = _.find(event.selected, function (selectionTarget) {
         return (!_.isUndefined(selectionTarget.projectLinkData) && (
-          (selectionTarget.projectLinkData.status === notHandledStatus || selectionTarget.projectLinkData.status === newRoadAddressStatus ) ||
+          projectLinkStatusIn(selectionTarget.projectLinkData, [notHandledStatus, newRoadAddressStatus,terminatedStatus,unchangedStatus]) ||
           (selectionTarget.projectLinkData.anomaly==noAddressAnomaly && selectionTarget.projectLinkData.roadLinkType!=floatingRoadLinkType) ||
-          selectionTarget.projectLinkData.roadClass === 99 || selectionTarget.projectLinkData.roadLinkSource === 3 ||
-            selectionTarget.projectLinkData.status === unchangedStatus)
+          selectionTarget.projectLinkData.roadClass === 99 || selectionTarget.projectLinkData.roadLinkSource === 3 )
         );
       });
       if (shiftPressed && !_.isUndefined(selectedProjectLinkProperty.get())) {
@@ -215,23 +204,13 @@
         return (ol.events.condition.doubleClick(mapBrowserEvent) && ol.events.condition.shiftKeyOnly(mapBrowserEvent)) || ol.events.condition.doubleClick(mapBrowserEvent);
       },
       style: function(feature, resolution) {
-        if(feature.projectLinkData.status === notHandledStatus || feature.projectLinkData.status === newRoadAddressStatus || feature.projectLinkData.roadLinkSource === 3) {
+        if(projectLinkStatusIn(feature.projectLinkData, [notHandledStatus,newRoadAddressStatus, terminatedStatus, unchangedStatus]) ||  feature.projectLinkData.roadLinkSource === 3) {
           return new ol.style.Style({
             fill: new ol.style.Fill({
               color: 'rgba(0, 255, 0, 0.75)'
             }),
             stroke: new ol.style.Stroke({
               color: 'rgba(0, 255, 0, 0.95)',
-              width: 8
-            })
-          });
-        } else if(feature.projectLinkData.status === terminatedStatus){
-          return new ol.style.Style({
-            fill: new ol.style.Fill({
-              color: 'rgba(0, 0, 0, 0.75)'
-            }),
-            stroke: new ol.style.Stroke({
-              color: 'rgba(0, 0, 0, 0.95)',
               width: 8
             })
           });
@@ -265,10 +244,9 @@
       var shiftPressed = event.mapBrowserEvent.originalEvent.shiftKey;
       var selection = _.find(event.selected, function (selectionTarget) {
         return (!_.isUndefined(selectionTarget.projectLinkData) && (
-          (selectionTarget.projectLinkData.status === notHandledStatus || selectionTarget.projectLinkData.status === newRoadAddressStatus) ||
+          projectLinkStatusIn(selectionTarget.projectLinkData,[notHandledStatus, newRoadAddressStatus, terminatedStatus, unchangedStatus])||
           (selectionTarget.projectLinkData.anomaly==noAddressAnomaly && selectionTarget.projectLinkData.roadLinkType!=floatingRoadLinkType) ||
-          selectionTarget.projectLinkData.roadClass === 99 || selectionTarget.projectLinkData.roadLinkSource === 3 ||
-            selectionTarget.projectLinkData.status === unchangedStatus)
+          selectionTarget.projectLinkData.roadClass === 99 || selectionTarget.projectLinkData.roadLinkSource === 3)
         );
       });
       if (shiftPressed && !_.isUndefined(selectedProjectLinkProperty.get())) {
@@ -567,6 +545,10 @@
       vectorLayer.getSource().clear();
     };
 
+    var projectLinkStatusIn = function(projectLink, possibleStatus){
+      return possibleStatus.includes(projectLink.status);
+    };
+
     eventbus.on('projectLink:projectLinksCreateSuccess', function () {
       projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1, undefined, projectCollection.getPublishableStatus());
     });
@@ -690,19 +672,6 @@
               }),
               stroke: new ol.style.Stroke({
                 color: 'rgba(56, 56, 54, 1)',
-                width: 8
-              })
-            }));
-            features.push(feature);
-          }
-          else if (_.contains(toBeUnchangedLinkIds, feature.projectLinkData.linkId)) {
-            feature.projectLinkData.status = unchangedStatus;
-            feature.setStyle(new ol.style.Style({
-              fill: new ol.style.Fill({
-                color: 'rgba(0, 0, 255, 1)'
-              }),
-              stroke: new ol.style.Stroke({
-                color: 'rgba(0, 0, 255, 1)',
                 width: 8
               })
             }));
