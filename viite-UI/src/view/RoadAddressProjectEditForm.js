@@ -136,6 +136,7 @@
           addSelect() +
           addSmallLabel('TIETYYPPI') +
           roadTypeDropdown() +
+          distanceValue() +
         '</div>';
     };
 
@@ -162,6 +163,19 @@
               '<option value = "9">9 Omistaja selvittämättä</option>' +
               '<option value = "99">99 Ei määritelty</option>' +
               '</select>';
+    };
+
+    var distanceValue = function() {
+      return '<div class="form-group" style="margin-top: 15px">' +
+             '<img src="../images/calibration-point.svg" style="margin-right: 5px" class="calibration-point"/>' +
+             '<label class="control-label-small" style="display: inline">ETÄISYYSLUKEMA VALINNAN</label>' +
+             '</div>' +
+             '<div class="form-group">' +
+             '<label class="control-label-small" style="float: left; margin-top: 10px">ALLUSSA</label>' +
+             addSmallInputNumber('begginingDistance', '--') +
+             '<label class="control-label-small" style="float: left;margin-top: 10px">LOPUSSA</label>' +
+             addSmallInputNumber('endDistance', '--') +
+             '</div>';
     };
 
     var addSelect = function(){
@@ -232,6 +246,12 @@
       $('#discontinuityDropdown').val(selectedProjectLink[selectedProjectLink.length - 1].discontinuity);
       $('#roadTypeDropDown').val(selectedProjectLink[0].roadTypeId);
     };
+    
+    var fillDistanceValues = function(selectedLinks) {
+      _.map(selectedLinks, function (link) {
+          console.log('');
+      })  
+    };
 
     var bindEvents = function() {
 
@@ -253,6 +273,7 @@
         checkInputs();
         // Change selected value in dropdown according to project link status
         changeDropDownValue(selectedProjectLink[0].status);
+        fillDistanceValues(selectedProjectLink);
       });
 
       eventbus.on('roadAddress:projectFailed', function() {
@@ -366,6 +387,7 @@
           rootElement.find('.new-road-address').prop("hidden", false);
           if(selectedProjectLink[0].id !== 0)
             rootElement.find('.changeDirectionDiv').prop("hidden", false);
+            rootElement.find('.distanceValue').prop("hidden", false);
         }
         else if(this.value == "ennallaan"){
           rootElement.find('.new-road-address').prop("hidden", true);
