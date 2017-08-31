@@ -128,7 +128,7 @@
       layer: [vectorLayer, suravageRoadProjectLayer],
       condition: ol.events.condition.singleClick,
       style: function(feature, resolution) {
-        if (feature.projectLinkData.status === notHandledStatus || feature.projectLinkData.status === newRoadAddressStatus || feature.projectLinkData.status === terminatedStatus || feature.projectLinkData.status === unchangedStatus || feature.projectLinkData.roadLinkSource === 3){
+        if(projectLinkStatusIn(feature.projectLinkData, [notHandledStatus, newRoadAddressStatus,terminatedStatus, unchangedStatus]) || feature.projectLinkData.roadLinkSource === 3){
           return new ol.style.Style({
             fill: new ol.style.Fill({
               color: 'rgba(0, 255, 0, 0.75)'
@@ -169,7 +169,7 @@
         event.mapBrowserEvent.originalEvent.shiftKey : false;
       var selection = _.find(event.selected, function (selectionTarget) {
         return (!_.isUndefined(selectionTarget.projectLinkData) && (
-          (selectionTarget.projectLinkData.status === notHandledStatus || selectionTarget.projectLinkData.status === newRoadAddressStatus|| selectionTarget.projectLinkData.status === terminatedStatus  || selectionTarget.projectLinkData.status === unchangedStatus) ||
+          projectLinkStatusIn(selectionTarget.projectLinkData, [notHandledStatus, newRoadAddressStatus,terminatedStatus,unchangedStatus]) ||
           (selectionTarget.projectLinkData.anomaly==noAddressAnomaly && selectionTarget.projectLinkData.roadLinkType!=floatingRoadLinkType) ||
           selectionTarget.projectLinkData.roadClass === 99 || selectionTarget.projectLinkData.roadLinkSource === 3 )
         );
@@ -204,7 +204,7 @@
         return (ol.events.condition.doubleClick(mapBrowserEvent) && ol.events.condition.shiftKeyOnly(mapBrowserEvent)) || ol.events.condition.doubleClick(mapBrowserEvent);
       },
       style: function(feature, resolution) {
-        if(feature.projectLinkData.status === notHandledStatus || feature.projectLinkData.status === newRoadAddressStatus || feature.projectLinkData.status === terminatedStatus || feature.projectLinkData.status === unchangedStatus ||  feature.projectLinkData.roadLinkSource === 3) {
+        if(projectLinkStatusIn(feature.projectLinkData, [notHandledStatus,newRoadAddressStatus, terminatedStatus, unchangedStatus]) ||  feature.projectLinkData.roadLinkSource === 3) {
           return new ol.style.Style({
             fill: new ol.style.Fill({
               color: 'rgba(0, 255, 0, 0.75)'
@@ -244,7 +244,7 @@
       var shiftPressed = event.mapBrowserEvent.originalEvent.shiftKey;
       var selection = _.find(event.selected, function (selectionTarget) {
         return (!_.isUndefined(selectionTarget.projectLinkData) && (
-          (selectionTarget.projectLinkData.status === notHandledStatus || selectionTarget.projectLinkData.status === newRoadAddressStatus|| selectionTarget.projectLinkData.status === terminatedStatus || selectionTarget.projectLinkData.status === unchangedStatus )||
+          projectLinkStatusIn(selectionTarget.projectLinkData,[notHandledStatus, newRoadAddressStatus, terminatedStatus, unchangedStatus])||
           (selectionTarget.projectLinkData.anomaly==noAddressAnomaly && selectionTarget.projectLinkData.roadLinkType!=floatingRoadLinkType) ||
           selectionTarget.projectLinkData.roadClass === 99 || selectionTarget.projectLinkData.roadLinkSource === 3)
         );
@@ -543,6 +543,10 @@
 
     var clearProjectLinkLayer = function() {
       vectorLayer.getSource().clear();
+    };
+
+    var projectLinkStatusIn = function(projectLink, possibleStatus){
+      return possibleStatus.includes(projectLink.status);
     };
 
     eventbus.on('projectLink:projectLinksCreateSuccess', function () {
