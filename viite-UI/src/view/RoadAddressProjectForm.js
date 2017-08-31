@@ -315,7 +315,7 @@
           rootElement.html(selectedProjectLinkTemplate(currentProject, options, selectedProjectLink));
           _.defer(function(){
             applicationModel.selectLayer('roadAddressProject');
-            toggleAditionalControls()
+            toggleAditionalControls();
           });
         });
         if(_.isUndefined(currentProject) || currentProject.id === 0){
@@ -404,8 +404,9 @@
       });
 
       rootElement.on('click', '[id^=editProject]', currentProject, function(eventObject){
+        var projectId = eventObject.currentTarget.value === "undefined" ? currentProject.id : eventObject.currentTarget.value;
         applicationModel.addSpinner();
-        projectCollection.getProjectsWithLinksById(parseInt(eventObject.currentTarget.value)).then(function(result){
+        projectCollection.getProjectsWithLinksById(parseInt(projectId)).then(function(result){
           rootElement.empty();
           setTimeout(function(){}, 0);
           eventbus.trigger('roadAddress:openProject', result);
@@ -416,6 +417,7 @@
             $('#activeButtons').empty();
             $('#actionButtons').html('<button id="saveEdit" class="save btn btn-save" disabled>Tallenna</button>' +
               '<button id="cancelEdit" class="cancel btn btn-cancel">Peruuta</button>');
+            eventbus.trigger("roadAddressProject:clearAndDisableInteractions");
           });
         });
       });
@@ -500,6 +502,7 @@
         projectCollection.clearRoadAddressProjects();
         eventbus.trigger('layer:enableButtons', true);
         if(changeLayerMode){
+          eventbus.trigger('roadAddressProject:clearOnClose');
           applicationModel.selectLayer('linkProperty', true);
         }
       };
@@ -531,12 +534,14 @@
 
       rootElement.on('click', '#saveEdit', function(){
         saveAndNext();
+        eventbus.trigger('roadAddressProject:enableInteractions');
       });
 
       rootElement.on('click', '#cancelEdit', function(){
         rootElement.empty();
         rootElement.html(selectedProjectLinkTemplate(currentProject, options, selectedProjectLink));
         toggleAditionalControls();
+        eventbus.trigger('roadAddressProject:enableInteractions');
       });
 
       rootElement.on('click', '#saveAndCancelDialogue', function(eventData){

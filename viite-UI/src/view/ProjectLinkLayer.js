@@ -424,6 +424,7 @@
     map.addInteraction(selectDoubleClick);
 
     var mapMovedHandler = function(mapState) {
+      var projectId = _.isUndefined(projectCollection.getCurrentProject()) ? undefined : projectCollection.getCurrentProject().project.id;
       if (mapState.zoom !== currentZoom) {
         currentZoom = mapState.zoom;
       }
@@ -431,7 +432,7 @@
         vectorSource.clear();
         eventbus.trigger('map:clearLayers');
       } else if (mapState.selectedLayer == layerName){
-        projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1, undefined, projectCollection.getPublishableStatus());
+        projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1, projectId, projectCollection.getPublishableStatus());
         handleRoadsVisibility();
       }
     };
@@ -695,6 +696,21 @@
 
     eventbus.on('roadAddressProject:deselectFeaturesSelected', function(){
       clearHighlights();
+    });
+
+    eventbus.on('roadAddressProject:clearAndDisableInteractions',function(){
+      clearHighlights();
+      removeSelectInteractions();
+    });
+    
+    eventbus.on('roadAddressProject:enableInteractions',function(){
+      addSelectInteractions();
+    });
+    
+    eventbus.on('roadAddressProject:clearOnClose', function(){
+      clearHighlights();
+      clearLayers();
+      clearProjectLinkLayer();
     });
 
     eventbus.on('map:clearLayers', clearLayers);

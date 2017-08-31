@@ -25,7 +25,9 @@
     };
 
     var titleWithProjectName = function(projectName) {
-      return '<span class ="edit-mode-title">'+projectName+'</span>';
+      return '<span class ="edit-mode-title">'+projectName+'<button id="editProject_'+ currentProject.id +'" ' +
+        'class="btn-edit-project" style="visibility:hidden;" value="' + currentProject.id + '"></button></span>' +
+        '<span id="closeProjectSpan" class="rightSideSpan" style="visibility:hidden;">Sulje Projekti</span>';
     };
 
     var clearInformationContent = function() {
@@ -198,6 +200,11 @@
         }
     };
 
+    var toggleAditionalControls = function(){
+      $('[id^=editProject]').css('visibility', 'visible');
+      $('#closeProjectSpan').css('visibility', 'visible');
+    };
+
     var bindEvents = function() {
 
       var rootElement = $('#feature-attributes');
@@ -216,6 +223,7 @@
         rootElement.html(selectedProjectLinkTemplate(currentProject.project, options, selectedProjectLink));
         replaceAddressInfo();
         checkInputs();
+        toggleAditionalControls();
       });
 
       eventbus.on('roadAddress:projectFailed', function() {
