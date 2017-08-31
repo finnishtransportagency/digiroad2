@@ -255,10 +255,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     withDynTransaction{
       links.foreach(link =>{
         if(link.status == LinkStatus.New.value){
-          ProjectDAO.removeProjectLinksByProjectAndRoadNumber(projectId, roadNumber, roadPartNumber) //match {
-           // case 0 =>
-           // case _ =>
-          //}
+          ProjectDAO.removeProjectLinksByLinkId(projectId, links.map(link=> link.linkId).toSet)
+          //recalculateMValues
+        }
+        else if (link.status == LinkStatus.Terminated.value || link.status == LinkStatus.Transfer.value ){
+          val roadLink = getProjectRoadLinksByLinkIds(Set(link.linkId),  false)
+          ProjectDAO.updateProjectLinkValues(projectId, roadLink.head)
         }
       })
     }
