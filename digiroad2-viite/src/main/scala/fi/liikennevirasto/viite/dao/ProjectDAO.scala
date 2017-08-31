@@ -118,7 +118,7 @@ object ProjectDAO {
 
   def updateProjectLinksToDB( projectLinks: Seq[ProjectLink], modifier:String): Unit ={
     val projectLinkPS = dynamicSession.prepareStatement("UPDATE project_link SET ROAD_NUMBER = ?,  ROAD_PART_NUMBER = ?, TRACK_CODE=?, DISCONTINUITY_TYPE = ?, START_ADDR_M=?, END_ADDR_M=?, MODIFIED_DATE= ? , MODIFIED_BY= ?, LRM_POSITION_ID= ?, PROJECT_ID= ? , CALIBRATION_POINTS= ? , STATUS=?,  ROAD_TYPE=? WHERE id = ?")
-    val lrmPS = dynamicSession.prepareStatement("UPDATE LRM_POSITION SET SIDE_CODE=?, START_MEASURE=?, END_MEASURE=?, LANE_CODE=?, MODIFIED_DATE=? WHERE LINK_ID = ?")
+    val lrmPS = dynamicSession.prepareStatement("UPDATE LRM_POSITION SET SIDE_CODE=?, START_MEASURE=?, END_MEASURE=?, LANE_CODE=?, MODIFIED_DATE=? WHERE ID = ?")
 
     for (projectLink <-projectLinks)
     {
@@ -142,7 +142,7 @@ object ProjectDAO {
       lrmPS.setDouble(3,projectLink.endMValue)
       lrmPS.setInt(4,projectLink.track.value)
       lrmPS.setDate(5 ,new java.sql.Date(new Date().getTime))
-      lrmPS.setLong(6,projectLink.linkId)
+      lrmPS.setLong(6,projectLink.lrmPositionId)
       lrmPS.addBatch()
     }
     projectLinkPS.executeBatch()

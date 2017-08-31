@@ -660,13 +660,26 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def updateProjectLinkStatus(projectId: Long, linkIds: Set[Long], linkStatus: LinkStatus, userName: String): Boolean = {
     withDynTransaction{
       val projectLinks = ProjectDAO.getProjectLinks(projectId)
+      val changedLink= projectLinks.filter(pl => pl.linkId==linkIds.head).head
+      val roadPartLinks= projectLinks.filter(pl => pl.roadNumber==changedLink.roadNumber).filter(pl => pl.roadPartNumber==changedLink.roadPartNumber)
       val changed = projectLinks.filter(pl => linkIds.contains(pl.linkId)).map(_.id).toSet
 
-      if(linkStatus==LinkStatus.Terminated){
-        val unchangedLinks =projectLinks.filterNot(pl => linkIds.contains(pl.linkId))
-        val terminatedLinks =projectLinks.filter(pl => linkIds.contains(pl.linkId))
-        val updatedProjectLinks=ProjectSectionCalculator.determineMValues(Seq(),unchangedLinks)
-        ProjectDAO.updateProjectLinksToDB(updatedProjectLinks++terminatedLinks,userName)
+      if(linkStatus==LinkStatus.Terminated || roadPartLinks.exists( pl=> pl.status==LinkStatus.Terminated)){
+        val projectAddressLinksGeom = getLinksByProjectLinkId(roadPartLinks.map(_.linkId).toSet, projectId, false).map(pal =>
+          pal.linkId -> pal.geometry).toMap
+        val adjLinks = roadPartLinks.map(pl => pl.copy(geometry = projectAddressLinksGeom(pl.linkId)
+        ))
+        val unchangedLinks =if (linkStatus== LinkStatus.UnChanged)
+        { adjLinks.filter(pl => pl.status==LinkStatus.UnChanged) ++ adjLinks.filter(pl => linkIds.contains(pl.linkId))}
+        else
+        { adjLinks.filter(pl => pl.status==LinkStatus.UnChanged)}
+        val terminatedLinks=if (linkStatus== LinkStatus.Terminated)
+          (roadPartLinks.filter(pl => pl.status==LinkStatus.Terminated) ++ adjLinks.filter(pl => linkIds.contains(pl.linkId))).map( pl => pl.copy(calibrationPoints = (None, None)))
+        else
+          roadPartLinks.filter(pl => pl.status==LinkStatus.Terminated).map( pl => pl.copy(calibrationPoints = (None, None)))
+        val unchangedProjectLinks=ProjectSectionCalculator.determineMValues(Seq(),unchangedLinks)
+        ProjectDAO.updateProjectLinksToDB(unchangedProjectLinks++terminatedLinks,userName)
+        ProjectDAO.updateProjectLinkStatus(changed, linkStatus, userName)
       } else
       ProjectDAO.updateProjectLinkStatus(changed, linkStatus, userName)
       try {
