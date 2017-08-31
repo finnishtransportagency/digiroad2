@@ -284,6 +284,8 @@
       });
 
       eventbus.on('roadAddress:projectLinksCreateSuccess', function () {
+        eventbus.trigger('projectChangeTable:refresh');
+        projectCollection.setTmpDirty([]);
         rootElement.find('.changeDirectionDiv').prop("hidden", false);
       });
 
