@@ -173,15 +173,15 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   def createLinearAsset(typeId: Int, linkId: Long, expired: Boolean, sideCode: Int, measures: Measures, username: String, vvhTimeStamp: Long = 0L, linkSource: Option[Int],
                         fromUpdate: Boolean = false,
                         createdByFromUpdate: Option[String] = Some(""),
-                        createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now())): Long = {
+                        createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now()), area: Int): Long = {
     val id = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     val validTo = if (expired) "sysdate" else "null"
     if (fromUpdate) {
       sqlu"""
       insert all
-        into asset(id, asset_type_id, created_by, created_date, valid_to, modified_by, modified_date)
-        values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $username, CURRENT_TIMESTAMP)
+        into asset(id, asset_type_id, created_by, created_date, valid_to, modified_by, modified_date, area)
+        values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $username, CURRENT_TIMESTAMP, $area)
 
         into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
         values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, CURRENT_TIMESTAMP, $vvhTimeStamp, $linkSource)
@@ -193,8 +193,8 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     } else {
       sqlu"""
       insert all
-        into asset(id, asset_type_id, created_by, created_date, valid_to)
-      values ($id, $typeId, $username, sysdate, #$validTo)
+        into asset(id, asset_type_id, created_by, created_date, valid_to, area)
+      values ($id, $typeId, $username, sysdate, #$validTo, $area)
 
       into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
       values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, CURRENT_TIMESTAMP, $vvhTimeStamp, $linkSource)
@@ -251,11 +251,11 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
           from asset a
           left join property p on a.asset_type_id = p.asset_type_id and public_id = 'huoltotie_tarkistettu'
           left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id
-          left join enumerated_value e on e.id = s.enumerated_value_id and e.value = 0
+          join enumerated_value e on e.id = s.enumerated_value_id and e.value = 0
           where a.asset_type_id = 290
           and(valid_to is NULL OR valid_to >= CURRENT_TIMESTAMP)"""
 
-    val sql = areas match {
+    val sql = optionalAreas match {
       case Some(area) => uncheckedQuery + s" and a.area in ($area)"
       case _ => uncheckedQuery
     }

@@ -114,7 +114,6 @@
         applicationModel.selectLayer('maintenanceRoad');
         backend.getLinearAssetById(id, 'maintenanceRoad').then(function (result) {
           eventbus.once('maintenanceRoads:fetched', function() {
-            console.log('fetch for '+result.id);
             var linearAsset = models.selectedMaintenanceRoad.getLinearAsset(result.id);
             models.selectedMaintenanceRoad.open(linearAsset);
           });

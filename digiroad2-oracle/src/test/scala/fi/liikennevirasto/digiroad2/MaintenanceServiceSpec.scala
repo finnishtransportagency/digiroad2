@@ -14,7 +14,7 @@ import org.scalatest.{FunSuite, Matchers}
 
 class MaintenanceServiceSpec extends FunSuite with Matchers {
   val maintenanceRoadAssetTypeId: Int = 290
-  
+
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockVVHClient = MockitoSugar.mock[VVHClient]
   val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
@@ -174,4 +174,32 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Get unchecked maintenanceRoad asset") {
+    val prop1 = Properties("huoltotie_kayttooikeus", "single_choice", "1")
+    val prop2 = Properties("huoltotie_huoltovastuu", "single_choice", "2")
+    val prop3 = Properties("huoltotie_tarkistettu", "checkbox", "0")
+    val prop4 = Properties("huoltotie_tarkistettu", "checkbox", "1")
+
+    val maintenanceUnchecked = MaintenanceRoad(List(prop1, prop2, prop3))
+    val maintenanceChecked = MaintenanceRoad(List(prop1, prop2, prop4))
+    runWithRollback {
+      //asset created on area 1
+      when(mockPolygonTools.getAreaByGeometry(Seq(any[Point]), Measures(any[Double],any[Double]), None )).thenReturn(1)
+      val uncheckedAsset1 = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, maintenanceUnchecked, 1, 0, None)), maintenanceRoadAssetTypeId, "testuser")
+      val checkedAsset1 = ServiceWithDao.create(Seq(NewLinearAsset(388562361l, 0, 20, maintenanceChecked, 1, 0, None)), maintenanceRoadAssetTypeId, "testuser")
+      //asset created on area 2
+      when(mockPolygonTools.getAreaByGeometry(Seq(any[Point]), Measures(any[Double],any[Double]), None )).thenReturn(2)
+      val uncheckedAsset2 = ServiceWithDao.create(Seq(NewLinearAsset(388562362l, 0, 20, maintenanceUnchecked, 1, 0, None)), maintenanceRoadAssetTypeId, "testuser")
+
+      val assetArea1 = ServiceWithDao.getUncheckedLinearAssets(Some(Set(1)))
+      assetArea1.flatMap(_._2).flatMap(_._2).toSeq.contains(uncheckedAsset1.head) should be (true)
+      assetArea1.flatMap(_._2).flatMap(_._2).toSeq.contains(uncheckedAsset2.head) should be (false)
+      assetArea1.flatMap(_._2).flatMap(_._2).toSeq.contains(checkedAsset1.head) should be (false)
+
+      val assetArea = ServiceWithDao.getUncheckedLinearAssets(None)
+      assetArea.flatMap(_._2).flatMap(_._2).toSeq.contains(uncheckedAsset1.head) should be (true)
+      assetArea.flatMap(_._2).flatMap(_._2).toSeq.contains(uncheckedAsset2.head) should be (true)
+      assetArea.flatMap(_._2).flatMap(_._2).toSeq.contains(checkedAsset1.head) should be (false)
+    }
+  }
 }

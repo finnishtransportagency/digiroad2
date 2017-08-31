@@ -799,6 +799,20 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   }
 
   /**
+    * Updates asset area in db.
+    **/
+  def updateArea(id: Long, area: Int): Unit = {
+    sqlu"""
+      update asset
+      set area = $area
+        modified_date = CURRENT_TIMESTAMP
+      where id = (
+        select lrm.id
+          from asset a
+          where a.id = $id
+    """.execute
+  }
+  /**
     * Splits speed limit by given split measure. Updates old asset and creates new asset. Returns new asset id.
     * Used by SpeedLimitService.split.
     */

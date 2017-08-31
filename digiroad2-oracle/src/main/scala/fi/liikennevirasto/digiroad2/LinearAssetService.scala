@@ -127,7 +127,7 @@ trait LinearAssetOperations {
     val optLrmInfo = withDynTransaction {
       dao.getAssetLrmPosition(typeId, assetId)
     }
-    val roadLinks: Option[RoadLinkLike] = optLrmInfo.flatMap( x => roadLinkService.getRoadLinkFromVVH(x._1))
+    val roadLinks: Option[RoadLinkLike] = optLrmInfo.flatMap( x => roadLinkService.getRoadLinkAndComplementaryFromVVH(x._1))
 
       val middePoint = (optLrmInfo, roadLinks) match {
       case (Some(lrmInfo), Some(road)) =>
