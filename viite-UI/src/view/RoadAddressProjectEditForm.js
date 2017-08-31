@@ -166,16 +166,17 @@
     };
 
     var distanceValue = function() {
-      return '<div class="form-group" style="margin-top: 15px">' +
+      return '<div id="distanceValue" hidden>' +
+             '<div class="form-group" style="margin-top: 15px">' +
              '<img src="../images/calibration-point.svg" style="margin-right: 5px" class="calibration-point"/>' +
              '<label class="control-label-small" style="display: inline">ETÄISYYSLUKEMA VALINNAN</label>' +
              '</div>' +
              '<div class="form-group">' +
              '<label class="control-label-small" style="float: left; margin-top: 10px">ALLUSSA</label>' +
-             addSmallInputNumber('begginingDistance', '--') +
+             addSmallInputNumber('beginDistance', '--') +
              '<label class="control-label-small" style="float: left;margin-top: 10px">LOPUSSA</label>' +
              addSmallInputNumber('endDistance', '--') +
-             '</div>';
+             '</div></div>';
     };
 
     var addSelect = function(){
@@ -246,11 +247,22 @@
       $('#discontinuityDropdown').val(selectedProjectLink[selectedProjectLink.length - 1].discontinuity);
       $('#roadTypeDropDown').val(selectedProjectLink[0].roadTypeId);
     };
-    
-    var fillDistanceValues = function(selectedLinks) {
-      _.map(selectedLinks, function (link) {
-          console.log('');
-      })  
+
+    var fillDistanceValues = function (selectedLinks) {
+      if (selectedLinks.length === 1 && selectedLinks[0].calibrationCode === 3) {
+        $('#beginDistance').val(selectedLinks[0].startAddressM);
+        $('#endDistance').val(selectedLinks[0].endAddressM);
+      } else {
+        var orderedByStartM = _.sortBy(selectedLinks, function (l) {
+           return l.startAddressM;
+        });
+        if (orderedByStartM[0].calibrationCode === 2) {
+          $('#beginDistance').val(orderedByStartM[0].startAddressM);
+        }
+        if (orderedByStartM[orderedByStartM.length - 1].calibrationCode === 1) {
+          $('#endDistance').val(orderedByStartM[orderedByStartM.length - 1].endAddressM);
+        }
+      }
     };
 
     var bindEvents = function() {
@@ -273,7 +285,6 @@
         checkInputs();
         // Change selected value in dropdown according to project link status
         changeDropDownValue(selectedProjectLink[0].status);
-        fillDistanceValues(selectedProjectLink);
       });
 
       eventbus.on('roadAddress:projectFailed', function() {
@@ -385,9 +396,11 @@
         else if(this.value == "uusi"){
           projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
           rootElement.find('.new-road-address').prop("hidden", false);
-          if(selectedProjectLink[0].id !== 0)
+          if(selectedProjectLink[0].id !== 0) {
+            fillDistanceValues(selectedProjectLink);
             rootElement.find('.changeDirectionDiv').prop("hidden", false);
-            rootElement.find('.distanceValue').prop("hidden", false);
+            rootElement.find('#distanceValue').prop("hidden", false);
+          }
         }
         else if(this.value == "ennallaan"){
           rootElement.find('.new-road-address').prop("hidden", true);

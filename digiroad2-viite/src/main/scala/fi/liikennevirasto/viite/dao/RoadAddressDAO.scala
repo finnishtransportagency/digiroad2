@@ -11,7 +11,7 @@ import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.dao.CalibrationCode._
-import fi.liikennevirasto.viite.model.Anomaly
+import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
@@ -61,6 +61,15 @@ object CalibrationCode {
 
   def getFromAddress(roadAddress: BaseRoadAddress): CalibrationCode = {
     (roadAddress.calibrationPoints._1.isEmpty, roadAddress.calibrationPoints._2.isEmpty) match {
+      case (true, true)   => No
+      case (true, false)  => AtEnd
+      case (false, true)  => AtBeginning
+      case (false, false) => AtBoth
+    }
+  }
+
+  def getFromAddressLinLike(roadAddress: RoadAddressLinkLike): CalibrationCode = {
+    (roadAddress.startCalibrationPoint.isEmpty, roadAddress.endCalibrationPoint.isEmpty) match {
       case (true, true)   => No
       case (true, false)  => AtEnd
       case (false, true)  => AtBeginning
