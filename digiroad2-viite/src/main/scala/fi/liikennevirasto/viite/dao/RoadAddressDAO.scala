@@ -439,22 +439,19 @@ object RoadAddressDAO {
     queryList(query)
   }
 
-  def isNewRoadPartUsed(roadNumber: Long, roadPartNumber: Long, projectId: Long) = {
+  def isNotAvailableForProject(roadNumber: Long, roadPartNumber: Long, projectId: Long): Boolean = {
     val query =
       s"""
-		select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
-        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
-        pos.side_code, pos.adjusted_timestamp,
-        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source
-        from project pro,
-        road_address ra cross join
-        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
-        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
-        join lrm_position pos on ra.lrm_position_id = pos.id
-        where  pro.id=$projectId AND road_number = $roadNumber AND road_part_number = $roadPartNumber and t.id < t2.id AND (ra.END_DATE IS NULL OR ra.END_DATE>=pro.START_DATE)
-        ORDER BY road_number, road_part_number, track_code, start_addr_m
+      SELECT 1 FROM dual WHERE EXISTS(select 1
+         from project pro,
+         road_address ra
+         join lrm_position pos on ra.lrm_position_id = pos.id
+         where  pro.id=$projectId AND road_number = $roadNumber AND road_part_number = $roadPartNumber AND
+         (ra.START_DATE>=pro.START_DATE or ra.END_DATE>pro.START_DATE) AND
+         ra.VALID_TO is null
+         )
       """
-    queryList(query)
+    Q.queryNA[Int](query).firstOption.nonEmpty
   }
 
   def fetchByRoad(roadNumber: Long, includeFloating: Boolean = false) = {
