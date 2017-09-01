@@ -19,10 +19,10 @@ case class TRProjectStatus(id:Option[Long], trProjectId:Option[Long], trSubProje
                            trModifiedDate:Option[String], user:Option[String], trPublishedDate:Option[String],
                            trJobNumber:Option[Long], errorMessage:Option[String], trProcessingStarted:Option[String],
                            trProcessingEnded:Option[String], errorCode:Option[Int])
-case class TRstatusresponse(id_tr_projekti:Option[Long], projekti:Option[Long],id:Option[Long], tunnus:Option[Long],
-                            status:Option[String], name:Option[String], changeDate:Option[String], ely:Option[Int],
+case class TRStatusResponse(id_tr_projekti:Option[Long], projekti:Option[Long], id:Option[Long], tunnus:Option[Long],
+                            status:Option[String], name:Option[String], change_date:Option[String], ely:Option[Int],
                             muutospvm:Option[String], user:Option[String], published_date:Option[String],
-                            job_number:Option[Long], errorMessage:Option[String], start_time:Option[String],
+                            job_number:Option[Long], error_message:Option[String], start_time:Option[String],
                             end_time:Option[String], error_code:Option[Int])
 
 case class ChangeProject(id:Long, name:String, user:String, ely:Long, changeDate:String, changeInfoSeq:Seq[RoadAddressChangeInfo])
@@ -240,14 +240,14 @@ object ViiteTierekisteriClient {
     fetchTRProjectStatus(projectId).map(responseMapper)
   }
 
-  private def fetchTRProjectStatus(projectId: Long): Option[TRstatusresponse] = {
+  private def fetchTRProjectStatus(projectId: Long): Option[TRStatusResponse] = {
     implicit val formats = DefaultFormats
     val request = new HttpGet(s"${getRestEndPoint}addresschange/$projectId")
     request.addHeader("X-Authorization", "Basic " + auth.getAuthInBase64)
 
     val response = client.execute(request)
     try {
-      val  receivedData = parse(StreamInput(response.getEntity.getContent)).extract[TRstatusresponse]
+      val  receivedData = parse(StreamInput(response.getEntity.getContent)).extract[TRStatusResponse]
       Option(receivedData)
     } catch {
       case NonFatal(e) =>
@@ -258,8 +258,10 @@ object ViiteTierekisteriClient {
     }
   }
 
-  def responseMapper (response:TRstatusresponse): TRProjectStatus = {
-    TRProjectStatus(response.id, response.id_tr_projekti, response.tunnus, response.job_number, response.status, response.name, response.changeDate, response.ely, response.muutospvm, response.user, response.published_date, response.job_number, response.errorMessage, response.start_time, response.end_time, response.error_code)
+  def responseMapper (response:TRStatusResponse): TRProjectStatus = {
+    TRProjectStatus(response.id, response.id_tr_projekti, response.tunnus, response.job_number, response.status,
+      response.name, response.change_date, response.ely, response.muutospvm, response.user, response.published_date,
+      response.job_number, response.error_message, response.start_time, response.end_time, response.error_code)
   }
 
 }

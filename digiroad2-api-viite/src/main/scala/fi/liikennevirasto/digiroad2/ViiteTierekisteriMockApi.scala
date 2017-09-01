@@ -204,12 +204,16 @@ class ViiteTierekisteriMockApi extends ScalatraServlet with JacksonJsonSupport {
       case _ =>
         (0, null)
     }
+    logger.info(s"Project id $id with name ${project("name")} has error code $errorCode, $error")
     Map (
       "id_tr_projekti" -> (1000 + id),
       "projekti" -> id,
       "id" -> id,
       "tunnus" -> 5,
-      "status" -> "T",
+      "status" -> (errorCode match {
+        case 0 => "T"
+        case _ => "V"
+      }),
       "name" -> project("name").toString,
       "change_date" -> project("change_date").toString,
       "ely" -> project("ely").toString,
