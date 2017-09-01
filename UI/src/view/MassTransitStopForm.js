@@ -470,6 +470,7 @@
           'yllapitajan_tunnus',
           'yllapitajan_koodi',
           'matkustajatunnus',
+          'laiturinumero', //Platform Number
           'maastokoordinaatti_x',
           'maastokoordinaatti_y',
           'maastokoordinaatti_z',
@@ -727,6 +728,38 @@
               {type: 'alert'});
         }
       });
+
+      //eventbus.on('assetPropertyValue:changed', function (event) {
+      //  var property = event.propertyData;
+      //
+      //  if (property.publicId === 'laiturinumero' && (_.find(property.values, function (value) {return value.propertyValue.length > 3;}))){
+      //    //var rootElement = $('#feature-attributes');
+      //    //rootElement.find('input[type="text"]').on('input change', function (event) {
+      //    //  var eventTarget = $(event.currentTarget);
+      //    //  selectedAsset.set({name: eventTarget.val()});
+      //    //});
+      //
+      //    var lastValueAdded = property.values[0].propertyValue.substring(0, 3);
+      //
+      //    var rootElement = $('#feature-attributes');
+      //    rootElement.find('input[type="text"]').on('input change', function (event) {
+      //      var eventTarget = $(event.currentTarget);
+      //      var propertyValue = $(event.currentTarget).val();
+      //    });
+      //
+      //    //property.values[0] = {propertyValue: lastValueAdded, propertyDisplayValue: lastValueAdded};
+      //
+      //    //_.map(property.values, function (value) {
+      //    //  value.propertyValue = lastValueAdded;
+      //    //  value.propertyDisplayValue = lastValueAdded
+      //    //});
+      //
+      //    //selectedMassTransitStopModel.setProperty(property.publicId, property.values, property.propertyType);
+      //
+      //    var t = 'teste 1';
+      //  }
+      //});
+
       backend.getEnumeratedPropertyValues();
     }
   };
