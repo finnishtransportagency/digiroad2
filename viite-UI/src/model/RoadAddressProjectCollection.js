@@ -187,9 +187,9 @@
           })
         };
         backend.revertChangesRoadlink(data, function (response) {
-          if (response.status == 'success') {
-            applicationModel.removeSpinner();
-            getProjectsWithLinksById(currentProject.project.id);
+          if (response.success) {
+            dirtyProjectLinkIds = [];
+            eventbus.trigger('projectLink:revertedChanges');
           }
           else if (response.status == INTERNAL_SERVER_ERROR_500 || response.status == BAD_REQUEST_400) {
             eventbus.trigger('roadAddress:projectLinksUpdateFailed', error.status);

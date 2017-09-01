@@ -202,7 +202,7 @@ object ProjectDAO {
   }
 
   def updateAddrMValues(projectLink: ProjectLink): Unit = {
-      sqlu"""update project_link set modified_date = sysdate, start_addr_m = ${projectLink.startAddrMValue}, end_addr_m = ${projectLink.endAddrMValue} where id = ${projectLink.id}
+      sqlu"""update project_link set modified_date = sysdate, start_addr_m = ${projectLink.startAddrMValue}, end_addr_m = ${projectLink.endAddrMValue}, calibration_points = ${CalibrationCode.getFromAddress(projectLink).value} where id = ${projectLink.id}
           """.execute
   }
 

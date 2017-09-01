@@ -252,19 +252,38 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def revertLinks(projectId: Long, roadNumber:Long, roadPartNumber: Long, links: List[LinkToRevert]) :Option[String] = {
-    withDynTransaction{
-      links.foreach(link =>{
-        if(link.status == LinkStatus.New.value){
-          ProjectDAO.removeProjectLinksByLinkId(projectId, links.map(link=> link.linkId).toSet)
-          //recalculateMValues
-        }
-        else if (link.status == LinkStatus.Terminated.value || link.status == LinkStatus.Transfer.value ){
-          val roadLink = RoadAddressDAO.fetchByLinkId(Set(link.linkId),  false, false)
-          ProjectDAO.updateProjectLinkValues(projectId, roadLink.head)
-        }
-      })
+
+    try {
+      withDynTransaction{
+        links.foreach(link =>{
+          if(link.status == LinkStatus.New.value){
+            ProjectDAO.removeProjectLinksByLinkId(projectId, links.map(link=> link.linkId).toSet)
+            val remainingLinks = ProjectDAO.projectLinksExist(projectId, roadNumber, roadPartNumber)
+            if (remainingLinks.nonEmpty){
+              val projectLinks = ProjectDAO.fetchByProjectNewRoadPart(roadNumber, roadPartNumber, projectId)
+              val projectAddressLinksGeom = getLinksByProjectLinkId(projectLinks.map(_.linkId).toSet, projectId, false).map(pal =>
+                pal.linkId -> pal.geometry).toMap
+              val adjLinks = projectLinks.map(pl => pl.copy(geometry = projectAddressLinksGeom(pl.linkId),
+                geometryLength = GeometryUtils.geometryLength(projectAddressLinksGeom(pl.linkId)),
+                calibrationPoints = (None, None), startAddrMValue = 0L, endAddrMValue = 0L
+              ))
+              ProjectSectionCalculator.determineMValues(adjLinks, Seq.empty[ProjectLink]).foreach(
+                adjLink => ProjectDAO.updateAddrMValues(adjLink))
+            }
+          }
+          else if (link.status == LinkStatus.Terminated.value || link.status == LinkStatus.Transfer.value ){
+            val roadLink = RoadAddressDAO.fetchByLinkId(Set(link.linkId),  false, false)
+            ProjectDAO.updateProjectLinkValues(projectId, roadLink.head)
+          }
+        })
+        Some("")
+      }
     }
-    return Some("")
+    catch{
+      case NonFatal(e) =>
+        logger.info("Error reverting the changes on roadlink", e)
+        Some("Virhe tapahtui muutosten palauttamisen yhteydessä")
+    }
   }
 
   def changeDirection(projectId : Long, roadNumber : Long, roadPartNumber : Long): Option[String] = {
