@@ -20,6 +20,7 @@
     var terminatedStatus = 1;
     var newRoadAddressStatus = 2;
     var unknownStatus = 99;
+    var isNotEditingData = true;
     Layer.call(this, layerName, roadLayer);
     var project;
     var me = this;
@@ -119,6 +120,26 @@
       style: styleFunction
     });
 
+    var showChangesAndSendButton = function () {
+      selectedProjectLinkProperty.clean();
+      $('.wrapper').remove();
+      $('#actionButtons').html('<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button><button disabled id ="send-button" class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button>');
+    };
+
+    var fireDeselectionConfirmation = function () {
+      new GenericConfirmPopup('Haluatko poistaa tien valinnan ja hylätä muutokset?', {
+        successCallback: function () {
+          eventbus.trigger('roadAddressProject:discardChanges');
+          isNotEditingData = true;
+          clearHighlights();
+          showChangesAndSendButton()
+        },
+        closeCallback: function(){
+          isNotEditingData = false;
+        }
+      });
+    };
+
     var selectSingleClick = new ol.interaction.Select({
       layer: [vectorLayer, suravageRoadProjectLayer],
       condition: ol.events.condition.singleClick,
@@ -177,11 +198,17 @@
           selectionTarget.projectLinkData.roadClass === 99 || selectionTarget.projectLinkData.roadLinkSource === 3)
         );
       });
-      selectedProjectLinkProperty.clean();
-      $('.wrapper').remove();
-      $('#actionButtons').html('<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button><button disabled id ="send-button" class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button>');
-      if (!_.isUndefined(selection))
-        selectedProjectLinkProperty.open(selection.projectLinkData.linkId, true);
+      if(isNotEditingData){
+        showChangesAndSendButton();
+        if (!_.isUndefined(selection))
+          selectedProjectLinkProperty.open(selection.projectLinkData.linkId, true);
+      } else {
+        _.defer(function(){
+          clearHighlights();
+          addFeaturesToSelection(event.deselected);
+          fireDeselectionConfirmation();
+        });
+      }
     });
 
     var selectDoubleClick = new ol.interaction.Select({
@@ -242,9 +269,16 @@
           selectionTarget.projectLinkData.roadClass === 99 || selectionTarget.projectLinkData.roadLinkSource === 3)
         );
       });
-      selectedProjectLinkProperty.clean();
-      if (!_.isUndefined(selection))
-        selectedProjectLinkProperty.open(selection.projectLinkData.linkId);
+      if(isNotEditingData){
+        selectedProjectLinkProperty.clean();
+        if (!_.isUndefined(selection))
+          selectedProjectLinkProperty.open(selection.projectLinkData.linkId);
+      } else {
+        _.defer(function(){
+          clearHighlights();
+          addFeaturesToSelection(event.deselected);
+        });
+      }
     });
 
     var revertSelectedChanges = function() {
@@ -718,6 +752,10 @@
     eventbus.on('suravageProjectRoads:toggleVisibility', function(visibility) {
       suravageRoadProjectLayer.setVisible(visibility);
       suravageProjectDirectionMarkerLayer.setVisible(visibility);
+    });
+
+    eventbus.on('roadAddressProject:editingRoad',function(){
+      isNotEditingData = false;
     });
 
     vectorLayer.setVisible(true);

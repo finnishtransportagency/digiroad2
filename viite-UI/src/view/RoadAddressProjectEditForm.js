@@ -291,8 +291,12 @@
       eventbus.on('roadAddress:projectLinksSaveFailed', function (result) {
         new ModalConfirm(result.toString());
       });
+      
+      eventbus.on('roadAddressProject:discardChanges',function(){
+        cancelChanges();
+      });
 
-      rootElement.on('click', '.project-form button.update', function() {
+      var saveChanges = function(){
         currentProject = projectCollection.getCurrentProject();
         if( $('[id=dropDown] :selected').val() == 'lakkautus') {
           projectCollection.saveProjectLinks(projectCollection.getTmpExpired());
@@ -301,9 +305,28 @@
         else if( $('[id=dropDown] :selected').val() === 'uusi'){
           projectCollection.createProjectLinks(selectedProjectLink);
         }
+      };
+
+      var cancelChanges = function() {
+        if(projectCollection.isDirty()) {
+          projectCollection.revertLinkStatus();
+          projectCollection.setDirty([]);
+          projectCollection.setTmpExpired([]);
+          projectLinkLayer.clearHighlights();
+          $('.wrapper').remove();
+          eventbus.trigger('roadAddress:projectLinksEdited');
+        } else {
+          eventbus.trigger('roadAddress:openProject', projectCollection.getCurrentProject());
+          eventbus.trigger('roadLinks:refreshView');
+        }
+      };
+
+      rootElement.on('click', '.project-form button.update', function() {
+        saveChanges();
       });
 
       rootElement.on('change', '#dropDown', function() {
+        eventbus.trigger('roadAddressProject:editingRoad');
         if(this.value == "lakkautus") {
           rootElement.find('.new-road-address').prop("hidden", true);
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
@@ -326,17 +349,7 @@
       });
 
       rootElement.on('click', '.project-form button.cancelLink', function(){
-        if(projectCollection.isDirty()) {
-          projectCollection.revertLinkStatus();
-          projectCollection.setDirty([]);
-          projectCollection.setTmpExpired([]);
-          projectLinkLayer.clearHighlights();
-          $('.wrapper').remove();
-          eventbus.trigger('roadAddress:projectLinksEdited');
-        } else {
-          eventbus.trigger('roadAddress:openProject', projectCollection.getCurrentProject());
-          eventbus.trigger('roadLinks:refreshView');
-        }
+        cancelChanges();
       });
 
       rootElement.on('click', '.project-form button.send', function(){
