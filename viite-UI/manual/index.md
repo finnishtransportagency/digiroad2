@@ -454,7 +454,7 @@ _Tieosoiteprojektit -listaus._
 --------------------------
 
 
-Tieosoiteprojektissa on mahdollista tehd&auml; seuraavia muutoksia eli toimenpiteit&auml;: lakkautus (tieosoitteen lakkautus), uusi (lis&auml;t&auml;&auml;n uusi tieosoite), numeroinnin muutos [ei viel&auml; toteutettu], ennallaan [ei viel&auml; toteutettu], kalibrointiarvon muutos [ei viel&auml; toteutettu], siirto [ei viel&auml; toteutettu] ja kalibrointipisteen siirto [ei viel&auml; toteutettu].  My&ouml;s tieosoitteen kasvusuunnan voi k&auml;&auml;nt&auml;&auml;. Seuraavissa kappaleissa kuvataan jokaisen toimenpiteen teko Viitteess&auml;.
+Tieosoiteprojektissa on mahdollista tehd&auml; seuraavia muutoksia eli toimenpiteit&auml;: lakkautus (tieosoitteen lakkautus), uusi (lis&auml;t&auml;&auml;n uusi tieosoite), numeroinnin muutos [ei viel&auml; toteutettu], ennallaan [ei viel&auml; toteutettu], et&auml;isyyslukeman muutos [ei viel&auml; toteutettu], siirto [ei viel&auml; toteutettu] ja et&auml;isyyslukemapisteen siirto [ei viel&auml; toteutettu].  My&ouml;s tieosoitteen kasvusuunnan voi k&auml;&auml;nt&auml;&auml;. Seuraavissa kappaleissa kuvataan jokaisen toimenpiteen teko Viitteess&auml;.
 
 Tieosoiteprojektissa muutostoimenpiteit&auml; p&auml;&auml;see tekem&auml;&auml;n klikkaamalla Seuraava-painiketta tieosoitemuutosprojektin perustietojen lomakkeella. T&auml;m&auml;n j&auml;lkeen sovellus muuttaa varatut tieosat muokattaviksi kohteiksi. Mik&auml;li toimenpiteen&auml; lis&auml;t&auml;&auml;n uusi tieosoite, k&auml;ytt&auml;j&auml; klikkaa projektin perustietojen lomakkeella Seuraava-painiketta ja valitsee sitten tieosoitteistettavan linkin kartalta.
 
@@ -496,12 +496,6 @@ K&auml;ytt&ouml;liittym&auml; varoittaa virheilmoituksella jos uusi tieosoite on
 
 _Tieosoite on jo olemassa projektin alkup&auml;iv&auml;n&auml;._
 
-![Tieosoite on jo projektissa](k45.JPG)
-
-_Tieosoite on jo varattuna toisessa projektissa nimelt&auml; 'Uusi tieosoiteprojekti'._
-
-Tallennuksen j&auml;lkeen linkit s&auml;ilyv&auml;t kartalla vihre&auml;ll&auml; korostettuna ja pinkit suuntanuolet piirtyv&auml;t p&auml;&auml;llimm&auml;iseksi. Valinnan voi purkaa klikkaamalla jotakin tyhj&auml;&auml; (tielinkit&ouml;nt&auml;) kohtaa karttan&auml;kym&auml;ss&auml; tai valitsemalle toisen tielinkin. Valinnan voi palauttaa klikkaamalla uuden tieosoitteen omaavaa tieosaa. Lis&auml;ksi, lomakkeelle ilmestyy K&auml;&auml;nn&auml; kasvusuunta -painike (1), jolla voi vaihtaa valitun tieosan kasvusuunnan. Kasvusuuntaa vaihtaessa my&ouml;s m-arvot p&auml;ivittyv&auml;t automaattisesti. 
-
 ![Kasvusuunnan vaihto](k47.JPG)
 
 _Valittuna olevan uuden tieosoitteen vaikutussuntaa vaihtuu lomakkeen 'K&auml;&auml;nn&auml; vaikutussuunta'-nappulasta._
@@ -516,19 +510,21 @@ _Uuden tieosoitteen linkit piirtyv&auml;t kartalle pinkill&auml;. Tieosan voi va
 
 Tallennettuun tieosoitteeseen voi jatkaa uusien linkkien lis&auml;&auml;mist&auml; vaiheittain. Ensin valitaan tallennetun tieosan jatkeeksi seuraava linkki ja sitten valitaan lomakkeelta toimenpide "uusi" ja annetaan linkeille sama tieosoite (TIE= tienumero, OSA=tieosanumero, AJR=ajoratakoodi). ELY ja Jatkuu arvot Viite t&auml;ytt&auml;&auml; automaattisesti. Tallennetaan lis&auml;ykset. Projektin voi my&ouml;s tallentaa, sulkea ja jatkaa lis&auml;yst&auml; samaan tieosoitteeseen my&ouml;hemmin. Kasvusuunta lis&auml;tylle osuudelle m&auml;&auml;r&auml;ytyy aiemmin osoitteistettujen linkkien mukaan ja sit&auml; voi edelleen k&auml;&auml;nt&auml;&auml; K&auml;&auml;nn&auml; kasvusuunta-painikkeella. M-arvot p&auml;ivittyv&auml;t koko tieosalle, jolle on annettu sama tieosoite.
 
+Tieosoitteen voi antaa Viitteess&auml; my&ouml;s ns. Suravage-linkeille (SuRavaGe = Suunniteltu rakentamisvaiheen geometria). Suravage-tiet n&auml;kyv&auml;t Viitteess&auml; vaaleanpunaisella v&auml;rill&auml; ja niiss&auml; n&auml;kyy my&ouml;s tieosoitteen kasvusuuntanuolet. 
+
 11.1.3 Numeroinnnin muutos
 --------------------------
 
 11.1.4 Ennallaan
 --------------------------
 
-11.1.5 Kalibrointiarvon muutos
+11.1.5 Et&auml;isyyslukeman muutos
 --------------------------
 
 11.1.6 Siirto
 --------------------------
 
-11.1.7 Kalibrointipisteen siirto
+11.1.7 Et&auml;isyyslukemapisteen siirto
 --------------------------
 
 11.2 Muutosilmoituksien tarkastelu taulukkon&auml;kym&auml;ss&auml;

@@ -13,8 +13,6 @@
     var dirtyProjectLinks = [];
     var self = this;
     var publishableProject = false;
-    var STATUS_NOT_HANDLED = 0;
-    var STATUS_TERMINATED = 1;
     var BAD_REQUEST_400 = 400;
     var UNAUTHORIZED_401 = 401;
     var PRECONDITION_FAILED_412 = 412;
@@ -178,10 +176,10 @@
     };
 
 
-    this.saveProjectLinks = function(toBeExpiredLinks) {
+    this.saveProjectLinks = function(toBeUpdatedDirtyLinks, statusCode) {
       console.log("Save Project Links called");
       applicationModel.addSpinner();
-      var linkIds = _.unique(_.map(toBeExpiredLinks,function (t){
+      var linkIds = _.unique(_.map(toBeUpdatedDirtyLinks,function (t){
         if(!_.isUndefined(t.linkId)){
           return t.linkId;
         } else return t;
@@ -189,7 +187,7 @@
 
       var projectId = projectinfo.id;
 
-      var data = {'linkIds': linkIds, 'projectId': projectId, 'newStatus': STATUS_TERMINATED};
+      var data = {'linkIds': linkIds, 'projectId': projectId, 'newStatus': statusCode};
 
       if(!_.isEmpty(linkIds) && typeof projectId !== 'undefined' && projectId !== 0){
         backend.updateProjectLinks(data, function(errorObject) {
@@ -380,11 +378,11 @@
       return currentRoadPartList;
     };
 
-    this.setTmpExpired = function(editRoadLinks){
+    this.setTmpDirty = function(editRoadLinks){
       dirtyProjectLinks = editRoadLinks;
     };
 
-    this.getTmpExpired = function(){
+    this.getTmpDirty = function(){
       return dirtyProjectLinks;
     };
 

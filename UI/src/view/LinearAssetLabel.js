@@ -9,7 +9,7 @@
           var valueLength = value.toString().length;
           var image = 'images/linearLabel_background.png';
 
-          if (!correctValue(value)) {
+          if (!me.isValidValue(value)) {
             image = 'images/warningLabel.png';
           }else if (valueLength > 4 && valueLength < 7) {
             image = 'images/linearLabel_background_large.png';
@@ -23,12 +23,12 @@
         };
 
         var textStyle = function(value) {
-          if (!correctValue(value))
+          if (!me.isValidValue(value))
             return '';
           return "" + value;
         };
 
-        var correctValue = function(value){
+        this.isValidValue = function(value){
           var valueLength = value.toString().length;
           if(value)
             if(valueLength > 6 || value < 0)
@@ -52,6 +52,14 @@
             return asset.value;
         };
 
+    };
+
+    root.SpeedLimitAssetLabel = function() {
+        LinearAssetLabel.call(this);
+
+        this.isValidValue = function(value) {
+            return value && value > 0 && value <= 120;
+        };
     };
 
     root.LinearAssetLabelMultiValues = function(){

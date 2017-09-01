@@ -1,5 +1,13 @@
 (function (root) {
   root.RoadAddressProjectEditForm = function(projectCollection, selectedProjectLinkProperty, projectLinkLayer, projectChangeTable) {
+    var STATUS_NOT_HANDLED = 0;
+    var STATUS_TERMINATED = 1;
+    var STATUS_NEW_LINK = 2;
+    var STATUS_UNCHANGED = 4;
+    var ACTION_TERMINATE = "terminate";
+    var ACTION_NEW_LINK = "new";
+    var ACTION_UNCHANGED = "unchanged";
+
     var currentProject = false;
     var selectedProjectLink = false;
     var backend=new Backend();
@@ -67,6 +75,7 @@
           ' OSA ' + '<span class="project-edit">' + link.roadPartNumber + '</span>' +
           ' AJR ' + '<span class="project-edit">' + link.trackCode + '</span>' +
           ' M:  ' + '<span class="project-edit">' + startM + ' - ' + endM + '</span>' +
+           (selected.length > 1 ? ' (' + selected.length + ' linkkiä)' : '')+
           '</div>' +
           '</div>';
       }
@@ -97,10 +106,10 @@
         '<div class="input-unit-combination">' +
         '<select class="form-control" id="dropDown" size="1">'+
         '<option selected disabled hidden>Valitse</option>'+
-        '<option value="lakkautus"' + (terminationState) + '>Lakkautus</option>'+
-        '<option value="uusi"' + (enableStatusNew ? ' ' : ' disabled')+'>Uusi</option>'+
+        '<option value="'+ACTION_TERMINATE + '"' + (terminationState) + '>Lakkautus</option>'+
+        '<option value="'+ACTION_NEW_LINK + '"' +  (enableStatusNew ? ' ' : ' disabled')+'>Uusi</option>'+
         '<option value="action4" disabled>Numeroinnin muutos</option>'+
-        '<option value="action5" disabled>Ennallaan</option>'+
+        '<option value="'+ACTION_UNCHANGED + '">Ennallaan</option>'+
         '<option value="action6" disabled>Kalibrointiarvon muutos</option>'+
         '<option value="action7" disabled>Siirto</option>'+
         '<option value="action8" disabled>Kalibrointipisteen siirto</option>'+
@@ -205,6 +214,20 @@
       $('#closeProjectSpan').css('visibility', 'visible');
     };
 
+    var changeDropDownValue = function (statusCode) {
+      var rootElement = $('#feature-attributes');
+      if (statusCode === STATUS_UNCHANGED) {
+        $("#dropDown").val(ACTION_UNCHANGED).change();
+      }
+      else if(statusCode === STATUS_NEW_LINK){
+        $("#dropDown").val(ACTION_NEW_LINK).change();
+        projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
+        rootElement.find('.new-road-address').prop("hidden", false);
+        if(selectedProjectLink[0].id !== 0)
+          rootElement.find('.changeDirectionDiv').prop("hidden", false);
+      }
+    };
+
     var bindEvents = function() {
 
       var rootElement = $('#feature-attributes');
@@ -224,6 +247,8 @@
         replaceAddressInfo();
         checkInputs();
         toggleAditionalControls();
+        // Change selected value in dropdown according to project link status
+        changeDropDownValue(selectedProjectLink[0].status);
       });
 
       eventbus.on('roadAddress:projectFailed', function() {
@@ -246,6 +271,8 @@
       });
 
       eventbus.on('roadAddress:projectLinksUpdated',function(data){
+        eventbus.trigger('projectChangeTable:refresh');
+        projectCollection.setTmpDirty([]);
         if (typeof data !== 'undefined' && typeof data.publishable !== 'undefined' && data.publishable) {
           eventbus.trigger('roadAddressProject:projectLinkSaved', data.id, data.publishable);
         }
@@ -277,6 +304,8 @@
       });
 
       eventbus.on('roadAddress:projectLinksCreateSuccess', function () {
+        eventbus.trigger('projectChangeTable:refresh');
+        projectCollection.setTmpDirty([]);
         rootElement.find('.changeDirectionDiv').prop("hidden", false);
       });
 
@@ -298,12 +327,16 @@
 
       var saveChanges = function(){
         currentProject = projectCollection.getCurrentProject();
-        if( $('[id=dropDown] :selected').val() == 'lakkautus') {
-          projectCollection.saveProjectLinks(projectCollection.getTmpExpired());
+        if( $('[id=dropDown] :selected').val() == ACTION_TERMINATE) {
+          projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), STATUS_TERMINATED);
           rootElement.html(emptyTemplate(currentProject.project));
         }
-        else if( $('[id=dropDown] :selected').val() === 'uusi'){
+        else if( $('[id=dropDown] :selected').val() === ACTION_NEW_LINK){
           projectCollection.createProjectLinks(selectedProjectLink);
+        }
+        else if( $('[id=dropDown] :selected').val() === ACTION_UNCHANGED){
+          projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), STATUS_UNCHANGED);
+          rootElement.html(emptyTemplate(currentProject.project));
         }
       };
 
@@ -312,6 +345,7 @@
           projectCollection.revertLinkStatus();
           projectCollection.setDirty([]);
           projectCollection.setTmpExpired([]);
+          projectCollection.setTmpDirty([])
           projectLinkLayer.clearHighlights();
           $('.wrapper').remove();
           eventbus.trigger('roadAddress:projectLinksEdited');
@@ -327,20 +361,26 @@
 
       rootElement.on('change', '#dropDown', function() {
         eventbus.trigger('roadAddressProject:editingRoad');
-        if(this.value == "lakkautus") {
+        if(this.value == ACTION_TERMINATE) {
           rootElement.find('.new-road-address').prop("hidden", true);
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
-            return {'id': link.linkId, 'status': link.status};
+            return {'id': link.linkId, 'status': STATUS_TERMINATED};
           })));
-          projectCollection.setTmpExpired(projectCollection.getTmpExpired().concat(selectedProjectLink));
+          projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
           rootElement.find('.project-form button.update').prop("disabled", false);
         }
-        else if(this.value == "uusi"){
-          projectCollection.setTmpExpired(projectCollection.getTmpExpired().concat(selectedProjectLink));
+        else if(this.value == ACTION_NEW_LINK){
+          projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
           rootElement.find('.new-road-address').prop("hidden", false);
           if(selectedProjectLink[0].id !== 0)
             rootElement.find('.changeDirectionDiv').prop("hidden", false);
+        }
+        else if(this.value == ACTION_UNCHANGED){
+          projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
+            return {'id': link.linkId, 'status': STATUS_UNCHANGED};
+          })));
+          projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
         }
       });
 

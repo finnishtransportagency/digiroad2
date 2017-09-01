@@ -60,7 +60,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     onSelect: onSelectMassTransitStop,
     draggable : false,
     filterGeometry : function(feature){
-      return feature.getGeometry() instanceof ol.geom.Point;
+      return feature.getGeometry() instanceof ol.geom.Point && !_.isUndefined(feature.getProperties().data);
     }
   });
 
@@ -540,7 +540,9 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     var extent = map.getView().calculateExtent(map.getSize());
 
     eventbus.once('roadLinks:fetched', function () {
-      roadLayer.drawRoadLinks(roadCollection.getAll(), map.getView().getZoom());
+      var roadLinks = roadCollection.getAll();
+      roadLayer.drawRoadLinks(roadLinks, map.getView().getZoom());
+      me.drawOneWaySigns(roadLayer.layer, roadLinks);
     });
 
     massTransitStopsCollection.refreshAssets({ bbox: extent, hasZoomLevelChanged: true });
@@ -628,8 +630,10 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   var registerRoadLinkFetched = function(){
     if (zoomlevels.isInAssetZoomLevel(map.getView().getZoom())) {
       eventbus.once('roadLinks:fetched', function() {
-          roadLayer.drawRoadLinks(roadCollection.getAll(), map.getView().getZoom());
+          var roadLinks = roadCollection.getAll();
+          roadLayer.drawRoadLinks(roadLinks, map.getView().getZoom());
           massTransitStopsCollection.fetchAssets( map.getView().calculateExtent(map.getSize()));
+          me.drawOneWaySigns(roadLayer.layer, roadLinks);
       });
       if(massTransitStopsCollection.isComplementaryActive())
         roadCollection.fetchWithComplementary(map.getView().calculateExtent(map.getSize()));
