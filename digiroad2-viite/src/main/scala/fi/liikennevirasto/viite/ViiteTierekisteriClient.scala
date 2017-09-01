@@ -148,7 +148,6 @@ object ViiteTierekisteriClient {
     val loadedKeyString = if(isTREnabled){
       properties.getProperty("digiroad2.tierekisteriViiteRestApiEndPoint")
     }  else "http://localhost:8080/trrest/"
-    println("viite-endpoint = "+loadedKeyString)
     if (loadedKeyString == null)
       throw new IllegalArgumentException("Missing TierekisteriViiteRestApiEndPoint")
     loadedKeyString
@@ -194,8 +193,13 @@ object ViiteTierekisteriClient {
     val response = client.execute(request)
     try {
       val statusCode = response.getStatusLine.getStatusCode
-      val errorMessage = parse(StreamInput(response.getEntity.getContent)).extractOpt[TRErrorResponse].getOrElse(TRErrorResponse("")) // would be nice if we didn't need case class for parsing of one attribute
-      ProjectChangeStatus(trProject.id, statusCode, errorMessage.error_message)
+      if (statusCode >= 500) {
+        logger.info(scala.io.Source.fromInputStream(response.getEntity.getContent).getLines().mkString("\n"))
+        throw new RuntimeException("Unable to submit: Tierekisteri error 500")
+      } else {
+        val errorMessage = parse(StreamInput(response.getEntity.getContent)).extractOpt[TRErrorResponse].getOrElse(TRErrorResponse("")) // would be nice if we didn't need case class for parsing of one attribute
+        ProjectChangeStatus(trProject.id, statusCode, errorMessage.error_message)
+      }
     } catch {
       case NonFatal(e) =>
         logger.error(s"Submit to Tierekisteri failed: ${e.getMessage}", e)
