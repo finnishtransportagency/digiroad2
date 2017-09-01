@@ -28,10 +28,12 @@
 
     var clean = function(){
       current = [];
+      projectLinkCollection.setDirty(current);
     };
 
     var close = function(){
       current = [];
+      projectLinkCollection.setDirty(current);
       eventbus.trigger('layer:enableButtons', true);
     };
 

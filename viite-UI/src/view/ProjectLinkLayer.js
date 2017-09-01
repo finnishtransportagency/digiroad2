@@ -170,6 +170,11 @@
     selectSingleClick.set('name','selectSingleClickInteractionPLL');
 
     selectSingleClick.on('select',function(event) {
+      // TODO: need to capture styling also.
+      if (projectCollection.isDirty()) {
+        new ModalConfirm("Olet muokannut tietoja. Tallenna tai peruuta muokkauksesi ensin.");
+        return;
+      }
       var selection = _.find(event.selected, function (selectionTarget) {
         return (!_.isUndefined(selectionTarget.projectLinkData) && (
           (selectionTarget.projectLinkData.status === notHandledStatus || selectionTarget.projectLinkData.status === newRoadAddressStatus ) ||
