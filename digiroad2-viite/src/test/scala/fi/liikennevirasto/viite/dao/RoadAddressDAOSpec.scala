@@ -257,7 +257,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
       val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
       ProjectDAO.createRoadAddressProject(rap)
       val reserved=   RoadAddressDAO.isNewRoadPartUsed(5,205,id)
-      reserved.size should be >=(0)
+      reserved.size should be (0)
     }
   }
 
