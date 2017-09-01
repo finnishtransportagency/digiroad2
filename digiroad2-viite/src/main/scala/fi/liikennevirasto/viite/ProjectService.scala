@@ -834,7 +834,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       logger.info(s"TR returned project status for $projectID: $currentState -> $newState, errMsg: $errorMessage")
       val updatedStatus = updateProjectStatusIfNeeded(currentState, newState, errorMessage, projectID)
       if (updatedStatus == Saved2TR)
-        updateRoadAddressWithProject(newState, projectID)
+        updateRoadAddressWithProject(updatedStatus, projectID)
       updatedStatus
     }.getOrElse(ProjectState.Unknown)
   }
