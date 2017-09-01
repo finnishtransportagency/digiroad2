@@ -133,12 +133,14 @@
       setMinDirtyZoomLevel: function(level) {
         minDirtyZoomLevel = level;
       },
-      selectLayer: function(layer) {
+      selectLayer: function(layer, toggleStart) {
         if (layer !== selectedLayer) {
           var previouslySelectedLayer = selectedLayer;
           selectedLayer = layer;
           setSelectedTool('Select');
-          eventbus.trigger('layer:selected', layer, previouslySelectedLayer);
+          eventbus.trigger('layer:selected', layer, previouslySelectedLayer, toggleStart);
+        } else if(layer === 'linkProperty' && toggleStart) {
+          eventbus.trigger('roadLayer:toggleProjectSelectionInForm', layer);
         }
       },
       getSelectedLayer: function() {
