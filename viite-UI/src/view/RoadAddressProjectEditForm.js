@@ -33,7 +33,9 @@
     };
 
     var titleWithProjectName = function(projectName) {
-      return '<span class ="edit-mode-title">'+projectName+'</span>';
+      return '<span class ="edit-mode-title">'+projectName+'<button id="editProject_'+ currentProject.id +'" ' +
+        'class="btn-edit-project" style="visibility:hidden;" value="' + currentProject.id + '"></button></span>' +
+        '<span id="closeProjectSpan" class="rightSideSpan" style="visibility:hidden;">Sulje Projekti</span>';
     };
 
     var clearInformationContent = function() {
@@ -181,7 +183,7 @@
       var selection = selectedData(selectedProjectLink);
 
       return _.template('' +
-        '<header>' +
+        '<header style ="display:-webkit-inline-box;">' +
         titleWithProjectName(project.name) +
         '</header>' +
         '<footer>'+showProjectChangeButton()+'</footer>');
@@ -205,6 +207,11 @@
         } else {
             rootElement.find('.project-form button.update').prop("disabled", true);
         }
+    };
+
+    var toggleAditionalControls = function(){
+      $('[id^=editProject]').css('visibility', 'visible');
+      $('#closeProjectSpan').css('visibility', 'visible');
     };
 
     var changeDropDownValue = function (statusCode) {
@@ -239,6 +246,7 @@
         rootElement.html(selectedProjectLinkTemplate(currentProject.project, options, selectedProjectLink));
         replaceAddressInfo();
         checkInputs();
+        toggleAditionalControls();
         // Change selected value in dropdown according to project link status
         changeDropDownValue(selectedProjectLink[0].status);
       });
@@ -312,8 +320,12 @@
       eventbus.on('roadAddress:projectLinksSaveFailed', function (result) {
         new ModalConfirm(result.toString());
       });
+      
+      eventbus.on('roadAddressProject:discardChanges',function(){
+        cancelChanges();
+      });
 
-      rootElement.on('click', '.project-form button.update', function() {
+      var saveChanges = function(){
         currentProject = projectCollection.getCurrentProject();
         if( $('[id=dropDown] :selected').val() == ACTION_TERMINATE) {
           projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), STATUS_TERMINATED);
@@ -326,9 +338,28 @@
           projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), STATUS_UNCHANGED);
           rootElement.html(emptyTemplate(currentProject.project));
         }
+      };
+
+      var cancelChanges = function() {
+        if(projectCollection.isDirty()) {
+          projectCollection.revertLinkStatus();
+          projectCollection.setDirty([]);
+          projectCollection.setTmpDirty([]);
+          projectLinkLayer.clearHighlights();
+          $('.wrapper').remove();
+          eventbus.trigger('roadAddress:projectLinksEdited');
+        } else {
+          eventbus.trigger('roadAddress:openProject', projectCollection.getCurrentProject());
+          eventbus.trigger('roadLinks:refreshView');
+        }
+      };
+
+      rootElement.on('click', '.project-form button.update', function() {
+        saveChanges();
       });
 
       rootElement.on('change', '#dropDown', function() {
+        eventbus.trigger('roadAddressProject:editingRoad');
         if(this.value == ACTION_TERMINATE) {
           rootElement.find('.new-road-address').prop("hidden", true);
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
@@ -357,17 +388,7 @@
       });
 
       rootElement.on('click', '.project-form button.cancelLink', function(){
-        if(projectCollection.isDirty()) {
-          projectCollection.revertLinkStatus();
-          projectCollection.setDirty([]);
-          projectCollection.setTmpDirty([]);
-          projectLinkLayer.clearHighlights();
-          $('.wrapper').remove();
-          eventbus.trigger('roadAddress:projectLinksEdited');
-        } else {
-          eventbus.trigger('roadAddress:openProject', projectCollection.getCurrentProject());
-          eventbus.trigger('roadLinks:refreshView');
-        }
+        cancelChanges();
       });
 
       rootElement.on('click', '.project-form button.send', function(){
