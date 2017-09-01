@@ -62,7 +62,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     */
   def checkNewRoadPartAvailableForProject(roadNumber: Long, roadPart: Long, project: RoadAddressProject): Option[String] = {
     val projectLinks = RoadAddressDAO.isNewRoadPartUsed(roadNumber, roadPart, project.id)
-    if (projectLinks.isEmpty) {
+    if (projectLinks == 0) {
       None
     } else {
       val fmt = DateTimeFormat.forPattern("dd.MM.yyyy")
@@ -185,7 +185,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     // TODO: Move validations to a validator object class and generalize
     def checkAvailable(number: Long, part: Long, currentProject: RoadAddressProject) = {
       val projectLinks = RoadAddressDAO.isNewRoadPartUsed(number, part, currentProject.id)
-      if (projectLinks.isEmpty) {
+      if (projectLinks == 0) {
         None
       } else {
         val fmt = DateTimeFormat.forPattern("dd.MM.yyyy")

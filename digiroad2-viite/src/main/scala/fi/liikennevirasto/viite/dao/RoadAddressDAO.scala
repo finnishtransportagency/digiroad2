@@ -442,10 +442,7 @@ object RoadAddressDAO {
   def isNewRoadPartUsed(roadNumber: Long, roadPartNumber: Long, projectId: Long) = {
     val query =
       s"""
-		select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
-        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
-        pos.side_code, pos.adjusted_timestamp,
-        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source
+		select count(ra.id)
         from project pro,
         road_address ra cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
@@ -454,7 +451,7 @@ object RoadAddressDAO {
         where  pro.id=$projectId AND road_number = $roadNumber AND road_part_number = $roadPartNumber and t.id < t2.id AND (ra.START_DATE>=pro.START_DATE or ra.END_DATE>pro.START_DATE) AND (ra.VALID_TO is null OR ra.VALID_TO > pro.START_DATE)
         ORDER BY road_number, road_part_number, track_code, start_addr_m
       """
-    queryList(query)
+    Q.queryNA[Int](query).first
   }
 
   def fetchByRoad(roadNumber: Long, includeFloating: Boolean = false) = {

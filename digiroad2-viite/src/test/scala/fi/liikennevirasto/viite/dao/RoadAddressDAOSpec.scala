@@ -247,17 +247,88 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
          val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
          ProjectDAO.createRoadAddressProject(rap)
       val reserved=   RoadAddressDAO.isNewRoadPartUsed(5,205,id)
-         reserved.size should be >=(1)
+         reserved should be >=(1)
     }
   }
 
   test("New roadnumber and roadpart number not reservable future") {
     runWithRollback {
-      val id = Sequences.nextViitePrimaryKeySeqValue
-      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
-      ProjectDAO.createRoadAddressProject(rap)
-      val reserved=   RoadAddressDAO.isNewRoadPartUsed(5,205,id)
-      reserved.size should be (0)
+      val id1 = Sequences.nextViitePrimaryKeySeqValue
+      val rap1 = RoadAddressProject(id1, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
+      ProjectDAO.createRoadAddressProject(rap1)
+      val reserved1=   RoadAddressDAO.isNewRoadPartUsed(5,205,id1)
+      reserved1 should be (0)
+
+      val id2 = Sequences.nextViitePrimaryKeySeqValue
+      val rap2 = RoadAddressProject(id2, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1500-01-01"), "TestUser", DateTime.parse("1500-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
+      ProjectDAO.createRoadAddressProject(rap2)
+      val reserved2=   RoadAddressDAO.isNewRoadPartUsed(5,206,id2)
+      reserved2 should be > (0)
+
+      val id3 = Sequences.nextViitePrimaryKeySeqValue
+      val rap3 = RoadAddressProject(id3, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1962-11-01"), "TestUser", DateTime.parse("1962-11-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
+      ProjectDAO.createRoadAddressProject(rap3)
+      val reserved3=   RoadAddressDAO.isNewRoadPartUsed(5,207,id3)
+      reserved3 should be > (0)
+
+      RoadAddressDAO.create(
+        Seq(
+          RoadAddress(Sequences.nextViitePrimaryKeySeqValue, 8888, 1, RoadType.PublicRoad, Track.Combined, Discontinuity.Continuous, 0, 35, Option.apply(DateTime.parse("1975-11-18")), None,
+            Option("TestUser"), Sequences.nextLrmPositionPrimaryKeySeqValue, 8888888, 0, 35, SideCode.TowardsDigitizing, 0, (None, None), false, Seq(Point(24.24477,987.456)), LinkGeomSource.Unknown)))
+
+      val id4 = Sequences.nextViitePrimaryKeySeqValue
+      val rap4 = RoadAddressProject(id4, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
+      ProjectDAO.createRoadAddressProject(rap4)
+      RoadAddressDAO.fetchByRoadPart(8888,1).map(r => {
+        RoadAddressDAO.update(r.copy(endDate = Option.apply(DateTime.parse("1500-01-01"))))
+      })
+      val reserved4=   RoadAddressDAO.isNewRoadPartUsed(8888,1,id4)
+      reserved4 should be (0)
+
+      val id5 = Sequences.nextViitePrimaryKeySeqValue
+      val rap5 = RoadAddressProject(id5, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
+      ProjectDAO.createRoadAddressProject(rap5)
+      RoadAddressDAO.fetchByRoadPart(8888,1).map(r => {
+        RoadAddressDAO.update(r.copy(endDate = Option.apply(DateTime.parse("2700-01-01"))))
+      })
+      val reserved5=   RoadAddressDAO.isNewRoadPartUsed(8888,1,id5)
+      reserved5 should be (0)
+
+      val id6 = Sequences.nextViitePrimaryKeySeqValue
+      val rap6 = RoadAddressProject(id6, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
+      ProjectDAO.createRoadAddressProject(rap6)
+      RoadAddressDAO.fetchByRoadPart(8888,1).map(r => {
+        RoadAddressDAO.update(r.copy(endDate = Option.apply(DateTime.parse("2800-01-01"))))
+      })
+      val reserved6=   RoadAddressDAO.isNewRoadPartUsed(8888,1,id6)
+      reserved6 should be > (0)
+
+      val id7 = Sequences.nextViitePrimaryKeySeqValue
+      val rap7 = RoadAddressProject(id7, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1975-01-01"), "TestUser", DateTime.parse("1975-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
+      ProjectDAO.createRoadAddressProject(rap7)
+      RoadAddressDAO.fetchByRoadPart(8888,1).map(r => {
+        RoadAddressDAO.update(r.copy(endDate = Option.apply(DateTime.parse("1990-01-01"))))
+      })
+      val reserved7=   RoadAddressDAO.isNewRoadPartUsed(8888,1,id7)
+      reserved7 should be > (0)
+
+      val id8 = Sequences.nextViitePrimaryKeySeqValue
+      val rap8 = RoadAddressProject(id8, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
+      ProjectDAO.createRoadAddressProject(rap8)
+      RoadAddressDAO.fetchByRoadPart(8888,1).map(r => {
+        RoadAddressDAO.update(r.copy(endDate = Option.apply(DateTime.parse("2800-01-01"))))
+      })
+      val reserved8=   RoadAddressDAO.isNewRoadPartUsed(8888,1,id8)
+      reserved8 should be > (0)
+
+      val id9 = Sequences.nextViitePrimaryKeySeqValue
+      val rap9 = RoadAddressProject(id9, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1975-01-01"), "TestUser", DateTime.parse("1975-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
+      ProjectDAO.createRoadAddressProject(rap9)
+      RoadAddressDAO.fetchByRoadPart(8888,1).map(r => {
+        RoadAddressDAO.update(r.copy(endDate = Option.apply(DateTime.parse("2700-01-01"))))
+      })
+      val reserved9=   RoadAddressDAO.isNewRoadPartUsed(8888,1,id9)
+      reserved9 should be > (0)
     }
   }
 
@@ -267,7 +338,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
       val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
       ProjectDAO.createRoadAddressProject(rap)
       val reserved=   RoadAddressDAO.isNewRoadPartUsed(1234567899,1,id)
-      reserved.size should be (0)
+      reserved should be (0)
     }
   }
 
@@ -281,7 +352,7 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
       val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
       ProjectDAO.createRoadAddressProject(rap)
       val reserved=   RoadAddressDAO.isNewRoadPartUsed(1943845,1,id)
-      reserved.size should be (0)
+      reserved should be (0)
     }
   }
 }
