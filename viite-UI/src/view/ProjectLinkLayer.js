@@ -137,7 +137,7 @@
           eventbus.trigger('roadAddressProject:discardChanges');
           isNotEditingData = true;
           clearHighlights();
-          showChangesAndSendButton()
+          showChangesAndSendButton();
         },
         closeCallback: function(){
           isNotEditingData = false;
@@ -219,11 +219,9 @@
           else selectedProjectLinkProperty.cleanIds();
         }
       } else {
-        _.defer(function(){
-          clearHighlights();
-          addFeaturesToSelection(event.deselected);
-          fireDeselectionConfirmation();
-        });
+        clearHighlights();
+        addFeaturesToSelection(event.deselected);
+        fireDeselectionConfirmation();
       }
     });
 
@@ -299,10 +297,8 @@
           else selectedProjectLinkProperty.cleanIds();
         }
       } else {
-        _.defer(function(){
-          clearHighlights();
-          addFeaturesToSelection(event.deselected);
-        });
+        clearHighlights();
+        addFeaturesToSelection(event.deselected);
       }
     });
 
@@ -782,11 +778,11 @@
       clearHighlights();
       removeSelectInteractions();
     });
-    
+
     eventbus.on('roadAddressProject:enableInteractions',function(){
       addSelectInteractions();
     });
-    
+
     eventbus.on('roadAddressProject:clearOnClose', function(){
       clearHighlights();
       clearLayers();

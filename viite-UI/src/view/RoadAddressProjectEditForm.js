@@ -344,8 +344,7 @@
         if(projectCollection.isDirty()) {
           projectCollection.revertLinkStatus();
           projectCollection.setDirty([]);
-          projectCollection.setTmpExpired([]);
-          projectCollection.setTmpDirty([])
+          projectCollection.setTmpDirty([]);
           projectLinkLayer.clearHighlights();
           $('.wrapper').remove();
           eventbus.trigger('roadAddress:projectLinksEdited');
