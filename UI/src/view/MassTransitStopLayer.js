@@ -588,6 +588,10 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
         renderAssets(groupedAssets);
       }
     });
+    eventListener.listenTo(eventbus, 'toggleWithRoadAddress', function(){
+      if(applicationModel.getSelectedLayer() == layerName)
+        me.refreshView();
+    });
 
     eventListener.listenTo(eventbus, 'assets:all-updated', handleAllAssetsUpdated);
     eventListener.listenTo(eventbus, 'assets:new-fetched', handleNewAssetsFetched);

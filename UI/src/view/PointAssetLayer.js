@@ -229,6 +229,10 @@
       eventListener.listenTo(eventbus, layerName + ':unselected', handleUnSelected);
       eventListener.listenTo(eventbus, layerName + ':changed', handleChanged);
       eventListener.listenTo(eventbus, 'application:readOnly', toggleMode);
+      eventListener.listenTo(eventbus, 'toggleWithRoadAddress', function(){
+        if(applicationModel.getSelectedLayer() == layerName)
+          me.refreshView();
+      });
     }
     eventbus.on( layerName + ':changeSigns', function(trafficSignData){
       setTrafficSigns(trafficSignData[0], trafficSignData[1]);

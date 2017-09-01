@@ -79,10 +79,5 @@
       roadLayer.clear();
       eventbus.off('map:moved', me.handleMapMoved);
     };
-
-    eventbus.on('roadLinks:changed', function(){
-      me.refreshView();
-    });
-
   };
 })(this);

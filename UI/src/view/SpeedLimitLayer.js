@@ -291,6 +291,10 @@ window.SpeedLimitLayer = function(params) {
     eventListener.listenTo(eventbus, 'speedLimits:drawSpeedLimitsHistory', drawSpeedLimitsHistory);
     eventListener.listenTo(eventbus, 'speedLimits:hideSpeedLimitsHistory', hideSpeedLimitsHistory);
     eventListener.listenTo(eventbus, 'speedLimits:showSpeedLimitsHistory', showSpeedLimitsHistory);
+    eventListener.listenTo(eventbus, 'toggleWithRoadAddress', function(){
+      if(applicationModel.getSelectedLayer() == layerName)
+        me.refreshView();
+    });
   };
 
   var startListeningExtraEvents = function(){

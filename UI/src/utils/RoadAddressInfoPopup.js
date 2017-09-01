@@ -50,6 +50,7 @@
         });
 
         var run = function (event) {
+          if(showPopup)
             if (canDisplayRoadAddressInfo())
                 displayRoadAddressInfoPopup(event);
         };
@@ -124,7 +125,7 @@
               overlay.setPosition(map.getEventCoordinate(event.originalEvent));
             };
 
-            if(feature.getGeometry().getType() === "Point"){
+            if(feature.getGeometry().getType() === "Point" || _.isUndefined(roadData.administrativeClass)){
               var pointAssetData = getPointAssetData(roadData);
               if(!_.isUndefined(pointAssetData)){
                 if(hasRoadAddressInfo(pointAssetData) && isStateRoad(pointAssetData)){

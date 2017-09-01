@@ -59,8 +59,6 @@
   root.RoadCollection = function(backend) {
     var roadLinkGroups = [];
     var roadLinkGroupsHistory = [];
-    var withRoadAddress = 'false';
-
     var roadLinks = function() {
       return _.flatten(roadLinkGroups);
     };
@@ -82,7 +80,7 @@
     };
 
     this.fetch = function(boundingBox) {
-      backend.getRoadLinks(boundingBox, withRoadAddress, function(fetchedRoadLinks) {
+      backend.getRoadLinks(boundingBox, applicationModel.getWithRoadAddress(), function(fetchedRoadLinks) {
           var selectedIds = _.map(getSelectedRoadLinks(), function(roadLink) {
             return roadLink.getId();
           });
@@ -186,10 +184,6 @@
 
     this.resetHistory = function(){
       roadLinkGroupsHistory = [];
-    };
-
-    this.toggleWithRoadAddress = function(set) {
-      withRoadAddress = set;
     };
   };
 })(this);

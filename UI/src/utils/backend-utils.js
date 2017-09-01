@@ -118,9 +118,9 @@
       };
     });
 
-    this.getSpeedLimits = latestResponseRequestor(function(boundingBox) {
+    this.getSpeedLimits = latestResponseRequestor(function(boundingBox, withRoadAddress) {
       return {
-        url: 'api/speedlimits?bbox=' + boundingBox
+        url: 'api/speedlimits?bbox=' + boundingBox + '&withRoadAddress=' + withRoadAddress
       };
     });
 
@@ -519,7 +519,7 @@
     };
 
     this.withSpeedLimitsData = function(speedLimitsData) {
-      self.getSpeedLimits = function(boundingBox) {
+      self.getSpeedLimits = function(boundingBox, withRoadAddress) {
         return $.Deferred().resolve(speedLimitsData);
       };
       return self;

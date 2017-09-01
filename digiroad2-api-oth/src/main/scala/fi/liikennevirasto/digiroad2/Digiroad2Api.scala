@@ -846,7 +846,11 @@ Returns empty result as Json message, not as page not found
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      speedLimitService.withRoadAddress(speedLimitService.get(boundingRectangle, municipalities)).map { linkPartition =>
+      val speedlimits = params("withRoadAddress") match {
+        case "true" => speedLimitService.withRoadAddress(speedLimitService.get(boundingRectangle, municipalities))
+        case _ => speedLimitService.get(boundingRectangle, municipalities)
+      }
+      speedlimits.map { linkPartition =>
         linkPartition.map { link =>
           Map(
             "id" -> (if (link.id == 0) None else Some(link.id)),
