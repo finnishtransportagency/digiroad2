@@ -439,19 +439,19 @@ object RoadAddressDAO {
     queryList(query)
   }
 
-  def isNewRoadPartUsed(roadNumber: Long, roadPartNumber: Long, projectId: Long) = {
+  def isNotAvailableForProject(roadNumber: Long, roadPartNumber: Long, projectId: Long): Boolean = {
     val query =
       s"""
-		select count(ra.id)
-        from project pro,
-        road_address ra cross join
-        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
-        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
-        join lrm_position pos on ra.lrm_position_id = pos.id
-        where  pro.id=$projectId AND road_number = $roadNumber AND road_part_number = $roadPartNumber and t.id < t2.id AND (ra.START_DATE>=pro.START_DATE or ra.END_DATE>pro.START_DATE) AND (ra.VALID_TO is null OR ra.VALID_TO > pro.START_DATE)
-        ORDER BY road_number, road_part_number, track_code, start_addr_m
+      SELECT 1 FROM dual WHERE EXISTS(select 1
+         from project pro,
+         road_address ra
+         join lrm_position pos on ra.lrm_position_id = pos.id
+         where  pro.id=$projectId AND road_number = $roadNumber AND road_part_number = $roadPartNumber AND
+         (ra.START_DATE>=pro.START_DATE or ra.END_DATE>pro.START_DATE) AND
+         ra.VALID_TO is null
+         )
       """
-    Q.queryNA[Int](query).first
+    Q.queryNA[Int](query).firstOption.nonEmpty
   }
 
   def fetchByRoad(roadNumber: Long, includeFloating: Boolean = false) = {
