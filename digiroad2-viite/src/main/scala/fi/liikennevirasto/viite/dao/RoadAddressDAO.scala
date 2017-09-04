@@ -68,7 +68,7 @@ object CalibrationCode {
     }
   }
 
-  def getFromAddressLinLike(roadAddress: RoadAddressLinkLike): CalibrationCode = {
+  def getFromAddressLinkLike(roadAddress: RoadAddressLinkLike): CalibrationCode = {
     (roadAddress.startCalibrationPoint.isEmpty, roadAddress.endCalibrationPoint.isEmpty) match {
       case (true, true)   => No
       case (true, false)  => AtEnd
