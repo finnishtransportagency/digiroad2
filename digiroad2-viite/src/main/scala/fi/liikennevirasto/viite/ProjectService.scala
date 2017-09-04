@@ -235,7 +235,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           projectLink.linkId ->
             existingProjectLink(projectLink, project, randomSideCode)
         }).toMap
-        val combinedLinks = (newProjectLinks.keySet ++ existingLinks.keySet).toSeq.distinct.map(
+        val combinedLinks = (newProjectLinks.keySet ++ existingLinks.keySet).toSeq.map(
           linkId => newProjectLinks.getOrElse(linkId, existingLinks(linkId))
         )
         //Determine geometries for the mValues and addressMValues
