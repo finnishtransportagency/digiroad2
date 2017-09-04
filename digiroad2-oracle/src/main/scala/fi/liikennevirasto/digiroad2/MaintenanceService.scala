@@ -82,36 +82,50 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     * Mark VALID_TO field of old asset to sysdate and create a new asset.
     * Copy all the data from old asset except the properties that changed, modifiedBy and modifiedAt.
     */
-  override protected def updateValueByExpiration(assetId: Long, valueToUpdate: Value, valuePropertyId: String, username: String, measures: Option[Measures]): Option[Long] = {
-    //Get Old Asset
-    val oldAsset = maintenanceDAO.fetchMaintenancesByIds(maintenanceRoadAssetTypeId, Set(assetId)).head
+  protected def updateValueByExpiration(assetIds: Seq[Long], valueToUpdate: Value, valuePropertyId: String, username: String, measures: Option[Measures]): Seq[Long] = {
+    //Get Old Assets
+    val oldAssets = maintenanceDAO.fetchMaintenancesByIds(maintenanceRoadAssetTypeId, assetIds.toSet)
+    val roadlinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(oldAssets.map(_.linkId).toSet, false)
 
+    val newAssetIDcreate = oldAssets.map { oldAsset =>
     //Expire the old asset
-    dao.updateExpiration(assetId, expired = true, username)
+      dao.updateExpiration(oldAsset.id, expired = true, username)
 
     //Create New Asset
-    val newAssetIDcreate = createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, valueToUpdate, oldAsset.sideCode,
-      measures.getOrElse(Measures(oldAsset.startMeasure, oldAsset.endMeasure)), username, vvhClient.roadLinkData.createVVHTimeStamp(), getLinkSource(oldAsset.linkId), true, oldAsset.createdBy, oldAsset.createdDateTime)
-
-    Some(newAssetIDcreate)
+       createAssetWithoutTransaction(oldAsset.typeId, oldAsset.linkId, valueToUpdate, oldAsset.sideCode, measures.getOrElse(Measures(oldAsset.startMeasure, oldAsset.endMeasure)),
+         username, vvhClient.roadLinkData.createVVHTimeStamp(), roadlinks.find(_.linkId == oldAsset.linkId), true, oldAsset.createdBy, oldAsset.createdDateTime)
+    }
+    newAssetIDcreate
   }
 
   override protected def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, measures: Option[Measures] = None): Seq[Long] = {
     if (ids.isEmpty)
       return ids
 
-    ids.flatMap { id =>
       val missingProperties = validateRequiredProperties(value.asInstanceOf[MaintenanceRoad])
       if (missingProperties.nonEmpty)
         throw new MissingMandatoryPropertyException(missingProperties)
-      updateValueByExpiration(id, value.asInstanceOf[MaintenanceRoad], maintenanceRoadAssetTypeId.toString(), username, measures)
+
+    updateValueByExpiration(ids, value.asInstanceOf[MaintenanceRoad], maintenanceRoadAssetTypeId.toString(), username, measures)
+  }
+
+
+  /**
+    * Saves new linear assets from UI. Used by Digiroad2Api /linearassets POST endpoint.
+    */
+  override def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String): Seq[Long] = {
+    val roadlink = roadLinkService.getRoadLinksAndComplementariesFromVVH(newLinearAssets.map(_.linkId).toSet)
+    withDynTransaction {
+      newLinearAssets.map { newAsset =>
+        createAssetWithoutTransaction(typeId, newAsset.linkId, newAsset.value, newAsset.sideCode, Measures(newAsset.startMeasure, newAsset.endMeasure), username, vvhClient.roadLinkData.createVVHTimeStamp(), roadlink.find(_.linkId == newAsset.linkId))
+      }
     }
   }
 
-  override protected def createWithoutTransaction(typeId: Int, linkId: Long, value: Value, sideCode: Int, measures: Measures, username: String, vvhTimeStamp: Long, linkSource: Option[Int], fromUpdate: Boolean = false,
+  def createAssetWithoutTransaction(typeId: Int, linkId: Long, value: Value, sideCode: Int, measures: Measures, username: String, vvhTimeStamp: Long, roadLink: Option[RoadLink], fromUpdate: Boolean = false,
                                        createdByFromUpdate: Option[String] = Some(""),
                                        createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now())): Long = {
-    val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId, newTransaction = false)
+
     val area = getAssetArea(roadLink, measures)
     val id = maintenanceDAO.createLinearAsset(maintenanceRoadAssetTypeId, linkId, expired = false, sideCode, measures, username,
       vvhTimeStamp, getLinkSource(roadLink), fromUpdate, createdByFromUpdate, createdDateTimeFromUpdate, area = area)
@@ -141,7 +155,7 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   def getAssetArea(roadLink: Option[RoadLink], measures: Measures, area: Option[Seq[Int]] = None): Int = {
     roadLink match {
       case Some(road) => polygonTools.getAreaByGeometry(road.geometry, measures, area)
-      case None => throw new IllegalArgumentException("Roadlink not found")
+      case None => throw new NoSuchElementException
     }
   }
 

@@ -1324,5 +1324,18 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
             and (a.valid_to >= sysdate or a.valid_to is null)""".as[(Long, Int, Long)].list
     }
   }
+  def getAllLinkIdByAsset(typeId: Long, linkId: Seq[Long], includeExpire: Boolean) = {
+    val filter = if (includeExpire) "" else "and (a.valid_to >= sysdate or a.valid_to is null)"
+    MassQuery.withIds(linkId.toSet) { idTableName =>
+      sql"""
+            select a.id, pos.link_id, pos.start_measure, pos.end_measure
+            from ASSET a
+            join ASSET_LINK al on a.id = al.asset_id
+            join LRM_POSITION pos on al.position_id = pos.id
+            join #$idTableName i on i.id = pos.link_id
+            where a.asset_type_id = $typeId
+            #$filter""".as[(Long, Long, Long, Long)].list
+    }
+  }
 }
 

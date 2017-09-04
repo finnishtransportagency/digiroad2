@@ -104,6 +104,10 @@ object DataFixture {
       HttpClientBuilder.create().build())
   }
 
+  lazy val maintenanceService: MaintenanceService = {
+    new MaintenanceService(roadLinkService, new DummyEventBus)
+  }
+
   lazy val assetDao : OracleAssetDao = {
     new OracleAssetDao()
   }
@@ -964,6 +968,43 @@ object DataFixture {
     println("\n")
   }
 
+  def updateAreasOnAsset(): Unit = {
+    println("\nStart Update areas on Asset at time ")
+    println(DateTime.now())
+    val MaintenanceRoadTypeId = 290
+
+    //Get All Municipalities
+    val municipalities: Seq[Int] =
+    OracleDatabase.withDynSession {
+      Queries.getMunicipalities
+    }
+
+    println("Obtaining all Road Links By Municipality")
+
+    //For each municipality get all VVH Roadlinks for pick link id and pavement data
+    municipalities.foreach { municipality =>
+
+      //Obtain all RoadLink by municipality
+      val roadLinks = roadLinkService.getRoadLinksFromVVHByMunicipality(municipality)
+
+      OracleDatabase.withDynTransaction {
+        //Obtain all existing RoadLinkId by AssetType and roadLinks
+        val assets = dataImporter.getAllLinkIdByAsset(MaintenanceRoadTypeId, roadLinks.map(_.linkId), includeExpire = true)
+
+        println("Municipality -> " + municipality  + " MaintenanceRoad Assets -> " + assets.size )
+
+        assets.foreach { asset =>
+          roadLinks.filter(_.linkId == asset._2)
+          val area = maintenanceService.getAssetArea(roadLinks.find(_.linkId == asset._2), Measures(asset._3, asset._4), None)
+          assets.foreach(asset => oracleLinearAssetDao.updateArea(asset._1, area))
+        }
+      }
+    }
+
+    println("\nEnd Update areas on Asset at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
 
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
@@ -1060,7 +1101,8 @@ object DataFixture {
         updateRoadWidthDataFromTR()
       case Some("update_trafficSigns_from_TR_to_OTH") =>
         updateTrafficSignDataFromTR()
-
+      case Some("update_areas_on_asset") =>
+        updateAreasOnAsset()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
@@ -1069,7 +1111,7 @@ object DataFixture {
         " check_unknown_speedlimits | set_transitStops_floating_reason | verify_roadLink_administrative_class_changed | set_TR_bus_stops_without_OTH_LiviId |" +
         " check_TR_bus_stops_without_OTH_LiviId | check_bus_stop_matching_between_OTH_TR | listing_bus_stops_with_side_code_conflict_with_roadLink_direction |" +
         " fill_lane_amounts_in_missing_road_links | import_all_trafficVolume_from_TR_to_OTH | import_all_litRoad_from_TR_to_OTH | import_all_roadWidth_from_TR_to_OTH |" +
-        " update_litRoad_from_TR_to_OTH | update_roadWidth_from_TR_to_OTH")
+        " update_litRoad_from_TR_to_OTH | update_roadWidth_from_TR_to_OTH | update_areas_on_asset")
     }
   }
 }

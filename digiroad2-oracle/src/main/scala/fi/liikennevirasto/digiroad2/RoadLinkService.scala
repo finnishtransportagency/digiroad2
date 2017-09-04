@@ -86,15 +86,16 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     else
       enrichRoadLinksFromVVH(vvhRoadLinks).headOption
   }
+  def getRoadLinkAndComplementaryFromVVH(linkId: Long, newTransaction: Boolean = true): Option[RoadLink] = getRoadLinksAndComplementariesFromVVH(Set(linkId), newTransaction: Boolean).headOption
 
-  def getRoadLinkAndComplementaryFromVVH(linkId: Long, newTransaction: Boolean = true): Option[RoadLink] = {
-    val vvhRoadLinks = fetchVVHRoadlinksAndComplementary(Set(linkId))
+  def getRoadLinksAndComplementariesFromVVH(linkId: Set[Long], newTransaction: Boolean = true): Seq[RoadLink] = {
+    val vvhRoadLinks = fetchVVHRoadlinksAndComplementary(linkId)
     if (newTransaction)
       withDynTransaction {
         enrichRoadLinksFromVVH(vvhRoadLinks)
-      }.headOption
+      }
     else
-      enrichRoadLinksFromVVH(vvhRoadLinks).headOption
+        enrichRoadLinksFromVVH(vvhRoadLinks)
   }
 
   def getComplementaryRoadLinkFromVVH(linkId: Long, newTransaction: Boolean = true): Option[RoadLink] = {
