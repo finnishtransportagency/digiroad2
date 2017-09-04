@@ -63,8 +63,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @return
     */
   def checkNewRoadPartAvailableForProject(roadNumber: Long, roadPart: Long, project: RoadAddressProject): Option[String] = {
-    val projectLinks = RoadAddressDAO.isNewRoadPartUsed(roadNumber, roadPart, project.id)
-    if (projectLinks.isEmpty) {
+    val isReserved = RoadAddressDAO.isNotAvailableForProject(roadNumber, roadPart, project.id)
+    if (!isReserved) {
       None
     } else {
       val fmt = DateTimeFormat.forPattern("dd.MM.yyyy")
@@ -186,8 +186,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
     // TODO: Move validations to a validator object class and generalize
     def checkAvailable(number: Long, part: Long, currentProject: RoadAddressProject) = {
-      val projectLinks = RoadAddressDAO.isNewRoadPartUsed(number, part, currentProject.id)
-      if (projectLinks.isEmpty) {
+      val isReserved = RoadAddressDAO.isNotAvailableForProject(number, part, currentProject.id)
+      if (!isReserved) {
         None
       } else {
         val fmt = DateTimeFormat.forPattern("dd.MM.yyyy")
@@ -805,7 +805,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   private def getStatusFromTRObject(trProject:Option[TRProjectStatus]):Option[ProjectState] = {
     trProject match {
-      case Some(trPojectobject) => mapTRstateToViiteState(trPojectobject.status.getOrElse(""))
+      case Some(trProjectobject) => mapTRStateToViiteState(trProjectobject.status.getOrElse(""))
       case None => None
       case _ => None
     }
@@ -869,12 +869,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val errorMessage = getTRErrorMessage(trProjectState)
       logger.info(s"TR returned project status for $projectID: $currentState -> $newState, errMsg: $errorMessage")
       val updatedStatus = updateProjectStatusIfNeeded(currentState, newState, errorMessage, projectID)
-      updateRoadAddressWithProject(newState, projectID)
+      if (updatedStatus == Saved2TR)
+        updateRoadAddressWithProject(updatedStatus, projectID)
       updatedStatus
     }.getOrElse(ProjectState.Unknown)
   }
 
-  private def mapTRstateToViiteState(trState:String): Option[ProjectState] ={
+  private def mapTRStateToViiteState(trState:String): Option[ProjectState] ={
 
     trState match {
       case "S" => Some(ProjectState.apply(ProjectState.TRProcessing.value))
