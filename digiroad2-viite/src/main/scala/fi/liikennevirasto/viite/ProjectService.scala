@@ -251,7 +251,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def revertLinks(projectId: Long, roadNumber:Long, roadPartNumber: Long, links: List[LinkToRevert]) :Option[String] = {
+  def revertLinks(projectId: Long, roadNumber: Long, roadPartNumber: Long, links: List[LinkToRevert]): Option[String] = {
 
     try {
       withDynTransaction{
@@ -276,7 +276,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             ProjectDAO.updateProjectLinkValues(projectId, roadLink.head)
           }
         })
-        Some("")
+        None
       }
     }
     catch{
