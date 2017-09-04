@@ -291,10 +291,7 @@ window.SpeedLimitLayer = function(params) {
     eventListener.listenTo(eventbus, 'speedLimits:drawSpeedLimitsHistory', drawSpeedLimitsHistory);
     eventListener.listenTo(eventbus, 'speedLimits:hideSpeedLimitsHistory', hideSpeedLimitsHistory);
     eventListener.listenTo(eventbus, 'speedLimits:showSpeedLimitsHistory', showSpeedLimitsHistory);
-    eventListener.listenTo(eventbus, 'toggleWithRoadAddress', function(){
-      if(applicationModel.getSelectedLayer() == layerName)
-        me.refreshView();
-    });
+    eventListener.listenTo(eventbus, 'toggleWithRoadAddress', refreshSelectedView);
   };
 
   var startListeningExtraEvents = function(){
@@ -544,6 +541,11 @@ window.SpeedLimitLayer = function(params) {
     roadAddressInfoPopup.stop();
     me.stop();
     me.hide();
+  };
+
+  var refreshSelectedView = function(){
+    if(applicationModel.getSelectedLayer() == layerName)
+      me.refreshView();
   };
 
   return {

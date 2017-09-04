@@ -28,10 +28,10 @@
         var infoContainer = document.getElementById('popup');
         var infoContent = document.getElementById('popup-content');
 
-        var showPopup = false;
+        var isShowPopup = false;
 
-        var setShowPopup = function(s){
-          showPopup = s;
+        var setShowPopup = function(showPopup){
+          isShowPopup = showPopup;
         };
 
         element.find('.checkbox').find('input[type=checkbox]').on('change', function (event) {
@@ -50,7 +50,7 @@
         });
 
         var run = function (event) {
-          if(showPopup)
+          if(isShowPopup)
             if (canDisplayRoadAddressInfo())
                 displayRoadAddressInfoPopup(event);
         };
@@ -64,7 +64,6 @@
         };
 
         var canDisplayRoadAddressInfo = function(){
-            if(showPopup)
                 return RoadAddressInfoData.roles &&
                     (_.contains(RoadAddressInfoData.roles, 'operator') || _.contains(RoadAddressInfoData.roles, 'busStopMaintainer'));
         };

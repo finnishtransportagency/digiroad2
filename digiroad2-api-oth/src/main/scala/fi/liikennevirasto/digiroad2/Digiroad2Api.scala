@@ -391,13 +391,11 @@ Returns empty result as Json message, not as page not found
     }
   }
 
-  private def getRoadLinksFromVVH(municipalities: Set[Int], withRoadAddress: String)(bbox: String): Seq[Seq[Map[String, Any]]] = {
+  private def getRoadLinksFromVVH(municipalities: Set[Int], withRoadAddress: Boolean)(bbox: String): Seq[Seq[Map[String, Any]]] = {
     val boundingRectangle = constructBoundingRectangle(bbox)
     validateBoundingBox(boundingRectangle)
-    val roadLinks = withRoadAddress match {
-      case "true" => roadLinkService.withRoadAddress(roadLinkService.getRoadLinksFromVVH(boundingRectangle, municipalities))
-      case _ => roadLinkService.getRoadLinksFromVVH(boundingRectangle, municipalities)
-    }
+    val roadLinkSeq = roadLinkService.getRoadLinksFromVVH(boundingRectangle, municipalities)
+    val roadLinks = if(withRoadAddress) roadLinkService.withRoadAddress(roadLinkSeq) else roadLinkSeq
     val partitionedRoadLinks = RoadLinkPartitioner.partition(roadLinks)
     partitionedRoadLinks.map {
       _.map(roadLinkToApi)
@@ -487,7 +485,7 @@ Returns empty result as Json message, not as page not found
     response.setHeader("Access-Control-Allow-Headers", "*")
     val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = if (user.isOperator() || user.isBusStopMaintainer()) Set() else user.configuration.authorizedMunicipalities
-    val withRoadAddress = params("withRoadAddress")
+    val withRoadAddress = params("withRoadAddress").toBoolean
 
     params.get("bbox")
       .map(getRoadLinksFromVVH(municipalities, withRoadAddress))
@@ -630,7 +628,7 @@ Returns empty result as Json message, not as page not found
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      if(params("withRoadAddress") == "true"){
+      if(params("withRoadAddress").toBoolean){
         if(user.isServiceRoadMaintainer())
           mapLinearAssets(linearAssetService.withRoadAddress(linearAssetService.getByIntersectedBoundingBox(typeId, user.configuration.authorizedAreas, boundingRectangle, municipalities)))
         else
@@ -846,11 +844,8 @@ Returns empty result as Json message, not as page not found
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      val speedlimits = params("withRoadAddress") match {
-        case "true" => speedLimitService.withRoadAddress(speedLimitService.get(boundingRectangle, municipalities))
-        case _ => speedLimitService.get(boundingRectangle, municipalities)
-      }
-      speedlimits.map { linkPartition =>
+      val speedLimits = if(params("withRoadAddress").toBoolean) speedLimitService.withRoadAddress(speedLimitService.get(boundingRectangle, municipalities)) else speedLimitService.get(boundingRectangle, municipalities)
+      speedLimits.map { linkPartition =>
         linkPartition.map { link =>
           Map(
             "id" -> (if (link.id == 0) None else Some(link.id)),

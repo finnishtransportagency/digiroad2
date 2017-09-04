@@ -588,11 +588,6 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
         renderAssets(groupedAssets);
       }
     });
-    eventListener.listenTo(eventbus, 'toggleWithRoadAddress', function(){
-      if(applicationModel.getSelectedLayer() == layerName)
-        me.refreshView();
-    });
-
     eventListener.listenTo(eventbus, 'assets:all-updated', handleAllAssetsUpdated);
     eventListener.listenTo(eventbus, 'assets:new-fetched', handleNewAssetsFetched);
     eventListener.listenTo(eventbus, 'assetGroup:destroyed', reRenderGroup);
@@ -615,6 +610,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     eventListener.listenTo(eventbus, 'road-type:selected', roadLayer.toggleRoadTypeWithSpecifiedStyle);
 
     eventListener.listenTo(eventbus, 'application:readOnly', toggleMode);
+    eventListener.listenTo(eventbus, 'toggleWithRoadAddress', refreshSelectedView);
   };
 
   var startListening = function() {
@@ -673,6 +669,11 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     roadAddressInfoPopup.stop();
     me.stop();
     me.hide();
+  };
+
+  var refreshSelectedView = function(){
+    if(applicationModel.getSelectedLayer() == layerName)
+      me.refreshView();
   };
 
   return {
