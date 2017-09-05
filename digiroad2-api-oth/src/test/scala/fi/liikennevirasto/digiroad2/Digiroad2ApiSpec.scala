@@ -218,7 +218,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     getWithUserAuth("/assetTypeProperties/10") {
       status should equal(200)
       val ps = parse(body).extract[List[Property]]
-      ps.size should equal(38)
+      ps.size should equal(39)
       val p1 = ps.find(_.publicId == TestPropertyId).get
       p1.publicId should be ("katos")
       p1.propertyType should be ("single_choice")
