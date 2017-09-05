@@ -685,17 +685,17 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       pal.linkId -> pal.geometry).toMap
     val roadPartLinksWithVVHGeometry = roadPartLinks.map(pl => pl.copy(geometry = roadPartLinksGeom(pl.linkId)
     ))
-    val unchangedLinks =
-      if (linkStatus== LinkStatus.UnChanged)
-      {roadPartLinksWithVVHGeometry.filter(pl => pl.status==LinkStatus.UnChanged) ++ roadPartLinksWithVVHGeometry.filter(pl => linkIds.contains(pl.linkId))}
+    val previouslyHandledLinksWithOutTermination:Seq[ProjectLink] =
+      if (linkStatus!= LinkStatus.Terminated)
+        roadPartLinksWithVVHGeometry.filter(pl => (pl.status!=LinkStatus.Terminated) && (pl.status!=LinkStatus.NotHandled)) ++ roadPartLinksWithVVHGeometry.filter(pl => linkIds.contains(pl.linkId))
       else
-      { roadPartLinksWithVVHGeometry.filter(pl => pl.status==LinkStatus.UnChanged).filterNot(pl => linkIds.contains(pl.linkId))}
+        roadPartLinksWithVVHGeometry.filter(pl =>(pl.status!=LinkStatus.Terminated) && (pl.status!=LinkStatus.NotHandled)).filterNot(pl => linkIds.contains(pl.linkId))
     val terminatedLinks=if (linkStatus== LinkStatus.Terminated)
       (roadPartLinks.filter(pl => pl.status==LinkStatus.Terminated) ++ roadPartLinksWithVVHGeometry.filter(pl => linkIds.contains(pl.linkId))).map( pl => pl.copy(calibrationPoints = (None, None)))
     else
       roadPartLinks.filter(pl => pl.status==LinkStatus.Terminated).map( pl => pl.copy(calibrationPoints = (None, None)))
-    val unchangedProjectLinks=ProjectSectionCalculator.determineMValues(Seq(),unchangedLinks)
-    ProjectDAO.updateProjectLinksToDB(unchangedProjectLinks++terminatedLinks,userName)
+    val recalculatedProjectLinks=ProjectSectionCalculator.determineMValues(Seq(),previouslyHandledLinksWithOutTermination)
+    ProjectDAO.updateProjectLinksToDB(recalculatedProjectLinks++terminatedLinks,userName)
     ProjectDAO.updateProjectLinkStatus(changedProjectLinks, linkStatus, userName)
   }
 
