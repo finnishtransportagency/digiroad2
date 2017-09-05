@@ -46,7 +46,7 @@
     };
 
     this.fetch = function(boundingBox) {
-      return backend.getSpeedLimits(boundingBox).then(function(speedLimitGroups) {
+      return backend.getSpeedLimits(boundingBox, applicationModel.getWithRoadAddress()).then(function(speedLimitGroups) {
         var partitionedSpeedLimitGroups = _.groupBy(speedLimitGroups, function(speedLimitGroup) {
           return _.some(speedLimitGroup, function(speedLimit) { return _.has(speedLimit, "id"); });
         });

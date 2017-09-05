@@ -286,6 +286,7 @@ window.LinearAssetLayer = function(params) {
     eventListener.listenTo(eventbus, multiElementEvent('cancelled'), linearAssetCancelled);
     eventListener.listenTo(eventbus, singleElementEvents('selectByLinkId'), selectLinearAssetByLinkId);
     eventListener.listenTo(eventbus, multiElementEvent('massUpdateFailed'), cancelSelection);
+    eventListener.listenTo(eventbus, 'toggleWithRoadAddress', refreshSelectedView);
   };
 
   var startListeningExtraEvents = function(){
@@ -488,6 +489,11 @@ window.LinearAssetLayer = function(params) {
     stopListeningExtraEvents();
     me.stop();
     me.hide();
+  };
+
+  var refreshSelectedView = function(){
+    if(applicationModel.getSelectedLayer() == layerName)
+      me.refreshView();
   };
 
   return {

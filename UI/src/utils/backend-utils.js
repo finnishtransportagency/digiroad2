@@ -19,9 +19,9 @@
           });
     };
 
-    this.getRoadLinks = createCallbackRequestor(function(boundingBox) {
+    this.getRoadLinks = createCallbackRequestorWithParameters(function(boundingBox, withRoadAddress) {
       return {
-        url: 'api/roadlinks?bbox=' + boundingBox
+        url: 'api/roadlinks?bbox=' + boundingBox + '&withRoadAddress=' + withRoadAddress
       };
     });
 
@@ -118,9 +118,9 @@
       };
     });
 
-    this.getSpeedLimits = latestResponseRequestor(function(boundingBox) {
+    this.getSpeedLimits = latestResponseRequestor(function(boundingBox, withRoadAddress) {
       return {
-        url: 'api/speedlimits?bbox=' + boundingBox
+        url: 'api/speedlimits?bbox=' + boundingBox + '&withRoadAddress=' + withRoadAddress
       };
     });
 
@@ -219,9 +219,9 @@
       });
     }, 1000);
 
-    this.getLinearAssets = latestResponseRequestor(function(boundingBox, typeId) {
+    this.getLinearAssets = latestResponseRequestor(function(boundingBox, typeId, withRoadAddress) {
       return {
-        url: 'api/linearassets?bbox=' + boundingBox + '&typeId=' + typeId
+        url: 'api/linearassets?bbox=' + boundingBox + '&typeId=' + typeId + '&withRoadAddress=' + withRoadAddress
       };
     });
 
@@ -446,6 +446,13 @@
       };
     }
 
+    function createCallbackRequestorWithParameters(getParameters) {
+      var requestor = latestResponseRequestor(getParameters);
+      return function(parameter, withRoadAddress, callback) {
+        requestor(parameter, withRoadAddress).then(callback);
+      };
+    }
+
     function latestResponseRequestor(getParameters) {
       var deferred;
       var requests = new Bacon.Bus();
@@ -462,7 +469,7 @@
     }
 
     this.withRoadLinkData = function (roadLinkData) {
-      self.getRoadLinks = function(boundingBox, callback) {
+      self.getRoadLinks = function(boundingBox, withRoadAddress, callback) {
         callback(roadLinkData);
         eventbus.trigger('roadLinks:fetched');
       };
@@ -512,7 +519,7 @@
     };
 
     this.withSpeedLimitsData = function(speedLimitsData) {
-      self.getSpeedLimits = function(boundingBox) {
+      self.getSpeedLimits = function(boundingBox, withRoadAddress) {
         return $.Deferred().resolve(speedLimitsData);
       };
       return self;
