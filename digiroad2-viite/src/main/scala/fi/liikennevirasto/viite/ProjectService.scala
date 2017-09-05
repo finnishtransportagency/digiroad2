@@ -662,25 +662,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val projectLinks = ProjectDAO.getProjectLinks(projectId)
       val changedLink= projectLinks.filter(pl => pl.linkId==linkIds.head).head
       val roadPartLinks= projectLinks.filter(pl => pl.roadNumber==changedLink.roadNumber).filter(pl => pl.roadPartNumber==changedLink.roadPartNumber)
-      val changed = projectLinks.filter(pl => linkIds.contains(pl.linkId)).map(_.id).toSet
+      val changedProjectLinks = projectLinks.filter(pl => linkIds.contains(pl.linkId)).map(_.id).toSet
       if(linkStatus==LinkStatus.Terminated || ( linkStatus==LinkStatus.UnChanged && roadPartLinks.exists( pl=> pl.status==LinkStatus.Terminated))){
-        val projectAddressLinksGeom = getLinksByProjectLinkId(roadPartLinks.map(_.linkId).toSet, projectId, false).map(pal =>
-          pal.linkId -> pal.geometry).toMap
-        val roadPartLinksWithVVHGeometry = roadPartLinks.map(pl => pl.copy(geometry = projectAddressLinksGeom(pl.linkId)
-        ))
-        val unchangedLinks =if (linkStatus== LinkStatus.UnChanged)
-        { roadPartLinksWithVVHGeometry.filter(pl => pl.status==LinkStatus.UnChanged) ++ roadPartLinksWithVVHGeometry.filter(pl => linkIds.contains(pl.linkId))}
-        else
-        { roadPartLinksWithVVHGeometry.filter(pl => pl.status==LinkStatus.UnChanged).filterNot(pl => linkIds.contains(pl.linkId))}
-        val terminatedLinks=if (linkStatus== LinkStatus.Terminated)
-          (roadPartLinks.filter(pl => pl.status==LinkStatus.Terminated) ++ roadPartLinksWithVVHGeometry.filter(pl => linkIds.contains(pl.linkId))).map( pl => pl.copy(calibrationPoints = (None, None)))
-        else
-          roadPartLinks.filter(pl => pl.status==LinkStatus.Terminated).map( pl => pl.copy(calibrationPoints = (None, None)))
-        val unchangedProjectLinks=ProjectSectionCalculator.determineMValues(Seq(),unchangedLinks)
-        ProjectDAO.updateProjectLinksToDB(unchangedProjectLinks++terminatedLinks,userName)
-        ProjectDAO.updateProjectLinkStatus(changed, linkStatus, userName)
+        terminationUpdateHandling(roadPartLinks, linkStatus, changedProjectLinks,projectId,userName, linkIds)
       } else
-      ProjectDAO.updateProjectLinkStatus(changed, linkStatus, userName)
+        ProjectDAO.updateProjectLinkStatus(changedProjectLinks, linkStatus, userName)
       try {
         val delta = ProjectDeltaCalculator.delta(projectId)
         setProjectDeltaToDB(delta,projectId)
@@ -691,6 +677,26 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           false
       }
     }
+  }
+
+  private  def terminationUpdateHandling(roadPartLinks :List[ProjectLink], linkStatus: LinkStatus, changedProjectLinks: Set[Long],projectId: Long,userName: String, linkIds: Set[Long] ) = {
+
+    val roadPartLinksGeom = getLinksByProjectLinkId(roadPartLinks.map(_.linkId).toSet, projectId, false).map(pal =>
+      pal.linkId -> pal.geometry).toMap
+    val roadPartLinksWithVVHGeometry = roadPartLinks.map(pl => pl.copy(geometry = roadPartLinksGeom(pl.linkId)
+    ))
+    val unchangedLinks =
+      if (linkStatus== LinkStatus.UnChanged)
+      {roadPartLinksWithVVHGeometry.filter(pl => pl.status==LinkStatus.UnChanged) ++ roadPartLinksWithVVHGeometry.filter(pl => linkIds.contains(pl.linkId))}
+      else
+      { roadPartLinksWithVVHGeometry.filter(pl => pl.status==LinkStatus.UnChanged).filterNot(pl => linkIds.contains(pl.linkId))}
+    val terminatedLinks=if (linkStatus== LinkStatus.Terminated)
+      (roadPartLinks.filter(pl => pl.status==LinkStatus.Terminated) ++ roadPartLinksWithVVHGeometry.filter(pl => linkIds.contains(pl.linkId))).map( pl => pl.copy(calibrationPoints = (None, None)))
+    else
+      roadPartLinks.filter(pl => pl.status==LinkStatus.Terminated).map( pl => pl.copy(calibrationPoints = (None, None)))
+    val unchangedProjectLinks=ProjectSectionCalculator.determineMValues(Seq(),unchangedLinks)
+    ProjectDAO.updateProjectLinksToDB(unchangedProjectLinks++terminatedLinks,userName)
+    ProjectDAO.updateProjectLinkStatus(changedProjectLinks, linkStatus, userName)
   }
 
   def projectLinkPublishable(projectId: Long): Boolean = {
