@@ -403,6 +403,10 @@
         applicationModel.removeSpinner();
       });
 
+      eventbus.on('roadAddressProject:reOpenCurrent',function(){
+        reOpenCurrent();
+      });
+
       rootElement.on('click', '[id^=editProject]', currentProject, function(eventObject){
         var projectId = eventObject.currentTarget.value === "undefined" ? currentProject.id : eventObject.currentTarget.value;
         applicationModel.addSpinner();
@@ -477,7 +481,7 @@
           $('#roadpartList').html(writeHtmlList(projectCollection.getReservedDirtyRoadParts()));
         } else
         if(projectCollection.getCurrentRoadPartList()[id] && projectCollection.getCurrentRoadPartList()[id].isDirty){
-          new GenericConfirmPopup('Haluatko varmasti poistaa tieosan varauksen ja siihen mahdollisesti tehdyt tieosoitemuutokset?', {
+          new GenericConfirmPopup('Haluatko varmasti poistaa tieosan varauksen ja \r\nsiihen mahdollisesti tehdyt tieosoitemuutokset?', {
             successCallback: function () {
               removePart(roadNumber, roadPartNumber);
               _.defer(textFieldChangeHandler);
@@ -532,16 +536,20 @@
         });
       };
 
+      var reOpenCurrent = function(){
+        rootElement.empty();
+        rootElement.html(selectedProjectLinkTemplate(currentProject, options, selectedProjectLink));
+        toggleAditionalControls();
+        eventbus.trigger('roadAddressProject:enableInteractions');
+      };
+
       rootElement.on('click', '#saveEdit', function(){
         saveAndNext();
         eventbus.trigger('roadAddressProject:enableInteractions');
       });
 
       rootElement.on('click', '#cancelEdit', function(){
-        rootElement.empty();
-        rootElement.html(selectedProjectLinkTemplate(currentProject, options, selectedProjectLink));
-        toggleAditionalControls();
-        eventbus.trigger('roadAddressProject:enableInteractions');
+        reOpenCurrent();
       });
 
       rootElement.on('click', '#saveAndCancelDialogue', function(eventData){
