@@ -365,7 +365,7 @@ Returns empty result as Json message, not as page not found
   private def validatePropertiesMaxSize(properties: Seq[SimpleProperty]) = {
     val propertiesWithMaxSize: Map[String, Int] = massTransitStopService.getPropertiesWithMaxSize()
     val invalidPropertiesDueMaxSize: Seq[SimpleProperty] = properties.filter { property =>
-      propertiesWithMaxSize.contains(property.publicId) && property.values.forall { value => value.propertyValue.toInt > 3 }
+      propertiesWithMaxSize.contains(property.publicId) && property.values.forall { value => value.propertyValue.length > 3 }
     }
     if (invalidPropertiesDueMaxSize.nonEmpty) halt(BadRequest("Properties with Invalid Size: " + invalidPropertiesDueMaxSize.mkString(", ")))
   }
