@@ -127,7 +127,7 @@ object ProjectDAO {
       projectLinkPS.setString(8,modifier)
       projectLinkPS.setLong(9,projectLink.lrmPositionId)
       projectLinkPS.setLong(10, projectLink.projectId)
-      projectLinkPS.setInt(11, CalibrationCode.getFromProjectLink(projectLink).value)
+      projectLinkPS.setInt(11, CalibrationCode.getFromAddress(projectLink).value)
       projectLinkPS.setInt(12, projectLink.status.value)
       projectLinkPS.setInt(13, projectLink.roadType.value)
       projectLinkPS.setLong(14, projectLink.id)
