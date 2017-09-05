@@ -131,13 +131,17 @@
       $('#actionButtons').html('<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button><button disabled id ="send-button" class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button>');
     };
 
-    var fireDeselectionConfirmation = function () {
+    var fireDeselectionConfirmation = function (shiftPressed, selection) {
       new GenericConfirmPopup('Haluatko poistaa tien valinnan ja hylätä muutokset?', {
         successCallback: function () {
           eventbus.trigger('roadAddressProject:discardChanges');
           isNotEditingData = true;
           clearHighlights();
           showChangesAndSendButton();
+          if(selection.size > 1)
+            showSingleClickChanges(shiftPressed, selection);
+          else
+            showDoubleClickChanges(shiftPressed, selection);
         },
         closeCallback: function(){
           isNotEditingData = false;
@@ -196,35 +200,39 @@
         );
       });
       if(isNotEditingData){
-        if (shiftPressed && !_.isUndefined(selectedProjectLinkProperty.get())) {
-          if(!_.isUndefined(selection) && canItBeAddToSelection(selection.projectLinkData)){
-            var clickedIds = projectCollection.getMultiSelectIds(selection.projectLinkData.linkId);
-            var previouslySelectedIds = _.map(selectedProjectLinkProperty.get(), function(selected){
-              return selected.linkId;
-            });
-            if(_.contains(previouslySelectedIds, selection.projectLinkData.linkId)){
-              previouslySelectedIds = _.without(previouslySelectedIds, clickedIds);
-            } else {
-              previouslySelectedIds = _.union(previouslySelectedIds, clickedIds);
-            }
-            selectedProjectLinkProperty.openShift(previouslySelectedIds);
-          }
-          highlightFeatures();
-        } else {
-          selectedProjectLinkProperty.clean();
-          $('.wrapper').remove();
-          $('#actionButtons').html('<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button><button disabled id ="send-button" class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button>');
-          if (!_.isUndefined(selection))
-            selectedProjectLinkProperty.open(selection.projectLinkData.linkId, true);
-          else selectedProjectLinkProperty.cleanIds();
-        }
+        showSingleClickChanges(shiftPressed, selection);
       } else {
         var selectedFeatures = event.deselected.concat(selectDoubleClick.getFeatures().getArray());
         clearHighlights();
         addFeaturesToSelection(selectedFeatures);
-        fireDeselectionConfirmation();
+        fireDeselectionConfirmation(shiftPressed, selection);
       }
     });
+
+    var showSingleClickChanges = function(shiftPressed, selection){
+      if (shiftPressed && !_.isUndefined(selectedProjectLinkProperty.get())) {
+        if(!_.isUndefined(selection) && canItBeAddToSelection(selection.projectLinkData)){
+          var clickedIds = projectCollection.getMultiSelectIds(selection.projectLinkData.linkId);
+          var previouslySelectedIds = _.map(selectedProjectLinkProperty.get(), function(selected){
+            return selected.linkId;
+          });
+          if(_.contains(previouslySelectedIds, selection.projectLinkData.linkId)){
+            previouslySelectedIds = _.without(previouslySelectedIds, clickedIds);
+          } else {
+            previouslySelectedIds = _.union(previouslySelectedIds, clickedIds);
+          }
+          selectedProjectLinkProperty.openShift(previouslySelectedIds);
+        }
+        highlightFeatures();
+      } else {
+        selectedProjectLinkProperty.clean();
+        $('.wrapper').remove();
+        $('#actionButtons').html('<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button><button disabled id ="send-button" class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button>');
+        if (!_.isUndefined(selection))
+          selectedProjectLinkProperty.open(selection.projectLinkData.linkId, true);
+        else selectedProjectLinkProperty.cleanIds();
+      }
+    };
 
     var selectDoubleClick = new ol.interaction.Select({
       layer: [vectorLayer, suravageRoadProjectLayer],
@@ -278,32 +286,36 @@
         );
       });
       if(isNotEditingData){
-        if (shiftPressed && !_.isUndefined(selectedProjectLinkProperty.get())) {
-          if(!_.isUndefined(selection) && canItBeAddToSelection(selection.projectLinkData)){
-            var selectedLinkIds = _.map(selectedProjectLinkProperty.get(), function(selected){
-              return selected.linkId;
-            });
-            if(_.contains(selectedLinkIds, selection.projectLinkData.linkId)){
-              selectedLinkIds = _.without(selectedLinkIds, selection.projectLinkData.linkId);
-            } else {
-              selectedLinkIds = selectedLinkIds.concat(selection.projectLinkData.linkId);
-            }
-            selectedProjectLinkProperty.openShift(selectedLinkIds);
-          }
-          highlightFeatures();
-        } else {
-          selectedProjectLinkProperty.clean();
-          if (!_.isUndefined(selection))
-            selectedProjectLinkProperty.open(selection.projectLinkData.linkId);
-          else selectedProjectLinkProperty.cleanIds();
-        }
+        showDoubleClickChanges(shiftPressed, selection);
       } else {
         var selectedFeatures = event.deselected.concat(selectSingleClick.getFeatures().getArray());
         clearHighlights();
         addFeaturesToSelection(selectedFeatures);
-        fireDeselectionConfirmation();
+        fireDeselectionConfirmation(shiftPressed, selection);
       }
     });
+
+    var showDoubleClickChanges = function(shiftPressed, selection){
+      if (shiftPressed && !_.isUndefined(selectedProjectLinkProperty.get())) {
+        if(!_.isUndefined(selection) && canItBeAddToSelection(selection.projectLinkData)){
+          var selectedLinkIds = _.map(selectedProjectLinkProperty.get(), function(selected){
+            return selected.linkId;
+          });
+          if(_.contains(selectedLinkIds, selection.projectLinkData.linkId)){
+            selectedLinkIds = _.without(selectedLinkIds, selection.projectLinkData.linkId);
+          } else {
+            selectedLinkIds = selectedLinkIds.concat(selection.projectLinkData.linkId);
+          }
+          selectedProjectLinkProperty.openShift(selectedLinkIds);
+        }
+        highlightFeatures();
+      } else {
+        selectedProjectLinkProperty.clean();
+        if (!_.isUndefined(selection))
+          selectedProjectLinkProperty.open(selection.projectLinkData.linkId);
+        else selectedProjectLinkProperty.cleanIds();
+      }
+    };
 
     var canItBeAddToSelection = function(selectionData) {
       var currentlySelectedSample = _.first(selectedProjectLinkProperty.get());
