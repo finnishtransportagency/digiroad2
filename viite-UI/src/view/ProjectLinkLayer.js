@@ -219,8 +219,9 @@
           else selectedProjectLinkProperty.cleanIds();
         }
       } else {
+        var selectedFeatures = event.deselected.concat(selectDoubleClick.getFeatures().getArray());
         clearHighlights();
-        addFeaturesToSelection(event.deselected);
+        addFeaturesToSelection(selectedFeatures);
         fireDeselectionConfirmation();
       }
     });
@@ -297,8 +298,10 @@
           else selectedProjectLinkProperty.cleanIds();
         }
       } else {
+        var selectedFeatures = event.deselected.concat(selectSingleClick.getFeatures().getArray());
         clearHighlights();
-        addFeaturesToSelection(event.deselected);
+        addFeaturesToSelection(selectedFeatures);
+        fireDeselectionConfirmation();
       }
     });
 
