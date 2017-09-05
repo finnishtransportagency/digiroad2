@@ -391,6 +391,17 @@ Returns empty result as Json message, not as page not found
     }
   }
 
+  private def getRoadLinksFromVVH(municipalities: Set[Int], withRoadAddress: Boolean)(bbox: String): Seq[Seq[Map[String, Any]]] = {
+    val boundingRectangle = constructBoundingRectangle(bbox)
+    validateBoundingBox(boundingRectangle)
+    val roadLinkSeq = roadLinkService.getRoadLinksFromVVH(boundingRectangle, municipalities)
+    val roadLinks = if(withRoadAddress) roadLinkService.withRoadAddress(roadLinkSeq) else roadLinkSeq
+    val partitionedRoadLinks = RoadLinkPartitioner.partition(roadLinks)
+    partitionedRoadLinks.map {
+      _.map(roadLinkToApi)
+    }
+  }
+
   private def getRoadlinksWithComplementaryFromVVH(municipalities: Set[Int])(bbox: String): Seq[Seq[Map[String, Any]]] = {
     val boundingRectangle = constructBoundingRectangle(bbox)
     validateBoundingBox(boundingRectangle)
@@ -474,9 +485,10 @@ Returns empty result as Json message, not as page not found
     response.setHeader("Access-Control-Allow-Headers", "*")
     val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = if (user.isOperator() || user.isBusStopMaintainer()) Set() else user.configuration.authorizedMunicipalities
+    val withRoadAddress = params("withRoadAddress").toBoolean
 
     params.get("bbox")
-      .map(getRoadLinksFromVVH(municipalities))
+      .map(getRoadLinksFromVVH(municipalities, withRoadAddress))
       .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
   }
 
@@ -616,10 +628,18 @@ Returns empty result as Json message, not as page not found
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      if(user.isServiceRoadMaintainer())
-        mapLinearAssets(linearAssetService.withRoadAddress(linearAssetService.getByIntersectedBoundingBox(typeId, user.configuration.authorizedAreas, boundingRectangle, municipalities)))
-      else
-        mapLinearAssets(linearAssetService.withRoadAddress(linearAssetService.getByBoundingBox(typeId, boundingRectangle, municipalities)))
+      if(params("withRoadAddress").toBoolean){
+        if(user.isServiceRoadMaintainer())
+          mapLinearAssets(linearAssetService.withRoadAddress(linearAssetService.getByIntersectedBoundingBox(typeId, user.configuration.authorizedAreas, boundingRectangle, municipalities)))
+        else
+          mapLinearAssets(linearAssetService.withRoadAddress(linearAssetService.getByBoundingBox(typeId, boundingRectangle, municipalities)))
+      }else{
+        if(user.isServiceRoadMaintainer())
+          mapLinearAssets(linearAssetService.getByIntersectedBoundingBox(typeId, user.configuration.authorizedAreas, boundingRectangle, municipalities))
+        else
+          mapLinearAssets(linearAssetService.getByBoundingBox(typeId, boundingRectangle, municipalities))
+      }
+
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
     }
@@ -824,7 +844,8 @@ Returns empty result as Json message, not as page not found
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      speedLimitService.withRoadAddress(speedLimitService.get(boundingRectangle, municipalities)).map { linkPartition =>
+      val speedLimits = if(params("withRoadAddress").toBoolean) speedLimitService.withRoadAddress(speedLimitService.get(boundingRectangle, municipalities)) else speedLimitService.get(boundingRectangle, municipalities)
+      speedLimits.map { linkPartition =>
         linkPartition.map { link =>
           Map(
             "id" -> (if (link.id == 0) None else Some(link.id)),

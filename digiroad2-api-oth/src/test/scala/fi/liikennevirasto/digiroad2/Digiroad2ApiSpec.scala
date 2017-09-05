@@ -272,7 +272,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("get numerical limits with bounding box", Tag("db")) {
-    getWithUserAuth("/linearassets?typeId=30&bbox=374037,6677013,374540,6677675") {
+    getWithUserAuth("/linearassets?typeId=30&bbox=374037,6677013,374540,6677675&withRoadAddress=true") {
       status should equal(200)
       val parsedBody = parse(body).extract[Seq[LinearAssetFromApi]]
       parsedBody.size should be(3)
@@ -282,7 +282,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("get numerical limits with bounding box should return bad request if typeId missing", Tag("db")) {
-    getWithUserAuth("/linearassets?bbox=374037,6677013,374540,6677675") {
+    getWithUserAuth("/linearassets?bbox=374037,6677013,374540,6677675&withRoadAddress=true") {
       status should equal(400)
     }
   }
