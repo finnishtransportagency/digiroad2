@@ -802,8 +802,8 @@
       suravageProjectDirectionMarkerLayer.setVisible(visibility);
     });
 
-    eventbus.on('roadAddressProject:editingRoad',function(){
-      isNotEditingData = false;
+    eventbus.on('roadAddressProject:toggleEditingRoad',function(notEditingData){
+      isNotEditingData = notEditingData;
     });
 
     vectorLayer.setVisible(true);

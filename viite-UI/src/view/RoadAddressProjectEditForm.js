@@ -418,6 +418,8 @@
           projectLinkLayer.clearHighlights();
           $('.wrapper').remove();
           eventbus.trigger('roadAddress:projectLinksEdited');
+          eventbus.trigger('roadAddressProject:toggleEditingRoad', true);
+          eventbus.trigger('roadAddressProject:reOpenCurrent');
         } else {
           eventbus.trigger('roadAddress:openProject', projectCollection.getCurrentProject());
           eventbus.trigger('roadLinks:refreshView');
@@ -425,11 +427,12 @@
       };
 
       rootElement.on('click', '.project-form button.update', function() {
+        eventbus.trigger('roadAddressProject:toggleEditingRoad', true);
         saveChanges();
       });
 
       rootElement.on('change', '#dropDown', function() {
-        eventbus.trigger('roadAddressProject:editingRoad');
+        eventbus.trigger('roadAddressProject:toggleEditingRoad', false);
         $('#ajr').prop('disabled',false);
         $('#discontinuityDropdown').prop('disabled',false);
         $('#roadTypeDropDown').prop('disabled',false);
