@@ -154,21 +154,21 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def addNewLinksToProject(projectAddressLinks: Seq[ProjectAddressLink], roadAddressProjectID: Long, newRoadNumber: Long,
                            newRoadPartNumber: Long, newTrackCode: Long, newDiscontinuity: Long, newRoadType: Long = RoadType.Unknown.value): Option[String] = {
     def newProjectLink(projectAddressLink: ProjectAddressLink, project: RoadAddressProject, sideCode: SideCode): ProjectLink = {
-      toProjectLink(projectAddressLink, NewRoadAddress, Track.apply(newTrackCode.toInt), project, sideCode)
+      toProjectLink(projectAddressLink, NewRoadAddress, Track.apply(newTrackCode.toInt), project, sideCode, true)
     }
 
     def existingProjectLink(projectAddressLink: ProjectAddressLink, project: RoadAddressProject, sideCode: SideCode): ProjectLink = {
-      toProjectLink(projectAddressLink, projectAddressLink.id, Track.apply(projectAddressLink.trackCode.toInt), project, sideCode)
+      toProjectLink(projectAddressLink, projectAddressLink.id, Track.apply(projectAddressLink.trackCode.toInt), project, sideCode, false)
     }
 
     def toProjectLink(projectAddressLink: ProjectAddressLink, id: Long, track: Track, project: RoadAddressProject,
-                      sideCode: SideCode): ProjectLink = {
+                      sideCode: SideCode, isNewProjectLink:Boolean = false): ProjectLink = {
       ProjectLink(id, newRoadNumber, newRoadPartNumber, track,
         Discontinuity.apply(newDiscontinuity.toInt), projectAddressLink.startAddressM,
         projectAddressLink.endAddressM, Some(project.startDate), None, Some(project.createdBy), -1,
         projectAddressLink.linkId, projectAddressLink.startMValue, projectAddressLink.endMValue, sideCode,
         (projectAddressLink.startCalibrationPoint, projectAddressLink.endCalibrationPoint), floating = false,
-        projectAddressLink.geometry, roadAddressProjectID, LinkStatus.New, RoadType.apply(newRoadType.toInt),
+        projectAddressLink.geometry, roadAddressProjectID, if (isNewProjectLink) LinkStatus.New else projectAddressLink.status, RoadType.apply(newRoadType.toInt),
         projectAddressLink.roadLinkSource, projectAddressLink.length)
     }
 
