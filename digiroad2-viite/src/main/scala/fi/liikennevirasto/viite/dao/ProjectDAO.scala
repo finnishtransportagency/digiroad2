@@ -145,7 +145,6 @@ object ProjectDAO {
 
 
   def createRoadAddressProject(roadAddressProject: RoadAddressProject): Unit = {
-    val test = roadAddressProject.startDate
     sqlu"""
          insert into project (id, state, name, ely, created_by, created_date, start_date ,modified_by, modified_date, add_info)
          values (${roadAddressProject.id}, ${roadAddressProject.status.value}, ${roadAddressProject.name}, -1, ${roadAddressProject.createdBy}, sysdate ,${roadAddressProject.startDate}, '-' , sysdate, ${roadAddressProject.additionalInfo})
