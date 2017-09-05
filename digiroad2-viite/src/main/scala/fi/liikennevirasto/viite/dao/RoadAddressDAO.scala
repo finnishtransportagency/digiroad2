@@ -11,7 +11,7 @@ import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.dao.CalibrationCode._
-import fi.liikennevirasto.viite.model.Anomaly
+import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
@@ -59,13 +59,17 @@ object CalibrationCode {
     values.find(_.value == intValue).getOrElse(No)
   }
 
+  private def fromBooleans(beginning: Boolean, end: Boolean): CalibrationCode = {
+    val beginValue = if (beginning) AtBeginning.value else No.value
+    val endValue = if (end) AtEnd.value else No.value
+    CalibrationCode.apply(beginValue+endValue)
+  }
   def getFromAddress(roadAddress: BaseRoadAddress): CalibrationCode = {
-    (roadAddress.calibrationPoints._1.isEmpty, roadAddress.calibrationPoints._2.isEmpty) match {
-      case (true, true)   => No
-      case (true, false)  => AtEnd
-      case (false, true)  => AtBeginning
-      case (false, false) => AtBoth
-    }
+    fromBooleans(roadAddress.calibrationPoints._1.isDefined, roadAddress.calibrationPoints._2.isDefined)
+  }
+
+  def getFromAddressLinkLike(roadAddress: RoadAddressLinkLike): CalibrationCode = {
+    fromBooleans(roadAddress.startCalibrationPoint.isDefined, roadAddress.endCalibrationPoint.isDefined)
   }
 
   case object No extends CalibrationCode { def value = 0 }

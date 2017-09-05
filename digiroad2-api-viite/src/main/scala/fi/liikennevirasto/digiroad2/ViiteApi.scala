@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.digiroad2.util.RoadAddressException
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model._
-import fi.liikennevirasto.viite.{ProjectService, ReservedRoadPart, RoadAddressService}
+import fi.liikennevirasto.viite.{LinkToRevert, ProjectService, ReservedRoadPart, RoadAddressService}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.json4s._
@@ -27,7 +27,9 @@ import scala.util.{Left, Right}
 
 case class NewAddressDataExtracted(sourceIds: Set[Long], targetIds: Set[Long])
 
-case class NewRoadAddressExtractor(linkIds: Set[Long], projectId: Long, newRoadNumber: Long, newRoadPartNumber : Long, newTrackCode: Long, newDiscontinuity :Long, roadEly: Long, roadLinkSource: Long)
+case class NewRoadAddressExtractor(linkIds: Set[Long], projectId: Long, newRoadNumber: Long, newRoadPartNumber : Long, newTrackCode: Long, newDiscontinuity :Long, roadEly: Long, roadLinkSource: Long, roadType: Long)
+
+case class RevertRoadLinksExtractor(projectId: Long, roadNumber: Long, roadPartNumber: Long, links: List[LinkToRevert])
 
 case class ProjectRoadAddressInfo(projectId : Long, roadNumber: Long, roadPartNumber :Long)
 
@@ -303,7 +305,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         projectService.setProjectEly(projectLink.projectId, projectLink.roadEly) match {
           case Some(errorMessage) => Map("success" -> false, "errormessage" -> errorMessage)
           case None => {
-            projectService.addNewLinksToProject(roadLinks, projectLink.projectId, projectLink.newRoadNumber, projectLink.newRoadPartNumber, projectLink.newTrackCode, projectLink.newDiscontinuity) match {
+            projectService.addNewLinksToProject(roadLinks, projectLink.projectId, projectLink.newRoadNumber, projectLink.newRoadPartNumber, projectLink.newTrackCode, projectLink.newDiscontinuity, projectLink.roadType) match {
               case Some(errorMessage) => Map("success" -> false, "errormessage" -> errorMessage)
               case None => Map ("success" -> true, "publishable" -> projectService.projectLinkPublishable(projectLink.projectId))
             }
@@ -313,6 +315,23 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       case e: MappingException  =>
         logger.warn("Exception saving road links in project", e)
         BadRequest("Missing mandatory ProjectLink parameter")
+      case e:Exception => {
+        logger.error(e.toString, e)
+        InternalServerError(e.toString)
+      }
+    }
+  }
+
+  put("/roadlinks/roadaddress/project/revertchangesroadlink") {
+    try {
+      val linksToRevert = parsedBody.extract[RevertRoadLinksExtractor]
+      if(linksToRevert.links.nonEmpty){
+        projectService.revertLinks(linksToRevert.projectId, linksToRevert.roadNumber, linksToRevert.roadPartNumber, linksToRevert.links) match {
+          case None => Map("success" -> true)
+          case Some(s) => Map("success" -> false, "errorMessage" -> s)
+        }
+      }
+    } catch {
       case e:Exception => {
         logger.error(e.toString, e)
         InternalServerError(e.toString)
@@ -449,10 +468,12 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "linkId" -> roadAddressLink.linkId,
       "mmlId" -> roadAddressLink.attributes.get("MTKID"),
       "points" -> roadAddressLink.geometry,
+      "calibrationCode" -> CalibrationCode.getFromAddressLinkLike(roadAddressLink).value,
       "calibrationPoints" -> Seq(calibrationPoint(roadAddressLink.geometry, roadAddressLink.startCalibrationPoint),
         calibrationPoint(roadAddressLink.geometry, roadAddressLink.endCalibrationPoint)),
       "administrativeClass" -> roadAddressLink.administrativeClass.toString,
       "roadClass" -> roadAddressService.roadClass(roadAddressLink.roadNumber),
+      "roadTypeId" -> roadAddressLink.roadType.value,
       "roadType" -> roadAddressLink.roadType.displayValue,
       "modifiedAt" -> roadAddressLink.modifiedAt,
       "modifiedBy" -> roadAddressLink.modifiedBy,

@@ -41,6 +41,18 @@
       });
     }, 1000);
 
+    this.revertChangesRoadlink = _.throttle(function(data, success, errorCallback) {
+        $.ajax({
+            contentType: "application/json",
+            type: "PUT",
+            url: "api/viite/roadlinks/roadaddress/project/revertchangesroadlink",
+            data: JSON.stringify(data),
+            dataType: "json",
+            success: success,
+            error: errorCallback
+        });
+    }, 1000);
+
     this.getRoadLinkByLinkId = _.throttle(function(linkId, callback) {
       return $.getJSON('api/viite/roadlinks/' + linkId, function(data) {
         return _.isFunction(callback) && callback(data);
@@ -159,7 +171,8 @@
         newTrackCode : data[4],
         newDiscontinuity : data[5],
         roadEly: data[6],
-        roadLinkSource: data[7]
+        roadLinkSource: data[7],
+        roadType: data[8]
       };
       $.ajax({
         contentType: "application/json",

@@ -9,6 +9,7 @@ import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.CalibrationCode.{AtBeginning, AtBoth, AtEnd, No}
+import fi.liikennevirasto.viite.model.ProjectAddressLink
 import fi.liikennevirasto.viite.{ReservedRoadPart, RoadType}
 import fi.liikennevirasto.viite.process.{Delta, ProjectDeltaCalculator}
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
@@ -47,10 +48,11 @@ sealed trait LinkStatus {
 }
 
 object LinkStatus {
-  val values = Set(NotHandled, Terminated, New, UnChanged, Unknown)
+  val values = Set(NotHandled, Terminated, New, Transfer, UnChanged, Unknown)
   case object NotHandled extends LinkStatus {def value = 0}
   case object Terminated extends LinkStatus {def value = 1}
   case object New extends LinkStatus {def value = 2}
+  case object Transfer extends LinkStatus {def value = 3}
   case object UnChanged extends LinkStatus {def value = 4}
   case object Unknown extends LinkStatus {def value = 99}
   def apply(intValue: Int): LinkStatus = {
@@ -78,7 +80,7 @@ object ProjectDAO {
     val addressPS = dynamicSession.prepareStatement("insert into PROJECT_LINK (id, project_id, lrm_position_id, " +
       "road_number, road_part_number, " +
       "track_code, discontinuity_type, START_ADDR_M, END_ADDR_M, created_by, " +
-      "calibration_points, status) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+      "calibration_points, status, road_type) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
     val ids = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= ${roadAddresses.size}""".as[Long].list
     roadAddresses.zip(ids).foreach { case ((address), (lrmId)) =>
       RoadAddressDAO.createLRMPosition(lrmPositionPS, lrmId, address.linkId, address.sideCode.value, address.startMValue, address.endMValue, 0, address.linkGeomSource.value)
@@ -96,6 +98,7 @@ object ProjectDAO {
       addressPS.setString(10, address.modifiedBy.get)
       addressPS.setDouble(11, CalibrationCode.getFromAddress(address).value)
       addressPS.setLong(12, address.status.value)
+      addressPS.setLong(13, address.roadType.value)
       addressPS.addBatch()
     }
     lrmPositionPS.executeBatch()
@@ -199,7 +202,7 @@ object ProjectDAO {
   }
 
   def updateAddrMValues(projectLink: ProjectLink): Unit = {
-      sqlu"""update project_link set modified_date = sysdate, start_addr_m = ${projectLink.startAddrMValue}, end_addr_m = ${projectLink.endAddrMValue} where id = ${projectLink.id}
+      sqlu"""update project_link set modified_date = sysdate, start_addr_m = ${projectLink.startAddrMValue}, end_addr_m = ${projectLink.endAddrMValue}, calibration_points = ${CalibrationCode.getFromAddress(projectLink).value} where id = ${projectLink.id}
           """.execute
   }
 
@@ -310,6 +313,12 @@ object ProjectDAO {
         val sql = s"UPDATE PROJECT_LINK SET STATUS = ${linkStatus.value}, MODIFIED_BY='$user' WHERE ID IN (SELECT ID FROM $s)"
         Q.updateNA(sql).execute
     }
+  }
+
+  def updateProjectLinkValues (projectId: Long, projectLink: RoadAddress) ={
+    val updateProjectLink = s"update project_link set project_link.road_number = ${projectLink.roadNumber}, project_link.road_part_number = ${projectLink.roadPartNumber}, project_link.track_code = ${projectLink.track.value}, " +
+      s" project_link.discontinuity_type = ${projectLink.discontinuity.value}, project_link.road_type = ${projectLink.roadType.value}, project_link.status = 0 where id in (select plink.id from project_link plink join lrm_position on lrm_position.id = plink.lrm_position_id where lrm_position.link_id =${projectLink.linkId} )"
+    Q.updateNA(updateProjectLink).execute
   }
 
   def flipProjectLinksSideCodes(projectId : Long, roadNumber : Long, roadPartNumber : Long): Unit = {
