@@ -72,12 +72,10 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
 
     // 4-fourth -click in the next-Seuraava button
     describe('when clicking in next aka Seuraava button and select one reserved link', function() {
-      before(function (done) {
-
+      before(function () {
         eventbus.on('roadAddressProject:fetched',function (){
           var ol3Feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 1717275);
           testHelpers.selectSingleFeatureByInteraction(openLayersMap, ol3Feature, testHelpers.getSingleClickNameProjectLinkLayer());
-          done();
         });
         testHelpers.clickNextButton();
       });
@@ -110,6 +108,11 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
           expect(inputsEmpty).to.be.true;
           //Check if Tallenna is disabled
           expect($('.update.btn.btn-save').is(':disabled')).to.be.true;
+
+          //Select another road to see the pop up
+          feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 1717275);
+          testHelpers.selectSingleFeatureByInteraction(openLayersMap, feature, testHelpers.getSingleClickNameProjectLinkLayer());
+          $('.yes').click();
 
           //Check if the values are filled in the input fields when data is valid
           feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 1717395);

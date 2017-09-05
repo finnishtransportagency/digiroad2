@@ -579,7 +579,9 @@
     };
 
     var projectLinkStatusIn = function(projectLink, possibleStatus){
-      return possibleStatus.includes(projectLink.status);
+      if(!_.isUndefined(possibleStatus) && !_.isUndefined(projectLink) )
+        return _.contains(possibleStatus, projectLink.status);
+      else return false;
     };
 
     eventbus.on('projectLink:projectLinksCreateSuccess', function () {
@@ -587,6 +589,10 @@
     });
 
     eventbus.on('changeProjectDirection:clicked', function () {
+      projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1, undefined, projectCollection.getPublishableStatus());
+    });
+
+    eventbus.on('projectLink:revertedChanges', function () {
       projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1, undefined, projectCollection.getPublishableStatus());
     });
 

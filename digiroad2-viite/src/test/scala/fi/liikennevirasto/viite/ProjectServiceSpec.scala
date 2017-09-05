@@ -706,7 +706,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
         projectLink.calibrationPoints._1,
         projectLink.calibrationPoints._2, Anomaly.None, projectLink.lrmPositionId, projectLink.status)
 
-      projectService.addNewLinksToProject(Seq(p), id, projectLink.roadNumber, projectLink.roadPartNumber, projectLink.track.value.toLong, projectLink.discontinuity.value.toLong)
+      projectService.addNewLinksToProject(Seq(p), id, projectLink.roadNumber, projectLink.roadPartNumber, projectLink.track.value.toLong, projectLink.discontinuity.value.toLong, projectLink.roadType.value)
       val links= ProjectDAO.getProjectLinks(id)
       links.size should be (1)
     }
@@ -749,12 +749,12 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
         projectLink2.calibrationPoints._1,
         projectLink2.calibrationPoints._2, Anomaly.None, projectLink2.lrmPositionId, projectLink2.status)
 
-      projectService.addNewLinksToProject(Seq(p1), id, projectLink1.roadNumber, projectLink1.roadPartNumber, projectLink1.track.value.toLong, projectLink1.discontinuity.value.toLong)
+      projectService.addNewLinksToProject(Seq(p1), id, projectLink1.roadNumber, projectLink1.roadPartNumber, projectLink1.track.value.toLong, projectLink1.discontinuity.value.toLong, projectLink1.roadType.value)
       val links= ProjectDAO.getProjectLinks(id)
       links.size should be (1)
 
 
-      projectService.addNewLinksToProject(Seq(p2), id, projectLink2.roadNumber, projectLink2.roadPartNumber, projectLink2.track.value.toLong, projectLink2.discontinuity.value.toLong)
+      projectService.addNewLinksToProject(Seq(p2), id, projectLink2.roadNumber, projectLink2.roadPartNumber, projectLink2.track.value.toLong, projectLink2.discontinuity.value.toLong, projectLink2.roadType.value)
       val linksAfter = ProjectDAO.getProjectLinks(id)
       linksAfter.size should be (2)
     }
@@ -786,19 +786,19 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
         projectLink.calibrationPoints._2, Anomaly.None, projectLink.lrmPositionId, projectLink.status)
 
       val message1project1 = projectService.addNewLinksToProject(Seq(p), id, projectLink.roadNumber,
-        projectLink.roadPartNumber, projectLink.track.value.toLong, projectLink.discontinuity.value.toLong).getOrElse("")
+        projectLink.roadPartNumber, projectLink.track.value.toLong, projectLink.discontinuity.value.toLong, projectLink.roadType.value).getOrElse("")
       val links = ProjectDAO.getProjectLinks(id)
       links.size should be(0)
       message1project1 should be("TIE 5 OSA 203 on jo olemassa projektin alkupäivänä 03.03.1972, tarkista tiedot") //check that it is reserved in roadaddress table
 
       val message1project2 = projectService.addNewLinksToProject(Seq(p), id + 1, projectLink2.roadNumber,
-        projectLink2.roadPartNumber, projectLink2.track.value.toLong, projectLink2.discontinuity.value.toLong)
+        projectLink2.roadPartNumber, projectLink2.track.value.toLong, projectLink2.discontinuity.value.toLong, projectLink2.roadType.value)
       val links2 = ProjectDAO.getProjectLinks(id + 1)
       links2.size should be(1)
       message1project2 should be(None)
 
       val message2project1 = projectService.addNewLinksToProject(Seq(p), id, projectLink3.roadNumber,
-        projectLink3.roadPartNumber, projectLink3.track.value.toLong, projectLink3.discontinuity.value.toLong).getOrElse("")
+        projectLink3.roadPartNumber, projectLink3.track.value.toLong, projectLink3.discontinuity.value.toLong, projectLink3.roadType.value).getOrElse("")
       val links3 = ProjectDAO.getProjectLinks(id)
       links3.size should be(0)
       message2project1 should be("TIE 5 OSA 999 on jo varattuna projektissa TestProject, tarkista tiedot")
@@ -962,7 +962,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
         SideCode.TowardsDigitizing, None, None, Anomaly.None, 0L, LinkStatus.New)
       val addresses = Seq(addProjectAddressLink512, addProjectAddressLink552)
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(addresses.map(_.linkId).toSet, false, false)).thenReturn(addresses.map(toRoadLink))
-      projectService.addNewLinksToProject(addresses, id, 75, 2, 0L, 5L) should be (None)
+      projectService.addNewLinksToProject(addresses, id, 75, 2, 0L, 5L, 5L) should be (None)
       val links=ProjectDAO.getProjectLinks(id)
       links.map(_.linkId).toSet should be (addresses.map(_.linkId).toSet)
       val sideCodes = links.map(l => l.id -> l.sideCode).toMap
@@ -979,7 +979,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
         SideCode.TowardsDigitizing, None, None, Anomaly.None, 0L, LinkStatus.New)
 
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(addresses.map(_.linkId).toSet, false, false)).thenReturn(addresses.map(toRoadLink))
-      projectService.addNewLinksToProject(Seq(addProjectAddressLink584), id, 75, 2, 0L, 5L) should be (None)
+      projectService.addNewLinksToProject(Seq(addProjectAddressLink584), id, 75, 2, 0L, 5L, 5L) should be (None)
 
       val linksAfter=ProjectDAO.getProjectLinks(id)
       linksAfter should have size (links.size + 1)
@@ -1022,7 +1022,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
 
       val addresses = Seq(addProjectAddressLink512, addProjectAddressLink552, addProjectAddressLink584)
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(addresses.map(_.linkId).toSet, false, false)).thenReturn(addresses.map(toRoadLink))
-      projectService.addNewLinksToProject(addresses, id, 75, 2, 0L, 5L) should be (Some("Valittu tiegeometria sisältää haarautumia ja pitää käsitellä osina. Tallennusta ei voi tehdä."))
+      projectService.addNewLinksToProject(addresses, id, 75, 2, 0L, 5L, 5L) should be (Some("Valittu tiegeometria sisältää haarautumia ja pitää käsitellä osina. Tallennusta ei voi tehdä."))
       val links=ProjectDAO.getProjectLinks(id)
       links.size should be (0)
     }

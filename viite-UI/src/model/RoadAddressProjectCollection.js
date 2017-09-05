@@ -175,6 +175,29 @@
       });
     };
 
+    this.revertChangesRoadlink = function (links) {
+      if(!_.isEmpty(links)) {
+        applicationModel.addSpinner();
+        var data = {
+          'projectId': currentProject.project.id,
+          'roadNumber': links[0].roadNumber,
+          'roadPartNumber': links[0].roadPartNumber,
+          'links': _.map(links, function (link) {
+            return {'linkId': link.linkId, 'status': link.status};
+          })
+        };
+        backend.revertChangesRoadlink(data, function (response) {
+          if (response.success) {
+            dirtyProjectLinkIds = [];
+            eventbus.trigger('projectLink:revertedChanges');
+          }
+          else if (response.status == INTERNAL_SERVER_ERROR_500 || response.status == BAD_REQUEST_400) {
+            eventbus.trigger('roadAddress:projectLinksUpdateFailed', error.status);
+          }
+        });
+      }
+    };
+
 
     this.saveProjectLinks = function(toBeUpdatedDirtyLinks, statusCode) {
       console.log("Save Project Links called");
@@ -250,9 +273,10 @@
         Number($('#roadAddressProject').find('#tie')[0].value),
         Number($('#roadAddressProject').find('#osa')[0].value),
         Number($('#roadAddressProject').find('#ajr')[0].value),
-        Number($('#roadAddressProject').find('#DiscontinuityDropdown')[0].value),
+        Number($('#roadAddressProject').find('#discontinuityDropdown')[0].value),
         Number($('#roadAddressProject').find('#ely')[0].value),
-        Number(_.first(toBeCreatedLinks).roadLinkSource)
+        Number(_.first(toBeCreatedLinks).roadLinkSource),
+        Number($('#roadAddressProject').find('#roadTypeDropDown')[0].value)
       ];
       backend.insertNewRoadLink(data, function(successObject) {
         if (!successObject.success) {
@@ -387,8 +411,10 @@
     };
 
     this.setCurrentRoadPartList = function(parts){
-      currentRoadPartList = parts.slice(0);
-      dirtyRoadPartList = parts.slice(0);
+      if(!_.isUndefined(parts)) {
+        currentRoadPartList = parts.slice(0);
+        dirtyRoadPartList = parts.slice(0);
+      }
     };
 
     this.isDirty = function() {
