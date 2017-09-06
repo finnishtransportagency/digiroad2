@@ -19,6 +19,8 @@ object MassTransitStopOperations {
   val AdministratorInfoPublicId = "tietojen_yllapitaja"
   val LiViIdentifierPublicId = "yllapitajan_koodi"
   val InventoryDateId = "inventointipaiva"
+  val RoadName_FI = "osoite_suomeksi"
+  val RoadName_SE = "osoite_ruotsiksi"
 
   val nameFiPublicId = "nimi_suomeksi"
   val nameSePublicId = "nimi_ruotsiksi"

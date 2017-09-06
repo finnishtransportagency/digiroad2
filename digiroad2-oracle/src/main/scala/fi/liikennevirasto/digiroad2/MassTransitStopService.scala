@@ -429,10 +429,10 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 
   private def updateExisting(queryFilter: String => String, optionalPosition: Option[Position],
-                             properties: Set[SimpleProperty], username: String, municipalityValidation: Int => Unit): MassTransitStopWithProperties = {
+                             assetProperties: Set[SimpleProperty], username: String, municipalityValidation: Int => Unit): MassTransitStopWithProperties = {
     withDynTransaction {
 
-      if (MassTransitStopOperations.mixedStoptypes(properties))
+      if (MassTransitStopOperations.mixedStoptypes(assetProperties))
         throw new IllegalArgumentException
 
       val persistedStop = fetchPointAssets(queryFilter).headOption
@@ -448,6 +448,8 @@ trait MassTransitStopService extends PointAssetOperations {
       val (municipalityCode, geometry) = roadLink
         .map { x => (x.municipalityCode, x.geometry) }
         .getOrElse(throw new NoSuchElementException)
+
+      val properties = getRoadNameProperties(assetProperties.toSeq, roadLink.get).toSet
 
       // Enrich properties with old administrator, if administrator value is empty in CSV import
       val verifiedProperties = MassTransitStopOperations.getVerifiedProperties(properties, asset.propertyData)
@@ -519,7 +521,7 @@ trait MassTransitStopService extends PointAssetOperations {
 
           //Create a new asset
           create(NewMassTransitStop(position.lon, position.lat, linkId, position.bearing.getOrElse(asset.bearing.get),
-            mergedPropertiesWithOutInventoryDate), username, newPoint, geometry, municipalityCode, Some(roadLink.get.administrativeClass), roadLink.get.linkSource)
+            mergedPropertiesWithOutInventoryDate), username, newPoint, roadLink.get)
         } else {
           update(asset, optionalPosition, username, mergedProperties, roadLink.get, operation)
         }
@@ -609,14 +611,14 @@ trait MassTransitStopService extends PointAssetOperations {
     roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId, newTransaction = false)
   }
 
-  override def create(asset: NewMassTransitStop, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass], linkSource: LinkGeomSource): Long = {
+ def create(asset: NewMassTransitStop, username: String, roadLink: RoadLinkLike): Long = {
     withDynTransaction {
       val point = Point(asset.lon, asset.lat)
-      create(asset, username, point, geometry, municipality, administrativeClass, linkSource).id
+      create(asset, username, point, roadLink).id
     }
   }
 
-  def updatedProperties(properties: Seq[SimpleProperty]): Seq[SimpleProperty] = {
+  def updatedProperties(properties: Seq[SimpleProperty] ): Seq[SimpleProperty] = {
     val inventoryDate = properties.find(_.publicId == MassTransitStopOperations.InventoryDateId)
     val notInventoryDate = properties.filterNot(_.publicId == MassTransitStopOperations.InventoryDateId)
     if (inventoryDate.nonEmpty && inventoryDate.get.values.exists(_.propertyValue != "")) {
@@ -626,18 +628,33 @@ trait MassTransitStopService extends PointAssetOperations {
     }
   }
 
-  private def create(asset: NewMassTransitStop, username: String, point: Point, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass], linkSource: LinkGeomSource): MassTransitStopWithProperties = {
+  def getRoadNameProperties(properties: Seq[SimpleProperty], roadLink: RoadLinkLike ): Seq[SimpleProperty] = {
+
+    properties.foldLeft(Seq.empty[SimpleProperty]) { (result, parameter) =>
+      if (parameter.publicId == MassTransitStopOperations.RoadName_FI && (parameter.values.isEmpty || parameter.values.exists(_.propertyValue == "")))
+
+        result ++ Seq(parameter.copy(values = Seq(PropertyValue(roadLink.attributes.getOrElse("ROADNAME_FI","").toString))))
+      else
+        if (parameter.publicId == MassTransitStopOperations.RoadName_SE && (parameter.values.isEmpty || parameter.values.exists(_.propertyValue == "")))
+          result ++ Seq(parameter.copy(values = Seq(PropertyValue(roadLink.attributes.getOrElse("ROADNAME_SE", "").toString))))
+      else
+        result ++ Seq(parameter)
+    }
+  }
+
+ def create(asset: NewMassTransitStop, username: String, point: Point, roadLink: RoadLinkLike): MassTransitStopWithProperties = {
+    val administrativeClass = Some(roadLink.administrativeClass)
     val assetId = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     val nationalId = massTransitStopDao.getNationalBusStopId
-    val mValue = calculateLinearReferenceFromPoint(point, geometry)
-    val newAssetPoint = GeometryUtils.calculatePointFromLinearReference(geometry, mValue).getOrElse(Point(asset.lon, asset.lat))
-    val floating = !PointAssetOperations.coordinatesWithinThreshold(Some(point), GeometryUtils.calculatePointFromLinearReference(geometry, mValue))
-    massTransitStopDao.insertLrmPosition(lrmPositionId, mValue, asset.linkId, linkSource)
-    massTransitStopDao.insertAsset(assetId, nationalId, newAssetPoint.x, newAssetPoint.y, asset.bearing, username, municipality, floating)
+    val mValue = calculateLinearReferenceFromPoint(point, roadLink.geometry)
+    val newAssetPoint = GeometryUtils.calculatePointFromLinearReference(roadLink.geometry, mValue).getOrElse(Point(asset.lon, asset.lat))
+    val floating = !PointAssetOperations.coordinatesWithinThreshold(Some(point), GeometryUtils.calculatePointFromLinearReference(roadLink.geometry, mValue))
+    massTransitStopDao.insertLrmPosition(lrmPositionId, mValue, asset.linkId, roadLink.linkSource)
+    massTransitStopDao.insertAsset(assetId, nationalId, newAssetPoint.x, newAssetPoint.y, asset.bearing, username, roadLink.municipalityCode, floating)
     massTransitStopDao.insertAssetLink(assetId, lrmPositionId)
 
-    val properties = updatedProperties(asset.properties)
+    val properties = getRoadNameProperties(updatedProperties(asset.properties), roadLink)
 
     val defaultValues = massTransitStopDao.propertyDefaultValues(typeId).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
     if (!MassTransitStopOperations.mixedStoptypes(properties.toSet))
