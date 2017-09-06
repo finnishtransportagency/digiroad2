@@ -201,18 +201,19 @@ object ProjectSectionCalculator {
 
   private def calculateSectionAddressValues(sections: Seq[CombinedSection]): Seq[Double] = {
     // Return fixed value for this section if it has one
-    def fixedValue(param: (CombinedSection, Option[CombinedSection])): Option[Double] = {
+    def fixedValue(param: (CombinedSection, Option[CombinedSection]), startValue: Option[Long]): Option[Double] = {
       val (currentSection, nextSection) = param
-      (currentSection.linkStatus, nextSection.map(_.linkStatus)) match {
-        case (LinkStatus.UnChanged, _) => Some(currentSection.endAddrM)
-        case (_, Some(LinkStatus.UnChanged)) => nextSection.map(_.startAddrM)
-        case (_, _) => None
+      (currentSection.linkStatus, nextSection.map(_.linkStatus), startValue) match {
+        case (LinkStatus.UnChanged, _, _) => Some(currentSection.endAddrM)
+        case (_, Some(LinkStatus.UnChanged), _) => nextSection.map(_.startAddrM)
+        case (LinkStatus.Transfer, _, Some(value)) => Some(value + currentSection.endAddrM - currentSection.startAddrM)
+        case (_, _, _) => None
       }
     }
     // Create equally long sequence with optionality
     val following = sections.tail.map(cs => Some(cs)) ++ Seq(None)
     sections.zip(following).scanLeft(0.0) { case (mValue, sec) =>
-      fixedValue(sec) match {
+      fixedValue(sec, Some(mValue.toLong)) match {
         case None => mValue + sec._1.geometryLength
         case Some(fixedValue) => fixedValue
       }

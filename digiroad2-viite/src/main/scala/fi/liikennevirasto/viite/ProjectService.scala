@@ -251,6 +251,18 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  private def withGeometry(projectLinks: Seq[ProjectLink], resetAddress: Boolean = false): Seq[ProjectLink] = {
+    val linkGeometries = roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(projectLinks.map(_.linkId).toSet,
+      false, frozenTimeVVHAPIServiceEnabled).map(pal => pal.linkId -> pal.geometry).toMap
+    projectLinks.map{pl =>
+      val geom = GeometryUtils.truncateGeometry2D(linkGeometries(pl.linkId), pl.startMValue, pl.endMValue)
+      pl.copy(geometry = geom,
+        geometryLength = GeometryUtils.geometryLength(geom),
+        startAddrMValue = if (resetAddress) 0L else pl.startAddrMValue,
+        endAddrMValue = if (resetAddress) 0L else pl.endAddrMValue,
+        calibrationPoints = if (resetAddress) (None, None) else pl.calibrationPoints)
+    }
+  }
   def revertLinks(projectId: Long, roadNumber: Long, roadPartNumber: Long, links: List[LinkToRevert]): Option[String] = {
 
     try {
@@ -261,12 +273,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             val remainingLinks = ProjectDAO.projectLinksExist(projectId, roadNumber, roadPartNumber)
             if (remainingLinks.nonEmpty){
               val projectLinks = ProjectDAO.fetchByProjectNewRoadPart(roadNumber, roadPartNumber, projectId)
-              val projectAddressLinksGeom = getLinksByProjectLinkId(projectLinks.map(_.linkId).toSet, projectId, false).map(pal =>
-                pal.linkId -> pal.geometry).toMap
-              val adjLinks = projectLinks.map(pl => pl.copy(geometry = projectAddressLinksGeom(pl.linkId),
-                geometryLength = GeometryUtils.geometryLength(projectAddressLinksGeom(pl.linkId)),
-                calibrationPoints = (None, None), startAddrMValue = 0L, endAddrMValue = 0L
-              ))
+              val adjLinks = withGeometry(projectLinks, resetAddress = true)
               ProjectSectionCalculator.determineMValues(adjLinks, Seq.empty[ProjectLink]).foreach(
                 adjLink => ProjectDAO.updateAddrMValues(adjLink))
             }
@@ -297,12 +304,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         // TODO: Check that status != UnChanged, throw exception if check fails
         ProjectDAO.flipProjectLinksSideCodes(projectId, roadNumber, roadPartNumber)
         val projectLinks = ProjectDAO.getProjectLinks(projectId)
-        val projectAddressLinksGeom = getLinksByProjectLinkId(projectLinks.map(_.linkId).toSet, projectId, false).map(pal =>
-          pal.linkId -> pal.geometry).toMap
-        val adjLinks = projectLinks.map(pl => pl.copy(geometry = projectAddressLinksGeom(pl.linkId),
-          geometryLength = GeometryUtils.geometryLength(projectAddressLinksGeom(pl.linkId)),
-          calibrationPoints = (None, None), startAddrMValue = 0L, endAddrMValue = 0L
-        ))
+        val adjLinks = withGeometry(projectLinks, resetAddress = false)
         ProjectSectionCalculator.determineMValues(adjLinks, Seq.empty[ProjectLink]).foreach(
           link => ProjectDAO.updateAddrMValues(link))
         None
@@ -693,15 +695,36 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def roadAddressLinkToProjectAddressLink(roadAddresses: Seq[RoadAddressLink]): Seq[ProjectAddressLink]= {
     roadAddresses.map(toProjectAddressLink)
   }
+
+  /**
+    * Update project links to given status and recalculate delta and change table
+    * @param projectId Project's id
+    * @param linkIds Set of link ids that are set to this status
+    * @param linkStatus New status for given link ids
+    * @param userName Username of the user that does this change
+    * @return true, if the delta calculation is successful and change table has been updated.
+    */
   def updateProjectLinkStatus(projectId: Long, linkIds: Set[Long], linkStatus: LinkStatus, userName: String): Boolean = {
     withDynTransaction{
-      val projectLinks = ProjectDAO.getProjectLinks(projectId)
-      val changed = projectLinks.filter(pl => linkIds.contains(pl.linkId)).map(_.id).toSet
-      ProjectDAO.updateProjectLinkStatus(changed, linkStatus, userName)
+      val projectLinks = withGeometry(ProjectDAO.getProjectLinks(projectId))
+      val (updatedProjectLinks, unchangedProjectLinks) = projectLinks.partition(pl => linkIds.contains(pl.linkId))
+      if (linkStatus == LinkStatus.Terminated)
+        ProjectDAO.updateProjectLinksToDB(updatedProjectLinks.map(_.copy(status=linkStatus, calibrationPoints = (None, None),
+          startAddrMValue = 0L, endAddrMValue = 0L)), userName)
+      else
+        ProjectDAO.updateProjectLinkStatus(updatedProjectLinks.map(_.id).toSet, linkStatus, userName)
+      updatedProjectLinks.map(pl => pl.copy(status = linkStatus)).groupBy(
+        pl => (pl.roadNumber, pl.roadPartNumber)).foreach {
+        grp =>
+          val (newLinks, preExistingLinks) = grp._2.filterNot(_.status == LinkStatus.Terminated).partition(_.status == LinkStatus.New)
+          val recalculatedProjectLinks = ProjectSectionCalculator.determineMValues(newLinks,
+            preExistingLinks ++ unchangedProjectLinks.filter(
+            upl => upl.roadNumber == grp._1._1 && upl.roadPartNumber == grp._1._2 && upl.status != LinkStatus.Terminated))
+          ProjectDAO.updateProjectLinksToDB(recalculatedProjectLinks, userName)
+      }
       try {
         val delta = ProjectDeltaCalculator.delta(projectId)
-        setProjectDeltaToDB(delta,projectId)
-        true
+        setProjectDeltaToDB(delta, projectId)
       } catch {
         case ex: RoadAddressException =>
           logger.info("Delta calculation not possible: " + ex.getMessage)
@@ -709,6 +732,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       }
     }
   }
+
 
   def projectLinkPublishable(projectId: Long): Boolean = {
     // TODO: add other checks after transfers etc. are enabled
@@ -749,8 +773,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   private def setProjectDeltaToDB(projectDelta:Delta, projectId:Long):Boolean= {
     RoadAddressChangesDAO.clearRoadChangeTable(projectId)
-    val batchInsertionResult = RoadAddressChangesDAO.insertDeltaToRoadChangeTable(projectDelta, projectId)
-    batchInsertionResult
+    RoadAddressChangesDAO.insertDeltaToRoadChangeTable(projectDelta, projectId)
   }
 
   private def toProjectAddressLink(ral: RoadAddressLinkLike): ProjectAddressLink = {
