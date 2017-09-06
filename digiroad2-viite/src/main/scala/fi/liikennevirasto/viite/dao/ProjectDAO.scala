@@ -342,6 +342,15 @@ object ProjectDAO {
     Q.queryNA[Long](query).list
   }
 
+  def projectLinksCountUnchanged (projectId : Long, roadNumber:Long, roadPartNumber: Long): Long = {
+    var query =
+      s"""
+         select count(id) from project_link
+          WHERE project_id = $projectId and road_number = $roadNumber and road_part_number = $roadPartNumber and status = 4
+       """
+    Q.queryNA[Long](query).first
+  }
+
   def updateProjectStatus(projectID:Long,state:ProjectState,errorMessage:String) {
     val projectstate=state.value
     sqlu""" update project set state=$projectstate, status_info=$errorMessage  WHERE id=$projectID""".execute
