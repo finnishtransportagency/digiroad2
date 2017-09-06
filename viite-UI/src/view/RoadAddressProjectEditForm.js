@@ -40,7 +40,7 @@
     var titleWithProjectName = function(projectName) {
       return '<span class ="edit-mode-title">'+projectName+'<button id="editProject_'+ currentProject.id +'" ' +
         'class="btn-edit-project" style="visibility:hidden;" value="' + currentProject.id + '"></button></span>' +
-        '<span id="closeProjectSpan" class="rightSideSpan" style="visibility:hidden;">Sulje Projekti</span>';
+        '<span id="closeProjectSpan" class="rightSideSpan" style="visibility:hidden;">Poistu projektista</span>';
     };
 
     var clearInformationContent = function() {
@@ -418,6 +418,8 @@
           projectLinkLayer.clearHighlights();
           $('.wrapper').remove();
           eventbus.trigger('roadAddress:projectLinksEdited');
+          eventbus.trigger('roadAddressProject:toggleEditingRoad', true);
+          eventbus.trigger('roadAddressProject:reOpenCurrent');
         } else {
           eventbus.trigger('roadAddress:openProject', projectCollection.getCurrentProject());
           eventbus.trigger('roadLinks:refreshView');
@@ -425,11 +427,12 @@
       };
 
       rootElement.on('click', '.project-form button.update', function() {
+        eventbus.trigger('roadAddressProject:toggleEditingRoad', true);
         saveChanges();
       });
 
       rootElement.on('change', '#dropDown', function() {
-        eventbus.trigger('roadAddressProject:editingRoad');
+        eventbus.trigger('roadAddressProject:toggleEditingRoad', false);
         $('#ajr').prop('disabled',false);
         $('#discontinuityDropdown').prop('disabled',false);
         $('#roadTypeDropDown').prop('disabled',false);
