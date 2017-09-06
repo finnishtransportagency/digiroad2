@@ -246,16 +246,12 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenAnswer(
         toMockAnswer(projectLinks, roadLink)
       )
-
       projectService.updateProjectLinkStatus(savedProject.id, linkIds205, LinkStatus.UnChanged, "-")
       projectService.projectLinkPublishable(savedProject.id) should be(false)
-
       projectService.updateProjectLinkStatus(savedProject.id, linkIds206, LinkStatus.UnChanged, "-")
       projectService.projectLinkPublishable(savedProject.id) should be(true)
-
       projectService.updateProjectLinkStatus(savedProject.id, Set(5168573), LinkStatus.Terminated, "-")
       projectService.projectLinkPublishable(savedProject.id) should be(true)
-
       val changeProjectOpt = projectService.getChangeProject(savedProject.id)
       val change = changeProjectOpt.get
       val updatedProjectLinks=ProjectDAO.getProjectLinks(savedProject.id)
@@ -291,11 +287,13 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       projectService.projectLinkPublishable(savedProject.id) should be(false)
       val projectLinks = ProjectDAO.getProjectLinks(savedProject.id)
       val partitioned = projectLinks.partition(_.roadPartNumber == 207)
-      val highestDistanceEnd= projectLinks.map(p=>p.startAddrMValue).max
-      val highestDistanceStart= projectLinks.map(p=>p.endAddrMValue).max
+      val highestDistanceStart= projectLinks.map(p=>p.startAddrMValue).max
+      val highestDistanceEnd= projectLinks.map(p=>p.endAddrMValue).max
       val linkIds207 = partitioned._1.map(_.linkId).toSet
-      when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(linkIds207, false, false)).thenReturn(
-        partitioned._1.map(pl => roadLink.copy(linkId = pl.linkId, geometry = Seq(Point(pl.startAddrMValue, 0.0), Point(pl.endAddrMValue, 0.0)))))
+      reset(mockRoadLinkService)
+      when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenAnswer(
+        toMockAnswer(projectLinks, roadLink)
+      )
       projectService.updateProjectLinkStatus(savedProject.id, linkIds207, LinkStatus.Transfer, "-")
       projectService.updateProjectLinkStatus(savedProject.id, Set(5168510), LinkStatus.Terminated, "-")
       projectService.projectLinkPublishable(savedProject.id) should be(true)
@@ -305,10 +303,10 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       updatedProjectLinks.exists { x=> x.status==LinkStatus.Transfer } should be(true)
       updatedProjectLinks.exists { x=> x.status==LinkStatus.Terminated } should be(true)
       updatedProjectLinks.filter( pl => pl.linkId==5168540).head.calibrationPoints should be ((Some(CalibrationPoint(5168540,0.0,0)),None))
-      updatedProjectLinks.filter( pl => pl.linkId==6463199).head.calibrationPoints should be ((None,Some(CalibrationPoint(6463199,highestDistanceStart-172,highestDistanceEnd-172))))  //we terminated link with distance 172 , and reduce original 3844-4287 with it
+      updatedProjectLinks.filter( pl => pl.linkId==6463199).head.calibrationPoints should be ((None,Some(CalibrationPoint(6463199,442.89,highestDistanceEnd-172))))  //we terminated link with distance 172
       projectService.updateProjectLinkStatus(savedProject.id, Set(5168579), LinkStatus.Terminated, "-")
       val updatedProjectLinks2=ProjectDAO.getProjectLinks(savedProject.id)
-      updatedProjectLinks2.filter( pl => pl.linkId==5168583).head.calibrationPoints should be (None,Some(CalibrationPoint(6463199,highestDistanceStart-172-49,highestDistanceEnd-172-49))) // reduce 49
+      updatedProjectLinks2.filter( pl => pl.linkId==6463199).head.calibrationPoints should be (None,Some(CalibrationPoint(6463199,442.89,highestDistanceEnd-172-49))) // reduce 49
     }
     runWithRollback {
       projectService.getRoadAddressAllProjects()
@@ -333,11 +331,13 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       projectService.projectLinkPublishable(savedProject.id) should be(false)
       val projectLinks = ProjectDAO.getProjectLinks(savedProject.id)
       val partitioned = projectLinks.partition(_.roadPartNumber == 207)
-      val highestDistanceEnd= projectLinks.map(p=>p.startAddrMValue).max
-      val highestDistanceStart= projectLinks.map(p=>p.endAddrMValue).max
+      val highestDistanceStart= projectLinks.map(p=>p.startAddrMValue).max
+      val highestDistanceEnd= projectLinks.map(p=>p.endAddrMValue).max
       val linkIds207 = partitioned._1.map(_.linkId).toSet
-      when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(linkIds207, false, false)).thenReturn(
-        partitioned._1.map(pl => roadLink.copy(linkId = pl.linkId, geometry = Seq(Point(pl.startAddrMValue, 0.0), Point(pl.endAddrMValue, 0.0)))))
+      reset(mockRoadLinkService)
+      when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenAnswer(
+        toMockAnswer(projectLinks, roadLink)
+      )
       projectService.updateProjectLinkStatus(savedProject.id, Set(5168510), LinkStatus.Terminated, "-")
       projectService.updateProjectLinkStatus(savedProject.id, linkIds207-5168510, LinkStatus.Transfer, "-")
       projectService.projectLinkPublishable(savedProject.id) should be(true)
@@ -347,10 +347,10 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       updatedProjectLinks.exists { x=> x.status==LinkStatus.Transfer } should be(true)
       updatedProjectLinks.exists { x=> x.status==LinkStatus.Terminated } should be(true)
       updatedProjectLinks.filter( pl => pl.linkId==5168540).head.calibrationPoints should be ((Some(CalibrationPoint(5168540,0.0,0)),None))
-      updatedProjectLinks.filter( pl => pl.linkId==6463199).head.calibrationPoints should be ((None,Some(CalibrationPoint(6463199,highestDistanceStart-172,highestDistanceEnd-172))))  //we terminated link with distance 172 , and reduce original 3844-4287 with it
+      updatedProjectLinks.filter( pl => pl.linkId==6463199).head.calibrationPoints should be ((None,Some(CalibrationPoint(6463199,442.89,highestDistanceEnd-172))))  //we terminated link with distance 172
       projectService.updateProjectLinkStatus(savedProject.id, Set(5168579), LinkStatus.Terminated, "-")
       val updatedProjectLinks2=ProjectDAO.getProjectLinks(savedProject.id)
-      updatedProjectLinks2.filter( pl => pl.linkId==5168583).head.calibrationPoints should be (None,Some(CalibrationPoint(6463199,highestDistanceStart-172-49,highestDistanceEnd-172-49))) // reduce 49
+      updatedProjectLinks2.filter( pl => pl.linkId==6463199).head.calibrationPoints should be (None,Some(CalibrationPoint(6463199,442.89,highestDistanceEnd-172-49))) // reduce 49
     }
     runWithRollback {
       projectService.getRoadAddressAllProjects()
