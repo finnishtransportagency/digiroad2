@@ -140,7 +140,7 @@
         '</div>' +
         '<div class = "form-result">' +
         '<label>PROJEKTIIN VALITUT TIEOSAT:</label>'+
-        '<div>'+
+        '<div style="margin-left: 16px;">'+
         addSmallLabel('TIE')+ addSmallLabel('OSA')+ addSmallLabel('PITUUS')+ addSmallLabel('JATKUU')+ addSmallLabel('ELY')+
         '</div>'+
         '<div id ="reservedRoads">'+
@@ -148,7 +148,7 @@
         '</div></div></br></br>' +
         '<div class = "form-result">' +
         '<label>UUDET VARATUT TIEOSAT:</label>'+
-        '<div>'+
+        '<div style="margin-left: 16px;">'+
         addSmallLabel('TIE')+ addSmallLabel('OSA')+ addSmallLabel('PITUUS')+ addSmallLabel('JATKUU')+ addSmallLabel('ELY')+
         '</div>'+
         '<div id ="newReservedRoads">'+
@@ -256,7 +256,7 @@
           projectCollection.setReservedDirtyRoadParts([]);
           _.each(result.formInfo, function(line){
             var button = projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber);
-            text += '<div style="display:inline-block;">'  + button +
+            text += '<div class="form-reserved-roads-list">'  + button +
               addSmallLabel(line.roadNumber)+ addSmallLabel(line.roadPartNumber)+ addSmallLabel(line.roadLength)+ addSmallLabel(line.discontinuity)+ addSmallLabel(line.ely) +
               '</div>';
           });
@@ -364,7 +364,7 @@
         var index = 0;
         _.each(result.projectLinks, function(line){
           var button = projectCollection.getDeleteButton(index++, line.roadNumber, line.roadPartNumber);
-          text += '<div style="display:inline-block;">'  + button +
+          text += '<div class="form-reserved-roads-list">'  + button +
             addSmallLabel(line.roadNumber)+
             addSmallLabel(line.roadPartNumber)+ addSmallLabel(line.roadLength)+ addSmallLabel(line.discontinuity)+ addSmallLabel(line.ely) +
             '</div>';
