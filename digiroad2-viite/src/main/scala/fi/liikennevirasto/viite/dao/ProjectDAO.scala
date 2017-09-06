@@ -386,7 +386,8 @@ object ProjectDAO {
     var query =
       s"""
          select count(id) from project_link
-          WHERE project_id = $projectId and road_number = $roadNumber and road_part_number = $roadPartNumber and status = 4
+          WHERE project_id = $projectId and road_number = $roadNumber and road_part_number = $roadPartNumber and
+          status = ${LinkStatus.UnChanged.value}
        """
     Q.queryNA[Long](query).first
   }
