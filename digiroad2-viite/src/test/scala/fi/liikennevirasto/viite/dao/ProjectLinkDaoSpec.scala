@@ -2,9 +2,13 @@ package fi.liikennevirasto.viite.dao
 import java.sql.SQLException
 
 import fi.liikennevirasto.digiroad2.GeometryUtils
+import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.viite.RoadType.UnknownOwnerRoad
 import fi.liikennevirasto.viite._
+import fi.liikennevirasto.viite.dao.LinkStatus.NotHandled
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
@@ -156,6 +160,35 @@ class ProjectLinkDaoSpec  extends FunSuite with Matchers {
       updatedProjectLinks.head.status should be(LinkStatus.Terminated)
     }
   }
+
+
+  /*
+  (id: Long, roadNumber: Long, roadPartNumber: Long, track: Track,
+                       discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
+                       endDate: Option[DateTime] = None, modifiedBy: Option[String] = None, lrmPositionId : Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
+                       calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false,
+                       geometry: Seq[Point], projectId: Long, status: LinkStatus, roadType: RoadType, linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, geometryLength: Double)
+
+   */
+
+  test("update project link") {
+    runWithRollback {
+      val terminatedLink = ProjectLink(648,77997,1,Track.Unknown,Discontinuity.Discontinuous,2523,3214,None,None,Some("updateTestuser"),70000665,6638300,1.0,377.05,SideCode.BothDirections,(None, Some(CalibrationPoint(125L, 58.1, 180))), floating=false, List(),7081807,LinkStatus.Terminated,UnknownOwnerRoad, LinkGeomSource.NormalLinkInterface, 10.0)
+      val projectLinks = ProjectDAO.getProjectLinks(7081807)
+      ProjectDAO.getProjectLinksById(Seq(647))
+      ProjectDAO.updateProjectLinkStatus(projectLinks.map(x => x.id).toSet, LinkStatus.UnChanged, "test")
+      ProjectDAO.updateProjectLinksToDB(Seq(terminatedLink),"tester")
+      val updatedProjectLinks = ProjectDAO.getProjectLinks(7081807).filter( _.id==648)
+     val updatedLink=updatedProjectLinks.head
+      updatedLink.status should be(LinkStatus.Terminated)
+      updatedLink.discontinuity should be (Discontinuity.Discontinuous)
+      updatedLink.startAddrMValue should be (2523)
+      updatedLink.endAddrMValue should be (3214)
+      updatedLink.track should be (Track.Unknown)
+      updatedLink.roadType should be (UnknownOwnerRoad)
+    }
+  }
+
 
 
   test("Update project status") {

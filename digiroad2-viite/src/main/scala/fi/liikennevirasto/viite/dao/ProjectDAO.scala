@@ -1,5 +1,6 @@
 package fi.liikennevirasto.viite.dao
-import java.sql.Timestamp
+import java.sql.{Timestamp, Types}
+import java.util.Date
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.Point
@@ -13,6 +14,7 @@ import fi.liikennevirasto.viite.model.ProjectAddressLink
 import fi.liikennevirasto.viite.{ReservedRoadPart, RoadType}
 import fi.liikennevirasto.viite.process.{Delta, ProjectDeltaCalculator}
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
+import oracle.net.aso.p
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -108,6 +110,43 @@ object ProjectDAO {
     roadAddresses.map(_.id)
   }
 
+
+  def updateProjectLinksToDB( projectLinks: Seq[ProjectLink], modifier:String): Unit ={
+    val projectLinkPS = dynamicSession.prepareStatement("UPDATE project_link SET ROAD_NUMBER = ?,  ROAD_PART_NUMBER = ?, TRACK_CODE=?, DISCONTINUITY_TYPE = ?, START_ADDR_M=?, END_ADDR_M=?, MODIFIED_DATE= ? , MODIFIED_BY= ?, LRM_POSITION_ID= ?, PROJECT_ID= ? , CALIBRATION_POINTS= ? , STATUS=?,  ROAD_TYPE=? WHERE id = ?")
+    val lrmPS = dynamicSession.prepareStatement("UPDATE LRM_POSITION SET SIDE_CODE=?, START_MEASURE=?, END_MEASURE=?, LANE_CODE=?, MODIFIED_DATE=? WHERE ID = ?")
+
+    for (projectLink <-projectLinks)
+    {
+      projectLinkPS.setLong(1,projectLink.roadNumber)
+      projectLinkPS.setLong(2,projectLink.roadPartNumber)
+      projectLinkPS.setInt(3,projectLink.track.value )
+      projectLinkPS.setInt(4,projectLink.discontinuity.value)
+      projectLinkPS.setLong(5,projectLink.startAddrMValue)
+      projectLinkPS.setLong(6,projectLink.endAddrMValue)
+      projectLinkPS.setDate(7 ,new java.sql.Date(new Date().getTime))
+      projectLinkPS.setString(8,modifier)
+      projectLinkPS.setLong(9,projectLink.lrmPositionId)
+      projectLinkPS.setLong(10, projectLink.projectId)
+      projectLinkPS.setInt(11, CalibrationCode.getFromAddress(projectLink).value)
+      projectLinkPS.setInt(12, projectLink.status.value)
+      projectLinkPS.setInt(13, projectLink.roadType.value)
+      projectLinkPS.setLong(14, projectLink.id)
+      projectLinkPS.addBatch()
+      lrmPS.setInt(1,projectLink.sideCode.value)
+      lrmPS.setDouble(2,projectLink.startMValue)
+      lrmPS.setDouble(3,projectLink.endMValue)
+      lrmPS.setInt(4,projectLink.track.value)
+      lrmPS.setDate(5 ,new java.sql.Date(new Date().getTime))
+      lrmPS.setLong(6,projectLink.lrmPositionId)
+      lrmPS.addBatch()
+    }
+    projectLinkPS.executeBatch()
+    lrmPS.executeBatch()
+    lrmPS.close()
+    projectLinkPS.close()
+  }
+
+
   def createRoadAddressProject(roadAddressProject: RoadAddressProject): Unit = {
     sqlu"""
          insert into project (id, state, name, ely, created_by, created_date, start_date ,modified_by, modified_date, add_info)
@@ -127,7 +166,7 @@ object ProjectDAO {
                 from PROJECT_LINK join LRM_POSITION
                 on LRM_POSITION.ID = PROJECT_LINK.LRM_POSITION_ID
                 where $filter (PROJECT_LINK.PROJECT_ID = $projectId ) order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
-    Q.queryNA[(Long, Long, Int, Int, Long, Long, Long, Long, Long, Long, Long, Long, String, String, Long, Double, Long, Int, Int, Int)](query).list.map {
+    Q.queryNA[(Long, Long, Int, Int, Long, Long, Long, Long, Double, Double, Long, Long, String, String, Long, Double, Long, Int, Int, Int)](query).list.map {
       case (projectLinkId, projectId, trackCode, discontinuityType, roadNumber, roadPartNumber, startAddrM, endAddrM,
       startMValue, endMValue, sideCode , lrmPositionId, createdBy, modifiedBy, linkId, length, calibrationPoints, status, roadType, source) =>
         ProjectLink(projectLinkId, roadNumber, roadPartNumber, Track.apply(trackCode), Discontinuity.apply(discontinuityType),
@@ -308,9 +347,10 @@ object ProjectDAO {
 
   def updateProjectLinkStatus(projectLinkIds: Set[Long], linkStatus: LinkStatus, userName: String): Unit = {
     val user = userName.replaceAll("[^A-Za-z0-9\\-]+", "")
-    MassQuery.withIds(projectLinkIds) {
-      s: String =>
-        val sql = s"UPDATE PROJECT_LINK SET STATUS = ${linkStatus.value}, MODIFIED_BY='$user' WHERE ID IN (SELECT ID FROM $s)"
+    projectLinkIds.grouped(500).foreach {
+      grp =>
+        val sql = s"UPDATE PROJECT_LINK SET STATUS = ${linkStatus.value}, MODIFIED_BY='$user' " +
+          s"WHERE ID IN ${grp.mkString("(", ",", ")")}"
         Q.updateNA(sql).execute
     }
   }
