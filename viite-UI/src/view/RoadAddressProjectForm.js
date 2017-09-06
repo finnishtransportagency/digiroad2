@@ -45,7 +45,7 @@
     var titleWithProjectName = function(projectName) {
       return '<span class ="edit-mode-title">'+projectName+'<button id="editProject_'+ currentProject.id +'" ' +
         'class="btn-edit-project" style="visibility:hidden;" value="' + currentProject.id + '"></button></span>' +
-        '<span id="closeProjectSpan" class="rightSideSpan" style="visibility:hidden;">Sulje Projekti</span>';
+        '<span id="closeProjectSpan" class="rightSideSpan" style="visibility:hidden;">Poistu projektista</span>';
     };
 
     var actionButtons = function(ready) {
@@ -564,7 +564,7 @@
         }
       });
       rootElement.on('click', '#closeProjectSpan', function(){
-        displayCloseConfirmMessage("Haluatko sulkea projektin ja lalata alkuun? \r\nProjekti tallennetaan keskeneräiseksi.", true);
+        displayCloseConfirmMessage("Haluatko tallentaa tekemäsi muutokset?", true);
       });
 
       rootElement.on('change', '.input-required', function() {
