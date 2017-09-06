@@ -390,14 +390,14 @@
           rootElement.html(emptyTemplate(currentProject.project));
         }
         else if( $('[id=dropDown] :selected').val() === ACTION_TRANSFER){
-          projectCollection.createProjectLinks(projectCollection.getTmpDirty());
+          projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), STATUS_TRANSFER);
           rootElement.html(emptyTemplate(currentProject.project));
         }
         else if( $('[id=dropDown] :selected').val() === ACTION_NEW_LINK){
           projectCollection.createProjectLinks(selectedProjectLink);
         }
         else if( $('[id=dropDown] :selected').val() === ACTION_UNCHANGED){
-          projectCollection.createProjectLinks(projectCollection.getTmpDirty());
+          projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), STATUS_UNCHANGED);
           rootElement.html(emptyTemplate(currentProject.project));
         }
         else if( $('[id=dropDown] :selected').val() === ACTION_NUMBERING){
