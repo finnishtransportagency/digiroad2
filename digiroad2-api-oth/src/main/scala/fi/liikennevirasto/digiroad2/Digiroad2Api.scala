@@ -288,11 +288,13 @@ Returns empty result as Json message, not as page not found
     }
     val (optionalLon, optionalLat, optionalLinkId, bearing) = massTransitStopPositionParameters(parsedBody)
     val properties = (parsedBody \ "properties").extractOpt[Seq[SimpleProperty]].getOrElse(Seq())
-    val linkId = (parsedBody \ "linkId").extractOpt[Long]
+    val persistedAsset = massTransitStopService.getPersistedAssetsByIds(Set(params("id").toLong)).headOption
+    val roadLinks = persistedAsset.flatMap { asset => roadLinkService.getRoadLinkAndComplementaryFromVVH(asset.linkId) }
     validateBusStopMaintainerUser(properties)
     if(properties.exists(prop => prop.publicId == "vaikutussuunta")) {
-      validateBusStopDirections(properties, linkId.get)
+      validateBusStopDirections(properties, roadLinks)
     }
+    validatePropertiesMaxSize(properties)
     val position = (optionalLon, optionalLat, optionalLinkId) match {
       case (Some(lon), Some(lat), Some(linkId)) => Some(Position(lon, lat, linkId, bearing))
       case _ => None
@@ -348,17 +350,25 @@ Returns empty result as Json message, not as page not found
       halt(BadRequest("Invalid property values on: " + propertiesWithInvalidValues.map(_.publicId).mkString(", ")))
   }
 
-  private def validateBusStopDirections(properties: Seq[SimpleProperty], linkId: Long) = {
-    val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId)
-    val roadLinkDirection = roadLink.map(dir => dir.trafficDirection).headOption
-    val massDirection = massTransitStopService
+  private def validateBusStopDirections(properties: Seq[SimpleProperty], roadLinks: Option[RoadLink]) = {
+    val roadLinkDirection = roadLinks.map(dir => dir.trafficDirection).headOption
 
     val busStopDirection = properties.find(prop => prop.publicId == "vaikutussuunta")
-                                     .get.values
-                                     .map(dir => dir.propertyValue).head
+      .get.values
+      .map(dir => dir.propertyValue).head
     if((roadLinkDirection.head.toString != SideCode.BothDirections.toString) && (roadLinkDirection.head.toString != SideCode.apply(busStopDirection.toInt).toString))
       halt(NotAcceptable("Invalid Mass Transit Stop direction"))
   }
+
+
+  private def validatePropertiesMaxSize(properties: Seq[SimpleProperty]) = {
+    val propertiesWithMaxSize: Map[String, Int] = massTransitStopService.getPropertiesWithMaxSize()
+    val invalidPropertiesDueMaxSize: Seq[SimpleProperty] = properties.filter { property =>
+      propertiesWithMaxSize.contains(property.publicId) && property.values.forall { value => value.propertyValue.length > 3 }
+    }
+    if (invalidPropertiesDueMaxSize.nonEmpty) halt(BadRequest("Properties with Invalid Size: " + invalidPropertiesDueMaxSize.mkString(", ")))
+  }
+
 
   post("/massTransitStops") {
     val positionParameters = massTransitStopPositionParameters(parsedBody)
@@ -370,7 +380,9 @@ Returns empty result as Json message, not as page not found
     validateUserRights(linkId)
     validateBusStopMaintainerUser(properties)
     validateCreationProperties(properties)
-    validateBusStopDirections(properties, linkId)
+    validatePropertiesMaxSize(properties)
+    val roadLinks = roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId)
+    validateBusStopDirections(properties, roadLinks)
     try {
       val id = createMassTransitStop(lon, lat, linkId, bearing, properties)
       massTransitStopService.getNormalAndComplementaryById(id)

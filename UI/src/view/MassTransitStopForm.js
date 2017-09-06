@@ -49,6 +49,13 @@
     };
   };
 
+  var ValidatePlatformNumberMaxSize = function (target, propertyPublicId) {
+    var propertyValue = target.currentTarget.value;
+    if (propertyPublicId === 'laiturinumero' && propertyValue.length > 3) {
+      target.currentTarget.value = propertyValue.substring(0, 3);
+    }
+  };
+
   var SaveButton = function() {
     var element = $('<button />').addClass('save btn btn-primary').text('Tallenna').click(function () {
       if (poistaSelected) {
@@ -263,6 +270,7 @@
           elementType = property.propertyType === 'long_text' ?
             $('<textarea />').addClass('form-control') : $('<input type="text"/>').addClass('form-control');
           element = elementType.bind('input', function(target){
+            ValidatePlatformNumberMaxSize(target, property.publicId);
             selectedMassTransitStopModel.setProperty(property.publicId, [{ propertyValue: target.currentTarget.value, propertyDisplayValue: target.currentTarget.value  }], property.propertyType, property.required);
           });
 
@@ -470,6 +478,7 @@
           'yllapitajan_tunnus',
           'yllapitajan_koodi',
           'matkustajatunnus',
+          'laiturinumero', //Platform Number
           'maastokoordinaatti_x',
           'maastokoordinaatti_y',
           'maastokoordinaatti_z',
