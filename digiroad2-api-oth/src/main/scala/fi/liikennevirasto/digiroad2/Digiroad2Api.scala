@@ -288,19 +288,21 @@ Returns empty result as Json message, not as page not found
     }
     val (optionalLon, optionalLat, optionalLinkId, bearing) = massTransitStopPositionParameters(parsedBody)
     val properties = (parsedBody \ "properties").extractOpt[Seq[SimpleProperty]].getOrElse(Seq())
-    val id = params("id").toLong
-    val persistedAsset = massTransitStopService.getPersistedAssetsByIds(Set(id)).headOption
-    val roadLinks = persistedAsset.flatMap { asset => roadLinkService.getRoadLinkAndComplementaryFromVVH(asset.linkId) }
     validateBusStopMaintainerUser(properties)
+    val id = params("id").toLong
+    val linkId = optionalLinkId match {
+      case Some(linkId) => linkId
+      case _ => massTransitStopService.getPersistedAssetsByIds(Set(id)).headOption.getOrElse(halt(BadRequest("Mass Transit Stop not available"))).linkId
+    }
+
     if(properties.exists(prop => prop.publicId == "vaikutussuunta")) {
-      validateBusStopDirections(properties, roadLinks)
+      validateBusStopDirections(properties, linkId)
     }
     val position = (optionalLon, optionalLat, optionalLinkId) match {
       case (Some(lon), Some(lat), Some(linkId)) => Some(Position(lon, lat, linkId, bearing))
       case _ => None
     }
     try {
-      val id = params("id").toLong
       massTransitStopService.updateExistingById(id, position, properties.toSet, userProvider.getCurrentUser().username, validateMunicipalityAuthorization(id))
     } catch {
       case e: NoSuchElementException => BadRequest("Target roadlink not found")
@@ -350,8 +352,10 @@ Returns empty result as Json message, not as page not found
       halt(BadRequest("Invalid property values on: " + propertiesWithInvalidValues.map(_.publicId).mkString(", ")))
   }
 
-  private def validateBusStopDirections(properties: Seq[SimpleProperty], roadLinks: Option[RoadLink]) = {
-    val roadLinkDirection = roadLinks.map(dir => dir.trafficDirection).headOption
+  private def validateBusStopDirections(properties: Seq[SimpleProperty], linkId: Long) = {
+    val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId)
+    val roadLinkDirection = roadLink.map(dir => dir.trafficDirection).headOption
+    val massDirection = massTransitStopService
 
     val busStopDirection = properties.find(prop => prop.publicId == "vaikutussuunta")
       .get.values
@@ -370,8 +374,7 @@ Returns empty result as Json message, not as page not found
     validateUserRights(linkId)
     validateBusStopMaintainerUser(properties)
     validateCreationProperties(properties)
-    val roadLinks = roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId)
-    validateBusStopDirections(properties, roadLinks)
+    validateBusStopDirections(properties, linkId)
     try {
       val id = createMassTransitStop(lon, lat, linkId, bearing, properties)
       massTransitStopService.getNormalAndComplementaryById(id)
