@@ -255,7 +255,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val linkGeometries = roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(projectLinks.map(_.linkId).toSet,
       false, frozenTimeVVHAPIServiceEnabled).map(pal => pal.linkId -> pal.geometry).toMap
     projectLinks.map{pl =>
-      val geom = GeometryUtils.truncateGeometry3D(linkGeometries(pl.linkId), pl.startMValue, pl.endMValue)
+      val geom = GeometryUtils.truncateGeometry2D(linkGeometries(pl.linkId), pl.startMValue, pl.endMValue)
       pl.copy(geometry = geom,
         geometryLength = GeometryUtils.geometryLength(geom),
         startAddrMValue = if (resetAddress) 0L else pl.startAddrMValue,
@@ -304,7 +304,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         // TODO: Check that status != UnChanged, throw exception if check fails
         ProjectDAO.flipProjectLinksSideCodes(projectId, roadNumber, roadPartNumber)
         val projectLinks = ProjectDAO.getProjectLinks(projectId)
-        val adjLinks = withGeometry(projectLinks, resetAddress = true)
+        val adjLinks = withGeometry(projectLinks, resetAddress = false)
         ProjectSectionCalculator.determineMValues(adjLinks, Seq.empty[ProjectLink]).foreach(
           link => ProjectDAO.updateAddrMValues(link))
         None
