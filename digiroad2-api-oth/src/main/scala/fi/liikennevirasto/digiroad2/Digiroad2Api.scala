@@ -292,9 +292,11 @@ Returns empty result as Json message, not as page not found
     val id = params("id").toLong
     val linkId = optionalLinkId match {
       case Some(linkId) => linkId
-      case _ => massTransitStopService.getPersistedAssetsByIds(Set(id)).headOption.getOrElse(halt(BadRequest("Mass Transit Stop not available"))).linkId
+      case _ => massTransitStopService.getPersistedAssetsByIds(Set(id)).headOption match {
+        case Some(asset) => asset.linkId
+        case _ => halt(BadRequest("Mass Transit Stop not available"))
+      }
     }
-
     if(properties.exists(prop => prop.publicId == "vaikutussuunta")) {
       validateBusStopDirections(properties, linkId)
     }
