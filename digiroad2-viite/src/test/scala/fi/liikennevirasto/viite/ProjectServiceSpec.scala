@@ -3,7 +3,6 @@ package fi.liikennevirasto.viite
 import java.net.ConnectException
 import java.util.Properties
 
-import fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
@@ -15,27 +14,26 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, RoadLinkService, _}
 import fi.liikennevirasto.viite.dao.Discontinuity.Discontinuous
 import fi.liikennevirasto.viite.dao.{Discontinuity, ProjectState, RoadAddressProject, _}
-import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, ProjectAddressLinkLike, RoadAddressLinkLike}
+import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.ProjectDeltaCalculator
-import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.conn.{ConnectTimeoutException, HttpHostConnectException}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
-import org.json4s.StringInput
-import org.mockito.Mockito.when
 import org.mockito.Matchers._
+import org.mockito.Mockito.{when, _}
+import org.mockito.invocation.InvocationOnMock
+import org.mockito.stubbing.Answer
 import org.scalatest.mock.MockitoSugar
-import org.scalatest.{FunSuite, Matchers}
+import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 
-import scala.collection.immutable.SortedMap
 import scala.util.parsing.json.JSON
 
-class ProjectServiceSpec  extends FunSuite with Matchers {
+class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
   val properties: Properties = {
     val props = new Properties()
     props.load(getClass.getResourceAsStream("/digiroad2.properties"))
@@ -52,6 +50,10 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
     override def withDynSession[T](f: => T): T = f
 
     override def withDynTransaction[T](f: => T): T = f
+  }
+
+  after {
+    reset(mockRoadLinkService)
   }
 
   def runWithRollback[T](f: => T): T = {
@@ -211,11 +213,26 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       val partitioned = projectLinks.partition(_.roadPartNumber == 205)
       val linkIds205 = partitioned._1.map(_.linkId).toSet
       val linkIds206 = partitioned._2.map(_.linkId).toSet
-      when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(linkIds205, false, false)).thenReturn(
-        partitioned._1.map(pl => roadLink.copy(linkId = pl.linkId, geometry = Seq(Point(pl.startAddrMValue, 0.0), Point(pl.endAddrMValue, 0.0)))))
-      when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(linkIds206, false, false)).thenReturn(
-        partitioned._2.map(pl => roadLink.copy(linkId = pl.linkId, geometry = Seq(Point(pl.startAddrMValue, 0.0), Point(pl.endAddrMValue, 0.0)))))
-
+      reset(mockRoadLinkService)
+      when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenAnswer(
+        new Answer[Seq[RoadLink]]() {
+          override def answer(invocation: InvocationOnMock): Seq[RoadLink] = {
+            val ids = invocation.getArguments.apply(0).asInstanceOf[Set[Long]]
+            projectLinks.groupBy(_.linkId).filterKeys(l => ids.contains(l)).mapValues{pl =>
+              val startP = Point(pl.map(_.startAddrMValue).min, 0.0)
+              val endP = Point(pl.map(_.endAddrMValue).max, 0.0)
+              val maxLen = pl.map(_.endMValue).max
+              val midP = Point((startP.x + endP.x)*.5,
+                if (endP.x - startP.x < maxLen) {
+                  Math.sqrt(maxLen * maxLen - (startP.x - endP.x) * (startP.x - endP.x)) / 2
+                }
+                else 0.0)
+              roadLink.copy(linkId = pl.head.linkId, geometry =
+                Seq(startP, midP, endP))
+            }.values.toSeq
+          }
+        }
+      )
 
       projectService.updateProjectLinkStatus(savedProject.id, linkIds205, LinkStatus.UnChanged, "-")
       projectService.projectLinkPublishable(savedProject.id) should be(false)
@@ -386,7 +403,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
     val roadLink = RoadLink(5170939L, Seq(Point(535605.272, 6982204.22, 85.90899999999965))
       , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
       InUse, NormalLinkInterface)
-    when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(Set(5170939L))).thenReturn(Seq(roadLink))
+    when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(Seq(roadLink))
     runWithRollback {
       val countCurrentProjects = projectService.getRoadAddressAllProjects()
       val id = 0
@@ -603,8 +620,10 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       val id = RoadAddressDAO.getNextRoadAddressId
       val ra = Seq(RoadAddress(id, roadNumber, roadPartNumber, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 0, linkId, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
         Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface))
-      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(Set(linkId))).thenReturn(Seq(RoadLink(linkId, ra.head.geometry, 9.8, State, 1, TrafficDirection.BothDirections,
-        Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(167)))))
+      val rl = RoadLink(linkId, ra.head.geometry, 9.8, State, 1, TrafficDirection.BothDirections,
+        Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(167)))
+      when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(rl))
+      when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(Seq(rl))
       RoadAddressDAO.create(ra)
 
       //Creation of test project with test links
@@ -630,6 +649,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
     val roadLink = RoadLink(5170939L, Seq(Point(535605.272, 6982204.22, 85.90899999999965))
       , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
       InUse, NormalLinkInterface)
+    when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(Seq(roadLink))
     runWithRollback {
       val countCurrentProjects = projectService.getRoadAddressAllProjects()
       val id = 0
