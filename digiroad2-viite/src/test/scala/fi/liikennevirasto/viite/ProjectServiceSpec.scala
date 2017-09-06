@@ -243,7 +243,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
     } should have size (count - 1)
   }
 
-  test("Terminating and transfering") {
+  test("Transfer and then terminate") {
     var count = 0
     val roadLink = RoadLink(5170939L, Seq(Point(535605.272, 6982204.22, 85.90899999999965))
       , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
@@ -284,6 +284,52 @@ class ProjectServiceSpec  extends FunSuite with Matchers {
       projectService.getRoadAddressAllProjects()
     } should have size (count - 1)
   }
+
+  test("Terminate then transfer ") {
+    var count = 0
+    val roadLink = RoadLink(5170939L, Seq(Point(535605.272, 6982204.22, 85.90899999999965))
+      , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
+      InUse, NormalLinkInterface)
+    when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink))
+    runWithRollback {
+      val countCurrentProjects = projectService.getRoadAddressAllProjects()
+      val id = 0
+      val addresses = List(ReservedRoadPart(5: Long, 5: Long, 207: Long, 5: Double, Discontinuity.apply("jatkuva"), 8: Long, None: Option[DateTime], None: Option[DateTime]))
+      val roadAddressProject = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", addresses, None)
+      val (savedProject, _, formLines, errMsg) = projectService.createRoadLinkProject(roadAddressProject)
+      val countAfterInsertProjects = projectService.getRoadAddressAllProjects()
+      count = countCurrentProjects.size + 1
+      countAfterInsertProjects.size should be(count)
+      projectService.projectLinkPublishable(savedProject.id) should be(false)
+      val projectLinks = ProjectDAO.getProjectLinks(savedProject.id)
+      val partitioned = projectLinks.partition(_.roadPartNumber == 207)
+      val highestDistanceEnd= projectLinks.map(p=>p.startAddrMValue).max
+      val highestDistanceStart= projectLinks.map(p=>p.endAddrMValue).max
+      val linkIds207 = partitioned._1.map(_.linkId).toSet
+      when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(linkIds207, false, false)).thenReturn(
+        partitioned._1.map(pl => roadLink.copy(linkId = pl.linkId, geometry = Seq(Point(pl.startAddrMValue, 0.0), Point(pl.endAddrMValue, 0.0)))))
+      projectService.updateProjectLinkStatus(savedProject.id, Set(5168510), LinkStatus.Terminated, "-")
+      projectService.updateProjectLinkStatus(savedProject.id, linkIds207-5168510, LinkStatus.Transfer, "-")
+      projectService.projectLinkPublishable(savedProject.id) should be(true)
+      val changeProjectOpt = projectService.getChangeProject(savedProject.id)
+      val change = changeProjectOpt.get
+      val updatedProjectLinks=ProjectDAO.getProjectLinks(savedProject.id)
+      updatedProjectLinks.exists { x=> x.status==LinkStatus.Transfer } should be(true)
+      updatedProjectLinks.exists { x=> x.status==LinkStatus.Terminated } should be(true)
+      updatedProjectLinks.filter( pl => pl.linkId==5168540).head.calibrationPoints should be ((Some(CalibrationPoint(5168540,0.0,0)),None))
+      updatedProjectLinks.filter( pl => pl.linkId==6463199).head.calibrationPoints should be ((None,Some(CalibrationPoint(6463199,highestDistanceStart-172,highestDistanceEnd-172))))  //we terminated link with distance 172 , and reduce original 3844-4287 with it
+      projectService.updateProjectLinkStatus(savedProject.id, Set(5168579), LinkStatus.Terminated, "-")
+      val updatedProjectLinks2=ProjectDAO.getProjectLinks(savedProject.id)
+      updatedProjectLinks2.filter( pl => pl.linkId==5168583).head.calibrationPoints should be (None,Some(CalibrationPoint(6463199,highestDistanceStart-172-49,highestDistanceEnd-172-49))) // reduce 49
+    }
+    runWithRollback {
+      projectService.getRoadAddressAllProjects()
+    } should have size (count - 1)
+  }
+
+
+
+
 
 
   ignore("Fetch project links") { // Needs more of mocking because of Futures + transactions disagreeing
