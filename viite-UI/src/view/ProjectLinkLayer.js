@@ -138,10 +138,13 @@
           isNotEditingData = true;
           clearHighlights();
           showChangesAndSendButton();
-          if(selection.size > 1)
-            showSingleClickChanges(shiftPressed, selection);
-          else
-            showDoubleClickChanges(shiftPressed, selection);
+          if(!_.isUndefined(selection)){
+            if(selection.size > 1)
+              showSingleClickChanges(shiftPressed, selection);
+            else
+              showDoubleClickChanges(shiftPressed, selection);
+          }
+
         },
         closeCallback: function(){
           isNotEditingData = false;
