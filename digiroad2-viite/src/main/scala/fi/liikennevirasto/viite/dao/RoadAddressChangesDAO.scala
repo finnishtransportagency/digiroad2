@@ -158,19 +158,45 @@ object RoadAddressChangesDAO {
   }
 
   def insertDeltaToRoadChangeTable(delta: Delta, projectId: Long): Boolean= {
-    def addToBatch(roadAddressSection: RoadAddressSection, ely: Long, addressChangeType: AddressChangeType, roadAddressChangePS: PreparedStatement) = {
+    def addToBatch(roadAddressSection: RoadAddressSection, ely: Long, addressChangeType: AddressChangeType,
+                   roadAddressChangePS: PreparedStatement) = {
+      addressChangeType match {
+        case AddressChangeType.New =>
+          roadAddressChangePS.setNull(3, java.sql.Types.INTEGER)
+          roadAddressChangePS.setLong(4, roadAddressSection.roadNumber)
+          roadAddressChangePS.setNull(5, java.sql.Types.INTEGER)
+          roadAddressChangePS.setLong(6, roadAddressSection.roadPartNumberStart)
+          roadAddressChangePS.setNull(7, java.sql.Types.INTEGER)
+          roadAddressChangePS.setLong(8, roadAddressSection.track.value)
+          roadAddressChangePS.setNull(9, java.sql.Types.INTEGER)
+          roadAddressChangePS.setLong(10, roadAddressSection.startMAddr)
+          roadAddressChangePS.setNull(11, java.sql.Types.INTEGER)
+          roadAddressChangePS.setLong(12, roadAddressSection.endMAddr)
+        case AddressChangeType.Termination =>
+          roadAddressChangePS.setLong(3, roadAddressSection.roadNumber)
+          roadAddressChangePS.setNull(4, java.sql.Types.INTEGER)
+          roadAddressChangePS.setLong(5, roadAddressSection.roadPartNumberStart)
+          roadAddressChangePS.setNull(6, java.sql.Types.INTEGER)
+          roadAddressChangePS.setLong(7, roadAddressSection.track.value)
+          roadAddressChangePS.setNull(8, java.sql.Types.INTEGER)
+          roadAddressChangePS.setLong(9, roadAddressSection.startMAddr)
+          roadAddressChangePS.setNull(10, java.sql.Types.INTEGER)
+          roadAddressChangePS.setLong(11, roadAddressSection.endMAddr)
+          roadAddressChangePS.setNull(12, java.sql.Types.INTEGER)
+        case _ =>
+          roadAddressChangePS.setLong(3, roadAddressSection.roadNumber)
+          roadAddressChangePS.setLong(4, roadAddressSection.roadNumber)
+          roadAddressChangePS.setLong(5, roadAddressSection.roadPartNumberStart)
+          roadAddressChangePS.setLong(6, roadAddressSection.roadPartNumberStart)
+          roadAddressChangePS.setLong(7, roadAddressSection.track.value)
+          roadAddressChangePS.setLong(8, roadAddressSection.track.value)
+          roadAddressChangePS.setLong(9, roadAddressSection.startMAddr)
+          roadAddressChangePS.setLong(10, roadAddressSection.startMAddr)
+          roadAddressChangePS.setLong(11, roadAddressSection.endMAddr)
+          roadAddressChangePS.setLong(12, roadAddressSection.endMAddr)
+      }
       roadAddressChangePS.setLong(1, projectId)
       roadAddressChangePS.setLong(2, addressChangeType.value)
-      roadAddressChangePS.setLong(3, roadAddressSection.roadNumber)
-      roadAddressChangePS.setLong(4, roadAddressSection.roadNumber)
-      roadAddressChangePS.setLong(5, roadAddressSection.roadPartNumberStart)
-      roadAddressChangePS.setLong(6, roadAddressSection.roadPartNumberStart)
-      roadAddressChangePS.setLong(7, roadAddressSection.track.value)
-      roadAddressChangePS.setLong(8, roadAddressSection.track.value)
-      roadAddressChangePS.setDouble(9, roadAddressSection.startMAddr)
-      roadAddressChangePS.setDouble(10, roadAddressSection.startMAddr)
-      roadAddressChangePS.setDouble(11, roadAddressSection.endMAddr)
-      roadAddressChangePS.setDouble(12, roadAddressSection.endMAddr)
       roadAddressChangePS.setLong(13, roadAddressSection.discontinuity.value)
       roadAddressChangePS.setLong(14, roadAddressSection.roadType.value)
       roadAddressChangePS.setLong(15, ely)

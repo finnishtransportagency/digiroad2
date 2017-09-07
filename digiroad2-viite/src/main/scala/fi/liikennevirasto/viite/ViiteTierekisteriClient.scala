@@ -1,6 +1,7 @@
 package fi.liikennevirasto.viite
 import java.util.Properties
 
+import fi.liikennevirasto.viite.dao.AddressChangeType._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.util.ViiteTierekisteriAuthPropertyReader
 import org.apache.http.client.methods.{HttpGet, HttpPost}
@@ -60,13 +61,33 @@ case object ChangeInfoItemSerializer extends CustomSerializer[RoadAddressChangeI
 }, {
   case o: RoadAddressChangeInfo =>
     implicit val formats = DefaultFormats + ChangeInfoRoadPartsSerializer
-    JObject(
-      JField("change_type", JInt(BigInt.apply(o.changeType.value))),
-      JField("continuity", JInt(BigInt.apply(o.discontinuity.value))),
-      JField("road_type", JInt(BigInt.apply(o.roadType.value))),
-      JField("source", Extraction.decompose(o.source)),
-      JField("target", Extraction.decompose(o.target))
-    )
+    val empty = RoadAddressChangeRecipient(None, None, None, None, None, None)
+    o.changeType match {
+      case New =>
+        JObject(
+          JField("change_type", JInt(BigInt.apply(o.changeType.value))),
+          JField("continuity", JInt(BigInt.apply(o.discontinuity.value))),
+          JField("road_type", JInt(BigInt.apply(o.roadType.value))),
+          JField("source", Extraction.decompose(empty)),
+          JField("target", Extraction.decompose(o.target))
+        )
+      case Termination =>
+        JObject(
+          JField("change_type", JInt(BigInt.apply(o.changeType.value))),
+          JField("continuity", JInt(BigInt.apply(o.discontinuity.value))),
+          JField("road_type", JInt(BigInt.apply(o.roadType.value))),
+          JField("source", Extraction.decompose(o.source)),
+          JField("target", Extraction.decompose(empty))
+        )
+      case _ =>
+        JObject(
+          JField("change_type", JInt(BigInt.apply(o.changeType.value))),
+          JField("continuity", JInt(BigInt.apply(o.discontinuity.value))),
+          JField("road_type", JInt(BigInt.apply(o.roadType.value))),
+          JField("source", Extraction.decompose(o.source)),
+          JField("target", Extraction.decompose(o.target))
+        )
+    }
 }))
 
 case object TRProjectStatusSerializer extends CustomSerializer[TRProjectStatus](format => ( {
