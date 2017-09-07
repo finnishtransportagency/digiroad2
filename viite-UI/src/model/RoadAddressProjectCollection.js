@@ -421,6 +421,14 @@
       return dirtyProjectLinks.length > 0;
     };
 
+    this.roadIsOther = function(road){
+      return  0 === road.roadNumber && 0 === road.anomaly && 0 === road.roadLinkType && 0 === road.roadPartNumber && 99 === road.trackCode;
+    };
+
+    this.roadIsUnknown = function(road){
+      return  0 === road.roadNumber && 1 === road.anomaly && 0 === road.roadLinkType && 0 === road.roadPartNumber && 99 === road.trackCode;
+    };
+
     function arrayIntersection(a, b, areEqualFunction) {
       return _.filter(a, function(aElem) {
         return _.any(b, function(bElem) {
