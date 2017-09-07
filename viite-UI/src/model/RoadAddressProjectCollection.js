@@ -203,8 +203,8 @@
       console.log("Save Project Links called");
       applicationModel.addSpinner();
       var linkIds = _.unique(_.map(toBeUpdatedDirtyLinks,function (t){
-        if(!_.isUndefined(t.linkId)){
-          return t.linkId;
+        if(!_.isUndefined(t.id)){
+          return t.id;
         } else return t;
       }));
 
