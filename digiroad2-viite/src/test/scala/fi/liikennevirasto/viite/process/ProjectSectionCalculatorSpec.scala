@@ -530,10 +530,20 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
 
     val projectLinkSeqT = Seq(projectLink0, projectLink3).map(_.copy(status=LinkStatus.Transfer))
     val projectLinkSeqN = Seq(projectLink1, projectLink2).map(_.copy(status=LinkStatus.New))
-    val output = ProjectSectionCalculator.determineMValues(projectLinkSeqN, projectLinkSeqT)
+    val output = ProjectSectionCalculator.assignMValues(projectLinkSeqN ++ projectLinkSeqT)
     output.length should be(4)
-    output.foreach(println)
-    output(3).calibrationPoints should be(None, Some(CalibrationPoint(12348,10.399999999999999,44)))
+    val maxAddr = output.map(_.endAddrMValue).max
+    output.filter(_.id == idRoad0).foreach { r =>
+      r.calibrationPoints should be(None, None)
+      // new value = original + (new end - old end)
+      r.startAddrMValue should be (projectLink0.startAddrMValue + maxAddr - projectLink3.endAddrMValue)
+      r.endAddrMValue should be (projectLink0.endAddrMValue + maxAddr - projectLink3.endAddrMValue)
+    }
+    output.filter(_.id == idRoad3).foreach { r =>
+      r.calibrationPoints should be(None, Some(CalibrationPoint(12348,10.399999999999999,44)))
+      r.startAddrMValue should be (maxAddr + projectLink3.startAddrMValue - projectLink3.endAddrMValue)
+      r.endAddrMValue should be (maxAddr)
+    }
 
     output(0).calibrationPoints should be(Some(CalibrationPoint(12347,0.0,0)), None)
 
