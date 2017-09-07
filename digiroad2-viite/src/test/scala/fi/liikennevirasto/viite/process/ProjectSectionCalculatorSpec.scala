@@ -513,4 +513,40 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     ordered.count(_.calibrationPoints._1.nonEmpty) should be (1)
     ordered.count(_.calibrationPoints._2.nonEmpty) should be (1)
   }
+
+  test("Project section calculator test for new + transfer") {
+    val idRoad0 = 0L // T
+    val idRoad1 = 1L // N
+    val idRoad2 = 2L // N
+    val idRoad3 = 3L // T
+    val projectLink0 = toProjectLink(rap)(RoadAddress(idRoad0, 5, 1, RoadType.Unknown, Track.Combined, Continuous, 0L, 12L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, 12345L, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), false,
+      Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface))
+    val projectLink1 = toProjectLink(rap)(RoadAddress(idRoad1, 5, 1, RoadType.Unknown, Track.Combined, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, 12346L, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), false,
+      Seq(Point(0.0, -10.0), Point(0.0, 0.0)), LinkGeomSource.NormalLinkInterface))
+    val projectLink2 = toProjectLink(rap)(RoadAddress(idRoad2, 5, 1, RoadType.Unknown, Track.Combined, Continuous, 0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, 12347L, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), false,
+      Seq(Point(0.0, -20.2), Point(0.0, -10.0)), LinkGeomSource.NormalLinkInterface))
+    val projectLink3 = toProjectLink(rap)(RoadAddress(idRoad3, 5, 1, RoadType.Unknown, Track.Combined, Discontinuous, 12L, 24L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, 12348L, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), false,
+      Seq(Point(0.0, 9.8), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface))
+
+    val projectLinkSeqT = Seq(projectLink0, projectLink3).map(_.copy(status=LinkStatus.Transfer))
+    val projectLinkSeqN = Seq(projectLink1, projectLink2).map(_.copy(status=LinkStatus.New))
+    val output = ProjectSectionCalculator.assignMValues(projectLinkSeqN ++ projectLinkSeqT)
+    output.length should be(4)
+    val maxAddr = output.map(_.endAddrMValue).max
+    output.filter(_.id == idRoad0).foreach { r =>
+      r.calibrationPoints should be(None, None)
+      // new value = original + (new end - old end)
+      r.startAddrMValue should be (projectLink0.startAddrMValue + maxAddr - projectLink3.endAddrMValue)
+      r.endAddrMValue should be (projectLink0.endAddrMValue + maxAddr - projectLink3.endAddrMValue)
+    }
+    output.filter(_.id == idRoad3).foreach { r =>
+      r.calibrationPoints should be(None, Some(CalibrationPoint(12348,10.399999999999999,44)))
+      r.startAddrMValue should be (maxAddr + projectLink3.startAddrMValue - projectLink3.endAddrMValue)
+      r.endAddrMValue should be (maxAddr)
+    }
+
+    output(0).calibrationPoints should be(Some(CalibrationPoint(12347,0.0,0)), None)
+
+  }
+
 }
