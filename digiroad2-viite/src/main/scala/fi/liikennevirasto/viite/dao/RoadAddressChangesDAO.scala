@@ -196,6 +196,9 @@ object RoadAddressChangesDAO {
             ProjectDeltaCalculator.partition(delta.unChanged).foreach { case (roadAddressSection) =>
               addToBatch(roadAddressSection, ely, AddressChangeType.Unchanged, roadAddressChangePS)
             }
+            ProjectDeltaCalculator.projectLinkPartition(delta.transferred).foreach{ case(roadAddressSection) =>
+                addToBatch(roadAddressSection, ely, AddressChangeType.Transfer, roadAddressChangePS)
+            }
             roadAddressChangePS.executeBatch()
             roadAddressChangePS.close()
             val endTime = System.currentTimeMillis()

@@ -21,8 +21,9 @@ object ProjectDeltaCalculator {
     val terminations = findTerminations(projectLinks, currentAddresses)
     val newCreations = findNewCreations(projectLinks)
     val unChanged = findUnChanged(projectLinks, currentAddresses)
+    val transferred = findTransferred(projectLinks)
 
-    Delta(project.startDate, terminations, newCreations, unChanged)
+    Delta(project.startDate, terminations, newCreations, unChanged, transferred)
   }
 
   private def findTerminations(projectLinks: Map[RoadPart, Seq[ProjectLink]], currentAddresses: Map[RoadPart, Seq[RoadAddress]]) = {
@@ -37,6 +38,10 @@ object ProjectDeltaCalculator {
     projectLinks.map{case (part, pLinks) => part -> (pLinks, currentAddresses.getOrElse(part, Seq()))}.mapValues{ case (pll, ra) =>
       ra.filter(r => pll.exists(pl => pl.linkId == r.linkId && pl.status == LinkStatus.UnChanged))
     }.values.flatten.toSeq
+  }
+
+  private def findTransferred(projectLinks: Map[RoadPart, Seq[ProjectLink]]) = {
+    projectLinks.values.flatten.filter(_.status == LinkStatus.Transfer).toSeq
   }
 
   private def findNewCreations(projectLinks: Map[RoadPart, Seq[ProjectLink]]) = {
@@ -86,5 +91,5 @@ object ProjectDeltaCalculator {
 }
 
 case class Delta(startDate: DateTime, terminations: Seq[RoadAddress], newRoads: Seq[ProjectLink],
-                 unChanged: Seq[RoadAddress])
+                 unChanged: Seq[RoadAddress], transferred: Seq[ProjectLink])
 case class RoadPart(roadNumber: Long, roadPartNumber: Long)
