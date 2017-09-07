@@ -97,6 +97,7 @@
       var enableStatusNew = (selected[0].status !== STATUS_NOT_HANDLED && selected[0].status !== STATUS_TERMINATED)|| selected[0].roadLinkSource === 3;
       var terminationState = status == STATUS_TERMINATED ? ' selected' : selected[0].roadLinkSource === 3 ? 'disabled' : '';
       var toEdit = selected[0].id !== 0;
+      var numberingVisibility = selected[0].status === 1;
       return _.template('' +
         '<header>' +
         titleWithProjectName(project.name) +
@@ -116,7 +117,7 @@
         '<option value='+ ACTION_TRANSFER + ' ' + (toEdit ? ' ' : ' disabled') + '>Siirto</option>'+
         '<option value='+ ACTION_NEW_LINK + ' ' + (enableStatusNew ? ' ' : ' disabled')+'>Uusi</option>'+
         '<option value= '+ ACTION_TERMINATE + ' ' + (terminationState) + '>Lakkautus</option>'+
-        '<option value='+ ACTION_NUMBERING + ' ' + (toEdit ? ' ' : ' disabled') + '>Numerointi</option>'+
+        '<option value='+ ACTION_NUMBERING + ' ' + (toEdit ? (numberingVisibility ? 'hidden' : ' ') : ' disabled') + '>Numerointi</option>'+
         '<option value='+ ACTION_REVERT + ' ' + (toEdit ? ' ' : ' disabled') + '>Palautus aihioksi tai tieosoitteettomaksi</option>' +
         '</select>'+
         '</div>'+
@@ -390,14 +391,14 @@
           rootElement.html(emptyTemplate(currentProject.project));
         }
         else if( $('[id=dropDown] :selected').val() === ACTION_TRANSFER){
-          projectCollection.createProjectLinks(projectCollection.getTmpDirty());
+          projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), STATUS_TRANSFER);
           rootElement.html(emptyTemplate(currentProject.project));
         }
         else if( $('[id=dropDown] :selected').val() === ACTION_NEW_LINK){
           projectCollection.createProjectLinks(selectedProjectLink);
         }
         else if( $('[id=dropDown] :selected').val() === ACTION_UNCHANGED){
-          projectCollection.createProjectLinks(projectCollection.getTmpDirty());
+          projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), STATUS_UNCHANGED);
           rootElement.html(emptyTemplate(currentProject.project));
         }
         else if( $('[id=dropDown] :selected').val() === ACTION_NUMBERING){
