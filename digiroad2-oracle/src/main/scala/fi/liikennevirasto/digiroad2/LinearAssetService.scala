@@ -537,7 +537,6 @@ trait LinearAssetOperations {
             dao.insertValue(id, LinearAssetTypes.getValuePropertyId(linearAsset.typeId), textValue)
           case Some(prohibitions: Prohibitions) =>
             dao.insertProhibitionValue(id, prohibitions)
-          case None => None
           case _ => None
         }
       }

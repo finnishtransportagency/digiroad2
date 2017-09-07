@@ -97,12 +97,6 @@
       });
     }, 1000);
 
-    // this.getLinearAssetById = _.throttle(function(Id, callback) {
-    //   return $.getJSON('api/linearAsset/unchecked/' + Id, function(data) {
-    //     return _.isFunction(callback) && callback(data);
-    //   });
-    // }, 1000);
-
     this.getRoadLinkByMmlId = _.throttle(function(mmlId, callback) {
       return $.getJSON('api/roadlinks/mml/' + mmlId, function(data) {
         return _.isFunction(callback) && callback(data);
