@@ -73,6 +73,7 @@ object ProjectSectionCalculator {
 
   /**
     * Calculates the address M values for the given set of project links and assigns them calibration points where applicable
+    * Deprecated: use assignMValues(projectLinks: Seq[ProjectLink]) instead.
     * @param newProjectLinks List of new addressed links in project
     * @param oldProjectLinks Other links in project, used as a guidance
     * @return Sequence of project links with address values and calibration points.
