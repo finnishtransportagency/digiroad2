@@ -97,12 +97,15 @@ object RoadAddressChangesDAO {
 
   val logger = LoggerFactory.getLogger(getClass)
 
-  private def toRoadAddressChangeRecipient(row: RoadAddressChangeRow) = {
+  private def toRoadAddressChangeSourceRecipient(row: RoadAddressChangeRow) = {
     RoadAddressChangeRecipient(row.sourceRoadNumber, row.sourceTrackCode, row.sourceStartRoadPartNumber, row.sourceEndRoadPartNumber, row.sourceStartAddressM, row.sourceEndAddressM)
   }
+  private def toRoadAddressChangeTargetRecipient(row: RoadAddressChangeRow) = {
+    RoadAddressChangeRecipient(row.targetRoadNumber, row.targetTrackCode, row.targetStartRoadPartNumber, row.targetEndRoadPartNumber, row.targetStartAddressM, row.targetEndAddressM)
+  }
   private def toRoadAddressChangeInfo(row: RoadAddressChangeRow) = {
-    val source = toRoadAddressChangeRecipient(row)
-    val target = toRoadAddressChangeRecipient(row)
+    val source = toRoadAddressChangeSourceRecipient(row)
+    val target = toRoadAddressChangeTargetRecipient(row)
     RoadAddressChangeInfo(AddressChangeType.apply(row.changeType), source, target, Discontinuity.apply(row.discontinuity), RoadType.apply(row.roadType))
   }
 
@@ -177,6 +180,25 @@ object RoadAddressChangesDAO {
       roadAddressChangePS.addBatch()
     }
 
+    def addToBatchWithOldValues(oldRoadAddressSection: RoadAddressSection, newRoadAddressSection:RoadAddressSection, ely: Long, addressChangeType: AddressChangeType, roadAddressChangePS: PreparedStatement) = {
+      roadAddressChangePS.setLong(1, projectId)
+      roadAddressChangePS.setLong(2, addressChangeType.value)
+      roadAddressChangePS.setLong(3, oldRoadAddressSection.roadNumber)
+      roadAddressChangePS.setLong(4, newRoadAddressSection.roadNumber)
+      roadAddressChangePS.setLong(5, oldRoadAddressSection.roadPartNumberStart)
+      roadAddressChangePS.setLong(6, newRoadAddressSection.roadPartNumberStart)
+      roadAddressChangePS.setLong(7, oldRoadAddressSection.track.value)
+      roadAddressChangePS.setLong(8, newRoadAddressSection.track.value)
+      roadAddressChangePS.setDouble(9, oldRoadAddressSection.startMAddr)
+      roadAddressChangePS.setDouble(10, newRoadAddressSection.startMAddr)
+      roadAddressChangePS.setDouble(11, oldRoadAddressSection.endMAddr)
+      roadAddressChangePS.setDouble(12, newRoadAddressSection.endMAddr)
+      roadAddressChangePS.setLong(13, newRoadAddressSection.discontinuity.value)
+      roadAddressChangePS.setLong(14, newRoadAddressSection.roadType.value)
+      roadAddressChangePS.setLong(15, ely)
+      roadAddressChangePS.addBatch()
+    }
+
     val startTime = System.currentTimeMillis()
     logger.info("Starting delta insertion in ChangeTable ")
     ProjectDAO.getRoadAddressProjectById(projectId) match {
@@ -196,8 +218,11 @@ object RoadAddressChangesDAO {
             ProjectDeltaCalculator.partition(delta.unChanged).foreach { case (roadAddressSection) =>
               addToBatch(roadAddressSection, ely, AddressChangeType.Unchanged, roadAddressChangePS)
             }
-            ProjectDeltaCalculator.projectLinkPartition(delta.transferred).foreach{ case(roadAddressSection) =>
-                addToBatch(roadAddressSection, ely, AddressChangeType.Transfer, roadAddressChangePS)
+            val partitionedValues = ProjectDeltaCalculator.partition(delta.transferredOld, delta.transferredNew)
+
+             partitionedValues._2.foreach{ case(newRoadAddressSection) =>
+              val oldRoadAddressSection = partitionedValues._1.find( p => p.roadNumber == newRoadAddressSection.roadNumber && p.roadPartNumberStart == newRoadAddressSection.roadPartNumberStart && p.track == newRoadAddressSection.track )
+              addToBatchWithOldValues(oldRoadAddressSection.get, newRoadAddressSection, ely, AddressChangeType.Transfer, roadAddressChangePS)
             }
             roadAddressChangePS.executeBatch()
             roadAddressChangePS.close()

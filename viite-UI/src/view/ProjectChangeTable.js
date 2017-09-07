@@ -97,7 +97,7 @@
             htmlTable+= '</tr>';
           } else if(changeInfoSeq.changetype === transferredLinkStatus){
             htmlTable+= '<tr class="change-table-data-row">';
-            htmlTable+=getEmptySource(changeInfoSeq);
+            htmlTable+=getSourceInfo(changeInfoSeq,projectChangeData);
             htmlTable+=getTartgetInfo(changeInfoSeq,projectChangeData);
             htmlTable+= '</tr>';
           }

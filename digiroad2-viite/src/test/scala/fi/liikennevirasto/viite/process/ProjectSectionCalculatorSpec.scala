@@ -51,7 +51,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       Seq(Point(0.0, 9.8), Point(0.0, 20.2)), LinkGeomSource.NormalLinkInterface))
 
     val projectLinkSeq = Seq(projectLink0, projectLink1, projectLink2, projectLink3)
-    val output = ProjectSectionCalculator.determineMValues(projectLinkSeq, Seq())
+    val output = ProjectSectionCalculator.assignMValues(projectLinkSeq)
     output.length should be(4)
 
     output.foreach(o =>
@@ -126,7 +126,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       Seq(Point(0.0, 96.0), Point(0.0, 148.0)), LinkGeomSource.NormalLinkInterface))
 
     val projectLinkSeq = Seq(projectLink0, projectLink1, projectLink2, projectLink3, projectLink4, projectLink5, projectLink6, projectLink7, projectLink8)
-    val output = ProjectSectionCalculator.determineMValues(projectLinkSeq, Seq()).sortBy(_.linkId)
+    val output = ProjectSectionCalculator.assignMValues(projectLinkSeq).sortBy(_.linkId)
     output.length should be(9)
     output.foreach(pl => pl.sideCode == TowardsDigitizing should be (true))
     val start = output.find(_.id==idRoad0).get
@@ -194,7 +194,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     val projectLinkSeq = Seq(projectLink0, projectLink1, projectLink2, projectLink3, projectLink4, projectLink5, projectLink6, projectLink7, projectLink8).map(
       pl => pl.copy(sideCode = SideCode.AgainstDigitizing)
     )
-    val output = ProjectSectionCalculator.determineMValues(projectLinkSeq, Seq()).sortBy(_.linkId)
+    val output = ProjectSectionCalculator.assignMValues(projectLinkSeq).sortBy(_.linkId)
     output.length should be(9)
     output.foreach(pl => pl.sideCode == AgainstDigitizing should be (true))
     val start = output.find(_.id==idRoad0).get
@@ -240,7 +240,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       Seq(Point(10.0, 15.0), Point(6.0, 19.2)), LinkGeomSource.NormalLinkInterface))
 
     val projectLinkSeq = Seq(projectLink0, projectLink1, projectLink2, projectLink3)
-    val output = ProjectSectionCalculator.determineMValues(projectLinkSeq, Seq()).sortBy(_.linkId)
+    val output = ProjectSectionCalculator.assignMValues(projectLinkSeq).sortBy(_.linkId)
     output.length should be(4)
     output.foreach(pl => pl.sideCode == AgainstDigitizing || pl.id % 2 == 0 should be (true))
     output.foreach(pl => pl.sideCode == TowardsDigitizing || pl.id % 2 != 0 should be (true))
@@ -298,10 +298,10 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, idRoad2, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), false,
       Seq(Point(28, 15), Point(75, 19.2)), LinkGeomSource.NormalLinkInterface))
     val list = List(projectLink0, projectLink1, projectLink2)
-    val ordered = ProjectSectionCalculator.determineMValues(list, Seq()).map(trackMap).toMap
+    val ordered = ProjectSectionCalculator.assignMValues(list).map(trackMap).toMap
     // Test that the result is not dependent on the order of the links
     list.permutations.foreach(l => {
-      ProjectSectionCalculator.determineMValues(l, Seq()).map(trackMap).toMap should be(ordered)
+      ProjectSectionCalculator.assignMValues(l).map(trackMap).toMap should be(ordered)
     })
   }
 
@@ -313,8 +313,8 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, 0L, 0.0, 0.0, SideCode.AgainstDigitizing, 0, (None, None), false,
       Seq(Point(20.0, 10.0), Point(28, 15)), LinkGeomSource.NormalLinkInterface))
 
-    val towards = ProjectSectionCalculator.determineMValues(Seq(projectLink0T), Seq()).head
-    val against = ProjectSectionCalculator.determineMValues(Seq(projectLink0A), Seq()).head
+    val towards = ProjectSectionCalculator.assignMValues(Seq(projectLink0T)).head
+    val against = ProjectSectionCalculator.assignMValues(Seq(projectLink0A)).head
     towards.sideCode should be (SideCode.TowardsDigitizing)
     against.sideCode should be (SideCode.AgainstDigitizing)
     towards.calibrationPoints._1 should be (Some(CalibrationPoint(0, 0.0, 0)))
@@ -331,7 +331,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, 1L, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), false,
       Seq(Point(28.0, 15.0), Point(38, 15)), LinkGeomSource.NormalLinkInterface))
 
-    val output = ProjectSectionCalculator.determineMValues(Seq(projectLink0, projectLink1), Seq())
+    val output = ProjectSectionCalculator.assignMValues(Seq(projectLink0, projectLink1))
     output.foreach { pl =>
       pl.startAddrMValue should be(0L)
       pl.endAddrMValue should be(0L)
@@ -356,7 +356,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, idRoad3, 0.0, 0.0, SideCode.AgainstDigitizing, 0, (None, None), false,
       Seq(Point(28, 10.2),Point(42, 10.3)), LinkGeomSource.NormalLinkInterface))
     val list = List(projectLink0, projectLink1, projectLink2, projectLink3)
-    val ordered = ProjectSectionCalculator.determineMValues(list, Seq())
+    val ordered = ProjectSectionCalculator.assignMValues(list)
     // Test that the direction of left track is corrected to match the right track
     val (right, left) = ordered.partition(_.track == Track.RightSide)
     right.foreach(
@@ -403,7 +403,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, idRoad5, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), false,
       Seq(Point(42, 11), Point(103, 15)), LinkGeomSource.NormalLinkInterface))
     val list = List(projectLink0, projectLink1, projectLink2, projectLink3, projectLink4, projectLink5)
-    val ordered = ProjectSectionCalculator.determineMValues(list, Seq())
+    val ordered = ProjectSectionCalculator.assignMValues(list)
     ordered.flatMap(_.calibrationPoints._1).foreach(
       _.addressMValue should be (0L)
     )
@@ -440,7 +440,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, idRoad5, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), false,
       Seq(Point(42, 11), Point(103, 15)), LinkGeomSource.NormalLinkInterface))
     val list = List(projectLink0, projectLink1, projectLink2, projectLink3, projectLink4, projectLink5)
-    val ordered = ProjectSectionCalculator.determineMValues(list, Seq())
+    val ordered = ProjectSectionCalculator.assignMValues(list)
     ordered.flatMap(_.calibrationPoints._1) should have size (2)
     ordered.flatMap(_.calibrationPoints._2) should have size (2)
   }
@@ -460,7 +460,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, idRoad2, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), false,
       Seq(Point(28, 1), Point(28, 10)), LinkGeomSource.NormalLinkInterface))
     val list = List(projectLink0, projectLink1, projectLink2)
-    val ordered = ProjectSectionCalculator.determineMValues(list, Seq())
+    val ordered = ProjectSectionCalculator.assignMValues(list)
     val left = ordered.find(_.linkId == idRoad1).get
     val right = ordered.find(_.linkId == idRoad2).get
     left.sideCode == right.sideCode should be (false)
@@ -481,7 +481,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       Seq(Point(28, 19), Point(28, 30)), LinkGeomSource.NormalLinkInterface)).copy(status = LinkStatus.New)
     val list = List(projectLink0, projectLink1, projectLink2)
     val (created, unchanged) = list.partition(_.status == LinkStatus.New)
-    val ordered = ProjectSectionCalculator.determineMValues(created, unchanged)
+    val ordered = ProjectSectionCalculator.assignMValues(created++unchanged )
     val road2 = ordered.find(_.linkId == idRoad2).get
     road2.startAddrMValue should be (19L)
     road2.endAddrMValue should be (30L)
@@ -505,7 +505,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       Seq(Point(28, 19), Point(28, 30)), LinkGeomSource.NormalLinkInterface)).copy(status = LinkStatus.Terminated)
     val list = List(projectLink0, projectLink1, projectLink2)
     val (_, unchanged) = list.partition(_.status == LinkStatus.Terminated)
-    val ordered = ProjectSectionCalculator.determineMValues(Seq(), unchanged)
+    val ordered = ProjectSectionCalculator.assignMValues(unchanged)
     ordered.find(_.linkId == idRoad2) should be (None)
     ordered.head.startAddrMValue should be (0L)
     ordered.last.endAddrMValue should be (19L)
