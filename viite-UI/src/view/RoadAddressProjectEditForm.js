@@ -510,7 +510,7 @@
           rootElement.find('.project-form button.update').prop("disabled", false);
         }
         else if(this.value == ACTION_NEW_LINK){
-          projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
+          projectCollection.setTmpDirty(_.filter(projectCollection.getTmpDirty(), function (l) { return l.status !== STATUS_TERMINATED;}).concat(selectedProjectLink));
           rootElement.find('.new-road-address').prop("hidden", false);
           if(selectedProjectLink[0].id !== 0) {
             fillDistanceValues(selectedProjectLink);
