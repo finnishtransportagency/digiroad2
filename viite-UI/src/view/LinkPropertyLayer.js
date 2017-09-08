@@ -1317,7 +1317,7 @@
       deactivateSelectInteractions();
     });
 
-    eventListener.listenTo(eventbus, 'linkProperties:deactivateAllSelections', function(){
+    eventListener.listenTo(eventbus, 'linkProperties:deactivateAllSelections roadAddressProject:stopAllInteractions', function(){
       deactivateSelectInteractions(true);
     });
 
@@ -1325,7 +1325,7 @@
       activateSelectInteractions();
     });
 
-    eventListener.listenTo(eventbus, 'linkProperties:activateAllSelections', function(){
+    eventListener.listenTo(eventbus, 'linkProperties:activateAllSelections roadAddressProject:startAllInteractions', function(){
       activateSelectInteractions(true);
     });
 
