@@ -239,9 +239,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           linkId => newProjectLinks.getOrElse(linkId, existingLinks(linkId))
         )
         //Determine geometries for the mValues and addressMValues
-        // TODO: check if this should be called with params (newProjectLinks, existingLinks)
-        val linksWithMValues = ProjectSectionCalculator.determineMValues(combinedLinks,
-          Seq())
+        val linksWithMValues = ProjectSectionCalculator.assignMValues(combinedLinks)
         ProjectDAO.removeProjectLinksByLinkId(roadAddressProjectID, combinedLinks.map(c => c.linkId).toSet)
         ProjectDAO.create(linksWithMValues)
         None
@@ -274,7 +272,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             if (remainingLinks.nonEmpty){
               val projectLinks = ProjectDAO.fetchByProjectNewRoadPart(roadNumber, roadPartNumber, projectId)
               val adjLinks = withGeometry(projectLinks, resetAddress = true)
-              ProjectSectionCalculator.determineMValues(adjLinks, Seq.empty[ProjectLink]).foreach(
+              ProjectSectionCalculator.assignMValues(adjLinks).foreach(
                 adjLink => ProjectDAO.updateAddrMValues(adjLink))
             }
           }
@@ -306,7 +304,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         ProjectDAO.flipProjectLinksSideCodes(projectId, roadNumber, roadPartNumber)
         val projectLinks = ProjectDAO.getProjectLinks(projectId)
         val adjLinks = withGeometry(projectLinks, resetAddress = false)
-        ProjectSectionCalculator.determineMValues(adjLinks, Seq.empty[ProjectLink]).foreach(
+        ProjectSectionCalculator.assignMValues(adjLinks).foreach(
           link => ProjectDAO.updateAddrMValues(link))
         None
       }
@@ -529,13 +527,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       try {
         val delta = ProjectDeltaCalculator.delta(projectId)
         //TODO would be better to give roadType to ProjectLinks table instead of calling vvh here
-        val linkIds = (delta.terminations ++ delta.unChanged).map(_.linkId).toSet
+        val linkIds = (delta.terminations ++ delta.unChanged ++ delta.transferredOld).map(_.linkId).toSet
         val vvhRoadLinks = roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(linkIds, false, frozenTimeVVHAPIServiceEnabled)
           .map(rl => rl.linkId -> rl).toMap
         val filledTerminations = withFetchedDataFromVVH(delta.terminations, vvhRoadLinks, RoadType)
         val filledUnChanged = withFetchedDataFromVVH(delta.unChanged, vvhRoadLinks, RoadType)
-
-        if (setProjectDeltaToDB(delta.copy(terminations = filledTerminations, unChanged = filledUnChanged), projectId)) {
+        val filledTransferred = withFetchedDataFromVVH(delta.transferredOld, vvhRoadLinks, RoadType)
+        if (setProjectDeltaToDB(delta.copy(terminations = filledTerminations, unChanged = filledUnChanged, transferredOld = filledTransferred), projectId)) {
           val roadAddressChanges = RoadAddressChangesDAO.fetchRoadAddressChanges(Set(projectId))
           Some(ViiteTierekisteriClient.convertToChangeProject(roadAddressChanges))
         } else {
@@ -708,7 +706,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def updateProjectLinkStatus(projectId: Long, linkIds: Set[Long], linkStatus: LinkStatus, userName: String): Boolean = {
     withDynTransaction{
       val projectLinks = withGeometry(ProjectDAO.getProjectLinks(projectId))
-      val (updatedProjectLinks, unchangedProjectLinks) = projectLinks.partition(pl => linkIds.contains(pl.linkId))
+      val (updatedProjectLinks, unchangedProjectLinks) = projectLinks.filterNot(pl=> pl.status == LinkStatus.Terminated ).partition(pl => linkIds.contains(pl.linkId))
       if (linkStatus == LinkStatus.Terminated)
         ProjectDAO.updateProjectLinksToDB(updatedProjectLinks.map(_.copy(status=linkStatus, calibrationPoints = (None, None),
           startAddrMValue = 0L, endAddrMValue = 0L)), userName)
@@ -718,8 +716,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         pl => (pl.roadNumber, pl.roadPartNumber)).foreach {
         grp =>
           val (newLinks, preExistingLinks) = grp._2.filterNot(_.status == LinkStatus.Terminated).partition(_.status == LinkStatus.New)
-          val recalculatedProjectLinks = ProjectSectionCalculator.determineMValues(newLinks,
-            preExistingLinks ++ unchangedProjectLinks.filter(
+          val recalculatedProjectLinks = ProjectSectionCalculator.assignMValues(newLinks++preExistingLinks ++ unchangedProjectLinks.filter(
             upl => upl.roadNumber == grp._1._1 && upl.roadPartNumber == grp._1._2 && upl.status != LinkStatus.Terminated))
           ProjectDAO.updateProjectLinksToDB(recalculatedProjectLinks, userName)
       }

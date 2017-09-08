@@ -504,7 +504,7 @@
           rootElement.find('.new-road-address').prop("hidden", true);
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
-            return {'id': link.linkId, 'status': STATUS_TERMINATED};
+            return {'linkId': link.linkId, 'status': STATUS_TERMINATED};
           })));
           projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
           rootElement.find('.project-form button.update').prop("disabled", false);
@@ -522,13 +522,13 @@
           rootElement.find('.new-road-address').prop("hidden", true);
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
-            return {'id': link.linkId, 'status': STATUS_UNCHANGED};
+            return {'linkId': link.linkId, 'status': STATUS_UNCHANGED};
           })));
           projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
         }
         else if(this.value == ACTION_TRANSFER) {
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
-              return {'id': link.linkId, 'status': STATUS_TRANSFER};
+              return {'linkId': link.linkId, 'status': STATUS_TRANSFER};
           })));
           projectCollection.setTmpDirty(projectCollection.getDirty());
           rootElement.find('.new-road-address').prop("hidden", false);
