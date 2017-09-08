@@ -233,7 +233,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           throw new ProjectValidationException("Valittu tiegeometria sisältää haarautumia ja pitää käsitellä osina. Tallennusta ei voi tehdä.")
         val existingLinks = linksInProject.map(projectLink => {
           projectLink.linkId ->
-            existingProjectLink(projectLink, project, randomSideCode)
+            existingProjectLink(projectLink, project, if (projectLink.status == LinkStatus.NotHandled && projectLink.sideCode.value < 5 ) projectLink.sideCode else randomSideCode)
         }).toMap
         val combinedLinks = (newProjectLinks.keySet ++ existingLinks.keySet).toSeq.map(
           linkId => newProjectLinks.getOrElse(linkId, existingLinks(linkId))

@@ -87,17 +87,80 @@
       return span;
     };
 
+    var defineOptionModifiers = function(option, selection) {
+      var roadIsUnknownOrOther = projectCollection.roadIsUnknown(selection[0]) || projectCollection.roadIsOther(selection[0]) || selection[0].roadLinkSource === 3;
+      var toEdit = selection[0].id === 0;
+      var modifiers = '';
+
+      switch(option) {
+        case ACTION_UNCHANGED: {
+          if(roadIsUnknownOrOther){
+            modifiers = 'disabled hidden';
+          } else {
+            modifiers = '';
+          }
+          break;
+        }
+        case ACTION_TRANSFER: {
+          if(roadIsUnknownOrOther){
+            modifiers = 'disabled hidden';
+          } else if(toEdit){
+            modifiers = 'disabled';
+          }
+          break;
+        }
+        case ACTION_NEW_LINK: {
+          var enableStatusNew = (selection[0].status !== STATUS_NOT_HANDLED && selection[0].status !== STATUS_TERMINATED)|| selection[0].roadLinkSource === 3;
+          if(!roadIsUnknownOrOther) {
+            if(!enableStatusNew)
+              modifiers = 'disabled';
+          }
+          break;
+        }
+        case ACTION_TERMINATE: {
+          if(roadIsUnknownOrOther){
+            modifiers = 'disabled hidden';
+          } else {
+            var status = _.uniq(_.map(selection, function(l) { return l.status; }));
+            if (status.length == 1)
+              status = status[0];
+            else
+              status = 0;
+            if (status === STATUS_TERMINATED){
+              modifiers = 'selected';
+            } else if(selection[0].roadLinkSource === 3) {
+              modifiers = 'disabled';
+            }
+          }
+          break;
+        }
+        case ACTION_NUMBERING: {
+          if(roadIsUnknownOrOther){
+            modifiers = 'disabled hidden';
+          } else if(toEdit) {
+            modifiers = 'disabled';
+          } else if(selection[0].status === 1) {
+            modifiers = 'hidden';
+          }
+          break;
+        }
+        case ACTION_REVERT: {
+          if(roadIsUnknownOrOther){
+            modifiers = 'disabled hidden';
+          } else if(toEdit) {
+            modifiers = 'disabled';
+          }
+          break;
+        }
+        default: {
+          modifiers = 'selected disabled hidden';
+        }
+      }
+      return modifiers;
+    };
+
     var selectedProjectLinkTemplate = function(project, optionTags, selected) {
       var selection = selectedData(selected);
-      var status = _.uniq(_.map(selected, function(l) { return l.status; }));
-      if (status.length == 1)
-        status = status[0];
-      else
-        status = 0;
-      var enableStatusNew = (selected[0].status !== STATUS_NOT_HANDLED && selected[0].status !== STATUS_TERMINATED)|| selected[0].roadLinkSource === 3;
-      var terminationState = status == STATUS_TERMINATED ? ' selected' : selected[0].roadLinkSource === 3 ? 'disabled' : '';
-      var toEdit = selected[0].id !== 0;
-      var numberingVisibility = selected[0].status === 1;
       return _.template('' +
         '<header>' +
         titleWithProjectName(project.name) +
@@ -112,13 +175,13 @@
         '<label>Toimenpiteet,' + selection  + '</label>' +
         '<div class="input-unit-combination">' +
         '<select class="form-control" id="dropDown" size="1">'+
-        '<option selected disabled hidden>Valitse</option>'+
-        '<option value='+ACTION_UNCHANGED+'>Ennallaan</option>'+
-        '<option value='+ ACTION_TRANSFER + ' ' + (toEdit ? ' ' : ' disabled') + '>Siirto</option>'+
-        '<option value='+ ACTION_NEW_LINK + ' ' + (enableStatusNew ? ' ' : ' disabled')+'>Uusi</option>'+
-        '<option value= '+ ACTION_TERMINATE + ' ' + (terminationState) + '>Lakkautus</option>'+
-        '<option value='+ ACTION_NUMBERING + ' ' + (toEdit ? (numberingVisibility ? 'hidden' : ' ') : ' disabled') + '>Numerointi</option>'+
-        '<option value='+ ACTION_REVERT + ' ' + (toEdit ? ' ' : ' disabled') + '>Palautus aihioksi tai tieosoitteettomaksi</option>' +
+        '<option '+ defineOptionModifiers('', selected) +'>Valitse</option>'+
+        '<option value='+ACTION_UNCHANGED+' ' + defineOptionModifiers(ACTION_UNCHANGED, selected) + '>Ennallaan</option>'+
+        '<option value='+ ACTION_TRANSFER + ' ' + defineOptionModifiers(ACTION_TRANSFER, selected) + '>Siirto</option>'+
+        '<option value='+ ACTION_NEW_LINK + ' ' + defineOptionModifiers(ACTION_NEW_LINK, selected) +'>Uusi</option>'+
+        '<option value= '+ ACTION_TERMINATE + ' ' + defineOptionModifiers(ACTION_TERMINATE, selected) + '>Lakkautus</option>'+
+        '<option value='+ ACTION_NUMBERING + ' ' + defineOptionModifiers(ACTION_NUMBERING, selected) + '>Numerointi</option>'+
+        '<option value='+ ACTION_REVERT + ' ' + defineOptionModifiers(ACTION_REVERT, selected) + '>Palautus aihioksi tai tieosoitteettomaksi</option>' +
         '</select>'+
         '</div>'+
         newRoadAddressInfo() +
