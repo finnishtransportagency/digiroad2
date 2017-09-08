@@ -199,10 +199,10 @@
     };
 
 
-    this.saveProjectLinks = function(toBeUpdatedDirtyLinks, statusCode) {
+    this.saveProjectLinks = function(changedLinks, statusCode) {
       console.log("Save Project Links called");
       applicationModel.addSpinner();
-      var linkIds = _.unique(_.map(toBeUpdatedDirtyLinks,function (t){
+      var linkIds = _.unique(_.map(changedLinks,function (t){
         if(!_.isUndefined(t.linkId)){
           return t.linkId;
         } else return t;

@@ -465,7 +465,7 @@
           rootElement.html(emptyTemplate(currentProject.project));
         }
         else if( $('[id=dropDown] :selected').val() === ACTION_NUMBERING){
-            projectCollection.createProjectLinks(projectCollection.getTmpDirty());
+          projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), STATUS_NUMBERING);
             rootElement.html(emptyTemplate(currentProject.project));
         }
         else if( $('[id=dropDown] :selected').val() === ACTION_REVERT){
