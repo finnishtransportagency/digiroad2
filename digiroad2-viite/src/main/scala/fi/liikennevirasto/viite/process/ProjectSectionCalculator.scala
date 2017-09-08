@@ -230,6 +230,7 @@ object ProjectSectionCalculator {
       (currentSection.linkStatus, nextSection.map(_.linkStatus), startValue) match {
         case (LinkStatus.UnChanged, _, _) => Some(currentSection.endAddrM)
         case (_, Some(LinkStatus.UnChanged), _) => nextSection.map(_.startAddrM)
+        case (LinkStatus.NotHandled, _, Some(value)) => Some(value + currentSection.endAddrM - currentSection.startAddrM)
         case (LinkStatus.Transfer, _, Some(value)) => Some(value + currentSection.endAddrM - currentSection.startAddrM)
         case (_, _, _) => None
       }
