@@ -1491,4 +1491,55 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       allLinks.size should be (newLinks.size + transferLinks.size)
     }
   }
+
+  test("Terminate link and new link in the beginning of road part, transfer to the rest of road part") {
+    runWithRollback{
+      val reservedRoadPart1 = ReservedRoadPart(3192, 847, 6, 3192, Discontinuity.EndOfRoad, 12, None, None)
+      val rap = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.now(), DateTime.now(), "Some additional info", Seq(reservedRoadPart1), None , None)
+      val addressesOnPart = RoadAddressDAO.fetchByRoadPart(847, 6, false)
+      val l = addressesOnPart.map(address => {
+        toProjectLink(rap)(address)
+      })
+      when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(l.map(toRoadLink))
+      val (project, projectLinks, formLine, str) = projectService.createRoadLinkProject(rap)
+      str should be ("ok")
+
+      val linksBefore = ProjectDAO.fetchByProjectNewRoadPart(847, 6, project.id, false).groupBy(_.linkId).map(_._2.head).toList
+      val mappedGeoms2 = StaticTestData.mappedGeoms(l.map(_.linkId))
+
+      val geomToLinks:List[ProjectLink] = linksBefore.map{l =>
+        val geom = mappedGeoms2(l.linkId)
+        l.copy(geometry = geom,
+          geometryLength = GeometryUtils.geometryLength(geom),
+          endMValue = GeometryUtils.geometryLength(geom)
+        )
+      }
+      val geom = StaticTestData.mappedGeoms(Seq(3730091L)).head._2
+
+      val newLink = ProjectAddressLink(NewRoadAddress, 3730091L, geom, GeometryUtils.geometryLength(geom),
+        State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
+        RoadType.PublicRoad, "X", 749, None, None, Map.empty, 847, 6, 0L, 12L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom),
+        SideCode.Unknown, None, None, Anomaly.None, 0L, LinkStatus.New)
+
+      val linkToTerminate = geomToLinks.sortBy(_.startAddrMValue).head
+      when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(geomToLinks.map(toRoadLink))
+      projectService.updateProjectLinkStatus(project.id, Set(linkToTerminate.linkId), LinkStatus.Terminated, "Test User") should be (true)
+
+      projectService.addNewLinksToProject(Seq(newLink), project.id, 847, 6, 0L, 12L) should be (None)
+
+      val allLinks = ProjectDAO.getProjectLinks(project.id)
+      val newLinks = allLinks.filter(_.status == LinkStatus.New)
+      val terminatedLinks = allLinks.filter(_.status == LinkStatus.Terminated)
+      val transferLinks = allLinks.filter(al => {al.status != LinkStatus.New && al.status != LinkStatus.Terminated})
+      val floatingLength = linksBefore.filter(_.floating).map(fl => {fl.endAddrMValue - fl.startAddrMValue})
+
+      when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(allLinks.map(_.linkId).toSet,false, false)).thenReturn(geomToLinks.map(toRoadLink) ++ Seq(toRoadLink(newLink)))
+      projectService.updateProjectLinkStatus(project.id, transferLinks.map(_.linkId).toSet, LinkStatus.Transfer, "Test") should be (true)
+
+      newLinks.head.calibrationPoints._1 should not be (None)
+      transferLinks.head.calibrationPoints._1 should be (None)
+      terminatedLinks.head.calibrationPoints._1 should be (None)
+      allLinks.size should be (newLinks.size + transferLinks.size + terminatedLinks.size)
+    }
+  }
 }
