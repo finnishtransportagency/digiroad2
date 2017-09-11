@@ -23,6 +23,8 @@ object MassTransitStopOperations {
   val nameFiPublicId = "nimi_suomeksi"
   val nameSePublicId = "nimi_ruotsiksi"
 
+  val terminalChildrenPublicId = "liitetyt_pysakit"
+
   /**
     * Check for administrative class change: road link has differing owner other than Unknown.
     *
@@ -166,4 +168,9 @@ object MassTransitStopOperations {
     }
   }
 
+  def getTerminalMassTransitStopChildren(properties: Seq[SimpleProperty]) : Seq[Long] = {
+    properties.find(_.publicId == "liitetyt_pysakit").map(_.values).getOrElse(Seq()).map(_.propertyValue).foldLeft(Seq.empty[Long]) { (result, child) =>
+      result ++ Seq(child.toLong)
+    }
+  }
 }

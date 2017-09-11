@@ -236,7 +236,7 @@ trait MassTransitStopService extends PointAssetOperations {
     getByLiviId(liviId, municipalityValidation, persistedStopToMassTransitStopWithProperties(fetchRoadLink))
   }
 
-  private def persistedStopToMassTransitStopWithProperties(roadLinkByLinkId: Long => Option[RoadLinkLike])
+  protected def persistedStopToMassTransitStopWithProperties(roadLinkByLinkId: Long => Option[RoadLinkLike])
                                                           (persistedStop: PersistedMassTransitStop): (MassTransitStopWithProperties, Option[FloatingReason]) = {
     val (floating, floatingReason) = isFloating(persistedStop, roadLinkByLinkId(persistedStop.linkId))
     (MassTransitStopWithProperties(id = persistedStop.id, nationalId = persistedStop.nationalId, stopTypes = persistedStop.stopTypes,
@@ -583,7 +583,7 @@ trait MassTransitStopService extends PointAssetOperations {
     massTransitStopDao.deleteNumberPropertyValue(assetId, "kellumisen_syy")
   }
 
-  private def fetchRoadLink(linkId: Long): Option[RoadLinkLike] = {
+  protected def fetchRoadLink(linkId: Long): Option[RoadLinkLike] = {
     roadLinkService.getRoadLinkFromVVH(linkId, newTransaction = false)
   }
 
@@ -836,13 +836,26 @@ class TerminalMassTransitStopAssetService(_massTransitStopDao: MassTransitStopDa
     massTransitStopDao.insertAsset(assetId, nationalId, newAssetPoint.x, newAssetPoint.y, asset.bearing, username, municipality, floating)
     massTransitStopDao.insertAssetLink(assetId, lrmPositionId)
 
+    val children = MassTransitStopOperations.getTerminalMassTransitStopChildren(asset.properties)
 
-    //Check if liitetty terminaaliin property comes
-    //if so extract this property and insert in TerminalLink table associated to assetId
-    //If there isn't any value should throw a Bad Request because is a mandatory field
+    //TODO: fetch by Seq[Long] id to check if the children exist and if they are at 200m
 
+    massTransitStopDao.insertTerminalLink(assetId, children)
+    val properties = updatedProperties(asset.properties)
 
-    throw new NotImplementedError("Not implemented")
+    val defaultValues = massTransitStopDao.propertyDefaultValues(typeId).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
+    if (!MassTransitStopOperations.mixedStoptypes(properties.toSet))
+    {
+      massTransitStopDao.updateAssetProperties(assetId, properties ++ defaultValues.toSet)
+      updateAdministrativeClassValue(assetId, administrativeClass.getOrElse(throw new IllegalArgumentException("AdministrativeClass argument is mandatory")))
+
+      fetchPointAssets(massTransitStopDao.withId(assetId)).headOption
+        .map(withFloatingUpdate(persistedStopToMassTransitStopWithProperties(fetchRoadLink)))
+        .get
+    }
+    else
+      throw new IllegalArgumentException
+
   }
 
   override protected def updateExisting(queryFilter: String => String, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: Int => Unit): MassTransitStopWithProperties = {

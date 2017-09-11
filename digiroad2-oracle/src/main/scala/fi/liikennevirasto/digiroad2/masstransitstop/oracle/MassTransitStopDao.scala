@@ -330,6 +330,16 @@ class MassTransitStopDao {
       """.execute
   }
 
+  def insertTerminalLink(terminalAssetId: Long, massTransitStopAssetId: Seq[Long]): Unit = {
+
+    massTransitStopAssetId.foreach( id => {
+      sqlu"""
+           insert into TERMINAL_BUS_STOP_LINK (TERMINAL_ASSET_ID, BUS_STOP_ASSET_ID)
+           values($terminalAssetId, $id)
+      """.execute
+    })
+  }
+
   def insertAssetLink(assetId: Long, lrmPositionId: Long): Unit = {
 
     sqlu"""

@@ -14,6 +14,7 @@ object AssetPropertyConfiguration {
   val ValidToId = "viimeinen_voimassaolopaiva"
   val CreatedId = "lisatty_jarjestelmaan"
   val ModifiedId = "muokattu_viimeksi"
+  val TerminalChildrenId = "liitetyt_pysakit"
   val assetPropertyNamesByLanguage: Map[String, Map[String, String]] = Map(
     LangFi -> Map(ValidityDirectionId -> "Vaikutussuunta", ValidFromId -> "Ensimmäinen voimassaolopäivä", ValidToId -> "Viimeinen voimassaolopäivä", CreatedId -> "Lisätty järjestelmään", ModifiedId -> "Muokattu viimeksi"),
     LangSv -> Map()
@@ -31,7 +32,8 @@ object AssetPropertyConfiguration {
     ValidFromId -> CommonAssetProperty(ValidFromId, "valid_from", Date,  Property(0, ValidFromId, Date, values = Seq())),
     ValidToId -> CommonAssetProperty(ValidToId, "valid_to", Date, Property(0, ValidToId, Date, values = Seq())),
     CreatedId -> CommonAssetProperty(CreatedId, "", ReadOnlyText, Property(0, CreatedId, ReadOnlyText, values = Seq())),
-    ModifiedId -> CommonAssetProperty(ModifiedId, "",  ReadOnlyText, Property(0, ModifiedId, ReadOnlyText, values = Seq()))
+    ModifiedId -> CommonAssetProperty(ModifiedId, "",  ReadOnlyText, Property(0, ModifiedId, ReadOnlyText, values = Seq())),
+    TerminalChildrenId -> CommonAssetProperty(TerminalChildrenId, "",  ReadOnlyText, Property(0, TerminalChildrenId, ReadOnlyText, required = true, values = Seq()))
   )
 
   def assetRowToCommonProperties(row: MassTransitStopRow): Seq[Property] = {
