@@ -261,7 +261,7 @@
           }
         } else {
           elementType = property.propertyType === 'long_text' ?
-            $('<textarea />').addClass('form-control') : $('<input type="text"/>').addClass('form-control');
+            $('<textarea />').addClass('form-control') : $('<input type="text"/>').addClass('form-control').attr('id', property.publicId);
           element = elementType.bind('input', function(target){
             selectedMassTransitStopModel.setProperty(property.publicId, [{ propertyValue: target.currentTarget.value, propertyDisplayValue: target.currentTarget.value  }], property.propertyType, property.required);
           });
@@ -700,6 +700,10 @@
 
       eventbus.on('asset:moved', function() {
         streetViewHandler.update();
+      });
+
+      eventbus.on('textElementValue:set', function (newTextValue, textId) {
+        $('input[id='+textId+']').val(newTextValue);
       });
 
       eventbus.on('assetPropertyValue:changed', function (event) {

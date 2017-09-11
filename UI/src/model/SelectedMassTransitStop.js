@@ -448,6 +448,22 @@
       });
     }
 
+    function isRoadNameDif(newRoadName, publicId) {
+      var properties = getProperties();
+
+      return _.some(properties, function (property) {
+        return property.publicId === publicId &&
+            _.some(property.values, function (value) {
+              return value.propertyValue !== newRoadName;
+            });
+      });
+    }
+
+    function setRoadNameFields(newRoadLinkData, public_ids) {
+      eventbus.trigger('textElementValue:set', newRoadLinkData.roadNameFi, public_ids.roadNameFi);
+      eventbus.trigger('textElementValue:set', newRoadLinkData.roadNameSe, public_ids.roadNameSe);
+    }
+
     return {
       close: close,
       save: save,
@@ -478,7 +494,9 @@
       isAdministratorHSL: isAdministratorHSL,
       validateDirectionsForSave : validateDirectionsForSave,
       validateDirectionsForCreation: validateDirectionsForCreation,
-      getEndDate: getEndDate
+      getEndDate: getEndDate,
+      isRoadNameDif: isRoadNameDif,
+      setRoadNameFields: setRoadNameFields
     };
   };
 
