@@ -273,7 +273,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     });
     var assetIds = _.map(groupContainingSavedAsset, function(asset) { return asset.id.toString(); });
 
-    if (groupContainingSavedAsset.length > 1) {
+    if (groupContainingSavedAsset && groupContainingSavedAsset.length > 1) {
       massTransitStopsCollection.destroyGroup(assetIds);
     }
 
