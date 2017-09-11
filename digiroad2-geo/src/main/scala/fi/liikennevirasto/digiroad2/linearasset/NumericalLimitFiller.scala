@@ -256,7 +256,7 @@ object NumericalLimitFiller {
     }
 
     /**
-      * Creates Numerical limits from orphaned segments (segments originating from a speed limit but no longer connected
+      * Creates Numerical limits from orphaned segments (segments originating from a linear assets but no longer connected
       * to them)
       * @param origin Segments Lanes that was split by overwriting a segment piece(s)
       * @param orphans List of orphaned segment pieces
@@ -406,6 +406,68 @@ object NumericalLimitFiller {
     (linearSegments, changeSet.copy(droppedAssetIds = changeSet.droppedAssetIds ++ droppedAssetIds))
   }
 
+  private def latestTimestamp(linearAsset: PieceWiseLinearAsset, linearAssetO: Option[PieceWiseLinearAsset]) = {
+    linearAssetO match {
+      case Some(lao) => Math.max(linearAsset.vvhTimeStamp, lao.vvhTimeStamp)
+      case _ => linearAsset.vvhTimeStamp
+    }
+  }
+
+  private def modifiedSort(left: PieceWiseLinearAsset, right: PieceWiseLinearAsset) = {
+    val leftStamp = left.modifiedDateTime.orElse(left.createdDateTime)
+    val rightStamp = right.modifiedDateTime.orElse(right.createdDateTime)
+    (leftStamp, rightStamp) match {
+      case (Some(l), Some(r)) => l.isAfter(r)
+      case (None, Some(r)) => false
+      case (Some(l), None) => true
+      case (None, None) => true
+    }
+  }
+
+  /**
+    * After other change operations connect linear assets that have same values and side codes if they extend each other
+    * @param roadLink Road link we are working on
+    * @param linearAssets List of linear assets
+    * @param changeSet Changes done previously
+    * @return List of linear assets and a change set
+    */
+  private def fuse(roadLink: RoadLink, linearAssets: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
+    val sortedList = linearAssets.sortBy(_.startMeasure)
+    if (linearAssets.nonEmpty) {
+      val origin = sortedList.head
+      val target = sortedList.tail.find(sl => Math.abs(sl.startMeasure - origin.endMeasure) < 0.1 &&
+          sl.value == origin.value && sl.sideCode.equals(origin.sideCode))
+      if (target.nonEmpty) {
+        // pick id if it already has one regardless of which one is newer
+        val toBeFused = Seq(origin, target.get).sortWith(modifiedSort)
+        val newId = toBeFused.find(_.id > 0).map(_.id).getOrElse(0L)
+        val roadLength = GeometryUtils.geometryLength(roadLink.geometry)
+        val modified =  toBeFused.head.copy(id = newId, startMeasure = origin.startMeasure, endMeasure = target.get.endMeasure)
+        val expiredId = Set(origin.id, target.get.id) -- Set(modified.id, 0L) // never attempt to expire id zero
+        val mValueAdjustment = Seq(changeSet.adjustedMValues.find(a => a.assetId == modified.id) match {
+          case Some(adjustment) => adjustment.copy(startMeasure = modified.startMeasure, endMeasure = modified.endMeasure)
+          case _ => MValueAdjustment(modified.id, modified.linkId, modified.startMeasure, modified.endMeasure)
+        })
+        // Replace origin and target with this new item in the list and recursively call itself again
+        fuse(roadLink, Seq(modified) ++ sortedList.tail.filterNot(sl => Set(origin, target.get).contains(sl)),
+          changeSet.copy(expiredAssetIds = changeSet.expiredAssetIds ++ expiredId, adjustedMValues = changeSet.adjustedMValues.filter(a => a.assetId > 0 && a.assetId != modified.id) ++ mValueAdjustment))
+      } else {
+        val fused = fuse(roadLink, sortedList.tail, changeSet)
+        (Seq(origin) ++ fused._1, fused._2)
+      }
+    } else {
+      (linearAssets, changeSet)
+    }
+  }
+
+  private def adjustAssets(roadLink: RoadLink, linearAssets: Seq[PersistedLinearAsset], changeSet: ChangeSet): (Seq[PersistedLinearAsset], ChangeSet) = {
+    linearAssets.foldLeft((Seq[PersistedLinearAsset](), changeSet)){
+      case ((resultAssets, change),linearAsset) =>
+        val (asset, adjustmentsMValues) = adjustAsset(linearAsset, roadLink)
+        (resultAssets ++ Seq(asset), change.copy(adjustedMValues = change.adjustedMValues ++ adjustmentsMValues))
+    }
+  }
+
   def fillTopology(topology: Seq[RoadLink], linearAssets: Map[Long, Seq[PersistedLinearAsset]], typeId: Int): (Seq[PieceWiseLinearAsset], ChangeSet) = {
     val fillOperations: Seq[(RoadLink, Seq[PersistedLinearAsset], ChangeSet) => (Seq[PersistedLinearAsset], ChangeSet)] = Seq(
       expireSegmentsOutsideGeometry,
@@ -413,7 +475,8 @@ object NumericalLimitFiller {
       capSegmentsThatOverflowGeometry,
       expireOverlappingSegments,
       combine,
-      adjustSegments,
+      fuse,
+      adjustAssets,
       adjustSegmentSideCodes,
       generateTwoSidedNonExistingLinearAssets(typeId),
       generateOneSidedNonExistingLinearAssets(SideCode.TowardsDigitizing, typeId),
