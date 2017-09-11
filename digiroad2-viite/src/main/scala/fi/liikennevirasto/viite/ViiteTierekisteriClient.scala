@@ -61,14 +61,14 @@ case object ChangeInfoItemSerializer extends CustomSerializer[RoadAddressChangeI
 }, {
   case o: RoadAddressChangeInfo =>
     implicit val formats = DefaultFormats + ChangeInfoRoadPartsSerializer
-    val empty = RoadAddressChangeSection(None, None, None, None, None, None)
+    val emptySection = RoadAddressChangeSection(None, None, None, None, None, None)
     o.changeType match {
       case New =>
         JObject(
           JField("change_type", JInt(BigInt.apply(o.changeType.value))),
           JField("continuity", JInt(BigInt.apply(o.discontinuity.value))),
           JField("road_type", JInt(BigInt.apply(o.roadType.value))),
-          JField("source", Extraction.decompose(empty)),
+          JField("source", Extraction.decompose(emptySection)),
           JField("target", Extraction.decompose(o.target))
         )
       case Termination =>
@@ -77,7 +77,7 @@ case object ChangeInfoItemSerializer extends CustomSerializer[RoadAddressChangeI
           JField("continuity", JInt(BigInt.apply(o.discontinuity.value))),
           JField("road_type", JInt(BigInt.apply(o.roadType.value))),
           JField("source", Extraction.decompose(o.source)),
-          JField("target", Extraction.decompose(empty))
+          JField("target", Extraction.decompose(emptySection))
         )
       case _ =>
         JObject(
