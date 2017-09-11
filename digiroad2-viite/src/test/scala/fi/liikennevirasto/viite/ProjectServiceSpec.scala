@@ -1531,7 +1531,6 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       val newLinks = allLinks.filter(_.status == LinkStatus.New)
       val terminatedLinks = allLinks.filter(_.status == LinkStatus.Terminated)
       val transferLinks = allLinks.filter(al => {al.status != LinkStatus.New && al.status != LinkStatus.Terminated})
-      val floatingLength = linksBefore.filter(_.floating).map(fl => {fl.endAddrMValue - fl.startAddrMValue})
 
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(allLinks.map(_.linkId).toSet,false, false)).thenReturn(geomToLinks.map(toRoadLink) ++ Seq(toRoadLink(newLink)))
       projectService.updateProjectLinkStatus(project.id, transferLinks.map(_.linkId).toSet, LinkStatus.Transfer, "Test") should be (true)
