@@ -428,7 +428,7 @@ trait MassTransitStopService extends PointAssetOperations {
     assets.flatMap(a => enrichStopIfInTierekisteri(Some(a))._1)
   }
 
-  private def updateExisting(queryFilter: String => String, optionalPosition: Option[Position],
+  protected def updateExisting(queryFilter: String => String, optionalPosition: Option[Position],
                              properties: Set[SimpleProperty], username: String, municipalityValidation: Int => Unit): MassTransitStopWithProperties = {
     withDynTransaction {
 
@@ -626,7 +626,7 @@ trait MassTransitStopService extends PointAssetOperations {
     }
   }
 
-  private def create(asset: NewMassTransitStop, username: String, point: Point, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass], linkSource: LinkGeomSource): MassTransitStopWithProperties = {
+  protected def create(asset: NewMassTransitStop, username: String, point: Point, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass], linkSource: LinkGeomSource): MassTransitStopWithProperties = {
     val assetId = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     val nationalId = massTransitStopDao.getNationalBusStopId
@@ -825,4 +825,41 @@ trait MassTransitStopService extends PointAssetOperations {
       tierekisteriClient.updateMassTransitStop(updatedTierekisteriMassTransitStop, None, Some(username))
     }
   }
+}
+
+
+class TerminalMassTransitStopAssetService(_massTransitStopDao: MassTransitStopDao, _tierekisteriClient: TierekisteriMassTransitStopClient, _tierekisteriEnabled: Boolean, _roadLinkService: RoadLinkService, _eventbus: DigiroadEventBus) extends MassTransitStopService{
+
+  override val massTransitStopDao: MassTransitStopDao = _massTransitStopDao
+  override val tierekisteriClient: TierekisteriMassTransitStopClient = _tierekisteriClient
+  override val tierekisteriEnabled: Boolean = _tierekisteriEnabled
+  override val roadLinkService: RoadLinkService = _roadLinkService
+
+  override def eventbus: DigiroadEventBus = _eventbus
+
+
+  override protected def create(asset: NewMassTransitStop, username: String, point: Point, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass], linkSource: LinkGeomSource): MassTransitStopWithProperties = {
+    val assetId = Sequences.nextPrimaryKeySeqValue
+    val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
+    val nationalId = massTransitStopDao.getNationalBusStopId
+    val mValue = calculateLinearReferenceFromPoint(point, geometry)
+    val newAssetPoint = GeometryUtils.calculatePointFromLinearReference(geometry, mValue).getOrElse(Point(asset.lon, asset.lat))
+    val floating = !PointAssetOperations.coordinatesWithinThreshold(Some(point), GeometryUtils.calculatePointFromLinearReference(geometry, mValue))
+    massTransitStopDao.insertLrmPosition(lrmPositionId, mValue, asset.linkId, linkSource)
+    massTransitStopDao.insertAsset(assetId, nationalId, newAssetPoint.x, newAssetPoint.y, asset.bearing, username, municipality, floating)
+    massTransitStopDao.insertAssetLink(assetId, lrmPositionId)
+
+
+    //Check if liitetty terminaaliin property comes
+    //if so extract this property and insert in TerminalLink table associated to assetId
+    //If there isn't any value should throw a Bad Request because is a mandatory field
+
+
+    throw new NotImplementedError("Not implemented")
+  }
+
+  override protected def updateExisting(queryFilter: String => String, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: Int => Unit): MassTransitStopWithProperties = {
+    throw new NotImplementedError("Not implemented")
+  }
+
 }
