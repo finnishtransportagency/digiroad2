@@ -96,10 +96,9 @@ trait MassTransitStopService extends PointAssetOperations {
     persistedAsset.id
   }
 
-
   def getByNationalId[T <: FloatingAsset](nationalId: Long, municipalityValidation: Int => Unit, persistedStopToFloatingStop: PersistedMassTransitStop => (T, Option[FloatingReason])): Option[T] = {
     withDynTransaction {
-      val persistedStop = fetchPointAssets(withNationalId(nationalId)).headOption
+      val persistedStop = fetchPointAssets(massTransitStopDao.withNationalId(nationalId)).headOption
       persistedStop.map(_.municipalityCode).foreach(municipalityValidation)
       persistedStop.map(withFloatingUpdate(persistedStopToFloatingStop))
     }
@@ -107,24 +106,15 @@ trait MassTransitStopService extends PointAssetOperations {
 
   def getByLiviId[T <: FloatingAsset](liviId: String, municipalityValidation: Int => Unit, persistedStopToFloatingStop: PersistedMassTransitStop => (T, Option[FloatingReason])): Option[T] = {
     withDynTransaction {
-      val nationalId = getNationalIdByLiviId(liviId).headOption
+      val nationalId = massTransitStopDao.getNationalIdByLiviId(liviId).headOption
       nationalId match {
         case Some(id) =>
-          val persistedStop = fetchPointAssets(withNationalId(id)).headOption
+          val persistedStop = fetchPointAssets(massTransitStopDao.withNationalId(id)).headOption
           persistedStop.map(_.municipalityCode).foreach(municipalityValidation)
           persistedStop.map(withFloatingUpdate(persistedStopToFloatingStop))
         case None => None
       }
     }
-  }
-
-  private def getNationalIdByLiviId(liviId: String): Seq[Long] = {
-    sql"""
-      select a.external_id
-      from text_property_value tp
-      join asset a on a.id = tp.asset_id
-      where tp.property_id = (select p.id from property p where p.public_id = 'yllapitajan_koodi')
-      and tp.value_fi = $liviId""".as[Long].list
   }
 
   /**
@@ -152,7 +142,7 @@ trait MassTransitStopService extends PointAssetOperations {
   def getByNationalIdWithTRWarnings[T <: FloatingAsset](nationalId: Long, municipalityValidation: Int => Unit,
                                                         persistedStopToFloatingStop: PersistedMassTransitStop => (T, Option[FloatingReason])): (Option[T], Boolean) = {
     withDynTransaction {
-      val persistedStop = fetchPointAssets(withNationalId(nationalId)).headOption
+      val persistedStop = fetchPointAssets(massTransitStopDao.withNationalId(nationalId)).headOption
       persistedStop.map(_.municipalityCode).foreach(municipalityValidation)
       val (enrichedStop, trError) = enrichStopIfInTierekisteri(persistedStop)
       (enrichedStop.map(withFloatingUpdate(persistedStopToFloatingStop)), trError)
@@ -395,14 +385,6 @@ trait MassTransitStopService extends PointAssetOperations {
     }
   }
 
-  private def withNationalId(nationalId: Long)(query: String): String = {
-    query + s" where a.external_id = $nationalId"
-  }
-
-  private def withId(id: Long)(query: String): String = {
-    query + s" where a.id = $id"
-  }
-
   private def extractStopTypes(rows: Seq[MassTransitStopRow]): Seq[Int] = {
     rows
       .filter { row => row.property.publicId.equals(MassTransitStopOperations.MassTransitStopTypePublicId) }
@@ -575,7 +557,7 @@ trait MassTransitStopService extends PointAssetOperations {
       updateAssetGeometry(id, newPoint)
     }
     val tierekisteriLiviId = MassTransitStopOperations.liviIdValueOption(persistedStop.propertyData).map(_.propertyValue) // Using the saved LiviId if any
-    val modifiedAsset = fetchPointAssets(withId(id)).headOption // Reload from database
+    val modifiedAsset = fetchPointAssets(massTransitStopDao.withId(id)).headOption // Reload from database
     if(tierekisteriOperation == Operation.Expire || tierekisteriOperation == Operation.Remove){
       executeTierekisteriOperation(tierekisteriOperation, modifiedAsset.get, { _ => Some(roadLink) }, tierekisteriLiviId, Some(username))
       convertPersistedStopWithPropertiesAndPublishEvent(modifiedAsset, { _ => Some(roadLink) }, Operation.Noop, tierekisteriLiviId, Some(username))
@@ -586,7 +568,7 @@ trait MassTransitStopService extends PointAssetOperations {
 
   def updateExistingById(id: Long, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: Int => Unit): MassTransitStopWithProperties = {
     val props = updatedProperties(properties.toSeq)
-    updateExisting(withId(id), optionalPosition, props.toSet, username, municipalityValidation)
+    updateExisting(massTransitStopDao.withId(id), optionalPosition, props.toSet, username, municipalityValidation)
   }
 
   def updateAdministrativeClassValue(assetId: Long, administrativeClass: AdministrativeClass): Unit ={
@@ -668,7 +650,7 @@ trait MassTransitStopService extends PointAssetOperations {
   private def getPersistedStopWithPropertiesAndPublishEvent(assetId: Long, roadLinkByLinkId: Long => Option[RoadLinkLike],
                                                             operation: Operation, liviId: Option[String], username: Option[String]): MassTransitStopWithProperties = {
     // TODO: use already loaded asset
-    convertPersistedStopWithPropertiesAndPublishEvent(fetchPointAssets(withId(assetId)).headOption, roadLinkByLinkId, operation, liviId, username)
+    convertPersistedStopWithPropertiesAndPublishEvent(fetchPointAssets(massTransitStopDao.withId(assetId)).headOption, roadLinkByLinkId, operation, liviId, username)
   }
 
   private def convertPersistedStopWithPropertiesAndPublishEvent(persistedStop: Option[PersistedMassTransitStop], roadLinkByLinkId: Long => Option[RoadLinkLike],
@@ -699,7 +681,7 @@ trait MassTransitStopService extends PointAssetOperations {
   def deleteAllMassTransitStopData(assetId: Long) = {
     withDynTransaction {
 
-      val persistedStop = fetchPointAssets(withId(assetId)).headOption
+      val persistedStop = fetchPointAssets(massTransitStopDao.withId(assetId)).headOption
       val relevantToTR = MassTransitStopOperations.isStoredInTierekisteri(Some(persistedStop.get))
 
       massTransitStopDao.deleteAllMassTransitStopData(assetId)
@@ -814,7 +796,6 @@ trait MassTransitStopService extends PointAssetOperations {
     MassTransitStopOperations.getAdministrationClass(persistedAsset.propertyData)
   }
 
-
   //  @throws(classOf[TierekisteriClientException])
   private def expireMassTransitStop(username: String, persistedStop: PersistedMassTransitStop) = {
     val expireDate= new Date()
@@ -836,6 +817,12 @@ class TerminalMassTransitStopAssetService(_massTransitStopDao: MassTransitStopDa
   override val roadLinkService: RoadLinkService = _roadLinkService
 
   override def eventbus: DigiroadEventBus = _eventbus
+
+  override def getByBoundingBox(user: User, bounds: BoundingRectangle) : Seq[PersistedAsset] =
+  {
+     throw new NotImplementedError("Maybe one day we will implement it!!!")
+  }
+
 
 
   override protected def create(asset: NewMassTransitStop, username: String, point: Point, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass], linkSource: LinkGeomSource): MassTransitStopWithProperties = {
