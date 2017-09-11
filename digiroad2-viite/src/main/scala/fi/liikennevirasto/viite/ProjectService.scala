@@ -707,8 +707,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     withDynTransaction{
       val projectLinks = withGeometry(ProjectDAO.getProjectLinks(projectId))
       val (updatedProjectLinks, unchangedProjectLinks) = projectLinks.filterNot(pl=> pl.status == LinkStatus.Terminated ).partition(pl => linkIds.contains(pl.linkId))
-      if (linkStatus == LinkStatus.Terminated)
-        ProjectDAO.updateProjectLinksToDB(updatedProjectLinks.map(_.copy(status=linkStatus, calibrationPoints = (None, None))), userName)
+      if (linkStatus == LinkStatus.Terminated) {
+        //Fetching road addresses in order to obtain the original addressMValues, since we may not have those values on project_link table, after previous recalculations
+        val roadAddresses = RoadAddressDAO.fetchByLinkId(updatedProjectLinks.map(pl => pl.linkId).toSet)
+        val updatedPL = updatedProjectLinks.map(pl => {
+          val roadAddress = roadAddresses.find(_.linkId == pl.linkId)
+          pl.copy(startAddrMValue = roadAddress.get.startAddrMValue, endAddrMValue = roadAddress.get.endAddrMValue)
+        })
+        ProjectDAO.updateProjectLinksToDB(updatedPL.map(_.copy(status = linkStatus, calibrationPoints = (None, None))), userName)
+      }
       else
         ProjectDAO.updateProjectLinkStatus(updatedProjectLinks.map(_.id).toSet, linkStatus, userName)
       updatedProjectLinks.map(pl => pl.copy(status = linkStatus)).groupBy(
