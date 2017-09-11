@@ -35,8 +35,7 @@ case class ProjectRoadAddressInfo(projectId : Long, roadNumber: Long, roadPartNu
 
 case class RoadAddressProjectExtractor(id: Long, projectEly: Option[Long], status: Long, name: String, startDate: String,
                                        additionalInfo: String, roadPartList: List[ReservedRoadPart])
-
-case class RoadAddressProjectLinkUpdate(linkIds: Seq[Long], projectId: Long, newStatus: Int)
+case class RoadAddressProjectLinkUpdate(linkIds: Set[Long], projectId: Long, newStatus: Int, newRoadNumber: Int, newRoadPart : Int)
 class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
                val roadAddressService: RoadAddressService,
                val projectService: ProjectService,
@@ -360,8 +359,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val user = userProvider.getCurrentUser()
 
     val modification = parsedBody.extract[RoadAddressProjectLinkUpdate]
-    val updated = projectService.updateProjectLinkStatus(modification.projectId, modification.linkIds.toSet,
-      LinkStatus.apply(modification.newStatus), user.username)
+    val updated = projectService.updateProjectLinkStatus(modification.projectId, modification.linkIds,
+      LinkStatus.apply(modification.newStatus), modification.newRoadNumber, modification.newRoadPart, user.username)
     Map("projectId" -> modification.projectId, "publishable" -> (updated &&
       projectService.projectLinkPublishable(modification.projectId)))
   }

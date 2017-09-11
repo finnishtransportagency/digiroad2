@@ -449,6 +449,7 @@
 
       var saveChanges = function(){
         currentProject = projectCollection.getCurrentProject();
+        //TODO revert dirtyness if others than ACTION_TERMINATE is choosen, because now after Lakkautus, the link(s) stay always in black color
         if( $('[id=dropDown] :selected').val() == ACTION_TERMINATE) {
           projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), STATUS_TERMINATED);
           rootElement.html(emptyTemplate(currentProject.project));

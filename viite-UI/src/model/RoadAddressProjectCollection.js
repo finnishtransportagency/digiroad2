@@ -202,15 +202,19 @@
     this.saveProjectLinks = function(changedLinks, statusCode) {
       console.log("Save Project Links called");
       applicationModel.addSpinner();
+      //TODO in the future if we want to choose multiple actions foreach link (linkId, newStatus) combo should be used
       var linkIds = _.unique(_.map(changedLinks,function (t){
-        if(!_.isUndefined(t.linkId)){
-          return t.linkId;
+        if(!_.isUndefined(t.id)){
+          return t.id;
         } else return t;
       }));
 
       var projectId = projectinfo.id;
-
-      var data = {'linkIds': linkIds, 'projectId': projectId, 'newStatus': statusCode};
+      var data = {'linkIds': linkIds,
+        'projectId': projectId,
+        'newStatus': statusCode,
+        'newRoadNumber':Number($('#roadAddressProject').find('#tie')[0].value),
+        'newRoadPart':Number($('#roadAddressProject').find('#osa')[0].value)};
 
       if(!_.isEmpty(linkIds) && typeof projectId !== 'undefined' && projectId !== 0){
         backend.updateProjectLinks(data, function(errorObject) {
