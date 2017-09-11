@@ -31,7 +31,7 @@
     function toggle() {
       $('.container').append('<div class="modal-overlay confirm-modal"><div class="modal-dialog"></div></div>');
       $('.modal-dialog').append(projectList.toggle());
-      eventbus.trigger("roadAddressProject:stopAllInteractions");
+      eventbus.trigger("roadAddressProject:deactivateAllSelections");
       bindEvents();
       fetchProjects();
     }

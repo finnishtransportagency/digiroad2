@@ -824,7 +824,7 @@
       isNotEditingData = notEditingData;
     });
 
-    eventbus.on('roadAddressProject:stopAllInteractions',function(){
+    eventbus.on('roadAddressProject:deactivateAllSelections',function(){
       deactivateSelectInteractions(true);
     });
 
