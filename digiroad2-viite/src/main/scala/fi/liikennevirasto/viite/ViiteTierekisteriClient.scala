@@ -55,13 +55,13 @@ case object ChangeInfoItemSerializer extends CustomSerializer[RoadAddressChangeI
   case o: JObject =>
     implicit val formats = DefaultFormats + ChangeInfoRoadPartsSerializer
     RoadAddressChangeInfo(AddressChangeType.apply(o.values("change_type").asInstanceOf[BigInt].intValue),
-      (o \\ "source").extract[RoadAddressChangeRecipient], (o \\ "target").extract[RoadAddressChangeRecipient],
+      (o \\ "source").extract[RoadAddressChangeSection], (o \\ "target").extract[RoadAddressChangeSection],
       Discontinuity.apply(o.values("continuity").asInstanceOf[BigInt].intValue),
       RoadType.apply(o.values("road_type").asInstanceOf[BigInt].intValue))
 }, {
   case o: RoadAddressChangeInfo =>
     implicit val formats = DefaultFormats + ChangeInfoRoadPartsSerializer
-    val empty = RoadAddressChangeRecipient(None, None, None, None, None, None)
+    val empty = RoadAddressChangeSection(None, None, None, None, None, None)
     o.changeType match {
       case New =>
         JObject(
@@ -135,7 +135,7 @@ case object TRProjectStatusSerializer extends CustomSerializer[TRProjectStatus](
       JField("error_code", s.errorCode.map(l => JInt(BigInt.apply(l))).orNull))
 }))
 
-case object ChangeInfoRoadPartsSerializer extends CustomSerializer[RoadAddressChangeRecipient](format => ( {
+case object ChangeInfoRoadPartsSerializer extends CustomSerializer[RoadAddressChangeSection](format => ( {
   case o: JObject =>
     def jIntToLong(jInt: Any): Long = {
       jInt.asInstanceOf[BigInt].longValue()
@@ -143,10 +143,10 @@ case object ChangeInfoRoadPartsSerializer extends CustomSerializer[RoadAddressCh
     val map = o.values
     val (road, track, startPart, stm, endPart, enm) =
       (map.get("tie"), map.get("ajr"), map.get("aosa"), map.get("aet"), map.get("losa"), map.get("let"))
-    RoadAddressChangeRecipient(road.map(jIntToLong), track.map(jIntToLong), startPart.map(jIntToLong), endPart.map(jIntToLong),
+    RoadAddressChangeSection(road.map(jIntToLong), track.map(jIntToLong), startPart.map(jIntToLong), endPart.map(jIntToLong),
       stm.map(jIntToLong), enm.map(jIntToLong))
 }, {
-  case s: RoadAddressChangeRecipient =>
+  case s: RoadAddressChangeSection =>
     JObject(JField("tie", s.roadNumber.map(l => JInt(BigInt.apply(l))).orNull),
       JField("ajr", s.trackCode.map(l => JInt(BigInt.apply(l))).orNull),
       JField("aosa", s.startRoadPartNumber.map(l => JInt(BigInt.apply(l))).orNull),

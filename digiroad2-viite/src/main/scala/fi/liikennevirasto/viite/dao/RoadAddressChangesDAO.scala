@@ -45,14 +45,19 @@ object AddressChangeType {
 
 }
 
-case class RoadAddressChangeRecipient(roadNumber: Option[Long], trackCode: Option[Long], startRoadPartNumber: Option[Long],
-                                      endRoadPartNumber: Option[Long], startAddressM: Option[Long], endAddressM:Option[Long])
-case class RoadAddressChangeInfo(changeType: AddressChangeType, source: RoadAddressChangeRecipient, target: RoadAddressChangeRecipient, discontinuity: Discontinuity, roadType: RoadType)
-case class ProjectRoadAddressChange(projectId: Long, projectName: Option[String], ely: Long, user: String, changeDate: DateTime, changeInfo: RoadAddressChangeInfo, projectStartDate: DateTime)
-case class RoadAddressChangeRow(projectId:Long, projectName:Option[String], createdBy:String, createdDate:Option[DateTime], startDate:Option[DateTime], modifiedBy:String, modifiedDate:Option[DateTime], ely:Long, changeType :Int, sourceRoadNumber:Option[Long],
-                                sourceTrackCode :Option[Long],sourceStartRoadPartNumber:Option[Long], sourceEndRoadPartNumber:Option[Long], sourceStartAddressM:Option[Long], sourceEndAddressM:Option[Long],
-                                targetRoadNumber:Option[Long], targetTrackCode:Option[Long], targetStartRoadPartNumber:Option[Long], targetEndRoadPartNumber:Option[Long], targetStartAddressM:Option[Long],
-                                targetEndAddressM:Option[Long], discontinuity: Int, roadType: Int)
+case class RoadAddressChangeSection(roadNumber: Option[Long], trackCode: Option[Long], startRoadPartNumber: Option[Long],
+                                    endRoadPartNumber: Option[Long], startAddressM: Option[Long], endAddressM:Option[Long])
+case class RoadAddressChangeInfo(changeType: AddressChangeType, source: RoadAddressChangeSection, target: RoadAddressChangeSection,
+                                 discontinuity: Discontinuity, roadType: RoadType)
+case class ProjectRoadAddressChange(projectId: Long, projectName: Option[String], ely: Long, user: String, changeDate: DateTime,
+                                    changeInfo: RoadAddressChangeInfo, projectStartDate: DateTime)
+case class ChangeRow(projectId: Long, projectName: Option[String], createdBy: String, createdDate: Option[DateTime],
+                     startDate: Option[DateTime], modifiedBy: String, modifiedDate: Option[DateTime], ely: Long,
+                     changeType: Int, sourceRoadNumber: Option[Long], sourceTrackCode: Option[Long],
+                     sourceStartRoadPartNumber: Option[Long], sourceEndRoadPartNumber: Option[Long],
+                     sourceStartAddressM: Option[Long], sourceEndAddressM: Option[Long], targetRoadNumber: Option[Long],
+                     targetTrackCode: Option[Long], targetStartRoadPartNumber: Option[Long], targetEndRoadPartNumber: Option[Long],
+                     targetStartAddressM:Option[Long], targetEndAddressM:Option[Long], discontinuity: Int, roadType: Int)
 
 object RoadAddressChangesDAO {
 
@@ -62,7 +67,7 @@ object RoadAddressChangesDAO {
 
   implicit val getRoadType = GetResult[RoadType]( r=> RoadType.apply(r.nextInt()))
 
-  implicit val getRoadAddressChangeRow = new GetResult[RoadAddressChangeRow] {
+  implicit val getRoadAddressChangeRow = new GetResult[ChangeRow] {
     def apply(r: PositionedResult) = {
       val projectId = r.nextLong
       val projectName = r.nextStringOption
@@ -88,7 +93,7 @@ object RoadAddressChangesDAO {
       val discontinuity = r.nextInt
       val roadType = r.nextInt
 
-      RoadAddressChangeRow(projectId, projectName:Option[String], createdBy:String, createdDate:Option[DateTime], startDate:Option[DateTime], modifiedBy:String, modifiedDate:Option[DateTime], ely:Long, changeType :Int, sourceRoadNumber:Option[Long],
+      ChangeRow(projectId, projectName:Option[String], createdBy:String, createdDate:Option[DateTime], startDate:Option[DateTime], modifiedBy:String, modifiedDate:Option[DateTime], ely:Long, changeType :Int, sourceRoadNumber:Option[Long],
         sourceTrackCode :Option[Long],sourceStartRoadPartNumber:Option[Long], sourceEndRoadPartNumber:Option[Long], sourceStartAddressM:Option[Long], sourceEndAddressM:Option[Long],
         targetRoadNumber:Option[Long], targetTrackCode:Option[Long], targetStartRoadPartNumber:Option[Long], targetEndRoadPartNumber:Option[Long], targetStartAddressM:Option[Long],
         targetEndAddressM:Option[Long], discontinuity: Int, roadType: Int)
@@ -97,17 +102,20 @@ object RoadAddressChangesDAO {
 
   val logger = LoggerFactory.getLogger(getClass)
 
-  private def toRoadAddressChangeRecipient(row: RoadAddressChangeRow) = {
-    RoadAddressChangeRecipient(row.sourceRoadNumber, row.sourceTrackCode, row.sourceStartRoadPartNumber, row.sourceEndRoadPartNumber, row.sourceStartAddressM, row.sourceEndAddressM)
+  private def toRoadAddressChangeRecipient(row: ChangeRow) = {
+    RoadAddressChangeSection(row.targetRoadNumber, row.targetTrackCode, row.targetStartRoadPartNumber, row.targetEndRoadPartNumber, row.targetStartAddressM, row.targetEndAddressM)
   }
-  private def toRoadAddressChangeInfo(row: RoadAddressChangeRow) = {
-    val source = toRoadAddressChangeRecipient(row)
+  private def toRoadAddressChangeSource(row: ChangeRow) = {
+    RoadAddressChangeSection(row.sourceRoadNumber, row.sourceTrackCode, row.sourceStartRoadPartNumber, row.sourceEndRoadPartNumber, row.sourceStartAddressM, row.sourceEndAddressM)
+  }
+  private def toRoadAddressChangeInfo(row: ChangeRow) = {
+    val source = toRoadAddressChangeSource(row)
     val target = toRoadAddressChangeRecipient(row)
     RoadAddressChangeInfo(AddressChangeType.apply(row.changeType), source, target, Discontinuity.apply(row.discontinuity), RoadType.apply(row.roadType))
   }
 
   // TODO: cleanup after modification dates and modified by are populated correctly
-  private def getUserAndModDate(row: RoadAddressChangeRow): (String, DateTime) = {
+  private def getUserAndModDate(row: ChangeRow): (String, DateTime) = {
     val user = if (row.modifiedDate.isEmpty) {
       row.createdBy
     } else {
@@ -127,7 +135,7 @@ object RoadAddressChangesDAO {
   }
 
   private def queryList(query: String) = {
-    val resultList = Q.queryNA[RoadAddressChangeRow](query).list
+    val resultList = Q.queryNA[ChangeRow](query).list
     resultList.map { row => {
       val changeInfo = toRoadAddressChangeInfo(row)
       val (user, date) = getUserAndModDate(row)
