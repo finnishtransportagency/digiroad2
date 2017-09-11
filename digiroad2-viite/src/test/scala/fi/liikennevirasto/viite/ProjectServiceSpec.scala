@@ -304,10 +304,10 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       updatedProjectLinks.exists { x=> x.status==LinkStatus.Transfer } should be(true)
       updatedProjectLinks.exists { x=> x.status==LinkStatus.Terminated } should be(true)
       updatedProjectLinks.filter( pl => pl.linkId==5168540).head.calibrationPoints should be ((Some(CalibrationPoint(5168540,0.0,0)),None))
-      updatedProjectLinks.filter( pl => pl.linkId==6463199).head.calibrationPoints should be ((None,Some(CalibrationPoint(6463199,442.89,highestDistanceEnd-172))))  //we terminated link with distance 172
-      projectService.updateProjectLinkStatus(savedProject.id, Set(5168579), LinkStatus.Terminated, "-")
+      updatedProjectLinks.filter( pl => pl.linkId==6463199).head.calibrationPoints should be ((None,Some(CalibrationPoint(6463199,442.89,highestDistanceEnd-projectLinks.filter( pl => pl.linkId==5168510).head.endAddrMValue))))  //we terminated link with distance 172
+      projectService.updateProjectLinkStatus(savedProject.id, Set(5168540), LinkStatus.Terminated, "-")
       val updatedProjectLinks2=ProjectDAO.getProjectLinks(savedProject.id)
-      updatedProjectLinks2.filter( pl => pl.linkId==6463199).head.calibrationPoints should be (None,Some(CalibrationPoint(6463199,442.89,highestDistanceEnd-172-49))) // reduce 49
+      updatedProjectLinks2.filter( pl => pl.linkId==6463199).head.calibrationPoints should be (None,Some(CalibrationPoint(6463199,442.89,highestDistanceEnd-projectLinks.filter( pl => pl.linkId==5168510).head.endAddrMValue-updatedProjectLinks.filter( pl => pl.linkId==5168540).head.endAddrMValue)))
     }
     runWithRollback {
       projectService.getRoadAddressAllProjects()
@@ -349,9 +349,9 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       updatedProjectLinks.exists { x=> x.status==LinkStatus.Terminated } should be(true)
       updatedProjectLinks.filter( pl => pl.linkId==5168540).head.calibrationPoints should be ((Some(CalibrationPoint(5168540,0.0,0)),None))
       updatedProjectLinks.filter( pl => pl.linkId==6463199).head.calibrationPoints should be ((None,Some(CalibrationPoint(6463199,442.89,highestDistanceEnd-172))))  //we terminated link with distance 172
-      projectService.updateProjectLinkStatus(savedProject.id, Set(5168579), LinkStatus.Terminated, "-")
+      projectService.updateProjectLinkStatus(savedProject.id, Set(5168540), LinkStatus.Terminated, "-")
       val updatedProjectLinks2=ProjectDAO.getProjectLinks(savedProject.id)
-      updatedProjectLinks2.filter( pl => pl.linkId==6463199).head.calibrationPoints should be (None,Some(CalibrationPoint(6463199,442.89,highestDistanceEnd-172-49))) // reduce 49
+      updatedProjectLinks2.filter( pl => pl.linkId==6463199).head.calibrationPoints should be (None,Some(CalibrationPoint(6463199,442.89,highestDistanceEnd-projectLinks.filter( pl => pl.linkId==5168510).head.endAddrMValue-updatedProjectLinks.filter( pl => pl.linkId==5168540).head.endAddrMValue)))
     }
     runWithRollback {
       projectService.getRoadAddressAllProjects()
