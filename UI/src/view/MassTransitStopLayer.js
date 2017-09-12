@@ -319,7 +319,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     }
   };
 
-  var createNewAsset = function(coordinate, placement) {
+  var createNewAsset = function(coordinate, placement, stopType) {
     var default_asset_direction = {BothDirections: 2, TowardsDigitizing: 2, AgainstDigitizing: 3};
     var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), coordinate.x, coordinate.y);
     var projectionOnNearestLine = geometrycalculator.nearestPointOnLine(nearestLine, coordinate);
@@ -331,7 +331,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       lat: projectionOnNearestLine.y,
       roadLinkId: nearestLine.roadLinkId,
       linkId: nearestLine.linkId,
-      stopTypes: []
+      stopTypes: stopType === 'AddTerminal' ? ['6'] : []
     };
     data.group = createDummyGroup(projectionOnNearestLine.x, projectionOnNearestLine.y, data);
     var massTransitStop = new MassTransitStop(data);
@@ -523,7 +523,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   var handleMapClick = function(coordinates) {
     if ((selectedControl === 'Add' || selectedControl === 'AddTerminal') && zoomlevels.isInRoadLinkZoomLevel(map.getView().getZoom())) {
       selectControl.deactivate();
-      createNewAsset(coordinates, false);
+      createNewAsset(coordinates, false, selectedControl);
     } else {
       if (selectedMassTransitStopModel.isDirty()) {
         selectControl.deactivate();
