@@ -829,6 +829,14 @@
       isNotEditingData = notEditingData;
     });
 
+    eventbus.on('roadAddressProject:deactivateAllSelections',function(){
+      deactivateSelectInteractions(true);
+    });
+
+    eventbus.on('roadAddressProject:startAllInteractions',function(){
+      activateSelectInteractions(true);
+    });
+
     vectorLayer.setVisible(true);
     suravageRoadProjectLayer.setVisible(true);
     calibrationPointLayer.setVisible(true);

@@ -499,6 +499,7 @@
 
 
       var closeProjectMode = function(changeLayerMode) {
+        eventbus.trigger("roadAddressProject:startAllInteractions");
         applicationModel.setOpenProject(false);
         rootElement.find('header').toggle();
         rootElement.find('.wrapper').toggle();
