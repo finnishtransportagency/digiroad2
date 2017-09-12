@@ -443,6 +443,14 @@ object RoadAddressDAO {
     queryList(query)
   }
 
+  /**
+    * Check that the road part is available for the project at project date (and not modified to be changed
+    * later)
+    * @param roadNumber Road number to be reserved for project
+    * @param roadPartNumber Road part number to be reserved for project
+    * @param projectId Project that wants to reserve the road part (used to check the project date vs. address dates)
+    * @return True, if unavailable
+    */
   def isNotAvailableForProject(roadNumber: Long, roadPartNumber: Long, projectId: Long): Boolean = {
     val query =
       s"""
