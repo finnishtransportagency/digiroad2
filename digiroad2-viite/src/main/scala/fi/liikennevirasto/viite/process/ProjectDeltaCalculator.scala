@@ -94,7 +94,7 @@ object ProjectDeltaCalculator {
     ).toSeq
   }
 
-  def partition(roadAddresses: Seq[RoadAddress], projectLinks : Seq[ProjectLink]): (Seq[RoadAddressSection],Seq[RoadAddressSection]) = {
+  def partition(roadAddresses: Seq[RoadAddress], projectLinks: Seq[ProjectLink]): Map[RoadAddressSection, RoadAddressSection] = {
     val groupedAddresses = roadAddresses.sortBy(_.startAddrMValue).groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
     val addressesGroups = groupedAddresses.mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
       RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
@@ -107,7 +107,11 @@ object ProjectDeltaCalculator {
         pl.track, pl.startAddrMValue, pl.endAddrMValue, pl.discontinuity, pl.roadType)
     ).toSeq
 
-    (addressesGroups, projectLinksGroups)
+    addressesGroups.map { sec =>
+      val linkId = roadAddresses.find(ra => sec.includes(ra)).map(_.linkId).get
+      val targetGroup = projectLinksGroups.find(_.includes(projectLinks.find(_.linkId == linkId).get))
+      sec -> targetGroup.get
+    }.toMap
   }
 
 }
