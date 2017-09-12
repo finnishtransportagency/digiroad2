@@ -360,7 +360,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
     val modification = parsedBody.extract[RoadAddressProjectLinkUpdate]
     val updated = projectService.updateProjectLinkStatus(modification.projectId, modification.linkIds,
-      LinkStatus.apply(modification.newStatus), modification.newRoadNumber, modification.newRoadPart, user.username)
+      LinkStatus.apply(modification.newStatus), user.username, modification.newRoadNumber, modification.newRoadPart)
     Map("projectId" -> modification.projectId, "publishable" -> (updated &&
       projectService.projectLinkPublishable(modification.projectId)))
   }

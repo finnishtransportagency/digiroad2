@@ -204,8 +204,8 @@
       applicationModel.addSpinner();
       //TODO in the future if we want to choose multiple actions foreach link (linkId, newStatus) combo should be used
       var linkIds = _.unique(_.map(changedLinks,function (t){
-        if(!_.isUndefined(t.id)){
-          return t.id;
+        if(!_.isUndefined(t.linkId)){
+          return t.linkId;
         } else return t;
       }));
 

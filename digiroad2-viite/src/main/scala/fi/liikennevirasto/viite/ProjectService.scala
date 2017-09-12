@@ -401,6 +401,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  private def isRoadPartTransfer(projectLinks: Seq[ProjectLink], roadNumber: Long , newRoadPart: Long): Boolean = {
+    projectLinks.filter(_.roadPartNumber == newRoadPart).length == 0 && projectLinks.filter(_.roadNumber == roadNumber).length > 0
+  }
+
   private def createFormOfReservedLinksToSavedRoadParts(project: RoadAddressProject): (Seq[ProjectFormLine], Option[ProjectLink]) = {
     val createdAddresses = ProjectDAO.getProjectLinks(project.id)
     val groupedAddresses = createdAddresses.groupBy { address =>
@@ -692,25 +696,36 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * Update project links to given status and recalculate delta and change table
     * @param projectId Project's id
     * @param linkIds Set of link ids that are set to this status
-    * @param newStatus New status for given link ids
+    * @param linkStatus New status for given link ids
     * @param userName Username of the user that does this change
     * @return true, if the delta calculation is successful and change table has been updated.
     */
-  def updateProjectLinkStatus(projectId: Long, linkIds: Set[Long], newStatus: LinkStatus, newRoadNumber: Long, newRoadPart: Long, userName: String): Boolean = {
+  def updateProjectLinkStatus(projectId: Long, linkIds: Set[Long], linkStatus: LinkStatus, userName: String, newRoadNumber: Long = 0, newRoadPart: Long = 0): Boolean = {
     withDynTransaction{
       val projectLinks = withGeometry(ProjectDAO.getProjectLinks(projectId))
       val (updatedProjectLinks, unchangedProjectLinks) = projectLinks.filterNot(pl=> pl.status == LinkStatus.Terminated ).partition(pl => linkIds.contains(pl.linkId))
-      if (linkStatus == LinkStatus.Terminated) {
-        //Fetching road addresses in order to obtain the original addressMValues, since we may not have those values on project_link table, after previous recalculations
-        val roadAddresses = RoadAddressDAO.fetchByLinkId(updatedProjectLinks.map(pl => pl.linkId).toSet)
-        val updatedPL = updatedProjectLinks.map(pl => {
-          val roadAddress = roadAddresses.find(_.linkId == pl.linkId)
-          pl.copy(startAddrMValue = roadAddress.get.startAddrMValue, endAddrMValue = roadAddress.get.endAddrMValue)
-        })
-        ProjectDAO.updateProjectLinksToDB(updatedPL.map(_.copy(status = linkStatus, calibrationPoints = (None, None))), userName)
+      linkStatus match {
+        case LinkStatus.Terminated => {
+          //Fetching road addresses in order to obtain the original addressMValues, since we may not have those values on project_link table, after previous recalculations
+          val roadAddresses = RoadAddressDAO.fetchByLinkId(updatedProjectLinks.map(pl => pl.linkId).toSet)
+          val updatedPL = updatedProjectLinks.map(pl => {
+            val roadAddress = roadAddresses.find(_.linkId == pl.linkId)
+            pl.copy(startAddrMValue = roadAddress.get.startAddrMValue, endAddrMValue = roadAddress.get.endAddrMValue)
+          })
+          ProjectDAO.updateProjectLinksToDB(updatedPL.map(_.copy(status = linkStatus, calibrationPoints = (None, None))), userName)
+        }
+        case LinkStatus.Transfer => {
+          if (isRoadPartTransfer(updatedProjectLinks, newRoadNumber, newRoadPart)) {
+            val updated = updatedProjectLinks.map(updl => {
+              updl.copy(roadPartNumber = newRoadPart, status = linkStatus, calibrationPoints = (None, None))
+            })
+            ProjectDAO.updateProjectLinksToDB(updated.map(upd => upd), userName)
+          } else {
+            ProjectDAO.updateProjectLinkStatus(updatedProjectLinks.map(_.id).toSet, linkStatus, userName)
+          }
+        }
+        case _ => ProjectDAO.updateProjectLinkStatus(updatedProjectLinks.map(_.id).toSet, linkStatus, userName)
       }
-      else
-        ProjectDAO.updateProjectLinkStatus(updatedProjectLinks.map(_.id).toSet, linkStatus, userName)
       recalculateProjectLinks(projectId, userName)
     }
   }
