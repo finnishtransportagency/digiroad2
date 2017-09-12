@@ -295,7 +295,6 @@ Returns empty result as Json message, not as page not found
     if(properties.exists(prop => prop.publicId == "vaikutussuunta")) {
       val linkId = optionalLinkId.getOrElse(halt(BadRequest("Missing mandatory field linkId")))
       validateBusStopDirections(properties, linkId)
-      validateBusStopDirections(properties, linkId.get)
     }
     val position = (optionalLon, optionalLat, optionalLinkId) match {
       case (Some(lon), Some(lat), Some(linkId)) => Some(Position(lon, lat, linkId, bearing))
