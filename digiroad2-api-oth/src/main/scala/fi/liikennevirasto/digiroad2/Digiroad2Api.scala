@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication, UnauthenticatedException, UserNotFoundException}
 import fi.liikennevirasto.digiroad2.linearasset._
+import fi.liikennevirasto.digiroad2.masstransitstop.MassTransitStopOperations
 import fi.liikennevirasto.digiroad2.pointasset.oracle.IncomingServicePoint
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.digiroad2.util.RoadAddressException
@@ -348,17 +349,13 @@ Returns empty result as Json message, not as page not found
       halt(BadRequest("Invalid property values on: " + propertiesWithInvalidValues.map(_.publicId).mkString(", ")))
   }
 
-  private def validateBusStopDirections(properties: Seq[SimpleProperty], linkId: Long) = {
-    val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId)
-    val roadLinkDirection = roadLink.map(dir => dir.trafficDirection).headOption
-    val massDirection = massTransitStopService
+    private def validateBusStopDirections(properties: Seq[SimpleProperty], linkId: Long) = {
+      val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId)
 
-    val busStopDirection = properties.find(prop => prop.publicId == "vaikutussuunta")
-                                     .get.values
-                                     .map(dir => dir.propertyValue).head
-    if((roadLinkDirection.head.toString != SideCode.BothDirections.toString) && (roadLinkDirection.head.toString != SideCode.apply(busStopDirection.toInt).toString))
-      halt(NotAcceptable("Invalid Mass Transit Stop direction"))
-  }
+      if(!properties.exists(prop => prop.publicId == "vaikutussuunta") ||
+        !MassTransitStopOperations.isValidBusStopDirections(properties, linkId, roadLink))
+        halt(NotAcceptable("Invalid Mass Transit Stop direction"))
+    }
 
   post("/massTransitStops") {
     val positionParameters = massTransitStopPositionParameters(parsedBody)
