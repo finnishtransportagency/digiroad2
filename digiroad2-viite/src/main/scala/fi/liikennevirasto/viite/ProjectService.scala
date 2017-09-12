@@ -1,13 +1,16 @@
 package fi.liikennevirasto.viite
 
+import java.util.Date
+
+import fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.SuravageLinkInterface
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, SideCode}
+import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
-import fi.liikennevirasto.digiroad2.{DigiroadEventBus, GeometryUtils, RoadLinkService, VVHRoadlink}
+import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.viite.dao.ProjectState._
 import fi.liikennevirasto.viite.dao.{ProjectDAO, RoadAddressDAO, _}
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink, RoadAddressLinkLike}
@@ -16,6 +19,7 @@ import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
 
+import scala.collection.mutable.ListBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
@@ -843,7 +847,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def setProjectStatusToSend2TR(projectId:Long) =
+  def setProjectStatusToSend2TR(projectId:Long) :Unit=
   {
     ProjectDAO.updateProjectStatus(projectId, ProjectState.Sent2TR,"")
   }
@@ -861,14 +865,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  private def getProjectsPendingInTR() :Seq[Long]= {
+  private def getProjectsPendingInTR:Seq[Long]= {
     withDynSession {
       ProjectDAO.getProjectsWithWaitingTRStatus()
     }
   }
   def updateProjectsWaitingResponseFromTR(): Unit =
   {
-    val listOfPendingProjects=getProjectsPendingInTR()
+    val listOfPendingProjects=getProjectsPendingInTR
     for(project<-listOfPendingProjects)
     {
       try {
@@ -913,21 +917,92 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   def updateRoadAddressWithProject(newState: ProjectState, projectID: Long): Seq[Long] = {
     if(newState == Saved2TR){
-      val delta = ProjectDeltaCalculator.delta(projectID)
-      val changes = RoadAddressChangesDAO.fetchRoadAddressChanges(Set(projectID))
-      val newLinks = delta.terminations.map(terminated => terminated.copy(id = NewRoadAddress,
-        endDate = Some(changes.head.projectStartDate)))
-      //Expiring old addresses
-      roadAddressService.expireRoadAddresses(delta.terminations.map(_.id).toSet)
-      //Creating new addresses with the applicable changes
-      val newRoads = RoadAddressDAO.create(newLinks, None)
+      val project=ProjectDAO.getRoadAddressProjectById(projectID)
+      val projectStartDate= Some(project.head.startDate)
+      val projectLinks=ProjectDAO.getProjectLinks(projectID)
+      val floatingFalse=false
+      val historyFalse=false
+      if (projectLinks.isEmpty)
+        throw new RuntimeException(s"Tried to import empty project to road address table after TR response : $newState")
+
+      val roadAddressIDsToExpire= RoadAddressDAO.fetchByLinkId(projectLinks.map( x => x.linkId ).toSet,floatingFalse,historyFalse)
+      //Expiring all old addresses by their ID
+      roadAddressService.expireRoadAddresses(roadAddressIDsToExpire.map( x => x.id ).toSet)
+      //Create endDate rows for old data that is "valid" (row should be ignored after end_date)
+      RoadAddressDAO.create(roadAddressIDsToExpire.map(x=> x.copy(endDate =projectStartDate,id =NewRoadAddress)),Some(project.head.createdBy))
+      //Create new rows to RoadAddress table defining when new address is used
+      importProjectLinksToRoadAddressTable(projectLinks.map(x=>x.copy(endDate = None, startDate =projectStartDate)),roadAddressIDsToExpire,Some(project.head.createdBy))
       //Remove the ProjectLinks from PROJECT_LINK table?
-      //      val projectLinks = ProjectDAO.getProjectLinks(projectID, Some(LinkStatus.Terminated))
-      //      ProjectDAO.removeProjectLinksById(projectLinks.map(_.projectId).toSet)
-      newRoads
     } else {
       throw new RuntimeException(s"Project state not at Saved2TR: $newState")
     }
+  }
+
+  /** Inserts currently "valid" row rows to DB which contain old info of roadAddress and date when to switch to rows containing project info
+    *
+    * @param projectLinks Project links list that is used to determine when old roadaddress info ends
+    * @param projectStartDate Date when project starts, used to determine date when roadaddress info should be read from data added during project
+    * @return
+    */
+
+  private def endProjectAddressesFromRoadaddress(projectLinks:Seq[ProjectLink], projectStartDate:Option[DateTime]) :Seq[RoadAddress]={
+   val roadLinksToEndOnProjectStartDate= RoadAddressDAO.fetchByLinkId(projectLinks.map(x=>x.linkId).toSet,true,true)
+    RoadAddressDAO.create(roadLinksToEndOnProjectStartDate.map(x=> x.copy(endDate =projectStartDate,id =NewRoadAddress)),Some("why"))
+    roadLinksToEndOnProjectStartDate
+  }
+
+  private def importProjectLinksToRoadAddressTable(projectLinks:Seq[ProjectLink], existingRoadAddresses:Seq[RoadAddress],projectOwner:Option[String]) ={
+    val existingRoadAddressLinkIds= existingRoadAddresses.map( x=> x.linkId)
+    val existingProjectAddresses= projectLinks.filter( x=> existingRoadAddressLinkIds.contains(x.linkId))
+    val newProjectLinks= projectLinks.filterNot( x=> existingRoadAddressLinkIds.contains(x.linkId))
+    val suravageProjectLinks=newProjectLinks.filter(x=>x.linkGeomSource==LinkGeomSource.SuravageLinkInterface)
+    val newNonSuravageLinks=newProjectLinks.filterNot(x=>x.linkGeomSource==LinkGeomSource.SuravageLinkInterface)
+    //Fetch geometry for projectlinks from roadaddress table based on link-id
+    val roadLinksWithExistingGeometry= convertProjectLinksToRoadAddressesWithRoadAddressGeometry(existingProjectAddresses,existingRoadAddresses)
+    //Fetches  geometry for newlinks from VVH (excluding suravagelinks) and combines it with projectlinkdata
+    val newRoads=convertProjectLinkToRoadAddressWithVVHLinkGeometry(newNonSuravageLinks,roadLinkService.fetchVVHRoadlinks(newNonSuravageLinks.map( x=> x.linkId).toSet,frozenTimeVVHAPIServiceEnabled))
+    //Fetches geometry for suravagelinks from VVH suravageInterface and combines it to projectLinkdata
+    val newSuravageRoads=convertProjectLinkToRoadAddressWithVVHLinkGeometry(suravageProjectLinks,roadLinkService.fetchSuravageLinksByLinkIdsFromVVH(suravageProjectLinks.map( x=> x.linkId).toSet))
+
+    RoadAddressDAO.create(roadLinksWithExistingGeometry++newRoads++newSuravageRoads,projectOwner)
+  }
+
+
+  private def convertProjectLinkToRoadAddressWithVVHLinkGeometry(projectLinks: Seq[ProjectLink], vvhRoadLinks:  Seq[VVHRoadlink]) :Seq[RoadAddress]= {
+    if (vvhRoadLinks==null)
+      return setProjectLinksAsFloating(projectLinks)
+    var projectLinksWithVVHGeometry=new ListBuffer[RoadAddress]()
+    projectLinks.foreach( x=>{
+      val vvhLink= vvhRoadLinks.filter(r=>r.linkId==x.linkId)
+      if (vvhLink.nonEmpty)
+        projectLinksWithVVHGeometry+= RoadAddress(NewRoadAddress,x.roadNumber,x.roadPartNumber,x.roadType,x.track,x.discontinuity,x.startAddrMValue,x.endAddrMValue,x.startDate, x.endDate,x.modifiedBy,x.lrmPositionId,x.linkId,x.startMValue,x.endMValue,x.sideCode,22L,x.calibrationPoints,x.floating,vvhLink.head.geometry,x.linkGeomSource)
+      else //If link has vanished from DB we put link with no geometry to floating state
+        projectLinksWithVVHGeometry++setProjectLinksAsFloating(Seq(x))
+    })
+    projectLinksWithVVHGeometry
+  }
+
+  private def setProjectLinksAsFloating(projectLinks: Seq[ProjectLink]) :Seq[RoadAddress]={
+    var projectLinksWithVVHGeometry=new ListBuffer[RoadAddress]()
+    projectLinks.foreach( x=>{
+        projectLinksWithVVHGeometry+= RoadAddress(NewRoadAddress,x.roadNumber,x.roadPartNumber,x.roadType,x.track,x.discontinuity,x.startAddrMValue,x.endAddrMValue,x.startDate, x.endDate,x.modifiedBy,x.lrmPositionId,x.linkId,x.startMValue,x.endMValue,x.sideCode,22L,x.calibrationPoints,floating=true,Seq.empty[Point],x.linkGeomSource)
+    })
+    projectLinksWithVVHGeometry
+  }
+
+  private def convertProjectLinksToRoadAddressesWithRoadAddressGeometry(projectLinks:Seq[ProjectLink],roadaddresses:Seq[RoadAddress]) :Seq[RoadAddress] ={
+    var roadLinksWithExistingGeometry  = new ListBuffer[RoadAddress]()
+    projectLinks.foreach( x=>{
+      val roadAddressLinkF= roadaddresses.filter(r=> r.linkId==x.linkId)
+      if (roadAddressLinkF.nonEmpty){
+        val  roadAddressLink=roadAddressLinkF.head
+        roadLinksWithExistingGeometry+=RoadAddress(NewRoadAddress,x.roadNumber,x.roadPartNumber,x.roadType,x.track,x.discontinuity,x.startAddrMValue,x.endAddrMValue,x.startDate, x.endDate,x.modifiedBy,x.lrmPositionId,x.linkId,x.startMValue,x.endMValue,x.sideCode,22L,x.calibrationPoints,x.floating,roadAddressLink.geometry,x.linkGeomSource)
+      }
+      else
+        roadLinksWithExistingGeometry++setProjectLinksAsFloating(Seq(x))
+    }
+    )
+    roadLinksWithExistingGeometry
   }
 
   // TODO: remove when saving road type to project link table
@@ -959,8 +1034,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         logger.debug("ProjectId: " + currentProjectId + " Ely is \"" + currentProjectEly + "\" no need to update")
         None
       } else {
-        logger.info(s"The project can not handle multiple ELY areas (the project ELY range is ${currentProjectEly}). Recording was discarded.")
-        Some(s"Projektissa ei voi käsitellä useita ELY-alueita (projektin ELY-alue on ${currentProjectEly}). Tallennus hylättiin.")
+        logger.info(s"The project can not handle multiple ELY areas (the project ELY range is $currentProjectEly). Recording was discarded.")
+        Some(s"Projektissa ei voi käsitellä useita ELY-alueita (projektin ELY-alue on $currentProjectEly). Tallennus hylättiin.")
       }
     }
   }
