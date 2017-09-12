@@ -76,6 +76,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val id = Sequences.nextViitePrimaryKeySeqValue
     val project = roadAddressProject.copy(id = id)
     ProjectDAO.createRoadAddressProject(project)
+    project.reservedParts.filter(rp =>
+      checkAndReserve(project, rp))
     project
   }
 
@@ -131,15 +133,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     None
   }
 
-  private def getAddressPartInfo(roadnumber: Long, roadpart: Long): Option[ReservedRoadPart] = {
-    RoadAddressDAO.getRoadPartInfo(roadnumber, roadpart) match {
+  private def getAddressPartInfo(roadNumber: Long, roadPart: Long): Option[ReservedRoadPart] = {
+    RoadAddressDAO.getRoadPartInfo(roadNumber, roadPart) match {
       case Some((roadpartid, linkid, lenght, discontinuity, startDate, endDate)) => {
         val enrichment = false
         val roadLink = roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(Set(linkid), enrichment,frozenTimeVVHAPIServiceEnabled)
         val ely: Option[Long] = roadLink.headOption.map(rl => MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(rl.municipalityCode, 0))
         ely match {
           case Some(value) if value != 0 =>
-            Some(ReservedRoadPart(roadpartid, roadnumber, roadpart, lenght, Discontinuity.apply(discontinuity.toInt), value, startDate, endDate))
+            Some(ReservedRoadPart(roadpartid, roadNumber, roadPart, lenght, Discontinuity.apply(discontinuity.toInt), value, startDate, endDate))
           case _ => None
         }
       }
@@ -225,6 +227,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         val project = fetchProject(roadAddressProjectID)
         checkAvailable(newRoadNumber, newRoadPartNumber, project)
         checkNotReserved(newRoadNumber, newRoadPartNumber, project)
+        if (!project.reservedParts.exists(p => p.roadNumber == newRoadNumber && p.roadPartNumber == newRoadPartNumber))
+          ProjectDAO.reserveRoadPart(project.id, newRoadNumber, newRoadPartNumber, project.modifiedBy)
         val newProjectLinks = projectAddressLinks.map(projectLink => {
           projectLink.linkId ->
             newProjectLink(projectLink, project, randomSideCode)
@@ -406,20 +410,21 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val groupedAddresses = createdAddresses.groupBy { address =>
       (address.roadNumber, address.roadPartNumber)
     }.toSeq.sortBy(_._1._2)(Ordering[Long])
-    val reservedRoadPartsToUI = groupedAddresses.map(addressGroup => {
-      val lastAddress = addressGroup._2.last
-      val lastAddressM = lastAddress.endAddrMValue
-      val roadLink = if(lastAddress.linkGeomSource == LinkGeomSource.SuravageLinkInterface) {
-        roadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(Set(lastAddress.linkId), false)
-      } else {
-        roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(Set(addressGroup._2.last.linkId), false, frozenTimeVVHAPIServiceEnabled)
-      }
-      val addressFormLine = ProjectFormLine(lastAddress.linkId, project.id, addressGroup._1._1,
-        addressGroup._1._2, lastAddressM, MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(roadLink.head.municipalityCode, -1),
-        lastAddress.discontinuity.description)
-      //TODO:case class RoadAddressProjectFormLine(projectId: Long, roadNumber: Long, roadPartNumber: Long, RoadLength: Long, ely : Long, discontinuity: String)
-      addressFormLine
-    })
+    val reservedRoadPartsToUI = groupedAddresses.map{
+      case ((roadNumber, roadPartNumber), projectLinks) =>
+        val lastAddress = projectLinks.last
+        val lastAddressM = lastAddress.endAddrMValue
+        val roadLink = if(lastAddress.linkGeomSource == LinkGeomSource.SuravageLinkInterface) {
+          roadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(Set(lastAddress.linkId), false)
+        } else {
+          roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(Set(projectLinks.last.linkId), false, frozenTimeVVHAPIServiceEnabled)
+        }
+        val addressFormLine = ProjectFormLine(lastAddress.linkId, project.id, roadNumber, roadPartNumber,
+          lastAddressM, MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(roadLink.head.municipalityCode, -1),
+          lastAddress.discontinuity.description)
+        //TODO:case class RoadAddressProjectFormLine(projectId: Long, roadNumber: Long, roadPartNumber: Long, RoadLength: Long, ely : Long, discontinuity: String)
+        addressFormLine
+    }
     val addresses = createdAddresses.headOption
     (reservedRoadPartsToUI, addresses)
   }
@@ -486,6 +491,17 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  private def checkAndReserve(project: RoadAddressProject, reservedRoadPart: ReservedRoadPart) = {
+    ProjectDAO.roadPartReservedTo(reservedRoadPart.roadNumber, reservedRoadPart.roadPartNumber) match {
+      case Some(id) if id != project.id => false
+      case Some(id) if id == project.id => true
+      case _ => ProjectDAO.reserveRoadPart(project.id, reservedRoadPart.roadNumber, reservedRoadPart.roadPartNumber,
+        project.modifiedBy)
+        true
+    }
+  }
+
+  //TODO: fixme
   def getProjectsWithReservedRoadParts(projectId: Long): (RoadAddressProject, Seq[ProjectFormLine]) = {
     withDynTransaction {
       val project: RoadAddressProject = ProjectDAO.getRoadAddressProjects(projectId).head

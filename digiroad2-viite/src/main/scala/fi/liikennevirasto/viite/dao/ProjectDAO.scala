@@ -150,7 +150,7 @@ object ProjectDAO {
   def createRoadAddressProject(roadAddressProject: RoadAddressProject): Unit = {
     sqlu"""
          insert into project (id, state, name, ely, created_by, created_date, start_date ,modified_by, modified_date, add_info)
-         values (${roadAddressProject.id}, ${roadAddressProject.status.value}, ${roadAddressProject.name}, -1, ${roadAddressProject.createdBy}, sysdate ,${roadAddressProject.startDate}, '-' , sysdate, ${roadAddressProject.additionalInfo})
+         values (${roadAddressProject.id}, ${roadAddressProject.status.value}, ${roadAddressProject.name}, null, ${roadAddressProject.createdBy}, sysdate, ${roadAddressProject.startDate}, '-' , sysdate, ${roadAddressProject.additionalInfo})
          """.execute
   }
 
@@ -298,6 +298,16 @@ object ProjectDAO {
     }
   }
 
+  def roadPartReservedTo(roadNumber: Long, roadPart: Long): Option[Long] = {
+    val query =
+      s"""SELECT p.id
+              FROM project p
+              JOIN PROJECT_RESERVED_ROAD_PART l
+           ON l.PROJECT_ID =  p.ID
+           WHERE l.road_number=$roadNumber AND road_part_number=$roadPart"""
+    Q.queryNA[Long](query).firstOption
+  }
+
   def roadPartReservedByProject(roadNumber: Long, roadPart: Long, projectId: Long = 0, withProjectId: Boolean = false): Option[String] = {
     val filter = if(withProjectId && projectId !=0) s" AND project_id != ${projectId} " else ""
     val query =
@@ -379,6 +389,11 @@ object ProjectDAO {
          WHERE project_id = $projectId and road_number = $roadNumber and road_part_number = $roadPartNumber
        """
     Q.queryNA[Long](query).list
+  }
+
+  def reserveRoadPart(id: Long, roadNumber: Long, roadPartNumber: Long, user: String) = {
+    sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART(id, road_number, road_part_number, project_id, created_by)
+      SELECT viite_general_seq.nextval, $roadNumber, $roadPartNumber, $id, $user FROM DUAL""".execute
   }
 
   def projectLinksCountUnchanged (projectId : Long, roadNumber:Long, roadPartNumber: Long): Long = {
