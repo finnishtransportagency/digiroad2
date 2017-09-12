@@ -59,12 +59,36 @@ object ProjectSectionCalculator {
   }
 
   /**
+    * Recalculates the AddressMValues for project links. LinkStatus.New will get reassigned values and all
+    * others will have the transfer/unchanged rules applied for them.
+    * Terminated links will not be recalculated
+    * @param projectLinks List of addressed links in project
+    * @return Sequence of project links with address values and calibration points.
+    */
+  def assignMValues(projectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
+    val (terminated, others) = projectLinks.partition(_.status == LinkStatus.Terminated)
+    val (newLinks, nonTerminatedLinks) = others.partition(_.status == LinkStatus.New)
+    assignMValues(newLinks, nonTerminatedLinks) ++ terminated
+  }
+
+  /**
+    * Calculates the address M values for the given set of project links and assigns them calibration points where applicable
+    * Deprecated: use assignMValues(projectLinks: Seq[ProjectLink]) instead.
+    * @param newProjectLinks List of new addressed links in project
+    * @param oldProjectLinks Other links in project, used as a guidance
+    * @return Sequence of project links with address values and calibration points.
+    */
+  @Deprecated
+  def determineMValues(newProjectLinks: Seq[ProjectLink], oldProjectLinks: Seq [ProjectLink]): Seq[ProjectLink] = {
+    assignMValues(newProjectLinks, oldProjectLinks)
+  }
+  /**
     * Calculates the address M values for the given set of project links and assigns them calibration points where applicable
     * @param newProjectLinks List of new addressed links in project
     * @param oldProjectLinks Other links in project, used as a guidance
     * @return Sequence of project links with address values and calibration points.
     */
-  def determineMValues(newProjectLinks: Seq[ProjectLink], oldProjectLinks: Seq [ProjectLink]): Seq[ProjectLink] = {
+  private def assignMValues(newProjectLinks: Seq[ProjectLink], oldProjectLinks: Seq [ProjectLink]): Seq[ProjectLink] = {
     // Sort: smallest endAddrMValue is first but zero does not count.
     def addressSort(projectLink1: ProjectLink, projectLink2: ProjectLink): Boolean = {
       // Test if exactly one already was in project -> prefer them for starting points.
@@ -206,6 +230,7 @@ object ProjectSectionCalculator {
       (currentSection.linkStatus, nextSection.map(_.linkStatus), startValue) match {
         case (LinkStatus.UnChanged, _, _) => Some(currentSection.endAddrM)
         case (_, Some(LinkStatus.UnChanged), _) => nextSection.map(_.startAddrM)
+        case (LinkStatus.NotHandled, _, Some(value)) => Some(value + currentSection.endAddrM - currentSection.startAddrM)
         case (LinkStatus.Transfer, _, Some(value)) => Some(value + currentSection.endAddrM - currentSection.startAddrM)
         case (_, _, _) => None
       }
@@ -316,7 +341,7 @@ object ProjectSectionCalculator {
 }
 case class RoadAddressSection(roadNumber: Long, roadPartNumberStart: Long, roadPartNumberEnd: Long, track: Track,
                               startMAddr: Long, endMAddr: Long, discontinuity: Discontinuity, roadType: RoadType) {
-  def includes(ra: RoadAddress): Boolean = {
+  def includes(ra: BaseRoadAddress): Boolean = {
     // within the road number and parts included
     ra.roadNumber == roadNumber && ra.roadPartNumber >= roadPartNumberStart && ra.roadPartNumber <= roadPartNumberEnd &&
       // and on the same track
