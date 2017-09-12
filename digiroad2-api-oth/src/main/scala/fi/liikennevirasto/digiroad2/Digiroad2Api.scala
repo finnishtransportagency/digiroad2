@@ -289,9 +289,12 @@ Returns empty result as Json message, not as page not found
     }
     val (optionalLon, optionalLat, optionalLinkId, bearing) = massTransitStopPositionParameters(parsedBody)
     val properties = (parsedBody \ "properties").extractOpt[Seq[SimpleProperty]].getOrElse(Seq())
-    val linkId = (parsedBody \ "linkId").extractOpt[Long]
     validateBusStopMaintainerUser(properties)
+    val id = params("id").toLong
+
     if(properties.exists(prop => prop.publicId == "vaikutussuunta")) {
+      val linkId = optionalLinkId.getOrElse(halt(BadRequest("Missing mandatory field linkId")))
+      validateBusStopDirections(properties, linkId)
       validateBusStopDirections(properties, linkId.get)
     }
     val position = (optionalLon, optionalLat, optionalLinkId) match {
@@ -299,7 +302,6 @@ Returns empty result as Json message, not as page not found
       case _ => None
     }
     try {
-      val id = params("id").toLong
       massTransitStopService.updateExistingById(id, position, properties.toSet, userProvider.getCurrentUser().username, validateMunicipalityAuthorization(id))
     } catch {
       case e: NoSuchElementException => BadRequest("Target roadlink not found")
