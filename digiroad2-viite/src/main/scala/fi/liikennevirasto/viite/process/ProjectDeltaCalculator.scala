@@ -94,6 +94,13 @@ object ProjectDeltaCalculator {
     ).toSeq
   }
 
+  /**
+    * Partition the transfers into a mapping of RoadAddressSection -> RoadAddressSection.
+    * It is impossible to tell afterwards the exact mapping unless done at this point
+    * @param roadAddresses Road Addresses that were the source
+    * @param projectLinks Project Links that have the transfer address values
+    * @return Map between the sections old -> new
+    */
   def partition(roadAddresses: Seq[RoadAddress], projectLinks: Seq[ProjectLink]): Map[RoadAddressSection, RoadAddressSection] = {
     val groupedAddresses = roadAddresses.sortBy(_.startAddrMValue).groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
     val addressesGroups = groupedAddresses.mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
