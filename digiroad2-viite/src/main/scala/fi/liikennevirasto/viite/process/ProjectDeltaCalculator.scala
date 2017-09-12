@@ -21,8 +21,9 @@ object ProjectDeltaCalculator {
     val terminations = findTerminations(projectLinks, currentAddresses)
     val newCreations = findNewCreations(projectLinks)
     val unChanged = findUnChanged(projectLinks, currentAddresses)
+    val transferred = Transferred(findTransferredOld(projectLinks, currentAddresses), findTransferredNew(projectLinks))
 
-    Delta(project.startDate, terminations, newCreations, unChanged)
+    Delta(project.startDate, terminations, newCreations, unChanged, transferred)
   }
 
   private def findTerminations(projectLinks: Map[RoadPart, Seq[ProjectLink]], currentAddresses: Map[RoadPart, Seq[RoadAddress]]) = {
@@ -37,6 +38,16 @@ object ProjectDeltaCalculator {
     projectLinks.map{case (part, pLinks) => part -> (pLinks, currentAddresses.getOrElse(part, Seq()))}.mapValues{ case (pll, ra) =>
       ra.filter(r => pll.exists(pl => pl.linkId == r.linkId && pl.status == LinkStatus.UnChanged))
     }.values.flatten.toSeq
+  }
+
+  private def findTransferredOld(projectLinks: Map[RoadPart, Seq[ProjectLink]], currentAddresses: Map[RoadPart, Seq[RoadAddress]]) = {
+    projectLinks.map{case (part, pLinks) => part -> (pLinks, currentAddresses.getOrElse(part, Seq()))}.mapValues{ case (pll, ra) =>
+      ra.filter(r => pll.exists(pl => pl.linkId == r.linkId && pl.status == LinkStatus.Transfer))
+    }.values.flatten.toSeq
+  }
+
+  private def findTransferredNew(projectLinks: Map[RoadPart, Seq[ProjectLink]]) = {
+    projectLinks.values.flatten.filter(_.status == LinkStatus.Transfer).toSeq
   }
 
   private def findNewCreations(projectLinks: Map[RoadPart, Seq[ProjectLink]]) = {
@@ -83,8 +94,38 @@ object ProjectDeltaCalculator {
     ).toSeq
   }
 
+  /**
+    * Partition the transfers into a mapping of RoadAddressSection -> RoadAddressSection.
+    * It is impossible to tell afterwards the exact mapping unless done at this point
+    * @param roadAddresses Road Addresses that were the source
+    * @param projectLinks Project Links that have the transfer address values
+    * @return Map between the sections old -> new
+    */
+  def partition(roadAddresses: Seq[RoadAddress], projectLinks: Seq[ProjectLink]): Map[RoadAddressSection, RoadAddressSection] = {
+    val groupedAddresses = roadAddresses.sortBy(_.startAddrMValue).groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
+    val addressesGroups = groupedAddresses.mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
+      RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
+        ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType)
+    ).toSeq
+
+    val groupedProjectLinks = projectLinks.sortBy(_.startAddrMValue).groupBy(pl => (pl.roadNumber, pl.roadPartNumber, pl.track))
+    val projectLinksGroups = groupedProjectLinks.mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(pl =>
+      RoadAddressSection(pl.roadNumber, pl.roadPartNumber, pl.roadPartNumber,
+        pl.track, pl.startAddrMValue, pl.endAddrMValue, pl.discontinuity, pl.roadType)
+    ).toSeq
+
+    addressesGroups.map { sec =>
+      val linkId = roadAddresses.find(ra => sec.includes(ra)).map(_.linkId).get
+      val targetGroup = projectLinksGroups.find(_.includes(projectLinks.find(_.linkId == linkId).get))
+      sec -> targetGroup.get
+    }.toMap
+  }
+
 }
 
 case class Delta(startDate: DateTime, terminations: Seq[RoadAddress], newRoads: Seq[ProjectLink],
-                 unChanged: Seq[RoadAddress])
+                 unChanged: Seq[RoadAddress], transferred: Transferred)
+
 case class RoadPart(roadNumber: Long, roadPartNumber: Long)
+
+case class Transferred(oldLinks: Seq[RoadAddress], newLinks: Seq[ProjectLink])
