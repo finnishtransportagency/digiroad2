@@ -212,6 +212,25 @@ object RoadAddressChangesDAO {
       roadAddressChangePS.addBatch()
     }
 
+    def addToBatchWithOldValues(oldRoadAddressSection: RoadAddressSection, newRoadAddressSection:RoadAddressSection, ely: Long, addressChangeType: AddressChangeType, roadAddressChangePS: PreparedStatement) = {
+      roadAddressChangePS.setLong(1, projectId)
+      roadAddressChangePS.setLong(2, addressChangeType.value)
+      roadAddressChangePS.setLong(3, oldRoadAddressSection.roadNumber)
+      roadAddressChangePS.setLong(4, newRoadAddressSection.roadNumber)
+      roadAddressChangePS.setLong(5, oldRoadAddressSection.roadPartNumberStart)
+      roadAddressChangePS.setLong(6, newRoadAddressSection.roadPartNumberStart)
+      roadAddressChangePS.setLong(7, oldRoadAddressSection.track.value)
+      roadAddressChangePS.setLong(8, newRoadAddressSection.track.value)
+      roadAddressChangePS.setDouble(9, oldRoadAddressSection.startMAddr)
+      roadAddressChangePS.setDouble(10, newRoadAddressSection.startMAddr)
+      roadAddressChangePS.setDouble(11, oldRoadAddressSection.endMAddr)
+      roadAddressChangePS.setDouble(12, newRoadAddressSection.endMAddr)
+      roadAddressChangePS.setLong(13, newRoadAddressSection.discontinuity.value)
+      roadAddressChangePS.setLong(14, newRoadAddressSection.roadType.value)
+      roadAddressChangePS.setLong(15, ely)
+      roadAddressChangePS.addBatch()
+    }
+
     val startTime = System.currentTimeMillis()
     logger.info("Starting delta insertion in ChangeTable ")
     ProjectDAO.getRoadAddressProjectById(projectId) match {
@@ -230,6 +249,11 @@ object RoadAddressChangesDAO {
             }
             ProjectDeltaCalculator.partition(delta.unChanged).foreach { case (roadAddressSection) =>
               addToBatch(roadAddressSection, ely, AddressChangeType.Unchanged, roadAddressChangePS)
+            }
+            val partitionedValues = ProjectDeltaCalculator.partition(delta.transferred.oldLinks, delta.transferred.newLinks)
+
+             partitionedValues.foreach{ case(sourceSection, targetSection) =>
+              addToBatchWithOldValues(sourceSection, targetSection, ely, AddressChangeType.Transfer, roadAddressChangePS)
             }
             roadAddressChangePS.executeBatch()
             roadAddressChangePS.close()
