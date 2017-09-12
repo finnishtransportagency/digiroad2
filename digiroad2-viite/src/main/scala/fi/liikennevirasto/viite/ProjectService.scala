@@ -526,14 +526,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val changeProjectData = withDynTransaction {
       try {
         val delta = ProjectDeltaCalculator.delta(projectId)
-        //TODO would be better to give roadType to ProjectLinks table instead of calling vvh here
-        val linkIds = (delta.terminations ++ delta.unChanged ++ delta.transferredOld).map(_.linkId).toSet
-        val vvhRoadLinks = roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(linkIds, false, frozenTimeVVHAPIServiceEnabled)
-          .map(rl => rl.linkId -> rl).toMap
-        val filledTerminations = withFetchedDataFromVVH(delta.terminations, vvhRoadLinks, RoadType)
-        val filledUnChanged = withFetchedDataFromVVH(delta.unChanged, vvhRoadLinks, RoadType)
-        val filledTransferred = withFetchedDataFromVVH(delta.transferredOld, vvhRoadLinks, RoadType)
-        if (setProjectDeltaToDB(delta.copy(terminations = filledTerminations, unChanged = filledUnChanged, transferredOld = filledTransferred), projectId)) {
+        if (setProjectDeltaToDB(delta, projectId)) {
           val roadAddressChanges = RoadAddressChangesDAO.fetchRoadAddressChanges(Set(projectId))
           Some(ViiteTierekisteriClient.convertToChangeProject(roadAddressChanges))
         } else {
@@ -924,32 +917,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       roadAddressService.expireRoadAddresses(delta.terminations.map(_.id).toSet)
       //Creating new addresses with the applicable changes
       val newRoads = RoadAddressDAO.create(newLinks, None)
-      //Remove the ProjectLinks from PROJECT_LINK table?
-      //      val projectLinks = ProjectDAO.getProjectLinks(projectID, Some(LinkStatus.Terminated))
-      //      ProjectDAO.removeProjectLinksById(projectLinks.map(_.projectId).toSet)
       newRoads
     } else {
       throw new RuntimeException(s"Project state not at Saved2TR: $newState")
     }
-  }
-
-  // TODO: remove when saving road type to project link table
-  def withFetchedDataFromVVH(roadAdddresses: Seq[RoadAddress], roadLinks: Map[Long, RoadLink], Type: Object): Seq[RoadAddress] = {
-    val fetchedAddresses = Type match {
-      case RoadType =>
-        val withRoadType: Seq[RoadAddress] = roadAdddresses.par.map {
-          ra =>
-            roadLinks.get(ra.linkId) match {
-              case None => ra
-              case Some(rl) =>
-                val roadType = RoadAddressLinkBuilder.getRoadType(rl.administrativeClass, rl.linkType)
-                ra.copy(roadType = roadType)
-            }
-        }.toList
-        withRoadType
-      case _ => roadAdddresses
-    }
-    fetchedAddresses
   }
 
   def setProjectEly(currentProjectId:Long, newEly: Long): Option[String] = {
