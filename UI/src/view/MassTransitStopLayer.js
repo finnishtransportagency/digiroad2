@@ -521,7 +521,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   }
 
   var handleMapClick = function(coordinates) {
-    if (selectedControl === 'Add' && zoomlevels.isInRoadLinkZoomLevel(map.getView().getZoom())) {
+    if ((selectedControl === 'Add' || selectedControl === 'AddTerminal') && zoomlevels.isInRoadLinkZoomLevel(map.getView().getZoom())) {
       selectControl.deactivate();
       createNewAsset(coordinates, false);
     } else {

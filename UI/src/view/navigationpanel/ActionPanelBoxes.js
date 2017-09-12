@@ -4,6 +4,7 @@
   var addToolIcon = '<img src="images/add-tool.svg"/>';
   var rectangleToolIcon = '<img src="images/rectangle-tool.svg"/>';
   var polygonToolIcon = '<img src="images/polygon-tool.svg"/>';
+  var terminalToolIcon = '<img src="images/add-terminal-tool.svg"/>';
 
   var Tool = function(toolName, icon, selectedAssetModel) {
     var className = toolName.toLowerCase();
@@ -74,6 +75,7 @@
   ActionPanelBoxes.ToolSelection = ToolSelection;
   ActionPanelBoxes.rectangleToolIcon = rectangleToolIcon;
   ActionPanelBoxes.polygonToolIcon = polygonToolIcon;
+  ActionPanelBoxes.terminalToolIcon = terminalToolIcon;
 
   ActionPanelBoxes.SpeedLimitBox = function(selectedSpeedLimit) {
     var speedLimits = [120, 100, 90, 80, 70, 60, 50, 40, 30, 20];
@@ -393,7 +395,8 @@
   ActionPanelBoxes.AssetBox = function(selectedMassTransitStopModel) {
     var toolSelection = new ToolSelection([
       new Tool('Select', selectToolIcon, selectedMassTransitStopModel),
-      new Tool('Add', addToolIcon, selectedMassTransitStopModel)
+      new Tool('Add', addToolIcon, selectedMassTransitStopModel),
+      new Tool('AddTerminal', terminalToolIcon, selectedMassTransitStopModel)
     ]);
 
     var editModeToggle = new EditModeToggleButton(toolSelection);
