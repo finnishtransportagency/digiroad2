@@ -223,13 +223,6 @@
             applicationModel.removeSpinner();
           }
         });
-
-        backend.insertNewRoadLink(data, function(successObject) {
-          if (!successObject.success) {
-            new ModalConfirm(successObject.errormessage);
-            applicationModel.removeSpinner();
-          }
-        });
       } else {
         console.log(!_.isEmpty(linkIds));
         console.log(typeof projectId);
