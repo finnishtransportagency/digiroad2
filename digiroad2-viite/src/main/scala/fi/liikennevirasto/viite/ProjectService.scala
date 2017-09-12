@@ -261,8 +261,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         calibrationPoints = if (resetAddress) (None, None) else pl.calibrationPoints)
     }
   }
-  def revertLinks(projectId: Long, roadNumber: Long, roadPartNumber: Long, links: List[LinkToRevert]): Option[String] = {
 
+  def revertLinks(projectId: Long, roadNumber: Long, roadPartNumber: Long, links: List[LinkToRevert]): Option[String] = {
     try {
       withDynTransaction{
         links.foreach(link =>{
@@ -711,25 +711,31 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       }
       else
         ProjectDAO.updateProjectLinkStatus(updatedProjectLinks.map(_.id).toSet, linkStatus, userName)
-      updatedProjectLinks.map(pl => pl.copy(status = linkStatus)).groupBy(
-        pl => (pl.roadNumber, pl.roadPartNumber)).foreach {
-        grp =>
-          val (newLinks, preExistingLinks) = grp._2.filterNot(_.status == LinkStatus.Terminated).partition(_.status == LinkStatus.New)
-          val recalculatedProjectLinks = ProjectSectionCalculator.assignMValues(newLinks++preExistingLinks ++ unchangedProjectLinks.filter(
-            upl => upl.roadNumber == grp._1._1 && upl.roadPartNumber == grp._1._2 && upl.status != LinkStatus.Terminated))
-          ProjectDAO.updateProjectLinksToDB(recalculatedProjectLinks, userName)
-      }
-      try {
-        val delta = ProjectDeltaCalculator.delta(projectId)
-        setProjectDeltaToDB(delta, projectId)
-      } catch {
-        case ex: RoadAddressException =>
-          logger.info("Delta calculation not possible: " + ex.getMessage)
-          false
-      }
+      recalculateProjectLinks(projectId, userName)
     }
   }
 
+  private def recalculateProjectLinks(projectId: Long, userName: String) = {
+    val projectLinks = withGeometry(ProjectDAO.getProjectLinks(projectId))
+    projectLinks.groupBy(
+      pl => (pl.roadNumber, pl.roadPartNumber)).foreach {
+      grp =>
+        val recalculatedProjectLinks = ProjectSectionCalculator.assignMValues(projectLinks)
+        ProjectDAO.updateProjectLinksToDB(recalculatedProjectLinks, userName)
+    }
+    recalculateChangeTable(projectId)
+  }
+
+  private def recalculateChangeTable(projectId: Long): Boolean = {
+    try {
+      val delta = ProjectDeltaCalculator.delta(projectId)
+      setProjectDeltaToDB(delta, projectId)
+    } catch {
+      case ex: RoadAddressException =>
+        logger.info("Delta calculation not possible: " + ex.getMessage)
+        false
+    }
+  }
 
   def projectLinkPublishable(projectId: Long): Boolean = {
     // TODO: add other checks after transfers etc. are enabled
