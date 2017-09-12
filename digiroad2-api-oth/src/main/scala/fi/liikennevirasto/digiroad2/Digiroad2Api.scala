@@ -290,14 +290,9 @@ Returns empty result as Json message, not as page not found
     val properties = (parsedBody \ "properties").extractOpt[Seq[SimpleProperty]].getOrElse(Seq())
     validateBusStopMaintainerUser(properties)
     val id = params("id").toLong
-    val linkId = optionalLinkId match {
-      case Some(linkId) => linkId
-      case _ => massTransitStopService.getPersistedAssetsByIds(Set(id)).headOption match {
-        case Some(asset) => asset.linkId
-        case _ => halt(BadRequest("Mass Transit Stop not available"))
-      }
-    }
+
     if(properties.exists(prop => prop.publicId == "vaikutussuunta")) {
+      val linkId = optionalLinkId.getOrElse(halt(BadRequest("Missing mandatory field linkId")))
       validateBusStopDirections(properties, linkId)
     }
     val position = (optionalLon, optionalLat, optionalLinkId) match {
