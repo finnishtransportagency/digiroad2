@@ -1383,7 +1383,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       val transferLinks = allLinks.filter(_.status != LinkStatus.New)
 
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(allLinks.map(_.linkId).toSet,false, false)).thenReturn(geomToLinks.map(toRoadLink) ++ Seq(toRoadLink(newLink)))
-      projectService.updateProjectLinkStatus(project.id, transferLinks.map(_.linkId).toSet, LinkStatus.Transfer, "Test") should be (true)
+      projectService.updateProjectLinkStatus(project.id, transferLinks.map(_.linkId).toSet, LinkStatus.Transfer, "Test") should be (None)
       newLinks.head.calibrationPoints._1 should not be (None)
       transferLinks.head.calibrationPoints._1 should be (None)
       allLinks.size should be (newLinks.size + transferLinks.size)
@@ -1421,7 +1421,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
 
       val linkToTerminate = geomToLinks.sortBy(_.startAddrMValue).head
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(geomToLinks.map(toRoadLink))
-      projectService.updateProjectLinkStatus(project.id, Set(linkToTerminate.linkId), LinkStatus.Terminated, "Test User") should be (true)
+      projectService.updateProjectLinkStatus(project.id, Set(linkToTerminate.linkId), LinkStatus.Terminated, "Test User") should be (None)
 
       projectService.addNewLinksToProject(Seq(newLink), project.id, 847, 6, 0L, 12L) should be (None)
 
@@ -1431,7 +1431,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       val transferLinks = allLinks.filter(al => {al.status != LinkStatus.New && al.status != LinkStatus.Terminated})
 
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(allLinks.map(_.linkId).toSet,false, false)).thenReturn(geomToLinks.map(toRoadLink) ++ Seq(toRoadLink(newLink)))
-      projectService.updateProjectLinkStatus(project.id, transferLinks.map(_.linkId).toSet, LinkStatus.Transfer, "Test") should be (true)
+      projectService.updateProjectLinkStatus(project.id, transferLinks.map(_.linkId).toSet, LinkStatus.Transfer, "Test") should be (None)
 
       newLinks.head.calibrationPoints._1 should not be (None)
       transferLinks.head.calibrationPoints._1 should be (None)

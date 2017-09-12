@@ -26,8 +26,8 @@
         url: 'api/viite/project/roadlinks?zoom=' + zoom + '&bbox=' + boundingBox + '&id=' + projectId
       };
     });
-
-    this.updateProjectLinks = _.throttle(function(data, errorCallback) {
+    
+    this.updateProjectLinks = _.throttle(function(data, success, errorCallback) {
       $.ajax({
         contentType: "application/json",
         type: "PUT",
