@@ -217,12 +217,16 @@
         'newRoadPart':Number($('#roadAddressProject').find('#osa')[0].value)};
 
       if(!_.isEmpty(linkIds) && typeof projectId !== 'undefined' && projectId !== 0){
-        backend.updateProjectLinks(data, function(errorObject) {
-          if (!errorObject.success) {
-            new ModalConfirm(errorObject.errormessage);
+        backend.updateProjectLinks(data, function(successObject) {
+          if (!successObject.success) {
+            new ModalConfirm("Tämä tieosoite on jo käytössä.");
             applicationModel.removeSpinner();
+          } else {
+            publishableProject = successObject.publishable;
+            eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
           }
         });
+
       } else {
         console.log(!_.isEmpty(linkIds));
         console.log(typeof projectId);
