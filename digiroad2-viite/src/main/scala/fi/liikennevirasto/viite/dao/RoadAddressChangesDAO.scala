@@ -255,6 +255,13 @@ object RoadAddressChangesDAO {
              partitionedValues.foreach{ case(sourceSection, targetSection) =>
               addToBatchWithOldValues(sourceSection, targetSection, ely, AddressChangeType.Transfer, roadAddressChangePS)
             }
+
+            val partitionedReNumeration = ProjectDeltaCalculator.partition(delta.numbering.oldLinks, delta.numbering.newLinks)
+            partitionedReNumeration.foreach{
+              case (sourceSection, targetSection) => addToBatchWithOldValues(sourceSection, targetSection, ely, AddressChangeType.ReNumeration, roadAddressChangePS)
+            }
+
+
             roadAddressChangePS.executeBatch()
             roadAddressChangePS.close()
             val endTime = System.currentTimeMillis()
