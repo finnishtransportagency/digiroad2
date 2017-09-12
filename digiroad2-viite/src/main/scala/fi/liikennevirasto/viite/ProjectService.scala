@@ -701,20 +701,27 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * Update project links to given status and recalculate delta and change table
     * @param projectId Project's id
     * @param linkIds Set of link ids that are set to this status
-    * @param linkStatus New status for given link ids
+    * @param newStatus New status for given link ids
     * @param userName Username of the user that does this change
     * @return true, if the delta calculation is successful and change table has been updated.
     */
-  def updateProjectLinkStatus(projectId: Long, linkIds: Set[Long], linkStatus: LinkStatus, userName: String): Boolean = {
+  def updateProjectLinkStatus(projectId: Long, linkIds: Set[Long], newStatus: LinkStatus, newRoadNumber: Long, newRoadPart: Long, userName: String): Boolean = {
     withDynTransaction{
       val projectLinks = withGeometry(ProjectDAO.getProjectLinks(projectId))
       val (updatedProjectLinks, unchangedProjectLinks) = projectLinks.partition(pl => linkIds.contains(pl.linkId))
-      if (linkStatus == LinkStatus.Terminated)
-        ProjectDAO.updateProjectLinksToDB(updatedProjectLinks.map(_.copy(status=linkStatus, calibrationPoints = (None, None),
+      if (newStatus == LinkStatus.Terminated){
+        ProjectDAO.updateProjectLinksToDB(updatedProjectLinks.map(_.copy(status=newStatus, calibrationPoints = (None, None),
           startAddrMValue = 0L, endAddrMValue = 0L)), userName)
-      else
-        ProjectDAO.updateProjectLinkStatus(updatedProjectLinks.map(_.id).toSet, linkStatus, userName)
-      updatedProjectLinks.map(pl => pl.copy(status = linkStatus)).groupBy(
+      } else if(newStatus == LinkStatus.Numbering){
+        //TODO check roadaddress date for possible numbering change
+//
+//        ProjectDAO.updateProjectLinkNumbering(updatedProjectLinks.map(_.id).toSet, newRoadNumber, newRoadPart, userName)
+//        ProjectDAO.updateProjectLinkStatus(updatedProjectLinks.map(_.id).toSet, newStatus, userName)
+      } else {
+        ProjectDAO.updateProjectLinkStatus(updatedProjectLinks.map(_.id).toSet, newStatus, userName)
+      }
+
+      updatedProjectLinks.map(pl => pl.copy(status = newStatus)).groupBy(
         pl => (pl.roadNumber, pl.roadPartNumber)).foreach {
         grp =>
           val (newLinks, preExistingLinks) = grp._2.filterNot(_.status == LinkStatus.Terminated).partition(_.status == LinkStatus.New)

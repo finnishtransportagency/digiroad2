@@ -36,6 +36,7 @@ object AddressChangeType {
         to a new physical location at the same time)
    */
 
+  case object NotHandled extends AddressChangeType { def value = 0 }
   case object Unchanged extends AddressChangeType { def value = 1 }
   case object New extends AddressChangeType { def value = 2 }
   case object Transfer extends AddressChangeType { def value = 3 }

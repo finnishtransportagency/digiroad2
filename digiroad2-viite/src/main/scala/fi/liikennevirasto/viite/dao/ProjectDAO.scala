@@ -56,6 +56,7 @@ object LinkStatus {
   case object New extends LinkStatus {def value = 2}
   case object Transfer extends LinkStatus {def value = 3}
   case object UnChanged extends LinkStatus {def value = 4}
+  case object Numbering extends LinkStatus {def value = 5}
   case object Unknown extends LinkStatus {def value = 99}
   def apply(intValue: Int): LinkStatus = {
     values.find(_.value == intValue).getOrElse(Unknown)

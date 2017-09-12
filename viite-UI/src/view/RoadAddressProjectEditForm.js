@@ -179,7 +179,7 @@
         '<option value='+ACTION_UNCHANGED+' ' + defineOptionModifiers(ACTION_UNCHANGED, selected) + '>Ennallaan</option>'+
         '<option value='+ ACTION_TRANSFER + ' ' + defineOptionModifiers(ACTION_TRANSFER, selected) + '>Siirto</option>'+
         '<option value='+ ACTION_NEW_LINK + ' ' + defineOptionModifiers(ACTION_NEW_LINK, selected) +'>Uusi</option>'+
-        '<option value= '+ ACTION_TERMINATE + ' ' + defineOptionModifiers(ACTION_TERMINATE, selected) + '>Lakkautus</option>'+
+        '<option value='+ ACTION_TERMINATE + ' ' + defineOptionModifiers(ACTION_TERMINATE, selected) + '>Lakkautus</option>'+
         '<option value='+ ACTION_NUMBERING + ' ' + defineOptionModifiers(ACTION_NUMBERING, selected) + '>Numerointi</option>'+
         '<option value='+ ACTION_REVERT + ' ' + defineOptionModifiers(ACTION_REVERT, selected) + '>Palautus aihioksi tai tieosoitteettomaksi</option>' +
         '</select>'+
@@ -449,6 +449,7 @@
 
       var saveChanges = function(){
         currentProject = projectCollection.getCurrentProject();
+        //TODO revert dirtyness if others than ACTION_TERMINATE is choosen, because now after Lakkautus, the link(s) stay always in black color
         if( $('[id=dropDown] :selected').val() == ACTION_TERMINATE) {
           projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), STATUS_TERMINATED);
           rootElement.html(emptyTemplate(currentProject.project));
@@ -465,7 +466,7 @@
           rootElement.html(emptyTemplate(currentProject.project));
         }
         else if( $('[id=dropDown] :selected').val() === ACTION_NUMBERING){
-            projectCollection.createProjectLinks(projectCollection.getTmpDirty());
+          projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), STATUS_NUMBERING);
             rootElement.html(emptyTemplate(currentProject.project));
         }
         else if( $('[id=dropDown] :selected').val() === ACTION_REVERT){
@@ -544,7 +545,7 @@
             })));
             projectCollection.setTmpDirty(projectCollection.getDirty());
             rootElement.find('.new-road-address').prop("hidden", false);
-            rootElement.find('.changeDirectionDiv').prop("hidden", false);
+            rootElement.find('.changeDirectionDiv').prop("hidden", true);
             rootElement.find('.project-form button.update').prop("disabled", false);
         }
         else if(this.value == ACTION_REVERT) {
