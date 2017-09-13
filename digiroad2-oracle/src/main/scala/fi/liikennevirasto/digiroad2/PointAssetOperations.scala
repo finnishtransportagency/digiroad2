@@ -18,7 +18,7 @@ sealed trait FloatingReason {
 }
 
 object FloatingReason{
-  val values = Set(Unknown, RoadOwnerChanged, NoRoadLinkFound, DifferentMunicipalityCode, DistanceToRoad, NoReferencePointForMValue)
+  val values = Set(Unknown, RoadOwnerChanged, NoRoadLinkFound, DifferentMunicipalityCode, DistanceToRoad, NoReferencePointForMValue, TrafficDirectionNotMatch)
 
   def apply(intValue: Int): FloatingReason = {
     values.find(_.value == intValue).getOrElse(Unknown)

@@ -55,18 +55,6 @@ object MassTransitStopOperations {
       (false, None)
     else
       (true, Some(FloatingReason.TrafficDirectionNotMatch))
-
-    //val busStopDirection =  persistedAsset.propertyData.find(_.publicId == "vaikutussuunta")
-//
-//      if ( busStopDirection.get.values.toString == "" || busStopDirection.isEmpty) {
-//        (true, Some(FloatingReason.TrafficDirectionNotMatch))
-//
-//      } else
-//        roadLinkOption match {
-//        case Some(road) if road.trafficDirection != TrafficDirection.BothDirections && road.trafficDirection.toString != SideCode.apply(busStopDirection.get.values.map(_.propertyValue).head.toInt).toString
-//        =>  (true, Some(FloatingReason.TrafficDirectionNotMatch))
-//        case _ =>   (false, None)
-//      }
     }
 
 
