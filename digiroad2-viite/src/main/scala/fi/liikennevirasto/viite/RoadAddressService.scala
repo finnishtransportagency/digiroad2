@@ -741,8 +741,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
 
 case class RoadAddressMerge(merged: Set[Long], created: Seq[RoadAddress])
-case class ReservedRoadPart(roadPartId: Long, roadNumber: Long, roadPartNumber: Long, roadLength: Double,
-                            discontinuity: Discontinuity, ely: Long, startDate: Option[DateTime], endDate: Option[DateTime]) {
+case class ReservedRoadPart(id: Long, roadNumber: Long, roadPartNumber: Long, roadLength: Double, addressLength: Long,
+                            discontinuity: Discontinuity, ely: Long, startDate: Option[DateTime], endDate: Option[DateTime],
+                            startingLinkId: Option[Long] = None, isDirty: Boolean = false) {
   def holds(baseRoadAddress: BaseRoadAddress): Boolean = {
     roadNumber == baseRoadAddress.roadNumber && roadPartNumber == baseRoadAddress.roadPartNumber
   }

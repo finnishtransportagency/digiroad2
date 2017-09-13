@@ -77,8 +77,6 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
                        geometry: Seq[Point], projectId: Long, status: LinkStatus, roadType: RoadType, linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, geometryLength: Double)
   extends BaseRoadAddress with PolyLine
 
-case class ProjectFormLine(startingLinkId: Long, projectId: Long, roadNumber: Long, roadPartNumber: Long, roadLength: Long, ely : Long, discontinuity: String, isDirty: Boolean = false)
-
 object ProjectDAO {
 
   def create(roadAddresses: Seq[ProjectLink]): Seq[Long] = {
@@ -180,6 +178,7 @@ object ProjectDAO {
     }
   }
 
+  //TODO: support for bigger queries than 1000 link ids
   def getProjectLinksById(projectLinkId: Seq[Long]): List[ProjectLink] = {
     val query =
       s"""select PROJECT_LINK.ID, PROJECT_LINK.PROJECT_ID, PROJECT_LINK.TRACK_CODE, PROJECT_LINK.DISCONTINUITY_TYPE,
@@ -253,6 +252,22 @@ object ProjectDAO {
     sqlu"""
          update project set state = ${roadAddressProject.status.value}, name = ${roadAddressProject.name}, modified_by = '-' ,modified_date = sysdate, add_info=${roadAddressProject.additionalInfo}, start_date=${roadAddressProject.startDate} where id = ${roadAddressProject.id}
          """.execute
+    roadAddressProject.reservedParts.foreach(updateReservedRoadPart)
+  }
+
+  /**
+    * Removes reserved road part and deletes the project links associated to it
+    * @param projectId Project's id
+    * @param reservedRoadPart Road part to be removed
+    */
+  def removeReservedRoadPart(projectId: Long, reservedRoadPart: ReservedRoadPart): Unit = {
+    sqlu"""
+           DELETE FROM PROJECT_LINK WHERE PROJECT_ID = $projectId AND ROAD_NUMBER = ${reservedRoadPart.roadNumber}
+           AND ROAD_PART_NUMBER = ${reservedRoadPart.roadPartNumber}
+           """.execute
+    sqlu"""
+         DELETE FROM RESERVED_ROAD_PART WHERE id = ${reservedRoadPart.id}
+         """.execute
   }
 
   def getProjectEly(roadAddressProjectId: Long): Option[Long] = {
@@ -262,7 +277,7 @@ object ProjectDAO {
          FROM project
          WHERE id=$roadAddressProjectId
        """
-    Q.queryNA[Long](query).firstOption
+    Q.queryNA[Option[Long]](query).firstOption.getOrElse(None)
   }
 
   def updateProjectEly(roadAddressProjectId: Long, ely: Long): Unit = {
@@ -289,20 +304,24 @@ object ProjectDAO {
   }
 
   def fetchReservedRoadParts(projectId: Long): Seq[ReservedRoadPart] = {
-    Q.queryNA[(Long, Long, Long, Double, Int, Long)](
-      "SELECT id, road_number, road_part_number, road_length, discontinuity, ely FROM " +
-        s"PROJECT_RESERVED_ROAD_PART WHERE project_id = $projectId").list.map{
-      case (id, roadNumber, roadPartNumber, length, discontinuity, ely) => ReservedRoadPart(id, roadNumber, roadPartNumber,
-        length, Discontinuity.apply(discontinuity), ely, None, None)
+    Q.queryNA[(Long, Long, Long, Double, Long, Int, Long, Option[Long], Long)](
+      "SELECT id, road_number, road_part_number, road_length, discontinuity, ely, first_link_id, " +
+        s"(SELECT COUNT (*) FROM PROJECT_LINK pl WHERE PROJECT_ID = rp.project_id AND rp.road_number=pl.road_number " +
+        s"AND rp.road_part_number = pl.road_part_number AND pl.status = ${LinkStatus.NotHandled}) AS unhandled FROM " +
+        s"PROJECT_RESERVED_ROAD_PART rp WHERE project_id = $projectId ORDER BY road_number, road_part_number").list.map{
+      case (id, road, part, length, addrLength, discontinuity, ely, linkId, unhandled) => ReservedRoadPart(id, road, part,
+        length, addrLength, Discontinuity.apply(discontinuity), ely, None, None, linkId, unhandled > 0)
     }
   }
 
   def fetchReservedRoadPart(roadNumber: Long, roadPartNumber: Long): Option[ReservedRoadPart] = {
-    Q.queryNA[(Long, Long, Long, Double, Int, Long)](
-      "SELECT id, road_number, road_part_number, road_length, discontinuity, ely FROM " +
+    Q.queryNA[(Long, Long, Long, Double, Long, Int, Long, Option[Long], Long)](
+      "SELECT id, road_number, road_part_number, road_length, addrLength, discontinuity, ely, first_link_id, " +
+        s"(SELECT COUNT (*) FROM PROJECT_LINK pl WHERE PROJECT_ID = rp.project_id AND rp.road_number=pl.road_number " +
+        s"AND rp.road_part_number = pl.road_part_number AND pl.status = ${LinkStatus.NotHandled}) AS unhandled FROM " +
         s"PROJECT_RESERVED_ROAD_PART WHERE road_number = $roadNumber AND road_part_number=$roadPartNumber").firstOption.map{
-      case (id, road, part, length, discontinuity, ely) => ReservedRoadPart(id, road, part,
-        length, Discontinuity.apply(discontinuity), ely, None, None)
+      case (id, road, part, length, addrLength, discontinuity, ely, linkId, unhandled) => ReservedRoadPart(id, road, part,
+        length, addrLength, Discontinuity.apply(discontinuity), ely, None, None, linkId, unhandled > 0)
     }
   }
 
@@ -316,7 +335,8 @@ object ProjectDAO {
           FROM project $filter order by name, id """
     Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String, Option[String], Option[Long])](query).list.map {
       case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo, statusInfo, ely) =>
-        RoadAddressProject(id, ProjectState.apply(state), name, createdBy, createdDate, modifiedBy, start_date, modifiedDate, addInfo, List.empty[ReservedRoadPart], statusInfo, ely)
+        RoadAddressProject(id, ProjectState.apply(state), name, createdBy, createdDate, modifiedBy, start_date,
+          modifiedDate, addInfo, fetchReservedRoadParts(projectId), statusInfo, ely)
     }
   }
 
@@ -403,19 +423,26 @@ object ProjectDAO {
     Q.updateNA(updateProjectLink).execute
   }
 
-  def projectLinksExist(projectId: Long, roadNumber: Long, roadPartNumber: Long):List[Long] =
+  def fetchProjectLinkIds(projectId: Long, roadNumber: Long, roadPartNumber: Long, status: Option[LinkStatus] = None): List[Long] =
   {
+    val filter = status.map(s => s" AND status = ${s.value}").getOrElse("")
     val query= s"""
-         SELECT Project_id
-         FROM Project_link
-         WHERE project_id = $projectId and road_number = $roadNumber and road_part_number = $roadPartNumber
+         SELECT LRM_position.link_id
+         FROM Project_link JOIN LRM_Position on project_link.LRM_POSITION_ID = lrm_position.id
+         WHERE project_id = $projectId and road_number = $roadNumber and road_part_number = $roadPartNumber $filter
        """
     Q.queryNA[Long](query).list
   }
 
-  def reserveRoadPart(id: Long, roadNumber: Long, roadPartNumber: Long, user: String) = {
+  def reserveRoadPart(projectId: Long, roadNumber: Long, roadPartNumber: Long, user: String): Unit = {
     sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART(id, road_number, road_part_number, project_id, created_by)
-      SELECT viite_general_seq.nextval, $roadNumber, $roadPartNumber, $id, $user FROM DUAL""".execute
+      SELECT viite_general_seq.nextval, $roadNumber, $roadPartNumber, $projectId, $user FROM DUAL""".execute
+  }
+
+  def updateReservedRoadPart(reserved: ReservedRoadPart): Unit = {
+    sqlu"""UPDATE PROJECT_RESERVED_ROAD_PART SET ROAD_LENGTH = ${reserved.roadLength},
+            ADDRESS_LENGTH = ${reserved.addressLength}, discontinuity = ${reserved.discontinuity.value},
+            ely = ${reserved.ely} WHERE id = ${reserved.id}""".execute
   }
 
   def projectLinksCountUnchanged (projectId : Long, roadNumber:Long, roadPartNumber: Long): Long = {
@@ -440,6 +467,29 @@ object ProjectDAO {
          WHERE state=${ProjectState.Sent2TR.value} OR state=${ProjectState.TRProcessing.value}
        """
     Q.queryNA[Long](query).list
+  }
+
+  def fetchFirstLink(projectId: Long, roadNumber: Long, roadPartNumber: Long): Option[ProjectLink] = {
+    val query = s"""select PROJECT_LINK.ID, PROJECT_LINK.PROJECT_ID, PROJECT_LINK.TRACK_CODE, PROJECT_LINK.DISCONTINUITY_TYPE,
+    PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.START_ADDR_M, PROJECT_LINK.END_ADDR_M,
+    LRM_POSITION.START_MEASURE, LRM_POSITION.END_MEASURE, LRM_POSITION.SIDE_CODE, PROJECT_LINK.LRM_POSITION_ID,
+    PROJECT_LINK.CREATED_BY, PROJECT_LINK.MODIFIED_BY, lrm_position.link_id,
+    (LRM_POSITION.END_MEASURE - LRM_POSITION.START_MEASURE) as length, PROJECT_LINK.CALIBRATION_POINTS, PROJECT_LINK.STATUS,
+    PROJECT_LINK.ROAD_TYPE, LRM_POSITION.LINK_SOURCE as source
+    from PROJECT_LINK join LRM_POSITION
+      on LRM_POSITION.ID = PROJECT_LINK.LRM_POSITION_ID
+    where PROJECT_LINK.PROJECT_ID = $projectId AND ROAD_PART_NUMBER=$roadPartNumber AND ROAD_NUMBER=$roadNumber AND
+    ROWNUM < 2
+    order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.START_ADDR_M, PROJECT_LINK.TRACK_CODE"""
+    Q.queryNA[(Long, Long, Int, Int, Long, Long, Long, Long, Double, Double, Long, Long, String, Option[String],
+      Long, Double, Long, Int, Int, Int)](query).firstOption.map {
+      case (projectLinkId, projId, trackCode, discontinuityType, road, roadPart, startAddrM, endAddrM,
+      startMValue, endMValue, sideCode , lrmPositionId, createdBy, modifiedBy, linkId, length, calibrationPoints, status, roadType, source) =>
+        ProjectLink(projectLinkId, road, roadPart, Track.apply(trackCode), Discontinuity.apply(discontinuityType),
+          startAddrM, endAddrM, None, None, modifiedBy, lrmPositionId, linkId, startMValue, endMValue, SideCode.apply(sideCode.toInt),
+          CalibrationPointsUtils.calibrations(CalibrationCode.apply(calibrationPoints.toInt),linkId,startMValue,endMValue,startAddrM,endAddrM, SideCode.apply(sideCode.toInt)),
+          false, Seq.empty[Point], projId, LinkStatus.apply(status), RoadType.apply(roadType),LinkGeomSource.apply(source),length)
+    }
   }
 
   private def deleteProjectLinks(ids: Set[Long]): Int = {

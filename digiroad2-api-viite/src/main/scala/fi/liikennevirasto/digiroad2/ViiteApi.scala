@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
-import fi.liikennevirasto.digiroad2.util.RoadAddressException
+import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReservedException}
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model._
 import fi.liikennevirasto.viite.{LinkToRevert, ProjectService, ReservedRoadPart, RoadAddressService}
@@ -34,7 +34,8 @@ case class RevertRoadLinksExtractor(projectId: Long, roadNumber: Long, roadPartN
 case class ProjectRoadAddressInfo(projectId : Long, roadNumber: Long, roadPartNumber :Long)
 
 case class RoadAddressProjectExtractor(id: Long, projectEly: Option[Long], status: Long, name: String, startDate: String,
-                                       additionalInfo: String, roadPartList: List[ReservedRoadPart])
+                                       additionalInfo: String, roadPartList: List[RoadPartExtractor])
+case class RoadPartExtractor(roadNumber: Long, roadPartNumber: Long)
 
 case class RoadAddressProjectLinkUpdate(linkIds: Seq[Long], projectId: Long, newStatus: Int)
 class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
@@ -208,9 +209,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val user = userProvider.getCurrentUser()
     val roadAddressProject = ProjectConverter.toRoadAddressProject(project, user)
     try {
-      val (projectSaved, addr, info, success) = projectService.createRoadLinkProject(roadAddressProject)
-      Map("project" -> roadAddressProjectToApi(projectSaved), "projectAddresses" -> addr, "formInfo" -> info,
-        "success" -> success)
+      val projectSaved = projectService.createRoadLinkProject(roadAddressProject)
+      val fetched = projectService.getRoadAddressSingleProject(projectSaved.id).get
+      Map("project" -> roadAddressProjectToApi(fetched), "projectAddresses" -> null, "formInfo" ->
+        fetched.reservedParts.map(reservedRoadPartToApi), "success" -> true)
     } catch {
       case ex: IllegalArgumentException => BadRequest(s"A project with id ${project.id} has already been created")
     }
@@ -226,18 +228,19 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val project = parsedBody.extract[RoadAddressProjectExtractor]
     val user = userProvider.getCurrentUser()
     val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
-    val roadAddressProject= RoadAddressProject(project.id, ProjectState.apply(project.status), project.name,
-      user.username, DateTime.now(), "-", formatter.parseDateTime(project.startDate), DateTime.now(),
-      project.additionalInfo, project.roadPartList.distinct, None, project.projectEly)
+    val roadAddressProject= ProjectConverter.toRoadAddressProject(project, user)
     try {
-      val (projectSaved, addr, _, success) = projectService.saveRoadLinkProject(roadAddressProject)
-      val info = projectService.getProjectsWithReservedRoadParts(projectSaved.id)._2
-      val trPreview= projectService.getChangeProject(project.id)
-      Map("project" -> roadAddressProjectToApi(projectSaved), "projectAddresses" -> addr, "formInfo" -> info, "trPreview"->trPreview,
-        "success" -> success)
+      val projectSaved = projectService.saveProject(roadAddressProject)
+      val changeTable = projectService.getChangeProject(project.id)
+      val firstLink = projectService.getFirstProjectLink(projectSaved)
+      Map("project" -> roadAddressProjectToApi(projectSaved), "projectAddresses" -> firstLink, "formInfo" ->
+        projectSaved.reservedParts.map(reservedRoadPartToApi), "trPreview"->changeTable,
+        "success" -> true)
     } catch {
       case ex: IllegalArgumentException =>
         NotFound(s"Project id ${project.id} not found")
+      case ex: RoadPartReservedException =>
+        Conflict(s"Road part unreservable")
     }
   }
 
@@ -266,11 +269,11 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   get("/roadlinks/roadaddress/project/all/projectId/:id") {
     val projectId = params("id").toLong
-    val (projects, projectLinks) = projectService.getProjectsWithReservedRoadParts(projectId)
-    val project = Seq(projects).map(roadAddressProjectToApi)
-    val projectsWithLinkId = project.head
-    val publishable = projectService.projectLinkPublishable(projectId) && projectLinks.nonEmpty
-    Map("project" -> projectsWithLinkId,"linkId" -> projectLinks.headOption.map(_.startingLinkId), "projectLinks" -> projectLinks, "publishable" -> publishable)
+    val project = projectService.getRoadAddressSingleProject(projectId).get
+    val projectMap = roadAddressProjectToApi(project)
+    val publishable = projectService.projectLinkPublishable(projectId)
+    Map("project" -> projectMap, "linkId" -> project.reservedParts.find(_.startingLinkId.nonEmpty).flatMap(_.startingLinkId),
+      "projectLinks" -> Seq(), "publishable" -> publishable)
   }
 
   get("/roadlinks/roadaddress/project/validatereservedlink/"){
@@ -536,10 +539,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   def reservedRoadPartToApi(reservedRoadPart: ReservedRoadPart) : Map[String, Any] = {
     Map("roadNumber" -> reservedRoadPart.roadNumber,
       "roadPartNumber" -> reservedRoadPart.roadPartNumber,
-      "roadPartId" -> reservedRoadPart.roadPartId,
+      "roadPartId" -> reservedRoadPart.id,
       "ely" -> reservedRoadPart.ely,
       "roadLength" -> reservedRoadPart.roadLength,
-      "discontinuity" -> reservedRoadPart.discontinuity.description
+      "addressLength" -> reservedRoadPart.addressLength,
+      "discontinuity" -> reservedRoadPart.discontinuity.description,
+      "startingLinkId" -> reservedRoadPart.startingLinkId,
+      "isDirty" -> reservedRoadPart.isDirty
     )
   }
 
@@ -589,6 +595,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
 }
 
+case class ProjectFormLine(startingLinkId: Long, projectId: Long, roadNumber: Long, roadPartNumber: Long, roadLength: Long, ely : Long, discontinuity: String, isDirty: Boolean = false)
+
 case object DiscontinuitySerializer extends CustomSerializer[Discontinuity](format => ( {
   case s: JString => Discontinuity.apply(s.values)
   case i: JInt => Discontinuity.apply(i.values.intValue)
@@ -601,6 +609,10 @@ object ProjectConverter {
     val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
     RoadAddressProject(project.id, ProjectState.apply(project.status),
       if (project.name.length > 32) project.name.substring(0, 32).trim else project.name.trim,
-      user.username, DateTime.now(), "-", formatter.parseDateTime(project.startDate), DateTime.now(), project.additionalInfo, project.roadPartList, None)
+      user.username, DateTime.now(), "-", formatter.parseDateTime(project.startDate), DateTime.now(), project.additionalInfo, project.roadPartList.map(toReservedRoadPart), None)
+  }
+  def toReservedRoadPart(rp: RoadPartExtractor): ReservedRoadPart = {
+    ReservedRoadPart(0L, rp.roadNumber, rp.roadPartNumber,
+      0.0, 0L, Discontinuity.Continuous, -1L, None, None, None, false)
   }
 }

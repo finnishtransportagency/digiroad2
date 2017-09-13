@@ -75,7 +75,7 @@ class ProjectLinkDaoSpec  extends FunSuite with Matchers {
   }
 
   test("create road address project with project links") {
-    val address = ReservedRoadPart(5: Long, 203: Long, 203: Long, 5.5: Double, Discontinuity.apply("jatkuva"), 8: Long, None: Option[DateTime], None: Option[DateTime])
+    val address = ReservedRoadPart(5: Long, 203: Long, 203: Long, 5.5: Double, 6, Discontinuity.apply("jatkuva"), 8: Long, None: Option[DateTime], None: Option[DateTime])
     runWithRollback {
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(address), None)
@@ -87,11 +87,12 @@ class ProjectLinkDaoSpec  extends FunSuite with Matchers {
       val projectlinks = ProjectDAO.getProjectLinks(id)
       projectlinks.length should be > 0
       projectlinks.forall(_.status == LinkStatus.NotHandled) should be(true)
+      ProjectDAO.fetchFirstLink(1,1,1).isEmpty should be (projectlinks.minBy(_.startAddrMValue))
     }
   }
 
   test("get projects waiting TR response") {
-    val address = ReservedRoadPart(5: Long, 203: Long, 203: Long, 5.5: Double, Discontinuity.apply("jatkuva"), 8: Long, None: Option[DateTime], None: Option[DateTime])
+    val address = ReservedRoadPart(5: Long, 203: Long, 203: Long, 5.5: Double, 6, Discontinuity.apply("jatkuva"), 8: Long, None: Option[DateTime], None: Option[DateTime])
     runWithRollback {
       val waitingCountp = ProjectDAO.getProjectsWithWaitingTRStatus().length
       val id = Sequences.nextViitePrimaryKeySeqValue
@@ -103,7 +104,7 @@ class ProjectLinkDaoSpec  extends FunSuite with Matchers {
   }
 
   test("check the removal of project links") {
-    val address = ReservedRoadPart(5: Long, 5: Long, 203: Long, 5.5: Double, Discontinuity.apply("jatkuva"), 8: Long, None: Option[DateTime], None: Option[DateTime])
+    val address = ReservedRoadPart(5: Long, 5: Long, 203: Long, 5.5: Double, 6L, Discontinuity.apply("jatkuva"), 8: Long, None: Option[DateTime], None: Option[DateTime])
     runWithRollback {
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(address), None)
@@ -119,7 +120,7 @@ class ProjectLinkDaoSpec  extends FunSuite with Matchers {
   }
 
   test("verify if one can increment the project check counter") {
-    val address = ReservedRoadPart(5: Long, 5: Long, 203: Long, 5.5: Double, Discontinuity.apply("jatkuva"), 8: Long, None: Option[DateTime], None: Option[DateTime])
+    val address = ReservedRoadPart(5: Long, 5: Long, 203: Long, 5.5: Double, 6, Discontinuity.apply("jatkuva"), 8: Long, None: Option[DateTime], None: Option[DateTime])
     runWithRollback {
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(address), None)
@@ -196,7 +197,7 @@ class ProjectLinkDaoSpec  extends FunSuite with Matchers {
   }
 
   test("Update project info") {
-    val address = ReservedRoadPart(5: Long, 203: Long, 203: Long, 5.5: Double, Discontinuity.apply("jatkuva"), 8: Long, None: Option[DateTime], None: Option[DateTime])
+    val address = ReservedRoadPart(5: Long, 203: Long, 203: Long, 5.5: Double, 6, Discontinuity.apply("jatkuva"), 8: Long, None: Option[DateTime], None: Option[DateTime])
     runWithRollback {
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(address), None)
