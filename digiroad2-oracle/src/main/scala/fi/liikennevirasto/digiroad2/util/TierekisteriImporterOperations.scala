@@ -515,6 +515,14 @@ class TrafficSignTierekisteriImporter extends PointAssetTierekisteriImporterOper
     }
   }
 
+  protected override def getAllTierekisteriHistoryAddressSection(roadNumber: Long, lastExecution: DateTime) = {
+    println("\nFetch " + assetName + " History by Road Number " + roadNumber)
+    val trAsset = tierekisteriClient.fetchHistoryAssetData(roadNumber, Some(lastExecution)).filter(_.assetType != TRTrafficSignType.Unknown)
+
+    trAsset.foreach { tr => println(s"TR: address ${tr.roadNumber}/${tr.startRoadPartNumber}-${tr.endRoadPartNumber}/${tr.track.value}/${tr.startAddressMValue}-${tr.endAddressMValue}") }
+    trAsset.map(_.asInstanceOf[TierekisteriAssetData]).flatMap(getRoadAddressSections)
+  }
+
   protected override def getAllTierekisteriAddressSections(roadNumber: Long) = {
     println("\nFetch Tierekisteri " + assetName + " by Road Number " + roadNumber)
     val trAsset = tierekisteriClient.fetchActiveAssetData(roadNumber).filter(_.assetType != TRTrafficSignType.Unknown)
