@@ -194,7 +194,7 @@ object MassTransitStopOperations {
 
     properties.find(prop => prop.publicId == "vaikutussuunta").flatMap(_.values.headOption.map(_.propertyValue)) match {
       case Some(busDir) =>
-        !((roadLinkDirection != TrafficDirection.BothDirections) && (roadLinkDirection.toString != TrafficDirection.apply(busDir.toInt).toString))
+        !((roadLinkDirection != TrafficDirection.BothDirections) && (roadLinkDirection.toString != SideCode.apply(busDir.toInt).toString))
       case None => false
     }
   }
