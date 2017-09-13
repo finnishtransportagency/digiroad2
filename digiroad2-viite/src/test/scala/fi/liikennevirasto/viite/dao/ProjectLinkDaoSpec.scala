@@ -87,7 +87,7 @@ class ProjectLinkDaoSpec  extends FunSuite with Matchers {
       val projectlinks = ProjectDAO.getProjectLinks(id)
       projectlinks.length should be > 0
       projectlinks.forall(_.status == LinkStatus.NotHandled) should be(true)
-      ProjectDAO.fetchFirstLink(1,1,1).isEmpty should be (projectlinks.minBy(_.startAddrMValue))
+      ProjectDAO.fetchFirstLink(id,5,203) should be (Some(projectlinks.minBy(_.startAddrMValue)))
     }
   }
 
