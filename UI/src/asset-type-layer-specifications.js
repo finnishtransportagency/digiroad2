@@ -195,6 +195,10 @@
         title: 'Kelirikko',
         enabled: 'Kelirikko',
         disabled: 'Ei kelirikkoa'
+      },
+      editConstrains : function(selectedAsset) {
+        //check if administrative class is State
+        return selectedAsset.administrativeClass === 1;
       }
     },
     {
@@ -252,6 +256,10 @@
         title: 'Päällyste',
         enabled: 'Päällyste',
         disabled: 'Ei päällystettä'
+      },
+      editConstrains : function(selectedAsset) {
+        //check if administrative class is State
+        return selectedAsset.administrativeClass === 1;
       }
     },
     {
@@ -288,6 +296,10 @@
         title: 'Kaista',
         enabled: 'Joukkoliikennekaista',
         disabled: 'Ei joukkoliikennekaistaa'
+      },
+      editConstrains : function(selectedAsset) {
+        //check if administrative class is State
+        return selectedAsset.administrativeClass === 1;
       }
     },
     {

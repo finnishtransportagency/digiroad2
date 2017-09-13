@@ -941,6 +941,39 @@ object DataFixture {
     println("\n")
   }
 
+  def importAllPavedRoadDataFromTR(): Unit ={
+    println("\nStart PavedRoad import at time: ")
+    println(DateTime.now())
+
+    tierekisteriDataImporter.importPavedRoadAsset
+
+    println("PavedRoad import complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
+  def importAllMassTransitLaneDataFromTR(): Unit ={
+    println("\nStart MassTransitLane import at time: ")
+    println(DateTime.now())
+
+    tierekisteriDataImporter.importMassTransitLaneAsset
+
+    println("MassTransitLane import complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
+  def importAllDamagedByThawDataFromTR(): Unit ={
+    println("\nStart DamagedByThaw import at time: ")
+    println(DateTime.now())
+
+    tierekisteriDataImporter.importDamagedByThawAsset
+
+    println("DamagedByThaw import complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
   def updateLitRoadDataFromTR(): Unit ={
     println("\nStart lighting update at: ")
     println(DateTime.now())
@@ -973,6 +1006,42 @@ object DataFixture {
     println("Traffic Signs update complete at time: ")
     println(DateTime.now())
     println("\n")
+  }
+
+  def updatePavedRoadDataFromTR(): Unit ={
+    println("\nStart PavedRoad update at: ")
+    println(DateTime.now())
+
+    tierekisteriDataImporter.updatePavedRoadAsset()
+
+    println("PavedRoad update complete at time: ")
+    println(DateTime.now())
+    println("\n")
+
+  }
+
+  def updateMassTransitLaneAssetDataFromTR(): Unit ={
+    println("\nStart MassTransitLane update at: ")
+    println(DateTime.now())
+
+    tierekisteriDataImporter.updateMassTransitLaneAsset()
+
+    println("MassTransitLane update complete at time: ")
+    println(DateTime.now())
+    println("\n")
+
+  }
+
+  def updateDamagedByThawAssetDataFromTR(): Unit ={
+    println("\nStart DamagedByThaw update at: ")
+    println(DateTime.now())
+
+    tierekisteriDataImporter.updateDamagedByThawAsset()
+
+    println("DamagedByThaw update complete at time: ")
+    println(DateTime.now())
+    println("\n")
+
   }
 
 
@@ -1065,12 +1134,24 @@ object DataFixture {
         importAllRoadWidthDataFromTR()
       case Some("import_all_trafficSigns_from_TR_to_OTH") =>
         importAllTrafficSignDataFromTR()
+      case Some("import_all_pavedRoad_from_TR_to_OTH") =>
+        importAllPavedRoadDataFromTR()
+      case Some("import_all_massTransitLane_from_TR_to_OTH") =>
+        importAllMassTransitLaneDataFromTR()
+      case Some("import_all_damagedByThaw_from_TR_to_OTH") =>
+        importAllDamagedByThawDataFromTR()
       case Some("update_litRoad_from_TR_to_OTH") =>
         updateLitRoadDataFromTR()
       case Some("update_roadWidth_from_TR_to_OTH") =>
         updateRoadWidthDataFromTR()
       case Some("update_trafficSigns_from_TR_to_OTH") =>
         updateTrafficSignDataFromTR()
+      case Some("update_pavedRoad_from_TR_to_OTH") =>
+        updatePavedRoadDataFromTR()
+      case Some("update_massTransitLane_from_TR_to_OTH") =>
+        updateMassTransitLaneAssetDataFromTR()
+      case Some("update_damagedByThaw_from_TR_to_OTH") =>
+        updateDamagedByThawAssetDataFromTR()
       case Some("import_all_speedLimits_from_TR_to_OTH") =>
         importAllSpeedLimitDataFromTR()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
@@ -1081,7 +1162,9 @@ object DataFixture {
         " check_unknown_speedlimits | set_transitStops_floating_reason | verify_roadLink_administrative_class_changed | set_TR_bus_stops_without_OTH_LiviId |" +
         " check_TR_bus_stops_without_OTH_LiviId | check_bus_stop_matching_between_OTH_TR | listing_bus_stops_with_side_code_conflict_with_roadLink_direction |" +
         " fill_lane_amounts_in_missing_road_links | import_all_trafficVolume_from_TR_to_OTH | import_all_litRoad_from_TR_to_OTH | import_all_roadWidth_from_TR_to_OTH |" +
-        " update_litRoad_from_TR_to_OTH | update_roadWidth_from_TR_to_OTH")
+        " import_all_trafficSigns_from_TR_to_OTH | import_all_pavedRoad_from_TR_to_OTH | import_all_massTransitLane_from_TR_to_OTH | update_litRoad_from_TR_to_OTH | " +
+        " update_roadWidth_from_TR_to_OTH | update_trafficSigns_from_TR_to_OTH | update_pavedRoad_from_TR_to_OTH | update_massTransitLane_from_TR_to_OTH" +
+        " import_all_damagedByThaw_from_TR_to_OTH | update_damagedByThaw_from_TR_to_OTH")
     }
   }
 }
