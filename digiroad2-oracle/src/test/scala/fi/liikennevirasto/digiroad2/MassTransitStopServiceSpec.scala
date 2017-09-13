@@ -46,7 +46,10 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     VVHRoadlink(1611353, 235, Seq(Point(374603.57,6677262.009), Point(374684.567, 6677277.323)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
     VVHRoadlink(1611341l, 91, Seq(Point(374375.156,6677244.904), Point(374567.632, 6677255.6)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
     VVHRoadlink(1l, 235, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers),
-    VVHRoadlink(1611601L, 235, Seq(Point(374668.195,6676884.282), Point(374805.498, 6676906.051)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers))
+    VVHRoadlink(1611601L, 235, Seq(Point(374668.195,6676884.282), Point(374805.498, 6676906.051)), Municipality, TrafficDirection.BothDirections, FeatureClass.AllOthers),
+    VVHRoadlink(12345l, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, attributes = Map("ROADNAME_SE" -> "roadname_se",
+      "ROADNAME_FI" -> "roadname_fi"))
+  )
 
   val mockVVHClient = MockitoSugar.mock[VVHClient]
   val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
@@ -73,11 +76,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
         .thenReturn(Some(toRoadLink(rl))))
     when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(vvhRoadLinks)
     when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(vvhRoadLinks.map(toRoadLink))
-    when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(123l, false)).thenReturn(Some(toRoadLink(VVHRoadlink(123l, 91, Seq(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, attributes = Map("ROADNAME_SE" -> "roadname_se", "ROADNAME_FI" -> "roadname_fi"), linkSource = NormalLinkInterface))))
-    when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(123l)).thenReturn(Some(VVHRoadlink(123l, 91, Seq(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, attributes = Map("ROADNAME_SE" -> "roadname_se", "ROADNAME_FI" -> "roadname_fi"), linkSource = NormalLinkInterface)))
-   // when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[Long], any[Boolean])).thenReturn(Some(toRoadLink(VVHRoadlink(1611601L, 91, Seq(Point(374668.195,6676884.282), Point(374805.498, 6676906.051)), State, TrafficDirection.BothDirections, FeatureClass.AllOthers))))
-   // when(mockRoadLinkService.fetchVVHRoadlinkAndComplementary(any[Long])).thenReturn(Some(VVHRoadlink(1611601L, 91, Seq(Point(374668.195,6676884.282), Point(374805.498, 6676906.051)), State, TrafficDirection.BothDirections, FeatureClass.AllOthers)))
-
+     when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[Long], any[Boolean])).thenReturn(Some(toRoadLink(VVHRoadlink(1611601L, 91, Seq(Point(374668.195,6676884.282), Point(374805.498, 6676906.051)), State, TrafficDirection.BothDirections, FeatureClass.AllOthers))))
   }
 
 
@@ -88,8 +87,6 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
     override val tierekisteriEnabled = false
     override val geometryTransform: GeometryTransform = mockGeometryTransform
-
-    override def create(asset: IncomingAsset, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass], linkSource: LinkGeomSource) = throw new UnsupportedOperationException("Not supported method")
   }
 
   class TestMassTransitStopServiceWithTierekisteri(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService) extends MassTransitStopService {
@@ -99,9 +96,6 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
     override val tierekisteriEnabled = true
     override val geometryTransform: GeometryTransform = mockGeometryTransform
-
-    override def create(asset: IncomingAsset, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass], linkSource: LinkGeomSource) = throw new UnsupportedOperationException("Not supported method")
-
   }
 
   object RollbackMassTransitStopService extends TestMassTransitStopService(new DummyEventBus, mockRoadLinkService)
@@ -115,8 +109,6 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
     override val tierekisteriEnabled = true
     override val geometryTransform: GeometryTransform = mockGeometryTransform
-
-    override def create(asset: IncomingAsset, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass], linkSource: LinkGeomSource) = throw new UnsupportedOperationException("Not supported method")
   }
 
   class MassTransitStopServiceWithTierekisteri(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService) extends MassTransitStopService {
@@ -124,8 +116,6 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
     override val tierekisteriEnabled = true
     override val geometryTransform: GeometryTransform = mockGeometryTransform
-
-    override def create(asset: IncomingAsset, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass], linkSource: LinkGeomSource) = throw new UnsupportedOperationException("Not supported method")
   }
 
   def runWithRollback(test: => Unit): Unit = assetLock.synchronized {
@@ -184,7 +174,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
           SimpleProperty("tietojen_yllapitaja", Seq(PropertyValue("1"))),
           SimpleProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
           SimpleProperty("vaikutussuunta", Seq(PropertyValue("2")))
-        )), "masstransitstopservice_spec", vvhRoadLink)
+        )), "masstransitstopservice_spec", vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass), linkSource = NormalLinkInterface)
       val stops = RollbackMassTransitStopService.getByBoundingBox(
         userWithKauniainenAuthorization, BoundingRectangle(Point(0.0, 0.0), Point(10.0, 10.0)))
       stops.map(_.id) should be(Seq(id))
@@ -624,8 +614,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
         SimpleProperty("pysakin_tyyppi", List(PropertyValue("1"))),
         SimpleProperty("tietojen_yllapitaja", List(PropertyValue("1"))),
         SimpleProperty("yllapitajan_koodi", List(PropertyValue("livi"))))
-      val vvhRoadLink = VVHRoadlink(123l, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, linkSource = NormalLinkInterface)
-      val id = service.create(NewMassTransitStop(60.0, 0.0, 123l, 100, properties), "test", vvhRoadLink)
+      val vvhRoadLink = VVHRoadlink(123l, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
+      val id = service.create(NewMassTransitStop(60.0, 0.0, 123l, 100, properties), "test", vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass), NormalLinkInterface)
       val massTransitStop = service.getById(id).get
       massTransitStop.bearing should be(Some(100))
       massTransitStop.floating should be(false)
@@ -652,8 +642,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
         SimpleProperty("pysakin_tyyppi", List(PropertyValue("5"))),
         SimpleProperty("tietojen_yllapitaja", List(PropertyValue("2"))),
         SimpleProperty("yllapitajan_koodi", List(PropertyValue("livi"))))
-      val vvhRoadLink = VVHRoadlink(123l, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, linkSource = NormalLinkInterface)
-      val id = service.create(NewMassTransitStop(60.0, 0.0, 123l, 100, properties), "test", vvhRoadLink)
+      val vvhRoadLink = VVHRoadlink(123l, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
+      val id = service.create(NewMassTransitStop(60.0, 0.0, 123l, 100, properties), "test", vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass), NormalLinkInterface)
       val massTransitStop = service.getById(id).get
       massTransitStop.bearing should be(Some(100))
       massTransitStop.floating should be(false)
@@ -670,7 +660,6 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
 
   test("Create new mass transit stop with Central ELY administration") {
     runWithRollback {
-
       val massTransitStopDao = new MassTransitStopDao
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
       val service = new TestMassTransitStopServiceWithTierekisteri(eventbus, mockRoadLinkService)
@@ -680,8 +669,8 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
         SimpleProperty("yllapitajan_koodi", List(PropertyValue("livi"))),
         SimpleProperty("ensimmainen_voimassaolopaiva", List(PropertyValue("2013-01-01"))),
         SimpleProperty("viimeinen_voimassaolopaiva", List(PropertyValue(DateTime.now().plusDays(1).toString()))))
-      val vvhRoadLink = VVHRoadlink(123l, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, linkSource = NormalLinkInterface)
-      val id = service.create(NewMassTransitStop(60.0, 0.0, 123l, 100, properties), "test", vvhRoadLink)
+      val vvhRoadLink = VVHRoadlink(123l, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
+      val id = service.create(NewMassTransitStop(60.0, 0.0, 123l, 100, properties), "test", vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass), NormalLinkInterface)
       val massTransitStop = service.getById(id).get
       massTransitStop.bearing should be(Some(100))
       massTransitStop.floating should be(false)
@@ -708,7 +697,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
         SimpleProperty("viimeinen_voimassaolopaiva", List(PropertyValue(DateTime.now().plusDays(1).toString()))),
         SimpleProperty("linkin_hallinnollinen_luokka", List(PropertyValue("1"))))
       val vvhRoadLink = vvhRoadLinks.find(_.linkId==12333l).get
-      val id = service.create(NewMassTransitStop(60.0, 0.0, 12333l, 100, properties), "test", vvhRoadLink)
+      val id = service.create(NewMassTransitStop(60.0, 0.0, 12333l, 100, properties), "test", vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass), NormalLinkInterface)
       val massTransitStop = service.getById(id).get
       massTransitStop.bearing should be(Some(100))
       massTransitStop.floating should be(false)
@@ -747,7 +736,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
         SimpleProperty("viimeinen_voimassaolopaiva", List(PropertyValue("2027-01-01"))))
       val vvhRoadLink = VVHRoadlink(123l, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
       when(mockRoadLinkService.getRoadLinkFromVVH(123l)).thenReturn(Some(vvhRoadLink).map(toRoadLink))
-      val id = service.create(NewMassTransitStop(60.0, 0.0, 123l, 100, properties), "test", vvhRoadLink)
+      val id = service.create(NewMassTransitStop(60.0, 0.0, 123l, 100, properties), "test", vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass), NormalLinkInterface)
 
       val newProperties = Set(
         SimpleProperty("tietojen_yllapitaja", List(PropertyValue("1")))
@@ -881,11 +870,11 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val linkId = 123l
       val municipalityCode = 91
       val geometry = Seq(Point(0.0,0.0), Point(120.0, 0.0))
-      val roadLink = VVHRoadlink(linkId, municipalityCode, geometry, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, linkSource = NormalLinkInterface)
-     // when(mockVVHRoadLinkClient.fetchByLinkId(linkId))
-     //   .thenReturn(Some(VVHRoadlink(linkId, municipalityCode, geometry, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
-      val oldAssetId = service.create(NewMassTransitStop(0, 0, linkId, 0, properties), "test", roadLink)
+      when(mockVVHRoadLinkClient.fetchByLinkId(linkId))
+        .thenReturn(Some(VVHRoadlink(linkId, municipalityCode, geometry, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+
+      val oldAssetId = service.create(NewMassTransitStop(0, 0, linkId, 0, properties), "test", geometry, municipalityCode, Some(Municipality), NormalLinkInterface)
       val oldAsset = sql"""select id, municipality_code, valid_from, valid_to from asset where id = $oldAssetId""".as[(Long, Int, String, String)].firstOption
       oldAsset should be (Some(oldAssetId, municipalityCode, null, null))
 
@@ -910,11 +899,11 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val linkId = 123l
       val municipalityCode = 91
       val geometry = Seq(Point(0.0,0.0), Point(120.0, 0.0))
-      val roadLink = VVHRoadlink(linkId, municipalityCode, geometry, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, linkSource = NormalLinkInterface)
+
       when(mockVVHRoadLinkClient.fetchByLinkId(linkId))
         .thenReturn(Some(VVHRoadlink(linkId, municipalityCode, geometry, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
 
-      val assetId = service.create(NewMassTransitStop(0, 0, linkId, 0, properties), "test", roadLink)
+      val assetId = service.create(NewMassTransitStop(0, 0, linkId, 0, properties), "test", geometry , municipalityCode, Some(Municipality), NormalLinkInterface)
       val asset = sql"""select id, municipality_code, valid_from, valid_to from asset where id = $assetId""".as[(Long, Int, String, String)].firstOption
       asset should be (Some(assetId, municipalityCode, null, null))
 
@@ -965,7 +954,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
           SimpleProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
           SimpleProperty("vaikutussuunta", Seq(PropertyValue("2")))
         )), "masstransitstopservice_spec",
-        vvhRoadLink)
+        vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass), NormalLinkInterface)
       when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]]
       )).thenReturn((new RoadAddress(Some("235"), 110, 10, Track.Combined, 108, None), RoadSide.Right))
       val service = RollbackMassTransitStopServiceWithTierekisteri
@@ -991,14 +980,14 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   test("Updating the mass transit stop from others -> HSL should create a stop in TR") {
     runWithRollback {
       reset(mockTierekisteriClient)
-      val vvhRoadLink = VVHRoadlink(11, 235, List(Point(0.0, 0.0), Point(120.0, 0.0)), State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, linkSource = NormalLinkInterface)
+      val vvhRoadLink = VVHRoadlink(11, 235, List(Point(0.0, 0.0), Point(120.0, 0.0)), State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
       val id = RollbackMassTransitStopService.create(NewMassTransitStop(5.0, 0.0, 1l, 2,
         Seq(
           SimpleProperty("tietojen_yllapitaja", Seq(PropertyValue("1"))),
           SimpleProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
           SimpleProperty("vaikutussuunta", Seq(PropertyValue("2")))
         )), "masstransitstopservice_spec",
-        vvhRoadLink)
+        vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass), NormalLinkInterface)
       when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]]
       )).thenReturn((new RoadAddress(Some("235"), 110, 10, Track.Combined, 108, None), RoadSide.Right))
       val service = RollbackMassTransitStopServiceWithTierekisteri
@@ -1024,14 +1013,14 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   test("Saving a mass transit stop should not create a stop in TR") {
     runWithRollback {
       reset(mockTierekisteriClient)
-      val vvhRoadLink = VVHRoadlink(11, 235, List(Point(0.0,0.0), Point(120.0, 0.0)), State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, linkSource = NormalLinkInterface)
+      val vvhRoadLink = VVHRoadlink(11, 235, List(Point(0.0,0.0), Point(120.0, 0.0)), State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
       val id = RollbackMassTransitStopService.create(NewMassTransitStop(5.0, 0.0, 1l, 2,
         Seq(
           SimpleProperty("tietojen_yllapitaja", Seq(PropertyValue("1"))),
           SimpleProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
           SimpleProperty("vaikutussuunta", Seq(PropertyValue("2")))
         )), "masstransitstopservice_spec",
-        vvhRoadLink)
+        vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass), NormalLinkInterface)
       verify(mockTierekisteriClient, times(0)).updateMassTransitStop(any[TierekisteriMassTransitStop], any[Option[String]], any[Option[String]])
       verify(mockTierekisteriClient, times(0)).createMassTransitStop(any[TierekisteriMassTransitStop])
     }
@@ -1039,14 +1028,14 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   test("Updating the mass transit stop from ELY -> others should expire a stop in TR") {
     runWithRollback {
       reset(mockTierekisteriClient)
-      val vvhRoadLink = VVHRoadlink(11, 235, List(Point(0.0, 0.0), Point(120.0, 0.0)), State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, linkSource = NormalLinkInterface)
+      val vvhRoadLink = VVHRoadlink(11, 235, List(Point(0.0, 0.0), Point(120.0, 0.0)), State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
       val id = RollbackMassTransitStopService.create(NewMassTransitStop(5.0, 0.0, 1l, 2,
         Seq(
           SimpleProperty("tietojen_yllapitaja", Seq(PropertyValue("2"))),
           SimpleProperty("pysakin_tyyppi", Seq(PropertyValue("2"), PropertyValue("3"))),
           SimpleProperty("vaikutussuunta", Seq(PropertyValue("2")))
         )), "masstransitstopservice_spec",
-        vvhRoadLink)
+        vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass), NormalLinkInterface)
       when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]]
       )).thenReturn((new RoadAddress(Some("235"), 110, 10, Track.Combined, 108, None), RoadSide.Right))
       val service = RollbackMassTransitStopServiceWithTierekisteri
@@ -1294,7 +1283,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
           SimpleProperty("tietojen_yllapitaja", Seq(PropertyValue("1"))),
           SimpleProperty("pysakin_tyyppi", Seq(PropertyValue("2"))),
           SimpleProperty("vaikutussuunta", Seq(PropertyValue("2")))
-        )), "masstransitstopservice_spec", vvhRoadLink)
+        )), "masstransitstopservice_spec", vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass), linkSource = NormalLinkInterface)
       val stops = RollbackMassTransitStopService.getByBoundingBox(
         userWithKauniainenAuthorization, BoundingRectangle(Point(0.0, 0.0), Point(10.0, 10.0)))
       val asset = stops.find(_.id == id)
@@ -1302,31 +1291,30 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       asset.get.lat should be(0.0)
     }
   }
-  test("Should add roadNames if not filled"){
+  test("Should add roadNames if not filled") {
+
     runWithRollback {
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
       val service = new TestMassTransitStopService(eventbus, mockRoadLinkService)
+      val values = List(PropertyValue("1"))
       val properties = List(
         SimpleProperty("pysakin_tyyppi", List(PropertyValue("1"))),
-        SimpleProperty("tietojen_yllapitaja", List(PropertyValue("2"))),
+        SimpleProperty("tietojen_yllapitaja", List(PropertyValue("1"))),
         SimpleProperty("yllapitajan_koodi", List(PropertyValue("livi"))),
         SimpleProperty("osoite_ruotsiksi", List(PropertyValue("user_road_name_se"))),
         SimpleProperty("osoite_suomeksi", List.empty[PropertyValue]))
-      val linkId = 123l
-      val municipalityCode = 91
-      val geometry = Seq(Point(0.0,0.0), Point(120.0, 0.0))
 
       val attributes: Map[String, Any] =
         Map("ROADNAME_SE" -> "roadname_se",
           "ROADNAME_FI" -> "roadname_fi")
 
-      val roadLink = toRoadLink(VVHRoadlink(linkId, municipalityCode, geometry, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, attributes = Map("ROADNAME_SE" -> "roadname_se",
-        "ROADNAME_FI" -> "roadname_fi"), linkSource = NormalLinkInterface))
+      val vvhRoadLink = VVHRoadlink(12345l, 91, List(Point(0.0, 0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, attributes = attributes)
+      when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(12345l, false)).thenReturn(Some(toRoadLink(vvhRoadLink)))
 
-      val assetId = service.create(NewMassTransitStop(0, 0, linkId, 0, properties), "test", roadLink)
-      val asset = service.fetchPointAssets((s:String) => s"""$s where a.id = $assetId""").headOption
+      val assetId = service.create(NewMassTransitStop(60.0, 0.0, 12345l, 100, properties), "test", vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass), NormalLinkInterface)
+      val asset = service.fetchPointAssets((s: String) => s"""$s where a.id = $assetId""").headOption
 
-      asset.get.propertyData.filter(_.publicId == "osoite_suomeksi").flatMap(_.values.map(_.propertyValue)).head should be ("roadname_fi")
+      asset.get.propertyData.filter(_.publicId == "osoite_suomeksi").flatMap(_.values.map(_.propertyValue)).headOption should be (Some("roadname_fi"))
       asset.get.propertyData.filter(_.publicId == "osoite_ruotsiksi").flatMap(_.values.map(_.propertyValue)).head should be ("user_road_name_se")
 
       val propertyChanges =  List(SimpleProperty("osoite_suomeksi", List(PropertyValue("new_road_name_fi"))))
@@ -1338,13 +1326,11 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
 
       val propertyChange =  List(SimpleProperty("osoite_suomeksi", List.empty[PropertyValue]))
       val newProperties1 = properties.filterNot(x => x.publicId == "osoite_suomeksi" || x.publicId == "osoite_ruotsiksi" ) ++ propertyChange
-      val updatedAssetId1 = service.updateExistingById(assetId, None, newProperties1.toSet, "test",  _ => Unit)
+      val updatedAssetId1 = RollbackMassTransitStopService.updateExistingById(assetId, None, newProperties1.toSet, "test",  _ => Unit)
 
       updatedAssetId1.propertyData.filter(_.publicId == "osoite_suomeksi").flatMap(_.values.map(_.propertyValue)).head should be ("roadname_fi")
       updatedAssetId1.propertyData.filter(_.publicId == "osoite_ruotsiksi").flatMap(_.values.map(_.propertyValue)).head should be ("user_road_name_se")
 
-
     }
   }
-
 }
