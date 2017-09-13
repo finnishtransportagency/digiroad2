@@ -106,20 +106,20 @@ object ProjectDeltaCalculator {
     ).toSeq
   }
 
-  def getRoadAddressSectionMap(roadGroups: Seq[RoadAddressSection], projectGroups: Seq[RoadAddressSection], roadAddresses: Seq[RoadAddress], projectLinks: Seq[ProjectLink] ): Map[RoadAddressSection, RoadAddressSection]  = {
+  def getRoadAddressSectionMap(roadGroups: Seq[RoadAddressSection], projectGroups: Seq[RoadAddressSection], roadAddresses: Seq[RoadAddress], projectLinks: Seq[ProjectLink] ): Seq[Map[RoadAddressSection, RoadAddressSection]]  = {
       roadGroups.map { sec =>
       val linkId = roadAddresses.find(ra => sec.includes(ra)).map(_.linkId).get
       val targetGroup = projectGroups.find(_.includes(projectLinks.find(_.linkId == linkId).get))
-      sec -> targetGroup.get
-    }.toMap
+      Map(sec -> targetGroup.get)
+    }
   }
 
-  def getProjectLinkSectionMap(projectGroups: Seq[RoadAddressSection], roadGroups: Seq[RoadAddressSection], roadAddresses: Seq[RoadAddress], projectLinks: Seq[ProjectLink]  ): Map[RoadAddressSection, RoadAddressSection] = {
+  def getProjectLinkSectionMap(projectGroups: Seq[RoadAddressSection], roadGroups: Seq[RoadAddressSection], roadAddresses: Seq[RoadAddress], projectLinks: Seq[ProjectLink]  ): Seq[Map[RoadAddressSection, RoadAddressSection]] = {
       projectGroups.map { sec =>
       val linkId = projectLinks.find(ra => sec.includes(ra)).map(_.linkId).get
-      val targetGroup = projectGroups.find(_.includes(projectLinks.find(_.linkId == linkId).get))
-      sec -> targetGroup.get
-    }.toMap
+      val sourceGroup = roadGroups.find(_.includes(roadAddresses.find(_.linkId == linkId).get))
+      Map(sourceGroup.get -> sec)
+    }
   }
 
   /**
@@ -129,7 +129,7 @@ object ProjectDeltaCalculator {
     * @param projectLinks Project Links that have the transfer address values
     * @return Map between the sections old -> new
     */
-  def partition(roadAddresses: Seq[RoadAddress], projectLinks: Seq[ProjectLink]): Map[RoadAddressSection, RoadAddressSection] = {
+  def partition(roadAddresses: Seq[RoadAddress], projectLinks: Seq[ProjectLink]): Seq[Map[RoadAddressSection, RoadAddressSection]] = {
     val groupedAddresses = roadAddresses.sortBy(_.startAddrMValue).groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
     val addressesGroups = groupedAddresses.mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
       RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
@@ -142,7 +142,7 @@ object ProjectDeltaCalculator {
         pl.track, pl.startAddrMValue, pl.endAddrMValue, pl.discontinuity, pl.roadType)
     ).toSeq
 
-    if (groupedAddresses.size > groupedProjectLinks.size)
+    if (groupedAddresses.size >= groupedProjectLinks.size)
       getRoadAddressSectionMap(addressesGroups, projectLinksGroups, roadAddresses, projectLinks)
     else
       getProjectLinkSectionMap(projectLinksGroups, addressesGroups, roadAddresses, projectLinks)
