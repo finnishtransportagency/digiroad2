@@ -534,6 +534,38 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
     } should have size (count - 1)
   }
 
+  test("update project link numbering and check project status") {
+    var count = 0
+    val roadLinks = Seq(
+      RoadLink(5170939L, Seq(Point(535605.272, 6982204.22, 85.90899999999965))
+      , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
+      InUse, NormalLinkInterface))
+
+    when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(roadLinks)
+    runWithRollback {
+      val countCurrentProjects = projectService.getRoadAddressAllProjects()
+      val id = 0
+      val addresses = List(ReservedRoadPart(5: Long, 5: Long, 207: Long, 5: Double, Discontinuity.apply("jatkuva"), 8: Long, None: Option[DateTime], None: Option[DateTime]))
+      val roadAddressProject = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", addresses, None)
+      val saved = projectService.createRoadLinkProject(roadAddressProject)._1
+      val countAfterInsertProjects = projectService.getRoadAddressAllProjects()
+      count = countCurrentProjects.size + 1
+      countAfterInsertProjects.size should be(count)
+      val projectLinks = ProjectDAO.getProjectLinks(saved.id)
+      val partitioned = projectLinks.partition(_.roadPartNumber == 207)
+      val linkIds207 = partitioned._1.map(_.linkId).toSet
+      when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(linkIds207, false, false)).thenReturn(
+        partitioned._1.map(pl => roadLinks.head.copy(linkId = pl.linkId, geometry = Seq(Point(pl.startAddrMValue, 0.0), Point(pl.endAddrMValue, 0.0)))))
+
+      projectService.projectLinkPublishable(saved.id) should be(false)
+      val linkIds = ProjectDAO.getProjectLinks(saved.id).map(_.linkId).toSet
+      projectService.updateProjectLinkStatus(saved.id, linkIds, LinkStatus.Numbering, "-", 99999, 1)
+      val afterNumberingLinks = ProjectDAO.getProjectLinks(saved.id)
+      afterNumberingLinks.foreach(l => (l.roadNumber == 99999 && l.roadPartNumber == 1 ) should be (true))
+    }
+
+  }
+
   test("fetch project data and send it to TR") {
     assume(testConnection)
     runWithRollback {

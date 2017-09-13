@@ -686,7 +686,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         val project = RoadAddressValidator.fetchProject(projectId)
         RoadAddressValidator.checkAvailable(newRoadNumber, newRoadPart, project)
         RoadAddressValidator.checkNotReserved(newRoadNumber, newRoadPart, project)
-        ProjectDAO.updateProjectLinkNumbering(projectId, projectLinks.head.roadNumber, projectLinks.head.roadPartNumber, newStatus, newRoadNumber, newRoadPart, userName)
+        ProjectDAO.updateProjectLinkNumbering(projectId, updatedProjectLinks.head.roadNumber, updatedProjectLinks.head.roadPartNumber, newStatus, newRoadNumber, newRoadPart, userName)
       } else {
         ProjectDAO.updateProjectLinkStatus(updatedProjectLinks.map(_.id).toSet, newStatus, userName)
       }
@@ -706,7 +706,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     projectLinks.groupBy(
       pl => (pl.roadNumber, pl.roadPartNumber)).foreach {
       grp =>
-        val recalculatedProjectLinks = ProjectSectionCalculator.assignMValues(projectLinks)
+        val recalculatedProjectLinks = ProjectSectionCalculator.assignMValues(grp._2)
         ProjectDAO.updateProjectLinksToDB(recalculatedProjectLinks, userName)
     }
     recalculateChangeTable(projectId)
