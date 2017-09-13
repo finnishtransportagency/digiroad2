@@ -48,6 +48,10 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
     new DamagedByThawTierekisteriImporter()
   }
 
+  lazy val speedLimitTierekisteriImporter: SpeedLimitsTierekisteriImporter = {
+    new SpeedLimitsTierekisteriImporter()
+  }
+
   lazy val assetDao : OracleAssetDao = {
     new OracleAssetDao()
   }
@@ -137,6 +141,10 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
   def updateTrafficSigns(): Unit = {
     val lastUpdate = obtainLastExecutionDate(trafficSignTierekisteriImporter.assetName, trafficSignsId)
     trafficSignTierekisteriImporter.updateAssets(lastUpdate)
+  }
+
+  def importSpeedLimits(): Unit = {
+    speedLimitTierekisteriImporter.importAssets();
   }
 
   def importPavedRoadAsset(): Unit = {

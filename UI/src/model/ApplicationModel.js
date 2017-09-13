@@ -22,6 +22,7 @@
     var setZoomLevel = function(level) {
       zoom.level = level;
     };
+    var withRoadAddress = 'false';
 
     function setSelectedTool(tool) {
       if (tool !== selectedTool) {
@@ -29,6 +30,10 @@
         eventbus.trigger('tool:changed', tool);
       }
     }
+
+    eventbus.on('toggleWithRoadAddress', function(set){
+      withRoadAddress = set;
+    });
 
     return {
       moveMap: function(zoom, bbox, center) {
@@ -82,6 +87,9 @@
       },
       getCurrentLocation: function() {
         return centerLonLat;
+      },
+      getWithRoadAddress: function() {
+        return withRoadAddress;
       }
     };
   };

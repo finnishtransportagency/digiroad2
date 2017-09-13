@@ -6,7 +6,7 @@ import fi.liikennevirasto.digiroad2.linearasset.PolyLine
 import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.dao.{CalibrationPoint, LinkStatus}
 
-trait ProjectAddressLinkLike extends PolyLine {
+trait ProjectAddressLinkLike extends RoadAddressLinkLike {
   def id: Long
   def linkId: Long
   def length: Double
@@ -35,6 +35,7 @@ trait ProjectAddressLinkLike extends PolyLine {
   def endCalibrationPoint: Option[CalibrationPoint]
   def anomaly: Anomaly
   def lrmPositionId: Long
+  def status: LinkStatus
 }
 
 case class ProjectAddressLink (id: Long, linkId: Long, geometry: Seq[Point],

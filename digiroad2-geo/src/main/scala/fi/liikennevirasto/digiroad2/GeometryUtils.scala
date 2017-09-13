@@ -1,6 +1,12 @@
 package fi.liikennevirasto.digiroad2
 
+import fi.liikennevirasto.digiroad2.linearasset.PolyLine
+
 object GeometryUtils {
+
+  // Default value of minimum distance where locations are considered to be same
+  final private val DefaultEpsilon = 0.01
+
   def geometryEndpoints(geometry: Seq[Point]): (Point, Point) = {
     val firstPoint: Point = geometry.head
     val lastPoint: Point = geometry.last
@@ -84,7 +90,7 @@ object GeometryUtils {
         } else {
           val distance = point.distance2DTo(acc.previousPoint)
           val remainingMeasure = acc.remainingMeasure
-          if (remainingMeasure <= distance + 0.01) {
+          if (remainingMeasure <= distance + DefaultEpsilon) {
             val directionVector = (point - acc.previousPoint).normalize()
             val result = Some(acc.previousPoint + directionVector.scale(acc.remainingMeasure))
             AlgorithmState(point, acc.remainingMeasure - distance, result)
@@ -138,7 +144,10 @@ object GeometryUtils {
   }
 
   def areAdjacent(geometry1: Seq[Point], geometry2: Seq[Point]): Boolean = {
-    val epsilon = 0.01
+    areAdjacent(geometry1, geometry2, DefaultEpsilon)
+  }
+
+  def areAdjacent(geometry1: Seq[Point], geometry2: Seq[Point], epsilon: Double): Boolean = {
     val geometry1EndPoints = GeometryUtils.geometryEndpoints(geometry1)
     val geometry2Endpoints = GeometryUtils.geometryEndpoints(geometry2)
     geometry2Endpoints._1.distance2DTo(geometry1EndPoints._1) < epsilon ||
@@ -148,7 +157,10 @@ object GeometryUtils {
   }
 
   def areAdjacent(geometry1: Seq[Point], geometry2: Point): Boolean = {
-    val epsilon = 0.01
+    areAdjacent(geometry1, geometry2, DefaultEpsilon)
+  }
+
+  def areAdjacent(geometry1: Seq[Point], geometry2: Point, epsilon: Double): Boolean = {
     val geometry1EndPoints = GeometryUtils.geometryEndpoints(geometry1)
     geometry2.distance2DTo(geometry1EndPoints._1) < epsilon ||
       geometry2.distance2DTo(geometry1EndPoints._2) < epsilon
@@ -160,7 +172,10 @@ object GeometryUtils {
   }
 
   def areAdjacent(point1: Point, point2: Point): Boolean = {
-    val epsilon = 0.01
+    areAdjacent(point1, point2, DefaultEpsilon)
+  }
+
+  def areAdjacent(point1: Point, point2: Point, epsilon: Double): Boolean = {
     point1.distance2DTo(point2) < epsilon
   }
 
@@ -285,6 +300,20 @@ object GeometryUtils {
     val top = points.maxBy(_.y).y
     val bottom = points.minBy(_.y).y
     (Point(left, top), Point(right, bottom))
+  }
+
+  def isLinear(polyLines: Seq[PolyLine]): Boolean =
+    !isNonLinear(polyLines)
+
+  def isNonLinear(polyLines: Seq[PolyLine]): Boolean = {
+    if (polyLines.isEmpty)
+      false
+    else {
+      val (p1, p2) = geometryEndpoints(polyLines.head.geometry)
+      polyLines.count(p => areAdjacent(p.geometry, p1, 1.0)) > 2 ||
+        polyLines.count(p => areAdjacent(p.geometry, p2, 1.0)) > 2 ||
+        isNonLinear(polyLines.tail)
+    }
   }
 
   case class Projection(oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, vvhTimeStamp: Long)

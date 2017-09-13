@@ -83,6 +83,11 @@ require(['lodash',
   'SelectedSpeedLimitSpec',
   'LocationInputParserSpec'], function (lodash) {
   window._ = lodash;
+  window.applicationModel = {
+    getWithRoadAddress : function(){
+      return 'false';
+    }
+  };
   mocha.checkLeaks();
   if (window.mochaPhantomJS) {
     mochaPhantomJS.run();

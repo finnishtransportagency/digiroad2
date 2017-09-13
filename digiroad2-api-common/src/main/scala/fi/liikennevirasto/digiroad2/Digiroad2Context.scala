@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit
 
 import akka.actor.{Actor, ActorSystem, Props}
 import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.ChangeSet
+import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.{PersistedLinearAsset, SpeedLimit, UnknownSpeedLimit}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.MassTransitStopDao
 import fi.liikennevirasto.digiroad2.municipality.MunicipalityProvider
@@ -118,9 +119,12 @@ object Digiroad2Context {
   val system = ActorSystem("Digiroad2")
   import system.dispatcher
   system.scheduler.schedule(FiniteDuration(2, TimeUnit.MINUTES),FiniteDuration(10, TimeUnit.MINUTES)) { //first query after 2 mins, then every 10 mins
-    projectService.updateProjectsWaitingResponseFromTR()
+    try {
+      projectService.updateProjectsWaitingResponseFromTR()
+    } catch {
+      case ex: Exception => System.err.println("Exception at TR checks: " + ex.getMessage)
+    }
   }
-
 
   val vallu = system.actorOf(Props[ValluActor], name = "vallu")
   eventbus.subscribe(vallu, "asset:saved")
@@ -154,11 +158,11 @@ object Digiroad2Context {
   eventbus.subscribe(roadAddressFloater, "roadAddress:floatRoadAddress")
 
   lazy val roadAddressService: RoadAddressService = {
-    new RoadAddressService(roadLinkService, eventbus)
+    new RoadAddressService(roadLinkService, eventbus, properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
   }
 
   lazy val projectService: ProjectService = {
-    new ProjectService(roadAddressService, roadLinkService, eventbus)
+    new ProjectService(roadAddressService, roadLinkService, eventbus,properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean)
   }
 
   lazy val authenticationTestModeEnabled: Boolean = {
@@ -187,6 +191,10 @@ object Digiroad2Context {
 
   lazy val vvhClient: VVHClient = {
     new VVHClient(getProperty("digiroad2.VVHRestApiEndPoint"))
+  }
+
+  lazy val linearAssetDao: OracleLinearAssetDao = {
+    new OracleLinearAssetDao(vvhClient, roadLinkService)
   }
 
   lazy val tierekisteriClient: TierekisteriMassTransitStopClient = {
@@ -223,6 +231,10 @@ object Digiroad2Context {
 
   lazy val linearAssetService: LinearAssetService = {
     new LinearAssetService(roadLinkService, eventbus)
+  }
+
+  lazy val onOffLinearAssetService: OnOffLinearAssetService = {
+    new OnOffLinearAssetService(roadLinkService, eventbus, linearAssetDao)
   }
 
   lazy val pedestrianCrossingService: PedestrianCrossingService = {

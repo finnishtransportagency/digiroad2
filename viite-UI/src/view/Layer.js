@@ -22,10 +22,12 @@
       return me.eventListener.running;
     };
     this.activateSelection = function() {
-      me.selectControl.activate();
+      if(!_.isUndefined(me.selectControl))
+        me.selectControl.activate();
     };
     this.deactivateSelection = function() {
-      me.selectControl.deactivate();
+      if(!_.isUndefined(me.selectControl))
+        me.selectControl.deactivate();
     };
     this.start = function(event) {
       if (!me.isStarted()) {
@@ -79,7 +81,7 @@
     this.mapOverLinkMiddlePoints = mapOverLinkMiddlePoints;
     this.show = function(map) {
       eventbus.on('map:moved', me.handleMapMoved);
-      if (map.getZoom() >= me.minZoomForContent) {
+      if (map.getView().getZoom() >= me.minZoomForContent) {
         me.start('shown');
       }
     };

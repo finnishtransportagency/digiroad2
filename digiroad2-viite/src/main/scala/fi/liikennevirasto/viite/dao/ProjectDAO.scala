@@ -1,5 +1,6 @@
 package fi.liikennevirasto.viite.dao
-import java.sql.Timestamp
+import java.sql.{Timestamp, Types}
+import java.util.Date
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.Point
@@ -9,9 +10,11 @@ import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.CalibrationCode.{AtBeginning, AtBoth, AtEnd, No}
+import fi.liikennevirasto.viite.model.ProjectAddressLink
 import fi.liikennevirasto.viite.{ReservedRoadPart, RoadType}
 import fi.liikennevirasto.viite.process.{Delta, ProjectDeltaCalculator}
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
+import oracle.net.aso.p
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -47,10 +50,12 @@ sealed trait LinkStatus {
 }
 
 object LinkStatus {
-  val values = Set(NotHandled, Terminated, New, Unknown)
+  val values = Set(NotHandled, Terminated, New, Transfer, UnChanged, Unknown)
   case object NotHandled extends LinkStatus {def value = 0}
   case object Terminated extends LinkStatus {def value = 1}
   case object New extends LinkStatus {def value = 2}
+  case object Transfer extends LinkStatus {def value = 3}
+  case object UnChanged extends LinkStatus {def value = 4}
   case object Unknown extends LinkStatus {def value = 99}
   def apply(intValue: Int): LinkStatus = {
     values.find(_.value == intValue).getOrElse(Unknown)
@@ -77,7 +82,7 @@ object ProjectDAO {
     val addressPS = dynamicSession.prepareStatement("insert into PROJECT_LINK (id, project_id, lrm_position_id, " +
       "road_number, road_part_number, " +
       "track_code, discontinuity_type, START_ADDR_M, END_ADDR_M, created_by, " +
-      "calibration_points, status) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+      "calibration_points, status, road_type) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
     val ids = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= ${roadAddresses.size}""".as[Long].list
     roadAddresses.zip(ids).foreach { case ((address), (lrmId)) =>
       RoadAddressDAO.createLRMPosition(lrmPositionPS, lrmId, address.linkId, address.sideCode.value, address.startMValue, address.endMValue, 0, address.linkGeomSource.value)
@@ -95,6 +100,7 @@ object ProjectDAO {
       addressPS.setString(10, address.modifiedBy.get)
       addressPS.setDouble(11, CalibrationCode.getFromAddress(address).value)
       addressPS.setLong(12, address.status.value)
+      addressPS.setLong(13, address.roadType.value)
       addressPS.addBatch()
     }
     lrmPositionPS.executeBatch()
@@ -103,6 +109,43 @@ object ProjectDAO {
     addressPS.close()
     roadAddresses.map(_.id)
   }
+
+
+  def updateProjectLinksToDB( projectLinks: Seq[ProjectLink], modifier:String): Unit ={
+    val projectLinkPS = dynamicSession.prepareStatement("UPDATE project_link SET ROAD_NUMBER = ?,  ROAD_PART_NUMBER = ?, TRACK_CODE=?, DISCONTINUITY_TYPE = ?, START_ADDR_M=?, END_ADDR_M=?, MODIFIED_DATE= ? , MODIFIED_BY= ?, LRM_POSITION_ID= ?, PROJECT_ID= ? , CALIBRATION_POINTS= ? , STATUS=?,  ROAD_TYPE=? WHERE id = ?")
+    val lrmPS = dynamicSession.prepareStatement("UPDATE LRM_POSITION SET SIDE_CODE=?, START_MEASURE=?, END_MEASURE=?, LANE_CODE=?, MODIFIED_DATE=? WHERE ID = ?")
+
+    for (projectLink <-projectLinks)
+    {
+      projectLinkPS.setLong(1,projectLink.roadNumber)
+      projectLinkPS.setLong(2,projectLink.roadPartNumber)
+      projectLinkPS.setInt(3,projectLink.track.value )
+      projectLinkPS.setInt(4,projectLink.discontinuity.value)
+      projectLinkPS.setLong(5,projectLink.startAddrMValue)
+      projectLinkPS.setLong(6,projectLink.endAddrMValue)
+      projectLinkPS.setDate(7 ,new java.sql.Date(new Date().getTime))
+      projectLinkPS.setString(8,modifier)
+      projectLinkPS.setLong(9,projectLink.lrmPositionId)
+      projectLinkPS.setLong(10, projectLink.projectId)
+      projectLinkPS.setInt(11, CalibrationCode.getFromAddress(projectLink).value)
+      projectLinkPS.setInt(12, projectLink.status.value)
+      projectLinkPS.setInt(13, projectLink.roadType.value)
+      projectLinkPS.setLong(14, projectLink.id)
+      projectLinkPS.addBatch()
+      lrmPS.setInt(1,projectLink.sideCode.value)
+      lrmPS.setDouble(2,projectLink.startMValue)
+      lrmPS.setDouble(3,projectLink.endMValue)
+      lrmPS.setInt(4,projectLink.track.value)
+      lrmPS.setDate(5 ,new java.sql.Date(new Date().getTime))
+      lrmPS.setLong(6,projectLink.lrmPositionId)
+      lrmPS.addBatch()
+    }
+    projectLinkPS.executeBatch()
+    lrmPS.executeBatch()
+    lrmPS.close()
+    projectLinkPS.close()
+  }
+
 
   def createRoadAddressProject(roadAddressProject: RoadAddressProject): Unit = {
     sqlu"""
@@ -123,7 +166,7 @@ object ProjectDAO {
                 from PROJECT_LINK join LRM_POSITION
                 on LRM_POSITION.ID = PROJECT_LINK.LRM_POSITION_ID
                 where $filter (PROJECT_LINK.PROJECT_ID = $projectId ) order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
-    Q.queryNA[(Long, Long, Int, Int, Long, Long, Long, Long, Long, Long, Long, Long, String, String, Long, Double, Long, Int, Int, Int)](query).list.map {
+    Q.queryNA[(Long, Long, Int, Int, Long, Long, Long, Long, Double, Double, Long, Long, String, String, Long, Double, Long, Int, Int, Int)](query).list.map {
       case (projectLinkId, projectId, trackCode, discontinuityType, roadNumber, roadPartNumber, startAddrM, endAddrM,
       startMValue, endMValue, sideCode , lrmPositionId, createdBy, modifiedBy, linkId, length, calibrationPoints, status, roadType, source) =>
         ProjectLink(projectLinkId, roadNumber, roadPartNumber, Track.apply(trackCode), Discontinuity.apply(discontinuityType),
@@ -197,14 +240,8 @@ object ProjectDAO {
     }
   }
 
-  def updateMValuesLinkId(projectLink: ProjectLink): Unit = {
-    sqlu"""update project_link set modified_date = sysdate, start_addr_m = ${projectLink.startAddrMValue}, end_addr_m = ${projectLink.endAddrMValue} where project_id = ${projectLink.projectId} and road_number = ${projectLink.roadNumber} and road_part_number = ${projectLink.roadPartNumber} and lrm_position_id = (select id from lrm_position where link_id = ${projectLink.linkId} and rownum = 1)
-          """.execute
-
-  }
-
-  def updateMValues(projectLink: ProjectLink): Unit = {
-    sqlu"""update project_link set modified_date = sysdate, start_addr_m = ${projectLink.startAddrMValue}, end_addr_m = ${projectLink.endAddrMValue} where id = ${projectLink.id}
+  def updateAddrMValues(projectLink: ProjectLink): Unit = {
+      sqlu"""update project_link set modified_date = sysdate, start_addr_m = ${projectLink.startAddrMValue}, end_addr_m = ${projectLink.endAddrMValue}, calibration_points = ${CalibrationCode.getFromAddress(projectLink).value} where id = ${projectLink.id}
           """.execute
   }
 
@@ -221,11 +258,7 @@ object ProjectDAO {
          FROM project
          WHERE id=$roadAddressProjectId
        """
-    Q.queryNA[Long](query).firstOption match
-    {
-      case Some(number) => Some(number)
-      case None => Some(-1)
-    }
+    Q.queryNA[Long](query).firstOption
   }
 
   def updateProjectEly(roadAddressProjectId: Long, ely: Long): Unit = {
@@ -234,28 +267,34 @@ object ProjectDAO {
       """.execute
   }
 
-  def getRoadAddressProjectById(id: Long): Option[RoadAddressProject] = {
-    val where = s""" where id =${id}"""
+  def getRoadAddressProjectById(projectId: Long): Option[RoadAddressProject] = {
+    val where = s""" where id =${projectId}"""
     val query =
-      s"""SELECT id, state, name, created_by, created_date, start_date, modified_by, modified_date, add_info, ely, status_info
+      s"""SELECT id, state, name, created_by, created_date, start_date, modified_by, COALESCE(modified_date, created_date), add_info, ely, status_info
           FROM project $where"""
     Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String, Option[Long], Option[String])](query).list.map {
-      case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo, ely, statusInfo) =>
-        RoadAddressProject(id, ProjectState.apply(state), name, createdBy,createdDate, modifiedBy, start_date, modifiedDate, addInfo, List.empty[ReservedRoadPart], statusInfo, ely)
+      case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo,
+      ely, statusInfo) if ely.contains(-1L) =>
+        RoadAddressProject(id, ProjectState.apply(state), name, createdBy,createdDate, modifiedBy, start_date, modifiedDate,
+          addInfo, List.empty[ReservedRoadPart], statusInfo, None)
+      case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo,
+      ely, statusInfo) =>
+        RoadAddressProject(id, ProjectState.apply(state), name, createdBy,createdDate, modifiedBy, start_date, modifiedDate,
+          addInfo, List.empty[ReservedRoadPart], statusInfo, ely)
     }.headOption
   }
 
   def getRoadAddressProjects(projectId: Long = 0): List[RoadAddressProject] = {
     val filter = projectId match {
       case 0 => ""
-      case _ => s""" where id =${projectId}"""
+      case _ => s""" where id =$projectId """
     }
     val query =
-      s"""SELECT id, state, name, created_by, created_date, start_date, modified_by, modified_date, add_info, status_info
+      s"""SELECT id, state, name, created_by, created_date, start_date, modified_by, COALESCE(modified_date, created_date), add_info, status_info, ely
           FROM project $filter order by name, id """
-    Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String, Option[String])](query).list.map {
-      case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo, statusInfo) =>
-        RoadAddressProject(id, ProjectState.apply(state), name, createdBy, createdDate, modifiedBy, start_date, modifiedDate, addInfo, List.empty[ReservedRoadPart], statusInfo)
+    Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String, Option[String], Option[Long])](query).list.map {
+      case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo, statusInfo, ely) =>
+        RoadAddressProject(id, ProjectState.apply(state), name, createdBy, createdDate, modifiedBy, start_date, modifiedDate, addInfo, List.empty[ReservedRoadPart], statusInfo, ely)
     }
   }
 
@@ -308,11 +347,18 @@ object ProjectDAO {
 
   def updateProjectLinkStatus(projectLinkIds: Set[Long], linkStatus: LinkStatus, userName: String): Unit = {
     val user = userName.replaceAll("[^A-Za-z0-9\\-]+", "")
-    MassQuery.withIds(projectLinkIds) {
-      s: String =>
-        val sql = s"UPDATE PROJECT_LINK SET STATUS = ${linkStatus.value}, MODIFIED_BY='$user' WHERE ID IN (SELECT ID FROM $s)"
+    projectLinkIds.grouped(500).foreach {
+      grp =>
+        val sql = s"UPDATE PROJECT_LINK SET STATUS = ${linkStatus.value}, MODIFIED_BY='$user' " +
+          s"WHERE ID IN ${grp.mkString("(", ",", ")")}"
         Q.updateNA(sql).execute
     }
+  }
+
+  def updateProjectLinkValues (projectId: Long, projectLink: RoadAddress) ={
+    val updateProjectLink = s"update project_link set project_link.road_number = ${projectLink.roadNumber}, project_link.road_part_number = ${projectLink.roadPartNumber}, project_link.track_code = ${projectLink.track.value}, " +
+      s" project_link.discontinuity_type = ${projectLink.discontinuity.value}, project_link.road_type = ${projectLink.roadType.value}, project_link.status = 0 where id in (select plink.id from project_link plink join lrm_position on lrm_position.id = plink.lrm_position_id where lrm_position.link_id =${projectLink.linkId} )"
+    Q.updateNA(updateProjectLink).execute
   }
 
   def flipProjectLinksSideCodes(projectId : Long, roadNumber : Long, roadPartNumber : Long): Unit = {
@@ -320,7 +366,9 @@ object ProjectDAO {
       " where id in (select lrm_position.id from project_link join " +
       s"LRM_Position on project_link.LRM_POSITION_ID = lrm_position.id where (side_code = 2 or side_code = 3) and project_link.project_id = $projectId and project_link.road_number = $roadNumber and project_link.road_part_number = $roadPartNumber)"
     Q.updateNA(updateLRM).execute
-    val updateProjectLink = s"update project_link set calibration_points = (CASE calibration_points WHEN 0 THEN 0 WHEN 1 THEN 2 WHEN 2 THEN 1 ELSE 3 END) where project_link.project_id = $projectId and project_link.road_number = $roadNumber and project_link.road_part_number = $roadPartNumber"
+    val updateProjectLink = s"update project_link set calibration_points = (CASE calibration_points WHEN 0 THEN 0 WHEN 1 THEN 2 WHEN 2 THEN 1 ELSE 3 END), " +
+      s"track_code = (CASE track_code WHEN 0 THEN 0 WHEN 1 THEN 2 WHEN 2 THEN 1 ELSE 3 END) " +
+      s"where project_link.project_id = $projectId and project_link.road_number = $roadNumber and project_link.road_part_number = $roadPartNumber"
     Q.updateNA(updateProjectLink).execute
   }
 
@@ -332,6 +380,16 @@ object ProjectDAO {
          WHERE project_id = $projectId and road_number = $roadNumber and road_part_number = $roadPartNumber
        """
     Q.queryNA[Long](query).list
+  }
+
+  def projectLinksCountUnchanged (projectId : Long, roadNumber:Long, roadPartNumber: Long): Long = {
+    var query =
+      s"""
+         select count(id) from project_link
+          WHERE project_id = $projectId and road_number = $roadNumber and road_part_number = $roadPartNumber and
+          status = ${LinkStatus.UnChanged.value}
+       """
+    Q.queryNA[Long](query).first
   }
 
   def updateProjectStatus(projectID:Long,state:ProjectState,errorMessage:String) {
