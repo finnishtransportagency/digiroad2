@@ -187,7 +187,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       halt(MethodNotAllowed("User not authorized, User needs to be BusStopMaintainer for do that action."))
     }
     else {
-      massTransitStopService.deleteAllMassTransitStopData(assetId)
+      massTransitStopService.deleteMassTransitStopData(assetId)
     }
   }
 
