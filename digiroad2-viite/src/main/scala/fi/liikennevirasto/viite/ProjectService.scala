@@ -938,19 +938,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  /** Inserts currently "valid" row rows to DB which contain old info of roadAddress and date when to switch to rows containing project info
-    *
-    * @param projectLinks Project links list that is used to determine when old roadaddress info ends
-    * @param projectStartDate Date when project starts, used to determine date when roadaddress info should be read from data added during project
-    * @return
-    */
-
-  private def endProjectAddressesFromRoadaddress(projectLinks:Seq[ProjectLink], projectStartDate:Option[DateTime]) :Seq[RoadAddress]={
-   val roadLinksToEndOnProjectStartDate= RoadAddressDAO.fetchByLinkId(projectLinks.map(x=>x.linkId).toSet,true,true)
-    RoadAddressDAO.create(roadLinksToEndOnProjectStartDate.map(x=> x.copy(endDate =projectStartDate,id =NewRoadAddress)),Some("why"))
-    roadLinksToEndOnProjectStartDate
-  }
-
   private def importProjectLinksToRoadAddressTable(projectLinks:Seq[ProjectLink], existingRoadAddresses:Seq[RoadAddress],projectOwner:Option[String]) ={
     val existingRoadAddressLinkIds= existingRoadAddresses.map( x=> x.linkId)
     val existingProjectAddresses= projectLinks.filter( x=> existingRoadAddressLinkIds.contains(x.linkId))
@@ -958,28 +945,119 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val suravageProjectLinks=newProjectLinks.filter(x=>x.linkGeomSource==LinkGeomSource.SuravageLinkInterface)
     val newNonSuravageLinks=newProjectLinks.filterNot(x=>x.linkGeomSource==LinkGeomSource.SuravageLinkInterface)
     //Fetch geometry for projectlinks from roadaddress table based on link-id
-    val roadLinksWithExistingGeometry= convertProjectLinksToRoadAddressesWithRoadAddressGeometry(existingProjectAddresses,existingRoadAddresses)
+    val (roadLinksWithExistingGeometry,missingDBGeometry)= convertProjectLinksToRoadAddressesWithRoadAddressGeometry(existingProjectAddresses,existingRoadAddresses)
     //Fetches  geometry for newlinks from VVH (excluding suravagelinks) and combines it with projectlinkdata
-    val newRoads=convertProjectLinkToRoadAddressWithVVHLinkGeometry(newNonSuravageLinks,roadLinkService.fetchVVHRoadlinks(newNonSuravageLinks.map( x=> x.linkId).toSet,frozenTimeVVHAPIServiceEnabled))
+    val (newRoads,missingNewRoadGeometry)=convertProjectLinkToRoadAddressWithVVHLinkGeometry(newNonSuravageLinks,roadLinkService.fetchVVHRoadlinks(newNonSuravageLinks.map( x=> x.linkId).toSet,frozenTimeVVHAPIServiceEnabled))
     //Fetches geometry for suravagelinks from VVH suravageInterface and combines it to projectLinkdata
-    val newSuravageRoads=convertProjectLinkToRoadAddressWithVVHLinkGeometry(suravageProjectLinks,roadLinkService.fetchSuravageLinksByLinkIdsFromVVH(suravageProjectLinks.map( x=> x.linkId).toSet))
-
-    RoadAddressDAO.create(roadLinksWithExistingGeometry++newRoads++newSuravageRoads,projectOwner)
+    val (newSuravageRoads,missingSuravageGeometry)=convertProjectLinkToRoadAddressWithVVHLinkGeometry(suravageProjectLinks,roadLinkService.fetchSuravageLinksByLinkIdsFromVVH(suravageProjectLinks.map( x=> x.linkId).toSet))
+    val projectLinksWithGeometry=roadLinksWithExistingGeometry++newRoads++newSuravageRoads
+    val missingGeometry=missingDBGeometry++missingNewRoadGeometry++missingSuravageGeometry
+    // TODO add check that geometry can be calculated to all roadparts = at least one known link from each roadpart
+    val guessGeometry= guestimateGeometry(missingGeometry.sortBy(x=>x.roadNumber).sortBy(x=>x.roadPartNumber).sortBy(x=>x.startMValue),projectLinksWithGeometry)
+    RoadAddressDAO.create(roadLinksWithExistingGeometry++newRoads++newSuravageRoads++guessGeometry,projectOwner)
   }
 
 
-  private def convertProjectLinkToRoadAddressWithVVHLinkGeometry(projectLinks: Seq[ProjectLink], vvhRoadLinks:  Seq[VVHRoadlink]) :Seq[RoadAddress]= {
+  /**
+    * Loops through geometry and tries to find geometry to missing links
+    * @param missingGeometry
+    * @param projectRoadaddressGeometry
+    * @return
+    */
+
+  private def guestimateGeometry(missingGeometry:Seq[RoadAddress],projectRoadaddressGeometry:Seq[RoadAddress]):Seq[RoadAddress]={
+    missingGeometry.lastOption match {
+      case  Some(missingRoadAddress)=>
+      {
+        val previousLink=projectRoadaddressGeometry.find(x=>x.startMValue==missingRoadAddress.endMValue && x.roadNumber==missingRoadAddress.roadNumber && x.roadPartNumber==missingRoadAddress.roadPartNumber && x.track==missingRoadAddress.track)
+        val nextLink=projectRoadaddressGeometry.find(x=>x.endMValue==missingRoadAddress.startMValue && x.roadNumber==missingRoadAddress.roadNumber && x.roadPartNumber==missingRoadAddress.roadPartNumber && x.track==missingRoadAddress.track)
+        (previousLink, nextLink) match {
+          case (p,n) if p.nonEmpty && n.nonEmpty => //missing link in the middle
+          {
+            val roadaddressWithAddedGeometry=missingRoadAddress.copy(geometry=Seq(p.head.geometry.last,n.head.geometry.head))
+          if (missingGeometry.size>1)
+            guestimateGeometry(missingGeometry.dropRight(1), projectRoadaddressGeometry++Seq(roadaddressWithAddedGeometry) )
+            else
+             projectRoadaddressGeometry++Seq(roadaddressWithAddedGeometry)
+          }
+          case (p,n) =>  //since seq is ordered we can search links to "previous" direction
+            {
+              val foundGeometryOnRoadPartOrTrack= projectRoadaddressGeometry.filter(x=>x.roadNumber==missingRoadAddress.roadNumber && x.roadPartNumber==missingRoadAddress.roadPartNumber &&x.track==missingRoadAddress.track)
+              if (foundGeometryOnRoadPartOrTrack.isEmpty)
+                throw new RuntimeException(s"RoadPart or trackpart did not have geometry to form missing geometry")
+              val previousLinkGeometry=  if (p.nonEmpty) p.head.geometry else None
+              val missingGeometryonRoadPartOrTrack= missingGeometry.filter(x=>x.roadNumber==missingRoadAddress.roadNumber && x.roadPartNumber==missingRoadAddress.roadPartNumber && x.track==missingRoadAddress.track)
+              val (adjacentLinksWithNoGeometry,previousLinkToChain)=getGeometryToPreviousLinks(missingGeometryonRoadPartOrTrack,foundGeometryOnRoadPartOrTrack,missingRoadAddress,Seq.empty[RoadAddress])
+              val adjacentIdSeq=adjacentLinksWithNoGeometry.map(x=>x.id)
+              val stillMissingGeometry=missingGeometry.filterNot(x=>adjacentIdSeq.contains(x.id))
+              val guessedGeometryForAdjacentLinks=guessGeometryForAdjacentLinks(adjacentLinksWithNoGeometry,previousLinkToChain,None)
+              if(stillMissingGeometry.isEmpty)
+                return projectRoadaddressGeometry++guessedGeometryForAdjacentLinks
+              guestimateGeometry(stillMissingGeometry, guessedGeometryForAdjacentLinks)
+            }
+          }
+        }
+      }
+    }
+
+  /**
+    *
+    * @param adjacentLinks Seq of adjacent links missing geometry
+    * @param previousLink  link containing geometry that has same startM value as seq:s highest endM value
+    * @param nextLink      link containing geometry that has same endM value as seq:s lowest startM value
+         Either nextLink or previousLink exists, and error should be throw earlier if no geometry can be used to guess geometry for given links
+    * @return              returns links containing geometry
+    */
+  private def guessGeometryForAdjacentLinks(adjacentLinks:Seq[RoadAddress], previousLink:Option[RoadAddress],nextLink:Option[RoadAddress]):Seq[RoadAddress]  ={
+  adjacentLinks.map(x=>x.copy(geometry=Seq(Point(0,0),Point(0,0))))
+  }
+
+
+  /**
+    * Gets link sequence missing geometry
+     * @param missingGeometry roadlinks from roadpart or track section that are missing geometry
+    * @param projectRoadaddressGeometry Known geometry from roadpart or track section
+    * @return
+    */
+  private def getGeometryToPreviousLinks(missingGeometry:Seq[RoadAddress],projectRoadaddressGeometry:Seq[RoadAddress],currentLink:RoadAddress,currentMissingLinksSeq:Seq[RoadAddress]): (Seq[RoadAddress], Option[RoadAddress])={
+  val nextLinkWithGeom=projectRoadaddressGeometry.filter(x=>x.endMValue==currentLink.startMValue)
+  if (nextLinkWithGeom.nonEmpty) //found link with geometry
+     (currentMissingLinksSeq++Seq(currentLink),Some(nextLinkWithGeom.head))
+    else
+    {
+    val nextLinkFromMissingList=missingGeometry.filter(x=>x.endMValue==currentLink.startMValue)
+      if (nextLinkFromMissingList.isEmpty) // we are probably on last link
+         (currentMissingLinksSeq++Seq(currentLink),None)
+      else //if we didnt find geometry, but found next missing geometry we search geometry from of next links next link
+        {
+          val reducedMissingGeometry=missingGeometry.filterNot(x=>x.id==currentLink.id)
+          getGeometryToPreviousLinks(reducedMissingGeometry,projectRoadaddressGeometry,nextLinkFromMissingList.head,currentMissingLinksSeq++Seq(currentLink))
+        }
+    }
+  }
+
+
+
+    //val roadPartGroupM=missingGeometry.groupBy( roadParts=>(roadParts.roadNumber,roadParts.roadPartNumber) )
+    //check if we can make a guess RoadPart should have at least one link
+
+    //find closest missing link missingling -> search for start_m and end_m
+
+
+
+  private def convertProjectLinkToRoadAddressWithVVHLinkGeometry(projectLinks: Seq[ProjectLink], vvhRoadLinks:  Seq[VVHRoadlink]) :(Seq[RoadAddress],Seq[RoadAddress])= {
     if (vvhRoadLinks==null)
-      return setProjectLinksAsFloating(projectLinks)
+      return (Seq.empty[RoadAddress],setProjectLinksAsFloating(projectLinks))
     var projectLinksWithVVHGeometry=new ListBuffer[RoadAddress]()
+    var missingGeometry=new ListBuffer[RoadAddress]()
     projectLinks.foreach( x=>{
       val vvhLink= vvhRoadLinks.filter(r=>r.linkId==x.linkId)
       if (vvhLink.nonEmpty)
         projectLinksWithVVHGeometry+= RoadAddress(NewRoadAddress,x.roadNumber,x.roadPartNumber,x.roadType,x.track,x.discontinuity,x.startAddrMValue,x.endAddrMValue,x.startDate, x.endDate,x.modifiedBy,x.lrmPositionId,x.linkId,x.startMValue,x.endMValue,x.sideCode,22L,x.calibrationPoints,x.floating,vvhLink.head.geometry,x.linkGeomSource)
       else //If link has vanished from DB we put link with no geometry to floating state
-        projectLinksWithVVHGeometry++setProjectLinksAsFloating(Seq(x))
+        missingGeometry++=projectLinksWithVVHGeometry++setProjectLinksAsFloating(Seq(x))
     })
-    projectLinksWithVVHGeometry
+    (projectLinksWithVVHGeometry,missingGeometry)
   }
 
   private def setProjectLinksAsFloating(projectLinks: Seq[ProjectLink]) :Seq[RoadAddress]={
@@ -990,8 +1068,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     projectLinksWithVVHGeometry
   }
 
-  private def convertProjectLinksToRoadAddressesWithRoadAddressGeometry(projectLinks:Seq[ProjectLink],roadaddresses:Seq[RoadAddress]) :Seq[RoadAddress] ={
+  private def convertProjectLinksToRoadAddressesWithRoadAddressGeometry(projectLinks:Seq[ProjectLink],roadaddresses:Seq[RoadAddress]) :(Seq[RoadAddress],Seq[RoadAddress])={
     var roadLinksWithExistingGeometry  = new ListBuffer[RoadAddress]()
+    var missingGeometry=new ListBuffer[RoadAddress]()
     projectLinks.foreach( x=>{
       val roadAddressLinkF= roadaddresses.filter(r=> r.linkId==x.linkId)
       if (roadAddressLinkF.nonEmpty){
@@ -999,10 +1078,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         roadLinksWithExistingGeometry+=RoadAddress(NewRoadAddress,x.roadNumber,x.roadPartNumber,x.roadType,x.track,x.discontinuity,x.startAddrMValue,x.endAddrMValue,x.startDate, x.endDate,x.modifiedBy,x.lrmPositionId,x.linkId,x.startMValue,x.endMValue,x.sideCode,22L,x.calibrationPoints,x.floating,roadAddressLink.geometry,x.linkGeomSource)
       }
       else
-        roadLinksWithExistingGeometry++setProjectLinksAsFloating(Seq(x))
+        missingGeometry++=setProjectLinksAsFloating(Seq(x))
     }
     )
-    roadLinksWithExistingGeometry
+    (roadLinksWithExistingGeometry,missingGeometry)
   }
 
   // TODO: remove when saving road type to project link table

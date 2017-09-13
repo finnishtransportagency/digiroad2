@@ -966,23 +966,11 @@ object RoadAddressDAO {
       })
       addressPS.setString(11, createdBy.getOrElse(address.modifiedBy.getOrElse("-")))
       val (p1, p2) = (address.geometry.headOption, address.geometry.lastOption)
-      if (p1.isEmpty || p2.isEmpty)
-      {
-        addressPS.setDouble(12, 0)
-        addressPS.setDouble(13, 0)
-        addressPS.setDouble(14, address.startAddrMValue)
-        addressPS.setDouble(15, 0)
-        addressPS.setDouble(16, 0)
-      }
-      else
-      {
-        addressPS.setDouble(12, p1.get.x)
-        addressPS.setDouble(13, p1.get.y)
-        addressPS.setDouble(14, address.startAddrMValue)
-        addressPS.setDouble(15, p2.get.x)
-        addressPS.setDouble(16, p2.get.y)
-      }
-
+      addressPS.setDouble(12, p1.get.x)
+      addressPS.setDouble(13, p1.get.y)
+      addressPS.setDouble(14, address.startAddrMValue)
+      addressPS.setDouble(15, p2.get.x)
+      addressPS.setDouble(16, p2.get.y)
       addressPS.setDouble(17, address.endAddrMValue)
       addressPS.setInt(18, if (address.floating) 1 else 0)
       addressPS.setInt(19, CalibrationCode.getFromAddress(address).value)
