@@ -218,8 +218,9 @@
 
       if(!_.isEmpty(linkIds) && typeof projectId !== 'undefined' && projectId !== 0){
         backend.updateProjectLinks(data, function(errorObject) {
-          if (errorObject.status == INTERNAL_SERVER_ERROR_500 || errorObject.status == BAD_REQUEST_400) {
-            eventbus.trigger('roadAddress:projectLinksUpdateFailed', errorObject.status);
+          if (!errorObject.success) {
+            new ModalConfirm(errorObject.errormessage);
+            applicationModel.removeSpinner();
           }
         });
       } else {

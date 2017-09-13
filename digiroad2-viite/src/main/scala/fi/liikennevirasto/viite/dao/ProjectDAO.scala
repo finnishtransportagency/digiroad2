@@ -50,7 +50,7 @@ sealed trait LinkStatus {
 }
 
 object LinkStatus {
-  val values = Set(NotHandled, Terminated, New, Transfer, UnChanged, Unknown)
+  val values = Set(NotHandled, Terminated, New, Transfer, UnChanged, Numbering, Unknown)
   case object NotHandled extends LinkStatus {def value = 0}
   case object Terminated extends LinkStatus {def value = 1}
   case object New extends LinkStatus {def value = 2}
@@ -344,6 +344,13 @@ object ProjectDAO {
 
   def incrementCheckCounter(projectID:Long, increment: Long) = {
     sqlu"""UPDATE project SET check_counter = check_counter + $increment WHERE id=$projectID""".execute
+  }
+
+  def updateProjectLinkNumbering(projectId: Long, roadNumber: Long, roadPart: Long, linkStatus: LinkStatus, newRoadNumber: Long, newRoadPart: Long, userName: String): Unit = {
+    val user = userName.replaceAll("[^A-Za-z0-9\\-]+", "")
+        val sql = s"UPDATE PROJECT_LINK SET STATUS = ${linkStatus.value}, MODIFIED_BY='$user', ROAD_NUMBER = $newRoadNumber, ROAD_PART_NUMBER = $newRoadPart " +
+          s"WHERE PROJECT_ID = $projectId  AND ROAD_NUMBER = $roadNumber AND ROAD_PART_NUMBER = $roadPart"
+        Q.updateNA(sql).execute
   }
 
   def updateProjectLinkStatus(projectLinkIds: Set[Long], linkStatus: LinkStatus, userName: String): Unit = {

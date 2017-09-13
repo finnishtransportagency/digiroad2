@@ -536,7 +536,8 @@
               rootElement.find('.changeDirectionDiv').prop("hidden", false);
         }
         else if(this.value == ACTION_NUMBERING) {
-            $('#ajr').prop('disabled',true);
+          new ModalConfirm("Numerointi koskee kokonaista tieosaa. Valintaasi on tarvittaessa laajennettu koko tieosalle.");
+          $('#ajr').prop('disabled',true);
             $('#discontinuityDropdown').prop('disabled',true);
             $('#roadTypeDropDown').prop('disabled',true);
             projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {

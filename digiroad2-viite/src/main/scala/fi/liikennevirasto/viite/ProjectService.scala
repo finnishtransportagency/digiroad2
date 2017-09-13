@@ -184,30 +184,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         SideCode.AgainstDigitizing
     }
 
-    // TODO: Move validations to a validator object class and generalize
-    def checkAvailable(number: Long, part: Long, currentProject: RoadAddressProject) = {
-      val isReserved = RoadAddressDAO.isNotAvailableForProject(number, part, currentProject.id)
-      if (!isReserved) {
-        None
-      } else {
-        val fmt = DateTimeFormat.forPattern("dd.MM.yyyy")
-        throw new ProjectValidationException(
-          s"TIE $number OSA $part on jo olemassa projektin alkupäivänä ${currentProject.startDate.toString(fmt)}, tarkista tiedot") //message to user if address is already in use
-      }
-    }
-
-    def checkNotReserved(number: Long, part: Long, currentProject: RoadAddressProject) = {
-      val project = ProjectDAO.roadPartReservedByProject(number, part, currentProject.id, withProjectId = true)
-      if (project.nonEmpty) {
-        throw new ProjectValidationException(s"TIE $number OSA $part on jo varattuna projektissa ${project.get}, tarkista tiedot")
-      }
-    }
-
-    def fetchProject(id: Long): RoadAddressProject = {
-      ProjectDAO.getRoadAddressProjectById(roadAddressProjectID).getOrElse(
-        throw new ProjectValidationException("Projektikoodilla ei löytynyt projektia"))
-    }
-
     try {
       withDynTransaction {
         val linksInProject = getLinksByProjectLinkId(ProjectDAO.fetchByProjectNewRoadPart(newRoadNumber, newRoadPartNumber,
@@ -222,9 +198,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               matchSideCodes(n, l)
             case _ => SideCode.TowardsDigitizing
           }.getOrElse(SideCode.TowardsDigitizing)
-        val project = fetchProject(roadAddressProjectID)
-        checkAvailable(newRoadNumber, newRoadPartNumber, project)
-        checkNotReserved(newRoadNumber, newRoadPartNumber, project)
+        val project = RoadAddressValidator.fetchProject(roadAddressProjectID)
+        RoadAddressValidator.checkAvailable(newRoadNumber, newRoadPartNumber, project)
+        RoadAddressValidator.checkNotReserved(newRoadNumber, newRoadPartNumber, project)
         val newProjectLinks = projectAddressLinks.map(projectLink => {
           projectLink.linkId ->
             newProjectLink(projectLink, project, randomSideCode)
@@ -700,10 +676,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @param userName Username of the user that does this change
     * @return true, if the delta calculation is successful and change table has been updated.
     */
-  def updateProjectLinkStatus(projectId: Long, linkIds: Set[Long], linkStatus: LinkStatus, userName: String, newRoadNumber: Long = 0, newRoadPart: Long = 0): Boolean = {
-    withDynTransaction{
+  def updateProjectLinkStatus(projectId: Long, linkIds: Set[Long], linkStatus: LinkStatus, userName: String, newRoadNumber: Long = 0, newRoadPart: Long = 0)= {
+    try {
+    withDynTransaction {
       val projectLinks = withGeometry(ProjectDAO.getProjectLinks(projectId))
-      val (updatedProjectLinks, unchangedProjectLinks) = projectLinks.filterNot(pl=> pl.status == LinkStatus.Terminated ).partition(pl => linkIds.contains(pl.linkId))
+      val (updatedProjectLinks, unchangedProjectLinks) = projectLinks.filterNot(pl => pl.status == LinkStatus.Terminated).partition(pl => linkIds.contains(pl.linkId))
       linkStatus match {
         case LinkStatus.Terminated => {
           //Fetching road addresses in order to obtain the original addressMValues, since we may not have those values on project_link table, after previous recalculations
@@ -713,6 +690,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             pl.copy(startAddrMValue = roadAddress.get.startAddrMValue, endAddrMValue = roadAddress.get.endAddrMValue)
           })
           ProjectDAO.updateProjectLinksToDB(updatedPL.map(_.copy(status = linkStatus, calibrationPoints = (None, None))), userName)
+        }
+        case LinkStatus.Numbering => {
+          val project = RoadAddressValidator.fetchProject(projectId)
+          RoadAddressValidator.checkAvailable(newRoadNumber, newRoadPart, project)
+          RoadAddressValidator.checkNotReserved(newRoadNumber, newRoadPart, project)
+          ProjectDAO.updateProjectLinkNumbering(projectId, projectLinks.head.roadNumber, projectLinks.head.roadPartNumber, linkStatus, newRoadNumber, newRoadPart, userName)
         }
         case LinkStatus.Transfer => {
           if (isRoadPartTransfer(updatedProjectLinks, newRoadNumber, newRoadPart)) {
@@ -727,6 +710,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         case _ => ProjectDAO.updateProjectLinkStatus(updatedProjectLinks.map(_.id).toSet, linkStatus, userName)
       }
       recalculateProjectLinks(projectId, userName)
+      }
+    } catch {
+      case ex: RoadAddressException =>
+        logger.info("Delta calculation not possible: " + ex.getMessage)
+        Some(ex.getMessage)
+      case ex: ProjectValidationException => Some(ex.getMessage)
     }
   }
 
@@ -741,14 +730,18 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     recalculateChangeTable(projectId)
   }
 
-  private def recalculateChangeTable(projectId: Long): Boolean = {
+  private def recalculateChangeTable(projectId: Long) = {
     try {
       val delta = ProjectDeltaCalculator.delta(projectId)
-      setProjectDeltaToDB(delta, projectId)
+      setProjectDeltaToDB(delta, projectId) match {
+        case true   => None
+        case false  => Some("Delta calculation not possible")
+      }
     } catch {
       case ex: RoadAddressException =>
         logger.info("Delta calculation not possible: " + ex.getMessage)
-        false
+        Some(ex.getMessage)
+      case ex: ProjectValidationException => Some(ex.getMessage)
     }
   }
 
@@ -789,7 +782,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  private def setProjectDeltaToDB(projectDelta:Delta, projectId:Long):Boolean= {
+  private def setProjectDeltaToDB(projectDelta:Delta, projectId:Long):Boolean = {
     RoadAddressChangesDAO.clearRoadChangeTable(projectId)
     RoadAddressChangesDAO.insertDeltaToRoadChangeTable(projectDelta, projectId)
   }
