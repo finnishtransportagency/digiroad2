@@ -1,6 +1,6 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.util.RoadAddressException
+import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.viite.dao.{ProjectLink, _}
 import org.joda.time.DateTime
 
@@ -106,6 +106,22 @@ object ProjectDeltaCalculator {
     ).toSeq
   }
 
+  def getRoadAddressSectionMap(roadGroups: Seq[RoadAddressSection], projectGroups: Seq[RoadAddressSection], roadAddresses: Seq[RoadAddress], projectLinks: Seq[ProjectLink] ): Map[RoadAddressSection, RoadAddressSection]  = {
+      roadGroups.map { sec =>
+      val linkId = roadAddresses.find(ra => sec.includes(ra)).map(_.linkId).get
+      val targetGroup = projectGroups.find(_.includes(projectLinks.find(_.linkId == linkId).get))
+      sec -> targetGroup.get
+    }.toMap
+  }
+
+  def getProjectLinkSectionMap(projectGroups: Seq[RoadAddressSection], roadGroups: Seq[RoadAddressSection], roadAddresses: Seq[RoadAddress], projectLinks: Seq[ProjectLink]  ): Map[RoadAddressSection, RoadAddressSection] = {
+      projectGroups.map { sec =>
+      val linkId = projectLinks.find(ra => sec.includes(ra)).map(_.linkId).get
+      val targetGroup = projectGroups.find(_.includes(projectLinks.find(_.linkId == linkId).get))
+      sec -> targetGroup.get
+    }.toMap
+  }
+
   /**
     * Partition the transfers into a mapping of RoadAddressSection -> RoadAddressSection.
     * It is impossible to tell afterwards the exact mapping unless done at this point
@@ -126,13 +142,11 @@ object ProjectDeltaCalculator {
         pl.track, pl.startAddrMValue, pl.endAddrMValue, pl.discontinuity, pl.roadType)
     ).toSeq
 
-    addressesGroups.map { sec =>
-      val linkId = roadAddresses.find(ra => sec.includes(ra)).map(_.linkId).get
-      val targetGroup = projectLinksGroups.find(_.includes(projectLinks.find(_.linkId == linkId).get))
-      sec -> targetGroup.get
-    }.toMap
+    if (groupedAddresses.size > groupedProjectLinks.size)
+      getRoadAddressSectionMap(addressesGroups, projectLinksGroups, roadAddresses, projectLinks)
+    else
+      getProjectLinkSectionMap(projectLinksGroups, addressesGroups, roadAddresses, projectLinks)
   }
-
 }
 
 case class Delta(startDate: DateTime, terminations: Seq[RoadAddress], newRoads: Seq[ProjectLink],
