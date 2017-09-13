@@ -3,14 +3,12 @@ package fi.liikennevirasto.viite.process
 import fi.liikennevirasto.digiroad2.util.RoadAddressException
 import fi.liikennevirasto.viite.dao.{ProjectLink, _}
 import org.joda.time.DateTime
-import org.slf4j.LoggerFactory
 
 /**
   * Calculate the effective change between the project and the current road address data
   */
 object ProjectDeltaCalculator {
 
-  val logger = LoggerFactory.getLogger(getClass)
   val checker = new ContinuityChecker(null) // We don't need road link service here
   def delta(projectId: Long): Delta = {
     val projectOpt = ProjectDAO.getRoadAddressProjectById(projectId)
@@ -18,13 +16,14 @@ object ProjectDeltaCalculator {
       throw new IllegalArgumentException("Project not found")
     val project = projectOpt.get
     val projectLinks = ProjectDAO.getProjectLinks(projectId).groupBy(l => RoadPart(l.roadNumber,l.roadPartNumber))
-    val currentAddresses = projectLinks.filter(_._2.exists(_.status != LinkStatus.New)).keySet.map(r => r -> RoadAddressDAO.fetchByRoadPart(r.roadNumber, r.roadPartNumber, true)).toMap
+    val currentAddresses = projectLinks.filter(_._2.exists(_.status != LinkStatus.New)).keySet.map(r =>
+      r -> RoadAddressDAO.fetchByRoadPart(r.roadNumber, r.roadPartNumber, includeFloating = true)).toMap
     val terminations = findTerminations(projectLinks, currentAddresses)
     val newCreations = findNewCreations(projectLinks)
-    if (terminations.size != currentAddresses.values.flatten.size)
-      throw new RoadAddressException(s"Road address count did not match: ${terminations.size} terminated, " +
-        s"(and ${newCreations.size } created), ${currentAddresses.values.flatten.size} addresses found")
-    Delta(project.startDate, terminations.sortBy(t => (t.discontinuity.value, t.roadType.value)), newCreations.sortBy(t => (t.discontinuity.value, t.roadType.value)))
+    val unChanged = findUnChanged(projectLinks, currentAddresses)
+    val transferred = Transferred(findTransferredOld(projectLinks, currentAddresses), findTransferredNew(projectLinks))
+
+    Delta(project.startDate, terminations, newCreations, unChanged, transferred)
   }
 
   private def findTerminations(projectLinks: Map[RoadPart, Seq[ProjectLink]], currentAddresses: Map[RoadPart, Seq[RoadAddress]]) = {
@@ -35,6 +34,22 @@ object ProjectDeltaCalculator {
     terminations.values.flatten.toSeq
   }
 
+  private def findUnChanged(projectLinks: Map[RoadPart, Seq[ProjectLink]], currentAddresses: Map[RoadPart, Seq[RoadAddress]]) = {
+    projectLinks.map{case (part, pLinks) => part -> (pLinks, currentAddresses.getOrElse(part, Seq()))}.mapValues{ case (pll, ra) =>
+      ra.filter(r => pll.exists(pl => pl.linkId == r.linkId && pl.status == LinkStatus.UnChanged))
+    }.values.flatten.toSeq
+  }
+
+  private def findTransferredOld(projectLinks: Map[RoadPart, Seq[ProjectLink]], currentAddresses: Map[RoadPart, Seq[RoadAddress]]) = {
+    projectLinks.map{case (part, pLinks) => part -> (pLinks, currentAddresses.getOrElse(part, Seq()))}.mapValues{ case (pll, ra) =>
+      ra.filter(r => pll.exists(pl => pl.linkId == r.linkId && pl.status == LinkStatus.Transfer))
+    }.values.flatten.toSeq
+  }
+
+  private def findTransferredNew(projectLinks: Map[RoadPart, Seq[ProjectLink]]) = {
+    projectLinks.values.flatten.filter(_.status == LinkStatus.Transfer).toSeq
+  }
+
   private def findNewCreations(projectLinks: Map[RoadPart, Seq[ProjectLink]]) = {
     projectLinks.values.flatten.filter(_.status == LinkStatus.New).toSeq
   }
@@ -42,10 +57,7 @@ object ProjectDeltaCalculator {
   private def validateTerminations(roadAddresses: Seq[RoadAddress]) = {
     if (roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber)).keySet.size != 1)
       throw new RoadAddressException("Multiple or no road parts present in one termination set")
-    val missingSegments = checker.checkAddressesHaveNoGaps(roadAddresses)
-    if (missingSegments.nonEmpty)
-      throw new RoadAddressException(s"Termination has gaps in between: ${missingSegments.mkString("\n")}") //TODO: terminate only part of the road part later
-  }
+   }
 
   def projectLinkPartition(projectLinks: Seq[ProjectLink]): Seq[RoadAddressSection] = {
     val grouped = projectLinks.groupBy(projectLink => (projectLink.roadNumber, projectLink.roadPartNumber, projectLink.track, projectLink.roadType))
@@ -82,7 +94,38 @@ object ProjectDeltaCalculator {
     ).toSeq
   }
 
+  /**
+    * Partition the transfers into a mapping of RoadAddressSection -> RoadAddressSection.
+    * It is impossible to tell afterwards the exact mapping unless done at this point
+    * @param roadAddresses Road Addresses that were the source
+    * @param projectLinks Project Links that have the transfer address values
+    * @return Map between the sections old -> new
+    */
+  def partition(roadAddresses: Seq[RoadAddress], projectLinks: Seq[ProjectLink]): Map[RoadAddressSection, RoadAddressSection] = {
+    val groupedAddresses = roadAddresses.sortBy(_.startAddrMValue).groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
+    val addressesGroups = groupedAddresses.mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
+      RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
+        ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType)
+    ).toSeq
+
+    val groupedProjectLinks = projectLinks.sortBy(_.startAddrMValue).groupBy(pl => (pl.roadNumber, pl.roadPartNumber, pl.track))
+    val projectLinksGroups = groupedProjectLinks.mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(pl =>
+      RoadAddressSection(pl.roadNumber, pl.roadPartNumber, pl.roadPartNumber,
+        pl.track, pl.startAddrMValue, pl.endAddrMValue, pl.discontinuity, pl.roadType)
+    ).toSeq
+
+    addressesGroups.map { sec =>
+      val linkId = roadAddresses.find(ra => sec.includes(ra)).map(_.linkId).get
+      val targetGroup = projectLinksGroups.find(_.includes(projectLinks.find(_.linkId == linkId).get))
+      sec -> targetGroup.get
+    }.toMap
+  }
+
 }
 
-case class Delta(startDate: DateTime, terminations: Seq[RoadAddress], newRoads: Seq[ProjectLink] = Seq.empty[ProjectLink])
+case class Delta(startDate: DateTime, terminations: Seq[RoadAddress], newRoads: Seq[ProjectLink],
+                 unChanged: Seq[RoadAddress], transferred: Transferred)
+
 case class RoadPart(roadNumber: Long, roadPartNumber: Long)
+
+case class Transferred(oldLinks: Seq[RoadAddress], newLinks: Seq[ProjectLink])

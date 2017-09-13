@@ -31,12 +31,14 @@
     function toggle() {
       $('.container').append('<div class="modal-overlay confirm-modal"><div class="modal-dialog"></div></div>');
       $('.modal-dialog').append(projectList.toggle());
+      eventbus.trigger("roadAddressProject:deactivateAllSelections");
       bindEvents();
       fetchProjects();
     }
 
     function hide() {
       projectList.hide();
+      eventbus.trigger("roadAddressProject:startAllInteractions");
       $('.modal-overlay').remove();
     }
 
@@ -53,9 +55,10 @@
         if(!_.isEmpty(unfinishedProjects)){
           var html = '<table align="left" width="100%">';
           _.each(unfinishedProjects, function(proj) {
+            var info = typeof(proj.statusInfo) !== "undefined" ? proj.statusInfo : 'Ei lisätietoja';
             html += '<tr class="project-item">' +
               '<td width="300px;">'+ staticFieldProjectList(proj.name)+'</td>'+
-              '<td width="300px;" title="'+proj.statusInfo+'">'+ staticFieldProjectList(proj.statusDescription)+'</td>'+
+              '<td width="300px;" title="'+ info +'">'+ staticFieldProjectList(proj.statusDescription)+'</td>'+
               '<td>'+'<button class="project-open btn btn-new" style="alignment: right; margin-bottom:6px" id="open-project-'+proj.id +'" value="'+proj.id+'"">Avaa</button>' +'</td>'+
               '</tr>' + '<tr style="border-bottom:1px solid darkgray; "><td colspan="100%"></td></tr>';
           });

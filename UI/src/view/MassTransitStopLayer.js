@@ -60,7 +60,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     onSelect: onSelectMassTransitStop,
     draggable : false,
     filterGeometry : function(feature){
-      return feature.getGeometry() instanceof ol.geom.Point;
+      return feature.getGeometry() instanceof ol.geom.Point && !_.isUndefined(feature.getProperties().data);
     }
   });
 
@@ -273,7 +273,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     });
     var assetIds = _.map(groupContainingSavedAsset, function(asset) { return asset.id.toString(); });
 
-    if (groupContainingSavedAsset.length > 1) {
+    if (groupContainingSavedAsset && groupContainingSavedAsset.length > 1) {
       massTransitStopsCollection.destroyGroup(assetIds);
     }
 
@@ -540,7 +540,9 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     var extent = map.getView().calculateExtent(map.getSize());
 
     eventbus.once('roadLinks:fetched', function () {
-      roadLayer.drawRoadLinks(roadCollection.getAll(), map.getView().getZoom());
+      var roadLinks = roadCollection.getAll();
+      roadLayer.drawRoadLinks(roadLinks, map.getView().getZoom());
+      me.drawOneWaySigns(roadLayer.layer, roadLinks);
     });
 
     massTransitStopsCollection.refreshAssets({ bbox: extent, hasZoomLevelChanged: true });
@@ -588,7 +590,6 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
         renderAssets(groupedAssets);
       }
     });
-
     eventListener.listenTo(eventbus, 'assets:all-updated', handleAllAssetsUpdated);
     eventListener.listenTo(eventbus, 'assets:new-fetched', handleNewAssetsFetched);
     eventListener.listenTo(eventbus, 'assetGroup:destroyed', reRenderGroup);
@@ -611,6 +612,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     eventListener.listenTo(eventbus, 'road-type:selected', roadLayer.toggleRoadTypeWithSpecifiedStyle);
 
     eventListener.listenTo(eventbus, 'application:readOnly', toggleMode);
+    eventListener.listenTo(eventbus, 'toggleWithRoadAddress', refreshSelectedView);
   };
 
   var startListening = function() {
@@ -628,8 +630,10 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   var registerRoadLinkFetched = function(){
     if (zoomlevels.isInAssetZoomLevel(map.getView().getZoom())) {
       eventbus.once('roadLinks:fetched', function() {
-          roadLayer.drawRoadLinks(roadCollection.getAll(), map.getView().getZoom());
+          var roadLinks = roadCollection.getAll();
+          roadLayer.drawRoadLinks(roadLinks, map.getView().getZoom());
           massTransitStopsCollection.fetchAssets( map.getView().calculateExtent(map.getSize()));
+          me.drawOneWaySigns(roadLayer.layer, roadLinks);
       });
       if(massTransitStopsCollection.isComplementaryActive())
         roadCollection.fetchWithComplementary(map.getView().calculateExtent(map.getSize()));
@@ -669,6 +673,11 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     roadAddressInfoPopup.stop();
     me.stop();
     me.hide();
+  };
+
+  var refreshSelectedView = function(){
+    if(applicationModel.getSelectedLayer() == layerName)
+      me.refreshView();
   };
 
   return {

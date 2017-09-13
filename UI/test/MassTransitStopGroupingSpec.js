@@ -1,6 +1,6 @@
 define(['chai', 'assetGrouping', 'zoomlevels', 'geometrycalculator'], function(chai, AssetGrouping) {
   var assert = chai.assert;
-  var assetGrouping = new AssetGrouping({ assetGroupingDistance: 36 });
+  var assetGrouping = new AssetGrouping(36);
 
   describe('Asset grouping', function() {
     describe('should be distance aware', function() {

@@ -167,7 +167,8 @@ object DataFixture {
 //      "siilinjarvi_speed_limits.sql",
 //      "siilinjarvi_linear_assets.sql",
       "insert_road_address_data.sql",
-      "insert_floating_road_addresses.sql"
+      "insert_floating_road_addresses.sql",
+      "insert_project_link_data.sql"
     ))
   }
 
@@ -929,6 +930,17 @@ object DataFixture {
     println("\n")
   }
 
+  def importAllSpeedLimitDataFromTR(): Unit ={
+    println("\nStart Speed Limits import at time: ")
+    println(DateTime.now())
+
+    tierekisteriDataImporter.importSpeedLimits()
+
+    println("Speed Limits import complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
   def importAllPavedRoadDataFromTR(): Unit ={
     println("\nStart PavedRoad import at time: ")
     println(DateTime.now())
@@ -1165,6 +1177,8 @@ object DataFixture {
         updateMassTransitLaneAssetDataFromTR()
       case Some("update_damagedByThaw_from_TR_to_OTH") =>
         updateDamagedByThawAssetDataFromTR()
+      case Some("import_all_speedLimits_from_TR_to_OTH") =>
+        importAllSpeedLimitDataFromTR()
       case Some("update_europeanRoad_from_TR_to_OTH") =>
         updateEuropeanRoadDataFromTR()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +

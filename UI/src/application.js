@@ -22,7 +22,7 @@
     });
 
     var pointAssets = _.map(pointAssetSpecs, function(spec) {
-      var collection = _.isUndefined(spec.collection ) ?  new PointAssetsCollection(backend, spec.layerName) : new spec.collection(backend, spec.layerName) ;
+      var collection = _.isUndefined(spec.collection ) ?  new PointAssetsCollection(backend, spec.layerName, spec.allowComplementaryLinks) : new spec.collection(backend, spec.layerName, spec.allowComplementaryLinks) ;
       var selectedPointAsset = new SelectedPointAsset(backend, spec.layerName, roadCollection);
       return _.merge({}, spec, {
         collection: collection,
@@ -196,6 +196,14 @@
 
     var mapOverlay = new MapOverlay($('.container'));
 
+    var mapPluginsContainer = $('#map-plugins');
+    new ScaleBar(map, mapPluginsContainer);
+    new TileMapSelector(mapPluginsContainer);
+    new ZoomBox(map, mapPluginsContainer);
+    new CoordinatesDisplay(map, mapPluginsContainer);
+
+    var roadAddressInfoPopup = new RoadAddressInfoPopup(map, mapPluginsContainer, roadCollection);
+
     if (withTileMaps) { new TileMapCollection(map); }
     var roadLayer = new RoadLayer(map, models.roadCollection);
 
@@ -215,8 +223,6 @@
     _.forEach(pointAssets, function(pointAsset ) {
      PointAssetForm.initialize(pointAsset.selectedPointAsset, pointAsset.layerName, pointAsset.formLabels, pointAsset.editConstrains || function() {return false;}, roadCollection, applicationModel);
     });
-
-    var roadAddressInfoPopup = new RoadAddressInfoPopup(map);
 
     var linearAssetLayers = _.reduce(linearAssets, function(acc, asset) {
      acc[asset.layerName] = new LinearAssetLayer({
@@ -249,8 +255,11 @@
        style: PointAssetStyle(asset.layerName),
        mapOverlay: mapOverlay,
        layerName: asset.layerName,
+       assetLabel: asset.label,
        newAsset: asset.newAsset,
        roadAddressInfoPopup: roadAddressInfoPopup,
+       allowGrouping: asset.allowGrouping,
+       assetGrouping: new AssetGrouping(asset.groupingDistance),
        editConstrains : asset.editConstrains || function() {return false;}
      });
      return acc;
@@ -259,7 +268,7 @@
     var layers = _.merge({
       road: roadLayer,
       linkProperty: new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel, roadAddressInfoPopup),
-       massTransitStop: new MassTransitStopLayer(map, models.roadCollection, mapOverlay, new AssetGrouping(applicationModel), roadLayer, roadAddressInfoPopup),
+       massTransitStop: new MassTransitStopLayer(map, models.roadCollection, mapOverlay, new AssetGrouping(36), roadLayer, roadAddressInfoPopup),
        speedLimit: new SpeedLimitLayer({
        map: map,
        application: applicationModel,
@@ -273,12 +282,6 @@
        manoeuvre: new ManoeuvreLayer(applicationModel, map, roadLayer, models.selectedManoeuvreSource, models.manoeuvresCollection, models.roadCollection)
 
     }, linearAssetLayers, pointAssetLayers);
-
-    var mapPluginsContainer = $('#map-plugins');
-    new ScaleBar(map, mapPluginsContainer);
-    new TileMapSelector(mapPluginsContainer);
-    new ZoomBox(map, mapPluginsContainer);
-    new CoordinatesDisplay(map, mapPluginsContainer);
 
     // Show environment name next to Digiroad logo
     $('#notification').append(Environment.localizedName());
@@ -323,7 +326,8 @@
           .concat(getLinearAsset(assetType.numberOfLanes))
           .concat(getLinearAsset(assetType.massTransitLane))
           .concat(getLinearAsset(assetType.europeanRoads))
-          .concat(getLinearAsset(assetType.exitNumbers)),
+          .concat(getLinearAsset(assetType.exitNumbers))
+          .concat(getLinearAsset(assetType.trSpeedLimits)),
       [speedLimitBox].concat(
       [winterSpeedLimits]),
       [massTransitBox]

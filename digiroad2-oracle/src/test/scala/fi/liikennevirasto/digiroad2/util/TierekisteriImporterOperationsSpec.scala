@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.util
 
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.{TierekisteriLightingAssetClient, TierekisteriMassTransitLaneAssetClient, _}
+import fi.liikennevirasto.digiroad2.{TierekisteriLightingAssetClient, TierekisteriMassTransitLaneAssetClient, TierekisteriTrafficSignData, _}
 import fi.liikennevirasto.digiroad2.asset.oracle.OracleAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.{TextualValue, NumericValue}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
@@ -17,6 +17,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
   val mockAssetDao: OracleAssetDao = MockitoSugar.mock[OracleAssetDao]
   val mockRoadAddressDAO: RoadAddressDAO = MockitoSugar.mock[RoadAddressDAO]
   val mockTRClient: TierekisteriLightingAssetClient = MockitoSugar.mock[TierekisteriLightingAssetClient]
+  val mockTRTrafficSignsLimitClient: TierekisteriTrafficSignAssetClient = MockitoSugar.mock[TierekisteriTrafficSignAssetClient]
   val mockRoadLinkService: RoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockVVHClient: VVHClient = MockitoSugar.mock[VVHClient]
   val mockVVHRoadLinkClient: VVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
@@ -39,6 +40,10 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     new TestTierekisteriAssetImporterOperations
   }
 
+  lazy val speedLimitsTierekisteriImporter: TestSpeedLimitsTierekisteriImporter = {
+    new TestSpeedLimitsTierekisteriImporter
+  }
+
   class TestTierekisteriAssetImporterOperations extends TierekisteriAssetImporterOperations {
     override def typeId: Int = 999
     override def withDynSession[T](f: => T): T = f
@@ -54,7 +59,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
     //Creating this new methods because is protected visibility on the trait
     def getRoadAddressSectionsTest(trAsset: TierekisteriAssetData): Seq[(AddressSection, TierekisteriAssetData)] = super.getRoadAddressSections(trAsset)
     def getAllViiteRoadAddressTest(section: AddressSection) = super.getAllViiteRoadAddress(section)
-    def getAllViiteRoadAddressTest(roadNumber: Long, roadPart: Long, track: Track) = super.getAllViiteRoadAddress(roadNumber, roadPart, track)
+    def getAllViiteRoadAddressTest(roadNumber: Long, roadPart: Long) = super.getAllViiteRoadAddress(roadNumber, roadPart)
     def expireAssetsTest(linkIds: Seq[Long]): Unit = super.expireAssets(linkIds)
     def calculateStartLrmByAddressTest(startAddress: ViiteRoadAddress, section: AddressSection): Option[Double] = super.calculateStartLrmByAddress(startAddress, section)
     def calculateEndLrmByAddressTest(endAddress: ViiteRoadAddress, section: AddressSection): Option[Double] = super.calculateEndLrmByAddress(endAddress, section)
@@ -65,6 +70,19 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
 
     override protected def createAsset(section: AddressSection, trAssetData: TierekisteriAssetData): Unit = {
 
+    }
+  }
+
+  class TestSpeedLimitsTierekisteriImporter extends SpeedLimitsTierekisteriImporter {
+    override lazy val assetDao: OracleAssetDao = mockAssetDao
+    override lazy val roadAddressDao: RoadAddressDAO = mockRoadAddressDAO
+    override val tierekisteriClient = mockTRTrafficSignsLimitClient
+    override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
+    override lazy val vvhClient: VVHClient = mockVVHClient
+    override def withDynTransaction[T](f: => T): T = f
+
+    def testSplitRoadAddressSectionBySigns(trAssets: Seq[TierekisteriAssetData], ra: ViiteRoadAddress, roadSide: RoadSide): Seq[(AddressSection, Option[TierekisteriAssetData])] = {
+      super.splitRoadAddressSectionBySigns(trAssets, ra, roadSide)
     }
   }
 
@@ -298,7 +316,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       when(mockRoadAddressDAO.getRoadAddress(any[String => String].apply)).thenReturn(Seq(ra))
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
-      when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
+      when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(Seq(vvhRoadLink))
 
       testLitRoad.importAssets()
       val asset = linearAssetDao.fetchLinearAssetsByLinkIds(testLitRoad.typeId, Seq(5001), LinearAssetTypes.numericValuePropertyId).head
@@ -346,7 +364,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       when(mockRoadAddressDAO.getRoadAddress(any[String => String].apply)).thenReturn(Seq(raS1)).thenReturn(Seq(raS2))
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
-      when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
+      when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(Seq(vvhRoadLink))
 
       testLitRoad.importAssets()
       val asset = linearAssetDao.fetchLinearAssetsByLinkIds(testLitRoad.typeId, Seq(5001), LinearAssetTypes.numericValuePropertyId)
@@ -373,14 +391,14 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
        val ra = ViiteRoadAddress(1L, roadNumber, startRoadPartNumber, Track.RightSide, 5, startAddressMValue, endAddressMValue, None, None, 1L, 5001, 1.5, 11.4, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
        val vvhRoadLink = VVHRoadlink(5001, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
 
-       when(mockAssetDao.getMunicipalities).thenReturn(Seq())
-       when(mockRoadAddressDAO.getRoadNumbers()).thenReturn(Seq(roadNumber))
-       when(mockTRClient.fetchActiveAssetData(any[Long])).thenReturn(Seq(tr))
-       when(mockRoadAddressDAO.withRoadAddressSinglePart(any[Long], any[Long], any[Int], any[Long], any[Option[Long]], any[Option[Int]])(any[String])).thenReturn("")
-       when(mockRoadAddressDAO.getRoadAddress(any[String => String].apply)).thenReturn(Seq(ra))
-       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-       when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
-       when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
+      when(mockAssetDao.getMunicipalities).thenReturn(Seq())
+      when(mockRoadAddressDAO.getRoadNumbers()).thenReturn(Seq(roadNumber))
+      when(mockTRClient.fetchActiveAssetData(any[Long])).thenReturn(Seq(tr))
+      when(mockRoadAddressDAO.withRoadAddressSinglePart(any[Long], any[Long], any[Int], any[Long], any[Option[Long]], any[Option[Int]])(any[String])).thenReturn("")
+      when(mockRoadAddressDAO.getRoadAddress(any[String => String].apply)).thenReturn(Seq(ra))
+      when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+      when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
+      when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(Seq(vvhRoadLink))
 
        testLitRoad.importAssets()
        val asset = linearAssetDao.fetchLinearAssetsByLinkIds(testLitRoad.typeId, Seq(5001), LinearAssetTypes.numericValuePropertyId).head
@@ -426,7 +444,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
 
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
-      when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
+      when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(Seq(vvhRoadLink))
 
       testLitRoad.importAssets()
       val assetI = linearAssetDao.fetchLinearAssetsByLinkIds(testLitRoad.typeId, Seq(5001), LinearAssetTypes.numericValuePropertyId).head
@@ -461,7 +479,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       when(mockRoadAddressDAO.getRoadAddress(any[String => String].apply)).thenReturn(Seq(ra))
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
-      when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
+      when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(Seq(vvhRoadLink))
 
       testMassTransitLane.importAssets()
       val asset = linearAssetDao.fetchLinearAssetsByLinkIds(testMassTransitLane.typeId, Seq(5001), LinearAssetTypes.numericValuePropertyId).head
@@ -508,7 +526,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
 
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
-      when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
+      when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(Seq(vvhRoadLink))
 
       testMassTransitLane.importAssets()
       val assetI = linearAssetDao.fetchLinearAssetsByLinkIds(testMassTransitLane.typeId, Seq(5001), LinearAssetTypes.numericValuePropertyId).head
@@ -542,7 +560,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       when(mockRoadAddressDAO.getRoadAddress(any[String => String].apply)).thenReturn(Seq(ra))
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
-      when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
+      when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(Seq(vvhRoadLink))
 
       testPavedRoad.importAssets()
       val asset = linearAssetDao.fetchLinearAssetsByLinkIds(testPavedRoad.typeId, Seq(5001), LinearAssetTypes.numericValuePropertyId).head
@@ -588,7 +606,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
 
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
-      when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
+      when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(Seq(vvhRoadLink))
 
       testPavedRoad.importAssets()
       val assetI = linearAssetDao.fetchLinearAssetsByLinkIds(testPavedRoad.typeId, Seq(5001), LinearAssetTypes.numericValuePropertyId).head
@@ -713,7 +731,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       when(mockRoadAddressDAO.getRoadAddress(any[String => String].apply)).thenReturn(Seq(ra))
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
-      when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
+      when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(Seq(vvhRoadLink))
 
       testDamageByThaw.importAssets()
       val asset = linearAssetDao.fetchLinearAssetsByLinkIds(testDamageByThaw.typeId, Seq(5001), LinearAssetTypes.numericValuePropertyId)
@@ -798,4 +816,141 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       assetU.value should be (Some(TextualValue(assetValueHist)))
     }
   }
+
+  test("Split road address in right side with one sign"){
+    val roadNumber = 1
+    val roadPart = 1
+    val startAddressMValue = 0
+    val endAddressMValue = 500
+    val starAddress = 0
+    val endAddress = 500
+    val trAssets = Seq(TierekisteriTrafficSignData(roadNumber, roadPart, roadPart, Track.RightSide, 40, 40, RoadSide.Right, TRTrafficSignType.SpeedLimit, "80"))
+    val roadAddress = ViiteRoadAddress(1L, roadNumber, roadPart, Track.RightSide, 5, startAddressMValue, endAddressMValue, None, None, 1L, 5001,starAddress, endAddress, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
+
+    val sections = speedLimitsTierekisteriImporter.testSplitRoadAddressSectionBySigns(trAssets, roadAddress, RoadSide.Right)
+
+    sections.size should be (2)
+    val (firstSection, firstTrAsset) = sections.head
+    val (lastSection, lastTrAsset) = sections.last
+
+    firstSection.roadNumber should be (1)
+    firstSection.roadPartNumber should be (1)
+    firstSection.startAddressMValue should be (0)
+    firstSection.endAddressMValue should be (Some(40))
+    firstTrAsset should be (None)
+
+    lastSection.roadNumber should be (1)
+    lastSection.roadPartNumber should be (1)
+    lastSection.startAddressMValue should be (40)
+    lastSection.endAddressMValue should be (Some(500))
+    lastTrAsset should be (trAssets.headOption)
+  }
+
+  test("Split road address in right side with two sign"){
+    val roadNumber = 1
+    val roadPart = 1
+    val startAddressMValue = 0
+    val endAddressMValue = 500
+    val starAddress = 0
+    val endAddress = 500
+    val trAssets = Seq(
+      TierekisteriTrafficSignData(roadNumber, roadPart, roadPart, Track.RightSide, 40, 40, RoadSide.Right, TRTrafficSignType.SpeedLimit, "80"),
+      TierekisteriTrafficSignData(roadNumber, roadPart, roadPart, Track.RightSide, 70, 70, RoadSide.Right, TRTrafficSignType.SpeedLimit, "90")
+    )
+    val roadAddress = ViiteRoadAddress(1L, roadNumber, roadPart, Track.RightSide, 5, startAddressMValue, endAddressMValue, None, None, 1L, 5001,starAddress, endAddress, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
+
+    val sections = speedLimitsTierekisteriImporter.testSplitRoadAddressSectionBySigns(trAssets, roadAddress, RoadSide.Right)
+
+    sections.size should be (3)
+    val (firstSection, firstTrAsset) = sections.head
+    val (middleSection, middleTrAsset) = sections.tail.head
+    val (lastSection, lastTrAsset) = sections.tail.last
+
+    firstSection.roadNumber should be (1)
+    firstSection.roadPartNumber should be (1)
+    firstSection.startAddressMValue should be (0)
+    firstSection.endAddressMValue should be (Some(40))
+    firstTrAsset should be (None)
+
+    middleSection.roadNumber should be (1)
+    middleSection.roadPartNumber should be (1)
+    middleSection.startAddressMValue should be (40)
+    middleSection.endAddressMValue should be (Some(70))
+    middleTrAsset should be (trAssets.headOption)
+
+    lastSection.roadNumber should be (1)
+    lastSection.roadPartNumber should be (1)
+    lastSection.startAddressMValue should be (70)
+    lastSection.endAddressMValue should be (Some(500))
+    lastTrAsset should be (trAssets.lastOption)
+  }
+
+  test("Split road address in left side with one sign"){
+    val roadNumber = 1
+    val roadPart = 1
+    val startAddressMValue = 0
+    val endAddressMValue = 500
+    val starAddress = 0
+    val endAddress = 500
+    val trAssets = Seq(TierekisteriTrafficSignData(roadNumber, roadPart, roadPart, Track.LeftSide, 40, 40, RoadSide.Left, TRTrafficSignType.SpeedLimit, "80"))
+    val roadAddress = ViiteRoadAddress(1L, roadNumber, roadPart, Track.LeftSide, 5, startAddressMValue, endAddressMValue, None, None, 1L, 5001,starAddress, endAddress, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
+
+    val sections = speedLimitsTierekisteriImporter.testSplitRoadAddressSectionBySigns(trAssets, roadAddress, RoadSide.Left)
+
+    sections.size should be (2)
+    val (firstSection, firstTrAsset) = sections.head
+    val (lastSection, lastTrAsset) = sections.last
+
+    firstSection.roadNumber should be (1)
+    firstSection.roadPartNumber should be (1)
+    firstSection.startAddressMValue should be (40)
+    firstSection.endAddressMValue should be (Some(500))
+    firstTrAsset should be (None)
+
+    lastSection.roadNumber should be (1)
+    lastSection.roadPartNumber should be (1)
+    lastSection.startAddressMValue should be (0)
+    lastSection.endAddressMValue should be (Some(40))
+    lastTrAsset should be (trAssets.headOption)
+  }
+
+  test("Split road address in left side with two sign"){
+    val roadNumber = 1
+    val roadPart = 1
+    val startAddressMValue = 0
+    val endAddressMValue = 500
+    val starAddress = 0
+    val endAddress = 500
+    val trAssets = Seq(
+      TierekisteriTrafficSignData(roadNumber, roadPart, roadPart, Track.LeftSide, 40, 40, RoadSide.Left, TRTrafficSignType.SpeedLimit, "80"),
+      TierekisteriTrafficSignData(roadNumber, roadPart, roadPart, Track.LeftSide, 70, 70, RoadSide.Left, TRTrafficSignType.SpeedLimit, "90")
+    )
+    val roadAddress = ViiteRoadAddress(1L, roadNumber, roadPart, Track.LeftSide, 5, startAddressMValue, endAddressMValue, None, None, 1L, 5001,starAddress, endAddress, SideCode.TowardsDigitizing, false, Seq(), false, None, None, None)
+
+    val sections = speedLimitsTierekisteriImporter.testSplitRoadAddressSectionBySigns(trAssets, roadAddress, RoadSide.Left)
+
+    sections.size should be (3)
+    val (firstSection, firstTrAsset) = sections.head
+    val (middleSection, middleTrAsset) = sections.tail.head
+    val (lastSection, lastTrAsset) = sections.tail.last
+
+    firstSection.roadNumber should be (1)
+    firstSection.roadPartNumber should be (1)
+    firstSection.startAddressMValue should be (70)
+    firstSection.endAddressMValue should be (Some(500))
+    firstTrAsset should be (None)
+
+    middleSection.roadNumber should be (1)
+    middleSection.roadPartNumber should be (1)
+    middleSection.startAddressMValue should be (40)
+    middleSection.endAddressMValue should be (Some(70))
+    middleTrAsset should be (trAssets.lastOption)
+
+    lastSection.roadNumber should be (1)
+    lastSection.roadPartNumber should be (1)
+    lastSection.startAddressMValue should be (0)
+    lastSection.endAddressMValue should be (Some(40))
+    lastTrAsset should be (trAssets.headOption)
+  }
+
 }
