@@ -330,15 +330,36 @@ class MassTransitStopDao {
       """.execute
   }
 
-  def insertTerminalLink(terminalAssetId: Long, massTransitStopAssetId: Seq[Long]): Unit = {
-
-    massTransitStopAssetId.foreach( id => {
-      sqlu"""
-           insert into TERMINAL_BUS_STOP_LINK (TERMINAL_ASSET_ID, BUS_STOP_ASSET_ID)
-           values($terminalAssetId, $id)
-      """.execute
-    })
+  def insertChildren(terminalAssetId: Long, massTransitStopAssetId: Seq[Long]): Unit = {
+    massTransitStopAssetId.foreach{ id =>
+        sqlu"""
+           insert into TERMINAL_BUS_STOP_LINK (TERMINAL_ASSET_ID, BUS_STOP_ASSET_ID) values ($terminalAssetId, $id)
+        """.execute
+    }
   }
+
+  def deleteChildren(terminalAssetId: Long, massTransitStopAssetId: Seq[Long]): Unit = {
+    val massTransitStopId = massTransitStopAssetId.mkString(",")
+
+    sqlu"""delete from TERMINAL_BUS_STOP_LINK
+           where BUS_STOP_ASSET_ID not in ($massTransitStopId)
+                and TERMINAL_ASSET_ID = $terminalAssetId
+           """.execute
+  }
+
+  def insertTerminal(assetId: Long): Unit = {
+    sqlu"""INSERT INTO TERMINAL_BUS_STOP_LINK (TERMINAL_ASSET_ID) VALUES ($assetId)""".execute
+  }
+
+  def deleteTerminalMassTransitStopData(assetId: Long): Unit ={
+    sqlu"""Delete From Text_Property_Value Where asset_id in (Select id as asset_id From asset Where id = $assetId)""".execute
+    sqlu"""Delete From Multiple_Choice_Value Where asset_id in (Select id as asset_id From asset Where id = $assetId)""".execute
+    sqlu"""Delete From Number_Property_Value Where asset_id in (Select id as asset_id From asset Where id = $assetId)""".execute
+    sqlu"""Delete From Asset_Link Where asset_id in (Select id as asset_id From asset Where id = $assetId)""".execute
+    sqlu"""Delete from TERMINAL_BUS_STOP_LINK where TERMINAL_ASSET_ID in (Select id as asset_id From asset Where id = $assetId)""".execute
+    sqlu"""Delete From Asset Where id = $assetId""".execute
+  }
+
 
   def insertAssetLink(assetId: Long, lrmPositionId: Long): Unit = {
 

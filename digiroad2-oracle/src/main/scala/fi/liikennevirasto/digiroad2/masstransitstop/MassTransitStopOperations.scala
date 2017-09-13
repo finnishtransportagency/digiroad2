@@ -169,7 +169,7 @@ object MassTransitStopOperations {
   }
 
   def getTerminalMassTransitStopChildren(properties: Seq[SimpleProperty]) : Seq[Long] = {
-    properties.find(_.publicId == "liitetyt_pysakit").map(_.values).getOrElse(Seq()).map(_.propertyValue).foldLeft(Seq.empty[Long]) { (result, child) =>
+    properties.find(_.publicId == terminalChildrenPublicId).map(_.values).getOrElse(Seq()).map(_.propertyValue).foldLeft(Seq.empty[Long]) { (result, child) =>
       result ++ Seq(child.toLong)
     }
   }

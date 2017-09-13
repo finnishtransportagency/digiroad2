@@ -918,7 +918,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val service = new TestMassTransitStopServiceWithTierekisteri(eventbus, mockRoadLinkService)
       when(mockTierekisteriClient.isTREnabled).thenReturn(true)
       val (stop, showStatusCode) = service.getMassTransitStopByNationalIdWithTRWarnings(85755, Int => Unit)
-      service.deleteAllMassTransitStopData(stop.head.id)
+      service.deleteMassTransitStopData(stop.head.id)
       verify(mockTierekisteriClient).deleteMassTransitStop("OTHJ85755")
       service.getMassTransitStopByNationalIdWithTRWarnings(85755, Int => Unit)._1.isEmpty should be(true)
       service.getMassTransitStopByNationalIdWithTRWarnings(85755, Int => Unit)._2 should be(false)
@@ -933,7 +933,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     intercept[TierekisteriClientException] {
       when(mockTierekisteriClient.isTREnabled).thenReturn(true)
       assetLock.synchronized {
-        service.deleteAllMassTransitStopData(stop.head.id)
+        service.deleteMassTransitStopData(stop.head.id)
       }
     }
     assetLock.synchronized {

@@ -33,7 +33,8 @@ object AssetPropertyConfiguration {
     ValidToId -> CommonAssetProperty(ValidToId, "valid_to", Date, Property(0, ValidToId, Date, values = Seq())),
     CreatedId -> CommonAssetProperty(CreatedId, "", ReadOnlyText, Property(0, CreatedId, ReadOnlyText, values = Seq())),
     ModifiedId -> CommonAssetProperty(ModifiedId, "",  ReadOnlyText, Property(0, ModifiedId, ReadOnlyText, values = Seq())),
-    TerminalChildrenId -> CommonAssetProperty(TerminalChildrenId, "",  ReadOnlyText, Property(0, TerminalChildrenId, ReadOnlyText, required = true, values = Seq()))
+    //TODO: Change this to required
+    TerminalChildrenId -> CommonAssetProperty(TerminalChildrenId, "",  ReadOnlyText, Property(0, TerminalChildrenId, ReadOnlyText, values = Seq()))
   )
 
   def assetRowToCommonProperties(row: MassTransitStopRow): Seq[Property] = {
