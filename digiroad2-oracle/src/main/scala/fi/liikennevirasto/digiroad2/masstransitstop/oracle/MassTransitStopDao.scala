@@ -34,6 +34,22 @@ class MassTransitStopDao {
     nextNationalBusStopId.as[Long].first
   }
 
+  def testeassetRowToProperty(assetRows: Iterable[TerminalBusStopRow]): Seq[Property] = {
+    assetRows.groupBy(_.property.propertyId).map { case (key, rows) =>
+      val row = rows.head
+      Property(
+        id = key,
+        publicId = row.property.publicId,
+        propertyType = row.property.propertyType,
+        required = row.property.propertyRequired,
+        values = rows.map(assetRow =>
+          PropertyValue(
+            assetRow.property.propertyValue,
+            testepropertyDisplayValueFromAssetRow(assetRow))
+        ).filter(_.propertyDisplayValue.isDefined).toSeq)
+    }.toSeq
+  }
+
   def assetRowToProperty(assetRows: Iterable[MassTransitStopRow]): Seq[Property] = {
     assetRows.groupBy(_.property.propertyId).map { case (key, rows) =>
       val row = rows.head
@@ -51,6 +67,11 @@ class MassTransitStopDao {
   }
 
   private def propertyDisplayValueFromAssetRow(assetRow: MassTransitStopRow): Option[String] = {
+    if (assetRow.property.publicId == "liikennointisuuntima") Some(getBearingDescription(assetRow.validityDirection, assetRow.bearing))
+    else Option(assetRow.property.propertyDisplayValue)
+  }
+
+  private def testepropertyDisplayValueFromAssetRow(assetRow: TerminalBusStopRow): Option[String] = {
     if (assetRow.property.publicId == "liikennointisuuntima") Some(getBearingDescription(assetRow.validityDirection, assetRow.bearing))
     else Option(assetRow.property.propertyDisplayValue)
   }
@@ -360,6 +381,10 @@ class MassTransitStopDao {
     sqlu"""Delete From Asset Where id = $assetId""".execute
   }
 
+
+  def withFilter(filter: String)(query: String): String = {
+    query + " " + filter
+  }
 
   def insertAssetLink(assetId: Long, lrmPositionId: Long): Unit = {
 

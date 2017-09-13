@@ -9,6 +9,7 @@ import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.masstransitstop.MassTransitStopOperations
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries._
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle._
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.GeometryTransform
 import org.joda.time.format.DateTimeFormat
@@ -17,6 +18,7 @@ import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
+import sun.reflect.generics.tree.BottomSignature
 
 import scala.util.Try
 
@@ -42,6 +44,11 @@ case class MassTransitStopRow(id: Long, externalId: Long, assetTypeId: Long, poi
                               validityDirection: Int, validFrom: Option[LocalDate], validTo: Option[LocalDate], property: PropertyRow,
                               created: Modification, modified: Modification, wgsPoint: Option[Point], lrmPosition: LRMPosition,
                               roadLinkType: AdministrativeClass = Unknown, municipalityCode: Int, persistedFloating: Boolean)
+
+case class TerminalBusStopRow(id: Long, externalId: Long, assetTypeId: Long, point: Option[Point], linkId: Long, bearing: Option[Int],
+                              validityDirection: Int, validFrom: Option[LocalDate], validTo: Option[LocalDate], property: PropertyRow,
+                              created: Modification, modified: Modification, wgsPoint: Option[Point], lrmPosition: LRMPosition,
+                            roadLinkType: AdministrativeClass = Unknown, municipalityCode: Int, persistedFloating: Boolean, isTerminal: Boolean, terminalAssetId: Long)
 
 trait MassTransitStopService extends PointAssetOperations {
   type IncomingAsset = NewMassTransitStop
@@ -735,7 +742,8 @@ trait MassTransitStopService extends PointAssetOperations {
       val linkSource = r.nextInt
       MassTransitStopRow(id, externalId, assetTypeId, point, linkId, bearing, validityDirection,
         validFrom, validTo, property, created, modified, wgsPoint,
-        lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point, vvhTimeStamp, linkSource), municipalityCode = municipalityCode, persistedFloating = persistedFloating)
+        lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point, vvhTimeStamp, linkSource),
+        municipalityCode = municipalityCode, persistedFloating = persistedFloating)
     }
   }
 
@@ -769,7 +777,7 @@ trait MassTransitStopService extends PointAssetOperations {
     }
   }
 
-  private def constructValidityPeriod(validFrom: Option[LocalDate], validTo: Option[LocalDate]): String = {
+  protected def constructValidityPeriod(validFrom: Option[LocalDate], validTo: Option[LocalDate]): String = {
     (validFrom, validTo) match {
       case (Some(from), None) => if (from.isAfter(LocalDate.now())) { MassTransitStopValidityPeriod.
         Future }
@@ -833,9 +841,139 @@ class TerminalMassTransitStopAssetService(_massTransitStopDao: MassTransitStopDa
 
   override def eventbus: DigiroadEventBus = _eventbus
 
-  override def getByBoundingBox(user: User, bounds: BoundingRectangle) : Seq[PersistedAsset] =
-  {
-     throw new NotImplementedError("Maybe one day we will implement it!!!")
+  private val radiusMeters = 200
+  private val terminalChildrenPublicId = "liitetyt_pysakit"
+
+  implicit val getTerminalBusStopRow = new GetResult[TerminalBusStopRow] {
+    def apply(r: PositionedResult) = {
+      val id = r.nextLong
+      val externalId = r.nextLong
+      val assetTypeId = r.nextLong
+      val bearing = r.nextIntOption
+      val validityDirection = r.nextInt
+      val validFrom = r.nextDateOption.map(new LocalDate(_))
+      val validTo = r.nextDateOption.map(new LocalDate(_))
+      val point = r.nextBytesOption.map(bytesToPoint)
+      val municipalityCode = r.nextInt()
+      val persistedFloating = r.nextBoolean()
+      val vvhTimeStamp = r.nextLong()
+      val propertyId = r.nextLong
+      val propertyPublicId = r.nextString
+      val propertyType = r.nextString
+      val propertyRequired = r.nextBoolean
+      val propertyValue = r.nextLongOption()
+      val propertyDisplayValue = r.nextStringOption()
+      val property = new PropertyRow(
+        propertyId = propertyId,
+        publicId = propertyPublicId,
+        propertyType = propertyType,
+        propertyRequired = propertyRequired,
+        propertyValue = propertyValue.getOrElse(propertyDisplayValue.getOrElse("")).toString,
+        propertyDisplayValue = propertyDisplayValue.orNull)
+      val lrmId = r.nextLong
+      val startMeasure = r.nextDouble()
+      val endMeasure = r.nextDouble()
+      val linkId = r.nextLong
+      val created = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
+      val modified = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
+      val wgsPoint = r.nextBytesOption.map(bytesToPoint)
+      val linkSource = r.nextInt
+      val isTerminal = r.nextBoolean()
+      val terminalAssetId = r.nextLong
+      TerminalBusStopRow(id, externalId, assetTypeId, point, linkId, bearing, validityDirection,
+        validFrom, validTo, property, created, modified, wgsPoint,
+        lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point, vvhTimeStamp, linkSource),
+        municipalityCode = municipalityCode, persistedFloating = persistedFloating, isTerminal = isTerminal,
+        terminalAssetId = terminalAssetId)
+    }
+  }
+
+  override def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[RoadLinkLike] = Seq()): Seq[PersistedMassTransitStop] = {
+    val query = """
+        select
+          a.id, a.external_id, a.asset_type_id, a.bearing, lrm.side_code,
+          a.valid_from, a.valid_to, a.geometry, a.municipality_code, a.floating,
+          lrm.adjusted_timestamp, p.id, p.public_id, p.property_type, p.required, e.value,
+          case
+            when e.name_fi is not null then e.name_fi
+            when tp.value_fi is not null then tp.value_fi
+            else null
+          end as display_value,
+          lrm.id, lrm.start_measure, lrm.end_measure, lrm.link_id,
+          a.created_date, a.created_by, a.modified_date, a.modified_by,
+          SDO_CS.TRANSFORM(a.geometry, 4326) AS position_wgs84, lrm.link_source,
+          case
+            when tbs.terminal_asset_id = a.id then 1
+            when tbs.terminal_asset_id <> a.id then 0
+          end as isTerminal,
+          tbs.terminal_asset_id as terminal_asset_id
+        from asset a
+        join asset_link al on a.id = al.asset_id
+        join lrm_position lrm on al.position_id = lrm.id
+        join property p on a.asset_type_id = p.asset_type_id
+        join terminal_bus_stop_link tbs on tbs.terminal_asset_id = a.id or tbs.bus_stop_asset_id = a.id
+        left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and (p.property_type = 'text' or p.property_type = 'long_text')
+        left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'multiple_choice'
+        left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
+      """
+    queryToPersistedMassTransitStops(queryFilter(query))
+  }
+
+  private def queryToPersistedMassTransitStops(query: String): Seq[PersistedMassTransitStop] = {
+    val rows = StaticQuery.queryNA[TerminalBusStopRow](query).iterator.toSeq
+
+    rows.filter(_.isTerminal).groupBy(_.id).map { case (id, stopRows) =>
+      val row = stopRows.head
+      val commonProperties: Seq[Property] = AssetPropertyConfiguration.assetRowToCommonProperties(row)
+      val point = row.point.get
+      val stopTypes = Seq()
+      val validityPeriod = Some(constructValidityPeriod(row.validFrom, row.validTo))
+      val mValue = row.lrmPosition.startMeasure
+      val vvhTimeStamp = row.lrmPosition.vvhTimeStamp
+      val linkSource = row.lrmPosition.linkSource
+      val childrenPropertyValues = rows.filter(r => !r.isTerminal && r.terminalAssetId == id).map{
+        r => PropertyValue(r.id.toString, Some(s"""${r.externalId} """), checked = true)
+      }
+
+      val properties: Seq[Property] = commonProperties ++ massTransitStopDao.testeassetRowToProperty(stopRows) ++ Seq(Property(0,"liitetyt_pysakit", PropertyTypes.MultipleChoice, false, childrenPropertyValues))
+
+      id -> PersistedMassTransitStop(id = row.id, nationalId = row.externalId, linkId = row.linkId, stopTypes = stopTypes,
+        municipalityCode = row.municipalityCode, lon = point.x, lat = point.y, mValue = mValue,
+        validityDirection = Some(row.validityDirection), bearing = row.bearing,
+        validityPeriod = validityPeriod, floating = row.persistedFloating, vvhTimeStamp = vvhTimeStamp, created = row.created, modified = row.modified,
+        propertyData = properties, linkSource = LinkGeomSource(linkSource))
+    }.values.toSeq
+  }
+
+  private def fetchByRadius(position : Point, meters: Int): Seq[PersistedMassTransitStop] = {
+    val topLeft = Point(position.x - meters, position.y - meters)
+    val bottomRight = Point(position.x + meters, position.y + meters)
+    val boundingBoxFilter = OracleDatabase.boundingBoxFilter(BoundingRectangle(topLeft, bottomRight), "a.geometry")
+    val filter = s"where a.asset_type_id = $typeId and $boundingBoxFilter"
+    fetchPointAssets(massTransitStopDao.withFilter(filter)).
+      filter(r => GeometryUtils.geometryLength(Seq(position, Point(r.lon, r.lat))) <= meters)
+  }
+
+  private def enrichBusStop(asset: PersistedMassTransitStop): PersistedMassTransitStop = {
+    asset.propertyData.find(_.publicId == terminalChildrenPublicId) match{
+      case Some(property) =>
+        val childFilters = fetchByRadius(Point(asset.lon, asset.lat), radiusMeters)
+        val newProperty = property.copy(values = property.values ++ childFilters.filterNot(a => property.values.exists(_.propertyValue.toLong == a.id)).
+          map{a => PropertyValue(a.id.toString, Some(s"""${a.nationalId} """), checked = false)})
+        asset.copy(propertyData = asset.propertyData.filterNot(p => p.publicId == terminalChildrenPublicId) ++ Seq(newProperty))
+      case _ =>
+        asset
+    }
+  }
+
+  override def getByNationalId[T <: FloatingAsset](nationalId: Long, municipalityValidation: (Int) => Unit, persistedStopToFloatingStop: (PersistedMassTransitStop) => (T, Option[FloatingReason])): Option[T] = {
+    withDynTransaction {
+      val persistedStop = fetchPointAssets(massTransitStopDao.withNationalId(nationalId)).headOption
+      persistedStop.map(_.municipalityCode).foreach(municipalityValidation)
+      persistedStop.
+        map(enrichBusStop).
+        map(withFloatingUpdate(persistedStopToFloatingStop))
+    }
   }
 
   override protected def create(asset: NewMassTransitStop, username: String, point: Point, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass], linkSource: LinkGeomSource): MassTransitStopWithProperties = {
@@ -917,7 +1055,6 @@ class TerminalMassTransitStopAssetService(_massTransitStopDao: MassTransitStopDa
         .get
     }
   }
-
 
   override def deleteMassTransitStopData(assetId: Long) = {
     withDynTransaction {

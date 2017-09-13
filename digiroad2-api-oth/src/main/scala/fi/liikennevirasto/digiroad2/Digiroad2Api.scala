@@ -167,7 +167,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       Point(PositionList(0), PositionList(1))
     }
     val properties = assetPropertyService.getAssetTypeMetadata(10l)
-    params.get("position").map(constructBoundingRectangle) match {
+    params.get("position").map(constructPosition) match {
       case Some(position) =>
         properties ++ Seq(Property(0,"liitetyt_pysakit", PropertyTypes.MultipleChoice, false, Seq(1,2,3).map{
           id =>

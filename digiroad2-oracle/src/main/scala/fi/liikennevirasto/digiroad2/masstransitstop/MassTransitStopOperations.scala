@@ -4,6 +4,26 @@ import fi.liikennevirasto.digiroad2.asset.{AbstractProperty, SimpleProperty, _}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.{FloatingReason, PersistedMassTransitStop}
 
+sealed trait BusStopType {
+  def value: Int
+}
+object BusStopType {
+  val values = Set(Virtual, Commuter, LongDistance, Unknown)
+
+  def apply(intValue: Int): BusStopType = {
+    values.find(_.value == intValue).getOrElse(Unknown)
+  }
+
+  case object Tram extends BusStopType { def value = 1 }
+  case object Commuter extends BusStopType { def value = 2 }
+  case object LongDistance extends BusStopType { def value = 3 }
+  case object Local extends BusStopType { def value = 4 }
+  case object Virtual extends BusStopType { def value = 5 }
+  case object Terminal extends BusStopType { def value = 6 }
+  case object Unknown extends BusStopType { def value = 99 }
+}
+
+
 object MassTransitStopOperations {
   val StateOwned: Set[AdministrativeClass] = Set(State)
   val OtherOwned: Set[AdministrativeClass] = Set(Municipality, Private)
