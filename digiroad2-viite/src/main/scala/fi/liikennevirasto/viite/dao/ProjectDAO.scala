@@ -64,7 +64,11 @@ object LinkStatus {
 
 case class RoadAddressProject(id: Long, status: ProjectState, name: String, createdBy: String, createdDate: DateTime,
                               modifiedBy: String, startDate: DateTime, dateModified: DateTime, additionalInfo: String,
-                              reservedParts: Seq[ReservedRoadPart], statusInfo: Option[String], ely: Option[Long] = None)
+                              reservedParts: Seq[ReservedRoadPart], statusInfo: Option[String], ely: Option[Long] = None) {
+  def isReserved(roadNumber: Long, roadPartNumber: Long): Boolean = {
+    reservedParts.exists(p => p.roadNumber == roadNumber && p.roadPartNumber == roadPartNumber)
+  }
+}
 
 case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track,
                        discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
@@ -281,7 +285,25 @@ object ProjectDAO {
       ely, statusInfo) =>
         RoadAddressProject(id, ProjectState.apply(state), name, createdBy,createdDate, modifiedBy, start_date, modifiedDate,
           addInfo, List.empty[ReservedRoadPart], statusInfo, ely)
-    }.headOption
+    }.headOption.map(p => p.copy(reservedParts = fetchReservedRoadParts(p.id)))
+  }
+
+  def fetchReservedRoadParts(projectId: Long): Seq[ReservedRoadPart] = {
+    Q.queryNA[(Long, Long, Long, Double, Int, Long)](
+      "SELECT id, road_number, road_part_number, road_length, discontinuity, ely FROM " +
+        s"PROJECT_RESERVED_ROAD_PART WHERE project_id = $projectId").list.map{
+      case (id, roadNumber, roadPartNumber, length, discontinuity, ely) => ReservedRoadPart(id, roadNumber, roadPartNumber,
+        length, Discontinuity.apply(discontinuity), ely, None, None)
+    }
+  }
+
+  def fetchReservedRoadPart(roadNumber: Long, roadPartNumber: Long): Option[ReservedRoadPart] = {
+    Q.queryNA[(Long, Long, Long, Double, Int, Long)](
+      "SELECT id, road_number, road_part_number, road_length, discontinuity, ely FROM " +
+        s"PROJECT_RESERVED_ROAD_PART WHERE road_number = $roadNumber AND road_part_number=$roadPartNumber").firstOption.map{
+      case (id, road, part, length, discontinuity, ely) => ReservedRoadPart(id, road, part,
+        length, Discontinuity.apply(discontinuity), ely, None, None)
+    }
   }
 
   def getRoadAddressProjects(projectId: Long = 0): List[RoadAddressProject] = {

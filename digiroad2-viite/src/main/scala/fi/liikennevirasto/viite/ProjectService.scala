@@ -134,19 +134,19 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   private def getAddressPartInfo(roadNumber: Long, roadPart: Long): Option[ReservedRoadPart] = {
-    RoadAddressDAO.getRoadPartInfo(roadNumber, roadPart) match {
-      case Some((roadpartid, linkid, lenght, discontinuity, startDate, endDate)) => {
-        val enrichment = false
-        val roadLink = roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(Set(linkid), enrichment,frozenTimeVVHAPIServiceEnabled)
-        val ely: Option[Long] = roadLink.headOption.map(rl => MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(rl.municipalityCode, 0))
-        ely match {
-          case Some(value) if value != 0 =>
-            Some(ReservedRoadPart(roadpartid, roadNumber, roadPart, lenght, Discontinuity.apply(discontinuity.toInt), value, startDate, endDate))
-          case _ => None
-        }
+    ProjectDAO.fetchReservedRoadPart(roadNumber, roadPart).orElse {
+      RoadAddressDAO.getRoadPartInfo(roadNumber, roadPart) match {
+        case Some((partId, linkId, length, discontinuity, startDate, endDate)) =>
+          val roadLink = roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(Set(linkId), newTransaction = false, frozenTimeVVHAPIServiceEnabled)
+          val ely: Option[Long] = roadLink.headOption.map(rl => MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(rl.municipalityCode, 0))
+          ely match {
+            case Some(value) if value != 0 =>
+              Some(ReservedRoadPart(partId, roadNumber, roadPart, length, Discontinuity.apply(discontinuity.toInt), value, startDate, endDate))
+            case _ => None
+          }
+        case None =>
+          None
       }
-      case None =>
-        None
     }
   }
 
@@ -227,7 +227,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         val project = fetchProject(roadAddressProjectID)
         checkAvailable(newRoadNumber, newRoadPartNumber, project)
         checkNotReserved(newRoadNumber, newRoadPartNumber, project)
-        if (!project.reservedParts.exists(p => p.roadNumber == newRoadNumber && p.roadPartNumber == newRoadPartNumber))
+        if (!project.isReserved(newRoadNumber, newRoadPartNumber))
           ProjectDAO.reserveRoadPart(project.id, newRoadNumber, newRoadPartNumber, project.modifiedBy)
         val newProjectLinks = projectAddressLinks.map(projectLink => {
           projectLink.linkId ->
@@ -337,6 +337,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val projectLinks = ProjectDAO.getProjectLinks(project.id)
     validateReservations(project.reservedParts, project.ely, project.id, projectLinks).orElse {
       val addresses = project.reservedParts.flatMap { roadaddress =>
+        if (!checkAndReserve(project, roadaddress))
+          throw new RuntimeException(s"Can't reserve road part ${roadaddress.roadNumber}/${roadaddress.roadPartNumber}")
         val addressesOnPart = RoadAddressDAO.fetchByRoadPart(roadaddress.roadNumber, roadaddress.roadPartNumber, false)
         val mapping = roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(addressesOnPart.map(_.linkId).toSet, false,frozenTimeVVHAPIServiceEnabled)
           .map(rl => rl.linkId -> RoadAddressLinkBuilder.getRoadType(rl.administrativeClass, rl.linkType)).toMap
