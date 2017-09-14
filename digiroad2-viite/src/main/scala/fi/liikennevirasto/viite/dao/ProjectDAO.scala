@@ -445,7 +445,7 @@ object ProjectDAO {
   def updateReservedRoadPart(reserved: ReservedRoadPart): Unit = {
     sqlu"""UPDATE PROJECT_RESERVED_ROAD_PART SET ROAD_LENGTH = ${reserved.roadLength},
             ADDRESS_LENGTH = ${reserved.addressLength}, discontinuity = ${reserved.discontinuity.value},
-            ely = ${reserved.ely} WHERE id = ${reserved.id}""".execute
+            ely = ${reserved.ely}, FIRST_LINK_ID = ${reserved.startingLinkId} WHERE id = ${reserved.id}""".execute
   }
 
   def projectLinksCountUnchanged (projectId : Long, roadNumber:Long, roadPartNumber: Long): Long = {

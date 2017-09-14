@@ -445,6 +445,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       projectService.saveProject(changed)
       val countAfterInsertProjects = projectService.getRoadAddressAllProjects()
       val projectLinks = ProjectDAO.fetchByProjectNewRoadPart(5, 205, saved.id)
+      projectLinks.nonEmpty should be (true)
       count = countCurrentProjects.size + 1
       countAfterInsertProjects.size should be(count)
       sqlu"""UPDATE Project_link set status = 1""".execute
@@ -600,6 +601,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
           8: Long, None: Option[DateTime], None: Option[DateTime])), None)
       val proj = projectService.createRoadLinkProject(project)
       projectId = proj.id
+      proj.reservedParts.foreach(println)
       val projectLinkId = proj.reservedParts.head.startingLinkId.get
       val link = ProjectDAO.getProjectByLinkId(projectLinkId).head
       val terminatedValue = LinkStatus.Terminated.value
