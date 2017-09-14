@@ -324,12 +324,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     //TODO: Check that there are no floating road addresses present when starting
     logger.info(s"Adding reserved road parts with links to project ${project.id}")
     val projectLinks = ProjectDAO.getProjectLinks(project.id)
-    logger.info(s"Links fetched")
+    logger.debug(s"Links fetched")
     project.reservedParts.foreach(println)
     validateReservations(project.reservedParts, project.ely, project.id, projectLinks).orElse {
-      logger.info(s"Validation passed")
+      logger.debug(s"Validation passed")
       val addresses = project.reservedParts.flatMap { reservation =>
-        logger.info(s"Reserve $reservation")
+        logger.debug(s"Reserve $reservation")
         val addressesOnPart = RoadAddressDAO.fetchByRoadPart(reservation.roadNumber, reservation.roadPartNumber, false)
         val mapping = roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(addressesOnPart.map(_.linkId).toSet, false,frozenTimeVVHAPIServiceEnabled)
           .map(rl => rl.linkId -> RoadAddressLinkBuilder.getRoadType(rl.administrativeClass, rl.linkType)).toMap
@@ -343,21 +343,21 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         }
         val projectLinks = addressesOnPart.map(toProjectLink(mapping))
         ProjectDAO.updateReservedRoadPart(generatedInfo)
-        logger.info(s"New parts updated $generatedInfo")
+        logger.debug(s"New parts updated $generatedInfo")
         projectLinks
       }
-      logger.info(s"Reserve done")
+      logger.debug(s"Reserve done")
       val linksOnRemovedParts = projectLinks.filterNot(pl => project.reservedParts.exists(_.holds(pl)))
       val newProjectLinks = addresses.filterNot {
         ad => projectLinks.exists(pl => pl.roadNumber == ad.roadNumber && pl.roadPartNumber == ad.roadPartNumber)
       }
-      logger.info(s"Removed / new links ready")
+      logger.debug(s"Removed / new links ready")
       if (linksOnRemovedParts.nonEmpty) {
         ProjectDAO.removeProjectLinksById(linksOnRemovedParts.map(_.id).toSet)
       }
-      logger.info(s"Removed deleted ${linksOnRemovedParts.size}")
+      logger.debug(s"Removed deleted ${linksOnRemovedParts.size}")
       ProjectDAO.create(newProjectLinks)
-      logger.info(s"New links created ${newProjectLinks.size}")
+      logger.debug(s"New links created ${newProjectLinks.size}")
       if (project.ely.isEmpty) {
         val ely = ProjectDAO.fetchReservedRoadParts(project.id).find(_.ely != -1).map(_.ely)
         if (ely.nonEmpty)
