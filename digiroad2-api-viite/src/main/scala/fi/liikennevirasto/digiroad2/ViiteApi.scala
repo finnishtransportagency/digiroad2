@@ -229,14 +229,12 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   put("/roadlinks/roadaddress/project/save"){
     val project = parsedBody.extract[RoadAddressProjectExtractor]
     val user = userProvider.getCurrentUser()
-    val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
     val roadAddressProject= ProjectConverter.toRoadAddressProject(project, user)
     try {
       val projectSaved = projectService.saveProject(roadAddressProject)
-      val changeTable = projectService.getChangeProject(project.id)
       val firstLink = projectService.getFirstProjectLink(projectSaved)
       Map("project" -> roadAddressProjectToApi(projectSaved), "projectAddresses" -> firstLink, "formInfo" ->
-        projectSaved.reservedParts.map(reservedRoadPartToApi), "trPreview"->changeTable,
+        projectSaved.reservedParts.map(reservedRoadPartToApi),
         "success" -> true)
     } catch {
       case ex: IllegalArgumentException =>

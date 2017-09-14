@@ -45,7 +45,6 @@ class ProjectLinkDaoSpec  extends FunSuite with Matchers {
     sqlu"""insert into project (id,state,name,ely,created_by, start_date) VALUES (2,0,'testproject2',1,'automatedtest', sysdate)""".execute
   }
 
-  //TRIGGER has been removed for the time being. Should activate the test again if the triggers are activated again.
   test("Add two links that are reserved") {
     OracleDatabase.withDynTransaction {
       addprojects()
