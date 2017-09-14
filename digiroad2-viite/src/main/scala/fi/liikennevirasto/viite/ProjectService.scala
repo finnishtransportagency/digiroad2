@@ -198,9 +198,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               matchSideCodes(n, l)
             case _ => SideCode.TowardsDigitizing
           }.getOrElse(SideCode.TowardsDigitizing)
-        val project = RoadAddressValidator.fetchProject(roadAddressProjectID)
-        RoadAddressValidator.checkAvailable(newRoadNumber, newRoadPartNumber, project)
-        RoadAddressValidator.checkNotReserved(newRoadNumber, newRoadPartNumber, project)
+        val project = getProjectWithCheckReservationChecks(roadAddressProjectID, newRoadNumber, newRoadPartNumber)
         val newProjectLinks = projectAddressLinks.map(projectLink => {
           projectLink.linkId ->
             newProjectLink(projectLink, project, randomSideCode)
@@ -664,6 +662,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     roadAddresses.map(toProjectAddressLink)
   }
 
+  private def getProjectWithCheckReservationChecks(projectId: Long, newRoadNumber: Long, newRoadPart: Long): RoadAddressProject = {
+    RoadAddressValidator.checkProjectExists(projectId)
+    val project = ProjectDAO.getRoadAddressProjectById(projectId).get
+    RoadAddressValidator.checkAvailable(newRoadNumber, newRoadPart, project)
+    RoadAddressValidator.checkNotReserved(newRoadNumber, newRoadPart, project)
+    project
+  }
   /**
     * Update project links to given status and recalculate delta and change table
     * @param projectId Project's id
@@ -675,29 +680,27 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def updateProjectLinkStatus(projectId: Long, linkIds: Set[Long], newStatus: LinkStatus, userName: String, newRoadNumber: Long = 0, newRoadPart: Long = 0) = {
     try {
       withDynTransaction{
-      val projectLinks = withGeometry(ProjectDAO.getProjectLinks(projectId))
-      val (updatedProjectLinks, unchangedProjectLinks) = projectLinks.partition(pl => linkIds.contains(pl.linkId))
+        val projectLinks = withGeometry(ProjectDAO.getProjectLinks(projectId))
+        val (updatedProjectLinks, unchangedProjectLinks) = projectLinks.partition(pl => linkIds.contains(pl.linkId))
 
-      if (newStatus == LinkStatus.Terminated){
-        ProjectDAO.updateProjectLinksToDB(updatedProjectLinks.map(_.copy(status=newStatus, calibrationPoints = (None, None),
-          startAddrMValue = 0L, endAddrMValue = 0L)), userName)
+        if (newStatus == LinkStatus.Terminated){
+          ProjectDAO.updateProjectLinksToDB(updatedProjectLinks.map(_.copy(status=newStatus, calibrationPoints = (None, None),
+            startAddrMValue = 0L, endAddrMValue = 0L)), userName)
 
-      } else if(newStatus == LinkStatus.Numbering){
-        val project = RoadAddressValidator.fetchProject(projectId)
-        RoadAddressValidator.checkAvailable(newRoadNumber, newRoadPart, project)
-        RoadAddressValidator.checkNotReserved(newRoadNumber, newRoadPart, project)
-        ProjectDAO.updateProjectLinkNumbering(projectId, updatedProjectLinks.head.roadNumber, updatedProjectLinks.head.roadPartNumber, newStatus, newRoadNumber, newRoadPart, userName)
-      } else {
-        ProjectDAO.updateProjectLinkStatus(updatedProjectLinks.map(_.id).toSet, newStatus, userName)
-      }
+        } else if(newStatus == LinkStatus.Numbering){
+          getProjectWithCheckReservationChecks(projectId, newRoadNumber, newRoadPart)
+          ProjectDAO.updateProjectLinkNumbering(projectId, updatedProjectLinks.head.roadNumber, updatedProjectLinks.head.roadPartNumber, newStatus, newRoadNumber, newRoadPart, userName)
+        } else {
+          ProjectDAO.updateProjectLinkStatus(updatedProjectLinks.map(_.id).toSet, newStatus, userName)
+        }
         recalculateProjectLinks(projectId, userName)
       }
 
     } catch {
-        case ex: RoadAddressException =>
-          logger.info("Delta calculation not possible: " + ex.getMessage)
-          Some(ex.getMessage)
-        case ex: ProjectValidationException => Some(ex.getMessage)
+      case ex: RoadAddressException =>
+        logger.info("Delta calculation not possible: " + ex.getMessage)
+        Some(ex.getMessage)
+      case ex: ProjectValidationException => Some(ex.getMessage)
     }
   }
 
