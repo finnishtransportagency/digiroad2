@@ -76,7 +76,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val id = Sequences.nextViitePrimaryKeySeqValue
     val project = roadAddressProject.copy(id = id)
     ProjectDAO.createRoadAddressProject(project)
-    addLinksToProject(project)
+    val error = addLinksToProject(project)
+    if (error.nonEmpty)
+      throw new RoadPartReservedException(error.get)
     ProjectDAO.getRoadAddressProjectById(id).get
   }
 
@@ -200,7 +202,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               matchSideCodes(n, l)
             case _ => SideCode.TowardsDigitizing
           }.getOrElse(SideCode.TowardsDigitizing)
-        val project = getProjectWithCheckReservationChecks(roadAddressProjectID, newRoadNumber, newRoadPartNumber)
+        val project = getProjectWithReservationChecks(roadAddressProjectID, newRoadNumber, newRoadPartNumber)
         if (!project.isReserved(newRoadNumber, newRoadPartNumber))
           ProjectDAO.reserveRoadPart(project.id, newRoadNumber, newRoadPartNumber, project.modifiedBy)
         val newProjectLinks = projectAddressLinks.map(projectLink => {
@@ -322,11 +324,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     //TODO: Check that there are no floating road addresses present when starting
     logger.info(s"Adding reserved road parts with links to project ${project.id}")
     val projectLinks = ProjectDAO.getProjectLinks(project.id)
-    logger.debug(s"Links fetched")
+    logger.info(s"Links fetched")
+    project.reservedParts.foreach(println)
     validateReservations(project.reservedParts, project.ely, project.id, projectLinks).orElse {
-      logger.debug(s"Validation passed")
+      logger.info(s"Validation passed")
       val addresses = project.reservedParts.flatMap { reservation =>
-        logger.debug(s"Reserve $reservation")
+        logger.info(s"Reserve $reservation")
         val addressesOnPart = RoadAddressDAO.fetchByRoadPart(reservation.roadNumber, reservation.roadPartNumber, false)
         val mapping = roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(addressesOnPart.map(_.linkId).toSet, false,frozenTimeVVHAPIServiceEnabled)
           .map(rl => rl.linkId -> RoadAddressLinkBuilder.getRoadType(rl.administrativeClass, rl.linkType)).toMap
@@ -340,27 +343,27 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         }
         val projectLinks = addressesOnPart.map(toProjectLink(mapping))
         ProjectDAO.updateReservedRoadPart(generatedInfo)
-        logger.debug(s"New parts updated $generatedInfo")
+        logger.info(s"New parts updated $generatedInfo")
         projectLinks
       }
-      logger.debug(s"Reserve done")
+      logger.info(s"Reserve done")
       val linksOnRemovedParts = projectLinks.filterNot(pl => project.reservedParts.exists(_.holds(pl)))
       val newProjectLinks = addresses.filterNot {
         ad => projectLinks.exists(pl => pl.roadNumber == ad.roadNumber && pl.roadPartNumber == ad.roadPartNumber)
       }
-      logger.debug(s"Removed / new links ready")
+      logger.info(s"Removed / new links ready")
       if (linksOnRemovedParts.nonEmpty) {
         ProjectDAO.removeProjectLinksById(linksOnRemovedParts.map(_.id).toSet)
       }
-      logger.debug(s"Removed deleted ${linksOnRemovedParts.size}")
+      logger.info(s"Removed deleted ${linksOnRemovedParts.size}")
       ProjectDAO.create(newProjectLinks)
-      logger.debug(s"New links created ${newProjectLinks.size}")
+      logger.info(s"New links created ${newProjectLinks.size}")
       if (project.ely.isEmpty) {
         val ely = ProjectDAO.fetchReservedRoadParts(project.id).find(_.ely != -1).map(_.ely)
         if (ely.nonEmpty)
           ProjectDAO.updateProjectEly(project.id, ely.get)
       }
-      logger.debug(s"Adding reserved road parts finished for project ${project.id}")
+      logger.info(s"Adding reserved road parts finished for project ${project.id}")
       None
     }
   }
@@ -651,7 +654,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     roadAddresses.map(toProjectAddressLink)
   }
 
-  private def getProjectWithCheckReservationChecks(projectId: Long, newRoadNumber: Long, newRoadPart: Long): RoadAddressProject = {
+  private def getProjectWithReservationChecks(projectId: Long, newRoadNumber: Long, newRoadPart: Long): RoadAddressProject = {
     RoadAddressValidator.checkProjectExists(projectId)
     val project = ProjectDAO.getRoadAddressProjectById(projectId).get
     RoadAddressValidator.checkAvailable(newRoadNumber, newRoadPart, project)
@@ -677,7 +680,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             startAddrMValue = 0L, endAddrMValue = 0L)), userName)
 
         } else if(newStatus == LinkStatus.Numbering){
-          getProjectWithCheckReservationChecks(projectId, newRoadNumber, newRoadPart)
+          val project = getProjectWithReservationChecks(projectId, newRoadNumber, newRoadPart)
+          if (!project.isReserved(newRoadNumber, newRoadPart))
+            ProjectDAO.reserveRoadPart(project.id, newRoadNumber, newRoadPart, project.modifiedBy)
           ProjectDAO.updateProjectLinkNumbering(projectId, updatedProjectLinks.head.roadNumber, updatedProjectLinks.head.roadPartNumber, newStatus, newRoadNumber, newRoadPart, userName)
         } else {
           ProjectDAO.updateProjectLinkStatus(updatedProjectLinks.map(_.id).toSet, newStatus, userName)
@@ -906,6 +911,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       roadAddressService.expireRoadAddresses(delta.terminations.map(_.id).toSet)
       //Creating new addresses with the applicable changes
       val newRoads = RoadAddressDAO.create(newLinks, None)
+      ProjectDAO.moveProjectLinksToHistory(projectID)
       newRoads
     } else {
       throw new RuntimeException(s"Project state not at Saved2TR: $newState")

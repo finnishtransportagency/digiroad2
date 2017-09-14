@@ -551,6 +551,16 @@ object ProjectDAO {
     }
   }
 
+  def moveProjectLinksToHistory(projectId: Long): Unit= {
+    sqlu"""INSERT INTO PROJECT_LINK_HISTORY (SELECT ID,
+       PROJECT_ID, TRACK_CODE, DISCONTINUITY_TYPE, ROAD_NUMBER, ROAD_PART_NUMBER, START_ADDR_M,
+       END_ADDR_M, LRM_POSITION_ID, CREATED_BY, MODIFIED_BY, CREATED_DATE, MODIFIED_DATE,
+       STATUS, CALIBRATION_POINTS, ROAD_TYPE FROM PROJECT_LINK WHERE PROJECT_ID = $projectId)""".execute
+    sqlu"""DELETE FROM PROJECT_LINK WHERE PROJECT_ID = $projectId""".execute
+    sqlu"""DELETE FROM PROJECT_RESERVED_ROAD_PART WHERE PROJECT_ID = $projectId""".execute
+  }
+
+
   def removeProjectLinksByProjectAndRoadNumber(projectId: Long, roadNumber: Long, roadPartNumber: Long): Int = {
     removeProjectLinks(projectId, Some(roadNumber), Some(roadPartNumber))
   }
