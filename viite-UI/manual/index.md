@@ -102,7 +102,7 @@ Karttaa liikutetaan raahaamalla.
 
 ####Mittakaavataso####
 
-Kartan mittakaavatasoa muutetaan joko hiiren rullalla, tuplaklikkaamalla, Shift+piirto (alue) tai mittakaavapainikkeista (1). Mittakaavapainikkeita k&auml;ytt&auml;m&auml;ll&auml; kartan keskitys s&auml;ilyy. Hiiren rullalla, tuplaklikkaamalla tai Shift+piirto (alue) kartan keskitys siirtyy kursorin kohtaan.  K&auml;yt&ouml;ss&auml; oleva mittakaavataso n&auml;kyy kartan oikeassa alakulmassa (2).
+Kartan mittakaavatasoa muutetaan joko hiiren rullalla, tuplaklikkaamalla, Ctrl+piirto (alue) tai mittakaavapainikkeista (1). Mittakaavapainikkeita k&auml;ytt&auml;m&auml;ll&auml; kartan keskitys s&auml;ilyy. Hiiren rullalla, tuplaklikkaamalla tai Shift+piirto (alue) kartan keskitys siirtyy kursorin kohtaan.  K&auml;yt&ouml;ss&auml; oleva mittakaavataso n&auml;kyy kartan oikeassa alakulmassa (2).
 
 ####Kohdistin####
 
@@ -377,7 +377,7 @@ Ep&auml;onnistuneen siirron j&auml;lkeen ty&ouml;skentely&auml; voi jatkaa toise
 10. Tieosoiteprojektin tekeminen
 --------------------------
 
-Uuden tieosoiteprojektin tekeminen aloitetaan klikkaamalla vasemman yl&auml;kulman painiketta Tieosoiteprojektit (1) ja avautuvasta ikkunasta painiketta Uusi tieosoiteprojekti (2).
+Uuden tieosoiteprojektin tekeminen aloitetaan klikkaamalla painiketta Tieosoiteprojektit (1) ja avautuvasta ikkunasta painiketta Uusi tieosoiteprojekti (2).
 
 ![Uusi tieosoiteprojekti](k17.JPG)
 
@@ -389,7 +389,7 @@ N&auml;yt&ouml;n oikeaan laitaan avautuu lomake tieosoiteprojektin perustietojen
 
 _Tieosoiteprojektin perustietojen lomake._
 
-Pakollisia tietoja ovat nimi ja projektin muutosten voimaantulop&auml;iv&auml;m&auml;&auml;r&auml;, jotka on merkattu lomakkeelle oranssilla (3). Projektiin ei ole pakko t&auml;ydent&auml;&auml; yht&auml;&auml;n tieosaa. Lis&auml;tiedot -kentt&auml;&auml;n k&auml;ytt&auml;j&auml; voi halutessaan tehd&auml; muistiinpanoja tieosoiteprojektista.
+Pakollisia tietoja ovat nimi ja projektin muutosten voimaantulop&auml;iv&auml;m&auml;&auml;r&auml;, jotka on merkattu lomakkeelle oranssilla (3). Projektiin ei ole pakko t&auml;ydent&auml;&auml; yht&auml;&auml;n tieosaa. Lis&auml;tiedot -kentt&auml;&auml;n k&auml;ytt&auml;j&auml; voi halutessaan tehd&auml; muistiinpanoja tieosoiteprojektista. Tiedot tallentuvat painamalla Jatka toimenpiteisiin -painiketta (4). My&ouml;s Poistu-painikkeesta Viite varmistaa haluaako k&auml;ytt&auml;j&auml; tallentaa projektiin tehdyt muutokset.
 
 ![Uusi tieosoiteprojekti](k19.JPG)
 
@@ -401,17 +401,17 @@ Varaa -painikkeen painamisen j&auml;lkeen tieosan tiedot tulevat n&auml;kyviin l
 
 ![Uusi tieosoiteprojekti](k22.JPG)
 
-_Tieosan tiedot lomakkeella Varaa -painikkeen painamisen j&auml;lkeen._
+_Tieosan tiedot lomakkeella Lis&auml;&auml; -painikkeen painamisen j&auml;lkeen._
 
 Tieosoiteprojekti tallentuu automaattisesti painikkeesta Jatka toimenpiteisiin, jolloin tiedot tallentuvat tietokantaan ja sovellus siirtyy toimenpiden&auml;yt&ouml;lle. Varaamisen yhteydess&auml; Viite zoomaa kartan varatun tieosan alkuun. Poistu-painikkeesta projekti suljetaan ja k&auml;ytt&auml;j&auml;lt&auml; varmistetaan, halutaanko tallentamattomat muutokset tallentaa. Projektiin p&auml;&auml;see palaamaan Tieosoiteprojektit -listan kautta. 
 
-K&auml;ytt&auml;j&auml; voi poistaa varattuja tieosia klikkaamalla tieosan Projektiin valitut tieosat-listalta. Mik&auml;li tieosille ei ole tehty muutoksia eli ne on pelkast&auml;&auml;n varattu projektiin, varaus poistetaan projektista. Jos tieosille on tehty muutoksia, Viite kysyy k&auml;ytt&auml;j&auml;lt&auml; varmistuksen poistosta. T&auml;ll&ouml;in kaikki muutokset menetet&auml;&auml;n.
+K&auml;ytt&auml;j&auml; voi poistaa varattuja tieosia klikkaamalla ruksia tieosan oikealla puolella, Projektiin valitut tieosat-listalta. Mik&auml;li tieosille ei ole tehty muutoksia eli ne on pelkast&auml;&auml;n varattu projektiin, varaus poistetaan projektista. Jos tieosille on tehty muutoksia, Viite kysyy k&auml;ytt&auml;j&auml;lt&auml; varmistuksen poistosta. T&auml;ll&ouml;in kaikki muutokset menetet&auml;&auml;n.
 
 
 
 ![Uusi tieosoiteprojekti](k20.JPG)
 
-_Tallentamisen yhteydess&auml; sovellus zoomaa varatun tieosan alkuun. Tie 71 osa 1 alkaa kohdistimen n&auml;ytt&auml;m&auml;st&auml; kohdasta, ja jatkuu oikealle (oranssi kantatie)._
+_Kun tieosa on varattu projektiin Viite zoomaa varatun tieosan alkuun mittakaavalle 1000m. Varattu tieosa alkaa kohdistimen n&auml;ytt&auml;m&auml;st&auml; kohdasta, ja jatkuu tieosan p&auml;&auml;h&auml;n et&auml;isyyslukema-symboliin asti._ 
 
 Varauksen yhteydess&auml; j&auml;rjestelm&auml; tekee varattaville tieosille tarkistukset:
 
@@ -456,9 +456,21 @@ _Tieosoiteprojektit -listaus._
 --------------------------
 
 
-Tieosoiteprojektissa on mahdollista tehd&auml; seuraavia muutoksia eli toimenpiteit&auml;: lakkautus (tieosoitteen lakkautus), uusi (lis&auml;t&auml;&auml;n uusi tieosoite), numeroinnin muutos [Ei viel&auml; toteutettu], ennallaan, et&auml;isyyslukeman muutos [toteutuksessa parhaillaan], siirto [Toteutuksessa parhaillaan] ja et&auml;isyyslukemapisteen siirto [ei viel&auml; toteutettu].  My&ouml;s tieosoitteen kasvusuunnan voi k&auml;&auml;nt&auml;&auml;. Seuraavissa kappaleissa kuvataan jokaisen toimenpiteen teko Viitteess&auml;.
+Tieosoiteprojektissa on mahdollista tehd&auml; seuraavia muutoksia eli toimenpiteit&auml;:
+(T&auml;h&auml;n voi jatkossa lis&auml;t&auml; taulukon jossa toimenpide on sanallisesti kuvattu tarkemmin.) 
 
-Tieosoiteprojektissa muutostoimenpiteit&auml; p&auml;&auml;see tekem&auml;&auml;n klikkaamalla Jatka toimenpiteisiin-painiketta tieosoitemuutosprojektin perustietojen lomakkeella. T&auml;m&auml;n j&auml;lkeen sovellus muuttaa varatut tieosat muokattaviksi kohteiksi. Mik&auml;li toimenpiteen&auml; lis&auml;t&auml;&auml;n uusi tieosoite, k&auml;ytt&auml;j&auml; klikkaa projektin perustietojen lomakkeella Jatka toimenpiteisiin-painiketta ja valitsee sitten tieosoitteistettavan linkin kartalta.
+- lakkautus (tieosoitteen lakkautus) 
+- uusi (lis&auml;t&auml;&auml;n uusi tieosoite) 
+- ennallaan (osa tieosoitteesta s&auml;ilyy ennallaan, kun osaa siit&auml; muutetaan)
+- siirto (tieosan alkuet&auml;isyys- ja loppuet&auml;isyysarvot p&auml;ivitet&auml;&auml;n, kun muulle osalle tieosaa tehd&auml;&auml;n muutos)
+- numeroinnin muutos [ei viel&auml; toteutettu] 
+- et&auml;isyyslukeman muutos [ei viel&auml; toteutettu]
+- et&auml;isyyslukemapisteen siirto [ei viel&auml; toteutettu]
+
+My&ouml;s tieosoitteen kasvusuunnan voi k&auml;&auml;nt&auml;&auml;. Seuraavissa kappaleissa kuvataan jokaisen toimenpiteen teko Viitteess&auml;.
+
+
+Tieosoiteprojektissa muutostoimenpiteit&auml; p&auml;&auml;see tekem&auml;&auml;n klikkaamalla Jatka toimenpiteisiin-painiketta tieosoitemuutosprojektin perustietojen lomakkeella. T&auml;m&auml;n j&auml;lkeen sovellus muuttaa varatut tieosat muokattaviksi kohteiksi ja ne n&auml;kyv&auml;t avautuvassa karttan&auml;kym&auml;ss&auml; keltaisella korostettuna. Mik&auml;li toimenpiteen&auml; lis&auml;t&auml;&auml;n uusi tieosoite, eli tieosia ei ole varattu projektiin, kartalta ei valikoidu mit&auml;&auml;n ennen k&auml;ytt&auml;j&auml;n tekem&auml;&auml; valintaa. T&auml;m&auml; tarkennetaan tulevissa toimenpiteit&auml; kuvaavissa kappaleissa.
 
 Projektitilassa, vain projektiin varattuja tieosia voi valita klikkaamalla (pl. uuden tiosoitteen lis&auml;&auml;minen). Tieverkon tieosoitetietoja voi katsella kartalla viem&auml;ll&auml; hiiren tieosoitelinkin p&auml;&auml;lle. T&auml;ll&ouml;in tielinkin infolaatikko tulee n&auml;kyviin.
 
