@@ -448,10 +448,10 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       val projectLinks = ProjectDAO.fetchByProjectNewRoadPart(5, 205, saved.id)
       count = countCurrentProjects.size + 1
       countAfterInsertProjects.size should be(count)
-      sqlu"""UPDATE Project_link set status = 5""".execute
+      sqlu"""UPDATE Project_link set status = ${LinkStatus.Terminated.value}""".execute
       val terminations = ProjectDeltaCalculator.delta(saved.id).terminations
       terminations should have size (projectLinks.size)
-      sqlu"""UPDATE Project_link set status = 2""".execute
+      sqlu"""UPDATE Project_link set status = ${LinkStatus.New.value}""".execute
       val newCreations = ProjectDeltaCalculator.delta(saved.id).newRoads
       newCreations should have size (projectLinks.size)
       val sections = ProjectDeltaCalculator.partition(terminations)
@@ -482,7 +482,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       val projectLinks = ProjectDAO.fetchByProjectNewRoadPart(5, 205, saved.id)
       count = countCurrentProjects.size + 1
       countAfterInsertProjects.size should be(count)
-      sqlu"""UPDATE Project_link set status = 5""".execute
+      sqlu"""UPDATE Project_link set status = ${LinkStatus.Terminated.value}""".execute
       val terminations = ProjectDeltaCalculator.delta(saved.id).terminations
       terminations should have size (projectLinks.size)
       val modTerminations = terminations.map(t =>
