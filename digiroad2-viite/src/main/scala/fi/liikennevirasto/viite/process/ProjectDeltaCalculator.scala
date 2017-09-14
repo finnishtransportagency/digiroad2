@@ -135,18 +135,18 @@ object ProjectDeltaCalculator {
         .mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
         RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
           ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType)).toSeq
-    })
+    }).flatten
     val targetCombined = newL.map(n => {
         n.sortBy(_.startAddrMValue).groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
           .mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
           RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
             ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType)).toSeq
-      })
+      }).flatten
 
     sourceCombined.map { sec =>
-      val linkId = roadAddresses.find(ra => sec.head.includes(ra)).map(_.linkId).get
-      val targetGroup = targetCombined.find(tc => tc.head.includes(projectLinks.find(_.linkId == linkId).get))
-      sec.head -> targetGroup.get.head
+      val linkId = roadAddresses.find(ra => sec.includes(ra)).map(_.linkId).get
+      val targetGroup = targetCombined.find(tc => tc.includes(projectLinks.find(_.linkId == linkId).get))
+      sec -> targetGroup.get
     }.toMap
 }}
 
