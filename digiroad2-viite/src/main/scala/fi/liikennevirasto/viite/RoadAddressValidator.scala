@@ -22,7 +22,7 @@ object RoadAddressValidator {
 
   def checkProjectExists(id: Long): Unit = {
     if (ProjectDAO.getRoadAddressProjectById(id).isEmpty)
-      throw new ProjectValidationException("Projektikoodilla ei löytynyt projektia"))
+      throw new ProjectValidationException("Projektikoodilla ei löytynyt projektia")
   }
 
 }
