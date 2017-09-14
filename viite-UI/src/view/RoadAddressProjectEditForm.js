@@ -542,7 +542,7 @@
             $('#discontinuityDropdown').prop('disabled',true);
             $('#roadTypeDropDown').prop('disabled',true);
             projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
-                return {'id': link.linkId, 'status': STATUS_NUMBERING};
+                return {'linkId': link.linkId, 'status': STATUS_NUMBERING};
             })));
             projectCollection.setTmpDirty(projectCollection.getDirty());
             rootElement.find('.new-road-address').prop("hidden", false);
