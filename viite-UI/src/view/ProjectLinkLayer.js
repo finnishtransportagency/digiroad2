@@ -17,10 +17,11 @@
     var againstDigitizing = 3;
     var towardsDigitizing = 2;
     var notHandledStatus = 0;
-    var terminatedStatus = 1;
+    var unchangedStatus = 1;
     var newRoadAddressStatus = 2;
     var transferedStatus = 3;
-    var unchangedStatus = 4;
+    var numberingStatus = 4;
+    var terminatedStatus = 5;
     var unknownStatus = 99;
     var isNotEditingData = true;
     Layer.call(this, layerName, roadLayer);
@@ -94,13 +95,17 @@
         borderWidth = 5;
         lineColor = 'rgba(0, 0, 255, 1)';
       }
+      if(status === numberingStatus) {
+        borderWidth = 5;
+        lineColor = 'rgba(139,69,19, 1)';
+      }
 
       if (status === newRoadAddressStatus) {
         borderWidth = 5;
         lineColor = 'rgba(255, 85, 221, 0.7)';
       }
 
-      if (status === notHandledStatus || status === terminatedStatus || status  === newRoadAddressStatus || status == transferedStatus || status === unchangedStatus) {
+      if (status === notHandledStatus || status === terminatedStatus || status  === newRoadAddressStatus || status == transferedStatus || status === unchangedStatus || status == numberingStatus) {
         var strokeWidth = styler.strokeWidthByZoomLevel(currentZoom, feature.projectLinkData.roadLinkType, feature.projectLinkData.anomaly, feature.projectLinkData.roadLinkSource, false, feature.projectLinkData.constructionType);
         var borderCap = 'round';
 
@@ -161,7 +166,7 @@
       layer: [vectorLayer, suravageRoadProjectLayer],
       condition: ol.events.condition.singleClick,
       style: function(feature, resolution) {
-        if(projectLinkStatusIn(feature.projectLinkData, [notHandledStatus, newRoadAddressStatus,terminatedStatus, transferedStatus, unchangedStatus]) || feature.projectLinkData.roadLinkSource === 3){
+        if(projectLinkStatusIn(feature.projectLinkData, [notHandledStatus, newRoadAddressStatus,terminatedStatus, transferedStatus, unchangedStatus, numberingStatus]) || feature.projectLinkData.roadLinkSource === 3){
           return new ol.style.Style({
             fill: new ol.style.Fill({
               color: 'rgba(0, 255, 0, 0.75)'
@@ -202,7 +207,7 @@
         event.mapBrowserEvent.originalEvent.shiftKey : false;
       var selection = _.find(event.selected, function (selectionTarget) {
         return (!_.isUndefined(selectionTarget.projectLinkData) && (
-          projectLinkStatusIn(selectionTarget.projectLinkData, [notHandledStatus, newRoadAddressStatus,terminatedStatus,unchangedStatus, transferedStatus]) ||
+          projectLinkStatusIn(selectionTarget.projectLinkData, [notHandledStatus, newRoadAddressStatus,terminatedStatus,unchangedStatus, transferedStatus, numberingStatus]) ||
           (selectionTarget.projectLinkData.anomaly==noAddressAnomaly && selectionTarget.projectLinkData.roadLinkType!=floatingRoadLinkType) ||
           selectionTarget.projectLinkData.roadClass === 99 || selectionTarget.projectLinkData.roadLinkSource === 3 )
         );
@@ -248,7 +253,7 @@
         return (ol.events.condition.doubleClick(mapBrowserEvent) && ol.events.condition.shiftKeyOnly(mapBrowserEvent)) || ol.events.condition.doubleClick(mapBrowserEvent);
       },
       style: function(feature, resolution) {
-        if(projectLinkStatusIn(feature.projectLinkData, [notHandledStatus,newRoadAddressStatus, terminatedStatus, unchangedStatus, transferedStatus]) ||  feature.projectLinkData.roadLinkSource === 3) {
+        if(projectLinkStatusIn(feature.projectLinkData, [notHandledStatus,newRoadAddressStatus, terminatedStatus, unchangedStatus, transferedStatus, numberingStatus]) ||  feature.projectLinkData.roadLinkSource === 3) {
           return new ol.style.Style({
             fill: new ol.style.Fill({
               color: 'rgba(0, 255, 0, 0.75)'
@@ -288,7 +293,7 @@
       var shiftPressed = event.mapBrowserEvent.originalEvent.shiftKey;
       var selection = _.find(event.selected, function (selectionTarget) {
         return (!_.isUndefined(selectionTarget.projectLinkData) && (
-          projectLinkStatusIn(selectionTarget.projectLinkData,[notHandledStatus, newRoadAddressStatus, terminatedStatus, unchangedStatus, transferedStatus])||
+          projectLinkStatusIn(selectionTarget.projectLinkData,[notHandledStatus, newRoadAddressStatus, terminatedStatus, unchangedStatus, transferedStatus, numberingStatus])||
           (selectionTarget.projectLinkData.anomaly==noAddressAnomaly && selectionTarget.projectLinkData.roadLinkType!=floatingRoadLinkType) ||
           selectionTarget.projectLinkData.roadClass === 99 || selectionTarget.projectLinkData.roadLinkSource === 3)
         );

@@ -1,11 +1,11 @@
 (function (root) {
   root.RoadAddressProjectEditForm = function(projectCollection, selectedProjectLinkProperty, projectLinkLayer, projectChangeTable) {
     var STATUS_NOT_HANDLED = 0;
-    var STATUS_TERMINATED = 1;
+    var STATUS_UNCHANGED = 1;
     var STATUS_NEW_LINK = 2;
     var STATUS_TRANSFER = 3;
-    var STATUS_UNCHANGED = 4;
-    var STATUS_NUMBERING = 5;
+    var STATUS_NUMBERING = 4;
+    var STATUS_TERMINATED  = 5;
     var ACTION_TERMINATE = "terminate";
     var ACTION_NEW_LINK = "new";
     var ACTION_TRANSFER = "transfer";
@@ -139,7 +139,7 @@
             modifiers = 'disabled hidden';
           } else if(toEdit) {
             modifiers = 'disabled';
-          } else if(selection[0].status === 1) {
+          } else if(selection[0].status === STATUS_TERMINATED) {
             modifiers = 'hidden';
           }
           break;
