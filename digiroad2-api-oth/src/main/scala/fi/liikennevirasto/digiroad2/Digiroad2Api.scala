@@ -206,7 +206,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
 /**
-Returns empty result as Json message, not as page not found
+  * Returns empty result as Json message, not as page not found
 */
     get("/massTransitStopsSafe/:nationalId") {
       def validateMunicipalityAuthorization(nationalId: Long)(municipalityCode: Int): Unit = {
@@ -630,7 +630,7 @@ Returns empty result as Json message, not as page not found
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      val usedService = if(typeId == maintenanceRoadService.maintenanceRoadAssetTypeId) maintenanceRoadService else linearAssetService
+      val usedService =  verifyServiceToUse(typeId)
       if(user.isServiceRoadMaintainer())
         mapLinearAssets(usedService.withRoadAddress(usedService.getByIntersectedBoundingBox(typeId, user.configuration.authorizedAreas, boundingRectangle, municipalities)))
       else
@@ -644,7 +644,7 @@ Returns empty result as Json message, not as page not found
     val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
     val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
-    val usedService = if(typeId == maintenanceRoadService.maintenanceRoadAssetTypeId) maintenanceRoadService else linearAssetService
+    val usedService =  verifyServiceToUse(typeId)
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
@@ -727,7 +727,7 @@ Returns empty result as Json message, not as page not found
   post("/linearassets") {
     val user = userProvider.getCurrentUser()
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
-    val usedService = if(typeId == maintenanceRoadService.maintenanceRoadAssetTypeId) maintenanceRoadService else linearAssetService
+    val usedService =  verifyServiceToUse(typeId)
     if (user.isServiceRoadMaintainer() && typeId!=serviceRoadTypeid)
       halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     if (typeId==trafficVolumeTypeid)
@@ -773,7 +773,7 @@ Returns empty result as Json message, not as page not found
       halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     if (typeId==trafficVolumeTypeid)
       halt(BadRequest("Cannot delete 'traffic Volume' asset"))
-    val usedService = if(typeId == maintenanceRoadService.maintenanceRoadAssetTypeId) maintenanceRoadService else linearAssetService
+    val usedService =  verifyServiceToUse(typeId)
     val linkIds = usedService.getPersistedAssetsByIds(typeId, ids).map(_.linkId)
     roadLinkService.fetchVVHRoadlinks(linkIds.toSet)
       .map(_.municipalityCode)
@@ -785,7 +785,7 @@ Returns empty result as Json message, not as page not found
   post("/linearassets/:id") {
     val user = userProvider.getCurrentUser()
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
-    val usedService = if(typeId == maintenanceRoadService.maintenanceRoadAssetTypeId) maintenanceRoadService else linearAssetService
+    val usedService =  verifyServiceToUse(typeId)
     if (user.isServiceRoadMaintainer() && typeId!=serviceRoadTypeid)
       halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     if (typeId==trafficVolumeTypeid)
@@ -801,7 +801,7 @@ Returns empty result as Json message, not as page not found
   post("/linearassets/:id/separate") {
     val user = userProvider.getCurrentUser()
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
-    val usedService = if(typeId == maintenanceRoadService.maintenanceRoadAssetTypeId) maintenanceRoadService else linearAssetService
+    val usedService =  verifyServiceToUse(typeId)
     if (user.isServiceRoadMaintainer() && typeId!=serviceRoadTypeid)
       halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     if (typeId==trafficVolumeTypeid)
@@ -1164,6 +1164,13 @@ Returns empty result as Json message, not as page not found
         case _ => None
       }
       service.create(asset, user.username, link.geometry, link.municipalityCode, Some(link.administrativeClass), link.linkSource)
+    }
+  }
+
+  private def verifyServiceToUse(typeId: Int): LinearAssetOperations = {
+    typeId match {
+      case maintenanceRoadService.maintenanceRoadAssetTypeId => maintenanceRoadService
+      case _ => linearAssetService
     }
   }
 

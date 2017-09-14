@@ -506,8 +506,6 @@ trait LinearAssetOperations {
           LinearAssetTypes.numericValuePropertyId
         case Some(TextualValue(textValue)) =>
           LinearAssetTypes.getValuePropertyId(typeId)
-        case Some(prohibitions: Prohibitions) => ""
-        case None => ""
         case _ => ""
       }
     }
