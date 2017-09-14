@@ -126,23 +126,27 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
 
   test("update inventory date") {
     val props = Seq(SimpleProperty("foo", Seq()))
-    val after = RollbackMassTransitStopService.updatedProperties(props)
+    val roadLink = VVHRoadlink(12345l, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
+
+    val after = RollbackMassTransitStopService.updatedProperties(props, roadLink)
     after should have size (2)
-    val after2 = RollbackMassTransitStopService.updatedProperties(after)
+    val after2 = RollbackMassTransitStopService.updatedProperties(after, roadLink)
     after2 should have size (2)
   }
 
   test("update empty inventory date") {
+    val roadLink = VVHRoadlink(12345l, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
     val props = Seq(SimpleProperty("inventointipaiva", Seq()))
-    val after = RollbackMassTransitStopService.updatedProperties(props)
+    val after = RollbackMassTransitStopService.updatedProperties(props, roadLink)
     after should have size (1)
     after.head.values should have size(1)
     after.head.values.head.propertyValue should be ( DateTimeFormat.forPattern("yyyy-MM-dd").print(DateTime.now))
   }
 
   test("do not update existing inventory date") {
+    val roadLink = VVHRoadlink(12345l, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
     val props = Seq(SimpleProperty("inventointipaiva", Seq(PropertyValue("2015-12-30"))))
-    val after = RollbackMassTransitStopService.updatedProperties(props)
+    val after = RollbackMassTransitStopService.updatedProperties(props, roadLink)
     after should have size (1)
     after.head.values should have size(1)
     after.head.values.head.propertyValue should be ( "2015-12-30")
