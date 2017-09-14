@@ -211,8 +211,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     try {
       val projectSaved = projectService.createRoadLinkProject(roadAddressProject)
       val fetched = projectService.getRoadAddressSingleProject(projectSaved.id).get
-      Map("project" -> roadAddressProjectToApi(fetched), "projectAddresses" -> null, "formInfo" ->
-        fetched.reservedParts.map(reservedRoadPartToApi), "success" -> true)
+      val firstAddress: Map[String, Any] =
+        fetched.reservedParts.find(_.startingLinkId.nonEmpty).map(p => "projectAddresses" -> p.startingLinkId.get).toMap
+      Map("project" -> roadAddressProjectToApi(fetched), "formInfo" ->
+        fetched.reservedParts.map(reservedRoadPartToApi), "success" -> true) ++ firstAddress
     } catch {
       case ex: IllegalArgumentException => BadRequest(s"A project with id ${project.id} has already been created")
     }
@@ -271,9 +273,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val projectId = params("id").toLong
     val project = projectService.getRoadAddressSingleProject(projectId).get
     val projectMap = roadAddressProjectToApi(project)
+    val parts = project.reservedParts.map(reservedRoadPartToApi)
     val publishable = projectService.projectLinkPublishable(projectId)
     Map("project" -> projectMap, "linkId" -> project.reservedParts.find(_.startingLinkId.nonEmpty).flatMap(_.startingLinkId),
-      "projectLinks" -> Seq(), "publishable" -> publishable)
+      "projectLinks" -> parts, "publishable" -> publishable)
   }
 
   get("/roadlinks/roadaddress/project/validatereservedlink/"){
@@ -544,7 +547,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "roadLength" -> reservedRoadPart.roadLength,
       "addressLength" -> reservedRoadPart.addressLength,
       "discontinuity" -> reservedRoadPart.discontinuity.description,
-      "startingLinkId" -> reservedRoadPart.startingLinkId,
+      "linkId" -> reservedRoadPart.startingLinkId,
       "isDirty" -> reservedRoadPart.isDirty
     )
   }

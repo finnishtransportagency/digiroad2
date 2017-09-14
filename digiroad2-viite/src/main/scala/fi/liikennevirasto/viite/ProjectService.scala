@@ -256,8 +256,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def getFirstProjectLink(project: RoadAddressProject): Option[ProjectLink] = {
     project.reservedParts.find(_.startingLinkId.nonEmpty) match {
       case Some(rrp) =>
-        ProjectDAO.fetchFirstLink(project.id, rrp.roadNumber, rrp.roadPartNumber).flatMap(pl =>
-        withGeometry(Seq(pl)).headOption)
+        withDynSession {
+          ProjectDAO.fetchFirstLink(project.id, rrp.roadNumber, rrp.roadPartNumber).flatMap(pl =>
+            withGeometry(Seq(pl)).headOption)
+        }
       case _ => None
     }
   }
@@ -483,6 +485,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @return
     */
   private def checkAndReserve(project: RoadAddressProject, reservedRoadPart: ReservedRoadPart): Option[ReservedRoadPart] = {
+    logger.info(s"Check ${project.id} matching to " + ProjectDAO.roadPartReservedTo(reservedRoadPart.roadNumber, reservedRoadPart.roadPartNumber))
     ProjectDAO.roadPartReservedTo(reservedRoadPart.roadNumber, reservedRoadPart.roadPartNumber) match {
       case Some(id) if id != project.id => None
       case Some(id) if id == project.id =>
