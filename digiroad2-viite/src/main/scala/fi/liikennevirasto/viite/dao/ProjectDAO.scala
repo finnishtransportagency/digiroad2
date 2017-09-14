@@ -52,11 +52,11 @@ sealed trait LinkStatus {
 object LinkStatus {
   val values = Set(NotHandled, Terminated, New, Transfer, UnChanged, Numbering, Unknown)
   case object NotHandled extends LinkStatus {def value = 0}
-  case object Terminated extends LinkStatus {def value = 1}
+  case object UnChanged  extends LinkStatus {def value = 1}
   case object New extends LinkStatus {def value = 2}
   case object Transfer extends LinkStatus {def value = 3}
-  case object UnChanged extends LinkStatus {def value = 4}
-  case object Numbering extends LinkStatus {def value = 5}
+  case object Numbering extends LinkStatus {def value = 4}
+  case object Terminated extends LinkStatus {def value = 5}
   case object Unknown extends LinkStatus {def value = 99}
   def apply(intValue: Int): LinkStatus = {
     values.find(_.value == intValue).getOrElse(Unknown)

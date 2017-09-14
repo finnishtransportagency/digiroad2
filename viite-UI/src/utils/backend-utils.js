@@ -27,17 +27,15 @@
       };
     });
     
-    this.updateProjectLinks = _.throttle(function(data, success, errorCallback) {
+    this.updateProjectLinks = _.throttle(function(data, success, error) {
       $.ajax({
         contentType: "application/json",
         type: "PUT",
         url: "api/viite/project/updateProjectLinks",
         data: JSON.stringify(data),
         dataType: "json",
-        success: function (data) {
-          eventbus.trigger('roadAddress:projectLinksUpdated', data);
-        },
-        error: errorCallback
+        success: success,
+        error: error
       });
     }, 1000);
 

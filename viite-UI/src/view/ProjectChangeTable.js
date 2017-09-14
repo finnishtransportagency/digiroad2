@@ -9,7 +9,7 @@
       'Numerointi',
       'Lakkautettu'
     ];
-    var unchanged = 1;
+    var unchangedStatus = 1;
     var newLinkStatus = 2;
     var transferredLinkStatus = 3;
     var numberingLinkStatus = 4;
@@ -91,7 +91,7 @@
             htmlTable+=getSourceInfo(changeInfoSeq,projectChangeData);
             htmlTable+=getEmptyTarget(changeInfoSeq);
             htmlTable+= '</tr>';
-          } else if (changeInfoSeq.changetype === unchanged) {
+          } else if (changeInfoSeq.changetype === unchangedStatus) {
             htmlTable+= '<tr class="change-table-data-row">';
             htmlTable+=getSourceInfo(changeInfoSeq,projectChangeData);
             htmlTable+=getTartgetInfo(changeInfoSeq,projectChangeData);

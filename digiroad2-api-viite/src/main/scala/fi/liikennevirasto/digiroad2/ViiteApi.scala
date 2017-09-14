@@ -362,7 +362,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       projectService.updateProjectLinkStatus(modification.projectId, modification.linkIds,
         LinkStatus.apply(modification.newStatus), user.username, modification.newRoadNumber, modification.newRoadPart) match {
         case Some(errorMessage) => Map("success" -> false, "errormessage" -> errorMessage)
-        case None => Map("success" -> true, "projectId" -> modification.projectId, "publishable" -> (projectService.projectLinkPublishable(modification.projectId)))
+        case None => Map("success" -> true, "id" -> modification.projectId, "publishable" -> (projectService.projectLinkPublishable(modification.projectId)))
       }
     } catch {
       case e: Exception => {

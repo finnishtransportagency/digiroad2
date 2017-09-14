@@ -5,27 +5,24 @@ import org.joda.time.format.DateTimeFormat
 
 object RoadAddressValidator {
 
-  def checkAvailable(number: Long, part: Long, currentProject: RoadAddressProject) = {
-    val isReserved = RoadAddressDAO.isNotAvailableForProject(number, part, currentProject.id)
-    if (!isReserved) {
-      None
-    } else {
+  def checkAvailable(number: Long, part: Long, currentProject: RoadAddressProject): Unit = {
+    if (RoadAddressDAO.isNotAvailableForProject(number, part, currentProject.id)) {
       val fmt = DateTimeFormat.forPattern("dd.MM.yyyy")
       throw new ProjectValidationException(
         s"TIE $number OSA $part on jo olemassa projektin alkupäivänä ${currentProject.startDate.toString(fmt)}, tarkista tiedot")
     }
   }
 
-  def checkNotReserved(number: Long, part: Long, currentProject: RoadAddressProject) = {
+  def checkNotReserved(number: Long, part: Long, currentProject: RoadAddressProject): Unit = {
     val project = ProjectDAO.roadPartReservedByProject(number, part, currentProject.id, withProjectId = true)
     if (project.nonEmpty) {
       throw new ProjectValidationException(s"TIE $number OSA $part on jo varattuna projektissa ${project.get}, tarkista tiedot")
     }
   }
 
-  def fetchProject(id: Long): RoadAddressProject = {
-    ProjectDAO.getRoadAddressProjectById(id).getOrElse(
-      throw new ProjectValidationException("Projektikoodilla ei löytynyt projektia"))
+  def checkProjectExists(id: Long): Unit = {
+    if (ProjectDAO.getRoadAddressProjectById(id).isEmpty)
+      throw new ProjectValidationException("Projektikoodilla ei löytynyt projektia")
   }
 
 }

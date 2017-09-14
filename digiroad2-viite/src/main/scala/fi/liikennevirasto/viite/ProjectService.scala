@@ -198,9 +198,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               matchSideCodes(n, l)
             case _ => SideCode.TowardsDigitizing
           }.getOrElse(SideCode.TowardsDigitizing)
-        val project = RoadAddressValidator.fetchProject(roadAddressProjectID)
-        RoadAddressValidator.checkAvailable(newRoadNumber, newRoadPartNumber, project)
-        RoadAddressValidator.checkNotReserved(newRoadNumber, newRoadPartNumber, project)
+        val project = getProjectWithCheckReservationChecks(roadAddressProjectID, newRoadNumber, newRoadPartNumber)
         val newProjectLinks = projectAddressLinks.map(projectLink => {
           projectLink.linkId ->
             newProjectLink(projectLink, project, randomSideCode)
@@ -668,6 +666,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     roadAddresses.map(toProjectAddressLink)
   }
 
+  private def getProjectWithCheckReservationChecks(projectId: Long, newRoadNumber: Long, newRoadPart: Long): RoadAddressProject = {
+    RoadAddressValidator.checkProjectExists(projectId)
+    val project = ProjectDAO.getRoadAddressProjectById(projectId).get
+    RoadAddressValidator.checkAvailable(newRoadNumber, newRoadPart, project)
+    RoadAddressValidator.checkNotReserved(newRoadNumber, newRoadPart, project)
+    project
+  }
   /**
     * Update project links to given status and recalculate delta and change table
     * @param projectId Project's id
@@ -692,10 +697,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           ProjectDAO.updateProjectLinksToDB(updatedPL.map(_.copy(status = linkStatus, calibrationPoints = (None, None))), userName)
         }
         case LinkStatus.Numbering => {
-          val project = RoadAddressValidator.fetchProject(projectId)
-          RoadAddressValidator.checkAvailable(newRoadNumber, newRoadPart, project)
-          RoadAddressValidator.checkNotReserved(newRoadNumber, newRoadPart, project)
-          ProjectDAO.updateProjectLinkNumbering(projectId, projectLinks.head.roadNumber, projectLinks.head.roadPartNumber, linkStatus, newRoadNumber, newRoadPart, userName)
+          getProjectWithCheckReservationChecks(projectId, newRoadNumber, newRoadPart)
+          ProjectDAO.updateProjectLinkNumbering(projectId, updatedProjectLinks.head.roadNumber, updatedProjectLinks.head.roadPartNumber, newStatus, newRoadNumber, newRoadPart, userName)
         }
         case LinkStatus.Transfer => {
           if (isRoadPartTransfer(updatedProjectLinks, newRoadNumber, newRoadPart)) {
@@ -724,7 +727,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     projectLinks.groupBy(
       pl => (pl.roadNumber, pl.roadPartNumber)).foreach {
       grp =>
-        val recalculatedProjectLinks = ProjectSectionCalculator.assignMValues(projectLinks)
+        val recalculatedProjectLinks = ProjectSectionCalculator.assignMValues(grp._2)
         ProjectDAO.updateProjectLinksToDB(recalculatedProjectLinks, userName)
     }
     recalculateChangeTable(projectId)
