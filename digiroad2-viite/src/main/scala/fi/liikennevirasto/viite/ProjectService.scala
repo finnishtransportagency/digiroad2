@@ -698,7 +698,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         }
         case LinkStatus.Numbering => {
           getProjectWithCheckReservationChecks(projectId, newRoadNumber, newRoadPart)
-          ProjectDAO.updateProjectLinkNumbering(projectId, updatedProjectLinks.head.roadNumber, updatedProjectLinks.head.roadPartNumber, newStatus, newRoadNumber, newRoadPart, userName)
+          ProjectDAO.updateProjectLinkNumbering(projectId, updatedProjectLinks.head.roadNumber, updatedProjectLinks.head.roadPartNumber, linkStatus, newRoadNumber, newRoadPart, userName)
         }
         case LinkStatus.Transfer => {
           if (isRoadPartTransfer(updatedProjectLinks, newRoadNumber, newRoadPart)) {
