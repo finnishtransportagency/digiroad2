@@ -969,7 +969,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   private def guestimateGeometry(missingGeometry:Seq[RoadAddress],projectRoadaddressGeometry:Seq[RoadAddress]):Seq[RoadAddress]={
     missingGeometry.lastOption match {
-      case  Some(missingRoadAddress)=>
+      case  Some(missingRoadAddress) =>
       {
         val previousLink=projectRoadaddressGeometry.find(x=>x.startMValue==missingRoadAddress.endMValue && x.roadNumber==missingRoadAddress.roadNumber && x.roadPartNumber==missingRoadAddress.roadPartNumber && x.track==missingRoadAddress.track)
         val nextLink=projectRoadaddressGeometry.find(x=>x.endMValue==missingRoadAddress.startMValue && x.roadNumber==missingRoadAddress.roadNumber && x.roadPartNumber==missingRoadAddress.roadPartNumber && x.track==missingRoadAddress.track)
@@ -982,36 +982,56 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             else
              projectRoadaddressGeometry++Seq(roadaddressWithAddedGeometry)
           }
-          case (p,n) =>  //since seq is ordered we can search links to "previous" direction
+          case (p,n) =>  //since seq is ordered we only have to search links to previous direction
             {
               val foundGeometryOnRoadPartOrTrack= projectRoadaddressGeometry.filter(x=>x.roadNumber==missingRoadAddress.roadNumber && x.roadPartNumber==missingRoadAddress.roadPartNumber &&x.track==missingRoadAddress.track)
               if (foundGeometryOnRoadPartOrTrack.isEmpty)
-                throw new RuntimeException(s"RoadPart or trackpart did not have geometry to form missing geometry")
-              val previousLinkGeometry=  if (p.nonEmpty) p.head.geometry else None
+                throw new RuntimeException(s"RoadPart or trackpart did not have geometry to form guestimate of missing geometry")
+              val nextLinkGeometry=  if (n.nonEmpty) Some(n.head.geometry) else Some(None)
               val missingGeometryonRoadPartOrTrack= missingGeometry.filter(x=>x.roadNumber==missingRoadAddress.roadNumber && x.roadPartNumber==missingRoadAddress.roadPartNumber && x.track==missingRoadAddress.track)
               val (adjacentLinksWithNoGeometry,previousLinkToChain)=getGeometryToPreviousLinks(missingGeometryonRoadPartOrTrack,foundGeometryOnRoadPartOrTrack,missingRoadAddress,Seq.empty[RoadAddress])
               val adjacentIdSeq=adjacentLinksWithNoGeometry.map(x=>x.id)
               val stillMissingGeometry=missingGeometry.filterNot(x=>adjacentIdSeq.contains(x.id))
-              val guessedGeometryForAdjacentLinks=guessGeometryForAdjacentLinks(adjacentLinksWithNoGeometry,previousLinkToChain,None)
+              val guessedGeometryForAdjacentLink=guessGeometryForAdjacentLinks(adjacentLinksWithNoGeometry.head,previousLinkToChain,None)
               if(stillMissingGeometry.isEmpty)
-                return projectRoadaddressGeometry++guessedGeometryForAdjacentLinks
-              guestimateGeometry(stillMissingGeometry, guessedGeometryForAdjacentLinks)
+                return projectRoadaddressGeometry++adjacentLinksWithNoGeometry.map(x=>x.copy(geometry =guessedGeometryForAdjacentLink ))
+              guestimateGeometry(stillMissingGeometry, projectRoadaddressGeometry++adjacentLinksWithNoGeometry.map(x=>x.copy(geometry =guessedGeometryForAdjacentLink )))
             }
           }
         }
+      case None => projectRoadaddressGeometry
+      case _=>  throw new RuntimeException("Undefined state when guessing geometry")
       }
     }
 
   /**
     *
-    * @param adjacentLinks Seq of adjacent links missing geometry
+    * @param linkToGenGeometry one of the of adjacent links missing geometry
     * @param previousLink  link containing geometry that has same startM value as seq:s highest endM value
     * @param nextLink      link containing geometry that has same endM value as seq:s lowest startM value
          Either nextLink or previousLink exists, and error should be throw earlier if no geometry can be used to guess geometry for given links
     * @return              returns links containing geometry
     */
-  private def guessGeometryForAdjacentLinks(adjacentLinks:Seq[RoadAddress], previousLink:Option[RoadAddress],nextLink:Option[RoadAddress]):Seq[RoadAddress]  ={
-  adjacentLinks.map(x=>x.copy(geometry=Seq(Point(0,0),Point(0,0))))
+  private def guessGeometryForAdjacentLinks(linkToGenGeometry:RoadAddress, previousLink:Option[RoadAddress],nextLink:Option[RoadAddress]):Seq[Point]  ={
+    (previousLink, nextLink) match {
+      case (Some(p), Some(n)) =>
+        val geom = Seq(p.geometry.last, n.geometry.head)
+        val geomLegth = GeometryUtils.geometryLength(geom)
+        val pToNAddrLength = (p.endAddrMValue - n.startAddrMValue).toDouble  //should startaddr==startM?
+        GeometryUtils.truncateGeometry2D(geom, geomLegth*(linkToGenGeometry.startAddrMValue - p.endAddrMValue) / pToNAddrLength,
+          geomLegth*(linkToGenGeometry.endAddrMValue - p.endAddrMValue) / pToNAddrLength)
+      case (None, Some(n)) => {
+        //val guestimateStartPoint= n.geometry.head - (n.geometry.last - n.geometry.head).normalize2D().scale(toGenerate.endAddrMValue - toGenerate.startAddrMValue)
+        val guestimateStartPoint= n.geometry.head - (n.geometry.last - n.geometry.head).normalize2D().scale(linkToGenGeometry.endAddrMValue - linkToGenGeometry.startAddrMValue)
+        val guestimateEndPoint= n.geometry.head - (n.geometry.last - n.geometry.head).normalize2D().scale(linkToGenGeometry.endAddrMValue - n.startAddrMValue)
+      Seq(guestimateStartPoint,guestimateEndPoint)
+      }
+      case (Some(p), None) =>
+        val guestimateStartPoint=p.geometry.last + (p.geometry.last - p.geometry.head).normalize2D().scale(linkToGenGeometry.endAddrMValue - linkToGenGeometry.startAddrMValue)
+        val guestimateEndPoint=p.geometry.last + (p.geometry.last - p.geometry.head).normalize2D().scale(linkToGenGeometry.endAddrMValue - p.endAddrMValue)
+        Seq(guestimateStartPoint,guestimateEndPoint)
+      case _ => throw new RuntimeException(s"RoadPart or trackpart did not have geometry to form missing geometry")
+    }
   }
 
 
@@ -1030,7 +1050,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val nextLinkFromMissingList=missingGeometry.filter(x=>x.endMValue==currentLink.startMValue)
       if (nextLinkFromMissingList.isEmpty) // we are probably on last link
          (currentMissingLinksSeq++Seq(currentLink),None)
-      else //if we didnt find geometry, but found next missing geometry we search geometry from of next links next link
+      else //if we didnt find geometry, but found next missing geometry we search geometry from  next links next link
         {
           val reducedMissingGeometry=missingGeometry.filterNot(x=>x.id==currentLink.id)
           getGeometryToPreviousLinks(reducedMissingGeometry,projectRoadaddressGeometry,nextLinkFromMissingList.head,currentMissingLinksSeq++Seq(currentLink))
