@@ -1,8 +1,5 @@
 package fi.liikennevirasto.viite
 
-import java.util.Date
-
-import fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.SuravageLinkInterface
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset._
@@ -971,7 +968,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   private def setProjectLinksAsFloating(projectLinks: Seq[ProjectLink]) :Seq[RoadAddress]={
     var projectLinksWithVVHGeometry=new ListBuffer[RoadAddress]()
     projectLinks.foreach( x=>{
-        projectLinksWithVVHGeometry+= RoadAddress(NewRoadAddress,x.roadNumber,x.roadPartNumber,x.roadType,x.track,x.discontinuity,x.startAddrMValue,x.endAddrMValue,x.startDate, x.endDate,x.modifiedBy,x.lrmPositionId,x.linkId,x.startMValue,x.endMValue,x.sideCode,22L,x.calibrationPoints,floating=true,Seq.empty[Point],x.linkGeomSource)
+      projectLinksWithVVHGeometry+= RoadAddress(NewRoadAddress,x.roadNumber,x.roadPartNumber,x.roadType,x.track,x.discontinuity,x.startAddrMValue,x.endAddrMValue,x.startDate, x.endDate,x.modifiedBy,x.lrmPositionId,x.linkId,x.startMValue,x.endMValue,x.sideCode,22L,x.calibrationPoints,floating=true,Seq.empty[Point],x.linkGeomSource)
     })
     projectLinksWithVVHGeometry
   }

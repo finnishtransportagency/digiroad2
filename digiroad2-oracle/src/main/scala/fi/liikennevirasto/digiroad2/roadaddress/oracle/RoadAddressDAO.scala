@@ -142,10 +142,6 @@ class RoadAddressDAO {
 		  """.as[Long].list
   }
 
-
-
-
-
   def getRoadAddressesFiltered(roadNumber: Long, roadPartNumber: Long, startM: Double, endM: Double): Seq[RoadAddress] = {
     val where =
       s""" where (( ra.start_addr_m >= $startM and ra.end_addr_m <= $endM ) or ( $startM >= ra.start_addr_m and $startM < ra.end_addr_m) or
