@@ -376,7 +376,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   private def isRoadPartTransfer(projectLinks: Seq[ProjectLink], roadNumber: Long , newRoadPart: Long): Boolean = {
-    projectLinks.filter(_.roadPartNumber == newRoadPart).length == 0 && projectLinks.filter(_.roadNumber == roadNumber).length > 0
+    !projectLinks.exists(_.roadPartNumber == newRoadPart) && projectLinks.exists(_.roadNumber == roadNumber)
   }
 
   private def createFormOfReservedLinksToSavedRoadParts(project: RoadAddressProject): (Seq[ProjectFormLine], Option[ProjectLink]) = {
@@ -705,7 +705,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             val updated = updatedProjectLinks.map(updl => {
               updl.copy(roadPartNumber = newRoadPart, status = linkStatus, calibrationPoints = (None, None))
             })
-            ProjectDAO.updateProjectLinksToDB(updated.map(upd => upd), userName)
+            ProjectDAO.updateProjectLinksToDB(updated, userName)
           } else {
             ProjectDAO.updateProjectLinkStatus(updatedProjectLinks.map(_.id).toSet, linkStatus, userName)
           }
