@@ -106,19 +106,14 @@ object ProjectDeltaCalculator {
     ).toSeq
   }
 
-  def getRoadAddressSectionMap(roadGroups: Seq[RoadAddressSection], projectGroups: Seq[RoadAddressSection], roadAddresses: Seq[RoadAddress], projectLinks: Seq[ProjectLink] ): Seq[Map[RoadAddressSection, RoadAddressSection]]  = {
-      roadGroups.map { sec =>
-      val linkId = roadAddresses.find(ra => sec.includes(ra)).map(_.linkId).get
-      val targetGroup = projectGroups.find(_.includes(projectLinks.find(_.linkId == linkId).get))
-      Map(sec -> targetGroup.get)
-    }
-  }
-
-  def getProjectLinkSectionMap(projectGroups: Seq[RoadAddressSection], roadGroups: Seq[RoadAddressSection], roadAddresses: Seq[RoadAddress], projectLinks: Seq[ProjectLink]  ): Seq[Map[RoadAddressSection, RoadAddressSection]] = {
-      projectGroups.map { sec =>
-      val linkId = projectLinks.find(ra => sec.includes(ra)).map(_.linkId).get
-      val sourceGroup = roadGroups.find(_.includes(roadAddresses.find(_.linkId == linkId).get))
-      Map(sourceGroup.get -> sec)
+  def pair(roadAddress: Seq[RoadAddress], projectLink: Seq[ProjectLink]): Seq[(RoadAddress,ProjectLink)] = {
+    roadAddress.foldLeft(List.empty[(RoadAddress,ProjectLink)]) { case (p, a) =>
+      projectLink.find(b => a.linkId == b.linkId) match {
+        case Some(b) => {
+          p :+ (a, b)
+        }
+        case None => p
+      }
     }
   }
 
@@ -129,25 +124,31 @@ object ProjectDeltaCalculator {
     * @param projectLinks Project Links that have the transfer address values
     * @return Map between the sections old -> new
     */
-  def partition(roadAddresses: Seq[RoadAddress], projectLinks: Seq[ProjectLink]): Seq[Map[RoadAddressSection, RoadAddressSection]] = {
-    val groupedAddresses = roadAddresses.sortBy(_.startAddrMValue).groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
-    val addressesGroups = groupedAddresses.mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
-      RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
-        ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType)
-    ).toSeq
+  def partition(roadAddresses: Seq[RoadAddress], projectLinks: Seq[ProjectLink]): Map[RoadAddressSection, RoadAddressSection] = {
 
-    val groupedProjectLinks = projectLinks.sortBy(_.startAddrMValue).groupBy(pl => (pl.roadNumber, pl.roadPartNumber, pl.track))
-    val projectLinksGroups = groupedProjectLinks.mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(pl =>
-      RoadAddressSection(pl.roadNumber, pl.roadPartNumber, pl.roadPartNumber,
-        pl.track, pl.startAddrMValue, pl.endAddrMValue, pl.discontinuity, pl.roadType)
-    ).toSeq
+    val paired = pair(roadAddresses, projectLinks).groupBy(x => (x._1.roadNumber, x._1.roadPartNumber, x._2.roadNumber, x._2.roadPartNumber))
 
-    if (groupedAddresses.size >= groupedProjectLinks.size)
-      getRoadAddressSectionMap(addressesGroups, projectLinksGroups, roadAddresses, projectLinks)
-    else
-      getProjectLinkSectionMap(projectLinksGroups, addressesGroups, roadAddresses, projectLinks)
-  }
-}
+    val (oldL, newL) = (paired.map( x=> x._2.map(_._1)),paired.map( x=> x._2.map(_._2)))
+
+    val sourceCombined = oldL.map(o => {
+      o.sortBy(_.startAddrMValue).groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
+        .mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
+        RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
+          ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType)).toSeq
+    })
+    val targetCombined = newL.map(n => {
+        n.sortBy(_.startAddrMValue).groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
+          .mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
+          RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
+            ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType)).toSeq
+      })
+
+    sourceCombined.map { sec =>
+      val linkId = roadAddresses.find(ra => sec.head.includes(ra)).map(_.linkId).get
+      val targetGroup = targetCombined.find(tc => tc.head.includes(projectLinks.find(_.linkId == linkId).get))
+      sec.head -> targetGroup.get.head
+    }.toMap
+}}
 
 case class Delta(startDate: DateTime, terminations: Seq[RoadAddress], newRoads: Seq[ProjectLink],
                  unChanged: Seq[RoadAddress], transferred: Transferred, numbering : ReNumeration)

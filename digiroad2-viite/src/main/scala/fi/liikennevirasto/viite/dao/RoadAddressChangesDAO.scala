@@ -253,12 +253,12 @@ object RoadAddressChangesDAO {
             val partitionedValues = ProjectDeltaCalculator.partition(delta.transferred.oldLinks, delta.transferred.newLinks)
 
              partitionedValues.foreach{ elem =>
-              addToBatchWithOldValues(elem.head._1, elem.head._2, ely, AddressChangeType.Transfer, roadAddressChangePS)
+              addToBatchWithOldValues(elem._1, elem._2, ely, AddressChangeType.Transfer, roadAddressChangePS)
             }
 
             val partitionedReNumeration = ProjectDeltaCalculator.partition(delta.numbering.oldLinks, delta.numbering.newLinks)
             partitionedReNumeration.foreach{ elem =>
-              addToBatchWithOldValues(elem.head._1, elem.head._2, ely, AddressChangeType.ReNumeration, roadAddressChangePS)
+              addToBatchWithOldValues(elem._1, elem._2, ely, AddressChangeType.ReNumeration, roadAddressChangePS)
             }
 
 
