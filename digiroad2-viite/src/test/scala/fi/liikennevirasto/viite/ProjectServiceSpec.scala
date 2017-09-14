@@ -649,7 +649,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
 
       val roadsAfterChanges=RoadAddressDAO.fetchByLinkId(Set(linkId))
       roadsAfterChanges.size should be (3)
-      val roadsAfterPublishing = roadsAfterChanges.filter(x=>x.startDate.nonEmpty).head
+      val roadsAfterPublishing = roadsAfterChanges.filter(x=>x.startDate.nonEmpty && x.endDate.isEmpty).head
       val endedAddress = roadsAfterChanges.filter(x=>x.endDate.nonEmpty)
 
       roadsBeforeChanges.linkId should be(roadsAfterPublishing.linkId)
