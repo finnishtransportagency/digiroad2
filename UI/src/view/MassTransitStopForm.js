@@ -49,9 +49,9 @@
     };
   };
 
-  var ValidatePlatformNumberMaxSize = function (target, propertyPublicId) {
+  var validatePlatformNumberMaxSize = function (target) {
     var propertyValue = target.currentTarget.value;
-    if (propertyPublicId === 'laiturinumero' && propertyValue.length > 3) {
+    if (propertyValue.length > 3) {
       target.currentTarget.value = propertyValue.substring(0, 3);
     }
   };
@@ -270,7 +270,8 @@
           elementType = property.propertyType === 'long_text' ?
             $('<textarea />').addClass('form-control') : $('<input type="text"/>').addClass('form-control');
           element = elementType.bind('input', function(target){
-            ValidatePlatformNumberMaxSize(target, property.publicId);
+            if (property.publicId === 'laiturinumero')
+              validatePlatformNumberMaxSize(target);
             selectedMassTransitStopModel.setProperty(property.publicId, [{ propertyValue: target.currentTarget.value, propertyDisplayValue: target.currentTarget.value  }], property.propertyType, property.required);
           });
 
