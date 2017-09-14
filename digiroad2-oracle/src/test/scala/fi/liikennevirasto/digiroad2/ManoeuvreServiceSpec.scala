@@ -59,6 +59,16 @@ class ManoeuvreServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     manoeuvres.exists(_.id == manoeuvreId2) should be(false)
   }
 
+  test("Filter manoeuvre by source road link in the specified municipality"){
+    val manoeuvreId = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Set.empty, Nil, None, Seq(123, 125, 124)))
+    val manoeuvreId2 = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Set.empty, Nil, None, Seq(1611420, 125)))
+
+    val manoeuvres = manoeuvreService.getByMunicipality(235)
+
+    manoeuvres.exists(_.id == manoeuvreId) should be(true)
+    manoeuvres.exists(_.id == manoeuvreId2) should be(false)
+  }
+
   def createManouvre: Manoeuvre = {
     val manoeuvreId = manoeuvreService.createManoeuvre("unittest", NewManoeuvre(Set(ValidityPeriod(0, 21, Saturday, 30, 45)), Nil, None, Seq(123, 124)))
 

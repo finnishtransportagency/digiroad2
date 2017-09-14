@@ -26,18 +26,16 @@
         url: 'api/viite/project/roadlinks?zoom=' + zoom + '&bbox=' + boundingBox + '&id=' + projectId
       };
     });
-
-    this.updateProjectLinks = _.throttle(function(data, errorCallback) {
+    
+    this.updateProjectLinks = _.throttle(function(data, success, error) {
       $.ajax({
         contentType: "application/json",
         type: "PUT",
-        url: "api/viite/project/roadlinks",
+        url: "api/viite/project/updateProjectLinks",
         data: JSON.stringify(data),
         dataType: "json",
-        success: function (data) {
-          eventbus.trigger('roadAddress:projectLinksUpdated', data);
-        },
-        error: errorCallback
+        success: success,
+        error: error
       });
     }, 1000);
 
