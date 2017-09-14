@@ -381,8 +381,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       logger.debug(s"Removed deleted ${linksOnRemovedParts.size}")
       ProjectDAO.create(newProjectLinks)
       logger.debug(s"New links created ${newProjectLinks.size}")
-      if (project.ely.isEmpty && project.reservedParts.exists(_.ely != -1))
-        ProjectDAO.updateProjectEly(project.id, project.reservedParts.head.ely)
+      if (project.ely.isEmpty) {
+        val ely = ProjectDAO.fetchReservedRoadParts(project.id).find(_.ely != -1).map(_.ely)
+        if (ely.nonEmpty)
+          ProjectDAO.updateProjectEly(project.id, ely.get)
+      }
       logger.debug(s"Adding reserved road parts finished for project ${project.id}")
       None
     }
