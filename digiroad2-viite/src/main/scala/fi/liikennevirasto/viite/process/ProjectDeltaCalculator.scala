@@ -15,15 +15,17 @@ object ProjectDeltaCalculator {
     if (projectOpt.isEmpty)
       throw new IllegalArgumentException("Project not found")
     val project = projectOpt.get
-    val projectLinks = ProjectDAO.getProjectLinks(projectId).groupBy(l => RoadPart(l.roadNumber,l.roadPartNumber))
+    val projectLinksFetched = ProjectDAO.getProjectLinks(projectId)
+    val projectLinks = projectLinksFetched.groupBy(l => RoadPart(l.roadNumber,l.roadPartNumber))
     val currentAddresses = projectLinks.filter(_._2.exists(_.status != LinkStatus.New)).keySet.map(r =>
-      r -> RoadAddressDAO.fetchByRoadPart(r.roadNumber, r.roadPartNumber, includeFloating = true)).toMap
+      r -> RoadAddressDAO.fetchByLinkId(projectLinksFetched.map(pl => pl.linkId).toSet, includeFloating = true)).toMap
     val terminations = findTerminations(projectLinks, currentAddresses)
     val newCreations = findNewCreations(projectLinks)
     val unChanged = findUnChanged(projectLinks, currentAddresses)
     val transferred = Transferred(findTransferredOld(projectLinks, currentAddresses), findTransferredNew(projectLinks))
+    val numbering = ReNumeration(findNumberingOld(projectLinks, currentAddresses), findNumberingNew(projectLinks))
 
-    Delta(project.startDate, terminations, newCreations, unChanged, transferred)
+    Delta(project.startDate, terminations, newCreations, unChanged, transferred, numbering)
   }
 
   private def findTerminations(projectLinks: Map[RoadPart, Seq[ProjectLink]], currentAddresses: Map[RoadPart, Seq[RoadAddress]]) = {
@@ -48,6 +50,16 @@ object ProjectDeltaCalculator {
 
   private def findTransferredNew(projectLinks: Map[RoadPart, Seq[ProjectLink]]) = {
     projectLinks.values.flatten.filter(_.status == LinkStatus.Transfer).toSeq
+  }
+
+  private def findNumberingOld(projectLinks: Map[RoadPart, Seq[ProjectLink]], currentAddresses: Map[RoadPart, Seq[RoadAddress]]) = {
+    projectLinks.map{case (part, pLinks) => part -> (pLinks, currentAddresses.getOrElse(part, Seq()))}.mapValues{ case (pll, ra) =>
+      ra.filter(r => pll.exists(pl => pl.linkId == r.linkId && pl.status == LinkStatus.Numbering))
+    }.values.flatten.toSeq
+  }
+
+  private def findNumberingNew(projectLinks: Map[RoadPart, Seq[ProjectLink]]) = {
+    projectLinks.values.flatten.filter(_.status == LinkStatus.Numbering).toSeq
   }
 
   private def findNewCreations(projectLinks: Map[RoadPart, Seq[ProjectLink]]) = {
@@ -124,8 +136,10 @@ object ProjectDeltaCalculator {
 }
 
 case class Delta(startDate: DateTime, terminations: Seq[RoadAddress], newRoads: Seq[ProjectLink],
-                 unChanged: Seq[RoadAddress], transferred: Transferred)
+                 unChanged: Seq[RoadAddress], transferred: Transferred, numbering : ReNumeration)
 
 case class RoadPart(roadNumber: Long, roadPartNumber: Long)
 
 case class Transferred(oldLinks: Seq[RoadAddress], newLinks: Seq[ProjectLink])
+
+case class ReNumeration(oldLinks: Seq[RoadAddress], newLinks: Seq[ProjectLink])

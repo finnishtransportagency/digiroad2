@@ -9,9 +9,10 @@
       'Numerointi',
       'Lakkautettu'
     ];
-    var unchanged = 1;
+    var unchangedStatus = 1;
     var newLinkStatus = 2;
     var transferredLinkStatus = 3;
+    var numberingLinkStatus = 4;
     var terminatedLinkStatus = 5;
     
     var changeTable =
@@ -90,12 +91,17 @@
             htmlTable+=getSourceInfo(changeInfoSeq,projectChangeData);
             htmlTable+=getEmptyTarget(changeInfoSeq);
             htmlTable+= '</tr>';
-          } else if (changeInfoSeq.changetype === unchanged) {
+          } else if (changeInfoSeq.changetype === unchangedStatus) {
             htmlTable+= '<tr class="change-table-data-row">';
             htmlTable+=getSourceInfo(changeInfoSeq,projectChangeData);
             htmlTable+=getTartgetInfo(changeInfoSeq,projectChangeData);
             htmlTable+= '</tr>';
           } else if(changeInfoSeq.changetype === transferredLinkStatus){
+            htmlTable+= '<tr class="change-table-data-row">';
+            htmlTable+=getSourceInfo(changeInfoSeq,projectChangeData);
+            htmlTable+=getTartgetInfo(changeInfoSeq,projectChangeData);
+            htmlTable+= '</tr>';
+          } else if(changeInfoSeq.changetype === numberingLinkStatus){
             htmlTable+= '<tr class="change-table-data-row">';
             htmlTable+=getSourceInfo(changeInfoSeq,projectChangeData);
             htmlTable+=getTartgetInfo(changeInfoSeq,projectChangeData);

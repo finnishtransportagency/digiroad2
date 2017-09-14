@@ -37,7 +37,7 @@ case class RoadAddressProjectExtractor(id: Long, projectEly: Option[Long], statu
                                        additionalInfo: String, roadPartList: List[RoadPartExtractor])
 case class RoadPartExtractor(roadNumber: Long, roadPartNumber: Long)
 
-case class RoadAddressProjectLinkUpdate(linkIds: Seq[Long], projectId: Long, newStatus: Int)
+case class RoadAddressProjectLinkUpdate(linkIds: Set[Long], projectId: Long, newStatus: Int, newRoadNumber: Int, newRoadPart: Int)
 class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
                val roadAddressService: RoadAddressService,
                val projectService: ProjectService,
@@ -362,15 +362,23 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         .map(getProjectLinks(projectId, zoomLevel))
         .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
   }
-  put("/project/roadlinks"){
+  put("/project/updateProjectLinks") {
     val user = userProvider.getCurrentUser()
-
-    val modification = parsedBody.extract[RoadAddressProjectLinkUpdate]
-    val updated = projectService.updateProjectLinkStatus(modification.projectId, modification.linkIds.toSet,
-      LinkStatus.apply(modification.newStatus), user.username)
-    Map("projectId" -> modification.projectId, "publishable" -> (updated &&
-      projectService.projectLinkPublishable(modification.projectId)))
+    try {
+      val modification = parsedBody.extract[RoadAddressProjectLinkUpdate]
+      projectService.updateProjectLinkStatus(modification.projectId, modification.linkIds,
+        LinkStatus.apply(modification.newStatus), user.username, modification.newRoadNumber, modification.newRoadPart) match {
+        case Some(errorMessage) => Map("success" -> false, "errormessage" -> errorMessage)
+        case None => Map("success" -> true, "id" -> modification.projectId, "publishable" -> (projectService.projectLinkPublishable(modification.projectId)))
+      }
+    } catch {
+      case e: Exception => {
+        logger.error(e.toString, e)
+        InternalServerError(e.toString)
+      }
+    }
   }
+
 
   get("/project/getchangetable/:projectId") {
     val projectId = params("projectId").toLong

@@ -199,25 +199,34 @@
     };
 
 
-    this.saveProjectLinks = function(toBeUpdatedDirtyLinks, statusCode) {
+    this.saveProjectLinks = function(changedLinks, statusCode) {
       console.log("Save Project Links called");
       applicationModel.addSpinner();
-      var linkIds = _.unique(_.map(toBeUpdatedDirtyLinks,function (t){
-        if(!_.isUndefined(t.linkId)){
-          return t.linkId;
+      //TODO in the future if we want to choose multiple actions foreach link (linkId, newStatus) combo should be used
+      var linkIds = _.unique(_.map(changedLinks,function (t){
+        if(!_.isUndefined(t.id)){
+          return t.id;
         } else return t;
       }));
 
       var projectId = projectinfo.id;
-
-      var data = {'linkIds': linkIds, 'projectId': projectId, 'newStatus': statusCode};
+      var data = {'linkIds': linkIds,
+        'projectId': projectId,
+        'newStatus': statusCode,
+        'newRoadNumber':Number($('#roadAddressProject').find('#tie')[0].value),
+        'newRoadPart':Number($('#roadAddressProject').find('#osa')[0].value)};
 
       if(!_.isEmpty(linkIds) && typeof projectId !== 'undefined' && projectId !== 0){
-        backend.updateProjectLinks(data, function(errorObject) {
-          if (errorObject.status == INTERNAL_SERVER_ERROR_500 || errorObject.status == BAD_REQUEST_400) {
-            eventbus.trigger('roadAddress:projectLinksUpdateFailed', errorObject.status);
+        backend.updateProjectLinks(data, function(successObject) {
+          if (!successObject.success) {
+            new ModalConfirm("Tämä tieosoite on jo käytössä.");
+            applicationModel.removeSpinner();
+          } else {
+            publishableProject = successObject.publishable;
+            eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
           }
         });
+
       } else {
         console.log(!_.isEmpty(linkIds));
         console.log(typeof projectId);
