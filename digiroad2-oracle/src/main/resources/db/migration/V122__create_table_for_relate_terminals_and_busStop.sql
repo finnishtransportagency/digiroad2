@@ -13,3 +13,6 @@ VALUES (primary_key_seq.nextval,'Liitetty Terminaaliin','db_migration_v122', sys
 
 INSERT INTO PROPERTY (ID, ASSET_TYPE_ID, PROPERTY_TYPE, REQUIRED, CREATED_BY, PUBLIC_ID, NAME_LOCALIZED_STRING_ID)
 VALUES (primary_key_seq.nextval, 10, 'read_only_text', 0, 'db_migration_v122', 'liitetty terminaaliin', (select id from LOCALIZED_STRING where VALUE_FI = 'Liitetty Terminaaliin'));
+
+INSERT INTO enumerated_value (id, value, name_fi, name_sv, created_by, property_id)
+values (primary_key_seq.nextval, 6, 'Terminaalipysäkit', ' ', 'db_migration_v122', (select id from property where public_id = 'pysakin_tyyppi'));
