@@ -989,7 +989,7 @@ object DataFixture {
 
       OracleDatabase.withDynTransaction {
         //Obtain all existing RoadLinkId by AssetType and roadLinks
-        val assets = dataImporter.getAllLinkIdByAsset(MaintenanceRoadTypeId, roadLinks.map(_.linkId), includeExpire = true)
+        val assets = dataImporter.getAssetsByLinkIds(MaintenanceRoadTypeId, roadLinks.map(_.linkId), includeExpire = true)
 
         println("Municipality -> " + municipality  + " MaintenanceRoad Assets -> " + assets.size )
 

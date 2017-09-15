@@ -36,7 +36,7 @@
 
     if(layerName === 'maintenanceRoad') {
       var table = $('<div/>');
-      table.append(tableForGroupingValues('Unknown', workListItems.Unknown));
+      table.append(tableForGroupingValues('Tuntematon', workListItems.Unknown));
       for(var i=1; i<=12; i++) {
         table.append(tableForGroupingValues(i, workListItems[i]));
       }

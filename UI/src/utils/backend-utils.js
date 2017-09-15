@@ -190,11 +190,11 @@
       };
     });
 
-     this.getLinearAssetById = latestResponseRequestor(function(id, endPointName) {
-       return {
-         url: 'api/linearAsset/unchecked/' + id
-       };
-     });
+    this.getLinearAssetById = latestResponseRequestor(function(id, endPointName) {
+      return {
+        url: 'api/linearAsset/unchecked/' + id
+      };
+    });
 
     this.createPointAsset = function(asset, endPointName) {
       return $.ajax({

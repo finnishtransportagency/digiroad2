@@ -125,9 +125,18 @@
   }
 
   var renderLinktoWorkList = function renderLinktoWorkList(layerName) {
+    var textName;
+    switch(layerName) {
+      case "maintenanceRoad":
+        textName = "Tarkistamattomien huoltoteiden lista";
+            break;
+      default:
+        textName = "";
+    }
+
       $('#information-content').append('' +
           '<div class="form form-horizontal" data-layer-name="' + layerName + '">' +
-          '<a id="unchecked-links" class="unchecked-linear-assets" href="#work-list/' + layerName + '">Tuntemattomien nopeusrajoitusten lista</a>' +
+          '<a id="unchecked-links" class="unchecked-linear-assets" href="#work-list/' + layerName + '">' + textName + '</a>' +
           '</div>');
   };
 

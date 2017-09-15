@@ -69,7 +69,7 @@ class PolygonTools {
 
     val area = areaOpt match {
       case Some(areaVal) => areaVal
-      case _ => Seq(1,2,3,4,5,6,7,8,9,10,11,12)
+      case _ => Seq(12,11,10,9,8,7,6,5,4,3,2,1)
     }
 
    area.find{ area => getPolygonByArea(area).exists(poly => poly.intersects(lineStringGeom))

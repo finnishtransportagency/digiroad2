@@ -1324,7 +1324,7 @@ def insertNumberPropertyData(propertyId: Long, assetId: Long, value:Int) {
             and (a.valid_to >= sysdate or a.valid_to is null)""".as[(Long, Int, Long)].list
     }
   }
-  def getAllLinkIdByAsset(typeId: Long, linkId: Seq[Long], includeExpire: Boolean) = {
+  def getAssetsByLinkIds(typeId: Long, linkId: Seq[Long], includeExpire: Boolean) = {
     val filter = if (includeExpire) "" else "and (a.valid_to >= sysdate or a.valid_to is null)"
     MassQuery.withIds(linkId.toSet) { idTableName =>
       sql"""

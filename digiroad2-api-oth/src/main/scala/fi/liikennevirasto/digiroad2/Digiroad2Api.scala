@@ -535,7 +535,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     if(typeId == maintenanceRoadService.maintenanceRoadAssetTypeId)
       maintenanceRoadService.getUncheckedLinearAssets(includedAreas)
     else
-      BadRequest("Missing mandatory 'bbox' parameter")
+      BadRequest("Linear Asset type not allowed")
   }
 
   get("/roadlinks/complementaries"){
