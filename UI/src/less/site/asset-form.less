@@ -200,6 +200,17 @@
     label.control-label.required {
       color: @warning;
     }
+
+    label.control-terminal-label.required:before {
+      content: '* ';
+    }
+
+    label.control-terminal-label.required {
+      color: @warning;
+      font-size: 13px;
+      margin-top: 9px;
+      margin-right: 30px;
+    }
   }
 
   span.validation-error {
@@ -214,6 +225,11 @@
     font-size: @font-size-xl;
     margin: auto;
     display:block
+  }
+
+  span.terminal-header {
+    width: 100px;
+    line-height: 17px;
   }
 
 }

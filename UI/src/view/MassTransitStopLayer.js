@@ -342,10 +342,19 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     }else {
       selectedMassTransitStopModel.place(data);
     }
+    isTerminalStop(data.stopTypes[0]);
     selectedAsset = createAsset(data);
     var feature = selectedAsset.massTransitStop.getMarkerFeature();
     selectControl.addSelectionFeatures([feature], false, false);
     applyBlockingOverlays();
+  };
+
+  var isTerminalStop = function (stopType) {
+    var terminalSelected = false;
+    if (stopType == 6) {
+      terminalSelected = true;
+    }
+    eventbus.trigger('terminalBusStop:selected', terminalSelected);
   };
 
   var applyBlockingOverlays = function() {

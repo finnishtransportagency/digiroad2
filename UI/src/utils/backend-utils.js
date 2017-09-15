@@ -307,10 +307,6 @@
       $.get('api/massTransitStops/' + nationalId, callback);
     };
 
-    this.getAssetTypeProperties = function(callback) {
-      $.get('api/assetTypeProperties/10', callback);
-    };
-
     this.getUserRoles = function () {
       $.get('api/user/roles', function (roles) {
         eventbus.trigger('roles:fetched', roles);
@@ -328,6 +324,12 @@
 
     this.getFloatingMassTransitStops = function() {
       return $.getJSON('api/massTransitStops/floating');
+    };
+
+    this.getAssetTypeProperties = function(position, callback) {
+    //this.getAssetTypeProperties = function (callback) {
+    //  $.get('api/assetTypeProperties/10', callback);
+      $.get('api/massTransitStops/metadata?position=' + position, callback);
     };
 
     this.getIncompleteLinks = function() {

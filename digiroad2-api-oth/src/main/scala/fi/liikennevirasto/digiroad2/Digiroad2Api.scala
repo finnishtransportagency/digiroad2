@@ -161,23 +161,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-  get("/massTransitStops/metadata") {
-    def constructPosition(position: String): Point ={
-      val PositionList = position.split(",").map(_.toDouble)
-      Point(PositionList(0), PositionList(1))
-    }
-    val properties = assetPropertyService.getAssetTypeMetadata(10l)
-    params.get("position").map(constructPosition) match {
-      case Some(position) =>
-        properties ++ Seq(Property(0,"liitetyt_pysakit", PropertyTypes.MultipleChoice, false, Seq(1,2,3).map{
-          id =>
-            PropertyValue(id.toString, Some("3001000 Cenas cenas"))
-        }))
-      case _ =>
-        properties
-    }
-  }
-
   delete("/massTransitStops/removal") {
     val user = userProvider.getCurrentUser()
     val assetId = (parsedBody \ "assetId").extractOpt[Int].get
@@ -226,29 +209,29 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   Returns empty result as Json message, not as page not found
   */
   get("/massTransitStopsSafe/:nationalId") {
-      def validateMunicipalityAuthorization(nationalId: Long)(municipalityCode: Int): Unit = {
-        if (!userProvider.getCurrentUser().isAuthorizedToRead(municipalityCode))
-          halt(Unauthorized("User not authorized for mass transit stop " + nationalId))
-      }
-      val nationalId = params("nationalId").toLong
-      val massTransitStopReturned =massTransitStopService.getMassTransitStopByNationalIdWithTRWarnings(nationalId, validateMunicipalityAuthorization(nationalId))
-      massTransitStopReturned._1 match {
-        case Some(stop) =>
-          Map ("id" -> stop.id,
-            "nationalId" -> stop.nationalId,
-            "stopTypes" -> stop.stopTypes,
-            "lat" -> stop.lat,
-            "lon" -> stop.lon,
-            "validityDirection" -> stop.validityDirection,
-            "bearing" -> stop.bearing,
-            "validityPeriod" -> stop.validityPeriod,
-            "floating" -> stop.floating,
-            "propertyData" -> stop.propertyData,
-            "success" -> true)
-        case None =>
-          Map("success" -> false)
-      }
+    def validateMunicipalityAuthorization(nationalId: Long)(municipalityCode: Int): Unit = {
+      if (!userProvider.getCurrentUser().isAuthorizedToRead(municipalityCode))
+        halt(Unauthorized("User not authorized for mass transit stop " + nationalId))
     }
+    val nationalId = params("nationalId").toLong
+    val massTransitStopReturned = massTransitStopService.getMassTransitStopByNationalIdWithTRWarnings(nationalId, validateMunicipalityAuthorization(nationalId))
+    massTransitStopReturned._1 match {
+      case Some(stop) =>
+        Map("id" -> stop.id,
+          "nationalId" -> stop.nationalId,
+          "stopTypes" -> stop.stopTypes,
+          "lat" -> stop.lat,
+          "lon" -> stop.lon,
+          "validityDirection" -> stop.validityDirection,
+          "bearing" -> stop.bearing,
+          "validityPeriod" -> stop.validityPeriod,
+          "floating" -> stop.floating,
+          "propertyData" -> stop.propertyData,
+          "success" -> true)
+      case None =>
+        Map("success" -> false)
+    }
+  }
 
   get("/massTransitStops/livi/:liviId") {
     def validateMunicipalityAuthorization(id: String)(municipalityCode: Int): Unit = {
@@ -281,6 +264,45 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       case false => Some(user.configuration.authorizedMunicipalities)
     }
     massTransitStopService.getFloatingAssetsWithReason(includedMunicipalities, Some(user.isOperator()))
+  }
+
+
+  get("/massTransitStops/metadata") {
+    def constructPosition(position: String): Point = {
+      val PositionList = position.split(",").map(_.toDouble)
+      Point(PositionList(0), PositionList(1))
+    }
+    val properties = assetPropertyService.getAssetTypeMetadata(10l)
+    params.get("position").map(constructPosition) match {
+      case Some(position) =>
+        Seq(
+          Property(200, "liitetyt_pysakit", PropertyTypes.MultipleChoice, true, Seq(1, 2, 3).map {
+            id =>
+              PropertyValue(id.toString, Some("3001000 Cenas cenas"), false)
+          })) ++ Seq(
+          Property(80, "nimi_suomeksi", PropertyTypes.Text, false, Seq(1).map {
+            id =>
+              PropertyValue("", Some(""))
+          })) ++ Seq(
+          Property(80, "nimi_ruotsiksi", PropertyTypes.Text, false, Seq(1).map {
+          id =>
+            PropertyValue("", Some(""))
+        })) ++ Seq(
+          Property(0, "vaikutussuunta", PropertyTypes.SingleChoice, false, Seq(1).map {
+            id =>
+              PropertyValue("2", Some("2"))
+          })) ++ Seq(
+          Property(0, "lisatty_jarjestelmaan", PropertyTypes.ReadOnlyText, false, Seq(1).map {
+            id =>
+              PropertyValue("", Some(""))
+          })) ++ Seq(
+          Property(0, "muokattu_viimeksi", PropertyTypes.ReadOnlyText, false, Seq(1).map {
+            id =>
+              PropertyValue("", Some(""))
+          }))
+      case _ =>
+//        properties
+    }
   }
 
   get("/enumeratedPropertyValues/:assetTypeId") {

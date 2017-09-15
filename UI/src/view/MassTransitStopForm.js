@@ -114,6 +114,7 @@
       poistaSelected = false;
       var streetViewHandler;
       var isTRMassTransitStop = false;
+      var isTerminalBusStop = false;
 
       var MStopDeletebutton = function(readOnly) {
 
@@ -171,6 +172,8 @@
 
           if (_.isNumber(selectedMassTransitStopModel.get('nationalId'))) {
             header.append('<span>Valtakunnallinen ID: ' + selectedMassTransitStopModel.get('nationalId') + '</span>');
+          } else if (isTerminalBusStop) {
+            header.append('<span class="terminal-header"> Uusi terminaalipys&auml;kki</span>');
           } else {
             header.append('<span>Uusi pys&auml;kki</span>');
           }
@@ -210,6 +213,20 @@
         if ($validFrom.length > 0 && $validTo.length > 0) {
           dateutil.addDependentDatePickers($validFrom, $validTo, $inventoryDate);
         }
+      };
+
+      var createTerminalWrapper = function(property) {
+        var wrapper = createFormRowDiv();
+        wrapper.append(createTerminalLabelElement(property));
+        return wrapper;
+      };
+
+      var createTerminalLabelElement = function(property) {
+        var label = $('<label />').addClass('control-terminal-label').text(property.localizedName);
+        if (property.required) {
+          label.addClass('required');
+        }
+        return label;
       };
 
       var createWrapper = function(property) {
@@ -393,6 +410,67 @@
         return element;
       };
 
+      var terminalMultiChoiceHandler = function (property) {
+        property.localizedName = "Liitetyt Pysakit";
+        //return createTerminalWrapper(property).append(createTerminalMultiChoiceElement(readOnly, property));
+        return createWrapper(property).append(createTerminalMultiChoiceElement(readOnly, property));
+      };
+
+      var createTerminalMultiChoiceElement = function (readOnly, property) {
+        var element;
+        var enumValues = property.values;
+
+        if (readOnly) {
+          element = $('<ul />');
+        } else {
+          element = $('<div />');
+        }
+
+        //element.addClass('choice-terminal-group');
+        element.addClass('choice-group');
+
+        element = _.reduce(enumValues, function (element, value) {
+          if (readOnly) {
+            if (value.checked) {
+              var item = $('<li />');
+              item.text(value.propertyDisplayValue);
+
+              element.append(item);
+            }
+          } else {
+            var container = $('<div class="checkbox" />');
+            var input = $('<input type="checkbox" />').change(function (evt) {
+              value.checked = evt.currentTarget.checked;
+              var values = _.chain(enumValues)
+                  .filter(function (value) {
+                    return value.checked;
+                  })
+                  .map(function (value) {
+                    return {
+                      propertyValue: parseInt(value.propertyValue, 10),
+                      propertyDisplayValue: value.propertyDisplayValue,
+                      checked: true
+                    };
+                  })
+                  .value();
+              if (_.isEmpty(values)) {
+                values.push({propertyValue: 99});
+              }
+              selectedMassTransitStopModel.setProperty(property.publicId, values, property.propertyType);
+            });
+
+            input.prop('checked', value.checked);
+
+            var label = $('<label />').text(value.propertyDisplayValue);
+            element.append(container.append(label.append(input)));
+          }
+
+          return element;
+        }, element);
+
+        return element;
+      };
+
       var multiChoiceHandler = function(property, choices){
         var choiceValidation = new InvalidCombinationError();
         return createWrapper(property).append(createMultiChoiceElement(readOnly, property, choices).append(choiceValidation.element));
@@ -504,6 +582,22 @@
         });
       };
 
+      var sortAndFilterTerminalProperties = function(properties) {
+        var propertyOrdering = [
+          'lisatty_jarjestelmaan',
+          'muokattu_viimeksi',
+          'nimi_suomeksi',
+          'nimi_ruotsiksi',
+          'vaikutussuunta',
+          'liitetyt_pysakit'];
+
+        return _.sortBy(properties, function(property) {
+          return _.indexOf(propertyOrdering, property.publicId);
+        }).filter(function(property){
+          return _.indexOf(propertyOrdering, property.publicId) >= 0;
+        });
+      };
+
       var floatingStatus = function(selectedAssetModel) {
         var text;
         switch (selectedMassTransitStopModel.getFloatingReason()){
@@ -531,7 +625,7 @@
 
       var getAssetForm = function() {
         var allProperties = selectedMassTransitStopModel.getProperties();
-        var properties = sortAndFilterProperties(allProperties);
+        var properties = isTerminalBusStop ? sortAndFilterTerminalProperties(allProperties) : sortAndFilterProperties(allProperties);
 
         setIsTRMassTransitStopValue(allProperties); // allProperties contains linkin_hallinnollinen_luokka property
         disableFormIfTRMassTransitStopHasEndDate(properties);
@@ -550,6 +644,8 @@
             return directionChoiceHandler(feature);
           } else if (propertyType === "single_choice") {
             return singleChoiceHandler(feature, enumeratedPropertyValues);
+          } else if (feature.propertyType === "multiple_choice" && isTerminalBusStop) {
+            return terminalMultiChoiceHandler(feature);
           } else if (feature.propertyType === "multiple_choice") {
             return multiChoiceHandler(feature, enumeratedPropertyValues);
           } else if (propertyType === "date" || feature.publicId == 'inventointipaiva') {
@@ -726,6 +822,10 @@
               'Olet siirtämässä pysäkin ELYn ylläpitoon! Huomioithan, että osa pysäkin varustetiedoista saattaa kadota tallennuksen yhteydessä.',
               {type: 'alert'});
         }
+      });
+
+      eventbus.on('terminalBusStop:selected', function(value) {
+        isTerminalBusStop = value;
       });
       backend.getEnumeratedPropertyValues();
     }

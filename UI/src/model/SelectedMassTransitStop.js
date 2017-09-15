@@ -38,7 +38,8 @@
         var transformValue = function(value) {
           return {
             propertyValue: value.propertyValue,
-            propertyDisplayValue: value.propertyDisplayValue
+            propertyDisplayValue: value.propertyDisplayValue,
+            checked: value.checked
           };
         };
 
@@ -87,7 +88,9 @@
       currentAsset = asset;
       currentAsset.payload = {};
       assetHasBeenModified = true;
-      backend.getAssetTypeProperties(function(properties) {
+      var position = asset.lon + ',' +asset.lat;
+      //backend.getAssetTypeProperties(function(properties) {
+      backend.getAssetTypeProperties(position, function(properties) {
         _.find(properties, function (property) {
           return property.publicId === 'vaikutussuunta';
         }).values.map(function (value) {
