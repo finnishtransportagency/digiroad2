@@ -417,6 +417,52 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  private def isRoadPartTransfer(projectLinks: Seq[ProjectLink], roadNumber: Long , newRoadPart: Long): Boolean = {
+    !projectLinks.exists(_.roadPartNumber == newRoadPart) && projectLinks.exists(_.roadNumber == roadNumber)
+  }
+
+  private def createFormOfReservedLinksToSavedRoadParts(project: RoadAddressProject): (Seq[ProjectFormLine], Option[ProjectLink]) = {
+    val createdAddresses = ProjectDAO.getProjectLinks(project.id)
+    val groupedAddresses = createdAddresses.groupBy { address =>
+      (address.roadNumber, address.roadPartNumber)
+    }.toSeq.sortBy(_._1._2)(Ordering[Long])
+    val reservedRoadPartsToUI = groupedAddresses.map(addressGroup => {
+      val lastAddress = addressGroup._2.last
+      val lastAddressM = lastAddress.endAddrMValue
+      val roadLink = if(lastAddress.linkGeomSource == LinkGeomSource.SuravageLinkInterface) {
+        roadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(Set(lastAddress.linkId), false)
+      } else {
+        roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(Set(addressGroup._2.last.linkId), false, frozenTimeVVHAPIServiceEnabled)
+      }
+      val addressFormLine = ProjectFormLine(lastAddress.linkId, project.id, addressGroup._1._1,
+        addressGroup._1._2, lastAddressM, MunicipalityDAO.getMunicipalityRoadMaintainers.getOrElse(roadLink.head.municipalityCode, -1),
+        lastAddress.discontinuity.description)
+      //TODO:case class RoadAddressProjectFormLine(projectId: Long, roadNumber: Long, roadPartNumber: Long, RoadLength: Long, ely : Long, discontinuity: String)
+      addressFormLine
+    })
+    val addresses = createdAddresses.headOption
+    (reservedRoadPartsToUI, addresses)
+  }
+
+  private def createNewRoadLinkProject(roadAddressProject: RoadAddressProject) = {
+    withDynTransaction {
+      val project = createProject(roadAddressProject)
+      if (project.reservedParts.isEmpty) //check if new project has links
+      {
+        val (forminfo, createdlink) = createFormOfReservedLinksToSavedRoadParts(project)
+        (project, None, forminfo, "ok")
+      } else {
+        //project with links success field contains errors if any, else "ok"
+        val errorMessage = addLinksToProject(project)
+
+        val (forminfo, createdlink) = createFormOfReservedLinksToSavedRoadParts(project)
+
+        (project, createdlink, forminfo, errorMessage.getOrElse("ok"))
+      }
+    }
+  }
+
+  def saveRoadLinkProject(roadAddressProject: RoadAddressProject): (RoadAddressProject, Option[ProjectLink], Seq[ProjectFormLine], String) = {
   /**
     * Save road link project, reserve new road parts, free previously reserved road parts that were removed
     * @param roadAddressProject Updated road address project case class
@@ -665,15 +711,42 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * Update project links to given status and recalculate delta and change table
     * @param projectId Project's id
     * @param linkIds Set of link ids that are set to this status
-    * @param newStatus New status for given link ids
+    * @param linkStatus New status for given link ids
     * @param userName Username of the user that does this change
     * @return true, if the delta calculation is successful and change table has been updated.
     */
-  def updateProjectLinkStatus(projectId: Long, linkIds: Set[Long], newStatus: LinkStatus, userName: String, newRoadNumber: Long = 0, newRoadPart: Long = 0) = {
+  def updateProjectLinkStatus(projectId: Long, linkIds: Set[Long], linkStatus: LinkStatus, userName: String, newRoadNumber: Long = 0, newRoadPart: Long = 0)= {
     try {
       withDynTransaction{
         val projectLinks = withGeometry(ProjectDAO.getProjectLinks(projectId))
         val (updatedProjectLinks, unchangedProjectLinks) = projectLinks.partition(pl => linkIds.contains(pl.linkId))
+        linkStatus match {
+          case LinkStatus.Terminated => {
+            //Fetching road addresses in order to obtain the original addressMValues, since we may not have those values on project_link table, after previous recalculations
+            val roadAddresses = RoadAddressDAO.fetchByLinkId(updatedProjectLinks.map(pl => pl.linkId).toSet)
+            val updatedPL = updatedProjectLinks.map(pl => {
+              val roadAddress = roadAddresses.find(_.linkId == pl.linkId)
+              pl.copy(startAddrMValue = roadAddress.get.startAddrMValue, endAddrMValue = roadAddress.get.endAddrMValue)
+            })
+            ProjectDAO.updateProjectLinksToDB(updatedPL.map(_.copy(status = linkStatus, calibrationPoints = (None, None))), userName)
+          }
+          case LinkStatus.Numbering => {
+            getProjectWithCheckReservationChecks(projectId, newRoadNumber, newRoadPart)
+            ProjectDAO.updateProjectLinkNumbering(projectId, updatedProjectLinks.head.roadNumber, updatedProjectLinks.head.roadPartNumber, linkStatus, newRoadNumber, newRoadPart, userName)
+          }
+          case LinkStatus.Transfer => {
+            if (isRoadPartTransfer(updatedProjectLinks, newRoadNumber, newRoadPart)) {
+              val updated = updatedProjectLinks.map(updl => {
+                updl.copy(roadPartNumber = newRoadPart, status = linkStatus, calibrationPoints = (None, None))
+              })
+              ProjectDAO.updateProjectLinksToDB(updated, userName)
+            } else {
+              ProjectDAO.updateProjectLinkStatus(updatedProjectLinks.map(_.id).toSet, linkStatus, userName)
+            }
+          }
+          case _ => ProjectDAO.updateProjectLinkStatus(updatedProjectLinks.map(_.id).toSet, linkStatus, userName)
+        }
+        recalculateProjectLinks(projectId, userName)
 
         if (newStatus == LinkStatus.Terminated){
           ProjectDAO.updateProjectLinksToDB(updatedProjectLinks.map(_.copy(status=newStatus, calibrationPoints = (None, None),
@@ -687,9 +760,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         } else {
           ProjectDAO.updateProjectLinkStatus(updatedProjectLinks.map(_.id).toSet, newStatus, userName)
         }
-        recalculateProjectLinks(projectId, userName)
+        case _ => ProjectDAO.updateProjectLinkStatus(updatedProjectLinks.map(_.id).toSet, linkStatus, userName)
       }
-
+      recalculateProjectLinks(projectId, userName)
+      }
     } catch {
       case ex: RoadAddressException =>
         logger.info("Delta calculation not possible: " + ex.getMessage)
