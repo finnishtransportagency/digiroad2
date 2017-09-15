@@ -923,9 +923,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       roadAddressService.expireRoadAddresses(roadAddressIDsToExpire.map( x => x.id ).toSet)
       //Create endDate rows for old data that is "valid" (row should be ignored after end_date)
       RoadAddressDAO.create(roadAddressIDsToExpire.map(x=> x.copy(endDate =projectStartDate,id =NewRoadAddress)),Some(project.head.createdBy))
-      //removing terminations and placing startdate to roadlinks we insert
+      //removing terminations and adding start date
+      val roadAddressesToBeImported=projectLinks.filterNot(x=>x.status==LinkStatus.Terminated).map(x=>x.copy(endDate = None, startDate =projectStartDate))
       //Create new rows to RoadAddress table defining when new address is used
-      importProjectLinksToRoadAddressTable(projectLinks.filterNot(x=>x.status==LinkStatus.Terminated).map(x=>x.copy(endDate = None, startDate =projectStartDate)),roadAddressIDsToExpire,Some(project.head.createdBy))
+      importProjectLinksToRoadAddressTable(roadAddressesToBeImported,roadAddressIDsToExpire,Some(project.head.createdBy))
       //Remove the ProjectLinks from PROJECT_LINK table?
     } else {
       throw new RuntimeException(s"Project state not at Saved2TR: $newState")
