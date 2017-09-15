@@ -39,7 +39,6 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
       .getOrElse(massTransitStop.created.modifier
         .getOrElse(""))
   }
-
   private def toGeoJSON(input: Iterable[PersistedMassTransitStop]): Map[String, Any] = {
     def extractPropertyValue(key: String, properties: Seq[Property], transformation: (Seq[String] => Any)): (String, Any) = {
       val values: Seq[String] = properties.filter { property => property.publicId == key }.flatMap { property =>
@@ -110,8 +109,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
             extractPropertyValue("pysakin_omistaja", massTransitStop.propertyData, propertyValuesToString),
             extractPropertyValue("palauteosoite", massTransitStop.propertyData, propertyValuesToString),
             extractPropertyValue("lisatiedot", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("pyorateline", massTransitStop.propertyData, firstPropertyValueToInt))
-       )
+            extractPropertyValue("pyorateline", massTransitStop.propertyData, firstPropertyValueToInt),
+            extractPropertyValue("liitetty_terminaaliin", massTransitStop.propertyData, propertyValuesToString)))
       })
   }
 
