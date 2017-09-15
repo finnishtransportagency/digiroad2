@@ -124,32 +124,35 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
 
   val assetLock = "Used to prevent deadlocks"
 
-  test("update inventory date") {
+  test("create and update inventory date propertie") {
+
     val props = Seq(SimpleProperty("foo", Seq()))
     val roadLink = VVHRoadlink(12345l, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
 
     val after = RollbackMassTransitStopService.updatedProperties(props, roadLink)
-    after should have size (2)
+    after should have size (4)
+    after.filter(_.publicId == MassTransitStopOperations.InventoryDateId ) should have size (1)
     val after2 = RollbackMassTransitStopService.updatedProperties(after, roadLink)
-    after2 should have size (2)
+    after2 should have size (4)
   }
 
   test("update empty inventory date") {
     val roadLink = VVHRoadlink(12345l, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
-    val props = Seq(SimpleProperty("inventointipaiva", Seq()))
+    val props = Seq(SimpleProperty(MassTransitStopOperations.InventoryDateId, Seq()))
     val after = RollbackMassTransitStopService.updatedProperties(props, roadLink)
-    after should have size (1)
-    after.head.values should have size(1)
-    after.head.values.head.propertyValue should be ( DateTimeFormat.forPattern("yyyy-MM-dd").print(DateTime.now))
+    after should have size (3)
+    after.filter(_.publicId == MassTransitStopOperations.InventoryDateId ) should have size(1)
+    after.filter(_.publicId == MassTransitStopOperations.InventoryDateId ).head.values.head.propertyValue should be ( DateTimeFormat.forPattern("yyyy-MM-dd").print(DateTime.now))
   }
 
   test("do not update existing inventory date") {
     val roadLink = VVHRoadlink(12345l, 91, List(Point(0.0,0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)
-    val props = Seq(SimpleProperty("inventointipaiva", Seq(PropertyValue("2015-12-30"))))
+    val props = Seq(SimpleProperty(MassTransitStopOperations.InventoryDateId, Seq(PropertyValue("2015-12-30"))))
     val after = RollbackMassTransitStopService.updatedProperties(props, roadLink)
-    after should have size (1)
-    after.head.values should have size(1)
-    after.head.values.head.propertyValue should be ( "2015-12-30")
+    after should have size (3)
+    after.filter(_.publicId == MassTransitStopOperations.InventoryDateId ) should have size(1)
+    after.filter(_.publicId == MassTransitStopOperations.InventoryDateId ).head.values should have size(1)
+    after.filter(_.publicId == MassTransitStopOperations.InventoryDateId ).head.values.head.propertyValue should be ( "2015-12-30")
   }
 
   test("Calculate mass transit stop validity periods") {
@@ -1295,46 +1298,53 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       asset.get.lat should be(0.0)
     }
   }
-  test("Should add roadNames if not filled") {
 
-    runWithRollback {
-      val eventbus = MockitoSugar.mock[DigiroadEventBus]
-      val service = new TestMassTransitStopService(eventbus, mockRoadLinkService)
-      val values = List(PropertyValue("1"))
-      val properties = List(
-        SimpleProperty("pysakin_tyyppi", List(PropertyValue("1"))),
-        SimpleProperty("tietojen_yllapitaja", List(PropertyValue("1"))),
-        SimpleProperty("yllapitajan_koodi", List(PropertyValue("livi"))),
-        SimpleProperty("osoite_ruotsiksi", List(PropertyValue("user_road_name_se"))),
-        SimpleProperty("osoite_suomeksi", List.empty[PropertyValue]))
-
+    test("create and update roadNames properties") {
       val attributes: Map[String, Any] =
         Map("ROADNAME_SE" -> "roadname_se",
           "ROADNAME_FI" -> "roadname_fi")
 
-      val vvhRoadLink = VVHRoadlink(12345l, 91, List(Point(0.0, 0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, attributes = attributes)
-      when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(12345l, false)).thenReturn(Some(toRoadLink(vvhRoadLink)))
+      val props = Seq(SimpleProperty(MassTransitStopOperations.InventoryDateId, Seq(PropertyValue("2015-12-30"))))
+      val roadLink = VVHRoadlink(12345l, 91, List(Point(0.0, 0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, attributes = attributes)
 
-      val assetId = service.create(NewMassTransitStop(60.0, 0.0, 12345l, 100, properties), "test", vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass), NormalLinkInterface)
-      val asset = service.fetchPointAssets((s: String) => s"""$s where a.id = $assetId""").headOption
-
-      asset.get.propertyData.filter(_.publicId == "osoite_suomeksi").flatMap(_.values.map(_.propertyValue)).headOption should be (Some("roadname_fi"))
-      asset.get.propertyData.filter(_.publicId == "osoite_ruotsiksi").flatMap(_.values.map(_.propertyValue)).head should be ("user_road_name_se")
-
-      val propertyChanges =  List(SimpleProperty("osoite_suomeksi", List(PropertyValue("new_road_name_fi"))))
-      val newProperties = properties.filterNot(x => x.publicId == "osoite_suomeksi" || x.publicId == "osoite_ruotsiksi" ) ++ propertyChanges
-      val updatedAssetId = service.updateExistingById(assetId, None, newProperties.toSet, "test",  _ => Unit)
-
-      updatedAssetId.propertyData.filter(_.publicId == "osoite_suomeksi").flatMap(_.values.map(_.propertyValue)).head should be ("new_road_name_fi")
-      updatedAssetId.propertyData.filter(_.publicId == "osoite_ruotsiksi").flatMap(_.values.map(_.propertyValue)).head should be ("user_road_name_se")
-
-      val propertyChange =  List(SimpleProperty("osoite_suomeksi", List.empty[PropertyValue]))
-      val newProperties1 = properties.filterNot(x => x.publicId == "osoite_suomeksi" || x.publicId == "osoite_ruotsiksi" ) ++ propertyChange
-      val updatedAssetId1 = RollbackMassTransitStopService.updateExistingById(assetId, None, newProperties1.toSet, "test",  _ => Unit)
-
-      updatedAssetId1.propertyData.filter(_.publicId == "osoite_suomeksi").flatMap(_.values.map(_.propertyValue)).head should be ("roadname_fi")
-      updatedAssetId1.propertyData.filter(_.publicId == "osoite_ruotsiksi").flatMap(_.values.map(_.propertyValue)).head should be ("user_road_name_se")
-
+      val after = RollbackMassTransitStopService.updatedProperties(props, roadLink)
+      after should have size (3)
+      after.filter(_.publicId == MassTransitStopOperations.RoadName_FI) should have size (1)
+      after.filter(_.publicId == MassTransitStopOperations.RoadName_SE) should have size (1)
+      after.filter(_.publicId == MassTransitStopOperations.RoadName_FI).head.values.head.propertyValue should be ("roadname_fi")
+      after.filter(_.publicId == MassTransitStopOperations.RoadName_SE).head.values.head.propertyValue should be ("roadname_se")
     }
+
+  test("Update roadNames properties when exist and not filled") {
+    val attributes: Map[String, Any] =
+      Map("ROADNAME_SE" -> "roadname_se",
+        "ROADNAME_FI" -> "roadname_fi")
+
+    val props = Seq(SimpleProperty(MassTransitStopOperations.RoadName_SE, Seq.empty[PropertyValue]), SimpleProperty(MassTransitStopOperations.RoadName_FI, Seq.empty[PropertyValue]))
+    val roadLink = VVHRoadlink(12345l, 91, List(Point(0.0, 0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, attributes = attributes)
+
+    val after = RollbackMassTransitStopService.updatedProperties(props, roadLink)
+    after should have size (3)
+    after.filter(_.publicId == MassTransitStopOperations.RoadName_FI) should have size (1)
+    after.filter(_.publicId == MassTransitStopOperations.RoadName_SE) should have size (1)
+    after.filter(_.publicId == MassTransitStopOperations.RoadName_FI).head.values.head.propertyValue should be ("roadname_fi")
+    after.filter(_.publicId == MassTransitStopOperations.RoadName_SE).head.values.head.propertyValue should be ("roadname_se")
+  }
+
+  test("Not update when roadNames properties are filled") {
+    val attributes: Map[String, Any] =
+      Map("ROADNAME_SE" -> "roadname_se",
+        "ROADNAME_FI" -> "roadname_fi")
+
+    val props = Seq(SimpleProperty(MassTransitStopOperations.RoadName_SE, Seq(PropertyValue("user_road_name_se"))),
+                    SimpleProperty(MassTransitStopOperations.RoadName_FI, Seq(PropertyValue("user_road_name_fi"))))
+    val roadLink = VVHRoadlink(12345l, 91, List(Point(0.0, 0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, attributes = attributes)
+
+    val after = RollbackMassTransitStopService.updatedProperties(props, roadLink)
+    after should have size (3)
+    after.filter(_.publicId == MassTransitStopOperations.RoadName_FI) should have size (1)
+    after.filter(_.publicId == MassTransitStopOperations.RoadName_SE) should have size (1)
+    after.filter(_.publicId == MassTransitStopOperations.RoadName_FI).head.values.head.propertyValue should be ("user_road_name_fi")
+    after.filter(_.publicId == MassTransitStopOperations.RoadName_SE).head.values.head.propertyValue should be ("user_road_name_se")
   }
 }

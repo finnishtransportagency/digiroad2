@@ -614,19 +614,29 @@ trait MassTransitStopService extends PointAssetOperations {
     }
   }
 
-  def updatedProperties(properties: Seq[SimpleProperty], roadLink: RoadLinkLike ): Seq[SimpleProperty] = {
+  def updatedProperties(properties: Seq[SimpleProperty], roadLink: RoadLinkLike): Seq[SimpleProperty] = {
+    val arrayProperties = Seq(MassTransitStopOperations.InventoryDateId, MassTransitStopOperations.RoadName_FI, MassTransitStopOperations.RoadName_SE )
+      val defaultproperties =  arrayProperties.flatMap{
+        key =>
+          if(!properties.exists(_.publicId == key))
+            Some(SimpleProperty(publicId = key,  values = Seq.empty[PropertyValue]))
+          else
+            None
+      } ++ properties
 
-    properties.map {
-      parameter =>
-        if (parameter.values.isEmpty || parameter.values.exists(_.propertyValue == "")) {
-          parameter.publicId match {
-            case MassTransitStopOperations.RoadName_FI => parameter.copy(values = Seq(PropertyValue(roadLink.attributes.getOrElse("ROADNAME_FI", "").toString)))
-            case MassTransitStopOperations.RoadName_SE => parameter.copy(values = Seq(PropertyValue(roadLink.attributes.getOrElse("ROADNAME_SE", "").toString)))
-            case MassTransitStopOperations.InventoryDateId => parameter.copy(values = Seq(PropertyValue(toIso8601.print(DateTime.now()))))
-            case _ => parameter
-          }} else
-          parameter
-    }
+        defaultproperties.map { parameter =>
+            if (parameter.values.isEmpty || parameter.values.exists(_.propertyValue == "")) {
+              parameter.publicId match {
+                case MassTransitStopOperations.RoadName_FI => parameter.copy(values = Seq(PropertyValue(roadLink.attributes.getOrElse("ROADNAME_FI", "").toString)))
+                case MassTransitStopOperations.RoadName_SE => parameter.copy(values = Seq(PropertyValue(roadLink.attributes.getOrElse("ROADNAME_SE", "").toString)))
+                case MassTransitStopOperations.InventoryDateId => parameter.copy(values = Seq(PropertyValue(toIso8601.print(DateTime.now()))))
+                case _ => parameter
+              }
+            } else
+              parameter
+
+        }
+
   }
 
   private def create(asset: NewMassTransitStop, username: String, point: Point, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass], linkSource: LinkGeomSource): MassTransitStopWithProperties = {
