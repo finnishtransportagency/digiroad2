@@ -606,6 +606,62 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
 
   }
 
+  test("process roadChange data and import the roadLink") {
+    //First Create Mock Project, RoadLinks and
+
+    runWithRollback {
+      var projectId = 0L
+      val roadNumber = 1943845
+      val roadPartNumber = 1
+      val linkId = 12345L
+      //Creation of Test road
+      val id = RoadAddressDAO.getNextRoadAddressId
+      val ra = Seq(RoadAddress(id, roadNumber, roadPartNumber, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 0, linkId, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
+        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface))
+      RoadAddressDAO.create(ra)
+      val roadsBeforeChanges = RoadAddressDAO.fetchByLinkId(Set(linkId)).head
+
+      when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(Set(linkId))).thenReturn(Seq(RoadLink(linkId, ra.head.geometry, 9.8, State, 1, TrafficDirection.BothDirections,
+        Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(167)))))
+      //Creation of test project with test links
+      val project = RoadAddressProject(projectId, ProjectState.Incomplete, "testiprojekti", "Test", DateTime.now(), "Test",
+        DateTime.parse("2020-01-01"), DateTime.now(), "info",
+        List(ReservedRoadPart(0: Long, roadNumber: Long, roadPartNumber: Long, 5: Double, Discontinuity.apply("jatkuva"),
+          8: Long, None: Option[DateTime], None: Option[DateTime])), None)
+      val (proj, projectLink, _, errmsg) = projectService.createRoadLinkProject(project)
+      projectLink.isEmpty should be(false)
+      errmsg should be("ok")
+      projectId = proj.id
+      val projectLinkId = projectLink.get.id
+      val projectLinkProjectId = projectLink.get.projectId
+      val terminatedValue = LinkStatus.UnChanged.value
+      //Changing the status of the test link
+      sqlu"""Update Project_Link Set Status = $terminatedValue
+            Where ID = $projectLinkId And PROJECT_ID = $projectLinkProjectId""".execute
+
+      //Creation of test road_address_changes
+      sqlu"""insert into road_address_changes
+             (project_id,change_type,new_road_number,new_road_part_number,new_track_code,new_start_addr_m,new_end_addr_m,new_discontinuity,new_road_type,new_ely,
+              old_road_number,old_road_part_number,old_track_code,old_start_addr_m,old_end_addr_m)
+             Values ($projectId,5,$roadNumber,$roadPartNumber,1,0,10,1,1,8,$roadNumber,$roadPartNumber,1,0,10)""".execute
+
+      projectService.updateRoadAddressWithProject(ProjectState.Saved2TR, projectId)
+
+      val roadsAfterChanges=RoadAddressDAO.fetchByLinkId(Set(linkId))
+      roadsAfterChanges.size should be (3)
+      val roadsAfterPublishing = roadsAfterChanges.filter(x=>x.startDate.nonEmpty && x.endDate.isEmpty).head
+      val endedAddress = roadsAfterChanges.filter(x=>x.endDate.nonEmpty)
+
+      roadsBeforeChanges.linkId should be(roadsAfterPublishing.linkId)
+      roadsBeforeChanges.roadNumber should be(roadsAfterPublishing.roadNumber)
+      roadsBeforeChanges.roadPartNumber should be(roadsAfterPublishing.roadPartNumber)
+      endedAddress.head.endDate.nonEmpty should be(true)
+      endedAddress.size should be (1)
+      endedAddress.head.endDate.get.toString("yyyy-MM-dd") should be("2020-01-01")
+      roadsAfterPublishing.startDate.get.toString("yyyy-MM-dd") should be("2020-01-01")
+    }
+  }
+
   test("process roadChange data and expire the roadLink") {
     //First Create Mock Project, RoadLinks and
 
@@ -635,7 +691,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       val projectLinkId = projectLink.get.id
       val projectLinkProjectId = projectLink.get.projectId
       val terminatedValue = LinkStatus.Terminated.value
-      //Changing the status of the test link to terminated
+      //Changing the status of the test link
       sqlu"""Update Project_Link Set Status = $terminatedValue
             Where ID = $projectLinkId And PROJECT_ID = $projectLinkProjectId""".execute
 
@@ -648,19 +704,15 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       projectService.updateRoadAddressWithProject(ProjectState.Saved2TR, projectId)
 
       val roadsAfterChanges=RoadAddressDAO.fetchByLinkId(Set(linkId))
-      roadsAfterChanges.size should be (3)
-      val roadsAfterPublishing = roadsAfterChanges.filter(x=>x.startDate.nonEmpty && x.endDate.isEmpty).head
+      roadsAfterChanges.size should be (1)
       val endedAddress = roadsAfterChanges.filter(x=>x.endDate.nonEmpty)
-
-      roadsBeforeChanges.linkId should be(roadsAfterPublishing.linkId)
-      roadsBeforeChanges.roadNumber should be(roadsAfterPublishing.roadNumber)
-      roadsBeforeChanges.roadPartNumber should be(roadsAfterPublishing.roadPartNumber)
       endedAddress.head.endDate.nonEmpty should be(true)
       endedAddress.size should be (1)
       endedAddress.head.endDate.get.toString("yyyy-MM-dd") should be("2020-01-01")
-      roadsAfterPublishing.startDate.get.toString("yyyy-MM-dd") should be("2020-01-01")
     }
   }
+
+
 
   test("verify existence of roadAddressNumbersAndSEParts") {
     val roadNumber = 1943845
