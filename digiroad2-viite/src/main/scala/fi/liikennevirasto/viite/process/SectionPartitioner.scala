@@ -7,7 +7,7 @@ object SectionPartitioner extends GraphPartitioner {
 
   def partition[T <: ProjectLink](links: Seq[T]): Seq[Seq[T]] = {
     val linkGroups = links.groupBy { link => (
-      link.roadNumber, link.roadPartNumber, link.track
+      link.roadNumber, link.roadPartNumber, link.track, link.status
     )
     }
     val clusters = for (linkGroup <- linkGroups.values.toSeq;

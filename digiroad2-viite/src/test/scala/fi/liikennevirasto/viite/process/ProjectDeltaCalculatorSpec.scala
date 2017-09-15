@@ -38,10 +38,10 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
     val transferTarget2 = (12 to 15).map(x => createTransferProjectLink(x*10, 10))
     val mapping =
       ProjectDeltaCalculator.partition(transferSource1 ++ transferSource2, transferTarget1 ++ transferTarget2)
-    mapping.foreach{ case (source, target) =>
-      source.startMAddr should be (target.startMAddr - project.id)
-      source.endMAddr should be (target.endMAddr - project.id)
-      source.track should be (target.track)
+    mapping.foreach{ elem =>
+      elem._1.startMAddr should be (elem._2.startMAddr - project.id)
+      elem._1.endMAddr should be (elem._2.endMAddr - project.id)
+      elem._1.track should be (elem._2.track)
     }
   }
 }

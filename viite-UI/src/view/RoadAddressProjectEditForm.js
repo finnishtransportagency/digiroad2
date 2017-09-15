@@ -400,7 +400,6 @@
         }
         else {
           eventbus.trigger('roadAddressProject:projectLinkSaved', data.id, data.publishable);
-          applicationModel.removeSpinner();
         }
       });
 
@@ -528,7 +527,7 @@
           projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
         }
         else if(this.value == ACTION_TRANSFER) {
-          projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
+          projectCollection.setDirty(_.filter(projectCollection.getDirty(), function(dirty) {return dirty.status !== STATUS_UNCHANGED;}).concat(_.map(selectedProjectLink, function (link) {
               return {'linkId': link.linkId, 'status': STATUS_TRANSFER};
           })));
           projectCollection.setTmpDirty(projectCollection.getDirty());
