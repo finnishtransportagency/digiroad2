@@ -15,7 +15,7 @@ CREATE TABLE PROJECT_RESERVED_ROAD_PART
 	  REFERENCES "PROJECT" ("ID") ENABLE
    );
 
-DELETE FROM PROJECT_LINK WHERE p.STATE NOT IN (1,2,4,99)
+DELETE FROM PROJECT_LINK WHERE PROJECT_ID IN (SELECT ID FROM PROJECT WHERE STATE NOT IN (1,2,4,99));
 
 INSERT INTO PROJECT_RESERVED_ROAD_PART(id, road_number, road_part_number, project_id, created_by)
   (SELECT viite_general_seq.nextval, road_number, road_part_number, project_id, created_by
