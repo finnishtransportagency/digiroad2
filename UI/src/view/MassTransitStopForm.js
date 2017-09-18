@@ -249,8 +249,8 @@
 
       var readOnlyHandler = function(property){
         var outer = createFormRowDiv();
-        var propertyVal = _.isEmpty(property.values) === false ? property.values[0].propertyDisplayValue : '';
-        if (property.propertyType === 'read_only_text' && property.publicId != 'yllapitajan_koodi') {
+        var propertyVal = !_.isEmpty(property.values) ? property.values[0].propertyDisplayValue : '';
+        if (property.propertyType === 'read_only_text' && property.publicId != 'yllapitajan_koodi' && property.publicId != 'liitetty terminaaliin') {
           outer.append($('<p />').addClass('form-control-static asset-log-info').text(property.localizedName + ': ' + propertyVal));
         } else {
           outer.append(createLabelElement(property));
@@ -551,6 +551,7 @@
           'yllapitajan_tunnus',
           'yllapitajan_koodi',
           'matkustajatunnus',
+          'liitetty terminaaliin',
           'maastokoordinaatti_x',
           'maastokoordinaatti_y',
           'maastokoordinaatti_z',

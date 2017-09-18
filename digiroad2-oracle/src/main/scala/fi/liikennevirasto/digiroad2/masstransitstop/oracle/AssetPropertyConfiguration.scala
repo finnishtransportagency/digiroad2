@@ -15,8 +15,9 @@ object AssetPropertyConfiguration {
   val CreatedId = "lisatty_jarjestelmaan"
   val ModifiedId = "muokattu_viimeksi"
   val TerminalChildrenId = "liitetyt_pysakit"
+  val ConnectedToTerminal = "liitetty terminaaliin"
   val assetPropertyNamesByLanguage: Map[String, Map[String, String]] = Map(
-    LangFi -> Map(ValidityDirectionId -> "Vaikutussuunta", ValidFromId -> "Ensimmäinen voimassaolopäivä", ValidToId -> "Viimeinen voimassaolopäivä", CreatedId -> "Lisätty järjestelmään", ModifiedId -> "Muokattu viimeksi"),
+    LangFi -> Map(ValidityDirectionId -> "Vaikutussuunta", ValidFromId -> "Ensimmäinen voimassaolopäivä", ValidToId -> "Viimeinen voimassaolopäivä", CreatedId -> "Lisätty järjestelmään", ModifiedId -> "Muokattu viimeksi", ConnectedToTerminal -> "Liitetty Terminaaliin"),
     LangSv -> Map()
   )
 
