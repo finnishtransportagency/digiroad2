@@ -225,7 +225,7 @@ class ProjectLinkDaoSpec  extends FunSuite with Matchers {
     }
   }
 
-  test("roadpart reserved by project test") {
+  test("roadpart reserved and released by project test") {
     //Creation of Test road
     runWithRollback {
       val id = Sequences.nextViitePrimaryKeySeqValue
@@ -236,6 +236,12 @@ class ProjectLinkDaoSpec  extends FunSuite with Matchers {
       ProjectDAO.create(addresses)
       val project = ProjectDAO.roadPartReservedByProject(5, 203)
       project should be(Some("TestProject"))
+      val reserved = ProjectDAO.fetchReservedRoadPart(5, 203)
+      reserved.nonEmpty should be (true)
+      ProjectDAO.removeReservedRoadPart(id, reserved.get)
+      val projectAfter = ProjectDAO.roadPartReservedByProject(5, 203)
+      projectAfter should be(None)
+      ProjectDAO.fetchReservedRoadPart(5, 203).isEmpty should be (true)
     }
   }
   test("Change road address direction") {

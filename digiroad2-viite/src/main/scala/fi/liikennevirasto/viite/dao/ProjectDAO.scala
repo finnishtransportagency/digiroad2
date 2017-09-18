@@ -267,7 +267,7 @@ object ProjectDAO {
            AND ROAD_PART_NUMBER = ${reservedRoadPart.roadPartNumber}
            """.execute
     sqlu"""
-         DELETE FROM RESERVED_ROAD_PART WHERE id = ${reservedRoadPart.id}
+         DELETE FROM PROJECT_RESERVED_ROAD_PART WHERE id = ${reservedRoadPart.id}
          """.execute
   }
 
