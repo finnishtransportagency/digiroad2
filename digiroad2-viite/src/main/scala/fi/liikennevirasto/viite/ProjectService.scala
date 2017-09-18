@@ -184,9 +184,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       }
       if (GeometryUtils.areAdjacent(newLink.geometry.head, endP) ||
         GeometryUtils.areAdjacent(newLink.geometry.last, startP))
-        SideCode.TowardsDigitizing
-      else
-        SideCode.AgainstDigitizing
+        if (existingLink.sideCode.equals(AgainstDigitizing))
+          TowardsDigitizing
+        else
+          AgainstDigitizing
+      else {
+        existingLink.sideCode
+      }
     }
 
     try {
@@ -197,7 +201,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           ProjectDAO.removeProjectLinksByProjectAndRoadNumber(roadAddressProjectID, newRoadNumber, newRoadPartNumber)
         }
         val randomSideCode =
-          linksInProject.map(l => l -> projectAddressLinks.filterNot(link => link.status == LinkStatus.Terminated).find(n => GeometryUtils.areAdjacent(l.geometry, n.geometry))).toMap.find { case (l, n) => n.nonEmpty }.map {
+          linksInProject.filterNot(link => link.status == LinkStatus.Terminated).map(l => l -> projectAddressLinks.find(n => GeometryUtils.areAdjacent(l.geometry, n.geometry))).toMap.find { case (l, n) => n.nonEmpty }.map {
             case (l, Some(n)) =>
               matchSideCodes(n, l)
             case _ => SideCode.TowardsDigitizing

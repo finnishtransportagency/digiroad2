@@ -194,8 +194,8 @@ object ProjectSectionCalculator {
             })
       }
     }
-    val groupedProjectLinks = newProjectLinks.groupBy(record => (record.roadNumber, record.roadPartNumber))
-    val groupedOldLinks = oldProjectLinks.groupBy(record => (record.roadNumber, record.roadPartNumber))
+    val groupedProjectLinks = newProjectLinks.sortBy(_.startAddrMValue).groupBy(record => (record.roadNumber, record.roadPartNumber))
+    val groupedOldLinks = oldProjectLinks.sortBy(_.startAddrMValue).groupBy(record => (record.roadNumber, record.roadPartNumber))
     val group = (groupedProjectLinks.keySet ++ groupedOldLinks.keySet).map(k =>
       k -> (groupedProjectLinks.getOrElse(k, Seq()), groupedOldLinks.getOrElse(k, Seq())))
     group.flatMap { case (part, (projectLinks, oldLinks)) => {
