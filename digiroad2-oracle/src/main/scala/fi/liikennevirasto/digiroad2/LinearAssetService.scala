@@ -141,7 +141,6 @@ trait LinearAssetOperations {
 
   protected def getByRoadLinks(typeId: Int, roadLinksExist: Seq[RoadLink], changes: Seq[ChangeInfo]): Seq[PieceWiseLinearAsset] = {
 
-    // Filter high functional classes from maintenance roads
     val roadLinks: Seq[RoadLink] = roadLinksExist
     val linkIds = roadLinks.map(_.linkId)
     val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(changes, roadLinks)

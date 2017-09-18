@@ -20,7 +20,7 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   val maintenanceRoadAssetTypeId: Int = 290
 
   /*
- * Creates new Maintenance asset and updates existing. Used by the Digiroad2Context.LinearAssetSaveProjected actor.
+ * Creates new Maintenance asset and updates existing. Used by the Digiroad2Context.MaintenanceRoadSaveProjected actor.
  */
   override def persistProjectedLinearAssets(newMaintenanceAssets: Seq[PersistedLinearAsset]): Unit = {
     if (newMaintenanceAssets.nonEmpty)
@@ -28,7 +28,7 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
 
     val (toInsert, toUpdate) = newMaintenanceAssets.partition(_.id == 0L)
     withDynTransaction {
-        val persisted = Map.empty[Long, Seq[PersistedLinearAsset]]
+        val persisted = maintenanceDAO.fetchMaintenancesByIds(maintenanceRoadAssetTypeId, toUpdate.map(_.id).toSet).groupBy(_.id)
         updateProjected(toUpdate, persisted)
       if (newMaintenanceAssets.nonEmpty)
         logger.info("Updated ids/linkids " + toUpdate.map(a => (a.id, a.linkId)))
@@ -70,11 +70,9 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
             maintenanceDAO.updateMaintenanceRoadValue(id, maintenance.asInstanceOf[MaintenanceRoad], LinearAssetTypes.VvhGenerated)
           case _ => None
         }
+      }
         if (mValueChanged(maintenanceAsset, persistedLinearAsset)) dao.updateMValues(maintenanceAsset.id, (maintenanceAsset.startMeasure, maintenanceAsset.endMeasure), maintenanceAsset.vvhTimeStamp)
         if (sideCodeChanged(maintenanceAsset, persistedLinearAsset)) dao.updateSideCode(maintenanceAsset.id, SideCode(maintenanceAsset.sideCode))
-        val area = getAssetArea(roadLinkService.getRoadLinkAndComplementaryFromVVH(maintenanceAsset.linkId, newTransaction = false), Measures(maintenanceAsset.startMeasure, maintenanceAsset.endMeasure))
-        dao.updateArea(maintenanceAsset.id, area)
-      }
     }
   }
 
@@ -87,7 +85,7 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     val oldAssets = maintenanceDAO.fetchMaintenancesByIds(maintenanceRoadAssetTypeId, assetIds.toSet)
     val roadlinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(oldAssets.map(_.linkId).toSet, false)
 
-    val newAssetIDcreate = oldAssets.map { oldAsset =>
+    oldAssets.map { oldAsset =>
     //Expire the old asset
       dao.updateExpiration(oldAsset.id, expired = true, username)
 
@@ -95,7 +93,6 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
        createAssetWithoutTransaction(oldAsset.typeId, oldAsset.linkId, valueToUpdate, oldAsset.sideCode, measures.getOrElse(Measures(oldAsset.startMeasure, oldAsset.endMeasure)),
          username, vvhClient.roadLinkData.createVVHTimeStamp(), roadlinks.find(_.linkId == oldAsset.linkId), true, oldAsset.createdBy, oldAsset.createdDateTime)
     }
-    newAssetIDcreate
   }
 
   override protected def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, measures: Option[Measures] = None): Seq[Long] = {
@@ -194,7 +191,7 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
 
     //Remove the asset ids ajusted in the "linearAssets:update" otherwise if the "linearAssets:saveProjectedLinearAssets" is executed after the "linearAssets:update"
     //it will update the mValues to the previous ones
-    eventBus.publish("linearAssets:saveProjectedLinearAssets", newAssets.filterNot(a => changeSet.adjustedMValues.exists(_.assetId == a.id)))
+    eventBus.publish("maintenanceRoads:saveProjectedMaintenanceRoads", newAssets.filterNot(a => changeSet.adjustedMValues.exists(_.assetId == a.id)))
 
     filledTopology
   }

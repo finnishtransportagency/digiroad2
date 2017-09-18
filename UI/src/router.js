@@ -113,13 +113,15 @@
       maintenanceRoad: function (id) {
         applicationModel.selectLayer('maintenanceRoad');
         var linearAsset = models.selectedMaintenanceRoad.getLinearAsset(parseInt(id));
-        if (linearAsset)
+        if (linearAsset) {
           models.selectedMaintenanceRoad.open(linearAsset, true);
-
+          applicationModel.setSelectedTool('Select');
+        }
         backend.getLinearAssetById(id, 'maintenanceRoad').then(function (result) {
           eventbus.once('maintenanceRoads:fetched', function() {
             var linearAsset = models.selectedMaintenanceRoad.getLinearAsset(result.id);
             models.selectedMaintenanceRoad.open(linearAsset, true);
+            applicationModel.setSelectedTool('Select');
           });
           mapCenterAndZoom(result.middlePoint.x, result.middlePoint.y, 12);
         });
