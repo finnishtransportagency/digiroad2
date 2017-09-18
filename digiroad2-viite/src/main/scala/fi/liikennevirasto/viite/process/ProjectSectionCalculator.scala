@@ -232,6 +232,7 @@ object ProjectSectionCalculator {
         case (_, Some(LinkStatus.UnChanged), _) => nextSection.map(_.startAddrM)
         case (LinkStatus.NotHandled, _, Some(value)) => Some(value + currentSection.endAddrM - currentSection.startAddrM)
         case (LinkStatus.Transfer, _, Some(value)) => Some(value + currentSection.endAddrM - currentSection.startAddrM)
+        case (LinkStatus.Numbering, _, Some(value)) => Some(value + currentSection.endAddrM - currentSection.startAddrM)
         case (_, _, _) => None
       }
     }
