@@ -67,7 +67,7 @@ object ProjectSectionCalculator {
     */
   def assignMValues(projectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
     val (terminated, others) = projectLinks.partition(_.status == LinkStatus.Terminated)
-    val (newLinks, nonTerminatedLinks) = others.partition(_.status == LinkStatus.New)
+    val (newLinks, nonTerminatedLinks) = others.partition(l => l.status == LinkStatus.New)
     assignMValues(newLinks, nonTerminatedLinks) ++ terminated
   }
 

@@ -148,20 +148,12 @@ object ProjectDeltaCalculator {
             ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType)).toSeq
       })
 
-    val groupedProjectLinks = projectLinks.sortBy(_.startAddrMValue).groupBy(pl => (pl.roadNumber, pl.roadPartNumber, pl.track))
-    val projectLinksGroups = groupedProjectLinks.mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(pl =>
-      RoadAddressSection(pl.roadNumber, pl.roadPartNumber, pl.roadPartNumber,
-        pl.track, pl.startAddrMValue, pl.endAddrMValue, pl.discontinuity, pl.roadType)
-    ).toSeq
-
-    addressesGroups.map { sec =>
+    sourceCombined.map { sec =>
       val linkId = roadAddresses.find(ra => sec.includes(ra)).map(_.linkId).get
-      val targetGroup = projectLinksGroups.find(_.includes(projectLinks.find(_.linkId == linkId).get))
+      val targetGroup = targetCombined.find(tc => tc.includes(projectLinks.find(_.linkId == linkId).get))
       sec -> targetGroup.get
     }.toMap
-  }
-
-}
+}}
 
 case class Delta(startDate: DateTime, terminations: Seq[RoadAddress], newRoads: Seq[ProjectLink],
                  unChanged: Seq[RoadAddress], transferred: Transferred, numbering : ReNumeration)
