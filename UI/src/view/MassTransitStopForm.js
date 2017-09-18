@@ -412,8 +412,7 @@
 
       var terminalMultiChoiceHandler = function (property) {
         property.localizedName = "Liitetyt Pysakit";
-        //return createTerminalWrapper(property).append(createTerminalMultiChoiceElement(readOnly, property));
-        return createWrapper(property).append(createTerminalMultiChoiceElement(readOnly, property));
+        return createTerminalWrapper(property).append(createTerminalMultiChoiceElement(readOnly, property));
       };
 
       var createTerminalMultiChoiceElement = function (readOnly, property) {
@@ -426,8 +425,7 @@
           element = $('<div />');
         }
 
-        //element.addClass('choice-terminal-group');
-        element.addClass('choice-group');
+        element.addClass('choice-terminal-group');
 
         element = _.reduce(enumValues, function (element, value) {
           if (readOnly) {
@@ -468,6 +466,11 @@
           return element;
         }, element);
 
+        if (!readOnly) {
+          var valuesTest = {propertyValue: 99};
+          selectedMassTransitStopModel.setProperty(property.publicId, valuesTest, property.propertyType, true);
+          selectedMassTransitStopModel.setProperty("pysakin_tyyppi", [{propertyValue: 6, propertyDisplayValue: "", checked: true}], "multiple_choice", true);
+        }
         return element;
       };
 
@@ -625,10 +628,15 @@
 
       var getAssetForm = function() {
         var allProperties = selectedMassTransitStopModel.getProperties();
-        var properties = isTerminalBusStop ? sortAndFilterTerminalProperties(allProperties) : sortAndFilterProperties(allProperties);
+        var properties;
 
-        setIsTRMassTransitStopValue(allProperties); // allProperties contains linkin_hallinnollinen_luokka property
-        disableFormIfTRMassTransitStopHasEndDate(properties);
+        if (isTerminalBusStop) {
+          properties = sortAndFilterTerminalProperties(allProperties);
+        } else {
+          properties = sortAndFilterProperties(allProperties);
+          setIsTRMassTransitStopValue(allProperties); // allProperties contains linkin_hallinnollinen_luokka property
+          disableFormIfTRMassTransitStopHasEndDate(properties);
+        }
 
         var contents = _.take(properties, 2)
           .concat(floatingStatus(selectedMassTransitStopModel))
