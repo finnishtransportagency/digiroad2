@@ -639,16 +639,16 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
         DateTime.parse("1990-01-01"), DateTime.now(), "info",
         List(ReservedRoadPart(0: Long, roadNumber: Long, roadPartNumber: Long, 5: Double, 5: Long, Discontinuity.apply("jatkuva"),
           8: Long, None: Option[DateTime], None: Option[DateTime])), None)
-      val (proj, projectLink, _, errmsg) = projectService.createRoadLinkProject(project)
-      projectLink.isEmpty should be(false)
-      errmsg should be("ok")
-      projectId = proj.id
-      val projectLinkId = projectLink.get.id
-      val projectLinkProjectId = projectLink.get.projectId
+      val savedProject = projectService.createRoadLinkProject(project)
+      val projectLinkId = savedProject.reservedParts.head.startingLinkId
+      projectLinkId.isEmpty should be(false)
+      projectId = savedProject.id
       val terminatedValue = LinkStatus.UnChanged.value
+      val projectLink = ProjectDAO.fetchFirstLink(projectId, roadNumber, roadPartNumber)
+      projectLink.isEmpty should be(false)
       //Changing the status of the test link
       sqlu"""Update Project_Link Set Status = $terminatedValue
-            Where ID = $projectLinkId And PROJECT_ID = $projectLinkProjectId""".execute
+            Where ID = ${projectLink.get.id} And PROJECT_ID = $projectId""".execute
 
       //Creation of test road_address_changes
       sqlu"""insert into road_address_changes
@@ -693,7 +693,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       //Creation of test project with test links
       val project = RoadAddressProject(projectId, ProjectState.Incomplete, "testiprojekti", "Test", DateTime.now(), "Test",
         DateTime.parse("2020-01-01"), DateTime.now(), "info",
-        List(ReservedRoadPart(0: Long, roadNumber: Long, roadPartNumber: Long, 5: Double, Discontinuity.apply("jatkuva"),
+        List(ReservedRoadPart(0: Long, roadNumber: Long, roadPartNumber: Long, 5: Double, 5: Long, Discontinuity.apply("jatkuva"),
           8: Long, None: Option[DateTime], None: Option[DateTime])), None)
       val proj = projectService.createRoadLinkProject(project)
       projectId = proj.id
