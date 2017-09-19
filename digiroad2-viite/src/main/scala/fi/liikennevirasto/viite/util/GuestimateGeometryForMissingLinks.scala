@@ -3,12 +3,7 @@ package fi.liikennevirasto.viite.util
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.dao.RoadAddress
 
-/**
-  * Created by alapeijario on 14.9.2017.
-  */
 class GuestimateGeometryForMissingLinks {
-
-
 
   /**
     * Loops through geometry and tries to find geometry to missing links
@@ -19,7 +14,7 @@ class GuestimateGeometryForMissingLinks {
 
   def guestimateGeometry(missingGeometry:Seq[RoadAddress],projectRoadaddressGeometry:Seq[RoadAddress]):Seq[RoadAddress]={
     missingGeometry.lastOption match {
-      case  Some(missingRoadAddress) =>
+      case Some(missingRoadAddress) =>
       {
         val previousLink=projectRoadaddressGeometry.find(x=>x.endAddrMValue==missingRoadAddress.startAddrMValue && x.roadNumber==missingRoadAddress.roadNumber && x.roadPartNumber==missingRoadAddress.roadPartNumber && x.track==missingRoadAddress.track)
         val nextLink=projectRoadaddressGeometry.find(x=>x.startAddrMValue==missingRoadAddress.endAddrMValue && x.roadNumber==missingRoadAddress.roadNumber && x.roadPartNumber==missingRoadAddress.roadPartNumber && x.track==missingRoadAddress.track)
