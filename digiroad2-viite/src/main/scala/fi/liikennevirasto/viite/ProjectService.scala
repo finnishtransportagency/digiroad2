@@ -22,8 +22,6 @@ import scala.concurrent.{Await, Future}
 import scala.util.control.NonFatal
 case class PreFillInfo(RoadNumber:BigInt, RoadPart:BigInt)
 
-case class LinkToRevert(linkId: Long, status: Long)
-
 class ProjectService(roadAddressService: RoadAddressService, roadLinkService: RoadLinkService, eventbus: DigiroadEventBus, frozenTimeVVHAPIServiceEnabled: Boolean = false) {
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
@@ -153,6 +151,23 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  def createProjectLinks(linkIds: Set[Long], projectId: Long, roadNumber: Long, roadPartNumber:Long, trackCode: Int, discontinuity: Int, roadType: Int, roadLinkSource: Int, roadEly: Long): Map[String, Any] = {
+    val roadLinks = if(roadLinkSource == LinkGeomSource.SuravageLinkInterface.value) {
+      getProjectSuravageRoadLinksByLinkIds(linkIds)
+    } else {
+      getProjectRoadLinksByLinkIds(linkIds)
+    }
+    setProjectEly(projectId, roadEly) match {
+      case Some(errorMessage) => Map("success" -> false, "errormessage" -> errorMessage)
+      case None => {
+        addNewLinksToProject(roadLinks, projectId, roadNumber, roadPartNumber, trackCode, discontinuity, roadType) match {
+          case Some(errorMessage) => Map("success" -> false, "errormessage" -> errorMessage)
+          case None => Map ("success" -> true, "publishable" -> projectLinkPublishable(projectId))
+        }
+      }
+    }
+  }
+
   /**
     * Used when adding road address that does not have previous address
     */
@@ -253,12 +268,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def revertLinks(projectId: Long, roadNumber: Long, roadPartNumber: Long, links: List[LinkToRevert]): Option[String] = {
+  def revertLinks(linkIds: Set[Long], projectId: Long, roadNumber: Long, roadPartNumber: Long): Option[String] = {
     try {
       withDynTransaction{
-        links.foreach(link =>{
-          if(link.status == LinkStatus.New.value){
-            ProjectDAO.removeProjectLinksByLinkId(projectId, links.map(link=> link.linkId).toSet)
+        val linksWithStatus = ProjectDAO.getProjectLinksById(linkIds.toSeq).map(pl => pl.linkId -> pl.status)
+        linksWithStatus.par.foreach(link =>{
+          if(link._2 == LinkStatus.New){
+            ProjectDAO.removeProjectLinksByLinkId(projectId, linkIds)
             val remainingLinks = ProjectDAO.fetchProjectLinkIds(projectId, roadNumber, roadPartNumber)
             if (remainingLinks.nonEmpty){
               val projectLinks = ProjectDAO.fetchByProjectNewRoadPart(roadNumber, roadPartNumber, projectId)
@@ -267,9 +283,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                 adjLink => ProjectDAO.updateAddrMValues(adjLink))
             }
           }
-          else if (link.status == LinkStatus.Terminated.value || link.status == LinkStatus.Transfer.value ){
-            val roadLink = RoadAddressDAO.fetchByLinkId(Set(link.linkId),  false, false)
-            ProjectDAO.updateProjectLinkValues(projectId, roadLink.head)
+          else if (link._2 == LinkStatus.Terminated || link._2 == LinkStatus.Transfer || link._2 == LinkStatus.Numbering){
+            val roadAddress = RoadAddressDAO.fetchByLinkId(Set(link._1),  false, false)
+            ProjectDAO.updateProjectLinkValues(projectId, roadAddress.head)
           }
         })
         None
@@ -673,7 +689,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @param userName Username of the user that does this change
     * @return true, if the delta calculation is successful and change table has been updated.
     */
-  def updateProjectLinkStatus(projectId: Long, linkIds: Set[Long], linkStatus: LinkStatus, userName: String, newRoadNumber: Long = 0, newRoadPart: Long = 0)= {
+  def updateProjectLinkStatus(projectId: Long, linkIds: Set[Long], linkStatus: LinkStatus, userName: String, roadNumber: Long = 0, roadPartNumber: Long = 0) = {
     try {
       withDynTransaction{
         val projectLinks = withGeometry(ProjectDAO.getProjectLinks(projectId))
@@ -691,20 +707,23 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             ProjectDAO.updateProjectLinksToDB(updatedPL.map(_.copy(status = linkStatus, calibrationPoints = (None, None))), userName)
           }
           case LinkStatus.Numbering => {
-            val project = getProjectWithReservationChecks(projectId, newRoadNumber, newRoadPart)
-            if (!project.isReserved(newRoadNumber, newRoadPart))
-              ProjectDAO.reserveRoadPart(project.id, newRoadNumber, newRoadPart, project.modifiedBy)
-            ProjectDAO.updateProjectLinkNumbering(projectId, updatedProjectLinks.head.roadNumber, updatedProjectLinks.head.roadPartNumber, linkStatus, newRoadNumber, newRoadPart, userName)
+            val project = getProjectWithReservationChecks(projectId, roadNumber, roadPartNumber)
+            if (!project.isReserved(roadNumber, roadPartNumber))
+              ProjectDAO.reserveRoadPart(project.id, roadNumber, roadPartNumber, project.modifiedBy)
+            ProjectDAO.updateProjectLinkNumbering(projectId, updatedProjectLinks.head.roadNumber, updatedProjectLinks.head.roadPartNumber, linkStatus, roadNumber, roadPartNumber, userName)
           }
           case LinkStatus.Transfer => {
-            if (isRoadPartTransfer(updatedProjectLinks, newRoadNumber, newRoadPart)) {
+            if (isRoadPartTransfer(updatedProjectLinks, roadNumber, roadPartNumber)) {
               val updated = updatedProjectLinks.map(updl => {
-                updl.copy(roadPartNumber = newRoadPart, status = linkStatus, calibrationPoints = (None, None))
+                updl.copy(roadPartNumber = roadPartNumber, status = linkStatus, calibrationPoints = (None, None))
               })
               ProjectDAO.updateProjectLinksToDB(updated, userName)
             } else {
               ProjectDAO.updateProjectLinkStatus(updatedProjectLinks.map(_.id).toSet, linkStatus, userName)
             }
+          }
+          case LinkStatus.Rollbacked => {
+            revertLinks(linkIds, projectId, roadNumber, roadPartNumber)
           }
           case _ => ProjectDAO.updateProjectLinkStatus(updatedProjectLinks.map(_.id).toSet, linkStatus, userName)
         }
