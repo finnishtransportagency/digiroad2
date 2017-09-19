@@ -155,23 +155,6 @@ object TRTrafficSignType {
   case object Unknown extends TRTrafficSignType { def value = 999999;  def trafficSignType = TrafficSignType.Unknown; }
 }
 
-sealed trait Operation {
-  def value: Int
-}
-object Operation {
-  val values = Set(Create, Update, Expire, Remove, Noop)
-
-  def apply(intValue: Int): Operation = {
-    values.find(_.value == intValue).getOrElse(Noop)
-  }
-
-  case object Create extends Operation { def value = 0 }
-  case object Update extends Operation { def value = 1 }
-  case object Expire extends Operation { def value = 2 }
-  case object Remove extends Operation { def value = 3 }
-  case object Noop extends Operation { def value = 3 }
-}
-
 case class TierekisteriMassTransitStop(nationalId: Long,
                                        liviId: String,
                                        roadAddress: RoadAddress,

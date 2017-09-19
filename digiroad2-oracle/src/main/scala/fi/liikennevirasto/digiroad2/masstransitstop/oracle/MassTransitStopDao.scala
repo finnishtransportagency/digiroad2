@@ -158,7 +158,6 @@ class MassTransitStopDao {
     }
   }
 
-
   def getNationalBusStopId = {
     nextNationalBusStopId.as[Long].first
   }
