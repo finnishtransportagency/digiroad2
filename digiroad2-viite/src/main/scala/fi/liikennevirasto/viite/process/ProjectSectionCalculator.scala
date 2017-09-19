@@ -194,8 +194,8 @@ object ProjectSectionCalculator {
             })
       }
     }
-    val groupedProjectLinks = newProjectLinks.sortBy(_.startAddrMValue).groupBy(record => (record.roadNumber, record.roadPartNumber))
-    val groupedOldLinks = oldProjectLinks.sortBy(_.startAddrMValue).groupBy(record => (record.roadNumber, record.roadPartNumber))
+    val groupedProjectLinks = newProjectLinks.groupBy(record => (record.roadNumber, record.roadPartNumber))
+    val groupedOldLinks = oldProjectLinks.groupBy(record => (record.roadNumber, record.roadPartNumber))
     val group = (groupedProjectLinks.keySet ++ groupedOldLinks.keySet).map(k =>
       k -> (groupedProjectLinks.getOrElse(k, Seq()), groupedOldLinks.getOrElse(k, Seq())))
     group.flatMap { case (part, (projectLinks, oldLinks)) => {
@@ -232,7 +232,7 @@ object ProjectSectionCalculator {
         case (_, Some(LinkStatus.UnChanged), _) => nextSection.map(_.startAddrM)
         case (LinkStatus.NotHandled, _, Some(value)) => Some(value + currentSection.endAddrM - currentSection.startAddrM)
         case (LinkStatus.Transfer, _, Some(value)) => Some(value + currentSection.endAddrM - currentSection.startAddrM)
-        case (LinkStatus.Numbering, _, Some(value)) => Some(value + currentSection.endAddrM - currentSection.startAddrM)
+        case (LinkStatus.Numbering, _, Some(value)) => Some(currentSection.endAddrM)
         case (_, _, _) => None
       }
     }

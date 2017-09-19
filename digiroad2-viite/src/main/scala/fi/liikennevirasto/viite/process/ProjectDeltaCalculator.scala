@@ -13,6 +13,7 @@ import org.joda.time.DateTime
   */
 object ProjectDeltaCalculator {
 
+  val MaxAllowedMValueError = 0.001
   val checker = new ContinuityChecker(null) // We don't need road link service here
   def delta(projectId: Long): Delta = {
     val projectOpt = ProjectDAO.getRoadAddressProjectById(projectId)
@@ -113,7 +114,7 @@ object ProjectDeltaCalculator {
   def pair(roadAddress: Seq[RoadAddress], projectLink: Seq[ProjectLink]): Seq[(RoadAddress,ProjectLink)] = {
     val df = new DecimalFormat("#.###")
     roadAddress.foldLeft(List.empty[(RoadAddress,ProjectLink)]) { case (p, a) =>
-      projectLink.find(b => a.linkId == b.linkId && b.endMValue == df.format(a.endMValue - a.startMValue).replace(",", ".").toDouble ) match {
+      projectLink.find(b => a.linkId == b.linkId &&  Math.abs(b.endMValue - (a.endMValue - a.startMValue)) <= MaxAllowedMValueError ) match {
         case Some(b) => {
           p :+ (a, b)
         }
