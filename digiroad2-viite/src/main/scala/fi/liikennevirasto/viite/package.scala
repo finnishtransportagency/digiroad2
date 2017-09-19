@@ -26,6 +26,12 @@ package object viite {
 
   val NewRoadAddress: Long = -1000L
 
+  val MaxDistanceForConnectedLinks = 0.1
+  /* No road address can be generated on a segment smaller than this. */
+
+  val MaxJumpForSection = 0.1
+  /* No road address can be generated on a segment smaller than this. */
+
   def switchSideCode(sideCode: SideCode): SideCode = {
     // Switch between against and towards 2 -> 3, 3 -> 2
     SideCode.apply(5-sideCode.value)
