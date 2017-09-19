@@ -112,7 +112,6 @@ object ProjectDeltaCalculator {
   }
 
   def pair(roadAddress: Seq[RoadAddress], projectLink: Seq[ProjectLink]): Seq[(RoadAddress,ProjectLink)] = {
-    val df = new DecimalFormat("#.###")
     roadAddress.foldLeft(List.empty[(RoadAddress,ProjectLink)]) { case (p, a) =>
       projectLink.find(b => a.linkId == b.linkId &&  Math.abs(b.endMValue - (a.endMValue - a.startMValue)) <= MaxAllowedMValueError ) match {
         case Some(b) => {
