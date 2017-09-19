@@ -132,6 +132,7 @@
         currentAsset = {};
         eventbus.trigger('asset:creationCancelled');
       }
+      eventbus.trigger('terminalBusStop:selected', false);
     };
 
     eventbus.on('application:readOnly', function() {
