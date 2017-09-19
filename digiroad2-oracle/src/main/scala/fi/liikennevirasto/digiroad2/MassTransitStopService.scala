@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.masstransitstop.{BusStopType, MassTransitStopOperations}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries._
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle._
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.oracle.{GenericQueries, OracleDatabase}
 import fi.liikennevirasto.digiroad2.user.User
 import fi.liikennevirasto.digiroad2.util.GeometryTransform
 import org.joda.time.format.DateTimeFormat
@@ -368,6 +368,49 @@ trait MassTransitStopService extends PointAssetOperations {
     updateAssetGeometry(adjustment.assetId, Point(adjustment.lon, adjustment.lat))
   }
 
+  def getMetadata(point: Option[Point]): Seq[PropertyMetadata] ={
+    def fetchByRadius(position : Point, meters: Int): Seq[PersistedMassTransitStop] = {
+      val topLeft = Point(position.x - meters, position.y - meters)
+      val bottomRight = Point(position.x + meters, position.y + meters)
+      val boundingBoxFilter = OracleDatabase.boundingBoxFilter(BoundingRectangle(topLeft, bottomRight), "a.geometry")
+      val filter = s"where a.asset_type_id = $typeId and $boundingBoxFilter"
+      massTransitStopDao.fetchPointAssets(massTransitStopDao.withFilter(filter)).
+        filter(r => GeometryUtils.geometryLength(Seq(position, Point(r.lon, r.lat))) <= meters)
+    }
+
+    def extractStopName(properties: Seq[Property]): String = {
+      properties
+        .filter { property => property.publicId.equals("nimi_ruotsiksi") }
+        .filterNot { property => property.values.isEmpty }
+        .map(_.values.head)
+        .map(_.propertyValue)
+        .headOption
+        .getOrElse("")
+    }
+
+    withDynSession {
+      val metadataRows = GenericQueries.getAssetTypeMetadataRow(typeId)
+      val properties = metadataRows.groupBy(_.publicId).toSeq.sortBy(_._1)(Ordering[String]).map{
+        case (key, rows) =>
+          val row = rows.head
+          PropertyMetadata(0, row.publicId, row.propertyName, row.propertyType, row.propertyRequired > 0, values =
+            rows.filterNot(_.valueName.isEmpty).map{ rowValue => PropertyValue(rowValue.valueValue.getOrElse(""), rowValue.valueName)})
+      }
+
+      point match {
+        case Some(point) => {
+          val childFilters = fetchByRadius(point, 200)
+          val newProperty = PropertyMetadata(0, "liitetyt_pysakit", "LIITETYT PYSAKIT", PropertyTypes.MultipleChoice, values = childFilters.map{a =>
+            val stopName = extractStopName(a.propertyData)
+            PropertyValue(a.id.toString, Some(s"""${a.nationalId} $stopName"""), checked = false)
+          })
+          Seq(newProperty) ++ properties
+        }
+        case _ => properties
+      }
+    }
+  }
+
   def mandatoryProperties(): Map[String, String] = {
     val requiredProperties = withDynSession {
       sql"""select public_id, property_type from property where asset_type_id = $typeId and required = 1""".as[(String, String)].iterator.toMap
@@ -398,8 +441,6 @@ trait MassTransitStopService extends PointAssetOperations {
       }*/
     }
   }
-
-
 }
 
 trait BusStopVariation

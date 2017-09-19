@@ -289,36 +289,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       val PositionList = position.split(",").map(_.toDouble)
       Point(PositionList(0), PositionList(1))
     }
-    val properties = assetPropertyService.getAssetTypeMetadata(10l)
-    params.get("position").map(constructPosition) match {
-      case Some(position) =>
-        Seq(
-          Property(200, "liitetyt_pysakit", PropertyTypes.MultipleChoice, true, Seq(1, 2, 3).map {
-            id =>
-              PropertyValue(id.toString, Some("3001000 Cenas cenas"), false)
-          })) ++ Seq(
-          Property(80, "nimi_suomeksi", PropertyTypes.Text, false, Seq(1).map {
-            id =>
-              PropertyValue("", Some(""))
-          })) ++ Seq(
-          Property(80, "nimi_ruotsiksi", PropertyTypes.Text, false, Seq(1).map {
-          id =>
-            PropertyValue("", Some(""))
-        })) ++ Seq(
-          Property(0, "vaikutussuunta", PropertyTypes.SingleChoice, false, Seq(1).map {
-            id =>
-              PropertyValue("2", Some("2"))
-          })) ++ Seq(
-          Property(0, "lisatty_jarjestelmaan", PropertyTypes.ReadOnlyText, false, Seq(1).map {
-            id =>
-              PropertyValue("", Some(""))
-          })) ++ Seq(
-          Property(0, "muokattu_viimeksi", PropertyTypes.ReadOnlyText, false, Seq(1).map {
-            id =>
-              PropertyValue("", Some(""))
-          }))
-      case _ =>
-//        properties
+    massTransitStopService.getMetadata(params.get("position").map(constructPosition)).map {
+      property =>
+        Map("publicId" -> property.publicId,
+          "propertyType" -> property.propertyType,
+          "propertyRequired" -> property.required,
+          "propertyName" -> property.Name,
+          "value" -> property.values.map{ propertyValue => Map("Name" -> propertyValue.propertyDisplayValue, "Value" -> propertyValue.propertyValue)})
     }
   }
 
