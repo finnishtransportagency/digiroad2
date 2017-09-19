@@ -668,8 +668,8 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       roadsBeforeChanges.roadPartNumber should be(roadsAfterPublishing.roadPartNumber)
       endedAddress.head.endDate.nonEmpty should be(true)
       endedAddress.size should be (1)
-      endedAddress.head.endDate.get.toString("yyyy-MM-dd") should be("2020-01-01")
-      roadsAfterPublishing.startDate.get.toString("yyyy-MM-dd") should be("2020-01-01")
+      endedAddress.head.endDate.get.toString("yyyy-MM-dd") should be("1990-01-01")
+      roadsAfterPublishing.startDate.get.toString("yyyy-MM-dd") should be("1990-01-01")
     }
   }
 
