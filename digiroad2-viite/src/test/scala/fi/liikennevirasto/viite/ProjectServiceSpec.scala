@@ -1527,8 +1527,8 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
 
       val address1 = RoadAddressDAO.fetchByRoadPart(11, 8, false).sortBy(_.startAddrMValue)
       val address2 = RoadAddressDAO.fetchByRoadPart(259, 1, false).sortBy(_.startAddrMValue)
-      val reservedRoadPart1 = ReservedRoadPart(address1.head.id, address1.head.roadNumber, address1.head.roadPartNumber, address1.last.endAddrMValue, address1.head.discontinuity, 8, None, None)
-      val reservedRoadPart2 = ReservedRoadPart(address2.head.id, address2.head.roadNumber, address2.head.roadPartNumber, address2.last.endAddrMValue, address2.head.discontinuity, 8, None, None)
+      val reservedRoadPart1 = ReservedRoadPart(address1.head.id, address1.head.roadNumber, address1.head.roadPartNumber, address1.last.endAddrMValue, address1.last.endAddrMValue, address1.head.discontinuity, 8, None, None)
+      val reservedRoadPart2 = ReservedRoadPart(address2.head.id, address2.head.roadNumber, address2.head.roadPartNumber, address2.last.endAddrMValue, address1.last.endAddrMValue, address2.head.discontinuity, 8, None, None)
       val rap = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.now(), DateTime.now(), "Some additional info", Seq(reservedRoadPart1) ++ Seq(reservedRoadPart2), None , None)
 
       val links = (address1 ++ address2).map(address => {
@@ -1536,8 +1536,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       })
 
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(links.map(toRoadLink))
-      val (project, projectLinks, formLine, str) = projectService.createRoadLinkProject(rap)
-      str should be ("ok")
+      val project = projectService.createRoadLinkProject(rap)
 
       val transferLink = address2.sortBy(_.startAddrMValue).head
       projectService.updateProjectLinkStatus(project.id, address1.map(_.linkId).toSet, LinkStatus.UnChanged, "TestUser") should be (None)
