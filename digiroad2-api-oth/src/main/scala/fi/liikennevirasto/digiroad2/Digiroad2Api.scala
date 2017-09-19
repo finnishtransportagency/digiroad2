@@ -127,23 +127,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     StartupParameters(east.getOrElse(390000), north.getOrElse(6900000), zoom.getOrElse(2))
   }
 
-  get("/massTransitStops/metadata") {
-    def constructPosition(position: String): Point ={
-      val PositionList = position.split(",").map(_.toDouble)
-      Point(PositionList(0), PositionList(1))
-    }
-    val properties = assetPropertyService.getAssetTypeMetadata(10l)
-    params.get("position").map(constructPosition) match {
-      case Some(position) =>
-        properties ++ Seq(Property(0,"liitetyt_pysakit", PropertyTypes.MultipleChoice, false, Seq(1,2,3).map{
-          id =>
-            PropertyValue(id.toString, Some("3001000 Cenas cenas"))
-        }))
-      case _ =>
-        properties
-    }
-  }
-
   get("/masstransitstopgapiurl"){
     val lat =params.get("latitude").getOrElse(halt(BadRequest("Bad coordinates")))
     val lon =params.get("longitude").getOrElse(halt(BadRequest("Bad coordinates")))

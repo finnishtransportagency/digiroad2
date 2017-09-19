@@ -488,7 +488,7 @@
           })
           .pluck('values')
           .flatten()
-          .filter(function(x) { return x.propertyValue !== '99'; })
+          .filter(function(x) { return !(x.propertyValue === '99' || x.propertyValue === '6'); })
           .value();
 
         if (readOnly) {
