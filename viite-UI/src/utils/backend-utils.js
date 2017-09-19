@@ -113,7 +113,7 @@
       $.ajax({
         contentType: "application/json",
         type: "PUT",
-        url: "api/viite/roadlinks/roadaddress/project/save",
+        url: "api/viite/roadlinks/roadaddress/project",
         data: JSON.stringify(data),
         dataType: "json",
         success: success,
@@ -125,7 +125,7 @@
       $.ajax({
         contentType: "application/json",
         type: "POST",
-        url: "api/viite/roadlinks/roadaddress/project/create",
+        url: "api/viite/roadlinks/roadaddress/project",
         data: JSON.stringify(data),
         dataType: "json",
         success: success,

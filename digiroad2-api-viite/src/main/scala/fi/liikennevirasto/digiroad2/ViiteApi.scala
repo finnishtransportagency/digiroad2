@@ -204,7 +204,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  post("/roadlinks/roadaddress/project/create"){
+  post("/roadlinks/roadaddress/project"){
     val project = parsedBody.extract[RoadAddressProjectExtractor]
     val user = userProvider.getCurrentUser()
     val roadAddressProject = ProjectConverter.toRoadAddressProject(project, user)
@@ -220,13 +220,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  post("/roadlinks/roadaddress/project/sendToTR") {
-    (parsedBody \ "projectID").extractOpt[Long].map(projectService.publishProject)
-      .getOrElse(BadRequest(s"Invalid arguments"))
-  }
-
-
-  put("/roadlinks/roadaddress/project/save"){
+  put("/roadlinks/roadaddress/project"){
     val project = parsedBody.extract[RoadAddressProjectExtractor]
     val user = userProvider.getCurrentUser()
     val roadAddressProject= ProjectConverter.toRoadAddressProject(project, user)
@@ -242,6 +236,11 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       case ex: RoadPartReservedException =>
         Conflict(s"Road part unreservable")
     }
+  }
+
+  post("/roadlinks/roadaddress/project/sendToTR") {
+    (parsedBody \ "projectID").extractOpt[Long].map(projectService.publishProject)
+      .getOrElse(BadRequest(s"Invalid arguments"))
   }
 
   put("/roadlinks/roadaddress/project/directionchangenewroadlink"){
@@ -618,7 +617,7 @@ object ProjectConverter {
     val formatter = DateTimeFormat.forPattern("dd.MM.yyyy")
     RoadAddressProject(project.id, ProjectState.apply(project.status),
       if (project.name.length > 32) project.name.substring(0, 32).trim else project.name.trim,
-      user.username, DateTime.now(), "-", formatter.parseDateTime(project.startDate), DateTime.now(), project.additionalInfo, project.roadPartList.map(toReservedRoadPart), None)
+      user.username, DateTime.now(), "-", formatter.parseDateTime(project.startDate), DateTime.now(), project.additionalInfo, project.roadPartList.map(toReservedRoadPart), Option(project.additionalInfo), Option(project.projectEly.get))
   }
   def toReservedRoadPart(rp: RoadPartExtractor): ReservedRoadPart = {
     ReservedRoadPart(0L, rp.roadNumber, rp.roadPartNumber,
