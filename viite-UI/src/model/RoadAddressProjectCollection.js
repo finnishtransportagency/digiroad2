@@ -155,7 +155,7 @@
       };
 
       backend.saveRoadAddressProject(dataJson, function (result) {
-        if (result.success === "ok") {
+        if (result.success) {
           projectinfo = {
             id: result.project.id,
             additionalInfo: result.project.additionalInfo,
@@ -247,7 +247,7 @@
       };
 
       backend.createRoadAddressProject(dataJson, function (result) {
-        if (result.success === "ok") {
+        if (result.success) {
           projectinfo = {
             id: result.project.id,
             additionalInfo: result.project.additionalInfo,
