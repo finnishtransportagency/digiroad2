@@ -85,6 +85,7 @@ trait BaseRoadAddress {
   def roadPartNumber: Long
   def track: Track
   def discontinuity: Discontinuity
+  def roadType: RoadType
   def startAddrMValue: Long
   def endAddrMValue: Long
   def startDate: Option[DateTime]

@@ -131,23 +131,18 @@ object ProjectDeltaCalculator {
     * @return Map between the sections old -> new
     */
   def partition(roadAddresses: Seq[RoadAddress], projectLinks: Seq[ProjectLink]): Map[RoadAddressSection, RoadAddressSection] = {
-
-    val paired = pair(roadAddresses, projectLinks).groupBy(x => (x._1.roadNumber, x._1.roadPartNumber, x._2.roadNumber, x._2.roadPartNumber))
-
-    val (oldL, newL) = (paired.map( x=> x._2.map(_._1)),paired.map( x=> x._2.map(_._2)))
-
-    val sourceCombined = oldL.flatMap(o => {
+    def toRoadAddressSection(o: Seq[BaseRoadAddress]): Seq[RoadAddressSection] = {
       o.sortBy(_.startAddrMValue).groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
         .mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
         RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
           ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType)).toSeq
-    })
-    val targetCombined = newL.flatMap(n => {
-        n.sortBy(_.startAddrMValue).groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
-          .mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
-          RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
-            ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType)).toSeq
-      })
+    }
+    val paired = pair(roadAddresses, projectLinks).groupBy(x => (x._1.roadNumber, x._1.roadPartNumber, x._2.roadNumber, x._2.roadPartNumber))
+
+    val (oldL, newL) = (paired.map( x=> x._2.map(_._1)),paired.map( x=> x._2.map(_._2)))
+
+    val sourceCombined = oldL.flatMap(toRoadAddressSection)
+    val targetCombined = newL.flatMap(toRoadAddressSection)
 
     sourceCombined.map { sec =>
       val linkId = roadAddresses.find(ra => sec.includes(ra)).map(_.linkId).get
