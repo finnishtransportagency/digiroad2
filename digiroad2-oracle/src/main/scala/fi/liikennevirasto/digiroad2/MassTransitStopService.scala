@@ -51,8 +51,8 @@ trait MassTransitStopService extends PointAssetOperations {
 
   lazy val logger = LoggerFactory.getLogger(getClass)
   val massTransitStopDao: MassTransitStopDao
-  val tierekisteriEnabled: Boolean
   val roadLinkService: RoadLinkService
+  val tierekisteriEnabled: Boolean
   val tierekisteriClient: TierekisteriMassTransitStopClient
 
   override def typeId: Int = 10
@@ -368,7 +368,8 @@ trait MassTransitStopService extends PointAssetOperations {
     updateAssetGeometry(adjustment.assetId, Point(adjustment.lon, adjustment.lat))
   }
 
-  def getMetadata(point: Option[Point]): Seq[PropertyMetadata] ={
+  //TODO duplicated code inside
+  def getMetadata(point: Option[Point]): Seq[Property] ={
     def fetchByRadius(position : Point, meters: Int): Seq[PersistedMassTransitStop] = {
       val topLeft = Point(position.x - meters, position.y - meters)
       val bottomRight = Point(position.x + meters, position.y + meters)
@@ -388,19 +389,12 @@ trait MassTransitStopService extends PointAssetOperations {
         .getOrElse("")
     }
 
-    withDynSession {
-      val metadataRows = GenericQueries.getAssetTypeMetadataRow(typeId)
-      val properties = metadataRows.groupBy(_.publicId).toSeq.sortBy(_._1)(Ordering[String]).map{
-        case (key, rows) =>
-          val row = rows.head
-          PropertyMetadata(0, row.publicId, row.propertyName, row.propertyType, row.propertyRequired > 0, values =
-            rows.filterNot(_.valueName.isEmpty).map{ rowValue => PropertyValue(rowValue.valueValue.getOrElse(""), rowValue.valueName)})
-      }
-
+    AssetPropertyConfiguration.commonAssetProperties.values.map(_.propertyDescriptor).toSeq ++ withDynSession {
+      val properties = Queries.availableProperties(typeId)
       point match {
         case Some(point) => {
           val childFilters = fetchByRadius(point, 200)
-          val newProperty = PropertyMetadata(0, "liitetyt_pysakit", "LIITETYT PYSAKIT", PropertyTypes.MultipleChoice, values = childFilters.map{a =>
+          val newProperty = Property(0, "liitetyt_pysakit", PropertyTypes.MultipleChoice, values = childFilters.map{a =>
             val stopName = extractStopName(a.propertyData)
             PropertyValue(a.id.toString, Some(s"""${a.nationalId} $stopName"""), checked = false)
           })

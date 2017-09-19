@@ -289,14 +289,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       val PositionList = position.split(",").map(_.toDouble)
       Point(PositionList(0), PositionList(1))
     }
-    massTransitStopService.getMetadata(params.get("position").map(constructPosition)).map {
-      property =>
-        Map("publicId" -> property.publicId,
-          "propertyType" -> property.propertyType,
-          "propertyRequired" -> property.required,
-          "propertyName" -> property.Name,
-          "value" -> property.values.map{ propertyValue => Map("Name" -> propertyValue.propertyDisplayValue, "Value" -> propertyValue.propertyValue)})
-    }
+    massTransitStopService.getMetadata(params.get("position").map(constructPosition))
   }
 
   get("/enumeratedPropertyValues/:assetTypeId") {

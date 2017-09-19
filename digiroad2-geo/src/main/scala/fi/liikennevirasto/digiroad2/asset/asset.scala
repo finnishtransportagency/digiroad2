@@ -169,8 +169,6 @@ case class PropertyValue(propertyValue: String, propertyDisplayValue: Option[Str
 case class EnumeratedPropertyValue(propertyId: Long, publicId: String, propertyName: String, propertyType: String, required: Boolean = false, values: Seq[PropertyValue]) extends AbstractProperty
 case class Position(lon: Double, lat: Double, linkId: Long, bearing: Option[Int])
 
-case class PropertyMetadata(id: Long, publicId: String, Name: String, propertyType: String, required: Boolean = false, values: Seq[PropertyValue]) extends AbstractProperty
-
 object PropertyTypes {
   val SingleChoice = "single_choice"
   val MultipleChoice = "multiple_choice"
