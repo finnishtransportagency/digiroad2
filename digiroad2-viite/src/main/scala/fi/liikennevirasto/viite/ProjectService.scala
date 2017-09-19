@@ -982,10 +982,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         pl.discontinuity,pl.startAddrMValue,pl.endAddrMValue,pl.startDate, pl.endDate,pl.modifiedBy,pl.lrmPositionId,pl.linkId,
         pl.startMValue,pl.endMValue,pl.sideCode,vvhLink.get.vvhTimeStamp,pl.calibrationPoints,pl.floating,
         Seq(p1, p2),pl.linkGeomSource)
-    }, setProjectLinksAsFloating(missingGeom.map(_._1)))
+    }, mapProjectLinksAsFloatingRoadAddresses(missingGeom.map(_._1)))
   }
 
-  private def setProjectLinksAsFloating(projectLinks: Seq[ProjectLink]) :Seq[RoadAddress]={
+  private def mapProjectLinksAsFloatingRoadAddresses(projectLinks: Seq[ProjectLink]) :Seq[RoadAddress]={
     projectLinks.map(x =>
       RoadAddress(NewRoadAddress,x.roadNumber,x.roadPartNumber,x.roadType,x.track,
         x.discontinuity,x.startAddrMValue,x.endAddrMValue,x.startDate, x.endDate,x.modifiedBy,x.lrmPositionId,x.linkId,
@@ -1002,7 +1002,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       RoadAddress(NewRoadAddress, pl.roadNumber, pl.roadPartNumber, pl.roadType, pl.track, pl.discontinuity, pl.startAddrMValue,
         pl.endAddrMValue, pl.startDate, pl.endDate, pl.modifiedBy, pl.lrmPositionId, pl.linkId, pl.startMValue, pl.endMValue, pl.sideCode,
         ra.get.adjustedTimestamp, pl.calibrationPoints, pl.floating, ra.get.geometry, pl.linkGeomSource)
-    }, setProjectLinksAsFloating(missingGeom.map(_._1)))
+    }, mapProjectLinksAsFloatingRoadAddresses(missingGeom.map(_._1)))
   }
 
   // TODO: remove when saving road type to project link table
