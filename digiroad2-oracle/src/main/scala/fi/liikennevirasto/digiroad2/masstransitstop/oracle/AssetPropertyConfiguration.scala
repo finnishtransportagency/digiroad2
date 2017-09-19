@@ -1,6 +1,6 @@
 package fi.liikennevirasto.digiroad2.masstransitstop.oracle
 
-import fi.liikennevirasto.digiroad2.{MassTransitStopRow, TerminalBusStopRow}
+import fi.liikennevirasto.digiroad2.{MassTransitStopRow}
 import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset.LocalizedString._
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
@@ -39,16 +39,6 @@ object AssetPropertyConfiguration {
 
   def assetRowToCommonProperties(row: MassTransitStopRow): Seq[Property] = {
    List(
-      createProperty(CreatedId, row.created.modifier, row.created.modificationTime),
-      createProperty(ModifiedId, row.modified.modifier, row.modified.modificationTime),
-      commonAssetProperties(ValidityDirectionId).propertyDescriptor.copy(values = Seq(validityDirectionValues.find(_.propertyValue.toInt == row.validityDirection).getOrElse(PropertyValue("", None)))),
-      createProperty(ValidFromId, row.validFrom.map(_.toString)),
-      createProperty(ValidToId, row.validTo.map(_.toString))
-    )
-  }
-
-  def assetRowToCommonProperties(row: TerminalBusStopRow): Seq[Property] = {
-    List(
       createProperty(CreatedId, row.created.modifier, row.created.modificationTime),
       createProperty(ModifiedId, row.modified.modifier, row.modified.modificationTime),
       commonAssetProperties(ValidityDirectionId).propertyDescriptor.copy(values = Seq(validityDirectionValues.find(_.propertyValue.toInt == row.validityDirection).getOrElse(PropertyValue("", None)))),

@@ -72,6 +72,7 @@ object DataFixture {
       override val tierekisteriClient: TierekisteriMassTransitStopClient = DataFixture.tierekisteriClient
       override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
       override val tierekisteriEnabled = true
+
     }
     new MassTransitStopServiceWithDynTransaction(eventbus, roadLinkService)
   }
@@ -509,8 +510,9 @@ object DataFixture {
     println(DateTime.now())
     println("\n")
   }
-
+  //TODO use variation tierekistiri one
   private def updateTierekisteriBusStopsWithoutOTHLiviId(dryRun: Boolean, boundsOffset: Double = 10): Unit ={
+    /*
     case class NearestBusStops(trBusStop: TierekisteriMassTransitStop, othBusStop: PersistedMassTransitStop, distance: Double)
     def hasLiviIdPropertyValue(persistedStop: PersistedMassTransitStop): Boolean ={
       persistedStop.propertyData.
@@ -582,6 +584,7 @@ object DataFixture {
     println("Complete at time: ")
     println(DateTime.now())
     println("\n")
+    */
   }
 
 
@@ -699,7 +702,8 @@ object DataFixture {
             //Create missed Bus Stop at the Tierekisteri
             if(!dryRun) {
               withDynSession {
-                massTransitStopService.executeTierekisteriOperation(Operation.Create, adjustedStop, roadLinkByLinkId => roadLinks.find(r => r.linkId == roadLinkByLinkId), None, None)
+                //TODO get it from the new variation
+                //massTransitStopService.executeTierekisteriOperation(Operation.Create, adjustedStop, roadLinkByLinkId => roadLinks.find(r => r.linkId == roadLinkByLinkId), None, None)
               }
             }
           } catch {

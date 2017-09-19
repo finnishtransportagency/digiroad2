@@ -8,6 +8,7 @@ import Database.dynamicSession
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.PropertyTypes._
 import fi.liikennevirasto.digiroad2.asset.{MassTransitStopValidityPeriod, _}
+import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.masstransitstop.MassTransitStopOperations
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
@@ -15,6 +16,7 @@ import fi.liikennevirasto.digiroad2.user.User
 import org.joda.time.{DateTime, Interval, LocalDate}
 import org.joda.time.format.ISODateTimeFormat
 import org.slf4j.LoggerFactory
+
 import scala.language.reflectiveCalls
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParameter, StaticQuery => Q}
@@ -30,24 +32,135 @@ class MassTransitStopDao {
     }
   }
 
-  def getNationalBusStopId = {
-    nextNationalBusStopId.as[Long].first
+  def fetchPointAssets(queryFilter: String => String): Seq[PersistedMassTransitStop] = {
+    val query = """
+        select a.id, a.external_id, a.asset_type_id, a.bearing, lrm.side_code,
+        a.valid_from, a.valid_to, geometry, a.municipality_code, a.floating,
+        lrm.adjusted_timestamp, p.id, p.public_id, p.property_type, p.required, e.value,
+        case
+          when e.name_fi is not null then e.name_fi
+          when tp.value_fi is not null then tp.value_fi
+          when np.value is not null then to_char(np.value)
+          else null
+        end as display_value,
+        lrm.id, lrm.start_measure, lrm.end_measure, lrm.link_id,
+        a.created_date, a.created_by, a.modified_date, a.modified_by,
+        SDO_CS.TRANSFORM(a.geometry, 4326) AS position_wgs84, lrm.link_source,
+        tbs.terminal_asset_id as terminal_asset_id
+        from asset a
+          join asset_link al on a.id = al.asset_id
+          join lrm_position lrm on al.position_id = lrm.id
+        join property p on a.asset_type_id = p.asset_type_id
+          left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id and p.property_type = 'single_choice'
+          left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and (p.property_type = 'text' or p.property_type = 'long_text' or p.property_type = 'read_only_text')
+          left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'multiple_choice'
+          left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and p.property_type = 'read_only_number'
+          left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
+          left join terminal_bus_stop_link tbs on tbs.terminal_asset_id = a.id or tbs.bus_stop_asset_id = a.id
+      """
+    queryToPersistedMassTransitStops(queryFilter(query))
   }
 
-  def testeassetRowToProperty(assetRows: Iterable[TerminalBusStopRow]): Seq[Property] = {
-    assetRows.groupBy(_.property.propertyId).map { case (key, rows) =>
-      val row = rows.head
-      Property(
-        id = key,
-        publicId = row.property.publicId,
-        propertyType = row.property.propertyType,
-        required = row.property.propertyRequired,
-        values = rows.map(assetRow =>
-          PropertyValue(
-            assetRow.property.propertyValue,
-            testepropertyDisplayValueFromAssetRow(assetRow))
-        ).filter(_.propertyDisplayValue.isDefined).toSeq)
-    }.toSeq
+  private def queryToPersistedMassTransitStops(query: String): Seq[PersistedMassTransitStop] = {
+    val rows = Q.queryNA[MassTransitStopRow](query).iterator.toSeq
+
+    rows.groupBy(_.id).map { case (id, stopRows) =>
+      val row = stopRows.head
+      val commonProperties: Seq[Property] = AssetPropertyConfiguration.assetRowToCommonProperties(row)
+      val properties: Seq[Property] = commonProperties ++ assetRowToProperty(stopRows)
+      val point = row.point.get
+      val validityPeriod = Some(constructValidityPeriod(row.validFrom, row.validTo))
+      val stopTypes = extractStopTypes(stopRows)
+      val mValue = row.lrmPosition.startMeasure
+      val vvhTimeStamp = row.lrmPosition.vvhTimeStamp
+      val linkSource = row.lrmPosition.linkSource
+
+      id -> PersistedMassTransitStop(id = row.id, nationalId = row.externalId, linkId = row.linkId, stopTypes = stopTypes,
+        municipalityCode = row.municipalityCode, lon = point.x, lat = point.y, mValue = mValue,
+        validityDirection = Some(row.validityDirection), bearing = row.bearing,
+        validityPeriod = validityPeriod, floating = row.persistedFloating, vvhTimeStamp = vvhTimeStamp, created = row.created, modified = row.modified,
+        propertyData = properties, linkSource = LinkGeomSource(linkSource), row.terminalId)
+    }.values.toSeq
+  }
+
+  private implicit val getMassTransitStopRow = new GetResult[MassTransitStopRow] {
+    def apply(r: PositionedResult) = {
+      val id = r.nextLong
+      val externalId = r.nextLong
+      val assetTypeId = r.nextLong
+      val bearing = r.nextIntOption
+      val validityDirection = r.nextInt
+      val validFrom = r.nextDateOption.map(new LocalDate(_))
+      val validTo = r.nextDateOption.map(new LocalDate(_))
+      val point = r.nextBytesOption.map(bytesToPoint)
+      val municipalityCode = r.nextInt()
+      val persistedFloating = r.nextBoolean()
+      val vvhTimeStamp = r.nextLong()
+      val propertyId = r.nextLong
+      val propertyPublicId = r.nextString
+      val propertyType = r.nextString
+      val propertyRequired = r.nextBoolean
+      val propertyValue = r.nextLongOption()
+      val propertyDisplayValue = r.nextStringOption()
+      val property = new PropertyRow(
+        propertyId = propertyId,
+        publicId = propertyPublicId,
+        propertyType = propertyType,
+        propertyRequired = propertyRequired,
+        propertyValue = propertyValue.getOrElse(propertyDisplayValue.getOrElse("")).toString,
+        propertyDisplayValue = propertyDisplayValue.orNull)
+      val lrmId = r.nextLong
+      val startMeasure = r.nextDouble()
+      val endMeasure = r.nextDouble()
+      val linkId = r.nextLong
+      val created = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
+      val modified = new Modification(r.nextTimestampOption().map(new DateTime(_)), r.nextStringOption)
+      val wgsPoint = r.nextBytesOption.map(bytesToPoint)
+      val linkSource = r.nextInt
+      val terminalId = r.nextLongOption
+      MassTransitStopRow(id, externalId, assetTypeId, point, linkId, bearing, validityDirection,
+        validFrom, validTo, property, created, modified, wgsPoint,
+        lrmPosition = LRMPosition(lrmId, startMeasure, endMeasure, point, vvhTimeStamp, linkSource),
+        municipalityCode = municipalityCode, persistedFloating = persistedFloating, terminalId = terminalId)
+    }
+  }
+
+  //TODO check if this should be here
+  private def extractStopTypes(rows: Seq[MassTransitStopRow]): Seq[Int] = {
+    rows
+      .filter { row => row.property.publicId.equals(MassTransitStopOperations.MassTransitStopTypePublicId) }
+      .filterNot { row => row.property.propertyValue.isEmpty }
+      .map { row => row.property.propertyValue.toInt }
+  }
+
+  private def constructValidityPeriod(validFrom: Option[LocalDate], validTo: Option[LocalDate]): String = {
+    (validFrom, validTo) match {
+      case (Some(from), None) => if (from.isAfter(LocalDate.now())) { MassTransitStopValidityPeriod.
+        Future }
+      else { MassTransitStopValidityPeriod.
+        Current }
+      case (None, Some(to)) => if (LocalDate.now().isAfter(to
+      )) { MassTransitStopValidityPeriod
+        .Past }
+      else { MassTransitStopValidityPeriod.
+        Current }
+      case (Some(from), Some(to)) =>
+        val interval = new Interval(from.toDateMidnight, to.toDateMidnight)
+        if (interval.
+          containsNow()) { MassTransitStopValidityPeriod
+          .Current }
+        else if (interval.
+          isBeforeNow) {
+          MassTransitStopValidityPeriod.Past }
+        else {
+          MassTransitStopValidityPeriod.Future }
+      case _ => MassTransitStopValidityPeriod.Current
+    }
+  }
+
+
+  def getNationalBusStopId = {
+    nextNationalBusStopId.as[Long].first
   }
 
   def assetRowToProperty(assetRows: Iterable[MassTransitStopRow]): Seq[Property] = {
@@ -67,11 +180,6 @@ class MassTransitStopDao {
   }
 
   private def propertyDisplayValueFromAssetRow(assetRow: MassTransitStopRow): Option[String] = {
-    if (assetRow.property.publicId == "liikennointisuuntima") Some(getBearingDescription(assetRow.validityDirection, assetRow.bearing))
-    else Option(assetRow.property.propertyDisplayValue)
-  }
-
-  private def testepropertyDisplayValueFromAssetRow(assetRow: TerminalBusStopRow): Option[String] = {
     if (assetRow.property.publicId == "liikennointisuuntima") Some(getBearingDescription(assetRow.validityDirection, assetRow.bearing))
     else Option(assetRow.property.propertyDisplayValue)
   }
