@@ -164,6 +164,8 @@
       currentAsset.propertyMetadata = asset.propertyData;
       currentAsset.payload = _.merge({}, _.pick(asset, usedKeysFromFetchedAsset), transformPropertyData(asset.propertyData));
       currentAsset.validityPeriod = asset.validityPeriod;
+      var terminalActive = asset.stopTypes[0] == 6 ? true : false;
+      eventbus.trigger('terminalBusStop:selected', terminalActive);
       eventbus.trigger('asset:modified');
     };
 

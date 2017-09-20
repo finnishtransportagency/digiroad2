@@ -592,7 +592,6 @@
           'muokattu_viimeksi',
           'nimi_suomeksi',
           'nimi_ruotsiksi',
-          'vaikutussuunta',
           'liitetyt_pysakit'];
 
         return _.sortBy(properties, function(property) {
