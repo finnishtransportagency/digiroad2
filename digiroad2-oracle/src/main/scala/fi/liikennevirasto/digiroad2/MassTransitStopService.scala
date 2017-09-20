@@ -20,6 +20,7 @@ import slick.jdbc.{GetResult, PositionedResult, StaticQuery}
 import sun.reflect.generics.tree.BottomSignature
 
 import scala.util.Try
+import scala.xml.dtd.REQUIRED
 
 case class NewMassTransitStop(lon: Double, lat: Double, linkId: Long, bearing: Int, properties: Seq[SimpleProperty]) extends IncomingPointAsset
 
@@ -178,6 +179,7 @@ trait MassTransitStopService extends PointAssetOperations {
       val asset = fetchPointAssets(massTransitStopDao.withId(assetId)).headOption.getOrElse(throw new NoSuchElementException)
 
       //TODO if we don't need the roadlink in the undo we can
+      //Or probably i will need to get the previous and the new roadlink if they are diferent to pass it to the was and undo
       val linkId = optionalPosition match {
         case Some(position) => position.linkId
         case _ => asset.linkId
@@ -252,7 +254,6 @@ trait MassTransitStopService extends PointAssetOperations {
     val mapRoadLinks = roadLinks.map(roadLink => roadLink.linkId -> roadLink).toMap
     val assets = super.getByMunicipality(municipalityCode, mapRoadLinks, roadLinks, Seq(), floatingAdjustment(adjustmentOperation, createPersistedAssetObject))
 
-    //TODO do this better
     if(withEnrich)
       assets.map{a =>
         val strategy = getStrategy(a)
@@ -399,7 +400,7 @@ trait MassTransitStopService extends PointAssetOperations {
 
   private def getStrategy(newProperties: Set[SimpleProperty], asset: PersistedMassTransitStop): (AbstractBusStopStrategy, AbstractBusStopStrategy) ={
     val (strategies, defaultStrategy) = getStrategies()
-    val previousStrategy = strategies.find(v => v.was(newProperties, None, Some(asset))).getOrElse(defaultStrategy)
+    val previousStrategy = strategies.find(v => v.was(asset)).getOrElse(defaultStrategy)
     val currentStrategy = strategies.find(strategy => strategy.is(newProperties, None, Some(asset))).getOrElse(defaultStrategy)
     (previousStrategy, currentStrategy)
   }
@@ -431,7 +432,7 @@ trait AbstractBusStopStrategy
   val massTransitStopDao: MassTransitStopDao
 
   def is(newProperties: Set[SimpleProperty], roadLink: Option[RoadLink], existingAsset: Option[PersistedMassTransitStop]): Boolean = {false}
-  def was(newProperties: Set[SimpleProperty], roadLink: Option[RoadLink], existingAsset: Option[PersistedMassTransitStop]): Boolean = {false}
+  def was(existingAsset: PersistedMassTransitStop): Boolean = {false}
   def undo(existingAsset: PersistedMassTransitStop, newProperties: Set[SimpleProperty], roadLink: RoadLink, username: String): Unit = {}
   def enrichBusStop(persistedStop: PersistedMassTransitStop): (PersistedMassTransitStop, Boolean)
   def create(newAsset: NewMassTransitStop, username: String, point: Point, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass], linkSource: LinkGeomSource, roadLink: RoadLink): PersistedMassTransitStop
@@ -582,8 +583,10 @@ class TerminalBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopD
   }
 
   override def enrichBusStop(asset: PersistedMassTransitStop): (PersistedMassTransitStop, Boolean) = {
-    val childFilters = fetchByRadius(Point(asset.lon, asset.lat), radiusMeters, asset.id).filter(a => a.terminalId.isEmpty)
-    val newProperty = Property(0, terminalChildrenPublicId, PropertyTypes.MultipleChoice, values = childFilters.map{a =>
+    val childFilters = fetchByRadius(Point(asset.lon, asset.lat), radiusMeters, asset.id)
+      .filter(a => a.id != asset.id)
+      .filter(a => a.terminalId == asset.id || a.terminalId.isEmpty)
+    val newProperty = Property(0, terminalChildrenPublicId, PropertyTypes.MultipleChoice, required = true, values = childFilters.map{ a =>
       val stopName = extractStopName(a.propertyData)
       PropertyValue(a.id.toString, Some(s"""${a.nationalId} $stopName"""), checked = false)
     })
@@ -711,11 +714,10 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
     isStoredInTierekisteri(properties, roadLink.map(_.administrativeClass))
   }
 
-  override def was(newProperties: Set[SimpleProperty], roadLink: Option[RoadLink], existingAssetOption: Option[PersistedMassTransitStop]): Boolean = {
-    if (!tierekisteriClient.isTREnabled || existingAssetOption.isEmpty)
+  override def was(existingAsset: PersistedMassTransitStop): Boolean = {
+    if (!tierekisteriClient.isTREnabled)
       return false
 
-    val existingAsset = existingAssetOption.get
     val administrationClass = MassTransitStopOperations.getAdministrationClass(existingAsset.propertyData)
     isStoredInTierekisteri(existingAsset.propertyData, administrationClass)
   }
@@ -815,7 +817,8 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
       filterNot(property => commonAssetProperties.exists(_._1 == property.publicId))
 
     //If it was already in Tierekisteri
-    if (was(properties, Some(roadLink), Some(asset))) {
+    if (was(asset)) {
+      //TODO check this otherwise we will have a error here
       val position = optionalPosition.get
       val assetPoint = Point(asset.lon, asset.lat)
       val newPoint = Point(position.lon, position.lat)
@@ -839,8 +842,10 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
           mergedPropertiesWithOutInventoryDate), username, newPoint, geometry, municipalityCode, Some(roadLink.administrativeClass), roadLink.linkSource, roadLink)
       }
 
-      //TODO execute tierekisteri operations
-      //executeTierekisteriOperation(Operation.Update, asset)
+      getLiviIdValue(asset.propertyData).map{
+        liviId =>
+          updateTierekisteriBusStop(asset, roadLink, liviId)
+      }
 
     }
     fetchAsset(asset.id)
