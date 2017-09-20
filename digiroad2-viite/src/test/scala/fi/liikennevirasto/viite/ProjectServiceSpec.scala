@@ -1617,7 +1617,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(links.map(toRoadLink))
       val project = projectService.createRoadLinkProject(rap)
 
-      val unchangedLinks = roadPart.filter(rp => List(5502468, 5502479, 5502483, 5502490, 5502500, 5502745, 5502741).contains(rp.linkId)).sortBy(_.startAddrMValue)
+      val unchangedLinks = roadPart.filter(rp => List(5502468, 5502479, 5502483, 5502490, 5502505, 5502500, 5502745, 5502741).contains(rp.linkId)).sortBy(_.startAddrMValue)
       val linksToTerminate = roadPart.filter(rp => List(5502402,5502394, 5502436).contains(rp.linkId)).sortBy(_.startAddrMValue)
 
       projectService.updateProjectLinkStatus(project.id, unchangedLinks.map(_.linkId).toSet, LinkStatus.UnChanged, "TestUser") should be (None)
@@ -1629,7 +1629,6 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       linksAfter.size should be (roadPart.size + newLinksWithGeom.size)
       newLinksAfter.last.endAddrMValue should be (math.round(unchangedLinks.last.endAddrMValue + newLinksWithGeom.map(_.length).sum))
       newLinksAfter.head.startAddrMValue should be (unchangedLinks.last.endAddrMValue)
-      newLinksAfter.head.sideCode should be (unchangedLinks.head.sideCode)
       }
   }
 }
