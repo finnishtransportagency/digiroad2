@@ -41,6 +41,8 @@ case class RoadLink(linkId: Long, geometry: Seq[Point],
   def isPaved : Boolean = surfaceType == SurfaceType.Paved.value
   def isNotPaved : Boolean = surfaceType == SurfaceType.None.value
 
+  def MTKClass: Int = attributes("MTKCLASS").asInstanceOf[BigInt].intValue
+
   def roadIdentifier: Option[Either[Int, String]] = {
     Try(Left(attributes("ROADNUMBER").asInstanceOf[BigInt].intValue()))
       .orElse(Try(Right(getStringAttribute("ROADNAME_FI"))))
@@ -64,7 +66,7 @@ sealed trait SurfaceType {
 }
 
 object SurfaceType {
-  val values = Set(Unknown, None, Paved)
+  val values = Set(Unknown, None, Paved, RoadWidth)
 
   def apply(intValue: Int): SurfaceType = {
     values.find(_.value == intValue).getOrElse(None)
@@ -72,6 +74,29 @@ object SurfaceType {
 
   case object Unknown extends SurfaceType { def value = 0 }
   case object None extends SurfaceType { def value = 1 }
-  case object Paved extends SurfaceType { def value = 2 }
+  case object Paved extends SurfaceType { def value = 2}
+  case object RoadWidth extends SurfaceType { def value = 3}
 
+}
+
+sealed trait MTKClassWidth {
+  def value: Int
+  def width: Int
+}
+
+object MTKClassWidth {
+  val values = Set(Autotie_Ia, Autotie_Ib, Autotie_IIa, Autotie_IIb, Autotie_IIIa, Autotie_IIIb, Ajotie)
+
+  def apply(intValue: Int): MTKClassWidth = {
+    values.find(_.value == intValue).getOrElse(Unknown)
+  }
+
+  case object Autotie_Ia extends MTKClassWidth { def value = 12111; def  width = 1100}
+  case object Autotie_Ib extends MTKClassWidth { def value = 12112; def  width	= 1100}
+  case object Autotie_IIa extends MTKClassWidth { def value = 12121; def width = 650 }
+  case object Autotie_IIb extends MTKClassWidth { def value = 12122; def  width = 650 }
+  case object Autotie_IIIa extends MTKClassWidth { def value = 12131; def width = 400 }
+  case object Autotie_IIIb extends MTKClassWidth { def value = 12132; def width = 400 }
+  case object Ajotie	extends MTKClassWidth { def value = 12141; def width = 250}
+  case object Unknown extends MTKClassWidth {def value=0; def width = 0}
 }
