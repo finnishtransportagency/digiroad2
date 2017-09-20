@@ -49,10 +49,12 @@
     };
   };
 
-  var SaveButton = function() {
+  var SaveButton = function(isTerminalActive) {
+    var deleteMessage = isTerminalActive ? 'valitsemasi terminaalipysäkin' : 'pysäkin';
+
     var element = $('<button />').addClass('save btn btn-primary').text('Tallenna').click(function () {
       if (poistaSelected) {
-        new GenericConfirmPopup('Haluatko varmasti poistaa pysäkin?', {
+        new GenericConfirmPopup('Haluatko varmasti poistaa ' + deleteMessage + '?', {
           successCallback: function () {
             element.prop('disabled', true);
             selectedMassTransitStopModel.deleteMassTransitStop(poistaSelected);
@@ -145,7 +147,7 @@
         var featureAttributesElement = container.append(header).append(wrapper);
         addDatePickers();
 
-        var saveBtn = new SaveButton();
+        var saveBtn = new SaveButton(isTerminalBusStop);
         var cancelBtn = new CancelButton();
         var validationErrorLabel = new ValidationErrorLabel();
 
@@ -165,7 +167,7 @@
         function busStopHeader(asset) {
           var buttons = $('<div/>').addClass('mass-transit-stop').addClass('form-controls')
             .append(new ValidationErrorLabel().element)
-            .append(new SaveButton().element)
+            .append(new SaveButton(isTerminalBusStop).element)
             .append(new CancelButton().element);
 
           var header = $('<header/>');
