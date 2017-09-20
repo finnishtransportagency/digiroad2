@@ -56,7 +56,7 @@ class MassTransitStopDao {
           left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'multiple_choice'
           left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and p.property_type = 'read_only_number'
           left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
-          left join terminal_bus_stop_link tbs on tbs.terminal_asset_id = a.id or tbs.bus_stop_asset_id = a.id
+          left join terminal_bus_stop_link tbs on tbs.bus_stop_asset_id = a.id
       """
     queryToPersistedMassTransitStops(queryFilter(query))
   }
@@ -79,7 +79,7 @@ class MassTransitStopDao {
         municipalityCode = row.municipalityCode, lon = point.x, lat = point.y, mValue = mValue,
         validityDirection = Some(row.validityDirection), bearing = row.bearing,
         validityPeriod = validityPeriod, floating = row.persistedFloating, vvhTimeStamp = vvhTimeStamp, created = row.created, modified = row.modified,
-        propertyData = properties, linkSource = LinkGeomSource(linkSource), row.terminalId)
+        propertyData = properties, linkSource = LinkGeomSource(linkSource), terminalId = row.terminalId)
     }.values.toSeq
   }
 

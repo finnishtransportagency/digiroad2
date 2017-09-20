@@ -8,7 +8,7 @@ sealed trait BusStopType {
   def value: Int
 }
 object BusStopType {
-  val values = Set(Virtual, Commuter, LongDistance, Unknown)
+  val values = Set(Virtual, Commuter, LongDistance, Terminal, Unknown)
 
   def apply(intValue: Int): BusStopType = {
     values.find(_.value == intValue).getOrElse(Unknown)

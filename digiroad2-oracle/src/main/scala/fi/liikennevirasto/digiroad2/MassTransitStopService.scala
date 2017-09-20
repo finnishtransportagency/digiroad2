@@ -584,11 +584,11 @@ class TerminalBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopD
 
   override def enrichBusStop(asset: PersistedMassTransitStop): (PersistedMassTransitStop, Boolean) = {
     val childFilters = fetchByRadius(Point(asset.lon, asset.lat), radiusMeters, asset.id)
-      .filter(a => a.id != asset.id)
-      .filter(a => a.terminalId == asset.id || a.terminalId.isEmpty)
+      .filter(a =>  a.terminalId.isEmpty || a.terminalId == Some(asset.id))
+      .filter(a => extractStopType(a) != Some(BusStopType.Terminal))
     val newProperty = Property(0, terminalChildrenPublicId, PropertyTypes.MultipleChoice, required = true, values = childFilters.map{ a =>
       val stopName = extractStopName(a.propertyData)
-      PropertyValue(a.id.toString, Some(s"""${a.nationalId} $stopName"""), checked = false)
+      PropertyValue(a.id.toString, Some(s"""${a.nationalId} $stopName"""), checked = a.terminalId == Some(asset.id))
     })
     (asset.copy(propertyData = asset.propertyData.filterNot(p => p.publicId == terminalChildrenPublicId) ++ Seq(newProperty)), false)
   }
@@ -675,9 +675,18 @@ class TerminalBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopD
     val topLeft = Point(position.x - meters, position.y - meters)
     val bottomRight = Point(position.x + meters, position.y + meters)
     val boundingBoxFilter = OracleDatabase.boundingBoxFilter(BoundingRectangle(topLeft, bottomRight), "a.geometry")
-    val filter = s"where a.asset_type_id = $typeId and ($boundingBoxFilter or terminal_asset_id = $terminalId)"
-    massTransitStopDao.fetchPointAssets(massTransitStopDao.withFilter(filter)).
-      filter(r => GeometryUtils.geometryLength(Seq(position, Point(r.lon, r.lat))) <= meters)
+    val filter = s"where a.asset_type_id = $typeId and (($boundingBoxFilter )or tbs.terminal_asset_id = $terminalId)"
+    massTransitStopDao.fetchPointAssets(massTransitStopDao.withFilter(filter))
+      .filter(r => GeometryUtils.geometryLength(Seq(position, Point(r.lon, r.lat))) <= meters)
+  }
+
+  private def extractStopType(asset: PersistedMassTransitStop): Option[BusStopType] ={
+    asset.propertyData.find(p=> p.publicId == MassTransitStopOperations.MassTransitStopTypePublicId) match {
+      case Some(property) =>
+        property.values.map(p => BusStopType.apply(p.propertyValue.toInt)).headOption
+      case _ =>
+        None
+    }
   }
 }
 
