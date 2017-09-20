@@ -1629,6 +1629,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       linksAfter.size should be (roadPart.size + newLinksWithGeom.size)
       newLinksAfter.last.endAddrMValue should be (math.round(unchangedLinks.last.endAddrMValue + newLinksWithGeom.map(_.length).sum))
       newLinksAfter.head.startAddrMValue should be (unchangedLinks.last.endAddrMValue)
+      newLinksAfter.head.sideCode should be (unchangedLinks.head.sideCode)
       }
   }
 }
