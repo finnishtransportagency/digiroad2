@@ -131,6 +131,7 @@ object ProjectSectionCalculator {
     def assignCalibrationPoints(ready: Seq[ProjectLink], unprocessed: Seq[ProjectLink]): Seq[ProjectLink] = {
       // If first one
       if (ready.isEmpty) {
+        println("Assigning calibration points for \n" + unprocessed.mkString("\n"))
         val link = unprocessed.head
         // If there is only one link in section we put two calibration points in it
         if (unprocessed.size == 1)
@@ -181,35 +182,35 @@ object ProjectSectionCalculator {
       }.values.flatten.toSeq
     }
     // Set address values to section
-    def assignLinkValues(section: CombinedSection, startMValue: Long, endMValue: Long): Seq[ProjectLink] = {
-      val coeff = (endMValue - startMValue).toDouble / section.right.links.map(_.geometryLength).sum
-      val runningLength = section.right.links.scanLeft(startMValue.toDouble){case (value, plink) =>
-        value + coeff*plink.geometryLength
-      }
-      // Calculate address values to right track
-      val rightLinks = section.right.links.zip(runningLength.zip(runningLength.tail)).map { case (plink, (start, end)) =>
-        plink.copy(startAddrMValue = Math.min(Math.round(start), Math.round(end)),
-          endAddrMValue = Math.max(Math.round(start), Math.round(end)),
-          startMValue = 0.0, endMValue = plink.geometryLength)
-      }
-      // Check if this is a combined track
-      if (section.right == section.left)
-        assignCalibrationPoints(Seq(), rightLinks)
-      else {
-        val coeffL = (endMValue - startMValue).toDouble / section.left.links.map(_.geometryLength).sum
-        val runningLengthL = section.left.links.scanLeft(startMValue.toDouble){case (value, plink) =>
-          value + coeffL*plink.geometryLength
-        }
-        // Calculate left track values
-        assignCalibrationPoints(Seq(), rightLinks) ++
-          assignCalibrationPoints(Seq(),
-            section.left.links.zip(runningLengthL.zip(runningLengthL.tail)).map { case (plink, (start, end)) =>
-              plink.copy(startAddrMValue = Math.min(Math.round(start), Math.round(end)),
-                endAddrMValue = Math.max(Math.round(start), Math.round(end)),
-                startMValue = 0.0, endMValue = plink.geometryLength)
-            })
-      }
-    }
+//    def assignLinkValues(section: CombinedSection, startMValue: Long, endMValue: Long): Seq[ProjectLink] = {
+//      val coeff = (endMValue - startMValue).toDouble / section.right.links.map(_.geometryLength).sum
+//      val runningLength = section.right.links.scanLeft(startMValue.toDouble){case (value, plink) =>
+//        value + coeff*plink.geometryLength
+//      }
+//      // Calculate address values to right track
+//      val rightLinks = section.right.links.zip(runningLength.zip(runningLength.tail)).map { case (plink, (start, end)) =>
+//        plink.copy(startAddrMValue = Math.min(Math.round(start), Math.round(end)),
+//          endAddrMValue = Math.max(Math.round(start), Math.round(end)),
+//          startMValue = 0.0, endMValue = plink.geometryLength)
+//      }
+//      // Check if this is a combined track
+//      if (section.right == section.left)
+//        assignCalibrationPoints(Seq(), rightLinks)
+//      else {
+//        val coeffL = (endMValue - startMValue).toDouble / section.left.links.map(_.geometryLength).sum
+//        val runningLengthL = section.left.links.scanLeft(startMValue.toDouble){case (value, plink) =>
+//          value + coeffL*plink.geometryLength
+//        }
+//        // Calculate left track values
+//        assignCalibrationPoints(Seq(), rightLinks) ++
+//          assignCalibrationPoints(Seq(),
+//            section.left.links.zip(runningLengthL.zip(runningLengthL.tail)).map { case (plink, (start, end)) =>
+//              plink.copy(startAddrMValue = Math.min(Math.round(start), Math.round(end)),
+//                endAddrMValue = Math.max(Math.round(start), Math.round(end)),
+//                startMValue = 0.0, endMValue = plink.geometryLength)
+//            })
+//      }
+//    }
     val groupedProjectLinks = newProjectLinks.groupBy(record => (record.roadNumber, record.roadPartNumber))
     val groupedOldLinks = oldProjectLinks.groupBy(record => (record.roadNumber, record.roadPartNumber))
     val group = (groupedProjectLinks.keySet ++ groupedOldLinks.keySet).map(k =>
@@ -219,9 +220,38 @@ object ProjectSectionCalculator {
         val (right, left) = TrackSectionOrder.orderProjectLinksTopologyByGeometry(
           findStartingPoint(projectLinks, oldLinks, userCalibrationPoints), projectLinks++oldLinks)
         val ordSections = TrackSectionOrder.createCombinedSections(right, left)
-        val mValues = calculateSectionAddressValues(ordSections)
-        val links = ordSections.zip(mValues.zip(mValues.tail)).flatMap { case (section, (start, end)) =>
-          assignLinkValues(section, start.toLong, end.toLong)
+
+        val links = calculateSectionAddressValues(ordSections).flatMap { sec =>
+          if (sec.right == sec.left)
+            assignCalibrationPoints(Seq(), sec.right.links)
+          else {
+            val (rEnd, lEnd) = (sec.right.links.last.endAddrMValue, sec.left.links.last.endAddrMValue)
+            val (rStart, lStart) = (sec.right.links.head.startAddrMValue, sec.left.links.head.startAddrMValue)
+            val (startMValue, endMValue) = (
+              if (rStart > lStart) Math.ceil(0.5*(rStart+lStart)) else Math.floor(0.5*(rStart+lStart)),
+              if (rEnd > lEnd) Math.ceil(0.5*(rEnd+lEnd)) else Math.floor(0.5*(rEnd+lEnd)))
+
+            val coeffR = (endMValue - startMValue) / sec.right.links.map(_.geometryLength).sum
+            val runningLengthR = sec.right.links.scanLeft(startMValue.toDouble){case (value, plink) =>
+              value + coeffR*plink.geometryLength
+            }
+            val coeffL = (endMValue - startMValue) / sec.left.links.map(_.geometryLength).sum
+            val runningLengthL = sec.left.links.scanLeft(startMValue.toDouble){case (value, plink) =>
+              value + coeffL*plink.geometryLength
+            }
+            // Calculate left track values
+            assignCalibrationPoints(Seq(), sec.right.links.zip(runningLengthR.zip(runningLengthR.tail)).map { case (plink, (start, end)) =>
+              plink.copy(startAddrMValue = Math.min(Math.round(start), Math.round(end)),
+                endAddrMValue = Math.max(Math.round(start), Math.round(end)),
+                startMValue = 0.0, endMValue = plink.geometryLength)
+            }) ++
+              assignCalibrationPoints(Seq(),
+                sec.left.links.zip(runningLengthL.zip(runningLengthL.tail)).map { case (plink, (start, end)) =>
+                  plink.copy(startAddrMValue = Math.min(Math.round(start), Math.round(end)),
+                    endAddrMValue = Math.max(Math.round(start), Math.round(end)),
+                    startMValue = 0.0, endMValue = plink.geometryLength)
+                })
+          }
         }
         eliminateExpiredCalibrationPoints(links)
       } catch {
@@ -233,7 +263,64 @@ object ProjectSectionCalculator {
     }.toSeq
   }
 
-  private def calculateSectionAddressValues(sections: Seq[CombinedSection]): Seq[Double] = {
+  private def calculateSectionAddressValues(sections: Seq[CombinedSection]): Seq[CombinedSection] = {
+    def isFixedAddressValue(linkStatus: LinkStatus) = {
+      linkStatus match {
+        case LinkStatus.Numbering | LinkStatus.UnChanged => true
+        case _ => false
+      }
+    }
+    def isFixedAddressLength(linkStatus: LinkStatus) = {
+      linkStatus match {
+        case LinkStatus.Numbering | LinkStatus.UnChanged | LinkStatus.NotHandled | LinkStatus.Transfer => true
+        case _ => false
+      }
+    }
+    def groupLinks(links: Seq[ProjectLink]): Seq[(Boolean, Seq[ProjectLink])] = {
+      links.foldLeft[Seq[(Boolean, Seq[ProjectLink])]](Seq()){
+        case (s, pl) if s.isEmpty =>
+          Seq((isFixedAddressValue(pl.status), Seq(pl)))
+        case (s, pl) if s.last._1 == isFixedAddressValue(pl.status) =>
+          val rev = s.reverse
+          rev.tail.reverse ++ Seq((rev.head._1, rev.head._2 ++ Seq(pl)))
+        case (s, pl) =>
+          s ++ Seq((isFixedAddressValue(pl.status), Seq(pl)))
+      }
+    }
+    def getLinkAddressValues(links: Seq[ProjectLink], startValue: Double = 0.0, coeff: Double = 1.0) = {
+      links.scanLeft(startValue) { case (run, pl) =>
+        if (isFixedAddressLength(pl.status))
+          run + pl.endAddrMValue - pl.startAddrMValue
+        else
+          run + coeff*pl.geometryLength
+      }
+    }
+    def setAddressValues(groups: Seq[(Boolean, Seq[ProjectLink])], startValue: Double): Seq[ProjectLink] = {
+      if (groups.isEmpty)
+        Seq()
+      else {
+        val (isUnchanged, links) = groups.head
+        if (isUnchanged)
+          links ++ setAddressValues(groups.tail, links.last.endAddrMValue.toDouble)
+        else {
+          val endValue = groups.find(_._1).map(_._2.head.startAddrMValue)
+          val addressMValues = if (endValue.nonEmpty) {
+            // Give calculated values to new links, keep transferred length
+            val (created, kept) = links.partition(_.status == LinkStatus.New)
+            val coeff = (endValue.get - kept.map(k => k.endAddrMValue - k.startAddrMValue).sum) / created.map(_.geometryLength).sum
+            getLinkAddressValues(links, startValue, coeff)
+          } else {
+            // Check that there are no other groups after this -- there shouldn't because booleans should switch back and forth
+            if (groups.tail.nonEmpty)
+              throw new InvalidAddressDataException("Consecutive non-static project link groups found")
+            getLinkAddressValues(links, startValue)
+          }
+          links.zip(addressMValues.zip(addressMValues.tail)).map{case (pl, (start, end)) =>
+            pl.copy(startAddrMValue = Math.round(start), endAddrMValue = Math.round(end), calibrationPoints = (None, None))} ++
+            setAddressValues(groups.tail, addressMValues.last)
+        }
+      }
+    }
     // Return fixed value for this section if it has one
     def fixedValue(param: (CombinedSection, Option[CombinedSection]), startValue: Option[Long]): Option[Double] = {
       val (currentSection, nextSection) = param
@@ -245,14 +332,9 @@ object ProjectSectionCalculator {
         case (_, _, _) => None
       }
     }
-    // Create equally long sequence with optionality
-    val following = sections.tail.map(cs => Some(cs)) ++ Seq(None)
-    sections.zip(following).scanLeft(0.0) { case (mValue, sec) =>
-      fixedValue(sec, Some(mValue.toLong)) match {
-        case None => mValue + sec._1.geometryLength
-        case Some(fixedValue) => fixedValue
-      }
-    }
+    val rightLinks = setAddressValues(groupLinks(sections.flatMap(_.right.links)), 0.0)
+    val leftLinks = setAddressValues(groupLinks(sections.flatMap(_.left.links)), 0.0)
+    TrackSectionOrder.createCombinedSections(rightLinks, leftLinks)
   }
 
 
@@ -367,6 +449,9 @@ case class RoadAddressSection(roadNumber: Long, roadPartNumberStart: Long, roadP
 case class RoadLinkLength(linkId: Long, geometryLength: Double)
 case class TrackSection(roadNumber: Long, roadPartNumber: Long, track: Track,
                         geometryLength: Double, links: Seq[ProjectLink]) {
+  def reverse = TrackSection(roadNumber, roadPartNumber, track, geometryLength,
+    links.map(l => l.copy(sideCode = SideCode.switch(l.sideCode))).reverse)
+
   lazy val startGeometry: Point = links.head.sideCode match {
     case AgainstDigitizing => links.head.geometry.last
     case _ => links.head.geometry.head

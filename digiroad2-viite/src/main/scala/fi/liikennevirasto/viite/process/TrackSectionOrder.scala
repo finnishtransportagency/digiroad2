@@ -3,12 +3,14 @@ package fi.liikennevirasto.viite.process
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Matrix, Point, Vector3d}
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
-import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.digiroad2.util.Track.RightSide
 import fi.liikennevirasto.viite.dao.ProjectLink
 
 
 object TrackSectionOrder {
+  private val RightVector = Vector3d(-1.0, 0.0, 0.0)
+  private val ForwardVector = Vector3d(0.0, 1.0, 0.0)
 
   def RotationMatrix(tangent: Vector3d): Matrix = {
     if (Math.abs(tangent.x) <= fi.liikennevirasto.viite.Epsilon)
@@ -30,10 +32,16 @@ object TrackSectionOrder {
     def distancePointToLink(p: Point, l: ProjectLink) = {
       GeometryUtils.minimumDistance(p, GeometryUtils.geometryEndpoints(l.geometry))
     }
+    def pickMostAligned(rotationMatrix: Matrix, vector: Vector3d, candidates: Seq[ProjectLink]): ProjectLink = {
+      candidates.minBy(pl => (rotationMatrix* GeometryUtils.firstSegmentDirection(pl.geometry).normalize2D()).dot(vector))
+    }
+
     def pickRightMost(lastLink: ProjectLink, candidates: Seq[ProjectLink]): ProjectLink = {
-      val rotationMatrix = RotationMatrix(GeometryUtils.lastSegmentDirection(lastLink.geometry))
-      val rightVector = Vector3d(-1.0, 0.0, 0.0)
-      candidates.minBy(pl => (rotationMatrix* GeometryUtils.firstSegmentDirection(pl.geometry).normalize2D()).dot(rightVector))
+      pickMostAligned(RotationMatrix(GeometryUtils.lastSegmentDirection(lastLink.geometry)), RightVector, candidates)
+    }
+
+    def pickForwardPointing(lastLink: ProjectLink, candidates: Seq[ProjectLink]): ProjectLink = {
+      pickMostAligned(RotationMatrix(GeometryUtils.lastSegmentDirection(lastLink.geometry)), ForwardVector, candidates)
     }
 
     def recursiveFindAndExtend(currentPoint: Point, ready: Seq[ProjectLink], unprocessed: Seq[ProjectLink]): Seq[ProjectLink] = {
@@ -48,13 +56,17 @@ object TrackSectionOrder {
             subsetB.minBy(b => distancePointToLink(currentPoint, b))
           case 1 =>
             connected.head
-          case 2 if findOnceConnectedLinks(unprocessed).exists(b =>
-            distancePointToLink(currentPoint, b) <= fi.liikennevirasto.viite.MaxJumpForSection) =>
-            findOnceConnectedLinks(unprocessed).filter(b =>
-              distancePointToLink(currentPoint, b) <= fi.liikennevirasto.viite.MaxJumpForSection)
-              .minBy(b => distancePointToLink(currentPoint, b))
+          case 2 =>
+            if (findOnceConnectedLinks(unprocessed).exists(b =>
+              distancePointToLink(currentPoint, b) <= fi.liikennevirasto.viite.MaxJumpForSection)) {
+              findOnceConnectedLinks(unprocessed).filter(b =>
+                distancePointToLink(currentPoint, b) <= fi.liikennevirasto.viite.MaxJumpForSection)
+                .minBy(b => distancePointToLink(currentPoint, b))
+            } else {
+              pickRightMost(ready.last, connected)
+            }
           case _ =>
-            pickRightMost(ready.last, connected)
+            pickForwardPointing(ready.last, connected)
         }
         // Check if link direction needs to be turned and choose next point
         val nextGeo = nextLink.geometry
@@ -62,7 +74,7 @@ object TrackSectionOrder {
           (SideCode.AgainstDigitizing, nextGeo.head)
         else
           (SideCode.TowardsDigitizing, nextGeo.last)
-        recursiveFindAndExtend(nextPoint, ready ++ Seq(nextLink.copy(sideCode = sideCode)), unprocessed.filter(pl => pl == nextLink))
+        recursiveFindAndExtend(nextPoint, ready ++ Seq(nextLink.copy(sideCode = sideCode)), unprocessed.filterNot(pl => pl == nextLink))
       }
     }
 
@@ -92,12 +104,30 @@ object TrackSectionOrder {
       }.reverse.map(fromProjectLinks)
     }
 
-    def combineSections(rightSection: Seq[TrackSection], leftSection: Seq[TrackSection]) = {
-      rightSection.zip(leftSection).map {
-        case (r, _) if r.track == Track.Combined =>
-          CombinedSection(r.startGeometry, r.endGeometry, r.geometryLength, r, r)
-        case (r, l)  =>
-          CombinedSection(r.startGeometry, r.endGeometry, (r.geometryLength + l.geometryLength)*.5, l, r)
+    def combineSections(rightSection: Seq[TrackSection], leftSection: Seq[TrackSection]): Seq[CombinedSection] = {
+      def needsReversal(left: TrackSection, right: TrackSection): Boolean = {
+        GeometryUtils.areAdjacent(left.startGeometry, right.endGeometry) ||
+          GeometryUtils.areAdjacent(left.endGeometry, right.startGeometry)
+      }
+//      rightSection.foreach(s => s.links.foreach(println))
+//      println
+//      leftSection.foreach(s => s.links.foreach(println))
+//      println
+//      rightSection.zip(leftSection).foreach(println)
+//      println("***")
+      rightSection.map { r =>
+        r.track match {
+          case Track.Combined =>
+            CombinedSection(r.startGeometry, r.endGeometry, r.geometryLength, r, r)
+          case Track.RightSide =>
+            val l = leftSection.filter(_.track == Track.LeftSide).minBy(l =>
+              Math.min(
+                Math.min(l.startGeometry.distance2DTo(r.startGeometry), l.startGeometry.distance2DTo(r.endGeometry)),
+              Math.min(l.endGeometry.distance2DTo(r.startGeometry), l.endGeometry.distance2DTo(r.endGeometry))))
+            CombinedSection(r.startGeometry, r.endGeometry, .5*(r.geometryLength + l.geometryLength),
+              if (needsReversal(l, r)) l.reverse else l, r)
+          case _ => throw new RoadAddressException(s"Incorrect track code ${r.track}")
+        }
       }
 
     }
