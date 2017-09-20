@@ -492,9 +492,9 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
           s"${terminalAsset.nationalId} $name"
         }
         val newProperty = Property(0, "liitetty terminaaliin", PropertyTypes.ReadOnlyText, values = Seq(PropertyValue(terminalId.toString, displayValue)))
-        (asset.copy(propertyData = asset.propertyData ++ Seq(newProperty)), true)
+        (asset.copy(propertyData = asset.propertyData ++ Seq(newProperty)), false)
       case _ =>
-        (asset, true)
+        (asset, false)
     }
   }
 
@@ -590,7 +590,7 @@ class TerminalBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopD
       val stopName = extractStopName(a.propertyData)
       PropertyValue(a.id.toString, Some(s"""${a.nationalId} $stopName"""), checked = false)
     })
-    (asset.copy(propertyData = asset.propertyData.filterNot(p => p.publicId == terminalChildrenPublicId) ++ Seq(newProperty)), true)
+    (asset.copy(propertyData = asset.propertyData.filterNot(p => p.publicId == terminalChildrenPublicId) ++ Seq(newProperty)), false)
   }
 
   override def create(asset: NewMassTransitStop, username: String, point: Point, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass], linkSource: LinkGeomSource, roadLink: RoadLink): PersistedMassTransitStop = {
