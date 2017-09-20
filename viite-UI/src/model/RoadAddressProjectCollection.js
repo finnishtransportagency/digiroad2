@@ -198,7 +198,6 @@
       }
     };
 
-
     this.saveProjectLinks = function(changedLinks, statusCode) {
       console.log("Save Project Links called");
       applicationModel.addSpinner();
@@ -210,23 +209,42 @@
       }));
 
       var projectId = projectinfo.id;
-      var data = {'linkIds': linkIds,
-        'projectId': projectId,
-        'newStatus': statusCode,
-        'newRoadNumber':Number($('#roadAddressProject').find('#tie')[0].value),
-        'newRoadPart':Number($('#roadAddressProject').find('#osa')[0].value)};
+
+      var data = [linkIds,
+        projectId,
+        Number($('#roadAddressProject').find('#tie')[0].value),
+        Number($('#roadAddressProject').find('#osa')[0].value),
+        Number($('#roadAddressProject').find('#ajr')[0].value),
+        Number($('#roadAddressProject').find('#discontinuityDropdown')[0].value),
+        Number($('#roadAddressProject').find('#ely')[0].value),
+        Number(_.first(changedLinks).roadLinkSource),
+        Number($('#roadAddressProject').find('#roadTypeDropDown')[0].value)
+      ];
 
       if(!_.isEmpty(linkIds) && typeof projectId !== 'undefined' && projectId !== 0){
-        backend.updateProjectLinks(data, function(successObject) {
-          if (!successObject.success) {
-            new ModalConfirm("Tämä tieosoite on jo käytössä.");
-            applicationModel.removeSpinner();
-          } else {
-            publishableProject = successObject.publishable;
-            eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
-          }
-        });
-
+        if(statusCode == 2){
+          backend.insertNewProjectLinks(data, function(successObject) {
+            if (!successObject.success) {
+              new ModalConfirm(successObject.errormessage);
+              applicationModel.removeSpinner();
+            } else {
+              publishableProject = successObject.publishable;
+              eventbus.trigger('projectLink:projectLinksCreateSuccess');
+              eventbus.trigger('roadAddress:projectLinksCreateSuccess');
+            }
+          });
+        }
+        else {
+          backend.updateProjectLinks(data, function (successObject) {
+            if (!successObject.success) {
+              new ModalConfirm("Tämä tieosoite on jo käytössä.");
+              applicationModel.removeSpinner();
+            } else {
+              publishableProject = successObject.publishable;
+              eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
+            }
+          });
+        }
       } else {
         console.log(!_.isEmpty(linkIds));
         console.log(typeof projectId);
@@ -267,7 +285,7 @@
       });
     };
 
-    this.createProjectLinks = function(toBeCreatedLinks) {
+  /*  this.createProjectLinks = function(toBeCreatedLinks) {
       console.log("Create Project Links called");
       applicationModel.addSpinner();
       var linkIds = _.unique(_.map(toBeCreatedLinks,function (t){
@@ -297,7 +315,7 @@
           eventbus.trigger('roadAddress:projectLinksCreateSuccess');
         }
       });
-    };
+    };*/
 
     this.changeNewProjectLinkDirection = function (projectId, selectedLinks){
       applicationModel.addSpinner();

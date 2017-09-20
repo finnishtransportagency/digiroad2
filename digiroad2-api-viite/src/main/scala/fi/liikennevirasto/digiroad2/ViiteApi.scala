@@ -37,11 +37,11 @@ case class ProjectRoadAddressInfo(projectId : Long, roadNumber: Long, roadPartNu
 case class RoadAddressProjectExtractor(id: Long, projectEly: Option[Long], status: Long, name: String, startDate: String,
                                        additionalInfo: String, roadPartList: List[RoadPartExtractor])
 
-case class RoadAddressProjectLinksExtractor(linkIds: Set[Long], status: Int, projectId: Long, roadNumber: Long, roadPartNumber : Long, trackCode: Int, discontinuity :Int, roadEly: Long, roadLinkSource: Int, roadType: Int)
+case class RoadAddressProjectLinksExtractor(linkIds: Set[Long], linkStatus: Int, projectId: Long, roadNumber: Long, roadPartNumber : Long, trackCode: Int, discontinuity :Int, roadEly: Long, roadLinkSource: Int, roadType: Int)
 
 case class RoadPartExtractor(roadNumber: Long, roadPartNumber: Long)
 
-case class RoadAddressProjectLinkUpdate(linkIds: Set[Long], projectId: Long, newStatus: Int, newRoadNumber: Int, newRoadPart: Int)
+//case class RoadAddressProjectLinkUpdate(linkIds: Set[Long], projectId: Long, newStatus: Int, newRoadNumber: Int, newRoadPart: Int)
 class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
                val roadAddressService: RoadAddressService,
                val projectService: ProjectService,
@@ -364,9 +364,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   put("/roadlinks/roadaddress/project/links") {
     val user = userProvider.getCurrentUser()
     try {
-      val links = parsedBody.extract[RoadAddressProjectLinkUpdate]
+      val links = parsedBody.extract[RoadAddressProjectLinksExtractor]
       projectService.updateProjectLinkStatus(links.projectId, links.linkIds,
-        LinkStatus.apply(links.newStatus), user.username, links.newRoadNumber, links.newRoadPart) match {
+        LinkStatus.apply(links.linkStatus), user.username, links.roadNumber, links.roadPartNumber) match {
         case Some(errorMessage) => Map("success" -> false, "errormessage" -> errorMessage)
         case None => Map("success" -> true, "id" -> links.projectId, "publishable" -> (projectService.projectLinkPublishable(links.projectId)))
       }

@@ -458,7 +458,7 @@
           rootElement.html(emptyTemplate(currentProject.project));
         }
         else if( $('[id=dropDown] :selected').val() === ACTION_NEW_LINK){
-          projectCollection.createProjectLinks(selectedProjectLink);
+          projectCollection.saveProjectLinks(selectedProjectLink);
         }
         else if( $('[id=dropDown] :selected').val() === ACTION_UNCHANGED){
           projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), STATUS_UNCHANGED);
