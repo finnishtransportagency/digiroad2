@@ -17,6 +17,7 @@
     var assetHasBeenModified = false;
     var currentAsset = {};
     var changedProps = [];
+    var assetPosition;
 
     var close = function() {
       assetHasBeenModified = false;
@@ -88,9 +89,12 @@
       currentAsset = asset;
       currentAsset.payload = {};
       assetHasBeenModified = true;
-      var position = asset.lon + ',' +asset.lat;
-      //backend.getAssetTypeProperties(function(properties) {
-      backend.getAssetTypeProperties(position, function(properties) {
+      if (typeof asset.stopTypes[0] !== 'undefined') {
+        assetPosition = asset.lon + ',' + asset.lat;
+      } else {
+        assetPosition = undefined;
+      }
+      backend.getAssetTypeProperties(assetPosition, function(properties) {
         _.find(properties, function (property) {
           return property.publicId === 'vaikutussuunta';
         }).values.map(function (value) {

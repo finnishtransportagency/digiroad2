@@ -51,7 +51,6 @@
 
   var SaveButton = function(isTerminalActive) {
     var deleteMessage = isTerminalActive ? 'valitsemasi terminaalipysäkin' : 'pysäkin';
-
     var element = $('<button />').addClass('save btn btn-primary').text('Tallenna').click(function () {
       if (poistaSelected) {
         new GenericConfirmPopup('Haluatko varmasti poistaa ' + deleteMessage + '?', {

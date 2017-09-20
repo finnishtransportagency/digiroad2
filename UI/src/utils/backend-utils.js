@@ -326,10 +326,12 @@
       return $.getJSON('api/massTransitStops/floating');
     };
 
-    this.getAssetTypeProperties = function(position, callback) {
-    //this.getAssetTypeProperties = function (callback) {
-    //  $.get('api/assetTypeProperties/10', callback);
-      $.get('api/massTransitStops/metadata?position=' + position, callback);
+    this.getAssetTypeProperties = function (position, callback) {
+      if (position) {
+        $.get('api/massTransitStops/metadata?position=' + position, callback);
+      } else {
+        $.get('api/massTransitStops/metadata', callback);
+      }
     };
 
     this.getIncompleteLinks = function() {
