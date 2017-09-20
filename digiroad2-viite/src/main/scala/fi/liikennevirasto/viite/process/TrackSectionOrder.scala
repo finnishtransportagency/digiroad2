@@ -76,42 +76,31 @@ object TrackSectionOrder {
     TrackSection(pl.roadNumber, pl.roadPartNumber, pl.track, pl.endMValue, Seq(pl))
   }
 
-  def orderTrackSectionsByGeometry(rightLinks: Seq[ProjectLink], leftLinks: Seq[ProjectLink]): Seq[CombinedSection] = {
-    def groupIntoSection(section: TrackSection, seq: Seq[ProjectLink]): (Seq[TrackSection]) = {
-      if (seq.isEmpty)
-        Seq(section)
-      else {
-        if (section.track == seq.head)
-          groupIntoSection(section.copy(links = section.links ++ seq.headOption,
-            geometryLength = section.geometryLength + (seq.head.endMValue - seq.head.startMValue)), seq.tail)
-        else {
-          val pl = seq.head
-          Seq(section) ++ groupIntoSection(toSection(pl), seq.tail)
+  def createCombinedSections(rightLinks: Seq[ProjectLink], leftLinks: Seq[ProjectLink]): Seq[CombinedSection] = {
+    def fromProjectLinks(s: Seq[ProjectLink]): TrackSection = {
+      val pl = s.head
+      TrackSection(pl.roadNumber, pl.roadPartNumber, pl.track, s.map(_.geometryLength).sum, s)
+    }
+    def groupIntoSections(seq: Seq[ProjectLink]): (Seq[TrackSection]) = {
+      val changePoints = seq.zip(seq.tail).filter{ case (pl1, pl2) => pl1.track != pl2.track}
+      seq.foldLeft(Seq(Seq[ProjectLink]())) { case (tracks, pl) =>
+        if (changePoints.exists(_._2 == pl)) {
+          Seq(Seq(pl)) ++ tracks
+        } else {
+          Seq(tracks.head ++ Seq(pl)) ++ tracks.tail
         }
-      }
+      }.reverse.map(fromProjectLinks)
     }
 
     def combineSections(rightSection: Seq[TrackSection], leftSection: Seq[TrackSection]) = {
+      rightSection.zip(leftSection).map {
+        case (r, _) if r.track == Track.Combined =>
+          CombinedSection(r.startGeometry, r.endGeometry, r.geometryLength, r, r)
+        case (r, l)  =>
+          CombinedSection(r.startGeometry, r.endGeometry, (r.geometryLength + l.geometryLength)*.5, l, r)
+      }
 
     }
-    // Collect in reverse order because it's neat
-    val segmentedRight = rightLinks.tail.foldLeft(Seq(Seq(rightLinks.head))){
-      case (seg, pl) =>
-        if (seg.head.head.track == pl.track)
-          Seq(Seq(pl) ++ seg.head) ++ seg.tail
-        else
-          Seq(Seq(pl)) ++ seg.tail
-    }.map(_.reverse).reverse
-    val segmentedLeft = leftLinks.tail.foldLeft(Seq(Seq(leftLinks.head))){
-      case (seg, pl) =>
-        if (seg.head.head.track == pl.track)
-          Seq(Seq(pl) ++ seg.head) ++ seg.tail
-        else
-          Seq(Seq(pl)) ++ seg.tail
-    }.map(_.reverse).reverse
-    val sectionRight = groupIntoSection(toSection(rightLinks.head), rightLinks.tail)
-    val sectionLeft = groupIntoSection(toSection(leftLinks.head),leftLinks.tail)
-
-
+    combineSections(groupIntoSections(rightLinks), groupIntoSections(leftLinks))
   }
 }

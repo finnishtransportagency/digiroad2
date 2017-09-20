@@ -65,35 +65,28 @@ object ProjectSectionCalculator {
     * @param projectLinks List of addressed links in project
     * @return Sequence of project links with address values and calibration points.
     */
-  def assignMValues(projectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
+  def assignMValues(projectLinks: Seq[ProjectLink], userGivenCalibrationPoints: Seq[CalibrationPoint] = Seq()): Seq[ProjectLink] = {
     val (terminated, others) = projectLinks.partition(_.status == LinkStatus.Terminated)
     val (newLinks, nonTerminatedLinks) = others.partition(l => l.status == LinkStatus.New)
-    assignMValues(newLinks, nonTerminatedLinks) ++ terminated
+    assignMValues(newLinks, nonTerminatedLinks, userGivenCalibrationPoints) ++ terminated
   }
 
   /**
-    * Calculates the address M values for the given set of project links and assigns them calibration points where applicable
-    * Deprecated: use assignMValues(projectLinks: Seq[ProjectLink]) instead.
-    * @param newProjectLinks List of new addressed links in project
-    * @param oldProjectLinks Other links in project, used as a guidance
-    * @return Sequence of project links with address values and calibration points.
+    * Find a starting point for this road part
+    * @param newLinks Status = New links that need to have an address
+    * @param oldLinks Other links that already existed before the project
+    * @return Starting point
     */
-  @Deprecated
-  def determineMValues(newProjectLinks: Seq[ProjectLink], oldProjectLinks: Seq [ProjectLink]): Seq[ProjectLink] = {
-    assignMValues(newProjectLinks, oldProjectLinks)
-  }
-  /**
-    * Calculates the address M values for the given set of project links and assigns them calibration points where applicable
-    * @param newProjectLinks List of new addressed links in project
-    * @param oldProjectLinks Other links in project, used as a guidance
-    * @return Sequence of project links with address values and calibration points.
-    */
-  private def assignMValues(newProjectLinks: Seq[ProjectLink], oldProjectLinks: Seq [ProjectLink]): Seq[ProjectLink] = {
-    // Sort: smallest endAddrMValue is first but zero does not count.
+  private def findStartingPoint(newLinks: Seq[ProjectLink], oldLinks: Seq[ProjectLink],
+                                calibrationPoints: Seq[CalibrationPoint]): Point = {
+    def calibrationPointToPoint(calibrationPoint: CalibrationPoint): Option[Point] = {
+      val link = oldLinks.find(_.linkId == calibrationPoint.linkId).orElse(newLinks.find(_.linkId == calibrationPoint.linkId))
+      link.flatMap(pl => GeometryUtils.calculatePointFromLinearReference(pl.geometry, calibrationPoint.segmentMValue))
+    }
     def addressSort(projectLink1: ProjectLink, projectLink2: ProjectLink): Boolean = {
       // Test if exactly one already was in project -> prefer them for starting points.
-      if (oldProjectLinks.exists(lip => lip.linkId == projectLink1.linkId) ^ oldProjectLinks.exists(lip => lip.linkId == projectLink2.linkId)) {
-        oldProjectLinks.exists(lip => lip.linkId == projectLink1.linkId)
+      if (oldLinks.exists(lip => lip.linkId == projectLink1.linkId) ^ oldLinks.exists(lip => lip.linkId == projectLink2.linkId)) {
+        oldLinks.exists(lip => lip.linkId == projectLink1.linkId)
       } else {
         if (projectLink1.endAddrMValue != projectLink2.endAddrMValue) {
           if (projectLink1.endAddrMValue == 0)
@@ -106,6 +99,29 @@ object ProjectSectionCalculator {
         }
       }
     }
+    calibrationPoints.find(_.addressMValue == 0).flatMap(calibrationPointToPoint).getOrElse{
+      val linkPartitions = SectionPartitioner.partition(newLinks).map(_.sortWith(addressSort)).map(orderProjectLinksTopologyByGeometry)
+      val oldLinkPartitions = SectionPartitioner.partition(oldLinks).map(_.sortWith(addressSort))
+      val sections = linkPartitions.map(lp =>
+        TrackSection(lp.head.roadNumber, lp.head.roadPartNumber, lp.head.track, lp.map(_.geometryLength).sum, lp)
+      )
+      val existingSections = oldLinkPartitions.map(lp =>
+        TrackSection(lp.head.roadNumber, lp.head.roadPartNumber, lp.head.track, lp.map(_.geometryLength).sum, lp)
+      )
+      orderTrackSectionsByGeometry(sections ++ existingSections).head.startGeometry}
+  }
+
+  /**
+    * Calculates the address M values for the given set of project links and assigns them calibration points where applicable
+    *
+    * @param newProjectLinks List of new addressed links in project
+    * @param oldProjectLinks Other links in project, used as a guidance
+    * @return Sequence of project links with address values and calibration points.
+    */
+  private def assignMValues(newProjectLinks: Seq[ProjectLink], oldProjectLinks: Seq[ProjectLink],
+                            userCalibrationPoints: Seq[CalibrationPoint]): Seq[ProjectLink] = {
+    // TODO: use user given calibration points (US-564, US-666, US-639)
+    // Sort: smallest endAddrMValue is first but zero does not count.
     def makeStartCP(projectLink: ProjectLink) = {
       Some(CalibrationPoint(projectLink.linkId, if (projectLink.sideCode == TowardsDigitizing) 0.0 else projectLink.geometryLength, projectLink.startAddrMValue))
     }
@@ -199,16 +215,10 @@ object ProjectSectionCalculator {
     val group = (groupedProjectLinks.keySet ++ groupedOldLinks.keySet).map(k =>
       k -> (groupedProjectLinks.getOrElse(k, Seq()), groupedOldLinks.getOrElse(k, Seq())))
     group.flatMap { case (part, (projectLinks, oldLinks)) => {
-      val linkPartitions = SectionPartitioner.partition(projectLinks).map(_.sortWith(addressSort)).map(orderProjectLinksTopologyByGeometry)
-      val oldLinkPartitions = SectionPartitioner.partition(oldLinks).map(_.sortWith(addressSort))
       try {
-        val sections = linkPartitions.map(lp =>
-          TrackSection(lp.head.roadNumber, lp.head.roadPartNumber, lp.head.track, lp.map(_.geometryLength).sum, lp)
-        )
-        val existingSections = oldLinkPartitions.map(lp =>
-          TrackSection(lp.head.roadNumber, lp.head.roadPartNumber, lp.head.track, lp.map(_.geometryLength).sum, lp)
-        )
-        val ordSections = orderTrackSectionsByGeometry(sections ++ existingSections)
+        val (right, left) = TrackSectionOrder.orderProjectLinksTopologyByGeometry(
+          findStartingPoint(projectLinks, oldLinks, userCalibrationPoints), projectLinks++oldLinks)
+        val ordSections = TrackSectionOrder.createCombinedSections(right, left)
         val mValues = calculateSectionAddressValues(ordSections)
         val links = ordSections.zip(mValues.zip(mValues.tail)).flatMap { case (section, (start, end)) =>
           assignLinkValues(section, start.toLong, end.toLong)
