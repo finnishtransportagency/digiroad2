@@ -28,7 +28,7 @@ import org.mockito.Mockito.{when, _}
 import org.mockito.invocation.InvocationOnMock
 import org.mockito.stubbing.Answer
 import org.scalatest.mock.MockitoSugar
-import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
+import org.scalatest.{BeforeAndAfter, FunSuite, Matchers, fixture}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
@@ -1630,6 +1630,83 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       linksRoad11.last.calibrationPoints._2 should not be (None)
       linksRoad11.size should be (address1.size + 1)
       linksRoad259.size should be (address2.size - 1)
+    }
+  }
+
+  test("Termination and creation of new road links in tracks 1 and 2") {
+    runWithRollback {
+      val address1 = RoadAddressDAO.fetchByRoadPart(5, 201, false).sortBy(_.startAddrMValue)
+      val address2 = RoadAddressDAO.fetchByRoadPart(5, 202, false).sortBy(_.startAddrMValue)
+      val reservedRoadPart1 = ReservedRoadPart(address1.head.id, address1.head.roadNumber, address1.head.roadPartNumber, address1.last.endAddrMValue, address1.last.endAddrMValue, address1.head.discontinuity, 8, None, None)
+      val reservedRoadPart2 = ReservedRoadPart(address2.head.id, address2.head.roadNumber, address2.head.roadPartNumber, address2.last.endAddrMValue, address2.last.endAddrMValue, address2.head.discontinuity, 8, None, None)
+      val rap = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.now(), DateTime.now(), "Some additional info", Seq(reservedRoadPart1) ++ Seq(reservedRoadPart2), None , None)
+
+      val roadParts = (address1 ++ address2).map(address => {
+        toProjectLink(rap, LinkStatus.NotHandled)(address)
+      })
+
+      when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(roadParts.map(toRoadLink))
+      val project = projectService.createRoadLinkProject(rap)
+
+      //Links to terminate: 2226690, 2226637, 2226636, 2226676, 2226658, 2226677, 2226482
+      projectService.updateProjectLinkStatus(project.id, Set(2226690, 2226637), LinkStatus.Terminated, "TestUser", 5, 201) should be (None)
+      projectService.updateProjectLinkStatus(project.id, Set(2226636), LinkStatus.Terminated, "TestUser") should be (None)
+      projectService.updateProjectLinkStatus(project.id, Set(2226676, 2226658), LinkStatus.Terminated, "TestUser") should be (None)
+      projectService.updateProjectLinkStatus(project.id, Set(2226677, 2226482), LinkStatus.Terminated, "TestUser") should be (None)
+
+      //NewLinks
+        //Road part 201
+          //Track code 1: 2226681, 6564541
+          //Track code 2: 2226632
+        //Road part 202
+          //Track code 1: 2226660
+          //Track code 2: 2226480
+      val mappedGeomsNewLinks = StaticTestData.mappedGeoms(Seq(2226681, 6564541, 2226632, 2226660, 2226480))
+      val geom1 = mappedGeomsNewLinks(2226681)
+      val geom2 = mappedGeomsNewLinks(6564541)
+      val geom3 = mappedGeomsNewLinks(2226632)
+      val geom4 = mappedGeomsNewLinks(2226660)
+      val geom5 = mappedGeomsNewLinks(2226480)
+
+      val link1 = ProjectAddressLink(NewRoadAddress, 2226681, geom1, GeometryUtils.geometryLength(geom1),
+        State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
+        RoadType.PublicRoad, "X", 749, None, None, Map.empty, 5, 201, 1L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom1),
+        SideCode.Unknown, None, None, Anomaly.None, 0L, LinkStatus.New)
+
+      val link2 = ProjectAddressLink(NewRoadAddress, 6564541, geom2, GeometryUtils.geometryLength(geom2),
+        State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
+        RoadType.PublicRoad, "X", 749, None, None, Map.empty, 5, 201, 1L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom2),
+        SideCode.Unknown, None, None, Anomaly.None, 0L, LinkStatus.New)
+
+      val link3 = ProjectAddressLink(NewRoadAddress, 2226632, geom3, GeometryUtils.geometryLength(geom3),
+        State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
+        RoadType.PublicRoad, "X", 749, None, None, Map.empty, 5, 201, 2L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom3),
+        SideCode.Unknown, None, None, Anomaly.None, 0L, LinkStatus.New)
+
+      val link4 = ProjectAddressLink(NewRoadAddress, 2226660, geom4, GeometryUtils.geometryLength(geom4),
+        State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
+        RoadType.PublicRoad, "X", 749, None, None, Map.empty, 5, 202, 1L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom4),
+        SideCode.Unknown, None, None, Anomaly.None, 0L, LinkStatus.New)
+
+      val link5 = ProjectAddressLink(NewRoadAddress, 2226480, geom5, GeometryUtils.geometryLength(geom5),
+        State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
+        RoadType.PublicRoad, "X", 749, None, None, Map.empty, 5, 202, 2L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom5),
+        SideCode.Unknown, None, None, Anomaly.None, 0L, LinkStatus.New)
+
+      projectService.addNewLinksToProject(Seq(link1,link2), project.id, 5, 201, 1, 5) should be (None)
+      projectService.addNewLinksToProject(Seq(link3), project.id, 5, 201, 2, 5) should be (None)
+      projectService.addNewLinksToProject(Seq(link4), project.id, 5, 202, 1, 5) should be (None)
+      projectService.addNewLinksToProject(Seq(link5), project.id, 5, 202, 2, 5) should be (None)
+
+      val linksAfter = ProjectDAO.getProjectLinks(project.id).sortBy(_.startAddrMValue)
+      val newLinks = linksAfter.filter(_.status == LinkStatus.New).sortBy(_.startAddrMValue)
+      val terminatedLinks = linksAfter.filter(_.status == LinkStatus.Terminated)
+      linksAfter.size should be (roadParts.size + newLinks.size)
+      val track1Links = newLinks.groupBy(l => (l.roadPartNumber, l.track))
+      track1Links
+      //track1Links
+
+
     }
   }
 }
