@@ -309,7 +309,7 @@
           currentProject.isDirty = false;
           jQuery('.modal-overlay').remove();
           if(!_.isUndefined(result.projectAddresses)) {
-            eventbus.trigger('linkProperties:selectedProject', result.projectAddresses.linkId);
+            eventbus.trigger('linkProperties:selectedProject', result.projectAddresses);
           }
           eventbus.trigger('roadAddressProject:openProject', result.project);
           rootElement.html(selectedProjectLinkTemplate(currentProject, options, selectedProjectLink));
