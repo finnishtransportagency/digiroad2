@@ -75,7 +75,7 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     def fillIncompletedRoadlinks(assets: Seq[PersistedLinearAsset], roadLink: RoadLink, changeInfo: ChangeInfo ): Seq[PersistedLinearAsset] = {
       val pointsOfInterest = (assets.map(_.startMeasure) ++ assets.map(_.endMeasure) ++  Seq(GeometryUtils.geometryLength(roadLink.geometry))).distinct.sorted
 
-      if(pointsOfInterest.length < 2)
+      if(pointsOfInterest.length <= 2)
         return Seq()
 
       val pieces = pointsOfInterest.zip(pointsOfInterest.tail)

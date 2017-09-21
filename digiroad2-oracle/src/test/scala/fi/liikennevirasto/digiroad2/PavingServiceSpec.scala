@@ -22,6 +22,27 @@ class PavingServiceSpec extends FunSuite with Matchers {
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val linearAssetDao = new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
 
+  when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+  when(mockVVHRoadLinkClient.fetchByLinkId(388562360l)).thenReturn(Some(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+  when(mockVVHClient.fetchRoadLinkByLinkId(any[Long])).thenReturn(Some(VVHRoadlink(388562360l, 235, Seq(Point(0, 0), Point(10, 0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)))
+
+
+  val roadLinkWithLinkSource = Seq(RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+    1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
+    ,RoadLink(388562360l, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+      1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
+    ,RoadLink(388562361l, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+      1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
+    ,RoadLink(388562362l, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, Municipality,
+      1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235), "SURFACETYPE" -> BigInt(2)), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface))
+
+  when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((roadLinkWithLinkSource, Nil))
+  when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLinkWithLinkSource)
+
+  when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(30, Seq(1), "mittarajoitus"))
+    .thenReturn(Seq(PersistedLinearAsset(1, 1, 1, Some(NumericValue(40000)), 0.4, 9.6, None, None, None, None, false, 30, 0, None, LinkGeomSource.NormalLinkInterface)))
+
   object PassThroughService extends LinearAssetOperations {
     override def withDynTransaction[T](f: => T): T = f
     override def roadLinkService: RoadLinkService = mockRoadLinkService
@@ -84,8 +105,9 @@ class PavingServiceSpec extends FunSuite with Matchers {
 
   test("Should not create new paving assets and return the existing paving assets when VVH doesn't have change information") {
 
-    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val service = createService()
+    val service = new PavingService(mockRoadLinkService, mockEventBus) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
 
     val newLinkId = 5001
     val municipalityCode = 235
@@ -97,7 +119,7 @@ class PavingServiceSpec extends FunSuite with Matchers {
     val attributes = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))
 
     val newRoadLink = RoadLink(newLinkId, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, attributes)
-
+    when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(newRoadLink))
     runWithRollback {
 
       val newAssetId = ServiceWithDao.create(Seq(NewLinearAsset(newLinkId, 0, 20, NumericValue(1), 1, 0, None)), PavingAssetTypeId, "testuser")
@@ -120,8 +142,9 @@ class PavingServiceSpec extends FunSuite with Matchers {
 
   test("Should be created only 1 new paving asset when get 3 roadlink change information from vvh and only 1 roadlink have surfacetype equal 2") {
 
-    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val service = createService()
+    val service = new PavingService(mockRoadLinkService, new DummyEventBus) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
 
     val newLinkId2 = 5002
     val newLinkId1 = 5001
@@ -152,7 +175,7 @@ class PavingServiceSpec extends FunSuite with Matchers {
 
       val existingAssets = service.getByBoundingBox(PavingAssetTypeId, boundingBox).toList.flatten
 
-      val filteredCreatedAssets = existingAssets.filter(p => (p.linkId == newLinkId2 && p.value.isDefined))
+      val filteredCreatedAssets = existingAssets.filter(p => p.linkId == newLinkId2 && p.value.isDefined)
 
       existingAssets.length should be (3)
       filteredCreatedAssets.length should be (1)
@@ -164,9 +187,9 @@ class PavingServiceSpec extends FunSuite with Matchers {
 
   test("Should not create paving assets when it's requested a different asset type.") {
 
-    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val service = createService()
-
+    val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
     val newLinkId = 5001
     val municipalityCode = 235
     val administrativeClass = Municipality
@@ -357,7 +380,9 @@ class PavingServiceSpec extends FunSuite with Matchers {
 
   test("If VVH does not supply a change Information then no new asset should be created.") {
     val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
-    val service = createService()
+    val service = new PavingService(mockRoadLinkService, new DummyEventBus) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
 
     val newLinkId = 5001
     val municipalityCode = 235
