@@ -64,6 +64,11 @@ trait AbstractBusStopStrategy {
     massTransitStopDao.updateNumberPropertyValue(assetId, "linkin_hallinnollinen_luokka", administrativeClass.value)
   }
 
+  protected def updatePropertiesForAsset(id: Long, properties: Seq[SimpleProperty], administrativeClass: AdministrativeClass, nationalId: Long) = {
+    massTransitStopDao.updateAssetProperties(id, properties)
+    updateAdministrativeClassValue(id, administrativeClass)
+  }
+
   protected def setPropertiesDefaultValues(properties: Seq[SimpleProperty]): Seq[SimpleProperty] = {
     val inventoryDate = properties.find(_.publicId == MassTransitStopOperations.InventoryDateId)
     val notInventoryDate = properties.filterNot(_.publicId == MassTransitStopOperations.InventoryDateId)
@@ -334,7 +339,7 @@ trait MassTransitStopService extends PointAssetOperations {
 
     def extractStopName(properties: Seq[Property]): String = {
       properties
-        .filter { property => property.publicId.equals("nimi_ruotsiksi") }
+        .filter { property => property.publicId.equals("nimi_suomeksi") }
         .filterNot { property => property.values.isEmpty }
         .map(_.values.head)
         .map(_.propertyValue)

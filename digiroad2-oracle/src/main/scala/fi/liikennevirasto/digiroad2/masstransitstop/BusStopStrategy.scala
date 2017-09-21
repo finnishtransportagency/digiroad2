@@ -11,7 +11,7 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
   override def enrichBusStop(asset: PersistedMassTransitStop): (PersistedMassTransitStop, Boolean) = {
     def extractStopName(properties: Seq[Property]): String = {
       properties
-        .filter { property => property.publicId.equals("nimi_ruotsiksi") }
+        .filter { property => property.publicId.equals("nimi_suomeksi") }
         .filterNot { property => property.values.isEmpty }
         .map(_.values.head)
         .map(_.propertyValue)
@@ -81,13 +81,7 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
       filterNot(_._1 == AssetPropertyConfiguration.ValidityDirectionId)
 
     val props = setPropertiesDefaultValues(properties.toSeq)
-    val mergedProperties = (asset.propertyData.
-      filterNot(property => props.exists(_.publicId == property.publicId)).
-      map(property => SimpleProperty(property.publicId, property.values)) ++ props).
-      filterNot(property => commonAssetProperties.exists(_._1 == property.publicId))
-
-    //TODO check what it was suppose to do after
-    //update(asset, optionalPosition, username, mergedProperties, roadLink, Operation.Noop)
+    updatePropertiesForAsset(asset.id, props, roadLink.administrativeClass, asset.nationalId)
 
     fetchAsset(asset.id)
   }
