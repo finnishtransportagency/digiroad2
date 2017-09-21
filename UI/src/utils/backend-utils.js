@@ -556,7 +556,7 @@
     };
 
     this.withAssetTypePropertiesData = function(assetTypePropertiesData) {
-      self.getAssetTypeProperties = function(callback) {
+      self.getAssetTypeProperties = function(position, callback) {
         callback(assetTypePropertiesData);
       };
       return self;
