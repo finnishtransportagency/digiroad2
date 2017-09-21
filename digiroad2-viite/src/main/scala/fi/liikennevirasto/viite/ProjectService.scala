@@ -421,8 +421,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  private def isRoadPartTransfer(projectLinks: Seq[ProjectLink], roadNumber: Long , newRoadPart: Long): Boolean = {
-    !projectLinks.exists(_.roadPartNumber == newRoadPart) && projectLinks.exists(_.roadNumber == roadNumber)
+  private def isRoadPartTransfer(projectLinks: Seq[ProjectLink], updatedProjectLinks: Seq[ProjectLink], newRoadNumber: Long , newRoadPart: Long): Boolean = {
+    projectLinks.exists(l => l.roadNumber == newRoadNumber && l.roadPartNumber == newRoadPart) match {
+      case true => !updatedProjectLinks.exists(_.roadPartNumber == newRoadPart) || !updatedProjectLinks.exists(_.roadNumber == newRoadNumber)
+      case _ => false
+    }
   }
 
   /**
@@ -701,9 +704,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             ProjectDAO.updateProjectLinkNumbering(projectId, updatedProjectLinks.head.roadNumber, updatedProjectLinks.head.roadPartNumber, linkStatus, newRoadNumber, newRoadPart, userName)
           }
           case LinkStatus.Transfer => {
-            if (isRoadPartTransfer(updatedProjectLinks, newRoadNumber, newRoadPart)) {
-              val updated = updatedProjectLinks.map(updl => {
-                updl.copy(roadPartNumber = newRoadPart, status = linkStatus, calibrationPoints = (None, None))
+           if (isRoadPartTransfer(projectLinks, updatedProjectLinks, newRoadNumber, newRoadPart)) {
+            val updated = updatedProjectLinks.map(updl => {
+              updl.copy(roadNumber = newRoadNumber, roadPartNumber = newRoadPart, status = linkStatus, calibrationPoints = (None, None))
               })
               ProjectDAO.updateProjectLinksToDB(updated, userName)
             } else {
