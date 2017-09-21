@@ -408,7 +408,7 @@ object ProjectDAO {
         Q.updateNA(sql).execute
   }
 
-  def updateProjectLinkStatus(projectLinkIds: Set[Long], linkStatus: LinkStatus, userName: String): Unit = {
+  def updateProjectLinks(projectLinkIds: Set[Long], linkStatus: LinkStatus, userName: String): Unit = {
     val user = userName.replaceAll("[^A-Za-z0-9\\-]+", "")
     projectLinkIds.grouped(500).foreach {
       grp =>

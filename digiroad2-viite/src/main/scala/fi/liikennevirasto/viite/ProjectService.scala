@@ -21,7 +21,7 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import scala.util.control.NonFatal
 case class PreFillInfo(RoadNumber:BigInt, RoadPart:BigInt)
-
+case class LinkToRevert(linkId: Long, status: Long)
 class ProjectService(roadAddressService: RoadAddressService, roadLinkService: RoadLinkService, eventbus: DigiroadEventBus, frozenTimeVVHAPIServiceEnabled: Boolean = false) {
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
@@ -681,6 +681,36 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     RoadAddressValidator.checkNotReserved(newRoadNumber, newRoadPart, project)
     project
   }
+
+  def revertLinks(projectId: Long, roadNumber: Long, roadPartNumber: Long, links: List[LinkToRevert]): Option[String] = {
+    try {
+      withDynTransaction{
+        links.foreach(link =>{
+          if(link.status == LinkStatus.New.value){
+            ProjectDAO.removeProjectLinksByLinkId(projectId, links.map(link=> link.linkId).toSet)
+            val remainingLinks = ProjectDAO.fetchProjectLinkIds(projectId, roadNumber, roadPartNumber)
+            if (remainingLinks.nonEmpty){
+              val projectLinks = ProjectDAO.fetchByProjectNewRoadPart(roadNumber, roadPartNumber, projectId)
+              val adjLinks = withGeometry(projectLinks, resetAddress = true)
+              ProjectSectionCalculator.assignMValues(adjLinks).foreach(
+                adjLink => ProjectDAO.updateAddrMValues(adjLink))
+            }
+          }
+          else if (link.status == LinkStatus.Terminated.value || link.status == LinkStatus.Transfer.value ){
+            val roadLink = RoadAddressDAO.fetchByLinkId(Set(link.linkId),  false, false)
+            ProjectDAO.updateProjectLinkValues(projectId, roadLink.head)
+          }
+        })
+        None
+      }
+    }
+    catch{
+      case NonFatal(e) =>
+        logger.info("Error reverting the changes on roadlink", e)
+        Some("Virhe tapahtui muutosten palauttamisen yhteydessä")
+    }
+  }
+
   /**
     * Update project links to given status and recalculate delta and change table
     * @param projectId Project's id
@@ -689,7 +719,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @param userName Username of the user that does this change
     * @return true, if the delta calculation is successful and change table has been updated.
     */
-  def updateProjectLinkStatus(projectId: Long, linkIds: Set[Long], linkStatus: LinkStatus, userName: String, roadNumber: Long = 0, roadPartNumber: Long = 0) = {
+  def updateProjectLinks(projectId: Long, linkIds: Set[Long], linkStatus: LinkStatus, userName: String, roadNumber: Long = 0, roadPartNumber: Long = 0) = {
     try {
       withDynTransaction{
         val projectLinks = withGeometry(ProjectDAO.getProjectLinks(projectId))
@@ -719,13 +749,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               })
               ProjectDAO.updateProjectLinksToDB(updated, userName)
             } else {
-              ProjectDAO.updateProjectLinkStatus(updatedProjectLinks.map(_.id).toSet, linkStatus, userName)
+              ProjectDAO.updateProjectLinks(updatedProjectLinks.map(_.id).toSet, linkStatus, userName)
             }
           }
           case LinkStatus.Rollbacked => {
             revertLinks(linkIds, projectId, roadNumber, roadPartNumber)
           }
-          case _ => ProjectDAO.updateProjectLinkStatus(updatedProjectLinks.map(_.id).toSet, linkStatus, userName)
+          case _ => ProjectDAO.updateProjectLinks(updatedProjectLinks.map(_.id).toSet, linkStatus, userName)
         }
         recalculateProjectLinks(projectId, userName)
       }

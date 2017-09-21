@@ -148,7 +148,7 @@
         });
     });
 
-    this.insertNewProjectLinks = _.throttle(function(data, success, failure) {
+    this.createProjectLinks = _.throttle(function(data, success, failure) {
       $.ajax({
         contentType: "application/json",
         type: "POST",
