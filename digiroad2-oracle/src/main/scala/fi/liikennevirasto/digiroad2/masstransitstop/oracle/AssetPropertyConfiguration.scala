@@ -14,7 +14,8 @@ object AssetPropertyConfiguration {
   val ValidToId = "viimeinen_voimassaolopaiva"
   val CreatedId = "lisatty_jarjestelmaan"
   val ModifiedId = "muokattu_viimeksi"
-  val ConnectedToTerminal = "liitetty terminaaliin"
+  //TODO this is not a common property
+  val ConnectedToTerminal = "liitetty_terminaaliin"
   val assetPropertyNamesByLanguage: Map[String, Map[String, String]] = Map(
     LangFi -> Map(ValidityDirectionId -> "Vaikutussuunta", ValidFromId -> "Ensimmäinen voimassaolopäivä", ValidToId -> "Viimeinen voimassaolopäivä", CreatedId -> "Lisätty järjestelmään", ModifiedId -> "Muokattu viimeksi", ConnectedToTerminal -> "Liitetty Terminaaliin"),
     LangSv -> Map()

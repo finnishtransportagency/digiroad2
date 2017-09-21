@@ -251,7 +251,7 @@
       var readOnlyHandler = function(property){
         var outer = createFormRowDiv();
         var propertyVal = !_.isEmpty(property.values) ? property.values[0].propertyDisplayValue : '';
-        if (property.propertyType === 'read_only_text' && property.publicId != 'yllapitajan_koodi' && property.publicId != 'liitetty terminaaliin') {
+        if (property.propertyType === 'read_only_text' && property.publicId != 'yllapitajan_koodi' && property.publicId != 'liitetty_terminaaliin') {
           outer.append($('<p />').addClass('form-control-static asset-log-info').text(property.localizedName + ': ' + propertyVal));
         } else {
           outer.append(createLabelElement(property));
@@ -433,7 +433,6 @@
             if (value.checked) {
               var item = $('<li />');
               item.text(value.propertyDisplayValue);
-
               element.append(item);
             }
           } else {
@@ -552,7 +551,7 @@
           'yllapitajan_tunnus',
           'yllapitajan_koodi',
           'matkustajatunnus',
-          'liitetty terminaaliin',
+          'liitetty_terminaaliin',
           'maastokoordinaatti_x',
           'maastokoordinaatti_y',
           'maastokoordinaatti_z',
