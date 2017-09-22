@@ -59,6 +59,13 @@ class MaintenanceRoadSaveProjected[T](maintenanceRoadProvider: MaintenanceServic
   }
 }
 
+class RoadWidthSaveProjected[T](roadWidthProvider: RoadWidthService) extends Actor {
+  def receive = {
+    case x: Seq[T] => roadWidthProvider.persistProjectedLinearAssets(x.asInstanceOf[Seq[PersistedLinearAsset]])
+    case _             => println("roadWidthSaveProjected: Received unknown message")
+  }
+}
+
 class SpeedLimitUpdater[A, B](speedLimitProvider: SpeedLimitService) extends Actor {
   def receive = {
     case x: Set[A] => speedLimitProvider.purgeUnknown(x.asInstanceOf[Set[Long]])
@@ -143,6 +150,10 @@ object Digiroad2Context {
 
   val maintenanceRoadSaveProjected = system.actorOf(Props(classOf[MaintenanceRoadSaveProjected[PersistedLinearAsset]], maintenanceRoadService), name = "maintenanceRoadSaveProjected")
   eventbus.subscribe(maintenanceRoadSaveProjected, "maintenanceRoads:saveProjectedMaintenanceRoads")
+
+  val roadWidthSaveProjected = system.actorOf(Props(classOf[RoadWidthSaveProjected[PersistedLinearAsset]], roadWidthService), name = "roadWidthSaveProjected")
+  eventbus.subscribe(roadWidthSaveProjected, "RoadWidth:saveProjectedRoadWidth")
+
 
   val speedLimitSaveProjected = system.actorOf(Props(classOf[SpeedLimitSaveProjected[SpeedLimit]], speedLimitService), name = "speedLimitSaveProjected")
   eventbus.subscribe(speedLimitSaveProjected, "speedLimits:saveProjectedSpeedLimits")
@@ -236,6 +247,14 @@ object Digiroad2Context {
 
   lazy val maintenanceRoadService: MaintenanceService = {
     new MaintenanceService(roadLinkService, eventbus)
+  }
+
+  lazy val pavingService: PavingService = {
+    new PavingService(roadLinkService, eventbus)
+  }
+
+  lazy val roadWidthService: RoadWidthService = {
+    new RoadWidthService(roadLinkService, eventbus)
   }
 
   lazy val linearAssetService: LinearAssetService = {

@@ -151,7 +151,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
     val service = createService()
 
     val assets = Seq(PersistedLinearAsset(1, 5000, 1, Some(NumericValue(12000)), 0, 5, None, None, None, None, false, RoadWidthAssetTypeId, 0, None, LinkGeomSource.NormalLinkInterface),
-                     PersistedLinearAsset(1, 5000, 1, Some(NumericValue(15000)), 8, 16, None, None, None, None, false, RoadWidthAssetTypeId, 0, None, LinkGeomSource.NormalLinkInterface))
+                     PersistedLinearAsset(2, 5000, 1, Some(NumericValue(15000)), 8, 16, None, None, None, None, false, RoadWidthAssetTypeId, 0, None, LinkGeomSource.NormalLinkInterface))
 
     val changeInfo = createChangeInfo(roadLinks, 11L)
     val (expiredIds, newAssets) = service.getRoadWidthAssetChanges(assets, roadLinks, changeInfo)

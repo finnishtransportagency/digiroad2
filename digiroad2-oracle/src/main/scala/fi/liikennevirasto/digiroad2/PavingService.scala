@@ -24,7 +24,6 @@ class PavingService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digiroad
   val PavingAssetTypeId = 110
 
   override protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Seq[PieceWiseLinearAsset] = {
-
     val linkIds = roadLinks.map(_.linkId)
     val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(changes, roadLinks)
     val existingAssets =

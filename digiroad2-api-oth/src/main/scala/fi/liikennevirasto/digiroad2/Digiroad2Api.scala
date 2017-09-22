@@ -40,6 +40,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val massTransitStopService: MassTransitStopService,
                    val linearAssetService: LinearAssetService,
                    val maintenanceRoadService: MaintenanceService,
+                   val pavingService: PavingService,
+                   val roadWidthService: RoadWidthService,
                    val manoeuvreService: ManoeuvreService = Digiroad2Context.manoeuvreService,
                    val pedestrianCrossingService: PedestrianCrossingService = Digiroad2Context.pedestrianCrossingService,
                    val userProvider: UserProvider = Digiroad2Context.userProvider,
@@ -54,6 +56,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val serviceRoadTypeid=290
     val trafficVolumeTypeid=170
     val roadWidthTypeId = 120
+    val pavingTypeId = 110
     val lightingTypeId = 100
     val trafficSignTypeId = 300
 
@@ -1170,6 +1173,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   private def verifyServiceToUse(typeId: Int): LinearAssetOperations = {
     typeId match {
       case maintenanceRoadService.maintenanceRoadAssetTypeId => maintenanceRoadService
+      case pavingService.PavingAssetTypeId => pavingService
+      case roadWidthService.RoadWidthAssetTypeId => roadWidthService
       case _ => linearAssetService
     }
   }
