@@ -1619,8 +1619,8 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       val project = projectService.createRoadLinkProject(rap)
 
       val transferLink = address2.sortBy(_.startAddrMValue).head
-      projectService.updateProjectLinkStatus(project.id, address1.map(_.linkId).toSet, LinkStatus.UnChanged, "TestUser") should be (None)
-      projectService.updateProjectLinkStatus(project.id, Set(transferLink.linkId), LinkStatus.Transfer, "TestUser", 11, 8) should be (None)
+      projectService.updateProjectLinks(project.id, address1.map(_.linkId).toSet, LinkStatus.UnChanged, "TestUser") should be (None)
+      projectService.updateProjectLinks(project.id, Set(transferLink.linkId), LinkStatus.Transfer, "TestUser", 11, 8) should be (None)
 
       val updatedLinks = ProjectDAO.getProjectLinks(project.id)
       val linksRoad11 = updatedLinks.filter(_.roadNumber == 11).sortBy(_.startAddrMValue)
