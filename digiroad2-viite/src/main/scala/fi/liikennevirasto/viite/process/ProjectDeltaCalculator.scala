@@ -1,5 +1,9 @@
 package fi.liikennevirasto.viite.process
 
+import fi.liikennevirasto.digiroad2.util.RoadAddressException
+import java.text.DecimalFormat
+
+import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.viite.dao.{ProjectLink, _}
 import org.joda.time.DateTime
@@ -9,6 +13,7 @@ import org.joda.time.DateTime
   */
 object ProjectDeltaCalculator {
 
+  val MaxAllowedMValueError = 0.001
   val checker = new ContinuityChecker(null) // We don't need road link service here
   def delta(projectId: Long): Delta = {
     val projectOpt = ProjectDAO.getRoadAddressProjectById(projectId)
@@ -108,7 +113,7 @@ object ProjectDeltaCalculator {
 
   def pair(roadAddress: Seq[RoadAddress], projectLink: Seq[ProjectLink]): Seq[(RoadAddress,ProjectLink)] = {
     roadAddress.foldLeft(List.empty[(RoadAddress,ProjectLink)]) { case (p, a) =>
-      projectLink.find(b => a.linkId == b.linkId) match {
+      projectLink.find(b => a.linkId == b.linkId &&  Math.abs(b.endMValue - (a.endMValue - a.startMValue)) <= MaxAllowedMValueError ) match {
         case Some(b) => {
           p :+ (a, b)
         }
@@ -125,23 +130,18 @@ object ProjectDeltaCalculator {
     * @return Map between the sections old -> new
     */
   def partition(roadAddresses: Seq[RoadAddress], projectLinks: Seq[ProjectLink]): Map[RoadAddressSection, RoadAddressSection] = {
-
-    val paired = pair(roadAddresses, projectLinks).groupBy(x => (x._1.roadNumber, x._1.roadPartNumber, x._2.roadNumber, x._2.roadPartNumber))
-
-    val (oldL, newL) = (paired.map( x=> x._2.map(_._1)),paired.map( x=> x._2.map(_._2)))
-
-    val sourceCombined = oldL.map(o => {
+    def toRoadAddressSection(o: Seq[BaseRoadAddress]): Seq[RoadAddressSection] = {
       o.sortBy(_.startAddrMValue).groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
         .mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
         RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
           ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType)).toSeq
-    }).flatten
-    val targetCombined = newL.map(n => {
-        n.sortBy(_.startAddrMValue).groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
-          .mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
-          RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
-            ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType)).toSeq
-      }).flatten
+    }
+    val paired = pair(roadAddresses, projectLinks).groupBy(x => (x._1.roadNumber, x._1.roadPartNumber, x._2.roadNumber, x._2.roadPartNumber))
+
+    val (oldL, newL) = (paired.map( x=> x._2.map(_._1)),paired.map( x=> x._2.map(_._2)))
+
+    val sourceCombined = oldL.flatMap(toRoadAddressSection)
+    val targetCombined = newL.flatMap(toRoadAddressSection)
 
     sourceCombined.map { sec =>
       val linkId = roadAddresses.find(ra => sec.includes(ra)).map(_.linkId).get

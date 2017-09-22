@@ -167,19 +167,19 @@ class ProjectLinkDaoSpec  extends FunSuite with Matchers {
 
   test("update project link") {
     runWithRollback {
-      val terminatedLink = ProjectLink(648,77997,1,Track.Unknown,Discontinuity.Discontinuous,2523,3214,None,None,Some("updateTestuser"),70000665,6638300,1.0,377.05,SideCode.BothDirections,(None, Some(CalibrationPoint(125L, 58.1, 180))), floating=false, List(),7081807,LinkStatus.Terminated,UnknownOwnerRoad, LinkGeomSource.NormalLinkInterface, 10.0)
       val projectLinks = ProjectDAO.getProjectLinks(7081807)
-      ProjectDAO.getProjectLinksById(Seq(647))
       ProjectDAO.updateProjectLinks(projectLinks.map(x => x.id).toSet, LinkStatus.UnChanged, "test")
-      ProjectDAO.updateProjectLinksToDB(Seq(terminatedLink),"tester")
-      val updatedProjectLinks = ProjectDAO.getProjectLinks(7081807).filter( _.id==648)
-     val updatedLink=updatedProjectLinks.head
+      val savedProjectLinks = ProjectDAO.getProjectLinks(7081807)
+      ProjectDAO.updateProjectLinksToDB(Seq(savedProjectLinks.sortBy(_.startAddrMValue).last.copy(status = LinkStatus.Terminated)),"tester")
+      val terminatedLink = projectLinks.sortBy(_.startAddrMValue).last
+      val updatedProjectLinks = ProjectDAO.getProjectLinks(7081807).filter( link => link.id == terminatedLink.id)
+      val updatedLink=updatedProjectLinks.head
       updatedLink.status should be(LinkStatus.Terminated)
-      updatedLink.discontinuity should be (Discontinuity.Discontinuous)
-      updatedLink.startAddrMValue should be (2523)
-      updatedLink.endAddrMValue should be (3214)
-      updatedLink.track should be (Track.Unknown)
-      updatedLink.roadType should be (UnknownOwnerRoad)
+      updatedLink.discontinuity should be (Discontinuity.Continuous)
+      updatedLink.startAddrMValue should be (savedProjectLinks.sortBy(_.startAddrMValue).last.startAddrMValue)
+      updatedLink.endAddrMValue should be (savedProjectLinks.sortBy(_.startAddrMValue).last.endAddrMValue)
+      updatedLink.track should be (savedProjectLinks.sortBy(_.startAddrMValue).last.track)
+      updatedLink.roadType should be (savedProjectLinks.sortBy(_.startAddrMValue).last.roadType)
     }
   }
 
