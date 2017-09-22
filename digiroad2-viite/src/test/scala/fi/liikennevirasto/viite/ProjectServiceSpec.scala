@@ -1641,26 +1641,18 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       val reservedRoadPart2 = ReservedRoadPart(address2.head.id, address2.head.roadNumber, address2.head.roadPartNumber, address2.last.endAddrMValue, address2.last.endAddrMValue, address2.head.discontinuity, 8, None, None)
       val rap = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.now(), DateTime.now(), "Some additional info", Seq(reservedRoadPart1) ++ Seq(reservedRoadPart2), None , None)
 
-      val roadParts = (address1 ++ address2).map(address => {
+      val allRoadParts = (address1 ++ address2).map(address => {
         toProjectLink(rap, LinkStatus.NotHandled)(address)
       })
 
-      when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(roadParts.map(toRoadLink))
+      when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(allRoadParts.map(toRoadLink))
       val project = projectService.createRoadLinkProject(rap)
 
-      //Links to terminate: 2226690, 2226637, 2226636, 2226676, 2226658, 2226677, 2226482
-      projectService.updateProjectLinkStatus(project.id, Set(2226690, 2226637), LinkStatus.Terminated, "TestUser", 5, 201) should be (None)
+      projectService.updateProjectLinkStatus(project.id, Set(2226690, 2226637), LinkStatus.Terminated, "TestUser") should be (None)
       projectService.updateProjectLinkStatus(project.id, Set(2226636), LinkStatus.Terminated, "TestUser") should be (None)
       projectService.updateProjectLinkStatus(project.id, Set(2226676, 2226658), LinkStatus.Terminated, "TestUser") should be (None)
       projectService.updateProjectLinkStatus(project.id, Set(2226677, 2226482), LinkStatus.Terminated, "TestUser") should be (None)
 
-      //NewLinks
-        //Road part 201
-          //Track code 1: 2226681, 6564541
-          //Track code 2: 2226632
-        //Road part 202
-          //Track code 1: 2226660
-          //Track code 2: 2226480
       val mappedGeomsNewLinks = StaticTestData.mappedGeoms(Seq(2226681, 6564541, 2226632, 2226660, 2226480))
       val geom1 = mappedGeomsNewLinks(2226681)
       val geom2 = mappedGeomsNewLinks(6564541)
@@ -1693,20 +1685,33 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
         RoadType.PublicRoad, "X", 749, None, None, Map.empty, 5, 202, 2L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom5),
         SideCode.Unknown, None, None, Anomaly.None, 0L, LinkStatus.New)
 
+      val roadWithTerminated = allRoadParts.map(rp => {
+        if (rp.linkId == 2226690 || rp.linkId == 2226637 || rp.linkId == 2226636 || rp.linkId == 2226676 || rp.linkId == 2226658 || rp.linkId == 2226677 || rp.linkId ==  2226482){
+          rp.copy(status = LinkStatus.Terminated)
+        } else
+          rp
+      })
+
+      when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(roadWithTerminated.filter(_.roadPartNumber==201).map(toRoadLink))
       projectService.addNewLinksToProject(Seq(link1,link2), project.id, 5, 201, 1, 5) should be (None)
+      val track1road201 = roadWithTerminated.filter(_.roadPartNumber==201).map(toRoadLink) ++ Seq(toRoadLink(link1)) ++ Seq(toRoadLink(link2))
+      when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(track1road201)
       projectService.addNewLinksToProject(Seq(link3), project.id, 5, 201, 2, 5) should be (None)
+
+      when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(roadWithTerminated.filter(_.roadPartNumber==202).map(toRoadLink))
       projectService.addNewLinksToProject(Seq(link4), project.id, 5, 202, 1, 5) should be (None)
+      val track1road202 = roadWithTerminated.filter(_.roadPartNumber==202).map(toRoadLink) ++ Seq(toRoadLink(link4))
+      when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(track1road202)
       projectService.addNewLinksToProject(Seq(link5), project.id, 5, 202, 2, 5) should be (None)
 
-      val linksAfter = ProjectDAO.getProjectLinks(project.id).sortBy(_.startAddrMValue)
+      val linksAfter = ProjectDAO.getProjectLinks(project.id)
+      val linksAfter201 = ProjectDAO.fetchByProjectNewRoadPart(5,201,project.id).sortBy(_.startAddrMValue)
+      val linksAfter202 = ProjectDAO.fetchByProjectNewRoadPart(5,202,project.id).sortBy(_.startAddrMValue)
       val newLinks = linksAfter.filter(_.status == LinkStatus.New).sortBy(_.startAddrMValue)
       val terminatedLinks = linksAfter.filter(_.status == LinkStatus.Terminated)
-      linksAfter.size should be (roadParts.size + newLinks.size)
-      val track1Links = newLinks.groupBy(l => (l.roadPartNumber, l.track))
-      track1Links
+      linksAfter.size should be (allRoadParts.map(_.linkId).toSet.size + newLinks.size)
+      //val track1Links = newLinks.groupBy(l => (l.roadPartNumber, l.track))
       //track1Links
-
-
     }
   }
 }
