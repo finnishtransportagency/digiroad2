@@ -268,36 +268,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def revertLinks(linkIds: Set[Long], projectId: Long, roadNumber: Long, roadPartNumber: Long): Option[String] = {
-    try {
-      withDynTransaction{
-        val linksWithStatus = ProjectDAO.getProjectLinksById(linkIds.toSeq).map(pl => pl.linkId -> pl.status)
-        linksWithStatus.par.foreach(link =>{
-          if(link._2 == LinkStatus.New){
-            ProjectDAO.removeProjectLinksByLinkId(projectId, linkIds)
-            val remainingLinks = ProjectDAO.fetchProjectLinkIds(projectId, roadNumber, roadPartNumber)
-            if (remainingLinks.nonEmpty){
-              val projectLinks = ProjectDAO.fetchByProjectNewRoadPart(roadNumber, roadPartNumber, projectId)
-              val adjLinks = withGeometry(projectLinks, resetAddress = true)
-              ProjectSectionCalculator.assignMValues(adjLinks).foreach(
-                adjLink => ProjectDAO.updateAddrMValues(adjLink))
-            }
-          }
-          else if (link._2 == LinkStatus.Terminated || link._2 == LinkStatus.Transfer || link._2 == LinkStatus.Numbering){
-            val roadAddress = RoadAddressDAO.fetchByLinkId(Set(link._1),  false, false)
-            ProjectDAO.updateProjectLinkValues(projectId, roadAddress.head)
-          }
-        })
-        None
-      }
-    }
-    catch{
-      case NonFatal(e) =>
-        logger.info("Error reverting the changes on roadlink", e)
-        Some("Virhe tapahtui muutosten palauttamisen yhteydessä")
-    }
-  }
-
   def changeDirection(projectId : Long, roadNumber : Long, roadPartNumber : Long): Option[String] = {
     RoadAddressLinkBuilder.municipalityRoadMaintainerMapping // make sure it is populated outside of this TX
     try {
@@ -751,9 +721,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             } else {
               ProjectDAO.updateProjectLinks(updatedProjectLinks.map(_.id).toSet, linkStatus, userName)
             }
-          }
-          case LinkStatus.Rollbacked => {
-            revertLinks(linkIds, projectId, roadNumber, roadPartNumber)
           }
           case _ => ProjectDAO.updateProjectLinks(updatedProjectLinks.map(_.id).toSet, linkStatus, userName)
         }
