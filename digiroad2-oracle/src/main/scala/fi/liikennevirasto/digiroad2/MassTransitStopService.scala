@@ -52,10 +52,11 @@ trait AbstractBusStopStrategy {
 
   def is(newProperties: Set[SimpleProperty], roadLink: Option[RoadLink], existingAsset: Option[PersistedMassTransitStop]): Boolean = {false}
   def was(existingAsset: PersistedMassTransitStop): Boolean = {false}
-  def undo(existingAsset: PersistedMassTransitStop, newProperties: Set[SimpleProperty], roadLink: RoadLink, username: String): Unit = {}
+  def undo(existingAsset: PersistedMassTransitStop, newProperties: Set[SimpleProperty], username: String): Unit = {}
   def enrichBusStop(persistedStop: PersistedMassTransitStop): (PersistedMassTransitStop, Boolean)
+  def isFloating(persistedAsset: PersistedPointAsset, roadLinkOption: Option[RoadLinkLike]): (Boolean, Option[FloatingReason]) = { (false, None) }
   def create(newAsset: NewMassTransitStop, username: String, point: Point, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass], linkSource: LinkGeomSource, roadLink: RoadLink): PersistedMassTransitStop
-  def update(persistedStop: PersistedMassTransitStop, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: Int => Unit): PersistedMassTransitStop
+  def update(persistedStop: PersistedMassTransitStop, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: Int => Unit, roadLink: RoadLink): PersistedMassTransitStop
   def delete(asset: PersistedMassTransitStop): Unit
 
   protected val toIso8601 = DateTimeFormat.forPattern("yyyy-MM-dd")
@@ -75,7 +76,7 @@ trait AbstractBusStopStrategy {
     if (inventoryDate.nonEmpty && inventoryDate.get.values.exists(_.propertyValue != "")) {
       properties
     } else {
-      notInventoryDate ++ Seq(SimpleProperty(MassTransitStopOperations.InventoryDateId, Seq(PropertyValue(toIso8601.print(DateTime.now())))))
+      notInventoryDate ++ Set(SimpleProperty(MassTransitStopOperations.InventoryDateId, Seq(PropertyValue(toIso8601.print(DateTime.now())))))
     }
   }
 
@@ -133,6 +134,18 @@ trait MassTransitStopService extends PointAssetOperations {
 
   override def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[RoadLinkLike]): Seq[PersistedMassTransitStop] = massTransitStopDao.fetchPointAssets(queryFilter)
 
+  override def getPersistedAssetsByIds(ids: Set[Long]): Seq[PersistedAsset] = {
+    withDynSession {
+      val idsStr = ids.toSeq.mkString(",")
+      val filter = s"where a.asset_type_id = $typeId and a.id in ($idsStr)"
+      fetchPointAssets(withFilter(filter)).map{
+        persistedStop =>
+          val strategy = getStrategy(persistedStop)
+          strategy.enrichBusStop(persistedStop)._1
+      }
+    }
+  }
+
   override def update(id: Long, updatedAsset: NewMassTransitStop, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long = {
     throw new NotImplementedError("Use updateExisting instead. Mass transit is legacy.")
   }
@@ -150,14 +163,16 @@ trait MassTransitStopService extends PointAssetOperations {
 
   override def isFloating(persistedAsset: PersistedPointAsset, roadLinkOption: Option[RoadLinkLike]): (Boolean, Option[FloatingReason]) = {
     roadLinkOption match {
-      case None => return super.isFloating(persistedAsset, roadLinkOption)
       case Some(roadLink) =>
         val administrationClass = MassTransitStopOperations.getAdministrationClass(persistedAsset.asInstanceOf[PersistedMassTransitStop].propertyData)
         val(floating , floatingReason) = MassTransitStopOperations.isFloating(administrationClass.getOrElse(Unknown), Some(roadLink))
         if (floating) {
           return (floating, floatingReason)
         }
+      case _ => //Do nothing
     }
+
+
 
     super.isFloating(persistedAsset, roadLinkOption)
   }
@@ -238,9 +253,9 @@ trait MassTransitStopService extends PointAssetOperations {
       val (previousStrategy, currentStrategy) = getStrategy(properties, asset)
 
       if(previousStrategy != currentStrategy)
-        previousStrategy.undo(asset, properties, roadLink, username)
+        previousStrategy.undo(asset, properties, username)
 
-      val persistedAsset = currentStrategy.update(asset, optionalPosition, properties, username, municipalityValidation)
+      val persistedAsset = currentStrategy.update(asset, optionalPosition, properties, username, municipalityValidation, roadLink)
 
       publishSaveEvent(persistedAsset, _ => Some(roadLink))
     }

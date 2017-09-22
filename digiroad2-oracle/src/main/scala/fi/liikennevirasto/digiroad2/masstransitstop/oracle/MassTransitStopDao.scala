@@ -488,7 +488,6 @@ class MassTransitStopDao {
     sqlu"""Delete From Asset Where id = $assetId""".execute
   }
 
-
   def withFilter(filter: String)(query: String): String = {
     query + " " + filter
   }
@@ -536,4 +535,12 @@ class MassTransitStopDao {
     query + s" where a.external_id = $nationalId"
   }
 
+  def countTerminalChildBusStops(assetId: Long): Int = {
+    sql"""
+        select count(*)
+        from asset a
+          left join terminal_bus_stop_link tbs on tbs.bus_stop_asset_id = a.id
+        where a.asset_type_id = 10 and (a.valid_to is null or a.valid_to > sysdate) and tbs.terminal_asset_id = $assetId
+      """.as[Int].first
+  }
 }

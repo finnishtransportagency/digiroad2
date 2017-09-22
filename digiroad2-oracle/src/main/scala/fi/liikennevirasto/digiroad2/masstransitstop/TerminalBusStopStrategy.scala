@@ -64,20 +64,12 @@ class TerminalBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopD
     fetchAsset(assetId)
   }
 
-  override def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: (Int) => Unit): PersistedMassTransitStop = {
+  override def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: (Int) => Unit, roadLink: RoadLink): PersistedMassTransitStop = {
 
     if (MassTransitStopOperations.mixedStoptypes(properties))
       throw new IllegalArgumentException
 
     municipalityValidation(asset.municipalityCode)
-
-    val linkId = optionalPosition match {
-      case Some(position) => position.linkId
-      case _ => asset.linkId
-    }
-
-    val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId, newTransaction = false).
-      getOrElse(throw new NoSuchElementException)
 
     // Enrich properties with old administrator, if administrator value is empty in CSV import
     //TODO: Change propertyValue
@@ -96,7 +88,7 @@ class TerminalBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopD
     massTransitStopDao.deleteChildren(id, children)
     massTransitStopDao.insertChildren(id, children)
 
-    fetchAsset(id)
+    enrichBusStop(fetchAsset(id))._1
   }
 
   override def delete(asset: PersistedMassTransitStop): Unit = {

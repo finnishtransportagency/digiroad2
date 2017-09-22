@@ -57,20 +57,12 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
     fetchAsset(assetId)
   }
 
-  override def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: (Int) => Unit): PersistedMassTransitStop = {
+  override def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: (Int) => Unit, roadLink: RoadLink): PersistedMassTransitStop = {
 
     if (MassTransitStopOperations.mixedStoptypes(properties))
       throw new IllegalArgumentException
 
     municipalityValidation(asset.municipalityCode)
-
-    val linkId = optionalPosition match {
-      case Some(position) => position.linkId
-      case _ => asset.linkId
-    }
-    //TODO move this outside this update
-    val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId, newTransaction = false).
-      getOrElse(throw new NoSuchElementException)
 
     massTransitStopDao.updateAssetLastModified(asset.id, username)
 
