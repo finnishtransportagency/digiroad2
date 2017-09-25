@@ -303,7 +303,7 @@
           if (property.values && property.values[0]) {
             element.text(property.values[0].propertyDisplayValue);
           } else {
-            element.html('Ei tiedossa');
+            element.addClass('undefined').html('Ei m&auml;&auml;ritetty');
           }
         } else {
           element = $('<select />').addClass('form-control').change(function(x){
