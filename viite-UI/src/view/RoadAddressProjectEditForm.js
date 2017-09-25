@@ -1,11 +1,11 @@
 (function (root) {
   root.RoadAddressProjectEditForm = function(projectCollection, selectedProjectLinkProperty, projectLinkLayer, projectChangeTable) {
     var STATUS_NOT_HANDLED = 0;
-    var STATUS_TERMINATED = 1;
+    var STATUS_UNCHANGED = 1;
     var STATUS_NEW_LINK = 2;
     var STATUS_TRANSFER = 3;
-    var STATUS_UNCHANGED = 4;
-    var STATUS_NUMBERING = 5;
+    var STATUS_NUMBERING = 4;
+    var STATUS_TERMINATED  = 5;
     var ACTION_TERMINATE = "terminate";
     var ACTION_NEW_LINK = "new";
     var ACTION_TRANSFER = "transfer";
@@ -139,7 +139,7 @@
             modifiers = 'disabled hidden';
           } else if(toEdit) {
             modifiers = 'disabled';
-          } else if(selection[0].status === 1) {
+          } else if(selection[0].status === STATUS_TERMINATED) {
             modifiers = 'hidden';
           }
           break;
@@ -179,7 +179,7 @@
         '<option value='+ACTION_UNCHANGED+' ' + defineOptionModifiers(ACTION_UNCHANGED, selected) + '>Ennallaan</option>'+
         '<option value='+ ACTION_TRANSFER + ' ' + defineOptionModifiers(ACTION_TRANSFER, selected) + '>Siirto</option>'+
         '<option value='+ ACTION_NEW_LINK + ' ' + defineOptionModifiers(ACTION_NEW_LINK, selected) +'>Uusi</option>'+
-        '<option value= '+ ACTION_TERMINATE + ' ' + defineOptionModifiers(ACTION_TERMINATE, selected) + '>Lakkautus</option>'+
+        '<option value='+ ACTION_TERMINATE + ' ' + defineOptionModifiers(ACTION_TERMINATE, selected) + '>Lakkautus</option>'+
         '<option value='+ ACTION_NUMBERING + ' ' + defineOptionModifiers(ACTION_NUMBERING, selected) + '>Numerointi</option>'+
         '<option value='+ ACTION_REVERT + ' ' + defineOptionModifiers(ACTION_REVERT, selected) + '>Palautus aihioksi tai tieosoitteettomaksi</option>' +
         '</select>'+
@@ -400,7 +400,6 @@
         }
         else {
           eventbus.trigger('roadAddressProject:projectLinkSaved', data.id, data.publishable);
-          applicationModel.removeSpinner();
         }
       });
 
@@ -449,6 +448,7 @@
 
       var saveChanges = function(){
         currentProject = projectCollection.getCurrentProject();
+        //TODO revert dirtyness if others than ACTION_TERMINATE is choosen, because now after Lakkautus, the link(s) stay always in black color
         if( $('[id=dropDown] :selected').val() == ACTION_TERMINATE) {
           projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), STATUS_TERMINATED);
           rootElement.html(emptyTemplate(currentProject.project));
@@ -465,7 +465,7 @@
           rootElement.html(emptyTemplate(currentProject.project));
         }
         else if( $('[id=dropDown] :selected').val() === ACTION_NUMBERING){
-            projectCollection.createProjectLinks(projectCollection.getTmpDirty());
+          projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), STATUS_NUMBERING);
             rootElement.html(emptyTemplate(currentProject.project));
         }
         else if( $('[id=dropDown] :selected').val() === ACTION_REVERT){
@@ -504,13 +504,13 @@
           rootElement.find('.new-road-address').prop("hidden", true);
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
-            return {'id': link.linkId, 'status': STATUS_TERMINATED};
+            return {'linkId': link.linkId, 'status': STATUS_TERMINATED};
           })));
           projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
           rootElement.find('.project-form button.update').prop("disabled", false);
         }
         else if(this.value == ACTION_NEW_LINK){
-          projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
+          projectCollection.setTmpDirty(_.filter(projectCollection.getTmpDirty(), function (l) { return l.status !== STATUS_TERMINATED;}).concat(selectedProjectLink));
           rootElement.find('.new-road-address').prop("hidden", false);
           if(selectedProjectLink[0].id !== 0) {
             fillDistanceValues(selectedProjectLink);
@@ -522,13 +522,13 @@
           rootElement.find('.new-road-address').prop("hidden", true);
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
-            return {'id': link.linkId, 'status': STATUS_UNCHANGED};
+            return {'linkId': link.linkId, 'status': STATUS_UNCHANGED};
           })));
           projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
         }
         else if(this.value == ACTION_TRANSFER) {
-          projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
-              return {'id': link.linkId, 'status': STATUS_TRANSFER};
+          projectCollection.setDirty(_.filter(projectCollection.getDirty(), function(dirty) {return dirty.status !== STATUS_UNCHANGED;}).concat(_.map(selectedProjectLink, function (link) {
+              return {'linkId': link.linkId, 'status': STATUS_TRANSFER};
           })));
           projectCollection.setTmpDirty(projectCollection.getDirty());
           rootElement.find('.new-road-address').prop("hidden", false);
@@ -536,15 +536,16 @@
               rootElement.find('.changeDirectionDiv').prop("hidden", false);
         }
         else if(this.value == ACTION_NUMBERING) {
-            $('#ajr').prop('disabled',true);
+          new ModalConfirm("Numerointi koskee kokonaista tieosaa. Valintaasi on tarvittaessa laajennettu koko tieosalle.");
+          $('#ajr').prop('disabled',true);
             $('#discontinuityDropdown').prop('disabled',true);
             $('#roadTypeDropDown').prop('disabled',true);
             projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
-                return {'id': link.linkId, 'status': STATUS_NUMBERING};
+                return {'linkId': link.linkId, 'status': STATUS_NUMBERING};
             })));
             projectCollection.setTmpDirty(projectCollection.getDirty());
             rootElement.find('.new-road-address').prop("hidden", false);
-            rootElement.find('.changeDirectionDiv').prop("hidden", false);
+            rootElement.find('.changeDirectionDiv').prop("hidden", true);
             rootElement.find('.project-form button.update').prop("disabled", false);
         }
         else if(this.value == ACTION_REVERT) {

@@ -1,6 +1,10 @@
 package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.util.RoadAddressException
+import java.text.DecimalFormat
+
+import fi.liikennevirasto.digiroad2.GeometryUtils
+import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.viite.dao.{ProjectLink, _}
 import org.joda.time.DateTime
 
@@ -9,20 +13,24 @@ import org.joda.time.DateTime
   */
 object ProjectDeltaCalculator {
 
+  val MaxAllowedMValueError = 0.001
   val checker = new ContinuityChecker(null) // We don't need road link service here
   def delta(projectId: Long): Delta = {
     val projectOpt = ProjectDAO.getRoadAddressProjectById(projectId)
     if (projectOpt.isEmpty)
       throw new IllegalArgumentException("Project not found")
     val project = projectOpt.get
-    val projectLinks = ProjectDAO.getProjectLinks(projectId).groupBy(l => RoadPart(l.roadNumber,l.roadPartNumber))
+    val projectLinksFetched = ProjectDAO.getProjectLinks(projectId)
+    val projectLinks = projectLinksFetched.groupBy(l => RoadPart(l.roadNumber,l.roadPartNumber))
     val currentAddresses = projectLinks.filter(_._2.exists(_.status != LinkStatus.New)).keySet.map(r =>
-      r -> RoadAddressDAO.fetchByRoadPart(r.roadNumber, r.roadPartNumber, includeFloating = true)).toMap
+      r -> RoadAddressDAO.fetchByLinkId(projectLinksFetched.map(pl => pl.linkId).toSet, includeFloating = true)).toMap
     val terminations = findTerminations(projectLinks, currentAddresses)
     val newCreations = findNewCreations(projectLinks)
     val unChanged = findUnChanged(projectLinks, currentAddresses)
+    val transferred = Transferred(findTransferredOld(projectLinks, currentAddresses), findTransferredNew(projectLinks))
+    val numbering = ReNumeration(findNumberingOld(projectLinks, currentAddresses), findNumberingNew(projectLinks))
 
-    Delta(project.startDate, terminations, newCreations, unChanged)
+    Delta(project.startDate, terminations, newCreations, unChanged, transferred, numbering)
   }
 
   private def findTerminations(projectLinks: Map[RoadPart, Seq[ProjectLink]], currentAddresses: Map[RoadPart, Seq[RoadAddress]]) = {
@@ -37,6 +45,26 @@ object ProjectDeltaCalculator {
     projectLinks.map{case (part, pLinks) => part -> (pLinks, currentAddresses.getOrElse(part, Seq()))}.mapValues{ case (pll, ra) =>
       ra.filter(r => pll.exists(pl => pl.linkId == r.linkId && pl.status == LinkStatus.UnChanged))
     }.values.flatten.toSeq
+  }
+
+  private def findTransferredOld(projectLinks: Map[RoadPart, Seq[ProjectLink]], currentAddresses: Map[RoadPart, Seq[RoadAddress]]) = {
+    projectLinks.map{case (part, pLinks) => part -> (pLinks, currentAddresses.getOrElse(part, Seq()))}.mapValues{ case (pll, ra) =>
+      ra.filter(r => pll.exists(pl => pl.linkId == r.linkId && pl.status == LinkStatus.Transfer))
+    }.values.flatten.toSeq
+  }
+
+  private def findTransferredNew(projectLinks: Map[RoadPart, Seq[ProjectLink]]) = {
+    projectLinks.values.flatten.filter(_.status == LinkStatus.Transfer).toSeq
+  }
+
+  private def findNumberingOld(projectLinks: Map[RoadPart, Seq[ProjectLink]], currentAddresses: Map[RoadPart, Seq[RoadAddress]]) = {
+    projectLinks.map{case (part, pLinks) => part -> (pLinks, currentAddresses.getOrElse(part, Seq()))}.mapValues{ case (pll, ra) =>
+      ra.filter(r => pll.exists(pl => pl.linkId == r.linkId && pl.status == LinkStatus.Numbering))
+    }.values.flatten.toSeq
+  }
+
+  private def findNumberingNew(projectLinks: Map[RoadPart, Seq[ProjectLink]]) = {
+    projectLinks.values.flatten.filter(_.status == LinkStatus.Numbering).toSeq
   }
 
   private def findNewCreations(projectLinks: Map[RoadPart, Seq[ProjectLink]]) = {
@@ -83,8 +111,50 @@ object ProjectDeltaCalculator {
     ).toSeq
   }
 
-}
+  def pair(roadAddress: Seq[RoadAddress], projectLink: Seq[ProjectLink]): Seq[(RoadAddress,ProjectLink)] = {
+    roadAddress.foldLeft(List.empty[(RoadAddress,ProjectLink)]) { case (p, a) =>
+      projectLink.find(b => a.linkId == b.linkId &&  Math.abs(b.endMValue - (a.endMValue - a.startMValue)) <= MaxAllowedMValueError ) match {
+        case Some(b) => {
+          p :+ (a, b)
+        }
+        case None => p
+      }
+    }
+  }
+
+  /**
+    * Partition the transfers into a mapping of RoadAddressSection -> RoadAddressSection.
+    * It is impossible to tell afterwards the exact mapping unless done at this point
+    * @param roadAddresses Road Addresses that were the source
+    * @param projectLinks Project Links that have the transfer address values
+    * @return Map between the sections old -> new
+    */
+  def partition(roadAddresses: Seq[RoadAddress], projectLinks: Seq[ProjectLink]): Map[RoadAddressSection, RoadAddressSection] = {
+    def toRoadAddressSection(o: Seq[BaseRoadAddress]): Seq[RoadAddressSection] = {
+      o.sortBy(_.startAddrMValue).groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
+        .mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
+        RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
+          ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType)).toSeq
+    }
+    val paired = pair(roadAddresses, projectLinks).groupBy(x => (x._1.roadNumber, x._1.roadPartNumber, x._2.roadNumber, x._2.roadPartNumber))
+
+    val (oldL, newL) = (paired.map( x=> x._2.map(_._1)),paired.map( x=> x._2.map(_._2)))
+
+    val sourceCombined = oldL.flatMap(toRoadAddressSection)
+    val targetCombined = newL.flatMap(toRoadAddressSection)
+
+    sourceCombined.map { sec =>
+      val linkId = roadAddresses.find(ra => sec.includes(ra)).map(_.linkId).get
+      val targetGroup = targetCombined.find(tc => tc.includes(projectLinks.find(_.linkId == linkId).get))
+      sec -> targetGroup.get
+    }.toMap
+}}
 
 case class Delta(startDate: DateTime, terminations: Seq[RoadAddress], newRoads: Seq[ProjectLink],
-                 unChanged: Seq[RoadAddress])
+                 unChanged: Seq[RoadAddress], transferred: Transferred, numbering : ReNumeration)
+
 case class RoadPart(roadNumber: Long, roadPartNumber: Long)
+
+case class Transferred(oldLinks: Seq[RoadAddress], newLinks: Seq[ProjectLink])
+
+case class ReNumeration(oldLinks: Seq[RoadAddress], newLinks: Seq[ProjectLink])

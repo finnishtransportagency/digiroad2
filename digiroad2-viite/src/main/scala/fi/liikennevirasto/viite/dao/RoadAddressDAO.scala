@@ -85,6 +85,7 @@ trait BaseRoadAddress {
   def roadPartNumber: Long
   def track: Track
   def discontinuity: Discontinuity
+  def roadType: RoadType
   def startAddrMValue: Long
   def endAddrMValue: Long
   def startDate: Option[DateTime]
@@ -443,6 +444,14 @@ object RoadAddressDAO {
     queryList(query)
   }
 
+  /**
+    * Check that the road part is available for the project at project date (and not modified to be changed
+    * later)
+    * @param roadNumber Road number to be reserved for project
+    * @param roadPartNumber Road part number to be reserved for project
+    * @param projectId Project that wants to reserve the road part (used to check the project date vs. address dates)
+    * @return True, if unavailable
+    */
   def isNotAvailableForProject(roadNumber: Long, roadPartNumber: Long, projectId: Long): Boolean = {
     val query =
       s"""
@@ -1029,7 +1038,7 @@ object RoadAddressDAO {
     if (Q.queryNA[Int](query).first>0) true else false
   }
 
-  def getRoadPartInfo(roadNumber:Long, roadPart:Long): Option[(Long,Long,Double,Long,Option[DateTime],Option[DateTime])] =
+  def getRoadPartInfo(roadNumber:Long, roadPart:Long): Option[(Long,Long,Long,Long,Option[DateTime],Option[DateTime])] =
   {
     val query = s"""SELECT r.id, l.link_id, r.end_addr_M, r.discontinuity,
                 (Select Max(ra.start_date) from road_address ra Where r.ROAD_PART_NUMBER = ra.ROAD_PART_NUMBER and r.ROAD_NUMBER = ra.ROAD_NUMBER) as start_date,
@@ -1042,6 +1051,6 @@ object RoadAddressDAO {
              on r.START_ADDR_M=ra.lol
              WHERE r.road_number=$roadNumber AND r.road_part_number=$roadPart AND
              (r.valid_from is null or r.valid_from <= sysdate) AND (r.valid_to is null or r.valid_to > sysdate) AND track_code in (0,1)"""
-    Q.queryNA[(Long,Long,Double,Long, Option[DateTime], Option[DateTime])](query).firstOption
+    Q.queryNA[(Long,Long,Long,Long, Option[DateTime], Option[DateTime])](query).firstOption
   }
 }
