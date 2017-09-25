@@ -1641,7 +1641,14 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       val reservedRoadPart2 = ReservedRoadPart(address2.head.id, address2.head.roadNumber, address2.head.roadPartNumber, address2.last.endAddrMValue, address2.last.endAddrMValue, address2.head.discontinuity, 8, None, None)
       val rap = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.now(), DateTime.now(), "Some additional info", Seq(reservedRoadPart1) ++ Seq(reservedRoadPart2), None , None)
 
-      val allRoadParts = (address1 ++ address2).map(address => {
+      val ad = address1.map(a => {
+        if (a.linkId == 2229329) {
+          a.copy(geometry = StaticTestData.mappedGeoms(Seq(2229329)).get(2229329L).get)
+        } else
+          a
+      })
+
+      val allRoadParts = (ad ++ address2).map(address => {
         toProjectLink(rap, LinkStatus.NotHandled)(address)
       })
 
@@ -1705,13 +1712,23 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       projectService.addNewLinksToProject(Seq(link5), project.id, 5, 202, 2, 5) should be (None)
 
       val linksAfter = ProjectDAO.getProjectLinks(project.id)
-      val linksAfter201 = ProjectDAO.fetchByProjectNewRoadPart(5,201,project.id).sortBy(_.startAddrMValue)
-      val linksAfter202 = ProjectDAO.fetchByProjectNewRoadPart(5,202,project.id).sortBy(_.startAddrMValue)
       val newLinks = linksAfter.filter(_.status == LinkStatus.New).sortBy(_.startAddrMValue)
-      val terminatedLinks = linksAfter.filter(_.status == LinkStatus.Terminated)
       linksAfter.size should be (allRoadParts.map(_.linkId).toSet.size + newLinks.size)
-      //val track1Links = newLinks.groupBy(l => (l.roadPartNumber, l.track))
-      //track1Links
+
+      val new201 = newLinks.filter(_.roadPartNumber == 201)
+      val new202 = newLinks.filter(_.roadPartNumber == 202)
+      new201.filter(_.track == Track.RightSide).sortBy(_.startAddrMValue).last.endAddrMValue should be (new201.filter(_.track == Track.LeftSide).sortBy(_.startAddrMValue).last.endAddrMValue)
+      new201.filter(_.track == Track.RightSide).sortBy(_.startAddrMValue).head.startAddrMValue should be (new201.filter(_.track == Track.LeftSide).sortBy(_.startAddrMValue).head.startAddrMValue)
+      new202.filter(_.track == Track.RightSide).sortBy(_.startAddrMValue).last.endAddrMValue should be (new202.filter(_.track == Track.LeftSide).sortBy(_.startAddrMValue).last.endAddrMValue)
+      new202.filter(_.track == Track.RightSide).sortBy(_.startAddrMValue).head.startAddrMValue should be (new202.filter(_.track == Track.LeftSide).sortBy(_.startAddrMValue).head.startAddrMValue)
+
+      val terminatedLinks = linksAfter.filter(_.status == LinkStatus.Terminated)
+      val term201 = terminatedLinks.filter(_.roadPartNumber == 201)
+      val term202 = terminatedLinks.filter(_.roadPartNumber == 202)
+      term201.filter(_.track == Track.RightSide).sortBy(_.startAddrMValue).last.endAddrMValue should be (term201.filter(_.track == Track.LeftSide).sortBy(_.startAddrMValue).last.endAddrMValue)
+      term201.filter(_.track == Track.RightSide).sortBy(_.startAddrMValue).head.startAddrMValue should be (term201.filter(_.track == Track.LeftSide).sortBy(_.startAddrMValue).head.startAddrMValue)
+      term202.filter(_.track == Track.RightSide).sortBy(_.startAddrMValue).last.endAddrMValue should be (term202.filter(_.track == Track.LeftSide).sortBy(_.startAddrMValue).last.endAddrMValue)
+      term202.filter(_.track == Track.RightSide).sortBy(_.startAddrMValue).head.startAddrMValue should be (term202.filter(_.track == Track.LeftSide).sortBy(_.startAddrMValue).head.startAddrMValue)
     }
   }
 }
