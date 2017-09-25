@@ -28,8 +28,8 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
   }
 
   override def is(newProperties: Set[SimpleProperty], roadLink: Option[RoadLink], existingAssetOption: Option[PersistedMassTransitStop]): Boolean = {
-    if (!tierekisteriClient.isTREnabled)
-      return false
+    //if (!tierekisteriClient.isTREnabled)
+    //  return false
 
     //TODO Check if this is really needed
     val properties = existingAssetOption match {
@@ -45,8 +45,8 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
   }
 
   override def was(existingAsset: PersistedMassTransitStop): Boolean = {
-    if (!tierekisteriClient.isTREnabled)
-      return false
+    //if (!tierekisteriClient.isTREnabled)
+    //  return false
 
     val administrationClass = MassTransitStopOperations.getAdministrationClass(existingAsset.propertyData)
     isStoredInTierekisteri(existingAsset.propertyData, administrationClass)
@@ -287,15 +287,15 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
   }
 
   private def createTierekisteriBusStop(persistedStop: PersistedMassTransitStop, roadLink: RoadLink, liviId: String): Unit =
-    tierekisteriClient.createMassTransitStop(mapTierekisteriBusStop(persistedStop, liviId, roadLinkOption = Some(roadLink)))
+    if(!tierekisteriClient.isTREnabled) tierekisteriClient.createMassTransitStop(mapTierekisteriBusStop(persistedStop, liviId, roadLinkOption = Some(roadLink)))
 
   private def updateTierekisteriBusStop(persistedStop: PersistedMassTransitStop, roadLink: RoadLink, liviId: String): Unit =
-    tierekisteriClient.updateMassTransitStop(mapTierekisteriBusStop(persistedStop, liviId, roadLinkOption = Some(roadLink)), Some(liviId))
+    if(!tierekisteriClient.isTREnabled) tierekisteriClient.updateMassTransitStop(mapTierekisteriBusStop(persistedStop, liviId, roadLinkOption = Some(roadLink)), Some(liviId))
 
   private def expireTierekisteriBusStop(persistedStop: PersistedMassTransitStop, liviId: String, username: String): Unit  =
-    tierekisteriClient.updateMassTransitStop(mapTierekisteriBusStop(persistedStop, liviId, expire = Some(new Date())), Some(liviId), Some(username))
+    if(!tierekisteriClient.isTREnabled) tierekisteriClient.updateMassTransitStop(mapTierekisteriBusStop(persistedStop, liviId, expire = Some(new Date())), Some(liviId), Some(username))
 
   private def deleteTierekisteriBusStop(liviId: String): Unit  =
-    tierekisteriClient.deleteMassTransitStop(liviId)
+    if(!tierekisteriClient.isTREnabled) tierekisteriClient.deleteMassTransitStop(liviId)
 
 }

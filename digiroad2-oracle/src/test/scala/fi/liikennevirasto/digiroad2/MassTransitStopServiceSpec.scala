@@ -34,7 +34,6 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     TierekisteriMassTransitStop(2, "2", RoadAddress(None, 1, 1, Track.Combined, 1, None), TRRoadSide.Unknown, StopType.Combined,
       false, equipments = Map(), None, None, None, "KX12356", None, None, None, new Date))
   )
-  when(mockTierekisteriClient.isTREnabled).thenReturn(true)
 
   val vvhRoadLinks = List(
     VVHRoadlink(1611353, 90, Nil, Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers),
