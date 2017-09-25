@@ -250,6 +250,13 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
   var handleAssetSaved = function(asset, positionUpdated) {
     _.merge(massTransitStopsCollection.getAsset(asset.id).data, asset);
+
+    var features = selectControl.getSelectInteraction().getFeatures();
+    _.each(features.getArray(), function(feature) {
+      var properties = feature.getProperties();
+      feature.setStyle(properties.massTransitStop.getMarkerSelectionStyles());
+    });
+
     if (positionUpdated) {
       destroyAsset(asset);
       deselectAsset(selectedAsset);
