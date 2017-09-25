@@ -467,9 +467,14 @@
         }, element);
 
         if ((!readOnly) && (applicationModel.getSelectedTool() == 'AddTerminal')) {
-          var terminalDefaultValue = {propertyValue: 99};
-          selectedMassTransitStopModel.setProperty(property.publicId, terminalDefaultValue, property.propertyType, true);
-          selectedMassTransitStopModel.setProperty("pysakin_tyyppi", [{propertyValue: 6, propertyDisplayValue: "", checked: true}], "multiple_choice", true);
+          var anyValueChecked = _.some(property.values, function (value) {
+            return value.checked === true;
+          });
+          if (!anyValueChecked) {
+            var terminalDefaultValue = {propertyValue: 99};
+            selectedMassTransitStopModel.setProperty(property.publicId, terminalDefaultValue, property.propertyType, true);
+            selectedMassTransitStopModel.setProperty("pysakin_tyyppi", [{propertyValue: 6, propertyDisplayValue: "", checked: true}], "multiple_choice", true);
+          }
         }
         return element;
       };

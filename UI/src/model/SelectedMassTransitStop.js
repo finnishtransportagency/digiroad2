@@ -27,7 +27,7 @@
     };
 
     eventbus.on('tool:changed', function(tool) {
-      if (tool !== 'Add' && exists()) {
+      if ((tool !== 'Add' && tool !== 'AddTerminal')  && exists()) {
         backend.getMassTransitStopByNationalId(currentAsset.payload.nationalId, function(asset) {
           if (exists()) { eventbus.trigger('asset:fetched', asset); }
         });
