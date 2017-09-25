@@ -342,7 +342,7 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 
   //TODO duplicated code inside
-  def getMetadata(point: Option[Point]): Seq[Property] ={
+  def getMetadata(point: Option[Point]): Seq[Property] = {
     def fetchByRadius(position : Point, meters: Int): Seq[PersistedMassTransitStop] = {
       val topLeft = Point(position.x - meters, position.y - meters)
       val bottomRight = Point(position.x + meters, position.y + meters)
