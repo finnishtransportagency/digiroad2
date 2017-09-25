@@ -31,16 +31,17 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
 
     val projectableTargetRoadLinks = roadLinks.filter(rl => rl.linkType.value == UnknownLinkType.value || rl.isCarTrafficRoad)
 
-    val (expiredRoadWidthAssetIds, newAndUpdatedRoadWidthAssets) = getRoadWidthAssetChanges(existingAssets, roadLinks, changes)
+    val (expiredRoadWidthAssetIds, newRoadWidthAssets) = getRoadWidthAssetChanges(existingAssets, roadLinks, changes)
 
     val combinedAssets = assetsOnChangedLinks.filterNot(
-      a => expiredRoadWidthAssetIds.contains(a.id) || newAndUpdatedRoadWidthAssets.exists(_.id == a.id) ) ++ newAndUpdatedRoadWidthAssets
+      a => expiredRoadWidthAssetIds.contains(a.id) || assetsWithoutChangedLinks.exists(_.id == a.id)
+    ) ++ newRoadWidthAssets
 
 
     val filledNewAssets = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
       combinedAssets, assetsOnChangedLinks, changes) ++ assetsWithoutChangedLinks
 
-    val newAssets = newAndUpdatedRoadWidthAssets.filterNot(a => filledNewAssets.exists(f => f.linkId == a.linkId)) ++ filledNewAssets
+    val newAssets = newRoadWidthAssets/*.filterNot(a => filledNewAssets.exists(f => f.linkId == a.linkId))*/ ++ filledNewAssets
 
     val timing = System.currentTimeMillis
     if (newAssets.nonEmpty) {
@@ -52,12 +53,12 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     val expiredAssetIds = existingAssets.filter(asset => removedLinkIds.contains(asset.linkId)).map(_.id).toSet ++
       changeSet.expiredAssetIds ++ expiredRoadWidthAssetIds
 
-    val mValueAdjustments = newAndUpdatedRoadWidthAssets.filter(_.id != 0).map( a =>
-      MValueAdjustment(a.id, a.linkId, a.startMeasure, a.endMeasure)
-    )
+//    val mValueAdjustments = newRoadWidthAssets.filter(_.id != 0).map( a =>
+//      MValueAdjustment(a.id, a.linkId, a.startMeasure, a.endMeasure)
+//    )
 
     eventBus.publish("linearAssets:update", changeSet.copy(expiredAssetIds = expiredAssetIds.filterNot(_ == 0L)
-      ,adjustedMValues = changeSet.adjustedMValues ++ mValueAdjustments))
+      /*,adjustedMValues = changeSet.adjustedMValues ++ mValueAdjustments*/))
 
     //Remove the asset ids ajusted in the "roadWidth:update" otherwise if the "roadWidth:saveProjectedRoadWidth" is executed after the "roadWidth:update"
     //it will update the mValues to the previous ones
