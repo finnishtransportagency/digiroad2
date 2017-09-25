@@ -1634,7 +1634,14 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("Termination and creation of new road links in tracks 1 and 2") {
+    def toProjectAddressLink(linkId: Long, road: Long, part: Long, geometry: Seq[Point]): ProjectAddressLink = {
+      ProjectAddressLink(NewRoadAddress, linkId, geometry, GeometryUtils.geometryLength(geometry),
+        State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
+        RoadType.PublicRoad, "X", 749, None, None, Map.empty, road, part, 1L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geometry),
+        SideCode.Unknown, None, None, Anomaly.None, 0L, LinkStatus.New)
+    }
     runWithRollback {
+
       val address1 = RoadAddressDAO.fetchByRoadPart(5, 201, false).sortBy(_.startAddrMValue)
       val address2 = RoadAddressDAO.fetchByRoadPart(5, 202, false).sortBy(_.startAddrMValue)
       val reservedRoadPart1 = ReservedRoadPart(address1.head.id, address1.head.roadNumber, address1.head.roadPartNumber, address1.last.endAddrMValue, address1.last.endAddrMValue, address1.head.discontinuity, 8, None, None)
@@ -1667,30 +1674,11 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       val geom4 = mappedGeomsNewLinks(2226660)
       val geom5 = mappedGeomsNewLinks(2226480)
 
-      val link1 = ProjectAddressLink(NewRoadAddress, 2226681, geom1, GeometryUtils.geometryLength(geom1),
-        State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
-        RoadType.PublicRoad, "X", 749, None, None, Map.empty, 5, 201, 1L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom1),
-        SideCode.Unknown, None, None, Anomaly.None, 0L, LinkStatus.New)
-
-      val link2 = ProjectAddressLink(NewRoadAddress, 6564541, geom2, GeometryUtils.geometryLength(geom2),
-        State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
-        RoadType.PublicRoad, "X", 749, None, None, Map.empty, 5, 201, 1L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom2),
-        SideCode.Unknown, None, None, Anomaly.None, 0L, LinkStatus.New)
-
-      val link3 = ProjectAddressLink(NewRoadAddress, 2226632, geom3, GeometryUtils.geometryLength(geom3),
-        State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
-        RoadType.PublicRoad, "X", 749, None, None, Map.empty, 5, 201, 2L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom3),
-        SideCode.Unknown, None, None, Anomaly.None, 0L, LinkStatus.New)
-
-      val link4 = ProjectAddressLink(NewRoadAddress, 2226660, geom4, GeometryUtils.geometryLength(geom4),
-        State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
-        RoadType.PublicRoad, "X", 749, None, None, Map.empty, 5, 202, 1L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom4),
-        SideCode.Unknown, None, None, Anomaly.None, 0L, LinkStatus.New)
-
-      val link5 = ProjectAddressLink(NewRoadAddress, 2226480, geom5, GeometryUtils.geometryLength(geom5),
-        State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
-        RoadType.PublicRoad, "X", 749, None, None, Map.empty, 5, 202, 2L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geom5),
-        SideCode.Unknown, None, None, Anomaly.None, 0L, LinkStatus.New)
+      val link1 = toProjectAddressLink(2226681, 5, 201, geom1)
+      val link2 = toProjectAddressLink(6564541, 5, 201, geom2)
+      val link3 = toProjectAddressLink(2226632, 5, 201, geom3)
+      val link4 = toProjectAddressLink(2226660, 5, 202, geom4)
+      val link5 = toProjectAddressLink(2226480, 5, 202, geom5)
 
       val roadWithTerminated = allRoadParts.map(rp => {
         if (rp.linkId == 2226690 || rp.linkId == 2226637 || rp.linkId == 2226636 || rp.linkId == 2226676 || rp.linkId == 2226658 || rp.linkId == 2226677 || rp.linkId ==  2226482){
