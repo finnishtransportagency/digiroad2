@@ -273,7 +273,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     });
     var assetIds = _.map(groupContainingSavedAsset, function(asset) { return asset.id.toString(); });
 
-    if (groupContainingSavedAsset.length > 1) {
+    if (groupContainingSavedAsset && groupContainingSavedAsset.length > 1) {
       massTransitStopsCollection.destroyGroup(assetIds);
     }
 
@@ -414,6 +414,11 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     return selectedMassTransitStopModel.isAdministratorHSL(properties) && selectedMassTransitStopModel.isAdminClassState(properties);
   };
 
+  var isTerminalChild = function () {
+    var properties = selectedMassTransitStopModel.getProperties();
+    return selectedMassTransitStopModel.isTerminalChild(properties);
+  };
+
   var restrictMovement = function (event, originalCoordinates, angle, nearestLine, coordinates) {
     var movementLimit = 50; //50 meters
     var popupMessageToShow;
@@ -425,6 +430,8 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       requestingMovePermission = true;
       if (ownedByELY() || ownedByHSL()){
         popupMessageToShow = 'Pysäkkiä siirretty yli 50 metriä. Siirron yhteydessä vanha pysäkki lakkautetaan ja luodaan uusi pysäkki.';
+      } else if (isTerminalChild()) {
+        popupMessageToShow = 'Pysäkkiä siirretty yli 50 metriä. Haluatko siirtää pysäkin uuteen sijaintiin? <br><br><br> *Pysäkin viittaus terminaaliin häviää siirron yhteydessä. Luo yhteys uudelleen tarvittaessa. ' ;
       } else {
         popupMessageToShow = 'Pysäkkiä siirretty yli 50 metriä. Haluatko siirtää pysäkin uuteen sijaintiin?';
       }

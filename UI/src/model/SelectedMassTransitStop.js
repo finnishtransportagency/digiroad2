@@ -458,6 +458,15 @@
       });
     }
 
+    function isTerminalChild(properties) {
+      if (!properties)
+        properties = getProperties();
+
+      return _.some(properties, function (property) {
+        return property.publicId === 'liitetty_terminaaliin' && !_.isEmpty(property.values);
+      });
+    }
+
     return {
       close: close,
       save: save,
@@ -488,7 +497,8 @@
       isAdministratorHSL: isAdministratorHSL,
       validateDirectionsForSave : validateDirectionsForSave,
       validateDirectionsForCreation: validateDirectionsForCreation,
-      getEndDate: getEndDate
+      getEndDate: getEndDate,
+      isTerminalChild: isTerminalChild
     };
   };
 
