@@ -149,7 +149,7 @@ class ProjectLinkDaoSpec  extends FunSuite with Matchers {
       val addresses = RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(rap))
       ProjectDAO.create(addresses)
       val projectLinks = ProjectDAO.getProjectLinks(id)
-      ProjectDAO.updateProjectLinkStatus(projectLinks.map(x => x.id).toSet, LinkStatus.Terminated, "test")
+      ProjectDAO.updateProjectLinks(projectLinks.map(x => x.id).toSet, LinkStatus.Terminated, "test")
       val updatedProjectLinks = ProjectDAO.getProjectLinks(id)
       updatedProjectLinks.head.status should be(LinkStatus.Terminated)
     }
@@ -168,7 +168,7 @@ class ProjectLinkDaoSpec  extends FunSuite with Matchers {
   test("update project link") {
     runWithRollback {
       val projectLinks = ProjectDAO.getProjectLinks(7081807)
-      ProjectDAO.updateProjectLinkStatus(projectLinks.map(x => x.id).toSet, LinkStatus.UnChanged, "test")
+      ProjectDAO.updateProjectLinks(projectLinks.map(x => x.id).toSet, LinkStatus.UnChanged, "test")
       val savedProjectLinks = ProjectDAO.getProjectLinks(7081807)
       ProjectDAO.updateProjectLinksToDB(Seq(savedProjectLinks.sortBy(_.startAddrMValue).last.copy(status = LinkStatus.Terminated)),"tester")
       val terminatedLink = projectLinks.sortBy(_.startAddrMValue).last
