@@ -5,6 +5,7 @@ import java.util.Properties
 import com.googlecode.flyway.core.Flyway
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.oracle.OracleAssetDao
+import fi.liikennevirasto.digiroad2.linearasset.NumericValue
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.masstransitstop.MassTransitStopOperations
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{MassTransitStopDao, Queries}
@@ -888,6 +889,54 @@ object DataFixture {
     println("Complete at time: ")
     println(DateTime.now())
     println("\n")
+  }
+  def fillRoadWidthInRoadLink(): Unit = {
+    println("\nFill Road Width in missing and incomplete road links")
+    println(DateTime.now())
+
+    val dao = new OracleLinearAssetDao(null, null)
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+
+    lazy val roadWidthService: RoadWidthService = {
+      new RoadWidthService(roadLinkService, new DummyEventBus)
+    }
+
+    val RoadWidthAssetTypeId: Int = 120
+
+    //Get All Municipalities
+    val municipalities: Seq[Int] =
+    OracleDatabase.withDynSession {
+      Queries.getMunicipalities
+    }
+
+    municipalities.foreach { municipality =>
+      val (roadLinks, changes) = roadLinkService.getRoadLinksAndChangesFromVVH(municipality)
+
+      val existingAssets =
+        withDynTransaction {
+          dao.fetchLinearAssetsByLinkIds(RoadWidthAssetTypeId, roadLinks.map(_.linkId), LinearAssetTypes.numericValuePropertyId).filterNot(_.expired)
+        }
+
+      val (expiredRoadWidthAssetIds, newRoadWidthAssets) = roadWidthService.getRoadWidthAssetChanges(existingAssets, roadLinks, changes)
+
+      val ids = expiredRoadWidthAssetIds
+      if (ids.nonEmpty)
+        println("\nExpiring ids " + ids.mkString(", "))
+      ids.foreach(dao.updateExpiration(_, expired = true, LinearAssetTypes.VvhGenerated))
+
+      newRoadWidthAssets.foreach{ linearAsset =>
+        val id = dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
+          Measures(linearAsset.startMeasure, linearAsset.endMeasure), linearAsset.createdBy.getOrElse(LinearAssetTypes.VvhGenerated), linearAsset.vvhTimeStamp, getLinkSource(roadLinks.find(_.linkId == linearAsset.linkId)))
+        linearAsset.value match {
+          case Some(NumericValue(intValue)) =>
+            dao.insertValue(id, LinearAssetTypes.numericValuePropertyId, intValue)
+          case _ => None
+        }
+      }
+    }
+
+    println("\nFill Road Width in missing and incomplete road links")
+    println(DateTime.now())
   }
 
   def importAllTrafficVolumeDataFromTR() {
