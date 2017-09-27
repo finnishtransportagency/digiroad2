@@ -23,7 +23,7 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
 import scala.util.control.NonFatal
 case class PreFillInfo(RoadNumber:BigInt, RoadPart:BigInt)
-case class LinkToRevert(linkId: Long, status: Long)
+case class LinkToRevert(id:Long, linkId: Long, status: Long)
 class ProjectService(roadAddressService: RoadAddressService, roadLinkService: RoadLinkService, eventbus: DigiroadEventBus, frozenTimeVVHAPIServiceEnabled: Boolean = false) {
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
@@ -668,13 +668,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             val remainingLinks = ProjectDAO.fetchProjectLinkIds(projectId, roadNumber, roadPartNumber)
             if (remainingLinks.nonEmpty){
               val projectLinks = ProjectDAO.fetchByProjectNewRoadPart(roadNumber, roadPartNumber, projectId)
-              val adjLinks = withGeometry(projectLinks, resetAddress = true)
-              ProjectSectionCalculator.assignMValues(adjLinks).foreach(
-                adjLink => ProjectDAO.updateAddrMValues(adjLink))
+              val adjLinks = withGeometry(projectLinks)
+              ProjectSectionCalculator.assignMValues(adjLinks).foreach(adjLink => ProjectDAO.updateAddrMValues(adjLink))
             }
           }
-          else if (link.status == LinkStatus.Terminated.value || link.status == LinkStatus.Transfer.value ){
-            val roadLink = RoadAddressDAO.fetchByLinkId(Set(link.linkId),  false, false)
+          else {
+            val projectLink = ProjectDAO.getProjectLinksById(Seq(link.id))
+            val roadLink = RoadAddressDAO.queryById(Set(projectLink.head.roadAddressId))
             ProjectDAO.updateProjectLinkValues(projectId, roadLink.head)
           }
         })
@@ -706,8 +706,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             //Fetching road addresses in order to obtain the original addressMValues, since we may not have those values on project_link table, after previous recalculations
             val roadAddresses = RoadAddressDAO.fetchByLinkId(updatedProjectLinks.map(pl => pl.linkId).toSet)
             val updatedPL = updatedProjectLinks.map(pl => {
-              // TODO: Match by road_address_id (VIITE-697)
-              val roadAddress = roadAddresses.filter(_.linkId == pl.linkId).minBy(a =>
+              val roadAddress = roadAddresses.filter(_.id == pl.roadAddressId).minBy(a =>
                 Math.abs(a.startMValue-pl.startMValue) + Math.abs(a.endMValue-pl.endMValue)) // Match by LRM position
               pl.copy(startAddrMValue = roadAddress.startAddrMValue, endAddrMValue = roadAddress.endAddrMValue)
             })
@@ -721,15 +720,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           }
           case LinkStatus.Transfer => {
             if (isRoadPartTransfer(projectLinks, updatedProjectLinks, roadNumber, roadPartNumber)) {
-              val updated = updatedProjectLinks.map(updl => {
+              val updated = updatedProjectLinks.filterNot(link => link.status == LinkStatus.Terminated).map(updl => {
                 updl.copy(roadNumber = roadNumber, roadPartNumber = roadPartNumber, status = linkStatus, calibrationPoints = (None, None))
               })
               ProjectDAO.updateProjectLinksToDB(updated, userName)
             } else {
-              ProjectDAO.updateProjectLinks(updatedProjectLinks.map(_.id).toSet, linkStatus, userName)
+              ProjectDAO.updateProjectLinks(updatedProjectLinks.filterNot(link => link.status == LinkStatus.Terminated).map(_.id).toSet, linkStatus, userName)
             }
           }
-          case _ => ProjectDAO.updateProjectLinks(updatedProjectLinks.map(_.id).toSet, linkStatus, userName)
+          case _ => ProjectDAO.updateProjectLinks(updatedProjectLinks.filterNot(link => link.status == LinkStatus.Terminated).map(_.id).toSet, linkStatus, userName)
         }
         recalculateProjectLinks(projectId, userName)
       }

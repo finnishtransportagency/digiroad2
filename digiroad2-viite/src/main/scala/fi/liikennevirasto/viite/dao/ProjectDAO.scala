@@ -408,7 +408,7 @@ object ProjectDAO {
   def updateProjectLinkNumbering(projectId: Long, roadNumber: Long, roadPart: Long, linkStatus: LinkStatus, newRoadNumber: Long, newRoadPart: Long, userName: String): Unit = {
     val user = userName.replaceAll("[^A-Za-z0-9\\-]+", "")
         val sql = s"UPDATE PROJECT_LINK SET STATUS = ${linkStatus.value}, MODIFIED_BY='$user', ROAD_NUMBER = $newRoadNumber, ROAD_PART_NUMBER = $newRoadPart " +
-          s"WHERE PROJECT_ID = $projectId  AND ROAD_NUMBER = $roadNumber AND ROAD_PART_NUMBER = $roadPart"
+          s"WHERE PROJECT_ID = $projectId  AND ROAD_NUMBER = $roadNumber AND ROAD_PART_NUMBER = $roadPart AND STATUS != ${LinkStatus.Terminated.value}"
         Q.updateNA(sql).execute
   }
 
@@ -423,9 +423,14 @@ object ProjectDAO {
   }
 
   def updateProjectLinkValues (projectId: Long, roadAddress: RoadAddress) = {
-    val updateProjectLink = s"update project_link set project_link.road_number = ${roadAddress.roadNumber}, project_link.road_part_number = ${roadAddress.roadPartNumber}, project_link.track_code = ${roadAddress.track.value}, " +
-      s" project_link.discontinuity_type = ${roadAddress.discontinuity.value}, project_link.road_type = ${roadAddress.roadType.value}, project_link.status = 0 where id in (select plink.id from project_link plink join lrm_position on lrm_position.id = plink.lrm_position_id where lrm_position.link_id =${roadAddress.linkId} )"
+    val updateProjectLink = s"UPDATE PROJECT_LINK SET ROAD_NUMBER = ${roadAddress.roadNumber}, ROAD_PART_NUMBER = ${roadAddress.roadPartNumber}, TRACK_CODE = ${roadAddress.track.value}, " +
+      s" DISCONTINUITY_TYPE = ${roadAddress.discontinuity.value}, ROAD_TYPE = ${roadAddress.roadType.value}, STATUS = ${LinkStatus.NotHandled.value}, START_ADDR_M = ${roadAddress.startAddrMValue}, END_ADDR_M = ${roadAddress.endAddrMValue}, " +
+      s" CALIBRATION_POINTS = ${CalibrationCode.getFromAddress(roadAddress).value} " +
+      s" WHERE ROAD_ADDRESS_ID = ${roadAddress.id} "
     Q.updateNA(updateProjectLink).execute
+
+    val updateLRMPosition = s"UPDATE LRM_POSITION SET SIDE_CODE = ${roadAddress.sideCode.value} where id in (SELECT LRM_POSITION_ID FROM PROJECT_LINK WHERE ROAD_ADDRESS_ID = ${roadAddress.id} )"
+    Q.updateNA(updateLRMPosition).execute
   }
 
   def flipProjectLinksSideCodes(projectId : Long, roadNumber : Long, roadPartNumber : Long): Unit = {
