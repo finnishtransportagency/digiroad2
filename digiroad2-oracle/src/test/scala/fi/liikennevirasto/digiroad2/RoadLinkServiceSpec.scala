@@ -814,8 +814,8 @@ class RoadLinkServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   test("Return road nodes") {
     val mockVVHClient = MockitoSugar.mock[VVHClient]
     val mockVVHRoadNodesClient = MockitoSugar.mock[VVHRoadNodesClient]
-    val vvhRoadNode = VVHRoadNodes(1, Point(1, 2, 3), 2, NodeType(1), 235)
-    val vvhRoadNode1 = VVHRoadNodes(2, Point(4, 5, 6), 2, NodeType(1), 235)
+    val vvhRoadNode = VVHRoadNodes(1, Point(1, 2, 3), 2, NodeType(1), 235, 1)
+    val vvhRoadNode1 = VVHRoadNodes(2, Point(4, 5, 6), 2, NodeType(1), 235, 1)
     val service = new TestService(mockVVHClient)
 
     OracleDatabase.withDynTransaction {
