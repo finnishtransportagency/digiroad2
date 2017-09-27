@@ -105,32 +105,55 @@ object TrackSectionOrder {
     }
 
     def combineSections(rightSection: Seq[TrackSection], leftSection: Seq[TrackSection]): Seq[CombinedSection] = {
-      def needsReversal(left: TrackSection, right: TrackSection): Boolean = {
-        GeometryUtils.areAdjacent(left.startGeometry, right.endGeometry) ||
-          GeometryUtils.areAdjacent(left.endGeometry, right.startGeometry)
-      }
-//      rightSection.foreach(s => s.links.foreach(println))
-//      println
-//      leftSection.foreach(s => s.links.foreach(println))
-//      println
-//      rightSection.zip(leftSection).foreach(println)
-//      println("***")
       rightSection.map { r =>
         r.track match {
           case Track.Combined =>
-            CombinedSection(r.startGeometry, r.endGeometry, r.geometryLength, r, r)
+            // Average address values for track lengths:
+            val l = leftSection.filter(_.track == Track.Combined).minBy(l =>
+              Math.min(
+                Math.min(l.startGeometry.distance2DTo(r.startGeometry), l.startGeometry.distance2DTo(r.endGeometry)),
+                Math.min(l.endGeometry.distance2DTo(r.startGeometry), l.endGeometry.distance2DTo(r.endGeometry))))
+            val (c, _) = averageTracks(r, l)
+            println(r.links.head.startAddrMValue, r.links.last.endAddrMValue)
+            println(l.links.head.startAddrMValue, l.links.last.endAddrMValue)
+            println("Combined ->" + (c.links.head.startAddrMValue, c.links.last.endAddrMValue))
+            CombinedSection(r.startGeometry, r.endGeometry, r.geometryLength, c, c)
           case Track.RightSide =>
             val l = leftSection.filter(_.track == Track.LeftSide).minBy(l =>
               Math.min(
                 Math.min(l.startGeometry.distance2DTo(r.startGeometry), l.startGeometry.distance2DTo(r.endGeometry)),
               Math.min(l.endGeometry.distance2DTo(r.startGeometry), l.endGeometry.distance2DTo(r.endGeometry))))
-            CombinedSection(r.startGeometry, r.endGeometry, .5*(r.geometryLength + l.geometryLength),
-              if (needsReversal(l, r)) l.reverse else l, r)
+            val (cr, cl) = averageTracks(r, l)
+            println(r.links.head.startAddrMValue, r.links.last.endAddrMValue)
+            println(l.links.head.startAddrMValue, l.links.last.endAddrMValue)
+            println("Separate ->" + (cr.links.head.startAddrMValue, cr.links.last.endAddrMValue))
+            println("Separate ->" + (cl.links.head.startAddrMValue, cl.links.last.endAddrMValue))
+            println(cr.links.head.startAddrMValue, cr.links.last.endAddrMValue)
+            println(cl.links.head.startAddrMValue, cl.links.last.endAddrMValue)
+            CombinedSection(r.startGeometry, r.endGeometry, .5*(cr.geometryLength + cl.geometryLength),
+              cl, cr)
           case _ => throw new RoadAddressException(s"Incorrect track code ${r.track}")
         }
       }
 
     }
     combineSections(groupIntoSections(rightLinks), groupIntoSections(leftLinks))
+  }
+
+  private def averageTracks(rightTrack: TrackSection, leftTrack: TrackSection): (TrackSection, TrackSection) = {
+    def needsReversal(left: TrackSection, right: TrackSection): Boolean = {
+      GeometryUtils.areAdjacent(left.startGeometry, right.endGeometry) ||
+        GeometryUtils.areAdjacent(left.endGeometry, right.startGeometry)
+    }
+    val alignedLeft = if (needsReversal(leftTrack, rightTrack)) leftTrack.reverse else leftTrack
+    val (startM, endM) = (average(rightTrack.startAddrM, alignedLeft.startAddrM), average(rightTrack.endAddrM, alignedLeft.endAddrM))
+
+    (rightTrack.toAddressValues(startM, endM), leftTrack.toAddressValues(startM, endM))
+  }
+  private def average(rightAddrValue: Long, leftAddrValue: Long): Long = {
+    if (rightAddrValue >= leftAddrValue)
+      (1L + rightAddrValue + leftAddrValue) / 2L
+    else
+      (rightAddrValue + leftAddrValue - 1L) / 2L
   }
 }
