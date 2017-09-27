@@ -407,7 +407,7 @@ object ProjectDAO {
         Q.updateNA(sql).execute
   }
 
-  def updateProjectLinkStatus(projectLinkIds: Set[Long], linkStatus: LinkStatus, userName: String): Unit = {
+  def updateProjectLinks(projectLinkIds: Set[Long], linkStatus: LinkStatus, userName: String): Unit = {
     val user = userName.replaceAll("[^A-Za-z0-9\\-]+", "")
     projectLinkIds.grouped(500).foreach {
       grp =>
@@ -417,9 +417,9 @@ object ProjectDAO {
     }
   }
 
-  def updateProjectLinkValues (projectId: Long, projectLink: RoadAddress) ={
-    val updateProjectLink = s"update project_link set project_link.road_number = ${projectLink.roadNumber}, project_link.road_part_number = ${projectLink.roadPartNumber}, project_link.track_code = ${projectLink.track.value}, " +
-      s" project_link.discontinuity_type = ${projectLink.discontinuity.value}, project_link.road_type = ${projectLink.roadType.value}, project_link.status = 0 where id in (select plink.id from project_link plink join lrm_position on lrm_position.id = plink.lrm_position_id where lrm_position.link_id =${projectLink.linkId} )"
+  def updateProjectLinkValues (projectId: Long, roadAddress: RoadAddress) = {
+    val updateProjectLink = s"update project_link set project_link.road_number = ${roadAddress.roadNumber}, project_link.road_part_number = ${roadAddress.roadPartNumber}, project_link.track_code = ${roadAddress.track.value}, " +
+      s" project_link.discontinuity_type = ${roadAddress.discontinuity.value}, project_link.road_type = ${roadAddress.roadType.value}, project_link.status = 0 where id in (select plink.id from project_link plink join lrm_position on lrm_position.id = plink.lrm_position_id where lrm_position.link_id =${roadAddress.linkId} )"
     Q.updateNA(updateProjectLink).execute
   }
 
