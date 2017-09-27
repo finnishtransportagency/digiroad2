@@ -135,7 +135,7 @@
       source: vectorSource,
       name: layerName,
       style: function(feature) {
-      return projectLinkStyler.getDefault().getStyle( feature.projectLinkData, {zoomLevel: currentZoom});
+      return projectLinkStyler.getProjectLinkStyle().getStyle( feature.projectLinkData, {zoomLevel: currentZoom});
     }
     });
 
@@ -168,7 +168,10 @@
 
     var selectSingleClick = new ol.interaction.Select({
       layer: [vectorLayer, suravageRoadProjectLayer],
-      condition: ol.events.condition.singleClick/*,
+      condition: ol.events.condition.singleClick,
+      style: function(feature) {
+        return projectLinkStyler.getSelectionLinkStyle().getStyle( feature.projectLinkData, {zoomLevel: currentZoom});
+      }/*,
       style: function (feature) {
         return projectLinkStyler.generateSelectionStyle(feature.roadLinkData);
       }
@@ -258,7 +261,11 @@
       layer: [vectorLayer, suravageRoadProjectLayer],
       condition: function (mapBrowserEvent) {
         return (ol.events.condition.doubleClick(mapBrowserEvent) && ol.events.condition.shiftKeyOnly(mapBrowserEvent)) || ol.events.condition.doubleClick(mapBrowserEvent);
+      },
+      style: function(feature) {
+        return projectLinkStyler.getSelectionLinkStyle().getStyle( feature.projectLinkData, {zoomLevel: currentZoom});
       }
+
       /*style: function (feature) {
         return projectLinkStyler.generateSelectionStyle(feature.roadLinkData);
       }*/
@@ -747,8 +754,8 @@
         if (editedLink) {
           if (_.contains(toBeTerminatedLinkIds, feature.projectLinkData.linkId)) {
             feature.projectLinkData.status = terminatedStatus;
-            //var termination = projectLinkStyler.generateStyleByFeature(feature);
-            //feature.setStyle(termination);
+            var termination = projectLinkStyler.getProjectLinkStyle().getStyle( feature.projectLinkData, {zoomLevel: currentZoom});
+            feature.setStyle(termination);
             /*feature.setStyle(new ol.style.Style({
              fill: new ol.style.Fill({
              color: 'rgba(56, 56, 54, 1)'
