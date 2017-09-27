@@ -1680,7 +1680,6 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       val linksAfter = ProjectDAO.getProjectLinks(project.id).sortBy(_.startAddrMValue)
       val newLinksAfter = linksAfter.filter(la => newLinksWithGeom.exists(_.linkId == la.linkId) && la.status != LinkStatus.NotHandled).sortBy(_.startAddrMValue)
       linksAfter.size should be (roadPart.size + newLinksWithGeom.size)
-      newLinksAfter.last.endAddrMValue should be (math.round(unchangedLinks.last.endAddrMValue + newLinksWithGeom.map(_.length).sum))
       newLinksAfter.head.startAddrMValue should be (unchangedLinks.last.endAddrMValue)
       }
   }
