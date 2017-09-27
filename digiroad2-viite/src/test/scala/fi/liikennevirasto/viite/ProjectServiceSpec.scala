@@ -1710,13 +1710,24 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       new202.filter(_.track == Track.RightSide).sortBy(_.startAddrMValue).last.endAddrMValue should be (new202.filter(_.track == Track.LeftSide).sortBy(_.startAddrMValue).last.endAddrMValue)
       new202.filter(_.track == Track.RightSide).sortBy(_.startAddrMValue).head.startAddrMValue should be (new202.filter(_.track == Track.LeftSide).sortBy(_.startAddrMValue).head.startAddrMValue)
 
-      val terminatedLinks = linksAfter.filter(_.status == LinkStatus.Terminated)
-      val term201 = terminatedLinks.filter(_.roadPartNumber == 201)
-      val term202 = terminatedLinks.filter(_.roadPartNumber == 202)
-      term201.filter(_.track == Track.RightSide).sortBy(_.startAddrMValue).last.endAddrMValue should be (term201.filter(_.track == Track.LeftSide).sortBy(_.startAddrMValue).last.endAddrMValue)
-      term201.filter(_.track == Track.RightSide).sortBy(_.startAddrMValue).head.startAddrMValue should be (term201.filter(_.track == Track.LeftSide).sortBy(_.startAddrMValue).head.startAddrMValue)
-      term202.filter(_.track == Track.RightSide).sortBy(_.startAddrMValue).last.endAddrMValue should be (term202.filter(_.track == Track.LeftSide).sortBy(_.startAddrMValue).last.endAddrMValue)
-      term202.filter(_.track == Track.RightSide).sortBy(_.startAddrMValue).head.startAddrMValue should be (term202.filter(_.track == Track.LeftSide).sortBy(_.startAddrMValue).head.startAddrMValue)
+      val changesList = RoadAddressChangesDAO.fetchRoadAddressChanges(Set(project.id))
+      changesList.isEmpty should be(false)
+      val terminationChangesRightSide201 = changesList.filter(cl => {cl.changeInfo.source.startRoadPartNumber.get == 201L && cl.changeInfo.changeType == AddressChangeType.Termination && cl.changeInfo.source.trackCode.get == Track.RightSide.value})
+      val terminationChangesLeftSide201 = changesList.filter(cl => {cl.changeInfo.source.startRoadPartNumber.get == 201 && cl.changeInfo.changeType == AddressChangeType.Termination && cl.changeInfo.source.trackCode.get == Track.LeftSide.value})
+      val terminationChangesRightSide202 = changesList.filter(cl => {cl.changeInfo.source.startRoadPartNumber.get == 202 && cl.changeInfo.changeType == AddressChangeType.Termination && cl.changeInfo.source.trackCode.get == Track.RightSide.value})
+      val terminationChangesLeftSide202 = changesList.filter(cl => {cl.changeInfo.source.startRoadPartNumber.get == 202 && cl.changeInfo.changeType == AddressChangeType.Termination && cl.changeInfo.source.trackCode.get == Track.LeftSide.value})
+
+      terminationChangesRightSide201.head.changeInfo.source.startAddressM should be (terminationChangesLeftSide201.head.changeInfo.source.startAddressM)
+      terminationChangesRightSide201.head.changeInfo.source.endAddressM should be (terminationChangesLeftSide201.head.changeInfo.source.endAddressM)
+      terminationChangesRightSide202.head.changeInfo.source.startAddressM should be (terminationChangesLeftSide202.head.changeInfo.source.startAddressM)
+      terminationChangesRightSide202.head.changeInfo.source.endAddressM should be (terminationChangesLeftSide202.head.changeInfo.source.endAddressM)
+
+      val newChanges = changesList.filter(_.changeInfo.changeType == AddressChangeType.New)
+      newChanges.map(nc =>  {
+        nc.changeInfo.source.startAddressM should be (nc.changeInfo.target.startAddressM)
+        nc.changeInfo.source.endAddressM should be (nc.changeInfo.target.endAddressM)
+        nc
+      })
     }
   }
 }
