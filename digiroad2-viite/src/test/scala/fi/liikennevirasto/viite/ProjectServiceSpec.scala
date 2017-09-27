@@ -262,6 +262,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       val updatedProjectLinks=ProjectDAO.getProjectLinks(savedProject.id)
       updatedProjectLinks.exists { x=> x.status==LinkStatus.UnChanged } should be(true)
       updatedProjectLinks.exists { x=> x.status==LinkStatus.Terminated } should be(true)
+      updatedProjectLinks.map(prettyPrint).foreach(println)
       updatedProjectLinks.filter( pl => pl.linkId==5168579).head.calibrationPoints should be ((None,Some(CalibrationPoint(5168579,15.173,4681))))
       projectService.updateProjectLinkStatus(savedProject.id, Set(5168579), LinkStatus.Terminated, "-")
       val updatedProjectLinks2=ProjectDAO.getProjectLinks(savedProject.id)

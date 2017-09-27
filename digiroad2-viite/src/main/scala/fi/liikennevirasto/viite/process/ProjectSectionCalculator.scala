@@ -194,22 +194,6 @@ object ProjectSectionCalculator {
           if (sec.right == sec.left)
             assignCalibrationPoints(Seq(), sec.right.links)
           else {
-//            val (rEnd, lEnd) = (sec.right.links.last.endAddrMValue, sec.left.links.last.endAddrMValue)
-//            val (rStart, lStart) = (sec.right.links.head.startAddrMValue, sec.left.links.head.startAddrMValue)
-//            val (startMValue, endMValue) = (
-//              if (rStart > lStart) Math.ceil(0.5*(rStart+lStart)) else Math.floor(0.5*(rStart+lStart)),
-//              if (rEnd > lEnd) Math.ceil(0.5*(rEnd+lEnd)) else Math.floor(0.5*(rEnd+lEnd)))
-//
-//            val coeffR = (endMValue - startMValue) / sec.right.links.map(_.geometryLength).sum
-//            val runningLengthR = sec.right.links.scanLeft(startMValue.toDouble){case (value, plink) =>
-//              value + coeffR*plink.geometryLength
-//            }
-//            val coeffL = (endMValue - startMValue) / sec.left.links.map(_.geometryLength).sum
-//            val runningLengthL = sec.left.links.scanLeft(startMValue.toDouble){case (value, plink) =>
-//              value + coeffL*plink.geometryLength
-//            }
-//            println(s"Assigning $coeffR, $coeffL for ${runningLengthR.last}, ${runningLengthL.last}")
-//            // Calculate left track values
             assignCalibrationPoints(Seq(), sec.right.links) ++
               assignCalibrationPoints(Seq(), sec.left.links)
           }
@@ -256,34 +240,6 @@ object ProjectSectionCalculator {
           run + coeff*pl.geometryLength
       }
     }
-    def setAddressValues(groups: Seq[(Boolean, Seq[ProjectLink])], startValue: Double): Seq[ProjectLink] = {
-      if (groups.isEmpty)
-        Seq()
-      else {
-        val (isUnchanged, links) = groups.head
-        println(s"Set ${startValue} for group $isUnchanged at ${links.head}")
-        if (isUnchanged)
-          links ++ setAddressValues(groups.tail, links.last.endAddrMValue.toDouble)
-        else {
-          val endValue = groups.find(_._1).map(_._2.head.startAddrMValue)
-          val addressMValues = if (endValue.nonEmpty) {
-            // Give calculated values to new links, keep transferred length
-            val (created, kept) = links.partition(_.status == LinkStatus.New)
-            val coeff = (endValue.get - kept.map(k => k.endAddrMValue - k.startAddrMValue).sum) / created.map(_.geometryLength).sum
-            getLinkAddressValues(links, startValue, coeff)
-          } else {
-            // Check that there are no other groups after this -- there shouldn't because booleans should switch back and forth
-            if (groups.tail.nonEmpty)
-              throw new InvalidAddressDataException("Consecutive non-static project link groups found")
-            getLinkAddressValues(links, startValue)
-          }
-          links.zip(addressMValues.zip(addressMValues.tail)).map{case (pl, (start, end)) =>
-            pl.copy(startAddrMValue = Math.round(start), endAddrMValue = Math.round(end), calibrationPoints = (None, None))} ++
-            setAddressValues(groups.tail, addressMValues.last)
-        }
-      }
-    }
-
     def adjustTracksToMatch(rightLinks: Seq[ProjectLink], leftLinks: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
       val (rEnd, lEnd) = (rightLinks.last.endAddrMValue, leftLinks.last.endAddrMValue)
       val (rStart, lStart) = (rightLinks.head.startAddrMValue, leftLinks.head.startAddrMValue)
@@ -316,8 +272,8 @@ object ProjectSectionCalculator {
     sections.foreach(sec =>
       println(sec.sideCode, sec.startAddrM, sec.endAddrM)
     )
-    val rightLinks = setAddressValues(groupLinks(sections.flatMap(_.right.links)), 0.0)
-    val leftLinks = setAddressValues(groupLinks(sections.flatMap(_.left.links)), 0.0)
+    val rightLinks = ProjectSectionMValueCalculator.calculateMValuesForTrack(sections.flatMap(_.right.links))
+    val leftLinks = ProjectSectionMValueCalculator.calculateMValuesForTrack(sections.flatMap(_.left.links))
     val (right, left) = adjustTracksToMatch(rightLinks, leftLinks)
     TrackSectionOrder.createCombinedSections(right, left)
   }
@@ -445,8 +401,8 @@ case class TrackSection(roadNumber: Long, roadPartNumber: Long, track: Track,
     case AgainstDigitizing => links.last.geometry.head
     case _ => links.last.geometry.last
   }
-  lazy val startAddrM = links.map(_.startAddrMValue).min
-  lazy val endAddrM = links.map(_.endAddrMValue).max
+  lazy val startAddrM: Long = links.map(_.startAddrMValue).min
+  lazy val endAddrM: Long = links.map(_.endAddrMValue).max
   def toAddressValues(start: Long, end: Long): TrackSection = {
     val runningLength = links.scanLeft(0.0){ case (d, pl) => d + pl.geometryLength }
     val coeff = (end - start) / runningLength.last
@@ -478,5 +434,7 @@ case class CombinedSection(startGeometry: Point, endGeometry: Point, geometryLen
   lazy val startAddrM: Long = right.links.map(_.startAddrMValue).min
 
   lazy val endAddrM: Long = right.links.map(_.endAddrMValue).max
+
+  lazy val linkStatusCodes: Set[LinkStatus] = (right.links.map(_.status) ++ left.links.map(_.status)).toSet
 }
 

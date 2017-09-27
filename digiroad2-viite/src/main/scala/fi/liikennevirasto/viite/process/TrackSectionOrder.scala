@@ -113,25 +113,14 @@ object TrackSectionOrder {
               Math.min(
                 Math.min(l.startGeometry.distance2DTo(r.startGeometry), l.startGeometry.distance2DTo(r.endGeometry)),
                 Math.min(l.endGeometry.distance2DTo(r.startGeometry), l.endGeometry.distance2DTo(r.endGeometry))))
-            val (c, _) = averageTracks(r, l)
-            println(r.links.head.startAddrMValue, r.links.last.endAddrMValue)
-            println(l.links.head.startAddrMValue, l.links.last.endAddrMValue)
-            println("Combined ->" + (c.links.head.startAddrMValue, c.links.last.endAddrMValue))
-            CombinedSection(r.startGeometry, r.endGeometry, r.geometryLength, c, c)
+            CombinedSection(r.startGeometry, r.endGeometry, r.geometryLength, l, r)
           case Track.RightSide =>
             val l = leftSection.filter(_.track == Track.LeftSide).minBy(l =>
               Math.min(
                 Math.min(l.startGeometry.distance2DTo(r.startGeometry), l.startGeometry.distance2DTo(r.endGeometry)),
               Math.min(l.endGeometry.distance2DTo(r.startGeometry), l.endGeometry.distance2DTo(r.endGeometry))))
-            val (cr, cl) = averageTracks(r, l)
-            println(r.links.head.startAddrMValue, r.links.last.endAddrMValue)
-            println(l.links.head.startAddrMValue, l.links.last.endAddrMValue)
-            println("Separate ->" + (cr.links.head.startAddrMValue, cr.links.last.endAddrMValue))
-            println("Separate ->" + (cl.links.head.startAddrMValue, cl.links.last.endAddrMValue))
-            println(cr.links.head.startAddrMValue, cr.links.last.endAddrMValue)
-            println(cl.links.head.startAddrMValue, cl.links.last.endAddrMValue)
-            CombinedSection(r.startGeometry, r.endGeometry, .5*(cr.geometryLength + cl.geometryLength),
-              cl, cr)
+            CombinedSection(r.startGeometry, r.endGeometry, .5*(r.geometryLength + l.geometryLength),
+              l, r)
           case _ => throw new RoadAddressException(s"Incorrect track code ${r.track}")
         }
       }
