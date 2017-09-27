@@ -4,6 +4,7 @@ import fi.liikennevirasto.digiroad2.util.RoadAddressException
 import java.text.DecimalFormat
 
 import fi.liikennevirasto.digiroad2.GeometryUtils
+import fi.liikennevirasto.digiroad2.util.Track.RightSide
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.viite.dao.{ProjectLink, _}
 import org.joda.time.DateTime
@@ -77,11 +78,19 @@ object ProjectDeltaCalculator {
    }
 
   def projectLinkPartition(projectLinks: Seq[ProjectLink]): Seq[RoadAddressSection] = {
-    val grouped = projectLinks.groupBy(projectLink => (projectLink.roadNumber, projectLink.roadPartNumber, projectLink.track, projectLink.roadType))
-    grouped.mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
+    val grouped = projectLinks.groupBy(projectLink => (projectLink.roadNumber, projectLink.roadPartNumber, projectLink.track, projectLink.roadType)).mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
       RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
         ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType)
     ).toSeq
+
+    val adjustedAddressMValues: Seq[RoadAddressSection] = grouped.groupBy(s => (s.roadNumber, s.roadPartNumberStart, s.roadPartNumberEnd)).flatMap {
+      group =>
+        group._2.sortBy(_.track.value).map{
+          e =>
+            e.copy(startMAddr = adjustAddrValues(group._2.map(_.startMAddr).sum, e.startMAddr, e.track), endMAddr = adjustAddrValues(group._2.map(_.endMAddr).sum, e.endMAddr, e.track))
+        }
+    }.toSeq
+    adjustedAddressMValues
   }
 
   private def combineTwo[T <: BaseRoadAddress](r1: T, r2: T): Seq[T] = {
@@ -103,12 +112,34 @@ object ProjectDeltaCalculator {
       combine(roadAddressSeq.tail, combineTwo(result.head, roadAddressSeq.head) ++ result.tail)
   }
 
+  def adjustAddrValues(addrMValues: Long, mValue: Long, track: Track): Long = {
+
+    val fusedValues = addrMValues%2 match {
+      case 0 => addrMValues/2
+      case _ =>
+        if(track == RightSide){
+            Math.ceil(addrMValues/2)
+        } else {
+            Math.floor(addrMValues/2)
+        }
+    }
+    fusedValues.toLong
+  }
+
   def partition(roadAddresses: Seq[RoadAddress]): Seq[RoadAddressSection] = {
-    val grouped = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track))
-    grouped.mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
+    val grouped = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track)).mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
       RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
         ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType)
     ).toSeq
+
+    val adjustedAddressMValues: Seq[RoadAddressSection] = grouped.groupBy(s => (s.roadNumber, s.roadPartNumberStart, s.roadPartNumberEnd)).flatMap {
+      group =>
+        group._2.sortBy(_.track.value).map{
+          e =>
+            e.copy(startMAddr = adjustAddrValues(group._2.map(_.startMAddr).sum, e.startMAddr, e.track), endMAddr = adjustAddrValues(group._2.map(_.endMAddr).sum, e.endMAddr, e.track))
+        }
+    }.toSeq
+    adjustedAddressMValues
   }
 
   def pair(roadAddress: Seq[RoadAddress], projectLink: Seq[ProjectLink]): Seq[(RoadAddress,ProjectLink)] = {
@@ -138,14 +169,29 @@ object ProjectDeltaCalculator {
     }
     val paired = pair(roadAddresses, projectLinks).groupBy(x => (x._1.roadNumber, x._1.roadPartNumber, x._2.roadNumber, x._2.roadPartNumber))
 
-    val (oldL, newL) = (paired.map( x=> x._2.map(_._1)),paired.map( x=> x._2.map(_._2)))
+    val (oldL, newL) = (paired.map( x=> x._2.map(_._1)).toSeq ,paired.map( x=> x._2.map(_._2)).toSeq)
 
-    val sourceCombined = oldL.flatMap(toRoadAddressSection)
-    val targetCombined = newL.flatMap(toRoadAddressSection)
+    val sourceCombined:Seq[RoadAddressSection] = oldL.flatMap(toRoadAddressSection)
+    val targetCombined:Seq[RoadAddressSection] = newL.flatMap(toRoadAddressSection)
+    val adjustedSourceValues: Seq[RoadAddressSection] = sourceCombined.groupBy(s => (s.roadNumber, s.roadPartNumberStart, s.roadPartNumberEnd)).flatMap {
+      group =>
+        group._2.sortBy(_.track.value).map{
+          e =>
+            e.copy(startMAddr = adjustAddrValues(group._2.map(_.startMAddr).sum, e.startMAddr, e.track), endMAddr = adjustAddrValues(group._2.map(_.endMAddr).sum, e.endMAddr, e.track))
+        }
+    }.toSeq
 
-    sourceCombined.map { sec =>
+    val adjustedTargetValues: Seq[RoadAddressSection] = targetCombined.groupBy(s => (s.roadNumber, s.roadPartNumberStart, s.roadPartNumberEnd)).flatMap {
+      group =>
+        group._2.sortBy(_.track.value).map{
+          e =>
+            e.copy(startMAddr = adjustAddrValues(group._2.map(_.startMAddr).sum, e.startMAddr, e.track), endMAddr = adjustAddrValues(group._2.map(_.endMAddr).sum, e.endMAddr, e.track))
+        }
+    }.toSeq
+
+    adjustedSourceValues.map { sec =>
       val linkId = roadAddresses.find(ra => sec.includes(ra)).map(_.linkId).get
-      val targetGroup = targetCombined.find(tc => tc.includes(projectLinks.find(_.linkId == linkId).get))
+      val targetGroup = adjustedTargetValues.find(tc => tc.includes(projectLinks.find(_.linkId == linkId).get))
       sec -> targetGroup.get
     }.toMap
 }}
