@@ -54,7 +54,7 @@ trait AbstractBusStopStrategy {
   def was(existingAsset: PersistedMassTransitStop): Boolean = {false}
   def undo(existingAsset: PersistedMassTransitStop, newProperties: Set[SimpleProperty], username: String): Unit = {}
   def enrichBusStop(persistedStop: PersistedMassTransitStop): (PersistedMassTransitStop, Boolean)
-  def isFloating(persistedAsset: PersistedPointAsset, roadLinkOption: Option[RoadLinkLike]): (Boolean, Option[FloatingReason]) = { (false, None) }
+  def isFloating(persistedAsset: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike]): (Boolean, Option[FloatingReason]) = { (false, None) }
   def create(newAsset: NewMassTransitStop, username: String, point: Point, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass], linkSource: LinkGeomSource, roadLink: RoadLink): PersistedMassTransitStop
   def update(persistedStop: PersistedMassTransitStop, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: Int => Unit, roadLink: RoadLink): PersistedMassTransitStop
   def delete(asset: PersistedMassTransitStop): Unit
@@ -162,9 +162,11 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 
   override def isFloating(persistedAsset: PersistedPointAsset, roadLinkOption: Option[RoadLinkLike]): (Boolean, Option[FloatingReason]) = {
+    val persistedMassTransitStop = persistedAsset.asInstanceOf[PersistedMassTransitStop]
+
     roadLinkOption match {
       case Some(roadLink) =>
-        val administrationClass = MassTransitStopOperations.getAdministrationClass(persistedAsset.asInstanceOf[PersistedMassTransitStop].propertyData)
+        val administrationClass = MassTransitStopOperations.getAdministrationClass(persistedMassTransitStop.propertyData)
         val(floating , floatingReason) = MassTransitStopOperations.isFloating(administrationClass.getOrElse(Unknown), Some(roadLink))
         if (floating) {
           return (floating, floatingReason)
@@ -172,9 +174,13 @@ trait MassTransitStopService extends PointAssetOperations {
       case _ => //Do nothing
     }
 
-
-
-    super.isFloating(persistedAsset, roadLinkOption)
+    val strategy = getStrategy(persistedMassTransitStop)
+    val (floating, floatingReason) = strategy.isFloating(persistedMassTransitStop, roadLinkOption)
+    if(floating){
+      (floating, floatingReason)
+    }else{
+      super.isFloating(persistedAsset, roadLinkOption)
+    }
   }
 
   override def setFloating(persistedStop: PersistedMassTransitStop, floating: Boolean): PersistedMassTransitStop = {

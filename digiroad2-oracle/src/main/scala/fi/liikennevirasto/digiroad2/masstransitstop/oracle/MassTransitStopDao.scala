@@ -407,6 +407,7 @@ class MassTransitStopDao {
     sqlu"""Delete From Text_Property_Value Where asset_id in (Select id as asset_id From asset Where id = $assetId)""".execute
     sqlu"""Delete From Asset_Link Where asset_id in (Select id as asset_id From asset Where id = $assetId)""".execute
     sqlu"""Delete From Number_Property_Value Where asset_id in (Select id as asset_id From asset Where id = $assetId)""".execute
+    sqlu"""Delete From Terminal_Bus_Stop_Link where terminal_asset_id = $assetId or bus_stop_asset_id = $assetId""".execute
     sqlu"""Delete From Asset Where id = $assetId""".execute
   }
 

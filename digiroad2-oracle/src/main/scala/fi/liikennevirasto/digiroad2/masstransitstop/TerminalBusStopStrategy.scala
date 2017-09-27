@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2.masstransitstop
 
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{AssetPropertyConfiguration, MassTransitStopDao, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 
@@ -35,6 +35,13 @@ class TerminalBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopD
       PropertyValue(a.id.toString, Some(s"""${a.nationalId} $stopName"""), checked = a.terminalId.contains(asset.id))
     })
     (asset.copy(propertyData = asset.propertyData.filterNot(p => p.publicId == terminalChildrenPublicId) ++ Seq(newProperty)), false)
+  }
+
+  override def isFloating(persistedAsset: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike]): (Boolean, Option[FloatingReason]) = {
+    massTransitStopDao.countTerminalChildBusStops(persistedAsset.id) match {
+      case 0 => (true, Some(FloatingReason.TerminalChildless))
+      case _ => (false, None)
+    }
   }
 
   override def create(asset: NewMassTransitStop, username: String, point: Point, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass], linkSource: LinkGeomSource, roadLink: RoadLink): PersistedMassTransitStop = {
