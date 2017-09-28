@@ -210,7 +210,12 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
     runWithRollback {
       val countCurrentProjects = projectService.getRoadAddressAllProjects()
       val id = 0
-      val addresses = List(ReservedRoadPart(5: Long, 203: Long, 203: Long, 5: Double, 5: Long, Discontinuity.apply("jatkuva"), 8: Long, None: Option[DateTime], None: Option[DateTime]))
+      val roadLink = RoadLink(2226637L, Seq(Point(534148.494, 6978117.311, 94.54499999999825))
+        , 378.264, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
+        InUse, NormalLinkInterface)
+
+      when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink))
+      val addresses = List(ReservedRoadPart(5: Long, 1130: Long, 4: Long, 5: Double, 5: Long, Discontinuity.apply("jatkuva"), 8: Long, None: Option[DateTime], None: Option[DateTime]))
       val roadAddressProject = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(), None)
       val saved = projectService.createRoadLinkProject(roadAddressProject)
       val changed = saved.copy(reservedParts = addresses)
