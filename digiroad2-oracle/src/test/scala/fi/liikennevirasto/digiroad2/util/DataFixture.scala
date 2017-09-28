@@ -904,15 +904,13 @@ object DataFixture {
     val RoadWidthAssetTypeId: Int = 120
 
     //Get All Municipalities
-//    val municipalities: Seq[Int] =
-//    OracleDatabase.withDynSession {
-//      Queries.getMunicipalities
-//    }
-    val municipalities: Seq[Int] = Seq(749)
+    val municipalities: Seq[Int] =
+    OracleDatabase.withDynSession {
+      Queries.getMunicipalities
+    }
 
     municipalities.foreach { municipality =>
       val (roadLinks, changes) = roadLinkService.getRoadLinksAndChangesFromVVH(municipality)
-
 
         OracleDatabase.withDynTransaction {
           val existingAssets = dao.fetchLinearAssetsByLinkIds(RoadWidthAssetTypeId, roadLinks.map(_.linkId), LinearAssetTypes.numericValuePropertyId).filterNot(_.expired)
