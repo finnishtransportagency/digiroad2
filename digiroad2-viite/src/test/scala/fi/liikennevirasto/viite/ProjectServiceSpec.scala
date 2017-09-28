@@ -1662,10 +1662,10 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(allRoadParts.map(toRoadLink))
       val project = projectService.createRoadLinkProject(rap)
 
-      projectService.updateProjectLinkStatus(project.id, Set(2226690, 2226637), LinkStatus.Terminated, "TestUser") should be (None)
-      projectService.updateProjectLinkStatus(project.id, Set(2226636), LinkStatus.Terminated, "TestUser") should be (None)
-      projectService.updateProjectLinkStatus(project.id, Set(2226676, 2226658), LinkStatus.Terminated, "TestUser") should be (None)
-      projectService.updateProjectLinkStatus(project.id, Set(2226677, 2226482), LinkStatus.Terminated, "TestUser") should be (None)
+      projectService.updateProjectLinks(project.id, Set(2226690, 2226637), LinkStatus.Terminated, "TestUser") should be (None)
+      projectService.updateProjectLinks(project.id, Set(2226636), LinkStatus.Terminated, "TestUser") should be (None)
+      projectService.updateProjectLinks(project.id, Set(2226676, 2226658), LinkStatus.Terminated, "TestUser") should be (None)
+      projectService.updateProjectLinks(project.id, Set(2226677, 2226482), LinkStatus.Terminated, "TestUser") should be (None)
 
       val mappedGeomsNewLinks = StaticTestData.mappedGeoms(Seq(2226681, 6564541, 2226632, 2226660, 2226480))
       val geom1 = mappedGeomsNewLinks(2226681)
