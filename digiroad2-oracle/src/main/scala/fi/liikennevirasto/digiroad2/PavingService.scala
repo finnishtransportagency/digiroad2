@@ -129,7 +129,7 @@ class PavingService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digiroad
    */
   override def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset]): Unit ={
     if (newLinearAssets.nonEmpty)
-      logger.info("Saving projected linear assets")
+      logger.info("Saving projected paved assets")
 
     val (toInsert, toUpdate) = newLinearAssets.partition(_.id == 0L)
     withDynTransaction {

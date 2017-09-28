@@ -34,14 +34,13 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     val (expiredRoadWidthAssetIds, newRoadWidthAssets) = getRoadWidthAssetChanges(existingAssets, roadLinks, changes)
 
     val combinedAssets = assetsOnChangedLinks.filterNot(
-      a => expiredRoadWidthAssetIds.contains(a.id) || assetsWithoutChangedLinks.exists(_.id == a.id)
+      a => expiredRoadWidthAssetIds.contains(a.id) || assetsWithoutChangedLinks.exists(_.id == a.id) || assetsWithoutChangedLinks.exists(_.id == a.id)
     ) ++ newRoadWidthAssets
-
 
     val filledNewAssets = fillNewRoadLinksWithPreviousAssetsData(projectableTargetRoadLinks,
       combinedAssets, assetsOnChangedLinks, changes) ++ assetsWithoutChangedLinks
 
-    val newAssets = newRoadWidthAssets/*.filterNot(a => filledNewAssets.exists(f => f.linkId == a.linkId))*/ ++ filledNewAssets
+    val newAssets = newRoadWidthAssets.filterNot(a => filledNewAssets.exists(f => f.linkId == a.linkId)) ++ filledNewAssets
 
     val timing = System.currentTimeMillis
     if (newAssets.nonEmpty) {
@@ -69,12 +68,11 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
 
   def getRoadWidthAssetChanges(existingLinearAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink],
                             changeInfos: Seq[ChangeInfo]): (Set[Long], Seq[PersistedLinearAsset]) = {
+
     def fillIncompletedRoadlinks(assets: Seq[PersistedLinearAsset], roadLink: RoadLink, changeInfo: ChangeInfo ): Seq[PersistedLinearAsset] = {
       val MinAllowedLength = 2.0
-
-      val pointsOfInterest = (assets.map(_.startMeasure) ++ assets.map(_.endMeasure) ++  Seq(GeometryUtils.geometryLength(roadLink.geometry))).distinct.sorted
-      if(pointsOfInterest.length <= 2)
-        return Seq()
+      val MinOfLenght: Double = 0
+      val pointsOfInterest = (assets.map(_.startMeasure) ++ assets.map(_.endMeasure) ++  Seq(MinOfLenght, GeometryUtils.geometryLength(roadLink.geometry))).distinct.sorted
 
       //Not create asset with the lenght less MinAllowedLength
       val pieces = pointsOfInterest.zip(pointsOfInterest.tail).filterNot{piece => (piece._2 - piece._1) < MinAllowedLength}
@@ -102,23 +100,19 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
         List()
     }.toSet[Long]
 
-    val newAndUpdatedAssets = changedAssets.flatMap{
-      case (Some(roadlink), changeInfo, assets) if assets.isEmpty =>
-            Some(PersistedLinearAsset(0L, roadlink.linkId, SideCode.BothDirections.value, Some(NumericValue(MTKClassWidth.apply(roadlink.MTKClass).width)), 0,
-              GeometryUtils.geometryLength(roadlink.geometry), Some("vvh_mtkclass_default"), None, None, None, false,
-              RoadWidthAssetTypeId, changeInfo.vvhTimeStamp, None, linkSource = roadlink.linkSource))
+    val newAssets = changedAssets.flatMap{
       case (Some(roadlink), changeInfo, assets) =>
          fillIncompletedRoadlinks(assets, roadlink, changeInfo).filterNot(a => assets.filterNot(asset => expiredAssetsIds.contains(asset.id)).exists(asset => math.abs(a.startMeasure - asset.startMeasure) < MaxAllowedError && math.abs(a.endMeasure - asset.endMeasure) < MaxAllowedError))
       case _ =>
         None
     }.toSeq
 
-    (expiredAssetsIds, newAndUpdatedAssets)
+    (expiredAssetsIds, newAssets)
   }
 
   override def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset]): Unit ={
     if (newLinearAssets.nonEmpty)
-      logger.info("Saving projected linear assets")
+      logger.info("Saving projected road Width assets")
 
     val (toInsert, toUpdate) = newLinearAssets.partition(_.id == 0L)
     withDynTransaction {

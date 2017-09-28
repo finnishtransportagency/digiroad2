@@ -904,35 +904,34 @@ object DataFixture {
     val RoadWidthAssetTypeId: Int = 120
 
     //Get All Municipalities
-    val municipalities: Seq[Int] =
-    OracleDatabase.withDynSession {
-      Queries.getMunicipalities
-    }
+//    val municipalities: Seq[Int] =
+//    OracleDatabase.withDynSession {
+//      Queries.getMunicipalities
+//    }
+    val municipalities: Seq[Int] = Seq(749)
 
     municipalities.foreach { municipality =>
       val (roadLinks, changes) = roadLinkService.getRoadLinksAndChangesFromVVH(municipality)
 
-      val existingAssets =
-        withDynTransaction {
-          dao.fetchLinearAssetsByLinkIds(RoadWidthAssetTypeId, roadLinks.map(_.linkId), LinearAssetTypes.numericValuePropertyId).filterNot(_.expired)
+
+        OracleDatabase.withDynTransaction {
+          val existingAssets = dao.fetchLinearAssetsByLinkIds(RoadWidthAssetTypeId, roadLinks.map(_.linkId), LinearAssetTypes.numericValuePropertyId).filterNot(_.expired)
+
+          val (expiredRoadWidthAssetIds, newRoadWidthAssets) = roadWidthService.getRoadWidthAssetChanges(existingAssets, roadLinks, changes)
+
+          val ids = expiredRoadWidthAssetIds
+          if (ids.nonEmpty)
+            println("\nExpiring ids " + ids.mkString(", "))
+          ids.foreach(dao.updateExpiration(_, expired = true, "vvh_mtkclass_default"))
+
+          newRoadWidthAssets.foreach { linearAsset =>
+            val roadLink = roadLinks.find(_.linkId == linearAsset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+
+            val id = dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
+              Measures(linearAsset.startMeasure, linearAsset.endMeasure), linearAsset.createdBy.getOrElse("vvh_mtkclass_default"), linearAsset.vvhTimeStamp, Some(roadLink.linkSource.value))
+            dao.insertValue(id, LinearAssetTypes.numericValuePropertyId, linearAsset.value.get.toString.toInt)
+          }
         }
-
-      val (expiredRoadWidthAssetIds, newRoadWidthAssets) = roadWidthService.getRoadWidthAssetChanges(existingAssets, roadLinks, changes)
-
-      val ids = expiredRoadWidthAssetIds
-      if (ids.nonEmpty)
-        println("\nExpiring ids " + ids.mkString(", "))
-      ids.foreach(dao.updateExpiration(_, expired = true, LinearAssetTypes.VvhGenerated))
-
-      newRoadWidthAssets.foreach{ linearAsset =>
-        val id = dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
-          Measures(linearAsset.startMeasure, linearAsset.endMeasure), linearAsset.createdBy.getOrElse(LinearAssetTypes.VvhGenerated), linearAsset.vvhTimeStamp, getLinkSource(roadLinks.find(_.linkId == linearAsset.linkId)))
-        linearAsset.value match {
-          case Some(NumericValue(intValue)) =>
-            dao.insertValue(id, LinearAssetTypes.numericValuePropertyId, intValue)
-          case _ => None
-        }
-      }
     }
 
     println("\nFill Road Width in missing and incomplete road links")
@@ -1136,6 +1135,8 @@ object DataFixture {
         listingBusStopsWithSideCodeConflictWithRoadLinkDirection()
       case Some("fill_lane_amounts_in_missing_road_links") =>
         fillLaneAmountsMissingInRoadLink()
+      case Some("fill_roadWidth_in_road_links") =>
+        fillRoadWidthInRoadLink()
       case Some("import_all_trafficVolume_from_TR_to_OTH") =>
         importAllTrafficVolumeDataFromTR()
       case Some("import_all_litRoad_from_TR_to_OTH") =>
@@ -1160,7 +1161,7 @@ object DataFixture {
         " check_unknown_speedlimits | set_transitStops_floating_reason | verify_roadLink_administrative_class_changed | set_TR_bus_stops_without_OTH_LiviId |" +
         " check_TR_bus_stops_without_OTH_LiviId | check_bus_stop_matching_between_OTH_TR | listing_bus_stops_with_side_code_conflict_with_roadLink_direction |" +
         " fill_lane_amounts_in_missing_road_links | import_all_trafficVolume_from_TR_to_OTH | import_all_litRoad_from_TR_to_OTH | import_all_roadWidth_from_TR_to_OTH |" +
-        " update_litRoad_from_TR_to_OTH | update_roadWidth_from_TR_to_OTH | update_areas_on_asset")
+        " update_litRoad_from_TR_to_OTH | update_roadWidth_from_TR_to_OTH | update_areas_on_asset | fill_roadWidth_in_road_links")
     }
   }
 }
