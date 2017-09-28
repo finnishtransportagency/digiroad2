@@ -76,66 +76,16 @@
       name: 'suravageProjectDirectionMarkerLayer'
     });
 
-    /* var styleFunction = function (feature, resolution){
-     var status = feature.projectLinkData.status;
-     var borderWidth;
-     var lineColor;
-
-     if(status === notHandledStatus) {
-     borderWidth = 8;
-     lineColor = 'rgba(247, 254, 46, 1)';
-     }
-     if (status === terminatedStatus) {
-     borderWidth = 3;
-     lineColor = 'rgba(56, 56, 54, 1)';
-     }
-     if(status === transferedStatus) {
-     borderWidth = 3;
-     lineColor = 'rgba(255, 0, 0, 1)';
-     }
-     if (status === unchangedStatus) {
-     borderWidth = 5;
-     lineColor = 'rgba(0, 0, 255, 1)';
-     }
-     if(status === numberingStatus) {
-     borderWidth = 5;
-     lineColor = 'rgba(139,69,19, 1)';
-     }
-
-     if (status === newRoadAddressStatus) {
-     borderWidth = 5;
-     lineColor = 'rgba(255, 85, 221, 0.7)';
-     }
-
-     if (status === notHandledStatus || status === terminatedStatus || status  === newRoadAddressStatus || status == transferedStatus || status === unchangedStatus || status == numberingStatus) {
-     var strokeWidth = styler.strokeWidthByZoomLevel(currentZoom, feature.projectLinkData.roadLinkType, feature.projectLinkData.anomaly, feature.projectLinkData.roadLinkSource, false, feature.projectLinkData.constructionType);
-     var borderCap = 'round';
-
-     var line = new ol.style.Stroke({
-     width: strokeWidth + borderWidth,
-     color: lineColor,
-     lineCap: borderCap
-     });
-
-     //Declaration of the Line Styles
-     var lineStyle = new ol.style.Style({
-     stroke: line
-     });
-
-     var zIndex = styler.determineZIndex(feature.projectLinkData.roadLinkType, feature.projectLinkData.anomaly, feature.projectLinkData.roadLinkSource, status);
-     lineStyle.setZIndex(zIndex + 1);
-     return [lineStyle];
-     }
-     else{
-     return styler.generateStyleByFeature(feature.projectLinkData, currentZoom);
-     }
-     };*/
-
     vectorLayer = new ol.layer.Vector({
       source: vectorSource,
       name: layerName,
       style: function(feature) {
-      return projectLinkStyler.getProjectLinkStyle().getStyle( feature.projectLinkData, {zoomLevel: currentZoom});
+        var status = feature.projectLinkData.status;
+        if (status === notHandledStatus || status === terminatedStatus || status  === newRoadAddressStatus || status == transferredStatus || status === unchangedStatus || status == numberingStatus) {
+          return projectLinkStyler.getProjectLinkStyle().getStyle( feature.projectLinkData, {zoomLevel: currentZoom});
+        } else {
+          return styler.generateStyleByFeature(feature.projectLinkData, currentZoom);
+        }
     }
     });
 
@@ -169,45 +119,11 @@
     var selectSingleClick = new ol.interaction.Select({
       layer: [vectorLayer, suravageRoadProjectLayer],
       condition: ol.events.condition.singleClick,
-      style: function(feature) {
-        return projectLinkStyler.getSelectionLinkStyle().getStyle( feature.projectLinkData, {zoomLevel: currentZoom});
-      }/*,
       style: function (feature) {
-        return projectLinkStyler.generateSelectionStyle(feature.roadLinkData);
+        if(projectLinkStatusIn(feature.projectLinkData, [notHandledStatus, newRoadAddressStatus,terminatedStatus, transferredStatus, unchangedStatus, numberingStatus]) || feature.projectLinkData.roadClass === 99) {
+          return projectLinkStyler.getSelectionLinkStyle().getStyle( feature.projectLinkData, {zoomLevel: currentZoom});
+        }
       }
-      /*style: function(feature, resolution) {
-       if(projectLinkStatusIn(feature.projectLinkData, [notHandledStatus, newRoadAddressStatus,terminatedStatus, transferedStatus, unchangedStatus, numberingStatus]) || feature.projectLinkData.roadLinkSource === 3){
-       return new ol.style.Style({
-       fill: new ol.style.Fill({
-       color: 'rgba(0, 255, 0, 0.75)'
-       }),
-       stroke: new ol.style.Stroke({
-       color: 'rgba(0, 255, 0, 0.95)',
-       width: 8
-       })
-       });
-       } else if(feature.projectLinkData.anomaly === noAddressAnomaly && feature.projectLinkData.status === unknownStatus){
-       return new ol.style.Style({
-       fill: new ol.style.Fill({
-       color: 'rgba(0, 255, 0, 0.75)'
-       }),
-       stroke: new ol.style.Stroke({
-       color: 'rgba(0, 255, 0, 0.95)',
-       width: 8
-       })
-       });
-       } else if (feature.projectLinkData.roadClass === 99){
-       return new ol.style.Style({
-       fill: new ol.style.Fill({
-       color: 'rgba(0, 255, 0, 0.75)'
-       }),
-       stroke: new ol.style.Stroke({
-       color: 'rgba(0, 255, 0, 0.95)',
-       width: 8
-       })
-       });
-       }
-       }*/
     });
 
     selectSingleClick.set('name', 'selectSingleClickInteractionPLL');
@@ -266,42 +182,6 @@
         return projectLinkStyler.getSelectionLinkStyle().getStyle( feature.projectLinkData, {zoomLevel: currentZoom});
       }
 
-      /*style: function (feature) {
-        return projectLinkStyler.generateSelectionStyle(feature.roadLinkData);
-      }*/
-      //style: function(feature, resolution) {
-      /*if(projectLinkStatusIn(feature.projectLinkData, [notHandledStatus,newRoadAddressStatus, terminatedStatus, unchangedStatus, transferedStatus, numberingStatus]) ||  feature.projectLinkData.roadLinkSource === 3) {
-       return new ol.style.Style({
-       fill: new ol.style.Fill({
-       color: 'rgba(0, 255, 0, 0.75)'
-       }),
-       stroke: new ol.style.Stroke({
-       color: 'rgba(0, 255, 0, 0.95)',
-       width: 8
-       })
-       });
-       } else if(feature.projectLinkData.anomaly === noAddressAnomaly && feature.projectLinkData.status === unknownStatus) {
-       return new ol.style.Style({
-       fill: new ol.style.Fill({
-       color: 'rgba(0, 255, 0, 0.75)'
-       }),
-       stroke: new ol.style.Stroke({
-       color: 'rgba(0, 255, 0, 0.95)',
-       width: 8
-       })
-       });
-       }/* else if (feature.projectLinkData.roadClass === 99){
-       return new ol.style.Style({
-       fill: new ol.style.Fill({
-       color: 'rgba(0, 255, 0, 0.75)'
-       }),
-       stroke: new ol.style.Stroke({
-       color: 'rgba(0, 255, 0, 0.95)',
-       width: 8
-       })
-       });
-       }*/
-      //}
     });
 
     selectDoubleClick.set('name', 'selectDoubleClickInteractionPLL');
@@ -756,15 +636,6 @@
             feature.projectLinkData.status = terminatedStatus;
             var termination = projectLinkStyler.getProjectLinkStyle().getStyle( feature.projectLinkData, {zoomLevel: currentZoom});
             feature.setStyle(termination);
-            /*feature.setStyle(new ol.style.Style({
-             fill: new ol.style.Fill({
-             color: 'rgba(56, 56, 54, 1)'
-             }),
-             stroke: new ol.style.Stroke({
-             color: 'rgba(56, 56, 54, 1)',
-             width: 8
-             })
-             }));*/
             features.push(feature);
           }
         }
