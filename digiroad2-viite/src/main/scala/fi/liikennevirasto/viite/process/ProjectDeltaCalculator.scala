@@ -190,8 +190,8 @@ object ProjectDeltaCalculator {
     }.toSeq
 
     adjustedSourceValues.map { sec =>
-      val linkId = roadAddresses.find(ra => sec.includes(ra)).map(_.linkId).get
-      val targetGroup = adjustedTargetValues.find(tc => tc.includes(projectLinks.find(_.linkId == linkId).get))
+      val linkId = roadAddresses.find(ra => sec.partialIncludes(ra)).map(_.linkId).get
+      val targetGroup = adjustedTargetValues.find(tc => tc.partialIncludes(projectLinks.find(_.linkId == linkId).get))
       sec -> targetGroup.get
     }.toMap
 }}

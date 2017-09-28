@@ -500,7 +500,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       sections should have size (4)
       sections.exists(_.track == Track.LeftSide) should be(true)
       sections.exists(_.track == Track.RightSide) should be(true)
-      sections.groupBy(_.endMAddr).keySet should have size (2)
+      sections.groupBy(_.track).keySet should have size (2)
     }
     runWithRollback {
       projectService.getRoadAddressAllProjects()

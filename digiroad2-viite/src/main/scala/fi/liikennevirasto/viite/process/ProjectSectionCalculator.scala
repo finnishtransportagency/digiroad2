@@ -354,6 +354,13 @@ case class RoadAddressSection(roadNumber: Long, roadPartNumberStart: Long, roadP
       !(ra.endAddrMValue > endMAddr && ra.roadPartNumber == roadPartNumberEnd ||
         ra.endAddrMValue < startMAddr && ra.roadPartNumber == roadPartNumberStart)
   }
+
+  def partialIncludes(ra: BaseRoadAddress): Boolean = {
+    // within the road number and parts included
+    ra.roadNumber == roadNumber && ra.roadPartNumber >= roadPartNumberStart && ra.roadPartNumber <= roadPartNumberEnd &&
+      // and on the same track
+      ra.track == track
+  }
 }
 case class RoadLinkLength(linkId: Long, geometryLength: Double)
 case class TrackSection(roadNumber: Long, roadPartNumber: Long, track: Track,
