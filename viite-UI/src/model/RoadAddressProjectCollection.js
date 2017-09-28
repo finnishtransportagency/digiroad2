@@ -182,7 +182,7 @@
           currentProject = result;
         }
         else {
-          eventbus.trigger('roadAddress:projectValidationFailed', result);
+          eventbus.trigger('roadAddress:projectValidationFailed', result.errorMessage);
         }
       }, function () {
         eventbus.trigger('roadAddress:projectFailed');
@@ -294,7 +294,7 @@
           currentProject = result;
         }
         else {
-          eventbus.trigger('roadAddress:projectValidationFailed', result);
+          eventbus.trigger('roadAddress:projectValidationFailed', result.errorMessage);
         }
       }, function () {
         eventbus.trigger('roadAddress:projectFailed');
@@ -450,7 +450,7 @@
 
     eventbus.on('roadPartsValidation:checkRoadParts', function(validationResult) {
       if (validationResult.success !== "ok") {
-        eventbus.trigger('roadAddress:projectValidationFailed', validationResult);
+        eventbus.trigger('roadAddress:projectValidationFailed', validationResult.success);
       } else {
         addToDirtyRoadPartList(validationResult);
         updateFormInfo(parseRoadPartInfoToResultRow());

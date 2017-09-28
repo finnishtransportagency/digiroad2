@@ -37,7 +37,7 @@ case class RoadAddressProjectExtractor(id: Long, projectEly: Option[Long], statu
 
 case class RoadAddressProjectLinksExtractor(linkIds: Set[Long], linkStatus: Int, projectId: Long, roadNumber: Long, roadPartNumber : Long, trackCode: Int, discontinuity :Int, roadEly: Long, roadLinkSource: Int, roadType: Int)
 
-case class RoadPartExtractor(roadNumber: Long, roadPartNumber: Long)
+case class RoadPartExtractor(roadNumber: Long, roadPartNumber: Long, ely: Long)
 
 class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
                val roadAddressService: RoadAddressService,
@@ -217,13 +217,16 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         fetched.reservedParts.map(reservedRoadPartToApi), "success" -> true) ++ firstAddress
     } catch {
       case ex: IllegalArgumentException => BadRequest(s"A project with id ${project.id} has already been created")
+      case ex: RuntimeException => Map("success" -> false, "errorMessage" -> ex.getMessage)
+      case ex: RoadPartReservedException => Map("success" -> false, "errorMessage" -> ex.getMessage)
+
     }
   }
 
   put("/roadlinks/roadaddress/project"){
     val project = parsedBody.extract[RoadAddressProjectExtractor]
     val user = userProvider.getCurrentUser()
-    val roadAddressProject= ProjectConverter.toRoadAddressProject(project, user)
+    val roadAddressProject = ProjectConverter.toRoadAddressProject(project, user)
     try {
       val projectSaved = projectService.saveProject(roadAddressProject)
       val firstLink = projectService.getFirstProjectLink(projectSaved)
@@ -231,10 +234,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         projectSaved.reservedParts.map(reservedRoadPartToApi),
         "success" -> true)
     } catch {
-      case ex: IllegalArgumentException =>
-        NotFound(s"Project id ${project.id} not found")
-      case ex: RoadPartReservedException =>
-        Conflict(s"Road part unreservable")
+      case ex: IllegalArgumentException => NotFound(s"Project id ${project.id} not found")
+      case ex: RuntimeException => Map("success" -> false, "errorMessage" -> ex.getMessage)
+      case ex: RoadPartReservedException => Map("success" -> false, "errorMessage" -> ex.getMessage)
     }
   }
 
@@ -609,6 +611,6 @@ object ProjectConverter {
   }
   def toReservedRoadPart(rp: RoadPartExtractor): ReservedRoadPart = {
     ReservedRoadPart(0L, rp.roadNumber, rp.roadPartNumber,
-      0.0, 0L, Discontinuity.Continuous, -1L, None, None, None, false)
+      0.0, 0L, Discontinuity.Continuous, rp.ely, None, None, None, false)
   }
 }
