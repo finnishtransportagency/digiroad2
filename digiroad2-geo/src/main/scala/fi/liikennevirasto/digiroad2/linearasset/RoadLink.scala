@@ -41,7 +41,12 @@ case class RoadLink(linkId: Long, geometry: Seq[Point],
   def isPaved : Boolean = surfaceType == SurfaceType.Paved.value
   def isNotPaved : Boolean = surfaceType == SurfaceType.None.value
 
-  def MTKClass: Int = attributes("MTKCLASS").asInstanceOf[BigInt].intValue
+  def extractMTKClass(attributes: Map[String, Any]): MTKClassWidth = {
+    Try(attributes("MTKCLASS").asInstanceOf[BigInt])
+      .map(_.toInt)
+      .map(MTKClassWidth.apply)
+      .getOrElse(MTKClassWidth.Unknown)
+  }
 
   def roadIdentifier: Option[Either[Int, String]] = {
     Try(Left(attributes("ROADNUMBER").asInstanceOf[BigInt].intValue()))

@@ -195,5 +195,30 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
     newAsset should have size 0
   }
 
+  test("Should not create new road with if the road doesn't have MTKClass attribute") {
+
+    val newLinkId2 = 5001
+    val newLinkId1 = 5000
+    val municipalityCode = 235
+    val administrativeClass = Municipality
+    val trafficDirection = TrafficDirection.BothDirections
+    val functionalClass = 1
+    val linkType = Freeway
+
+    val attributes1 = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))
+    val attributes2 = Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))
+
+    val geometry = List(Point(0.0, 0.0), Point(20.0, 0.0))
+    val newRoadLink1 = RoadLink(newLinkId1, geometry, GeometryUtils.geometryLength(geometry), administrativeClass,
+      functionalClass, trafficDirection, linkType, None, None, attributes1)
+    val newRoadLink2 = newRoadLink1.copy(linkId=newLinkId2, attributes = attributes2)
+    val roadLinks = List(newRoadLink1, newRoadLink2)
+    val service = createService()
+
+    val changeInfo = createChangeInfo(roadLinks, 11L)
+    val (expiredIds, newAsset) = service.getRoadWidthAssetChanges(Seq(), roadLinks, changeInfo)
+    expiredIds should have size 0
+    newAsset should have size 0
+  }
 }
 
