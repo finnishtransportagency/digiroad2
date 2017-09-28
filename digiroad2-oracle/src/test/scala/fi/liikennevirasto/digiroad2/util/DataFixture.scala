@@ -929,7 +929,11 @@ object DataFixture {
 
             val id = dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
               Measures(linearAsset.startMeasure, linearAsset.endMeasure), linearAsset.createdBy.getOrElse("vvh_mtkclass_default"), linearAsset.vvhTimeStamp, Some(roadLink.linkSource.value))
-            dao.insertValue(id, LinearAssetTypes.numericValuePropertyId, linearAsset.value.get.toString.toInt)
+            linearAsset.value match {
+              case Some(NumericValue(intValue)) =>
+                dao.insertValue(id, LinearAssetTypes.numericValuePropertyId, intValue)
+              case _ => None
+            }
           }
         }
     }
