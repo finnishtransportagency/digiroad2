@@ -330,11 +330,6 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
     "geometryWKT" -> geometryWKT
   }
 
-  def mapSubtype(nodeSubtype: Int): (String, String) = {
-    val subtypes = Map(1 -> "Tiesolmu", 2 -> "Suunnitelmasolmu", 3 -> "Täydentävä solmu", 9 -> "Muu solmu")
-    "subtype" -> subtypes.getOrElse(nodeSubtype, "")
-  }
-
   def railwayCrossingsToApi(crossings: Seq[RailwayCrossing]): Seq[Map[String, Any]] = {
     crossings.filterNot(_.floating).map { railwayCrossing =>
       Map("id" -> railwayCrossing.id,
@@ -397,8 +392,6 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
           "nodeType" -> roadNode.formOfNode.value,
           "point" -> Map("x" -> roadNode.geometry.x, "y" -> roadNode.geometry.y),
           "subtype" -> roadNode.subtype,
-       // TODO: use this method in is needed to se the name of the value
-       // mapSubtype(roadNode.subtype),
           geometryWKTForPoints(roadNode.geometry.x, roadNode.geometry.y)
       )
     }
