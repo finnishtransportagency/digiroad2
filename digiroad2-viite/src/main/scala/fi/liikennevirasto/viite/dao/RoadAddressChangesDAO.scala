@@ -250,17 +250,14 @@ object RoadAddressChangesDAO {
             ProjectDeltaCalculator.partition(delta.unChanged).foreach { case (roadAddressSection) =>
               addToBatch(roadAddressSection, ely, AddressChangeType.Unchanged, roadAddressChangePS)
             }
-            val partitionedValues = ProjectDeltaCalculator.partition(delta.transferred.oldLinks, delta.transferred.newLinks)
 
-             partitionedValues.foreach{ elem =>
-              addToBatchWithOldValues(elem._1, elem._2, ely, AddressChangeType.Transfer, roadAddressChangePS)
+            ProjectDeltaCalculator.partition(delta.transferred.oldLinks, delta.transferred.newLinks).foreach{ case (roadAddressSection1, roadAddressSection2) =>
+              addToBatchWithOldValues(roadAddressSection1, roadAddressSection2 , ely, AddressChangeType.Transfer, roadAddressChangePS)
             }
 
-            val partitionedReNumeration = ProjectDeltaCalculator.partition(delta.numbering.oldLinks, delta.numbering.newLinks)
-            partitionedReNumeration.foreach{ elem =>
-              addToBatchWithOldValues(elem._1, elem._2, ely, AddressChangeType.ReNumeration, roadAddressChangePS)
+            ProjectDeltaCalculator.partition(delta.numbering.oldLinks, delta.numbering.newLinks).foreach{ case (roadAddressSection1, roadAddressSection2) =>
+              addToBatchWithOldValues(roadAddressSection1, roadAddressSection2, ely, AddressChangeType.ReNumeration, roadAddressChangePS)
             }
-
 
             roadAddressChangePS.executeBatch()
             roadAddressChangePS.close()
