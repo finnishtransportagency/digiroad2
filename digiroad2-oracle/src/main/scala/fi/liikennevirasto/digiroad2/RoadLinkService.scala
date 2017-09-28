@@ -648,7 +648,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
         case _ => None
       }
       val ac = (row._14, row._15, row._16, row._17) match{
-        case (Some(linkId), Some(value), Some(modDate), Some(modBy)) => Option((linkId, value, modDate, modBy))
+        case (Some(linkId), Some(value), Some(createdDate), Some(createdBy)) => Option((linkId, value, createdDate, createdBy))
         case _ => None
       }
       row._1 ->(td, fc, lt, ac)
