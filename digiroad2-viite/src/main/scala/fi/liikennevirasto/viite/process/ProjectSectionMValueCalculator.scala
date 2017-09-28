@@ -1,7 +1,7 @@
 package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
-import fi.liikennevirasto.digiroad2.util.RoadAddressException
+import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao.{CalibrationPoint, LinkStatus, ProjectLink}
 
@@ -52,75 +52,60 @@ object ProjectSectionMValueCalculator {
 //  }
 // Before or after this: Check that the end lengths should agree and adjust if needed
 
-  private def groupProjectLinks(seq: Seq[ProjectLink]): Seq[Seq[ProjectLink]] = {
-    if (seq.isEmpty || !seq.exists(_.status != seq.head.status))
-      Seq(seq)
-    else {
-      seq.head.status match {
-        case LinkStatus.UnChanged =>
-          val index = seq.zipWithIndex.find(_._1.status != LinkStatus.UnChanged).get._2 - 1
-          val (s, others) = seq.splitAt(index)
-          Seq(s) ++ groupProjectLinks(others)
-        case _ =>
-          val index = seq.zipWithIndex.find(_._1.status == LinkStatus.UnChanged).map(_._2)
-          if (index.isEmpty)
-            Seq(seq)
-          else {
-            val (s, others) = seq.splitAt(index.get - 1)
-            Seq(s) ++ groupProjectLinks(others)
-          }
-      }
-    }
-  }
   def calculateMValuesForTrack(seq: Seq[ProjectLink]): Seq[ProjectLink] = {
+    // That is an address connected extension of this
+    def isExtensionOf(ext: ProjectLink)(thisPL: ProjectLink) = {
+      thisPL.endAddrMValue == ext.startAddrMValue &&
+        (thisPL.track == ext.track || Set(thisPL.track, ext.track).contains(Track.Combined))
+    }
     // Group all consecutive links with same status
-    val grouped = groupProjectLinks(seq)
-//      seq.(Seq(Seq[ProjectLink]())){ case (s, pl) =>
-//      (s.head.headOption.map(_.status), pl.status) match {
-//        case (None, _) => Seq(Seq(pl))
-//        case (Some(LinkStatus.UnChanged), LinkStatus.UnChanged) => Seq(s.head ++ Seq(pl)) ++ s.tail
-//        case (Some(LinkStatus.UnChanged), _) => Seq(Seq(pl)) ++ s
-//        case (_, LinkStatus.UnChanged) => Seq(Seq(pl)) ++ s
-//        case (_, _) => Seq(s.head ++ Seq(pl)) ++ s.tail
-//      }
-//    }.reverse
-    //[(Option[ProjectLink], Seq[ProjectLink])]
-    grouped.zip(grouped.tail.map(_.headOption) ++ Seq(None)).scanLeft[AddressingGroup, Seq[AddressingGroup]](AddressingGroup(None, Seq[ProjectLink]())){
-      case (prev, (s, next)) =>
-        if (s.exists(_.status == LinkStatus.UnChanged))
-          AddressingGroup(s.lastOption, s)
-        else {
-          val calculated = assignLinkValues(s, prev.previous, next)
-          AddressingGroup(calculated.lastOption, calculated)
+    val (unchanged, others) = seq.partition(_.status == LinkStatus.UnChanged)
+    val mapped = unchanged.groupBy(_.startAddrMValue)
+    if (mapped.values.exists(_.size != 1)) {
+      println(mapped.values.exists(_.size != 1))
+      mapped.values.foreach(println)
+      throw new RoadAddressException(s"Multiple unchanged links specified with overlapping address value ${mapped.values.filter(_.size != 1).mkString(", ")}")
+    }
+    if (unchanged.nonEmpty && mapped.keySet.count(_ == 0L) != 1)
+      throw new RoadAddressException("No starting point (Address = 0) found for UnChanged links")
+    if (!unchanged.forall(
+      pl => {
+        val previousLinks = unchanged.filter(isExtensionOf(pl))
+        println(s"${previousLinks.size} -> ${pl.startAddrMValue}, ${pl.track}, ${previousLinks.map(_.track).toSet}")
+        previousLinks.size match {
+          case 0 => pl.startAddrMValue == 0
+          case 1 => true
+          case 2 => pl.track == Track.Combined && previousLinks.map(_.track).toSet == Set(Track.LeftSide, Track.RightSide)
+          case _ => false
         }
-    }.flatMap(_.group)
+      }))
+      throw new RoadAddressException(s"Invalid unchanged link found")
+    unchanged ++ assignLinkValues(others, unchanged.map(_.endAddrMValue.toDouble).sorted.lastOption)
   }
 
-  private def assignLinkValues(seq: Seq[ProjectLink], prev: Option[ProjectLink], next: Option[ProjectLink]) = {
-    val startM = prev.map(_.endAddrMValue).getOrElse(0L)
-    val end = next.map(_.startAddrMValue)
-    println(s"Assign $startM - $end")
-    val (newLinks, transferLinks) = seq.partition(_.status == LinkStatus.New)
-    val newLinksGeomLength = newLinks.map(_.geometryLength).sum
-    val transferAddressLength = transferLinks.map(l => l.endAddrMValue - l.startAddrMValue).sum
-    val coeff = end match {
-      case None =>
-        1.0
-      case Some(endValue) =>
-        (endValue - startM - transferAddressLength) / newLinksGeomLength
-    }
-    val newAddressValues = seq.scanLeft(startM.toDouble){ case (m, pl) =>
-        pl.status match {
-          case LinkStatus.New => m + pl.geometryLength * coeff
-          case LinkStatus.Transfer => m + pl.endAddrMValue - pl.startAddrMValue
-          case _ => throw new RoadAddressException(s"Invalid status found at value assignment ${pl.status}, linkId: ${pl.linkId}")
-        }
+  def assignLinkValues(seq: Seq[ProjectLink], addr: Option[Double], coEff: Double = 1.0): Seq[ProjectLink] = {
+    val newAddressValues = seq.scanLeft(addr.getOrElse(0.0)){ case (m, pl) =>
+      pl.status match {
+        case LinkStatus.New => m + pl.geometryLength * coEff
+        case LinkStatus.Transfer | LinkStatus.NotHandled => m + pl.endAddrMValue - pl.startAddrMValue
+        case LinkStatus.UnChanged | LinkStatus.Numbering => pl.endAddrMValue
+        case _ => throw new RoadAddressException(s"Invalid status found at value assignment ${pl.status}, linkId: ${pl.linkId}")
+      }
     }
     seq.zip(newAddressValues.zip(newAddressValues.tail)).map { case (pl, (st, en)) =>
       pl.copy(startAddrMValue = Math.round(st), endAddrMValue = Math.round(en))}
   }
+  def calculateAddressingFactors(seq: Seq[ProjectLink]): TrackAddressingFactors = {
+    seq.foldLeft[TrackAddressingFactors](TrackAddressingFactors(0, 0, 0.0)) { case (a, pl) =>
+      pl.status match {
+        case UnChanged | Numbering => a.copy(unChangedLength = a.unChangedLength + pl.endAddrMValue - pl.startAddrMValue)
+        case Transfer | LinkStatus.NotHandled => a.copy(transferLength = a.transferLength + pl.endAddrMValue - pl.startAddrMValue)
+        case New => a.copy(newLength = a.newLength + pl.geometryLength)
+      }
+    }
+  }
 }
 
-case class AssignedValue(startAddrM: Option[Long], fixedLength: Option[Long])
+case class TrackAddressingFactors(unChangedLength: Long, transferLength: Long, newLength: Double)
 case class CalculatedValue(addressAndGeomLength: Either[Long, Double])
 case class AddressingGroup(previous: Option[ProjectLink], group: Seq[ProjectLink])

@@ -1064,7 +1064,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
           endMValue = GeometryUtils.geometryLength(geom)
         )
       }
-      val adjusted = geomToLinks
+      val adjusted = ProjectSectionCalculator.assignMValues(geomToLinks)
       ProjectDAO.updateProjectLinksToDB(adjusted, "-")
 
       reset(mockRoadLinkService)
@@ -1085,13 +1085,17 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
         GeometryUtils.geometryEndpoints(mappedGeoms(l.linkId)) should be (GeometryUtils.geometryEndpoints(l.geometry))
       }
 
-      val linksFirst = links.sortBy(_.id).head
-      val linksLast = links.sortBy(_.id).last
+      val linksFirst = adjusted.sortBy(_.id).head
+      val linksLast = adjusted.sortBy(_.id).last
       val changedLinksFirst = changedLinks.sortBy(_.id).head
       val changedLinksLast = changedLinks.sortBy(_.id).last
-
+      prettyPrint(changedLinks.sortBy(_.startAddrMValue))
+      prettyPrint(adjusted.sortBy(_.startAddrMValue).toList)
       adjusted.sortBy(_.id).zip(changedLinks.sortBy(_.id)).foreach{
         case (oldLink, newLink) =>
+          println(oldLink)
+          println(newLink)
+          println()
           oldLink.startAddrMValue should be ((linksLast.endAddrMValue - newLink.endAddrMValue) +- 1)
           oldLink.endAddrMValue should be ((linksLast.endAddrMValue - newLink.startAddrMValue) +- 1)
           val trackChangeCorrect = (oldLink.track, newLink.track) match {

@@ -119,6 +119,7 @@ object TrackSectionOrder {
               Math.min(
                 Math.min(l.startGeometry.distance2DTo(r.startGeometry), l.startGeometry.distance2DTo(r.endGeometry)),
               Math.min(l.endGeometry.distance2DTo(r.startGeometry), l.endGeometry.distance2DTo(r.endGeometry))))
+            println(s"Combining ${r.startAddrM} - ${r.endAddrM} with l& ${l.startAddrM} - ${l.endAddrM}")
             CombinedSection(r.startGeometry, r.endGeometry, .5*(r.geometryLength + l.geometryLength),
               l, r)
           case _ => throw new RoadAddressException(s"Incorrect track code ${r.track}")
