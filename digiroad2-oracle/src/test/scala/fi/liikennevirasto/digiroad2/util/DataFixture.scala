@@ -910,6 +910,7 @@ object DataFixture {
     }
 
     municipalities.foreach { municipality =>
+      println("Working on... municipality -> " + municipality)
       val (roadLinks, changes) = roadLinkService.getRoadLinksAndChangesFromVVH(municipality)
 
         OracleDatabase.withDynTransaction {

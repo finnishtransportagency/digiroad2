@@ -674,6 +674,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   def insertValue(assetId: Long, valuePropertyId: String, value: Int) = {
     val numberPropertyValueId = Sequences.nextPrimaryKeySeqValue
     val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply(valuePropertyId).first
+    println("propertyId / numberPropertyValueId-> " + propertyId + " / " + numberPropertyValueId)
     sqlu"""
        insert into number_property_value(id, asset_id, property_id, value)
        values ($numberPropertyValueId, $assetId, $propertyId, $value)
