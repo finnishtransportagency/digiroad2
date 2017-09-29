@@ -620,6 +620,9 @@
           case '3': //DifferentMunicipalityCode
             text = 'Kadun tai tien omistava kunta on vaihtunut. Tarkista ja korjaa pysäkin sijainti.';
             break;
+          case '7': //TerminalChildless
+              text = 'Kyseisellä terminaalipysäkillä ei ole yhtään liitettyä pysäkkiä.';
+              break;
           default:
             text = 'Kadun tai tien geometria on muuttunut, tarkista ja korjaa pysäkin sijainti.';
         }

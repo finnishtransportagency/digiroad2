@@ -7,6 +7,7 @@
       future: false,
       past: false
     };
+
     var filterComplementaries = function(assets){
       if(isComplementaryActive)
         return assets;
@@ -18,11 +19,13 @@
         return _.has(existingAssets, asset.id.toString());
       });
     };
+
     var selectedValidityPeriods = function(validityPeriods) {
       return _.keys(_.pick(validityPeriods, function(selected) {
         return selected;
       }));
     };
+
     var refreshAssets = function(mapMoveEvent) {
       backend.getAssetsWithCallback(mapMoveEvent.bbox, function(backendAssets) {
         backendAssets = filterComplementaries(backendAssets);
@@ -34,7 +37,26 @@
       });
     };
 
+    var getAllTerminalNearestStops = function(properties) {
+        return _.map(
+            _.flatten(
+              _.map(
+                _.filter(properties, function(property){
+                  return property.publicId == 'liitetyt_pysakit';
+                }),
+                function(property) {
+                  return property.values;
+                }
+              )
+            ),
+            function(value) {
+              return { id: parseInt(value.propertyValue), isChild: value.checked };
+            }
+        );
+    };
+
     return {
+      getAllTerminalNearestStops: getAllTerminalNearestStops,
       insertAsset: function(asset, assetId) {
         asset.data = _.merge(asset.data, {originalLon: asset.data.lon, originalLat: asset.data.lat } );
         assets[assetId] = asset;
