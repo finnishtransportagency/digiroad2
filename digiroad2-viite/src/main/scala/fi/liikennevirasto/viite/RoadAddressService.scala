@@ -139,9 +139,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       withTiming(
         Await.result(combinedFuture, Duration.Inf), "End fetch vvh road links in %.3f sec"
       )
+    val roadsWithEndDate = addresses.values.flatten.filter(a => a.endDate.isDefined).map(_.linkId).toSeq
     val complementaryLinkIds = complementaryLinks.map(_.linkId)
-    val normalRoadLinkIds = roadLinks.map(_.linkId)
-    val allRoadLinks = roadLinks++complementaryLinks
+    val normalRoadLinkIds = roadLinks.filterNot(rl => roadsWithEndDate.contains(rl.linkId)).map(_.linkId)
+    val allRoadLinks = roadLinks.filterNot(rl => roadsWithEndDate.contains(rl.linkId))++complementaryLinks
     val linkIds = (complementaryLinkIds ++ normalRoadLinkIds).toSet
 
     //TODO: In the future when we are dealing with VVHChangeInfo we need to better evaluate when do we switch from bounding box queries to
