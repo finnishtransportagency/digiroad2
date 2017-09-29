@@ -41,7 +41,7 @@ object RoadLinkServiceDAO {
   }
 
   def insertValues(table: String, column: String, vvhColumn: String, linkId: Long, username: Option[String], existingValue: Int, value: Int, mmlId: Option[Long], optionalVVHValue: Option[Int]) = {
-    sqlu"""insert into #$table (id, link_id, #$column, modified_by, mml_id, #$vvhColumn )
+    sqlu"""insert into #$table (id, link_id, #$column, created_by, mml_id, #$vvhColumn )
                    select primary_key_seq.nextval, $linkId, $value, $username, $mmlId, $optionalVVHValue
                    from dual
                    where exists (select * from #$table where link_id = $linkId)""".execute
