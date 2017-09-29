@@ -1643,7 +1643,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       ProjectAddressLink(NewRoadAddress, linkId, geometry, GeometryUtils.geometryLength(geometry),
         State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
         RoadType.PublicRoad, "X", 749, None, None, Map.empty, road, part, 1L, 8L, 5L, 0L, 0L, 0.0, GeometryUtils.geometryLength(geometry),
-        SideCode.Unknown, None, None, Anomaly.None, 0L, LinkStatus.New)
+        SideCode.Unknown, None, None, Anomaly.None, 0L, LinkStatus.New, 0)
     }
     runWithRollback {
 
