@@ -1095,6 +1095,8 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
         case (oldLink, newLink) =>
           println(oldLink)
           println(newLink)
+          println((oldLink.endAddrMValue - oldLink.startAddrMValue) + " vs " + (newLink.endAddrMValue - newLink.startAddrMValue))
+          println(oldLink.endAddrMValue, oldLink.startAddrMValue, newLink.endAddrMValue, newLink.startAddrMValue)
           println()
           oldLink.startAddrMValue should be ((linksLast.endAddrMValue - newLink.endAddrMValue) +- 1)
           oldLink.endAddrMValue should be ((linksLast.endAddrMValue - newLink.startAddrMValue) +- 1)
@@ -1108,10 +1110,10 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       }
       linksFirst.id should be (changedLinksFirst.id)
       linksLast.id should be (changedLinksLast.id)
-      linksLast.geometryLength should be (changedLinks.sortBy(_.id).last.geometryLength)
-      linksLast.endMValue should be (changedLinks.sortBy(_.id).last.endMValue)
-      linksFirst.endMValue should be (changedLinksFirst.endMValue)
-      linksLast.endMValue should be (changedLinksLast.endMValue)
+      linksLast.geometryLength should be (changedLinks.sortBy(_.id).last.geometryLength +- .1)
+      linksLast.endMValue should be (changedLinks.sortBy(_.id).last.endMValue +- .1)
+      linksFirst.endMValue should be (changedLinksFirst.endMValue +- .1)
+      linksLast.endMValue should be (changedLinksLast.endMValue +- .1)
     }
   }
 

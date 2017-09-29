@@ -113,15 +113,22 @@ object TrackSectionOrder {
               Math.min(
                 Math.min(l.startGeometry.distance2DTo(r.startGeometry), l.startGeometry.distance2DTo(r.endGeometry)),
                 Math.min(l.endGeometry.distance2DTo(r.startGeometry), l.endGeometry.distance2DTo(r.endGeometry))))
-            CombinedSection(r.startGeometry, r.endGeometry, r.geometryLength, l, r)
+            val (avr, avl) = averageTracks(r, l)
+            println(s"Right ${avr.links.map(l => s"${l.linkId} ${l.startAddrMValue} - ${l.endAddrMValue}").head}")
+            println(s"Right ${avr.links.map(l => s"${l.linkId} ${l.startAddrMValue} - ${l.endAddrMValue}").last}")
+            println(s"Left ${avl.links.map(l => s"${l.linkId} ${l.startAddrMValue} - ${l.endAddrMValue}").head}")
+            println(s"Left ${avl.links.map(l => s"${l.linkId} ${l.startAddrMValue} - ${l.endAddrMValue}").last}")
+            CombinedSection(r.startGeometry, r.endGeometry, r.geometryLength, avl, avr)
           case Track.RightSide =>
             val l = leftSection.filter(_.track == Track.LeftSide).minBy(l =>
               Math.min(
                 Math.min(l.startGeometry.distance2DTo(r.startGeometry), l.startGeometry.distance2DTo(r.endGeometry)),
               Math.min(l.endGeometry.distance2DTo(r.startGeometry), l.endGeometry.distance2DTo(r.endGeometry))))
+            val (avr, avl) = averageTracks(r, l)
             println(s"Combining ${r.startAddrM} - ${r.endAddrM} with l& ${l.startAddrM} - ${l.endAddrM}")
-            CombinedSection(r.startGeometry, r.endGeometry, .5*(r.geometryLength + l.geometryLength),
-              l, r)
+            println(s"Combined ${avr.startAddrM} - ${avr.endAddrM} with l& ${avl.startAddrM} - ${avl.endAddrM}")
+            CombinedSection(avr.startGeometry, avr.endGeometry, .5*(avr.geometryLength + avl.geometryLength),
+              avl, avr)
           case _ => throw new RoadAddressException(s"Incorrect track code ${r.track}")
         }
       }
