@@ -5,7 +5,7 @@ import java.util.Properties
 import com.googlecode.flyway.core.Flyway
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.oracle.OracleAssetDao
-import fi.liikennevirasto.digiroad2.linearasset.NumericValue
+import fi.liikennevirasto.digiroad2.linearasset.{MTKClassWidth, NumericValue, PersistedLinearAsset}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.masstransitstop.MassTransitStopOperations
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{MassTransitStopDao, Queries}
@@ -890,6 +890,7 @@ object DataFixture {
     println(DateTime.now())
     println("\n")
   }
+
   def fillRoadWidthInRoadLink(): Unit = {
     println("\nFill Road Width in missing and incomplete road links")
     println(DateTime.now())
@@ -902,6 +903,9 @@ object DataFixture {
     }
 
     val RoadWidthAssetTypeId: Int = 120
+    val MaxAllowedError = 0.01
+    val MinAllowedLength = 2.0
+    val MinOfLength: Double = 0
 
     //Get All Municipalities
     val municipalities: Seq[Int] =
@@ -912,29 +916,58 @@ object DataFixture {
     municipalities.foreach { municipality =>
       println("Working on... municipality -> " + municipality)
       val (roadLinks, changes) = roadLinkService.getRoadLinksAndChangesFromVVH(municipality)
+      //filter roadLink by administrative class and roadLink with MTKClass valid
+      val roadLinkAdminClass = roadLinks.filter(road => road.administrativeClass == Municipality || road.administrativeClass == Private)
+      val roadWithMTKClass = roadLinkAdminClass.filter(road => MTKClassWidth.values.toSeq.contains(road.extractMTKClass(road.attributes)))
 
-        OracleDatabase.withDynTransaction {
-          val existingAssets = dao.fetchLinearAssetsByLinkIds(RoadWidthAssetTypeId, roadLinks.map(_.linkId), LinearAssetTypes.numericValuePropertyId).filterNot(_.expired)
+      OracleDatabase.withDynTransaction {
+        val existingAssets = dao.fetchLinearAssetsByLinkIds(RoadWidthAssetTypeId, roadLinks.map(_.linkId), LinearAssetTypes.numericValuePropertyId).filterNot(_.expired)
 
-          val (expiredRoadWidthAssetIds, newRoadWidthAssets) = roadWidthService.getRoadWidthAssetChanges(existingAssets, roadLinks, changes)
+        val lastChanges = changes.filter(_.newId.isDefined).groupBy(_.newId.get).mapValues(c => c.maxBy(_.vvhTimeStamp))
 
-          val ids = expiredRoadWidthAssetIds
-          if (ids.nonEmpty)
-            println("\nExpiring ids " + ids.mkString(", "))
-          ids.foreach(dao.updateExpiration(_, expired = true, "vvh_mtkclass_default"))
+        //Map all existing assets by roadLink and changeInfo
+        val changedAssets = lastChanges.map{
+          case (linkId, changeInfo) =>
+            (roadWithMTKClass.find(road => road.linkId == linkId ), changeInfo, existingAssets.filter(_.linkId == linkId))
+        }
 
-          newRoadWidthAssets.foreach { linearAsset =>
-            val roadLink = roadLinks.find(_.linkId == linearAsset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+        val expiredAssetsIds = changedAssets.flatMap {
+          case (Some(roadLink), changeInfo, assets) if assets.nonEmpty =>
+            assets.filter(asset => asset.vvhTimeStamp < changeInfo.vvhTimeStamp && asset.createdBy.contains("vvh_mtkclass_default")).map(_.id)
+          case _ =>
+            List()
+        }.toSet[Long]
 
-            val id = dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
-              Measures(linearAsset.startMeasure, linearAsset.endMeasure), linearAsset.createdBy.getOrElse("vvh_mtkclass_default"), linearAsset.vvhTimeStamp, Some(roadLink.linkSource.value))
-            linearAsset.value match {
-              case Some(NumericValue(intValue)) =>
-                dao.insertValue(id, LinearAssetTypes.numericValuePropertyId, intValue)
-              case _ => None
-            }
+        val newAssets = changedAssets.flatMap{
+          case (Some(roadLink), changeInfo, assets) =>
+            val pointsOfInterest = (assets.map(_.startMeasure) ++ assets.map(_.endMeasure) ++  Seq(MinOfLength, GeometryUtils.geometryLength(roadLink.geometry))).distinct.sorted
+
+            //Not create asset with the length less MinAllowedLength
+            val pieces = pointsOfInterest.zip(pointsOfInterest.tail).filterNot{piece => (piece._2 - piece._1) < MinAllowedLength}
+            pieces.flatMap { measures =>
+              Some(PersistedLinearAsset(0L, roadLink.linkId, SideCode.BothDirections.value, Some(NumericValue(roadLink.extractMTKClass(roadLink.attributes).width)),
+                measures._1, measures._2, Some("vvh_mtkclass_default"), None, None, None, false, RoadWidthAssetTypeId, changeInfo.vvhTimeStamp, None, linkSource = roadLink.linkSource))
+            }.filterNot(a => assets.filterNot(asset => expiredAssetsIds.contains(asset.id)).exists(asset => math.abs(a.startMeasure - asset.startMeasure) < MaxAllowedError && math.abs(a.endMeasure - asset.endMeasure) < MaxAllowedError))
+          case _ =>
+            None
+        }.toSeq
+
+        if (expiredAssetsIds.nonEmpty)
+          println("\nExpiring ids " + expiredAssetsIds.mkString(", "))
+        expiredAssetsIds.foreach(dao.updateExpiration(_, expired = true, "vvh_mtkclass_default"))
+
+        newAssets.foreach { linearAsset =>
+          val roadLink = roadLinks.find(_.linkId == linearAsset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+
+          val id = dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
+            Measures(linearAsset.startMeasure, linearAsset.endMeasure), linearAsset.createdBy.getOrElse("vvh_mtkclass_default"), linearAsset.vvhTimeStamp, Some(roadLink.linkSource.value))
+          linearAsset.value match {
+            case Some(NumericValue(intValue)) =>
+              dao.insertValue(id, LinearAssetTypes.numericValuePropertyId, intValue)
+            case _ => None
           }
         }
+      }
     }
 
     println("\nFill Road Width in missing and incomplete road links")

@@ -17,14 +17,12 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
 
   override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
 
-  val RoadWidthAssetTypeId: Int = 120
-
   override protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Seq[PieceWiseLinearAsset] = {
     val linkIds = roadLinks.map(_.linkId)
     val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(changes, roadLinks)
     val existingAssets =
       withDynTransaction {
-            dao.fetchLinearAssetsByLinkIds(RoadWidthAssetTypeId, linkIds ++ removedLinkIds, LinearAssetTypes.numericValuePropertyId).filterNot(_.expired)
+            dao.fetchLinearAssetsByLinkIds(LinearAssetTypes.RoadWidthAssetTypeId, linkIds ++ removedLinkIds, LinearAssetTypes.numericValuePropertyId).filterNot(_.expired)
         }
 
     val (assetsOnChangedLinks, assetsWithoutChangedLinks) = existingAssets.partition(a => LinearAssetUtils.newChangeInfoDetected(a, changes))
@@ -69,40 +67,33 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
   def getRoadWidthAssetChanges(existingLinearAssets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink],
                             changeInfos: Seq[ChangeInfo]): (Set[Long], Seq[PersistedLinearAsset]) = {
 
-    def fillIncompletedRoadlinks(assets: Seq[PersistedLinearAsset], roadLink: RoadLink, changeInfo: ChangeInfo ): Seq[PersistedLinearAsset] = {
-      val MinAllowedLength = 2.0
-      val MinOfLenght: Double = 0
-      val pointsOfInterest = (assets.map(_.startMeasure) ++ assets.map(_.endMeasure) ++  Seq(MinOfLenght, GeometryUtils.geometryLength(roadLink.geometry))).distinct.sorted
-
-      //Not create asset with the lenght less MinAllowedLength
-      val pieces = pointsOfInterest.zip(pointsOfInterest.tail).filterNot{piece => (piece._2 - piece._1) < MinAllowedLength}
-      pieces.flatMap { measures =>
-          Some(PersistedLinearAsset(0L, roadLink.linkId, SideCode.BothDirections.value, Some(NumericValue(roadLink.extractMTKClass(roadLink.attributes).width)),
-            measures._1, measures._2, Some("vvh_mtkclass_default"), None, None, None, false, RoadWidthAssetTypeId, changeInfo.vvhTimeStamp, None, linkSource = roadLink.linkSource))
-      }
-    }
-    val MaxAllowedError = 0.01
     val roadLinkAdminClass = roadLinks.filter(road => road.administrativeClass == Municipality || road.administrativeClass == Private)
     val roadWithMTKClass = roadLinkAdminClass.filter(road => MTKClassWidth.values.toSeq.contains(road.extractMTKClass(road.attributes)))
 
     val lastChanges = changeInfos.filter(_.newId.isDefined).groupBy(_.newId.get).mapValues(c => c.maxBy(_.vvhTimeStamp))
 
     //Map all existing assets by roadlink and changeinfo
-    val changedAssets = lastChanges.map{
+    val changedAssets = lastChanges.map {
       case (linkId, changeInfo) =>
-        (roadWithMTKClass.find(road => road.linkId == linkId ), changeInfo, existingLinearAssets.filter(_.linkId == linkId))
+        (roadWithMTKClass.find(road => road.linkId == linkId), changeInfo, existingLinearAssets.filter(_.linkId == linkId))
     }
 
     val expiredAssetsIds = changedAssets.flatMap {
       case (Some(roadlink), changeInfo, assets) if assets.nonEmpty =>
-          assets.filter(asset => asset.vvhTimeStamp < changeInfo.vvhTimeStamp && asset.createdBy.contains("vvh_mtkclass_default")).map(_.id)
+        assets.filter(asset => asset.vvhTimeStamp < changeInfo.vvhTimeStamp && asset.createdBy.contains("vvh_mtkclass_default")).map(_.id)
       case _ =>
         List()
     }.toSet[Long]
 
     val newAssets = changedAssets.flatMap{
-      case (Some(roadlink), changeInfo, assets) =>
-         fillIncompletedRoadlinks(assets, roadlink, changeInfo).filterNot(a => assets.filterNot(asset => expiredAssetsIds.contains(asset.id)).exists(asset => math.abs(a.startMeasure - asset.startMeasure) < MaxAllowedError && math.abs(a.endMeasure - asset.endMeasure) < MaxAllowedError))
+      case (Some(roadLink), changeInfo, assets) if assets.isEmpty =>
+        Some(PersistedLinearAsset(0L, roadLink.linkId, SideCode.BothDirections.value, Some(NumericValue(roadLink.extractMTKClass(roadLink.attributes).width)),
+          0, GeometryUtils.geometryLength(roadLink.geometry), Some("vvh_mtkclass_default"), None, None, None, false, LinearAssetTypes.RoadWidthAssetTypeId, changeInfo.vvhTimeStamp, None, linkSource = roadLink.linkSource))
+      case (Some(roadLink), changeInfo, assets) if assets.nonEmpty =>
+        //if the asset was created by changeInfo and there is a new changeInfo, expire and crete a new asset
+        assets.filter(asset => expiredAssetsIds.contains(asset.id)).map { asset =>
+        PersistedLinearAsset(0L, roadLink.linkId, SideCode.BothDirections.value, Some(NumericValue(roadLink.extractMTKClass(roadLink.attributes).width)),
+          asset.startMeasure, asset.endMeasure, Some("vvh_mtkclass_default"), None, None, None, false, LinearAssetTypes.RoadWidthAssetTypeId, changeInfo.vvhTimeStamp, None, linkSource = roadLink.linkSource)}
       case _ =>
         None
     }.toSeq

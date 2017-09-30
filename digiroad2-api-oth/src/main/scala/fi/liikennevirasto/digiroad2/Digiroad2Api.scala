@@ -1172,9 +1172,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
 
   private def verifyServiceToUse(typeId: Int): LinearAssetOperations = {
     typeId match {
-      case maintenanceRoadService.maintenanceRoadAssetTypeId => maintenanceRoadService
-      case pavingService.PavingAssetTypeId => pavingService
-      case roadWidthService.RoadWidthAssetTypeId => roadWidthService
+      case LinearAssetTypes.MaintenanceRoadAssetTypeId => maintenanceRoadService
+      case LinearAssetTypes.PavingAssetTypeId => pavingService
+      case LinearAssetTypes.RoadWidthAssetTypeId => roadWidthService
       case _ => linearAssetService
     }
   }
