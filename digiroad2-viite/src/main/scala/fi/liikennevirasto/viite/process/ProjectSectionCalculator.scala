@@ -3,7 +3,7 @@ package fi.liikennevirasto.viite.process
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d}
 import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.dao._
 import org.slf4j.LoggerFactory
@@ -66,11 +66,30 @@ object ProjectSectionCalculator {
     * @return Sequence of project links with address values and calibration points.
     */
   def assignMValues(projectLinks: Seq[ProjectLink], userGivenCalibrationPoints: Seq[CalibrationPoint] = Seq()): Seq[ProjectLink] = {
+    logger.info(s"Starting MValue assignment for ${projectLinks.size} links")
     val (terminated, others) = projectLinks.partition(_.status == LinkStatus.Terminated)
     val (newLinks, nonTerminatedLinks) = others.partition(l => l.status == LinkStatus.New)
-    assignMValues(newLinks, nonTerminatedLinks, userGivenCalibrationPoints) ++ terminated
+    try {
+      assignMValues(newLinks, nonTerminatedLinks, userGivenCalibrationPoints) ++ terminated
+    } finally {
+      logger.info(s"Finished MValue assignment for ${projectLinks.size} links")
+    }
   }
 
+  def findStartingPoints(newLinks: Seq[ProjectLink], oldLinks: Seq[ProjectLink],
+                                calibrationPoints: Seq[CalibrationPoint]): (Point, Point) = {
+    val rightStartPoint = findStartingPoint(newLinks.filter(_.track != Track.LeftSide), oldLinks.filter(_.track != Track.LeftSide),
+      calibrationPoints)
+    // Get left track non-connected points and find the closest to right track starting point
+    val leftLinks = newLinks.filter(_.track != Track.RightSide) ++ oldLinks.filter(_.track != Track.RightSide)
+    val leftLinkEnds = leftLinks.flatMap(pl => Seq(pl.startingPoint, pl.endPoint))
+    val leftPoints = leftLinkEnds.filterNot(p1 => leftLinkEnds.count(p2 => GeometryUtils.areAdjacent(p1, p2)) > 1)
+    if (leftPoints.isEmpty)
+      throw new InvalidAddressDataException("Missing left track starting points")
+    val leftStartPoint = leftPoints.minBy(lp => (lp - rightStartPoint).length())
+    (rightStartPoint, leftStartPoint)
+
+  }
   /**
     * Find a starting point for this road part
     * @param newLinks Status = New links that need to have an address
@@ -99,16 +118,32 @@ object ProjectSectionCalculator {
         }
       }
     }
-    calibrationPoints.find(_.addressMValue == 0).flatMap(calibrationPointToPoint).getOrElse{
-      val linkPartitions = SectionPartitioner.partition(newLinks).map(_.sortWith(addressSort)).map(orderProjectLinksTopologyByGeometry)
-      val oldLinkPartitions = SectionPartitioner.partition(oldLinks).map(_.sortWith(addressSort))
-      val sections = linkPartitions.map(lp =>
-        TrackSection(lp.head.roadNumber, lp.head.roadPartNumber, lp.head.track, lp.map(_.geometryLength).sum, lp)
-      )
-      val existingSections = oldLinkPartitions.map(lp =>
-        TrackSection(lp.head.roadNumber, lp.head.roadPartNumber, lp.head.track, lp.map(_.geometryLength).sum, lp)
-      )
-      orderTrackSectionsByGeometry(sections ++ existingSections).head.startGeometry}
+    // Pick the one with calibration point set to zero: or any old link with lowest address: or new links by direction
+    calibrationPoints.find(_.addressMValue == 0).flatMap(calibrationPointToPoint).getOrElse(
+      oldLinks.filter(_.status == LinkStatus.UnChanged).sortWith(addressSort).headOption.map(_.startingPoint).getOrElse {
+        val remainLinks = oldLinks ++ newLinks
+        if (remainLinks.isEmpty)
+          throw new InvalidAddressDataException("Missing right track starting project links")
+        val points = remainLinks.map(pl => (pl.startingPoint, pl.endPoint))
+        val direction = points.map(p => p._2 - p._1).fold(Vector3d(0, 0, 0)) { case (v1, v2) => v1 + v2 }.normalize2D()
+        // Approximate estimate of the mid point: averaged over count, not link length
+        val midPoint = points.map(p => p._1 + (p._2 - p._1).scale(0.5)).foldLeft(Vector3d(0,0,0)){case (x, p) =>
+          (p - Point(0,0)).scale(1.0/points.size) + x}
+
+        points.flatMap{ case (start, end) =>
+          val stSeq = if (points.exists(p => GeometryUtils.areAdjacent(p._2, start)))
+            Seq()
+          else
+            Seq(start -> direction.dot(start.toVector - midPoint))
+          val endSeq = if (points.exists(p => GeometryUtils.areAdjacent(p._1, end)))
+            Seq()
+          else
+            Seq(end -> direction.dot(end.toVector - midPoint))
+          stSeq ++ endSeq
+        }.minBy(_._2)._1
+      }
+
+    )
   }
 
   /**
@@ -187,10 +222,7 @@ object ProjectSectionCalculator {
     group.flatMap { case (part, (projectLinks, oldLinks)) => {
       try {
         val (right, left) = TrackSectionOrder.orderProjectLinksTopologyByGeometry(
-          findStartingPoint(projectLinks, oldLinks, userCalibrationPoints), projectLinks++oldLinks)
-        right.find(_.linkId == 5169388).foreach(println)
-        left.find(_.linkId == 5169388).foreach(println)
-        println("***")
+          findStartingPoints(projectLinks, oldLinks, userCalibrationPoints), projectLinks++oldLinks)
         val ordSections = TrackSectionOrder.createCombinedSections(right, left)
 
         val links = calculateSectionAddressValues(ordSections).flatMap { sec =>
@@ -201,8 +233,6 @@ object ProjectSectionCalculator {
               assignCalibrationPoints(Seq(), sec.left.links)
           }
         }
-        links.find(_.linkId == 5169388).foreach(println)
-        println("***")
         eliminateExpiredCalibrationPoints(links)
       } catch {
         case ex: InvalidAddressDataException =>
@@ -261,14 +291,8 @@ object ProjectSectionCalculator {
 
     val rightLinks = ProjectSectionMValueCalculator.calculateMValuesForTrack(sections.flatMap(_.right.links))
     val leftLinks = ProjectSectionMValueCalculator.calculateMValuesForTrack(sections.flatMap(_.left.links))
-    println("******")
-    rightLinks.filter(_.linkId == 5169388).foreach(println)
-    leftLinks.filter(_.linkId == 5169388).foreach(println)
     val (right, left) = adjustTracksToMatch(rightLinks.sortBy(_.startAddrMValue), leftLinks.sortBy(_.startAddrMValue), None)
-    right.filter(_.linkId == 5169388).foreach(println)
-    left.filter(_.linkId == 5169388).foreach(println)
-    println("******")
-    TrackSectionOrder.createCombinedSections(rightLinks, leftLinks)
+    TrackSectionOrder.createCombinedSections(right, left)
   }
 
 
@@ -363,6 +387,24 @@ object ProjectSectionCalculator {
     // Switch between against and towards 2 -> 3, 3 -> 2
     SideCode.apply(5-sideCode.value)
   }
+
+  private def averageTracks(rightTrack: TrackSection, leftTrack: TrackSection): (TrackSection, TrackSection) = {
+    def needsReversal(left: TrackSection, right: TrackSection): Boolean = {
+      GeometryUtils.areAdjacent(left.startGeometry, right.endGeometry) ||
+        GeometryUtils.areAdjacent(left.endGeometry, right.startGeometry)
+    }
+    val alignedLeft = if (needsReversal(leftTrack, rightTrack)) leftTrack.reverse else leftTrack
+    val (startM, endM) = (average(rightTrack.startAddrM, alignedLeft.startAddrM), average(rightTrack.endAddrM, alignedLeft.endAddrM))
+
+    (rightTrack.toAddressValues(startM, endM), leftTrack.toAddressValues(startM, endM))
+  }
+  private def average(rightAddrValue: Long, leftAddrValue: Long): Long = {
+    if (rightAddrValue >= leftAddrValue)
+      (1L + rightAddrValue + leftAddrValue) / 2L
+    else
+      (rightAddrValue + leftAddrValue - 1L) / 2L
+  }
+
 
 }
 case class RoadAddressSection(roadNumber: Long, roadPartNumberStart: Long, roadPartNumberEnd: Long, track: Track,

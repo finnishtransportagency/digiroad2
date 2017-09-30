@@ -22,7 +22,7 @@ object TrackSectionOrder {
     }
   }
 
-  def orderProjectLinksTopologyByGeometry(startingPoint: Point, list: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
+  def orderProjectLinksTopologyByGeometry(startingPoints: (Point, Point), list: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
 
     def findOnceConnectedLinks(seq: Seq[ProjectLink]): Seq[ProjectLink] = {
       // Using 3 because case b==j is included
@@ -81,7 +81,7 @@ object TrackSectionOrder {
     val track01 = list.filter(_.track != Track.LeftSide)
     val track02 = list.filter(_.track != Track.RightSide)
 
-    (recursiveFindAndExtend(startingPoint, Seq(), track01), recursiveFindAndExtend(startingPoint, Seq(), track02))
+    (recursiveFindAndExtend(startingPoints._1, Seq(), track01), recursiveFindAndExtend(startingPoints._2, Seq(), track02))
   }
 
   def toSection(pl: ProjectLink) = {
@@ -94,6 +94,8 @@ object TrackSectionOrder {
       TrackSection(pl.roadNumber, pl.roadPartNumber, pl.track, s.map(_.geometryLength).sum, s)
     }
     def groupIntoSections(seq: Seq[ProjectLink]): (Seq[TrackSection]) = {
+      if (seq.isEmpty)
+        throw new InvalidAddressDataException("Missing track")
       val changePoints = seq.zip(seq.tail).filter{ case (pl1, pl2) => pl1.track != pl2.track}
       seq.foldLeft(Seq(Seq[ProjectLink]())) { case (tracks, pl) =>
         if (changePoints.exists(_._2 == pl)) {
@@ -113,44 +115,19 @@ object TrackSectionOrder {
               Math.min(
                 Math.min(l.startGeometry.distance2DTo(r.startGeometry), l.startGeometry.distance2DTo(r.endGeometry)),
                 Math.min(l.endGeometry.distance2DTo(r.startGeometry), l.endGeometry.distance2DTo(r.endGeometry))))
-            val (avr, avl) = averageTracks(r, l)
-            println(s"Right ${avr.links.map(l => s"${l.linkId} ${l.startAddrMValue} - ${l.endAddrMValue}").head}")
-            println(s"Right ${avr.links.map(l => s"${l.linkId} ${l.startAddrMValue} - ${l.endAddrMValue}").last}")
-            println(s"Left ${avl.links.map(l => s"${l.linkId} ${l.startAddrMValue} - ${l.endAddrMValue}").head}")
-            println(s"Left ${avl.links.map(l => s"${l.linkId} ${l.startAddrMValue} - ${l.endAddrMValue}").last}")
-            CombinedSection(r.startGeometry, r.endGeometry, r.geometryLength, avl, avr)
+            CombinedSection(r.startGeometry, r.endGeometry, r.geometryLength, l, r)
           case Track.RightSide =>
             val l = leftSection.filter(_.track == Track.LeftSide).minBy(l =>
               Math.min(
                 Math.min(l.startGeometry.distance2DTo(r.startGeometry), l.startGeometry.distance2DTo(r.endGeometry)),
               Math.min(l.endGeometry.distance2DTo(r.startGeometry), l.endGeometry.distance2DTo(r.endGeometry))))
-            val (avr, avl) = averageTracks(r, l)
-            println(s"Combining ${r.startAddrM} - ${r.endAddrM} with l& ${l.startAddrM} - ${l.endAddrM}")
-            println(s"Combined ${avr.startAddrM} - ${avr.endAddrM} with l& ${avl.startAddrM} - ${avl.endAddrM}")
-            CombinedSection(avr.startGeometry, avr.endGeometry, .5*(avr.geometryLength + avl.geometryLength),
-              avl, avr)
+            CombinedSection(r.startGeometry, r.endGeometry, .5*(r.geometryLength + l.geometryLength),
+              l, r)
           case _ => throw new RoadAddressException(s"Incorrect track code ${r.track}")
         }
       }
 
     }
     combineSections(groupIntoSections(rightLinks), groupIntoSections(leftLinks))
-  }
-
-  private def averageTracks(rightTrack: TrackSection, leftTrack: TrackSection): (TrackSection, TrackSection) = {
-    def needsReversal(left: TrackSection, right: TrackSection): Boolean = {
-      GeometryUtils.areAdjacent(left.startGeometry, right.endGeometry) ||
-        GeometryUtils.areAdjacent(left.endGeometry, right.startGeometry)
-    }
-    val alignedLeft = if (needsReversal(leftTrack, rightTrack)) leftTrack.reverse else leftTrack
-    val (startM, endM) = (average(rightTrack.startAddrM, alignedLeft.startAddrM), average(rightTrack.endAddrM, alignedLeft.endAddrM))
-
-    (rightTrack.toAddressValues(startM, endM), leftTrack.toAddressValues(startM, endM))
-  }
-  private def average(rightAddrValue: Long, leftAddrValue: Long): Long = {
-    if (rightAddrValue >= leftAddrValue)
-      (1L + rightAddrValue + leftAddrValue) / 2L
-    else
-      (rightAddrValue + leftAddrValue - 1L) / 2L
   }
 }

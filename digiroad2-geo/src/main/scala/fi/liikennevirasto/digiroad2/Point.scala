@@ -52,6 +52,10 @@ case class Vector3d(x: Double, y: Double, z: Double) {
     Vector3d(x - that.x, y - that.y, z - that.z)
   }
 
+  def +(that: Vector3d): Vector3d = {
+    Vector3d(x + that.x, y + that.y, z + that.z)
+  }
+
   def to2D(): Vector3d = {
     Vector3d(x, y, 0.0)
   }
@@ -74,5 +78,9 @@ case class Point(x: Double, y: Double, z: Double = 0.0) {
 
   def +(that: Vector3d): Point = {
     Point(x + that.x, y + that.y, z + that.z)
+  }
+
+  lazy val toVector: Vector3d = {
+    this - Point(0.0, 0.0)
   }
 }

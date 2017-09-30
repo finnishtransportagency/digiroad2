@@ -345,7 +345,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     val idRoad2 = 2L //   L<    <- Note! Incompatible, means the addressing direction is against the right track
     val idRoad3 = 3L //   L<    <- Note! Incompatible, means the addressing direction is against the right track
     val projectLink0 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad0, 5, 1, RoadType.Unknown, Track.RightSide, Continuous,
-      0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, idRoad0, 0.0, 0.0, SideCode.AgainstDigitizing, 0, (None, None), false,
+      0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, idRoad0, 0.0, 0.0, SideCode.AgainstDigitizing, 0, (Some(CalibrationPoint(0L, 0.0, 0L)), None), false,
       Seq(Point(28, 9.8), Point(20.0, 10.0)), LinkGeomSource.NormalLinkInterface))
     val projectLink1 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad1, 5, 1, RoadType.Unknown, Track.RightSide, Continuous,
       0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, idRoad1, 0.0, 0.0, SideCode.AgainstDigitizing, 0, (None, None), false,
@@ -358,6 +358,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       Seq(Point(28, 10.2),Point(42, 10.3)), LinkGeomSource.NormalLinkInterface))
     val list = List(projectLink0, projectLink1, projectLink2, projectLink3)
     val ordered = ProjectSectionCalculator.assignMValues(list)
+    ordered.foreach(println)
     // Test that the direction of left track is corrected to match the right track
     val (right, left) = ordered.partition(_.track == Track.RightSide)
     right.foreach(
@@ -366,14 +367,6 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     left.foreach(
       _.sideCode should be (TowardsDigitizing)
     )
-    right.flatMap(_.calibrationPoints._1) should have size (1)
-    right.flatMap(_.calibrationPoints._2) should have size (1)
-    left.flatMap(_.calibrationPoints._1) should have size (1)
-    left.flatMap(_.calibrationPoints._2) should have size (1)
-    right.flatMap(_.calibrationPoints._1).head should be (CalibrationPoint(0, 8.002499609497024, 0))
-    left.flatMap(_.calibrationPoints._1).head should be (CalibrationPoint(2, 0.0, 0))
-    right.flatMap(_.calibrationPoints._2).head should be (CalibrationPoint(1, 0.0, 22))
-    left.flatMap(_.calibrationPoints._2).head should be (CalibrationPoint(3, 14.000357138301865,22))
   }
 
   test("determineMValues different track lengths are adjusted") {
@@ -451,8 +444,8 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     val idRoad0 = 0L //   C>
     val idRoad1 = 1L //   L>
     val idRoad2 = 2L //   R>
-    val projectLink0 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad0, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
-      0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, idRoad0, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), false,
+    val projectLink0 = toProjectLink(rap, LinkStatus.UnChanged)(RoadAddress(idRoad0, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
+      0L, 8L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, idRoad0, 0.0, 8.0, SideCode.TowardsDigitizing, 0, (Some(CalibrationPoint(0L, 0.0, 0L)), None), false,
       Seq(Point(20.0, 10.0), Point(28, 10)), LinkGeomSource.NormalLinkInterface))
     val projectLink1 = toProjectLink(rap, LinkStatus.New)(RoadAddress(idRoad1, 5, 1, RoadType.Unknown, Track.LeftSide, Continuous,
       0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, idRoad1, 0.0, 0.0, SideCode.TowardsDigitizing, 0, (None, None), false,
