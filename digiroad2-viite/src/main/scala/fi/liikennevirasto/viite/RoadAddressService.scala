@@ -195,7 +195,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val missingViiteRoadAddress = Await.result(fetchMissingRoadAddressesByBoundingBoxF, Duration.Inf)
     logger.info("End fetch addresses in %.3f sec".format((System.currentTimeMillis() - fetchAddrStartTime) * 0.001))
 
-    val addressLinkIds = addresses.keySet ++ missingViiteRoadAddress.keySet
+    val roadsWithEndDate = addresses.values.flatten.filter(a => a.endDate.isDefined).map(_.linkId).toSeq
+
+    val addressLinkIds = addresses.filterNot(rl => roadsWithEndDate.contains(rl._1)).keySet ++ missingViiteRoadAddress.keySet
     val fetchVVHStartTime = System.currentTimeMillis()
     val changedRoadLinksF = roadLinkService.getChangeInfoFromVVHF(addressLinkIds)
     val roadLinks = roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(addressLinkIds,newTransaction,frozenTimeVVHAPIServiceEnabled)
@@ -527,7 +529,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
     val addresses =
       withDynTransaction {
-        RoadAddressDAO.fetchByLinkId(roadLinksWithComplimentary.map(_.linkId).toSet, false, false).groupBy(_.linkId)
+        RoadAddressDAO.fetchByLinkId(roadLinksWithComplimentary.map(_.linkId).toSet, false, false).filterNot(ra => ra.endDate.isDefined).groupBy(_.linkId)
       }
     // In order to avoid sending roadAddressLinks that have no road address
     // we remove the road links that have no known address
