@@ -3,6 +3,8 @@ package fi.liikennevirasto.digiroad2.masstransitstop
 import fi.liikennevirasto.digiroad2.asset.{AbstractProperty, SimpleProperty, _}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.{FloatingReason, PersistedMassTransitStop}
+import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormat
 
 sealed trait BusStopType {
   def value: Int
@@ -25,6 +27,8 @@ object BusStopType {
 
 
 object MassTransitStopOperations {
+  val toIso8601 = DateTimeFormat.forPattern("yyyy-MM-dd")
+
   val StateOwned: Set[AdministrativeClass] = Set(State)
   val OtherOwned: Set[AdministrativeClass] = Set(Municipality, Private)
   val CommuterBusStopPropertyValue: String = "2"
@@ -119,6 +123,16 @@ object MassTransitStopOperations {
   def getTerminalMassTransitStopChildren(properties: Seq[SimpleProperty]) : Seq[Long] = {
     properties.find(_.publicId == terminalChildrenPublicId).map(_.values).getOrElse(Seq()).map(_.propertyValue).foldLeft(Seq.empty[Long]) { (result, child) =>
       result ++ Seq(child.toLong)
+    }
+  }
+
+  def setPropertiesDefaultValues(properties: Seq[SimpleProperty]): Seq[SimpleProperty] = {
+    val inventoryDate = properties.find(_.publicId == MassTransitStopOperations.InventoryDateId)
+    val notInventoryDate = properties.filterNot(_.publicId == MassTransitStopOperations.InventoryDateId)
+    if (inventoryDate.nonEmpty && inventoryDate.get.values.exists(_.propertyValue != "")) {
+      properties
+    } else {
+      notInventoryDate ++ Set(SimpleProperty(MassTransitStopOperations.InventoryDateId, Seq(PropertyValue(toIso8601.print(DateTime.now())))))
     }
   }
 }

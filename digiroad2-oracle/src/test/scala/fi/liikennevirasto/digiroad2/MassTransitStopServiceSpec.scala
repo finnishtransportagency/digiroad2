@@ -6,7 +6,7 @@ import java.util.Date
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.masstransitstop.MassTransitStopOperations
+import fi.liikennevirasto.digiroad2.masstransitstop.{BusStopStrategy, MassTransitStopOperations, TierekisteriBusStopStrategy}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.MassTransitStopDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
@@ -76,6 +76,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[Long], any[Boolean])).thenReturn(Some(toRoadLink(VVHRoadlink(1611601L, 91, Seq(Point(374668.195,6676884.282), Point(374805.498, 6676906.051)), State, TrafficDirection.BothDirections, FeatureClass.AllOthers))))
   }
 
+  object RollbackBusStopStrategy extends BusStopStrategy(10, new MassTransitStopDao, mockRoadLinkService)
 
   class TestMassTransitStopService(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService) extends MassTransitStopService {
     override def withDynSession[T](f: => T): T = f
@@ -121,19 +122,17 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
 
   val assetLock = "Used to prevent deadlocks"
 
-  //TODO Use set properties from default variation or trait
-  /*
   test("update inventory date") {
     val props = Seq(SimpleProperty("foo", Seq()))
-    val after = RollbackMassTransitStopService.updatedProperties(props)
+    val after = MassTransitStopOperations.setPropertiesDefaultValues(props)
     after should have size (2)
-    val after2 = RollbackMassTransitStopService.updatedProperties(after)
+    val after2 = MassTransitStopOperations.setPropertiesDefaultValues(after)
     after2 should have size (2)
   }
 
   test("update empty inventory date") {
     val props = Seq(SimpleProperty("inventointipaiva", Seq()))
-    val after = RollbackMassTransitStopService.updatedProperties(props)
+    val after = MassTransitStopOperations.setPropertiesDefaultValues(props)
     after should have size (1)
     after.head.values should have size(1)
     after.head.values.head.propertyValue should be ( DateTimeFormat.forPattern("yyyy-MM-dd").print(DateTime.now))
@@ -141,12 +140,11 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
 
   test("do not update existing inventory date") {
     val props = Seq(SimpleProperty("inventointipaiva", Seq(PropertyValue("2015-12-30"))))
-    val after = RollbackMassTransitStopService.updatedProperties(props)
+    val after = MassTransitStopOperations.setPropertiesDefaultValues(props)
     after should have size (1)
     after.head.values should have size(1)
     after.head.values.head.propertyValue should be ( "2015-12-30")
   }
-  */
 
   test("Calculate mass transit stop validity periods") {
     runWithRollback {
@@ -1056,8 +1054,6 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     }
   }
 
-  //TODO  change to trait variation
-  /*
   test ("Get enumerated property values") {
     runWithRollback {
       val propertyValues = RollbackMassTransitStopService.massTransitStopEnumeratedPropertyValues
@@ -1075,7 +1071,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val assetId = 300006
       val boundingBox = BoundingRectangle(Point(370000,6077000), Point(374800,6677600))
       //Set administration class of the asset with State value
-      RollbackMassTransitStopService.updateAdministrativeClassValue(assetId, State)
+      RollbackBusStopStrategy.updateAdministrativeClassValue(assetId, State)
       val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
       stops.find(_.id == assetId).map(_.floating) should be(Some(true))
       massTransitStopDao.getAssetFloatingReason(assetId) should be(Some(FloatingReason.RoadOwnerChanged))
@@ -1090,7 +1086,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val assetId = 300012
       val boundingBox = BoundingRectangle(Point(370000,6077000), Point(374800,6677600))
       //Set administration class of the asset with State value
-      RollbackMassTransitStopService.updateAdministrativeClassValue(assetId, State)
+      RollbackBusStopStrategy.updateAdministrativeClassValue(assetId, State)
       val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
       stops.find(_.id == assetId).map(_.floating) should be(Some(true))
       massTransitStopDao.getAssetFloatingReason(assetId) should be(Some(FloatingReason.RoadOwnerChanged))
@@ -1109,7 +1105,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val assetId = 300006
       val boundingBox = BoundingRectangle(Point(370000,6077000), Point(374800,6677600))
       //Set administration class of the asset with State value
-      RollbackMassTransitStopService.updateAdministrativeClassValue(assetId, Municipality)
+      RollbackBusStopStrategy.updateAdministrativeClassValue(assetId, Municipality)
       val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
       stops.find(_.id == assetId).map(_.floating) should be(Some(true))
       massTransitStopDao.getAssetFloatingReason(assetId) should be(Some(FloatingReason.RoadOwnerChanged))
@@ -1128,7 +1124,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val assetId = 300006
       val boundingBox = BoundingRectangle(Point(370000,6077000), Point(374800,6677600))
       //Set administration class of the asset with State value
-      RollbackMassTransitStopService.updateAdministrativeClassValue(assetId, Private)
+      RollbackBusStopStrategy.updateAdministrativeClassValue(assetId, Private)
       val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
       stops.find(_.id == assetId).map(_.floating) should be(Some(true))
       massTransitStopDao.getAssetFloatingReason(assetId) should be(Some(FloatingReason.RoadOwnerChanged))
@@ -1142,7 +1138,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val assetId = 300012
       val boundingBox = BoundingRectangle(Point(370000,6077000), Point(374800,6677600))
       //Set administration class of the asset with State value
-      RollbackMassTransitStopService.updateAdministrativeClassValue(assetId, State)
+      RollbackBusStopStrategy.updateAdministrativeClassValue(assetId, State)
       //GetBoundingBox will set assets  to floating
       RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
       val workingList = RollbackMassTransitStopService.getFloatingAssetsWithReason(Some(Set(235)), Some(false))
@@ -1155,10 +1151,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       }
     }
   }
-  */
 
-  //TODO  change to trait variation
-  /*
   test("Stops working list should have all floating assets if user is operator"){
     when(mockVVHRoadLinkClient.fetchByMunicipalitiesAndBounds(any[BoundingRectangle], any[Set[Int]])).thenReturn(vvhRoadLinks)
 
@@ -1166,7 +1159,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val assetId = 300012
       val boundingBox = BoundingRectangle(Point(370000,6077000), Point(374800,6677600))
       //Set administration class of the asset with State value
-      RollbackMassTransitStopService.updateAdministrativeClassValue(assetId, State)
+      RollbackBusStopStrategy.updateAdministrativeClassValue(assetId, State)
       //GetBoundingBox will set assets  to floating
       RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
       val workingList = RollbackMassTransitStopService.getFloatingAssetsWithReason(Some(Set(235)), Some(true))
@@ -1176,11 +1169,10 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       //Should have the external id of the asset with administration class changed
       externalIds.map(_.get("id")) should contain (Some(8))
     }
-  }*/
+  }
 
-  //TODO change to tierekisteri variation
-  /*
   test("getByMunicipality gets Tierekisteri Equipment") {
+    val tierekisteriStrategy = new TierekisteriBusStopStrategy(10, new MassTransitStopDao, mockRoadLinkService, mockTierekisteriClient, new GeometryTransform)
     val combinations: List[(Existence, String)] = List(Existence.No, Existence.Yes, Existence.Unknown).zip(List("1", "2", "99"))
     combinations.foreach { case (e, v) =>
       reset(mockTierekisteriClient, mockRoadLinkService)
@@ -1192,7 +1184,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
 
       runWithRollback {
         val stops = RollbackMassTransitStopServiceWithTierekisteri.getByMunicipality(235)
-        val (trStops, _) = stops.partition(s => MassTransitStopOperations.isStoredInTierekisteri(Some(s)))
+        val (trStops, _) = stops.partition(s => tierekisteriStrategy.was(s))
         val equipmentPublicIds = Equipment.values.filter(_.isMaster).map(_.publicId)
         // All should be unknown as set in the TRClientMock
         val equipments = trStops.map(t => t.propertyData.filter(p => equipmentPublicIds.contains(p.publicId)))
@@ -1201,7 +1193,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       verify(mockRoadLinkService, times(1)).getRoadLinksWithComplementaryFromVVH(any[Int])
       verify(mockTierekisteriClient, Mockito.atLeast(1)).fetchMassTransitStop(any[String])
     }
-  }*/
+  }
 
   test("Updating an existing stop should not create a new Livi ID") {
     val equipments = Map[Equipment, Existence](

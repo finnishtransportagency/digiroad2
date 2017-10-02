@@ -59,9 +59,11 @@ trait AbstractBusStopStrategy {
   def update(persistedStop: PersistedMassTransitStop, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: Int => Unit, roadLink: RoadLink): PersistedMassTransitStop
   def delete(asset: PersistedMassTransitStop): Unit
 
+  //TODO exists in masstransitstopoperations
   protected val toIso8601 = DateTimeFormat.forPattern("yyyy-MM-dd")
 
-  protected def updateAdministrativeClassValue(assetId: Long, administrativeClass: AdministrativeClass): Unit ={
+  //TODO Change this to protected
+  def updateAdministrativeClassValue(assetId: Long, administrativeClass: AdministrativeClass): Unit ={
     massTransitStopDao.updateNumberPropertyValue(assetId, "linkin_hallinnollinen_luokka", administrativeClass.value)
   }
 
@@ -70,14 +72,9 @@ trait AbstractBusStopStrategy {
     updateAdministrativeClassValue(id, administrativeClass)
   }
 
+  //TODO remove this method and call the direct one
   protected def setPropertiesDefaultValues(properties: Seq[SimpleProperty]): Seq[SimpleProperty] = {
-    val inventoryDate = properties.find(_.publicId == MassTransitStopOperations.InventoryDateId)
-    val notInventoryDate = properties.filterNot(_.publicId == MassTransitStopOperations.InventoryDateId)
-    if (inventoryDate.nonEmpty && inventoryDate.get.values.exists(_.propertyValue != "")) {
-      properties
-    } else {
-      notInventoryDate ++ Set(SimpleProperty(MassTransitStopOperations.InventoryDateId, Seq(PropertyValue(toIso8601.print(DateTime.now())))))
-    }
+    MassTransitStopOperations.setPropertiesDefaultValues(properties)
   }
 
   protected def updatePosition(id: Long, roadLink: RoadLink)(position: Position) = {
