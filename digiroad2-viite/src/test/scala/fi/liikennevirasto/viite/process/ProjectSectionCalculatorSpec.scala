@@ -128,7 +128,6 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       pl.copy(endMValue =pl.geometryLength))
     val output = ProjectSectionCalculator.assignMValues(projectLinkSeq).sortBy(_.linkId)
     output.length should be(9)
-    output.foreach(println)
     output.foreach(pl => pl.sideCode == TowardsDigitizing should be (true))
     val start = output.find(_.id==idRoad0).get
     start.calibrationPoints._1.nonEmpty should be (true)
@@ -358,7 +357,6 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       Seq(Point(28, 10.2),Point(42, 10.3)), LinkGeomSource.NormalLinkInterface))
     val list = List(projectLink0, projectLink1, projectLink2, projectLink3)
     val ordered = ProjectSectionCalculator.assignMValues(list)
-    ordered.foreach(println)
     // Test that the direction of left track is corrected to match the right track
     val (right, left) = ordered.partition(_.track == Track.RightSide)
     right.foreach(
@@ -476,7 +474,6 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     val list = List(projectLink0, projectLink1, projectLink2)
     val (created, unchanged) = list.partition(_.status == LinkStatus.New)
     val ordered = ProjectSectionCalculator.assignMValues(created++unchanged )
-    ordered.foreach(println)
     val road2 = ordered.find(_.linkId == idRoad2).get
     road2.startAddrMValue should be (19L)
     road2.endAddrMValue should be (30L)
@@ -504,7 +501,6 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
     ordered.find(_.linkId == idRoad2) should be (None)
     ordered.head.startAddrMValue should be (0L)
     ordered.last.endAddrMValue should be (19L)
-    ordered.foreach(println)
     ordered.count(_.calibrationPoints._1.nonEmpty) should be (1)
     ordered.count(_.calibrationPoints._2.nonEmpty) should be (1)
   }

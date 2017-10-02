@@ -1093,11 +1093,6 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       prettyPrint(adjusted.sortBy(_.startAddrMValue).toList)
       adjusted.sortBy(_.id).zip(changedLinks.sortBy(_.id)).foreach{
         case (oldLink, newLink) =>
-          println(oldLink)
-          println(newLink)
-          println((oldLink.endAddrMValue - oldLink.startAddrMValue) + " vs " + (newLink.endAddrMValue - newLink.startAddrMValue))
-          println(oldLink.endAddrMValue, oldLink.startAddrMValue, newLink.endAddrMValue, newLink.startAddrMValue)
-          println()
           oldLink.startAddrMValue should be ((linksLast.endAddrMValue - newLink.endAddrMValue) +- 1)
           oldLink.endAddrMValue should be ((linksLast.endAddrMValue - newLink.startAddrMValue) +- 1)
           val trackChangeCorrect = (oldLink.track, newLink.track) match {
