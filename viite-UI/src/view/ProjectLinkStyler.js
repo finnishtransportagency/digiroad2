@@ -15,17 +15,17 @@
 
     var strokeWidthRule = _.partial(strokeByZomLevel);
     var strokeWidthRules = [
-      strokeWidthRule(5, { stroke: {width: 3}}),
-      strokeWidthRule(6, { stroke: {width: 3}}),
-      strokeWidthRule(7, { stroke: {width: 4}}),
-      strokeWidthRule(8, { stroke: {width: 4}}),
-      strokeWidthRule(9, { stroke: {width: 4}}),
-      strokeWidthRule(10, { stroke: {width: 5}}),
-      strokeWidthRule(11, { stroke: {width: 5}}),
-      strokeWidthRule(12, { stroke: {width: 7}}),
-      strokeWidthRule(13, { stroke: {width: 10}}),
-      strokeWidthRule(14, { stroke: {width: 14}}),
-      strokeWidthRule(15, { stroke: {width: 14}})
+      strokeWidthRule(5, { stroke: {width: 5}}),
+      strokeWidthRule(6, { stroke: {width: 5}}),
+      strokeWidthRule(7, { stroke: {width: 6}}),
+      strokeWidthRule(8, { stroke: {width: 6}}),
+      strokeWidthRule(9, { stroke: {width: 6}}),
+      strokeWidthRule(10, { stroke: {width: 7}}),
+      strokeWidthRule(11, { stroke: {width: 7}}),
+      strokeWidthRule(12, { stroke: {width: 9}}),
+      strokeWidthRule(13, { stroke: {width: 12}}),
+      strokeWidthRule(14, { stroke: {width: 16}}),
+      strokeWidthRule(15, { stroke: {width: 16}})
     ];
 
     var projectLinkRules = [
@@ -34,7 +34,8 @@
       new StyleRule().where('status').is(newRoadAddressStatus).use({stroke: {color: '#FF55DD', width: 5, lineCap: 'round'}}),
       new StyleRule().where('status').is(transferredStatus).use({stroke: {color: '#FF0000', width: 3, lineCap: 'round'}}),
       new StyleRule().where('status').is(numberingStatus).use({stroke: {color: '#8B4513', width: 5, lineCap: 'round'}}),
-      new StyleRule().where('status').is(terminatedStatus).use({stroke: {color: '#383836', width: 3, lineCap: 'round'}})
+      new StyleRule().where('status').is(terminatedStatus).use({stroke: {color: '#383836', width: 3, lineCap: 'round'}}),
+      new StyleRule().where('status').is(unknownStatus).use({stroke: {color: '#383836', width: 3, lineCap: 'round'}})
     ];
 
     var selectionStyleRules = [
@@ -53,7 +54,7 @@
     projectLinkStyle.addRules(projectLinkRules);
     projectLinkStyle.addRules(strokeWidthRules);
 
-    var selectionLinkStyle = new StyleRuleProvider({opacity: 0.95, lineCap: 'round'});
+    var selectionLinkStyle = new StyleRuleProvider({opacity: 0.95, lineCap: 'round', width: 8});
     selectionLinkStyle.addRules(projectLinkRules);
     selectionLinkStyle.addRules(strokeWidthRules);
     selectionLinkStyle.addRules(selectionStyleRules);
