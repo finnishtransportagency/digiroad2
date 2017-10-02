@@ -45,6 +45,17 @@ class LinearAssetUpdater(linearAssetService: LinearAssetService) extends Actor {
   }
 }
 
+class RoadWidthUpdater(roadWidthService: RoadWidthService) extends Actor {
+  def receive = {
+    case x: ChangeSet => persistRoadWidthChanges(x)
+    case _            => println("RoadWidthUpdater: Received unknown message")
+  }
+
+  def persistRoadWidthChanges(changeSet: ChangeSet) {
+    roadWidthService.updateChangeSet(changeSet);
+  }
+}
+
 class LinearAssetSaveProjected[T](linearAssetProvider: LinearAssetService) extends Actor {
   def receive = {
     case x: Seq[T] => linearAssetProvider.persistProjectedLinearAssets(x.asInstanceOf[Seq[PersistedLinearAsset]])
@@ -63,6 +74,13 @@ class RoadWidthSaveProjected[T](roadWidthProvider: RoadWidthService) extends Act
   def receive = {
     case x: Seq[T] => roadWidthProvider.persistProjectedLinearAssets(x.asInstanceOf[Seq[PersistedLinearAsset]])
     case _             => println("roadWidthSaveProjected: Received unknown message")
+  }
+}
+
+class PavingSaveProjected[T](pavingProvider: PavingService) extends Actor {
+  def receive = {
+    case x: Seq[T] => pavingProvider.persistProjectedLinearAssets(x.asInstanceOf[Seq[PersistedLinearAsset]])
+    case _             => println("pavingSaveProjected: Received unknown message")
   }
 }
 
@@ -151,9 +169,14 @@ object Digiroad2Context {
   val maintenanceRoadSaveProjected = system.actorOf(Props(classOf[MaintenanceRoadSaveProjected[PersistedLinearAsset]], maintenanceRoadService), name = "maintenanceRoadSaveProjected")
   eventbus.subscribe(maintenanceRoadSaveProjected, "maintenanceRoads:saveProjectedMaintenanceRoads")
 
+  val roadWidthUpdater = system.actorOf(Props(classOf[RoadWidthUpdater], roadWidthService), name = "roadWidthUpdater")
+  eventbus.subscribe(roadWidthUpdater, "roadWidth:update")
+
   val roadWidthSaveProjected = system.actorOf(Props(classOf[RoadWidthSaveProjected[PersistedLinearAsset]], roadWidthService), name = "roadWidthSaveProjected")
   eventbus.subscribe(roadWidthSaveProjected, "RoadWidth:saveProjectedRoadWidth")
 
+  val pavingSaveProjected = system.actorOf(Props(classOf[RoadWidthSaveProjected[PersistedLinearAsset]], pavingService), name = "pavingSaveProjected")
+  eventbus.subscribe(pavingSaveProjected, "paving:saveProjectedPaving")
 
   val speedLimitSaveProjected = system.actorOf(Props(classOf[SpeedLimitSaveProjected[SpeedLimit]], speedLimitService), name = "speedLimitSaveProjected")
   eventbus.subscribe(speedLimitSaveProjected, "speedLimits:saveProjectedSpeedLimits")

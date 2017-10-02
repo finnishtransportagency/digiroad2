@@ -1,14 +1,16 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.{NumericValue, PersistedLinearAsset, RoadLink}
+import fi.liikennevirasto.digiroad2.linearasset.{NewLinearAsset, NumericValue, PersistedLinearAsset, RoadLink}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
 import org.mockito.ArgumentCaptor
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.{FunSuite, Matchers}
 import org.scalatest.mock.MockitoSugar
+import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
 class RoadWidthServiceSpec extends FunSuite with Matchers {
   val RoadWidthAssetTypeId = 120
@@ -21,16 +23,16 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val linearAssetDao = new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
 
-  object PassThroughService extends LinearAssetOperations {
-    override def withDynTransaction[T](f: => T): T = f
-    override def roadLinkService: RoadLinkService = mockRoadLinkService
-    override def dao: OracleLinearAssetDao = mockLinearAssetDao
-    override def eventBus: DigiroadEventBus = mockEventBus
-    override def vvhClient: VVHClient = mockVVHClient
-    override def polygonTools: PolygonTools = mockPolygonTools
-
-    override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
-  }
+//  object PassThroughService extends LinearAssetOperations {
+//    override def withDynTransaction[T](f: => T): T = f
+//    override def roadLinkService: RoadLinkService = mockRoadLinkService
+//    override def dao: OracleLinearAssetDao = mockLinearAssetDao
+//    override def eventBus: DigiroadEventBus = mockEventBus
+//    override def vvhClient: VVHClient = mockVVHClient
+//    override def polygonTools: PolygonTools = mockPolygonTools
+//
+//    override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
+//  }
 
   object ServiceWithDao extends RoadWidthService(mockRoadLinkService, mockEventBus) {
     override def withDynTransaction[T](f: => T): T = f
@@ -43,7 +45,11 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
     override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
   }
 
-  def runWithRollback(test: => Unit): Unit = TestTransactions.runWithRollback(PassThroughService.dataSource)(test)
+  def runWithRollback(test: => Unit): Unit = assetLock.synchronized {
+    TestTransactions.runWithRollback()(test)
+  }
+
+  val assetLock = "Used to prevent deadlocks"
 
   private def createChangeInfo(roadLinks: Seq[RoadLink], vvhTimeStamp: Long) = {
     roadLinks.map(rl => ChangeInfo(Some(rl.linkId), Some(rl.linkId), 0L, 1, None, None, None, None, vvhTimeStamp))
@@ -112,7 +118,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
 
     runWithRollback {
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink2, newRoadLink1, newRoadLink0), changeInfoSeq))
-      when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[String])).thenReturn(List())
+      when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[String], any[Boolean])).thenReturn(List())
 
       val existingAssets = service.getByBoundingBox(RoadWidthAssetTypeId, boundingBox).toList.flatten
 
@@ -135,11 +141,11 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
     val assets = Seq(PersistedLinearAsset(1, 5000, 1, Some(NumericValue(12000)), 0, 5, None, None, None, None, false, RoadWidthAssetTypeId, 0, None, LinkGeomSource.NormalLinkInterface))
 
     val changeInfo = createChangeInfo(roadLinks, 11L)
-    val (expiredIds, newAssets) = service.getRoadWidthAssetChanges(assets, roadLinks, changeInfo)
+    val (expiredIds, newAssets) = service.getRoadWidthAssetChanges(assets, Seq(), roadLinks, changeInfo)
     expiredIds should have size 0
-    newAssets.filter(_.linkId == 50000) should have size 0
-    newAssets.filter(_.linkId == 50001) should have size 1
-    newAssets.filter(_.linkId == 50001).head.value should be (650)
+    newAssets.filter(_.linkId == 5000) should have size 0
+    newAssets.filter(_.linkId == 5001) should have size 1
+    newAssets.filter(_.linkId == 5001).head.value should be (Some(NumericValue(650)))
   }
 
   test("Should not create any new asset (MTKClass not valid)") {
@@ -162,7 +168,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
     val service = createService()
 
     val changeInfo = createChangeInfo(roadLinks, 11L)
-    val (expiredIds, newAsset) = service.getRoadWidthAssetChanges(Seq(), roadLinks, changeInfo)
+    val (expiredIds, newAsset) = service.getRoadWidthAssetChanges(Seq(), Seq(), roadLinks, changeInfo)
     expiredIds should have size 0
     newAsset should have size 0
   }
@@ -188,7 +194,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
     val service = createService()
 
     val changeInfo = createChangeInfo(roadLinks, 11L)
-    val (expiredIds, newAsset) = service.getRoadWidthAssetChanges(Seq(), roadLinks, changeInfo)
+    val (expiredIds, newAsset) = service.getRoadWidthAssetChanges(Seq(), Seq(), roadLinks, changeInfo)
     expiredIds should have size 0
     newAsset should have size 0
   }
@@ -202,7 +208,7 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
       PersistedLinearAsset(2, 5001, 1, Some(NumericValue(2000)), 0, 20, None, None, None, None, false, RoadWidthAssetTypeId, 10L, None, LinkGeomSource.NormalLinkInterface))
 
     val changeInfo = createChangeInfo(roadLinks, 11L)
-    val (expiredIds, newAsset) = service.getRoadWidthAssetChanges(assets, roadLinks, changeInfo)
+    val (expiredIds, newAsset) = service.getRoadWidthAssetChanges(assets, Seq(), roadLinks, changeInfo)
     expiredIds should have size 1
     expiredIds should be (Set(1))
     newAsset.forall(_.vvhTimeStamp == 11L) should be (true)
@@ -212,9 +218,74 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
     newAsset.head.value should be (Some(NumericValue(1100)))
   }
 
+  test("Do not updated asset created or expired by the user") {
+    val municipalityCode = 235
+    val roadLinks = createRoadLinks(municipalityCode)
+    val service = createService()
 
+    val assets = Seq(PersistedLinearAsset(1, 5000, 1, Some(NumericValue(4000)), 0, 20,  Some("test"), None, None, None, false, RoadWidthAssetTypeId, 10L, None, LinkGeomSource.NormalLinkInterface))
+    val expiredAssets = Seq(PersistedLinearAsset(2, 5001, 1, Some(NumericValue(2000)), 0, 20, Some("test"), None, Some("test2"), None, true, RoadWidthAssetTypeId, 10L, None, LinkGeomSource.NormalLinkInterface))
 
+    val changeInfo = createChangeInfo(roadLinks, 11L)
+    val (expiredIds, newAsset) = service.getRoadWidthAssetChanges(assets, expiredAssets, roadLinks, changeInfo)
+    expiredIds should have size 0
+    newAsset should have size 0
+  }
 
+  test("Create linear asset on a road link that has changed previously"){
+    val oldLinkId1 = 5000
+    val linkId1 = 5001
+    val newLinkId = 6000
+    val municipalityCode = 235
+    val administrativeClass = Municipality
+    val trafficDirection = TrafficDirection.BothDirections
+    val functionalClass = 1
+    val linkType = Freeway
+    val assetTypeId = 120
 
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val timeStamp = new VVHRoadLinkClient("http://localhost:6080").createVVHTimeStamp(5)
+    when(mockVVHRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
+    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+
+    val service = new RoadWidthService(mockRoadLinkService, new DummyEventBus) {
+      override def withDynTransaction[T](f: => T): T = f
+      override def vvhClient: VVHClient = mockVVHClient
+    }
+
+    val roadLinks = Seq(
+      RoadLink(linkId1, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))),
+      RoadLink(newLinkId, List(Point(0.0, 0.0), Point(120.0, 0.0)), 120.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))))
+
+    val changeInfo = Seq(
+      ChangeInfo(Some(oldLinkId1), Some(newLinkId), 12345, 1, Some(0), Some(100), Some(0), Some(100), 1476468913000L),
+      ChangeInfo(Some(linkId1), Some(newLinkId), 12345, 2, Some(0), Some(20), Some(100), Some(120), 1476468913000L)
+    )
+
+    OracleDatabase.withDynTransaction {
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((roadLinks, changeInfo))
+      when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLinks)
+      val newAsset1 = NewLinearAsset(linkId1, 0.0, 20, NumericValue(2017), 1, 234567, None)
+      val id1 = service.create(Seq(newAsset1), assetTypeId, "KX2")
+
+      val newAsset = NewLinearAsset(newLinkId, 0.0, 120, NumericValue(4779), 1, 234567, None)
+      val id = service.create(Seq(newAsset), assetTypeId, "KX2")
+
+      id should have size (1)
+      id.head should not be (0)
+
+      val assets = service.getPersistedAssetsByIds(assetTypeId, Set(1L, id.head, id1.head))
+      assets should have size (2)
+      assets.forall(_.vvhTimeStamp > 0L) should be (true)
+
+      val after = service.getByBoundingBox(assetTypeId, BoundingRectangle(Point(0.0, 0.0), Point(120.0, 120.0)), Set(municipalityCode))
+      after should have size(2)
+      after.flatten.forall(_.id != 0) should be (true)
+      dynamicSession.rollback()
+
+    }
+  }
 }
 
