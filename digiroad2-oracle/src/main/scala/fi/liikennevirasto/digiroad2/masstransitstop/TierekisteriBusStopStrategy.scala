@@ -11,14 +11,13 @@ import fi.liikennevirasto.digiroad2.util.GeometryTransform
 
 import scala.util.Try
 
-class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopDao, roadLinkService: RoadLinkService, tierekisteriClient: TierekisteriMassTransitStopClient) extends BusStopStrategy(typeId, massTransitStopDao, roadLinkService)
+class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopDao, roadLinkService: RoadLinkService, tierekisteriClient: TierekisteriMassTransitStopClient, geometryTransform: GeometryTransform) extends BusStopStrategy(typeId, massTransitStopDao, roadLinkService)
 {
   //TODO check the really need for that or put it in the parent class
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
 
   val toLiviId = "OTHJ%d"
   val MaxMovementDistanceMeters = 50
-  val geometryTransform = new GeometryTransform
 
   lazy val massTransitStopEnumeratedPropertyValues = {
     withDynSession{
@@ -128,7 +127,7 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
 
     //If it was already in Tierekisteri
     if (was(asset)) {
-      val liviId = getLiviIdValue(mergedProperties).getOrElse(throw new NoSuchElementException)
+      val liviId = getLiviIdValue(asset.propertyData).orElse(getLiviIdValue(properties.toSeq)).getOrElse(throw new NoSuchElementException)
       if (calculateMovedDistance(asset, optionalPosition) > MaxMovementDistanceMeters) {
         val position = optionalPosition.get
         val newInventoryDateValue =
@@ -151,7 +150,7 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
       }else{
         optionalPosition.map(updatePosition(asset.id, roadLink))
         massTransitStopDao.updateAssetLastModified(asset.id, username)
-        massTransitStopDao.updateAssetProperties(asset.id, mergedProperties)
+        massTransitStopDao.updateAssetProperties(asset.id, verifiedProperties.toSeq)
         massTransitStopDao.updateTextPropertyValue(asset.id, MassTransitStopOperations.LiViIdentifierPublicId, liviId)
         updateAdministrativeClassValue(asset.id, roadLink.administrativeClass)
 
@@ -163,7 +162,7 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
       val newLiviId = toLiviId.format(asset.nationalId)
       optionalPosition.map(updatePosition(asset.id, roadLink))
       massTransitStopDao.updateAssetLastModified(asset.id, username)
-      massTransitStopDao.updateAssetProperties(asset.id, mergedProperties)
+      massTransitStopDao.updateAssetProperties(asset.id, verifiedProperties.toSeq)
       massTransitStopDao.updateTextPropertyValue(asset.id, MassTransitStopOperations.LiViIdentifierPublicId, newLiviId)
       updateAdministrativeClassValue(asset.id, roadLink.administrativeClass)
 
@@ -173,6 +172,13 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
 
       persistedAsset
     }
+  }
+
+  override def delete(asset: PersistedMassTransitStop): Unit = {
+    super.delete(asset)
+
+    val liviId = getLiviIdValue(asset.propertyData).getOrElse(throw new NoSuchElementException)
+    deleteTierekisteriBusStop(liviId)
   }
 
   private def getLiviIdValue(properties: Seq[AbstractProperty]) = {

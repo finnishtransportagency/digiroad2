@@ -689,6 +689,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     runWithRollback {
       val eventbus = MockitoSugar.mock[DigiroadEventBus]
       val service = new TestMassTransitStopServiceWithTierekisteri(eventbus, mockRoadLinkService)
+      when(mockTierekisteriClient.isTREnabled).thenReturn(true)
       val properties = List(
         SimpleProperty("pysakin_tyyppi", List(PropertyValue("1"))),
         SimpleProperty("tietojen_yllapitaja", List(PropertyValue("3"))),
@@ -959,6 +960,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
         vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass), NormalLinkInterface)
       when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]]
       )).thenReturn((new RoadAddress(Some("235"), 110, 10, Track.Combined, 108, None), RoadSide.Right))
+      when(mockTierekisteriClient.isTREnabled).thenReturn(true)
       val service = RollbackMassTransitStopServiceWithTierekisteri
       val stop = service.getById(id).get
       val props = stop.propertyData
@@ -992,6 +994,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
         vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass), NormalLinkInterface)
       when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]]
       )).thenReturn((new RoadAddress(Some("235"), 110, 10, Track.Combined, 108, None), RoadSide.Right))
+      when(mockTierekisteriClient.isTREnabled).thenReturn(true)
       val service = RollbackMassTransitStopServiceWithTierekisteri
       val stop = service.getById(id).get
       val props = stop.propertyData
@@ -1040,6 +1043,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
         vvhRoadLink.geometry, vvhRoadLink.municipalityCode, Some(vvhRoadLink.administrativeClass), NormalLinkInterface)
       when(mockGeometryTransform.resolveAddressAndLocation(any[Point], any[Int], any[Double], any[Long], any[Int], any[Option[Int]], any[Option[Int]]
       )).thenReturn((new RoadAddress(Some("235"), 110, 10, Track.Combined, 108, None), RoadSide.Right))
+      when(mockTierekisteriClient.isTREnabled).thenReturn(true)
       val service = RollbackMassTransitStopServiceWithTierekisteri
       val stop = service.getById(id).get
       val props = stop.propertyData
@@ -1047,7 +1051,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val newStop = stop.copy(stopTypes = Seq(2, 3), propertyData = props.filterNot(_.publicId == "tietojen_yllapitaja") ++ Seq(admin))
       val newProps = newStop.propertyData.map(prop => SimpleProperty(prop.publicId, prop.values)).toSet
       service.updateExistingById(stop.id, None, newProps, "seppo", { (Int) => Unit })
-      verify(mockTierekisteriClient, times(1)).createMassTransitStop(any[TierekisteriMassTransitStop])
+      verify(mockTierekisteriClient, times(0)).createMassTransitStop(any[TierekisteriMassTransitStop])
       verify(mockTierekisteriClient, times(1)).updateMassTransitStop(any[TierekisteriMassTransitStop], any[Option[String]], any[Option[String]])
     }
   }
@@ -1223,6 +1227,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       sqlu"""update asset set floating=1 where id = 300008""".execute
       sqlu"""update text_property_value set value_fi='livi114873' where asset_id = 300008 and value_fi = 'OTHJ85755'""".execute
       when(mockTierekisteriClient.fetchMassTransitStop("livi114873")).thenReturn(Some(trStop))
+      when(mockTierekisteriClient.isTREnabled).thenReturn(true)
       val (stopOpt, showStatusCode) = RollbackMassTransitStopServiceWithTierekisteri.getMassTransitStopByNationalIdWithTRWarnings(85755, _ => Unit)
       val stop = stopOpt.get
       RollbackMassTransitStopServiceWithTierekisteri.updateExistingById(stop.id,

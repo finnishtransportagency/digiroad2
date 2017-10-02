@@ -125,7 +125,7 @@ trait MassTransitStopService extends PointAssetOperations {
     }
   }
   lazy val defaultBusStopStrategy = new BusStopStrategy(typeId, massTransitStopDao, roadLinkService)
-  lazy val tierekisteriBusStopStrategy = new TierekisteriBusStopStrategy(typeId, massTransitStopDao, roadLinkService, tierekisteriClient)
+  lazy val tierekisteriBusStopStrategy = new TierekisteriBusStopStrategy(typeId, massTransitStopDao, roadLinkService, tierekisteriClient, geometryTransform)
   lazy val terminalBusStopStrategy = new TerminalBusStopStrategy(typeId, massTransitStopDao, roadLinkService)
 
   override def getByMunicipality(municipalityCode: Int): Seq[PersistedMassTransitStop] = {
@@ -138,11 +138,12 @@ trait MassTransitStopService extends PointAssetOperations {
     withDynSession {
       val idsStr = ids.toSeq.mkString(",")
       val filter = s"where a.asset_type_id = $typeId and a.id in ($idsStr)"
-      fetchPointAssets(withFilter(filter)).map{
+      fetchPointAssets(withFilter(filter))
+      /*.map{
         persistedStop =>
           val strategy = getStrategy(persistedStop)
           strategy.enrichBusStop(persistedStop)._1
-      }
+      }*/
     }
   }
 
@@ -256,7 +257,7 @@ trait MassTransitStopService extends PointAssetOperations {
       }
       val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId, false).getOrElse(throw new NoSuchElementException)
 
-      val (previousStrategy, currentStrategy) = getStrategy(properties, asset)
+      val (previousStrategy, currentStrategy) = getStrategy(properties, asset, roadLink)
 
       if(previousStrategy != currentStrategy)
         previousStrategy.undo(asset, properties, username)
@@ -468,10 +469,10 @@ trait MassTransitStopService extends PointAssetOperations {
     strategies.find(strategy => strategy.is(newProperties, Some(roadLink), None)).getOrElse(defaultStrategy)
   }
 
-  private def getStrategy(newProperties: Set[SimpleProperty], asset: PersistedMassTransitStop): (AbstractBusStopStrategy, AbstractBusStopStrategy) ={
+  private def getStrategy(newProperties: Set[SimpleProperty], asset: PersistedMassTransitStop, roadLink: RoadLink): (AbstractBusStopStrategy, AbstractBusStopStrategy) ={
     val (strategies, defaultStrategy) = getStrategies()
     val previousStrategy = strategies.find(v => v.was(asset)).getOrElse(defaultStrategy)
-    val currentStrategy = strategies.find(strategy => strategy.is(newProperties, None, Some(asset))).getOrElse(defaultStrategy)
+    val currentStrategy = strategies.find(strategy => strategy.is(newProperties, Some(roadLink), Some(asset))).getOrElse(defaultStrategy)
     (previousStrategy, currentStrategy)
   }
 
