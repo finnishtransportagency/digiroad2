@@ -262,7 +262,6 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       val updatedProjectLinks=ProjectDAO.getProjectLinks(savedProject.id)
       updatedProjectLinks.exists { x=> x.status==LinkStatus.UnChanged } should be(true)
       updatedProjectLinks.exists { x=> x.status==LinkStatus.Terminated } should be(true)
-      updatedProjectLinks.map(prettyPrint).foreach(println)
       updatedProjectLinks.filter( pl => pl.linkId==5168579).head.calibrationPoints should be ((None,Some(CalibrationPoint(5168579,15.173,4681))))
       projectService.updateProjectLinkStatus(savedProject.id, Set(5168579), LinkStatus.Terminated, "-")
       val updatedProjectLinks2=ProjectDAO.getProjectLinks(savedProject.id)
@@ -1089,8 +1088,6 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       val linksLast = adjusted.sortBy(_.id).last
       val changedLinksFirst = changedLinks.sortBy(_.id).head
       val changedLinksLast = changedLinks.sortBy(_.id).last
-      prettyPrint(changedLinks.sortBy(_.startAddrMValue))
-      prettyPrint(adjusted.sortBy(_.startAddrMValue).toList)
       adjusted.sortBy(_.id).zip(changedLinks.sortBy(_.id)).foreach{
         case (oldLink, newLink) =>
           oldLink.startAddrMValue should be ((linksLast.endAddrMValue - newLink.endAddrMValue) +- 1)
