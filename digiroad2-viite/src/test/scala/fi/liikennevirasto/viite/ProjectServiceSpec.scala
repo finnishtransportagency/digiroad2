@@ -1696,6 +1696,8 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
           rp
       })
 
+      sqlu"""UPDATE PROJECT_LINK SET status = ${LinkStatus.UnChanged.value} WHERE project_id = ${project.id} AND status = ${LinkStatus.NotHandled.value}""".execute
+
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(roadWithTerminated.filter(_.roadPartNumber==201).map(toRoadLink))
       projectService.addNewLinksToProject(Seq(link1,link2), project.id, 5, 201, 1, 5) should be (None)
       val track1road201 = roadWithTerminated.filter(_.roadPartNumber==201).map(toRoadLink) ++ Seq(toRoadLink(link1)) ++ Seq(toRoadLink(link2))
@@ -1712,12 +1714,10 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       val newLinks = linksAfter.filter(_.status == LinkStatus.New).sortBy(_.startAddrMValue)
       linksAfter.size should be (allRoadParts.map(_.linkId).toSet.size + newLinks.size)
 
-      val new201 = newLinks.filter(_.roadPartNumber == 201)
-      val new202 = newLinks.filter(_.roadPartNumber == 202)
-      new201.filter(_.track == Track.RightSide).sortBy(_.startAddrMValue).last.endAddrMValue should be (new201.filter(_.track == Track.LeftSide).sortBy(_.startAddrMValue).last.endAddrMValue)
-      new201.filter(_.track == Track.RightSide).sortBy(_.startAddrMValue).head.startAddrMValue should be (new201.filter(_.track == Track.LeftSide).sortBy(_.startAddrMValue).head.startAddrMValue)
-      new202.filter(_.track == Track.RightSide).sortBy(_.startAddrMValue).last.endAddrMValue should be (new202.filter(_.track == Track.LeftSide).sortBy(_.startAddrMValue).last.endAddrMValue)
-      new202.filter(_.track == Track.RightSide).sortBy(_.startAddrMValue).head.startAddrMValue should be (new202.filter(_.track == Track.LeftSide).sortBy(_.startAddrMValue).head.startAddrMValue)
+      val (new201R, new201L) = newLinks.filter(_.roadPartNumber == 201).partition(_.track == Track.RightSide)
+      val (new202R, new202L) = newLinks.filter(_.roadPartNumber == 202).partition(_.track == Track.RightSide)
+      new201R.maxBy(_.startAddrMValue).endAddrMValue should be (new201L.maxBy(_.startAddrMValue).endAddrMValue)
+      new202R.maxBy(_.startAddrMValue).endAddrMValue should be (new202L.maxBy(_.startAddrMValue).endAddrMValue)
 
       val changesList = RoadAddressChangesDAO.fetchRoadAddressChanges(Set(project.id))
       changesList.isEmpty should be(false)
