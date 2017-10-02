@@ -51,7 +51,7 @@
 
     var actionButtons = function() {
       var html = '<div class="project-form form-controls" id="actionButtons">' +
-        '<button class="update btn btn-save"' + (projectCollection.isDirty() ? '' : 'disabled') + '>Tallenna</button>' +
+        '<button class="update btn btn-save"' + (projectCollection.isDirty() ? '' : 'disabled') + ' style="width:auto;">Jatka Toimenpiteisiin</button>' +
         '<button class="cancelLink btn btn-cancel">Peruuta</button>' +
         '</div>';
       return html;

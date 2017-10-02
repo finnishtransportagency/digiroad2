@@ -2,7 +2,8 @@
   root.RoadLinkBox = function(linkPropertiesModel) {
     var className = 'road-link';
     var title = 'Selite';
-
+    var selectToolIcon = '<img src="images/select-tool.svg"/>';
+    var cutToolIcon = '<img src="images/cut-tool.svg"/>';
     var expandedTemplate = _.template('' +
       '<div class="panel <%= className %>">' +
         '<header class="panel-header expanded"><%- title %></header>' +
@@ -81,11 +82,79 @@
     roadClassLegend.append(floatingLegend);
     roadClassLegend.append(calibrationPointPicture);
 
-    var editModeToggle = new EditModeToggleButton({
-      hide: function() {},
-      reset: function() {},
-      show: function() {}
-    });
+    var Tool = function(toolName, icon) {
+      var className = toolName.toLowerCase();
+      var element = $('<div class="action"/>').addClass(className).attr('action', toolName).append(icon).click(function() {
+        // executeOrShowConfirmDialog(function() {
+          applicationModel.setSelectedTool(toolName);
+        // });
+      });
+      var deactivate = function() {
+        element.removeClass('active');
+      };
+      var activate = function() {
+        element.addClass('active');
+      };
+
+      return {
+        element: element,
+        deactivate: deactivate,
+        activate: activate,
+        name: toolName
+      };
+    };
+
+    var ToolSelection = function(tools) {
+      var element = $('<div class="panel-section panel-actions" />');
+      _.each(tools, function(tool) {
+        element.append(tool.element);
+      });
+      var hide = function() {
+        element.hide();
+      };
+      var show = function() {
+        element.show();
+      };
+      var deactivateAll = function() {
+        _.each(tools, function(tool) {
+          tool.deactivate();
+        });
+      };
+      var reset = function() {
+        deactivateAll();
+        tools[0].activate();
+      };
+      eventbus.on('tool:changed', function(name) {
+        _.each(tools, function(tool) {
+          if (tool.name != name) {
+            tool.deactivate();
+          } else {
+            tool.activate();
+          }
+        });
+      });
+
+      hide();
+
+      return {
+        element: element,
+        reset: reset,
+        show: show,
+        hide: hide
+      };
+    };
+
+    var toolSelection = new ToolSelection([
+      new Tool('Select', selectToolIcon),
+      new Tool('Cut', cutToolIcon)
+    ]);
+
+    var editModeToggle = new EditModeToggleButton(
+      toolSelection
+      // hide: function() {},
+      // reset: function() {},
+      // show: function() {}
+    );
 
     var templateAttributes = {
       className: className,
@@ -107,6 +176,12 @@
 
     eventbus.on('editMode:setReadOnly', function(mode) {
       editModeToggle.toggleEditMode(mode);
+      elements.expanded.append(toolSelection.element);
+    });
+
+    eventbus.on('application:readOnly', function() {
+      if(applicationModel.getSelectedLayer() != "linkProperty")
+      elements.expanded.append(toolSelection.element);
     });
 
     bindExternalEventHandlers();
