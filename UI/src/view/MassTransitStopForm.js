@@ -510,6 +510,7 @@
           case '2': //NoRoadLinkFound
           case '4': //DistanceToRoad
           case '5': //NoReferencePointForMValue
+          case '6': //DirectionNotMatch
             text = 'Kadun tai tien geometria on muuttunut...';
             break;
           case '1': //RoadOwnerChanged
