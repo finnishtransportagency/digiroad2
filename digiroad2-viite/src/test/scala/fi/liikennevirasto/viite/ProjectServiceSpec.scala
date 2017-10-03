@@ -454,7 +454,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       val changed = saved.copy(reservedParts = addresses)
       projectService.saveProject(changed)
       val countAfterInsertProjects = projectService.getRoadAddressAllProjects()
-      val projectLinks = ProjectDAO.fetchByProjectNewRoadPart(5, 205, saved.id)
+      val projectLinks = ProjectDAO.fetchByProjectRoadPart(5, 205, saved.id)
       projectLinks.nonEmpty should be (true)
       count = countCurrentProjects.size + 1
       countAfterInsertProjects.size should be(count)
@@ -489,7 +489,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       val changed = saved.copy(reservedParts = addresses)
       projectService.saveProject(changed)
       val countAfterInsertProjects = projectService.getRoadAddressAllProjects()
-      val projectLinks = ProjectDAO.fetchByProjectNewRoadPart(5, 205, saved.id)
+      val projectLinks = ProjectDAO.fetchByProjectRoadPart(5, 205, saved.id)
       count = countCurrentProjects.size + 1
       countAfterInsertProjects.size should be(count)
       sqlu"""UPDATE Project_link set status = ${LinkStatus.Terminated.value}""".execute
@@ -703,7 +703,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       val proj = projectService.createRoadLinkProject(project)
       projectId = proj.id
       val projectLinkId = proj.reservedParts.head.startingLinkId.get
-      val link = ProjectDAO.getProjectByLinkId(projectLinkId).head
+      val link = ProjectDAO.getProjectLinksByLinkId(projectLinkId).head
       val terminatedValue = LinkStatus.Terminated.value
       //Changing the status of the test link
       sqlu"""Update Project_Link Set Status = $terminatedValue
@@ -1179,7 +1179,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       links.map(_.linkId).toSet should be (addresses.map(_.linkId).toSet)
       val sideCodes = links.map(l => l.id -> l.sideCode).toMap
       projectService.changeDirection(id, 75, 2) should be (None)
-      val changedLinks = ProjectDAO.getProjectLinksById(links.map{l => l.id})
+      val changedLinks = ProjectDAO.getProjectLinksByLinkIds(links.map{ l => l.id})
       changedLinks.foreach(cl => cl.sideCode should not be (sideCodes(cl.id)))
 
       val geom584 = StaticTestData.mappedGeoms(Seq(5176584L)).values.head
@@ -1247,7 +1247,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
         toProjectLink(rap, LinkStatus.NotHandled)(address)
       }))
 
-      val linksBefore = ProjectDAO.fetchByProjectNewRoadPart(77, 35, id).groupBy(_.linkId).map(_._2.head).toList
+      val linksBefore = ProjectDAO.fetchByProjectRoadPart(77, 35, id).groupBy(_.linkId).map(_._2.head).toList
 
       val points5170271 = "[ {\"x\": 530492.408, \"y\": 6994103.892, \"z\": 114.60400000000664},{\"x\": 530490.492, \"y\": 6994104.815, \"z\": 114.63800000000629},{\"x\": 530459.903, \"y\": 6994118.958, \"z\": 114.97299999999814},{\"x\": 530427.446, \"y\": 6994134.189, \"z\": 115.30400000000373},{\"x\": 530392.422, \"y\": 6994153.545, \"z\": 115.721000000005},{\"x\": 530385.114, \"y\": 6994157.976, \"z\": 115.71099999999569},{\"x\": 530381.104, \"y\": 6994161.327, \"z\": 115.77000000000407},{\"x\": 530367.101, \"y\": 6994170.075, \"z\": 115.93099999999686},{\"x\": 530330.275, \"y\": 6994195.603, \"z\": 116.37200000000303}]"
       val points5170414 = "[ {\"x\": 531540.842, \"y\": 6993806.017, \"z\": 114.1530000000057},{\"x\": 531515.135, \"y\": 6993815.644, \"z\": 114.74400000000605}]"
@@ -1403,12 +1403,12 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(geomToLinks.map(toRoadLink))
       projectService.addNewLinksToProject(Seq(newLink), id, 77, 35, 0L, 5L) should be (None)
 
-      val linksAfter = ProjectDAO.fetchByProjectNewRoadPart(77, 35, id)
+      val linksAfter = ProjectDAO.fetchByProjectRoadPart(77, 35, id)
       linksAfter should have size (linksBefore.size + 1)
       linksAfter.filterNot(la => { linksBefore.exists( lb => {lb.linkId == la.linkId && lb.sideCode.value == la.sideCode.value } )}).size should be (1)
 
       projectService.addNewLinksToProject(Seq(newLink2), id, 77, 35, 0L, 5L) should be (None)
-      val linksAfter2 = ProjectDAO.fetchByProjectNewRoadPart(77, 35, id)
+      val linksAfter2 = ProjectDAO.fetchByProjectRoadPart(77, 35, id)
       linksAfter2 should have size (linksBefore.size + 1)
       linksAfter2.head.linkId should be (5167559)
       linksAfter2.head.startAddrMValue should be (0)
@@ -1475,7 +1475,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(l.map(toRoadLink))
       val project = projectService.createRoadLinkProject(rap)
 
-      val linksBefore = ProjectDAO.fetchByProjectNewRoadPart(77, 35, project.id).groupBy(_.linkId).map(_._2.head).toList
+      val linksBefore = ProjectDAO.fetchByProjectRoadPart(77, 35, project.id).groupBy(_.linkId).map(_._2.head).toList
 
       val mappedGeoms = StaticTestData.mappedGeoms(l.map(_.linkId))
 
@@ -1536,7 +1536,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(l.map(toRoadLink))
       val project = projectService.createRoadLinkProject(rap)
 
-      val linksBefore = ProjectDAO.fetchByProjectNewRoadPart(847, 6, project.id).groupBy(_.linkId).map(_._2.head).toList
+      val linksBefore = ProjectDAO.fetchByProjectRoadPart(847, 6, project.id).groupBy(_.linkId).map(_._2.head).toList
       val mappedGeoms2 = StaticTestData.mappedGeoms(l.map(_.linkId))
 
       val geomToLinks:List[ProjectLink] = linksBefore.map{l =>

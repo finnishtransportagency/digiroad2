@@ -400,6 +400,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   delete("/project/split/:linkId"){
     val user = userProvider.getCurrentUser()
+
     // TODO: implementation here
   }
   private def roadlinksData(): (Seq[String], Seq[String]) = {

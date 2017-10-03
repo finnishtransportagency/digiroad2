@@ -210,7 +210,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
     try {
       withDynTransaction {
-        val linksInProject = getLinksByProjectLinkId(ProjectDAO.fetchByProjectNewRoadPart(newRoadNumber, newRoadPartNumber, roadAddressProjectID).map(l => l.linkId).toSet, roadAddressProjectID, false)
+        val linksInProject = getLinksByProjectLinkId(ProjectDAO.fetchByProjectRoadPart(newRoadNumber, newRoadPartNumber, roadAddressProjectID).map(l => l.linkId).toSet, roadAddressProjectID, false)
         //Deleting all existent roads for same road_number and road_part_number, in order to recalculate the full road if it is already in project
         if (linksInProject.nonEmpty) {
           ProjectDAO.removeProjectLinksByProjectAndRoadNumber(roadAddressProjectID, newRoadNumber, newRoadPartNumber)
@@ -455,6 +455,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  def getSplitLinkData(projectId: Long, linkId: Long): Seq[ProjectLink] = {
+    withDynTransaction {
+      ProjectDAO.fetchSplitLinks(projectId, linkId)
+    }
+  }
+
   /**
     * Check that road part is available for reservation and return the id of reserved road part table row.
     * Reservation must contain road number and road part number, other data is not used or saved.
@@ -668,13 +674,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             ProjectDAO.removeProjectLinksByLinkId(projectId, links.map(link=> link.linkId).toSet)
             val remainingLinks = ProjectDAO.fetchProjectLinkIds(projectId, roadNumber, roadPartNumber)
             if (remainingLinks.nonEmpty){
-              val projectLinks = ProjectDAO.fetchByProjectNewRoadPart(roadNumber, roadPartNumber, projectId)
+              val projectLinks = ProjectDAO.fetchByProjectRoadPart(roadNumber, roadPartNumber, projectId)
               val adjLinks = withGeometry(projectLinks)
               ProjectSectionCalculator.assignMValues(adjLinks).foreach(adjLink => ProjectDAO.updateAddrMValues(adjLink))
             }
           }
           else {
-            val projectLink = ProjectDAO.getProjectLinksById(Seq(link.id))
+            val projectLink = ProjectDAO.getProjectLinksByLinkIds(Seq(link.id))
             val roadLink = RoadAddressDAO.queryById(Set(projectLink.head.roadAddressId))
             ProjectDAO.updateProjectLinkValues(projectId, roadLink.head)
           }
