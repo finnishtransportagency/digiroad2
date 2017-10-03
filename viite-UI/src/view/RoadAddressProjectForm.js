@@ -380,6 +380,7 @@
         activeLayer = true;
         rootElement.find('.btn-reserve').prop("disabled", false);
         rootElement.find('.btn-next').prop("disabled", false);
+        eventbus.trigger('roadAddressProject:clearTool');
         applicationModel.removeSpinner();
       });
 
