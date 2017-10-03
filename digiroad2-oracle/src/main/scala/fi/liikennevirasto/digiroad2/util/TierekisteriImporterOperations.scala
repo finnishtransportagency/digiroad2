@@ -690,3 +690,40 @@ class EuropeanRoadTierekisteriImporter extends LinearAssetTierekisteriImporterOp
     println(s"Created OTH $assetName assets for ${vvhRoadlink.linkId} from TR data with assetId $assetId")
   }
 }
+
+class SpeedLimitAssetTierekisteriImporter extends LinearAssetTierekisteriImporterOperations{
+
+  lazy val speedLimitService: SpeedLimitService = new SpeedLimitService(eventbus, vvhClient, roadLinkService)
+
+  override def typeId: Int = 20
+  override def assetName = "speedlimit"
+  override type TierekisteriClientType = TierekisteriSpeedLimitAssetClient
+  override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+  override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+
+  override val tierekisteriClient = new TierekisteriSpeedLimitAssetClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+    getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+    HttpClientBuilder.create().build())
+
+  private def getSideCode(raSideCode: SideCode, roadSide: RoadSide): SideCode = {
+    roadSide match {
+      case RoadSide.Right => raSideCode
+      case RoadSide.Left => raSideCode match {
+        case TowardsDigitizing => SideCode.AgainstDigitizing
+        case AgainstDigitizing => SideCode.TowardsDigitizing
+        case _ => SideCode.BothDirections
+      }
+      case _ => SideCode.BothDirections
+    }
+  }
+
+  protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
+    if (measures.startMeasure != measures.endMeasure) {
+      val assetId = speedLimitService.dao.createSpeedLimit("batch_process_speedlimit", vvhRoadlink.linkId, measures, getSideCode(roadAddress.sideCode, trAssetData.roadSide),
+        trAssetData.assetValue, Some(vvhClient.roadLinkData.createVVHTimeStamp()), None, None, None, vvhRoadlink.linkSource)
+
+      println(s"Created OTH $assetName assets for ${vvhRoadlink.linkId} from TR data with assetId $assetId")
+    }
+  }
+
+}
