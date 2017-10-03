@@ -564,6 +564,19 @@ trait MassTransitStopService extends PointAssetOperations {
       None
   }
 
+  /**
+    * Update properties for asset.
+    *
+    * @param id
+    * @param properties
+    * @return
+    */
+  def updatePropertiesForAsset(id: Long, properties: Seq[SimpleProperty]) = {
+    withDynTransaction {
+      massTransitStopDao.updateAssetProperties(id, properties)
+    }
+  }
+
   private def update(persistedStop: PersistedMassTransitStop, optionalPosition: Option[Position], username: String,
                      properties: Seq[SimpleProperty], roadLink: RoadLinkLike, tierekisteriOperation: Operation): MassTransitStopWithProperties = {
 
