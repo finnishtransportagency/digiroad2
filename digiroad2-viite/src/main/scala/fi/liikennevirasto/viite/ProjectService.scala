@@ -171,6 +171,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  // TODO: add other parameters as needed
+  def createProjectLinkSplit(suravageLinkId: Long, projectId: Long) = {
+    val projectLinks = ProjectDAO.getProjectLinks(projectId)
+    val suravageLink = roadLinkService.fetchSuravageLinksByLinkIdsFromVVH(Set(suravageLinkId))
+  }
+
   /**
     * Used when adding road address that does not have previous address
     */
