@@ -1,10 +1,8 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Matrix, Point, Vector3d}
 import fi.liikennevirasto.digiroad2.asset.SideCode
-import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
-import fi.liikennevirasto.digiroad2.util.Track.RightSide
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Matrix, Point, Vector3d}
 import fi.liikennevirasto.viite.dao.ProjectLink
 
 
