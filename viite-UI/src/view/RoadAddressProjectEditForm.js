@@ -162,6 +162,7 @@
         staticField('Muokattu viimeksi', project.modifiedBy + ' ' + project.dateModified)+
         '<div class="form-group editable form-editable-roadAddressProject"> '+
         selectionForm(selection, selected, 0) +
+        '<hr class="horizontal-line"/>' +
         selectionForm(selection, selected, 1)+
         changeDirection()+
         actionSelectedField()+
@@ -489,6 +490,21 @@
       rootElement.on('click', '.project-form button.update', function() {
         eventbus.trigger('roadAddressProject:toggleEditingRoad', true);
         saveChanges();
+      });
+
+
+
+      rootElement.on('change', '#dropdown_0', function(){
+        if (this.value == LinkStatus.New.action) {
+
+
+        }
+      });
+
+      rootElement.on('change', '#dropdown_1', function(){
+        if (this.value == LinkStatus.New.action) {
+
+        }
       });
 
       rootElement.on('change', '#dropDown', function() {
