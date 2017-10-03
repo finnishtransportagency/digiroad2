@@ -1,5 +1,6 @@
 (function(root) {
   root.ProjectLinkLayer = function(map, projectCollection, selectedProjectLinkProperty, roadLayer) {
+
     var layerName = 'roadAddressProject';
     var vectorLayer;
     var calibrationPointVector = new ol.source.Vector({});
@@ -606,10 +607,186 @@
       vectorLayer.getSource().clear();
     };
 
+    var selectToolControl = new SelectToolControl(applicationModel, vectorLayer, map, {
+      style: function (feature) {
+        return style.browsingStyle.getStyle(feature, {zoomLevel: uiState.zoomLevel});
+      },
+      // onInteractionEnd: onInteractionEnd,
+      // onSelect: OnSelect,
+      filterGeometry: function (feature) {
+        return true;
+      }
+    });
+
+
+
+    var SuravageCutter = function(vectorLayer, collection, eventListener) {
+      var scissorFeatures = [];
+      var CUT_THRESHOLD = 20;
+      var vectorSource = vectorLayer.getSource();
+
+      var moveTo = function(x, y) {
+        scissorFeatures = [new ol.Feature({geometry: new ol.geom.Point([x, y]), type: 'cutter' })];
+        selectToolControl.removeFeatures(function(feature) {
+          return feature.getProperties().type === 'cutter';
+        });
+        selectToolControl.addNewFeature(scissorFeatures, true);
+      };
+
+      var remove = function() {
+        selectToolControl.removeFeatures(function(feature) {
+          return feature.getProperties().type === 'cutter';
+        });
+        scissorFeatures = [];
+      };
+
+      var self = this;
+
+      var clickHandler = function(evt) {
+        if (applicationModel.getSelectedTool() === 'Cut') {
+          // if (selectedProjectLinkProperty.isDirty()) {
+            // displayConfirmMessage();
+          // } else {
+            self.cut(evt);
+          // }
+        }
+      };
+
+      this.deactivate = function() {
+        eventListener.stopListening(eventbus, 'map:clicked', clickHandler);
+        eventListener.stopListening(eventbus, 'map:mouseMoved');
+        remove();
+      };
+
+      this.activate = function() {
+        eventListener.listenTo(eventbus, 'map:clicked', clickHandler);
+        eventListener.listenTo(eventbus, 'map:mouseMoved', function(event) {
+          if (applicationModel.getSelectedTool() === 'Cut' && !selectedProjectLinkProperty.isDirty()) {
+            self.updateByPosition(event.coordinate);
+          }
+        });
+      };
+
+      var isWithinCutThreshold = function(suravageLink) {
+        return suravageLink !== undefined && suravageLink < CUT_THRESHOLD;
+      };
+
+      var findNearestSuravageLink = function(point) {
+        return _.chain(vectorSource.getFeatures())
+            .filter(function(feature) {
+              return feature.getGeometry() instanceof ol.geom.LineString;
+            })
+            .reject(function(feature) {
+              var properties = feature.getProperties();
+              return _.has(properties, 'generatedId') && _.flatten(collection.getGroup(properties)).length > 0;
+            })
+            .map(function(feature) {
+              var closestP = feature.getGeometry().getClosestPoint(point);
+              var distanceBetweenPoints = GeometryUtils.distanceOfPoints(point, closestP);
+              return {
+                feature: feature,
+                point: closestP,
+                distance: distanceBetweenPoints
+              };
+            })
+            .sortBy(function(nearest) {
+              return nearest.distance;
+            })
+            .head()
+            .value();
+      };
+
+      this.updateByPosition = function(mousePoint) {
+        var closestSuravageLink = findNearestSuravageLink(mousePoint);
+        if (!closestSuravageLink) {
+          return;
+        }
+        if (isWithinCutThreshold(closestSuravageLink.distance)) {
+          moveTo(closestSuravageLink.point[0], closestSuravageLink.point[1]);
+        } else {
+          remove();
+        }
+      };
+
+      this.cut = function(mousePoint) {
+        var pointsToLineString = function(points) {
+          var coordPoints = _.map(points, function(point) { return [point.x, point.y]; });
+          return new ol.geom.LineString(coordPoints);
+        };
+
+        var calculateSplitProperties = function(nearestSuravage, point) {
+          var lineString = pointsToLineString(nearestSuravage.points);
+          var startMeasureOffset = nearestSuravage.startMeasure;
+          var splitMeasure = GeometryUtils.calculateMeasureAtPoint(lineString, point) + startMeasureOffset;
+          var splitVertices = GeometryUtils.splitByPoint(pointsToLineString(nearestSuravage.points), point);
+          return _.merge({ splitMeasure: splitMeasure }, splitVertices);
+        };
+
+        var nearest = findNearestSuravageLink([mousePoint.x, mousePoint.y]);
+
+        if (!isWithinCutThreshold(nearest.distance)) {
+          return;
+        }
+
+        var nearestSuravage = nearest.feature.getProperties();
+        var splitProperties = calculateSplitProperties(nearestSuravage, mousePoint);
+        selectedProjectLinkProperty.splitSuravageLink(nearestSuravage.id, splitProperties);
+
+        remove();
+      };
+    };
+
+    var uiState = { zoomLevel: 9 };
+
+
+
+    // var OnSelect = function(evt) {
+    //   if(evt.selected.length !== 0) {
+    //     var feature = evt.selected[0];
+    //     var properties = feature.getProperties();
+    //     // verifyClickEvent(properties, evt);
+    //   }else{
+    //     if (selectedSpeedLimit.exists()) {
+    //       selectToolControl.clear();
+    //       selectedSpeedLimit.close();
+    //     }
+    //   }
+    // };
+
+    // var verifyClickEvent = function(properties, evt){
+    //   var singleLinkSelect = evt.mapBrowserEvent.type === 'dblclick';
+    //   selectedSpeedLimit.open(properties, singleLinkSelect);
+    //   highlightMultipleLinearAssetFeatures();
+    // };
+
+    // function onInteractionEnd(speedLimits) {
+    //   if (selectedSpeedLimit.isDirty()) {
+    //     displayConfirmMessage();
+    //   } else {
+    //     if (speedLimits.length > 0) {
+    //       selectedSpeedLimit.close();
+    //       showDialog(speedLimits);
+    //     }
+    //   }
+    // }
+
+
     var projectLinkStatusIn = function(projectLink, possibleStatus){
       if(!_.isUndefined(possibleStatus) && !_.isUndefined(projectLink) )
         return _.contains(possibleStatus, projectLink.status);
       else return false;
+    };
+
+    var suravageCutter = new SuravageCutter(vectorLayer, projectCollection, me.eventListener);
+
+    var changeTool = function(tool) {
+      if (tool === 'Cut') {
+        selectToolControl.deactivate();
+        suravageCutter.activate();
+      } else if (tool === 'Select') {
+        suravageCutter.deactivate();
+        selectToolControl.activate();
+      }
     };
 
     eventbus.on('projectLink:projectLinksCreateSuccess', function () {
@@ -753,6 +930,8 @@
       vectorLayer.getSource().addFeatures(features);
       vectorLayer.changed();
     };
+
+    eventbus.on('tool:changed', changeTool);
 
     eventbus.on('roadAddressProject:openProject', function(projectSelected) {
       this.project = projectSelected;

@@ -3,6 +3,7 @@
 
     var current = [];
     var ids = [];
+    var dirty = false;
 
     var open = function (linkid, multiSelect) {
       if (!multiSelect) {
@@ -13,6 +14,56 @@
         current = projectLinkCollection.getByLinkId(ids);
       }
       eventbus.trigger('projectLink:clicked', get());
+    };
+
+    this.splitSuravageLink = function(id, split) {
+      splitProjectLinks(id, split, function(splitSpeedLimits) {
+        selection = [splitSpeedLimits.created, splitSpeedLimits.existing];
+        originalSpeedLimitValue = splitSpeedLimits.existing.value;
+        dirty = true;
+        collection.setSelection(self);
+        eventbus.trigger('speedLimit:selected', self);
+      });
+    };
+
+    var splitSuravageLinks = function(id, split, callback) {
+      // var link = _.find(_.flatten(speedLimits), { id: id });
+
+
+      var left = _.cloneDeep(link);
+      left.points = split.firstSplitVertices;
+
+      var right = _.cloneDeep(link);
+      right.points = split.secondSplitVertices;
+
+      if (calculateMeasure(left) < calculateMeasure(right)) {
+        splitSpeedLimits.created = left;
+        splitSpeedLimits.existing = right;
+      } else {
+        splitSpeedLimits.created = right;
+        splitSpeedLimits.existing = left;
+      }
+
+      splitSpeedLimits.created.id = null;
+      splitSpeedLimits.splitMeasure = split.splitMeasure;
+
+      splitSpeedLimits.created.marker = 'A';
+      splitSpeedLimits.existing.marker = 'B';
+
+      dirty = true;
+      callback(splitSpeedLimits);
+      eventbus.trigger('speedLimits:fetched', self.getAll());
+    };
+
+    var calculateMeasure = function(link) {
+      var points = _.map(link.points, function(point) {
+        return [point.x, point.y];
+      });
+      return new ol.geom.LineString(points).getLength();
+    };
+
+    this.isDirty = function() {
+      return dirty;
     };
 
     var openShift = function(linkIds) {

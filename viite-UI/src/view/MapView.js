@@ -64,8 +64,9 @@
     }, this);
 
     var setCursor = function(tool) {
-      var cursor = {'Select': 'default', 'Add': 'crosshair', 'Cut': 'pointer', 'Copy': 'copy'};
-      $('.olMap').css('cursor', cursor[tool]);
+      var cursor = {'Select': 'default', 'Add': 'crosshair', 'Cut': 'crosshair', 'Copy': 'copy'};
+      // $('.olMap').css('cursor', cursor[tool]);
+      map.getViewport().style.cursor = cursor[tool];
     };
 
     eventbus.on('tool:changed', function(tool) {
@@ -119,8 +120,6 @@
 
     addCenterMarkerLayerToMap(map);
 
-    setCursor(applicationModel.getSelectedTool());
-
     //initial cursor when the map user is not dragging the map
     map.getViewport().style.cursor = "initial";
 
@@ -145,5 +144,6 @@
         map.getViewport().style.cursor = "initial";
     });
 
+    setCursor(applicationModel.getSelectedTool());
   };
 })(this);
