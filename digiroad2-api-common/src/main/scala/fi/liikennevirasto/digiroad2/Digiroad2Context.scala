@@ -175,7 +175,7 @@ object Digiroad2Context {
   val roadWidthSaveProjected = system.actorOf(Props(classOf[RoadWidthSaveProjected[PersistedLinearAsset]], roadWidthService), name = "roadWidthSaveProjected")
   eventbus.subscribe(roadWidthSaveProjected, "RoadWidth:saveProjectedRoadWidth")
 
-  val pavingSaveProjected = system.actorOf(Props(classOf[RoadWidthSaveProjected[PersistedLinearAsset]], pavingService), name = "pavingSaveProjected")
+  val pavingSaveProjected = system.actorOf(Props(classOf[PavingSaveProjected[PersistedLinearAsset]], pavingService), name = "pavingSaveProjected")
   eventbus.subscribe(pavingSaveProjected, "paving:saveProjectedPaving")
 
   val speedLimitSaveProjected = system.actorOf(Props(classOf[SpeedLimitSaveProjected[SpeedLimit]], speedLimitService), name = "speedLimitSaveProjected")
