@@ -184,6 +184,10 @@
       elements.expanded.append(toolSelection.element);
     });
 
+    eventbus.on('roadAddressProject:clearTool', function(){
+      toolSelection.hide();
+    });
+
     bindExternalEventHandlers();
 
     elements.expanded.find('.legend-container').append(roadClassLegend);
