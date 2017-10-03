@@ -197,7 +197,7 @@ object ProjectDAO {
   }
 
   //TODO: support for bigger queries than 1000 link ids
-  def getProjectLinksByLinkIds(projectLinkId: Seq[Long]): List[ProjectLink] = {
+  def getProjectLinksByIds(projectLinkId: Iterable[Long]): List[ProjectLink] = {
     val query =
       s"""select PROJECT_LINK.ID, PROJECT_LINK.PROJECT_ID, PROJECT_LINK.TRACK_CODE, PROJECT_LINK.DISCONTINUITY_TYPE,
           PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.START_ADDR_M, PROJECT_LINK.END_ADDR_M,

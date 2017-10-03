@@ -1179,7 +1179,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       links.map(_.linkId).toSet should be (addresses.map(_.linkId).toSet)
       val sideCodes = links.map(l => l.id -> l.sideCode).toMap
       projectService.changeDirection(id, 75, 2) should be (None)
-      val changedLinks = ProjectDAO.getProjectLinksByLinkIds(links.map{ l => l.id})
+      val changedLinks = ProjectDAO.getProjectLinksByIds(links.map{ l => l.id})
       changedLinks.foreach(cl => cl.sideCode should not be (sideCodes(cl.id)))
 
       val geom584 = StaticTestData.mappedGeoms(Seq(5176584L)).values.head
