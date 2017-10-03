@@ -393,10 +393,18 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }.getOrElse(BadRequest("Missing mandatory 'projectId' parameter"))
   }
 
-  put("/project/split/:projectId/:linkId"){
+  put("/project/split/:projectId/:linkId") {
     val user = userProvider.getCurrentUser()
-    val projectId = params.get("projectId")
-    // TODO: implementation here
+    val splitPoint = parsedBody.extract[Point]
+    val projectId = params.get("projectId").map(_.toLong)
+    val linkId = params.get("linkId").map(_.toLong)
+    (projectId, linkId) match {
+      case (Some(project), Some(link)) if splitPoint != null => {
+        projectService.splitSuravageLinkForProject(link,project,splitPoint)
+      }
+      case _ => BadRequest("Missing mandatory 'projectId', 'linkId' or splitPoint parameter from URI: /project/split/:projectId/:linkId")
+      // TODO: implementation here
+    }
   }
 
   delete("/project/split/:projectId/:linkId"){

@@ -11,6 +11,7 @@ import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.viite.dao.ProjectState._
 import fi.liikennevirasto.viite.dao.{ProjectDAO, RoadAddressDAO, _}
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink, RoadAddressLinkLike}
+import fi.liikennevirasto.viite.process.DefloatMapper.distancesBetweenEndPoints
 import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.util.GuestimateGeometryForMissingLinks
 import org.joda.time.DateTime
@@ -392,6 +393,34 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       }
     }
   }
+
+  def splitSuravageLinkForProject(linkId:Long,projectId:Long,splitPoint:Point):Either[String, ProjectLink]  =
+  {
+  roadAddressService.getSuravageRoadLinkAddressesByLinkIds(Set(linkId)) match {
+     case (suravageLinks) if suravageLinks.nonEmpty && suravageLinks.size==1 =>
+       {
+        val suravageLink=suravageLinks.head
+         val sortedX= suravageLink.geometry.map(x=> x.x).sorted  //min to max
+         val sortedY= suravageLink.geometry.map(y=> y.y).sorted
+         val rightTop=Point(sortedX.last, sortedY.last)
+         val leftBottom= Point(sortedX.head, sortedY.head)
+         withDynSession{
+         val roadLinksNearsuravageLink=RoadAddressDAO.fetchRoadAddressesByBoundingBox(BoundingRectangle(leftBottom,rightTop),false) //TODO filter links that are not in project
+         val distancesBetweenroadLinksNearsuravageLink=roadLinksNearsuravageLink.map( x   =>
+           (x.linkId,distancesBetweenEndPoints(suravageLink.geometry,x.geometry))  //TODO needs splitted geometry and comparison with splitted geometry probably have to  check distances for both sides  because we dont know which side will be terminated
+       )
+        val closestRoadLink=distancesBetweenroadLinksNearsuravageLink.minBy(x=>x._2._2) // might have to create better method to rank roadlinks
+          //TODO method to  create merged suravagelink
+          // TODO  Create new projectlink to project
+          Left("")//todo return created link
+         }
+       }
+       case _=>  Left("Suravage link fetch failed")
+   }
+  }
+
+
+
 
   private def existsInSuravageOrNew(projectLink: Option[ProjectLink]): Boolean = {
     if (projectLink.isEmpty) {
