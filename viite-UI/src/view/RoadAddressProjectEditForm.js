@@ -160,21 +160,8 @@
         staticField('Lisätty järjestelmään', project.createdBy + ' ' + project.startDate)+
         staticField('Muokattu viimeksi', project.modifiedBy + ' ' + project.dateModified)+
         '<div class="form-group editable form-editable-roadAddressProject"> '+
-        '<form id="roadAddressProject" class="input-unit-combination form-group form-horizontal roadAddressProject">'+
-        '<label>Toimenpiteet,' + selection  + '</label>' +
-        '<div class="input-unit-combination">' +
-        '<select class="form-control" id="dropDown" size="1">'+
-        '<option '+ defineOptionModifiers('', selected) +'>Valitse</option>'+
-        '<option value='+ LinkStatus.Unchanged.action+' ' + defineOptionModifiers(LinkStatus.Unchanged.action, selected) + '>Ennallaan</option>'+
-        '<option value='+ LinkStatus.Transfer.action + ' ' + defineOptionModifiers(LinkStatus.Transfer.action, selected) + '>Siirto</option>'+
-        '<option value='+ LinkStatus.New.action + ' ' + defineOptionModifiers(LinkStatus.New.action, selected) +'>Uusi</option>'+
-        '<option value='+ LinkStatus.Terminated.action + ' ' + defineOptionModifiers(LinkStatus.Terminated.action, selected) + '>Lakkautus</option>'+
-        '<option value='+ LinkStatus.Numbering.action + ' ' + defineOptionModifiers(LinkStatus.Numbering.action, selected) + '>Numerointi</option>'+
-        '<option value='+ LinkStatus.Revert.action + ' ' + defineOptionModifiers(LinkStatus.Revert.action, selected) + '>Palautus aihioksi tai tieosoitteettomaksi</option>' +
-        '</select>'+
-        '</div>'+
-        newRoadAddressInfo() +
-        '</form>' +
+        selectionForm(selection, selected) +
+        selectionForm(selection, selected)+
         changeDirection()+
         actionSelectedField()+
         '</div>'+
@@ -182,6 +169,24 @@
         '</div>'+
         '</div>'+
         '<footer>' + actionButtons() + '</footer>');
+    };
+
+    var selectionForm = function(selection, selected){
+      return '<form id="roadAddressProject" class="input-unit-combination form-group form-horizontal roadAddressProject">'+
+      '<label>Toimenpiteet,' + selection  + '</label>' +
+      '<div class="input-unit-combination">' +
+      '<select class="form-control" id="dropDown" size="1">'+
+      '<option '+ defineOptionModifiers('', selected) +'>Valitse</option>'+
+      '<option value='+ LinkStatus.Unchanged.action+' ' + defineOptionModifiers(LinkStatus.Unchanged.action, selected) + '>Ennallaan</option>'+
+      '<option value='+ LinkStatus.Transfer.action + ' ' + defineOptionModifiers(LinkStatus.Transfer.action, selected) + '>Siirto</option>'+
+      '<option value='+ LinkStatus.New.action + ' ' + defineOptionModifiers(LinkStatus.New.action, selected) +'>Uusi</option>'+
+      '<option value='+ LinkStatus.Terminated.action + ' ' + defineOptionModifiers(LinkStatus.Terminated.action, selected) + '>Lakkautus</option>'+
+      '<option value='+ LinkStatus.Numbering.action + ' ' + defineOptionModifiers(LinkStatus.Numbering.action, selected) + '>Numerointi</option>'+
+      '<option value='+ LinkStatus.Revert.action + ' ' + defineOptionModifiers(LinkStatus.Revert.action, selected) + '>Palautus aihioksi tai tieosoitteettomaksi</option>' +
+      '</select>'+
+      '</div>'+
+      newRoadAddressInfo() +
+      '</form>';
     };
 
     var newRoadAddressInfo = function(){
