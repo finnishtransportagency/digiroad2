@@ -4,6 +4,7 @@
 
     var currentProject = false;
     var selectedProjectLink = false;
+    var markers = ['A', 'B'];
     var backend=new Backend();
     var staticField = function(labelText, dataField) {
       var field;
@@ -160,8 +161,8 @@
         staticField('Lisätty järjestelmään', project.createdBy + ' ' + project.startDate)+
         staticField('Muokattu viimeksi', project.modifiedBy + ' ' + project.dateModified)+
         '<div class="form-group editable form-editable-roadAddressProject"> '+
-        selectionForm(selection, selected) +
-        selectionForm(selection, selected)+
+        selectionForm(selection, selected, 0) +
+        selectionForm(selection, selected, 1)+
         changeDirection()+
         actionSelectedField()+
         '</div>'+
@@ -171,11 +172,13 @@
         '<footer>' + actionButtons() + '</footer>');
     };
 
-    var selectionForm = function(selection, selected){
+    var selectionForm = function(selection, selected, index){
       return '<form id="roadAddressProject" class="input-unit-combination form-group form-horizontal roadAddressProject">'+
       '<label>Toimenpiteet,' + selection  + '</label>' +
+      '<span class="marker">'+markers[index]+'</span>'+
       '<div class="input-unit-combination">' +
-      '<select class="form-control" id="dropDown" size="1">'+
+      //TODO - Change the events in order to use id with numbering
+      '<select class="form-control" id="dropdown_'+index+'" size="1">'+
       '<option '+ defineOptionModifiers('', selected) +'>Valitse</option>'+
       '<option value='+ LinkStatus.Unchanged.action+' ' + defineOptionModifiers(LinkStatus.Unchanged.action, selected) + '>Ennallaan</option>'+
       '<option value='+ LinkStatus.Transfer.action + ' ' + defineOptionModifiers(LinkStatus.Transfer.action, selected) + '>Siirto</option>'+
