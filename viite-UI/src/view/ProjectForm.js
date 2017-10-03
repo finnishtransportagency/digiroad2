@@ -213,6 +213,6 @@
         '</div>'+
         '</div>'+
         '<footer>' + actionButtons() + '</footer>');
-    }
-  }
-});
+    };
+  };
+}(this));

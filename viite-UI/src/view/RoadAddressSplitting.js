@@ -16,7 +16,6 @@
         rootElement.html(projectForm.selectedProjectLinkTemplate(currentProject.project, 'split'));
       });
     };
-
     bindEvents();
-  }
-});
+  };
+}(this));
