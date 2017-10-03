@@ -181,12 +181,12 @@
       //TODO - Change the events in order to use id with numbering
       '<select class="form-control" id="dropdown_'+index+'" size="1">'+
       '<option '+ defineOptionModifiers('', selected) +'>Valitse</option>'+
-      '<option value='+ LinkStatus.Unchanged.action+' ' + defineOptionModifiers(LinkStatus.Unchanged.action, selected) + '>Ennallaan</option>'+
-      '<option value='+ LinkStatus.Transfer.action + ' ' + defineOptionModifiers(LinkStatus.Transfer.action, selected) + '>Siirto</option>'+
-      '<option value='+ LinkStatus.New.action + ' ' + defineOptionModifiers(LinkStatus.New.action, selected) +'>Uusi</option>'+
-      '<option value='+ LinkStatus.Terminated.action + ' ' + defineOptionModifiers(LinkStatus.Terminated.action, selected) + '>Lakkautus</option>'+
-      '<option value='+ LinkStatus.Numbering.action + ' ' + defineOptionModifiers(LinkStatus.Numbering.action, selected) + '>Numerointi</option>'+
-      '<option value='+ LinkStatus.Revert.action + ' ' + defineOptionModifiers(LinkStatus.Revert.action, selected) + '>Palautus aihioksi tai tieosoitteettomaksi</option>' +
+      '<option id="drop_'+ index +'_' + LinkStatus.Unchanged.action + '" value='+ LinkStatus.Unchanged.action+' ' + defineOptionModifiers(LinkStatus.Unchanged.action, selected) + '>Ennallaan</option>'+
+      '<option id="drop_'+ index +'_' + LinkStatus.Transfer.action + '" value='+ LinkStatus.Transfer.action + ' ' + defineOptionModifiers(LinkStatus.Transfer.action, selected) + '>Siirto</option>'+
+      '<option id="drop_'+ index +'_' + LinkStatus.New.action + '" value='+ LinkStatus.New.action + ' ' + defineOptionModifiers(LinkStatus.New.action, selected) +'>Uusi</option>'+
+      '<option id="drop_'+ index +'_' + LinkStatus.Terminated.action + '" value='+ LinkStatus.Terminated.action + ' ' + defineOptionModifiers(LinkStatus.Terminated.action, selected) + '>Lakkautus</option>'+
+      '<option id="drop_'+ index +'_' + LinkStatus.Numbering.action + '" value='+ LinkStatus.Numbering.action + ' ' + defineOptionModifiers(LinkStatus.Numbering.action, selected) + '>Numerointi</option>'+
+      '<option id="drop_'+ index +'_' + LinkStatus.Revert.action + '" value='+ LinkStatus.Revert.action + ' ' + defineOptionModifiers(LinkStatus.Revert.action, selected) + '>Palautus aihioksi tai tieosoitteettomaksi</option>' +
       '</select>'+
       '</div>'+
       newRoadAddressInfo() +
@@ -493,17 +493,48 @@
       });
 
 
-
       rootElement.on('change', '#dropdown_0', function(){
         if (this.value == LinkStatus.New.action) {
+          $('#drop_0_'+ LinkStatus.Numbering.action).prop('disabled',true).prop('hidden',true);
+          $('#drop_0_'+ LinkStatus.Terminated.action).prop('disabled',true).prop('hidden',true);
+          $('#drop_0_'+ LinkStatus.Revert.action).prop('disabled',true).prop('hidden',true);
+          $('#drop_0_'+ LinkStatus.New.action).prop('disabled',false).prop('hidden',false);
+          $('#drop_1_'+ LinkStatus.New.action).prop('disabled',true).prop('hidden',true);
+          $('#drop_1_'+ LinkStatus.Unchanged.action).prop('disabled',false).prop('hidden',false);
+          $('#drop_1_'+ LinkStatus.Transfer.action).prop('disabled',false).prop('hidden',false);
+          $('#drop_1_'+ LinkStatus.Numbering.action).prop('disabled',true).prop('hidden',true);
+          $('#drop_1_'+ LinkStatus.Terminated.action).prop('disabled',true).prop('hidden',true);
+          $('#drop_1_'+ LinkStatus.Revert.action).prop('disabled',true).prop('hidden',true);
+          $('#drop_1_'+ LinkStatus.New.action).prop('disabled',true).prop('hidden',true);
 
-
+        } else if (this.value == LinkStatus.Unchanged.action || this.value == LinkStatus.Transfer.action) {
+          $('#drop_0_'+ LinkStatus.New.action).prop('disabled',false).prop('hidden',false);
+          $('#drop_0_'+ LinkStatus.Numbering.action).prop('disabled',true).prop('hidden',true);
+          $('#drop_0_'+ LinkStatus.Terminated.action).prop('disabled',true).prop('hidden',true);
+          $('#drop_0_'+ LinkStatus.Revert.action).prop('disabled',true).prop('hidden',true);
+          $('#drop_1_'+ LinkStatus.Unchanged.action).prop('disabled',true).prop('hidden',true);
+          $('#drop_1_'+ LinkStatus.Transfer.action).prop('disabled',true).prop('hidden',true);
+          $('#drop_1_'+ LinkStatus.Numbering.action).prop('disabled',true).prop('hidden',true);
+          $('#drop_1_'+ LinkStatus.Terminated.action).prop('disabled',true).prop('hidden',true);
+          $('#drop_1_'+ LinkStatus.Revert.action).prop('disabled',true).prop('hidden',true);
+          $('#drop_1_'+ LinkStatus.New.action).prop('disabled',false).prop('hidden',false);
         }
       });
 
       rootElement.on('change', '#dropdown_1', function(){
         if (this.value == LinkStatus.New.action) {
-
+          $('#drop_1_'+ LinkStatus.Numbering.action).prop('disabled',true).prop('hidden',true);
+          $('#drop_1_'+ LinkStatus.Terminated.action).prop('disabled',true).prop('hidden',true);
+          $('#drop_1_'+ LinkStatus.Revert.action).prop('disabled',true).prop('hidden',true);
+          $('#drop_1_'+ LinkStatus.New.action).prop('disabled',false).prop('hidden',false);
+          $('#drop_0_'+ LinkStatus.New.action).prop('disabled',true).prop('hidden',true);
+        } else if (this.value == LinkStatus.Unchanged.action || this.value == LinkStatus.Transfer.action) {
+          $('#drop_0_'+ LinkStatus.Unchanged.action).prop('disabled',true).prop('hidden',true);
+          $('#drop_0_'+ LinkStatus.Transfer.action).prop('disabled',true).prop('hidden',true);
+          $('#drop_0_'+ LinkStatus.Numbering.action).prop('disabled',true).prop('hidden',true);
+          $('#drop_0_'+ LinkStatus.Terminated.action).prop('disabled',true).prop('hidden',true);
+          $('#drop_0_'+ LinkStatus.Revert.action).prop('disabled',true).prop('hidden',true);
+          $('#drop_0_'+ LinkStatus.New.action).prop('disabled',false).prop('hidden',false);
         }
       });
 
