@@ -393,6 +393,15 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }.getOrElse(BadRequest("Missing mandatory 'projectId' parameter"))
   }
 
+  put("/project/split"){
+    val user = userProvider.getCurrentUser()
+    // TODO: implementation here
+  }
+
+  delete("/project/split/:linkId"){
+    val user = userProvider.getCurrentUser()
+    // TODO: implementation here
+  }
   private def roadlinksData(): (Seq[String], Seq[String]) = {
     val data = JSON.parseFull(params.get("data").get).get.asInstanceOf[Map[String,Any]]
     val sources = data("sourceLinkIds").asInstanceOf[Seq[String]]
