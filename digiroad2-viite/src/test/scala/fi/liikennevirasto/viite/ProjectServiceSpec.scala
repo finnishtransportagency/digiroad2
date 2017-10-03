@@ -16,7 +16,7 @@ import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, RoadLinkService, _
 import fi.liikennevirasto.viite.dao.Discontinuity.Discontinuous
 import fi.liikennevirasto.viite.dao.{Discontinuity, ProjectState, RoadAddressProject, _}
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLinkLike}
-import fi.liikennevirasto.viite.process.ProjectDeltaCalculator
+import fi.liikennevirasto.viite.process.{ProjectDeltaCalculator, ProjectSectionCalculator}
 import fi.liikennevirasto.viite.util.StaticTestData
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.HttpGet
@@ -1068,27 +1068,32 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
           endMValue = GeometryUtils.geometryLength(geom)
         )
       }
-      ProjectDAO.updateProjectLinksToDB(geomToLinks, "-")
+      val adjusted = ProjectSectionCalculator.assignMValues(geomToLinks)
+      ProjectDAO.updateProjectLinksToDB(adjusted, "-")
 
       reset(mockRoadLinkService)
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenAnswer(
-        toMockAnswer(geomToLinks.map(toRoadLink))
+        toMockAnswer(adjusted.map(toRoadLink))
       )
       projectService.changeDirection(7081807, 77997, 1)
       val changedLinks = ProjectDAO.getProjectLinks(7081807)
 
-      geomToLinks.foreach { l =>
+      // Test that for every link there should be the address before it or after it (unless it's the first or last link)
+      changedLinks.foreach(l =>
+        (l == changedLinks.head || changedLinks.exists(c => c.endAddrMValue == l.startAddrMValue &&
+        c.track == l.track || (c.track.value * l.track.value == 0))) && (l == changedLinks.last ||
+          changedLinks.exists(c => c.startAddrMValue == l.endAddrMValue &&
+            c.track == l.track || (c.track.value * l.track.value == 0))) should be (true)
+      )
+      adjusted.foreach { l =>
         GeometryUtils.geometryEndpoints(mappedGeoms(l.linkId)) should be (GeometryUtils.geometryEndpoints(l.geometry))
       }
-//      prettyPrint(geomToLinks)
-//      prettyPrint(changedLinks)
 
-      val linksFirst = links.sortBy(_.id).head
-      val linksLast = links.sortBy(_.id).last
+      val linksFirst = adjusted.sortBy(_.id).head
+      val linksLast = adjusted.sortBy(_.id).last
       val changedLinksFirst = changedLinks.sortBy(_.id).head
       val changedLinksLast = changedLinks.sortBy(_.id).last
-
-      geomToLinks.sortBy(_.id).zip(changedLinks.sortBy(_.id)).foreach{
+      adjusted.sortBy(_.id).zip(changedLinks.sortBy(_.id)).foreach{
         case (oldLink, newLink) =>
           oldLink.startAddrMValue should be ((linksLast.endAddrMValue - newLink.endAddrMValue) +- 1)
           oldLink.endAddrMValue should be ((linksLast.endAddrMValue - newLink.startAddrMValue) +- 1)
@@ -1100,13 +1105,12 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
           }
           trackChangeCorrect should be (true)
       }
-
       linksFirst.id should be (changedLinksFirst.id)
       linksLast.id should be (changedLinksLast.id)
-      linksLast.geometryLength should be (changedLinks.sortBy(_.id).last.geometryLength)
-      linksLast.endMValue should be (changedLinks.sortBy(_.id).last.endMValue)
-      linksFirst.endMValue should be (changedLinksFirst.endMValue)
-      linksLast.endMValue should be (changedLinksLast.endMValue)
+      linksLast.geometryLength should be (changedLinks.sortBy(_.id).last.geometryLength +- .1)
+      linksLast.endMValue should be (changedLinks.sortBy(_.id).last.endMValue +- .1)
+      linksFirst.endMValue should be (changedLinksFirst.endMValue +- .1)
+      linksLast.endMValue should be (changedLinksLast.endMValue +- .1)
     }
   }
 
@@ -1190,8 +1194,8 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       val linksAfter=ProjectDAO.getProjectLinks(id)
       linksAfter should have size (links.size + 1)
       linksAfter.find(_.linkId == addProjectAddressLink584.linkId).map(_.sideCode) should be (Some(AgainstDigitizing))
-      linksAfter.find(_.linkId == 5176512).get.endAddrMValue should be (2003)
-      linksAfter.find(_.linkId == 5176512).get.startAddrMValue should be (892)
+      linksAfter.find(_.linkId == 5176512).get.endAddrMValue should be (2004)
+      linksAfter.find(_.linkId == 5176512).get.startAddrMValue should be (893)
       linksAfter.find(_.linkId == 5176584).get.startAddrMValue should be (0)
     }
   }
@@ -1692,6 +1696,8 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
           rp
       })
 
+      sqlu"""UPDATE PROJECT_LINK SET status = ${LinkStatus.UnChanged.value} WHERE project_id = ${project.id} AND status = ${LinkStatus.NotHandled.value}""".execute
+
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(roadWithTerminated.filter(_.roadPartNumber==201).map(toRoadLink))
       projectService.addNewLinksToProject(Seq(link1,link2), project.id, 5, 201, 1, 5) should be (None)
       val track1road201 = roadWithTerminated.filter(_.roadPartNumber==201).map(toRoadLink) ++ Seq(toRoadLink(link1)) ++ Seq(toRoadLink(link2))
@@ -1708,12 +1714,10 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       val newLinks = linksAfter.filter(_.status == LinkStatus.New).sortBy(_.startAddrMValue)
       linksAfter.size should be (allRoadParts.map(_.linkId).toSet.size + newLinks.size)
 
-      val new201 = newLinks.filter(_.roadPartNumber == 201)
-      val new202 = newLinks.filter(_.roadPartNumber == 202)
-      new201.filter(_.track == Track.RightSide).sortBy(_.startAddrMValue).last.endAddrMValue should be (new201.filter(_.track == Track.LeftSide).sortBy(_.startAddrMValue).last.endAddrMValue)
-      new201.filter(_.track == Track.RightSide).sortBy(_.startAddrMValue).head.startAddrMValue should be (new201.filter(_.track == Track.LeftSide).sortBy(_.startAddrMValue).head.startAddrMValue)
-      new202.filter(_.track == Track.RightSide).sortBy(_.startAddrMValue).last.endAddrMValue should be (new202.filter(_.track == Track.LeftSide).sortBy(_.startAddrMValue).last.endAddrMValue)
-      new202.filter(_.track == Track.RightSide).sortBy(_.startAddrMValue).head.startAddrMValue should be (new202.filter(_.track == Track.LeftSide).sortBy(_.startAddrMValue).head.startAddrMValue)
+      val (new201R, new201L) = newLinks.filter(_.roadPartNumber == 201).partition(_.track == Track.RightSide)
+      val (new202R, new202L) = newLinks.filter(_.roadPartNumber == 202).partition(_.track == Track.RightSide)
+      new201R.maxBy(_.startAddrMValue).endAddrMValue should be (new201L.maxBy(_.startAddrMValue).endAddrMValue)
+      new202R.maxBy(_.startAddrMValue).endAddrMValue should be (new202L.maxBy(_.startAddrMValue).endAddrMValue)
 
       val changesList = RoadAddressChangesDAO.fetchRoadAddressChanges(Set(project.id))
       changesList.isEmpty should be(false)
