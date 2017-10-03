@@ -684,7 +684,7 @@ class EuropeanRoadTierekisteriImporter extends LinearAssetTierekisteriImporterOp
 
 
   protected override def filterTierekisteriAssets(tierekisteriAssetData: TierekisteriAssetData): Boolean = {
-     tierekisteriAssetData.assetValue.trim.nonEmpty || tierekisteriAssetData.assetValue != null
+    tierekisteriAssetData.assetValue != null || tierekisteriAssetData.assetValue.trim.nonEmpty
   }
 
   override protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
