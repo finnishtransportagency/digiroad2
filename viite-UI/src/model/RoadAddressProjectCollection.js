@@ -152,7 +152,7 @@
       var dataJson = {
         id: projectid,
         projectEly: currentProject.project.ely,
-        status: 1,
+        status: currentProject.project.statusCode,
         name: data[0].value,
         startDate: data[1].value,
         additionalInfo: data[2].value,
