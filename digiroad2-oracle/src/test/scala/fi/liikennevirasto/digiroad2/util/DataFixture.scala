@@ -902,10 +902,10 @@ object DataFixture {
       new RoadWidthService(roadLinkService, new DummyEventBus)
     }
 
-    val RoadWidthAssetTypeId: Int = 120
-    val MaxAllowedError = 0.01
-    val MinAllowedLength = 2.0
-    val MinOfLength: Double = 0
+    val roadWidthAssetTypeId: Int = 120
+    val maxAllowedError = 0.01
+    val minAllowedLength = 2.0
+    val minOfLength: Double = 0
 
     //Get All Municipalities
     val municipalities: Seq[Int] =
@@ -921,7 +921,7 @@ object DataFixture {
       val roadWithMTKClass = roadLinkAdminClass.filter(road => MTKClassWidth.values.toSeq.contains(road.extractMTKClass(road.attributes)))
 
       OracleDatabase.withDynTransaction {
-        val existingAssets = dao.fetchLinearAssetsByLinkIds(RoadWidthAssetTypeId, roadLinks.map(_.linkId), LinearAssetTypes.numericValuePropertyId).filterNot(_.expired)
+        val existingAssets = dao.fetchLinearAssetsByLinkIds(roadWidthAssetTypeId, roadLinks.map(_.linkId), LinearAssetTypes.numericValuePropertyId).filterNot(_.expired)
 
         val lastChanges = changes.filter(_.newId.isDefined).groupBy(_.newId.get).mapValues(c => c.maxBy(_.vvhTimeStamp))
 
@@ -940,14 +940,14 @@ object DataFixture {
 
         val newAssets = changedAssets.flatMap{
           case (Some(roadLink), changeInfo, assets) =>
-            val pointsOfInterest = (assets.map(_.startMeasure) ++ assets.map(_.endMeasure) ++  Seq(MinOfLength, GeometryUtils.geometryLength(roadLink.geometry))).distinct.sorted
+            val pointsOfInterest = (assets.map(_.startMeasure) ++ assets.map(_.endMeasure) ++  Seq(minOfLength, GeometryUtils.geometryLength(roadLink.geometry))).distinct.sorted
 
             //Not create asset with the length less MinAllowedLength
-            val pieces = pointsOfInterest.zip(pointsOfInterest.tail).filterNot{piece => (piece._2 - piece._1) < MinAllowedLength}
+            val pieces = pointsOfInterest.zip(pointsOfInterest.tail).filterNot{piece => (piece._2 - piece._1) < minAllowedLength}
             pieces.flatMap { measures =>
               Some(PersistedLinearAsset(0L, roadLink.linkId, SideCode.BothDirections.value, Some(NumericValue(roadLink.extractMTKClass(roadLink.attributes).width)),
-                measures._1, measures._2, Some("vvh_mtkclass_default"), None, None, None, false, RoadWidthAssetTypeId, changeInfo.vvhTimeStamp, None, linkSource = roadLink.linkSource))
-            }.filterNot(a => assets.filterNot(asset => expiredAssetsIds.contains(asset.id)).exists(asset => math.abs(a.startMeasure - asset.startMeasure) < MaxAllowedError && math.abs(a.endMeasure - asset.endMeasure) < MaxAllowedError))
+                measures._1, measures._2, Some("vvh_mtkclass_default"), None, None, None, false, roadWidthAssetTypeId, changeInfo.vvhTimeStamp, None, linkSource = roadLink.linkSource))
+            }.filterNot(a => assets.filterNot(asset => expiredAssetsIds.contains(asset.id)).exists(asset => math.abs(a.startMeasure - asset.startMeasure) < maxAllowedError && math.abs(a.endMeasure - asset.endMeasure) < maxAllowedError))
           case _ =>
             None
         }.toSeq
