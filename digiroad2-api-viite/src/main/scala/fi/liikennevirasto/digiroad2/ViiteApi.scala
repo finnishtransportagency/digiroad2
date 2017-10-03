@@ -401,17 +401,21 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   delete("/project/split/:projectId/:linkId"){
     val user = userProvider.getCurrentUser()
-    val projectId = params.get("projectId").map(_.toLong)
-    val linkId = params.get("linkId").map(_.toLong)
-    (projectId, linkId) match {
-      case (Some(project), Some(link)) =>
-        val error = projectService.revertLinks(projectService.getSplitLinkData(project, link))
-        if (error.nonEmpty) {
-          PreconditionFailed(error.get)
-        } else {
-          NoContent()
-        }
-      case _ => BadRequest("Missing mandatory 'projectId' or 'linkId' parameter from URI: /project/split/:projectId/:linkId")
+    try {
+      val projectId = params.get("projectId").map(_.toLong)
+      val linkId = params.get("linkId").map(_.toLong)
+      (projectId, linkId) match {
+        case (Some(project), Some(link)) =>
+          val error = projectService.revertLinks(projectService.getSplitLinkData(project, link))
+          if (error.nonEmpty) {
+            PreconditionFailed(error.get)
+          } else {
+            NoContent()
+          }
+        case _ => BadRequest("Missing mandatory 'projectId' or 'linkId' parameter from URI: /project/split/:projectId/:linkId")
+      }
+    } catch {
+      case _: NumberFormatException => BadRequest("'projectId' or 'linkId' parameter given could not be parsed as an integer number")
     }
   }
   private def roadlinksData(): (Seq[String], Seq[String]) = {
