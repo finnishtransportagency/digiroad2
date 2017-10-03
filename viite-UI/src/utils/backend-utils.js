@@ -1,7 +1,7 @@
 (function (root) {
   root.Backend = function() {
     var self = this;
-    var  loadingProject;
+    var loadingProject;
 
     this.getRoadLinks = createCallbackRequestor(function(params) {
       var zoom = params.zoom;
@@ -234,6 +234,15 @@
     this.getCoordinatesFromRoadAddress = function(roadNumber, section, distance, lane) {
       return $.get("vkm/tieosoite", {tie: roadNumber, osa: section, etaisyys: distance, ajorata: lane})
         .then(function(x) { return JSON.parse(x); });
+    };
+
+    this.removeProjectLinkSplit = function(projectId, linkId, success, errorCallback) {
+      $.ajax({
+        type: "DELETE",
+        url: "api/viite/project/split/" + projectId + "/" + linkId,
+        success: success,
+        error: errorCallback
+      });
     };
 
     function createCallbackRequestor(getParameters) {
