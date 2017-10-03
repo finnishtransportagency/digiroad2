@@ -83,6 +83,22 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
 }
 
 object ProjectDAO {
+  private def listQuery(query: String) = {
+    Q.queryNA[(Long, Long, Int, Int, Long, Long, Long, Long, Double, Double, Long, Long, String, String,
+      Long, Double, Long, Int, Int, Int, Long)](query).list.map(mapToProjectLink)
+  }
+
+  private def mapToProjectLink(row: (Long, Long, Int, Int, Long, Long, Long, Long, Double, Double, Long, Long,
+    String, String, Long, Double, Long, Int, Int, Int, Long)): ProjectLink = {
+    val (projectLinkId, projectId, trackCode, discontinuityType, roadNumber, roadPartNumber, startAddrM, endAddrM,
+    startMValue, endMValue, sideCode , lrmPositionId, createdBy, modifiedBy, linkId, length, calibrationPoints, status,
+    roadType, source, roadAddressId) = row
+    ProjectLink(projectLinkId, roadNumber, roadPartNumber, Track.apply(trackCode), Discontinuity.apply(discontinuityType),
+      startAddrM, endAddrM, None, None, None, lrmPositionId, linkId, startMValue, endMValue, SideCode.apply(sideCode.toInt),
+      CalibrationPointsUtils.calibrations(CalibrationCode.apply(calibrationPoints.toInt),linkId,startMValue,endMValue,
+        startAddrM,endAddrM, SideCode.apply(sideCode.toInt)),false, Seq.empty[Point], projectId, LinkStatus.apply(status),
+      RoadType.apply(roadType),LinkGeomSource.apply(source),length, roadAddressId)
+  }
 
   def create(roadAddresses: Seq[ProjectLink]): Seq[Long] = {
     val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure, adjusted_timestamp, link_source) values (?, ?, ?, ?, ?, ?, ?)")
@@ -177,18 +193,11 @@ object ProjectDAO {
                 from PROJECT_LINK join LRM_POSITION
                 on LRM_POSITION.ID = PROJECT_LINK.LRM_POSITION_ID
                 where $filter (PROJECT_LINK.PROJECT_ID = $projectId ) order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
-    Q.queryNA[(Long, Long, Int, Int, Long, Long, Long, Long, Double, Double, Long, Long, String, String, Long, Double, Long, Int, Int, Int, Long)](query).list.map {
-      case (projectLinkId, projectId, trackCode, discontinuityType, roadNumber, roadPartNumber, startAddrM, endAddrM,
-      startMValue, endMValue, sideCode , lrmPositionId, createdBy, modifiedBy, linkId, length, calibrationPoints, status, roadType, source, roadAddressId) =>
-        ProjectLink(projectLinkId, roadNumber, roadPartNumber, Track.apply(trackCode), Discontinuity.apply(discontinuityType),
-          startAddrM, endAddrM, None, None, None, lrmPositionId, linkId, startMValue, endMValue, SideCode.apply(sideCode.toInt),
-          CalibrationPointsUtils.calibrations(CalibrationCode.apply(calibrationPoints.toInt),linkId,startMValue,endMValue,startAddrM,endAddrM, SideCode.apply(sideCode.toInt)),
-          false, Seq.empty[Point], projectId, LinkStatus.apply(status), RoadType.apply(roadType),LinkGeomSource.apply(source),length, roadAddressId)
-    }
+    listQuery(query)
   }
 
   //TODO: support for bigger queries than 1000 link ids
-  def getProjectLinksById(projectLinkId: Seq[Long]): List[ProjectLink] = {
+  def getProjectLinksByIds(projectLinkId: Iterable[Long]): List[ProjectLink] = {
     val query =
       s"""select PROJECT_LINK.ID, PROJECT_LINK.PROJECT_ID, PROJECT_LINK.TRACK_CODE, PROJECT_LINK.DISCONTINUITY_TYPE,
           PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.START_ADDR_M, PROJECT_LINK.END_ADDR_M,
@@ -199,17 +208,10 @@ object ProjectDAO {
                 from PROJECT_LINK join LRM_POSITION
                 on LRM_POSITION.ID = PROJECT_LINK.LRM_POSITION_ID
                 where project_link.id in (${projectLinkId.mkString(",")}) order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
-    Q.queryNA[(Long, Long, Int, Int, Long, Long, Long, Long, Long, Long, Long, Long, String, String, Long, Double, Long, Int, Int, Int, Long)](query).list.map {
-      case (projectLinkId, projectId, trackCode, discontinuityType, roadNumber, roadPartNumber, startAddrM, endAddrM,
-      startMValue, endMValue, sideCode , lrmPositionId, createdBy, modifiedBy, linkId, length, calibrationPoints, status, roadType, source, roadAddressId) =>
-        ProjectLink(projectLinkId, roadNumber, roadPartNumber, Track.apply(trackCode), Discontinuity.apply(discontinuityType),
-          startAddrM, endAddrM, None, None, None, lrmPositionId, linkId, startMValue, endMValue, SideCode.apply(sideCode.toInt),
-          CalibrationPointsUtils.calibrations(CalibrationCode.apply(calibrationPoints.toInt),linkId,startMValue,endMValue,startAddrM,endAddrM, SideCode.apply(sideCode.toInt)),
-          false, Seq.empty[Point], projectId, LinkStatus.apply(status), RoadType.apply(roadType),LinkGeomSource.apply(source),length, roadAddressId)
-    }
+    listQuery(query)
   }
 
-  def getProjectByLinkId(projectLinkId: Long): List[ProjectLink] = {
+  def getProjectLinksByLinkId(projectLinkId: Long): List[ProjectLink] = {
     val query =
       s"""select PROJECT_LINK.ID, PROJECT_LINK.PROJECT_ID, PROJECT_LINK.TRACK_CODE, PROJECT_LINK.DISCONTINUITY_TYPE,
           PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.START_ADDR_M, PROJECT_LINK.END_ADDR_M,
@@ -219,18 +221,11 @@ object ProjectDAO {
           PROJECT_LINK.ROAD_TYPE, LRM_POSITION.LINK_SOURCE as source, PROJECT_LINK.ROAD_ADDRESS_ID
                 from PROJECT_LINK join LRM_POSITION
                 on LRM_POSITION.ID = PROJECT_LINK.LRM_POSITION_ID
-                where LRM_POSITION.link_id = ${projectLinkId} order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
-    Q.queryNA[(Long, Long, Int, Int, Long, Long, Long, Long, Long, Long, Long, Long, String, String, Long, Double, Long, Int, Int, Int, Long)](query).list.map {
-      case (projectLinkId, projectId, trackCode, discontinuityType, roadNumber, roadPartNumber, startAddrM, endAddrM,
-      startMValue, endMValue, sideCode , lrmPositionId, createdBy, modifiedBy, linkId, length, calibrationPoints, status, roadType, source, roadAddressId) =>
-        ProjectLink(projectLinkId, roadNumber, roadPartNumber, Track.apply(trackCode), Discontinuity.apply(discontinuityType),
-          startAddrM, endAddrM, None, None, None, lrmPositionId, linkId, startMValue, endMValue, SideCode.apply(sideCode.toInt),
-          CalibrationPointsUtils.calibrations(CalibrationCode.apply(calibrationPoints.toInt),linkId,startMValue,endMValue,startAddrM,endAddrM, SideCode.apply(sideCode.toInt)),
-          false, Seq.empty[Point], projectId, LinkStatus.apply(status), RoadType.apply(roadType),LinkGeomSource.apply(source),length, roadAddressId)
-    }
+                where LRM_POSITION.link_id = $projectLinkId order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
+    listQuery(query)
   }
 
-  def fetchByProjectNewRoadPart(roadNumber: Long, roadPartNumber: Long, projectId: Long): List[ProjectLink] = {
+  def fetchByProjectRoadPart(roadNumber: Long, roadPartNumber: Long, projectId: Long): List[ProjectLink] = {
     val filter = s"PROJECT_LINK.ROAD_NUMBER = $roadNumber AND PROJECT_LINK.ROAD_PART_NUMBER = $roadPartNumber AND"
     val query =
       s"""select PROJECT_LINK.ID, PROJECT_LINK.PROJECT_ID, PROJECT_LINK.TRACK_CODE, PROJECT_LINK.DISCONTINUITY_TYPE,
@@ -242,14 +237,7 @@ object ProjectDAO {
                 from PROJECT_LINK join LRM_POSITION
                 on LRM_POSITION.ID = PROJECT_LINK.LRM_POSITION_ID
                 where $filter (PROJECT_LINK.PROJECT_ID = $projectId ) order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
-    Q.queryNA[(Long, Long, Int, Int, Long, Long, Long, Long, Long, Long, Long, Long, String, String, Long, Double, Long, Int, Int, Int, Long)](query).list.map {
-      case (projectLinkId, projectId, trackCode, discontinuityType, roadNumber, roadPartNumber, startAddrM, endAddrM,
-      startMValue, endMValue, sideCode , lrmPositionId, createdBy, modifiedBy, linkId, length, calibrationPoints, status, roadType, source, roadAddressId) =>
-        ProjectLink(projectLinkId, roadNumber, roadPartNumber, Track.apply(trackCode), Discontinuity.apply(discontinuityType),
-          startAddrM, endAddrM, None, None, None, lrmPositionId, linkId, startMValue, endMValue, SideCode.apply(sideCode.toInt),
-          CalibrationPointsUtils.calibrations(CalibrationCode.apply(calibrationPoints.toInt),linkId,startMValue,endMValue,startAddrM,endAddrM, SideCode.apply(sideCode.toInt)),
-          false, Seq.empty[Point], projectId, LinkStatus.apply(status), RoadType.apply(roadType),LinkGeomSource.apply(source),length, roadAddressId)
-    }
+    listQuery(query)
   }
 
   def updateAddrMValues(projectLink: ProjectLink): Unit = {
@@ -333,7 +321,7 @@ object ProjectDAO {
     }.map {
       case (id, rpp) =>
         rpp.copy(isDirty =
-          fetchByProjectNewRoadPart(roadNumber, roadPartNumber, id).exists(_.status == LinkStatus.NotHandled))
+          fetchByProjectRoadPart(roadNumber, roadPartNumber, id).exists(_.status == LinkStatus.NotHandled))
     }
   }
 
@@ -506,15 +494,7 @@ object ProjectDAO {
       START_ADDR_M = (SELECT MIN(START_ADDR_M) FROM PROJECT_LINK WHERE
       PROJECT_LINK.PROJECT_ID = $projectId AND ROAD_PART_NUMBER=$roadPartNumber AND ROAD_NUMBER=$roadNumber)
     order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.START_ADDR_M, PROJECT_LINK.TRACK_CODE"""
-    Q.queryNA[(Long, Long, Int, Int, Long, Long, Long, Long, Double, Double, Long, Long, String, Option[String],
-      Long, Double, Long, Int, Int, Int, Long)](query).firstOption.map {
-      case (projectLinkId, projId, trackCode, discontinuityType, road, roadPart, startAddrM, endAddrM,
-      startMValue, endMValue, sideCode , lrmPositionId, createdBy, modifiedBy, linkId, length, calibrationPoints, status, roadType, source, roadAddressId) =>
-        ProjectLink(projectLinkId, road, roadPart, Track.apply(trackCode), Discontinuity.apply(discontinuityType),
-          startAddrM, endAddrM, None, None, modifiedBy, lrmPositionId, linkId, startMValue, endMValue, SideCode.apply(sideCode.toInt),
-          CalibrationPointsUtils.calibrations(CalibrationCode.apply(calibrationPoints.toInt),linkId,startMValue,endMValue,startAddrM,endAddrM, SideCode.apply(sideCode.toInt)),
-          false, Seq.empty[Point], projId, LinkStatus.apply(status), RoadType.apply(roadType),LinkGeomSource.apply(source),length, roadAddressId)
-    }
+    listQuery(query).headOption
   }
 
   private def deleteProjectLinks(ids: Set[Long]): Int = {
@@ -573,7 +553,6 @@ object ProjectDAO {
     sqlu"""DELETE FROM PROJECT_RESERVED_ROAD_PART WHERE PROJECT_ID = $projectId""".execute
   }
 
-
   def removeProjectLinksByProjectAndRoadNumber(projectId: Long, roadNumber: Long, roadPartNumber: Long): Int = {
     removeProjectLinks(projectId, Some(roadNumber), Some(roadPartNumber))
   }
@@ -584,6 +563,21 @@ object ProjectDAO {
 
   def removeProjectLinksByLinkId(projectId: Long, linkIds: Set[Long]): Int = {
     removeProjectLinks(projectId, None, None, linkIds)
+  }
+
+  def fetchSplitLinks(projectId: Long, linkId: Long): Seq[ProjectLink] = {
+    val query =
+      s"""select PROJECT_LINK.ID, PROJECT_LINK.PROJECT_ID, PROJECT_LINK.TRACK_CODE, PROJECT_LINK.DISCONTINUITY_TYPE,
+          PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.START_ADDR_M, PROJECT_LINK.END_ADDR_M,
+          LRM_POSITION.START_MEASURE, LRM_POSITION.END_MEASURE, LRM_POSITION.SIDE_CODE, PROJECT_LINK.LRM_POSITION_ID,
+          PROJECT_LINK.CREATED_BY, PROJECT_LINK.MODIFIED_BY, lrm_position.link_id,
+          (LRM_POSITION.END_MEASURE - LRM_POSITION.START_MEASURE) as length, PROJECT_LINK.CALIBRATION_POINTS, PROJECT_LINK.STATUS,
+          PROJECT_LINK.ROAD_TYPE, LRM_POSITION.LINK_SOURCE as source, PROJECT_LINK.ROAD_ADDRESS_ID
+                from PROJECT_LINK join LRM_POSITION
+                on LRM_POSITION.ID = PROJECT_LINK.LRM_POSITION_ID
+                where PROJECT_LINK.PROJECT_ID = $projectId AND (LRM_POSITION.LINK_ID = $linkId OR PROJECT_LINK.CONNECTED_LINK_ID = $linkId)"""
+    Q.queryNA[(Long, Long, Int, Int, Long, Long, Long, Long, Double, Double, Long, Long, String, String, Long, Double,
+      Long, Int, Int, Int, Long)](query).list.map(mapToProjectLink)
   }
 
   def toTimeStamp(dateTime: Option[DateTime]) = {

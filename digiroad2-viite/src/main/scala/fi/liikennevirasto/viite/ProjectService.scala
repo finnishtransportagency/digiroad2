@@ -210,7 +210,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
     try {
       withDynTransaction {
-        val linksInProject = getLinksByProjectLinkId(ProjectDAO.fetchByProjectNewRoadPart(newRoadNumber, newRoadPartNumber, roadAddressProjectID).map(l => l.linkId).toSet, roadAddressProjectID, false)
+        val linksInProject = getLinksByProjectLinkId(ProjectDAO.fetchByProjectRoadPart(newRoadNumber, newRoadPartNumber, roadAddressProjectID).map(l => l.linkId).toSet, roadAddressProjectID, false)
         //Deleting all existent roads for same road_number and road_part_number, in order to recalculate the full road if it is already in project
         if (linksInProject.nonEmpty) {
           ProjectDAO.removeProjectLinksByProjectAndRoadNumber(roadAddressProjectID, newRoadNumber, newRoadPartNumber)
@@ -455,6 +455,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  def getSplitLinkData(projectId: Long, linkId: Long): Seq[ProjectLink] = {
+    withDynTransaction {
+      ProjectDAO.fetchSplitLinks(projectId, linkId)
+    }
+  }
+
   /**
     * Check that road part is available for reservation and return the id of reserved road part table row.
     * Reservation must contain road number and road part number, other data is not used or saved.
@@ -660,25 +666,27 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     project
   }
 
-  def revertLinks(projectId: Long, roadNumber: Long, roadPartNumber: Long, links: List[LinkToRevert]): Option[String] = {
+  def revertLinks(links: Iterable[ProjectLink]): Option[String] = {
+    if (links.groupBy(l => (l.projectId, l.roadNumber, l.roadPartNumber)).keySet.size != 1)
+      throw new IllegalArgumentException("Reverting links from multiple road parts at once is not allowed")
+    val l = links.head
+    revertLinks(l.projectId, l.roadNumber, l.roadPartNumber, links.map(
+      link => LinkToRevert(link.id, link.linkId, link.status.value)))
+  }
+
+  def revertLinks(projectId: Long, roadNumber: Long, roadPartNumber: Long, links: Iterable[LinkToRevert]): Option[String] = {
     try {
       withDynTransaction{
-        links.foreach(link =>{
-          if(link.status == LinkStatus.New.value){
-            ProjectDAO.removeProjectLinksByLinkId(projectId, links.map(link=> link.linkId).toSet)
-            val remainingLinks = ProjectDAO.fetchProjectLinkIds(projectId, roadNumber, roadPartNumber)
-            if (remainingLinks.nonEmpty){
-              val projectLinks = ProjectDAO.fetchByProjectNewRoadPart(roadNumber, roadPartNumber, projectId)
-              val adjLinks = withGeometry(projectLinks)
-              ProjectSectionCalculator.assignMValues(adjLinks).foreach(adjLink => ProjectDAO.updateAddrMValues(adjLink))
-            }
-          }
-          else {
-            val projectLink = ProjectDAO.getProjectLinksById(Seq(link.id))
-            val roadLink = RoadAddressDAO.queryById(Set(projectLink.head.roadAddressId))
-            ProjectDAO.updateProjectLinkValues(projectId, roadLink.head)
-          }
-        })
+        val (added, modified) = links.partition(_.status == LinkStatus.New.value)
+        ProjectDAO.removeProjectLinksByLinkId(projectId, added.map(_.linkId).toSet)
+        val projectLinks = ProjectDAO.getProjectLinksByIds(modified.map(_.id))
+        RoadAddressDAO.queryById(projectLinks.map(_.roadAddressId).toSet).foreach( ra =>
+          ProjectDAO.updateProjectLinkValues(projectId, ra))
+        val afterUpdateLinks = ProjectDAO.fetchByProjectRoadPart(roadNumber, roadPartNumber, projectId)
+        if (afterUpdateLinks.nonEmpty){
+          val adjLinks = withGeometry(afterUpdateLinks)
+          ProjectSectionCalculator.assignMValues(adjLinks).foreach(adjLink => ProjectDAO.updateAddrMValues(adjLink))
+        }
         None
       }
     }
