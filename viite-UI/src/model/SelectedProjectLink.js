@@ -17,7 +17,7 @@
     };
 
     this.splitSuravageLink = function(id, split) {
-      splitProjectLinks(id, split, function(splitSpeedLimits) {
+      splitSuravageLinks(id, split, function(splitSpeedLimits) {
         selection = [splitSpeedLimits.created, splitSpeedLimits.existing];
         originalSpeedLimitValue = splitSpeedLimits.existing.value;
         dirty = true;
@@ -28,7 +28,7 @@
 
     var splitSuravageLinks = function(id, split, callback) {
       // var link = _.find(_.flatten(speedLimits), { id: id });
-
+      //TODO add selected link as arg
 
       var left = _.cloneDeep(link);
       left.points = split.firstSplitVertices;
