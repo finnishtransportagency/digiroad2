@@ -4,7 +4,8 @@ import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.{MaxDistanceForConnectedLinks, MaxSuravageToleranceToGeometry, RoadType}
-import fi.liikennevirasto.viite.dao.{Discontinuity, LinkStatus, ProjectLink}
+import fi.liikennevirasto.viite.dao.{Discontinuity, LinkStatus, ProjectLink, RoadAddress}
+import fi.liikennevirasto.viite.model.RoadAddressLink
 
 /**
   * Split suravage link together with project link template
@@ -50,7 +51,7 @@ object ProjectLinkSplitter {
     Seq(splittedA,splittedB,template)
   }
 
-  def findMatchingGeometrySegment(suravage: RoadLinkLike, template: RoadLinkLike): Option[Seq[Point]] = {
+  def findMatchingGeometrySegment(suravage: RoadLinkLike, template: RoadAddress): Option[Seq[Point]] = {
     def findMatchingSegment(suravageGeom: Seq[Point], templateGeom: Seq[Point]): Option[Seq[Point]] = {
       if (GeometryUtils.areAdjacent(suravageGeom.head, templateGeom.head, MaxDistanceForConnectedLinks)) {
         val boundaries = geometryToBoundaries(suravageGeom)
@@ -60,7 +61,7 @@ object ProjectLinkSplitter {
           exitPoint.map(ep => GeometryUtils.truncateGeometry2D(templateGeom, 0.0,
             GeometryUtils.calculateLinearReferenceFromPoint(ep, templateGeom)))
         } else {
-          Some(GeometryUtils.truncateGeometry2D(templateGeom, 0.0, Math.max(template.length, suravage.length)))
+          Some(GeometryUtils.truncateGeometry2D(templateGeom, 0.0, Math.max(template.geometry.length, suravage.length)))
         }
       } else
         None

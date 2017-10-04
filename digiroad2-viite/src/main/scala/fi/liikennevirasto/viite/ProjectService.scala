@@ -402,45 +402,49 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   def splitSuravageLinkForProject(linkId:Long,projectId:Long,splitPoint:Point):Either[String, ProjectLink]  =
   {
-  roadAddressService.getSuravageRoadLinkAddressesByLinkIds(Set(linkId)) match {
-     case (suravageLinks) if suravageLinks.nonEmpty && suravageLinks.size==1 =>
-       val suravageLink=suravageLinks.head
-       val endPoints = GeometryUtils.geometryEndpoints(suravageLink.geometry)
-       val x = if (endPoints._1.x > endPoints._2.x) (endPoints._2.x, endPoints._1.x) else (endPoints._1.x, endPoints._2.x)
-       val rightTop = Point(x._2, endPoints._2.y)
-       val leftBottom = Point(x._1, endPoints._1.y)
-      val (roadLinksNearSuravageLinks,projectLinksNearSuravageL,suravageProjectLinks)=
-        getRoadLinksProjectLinksNearSuravageAndSuravageProjectLink(BoundingRectangle(leftBottom, rightTop),projectId,suravageLink.linkId)
+    roadLinkService.fetchSuravageLinksByLinkIdsFromVVH(Set(linkId)) match {
+      case (suravageLinks) if suravageLinks.nonEmpty && suravageLinks.size==1 =>
+        val suravageLink=suravageLinks.head
+        val endPoints = GeometryUtils.geometryEndpoints(suravageLink.geometry)
+        val x = if (endPoints._1.x > endPoints._2.x) (endPoints._2.x, endPoints._1.x) else (endPoints._1.x, endPoints._2.x)
+        val rightTop = Point(x._2, endPoints._2.y)
+        val leftBottom = Point(x._1, endPoints._1.y)
+        val (roadLinksNearSuravageLinks,projectLinksNearSuravageL,suravageProjectLinks,projectELY) =
+          getRoadLinksProjectLinksNearSuravageAndSuravageProjectLink(BoundingRectangle(leftBottom, rightTop),projectId,suravageLink.linkId)
         if (roadLinksNearSuravageLinks.isEmpty)
-        Left("Could not find roadaddresslinks near suravagelink")
-       if (projectLinksNearSuravageL.isEmpty)
-         Left("Could not find projectlinks near suravagelink")
-       if (suravageProjectLinks.isEmpty && suravageProjectLinks.length>1)
-         Left("Could not match suravagelink to projectlinks")
-         val suravageProjectLink=suravageProjectLinks.head
-         val projectLinksWithInTolerance=roadLinksNearSuravageLinks.filter(x=>projectLinksNearSuravageL.map(x=>x.linkId).contains(x.linkId))
-           .filter(x=> x.linkGeomSource!=LinkGeomSource.SuravageLinkInterface && GeometryUtils.areAdjacent(Seq(x.geometry.head, x.geometry.last),suravageLink.geometry)
-             && GeometryUtils.minimumDistance(splitPoint,x.geometry)>1)
-      val mostCommonLinkWithSuravage= projectLinksWithInTolerance.head //TODO get link that has highestCommonlenght
-      val projectLink=projectLinksNearSuravageL.filter(x=>x.linkId==mostCommonLinkWithSuravage.linkId).head
-      ProjectLinkSplitter.split(suravageProjectLink,projectLink,
-        SplitOptions(splitPoint,projectLink.status,projectLink.status,projectLink.roadNumber,projectLink.roadPartNumber,
-        projectLink.track.value,projectLink.discontinuity.value,-1,projectLink.linkGeomSource.value,projectLink.roadType.value))
-         //TODO method to  update "merged" suravagelink
+          return Left("Could not find roadaddresslinks near suravagelink")
+        if (projectLinksNearSuravageL.isEmpty)
+          return Left("Could not find projectlinks near suravagelink")
+        if (suravageProjectLinks.isEmpty && suravageProjectLinks.length>1)
+          return Left("Could not match suravagelink to projectlinks")
+        val suravageProjectLink=suravageProjectLinks.head
+        val projectLinksWithInTolerance=roadLinksNearSuravageLinks.filter(x=>projectLinksNearSuravageL.map(x=>x.linkId).contains(x.linkId))
+          .filter(x=> x.linkGeomSource!=LinkGeomSource.SuravageLinkInterface && GeometryUtils.areAdjacent(Seq(x.geometry.head, x.geometry.last),suravageLink.geometry)
+            && GeometryUtils.minimumDistance(splitPoint,x.geometry)>1)
+        //we rank template links near suravagelink by how much they overlap with suravage geometry
+        val rankedcanditetesForMerge= projectLinksWithInTolerance.map(x=>
+          (GeometryUtils.geometryLength(ProjectLinkSplitter.findMatchingGeometrySegment(suravageLink,x).getOrElse(Seq())),x.copy()))
+        val mostCommonLinkWithSuravage=rankedcanditetesForMerge.maxBy(_._1)._2
+        val projectLink=projectLinksNearSuravageL.filter(x=>x.linkId==mostCommonLinkWithSuravage.linkId).head
+        val splittedLinks=ProjectLinkSplitter.split(suravageProjectLink,projectLink,
+          SplitOptions(splitPoint,projectLink.status,projectLink.status,projectLink.roadNumber,projectLink.roadPartNumber,
+            projectLink.track.value,projectLink.discontinuity.value,projectELY.getOrElse(-1),projectLink.linkGeomSource.value,projectLink.roadType.value))
+        //TODO method to  update "merged" suravagelink
         // TODO  update suravagelink project
         Right(null)//TODO return created link
-     case _=>  Left("Suravage link fetch from VVH failed")
-   }
+      case _=>  Left("Suravage link fetch from VVH failed")
+    }
   }
 
 
-private def getRoadLinksProjectLinksNearSuravageAndSuravageProjectLink(bbox:BoundingRectangle, suravageLinkId:Long, projectId:Long): (Seq[RoadAddress],Seq[ProjectLink],Seq[ProjectLink]) =
+  private def getRoadLinksProjectLinksNearSuravageAndSuravageProjectLink(bbox:BoundingRectangle, suravageLinkId:Long, projectId:Long): (Seq[RoadAddress],Seq[ProjectLink],Seq[ProjectLink],Option[Long]) =
   {
     withDynSession {
       val roadLinksNearSuravageLinks = RoadAddressDAO.fetchRoadAddressesByBoundingBox(bbox, false)
       val projectLinksNearSuravageL = ProjectDAO.getProjectLinksByProjectAndLinkId(roadLinksNearSuravageLinks.map(x => x.linkId), projectId)
       val suravageProjectLinks = ProjectDAO.getProjectLinksByLinkId(suravageLinkId)
-      (roadLinksNearSuravageLinks,projectLinksNearSuravageL,suravageProjectLinks)
+      val projectELY=ProjectDAO.getProjectEly(projectId)
+      (roadLinksNearSuravageLinks,projectLinksNearSuravageL,suravageProjectLinks,projectELY)
     }
   }
 
