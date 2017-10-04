@@ -16,6 +16,11 @@ object ProjectLinkSplitter {
     GeometryUtils.areAdjacent(link1.geometry.head, link2.geometry.last, MaxDistanceForConnectedLinks) ||
       GeometryUtils.areAdjacent(link1.geometry.last, link2.geometry.head, MaxDistanceForConnectedLinks)
   }
+  private def isTailConnected(link1: PolyLine, link2: PolyLine) = {
+    GeometryUtils.areAdjacent(link1.geometry.last, link2.geometry.last, MaxDistanceForConnectedLinks) ||
+      isDirectionReversed(link1, link2) &&
+        GeometryUtils.areAdjacent(link1.geometry.head, link2.geometry.last, MaxDistanceForConnectedLinks)
+  }
   private def suravageWithOptions(suravage: ProjectLink, templateLink: ProjectLink, split: SplitOptions, suravageM: Double,
                               splitAddressM: Long) = {
     (
@@ -101,8 +106,9 @@ object ProjectLinkSplitter {
     val templateM = GeometryUtils.calculateLinearReferenceFromPoint(split.splitPoint, templateLink.geometry)
     val splitAddressM = templateLink.startAddrMValue + Math.round(templateM / templateLink.geometryLength *
       (templateLink.endAddrMValue - templateLink.startAddrMValue))
+    val isReversed = (split.statusB == LinkStatus.New) ^ isTailConnected(suravage, templateLink)
     val splits =
-      if (split.statusB == LinkStatus.New)
+      if (isReversed)
         movedFromStart(suravageM, templateM, splitAddressM)
       else
         movedFromEnd(suravageM, templateM, splitAddressM)
