@@ -137,13 +137,11 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers {
     sl should have size (2)
     tl should have size (1)
     val terminatedLink = tl.head
-    println(terminatedLink)
     terminatedLink.status should be (LinkStatus.Terminated)
     terminatedLink.endAddrMValue should be (template.endAddrMValue)
     GeometryUtils.areAdjacent(terminatedLink.geometry,
       GeometryUtils.truncateGeometry2D(template.geometry, terminatedLink.startMValue, template.geometryLength)) should be (true)
     sl.foreach { l =>
-      println(l)
       l.endAddrMValue == terminatedLink.startAddrMValue || l.startAddrMValue == terminatedLink.startAddrMValue should be(true)
       l.linkGeomSource should be (LinkGeomSource.SuravageLinkInterface)
       (l.endAddrMValue == template.endAddrMValue &&
@@ -203,15 +201,13 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers {
     sl should have size (2)
     tl should have size (1)
     val terminatedLink = tl.head
-    println(terminatedLink)
     terminatedLink.status should be (LinkStatus.Terminated)
-    terminatedLink.endAddrMValue should be (template.endAddrMValue)
+    terminatedLink.startAddrMValue should be (template.startAddrMValue)
     GeometryUtils.areAdjacent(terminatedLink.geometry,
       GeometryUtils.truncateGeometry2D(template.geometry, terminatedLink.startMValue, template.geometryLength)) should be (true)
     sl.foreach { l =>
-      println(l)
       l.roadAddressId should be (template.roadAddressId)
-      l.endAddrMValue == terminatedLink.startAddrMValue || l.startAddrMValue == terminatedLink.startAddrMValue &&
+      l.startAddrMValue == terminatedLink.endAddrMValue || l.startAddrMValue == terminatedLink.startAddrMValue &&
         l.status == LinkStatus.New should be(true)
       l.linkGeomSource should be (LinkGeomSource.SuravageLinkInterface)
       l.endAddrMValue == template.endAddrMValue || l.startAddrMValue == template.startAddrMValue should be(true)

@@ -79,7 +79,7 @@ object ProjectLinkSplitter {
         startMValue = 0.0,
         endMValue = templateM,
         geometryLength = templateM,
-        startAddrMValue = splitAddressM,
+        endAddrMValue = splitAddressM,
         status = LinkStatus.Terminated,
         geometry = GeometryUtils.truncateGeometry2D(templateLink.geometry, 0.0, templateM),
         connectedLinkId = Some(suravage.linkId))
@@ -106,7 +106,7 @@ object ProjectLinkSplitter {
     val templateM = GeometryUtils.calculateLinearReferenceFromPoint(split.splitPoint, templateLink.geometry)
     val splitAddressM = templateLink.startAddrMValue + Math.round(templateM / templateLink.geometryLength *
       (templateLink.endAddrMValue - templateLink.startAddrMValue))
-    val isReversed = (split.statusB == LinkStatus.New) ^ isTailConnected(suravage, templateLink)
+    val isReversed = (split.statusB == LinkStatus.New) ^ isDirectionReversed(suravage, templateLink)// isTailConnected(suravage, templateLink)
     val splits =
       if (isReversed)
         movedFromStart(suravageM, templateM, splitAddressM)
