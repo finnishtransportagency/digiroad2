@@ -667,9 +667,9 @@
     };
 
     var selectToolControl = new SelectToolControl(applicationModel, vectorLayer, map, {
-      // style: function (feature) {
-      //   return style.browsingStyle.getStyle(feature, {zoomLevel: uiState.zoomLevel});
-      // },
+      style: function (feature) {
+        return style.browsingStyle.getStyle(feature, {zoomLevel: uiState.zoomLevel});
+      },
       // onInteractionEnd: onInteractionEnd,
       // onSelect: OnSelect,
       filterGeometry: function (feature) {
@@ -704,7 +704,7 @@
       var clickHandler = function(evt) {
         if (applicationModel.getSelectedTool() === 'Cut') {
           // if (collection.isDirty()) {
-          //   me.displayConfirmMessage();
+          //   me.splayConfirmMessage();
           // } else {
             self.cut(evt);
           // }
@@ -733,13 +733,8 @@
       var findNearestSuravageLink = function(point) {
         return _.chain(vectorSource.getFeatures())
             .filter(function(feature) {
-              return feature.getGeometry() instanceof ol.geom.LineString;
+              return feature.projectLinkData.roadLinkSource == 3;
             })
-            // .reject(function(feature) {
-            //   var properties = feature.getProperties();
-            //   return _.has(properties, 'generatedId');
-            //   // && _.flatten(projectCollection.getGroup(properties.id)).length > 0;
-            // })
             .map(function(feature) {
               var closestP = feature.getGeometry().getClosestPoint(point);
               var distanceBetweenPoints = GeometryUtils.distanceOfPoints(point, closestP);
@@ -784,16 +779,10 @@
         };
 
         var nearest = findNearestSuravageLink([mousePoint.x, mousePoint.y]);
-        //nearest is the selected one for this test
-        // var nearest = _.first(_.filter(vectorSource.getFeatures(), function(feature){
-        //   return feature.linkId == 500006335;
-        // }));
 
-
-
-        // if (!isWithinCutThreshold(nearest.distance)) {
-        //   return;
-        // }
+        if (!isWithinCutThreshold(nearest.distance)) {
+          return;
+        }
 
         var nearestSuravage = nearest.feature.projectLinkData;
         var splitProperties = calculateSplitProperties(nearestSuravage, mousePoint);
@@ -842,7 +831,7 @@
       else return false;
     };
 
-    var suravageCutter = new SuravageCutter(vectorLayer, projectCollection, me.eventListener);
+    var suravageCutter = new SuravageCutter(suravageRoadProjectLayer, projectCollection, me.eventListener);
 
     var changeTool = function(tool) {
       if (tool === 'Cut') {

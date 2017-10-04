@@ -4,6 +4,7 @@
     var current = [];
     var ids = [];
     var dirty = false;
+    var splitSuravage = {};
 
     var open = function (linkid, multiSelect) {
       if (!multiSelect) {
@@ -16,9 +17,9 @@
       eventbus.trigger('projectLink:clicked', get());
     };
 
-    this.splitSuravageLink = function(nearestSuravage, split) {
-      splitSuravageLinks(nearestSuravage, split, function(splitSpeedLimits) {
-        selection = [splitSpeedLimits.created, splitSpeedLimits.existing];
+    var splitSuravageLink = function(nearestSuravage, split) {
+      splitSuravageLinks(nearestSuravage, split, function(splitSuravage) {
+        selection = [splitSuravage.created, splitSuravage.existing];
         // originalSpeedLimitValue = splitSpeedLimits.existing.value;
         dirty = true;
         // collection.setSelection(self);
@@ -37,22 +38,22 @@
       right.points = split.secondSplitVertices;
 
       if (calculateMeasure(left) < calculateMeasure(right)) {
-        splitSpeedLimits.created = left;
-        splitSpeedLimits.existing = right;
+        splitSuravage.created = left;
+        splitSuravage.existing = right;
       } else {
-        splitSpeedLimits.created = right;
-        splitSpeedLimits.existing = left;
+        splitSuravage.created = right;
+        splitSuravage.existing = left;
       }
 
-      splitSpeedLimits.created.id = null;
-      splitSpeedLimits.splitMeasure = split.splitMeasure;
+      splitSuravage.created.id = null;
+      splitSuravage.splitMeasure = split.splitMeasure;
 
-      splitSpeedLimits.created.marker = 'A';
-      splitSpeedLimits.existing.marker = 'B';
+      splitSuravage.created.marker = 'A';
+      splitSuravage.existing.marker = 'B';
 
       dirty = true;
-      callback(splitSpeedLimits);
-      eventbus.trigger('speedLimits:fetched', self.getAll());
+      callback(splitSuravage);
+      // eventbus.trigger('speedLimits:fetched', self.getAll());
     };
 
     var calculateMeasure = function(link) {
@@ -116,7 +117,8 @@
       close: close,
       isSelected: isSelected,
       setCurrent: setCurrent,
-      isDirty: isDirty
+      isDirty: isDirty,
+      splitSuravageLink: splitSuravageLink
     };
   };
 })(this);

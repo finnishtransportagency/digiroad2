@@ -213,11 +213,6 @@
     else return firstVertex;
   };
 
-  root.pointsToLineString = function(points) {
-    var openlayersPoints = _.map(points, function(point) { return new OpenLayers.Geometry.Point(point.x, point.y); });
-    return new OpenLayers.Geometry.LineString(openlayersPoints);
-  };
-
   root.areAdjacents = function(geometry1, geometry2){
     var epsilon = 0.01;
     var geom1FirstPoint = _.first(geometry1);
@@ -230,7 +225,5 @@
       distanceOfPoints(geom2LastPoint,geom1LastPoint) < epsilon;
   };
 
-
-  
 })(window.GeometryUtils = window.GeometryUtils || {});
 
