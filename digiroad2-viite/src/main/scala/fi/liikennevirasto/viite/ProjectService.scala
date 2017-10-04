@@ -13,7 +13,7 @@ import fi.liikennevirasto.viite.dao.{ProjectDAO, RoadAddressDAO, _}
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.DefloatMapper.distancesBetweenEndPoints
 import fi.liikennevirasto.viite.process._
-import fi.liikennevirasto.viite.util.GuestimateGeometryForMissingLinks
+import fi.liikennevirasto.viite.util.{GuestimateGeometryForMissingLinks, ProjectLinkSplitter}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
@@ -410,11 +410,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
        val rightTop = Point(x._2, endPoints._2.y)
        val leftBottom = Point(x._1, endPoints._1.y)
        withDynSession{
-       val roadLinksNearSuravageLink=RoadAddressDAO.fetchRoadAddressesByBoundingBox(BoundingRectangle(leftBottom,rightTop),false) //TODO filter links that are not in project
-       val distancesBetween=roadLinksNearSuravageLink.map( x   =>
-         (x.linkId,distancesBetweenEndPoints(suravageLink.geometry,x.geometry))  //TODO needs splitted geometry and comparison with splitted geometry probably have to  check distances for both sides  because we dont know which side will be terminated
-     )
-      val closestRoadLink=distancesBetween.minBy(x=>x._2._2) // might have to create better method to rank roadlinks
+         val roadLinksNearSuravageLink=RoadAddressDAO.fetchRoadAddressesByBoundingBox(BoundingRectangle(leftBottom,rightTop),false)
+         val projectLinksNearSuravageL=ProjectDAO.getProjectLinksByProjectAndLinkId(roadLinksNearSuravageLink.map(x=> x.linkId),projectId)
+
+
+         val projectLinksWithInTolerance=roadLinksNearSuravageLink.filter(x=>projectLinksNearSuravageL.map(x=>x.linkId).contains(x.linkId))
+           .filter(x=> GeometryUtils.areAdjacent(Seq(x.geometry.head, x.geometry.last),suravageLink.geometry)
+             && GeometryUtils.minimumDistance(splitPoint,x.geometry)>1)
+
+      val mostCommonWithSuravage= None //TODO get link that has highestCommonlenght
         //TODO method to  create merged suravagelink
         // TODO  Create new projectlink to project
         Left("")//todo return created link

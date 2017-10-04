@@ -214,6 +214,14 @@ object ProjectDAO {
     listQuery(query)
   }
 
+  def getProjectLinksByProjectAndLinkId(projectLinkIds: Iterable[Long], projectId:Long): List[ProjectLink] = {
+    val query =
+      s"""$projectLinkQueryBase
+                where project_link.id in (${projectLinkIds.mkString(",")} AND (PROJECT_LINK.PROJECT_ID = $projectId )  ) order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
+    listQuery(query)
+  }
+
+
   def fetchByProjectRoadPart(roadNumber: Long, roadPartNumber: Long, projectId: Long): List[ProjectLink] = {
     val filter = s"PROJECT_LINK.ROAD_NUMBER = $roadNumber AND PROJECT_LINK.ROAD_PART_NUMBER = $roadPartNumber AND"
     val query =
@@ -494,7 +502,7 @@ object ProjectDAO {
       val deleteLrm =
         s"""
          DELETE FROM LRM_POSITION WHERE id IN (SELECT lrm_position_id from PROJECT_LINK where id in (${ids.mkString(",")}))
-       """
+      """
       Q.updateNA(deleteLrm).execute
       count
     }
