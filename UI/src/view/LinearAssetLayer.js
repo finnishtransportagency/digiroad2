@@ -108,10 +108,13 @@ window.LinearAssetLayer = function(params) {
     this.updateByPosition = function(mousePoint) {
       var closestLinearAssetLink = findNearestLinearAssetLink(mousePoint);
       if (closestLinearAssetLink) {
-        if (isWithinCutThreshold(closestLinearAssetLink.distance)) {
-          moveTo(closestLinearAssetLink.point[0], closestLinearAssetLink.point[1]);
-        } else {
-          remove();
+        var nearestLineAsset = closestLinearAssetLink.feature.getProperties();
+        if (!editConstrains(nearestLineAsset)) {
+          if (isWithinCutThreshold(closestLinearAssetLink.distance)) {
+            moveTo(closestLinearAssetLink.point[0], closestLinearAssetLink.point[1]);
+          } else {
+            remove();
+          }
         }
       }
     };
@@ -137,10 +140,12 @@ window.LinearAssetLayer = function(params) {
       }
 
       var nearestLinearAsset = nearest.feature.getProperties();
-      var splitProperties = calculateSplitProperties(nearestLinearAsset, mousePoint);
-      selectedLinearAsset.splitLinearAsset(nearestLinearAsset.id, splitProperties);
+      if(!editConstrains(nearestLinearAsset)) {
+        var splitProperties = calculateSplitProperties(nearestLinearAsset, mousePoint);
+        selectedLinearAsset.splitLinearAsset(nearestLinearAsset.id, splitProperties);
 
-      remove();
+        remove();
+      }
     };
   };
 

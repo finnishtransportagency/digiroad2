@@ -297,13 +297,17 @@ trait MassTransitStopService extends PointAssetOperations {
     roadLinkOption match {
       case None => return super.isFloating(persistedAsset, roadLinkOption)
       case Some(roadLink) =>
-        val administrationClass = getAdministrationClass(persistedAsset.asInstanceOf[PersistedMassTransitStop])
+        val massTransitStopAsset = persistedAsset.asInstanceOf[PersistedMassTransitStop]
+        val administrationClass = getAdministrationClass(massTransitStopAsset)
         val(floating , floatingReason) = MassTransitStopOperations.isFloating(administrationClass.getOrElse(Unknown), Some(roadLink))
         if (floating) {
           return (floating, floatingReason)
         }
+        val(floatingDir , floatingReasonDir) = MassTransitStopOperations.isFloating(massTransitStopAsset, roadLinkOption)
+        if (floatingDir) {
+          return (floatingDir, floatingReasonDir)
+        }
     }
-
     super.isFloating(persistedAsset, roadLinkOption)
   }
 
@@ -704,6 +708,12 @@ trait MassTransitStopService extends PointAssetOperations {
     }
     val validityDirection = AssetPropertyConfiguration.commonAssetProperties(AssetPropertyConfiguration.ValidityDirectionId)
     requiredProperties + (validityDirection.publicId -> validityDirection.propertyType)
+  }
+
+  def getPropertiesWithMaxSize(): Map[String, Int] = {
+    withDynSession {
+      massTransitStopDao.getPropertiesWithMaxSize(typeId)
+    }
   }
 
   def calculateLinearReferenceFromPoint(point: Point, points: Seq[Point]): Double = {
