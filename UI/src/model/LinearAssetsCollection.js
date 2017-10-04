@@ -1,39 +1,43 @@
 (function(root) {
   root.LinearAssetsCollection = function(backend, typeId, singleElementEventCategory, multiElementEventCategory) {
-    var linearAssets = [];
-    var dirty = false;
-    var selection = null;
-    var self = this;
-    var splitLinearAssets = {};
-    var separatedLimit = {};
+      var linearAssets = [];
+      var dirty = false;
+      var selection = null;
+      var self = this;
+      var splitLinearAssets = {};
+      var separatedLimit = {};
 
-    var singleElementEvent = function(eventName) {
-      return singleElementEventCategory + ':' + eventName;
-    };
+      var singleElementEvent = function (eventName) {
+          return singleElementEventCategory + ':' + eventName;
+      };
 
-    var multiElementEvent = function(eventName) {
-      return multiElementEventCategory + ':' + eventName;
-    };
+      var multiElementEvent = function (eventName) {
+          return multiElementEventCategory + ':' + eventName;
+      };
 
-    var maintainSelectedLinearAssetChain = function(collection) {
-      if (!selection) return collection;
+      var maintainSelectedLinearAssetChain = function (collection) {
+          if (!selection) return collection;
 
       var isSelected = function (linearAsset) { return selection.isSelected(linearAsset); };
 
-      var collectionPartitionedBySelection = _.groupBy(collection, function(linearAssetGroup) {
-        return _.some(linearAssetGroup, isSelected);
-      });
-      var groupContainingSelection = _.flatten(collectionPartitionedBySelection[true] || []);
+          var collectionPartitionedBySelection = _.groupBy(collection, function (linearAssetGroup) {
+              return _.some(linearAssetGroup, isSelected);
+          });
+          var groupContainingSelection = _.flatten(collectionPartitionedBySelection[true] || []);
 
-      var collectionWithoutGroup = collectionPartitionedBySelection[false] || [];
-      var groupWithoutSelection = _.reject(groupContainingSelection, isSelected);
+          var collectionWithoutGroup = collectionPartitionedBySelection[false] || [];
+          var groupWithoutSelection = _.reject(groupContainingSelection, isSelected);
 
-      return collectionWithoutGroup.concat(_.isEmpty(groupWithoutSelection) ? [] : [groupWithoutSelection]).concat([selection.get()]);
-    };
+          return collectionWithoutGroup.concat(_.isEmpty(groupWithoutSelection) ? [] : [groupWithoutSelection]).concat([selection.get()]);
+      };
 
-    this.getAll = function() {
-      return maintainSelectedLinearAssetChain(linearAssets);
-    };
+      this.getAll = function () {
+          return maintainSelectedLinearAssetChain(linearAssets);
+      };
+
+      this.getById = function (Id) {
+          return _.find(_.flatten(linearAssets), {id: Id});
+      };
 
     var generateUnknownLimitId = function(linearAsset) {
       return linearAsset.linkId.toString() +

@@ -402,118 +402,6 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     }.toSeq
   }
 
-  /**
-    * Iterates a set of link ids with MaintenanceRoad asset type id and floating flag and returns linear assets. Used by LinearAssetService.getByRoadLinks
-    */
-  def fetchMaintenancesByLinkIds(maintenanceRoadAssetTypeId: Int, linkIds: Seq[Long], includeFloating: Boolean = false, includeExpire: Boolean = true ): Seq[PersistedLinearAsset] = {
-    val floatingFilter = if (includeFloating) "" else "and a.floating = 0"
-    val expiredFilter = if (includeExpire) "" else "and (a.valid_to > sysdate or a.valid_to is null)"
-    val filter = floatingFilter ++ expiredFilter
-
-    val assets = MassQuery.withIds(linkIds.toSet) { idTableName =>
-      sql"""
-         select a.id, t.id, t.property_id, t.value_fi, p.property_type, p.public_id, p.required, pos.link_id,
-                pos.side_code, pos.start_measure,
-                pos.end_measure, pos.adjusted_timestamp, pos.modified_date, a.created_by, a.created_date,
-                a.modified_by, a.modified_date,
-                case when a.valid_to <= sysdate then 1 else 0 end as expired, pos.link_source
-           from asset a
-                join asset_link al on a.id = al.asset_id
-                join lrm_position pos on al.position_id = pos.id
-                join text_property_value t on t.asset_id = a.id
-                join #$idTableName i on i.id = pos.link_id
-                join property p on p.id = t.property_id
-          where a.asset_type_id = #$maintenanceRoadAssetTypeId
-          #$filter
-         union
-         select a.id, e.id, e.property_id, cast (e.value as varchar2 (30)), p.property_type, p.public_id, p.required,
-                pos.link_id, pos.side_code,
-                pos.start_measure, pos.end_measure, pos.adjusted_timestamp, pos.modified_date, a.created_by,
-                a.created_date, a.modified_by, a.modified_date,
-                case when a.valid_to <= sysdate then 1 else 0 end as expired, pos.link_source
-           from asset a
-               join asset_link al on a.id = al.asset_id
-                join lrm_position pos on al.position_id = pos.id
-                join single_choice_value s on s.asset_id = a.id
-                join enumerated_value e on e.id = s.enumerated_value_id
-                join #$idTableName i on i.id = pos.link_id
-                join property p on p.id = e.property_id
-          where a.asset_type_id = #$maintenanceRoadAssetTypeId
-          #$filter"""
-        .as[(Long, Long, Long, String, String, String, Boolean, Long, Int, Double, Double, Long, Option[DateTime], Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)].list
-    }
-
-    val groupedByAssetId = assets.groupBy(_._1)
-    val groupedByMaintenanceRoadId = groupedByAssetId.mapValues(_.groupBy(_._2))
-
-    groupedByMaintenanceRoadId.map { case (assetId, rowsByMaintenanceRoadId) =>
-      val (_, _, _, _, _, _, _, linkId, sideCode, startMeasure, endMeasure, vvhTimeStamp, geomModifiedDate, createdBy, createdDate, modifiedBy, modifiedDate, expired, linkSource) = groupedByAssetId(assetId).head
-      val maintenanceRoadValues = rowsByMaintenanceRoadId.keys.toSeq.sorted.map { maintenanceRoadId =>
-        val rows = rowsByMaintenanceRoadId(maintenanceRoadId)
-        val propertyValue = rows.head._4
-        val propertyType = rows.head._5
-        val propertyPublicId = rows.head._6
-        Properties(propertyPublicId, propertyType, propertyValue)
-      }
-      PersistedLinearAsset(assetId, linkId, sideCode, Some(MaintenanceRoad(maintenanceRoadValues)), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, maintenanceRoadAssetTypeId, vvhTimeStamp, geomModifiedDate, LinkGeomSource.apply(linkSource))
-    }.toSeq
-  }
-
-  /**
-    * Iterates a set of asset ids with MaintenanceRoad asset type id and floating flag and returns linear assets. User by LinearAssetService.getPersistedAssetsByIds
-    */
-  def fetchMaintenancesByIds(maintenanceRoadAssetTypeId: Int, ids: Set[Long], includeFloating: Boolean = false): Seq[PersistedLinearAsset] = {
-    val floatingFilter = if (includeFloating) "" else "and a.floating = 0"
-
-    val assets = MassQuery.withIds(ids.toSet) { idTableName =>
-      sql"""
-         select a.id, t.id, t.property_id, t.value_fi, p.property_type, p.public_id, p.required, pos.link_id,
-                pos.side_code, pos.start_measure,
-                pos.end_measure, pos.adjusted_timestamp, pos.modified_date, a.created_by, a.created_date,
-                a.modified_by, a.modified_date,
-                case when a.valid_to <= sysdate then 1 else 0 end as expired, pos.link_source
-           from asset a
-                join asset_link al on a.id = al.asset_id
-                join lrm_position pos on al.position_id = pos.id
-                join text_property_value t on t.asset_id = a.id
-                join #$idTableName i on i.id = a.id
-                join property p on p.id = t.property_id
-          where a.asset_type_id = #$maintenanceRoadAssetTypeId
-            #$floatingFilter
-         union
-         select a.id, e.id, e.property_id, cast (e.value as varchar2 (30)), p.property_type, p.public_id, p.required,
-                pos.link_id, pos.side_code,
-                pos.start_measure, pos.end_measure, pos.adjusted_timestamp, pos.modified_date, a.created_by,
-                a.created_date, a.modified_by, a.modified_date,
-                case when a.valid_to <= sysdate then 1 else 0 end as expired, pos.link_source
-           from asset a
-               join asset_link al on a.id = al.asset_id
-                join lrm_position pos on al.position_id = pos.id
-                join single_choice_value s on s.asset_id = a.id
-                join enumerated_value e on e.id = s.enumerated_value_id
-                join #$idTableName i on i.id = a.id
-                join property p on p.id = e.property_id
-          where a.asset_type_id = #$maintenanceRoadAssetTypeId
-            #$floatingFilter"""
-        .as[(Long, Long, Long, String, String, String, Boolean, Long, Int, Double, Double, Long, Option[DateTime], Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int)].list
-    }
-
-    val groupedByAssetId = assets.groupBy(_._1)
-    val groupedByMaintenanceRoadId = groupedByAssetId.mapValues(_.groupBy(_._2))
-
-    groupedByMaintenanceRoadId.map { case (assetId, rowsByMaintenanceRoadId) =>
-      val (_, _, _, _, _, _, _, linkId, sideCode, startMeasure, endMeasure, vvhTimeStamp, geomModifiedDate, createdBy, createdDate, modifiedBy, modifiedDate, expired, linkSource) = groupedByAssetId(assetId).head
-      val maintenanceRoadValues = rowsByMaintenanceRoadId.keys.toSeq.sorted.map { maintenanceRoadId =>
-        val rows = rowsByMaintenanceRoadId(maintenanceRoadId)
-        val propertyValue = rows.head._4
-        val propertyType = rows.head._5
-        val propertyPublicId = rows.head._6
-        Properties(propertyPublicId, propertyType, propertyValue)
-      }
-      PersistedLinearAsset(assetId, linkId, sideCode, Some(MaintenanceRoad(maintenanceRoadValues)), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, maintenanceRoadAssetTypeId, vvhTimeStamp, geomModifiedDate, LinkGeomSource.apply(linkSource))
-    }.toSeq
-  }
-
   private def fetchSpeedLimitsByLinkId(linkId: Long) = {
     sql"""
       select a.id, pos.link_id, pos.side_code, e.value, pos.start_measure, pos.end_measure, pos.adjusted_timestamp, pos.modified_date, pos.link_source
@@ -911,6 +799,16 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   }
 
   /**
+    * Updates asset area in db.
+    **/
+  def updateArea(assetId: Long, area: Int): Unit = {
+    sqlu"""
+      update asset
+      set area = $area
+      where id = $assetId
+    """.execute
+  }
+  /**
     * Splits speed limit by given split measure. Updates old asset and creates new asset. Returns new asset id.
     * Used by SpeedLimitService.split.
     */
@@ -1061,41 +959,6 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     }
   }
 
-  /**
-    * Updates MaintenanceRoad property. Used by LinearAssetService.updateProjected.
-    */
-  def updateMaintenanceRoadValue(assetId: Long, value: MaintenanceRoad, username: String): Option[Long] = {
-    value.maintenanceRoad.foreach { prop =>
-      val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply(prop.publicId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + prop.publicId + " not found"))
-      prop.propertyType match {
-        case PropertyTypes.Text => {
-          if (textPropertyValueDoesNotExist(assetId, propertyId) && prop.value.nonEmpty) {
-            Queries.insertTextProperty(assetId, propertyId, prop.value).first
-          } else if (prop.value.isEmpty) {
-            Queries.deleteTextProperty(assetId, propertyId).execute
-          } else {
-            Queries.updateTextProperty(assetId, propertyId, prop.value).firstOption.getOrElse(throw new IllegalArgumentException("Property Text Update: " + prop.publicId + " not found"))
-          }
-        }
-        case PropertyTypes.SingleChoice | PropertyTypes.CheckBox => {
-          if (singleChoiceValueDoesNotExist(assetId, propertyId)) {
-            Queries.insertSingleChoiceProperty(assetId, propertyId, prop.value.toInt).first
-          } else {
-            Queries.updateSingleChoiceProperty(assetId, propertyId, prop.value.toInt).firstOption.getOrElse(throw new IllegalArgumentException("Property Single Choice Update: " + prop.publicId + " not found"))
-          }
-        }
-      }
-    }
-    Some(assetId)
-  }
-
-  private def textPropertyValueDoesNotExist(assetId: Long, propertyId: Long) = {
-    Q.query[(Long, Long), Long](Queries.existsTextProperty).apply((assetId, propertyId)).firstOption.isEmpty
-  }
-
-  private def singleChoiceValueDoesNotExist(assetId: Long, propertyId: Long) = {
-    Q.query[(Long, Long), Long](Queries.existsSingleChoiceProperty).apply((assetId, propertyId)).firstOption.isEmpty
-  }
 
   /**
     *  Updates prohibition value. Used by LinearAssetService.updateWithoutTransaction.
@@ -1117,17 +980,6 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     }
     Some(id)
   }
-
-    def insertMaintenanceRoadValue(assetId: Long, value: MaintenanceRoad): Unit = {
-      value.maintenanceRoad.filter(finalProps => finalProps.value != "").foreach(prop => {
-        prop.propertyType match {
-          case PropertyTypes.Text =>
-            insertValue(assetId, prop.publicId, prop.value)
-          case PropertyTypes.SingleChoice | PropertyTypes.CheckBox =>
-            insertEnumeratedValue(assetId, prop.publicId, prop.value.toInt)
-        }
-      })
-    }
 
   def getRequiredProperties(typeId: Int): Map[String, String] ={
     val requiredProperties =
@@ -1179,6 +1031,21 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
               join lrm_position lp on (al.position_id = lp.id)
               where (a.asset_type_id = $assetType and  lp.link_id = $linkId)""".as[(Long)].list
     ids
+  }
+
+  def getAssetLrmPosition(typeId: Long, assetId: Long): Option[( Long, Double, Double)] = {
+    val lrmInfo =
+      sql"""
+          select lrm.link_Id, lrm.start_measure, lrm.end_measure
+          from asset a
+          join asset_link al on al.asset_id = a.id
+          join lrm_position lrm on lrm.id = al.position_id
+          where a.asset_type_id = $typeId
+          and (a.valid_to IS NULL OR a.valid_to >= CURRENT_TIMESTAMP )
+          and a.floating = 0
+          and a.id = $assetId
+      """.as[(Long, Double, Double)].firstOption
+    lrmInfo
   }
 
   def getMunicipalityById(id: Long): Seq[Long] = {
