@@ -356,4 +356,8 @@ class MassTransitStopDao {
       """.execute
   }
 
+  def getPropertiesWithMaxSize(assetTypeId: Long): Map[String, Int] = {
+    sql"""select public_id, max_value_length from property where asset_type_id = $assetTypeId and max_value_length is not null""".as[(String, Int)].iterator.toMap
+  }
+
 }
