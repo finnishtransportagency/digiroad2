@@ -719,11 +719,11 @@
 
       this.activate = function() {
         eventListener.listenTo(eventbus, 'map:clicked', clickHandler);
-        eventListener.listenTo(eventbus, 'map:mouseMoved', function(event) {
-          if (applicationModel.getSelectedTool() === 'Cut' && !selectedProjectLinkProperty.isDirty()) {
-            self.updateByPosition(event.coordinate);
-          }
-        });
+        // eventListener.listenTo(eventbus, 'map:mouseMoved', function(event) {
+        //   if (applicationModel.getSelectedTool() === 'Cut' && !selectedProjectLinkProperty.isDirty()) {
+        //     self.updateByPosition(event.coordinate);
+        //   }
+        // });
       };
 
       var isWithinCutThreshold = function(suravageLink) {
@@ -732,14 +732,14 @@
 
       var findNearestSuravageLink = function(point) {
         return _.chain(vectorSource.getFeatures())
-            .filter(function(feature) {
-              return feature.getGeometry() instanceof ol.geom.LineString;
-            })
-            .reject(function(feature) {
-              var properties = feature.getProperties();
-              return _.has(properties, 'generatedId');
-                  // && _.flatten(projectCollection.getGroup(properties.id)).length > 0;
-            })
+            // .filter(function(feature) {
+            //   return feature.getGeometry() instanceof ol.geom.LineString;
+            // })
+            // .reject(function(feature) {
+            //   var properties = feature.getProperties();
+            //   return _.has(properties, 'generatedId');
+            //   // && _.flatten(projectCollection.getGroup(properties.id)).length > 0;
+            // })
             .map(function(feature) {
               var closestP = feature.getGeometry().getClosestPoint(point);
               var distanceBetweenPoints = GeometryUtils.distanceOfPoints(point, closestP);
@@ -776,19 +776,26 @@
 
         var calculateSplitProperties = function(nearestSuravage, point) {
           var lineString = pointsToLineString(nearestSuravage.points);
-          var startMeasureOffset = nearestSuravage.startMeasure;
-          var splitMeasure = GeometryUtils.calculateMeasureAtPoint(lineString, point) + startMeasureOffset;
-          var splitVertices = GeometryUtils.splitByPoint(pointsToLineString(nearestSuravage.points), point);
+          // var lineString = nearestSuravage.geometry;
+          // var startMeasureOffset = nearestSuravage.startMeasure;
+          var splitMeasure = GeometryUtils.calculateMeasureAtPoint(lineString, point);
+          var splitVertices = GeometryUtils.splitByPoint(lineString, point);
           return _.merge({ splitMeasure: splitMeasure }, splitVertices);
         };
 
-        var nearest = findNearestSuravageLink([mousePoint.x, mousePoint.y]);
+        // var nearest = findNearestSuravageLink([mousePoint.x, mousePoint.y]);
+        //nearest is the selected one for this test
+        var nearest = _.first(_.filter(vectorSource.getFeatures(), function(feature){
+          return feature.linkId == 500006335;
+        }));
 
-        if (!isWithinCutThreshold(nearest.distance)) {
-          return;
-        }
 
-        var nearestSuravage = nearest.feature.getProperties();
+
+        // if (!isWithinCutThreshold(nearest.distance)) {
+        //   return;
+        // }
+
+        var nearestSuravage = nearest.projectLinkData;
         var splitProperties = calculateSplitProperties(nearestSuravage, mousePoint);
         selectedProjectLinkProperty.splitSuravageLink(nearestSuravage, splitProperties);
 

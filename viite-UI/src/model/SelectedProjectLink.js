@@ -19,10 +19,10 @@
     this.splitSuravageLink = function(nearestSuravage, split) {
       splitSuravageLinks(nearestSuravage, split, function(splitSpeedLimits) {
         selection = [splitSpeedLimits.created, splitSpeedLimits.existing];
-        originalSpeedLimitValue = splitSpeedLimits.existing.value;
+        // originalSpeedLimitValue = splitSpeedLimits.existing.value;
         dirty = true;
-        collection.setSelection(self);
-        eventbus.trigger('speedLimit:selected', self);
+        // collection.setSelection(self);
+        // eventbus.trigger('speedLimit:selected', self);
       });
     };
 
