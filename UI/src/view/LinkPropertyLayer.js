@@ -339,6 +339,10 @@
         redrawSelected();
         currentRenderIntent = 'select';
       });
+      eventListener.listenTo(eventbus, 'toggleWithRoadAddress', function(){
+        if(applicationModel.getSelectedLayer() == layerName)
+          me.refreshView();
+      });
     };
 
     var startListeningExtraEvents = function(){

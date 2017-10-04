@@ -1899,4 +1899,24 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
     }
   }
+
+  test("Fetch assets by municipality - lighting") {
+    runWithRollback {
+
+      val newAssetId = ServiceWithDao.create(Seq(NewLinearAsset(1, 0, 20, NumericValue(1), 1, 0, None)), 100, "testuser")
+      val newAsset = ServiceWithDao.getPersistedAssetsByIds(100, newAssetId.toSet)
+
+      when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[String])).thenReturn(List(newAsset.head))
+      val assets = PassThroughService.getAssetsByMunicipality(100, 235)
+
+      assets.length should be (1)
+      assets.foreach { asset =>
+        asset.linkId should be (1)
+        asset.value.get should be(NumericValue(1))
+        asset.startMeasure should be(0)
+        asset.endMeasure should be (20)
+        asset.typeId should be (100)
+      }
+    }
+  }
 }

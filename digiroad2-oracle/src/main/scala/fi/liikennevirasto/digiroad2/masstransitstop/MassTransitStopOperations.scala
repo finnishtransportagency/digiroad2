@@ -1,7 +1,7 @@
 package fi.liikennevirasto.digiroad2.masstransitstop
 
 import fi.liikennevirasto.digiroad2.asset.{AbstractProperty, SimpleProperty, _}
-import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.{FloatingReason, PersistedMassTransitStop}
 
 object MassTransitStopOperations {
@@ -19,6 +19,8 @@ object MassTransitStopOperations {
   val AdministratorInfoPublicId = "tietojen_yllapitaja"
   val LiViIdentifierPublicId = "yllapitajan_koodi"
   val InventoryDateId = "inventointipaiva"
+  val RoadName_FI = "osoite_suomeksi"
+  val RoadName_SE = "osoite_ruotsiksi"
 
   val nameFiPublicId = "nimi_suomeksi"
   val nameSePublicId = "nimi_ruotsiksi"
@@ -46,6 +48,17 @@ object MassTransitStopOperations {
     else
       (false, None)
   }
+
+  def isFloating(persistedAsset: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike]): (Boolean, Option[FloatingReason]) = {
+    val simpleProperty = persistedAsset.propertyData.map{x => SimpleProperty(x.publicId , x.values)}
+
+    if(persistedAsset.propertyData.exists(_.publicId == "vaikutussuunta") &&
+      isValidBusStopDirections(simpleProperty, persistedAsset.linkId, roadLinkOption))
+      (false, None)
+    else
+      (true, Some(FloatingReason.TrafficDirectionNotMatch))
+    }
+
 
   def floatingReason(administrativeClass: AdministrativeClass, roadLink: RoadLinkLike): Option[String] = {
     if (administrativeClassMismatch(administrativeClass, Some(roadLink.administrativeClass)))
@@ -166,4 +179,13 @@ object MassTransitStopOperations {
     }
   }
 
+  def isValidBusStopDirections(properties: Seq[SimpleProperty], linkId: Long, roadLink: Option[RoadLinkLike]) = {
+    val roadLinkDirection = roadLink.map(dir => dir.trafficDirection).getOrElse(throw new IllegalStateException("Road link no longer available"))
+
+    properties.find(prop => prop.publicId == "vaikutussuunta").flatMap(_.values.headOption.map(_.propertyValue)) match {
+      case Some(busDir) =>
+        !((roadLinkDirection != TrafficDirection.BothDirections) && (roadLinkDirection.toString != SideCode.apply(busDir.toInt).toString))
+      case None => false
+    }
+  }
 }

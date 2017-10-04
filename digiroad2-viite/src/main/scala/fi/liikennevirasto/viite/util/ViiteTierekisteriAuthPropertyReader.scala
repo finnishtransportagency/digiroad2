@@ -14,7 +14,6 @@ class ViiteTierekisteriAuthPropertyReader {
 
   private def getUsername: String = {
     val loadedKeyString = properties.getProperty("viitetierekisteri.username")
-    println("u = "+loadedKeyString)
     if (loadedKeyString == null)
       throw new IllegalArgumentException("Missing TR username")
     loadedKeyString
@@ -22,7 +21,6 @@ class ViiteTierekisteriAuthPropertyReader {
 
   private def getPassword: String = {
     val loadedKeyString = properties.getProperty("viitetierekisteri.password")
-    println("p = "+loadedKeyString)
     if (loadedKeyString == null)
       throw new IllegalArgumentException("Missing TR Password")
     loadedKeyString

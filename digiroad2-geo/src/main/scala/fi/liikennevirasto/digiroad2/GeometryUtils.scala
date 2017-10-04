@@ -302,6 +302,9 @@ object GeometryUtils {
     (Point(left, top), Point(right, bottom))
   }
 
+  def isLinear(polyLines: Seq[PolyLine]): Boolean =
+    !isNonLinear(polyLines)
+
   def isNonLinear(polyLines: Seq[PolyLine]): Boolean = {
     if (polyLines.isEmpty)
       false
@@ -310,6 +313,26 @@ object GeometryUtils {
       polyLines.count(p => areAdjacent(p.geometry, p1, 1.0)) > 2 ||
         polyLines.count(p => areAdjacent(p.geometry, p2, 1.0)) > 2 ||
         isNonLinear(polyLines.tail)
+    }
+  }
+
+  def lastSegmentDirection(geometry: Seq[Point]): Vector3d = {
+    geometry.size match {
+      case 0 | 1 => throw new IllegalArgumentException("Geometry had less than 2 points")
+      case 2 =>
+        val (p1, p2) = (geometry.head, geometry.last)
+        Vector3d(p2.x - p1.x, p2.y - p1.y, p2.z - p1.z)
+      case _ =>
+        lastSegmentDirection(geometry.tail)
+    }
+  }
+
+  def firstSegmentDirection(geometry: Seq[Point]): Vector3d = {
+    geometry.size match {
+      case 0 | 1 => throw new IllegalArgumentException("Geometry had less than 2 points")
+      case _ =>
+        val (p1, p2) = (geometry.head, geometry.tail.head)
+        Vector3d(p2.x - p1.x, p2.y - p1.y, p2.z - p1.z)
     }
   }
 

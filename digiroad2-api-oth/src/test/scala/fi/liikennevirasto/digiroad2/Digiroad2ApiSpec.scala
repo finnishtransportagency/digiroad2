@@ -219,7 +219,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     getWithUserAuth("/assetTypeProperties/10") {
       status should equal(200)
       val ps = parse(body).extract[List[Property]]
-      ps.size should equal(38)
+      ps.size should equal(39)
       val p1 = ps.find(_.publicId == TestPropertyId).get
       p1.publicId should be ("katos")
       p1.propertyType should be ("single_choice")
@@ -273,7 +273,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("get numerical limits with bounding box", Tag("db")) {
-    getWithUserAuth("/linearassets?typeId=30&bbox=374037,6677013,374540,6677675") {
+    getWithUserAuth("/linearassets?typeId=30&bbox=374037,6677013,374540,6677675&withRoadAddress=true") {
       status should equal(200)
       val parsedBody = parse(body).extract[Seq[LinearAssetFromApi]]
       parsedBody.size should be(3)
@@ -283,7 +283,7 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   }
 
   test("get numerical limits with bounding box should return bad request if typeId missing", Tag("db")) {
-    getWithUserAuth("/linearassets?bbox=374037,6677013,374540,6677675") {
+    getWithUserAuth("/linearassets?bbox=374037,6677013,374540,6677675&withRoadAddress=true") {
       status should equal(400)
     }
   }

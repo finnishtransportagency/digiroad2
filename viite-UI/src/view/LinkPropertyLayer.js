@@ -1317,7 +1317,7 @@
       deactivateSelectInteractions();
     });
 
-    eventListener.listenTo(eventbus, 'linkProperties:deactivateAllSelections', function(){
+    eventListener.listenTo(eventbus, 'linkProperties:deactivateAllSelections roadAddressProject:deactivateAllSelections', function(){
       deactivateSelectInteractions(true);
     });
 
@@ -1325,12 +1325,12 @@
       activateSelectInteractions();
     });
 
-    eventListener.listenTo(eventbus, 'linkProperties:activateAllSelections', function(){
+    eventListener.listenTo(eventbus, 'linkProperties:activateAllSelections roadAddressProject:startAllInteractions', function(){
       activateSelectInteractions(true);
     });
 
     eventListener.listenTo(eventbus, 'layer:selected', function(layer, previouslySelectedLayer){
-      //TODO create proper system for layer changes and needed calls
+      //TODO: there might be room for improvement on this, but I am not seeing it
       if (layer !== 'linkProperty') {
         deactivateSelectInteractions(true);
         removeSelectInteractions();
@@ -1344,10 +1344,23 @@
         clearLayers();
         hideLayer();
         removeSelectInteractions();
+      } else if(previouslySelectedLayer === 'roadAddressProject') {
+        clearLayers();
+        clearHighlights();
+        setGeneralOpacity(1);
+        showLayer();
+        _.defer(function(){
+          roadCollection.fetch(map.getView().calculateExtent(map.getSize()), map.getView().getZoom());
+        });
       }
     });
     var show = function(map) {
       vectorLayer.setVisible(true);
+    };
+
+    var showLayer = function(){
+      me.start();
+      me.show(map);
     };
 
     var hideLayer = function() {

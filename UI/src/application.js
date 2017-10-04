@@ -198,6 +198,14 @@
 
     var mapOverlay = new MapOverlay($('.container'));
 
+    var mapPluginsContainer = $('#map-plugins');
+    new ScaleBar(map, mapPluginsContainer);
+    new TileMapSelector(mapPluginsContainer);
+    new ZoomBox(map, mapPluginsContainer);
+    new CoordinatesDisplay(map, mapPluginsContainer);
+
+    var roadAddressInfoPopup = new RoadAddressInfoPopup(map, mapPluginsContainer, roadCollection);
+
     if (withTileMaps) { new TileMapCollection(map); }
     var roadLayer = new RoadLayer(map, models.roadCollection);
 
@@ -217,8 +225,6 @@
     _.forEach(pointAssets, function(pointAsset ) {
      PointAssetForm.initialize(pointAsset.selectedPointAsset, pointAsset.layerName, pointAsset.formLabels, pointAsset.editConstrains || function() {return false;}, roadCollection, applicationModel);
     });
-
-    var roadAddressInfoPopup = new RoadAddressInfoPopup(map);
 
     var linearAssetLayers = _.reduce(linearAssets, function(acc, asset) {
      acc[asset.layerName] = new LinearAssetLayer({
@@ -279,12 +285,6 @@
 
     }, linearAssetLayers, pointAssetLayers);
 
-    var mapPluginsContainer = $('#map-plugins');
-    new ScaleBar(map, mapPluginsContainer);
-    new TileMapSelector(mapPluginsContainer);
-    new ZoomBox(map, mapPluginsContainer);
-    new CoordinatesDisplay(map, mapPluginsContainer);
-
     // Show environment name next to Digiroad logo
     $('#notification').append(Environment.localizedName());
 
@@ -332,7 +332,8 @@
           .concat(getLinearAsset(assetType.numberOfLanes))
           .concat(getLinearAsset(assetType.massTransitLane))
           .concat(getLinearAsset(assetType.europeanRoads))
-          .concat(getLinearAsset(assetType.exitNumbers)),
+          .concat(getLinearAsset(assetType.exitNumbers))
+          .concat(getLinearAsset(assetType.trSpeedLimits)),
       [speedLimitBox].concat(
       [winterSpeedLimits]),
       [massTransitBox]

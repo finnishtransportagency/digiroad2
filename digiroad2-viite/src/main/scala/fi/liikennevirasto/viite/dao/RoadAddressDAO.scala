@@ -11,7 +11,7 @@ import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.dao.CalibrationCode._
-import fi.liikennevirasto.viite.model.Anomaly
+import fi.liikennevirasto.viite.model.{Anomaly, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.InvalidAddressDataException
 import fi.liikennevirasto.viite.process.RoadAddressFiller.LRMValueAdjustment
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
@@ -59,13 +59,17 @@ object CalibrationCode {
     values.find(_.value == intValue).getOrElse(No)
   }
 
+  private def fromBooleans(beginning: Boolean, end: Boolean): CalibrationCode = {
+    val beginValue = if (beginning) AtBeginning.value else No.value
+    val endValue = if (end) AtEnd.value else No.value
+    CalibrationCode.apply(beginValue+endValue)
+  }
   def getFromAddress(roadAddress: BaseRoadAddress): CalibrationCode = {
-    (roadAddress.calibrationPoints._1.isEmpty, roadAddress.calibrationPoints._2.isEmpty) match {
-      case (true, true)   => No
-      case (true, false)  => AtEnd
-      case (false, true)  => AtBeginning
-      case (false, false) => AtBoth
-    }
+    fromBooleans(roadAddress.calibrationPoints._1.isDefined, roadAddress.calibrationPoints._2.isDefined)
+  }
+
+  def getFromAddressLinkLike(roadAddress: RoadAddressLinkLike): CalibrationCode = {
+    fromBooleans(roadAddress.startCalibrationPoint.isDefined, roadAddress.endCalibrationPoint.isDefined)
   }
 
   case object No extends CalibrationCode { def value = 0 }
@@ -81,6 +85,7 @@ trait BaseRoadAddress {
   def roadPartNumber: Long
   def track: Track
   def discontinuity: Discontinuity
+  def roadType: RoadType
   def startAddrMValue: Long
   def endAddrMValue: Long
   def startDate: Option[DateTime]
@@ -439,22 +444,27 @@ object RoadAddressDAO {
     queryList(query)
   }
 
-  def isNewRoadPartUsed(roadNumber: Long, roadPartNumber: Long, projectId: Long) = {
+  /**
+    * Check that the road part is available for the project at project date (and not modified to be changed
+    * later)
+    * @param roadNumber Road number to be reserved for project
+    * @param roadPartNumber Road part number to be reserved for project
+    * @param projectId Project that wants to reserve the road part (used to check the project date vs. address dates)
+    * @return True, if unavailable
+    */
+  def isNotAvailableForProject(roadNumber: Long, roadPartNumber: Long, projectId: Long): Boolean = {
     val query =
       s"""
-		select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
-        ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
-        pos.side_code, pos.adjusted_timestamp,
-        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source
-        from project pro,
-        road_address ra cross join
-        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
-        TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
-        join lrm_position pos on ra.lrm_position_id = pos.id
-        where  pro.id=$projectId AND road_number = $roadNumber AND road_part_number = $roadPartNumber and t.id < t2.id AND (ra.END_DATE IS NULL OR ra.END_DATE>=pro.START_DATE)
-        ORDER BY road_number, road_part_number, track_code, start_addr_m
+      SELECT 1 FROM dual WHERE EXISTS(select 1
+         from project pro,
+         road_address ra
+         join lrm_position pos on ra.lrm_position_id = pos.id
+         where  pro.id=$projectId AND road_number = $roadNumber AND road_part_number = $roadPartNumber AND
+         (ra.START_DATE>=pro.START_DATE or ra.END_DATE>pro.START_DATE) AND
+         ra.VALID_TO is null
+         )
       """
-    queryList(query)
+    Q.queryNA[Int](query).firstOption.nonEmpty
   }
 
   def fetchByRoad(roadNumber: Long, includeFloating: Boolean = false) = {
@@ -1028,7 +1038,7 @@ object RoadAddressDAO {
     if (Q.queryNA[Int](query).first>0) true else false
   }
 
-  def getRoadPartInfo(roadNumber:Long, roadPart:Long): Option[(Long,Long,Double,Long,Option[DateTime],Option[DateTime])] =
+  def getRoadPartInfo(roadNumber:Long, roadPart:Long): Option[(Long,Long,Long,Long,Option[DateTime],Option[DateTime])] =
   {
     val query = s"""SELECT r.id, l.link_id, r.end_addr_M, r.discontinuity,
                 (Select Max(ra.start_date) from road_address ra Where r.ROAD_PART_NUMBER = ra.ROAD_PART_NUMBER and r.ROAD_NUMBER = ra.ROAD_NUMBER) as start_date,
@@ -1041,6 +1051,6 @@ object RoadAddressDAO {
              on r.START_ADDR_M=ra.lol
              WHERE r.road_number=$roadNumber AND r.road_part_number=$roadPart AND
              (r.valid_from is null or r.valid_from <= sysdate) AND (r.valid_to is null or r.valid_to > sysdate) AND track_code in (0,1)"""
-    Q.queryNA[(Long,Long,Double,Long, Option[DateTime], Option[DateTime])](query).firstOption
+    Q.queryNA[(Long,Long,Long,Long, Option[DateTime], Option[DateTime])](query).firstOption
   }
 }

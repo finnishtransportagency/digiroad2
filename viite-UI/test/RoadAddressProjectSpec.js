@@ -51,15 +51,11 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
     // 3-third -click in the reserve button
     describe('when clicking in reserve aka Varaa button', function() {
       before(function (done) {
-        $('[id^=nimi]').val('Project Two');
-        $('[id^=alkupvm]').val('30.5.2017');
-        $('[id^=tie]').val('1130');
-        $('[id^=aosa]').val('4');
-        $('[id^=losa]').val('4');
-        $('.btn-next').prop('disabled', false);
-        $('.btn-next').attr('disabled', false);
-        $('.btn-reserve').prop('disabled', false);
-        $('.btn-reserve').attr('disabled', false);
+        $('[id^=nimi]').val('Project Two').trigger("change");
+        $('[id^=alkupvm]').val('30.5.2017').trigger("change");
+        $('[id^=tie]').val('1130').trigger("change");
+        $('[id^=aosa]').val('4').trigger("change");
+        $('[id^=losa]').val('4').trigger("change");
         eventbus.on('roadPartsValidation:checkRoadParts', function(validationResult){
           if(validationResult.success == "ok"){
             done();
@@ -69,19 +65,17 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
       });
 
       it('Seuraava button should be enabled', function () {
-        var isSeuraavaButtonDisabled = $('.btn-next').is(":disabled");
+        var isSeuraavaButtonDisabled = $('#generalNext').is(":disabled");
         expect(isSeuraavaButtonDisabled).to.be.false;
       });
     });
 
     // 4-fourth -click in the next-Seuraava button
     describe('when clicking in next aka Seuraava button and select one reserved link', function() {
-      before(function (done) {
-
+      before(function () {
         eventbus.on('roadAddressProject:fetched',function (){
           var ol3Feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 1717275);
           testHelpers.selectSingleFeatureByInteraction(openLayersMap, ol3Feature, testHelpers.getSingleClickNameProjectLinkLayer());
-          done();
         });
         testHelpers.clickNextButton();
       });
@@ -114,6 +108,11 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
           expect(inputsEmpty).to.be.true;
           //Check if Tallenna is disabled
           expect($('.update.btn.btn-save').is(':disabled')).to.be.true;
+
+          //Select another road to see the pop up
+          feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 1717275);
+          testHelpers.selectSingleFeatureByInteraction(openLayersMap, feature, testHelpers.getSingleClickNameProjectLinkLayer());
+          $('.yes').click();
 
           //Check if the values are filled in the input fields when data is valid
           feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 1717395);

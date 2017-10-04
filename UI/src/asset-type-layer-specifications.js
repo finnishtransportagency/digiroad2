@@ -27,7 +27,8 @@
     exitNumbers: 270,
     trafficLights: 280,
     maintenanceRoad: 290,
-    trafficSigns: 300
+    trafficSigns: 300,
+    trSpeedLimits: 310
   };
 
   root.linearAssetSpecs = [
@@ -194,6 +195,10 @@
         title: 'Kelirikko',
         enabled: 'Kelirikko',
         disabled: 'Ei kelirikkoa'
+      },
+      editConstrains : function(selectedAsset) {
+        //check if administrative class is State
+        return selectedAsset.administrativeClass === 1;
       }
     },
     {
@@ -251,6 +256,10 @@
         title: 'Päällyste',
         enabled: 'Päällyste',
         disabled: 'Ei päällystettä'
+      },
+      editConstrains : function(selectedAsset) {
+        //check if administrative class is State
+        return selectedAsset.administrativeClass === 1;
       }
     },
     {
@@ -287,6 +296,10 @@
         title: 'Kaista',
         enabled: 'Joukkoliikennekaista',
         disabled: 'Ei joukkoliikennekaistaa'
+      },
+      editConstrains : function(selectedAsset) {
+        //check if administrative class is State
+        return selectedAsset.administrativeClass === 1;
       }
     },
     {
@@ -356,6 +369,10 @@
         title: '',
         enabled: 'Eurooppatienumero(t)',
         disabled: 'Ei eurooppatienumeroa'
+      },
+      editConstrains : function(selectedAsset) {
+        //check if administrative class is State
+        return selectedAsset.administrativeClass === 1;
       },
       label: new LinearAssetLabelMultiValues()
     },
@@ -430,7 +447,24 @@
   ];
 
   root.experimentalLinearAssetSpecs = [
-  // In future this array could be use to include another experimental Linear
+    {
+      typeId: assetType.trSpeedLimits,
+      singleElementEventCategory: 'trSpeedLimit',
+      multiElementEventCategory: 'trSpeedLimits',
+      layerName: 'trSpeedLimits',
+      title: 'Tierekisteri nopeusrajoitus',
+      newTitle: 'Uusi nopeusrajoitus',
+      className: 'tr-speed-limits',
+      unit: 'km/h',
+      isSeparable: true,
+      allowComplementaryLinks: false,
+      editControlLabels: {
+        title: '',
+        enabled: 'Nopeusrajoitus',
+        disabled: 'Tuntematon'
+      },
+      label: new SpeedLimitAssetLabel()
+    }
   ];
 
   root.pointAssetSpecs = [

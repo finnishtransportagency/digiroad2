@@ -134,7 +134,7 @@ define(['RoadAddressTestData',
     };
 
     var clickNextButton = function(){
-      $('.btn-next').click();
+      $('#generalNext').click();
     };
 
     var clickReserveButton = function(){

@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.{RequestHeaderAuthentication, UnauthenticatedException, UserNotFoundException}
 import fi.liikennevirasto.digiroad2.linearasset._
+import fi.liikennevirasto.digiroad2.masstransitstop.MassTransitStopOperations
 import fi.liikennevirasto.digiroad2.pointasset.oracle.IncomingServicePoint
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 import fi.liikennevirasto.digiroad2.util.RoadAddressException
@@ -289,17 +290,19 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
     val (optionalLon, optionalLat, optionalLinkId, bearing) = massTransitStopPositionParameters(parsedBody)
     val properties = (parsedBody \ "properties").extractOpt[Seq[SimpleProperty]].getOrElse(Seq())
-    val linkId = (parsedBody \ "linkId").extractOpt[Long]
     validateBusStopMaintainerUser(properties)
+    val id = params("id").toLong
+
     if(properties.exists(prop => prop.publicId == "vaikutussuunta")) {
-      validateBusStopDirections(properties, linkId.get)
+      val linkId = optionalLinkId.getOrElse(halt(BadRequest("Missing mandatory field linkId")))
+      validateBusStopDirections(properties, linkId)
     }
+    validatePropertiesMaxSize(properties)
     val position = (optionalLon, optionalLat, optionalLinkId) match {
       case (Some(lon), Some(lat), Some(linkId)) => Some(Position(lon, lat, linkId, bearing))
       case _ => None
     }
     try {
-      val id = params("id").toLong
       massTransitStopService.updateExistingById(id, position, properties.toSet, userProvider.getCurrentUser().username, validateMunicipalityAuthorization(id))
     } catch {
       case e: NoSuchElementException => BadRequest("Target roadlink not found")
@@ -309,7 +312,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-  private def createMassTransitStop(lon: Double, lat: Double, linkId: Long, bearing: Int, properties: Seq[SimpleProperty]): Long = {
+  private def createMassTransitStop(lon: Double, lat: Double, linkId: Long, bearing: Int, properties: Seq[SimpleProperty] ): Long = {
     val roadLink = roadLinkService.fetchVVHRoadlinkAndComplementary(linkId).getOrElse(throw new NoSuchElementException)
     massTransitStopService.create(NewMassTransitStop(lon, lat, linkId, bearing, properties), userProvider.getCurrentUser().username, roadLink.geometry, roadLink.municipalityCode, Some(roadLink.administrativeClass),  roadLink.linkSource)
   }
@@ -349,16 +352,21 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       halt(BadRequest("Invalid property values on: " + propertiesWithInvalidValues.map(_.publicId).mkString(", ")))
   }
 
-  private def validateBusStopDirections(properties: Seq[SimpleProperty], linkId: Long) = {
-    val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId)
-    val roadLinkDirection = roadLink.map(dir => dir.trafficDirection).headOption
-    val massDirection = massTransitStopService
+    private def validateBusStopDirections(properties: Seq[SimpleProperty], linkId: Long) = {
+      val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId)
 
-    val busStopDirection = properties.find(prop => prop.publicId == "vaikutussuunta")
-                                     .get.values
-                                     .map(dir => dir.propertyValue).head
-    if((roadLinkDirection.head.toString != SideCode.BothDirections.toString) && (roadLinkDirection.head.toString != SideCode.apply(busStopDirection.toInt).toString))
-      halt(NotAcceptable("Invalid Mass Transit Stop direction"))
+      if(!properties.exists(prop => prop.publicId == "vaikutussuunta") ||
+        !MassTransitStopOperations.isValidBusStopDirections(properties, linkId, roadLink))
+        halt(NotAcceptable("Invalid Mass Transit Stop direction"))
+    }
+
+
+  private def validatePropertiesMaxSize(properties: Seq[SimpleProperty]) = {
+    val propertiesWithMaxSize: Map[String, Int] = massTransitStopService.getPropertiesWithMaxSize()
+    val invalidPropertiesDueMaxSize: Seq[SimpleProperty] = properties.filter { property =>
+      propertiesWithMaxSize.contains(property.publicId) && property.values.nonEmpty && property.values.forall { value => value.propertyValue.length > propertiesWithMaxSize(property.publicId) }
+    }
+    if (invalidPropertiesDueMaxSize.nonEmpty) halt(BadRequest("Properties with Invalid Size: " + invalidPropertiesDueMaxSize.mkString(", ")))
   }
 
   post("/massTransitStops") {
@@ -371,6 +379,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     validateUserRights(linkId)
     validateBusStopMaintainerUser(properties)
     validateCreationProperties(properties)
+    validatePropertiesMaxSize(properties)
     validateBusStopDirections(properties, linkId)
     try {
       val id = createMassTransitStop(lon, lat, linkId, bearing, properties)
@@ -386,6 +395,17 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val boundingRectangle = constructBoundingRectangle(bbox)
     validateBoundingBox(boundingRectangle)
     val roadLinks = roadLinkService.withRoadAddress(roadLinkService.getRoadLinksFromVVH(boundingRectangle, municipalities))
+    val partitionedRoadLinks = RoadLinkPartitioner.partition(roadLinks)
+    partitionedRoadLinks.map {
+      _.map(roadLinkToApi)
+    }
+  }
+
+  private def getRoadLinksFromVVH(municipalities: Set[Int], withRoadAddress: Boolean)(bbox: String): Seq[Seq[Map[String, Any]]] = {
+    val boundingRectangle = constructBoundingRectangle(bbox)
+    validateBoundingBox(boundingRectangle)
+    val roadLinkSeq = roadLinkService.getRoadLinksFromVVH(boundingRectangle, municipalities)
+    val roadLinks = if(withRoadAddress) roadLinkService.withRoadAddress(roadLinkSeq) else roadLinkSeq
     val partitionedRoadLinks = RoadLinkPartitioner.partition(roadLinks)
     partitionedRoadLinks.map {
       _.map(roadLinkToApi)
@@ -475,9 +495,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     response.setHeader("Access-Control-Allow-Headers", "*")
     val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = if (user.isOperator() || user.isBusStopMaintainer()) Set() else user.configuration.authorizedMunicipalities
+    val withRoadAddress = params("withRoadAddress").toBoolean
 
     params.get("bbox")
-      .map(getRoadLinksFromVVH(municipalities))
+      .map(getRoadLinksFromVVH(municipalities, withRoadAddress))
       .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
   }
 
@@ -631,10 +652,17 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
       val usedService =  verifyServiceToUse(typeId)
-      if(user.isServiceRoadMaintainer())
-        mapLinearAssets(usedService.withRoadAddress(usedService.getByIntersectedBoundingBox(typeId, user.configuration.authorizedAreas, boundingRectangle, municipalities)))
-      else
-        mapLinearAssets(usedService.withRoadAddress(usedService.getByBoundingBox(typeId, boundingRectangle, municipalities)))
+      if(params("withRoadAddress").toBoolean){
+        if(user.isServiceRoadMaintainer())
+          mapLinearAssets(usedService.withRoadAddress(usedService.getByIntersectedBoundingBox(typeId, user.configuration.authorizedAreas, boundingRectangle, municipalities)))
+        else
+          mapLinearAssets(usedService.withRoadAddress(usedService.getByBoundingBox(typeId, boundingRectangle, municipalities)))
+      }else{
+        if(user.isServiceRoadMaintainer())
+          mapLinearAssets(usedService.getByIntersectedBoundingBox(typeId, user.configuration.authorizedAreas, boundingRectangle, municipalities))
+        else
+          mapLinearAssets(usedService.getByBoundingBox(typeId, boundingRectangle, municipalities))
+      }
     } getOrElse {
       BadRequest("Missing mandatory 'bbox' parameter")
     }
@@ -844,7 +872,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      speedLimitService.withRoadAddress(speedLimitService.get(boundingRectangle, municipalities)).map { linkPartition =>
+      val speedLimits = if(params("withRoadAddress").toBoolean) speedLimitService.withRoadAddress(speedLimitService.get(boundingRectangle, municipalities)) else speedLimitService.get(boundingRectangle, municipalities)
+      speedLimits.map { linkPartition =>
         linkPartition.map { link =>
           Map(
             "id" -> (if (link.id == 0) None else Some(link.id)),

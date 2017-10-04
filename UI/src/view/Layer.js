@@ -79,6 +79,5 @@
       roadLayer.clear();
       eventbus.off('map:moved', me.handleMapMoved);
     };
-
   };
 })(this);

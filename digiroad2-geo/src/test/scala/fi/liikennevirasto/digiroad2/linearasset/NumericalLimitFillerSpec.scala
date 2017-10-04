@@ -331,7 +331,7 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
     changeSet.expiredAssetIds should be(Set(2))
   }
 
-  test("adjustTwoWaySegments") {
+  test("adjustSegments with None value") {
     val roadLink = RoadLink(1, Seq(Point(0.0, 0.0), Point(15.0, 0.0)), 15.0, AdministrativeClass.apply(1), FunctionalClass.Unknown,
     TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
     val assets = Seq(
@@ -351,6 +351,84 @@ class NumericalLimitFillerSpec extends FunSuite with Matchers {
     changeSet.adjustedMValues.head.endMeasure should be (15.0)
     changeSet.adjustedMValues.head.startMeasure should be (0.0)
     changeSet.expiredAssetIds should be (Set(2,3))
+  }
+
+  test("adjustSegments with value") {
+    val roadLink = RoadLink(1, Seq(Point(0.0, 0.0), Point(15.0, 0.0)), 15.0, AdministrativeClass.apply(1), FunctionalClass.Unknown,
+      TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
+    val assets = Seq(
+      PersistedLinearAsset(1, 1, SideCode.BothDirections.value, Some(NumericValue(10)), 0.0, 4.5, Some("guy"),
+        Some(DateTime.now()), None, None, expired = false, 160, 0, None, linkSource = NormalLinkInterface),
+      PersistedLinearAsset(2, 1, SideCode.BothDirections.value, Some(NumericValue(10)), 4.5, 9.0, Some("guy"),
+        Some(DateTime.now().minusDays(2)), None, None, expired = false, 160, 0, None, linkSource = NormalLinkInterface),
+      PersistedLinearAsset(3, 1, SideCode.BothDirections.value, Some(NumericValue(10)), 9.0, 15.0, Some("guy"),
+        Some(DateTime.now().minusDays(1)), None, None, expired = false, 160, 0, None, linkSource = NormalLinkInterface)
+    )
+    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(Seq(roadLink), Map(1L -> assets), 160)
+    filledTopology.length should be (1)
+    filledTopology.head.id should be (1)
+    filledTopology.head.endMeasure should be (15.0)
+    filledTopology.head.startMeasure should be (0.0)
+    changeSet.adjustedMValues.length should be (1)
+    changeSet.adjustedMValues.head.endMeasure should be (15.0)
+    changeSet.adjustedMValues.head.startMeasure should be (0.0)
+    changeSet.expiredAssetIds should be (Set(2,3))
+  }
+
+  test("adjust Segments with diferent direction") {
+    val roadLink = RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, AdministrativeClass.apply(1), FunctionalClass.Unknown,
+      TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
+    val assets = Seq(
+      PersistedLinearAsset(1, 1, SideCode.AgainstDigitizing.value, Some(NumericValue(10)), 0.0, 5.0, Some("guy"),
+        Some(DateTime.now()), None, None, expired = false, 180, 0, None, linkSource = NormalLinkInterface),
+      PersistedLinearAsset(2, 1, SideCode.AgainstDigitizing.value, Some(NumericValue(10)), 5.0, 10.0, Some("guy"),
+        Some(DateTime.now().minusDays(2)), None, None, expired = false, 180, 0, None, linkSource = NormalLinkInterface),
+      PersistedLinearAsset(3, 1, SideCode.TowardsDigitizing.value, Some(NumericValue(20)), 0.0, 4.0, Some("guy"),
+        Some(DateTime.now().minusDays(3)), None, None, expired = false, 180, 0, None, linkSource = NormalLinkInterface),
+      PersistedLinearAsset(4, 1, SideCode.TowardsDigitizing.value, Some(NumericValue(20)), 4.0, 10.0, Some("guy"),
+        Some(DateTime.now().minusDays(4)), None, None, expired = false, 180, 0, None, linkSource = NormalLinkInterface)
+    )
+    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(Seq(roadLink), Map(1L -> assets), 180)
+    filledTopology.length should be (2)
+    filledTopology.head.startMeasure should be (0.0)
+    filledTopology.head.endMeasure should be (10.00)
+    filledTopology.last.startMeasure should be (0.0)
+    filledTopology.last.endMeasure should be (10.00)
+    changeSet.adjustedMValues.length should be (2)
+    changeSet.adjustedMValues.head.endMeasure should be (10.0)
+    changeSet.adjustedMValues.head.startMeasure should be (0.0)
+    changeSet.adjustedMValues.last.endMeasure should be (10.0)
+    changeSet.adjustedMValues.last.startMeasure should be (0.0)
+  }
+
+  test("combine segments into one") {
+    val roadLink = RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, AdministrativeClass.apply(1), FunctionalClass.Unknown,
+      TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
+    val assets = Seq(
+      PersistedLinearAsset(1, 1, SideCode.AgainstDigitizing.value, Some(NumericValue(10)), 0.0, 10.0, Some("guy"),
+        Some(DateTime.now()), None, None, expired = false, 180, 0, None, linkSource = NormalLinkInterface),
+      PersistedLinearAsset(3, 1, SideCode.TowardsDigitizing.value, Some(NumericValue(10)), 0.0, 10.0, Some("guy"),
+        Some(DateTime.now().minusDays(1)), None, None, expired = false, 180, 0, None, linkSource = NormalLinkInterface)
+    )
+    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(Seq(roadLink), Map(1L -> assets), 180)
+    filledTopology.length should be (1)
+    filledTopology.head.startMeasure should be (0.0)
+    filledTopology.head.endMeasure should be (10.00)
+  }
+
+  test("combine segments into one with none value") {
+    val roadLink = RoadLink(1, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, AdministrativeClass.apply(1), FunctionalClass.Unknown,
+      TrafficDirection.BothDirections, LinkType.apply(3), None, None, Map())
+    val assets = Seq(
+      PersistedLinearAsset(1, 1, SideCode.AgainstDigitizing.value, None, 0.0, 10.0, Some("guy"),
+        Some(DateTime.now()), None, None, expired = false, 180, 0, None, linkSource = NormalLinkInterface),
+      PersistedLinearAsset(3, 1, SideCode.TowardsDigitizing.value, None, 0.0, 10.0, Some("guy"),
+        Some(DateTime.now().minusDays(1)), None, None, expired = false, 180, 0, None, linkSource = NormalLinkInterface)
+    )
+    val (filledTopology, changeSet) = NumericalLimitFiller.fillTopology(Seq(roadLink), Map(1L -> assets), 180)
+    filledTopology.length should be (1)
+    filledTopology.head.startMeasure should be (0.0)
+    filledTopology.head.endMeasure should be (10.00)
   }
 
   private def roadLink(linkId: Long, geometry: Seq[Point], administrativeClass: AdministrativeClass = Unknown): RoadLink = {

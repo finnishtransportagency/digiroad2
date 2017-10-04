@@ -46,7 +46,7 @@
     };
 
     this.fetch = function(boundingBox) {
-      return fetch(boundingBox, backend.getLinearAssets(boundingBox, typeId));
+      return fetch(boundingBox, backend.getLinearAssets(boundingBox, typeId, applicationModel.getWithRoadAddress()));
     };
 
     this.fetchAssetsWithComplementary = function(boundingBox) {
@@ -217,6 +217,5 @@
       separatedLimit.B = limitB;
       return [limitA, limitB];
     };
-
   };
 })(this);

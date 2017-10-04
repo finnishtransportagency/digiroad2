@@ -110,7 +110,8 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
             extractPropertyValue("pysakin_omistaja", massTransitStop.propertyData, propertyValuesToString),
             extractPropertyValue("palauteosoite", massTransitStop.propertyData, propertyValuesToString),
             extractPropertyValue("lisatiedot", massTransitStop.propertyData, propertyValuesToString),
-            extractPropertyValue("pyorateline", massTransitStop.propertyData, firstPropertyValueToInt))
+            extractPropertyValue("pyorateline", massTransitStop.propertyData, firstPropertyValueToInt),
+            extractPropertyValue("laiturinumero", massTransitStop.propertyData, propertyValuesToString))
        )
       })
   }
@@ -391,6 +392,7 @@ class IntegrationApi(val massTransitStopService: MassTransitStopService) extends
       Map("nodeId" -> roadNode.nodeId,
           "nodeType" -> roadNode.formOfNode.value,
           "point" -> Map("x" -> roadNode.geometry.x, "y" -> roadNode.geometry.y),
+          "subtype" -> roadNode.subtype,
           geometryWKTForPoints(roadNode.geometry.x, roadNode.geometry.y)
       )
     }

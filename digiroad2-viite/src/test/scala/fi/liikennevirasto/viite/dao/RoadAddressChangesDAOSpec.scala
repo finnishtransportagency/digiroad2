@@ -5,8 +5,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.ReservedRoadPart
 import fi.liikennevirasto.viite.RoadType.UnknownOwnerRoad
-import fi.liikennevirasto.viite.dao.LinkStatus.NotHandled
-import fi.liikennevirasto.viite.process.Delta
+import fi.liikennevirasto.viite.process.{Delta, Transferred, ReNumeration}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
@@ -30,7 +29,7 @@ class RoadAddressChangesDAOSpec extends FunSuite with Matchers {
   test("confirm data fetching"){
     runWithRollback{
       //inserts one case
-      val addresses = List(ReservedRoadPart(5:Long, 203:Long, 203:Long, 5:Double, Discontinuity.apply("jatkuva"), 8:Long, None:Option[DateTime], None:Option[DateTime]))
+      val addresses = List(ReservedRoadPart(5:Long, 203:Long, 203:Long, 5:Double, 6L, Discontinuity.apply("jatkuva"), 8:Long, None:Option[DateTime], None:Option[DateTime]))
       val project = RoadAddressProject(100,ProjectState.Incomplete,"testiprojekti","Test",DateTime.now(),"Test",DateTime.now(),DateTime.now(),"info",addresses, None)
       ProjectDAO.createRoadAddressProject(project)
       sqlu""" insert into road_address_changes(project_id,change_type,new_road_number,new_road_part_number,new_track_code,new_start_addr_m,new_end_addr_m,new_discontinuity,new_road_type,new_ely) Values(100,1,6,1,1,0,10.5,1,1,8) """.execute
@@ -42,8 +41,8 @@ class RoadAddressChangesDAOSpec extends FunSuite with Matchers {
   }
 
   test("confirm data insertion") {
-    val newProjectLink = ProjectLink(1, 0, 0, Track.Unknown, Discontinuity.Continuous, 0, 0, None, None, None, 0, 0, 0.0, 0.0, SideCode.Unknown, (None, None), false, List(), 1, LinkStatus.New, UnknownOwnerRoad, LinkGeomSource.NormalLinkInterface, 0.0)
-    val delta = Delta(DateTime.now(), Seq(), Seq(newProjectLink))
+    val newProjectLink = ProjectLink(1, 0, 0, Track.Unknown, Discontinuity.Continuous, 0, 0, None, None, None, 0, 0, 0.0, 0.0, SideCode.Unknown, (None, None), false, List(), 1, LinkStatus.New, UnknownOwnerRoad, LinkGeomSource.NormalLinkInterface, 0.0, 0)
+    val delta = Delta(DateTime.now(), Seq(), Seq(newProjectLink), Seq(), Transferred(Seq(), Seq()), ReNumeration(Seq(), Seq()))
     runWithRollback {
       addprojects()
       RoadAddressChangesDAO.insertDeltaToRoadChangeTable(delta, 1)
