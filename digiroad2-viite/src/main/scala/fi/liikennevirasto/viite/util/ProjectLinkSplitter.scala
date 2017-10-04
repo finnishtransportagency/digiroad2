@@ -96,7 +96,7 @@ object ProjectLinkSplitter {
     val a = v1.y / v1.x
     val b = p1.y - a * p1.x
     val c = v2.y / v2.x
-    val d = p3.y - a * p3.x
+    val d = p3.y - c * p3.x
     if (Math.abs(a-c) < 1E-4 && Math.abs(d-b) > 1E-4) {
       // Differing y is great but coefficients a and c are almost same -> Towards infinities
       None
@@ -121,7 +121,7 @@ object ProjectLinkSplitter {
       val vecL = (p2-p1).normalize2D().rotateLeft().scale(MaxSuravageToleranceToGeometry)
       ((p1 + vecL, p2 + vecL), (p1 - vecL, p2 - vecL))
     }.unzip
-    (connectSegments(leftUnConnected), connectSegments(rightUnConnected))
+    (connectSegments(leftUnConnected).tail, connectSegments(rightUnConnected).tail)
   }
 }
 
