@@ -380,7 +380,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           Map("changetype"->changeInfo.changeType.value, "roadType"->changeInfo.roadType.value,
             "discontinuity"->changeInfo.discontinuity.value, "source"->changeInfo.source,
             "target"->changeInfo.target)))
-    ).getOrElse(PreconditionFailed())
+    ).getOrElse(None)
   }
 
   post("/project/publish"){

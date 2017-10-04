@@ -674,9 +674,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             }
           }
           else {
-            val projectLink = ProjectDAO.getProjectLinksById(Seq(link.id))
-            val roadLink = RoadAddressDAO.queryById(Set(projectLink.head.roadAddressId))
-            ProjectDAO.updateProjectLinkValues(projectId, roadLink.head)
+            val projectLinks = ProjectDAO.getProjectByLinkId(link.linkId)
+            val roadLinks = RoadAddressDAO.queryById(projectLinks.map(_.roadAddressId).toSet)
+            roadLinks.foreach( rl => ProjectDAO.updateProjectLinkValues(projectId, rl))
           }
         })
         None
