@@ -13,7 +13,7 @@ object ProjectLinkSplitter {
   def split(suravage: ProjectLink, templateLink: ProjectLink, split: SplitOptions): Seq[ProjectLink] = {
     val suravageM = GeometryUtils.calculateLinearReferenceFromPoint(split.splitPoint, suravage.geometry)
     val templateM = GeometryUtils.calculateLinearReferenceFromPoint(split.splitPoint, templateLink.geometry)
-    val (splittedA, splittedB, template) = (split.statusA, split.statusB) match {
+    val (splitA, splitB, splitT) = (split.statusA, split.statusB) match {
       case (LinkStatus.UnChanged, LinkStatus.Terminated) => {
         val splitAddressM = Math.round(templateM / templateLink.geometryLength *
           (templateLink.endAddrMValue - templateLink.startAddrMValue))
@@ -47,7 +47,7 @@ object ProjectLinkSplitter {
         ))
       }
     }
-    Seq(splittedA,splittedB,template)
+    Seq(splitA,splitB,splitT)
   }
 
   def findMatchingGeometrySegment(suravage: RoadLinkLike, template: RoadLinkLike): Option[Seq[Point]] = {

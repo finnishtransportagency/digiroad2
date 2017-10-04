@@ -93,6 +93,10 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers {
     GeometryUtils.geometryLength(g) should be < GeometryUtils.geometryLength(geomT)
     GeometryUtils.geometryLength(g) should be > (0.0)
     GeometryUtils.minimumDistance(g.last, geomT) should be < MaxDistanceForConnectedLinks
-    g.foreach(println)
+    g.length should be (3)
+    g.lastOption.foreach { p =>
+      p.x should be(5.0 +- 0.001)
+      p.y should be(13.0414 +- 0.001)
+    }
   }
 }
