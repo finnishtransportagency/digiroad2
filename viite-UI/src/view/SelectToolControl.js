@@ -91,13 +91,13 @@
         });
 
         var toggleDragBox = function() {
-          if (!application.isReadOnly() && enabled && settings.draggable) {
-            destroyDragBoxInteraction();
-            map.addInteraction(dragBoxInteraction);
-          } else {
-            if ((!settings.draggable && enabled) || application.isReadOnly())
-              destroyDragBoxInteraction();
-          }
+          // if (!application.isReadOnly() && enabled && settings.draggable) {
+          //   destroyDragBoxInteraction();
+          //   map.addInteraction(dragBoxInteraction);
+          // } else {
+          //   if ((!settings.draggable && enabled) || application.isReadOnly())
+          //     destroyDragBoxInteraction();
+          // }
         };
 
 

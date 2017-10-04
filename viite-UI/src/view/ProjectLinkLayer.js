@@ -325,10 +325,69 @@
         highlightFeatures();
       } else {
         selectedProjectLinkProperty.clean();
-        if (!_.isUndefined(selection))
+        if (!_.isUndefined(selection)) {
           selectedProjectLinkProperty.open(selection.projectLinkData.linkId);
+        if(selection.projectLinkData.roadLinkSource==3)
+          decorateSelection(selection);
+        }
         else selectedProjectLinkProperty.cleanIds();
       }
+    };
+
+    var offsetBySideCode = function (suravageLink) {
+      return GeometryUtils.offsetBySideCode(applicationModel.zoom.level, suravageLink);
+    };
+
+    var decorateSelection = function (suravageLink) {
+      drawIndicators(_.map(_.cloneDeep(suravageLink), offsetBySideCode));
+    };
+
+    var drawIndicators = function(links) {
+      var features = [];
+
+      var markerContainer = function(link, position) {
+        var anchor, offset;
+        // if(assetLabel){
+        //   anchor = assetLabel.getMarkerAnchor(uiState.zoomLevel);
+        //   offset = assetLabel.getMarkerOffset(uiState.zoomLevel);
+        // }
+
+        var imageSettings = {src: 'images/center-marker2.svg'};
+        // if(anchor)
+        //   imageSettings = _.merge(imageSettings, { anchor : anchor });
+
+        var textSettings = {
+          text : link.marker,
+          fill: new ol.style.Fill({
+            color: '#ffffff'
+          }),
+          font : '12px sans-serif'
+        };
+        // if(offset)
+        //   textSettings = _.merge(textSettings, {offsetX : offset[0], offsetY : offset[1]});
+
+        var style = new ol.style.Style({
+          image : new ol.style.Icon(imageSettings),
+          text : new ol.style.Text(textSettings)
+        });
+        var marker = new ol.Feature({
+          geometry : new ol.geom.Point([position.x, position.y])
+        });
+        marker.setStyle(style);
+        features.push(marker);
+      };
+
+      var indicatorsForSplit = function() {
+        return me.mapOverLinkMiddlePoints(links, function(link, middlePoint) {
+          markerContainer(link, middlePoint);
+        });
+      };
+
+      var indicators = function() {
+        return indicatorsForSplit();
+      };
+      indicators();
+      selectToolControl.addNewFeature(features);
     };
 
     var canItBeAddToSelection = function(selectionData) {
@@ -608,9 +667,9 @@
     };
 
     var selectToolControl = new SelectToolControl(applicationModel, vectorLayer, map, {
-      style: function (feature) {
-        return style.browsingStyle.getStyle(feature, {zoomLevel: uiState.zoomLevel});
-      },
+      // style: function (feature) {
+      //   return style.browsingStyle.getStyle(feature, {zoomLevel: uiState.zoomLevel});
+      // },
       // onInteractionEnd: onInteractionEnd,
       // onSelect: OnSelect,
       filterGeometry: function (feature) {
@@ -644,8 +703,8 @@
 
       var clickHandler = function(evt) {
         if (applicationModel.getSelectedTool() === 'Cut') {
-          // if (selectedProjectLinkProperty.isDirty()) {
-            // displayConfirmMessage();
+          // if (collection.isDirty()) {
+          //   me.displayConfirmMessage();
           // } else {
             self.cut(evt);
           // }
@@ -678,7 +737,8 @@
             })
             .reject(function(feature) {
               var properties = feature.getProperties();
-              return _.has(properties, 'generatedId') && _.flatten(collection.getGroup(properties)).length > 0;
+              return _.has(properties, 'generatedId');
+                  // && _.flatten(projectCollection.getGroup(properties.id)).length > 0;
             })
             .map(function(feature) {
               var closestP = feature.getGeometry().getClosestPoint(point);
@@ -730,7 +790,7 @@
 
         var nearestSuravage = nearest.feature.getProperties();
         var splitProperties = calculateSplitProperties(nearestSuravage, mousePoint);
-        selectedProjectLinkProperty.splitSuravageLink(nearestSuravage.id, splitProperties);
+        selectedProjectLinkProperty.splitSuravageLink(nearestSuravage, splitProperties);
 
         remove();
       };
@@ -738,25 +798,23 @@
 
     var uiState = { zoomLevel: 9 };
 
-
-
     // var OnSelect = function(evt) {
     //   if(evt.selected.length !== 0) {
     //     var feature = evt.selected[0];
     //     var properties = feature.getProperties();
-    //     // verifyClickEvent(properties, evt);
+    //     verifyClickEvent(properties, evt);
     //   }else{
-    //     if (selectedSpeedLimit.exists()) {
-    //       selectToolControl.clear();
-    //       selectedSpeedLimit.close();
-    //     }
+    //     // if (selectedSpeedLimit.exists()) {
+    //     //   selectToolControl.clear();
+    //     //   selectedSpeedLimit.close();
+    //     // }
     //   }
     // };
 
     // var verifyClickEvent = function(properties, evt){
     //   var singleLinkSelect = evt.mapBrowserEvent.type === 'dblclick';
     //   selectedSpeedLimit.open(properties, singleLinkSelect);
-    //   highlightMultipleLinearAssetFeatures();
+    //   // highlightMultipleLinearAssetFeatures();
     // };
 
     // function onInteractionEnd(speedLimits) {

@@ -16,8 +16,8 @@
       eventbus.trigger('projectLink:clicked', get());
     };
 
-    this.splitSuravageLink = function(id, split) {
-      splitSuravageLinks(id, split, function(splitSpeedLimits) {
+    this.splitSuravageLink = function(nearestSuravage, split) {
+      splitSuravageLinks(nearestSuravage, split, function(splitSpeedLimits) {
         selection = [splitSpeedLimits.created, splitSpeedLimits.existing];
         originalSpeedLimitValue = splitSpeedLimits.existing.value;
         dirty = true;
@@ -26,14 +26,14 @@
       });
     };
 
-    var splitSuravageLinks = function(id, split, callback) {
+    var splitSuravageLinks = function(nearestSuravage, split, callback) {
       // var link = _.find(_.flatten(speedLimits), { id: id });
       //TODO add selected link as arg
 
-      var left = _.cloneDeep(link);
+      var left = _.cloneDeep(nearestSuravage);
       left.points = split.firstSplitVertices;
 
-      var right = _.cloneDeep(link);
+      var right = _.cloneDeep(nearestSuravage);
       right.points = split.secondSplitVertices;
 
       if (calculateMeasure(left) < calculateMeasure(right)) {
@@ -62,7 +62,7 @@
       return new ol.geom.LineString(points).getLength();
     };
 
-    this.isDirty = function() {
+    var isDirty = function() {
       return dirty;
     };
 
@@ -115,7 +115,8 @@
       cleanIds: cleanIds,
       close: close,
       isSelected: isSelected,
-      setCurrent: setCurrent
+      setCurrent: setCurrent,
+      isDirty: isDirty
     };
   };
 })(this);
