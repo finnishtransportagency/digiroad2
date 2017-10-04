@@ -719,11 +719,11 @@
 
       this.activate = function() {
         eventListener.listenTo(eventbus, 'map:clicked', clickHandler);
-        // eventListener.listenTo(eventbus, 'map:mouseMoved', function(event) {
-        //   if (applicationModel.getSelectedTool() === 'Cut' && !selectedProjectLinkProperty.isDirty()) {
-        //     self.updateByPosition(event.coordinate);
-        //   }
-        // });
+        eventListener.listenTo(eventbus, 'map:mouseMoved', function(event) {
+          if (applicationModel.getSelectedTool() === 'Cut' && !selectedProjectLinkProperty.isDirty()) {
+            self.updateByPosition(event.coordinate);
+          }
+        });
       };
 
       var isWithinCutThreshold = function(suravageLink) {
@@ -732,9 +732,9 @@
 
       var findNearestSuravageLink = function(point) {
         return _.chain(vectorSource.getFeatures())
-            // .filter(function(feature) {
-            //   return feature.getGeometry() instanceof ol.geom.LineString;
-            // })
+            .filter(function(feature) {
+              return feature.getGeometry() instanceof ol.geom.LineString;
+            })
             // .reject(function(feature) {
             //   var properties = feature.getProperties();
             //   return _.has(properties, 'generatedId');
@@ -783,11 +783,11 @@
           return _.merge({ splitMeasure: splitMeasure }, splitVertices);
         };
 
-        // var nearest = findNearestSuravageLink([mousePoint.x, mousePoint.y]);
+        var nearest = findNearestSuravageLink([mousePoint.x, mousePoint.y]);
         //nearest is the selected one for this test
-        var nearest = _.first(_.filter(vectorSource.getFeatures(), function(feature){
-          return feature.linkId == 500006335;
-        }));
+        // var nearest = _.first(_.filter(vectorSource.getFeatures(), function(feature){
+        //   return feature.linkId == 500006335;
+        // }));
 
 
 
@@ -795,7 +795,7 @@
         //   return;
         // }
 
-        var nearestSuravage = nearest.projectLinkData;
+        var nearestSuravage = nearest.feature.projectLinkData;
         var splitProperties = calculateSplitProperties(nearestSuravage, mousePoint);
         selectedProjectLinkProperty.splitSuravageLink(nearestSuravage, splitProperties);
 
