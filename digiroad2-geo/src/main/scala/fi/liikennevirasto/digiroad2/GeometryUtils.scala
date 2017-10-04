@@ -336,5 +336,11 @@ object GeometryUtils {
     }
   }
 
+  def geometryToSegments(geometry: Seq[Point]): Seq[Seq[Point]] = {
+    geometry.zip(geometry.tail).map {
+      case (p1, p2) => Seq(p1, p2)
+    }
+  }
+
   case class Projection(oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, vvhTimeStamp: Long)
 }

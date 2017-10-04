@@ -3,7 +3,7 @@ package fi.liikennevirasto.viite.util
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
-import fi.liikennevirasto.viite.{MaxDistanceForConnectedLinks, MaxSuravageToleranceToGeometry, RoadType}
+import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.{Discontinuity, LinkStatus, ProjectLink}
 
 /**
@@ -54,7 +54,11 @@ object ProjectLinkSplitter {
     def findMatchingSegment(suravageGeom: Seq[Point], templateGeom: Seq[Point]): Option[Seq[Point]] = {
       if (GeometryUtils.areAdjacent(suravageGeom.head, templateGeom.head, MaxDistanceForConnectedLinks)) {
         val boundaries = geometryToBoundaries(suravageGeom)
-        val exitPoint = findIntersection(suravageGeom, boundaries._1).orElse(findIntersection(suravageGeom, boundaries._2))
+        val templateSegments = GeometryUtils.geometryToSegments(templateGeom)
+        val exitPoint = templateSegments.flatMap { seg =>
+          findIntersection(seg, boundaries._1, Some(Epsilon), Some(Epsilon))
+            .orElse(findIntersection(seg, boundaries._2, Some(Epsilon), Some(Epsilon)))
+        }.headOption
         if (exitPoint.nonEmpty) {
           // Exits the tunnel -> find point
           exitPoint.map(ep => GeometryUtils.truncateGeometry2D(templateGeom, 0.0,
@@ -69,10 +73,15 @@ object ProjectLinkSplitter {
       findMatchingSegment(suravage.geometry.reverse, template.geometry.reverse).map(_.reverse))
   }
 
-  def findIntersection(geometry1: Seq[Point], geometry2: Seq[Point]): Option[Point] = {
+  def findIntersection(geometry1: Seq[Point], geometry2: Seq[Point], maxDistance1: Option[Double] = None,
+                       maxDistance2: Option[Double] = None): Option[Point] = {
     val segments1 = geometry1.zip(geometry1.tail)
-    val segments2 = geometry1.zip(geometry1.tail)
-    segments1.zip(segments2).flatMap{ case (s1, s2) => intersectionPoint(s1, s2) }.headOption
+    val segments2 = geometry2.zip(geometry2.tail)
+    val s = segments1.flatMap( s1 => segments2.flatMap{ s2 =>
+      intersectionPoint(s1, s2).filter(p =>
+        maxDistance1.forall(d => GeometryUtils.minimumDistance(p, s1) < d) &&
+          maxDistance2.forall(d => GeometryUtils.minimumDistance(p, s2) < d))})
+    s.headOption
   }
 
   def intersectionPoint(segment1: (Point, Point), segment2: (Point, Point)): Option[Point] = {
@@ -92,7 +101,11 @@ object ProjectLinkSplitter {
         val normV2 = v2.normalize2D()
         return Some(p3 + normV2.scale(dx/normV2.x))
       }
+    } else if (Math.abs(v2.x) < 0.001) {
+      // second parameter is near vertical, switch places and rerun
+      return intersectionPoint((switchXY(p3), switchXY(p4)), (switchXY(p1),switchXY(p2))).map(switchXY)
     }
+
     val a = v1.y / v1.x
     val b = p1.y - a * p1.x
     val c = v2.y / v2.x
