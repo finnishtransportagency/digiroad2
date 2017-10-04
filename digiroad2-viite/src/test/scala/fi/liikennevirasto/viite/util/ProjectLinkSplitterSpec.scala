@@ -1,8 +1,10 @@
 package fi.liikennevirasto.viite.util
 
-import fi.liikennevirasto.digiroad2.asset.{State, TrafficDirection}
+import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode, State, TrafficDirection}
+import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{FeatureClass, GeometryUtils, Point, VVHRoadlink}
 import fi.liikennevirasto.viite._
+import fi.liikennevirasto.viite.dao.{Discontinuity, LinkStatus, ProjectLink}
 import org.scalatest.{FunSuite, Matchers}
 
 class ProjectLinkSplitterSpec extends FunSuite with Matchers {
@@ -98,5 +100,86 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers {
       p.x should be(5.0 +- 0.001)
       p.y should be(13.0414 +- 0.001)
     }
+  }
+
+  test("Matching geometry test for differing digitization directions") {
+    val geom = Seq(Point(5.0, 0.0), Point(15.0, 0.0), Point(16.0, 0.5), Point(20.0, 0.8))
+    val geomT = Seq(Point(5.0, 0.0), Point(15.0, 0.0), Point(17.0, -0.5), Point(20.0, -2.0)).reverse
+    val suravage = VVHRoadlink(1234L, 0, geom, State, TrafficDirection.BothDirections, FeatureClass.AllOthers)
+    val template = VVHRoadlink(1235L, 0, geomT, State, TrafficDirection.BothDirections, FeatureClass.AllOthers)
+    val splitGeometryOpt = ProjectLinkSplitter.findMatchingGeometrySegment(suravage, template)
+    splitGeometryOpt.isEmpty should be (false)
+    val g = splitGeometryOpt.get
+    GeometryUtils.geometryLength(g) should be < GeometryUtils.geometryLength(geomT)
+    GeometryUtils.geometryLength(g) should be > (0.0)
+    GeometryUtils.minimumDistance(g.last, geomT) should be < MaxDistanceForConnectedLinks
+    g.length should be (3)
+    g.headOption.foreach { p =>
+      p.x should be(15.75 +- 0.1)
+      p.y should be(-.19 +- 0.1)
+    }
+  }
+
+  test("Split aligning project links") {
+    val sGeom = Seq(Point(5.0, 0.0), Point(15.0, 0.0), Point(16.0, 0.5), Point(20.0, 0.8))
+    val tGeom = Seq(Point(5.0, 0.0), Point(15.0, 0.0), Point(16.0, 1.5), Point(20.0, 4.8))
+    val sLen = GeometryUtils.geometryLength(sGeom)
+    val tLen = GeometryUtils.geometryLength(tGeom)
+    val suravage = ProjectLink(0L, 0L, 0L, Track.Unknown, Discontinuity.Continuous, 0L, 0L, None, None, None, 0L, 123L, 0.0, sLen,
+      SideCode.Unknown, (None, None), false, sGeom, 1L, LinkStatus.NotHandled, RoadType.Unknown, LinkGeomSource.SuravageLinkInterface,
+      sLen, 0L, None)
+    val template = ProjectLink(2L, 5L, 205L, Track.Combined, Discontinuity.Continuous, 1024L, 1040L, None, None, None, 0L, 124L, 0.0, sLen,
+      SideCode.TowardsDigitizing, (None, None), false, tGeom, 1L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface,
+      tLen, 0L, None)
+    val (sl, tl) = ProjectLinkSplitter.split(suravage, template, SplitOptions(Point(15.5, 0.75), LinkStatus.UnChanged,
+      LinkStatus.New, 5L, 205L, Track.Combined.value, Discontinuity.Continuous.value, 8L, LinkGeomSource.NormalLinkInterface.value,
+      RoadType.PublicRoad.value)).partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
+    sl should have size (2)
+    tl should have size (1)
+    val terminatedLink = tl.head
+    terminatedLink.status should be (LinkStatus.Terminated)
+    terminatedLink.endAddrMValue should be (template.endAddrMValue)
+    GeometryUtils.areAdjacent(terminatedLink.geometry,
+      GeometryUtils.truncateGeometry2D(template.geometry, terminatedLink.startMValue, template.geometryLength)) should be (true)
+    sl.foreach { l =>
+      l.endAddrMValue == terminatedLink.startAddrMValue || l.startAddrMValue == terminatedLink.startAddrMValue should be(true)
+      l.linkGeomSource should be (LinkGeomSource.SuravageLinkInterface)
+      l.endAddrMValue == template.endAddrMValue || l.startAddrMValue == template.startAddrMValue should be(true)
+      l.status == LinkStatus.New || l.status == LinkStatus.UnChanged should be (true)
+      GeometryUtils.areAdjacent(l.geometry, suravage.geometry) should be (true)
+      l.roadNumber should be (template.roadNumber)
+      l.roadPartNumber should be (template.roadPartNumber)
+      l.sideCode should be (SideCode.TowardsDigitizing)
+    }
+
+  }
+
+  test("Split opposing project links") {
+    val sGeom = Seq(Point(5.0, 0.0), Point(15.0, 0.0), Point(16.0, 0.5), Point(20.0, -0.8)).reverse
+    val tGeom = Seq(Point(5.0, 0.0), Point(15.0, 0.0), Point(16.0, 1.5), Point(20.0, 4.8))
+    val sLen = GeometryUtils.geometryLength(sGeom)
+    val tLen = GeometryUtils.geometryLength(tGeom)
+    val suravage = ProjectLink(0L, 0L, 0L, Track.Unknown, Discontinuity.Continuous, 0L, 0L, None, None, None, 0L, 123L, 0.0, sLen,
+      SideCode.Unknown, (None, None), false, sGeom, 1L, LinkStatus.NotHandled, RoadType.Unknown, LinkGeomSource.SuravageLinkInterface,
+      sLen, 0L, None)
+    val template = ProjectLink(2L, 5L, 205L, Track.Combined, Discontinuity.Continuous, 1024L, 1040L, None, None, None, 0L, 124L, 0.0, sLen,
+      SideCode.TowardsDigitizing, (None, None), false, tGeom, 1L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface,
+      tLen, 0L, None)
+    val (sl, tl) = ProjectLinkSplitter.split(suravage, template, SplitOptions(Point(15.5, 0.75), LinkStatus.UnChanged,
+      LinkStatus.New, 5L, 205L, Track.Combined.value, Discontinuity.Continuous.value, 8L, LinkGeomSource.NormalLinkInterface.value,
+      RoadType.PublicRoad.value)).partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
+    sl should have size (2)
+    tl should have size (1)
+    val terminatedLink = tl.head
+    terminatedLink.status should be (LinkStatus.Terminated)
+    terminatedLink.endAddrMValue should be (template.endAddrMValue)
+    GeometryUtils.areAdjacent(terminatedLink.geometry,
+      GeometryUtils.truncateGeometry2D(template.geometry, terminatedLink.startMValue, template.geometryLength)) should be (true)
+    sl.foreach { l =>
+      l.sideCode should be (SideCode.AgainstDigitizing)
+      l.endAddrMValue == template.endAddrMValue || l.startMValue > 0.0 should be (true)
+      l.startAddrMValue == template.startAddrMValue || l.startMValue == 0.0 should be (true)
+    }
+
   }
 }

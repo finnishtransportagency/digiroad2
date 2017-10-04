@@ -76,7 +76,9 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
                        discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
                        endDate: Option[DateTime] = None, modifiedBy: Option[String] = None, lrmPositionId : Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
                        calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false,
-                       geometry: Seq[Point], projectId: Long, status: LinkStatus, roadType: RoadType, linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, geometryLength: Double, roadAddressId : Long)
+                       geometry: Seq[Point], projectId: Long, status: LinkStatus, roadType: RoadType,
+                       linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, geometryLength: Double, roadAddressId : Long,
+                       connectedLinkId: Option[Long] = None)
   extends BaseRoadAddress with PolyLine {
   lazy val startingPoint = if (sideCode == SideCode.AgainstDigitizing) geometry.last else geometry.head
   lazy val endPoint = if (sideCode == SideCode.AgainstDigitizing) geometry.head else geometry.last
@@ -89,25 +91,25 @@ object ProjectDAO {
   LRM_POSITION.START_MEASURE, LRM_POSITION.END_MEASURE, LRM_POSITION.SIDE_CODE, PROJECT_LINK.LRM_POSITION_ID,
   PROJECT_LINK.CREATED_BY, PROJECT_LINK.MODIFIED_BY, lrm_position.link_id,
   (LRM_POSITION.END_MEASURE - LRM_POSITION.START_MEASURE) as length, PROJECT_LINK.CALIBRATION_POINTS, PROJECT_LINK.STATUS,
-  PROJECT_LINK.ROAD_TYPE, LRM_POSITION.LINK_SOURCE as source, PROJECT_LINK.ROAD_ADDRESS_ID
+  PROJECT_LINK.ROAD_TYPE, LRM_POSITION.LINK_SOURCE as source, PROJECT_LINK.ROAD_ADDRESS_ID, PROJECT_LINK.CONNECTED_LINK_ID
   from PROJECT_LINK join LRM_POSITION
     on LRM_POSITION.ID = PROJECT_LINK.LRM_POSITION_ID"""
 
   private def listQuery(query: String) = {
     Q.queryNA[(Long, Long, Int, Int, Long, Long, Long, Long, Double, Double, Long, Long, String, String,
-      Long, Double, Long, Int, Int, Int, Long)](query).list.map(mapToProjectLink)
+      Long, Double, Long, Int, Int, Int, Long, Option[Long])](query).list.map(mapToProjectLink)
   }
 
   private def mapToProjectLink(row: (Long, Long, Int, Int, Long, Long, Long, Long, Double, Double, Long, Long,
-    String, String, Long, Double, Long, Int, Int, Int, Long)): ProjectLink = {
+    String, String, Long, Double, Long, Int, Int, Int, Long, Option[Long])): ProjectLink = {
     val (projectLinkId, projectId, trackCode, discontinuityType, roadNumber, roadPartNumber, startAddrM, endAddrM,
     startMValue, endMValue, sideCode , lrmPositionId, createdBy, modifiedBy, linkId, length, calibrationPoints, status,
-    roadType, source, roadAddressId) = row
+    roadType, source, roadAddressId, connectedLinkId) = row
     ProjectLink(projectLinkId, roadNumber, roadPartNumber, Track.apply(trackCode), Discontinuity.apply(discontinuityType),
       startAddrM, endAddrM, None, None, None, lrmPositionId, linkId, startMValue, endMValue, SideCode.apply(sideCode.toInt),
       CalibrationPointsUtils.calibrations(CalibrationCode.apply(calibrationPoints.toInt),linkId,startMValue,endMValue,
         startAddrM,endAddrM, SideCode.apply(sideCode.toInt)),false, Seq.empty[Point], projectId, LinkStatus.apply(status),
-      RoadType.apply(roadType),LinkGeomSource.apply(source),length, roadAddressId)
+      RoadType.apply(roadType),LinkGeomSource.apply(source),length, roadAddressId, connectedLinkId)
   }
 
   def create(roadAddresses: Seq[ProjectLink]): Seq[Long] = {
@@ -563,7 +565,7 @@ object ProjectDAO {
       s"""$projectLinkQueryBase
                 where PROJECT_LINK.PROJECT_ID = $projectId AND (LRM_POSITION.LINK_ID = $linkId OR PROJECT_LINK.CONNECTED_LINK_ID = $linkId)"""
     Q.queryNA[(Long, Long, Int, Int, Long, Long, Long, Long, Double, Double, Long, Long, String, String, Long, Double,
-      Long, Int, Int, Int, Long)](query).list.map(mapToProjectLink)
+      Long, Int, Int, Int, Long, Option[Long])](query).list.map(mapToProjectLink)
   }
 
   def toTimeStamp(dateTime: Option[DateTime]) = {

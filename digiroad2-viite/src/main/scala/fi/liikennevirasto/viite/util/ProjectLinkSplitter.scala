@@ -1,6 +1,7 @@
 package fi.liikennevirasto.viite.util
 
-import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
+import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.linearasset.{PolyLine, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite._
@@ -10,44 +11,105 @@ import fi.liikennevirasto.viite.dao.{Discontinuity, LinkStatus, ProjectLink}
   * Split suravage link together with project link template
   */
 object ProjectLinkSplitter {
+  private def isDirectionReversed(link1: PolyLine, link2: PolyLine) = {
+    GeometryUtils.areAdjacent(link1.geometry.head, link2.geometry.last, MaxDistanceForConnectedLinks) ||
+      GeometryUtils.areAdjacent(link1.geometry.last, link2.geometry.head, MaxDistanceForConnectedLinks)
+  }
+  private def suravageWithOptions(suravage: ProjectLink, templateLink: ProjectLink, split: SplitOptions, suravageM: Double,
+                              splitAddressM: Long) = {
+    (
+      suravage.copy(roadNumber = split.roadNumber,
+        roadPartNumber = split.roadPartNumber,
+        track = Track.apply(split.trackCode),
+        discontinuity = Discontinuity.Continuous,
+        //          ely = split.ely,
+        roadType = RoadType.apply(split.roadType),
+        startMValue = 0.0,
+        endMValue = suravageM,
+        startAddrMValue = templateLink.startAddrMValue,
+        endAddrMValue = splitAddressM,
+        status = split.statusA,
+        sideCode = templateLink.sideCode,
+        roadAddressId = templateLink.roadAddressId,
+        connectedLinkId = Some(templateLink.linkId),
+        geometry = GeometryUtils.truncateGeometry2D(suravage.geometry, 0.0, suravageM),
+        geometryLength = suravageM
+      ),
+      suravage.copy(roadNumber = split.roadNumber,
+        roadPartNumber = split.roadPartNumber,
+        track = Track.apply(split.trackCode),
+        discontinuity = Discontinuity.apply(split.discontinuity),
+        //          ely = split.ely,
+        roadType = RoadType.apply(split.roadType),
+        startMValue = suravageM,
+        endMValue = suravage.geometryLength,
+        startAddrMValue = splitAddressM,
+        endAddrMValue = templateLink.endAddrMValue,
+        status = split.statusB,
+        sideCode = templateLink.sideCode,
+        roadAddressId = templateLink.roadAddressId,
+        connectedLinkId = Some(templateLink.linkId),
+        geometry = GeometryUtils.truncateGeometry2D(suravage.geometry, suravageM, suravage.geometryLength),
+        geometryLength = suravage.geometryLength - suravageM)
+    )
+  }
   def split(suravage: ProjectLink, templateLink: ProjectLink, split: SplitOptions): Seq[ProjectLink] = {
+    def movedFromStart(suravageM: Double, templateM: Double, splitAddressM: Long) = {
+      val (splitA, splitB) = suravageWithOptions(suravage, templateLink, split, suravageM, splitAddressM)
+      val splitT = templateLink.copy(
+        startMValue = templateM,
+        endMValue = templateLink.geometryLength,
+        geometryLength = templateLink.geometryLength - templateM,
+        startAddrMValue = splitAddressM,
+        status = LinkStatus.Terminated,
+        geometry = GeometryUtils.truncateGeometry2D(templateLink.geometry, templateM, templateLink.geometryLength),
+        connectedLinkId = Some(suravage.linkId)
+      )
+      (splitA,splitB,splitT)
+    }
+    def movedFromEnd(suravageM: Double, templateM: Double, splitAddressM: Long) = {
+      val (splitA, splitB) = suravageWithOptions(suravage, templateLink, split, suravageM, splitAddressM)
+      val splitT = templateLink.copy(
+        startMValue = 0.0,
+        endMValue = templateM,
+        geometryLength = templateM,
+        startAddrMValue = splitAddressM,
+        status = LinkStatus.Terminated,
+        geometry = GeometryUtils.truncateGeometry2D(templateLink.geometry, 0.0, templateM),
+        connectedLinkId = Some(suravage.linkId))
+      (splitA,splitB,splitT)
+    }
+    def switchDigitization(splits: (ProjectLink, ProjectLink, ProjectLink)) = {
+      val (splitA, splitB, splitT) = splits
+      (
+        splitB.copy(
+          sideCode = SideCode.switch(splitA.sideCode),
+          startMValue = 0.0,
+          endMValue = splitB.startMValue),
+        splitA.copy(
+          sideCode = SideCode.switch(splitA.sideCode),
+          startMValue = splitB.startMValue,
+          endMValue = splitB.endMValue
+        ),
+        splitT)
+    }
+    def toSeq(splits: (ProjectLink, ProjectLink, ProjectLink)) = {
+      Seq(splits._1, splits._2, splits._3)
+    }
     val suravageM = GeometryUtils.calculateLinearReferenceFromPoint(split.splitPoint, suravage.geometry)
     val templateM = GeometryUtils.calculateLinearReferenceFromPoint(split.splitPoint, templateLink.geometry)
-    val (splitA, splitB, splitT) = (split.statusA, split.statusB) match {
-      case (LinkStatus.UnChanged, LinkStatus.Terminated) => {
-        val splitAddressM = Math.round(templateM / templateLink.geometryLength *
-          (templateLink.endAddrMValue - templateLink.startAddrMValue))
-        (suravage.copy(roadNumber = split.roadNumber,
-          roadPartNumber = split.roadPartNumber,
-          track = Track.apply(split.trackCode),
-          discontinuity = Discontinuity.apply(split.discontinuity),
-//          ely = split.ely,
-          roadType = RoadType.apply(split.roadType),
-          startMValue = 0.0,
-          endMValue = suravageM,
-          startAddrMValue = templateLink.startAddrMValue,
-          endAddrMValue = splitAddressM,
-          status = LinkStatus.UnChanged
-        ), suravage.copy(roadNumber = split.roadNumber,
-          roadPartNumber = split.roadPartNumber,
-          track = Track.apply(split.trackCode),
-          discontinuity = Discontinuity.apply(split.discontinuity),
-//          ely = split.ely,
-          roadType = RoadType.apply(split.roadType),
-          startMValue = suravageM,
-          endMValue = suravage.geometryLength,
-          startAddrMValue = splitAddressM,
-          endAddrMValue = templateLink.endAddrMValue,
-          status = LinkStatus.New
-        ), templateLink.copy(
-          startMValue = templateM,
-          endMValue = templateLink.geometryLength,
-          startAddrMValue = splitAddressM,
-          status = LinkStatus.Terminated
-        ))
-      }
-    }
-    Seq(splitA,splitB,splitT)
+    val splitAddressM = templateLink.startAddrMValue + Math.round(templateM / templateLink.geometryLength *
+      (templateLink.endAddrMValue - templateLink.startAddrMValue))
+    val splits =
+      if (split.statusB == LinkStatus.New)
+        movedFromStart(suravageM, templateM, splitAddressM)
+      else
+        movedFromEnd(suravageM, templateM, splitAddressM)
+    if (isDirectionReversed(suravage, templateLink))
+      toSeq(switchDigitization(splits))
+    else
+      toSeq(splits)
+
   }
 
   def findMatchingGeometrySegment(suravage: RoadLinkLike, template: RoadLinkLike): Option[Seq[Point]] = {
@@ -66,6 +128,8 @@ object ProjectLinkSplitter {
         } else {
           Some(GeometryUtils.truncateGeometry2D(templateGeom, 0.0, Math.max(template.length, suravage.length)))
         }
+      } else if (GeometryUtils.areAdjacent(suravageGeom.last, templateGeom.head, MaxDistanceForConnectedLinks)) {
+        findMatchingSegment(suravageGeom.reverse, templateGeom)
       } else
         None
     }
