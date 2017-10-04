@@ -1,9 +1,8 @@
 package fi.liikennevirasto.viite
-
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.SuravageLinkInterface
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, _}
-import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
+import fi.liikennevirasto.digiroad2.linearasset.{PolyLine, RoadLinkLike,RoadLink}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReservedException, Track}
@@ -423,7 +422,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             && GeometryUtils.minimumDistance(splitPoint,x.geometry)>1)
         //we rank template links near suravagelink by how much they overlap with suravage geometry
         val rankedcanditetesForMerge= projectLinksWithInTolerance.map(x=>
-          (GeometryUtils.geometryLength(ProjectLinkSplitter.findMatchingGeometrySegment(suravageLink,x).getOrElse(Seq())),x.copy()))
+          (GeometryUtils.geometryLength(ProjectLinkSplitter.findMatchingGeometrySegment(suravageLink, VVHRoadlink(x.linkId, 0, x.geometry, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers)).getOrElse(Seq())),x.copy()))
         val mostCommonLinkWithSuravage=rankedcanditetesForMerge.maxBy(_._1)._2
         val projectLink=projectLinksNearSuravageL.filter(x=>x.linkId==mostCommonLinkWithSuravage.linkId).head
         val splittedLinks=ProjectLinkSplitter.split(suravageProjectLink,projectLink,

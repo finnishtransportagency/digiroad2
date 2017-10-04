@@ -1,13 +1,13 @@
 package fi.liikennevirasto.viite.util
 
-import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
+import javafx.scene.shape.Polyline
+
+import fi.liikennevirasto.digiroad2.linearasset.{PolyLine, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.{Discontinuity, LinkStatus, ProjectLink}
 import fi.liikennevirasto.viite.{MaxDistanceForConnectedLinks, MaxSuravageToleranceToGeometry, RoadType}
-import fi.liikennevirasto.viite.dao.{Discontinuity, LinkStatus, ProjectLink, RoadAddress}
-import fi.liikennevirasto.viite.model.RoadAddressLink
+import fi.liikennevirasto.viite.dao.{Discontinuity, LinkStatus, ProjectLink}
 
 /**
   * Split suravage link together with project link template
@@ -53,7 +53,7 @@ object ProjectLinkSplitter {
     Seq(splitA,splitB,splitT)
   }
 
-  def findMatchingGeometrySegment(suravage: RoadLinkLike, template: RoadAddress): Option[Seq[Point]] = {
+  def findMatchingGeometrySegment(suravage: RoadLinkLike, template: PolyLine): Option[Seq[Point]] = {
     def findMatchingSegment(suravageGeom: Seq[Point], templateGeom: Seq[Point]): Option[Seq[Point]] = {
       if (GeometryUtils.areAdjacent(suravageGeom.head, templateGeom.head, MaxDistanceForConnectedLinks)) {
         val boundaries = geometryToBoundaries(suravageGeom)
