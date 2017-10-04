@@ -152,7 +152,7 @@
       var dataJson = {
         id: projectid,
         projectEly: currentProject.project.ely,
-        status: 1,
+        status: currentProject.project.statusCode,
         name: data[0].value,
         startDate: data[1].value,
         additionalInfo: data[2].value,
@@ -182,7 +182,7 @@
           currentProject = result;
         }
         else {
-          eventbus.trigger('roadAddress:projectValidationFailed', result);
+          eventbus.trigger('roadAddress:projectValidationFailed', result.errorMessage);
         }
       }, function () {
         eventbus.trigger('roadAddress:projectFailed');
@@ -197,7 +197,7 @@
           'roadNumber': links[0].roadNumber,
           'roadPartNumber': links[0].roadPartNumber,
           'links': _.map(links, function (link) {
-            return {'linkId': link.linkId, 'status': link.status};
+            return {'id': link.id, 'linkId': link.linkId, 'status': link.status};
           })
         };
         backend.revertChangesRoadlink(data, function (response) {
@@ -207,6 +207,12 @@
           }
           else if (response.status == INTERNAL_SERVER_ERROR_500 || response.status == BAD_REQUEST_400) {
             eventbus.trigger('roadAddress:projectLinksUpdateFailed', error.status);
+            new ModalConfirm(response.errorMessage);
+            applicationModel.removeSpinner();
+          }
+          else{
+            new ModalConfirm(response.errorMessage);
+            applicationModel.removeSpinner();
           }
         });
       }
@@ -294,7 +300,7 @@
           currentProject = result;
         }
         else {
-          eventbus.trigger('roadAddress:projectValidationFailed', result);
+          eventbus.trigger('roadAddress:projectValidationFailed', result.errorMessage);
         }
       }, function () {
         eventbus.trigger('roadAddress:projectFailed');
@@ -450,7 +456,7 @@
 
     eventbus.on('roadPartsValidation:checkRoadParts', function(validationResult) {
       if (validationResult.success !== "ok") {
-        eventbus.trigger('roadAddress:projectValidationFailed', validationResult);
+        eventbus.trigger('roadAddress:projectValidationFailed', validationResult.success);
       } else {
         addToDirtyRoadPartList(validationResult);
         updateFormInfo(parseRoadPartInfoToResultRow());

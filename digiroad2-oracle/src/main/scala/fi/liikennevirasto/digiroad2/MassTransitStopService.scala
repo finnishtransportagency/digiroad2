@@ -696,6 +696,12 @@ trait MassTransitStopService extends PointAssetOperations {
     requiredProperties + (validityDirection.publicId -> validityDirection.propertyType)
   }
 
+  def getPropertiesWithMaxSize(): Map[String, Int] = {
+    withDynSession {
+      massTransitStopDao.getPropertiesWithMaxSize(typeId)
+    }
+  }
+
   def calculateLinearReferenceFromPoint(point: Point, points: Seq[Point]): Double = {
     GeometryUtils.calculateLinearReferenceFromPoint(point, points)
   }

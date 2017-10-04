@@ -57,6 +57,7 @@ object LinkStatus {
   case object Transfer extends LinkStatus {def value = 3}
   case object Numbering extends LinkStatus {def value = 4}
   case object Terminated extends LinkStatus {def value = 5}
+  case object Rollbacked extends LinkStatus {def value = 42}
   case object Unknown extends LinkStatus {def value = 99}
   def apply(intValue: Int): LinkStatus = {
     values.find(_.value == intValue).getOrElse(Unknown)
@@ -75,8 +76,11 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
                        discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
                        endDate: Option[DateTime] = None, modifiedBy: Option[String] = None, lrmPositionId : Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
                        calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false,
-                       geometry: Seq[Point], projectId: Long, status: LinkStatus, roadType: RoadType, linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, geometryLength: Double)
-  extends BaseRoadAddress with PolyLine
+                       geometry: Seq[Point], projectId: Long, status: LinkStatus, roadType: RoadType, linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, geometryLength: Double, roadAddressId : Long)
+  extends BaseRoadAddress with PolyLine {
+  lazy val startingPoint = if (sideCode == SideCode.AgainstDigitizing) geometry.last else geometry.head
+  lazy val endPoint = if (sideCode == SideCode.AgainstDigitizing) geometry.head else geometry.last
+}
 
 object ProjectDAO {
 
@@ -85,7 +89,7 @@ object ProjectDAO {
     val addressPS = dynamicSession.prepareStatement("insert into PROJECT_LINK (id, project_id, lrm_position_id, " +
       "road_number, road_part_number, " +
       "track_code, discontinuity_type, START_ADDR_M, END_ADDR_M, created_by, " +
-      "calibration_points, status, road_type) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+      "calibration_points, status, road_type, road_address_id) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
     val ids = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= ${roadAddresses.size}""".as[Long].list
     roadAddresses.zip(ids).foreach { case ((address), (lrmId)) =>
       RoadAddressDAO.createLRMPosition(lrmPositionPS, lrmId, address.linkId, address.sideCode.value, address.startMValue, address.endMValue, 0, address.linkGeomSource.value)
@@ -104,6 +108,10 @@ object ProjectDAO {
       addressPS.setDouble(11, CalibrationCode.getFromAddress(address).value)
       addressPS.setLong(12, address.status.value)
       addressPS.setLong(13, address.roadType.value)
+      if(address.roadAddressId == 0)
+        addressPS.setString(14, null)
+      else
+        addressPS.setLong(14, address.roadAddressId)
       addressPS.addBatch()
     }
     lrmPositionPS.executeBatch()
@@ -165,17 +173,17 @@ object ProjectDAO {
           LRM_POSITION.START_MEASURE, LRM_POSITION.END_MEASURE, LRM_POSITION.SIDE_CODE, PROJECT_LINK.LRM_POSITION_ID,
           PROJECT_LINK.CREATED_BY, PROJECT_LINK.MODIFIED_BY, lrm_position.link_id,
           (LRM_POSITION.END_MEASURE - LRM_POSITION.START_MEASURE) as length, PROJECT_LINK.CALIBRATION_POINTS, PROJECT_LINK.STATUS,
-          PROJECT_LINK.ROAD_TYPE, LRM_POSITION.LINK_SOURCE as source
+          PROJECT_LINK.ROAD_TYPE, LRM_POSITION.LINK_SOURCE as source, PROJECT_LINK.ROAD_ADDRESS_ID
                 from PROJECT_LINK join LRM_POSITION
                 on LRM_POSITION.ID = PROJECT_LINK.LRM_POSITION_ID
                 where $filter (PROJECT_LINK.PROJECT_ID = $projectId ) order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
-    Q.queryNA[(Long, Long, Int, Int, Long, Long, Long, Long, Double, Double, Long, Long, String, String, Long, Double, Long, Int, Int, Int)](query).list.map {
+    Q.queryNA[(Long, Long, Int, Int, Long, Long, Long, Long, Double, Double, Long, Long, String, String, Long, Double, Long, Int, Int, Int, Long)](query).list.map {
       case (projectLinkId, projectId, trackCode, discontinuityType, roadNumber, roadPartNumber, startAddrM, endAddrM,
-      startMValue, endMValue, sideCode , lrmPositionId, createdBy, modifiedBy, linkId, length, calibrationPoints, status, roadType, source) =>
+      startMValue, endMValue, sideCode , lrmPositionId, createdBy, modifiedBy, linkId, length, calibrationPoints, status, roadType, source, roadAddressId) =>
         ProjectLink(projectLinkId, roadNumber, roadPartNumber, Track.apply(trackCode), Discontinuity.apply(discontinuityType),
           startAddrM, endAddrM, None, None, None, lrmPositionId, linkId, startMValue, endMValue, SideCode.apply(sideCode.toInt),
           CalibrationPointsUtils.calibrations(CalibrationCode.apply(calibrationPoints.toInt),linkId,startMValue,endMValue,startAddrM,endAddrM, SideCode.apply(sideCode.toInt)),
-          false, Seq.empty[Point], projectId, LinkStatus.apply(status), RoadType.apply(roadType),LinkGeomSource.apply(source),length)
+          false, Seq.empty[Point], projectId, LinkStatus.apply(status), RoadType.apply(roadType),LinkGeomSource.apply(source),length, roadAddressId)
     }
   }
 
@@ -187,17 +195,17 @@ object ProjectDAO {
           LRM_POSITION.START_MEASURE, LRM_POSITION.END_MEASURE, LRM_POSITION.SIDE_CODE, PROJECT_LINK.LRM_POSITION_ID,
           PROJECT_LINK.CREATED_BY, PROJECT_LINK.MODIFIED_BY, lrm_position.link_id,
           (LRM_POSITION.END_MEASURE - LRM_POSITION.START_MEASURE) as length, PROJECT_LINK.CALIBRATION_POINTS, PROJECT_LINK.STATUS,
-          PROJECT_LINK.ROAD_TYPE, LRM_POSITION.LINK_SOURCE as source
+          PROJECT_LINK.ROAD_TYPE, LRM_POSITION.LINK_SOURCE as source, PROJECT_LINK.ROAD_ADDRESS_ID
                 from PROJECT_LINK join LRM_POSITION
                 on LRM_POSITION.ID = PROJECT_LINK.LRM_POSITION_ID
                 where project_link.id in (${projectLinkId.mkString(",")}) order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
-    Q.queryNA[(Long, Long, Int, Int, Long, Long, Long, Long, Long, Long, Long, Long, String, String, Long, Double, Long, Int, Int, Int)](query).list.map {
+    Q.queryNA[(Long, Long, Int, Int, Long, Long, Long, Long, Long, Long, Long, Long, String, String, Long, Double, Long, Int, Int, Int, Long)](query).list.map {
       case (projectLinkId, projectId, trackCode, discontinuityType, roadNumber, roadPartNumber, startAddrM, endAddrM,
-      startMValue, endMValue, sideCode , lrmPositionId, createdBy, modifiedBy, linkId, length, calibrationPoints, status, roadType, source) =>
+      startMValue, endMValue, sideCode , lrmPositionId, createdBy, modifiedBy, linkId, length, calibrationPoints, status, roadType, source, roadAddressId) =>
         ProjectLink(projectLinkId, roadNumber, roadPartNumber, Track.apply(trackCode), Discontinuity.apply(discontinuityType),
           startAddrM, endAddrM, None, None, None, lrmPositionId, linkId, startMValue, endMValue, SideCode.apply(sideCode.toInt),
           CalibrationPointsUtils.calibrations(CalibrationCode.apply(calibrationPoints.toInt),linkId,startMValue,endMValue,startAddrM,endAddrM, SideCode.apply(sideCode.toInt)),
-          false, Seq.empty[Point], projectId, LinkStatus.apply(status), RoadType.apply(roadType),LinkGeomSource.apply(source),length)
+          false, Seq.empty[Point], projectId, LinkStatus.apply(status), RoadType.apply(roadType),LinkGeomSource.apply(source),length, roadAddressId)
     }
   }
 
@@ -208,17 +216,17 @@ object ProjectDAO {
           LRM_POSITION.START_MEASURE, LRM_POSITION.END_MEASURE, LRM_POSITION.SIDE_CODE, PROJECT_LINK.LRM_POSITION_ID,
           PROJECT_LINK.CREATED_BY, PROJECT_LINK.MODIFIED_BY, lrm_position.link_id,
           (LRM_POSITION.END_MEASURE - LRM_POSITION.START_MEASURE) as length, PROJECT_LINK.CALIBRATION_POINTS, PROJECT_LINK.STATUS,
-          PROJECT_LINK.ROAD_TYPE, LRM_POSITION.LINK_SOURCE as source
+          PROJECT_LINK.ROAD_TYPE, LRM_POSITION.LINK_SOURCE as source, PROJECT_LINK.ROAD_ADDRESS_ID
                 from PROJECT_LINK join LRM_POSITION
                 on LRM_POSITION.ID = PROJECT_LINK.LRM_POSITION_ID
                 where LRM_POSITION.link_id = ${projectLinkId} order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
-    Q.queryNA[(Long, Long, Int, Int, Long, Long, Long, Long, Long, Long, Long, Long, String, String, Long, Double, Long, Int, Int, Int)](query).list.map {
+    Q.queryNA[(Long, Long, Int, Int, Long, Long, Long, Long, Long, Long, Long, Long, String, String, Long, Double, Long, Int, Int, Int, Long)](query).list.map {
       case (projectLinkId, projectId, trackCode, discontinuityType, roadNumber, roadPartNumber, startAddrM, endAddrM,
-      startMValue, endMValue, sideCode , lrmPositionId, createdBy, modifiedBy, linkId, length, calibrationPoints, status, roadType, source) =>
+      startMValue, endMValue, sideCode , lrmPositionId, createdBy, modifiedBy, linkId, length, calibrationPoints, status, roadType, source, roadAddressId) =>
         ProjectLink(projectLinkId, roadNumber, roadPartNumber, Track.apply(trackCode), Discontinuity.apply(discontinuityType),
           startAddrM, endAddrM, None, None, None, lrmPositionId, linkId, startMValue, endMValue, SideCode.apply(sideCode.toInt),
           CalibrationPointsUtils.calibrations(CalibrationCode.apply(calibrationPoints.toInt),linkId,startMValue,endMValue,startAddrM,endAddrM, SideCode.apply(sideCode.toInt)),
-          false, Seq.empty[Point], projectId, LinkStatus.apply(status), RoadType.apply(roadType),LinkGeomSource.apply(source),length)
+          false, Seq.empty[Point], projectId, LinkStatus.apply(status), RoadType.apply(roadType),LinkGeomSource.apply(source),length, roadAddressId)
     }
   }
 
@@ -230,17 +238,17 @@ object ProjectDAO {
           LRM_POSITION.START_MEASURE, LRM_POSITION.END_MEASURE, LRM_POSITION.SIDE_CODE, PROJECT_LINK.LRM_POSITION_ID,
           PROJECT_LINK.CREATED_BY, PROJECT_LINK.MODIFIED_BY, lrm_position.link_id,
           (LRM_POSITION.END_MEASURE - LRM_POSITION.START_MEASURE) as length, PROJECT_LINK.CALIBRATION_POINTS, PROJECT_LINK.STATUS,
-          PROJECT_LINK.ROAD_TYPE, LRM_POSITION.LINK_SOURCE as source
+          PROJECT_LINK.ROAD_TYPE, LRM_POSITION.LINK_SOURCE as source, PROJECT_LINK.ROAD_ADDRESS_ID
                 from PROJECT_LINK join LRM_POSITION
                 on LRM_POSITION.ID = PROJECT_LINK.LRM_POSITION_ID
                 where $filter (PROJECT_LINK.PROJECT_ID = $projectId ) order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
-    Q.queryNA[(Long, Long, Int, Int, Long, Long, Long, Long, Long, Long, Long, Long, String, String, Long, Double, Long, Int, Int, Int)](query).list.map {
+    Q.queryNA[(Long, Long, Int, Int, Long, Long, Long, Long, Long, Long, Long, Long, String, String, Long, Double, Long, Int, Int, Int, Long)](query).list.map {
       case (projectLinkId, projectId, trackCode, discontinuityType, roadNumber, roadPartNumber, startAddrM, endAddrM,
-      startMValue, endMValue, sideCode , lrmPositionId, createdBy, modifiedBy, linkId, length, calibrationPoints, status, roadType, source) =>
+      startMValue, endMValue, sideCode , lrmPositionId, createdBy, modifiedBy, linkId, length, calibrationPoints, status, roadType, source, roadAddressId) =>
         ProjectLink(projectLinkId, roadNumber, roadPartNumber, Track.apply(trackCode), Discontinuity.apply(discontinuityType),
           startAddrM, endAddrM, None, None, None, lrmPositionId, linkId, startMValue, endMValue, SideCode.apply(sideCode.toInt),
           CalibrationPointsUtils.calibrations(CalibrationCode.apply(calibrationPoints.toInt),linkId,startMValue,endMValue,startAddrM,endAddrM, SideCode.apply(sideCode.toInt)),
-          false, Seq.empty[Point], projectId, LinkStatus.apply(status), RoadType.apply(roadType),LinkGeomSource.apply(source),length)
+          false, Seq.empty[Point], projectId, LinkStatus.apply(status), RoadType.apply(roadType),LinkGeomSource.apply(source),length, roadAddressId)
     }
   }
 
@@ -403,7 +411,7 @@ object ProjectDAO {
   def updateProjectLinkNumbering(projectId: Long, roadNumber: Long, roadPart: Long, linkStatus: LinkStatus, newRoadNumber: Long, newRoadPart: Long, userName: String): Unit = {
     val user = userName.replaceAll("[^A-Za-z0-9\\-]+", "")
         val sql = s"UPDATE PROJECT_LINK SET STATUS = ${linkStatus.value}, MODIFIED_BY='$user', ROAD_NUMBER = $newRoadNumber, ROAD_PART_NUMBER = $newRoadPart " +
-          s"WHERE PROJECT_ID = $projectId  AND ROAD_NUMBER = $roadNumber AND ROAD_PART_NUMBER = $roadPart"
+          s"WHERE PROJECT_ID = $projectId  AND ROAD_NUMBER = $roadNumber AND ROAD_PART_NUMBER = $roadPart AND STATUS != ${LinkStatus.Terminated.value}"
         Q.updateNA(sql).execute
   }
 
@@ -418,9 +426,14 @@ object ProjectDAO {
   }
 
   def updateProjectLinkValues (projectId: Long, roadAddress: RoadAddress) = {
-    val updateProjectLink = s"update project_link set project_link.road_number = ${roadAddress.roadNumber}, project_link.road_part_number = ${roadAddress.roadPartNumber}, project_link.track_code = ${roadAddress.track.value}, " +
-      s" project_link.discontinuity_type = ${roadAddress.discontinuity.value}, project_link.road_type = ${roadAddress.roadType.value}, project_link.status = 0 where id in (select plink.id from project_link plink join lrm_position on lrm_position.id = plink.lrm_position_id where lrm_position.link_id =${roadAddress.linkId} )"
+    val updateProjectLink = s"UPDATE PROJECT_LINK SET ROAD_NUMBER = ${roadAddress.roadNumber}, ROAD_PART_NUMBER = ${roadAddress.roadPartNumber}, TRACK_CODE = ${roadAddress.track.value}, " +
+      s" DISCONTINUITY_TYPE = ${roadAddress.discontinuity.value}, ROAD_TYPE = ${roadAddress.roadType.value}, STATUS = ${LinkStatus.NotHandled.value}, START_ADDR_M = ${roadAddress.startAddrMValue}, END_ADDR_M = ${roadAddress.endAddrMValue}, " +
+      s" CALIBRATION_POINTS = ${CalibrationCode.getFromAddress(roadAddress).value} " +
+      s" WHERE ROAD_ADDRESS_ID = ${roadAddress.id} "
     Q.updateNA(updateProjectLink).execute
+
+    val updateLRMPosition = s"UPDATE LRM_POSITION SET SIDE_CODE = ${roadAddress.sideCode.value} where id in (SELECT LRM_POSITION_ID FROM PROJECT_LINK WHERE ROAD_ADDRESS_ID = ${roadAddress.id} )"
+    Q.updateNA(updateLRMPosition).execute
   }
 
   def flipProjectLinksSideCodes(projectId : Long, roadNumber : Long, roadPartNumber : Long): Unit = {
@@ -486,7 +499,7 @@ object ProjectDAO {
     LRM_POSITION.START_MEASURE, LRM_POSITION.END_MEASURE, LRM_POSITION.SIDE_CODE, PROJECT_LINK.LRM_POSITION_ID,
     PROJECT_LINK.CREATED_BY, PROJECT_LINK.MODIFIED_BY, lrm_position.link_id,
     (LRM_POSITION.END_MEASURE - LRM_POSITION.START_MEASURE) as length, PROJECT_LINK.CALIBRATION_POINTS, PROJECT_LINK.STATUS,
-    PROJECT_LINK.ROAD_TYPE, LRM_POSITION.LINK_SOURCE as source
+    PROJECT_LINK.ROAD_TYPE, LRM_POSITION.LINK_SOURCE as source, PROJECT_LINK.ROAD_ADDRESS_ID
     from PROJECT_LINK join LRM_POSITION
       on LRM_POSITION.ID = PROJECT_LINK.LRM_POSITION_ID
     where ROAD_PART_NUMBER=$roadPartNumber AND ROAD_NUMBER=$roadNumber AND
@@ -494,13 +507,13 @@ object ProjectDAO {
       PROJECT_LINK.PROJECT_ID = $projectId AND ROAD_PART_NUMBER=$roadPartNumber AND ROAD_NUMBER=$roadNumber)
     order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.START_ADDR_M, PROJECT_LINK.TRACK_CODE"""
     Q.queryNA[(Long, Long, Int, Int, Long, Long, Long, Long, Double, Double, Long, Long, String, Option[String],
-      Long, Double, Long, Int, Int, Int)](query).firstOption.map {
+      Long, Double, Long, Int, Int, Int, Long)](query).firstOption.map {
       case (projectLinkId, projId, trackCode, discontinuityType, road, roadPart, startAddrM, endAddrM,
-      startMValue, endMValue, sideCode , lrmPositionId, createdBy, modifiedBy, linkId, length, calibrationPoints, status, roadType, source) =>
+      startMValue, endMValue, sideCode , lrmPositionId, createdBy, modifiedBy, linkId, length, calibrationPoints, status, roadType, source, roadAddressId) =>
         ProjectLink(projectLinkId, road, roadPart, Track.apply(trackCode), Discontinuity.apply(discontinuityType),
           startAddrM, endAddrM, None, None, modifiedBy, lrmPositionId, linkId, startMValue, endMValue, SideCode.apply(sideCode.toInt),
           CalibrationPointsUtils.calibrations(CalibrationCode.apply(calibrationPoints.toInt),linkId,startMValue,endMValue,startAddrM,endAddrM, SideCode.apply(sideCode.toInt)),
-          false, Seq.empty[Point], projId, LinkStatus.apply(status), RoadType.apply(roadType),LinkGeomSource.apply(source),length)
+          false, Seq.empty[Point], projId, LinkStatus.apply(status), RoadType.apply(roadType),LinkGeomSource.apply(source),length, roadAddressId)
     }
   }
 

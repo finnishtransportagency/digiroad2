@@ -384,7 +384,7 @@
       });
 
       eventbus.on('roadAddress:projectValidationFailed', function (result) {
-        new ModalConfirm(result.success.toString());
+        new ModalConfirm(result.toString());
         applicationModel.removeSpinner();
       });
 

@@ -296,6 +296,7 @@ Returns empty result as Json message, not as page not found
       val linkId = optionalLinkId.getOrElse(halt(BadRequest("Missing mandatory field linkId")))
       validateBusStopDirections(properties, linkId)
     }
+    validatePropertiesMaxSize(properties)
     val position = (optionalLon, optionalLat, optionalLinkId) match {
       case (Some(lon), Some(lat), Some(linkId)) => Some(Position(lon, lat, linkId, bearing))
       case _ => None
@@ -358,6 +359,15 @@ Returns empty result as Json message, not as page not found
         halt(NotAcceptable("Invalid Mass Transit Stop direction"))
     }
 
+
+  private def validatePropertiesMaxSize(properties: Seq[SimpleProperty]) = {
+    val propertiesWithMaxSize: Map[String, Int] = massTransitStopService.getPropertiesWithMaxSize()
+    val invalidPropertiesDueMaxSize: Seq[SimpleProperty] = properties.filter { property =>
+      propertiesWithMaxSize.contains(property.publicId) && property.values.nonEmpty && property.values.forall { value => value.propertyValue.length > propertiesWithMaxSize(property.publicId) }
+    }
+    if (invalidPropertiesDueMaxSize.nonEmpty) halt(BadRequest("Properties with Invalid Size: " + invalidPropertiesDueMaxSize.mkString(", ")))
+  }
+
   post("/massTransitStops") {
     val positionParameters = massTransitStopPositionParameters(parsedBody)
     val lon = positionParameters._1.get
@@ -368,6 +378,7 @@ Returns empty result as Json message, not as page not found
     validateUserRights(linkId)
     validateBusStopMaintainerUser(properties)
     validateCreationProperties(properties)
+    validatePropertiesMaxSize(properties)
     validateBusStopDirections(properties, linkId)
     try {
       val id = createMassTransitStop(lon, lat, linkId, bearing, properties)
