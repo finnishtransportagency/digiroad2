@@ -124,8 +124,6 @@ trait LinearAssetOperations {
           dao.fetchProhibitionsByLinkIds(typeId, linkIds ++ removedLinkIds, includeFloating = false)
         case LinearAssetTypes.EuropeanRoadAssetTypeId | LinearAssetTypes.ExitNumberAssetTypeId =>
           dao.fetchAssetsWithTextualValuesByLinkIds(typeId, linkIds ++ removedLinkIds, LinearAssetTypes.getValuePropertyId(typeId))
-        case LinearAssetTypes.MaintenanceRoadAssetTypeId =>
-          dao.fetchMaintenancesByLinkIds(typeId, linkIds ++ removedLinkIds, includeFloating = false)
         case _ =>
           dao.fetchLinearAssetsByLinkIds(typeId, linkIds ++ removedLinkIds, LinearAssetTypes.numericValuePropertyId)
       }

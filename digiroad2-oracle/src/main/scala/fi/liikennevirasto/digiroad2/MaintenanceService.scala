@@ -86,16 +86,16 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     val roadlinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(oldAssets.map(_.linkId).toSet, false)
 
     oldAssets.map { oldAsset =>
-    //Expire the old asset
+      //Expire the old asset
       dao.updateExpiration(oldAsset.id, expired = true, username)
 
-    //Create New Asset
-       createAssetWithoutTransaction(oldAsset.typeId, oldAsset.linkId, valueToUpdate, oldAsset.sideCode, measures.getOrElse(Measures(oldAsset.startMeasure, oldAsset.endMeasure)),
-         username, vvhClient.roadLinkData.createVVHTimeStamp(), roadlinks.find(_.linkId == oldAsset.linkId), true, oldAsset.createdBy, oldAsset.createdDateTime)
+      //Create New Asset
+      createAssetWithoutTransaction(oldAsset.typeId, oldAsset.linkId, valueToUpdate, oldAsset.sideCode, measures.getOrElse(Measures(oldAsset.startMeasure, oldAsset.endMeasure)),
+        username, vvhClient.roadLinkData.createVVHTimeStamp(), roadlinks.find(_.linkId == oldAsset.linkId), true, oldAsset.createdBy, oldAsset.createdDateTime)
     }
   }
 
-  override protected def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, measures: Option[Measures] = None): Seq[Long] = {
+  override protected def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, measures: Option[Measures] = None, vvhTimeStamp: Option[Long], sideCode: Option[Int]): Seq[Long] = {
     if (ids.isEmpty)
       return ids
 
@@ -110,7 +110,7 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
   /**
     * Saves new linear assets from UI. Used by Digiroad2Api /linearassets POST endpoint.
     */
-  override def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String): Seq[Long] = {
+  override def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String, vvhTimeStamp: Long = vvhClient.roadLinkData.createVVHTimeStamp()): Seq[Long] = {
     val roadlink = roadLinkService.getRoadLinksAndComplementariesFromVVH(newLinearAssets.map(_.linkId).toSet)
     withDynTransaction {
       newLinearAssets.map { newAsset =>
