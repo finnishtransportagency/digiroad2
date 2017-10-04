@@ -2,7 +2,7 @@ package fi.liikennevirasto.viite
 
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.SuravageLinkInterface
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
-import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, _}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -13,7 +13,7 @@ import fi.liikennevirasto.viite.dao.{ProjectDAO, RoadAddressDAO, _}
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.DefloatMapper.distancesBetweenEndPoints
 import fi.liikennevirasto.viite.process._
-import fi.liikennevirasto.viite.util.{GuestimateGeometryForMissingLinks, ProjectLinkSplitter}
+import fi.liikennevirasto.viite.util.{GuestimateGeometryForMissingLinks, ProjectLinkSplitter, SplitOptions}
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.slf4j.LoggerFactory
@@ -409,26 +409,40 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
        val x = if (endPoints._1.x > endPoints._2.x) (endPoints._2.x, endPoints._1.x) else (endPoints._1.x, endPoints._2.x)
        val rightTop = Point(x._2, endPoints._2.y)
        val leftBottom = Point(x._1, endPoints._1.y)
-       withDynSession{
-         val roadLinksNearSuravageLink=RoadAddressDAO.fetchRoadAddressesByBoundingBox(BoundingRectangle(leftBottom,rightTop),false)
-         val projectLinksNearSuravageL=ProjectDAO.getProjectLinksByProjectAndLinkId(roadLinksNearSuravageLink.map(x=> x.linkId),projectId)
-
-
-         val projectLinksWithInTolerance=roadLinksNearSuravageLink.filter(x=>projectLinksNearSuravageL.map(x=>x.linkId).contains(x.linkId))
-           .filter(x=> GeometryUtils.areAdjacent(Seq(x.geometry.head, x.geometry.last),suravageLink.geometry)
+      val (roadLinksNearSuravageLinks,projectLinksNearSuravageL,suravageProjectLinks)=
+        getRoadLinksProjectLinksNearSuravageAndSuravageProjectLink(BoundingRectangle(leftBottom, rightTop),projectId,suravageLink.linkId)
+        if (roadLinksNearSuravageLinks.isEmpty)
+        Left("Could not find roadaddresslinks near suravagelink")
+       if (projectLinksNearSuravageL.isEmpty)
+         Left("Could not find projectlinks near suravagelink")
+       if (suravageProjectLinks.isEmpty && suravageProjectLinks.length>1)
+         Left("Could not match suravagelink to projectlinks")
+         val suravageProjectLink=suravageProjectLinks.head
+         val projectLinksWithInTolerance=roadLinksNearSuravageLinks.filter(x=>projectLinksNearSuravageL.map(x=>x.linkId).contains(x.linkId))
+           .filter(x=> x.linkGeomSource!=LinkGeomSource.SuravageLinkInterface && GeometryUtils.areAdjacent(Seq(x.geometry.head, x.geometry.last),suravageLink.geometry)
              && GeometryUtils.minimumDistance(splitPoint,x.geometry)>1)
-
-      val mostCommonWithSuravage= None //TODO get link that has highestCommonlenght
-        //TODO method to  create merged suravagelink
-        // TODO  Create new projectlink to project
-        Left("")//todo return created link
-       }
-     case _=>  Left("Suravage link fetch failed")
+      val mostCommonLinkWithSuravage= projectLinksWithInTolerance.head //TODO get link that has highestCommonlenght
+      val projectLink=projectLinksNearSuravageL.filter(x=>x.linkId==mostCommonLinkWithSuravage.linkId).head
+      ProjectLinkSplitter.split(suravageProjectLink,projectLink,
+        SplitOptions(splitPoint,projectLink.status,projectLink.status,projectLink.roadNumber,projectLink.roadPartNumber,
+        projectLink.track.value,projectLink.discontinuity.value,-1,projectLink.linkGeomSource.value,projectLink.roadType.value))
+         //TODO method to  update "merged" suravagelink
+        // TODO  update suravagelink project
+        Right(null)//TODO return created link
+     case _=>  Left("Suravage link fetch from VVH failed")
    }
   }
 
 
-
+private def getRoadLinksProjectLinksNearSuravageAndSuravageProjectLink(bbox:BoundingRectangle, suravageLinkId:Long, projectId:Long): (Seq[RoadAddress],Seq[ProjectLink],Seq[ProjectLink]) =
+  {
+    withDynSession {
+      val roadLinksNearSuravageLinks = RoadAddressDAO.fetchRoadAddressesByBoundingBox(bbox, false)
+      val projectLinksNearSuravageL = ProjectDAO.getProjectLinksByProjectAndLinkId(roadLinksNearSuravageLinks.map(x => x.linkId), projectId)
+      val suravageProjectLinks = ProjectDAO.getProjectLinksByLinkId(suravageLinkId)
+      (roadLinksNearSuravageLinks,projectLinksNearSuravageL,suravageProjectLinks)
+    }
+  }
 
   private def existsInSuravageOrNew(projectLink: Option[ProjectLink]): Boolean = {
     if (projectLink.isEmpty) {
