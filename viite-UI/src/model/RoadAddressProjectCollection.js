@@ -240,9 +240,17 @@
         discontinuity: Number($('#roadAddressProject').find('#discontinuityDropdown')[0].value),
         roadEly: Number($('#roadAddressProject').find('#ely')[0].value),
         roadLinkSource: Number(_.first(changedLinks).roadLinkSource),
-        roadType: Number($('#roadAddressProject').find('#roadTypeDropDown')[0].value)
+        roadType: Number($('#roadAddressProject').find('#roadTypeDropDown')[0].value),
+        userDefinedEndAddressM: -1
       };
-
+      
+      var endDistance = parseInt($('#endDistance').val());
+      var originalEndDistance = _.chain(changedLinks).uniq().sortBy(function(cl){
+        return cl.endAddressM;
+      }).last().value().endAddressM;
+      if(!isNaN(endDistance) && !isNaN(originalEndDistance) && originalEndDistance !== endDistance){
+        dataJson.userDefinedEndAddressM = endDistance;
+      }
       if(!_.isEmpty(linkIds) && typeof projectId !== 'undefined' && projectId !== 0){
         if(statusCode == LinkStatus.New.value){
           backend.createProjectLinks(dataJson, function(successObject) {
