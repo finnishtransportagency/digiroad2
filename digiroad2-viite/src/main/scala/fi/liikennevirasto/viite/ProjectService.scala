@@ -404,24 +404,22 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   {
   roadAddressService.getSuravageRoadLinkAddressesByLinkIds(Set(linkId)) match {
      case (suravageLinks) if suravageLinks.nonEmpty && suravageLinks.size==1 =>
-       {
-        val suravageLink=suravageLinks.head
-         val sortedX= suravageLink.geometry.map(x=> x.x).sorted  //min to max
-         val sortedY= suravageLink.geometry.map(y=> y.y).sorted
-         val rightTop=Point(sortedX.last, sortedY.last)
-         val leftBottom= Point(sortedX.head, sortedY.head)
-         withDynSession{
-         val roadLinksNearsuravageLink=RoadAddressDAO.fetchRoadAddressesByBoundingBox(BoundingRectangle(leftBottom,rightTop),false) //TODO filter links that are not in project
-         val distancesBetweenroadLinksNearsuravageLink=roadLinksNearsuravageLink.map( x   =>
-           (x.linkId,distancesBetweenEndPoints(suravageLink.geometry,x.geometry))  //TODO needs splitted geometry and comparison with splitted geometry probably have to  check distances for both sides  because we dont know which side will be terminated
-       )
-        val closestRoadLink=distancesBetweenroadLinksNearsuravageLink.minBy(x=>x._2._2) // might have to create better method to rank roadlinks
-          //TODO method to  create merged suravagelink
-          // TODO  Create new projectlink to project
-          Left("")//todo return created link
-         }
+       val suravageLink=suravageLinks.head
+       val endPoints = GeometryUtils.geometryEndpoints(suravageLink.geometry)
+       val x = if (endPoints._1.x > endPoints._2.x) (endPoints._2.x, endPoints._1.x) else (endPoints._1.x, endPoints._2.x)
+       val rightTop = Point(x._2, endPoints._2.y)
+       val leftBottom = Point(x._1, endPoints._1.y)
+       withDynSession{
+       val roadLinksNearSuravageLink=RoadAddressDAO.fetchRoadAddressesByBoundingBox(BoundingRectangle(leftBottom,rightTop),false) //TODO filter links that are not in project
+       val distancesBetween=roadLinksNearSuravageLink.map( x   =>
+         (x.linkId,distancesBetweenEndPoints(suravageLink.geometry,x.geometry))  //TODO needs splitted geometry and comparison with splitted geometry probably have to  check distances for both sides  because we dont know which side will be terminated
+     )
+      val closestRoadLink=distancesBetween.minBy(x=>x._2._2) // might have to create better method to rank roadlinks
+        //TODO method to  create merged suravagelink
+        // TODO  Create new projectlink to project
+        Left("")//todo return created link
        }
-       case _=>  Left("Suravage link fetch failed")
+     case _=>  Left("Suravage link fetch failed")
    }
   }
 
