@@ -1,10 +1,10 @@
 package fi.liikennevirasto.viite.util
 
+import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
-import fi.liikennevirasto.viite.RoadType
+import fi.liikennevirasto.viite.{MaxDistanceForConnectedLinks, MaxSuravageToleranceToGeometry, RoadType}
 import fi.liikennevirasto.viite.dao.{Discontinuity, LinkStatus, ProjectLink}
-import fi.liikennevirasto.viite.model.ProjectAddressLink
 
 /**
   * Split suravage link together with project link template
@@ -46,9 +46,82 @@ object ProjectLinkSplitter {
           status = LinkStatus.Terminated
         ))
       }
-        Seq(splittedA,splittedB,template)
     }
-    Seq()
+    Seq(splittedA,splittedB,template)
+  }
+
+  def findMatchingGeometrySegment(suravage: RoadLinkLike, template: RoadLinkLike): Option[Seq[Point]] = {
+    def findMatchingSegment(suravageGeom: Seq[Point], templateGeom: Seq[Point]): Option[Seq[Point]] = {
+      if (GeometryUtils.areAdjacent(suravageGeom.head, templateGeom.head, MaxDistanceForConnectedLinks)) {
+        val boundaries = geometryToBoundaries(suravageGeom)
+        val exitPoint = findIntersection(suravageGeom, boundaries._1).orElse(findIntersection(suravageGeom, boundaries._2))
+        if (exitPoint.nonEmpty) {
+          // Exits the tunnel -> find point
+          exitPoint.map(ep => GeometryUtils.truncateGeometry2D(templateGeom, 0.0,
+            GeometryUtils.calculateLinearReferenceFromPoint(ep, templateGeom)))
+        } else {
+          Some(GeometryUtils.truncateGeometry2D(templateGeom, 0.0, Math.max(template.length, suravage.length)))
+        }
+      } else
+        None
+    }
+    findMatchingSegment(suravage.geometry, template.geometry).orElse(
+      findMatchingSegment(suravage.geometry.reverse, template.geometry.reverse).map(_.reverse))
+  }
+
+  def findIntersection(geometry1: Seq[Point], geometry2: Seq[Point]): Option[Point] = {
+    val segments1 = geometry1.zip(geometry1.tail)
+    val segments2 = geometry1.zip(geometry1.tail)
+    segments1.zip(segments2).flatMap{ case (s1, s2) => intersectionPoint(s1, s2) }.headOption
+  }
+
+  def intersectionPoint(segment1: (Point, Point), segment2: (Point, Point)): Option[Point] = {
+
+    def switchXY(p: Point) = {
+      Point(p.y, p.x, p.z)
+    }
+    val ((p1,p2),(p3,p4)) = (segment1, segment2)
+    val v1 = p2-p1
+    val v2 = p4-p3
+    if (Math.abs(v1.x) < 0.001) {
+      if (Math.abs(v2.x) < 0.001) {
+        // Both are vertical or near vertical -> swap x and y and recalculate
+        return intersectionPoint((switchXY(p1),switchXY(p2)), (switchXY(p3), switchXY(p4))).map(switchXY)
+      } else {
+        val dx = (p1 - p3).x
+        val normV2 = v2.normalize2D()
+        return Some(p3 + normV2.scale(dx/normV2.x))
+      }
+    }
+    val a = v1.y / v1.x
+    val b = p1.y - a * p1.x
+    val c = v2.y / v2.x
+    val d = p3.y - a * p3.x
+    if (Math.abs(a-c) < 1E-4 && Math.abs(d-b) > 1E-4) {
+      // Differing y is great but coefficients a and c are almost same -> Towards infinities
+      None
+    } else {
+      val x = (d - b) / (a - c)
+      val y = a * x + b
+      if (x.isNaN || x.isInfinity || y.isNaN || y.isInfinity)
+        None
+      else
+        Some(Point(x, y))
+    }
+  }
+
+  def geometryToBoundaries(suravageGeometry: Seq[Point]): (Seq[Point], Seq[Point]) = {
+    def connectSegments(unConnected: Seq[(Point, Point)]): Seq[Point] = {
+      unConnected.scanLeft(unConnected.head){ case (previous, current) =>
+        val intersection = intersectionPoint(previous, current)
+        (intersection.getOrElse(current._1), current._2)
+      }.map(_._1) ++ Seq(unConnected.last._2)
+    }
+    val (leftUnConnected, rightUnConnected) = suravageGeometry.zip(suravageGeometry.tail).map{ case (p1, p2) =>
+      val vecL = (p2-p1).normalize2D().rotateLeft().scale(MaxSuravageToleranceToGeometry)
+      ((p1 + vecL, p2 + vecL), (p1 - vecL, p2 - vecL))
+    }.unzip
+    (connectSegments(leftUnConnected), connectSegments(rightUnConnected))
   }
 }
 

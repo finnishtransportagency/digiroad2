@@ -17,9 +17,26 @@ case class Matrix(m: Seq[Seq[Double]]) {
     } else
       throw new IllegalArgumentException("Matrix operations only support 2d and 3d square matrixes")
   }
+  def transpose: Matrix = {
+    m.size match {
+      case 2 => Matrix(Seq(Seq(m(0)(0), m(1)(0)), Seq(m(0)(1), m(1)(1))))
+      case 3 => Matrix(Seq(Seq(m(0)(0), m(1)(0), m(2)(0)),
+        Seq(m(0)(1), m(1)(1), m(2)(1)),
+        Seq(m(0)(2), m(1)(2), m(2)(2))))
+    }
+  }
 }
 
 case class Vector3d(x: Double, y: Double, z: Double) {
+  private val RotationLeft = Matrix(Seq(Seq(0.0, 1.0), Seq(-1.0, 0.0)))
+  private val RotationRight = RotationLeft.transpose
+  def rotateLeft(): Vector3d = {
+    RotationLeft * this
+  }
+  def rotateRight(): Vector3d = {
+    RotationRight * this
+  }
+
   def dot(that: Vector3d): Double = {
     (x * that.x) + (y * that.y) + (z * that.z)
   }
