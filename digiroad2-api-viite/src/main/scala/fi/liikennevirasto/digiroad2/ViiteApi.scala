@@ -33,6 +33,9 @@ case class RevertRoadLinksExtractor(projectId: Long, roadNumber: Long, roadPartN
 
 case class ProjectRoadAddressInfo(projectId : Long, roadNumber: Long, roadPartNumber :Long)
 
+case class SuravageSplitInfo(splitPointx: Double, splitPointy: Double, aStatus:Int,bStatus:Int, roadNumber:Long, roadPartNumber :Long, trackCode: Int,
+                             discontinuity: Discontinuity, ely:Long, roadType: Int, projectId:Long )
+
 case class RoadAddressProjectExtractor(id: Long, projectEly: Option[Long], status: Long, name: String, startDate: String,
                                        additionalInfo: String, roadPartList: List[RoadPartExtractor])
 
@@ -396,24 +399,21 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   put("/project/split/:linkID") {
     val user = userProvider.getCurrentUser()
-    //val splitPoint = parsedBody.extract[Point]
-    val projectId = params.get("projectId").map(_.toLong)
-    val linkId = params.get("linkID").map(_.toLong)
-    val xC = params.get("x").map(_.toDouble)
-    val yC = params.get("y").map(_.toDouble)
-    val aStatus=params.get("aStatus").map(_.toInt)
-    val bStatus=params.get("bStatus").map(_.toInt)
-    (projectId, linkId,xC,yC,aStatus,bStatus) match {
-      case (Some(project), Some(link),Some(x),Some(y),Some(apartStatus),Some(bpartStatus)) => {
-        val splitPoint = Point(x,y)
-        val options = SplitOptions(splitPoint,LinkStatus.apply(apartStatus),LinkStatus.apply(bpartStatus),123,456,
-          Track.Combined,Discontinuity.Continuous,8,LinkGeomSource.NormalLinkInterface, RoadType.PublicRoad)
-        val splitError = projectService.splitSuravageLink(link,project,user.username,options)
-        Map("success" -> splitError.isEmpty, "reason" -> splitError.orNull)
-      }
-      case _ => BadRequest("Missing mandatory 'projectId', 'linkId' or splitPoint parameter from URI: /project/split/:projectId/:linkId")
+    params.get("linkID").map(_.toLong) match {
+    case Some(link)=>
+    try {
+      val splitInfo = parsedBody.extract[SuravageSplitInfo]
+      val splitPoint = Point(splitInfo.splitPointx, splitInfo.splitPointy)
+      val options = SplitOptions(splitPoint, LinkStatus.apply(splitInfo.aStatus), LinkStatus.apply(splitInfo.bStatus), splitInfo.roadNumber, splitInfo.roadPartNumber,
+        Track.apply(splitInfo.trackCode), splitInfo.discontinuity, -1, LinkGeomSource.NormalLinkInterface, RoadType.apply(splitInfo.roadType))
+      val splitError = projectService.splitSuravageLink(link, splitInfo.projectId, user.username, options)
+      Map("success" -> splitError.isEmpty, "reason" -> splitError.orNull)
+    } catch {
+      case _: NumberFormatException => BadRequest("Missing mandatory data")
     }
-  }
+    case _ => BadRequest("Missing Linkid from url")
+    }
+    }
 
   delete("/project/split/:projectId/:linkId"){
     val user = userProvider.getCurrentUser()
