@@ -637,7 +637,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       rl =>
         val pl = fetchProjectLinks.getOrElse(rl.linkId, Seq())
         rl.linkId -> buildProjectRoadLink(rl, pl)
-    }.toMap.mapValues(_.get)
+    }.toMap
 
     RoadAddressFiller.fillProjectTopology(complementedRoadLinks, projectRoadLinks)
   }
@@ -687,7 +687,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         sl =>
           val pl = projectLinks.getOrElse(sl.linkId, Seq())
           sl.linkId -> buildProjectRoadLink(sl, pl)
-      }).filterNot { case (_, optPAL) => optPAL.isEmpty}.toMap.mapValues(_.get)
+      }).filter(_._2.nonEmpty).toMap
 
     val filledProjectLinks = RoadAddressFiller.fillProjectTopology(complementedRoadLinks ++ suravageLinks, projectRoadLinks)
 
@@ -883,22 +883,26 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       ral.anomaly, ral.lrmPositionId, LinkStatus.Unknown, ral.id)
   }
 
-  private def buildProjectRoadLink(rl: RoadLinkLike, projectLinks: Seq[ProjectLink]): Option[ProjectAddressLink] = {
-    val pl = projectLinks.size match {
-      case 0 => return None
-      case 1 => projectLinks.head
+  private def buildProjectRoadLink(rl: RoadLinkLike, projectLinks: Seq[ProjectLink]): Seq[ProjectAddressLink] = {
+    val pl: Seq[ProjectLink] = projectLinks.size match {
+      case 0 => return Seq()
+      case 1 => projectLinks
       case _ => fuseProjectLinks(projectLinks)
     }
-    Some(ProjectAddressLinkBuilder.build(rl, pl))
+    pl.map(l => ProjectAddressLinkBuilder.build(rl, l))
   }
 
   private def fuseProjectLinks(links: Seq[ProjectLink]) = {
     val linkIds = links.map(_.linkId).distinct
     if (linkIds.size != 1)
       throw new IllegalArgumentException(s"Multiple road link ids given for building one link: ${linkIds.mkString(", ")}")
-    val (startM, endM, startA, endA) = (links.map(_.startMValue).min, links.map(_.endMValue).max,
-      links.map(_.startAddrMValue).min, links.map(_.endAddrMValue).max)
-    links.head.copy(startMValue = startM, endMValue = endM, startAddrMValue = startA, endAddrMValue = endA)
+    if (links.exists(_.connectedLinkId.nonEmpty))
+      links
+    else {
+      val (startM, endM, startA, endA) = (links.map(_.startMValue).min, links.map(_.endMValue).max,
+        links.map(_.startAddrMValue).min, links.map(_.endAddrMValue).max)
+      Seq(links.head.copy(startMValue = startM, endMValue = endM, startAddrMValue = startA, endAddrMValue = endA))
+    }
   }
 
   private def fetchRoadLinksWithComplementaryAndSuravage(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],

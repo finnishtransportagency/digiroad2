@@ -144,7 +144,8 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers {
     sl.foreach { l =>
       l.endAddrMValue == terminatedLink.startAddrMValue || l.startAddrMValue == terminatedLink.startAddrMValue should be(true)
       l.linkGeomSource should be (LinkGeomSource.SuravageLinkInterface)
-      l.endAddrMValue == template.endAddrMValue || l.startAddrMValue == template.startAddrMValue should be(true)
+      (l.endAddrMValue == template.endAddrMValue &&
+        l.status == LinkStatus.New) || l.endAddrMValue == terminatedLink.startAddrMValue  should be(true)
       l.status == LinkStatus.New || l.status == LinkStatus.UnChanged should be (true)
       GeometryUtils.areAdjacent(l.geometry, suravage.geometry) should be (true)
       l.roadNumber should be (template.roadNumber)
@@ -165,8 +166,8 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers {
     val template = ProjectLink(2L, 5L, 205L, Track.Combined, Discontinuity.Continuous, 1024L, 1040L, None, None, None, 0L, 124L, 0.0, sLen,
       SideCode.TowardsDigitizing, (None, None), false, tGeom, 1L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface,
       tLen, 0L, None)
-    val (sl, tl) = ProjectLinkSplitter.split(suravage, template, SplitOptions(Point(15.5, 0.75), LinkStatus.UnChanged,
-      LinkStatus.New, 5L, 205L, Track.Combined.value, Discontinuity.Continuous.value, 8L, LinkGeomSource.NormalLinkInterface.value,
+    val (sl, tl) = ProjectLinkSplitter.split(suravage, template, SplitOptions(Point(15.5, 0.75), LinkStatus.New,
+      LinkStatus.UnChanged, 5L, 205L, Track.Combined.value, Discontinuity.Continuous.value, 8L, LinkGeomSource.NormalLinkInterface.value,
       RoadType.PublicRoad.value)).partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
     sl should have size (2)
     tl should have size (1)
@@ -179,6 +180,42 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers {
       l.sideCode should be (SideCode.AgainstDigitizing)
       l.endAddrMValue == template.endAddrMValue || l.startMValue > 0.0 should be (true)
       l.startAddrMValue == template.startAddrMValue || l.startMValue == 0.0 should be (true)
+    }
+
+  }
+
+  test("Split aligning project/suravage links joining at the end") {
+    val sGeom = Seq(Point(5.0, 0.0), Point(15.0, 0.0), Point(16.0, 0.5), Point(20.0, 3.8))
+    val tGeom = Seq(Point(5.0, 3.0), Point(15.0, 0.0), Point(16.0, 0.5), Point(20.0, 3.8))
+    val sLen = GeometryUtils.geometryLength(sGeom)
+    val tLen = GeometryUtils.geometryLength(tGeom)
+    val suravage = ProjectLink(0L, 0L, 0L, Track.Unknown, Discontinuity.Continuous, 0L, 0L, None, None, None, 0L, 123L, 0.0, sLen,
+      SideCode.Unknown, (None, None), false, sGeom, 1L, LinkStatus.NotHandled, RoadType.Unknown, LinkGeomSource.SuravageLinkInterface,
+      sLen, 0L, None)
+    val template = ProjectLink(2L, 5L, 205L, Track.Combined, Discontinuity.Continuous, 1024L, 1040L, None, None, None, 0L, 124L, 0.0, sLen,
+      SideCode.TowardsDigitizing, (None, None), false, tGeom, 1L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface,
+      tLen, 10L, None)
+    val (sl, tl) = ProjectLinkSplitter.split(suravage, template, SplitOptions(Point(15.0, 0.0), LinkStatus.New,
+      LinkStatus.Transfer, 5L, 205L, Track.Combined.value, Discontinuity.Continuous.value, 8L, LinkGeomSource.NormalLinkInterface.value,
+      RoadType.PublicRoad.value)).partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
+    sl should have size (2)
+    tl should have size (1)
+    val terminatedLink = tl.head
+    terminatedLink.status should be (LinkStatus.Terminated)
+    terminatedLink.startAddrMValue should be (template.startAddrMValue)
+    GeometryUtils.areAdjacent(terminatedLink.geometry,
+      GeometryUtils.truncateGeometry2D(template.geometry, terminatedLink.startMValue, template.geometryLength)) should be (true)
+    sl.foreach { l =>
+      l.roadAddressId should be (template.roadAddressId)
+      l.startAddrMValue == terminatedLink.endAddrMValue || l.startAddrMValue == terminatedLink.startAddrMValue &&
+        l.status == LinkStatus.New should be(true)
+      l.linkGeomSource should be (LinkGeomSource.SuravageLinkInterface)
+      l.endAddrMValue == template.endAddrMValue || l.startAddrMValue == template.startAddrMValue should be(true)
+      l.status == LinkStatus.New || l.status == LinkStatus.Transfer should be (true)
+      GeometryUtils.areAdjacent(l.geometry, suravage.geometry) should be (true)
+      l.roadNumber should be (template.roadNumber)
+      l.roadPartNumber should be (template.roadPartNumber)
+      l.sideCode should be (SideCode.TowardsDigitizing)
     }
 
   }
