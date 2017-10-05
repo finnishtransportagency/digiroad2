@@ -393,17 +393,27 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }.getOrElse(BadRequest("Missing mandatory 'projectId' parameter"))
   }
 
-  put("/project/split/:projectId/:linkId") {
+  put("/project/split/:linkID") {
     val user = userProvider.getCurrentUser()
-    val splitPoint = parsedBody.extract[Point]
+    //val splitPoint = parsedBody.extract[Point]
     val projectId = params.get("projectId").map(_.toLong)
-    val linkId = params.get("linkId").map(_.toLong)
-    (projectId, linkId) match {
-      case (Some(project), Some(link)) if splitPoint != null => {
-        projectService.splitSuravageLinkForProject(link,project,splitPoint)
+    val linkId = params.get("linkID").map(_.toLong)
+    val xC = params.get("x").map(_.toDouble)
+    val yC = params.get("y").map(_.toDouble)
+    (projectId, linkId,xC,yC) match {
+      case (Some(project), Some(link),Some(x),Some(y)) => {
+        val splitPoint = Point(x,y)
+        projectService.splitSuravageLinkForProject(link,project,splitPoint,user.username) match {
+
+          case Right(projectLink) => {
+            Map("success" -> true) //are we going to send newly created link to API here or do we request refresh for all links?
+          }
+          case Left(failuremessage) => {
+            Map("success" -> false, "reason" -> failuremessage)
+          }
+        }
       }
       case _ => BadRequest("Missing mandatory 'projectId', 'linkId' or splitPoint parameter from URI: /project/split/:projectId/:linkId")
-      // TODO: implementation here
     }
   }
 

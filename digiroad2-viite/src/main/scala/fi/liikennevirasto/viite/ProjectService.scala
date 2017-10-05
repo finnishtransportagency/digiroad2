@@ -399,7 +399,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def splitSuravageLinkForProject(linkId:Long,projectId:Long,splitPoint:Point):Either[String, ProjectLink]  =
+  def splitSuravageLinkForProject(linkId:Long,projectId:Long,splitPoint:Point,username:String):Either[String, ProjectLink]  =
   {
     roadLinkService.fetchSuravageLinksByLinkIdsFromVVH(Set(linkId)) match {
       case (suravageLinks) if suravageLinks.nonEmpty && suravageLinks.size==1 =>
@@ -428,9 +428,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         val splittedLinks=ProjectLinkSplitter.split(suravageProjectLink,projectLink,
           SplitOptions(splitPoint,projectLink.status,projectLink.status,projectLink.roadNumber,projectLink.roadPartNumber,
             projectLink.track.value,projectLink.discontinuity.value,projectELY.getOrElse(-1),projectLink.linkGeomSource.value,projectLink.roadType.value))
+
         //TODO method to  update "merged" suravagelink
-        // TODO  update suravagelink project
-        Right(null)//TODO return created link
+        val updatedSuravageProjectLink=suravageLink
+        ProjectDAO.updateProjectLinksToDB(Seq(splittedLinks.head),username)
+        Left("complated")
+        //Right(null)//TODO return created link
       case _=>  Left("Suravage link fetch from VVH failed")
     }
   }
