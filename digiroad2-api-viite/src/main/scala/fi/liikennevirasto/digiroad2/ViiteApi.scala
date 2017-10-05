@@ -545,7 +545,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   def projectAddressLinkToApi(projectAddressLink: ProjectAddressLink): Map[String, Any] = {
     roadAddressLinkLikeToApi(projectAddressLink) ++
     Map(
-      "status" -> projectAddressLink.status.value
+      "status" -> projectAddressLink.status.value,
+      "connectedLinkId" -> projectAddressLink.connectedLinkId
     )
   }
 
