@@ -406,7 +406,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       val splitInfo = parsedBody.extract[SuravageSplitInfo]
       val splitPoint = Point(splitInfo.splitPointx, splitInfo.splitPointy)
       val options = SplitOptions(splitPoint, LinkStatus.apply(splitInfo.aStatus), LinkStatus.apply(splitInfo.bStatus), splitInfo.roadNumber, splitInfo.roadPartNumber,
-        Track.apply(splitInfo.trackCode), splitInfo.discontinuity, -1, LinkGeomSource.NormalLinkInterface, RoadType.values(splitInfo.roadType))
+        Track.apply(splitInfo.trackCode), splitInfo.discontinuity, -1, LinkGeomSource.NormalLinkInterface, RoadType.apply(splitInfo.roadType))
       val splitError = projectService.splitSuravageLink(link, splitInfo.projectId, user.username, options)
       Map("success" -> splitError.isEmpty, "reason" -> splitError.orNull)
     } catch {
