@@ -1,12 +1,13 @@
 package fi.liikennevirasto.viite.util
 
-import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset.{PolyLine, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.{MaxDistanceForConnectedLinks, MaxSuravageToleranceToGeometry, RoadType}
 import fi.liikennevirasto.viite.dao.{Discontinuity, LinkStatus, ProjectLink}
+import fi.liikennevirasto.viite.model.RoadAddressLinkLike
 
 /**
   * Split suravage link together with project link template
@@ -26,10 +27,10 @@ object ProjectLinkSplitter {
     (
       suravage.copy(roadNumber = split.roadNumber,
         roadPartNumber = split.roadPartNumber,
-        track = Track.apply(split.trackCode),
-        discontinuity = Discontinuity.Continuous,
+        track = split.trackCode,
+        discontinuity = split.discontinuity,
         //          ely = split.ely,
-        roadType = RoadType.apply(split.roadType),
+        roadType = split.roadType,
         startMValue = 0.0,
         endMValue = suravageM,
         startAddrMValue = templateLink.startAddrMValue,
@@ -43,10 +44,10 @@ object ProjectLinkSplitter {
       ),
       suravage.copy(roadNumber = split.roadNumber,
         roadPartNumber = split.roadPartNumber,
-        track = Track.apply(split.trackCode),
-        discontinuity = Discontinuity.apply(split.discontinuity),
+        track = split.trackCode,
+        discontinuity = split.discontinuity,
         //          ely = split.ely,
-        roadType = RoadType.apply(split.roadType),
+        roadType = split.roadType,
         startMValue = suravageM,
         endMValue = suravage.geometryLength,
         startAddrMValue = splitAddressM,
@@ -119,7 +120,7 @@ object ProjectLinkSplitter {
 
   }
 
-  def findMatchingGeometrySegment(suravage: RoadLinkLike, template: PolyLine): Option[Seq[Point]] = {
+  def findMatchingGeometrySegment(suravage: PolyLine, template: PolyLine): Option[Seq[Point]] = {
     def findMatchingSegment(suravageGeom: Seq[Point], templateGeom: Seq[Point]): Option[Seq[Point]] = {
       if (GeometryUtils.areAdjacent(suravageGeom.head, templateGeom.head, MaxDistanceForConnectedLinks)) {
         val boundaries = geometryToBoundaries(suravageGeom)
@@ -133,7 +134,9 @@ object ProjectLinkSplitter {
           exitPoint.map(ep => GeometryUtils.truncateGeometry2D(templateGeom, 0.0,
             GeometryUtils.calculateLinearReferenceFromPoint(ep, templateGeom)))
         } else {
-          Some(GeometryUtils.truncateGeometry2D(templateGeom, 0.0, Math.max(template.geometry.length, suravage.length)))
+          val length = GeometryUtils.geometryLength(suravage.geometry)
+          Some(GeometryUtils.truncateGeometry2D(templateGeom, 0.0,
+            Math.max(GeometryUtils.geometryLength(template.geometry), length)))
         }
       } else if (GeometryUtils.areAdjacent(suravageGeom.last, templateGeom.head, MaxDistanceForConnectedLinks)) {
         findMatchingSegment(suravageGeom.reverse, templateGeom)
@@ -210,6 +213,6 @@ object ProjectLinkSplitter {
 }
 
 case class SplitOptions(splitPoint: Point, statusA: LinkStatus, statusB: LinkStatus,
-                        roadNumber: Long, roadPartNumber: Long, trackCode: Int, discontinuity: Int, ely: Long,
-                        roadLinkSource: Int, roadType: Int)
+                        roadNumber: Long, roadPartNumber: Long, trackCode: Track, discontinuity: Discontinuity, ely: Long,
+                        roadLinkSource: LinkGeomSource, roadType: RoadType)
 

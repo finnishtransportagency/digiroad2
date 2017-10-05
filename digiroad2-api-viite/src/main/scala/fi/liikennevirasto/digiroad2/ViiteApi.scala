@@ -6,11 +6,12 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
-import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReservedException}
+import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReservedException, Track}
 import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model._
-import fi.liikennevirasto.viite.{LinkToRevert, ProjectService, ReservedRoadPart, RoadAddressService}
+import fi.liikennevirasto.viite.util.SplitOptions
+import fi.liikennevirasto.viite._
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.json4s._
@@ -403,15 +404,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     (projectId, linkId,xC,yC) match {
       case (Some(project), Some(link),Some(x),Some(y)) => {
         val splitPoint = Point(x,y)
-        projectService.splitSuravageLinkForProject(link,project,splitPoint,user.username) match {
-
-          case Right(projectLink) => {
-            Map("success" -> true) //are we going to send newly created link to API here or do we request refresh for all links?
-          }
-          case Left(failuremessage) => {
-            Map("success" -> false, "reason" -> failuremessage)
-          }
-        }
+        val options = SplitOptions(splitPoint,LinkStatus.UnChanged,LinkStatus.New,123,456,
+          Track.Combined,Discontinuity.Continuous,8,LinkGeomSource.NormalLinkInterface, RoadType.PublicRoad)
+        val splitError = projectService.splitSuravageLink(link,project,user.username,options)
+        Map("success" -> splitError.isEmpty, "reason" -> splitError.orNull)
       }
       case _ => BadRequest("Missing mandatory 'projectId', 'linkId' or splitPoint parameter from URI: /project/split/:projectId/:linkId")
     }

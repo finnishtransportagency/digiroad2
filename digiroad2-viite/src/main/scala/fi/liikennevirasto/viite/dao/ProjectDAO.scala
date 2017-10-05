@@ -202,10 +202,10 @@ object ProjectDAO {
   }
 
   //TODO: support for bigger queries than 1000 link ids
-  def getProjectLinksByIds(projectLinkId: Iterable[Long]): List[ProjectLink] = {
+  def getProjectLinksByIds(linkIds: Iterable[Long]): List[ProjectLink] = {
     val query =
       s"""$projectLinkQueryBase
-                where project_link.id in (${projectLinkId.mkString(",")}) order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
+                where project_link.id in (${linkIds.mkString(",")}) order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
     listQuery(query)
   }
 

@@ -132,8 +132,8 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers {
       SideCode.TowardsDigitizing, (None, None), false, tGeom, 1L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface,
       tLen, 0L, None)
     val (sl, tl) = ProjectLinkSplitter.split(suravage, template, SplitOptions(Point(15.5, 0.75), LinkStatus.UnChanged,
-      LinkStatus.New, 5L, 205L, Track.Combined.value, Discontinuity.Continuous.value, 8L, LinkGeomSource.NormalLinkInterface.value,
-      RoadType.PublicRoad.value)).partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
+      LinkStatus.New, 5L, 205L, Track.Combined, Discontinuity.Continuous, 8L, LinkGeomSource.NormalLinkInterface,
+      RoadType.PublicRoad)).partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
     sl should have size (2)
     tl should have size (1)
     val terminatedLink = tl.head
@@ -167,8 +167,8 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers {
       SideCode.TowardsDigitizing, (None, None), false, tGeom, 1L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface,
       tLen, 0L, None)
     val (sl, tl) = ProjectLinkSplitter.split(suravage, template, SplitOptions(Point(15.5, 0.75), LinkStatus.New,
-      LinkStatus.UnChanged, 5L, 205L, Track.Combined.value, Discontinuity.Continuous.value, 8L, LinkGeomSource.NormalLinkInterface.value,
-      RoadType.PublicRoad.value)).partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
+      LinkStatus.UnChanged, 5L, 205L, Track.Combined, Discontinuity.Continuous, 8L, LinkGeomSource.NormalLinkInterface,
+      RoadType.PublicRoad)).partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
     sl should have size (2)
     tl should have size (1)
     val terminatedLink = tl.head
@@ -196,8 +196,8 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers {
       SideCode.TowardsDigitizing, (None, None), false, tGeom, 1L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface,
       tLen, 10L, None)
     val (sl, tl) = ProjectLinkSplitter.split(suravage, template, SplitOptions(Point(15.0, 0.0), LinkStatus.New,
-      LinkStatus.Transfer, 5L, 205L, Track.Combined.value, Discontinuity.Continuous.value, 8L, LinkGeomSource.NormalLinkInterface.value,
-      RoadType.PublicRoad.value)).partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
+      LinkStatus.Transfer, 5L, 205L, Track.Combined, Discontinuity.Continuous, 8L, LinkGeomSource.NormalLinkInterface,
+      RoadType.PublicRoad)).partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
     sl should have size (2)
     tl should have size (1)
     val terminatedLink = tl.head
