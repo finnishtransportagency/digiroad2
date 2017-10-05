@@ -401,10 +401,12 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val linkId = params.get("linkID").map(_.toLong)
     val xC = params.get("x").map(_.toDouble)
     val yC = params.get("y").map(_.toDouble)
-    (projectId, linkId,xC,yC) match {
-      case (Some(project), Some(link),Some(x),Some(y)) => {
+    val aStatus=params.get("aStatus").map(_.toInt)
+    val bStatus=params.get("bStatus").map(_.toInt)
+    (projectId, linkId,xC,yC,aStatus,bStatus) match {
+      case (Some(project), Some(link),Some(x),Some(y),Some(apartStatus),Some(bpartStatus)) => {
         val splitPoint = Point(x,y)
-        val options = SplitOptions(splitPoint,LinkStatus.UnChanged,LinkStatus.New,123,456,
+        val options = SplitOptions(splitPoint,LinkStatus.apply(apartStatus),LinkStatus.apply(bpartStatus),123,456,
           Track.Combined,Discontinuity.Continuous,8,LinkGeomSource.NormalLinkInterface, RoadType.PublicRoad)
         val splitError = projectService.splitSuravageLink(link,project,user.username,options)
         Map("success" -> splitError.isEmpty, "reason" -> splitError.orNull)

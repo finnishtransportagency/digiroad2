@@ -429,8 +429,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         val project = ProjectDAO.getRoadAddressProjectById(projectId).get
         val splitLinks = ProjectLinkSplitter.split(newProjectLink(suravageProjectLink, project, SideCode.TowardsDigitizing,
           Track.Unknown.value, 0L, 0L, 0, RoadType.Unknown.value, projectId), bestFit, splitOptions)
-
-        //TODO method to  update "merged" suravagelink
         ProjectDAO.removeProjectLinksByLinkId(projectId, splitLinks.map(_.linkId).toSet)
         ProjectDAO.create(splitLinks)
         None
