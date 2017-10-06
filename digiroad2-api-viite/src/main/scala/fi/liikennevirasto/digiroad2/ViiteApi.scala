@@ -35,7 +35,7 @@ case class ProjectRoadAddressInfo(projectId : Long, roadNumber: Long, roadPartNu
 case class RoadAddressProjectExtractor(id: Long, projectEly: Option[Long], status: Long, name: String, startDate: String,
                                        additionalInfo: String, roadPartList: List[RoadPartExtractor])
 
-case class RoadAddressProjectLinksExtractor(linkIds: Set[Long], linkStatus: Int, projectId: Long, roadNumber: Long, roadPartNumber : Long, trackCode: Int, discontinuity :Int, roadEly: Long, roadLinkSource: Int, roadType: Int, userDefinedEndAddressM: Int)
+case class RoadAddressProjectLinksExtractor(linkIds: Set[Long], linkStatus: Int, projectId: Long, roadNumber: Long, roadPartNumber : Long, trackCode: Int, discontinuity :Int, roadEly: Long, roadLinkSource: Int, roadType: Int, userDefinedEndAddressM: Option[Int])
 
 case class RoadPartExtractor(roadNumber: Long, roadPartNumber: Long, ely: Long)
 
@@ -337,7 +337,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     try {
       val links = parsedBody.extract[RoadAddressProjectLinksExtractor]
       projectService.updateProjectLinks(links.projectId, links.linkIds,
-        LinkStatus.apply(links.linkStatus), user.username, links.roadNumber, links.roadPartNumber) match {
+        LinkStatus.apply(links.linkStatus), user.username, links.roadNumber, links.roadPartNumber, links.userDefinedEndAddressM) match {
         case Some(errorMessage) => Map("success" -> false, "errormessage" -> errorMessage)
         case None => Map("success" -> true, "id" -> links.projectId, "publishable" -> (projectService.projectLinkPublishable(links.projectId)))
       }

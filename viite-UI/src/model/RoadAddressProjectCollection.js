@@ -241,7 +241,7 @@
         roadEly: Number($('#roadAddressProject').find('#ely')[0].value),
         roadLinkSource: Number(_.first(changedLinks).roadLinkSource),
         roadType: Number($('#roadAddressProject').find('#roadTypeDropDown')[0].value),
-        userDefinedEndAddressM: -1
+        userDefinedEndAddressM: null
       };
       
       var endDistance = parseInt($('#endDistance').val());
