@@ -391,17 +391,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-  private def getRoadLinksFromVVH(municipalities: Set[Int])(bbox: String): Seq[Seq[Map[String, Any]]] = {
-    val boundingRectangle = constructBoundingRectangle(bbox)
-    validateBoundingBox(boundingRectangle)
-    val roadLinks = roadLinkService.withRoadAddress(roadLinkService.getRoadLinksFromVVH(boundingRectangle, municipalities))
-    val partitionedRoadLinks = RoadLinkPartitioner.partition(roadLinks)
-    partitionedRoadLinks.map {
-      _.map(roadLinkToApi)
-    }
-  }
-
-  private def getRoadLinksFromVVH(municipalities: Set[Int], withRoadAddress: Boolean)(bbox: String): Seq[Seq[Map[String, Any]]] = {
+  private def getRoadLinksFromVVH(municipalities: Set[Int], withRoadAddress: Boolean = true)(bbox: String): Seq[Seq[Map[String, Any]]] = {
     val boundingRectangle = constructBoundingRectangle(bbox)
     validateBoundingBox(boundingRectangle)
     val roadLinkSeq = roadLinkService.getRoadLinksFromVVH(boundingRectangle, municipalities)
@@ -495,10 +485,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     response.setHeader("Access-Control-Allow-Headers", "*")
     val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = if (user.isOperator() || user.isBusStopMaintainer()) Set() else user.configuration.authorizedMunicipalities
-    val withRoadAddress = params("withRoadAddress").toBoolean
 
     params.get("bbox")
-      .map(getRoadLinksFromVVH(municipalities, withRoadAddress))
+      .map(getRoadLinksFromVVH(municipalities))
       .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
   }
 
