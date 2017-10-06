@@ -401,13 +401,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def splitSuravageLink(linkId:Long, projectId:Long, username:String,
+  def splitSuravageLink(linkId:Long, username:String,
                         splitOptions: SplitOptions): Option[String] =
   {
     val sOption = getProjectSuravageRoadLinksByLinkIds(Set(linkId)).headOption
     if (sOption.isEmpty) {
       Some(ErrorSuravageLinkNotFound)
     } else {
+      val projectId = splitOptions.projectId
       val suravageLink = sOption.get
       val endPoints = GeometryUtils.geometryEndpoints(suravageLink.geometry)
       val x = if (endPoints._1.x > endPoints._2.x) (endPoints._2.x, endPoints._1.x) else (endPoints._1.x, endPoints._2.x)

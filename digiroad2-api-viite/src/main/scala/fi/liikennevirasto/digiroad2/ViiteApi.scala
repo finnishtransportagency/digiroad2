@@ -6,12 +6,11 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
-import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReservedException, Track}
-import fi.liikennevirasto.viite.dao.LinkStatus._
+import fi.liikennevirasto.digiroad2.util.{DigiroadSerializers, RoadAddressException, RoadPartReservedException}
+import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model._
 import fi.liikennevirasto.viite.util.SplitOptions
-import fi.liikennevirasto.viite._
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.json4s._
@@ -32,9 +31,6 @@ case class NewAddressDataExtracted(sourceIds: Set[Long], targetIds: Set[Long])
 case class RevertRoadLinksExtractor(projectId: Long, roadNumber: Long, roadPartNumber: Long, links: List[LinkToRevert])
 
 case class ProjectRoadAddressInfo(projectId : Long, roadNumber: Long, roadPartNumber :Long)
-
-case class SuravageSplitInfo(splitPointx: Double, splitPointy: Double, aStatus:Int,bStatus:Int, roadNumber:Long, roadPartNumber :Long, trackCode: Int,
-                             discontinuity: Discontinuity, ely:Long, roadType: Int, projectId:Long )
 
 case class RoadAddressProjectExtractor(id: Long, projectEly: Option[Long], status: Long, name: String, startDate: String,
                                        additionalInfo: String, roadPartList: List[RoadPartExtractor])
@@ -65,7 +61,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
 
   val logger = LoggerFactory.getLogger(getClass)
-  protected implicit val jsonFormats: Formats = DefaultFormats + DiscontinuitySerializer
+  protected implicit val jsonFormats: Formats = DigiroadSerializers.jsonFormats
   JSON.globalNumberParser = {
     in =>
       try in.toLong catch { case _: NumberFormatException => in.toDouble }
@@ -400,20 +396,17 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   put("/project/split/:linkID") {
     val user = userProvider.getCurrentUser()
     params.get("linkID").map(_.toLong) match {
-    case Some(link)=>
-    try {
-      val splitInfo = parsedBody.extract[SuravageSplitInfo]
-      val splitPoint = Point(splitInfo.splitPointx, splitInfo.splitPointy)
-      val options = SplitOptions(splitPoint, LinkStatus.apply(splitInfo.aStatus), LinkStatus.apply(splitInfo.bStatus), splitInfo.roadNumber, splitInfo.roadPartNumber,
-        Track.apply(splitInfo.trackCode), splitInfo.discontinuity, -1, LinkGeomSource.NormalLinkInterface, RoadType.apply(splitInfo.roadType))
-      val splitError = projectService.splitSuravageLink(link, splitInfo.projectId, user.username, options)
-      Map("success" -> splitError.isEmpty, "reason" -> splitError.orNull)
-    } catch {
-      case _: NumberFormatException => BadRequest("Missing mandatory data")
+      case Some(link)=>
+        try {
+          val options = parsedBody.extract[SplitOptions]
+          val splitError = projectService.splitSuravageLink(link, user.username, options)
+          Map("success" -> splitError.isEmpty, "reason" -> splitError.orNull)
+        } catch {
+          case _: NumberFormatException => BadRequest("Missing mandatory data")
+        }
+      case _ => BadRequest("Missing Linkid from url")
     }
-    case _ => BadRequest("Missing Linkid from url")
-    }
-    }
+  }
 
   delete("/project/split/:projectId/:linkId"){
     val user = userProvider.getCurrentUser()
@@ -636,13 +629,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 }
 
 case class ProjectFormLine(startingLinkId: Long, projectId: Long, roadNumber: Long, roadPartNumber: Long, roadLength: Long, ely : Long, discontinuity: String, isDirty: Boolean = false)
-
-case object DiscontinuitySerializer extends CustomSerializer[Discontinuity](format => ( {
-  case s: JString => Discontinuity.apply(s.values)
-  case i: JInt => Discontinuity.apply(i.values.intValue)
-}, {
-  case s: Discontinuity => JString(s.description)
-}))
 
 object ProjectConverter {
   def toRoadAddressProject(project: RoadAddressProjectExtractor, user: User): RoadAddressProject = {
