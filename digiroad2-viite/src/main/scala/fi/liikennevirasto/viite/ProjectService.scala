@@ -697,10 +697,20 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @param userName Username of the user that does this change
     * @return true, if the delta calculation is successful and change table has been updated.
     */
-  def updateProjectLinks(projectId: Long, linkIds: Set[Long], linkStatus: LinkStatus, userName: String, roadNumber: Long = 0, roadPartNumber: Long = 0) = {
+  def updateProjectLinks(projectId: Long, linkIds: Set[Long], linkStatus: LinkStatus, userName: String, roadNumber: Long = 0, roadPartNumber: Long = 0, userDefinedEndAddressM: Option[Int]) = {
     try {
-      withDynTransaction{
+          withDynTransaction{
         val projectLinks = withGeometry(ProjectDAO.getProjectLinks(projectId))
+            val userGeneratedCalibrationPoints = if(!userDefinedEndAddressM.isEmpty) {
+              val endSegment = projectLinks.maxBy(_.endAddrMValue)
+              val calibrationPoint = CalibrationPoint(endSegment.id, endSegment.endMValue, userDefinedEndAddressM.get)
+              if(CalibrationPointDAO.findExistingCalibrationPoint(calibrationPoint).isEmpty)
+                CalibrationPointDAO.insertNewCalibrationPoint(calibrationPoint)
+              else CalibrationPointDAO.updateCalibrationPointAddressM(calibrationPoint)
+              Seq(CalibrationPoint)
+            } else {
+              Seq.empty[CalibrationPoint]
+            }
         val (updatedProjectLinks, unchangedProjectLinks) = projectLinks.partition(pl => linkIds.contains(pl.linkId))
         linkStatus match {
           case LinkStatus.Terminated => {
