@@ -240,11 +240,22 @@
         discontinuity: Number($('#roadAddressProject').find('#discontinuityDropdown')[0].value),
         roadEly: Number($('#roadAddressProject').find('#ely')[0].value),
         roadLinkSource: Number(_.first(changedLinks).roadLinkSource),
-        roadType: Number($('#roadAddressProject').find('#roadTypeDropDown')[0].value)
+        roadType: Number($('#roadAddressProject').find('#roadTypeDropDown')[0].value),
+        userDefinedEndAddressM: null
       };
-
+      
+      var endDistance = parseInt($('#endDistance').val());
+      var originalEndDistance = _.chain(changedLinks).uniq().sortBy(function(cl){
+        return cl.endAddressM;
+      }).last().value().endAddressM;
+      if(!isNaN(endDistance) && !isNaN(originalEndDistance) && originalEndDistance !== endDistance){
+        dataJson.userDefinedEndAddressM = endDistance;
+      }
       if(!_.isEmpty(linkIds) && typeof projectId !== 'undefined' && projectId !== 0){
-        if(statusCode == LinkStatus.New.value){
+        var ids = _.chain(changedLinks).map(function (cl) {
+          return cl.id;
+        }).uniq().value();
+        if(statusCode == LinkStatus.New.value && ids.length === 1 && ids[0] === 0){
           backend.createProjectLinks(dataJson, function(successObject) {
             if (!successObject.success) {
               new ModalConfirm(successObject.errormessage);
