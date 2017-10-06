@@ -1,13 +1,11 @@
 package fi.liikennevirasto.viite.util
 
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
-import fi.liikennevirasto.digiroad2.linearasset.{PolyLine, RoadLinkLike}
+import fi.liikennevirasto.digiroad2.linearasset.PolyLine
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
-import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.{MaxDistanceForConnectedLinks, MaxSuravageToleranceToGeometry, RoadType}
 import fi.liikennevirasto.viite.dao.{Discontinuity, LinkStatus, ProjectLink}
-import fi.liikennevirasto.viite.model.RoadAddressLinkLike
+import fi.liikennevirasto.viite.{MaxDistanceForConnectedLinks, MaxSuravageToleranceToGeometry, RoadType, _}
 
 /**
   * Split suravage link together with project link template
@@ -214,5 +212,5 @@ object ProjectLinkSplitter {
 
 case class SplitOptions(splitPoint: Point, statusA: LinkStatus, statusB: LinkStatus,
                         roadNumber: Long, roadPartNumber: Long, trackCode: Track, discontinuity: Discontinuity, ely: Long,
-                        roadLinkSource: LinkGeomSource, roadType: RoadType)
+                        roadLinkSource: LinkGeomSource, roadType: RoadType, projectId: Long)
 
