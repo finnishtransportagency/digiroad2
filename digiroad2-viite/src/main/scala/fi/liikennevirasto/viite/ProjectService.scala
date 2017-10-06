@@ -430,7 +430,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         val splitLinks = ProjectLinkSplitter.split(newProjectLink(suravageProjectLink, project, SideCode.TowardsDigitizing,
           Track.Unknown.value, 0L, 0L, 0, RoadType.Unknown.value, projectId), bestFit, splitOptions)
         ProjectDAO.removeProjectLinksByLinkId(projectId, splitLinks.map(_.linkId).toSet)
-        ProjectDAO.create(splitLinks)
+        ProjectDAO.create(splitLinks.map(x => x.copy (modifiedBy = Some(username))))
         None
       }
     }
