@@ -600,7 +600,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
     val suravageAddressLink= RoadAddressLink(2,1,Seq(Point(0,0),Point(0,45.3),Point(0,123)),123,
       AdministrativeClass.apply(1),LinkType.apply(1),RoadLinkType.UnknownRoadLinkType,ConstructionType.Planned,LinkGeomSource.SuravageLinkInterface,RoadType.PublicRoad,"testRoad",
       8,None,None,null,1,1,Track.Combined.value,8,Discontinuity.Continuous.value,0,123,"","",0,123,SideCode.AgainstDigitizing,None,None,Anomaly.None,1)
-    val options=SplitOptions(Point(0,0),LinkStatus.Terminated,LinkStatus.New,1,1,Track.Combined,Discontinuity.Continuous,1,LinkGeomSource.NormalLinkInterface,RoadType.PublicRoad)
+    val options=SplitOptions(Point(0,0),LinkStatus.Terminated,LinkStatus.New,1,1,Track.Combined,Discontinuity.Continuous,1,LinkGeomSource.NormalLinkInterface,RoadType.PublicRoad,projctId)
     when(mockRoadAddressService.getSuravageRoadLinkAddressesByLinkIds(any[Set[Long]])).thenReturn(Seq(suravageAddressLink))
     when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle],any[Set[Int]])).thenReturn(Seq(roadLink))
     val rap = RoadAddressProject(projctId, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
@@ -609,15 +609,15 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       sqlu""" insert into LRM_Position(id,start_Measure,end_Measure,Link_id) Values(1,0,87,1) """.execute
       sqlu""" INSERT INTO PROJECT_RESERVED_ROAD_PART (ID, ROAD_NUMBER, ROAD_PART_NUMBER, PROJECT_ID, CREATED_BY, ROAD_LENGTH, ADDRESS_LENGTH, DISCONTINUITY, ELY) VALUES (0,1,1,0,'""',87,900,0,0)""".execute
       sqlu""" INSERT INTO PROJECT_LINK (ID, PROJECT_ID, TRACK_CODE, DISCONTINUITY_TYPE, ROAD_NUMBER, ROAD_PART_NUMBER, START_ADDR_M, END_ADDR_M, LRM_POSITION_ID, CREATED_BY, CREATED_DATE, STATUS) VALUES (1,0,0,0,1,1,0,87,1,1,TO_DATE('2017-10-06 14:54:41', 'YYYY-MM-DD HH24:MI:SS'),0)""".execute
-      val test = projectServiceWithRoadAddressMock.splitSuravageLink(1, 0, "testUser", options)
+      val test = projectServiceWithRoadAddressMock.splitSuravageLink(1, "testUser", options)
       val projectLinks=ProjectDAO.getProjectLinks(projctId)
       val newSuravageLink=projectLinks.filter(x=>x.linkGeomSource==LinkGeomSource.SuravageLinkInterface)
       val templateLinks=projectLinks.filter(x=>x.linkGeomSource!=LinkGeomSource.SuravageLinkInterface).head
-      //   newSuravageLink.count(x => x.connectedLinkId.isDefined) should be >= (1)
-      //   newSuravageLink.count(x => x.startMValue == 0) should be >= (1)
-      //   newSuravageLink.count(x => x.startMValue == 45.3) should be (1)
+      newSuravageLink.count(x => x.connectedLinkId.isDefined) should be >= (1)
+      newSuravageLink.count(x => x.startMValue == 0) should be >= (1)
+      newSuravageLink.count(x => x.startMValue == 45.3) should be (1)
       newSuravageLink.count(x => x.endMValue == 123) should be  (1)
-      //   newSuravageLink.count(x => x.endMValue == 45.3) should be  (1)
+      newSuravageLink.count(x => x.endMValue == 45.3) should be  (1)
       templateLinks.status should be (LinkStatus.Terminated)
       reset(mockRoadLinkService)
       reset(mockRoadAddressService)
