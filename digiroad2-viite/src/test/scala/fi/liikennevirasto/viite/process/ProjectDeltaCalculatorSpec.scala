@@ -82,8 +82,6 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
     val addresses2 = (0 to 11).map(i => createRoadAddress(i*10, 10L)).map(l => l.copy(track = Track.LeftSide, id=l.id+1))
     val terminations = Seq(addresses.head, addresses2.head)
     val transfers = addresses.tail ++ addresses2.tail
-    //.map(l => l.copy(startAddrMValue = l.startAddrMValue - 12, endAddrMValue = l.endAddrMValue - 12))
-    //.map(l => l.copy(startAddrMValue = l.startAddrMValue - 10, endAddrMValue = l.endAddrMValue - 10))
     val projectLinks =
       terminations.map(toProjectLink(project, LinkStatus.Terminated)) ++
         transfers.map(t => {
@@ -92,7 +90,7 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
             endAddrMValue = t.endAddrMValue - d))
         })
 
-    val transfLinks = projectLinks.filter(_.status != LinkStatus.Terminated)
+    val transLinks = projectLinks.filter(_.status != LinkStatus.Terminated)
     val termPart = ProjectDeltaCalculator.partition(terminations)
     termPart should have size(2)
     termPart.foreach(x => {
@@ -100,7 +98,7 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
       x.endMAddr should be (11L)
     })
 
-    val transferParts = ProjectDeltaCalculator.partition(transfers, transfLinks)
+    val transferParts = ProjectDeltaCalculator.partition(transfers, transLinks)
     transferParts should have size(2)
     transferParts.foreach(x => {
       val (fr, to) = x
