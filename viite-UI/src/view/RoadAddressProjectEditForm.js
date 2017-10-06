@@ -163,10 +163,9 @@
         '<div class="form-group editable form-editable-roadAddressProject"> '+
         selectionForm(selection, selected, 0) +
         ((applicationModel.getSelectedTool() === 'Cut' && selected.length == 2) ?
-            '<hr class="horizontal-line"/>' +
-            selectionForm(selection, selected, 1)
-            : '')
-        + changeDirection()+
+          '<hr class="horizontal-line"/>' +
+          selectionForm(selection, selected, 1) : "") +
+        changeDirection()+
         actionSelectedField()+
         '</div>'+
         '</div>' +
