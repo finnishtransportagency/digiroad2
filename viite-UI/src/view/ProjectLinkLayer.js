@@ -81,7 +81,7 @@
       name: layerName,
       style: function(feature) {
         var status = feature.projectLinkData.status;
-        if (status === notHandledStatus || status === terminatedStatus || status  === newRoadAddressStatus || status == transferredStatus || status === unchangedStatus || status == numberingStatus || feature.projectLinkData.roadLinkSource == 3) {
+        if (status === notHandledStatus || status === terminatedStatus || status  === newRoadAddressStatus || status == transferredStatus || status === unchangedStatus || status == numberingStatus) {
           return projectLinkStyler.getProjectLinkStyle().getStyle( feature.projectLinkData, {zoomLevel: currentZoom});
         } else {
           return styler.generateStyleByFeature(feature.projectLinkData, currentZoom);
@@ -121,7 +121,7 @@
       condition: ol.events.condition.singleClick,
       style: function (feature) {
         if(projectLinkStatusIn(feature.projectLinkData, [notHandledStatus, newRoadAddressStatus,terminatedStatus, transferredStatus, unchangedStatus, numberingStatus]) || feature.projectLinkData.roadClass === 99 || feature.projectLinkData.roadLinkSource == 3) {
-          return projectLinkStyler.getSelectionLinkStyle().getStyle( feature.projectLinkData, {zoomLevel: currentZoom});
+         return projectLinkStyler.getSelectionLinkStyle().getStyle( feature.projectLinkData, {zoomLevel: currentZoom});
         }
       }
     });
@@ -179,7 +179,7 @@
         return (ol.events.condition.doubleClick(mapBrowserEvent) && ol.events.condition.shiftKeyOnly(mapBrowserEvent)) || ol.events.condition.doubleClick(mapBrowserEvent);
       },
       style: function(feature) {
-        if(projectLinkStatusIn(feature.projectLinkData, [notHandledStatus, newRoadAddressStatus,terminatedStatus, transferredStatus, unchangedStatus, numberingStatus]) || feature.projectLinkData.roadClass === 99 || feature.projectLinkData.roadLinkSource == 3) {
+        if(projectLinkStatusIn(feature.projectLinkData, [notHandledStatus, newRoadAddressStatus,terminatedStatus, transferredStatus, unchangedStatus, numberingStatus]) || feature.projectLinkData.roadClass === 99) {
           return projectLinkStyler.getSelectionLinkStyle().getStyle( feature.projectLinkData, {zoomLevel: currentZoom});
         }
       }
@@ -238,16 +238,7 @@
       var features = [];
 
       var markerContainer = function(link, position) {
-        var anchor, offset;
-        // if(assetLabel){
-        //   anchor = assetLabel.getMarkerAnchor(uiState.zoomLevel);
-        //   offset = assetLabel.getMarkerOffset(uiState.zoomLevel);
-        // }
-
         var imageSettings = {src: 'images/center-marker2.svg'};
-        // if(anchor)
-        //   imageSettings = _.merge(imageSettings, { anchor : anchor });
-
         var textSettings = {
           text : link.marker,
           fill: new ol.style.Fill({
@@ -255,9 +246,6 @@
           }),
           font : '12px sans-serif'
         };
-        // if(offset)
-        //   textSettings = _.merge(textSettings, {offsetX : offset[0], offsetY : offset[1]});
-
         var style = new ol.style.Style({
           image : new ol.style.Icon(imageSettings),
           text : new ol.style.Text(textSettings)
@@ -679,13 +667,6 @@
         var splitProperties = calculateSplitProperties(nearestSuravage, mousePoint);
         selectedProjectLinkProperty.splitSuravageLink(nearestSuravage, splitProperties);
 
-
-        // var indicatorsForSplit = function() {
-        //   return mapOverLinkMiddlePoints(splited, function(link, middlePoint) {
-        //     markerContainer(link, middlePoint);
-        //   });
-        // };
-
         // remove();
       };
     };
@@ -719,9 +700,9 @@
     };
 
     eventbus.on('splited:projectLinks', function (splited) {
-      drawIndicators(_.map(_.cloneDeep(splited)));
+      drawIndicators(splited);
       selectedProjectLinkProperty.setCurrent(splited);
-      // eventbus.trigger('projectLink:clicked', splited);
+      _.defer(eventbus.trigger('projectLink:clicked', splited));
     });
 
     eventbus.on('projectLink:projectLinksCreateSuccess', function () {
