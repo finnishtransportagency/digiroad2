@@ -3,7 +3,7 @@ package fi.liikennevirasto.viite
 import java.net.ConnectException
 import java.util.Properties
 
-import fi.liikennevirasto.viite.util.prettyPrint
+import fi.liikennevirasto.viite.util.{SplitOptions, StaticTestData}
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
@@ -14,10 +14,9 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, RoadLinkService, _}
 import fi.liikennevirasto.viite.dao.Discontinuity.Discontinuous
-import fi.liikennevirasto.viite.dao.{Discontinuity, ProjectState, RoadAddressProject, _}
-import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLinkLike}
+import fi.liikennevirasto.viite.dao.{Discontinuity, ProjectDAO, ProjectState, RoadAddressProject, _}
+import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.{ProjectDeltaCalculator, ProjectSectionCalculator}
-import fi.liikennevirasto.viite.util.StaticTestData
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.conn.{ConnectTimeoutException, HttpHostConnectException}
@@ -41,7 +40,9 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
     props.load(getClass.getResourceAsStream("/digiroad2.properties"))
     props
   }
+  val mockProjectService= MockitoSugar.mock[ProjectService]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+  val mockRoadAddressService = MockitoSugar.mock[RoadAddressService]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val roadAddressService = new RoadAddressService(mockRoadLinkService, mockEventBus) {
     override def withDynSession[T](f: => T): T = f
@@ -53,6 +54,12 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
 
     override def withDynTransaction[T](f: => T): T = f
   }
+
+    val projectServiceWithRoadAddressMock= new ProjectService(mockRoadAddressService, mockRoadLinkService, mockEventBus) {
+      override def withDynSession[T](f: => T): T = f
+
+      override def withDynTransaction[T](f: => T): T = f
+    }
 
   after {
     reset(mockRoadLinkService)
@@ -578,6 +585,33 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
     }
 
   }
+
+  test("Splitting link test") {
+    reset(mockRoadLinkService)
+    reset(mockRoadAddressService)
+    reset(mockProjectService)
+    val projctId=0
+    val projectLink= ProjectLink(2,1,1,Track.Combined,Discontinuity.Continuous,0,87,None,None,None,2,3,0,87,SideCode.Unknown,null,false,
+      Seq(Point(0,0.45), Point(0,45.3), Point(0,87)),0,LinkStatus.NotHandled,RoadType.PublicRoad,LinkGeomSource.NormalLinkInterface,1,1,None)
+    val roadLink = RoadLink(1, Seq(Point(0,0),Point(0,45.3),Point(0,87))
+      , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
+      InUse, NormalLinkInterface)
+    val suravageAddressLink= RoadAddressLink(2,1,Seq(Point(0,0),Point(0,0),Point(0,45.3),Point(0,123)),123,
+      AdministrativeClass.apply(1),LinkType.apply(1),RoadLinkType.UnknownRoadLinkType,ConstructionType.Planned,LinkGeomSource.SuravageLinkInterface,RoadType.PublicRoad,"testRoad",
+      8,None,None,null,1,1,Track.Combined.value,8,Discontinuity.Continuous.value,0,123,"","",0,123,SideCode.AgainstDigitizing,None,None,Anomaly.None,1)
+    val options=SplitOptions(Point(0,0),LinkStatus.Terminated,LinkStatus.New,1,1,Track.Combined,Discontinuity.Continuous,1,LinkGeomSource.NormalLinkInterface,RoadType.PublicRoad)
+    when(mockRoadAddressService.getSuravageRoadLinkAddressesByLinkIds(any[Set[Long]])).thenReturn(Seq(suravageAddressLink))
+    when(mockRoadLinkService.getRoadLinksWithComplementaryFromVVH(any[BoundingRectangle],any[Set[Int]])).thenReturn(Seq(roadLink))
+    when(mockProjectService.getProjectLinksInBoundingBox(any[BoundingRectangle],any[Long])).thenReturn(Seq(projectLink))
+    val rap = RoadAddressProject(projctId, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
+
+
+
+    val test= projectServiceWithRoadAddressMock.splitSuravageLink(1,0,"testUser",options)
+    //val rap = RoadAddressProject(projctId, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
+    //ProjectDAO.createRoadAddressProject(rap)
+  }
+
 
   test("fetch project data and send it to TR") {
     assume(testConnection)

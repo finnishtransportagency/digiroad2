@@ -438,11 +438,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
 
-  private def getProjectLinksInBoundingBox(bbox:BoundingRectangle, projectId:Long): (Seq[ProjectLink]) =
+  def getProjectLinksInBoundingBox(bbox:BoundingRectangle, projectId:Long): (Seq[ProjectLink]) =
   {
     withDynSession {
       val roadLinks = roadLinkService.getRoadLinksWithComplementaryFromVVH(bbox).map(rl => rl.linkId -> rl).toMap
-      val projectLinks = ProjectDAO.getProjectLinksByIds(roadLinks.keys).filter(_.status == LinkStatus.NotHandled)
+      val projectLinks = ProjectDAO.getProjectLinksByProjectAndLinkId(roadLinks.keys,projectId).filter(_.status == LinkStatus.NotHandled)
       projectLinks.map(pl => withGeometry(pl, roadLinks(pl.linkId).geometry, false))
     }
   }
