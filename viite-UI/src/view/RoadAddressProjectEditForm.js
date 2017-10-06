@@ -21,6 +21,7 @@
         '</div>';
       return field;
     };
+    var endDistanceOriginalValue = '--';
     var options =['Valitse'];
 
     var title = function() {
@@ -247,6 +248,7 @@
         addSmallInputNumber('beginDistance', '--') +
         '<label class="control-label-small" style="float: left;margin-top: 10px">LOPUSSA</label>' +
         addSmallInputNumber('endDistance', '--') +
+        '<span id="manualCPWarning" class="manualCPWarningSpan">!</span>' +
         '</div></div>';
     };
 
@@ -345,6 +347,7 @@
         }
         if (orderedByStartM[orderedByStartM.length - 1].calibrationCode === 1) {
           $('#endDistance').val(orderedByStartM[orderedByStartM.length - 1].endAddressM);
+          endDistanceOriginalValue = orderedByStartM[orderedByStartM.length - 1].endAddressM;
         }
       }
     };
@@ -487,6 +490,13 @@
           eventbus.trigger('roadLinks:refreshView');
         }
       };
+
+      rootElement.on('change', '#endDistance', function(eventData){
+        var changedValue = parseInt(eventData.target.value);
+        if(!isNaN(changedValue) && !isNaN(parseInt(endDistanceOriginalValue)) && changedValue !== endDistanceOriginalValue)
+          $('#manualCPWarning').css('display', 'inline-block');
+        else $('#manualCPWarning').css('display', 'none');
+      });
 
       rootElement.on('click', '.project-form button.update', function() {
         eventbus.trigger('roadAddressProject:toggleEditingRoad', true);

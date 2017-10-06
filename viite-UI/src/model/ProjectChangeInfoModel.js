@@ -8,11 +8,12 @@
 
 
     function getChanges(projectID){
+      $('.project-changes').html('<table class="change-table"></table>');
       backend.getChangeTable(projectID,function(changedata) {
-    var parsedresult=roadChangeAPIResultParser(changedata);
-      if (parsedresult!==null && parsedresult.discontinuity !==null) {
-        eventbus.trigger('projectChanges:fetched', roadChangeAPIResultParser(parsedresult));
-      }
+        var parsedResult=roadChangeAPIResultParser(changedata);
+        if (parsedResult!==null && parsedResult.discontinuity !==null) {
+          eventbus.trigger('projectChanges:fetched', roadChangeAPIResultParser(parsedResult));
+        }
       });
     }
 

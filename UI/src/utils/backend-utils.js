@@ -190,6 +190,12 @@
       };
     });
 
+    this.getLinearAssetById = latestResponseRequestor(function(id, endPointName) {
+      return {
+        url: 'api/linearAsset/unchecked/' + id
+      };
+    });
+
     this.createPointAsset = function(asset, endPointName) {
       return $.ajax({
         contentType: "application/json",
@@ -360,6 +366,10 @@
 
     this.getFloatingTrafficSigns = function() {
       return $.getJSON('api/trafficSigns/floating');
+    };
+
+    this.getLinearAssetUnchecked = function(typeId) {
+      return $.getJSON('api/linearAsset/unchecked?typeId=' + typeId);
     };
 
     this.createAsset = function (data, errorCallback) {

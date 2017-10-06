@@ -6,7 +6,7 @@ import com.vividsolutions.jts.geom._
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import org.geotools.geometry.jts.GeometryBuilder
-import fi.liikennevirasto.digiroad2.Point
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Measures, Point}
 import com.vividsolutions.jts.io.WKTReader
 import scala.collection.mutable.ListBuffer
 
@@ -61,6 +61,19 @@ class PolygonTools {
       case _ => Seq.empty[Polygon]
     }
     polygon
+  }
+
+  def getAreaByGeometry(geometry: Seq[Point], measure: Measures, areaOpt: Option[Seq[Int]]): Int  = {
+    val assetGeom = GeometryUtils.truncateGeometry2D(geometry, measure.startMeasure, measure.endMeasure)
+    val lineStringGeom = geomBuilder.lineString(assetGeom.flatMap(p => Seq(p.x, p.y)):_*)
+
+    val area = areaOpt match {
+      case Some(areaVal) => areaVal
+      case _ => Seq(1,2,3,4,5,6,7,8,9,10,11,12)
+    }
+
+   area.find{ area => getPolygonByArea(area).exists(poly => poly.intersects(lineStringGeom))
+   }.getOrElse(throw new IllegalArgumentException("Geometry not found in polygon areas"))
   }
 
   def getAreasGeometries(areadIds: Set[Int]): Seq[Geometry] ={

@@ -10,7 +10,7 @@ object ProjectLinkPartitioner extends GraphPartitioner {
     val linkGroups = links.groupBy { link => (
       link.anomaly, link.roadNumber, link.roadPartNumber, link.trackCode,
       link.roadLinkType.equals(RoadLinkType.FloatingRoadLinkType), link.roadLinkSource.equals(LinkGeomSource.ComplimentaryLinkInterface), link.roadLinkSource.equals(LinkGeomSource.SuravageLinkInterface),
-      link.roadName, link.municipalityCode, link.status, link.sideCode
+      link.roadName, link.municipalityCode, link.status
       )
     }
     val clusters = for (linkGroup <- linkGroups.values.toSeq;

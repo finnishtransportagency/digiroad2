@@ -433,11 +433,9 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 
   private def updateExisting(queryFilter: String => String, optionalPosition: Option[Position],
-                             properties: Set[SimpleProperty], username: String, municipalityValidation: Int => Unit): MassTransitStopWithProperties = {
+                             assetProperties: Set[SimpleProperty], username: String, municipalityValidation: Int => Unit): MassTransitStopWithProperties = {
     withDynTransaction {
 
-      if (MassTransitStopOperations.mixedStoptypes(properties))
-        throw new IllegalArgumentException
 
       val persistedStop = fetchPointAssets(queryFilter).headOption
       persistedStop.map(_.municipalityCode).foreach(municipalityValidation)
@@ -448,26 +446,27 @@ trait MassTransitStopService extends PointAssetOperations {
         case _ => asset.linkId
       }
 
-      val roadLink = fetchRoadLinkAndComplementary(linkId)
-      val (municipalityCode, geometry) = roadLink
-        .map { x => (x.municipalityCode, x.geometry) }
-        .getOrElse(throw new NoSuchElementException)
+      val roadLink = fetchRoadLinkAndComplementary(linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+      val properties = updatedProperties(assetProperties.toSeq, roadLink)
+
+      if (MassTransitStopOperations.mixedStoptypes(properties.toSet))
+        throw new IllegalArgumentException
 
       // Enrich properties with old administrator, if administrator value is empty in CSV import
-      val verifiedProperties = MassTransitStopOperations.getVerifiedProperties(properties, asset.propertyData)
+      val verifiedProperties = MassTransitStopOperations.getVerifiedProperties(properties.toSet, asset.propertyData)
 
       val id = asset.id
       massTransitStopDao.updateAssetLastModified(id, username)
-      val isVirtualBusStop = MassTransitStopOperations.isVirtualBusStop(properties)
+      val isVirtualBusStop = MassTransitStopOperations.isVirtualBusStop(properties.toSet)
       val oldLiviIdProperty = MassTransitStopOperations.liviIdValueOption(asset.propertyData)
       val newLiviIdProperty = if (verifiedProperties.nonEmpty) {
         val administrationProperty = verifiedProperties.find(_.publicId == MassTransitStopOperations.AdministratorInfoPublicId)
         val elyAdministrated = administrationProperty.exists(_.values.headOption.exists(_.propertyValue == MassTransitStopOperations.CentralELYPropertyValue))
         val hslAdministrated = administrationProperty.exists(_.values.headOption.exists(_.propertyValue == MassTransitStopOperations.HSLPropertyValue))
         if ((!(elyAdministrated || hslAdministrated) || isVirtualBusStop) && MassTransitStopOperations.liviIdValueOption(asset.propertyData).exists(_.propertyValue != "")) {
-          updatePropertiesForAsset(id, verifiedProperties.toSeq, roadLink.get.administrativeClass, asset.nationalId, None)
+          updatePropertiesForAsset(id, verifiedProperties.toSeq, roadLink.administrativeClass, asset.nationalId, None)
         } else {
-          updatePropertiesForAsset(id, verifiedProperties.toSeq, roadLink.get.administrativeClass, asset.nationalId, MassTransitStopOperations.liviIdValueOption(asset.propertyData))
+          updatePropertiesForAsset(id, verifiedProperties.toSeq, roadLink.administrativeClass, asset.nationalId, MassTransitStopOperations.liviIdValueOption(asset.propertyData))
         }
       } else {
         None
@@ -475,10 +474,10 @@ trait MassTransitStopService extends PointAssetOperations {
       if (optionalPosition.isDefined) {
         val position = optionalPosition.get
         val point = Point(position.lon, position.lat)
-        val mValue = calculateLinearReferenceFromPoint(point, geometry)
-        massTransitStopDao.updateLrmPosition(id, mValue, linkId, roadLink.get.linkSource)
+        val mValue = calculateLinearReferenceFromPoint(point, roadLink.geometry)
+        massTransitStopDao.updateLrmPosition(id, mValue, linkId, roadLink.linkSource)
         massTransitStopDao.updateBearing(id, position)
-        massTransitStopDao.updateMunicipality(id, municipalityCode)
+        massTransitStopDao.updateMunicipality(id, roadLink.municipalityCode)
         updateAssetGeometry(id, point)
       }
 
@@ -523,12 +522,12 @@ trait MassTransitStopService extends PointAssetOperations {
 
           //Create a new asset
           create(NewMassTransitStop(position.lon, position.lat, linkId, position.bearing.getOrElse(asset.bearing.get),
-            mergedPropertiesWithOutInventoryDate), username, newPoint, geometry, municipalityCode, Some(roadLink.get.administrativeClass), roadLink.get.linkSource)
+            mergedPropertiesWithOutInventoryDate), username, newPoint, roadLink.geometry, roadLink.municipalityCode, Some(roadLink.administrativeClass), roadLink.linkSource)
         } else {
-          update(asset, optionalPosition, username, mergedProperties, roadLink.get, operation)
+          update(asset, optionalPosition, username, mergedProperties, roadLink, operation)
         }
       } else {
-        update(asset, optionalPosition, username, mergedProperties, roadLink.get, operation)
+        update(asset, optionalPosition, username, mergedProperties, roadLink, operation)
       }
     }
   }
@@ -589,8 +588,7 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 
   def updateExistingById(id: Long, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: Int => Unit): MassTransitStopWithProperties = {
-    val props = updatedProperties(properties.toSeq)
-    updateExisting(withId(id), optionalPosition, props.toSet, username, municipalityValidation)
+    updateExisting(withId(id), optionalPosition, properties, username, municipalityValidation)
   }
 
   def updateAdministrativeClassValue(assetId: Long, administrativeClass: AdministrativeClass): Unit ={
@@ -620,14 +618,29 @@ trait MassTransitStopService extends PointAssetOperations {
     }
   }
 
-  def updatedProperties(properties: Seq[SimpleProperty]): Seq[SimpleProperty] = {
-    val inventoryDate = properties.find(_.publicId == MassTransitStopOperations.InventoryDateId)
-    val notInventoryDate = properties.filterNot(_.publicId == MassTransitStopOperations.InventoryDateId)
-    if (inventoryDate.nonEmpty && inventoryDate.get.values.exists(_.propertyValue != "")) {
-      properties
-    } else {
-      notInventoryDate ++ Seq(SimpleProperty(MassTransitStopOperations.InventoryDateId, Seq(PropertyValue(toIso8601.print(DateTime.now())))))
-    }
+  def updatedProperties(properties: Seq[SimpleProperty], roadLink: RoadLinkLike): Seq[SimpleProperty] = {
+    val arrayProperties = Seq(MassTransitStopOperations.InventoryDateId, MassTransitStopOperations.RoadName_FI, MassTransitStopOperations.RoadName_SE )
+      val defaultproperties =  arrayProperties.flatMap{
+        key =>
+          if(!properties.exists(_.publicId == key))
+            Some(SimpleProperty(publicId = key,  values = Seq.empty[PropertyValue]))
+          else
+            None
+      } ++ properties
+
+        defaultproperties.map { parameter =>
+            if (parameter.values.isEmpty || parameter.values.exists(_.propertyValue == "")) {
+              parameter.publicId match {
+                case MassTransitStopOperations.RoadName_FI => parameter.copy(values = Seq(PropertyValue(roadLink.attributes.getOrElse("ROADNAME_FI", "").toString)))
+                case MassTransitStopOperations.RoadName_SE => parameter.copy(values = Seq(PropertyValue(roadLink.attributes.getOrElse("ROADNAME_SE", "").toString)))
+                case MassTransitStopOperations.InventoryDateId => parameter.copy(values = Seq(PropertyValue(toIso8601.print(DateTime.now()))))
+                case _ => parameter
+              }
+            } else
+              parameter
+
+        }
+
   }
 
   private def create(asset: NewMassTransitStop, username: String, point: Point, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass], linkSource: LinkGeomSource): MassTransitStopWithProperties = {
@@ -641,21 +654,22 @@ trait MassTransitStopService extends PointAssetOperations {
     massTransitStopDao.insertAsset(assetId, nationalId, newAssetPoint.x, newAssetPoint.y, asset.bearing, username, municipality, floating)
     massTransitStopDao.insertAssetLink(assetId, lrmPositionId)
 
-    val properties = updatedProperties(asset.properties)
+    val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(asset.linkId, false).getOrElse(throw new IllegalStateException("Road link no longer available"))
+    val properties = updatedProperties(asset.properties, roadLink)
 
     val defaultValues = massTransitStopDao.propertyDefaultValues(typeId).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
-    if (!MassTransitStopOperations.mixedStoptypes(properties.toSet))
-    {
-      massTransitStopDao.updateAssetProperties(assetId, properties ++ defaultValues.toSet)
-      updateAdministrativeClassValue(assetId, administrativeClass.getOrElse(throw new IllegalArgumentException("AdministrativeClass argument is mandatory")))
-      val newAdminClassProperty = SimpleProperty(MassTransitStopOperations.MassTransitStopAdminClassPublicId, Seq(PropertyValue(administrativeClass.getOrElse(Unknown).value.toString)))
-      val propsWithAdminClass = properties.filterNot(_.publicId == MassTransitStopOperations.MassTransitStopAdminClassPublicId) ++ Seq(newAdminClassProperty)
-      val liviId = overWriteLiViIdentifierProperty(assetId, nationalId, propsWithAdminClass, administrativeClass)
-      val operation = if (MassTransitStopOperations.isStoredInTierekisteri(propsWithAdminClass, administrativeClass)) Operation.Create else Operation.Noop
-      getPersistedStopWithPropertiesAndPublishEvent(assetId, fetchRoadLink, operation, liviId.map(_.values.head.propertyValue), Some(username))
-    }
-    else
+
+    if (MassTransitStopOperations.mixedStoptypes(properties.toSet))
       throw new IllegalArgumentException
+
+    massTransitStopDao.updateAssetProperties(assetId, properties ++ defaultValues.toSet)
+    updateAdministrativeClassValue(assetId, administrativeClass.getOrElse(throw new IllegalArgumentException("AdministrativeClass argument is mandatory")))
+    val newAdminClassProperty = SimpleProperty(MassTransitStopOperations.MassTransitStopAdminClassPublicId, Seq(PropertyValue(administrativeClass.getOrElse(Unknown).value.toString)))
+    val propsWithAdminClass = properties.filterNot(_.publicId == MassTransitStopOperations.MassTransitStopAdminClassPublicId) ++ Seq(newAdminClassProperty)
+    val liviId = overWriteLiViIdentifierProperty(assetId, nationalId, propsWithAdminClass, administrativeClass)
+    val operation = if (MassTransitStopOperations.isStoredInTierekisteri(propsWithAdminClass, administrativeClass)) Operation.Create else Operation.Noop
+    getPersistedStopWithPropertiesAndPublishEvent(assetId, fetchRoadLink, operation, liviId.map(_.values.head.propertyValue), Some(username))
+
   }
 
   private def overWriteLiViIdentifierProperty(assetId: Long, nationalId: Long, properties: Seq[SimpleProperty], administrativeClass: Option[AdministrativeClass]) : Option[SimpleProperty] = {
@@ -694,6 +708,12 @@ trait MassTransitStopService extends PointAssetOperations {
     }
     val validityDirection = AssetPropertyConfiguration.commonAssetProperties(AssetPropertyConfiguration.ValidityDirectionId)
     requiredProperties + (validityDirection.publicId -> validityDirection.propertyType)
+  }
+
+  def getPropertiesWithMaxSize(): Map[String, Int] = {
+    withDynSession {
+      massTransitStopDao.getPropertiesWithMaxSize(typeId)
+    }
   }
 
   def calculateLinearReferenceFromPoint(point: Point, points: Seq[Point]): Double = {

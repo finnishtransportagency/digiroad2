@@ -41,6 +41,10 @@
       eventbus.trigger(singleElementEvent('selected'), self);
     };
 
+    this.getLinearAsset = function(id) {
+     return collection.getById(id);
+    };
+
     this.openMultiple = function(linearAssets) {
       var partitioned = _.groupBy(linearAssets, isUnknown);
       var existingLinearAssets = _.unique(partitioned[false] || [], 'id');

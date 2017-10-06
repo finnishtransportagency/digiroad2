@@ -35,7 +35,7 @@ case class ProjectRoadAddressInfo(projectId : Long, roadNumber: Long, roadPartNu
 case class RoadAddressProjectExtractor(id: Long, projectEly: Option[Long], status: Long, name: String, startDate: String,
                                        additionalInfo: String, roadPartList: List[RoadPartExtractor])
 
-case class RoadAddressProjectLinksExtractor(linkIds: Set[Long], linkStatus: Int, projectId: Long, roadNumber: Long, roadPartNumber : Long, trackCode: Int, discontinuity :Int, roadEly: Long, roadLinkSource: Int, roadType: Int)
+case class RoadAddressProjectLinksExtractor(linkIds: Set[Long], linkStatus: Int, projectId: Long, roadNumber: Long, roadPartNumber : Long, trackCode: Int, discontinuity :Int, roadEly: Long, roadLinkSource: Int, roadType: Int, userDefinedEndAddressM: Option[Int])
 
 case class RoadPartExtractor(roadNumber: Long, roadPartNumber: Long, ely: Long)
 
@@ -380,7 +380,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           Map("changetype"->changeInfo.changeType.value, "roadType"->changeInfo.roadType.value,
             "discontinuity"->changeInfo.discontinuity.value, "source"->changeInfo.source,
             "target"->changeInfo.target)))
-    ).getOrElse(PreconditionFailed())
+    ).getOrElse(None)
   }
 
   post("/project/publish"){

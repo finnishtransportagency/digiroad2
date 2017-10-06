@@ -30,8 +30,6 @@ class OnOffLinearAssetService(roadLinkServiceImpl: RoadLinkService, eventBusImpl
           dao.fetchLinearAssetsByIds(Set(assetId), valuePropertyId).head
         case TextualValue(textValue) =>
           dao.fetchAssetsWithTextualValuesByIds(Set(assetId), valuePropertyId).head
-        case maintenanceRoad: MaintenanceRoad =>
-          dao.fetchMaintenancesByIds(valuePropertyId.toInt, Set(assetId)).head
         case _ => return None
       }
 

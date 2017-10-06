@@ -26,6 +26,14 @@ package object viite {
 
   val NewRoadAddress: Long = -1000L
 
+  val MaxDistanceForConnectedLinks = 0.1
+
+  /* Used for small jumps on discontinuity or self-crossing tracks */
+  val MaxJumpForSection = 50.0
+
+  /* Maximum distance to consider the tracks to go side by side */
+  val MaxDistanceBetweenTracks = 50.0
+
   def switchSideCode(sideCode: SideCode): SideCode = {
     // Switch between against and towards 2 -> 3, 3 -> 2
     SideCode.apply(5-sideCode.value)
