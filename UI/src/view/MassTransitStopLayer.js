@@ -11,8 +11,8 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   var visibleAssets;
   var overrideMessageAllow = true;
   var publicIds = {
-    roadNameFi: 'osoite_ruotsiksi',
-    roadNameSe: 'osoite_suomeksi'
+    roadNameFi: 'osoite_suomeksi',
+    roadNameSe: 'osoite_ruotsiksi'
   };
 
   var selectedControl = 'Select';
