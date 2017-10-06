@@ -572,22 +572,20 @@
         selectSingleClick.getFeatures().push(scissorFeatures);
       };
 
-      var removeFeatures = function (match) {
+      var remove = function() {
+        var featuresToRemove = [];
         _.each(selectSingleClick.getFeatures().getArray(), function(feature){
-          if(match(feature)) {
-            selectSingleClick.getFeatures().remove(feature);
-          }
+          if(feature.getProperties().type == 'cutter')
+            featuresToRemove.push(feature);
         });
+        scissorFeatures = [];
+        _.each(featuresToRemove, function(ft){
+          selectSingleClick.getFeatures().remove(ft);
+        })
       };
 
-      // var remove = function() {
-      //   removeFeatures(function(feature) {
-      //     return feature.getProperties().type === 'cutter';
-      //   });
-      //   scissorFeatures = [];
-      // };
-
       var clickHandler = function(evt) {
+        remove();
         if (applicationModel.getSelectedTool() === 'Cut') {
           self.cut(evt);
         }
@@ -596,7 +594,7 @@
       this.deactivate = function() {
         eventListener.stopListening(eventbus, 'map:clicked', clickHandler);
         eventListener.stopListening(eventbus, 'map:mouseMoved');
-        // remove();
+        remove();
       };
 
       this.activate = function() {
@@ -666,8 +664,7 @@
         var nearestSuravage = nearest.feature.projectLinkData;
         var splitProperties = calculateSplitProperties(nearestSuravage, mousePoint);
         selectedProjectLinkProperty.splitSuravageLink(nearestSuravage, splitProperties);
-
-        // remove();
+        remove();
       };
     };
 
@@ -701,7 +698,7 @@
 
     eventbus.on('splited:projectLinks', function (splited) {
       drawIndicators(splited);
-      selectedProjectLinkProperty.setCurrent(splited);
+      // selectedProjectLinkProperty.setCurrent(splited);
       _.defer(eventbus.trigger('projectLink:clicked', splited));
     });
 
