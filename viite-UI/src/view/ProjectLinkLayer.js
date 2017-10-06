@@ -132,19 +132,19 @@
       var shiftPressed = event.mapBrowserEvent !== undefined ?
         event.mapBrowserEvent.originalEvent.shiftKey : false;
       var selection = _.find(event.selected, function (selectionTarget) {
-        return (!_.isUndefined(selectionTarget.projectLinkData) && (
+        return (applicationModel.getSelectedTool() != 'Cut' && !_.isUndefined(selectionTarget.projectLinkData) && (
           projectLinkStatusIn(selectionTarget.projectLinkData, [notHandledStatus, newRoadAddressStatus, terminatedStatus, unchangedStatus, transferredStatus, numberingStatus]) ||
           (selectionTarget.projectLinkData.anomaly == noAddressAnomaly && selectionTarget.projectLinkData.roadLinkType != floatingRoadLinkType) ||
           selectionTarget.projectLinkData.roadClass === 99 || selectionTarget.projectLinkData.roadLinkSource === 3 )
         );
       });
-      if (isNotEditingData) {
-        showSingleClickChanges(shiftPressed, selection);
-      } else {
-        var selectedFeatures = event.deselected.concat(selectDoubleClick.getFeatures().getArray());
-        clearHighlights();
-        addFeaturesToSelection(selectedFeatures);
-        fireDeselectionConfirmation(shiftPressed, selection);
+        if (isNotEditingData) {
+          showSingleClickChanges(shiftPressed, selection);
+        } else {
+          var selectedFeatures = event.deselected.concat(selectDoubleClick.getFeatures().getArray());
+          clearHighlights();
+          addFeaturesToSelection(selectedFeatures);
+          fireDeselectionConfirmation(shiftPressed, selection);
       }
     });
 
@@ -197,14 +197,14 @@
           selectionTarget.projectLinkData.roadClass === 99 || selectionTarget.projectLinkData.roadLinkSource === 3)
         );
       });
-      if (isNotEditingData) {
-        showDoubleClickChanges(shiftPressed, selection);
-      } else {
-        var selectedFeatures = event.deselected.concat(selectSingleClick.getFeatures().getArray());
-        clearHighlights();
-        addFeaturesToSelection(selectedFeatures);
-        fireDeselectionConfirmation(shiftPressed, selection);
-      }
+        if (isNotEditingData) {
+          showDoubleClickChanges(shiftPressed, selection);
+        } else {
+          var selectedFeatures = event.deselected.concat(selectSingleClick.getFeatures().getArray());
+          clearHighlights();
+          addFeaturesToSelection(selectedFeatures);
+          fireDeselectionConfirmation(shiftPressed, selection);
+        }
     });
 
     var showDoubleClickChanges = function (shiftPressed, selection) {
@@ -563,39 +563,25 @@
       vectorLayer.getSource().clear();
     };
 
-    var selectToolControl = new SelectToolControl(applicationModel, vectorLayer, map, {
-      style: function (feature) {
-        return style.browsingStyle.getStyle(feature, {zoomLevel: uiState.zoomLevel});
-      },
-      // onInteractionEnd: onInteractionEnd,
-      // onSelect: OnSelect,
-      filterGeometry: function (feature) {
-        return true;
-      }
-    });
-
-
-
     var SuravageCutter = function(vectorLayer, collection, eventListener) {
-      var scissorFeatures = [];
+      var scissorFeatures = null;
       var CUT_THRESHOLD = 20;
       var vectorSource = vectorLayer.getSource();
       var self = this;
 
       var moveTo = function(x, y) {
-        scissorFeatures = [new ol.Feature({geometry: new ol.geom.Point([x, y]), type: 'cutter'})];
-        selectSingleClick.removeFeatures(function(feature) {
-            return feature.getProperties().type === 'cutter';
+        scissorFeatures = new ol.Feature({
+          geometry: new ol.geom.Point([x, y]),
+          type: 'cutter'
         });
-        selectSingleClick.getSource().addFeatures(scissorFeatures);
-        selectSingleClick.getSource.push(scissorFeatures, true);
-      };
-
-      var remove = function() {
-        removeFeatures(function(feature) {
-          return feature.getProperties().type === 'cutter';
-        });
-        scissorFeatures = [];
+        scissorFeatures.setStyle(
+            new ol.style.Style({
+              image: new ol.style.Icon({
+                src: 'images/cursor-crosshair.svg'
+              })
+          })
+        );
+        selectSingleClick.getFeatures().push(scissorFeatures);
       };
 
       var removeFeatures = function (match) {
@@ -606,14 +592,16 @@
         });
       };
 
+      // var remove = function() {
+      //   removeFeatures(function(feature) {
+      //     return feature.getProperties().type === 'cutter';
+      //   });
+      //   scissorFeatures = [];
+      // };
+
       var clickHandler = function(evt) {
         if (applicationModel.getSelectedTool() === 'Cut') {
-          // if (collection.isDirty()) {
-          //   me.displayConfirmMessage();
-          // } else {
-          // clearIndicators();
           self.cut(evt);
-          // }
         }
       };
 
@@ -663,7 +651,7 @@
           return;
         }
         if (isWithinCutThreshold(closestSuravageLink.distance)) {
-          moveTo(closestSuravageLink.point[0], closestSuravageLink.point[1]);
+          // moveTo(closestSuravageLink.point[0], closestSuravageLink.point[1]);
         } else {
           // remove();
         }
@@ -714,38 +702,6 @@
     };
 
     var uiState = { zoomLevel: 9 };
-
-    // var OnSelect = function(evt) {
-    //   if(evt.selected.length !== 0) {
-    //     var feature = evt.selected[0];
-    //     var properties = feature.getProperties();
-    //     verifyClickEvent(properties, evt);
-    //   }else{
-    //     // if (selectedSpeedLimit.exists()) {
-    //     //   selectToolControl.clear();
-    //     //   selectedSpeedLimit.close();
-    //     // }
-    //   }
-    // };
-
-    // var verifyClickEvent = function(properties, evt){
-    //   var singleLinkSelect = evt.mapBrowserEvent.type === 'dblclick';
-    //   selectedSpeedLimit.open(properties, singleLinkSelect);
-    //   // highlightMultipleLinearAssetFeatures();
-    // };
-
-    // function onInteractionEnd(speedLimits) {
-    //   if (selectedSpeedLimit.isDirty()) {
-    //     displayConfirmMessage();
-    //   } else {
-    //     if (speedLimits.length > 0) {
-    //       selectedSpeedLimit.close();
-    //       showDialog(speedLimits);
-    //     }
-    //   }
-    // }
-
-
     var projectLinkStatusIn = function(projectLink, possibleStatus){
       if(!_.isUndefined(possibleStatus) && !_.isUndefined(projectLink) )
         return _.contains(possibleStatus, projectLink.status);
@@ -756,17 +712,16 @@
 
     var changeTool = function(tool) {
       if (tool === 'Cut') {
-        // selectToolControl.deactivate();
         suravageCutter.activate();
       } else if (tool === 'Select') {
         suravageCutter.deactivate();
-        // clearHighlights();
-        // selectToolControl.activate();
       }
     };
 
     eventbus.on('splited:projectLinks', function (splited) {
       drawIndicators(_.map(_.cloneDeep(splited)));
+      selectedProjectLinkProperty.setCurrent(splited);
+      // eventbus.trigger('projectLink:clicked', splited);
     });
 
     eventbus.on('projectLink:projectLinksCreateSuccess', function () {
@@ -802,8 +757,6 @@
       });
 
       var toBeTerminatedLinkIds = _.pluck(toBeTerminated[0], 'id');
-      var toBeUnchangedLinkIds = _.pluck(toBeUnchanged[0], 'id');
-
       var suravageProjectRoads = separated[0];
       var suravageFeatures = [];
       suravageProjectDirectionMarkerLayer.getSource().clear();
