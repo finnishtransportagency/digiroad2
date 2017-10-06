@@ -589,7 +589,6 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
   test("Splitting link test") {
     reset(mockRoadLinkService)
     reset(mockRoadAddressService)
-    reset(mockProjectService)
     val addresses = List(ReservedRoadPart(1: Long, 1 : Long, 1: Long, 87: Double, 5: Long, Discontinuity.apply("jatkuva"), 8: Long, None: Option[DateTime], None: Option[DateTime]))
     val projctId=0
     val lrmPositionid=1
@@ -620,7 +619,8 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       newSuravageLink.count(x => x.endMValue == 123) should be  (1)
       //   newSuravageLink.count(x => x.endMValue == 45.3) should be  (1)
       templateLinks.status should be (LinkStatus.Terminated)
-
+      reset(mockRoadLinkService)
+      reset(mockRoadAddressService)
     }
   }
 
