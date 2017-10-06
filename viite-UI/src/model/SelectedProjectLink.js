@@ -17,20 +17,15 @@
       eventbus.trigger('projectLink:clicked', get());
     };
 
-    var splitSuravageLink = function(nearestSuravage, split) {
-      splitSuravageLinks(nearestSuravage, split, function(splitSuravage) {
-        selection = [splitSuravage.created, splitSuravage.existing];
-        // originalSpeedLimitValue = splitSpeedLimits.existing.value;
+    var splitSuravageLink = function(suravage, split) {
+      splitSuravageLinks(suravage, split, function(splitedSuravageLinks) {
+        selection = [splitedSuravageLinks.created, splitedSuravageLinks.existing];
         dirty = true;
-        // collection.setSelection(self);
-        // eventbus.trigger('speedLimit:selected', self);
+        eventbus.trigger('splited:projectLinks', selection);
       });
     };
 
     var splitSuravageLinks = function(nearestSuravage, split, callback) {
-      // var link = _.find(_.flatten(speedLimits), { id: id });
-      //TODO add selected link as arg
-
       var left = _.cloneDeep(nearestSuravage);
       left.points = split.firstSplitVertices;
 
@@ -53,7 +48,6 @@
 
       dirty = true;
       callback(splitSuravage);
-      // eventbus.trigger('speedLimits:fetched', self.getAll());
     };
 
     var calculateMeasure = function(link) {

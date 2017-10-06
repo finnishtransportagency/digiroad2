@@ -66,6 +66,7 @@
       source: suravageRoadVector,
       name:'suravageRoadProjectLayer',
       style: function(feature) {
+        if(!_.isUndefined(feature.projectLinkData))
         return styler.generateStyleByFeature(feature.projectLinkData, map.getView().getZoom());
       }
     });
@@ -327,8 +328,6 @@
         selectedProjectLinkProperty.clean();
         if (!_.isUndefined(selection)) {
           selectedProjectLinkProperty.open(selection.projectLinkData.linkId);
-        if(selection.projectLinkData.roadLinkSource==3)
-          decorateSelection(selection);
         }
         else selectedProjectLinkProperty.cleanIds();
       }
@@ -336,10 +335,6 @@
 
     var offsetBySideCode = function (suravageLink) {
       return GeometryUtils.offsetBySideCode(applicationModel.zoom.level, suravageLink);
-    };
-
-    var decorateSelection = function (suravageLink) {
-      drawIndicators(_.map(_.cloneDeep(suravageLink), offsetBySideCode));
     };
 
     var drawIndicators = function(links) {
@@ -371,14 +366,15 @@
           text : new ol.style.Text(textSettings)
         });
         var marker = new ol.Feature({
-          geometry : new ol.geom.Point([position.x, position.y])
+          geometry : new ol.geom.Point([position.x, position.y]),
+          type: 'cutter'
         });
         marker.setStyle(style);
         features.push(marker);
       };
 
       var indicatorsForSplit = function() {
-        return me.mapOverLinkMiddlePoints(links, function(link, middlePoint) {
+        return mapOverLinkMiddlePoints(links, function(link, middlePoint) {
           markerContainer(link, middlePoint);
         });
       };
@@ -387,7 +383,10 @@
         return indicatorsForSplit();
       };
       indicators();
-      selectToolControl.addNewFeature(features);
+
+      _.each(features, function(feature){
+        selectSingleClick.getFeatures().push(feature);
+      });
     };
 
     var canItBeAddToSelection = function(selectionData) {
@@ -397,20 +396,21 @@
         selectionData.trackCode === currentlySelectedSample.trackCode;
     };
 
-    var revertSelectedChanges = function() {
-      if(projectCollection.isDirty()) {
-        projectCollection.revertLinkStatus();
-        projectCollection.setDirty([]);
-        eventbus.trigger('roadAddress:projectLinksEdited');
-      }
-    };
-
     var clearHighlights = function(){
-      if(selectDoubleClick.getFeatures().getLength() !== 0){
-        selectDoubleClick.getFeatures().clear();
-      }
-      if(selectSingleClick.getFeatures().getLength() !== 0){
-        selectSingleClick.getFeatures().clear();
+      if(applicationModel.getSelectedTool() == 'Cut'){
+        if(selectDoubleClick.getFeatures().getLength() !== 0){
+          selectDoubleClick.getFeatures().clear();
+        }
+        if(_.filter(selectSingleClick.getFeatures().getArray(), function(feature){ return feature.getProperties().type != 'cutter';}).length !== 0){
+          selectSingleClick.getFeatures().clear();
+        }
+      } else {
+        if(selectDoubleClick.getFeatures().getLength() !== 0){
+          selectDoubleClick.getFeatures().clear();
+        }
+        if(selectSingleClick.getFeatures().getLength() !== 0){
+          selectSingleClick.getFeatures().clear();
+        }
       }
     };
 
@@ -436,7 +436,7 @@
         addFeaturesToSelection(featuresToHighlight);
       } else {
         _.each(suravageRoadProjectLayer.getSource().getFeatures(), function(feature) {
-          var canIHighlight = !_.isUndefined(feature.projectLinkData.linkId) ?
+          var canIHighlight = (!_.isUndefined(feature.projectLinkData) && !_.isUndefined(feature.projectLinkData.linkId)) ?
             selectedProjectLinkProperty.isSelected(feature.projectLinkData.linkId) : false;
           if(canIHighlight){
             suravageFeaturesToHighlight.push(feature);
@@ -683,30 +683,39 @@
       var scissorFeatures = [];
       var CUT_THRESHOLD = 20;
       var vectorSource = vectorLayer.getSource();
+      var self = this;
 
       var moveTo = function(x, y) {
-        scissorFeatures = [new ol.Feature({geometry: new ol.geom.Point([x, y]), type: 'cutter' })];
-        selectToolControl.removeFeatures(function(feature) {
-          return feature.getProperties().type === 'cutter';
+        scissorFeatures = [new ol.Feature({geometry: new ol.geom.Point([x, y]), type: 'cutter'})];
+        selectSingleClick.removeFeatures(function(feature) {
+            return feature.getProperties().type === 'cutter';
         });
-        selectToolControl.addNewFeature(scissorFeatures, true);
+        selectSingleClick.getSource().addFeatures(scissorFeatures);
+        selectSingleClick.getSource.push(scissorFeatures, true);
       };
 
       var remove = function() {
-        selectToolControl.removeFeatures(function(feature) {
+        removeFeatures(function(feature) {
           return feature.getProperties().type === 'cutter';
         });
         scissorFeatures = [];
       };
 
-      var self = this;
+      var removeFeatures = function (match) {
+        _.each(selectSingleClick.getFeatures().getArray(), function(feature){
+          if(match(feature)) {
+            selectSingleClick.getFeatures().remove(feature);
+          }
+        });
+      };
 
       var clickHandler = function(evt) {
         if (applicationModel.getSelectedTool() === 'Cut') {
           // if (collection.isDirty()) {
-          //   me.splayConfirmMessage();
+          //   me.displayConfirmMessage();
           // } else {
-            self.cut(evt);
+          // clearIndicators();
+          self.cut(evt);
           // }
         }
       };
@@ -714,7 +723,7 @@
       this.deactivate = function() {
         eventListener.stopListening(eventbus, 'map:clicked', clickHandler);
         eventListener.stopListening(eventbus, 'map:mouseMoved');
-        remove();
+        // remove();
       };
 
       this.activate = function() {
@@ -733,7 +742,7 @@
       var findNearestSuravageLink = function(point) {
         return _.chain(vectorSource.getFeatures())
             .filter(function(feature) {
-              return feature.projectLinkData.roadLinkSource == 3;
+              return !_.isUndefined(feature.projectLinkData) && feature.projectLinkData.roadLinkSource == 3;
             })
             .map(function(feature) {
               var closestP = feature.getGeometry().getClosestPoint(point);
@@ -759,7 +768,7 @@
         if (isWithinCutThreshold(closestSuravageLink.distance)) {
           moveTo(closestSuravageLink.point[0], closestSuravageLink.point[1]);
         } else {
-          remove();
+          // remove();
         }
       };
 
@@ -771,8 +780,6 @@
 
         var calculateSplitProperties = function(nearestSuravage, point) {
           var lineString = pointsToLineString(nearestSuravage.points);
-          // var lineString = nearestSuravage.geometry;
-          // var startMeasureOffset = nearestSuravage.startMeasure;
           var splitMeasure = GeometryUtils.calculateMeasureAtPoint(lineString, point);
           var splitVertices = GeometryUtils.splitByPoint(lineString, point);
           return _.merge({ splitMeasure: splitMeasure }, splitVertices);
@@ -783,13 +790,30 @@
         if (!isWithinCutThreshold(nearest.distance)) {
           return;
         }
-
         var nearestSuravage = nearest.feature.projectLinkData;
         var splitProperties = calculateSplitProperties(nearestSuravage, mousePoint);
         selectedProjectLinkProperty.splitSuravageLink(nearestSuravage, splitProperties);
 
-        remove();
+
+        // var indicatorsForSplit = function() {
+        //   return mapOverLinkMiddlePoints(splited, function(link, middlePoint) {
+        //     markerContainer(link, middlePoint);
+        //   });
+        // };
+
+        // remove();
       };
+    };
+
+    var mapOverLinkMiddlePoints = function(links, transformation) {
+      return _.map(links, function(link) {
+        var points = _.map(link.points, function(point) {
+          return [point.x, point.y];
+        });
+        var lineString = new ol.geom.LineString(points);
+        var middlePoint = GeometryUtils.calculateMidpointOfLineString(lineString);
+        return transformation(link, middlePoint);
+      });
     };
 
     var uiState = { zoomLevel: 9 };
@@ -835,13 +859,18 @@
 
     var changeTool = function(tool) {
       if (tool === 'Cut') {
-        selectToolControl.deactivate();
+        // selectToolControl.deactivate();
         suravageCutter.activate();
       } else if (tool === 'Select') {
         suravageCutter.deactivate();
-        selectToolControl.activate();
+        // clearHighlights();
+        // selectToolControl.activate();
       }
     };
+
+    eventbus.on('splited:projectLinks', function (splited) {
+      drawIndicators(_.map(_.cloneDeep(splited)));
+    });
 
     eventbus.on('projectLink:projectLinksCreateSuccess', function () {
       projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1, undefined, projectCollection.getPublishableStatus());

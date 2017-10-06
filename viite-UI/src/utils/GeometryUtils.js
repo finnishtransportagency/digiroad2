@@ -67,9 +67,6 @@
   };
 
   root.offsetBySideCode = function (zoom, asset) {
-    if (asset.sideCode === 1) {
-      return asset;
-    }
     asset.points = _.map(asset.points, function (point, index, geometry) {
       var baseOffset = -3.5;
       return root.offsetPoint(point, index, geometry, asset.sideCode, baseOffset);
