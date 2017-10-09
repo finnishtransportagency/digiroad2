@@ -323,9 +323,11 @@ trait MassTransitStopService extends PointAssetOperations {
     val assets = super.getByMunicipality(municipalityCode, mapRoadLinks, roadLinks, Seq(), floatingAdjustment(adjustmentOperation, createPersistedAssetObject))
 
     if(withEnrich)
-      assets.map{a =>
-        val strategy = getStrategy(a)
-        strategy.enrichBusStop(a)._1
+      withDynSession{
+        assets.map{a =>
+          val strategy = getStrategy(a)
+          strategy.enrichBusStop(a)._1
+        }
       }
     else
       assets
