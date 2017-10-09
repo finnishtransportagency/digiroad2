@@ -260,8 +260,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   private def withGeometry(projectLinks: Seq[ProjectLink], resetAddress: Boolean = false): Seq[ProjectLink] = {
-    val suravageLinks = projectLinks.filter(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
-    val linkGeometries = (roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(projectLinks.map(_.linkId).toSet,
+    val (suravageLinks, roadLinks) = projectLinks.partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
+    val linkGeometries = (roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(roadLinks.map(_.linkId).toSet,
       false, frozenTimeVVHAPIServiceEnabled).map(pal => pal.linkId -> pal.geometry)
     ++ (if (suravageLinks.nonEmpty)
       roadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(suravageLinks.map(_.linkId).toSet, false).map(pal => pal.linkId -> pal.geometry) else Seq())).toMap
