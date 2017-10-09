@@ -149,7 +149,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
   }
 
   class TestSpeedLimitAssetOperations extends SpeedLimitAssetTierekisteriImporter {
-    override lazy val assetDao: OracleAssetDao = oracleAssetDao
+    override lazy val assetDao: OracleAssetDao = mockAssetDao
     override lazy val roadAddressDao: RoadAddressDAO = mockRoadAddressDAO
     override val tierekisteriClient: TierekisteriSpeedLimitAssetClient = mockTRSpeedLimitAssetClient
     override lazy val roadLinkService: RoadLinkService = mockRoadLinkService
@@ -993,6 +993,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
       when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(Seq(vvhRoadLink))
       when(mockRoadLinkService.fetchVVHRoadlinksAndComplementary(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
+      when(mockRoadLinkService.getVVHRoadLinksF(any[Int])).thenReturn(Seq(vvhRoadLink))
 
       testSpeedLimit.importAssets()
       val asset = linearAssetDao.getCurrentSpeedLimitsByLinkIds(Some(Set(5001))).head
@@ -1025,7 +1026,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       val vvhRoadLink = VVHRoadlink(5001, 235, Nil, State, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, None, Map(), ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)
 
       when(mockAssetDao.expireAssetByTypeAndLinkId(any[Long], any[Seq[Long]])).thenCallRealMethod()
-      when(mockAssetDao.getMunicipalities).thenReturn(Seq())
+      when(mockAssetDao.getMunicipalities).thenReturn(Seq(235))
       when(mockRoadAddressDAO.getRoadNumbers()).thenReturn(Seq(roadNumber))
       when(mockTRSpeedLimitAssetClient.fetchActiveAssetData(any[Long])).thenReturn(Seq(tr))
       when(mockTRSpeedLimitAssetClient.fetchHistoryAssetData(any[Long], any[Option[DateTime]])).thenReturn(Seq(trHist))  /*needed for update*/
@@ -1033,6 +1034,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
 
       when(mockRoadAddressDAO.withRoadAddressSinglePart(any[Long], any[Long], any[Int], any[Long], any[Option[Long]], any[Option[Int]])(any[String])).thenReturn("")
       when(mockRoadAddressDAO.getRoadAddress(any[String => String].apply)).thenReturn(Seq(ra))
+      when(mockRoadLinkService.getVVHRoadLinksF(any[Int])).thenReturn(Seq(vvhRoadLink))
 
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
       when(mockVVHRoadLinkClient.fetchByLinkIds(any[Set[Long]])).thenReturn(Seq(vvhRoadLink))
