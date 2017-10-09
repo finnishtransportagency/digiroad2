@@ -4,7 +4,7 @@ Create Table CALIBRATION_POINT (
 	ID Number Not Null,
 	PROJECT_LINK_ID Number Not Null,
 	PROJECT_ID Number Not Null,
-	LINK_M Numeric Not Null,
+	LINK_M Number(8,3) Not Null,
 	ADDRESS_M Number Not Null,
 	Constraint CALIBRATION_POINT_PK Primary Key (
 		ID ) Enable,
