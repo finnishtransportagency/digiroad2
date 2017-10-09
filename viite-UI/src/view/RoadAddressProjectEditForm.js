@@ -60,21 +60,44 @@
     };
 
     var selectedData = function (selected) {
-      var span = '';
+      var span = [];
       if (selected[0]) {
         var link = selected[0];
         var startM = Math.min.apply(Math, _.map(selected, function(l) { return l.startAddressM; }));
         var endM = Math.max.apply(Math, _.map(selected, function(l) { return l.endAddressM; }));
-        span = '<div class="project-edit-selections" style="display:inline-block;padding-left:8px;">' +
-          '<div class="project-edit">' +
-          ' TIE ' + '<span class="project-edit">' + link.roadNumber + '</span>' +
-          ' OSA ' + '<span class="project-edit">' + link.roadPartNumber + '</span>' +
-          ' AJR ' + '<span class="project-edit">' + link.trackCode + '</span>' +
-          ' M:  ' + '<span class="project-edit">' + startM + ' - ' + endM + '</span>' +
-          (selected.length > 1 ? ' (' + selected.length + ' linkkiä)' : '')+
-          '</div>' +
-          '</div>';
+        var div = '<div class="project-edit-selections" style="display:inline-block;padding-left:8px;">' +
+            '<div class="project-edit">' +
+            ' TIE ' + '<span class="project-edit">' + link.roadNumber + '</span>' +
+            ' OSA ' + '<span class="project-edit">' + link.roadPartNumber + '</span>' +
+            ' AJR ' + '<span class="project-edit">' + link.trackCode + '</span>' +
+            ' M:  ' + '<span class="project-edit">' + startM + ' - ' + endM + '</span>' +
+            (selected.length > 1 ? ' (' + selected.length + ' linkkiä)' : '')+
+            '</div>' +
+            '</div>';
+        span.push(div);
       }
+      return span;
+    };
+
+    var selectedSplitData = function (selected) {
+      var span = [];
+      _.each(selected, function(sel){
+        if (sel) {
+          var link = sel;
+          var startM = ((applicationModel.getSelectedTool() === 'Cut' && selected.length == 2) ? link.startMValue.toFixed(2) : Math.min.apply(Math, _.map(selected, function(l) { return l.startAddressM; })));
+          var endM = ((applicationModel.getSelectedTool() === 'Cut' && selected.length == 2) ? link.endMValue.toFixed(2) : Math.max.apply(Math, _.map(selected, function(l) { return l.endAddressM; })));
+          var div = '<div class="project-edit-selections" style="display:inline-block;padding-left:8px;">' +
+              '<div class="project-edit">' +
+              ' TIE ' + '<span class="project-edit">' + link.roadNumber + '</span>' +
+              ' OSA ' + '<span class="project-edit">' + link.roadPartNumber + '</span>' +
+              ' AJR ' + '<span class="project-edit">' + link.trackCode + '</span>' +
+              ' M:  ' + '<span class="project-edit">' + startM + ' - ' + endM + '</span>' +
+              (selected.length > 1 ? ' (' + selected.length + ' linkkiä)' : '')+
+              '</div>' +
+              '</div>';
+          span.push(div);
+        }
+      });
       return span;
     };
 
@@ -151,7 +174,7 @@
     };
 
     var selectedProjectLinkTemplate = function(project, optionTags, selected) {
-      var selection = selectedData(selected);
+      var selection = ((applicationModel.getSelectedTool() == 'Cut' && selected[0].roadLinkSource == 3) ? selectedSplitData(selected) : selectedData(selected));
       return _.template('' +
         '<header>' +
         titleWithProjectName(project.name) +
@@ -162,10 +185,10 @@
         staticField('Lisätty järjestelmään', project.createdBy + ' ' + project.startDate)+
         staticField('Muokattu viimeksi', project.modifiedBy + ' ' + project.dateModified)+
         '<div class="form-group editable form-editable-roadAddressProject"> '+
-        selectionForm(selection, selected, 0) +
+        selectionForm(selection[0], selected, 0) +
         ((applicationModel.getSelectedTool() === 'Cut' && selected.length == 2) ?
           '<hr class="horizontal-line"/>' +
-          selectionForm(selection, selected, 1) : "") +
+          selectionForm(selection[1], selected, 1) : "") +
         changeDirection()+
         actionSelectedField()+
         '</div>'+
@@ -178,7 +201,9 @@
     var selectionForm = function(selection, selected, index){
       return '<form id="roadAddressProject" class="input-unit-combination form-group form-horizontal roadAddressProject">'+
       '<label>Toimenpiteet,' + selection  + '</label>' +
-      '<span class="marker">'+markers[index]+'</span>'+
+        ((applicationModel.getSelectedTool() === 'Cut' && selected.length == 2) ?
+        '<span class="marker">'+markers[index]+'</span>'
+        : "") +
       '<div class="input-unit-combination">' +
       //TODO - Change the events in order to use id with numbering
       '<select class="form-control" id="dropdown_'+index+'" size="1">'+
@@ -284,8 +309,6 @@
     };
 
     var emptyTemplate = function(project) {
-      var selection = selectedData(selectedProjectLink);
-
       return _.template('' +
         '<header style ="display:-webkit-inline-box;">' +
         titleWithProjectName(project.name) +

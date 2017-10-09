@@ -581,7 +581,7 @@
         scissorFeatures = [];
         _.each(featuresToRemove, function(ft){
           selectSingleClick.getFeatures().remove(ft);
-        })
+        });
       };
 
       var clickHandler = function(evt) {
@@ -658,12 +658,13 @@
 
         var nearest = findNearestSuravageLink([mousePoint.x, mousePoint.y]);
 
-        if (!isWithinCutThreshold(nearest.distance)) {
+        if (!nearest || !isWithinCutThreshold(nearest.distance)) {
           return;
         }
         var nearestSuravage = nearest.feature.projectLinkData;
         var splitProperties = calculateSplitProperties(nearestSuravage, mousePoint);
         selectedProjectLinkProperty.splitSuravageLink(nearestSuravage, splitProperties);
+        addFeaturesToSelection(nearestSuravage);
         remove();
       };
     };
@@ -698,7 +699,6 @@
 
     eventbus.on('splited:projectLinks', function (splited) {
       drawIndicators(splited);
-      // selectedProjectLinkProperty.setCurrent(splited);
       _.defer(eventbus.trigger('projectLink:clicked', splited));
     });
 
