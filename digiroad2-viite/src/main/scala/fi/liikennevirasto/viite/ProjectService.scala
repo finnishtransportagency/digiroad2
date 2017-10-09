@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReservedException, Track}
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefineCalibrationPoint
 import fi.liikennevirasto.viite.dao.ProjectState._
 import fi.liikennevirasto.viite.dao.{ProjectDAO, RoadAddressDAO, _}
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink, RoadAddressLinkLike}
@@ -703,10 +704,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         val projectLinks = withGeometry(ProjectDAO.getProjectLinks(projectId))
             val userGeneratedCalibrationPoints = if(!userDefinedEndAddressM.isEmpty) {
               val endSegment = projectLinks.maxBy(_.endAddrMValue)
-              val calibrationPoint = CalibrationPoint(endSegment.id, endSegment.endMValue, userDefinedEndAddressM.get)
-              if(CalibrationPointDAO.findExistingCalibrationPoint(calibrationPoint).isEmpty)
-                CalibrationPointDAO.insertNewCalibrationPoint(calibrationPoint)
-              else CalibrationPointDAO.updateCalibrationPointAddressM(calibrationPoint)
+              val calibrationPoint = UserDefineCalibrationPoint(newCalibrationPointId, endSegment.id, projectId, endSegment.endMValue, userDefinedEndAddressM.get)
+              val foundCalibrationPoint = CalibrationPointDAO.findCalibrationPointByRemainingValues(endSegment.id, projectId, endSegment.endMValue, userDefinedEndAddressM.get)
+              if(foundCalibrationPoint.isEmpty)
+                CalibrationPointDAO.createCalibrationPoint(calibrationPoint)
+              else CalibrationPointDAO.updateSpecificCalibrationPointMeasures(foundCalibrationPoint.head.id, endSegment.endMValue, userDefinedEndAddressM.get)
               Seq(CalibrationPoint)
             } else {
               Seq.empty[CalibrationPoint]

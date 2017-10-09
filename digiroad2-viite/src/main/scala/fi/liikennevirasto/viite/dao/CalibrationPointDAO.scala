@@ -9,49 +9,83 @@ import slick.jdbc.{StaticQuery => Q}
   */
 object CalibrationPointDAO {
 
-  def findExistingCalibrationPoint(projectLinkId: Long, segmentMValue: Long): Seq[CalibrationPoint] = {
-    val query =
+  trait CalibrationPointMValues {
+    def segmentMValue: Double
+    def addressMValue: Long
+  }
+
+  case class UserDefineCalibrationPoint(id: Long, projectLinkId: Long, projectId: Long, segmentMValue: Double, addressMValue: Long) extends CalibrationPointMValues
+
+  def findCalibrationPointById(id: Long): UserDefineCalibrationPoint = {
+    val baseQuery =
       s"""
-         |Select * From CALIBRATION_POINT cp Where cp.PROJECT_LINK_ID = ${projectLinkId} And cp.LINK_M = ${segmentMValue}
+         Select * From CALIBRATION_POINT Where ID = ${id}
        """
-    Q.queryNA[(Long, Double, Int)](query).list.map{
-      case (projectLinkId, linkM, addressM) => CalibrationPoint(projectLinkId, linkM, addressM)
+
+    Q.queryNA[(Long, Long, Long, Double, Long)](baseQuery).list.map{
+      case (id,projectLinkId, projectId, linkM, addressM) => UserDefineCalibrationPoint(id,projectLinkId, projectId, linkM, addressM)
+    }.head
+  }
+
+  def findCalibrationPointByRemainingValues(projectLinkId: Long, projectId: Long, segmentMValue: Double, addressMValue: Long): Seq[UserDefineCalibrationPoint] = {
+    val baseQuery =
+      s"""
+         Select * From CALIBRATION_POINT Where PROJECT_LINK_ID = ${projectLinkId} And PROJECT_ID = ${projectId} And LINK_M = ${segmentMValue} And ADDRESS_M = ${addressMValue}
+       """
+
+    Q.queryNA[(Long, Long, Long, Double, Long)](baseQuery).list.map{
+      case (id,projectLinkId, projectId, linkM, addressM) => UserDefineCalibrationPoint(id,projectLinkId, projectId, linkM, addressM)
     }
   }
 
-  def findExistingCalibrationPoint(calibrationPoint: CalibrationPoint): Seq[CalibrationPoint] = {
-    val query =
+  def findCalibrationPointsOfRoad(projectId: Long, linkId: Long): UserDefineCalibrationPoint = {
+    val baseQuery =
       s"""
-         |Select * From CALIBRATION_POINT cp Where cp.PROJECT_LINK_ID = ${calibrationPoint.linkId} And cp.LINK_M = ${calibrationPoint.segmentMValue}
+         Select * From CALIBRATION_POINT Where PROJECT_LINK_ID = ${linkId} And PROJECT_ID = ${projectId}
        """
-    Q.queryNA[(Long, Double, Int)](query).list.map{
-      case (projectLinkId, linkM, addressM) => CalibrationPoint(projectLinkId, linkM, addressM)
-    }
+
+    Q.queryNA[(Long, Long, Long, Double, Long)](baseQuery).list.map{
+      case (id,projectLinkId, projectId, linkM, addressM) => UserDefineCalibrationPoint(id,projectLinkId, projectId, linkM, addressM)
+    }.head
   }
 
-  def insertNewCalibrationPoint(projectLinkId: Long, segmentMValue: Long, addressMValue: Long) = {
+  def createCalibrationPoint(calibrationPoint: UserDefineCalibrationPoint) = {
+    val nextCalibrationPointId = sql"""select CALIBRATION_POINT_ID_SEQ.nextval from dual""".as[Long].first
     sqlu"""
-           Insert Into CALIBRATION_POINT (PROJECT_LINK_ID, LINK_M, ADDR_M) Values
-           (${projectLinkId}, ${segmentMValue}, ${addressMValue})
+      Insert Into CALIBRATION_POINT (ID, PROJECT_LINK_ID, PROJECT_ID, LINK_M, ADDRESS_M) Values
+      (${nextCalibrationPointId}, ${calibrationPoint.projectLinkId}, ${calibrationPoint.projectId}, ${calibrationPoint.segmentMValue}, ${calibrationPoint.addressMValue})
       """.execute
   }
 
-  def insertNewCalibrationPoint(calibrationPoint: CalibrationPoint) = {
+  def createCalibrationPoint(projectLinkId: Long, projectId: Long, segmentMValue: Double, addressMValue: Long) = {
+    val nextCalibrationPointId = sql"""select CALIBRATION_POINT_ID_SEQ.nextval from dual""".as[Long].first
     sqlu"""
-           Insert Into CALIBRATION_POINT (PROJECT_LINK_ID, LINK_M, ADDR_M) Values
-           (${calibrationPoint.linkId}, ${calibrationPoint.segmentMValue}, ${calibrationPoint.addressMValue})
+      Insert Into CALIBRATION_POINT (ID, PROJECT_LINK_ID, PROJECT_ID, LINK_M, ADDRESS_M) Values
+      (${nextCalibrationPointId}, ${projectLinkId}, ${projectId}, ${segmentMValue}, ${addressMValue})
       """.execute
   }
 
-  def updateCalibrationPointAddressM(projectLinkId: Long, segmentMValue: Long, addressMValue: Long) = {
+  def updateSpecificCalibrationPointMeasures(id: Long, segmentMValue: Double, addressMValue: Long) = {
     sqlu"""
-           Update CALIBRATION_POINT Where PROJECT_LINK_ID = ${projectLinkId} And LINK_M = ${segmentMValue} SET ADDR_M = ${addressMValue}
+        Update CALIBRATION_POINT Where ID = ${id} SET LINK_M = ${segmentMValue}, ADDRESS_M = ${addressMValue}
+      """
+  }
+
+  def removeSpecificCalibrationPoint(id: Long) = {
+    sqlu"""
+        Delete From CALIBRATION_POINT Where ID = ${id}
       """.execute
   }
 
-  def updateCalibrationPointAddressM(calibrationPoint: CalibrationPoint) = {
+  def removeAllCalibrationPointsFromRoad(projectLinkId: Long, projectId: Long) = {
     sqlu"""
-           Update CALIBRATION_POINT Where PROJECT_LINK_ID = ${calibrationPoint.linkId} And LINK_M = ${calibrationPoint.segmentMValue} SET ADDR_M = ${calibrationPoint.addressMValue}
+        Delete From CALIBRATION_POINT Where PROJECT_LINK_ID = ${projectLinkId} And PROJECT_ID  = ${projectId}
+      """.execute
+  }
+
+  def removeAllCalibrationPointsFromProject(projectId: Long) = {
+    sqlu"""
+        Delete From CALIBRATION_POINT Where PROJECT_ID  = ${projectId}
       """.execute
   }
 

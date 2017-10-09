@@ -34,6 +34,8 @@ package object viite {
   /* Maximum distance to consider the tracks to go side by side */
   val MaxDistanceBetweenTracks = 50.0
 
+  val newCalibrationPointId: Long = -1000L
+
   def switchSideCode(sideCode: SideCode): SideCode = {
     // Switch between against and towards 2 -> 3, 3 -> 2
     SideCode.apply(5-sideCode.value)
