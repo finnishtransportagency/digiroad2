@@ -370,10 +370,12 @@ trait MassTransitStopService extends PointAssetOperations {
       val properties = Queries.availableProperties(typeId)
       point match {
         case Some(point) => {
-          val childFilters = fetchByRadius(point, 200).filter(a => a.terminalId.isEmpty)
-          val newProperty = Property(0, "liitetyt_pysakit", PropertyTypes.MultipleChoice, required = true, values = childFilters.map{a =>
+          val childFilters = fetchByRadius(point, 200)
+            .filter(a =>  a.terminalId.isEmpty || a.terminalId.contains(a.id))
+            .filter(a => !extractStopType(a).contains(BusStopType.Terminal))
+          val newProperty = Property(0, "liitetyt_pysakit", PropertyTypes.MultipleChoice, required = true, values = childFilters.map{ a =>
             val stopName = extractStopName(a.propertyData)
-            PropertyValue(a.id.toString, Some(s"""${a.nationalId} $stopName"""), checked = false)
+            PropertyValue(a.id.toString, Some(s"""${a.nationalId} $stopName"""), checked = a.terminalId.contains(asset.id))
           })
           Seq(newProperty) ++ properties
         }
@@ -421,6 +423,16 @@ trait MassTransitStopService extends PointAssetOperations {
       lon = persistedStop.lon, lat = persistedStop.lat, validityDirection = persistedStop.validityDirection,
       bearing = persistedStop.bearing, validityPeriod = persistedStop.validityPeriod, floating = floating,
       propertyData = persistedStop.propertyData), floatingReason)
+  }
+
+  //TODO this is duplicated
+  private def extractStopType(asset: PersistedMassTransitStop): Option[BusStopType] ={
+    asset.propertyData.find(p=> p.publicId == MassTransitStopOperations.MassTransitStopTypePublicId) match {
+      case Some(property) =>
+        property.values.map(p => BusStopType.apply(p.propertyValue.toInt)).headOption
+      case _ =>
+        None
+    }
   }
 
   private def extractStopTypes(rows: Seq[MassTransitStopRow]): Seq[Int] = {
