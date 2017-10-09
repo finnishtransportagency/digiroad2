@@ -120,7 +120,7 @@
       layer: [vectorLayer, suravageRoadProjectLayer],
       condition: ol.events.condition.singleClick,
       style: function (feature) {
-        if(projectLinkStatusIn(feature.projectLinkData, [notHandledStatus, newRoadAddressStatus,terminatedStatus, transferredStatus, unchangedStatus, numberingStatus]) || feature.projectLinkData.roadClass === 99 || feature.projectLinkData.roadLinkSource == 3) {
+        if(projectLinkStatusIn(feature.projectLinkData, [notHandledStatus, newRoadAddressStatus,terminatedStatus, transferredStatus, unchangedStatus, numberingStatus]) || feature.projectLinkData.roadClass === 99 || (feature.projectLinkData.roadLinkSource == 3 && applicationModel.getSelectedTool() != 'Cut')) {
          return projectLinkStyler.getSelectionLinkStyle().getStyle( feature.projectLinkData, {zoomLevel: currentZoom});
         }
       }
@@ -664,8 +664,7 @@
         var nearestSuravage = nearest.feature.projectLinkData;
         var splitProperties = calculateSplitProperties(nearestSuravage, mousePoint);
         selectedProjectLinkProperty.splitSuravageLink(nearestSuravage, splitProperties);
-        addFeaturesToSelection(nearestSuravage);
-        remove();
+        nearest.feature.setStyle(projectLinkStyler.getSelectionLinkStyle().getStyle({zoomLevel: currentZoom}));
       };
     };
 
@@ -697,9 +696,11 @@
       }
     };
 
+
+
     eventbus.on('splited:projectLinks', function (splited) {
-      drawIndicators(splited);
-      _.defer(eventbus.trigger('projectLink:clicked', splited));
+      _.defer(function(){drawIndicators(splited);});
+        eventbus.trigger('projectLink:clicked', splited);
     });
 
     eventbus.on('projectLink:projectLinksCreateSuccess', function () {

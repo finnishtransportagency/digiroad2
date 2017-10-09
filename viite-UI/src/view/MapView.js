@@ -107,6 +107,7 @@
 
     map.on('moveend', function() {
       applicationModel.moveMap(map.getView().getZoom(), map.getLayers().getArray()[0].getExtent(), map.getView().getCenter());
+      setCursor(applicationModel.getSelectedTool());
     });
 
     map.on('pointermove', function(event) {
