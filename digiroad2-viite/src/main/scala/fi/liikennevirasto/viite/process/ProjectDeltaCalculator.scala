@@ -80,36 +80,20 @@ object ProjectDeltaCalculator {
       throw new RoadAddressException("Multiple or no road parts present in one termination set")
    }
 
-  def projectLinkPartition(projectLinks: Seq[ProjectLink]): Seq[RoadAddressSection] = {
-    val grouped = projectLinks.groupBy(projectLink => (projectLink.roadNumber, projectLink.roadPartNumber, projectLink.track, projectLink.roadType))
-      .mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
-      RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
-        ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType)
-    ).toSeq
-    val paired = grouped.groupBy(section => (section.roadNumber, section.roadPartNumberStart, section.track))
-
-    paired.flatMap { case (key, target) =>
-      val matches = matchingTracks(paired, key)
-      if (matches.nonEmpty)
-        adjustTrack((target, matches.get))
-      else
-        target
-    }.toSeq
-  }
-
-  private def combineTwo[T <: BaseRoadAddress, R <: BaseRoadAddress](tr1: (T,R), tr2: (T,R)): Seq[(T,R)] = {
-    val (t1,r1) = tr1
-    val (t2,r2) = tr2
-    if (r1.endAddrMValue == r2.startAddrMValue && r1.discontinuity == Discontinuity.Continuous &&
-      t1.endAddrMValue == t2.startAddrMValue && t1.discontinuity == Discontinuity.Continuous)
+  private def combineTwo[R <: BaseRoadAddress, P <: BaseRoadAddress](tr1: (R,P), tr2: (R,P)): Seq[(R,P)] = {
+    val (ra1,pl1) = tr1
+    val (ra2,pl2) = tr2
+    if (pl1.endAddrMValue == pl2.startAddrMValue && pl1.discontinuity == Discontinuity.Continuous &&
+      ra1.endAddrMValue == ra2.startAddrMValue && ra1.discontinuity == Discontinuity.Continuous &&
+    pl1.roadType == pl2.roadType)
       Seq((
-        t1 match {
-          case x: RoadAddress => x.copy(endAddrMValue = t2.endAddrMValue, discontinuity = t2.discontinuity).asInstanceOf[T]
-          case x: ProjectLink => x.copy(endAddrMValue = t2.endAddrMValue, discontinuity = t2.discontinuity).asInstanceOf[T]
+        ra1 match {
+          case x: RoadAddress => x.copy(endAddrMValue = ra2.endAddrMValue, discontinuity = ra2.discontinuity).asInstanceOf[R]
+          case x: ProjectLink => x.copy(endAddrMValue = ra2.endAddrMValue, discontinuity = ra2.discontinuity).asInstanceOf[R]
       },
-        r1 match {
-          case x: RoadAddress => x.copy(endAddrMValue = r2.endAddrMValue, discontinuity = r2.discontinuity).asInstanceOf[R]
-          case x: ProjectLink => x.copy(endAddrMValue = r2.endAddrMValue, discontinuity = r2.discontinuity).asInstanceOf[R]
+        pl1 match {
+          case x: RoadAddress => x.copy(endAddrMValue = pl2.endAddrMValue, discontinuity = pl2.discontinuity).asInstanceOf[P]
+          case x: ProjectLink => x.copy(endAddrMValue = pl2.endAddrMValue, discontinuity = pl2.discontinuity).asInstanceOf[P]
       }))
     else {
       Seq(tr2, tr1)
@@ -136,7 +120,7 @@ object ProjectDeltaCalculator {
   }
 
 
-  private def combinePair[T <: BaseRoadAddress, R <: BaseRoadAddress](combinedSeq: Seq[(T,R)], result: Seq[(T,R)] = Seq()): Seq[(T,R)] = {
+  private def combinePair[T <: BaseRoadAddress, R <: ProjectLink](combinedSeq: Seq[(T,R)], result: Seq[(T,R)] = Seq()): Seq[(T,R)] = {
     if (combinedSeq.isEmpty)
       result.reverse
     else if (result.isEmpty)
@@ -158,21 +142,21 @@ object ProjectDeltaCalculator {
     fusedValues.toLong
   }
 
-  def partition(roadAddresses: Seq[RoadAddress]): Seq[RoadAddressSection] = {
-    val grouped = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track)).mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
+  def partition[T <: BaseRoadAddress](roadAddresses: Seq[T]): Seq[RoadAddressSection] = {
+    val grouped = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track, ra.roadType))
+      .mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
       RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
         ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType)
     ).toSeq
+    val paired = grouped.groupBy(section => (section.roadNumber, section.roadPartNumberStart, section.track))
 
-    val adjustedAddressMValues: Seq[RoadAddressSection] = grouped.groupBy(s => (s.roadNumber, s.roadPartNumberStart, s.roadPartNumberEnd)).flatMap {
-      group =>
-        group._2.sortBy(_.track.value).map{
-          e =>
-            e.copy(startMAddr = adjustAddrValues(group._2.map(_.startMAddr).sum, e.startMAddr, e.track),
-              endMAddr = adjustAddrValues(group._2.map(_.endMAddr).sum, e.endMAddr, e.track))
-        }
+    paired.flatMap { case (key, target) =>
+      val matches = matchingTracks(paired, key)
+      if (matches.nonEmpty)
+        adjustTrack((target, matches.get))
+      else
+        target
     }.toSeq
-    adjustedAddressMValues
   }
 
   def pair(roadAddress: Seq[RoadAddress], projectLink: Map[Long, Seq[ProjectLink]]): Seq[(RoadAddress,ProjectLink)] = {
@@ -237,7 +221,6 @@ object ProjectDeltaCalculator {
         val x = v.unzip
         toRoadAddressSection(x._1) -> toRoadAddressSection(x._2)
       })
-
     paired.flatMap { case (key, (src, target)) =>
       val matches = matchingTracks(paired, key)
       if (matches.nonEmpty)
