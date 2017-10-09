@@ -30,7 +30,7 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
       roadAddress.discontinuity, roadAddress.startAddrMValue + project.id, roadAddress.endAddrMValue + project.id, roadAddress.startDate,
       roadAddress.endDate, modifiedBy=Option(project.createdBy), 0L, roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
       roadAddress.sideCode, roadAddress.calibrationPoints, floating=false, roadAddress.geometry, project.id, status,
-      RoadType.PublicRoad, roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.id)
+      roadAddress.roadType, roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.id)
   }
 
   private def toProjectLink(project: RoadAddressProject, status: LinkStatus)(roadAddress: RoadAddress): ProjectLink = {
@@ -38,7 +38,7 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
       roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
       roadAddress.endDate, modifiedBy=Option(project.createdBy), 0L, roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
       roadAddress.sideCode, roadAddress.calibrationPoints, floating=false, roadAddress.geometry, project.id, status,
-      RoadType.PublicRoad, roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.id)
+      roadAddress.roadType, roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), roadAddress.id)
   }
 
   test("Multiple transfers on single road part") {
@@ -195,7 +195,7 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
       to.startMAddr should be (51L)
       to.endMAddr should be (111L)
     })
-    val newParts = ProjectDeltaCalculator.projectLinkPartition(newLinks)
+    val newParts = ProjectDeltaCalculator.partition(newLinks)
     newParts should have size(4)
     newParts.filter(_.startMAddr < 100).foreach(to => {
       to.startMAddr should be (38)
@@ -204,6 +204,44 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
     newParts.filter(_.startMAddr >= 100).foreach(to => {
       to.startMAddr should be (111)
       to.endMAddr should be (125)
+    })
+  }
+
+  test("unchanged with road type change in between + new") {
+    val addresses = (0 to 9).map(i => createRoadAddress(i*12, 12L)).map( ra =>
+      if (ra.id > 50)
+        ra
+      else
+        ra.copy(roadType = RoadType.MunicipalityStreetRoad)
+    )
+    val unchanged = addresses.map(toProjectLink(project, LinkStatus.UnChanged))
+
+    val newLinks = Seq(ProjectLink(981, 5, 205, Track.Combined,
+      Discontinuity.MinorDiscontinuity, 120, 130, None, None,
+      modifiedBy=Option(project.createdBy), 0L, 981, 0.0, 12.1,
+      TowardsDigitizing, (None, None), floating=false, Seq(Point(0.0, 36.0), Point(0.0, 48.1)), project.id, LinkStatus.New,
+      RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 12.1, -1L))
+
+    val uncParts = ProjectDeltaCalculator.partition(addresses, unchanged)
+    uncParts should have size(2)
+    uncParts.foreach(x => {
+      val (fr, to) = x
+      (fr.startMAddr == 60 || fr.endMAddr == 60) should be (true)
+      (to.startMAddr == 60 || to.endMAddr == 60) should be (true)
+      if (fr.startMAddr == 0L)
+        fr.roadType should be (RoadType.MunicipalityStreetRoad)
+      else
+        fr.roadType should be (RoadType.PublicRoad)
+      if (to.startMAddr == 0L)
+        to.roadType should be (RoadType.MunicipalityStreetRoad)
+      else
+        to.roadType should be (RoadType.PublicRoad)
+    })
+    val newParts = ProjectDeltaCalculator.partition(newLinks)
+    newParts should have size(1)
+    newParts.foreach(to => {
+      to.startMAddr should be (120)
+      to.endMAddr should be (130)
     })
   }
 }
