@@ -84,15 +84,14 @@
       _.each(selected, function(sel){
         if (sel) {
           var link = sel;
-          var startM = ((applicationModel.getSelectedTool() === 'Cut' && selected.length == 2) ? link.startMValue.toFixed(2) : Math.min.apply(Math, _.map(selected, function(l) { return l.startAddressM; })));
-          var endM = ((applicationModel.getSelectedTool() === 'Cut' && selected.length == 2) ? link.endMValue.toFixed(2) : Math.max.apply(Math, _.map(selected, function(l) { return l.endAddressM; })));
+          var startM = ((applicationModel.getSelectedTool() === 'Cut' && selected.length == 2) ? Math.round(link.startMValue) : Math.min.apply(Math, _.map(selected, function(l) { return l.startAddressM; })));
+          var endM = ((applicationModel.getSelectedTool() === 'Cut' && selected.length == 2) ? Math.round(link.endMValue) : Math.max.apply(Math, _.map(selected, function(l) { return l.endAddressM; })));
           var div = '<div class="project-edit-selections" style="display:inline-block;padding-left:8px;">' +
               '<div class="project-edit">' +
               ' TIE ' + '<span class="project-edit">' + link.roadNumber + '</span>' +
               ' OSA ' + '<span class="project-edit">' + link.roadPartNumber + '</span>' +
               ' AJR ' + '<span class="project-edit">' + link.trackCode + '</span>' +
               ' M:  ' + '<span class="project-edit">' + startM + ' - ' + endM + '</span>' +
-              (selected.length > 1 ? ' (' + selected.length + ' linkkiä)' : '')+
               '</div>' +
               '</div>';
           span.push(div);
