@@ -13,17 +13,12 @@ import scala.util.Try
 
 class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopDao, roadLinkService: RoadLinkService, tierekisteriClient: TierekisteriMassTransitStopClient, geometryTransform: GeometryTransform) extends BusStopStrategy(typeId, massTransitStopDao, roadLinkService)
 {
-  //TODO check the really need for that or put it in the parent class
-  def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
-
   val toLiviId = "OTHJ%d"
   val MaxMovementDistanceMeters = 50
 
   lazy val massTransitStopEnumeratedPropertyValues = {
-    withDynSession{
       val properties = Queries.getEnumeratedPropertyValues(typeId)
       properties.map(epv => epv.publicId -> epv.values).toMap
-    }
   }
 
   override def is(newProperties: Set[SimpleProperty], roadLink: Option[RoadLink], existingAssetOption: Option[PersistedMassTransitStop]): Boolean = {
@@ -59,7 +54,8 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
   }
 
   override def enrichBusStop(persistedStop: PersistedMassTransitStop): (PersistedMassTransitStop, Boolean) = {
-    val properties = persistedStop.propertyData
+    val enrichPersistedStop = { super.enrichBusStop(persistedStop)._1 }
+    val properties = enrichPersistedStop.propertyData
     val liViProp = properties.find(_.publicId == MassTransitStopOperations.LiViIdentifierPublicId)
     val liViId = liViProp.flatMap(_.values.headOption).map(_.propertyValue)
     val tierekisteriStop = liViId.flatMap(tierekisteriClient.fetchMassTransitStop)
