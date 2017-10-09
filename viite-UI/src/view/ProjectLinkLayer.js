@@ -696,8 +696,6 @@
       }
     };
 
-
-
     eventbus.on('splited:projectLinks', function (splited) {
       _.defer(function(){drawIndicators(splited);});
         eventbus.trigger('projectLink:clicked', splited);
