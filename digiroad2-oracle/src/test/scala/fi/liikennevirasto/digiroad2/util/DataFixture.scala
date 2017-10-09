@@ -1071,7 +1071,7 @@ object DataFixture {
     println("\nSynchronize name (Swedish), korotettu and katos (shelter) info of bus stops according to the info saved in TR")
     println(DateTime.now())
 
-    val username = "batch_sync_BS_with_TR_info"
+    val username = "batch_process_sync_BS_with_TR_info"
 
     var persistedStop: Seq[PersistedMassTransitStop] = Seq()
     var outdatedBusStopsOTH: Seq[PersistedMassTransitStop] = Seq()
