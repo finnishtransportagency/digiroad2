@@ -380,6 +380,7 @@
         activeLayer = true;
         rootElement.find('.btn-reserve').prop("disabled", false);
         rootElement.find('.btn-next').prop("disabled", false);
+        eventbus.trigger('roadAddressProject:clearTool');
         applicationModel.removeSpinner();
       });
 
@@ -419,7 +420,7 @@
           }
           _.defer(function(){
             $('#activeButtons').empty();
-            $('#actionButtons').html('<button id="saveEdit" class="save btn btn-save" disabled>Tallenna</button>' +
+            $('#actionButtons').html('<button id="saveEdit" class="save btn btn-save" disabled style="width:auto;">Jatka Toimenpiteisiin</button>' +
               '<button id="cancelEdit" class="cancel btn btn-cancel">Peruuta</button>');
             eventbus.trigger("roadAddressProject:clearAndDisableInteractions");
           });
