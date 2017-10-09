@@ -120,7 +120,7 @@
       layer: [vectorLayer, suravageRoadProjectLayer],
       condition: ol.events.condition.singleClick,
       style: function (feature) {
-        if(projectLinkStatusIn(feature.projectLinkData, [notHandledStatus, newRoadAddressStatus,terminatedStatus, transferredStatus, unchangedStatus, numberingStatus]) || feature.projectLinkData.roadClass === 99 || feature.projectLinkData.roadLinkSource == 3) {
+        if(feature.getProperties().type != 'cutter-crosshair' && (projectLinkStatusIn(feature.projectLinkData, [notHandledStatus, newRoadAddressStatus,terminatedStatus, transferredStatus, unchangedStatus, numberingStatus]) || feature.projectLinkData.roadClass === 99 || feature.projectLinkData.roadLinkSource == 3)) {
          return projectLinkStyler.getSelectionLinkStyle().getStyle( feature.projectLinkData, {zoomLevel: currentZoom});
         }
       }
@@ -286,7 +286,7 @@
         if(selectDoubleClick.getFeatures().getLength() !== 0){
           selectDoubleClick.getFeatures().clear();
         }
-        if(_.filter(selectSingleClick.getFeatures().getArray(), function(feature){ return feature.getProperties().type != 'cutter';}).length !== 0){
+        if(_.filter(selectSingleClick.getFeatures().getArray(), function(feature){ return feature.getProperties().type != 'cutter' && feature.getProperties().type != 'cutter-crosshair';}).length !== 0){
           selectSingleClick.getFeatures().clear();
         }
       } else {
@@ -553,14 +553,14 @@
 
     var SuravageCutter = function(vectorLayer, collection, eventListener) {
       var scissorFeatures = null;
-      var CUT_THRESHOLD = 20;
+      var CUT_THRESHOLD = 40;
       var vectorSource = vectorLayer.getSource();
       var self = this;
 
       var moveTo = function(x, y) {
         scissorFeatures = new ol.Feature({
           geometry: new ol.geom.Point([x, y]),
-          type: 'cutter'
+          type: 'cutter-crosshair'
         });
         scissorFeatures.setStyle(
             new ol.style.Style({
@@ -594,6 +594,7 @@
       this.deactivate = function() {
         eventListener.stopListening(eventbus, 'map:clicked', clickHandler);
         eventListener.stopListening(eventbus, 'map:mouseMoved');
+        selectedProjectLinkProperty.setDirty(false);
         remove();
       };
 
@@ -637,9 +638,7 @@
           return;
         }
         if (isWithinCutThreshold(closestSuravageLink.distance)) {
-          // moveTo(closestSuravageLink.point[0], closestSuravageLink.point[1]);
-        } else {
-          // remove();
+          moveTo(closestSuravageLink.point[0], closestSuravageLink.point[1]);
         }
       };
 

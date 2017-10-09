@@ -66,6 +66,10 @@
       return dirty;
     };
 
+    var setDirty = function(value) {
+      dirty = value;
+    };
+
     var openShift = function(linkIds) {
       if (linkIds.length === 0) {
         cleanIds();
@@ -117,6 +121,7 @@
       isSelected: isSelected,
       setCurrent: setCurrent,
       isDirty: isDirty,
+      setDirty: setDirty,
       splitSuravageLink: splitSuravageLink
     };
   };
