@@ -31,13 +31,18 @@
 
       var right = _.cloneDeep(nearestSuravage);
       right.points = split.secondSplitVertices;
-
-      if (calculateMeasure(left) < calculateMeasure(right)) {
+      var measureLeft = calculateMeasure(left);
+      var measureRight = calculateMeasure(right);
+      if (measureLeft < measureRight) {
         splitSuravage.created = left;
+        splitSuravage.created.endMValue = measureLeft;
         splitSuravage.existing = right;
+        splitSuravage.existing.endMValue = measureRight;
       } else {
         splitSuravage.created = right;
+        splitSuravage.created.endMValue = measureRight;
         splitSuravage.existing = left;
+        splitSuravage.existing.endMValue = measureLeft;
       }
 
       splitSuravage.created.id = null;
