@@ -85,14 +85,14 @@ class TerminalBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopD
     val id = asset.id
     massTransitStopDao.updateAssetLastModified(id, username)
     //TODO check this better
-    massTransitStopDao.updateAssetProperties(id, verifiedProperties.toSeq)
+    massTransitStopDao.updateAssetProperties(id, verifiedProperties.filter(a => a.publicId != terminalChildrenPublicId).toSeq)
     updateAdministrativeClassValue(id, roadLink.administrativeClass)
 
     optionalPosition.map(updatePosition(id, roadLink))
 
     val children = MassTransitStopOperations.getTerminalMassTransitStopChildren(properties.toSeq)
 
-    massTransitStopDao.deleteChildren(id, children)
+    massTransitStopDao.deleteChildren(id)
     massTransitStopDao.insertChildren(id, children)
 
     enrichBusStop(fetchAsset(id))._1
@@ -105,7 +105,7 @@ class TerminalBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopD
   //TODO move this
   private def extractStopName(properties: Seq[Property]): String = {
     properties
-      .filter { property => property.publicId.equals("nimi_ruotsiksi") }
+      .filter { property => property.publicId.equals("nimi_suomeksi") }
       .filterNot { property => property.values.isEmpty }
       .map(_.values.head)
       .map(_.propertyValue)

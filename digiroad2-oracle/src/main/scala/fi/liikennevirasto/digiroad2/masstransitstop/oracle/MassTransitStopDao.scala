@@ -467,12 +467,9 @@ class MassTransitStopDao {
     }
   }
 
-  def deleteChildren(terminalAssetId: Long, massTransitStopAssetId: Seq[Long]): Unit = {
-    val massTransitStopId = massTransitStopAssetId.mkString(",")
-
+  def deleteChildren(terminalAssetId: Long): Unit = {
     sqlu"""delete from TERMINAL_BUS_STOP_LINK
-           where BUS_STOP_ASSET_ID not in ($massTransitStopId)
-                and TERMINAL_ASSET_ID = $terminalAssetId
+           where TERMINAL_ASSET_ID = $terminalAssetId
            """.execute
   }
 
