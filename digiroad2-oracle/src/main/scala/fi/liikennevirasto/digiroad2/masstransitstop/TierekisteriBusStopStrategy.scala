@@ -60,8 +60,8 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
     val liViId = liViProp.flatMap(_.values.headOption).map(_.propertyValue)
     val tierekisteriStop = liViId.flatMap(tierekisteriClient.fetchMassTransitStop)
     tierekisteriStop.isEmpty match {
-      case true => (persistedStop, true)
-      case false => (enrichWithTierekisteriInfo(persistedStop, tierekisteriStop.get), false)
+      case true => (enrichPersistedStop, true)
+      case false => (enrichWithTierekisteriInfo(enrichPersistedStop, tierekisteriStop.get), false)
     }
   }
 
