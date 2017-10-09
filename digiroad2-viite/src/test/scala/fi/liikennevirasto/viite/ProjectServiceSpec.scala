@@ -589,7 +589,6 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
   test("Splitting link test") {
     reset(mockRoadLinkService)
     reset(mockRoadAddressService)
-    val addresses = List(ReservedRoadPart(1: Long, 1 : Long, 1: Long, 87: Double, 5: Long, Discontinuity.apply("jatkuva"), 8: Long, None: Option[DateTime], None: Option[DateTime]))
     val projctId=0
     val lrmPositionid=1
     val projectLink= ProjectLink(2,1,1,Track.Combined,Discontinuity.Continuous,0,87,None,None,None,2,3,0,87,SideCode.Unknown,null,false,
@@ -609,11 +608,12 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       sqlu""" insert into LRM_Position(id,start_Measure,end_Measure,Link_id) Values(1,0,87,1) """.execute
       sqlu""" INSERT INTO PROJECT_RESERVED_ROAD_PART (ID, ROAD_NUMBER, ROAD_PART_NUMBER, PROJECT_ID, CREATED_BY, ROAD_LENGTH, ADDRESS_LENGTH, DISCONTINUITY, ELY) VALUES (0,1,1,0,'""',87,900,0,0)""".execute
       sqlu""" INSERT INTO PROJECT_LINK (ID, PROJECT_ID, TRACK_CODE, DISCONTINUITY_TYPE, ROAD_NUMBER, ROAD_PART_NUMBER, START_ADDR_M, END_ADDR_M, LRM_POSITION_ID, CREATED_BY, CREATED_DATE, STATUS) VALUES (1,0,0,0,1,1,0,87,1,1,TO_DATE('2017-10-06 14:54:41', 'YYYY-MM-DD HH24:MI:SS'),0)""".execute
-      val test = projectServiceWithRoadAddressMock.splitSuravageLink(1, "testUser", options)
+      val failmessage = projectServiceWithRoadAddressMock.splitSuravageLink(1, "testUser", options)
       val projectLinks=ProjectDAO.getProjectLinks(projctId)
       val newSuravageLink=projectLinks.filter(x=>x.linkGeomSource==LinkGeomSource.SuravageLinkInterface)
       val templateLinks=projectLinks.filter(x=>x.linkGeomSource!=LinkGeomSource.SuravageLinkInterface).head
-      newSuravageLink.count(x => x.connectedLinkId.isDefined) should be >= (1)
+      failmessage should be (None)
+      projectLinks.count(x => x.connectedLinkId.isDefined) should be  (3)
       newSuravageLink.count(x => x.startMValue == 0) should be >= (1)
       newSuravageLink.count(x => x.startMValue == 45.3) should be (1)
       newSuravageLink.count(x => x.endMValue == 123) should be  (1)

@@ -117,7 +117,7 @@ object ProjectDAO {
     val addressPS = dynamicSession.prepareStatement("insert into PROJECT_LINK (id, project_id, lrm_position_id, " +
       "road_number, road_part_number, " +
       "track_code, discontinuity_type, START_ADDR_M, END_ADDR_M, created_by, " +
-      "calibration_points, status, road_type, road_address_id) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+      "calibration_points, status, road_type, road_address_id, connected_link_id) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)")
     val ids = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= ${roadAddresses.size}""".as[Long].list
     roadAddresses.zip(ids).foreach { case ((address), (lrmId)) =>
       RoadAddressDAO.createLRMPosition(lrmPositionPS, lrmId, address.linkId, address.sideCode.value, address.startMValue, address.endMValue, 0, address.linkGeomSource.value)
@@ -140,7 +140,12 @@ object ProjectDAO {
         addressPS.setString(14, null)
       else
         addressPS.setLong(14, address.roadAddressId)
+      if (address.connectedLinkId.isDefined)
+      addressPS.setLong(15, address.connectedLinkId.getOrElse(-1))
+      else
+        addressPS.setString(14, null)
       addressPS.addBatch()
+
     }
     lrmPositionPS.executeBatch()
     addressPS.executeBatch()
