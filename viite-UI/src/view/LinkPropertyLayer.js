@@ -816,8 +816,8 @@
           }
         });
 
-          var actualPoints =  me.drawCalibrationMarkers(calibrationPointLayer.source, newRoads);
-          _ch(actualPoints, function(actualPoint) {
+        var actualPoints =  me.drawCalibrationMarkers(calibrationPointLayer.source, newRoads);
+        _.each(actualPoints, function(actualPoint) {
           var calMarker = new CalibrationPoint(actualPoint);
           simulatedRoadsLayer.getSource().addFeature(calMarker.getMarker(true));
         });
