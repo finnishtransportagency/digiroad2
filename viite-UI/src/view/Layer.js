@@ -66,23 +66,8 @@
 
       layer.addFeatures(signs);
     };
-/*
-    this.drawCalibrationMarkers = function(layer, roadLinks) {
-      var calibrationPoints = _.flatten(_.filter(roadLinks, function(roadLink) {
-        return roadLink.calibrationPoints.length > 0;
-      }).map(function(roadLink) {
-        return roadLink.calibrationPoints;
-      }));
-      return _.filter(calibrationPoints, function(cp){
-        return cp.point !== undefined;
-      });
-    };
-
-*/
 
     this.drawCalibrationMarkers = function(layer, roadLinks) {
-
-
       var calibrationPointsWithValue = [];
       (_.filter(roadLinks, function (roadLink) {
           return roadLink.calibrationPoints.length > 0;
