@@ -1,5 +1,5 @@
 (function(root) {
-  root.RoadLinkBox = function(linkPropertiesModel) {
+  root.RoadLinkBox = function(selectedProjectLinkProperty) {
     var className = 'road-link';
     var title = 'Selite';
     var selectToolIcon = '<img src="images/select-tool.svg"/>';
@@ -85,15 +85,23 @@
     var Tool = function(toolName, icon) {
       var className = toolName.toLowerCase();
       var element = $('<div class="action"/>').addClass(className).attr('action', toolName).append(icon).click(function() {
-        // executeOrShowConfirmDialog(function() {
+        executeOrShowConfirmDialog(function() {
           applicationModel.setSelectedTool(toolName);
-        // });
+        });
       });
       var deactivate = function() {
         element.removeClass('active');
       };
       var activate = function() {
         element.addClass('active');
+      };
+
+      var executeOrShowConfirmDialog = function(f) {
+        if (selectedProjectLinkProperty.isDirty()) {
+          new Confirm();
+        } else {
+          f();
+        }
       };
 
       return {
@@ -135,7 +143,7 @@
       });
 
       hide();
-
+      
       return {
         element: element,
         reset: reset,

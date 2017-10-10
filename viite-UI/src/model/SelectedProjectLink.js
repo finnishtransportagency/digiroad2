@@ -20,7 +20,6 @@
     var splitSuravageLink = function(suravage, split) {
       splitSuravageLinks(suravage, split, function(splitedSuravageLinks) {
         selection = [splitedSuravageLinks.created, splitedSuravageLinks.existing];
-        dirty = true;
         eventbus.trigger('splited:projectLinks', selection);
       });
     };
@@ -51,7 +50,6 @@
       splitSuravage.created.marker = 'A';
       splitSuravage.existing.marker = 'B';
 
-      dirty = true;
       callback(splitSuravage);
     };
 

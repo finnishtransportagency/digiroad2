@@ -132,7 +132,7 @@
       var shiftPressed = event.mapBrowserEvent !== undefined ?
         event.mapBrowserEvent.originalEvent.shiftKey : false;
       var selection = _.find(event.selected, function (selectionTarget) {
-        return (applicationModel.getSelectedTool() != 'Cut' && !_.isUndefined(selectionTarget.projectLinkData) && (
+        return (!_.isUndefined(selectionTarget.projectLinkData) && (
           projectLinkStatusIn(selectionTarget.projectLinkData, [notHandledStatus, newRoadAddressStatus, terminatedStatus, unchangedStatus, transferredStatus, numberingStatus]) ||
           (selectionTarget.projectLinkData.anomaly == noAddressAnomaly && selectionTarget.projectLinkData.roadLinkType != floatingRoadLinkType) ||
           selectionTarget.projectLinkData.roadClass === 99 || selectionTarget.projectLinkData.roadLinkSource === 3 )
@@ -167,7 +167,7 @@
         selectedProjectLinkProperty.clean();
         $('.wrapper').remove();
         $('#actionButtons').html('<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button><button disabled id ="send-button" class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button>');
-        if (!_.isUndefined(selection))
+        if (!_.isUndefined(selection) && !selectedProjectLinkProperty.isDirty())
           selectedProjectLinkProperty.open(selection.projectLinkData.linkId, true);
         else selectedProjectLinkProperty.cleanIds();
       }
@@ -223,15 +223,15 @@
         highlightFeatures();
       } else {
         selectedProjectLinkProperty.clean();
-        if (!_.isUndefined(selection)) {
+        if (!_.isUndefined(selection) && !selectedProjectLinkProperty.isDirty()) {
           selectedProjectLinkProperty.open(selection.projectLinkData.linkId);
         }
         else selectedProjectLinkProperty.cleanIds();
       }
     };
 
-    var offsetBySideCode = function (suravageLink) {
-      return GeometryUtils.offsetBySideCode(applicationModel.zoom.level, suravageLink);
+    var clear = function(){
+      selectSingleClick.getFeatures().clear();
     };
 
     var drawIndicators = function(links) {
@@ -286,7 +286,7 @@
         if(selectDoubleClick.getFeatures().getLength() !== 0){
           selectDoubleClick.getFeatures().clear();
         }
-        if(_.filter(selectSingleClick.getFeatures().getArray(), function(feature){ return feature.getProperties().type != 'cutter' && feature.getProperties().type != 'cutter-crosshair';}).length !== 0){
+        if(selectSingleClick.getFeatures().getLength() !== 0){
           selectSingleClick.getFeatures().clear();
         }
       } else {
@@ -553,7 +553,7 @@
 
     var SuravageCutter = function(vectorLayer, collection, eventListener) {
       var scissorFeatures = null;
-      var CUT_THRESHOLD = 40;
+      var CUT_THRESHOLD = 5;
       var vectorSource = vectorLayer.getSource();
       var self = this;
 
@@ -585,7 +585,7 @@
       };
 
       var clickHandler = function(evt) {
-        remove();
+        // selectedProjectLinkProperty.clean();
         if (applicationModel.getSelectedTool() === 'Cut') {
           self.cut(evt);
         }
@@ -595,16 +595,11 @@
         eventListener.stopListening(eventbus, 'map:clicked', clickHandler);
         eventListener.stopListening(eventbus, 'map:mouseMoved');
         selectedProjectLinkProperty.setDirty(false);
-        remove();
+        clearHighlights();
       };
 
       this.activate = function() {
         eventListener.listenTo(eventbus, 'map:clicked', clickHandler);
-        eventListener.listenTo(eventbus, 'map:mouseMoved', function(event) {
-          if (applicationModel.getSelectedTool() === 'Cut' && !selectedProjectLinkProperty.isDirty()) {
-            self.updateByPosition(event.coordinate);
-          }
-        });
       };
 
       var isWithinCutThreshold = function(suravageLink) {
@@ -663,6 +658,7 @@
         var nearestSuravage = nearest.feature.projectLinkData;
         var splitProperties = calculateSplitProperties(nearestSuravage, mousePoint);
         selectedProjectLinkProperty.splitSuravageLink(nearestSuravage, splitProperties);
+        selectSingleClick.getFeatures().clear();
         selectSingleClick.getFeatures().push(nearest.feature);
       };
     };
@@ -678,7 +674,6 @@
       });
     };
 
-    var uiState = { zoomLevel: 9 };
     var projectLinkStatusIn = function(projectLink, possibleStatus){
       if(!_.isUndefined(possibleStatus) && !_.isUndefined(projectLink) )
         return _.contains(possibleStatus, projectLink.status);
@@ -688,12 +683,12 @@
     var suravageCutter = new SuravageCutter(suravageRoadProjectLayer, projectCollection, me.eventListener);
 
     var changeTool = function(tool) {
-      if (tool === 'Cut') {
-        suravageCutter.activate();
-      } else if (tool === 'Select') {
-        suravageCutter.deactivate();
-      }
-    };
+          if (tool === 'Cut') {
+            suravageCutter.activate();
+          } else if (tool === 'Select') {
+            suravageCutter.deactivate();
+          }
+      };
 
     eventbus.on('splited:projectLinks', function (splited) {
       _.defer(function(){drawIndicators(splited);});
