@@ -337,7 +337,12 @@ trait MassTransitStopService extends PointAssetOperations {
 
     val result = getFloatingPointAssets(includedMunicipalities, isOperator)
 
-    result.groupBy(_.municipality)
+    val floatingTerminals = getTerminalFloatingPointAssets(includedMunicipalities, isOperator)
+
+    Map("Terminaalipysäkit" -> floatingTerminals.groupBy(_._2).mapValues(_.map {
+      case (id, _, floatingReason) =>
+        Map("id" -> id, "floatingReason" -> floatingReason.value.toLong)
+    })) ++ result.filterNot(r => floatingTerminals.exists(_._1 == r.id)).groupBy(_.municipality)
       .mapValues { municipalityAssets =>
         municipalityAssets
           .groupBy(_.administrativeClass)
@@ -401,6 +406,48 @@ trait MassTransitStopService extends PointAssetOperations {
       getStrategy(persistedStop)
         .delete(persistedStop)
     }
+  }
+
+  protected def getTerminalFloatingPointAssets(includedMunicipalities: Option[Set[Int]], isOperator: Option[Boolean] = None): Seq[(Long, String, FloatingReason)] = {
+    withDynTransaction {
+      val optionalMunicipalities = includedMunicipalities.map(_.mkString(","))
+
+      val municipalityFilter = optionalMunicipalities match {
+        case Some(municipalities) => s" and municipality_code in ($municipalities)"
+        case _ => ""
+      }
+
+      val result = fetchTerminalFloatingAssets(query => query + municipalityFilter, isOperator)
+      val administrativeClasses = roadLinkService.getRoadLinksByLinkIdsFromVVH(result.map(_._2).toSet, newTransaction = false).groupBy(_.linkId).mapValues(_.head.administrativeClass)
+      result
+        .map { case (id, linkId) =>
+          (id, administrativeClasses.getOrElse(linkId, Unknown).toString, FloatingReason.TerminalChildless)
+        }
+    }
+  }
+
+  //TODO move query to DAO
+  private def fetchTerminalFloatingAssets(addQueryFilter: String => String, isOperator: Option[Boolean]): Seq[(Long, Long)] ={
+    val query = s"""select a.$idField, lrm.link_id
+          from asset a
+          join asset_link al on a.id = al.asset_id
+          join lrm_position lrm on al.position_id = lrm.id
+          join property p on a.asset_type_id = p.asset_type_id and p.public_id = 'pysakin_tyyppi'
+          left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and p.property_type = 'read_only_number'
+          left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'multiple_choice'
+          left join enumerated_value e on mc.enumerated_value_id = e.id
+          where a.asset_type_id = $typeId and a.floating = '1' and (a.valid_to is null or a.valid_to > sysdate) and e.value = 6"""
+
+    val queryFilter = isOperator match {
+      case Some(false) =>
+        (q: String) => {
+          addQueryFilter(q + s""" and np.value <> ${FloatingReason.RoadOwnerChanged.value}""")
+        }
+      case _ =>
+        addQueryFilter
+    }
+
+    StaticQuery.queryNA[(Long, Long)](queryFilter(query)).list
   }
 
   private def updateFloatingReasonValue(assetId: Long, floatingReason: FloatingReason): Unit ={
