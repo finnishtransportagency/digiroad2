@@ -9,7 +9,7 @@
     var createCalibrationPointMarker = function() {
       var markerGraphics = _.clone(defaultMarkerGraphics);
       var marker =  new ol.Feature({
-          geometry: new ol.geom.Point([data.points[0].point.x, data.points[0].point.y])
+          geometry: new ol.geom.Point([data.points.x, data.points.y])
       }
       );
 
@@ -27,7 +27,7 @@
           anchor: [0.5, 1]
         })
       });
-      if(data.calibrationCode<firstCustomCalibrationPointValue)
+      if(data.calibrationCode<=firstCustomCalibrationPointValue)
         marker.setStyle(calibrationPointMarkerStyle);
       else
         marker.setStyle(calibrationPointMarkerStylecustom);
