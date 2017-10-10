@@ -24,11 +24,29 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     //Increase the buffer around the viewport extend because of group bus stops
     renderBuffer: 300
   });
+  var terminalSource = new ol.source.Vector();
+  var terminalLayer = new ol.layer.Vector({
+      source : terminalSource,
+      style : function(feature) {
+          var properties = feature.getProperties();
+          if(properties.massTransitStop)
+              return properties.massTransitStop.getMarkerStyle();
+          return [];
+      },
+      //Increase the buffer around the viewport extend because of group bus stops
+      renderBuffer: 300
+  });
 
   assetLayer.set('name', layerName);
   assetLayer.setOpacity(1);
   assetLayer.setVisible(true);
   map.addLayer(assetLayer);
+
+  terminalLayer.set('name', 'terminalLayer');
+  terminalLayer.setOpacity(1);
+  terminalLayer.setVisible(true);
+  map.addLayer(terminalLayer);
+
 
   function onSelectMassTransitStop(event) {
     debugger;
@@ -320,7 +338,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     }
 
     if(_.contains(['liitetyt_pysakit'], propertyData.propertyData.publicId)){
-      _.each(features.getArray(), function(feature){
+      _.each(terminalSource.getFeatures(), function(feature){
           var busStop = feature.getProperties();
           var asset = selectedMassTransitStopModel.getCurrentAsset();
           if(asset.id == busStop.data.id || _.some(propertyData.propertyData.values, function(value){ return busStop.data.id == parseInt(value.propertyValue);  } )){
@@ -391,6 +409,12 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   };
 
   var closeAsset = function() {
+    _.each(terminalSource.getFeatures(), function(feature){
+        feature.setStyle(feature.getProperties().massTransitStop.getMarkerDefaultStyles());
+    });
+    if(selectedAsset)
+      selectedAsset.massTransitStop.getMarkerFeature().setStyle(selectedAsset.massTransitStop.getMarkerDefaultStyles());
+    terminalSource.clear();
     deselectAsset(selectedAsset);
     eventbus.trigger('application:controledTR',false);
   };
@@ -425,8 +449,9 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       return null;
     }), null);
     selectedAsset.massTransitStop.setMarkerSelectionStyle();
-    features.push(selectedAsset.massTransitStop.getMarker().feature);
-    selectControl.addSelectionFeatures(features, false, false);
+
+    terminalSource.addFeatures(features);
+    selectControl.addSelectionFeatures([selectedAsset.massTransitStop.getMarker().feature], false, false);
   };
 
   var ownedByELY = function () {
