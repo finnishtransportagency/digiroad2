@@ -129,7 +129,6 @@
       assetHasBeenModified = false;
       if (currentAsset.id) {
         backend.getMassTransitStopByNationalId(currentAsset.payload.nationalId, function(asset) {
-          open(asset);
           eventbus.trigger('asset:updateCancelled', asset);
         });
       } else {
