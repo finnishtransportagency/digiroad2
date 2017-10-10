@@ -409,12 +409,6 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   };
 
   var closeAsset = function() {
-    _.each(terminalSource.getFeatures(), function(feature){
-        feature.setStyle(feature.getProperties().massTransitStop.getMarkerDefaultStyles());
-    });
-    if(selectedAsset)
-      selectedAsset.massTransitStop.getMarkerFeature().setStyle(selectedAsset.massTransitStop.getMarkerDefaultStyles());
-    terminalSource.clear();
     deselectAsset(selectedAsset);
     eventbus.trigger('application:controledTR',false);
   };
@@ -428,6 +422,12 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   };
 
   var deselectAsset = function(asset) {
+    _.each(terminalSource.getFeatures(), function(feature){
+        feature.setStyle(feature.getProperties().massTransitStop.getMarkerDefaultStyles());
+    });
+    if(selectedAsset)
+        selectedAsset.massTransitStop.getMarkerFeature().setStyle(selectedAsset.massTransitStop.getMarkerDefaultStyles());
+    terminalSource.clear();
     if (asset)
       movementPermissionConfirmed = false;
   };
@@ -441,15 +441,17 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       var childAsset = massTransitStopsCollection.getAsset(nearestStop.id);
       if(childAsset){
         if(!nearestStop.isChild)
-          childAsset.massTransitStop.setMarkerDefaultStyle();
+          childAsset.massTransitStop.getMarkerFeature().setStyle(childAsset.massTransitStop.getMarkerDefaultStyles());
+
         else
-          childAsset.massTransitStop.setMarkerSelectionStyle();
-        return childAsset.massTransitStop.getMarker().feature;
+          childAsset.massTransitStop.getMarkerFeature().setStyle(childAsset.massTransitStop.getMarkerSelectionStyles());
+        return childAsset.massTransitStop.getMarkerFeature();
       }
       return null;
     }), null);
-    selectedAsset.massTransitStop.setMarkerSelectionStyle();
 
+    selectedAsset.massTransitStop.getMarkerFeature().setStyle(selectedAsset.massTransitStop.getMarkerSelectionStyles());
+    terminalSource.clear();
     terminalSource.addFeatures(features);
     selectControl.addSelectionFeatures([selectedAsset.massTransitStop.getMarker().feature], false, false);
   };
