@@ -63,7 +63,6 @@ object ProjectLinkSplitter {
       val (splitA, splitB) = suravageWithOptions(suravage, templateLink, split, suravageM, splitAddressM)
       val splitT = templateLink.copy(
         startMValue = templateM,
-        endAddrMValue = suravageM.toLong,
         endMValue = templateLink.geometryLength,
         geometryLength = templateLink.geometryLength - templateM,
         startAddrMValue = splitAddressM,
