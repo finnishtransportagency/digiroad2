@@ -255,7 +255,6 @@
       var name = '';
       var direction = '';
       var nationalId = data.nationalId ? data.nationalId : '';
-      debugger;
       if(selectedMassTransitStopModel.exists()){
         if(selectedMassTransitStopModel.getId() == data.id){
             name = selectedMassTransitStopModel.getName();
@@ -264,7 +263,7 @@
         else
         {
           var asset = collection.getAsset(data.id);
-          name = asset.data.name ? asset.data.name : getPropertyValue({ propertyData: asset.data.propertyData }, 'nimi_suomeksi'); ;
+          name = asset.data.name ? asset.data.name : getPropertyValue({ propertyData: asset.data.propertyData }, 'nimi_suomeksi');
         }
       }else
       {

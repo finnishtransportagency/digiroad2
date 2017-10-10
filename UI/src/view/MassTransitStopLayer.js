@@ -49,7 +49,6 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
 
   function onSelectMassTransitStop(event) {
-    debugger;
     if(event.selected.length > 0){
       _.each(event.selected, function(feature){
 
@@ -315,7 +314,6 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   };
 
   var handleAssetPropertyValueChanged = function(propertyData) {
-    debugger;
     var features = selectControl.getSelectInteraction().getFeatures();
     if (propertyData.propertyData.publicId === 'vaikutussuunta') {
       _.each(features.getArray(), function(feature){
