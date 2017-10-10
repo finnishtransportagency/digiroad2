@@ -81,7 +81,7 @@
       name: layerName,
       style: function(feature) {
         var status = feature.projectLinkData.status;
-        if (status === notHandledStatus || status === terminatedStatus || status  === newRoadAddressStatus || status == transferredStatus || status === unchangedStatus || status == numberingStatus) {
+        if (status === notHandledStatus || status === terminatedStatus || status  === newRoadAddressStatus || status == transferredStatus || status === unchangedStatus || status == numberingStatus || feature.projectLinkData.roadLinkSource == 3) {
           return projectLinkStyler.getProjectLinkStyle().getStyle( feature.projectLinkData, {zoomLevel: currentZoom});
         } else {
           return styler.generateStyleByFeature(feature.projectLinkData, currentZoom);
@@ -120,8 +120,8 @@
       layer: [vectorLayer, suravageRoadProjectLayer],
       condition: ol.events.condition.singleClick,
       style: function (feature) {
-        if(feature.getProperties().type != 'cutter-crosshair' && (projectLinkStatusIn(feature.projectLinkData, [notHandledStatus, newRoadAddressStatus,terminatedStatus, transferredStatus, unchangedStatus, numberingStatus]) || feature.projectLinkData.roadClass === 99 || feature.projectLinkData.roadLinkSource == 3)) {
-         return projectLinkStyler.getSelectionLinkStyle().getStyle( feature.projectLinkData, {zoomLevel: currentZoom});
+        if(projectLinkStatusIn(feature.projectLinkData, [notHandledStatus, newRoadAddressStatus,terminatedStatus, transferredStatus, unchangedStatus, numberingStatus]) || feature.projectLinkData.roadClass === 99 || feature.projectLinkData.roadLinkSource == 3) {
+          return projectLinkStyler.getSelectionLinkStyle().getStyle( feature.projectLinkData, {zoomLevel: currentZoom});
         }
       }
     });
@@ -132,19 +132,19 @@
       var shiftPressed = event.mapBrowserEvent !== undefined ?
         event.mapBrowserEvent.originalEvent.shiftKey : false;
       var selection = _.find(event.selected, function (selectionTarget) {
-        return (applicationModel.getSelectedTool() != 'Cut' && !_.isUndefined(selectionTarget.projectLinkData) && (
+        return (!_.isUndefined(selectionTarget.projectLinkData) && (
           projectLinkStatusIn(selectionTarget.projectLinkData, [notHandledStatus, newRoadAddressStatus, terminatedStatus, unchangedStatus, transferredStatus, numberingStatus]) ||
           (selectionTarget.projectLinkData.anomaly == noAddressAnomaly && selectionTarget.projectLinkData.roadLinkType != floatingRoadLinkType) ||
           selectionTarget.projectLinkData.roadClass === 99 || selectionTarget.projectLinkData.roadLinkSource === 3 )
         );
       });
-        if (isNotEditingData) {
-          showSingleClickChanges(shiftPressed, selection);
-        } else {
-          var selectedFeatures = event.deselected.concat(selectDoubleClick.getFeatures().getArray());
-          clearHighlights();
-          addFeaturesToSelection(selectedFeatures);
-          fireDeselectionConfirmation(shiftPressed, selection);
+      if (isNotEditingData) {
+        showSingleClickChanges(shiftPressed, selection);
+      } else {
+        var selectedFeatures = event.deselected.concat(selectDoubleClick.getFeatures().getArray());
+        clearHighlights();
+        addFeaturesToSelection(selectedFeatures);
+        fireDeselectionConfirmation(shiftPressed, selection);
       }
     });
 
@@ -179,7 +179,7 @@
         return (ol.events.condition.doubleClick(mapBrowserEvent) && ol.events.condition.shiftKeyOnly(mapBrowserEvent)) || ol.events.condition.doubleClick(mapBrowserEvent);
       },
       style: function(feature) {
-        if(projectLinkStatusIn(feature.projectLinkData, [notHandledStatus, newRoadAddressStatus,terminatedStatus, transferredStatus, unchangedStatus, numberingStatus]) || feature.projectLinkData.roadClass === 99) {
+        if(projectLinkStatusIn(feature.projectLinkData, [notHandledStatus, newRoadAddressStatus,terminatedStatus, transferredStatus, unchangedStatus, numberingStatus]) || feature.projectLinkData.roadClass === 99 || feature.projectLinkData.roadLinkSource == 3) {
           return projectLinkStyler.getSelectionLinkStyle().getStyle( feature.projectLinkData, {zoomLevel: currentZoom});
         }
       }
@@ -197,14 +197,14 @@
           selectionTarget.projectLinkData.roadClass === 99 || selectionTarget.projectLinkData.roadLinkSource === 3)
         );
       });
-        if (isNotEditingData) {
-          showDoubleClickChanges(shiftPressed, selection);
-        } else {
-          var selectedFeatures = event.deselected.concat(selectSingleClick.getFeatures().getArray());
-          clearHighlights();
-          addFeaturesToSelection(selectedFeatures);
-          fireDeselectionConfirmation(shiftPressed, selection);
-        }
+      if (isNotEditingData) {
+        showDoubleClickChanges(shiftPressed, selection);
+      } else {
+        var selectedFeatures = event.deselected.concat(selectSingleClick.getFeatures().getArray());
+        clearHighlights();
+        addFeaturesToSelection(selectedFeatures);
+        fireDeselectionConfirmation(shiftPressed, selection);
+      }
     });
 
     var showDoubleClickChanges = function (shiftPressed, selection) {
@@ -223,79 +223,33 @@
         highlightFeatures();
       } else {
         selectedProjectLinkProperty.clean();
-        if (!_.isUndefined(selection)) {
+        if (!_.isUndefined(selection))
           selectedProjectLinkProperty.open(selection.projectLinkData.linkId);
-        }
         else selectedProjectLinkProperty.cleanIds();
       }
     };
 
-    var offsetBySideCode = function (suravageLink) {
-      return GeometryUtils.offsetBySideCode(applicationModel.zoom.level, suravageLink);
-    };
-
-    var drawIndicators = function(links) {
-      var features = [];
-
-      var markerContainer = function(link, position) {
-        var imageSettings = {src: 'images/center-marker2.svg'};
-        var textSettings = {
-          text : link.marker,
-          fill: new ol.style.Fill({
-            color: '#ffffff'
-          }),
-          font : '12px sans-serif'
-        };
-        var style = new ol.style.Style({
-          image : new ol.style.Icon(imageSettings),
-          text : new ol.style.Text(textSettings)
-        });
-        var marker = new ol.Feature({
-          geometry : new ol.geom.Point([position.x, position.y]),
-          type: 'cutter'
-        });
-        marker.setStyle(style);
-        features.push(marker);
-      };
-
-      var indicatorsForSplit = function() {
-        return mapOverLinkMiddlePoints(links, function(link, middlePoint) {
-          markerContainer(link, middlePoint);
-        });
-      };
-
-      var indicators = function() {
-        return indicatorsForSplit();
-      };
-      indicators();
-
-      _.each(features, function(feature){
-        selectSingleClick.getFeatures().push(feature);
-      });
-    };
-
-    var canItBeAddToSelection = function(selectionData) {
+    var canItBeAddToSelection = function (selectionData) {
       var currentlySelectedSample = _.first(selectedProjectLinkProperty.get());
       return selectionData.roadNumber === currentlySelectedSample.roadNumber &&
         selectionData.roadPartNumber === currentlySelectedSample.roadPartNumber &&
         selectionData.trackCode === currentlySelectedSample.trackCode;
     };
 
-    var clearHighlights = function(){
-      if(applicationModel.getSelectedTool() == 'Cut'){
-        if(selectDoubleClick.getFeatures().getLength() !== 0){
-          selectDoubleClick.getFeatures().clear();
-        }
-        if(_.filter(selectSingleClick.getFeatures().getArray(), function(feature){ return feature.getProperties().type != 'cutter' && feature.getProperties().type != 'cutter-crosshair';}).length !== 0){
-          selectSingleClick.getFeatures().clear();
-        }
-      } else {
-        if(selectDoubleClick.getFeatures().getLength() !== 0){
-          selectDoubleClick.getFeatures().clear();
-        }
-        if(selectSingleClick.getFeatures().getLength() !== 0){
-          selectSingleClick.getFeatures().clear();
-        }
+    var revertSelectedChanges = function () {
+      if (projectCollection.isDirty()) {
+        projectCollection.revertLinkStatus();
+        projectCollection.setDirty([]);
+        eventbus.trigger('roadAddress:projectLinksEdited');
+      }
+    };
+
+    var clearHighlights = function () {
+      if (selectDoubleClick.getFeatures().getLength() !== 0) {
+        selectDoubleClick.getFeatures().clear();
+      }
+      if (selectSingleClick.getFeatures().getLength() !== 0) {
+        selectSingleClick.getFeatures().clear();
       }
     };
 
@@ -320,8 +274,8 @@
       if (featuresToHighlight.length !== 0) {
         addFeaturesToSelection(featuresToHighlight);
       } else {
-        _.each(suravageRoadProjectLayer.getSource().getFeatures(), function(feature) {
-          var canIHighlight = (!_.isUndefined(feature.projectLinkData) && !_.isUndefined(feature.projectLinkData.linkId)) ?
+        _.each(suravageRoadProjectLayer.getSource().getFeatures(), function (feature) {
+          var canIHighlight = !_.isUndefined(feature.projectLinkData.linkId) ?
             selectedProjectLinkProperty.isSelected(feature.projectLinkData.linkId) : false;
           if (canIHighlight) {
             suravageFeaturesToHighlight.push(feature);
@@ -551,154 +505,11 @@
       vectorLayer.getSource().clear();
     };
 
-    var SuravageCutter = function(vectorLayer, collection, eventListener) {
-      var scissorFeatures = null;
-      var CUT_THRESHOLD = 40;
-      var vectorSource = vectorLayer.getSource();
-      var self = this;
-
-      var moveTo = function(x, y) {
-        scissorFeatures = new ol.Feature({
-          geometry: new ol.geom.Point([x, y]),
-          type: 'cutter-crosshair'
-        });
-        scissorFeatures.setStyle(
-            new ol.style.Style({
-              image: new ol.style.Icon({
-                src: 'images/cursor-crosshair.svg'
-              })
-          })
-        );
-        selectSingleClick.getFeatures().push(scissorFeatures);
-      };
-
-      var remove = function() {
-        var featuresToRemove = [];
-        _.each(selectSingleClick.getFeatures().getArray(), function(feature){
-          if(feature.getProperties().type == 'cutter')
-            featuresToRemove.push(feature);
-        });
-        scissorFeatures = [];
-        _.each(featuresToRemove, function(ft){
-          selectSingleClick.getFeatures().remove(ft);
-        });
-      };
-
-      var clickHandler = function(evt) {
-        remove();
-        if (applicationModel.getSelectedTool() === 'Cut') {
-          self.cut(evt);
-        }
-      };
-
-      this.deactivate = function() {
-        eventListener.stopListening(eventbus, 'map:clicked', clickHandler);
-        eventListener.stopListening(eventbus, 'map:mouseMoved');
-        selectedProjectLinkProperty.setDirty(false);
-        remove();
-      };
-
-      this.activate = function() {
-        eventListener.listenTo(eventbus, 'map:clicked', clickHandler);
-        eventListener.listenTo(eventbus, 'map:mouseMoved', function(event) {
-          if (applicationModel.getSelectedTool() === 'Cut' && !selectedProjectLinkProperty.isDirty()) {
-            self.updateByPosition(event.coordinate);
-          }
-        });
-      };
-
-      var isWithinCutThreshold = function(suravageLink) {
-        return suravageLink !== undefined && suravageLink < CUT_THRESHOLD;
-      };
-
-      var findNearestSuravageLink = function(point) {
-        return _.chain(vectorSource.getFeatures())
-            .filter(function(feature) {
-              return !_.isUndefined(feature.projectLinkData) && feature.projectLinkData.roadLinkSource == 3;
-            })
-            .map(function(feature) {
-              var closestP = feature.getGeometry().getClosestPoint(point);
-              var distanceBetweenPoints = GeometryUtils.distanceOfPoints(point, closestP);
-              return {
-                feature: feature,
-                point: closestP,
-                distance: distanceBetweenPoints
-              };
-            })
-            .sortBy(function(nearest) {
-              return nearest.distance;
-            })
-            .head()
-            .value();
-      };
-
-      this.updateByPosition = function(mousePoint) {
-        var closestSuravageLink = findNearestSuravageLink(mousePoint);
-        if (!closestSuravageLink) {
-          return;
-        }
-        if (isWithinCutThreshold(closestSuravageLink.distance)) {
-          moveTo(closestSuravageLink.point[0], closestSuravageLink.point[1]);
-        }
-      };
-
-      this.cut = function(mousePoint) {
-        var pointsToLineString = function(points) {
-          var coordPoints = _.map(points, function(point) { return [point.x, point.y]; });
-          return new ol.geom.LineString(coordPoints);
-        };
-
-        var calculateSplitProperties = function(nearestSuravage, point) {
-          var lineString = pointsToLineString(nearestSuravage.points);
-          var splitMeasure = GeometryUtils.calculateMeasureAtPoint(lineString, point);
-          var splitVertices = GeometryUtils.splitByPoint(lineString, point);
-          return _.merge({ splitMeasure: splitMeasure }, splitVertices);
-        };
-
-        var nearest = findNearestSuravageLink([mousePoint.x, mousePoint.y]);
-
-        if (!nearest || !isWithinCutThreshold(nearest.distance)) {
-          return;
-        }
-        var nearestSuravage = nearest.feature.projectLinkData;
-        var splitProperties = calculateSplitProperties(nearestSuravage, mousePoint);
-        selectedProjectLinkProperty.splitSuravageLink(nearestSuravage, splitProperties);
-        selectSingleClick.getFeatures().push(nearest.feature);
-      };
-    };
-
-    var mapOverLinkMiddlePoints = function(links, transformation) {
-      return _.map(links, function(link) {
-        var points = _.map(link.points, function(point) {
-          return [point.x, point.y];
-        });
-        var lineString = new ol.geom.LineString(points);
-        var middlePoint = GeometryUtils.calculateMidpointOfLineString(lineString);
-        return transformation(link, middlePoint);
-      });
-    };
-
-    var uiState = { zoomLevel: 9 };
-    var projectLinkStatusIn = function(projectLink, possibleStatus){
-      if(!_.isUndefined(possibleStatus) && !_.isUndefined(projectLink) )
+    var projectLinkStatusIn = function (projectLink, possibleStatus) {
+      if (!_.isUndefined(possibleStatus) && !_.isUndefined(projectLink))
         return _.contains(possibleStatus, projectLink.status);
       else return false;
     };
-
-    var suravageCutter = new SuravageCutter(suravageRoadProjectLayer, projectCollection, me.eventListener);
-
-    var changeTool = function(tool) {
-      if (tool === 'Cut') {
-        suravageCutter.activate();
-      } else if (tool === 'Select') {
-        suravageCutter.deactivate();
-      }
-    };
-
-    eventbus.on('splited:projectLinks', function (splited) {
-      _.defer(function(){drawIndicators(splited);});
-        eventbus.trigger('projectLink:clicked', splited);
-    });
 
     eventbus.on('projectLink:projectLinksCreateSuccess', function () {
       projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1, undefined, projectCollection.getPublishableStatus());
@@ -733,6 +544,8 @@
       });
 
       var toBeTerminatedLinkIds = _.pluck(toBeTerminated[0], 'id');
+      var toBeUnchangedLinkIds = _.pluck(toBeUnchanged[0], 'id');
+
       var suravageProjectRoads = separated[0];
       var suravageFeatures = [];
       suravageProjectDirectionMarkerLayer.getSource().clear();
@@ -837,9 +650,7 @@
       vectorLayer.changed();
     };
 
-    eventbus.on('tool:changed', changeTool);
-
-    eventbus.on('roadAddressProject:openProject', function(projectSelected) {
+    eventbus.on('roadAddressProject:openProject', function (projectSelected) {
       this.project = projectSelected;
       eventbus.trigger('layer:enableButtons', false);
       eventbus.trigger('editMode:setReadOnly', false);

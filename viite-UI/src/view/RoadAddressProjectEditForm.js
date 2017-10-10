@@ -4,7 +4,6 @@
 
     var currentProject = false;
     var selectedProjectLink = false;
-    var markers = ['A', 'B'];
     var backend=new Backend();
     var staticField = function(labelText, dataField) {
       var field;
@@ -53,50 +52,28 @@
 
     var actionButtons = function() {
       var html = '<div class="project-form form-controls" id="actionButtons">' +
-        '<button class="update btn btn-save"' + (projectCollection.isDirty() ? '' : 'disabled') + ' style="width:auto;">Jatka Toimenpiteisiin</button>' +
+        '<button class="update btn btn-save"' + (projectCollection.isDirty() ? '' : 'disabled') + '>Tallenna</button>' +
         '<button class="cancelLink btn btn-cancel">Peruuta</button>' +
         '</div>';
       return html;
     };
 
     var selectedData = function (selected) {
-      var span = [];
+      var span = '';
       if (selected[0]) {
         var link = selected[0];
         var startM = Math.min.apply(Math, _.map(selected, function(l) { return l.startAddressM; }));
         var endM = Math.max.apply(Math, _.map(selected, function(l) { return l.endAddressM; }));
-        var div = '<div class="project-edit-selections" style="display:inline-block;padding-left:8px;">' +
-            '<div class="project-edit">' +
-            ' TIE ' + '<span class="project-edit">' + link.roadNumber + '</span>' +
-            ' OSA ' + '<span class="project-edit">' + link.roadPartNumber + '</span>' +
-            ' AJR ' + '<span class="project-edit">' + link.trackCode + '</span>' +
-            ' M:  ' + '<span class="project-edit">' + startM + ' - ' + endM + '</span>' +
-            (selected.length > 1 ? ' (' + selected.length + ' linkkiä)' : '')+
-            '</div>' +
-            '</div>';
-        span.push(div);
+        span = '<div class="project-edit-selections" style="display:inline-block;padding-left:8px;">' +
+          '<div class="project-edit">' +
+          ' TIE ' + '<span class="project-edit">' + link.roadNumber + '</span>' +
+          ' OSA ' + '<span class="project-edit">' + link.roadPartNumber + '</span>' +
+          ' AJR ' + '<span class="project-edit">' + link.trackCode + '</span>' +
+          ' M:  ' + '<span class="project-edit">' + startM + ' - ' + endM + '</span>' +
+          (selected.length > 1 ? ' (' + selected.length + ' linkkiä)' : '')+
+          '</div>' +
+          '</div>';
       }
-      return span;
-    };
-
-    var selectedSplitData = function (selected) {
-      var span = [];
-      _.each(selected, function(sel){
-        if (sel) {
-          var link = sel;
-          var startM = ((applicationModel.getSelectedTool() === 'Cut' && selected.length == 2) ? Math.round(link.startMValue) : Math.min.apply(Math, _.map(selected, function(l) { return l.startAddressM; })));
-          var endM = ((applicationModel.getSelectedTool() === 'Cut' && selected.length == 2) ? Math.round(link.endMValue) : Math.max.apply(Math, _.map(selected, function(l) { return l.endAddressM; })));
-          var div = '<div class="project-edit-selections" style="display:inline-block;padding-left:8px;">' +
-              '<div class="project-edit">' +
-              ' TIE ' + '<span class="project-edit">' + link.roadNumber + '</span>' +
-              ' OSA ' + '<span class="project-edit">' + link.roadPartNumber + '</span>' +
-              ' AJR ' + '<span class="project-edit">' + link.trackCode + '</span>' +
-              ' M:  ' + '<span class="project-edit">' + startM + ' - ' + endM + '</span>' +
-              '</div>' +
-              '</div>';
-          span.push(div);
-        }
-      });
       return span;
     };
 
@@ -173,7 +150,7 @@
     };
 
     var selectedProjectLinkTemplate = function(project, optionTags, selected) {
-      var selection = ((applicationModel.getSelectedTool() == 'Cut' && selected[0].roadLinkSource == 3) ? selectedSplitData(selected) : selectedData(selected));
+      var selection = selectedData(selected);
       return _.template('' +
         '<header>' +
         titleWithProjectName(project.name) +
@@ -184,10 +161,21 @@
         staticField('Lisätty järjestelmään', project.createdBy + ' ' + project.startDate)+
         staticField('Muokattu viimeksi', project.modifiedBy + ' ' + project.dateModified)+
         '<div class="form-group editable form-editable-roadAddressProject"> '+
-        selectionForm(selection[0], selected, 0) +
-        ((applicationModel.getSelectedTool() === 'Cut' && selected.length == 2) ?
-          '<hr class="horizontal-line"/>' +
-          selectionForm(selection[1], selected, 1) : "") +
+        '<form id="roadAddressProject" class="input-unit-combination form-group form-horizontal roadAddressProject">'+
+        '<label>Toimenpiteet,' + selection  + '</label>' +
+        '<div class="input-unit-combination">' +
+        '<select class="form-control" id="dropDown" size="1">'+
+        '<option '+ defineOptionModifiers('', selected) +'>Valitse</option>'+
+        '<option value='+ LinkStatus.Unchanged.action+' ' + defineOptionModifiers(LinkStatus.Unchanged.action, selected) + '>Ennallaan</option>'+
+        '<option value='+ LinkStatus.Transfer.action + ' ' + defineOptionModifiers(LinkStatus.Transfer.action, selected) + '>Siirto</option>'+
+        '<option value='+ LinkStatus.New.action + ' ' + defineOptionModifiers(LinkStatus.New.action, selected) +'>Uusi</option>'+
+        '<option value='+ LinkStatus.Terminated.action + ' ' + defineOptionModifiers(LinkStatus.Terminated.action, selected) + '>Lakkautus</option>'+
+        '<option value='+ LinkStatus.Numbering.action + ' ' + defineOptionModifiers(LinkStatus.Numbering.action, selected) + '>Numerointi</option>'+
+        '<option value='+ LinkStatus.Revert.action + ' ' + defineOptionModifiers(LinkStatus.Revert.action, selected) + '>Palautus aihioksi tai tieosoitteettomaksi</option>' +
+        '</select>'+
+        '</div>'+
+        newRoadAddressInfo() +
+        '</form>' +
         changeDirection()+
         actionSelectedField()+
         '</div>'+
@@ -195,28 +183,6 @@
         '</div>'+
         '</div>'+
         '<footer>' + actionButtons() + '</footer>');
-    };
-
-    var selectionForm = function(selection, selected, index){
-      return '<form id="roadAddressProject" class="input-unit-combination form-group form-horizontal roadAddressProject">'+
-      '<label>Toimenpiteet,' + selection  + '</label>' +
-        ((applicationModel.getSelectedTool() === 'Cut' && selected.length == 2) ?
-        '<span class="marker">'+markers[index]+'</span>'
-        : "") +
-      '<div class="input-unit-combination">' +
-      //TODO - Change the events in order to use id with numbering
-      '<select class="form-control" id="dropdown_'+index+'" size="1">'+
-      '<option '+ defineOptionModifiers('', selected) +'>Valitse</option>'+
-      '<option id="drop_'+ index +'_' + LinkStatus.Unchanged.action + '" value='+ LinkStatus.Unchanged.action+' ' + defineOptionModifiers(LinkStatus.Unchanged.action, selected) + '>Ennallaan</option>'+
-      '<option id="drop_'+ index +'_' + LinkStatus.Transfer.action + '" value='+ LinkStatus.Transfer.action + ' ' + defineOptionModifiers(LinkStatus.Transfer.action, selected) + '>Siirto</option>'+
-      '<option id="drop_'+ index +'_' + LinkStatus.New.action + '" value='+ LinkStatus.New.action + ' ' + defineOptionModifiers(LinkStatus.New.action, selected) +'>Uusi</option>'+
-      '<option id="drop_'+ index +'_' + LinkStatus.Terminated.action + '" value='+ LinkStatus.Terminated.action + ' ' + defineOptionModifiers(LinkStatus.Terminated.action, selected) + '>Lakkautus</option>'+
-      '<option id="drop_'+ index +'_' + LinkStatus.Numbering.action + '" value='+ LinkStatus.Numbering.action + ' ' + defineOptionModifiers(LinkStatus.Numbering.action, selected) + '>Numerointi</option>'+
-      '<option id="drop_'+ index +'_' + LinkStatus.Revert.action + '" value='+ LinkStatus.Revert.action + ' ' + defineOptionModifiers(LinkStatus.Revert.action, selected) + '>Palautus aihioksi tai tieosoitteettomaksi</option>' +
-      '</select>'+
-      '</div>'+
-      newRoadAddressInfo() +
-      '</form>';
     };
 
     var newRoadAddressInfo = function(){
@@ -308,6 +274,8 @@
     };
 
     var emptyTemplate = function(project) {
+      var selection = selectedData(selectedProjectLink);
+
       return _.template('' +
         '<header style ="display:-webkit-inline-box;">' +
         titleWithProjectName(project.name) +
@@ -523,52 +491,6 @@
       rootElement.on('click', '.project-form button.update', function() {
         eventbus.trigger('roadAddressProject:toggleEditingRoad', true);
         saveChanges();
-      });
-
-
-      rootElement.on('change', '#dropdown_0', function(){
-        if (this.value == LinkStatus.New.action) {
-          $('#drop_0_'+ LinkStatus.Numbering.action).prop('disabled',true).prop('hidden',true);
-          $('#drop_0_'+ LinkStatus.Terminated.action).prop('disabled',true).prop('hidden',true);
-          $('#drop_0_'+ LinkStatus.Revert.action).prop('disabled',true).prop('hidden',true);
-          $('#drop_0_'+ LinkStatus.New.action).prop('disabled',false).prop('hidden',false);
-          $('#drop_1_'+ LinkStatus.New.action).prop('disabled',true).prop('hidden',true);
-          $('#drop_1_'+ LinkStatus.Unchanged.action).prop('disabled',false).prop('hidden',false);
-          $('#drop_1_'+ LinkStatus.Transfer.action).prop('disabled',false).prop('hidden',false);
-          $('#drop_1_'+ LinkStatus.Numbering.action).prop('disabled',true).prop('hidden',true);
-          $('#drop_1_'+ LinkStatus.Terminated.action).prop('disabled',true).prop('hidden',true);
-          $('#drop_1_'+ LinkStatus.Revert.action).prop('disabled',true).prop('hidden',true);
-          $('#drop_1_'+ LinkStatus.New.action).prop('disabled',true).prop('hidden',true);
-
-        } else if (this.value == LinkStatus.Unchanged.action || this.value == LinkStatus.Transfer.action) {
-          $('#drop_0_'+ LinkStatus.New.action).prop('disabled',false).prop('hidden',false);
-          $('#drop_0_'+ LinkStatus.Numbering.action).prop('disabled',true).prop('hidden',true);
-          $('#drop_0_'+ LinkStatus.Terminated.action).prop('disabled',true).prop('hidden',true);
-          $('#drop_0_'+ LinkStatus.Revert.action).prop('disabled',true).prop('hidden',true);
-          $('#drop_1_'+ LinkStatus.Unchanged.action).prop('disabled',true).prop('hidden',true);
-          $('#drop_1_'+ LinkStatus.Transfer.action).prop('disabled',true).prop('hidden',true);
-          $('#drop_1_'+ LinkStatus.Numbering.action).prop('disabled',true).prop('hidden',true);
-          $('#drop_1_'+ LinkStatus.Terminated.action).prop('disabled',true).prop('hidden',true);
-          $('#drop_1_'+ LinkStatus.Revert.action).prop('disabled',true).prop('hidden',true);
-          $('#drop_1_'+ LinkStatus.New.action).prop('disabled',false).prop('hidden',false);
-        }
-      });
-
-      rootElement.on('change', '#dropdown_1', function(){
-        if (this.value == LinkStatus.New.action) {
-          $('#drop_1_'+ LinkStatus.Numbering.action).prop('disabled',true).prop('hidden',true);
-          $('#drop_1_'+ LinkStatus.Terminated.action).prop('disabled',true).prop('hidden',true);
-          $('#drop_1_'+ LinkStatus.Revert.action).prop('disabled',true).prop('hidden',true);
-          $('#drop_1_'+ LinkStatus.New.action).prop('disabled',false).prop('hidden',false);
-          $('#drop_0_'+ LinkStatus.New.action).prop('disabled',true).prop('hidden',true);
-        } else if (this.value == LinkStatus.Unchanged.action || this.value == LinkStatus.Transfer.action) {
-          $('#drop_0_'+ LinkStatus.Unchanged.action).prop('disabled',true).prop('hidden',true);
-          $('#drop_0_'+ LinkStatus.Transfer.action).prop('disabled',true).prop('hidden',true);
-          $('#drop_0_'+ LinkStatus.Numbering.action).prop('disabled',true).prop('hidden',true);
-          $('#drop_0_'+ LinkStatus.Terminated.action).prop('disabled',true).prop('hidden',true);
-          $('#drop_0_'+ LinkStatus.Revert.action).prop('disabled',true).prop('hidden',true);
-          $('#drop_0_'+ LinkStatus.New.action).prop('disabled',false).prop('hidden',false);
-        }
       });
 
       rootElement.on('change', '#dropDown', function() {
