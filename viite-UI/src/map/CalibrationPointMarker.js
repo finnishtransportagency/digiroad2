@@ -5,7 +5,7 @@
     var defaultMarkerGraphics = {
       externalGraphic: "images/calibration-point.svg"
     };
-    var firstCustomCalibrationPointValue=5;
+    var firstCustomCalibrationPointValue=4;
     var createCalibrationPointMarker = function() {
       var markerGraphics = _.clone(defaultMarkerGraphics);
       var marker =  new ol.Feature({
@@ -23,7 +23,7 @@
 
       var calibrationPointMarkerStylecustom = new ol.style.Style({
         image: new ol.style.Icon({
-          src: "images/custom-calibration-point.svg",
+            src: "images/custom-calibration-point.svg",
           anchor: [0.5, 1]
         })
       });
