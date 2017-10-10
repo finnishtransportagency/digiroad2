@@ -91,6 +91,12 @@
     var speedLimitComplementaryCheckBox = [
       '<div class="check-box-container">' +
         '<input id="compCheckbox" type="checkbox" /> <lable>Näytä täydentävä geometria</lable>' +
+      '</div>'
+    ].join('');
+
+    var speedLimitSignsCheckBox = [
+      '<div class="check-box-container">' +
+      '<input id="signsCheckbox" type="checkbox" /> <lable>Näytä liikennemerkit</lable>' +
       '</div>' +
       '</div>'
     ].join('');
@@ -104,6 +110,7 @@
             speedLimitLegendTemplate,
             speedLimitHistoryCheckBox,
             speedLimitComplementaryCheckBox,
+            speedLimitSignsCheckBox,
       '  </div>',
       '</div>'].join('');
 
@@ -170,6 +177,14 @@
         } else {
           eventbus.trigger('speedLimits:hideSpeedLimitsComplementary');
         }
+      }
+    });
+
+    elements.expanded.find('#signsCheckbox').on('change', function (event) {
+      if ($(event.currentTarget).prop('checked')) {
+        eventbus.trigger('speedLimits:showSpeedLimitsSigns');
+      } else {
+        eventbus.trigger('speedLimits:hideSpeedLimitsSigns');
       }
     });
 

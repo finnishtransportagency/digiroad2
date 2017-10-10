@@ -293,6 +293,8 @@ window.SpeedLimitLayer = function(params) {
     eventListener.listenTo(eventbus, 'speedLimits:drawSpeedLimitsHistory', drawSpeedLimitsHistory);
     eventListener.listenTo(eventbus, 'speedLimits:hideSpeedLimitsHistory', hideSpeedLimitsHistory);
     eventListener.listenTo(eventbus, 'speedLimits:showSpeedLimitsHistory', showSpeedLimitsHistory);
+    eventListener.listenTo(eventbus, 'speedLimits:hideSpeedLimitsSigns', hideSpeedLimitsSigns);
+    eventListener.listenTo(eventbus, 'speedLimits:showSpeedLimitsSigns', showSpeedLimitsSigns);
     eventListener.listenTo(eventbus, 'toggleWithRoadAddress', refreshSelectedView);
     eventListener.listenTo(eventbus, 'speedLimit:unselect', handleSpeedLimitUnselected);
   };
@@ -326,6 +328,15 @@ window.SpeedLimitLayer = function(params) {
     me.refreshView();
   };
 
+  var showSpeedLimitsSigns = function() {
+    //
+  };
+
+  var hideSpeedLimitsSigns = function() {
+    // vectorLayerSigns.setVisible(false);
+    // isActive = false;
+    // vectorLayerSigns.getSource().clear();
+  };
 
   var indexOf = function (layers, layer) {
     var length = layers.getLength();
