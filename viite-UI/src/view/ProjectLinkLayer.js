@@ -622,7 +622,7 @@
       calibrationPointLayer.getSource().clear();
       var actualPoints = me.drawCalibrationMarkers(calibrationPointLayer.source, projectLinks);
       _.each(actualPoints, function (actualPoint) {
-        var calMarker = new CalibrationPoint(actualPoint.point);
+        var calMarker = new CalibrationPoint(actualPoint);
         calibrationPointLayer.getSource().addFeature(calMarker.getMarker(true));
       });
 

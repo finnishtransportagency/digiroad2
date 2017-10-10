@@ -66,7 +66,7 @@
 
       layer.addFeatures(signs);
     };
-
+/*
     this.drawCalibrationMarkers = function(layer, roadLinks) {
       var calibrationPoints = _.flatten(_.filter(roadLinks, function(roadLink) {
         return roadLink.calibrationPoints.length > 0;
@@ -76,6 +76,23 @@
       return _.filter(calibrationPoints, function(cp){
         return cp.point !== undefined;
       });
+    };
+
+*/
+
+    this.drawCalibrationMarkers = function(layer, roadLinks) {
+      var calibrationPointsWithValue = [];
+      _.flatten(_.filter(roadLinks, function (roadLink) {
+          return roadLink.calibrationPoints.length > 0;
+        }
+      )).forEach(function (roadLink) {
+        var point=roadLink.calibrationPoints[0].point;
+        if(point)
+        calibrationPointsWithValue.push([roadLink.calibrationPoints, roadLink.calibrationCode]);
+      });
+
+      return calibrationPointsWithValue;
+
     };
 
     this.mapOverLinkMiddlePoints = mapOverLinkMiddlePoints;
