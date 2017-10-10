@@ -181,10 +181,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       toProjectLink(projectAddressLink, NewRoadAddress, Track.apply(newTrackCode.toInt), project, sideCode, true)
     }
 
-    def existingProjectLink(projectAddressLink: ProjectAddressLink, project: RoadAddressProject, sideCode: SideCode): ProjectLink = {
-      toProjectLink(projectAddressLink, projectAddressLink.id, Track.apply(projectAddressLink.trackCode.toInt), project, sideCode, false)
-    }
-
     def toProjectLink(projectAddressLink: ProjectAddressLink, id: Long, track: Track, project: RoadAddressProject,
                       sideCode: SideCode, isNewProjectLink:Boolean = false): ProjectLink = {
       ProjectLink(id, newRoadNumber, newRoadPartNumber, track,
@@ -256,16 +252,17 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   private def withGeometry(projectLinks: Seq[ProjectLink], resetAddress: Boolean = false): Seq[ProjectLink] = {
-    val linkGeometries = roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(projectLinks.map(_.linkId).toSet,
+    val (withGeom, without) = projectLinks.partition(_.geometry.length > 1)
+    val linkGeometries = roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(without.map(_.linkId).toSet,
       false, frozenTimeVVHAPIServiceEnabled).map(pal => pal.linkId -> pal.geometry).toMap
-    projectLinks.map{pl =>
+    without.map{pl =>
       val geom = GeometryUtils.truncateGeometry2D(linkGeometries(pl.linkId), pl.startMValue, pl.endMValue)
       pl.copy(geometry = geom,
         geometryLength = GeometryUtils.geometryLength(geom),
         startAddrMValue = if (resetAddress) 0L else pl.startAddrMValue,
         endAddrMValue = if (resetAddress) 0L else pl.endAddrMValue,
         calibrationPoints = if (resetAddress) (None, None) else pl.calibrationPoints)
-    }
+    } ++ withGeom
   }
 
   def changeDirection(projectId : Long, roadNumber : Long, roadPartNumber : Long): Option[String] = {
@@ -570,7 +567,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       rl =>
         val pl = fetchProjectLinks.getOrElse(rl.linkId, Seq())
         rl.linkId -> buildProjectRoadLink(rl, pl)
-    }.toMap.mapValues(_.get)
+    }.toMap.filter(_._2.nonEmpty).mapValues(_.get)
 
     RoadAddressFiller.fillProjectTopology(complementedRoadLinks, projectRoadLinks)
   }
