@@ -294,5 +294,26 @@
     var roadIsUnknown = function(road){
       return  0 === road.roadNumber && 1 === road.anomaly && 0 === road.roadLinkType && 0 === road.roadPartNumber && 99 === road.trackCode;
     };
+    
+    this.findReservedProjectLinks = function(boundingBox, zoomLevel, projectId) {
+      backend.getProjectLinks({boundingBox: boundingBox, zoom: zoomLevel, projectId: projectId}, function(fetchedLinks) {
+        var notHandledLinks = _.chain(fetchedLinks).flatten().filter(function (link) {
+          return link.status === 0;
+        }).uniq().value();
+        var notHandledOL3Features = _.map(notHandledLinks, function(road) {
+          var points = _.map(road.points, function (point) {
+            return [point.x, point.y];
+          });
+          var feature = new ol.Feature({
+            geometry: new ol.geom.LineString(points)
+          });
+          feature.projectLinkData = road;
+          feature.projectId = projectId;
+          return feature;
+        });
+        eventbus.trigger('linkProperties:highlightReservedRoads', notHandledOL3Features);
+      });
+    };
+    
   };
 })(this);

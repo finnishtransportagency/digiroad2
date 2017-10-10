@@ -18,6 +18,7 @@
     var simulationVector = new ol.source.Vector({});
     var geometryChangedVector = new ol.source.Vector({});
     var suravageRoadLayerVector = new ol.source.Vector({});
+    var reservedRoadVector = new ol.source.Vector({});
 
     var normalRoadLinkType = 1;
     var floatingRoadLinkType=-1;
@@ -28,6 +29,8 @@
     var towardsDigitizing = 2;
     var linkSourceSuravage=3;
     var activeLayer = false;
+
+    var projectLinkStyler = new ProjectLinkStyler();
 
     var indicatorLayer = new ol.layer.Vector({
       source: indicatorVector,
@@ -65,6 +68,11 @@
     var greenRoadLayer = new ol.layer.Vector({
       source: greenRoadLayerVector,
       name: 'greenRoadLayer'
+    });
+
+    var reservedRoadLayer = new ol.layer.Vector({
+      source: reservedRoadVector,
+      name: 'reservedRoadLayer'
     });
 
     var greenRoads = function(Ol3Features, addToGreenLayer) {
@@ -133,6 +141,7 @@
     map.addLayer(pickRoadsLayer);
     map.addLayer(simulatedRoadsLayer);
     map.addLayer(suravageRoadLayer);
+    map.addLayer(reservedRoadLayer);
 
     floatingMarkerLayer.setVisible(true);
     anomalousMarkerLayer.setVisible(true);
@@ -144,6 +153,7 @@
     pickRoadsLayer.setVisible(true);
     simulatedRoadsLayer.setVisible(true);
     suravageRoadLayer.setVisible(true);
+    reservedRoadLayer.setVisible(true);
 
     var isAnomalousById = function(featureId){
       var anomalousMarkers = anomalousMarkerLayer.getSource().getFeatures();
@@ -413,6 +423,7 @@
       greenRoadLayer.getSource().clear();
       pickRoadsLayer.getSource().clear();
       suravageRoadLayer.getSource().clear();
+      reservedRoadLayer.getSource().clear();
     };
 
     /**
@@ -1056,12 +1067,21 @@
       else return _.first(features);
     };
 
-    eventbus.on('linkProperties:highlightSelectedProject', function(featureLinkId){
+    eventbus.on('linkProperties:highlightSelectedProject', function(featureLinkId) {
       setGeneralOpacity(0.2);
-      var projectFeature = _.filter(roadLayer.layer.getSource().getFeatures(), function (ft) {
-        return ft.roadLinkData.linkId === featureLinkId;
+        var boundingBox = map.getView().calculateExtent(map.getSize());
+        var zoomLevel = map.getView().getZoom();
+        roadCollection.findReservedProjectLinks(boundingBox, zoomLevel, featureLinkId);
+    });
+
+    eventbus.on('linkProperties:highlightReservedRoads', function(reservedOL3Features){
+    //              var style = projectLinkStyler.getProjectLinkStyle().getStyle( feature.projectLinkData, {zoomLevel: map.getView().getZoom()});
+     var styledFeatures = _.map(reservedOL3Features,function(feature) {
+        feature.setStyle(projectLinkStyler.getProjectLinkStyle().getStyle( feature.projectLinkData, {zoomLevel: map.getView().getZoom()}));
+       return feature;
       });
-      addFeaturesToSelection(projectFeature);
+      reservedRoadLayer.setZIndex(10000);
+      reservedRoadLayer.getSource().addFeatures(styledFeatures);
     });
 
     eventbus.on('linkProperties:deselectFeaturesSelected', function(){
