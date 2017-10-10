@@ -24,6 +24,8 @@ object MassTransitStopOperations {
 
   val nameFiPublicId = "nimi_suomeksi"
   val nameSePublicId = "nimi_ruotsiksi"
+  val roofPublicId = "katos"
+  val raisePublicId = "korotettu"
 
   /**
     * Check for administrative class change: road link has differing owner other than Unknown.
