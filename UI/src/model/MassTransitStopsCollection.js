@@ -81,6 +81,7 @@
       },
       fetchAssets: function(boundingBox) {
         backend.getAssets(boundingBox, function(assets){
+          debugger;
           return filterComplementaries(assets);
         });
       },

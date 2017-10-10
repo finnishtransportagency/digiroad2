@@ -80,7 +80,7 @@ class TerminalBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopD
 
     // Enrich properties with old administrator, if administrator value is empty in CSV import
     //TODO: Change propertyValue
-    val verifiedProperties = MassTransitStopOperations.getVerifiedProperties(properties, asset.propertyData) ++ Seq(SimpleProperty(MassTransitStopOperations.MassTransitStopTypePublicId, Seq(PropertyValue("5"))))
+    val verifiedProperties = MassTransitStopOperations.getVerifiedProperties(properties, asset.propertyData)
 
     val id = asset.id
     massTransitStopDao.updateAssetLastModified(id, username)

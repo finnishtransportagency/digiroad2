@@ -1,6 +1,6 @@
 (function(root) {
 
-  root.MassTransitMarkerStyle = function(data, map){
+  root.MassTransitMarkerStyle = function(data, collection, map){
     var IMAGE_HEIGHT = 17;
     var IMAGE_WIDTH = 28;
     var IMAGE_MARGIN = 2;
@@ -255,9 +255,17 @@
       var name = '';
       var direction = '';
       var nationalId = data.nationalId ? data.nationalId : '';
+      debugger;
       if(selectedMassTransitStopModel.exists()){
-        name = selectedMassTransitStopModel.getName();
-        direction = selectedMassTransitStopModel.getDirection();
+        if(selectedMassTransitStopModel.getId() == data.id){
+            name = selectedMassTransitStopModel.getName();
+            direction = selectedMassTransitStopModel.getDirection();
+        }
+        else
+        {
+          var asset = collection.getAsset(data.id);
+          name = asset.data.name;
+        }
       }else
       {
         if(data.propertyData){

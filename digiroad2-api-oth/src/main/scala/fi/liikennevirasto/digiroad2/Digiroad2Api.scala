@@ -148,6 +148,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     massTransitStopService.getByBoundingBox(user, bbox).map { stop =>
       Map("id" -> stop.id,
         "linkId" -> stop.linkId,
+        "name" -> extractPropertyValue("nimi_suomeksi", stop.propertyData, values => values.headOption.getOrElse("")),
         "nationalId" -> stop.nationalId,
         "stopTypes" -> stop.stopTypes,
         "municipalityNumber" -> stop.municipalityCode,
@@ -1203,5 +1204,14 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     if (user.isServiceRoadMaintainer())
       halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     servicePointService.expire(id, user.username)
+  }
+
+  private def extractPropertyValue(key: String, properties: Seq[Property], transformation: (Seq[String] => Any)) = {
+    val values: Seq[String] = properties.filter { property => property.publicId == key }.flatMap { property =>
+      property.values.map { value =>
+        value.propertyValue
+      }
+    }
+    transformation(values)
   }
 }

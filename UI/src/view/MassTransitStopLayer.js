@@ -134,7 +134,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   });
 
   var createAsset = function(assetData) {
-    var massTransitStop = new MassTransitStop(assetData, map);
+    var massTransitStop = new MassTransitStop(assetData, massTransitStopsCollection, map);
     var marker = massTransitStop.getMarker();
     var asset = {};
     asset.data = assetData;
@@ -366,7 +366,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       stopTypes: stopType === 'AddTerminal' ? ['6'] : []
     };
     data.group = createDummyGroup(projectionOnNearestLine.x, projectionOnNearestLine.y, data);
-    var massTransitStop = new MassTransitStop(data);
+    var massTransitStop = new MassTransitStop(data, massTransitStopsCollection);
     var currentAsset = selectedMassTransitStopModel.getCurrentAsset();
     deselectAsset();
     if(placement){
