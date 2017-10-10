@@ -317,7 +317,15 @@
         .map(extractDisplayValue)
         .value()
         .join(', ');
-    };
+    }
+
+    function extractDisplayValue(value) {
+        if(_.has(value, 'propertyDisplayValue')) {
+            return value.propertyDisplayValue;
+        } else {
+            return value.propertyValue;
+        }
+    }
 
     return {
       createSelectionMarkerStyles: createSelectionMarkerStyles,

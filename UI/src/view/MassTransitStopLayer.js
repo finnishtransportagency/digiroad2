@@ -262,7 +262,8 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
   var handleAssetCreated = function(asset) {
     removeAssetFromMap(selectedAsset);
-    deselectAsset(selectedAsset);
+    if (asset)
+      movementPermissionConfirmed = false;
     selectedAsset = createAndGroupUIAsset(asset);
     removeOverlay();
   };
@@ -440,11 +441,15 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     var features = _.without(_.map(nearestStops, function(nearestStop){
       var childAsset = massTransitStopsCollection.getAsset(nearestStop.id);
       if(childAsset){
-        if(!nearestStop.isChild)
-          childAsset.massTransitStop.getMarkerFeature().setStyle(childAsset.massTransitStop.getMarkerDefaultStyles());
-
+        if(!nearestStop.isChild){
+            if(applicationModel.isReadOnly())
+              return null;
+            childAsset.massTransitStop.getMarkerFeature().setStyle(childAsset.massTransitStop.getMarkerDefaultStyles());
+        }
         else
-          childAsset.massTransitStop.getMarkerFeature().setStyle(childAsset.massTransitStop.getMarkerSelectionStyles());
+        {
+            childAsset.massTransitStop.getMarkerFeature().setStyle(childAsset.massTransitStop.getMarkerSelectionStyles());
+        }
         return childAsset.massTransitStop.getMarkerFeature();
       }
       return null;
