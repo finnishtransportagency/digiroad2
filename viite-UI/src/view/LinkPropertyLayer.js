@@ -1139,7 +1139,7 @@
       _.map(selectedLinkProperty.getFeaturesToKeepFloatings(), function(featureToKeep){
         if(featureToKeep.calibrationPoints.length > 0) {
           _.each(featureToKeep.calibrationPoints, function (cPoint) {
-            var newPoint = new CalibrationPoint({point:cPoint.point, calibrationCode:unknownCalibvationPointValue}).getMarker(true);
+            var newPoint = new CalibrationPoint({points:cPoint.point, calibrationCode:unknownCalibvationPointValue}).getMarker(true);
             _.each(calibrationPointLayer.getSource().getFeatures(), function (feature) {
               if (newPoint.values_.geometry.flatCoordinates[0] == feature.values_.geometry.flatCoordinates[0] &&
                 newPoint.values_.geometry.flatCoordinates[1] == feature.values_.geometry.flatCoordinates[1]) {
