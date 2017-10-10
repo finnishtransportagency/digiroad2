@@ -1,6 +1,7 @@
 (function(root) {
   root.LinkPropertyLayer = function(map, roadLayer, selectedLinkProperty, roadCollection, linkPropertiesModel, applicationModel,styler) {
     var layerName = 'linkProperty';
+    var unknownCalibvationPointValue=-1;
     var cachedLinkPropertyMarker = null;
     var cachedMarker = null;
     Layer.call(this, layerName, roadLayer);
@@ -611,7 +612,7 @@
         if(!applicationModel.isActiveButtons()) {
           var actualPoints = me.drawCalibrationMarkers(calibrationPointLayer.source, roadLinks);
           _.each(actualPoints, function (actualPoint) {
-            var calMarker = new CalibrationPoint(actualPoint.point);
+            var calMarker = new CalibrationPoint(actualPoint);
             calibrationPointLayer.getSource().addFeature(calMarker.getMarker(true));
           });
           calibrationPointLayer.setZIndex(22);
@@ -817,7 +818,7 @@
 
         var actualPoints =  me.drawCalibrationMarkers(calibrationPointLayer.source, newRoads);
         _.each(actualPoints, function(actualPoint) {
-          var calMarker = new CalibrationPoint(actualPoint.point);
+          var calMarker = new CalibrationPoint(actualPoint);
           simulatedRoadsLayer.getSource().addFeature(calMarker.getMarker(true));
         });
 
@@ -1138,7 +1139,7 @@
       _.map(selectedLinkProperty.getFeaturesToKeepFloatings(), function(featureToKeep){
         if(featureToKeep.calibrationPoints.length > 0) {
           _.each(featureToKeep.calibrationPoints, function (cPoint) {
-            var newPoint = new CalibrationPoint(cPoint.point).getMarker(true);
+            var newPoint = new CalibrationPoint({points:cPoint.point, calibrationCode:unknownCalibvationPointValue}).getMarker(true);
             _.each(calibrationPointLayer.getSource().getFeatures(), function (feature) {
               if (newPoint.values_.geometry.flatCoordinates[0] == feature.values_.geometry.flatCoordinates[0] &&
                 newPoint.values_.geometry.flatCoordinates[1] == feature.values_.geometry.flatCoordinates[1]) {
