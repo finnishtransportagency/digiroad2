@@ -264,7 +264,7 @@
         else
         {
           var asset = collection.getAsset(data.id);
-          name = asset.data.name;
+          name = asset.data.name ? asset.data.name : getPropertyValue({ propertyData: asset.data.propertyData }, 'nimi_suomeksi'); ;
         }
       }else
       {
@@ -306,6 +306,17 @@
           height += (asset.stopTypes.length * IMAGE_HEIGHT) + (IMAGE_MARGIN * 2) + (IMAGE_PADDING * 2) - 2;
       });
       return height;
+    };
+
+    function getPropertyValue(asset, propertyName) {
+      return _.chain(asset.propertyData)
+        .find(function (property) { return property.publicId === propertyName; })
+        .pick('values')
+        .values()
+        .flatten()
+        .map(extractDisplayValue)
+        .value()
+        .join(', ');
     };
 
     return {

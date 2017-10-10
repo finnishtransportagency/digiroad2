@@ -423,10 +423,10 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
   var deselectAsset = function(asset) {
     _.each(terminalSource.getFeatures(), function(feature){
-        feature.setStyle(feature.getProperties().massTransitStop.getMarkerDefaultStyles());
+      feature.setStyle(feature.getProperties().massTransitStop.getMarkerDefaultStyles());
     });
     if(selectedAsset)
-        selectedAsset.massTransitStop.getMarkerFeature().setStyle(selectedAsset.massTransitStop.getMarkerDefaultStyles());
+      selectedAsset.massTransitStop.getMarkerFeature().setStyle(selectedAsset.massTransitStop.getMarkerDefaultStyles());
     terminalSource.clear();
     if (asset)
       movementPermissionConfirmed = false;

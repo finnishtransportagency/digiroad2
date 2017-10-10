@@ -136,11 +136,6 @@ trait MassTransitStopService extends PointAssetOperations {
       val idsStr = ids.toSeq.mkString(",")
       val filter = s"where a.asset_type_id = $typeId and a.id in ($idsStr)"
       fetchPointAssets(withFilter(filter))
-      /*.map{
-        persistedStop =>
-          val strategy = getStrategy(persistedStop)
-          strategy.enrichBusStop(persistedStop)._1
-      }*/
     }
   }
 
@@ -358,7 +353,7 @@ trait MassTransitStopService extends PointAssetOperations {
       val topLeft = Point(position.x - meters, position.y - meters)
       val bottomRight = Point(position.x + meters, position.y + meters)
       val boundingBoxFilter = OracleDatabase.boundingBoxFilter(BoundingRectangle(topLeft, bottomRight), "a.geometry")
-      val filter = s"where a.asset_type_id = $typeId and $boundingBoxFilter"
+      val filter = s"where a.asset_type_id = $typeId and ((($boundingBoxFilter ) and (a.valid_to is null or a.valid_to > sysdate))"
       massTransitStopDao.fetchPointAssets(massTransitStopDao.withFilter(filter)).
         filter(r => GeometryUtils.geometryLength(Seq(position, Point(r.lon, r.lat))) <= meters)
     }
