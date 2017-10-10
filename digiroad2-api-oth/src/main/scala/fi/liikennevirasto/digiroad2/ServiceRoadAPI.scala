@@ -7,7 +7,7 @@ import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.ScalatraServlet
 import org.scalatra.json.JacksonJsonSupport
 
-class ServiceRoadAPI(val linearAssetService: LinearAssetOperations, val roadLinkService: RoadLinkService) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport {
+class ServiceRoadAPI(val maintenanceService: MaintenanceService, val roadLinkService: RoadLinkService) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport {
 
   override def baseAuth: String = "serviceRoad."
   override val realm: String = "Service Road API"
@@ -21,7 +21,7 @@ class ServiceRoadAPI(val linearAssetService: LinearAssetOperations, val roadLink
   get("/huoltotiet/:areaId"){
     contentType = formats("json")
     var areaId = params("areaId")
-    val maintenanceAsset = linearAssetService.getActiveMaintenanceRoadByPolygon(areaId.toInt, LinearAssetTypes.MaintenanceRoadAssetTypeId)
+    val maintenanceAsset = maintenanceService.getActiveMaintenanceRoadByPolygon(areaId.toInt)
     createJson(maintenanceAsset)
   }
 

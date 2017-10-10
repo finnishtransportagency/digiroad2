@@ -9,6 +9,11 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   var requestingMovePermission  = false;
   var massTransitStopLayerStyles = MassTransitStopLayerStyles(roadLayer);
   var visibleAssets;
+  var overrideMessageAllow = true;
+  var publicIds = {
+    roadNameFi: 'osoite_suomeksi',
+    roadNameSe: 'osoite_ruotsiksi'
+  };
 
   var selectedControl = 'Select';
 
@@ -40,6 +45,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
         feature.getProperties().massTransitStop.getMarkerSelectionStyles();
         selectedMassTransitStopModel.change(feature.getProperties().data);
         movementPermissionConfirmed = false;
+        overrideMessageAllow = true;
       });
       toggleMode();
     }
@@ -387,9 +393,11 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     }
   };
 
-  var deselectAsset = function(asset) {
-    if (asset)
+  var deselectAsset = function (asset) {
+    if (asset) {
       movementPermissionConfirmed = false;
+      overrideMessageAllow = true;
+    }
   };
 
   var handleAssetFetched = function(backendAsset) {
@@ -410,6 +418,30 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   var ownedByHSL = function(){
     var properties = selectedMassTransitStopModel.getProperties();
     return selectedMassTransitStopModel.isAdministratorHSL(properties) && selectedMassTransitStopModel.isAdminClassState(properties);
+  };
+
+  var autoUpdateAddressNames = function (originalLinkId, newLinkId) {
+    var popupMessageToShow = 'Säilyykö pysäkin osoite (katunimi) samana? Jos ei, tarkista uusi osoite tallennuksen jälkeen.';
+    var roadLinkData = roadCollection.getRoadLinkByLinkId(newLinkId).getData();
+
+    if (overrideMessageAllow) {
+      if (selectedMassTransitStopModel.isRoadNameDif(roadLinkData.roadNameFi, publicIds.roadNameFi) ||
+          selectedMassTransitStopModel.isRoadNameDif(roadLinkData.roadNameSe, publicIds.roadNameSe)) {
+        new GenericConfirmPopup(popupMessageToShow, {
+          successCallback: function () {
+          },
+          closeCallback: function () {
+            overrideMessageAllow = false;
+            selectedMassTransitStopModel.setProperty(publicIds.roadNameFi, [{propertyValue: ''}]);
+            selectedMassTransitStopModel.setProperty(publicIds.roadNameSe, [{propertyValue: ''}]);
+
+            selectedMassTransitStopModel.setRoadNameFields(roadLinkData, publicIds);
+          }
+        });
+      }
+    } else {
+      selectedMassTransitStopModel.setRoadNameFields(roadLinkData, publicIds);
+    }
   };
 
   var restrictMovement = function (event, originalCoordinates, angle, nearestLine, coordinates) {
@@ -433,6 +465,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
           roadLayer.clearSelection();
           movementPermissionConfirmed = true;
           requestingMovePermission = false;
+          autoUpdateAddressNames(selectedAsset.data.linkId, nearestLine.linkId);
         },
         closeCallback: function(){
           //Moves the stop to the original position
@@ -448,6 +481,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     else
     {
       doMovement(event, angle, nearestLine, coordinates);
+      autoUpdateAddressNames(selectedAsset.data.linkId, nearestLine.linkId);
       roadLayer.clearSelection();
     }
   };

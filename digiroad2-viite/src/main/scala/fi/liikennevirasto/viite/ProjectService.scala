@@ -260,8 +260,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   private def withGeometry(projectLinks: Seq[ProjectLink], resetAddress: Boolean = false): Seq[ProjectLink] = {
-    val linkGeometries = roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(projectLinks.map(_.linkId).toSet,
-      false, frozenTimeVVHAPIServiceEnabled).map(pal => pal.linkId -> pal.geometry).toMap
+    val (suravageLinks, roadLinks) = projectLinks.partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
+    val linkGeometries = (roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(roadLinks.map(_.linkId).toSet,
+      false, frozenTimeVVHAPIServiceEnabled).map(pal => pal.linkId -> pal.geometry)
+    ++ (if (suravageLinks.nonEmpty)
+      roadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(suravageLinks.map(_.linkId).toSet, false).map(pal => pal.linkId -> pal.geometry) else Seq())).toMap
     projectLinks.map{pl =>
       val geom = GeometryUtils.truncateGeometry2D(linkGeometries(pl.linkId), pl.startMValue, pl.endMValue)
       pl.copy(geometry = geom,
@@ -674,9 +677,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             }
           }
           else {
-            val projectLink = ProjectDAO.getProjectLinksById(Seq(link.id))
-            val roadLink = RoadAddressDAO.queryById(Set(projectLink.head.roadAddressId))
-            ProjectDAO.updateProjectLinkValues(projectId, roadLink.head)
+            val projectLinks = ProjectDAO.getProjectByLinkId(link.linkId)
+            val roadLinks = RoadAddressDAO.queryById(projectLinks.map(_.roadAddressId).toSet)
+            roadLinks.foreach( rl => ProjectDAO.updateProjectLinkValues(projectId, rl))
           }
         })
         None

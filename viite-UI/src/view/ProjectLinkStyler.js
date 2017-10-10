@@ -35,7 +35,8 @@
       new StyleRule().where('status').is(transferredStatus).use({stroke: {color: '#FF0000', width: 3, lineCap: 'round'}}),
       new StyleRule().where('status').is(numberingStatus).use({stroke: {color: '#8B4513', width: 5, lineCap: 'round'}}),
       new StyleRule().where('status').is(terminatedStatus).use({stroke: {color: '#383836', width: 3, lineCap: 'round'}}),
-      new StyleRule().where('status').is(unknownStatus).use({stroke: {color: '#383836', width: 3, lineCap: 'round'}})
+      new StyleRule().where('status').is(unknownStatus).use({stroke: {color: '#383836', width: 3, lineCap: 'round'}}),
+      new StyleRule().where('roadLinkSource').is(3).and('status').is(unknownStatus).use({stroke: {color: '#D3AFF6'}})
     ];
 
     var selectionStyleRules = [
