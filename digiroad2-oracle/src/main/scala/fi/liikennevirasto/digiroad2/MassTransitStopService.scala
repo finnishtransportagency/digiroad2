@@ -180,9 +180,26 @@ trait MassTransitStopService extends PointAssetOperations {
     persistedStop.copy(floating = floating)
   }
 
-  override def getByBoundingBox(user: User, bounds: BoundingRectangle) : Seq[PersistedAsset] = {
+  override def getByBoundingBox(user: User, bounds: BoundingRectangle) : Seq[PersistedMassTransitStop] = {
     val roadLinks = roadLinkService.getRoadLinksWithComplementaryFromVVH(bounds)
     super.getByBoundingBox(user, bounds, roadLinks, Seq(), floatingAdjustment(adjustmentOperation, createPersistedAssetObject))
+  }
+
+  override def getNormalAndComplementaryById(id: Long): Option[PersistedAsset] = {
+    val persistedAsset = getPersistedAssetsByIds(Set(id)).headOption
+    val roadLinks: Option[RoadLinkLike] = persistedAsset.flatMap { x => roadLinkService.getRoadLinkAndComplementaryFromVVH(x.linkId) }
+
+    def findRoadlink(linkId: Long): Option[RoadLinkLike] =
+      roadLinks.find(_.linkId == linkId)
+
+    withDynSession {
+      persistedAsset.map{
+        asset =>
+          val strategy = getStrategy(asset)
+          val (enrichedStop, _) = strategy.enrichBusStop(asset)
+          withFloatingUpdate(convertPersistedAsset(setFloating, findRoadlink))(enrichedStop)
+      }
+    }
   }
 
   override def create(asset: NewMassTransitStop, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass], linkSource: LinkGeomSource): Long = {
@@ -353,7 +370,7 @@ trait MassTransitStopService extends PointAssetOperations {
       val topLeft = Point(position.x - meters, position.y - meters)
       val bottomRight = Point(position.x + meters, position.y + meters)
       val boundingBoxFilter = OracleDatabase.boundingBoxFilter(BoundingRectangle(topLeft, bottomRight), "a.geometry")
-      val filter = s"where a.asset_type_id = $typeId and ((($boundingBoxFilter ) and (a.valid_to is null or a.valid_to > sysdate))"
+      val filter = s"where a.asset_type_id = $typeId and (($boundingBoxFilter ) and (a.valid_to is null or a.valid_to > sysdate))"
       massTransitStopDao.fetchPointAssets(massTransitStopDao.withFilter(filter)).
         filter(r => GeometryUtils.geometryLength(Seq(position, Point(r.lon, r.lat))) <= meters)
     }
