@@ -186,6 +186,7 @@ trait RoadAddressMapper {
 
   /**
     * Measure summed distance between two geometries: head-to-head + tail-to-head vs. head-to-tail + tail-to-head
+ *
     * @param geom1 Geometry 1
     * @param geom2 Goemetry 2
     * @return h2h distance, h2t distance sums
@@ -209,6 +210,7 @@ trait RoadAddressMapper {
 
   /**
     * Partitioning for transfer checks. Stops at calibration points, changes of road part etc.
+ *
     * @param roadAddresses
     * @return
     */

@@ -8,6 +8,7 @@ import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReservedException, Track}
 import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefineCalibrationPoint
 import fi.liikennevirasto.viite.dao.ProjectState._
 import fi.liikennevirasto.viite.dao.{ProjectDAO, RoadAddressDAO, _}
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink, RoadAddressLinkLike}
@@ -700,10 +701,21 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @param userName Username of the user that does this change
     * @return true, if the delta calculation is successful and change table has been updated.
     */
-  def updateProjectLinks(projectId: Long, linkIds: Set[Long], linkStatus: LinkStatus, userName: String, roadNumber: Long = 0, roadPartNumber: Long = 0) = {
+  def updateProjectLinks(projectId: Long, linkIds: Set[Long], linkStatus: LinkStatus, userName: String, roadNumber: Long = 0, roadPartNumber: Long = 0, userDefinedEndAddressM: Option[Int]) = {
     try {
-      withDynTransaction{
+          withDynTransaction{
         val projectLinks = withGeometry(ProjectDAO.getProjectLinks(projectId))
+            val userGeneratedCalibrationPoints = if(!userDefinedEndAddressM.isEmpty) {
+              val endSegment = projectLinks.maxBy(_.endAddrMValue)
+              val calibrationPoint = UserDefineCalibrationPoint(newCalibrationPointId, endSegment.id, projectId, endSegment.endMValue, userDefinedEndAddressM.get)
+              val foundCalibrationPoint = CalibrationPointDAO.findCalibrationPointByRemainingValues(endSegment.id, projectId, endSegment.endMValue, userDefinedEndAddressM.get)
+              if(foundCalibrationPoint.isEmpty)
+                CalibrationPointDAO.createCalibrationPoint(calibrationPoint)
+              else CalibrationPointDAO.updateSpecificCalibrationPointMeasures(foundCalibrationPoint.head.id, endSegment.endMValue, userDefinedEndAddressM.get)
+              Seq(CalibrationPoint)
+            } else {
+              Seq.empty[CalibrationPoint]
+            }
         val (updatedProjectLinks, unchangedProjectLinks) = projectLinks.partition(pl => linkIds.contains(pl.linkId))
         linkStatus match {
           case LinkStatus.Terminated => {
