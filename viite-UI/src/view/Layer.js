@@ -81,14 +81,18 @@
 */
 
     this.drawCalibrationMarkers = function(layer, roadLinks) {
+
+
       var calibrationPointsWithValue = [];
-      _.flatten(_.filter(roadLinks, function (roadLink) {
+      (_.filter(roadLinks, function (roadLink) {
           return roadLink.calibrationPoints.length > 0;
         }
       )).forEach(function (roadLink) {
-        var point=roadLink.calibrationPoints[0].point;
-        if(point)
-        calibrationPointsWithValue.push([roadLink.calibrationPoints, roadLink.calibrationCode]);
+        roadLink.calibrationPoints.forEach(function (currentPoint) {
+          var point=currentPoint.point;
+          if(point)
+            calibrationPointsWithValue.push({points:point,calibrationCode:roadLink.calibrationCode});
+        });
       });
 
       return calibrationPointsWithValue;
