@@ -22,12 +22,12 @@ object ProjectLinkSplitter {
   }
   private def suravageWithOptions(suravage: ProjectLink, templateLink: ProjectLink, split: SplitOptions, suravageM: Double,
                               splitAddressM: Long) = {
+    //TODO: ely code for split Suravage when ProjectLinks has that column
     (
       suravage.copy(roadNumber = split.roadNumber,
         roadPartNumber = split.roadPartNumber,
         track = split.trackCode,
         discontinuity = split.discontinuity,
-        //          ely = split.ely,
         roadType = split.roadType,
         startMValue = 0.0,
         endMValue = suravageM,
@@ -44,7 +44,6 @@ object ProjectLinkSplitter {
         roadPartNumber = split.roadPartNumber,
         track = split.trackCode,
         discontinuity = split.discontinuity,
-        //          ely = split.ely,
         roadType = split.roadType,
         startMValue = suravageM,
         endMValue = suravage.geometryLength,
@@ -161,27 +160,27 @@ object ProjectLinkSplitter {
     def switchXY(p: Point) = {
       Point(p.y, p.x, p.z)
     }
-    val ((p1,p2),(p3,p4)) = (segment1, segment2)
-    val v1 = p2-p1
-    val v2 = p4-p3
-    if (Math.abs(v1.x) < 0.001) {
-      if (Math.abs(v2.x) < 0.001) {
+    val ((segment1Start,segment1End),(segment2Start,segment2End)) = (segment1, segment2)
+    val vector1 = segment1End-segment1Start
+    val vector2 = segment2End-segment2Start
+    if (Math.abs(vector1.x) < 0.001) {
+      if (Math.abs(vector2.x) < 0.001) {
         // Both are vertical or near vertical -> swap x and y and recalculate
-        return intersectionPoint((switchXY(p1),switchXY(p2)), (switchXY(p3), switchXY(p4))).map(switchXY)
+        return intersectionPoint((switchXY(segment1Start),switchXY(segment1End)), (switchXY(segment2Start), switchXY(segment2End))).map(switchXY)
       } else {
-        val dx = (p1 - p3).x
-        val normV2 = v2.normalize2D()
-        return Some(p3 + normV2.scale(dx/normV2.x))
+        val dx = (segment1Start - segment2Start).x
+        val normV2 = vector2.normalize2D()
+        return Some(segment2Start + normV2.scale(dx/normV2.x))
       }
-    } else if (Math.abs(v2.x) < 0.001) {
+    } else if (Math.abs(vector2.x) < 0.001) {
       // second parameter is near vertical, switch places and rerun
-      return intersectionPoint((switchXY(p3), switchXY(p4)), (switchXY(p1),switchXY(p2))).map(switchXY)
+      return intersectionPoint((switchXY(segment2Start), switchXY(segment2End)), (switchXY(segment1Start),switchXY(segment1End))).map(switchXY)
     }
-
-    val a = v1.y / v1.x
-    val b = p1.y - a * p1.x
-    val c = v2.y / v2.x
-    val d = p3.y - c * p3.x
+    // calculate lines as y = ax + b and y = cx + d
+    val a = vector1.y / vector1.x
+    val b = segment1Start.y - a * segment1Start.x
+    val c = vector2.y / vector2.x
+    val d = segment2Start.y - c * segment2Start.x
     if (Math.abs(a-c) < 1E-4 && Math.abs(d-b) > 1E-4) {
       // Differing y is great but coefficients a and c are almost same -> Towards infinities
       None
