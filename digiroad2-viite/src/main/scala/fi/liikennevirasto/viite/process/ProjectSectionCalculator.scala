@@ -16,6 +16,7 @@ object ProjectSectionCalculator {
     * Recalculates the AddressMValues for project links. LinkStatus.New will get reassigned values and all
     * others will have the transfer/unchanged rules applied for them.
     * Terminated links will not be recalculated
+    *
     * @param projectLinks List of addressed links in project
     * @return Sequence of project links with address values and calibration points.
     */
@@ -46,6 +47,7 @@ object ProjectSectionCalculator {
   }
   /**
     * Find a starting point for this road part
+    *
     * @param newLinks Status = New links that need to have an address
     * @param oldLinks Other links that already existed before the project
     * @param calibrationPoints The calibration points set by user as fixed addresses

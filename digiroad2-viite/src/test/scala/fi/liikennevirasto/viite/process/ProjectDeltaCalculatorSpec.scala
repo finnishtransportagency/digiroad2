@@ -77,6 +77,22 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
     start205.map(x => (x._1.startMAddr, x._2.startMAddr, x._1.endMAddr, x._2.endMAddr)) should be (Some((0L, 0L, 110L, 110L)))
   }
 
+  test("Numbering operation") {
+    val addresses = (0 to 10).map(i => createRoadAddress(i*10, 10L))
+    val numberingLinks = addresses.map(_.copy(roadNumber = 12345, roadPartNumber = 1)).map(toProjectLink(project, LinkStatus.Numbering))
+
+    val partitions = ProjectDeltaCalculator.partition(addresses, numberingLinks)
+    partitions should have size(1)
+    val correctRoadNumber = partitions.find(p => p._1.roadNumber == 5 && p._2.roadNumber == 12345)
+    val correctRoadPartNumber = partitions.find(p => p._1.roadPartNumberStart == 205 && p._1.roadPartNumberEnd == 205 && p._2.roadPartNumberStart == 1 && p._2.roadPartNumberEnd == 1)
+    correctRoadNumber.size should be (1)
+    correctRoadPartNumber.size should be (1)
+
+    correctRoadNumber.get._1.track should be (correctRoadNumber.get._2.track)
+    correctRoadNumber.get._1.discontinuity should be (correctRoadNumber.get._2.discontinuity)
+    correctRoadNumber.map(x => (x._1.startMAddr, x._2.startMAddr, x._1.endMAddr, x._2.endMAddr)) should be (Some((0L, 0L, 110L, 110L)))
+  }
+
   test("2 track termination + transfer") {
     val addresses = (0 to 9).map(i => createRoadAddress(i*12, 12L)).map(_.copy(track = Track.RightSide))
     val addresses2 = (0 to 11).map(i => createRoadAddress(i*10, 10L)).map(l => l.copy(track = Track.LeftSide, id=l.id+1))
