@@ -189,7 +189,7 @@
         ((applicationModel.getSelectedTool() === 'Cut' && selected.length == 2) ?
           '<hr class="horizontal-line"/>' +
           selectionForm(selection[1], selected, 1) : "") +
-        changeDirection()+
+        ((selected.size == 2 && selected[0].linkId === selected[1].linkId) ? changeDirection(): '') +
         actionSelectedField()+
         '</div>'+
         '</div>' +
@@ -201,7 +201,7 @@
     var selectionForm = function(selection, selected, index){
       return '<form id="roadAddressProjectForm_'+index+'" class="input-unit-combination form-group form-horizontal roadAddressProject">'+
       '<label>Toimenpiteet,' + selection  + '</label>' +
-        ((applicationModel.getSelectedTool() === 'Cut' && selected.length == 2) ?
+        ((selected.length == 2 && selected[0].linkId === selected[1].linkId) ?
         '<span class="marker">'+markers[index]+'</span>'
         : "") +
       '<div class="input-unit-combination">' +
@@ -216,11 +216,11 @@
       '<option id="drop_'+ index +'_' + LinkStatus.Revert.action + '" value='+ LinkStatus.Revert.action + ' ' + defineOptionModifiers(LinkStatus.Revert.action, selected) + '>Palautus aihioksi tai tieosoitteettomaksi</option>' +
       '</select>'+
       '</div>'+
-      newRoadAddressInfo() +
+      newRoadAddressInfo(selected) +
       '</form>';
     };
 
-    var newRoadAddressInfo = function(){
+    var newRoadAddressInfo = function(selected){
       return '<div class="form-group new-road-address" hidden>' +
         '<div><label></label></div><div><label style = "margin-top: 50px">TIEOSOITTEEN TIEDOT</label></div>' +
         addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('AJR')+ addSmallLabel('ELY')  + addSmallLabel('JATKUU')+
@@ -233,7 +233,7 @@
         addSelect() +
         addSmallLabel('TIETYYPPI') +
         roadTypeDropdown() +
-        distanceValue() +
+        ((selected.length == 2 && selected[0].linkId === selected[1].linkId) ? '' : distanceValue()) +
         '</div>';
     };
 
