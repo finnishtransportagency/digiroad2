@@ -6,11 +6,11 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
-import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReservedException}
-import fi.liikennevirasto.viite.dao.LinkStatus._
+import fi.liikennevirasto.digiroad2.util.{DigiroadSerializers, RoadAddressException, RoadPartReservedException}
+import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.model._
-import fi.liikennevirasto.viite.{LinkToRevert, ProjectService, ReservedRoadPart, RoadAddressService}
+import fi.liikennevirasto.viite.util.SplitOptions
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
 import org.json4s._
@@ -61,7 +61,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
 
   val logger = LoggerFactory.getLogger(getClass)
-  protected implicit val jsonFormats: Formats = DefaultFormats + DiscontinuitySerializer
+  protected implicit val jsonFormats: Formats = DigiroadSerializers.jsonFormats
   JSON.globalNumberParser = {
     in =>
       try in.toLong catch { case _: NumberFormatException => in.toDouble }
@@ -394,6 +394,40 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }.getOrElse(BadRequest("Missing mandatory 'projectId' parameter"))
   }
 
+  put("/project/split/:linkID") {
+    val user = userProvider.getCurrentUser()
+    params.get("linkID").map(_.toLong) match {
+      case Some(link)=>
+        try {
+          val options = parsedBody.extract[SplitOptions]
+          val splitError = projectService.splitSuravageLink(link, user.username, options)
+          Map("success" -> splitError.isEmpty, "reason" -> splitError.orNull)
+        } catch {
+          case _: NumberFormatException => BadRequest("Missing mandatory data")
+        }
+      case _ => BadRequest("Missing Linkid from url")
+    }
+  }
+
+  delete("/project/split/:projectId/:linkId"){
+    val user = userProvider.getCurrentUser()
+    try {
+      val projectId = params.get("projectId").map(_.toLong)
+      val linkId = params.get("linkId").map(_.toLong)
+      (projectId, linkId) match {
+        case (Some(project), Some(link)) =>
+          val error = projectService.revertSplit(project, link)
+          if (error.nonEmpty) {
+            PreconditionFailed(error.get)
+          } else {
+            NoContent()
+          }
+        case _ => BadRequest("Missing mandatory 'projectId' or 'linkId' parameter from URI: /project/split/:projectId/:linkId")
+      }
+    } catch {
+      case _: NumberFormatException => BadRequest("'projectId' or 'linkId' parameter given could not be parsed as an integer number")
+    }
+  }
   private def roadlinksData(): (Seq[String], Seq[String]) = {
     val data = JSON.parseFull(params.get("data").get).get.asInstanceOf[Map[String,Any]]
     val sources = data("sourceLinkIds").asInstanceOf[Seq[String]]
@@ -513,7 +547,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   def projectAddressLinkToApi(projectAddressLink: ProjectAddressLink): Map[String, Any] = {
     roadAddressLinkLikeToApi(projectAddressLink) ++
     Map(
-      "status" -> projectAddressLink.status.value
+      "status" -> projectAddressLink.status.value,
+      "connectedLinkId" -> projectAddressLink.connectedLinkId
     )
   }
 
@@ -595,13 +630,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 }
 
 case class ProjectFormLine(startingLinkId: Long, projectId: Long, roadNumber: Long, roadPartNumber: Long, roadLength: Long, ely : Long, discontinuity: String, isDirty: Boolean = false)
-
-case object DiscontinuitySerializer extends CustomSerializer[Discontinuity](format => ( {
-  case s: JString => Discontinuity.apply(s.values)
-  case i: JInt => Discontinuity.apply(i.values.intValue)
-}, {
-  case s: Discontinuity => JString(s.description)
-}))
 
 object ProjectConverter {
   def toRoadAddressProject(project: RoadAddressProjectExtractor, user: User): RoadAddressProject = {
