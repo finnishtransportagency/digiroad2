@@ -467,7 +467,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         ProjectDAO.fetchReservedRoadPart(reservedRoadPart.roadNumber, reservedRoadPart.roadPartNumber)
       case _ =>
         ProjectDAO.reserveRoadPart(project.id, reservedRoadPart.roadNumber, reservedRoadPart.roadPartNumber,
-        project.modifiedBy)
+          project.modifiedBy)
         ProjectDAO.fetchReservedRoadPart(reservedRoadPart.roadNumber, reservedRoadPart.roadPartNumber)
     }
   }
@@ -697,19 +697,19 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def updateProjectLinks(projectId: Long, linkIds: Set[Long], linkStatus: LinkStatus, userName: String,
                          roadNumber: Long = 0, roadPartNumber: Long = 0, userDefinedEndAddressM: Option[Int]) = {
     try {
-          withDynTransaction{
+      withDynTransaction{
         val projectLinks = withGeometry(ProjectDAO.getProjectLinks(projectId))
-            val userGeneratedCalibrationPoints = if(!userDefinedEndAddressM.isEmpty) {
-              val endSegment = projectLinks.maxBy(_.endAddrMValue)
-              val calibrationPoint = UserDefineCalibrationPoint(newCalibrationPointId, endSegment.id, projectId, endSegment.endMValue, userDefinedEndAddressM.get)
-              val foundCalibrationPoint = CalibrationPointDAO.findCalibrationPointByRemainingValues(endSegment.id, projectId, endSegment.endMValue, userDefinedEndAddressM.get)
-              if(foundCalibrationPoint.isEmpty)
-                CalibrationPointDAO.createCalibrationPoint(calibrationPoint)
-              else CalibrationPointDAO.updateSpecificCalibrationPointMeasures(foundCalibrationPoint.head.id, endSegment.endMValue, userDefinedEndAddressM.get)
-              Seq(CalibrationPoint)
-            } else {
-              Seq.empty[CalibrationPoint]
-            }
+        val userGeneratedCalibrationPoints = if(!userDefinedEndAddressM.isEmpty) {
+          val endSegment = projectLinks.maxBy(_.endAddrMValue)
+          val calibrationPoint = UserDefineCalibrationPoint(newCalibrationPointId, endSegment.id, projectId, endSegment.endMValue, userDefinedEndAddressM.get)
+          val foundCalibrationPoint = CalibrationPointDAO.findCalibrationPointByRemainingValues(endSegment.id, projectId, endSegment.endMValue, userDefinedEndAddressM.get)
+          if(foundCalibrationPoint.isEmpty)
+            CalibrationPointDAO.createCalibrationPoint(calibrationPoint)
+          else CalibrationPointDAO.updateSpecificCalibrationPointMeasures(foundCalibrationPoint.head.id, endSegment.endMValue, userDefinedEndAddressM.get)
+          Seq(CalibrationPoint)
+        } else {
+          Seq.empty[CalibrationPoint]
+        }
         val (updatedProjectLinks, unchangedProjectLinks) = projectLinks.partition(pl => linkIds.contains(pl.linkId))
         linkStatus match {
           case LinkStatus.Terminated => {

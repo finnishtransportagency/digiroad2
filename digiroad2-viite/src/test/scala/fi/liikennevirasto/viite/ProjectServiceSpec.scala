@@ -179,7 +179,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
     when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenAnswer(
       toMockAnswer(dbLinks ++ projectLinks.asInstanceOf[Seq[ProjectLink]].filterNot(l => dbLinks.map(_.linkId).contains(l.linkId)),
         roadLink, palinks.asInstanceOf[Seq[ProjectAddressLink]].map(toRoadLink)
-    ))
+      ))
   }
 
   test("create road link project without road parts") {
@@ -447,11 +447,11 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   ignore("Fetch project links") { // Needs more of mocking because of Futures + transactions disagreeing
-    val roadLinkService = new RoadLinkService(new VVHClient(properties.getProperty("digiroad2.VVHRestApiEndPoint")), mockEventBus, new DummySerializer) {
-      override def withDynSession[T](f: => T): T = f
+  val roadLinkService = new RoadLinkService(new VVHClient(properties.getProperty("digiroad2.VVHRestApiEndPoint")), mockEventBus, new DummySerializer) {
+    override def withDynSession[T](f: => T): T = f
 
-      override def withDynTransaction[T](f: => T): T = f
-    }
+    override def withDynTransaction[T](f: => T): T = f
+  }
     val roadAddressService = new RoadAddressService(roadLinkService, mockEventBus) {
       override def withDynSession[T](f: => T): T = f
 
@@ -622,8 +622,8 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
     var count = 0
     val roadLinks = Seq(
       RoadLink(5170939L, Seq(Point(535605.272, 6982204.22, 85.90899999999965))
-      , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
-      InUse, NormalLinkInterface))
+        , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
+        InUse, NormalLinkInterface))
 
     when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(roadLinks)
     runWithRollback {
@@ -942,7 +942,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       val countCurrentProjects = projectService.getRoadAddressAllProjects()
       val id = 0
       val addresses = List(ReservedRoadPart(5: Long, 5: Long, 205: Long, 5: Double, 5L, Discontinuity.apply("jatkuva"), 8: Long, None: Option[DateTime], None: Option[DateTime]),
-          ReservedRoadPart(5: Long, 5: Long, 206: Long, 5: Double, 5L, Discontinuity.apply("jatkuva"), 8: Long, None: Option[DateTime], None: Option[DateTime]))
+        ReservedRoadPart(5: Long, 5: Long, 206: Long, 5: Double, 5L, Discontinuity.apply("jatkuva"), 8: Long, None: Option[DateTime], None: Option[DateTime]))
       val roadAddressProject = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", addresses, None)
       val saved = projectService.createRoadLinkProject(roadAddressProject)
       saved.reservedParts should have size (2)
@@ -995,7 +995,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       change.changeInfoSeq.foreach(_.changeType should be(Termination))
       change.changeInfoSeq.foreach(_.discontinuity should be(Discontinuity.Continuous))
       // TODO: When road types are properly generated
-//      change.changeInfoSeq.foreach(_.roadType should be(RoadType.UnknownOwnerRoad))
+      //      change.changeInfoSeq.foreach(_.roadType should be(RoadType.UnknownOwnerRoad))
     }
     runWithRollback {
       projectService.getRoadAddressAllProjects()
@@ -1160,7 +1160,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       // Test that for every link there should be the address before it or after it (unless it's the first or last link)
       changedLinks.foreach(l =>
         (l == changedLinks.head || changedLinks.exists(c => c.endAddrMValue == l.startAddrMValue &&
-        c.track == l.track || (c.track.value * l.track.value == 0))) && (l == changedLinks.last ||
+          c.track == l.track || (c.track.value * l.track.value == 0))) && (l == changedLinks.last ||
           changedLinks.exists(c => c.startAddrMValue == l.endAddrMValue &&
             c.track == l.track || (c.track.value * l.track.value == 0))) should be (true)
       )
@@ -1447,25 +1447,25 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       }
 
       val points = "[{\"x\": 528105.957, \"y\": 6995221.607, \"z\": 120.3530000000028}," +
-                          "{\"x\": 528104.681, \"y\": 6995222.485, \"z\": 120.35099999999511}," +
-                          "{\"x\": 528064.931, \"y\": 6995249.45, \"z\": 120.18099999999686}," +
-                          "{\"x\": 528037.789, \"y\": 6995266.234, \"z\": 120.03100000000268}," +
-                          "{\"x\": 528008.332, \"y\": 6995285.521, \"z\": 119.8969999999972}," +
-                          "{\"x\": 527990.814, \"y\": 6995296.039, \"z\": 119.77300000000105}," +
-                          "{\"x\": 527962.009, \"y\": 6995313.215, \"z\": 119.57099999999627}," +
-                          "{\"x\": 527926.972, \"y\": 6995333.398, \"z\": 119.18799999999464}," +
-                          "{\"x\": 527890.962, \"y\": 6995352.332, \"z\": 118.82200000000012}," +
-                          "{\"x\": 527867.18, \"y\": 6995364.458, \"z\": 118.5219999999972}," +
-                          "{\"x\": 527843.803, \"y\": 6995376.389, \"z\": 118.35099999999511}," +
-                          "{\"x\": 527815.902, \"y\": 6995389.54, \"z\": 117.94599999999627}," +
-                          "{\"x\": 527789.731, \"y\": 6995401.53, \"z\": 117.6420000000071}," +
-                          "{\"x\": 527762.707, \"y\": 6995413.521, \"z\": 117.2960000000021}," +
-                          "{\"x\": 527737.556, \"y\": 6995424.518, \"z\": 117.09799999999814}," +
-                          "{\"x\": 527732.52, \"y\": 6995426.729, \"z\": 116.98600000000442}]"
+        "{\"x\": 528104.681, \"y\": 6995222.485, \"z\": 120.35099999999511}," +
+        "{\"x\": 528064.931, \"y\": 6995249.45, \"z\": 120.18099999999686}," +
+        "{\"x\": 528037.789, \"y\": 6995266.234, \"z\": 120.03100000000268}," +
+        "{\"x\": 528008.332, \"y\": 6995285.521, \"z\": 119.8969999999972}," +
+        "{\"x\": 527990.814, \"y\": 6995296.039, \"z\": 119.77300000000105}," +
+        "{\"x\": 527962.009, \"y\": 6995313.215, \"z\": 119.57099999999627}," +
+        "{\"x\": 527926.972, \"y\": 6995333.398, \"z\": 119.18799999999464}," +
+        "{\"x\": 527890.962, \"y\": 6995352.332, \"z\": 118.82200000000012}," +
+        "{\"x\": 527867.18, \"y\": 6995364.458, \"z\": 118.5219999999972}," +
+        "{\"x\": 527843.803, \"y\": 6995376.389, \"z\": 118.35099999999511}," +
+        "{\"x\": 527815.902, \"y\": 6995389.54, \"z\": 117.94599999999627}," +
+        "{\"x\": 527789.731, \"y\": 6995401.53, \"z\": 117.6420000000071}," +
+        "{\"x\": 527762.707, \"y\": 6995413.521, \"z\": 117.2960000000021}," +
+        "{\"x\": 527737.556, \"y\": 6995424.518, \"z\": 117.09799999999814}," +
+        "{\"x\": 527732.52, \"y\": 6995426.729, \"z\": 116.98600000000442}]"
 
       val reversedPoints = "[{\"x\": 527752.52, \"y\": 6995555.729, \"z\": 118.98600000000442}," +
-                            "{\"x\": 527742.972, \"y\": 6995532.398, \"z\": 117.18799999999464},"+
-                            "{\"x\": 527732.52, \"y\": 6995426.729, \"z\": 116.98600000000442}]"
+        "{\"x\": 527742.972, \"y\": 6995532.398, \"z\": 117.18799999999464},"+
+        "{\"x\": 527732.52, \"y\": 6995426.729, \"z\": 116.98600000000442}]"
 
       val geom = JSON.parseFull(points).get.asInstanceOf[List[Map[String, Double]]].map(m => Point(m("x"), m("y"), m("z")))
 
@@ -1870,6 +1870,6 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       val newLinksAfter = linksAfter.filter(la => newLinksWithGeom.exists(_.linkId == la.linkId) && la.status != LinkStatus.NotHandled).sortBy(_.startAddrMValue)
       linksAfter.size should be (roadPart.size + newLinksWithGeom.size)
       newLinksAfter.head.startAddrMValue should be (unchangedLinks.last.endAddrMValue)
-      }
+    }
   }
 }
