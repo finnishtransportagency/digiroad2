@@ -65,7 +65,15 @@
     var preMovedRoadAddresses = [];
     var changedIds = [];
 
-    var projectLinkStatus_notHandled = 0;
+    var LinkStatus = {
+      NotHandled: {value: 0, action: "NotHandled"},
+      Unchanged: {value: 1, action: "Unchanged"},
+      New: {value: 2, action: "New"},
+      Transfer: {value: 3, action: "Transfer"},
+      Numbering: {value: 4, action: "Numbering"},
+      Terminated: {value: 5, action: "Terminated"},
+      Revert: {value: 6, action: "Revert"}
+    };
 
     var roadLinks = function() {
       return _.flatten(roadLinkGroups);
@@ -75,6 +83,10 @@
       return _.filter(roadLinks().concat(suravageRoadLinks()), function(roadLink) {
         return roadLink.isSelected() && roadLink.getData().anomaly === 0;
       });
+    };
+
+    this.getLinkStatus = function () {
+      return LinkStatus;
     };
 
     this.fetch = function(boundingBox, zoom) {
@@ -300,7 +312,7 @@
     this.findReservedProjectLinks = function(boundingBox, zoomLevel, projectId) {
       backend.getProjectLinks({boundingBox: boundingBox, zoom: zoomLevel, projectId: projectId}, function(fetchedLinks) {
         var notHandledLinks = _.chain(fetchedLinks).flatten().filter(function (link) {
-          return link.status === projectLinkStatus_notHandled;
+          return link.status ===  LinkStatus.NotHandled.value
         }).uniq().value();
         var notHandledOL3Features = _.map(notHandledLinks, function(road) {
           var points = _.map(road.points, function (point) {
