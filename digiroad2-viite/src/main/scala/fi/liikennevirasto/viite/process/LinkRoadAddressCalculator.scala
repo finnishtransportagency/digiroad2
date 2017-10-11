@@ -1,10 +1,10 @@
 package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite.dao.{CalibrationPoint, RoadAddress}
+import fi.liikennevirasto.viite.dao.{BaseRoadAddress, CalibrationPoint, ProjectLink, RoadAddress}
 
 trait LinkRoadAddressCalculator {
-  def recalculate(addressList: Seq[RoadAddress]): Seq[RoadAddress]
+  def recalculate[T <: BaseRoadAddress](addressList: Seq[T]): Seq[T]
 }
 object LinkRoadAddressCalculator {
   /**
@@ -13,7 +13,7 @@ object LinkRoadAddressCalculator {
     *
     * @param addressList RoadAddress objects for one road or road part
     */
-  def recalculate(addressList: Seq[RoadAddress]) = {
+  def recalculate[T <: BaseRoadAddress](addressList: Seq[T]): Seq[T] = {
     if (!addressList.forall(ra => ra.roadNumber == addressList.head.roadNumber))
       throw new InvalidAddressDataException("Multiple road numbers present in source data")
     addressList.groupBy(_.roadPartNumber).flatMap{ case (_, seq) => recalculatePart(seq) }.toSeq
@@ -25,14 +25,14 @@ object LinkRoadAddressCalculator {
     *
     * @param addressList RoadAddress objects for one road or road part
     */
-  private def recalculatePart(addressList: Seq[RoadAddress]): Seq[RoadAddress] = {
+  private def recalculatePart[T <: BaseRoadAddress](addressList: Seq[T]): Seq[T] = {
     val (trackZero, others) = addressList.partition(ra => ra.track == Track.Combined)
     val (trackOne, trackTwo) = others.partition(ra => ra.track == Track.RightSide)
     recalculateTrack(trackZero) ++
       recalculateTrack(trackOne) ++
       recalculateTrack(trackTwo)
   }
-  private def recalculateTrack(addressList: Seq[RoadAddress]) = {
+  private def recalculateTrack[T <: BaseRoadAddress](addressList: Seq[T]): Seq[T] = {
     val groupedList = addressList.groupBy(_.roadPartNumber)
     groupedList.mapValues {
       case (addresses) =>
@@ -41,7 +41,7 @@ object LinkRoadAddressCalculator {
     }.values.flatten.toSeq
   }
 
-  private def segmentize(addresses: Seq[RoadAddress], processed: Seq[RoadAddress]): Seq[RoadAddress] = {
+  private def segmentize[T <: BaseRoadAddress](addresses: Seq[T], processed: Seq[T]): Seq[T] = {
     if (addresses.isEmpty)
       return processed
     val calibrationPointsS = addresses.flatMap(ra =>
@@ -61,17 +61,20 @@ object LinkRoadAddressCalculator {
     segmentize(others, processed ++ adjustGeometry(segments, startCP, endCP))
   }
 
-  private def linkLength(roadAddress: RoadAddress) = {
+  private def linkLength(roadAddress: BaseRoadAddress) = {
     roadAddress.endMValue - roadAddress.startMValue
   }
 
-  private def adjustGeometry(segments: Seq[RoadAddress], startingCP: CalibrationPoint, endingCP: CalibrationPoint) = {
+  private def adjustGeometry[T <: BaseRoadAddress](segments: Seq[T], startingCP: CalibrationPoint, endingCP: CalibrationPoint): Seq[T] = {
     val newGeom = segments.scanLeft((0.0, 0.0))({ case (runningLen, address) => (runningLen._2, runningLen._2 + linkLength(address))}).tail
     val coefficient = (endingCP.addressMValue - startingCP.addressMValue) / newGeom.last._2
     segments.zip(newGeom).map {
-      case (ra, (cumStart, cumEnd)) =>
-        ra.copy(startAddrMValue = Math.round(coefficient * cumStart) + startingCP.addressMValue, endAddrMValue = Math.round(coefficient * cumEnd) + startingCP.addressMValue)
-
+      case (t, (cumStart, cumEnd)) =>
+        (t match {
+          case ra: RoadAddress => ra.copy(startAddrMValue = Math.round(coefficient * cumStart) + startingCP.addressMValue, endAddrMValue = Math.round(coefficient * cumEnd) + startingCP.addressMValue)
+          case pl: ProjectLink => pl.copy(startAddrMValue = Math.round(coefficient * cumStart) + startingCP.addressMValue, endAddrMValue = Math.round(coefficient * cumEnd) + startingCP.addressMValue)
+          case _ => t
+        }).asInstanceOf[T]
     }
   }
 }

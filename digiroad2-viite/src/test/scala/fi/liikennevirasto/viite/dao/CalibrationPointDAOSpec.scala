@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, RoadLinkService}
 import fi.liikennevirasto.viite
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefineCalibrationPoint
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.Discontinuity.Discontinuous
 import fi.liikennevirasto.viite.{ReservedRoadPart, RoadAddressMerge, RoadAddressService, RoadType}
 import org.joda.time.DateTime
@@ -45,7 +45,7 @@ class CalibrationPointDAOSpec extends FunSuite with Matchers {
       addTestProjects()
       addProjectRoads()
       CalibrationPointDAO.createCalibrationPoint(1, 1, 0.0, 15)
-      CalibrationPointDAO.createCalibrationPoint(UserDefineCalibrationPoint(viite.newCalibrationPointId, 2, 2, 1.1, 20))
+      CalibrationPointDAO.createCalibrationPoint(UserDefinedCalibrationPoint(viite.newCalibrationPointId, 2, 2, 1.1, 20))
       val calibrationPointsAmmount = sql""" Select count(*) from CALIBRATION_POINT""".as[Long].first
       calibrationPointsAmmount should be (2)
     }
@@ -57,7 +57,7 @@ class CalibrationPointDAOSpec extends FunSuite with Matchers {
       addProjectRoads()
       CalibrationPointDAO.createCalibrationPoint(1, 1, 0.0, 15)
       CalibrationPointDAO.createCalibrationPoint(1, 1, 14.0, 25)
-      val calibrationPoints = CalibrationPointDAO.findCalibrationPointByRemainingValues(1, 1, 0.0, 15)
+      val calibrationPoints = CalibrationPointDAO.findCalibrationPointByRemainingValues(1, 1, 0.05, 0.075)
       calibrationPoints.size should be (1)
       calibrationPoints.head.id != viite.newCalibrationPointId should be (true)
       calibrationPoints.head.projectId should be (1)
