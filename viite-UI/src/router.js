@@ -47,8 +47,9 @@
       },
 
       roadAddressProject: function (projectId) {
-        eventbus.trigger('roadAddressProject:openProject', {id: projectId});
         applicationModel.selectLayer('roadAddressProject');
+        var parsedProjectId = parseInt(projectId);
+        eventbus.trigger('roadAddressProject:startProject', parsedProjectId, true);
       }
     });
 

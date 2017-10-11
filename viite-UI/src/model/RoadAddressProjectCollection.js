@@ -109,7 +109,7 @@
       });
     };
 
-    this.getProjectsWithLinksById = function (projectId) {
+    this.getProjectsWithLinksById = function (projectId, openForm) {
       return backend.getProjectsWithLinksById(projectId, function (result) {
         roadAddressProjects = result.project;
         currentProject = result;
@@ -119,6 +119,12 @@
         };
         publishableProject = result.publishable;
         eventbus.trigger('roadAddressProject:projectFetched', projectinfo);
+        if(openForm){
+          eventbus.trigger('roadAddress:openProject', result);
+          if(applicationModel.isReadOnly()) {
+            $('.edit-mode-btn:visible').click();
+          }
+        }
       });
     };
 
@@ -464,6 +470,8 @@
         });
       });
     }
+
+    eventbus.on('roadAddressProject:startProject', this.getProjectsWithLinksById);
 
     eventbus.on('roadPartsValidation:checkRoadParts', function(validationResult) {
       if (validationResult.success !== "ok") {
