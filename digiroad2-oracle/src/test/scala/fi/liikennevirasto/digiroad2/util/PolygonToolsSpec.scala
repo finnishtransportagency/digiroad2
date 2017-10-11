@@ -6,7 +6,7 @@ import com.vividsolutions.jts.geom.{Coordinate, GeometryFactory, Polygon}
 import org.scalatest.{FunSuite, Matchers}
 import org.geotools.geometry.jts.GeometryBuilder
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
-import fi.liikennevirasto.digiroad2.{Point, VVHClient}
+import fi.liikennevirasto.digiroad2.{Measures, Point, VVHClient}
 import com.vividsolutions.jts.io.WKTReader
 
 
@@ -82,4 +82,26 @@ class PolygonToolsSpec extends FunSuite with Matchers {
     val interceptedPolygon= polygonTools.geometryInterceptorToBoundingBox(Seq(poly1, poly2),bounds)
     interceptedPolygon.isEmpty should be (true)
   }
+
+  test("asset geometry exist in polygon areas") {
+    val result = polygonTools.getAreaByGeometry(Seq(Point(550000, 6806000) ,Point(560000, 6806000)), Measures(0, 10000), None)
+    result should be (6)
+  }
+
+  test("asset geometry intersect polygon areas") {
+    val result1 = polygonTools.getAreaByGeometry(Seq(Point(281000,6690000), Point(374000,6690000)), Measures(0, 430000), Some(Seq(1)))
+    val result2 = polygonTools.getAreaByGeometry(Seq(Point(281000,6690000), Point(374000,6690000)), Measures(0, 430000), Some(Seq(2)))
+    result1 should be (1)
+    result2 should be (2)
+  }
+
+  test("asset geometry not found in polygon areas") {
+    val thrown = intercept[IllegalArgumentException] {
+      polygonTools.getAreaByGeometry(Seq(Point(282000, 6623686) ,Point(287000, 6623686)), Measures(0, 5000), None)
+    }
+    thrown.getMessage should be ("Geometry not found in polygon areas")
+
+  }
+
+
 }

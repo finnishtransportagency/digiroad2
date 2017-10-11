@@ -34,6 +34,8 @@ package object viite {
   /* Maximum distance to consider the tracks to go side by side */
   val MaxDistanceBetweenTracks = 50.0
 
+  val newCalibrationPointId: Long = -1000L
+
   /* Maximum distance of regular road link geometry to suravage geometry difference where splitting is allowed */
   val MaxSuravageToleranceToGeometry = 0.5
 

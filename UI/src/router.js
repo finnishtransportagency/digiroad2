@@ -35,6 +35,7 @@
         'railwayCrossings/:id': 'railwayCrossings',
         'directionalTrafficSigns/:id': 'directionalTrafficSigns',
         'trafficSigns/:id': 'trafficSigns',
+        'maintenanceRoad/:linkId': 'maintenanceRoad',
         'work-list/speedLimit': 'speedLimitWorkList',
         'work-list/linkProperty': 'linkPropertyWorkList',
         'work-list/massTransitStop': 'massTransitStopWorkList',
@@ -43,7 +44,8 @@
         'work-list/obstacles': 'obstacleWorkList',
         'work-list/railwayCrossings': 'railwayCrossingWorkList',
         'work-list/directionalTrafficSigns': 'directionalTrafficSignsWorkList',
-        'work-list/trafficSigns': 'trafficSigntWorkList'
+        'work-list/trafficSigns': 'trafficSigntWorkList',
+        'work-list/maintenanceRoad': 'maintenanceRoadWorkList'
       },
 
       massTransitStop: function (id) {
@@ -105,6 +107,23 @@
           $.when(mapMoved).then(function () {
             eventbus.trigger('speedLimit:selectByLinkId', parseInt(linkId, 10));
           });
+        });
+      },
+
+      maintenanceRoad: function (id) {
+        applicationModel.selectLayer('maintenanceRoad');
+        var linearAsset = models.selectedMaintenanceRoad.getLinearAsset(parseInt(id));
+        if (linearAsset) {
+          models.selectedMaintenanceRoad.open(linearAsset, true);
+          applicationModel.setSelectedTool('Select');
+        }
+        backend.getLinearAssetById(id, 'maintenanceRoad').then(function (result) {
+          eventbus.once('maintenanceRoads:fetched', function() {
+            var linearAsset = models.selectedMaintenanceRoad.getLinearAsset(result.id);
+            models.selectedMaintenanceRoad.open(linearAsset, true);
+            applicationModel.setSelectedTool('Select');
+          });
+          mapCenterAndZoom(result.middlePoint.x, result.middlePoint.y, 12);
         });
       },
 
@@ -189,6 +208,10 @@
 
       directionalTrafficSignsWorkList: function () {
         eventbus.trigger('workList:select', 'directionalTrafficSigns', backend.getFloatingDirectionalTrafficSigns());
+      },
+
+      maintenanceRoadWorkList: function () {
+        eventbus.trigger('workList:select', 'maintenanceRoad', backend.getLinearAssetUnchecked(290));
       }
     });
 
