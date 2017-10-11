@@ -1108,6 +1108,111 @@ object DataFixture {
 
   }
 
+  def updateOTHBusStopWithTRInfo(): Unit = {
+    println("\nSynchronize name (Swedish), korotettu and katos (shelter) info of bus stops according to the info saved in TR")
+    println(DateTime.now())
+
+    val username = "batch_process_sync_BS_with_TR_info"
+
+    var persistedStop: Seq[PersistedMassTransitStop] = Seq()
+    var outdatedBusStopsOTH: Seq[PersistedMassTransitStop] = Seq()
+
+    //Get All Municipalities
+    val municipalities: Seq[Int] =
+      OracleDatabase.withDynSession {
+        Queries.getMunicipalities
+      }
+
+    //Get a List of All Bus Stops present in Tierekisteri
+    val allBusStopsTR = tierekisteriClient.fetchActiveMassTransitStops
+
+    //Save Tierekisteri LiviIDs into a List
+    val liviIdsListTR = allBusStopsTR.map(_.liviId)
+
+    municipalities.foreach { municipality =>
+      println("Start processing municipality %d".format(municipality))
+
+      //Get all OTH Bus Stops By Municipality
+      persistedStop = massTransitStopService.getByMunicipality(municipality, false)
+
+      persistedStop.foreach { stop =>
+        val stopLiviId = stop.propertyData.
+          find(property => property.publicId == MassTransitStopOperations.LiViIdentifierPublicId).
+          flatMap(property => property.values.headOption).map(p => p.propertyValue)
+
+        // Validate if OTH stop are known in Tierekisteri and if is maintained by ELY
+        if (stopLiviId.isDefined && liviIdsListTR.contains(stopLiviId.get)) {
+          //Data From OTH
+          val stopNameSE =
+            stop.propertyData.find(property => property.publicId == MassTransitStopOperations.nameSePublicId).
+              flatMap(property => property.values.headOption).map(p => p.propertyValue)
+            match {
+              case Some(roofValue) => roofValue
+              case _ => ""
+            }
+
+          val stopRoofValue =
+            stop.propertyData.find(property => property.publicId == MassTransitStopOperations.roofPublicId).
+              flatMap(property => property.values.headOption).map(p => p.propertyValue)
+            match {
+              case Some(roofValue) => Existence.fromPropertyValue(roofValue)
+              case _ => ""
+            }
+
+          val stopRaisedBusStopValue =
+            stop.propertyData.find(property => property.publicId == MassTransitStopOperations.raisePublicId).
+              flatMap(property => property.values.headOption).map(p => p.propertyValue)
+            match {
+              case Some(raisedValue) => Existence.fromPropertyValue(raisedValue)
+              case _ => ""
+            }
+
+          //Data From TR
+          val busStopsTR = allBusStopsTR.find(_.liviId == stopLiviId.get)
+
+          val nameSEinTR = busStopsTR.head.nameSe match {
+            case Some(name) => name
+            case _ => ""
+          }
+          val roofValueinTR = busStopsTR.head.equipments.get(Equipment.Roof) match {
+            case Some(roofValue) => roofValue
+            case _ => ""
+          }
+          val raisedValueinTR = busStopsTR.head.equipments.get(Equipment.RaisedBusStop) match {
+            case Some(raisedValue) => raisedValue
+            case _ => ""
+          }
+
+          if ((stopNameSE != nameSEinTR) || (stopRoofValue != roofValueinTR) || (stopRaisedBusStopValue != raisedValueinTR)) {
+            val propertiesToUpdate = Seq(
+              SimpleProperty(MassTransitStopOperations.nameSePublicId, Seq(PropertyValue(nameSEinTR))),
+              SimpleProperty(MassTransitStopOperations.roofPublicId, Seq(PropertyValue(roofValueinTR.asInstanceOf[Existence].propertyValue.toString()))),
+              SimpleProperty(MassTransitStopOperations.raisePublicId, Seq(PropertyValue(raisedValueinTR.asInstanceOf[Existence].propertyValue.toString())))
+            )
+
+            massTransitStopService.updatePropertiesForAsset(stop.id, propertiesToUpdate)
+
+            //Add a list of outdated Bus Stops
+            outdatedBusStopsOTH = outdatedBusStopsOTH ++ List(stop)
+          }
+        }
+      }
+
+      println("End processing municipality %d".format(municipality))
+    }
+
+    //Print the List of Bus stops where info is not the same
+    println("List of Bus stops where info is not the same:")
+    outdatedBusStopsOTH.foreach { busStops =>
+      println("External Id: " + busStops.nationalId)
+    }
+
+    println("\n")
+    println("Complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
 
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
@@ -1224,6 +1329,8 @@ object DataFixture {
         updateEuropeanRoadDataFromTR()
       case Some("update_areas_on_asset") =>
         updateAreasOnAsset()
+      case Some("update_OTH_BS_with_TR_info") =>
+        updateOTHBusStopWithTRInfo()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
@@ -1234,7 +1341,7 @@ object DataFixture {
         " fill_lane_amounts_in_missing_road_links | import_all_trafficVolume_from_TR_to_OTH | import_all_litRoad_from_TR_to_OTH | import_all_roadWidth_from_TR_to_OTH |" +
         " import_all_trafficSigns_from_TR_to_OTH | import_all_pavedRoad_from_TR_to_OTH | import_all_massTransitLane_from_TR_to_OTH | update_litRoad_from_TR_to_OTH | " +
         " update_roadWidth_from_TR_to_OTH | update_trafficSigns_from_TR_to_OTH | update_pavedRoad_from_TR_to_OTH | update_massTransitLane_from_TR_to_OTH" +
-        " import_all_damagedByThaw_from_TR_to_OTH | update_damagedByThaw_from_TR_to_OTH | import_all_europeanRoad_from_TR_to_OTH | update_europeanRoad_from_TR_to_OTH | update_areas_on_asset")
+        " import_all_damagedByThaw_from_TR_to_OTH | update_damagedByThaw_from_TR_to_OTH | import_all_europeanRoad_from_TR_to_OTH | update_europeanRoad_from_TR_to_OTH | update_areas_on_asset | update_OTH_BS_with_TR_info")
     }
   }
 }
