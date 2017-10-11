@@ -415,7 +415,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       val linkId = params.get("linkId").map(_.toLong)
       (projectId, linkId) match {
         case (Some(project), Some(link)) =>
-          val error = projectService.revertLinks(projectService.getSplitLinkData(project, link))
+          val error = projectService.revertSplit(project, link)
           if (error.nonEmpty) {
             PreconditionFailed(error.get)
           } else {

@@ -401,14 +401,40 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  def revertSplit(projectId: Long, linkId:Long): Option[String] = {
+    withDynTransaction {
+      val previousSplit = ProjectDAO.fetchSplitLinks(projectId, linkId)
+      if (previousSplit.nonEmpty) {
+        val (suravage, original) = previousSplit.partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
+        revertLinks(projectId, previousSplit.head.roadNumber, previousSplit.head.roadPartNumber,
+          suravage.map(link => LinkToRevert(link.id, link.linkId, link.status.value)),
+          original.map(link => LinkToRevert(link.id, link.linkId, link.status.value)))
+      } else
+        Some(s"No split for link id $linkId found!")
+    }
+  }
+
   def splitSuravageLink(linkId:Long, username:String,
-                        splitOptions: SplitOptions): Option[String] =
-  {
+                        splitOptions: SplitOptions): Option[String] = {
+    withDynTransaction {
+      splitSuravageLinkInTX(linkId, username, splitOptions)
+    }
+  }
+
+  def splitSuravageLinkInTX(linkId:Long, username:String,
+                            splitOptions: SplitOptions): Option[String] = {
     val sOption = getProjectSuravageRoadLinksByLinkIds(Set(linkId)).headOption
     if (sOption.isEmpty) {
       Some(ErrorSuravageLinkNotFound)
     } else {
       val projectId = splitOptions.projectId
+      val previousSplit = ProjectDAO.fetchSplitLinks(projectId, linkId)
+      if (previousSplit.nonEmpty) {
+        val (suravage, original) = previousSplit.partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
+        revertLinks(projectId, previousSplit.head.roadNumber, previousSplit.head.roadPartNumber,
+          suravage.map(link => LinkToRevert(link.id, link.linkId, link.status.value)),
+          original.map(link => LinkToRevert(link.id, link.linkId, link.status.value)))
+      }
       val suravageLink = sOption.get
       val endPoints = GeometryUtils.geometryEndpoints(suravageLink.geometry)
       val x = if (endPoints._1.x > endPoints._2.x) (endPoints._2.x, endPoints._1.x) else (endPoints._1.x, endPoints._2.x)
@@ -431,7 +457,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         val splitLinks = ProjectLinkSplitter.split(newProjectLink(suravageProjectLink, project, SideCode.TowardsDigitizing,
           Track.Unknown.value, 0L, 0L, 0, RoadType.Unknown.value, projectId), bestFit, splitOptions)
         ProjectDAO.removeProjectLinksByLinkId(projectId, splitLinks.map(_.linkId).toSet)
-        ProjectDAO.create(splitLinks.map(x => x.copy (modifiedBy = Some(username))))
+        ProjectDAO.create(splitLinks.map(x => x.copy(modifiedBy = Some(username))))
         None
       }
     }
@@ -729,20 +755,25 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       link => LinkToRevert(link.id, link.linkId, link.status.value)))
   }
 
+  private def revertLinks(projectId: Long, roadNumber: Long, roadPartNumber: Long, toRemove: Iterable[LinkToRevert],
+                          modified: Iterable[LinkToRevert]) = {
+    ProjectDAO.removeProjectLinksByLinkId(projectId, toRemove.map(_.linkId).toSet)
+    val projectLinks = ProjectDAO.getProjectLinksByIds(modified.map(_.id))
+    RoadAddressDAO.queryById(projectLinks.map(_.roadAddressId).toSet).foreach( ra =>
+      ProjectDAO.updateProjectLinkValues(projectId, ra))
+    val afterUpdateLinks = ProjectDAO.fetchByProjectRoadPart(roadNumber, roadPartNumber, projectId)
+    if (afterUpdateLinks.nonEmpty){
+      val adjLinks = withGeometry(afterUpdateLinks)
+      ProjectSectionCalculator.assignMValues(adjLinks).foreach(adjLink => ProjectDAO.updateAddrMValues(adjLink))
+    }
+    None
+  }
+
   def revertLinks(projectId: Long, roadNumber: Long, roadPartNumber: Long, links: Iterable[LinkToRevert]): Option[String] = {
     try {
       withDynTransaction{
         val (added, modified) = links.partition(_.status == LinkStatus.New.value)
-        ProjectDAO.removeProjectLinksByLinkId(projectId, added.map(_.linkId).toSet)
-        val projectLinks = ProjectDAO.getProjectLinksByIds(modified.map(_.id))
-        RoadAddressDAO.queryById(projectLinks.map(_.roadAddressId).toSet).foreach( ra =>
-          ProjectDAO.updateProjectLinkValues(projectId, ra))
-        val afterUpdateLinks = ProjectDAO.fetchByProjectRoadPart(roadNumber, roadPartNumber, projectId)
-        if (afterUpdateLinks.nonEmpty){
-          val adjLinks = withGeometry(afterUpdateLinks)
-          ProjectSectionCalculator.assignMValues(adjLinks).foreach(adjLink => ProjectDAO.updateAddrMValues(adjLink))
-        }
-        None
+        revertLinks(projectId, roadNumber, roadPartNumber, added, modified)
       }
     }
     catch{
