@@ -1457,8 +1457,8 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       val linksAfter=ProjectDAO.getProjectLinks(id)
       linksAfter should have size (links.size + 1)
       linksAfter.find(_.linkId == addProjectAddressLink584.linkId).map(_.sideCode) should be (Some(AgainstDigitizing))
-      linksAfter.find(_.linkId == 5176512).get.endAddrMValue should be (2002)
-      linksAfter.find(_.linkId == 5176512).get.startAddrMValue should be (892)
+      linksAfter.find(_.linkId == 5176512).get.endAddrMValue should be (2004)
+      linksAfter.find(_.linkId == 5176512).get.startAddrMValue should be (893)
       linksAfter.find(_.linkId == 5176584).get.startAddrMValue should be (0)
     }
   }
@@ -1511,7 +1511,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
         toProjectLink(rap, LinkStatus.NotHandled)(address)
       }))
 
-      val linksBefore = ProjectDAO.fetchByProjectRoadPart(77, 35, id).groupBy(_.linkId).map(_._2.head).toList
+      val linksBefore = ProjectDAO.fetchByProjectRoadPart(77, 35, id)
 
       val points5170271 = "[ {\"x\": 530492.408, \"y\": 6994103.892, \"z\": 114.60400000000664},{\"x\": 530490.492, \"y\": 6994104.815, \"z\": 114.63800000000629},{\"x\": 530459.903, \"y\": 6994118.958, \"z\": 114.97299999999814},{\"x\": 530427.446, \"y\": 6994134.189, \"z\": 115.30400000000373},{\"x\": 530392.422, \"y\": 6994153.545, \"z\": 115.721000000005},{\"x\": 530385.114, \"y\": 6994157.976, \"z\": 115.71099999999569},{\"x\": 530381.104, \"y\": 6994161.327, \"z\": 115.77000000000407},{\"x\": 530367.101, \"y\": 6994170.075, \"z\": 115.93099999999686},{\"x\": 530330.275, \"y\": 6994195.603, \"z\": 116.37200000000303}]"
       val points5170414 = "[ {\"x\": 531540.842, \"y\": 6993806.017, \"z\": 114.1530000000057},{\"x\": 531515.135, \"y\": 6993815.644, \"z\": 114.74400000000605}]"
@@ -1622,10 +1622,9 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
 
       //links.nonEmpty should be (true)
       val geomToLinks:List[ProjectLink] = linksBefore.map{l =>
-        val geom = mappedGeoms(l.linkId)
+        val geom = GeometryUtils.truncateGeometry2D(mappedGeoms(l.linkId), l.startMValue, l.endMValue)
         l.copy(geometry = geom,
-          geometryLength = GeometryUtils.geometryLength(geom),
-          endMValue = GeometryUtils.geometryLength(geom)
+          geometryLength = GeometryUtils.geometryLength(geom)
         )
       }
 

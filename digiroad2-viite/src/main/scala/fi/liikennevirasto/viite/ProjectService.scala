@@ -171,34 +171,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   private def newProjectLink(projectAddressLink: ProjectAddressLink, project: RoadAddressProject, sideCode: SideCode, newTrackCode: Long,
-                     newRoadNumber: Long, newRoadPartNumber: Long, newDiscontinuity: Int, newRoadType: Long, projectId: Long): ProjectLink = {
+                             newRoadNumber: Long, newRoadPartNumber: Long, newDiscontinuity: Int, newRoadType: Long, projectId: Long): ProjectLink = {
     toProjectLink(projectAddressLink, NewRoadAddress, Track.apply(newTrackCode.toInt), project, sideCode,
       newRoadNumber, newRoadPartNumber, newDiscontinuity, newRoadType, projectId, true)
   }
-  /**
-    * Used when adding road address that does not have previous address
-    */
-  def addNewLinksToProject(newLinks: Seq[ProjectAddressLink], roadAddressProjectID: Long, newRoadNumber: Long,
-                           newRoadPartNumber: Long, newTrackCode: Long, newDiscontinuity: Long,
-                           newRoadType: Long = RoadType.Unknown.value, user: String): Option[String] = {
-    def newProjectLink(projectAddressLink: ProjectAddressLink, project: RoadAddressProject, sideCode: SideCode): ProjectLink = {
-      toProjectLink(projectAddressLink, NewRoadAddress, Track.apply(newTrackCode.toInt), project, sideCode, true)
-    }
-
-    def toProjectLink(projectAddressLink: ProjectAddressLink, id: Long, track: Track, project: RoadAddressProject,
-                      sideCode: SideCode, isNewProjectLink:Boolean = false): ProjectLink = {
-      ProjectLink(id, newRoadNumber, newRoadPartNumber, track,
-        Discontinuity.apply(newDiscontinuity.toInt), projectAddressLink.startAddressM,
-        projectAddressLink.endAddressM, Some(project.startDate), None, Some(project.createdBy), -1,
-        projectAddressLink.linkId, projectAddressLink.startMValue, projectAddressLink.endMValue, sideCode,
-        (projectAddressLink.startCalibrationPoint, projectAddressLink.endCalibrationPoint), floating = false,
-        projectAddressLink.geometry, roadAddressProjectID, if (isNewProjectLink) LinkStatus.New else projectAddressLink.status, RoadType.apply(newRoadType.toInt),
-        projectAddressLink.roadLinkSource, projectAddressLink.length, projectAddressLink.roadAddressId)
-    }
 
   private def toProjectLink(projectAddressLink: ProjectAddressLink, id: Long, track: Track, project: RoadAddressProject,
-                    sideCode: SideCode, newRoadNumber: Long, newRoadPartNumber: Long, newDiscontinuity: Int, newRoadType: Long,
-                    projectId: Long, isNewProjectLink: Boolean = false): ProjectLink = {
+                            sideCode: SideCode, newRoadNumber: Long, newRoadPartNumber: Long, newDiscontinuity: Int, newRoadType: Long,
+                            projectId: Long, isNewProjectLink: Boolean = false): ProjectLink = {
     ProjectLink(id, newRoadNumber, newRoadPartNumber, track,
       Discontinuity.apply(newDiscontinuity.toInt), projectAddressLink.startAddressM,
       projectAddressLink.endAddressM, Some(project.startDate), None, Some(project.createdBy), -1,
@@ -211,8 +191,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   /**
     * Used when adding road address that does not have previous address
     */
-  def addNewLinksToProject(projectAddressLinks: Seq[ProjectAddressLink], roadAddressProjectID: Long, newRoadNumber: Long,
-                           newRoadPartNumber: Long, newTrackCode: Long, newDiscontinuity: Long, newRoadType: Long = RoadType.Unknown.value): Option[String] = {
+  def addNewLinksToProject(newLinks: Seq[ProjectAddressLink], roadAddressProjectID: Long, newRoadNumber: Long,
+                           newRoadPartNumber: Long, newTrackCode: Long, newDiscontinuity: Long,
+                           newRoadType: Long = RoadType.Unknown.value, user: String): Option[String] = {
 
     def matchSideCodes(newLink: ProjectAddressLink, existingLink: ProjectAddressLink): SideCode = {
       val (startP, endP) =GeometryUtils.geometryEndpoints(existingLink.geometry)
@@ -275,9 +256,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   private def withGeometry(projectLinks: Seq[ProjectLink], resetAddress: Boolean = false): Seq[ProjectLink] = {
-    val linkGeometries = roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(projectLinks.map(_.linkId).toSet,
-      false, frozenTimeVVHAPIServiceEnabled).map(pal => pal.linkId -> pal.geometry).toMap
-    projectLinks.map(pl => withGeometry(pl, linkGeometries(pl.linkId), resetAddress))
+    val (withGeom, without) = projectLinks.partition(_.geometry.length > 1)
+    val (suravageLinks, roadLinks) = without.partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
+    val linkGeometries = (roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(roadLinks.map(_.linkId).toSet,
+      false, frozenTimeVVHAPIServiceEnabled).map(pal => pal.linkId -> pal.geometry)
+      ++ (if (suravageLinks.nonEmpty)
+      roadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(suravageLinks.map(_.linkId).toSet, false).map(pal => pal.linkId -> pal.geometry) else Seq())).toMap
+    without.map{pl =>
+      withGeometry(pl, linkGeometries(pl.linkId), resetAddress)}  ++ withGeom
   }
 
   private def withGeometry(pl: ProjectLink, linkGeometry: Seq[Point], resetAddress: Boolean) = {
@@ -287,20 +273,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       startAddrMValue = if (resetAddress) 0L else pl.startAddrMValue,
       endAddrMValue = if (resetAddress) 0L else pl.endAddrMValue,
       calibrationPoints = if (resetAddress) (None, None) else pl.calibrationPoints)
-    val (withGeom, without) = projectLinks.partition(_.geometry.length > 1)
-    val (suravageLinks, roadLinks) = without.partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
-    val linkGeometries = (roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(roadLinks.map(_.linkId).toSet,
-      false, frozenTimeVVHAPIServiceEnabled).map(pal => pal.linkId -> pal.geometry)
-      ++ (if (suravageLinks.nonEmpty)
-      roadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(suravageLinks.map(_.linkId).toSet, false).map(pal => pal.linkId -> pal.geometry) else Seq())).toMap
-    without.map{pl =>
-      val geom = GeometryUtils.truncateGeometry2D(linkGeometries(pl.linkId), pl.startMValue, pl.endMValue)
-      pl.copy(geometry = geom,
-        geometryLength = GeometryUtils.geometryLength(geom),
-        startAddrMValue = if (resetAddress) 0L else pl.startAddrMValue,
-        endAddrMValue = if (resetAddress) 0L else pl.endAddrMValue,
-        calibrationPoints = if (resetAddress) (None, None) else pl.calibrationPoints)
-    } ++ withGeom
   }
 
   def changeDirection(projectId : Long, roadNumber : Long, roadPartNumber : Long): Option[String] = {
@@ -330,9 +302,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   /**
     * Adds reserved road links (from road parts) to a road address project. Clears
     * project links that are no longer reserved for the project. Reservability is check before this.
-    *
-    * @param project
-    * @return
     */
   private def addLinksToProject(project: RoadAddressProject): Option[String] = {
     def toProjectLink(roadTypeMap: Map[Long, RoadType])(roadAddress: RoadAddress): ProjectLink = {
@@ -684,7 +653,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       rl =>
         val pl = fetchProjectLinks.getOrElse(rl.linkId, Seq())
         rl.linkId -> buildProjectRoadLink(rl, pl)
-    }.toMap.filter(_._2.nonEmpty).mapValues(_.get)
+    }.toMap
 
     RoadAddressFiller.fillProjectTopology(complementedRoadLinks, projectRoadLinks)
   }
