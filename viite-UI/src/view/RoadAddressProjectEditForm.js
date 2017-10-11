@@ -53,7 +53,7 @@
 
     var actionButtons = function() {
       var html = '<div class="project-form form-controls" id="actionButtons">' +
-        '<button class="update btn btn-save"' + (projectCollection.isDirty() ? '' : 'disabled') + ' style="width:auto;">Jatka Toimenpiteisiin</button>' +
+        '<button class="update btn btn-save"' + (projectCollection.isDirty() ? '' : 'disabled') + ' style="width:auto;">Tallenna</button>' +
         '<button class="cancelLink btn btn-cancel">Peruuta</button>' +
         '</div>';
       return html;
@@ -101,13 +101,14 @@
     };
 
     var defineOptionModifiers = function(option, selection) {
-      var roadIsUnknownOrOther = projectCollection.roadIsUnknown(selection[0]) || projectCollection.roadIsOther(selection[0]) || selection[0].roadLinkSource === 3;
+      var roadIsUnknownOrOther = projectCollection.roadIsUnknown(selection[0]) || projectCollection.roadIsOther(selection[0]);
+      var roadIsSuravage =  selection[0].roadLinkSource === 3;
       var toEdit = selection[0].id === 0;
       var modifiers = '';
 
       switch(option) {
         case LinkStatus.Unchanged.action: {
-          if(roadIsUnknownOrOther){
+          if(roadIsUnknownOrOther || roadIsSuravage){
             modifiers = 'disabled hidden';
           } else {
             modifiers = '';
@@ -115,7 +116,7 @@
           break;
         }
         case LinkStatus.Transfer.action: {
-          if(roadIsUnknownOrOther){
+          if(roadIsUnknownOrOther || roadIsSuravage){
             modifiers = 'disabled hidden';
           } else if(toEdit){
             modifiers = 'disabled';
@@ -131,7 +132,7 @@
           break;
         }
         case LinkStatus.Terminated.action: {
-          if(roadIsUnknownOrOther){
+          if(roadIsUnknownOrOther || roadIsSuravage){
             modifiers = 'disabled hidden';
           } else {
             var status = _.uniq(_.map(selection, function(l) { return l.status; }));
@@ -148,7 +149,7 @@
           break;
         }
         case LinkStatus.Numbering.action: {
-          if(roadIsUnknownOrOther){
+          if(roadIsUnknownOrOther || roadIsSuravage){
             modifiers = 'disabled hidden';
           } else if(toEdit) {
             modifiers = 'disabled';
@@ -198,7 +199,7 @@
     };
 
     var selectionForm = function(selection, selected, index){
-      return '<form id="roadAddressProject" class="input-unit-combination form-group form-horizontal roadAddressProject">'+
+      return '<form id="roadAddressProjectForm_'+index+'" class="input-unit-combination form-group form-horizontal roadAddressProject">'+
       '<label>Toimenpiteet,' + selection  + '</label>' +
         ((applicationModel.getSelectedTool() === 'Cut' && selected.length == 2) ?
         '<span class="marker">'+markers[index]+'</span>'
@@ -527,59 +528,45 @@
       });
 
 
-      rootElement.on('change', '#dropdown_0', function(){
+      rootElement.on('change', '#roadAddressProjectForm_0 #dropdown_0, #roadAddressProjectForm_1 #dropdown_1', function(){
         if (this.value == LinkStatus.New.action && applicationModel.getSelectedTool() == 'Cut') {
           $('#drop_0_'+ LinkStatus.Numbering.action).prop('disabled',true).prop('hidden',true);
           $('#drop_0_'+ LinkStatus.Terminated.action).prop('disabled',true).prop('hidden',true);
           $('#drop_0_'+ LinkStatus.Revert.action).prop('disabled',true).prop('hidden',true);
-          $('#drop_0_'+ LinkStatus.New.action).prop('disabled',false).prop('hidden',false);
+          $('#drop_0_'+ LinkStatus.Transfer.action).prop('disabled',false).prop('hidden',false);
+          $('#drop_0_'+ LinkStatus.Unchanged.action).prop('disabled',false).prop('hidden',false);
+          $('#drop_0_'+ LinkStatus.New.action).prop('disabled',false).prop('hidden',true);
           $('#drop_1_'+ LinkStatus.New.action).prop('disabled',true).prop('hidden',true);
           $('#drop_1_'+ LinkStatus.Unchanged.action).prop('disabled',false).prop('hidden',false);
           $('#drop_1_'+ LinkStatus.Transfer.action).prop('disabled',false).prop('hidden',false);
           $('#drop_1_'+ LinkStatus.Numbering.action).prop('disabled',true).prop('hidden',true);
           $('#drop_1_'+ LinkStatus.Terminated.action).prop('disabled',true).prop('hidden',true);
           $('#drop_1_'+ LinkStatus.Revert.action).prop('disabled',true).prop('hidden',true);
-          $('#drop_1_'+ LinkStatus.New.action).prop('disabled',true).prop('hidden',true);
 
         } else if ((this.value == LinkStatus.Unchanged.action || this.value == LinkStatus.Transfer.action ) && applicationModel.getSelectedTool() == 'Cut') {
-          $('#drop_0_'+ LinkStatus.New.action).prop('disabled',false).prop('hidden',false);
           $('#drop_0_'+ LinkStatus.Numbering.action).prop('disabled',true).prop('hidden',true);
           $('#drop_0_'+ LinkStatus.Terminated.action).prop('disabled',true).prop('hidden',true);
           $('#drop_0_'+ LinkStatus.Revert.action).prop('disabled',true).prop('hidden',true);
-          $('#drop_1_'+ LinkStatus.Unchanged.action).prop('disabled',true).prop('hidden',true);
-          $('#drop_1_'+ LinkStatus.Transfer.action).prop('disabled',true).prop('hidden',true);
-          $('#drop_1_'+ LinkStatus.Numbering.action).prop('disabled',true).prop('hidden',true);
-          $('#drop_1_'+ LinkStatus.Terminated.action).prop('disabled',true).prop('hidden',true);
-          $('#drop_1_'+ LinkStatus.Revert.action).prop('disabled',true).prop('hidden',true);
-          $('#drop_1_'+ LinkStatus.New.action).prop('disabled',false).prop('hidden',false);
-        }
-      });
-
-      rootElement.on('change', '#dropdown_1', function(){
-        if (this.value == LinkStatus.New.action && applicationModel.getSelectedTool() == 'Cut') {
-          $('#drop_1_'+ LinkStatus.Numbering.action).prop('disabled',true).prop('hidden',true);
-          $('#drop_1_'+ LinkStatus.Terminated.action).prop('disabled',true).prop('hidden',true);
-          $('#drop_1_'+ LinkStatus.Revert.action).prop('disabled',true).prop('hidden',true);
-          $('#drop_1_'+ LinkStatus.New.action).prop('disabled',false).prop('hidden',false);
-          $('#drop_0_'+ LinkStatus.New.action).prop('disabled',true).prop('hidden',true);
-        } else if ((this.value == LinkStatus.Unchanged.action || this.value == LinkStatus.Transfer.action) && applicationModel.getSelectedTool() == 'Cut') {
-          $('#drop_0_'+ LinkStatus.Unchanged.action).prop('disabled',true).prop('hidden',true);
-          $('#drop_0_'+ LinkStatus.Transfer.action).prop('disabled',true).prop('hidden',true);
-          $('#drop_0_'+ LinkStatus.Numbering.action).prop('disabled',true).prop('hidden',true);
-          $('#drop_0_'+ LinkStatus.Terminated.action).prop('disabled',true).prop('hidden',true);
-          $('#drop_0_'+ LinkStatus.Revert.action).prop('disabled',true).prop('hidden',true);
+          $('#drop_0_'+ LinkStatus.Transfer.action).prop('disabled',false).prop('hidden',true);
+          $('#drop_0_'+ LinkStatus.Unchanged.action).prop('disabled',false).prop('hidden',true);
           $('#drop_0_'+ LinkStatus.New.action).prop('disabled',false).prop('hidden',false);
+          $('#drop_1_'+ LinkStatus.New.action).prop('disabled',false).prop('hidden',false);
+          $('#drop_1_'+ LinkStatus.Unchanged.action).prop('disabled',false).prop('hidden',true);
+          $('#drop_1_'+ LinkStatus.Transfer.action).prop('disabled',false).prop('hidden',true);
+          $('#drop_1_'+ LinkStatus.Numbering.action).prop('disabled',true).prop('hidden',true);
+          $('#drop_1_'+ LinkStatus.Terminated.action).prop('disabled',true).prop('hidden',true);
+          $('#drop_1_'+ LinkStatus.Revert.action).prop('disabled',true).prop('hidden',true);
         }
       });
 
-      rootElement.on('change', '#dropdown_0', function() {
+      rootElement.on('change', '#roadAddressProjectForm_0 #dropdown_0', function() {
         selectedProjectLinkProperty.setDirty(true);
         eventbus.trigger('roadAddressProject:toggleEditingRoad', false);
-        $('#ajr').prop('disabled',false);
-        $('#discontinuityDropdown').prop('disabled',false);
-        $('#roadTypeDropDown').prop('disabled',false);
+        $('#roadAddressProjectForm_0 #ajr').prop('disabled',false);
+        $('#roadAddressProjectForm_0 #discontinuityDropdown').prop('disabled',false);
+        $('#roadAddressProjectForm_0 #roadTypeDropDown').prop('disabled',false);
         if(this.value == LinkStatus.Terminated.action) {
-          rootElement.find('.new-road-address').prop("hidden", true);
+          rootElement.find('#roadAddressProjectForm_0 .new-road-address').prop("hidden", true);
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
             return {'linkId': link.linkId, 'status': LinkStatus.Terminated.value, 'roadLinkSource': link.roadLinkSource};
@@ -589,7 +576,7 @@
         }
         else if(this.value == LinkStatus.New.action){
           projectCollection.setTmpDirty(_.filter(projectCollection.getTmpDirty(), function (l) { return l.status !== LinkStatus.Terminated.value;}).concat(selectedProjectLink));
-          rootElement.find('.new-road-address').prop("hidden", false);
+          rootElement.find('#roadAddressProjectForm_0 .new-road-address').prop("hidden", false);
           if(selectedProjectLink[0].id !== 0) {
             fillDistanceValues(selectedProjectLink);
             rootElement.find('.changeDirectionDiv').prop("hidden", false);
@@ -597,7 +584,7 @@
           }
         }
         else if(this.value == LinkStatus.Unchanged.action){
-          rootElement.find('.new-road-address').prop("hidden", true);
+          rootElement.find('#roadAddressProjectForm_0 .new-road-address').prop("hidden", true);
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
             return {'linkId': link.linkId, 'status': LinkStatus.Unchanged.value, 'roadLinkSource': link.roadLinkSource};
@@ -609,39 +596,39 @@
             return {'linkId': link.linkId, 'status': LinkStatus.Transfer.value, 'roadLinkSource': link.roadLinkSource};
           })));
           projectCollection.setTmpDirty(projectCollection.getDirty());
-          rootElement.find('.new-road-address').prop("hidden", false);
+          rootElement.find('#roadAddressProjectForm_0 .new-road-address').prop("hidden", false);
           if(selectedProjectLink[0].id !== 0)
             rootElement.find('.changeDirectionDiv').prop("hidden", false);
         }
         else if(this.value == LinkStatus.Numbering.action) {
           new ModalConfirm("Numerointi koskee kokonaista tieosaa. Valintaasi on tarvittaessa laajennettu koko tieosalle.");
-          $('#ajr').prop('disabled',true);
-          $('#discontinuityDropdown').prop('disabled',true);
-          $('#roadTypeDropDown').prop('disabled',true);
+          $('#roadAddressProjectForm_0 #ajr').prop('disabled',true);
+          $('#roadAddressProjectForm_0 #discontinuityDropdown').prop('disabled',true);
+          $('#roadAddressProjectForm_0 #roadTypeDropDown').prop('disabled',true);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
             return {'linkId': link.linkId, 'status': LinkStatus.Numbering.value, 'roadLinkSource': link.roadLinkSource};
           })));
           projectCollection.setTmpDirty(projectCollection.getDirty());
-          rootElement.find('.new-road-address').prop("hidden", false);
+          rootElement.find('#roadAddressProjectForm_0 .new-road-address').prop("hidden", false);
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
           rootElement.find('.project-form button.update').prop("disabled", false);
         }
         else if(this.value == LinkStatus.Revert.action) {
-          rootElement.find('.new-road-address').prop("hidden", true);
+          rootElement.find('#roadAddressProjectForm_0 .new-road-address').prop("hidden", true);
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
           rootElement.find('.project-form button.update').prop("disabled", false);
         }
       });
 
-      rootElement.on('change', '#dropdown_1', function() {
+      rootElement.on('change', '#roadAddressProjectForm_1 #dropdown_1', function() {
         selectedProjectLinkProperty.setDirty(true);
         eventbus.trigger('roadAddressProject:toggleEditingRoad', false);
-        $('#ajr').prop('disabled',false);
-        $('#discontinuityDropdown').prop('disabled',false);
-        $('#roadTypeDropDown').prop('disabled',false);
+        $('#roadAddressProjectForm_1 #ajr').prop('disabled',false);
+        $('#roadAddressProjectForm_1 #discontinuityDropdown').prop('disabled',false);
+        $('#roadAddressProjectForm_1 #roadTypeDropDown').prop('disabled',false);
         if(this.value == LinkStatus.Terminated.action) {
-          rootElement.find('.new-road-address').prop("hidden", true);
-          rootElement.find('.changeDirectionDiv').prop("hidden", true);
+          rootElement.find('#roadAddressProjectForm_1 .new-road-address').prop("hidden", true);
+          rootElement.find('#roadAddressProjectForm_1 .changeDirectionDiv').prop("hidden", true);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
             return {'linkId': link.linkId, 'status': LinkStatus.Terminated.value, 'roadLinkSource': link.roadLinkSource};
           })));
@@ -650,16 +637,15 @@
         }
         else if(this.value == LinkStatus.New.action){
           projectCollection.setTmpDirty(_.filter(projectCollection.getTmpDirty(), function (l) { return l.status !== LinkStatus.Terminated.value;}).concat(selectedProjectLink));
-          rootElement.find('.new-road-address').prop("hidden", false);
+          rootElement.find('#roadAddressProjectForm_1 .new-road-address').prop("hidden", false);
           if(selectedProjectLink[0].id !== 0) {
             fillDistanceValues(selectedProjectLink);
-            rootElement.find('.changeDirectionDiv').prop("hidden", false);
             rootElement.find('#distanceValue').prop("hidden", false);
           }
         }
         else if(this.value == LinkStatus.Unchanged.action){
-          rootElement.find('.new-road-address').prop("hidden", true);
-          rootElement.find('.changeDirectionDiv').prop("hidden", true);
+          rootElement.find('#roadAddressProjectForm_1 .new-road-address').prop("hidden", true);
+          rootElement.find('#roadAddressProjectForm_1 .changeDirectionDiv').prop("hidden", true);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
             return {'linkId': link.linkId, 'status': LinkStatus.Unchanged.value, 'roadLinkSource': link.roadLinkSource};
           })));
@@ -670,35 +656,31 @@
             return {'linkId': link.linkId, 'status': LinkStatus.Transfer.value, 'roadLinkSource': link.roadLinkSource};
           })));
           projectCollection.setTmpDirty(projectCollection.getDirty());
-          rootElement.find('.new-road-address').prop("hidden", false);
-          if(selectedProjectLink[0].id !== 0)
-            rootElement.find('.changeDirectionDiv').prop("hidden", false);
+          rootElement.find('#roadAddressProjectForm_1 .new-road-address').prop("hidden", false);
         }
         else if(this.value == LinkStatus.Numbering.action) {
           new ModalConfirm("Numerointi koskee kokonaista tieosaa. Valintaasi on tarvittaessa laajennettu koko tieosalle.");
-          $('#ajr').prop('disabled',true);
-          $('#discontinuityDropdown').prop('disabled',true);
-          $('#roadTypeDropDown').prop('disabled',true);
+          $('#roadAddressProjectForm_1 #ajr').prop('disabled',true);
+          $('#roadAddressProjectForm_1 #discontinuityDropdown').prop('disabled',true);
+          $('#roadAddressProjectForm_1 #roadTypeDropDown').prop('disabled',true);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
             return {'linkId': link.linkId, 'status': LinkStatus.Numbering.value, 'roadLinkSource': link.roadLinkSource};
           })));
           projectCollection.setTmpDirty(projectCollection.getDirty());
-          rootElement.find('.new-road-address').prop("hidden", false);
-          rootElement.find('.changeDirectionDiv').prop("hidden", true);
+          rootElement.find('#roadAddressProjectForm_1 .new-road-address').prop("hidden", false);
           rootElement.find('.project-form button.update').prop("disabled", false);
         }
         else if(this.value == LinkStatus.Revert.action) {
-          rootElement.find('.new-road-address').prop("hidden", true);
-          rootElement.find('.changeDirectionDiv').prop("hidden", true);
+          rootElement.find('#roadAddressProjectForm_1 .new-road-address').prop("hidden", true);
           rootElement.find('.project-form button.update').prop("disabled", false);
         }
       });
 
-      rootElement.on('change', '.form-group', function() {
+      rootElement.on('change', '#roadAddressProjectForm_1 .form-group', function() {
         rootElement.find('.action-selected-field').prop("hidden", false);
       });
 
-      rootElement.on('click', '.project-form button.cancelLink', function(){
+      rootElement.on('click', ' .project-form button.cancelLink', function(){
         cancelChanges();
       });
 
