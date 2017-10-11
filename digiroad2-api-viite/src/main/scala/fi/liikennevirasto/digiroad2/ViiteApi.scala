@@ -320,7 +320,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val user = userProvider.getCurrentUser()
     try {
       val links = parsedBody.extract[RoadAddressProjectLinksExtractor]
-        projectService.createProjectLinks(links.linkIds, links.projectId, links.roadNumber, links.roadPartNumber, links.trackCode, links.discontinuity, links.roadType, links.roadLinkSource, links.roadEly)
+        projectService.createProjectLinks(links.linkIds, links.projectId, links.roadNumber, links.roadPartNumber,
+          links.trackCode, links.discontinuity, links.roadType, links.roadLinkSource, links.roadEly, user.username)
     } catch {
       case e: MappingException  =>
         logger.warn("Exception treating road links", e)

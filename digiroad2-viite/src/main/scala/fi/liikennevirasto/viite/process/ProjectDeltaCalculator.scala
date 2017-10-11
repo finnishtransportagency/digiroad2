@@ -1,9 +1,5 @@
 package fi.liikennevirasto.viite.process
 
-import fi.liikennevirasto.digiroad2.util.RoadAddressException
-import java.text.DecimalFormat
-
-import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.util.Track.RightSide
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.viite.dao.{ProjectLink, _}
@@ -26,49 +22,41 @@ object ProjectDeltaCalculator {
     val project = projectOpt.get
     val projectLinksFetched = ProjectDAO.getProjectLinks(projectId)
     val projectLinks = projectLinksFetched.groupBy(l => RoadPart(l.roadNumber,l.roadPartNumber))
-    val currentAddresses = projectLinks.filter(_._2.exists(_.status != LinkStatus.New)).keySet.map(r =>
-      r -> RoadAddressDAO.fetchByLinkId(projectLinksFetched.map(pl => pl.linkId).toSet, includeFloating = true)).toMap
+    val currentAddresses = RoadAddressDAO.fetchByIdMassQuery(projectLinksFetched.map(pl => pl.roadAddressId).toSet,
+      includeFloating = true).map(ra => ra.id -> ra).toMap
     val terminations = findTerminations(projectLinks, currentAddresses)
     val newCreations = findNewCreations(projectLinks)
     val unChanged = findUnChanged(projectLinks, currentAddresses)
-    val transferred = Transferred(findTransferredOld(projectLinks, currentAddresses), findTransferredNew(projectLinks))
-    val numbering = ReNumeration(findNumberingOld(projectLinks, currentAddresses), findNumberingNew(projectLinks))
+    val transferred = Transferred(findTransfers(projectLinksFetched, currentAddresses))
+    val numbering = ReNumeration(findNumbering(projectLinksFetched, currentAddresses))
 
     Delta(project.startDate, terminations, newCreations, unChanged, transferred, numbering)
   }
 
-  private def findTerminations(projectLinks: Map[RoadPart, Seq[ProjectLink]], currentAddresses: Map[RoadPart, Seq[RoadAddress]]) = {
-    val terminations = projectLinks.map{case (part, pLinks) => part -> (pLinks, currentAddresses.getOrElse(part, Seq()))}.mapValues{ case (pll, ra) =>
-      ra.filter(r => pll.exists(pl => pl.linkId == r.linkId && pl.status == LinkStatus.Terminated))
-    }
+  private def findTerminations(projectLinks: Map[RoadPart, Seq[ProjectLink]], currentAddresses: Map[Long, RoadAddress]) = {
+    val terminations = projectLinks.mapValues(pll =>
+      pll.filter(_.status == LinkStatus.Terminated).flatMap(pl =>
+        currentAddresses.get(pl.roadAddressId)
+      )
+    )
     terminations.filterNot(t => t._2.isEmpty).values.foreach(validateTerminations)
     terminations.values.flatten.toSeq
   }
 
-  private def findUnChanged(projectLinks: Map[RoadPart, Seq[ProjectLink]], currentAddresses: Map[RoadPart, Seq[RoadAddress]]) = {
-    projectLinks.map{case (part, pLinks) => part -> (pLinks, currentAddresses.getOrElse(part, Seq()))}.mapValues{ case (pll, ra) =>
-      ra.filter(r => pll.exists(pl => pl.linkId == r.linkId && pl.status == LinkStatus.UnChanged))
-    }.values.flatten.toSeq
+  private def findUnChanged(projectLinks: Map[RoadPart, Seq[ProjectLink]], currentAddresses: Map[Long, RoadAddress]) = {
+    projectLinks.mapValues(pll =>
+      pll.filter(_.status == LinkStatus.UnChanged).flatMap(pl =>
+        currentAddresses.get(pl.roadAddressId)
+      )
+    ).values.flatten.toSeq
   }
 
-  private def findTransferredOld(projectLinks: Map[RoadPart, Seq[ProjectLink]], currentAddresses: Map[RoadPart, Seq[RoadAddress]]) = {
-    projectLinks.map{case (part, pLinks) => part -> (pLinks, currentAddresses.getOrElse(part, Seq()))}.mapValues{ case (pll, ra) =>
-      ra.filter(r => pll.exists(pl => pl.linkId == r.linkId && pl.status == LinkStatus.Transfer))
-    }.values.flatten.toSeq
+  private def findTransfers(projectLinks: Seq[ProjectLink], currentAddresses: Map[Long, RoadAddress]) = {
+    projectLinks.filter(_.status == LinkStatus.Transfer).map(pl => currentAddresses(pl.roadAddressId) -> pl)
   }
 
-  private def findTransferredNew(projectLinks: Map[RoadPart, Seq[ProjectLink]]) = {
-    projectLinks.values.flatten.filter(_.status == LinkStatus.Transfer).toSeq
-  }
-
-  private def findNumberingOld(projectLinks: Map[RoadPart, Seq[ProjectLink]], currentAddresses: Map[RoadPart, Seq[RoadAddress]]) = {
-    projectLinks.map{case (part, pLinks) => part -> (pLinks, currentAddresses.getOrElse(part, Seq()))}.mapValues{ case (pll, ra) =>
-      ra.filter(r => pll.exists(pl => pl.linkId == r.linkId && pl.status == LinkStatus.Numbering))
-    }.values.flatten.toSeq
-  }
-
-  private def findNumberingNew(projectLinks: Map[RoadPart, Seq[ProjectLink]]) = {
-    projectLinks.values.flatten.filter(_.status == LinkStatus.Numbering).toSeq
+  private def findNumbering(projectLinks: Seq[ProjectLink], currentAddresses: Map[Long, RoadAddress]) = {
+    projectLinks.filter(_.status == LinkStatus.Numbering).map(pl => currentAddresses(pl.roadAddressId) -> pl)
   }
 
   private def findNewCreations(projectLinks: Map[RoadPart, Seq[ProjectLink]]) = {
@@ -96,6 +84,8 @@ object ProjectDeltaCalculator {
           case x: ProjectLink => x.copy(endAddrMValue = pl2.endAddrMValue, discontinuity = pl2.discontinuity).asInstanceOf[P]
       }))
     else {
+      logger.info(s"No match: ${pl1.endAddrMValue == pl2.startAddrMValue} ${pl1.discontinuity == Discontinuity.Continuous} " +
+        s"${ra1.endAddrMValue} ${ra2.startAddrMValue} ${ra1.discontinuity == Discontinuity.Continuous} ${pl1.roadType} ${pl2.roadType}")
       Seq(tr2, tr1)
     }
   }
@@ -209,20 +199,23 @@ object ProjectDeltaCalculator {
     * @return Map between the sections old -> new
     */
   def partition(roadAddresses: Seq[RoadAddress], projectLinks: Seq[ProjectLink]): Map[RoadAddressSection, RoadAddressSection] = {
+    partition(pair(roadAddresses, projectLinks.groupBy(_.roadAddressId)))
+  }
+
+  def partition(transfers: Seq[(RoadAddress, ProjectLink)]): Map[RoadAddressSection, RoadAddressSection] = {
     def toRoadAddressSection(o: Seq[BaseRoadAddress]): Seq[RoadAddressSection] = {
       o.sortBy(_.startAddrMValue).map(ra =>
         RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
           ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType))
     }
-    val paired = pair(roadAddresses, projectLinks.groupBy(_.roadAddressId))
-      .groupBy(x => (x._1.roadNumber, x._1.roadPartNumber, x._1.track, x._2.roadNumber, x._2.roadPartNumber, x._2.track))
+    val sectioned = transfers.groupBy(x => (x._1.roadNumber, x._1.roadPartNumber, x._1.track, x._2.roadNumber, x._2.roadPartNumber, x._2.track))
       .mapValues(v => combinePair(v.sortBy(_._1.startAddrMValue)))
       .mapValues(v => {
         val x = v.unzip
         toRoadAddressSection(x._1) -> toRoadAddressSection(x._2)
       })
-    paired.flatMap { case (key, (src, target)) =>
-      val matches = matchingTracks(paired, key)
+    sectioned.flatMap { case (key, (src, target)) =>
+      val matches = matchingTracks(sectioned, key)
       if (matches.nonEmpty)
         adjustTrack((src, matches.get._1)).zip(adjustTrack((target, matches.get._2)))
       else
@@ -236,6 +229,6 @@ case class Delta(startDate: DateTime, terminations: Seq[RoadAddress], newRoads: 
 
 case class RoadPart(roadNumber: Long, roadPartNumber: Long)
 
-case class Transferred(oldLinks: Seq[RoadAddress], newLinks: Seq[ProjectLink])
+case class Transferred(mapping: Seq[(RoadAddress, ProjectLink)])
 
-case class ReNumeration(oldLinks: Seq[RoadAddress], newLinks: Seq[ProjectLink])
+case class ReNumeration(mapping: Seq[(RoadAddress, ProjectLink)])
