@@ -70,13 +70,34 @@ object CalibrationCode {
   }
 
   def getFromAddressLinkLike(roadAddress: RoadAddressLinkLike): CalibrationCode = {
-    fromBooleans(roadAddress.startCalibrationPoint.isDefined, roadAddress.endCalibrationPoint.isDefined)
+    //fromBooleans(roadAddress.startCalibrationPoint.isDefined, roadAddress.endCalibrationPoint.isDefined)
+
+    val startSame = roadAddress.startAddressM == roadAddress.startCalibrationPoint.getOrElse(-1)
+    val endSame = roadAddress.endAddressM == roadAddress.endCalibrationPoint.getOrElse(-1)
+    if (endSame && startSame)
+      return fromBooleans(roadAddress.startCalibrationPoint.isDefined, roadAddress.endCalibrationPoint.isDefined)
+    if (startSame && !endSame)
+      AtBeginningAndUserDefinedEnd
+    else if (!startSame && endSame)
+      AtEndAndUserBeginning
+    else if (!startSame && !endSame)
+      UserDefinedBoth
+    else if (roadAddress.startCalibrationPoint.isEmpty && endSame)
+      userDefinedEnd
+    else if (startSame && roadAddress.startCalibrationPoint.isEmpty)
+      userDefinedBeginning
+    else No
   }
 
   case object No extends CalibrationCode { def value = 0 }
   case object AtEnd extends CalibrationCode { def value = 1 }
   case object AtBeginning extends CalibrationCode { def value = 2 }
   case object AtBoth extends CalibrationCode { def value = 3 }
+  case object userDefinedEnd extends CalibrationCode { def value = 4 }
+  case object userDefinedBeginning extends CalibrationCode { def value = 5 }
+  case object UserDefinedBoth extends CalibrationCode { def value = 6 }
+  case object AtEndAndUserBeginning extends CalibrationCode { def value = 7 }
+  case object AtBeginningAndUserDefinedEnd extends CalibrationCode { def value = 8 }
 }
 case class CalibrationPoint(linkId: Long, segmentMValue: Double, addressMValue: Long) extends CalibrationPointMValues
 
