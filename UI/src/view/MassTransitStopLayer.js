@@ -337,9 +337,9 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     }
 
     if(_.contains(['liitetyt_pysakit'], propertyData.propertyData.publicId)){
+      var asset = selectedMassTransitStopModel.getCurrentAsset();
       _.each(terminalSource.getFeatures(), function(feature){
           var busStop = feature.getProperties();
-          var asset = selectedMassTransitStopModel.getCurrentAsset();
           if(asset.id == busStop.data.id || _.some(propertyData.propertyData.values, function(value){ return busStop.data.id == parseInt(value.propertyValue);  } )){
             feature.setStyle(busStop.massTransitStop.getMarkerSelectionStyles());
           }
@@ -659,6 +659,22 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     eventListener.listenTo(eventbus, 'asset:creationCancelled asset:creationFailed asset:creationTierekisteriFailed asset:creationNotFoundRoadAddressVKM', cancelCreate);
     eventListener.listenTo(eventbus, 'asset:updateCancelled asset:updateFailed asset:updateTierekisteriFailed asset:updateNotFoundRoadAddressVKM', cancelUpdate);
     eventListener.listenTo(eventbus, 'asset:closed', closeAsset);
+    eventListener.listenTo(eventbus, 'asset:modified', function(){
+      terminalSource.clear();
+      var asset = selectedMassTransitStopModel.getCurrentAsset();
+      if(asset.propertyMetadata){
+        var property = _.find(asset.propertyMetadata, function(prop){
+          return prop.publicId == 'liitetyt_pysakit';
+        });
+        if(property)
+          _.each(property.values, function(value){
+              var busStop = massTransitStopsCollection.getAsset(parseInt(value.propertyValue));
+              if(busStop)
+                  terminalSource.addFeature(busStop.massTransitStop.getMarkerFeature());
+          });
+      }
+    });
+
     eventListener.listenTo(eventbus, 'assets:fetched', function(assets) {
       if (zoomlevels.isInAssetZoomLevel(map.getView().getZoom())) {
         var groupedAssets = assetGrouping.groupByDistance(assets, map.getView().getZoom());
