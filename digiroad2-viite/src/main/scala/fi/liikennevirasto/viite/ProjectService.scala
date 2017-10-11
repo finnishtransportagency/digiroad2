@@ -8,7 +8,7 @@ import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReservedException, Track}
 import fi.liikennevirasto.digiroad2._
-import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefineCalibrationPoint
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.ProjectState._
 import fi.liikennevirasto.viite.dao.{ProjectDAO, RoadAddressDAO, _}
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink, RoadAddressLinkLike}
@@ -697,20 +697,20 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def updateProjectLinks(projectId: Long, linkIds: Set[Long], linkStatus: LinkStatus, userName: String,
                          roadNumber: Long = 0, roadPartNumber: Long = 0, userDefinedEndAddressM: Option[Int]) = {
     try {
-          withDynTransaction{
+      withDynTransaction{
         val projectLinks = withGeometry(ProjectDAO.getProjectLinks(projectId))
-        val userGeneratedCalibrationPoints = if(!userDefinedEndAddressM.isEmpty) {
+        userDefinedEndAddressM.map(addressM => {
           val endSegment = projectLinks.maxBy(_.endAddrMValue)
-          val calibrationPoint = UserDefineCalibrationPoint(newCalibrationPointId, endSegment.id, projectId, endSegment.endMValue, userDefinedEndAddressM.get)
-          val foundCalibrationPoint = CalibrationPointDAO.findCalibrationPointByRemainingValues(endSegment.id, projectId, endSegment.endMValue, userDefinedEndAddressM.get)
+          val calibrationPoint = UserDefinedCalibrationPoint(newCalibrationPointId, endSegment.id, projectId, endSegment.endMValue, addressM)
+          // TODO: remove calibration points that exist elsewhere except at the link end or start
+          val foundCalibrationPoint = CalibrationPointDAO.findCalibrationPointByRemainingValues(endSegment.id, projectId, endSegment.endMValue)
           if(foundCalibrationPoint.isEmpty)
             CalibrationPointDAO.createCalibrationPoint(calibrationPoint)
-          else CalibrationPointDAO.updateSpecificCalibrationPointMeasures(foundCalibrationPoint.head.id, endSegment.endMValue, userDefinedEndAddressM.get)
+          else
+            CalibrationPointDAO.updateSpecificCalibrationPointMeasures(foundCalibrationPoint.head.id, endSegment.endMValue, addressM)
           Seq(CalibrationPoint)
-        } else {
-          Seq.empty[CalibrationPoint]
-        }
-        val (updatedProjectLinks, unchangedProjectLinks) = projectLinks.partition(pl => linkIds.contains(pl.linkId))
+        })
+        val (updatedProjectLinks, _) = projectLinks.partition(pl => linkIds.contains(pl.linkId))
         linkStatus match {
           case LinkStatus.Terminated => {
             //Fetching road addresses in order to obtain the original addressMValues, since we may not have those values on project_link table, after previous recalculations
@@ -754,7 +754,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     projectLinks.groupBy(
       pl => (pl.roadNumber, pl.roadPartNumber)).foreach {
       grp =>
-        val recalculatedProjectLinks = ProjectSectionCalculator.assignMValues(grp._2)
+        val calibrationPoints = CalibrationPointDAO.fetchByRoadPart(projectId, grp._1._1, grp._1._2)
+        val recalculatedProjectLinks = ProjectSectionCalculator.assignMValues(grp._2, calibrationPoints)
         ProjectDAO.updateProjectLinksToDB(recalculatedProjectLinks, userName)
     }
     recalculateChangeTable(projectId)
