@@ -65,6 +65,8 @@
     var preMovedRoadAddresses = [];
     var changedIds = [];
 
+    var projectLinkStatus_notHandled = 0;
+
     var roadLinks = function() {
       return _.flatten(roadLinkGroups);
     };
@@ -298,7 +300,7 @@
     this.findReservedProjectLinks = function(boundingBox, zoomLevel, projectId) {
       backend.getProjectLinks({boundingBox: boundingBox, zoom: zoomLevel, projectId: projectId}, function(fetchedLinks) {
         var notHandledLinks = _.chain(fetchedLinks).flatten().filter(function (link) {
-          return link.status === 0;
+          return link.status === projectLinkStatus_notHandled;
         }).uniq().value();
         var notHandledOL3Features = _.map(notHandledLinks, function(road) {
           var points = _.map(road.points, function (point) {

@@ -1075,7 +1075,6 @@
     });
 
     eventbus.on('linkProperties:highlightReservedRoads', function(reservedOL3Features){
-    //              var style = projectLinkStyler.getProjectLinkStyle().getStyle( feature.projectLinkData, {zoomLevel: map.getView().getZoom()});
      var styledFeatures = _.map(reservedOL3Features,function(feature) {
         feature.setStyle(projectLinkStyler.getProjectLinkStyle().getStyle( feature.projectLinkData, {zoomLevel: map.getView().getZoom()}));
        return feature;
