@@ -469,33 +469,32 @@
       var saveChanges = function(){
         currentProject = projectCollection.getCurrentProject();
         //TODO revert dirtyness if others than ACTION_TERMINATE is choosen, because now after Lakkautus, the link(s) stay always in black color
-        if( $('[id=dropDown_0] :selected').val() == LinkStatus.Unchanged.action) {
-          projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Unchanged.value);
-          rootElement.html(emptyTemplate(currentProject.project));
+        var statusDropdown_0 =$('[id=dropDown_0] :selected').val();
+        var statusDropdown_1 = $('[id=dropDown_1] :selected').val();
+        switch (statusDropdown_0){
+          case LinkStatus.Unchanged.action : {
+            //Add save if dropdown 1 has uusi operation.
+            projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Unchanged.value); break;
+          }
+          case LinkStatus.New.action : {
+            //Add save if dropdown 1 has unchanged or transfer operation.
+            projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.New.value); break;
+          }
+          case LinkStatus.Transfer.action : {
+            //Add save if dropdown 1 has uusi operation.
+            projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Transfer.value); break;
+          }
+          case LinkStatus.Numbering.action : {
+            projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Numbering.value); break;
+          }
+          case LinkStatus.Terminated.action: {
+            projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Terminated.value); break;
+          }
+          case LinkStatus.Revert.action : {
+            projectCollection.revertChangesRoadlink(selectedProjectLink); break;
+          }
         }
-        else if( $('[id=dropDown_0] :selected').val() === LinkStatus.New.action){
-          projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.New.value);
-          rootElement.html(emptyTemplate(currentProject.project));
-        }
-        else if( $('[id=dropDown_0] :selected').val() === LinkStatus.Transfer.action){
-          projectCollection.saveProjectLinks(selectedProjectLink, LinkStatus.Transfer.value);
-        }
-        else if( $('[id=dropDown_0] :selected').val() === LinkStatus.Numbering.action){
-          projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Numbering.value);
-          rootElement.html(emptyTemplate(currentProject.project));
-        }
-        else if( $('[id=dropDown_0] :selected').val() === LinkStatus.Terminated.action){
-          projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Terminated.value);
-          rootElement.html(emptyTemplate(currentProject.project));
-        }
-        else if( $('[id=dropDown_0] :selected').val() === LinkStatus.Numbering.action){
-          projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Numbering.value);
-          rootElement.html(emptyTemplate(currentProject.project));
-        }
-        else if( $('[id=dropDown_0] :selected').val() === LinkStatus.Revert.action){
-          projectCollection.revertChangesRoadlink(selectedProjectLink);
-          rootElement.html(emptyTemplate(currentProject.project));
-        }
+        rootElement.html(emptyTemplate(currentProject.project));
       };
 
       var cancelChanges = function() {
