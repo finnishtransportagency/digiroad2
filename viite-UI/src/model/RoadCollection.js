@@ -312,7 +312,7 @@
     this.findReservedProjectLinks = function(boundingBox, zoomLevel, projectId) {
       backend.getProjectLinks({boundingBox: boundingBox, zoom: zoomLevel, projectId: projectId}, function(fetchedLinks) {
         var notHandledLinks = _.chain(fetchedLinks).flatten().filter(function (link) {
-          return link.status ===  LinkStatus.NotHandled.value
+          return link.status ===  LinkStatus.NotHandled.value;
         }).uniq().value();
         var notHandledOL3Features = _.map(notHandledLinks, function(road) {
           var points = _.map(road.points, function (point) {
