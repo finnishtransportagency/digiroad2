@@ -131,8 +131,9 @@
     selectSingleClick.on('select', function (event) {
       var shiftPressed = event.mapBrowserEvent !== undefined ?
         event.mapBrowserEvent.originalEvent.shiftKey : false;
-      var selection = _.find(event.selected, function (selectionTarget) {
-        return (!_.isUndefined(selectionTarget.projectLinkData) && (
+      removeCutterMarkers();
+      var selection = _.find(event.selected.concat(selectSingleClick.getFeatures().getArray()), function (selectionTarget) {
+        return (applicationModel.getSelectedTool() != 'Cut' && !_.isUndefined(selectionTarget.projectLinkData) && (
           projectLinkStatusIn(selectionTarget.projectLinkData, [notHandledStatus, newRoadAddressStatus, terminatedStatus, unchangedStatus, transferredStatus, numberingStatus]) ||
           (selectionTarget.projectLinkData.anomaly == noAddressAnomaly && selectionTarget.projectLinkData.roadLinkType != floatingRoadLinkType) ||
           selectionTarget.projectLinkData.roadClass === 99 || selectionTarget.projectLinkData.roadLinkSource === 3 )
@@ -228,10 +229,6 @@
         }
         else selectedProjectLinkProperty.cleanIds();
       }
-    };
-
-    var clear = function(){
-      selectSingleClick.getFeatures().clear();
     };
 
     var drawIndicators = function(links) {
@@ -551,9 +548,20 @@
       vectorLayer.getSource().clear();
     };
 
+    var removeCutterMarkers = function() {
+      var featuresToRemove = [];
+      _.each(selectSingleClick.getFeatures().getArray(), function(feature){
+        if(feature.getProperties().type == 'cutter')
+          featuresToRemove.push(feature);
+      });
+      _.each(featuresToRemove, function(ft){
+        selectSingleClick.getFeatures().remove(ft);
+      });
+    };
+
     var SuravageCutter = function(vectorLayer, collection, eventListener) {
       var scissorFeatures = null;
-      var CUT_THRESHOLD = 5;
+      var CUT_THRESHOLD = 1;
       var vectorSource = vectorLayer.getSource();
       var self = this;
 
@@ -572,30 +580,18 @@
         selectSingleClick.getFeatures().push(scissorFeatures);
       };
 
-      var remove = function() {
-        var featuresToRemove = [];
-        _.each(selectSingleClick.getFeatures().getArray(), function(feature){
-          if(feature.getProperties().type == 'cutter')
-            featuresToRemove.push(feature);
-        });
-        scissorFeatures = [];
-        _.each(featuresToRemove, function(ft){
-          selectSingleClick.getFeatures().remove(ft);
-        });
-      };
 
       var clickHandler = function(evt) {
-        // selectedProjectLinkProperty.clean();
         if (applicationModel.getSelectedTool() === 'Cut') {
+          $('.wrapper').remove();
           self.cut(evt);
         }
       };
 
       this.deactivate = function() {
-        eventListener.stopListening(eventbus, 'map:clicked', clickHandler);
-        eventListener.stopListening(eventbus, 'map:mouseMoved');
+        //TODO check if need to stop this click handling
+        // eventListener.stopListening(eventbus, 'map:clicked', clickHandler);
         selectedProjectLinkProperty.setDirty(false);
-        clearHighlights();
       };
 
       this.activate = function() {
