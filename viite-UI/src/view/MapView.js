@@ -118,6 +118,9 @@
     map.on('singleclick', function(event) {
       eventbus.trigger('map:clicked', { x: event.coordinate.shift(), y: event.coordinate.shift() });
     });
+    map.on('dblclick', function(event) {
+      eventbus.trigger('map:dblclicked', { x: event.coordinate.shift(), y: event.coordinate.shift() });
+    });
 
     addCenterMarkerLayerToMap(map);
 
