@@ -34,6 +34,17 @@ package object viite {
   /* Maximum distance to consider the tracks to go side by side */
   val MaxDistanceBetweenTracks = 50.0
 
+  val newCalibrationPointId: Long = -1000L
+
+  /* Maximum distance of regular road link geometry to suravage geometry difference where splitting is allowed */
+  val MaxSuravageToleranceToGeometry = 0.5
+
+  val ErrorNoMatchingProjectLinkForSplit = "Suravage-linkkiä vastaavaa käsittelemätöntä tieosoitelinkkiä ei löytynyt projektista"
+  val ErrorFollowingRoadPartsNotFoundInDB = "Seuraavia tieosia ei löytynyt tietokannasta:"
+  val ErrorFollowingPartsHaveDifferingEly = "Seuraavat tieosat ovat eri ELY-numerolla kuin projektin muut osat:"
+  val ErrorRoadPartsHaveDifferingEly = "Tieosat ovat eri ELYistä"
+  val ErrorSuravageLinkNotFound = "Suravage-linkkiä ei löytynyt"
+
   def switchSideCode(sideCode: SideCode): SideCode = {
     // Switch between against and towards 2 -> 3, 3 -> 2
     SideCode.apply(5-sideCode.value)

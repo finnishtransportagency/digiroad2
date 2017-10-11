@@ -36,13 +36,16 @@ trait ProjectAddressLinkLike extends RoadAddressLinkLike {
   def anomaly: Anomaly
   def lrmPositionId: Long
   def status: LinkStatus
+  def roadAddressId: Long
+  def connectedLinkId: Option[Long]
 }
 
 case class ProjectAddressLink (id: Long, linkId: Long, geometry: Seq[Point],
                                length: Double, administrativeClass: AdministrativeClass,
                                linkType: LinkType, roadLinkType: RoadLinkType, constructionType: ConstructionType,
-                               roadLinkSource: LinkGeomSource, roadType: RoadType, roadName: String, municipalityCode: BigInt, modifiedAt: Option[String],modifiedBy: Option[String],
+                               roadLinkSource: LinkGeomSource, roadType: RoadType, roadName: String, municipalityCode: BigInt, modifiedAt: Option[String], modifiedBy: Option[String],
                                attributes: Map[String, Any] = Map(), roadNumber: Long, roadPartNumber: Long, trackCode: Long, elyCode: Long, discontinuity: Long,
                                startAddressM: Long, endAddressM: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
                                startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint],
-                               anomaly: Anomaly = Anomaly.None, lrmPositionId: Long, status: LinkStatus, roadAddressId : Long) extends ProjectAddressLinkLike
+                               anomaly: Anomaly = Anomaly.None, lrmPositionId: Long, status: LinkStatus, roadAddressId: Long,
+                               connectedLinkId: Option[Long] = None) extends ProjectAddressLinkLike

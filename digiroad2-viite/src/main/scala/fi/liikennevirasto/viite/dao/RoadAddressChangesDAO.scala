@@ -251,11 +251,11 @@ object RoadAddressChangesDAO {
               addToBatch(roadAddressSection, ely, AddressChangeType.Unchanged, roadAddressChangePS)
             }
 
-            ProjectDeltaCalculator.partition(delta.transferred.oldLinks, delta.transferred.newLinks).foreach{ case (roadAddressSection1, roadAddressSection2) =>
+            ProjectDeltaCalculator.partition(delta.transferred.mapping).foreach{ case (roadAddressSection1, roadAddressSection2) =>
               addToBatchWithOldValues(roadAddressSection1, roadAddressSection2 , ely, AddressChangeType.Transfer, roadAddressChangePS)
             }
 
-            ProjectDeltaCalculator.partition(delta.numbering.oldLinks, delta.numbering.newLinks).foreach{ case (roadAddressSection1, roadAddressSection2) =>
+            ProjectDeltaCalculator.partition(delta.numbering.mapping).foreach{ case (roadAddressSection1, roadAddressSection2) =>
               addToBatchWithOldValues(roadAddressSection1, roadAddressSection2, ely, AddressChangeType.ReNumeration, roadAddressChangePS)
             }
 

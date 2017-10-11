@@ -18,7 +18,7 @@ import slick.jdbc.StaticQuery.interpolation
 /**
   * Class to test DB trigger that does not allow reserving already reserved links to project
   */
-class ProjectLinkDaoSpec  extends FunSuite with Matchers {
+class ProjectDaoSpec  extends FunSuite with Matchers {
 
   private final val lock: String = "LOCK OBJECT"
 

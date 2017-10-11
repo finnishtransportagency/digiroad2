@@ -327,8 +327,15 @@
       };
 
       var fillForm = function (currParts, newParts) {
-        if (newParts.length === 0) hasNewRoadParts = false;
-        rootElement.html(openProjectTemplate(currentProject, writeHtmlList(currParts), writeHtmlList(newParts)));
+        if (newParts.length === 0) {
+          hasNewRoadParts = false;
+        }
+        if (newParts.length === 0 && currParts.length === 0 && currentProject.id === 0 ) {
+          rootElement.html(newProjectTemplate());
+          addDatePicker();
+        }else{
+          rootElement.html(openProjectTemplate(currentProject, writeHtmlList(currParts), writeHtmlList(newParts)));
+        }
         applicationModel.setProjectButton(true);
         applicationModel.setProjectFeature(currentProject.id);
         applicationModel.setOpenProject(true);
