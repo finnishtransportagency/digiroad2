@@ -43,6 +43,8 @@
         splitSuravage.existing = left;
         splitSuravage.existing.endMValue = measureLeft;
       }
+      splitSuravage.created.splitPoint = split.point;
+      splitSuravage.existing.splitPoint = split.point;
 
       splitSuravage.created.id = null;
       splitSuravage.splitMeasure = split.splitMeasure;

@@ -159,9 +159,6 @@
 
     var editModeToggle = new EditModeToggleButton(
       toolSelection
-      // hide: function() {},
-      // reset: function() {},
-      // show: function() {}
     );
 
     var templateAttributes = {

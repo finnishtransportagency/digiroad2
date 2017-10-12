@@ -205,9 +205,8 @@
         '<span class="marker">'+markers[index]+'</span>'
         : "") +
       '<div class="input-unit-combination">' +
-      //TODO - Change the events in order to use id with numbering
       '<select class="form-control" id="dropdown_'+index+'" size="1">'+
-      '<option id="drop_'+ index +'_-1' + '" '+ defineOptionModifiers('', selected) +'>Valitse</option>'+
+      '<option id="drop_'+ index +'_' + '" '+ defineOptionModifiers('', selected) +'>Valitse</option>'+
       '<option id="drop_'+ index +'_' + LinkStatus.Unchanged.action + '" value='+ LinkStatus.Unchanged.action+' ' + defineOptionModifiers(LinkStatus.Unchanged.action, selected) + '>Ennallaan</option>'+
       '<option id="drop_'+ index +'_' + LinkStatus.Transfer.action + '" value='+ LinkStatus.Transfer.action + ' ' + defineOptionModifiers(LinkStatus.Transfer.action, selected) + '>Siirto</option>'+
       '<option id="drop_'+ index +'_' + LinkStatus.New.action + '" value='+ LinkStatus.New.action + ' ' + defineOptionModifiers(LinkStatus.New.action, selected) +'>Uusi</option>'+

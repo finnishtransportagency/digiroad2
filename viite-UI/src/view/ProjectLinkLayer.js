@@ -166,7 +166,6 @@
         highlightFeatures();
       } else {
         selectedProjectLinkProperty.clean();
-        $('.wrapper').remove();
         $('#actionButtons').html('<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button><button disabled id ="send-button" class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button>');
         if (!_.isUndefined(selection) && !selectedProjectLinkProperty.isDirty())
           selectedProjectLinkProperty.open(selection.projectLinkData.linkId, true);
@@ -176,9 +175,7 @@
 
     var selectDoubleClick = new ol.interaction.Select({
       layer: [vectorLayer, suravageRoadProjectLayer],
-      condition: function (mapBrowserEvent) {
-        return (ol.events.condition.doubleClick(mapBrowserEvent) && ol.events.condition.shiftKeyOnly(mapBrowserEvent)) || ol.events.condition.doubleClick(mapBrowserEvent);
-      },
+      condition: ol.events.condition.doubleClick,
       style: function(feature) {
         if(projectLinkStatusIn(feature.projectLinkData, [notHandledStatus, newRoadAddressStatus,terminatedStatus, transferredStatus, unchangedStatus, numberingStatus]) || feature.projectLinkData.roadClass === 99 || feature.projectLinkData.roadLinkSource == 3) {
           return projectLinkStyler.getSelectionLinkStyle().getStyle( feature.projectLinkData, {zoomLevel: currentZoom});
@@ -382,7 +379,7 @@
 
     var zoomDoubleClickListener = function (event) {
       _.defer(function () {
-        if (!event.shiftKey && selectedProjectLinkProperty.get().length === 0 &&
+        if (applicationModel.getSelectedTool() != 'Cut' && !event.shiftKey && selectedProjectLinkProperty.get().length === 0 &&
           applicationModel.getSelectedLayer() == 'roadAddressProject' && map.getView().getZoom() <= 13) {
           map.getView().setZoom(map.getView().getZoom() + 1);
         }
@@ -564,22 +561,6 @@
       var vectorSource = vectorLayer.getSource();
       var self = this;
 
-      var moveTo = function(x, y) {
-        scissorFeatures = new ol.Feature({
-          geometry: new ol.geom.Point([x, y]),
-          type: 'cutter-crosshair'
-        });
-        scissorFeatures.setStyle(
-            new ol.style.Style({
-              image: new ol.style.Icon({
-                src: 'images/cursor-crosshair.svg'
-              })
-          })
-        );
-        selectSingleClick.getFeatures().push(scissorFeatures);
-      };
-
-
       var clickHandler = function(evt) {
         if (applicationModel.getSelectedTool() === 'Cut') {
           $('.wrapper').remove();
@@ -622,16 +603,6 @@
             .value();
       };
 
-      this.updateByPosition = function(mousePoint) {
-        var closestSuravageLink = findNearestSuravageLink(mousePoint);
-        if (!closestSuravageLink) {
-          return;
-        }
-        if (isWithinCutThreshold(closestSuravageLink.distance)) {
-          moveTo(closestSuravageLink.point[0], closestSuravageLink.point[1]);
-        }
-      };
-
       this.cut = function(mousePoint) {
         var pointsToLineString = function(points) {
           var coordPoints = _.map(points, function(point) { return [point.x, point.y]; });
@@ -642,7 +613,7 @@
           var lineString = pointsToLineString(nearestSuravage.points);
           var splitMeasure = GeometryUtils.calculateMeasureAtPoint(lineString, point);
           var splitVertices = GeometryUtils.splitByPoint(lineString, point);
-          return _.merge({ splitMeasure: splitMeasure }, splitVertices);
+          return _.merge({ splitMeasure: splitMeasure, point: point }, splitVertices);
         };
 
         var nearest = findNearestSuravageLink([mousePoint.x, mousePoint.y]);

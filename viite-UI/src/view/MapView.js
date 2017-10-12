@@ -65,7 +65,6 @@
 
     var setCursor = function(tool) {
       var cursor = {'Select': 'default', 'Add': 'crosshair', 'Cut': 'crosshair', 'Copy': 'copy'};
-      // $('.olMap').css('cursor', cursor[tool]);
       map.getViewport().style.cursor = cursor[tool];
     };
 
