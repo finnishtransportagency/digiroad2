@@ -273,7 +273,6 @@
       if(roadCollection){
         var roadLinkDirection = getRoadLinkDirection();
         var massTransitStopDirection =  currentAsset.payload.validityDirection;
-        debugger;
         return isTerminalBusStop(currentAsset.payload.properties) || roadLinkDirection === 1 || roadLinkDirection === massTransitStopDirection;
       }else{
         return false;
