@@ -3,7 +3,7 @@
     var currentProject = false;
     var selectedProjectLink = false;
     var activeLayer = false;
-    var hasNewRoadParts = false;
+    var hasReservedRoadParts = false;
     var staticField = function(labelText, dataField) {
       var field;
       field = '<div class="form-group">' +
@@ -247,7 +247,7 @@
         var data = $('#roadAddressProject').get(0);
         applicationModel.addSpinner();
         eventbus.once('roadAddress:projectSaved', function (result) {
-          hasNewRoadParts = false;
+          hasReservedRoadParts = false;
           currentProject = result.project;
           currentProject.isDirty = false;
           var text = '';
@@ -328,7 +328,7 @@
 
       var fillForm = function (currParts, newParts) {
         if (newParts.length === 0) {
-          hasNewRoadParts = false;
+          hasReservedRoadParts = false;
         }
         if (newParts.length === 0 && currParts.length === 0 && currentProject.id === 0 ) {
           rootElement.html(newProjectTemplate());
@@ -399,7 +399,7 @@
         rootElement.find('#generalNext').prop("disabled", formIsInvalid(rootElement));
         $('#saveEdit:disabled').prop('disabled', formIsInvalid(rootElement));
         currentProject.isDirty = true;
-        hasNewRoadParts = true;
+        hasReservedRoadParts = true;
       });
 
       eventbus.on('layer:selected', function(layer) {
@@ -505,7 +505,7 @@
       });
 
 
-      var closeProjectMode = function(changeLayerMode) {
+      var closeProjectMode = function(changeLayerMode, noSave) {
         eventbus.trigger("roadAddressProject:startAllInteractions");
         applicationModel.setOpenProject(false);
         rootElement.find('header').toggle();
@@ -515,7 +515,7 @@
         eventbus.trigger('layer:enableButtons', true);
         if(changeLayerMode){
           eventbus.trigger('roadAddressProject:clearOnClose');
-          applicationModel.selectLayer('linkProperty', true);
+          applicationModel.selectLayer('linkProperty', true, noSave);
         }
       };
 
@@ -557,19 +557,21 @@
       });
 
       rootElement.on('click', '#cancelEdit', function(){
-        reOpenCurrent();
+        new GenericConfirmPopup('Haluatko tallentaa tekemäsi muutokset?', {
+          successCallback: function() {
+            saveAndNext();
+            eventbus.trigger('roadAddressProject:enableInteractions');
+          },
+          closeCallback: function(){
+            reOpenCurrent();
+          }
+        });
+
       });
 
       rootElement.on('click', '#saveAndCancelDialogue', function(eventData){
         var defaultPopupMessage = 'Haluatko tallentaa tekemäsi muutokset?';
-        if (currentProject && hasNewRoadParts) {
-          hasNewRoadParts = false;
-          projectCollection.setReservedDirtyRoadParts([]);
-          fillForm(projectCollection.getCurrentRoadPartList(), projectCollection.getReservedDirtyRoadParts());
-        }
-        else if (activeLayer) {
-          displayCloseConfirmMessage(defaultPopupMessage, true, eventData.currentTarget.id);
-        }
+        displayCloseConfirmMessage(defaultPopupMessage, true);
       });
       rootElement.on('click', '#closeProjectSpan', function(){
         displayCloseConfirmMessage("Haluatko tallentaa tekemäsi muutokset?", true);
