@@ -183,6 +183,10 @@ object Digiroad2Context {
     new AssetPropertyService(eventbus, userProvider, DefaultDatabaseTransaction)
   }
 
+  lazy val linearMassLimitationService: LinearMassLimitationService = {
+    new LinearMassLimitationService(roadLinkService)
+  }
+
   lazy val speedLimitService: SpeedLimitService = {
     new SpeedLimitService(eventbus, vvhClient, roadLinkService)
   }

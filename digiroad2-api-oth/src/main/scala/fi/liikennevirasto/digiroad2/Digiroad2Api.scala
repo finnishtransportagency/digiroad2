@@ -31,6 +31,8 @@ case class NewProhibition(linkId: Long, startMeasure: Double, endMeasure: Double
 
 case class NewMaintenanceRoad(linkId: Long, startMeasure: Double, endMeasure: Double, value: Seq[Properties], sideCode: Int)
 
+//case class NewMassLimitationsAsset(geometry: Seq[Point], value: Seq[AssetTypes])
+
 class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val speedLimitService: SpeedLimitService,
                    val obstacleService: ObstacleService = Digiroad2Context.obstacleService,
@@ -40,6 +42,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val vvhClient: VVHClient,
                    val massTransitStopService: MassTransitStopService,
                    val linearAssetService: LinearAssetService,
+                   val linearMassLimitationService: LinearMassLimitationService = Digiroad2Context.linearMassLimitationService,
                    val maintenanceRoadService: MaintenanceService,
                    val manoeuvreService: ManoeuvreService = Digiroad2Context.manoeuvreService,
                    val pedestrianCrossingService: PedestrianCrossingService = Digiroad2Context.pedestrianCrossingService,
@@ -674,6 +677,19 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
+  get("/linearassets/massLimitation") {
+    val user = userProvider.getCurrentUser()
+    val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
+    val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
+    params.get("bbox").map { bbox =>
+      val boundingRectangle = constructBoundingRectangle(bbox)
+      validateBoundingBox(boundingRectangle)
+      mapMassLinearAssets(linearMassLimitationService.getMassLimitationByBoundingBox(typeId, boundingRectangle, municipalities))
+    } getOrElse {
+      BadRequest("Missing mandatory 'bbox' parameter")
+    }
+  }
+
   def mapLinearAssets(assets: Seq[Seq[PieceWiseLinearAsset]]): Seq[Seq[Map[String, Any]]] = {
     assets.map { links =>
       links.map { link =>
@@ -697,6 +713,17 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
           "startAddrMValue" -> extractLongValue(link.attributes, "VIITE_START_ADDR"),
           "endAddrMValue" ->  extractLongValue(link.attributes, "VIITE_END_ADDR"),
           "administrativeClass" -> link.administrativeClass.value
+        )
+      }
+    }
+  }
+
+  def mapMassLinearAssets(readOnlyAssets: Seq[Seq[MassLinearAsset]]): Seq[Seq[Map[String, Any]]] = {
+    readOnlyAssets.map { links =>
+      links.map { link =>
+        Map(
+          "points" -> link.geometry,
+          "value" -> link.value.toJson
         )
       }
     }
@@ -739,7 +766,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
         value.extractOpt[Seq[NewNumericValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, NumericValue(x.value), x.sideCode, 0, None))
     }
   }
-
 
   post("/linearassets") {
     val user = userProvider.getCurrentUser()
