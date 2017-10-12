@@ -199,8 +199,18 @@
       });
     };
 
+    var isTerminalStop = function (stopType) {
+        var terminalSelected = false;
+        if (stopType == 6) {
+            terminalSelected = true;
+        }
+    };
+
     var createDirectionArrowStyle = function() {
+
       var directionArrowSrc = data.floating ? 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow-warning.svg' : 'src/resources/digiroad2/bundle/assetlayer/images/direction-arrow.svg';
+      if(data.stopTypes[0] == 6)
+          directionArrowSrc = data.floating ? 'src/resources/digiroad2/bundle/assetlayer/images/no-direction-warning.svg' : 'src/resources/digiroad2/bundle/assetlayer/images/no-direction.svg';
       var rotation = validitydirections.calculateRotation(data.bearing, data.validityDirection);
       return new ol.style.Style({
         image: new ol.style.Icon(({

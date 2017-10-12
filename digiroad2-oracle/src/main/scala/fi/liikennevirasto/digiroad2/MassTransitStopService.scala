@@ -82,10 +82,15 @@ trait AbstractBusStopStrategy {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(point, roadLink.geometry)
     val newPoint = GeometryUtils.calculatePointFromLinearReference(roadLink.geometry, mValue).getOrElse(point)
     massTransitStopDao.updateLrmPosition(id, mValue, roadLink.linkId, roadLink.linkSource)
-    massTransitStopDao.updateBearing(id, position)
     massTransitStopDao.updateMunicipality(id, roadLink.municipalityCode)
     updateAssetGeometry(id, newPoint)
   }
+
+  protected def updatePositionWithBearing(id: Long, roadLink: RoadLink)(position: Position) = {
+    updatePosition(id, roadLink)(position)
+    massTransitStopDao.updateBearing(id, position)
+  }
+
 
   protected def fetchAsset(id: Long): PersistedMassTransitStop = {
     massTransitStopDao.fetchPointAssets(massTransitStopDao.withId(id)).headOption.getOrElse(throw new NoSuchElementException)

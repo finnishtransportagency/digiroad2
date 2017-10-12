@@ -10,6 +10,8 @@ class TerminalBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopD
 {
   private val radiusMeters = 200
   private val terminalChildrenPublicId = "liitetyt_pysakit"
+  private val validityDirectionPublicId = "vaikutussuunta"
+  private val ignoredProperties = Seq(terminalChildrenPublicId, validityDirectionPublicId)
 
   override def is(newProperties: Set[SimpleProperty], roadLink: Option[RoadLink], existingAssetOption: Option[PersistedMassTransitStop]): Boolean = {
     //If the stop have the property stop type with the terminal value
@@ -51,8 +53,8 @@ class TerminalBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopD
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(point, geometry)
     val newAssetPoint = GeometryUtils.calculatePointFromLinearReference(geometry, mValue).getOrElse(Point(asset.lon, asset.lat))
     val floating = !PointAssetOperations.coordinatesWithinThreshold(Some(point), GeometryUtils.calculatePointFromLinearReference(geometry, mValue))
-    massTransitStopDao.insertLrmPosition(lrmPositionId, mValue, asset.linkId, linkSource)
-    massTransitStopDao.insertAsset(assetId, nationalId, newAssetPoint.x, newAssetPoint.y, asset.bearing, username, municipality, floating)
+    massTransitStopDao.insertLrmPosition(lrmPositionId, mValue, asset.linkId, linkSource, SideCode.BothDirections)
+    massTransitStopDao.insertAsset(assetId, nationalId, newAssetPoint.x, newAssetPoint.y, username, municipality, floating)
     massTransitStopDao.insertAssetLink(assetId, lrmPositionId)
 
     val children = MassTransitStopOperations.getTerminalMassTransitStopChildren(asset.properties)
@@ -66,7 +68,7 @@ class TerminalBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopD
     if (MassTransitStopOperations.mixedStoptypes(properties.toSet))
       throw new IllegalArgumentException
 
-    massTransitStopDao.updateAssetProperties(assetId, properties.filterNot(_.publicId == terminalChildrenPublicId) ++ defaultValues.toSet)
+    massTransitStopDao.updateAssetProperties(assetId, properties.filterNot(p =>  ignoredProperties.contains(p.publicId)) ++ defaultValues.toSet)
     updateAdministrativeClassValue(assetId, administrativeClass.getOrElse(throw new IllegalArgumentException("AdministrativeClass argument is mandatory")))
     fetchAsset(assetId)
   }
@@ -85,7 +87,7 @@ class TerminalBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopD
     val id = asset.id
     massTransitStopDao.updateAssetLastModified(id, username)
     //TODO check this better
-    massTransitStopDao.updateAssetProperties(id, verifiedProperties.filter(a => a.publicId != terminalChildrenPublicId).toSeq)
+    massTransitStopDao.updateAssetProperties(id, verifiedProperties.filterNot(p =>  ignoredProperties.contains(p.publicId)).toSeq)
     updateAdministrativeClassValue(id, roadLink.administrativeClass)
 
     optionalPosition.map(updatePosition(id, roadLink))

@@ -273,7 +273,8 @@
       if(roadCollection){
         var roadLinkDirection = getRoadLinkDirection();
         var massTransitStopDirection =  currentAsset.payload.validityDirection;
-        return roadLinkDirection === 1 || roadLinkDirection === massTransitStopDirection;
+        debugger;
+        return isTerminalBusStop(currentAsset.payload.properties) || roadLinkDirection === 1 || roadLinkDirection === massTransitStopDirection;
       }else{
         return false;
       }
@@ -454,6 +455,14 @@
       return _.some(properties, function(property){
         return property.publicId === 'tietojen_yllapitaja' &&
             _.some(property.values, function(value){return value.propertyValue ==='2'; });
+      });
+    }
+
+    function isTerminalBusStop(properties) {
+      return _.some(properties, function(property) {
+        return property.publicId == 'pysakin_tyyppi' && _.some(property.values, function(value){
+          return value.propertyValue = "6";
+        });
       });
     }
 

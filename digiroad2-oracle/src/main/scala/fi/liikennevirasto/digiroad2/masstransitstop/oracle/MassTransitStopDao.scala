@@ -449,11 +449,28 @@ class MassTransitStopDao {
       """.execute
   }
 
+  def insertLrmPosition(id: Long, mValue: Double, linkId: Long, linkSource: LinkGeomSource, sideCode: SideCode) {
+    sqlu"""
+           insert into lrm_position (id, start_measure, end_measure, link_id, link_source, side_code)
+           values ($id, $mValue, $mValue, $linkId, ${linkSource.value}, ${sideCode.value})
+      """.execute
+  }
+
   def insertAsset(id: Long, nationalId: Long, lon: Double, lat: Double, bearing: Int, creator: String, municipalityCode: Int, floating: Boolean): Unit = {
     val typeId = 10
     sqlu"""
            insert into asset (id, external_id, asset_type_id, bearing, created_by, municipality_code, geometry, floating)
            values ($id, $nationalId, $typeId, $bearing, $creator, $municipalityCode,
+           MDSYS.SDO_GEOMETRY(4401, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,1,1), MDSYS.SDO_ORDINATE_ARRAY($lon, $lat, 0, 0)),
+           $floating)
+      """.execute
+  }
+
+  def insertAsset(id: Long, nationalId: Long, lon: Double, lat: Double, creator: String, municipalityCode: Int, floating: Boolean): Unit = {
+    val typeId = 10
+    sqlu"""
+           insert into asset (id, external_id, asset_type_id, created_by, municipality_code, geometry, floating)
+           values ($id, $nationalId, $typeId, $creator, $municipalityCode,
            MDSYS.SDO_GEOMETRY(4401, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,1,1), MDSYS.SDO_ORDINATE_ARRAY($lon, $lat, 0, 0)),
            $floating)
       """.execute

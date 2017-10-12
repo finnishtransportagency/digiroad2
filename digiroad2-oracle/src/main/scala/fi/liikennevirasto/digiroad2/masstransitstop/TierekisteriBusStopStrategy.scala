@@ -144,7 +144,7 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
           mergedPropertiesWithOutInventoryDate), username, Point(position.lon, position.lat), geometry, municipalityCode, Some(roadLink.administrativeClass), roadLink.linkSource, roadLink)
 
       }else{
-        optionalPosition.map(updatePosition(asset.id, roadLink))
+        optionalPosition.map(updatePositionWithBearing(asset.id, roadLink))
         massTransitStopDao.updateAssetLastModified(asset.id, username)
         massTransitStopDao.updateAssetProperties(asset.id, verifiedProperties.toSeq)
         massTransitStopDao.updateTextPropertyValue(asset.id, MassTransitStopOperations.LiViIdentifierPublicId, liviId)
@@ -158,7 +158,7 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
       }
     }else{
       val newLiviId = toLiviId.format(asset.nationalId)
-      optionalPosition.map(updatePosition(asset.id, roadLink))
+      optionalPosition.map(updatePositionWithBearing(asset.id, roadLink))
       massTransitStopDao.updateAssetLastModified(asset.id, username)
       massTransitStopDao.updateAssetProperties(asset.id, verifiedProperties.toSeq)
       massTransitStopDao.updateTextPropertyValue(asset.id, MassTransitStopOperations.LiViIdentifierPublicId, newLiviId)

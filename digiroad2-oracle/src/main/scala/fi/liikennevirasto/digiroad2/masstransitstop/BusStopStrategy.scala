@@ -66,7 +66,7 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
 
     massTransitStopDao.updateAssetLastModified(asset.id, username)
 
-    optionalPosition.map(updatePosition(asset.id, roadLink))
+    optionalPosition.map(updatePositionWithBearing(asset.id, roadLink))
 
     //Remove from common assets the side code property
     val commonAssetProperties = AssetPropertyConfiguration.commonAssetProperties.
