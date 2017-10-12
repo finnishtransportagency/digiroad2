@@ -51,6 +51,10 @@
       new StyleRule().where('roadClass').is(99).use({stroke: {color: '#00FF00'}})
     ];
 
+    var cutterStyleRules = [
+      new StyleRule().where('type').is('cutter-crosshair').use({icon: {src: 'images/cursor-crosshair.svg'}})
+    ];
+
     var projectLinkStyle = new StyleRuleProvider({});
     projectLinkStyle.addRules(projectLinkRules);
     projectLinkStyle.addRules(strokeWidthRules);
@@ -59,6 +63,7 @@
     selectionLinkStyle.addRules(projectLinkRules);
     selectionLinkStyle.addRules(strokeWidthRules);
     selectionLinkStyle.addRules(selectionStyleRules);
+    selectionLinkStyle.addRules(cutterStyleRules);
 
     var getProjectLinkStyle = function () {
       return projectLinkStyle;

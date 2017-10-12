@@ -261,10 +261,7 @@
         return indicatorsForSplit();
       };
       indicators();
-
-      _.each(features, function(feature){
-        selectSingleClick.getFeatures().push(feature);
-      });
+      addFeaturesToSelection(features);
     };
 
     var canItBeAddToSelection = function(selectionData) {
@@ -402,7 +399,11 @@
       if (event.dragging) {
         return;
       }
-      displayRoadAddressInfo(event, pixel);
+      if (applicationModel.getSelectedTool() === 'Cut' && suravageCutter) {
+        suravageCutter.updateByPosition(event.coordinate);
+      } else {
+        displayRoadAddressInfo(event, pixel);
+      }
     });
 
     var displayRoadAddressInfo = function (event, pixel) {
@@ -556,10 +557,34 @@
     };
 
     var SuravageCutter = function(vectorLayer, collection, eventListener) {
-      var scissorFeatures = null;
-      var CUT_THRESHOLD = 1;
+      var scissorFeatures = [];
+      var CUT_THRESHOLD = 20;
       var vectorSource = vectorLayer.getSource();
       var self = this;
+
+      var moveTo = function(x, y) {
+        scissorFeatures = [new ol.Feature({
+          geometry: new ol.geom.Point([x, y]),
+          type: 'cutter-crosshair'
+        })];
+        scissorFeatures[0].setStyle(
+            new ol.style.Style({
+              image: new ol.style.Icon({
+                src: 'images/cursor-crosshair.svg'
+              })
+          })
+        );
+        removeFeaturesByType('cutter-crosshair');
+        addFeaturesToSelection(scissorFeatures);
+      };
+
+      var removeFeaturesByType = function (match) {
+        _.each(selectSingleClick.getFeatures().getArray(), function(feature){
+          if(feature && feature.getProperties().type == match) {
+            selectSingleClick.getFeatures().remove(feature);
+          }
+        });
+      };
 
       var clickHandler = function(evt) {
         if (applicationModel.getSelectedTool() === 'Cut') {
@@ -601,6 +626,18 @@
             })
             .head()
             .value();
+      };
+
+      this.updateByPosition = function(mousePoint) {
+        var closestSuravageLink = findNearestSuravageLink(mousePoint);
+        if (!closestSuravageLink) {
+          return;
+        }
+        if (isWithinCutThreshold(closestSuravageLink.distance)) {
+          moveTo(closestSuravageLink.point[0], closestSuravageLink.point[1]);
+        } else {
+          removeFeaturesByType('cutter-crosshair');
+        }
       };
 
       this.cut = function(mousePoint) {
