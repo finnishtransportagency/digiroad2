@@ -3,8 +3,9 @@ package fi.liikennevirasto.viite.model
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.PolyLine
 import fi.liikennevirasto.digiroad2.{Point, RoadLinkType}
-import fi.liikennevirasto.viite.dao.CalibrationPoint
+import fi.liikennevirasto.viite.dao.{CalibrationCode, CalibrationPoint}
 import fi.liikennevirasto.viite.RoadType
+import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
 
 trait RoadAddressLinkLike extends PolyLine {
   def id: Long
@@ -35,6 +36,7 @@ trait RoadAddressLinkLike extends PolyLine {
   def endCalibrationPoint: Option[CalibrationPoint]
   def anomaly: Anomaly
   def lrmPositionId: Long
+  def calibrationPointCode:Option[CalibrationCode]
 }
 
 case class RoadAddressLink(id: Long, linkId: Long, geometry: Seq[Point],
@@ -43,7 +45,7 @@ case class RoadAddressLink(id: Long, linkId: Long, geometry: Seq[Point],
                            attributes: Map[String, Any] = Map(), roadNumber: Long, roadPartNumber: Long, trackCode: Long, elyCode: Long, discontinuity: Long,
                            startAddressM: Long, endAddressM: Long, startDate: String, endDate: String, startMValue: Double, endMValue: Double, sideCode: SideCode,
                            startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint],
-                           anomaly: Anomaly = Anomaly.None, lrmPositionId: Long, newGeometry: Option[Seq[Point]] = None) extends RoadAddressLinkLike {
+                           anomaly: Anomaly = Anomaly.None, lrmPositionId: Long, newGeometry: Option[Seq[Point]] = None,calibrationPointCode:Option[CalibrationCode]=None) extends RoadAddressLinkLike {
 }
 
 sealed trait Anomaly {

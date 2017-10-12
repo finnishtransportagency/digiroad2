@@ -88,6 +88,29 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     }
   }
 
+
+  def getUsercalibrationPointsToLinks(roadlinks :Seq[RoadAddressLink]) : Seq[RoadAddressLink] ={
+    val userDefinedPoints= CalibrationPointDAO.findCalibrationPointsByLinkIDs(roadlinks.map(x=>x.linkId))
+    roadlinks.map(x=> {
+
+      userDefinedPoints.head.projectId
+      val userdefinedPointsForLink = userDefinedPoints.filter(y => y.projectLinkId == x.linkId)
+      if (userdefinedPointsForLink.nonEmpty) {
+        if (userdefinedPointsForLink.size == 2) {
+          x.copy(calibrationPointCode = Some(CalibrationCode.UserDefinedBoth))
+        } else {
+          val linksCalibrationPoint = userdefinedPointsForLink.head
+          val usercalibrationPointcloserToBeggining = x.startAddressM - linksCalibrationPoint.addressMValue < x.endMValue - linksCalibrationPoint.addressMValue
+          if (usercalibrationPointcloserToBeggining && x.endCalibrationPoint.isDefined){
+            x.copy(calibrationPointCode = Some(CalibrationCode.UserDefinedBoth))
+          }
+        }
+      }
+    })
+  null
+  }
+
+
   def buildFloatingRoadAddressLink(rl: VVHHistoryRoadLink, roadAddrSeq: Seq[RoadAddress]): Seq[RoadAddressLink] = {
     val fusedRoadAddresses = RoadAddressLinkBuilder.fuseRoadAddress(roadAddrSeq)
     fusedRoadAddresses.map(ra => {

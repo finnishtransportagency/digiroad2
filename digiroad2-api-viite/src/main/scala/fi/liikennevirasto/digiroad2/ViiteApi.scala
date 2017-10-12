@@ -449,10 +449,14 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       case DrawAllRoads =>roadAddressService.getRoadAddressLinksWithSuravage(boundingRectangle,roadNumberLimits=Seq(),municipalities,everything = true)
       case _ => roadAddressService.getRoadAddressLinksWithSuravage(boundingRectangle,roadNumberLimits=Seq((1, 19999)),municipalities)
     }
+
+    val roadLinksWithUserCalibrationPoints=roadAddressService.getUsercalibrationPointsToLinks(viiteRoadLinks)
     val partitionedRoadLinks = RoadAddressLinkPartitioner.partition(viiteRoadLinks)
     partitionedRoadLinks.map {
       _.map(roadAddressLinkToApi)
     }
+
+
   }
 
   private def getProjectLinks(projectId: Long, zoomLevel: Int)(bbox: String): Seq[Seq[Map[String, Any]]] = {
@@ -536,6 +540,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
 
   def roadAddressLinkToApi(roadAddressLink: RoadAddressLink): Map[String, Any] = {
+    val roadlinksWithUserCalibrationPoints=roadAddressService.getUsercalibrationPointsToLinks(roadAddressLink)
     roadAddressLinkLikeToApi(roadAddressLink) ++
     Map(
       "startDate" -> roadAddressLink.startDate,

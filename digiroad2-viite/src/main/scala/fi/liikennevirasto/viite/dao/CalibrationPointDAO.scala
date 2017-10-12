@@ -30,6 +30,15 @@ object CalibrationPointDAO {
 
   }
 
+  def findCalibrationPointsByLinkIDs(linkIds: Seq[Long]): Seq[UserDefinedCalibrationPoint] = {
+    val baseQuery =
+      s"""
+         Select * From CALIBRATION_POINT Where PROJECT_LINK_ID in (${linkIds.mkString(",")})
+       """
+    Q.queryNA[(Long, Long, Long, Double, Long)](baseQuery).list.map{
+      case (id,projectLinkId, projectId, linkM, addressM) => UserDefinedCalibrationPoint(id,projectLinkId, projectId, linkM, addressM)
+    }
+  }
 
   def findCalibrationPointById(id: Long): Option[UserDefinedCalibrationPoint] = {
     val baseQuery =
