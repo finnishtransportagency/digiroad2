@@ -234,13 +234,13 @@
         linkIds: linkIds,
         linkStatus: statusCode,
         projectId: projectId,
-        roadNumber: Number($('#roadAddressProject').find('#tie')[0].value),
-        roadPartNumber: Number($('#roadAddressProject').find('#osa')[0].value),
-        trackCode: Number($('#roadAddressProject').find('#ajr')[0].value),
-        discontinuity: Number($('#roadAddressProject').find('#discontinuityDropdown')[0].value),
-        roadEly: Number($('#roadAddressProject').find('#ely')[0].value),
+        roadNumber: Number($('#roadAddressProjectForm_0').find('#tie')[0].value),
+        roadPartNumber: Number($('#roadAddressProjectForm_0').find('#osa')[0].value),
+        trackCode: Number($('#roadAddressProjectForm_0').find('#ajr')[0].value),
+        discontinuity: Number($('#roadAddressProjectForm_0').find('#discontinuityDropdown')[0].value),
+        roadEly: Number($('#roadAddressProjectForm_0').find('#ely')[0].value),
         roadLinkSource: Number(_.first(changedLinks).roadLinkSource),
-        roadType: Number($('#roadAddressProject').find('#roadTypeDropDown')[0].value),
+        roadType: Number($('#roadAddressProjectForm_0').find('#roadTypeDropDown')[0].value),
         userDefinedEndAddressM: null
       };
       

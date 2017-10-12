@@ -469,8 +469,8 @@
       var saveChanges = function(){
         currentProject = projectCollection.getCurrentProject();
         //TODO revert dirtyness if others than ACTION_TERMINATE is choosen, because now after Lakkautus, the link(s) stay always in black color
-        var statusDropdown_0 =$('[id=dropDown_0] :selected').val();
-        var statusDropdown_1 = $('[id=dropDown_1] :selected').val();
+        var statusDropdown_0 =$('#dropdown_0').val();
+        var statusDropdown_1 = $('#dropdown_1').val();
         switch (statusDropdown_0){
           case LinkStatus.Unchanged.action : {
             //Add save if dropdown 1 has uusi operation.
@@ -494,6 +494,7 @@
             projectCollection.revertChangesRoadlink(selectedProjectLink); break;
           }
         }
+        selectedProjectLinkProperty.setDirty(false);
         rootElement.html(emptyTemplate(currentProject.project));
       };
 
