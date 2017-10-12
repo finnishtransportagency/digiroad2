@@ -120,7 +120,7 @@ class TerminalBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopD
     val topLeft = Point(position.x - meters, position.y - meters)
     val bottomRight = Point(position.x + meters, position.y + meters)
     val boundingBoxFilter = OracleDatabase.boundingBoxFilter(BoundingRectangle(topLeft, bottomRight), "a.geometry")
-    val filter = s"where a.asset_type_id = $typeId and ((($boundingBoxFilter ) and (a.valid_to is null or a.valid_to > sysdate)) or tbs.terminal_asset_id = $terminalId)"
+    val filter = s"where a.asset_type_id = $typeId and (a.valid_to is null or a.valid_to > sysdate) and (($boundingBoxFilter ) or tbs.terminal_asset_id = $terminalId)"
     massTransitStopDao.fetchPointAssets(massTransitStopDao.withFilter(filter))
       .filter(r => GeometryUtils.geometryLength(Seq(position, Point(r.lon, r.lat))) <= meters || r.terminalId.contains(terminalId))
   }
