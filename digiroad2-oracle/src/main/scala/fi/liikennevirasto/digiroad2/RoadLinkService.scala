@@ -232,8 +232,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @param municipalities
     * @return Road links
     */
-  def getRoadLinksWithComplementaryFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()) : Seq[RoadLink] =
-    getRoadLinksWithComplementaryAndChangesFromVVH(bounds, municipalities)._1
+  def getRoadLinksWithComplementaryFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set(), newTransaction: Boolean = true) : Seq[RoadLink] =
+    getRoadLinksWithComplementaryAndChangesFromVVH(bounds, municipalities, newTransaction)._1
 
   /**
     * This method is utilized to find adjacent links of a road link.
@@ -391,7 +391,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     * @param municipalities
     * @return Road links and change data
     */
-  def getRoadLinksWithComplementaryAndChangesFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): (Seq[RoadLink], Seq[ChangeInfo])= {
+  def getRoadLinksWithComplementaryAndChangesFromVVH(bounds: BoundingRectangle, municipalities: Set[Int] = Set(), newTransaction:Boolean = true): (Seq[RoadLink], Seq[ChangeInfo])= {
     val fut = for{
       f1Result <- vvhClient.complementaryData.fetchWalkwaysByBoundsAndMunicipalitiesF(bounds, municipalities)
       f2Result <- vvhClient.roadLinkChangeInfo.fetchByBoundsAndMunicipalitiesF(bounds, municipalities)
@@ -400,9 +400,13 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
     val (complementaryLinks, changes, links) = Await.result(fut, Duration.Inf)
 
-    withDynTransaction {
-      (enrichRoadLinksFromVVH(links ++ complementaryLinks, changes), changes)
+    if(newTransaction){
+      withDynTransaction {
+        (enrichRoadLinksFromVVH(links ++ complementaryLinks, changes), changes)
+      }
     }
+    else (enrichRoadLinksFromVVH(links ++ complementaryLinks, changes), changes)
+
   }
 
   def reloadRoadLinksWithComplementaryAndChangesFromVVH(municipalities: Int): (Seq[RoadLink], Seq[ChangeInfo], Seq[RoadLink])= {

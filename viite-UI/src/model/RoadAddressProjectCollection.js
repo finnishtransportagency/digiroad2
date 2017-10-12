@@ -286,6 +286,47 @@
       }
     };
 
+    this.saveCuttedProjectLinks = function(changedLinks, statusCodeA, statusCodeB){
+      console.log("Save Cutted Project Links called");
+      applicationModel.addSpinner();
+
+      var splitPoint = changedLinks[0].points[changedLinks[0].points.length-1];
+
+      var linkIds = _.unique(_.map(changedLinks,function (t){
+        if(!_.isUndefined(t.linkId)){
+          return t.linkId;
+        } else return t;
+      }));
+
+      var projectId = projectinfo.id;
+
+      var dataJson = {
+        splitPoint: {x: splitPoint.x, y: splitPoint.y},
+        statusA: statusCodeA,
+        statusB: statusCodeB,
+        roadNumber: Number($('#roadAddressProjectForm_0').find('#tie')[0].value),
+        roadPartNumber: Number($('#roadAddressProjectForm_0').find('#osa')[0].value),
+        trackCode: Number($('#roadAddressProjectForm_0').find('#ajr')[0].value),
+        discontinuity: Number($('#roadAddressProjectForm_0').find('#discontinuityDropdown')[0].value),
+        ely: Number($('#roadAddressProjectForm_0').find('#ely')[0].value),
+        roadLinkSource: Number(_.first(changedLinks).roadLinkSource),
+        roadType: Number($('#roadAddressProjectForm_0').find('#roadTypeDropDown')[0].value),
+        projectId: projectId
+      };
+
+      backend.saveProjectLinkSplit(dataJson, changedLinks[0].linkId, function(successObject){
+        if (!successObject.success) {
+          new ModalConfirm(successObject.reason);
+          applicationModel.removeSpinner();
+        }
+          else{
+          eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
+        }
+
+      }, null);
+
+    };
+
     this.createProject = function (data) {
 
       var dataJson = {

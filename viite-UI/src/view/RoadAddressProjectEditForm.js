@@ -472,16 +472,35 @@
         var statusDropdown_1 = $('#dropdown_1').val();
         switch (statusDropdown_0){
           case LinkStatus.Unchanged.action : {
-            //Add save if dropdown 1 has uusi operation.
-            projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Unchanged.value); break;
+            if(!_.isUndefined(statusDropdown_1) && statusDropdown_1 == LinkStatus.New.action){
+              projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Unchanged.value, LinkStatus.New.value);
+            }
+            else if(_.isUndefined(statusDropdown_1)){
+              projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Unchanged.value);
+            }
+            break;
           }
           case LinkStatus.New.action : {
-            //Add save if dropdown 1 has unchanged or transfer operation.
-            projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.New.value); break;
+            if(!_.isUndefined(statusDropdown_1) && statusDropdown_1 == LinkStatus.Unchanged.action){
+              projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), LinkStatus.New.value, LinkStatus.Unchanged.value);
+            }
+
+            else if(!_.isUndefined(statusDropdown_1) && statusDropdown_1 == LinkStatus.Transfer.action){
+              projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), LinkStatus.New.value, LinkStatus.Transfer.value);
+            }
+            else if(_.isUndefined(statusDropdown_1)) {
+              projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.New.value);
+            }
+            break;
           }
           case LinkStatus.Transfer.action : {
-            //Add save if dropdown 1 has uusi operation.
-            projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Transfer.value); break;
+            if(!_.isUndefined(statusDropdown_1) && statusDropdown_1 == LinkStatus.New.action){
+              projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Unchanged.value, LinkStatus.New.value);
+            }
+            else if(_.isUndefined(statusDropdown_1)){
+              projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Transfer.value);
+            }
+            break;
           }
           case LinkStatus.Numbering.action : {
             projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Numbering.value); break;
@@ -568,7 +587,7 @@
           rootElement.find('#roadAddressProjectForm_0 .new-road-address').prop("hidden", true);
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
-            return {'linkId': link.linkId, 'status': LinkStatus.Terminated.value, 'roadLinkSource': link.roadLinkSource};
+            return {'linkId': link.linkId, 'status': LinkStatus.Terminated.value, 'roadLinkSource': link.roadLinkSource, 'points': link.points};
           })));
           projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
           rootElement.find('.project-form button.update').prop("disabled", false);
@@ -586,13 +605,13 @@
           rootElement.find('#roadAddressProjectForm_0 .new-road-address').prop("hidden", true);
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
-            return {'linkId': link.linkId, 'status': LinkStatus.Unchanged.value, 'roadLinkSource': link.roadLinkSource};
+            return {'linkId': link.linkId, 'status': LinkStatus.Unchanged.value, 'roadLinkSource': link.roadLinkSource, 'points': link.points};
           })));
           projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
         }
         else if(this.value == LinkStatus.Transfer.action) {
           projectCollection.setDirty(_.filter(projectCollection.getDirty(), function(dirty) {return dirty.status !== LinkStatus.Unchanged.value;}).concat(_.map(selectedProjectLink, function (link) {
-            return {'linkId': link.linkId, 'status': LinkStatus.Transfer.value, 'roadLinkSource': link.roadLinkSource};
+            return {'linkId': link.linkId, 'status': LinkStatus.Transfer.value, 'roadLinkSource': link.roadLinkSource, 'points': link.points};
           })));
           projectCollection.setTmpDirty(projectCollection.getDirty());
           rootElement.find('#roadAddressProjectForm_0 .new-road-address').prop("hidden", false);
@@ -605,7 +624,7 @@
           $('#roadAddressProjectForm_0 #discontinuityDropdown').prop('disabled',true);
           $('#roadAddressProjectForm_0 #roadTypeDropDown').prop('disabled',true);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
-            return {'linkId': link.linkId, 'status': LinkStatus.Numbering.value, 'roadLinkSource': link.roadLinkSource};
+            return {'linkId': link.linkId, 'status': LinkStatus.Numbering.value, 'roadLinkSource': link.roadLinkSource, 'points': link.points};
           })));
           projectCollection.setTmpDirty(projectCollection.getDirty());
           rootElement.find('#roadAddressProjectForm_0 .new-road-address').prop("hidden", false);
@@ -629,7 +648,7 @@
           rootElement.find('#roadAddressProjectForm_1 .new-road-address').prop("hidden", true);
           rootElement.find('#roadAddressProjectForm_1 .changeDirectionDiv').prop("hidden", true);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
-            return {'linkId': link.linkId, 'status': LinkStatus.Terminated.value, 'roadLinkSource': link.roadLinkSource};
+            return {'linkId': link.linkId, 'status': LinkStatus.Terminated.value, 'roadLinkSource': link.roadLinkSource, 'points': link.points};
           })));
           projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
           rootElement.find('.project-form button.update').prop("disabled", false);
@@ -646,13 +665,13 @@
           rootElement.find('#roadAddressProjectForm_1 .new-road-address').prop("hidden", true);
           rootElement.find('#roadAddressProjectForm_1 .changeDirectionDiv').prop("hidden", true);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
-            return {'linkId': link.linkId, 'status': LinkStatus.Unchanged.value, 'roadLinkSource': link.roadLinkSource};
+            return {'linkId': link.linkId, 'status': LinkStatus.Unchanged.value, 'roadLinkSource': link.roadLinkSource, 'points': link.points};
           })));
           projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
         }
         else if(this.value == LinkStatus.Transfer.action) {
           projectCollection.setDirty(_.filter(projectCollection.getDirty(), function(dirty) {return dirty.status !== LinkStatus.Unchanged.value;}).concat(_.map(selectedProjectLink, function (link) {
-            return {'linkId': link.linkId, 'status': LinkStatus.Transfer.value, 'roadLinkSource': link.roadLinkSource};
+            return {'linkId': link.linkId, 'status': LinkStatus.Transfer.value, 'roadLinkSource': link.roadLinkSource, 'points': link.points};
           })));
           projectCollection.setTmpDirty(projectCollection.getDirty());
           rootElement.find('#roadAddressProjectForm_1 .new-road-address').prop("hidden", false);
@@ -663,7 +682,7 @@
           $('#roadAddressProjectForm_1 #discontinuityDropdown').prop('disabled',true);
           $('#roadAddressProjectForm_1 #roadTypeDropDown').prop('disabled',true);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
-            return {'linkId': link.linkId, 'status': LinkStatus.Numbering.value, 'roadLinkSource': link.roadLinkSource};
+            return {'linkId': link.linkId, 'status': LinkStatus.Numbering.value, 'roadLinkSource': link.roadLinkSource, 'points': link.points};
           })));
           projectCollection.setTmpDirty(projectCollection.getDirty());
           rootElement.find('#roadAddressProjectForm_1 .new-road-address').prop("hidden", false);
