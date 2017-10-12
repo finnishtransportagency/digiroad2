@@ -201,6 +201,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     roadLayer.clearSelection();
     removeOverlay();
     selectControl.clear();
+    deselectAsset(selectedAsset);
     removeAssetFromMap(selectedAsset);
   };
 
@@ -674,7 +675,6 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
           });
       }
     });
-
     eventListener.listenTo(eventbus, 'assets:fetched', function(assets) {
       if (zoomlevels.isInAssetZoomLevel(map.getView().getZoom())) {
         var groupedAssets = assetGrouping.groupByDistance(assets, map.getView().getZoom());

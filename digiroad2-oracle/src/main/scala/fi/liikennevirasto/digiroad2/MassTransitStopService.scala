@@ -522,7 +522,7 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 
   private def fetchRoadLink(linkId: Long): Option[RoadLinkLike] = {
-    roadLinkService.getRoadLinkFromVVH(linkId, newTransaction = false)
+    roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId, newTransaction = false)
   }
 
   private def getStrategies(): (Seq[AbstractBusStopStrategy], AbstractBusStopStrategy) ={
