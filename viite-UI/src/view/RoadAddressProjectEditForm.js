@@ -102,13 +102,14 @@
 
     var defineOptionModifiers = function(option, selection) {
       var roadIsUnknownOrOther = projectCollection.roadIsUnknown(selection[0]) || projectCollection.roadIsOther(selection[0]);
-      var roadIsSuravage =  selection[0].roadLinkSource === 3;
-      var toEdit = selection[0].id === 0;
+      var roadIsSuravage = selection[0].roadLinkSource === 3;
+      var isSplitMode = selection.length == 2 && selection[0].linkId === selection[1].linkId;
+      var toEdit = !isSplitMode && selection[0].id === 0;
       var modifiers = '';
 
       switch(option) {
         case LinkStatus.Unchanged.action: {
-          if(roadIsUnknownOrOther || roadIsSuravage){
+          if ((roadIsUnknownOrOther || roadIsSuravage) && !isSplitMode) {
             modifiers = 'disabled hidden';
           } else {
             modifiers = '';
@@ -116,7 +117,7 @@
           break;
         }
         case LinkStatus.Transfer.action: {
-          if(roadIsUnknownOrOther || roadIsSuravage){
+          if ((roadIsUnknownOrOther || roadIsSuravage) && !isSplitMode) {
             modifiers = 'disabled hidden';
           } else if(toEdit){
             modifiers = 'disabled';
@@ -124,7 +125,8 @@
           break;
         }
         case LinkStatus.New.action: {
-          var enableStatusNew = (selection[0].status !== LinkStatus.NotHandled.value && selection[0].status !== LinkStatus.Terminated.value)|| selection[0].roadLinkSource === 3;
+          var enableStatusNew = (selection[0].status !== LinkStatus.NotHandled.value &&
+            selection[0].status !== LinkStatus.Terminated.value) || roadIsSuravage;
           if(!roadIsUnknownOrOther) {
             if(!enableStatusNew)
               modifiers = 'disabled';
