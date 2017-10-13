@@ -426,7 +426,7 @@
           }
           _.defer(function(){
             $('#activeButtons').empty();
-            $('#actionButtons').html('<button id="saveEdit" class="save btn btn-save" disabled>Tallenna</button>' +
+            $('#actionButtons').html('<button id="saveEdit" class="save btn btn-save">Tallenna</button>' +
               '<button id="cancelEdit" class="cancel btn btn-cancel">Peruuta</button>');
             eventbus.trigger("roadAddressProject:clearAndDisableInteractions");
           });
