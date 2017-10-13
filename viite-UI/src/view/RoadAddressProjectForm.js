@@ -380,7 +380,7 @@
         jQuery('.modal-overlay').remove();
         setTimeout(function(){}, 0);
         if(!_.isUndefined(currentProject))
-          eventbus.trigger('linkProperties:selectedProject', result.linkId);
+          eventbus.trigger('linkProperties:selectedProject', result.linkId, result.project.id);
         applicationModel.setProjectButton(true);
         applicationModel.setProjectFeature(currentProject.id);
         applicationModel.setOpenProject(true);
