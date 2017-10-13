@@ -6,7 +6,9 @@ window.SpeedLimitLayer = function(params) {
       roadLayer = params.roadLayer,
       style = params.style,
       layerName = 'speedLimit',
-      roadAddressInfoPopup= params.roadAddressInfoPopup;
+      roadAddressInfoPopup= params.roadAddressInfoPopup,
+      backend = params.backend;
+      // trafficSignReadOnlyLayer = params.trafficSignReadOnlyLayer();
   var isActive = false;
   var extraEventListener = _.extend({running: false}, eventbus);
 
@@ -187,6 +189,15 @@ window.SpeedLimitLayer = function(params) {
   map.addLayer(indicatorLayer);
   indicatorLayer.setVisible(false);
 
+  var trafficSignReadOnlyLayer = new TrafficSignReadOnlyLayer({
+    layerName: layerName,
+    style: new PointAssetStyle('trafficSigns'),
+    collection: new ReadOnlyTrafficSignsCollection(backend, 'trafficSigns', true),
+    assetLabel: new TrafficSignLabel(),
+    assetGrouping: new AssetGrouping(9),
+    map: map
+  });
+
   var speedLimitCutter = new SpeedLimitCutter(vectorLayer, collection, me.eventListener);
 
   var OnSelect = function(evt) {
@@ -198,6 +209,7 @@ window.SpeedLimitLayer = function(params) {
       if (selectedSpeedLimit.exists()) {
         selectToolControl.clear();
         selectedSpeedLimit.close();
+        trafficSignReadOnlyLayer.highLightLayer();
       }
     }
   };
@@ -211,6 +223,7 @@ window.SpeedLimitLayer = function(params) {
   var highlightMultipleLinearAssetFeatures = function() {
     var selectedAsset = selectedSpeedLimit.get();
     selectToolControl.addSelectionFeatures(style.renderFeatures(selectedAsset));
+    trafficSignReadOnlyLayer.unHighLightLayer();
   };
 
   var selectToolControl = new SelectToolControl(application, vectorLayer, map, {
@@ -293,8 +306,6 @@ window.SpeedLimitLayer = function(params) {
     eventListener.listenTo(eventbus, 'speedLimits:drawSpeedLimitsHistory', drawSpeedLimitsHistory);
     eventListener.listenTo(eventbus, 'speedLimits:hideSpeedLimitsHistory', hideSpeedLimitsHistory);
     eventListener.listenTo(eventbus, 'speedLimits:showSpeedLimitsHistory', showSpeedLimitsHistory);
-    eventListener.listenTo(eventbus, 'speedLimits:hideSpeedLimitsSigns', hideSpeedLimitsSigns);
-    eventListener.listenTo(eventbus, 'speedLimits:showSpeedLimitsSigns', showSpeedLimitsSigns);
     eventListener.listenTo(eventbus, 'toggleWithRoadAddress', refreshSelectedView);
     eventListener.listenTo(eventbus, 'speedLimit:unselect', handleSpeedLimitUnselected);
   };
@@ -326,16 +337,6 @@ window.SpeedLimitLayer = function(params) {
   var hideSpeedLimitsComplementary = function() {
     collection.activeComplementary(false);
     me.refreshView();
-  };
-
-  var showSpeedLimitsSigns = function() {
-    //
-  };
-
-  var hideSpeedLimitsSigns = function() {
-    // vectorLayerSigns.setVisible(false);
-    // isActive = false;
-    // vectorLayerSigns.getSource().clear();
   };
 
   var indexOf = function (layers, layer) {
@@ -393,6 +394,7 @@ window.SpeedLimitLayer = function(params) {
     selectToolControl.activate();
     me.eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
     redrawSpeedLimits(collection.getAll());
+    trafficSignReadOnlyLayer.highLightLayer();
   };
 
   var handleSpeedLimitUnselected = function () {
@@ -547,9 +549,16 @@ window.SpeedLimitLayer = function(params) {
     me.show(map);
   };
 
+  var hideReadOnlyLayer = function(){
+    if(!_.isUndefined(trafficSignReadOnlyLayer)){
+      trafficSignReadOnlyLayer.hide();
+    }
+  };
+
   var hideLayer = function(map) {
     reset();
     selectToolControl.clear();
+    hideReadOnlyLayer();
     selectedSpeedLimit.close();
     vectorLayer.setVisible(false);
     vectorLayerHistory.setVisible(false);

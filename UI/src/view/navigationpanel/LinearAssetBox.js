@@ -1,5 +1,5 @@
 (function(root) {
-  root.LinearAssetBox = function(selectedLinearAsset, layerName, title, className, legendValues, showUnit, unit, allowComplementaryLinks) {
+  root.LinearAssetBox = function(selectedLinearAsset, layerName, title, className, legendValues, showUnit, unit, allowComplementaryLinks, hasTrafficSignReadOnlyLayer) {
     var legendTemplate = _.map(legendValues, function(value, idx) {
       return '<div class="legend-entry">' +
                '<div class="label">' + value + '</div>' +
@@ -7,6 +7,13 @@
              '</div>';
     }).join('');
 
+      var speedLimitSignsCheckBox = hasTrafficSignReadOnlyLayer ? [
+          '  <div class="panel-section traffic-signs-checkbox">',
+          '<div class="check-box-container">' +
+          '<input id="signsCheckbox" type="checkbox" /> <lable>Näytä liikennemerkit</lable>' +
+          '</div>' +
+          '</div>'
+      ].join('') : '';
 
       var complementaryLinkCheckBox = allowComplementaryLinks ? [
           '  <div class="panel-section roadLink-complementary-checkbox">',
@@ -25,6 +32,7 @@
             legendTemplate,
       '  </div>',
       complementaryLinkCheckBox,
+      speedLimitSignsCheckBox,
       '</div>'].join('');
 
     var elements = {
@@ -71,6 +79,14 @@
                 eventbus.trigger('complementaryLinks:hide');
             }
         }
+    });
+
+    elements.expanded.find('#signsCheckbox').on('change', function (event) {
+      if ($(event.currentTarget).prop('checked')) {
+        eventbus.trigger('trSpeedLimits:showSpeedLimitsSigns');
+      } else {
+        eventbus.trigger('trSpeedLimits:hideSpeedLimitsSigns');
+      }
     });
 
     var element = $('<div class="panel-group simple-limit ' + className + 's"/>').append(elements.expanded).hide();

@@ -463,7 +463,8 @@
         enabled: 'Nopeusrajoitus',
         disabled: 'Tuntematon'
       },
-      label: new SpeedLimitAssetLabel()
+      label: new SpeedLimitAssetLabel(),
+      hasTrafficSignReadOnlyLayer: true
     }
   ];
 

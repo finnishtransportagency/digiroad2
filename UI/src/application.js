@@ -209,6 +209,17 @@
     if (withTileMaps) { new TileMapCollection(map); }
     var roadLayer = new RoadLayer(map, models.roadCollection);
 
+    // var trafficSignReadOnlyLayer = function(layerName){
+    //   return TrafficSignReadOnlyLayer({
+    //     layerName: layerName,
+    //     style: new PointAssetStyle('trafficSigns'),
+    //     collection: new ReadOnlyTrafficSignsCollection(backend, 'trafficSigns', true),
+    //     assetLabel: new TrafficSignLabel(),
+    //     assetGrouping: new AssetGrouping(9),
+    //     map: map
+    //   });
+    // };
+
     new LinkPropertyForm(models.selectedLinkProperty);
     new ManoeuvreForm(models.selectedManoeuvreSource);
     _.forEach(linearAssets, function(linearAsset) {
@@ -241,7 +252,10 @@
        formElements: AssetFormElementsFactory.construct(asset),
        assetLabel: asset.label,
        roadAddressInfoPopup: roadAddressInfoPopup,
-       editConstrains : asset.editConstrains || function() {return false;}
+       editConstrains : asset.editConstrains || function() {return false;},
+       hasTrafficSignReadOnlyLayer: asset.hasTrafficSignReadOnlyLayer,
+       // trafficSignReadOnlyLayer: trafficSignReadOnlyLayer(),
+       backend: backend
      });
      return acc;
     }, {});
@@ -280,6 +294,7 @@
        style: SpeedLimitStyle(applicationModel),
        roadLayer: roadLayer,
        roadAddressInfoPopup: roadAddressInfoPopup
+       // trafficSignReadOnlyLayer: trafficSignReadOnlyLayer()
        }),
        manoeuvre: new ManoeuvreLayer(applicationModel, map, roadLayer, models.selectedManoeuvreSource, models.manoeuvresCollection, models.roadCollection)
 
@@ -364,7 +379,7 @@
       var asset = _.find(linearAssets, {typeId: typeId});
       if (asset) {
         var legendValues = [asset.editControlLabels.disabled, asset.editControlLabels.enabled];
-        return [new LinearAssetBox(asset.selectedLinearAsset, asset.layerName, asset.title, asset.className, legendValues, asset.editControlLabels.showUnit, asset.unit, asset.allowComplementaryLinks)];
+        return [new LinearAssetBox(asset.selectedLinearAsset, asset.layerName, asset.title, asset.className, legendValues, asset.editControlLabels.showUnit, asset.unit, asset.allowComplementaryLinks, asset.hasTrafficSignReadOnlyLayer)];
       }
       return [];
     }
