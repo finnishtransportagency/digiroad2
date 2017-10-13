@@ -284,11 +284,11 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenAnswer(
         toMockAnswer(projectLinks, roadLink)
       )
-      projectService.updateProjectLinks(savedProject.id, linkIds205, LinkStatus.UnChanged,"-", 0, 0, Option.empty[Int])
+      projectService.updateProjectLinks(savedProject.id, linkIds205, LinkStatus.UnChanged,"-", 0, 0, Option.empty[Int]) should be (None)
       projectService.projectLinkPublishable(savedProject.id) should be(false)
-      projectService.updateProjectLinks(savedProject.id, linkIds206, LinkStatus.UnChanged, "-", 0, 0, Option.empty[Int])
+      projectService.updateProjectLinks(savedProject.id, linkIds206, LinkStatus.UnChanged, "-", 0, 0, Option.empty[Int]) should be (None)
       projectService.projectLinkPublishable(savedProject.id) should be(true)
-      projectService.updateProjectLinks(savedProject.id, Set(5168573), LinkStatus.Terminated, "-", 0, 0, Option.empty[Int])
+      projectService.updateProjectLinks(savedProject.id, Set(5168573), LinkStatus.Terminated, "-", 0, 0, Option.empty[Int]) should be (None)
       projectService.projectLinkPublishable(savedProject.id) should be(true)
       val changeProjectOpt = projectService.getChangeProject(savedProject.id)
       val change = changeProjectOpt.get
@@ -332,8 +332,8 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenAnswer(
         toMockAnswer(projectLinks, roadLink)
       )
-      projectService.updateProjectLinks(savedProject.id, linkIds207, LinkStatus.Transfer, "-", 0, 0, Option.empty[Int])
-      projectService.updateProjectLinks(savedProject.id, Set(5168510), LinkStatus.Terminated, "-", 0, 0, Option.empty[Int])
+      projectService.updateProjectLinks(savedProject.id, linkIds207, LinkStatus.Transfer, "-", 0, 0, Option.empty[Int]) should be (None)
+      projectService.updateProjectLinks(savedProject.id, Set(5168510), LinkStatus.Terminated, "-", 0, 0, Option.empty[Int]) should be (None)
       projectService.projectLinkPublishable(savedProject.id) should be(true)
       val changeProjectOpt = projectService.getChangeProject(savedProject.id)
       val change = changeProjectOpt.get
@@ -342,7 +342,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       updatedProjectLinks.exists { x=> x.status==LinkStatus.Terminated } should be(true)
       updatedProjectLinks.filter( pl => pl.linkId==5168540).head.calibrationPoints should be ((Some(CalibrationPoint(5168540,0.0,0)),None))
       updatedProjectLinks.filter( pl => pl.linkId==6463199).head.calibrationPoints should be ((None,Some(CalibrationPoint(6463199,442.89,highestDistanceEnd-projectLinks.filter( pl => pl.linkId==5168510).head.endAddrMValue))))  //we terminated link with distance 172
-      projectService.updateProjectLinks(savedProject.id, Set(5168540), LinkStatus.Terminated, "-", 0, 0, Option.empty[Int])
+      projectService.updateProjectLinks(savedProject.id, Set(5168540), LinkStatus.Terminated, "-", 0, 0, Option.empty[Int]) should be (None)
       val updatedProjectLinks2=ProjectDAO.getProjectLinks(savedProject.id)
       updatedProjectLinks2.filter( pl => pl.linkId==6463199).head.calibrationPoints should be (None,Some(CalibrationPoint(6463199,442.89,highestDistanceEnd-projectLinks.filter( pl => pl.linkId==5168510).head.endAddrMValue-updatedProjectLinks.filter( pl => pl.linkId==5168540).head.endAddrMValue)))
     }
