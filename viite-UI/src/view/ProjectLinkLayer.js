@@ -150,6 +150,8 @@
     });
 
     var showSingleClickChanges = function (shiftPressed, selection) {
+      if(applicationModel.getSelectedTool() == 'Cut')
+        return;
       if (shiftPressed && !_.isUndefined(selectedProjectLinkProperty.get())) {
         if (!_.isUndefined(selection) && canItBeAddToSelection(selection.projectLinkData)) {
           var clickedIds = projectCollection.getMultiSelectIds(selection.projectLinkData.linkId);
@@ -567,6 +569,13 @@
           geometry: new ol.geom.Point([x, y]),
           type: 'cutter-crosshair'
         })];
+        scissorFeatures[0].setStyle(
+            new ol.style.Style({
+              image: new ol.style.Icon({
+                src: 'images/cursor-crosshair.svg'
+              })
+            })
+        );
         removeFeaturesByType('cutter-crosshair');
         addFeaturesToSelection(scissorFeatures);
       };
@@ -649,6 +658,7 @@
         var nearest = findNearestSuravageLink([mousePoint.x, mousePoint.y]);
 
         if (!nearest || !isWithinCutThreshold(nearest.distance)) {
+          showChangesAndSendButton();
           return;
         }
         var nearestSuravage = nearest.feature.projectLinkData;
@@ -656,6 +666,7 @@
         selectedProjectLinkProperty.splitSuravageLink(nearestSuravage, splitProperties);
         selectSingleClick.getFeatures().clear();
         selectSingleClick.getFeatures().push(nearest.feature);
+        projectCollection.setTmpDirty([nearest.feature.projectLinkData]);
       };
     };
 
