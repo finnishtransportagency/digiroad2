@@ -460,7 +460,7 @@
     function isTerminalBusStop(properties) {
       return _.some(properties, function(property) {
         return property.publicId == 'pysakin_tyyppi' && _.some(property.values, function(value){
-          return value.propertyValue = "6";
+          return value.propertyValue == "6";
         });
       });
     }
