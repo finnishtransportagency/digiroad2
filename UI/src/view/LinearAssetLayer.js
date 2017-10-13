@@ -37,7 +37,7 @@
     };
 
     var drawLinearAssets = function(linearAssets) {
-      var asset = _.filter(linearAssets, function(asset) { return !_.some(asset.types, function(type) { return type.typeId == params.typeId; }) });
+      var asset = _.filter(linearAssets, function(asset) { return !_.some(asset.types, function(type) { return type.typeId == params.typeId; }); });
       vectorSource.addFeatures(params.style.renderFeatures(asset));
     };
 
