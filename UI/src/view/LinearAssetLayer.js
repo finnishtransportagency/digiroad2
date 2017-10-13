@@ -1,4 +1,75 @@
-window.LinearAssetLayer = function(params) {
+(function (root) {
+
+  var ReadOnlyLinearAssetLayer = function (params, map) {
+
+    var isActive = false;
+    var uiState = { zoomLevel: 9 };
+
+    var vectorSource = new ol.source.Vector();
+    var vectorLayer = new ol.layer.Vector({
+      source : vectorSource,
+      style : function(feature) {
+        return params.style.browsingStyleProviderReadOnly.getStyle(feature, {zoomLevel: uiState.zoomLevel});
+      }
+    });
+
+    vectorLayer.set('name', 'ReadOnlyLinearAssetLayer');
+    vectorLayer.setOpacity(1);
+    vectorLayer.setVisible(false);
+    map.addLayer(vectorLayer);
+
+    var adjustStylesByZoomLevel = function(zoom) {
+      uiState.zoomLevel = zoom;
+    };
+
+    var showLayer = function(){
+      vectorLayer.setVisible(true);
+    };
+
+    var hideLayer = function(){
+      vectorLayer.setVisible(false);
+    };
+
+    var redrawLinearAssets = function(linearAssetChains) {
+      vectorSource.clear();
+      var linearAssets = _.flatten(linearAssetChains);
+      drawLinearAssets(linearAssets);
+    };
+
+    var drawLinearAssets = function(linearAssets) {
+      var asset = _.filter(linearAssets, function(asset) { return !_.some(asset.types, function(type) { return type.typeId == params.typeId; }) });
+      vectorSource.addFeatures(params.style.renderFeatures(asset));
+    };
+
+    var refreshView = function () {
+      vectorLayer.setVisible(true);
+      adjustStylesByZoomLevel(map.getView().getZoom());
+      params.collection.fetchReadOnlyAssets(map.getView().calculateExtent(map.getSize()));
+    };
+
+    //TODO: To be used when box is implemented
+    // //event to be trigger when the Muut massarajoitukset checkbox is checked
+    // eventbus.on('massLimitation:show', function () {
+    //   isActive = true;
+    //   showLayer();
+    // });
+    // //event to be trigger when the Muut massarajoitukset checkbox is unchecked
+    // eventbus.on('massLimitation:hide', function () {
+    //   isActive = false;
+    //   hideLayer();
+    // });
+
+    eventbus.on('fetchedR', redrawLinearAssets);
+
+    return {
+      refreshView: refreshView,
+      redrawLinearAssets: redrawLinearAssets,
+      hideLayer: hideLayer,
+      showLayer: showLayer
+    };
+  };
+
+root.LinearAssetLayer  = function(params) {
   var map = params.map,
       application = params.application,
       collection = params.collection,
@@ -10,13 +81,12 @@ window.LinearAssetLayer = function(params) {
       layerName = params.layerName,
       assetLabel = params.assetLabel,
       roadAddressInfoPopup = params.roadAddressInfoPopup,
-      editConstrains = params.editConstrains;
-
+      editConstrains = params.editConstrains,
+      massLimitation = params.massLimitation;
 
   Layer.call(this, layerName, roadLayer);
   var me = this;
   me.minZoomForContent = zoomlevels.minZoomForAssets;
-
   var isComplementaryChecked = false;
   var extraEventListener = _.extend({running: false}, eventbus);
 
@@ -170,6 +240,7 @@ window.LinearAssetLayer = function(params) {
   });
   map.addLayer(indicatorLayer);
   indicatorLayer.setVisible(false);
+  var readOnlyLayer = new ReadOnlyLinearAssetLayer(params, map);
 
   var linearAssetCutter = new LinearAssetCutter(me.eventListener, vectorLayer, collection);
 
@@ -181,6 +252,7 @@ window.LinearAssetLayer = function(params) {
     }else{
       if (selectedLinearAsset.exists()) {
          selectedLinearAsset.close();
+         readOnlyLayer.showLayer();
       }
     }
   };
@@ -197,6 +269,7 @@ window.LinearAssetLayer = function(params) {
     if(assetLabel)
         features = features.concat(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep(selectedLinearAsset.get()), offsetBySideCode), uiState.zoomLevel));
     selectToolControl.addSelectionFeatures(features);
+    readOnlyLayer.hideLayer();
   };
 
   var selectToolControl = new SelectToolControl(application, vectorLayer, map, {
@@ -350,6 +423,8 @@ window.LinearAssetLayer = function(params) {
         eventbus.trigger('layer:linearAsset:' + event);
       });
     }
+    if(massLimitation)
+      readOnlyLayer.refreshView();
   };
 
   this.activateSelection = function() {
@@ -440,14 +515,16 @@ window.LinearAssetLayer = function(params) {
     indicatorLayer.getSource().clear();
     var linearAssets = _.flatten(linearAssetChains);
       decorateSelection();
-
       drawLinearAssets(linearAssets);
   };
 
   var drawLinearAssets = function(linearAssets) {
     vectorSource.addFeatures(style.renderFeatures(linearAssets));
-    if(assetLabel)
+    if(massLimitation)
+      readOnlyLayer.showLayer();
+    if(assetLabel) {
       vectorSource.addFeatures(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep(linearAssets), offsetBySideCode), uiState.zoomLevel));
+    }
   };
 
   var offsetBySideCode = function (linearAsset) {
@@ -496,6 +573,7 @@ window.LinearAssetLayer = function(params) {
   var hideLayer = function() {
     reset();
     vectorLayer.setVisible(false);
+    readOnlyLayer.hideLayer();
     indicatorLayer.setVisible(false);
     selectedLinearAsset.close();
     stopListeningExtraEvents();
@@ -515,3 +593,4 @@ window.LinearAssetLayer = function(params) {
     minZoomForContent: me.minZoomForContent
   };
 };
+})(this);

@@ -241,7 +241,9 @@
        formElements: AssetFormElementsFactory.construct(asset),
        assetLabel: asset.label,
        roadAddressInfoPopup: roadAddressInfoPopup,
-       editConstrains : asset.editConstrains || function() {return false;}
+       editConstrains : asset.editConstrains || function() {return false;},
+       massLimitation : asset.massLimitation,
+       typeId : asset.typeId
      });
      return acc;
     }, {});

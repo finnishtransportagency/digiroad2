@@ -53,6 +53,12 @@
       return fetch(boundingBox, backend.getLinearAssetsWithComplementary(boundingBox, typeId));
     };
 
+    //TODO: Change this to use the real request
+    this.fetchReadOnlyAssets = function(boundingBox) {
+      linearAssets = backend.getReadOnlyLinearAssets();
+      eventbus.trigger('fetchedR', self.getAll());
+    };
+
     var fetch = function(boundingBox, assets) {
       return assets.then(function(linearAssetGroups) {
         var partitionedLinearAssetGroups = _.groupBy(linearAssetGroups, function(linearAssetGroup) {

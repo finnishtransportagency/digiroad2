@@ -237,6 +237,70 @@
       };
     });
 
+    this.getReadOnlyLinearAssets = function() {
+      //TODO: Change this to make the request
+      return [{
+        "points": [
+          {
+            "x": 374195.679,
+            "y": 6677255.286,
+            "z": 25.260999999998603
+          },
+          {
+            "x": 374213.968,
+            "y": 6677256.785,
+            "z": 25.15799999999581
+          },
+          {
+            "x": 374233.999,
+            "y": 6677257.455,
+            "z": 24.895000000004075
+          },
+          {
+            "x": 374238.876,
+            "y": 6677257.206,
+            "z": 24.851999999998952
+          }
+        ],
+        "types": [
+          {
+            "typeId": 60,
+            "value": 1
+          },
+          {
+            "typeId": 50,
+            "value": 1
+          }
+        ],
+        "sideCode" : 1,
+        "isCompost": true,
+        "expired": "false"
+      },
+      {
+        "points": [
+          {
+            "x": 374301.284,
+            "y": 6677250.57,
+            "z": 24.721999999994296
+          },
+          {
+            "x": 374279.894,
+            "y": 6677253.336,
+            "z": 24.679000000003725
+          }
+        ],
+        "types": [
+          {
+            "typeId": 60,
+            "value": 1
+          }
+        ],
+        "sideCode" : 1,
+        "isCompost": true,
+        "expired": "false"
+      }];
+    };
+
     this.createLinearAssets = _.throttle(function(data, success, failure) {
       $.ajax({
         contentType: "application/json",

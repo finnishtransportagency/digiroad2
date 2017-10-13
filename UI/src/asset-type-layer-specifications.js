@@ -48,7 +48,8 @@
         disabled: 'Ei rajoitusta',
         showUnit: true
       },
-      label: new LinearAssetLabel()
+      label: new LinearAssetLabel(),
+      massLimitation : true
     },
     {
       typeId: assetType.trailerTruckWeightLimit,
@@ -66,7 +67,8 @@
         disabled: 'Ei rajoitusta',
         showUnit: true
       },
-      label: new LinearAssetLabel()
+      label: new LinearAssetLabel(),
+      massLimitation : true
     },
     {
       typeId: assetType.axleWeightLimit,
@@ -84,7 +86,8 @@
         disabled: 'Ei rajoitusta',
         showUnit: true
       },
-      label: new LinearAssetLabel()
+      label: new LinearAssetLabel(),
+      massLimitation : true
     },
     {
       typeId: assetType.bogieWeightLimit,
@@ -102,7 +105,8 @@
         disabled: 'Ei rajoitusta',
         showUnit: true
       },
-      label: new LinearAssetLabel()
+      label: new LinearAssetLabel(),
+      massLimitation : true
     },
     {
       typeId: assetType.heightLimit,
@@ -120,7 +124,8 @@
         disabled: 'Ei rajoitusta',
         showUnit: true
       },
-      label: new LinearAssetLabel()
+      label: new LinearAssetLabel(),
+      massLimitation : true
     },
     {
       typeId: assetType.lengthLimit,
@@ -138,7 +143,8 @@
         disabled: 'Ei rajoitusta',
         showUnit: true
       },
-      label: new LinearAssetLabel()
+      label: new LinearAssetLabel(),
+      massLimitation : true
     },
     {
       typeId: assetType.widthLimit,
@@ -157,7 +163,8 @@
         disabled: 'Ei rajoitusta',
         showUnit: true
       },
-      label: new LinearAssetLabel()
+      label: new LinearAssetLabel(),
+      massLimitation : true
     },
     {
       typeId: assetType.litRoad,
