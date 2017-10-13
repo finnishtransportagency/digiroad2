@@ -457,6 +457,8 @@
     map.addInteraction(selectDoubleClick);
 
     var mapMovedHandler = function (mapState) {
+      if(applicationModel.getSelectedTool() == 'Cut' && selectSingleClick.getFeatures().getArray().length > 0)
+          return;
       var projectId = _.isUndefined(projectCollection.getCurrentProject()) ? undefined : projectCollection.getCurrentProject().project.id;
       if (mapState.zoom !== currentZoom) {
         currentZoom = mapState.zoom;
