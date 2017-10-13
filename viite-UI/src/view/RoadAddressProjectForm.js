@@ -4,6 +4,7 @@
     var selectedProjectLink = false;
     var activeLayer = false;
     var hasNewRoadParts = false;
+    
     var staticField = function(labelText, dataField) {
       var field;
       field = '<div class="form-group">' +
@@ -425,13 +426,17 @@
             $('.edit-mode-btn:visible').click();
           }
           _.defer(function(){
-            $('#activeButtons').empty();
-            $('#actionButtons').html('<button id="saveEdit" class="save btn btn-save" disabled>Tallenna</button>' +
-              '<button id="cancelEdit" class="cancel btn btn-cancel">Peruuta</button>');
-            eventbus.trigger("roadAddressProject:clearAndDisableInteractions");
+            loadEditbuttons();
           });
         });
       });
+
+      var loadEditbuttons = function(){
+        $('#activeButtons').empty();
+        $('#actionButtons').html('<button id="saveEdit" class="save btn btn-save" disabled>Tallenna</button>' +
+          '<button id="cancelEdit" class="cancel btn btn-cancel">Peruuta</button>');
+        eventbus.trigger("roadAddressProject:clearAndDisableInteractions");
+      };
 
       var saveAndNext = function() {
         saveChanges();
@@ -452,20 +457,30 @@
         }
       });
 
-      function textFieldChangeHandler(eventData) {
+      var textFieldChangeHandler = function (eventData) {
         if(currentProject) {
           currentProject.isDirty = true;
         }
-        if($('#nimi').text() !== "" && $('#alkupvm').text() !== "" && $('#generalNext').is(':disabled')){
+        var textIsNonEmpty = $('#nimi').val() !== "" && $('#alkupvm').val() !== "";
+        var nextAreDisabled = $('#generalNext').is(':disabled') || $('#saveEdit').is(':disabled');
+        var reservedRemoved = !_.isUndefined(eventData) && eventData.removedReserved;
+
+        if((textIsNonEmpty || reservedRemoved) && nextAreDisabled){
           $('#generalNext').prop('disabled', false);
           $('#saveEdit:disabled').prop('disabled', false);
           currentProject.isDirty = true;
         }
-      }
+      };
 
-      rootElement.on('change','#nimi', textFieldChangeHandler);
-      rootElement.on('change','#alkupvm', textFieldChangeHandler);
-      rootElement.on('change','#lisatiedot', textFieldChangeHandler);
+      rootElement.on('change','#nimi', function(){
+        textFieldChangeHandler();
+      });
+      rootElement.on('change','#alkupvm', function(){
+        textFieldChangeHandler();
+      });
+      rootElement.on('change','#lisatiedot', function(){
+        textFieldChangeHandler();
+      });
 
       rootElement.on('click', '.btn-reserve', function() {
         var data;
@@ -491,7 +506,10 @@
           new GenericConfirmPopup('Haluatko varmasti poistaa tieosan varauksen ja \r\nsiihen mahdollisesti tehdyt tieosoitemuutokset?', {
             successCallback: function () {
               removePart(roadNumber, roadPartNumber);
-              _.defer(textFieldChangeHandler);
+              loadEditbuttons();
+              _.defer(function(){
+                textFieldChangeHandler({removedReserved: true});
+              });
             }
           });
         }
