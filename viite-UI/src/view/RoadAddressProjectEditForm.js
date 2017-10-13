@@ -80,6 +80,7 @@
     var defineOptionModifiers = function(option, selection) {
       var roadIsUnknownOrOther = projectCollection.roadIsUnknown(selection[0]) || projectCollection.roadIsOther(selection[0]) || selection[0].roadLinkSource === 3;
       var toEdit = selection[0].id === 0;
+      var linkStatus = selection[0].status;
       var modifiers = '';
 
       switch(option) {
@@ -319,6 +320,10 @@
         rootElement.find('.new-road-address').prop("hidden", false);
         if(selectedProjectLink[0].id !== 0)
           rootElement.find('.changeDirectionDiv').prop("hidden", false);
+      }
+      else if (statusCode == LinkStatus.Transfer.value) {
+        $("select option[value*="+LinkStatus.New.action+"]").prop('disabled',true);
+        $('#dropDown').val(LinkStatus.Transfer.action).change();
       }
       $('#discontinuityDropdown').val(selectedProjectLink[selectedProjectLink.length - 1].discontinuity);
       $('#roadTypeDropDown').val(selectedProjectLink[0].roadTypeId);
