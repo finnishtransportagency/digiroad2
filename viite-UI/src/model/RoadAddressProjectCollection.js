@@ -234,13 +234,13 @@
         linkIds: linkIds,
         linkStatus: statusCode,
         projectId: projectId,
-        roadNumber: Number($('#roadAddressProjectForm_0').find('#tie')[0].value),
-        roadPartNumber: Number($('#roadAddressProjectForm_0').find('#osa')[0].value),
-        trackCode: Number($('#roadAddressProjectForm_0').find('#ajr')[0].value),
-        discontinuity: Number($('#roadAddressProjectForm_0').find('#discontinuityDropdown')[0].value),
-        roadEly: Number($('#roadAddressProjectForm_0').find('#ely')[0].value),
+        roadNumber: Number($('#roadAddressProjectForm').find('#tie')[0].value),
+        roadPartNumber: Number($('#roadAddressProjectForm').find('#osa')[0].value),
+        trackCode: Number($('#roadAddressProjectForm').find('#ajr')[0].value),
+        discontinuity: Number($('#roadAddressProjectForm').find('#discontinuityDropdown')[0].value),
+        roadEly: Number($('#roadAddressProjectForm').find('#ely')[0].value),
         roadLinkSource: Number(_.first(changedLinks).roadLinkSource),
-        roadType: Number($('#roadAddressProjectForm_0').find('#roadTypeDropDown')[0].value),
+        roadType: Number($('#roadAddressProjectForm').find('#roadTypeDropDown')[0].value),
         userDefinedEndAddressM: null
       };
       
@@ -304,13 +304,13 @@
         splitPoint: {x: splitPoint.x, y: splitPoint.y},
         statusA: statusCodeA,
         statusB: statusCodeB,
-        roadNumber: Number($('#roadAddressProjectForm_0').find('#tie')[0].value),
-        roadPartNumber: Number($('#roadAddressProjectForm_0').find('#osa')[0].value),
-        trackCode: Number($('#roadAddressProjectForm_0').find('#ajr')[0].value),
-        discontinuity: Number($('#roadAddressProjectForm_0').find('#discontinuityDropdown')[0].value),
-        ely: Number($('#roadAddressProjectForm_0').find('#ely')[0].value),
+        roadNumber: Number($('#roadAddressProjectFormCut').find('#tie')[0].value),
+        roadPartNumber: Number($('#roadAddressProjectFormCut').find('#osa')[0].value),
+        trackCode: Number($('#roadAddressProjectFormCut').find('#ajr')[0].value),
+        discontinuity: Number($('#roadAddressProjectFormCut').find('#discontinuityDropdown')[0].value),
+        ely: Number($('#roadAddressProjectFormCut').find('#ely')[0].value),
         roadLinkSource: Number(_.first(changedLinks).roadLinkSource),
-        roadType: Number($('#roadAddressProjectForm_0').find('#roadTypeDropDown')[0].value),
+        roadType: Number($('#roadAddressProjectFormCut').find('#roadTypeDropDown')[0].value),
         projectId: projectId
       };
 
