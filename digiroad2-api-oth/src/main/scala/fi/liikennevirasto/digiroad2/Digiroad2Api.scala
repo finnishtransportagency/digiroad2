@@ -718,12 +718,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-  def mapMassLinearAssets(readOnlyAssets: Seq[Seq[MassLinearAsset]]): Seq[Seq[Map[String, Any]]] = {
+  def mapMassLinearAssets(readOnlyAssets: Seq[Seq[MassLimitationAsset]]): Seq[Seq[Map[String, Any]]] = {
     readOnlyAssets.map { links =>
       links.map { link =>
         Map(
           "points" -> link.geometry,
-          "value" -> link.value.toJson
+          "sideCode" -> link.sideCode,
+          "values" -> link.value.map(_.toJson)
         )
       }
     }

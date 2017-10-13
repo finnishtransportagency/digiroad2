@@ -386,7 +386,6 @@ root.LinearAssetLayer  = function(params) {
 
   var linearAssetUnSelected = function () {
     selectToolControl.clear();
-    selectToolControl.activate();
     me.eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
   };
   
