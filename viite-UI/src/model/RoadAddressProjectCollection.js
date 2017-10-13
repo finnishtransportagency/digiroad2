@@ -276,7 +276,7 @@
         else {
           backend.updateProjectLinks(dataJson, function (successObject) {
             if (!successObject.success) {
-              new ModalConfirm("Tämä tieosoite on jo käytössä.");
+              new ModalConfirm(successObject.errormessage);
               applicationModel.removeSpinner();
             } else {
               publishableProject = successObject.publishable;
