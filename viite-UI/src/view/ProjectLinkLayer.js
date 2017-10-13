@@ -567,13 +567,6 @@
           geometry: new ol.geom.Point([x, y]),
           type: 'cutter-crosshair'
         })];
-        scissorFeatures[0].setStyle(
-            new ol.style.Style({
-              image: new ol.style.Icon({
-                src: 'images/cursor-crosshair.svg'
-              })
-          })
-        );
         removeFeaturesByType('cutter-crosshair');
         addFeaturesToSelection(scissorFeatures);
       };
