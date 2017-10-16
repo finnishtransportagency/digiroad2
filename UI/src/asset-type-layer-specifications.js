@@ -124,8 +124,7 @@
         disabled: 'Ei rajoitusta',
         showUnit: true
       },
-      label: new LinearAssetLabel(),
-      massLimitation : true
+      label: new LinearAssetLabel()
     },
     {
       typeId: assetType.lengthLimit,
@@ -143,8 +142,7 @@
         disabled: 'Ei rajoitusta',
         showUnit: true
       },
-      label: new LinearAssetLabel(),
-      massLimitation : true
+      label: new LinearAssetLabel()
     },
     {
       typeId: assetType.widthLimit,
@@ -163,8 +161,7 @@
         disabled: 'Ei rajoitusta',
         showUnit: true
       },
-      label: new LinearAssetLabel(),
-      massLimitation : true
+      label: new LinearAssetLabel()
     },
     {
       typeId: assetType.litRoad,

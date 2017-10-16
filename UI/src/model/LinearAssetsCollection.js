@@ -53,10 +53,18 @@
       return fetch(boundingBox, backend.getLinearAssetsWithComplementary(boundingBox, typeId));
     };
 
-    //TODO: Change this to use the real request
     this.fetchReadOnlyAssets = function(boundingBox) {
-      linearAssets = backend.getReadOnlyLinearAssets();
-      eventbus.trigger('fetchedR', self.getAll());
+      return fetchR(boundingBox, backend.getReadOnlyLinearAssets(boundingBox, typeId));
+    };
+
+    var fetchR = function(boundingBox, assets) {
+      return assets.then(function(linearAssetGroups) {
+        var partitionedLinearAssetGroups = _.groupBy(linearAssetGroups, function(linearAssetGroup) {
+          return _.some(linearAssetGroup, function(linearAsset) { return _.has(linearAsset, 'values'); });
+        });
+        var knownLinearAssets = partitionedLinearAssetGroups[true] || [];
+        eventbus.trigger('fetchedR', knownLinearAssets.concat([]));
+      });
     };
 
     var fetch = function(boundingBox, assets) {

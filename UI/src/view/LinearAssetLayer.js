@@ -37,14 +37,16 @@
     };
 
     var drawLinearAssets = function(linearAssets) {
-      var asset = _.filter(linearAssets, function(asset) { return !_.some(asset.types, function(type) { return type.typeId == params.typeId; }); });
+      var asset = _.filter(linearAssets, function(asset) { return !_.some(asset.values, function(type) { return type.typeId == params.typeId; }); });
       vectorSource.addFeatures(params.style.renderFeatures(asset));
     };
 
     var refreshView = function () {
       vectorLayer.setVisible(true);
       adjustStylesByZoomLevel(map.getView().getZoom());
-      params.collection.fetchReadOnlyAssets(map.getView().calculateExtent(map.getSize()));
+      params.collection.fetchReadOnlyAssets(map.getView().calculateExtent(map.getSize())).then(function() {
+        eventbus.trigger('layer:linearAsset:' + event);
+      });
     };
 
     //TODO: To be used when box is implemented
@@ -444,6 +446,7 @@ root.LinearAssetLayer  = function(params) {
     }
     eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
     redrawLinearAssets(collection.getAll());
+    readOnlyLayer.hideLayer();
   };
 
   var drawIndicators = function(links) {
