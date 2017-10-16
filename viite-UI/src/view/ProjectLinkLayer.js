@@ -10,7 +10,6 @@
     var layerMinContentZoomLevels = {};
     var currentZoom = 0;
     var standardZIndex = 6;
-
     var LinkStatus = LinkValues.LinkStatus;
     var Anomaly = LinkValues.Anomaly;
     var SideCode = LinkValues.SideCode;

@@ -45,7 +45,6 @@
       return LinkStatus;
     };
 
-
     this.reset = function(){
       fetchedProjectLinks = [];
     };

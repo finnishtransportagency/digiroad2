@@ -56,7 +56,7 @@
     };
   };
 
-  root.RoadCollection = function(backend) {
+  root.RoadCollection = function(backend, LinkVals) {
     var roadLinkGroups = [];
     var roadLinkGroupsSuravage = [];
     var tmpRoadLinkGroups = [];

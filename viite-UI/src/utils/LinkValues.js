@@ -1,5 +1,4 @@
 (function (root) {
-
     root.LinkStatus = {
         NotHandled:                 {value: 0, description: "NotHandled"},
         Unchanged:                  {value: 1, description: "Unchanged"},
