@@ -4,7 +4,6 @@ import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.masslimitation.oracle.OracleMassLimitationDao
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
-import slick.util.iter.Empty
 
 case class MassLimitationAsset(geometry: Seq[Point], sideCode: Int, value: Option[Value])
 
@@ -17,7 +16,7 @@ class LinearMassLimitationService(roadLinkService: RoadLinkService, dao: OracleM
     LinearAssetTypes.BogieWeightLimits)
 
   def getMassLimitationByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[MassLimitationAsset]] = {
-    val roadLinks = roadLinkService.getRoadLinksWithComplementaryFromVVH(bounds, municipalities)
+    val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities)
     typeId match {
       case typeIdValue if MassLimitationAssetTypes.contains(typeIdValue) =>
         Seq(getMassLimitationByRoadLinks(MassLimitationAssetTypes, roadLinks))
@@ -25,7 +24,7 @@ class LinearMassLimitationService(roadLinkService: RoadLinkService, dao: OracleM
     }
   }
 
-  def getMassLimitationWithComplementayByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[MassLimitationAsset]] = {
+  def getMassLimitationWithComplementaryByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[MassLimitationAsset]] = {
     val roadLinks = roadLinkService.getRoadLinksWithComplementaryFromVVH(bounds, municipalities)
     typeId match {
       case typeIdValue if MassLimitationAssetTypes.contains(typeIdValue) =>
@@ -40,8 +39,10 @@ class LinearMassLimitationService(roadLinkService: RoadLinkService, dao: OracleM
 
     allAssets.groupBy(_.linkId).flatMap {
       case (linkId, assets) =>
-        assetSplitSideCodes(assets).groupBy(_.sideCode).flatMap {
-          case (side, assetsBySide) => getMaxLenghtBySideCode(assetsBySide, roadLinks)
+        val geometrySegment = GeometryUtils.truncateGeometry2D(roadLinks.find(_.linkId == assets.head.linkId).get.geometry, assets.minBy(_.startMeasure).startMeasure, assets.maxBy(_.endMeasure).endMeasure)
+
+        assetSplitSideCodes(assets).groupBy(_.sideCode).map {
+          case (side, assetsBySide) => getAssetBySideCode(assetsBySide, geometrySegment)
         }
     }.toSeq
   }
@@ -61,11 +62,8 @@ class LinearMassLimitationService(roadLinkService: RoadLinkService, dao: OracleM
     }
   }
 
-  protected def getMaxLenghtBySideCode(assets: Seq[PersistedLinearAsset], roadLinks: Seq[RoadLink]): Option[MassLimitationAsset] = {
-    assets.sortBy(sort => (sort.linkId, sort.sideCode, sort.startMeasure - sort.endMeasure)).headOption.map { lengthiestAsset =>
-      val geometrySegment = GeometryUtils.truncateGeometry2D(roadLinks.find(_.linkId == lengthiestAsset.linkId).get.geometry, lengthiestAsset.startMeasure, lengthiestAsset.endMeasure)
+  protected def getAssetBySideCode(assets: Seq[PersistedLinearAsset], geometry: Seq[Point]): MassLimitationAsset = {
       val values = assets.map(a => AssetTypes(a.typeId, a.value.getOrElse(NumericValue(0)).asInstanceOf[NumericValue].value.toString ))
-      MassLimitationAsset(geometrySegment, lengthiestAsset.sideCode, Some(MassLimitationValue(values)))
-    }
+      MassLimitationAsset(geometry, assets.head.sideCode, Some(MassLimitationValue(values)))
   }
 }

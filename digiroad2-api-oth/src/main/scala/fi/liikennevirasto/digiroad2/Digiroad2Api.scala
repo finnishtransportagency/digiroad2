@@ -690,6 +690,19 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
+  get("/linearassets/complementary/massLimitation") {
+    val user = userProvider.getCurrentUser()
+    val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
+    val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
+    params.get("bbox").map { bbox =>
+      val boundingRectangle = constructBoundingRectangle(bbox)
+      validateBoundingBox(boundingRectangle)
+      mapMassLinearAssets(linearMassLimitationService.getMassLimitationWithComplementaryByBoundingBox(typeId, boundingRectangle, municipalities))
+    } getOrElse {
+      BadRequest("Missing mandatory 'bbox' parameter")
+    }
+  }
+
   def mapLinearAssets(assets: Seq[Seq[PieceWiseLinearAsset]]): Seq[Seq[Map[String, Any]]] = {
     assets.map { links =>
       links.map { link =>
