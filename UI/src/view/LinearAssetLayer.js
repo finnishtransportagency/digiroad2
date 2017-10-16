@@ -108,10 +108,13 @@ window.LinearAssetLayer = function(params) {
     this.updateByPosition = function(mousePoint) {
       var closestLinearAssetLink = findNearestLinearAssetLink(mousePoint);
       if (closestLinearAssetLink) {
-        if (isWithinCutThreshold(closestLinearAssetLink.distance)) {
-          moveTo(closestLinearAssetLink.point[0], closestLinearAssetLink.point[1]);
-        } else {
-          remove();
+        var nearestLineAsset = closestLinearAssetLink.feature.getProperties();
+        if (!editConstrains(nearestLineAsset)) {
+          if (isWithinCutThreshold(closestLinearAssetLink.distance)) {
+            moveTo(closestLinearAssetLink.point[0], closestLinearAssetLink.point[1]);
+          } else {
+            remove();
+          }
         }
       }
     };
@@ -137,10 +140,12 @@ window.LinearAssetLayer = function(params) {
       }
 
       var nearestLinearAsset = nearest.feature.getProperties();
-      var splitProperties = calculateSplitProperties(nearestLinearAsset, mousePoint);
-      selectedLinearAsset.splitLinearAsset(nearestLinearAsset.id, splitProperties);
+      if(!editConstrains(nearestLinearAsset)) {
+        var splitProperties = calculateSplitProperties(nearestLinearAsset, mousePoint);
+        selectedLinearAsset.splitLinearAsset(nearestLinearAsset.id, splitProperties);
 
-      remove();
+        remove();
+      }
     };
   };
 
@@ -277,6 +282,7 @@ window.LinearAssetLayer = function(params) {
     var linearAssetChanged = _.partial(handleLinearAssetChanged, eventListener);
     var linearAssetCancelled = _.partial(handleLinearAssetCancelled, eventListener);
     eventListener.listenTo(eventbus, singleElementEvents('unselect'), linearAssetUnSelected);
+    eventListener.listenTo(eventbus, singleElementEvents('selected'), linearAssetSelected);
     eventListener.listenTo(eventbus, multiElementEvent('fetched'), redrawLinearAssets);
     eventListener.listenTo(eventbus, 'tool:changed', changeTool);
     eventListener.listenTo(eventbus, singleElementEvents('saved'), handleLinearAssetSaved);
@@ -307,6 +313,11 @@ window.LinearAssetLayer = function(params) {
 
   var linearAssetUnSelected = function () {
     selectToolControl.clear();
+    me.eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
+  };
+  
+  var linearAssetSelected = function(){
+      decorateSelection();
   };
 
   var handleLinearAssetSaved = function() {

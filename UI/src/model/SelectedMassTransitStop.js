@@ -241,7 +241,7 @@
         });
       } else {
         currentAsset.payload.id = currentAsset.id;
-        changedProps = _.union(changedProps, ["tietojen_yllapitaja"], ["inventointipaiva"]);
+        changedProps = _.union(changedProps, ["tietojen_yllapitaja"], ["inventointipaiva"] , ["osoite_suomeksi"], ["osoite_ruotsiksi"]);
         var payload = payloadWithProperties(currentAsset.payload, changedProps);
         var positionUpdated = !_.isEmpty(_.intersection(changedProps, ['lon', 'lat']));
         backend.updateAsset(currentAsset.id, payload, function (asset) {
@@ -303,6 +303,7 @@
     var switchDirection = function() {
       var validityDirection = validitydirections.switchDirection(get('validityDirection'));
       setProperty('vaikutussuunta', [{ propertyValue: validityDirection }]);
+      currentAsset.payload.linkId = currentAsset.payload.linkId ? currentAsset.payload.linkId : currentAsset.linkId;
       currentAsset.payload.validityDirection = validityDirection;
     };
 
@@ -457,6 +458,22 @@
       });
     }
 
+    function isRoadNameDif(newRoadName, publicId) {
+      var properties = getProperties();
+
+      return _.some(properties, function (property) {
+        return property.publicId === publicId &&
+            _.some(property.values, function (value) {
+              return value.propertyValue !== newRoadName;
+            });
+      });
+    }
+
+    function setRoadNameFields(newRoadLinkData, public_ids) {
+      eventbus.trigger('textElementValue:set', newRoadLinkData.roadNameFi, public_ids.roadNameFi);
+      eventbus.trigger('textElementValue:set', newRoadLinkData.roadNameSe, public_ids.roadNameSe);
+    }
+
     function isTerminalBusStop(properties) {
       return _.some(properties, function(property) {
         return property.publicId == 'pysakin_tyyppi' && _.some(property.values, function(value){
@@ -505,6 +522,8 @@
       validateDirectionsForSave : validateDirectionsForSave,
       validateDirectionsForCreation: validateDirectionsForCreation,
       getEndDate: getEndDate,
+      isRoadNameDif: isRoadNameDif,
+      setRoadNameFields: setRoadNameFields,
       isTerminalChild: isTerminalChild
     };
   };

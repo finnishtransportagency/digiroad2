@@ -102,8 +102,21 @@
       return cacheImage(cachedImageKey, image, canvas.width, canvas.height );
     };
 
-    var createStopBackgroundImage = function(busStopsNumber){
-      var cachedImageKey = 'image_'+busStopsNumber;
+    var createStopBackgroundImage = function(busStopsNumber, validityPeriod){
+      var canvasFillColor;
+
+      switch (validityPeriod) {
+        case "future":
+          canvasFillColor = '#117400';
+          break;
+        case "past":
+          canvasFillColor = '#880000';
+          break;
+        default:
+          canvasFillColor = '#fff';
+      }
+
+      var cachedImageKey = 'image_'+busStopsNumber+'_'+validityPeriod;
       var cachedImage = getCachedImage(cachedImageKey);
 
       if(cachedImage)
@@ -118,7 +131,7 @@
       roundRect(canvasContext, 1,1, IMAGE_WIDTH + (IMAGE_PADDING * 2), (IMAGE_PADDING * 2) + (IMAGE_HEIGHT * busStopsNumber), 3);
       canvasContext.lineWidth = 2;
       canvasContext.stroke();
-      canvasContext.fillStyle = '#fff';
+      canvasContext.fillStyle = canvasFillColor;
       canvasContext.fill();
 
       roundRect(canvasContext, 1 + IMAGE_PADDING, 1 + IMAGE_PADDING, IMAGE_WIDTH, IMAGE_HEIGHT * busStopsNumber, 3);
@@ -168,11 +181,11 @@
       });
     };
 
-    var createStopBackgroundStyle = function(stopTypes, margin){
+    var createStopBackgroundStyle = function(stopTypes, margin, validityPeriod){
       var groupOffset = groupOffsetForAsset();
       var imgMargin = margin ? margin : 0;
       var types = _.isEmpty(stopTypes) ? 1 : stopTypes.length;
-      var background = createStopBackgroundImage(types);
+      var background = createStopBackgroundImage(types, validityPeriod);
       return new ol.style.Style({
         image: new ol.style.Icon(({
           anchor: [0-imgMargin, (types * IMAGE_HEIGHT) + STICK_HEIGHT + (IMAGE_PADDING * 2) + 1 + imgMargin + groupOffset],
@@ -265,6 +278,7 @@
       var name = '';
       var direction = '';
       var nationalId = data.nationalId ? data.nationalId : '';
+      var validityPeriod = !_.isUndefined(data.validityPeriod) ? data.validityPeriod : '';
       if(selectedMassTransitStopModel.exists()){
         if(selectedMassTransitStopModel.getId() == data.id){
             name = selectedMassTransitStopModel.getName();
@@ -287,17 +301,18 @@
       styles = styles.concat(createDirectionArrowStyle());
       styles = styles.concat(createStickStyle());
       styles = styles.concat(createSelectionBackgroundStyle(data.stopTypes, name+direction));
-      styles = styles.concat(createStopBackgroundStyle(data.stopTypes, IMAGE_MARGIN));
+      styles = styles.concat(createStopBackgroundStyle(data.stopTypes, IMAGE_MARGIN, validityPeriod));
       styles = styles.concat(createStopTypeStyles(data.stopTypes, IMAGE_MARGIN));
       styles = styles.concat(createTextStyles(data.stopTypes, nationalId, name, direction, IMAGE_MARGIN));
       return styles;
     };
 
     var createDefaultMarkerStyles = function(){
+      var validityPeriod = !_.isUndefined(data.validityPeriod) ? data.validityPeriod : '';
       var styles = [];
       styles = styles.concat(createDirectionArrowStyle());
       styles = styles.concat(createStickStyle());
-      styles = styles.concat(createStopBackgroundStyle(data.stopTypes));
+      styles = styles.concat(createStopBackgroundStyle(data.stopTypes, 0, validityPeriod));
       styles = styles.concat(createStopTypeStyles(data.stopTypes));
       return styles;
     };

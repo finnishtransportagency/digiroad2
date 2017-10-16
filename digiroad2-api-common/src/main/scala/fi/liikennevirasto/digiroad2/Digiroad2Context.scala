@@ -53,6 +53,13 @@ class LinearAssetSaveProjected[T](linearAssetProvider: LinearAssetService) exten
   }
 }
 
+class MaintenanceRoadSaveProjected[T](maintenanceRoadProvider: MaintenanceService) extends Actor {
+  def receive = {
+    case x: Seq[T] => maintenanceRoadProvider.persistProjectedLinearAssets(x.asInstanceOf[Seq[PersistedLinearAsset]])
+    case _             => println("maintenanceRoadSaveProjected: Received unknown message")
+  }
+}
+
 class SpeedLimitUpdater[A, B](speedLimitProvider: SpeedLimitService) extends Actor {
   def receive = {
     case x: Set[A] => speedLimitProvider.purgeUnknown(x.asInstanceOf[Set[Long]])
@@ -134,6 +141,9 @@ object Digiroad2Context {
 
   val linearAssetSaveProjected = system.actorOf(Props(classOf[LinearAssetSaveProjected[PersistedLinearAsset]], linearAssetService), name = "linearAssetSaveProjected")
   eventbus.subscribe(linearAssetSaveProjected, "linearAssets:saveProjectedLinearAssets")
+
+  val maintenanceRoadSaveProjected = system.actorOf(Props(classOf[MaintenanceRoadSaveProjected[PersistedLinearAsset]], maintenanceRoadService), name = "maintenanceRoadSaveProjected")
+  eventbus.subscribe(maintenanceRoadSaveProjected, "maintenanceRoads:saveProjectedMaintenanceRoads")
 
   val speedLimitSaveProjected = system.actorOf(Props(classOf[SpeedLimitSaveProjected[SpeedLimit]], speedLimitService), name = "speedLimitSaveProjected")
   eventbus.subscribe(speedLimitSaveProjected, "speedLimits:saveProjectedSpeedLimits")
@@ -227,6 +237,10 @@ object Digiroad2Context {
       override val tierekisteriEnabled = getProperty("digiroad2.tierekisteri.enabled").toBoolean
     }
     new ProductionMassTransitStopService(eventbus, roadLinkService)
+  }
+
+  lazy val maintenanceRoadService: MaintenanceService = {
+    new MaintenanceService(roadLinkService, eventbus)
   }
 
   lazy val linearAssetService: LinearAssetService = {

@@ -24,7 +24,7 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
 
   def getByMunicipality(municipalityNumber: Int): Seq[Manoeuvre] = {
     val roadLinks = roadLinkService.getRoadLinksFromVVH(municipalityNumber)
-    getByRoadLinks(roadLinks)
+    getBySourceRoadLinks(roadLinks)
   }
 
   def getByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int]): Seq[Manoeuvre] = {
@@ -116,10 +116,18 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     isValidManoeuvre(roadLinks)(manoeuvre)
   }
 
+  private def getBySourceRoadLinks(roadLinks: Seq[RoadLink]): Seq[Manoeuvre] = {
+    getByRoadLinks(roadLinks, dao.getByElementTypeRoadLinks(ElementTypes.FirstElement))
+  }
+
   private def getByRoadLinks(roadLinks: Seq[RoadLink]): Seq[Manoeuvre] = {
+    getByRoadLinks(roadLinks, dao.getByRoadLinks)
+  }
+
+  private def getByRoadLinks(roadLinks: Seq[RoadLink], getDaoManoeuvres: Seq[Long] => Seq[Manoeuvre]): Seq[Manoeuvre] = {
     val manoeuvres =
       withDynTransaction {
-        dao.getByRoadLinks(roadLinks.map(_.linkId)).map{ manoeuvre =>
+        getDaoManoeuvres(roadLinks.map(_.linkId)).map{ manoeuvre =>
           val firstElement = manoeuvre.elements.filter(_.elementType == ElementTypes.FirstElement).head
           val lastElement = manoeuvre.elements.filter(_.elementType == ElementTypes.LastElement).head
           val intermediateElements = manoeuvre.elements.filter(_.elementType == ElementTypes.IntermediateElement)

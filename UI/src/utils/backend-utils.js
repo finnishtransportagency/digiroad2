@@ -19,9 +19,9 @@
           });
     };
 
-    this.getRoadLinks = createCallbackRequestorWithParameters(function(boundingBox, withRoadAddress) {
+    this.getRoadLinks = createCallbackRequestorWithParameters(function(boundingBox) {
       return {
-        url: 'api/roadlinks?bbox=' + boundingBox + '&withRoadAddress=' + withRoadAddress
+        url: 'api/roadlinks?bbox=' + boundingBox
       };
     });
 
@@ -187,6 +187,12 @@
     this.getPointAssetById = latestResponseRequestor(function(id, endPointName) {
       return {
         url: 'api/'+ endPointName + '/' + id
+      };
+    });
+
+    this.getLinearAssetById = latestResponseRequestor(function(id, endPointName) {
+      return {
+        url: 'api/linearAsset/unchecked/' + id
       };
     });
 
@@ -366,6 +372,10 @@
       return $.getJSON('api/trafficSigns/floating');
     };
 
+    this.getLinearAssetUnchecked = function(typeId) {
+      return $.getJSON('api/linearAsset/unchecked?typeId=' + typeId);
+    };
+
     this.createAsset = function (data, errorCallback) {
       eventbus.trigger('asset:creating');
       $.ajax({
@@ -452,8 +462,8 @@
 
     function createCallbackRequestorWithParameters(getParameters) {
       var requestor = latestResponseRequestor(getParameters);
-      return function(parameter, withRoadAddress, callback) {
-        requestor(parameter, withRoadAddress).then(callback);
+      return function(parameter, callback) {
+        requestor(parameter).then(callback);
       };
     }
 
@@ -473,7 +483,7 @@
     }
 
     this.withRoadLinkData = function (roadLinkData) {
-      self.getRoadLinks = function(boundingBox, withRoadAddress, callback) {
+      self.getRoadLinks = function(boundingBox, callback) {
         callback(roadLinkData);
         eventbus.trigger('roadLinks:fetched');
       };

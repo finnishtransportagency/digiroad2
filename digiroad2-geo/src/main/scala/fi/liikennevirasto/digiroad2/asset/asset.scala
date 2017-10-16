@@ -131,6 +131,14 @@ object SideCode {
     values.find(_.value == intValue).getOrElse(Unknown)
   }
 
+  def switch(sideCode: SideCode): SideCode = {
+    sideCode match {
+      case TowardsDigitizing => AgainstDigitizing
+      case AgainstDigitizing => TowardsDigitizing
+      case _ => sideCode
+    }
+  }
+
   case object BothDirections extends SideCode { def value = 1 }
   case object TowardsDigitizing extends SideCode { def value = 2 }
   case object AgainstDigitizing extends SideCode { def value = 3 }

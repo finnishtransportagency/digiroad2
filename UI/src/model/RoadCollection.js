@@ -80,7 +80,7 @@
     };
 
     this.fetch = function(boundingBox) {
-      backend.getRoadLinks(boundingBox, applicationModel.getWithRoadAddress(), function(fetchedRoadLinks) {
+      backend.getRoadLinks(boundingBox, function(fetchedRoadLinks) {
           var selectedIds = _.map(getSelectedRoadLinks(), function(roadLink) {
             return roadLink.getId();
           });

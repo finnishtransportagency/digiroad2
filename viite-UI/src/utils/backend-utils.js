@@ -1,7 +1,7 @@
 (function (root) {
   root.Backend = function() {
     var self = this;
-    var  loadingProject;
+    var loadingProject;
 
     this.getRoadLinks = createCallbackRequestor(function(params) {
       var zoom = params.zoom;
@@ -26,20 +26,6 @@
         url: 'api/viite/project/roadlinks?zoom=' + zoom + '&bbox=' + boundingBox + '&id=' + projectId
       };
     });
-
-    this.updateProjectLinks = _.throttle(function(data, errorCallback) {
-      $.ajax({
-        contentType: "application/json",
-        type: "PUT",
-        url: "api/viite/project/roadlinks",
-        data: JSON.stringify(data),
-        dataType: "json",
-        success: function (data) {
-          eventbus.trigger('roadAddress:projectLinksUpdated', data);
-        },
-        error: errorCallback
-      });
-    }, 1000);
 
     this.revertChangesRoadlink = _.throttle(function(data, success, errorCallback) {
         $.ajax({
@@ -115,7 +101,7 @@
       $.ajax({
         contentType: "application/json",
         type: "PUT",
-        url: "api/viite/roadlinks/roadaddress/project/save",
+        url: "api/viite/roadlinks/roadaddress/project",
         data: JSON.stringify(data),
         dataType: "json",
         success: success,
@@ -127,7 +113,7 @@
       $.ajax({
         contentType: "application/json",
         type: "POST",
-        url: "api/viite/roadlinks/roadaddress/project/create",
+        url: "api/viite/roadlinks/roadaddress/project",
         data: JSON.stringify(data),
         dataType: "json",
         success: success,
@@ -162,26 +148,27 @@
         });
     });
 
-    this.insertNewRoadLink = _.throttle(function(data, success, failure) {
-      var Json = {
-        linkIds : data[0],
-        projectId : data[1],
-        newRoadNumber : data[2],
-        newRoadPartNumber : data[3],
-        newTrackCode : data[4],
-        newDiscontinuity : data[5],
-        roadEly: data[6],
-        roadLinkSource: data[7],
-        roadType: data[8]
-      };
+    this.createProjectLinks = _.throttle(function(data, success, failure) {
       $.ajax({
         contentType: "application/json",
-        type: "PUT",
-        url: "api/viite/roadlinks/roadaddress/project/savenewroadlink",
-        data: JSON.stringify(Json),
+        type: "POST",
+        url: "api/viite/roadlinks/roadaddress/project/links",
+        data: JSON.stringify(data),
         dataType: "json",
         success: success,
         error: failure
+      });
+    }, 1000);
+
+    this.updateProjectLinks = _.throttle(function(data, success, error) {
+      $.ajax({
+        contentType: "application/json",
+        type: "PUT",
+        url: "api/viite/roadlinks/roadaddress/project/links",
+        data: JSON.stringify(data),
+        dataType: "json",
+        success: success,
+        error: error
       });
     }, 1000);
 
@@ -247,6 +234,15 @@
     this.getCoordinatesFromRoadAddress = function(roadNumber, section, distance, lane) {
       return $.get("vkm/tieosoite", {tie: roadNumber, osa: section, etaisyys: distance, ajorata: lane})
         .then(function(x) { return JSON.parse(x); });
+    };
+
+    this.removeProjectLinkSplit = function(projectId, linkId, success, errorCallback) {
+      $.ajax({
+        type: "DELETE",
+        url: "api/viite/project/split/" + projectId + "/" + linkId,
+        success: success,
+        error: errorCallback
+      });
     };
 
     function createCallbackRequestor(getParameters) {

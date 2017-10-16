@@ -558,4 +558,8 @@ class MassTransitStopDao {
         where a.asset_type_id = 10 and (a.valid_to is null or a.valid_to > sysdate) and tbs.terminal_asset_id = $assetId
       """.as[Int].first
   }
+  def getPropertiesWithMaxSize(assetTypeId: Long): Map[String, Int] = {
+    sql"""select public_id, max_value_length from property where asset_type_id = $assetTypeId and max_value_length is not null""".as[(String, Int)].iterator.toMap
+  }
+
 }

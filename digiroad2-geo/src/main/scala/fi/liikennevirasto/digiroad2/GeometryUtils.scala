@@ -316,5 +316,31 @@ object GeometryUtils {
     }
   }
 
+  def lastSegmentDirection(geometry: Seq[Point]): Vector3d = {
+    geometry.size match {
+      case 0 | 1 => throw new IllegalArgumentException("Geometry had less than 2 points")
+      case 2 =>
+        val (p1, p2) = (geometry.head, geometry.last)
+        Vector3d(p2.x - p1.x, p2.y - p1.y, p2.z - p1.z)
+      case _ =>
+        lastSegmentDirection(geometry.tail)
+    }
+  }
+
+  def firstSegmentDirection(geometry: Seq[Point]): Vector3d = {
+    geometry.size match {
+      case 0 | 1 => throw new IllegalArgumentException("Geometry had less than 2 points")
+      case _ =>
+        val (p1, p2) = (geometry.head, geometry.tail.head)
+        Vector3d(p2.x - p1.x, p2.y - p1.y, p2.z - p1.z)
+    }
+  }
+
+  def geometryToSegments(geometry: Seq[Point]): Seq[Seq[Point]] = {
+    geometry.zip(geometry.tail).map {
+      case (p1, p2) => Seq(p1, p2)
+    }
+  }
+
   case class Projection(oldStart: Double, oldEnd: Double, newStart: Double, newEnd: Double, vvhTimeStamp: Long)
 }

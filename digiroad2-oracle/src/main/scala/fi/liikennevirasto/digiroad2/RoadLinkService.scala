@@ -86,15 +86,16 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     else
       enrichRoadLinksFromVVH(vvhRoadLinks).headOption
   }
+  def getRoadLinkAndComplementaryFromVVH(linkId: Long, newTransaction: Boolean = true): Option[RoadLink] = getRoadLinksAndComplementariesFromVVH(Set(linkId), newTransaction: Boolean).headOption
 
-  def getRoadLinkAndComplementaryFromVVH(linkId: Long, newTransaction: Boolean = true): Option[RoadLink] = {
-    val vvhRoadLinks = fetchVVHRoadlinksAndComplementary(Set(linkId))
+  def getRoadLinksAndComplementariesFromVVH(linkId: Set[Long], newTransaction: Boolean = true): Seq[RoadLink] = {
+    val vvhRoadLinks = fetchVVHRoadlinksAndComplementary(linkId)
     if (newTransaction)
       withDynTransaction {
         enrichRoadLinksFromVVH(vvhRoadLinks)
-      }.headOption
+      }
     else
-      enrichRoadLinksFromVVH(vvhRoadLinks).headOption
+        enrichRoadLinksFromVVH(vvhRoadLinks)
   }
 
   def getComplementaryRoadLinkFromVVH(linkId: Long, newTransaction: Boolean = true): Option[RoadLink] = {
@@ -648,7 +649,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
         case _ => None
       }
       val ac = (row._14, row._15, row._16, row._17) match{
-        case (Some(linkId), Some(value), Some(modDate), Some(modBy)) => Option((linkId, value, modDate, modBy))
+        case (Some(linkId), Some(value), Some(createdDate), Some(createdBy)) => Option((linkId, value, createdDate, createdBy))
         case _ => None
       }
       row._1 ->(td, fc, lt, ac)

@@ -44,6 +44,7 @@ class ValluStoreStopChangeMessageSpec extends FlatSpec with MustMatchers {
     (xml \ "Names" ) must be ('empty)
     (xml \ "SpecialNeeds").text must equal("")
     (xml \ "Comments").text must equal("")
+    (xml \ "PlatformCode").text must equal("")
     (xml \ "ConnectedToTerminal").text must equal("")
   }
 

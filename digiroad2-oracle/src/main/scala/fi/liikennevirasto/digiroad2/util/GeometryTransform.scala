@@ -63,6 +63,7 @@ object RoadSide {
 
 case class RoadAddress(municipalityCode: Option[String], road: Int, roadPart: Int, track: Track, mValue: Int, deviation: Option[Double])
 class RoadAddressException(response: String) extends RuntimeException(response)
+class RoadPartReservedException(response: String) extends RoadAddressException(response)
 
 /**
   * A class to transform ETRS89-FI coordinates to road network addresses

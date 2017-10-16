@@ -49,6 +49,13 @@
     };
   };
 
+  var validatePlatformNumberMaxSize = function (target) {
+    var propertyValue = target.currentTarget.value;
+    if (propertyValue.length > 3) {
+      target.currentTarget.value = propertyValue.substring(0, 3);
+    }
+  };
+
   var SaveButton = function(isTerminalActive) {
     var deleteMessage = isTerminalActive ? 'valitsemasi terminaalipysäkin' : 'pysäkin';
     var element = $('<button />').addClass('save btn btn-primary').text('Tallenna').click(function () {
@@ -279,8 +286,10 @@
           }
         } else {
           elementType = property.propertyType === 'long_text' ?
-            $('<textarea />').addClass('form-control') : $('<input type="text"/>').addClass('form-control');
+            $('<textarea />').addClass('form-control') : $('<input type="text"/>').addClass('form-control').attr('id', property.publicId);
           element = elementType.bind('input', function(target){
+            if (property.publicId === 'laiturinumero')
+              validatePlatformNumberMaxSize(target);
             selectedMassTransitStopModel.setProperty(property.publicId, [{ propertyValue: target.currentTarget.value, propertyDisplayValue: target.currentTarget.value  }], property.propertyType, property.required);
           });
 
@@ -321,7 +330,7 @@
           if (property.values && property.values[0]) {
             element.text(property.values[0].propertyDisplayValue);
           } else {
-            element.html('Ei tiedossa');
+            element.addClass('undefined').html('Ei m&auml;&auml;ritetty');
           }
         } else {
           element = $('<select />').addClass('form-control').change(function(x){
@@ -556,6 +565,7 @@
           'yllapitajan_tunnus',
           'yllapitajan_koodi',
           'matkustajatunnus',
+          'laiturinumero', //Platform Number
           'liitetty_terminaaliin',
           'maastokoordinaatti_x',
           'maastokoordinaatti_y',
@@ -612,6 +622,7 @@
           case '2': //NoRoadLinkFound
           case '4': //DistanceToRoad
           case '5': //NoReferencePointForMValue
+          case '6': //DirectionNotMatch
             text = 'Kadun tai tien geometria on muuttunut...';
             break;
           case '1': //RoadOwnerChanged
@@ -812,6 +823,10 @@
 
       eventbus.on('asset:moved', function() {
         streetViewHandler.update();
+      });
+
+      eventbus.on('textElementValue:set', function (newTextValue, textId) {
+        $('input[id='+textId+']').val(newTextValue);
       });
 
       eventbus.on('assetPropertyValue:changed', function (event) {

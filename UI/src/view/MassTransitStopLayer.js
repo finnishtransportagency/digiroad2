@@ -9,6 +9,11 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   var requestingMovePermission  = false;
   var massTransitStopLayerStyles = MassTransitStopLayerStyles(roadLayer);
   var visibleAssets;
+  var overrideMessageAllow = true;
+  var publicIds = {
+    roadNameFi: 'osoite_suomeksi',
+    roadNameSe: 'osoite_ruotsiksi'
+  };
 
   var selectedControl = 'Select';
 
@@ -58,6 +63,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
         feature.getProperties().massTransitStop.getMarkerSelectionStyles();
         selectedMassTransitStopModel.change(feature.getProperties().data);
         movementPermissionConfirmed = false;
+        overrideMessageAllow = true;
       });
       toggleMode();
     }
@@ -270,6 +276,13 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
   var handleAssetSaved = function(asset, positionUpdated) {
     _.merge(massTransitStopsCollection.getAsset(asset.id).data, asset);
+
+    var features = selectControl.getSelectInteraction().getFeatures();
+    _.each(features.getArray(), function(feature) {
+      var properties = feature.getProperties();
+      feature.setStyle(properties.massTransitStop.getMarkerSelectionStyles());
+    });
+
     if (positionUpdated) {
       destroyAsset(asset);
       deselectAsset(selectedAsset);
@@ -430,6 +443,8 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     terminalSource.clear();
     if (asset)
       movementPermissionConfirmed = false;
+      overrideMessageAllow = true;
+    }
   };
 
   var handleAssetFetched = function(backendAsset) {
@@ -473,6 +488,30 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     return selectedMassTransitStopModel.isAdministratorHSL(properties) && selectedMassTransitStopModel.isAdminClassState(properties);
   };
 
+  var autoUpdateAddressNames = function (originalLinkId, newLinkId) {
+    var popupMessageToShow = 'Säilyykö pysäkin osoite (katunimi) samana? Jos ei, tarkista uusi osoite tallennuksen jälkeen.';
+    var roadLinkData = roadCollection.getRoadLinkByLinkId(newLinkId).getData();
+
+    if (overrideMessageAllow) {
+      if (selectedMassTransitStopModel.isRoadNameDif(roadLinkData.roadNameFi, publicIds.roadNameFi) ||
+          selectedMassTransitStopModel.isRoadNameDif(roadLinkData.roadNameSe, publicIds.roadNameSe)) {
+        new GenericConfirmPopup(popupMessageToShow, {
+          successCallback: function () {
+          },
+          closeCallback: function () {
+            overrideMessageAllow = false;
+            selectedMassTransitStopModel.setProperty(publicIds.roadNameFi, [{propertyValue: ''}]);
+            selectedMassTransitStopModel.setProperty(publicIds.roadNameSe, [{propertyValue: ''}]);
+
+            selectedMassTransitStopModel.setRoadNameFields(roadLinkData, publicIds);
+          }
+        });
+      }
+    } else {
+      selectedMassTransitStopModel.setRoadNameFields(roadLinkData, publicIds);
+    }
+  };
+
   var isTerminalChild = function () {
     var properties = selectedMassTransitStopModel.getProperties();
     return selectedMassTransitStopModel.isTerminalChild(properties);
@@ -502,6 +541,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
           roadLayer.clearSelection();
           movementPermissionConfirmed = true;
           requestingMovePermission = false;
+          autoUpdateAddressNames(selectedAsset.data.linkId, nearestLine.linkId);
         },
         closeCallback: function(){
           //Moves the stop to the original position
@@ -517,6 +557,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     else
     {
       doMovement(event, angle, nearestLine, coordinates);
+      autoUpdateAddressNames(selectedAsset.data.linkId, nearestLine.linkId);
       roadLayer.clearSelection();
     }
   };
