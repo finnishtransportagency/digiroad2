@@ -244,8 +244,17 @@
         $('#closeProjectSpan').css('visibility', 'visible');
       };
 
-      var saveChanges = function() {
+      var createOrSaveProject = function() {
         var data = $('#roadAddressProject').get(0);
+        if(_.isUndefined(currentProject) || currentProject.id === 0){
+          projectCollection.setDirtyRoadParts(projectCollection.getReservedDirtyRoadParts());
+          projectCollection.createProject(data);
+        } else {
+          projectCollection.saveProject(data);
+        }
+      };
+
+      var saveChanges = function() {
         applicationModel.addSpinner();
         eventbus.once('roadAddress:projectSaved', function (result) {
           hasNewRoadParts = false;
@@ -269,41 +278,22 @@
             eventbus.trigger('linkProperties:selectedProject', result.projectAddresses.linkId);
           }
         });
-        if(_.isUndefined(currentProject) || currentProject.id === 0){
-          projectCollection.setDirtyRoadParts(projectCollection.getReservedDirtyRoadParts());
-          projectCollection.createProject(data);
-        } else {
-          projectCollection.saveProject(data);
-        }
+        createOrSaveProject();
       };
 
       var nextStage = function(){
-        var data = $('#roadAddressProject').get(0);
         applicationModel.addSpinner();
-        eventbus.once('roadAddress:projectSaved', function (result) {
-          currentProject = result.project;
-          currentProject.isDirty = false;
-          jQuery('.modal-overlay').remove();
-          if(!_.isUndefined(result.projectAddresses)) {
-            eventbus.trigger('linkProperties:selectedProject', result.projectAddresses.linkId);
-          }
-          eventbus.trigger('roadAddressProject:openProject', result.project);
-          rootElement.html(selectedProjectLinkTemplate(currentProject, options, selectedProjectLink));
-          _.defer(function(){
-            applicationModel.selectLayer('roadAddressProject');
-            toggleAditionalControls();
-          });
+        currentProject.isDirty = false;
+        jQuery('.modal-overlay').remove();
+        eventbus.trigger('roadAddressProject:openProject', currentProject);
+        rootElement.html(selectedProjectLinkTemplate(currentProject, options, selectedProjectLink));
+        _.defer(function(){
+          applicationModel.selectLayer('roadAddressProject');
+          toggleAditionalControls();
         });
-        if(_.isUndefined(currentProject) || currentProject.id === 0){
-          projectCollection.setDirtyRoadParts(projectCollection.getReservedDirtyRoadParts());
-          projectCollection.createProject(data);
-        } else {
-          projectCollection.saveProject(data);
-        }
       };
 
       var createNewProject = function() {
-        var data = $('#roadAddressProject').get(0);
         applicationModel.addSpinner();
         eventbus.once('roadAddress:projectSaved', function (result) {
           currentProject = result.project;
@@ -319,12 +309,7 @@
             toggleAditionalControls();
           });
         });
-        if(_.isUndefined(currentProject) || currentProject.id === 0){
-          projectCollection.setDirtyRoadParts(projectCollection.getReservedDirtyRoadParts());
-          projectCollection.createProject(data);
-        } else {
-          projectCollection.saveProject(data);
-        }
+        createOrSaveProject();
       };
 
       var fillForm = function (currParts, newParts) {
@@ -440,7 +425,7 @@
 
       var saveAndNext = function() {
         saveChanges();
-        _.defer(function(){
+        eventbus.once('roadAddress:projectSaved', function () {
           nextStage();
         });
       };
@@ -542,13 +527,7 @@
         new GenericConfirmPopup(popupMessage, {
           successCallback: function () {
             if(isDirty){
-              var data = $('#roadAddressProject').get(0);
-              if(_.isUndefined(currentProject) || currentProject.id === 0){
-                projectCollection.setDirtyRoadParts(projectCollection.getReservedDirtyRoadParts());
-                projectCollection.createProject(data);
-              } else {
-                projectCollection.saveProject(data);
-              }
+              createOrSaveProject();
               _.defer(function(){
                 closeProjectMode(changeLayerMode);
               });
