@@ -13,15 +13,7 @@
     var dirtyProjectLinks = [];
     var self = this;
     var publishableProject = false;
-    var LinkStatus = {
-      NotHandled: {value: 0, action: "NotHandled"},
-      Unchanged: {value: 1, action: "Unchanged"},
-      New: {value: 2, action: "New"},
-      Transfer: {value: 3, action: "Transfer"},
-      Numbering: {value: 4, action: "Numbering"},
-      Terminated: {value: 5, action: "Terminated"},
-      Revert: {value: 6, action: "Revert"}
-    };
+    var LinkStatus = LinkValues.LinkStatus;
     var BAD_REQUEST_400 = 400;
     var UNAUTHORIZED_401 = 401;
     var PRECONDITION_FAILED_412 = 412;
