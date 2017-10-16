@@ -491,7 +491,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
   }
 
-    get("/roadlinks/:linkId") {
+  get("/roadlinks/:linkId") {
       val linkId = params("linkId").toLong
       roadLinkService.getRoadLinkMiddlePointByLinkId(linkId).map {
         case (id, middlePoint,source) => Map("success"->true, "id" -> id, "middlePoint" -> middlePoint, "source" -> source.value)
