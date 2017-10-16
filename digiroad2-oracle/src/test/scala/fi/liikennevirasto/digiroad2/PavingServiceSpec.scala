@@ -45,17 +45,6 @@ class PavingServiceSpec extends FunSuite with Matchers {
   when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(30, Seq(1), "mittarajoitus"))
     .thenReturn(Seq(PersistedLinearAsset(1, 1, 1, Some(NumericValue(40000)), 0.4, 9.6, None, None, None, None, false, 30, 0, None, LinkGeomSource.NormalLinkInterface)))
 
-//  object PassThroughService extends LinearAssetOperations {
-//    override def withDynTransaction[T](f: => T): T = f
-//    override def roadLinkService: RoadLinkService = mockRoadLinkService
-//    override def dao: OracleLinearAssetDao = mockLinearAssetDao
-//    override def eventBus: DigiroadEventBus = mockEventBus
-//    override def vvhClient: VVHClient = mockVVHClient
-//    override def polygonTools: PolygonTools = mockPolygonTools
-//
-//    override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
-//  }
-
   object ServiceWithDao extends PavingService(mockRoadLinkService, mockEventBus) {
     override def withDynTransaction[T](f: => T): T = f
     override def roadLinkService: RoadLinkService = mockRoadLinkService
@@ -439,7 +428,6 @@ class PavingServiceSpec extends FunSuite with Matchers {
     val assetTypeId = 110
     val geom = List(Point(428906.372,6693954.166),Point(428867.234,6693997.01),Point(428857.131,6694009.293))
     val len = GeometryUtils.geometryLength(geom)
-    //      [{"modifiedAt":"19.05.2016 14:16:23","linkId":3056622,"roadNameFi":"Lohjanharjuntie","roadPartNumber":1,"administrativeClass":"State","municipalityCode":444,"roadNumber":1125,"points":[{"x":346005.726,"y":6688024.548,"z":0.0},{"x":346020.228,"y":6688034.371,"z":0.0},{"x":346046.054,"y":6688061.11,"z":0.0},{"x":346067.323,"y":6688080.86,"z":0.0}],"verticalLevel":0,"maxAddressNumberRight":1365,"trafficDirection":"TowardsDigitizing","minAddressNumberRight":1361,"roadNameSe":"Lojoåsvägen","functionalClass":4,"linkType":2,"mmlId":1204467577,"modifiedBy":"k638654"}],
 
     val roadLinks = Seq(RoadLink(oldLinkId1, geom, len, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))))
     val changeInfo = Seq(

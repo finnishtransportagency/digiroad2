@@ -23,17 +23,6 @@ class RoadWidthServiceSpec extends FunSuite with Matchers {
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
   val linearAssetDao = new OracleLinearAssetDao(mockVVHClient, mockRoadLinkService)
 
-//  object PassThroughService extends LinearAssetOperations {
-//    override def withDynTransaction[T](f: => T): T = f
-//    override def roadLinkService: RoadLinkService = mockRoadLinkService
-//    override def dao: OracleLinearAssetDao = mockLinearAssetDao
-//    override def eventBus: DigiroadEventBus = mockEventBus
-//    override def vvhClient: VVHClient = mockVVHClient
-//    override def polygonTools: PolygonTools = mockPolygonTools
-//
-//    override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
-//  }
-
   object ServiceWithDao extends RoadWidthService(mockRoadLinkService, mockEventBus) {
     override def withDynTransaction[T](f: => T): T = f
     override def roadLinkService: RoadLinkService = mockRoadLinkService

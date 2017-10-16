@@ -633,7 +633,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
-      val usedService =  verifyServiceToUse(typeId)
+      val usedService =  getLinearAssetService(typeId)
       if(user.isServiceRoadMaintainer())
         mapLinearAssets(usedService.withRoadAddress(usedService.getByIntersectedBoundingBox(typeId, user.configuration.authorizedAreas, boundingRectangle, municipalities)))
       else
@@ -647,7 +647,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val user = userProvider.getCurrentUser()
     val municipalities: Set[Int] = if (user.isOperator()) Set() else user.configuration.authorizedMunicipalities
     val typeId = params.getOrElse("typeId", halt(BadRequest("Missing mandatory 'typeId' parameter"))).toInt
-    val usedService =  verifyServiceToUse(typeId)
+    val usedService =  getLinearAssetService(typeId)
     params.get("bbox").map { bbox =>
       val boundingRectangle = constructBoundingRectangle(bbox)
       validateBoundingBox(boundingRectangle)
@@ -730,7 +730,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   post("/linearassets") {
     val user = userProvider.getCurrentUser()
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
-    val usedService =  verifyServiceToUse(typeId)
+    val usedService = getLinearAssetService(typeId)
     if (user.isServiceRoadMaintainer() && typeId!=serviceRoadTypeid)
       halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     if (typeId==trafficVolumeTypeid)
@@ -776,7 +776,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     if (typeId==trafficVolumeTypeid)
       halt(BadRequest("Cannot delete 'traffic Volume' asset"))
-    val usedService =  verifyServiceToUse(typeId)
+    val usedService =  getLinearAssetService(typeId)
     val linkIds = usedService.getPersistedAssetsByIds(typeId, ids).map(_.linkId)
     roadLinkService.fetchVVHRoadlinks(linkIds.toSet)
       .map(_.municipalityCode)
@@ -788,7 +788,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   post("/linearassets/:id") {
     val user = userProvider.getCurrentUser()
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
-    val usedService =  verifyServiceToUse(typeId)
+    val usedService =  getLinearAssetService(typeId)
     if (user.isServiceRoadMaintainer() && typeId!=serviceRoadTypeid)
       halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     if (typeId==trafficVolumeTypeid)
@@ -804,7 +804,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   post("/linearassets/:id/separate") {
     val user = userProvider.getCurrentUser()
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
-    val usedService =  verifyServiceToUse(typeId)
+    val usedService =  getLinearAssetService(typeId)
     if (user.isServiceRoadMaintainer() && typeId!=serviceRoadTypeid)
       halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     if (typeId==trafficVolumeTypeid)
@@ -1170,7 +1170,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-  private def verifyServiceToUse(typeId: Int): LinearAssetOperations = {
+  private def getLinearAssetService(typeId: Int): LinearAssetOperations = {
     typeId match {
       case LinearAssetTypes.MaintenanceRoadAssetTypeId => maintenanceRoadService
       case LinearAssetTypes.PavingAssetTypeId => pavingService

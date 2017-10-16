@@ -90,18 +90,18 @@ sealed trait MTKClassWidth {
 }
 
 object MTKClassWidth {
-  val values = Set(Autotie_Ia, Autotie_Ib, Autotie_IIa, Autotie_IIb, Autotie_IIIa, Autotie_IIIb, Ajotie)
+  val values = Set(CarRoad_Ia, CarRoad_Ib, CarRoad_IIa, CarRoad_IIb, CarRoad_IIIa, CarRoad_IIIb, DriveWay)
 
   def apply(intValue: Int): MTKClassWidth = {
     values.find(_.value == intValue).getOrElse(Unknown)
   }
 
-  case object Autotie_Ia extends MTKClassWidth { def value = 12111; def  width = 1100}
-  case object Autotie_Ib extends MTKClassWidth { def value = 12112; def  width	= 1100}
-  case object Autotie_IIa extends MTKClassWidth { def value = 12121; def width = 650 }
-  case object Autotie_IIb extends MTKClassWidth { def value = 12122; def  width = 650 }
-  case object Autotie_IIIa extends MTKClassWidth { def value = 12131; def width = 400 }
-  case object Autotie_IIIb extends MTKClassWidth { def value = 12132; def width = 400 }
-  case object Ajotie	extends MTKClassWidth { def value = 12141; def width = 250}
+  case object CarRoad_Ia extends MTKClassWidth { def value = 12111; def  width = 1100}
+  case object CarRoad_Ib extends MTKClassWidth { def value = 12112; def  width	= 1100}
+  case object CarRoad_IIa extends MTKClassWidth { def value = 12121; def width = 650 }
+  case object CarRoad_IIb extends MTKClassWidth { def value = 12122; def  width = 650 }
+  case object CarRoad_IIIa extends MTKClassWidth { def value = 12131; def width = 400 }
+  case object CarRoad_IIIb extends MTKClassWidth { def value = 12132; def width = 400 }
+  case object DriveWay	extends MTKClassWidth { def value = 12141; def width = 250}
   case object Unknown extends MTKClassWidth {def value=0; def width = 0}
 }
