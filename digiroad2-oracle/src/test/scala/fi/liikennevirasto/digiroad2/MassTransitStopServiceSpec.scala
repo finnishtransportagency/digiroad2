@@ -1338,7 +1338,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val props = Seq(SimpleProperty(MassTransitStopOperations.InventoryDateId, Seq(PropertyValue("2015-12-30"))))
       val roadLink = VVHRoadlink(12345l, 91, List(Point(0.0, 0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, attributes = attributes)
 
-      val after = RollbackMassTransitStopService.updatedProperties(props, roadLink)
+      val after = MassTransitStopOperations.setPropertiesDefaultValues(props, roadLink)
       after should have size (3)
       after.filter(_.publicId == MassTransitStopOperations.RoadName_FI) should have size (1)
       after.filter(_.publicId == MassTransitStopOperations.RoadName_SE) should have size (1)
@@ -1354,7 +1354,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     val props = Seq(SimpleProperty(MassTransitStopOperations.RoadName_SE, Seq.empty[PropertyValue]), SimpleProperty(MassTransitStopOperations.RoadName_FI, Seq.empty[PropertyValue]))
     val roadLink = VVHRoadlink(12345l, 91, List(Point(0.0, 0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, attributes = attributes)
 
-    val after = RollbackMassTransitStopService.updatedProperties(props, roadLink)
+    val after = MassTransitStopOperations.setPropertiesDefaultValues(props, roadLink)
     after should have size (3)
     after.filter(_.publicId == MassTransitStopOperations.RoadName_FI) should have size (1)
     after.filter(_.publicId == MassTransitStopOperations.RoadName_SE) should have size (1)
@@ -1371,7 +1371,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
                     SimpleProperty(MassTransitStopOperations.RoadName_FI, Seq(PropertyValue("user_road_name_fi"))))
     val roadLink = VVHRoadlink(12345l, 91, List(Point(0.0, 0.0), Point(120.0, 0.0)), Municipality, TrafficDirection.UnknownDirection, FeatureClass.AllOthers, attributes = attributes)
 
-    val after = RollbackMassTransitStopService.updatedProperties(props, roadLink)
+    val after = MassTransitStopOperations.setPropertiesDefaultValues(props, roadLink)
     after should have size (3)
     after.filter(_.publicId == MassTransitStopOperations.RoadName_FI) should have size (1)
     after.filter(_.publicId == MassTransitStopOperations.RoadName_SE) should have size (1)

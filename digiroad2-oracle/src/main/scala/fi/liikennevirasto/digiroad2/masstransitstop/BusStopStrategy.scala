@@ -35,7 +35,7 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
 
   override def create(asset: NewMassTransitStop, username: String, point: Point, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass], linkSource: LinkGeomSource, roadLink: RoadLink): PersistedMassTransitStop = {
 
-    val properties = setPropertiesDefaultValues(asset.properties)
+    val properties = setPropertiesDefaultValues(asset.properties, roadLink)
 
     if (MassTransitStopOperations.mixedStoptypes(properties.toSet))
       throw new IllegalArgumentException
@@ -72,7 +72,7 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
     val commonAssetProperties = AssetPropertyConfiguration.commonAssetProperties.
       filterNot(_._1 == AssetPropertyConfiguration.ValidityDirectionId)
 
-    val props = setPropertiesDefaultValues(properties.toSeq)
+    val props = setPropertiesDefaultValues(properties.toSeq, roadLink)
     updatePropertiesForAsset(asset.id, props, roadLink.administrativeClass, asset.nationalId)
 
     fetchAsset(asset.id)

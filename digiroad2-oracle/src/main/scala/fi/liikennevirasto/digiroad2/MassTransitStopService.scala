@@ -73,8 +73,8 @@ trait AbstractBusStopStrategy {
   }
 
   //TODO remove this method and call the direct one
-  protected def setPropertiesDefaultValues(properties: Seq[SimpleProperty]): Seq[SimpleProperty] = {
-    MassTransitStopOperations.setPropertiesDefaultValues(properties)
+  protected def setPropertiesDefaultValues(properties: Seq[SimpleProperty], roadLink: RoadLinkLike): Seq[SimpleProperty] = {
+    MassTransitStopOperations.setPropertiesDefaultValues(properties, roadLink)
   }
 
   protected def updatePosition(id: Long, roadLink: RoadLink)(position: Position) = {
@@ -164,11 +164,17 @@ trait MassTransitStopService extends PointAssetOperations {
 
     roadLinkOption match {
       case Some(roadLink) =>
+        val massTransitStopAsset = persistedAsset.asInstanceOf[PersistedMassTransitStop]
         val administrationClass = MassTransitStopOperations.getAdministrationClass(persistedMassTransitStop.propertyData)
         val(floating , floatingReason) = MassTransitStopOperations.isFloating(administrationClass.getOrElse(Unknown), Some(roadLink))
         if (floating) {
           return (floating, floatingReason)
         }
+        val(floatingDir , floatingReasonDir) = MassTransitStopOperations.isFloating(massTransitStopAsset, roadLinkOption)
+        if (floatingDir) {
+          return (floatingDir, floatingReasonDir)
+        }
+
       case _ => //Do nothing
     }
 
@@ -424,6 +430,26 @@ trait MassTransitStopService extends PointAssetOperations {
         .delete(persistedStop)
     }
   }
+
+  /**
+    * Update properties for asset.
+    *
+    * @param id
+    * @param properties
+    * @return
+    */
+  def updatePropertiesForAsset(id: Long, properties: Seq[SimpleProperty]) = {
+    withDynTransaction {
+      massTransitStopDao.updateAssetProperties(id, properties)
+    }
+  }
+
+  def getPropertiesWithMaxSize(): Map[String, Int] = {
+    withDynSession {
+      massTransitStopDao.getPropertiesWithMaxSize(typeId)
+    }
+  }
+
 
   protected def getTerminalFloatingPointAssets(includedMunicipalities: Option[Set[Int]], isOperator: Option[Boolean] = None): Seq[(Long, String, FloatingReason)] = {
     withDynTransaction {

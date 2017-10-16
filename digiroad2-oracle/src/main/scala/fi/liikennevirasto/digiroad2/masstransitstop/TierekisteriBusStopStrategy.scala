@@ -76,7 +76,7 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
     massTransitStopDao.insertAsset(assetId, nationalId, newAssetPoint.x, newAssetPoint.y, asset.bearing, username, municipality, floating)
     massTransitStopDao.insertAssetLink(assetId, lrmPositionId)
 
-    val properties = setPropertiesDefaultValues(asset.properties)
+    val properties = setPropertiesDefaultValues(asset.properties, roadLink)
 
     val defaultValues = massTransitStopDao.propertyDefaultValues(typeId).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
     if (MassTransitStopOperations.mixedStoptypes(properties.toSet))
@@ -100,7 +100,7 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
 
   //TODO this can be improved for sure
   override def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], props: Set[SimpleProperty], username: String, municipalityValidation: (Int) => Unit, roadLink: RoadLink): PersistedMassTransitStop = {
-    val properties = setPropertiesDefaultValues(props.toSeq).toSet
+    val properties = setPropertiesDefaultValues(props.toSeq, roadLink).toSet
 
     if (MassTransitStopOperations.mixedStoptypes(properties))
       throw new IllegalArgumentException

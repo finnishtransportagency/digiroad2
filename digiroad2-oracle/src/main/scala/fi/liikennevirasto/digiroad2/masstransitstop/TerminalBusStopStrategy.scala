@@ -62,7 +62,7 @@ class TerminalBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopD
 
     massTransitStopDao.insertChildren(assetId, children)
 
-    val properties = setPropertiesDefaultValues(asset.properties)
+    val properties = setPropertiesDefaultValues(asset.properties, roadLink)
 
     val defaultValues = massTransitStopDao.propertyDefaultValues(typeId).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
     if (MassTransitStopOperations.mixedStoptypes(properties.toSet))
