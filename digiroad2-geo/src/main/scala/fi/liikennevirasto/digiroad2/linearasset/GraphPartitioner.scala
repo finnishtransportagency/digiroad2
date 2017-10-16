@@ -8,8 +8,8 @@ import org.geotools.graph.structure.basic.BasicEdge
 import scala.collection.JavaConversions._
 
 trait GraphPartitioner {
-  protected def clusterLinks[T <: PolyLine](links: Seq[T]): Seq[Graph] = {
-    val generator = new BasicLineGraphGenerator(0.5)
+  protected def clusterLinks[T <: PolyLine](links: Seq[T], tolerance: Double = 0.5): Seq[Graph] = {
+    val generator = new BasicLineGraphGenerator(tolerance)
     links.foreach { link =>
       val (sp, ep) = GeometryUtils.geometryEndpoints(link.geometry)
       val segment = new LineSegment(sp.x, sp.y, ep.x, ep.y)

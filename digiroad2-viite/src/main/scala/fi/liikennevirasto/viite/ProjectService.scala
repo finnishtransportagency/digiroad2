@@ -781,7 +781,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @return true, if the delta calculation is successful and change table has been updated.
     */
   def updateProjectLinks(projectId: Long, linkIds: Set[Long], linkStatus: LinkStatus, userName: String,
-                         roadNumber: Long = 0, roadPartNumber: Long = 0, userDefinedEndAddressM: Option[Int]) = {
+                         roadNumber: Long = 0, roadPartNumber: Long = 0, userDefinedEndAddressM: Option[Int]): Option[String] = {
     try {
       withDynTransaction{
         val projectLinks = withGeometry(ProjectDAO.getProjectLinks(projectId))
@@ -826,11 +826,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           case _ => ProjectDAO.updateProjectLinks(updatedProjectLinks.filterNot(link => link.status == LinkStatus.Terminated).map(_.id).toSet, linkStatus, userName)
         }
         recalculateProjectLinks(projectId, userName)
+        None
       }
     } catch {
       case ex: RoadAddressException =>
-        logger.info("Delta calculation not possible: " + ex.getMessage)
-        Some(ex.getMessage)
+        logger.info("Road address Exception: " + ex.getMessage)
+        Some(s"Tieosoitevirhe: (${ex.getMessage}")
       case ex: ProjectValidationException => Some(ex.getMessage)
     }
   }
