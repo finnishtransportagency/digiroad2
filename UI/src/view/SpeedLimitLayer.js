@@ -23,6 +23,48 @@ window.SpeedLimitLayer = function(params) {
   this.layerStarted = function(eventListener) {
     bindEvents(eventListener);
   };
+
+  var uiState = { zoomLevel: 9 };
+
+  var vectorSourceHistory = new ol.source.Vector();
+  var vectorLayerHistory = new ol.layer.Vector({
+    source : vectorSourceHistory,
+    style : function(feature) {
+      return style.historyStyle.getStyle( feature, {zoomLevel: uiState.zoomLevel});
+    }
+  });
+
+  vectorLayerHistory.setOpacity(1);
+  vectorLayerHistory.setVisible(false);
+
+  var vectorSource = new ol.source.Vector();
+  var vectorLayer = new ol.layer.Vector({
+    source : vectorSource,
+    style : function(feature) {
+      return style.browsingStyle.getStyle( feature, {zoomLevel: uiState.zoomLevel});
+    }
+  });
+  vectorLayer.set('name', layerName);
+  vectorLayer.setOpacity(1);
+  vectorLayer.setVisible(false);
+  map.addLayer(vectorLayer);
+
+  var indicatorVector = new ol.source.Vector({});
+  var indicatorLayer = new ol.layer.Vector({
+    source : indicatorVector
+  });
+  map.addLayer(indicatorLayer);
+  indicatorLayer.setVisible(false);
+
+  var trafficSignReadOnlyLayer = new TrafficSignReadOnlyLayer({
+    layerName: layerName,
+    style: new PointAssetStyle('trafficSigns'),
+    collection: new ReadOnlyTrafficSignsCollection(backend, 'trafficSigns', true),
+    assetLabel: new TrafficSignLabel(),
+    assetGrouping: new AssetGrouping(9),
+    map: map
+  });
+
   this.refreshView = function(event) {
     vectorLayer.setVisible(true);
     adjustStylesByZoomLevel(map.getView().getZoom());
@@ -33,6 +75,7 @@ window.SpeedLimitLayer = function(params) {
     if (isActive) {
       showSpeedLimitsHistory();
     }
+    trafficSignReadOnlyLayer.refreshView();
 
   this.removeLayerFeatures = function() {
       vectorLayer.getSource().clear();
@@ -157,46 +200,46 @@ window.SpeedLimitLayer = function(params) {
     };
   };
 
-  var uiState = { zoomLevel: 9 };
-
-  var vectorSourceHistory = new ol.source.Vector();
-  var vectorLayerHistory = new ol.layer.Vector({
-    source : vectorSourceHistory,
-    style : function(feature) {
-      return style.historyStyle.getStyle( feature, {zoomLevel: uiState.zoomLevel});
-    }
-  });
-
-  vectorLayerHistory.setOpacity(1);
-  vectorLayerHistory.setVisible(false);
-
-  var vectorSource = new ol.source.Vector();
-  var vectorLayer = new ol.layer.Vector({
-    source : vectorSource,
-    style : function(feature) {
-      return style.browsingStyle.getStyle( feature, {zoomLevel: uiState.zoomLevel});
-    }
-  });
-  vectorLayer.set('name', layerName);
-  vectorLayer.setOpacity(1);
-  vectorLayer.setVisible(false);
-  map.addLayer(vectorLayer);
-
-  var indicatorVector = new ol.source.Vector({});
-  var indicatorLayer = new ol.layer.Vector({
-    source : indicatorVector
-  });
-  map.addLayer(indicatorLayer);
-  indicatorLayer.setVisible(false);
-
-  var trafficSignReadOnlyLayer = new TrafficSignReadOnlyLayer({
-    layerName: layerName,
-    style: new PointAssetStyle('trafficSigns'),
-    collection: new ReadOnlyTrafficSignsCollection(backend, 'trafficSigns', true),
-    assetLabel: new TrafficSignLabel(),
-    assetGrouping: new AssetGrouping(9),
-    map: map
-  });
+  // var uiState = { zoomLevel: 9 };
+  //
+  // var vectorSourceHistory = new ol.source.Vector();
+  // var vectorLayerHistory = new ol.layer.Vector({
+  //   source : vectorSourceHistory,
+  //   style : function(feature) {
+  //     return style.historyStyle.getStyle( feature, {zoomLevel: uiState.zoomLevel});
+  //   }
+  // });
+  //
+  // vectorLayerHistory.setOpacity(1);
+  // vectorLayerHistory.setVisible(false);
+  //
+  // var vectorSource = new ol.source.Vector();
+  // var vectorLayer = new ol.layer.Vector({
+  //   source : vectorSource,
+  //   style : function(feature) {
+  //     return style.browsingStyle.getStyle( feature, {zoomLevel: uiState.zoomLevel});
+  //   }
+  // });
+  // vectorLayer.set('name', layerName);
+  // vectorLayer.setOpacity(1);
+  // vectorLayer.setVisible(false);
+  // map.addLayer(vectorLayer);
+  //
+  // var indicatorVector = new ol.source.Vector({});
+  // var indicatorLayer = new ol.layer.Vector({
+  //   source : indicatorVector
+  // });
+  // map.addLayer(indicatorLayer);
+  // indicatorLayer.setVisible(false);
+  //
+  // var trafficSignReadOnlyLayer = new TrafficSignReadOnlyLayer({
+  //   layerName: layerName,
+  //   style: new PointAssetStyle('trafficSigns'),
+  //   collection: new ReadOnlyTrafficSignsCollection(backend, 'trafficSigns', true),
+  //   assetLabel: new TrafficSignLabel(),
+  //   assetGrouping: new AssetGrouping(9),
+  //   map: map
+  // });
 
   var speedLimitCutter = new SpeedLimitCutter(vectorLayer, collection, me.eventListener);
 
@@ -330,12 +373,14 @@ window.SpeedLimitLayer = function(params) {
   };
 
   var showSpeedLimitsComplementary = function() {
-      collection.activeComplementary(true);
-      me.refreshView();
+    collection.activeComplementary(true);
+    trafficSignReadOnlyLayer.showTrafficSignsComplementary();
+    me.refreshView();
   };
 
   var hideSpeedLimitsComplementary = function() {
     collection.activeComplementary(false);
+    trafficSignReadOnlyLayer.hideTrafficSignsComplementary();
     me.refreshView();
   };
 

@@ -177,6 +177,11 @@
             addNewFeature(features);
         };
 
+        var addSelectionFeaturesWithHighlight = function(features, highlightLayer){
+          clear();
+          addNewFeature(features, highlightLayer);
+        };
+
         var addNewFeature = function (features, highlightLayer) {
             _.each(features, function(feature){
                 selectInteraction.getFeatures().push(feature);
@@ -224,7 +229,8 @@
             activeRectangle: activeRectangle,
             clear : clear,
             removeFeatures : removeFeatures,
-            deactivateDraw: deactivateDraw
+            deactivateDraw: deactivateDraw,
+            addSelectionFeaturesWithHighlight: addSelectionFeaturesWithHighlight
         };
     };
 })(this);

@@ -96,6 +96,16 @@
       return _.map(_.flatten(modifiedAssets), createFeature);
     };
 
+    this.showTrafficSignsComplementary = function() {
+      collection.activeComplementary(true);
+      me.refreshView();
+    };
+
+    this.hideTrafficSignsComplementary = function() {
+      collection.activeComplementary(false);
+      me.refreshView();
+    };
+
     function createFeature(asset) {
       var rotation = determineRotation(asset);
       var bearing = determineBearing(asset);
@@ -118,7 +128,7 @@
           return feature.getProperties();
         });
         if (feature){
-          selectControl.addNewFeature(feature, true);
+          selectControl.addSelectionFeaturesWithHighlight(feature, true);
         }
     }
 

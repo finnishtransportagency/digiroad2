@@ -371,6 +371,9 @@ window.LinearAssetLayer = function(params) {
         eventbus.trigger('layer:linearAsset:' + event);
       });
     }
+    if(!_.isUndefined(trafficSignReadOnlyLayer)){
+      trafficSignReadOnlyLayer.refreshView();
+    }
   };
 
   this.activateSelection = function() {
