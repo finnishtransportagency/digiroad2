@@ -224,7 +224,7 @@ object ProjectDAO {
   def getProjectLinksByProjectAndLinkId(projectLinkIds: Iterable[Long], projectId:Long): List[ProjectLink] = {
     val query =
       s"""$projectLinkQueryBase
-                where project_link.id in (${projectLinkIds.mkString(",")}) AND (PROJECT_LINK.PROJECT_ID = $projectId )   order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
+                where LRM_POSITION.LINK_ID in (${projectLinkIds.mkString(",")}) AND (PROJECT_LINK.PROJECT_ID = $projectId )   order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
     listQuery(query)
   }
 
