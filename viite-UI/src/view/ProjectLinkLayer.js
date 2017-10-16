@@ -95,7 +95,7 @@
       $('#actionButtons').html('<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button><button disabled id ="send-button" class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button>');
     };
 
-    var fireDeselectionConfirmation = function (shiftPressed, selection) {
+    var fireDeselectionConfirmation = function (shiftPressed, selection, clickType) {
       new GenericConfirmPopup('Haluatko poistaa tien valinnan ja hylätä muutokset?', {
         successCallback: function () {
           eventbus.trigger('roadAddressProject:discardChanges');
@@ -103,7 +103,7 @@
           clearHighlights();
           showChangesAndSendButton();
           if (!_.isUndefined(selection)) {
-            if (selection.size > 1)
+            if (clickType === 'single')
               showSingleClickChanges(shiftPressed, selection);
             else
               showDoubleClickChanges(shiftPressed, selection);
@@ -144,7 +144,7 @@
         var selectedFeatures = event.deselected.concat(selectDoubleClick.getFeatures().getArray());
         clearHighlights();
         addFeaturesToSelection(selectedFeatures);
-        fireDeselectionConfirmation(shiftPressed, selection);
+        fireDeselectionConfirmation(shiftPressed, selection, 'single');
       }
     });
 
@@ -203,7 +203,7 @@
         var selectedFeatures = event.deselected.concat(selectSingleClick.getFeatures().getArray());
         clearHighlights();
         addFeaturesToSelection(selectedFeatures);
-        fireDeselectionConfirmation(shiftPressed, selection);
+        fireDeselectionConfirmation(shiftPressed, selection, 'double');
       }
     });
 

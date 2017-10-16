@@ -1374,6 +1374,12 @@
         });
       }
     });
+
+    eventListener.listenTo(eventbus, 'roadAddressProject:clearOnClose', function(){
+      setGeneralOpacity(1);
+      reservedRoadLayer.getSource().clear();
+    });
+    
     var show = function(map) {
       vectorLayer.setVisible(true);
     };
