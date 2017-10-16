@@ -18,16 +18,8 @@
     var LinkGeomSource = LinkValues.LinkGeomSource;
     var RoadClass = LinkValues.RoadClass;
 
-    var notHandledStatus = 0;
-    var unchangedStatus = 1;
-    var newRoadAddressStatus = 2;
-    var transferredStatus = 3;
-    var numberingStatus = 4;
-    var terminatedStatus = 5;
-    var unknownStatus = 99;
     var isNotEditingData = true;
     Layer.call(this, layerName, roadLayer);
-    var project;
     var me = this;
     var styler = new Styler();
     var projectLinkStyler = new ProjectLinkStyler();
@@ -37,7 +29,7 @@
         var zoom = Math.log(1024 / resolution) / Math.log(2);
 
         var nonSuravageRoads = _.filter(projectCollection.getAll(), function (projectRoad) {
-          return projectRoad.roadLinkSource !== LinkGeomSource.SuravageRoadLink.value;
+          return projectRoad.roadLinkSource !== LinkGeomSource.SuravageLinkInterface.value;
         });
         var features = _.map(nonSuravageRoads, function (projectLink) {
           var points = _.map(projectLink.points, function (point) {
@@ -83,7 +75,7 @@
       name: layerName,
       style: function(feature) {
         var status = feature.projectLinkData.status;
-        if (status === notHandledStatus || status === terminatedStatus || status  === newRoadAddressStatus || status == transferredStatus || status === unchangedStatus || status == numberingStatus) {
+        if (status === LinkStatus.NotHandled.value || status === LinkStatus.Terminated.value || status  === LinkStatus.New.value || status == LinkStatus.Transfer.value || status === LinkStatus.Unchanged.value || status == LinkStatus.Numbering.value) {
           return projectLinkStyler.getProjectLinkStyle().getStyle( feature.projectLinkData, {zoomLevel: currentZoom});
         } else {
           return styler.generateStyleByFeature(feature.projectLinkData, currentZoom);
@@ -118,11 +110,13 @@
       });
     };
 
+    var possibleStatusForSelection = [LinkStatus.NotHandled.value, LinkStatus.New.value, LinkStatus.Terminated.value, LinkStatus.Transfer.value, LinkStatus.Unchanged.value, LinkStatus.Numbering.value];
+
     var selectSingleClick = new ol.interaction.Select({
       layer: [vectorLayer, suravageRoadProjectLayer],
       condition: ol.events.condition.singleClick,
       style: function (feature) {
-        if(projectLinkStatusIn(feature.projectLinkData, [notHandledStatus, newRoadAddressStatus,terminatedStatus, transferredStatus, unchangedStatus, numberingStatus]) || feature.projectLinkData.roadClass === 99 || feature.projectLinkData.roadLinkSource == 3) {
+        if(projectLinkStatusIn(feature.projectLinkData, possibleStatusForSelection) || feature.projectLinkData.roadClass === RoadClass.NoClass.value || feature.projectLinkData.roadLinkSource == LinkGeomSource.SuravageLinkInterface.value) {
          return projectLinkStyler.getSelectionLinkStyle().getStyle( feature.projectLinkData, {zoomLevel: currentZoom});
         }
       }
@@ -136,9 +130,9 @@
       removeCutterMarkers();
       var selection = _.find(event.selected.concat(selectSingleClick.getFeatures().getArray()), function (selectionTarget) {
         return (applicationModel.getSelectedTool() != 'Cut' && !_.isUndefined(selectionTarget.projectLinkData) && (
-          projectLinkStatusIn(selectionTarget.projectLinkData, [notHandledStatus, newRoadAddressStatus, terminatedStatus, unchangedStatus, transferredStatus, numberingStatus]) ||
+          projectLinkStatusIn(selectionTarget.projectLinkData, possibleStatusForSelection) ||
           (selectionTarget.projectLinkData.anomaly == Anomaly.NoAddressGiven.value && selectionTarget.projectLinkData.roadLinkType != RoadLinkType.FloatingRoadLinkType.value) ||
-          selectionTarget.projectLinkData.roadClass === 99 || selectionTarget.projectLinkData.roadLinkSource === 3 )
+          selectionTarget.projectLinkData.roadClass === RoadClass.NoClass.value || selectionTarget.projectLinkData.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value )
         );
       });
         if (isNotEditingData) {
@@ -182,7 +176,7 @@
       layer: [vectorLayer, suravageRoadProjectLayer],
       condition: ol.events.condition.doubleClick,
       style: function(feature) {
-        if(projectLinkStatusIn(feature.projectLinkData, [notHandledStatus, newRoadAddressStatus,terminatedStatus, transferredStatus, unchangedStatus, numberingStatus]) || feature.projectLinkData.roadClass === 99 || feature.projectLinkData.roadLinkSource == 3) {
+        if(projectLinkStatusIn(feature.projectLinkData, possibleStatusForSelection) || feature.projectLinkData.roadClass === RoadClass.NoClass.value || feature.projectLinkData.roadLinkSource == LinkGeomSource.SuravageLinkInterface.value) {
           return projectLinkStyler.getSelectionLinkStyle().getStyle( feature.projectLinkData, {zoomLevel: currentZoom});
         }
       }
@@ -194,9 +188,9 @@
       var shiftPressed = event.mapBrowserEvent.originalEvent.shiftKey;
       var selection = _.find(event.selected, function (selectionTarget) {
         return (applicationModel.getSelectedTool() != 'Cut' && !_.isUndefined(selectionTarget.projectLinkData) && (
-          projectLinkStatusIn(selectionTarget.projectLinkData, [notHandledStatus, newRoadAddressStatus, terminatedStatus, unchangedStatus, transferredStatus, numberingStatus]) ||
+          projectLinkStatusIn(selectionTarget.projectLinkData, possibleStatusForSelection) ||
           (selectionTarget.projectLinkData.anomaly == Anomaly.NoAddressGiven.value && selectionTarget.projectLinkData.roadLinkType != RoadLinkType.FloatingRoadLinkType.value) ||
-          selectionTarget.projectLinkData.roadClass === RoadClass.NoClass.value || selectionTarget.projectLinkData.roadLinkSource === LinkGeomSource.SuravageRoadLink.value)
+          selectionTarget.projectLinkData.roadClass === RoadClass.NoClass.value || selectionTarget.projectLinkData.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value)
         );
       });
         if (isNotEditingData) {
@@ -733,10 +727,10 @@
         return projectRoad.roadLinkSource === 3;
       });
       var toBeTerminated = _.partition(editedLinks, function (link) {
-        return link.status === terminatedStatus;
+        return link.status === LinkStatus.Terminated.value;
       });
       var toBeUnchanged = _.partition(editedLinks, function (link) {
-        return link.status === unchangedStatus;
+        return link.status === LinkStatus.Unchanged.value;
       });
 
       var toBeTerminatedLinkIds = _.pluck(toBeTerminated[0], 'id');
@@ -829,7 +823,7 @@
         var editedLink = (!_.isUndefined(feature.projectLinkData.linkId) && _.contains(_.pluck(editedLinks, 'id'), feature.projectLinkData.linkId));
         if (editedLink) {
           if (_.contains(toBeTerminatedLinkIds, feature.projectLinkData.linkId)) {
-            feature.projectLinkData.status = terminatedStatus;
+            feature.projectLinkData.status = LinkStatus.Terminated.value;
             var termination = projectLinkStyler.getProjectLinkStyle().getStyle( feature.projectLinkData, {zoomLevel: currentZoom});
             feature.setStyle(termination);
             features.push(feature);
