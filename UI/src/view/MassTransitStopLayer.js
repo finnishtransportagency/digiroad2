@@ -444,8 +444,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     if (asset)
       movementPermissionConfirmed = false;
       overrideMessageAllow = true;
-    }
-  };
+    };
 
   var handleAssetFetched = function(backendAsset) {
     deselectAsset(selectedAsset);

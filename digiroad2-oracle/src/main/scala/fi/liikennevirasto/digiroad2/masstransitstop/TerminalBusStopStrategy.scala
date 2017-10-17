@@ -46,15 +46,16 @@ class TerminalBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopD
     }
   }
 
-  override def create(asset: NewMassTransitStop, username: String, point: Point, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass], linkSource: LinkGeomSource, roadLink: RoadLink): PersistedMassTransitStop = {
+//override def create(asset: NewMassTransitStop, username: String, point: Point, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass], linkSource: LinkGeomSource, roadLink: RoadLink): PersistedMassTransitStop = {
+  override def create(asset: NewMassTransitStop, username: String, point: Point, roadLink: RoadLink): PersistedMassTransitStop = {
     val assetId = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     val nationalId = massTransitStopDao.getNationalBusStopId
-    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(point, geometry)
-    val newAssetPoint = GeometryUtils.calculatePointFromLinearReference(geometry, mValue).getOrElse(Point(asset.lon, asset.lat))
-    val floating = !PointAssetOperations.coordinatesWithinThreshold(Some(point), GeometryUtils.calculatePointFromLinearReference(geometry, mValue))
-    massTransitStopDao.insertLrmPosition(lrmPositionId, mValue, asset.linkId, linkSource, SideCode.BothDirections)
-    massTransitStopDao.insertAsset(assetId, nationalId, newAssetPoint.x, newAssetPoint.y, username, municipality, floating)
+    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(point, roadLink.geometry)
+    val newAssetPoint = GeometryUtils.calculatePointFromLinearReference(roadLink.geometry, mValue).getOrElse(Point(asset.lon, asset.lat))
+    val floating = !PointAssetOperations.coordinatesWithinThreshold(Some(point), GeometryUtils.calculatePointFromLinearReference(roadLink.geometry, mValue))
+    massTransitStopDao.insertLrmPosition(lrmPositionId, mValue, asset.linkId, roadLink.linkSource, SideCode.BothDirections)
+    massTransitStopDao.insertAsset(assetId, nationalId, newAssetPoint.x, newAssetPoint.y, username, roadLink.municipalityCode, floating)
     massTransitStopDao.insertAssetLink(assetId, lrmPositionId)
 
     val children = MassTransitStopOperations.getTerminalMassTransitStopChildren(asset.properties)
@@ -62,14 +63,14 @@ class TerminalBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopD
 
     massTransitStopDao.insertChildren(assetId, children)
 
-    val properties = setPropertiesDefaultValues(asset.properties, roadLink)
+    val properties = MassTransitStopOperations.setPropertiesDefaultValues(asset.properties, roadLink)
 
     val defaultValues = massTransitStopDao.propertyDefaultValues(typeId).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
     if (MassTransitStopOperations.mixedStoptypes(properties.toSet))
       throw new IllegalArgumentException
 
     massTransitStopDao.updateAssetProperties(assetId, properties.filterNot(p =>  ignoredProperties.contains(p.publicId)) ++ defaultValues.toSet)
-    updateAdministrativeClassValue(assetId, administrativeClass.getOrElse(throw new IllegalArgumentException("AdministrativeClass argument is mandatory")))
+    updateAdministrativeClassValue(assetId, roadLink.administrativeClass) //.getOrElse(throw new IllegalArgumentException("AdministrativeClass argument is mandatory")))
     fetchAsset(assetId)
   }
 

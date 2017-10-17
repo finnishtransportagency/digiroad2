@@ -331,10 +331,10 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     validateBusStopMaintainerUser(properties)
     val id = params("id").toLong
 
-    if(properties.exists(prop => prop.publicId == "vaikutussuunta")) {
-      val linkId = optionalLinkId.getOrElse(halt(BadRequest("Missing mandatory field linkId")))
-      validateBusStopDirections(properties, linkId)
-    }
+//    if(properties.exists(prop => prop.publicId == "vaikutussuunta")) {
+//      val linkId = optionalLinkId.getOrElse(halt(BadRequest("Missing mandatory field linkId")))
+//      validateBusStopDirections(properties, linkId)
+//    }
     validatePropertiesMaxSize(properties)
     val position = (optionalLon, optionalLat, optionalLinkId) match {
       case (Some(lon), Some(lat), Some(linkId)) => Some(Position(lon, lat, linkId, bearing))
@@ -350,13 +350,14 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-  private def createMassTransitStop(lon: Double, lat: Double, linkId: Long, bearing: Int, properties: Seq[SimpleProperty] ): Long = {
-    val roadLink = roadLinkService.fetchVVHRoadlinkAndComplementary(linkId).getOrElse(throw new NoSuchElementException)
-    massTransitStopService.create(NewMassTransitStop(lon, lat, linkId, bearing, properties), userProvider.getCurrentUser().username, roadLink.geometry, roadLink.municipalityCode, Some(roadLink.administrativeClass),  roadLink.linkSource)
+  private def createMassTransitStop(lon: Double, lat: Double, linkId: Long, bearing: Int, properties: Seq[SimpleProperty], roadLink: RoadLink): Long = {
+   // val roadLink = roadLinkService.fetchVVHRoadlinkAndComplementary(linkId).getOrElse(throw new NoSuchElementException)
+//    massTransitStopService.create(NewMassTransitStop(lon, lat, linkId, bearing, properties), userProvider.getCurrentUser().username, roadLink.geometry, roadLink.municipalityCode, Some(roadLink.administrativeClass),  roadLink.linkSource)
+    massTransitStopService.create(NewMassTransitStop(lon, lat, linkId, bearing, properties), userProvider.getCurrentUser().username, roadLink)
   }
 
-  private def validateUserRights(linkId: Long) = {
-    val authorized: Boolean = roadLinkService.fetchVVHRoadlinkAndComplementary(linkId).map(_.municipalityCode).exists(userProvider.getCurrentUser().isAuthorizedToWrite)
+  private def validateUserRights(roadLink: RoadLink) = {
+    val authorized: Boolean = userProvider.getCurrentUser().isAuthorizedToWrite(roadLink.municipalityCode)
     if (!authorized) halt(Unauthorized("User not authorized"))
   }
 
@@ -390,13 +391,13 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       halt(BadRequest("Invalid property values on: " + propertiesWithInvalidValues.map(_.publicId).mkString(", ")))
   }
 
-    private def validateBusStopDirections(properties: Seq[SimpleProperty], linkId: Long) = {
-      val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId)
-
-      if(!properties.exists(prop => prop.publicId == "vaikutussuunta") ||
-        !MassTransitStopOperations.isValidBusStopDirections(properties, linkId, roadLink))
-        halt(NotAcceptable("Invalid Mass Transit Stop direction"))
-    }
+//    private def validateBusStopDirections(properties: Seq[SimpleProperty], linkId: Long) = {
+//      val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId)
+//
+//      if(!properties.exists(prop => prop.publicId == "vaikutussuunta") ||
+//        !MassTransitStopOperations.isValidBusStopDirections(properties, roadLink))
+//        halt(NotAcceptable("Invalid Mass Transit Stop direction"))
+//    }
 
 
   private def validatePropertiesMaxSize(properties: Seq[SimpleProperty]) = {
@@ -414,13 +415,14 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val linkId = positionParameters._3.get
     val bearing = positionParameters._4.get
     val properties = (parsedBody \ "properties").extract[Seq[SimpleProperty]]
-    validateUserRights(linkId)
+    val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId).getOrElse(throw new NoSuchElementException)
+    validateUserRights(roadLink)
     validateBusStopMaintainerUser(properties)
     validateCreationProperties(properties)
     validatePropertiesMaxSize(properties)
-    validateBusStopDirections(properties, linkId)
+//    validateBusStopDirections(properties, linkId)
     try {
-      val id = createMassTransitStop(lon, lat, linkId, bearing, properties)
+      val id = createMassTransitStop(lon, lat, linkId, bearing, properties, roadLink)
       massTransitStopService.getNormalAndComplementaryById(id)
     } catch {
       case e: RoadAddressException =>
@@ -650,6 +652,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     case unf: UserNotFoundException => halt(Forbidden(unf.username))
     case te: TierekisteriClientException => halt(TierekisteriInternalServerError("Tietojen tallentaminen/muokkaminen Tierekisterissa epäonnistui. Tehtyjä muutoksia ei tallennettu OTH:ssa"))
     case rae: RoadAddressException => halt(RoadAddressNotFound("Sovellus ei pysty tunnistamaan annetulle pysäkin sijainnille tieosoitetta. Pysäkin tallennus Tierekisterissä ja OTH:ssa epäonnistui"))
+    case masse: MassTransitStopException => halt(NotAcceptable("Invalid Mass Transit Stop direction"))
     case e: Exception =>
       logger.error("API Error", e)
       NewRelic.noticeError(e)
@@ -1212,13 +1215,15 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     val asset = (parsedBody \ "asset").extract[service.IncomingAsset]
 
-    for (link <- roadLinkService.fetchVVHRoadlinkAndComplementary(asset.linkId)) {
+//    for (link <- roadLinkService.fetchVVHRoadlinkAndComplementary(asset.linkId)) {
+    for (link <- roadLinkService.getRoadLinkAndComplementaryFromVVH(asset.linkId)) {
       validateUserMunicipalityAccess(user)(link.municipalityCode)
       optTypeID match {
         case Some(typeId) => validateAdministrativeClass(typeId)(link.administrativeClass)
         case _ => None
       }
-      service.create(asset, user.username, link.geometry, link.municipalityCode, Some(link.administrativeClass), link.linkSource)
+//      service.create(asset, user.username, link.geometry, link.municipalityCode, Some(link.administrativeClass), link.linkSource)
+      service.create(asset, user.username, link)
     }
   }
 

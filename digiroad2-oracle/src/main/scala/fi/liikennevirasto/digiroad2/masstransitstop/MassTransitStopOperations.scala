@@ -81,7 +81,7 @@ object MassTransitStopOperations {
     val simpleProperty = persistedAsset.propertyData.map{x => SimpleProperty(x.publicId , x.values)}
 
     if(persistedAsset.propertyData.exists(_.publicId == "vaikutussuunta") &&
-      isValidBusStopDirections(simpleProperty, persistedAsset.linkId, roadLinkOption))
+      isValidBusStopDirections(simpleProperty, roadLinkOption))
       (false, None)
     else
       (true, Some(FloatingReason.TrafficDirectionNotMatch))
@@ -135,7 +135,7 @@ object MassTransitStopOperations {
     }
   }
 
-  def isValidBusStopDirections(properties: Seq[SimpleProperty], linkId: Long, roadLink: Option[RoadLinkLike]) = {
+  def isValidBusStopDirections(properties: Seq[SimpleProperty], roadLink: Option[RoadLinkLike]) = {
     val roadLinkDirection = roadLink.map(dir => dir.trafficDirection).getOrElse(throw new IllegalStateException("Road link no longer available"))
 
     properties.find(prop => prop.publicId == "vaikutussuunta").flatMap(_.values.headOption.map(_.propertyValue)) match {

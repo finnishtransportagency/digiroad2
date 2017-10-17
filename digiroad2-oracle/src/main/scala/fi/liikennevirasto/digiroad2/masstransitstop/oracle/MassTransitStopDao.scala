@@ -23,7 +23,9 @@ import slick.jdbc.{GetResult, PositionedParameters, PositionedResult, SetParamet
 
 class MassTransitStopDao {
   val logger = LoggerFactory.getLogger(getClass)
-
+  def typeId: Int = 10
+  val idField = "external_id"
+  val MAX_VALUE_LENGTH =
   implicit val SetStringSeq: SetParameter[IndexedSeq[Any]] = new SetParameter[IndexedSeq[Any]] {
     def apply(seq: IndexedSeq[Any], p: PositionedParameters): Unit = {
       for (i <- 1 to seq.length) {
@@ -561,5 +563,29 @@ class MassTransitStopDao {
   def getPropertiesWithMaxSize(assetTypeId: Long): Map[String, Int] = {
     sql"""select public_id, max_value_length from property where asset_type_id = $assetTypeId and max_value_length is not null""".as[(String, Int)].iterator.toMap
   }
+
+  def fetchTerminalFloatingAssets(addQueryFilter: String => String, isOperator: Option[Boolean]): Seq[(Long, Long)] ={
+    val query = s"""select a.$idField, lrm.link_id
+          from asset a
+          join asset_link al on a.id = al.asset_id
+          join lrm_position lrm on al.position_id = lrm.id
+          join property p on a.asset_type_id = p.asset_type_id and p.public_id = 'pysakin_tyyppi'
+          left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and p.property_type = 'read_only_number'
+          left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'multiple_choice'
+          left join enumerated_value e on mc.enumerated_value_id = e.id
+          where a.asset_type_id = $typeId and a.floating = '1' and (a.valid_to is null or a.valid_to > sysdate) and e.value = 6"""
+
+    val queryFilter = isOperator match {
+      case Some(false) =>
+        (q: String) => {
+          addQueryFilter(q + s""" and np.value <> ${FloatingReason.RoadOwnerChanged.value}""")
+        }
+      case _ =>
+        addQueryFilter
+    }
+
+    Q.queryNA[(Long, Long)](queryFilter(query)).list
+  }
+
 
 }
