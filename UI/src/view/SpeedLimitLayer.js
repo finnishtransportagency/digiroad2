@@ -558,7 +558,7 @@ window.SpeedLimitLayer = function(params) {
   };
 
   var editConstrains = function(selectedAsset) {
-    return selectedAsset.administrativeClass === "State";
+    return selectedAsset.administrativeClass === 'State';
   };
 
   return {

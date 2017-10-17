@@ -998,7 +998,7 @@ object DataFixture {
     println("\nStart Speed limit import at time: ")
     println(DateTime.now())
 
-    tierekisteriDataImporter.importSpeedLimitAsset
+    tierekisteriDataImporter.importSpeedLimitAsset()
 
     println("Speed limit import complete at time: ")
     println(DateTime.now())

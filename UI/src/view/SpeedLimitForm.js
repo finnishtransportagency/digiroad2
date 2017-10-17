@@ -90,6 +90,7 @@
       rootElement.find('.editable .form-control').toggle(!readOnly);
       rootElement.find('.form-controls').toggle(!readOnly);
       rootElement.find('#separate-limit').toggle(!readOnly);
+      rootElement.find('.editable .form-control').prop('disabled', readOnly);
     };
     eventbus.on('speedLimit:selected speedLimit:cancelled', function() {
       rootElement.html(template(selectedSpeedLimit));
@@ -139,7 +140,7 @@
   }
 
   var editConstrains = function(selectedAsset) {
-    return selectedAsset.administrativeClass === "State";
+    return selectedAsset.administrativeClass === 'State';
   };
 
   root.SpeedLimitForm = {

@@ -966,7 +966,7 @@ class TierekisteriSpeedLimitAssetClient(trEndPoint: String, trEnable: Boolean, h
 
   override val trAssetType = "tl168"
   private val trSpeedLimitValue = "NOPRAJ"
-  private val trPUOLI = "PUOLI"
+  private val trSide = "PUOLI"
 
 
   override def mapFields(data: Map[String, Any]): TierekisteriSpeedLimitData = {
@@ -979,7 +979,7 @@ class TierekisteriSpeedLimitAssetClient(trEndPoint: String, trEnable: Boolean, h
     val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
     val endMValue = convertToLong(getMandatoryFieldValue(data, trEndMValue)).get
     val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
-    val roadSide = convertToInt(getMandatoryFieldValue(data, trPUOLI)).map(RoadSide.apply).getOrElse(RoadSide.Unknown)
+    val roadSide = convertToInt(getMandatoryFieldValue(data, trSide)).map(RoadSide.apply).getOrElse(RoadSide.Unknown)
 
 
     TierekisteriSpeedLimitData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue, assetValue, roadSide)

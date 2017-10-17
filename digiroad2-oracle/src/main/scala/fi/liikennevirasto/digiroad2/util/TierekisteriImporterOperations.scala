@@ -287,6 +287,18 @@ trait LinearAssetTierekisteriImporterOperations extends TierekisteriAssetImporte
         }
       }
   }
+
+  protected def getSideCode(raSideCode: SideCode, roadSide: RoadSide): SideCode = {
+    roadSide match {
+      case RoadSide.Right => raSideCode
+      case RoadSide.Left => raSideCode match {
+        case TowardsDigitizing => SideCode.AgainstDigitizing
+        case AgainstDigitizing => SideCode.TowardsDigitizing
+        case _ => SideCode.BothDirections
+      }
+      case _ => SideCode.BothDirections
+    }
+  }
 }
 
 trait PointAssetTierekisteriImporterOperations extends TierekisteriAssetImporterOperations{
@@ -373,18 +385,6 @@ class SpeedLimitsTierekisteriImporter extends LinearAssetTierekisteriImporterOpe
                 createLinearAsset(roadLink, roadAddress, addressSection, measures, trAsset)
             }
         }
-    }
-  }
-
-  private def getSideCode(raSideCode: SideCode, roadSide: RoadSide): SideCode = {
-    roadSide match {
-      case RoadSide.Right => raSideCode
-      case RoadSide.Left => raSideCode match {
-        case TowardsDigitizing => SideCode.AgainstDigitizing
-        case AgainstDigitizing => SideCode.TowardsDigitizing
-        case _ => SideCode.BothDirections
-      }
-      case _ => SideCode.BothDirections
     }
   }
 
@@ -704,18 +704,6 @@ class SpeedLimitAssetTierekisteriImporter extends LinearAssetTierekisteriImporte
   override val tierekisteriClient = new TierekisteriSpeedLimitAssetClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
     getProperty("digiroad2.tierekisteri.enabled").toBoolean,
     HttpClientBuilder.create().build())
-
-  private def getSideCode(raSideCode: SideCode, roadSide: RoadSide): SideCode = {
-    roadSide match {
-      case RoadSide.Right => raSideCode
-      case RoadSide.Left => raSideCode match {
-        case TowardsDigitizing => SideCode.AgainstDigitizing
-        case AgainstDigitizing => SideCode.TowardsDigitizing
-        case _ => SideCode.BothDirections
-      }
-      case _ => SideCode.BothDirections
-    }
-  }
 
   protected def createLinearAsset(vvhRoadlink: VVHRoadlink, roadAddress: ViiteRoadAddress, section: AddressSection, measures: Measures, trAssetData: TierekisteriAssetData): Unit = {
     if (measures.startMeasure != measures.endMeasure) {
