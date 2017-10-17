@@ -1049,9 +1049,14 @@ object DataFixture {
         println("Municipality -> " + municipality  + " MaintenanceRoad Assets -> " + assets.size )
 
         assets.foreach { asset =>
-          roadLinks.filter(_.linkId == asset._2)
-          val area = maintenanceService.getAssetArea(roadLinks.find(_.linkId == asset._2), Measures(asset._3, asset._4), None)
-          assets.foreach(asset => oracleLinearAssetDao.updateArea(asset._1, area))
+          try {
+            val area = maintenanceService.getAssetArea(roadLinks.find(_.linkId == asset._2), Measures(asset._3, asset._4), None)
+            assets.foreach(asset => oracleLinearAssetDao.updateArea(asset._1, area))
+          } catch {
+            case ex: Exception => {
+              println(s"""asset id ${asset._1} in link id ${asset._2} as failed with the following exception ${ex.getMessage}""")
+            }
+          }
         }
       }
     }
