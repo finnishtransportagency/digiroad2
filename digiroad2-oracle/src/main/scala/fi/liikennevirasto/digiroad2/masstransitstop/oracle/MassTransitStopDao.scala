@@ -25,7 +25,7 @@ class MassTransitStopDao {
   val logger = LoggerFactory.getLogger(getClass)
   def typeId: Int = 10
   val idField = "external_id"
-  val MAX_VALUE_LENGTH =
+
   implicit val SetStringSeq: SetParameter[IndexedSeq[Any]] = new SetParameter[IndexedSeq[Any]] {
     def apply(seq: IndexedSeq[Any], p: PositionedParameters): Unit = {
       for (i <- 1 to seq.length) {
