@@ -184,6 +184,10 @@ class ProjectDaoSpec  extends FunSuite with Matchers {
     }
   }
 
+  test("Empty list will not throw an exception") {
+    ProjectDAO.getProjectLinksByIds(Seq())
+    ProjectDAO.removeProjectLinksById(Set())
+  }
 
 
   test("Update project status") {

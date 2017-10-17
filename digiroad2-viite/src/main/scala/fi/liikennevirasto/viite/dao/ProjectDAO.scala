@@ -208,10 +208,14 @@ object ProjectDAO {
 
   //TODO: support for bigger queries than 1000 link ids
   def getProjectLinksByIds(linkIds: Iterable[Long]): List[ProjectLink] = {
-    val query =
-      s"""$projectLinkQueryBase
+    if (linkIds.isEmpty)
+      List()
+    else {
+      val query =
+        s"""$projectLinkQueryBase
                 where project_link.id in (${linkIds.mkString(",")}) order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
-    listQuery(query)
+      listQuery(query)
+    }
   }
 
   def getProjectLinksByLinkId(projectLinkId: Long): List[ProjectLink] = {
@@ -222,10 +226,14 @@ object ProjectDAO {
   }
 
   def getProjectLinksByProjectAndLinkId(projectLinkIds: Iterable[Long], projectId:Long): List[ProjectLink] = {
-    val query =
-      s"""$projectLinkQueryBase
+    if (projectLinkIds.isEmpty)
+      List()
+    else {
+      val query =
+        s"""$projectLinkQueryBase
                 where project_link.id in (${projectLinkIds.mkString(",")}) AND (PROJECT_LINK.PROJECT_ID = $projectId )   order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
-    listQuery(query)
+      listQuery(query)
+    }
   }
 
 
@@ -528,7 +536,7 @@ object ProjectDAO {
 
   private def removeProjectLinks(projectId: Long, roadNumber: Option[Long], roadPartNumber: Option[Long],
                                  linkIds: Set[Long] = Set()): Int = {
-    if (linkIds.size > 900) {
+    if (linkIds.size > 900 || linkIds.isEmpty) {
       linkIds.grouped(900).map(g => removeProjectLinks(projectId, roadNumber, roadPartNumber, g)).sum
     } else {
       val roadFilter = roadNumber.map(l => s"AND road_number = $l").getOrElse("")
