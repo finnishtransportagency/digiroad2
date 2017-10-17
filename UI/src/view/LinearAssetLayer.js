@@ -30,6 +30,10 @@
       vectorLayer.setVisible(false);
     };
 
+    var removeLayerFeatures = function(){
+      vectorLayer.getSource().clear();
+    };
+
     var redrawLinearAssets = function(linearAssetChains) {
       vectorSource.clear();
       var linearAssets = _.flatten(linearAssetChains);
@@ -48,26 +52,14 @@
         eventbus.trigger('layer:linearAsset:' + event);
       });
     };
-
-    //TODO: To be used when box is implemented
-    // //event to be trigger when the Muut massarajoitukset checkbox is checked
-    // eventbus.on('massLimitation:show', function () {
-    //   isActive = true;
-    //   showLayer();
-    // });
-    // //event to be trigger when the Muut massarajoitukset checkbox is unchecked
-    // eventbus.on('massLimitation:hide', function () {
-    //   isActive = false;
-    //   hideLayer();
-    // });
-
     eventbus.on('fetchedR', redrawLinearAssets);
 
     return {
       refreshView: refreshView,
       redrawLinearAssets: redrawLinearAssets,
       hideLayer: hideLayer,
-      showLayer: showLayer
+      showLayer: showLayer,
+      removeLayerFeatures: removeLayerFeatures
     };
   };
 
@@ -437,6 +429,7 @@ root.LinearAssetLayer  = function(params) {
   this.removeLayerFeatures = function() {
     vectorLayer.getSource().clear();
     indicatorLayer.getSource().clear();
+    readOnlyLayer.removeLayerFeatures();
   };
 
   var handleLinearAssetCancelled = function(eventListener) {
@@ -554,6 +547,7 @@ root.LinearAssetLayer  = function(params) {
     startListeningExtraEvents();
     vectorLayer.setVisible(true);
     indicatorLayer.setVisible(true);
+    readOnlyLayer.showLayer();
     me.refreshView();
     roadAddressInfoPopup.start();
     me.show(map);

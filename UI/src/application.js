@@ -242,7 +242,7 @@
        assetLabel: asset.label,
        roadAddressInfoPopup: roadAddressInfoPopup,
        editConstrains : asset.editConstrains || function() {return false;},
-       massLimitation : asset.massLimitation,
+       massLimitation : asset.editControlLabels.otherRestrictions,
        typeId : asset.typeId
      });
      return acc;
@@ -365,7 +365,7 @@
     function getLinearAsset(typeId) {
       var asset = _.find(linearAssets, {typeId: typeId});
       if (asset) {
-        var legendValues = [asset.editControlLabels.disabled, asset.editControlLabels.enabled];
+        var legendValues = [asset.editControlLabels.disabled, asset.editControlLabels.enabled, asset.editControlLabels.otherRestrictions];
         return [new LinearAssetBox(asset.selectedLinearAsset, asset.layerName, asset.title, asset.className, legendValues, asset.editControlLabels.showUnit, asset.unit, asset.allowComplementaryLinks)];
       }
       return [];

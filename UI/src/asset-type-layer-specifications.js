@@ -43,13 +43,14 @@
       unit: 'kg',
       isSeparable: false,
       allowComplementaryLinks: true,
-      editControlLabels: { title: 'Rajoitus',
+      editControlLabels: {
+        title: 'Rajoitus',
         enabled: 'Rajoitus',
         disabled: 'Ei rajoitusta',
+        otherRestrictions : 'Muut massarajoitukset',
         showUnit: true
       },
-      label: new LinearAssetLabel(),
-      massLimitation : true
+      label: new LinearAssetLabel()
     },
     {
       typeId: assetType.trailerTruckWeightLimit,
@@ -65,10 +66,10 @@
       editControlLabels: { title: 'Rajoitus',
         enabled: 'Rajoitus',
         disabled: 'Ei rajoitusta',
+        otherRestrictions : 'Muut massarajoitukset',
         showUnit: true
       },
-      label: new LinearAssetLabel(),
-      massLimitation : true
+      label: new LinearAssetLabel()
     },
     {
       typeId: assetType.axleWeightLimit,
@@ -84,10 +85,10 @@
       editControlLabels: { title: 'Rajoitus',
         enabled: 'Rajoitus',
         disabled: 'Ei rajoitusta',
+        otherRestrictions : 'Muut massarajoitukset',
         showUnit: true
       },
-      label: new LinearAssetLabel(),
-      massLimitation : true
+      label: new LinearAssetLabel()
     },
     {
       typeId: assetType.bogieWeightLimit,
@@ -103,10 +104,10 @@
       editControlLabels: { title: 'Rajoitus',
         enabled: 'Rajoitus',
         disabled: 'Ei rajoitusta',
+        otherRestrictions : 'Muut massarajoitukset',
         showUnit: true
       },
-      label: new LinearAssetLabel(),
-      massLimitation : true
+      label: new LinearAssetLabel()
     },
     {
       typeId: assetType.heightLimit,

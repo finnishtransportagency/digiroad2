@@ -1,20 +1,20 @@
 (function(root) {
   root.LinearAssetBox = function(selectedLinearAsset, layerName, title, className, legendValues, showUnit, unit, allowComplementaryLinks) {
     var legendTemplate = _.map(legendValues, function(value, idx) {
-      return '<div class="legend-entry">' +
+      return value ? '<div class="legend-entry">' +
                '<div class="label">' + value + '</div>' +
                '<div class="symbol linear limit-' + idx + '" />' +
-             '</div>';
+             '</div>' : '';
     }).join('');
 
 
-      var complementaryLinkCheckBox = allowComplementaryLinks ? [
-          '  <div class="panel-section roadLink-complementary-checkbox">',
-          '<div class="check-box-container">' +
-          '<input id="complementaryLinkCheckBox" type="checkbox" /> <lable>Näytä täydentävä geometria</lable>' +
-          '</div>' +
-          '</div>'
-      ].join('') : '';
+    var complementaryLinkCheckBox = allowComplementaryLinks ? [
+        '  <div class="panel-section roadLink-complementary-checkbox">',
+        '<div class="check-box-container">' +
+        '<input id="complementaryLinkCheckBox" type="checkbox" /> <lable>Näytä täydentävä geometria</lable>' +
+        '</div>' +
+        '</div>'
+    ].join('') : '';
 
     var expandedTemplate = [
       '<div class="panel ' + layerName +'">',
