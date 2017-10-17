@@ -139,9 +139,11 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       withTiming(
         Await.result(combinedFuture, Duration.Inf), "End fetch vvh road links in %.3f sec"
       )
+    val (roadsWithEndDate, roadsWithoutEndDate) = addresses.values.flatten.partition(a => a.endDate.isDefined)
     val complementaryLinkIds = complementaryLinks.map(_.linkId)
-    val normalRoadLinkIds = roadLinks.map(_.linkId)
-    val allRoadLinks = roadLinks++complementaryLinks
+    val roadsWithEndDateLinkIds = roadsWithEndDate.map(_.linkId).toSeq
+    val normalRoadLinkIds = roadLinks.filterNot(rl => roadsWithEndDateLinkIds.contains(rl.linkId)).map(_.linkId)
+    val allRoadLinks = roadLinks.filterNot(rl => roadsWithEndDateLinkIds.contains(rl.linkId))++complementaryLinks
     val linkIds = (complementaryLinkIds ++ normalRoadLinkIds).toSet
 
     //TODO: In the future when we are dealing with VVHChangeInfo we need to better evaluate when do we switch from bounding box queries to
@@ -194,7 +196,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val missingViiteRoadAddress = Await.result(fetchMissingRoadAddressesByBoundingBoxF, Duration.Inf)
     logger.info("End fetch addresses in %.3f sec".format((System.currentTimeMillis() - fetchAddrStartTime) * 0.001))
 
-    val addressLinkIds = addresses.keySet ++ missingViiteRoadAddress.keySet
+    val roadsWithEndDate = addresses.values.flatten.filter(a => a.endDate.isDefined).map(_.linkId).toSeq
+
+    val addressLinkIds = addresses.filterNot(rl => roadsWithEndDate.contains(rl._1)).keySet ++ missingViiteRoadAddress.keySet
     val fetchVVHStartTime = System.currentTimeMillis()
     val changedRoadLinksF = roadLinkService.getChangeInfoFromVVHF(addressLinkIds)
     val roadLinks = roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(addressLinkIds,newTransaction,frozenTimeVVHAPIServiceEnabled)
@@ -526,7 +530,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
     val addresses =
       withDynTransaction {
-        RoadAddressDAO.fetchByLinkId(roadLinksWithComplimentary.map(_.linkId).toSet, false, false).groupBy(_.linkId)
+        RoadAddressDAO.fetchByLinkId(roadLinksWithComplimentary.map(_.linkId).toSet, includeFloating = false, includeHistory = false).groupBy(_.linkId)
       }
     // In order to avoid sending roadAddressLinks that have no road address
     // we remove the road links that have no known address

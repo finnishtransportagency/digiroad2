@@ -282,6 +282,7 @@ window.LinearAssetLayer = function(params) {
     var linearAssetChanged = _.partial(handleLinearAssetChanged, eventListener);
     var linearAssetCancelled = _.partial(handleLinearAssetCancelled, eventListener);
     eventListener.listenTo(eventbus, singleElementEvents('unselect'), linearAssetUnSelected);
+    eventListener.listenTo(eventbus, singleElementEvents('selected'), linearAssetSelected);
     eventListener.listenTo(eventbus, multiElementEvent('fetched'), redrawLinearAssets);
     eventListener.listenTo(eventbus, 'tool:changed', changeTool);
     eventListener.listenTo(eventbus, singleElementEvents('saved'), handleLinearAssetSaved);
@@ -312,6 +313,11 @@ window.LinearAssetLayer = function(params) {
 
   var linearAssetUnSelected = function () {
     selectToolControl.clear();
+    me.eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
+  };
+  
+  var linearAssetSelected = function(){
+      decorateSelection();
   };
 
   var handleLinearAssetSaved = function() {

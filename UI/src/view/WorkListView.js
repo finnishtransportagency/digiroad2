@@ -4,11 +4,11 @@
       var countString = totalCount ? ' (yhteensä ' + totalCount + ' kpl)' : '';
       return $('<h2/>').html(municipalityName + countString);
     };
-    var tableHeaderRow = function(administrativeClass) {
-      return $('<caption/>').html(administrativeClass);
+    var tableHeaderRow = function(headerName) {
+      return $('<caption/>').html(headerName);
     };
-    var tableContentRows = function(linkIds) {
-      return _.map(linkIds, function(item) {
+    var tableContentRows = function(Ids) {
+      return _.map(Ids, function(item) {
         return $('<tr/>').append($('<td/>').append(typeof item.id !== 'undefined' ? assetLink(item) : idLink(item)));
       });
     };
@@ -26,18 +26,28 @@
         workListItem.append(floatingValidator);
       return workListItem;
     };
-    var tableForAdministrativeClass = function(administrativeClass, linkIds, count) {
-      if (!linkIds || linkIds.length === 0) return '';
+    var tableForGroupingValues = function(values, Ids, count) {
+      if (!Ids || Ids.length === 0) return '';
       var countString = count ? ' (' + count + ' kpl)' : '';
       return $('<table/>').addClass('table')
-        .append(tableHeaderRow(administrativeClass + countString))
-        .append(tableContentRows(linkIds));
+        .append(tableHeaderRow(values + countString))
+        .append(tableContentRows(Ids));
     };
+
+    if(layerName === 'maintenanceRoad') {
+      var table = $('<div/>');
+      table.append(tableForGroupingValues('Tuntematon', workListItems.Unknown));
+      for(var i=1; i<=12; i++) {
+        table.append(tableForGroupingValues(i, workListItems[i]));
+      }
+      return table;
+    } else
+
     return $('<div/>').append(municipalityHeader(municipalityName, workListItems.totalCount))
-      .append(tableForAdministrativeClass('Kunnan omistama', workListItems.Municipality, workListItems.municipalityCount))
-      .append(tableForAdministrativeClass('Valtion omistama', workListItems.State, workListItems.stateCount))
-      .append(tableForAdministrativeClass('Yksityisen omistama', workListItems.Private, workListItems.privateCount))
-      .append(tableForAdministrativeClass('Ei tiedossa', workListItems.Unknown, 0));
+      .append(tableForGroupingValues('Kunnan omistama', workListItems.Municipality, workListItems.municipalityCount))
+      .append(tableForGroupingValues('Valtion omistama', workListItems.State, workListItems.stateCount))
+      .append(tableForGroupingValues('Yksityisen omistama', workListItems.Private, workListItems.privateCount))
+      .append(tableForGroupingValues('Ei tiedossa', workListItems.Unknown, 0));
   };
 
   var generateWorkList = function(layerName, listP) {
@@ -50,7 +60,8 @@
       obstacles: 'Geometrian ulkopuolelle jääneet esterakennelmat',
       railwayCrossings: 'Geometrian ulkopuolelle jääneet rautatien tasoristeykset',
       directionalTrafficSigns: 'Geometrian ulkopuolelle jääneet opastustaulut',
-      trafficSigns: 'Geometrian ulkopuolelle jääneet liikennevalot'
+      trafficSigns: 'Geometrian ulkopuolelle jääneet liikennevalot',
+      maintenanceRoad: 'Tarkistamattomien huoltoteiden lista'
     };
     $('#work-list').html('' +
       '<div style="overflow: auto;">' +
