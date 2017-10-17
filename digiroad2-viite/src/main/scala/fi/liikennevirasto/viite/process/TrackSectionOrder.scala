@@ -20,16 +20,16 @@ object TrackSectionOrder {
     }
   }
 
+  def findOnceConnectedLinks(seq: Seq[ProjectLink]): Map[Point, ProjectLink] = {
+    val pointMap = seq.flatMap(l => {
+      val (p1, p2) = GeometryUtils.geometryEndpoints(l.geometry)
+      Seq(p1 -> l, p2 -> l)
+    }).groupBy(_._1).mapValues(_.map(_._2).distinct)
+    pointMap.filter(_._2.size == 1).mapValues(_.head)
+  }
+
   def orderProjectLinksTopologyByGeometry(startingPoints: (Point, Point), list: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
 
-    def findOnceConnectedLinks(seq: Seq[ProjectLink]): Map[Point, ProjectLink] = {
-      // Using 3 because case b==j is included
-      val pointMap = seq.flatMap(l => {
-        val (p1, p2) = GeometryUtils.geometryEndpoints(l.geometry)
-        Seq(p1 -> l, p2 -> l)
-      }).groupBy(_._1).mapValues(_.map(_._2).distinct)
-      pointMap.filter(_._2.size == 1).mapValues(_.head)
-    }
     def pickMostAligned(rotationMatrix: Matrix, vector: Vector3d, candidates: Seq[ProjectLink]): ProjectLink = {
       candidates.minBy(pl => (rotationMatrix * GeometryUtils.firstSegmentDirection(pl.geometry).normalize2D()) ⋅ vector)
     }
@@ -83,10 +83,6 @@ object TrackSectionOrder {
     val track02 = list.filter(_.track != Track.RightSide)
 
     (recursiveFindAndExtend(startingPoints._1, Seq(), track01), recursiveFindAndExtend(startingPoints._2, Seq(), track02))
-  }
-
-  def toSection(pl: ProjectLink) = {
-    TrackSection(pl.roadNumber, pl.roadPartNumber, pl.track, pl.endMValue, Seq(pl))
   }
 
   def createCombinedSections(rightLinks: Seq[ProjectLink], leftLinks: Seq[ProjectLink]): Seq[CombinedSection] = {
