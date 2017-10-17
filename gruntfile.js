@@ -173,6 +173,71 @@ module.exports = function(grunt) {
             }
           }
         ]
+      },
+      test_server: {
+        options: {
+          base: ['dist', 'dist-viite', '.'],
+          port: 9003,
+          middleware: function(connect, opts) {
+            var config = [
+              // Serve static files.
+              connect.static(opts.base[0]),
+              connect.static(opts.base[1]),
+              connect.static(opts.base[2]),
+              // Make empty directories browsable.
+              connect.directory(opts.base[2])
+            ];
+            var proxy = require('grunt-connect-proxy/lib/utils').proxyRequest;
+            config.unshift(proxy);
+            return config;
+          }
+        },
+        proxies: [
+          {
+            context: '/api',
+            host: '127.0.0.1',
+            port: '8080',
+            https: false,
+            changeOrigin: false,
+            xforward: false
+          },
+          {
+            context: '/arcgis',
+            host: 'aineistot.esri.fi',
+            https: true,
+            port: '443',
+            changeOrigin: true,
+            xforward: false,
+            headers: {referer: 'https://aineistot.esri.fi/arcgis/rest/services/Taustakartat/Harmaasavy/MapServer?f=jsapi'}
+          },
+          {
+            context: '/maasto',
+            host: 'karttamoottori.maanmittauslaitos.fi',
+            https: false,
+            changeOrigin: true,
+            xforward: false,
+            headers: {referer: 'http://www.paikkatietoikkuna.fi/web/fi/kartta'}
+          },
+          {
+            context: '/vkm',
+            host: 'localhost',
+            port: '8997',
+            https: false,
+            changeOrigin: false,
+            xforward: false
+          },
+          {
+            context: '/test/components',
+            host: 'localhost',
+            port: '9003',
+            https: false,
+            changeOrigin: true,
+            xforward: true,
+            rewrite: {
+              '^/test/components': '/components'
+            }
+          }
+        ]
       }
     },
     less: {
@@ -244,6 +309,20 @@ module.exports = function(grunt) {
           timeout: 10000,
           reporter: 'Spec'
         }
+      },
+      digiroad_tests: {
+        options: {
+          mocha: { ignoreLeaks: true },
+          urls: [
+            'http://127.0.0.1:9003/UI/test/test-runner.html',
+            'http://127.0.0.1:9003/UI/test/integration-tests.html',
+            'http://127.0.0.1:9003/viite-UI/test/test-runner.html',
+            'http://127.0.0.1:9003/viite-UI/test/integration-tests.html'],
+          run: false,
+          log: true,
+          timeout: 10000,
+          reporter: 'Spec'
+        }
       }
     },
     watch: {
@@ -302,6 +381,10 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-exec');
 
   var target = grunt.option('target') || 'production';
+
+  grunt.registerTask('build_tests', [/*'exec:oth_build_openlayers', 'exec:viite_build_openlayers', */'configureProxies:oth', 'configureProxies:viite','less:production', 'less:viiteprod', 'connect:test_server', 'mocha:digiroad_tests']);
+
+  grunt.registerTask('newDefault', ['jshint', 'env:production', 'exec:prepare_openlayers', 'preprocess:production', 'build_tests', 'concat', 'uglify', 'cachebreaker']);
 
   grunt.registerTask('server', ['env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'less:development', 'less:viitedev', 'watch:oth']);
 
