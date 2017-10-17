@@ -781,17 +781,6 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     vvhClient.roadLinkChangeInfo.fetchByLinkIdsF(linkIds)
   }
 
-  /**
-    * Gets road links and change data by municipality from VVH. Used to update cache
-    */
-  def reloadRoadLinksAndChangesFromVVH(municipality: Int): (Seq[RoadLink], Seq[ChangeInfo])= {
-    val (changes, links) = Await.result(vvhClient.roadLinkChangeInfo.fetchByMunicipalityF(municipality).zip(vvhClient.roadLinkData.fetchByMunicipalityF(municipality)), atMost = Duration.Inf)
-
-    withDynTransaction {
-      (enrichRoadLinksFromVVH(links, changes), changes)
-    }
-  }
-
   def reloadRoadNodesFromVVH(municipality: Int): (Seq[VVHRoadNodes])= {
     vvhClient.roadNodesData.fetchByMunicipality(municipality)
   }
@@ -1273,6 +1262,21 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   private val complementaryCacheFileNames = "complementary_%d_%d.cached"
   private val complementaryCacheStartsMatch = "complementary_%d_"
 
+  private def deleteOldNodeCacheFiles(municipalityCode: Int, dir: Option[File], maxAge: Long) = {
+    val oldNodeCacheFiles = dir.map(cacheDir => cacheDir.listFiles(new FilenameFilter {
+      override def accept(dir: File, name: String): Boolean = {
+        name.startsWith(nodeCacheStartsMatch.format(municipalityCode))
+      }
+    }).filter(f => f.lastModified() + maxAge < System.currentTimeMillis))
+    oldNodeCacheFiles.getOrElse(Array()).foreach(f =>
+      try {
+        f.delete()
+      } catch {
+        case ex: Exception => logger.warn("Unable to delete old node cache file " + f.toPath, ex)
+      }
+    )
+  }
+
   private def deleteOldCacheFiles(municipalityCode: Int, dir: Option[File], maxAge: Long) = {
     val oldCacheFiles = dir.map(cacheDir => cacheDir.listFiles(new FilenameFilter {
       override def accept(dir: File, name: String): Boolean = {
@@ -1284,6 +1288,18 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
         f.delete()
       } catch {
         case ex: Exception => logger.warn("Unable to delete old Geometry cache file " + f.toPath, ex)
+      }
+    )
+    val oldChangesCacheFiles = dir.map(cacheDir => cacheDir.listFiles(new FilenameFilter {
+      override def accept(dir: File, name: String): Boolean = {
+        name.startsWith(changeCacheStartsMatch.format(municipalityCode))
+      }
+    }).filter(f => f.lastModified() + maxAge < System.currentTimeMillis))
+    oldChangesCacheFiles.getOrElse(Array()).foreach(f =>
+      try {
+        f.delete()
+      } catch {
+        case ex: Exception => logger.warn("Unable to delete old change cache file " + f.toPath, ex)
       }
     )
     val oldCompCacheFiles = dir.map(cacheDir => cacheDir.listFiles(new FilenameFilter {
@@ -1299,32 +1315,6 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       }
     )
   }
-
-  /*
-  private def getCacheFiles(municipalityCode: Int, dir: Option[File]): (Option[(File, File)]) = {
-    val twentyHours = 20L * 60 * 60 * 1000
-
-    deleteOldCacheFiles(municipalityCode, dir, twentyHours)
-
-    val cachedGeometryFile = dir.map(cacheDir => cacheDir.listFiles(new FilenameFilter {
-      override def accept(dir: File, name: String): Boolean = {
-        name.startsWith(geometryCacheStartsMatch.format(municipalityCode))
-      }
-    }).filter(f => f.lastModified() + twentyHours > System.currentTimeMillis))
-
-    val cachedChangesFile = dir.map(cacheDir => cacheDir.listFiles(new FilenameFilter {
-      override def accept(dir: File, name: String): Boolean = {
-        name.startsWith(changeCacheStartsMatch.format(municipalityCode))
-      }
-    }).filter(f => f.lastModified() + twentyHours > System.currentTimeMillis))
-
-    if (cachedGeometryFile.nonEmpty && cachedGeometryFile.get.nonEmpty && cachedGeometryFile.get.head.canRead &&
-      cachedChangesFile.nonEmpty && cachedChangesFile.get.nonEmpty && cachedChangesFile.get.head.canRead) {
-      Some(cachedGeometryFile.get.head, cachedChangesFile.get.head)
-    } else {
-      None
-    }
-  }*/
 
   private def getCacheWithComplementaryFiles(municipalityCode: Int, dir: Option[File]): (Option[(File, File, File)]) = {
     val twentyHours = 20L * 60 * 60 * 1000
@@ -1360,7 +1350,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   private def getNodeCacheFiles(municipalityCode: Int, dir: Option[File]): Option[File] = {
     val twentyHours = 20L * 60 * 60 * 1000
 
-    deleteOldCacheFiles(municipalityCode, dir, twentyHours)
+    deleteOldNodeCacheFiles(municipalityCode, dir, twentyHours)
 
     val cachedGeometryFile = dir.map(cacheDir => cacheDir.listFiles(new FilenameFilter {
       override def accept(dir: File, name: String): Boolean = {
@@ -1377,45 +1367,24 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
 
   //getRoadLinksFromVVHFuture expects to get only "normal" roadlinks from getCachedRoadLinksAndChanges  method.
   private def getCachedRoadLinksAndChanges(municipalityCode: Int): (Seq[RoadLink], Seq[ChangeInfo]) = {
+    val (roadLinks, changes, _) = getCachedRoadLinks(municipalityCode)
+    (roadLinks, changes)
+  }
+
+  private def getCachedRoadLinksWithComplementaryAndChanges(municipalityCode: Int): (Seq[RoadLink], Seq[ChangeInfo]) = {
+    val (roadLinks, changes, complementaries) = getCachedRoadLinks(municipalityCode)
+    (roadLinks ++ complementaries, changes)
+  }
+
+  private def getCachedRoadLinks(municipalityCode: Int): (Seq[RoadLink], Seq[ChangeInfo], Seq[RoadLink]) = {
     val dir = getCacheDirectory
     val cachedFiles = getCacheWithComplementaryFiles(municipalityCode, dir)
     cachedFiles match {
       case Some((geometryFile, changesFile, complementaryFile)) =>
         logger.info("Returning cached result")
-        (vvhSerializer.readCachedGeometry(geometryFile), vvhSerializer.readCachedChanges(changesFile))
+        (vvhSerializer.readCachedGeometry(geometryFile), vvhSerializer.readCachedChanges(changesFile), vvhSerializer.readCachedGeometry(complementaryFile))
       case _ =>
-        val (roadLinks, changes) = reloadRoadLinksAndChangesFromVVH(municipalityCode)
-        if (dir.nonEmpty) {
-          try {
-            val newGeomFile = new File(dir.get, geometryCacheFileNames.format(municipalityCode, System.currentTimeMillis))
-            if (vvhSerializer.writeCache(newGeomFile, roadLinks)) {
-              logger.info("New cached file created: " + newGeomFile + " containing " + roadLinks.size + " items")
-            } else {
-              logger.error("Writing cached geom file failed!")
-            }
-            val newChangeFile = new File(dir.get, changeCacheFileNames.format(municipalityCode, System.currentTimeMillis))
-            if (vvhSerializer.writeCache(newChangeFile, changes)) {
-              logger.info("New cached file created: " + newChangeFile + " containing " + changes.size + " items")
-            } else {
-              logger.error("Writing cached changes file failed!")
-            }
-          } catch {
-            case ex: Exception => logger.warn("Failed cache IO when writing:", ex)
-          }
-        }
-        (roadLinks, changes)
-    }
-  }
-
-  private def getCachedRoadLinksWithComplementaryAndChanges(municipalityCode: Int): (Seq[RoadLink], Seq[ChangeInfo]) = {
-    val dir = getCacheDirectory
-    val cachedFiles = getCacheWithComplementaryFiles(municipalityCode, dir)
-    cachedFiles match {
-      case Some((geometryFile, changesFile, complemtaryFile)) =>
-        logger.info("Returning cached result")
-        (vvhSerializer.readCachedGeometry(geometryFile) ++ vvhSerializer.readCachedGeometry(complemtaryFile), vvhSerializer.readCachedChanges(changesFile))
-      case _ =>
-        val (roadLinks, changes, complementary) = reloadRoadLinksWithComplementaryAndChangesFromVVH(municipalityCode)
+        val (roadLinks, changes, complementaries) = reloadRoadLinksWithComplementaryAndChangesFromVVH(municipalityCode)
         if (dir.nonEmpty) {
           try {
             val newGeomFile = new File(dir.get, geometryCacheFileNames.format(municipalityCode, System.currentTimeMillis))
@@ -1431,8 +1400,8 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
               logger.error("Writing cached changes file failed!")
             }
             val newComplementaryFile = new File(dir.get, complementaryCacheFileNames.format(municipalityCode, System.currentTimeMillis))
-            if (vvhSerializer.writeCache(newComplementaryFile, complementary)) {
-              logger.info("New cached file created: " + newComplementaryFile + " containing " + complementary.size + " items")
+            if (vvhSerializer.writeCache(newComplementaryFile, complementaries)) {
+              logger.info("New cached file created: " + newComplementaryFile + " containing " + complementaries.size + " items")
             } else {
               logger.error("Writing cached complementay file failed!")
             }
@@ -1440,7 +1409,7 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
             case ex: Exception => logger.warn("Failed cache IO when writing:", ex)
           }
         }
-        (roadLinks ++ complementary, changes)
+        (roadLinks, changes, complementaries)
     }
   }
 
@@ -1499,7 +1468,6 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
   def fetchSuravageLinksByLinkIdsFromVVH(linkIdsToGet: Set[Long]): Seq[VVHRoadlink] = {
     Await.result(vvhClient.suravageData.fetchSuravageByLinkIdsF(linkIdsToGet), atMost = Duration.create(1, TimeUnit.HOURS))
   }
-
 
   def getComplementaryRoadLinksFromVVH(municipality: Int): Seq[RoadLink] = {
     val vvhRoadLinks = Await.result(vvhClient.complementaryData.fetchByMunicipalityF(municipality), Duration.create(1, TimeUnit.HOURS))
