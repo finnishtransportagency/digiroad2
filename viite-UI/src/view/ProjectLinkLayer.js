@@ -657,6 +657,7 @@
 
         if (!nearest || !isWithinCutThreshold(nearest.distance)) {
           showChangesAndSendButton();
+          selectSingleClick.getFeatures().clear();
           return;
         }
         var nearestSuravage = nearest.feature.projectLinkData;
@@ -690,8 +691,10 @@
     var changeTool = function(tool) {
           if (tool === 'Cut') {
             suravageCutter.activate();
+            selectSingleClick.setActive(false);
           } else if (tool === 'Select') {
             suravageCutter.deactivate();
+            selectSingleClick.setActive(true);
           }
       };
 
