@@ -2,6 +2,7 @@
   root.ProjectForm = function(projectCollection, selectedProjectLink) {
 
     var LinkStatus = projectCollection.getLinkStatus();
+    var LinkGeomSource = LinkValues.LinkGeomSource;
 
     var addSmallInputNumber = function(id, value){
       //Validate only number characters on "onkeypress" including TAB and backspace
@@ -69,7 +70,7 @@
     };
 
     var defineOptionModifiers = function(option, selection) {
-      var roadIsUnknownOrOther = projectCollection.roadIsUnknown(selection[0]) || projectCollection.roadIsOther(selection[0]) || selection[0].roadLinkSource === 3;
+      var roadIsUnknownOrOther = projectCollection.roadIsUnknown(selection[0]) || projectCollection.roadIsOther(selection[0]) || selection[0].roadLinkSource === LinkGeomSource.SuravageLinkInterface.value;
       var toEdit = selection[0].id === 0;
       var modifiers = '';
 
@@ -91,7 +92,7 @@
           break;
         }
         case LinkStatus.New.action: {
-          var enableStatusNew = (selection[0].status !== LinkStatus.NotHandled.value && selection[0].status !== LinkStatus.Terminated.value)|| selection[0].roadLinkSource === 3;
+          var enableStatusNew = (selection[0].status !== LinkStatus.NotHandled.value && selection[0].status !== LinkStatus.Terminated.value)|| selection[0].roadLinkSource === LinkGeomSource.SuravageLinkInterface.value;
           if(!roadIsUnknownOrOther) {
             if(!enableStatusNew)
               modifiers = 'disabled';
@@ -109,7 +110,7 @@
               status = 0;
             if (status === LinkStatus.Terminated.value){
               modifiers = 'selected';
-            } else if(selection[0].roadLinkSource === 3) {
+            } else if(selection[0].roadLinkSource === LinkGeomSource.SuravageLinkInterface.value) {
               modifiers = 'disabled';
             }
           }
