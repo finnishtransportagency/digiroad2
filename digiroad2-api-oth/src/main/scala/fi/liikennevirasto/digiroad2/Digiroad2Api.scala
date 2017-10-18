@@ -882,7 +882,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
             "roadNumber" -> extractLongValue(link.attributes, "VIITE_ROAD_NUMBER"),
             "track" -> extractIntValue(link.attributes, "VIITE_TRACK"),
             "startAddrMValue" -> extractLongValue(link.attributes, "VIITE_START_ADDR"),
-            "endAddrMValue" ->  extractLongValue(link.attributes, "VIITE_END_ADDR")
+            "endAddrMValue" ->  extractLongValue(link.attributes, "VIITE_END_ADDR"),
+            "administrativeClass" -> link.attributes.get("ROAD_ADMIN_CLASS")
           )
         }
       }

@@ -107,6 +107,7 @@
       var roadIsSuravage = selection[0].roadLinkSource === LinkGeomSource.SuravageLinkInterface.value;
       var isSplitMode = selection.length == 2 && selection[0].linkId === selection[1].linkId;
       var toEdit = !isSplitMode && selection[0].id === 0;
+      var linkStatus = selection[0].status;
       var modifiers = '';
 
       switch(option) {
@@ -380,8 +381,8 @@
           rootElement.find('.changeDirectionDiv').prop("hidden", false);
       }
       else if (statusCode == LinkStatus.Transfer.value) {
-        $("select option[value*="+LinkStatus.New.description+"]").prop('disabled',true);
-        $('#dropDown').val(LinkStatus.Transfer.description).change();
+        $("select option[value*="+LinkStatus.New.action+"]").prop('disabled',true);
+        $('#dropDown').val(LinkStatus.Transfer.action).change();
       }
       $('#discontinuityDropdown').val(selectedProjectLink[selectedProjectLink.length - 1].discontinuity);
       $('#roadTypeDropDown').val(selectedProjectLink[0].roadTypeId);

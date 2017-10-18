@@ -79,13 +79,10 @@ class ViiteTierekisteriMockApi extends ScalatraServlet with JacksonJsonSupport {
     }
 
     def testIsNull(map: Map[String, Any], keys: Seq[String], errorTemplate: String): Unit = {
-      if (keys.nonEmpty) {
-        val key = keys.head
-        val errorMessage = errorTemplate.format(key)
-        if (map(key) != "null") {
-          halt(failValidation(errorMessage))
-        }
-        testIsNull(map, keys.tail, errorTemplate)
+      val nonNullValues=map.filterNot(x=>x._2==null)
+      if (nonNullValues.nonEmpty) {
+        val errorMessage = errorTemplate.format(nonNullValues.head._1)
+        halt(failValidation(errorMessage))
       }
     }
 

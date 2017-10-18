@@ -64,6 +64,9 @@ object DataFixture {
   lazy val tierekisteriDataImporter: TierekisteriDataImporter = {
     new TierekisteriDataImporter(vvhClient, oracleLinearAssetDao, roadAddressDao, linearAssetService)
   }
+  lazy val speedLimitService: SpeedLimitService = {
+    new SpeedLimitService(new DummyEventBus, vvhClient, roadLinkService)
+  }
 
   lazy val massTransitStopService: MassTransitStopService = {
     class MassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService) extends MassTransitStopService {
@@ -106,6 +109,12 @@ object DataFixture {
 
   lazy val maintenanceService: MaintenanceService = {
     new MaintenanceService(roadLinkService, new DummyEventBus)
+  }
+
+  lazy val tierekisteriSpeedLimitAsset : TierekisteriSpeedLimitAssetClient = {
+    new TierekisteriSpeedLimitAssetClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+      getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+      HttpClientBuilder.create().build())
   }
 
   lazy val assetDao : OracleAssetDao = {
@@ -989,6 +998,18 @@ object DataFixture {
     println("\n")
   }
 
+  def importSpeedLimitAssetFromTR(): Unit ={
+    println("\nStart Speed limit import at time: ")
+    println(DateTime.now())
+
+    tierekisteriDataImporter.importSpeedLimitAsset()
+
+    println("Speed limit import complete at time: ")
+    println(DateTime.now())
+    println("\n")
+
+  }
+
   def updateLitRoadDataFromTR(): Unit ={
     println("\nStart lighting update at: ")
     println(DateTime.now())
@@ -1049,9 +1070,14 @@ object DataFixture {
         println("Municipality -> " + municipality  + " MaintenanceRoad Assets -> " + assets.size )
 
         assets.foreach { asset =>
-          roadLinks.filter(_.linkId == asset._2)
-          val area = maintenanceService.getAssetArea(roadLinks.find(_.linkId == asset._2), Measures(asset._3, asset._4), None)
-          assets.foreach(asset => oracleLinearAssetDao.updateArea(asset._1, area))
+          try {
+            val area = maintenanceService.getAssetArea(roadLinks.find(_.linkId == asset._2), Measures(asset._3, asset._4), None)
+            assets.foreach(asset => oracleLinearAssetDao.updateArea(asset._1, area))
+          } catch {
+            case ex: Exception => {
+              println(s"""asset id ${asset._1} in link id ${asset._2} as failed with the following exception ${ex.getMessage}""")
+            }
+          }
         }
       }
     }
@@ -1103,6 +1129,18 @@ object DataFixture {
     tierekisteriDataImporter.updateEuropeanRoadAsset()
 
     println("EuropeanRoad update complete at time: ")
+    println(DateTime.now())
+    println("\n")
+
+  }
+
+  def updateSpeedLimitAssetFromTR(): Unit ={
+    println("\nStart Speed limit update at: ")
+    println(DateTime.now())
+
+    tierekisteriDataImporter.updateSpeedLimitAssets()
+
+    println("Speed limit import complete at time: ")
     println(DateTime.now())
     println("\n")
 
@@ -1331,6 +1369,10 @@ object DataFixture {
         updateAreasOnAsset()
       case Some("update_OTH_BS_with_TR_info") =>
         updateOTHBusStopWithTRInfo()
+      case Some("import_speed_limit_asset_from_TR_to_OTH") =>
+        importSpeedLimitAssetFromTR()
+      case Some("update_speed_limit_asset_from_TR_to_OTH") =>
+        updateSpeedLimitAssetFromTR()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +

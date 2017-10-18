@@ -88,7 +88,7 @@
       $('#actionButtons').html('<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button><button disabled id ="send-button" class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button>');
     };
 
-    var fireDeselectionConfirmation = function (shiftPressed, selection) {
+    var fireDeselectionConfirmation = function (shiftPressed, selection, clickType) {
       new GenericConfirmPopup('Haluatko poistaa tien valinnan ja hylätä muutokset?', {
         successCallback: function () {
           eventbus.trigger('roadAddressProject:discardChanges');
@@ -96,7 +96,7 @@
           clearHighlights();
           showChangesAndSendButton();
           if (!_.isUndefined(selection)) {
-            if (selection.size > 1)
+            if (clickType === 'single')
               showSingleClickChanges(shiftPressed, selection);
             else
               showDoubleClickChanges(shiftPressed, selection);
@@ -134,13 +134,13 @@
           selectionTarget.projectLinkData.roadClass === RoadClass.NoClass.value || selectionTarget.projectLinkData.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value )
         );
       });
-        if (isNotEditingData) {
-          showSingleClickChanges(shiftPressed, selection);
-        } else {
-          var selectedFeatures = event.deselected.concat(selectDoubleClick.getFeatures().getArray());
-          clearHighlights();
-          addFeaturesToSelection(selectedFeatures);
-          fireDeselectionConfirmation(shiftPressed, selection);
+      if (isNotEditingData) {
+        showSingleClickChanges(shiftPressed, selection);
+      } else {
+        var selectedFeatures = event.deselected.concat(selectDoubleClick.getFeatures().getArray());
+        clearHighlights();
+        addFeaturesToSelection(selectedFeatures);
+        fireDeselectionConfirmation(shiftPressed, selection, 'single');
       }
     });
 
@@ -192,14 +192,14 @@
           selectionTarget.projectLinkData.roadClass === RoadClass.NoClass.value || selectionTarget.projectLinkData.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value)
         );
       });
-        if (isNotEditingData) {
-          showDoubleClickChanges(shiftPressed, selection);
-        } else {
-          var selectedFeatures = event.deselected.concat(selectSingleClick.getFeatures().getArray());
-          clearHighlights();
-          addFeaturesToSelection(selectedFeatures);
-          fireDeselectionConfirmation(shiftPressed, selection);
-        }
+      if (isNotEditingData) {
+        showDoubleClickChanges(shiftPressed, selection);
+      } else {
+        var selectedFeatures = event.deselected.concat(selectSingleClick.getFeatures().getArray());
+        clearHighlights();
+        addFeaturesToSelection(selectedFeatures);
+        fireDeselectionConfirmation(shiftPressed, selection, 'double');
+      }
     });
 
     var showDoubleClickChanges = function (shiftPressed, selection) {
