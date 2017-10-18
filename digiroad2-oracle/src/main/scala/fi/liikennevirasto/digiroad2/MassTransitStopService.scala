@@ -113,7 +113,7 @@ trait MassTransitStopService extends PointAssetOperations {
   override val idField = "external_id"
 
   //TODO remove this from the trait
-//  val geometryTransform = new GeometryTransform
+  val geometryTransform = new GeometryTransform
 
   def withDynSession[T](f: => T): T
   def withDynTransaction[T](f: => T): T
@@ -128,8 +128,7 @@ trait MassTransitStopService extends PointAssetOperations {
     }
   }
   lazy val defaultBusStopStrategy = new BusStopStrategy(typeId, massTransitStopDao, roadLinkService)
-//  lazy val tierekisteriBusStopStrategy = new TierekisteriBusStopStrategy(typeId, massTransitStopDao, roadLinkService, tierekisteriClient, geometryTransform)
-  lazy val tierekisteriBusStopStrategy = new TierekisteriBusStopStrategy(typeId, massTransitStopDao, roadLinkService, tierekisteriClient)
+  lazy val tierekisteriBusStopStrategy = new TierekisteriBusStopStrategy(typeId, massTransitStopDao, roadLinkService, tierekisteriClient, geometryTransform)
   lazy val terminalBusStopStrategy = new TerminalBusStopStrategy(typeId, massTransitStopDao, roadLinkService)
 
   override def getByMunicipality(municipalityCode: Int): Seq[PersistedMassTransitStop] = {
@@ -215,16 +214,12 @@ trait MassTransitStopService extends PointAssetOperations {
     }
   }
 
-//  override def create(asset: NewMassTransitStop, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass], linkSource: LinkGeomSource, roadLink: RoadLink): Long = {
-    override def create(asset: NewMassTransitStop, username: String, roadLink: RoadLink): Long = {
+  override def create(asset: NewMassTransitStop, username: String, roadLink: RoadLink): Long = {
 
-    //TODO RoadLink is get at least twice, it can be improved if we change the base create
-      //val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(asset.linkId).getOrElse(throw new NoSuchElementException)
     validateBusStopDirections(asset.properties, roadLink)
     withDynTransaction {
       val point = Point(asset.lon, asset.lat)
       val strategy = getStrategy(asset.properties.toSet, roadLink)
-//      val persistedAsset = strategy.create(asset, username, point, geometry, municipality, administrativeClass, linkSource, roadLink)
       val persistedAsset = strategy.create(asset, username, point, roadLink)
       publishSaveEvent(persistedAsset, _ => Some(roadLink))
       persistedAsset.id
