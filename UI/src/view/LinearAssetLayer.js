@@ -14,12 +14,10 @@ window.LinearAssetLayer = function(params) {
       hasTrafficSignReadOnlyLayer = params.hasTrafficSignReadOnlyLayer,
       backend = params.backend;
 
-
   Layer.call(this, layerName, roadLayer);
   var me = this;
   me.minZoomForContent = zoomlevels.minZoomForAssets;
 
-  var trafficSignReadOnlyLayer;
   var isComplementaryChecked = false;
   var extraEventListener = _.extend({running: false}, eventbus);
 
@@ -174,16 +172,14 @@ window.LinearAssetLayer = function(params) {
   map.addLayer(indicatorLayer);
   indicatorLayer.setVisible(false);
 
-  var createTrafficSignReadOnlyLayer = function(layerName) {
-    return new TrafficSignReadOnlyLayer({
+  var trafficSignReadOnlyLayer = new TrafficSignReadOnlyLayer({
       layerName: layerName,
       style: new PointAssetStyle('trafficSigns'),
-      collection: new ReadOnlyTrafficSignsCollection(backend, 'trafficSigns', true),
+      collection: new TrafficSignsCollection(backend, 'trafficSigns', true),
       assetLabel: new TrafficSignLabel(),
       assetGrouping: new AssetGrouping(9),
       map: map
     });
-  };
 
   var linearAssetCutter = new LinearAssetCutter(me.eventListener, vectorLayer, collection);
 
@@ -355,8 +351,6 @@ window.LinearAssetLayer = function(params) {
 
   this.layerStarted = function(eventListener) {
     bindEvents(eventListener);
-    if(hasTrafficSignReadOnlyLayer)
-      trafficSignReadOnlyLayer = createTrafficSignReadOnlyLayer(layerName);
   };
 
   this.refreshView = function(event) {
@@ -371,7 +365,7 @@ window.LinearAssetLayer = function(params) {
         eventbus.trigger('layer:linearAsset:' + event);
       });
     }
-    if(!_.isUndefined(trafficSignReadOnlyLayer)){
+    if(hasTrafficSignReadOnlyLayer){
       trafficSignReadOnlyLayer.refreshView();
     }
   };
@@ -497,6 +491,7 @@ window.LinearAssetLayer = function(params) {
 
   var show = function(map) {
     startListeningExtraEvents();
+    // showReadOnlyLayer();
     vectorLayer.setVisible(true);
     indicatorLayer.setVisible(true);
     me.refreshView();
@@ -518,9 +513,10 @@ window.LinearAssetLayer = function(params) {
   };
 
   var hideReadOnlyLayer = function(){
-    if(trafficSignReadOnlyLayer){
+    if(hasTrafficSignReadOnlyLayer){
       trafficSignReadOnlyLayer.hide();
-    }
+      trafficSignReadOnlyLayer.removeLayerFeatures();
+  }
   };
 
   var unHighLightReadOnlyLayer = function(){

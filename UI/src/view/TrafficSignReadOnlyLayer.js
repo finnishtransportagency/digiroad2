@@ -36,12 +36,14 @@
 
     var showSpeedLimitSigns = function(){
       setLayerToShow(parentLayerName, true);
+      collection.setTrafficSigns('speedLimits', true);
       me.show();
       me.refreshView();
     };
 
     var hideSpeedLimitSigns = function(){
       setLayerToShow(parentLayerName, false);
+      collection.setTrafficSigns('speedLimits', false);
       me.hide();
     };
 
@@ -75,6 +77,10 @@
         });
     };
 
+    this.removeLayerFeatures = function() {
+      vectorLayer.getSource().clear();
+    };
+
     var selectControl = new SelectToolControl(application, vectorLayer, map, {
       style : function (feature) {
         return style.browsingStyleProvider.getStyle(feature);
@@ -102,6 +108,7 @@
     };
 
     this.hideTrafficSignsComplementary = function() {
+      me.removeLayerFeatures();
       collection.activeComplementary(false);
       me.refreshView();
     };

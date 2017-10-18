@@ -8,7 +8,6 @@ window.SpeedLimitLayer = function(params) {
       layerName = 'speedLimit',
       roadAddressInfoPopup= params.roadAddressInfoPopup,
       backend = params.backend;
-      // trafficSignReadOnlyLayer = params.trafficSignReadOnlyLayer();
   var isActive = false;
   var extraEventListener = _.extend({running: false}, eventbus);
 
@@ -59,7 +58,7 @@ window.SpeedLimitLayer = function(params) {
   var trafficSignReadOnlyLayer = new TrafficSignReadOnlyLayer({
     layerName: layerName,
     style: new PointAssetStyle('trafficSigns'),
-    collection: new ReadOnlyTrafficSignsCollection(backend, 'trafficSigns', true),
+    collection: new TrafficSignsCollection(backend, 'trafficSigns', true),
     assetLabel: new TrafficSignLabel(),
     assetGrouping: new AssetGrouping(9),
     map: map
@@ -199,47 +198,6 @@ window.SpeedLimitLayer = function(params) {
       remove();
     };
   };
-
-  // var uiState = { zoomLevel: 9 };
-  //
-  // var vectorSourceHistory = new ol.source.Vector();
-  // var vectorLayerHistory = new ol.layer.Vector({
-  //   source : vectorSourceHistory,
-  //   style : function(feature) {
-  //     return style.historyStyle.getStyle( feature, {zoomLevel: uiState.zoomLevel});
-  //   }
-  // });
-  //
-  // vectorLayerHistory.setOpacity(1);
-  // vectorLayerHistory.setVisible(false);
-  //
-  // var vectorSource = new ol.source.Vector();
-  // var vectorLayer = new ol.layer.Vector({
-  //   source : vectorSource,
-  //   style : function(feature) {
-  //     return style.browsingStyle.getStyle( feature, {zoomLevel: uiState.zoomLevel});
-  //   }
-  // });
-  // vectorLayer.set('name', layerName);
-  // vectorLayer.setOpacity(1);
-  // vectorLayer.setVisible(false);
-  // map.addLayer(vectorLayer);
-  //
-  // var indicatorVector = new ol.source.Vector({});
-  // var indicatorLayer = new ol.layer.Vector({
-  //   source : indicatorVector
-  // });
-  // map.addLayer(indicatorLayer);
-  // indicatorLayer.setVisible(false);
-  //
-  // var trafficSignReadOnlyLayer = new TrafficSignReadOnlyLayer({
-  //   layerName: layerName,
-  //   style: new PointAssetStyle('trafficSigns'),
-  //   collection: new ReadOnlyTrafficSignsCollection(backend, 'trafficSigns', true),
-  //   assetLabel: new TrafficSignLabel(),
-  //   assetGrouping: new AssetGrouping(9),
-  //   map: map
-  // });
 
   var speedLimitCutter = new SpeedLimitCutter(vectorLayer, collection, me.eventListener);
 
@@ -597,6 +555,7 @@ window.SpeedLimitLayer = function(params) {
   var hideReadOnlyLayer = function(){
     if(!_.isUndefined(trafficSignReadOnlyLayer)){
       trafficSignReadOnlyLayer.hide();
+      trafficSignReadOnlyLayer.removeLayerFeatures();
     }
   };
 
