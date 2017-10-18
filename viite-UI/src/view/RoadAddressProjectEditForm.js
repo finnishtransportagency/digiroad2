@@ -507,6 +507,8 @@
 
       rootElement.on('change', '#dropDown', function() {
         eventbus.trigger('roadAddressProject:toggleEditingRoad', false);
+        $('#tie').prop('disabled',false);
+        $('#osa').prop('disabled',false);
         $('#ajr').prop('disabled',false);
         $('#discontinuityDropdown').prop('disabled',false);
         $('#roadTypeDropDown').prop('disabled',false);
@@ -529,8 +531,13 @@
           }
         }
         else if(this.value == LinkStatus.Unchanged.action){
-          rootElement.find('.new-road-address').prop("hidden", true);
+          rootElement.find('.new-road-address').prop("hidden", false);
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
+          $('#tie').prop('disabled',true);
+          $('#osa').prop('disabled',true);
+          $('#ajr').prop('disabled',true);
+          $('#discontinuityDropdown').prop('disabled',false);
+          $('#roadTypeDropDown').prop('disabled',false);
           projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
             return {'linkId': link.linkId, 'status': LinkStatus.Unchanged.value, 'roadLinkSource': link.roadLinkSource};
           })));
