@@ -44,7 +44,7 @@ object TrackSectionOrder {
 
     def getOppositeEnd(geometry: Seq[Point], point: Point): Point = {
       val (st, en) = GeometryUtils.geometryEndpoints(geometry)
-      if ((st - point).length() > (en - point).length()) en else st
+      if ((st - point).length() < (en - point).length()) en else st
     }
 
     def recursiveFindAndExtend(currentPoint: Point, ready: Seq[ProjectLink], unprocessed: Seq[ProjectLink]): Seq[ProjectLink] = {
@@ -74,7 +74,7 @@ object TrackSectionOrder {
             (getOppositeEnd(l.geometry, currentPoint), l)
         }
         // Check if link direction needs to be turned and choose next point
-        val sideCode = if (nextLink.geometry.head == nextPoint) SideCode.TowardsDigitizing else SideCode.AgainstDigitizing
+        val sideCode = if (nextLink.geometry.last == nextPoint) SideCode.TowardsDigitizing else SideCode.AgainstDigitizing
         recursiveFindAndExtend(nextPoint, ready ++ Seq(nextLink.copy(sideCode = sideCode)), unprocessed.filterNot(pl => pl == nextLink))
       }
     }
