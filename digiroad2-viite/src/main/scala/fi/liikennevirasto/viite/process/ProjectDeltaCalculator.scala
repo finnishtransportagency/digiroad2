@@ -84,8 +84,6 @@ object ProjectDeltaCalculator {
           case x: ProjectLink => x.copy(endAddrMValue = pl2.endAddrMValue, discontinuity = pl2.discontinuity).asInstanceOf[P]
       }))
     else {
-      logger.info(s"No match: ${pl1.endAddrMValue == pl2.startAddrMValue} ${pl1.discontinuity == Discontinuity.Continuous} " +
-        s"${ra1.endAddrMValue} ${ra2.startAddrMValue} ${ra1.discontinuity == Discontinuity.Continuous} ${pl1.roadType} ${pl2.roadType}")
       Seq(tr2, tr1)
     }
   }
