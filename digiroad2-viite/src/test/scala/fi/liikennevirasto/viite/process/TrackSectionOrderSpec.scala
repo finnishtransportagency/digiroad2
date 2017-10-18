@@ -46,4 +46,23 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
       TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(20.0, 10.0), Point(20.0, 10.0)), l)._1 should be(ordered)
     })
   }
+
+  test("combined track with one ill-fitting link direction after discontinuity") {
+    val points = Seq(Seq(Point(100,110), Point(75, 130), Point(50,159)),
+      Seq(Point(50,160), Point(0, 110), Point(0,60)),
+      Seq(Point(0,60), Point(-50, 80), Point(-100, 110)),
+      Seq(Point(-100,110), Point(-120, 140), Point(-150,210)))
+    val geom = points.map(g =>
+      if (g.head.y > g.last.y)
+        g.reverse
+      else g
+    )
+    val list = geom.zip(0 to 3).map{ case (g, id) =>
+      toProjectLink(rap, LinkStatus.New)(RoadAddress(id, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
+        0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, id, 0.0, 0.0, SideCode.Unknown, 0, (None, None), false,
+        g, LinkGeomSource.NormalLinkInterface))
+    }
+    val (ordered, _) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(100,110), Point(100,110)), list)
+    ordered.map(_.id) should be (Seq(0L, 1L, 2L, 3L))
+  }
 }

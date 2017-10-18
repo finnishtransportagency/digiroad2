@@ -41,6 +41,9 @@ case class Vector3d(x: Double, y: Double, z: Double) {
     (x * that.x) + (y * that.y) + (z * that.z)
   }
 
+  def ⋅(that: Vector3d): Double = {
+    dot(that)
+  }
   def normalize(): Vector3d = {
     if (length() != 0) {
       scale(1 / length())
@@ -72,6 +75,12 @@ case class Vector3d(x: Double, y: Double, z: Double) {
   def +(that: Vector3d): Vector3d = {
     Vector3d(x + that.x, y + that.y, z + that.z)
   }
+
+  def ⨯(that: Vector3d): Vector3d = {
+    Vector3d(this.y * that.z - this.z * that.y, this.z * that.x - this.x * that.z, this.x * that.y - this.y * that.x)
+  }
+
+  def cross(that: Vector3d): Vector3d = ⨯(that)
 
   def to2D(): Vector3d = {
     Vector3d(x, y, 0.0)

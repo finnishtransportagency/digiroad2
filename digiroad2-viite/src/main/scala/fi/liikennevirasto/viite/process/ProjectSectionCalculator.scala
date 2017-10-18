@@ -38,8 +38,7 @@ object ProjectSectionCalculator {
       calibrationPoints)
     // Get left track non-connected points and find the closest to right track starting point
     val leftLinks = newLinks.filter(_.track != Track.RightSide) ++ oldLinks.filter(_.track != Track.RightSide)
-    val leftLinkEnds = leftLinks.flatMap(pl => Seq(pl.startingPoint, pl.endPoint))
-    val leftPoints = leftLinkEnds.filterNot(p1 => leftLinkEnds.count(p2 => GeometryUtils.areAdjacent(p1, p2)) > 1)
+    val leftPoints = TrackSectionOrder.findOnceConnectedLinks(leftLinks).keys
     if (leftPoints.isEmpty)
       throw new InvalidAddressDataException("Missing left track starting points")
     val leftStartPoint = leftPoints.minBy(lp => (lp - rightStartPoint).length())
