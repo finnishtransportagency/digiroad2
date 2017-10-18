@@ -196,7 +196,7 @@
         addSmallInputNumber('osa',(selectedProjectLink[0].roadPartNumber !== 0 ? selectedProjectLink[0].roadPartNumber : '')) +
         addSmallInputNumber('ajr',(selectedProjectLink[0].trackCode !== 99 ? selectedProjectLink[0].trackCode : '')) +
         addSmallInputNumberDisabled('ely', selectedProjectLink[0].elyCode) +
-        addSelect() +
+        addDiscontinuityDropdown() +
         addSmallLabel('TIETYYPPI') +
         roadTypeDropdown() +
         distanceValue() +
@@ -243,15 +243,22 @@
         '</div></div>';
     };
 
-    var addSelect = function(){
-      return '<select class="form-select-control" id="discontinuityDropdown" size="1">'+
-        '<option value = "5" selected disabled hidden>5 Jatkuva</option>'+
-        '<option value="1" >1 Tien loppu</option>'+
-        '<option value="2" >2 Epäjatkuva</option>'+
-        '<option value="3" >3 ELY:n raja</option>'+
-        '<option value="4" >4 Lievä epäjatkuvuus</option>'+
-        '<option value="5" >5 Jatkuva</option>'+
-        '</select>';
+    var addDiscontinuityDropdown = function(){
+      if(selectedProjectLink[0].endAddressM == 0){
+        return '<select class="form-select-control" id="discontinuityDropdown" size="1">'+
+          '<option value = "5" selected disabled hidden>5 Jatkuva</option>'+
+          '</select>';
+      }
+      else {
+        return '<select class="form-select-control" id="discontinuityDropdown" size="1">' +
+          '<option value = "5" selected disabled hidden>5 Jatkuva</option>' +
+          '<option value="1" >1 Tien loppu</option>' +
+          '<option value="2" >2 Epäjatkuva</option>' +
+          '<option value="3" >3 ELY:n raja</option>' +
+          '<option value="4" >4 Lievä epäjatkuvuus</option>' +
+          '<option value="5" >5 Jatkuva</option>' +
+          '</select>';
+      }
     };
 
     var changeDirection = function () {
