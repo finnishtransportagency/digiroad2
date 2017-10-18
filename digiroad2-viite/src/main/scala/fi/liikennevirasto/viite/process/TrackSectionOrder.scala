@@ -25,7 +25,10 @@ object TrackSectionOrder {
       val (p1, p2) = GeometryUtils.geometryEndpoints(l.geometry)
       Seq(p1 -> l, p2 -> l)
     }).groupBy(_._1).mapValues(_.map(_._2).distinct)
-    pointMap.filter(_._2.size == 1).mapValues(_.head)
+    pointMap.keys.map{ p =>
+      val links = pointMap.filterKeys(m => GeometryUtils.areAdjacent(p, m, fi.liikennevirasto.viite.MaxDistanceForConnectedLinks)).values.flatten
+      p -> links
+    }.toMap.filter(_._2.size == 1).mapValues(_.head)
   }
 
   def orderProjectLinksTopologyByGeometry(startingPoints: (Point, Point), list: Seq[ProjectLink]): (Seq[ProjectLink], Seq[ProjectLink]) = {
@@ -56,7 +59,8 @@ object TrackSectionOrder {
         val (nextPoint, nextLink) = connected.size match {
           case 0 =>
             val subsetB = findOnceConnectedLinks(unprocessed)
-            subsetB.minBy(b => (currentPoint - b._1).length())
+            val (closestPoint, link) = subsetB.minBy(b => (currentPoint - b._1).length())
+            (getOppositeEnd(link.geometry, closestPoint), link)
           case 1 =>
             (getOppositeEnd(connected.head.geometry, currentPoint), connected.head)
           case 2 =>
