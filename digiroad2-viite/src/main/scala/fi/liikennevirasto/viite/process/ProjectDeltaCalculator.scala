@@ -136,7 +136,7 @@ object ProjectDeltaCalculator {
     val grouped = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track, ra.roadType))
       .mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
       RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
-        ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType)
+        ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType, ra.ely)
     ).toSeq
     val paired = grouped.groupBy(section => (section.roadNumber, section.roadPartNumberStart, section.track))
 
@@ -206,7 +206,7 @@ object ProjectDeltaCalculator {
     def toRoadAddressSection(o: Seq[BaseRoadAddress]): Seq[RoadAddressSection] = {
       o.sortBy(_.startAddrMValue).map(ra =>
         RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
-          ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType))
+          ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType, ra.ely))
     }
     val sectioned = transfers.groupBy(x => (x._1.roadNumber, x._1.roadPartNumber, x._1.track, x._2.roadNumber, x._2.roadPartNumber, x._2.track))
       .mapValues(v => combinePair(v.sortBy(_._1.startAddrMValue)))

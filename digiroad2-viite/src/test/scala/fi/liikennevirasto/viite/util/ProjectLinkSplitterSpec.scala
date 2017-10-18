@@ -127,10 +127,10 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers {
     val tLen = GeometryUtils.geometryLength(tGeom)
     val suravage = ProjectLink(0L, 0L, 0L, Track.Unknown, Discontinuity.Continuous, 0L, 0L, None, None, None, 0L, 123L, 0.0, sLen,
       SideCode.Unknown, (None, None), false, sGeom, 1L, LinkStatus.NotHandled, RoadType.Unknown, LinkGeomSource.SuravageLinkInterface,
-      sLen, 0L, None)
+      sLen, 0L, 5)
     val template = ProjectLink(2L, 5L, 205L, Track.Combined, Discontinuity.Continuous, 1024L, 1040L, None, None, None, 0L, 124L, 0.0, sLen,
       SideCode.TowardsDigitizing, (None, None), false, tGeom, 1L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface,
-      tLen, 0L, None)
+      tLen, 0L, 5)
     val (sl, tl) = ProjectLinkSplitter.split(suravage, template, SplitOptions(Point(15.5, 0.75), LinkStatus.UnChanged,
       LinkStatus.New, 5L, 205L, Track.Combined, Discontinuity.Continuous, 8L, LinkGeomSource.NormalLinkInterface,
       RoadType.PublicRoad, 1L)).partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
@@ -162,10 +162,10 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers {
     val tLen = GeometryUtils.geometryLength(tGeom)
     val suravage = ProjectLink(0L, 0L, 0L, Track.Unknown, Discontinuity.Continuous, 0L, 0L, None, None, None, 0L, 123L, 0.0, sLen,
       SideCode.Unknown, (None, None), false, sGeom, 1L, LinkStatus.NotHandled, RoadType.Unknown, LinkGeomSource.SuravageLinkInterface,
-      sLen, 0L, None)
+      sLen, 0L, 5)
     val template = ProjectLink(2L, 5L, 205L, Track.Combined, Discontinuity.Continuous, 1024L, 1040L, None, None, None, 0L, 124L, 0.0, sLen,
       SideCode.TowardsDigitizing, (None, None), false, tGeom, 1L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface,
-      tLen, 0L, None)
+      tLen, 0L, 5)
     val (sl, tl) = ProjectLinkSplitter.split(suravage, template, SplitOptions(Point(15.5, 0.75), LinkStatus.New,
       LinkStatus.UnChanged, 5L, 205L, Track.Combined, Discontinuity.Continuous, 8L, LinkGeomSource.NormalLinkInterface,
       RoadType.PublicRoad, 1L)).partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
@@ -191,10 +191,10 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers {
     val tLen = GeometryUtils.geometryLength(tGeom)
     val suravage = ProjectLink(0L, 0L, 0L, Track.Unknown, Discontinuity.Continuous, 0L, 0L, None, None, None, 0L, 123L, 0.0, sLen,
       SideCode.Unknown, (None, None), false, sGeom, 1L, LinkStatus.NotHandled, RoadType.Unknown, LinkGeomSource.SuravageLinkInterface,
-      sLen, 0L, None)
+      sLen, 0L, 5)
     val template = ProjectLink(2L, 5L, 205L, Track.Combined, Discontinuity.Continuous, 1024L, 1040L, None, None, None, 0L, 124L, 0.0, sLen,
       SideCode.TowardsDigitizing, (None, None), false, tGeom, 1L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface,
-      tLen, 10L, None)
+      tLen, 10L, 5)
     val (sl, tl) = ProjectLinkSplitter.split(suravage, template, SplitOptions(Point(15.0, 0.0), LinkStatus.New,
       LinkStatus.Transfer, 5L, 205L, Track.Combined, Discontinuity.Continuous, 8L, LinkGeomSource.NormalLinkInterface,
       RoadType.PublicRoad, 1L)).partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)

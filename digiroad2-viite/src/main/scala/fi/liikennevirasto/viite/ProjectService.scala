@@ -185,7 +185,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       projectAddressLink.linkId, projectAddressLink.startMValue, projectAddressLink.endMValue, sideCode,
       (projectAddressLink.startCalibrationPoint, projectAddressLink.endCalibrationPoint), floating = false,
       projectAddressLink.geometry, projectId, if (isNewProjectLink) LinkStatus.New else projectAddressLink.status, RoadType.apply(newRoadType.toInt),
-      projectAddressLink.roadLinkSource, projectAddressLink.length, projectAddressLink.roadAddressId, Some(projectAddressLink.elyCode))
+      projectAddressLink.roadLinkSource, projectAddressLink.length, projectAddressLink.roadAddressId, projectAddressLink.elyCode)
   }
 
   /**
@@ -359,7 +359,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  private def validateReservations(reservedRoadParts: Seq[ReservedRoadPart], projectEly: Option[Long], projectId: Long, projectLinks: List[ProjectLink]): Option[String] = {
+  private def validateReservations(reservedRoadParts: Seq[ReservedRoadPart], projectEly: Option[Long], projectId: Long, projectLinks: Seq[ProjectLink]): Option[String] = {
     val errors = reservedRoadParts.flatMap{ra =>
       val roadPartExistsInAddresses = RoadAddressDAO.roadPartExists(ra.roadNumber, ra.roadPartNumber) ||
         ProjectDAO.fetchProjectLinkIds(projectId, ra.roadNumber, ra.roadPartNumber).nonEmpty

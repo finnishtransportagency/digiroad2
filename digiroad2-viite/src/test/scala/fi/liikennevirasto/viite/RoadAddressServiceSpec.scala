@@ -393,7 +393,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   private def roadAddressLinkToRoadAddress(floating: Boolean)(l: RoadAddressLink) = {
     RoadAddress(l.id, l.roadNumber, l.roadPartNumber, RoadType.Unknown, Track.apply(l.trackCode.toInt), Discontinuity.apply(l.discontinuity.toInt),
       l.startAddressM, l.endAddressM, Option(new DateTime(new Date())), None, None, 0, l.linkId, l.startMValue, l.endMValue, l.sideCode, 0,
-      (l.startCalibrationPoint, l.endCalibrationPoint), floating, l.geometry, LinkGeomSource.NormalLinkInterface, Some(l.elyCode))
+      (l.startCalibrationPoint, l.endCalibrationPoint), floating, l.geometry, LinkGeomSource.NormalLinkInterface, l.elyCode)
   }
 
   test("recalculate one track road with single part") {
@@ -447,7 +447,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   test("GetFloatingAdjacents road links on road 75 part 2 sourceLinkId 5176142") {
     val roadAddressService = new RoadAddressService(mockRoadLinkService,mockEventBus)
     val road75FloatingAddresses = RoadAddress(367,75,2,RoadType.Unknown, Track.Combined,Discontinuity.Continuous,3532,3598,None,None,Some("tr"),
-      70000389,5176142,0.0,65.259,SideCode.TowardsDigitizing,0,(None,None),true,List(Point(538889.668,6999800.979,0.0), Point(538912.266,6999862.199,0.0)), LinkGeomSource.NormalLinkInterface, Some(8))
+      70000389,5176142,0.0,65.259,SideCode.TowardsDigitizing,0,(None,None),true,List(Point(538889.668,6999800.979,0.0), Point(538912.266,6999862.199,0.0)), LinkGeomSource.NormalLinkInterface, 8)
 
     when(mockRoadLinkService.getViiteCurrentAndHistoryRoadLinksFromVVH(any[Set[Long]],any[Boolean])).thenReturn(
       (Seq(), Stream()))

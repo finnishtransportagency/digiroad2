@@ -7,18 +7,13 @@ import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset.PolyLine
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
-import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.viite.dao.CalibrationCode.{AtBeginning, AtBoth, AtEnd, No}
-import fi.liikennevirasto.viite.model.ProjectAddressLink
 import fi.liikennevirasto.viite.{ReservedRoadPart, RoadType}
-import fi.liikennevirasto.viite.process.{Delta, ProjectDeltaCalculator}
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
-import oracle.net.aso.p
 import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
-import slick.jdbc.{StaticQuery => Q}
+import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
 sealed trait ProjectState{
   def value: Int
@@ -78,7 +73,7 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
                        calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false,
                        geometry: Seq[Point], projectId: Long, status: LinkStatus, roadType: RoadType,
                        linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, geometryLength: Double, roadAddressId : Long,
-                       ely: Option[Long], connectedLinkId: Option[Long] = None)
+                       ely: Long, connectedLinkId: Option[Long] = None)
   extends BaseRoadAddress with PolyLine {
   lazy val startingPoint = if (sideCode == SideCode.AgainstDigitizing) geometry.last else geometry.head
   lazy val endPoint = if (sideCode == SideCode.AgainstDigitizing) geometry.head else geometry.last
@@ -95,12 +90,47 @@ object ProjectDAO {
   from PROJECT_LINK join LRM_POSITION
     on LRM_POSITION.ID = PROJECT_LINK.LRM_POSITION_ID"""
 
-  private def listQuery(query: String) = {
-    Q.queryNA[(Long, Long, Int, Int, Long, Long, Long, Long, Double, Double, Long, Long, String, String,
-      Long, Double, Long, Int, Int, Int, Long, Option[Long])](query).list.map(mapToProjectLink)
+  implicit val getProjectLinkRow = new GetResult[ProjectLink] {
+    def apply(r: PositionedResult) = {
+      val projectLinkId = r.nextLong()
+      val projectId = r.nextLong()
+      val trackCode = Track.apply(r.nextInt())
+      val discontinuityType = Discontinuity.apply(r.nextInt())
+      val roadNumber = r.nextLong()
+      val roadPartNumber = r.nextLong()
+      val startAddrM = r.nextLong()
+      val endAddrM = r.nextLong()
+      val startMValue = r.nextDouble()
+      val endMValue = r.nextDouble()
+      val sideCode = SideCode.apply(r.nextInt())
+      val lrmPositionId = r.nextLong()
+      val createdBy = r.nextString()
+      val modifiedBy = r.nextString()
+      val linkId = r.nextLong()
+      val length = r.nextDouble()
+      val calibrationPoints =
+        CalibrationPointsUtils.calibrations(CalibrationCode.apply(r.nextInt()),linkId,startMValue,endMValue,
+          startAddrM,endAddrM, sideCode )
+      val status = LinkStatus.apply(r.nextInt())
+      val roadType = RoadType.apply(r.nextInt())
+      val source = LinkGeomSource.apply(r.nextInt())
+      val roadAddressId = r.nextLong()
+      val ely = r.nextLong()
+      val connectedLinkId = Some(r.nextLong())
+
+      ProjectLink(projectLinkId, roadNumber, roadPartNumber, trackCode, discontinuityType, startAddrM, endAddrM, None, None,
+        None, lrmPositionId, linkId, startMValue, endMValue, sideCode, calibrationPoints, false, Seq.empty[Point], projectId,
+        status, roadType, source,length, roadAddressId, ely, connectedLinkId)
+    }
   }
 
-  private def mapToProjectLink(row: (Long, Long, Int, Int, Long, Long, Long, Long, Double, Double, Long, Long,
+  private def listQuery(query: String) = {
+    Q.queryNA[ProjectLink](query).iterator.toSeq
+    /*Q.queryNA[(Long, Long, Int, Int, Long, Long, Long, Long, Double, Double, Long, Long, String, String,
+      Long, Double, Long, Int, Int, Int, Long, Option[Long])](query).list.map(mapToProjectLink)*/
+  }
+
+  /*private def mapToProjectLink(row: (Long, Long, Int, Int, Long, Long, Long, Long, Double, Double, Long, Long,
     String, String, Long, Double, Long, Int, Int, Int, Long, Option[Long])): ProjectLink = {
     val (projectLinkId, projectId, trackCode, discontinuityType, roadNumber, roadPartNumber, startAddrM, endAddrM,
     startMValue, endMValue, sideCode , lrmPositionId, createdBy, modifiedBy, linkId, length, calibrationPoints, status,
@@ -110,7 +140,7 @@ object ProjectDAO {
       CalibrationPointsUtils.calibrations(CalibrationCode.apply(calibrationPoints.toInt),linkId,startMValue,endMValue,
         startAddrM,endAddrM, SideCode.apply(sideCode.toInt)),false, Seq.empty[Point], projectId, LinkStatus.apply(status),
       RoadType.apply(roadType),LinkGeomSource.apply(source),length, roadAddressId, connectedLinkId)
-  }
+  }*/
 
   def create(roadAddresses: Seq[ProjectLink]): Seq[Long] = {
     val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure, adjusted_timestamp, link_source) values (?, ?, ?, ?, ?, ?, ?)")
@@ -198,7 +228,7 @@ object ProjectDAO {
          """.execute
   }
 
-  def getProjectLinks(projectId: Long, linkStatusFilter: Option[LinkStatus] = None): List[ProjectLink] = {
+  def getProjectLinks(projectId: Long, linkStatusFilter: Option[LinkStatus] = None): Seq[ProjectLink] = {
     val filter = if (linkStatusFilter.isEmpty) "" else s"PROJECT_LINK.STATUS = ${linkStatusFilter.get.value} AND"
     val query =
       s"""$projectLinkQueryBase
@@ -207,7 +237,7 @@ object ProjectDAO {
   }
 
   //TODO: support for bigger queries than 1000 link ids
-  def getProjectLinksByIds(linkIds: Iterable[Long]): List[ProjectLink] = {
+  def getProjectLinksByIds(linkIds: Iterable[Long]): Seq[ProjectLink] = {
     if (linkIds.isEmpty)
       List()
     else {
@@ -218,14 +248,14 @@ object ProjectDAO {
     }
   }
 
-  def getProjectLinksByLinkId(projectLinkId: Long): List[ProjectLink] = {
+  def getProjectLinksByLinkId(projectLinkId: Long): Seq[ProjectLink] = {
     val query =
       s"""$projectLinkQueryBase
                 where LRM_POSITION.link_id = $projectLinkId order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
     listQuery(query)
   }
 
-  def getProjectLinksByProjectAndLinkId(projectLinkIds: Iterable[Long], projectId:Long): List[ProjectLink] = {
+  def getProjectLinksByProjectAndLinkId(projectLinkIds: Iterable[Long], projectId:Long): Seq[ProjectLink] = {
     if (projectLinkIds.isEmpty)
       List()
     else {
@@ -237,7 +267,7 @@ object ProjectDAO {
   }
 
 
-  def fetchByProjectRoadPart(roadNumber: Long, roadPartNumber: Long, projectId: Long): List[ProjectLink] = {
+  def fetchByProjectRoadPart(roadNumber: Long, roadPartNumber: Long, projectId: Long): Seq[ProjectLink] = {
     val filter = s"PROJECT_LINK.ROAD_NUMBER = $roadNumber AND PROJECT_LINK.ROAD_PART_NUMBER = $roadPartNumber AND"
     val query =
       s"""$projectLinkQueryBase
@@ -581,8 +611,7 @@ object ProjectDAO {
     val query =
       s"""$projectLinkQueryBase
                 where PROJECT_LINK.PROJECT_ID = $projectId AND (LRM_POSITION.LINK_ID = $linkId OR PROJECT_LINK.CONNECTED_LINK_ID = $linkId)"""
-    Q.queryNA[(Long, Long, Int, Int, Long, Long, Long, Long, Double, Double, Long, Long, String, String, Long, Double,
-      Long, Int, Int, Int, Long, Option[Long])](query).list.map(mapToProjectLink)
+    listQuery(query)
   }
 
   def toTimeStamp(dateTime: Option[DateTime]) = {
