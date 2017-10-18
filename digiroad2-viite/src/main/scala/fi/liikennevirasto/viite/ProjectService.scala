@@ -784,7 +784,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @return true, if the delta calculation is successful and change table has been updated.
     */
   def updateProjectLinks(projectId: Long, linkIds: Set[Long], linkStatus: LinkStatus, userName: String,
-                         roadNumber: Long = 0, roadPartNumber: Long = 0, userDefinedEndAddressM: Option[Int]): Option[String] = {
+                         roadNumber: Long = 0, roadPartNumber: Long = 0, userDefinedEndAddressM: Option[Int], roadType: Long, discontinuity: Long, ely: Long): Option[String] = {
     try {
       withDynTransaction{
         val projectLinks = withGeometry(ProjectDAO.getProjectLinks(projectId))
@@ -825,6 +825,18 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             } else {
               ProjectDAO.updateProjectLinks(updatedProjectLinks.filterNot(link => link.status == LinkStatus.Terminated).map(_.id).toSet, linkStatus, userName)
             }
+          }
+          case LinkStatus.UnChanged => {
+            val project = getProjectWithReservationChecks(projectId, roadNumber, roadPartNumber)
+            if (!project.isReserved(roadNumber, roadPartNumber))
+              ProjectDAO.reserveRoadPart(project.id, roadNumber, roadPartNumber, project.modifiedBy)
+            val targetLinks = updatedProjectLinks.filterNot(link => link.status == LinkStatus.Terminated)
+            val lastSegment = targetLinks.maxBy(_.endAddrMValue)
+            if(targetLinks.size > 1){
+              val linksToUpdate =targetLinks.filterNot(_.id == lastSegment.id)
+              ProjectDAO.updateProjectLinkUnchanged(linksToUpdate.map(_.id).toSet, linkStatus, userName, roadType, None)
+            }
+            ProjectDAO.updateProjectLinkUnchanged(Set(lastSegment.id), linkStatus, userName, roadType, Some(discontinuity))
           }
           case _ => ProjectDAO.updateProjectLinks(updatedProjectLinks.filterNot(link => link.status == LinkStatus.Terminated).map(_.id).toSet, linkStatus, userName)
         }

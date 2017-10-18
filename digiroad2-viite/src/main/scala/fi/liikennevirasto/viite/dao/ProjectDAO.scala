@@ -448,6 +448,22 @@ object ProjectDAO {
         Q.updateNA(sql).execute
   }
 
+  def updateProjectLinkUnchanged(projectLinkIds: Set[Long], linkStatus: LinkStatus, userName: String, roadType: Long, discontinuity: Option[Long]): Unit = {
+    val user = userName.replaceAll("[^A-Za-z0-9\\-]+", "")
+    if(discontinuity.isEmpty) {
+      projectLinkIds.grouped(500).foreach {
+        grp =>
+          val sql = s"UPDATE PROJECT_LINK SET STATUS = ${linkStatus.value}, MODIFIED_BY='$user', ROAD_TYPE= $roadType " +
+            s"WHERE ID IN ${grp.mkString("(", ",", ")")}"
+          Q.updateNA(sql).execute
+      }
+    } else {
+      val sql = s"UPDATE PROJECT_LINK SET STATUS = ${linkStatus.value}, MODIFIED_BY='$user', ROAD_TYPE= $roadType, DISCONTINUITY_TYPE = ${discontinuity.get} " +
+       s"WHERE ID = ${projectLinkIds.head}"
+      Q.updateNA(sql).execute
+    }
+  }
+
   def updateProjectLinks(projectLinkIds: Set[Long], linkStatus: LinkStatus, userName: String): Unit = {
     val user = userName.replaceAll("[^A-Za-z0-9\\-]+", "")
     projectLinkIds.grouped(500).foreach {
