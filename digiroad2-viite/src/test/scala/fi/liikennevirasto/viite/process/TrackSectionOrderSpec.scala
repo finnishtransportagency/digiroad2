@@ -61,7 +61,7 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     val list = geom.zip(0 to 3).map{ case (g, id) =>
       toProjectLink(rap, LinkStatus.New)(RoadAddress(id, 5, 1, RoadType.Unknown, Track.Combined, Continuous,
         0L, 0L, Some(DateTime.parse("1901-01-01")), Some(DateTime.parse("1902-01-01")), Option("tester"), 0, id, 0.0, 0.0, SideCode.Unknown, 0, (None, None), false,
-        g, LinkGeomSource.NormalLinkInterface))
+        g, LinkGeomSource.NormalLinkInterface, None))
     }
     val (ordered, _) = TrackSectionOrder.orderProjectLinksTopologyByGeometry((Point(100,110), Point(100,110)), list)
     ordered.map(_.id) should be (Seq(0L, 1L, 2L, 3L))
