@@ -48,25 +48,6 @@ class ProjectDaoSpec  extends FunSuite with Matchers {
     (id1, id2)
   }
 
-  test("Add two links that are reserved") {
-    OracleDatabase.withDynTransaction {
-      val (projectId1, projectId2) = addprojects()
-      ProjectDAO.reserveRoadPart(projectId1, 1, 1, "TestUser")
-      var completed = true
-      /*Insert links to project*/
-      sqlu"""insert into project_link (id,project_id,track_code,discontinuity_type,road_number,road_part_number,start_addr_M,end_addr_M,lrm_position_id,created_by) VALUES (${Sequences.nextViitePrimaryKeySeqValue},${projectId1},1,0,1,1,1,1,20000286,'automatedtest')""".execute
-      try {
-        sqlu"""insert into project_link (id,project_id,track_code,discontinuity_type,road_number,road_part_number,start_addr_M,end_addr_M,lrm_position_id,created_by) VALUES (${Sequences.nextViitePrimaryKeySeqValue},${projectId2},1,0,1,1,1,1,20000286,'automatedtest')""".execute
-      } catch {
-        case _: SQLException =>
-          completed = false
-      }
-      sql"""SELECT COUNT(*) FROM project_link WHERE created_by = 'automatedtest'""".as[Long].first should be(1L)
-      completed should be(false)
-      dynamicSession.rollback()
-    }
-  }
-
   test("create empty road address project") {
     runWithRollback {
       val id = Sequences.nextViitePrimaryKeySeqValue
