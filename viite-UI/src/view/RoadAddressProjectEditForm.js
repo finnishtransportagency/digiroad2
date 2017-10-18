@@ -264,8 +264,7 @@
         '</div>';
     };
 
-    function replaceAddressInfo()
-    {
+    var replaceAddressInfo = function() {
       if (selectedProjectLink[0].roadNumber === 0 && selectedProjectLink[0].roadPartNumber === 0 && selectedProjectLink[0].trackCode === 99 )
       {
         backend.getNonOverridenVVHValuesForLink(selectedProjectLink[0].linkId, function (response) {
@@ -275,7 +274,7 @@
           }
         });
       }
-    }
+    };
 
     var roadTypeDropdown = function() {
       return '<select class="form-control" id="roadTypeDropDown" size = "1" style="width: auto !important; display: inline">' +
