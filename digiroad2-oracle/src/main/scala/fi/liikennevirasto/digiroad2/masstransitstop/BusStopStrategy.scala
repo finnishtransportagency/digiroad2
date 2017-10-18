@@ -7,23 +7,13 @@ import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{AssetPropertyConfigu
 
 class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopDao, val roadLinkService: RoadLinkService) extends AbstractBusStopStrategy
 {
-  //TODO remove duplicated code
-  override def enrichBusStop(asset: PersistedMassTransitStop): (PersistedMassTransitStop, Boolean) = {
-    def extractStopName(properties: Seq[Property]): String = {
-      properties
-        .filter { property => property.publicId.equals("nimi_suomeksi") }
-        .filterNot { property => property.values.isEmpty }
-        .map(_.values.head)
-        .map(_.propertyValue)
-        .headOption
-        .getOrElse("")
-    }
 
+  override def enrichBusStop(asset: PersistedMassTransitStop): (PersistedMassTransitStop, Boolean) = {
     asset.terminalId match {
       case Some(terminalId) =>
         val terminalAssetOption = massTransitStopDao.fetchPointAssets(massTransitStopDao.withId(terminalId)).headOption
         val displayValue = terminalAssetOption.map{ terminalAsset =>
-          val name = extractStopName(terminalAsset.propertyData)
+          val name = MassTransitStopOperations.extractStopName(terminalAsset.propertyData)
           s"${terminalAsset.nationalId} $name"
         }
         val newProperty = Property(0, "liitetty_terminaaliin", PropertyTypes.ReadOnlyText, values = Seq(PropertyValue(terminalId.toString, displayValue)))
@@ -33,8 +23,7 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
     }
   }
 
-//  override def create(asset: NewMassTransitStop, username: String, point: Point, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass], linkSource: LinkGeomSource, roadLink: RoadLink): PersistedMassTransitStop = {
-    override def create(asset: NewMassTransitStop, username: String, point: Point, roadLink: RoadLink): PersistedMassTransitStop = {
+  override def create(asset: NewMassTransitStop, username: String, point: Point, roadLink: RoadLink): PersistedMassTransitStop = {
 
     val properties = MassTransitStopOperations.setPropertiesDefaultValues(asset.properties, roadLink)
 

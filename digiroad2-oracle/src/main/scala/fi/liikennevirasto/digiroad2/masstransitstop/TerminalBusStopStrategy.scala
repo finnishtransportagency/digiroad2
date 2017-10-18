@@ -29,11 +29,11 @@ class TerminalBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopD
   }
 
   override def enrichBusStop(asset: PersistedMassTransitStop): (PersistedMassTransitStop, Boolean) = {
-    val childFilters = fetchByRadius(Point(asset.lon, asset.lat), radiusMeters, asset.id)
+    val childFilters =  massTransitStopDao.fetchByRadius(Point(asset.lon, asset.lat), radiusMeters, Some(asset.id))
       .filter(a =>  a.terminalId.isEmpty || a.terminalId.contains(asset.id))
-      .filter(a => !extractStopType(a).contains(BusStopType.Terminal))
+      .filter(a => !MassTransitStopOperations.extractStopType(a).contains(BusStopType.Terminal))
     val newProperty = Property(0, terminalChildrenPublicId, PropertyTypes.MultipleChoice, required = true, values = childFilters.map{ a =>
-      val stopName = extractStopName(a.propertyData)
+      val stopName = MassTransitStopOperations.extractStopName(a.propertyData)
       PropertyValue(a.id.toString, Some(s"""${a.nationalId} $stopName"""), checked = a.terminalId.contains(asset.id))
     })
     (asset.copy(propertyData = asset.propertyData.filterNot(p => p.publicId == terminalChildrenPublicId) ++ Seq(newProperty)), false)
@@ -46,7 +46,6 @@ class TerminalBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopD
     }
   }
 
-//override def create(asset: NewMassTransitStop, username: String, point: Point, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass], linkSource: LinkGeomSource, roadLink: RoadLink): PersistedMassTransitStop = {
   override def create(asset: NewMassTransitStop, username: String, point: Point, roadLink: RoadLink): PersistedMassTransitStop = {
     val assetId = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
@@ -63,14 +62,12 @@ class TerminalBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopD
 
     massTransitStopDao.insertChildren(assetId, children)
 
-    val properties = MassTransitStopOperations.setPropertiesDefaultValues(asset.properties, roadLink)
-
-    val defaultValues = massTransitStopDao.propertyDefaultValues(typeId).filterNot(defaultValue => properties.exists(_.publicId == defaultValue.publicId))
-    if (MassTransitStopOperations.mixedStoptypes(properties.toSet))
+    val defaultValues = massTransitStopDao.propertyDefaultValues(typeId).filterNot(defaultValue => asset.properties.exists(_.publicId == defaultValue.publicId))
+    if (MassTransitStopOperations.mixedStoptypes(asset.properties.toSet))
       throw new IllegalArgumentException
 
-    massTransitStopDao.updateAssetProperties(assetId, properties.filterNot(p =>  ignoredProperties.contains(p.publicId)) ++ defaultValues.toSet)
-    updateAdministrativeClassValue(assetId, roadLink.administrativeClass) //.getOrElse(throw new IllegalArgumentException("AdministrativeClass argument is mandatory")))
+    massTransitStopDao.updateAssetProperties(assetId, asset.properties.filterNot(p =>  ignoredProperties.contains(p.publicId)) ++ defaultValues.toSet)
+    updateAdministrativeClassValue(assetId, roadLink.administrativeClass)
     fetchAsset(assetId)
   }
 
@@ -82,12 +79,10 @@ class TerminalBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopD
     municipalityValidation(asset.municipalityCode)
 
     // Enrich properties with old administrator, if administrator value is empty in CSV import
-    //TODO: Change propertyValue
     val verifiedProperties = MassTransitStopOperations.getVerifiedProperties(properties, asset.propertyData)
 
     val id = asset.id
     massTransitStopDao.updateAssetLastModified(id, username)
-    //TODO check this better
     massTransitStopDao.updateAssetProperties(id, verifiedProperties.filterNot(p =>  ignoredProperties.contains(p.publicId)).toSeq)
     updateAdministrativeClassValue(id, roadLink.administrativeClass)
 
@@ -104,34 +99,5 @@ class TerminalBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopD
 
   override def delete(asset: PersistedMassTransitStop): Unit = {
     massTransitStopDao.deleteTerminalMassTransitStopData(asset.id)
-  }
-
-  //TODO move this
-  private def extractStopName(properties: Seq[Property]): String = {
-    properties
-      .filter { property => property.publicId.equals("nimi_suomeksi") }
-      .filterNot { property => property.values.isEmpty }
-      .map(_.values.head)
-      .map(_.propertyValue)
-      .headOption
-      .getOrElse("")
-  }
-
-  private def fetchByRadius(position : Point, meters: Int, terminalId: Long): Seq[PersistedMassTransitStop] = {
-    val topLeft = Point(position.x - meters, position.y - meters)
-    val bottomRight = Point(position.x + meters, position.y + meters)
-    val boundingBoxFilter = OracleDatabase.boundingBoxFilter(BoundingRectangle(topLeft, bottomRight), "a.geometry")
-    val filter = s"where a.asset_type_id = $typeId and (a.valid_to is null or a.valid_to > sysdate) and (($boundingBoxFilter ) or tbs.terminal_asset_id = $terminalId)"
-    massTransitStopDao.fetchPointAssets(massTransitStopDao.withFilter(filter))
-      .filter(r => GeometryUtils.geometryLength(Seq(position, Point(r.lon, r.lat))) <= meters || r.terminalId.contains(terminalId))
-  }
-
-  private def extractStopType(asset: PersistedMassTransitStop): Option[BusStopType] ={
-    asset.propertyData.find(p=> p.publicId == MassTransitStopOperations.MassTransitStopTypePublicId) match {
-      case Some(property) =>
-        property.values.map(p => BusStopType.apply(p.propertyValue.toInt)).headOption
-      case _ =>
-        None
-    }
   }
 }

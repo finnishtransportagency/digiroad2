@@ -207,6 +207,11 @@
 
     var requiredPropertiesMissing = function() {
       var isRequiredProperty = function(publicId) {
+        //ignore if it is a terminal
+        if(currentAsset.stopTypes && currentAsset.stopTypes[0] == 6)
+          return false;
+        if(currentAsset.payload && isTerminalBusStop(currentAsset.payload.properties))
+          return false;
         return getPropertyMetadata(publicId).required;
       };
       var isChoicePropertyWithUnknownValue = function(property) {

@@ -55,17 +55,12 @@ trait AbstractBusStopStrategy {
   def undo(existingAsset: PersistedMassTransitStop, newProperties: Set[SimpleProperty], username: String): Unit = {}
   def enrichBusStop(persistedStop: PersistedMassTransitStop): (PersistedMassTransitStop, Boolean)
   def isFloating(persistedAsset: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike]): (Boolean, Option[FloatingReason]) = { (false, None) }
-  //  def create(newAsset: NewMassTransitStop, username: String, point: Point, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass], linkSource: LinkGeomSource, roadLink: RoadLink): PersistedMassTransitStop
   def create(newAsset: NewMassTransitStop, username: String, point: Point, roadLink: RoadLink): PersistedMassTransitStop
 
   def update(persistedStop: PersistedMassTransitStop, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: Int => Unit, roadLink: RoadLink): PersistedMassTransitStop
   def delete(asset: PersistedMassTransitStop): Unit
 
-  //TODO exists in masstransitstopoperations
-  //protected val toIso8601 = DateTimeFormat.forPattern("yyyy-MM-dd")
-
-  //TODO Change this to protected
-  def updateAdministrativeClassValue(assetId: Long, administrativeClass: AdministrativeClass): Unit ={
+  protected def updateAdministrativeClassValue(assetId: Long, administrativeClass: AdministrativeClass): Unit ={
     massTransitStopDao.updateNumberPropertyValue(assetId, "linkin_hallinnollinen_luokka", administrativeClass.value)
   }
 
@@ -73,11 +68,6 @@ trait AbstractBusStopStrategy {
     massTransitStopDao.updateAssetProperties(id, properties)
     updateAdministrativeClassValue(id, administrativeClass)
   }
-
-  //TODO remove this method and call the direct one
-//  protected def setPropertiesDefaultValues(properties: Seq[SimpleProperty], roadLink: RoadLinkLike): Seq[SimpleProperty] = {
-//    MassTransitStopOperations.setPropertiesDefaultValues(properties, roadLink)
-//  }
 
   protected def updatePosition(id: Long, roadLink: RoadLink)(position: Position) = {
     val point = Point(position.lon, position.lat)
@@ -105,22 +95,18 @@ trait MassTransitStopService extends PointAssetOperations {
   lazy val logger = LoggerFactory.getLogger(getClass)
   val massTransitStopDao: MassTransitStopDao
   val roadLinkService: RoadLinkService
-  //TODO remove those two from the trait
-  val tierekisteriEnabled: Boolean
+
+  val geometryTransform = new GeometryTransform
   val tierekisteriClient: TierekisteriMassTransitStopClient
 
   override def typeId: Int = 10
   override val idField = "external_id"
-
-  //TODO remove this from the trait
-  val geometryTransform = new GeometryTransform
 
   def withDynSession[T](f: => T): T
   def withDynTransaction[T](f: => T): T
 
   def eventbus: DigiroadEventBus
 
-  //TODO check if this is really needed here
   lazy val massTransitStopEnumeratedPropertyValues = {
     withDynSession{
       val properties = Queries.getEnumeratedPropertyValues(typeId)
@@ -269,8 +255,6 @@ trait MassTransitStopService extends PointAssetOperations {
     withDynTransaction {
       val asset = fetchPointAssets(massTransitStopDao.withId(assetId)).headOption.getOrElse(throw new NoSuchElementException)
 
-      //TODO if we don't need the roadlink in the undo we can
-      //Or probably i will need to get the previous and the new roadlink if they are diferent to pass it to the was and undo
       val linkId = optionalPosition match {
         case Some(position) => position.linkId
         case _ => asset.linkId
@@ -310,7 +294,7 @@ trait MassTransitStopService extends PointAssetOperations {
       persistedStopOption match {
         case Some(persistedStop) =>
           municipalityValidation(persistedStop.municipalityCode)
-          //TODO can be improved
+
           val strategy = getStrategy(persistedStop)
           val (enrichedStop, error) = strategy.enrichBusStop(persistedStop)
           (Some(withFloatingUpdate(persistedStopToMassTransitStopWithProperties(fetchRoadLink))(enrichedStop)), error)
@@ -379,36 +363,16 @@ trait MassTransitStopService extends PointAssetOperations {
       }
   }
 
-  //TODO duplicated code inside
   def getMetadata(point: Option[Point]): Seq[Property] = {
-    def fetchByRadius(position : Point, meters: Int): Seq[PersistedMassTransitStop] = {
-      val topLeft = Point(position.x - meters, position.y - meters)
-      val bottomRight = Point(position.x + meters, position.y + meters)
-      val boundingBoxFilter = OracleDatabase.boundingBoxFilter(BoundingRectangle(topLeft, bottomRight), "a.geometry")
-      val filter = s"where a.asset_type_id = $typeId and (($boundingBoxFilter ) and (a.valid_to is null or a.valid_to > sysdate))"
-      massTransitStopDao.fetchPointAssets(massTransitStopDao.withFilter(filter)).
-        filter(r => GeometryUtils.geometryLength(Seq(position, Point(r.lon, r.lat))) <= meters)
-    }
-
-    def extractStopName(properties: Seq[Property]): String = {
-      properties
-        .filter { property => property.publicId.equals("nimi_suomeksi") }
-        .filterNot { property => property.values.isEmpty }
-        .map(_.values.head)
-        .map(_.propertyValue)
-        .headOption
-        .getOrElse("")
-    }
-
     AssetPropertyConfiguration.commonAssetProperties.values.map(_.propertyDescriptor).toSeq ++ withDynSession {
       val properties = Queries.availableProperties(typeId)
       point match {
         case Some(point) => {
-          val childFilters = fetchByRadius(point, 200)
+          val childFilters = massTransitStopDao.fetchByRadius(point, 200)
             .filter(a =>  a.terminalId.isEmpty)
-            .filter(a => !extractStopType(a).contains(BusStopType.Terminal))
+            .filter(a => !MassTransitStopOperations.extractStopType(a).contains(BusStopType.Terminal))
           val newProperty = Property(0, "liitetyt_pysakit", PropertyTypes.MultipleChoice, required = true, values = childFilters.map{ a =>
-            val stopName = extractStopName(a.propertyData)
+            val stopName = MassTransitStopOperations.extractStopName(a.propertyData)
             PropertyValue(a.id.toString, Some(s"""${a.nationalId} $stopName"""), checked = false)
           })
           Seq(newProperty) ++ properties
@@ -418,12 +382,16 @@ trait MassTransitStopService extends PointAssetOperations {
     }
   }
 
-  def mandatoryProperties(): Map[String, String] = {
-    val requiredProperties = withDynSession {
-      sql"""select public_id, property_type from property where asset_type_id = $typeId and required = 1""".as[(String, String)].iterator.toMap
+  def mandatoryProperties(properties: Seq[SimpleProperty]): Map[String, String] = {
+    if(MassTransitStopOperations.extractStopTypes(properties).contains(BusStopType.Terminal)){
+      Map[String, String]()
+    } else {
+      val requiredProperties = withDynSession {
+        sql"""select public_id, property_type from property where asset_type_id = $typeId and required = 1""".as[(String, String)].iterator.toMap
+      }
+      val validityDirection = AssetPropertyConfiguration.commonAssetProperties(AssetPropertyConfiguration.ValidityDirectionId)
+      requiredProperties + (validityDirection.publicId -> validityDirection.propertyType)
     }
-    val validityDirection = AssetPropertyConfiguration.commonAssetProperties(AssetPropertyConfiguration.ValidityDirectionId)
-    requiredProperties + (validityDirection.publicId -> validityDirection.propertyType)
   }
 
   def deleteMassTransitStopData(assetId: Long) = {
@@ -506,35 +474,11 @@ trait MassTransitStopService extends PointAssetOperations {
       propertyData = persistedStop.propertyData), floatingReason)
   }
 
-  //TODO this is duplicated
-  private def extractStopType(asset: PersistedMassTransitStop): Option[BusStopType] ={
-    asset.propertyData.find(p=> p.publicId == MassTransitStopOperations.MassTransitStopTypePublicId) match {
-      case Some(property) =>
-        property.values.map(p => BusStopType.apply(p.propertyValue.toInt)).headOption
-      case _ =>
-        None
-    }
-  }
-
-  private def extractStopTypes(rows: Seq[MassTransitStopRow]): Seq[Int] = {
-    rows
-      .filter { row => row.property.publicId.equals(MassTransitStopOperations.MassTransitStopTypePublicId) }
-      .filterNot { row => row.property.propertyValue.isEmpty }
-      .map { row => row.property.propertyValue.toInt }
-  }
-
   private def eventBusMassTransitStop(stop: PersistedMassTransitStop, municipalityName: String) = {
     EventBusMassTransitStop(municipalityNumber = stop.municipalityCode, municipalityName = municipalityName,
       nationalId = stop.nationalId, lon = stop.lon, lat = stop.lat, bearing = stop.bearing,
       validityDirection = stop.validityDirection, created = stop.created, modified = stop.modified,
       propertyData = stop.propertyData)
-  }
-
-  //TODO check here this is used if possible move it to the DAO
-  private implicit val getLocalDate = new GetResult[Option[LocalDate]] {
-    def apply(r: PositionedResult) = {
-      r.nextDateOption().map(new LocalDate(_))
-    }
   }
 
   private def deleteFloatingReasonValue(assetId: Long): Unit = {

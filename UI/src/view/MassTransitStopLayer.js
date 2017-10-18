@@ -506,6 +506,14 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     return selectedMassTransitStopModel.isTerminalChild(properties);
   };
 
+  var isTerminalBusStop = function() {
+      return _.some(selectedMassTransitStopModel.getProperties(), function(property) {
+          return property.publicId == 'pysakin_tyyppi' && _.some(property.values, function(value){
+                  return value.propertyValue == "6";
+              });
+      });
+  };
+
   var restrictMovement = function (event, originalCoordinates, angle, nearestLine, coordinates) {
     var movementLimit = 50; //50 meters
     var popupMessageToShow;
@@ -530,7 +538,8 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
           roadLayer.clearSelection();
           movementPermissionConfirmed = true;
           requestingMovePermission = false;
-          autoUpdateAddressNames(selectedAsset.data.linkId, nearestLine.linkId);
+          if(isTerminalBusStop())
+            autoUpdateAddressNames(selectedAsset.data.linkId, nearestLine.linkId);
         },
         closeCallback: function(){
           //Moves the stop to the original position
@@ -546,7 +555,8 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     else
     {
       doMovement(event, angle, nearestLine, coordinates);
-      autoUpdateAddressNames(selectedAsset.data.linkId, nearestLine.linkId);
+      if(isTerminalBusStop())
+        autoUpdateAddressNames(selectedAsset.data.linkId, nearestLine.linkId);
       roadLayer.clearSelection();
     }
   };

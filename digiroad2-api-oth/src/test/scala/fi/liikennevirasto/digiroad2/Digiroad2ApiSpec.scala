@@ -120,8 +120,6 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
 
   when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH((1611071l))).thenReturn(Some(RoadLink(1611071l,  List(Point(0.0, 0.0), Point(117.318, 0.0)), 117.318, Municipality, 1, TrafficDirection.UnknownDirection, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(91)))))
 
-
-
   val testObstacleService = new ObstacleService(mockRoadLinkService)
   val testRailwayCrossingService = new RailwayCrossingService(mockRoadLinkService)
   val testDirectionalTrafficSignService = new DirectionalTrafficSignService(mockRoadLinkService)
@@ -133,7 +131,6 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
     override val tierekisteriClient: TierekisteriMassTransitStopClient = mockTierekisteriClient
     override val roadLinkService: RoadLinkService = mockRoadLinkService
-    override val tierekisteriEnabled = false
   }
   val testLinearAssetService = new LinearAssetService(mockRoadLinkService, new DummyEventBus)
   val testServicePointService = new ServicePointService

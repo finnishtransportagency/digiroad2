@@ -11,6 +11,55 @@ import fi.liikennevirasto.digiroad2.util.GeometryTransform
 
 import scala.util.Try
 
+object TierekisteriBusStopStrategyOperations{
+
+  /**
+    * Verify if the stop is relevant to Tierekisteri: Must be non-virtual and must be administered by ELY or HSL.
+    * Convenience method
+    *
+    */
+  def isStoredInTierekisteri(properties: Seq[AbstractProperty], administrativeClass: Option[AdministrativeClass]): Boolean = {
+    val administrationProperty = properties.find(_.publicId == MassTransitStopOperations.AdministratorInfoPublicId)
+    val stopType = properties.find(pro => pro.publicId == MassTransitStopOperations.MassTransitStopTypePublicId)
+    val elyAdministrated = administrationProperty.exists(_.values.headOption.exists(_.propertyValue == MassTransitStopOperations.CentralELYPropertyValue))
+    val isVirtualStop = stopType.exists(_.values.exists(_.propertyValue == MassTransitStopOperations.VirtualBusStopPropertyValue))
+    val isHSLAdministrated =  administrationProperty.exists(_.values.headOption.exists(_.propertyValue == MassTransitStopOperations.HSLPropertyValue))
+    val isAdminClassState = administrativeClass.contains(State)
+    !isVirtualStop && (elyAdministrated || (isHSLAdministrated && isAdminClassState))
+  }
+
+  /**
+    * Don't use this method is just here because datafixture legacy
+    * Verify if the stop is relevant to Tierekisteri: Must be non-virtual and must be administered by ELY.
+    * Convenience method
+    *
+    * @param persistedStopOption The persisted stops
+    * @return returns true if the stop is not virtual and is a ELY bus stop
+    */
+  def isStoredInTierekisteri(persistedStopOption: Option[PersistedMassTransitStop]): Boolean ={
+    def getAdministrationClass(properties: Seq[AbstractProperty]): Option[AdministrativeClass] = {
+      val propertyValueOption = properties.find(_.publicId == "linkin_hallinnollinen_luokka")
+        .map(_.values).getOrElse(Seq()).headOption
+
+      propertyValueOption match {
+        case None => None
+        case Some(propertyValue) if propertyValue.propertyValue.isEmpty => None
+        case Some(propertyValue) if propertyValue.propertyValue.nonEmpty =>
+          Some(AdministrativeClass.apply(propertyValue.propertyValue.toInt))
+      }
+    }
+
+    persistedStopOption match {
+      case Some(persistedStop) =>
+        val administrationProperty = persistedStop.propertyData.find(_.publicId == "tietojen_yllapitaja")
+        val stopType = persistedStop.propertyData.find(pro => pro.publicId == "pysakin_tyyppi")
+        isStoredInTierekisteri(persistedStop.propertyData, getAdministrationClass(persistedStop.propertyData))
+      case _ =>
+        false
+    }
+  }
+}
+
 class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitStopDao, roadLinkService: RoadLinkService, tierekisteriClient: TierekisteriMassTransitStopClient, geometryTransform: GeometryTransform) extends BusStopStrategy(typeId, massTransitStopDao, roadLinkService)
 {
   val toLiviId = "OTHJ%d"
@@ -22,7 +71,6 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
   }
 
   override def is(newProperties: Set[SimpleProperty], roadLink: Option[RoadLink], existingAssetOption: Option[PersistedMassTransitStop]): Boolean = {
-    //TODO Check if this is really needed
     val properties = existingAssetOption match {
       case Some(existingAsset) =>
         (existingAsset.propertyData.
@@ -32,12 +80,12 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
       case _ => newProperties.toSeq
     }
 
-    isStoredInTierekisteri(properties, roadLink.map(_.administrativeClass))
+    TierekisteriBusStopStrategyOperations.isStoredInTierekisteri(properties, roadLink.map(_.administrativeClass))
   }
 
   override def was(existingAsset: PersistedMassTransitStop): Boolean = {
     val administrationClass = MassTransitStopOperations.getAdministrationClass(existingAsset.propertyData)
-    isStoredInTierekisteri(existingAsset.propertyData, administrationClass)
+    TierekisteriBusStopStrategyOperations.isStoredInTierekisteri(existingAsset.propertyData, administrationClass)
   }
 
   override def undo(existingAsset: PersistedMassTransitStop, newProperties: Set[SimpleProperty], username: String): Unit = {
@@ -65,10 +113,9 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
     }
   }
 
-//  override def create(asset: NewMassTransitStop, username: String, point: Point, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass], linkSource: LinkGeomSource, roadLink: RoadLink): PersistedMassTransitStop = {
   override def create(asset: NewMassTransitStop, username: String, point: Point, roadLink: RoadLink): PersistedMassTransitStop = {
 
-      val assetId = Sequences.nextPrimaryKeySeqValue
+    val assetId = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     val nationalId = massTransitStopDao.getNationalBusStopId
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(point, roadLink.geometry)
@@ -85,10 +132,7 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
       throw new IllegalArgumentException
 
     massTransitStopDao.updateAssetProperties(assetId, properties ++ defaultValues.toSet)
-    updateAdministrativeClassValue(assetId, roadLink.administrativeClass) //.getOrElse(throw new IllegalArgumentException("AdministrativeClass argument is mandatory")))
-    val newAdminClassProperty = SimpleProperty(MassTransitStopOperations.MassTransitStopAdminClassPublicId, Seq(PropertyValue(roadLink.administrativeClass.value.toString))) //.getOrElse(Unknown).value.toString)))
-    //TODO This variable is not been in use check what is missing
-    val propsWithAdminClass = properties.filterNot(_.publicId == MassTransitStopOperations.MassTransitStopAdminClassPublicId) ++ Seq(newAdminClassProperty)
+    updateAdministrativeClassValue(assetId, roadLink.administrativeClass)
 
     val liviId = toLiviId.format(nationalId)
     massTransitStopDao.updateTextPropertyValue(assetId, MassTransitStopOperations.LiViIdentifierPublicId, liviId)
@@ -108,8 +152,6 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
       throw new IllegalArgumentException
 
     municipalityValidation(asset.municipalityCode)
-
-    //val (municipalityCode, geometry) = (roadLink.municipalityCode, roadLink.geometry)
 
     // Enrich properties with old administrator, if administrator value is empty in CSV import
     val verifiedProperties = MassTransitStopOperations.getVerifiedProperties(properties, asset.propertyData)
@@ -193,21 +235,6 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
         assetPoint.distance2DTo(newPoint)
       case _ => 0
     }
-  }
-
-  /**
-    * Verify if the stop is relevant to Tierekisteri: Must be non-virtual and must be administered by ELY or HSL.
-    * Convenience method
-    *
-    */
-  private def isStoredInTierekisteri(properties: Seq[AbstractProperty], administrativeClass: Option[AdministrativeClass]): Boolean = {
-    val administrationProperty = properties.find(_.publicId == MassTransitStopOperations.AdministratorInfoPublicId)
-    val stopType = properties.find(pro => pro.publicId == MassTransitStopOperations.MassTransitStopTypePublicId)
-    val elyAdministrated = administrationProperty.exists(_.values.headOption.exists(_.propertyValue == MassTransitStopOperations.CentralELYPropertyValue))
-    val isVirtualStop = stopType.exists(_.values.exists(_.propertyValue == MassTransitStopOperations.VirtualBusStopPropertyValue))
-    val isHSLAdministrated =  administrationProperty.exists(_.values.headOption.exists(_.propertyValue == MassTransitStopOperations.HSLPropertyValue))
-    val isAdminClassState = administrativeClass.contains(State)
-    !isVirtualStop && (elyAdministrated || (isHSLAdministrated && isAdminClassState))
   }
 
   //  @throws(classOf[TierekisteriClientException])

@@ -350,12 +350,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     }
   }
 
-  private def createMassTransitStop(lon: Double, lat: Double, linkId: Long, bearing: Int, properties: Seq[SimpleProperty], roadLink: RoadLink): Long = {
-   // val roadLink = roadLinkService.fetchVVHRoadlinkAndComplementary(linkId).getOrElse(throw new NoSuchElementException)
-//    massTransitStopService.create(NewMassTransitStop(lon, lat, linkId, bearing, properties), userProvider.getCurrentUser().username, roadLink.geometry, roadLink.municipalityCode, Some(roadLink.administrativeClass),  roadLink.linkSource)
-    massTransitStopService.create(NewMassTransitStop(lon, lat, linkId, bearing, properties), userProvider.getCurrentUser().username, roadLink)
-  }
-
   private def validateUserRights(roadLink: RoadLink) = {
     val authorized: Boolean = userProvider.getCurrentUser().isAuthorizedToWrite(roadLink.municipalityCode)
     if (!authorized) halt(Unauthorized("User not authorized"))
@@ -372,7 +366,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   private def validateCreationProperties(properties: Seq[SimpleProperty]) = {
-    val mandatoryProperties: Map[String, String] = massTransitStopService.mandatoryProperties()
+    val mandatoryProperties: Map[String, String] = massTransitStopService.mandatoryProperties(properties)
     val nonEmptyMandatoryProperties: Seq[SimpleProperty] = properties.filter { property =>
       mandatoryProperties.contains(property.publicId) && property.values.nonEmpty
     }
@@ -390,15 +384,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     if (propertiesWithInvalidValues.nonEmpty)
       halt(BadRequest("Invalid property values on: " + propertiesWithInvalidValues.map(_.publicId).mkString(", ")))
   }
-
-//    private def validateBusStopDirections(properties: Seq[SimpleProperty], linkId: Long) = {
-//      val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId)
-//
-//      if(!properties.exists(prop => prop.publicId == "vaikutussuunta") ||
-//        !MassTransitStopOperations.isValidBusStopDirections(properties, roadLink))
-//        halt(NotAcceptable("Invalid Mass Transit Stop direction"))
-//    }
-
 
   private def validatePropertiesMaxSize(properties: Seq[SimpleProperty]) = {
     val propertiesWithMaxSize: Map[String, Int] = massTransitStopService.getPropertiesWithMaxSize()
@@ -420,9 +405,8 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     validateBusStopMaintainerUser(properties)
     validateCreationProperties(properties)
     validatePropertiesMaxSize(properties)
-//    validateBusStopDirections(properties, linkId)
     try {
-      val id = createMassTransitStop(lon, lat, linkId, bearing, properties, roadLink)
+      val id = massTransitStopService.create(NewMassTransitStop(lon, lat, linkId, bearing, properties), userProvider.getCurrentUser().username, roadLink)
       massTransitStopService.getNormalAndComplementaryById(id)
     } catch {
       case e: RoadAddressException =>

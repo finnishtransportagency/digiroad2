@@ -80,13 +80,17 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
   }
 
   object RollbackBusStopStrategy extends BusStopStrategy(10, new MassTransitStopDao, mockRoadLinkService)
+  {
+    def updateAdministrativeClassValueTest(assetId: Long, administrativeClass: AdministrativeClass): Unit ={
+      super.updateAdministrativeClassValue(assetId, administrativeClass)
+    }
+  }
 
   class TestMassTransitStopService(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService) extends MassTransitStopService {
     override def withDynSession[T](f: => T): T = f
     override def withDynTransaction[T](f: => T): T = f
     override val tierekisteriClient: TierekisteriMassTransitStopClient = mockTierekisteriClient
     override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
-    override val tierekisteriEnabled = false
     override val geometryTransform: GeometryTransform = mockGeometryTransform
   }
 
@@ -95,7 +99,6 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     override def withDynTransaction[T](f: => T): T = f
     override val tierekisteriClient: TierekisteriMassTransitStopClient = mockTierekisteriClient
     override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
-    override val tierekisteriEnabled = true
     override val geometryTransform: GeometryTransform = mockGeometryTransform
   }
 
@@ -108,14 +111,12 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
     override def withDynTransaction[T](f: => T): T = TestTransactions.withDynTransaction()(f)
     override val tierekisteriClient: TierekisteriMassTransitStopClient = mockTierekisteriClient
     override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
-    override val tierekisteriEnabled = true
     override val geometryTransform: GeometryTransform = mockGeometryTransform
   }
 
   class MassTransitStopServiceWithTierekisteri(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService) extends MassTransitStopService {
     override val tierekisteriClient: TierekisteriMassTransitStopClient = mockTierekisteriClient
     override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
-    override val tierekisteriEnabled = true
     override val geometryTransform: GeometryTransform = mockGeometryTransform
   }
 
@@ -1099,7 +1100,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val assetId = 300006
       val boundingBox = BoundingRectangle(Point(370000,6077000), Point(374800,6677600))
       //Set administration class of the asset with State value
-      RollbackBusStopStrategy.updateAdministrativeClassValue(assetId, State)
+      RollbackBusStopStrategy.updateAdministrativeClassValueTest(assetId, State)
       val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
       stops.find(_.id == assetId).map(_.floating) should be(Some(true))
       massTransitStopDao.getAssetFloatingReason(assetId) should be(Some(FloatingReason.RoadOwnerChanged))
@@ -1114,7 +1115,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val assetId = 300012
       val boundingBox = BoundingRectangle(Point(370000,6077000), Point(374800,6677600))
       //Set administration class of the asset with State value
-      RollbackBusStopStrategy.updateAdministrativeClassValue(assetId, State)
+      RollbackBusStopStrategy.updateAdministrativeClassValueTest(assetId, State)
       val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
       stops.find(_.id == assetId).map(_.floating) should be(Some(true))
       massTransitStopDao.getAssetFloatingReason(assetId) should be(Some(FloatingReason.RoadOwnerChanged))
@@ -1133,7 +1134,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val assetId = 300006
       val boundingBox = BoundingRectangle(Point(370000,6077000), Point(374800,6677600))
       //Set administration class of the asset with State value
-      RollbackBusStopStrategy.updateAdministrativeClassValue(assetId, Municipality)
+      RollbackBusStopStrategy.updateAdministrativeClassValueTest(assetId, Municipality)
       val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
       stops.find(_.id == assetId).map(_.floating) should be(Some(true))
       massTransitStopDao.getAssetFloatingReason(assetId) should be(Some(FloatingReason.RoadOwnerChanged))
@@ -1152,7 +1153,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val assetId = 300006
       val boundingBox = BoundingRectangle(Point(370000,6077000), Point(374800,6677600))
       //Set administration class of the asset with State value
-      RollbackBusStopStrategy.updateAdministrativeClassValue(assetId, Private)
+      RollbackBusStopStrategy.updateAdministrativeClassValueTest(assetId, Private)
       val stops = RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
       stops.find(_.id == assetId).map(_.floating) should be(Some(true))
       massTransitStopDao.getAssetFloatingReason(assetId) should be(Some(FloatingReason.RoadOwnerChanged))
@@ -1166,7 +1167,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val assetId = 300012
       val boundingBox = BoundingRectangle(Point(370000,6077000), Point(374800,6677600))
       //Set administration class of the asset with State value
-      RollbackBusStopStrategy.updateAdministrativeClassValue(assetId, State)
+      RollbackBusStopStrategy.updateAdministrativeClassValueTest(assetId, State)
       //GetBoundingBox will set assets  to floating
       RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
       val workingList = RollbackMassTransitStopService.getFloatingAssetsWithReason(Some(Set(235)), Some(false))
@@ -1187,7 +1188,7 @@ class MassTransitStopServiceSpec extends FunSuite with Matchers with BeforeAndAf
       val assetId = 300012
       val boundingBox = BoundingRectangle(Point(370000,6077000), Point(374800,6677600))
       //Set administration class of the asset with State value
-      RollbackBusStopStrategy.updateAdministrativeClassValue(assetId, State)
+      RollbackBusStopStrategy.updateAdministrativeClassValueTest(assetId, State)
       //GetBoundingBox will set assets  to floating
       RollbackMassTransitStopService.getByBoundingBox(userWithKauniainenAuthorization, boundingBox)
       val workingList = RollbackMassTransitStopService.getFloatingAssetsWithReason(Some(Set(235)), Some(true))

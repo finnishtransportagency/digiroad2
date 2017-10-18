@@ -11,6 +11,7 @@ import fi.liikennevirasto.digiroad2.asset.{MassTransitStopValidityPeriod, _}
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
 import fi.liikennevirasto.digiroad2.masstransitstop.MassTransitStopOperations
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries._
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.user.User
 import org.joda.time.{DateTime, Interval, LocalDate}
@@ -63,6 +64,23 @@ class MassTransitStopDao {
     queryToPersistedMassTransitStops(queryFilter(query))
   }
 
+  def fetchByRadius(position : Point, meters: Int, terminalIdOption: Option[Long] = None): Seq[PersistedMassTransitStop] = {
+    val topLeft = Point(position.x - meters, position.y - meters)
+    val bottomRight = Point(position.x + meters, position.y + meters)
+    val boundingBoxFilter = OracleDatabase.boundingBoxFilter(BoundingRectangle(topLeft, bottomRight), "a.geometry")
+
+    terminalIdOption match {
+      case Some(terminalId) =>
+        val filter = s"where a.asset_type_id = $typeId and (a.valid_to is null or a.valid_to > sysdate) and (($boundingBoxFilter ) or tbs.terminal_asset_id = $terminalId)"
+        fetchPointAssets(withFilter(filter))
+          .filter(r => GeometryUtils.geometryLength(Seq(position, Point(r.lon, r.lat))) <= meters || r.terminalId.contains(terminalId))
+      case _ =>
+        val filter = s"where a.asset_type_id = $typeId and (($boundingBoxFilter ) and (a.valid_to is null or a.valid_to > sysdate))"
+        fetchPointAssets(withFilter(filter)).
+          filter(r => GeometryUtils.geometryLength(Seq(position, Point(r.lon, r.lat))) <= meters)
+    }
+  }
+
   private def queryToPersistedMassTransitStops(query: String): Seq[PersistedMassTransitStop] = {
     val rows = Q.queryNA[MassTransitStopRow](query).iterator.toSeq
 
@@ -83,6 +101,12 @@ class MassTransitStopDao {
         validityPeriod = validityPeriod, floating = row.persistedFloating, vvhTimeStamp = vvhTimeStamp, created = row.created, modified = row.modified,
         propertyData = properties, linkSource = LinkGeomSource(linkSource), terminalId = row.terminalId)
     }.values.toSeq
+  }
+
+  private implicit val getLocalDate = new GetResult[Option[LocalDate]] {
+    def apply(r: PositionedResult) = {
+      r.nextDateOption().map(new LocalDate(_))
+    }
   }
 
   private implicit val getMassTransitStopRow = new GetResult[MassTransitStopRow] {
@@ -127,7 +151,6 @@ class MassTransitStopDao {
     }
   }
 
-  //TODO check if this should be here
   private def extractStopTypes(rows: Seq[MassTransitStopRow]): Seq[Int] = {
     rows
       .filter { row => row.property.publicId.equals(MassTransitStopOperations.MassTransitStopTypePublicId) }

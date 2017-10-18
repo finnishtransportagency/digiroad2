@@ -151,6 +151,30 @@ object MassTransitStopOperations {
     }
   }
 
+  def extractStopType(asset: PersistedMassTransitStop): Option[BusStopType] ={
+    extractStopTypes(asset.propertyData).headOption
+  }
+
+  def extractStopTypes(properties: Seq[AbstractProperty]): Seq[BusStopType] ={
+    properties.find(p=> p.publicId == MassTransitStopOperations.MassTransitStopTypePublicId) match {
+      case Some(property) =>
+        property.values.map(p => BusStopType.apply(p.propertyValue.toInt))
+      case _ =>
+        Seq()
+    }
+  }
+
+
+  def extractStopName(properties: Seq[Property]): String = {
+    properties
+      .filter { property => property.publicId.equals("nimi_suomeksi") }
+      .filterNot { property => property.values.isEmpty }
+      .map(_.values.head)
+      .map(_.propertyValue)
+      .headOption
+      .getOrElse("")
+  }
+
   def setPropertiesDefaultValues(properties: Seq[SimpleProperty], roadLink: RoadLinkLike): Seq[SimpleProperty] = {
     val arrayProperties = Seq(MassTransitStopOperations.InventoryDateId, MassTransitStopOperations.RoadName_FI, MassTransitStopOperations.RoadName_SE )
     val defaultproperties =  arrayProperties.flatMap{
