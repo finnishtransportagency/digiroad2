@@ -4,28 +4,6 @@
     var me = this;
     var cachedMassTransitMarker = null;
     var cachedFeature = null;
-    var currentStyles = null;
-
-    var setMarkerSelectionStyle = function(asset){
-      if (!cachedFeature)
-        createNewMarker();
-
-      currentStyles = getMarkerSelectionStyles();
-    };
-
-    var setMarkerDefaultStyle = function(asset){
-      if (!cachedFeature)
-        createNewMarker();
-
-      currentStyles = getMarkerDefaultStyles();
-    };
-
-    var getMarkerStyle = function(){
-      if(currentStyles)
-        return currentStyles;
-
-      return getMarkerDefaultStyles();
-    };
 
     var getMarker = function() {
       if (!cachedFeature)
@@ -70,10 +48,7 @@
       createNewMarker: createNewMarker,
       getMarkerSelectionStyles: getMarkerSelectionStyles,
       getMarkerDefaultStyles: getMarkerDefaultStyles,
-      getMarkerFeature: getMarkerFeature,
-      setMarkerSelectionStyle: setMarkerSelectionStyle,
-      setMarkerDefaultStyle: setMarkerDefaultStyle,
-      getMarkerStyle: getMarkerStyle
+      getMarkerFeature: getMarkerFeature
     };
   };
 }(this));

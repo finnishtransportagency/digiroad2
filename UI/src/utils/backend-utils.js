@@ -334,7 +334,7 @@
 
     this.getAssetTypeProperties = function (position, callback) {
       if (position) {
-        $.get('api/massTransitStops/metadata?position=' + position, callback);
+        $.get('api/massTransitStops/metadata?position=' + position.lon + ',' + position.lat, callback);
       } else {
         $.get('api/massTransitStops/metadata', callback);
       }

@@ -89,11 +89,7 @@
       currentAsset = asset;
       currentAsset.payload = {};
       assetHasBeenModified = true;
-      if (typeof asset.stopTypes[0] !== 'undefined') {
-        assetPosition = asset.lon + ',' + asset.lat;
-      } else {
-        assetPosition = undefined;
-      }
+      var assetPosition = asset.stopTypes && asset.stopTypes.length > 0 ? { lon: asset.lon, lat: asset.lat } : undefined;
       backend.getAssetTypeProperties(assetPosition, function(properties) {
         _.find(properties, function (property) {
           return property.publicId === 'vaikutussuunta';
@@ -167,8 +163,7 @@
       currentAsset.propertyMetadata = asset.propertyData;
       currentAsset.payload = _.merge({}, _.pick(asset, usedKeysFromFetchedAsset), transformPropertyData(asset.propertyData));
       currentAsset.validityPeriod = asset.validityPeriod;
-      var terminalActive = asset.stopTypes[0] == 6 ? true : false;
-      eventbus.trigger('terminalBusStop:selected', terminalActive);
+      eventbus.trigger('terminalBusStop:selected', asset.stopTypes[0] == 6);
       eventbus.trigger('asset:modified');
     };
 
