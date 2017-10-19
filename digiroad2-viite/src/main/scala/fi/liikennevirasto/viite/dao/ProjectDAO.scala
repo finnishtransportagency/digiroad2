@@ -102,14 +102,14 @@ object ProjectDAO {
       val endAddrM = r.nextLong()
       val startMValue = r.nextDouble()
       val endMValue = r.nextDouble()
-      val sideCode = SideCode.apply(r.nextLong().toInt)
+      val sideCode = SideCode.apply(r.nextInt)
       val lrmPositionId = r.nextLong()
       val createdBy = r.nextString()
       val modifiedBy = r.nextString()
       val linkId = r.nextLong()
       val length = r.nextDouble()
       val calibrationPoints =
-        CalibrationPointsUtils.calibrations(CalibrationCode.apply(r.nextLong().toInt),linkId,startMValue,endMValue,
+        CalibrationPointsUtils.calibrations(CalibrationCode.apply(r.nextInt),linkId,startMValue,endMValue,
           startAddrM,endAddrM, sideCode )
       val status = LinkStatus.apply(r.nextInt())
       val roadType = RoadType.apply(r.nextInt())
@@ -147,7 +147,7 @@ object ProjectDAO {
     val addressPS = dynamicSession.prepareStatement("insert into PROJECT_LINK (id, project_id, lrm_position_id, " +
       "road_number, road_part_number, " +
       "track_code, discontinuity_type, START_ADDR_M, END_ADDR_M, created_by, " +
-      "calibration_points, status, road_type, road_address_id, connected_link_id) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)")
+      "calibration_points, status, road_type, road_address_id, connected_link_id, ely) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?)")
     val ids = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= ${roadAddresses.size}""".as[Long].list
     roadAddresses.zip(ids).foreach { case ((address), (lrmId)) =>
       RoadAddressDAO.createLRMPosition(lrmPositionPS, lrmId, address.linkId, address.sideCode.value, address.startMValue, address.endMValue, 0, address.linkGeomSource.value)
@@ -174,6 +174,7 @@ object ProjectDAO {
       addressPS.setLong(15, address.connectedLinkId.getOrElse(-1))
       else
         addressPS.setString(15, null)
+      addressPS.setLong(16,address.ely)
       addressPS.addBatch()
 
     }

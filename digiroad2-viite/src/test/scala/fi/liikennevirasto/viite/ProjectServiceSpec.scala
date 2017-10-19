@@ -890,9 +890,9 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       val linkId = 12345L
       //Creation of Test road
       val id = RoadAddressDAO.getNextRoadAddressId
-      val ra = Seq(RoadAddress(id, roadNumber, roadPartNumber, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L,
+      val ra = Seq(RoadAddress(id, roadNumber, roadPartNumber, RoadType.PublicRoad, Track.Combined, Discontinuous, 0L, 10L,
         Some(DateTime.parse("1901-01-01")), None, Option("tester"), 0, linkId, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
-        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 5))
+        Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface, 8))
       RoadAddressDAO.create(ra)
       val roadsBeforeChanges = RoadAddressDAO.fetchByLinkId(Set(linkId)).head
 
@@ -918,12 +918,12 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       sqlu"""insert into road_address_changes
              (project_id,change_type,new_road_number,new_road_part_number,new_track_code,new_start_addr_m,new_end_addr_m,new_discontinuity,new_road_type,new_ely,
               old_road_number,old_road_part_number,old_track_code,old_start_addr_m,old_end_addr_m)
-             Values ($projectId,5,$roadNumber,$roadPartNumber,1,0,10,1,1,8,$roadNumber,$roadPartNumber,1,0,10)""".execute
+             Values ($projectId,1,$roadNumber,$roadPartNumber,0,0,10,2,1,8,$roadNumber,$roadPartNumber,0,0,10)""".execute
 
       projectService.updateRoadAddressWithProjectLinks(ProjectState.Saved2TR, projectId)
 
       val roadsAfterChanges=RoadAddressDAO.fetchByLinkId(Set(linkId))
-      roadsAfterChanges.size should be (3)
+      roadsAfterChanges.size should be (2)
       val roadsAfterPublishing = roadsAfterChanges.filter(x=>x.startDate.nonEmpty && x.endDate.isEmpty).head
       val endedAddress = roadsAfterChanges.filter(x=>x.endDate.nonEmpty)
 
