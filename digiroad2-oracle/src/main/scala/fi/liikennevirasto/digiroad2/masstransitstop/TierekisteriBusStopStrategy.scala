@@ -301,8 +301,6 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
   }
 
   private def mapTierekisteriBusStop(persistedStop: PersistedMassTransitStop, liviId: String, expire: Option[Date] = None, roadLinkOption: Option[RoadLink] = None): TierekisteriMassTransitStop ={
-    val geometryTransform = new GeometryTransform
-
     val road = roadLinkOption match {
       case Some(roadLink) =>
         roadLink.roadNumber match {
