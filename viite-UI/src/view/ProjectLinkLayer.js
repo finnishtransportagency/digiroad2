@@ -728,6 +728,8 @@
       var separated = _.partition(projectCollection.getAll(), function (projectRoad) {
         return projectRoad.roadLinkSource === 3;
       });
+      calibrationPointLayer.getSource().clear();
+
       var toBeTerminated = _.partition(editedLinks, function (link) {
         return link.status === LinkStatus.Terminated.value;
       });
@@ -772,6 +774,12 @@
         selectSingleClick.getFeatures().push(marker);
       });
 
+      var actualCalibrationPoints = me.drawCalibrationMarkers(calibrationPointLayer.source, suravageProjectRoads);
+      _.each(actualCalibrationPoints, function (actualPoint) {
+        var calMarker = new CalibrationPoint(actualPoint);
+        calibrationPointLayer.getSource().addFeature(calMarker.getMarker(true));
+      });
+
       suravageRoadProjectLayer.getSource().addFeatures(suravageFeatures);
 
       var projectLinks = separated[1];
@@ -809,7 +817,6 @@
         selectSingleClick.getFeatures().push(marker);
       });
 
-      calibrationPointLayer.getSource().clear();
       var actualPoints = me.drawCalibrationMarkers(calibrationPointLayer.source, projectLinks);
       _.each(actualPoints, function (actualPoint) {
         var calMarker = new CalibrationPoint(actualPoint);
@@ -832,6 +839,7 @@
           }
         }
       });
+      
       if (features.length !== 0)
         addFeaturesToSelection(features);
       features = features.concat(partitioned[1]);
