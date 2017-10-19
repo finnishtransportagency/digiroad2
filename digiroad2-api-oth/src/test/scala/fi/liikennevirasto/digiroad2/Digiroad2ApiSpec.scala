@@ -319,8 +319,6 @@ class Digiroad2ApiSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       status should equal(200)
       val parsedBody = parse(body).extract[Seq[MassLinearAssetFromApi]]
       parsedBody.size should be(3)
-//      parsedBody.count(_.id.isEmpty) should be(1)
-//      parsedBody.count(_.id.isDefined) should be(2)
     }
   }
 

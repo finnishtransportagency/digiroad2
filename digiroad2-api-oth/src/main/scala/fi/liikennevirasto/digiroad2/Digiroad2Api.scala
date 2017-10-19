@@ -31,8 +31,6 @@ case class NewProhibition(linkId: Long, startMeasure: Double, endMeasure: Double
 
 case class NewMaintenanceRoad(linkId: Long, startMeasure: Double, endMeasure: Double, value: Seq[Properties], sideCode: Int)
 
-//case class NewMassLimitationsAsset(geometry: Seq[Point], value: Seq[AssetTypes])
-
 class Digiroad2Api(val roadLinkService: RoadLinkService,
                    val speedLimitService: SpeedLimitService,
                    val obstacleService: ObstacleService = Digiroad2Context.obstacleService,

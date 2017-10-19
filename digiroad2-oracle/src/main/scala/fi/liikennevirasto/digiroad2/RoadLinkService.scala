@@ -252,8 +252,6 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       enrichRoadLinksFromVVH(links ++ complementaryLinks)
     }
   }
-//
-//   getRoadLinksWithComplementaryAndChangesFromVVH(bounds, municipalities)._1
 
   /**
     * This method is utilized to find adjacent links of a road link.
