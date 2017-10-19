@@ -1810,18 +1810,20 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     val heightLimitAssetId = 70
 
     OracleDatabase.withDynTransaction {
-      sqlu"""insert into lrm_position (id, link_id) VALUES (1, 100)""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date) values (1, ${heightLimitAssetId}, TO_TIMESTAMP('2016-11-01 16:00', 'YYYY-MM-DD HH24:MI'))""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values (1, 1)""".execute
-      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values (1, 1, (select id from property where public_id = 'mittarajoitus'), 1000)""".execute
-      sqlu"""insert into lrm_position (id, link_id) VALUES (2, 200)""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date) values (2,  ${heightLimitAssetId}, TO_TIMESTAMP('2016-11-01 16:00', 'YYYY-MM-DD HH24:MI'))""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values (2, 2)""".execute
-      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values (2, 2, (select id from property where public_id = 'mittarajoitus'), 1000)""".execute
-      sqlu"""insert into lrm_position (id, link_id) VALUES (3, 300)""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date) values (3,  ${heightLimitAssetId}, TO_TIMESTAMP('2016-11-01 16:00', 'YYYY-MM-DD HH24:MI'))""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values (3, 3)""".execute
-      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values (3, 3, (select id from property where public_id = 'mittarajoitus'), 1000)""".execute
+      val (lrm1, lrm2, lrm3) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue)
+      val (asset1, asset2, asset3) = (Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
+      sqlu"""insert into lrm_position (id, link_id) VALUES ($lrm1, 100)""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date) values ($asset1, ${heightLimitAssetId}, TO_TIMESTAMP('2016-11-01 16:00', 'YYYY-MM-DD HH24:MI'))""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values ($asset1, $lrm1)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values ($asset1, $asset1, (select id from property where public_id = 'mittarajoitus'), 1000)""".execute
+      sqlu"""insert into lrm_position (id, link_id) VALUES ($lrm2, 200)""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date) values ($asset2,  ${heightLimitAssetId}, TO_TIMESTAMP('2016-11-01 16:00', 'YYYY-MM-DD HH24:MI'))""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values ($asset2, $lrm2)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values ($asset2, $asset2, (select id from property where public_id = 'mittarajoitus'), 1000)""".execute
+      sqlu"""insert into lrm_position (id, link_id) VALUES ($lrm3, 300)""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date) values ($asset3,  ${heightLimitAssetId}, TO_TIMESTAMP('2016-11-01 16:00', 'YYYY-MM-DD HH24:MI'))""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values ($asset3, $lrm3)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values ($asset3, $asset3, (select id from property where public_id = 'mittarajoitus'), 1000)""".execute
 
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
 
