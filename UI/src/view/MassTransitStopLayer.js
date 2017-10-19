@@ -574,6 +574,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
     roadLayer.selectRoadLink(nearestLine);
     feature.getGeometry().setCoordinates([coordinates.lon, coordinates.lat]);
+    selectedAsset.massTransitStop.getMarkerFeature().setStyle(selectedAsset.massTransitStop.getMarkerSelectionStyles());
 
     selectedMassTransitStopModel.move({
       lon: coordinates.lon,
