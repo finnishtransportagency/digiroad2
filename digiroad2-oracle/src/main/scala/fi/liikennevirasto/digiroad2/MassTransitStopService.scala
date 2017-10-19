@@ -386,7 +386,7 @@ trait MassTransitStopService extends PointAssetOperations {
   def mandatoryProperties(properties: Seq[SimpleProperty]): Map[String, String] = {
     //TODO use the strategies to get the mandatory fields
     if(MassTransitStopOperations.extractStopTypes(properties).contains(BusStopType.Terminal)){
-      Map[String, String]("liitetyt_pysakit", PropertyTypes.MultipleChoice)
+      Map[String, String]("liitetyt_pysakit" -> PropertyTypes.MultipleChoice)
     } else {
       val requiredProperties = withDynSession {
         sql"""select public_id, property_type from property where asset_type_id = $typeId and required = 1""".as[(String, String)].iterator.toMap
