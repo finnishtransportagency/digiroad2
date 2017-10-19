@@ -2,14 +2,18 @@
 
   var ReadOnlyLinearAssetLayer = function (params, map) {
 
-    var isActive = false;
+    var isActive = params.massLimitation;
+    var style = params.style;
+    var collection = params.collection;
+    var typeId = params.typeId;
+
     var uiState = { zoomLevel: 9 };
 
     var vectorSource = new ol.source.Vector();
     var vectorLayer = new ol.layer.Vector({
       source : vectorSource,
       style : function(feature) {
-        return params.style.browsingStyleProviderReadOnly.getStyle(feature, {zoomLevel: uiState.zoomLevel});
+        return style.browsingStyleProviderReadOnly.getStyle(feature, {zoomLevel: uiState.zoomLevel});
       }
     });
 
@@ -23,7 +27,8 @@
     };
 
     var showLayer = function(){
-      vectorLayer.setVisible(true);
+      if(isActive)
+        vectorLayer.setVisible(true);
     };
 
     var hideLayer = function(){
@@ -45,16 +50,16 @@
     };
 
     var drawLinearAssets = function(linearAssets) {
-      var asset = _.filter(linearAssets, function(asset) { return !_.some(asset.values, function(type) { return type.typeId == params.typeId; }); });
+      var asset = _.filter(linearAssets, function(asset) { return !_.some(asset.values, function(type) { return type.typeId == typeId; }); });
       vectorSource.addFeatures(new MassLimitationsLabel().renderFeaturesByLinearAssets(_.map(_.cloneDeep(linearAssets), offsetBySideCode), uiState.zoomLevel));
-      vectorSource.addFeatures(params.style.renderFeatures(asset));
+      vectorSource.addFeatures(style.renderFeatures(asset));
     };
 
     var refreshView = function () {
       vectorLayer.setVisible(true);
       adjustStylesByZoomLevel(map.getView().getZoom());
-      params.collection.fetchReadOnlyAssets(map.getView().calculateExtent(map.getSize())).then(function() {
-        eventbus.trigger('layer:linearAsset:' + event);
+      collection.fetchReadOnlyAssets(map.getView().calculateExtent(map.getSize())).then(function() {
+        eventbus.trigger('layer:readOnlyLayer:' + event);
       });
     };
     eventbus.on('fetchedR', redrawLinearAssets);
@@ -365,6 +370,7 @@ root.LinearAssetLayer  = function(params) {
     eventListener.listenTo(eventbus, singleElementEvents('selectByLinkId'), selectLinearAssetByLinkId);
     eventListener.listenTo(eventbus, multiElementEvent('massUpdateFailed'), cancelSelection);
     eventListener.listenTo(eventbus, 'toggleWithRoadAddress', refreshSelectedView);
+    eventListener.listenTo(eventbus, 'layer:linearAsset', refreshReadOnlyLayer);
   };
 
   var startListeningExtraEvents = function(){
@@ -405,24 +411,27 @@ root.LinearAssetLayer  = function(params) {
     decorateSelection();
   };
 
+  var refreshReadOnlyLayer = function () {
+    if(massLimitation)
+      readOnlyLayer.refreshView();
+  };
+
   this.layerStarted = function(eventListener) {
     bindEvents(eventListener);
   };
 
-  this.refreshView = function(event) {
+  this.refreshView = function() {
     vectorLayer.setVisible(true);
     adjustStylesByZoomLevel(map.getView().getZoom());
     if (isComplementaryChecked) {
       collection.fetchAssetsWithComplementary(map.getView().calculateExtent(map.getSize())).then(function() {
-        eventbus.trigger('layer:linearAsset:' + event);
+        eventbus.trigger('layer:linearAsset');
       });
     } else {
       collection.fetch(map.getView().calculateExtent(map.getSize())).then(function() {
-        eventbus.trigger('layer:linearAsset:' + event);
+        eventbus.trigger('layer:linearAsset');
       });
     }
-    if(massLimitation)
-      readOnlyLayer.refreshView();
   };
 
   this.activateSelection = function() {
@@ -520,8 +529,7 @@ root.LinearAssetLayer  = function(params) {
 
   var drawLinearAssets = function(linearAssets) {
     vectorSource.addFeatures(style.renderFeatures(linearAssets));
-    if(massLimitation)
-      readOnlyLayer.showLayer();
+    readOnlyLayer.showLayer();
     if(assetLabel) {
       vectorSource.addFeatures(assetLabel.renderFeaturesByLinearAssets(_.map(_.cloneDeep(linearAssets), offsetBySideCode), uiState.zoomLevel));
     }
@@ -552,7 +560,6 @@ root.LinearAssetLayer  = function(params) {
     startListeningExtraEvents();
     vectorLayer.setVisible(true);
     indicatorLayer.setVisible(true);
-    readOnlyLayer.showLayer();
     me.refreshView();
     roadAddressInfoPopup.start();
     me.show(map);
@@ -574,8 +581,8 @@ root.LinearAssetLayer  = function(params) {
   var hideLayer = function() {
     reset();
     vectorLayer.setVisible(false);
-    readOnlyLayer.hideLayer();
     indicatorLayer.setVisible(false);
+    readOnlyLayer.hideLayer();
     selectedLinearAsset.close();
     stopListeningExtraEvents();
     me.stop();

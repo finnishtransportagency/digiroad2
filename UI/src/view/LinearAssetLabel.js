@@ -161,15 +161,15 @@
         return value;
       };
 
-      this.getStyle = function (asset, count) {
-        return [backgroundStyle(getTypeId(asset), count), new ol.style.Style({
+      this.getStyle = function (asset, counter) {
+        return [backgroundStyle(getTypeId(asset), counter), new ol.style.Style({
           text: new ol.style.Text({
             text: textStyle(me.getValue(asset)),
             fill: new ol.style.Fill({
               color: '#000000'
             }),
             font: '14px sans-serif',
-            offsetY: getTextOffset(asset, count)
+            offsetY: getTextOffset(asset, counter)
           })
         })];
       };
@@ -185,8 +185,8 @@
       };
 
 
-      var getTextOffset = function (asset, count) {
-        var offsets = { 30: -17 - (count * 35), 40: -12 - (count * 35), 50: -20 - (count * 35), 60: -20 - (count * 35)};
+      var getTextOffset = function (asset, counter) {
+        var offsets = { 30: -17 - (counter * 35), 40: -12 - (counter * 35), 50: -20 - (counter * 35), 60: -20 - (counter * 35)};
         return offsets[getTypeId(asset)];
       };
 
@@ -209,9 +209,9 @@
 
         return [].concat.apply([], _.chain(assets).map(function (asset) {
           var values = getValues(asset);
-          var count = 0;
+          var size = values.length;
           return _.map(values, function (assetValues) {
-            var style = me.getStyle(assetValues, count++, getPoint(asset)[1]);
+            var style = me.getStyle(assetValues, --size);
             var feature = me.createFeature(getPoint(asset));
             feature.setStyle(style);
             return feature;
