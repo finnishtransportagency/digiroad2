@@ -115,6 +115,8 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
 
   override def create(asset: NewMassTransitStop, username: String, point: Point, roadLink: RoadLink): PersistedMassTransitStop = {
 
+    validateBusStopDirections(asset.properties, roadLink)
+
     val assetId = Sequences.nextPrimaryKeySeqValue
     val lrmPositionId = Sequences.nextLrmPositionPrimaryKeySeqValue
     val nationalId = massTransitStopDao.getNationalBusStopId
@@ -146,6 +148,11 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
 
   //TODO this can be improved for sure
   override def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], props: Set[SimpleProperty], username: String, municipalityValidation: (Int) => Unit, roadLink: RoadLink): PersistedMassTransitStop = {
+
+    if(props.exists(prop => prop.publicId == "vaikutussuunta")) {
+      validateBusStopDirections(props.toSeq, roadLink)
+    }
+
     val properties = MassTransitStopOperations.setPropertiesDefaultValues(props.toSeq, roadLink).toSet
 
     if (MassTransitStopOperations.mixedStoptypes(properties))

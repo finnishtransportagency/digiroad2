@@ -86,6 +86,13 @@ trait AbstractBusStopStrategy {
   protected def fetchAsset(id: Long): PersistedMassTransitStop = {
     massTransitStopDao.fetchPointAssets(massTransitStopDao.withId(id)).headOption.getOrElse(throw new NoSuchElementException)
   }
+
+  protected def validateBusStopDirections(properties: Seq[SimpleProperty], roadLink: RoadLink) = {
+    if(!properties.exists(prop => prop.publicId == "vaikutussuunta") ||
+      !MassTransitStopOperations.isValidBusStopDirections(properties, Some(roadLink)))
+
+      throw new MassTransitStopException("Invalid Mass Transit Stop direction")
+  }
 }
 
 trait MassTransitStopService extends PointAssetOperations {
@@ -201,8 +208,6 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 
   override def create(asset: NewMassTransitStop, username: String, roadLink: RoadLink): Long = {
-
-    validateBusStopDirections(asset.properties, roadLink)
     withDynTransaction {
       val point = Point(asset.lon, asset.lat)
       val strategy = getStrategy(asset.properties.toSet, roadLink)
@@ -260,10 +265,6 @@ trait MassTransitStopService extends PointAssetOperations {
         case _ => asset.linkId
       }
       val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId, false).getOrElse(throw new NoSuchElementException)
-
-      if(properties.exists(prop => prop.publicId == "vaikutussuunta")) {
-        validateBusStopDirections(properties.toSeq, roadLink)
-      }
 
       val (previousStrategy, currentStrategy) = getStrategy(properties, asset, roadLink)
 
@@ -438,13 +439,6 @@ trait MassTransitStopService extends PointAssetOperations {
           (id, administrativeClasses.getOrElse(linkId, Unknown).toString, FloatingReason.TerminalChildless)
         }
     }
-  }
-
-  private def validateBusStopDirections(properties: Seq[SimpleProperty], roadLink: RoadLink) = {
-    if(!properties.exists(prop => prop.publicId == "vaikutussuunta") ||
-      !MassTransitStopOperations.isValidBusStopDirections(properties, Some(roadLink)))
-
-      throw new MassTransitStopException("Invalid Mass Transit Stop direction")
   }
 
   private def updateFloatingReasonValue(assetId: Long, floatingReason: FloatingReason): Unit ={

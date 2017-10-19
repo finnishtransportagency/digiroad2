@@ -25,6 +25,8 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
 
   override def create(asset: NewMassTransitStop, username: String, point: Point, roadLink: RoadLink): PersistedMassTransitStop = {
 
+    validateBusStopDirections(asset.properties, roadLink)
+
     val properties = MassTransitStopOperations.setPropertiesDefaultValues(asset.properties, roadLink)
 
     if (MassTransitStopOperations.mixedStoptypes(properties.toSet))
@@ -48,6 +50,10 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
   }
 
   override def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: (Int) => Unit, roadLink: RoadLink): PersistedMassTransitStop = {
+
+    if(properties.exists(prop => prop.publicId == "vaikutussuunta")) {
+      validateBusStopDirections(properties.toSeq, roadLink)
+    }
 
     if (MassTransitStopOperations.mixedStoptypes(properties))
       throw new IllegalArgumentException
