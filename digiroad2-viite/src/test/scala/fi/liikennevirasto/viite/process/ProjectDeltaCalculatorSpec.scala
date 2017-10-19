@@ -261,14 +261,38 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
     })
   }
 
-  test("update ely, road type and discontinuity") {
+  test ("road with ely change") {
     val addresses = (0 to 9).map(i => createRoadAddress(i*12, 12L))
-    val links = addresses.map(toProjectLink(project, LinkStatus.UnChanged))
-
-    val partitioned = ProjectDeltaCalculator.partition(addresses, links.map(_.copy(ely = 5)))
+    val links = addresses.filter(_.endAddrMValue < 61).map(a => toProjectLink(project, LinkStatus.UnChanged)(a.copy(ely = 5)))
+    val partitioned = ProjectDeltaCalculator.partition(addresses, links)
     partitioned.size should be (1)
     val (fr, to) = partitioned.head
+    fr.startMAddr should be (to.startMAddr)
+    fr.endMAddr should be (to.endMAddr)
     fr.ely should be (8)
     to.ely should be (5)
+  }
+
+  test("road with discontinuity change") {
+    val addresses = (0 to 9).map(i => createRoadAddress(i*12, 12L))
+    val links = addresses.map(a => toProjectLink(project, LinkStatus.UnChanged)(
+      if (a.endAddrMValue == 60) {
+        a.copy(discontinuity = Discontinuity.MinorDiscontinuity)
+      } else {
+        a
+      }
+    ))
+    val partitioned = ProjectDeltaCalculator.partition(addresses, links)
+    partitioned.size should be (2)
+    partitioned.foreach(x => {
+      val (fr, to) = x
+      if (fr.startMAddr == 0) {
+        fr.discontinuity should be (Discontinuity.Continuous)
+        to.discontinuity should be (Discontinuity.MinorDiscontinuity)
+      } else {
+        fr.discontinuity should be (Discontinuity.Continuous)
+        to.discontinuity should be (Discontinuity.Continuous)
+      }
+    })
   }
 }
