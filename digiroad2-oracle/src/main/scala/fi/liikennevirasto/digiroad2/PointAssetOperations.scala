@@ -223,9 +223,9 @@ trait PointAssetOperations {
     }
   }
 
-  def getNormalAndComplementaryById(id: Long): Option[PersistedAsset] = {
+  def getNormalAndComplementaryById(id: Long, roadLink: RoadLink): Option[PersistedAsset] = {
     val persistedAsset = getPersistedAssetsByIds(Set(id)).headOption
-    val roadLinks: Option[RoadLinkLike] = persistedAsset.flatMap { x => roadLinkService.getRoadLinkAndComplementaryFromVVH(x.linkId) }
+    val roadLinks: Option[RoadLinkLike] = Some(roadLink)
 
     def findRoadlink(linkId: Long): Option[RoadLinkLike] =
       roadLinks.find(_.linkId == linkId)

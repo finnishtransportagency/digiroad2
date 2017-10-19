@@ -183,9 +183,9 @@ trait MassTransitStopService extends PointAssetOperations {
     super.getByBoundingBox(user, bounds, roadLinks, Seq(), floatingAdjustment(adjustmentOperation, createPersistedAssetObject))
   }
 
-  override def getNormalAndComplementaryById(id: Long): Option[PersistedAsset] = {
+  override def getNormalAndComplementaryById(id: Long, roadLink: RoadLink): Option[PersistedAsset] = {
     val persistedAsset = getPersistedAssetsByIds(Set(id)).headOption
-    val roadLinks: Option[RoadLinkLike] = persistedAsset.flatMap { x => roadLinkService.getRoadLinkAndComplementaryFromVVH(x.linkId) }
+    val roadLinks: Option[RoadLinkLike] = Some(roadLink)
 
     def findRoadlink(linkId: Long): Option[RoadLinkLike] =
       roadLinks.find(_.linkId == linkId)
@@ -444,7 +444,7 @@ trait MassTransitStopService extends PointAssetOperations {
     if(!properties.exists(prop => prop.publicId == "vaikutussuunta") ||
       !MassTransitStopOperations.isValidBusStopDirections(properties, Some(roadLink)))
 
-      throw new MassTransitStopException()
+      throw new MassTransitStopException("Invalid Mass Transit Stop direction")
   }
 
   private def updateFloatingReasonValue(assetId: Long, floatingReason: FloatingReason): Unit ={
@@ -527,4 +527,6 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 }
 
-class MassTransitStopException() extends RuntimeException
+class MassTransitStopException(string: String) extends RuntimeException {
+  override def getMessage: String = string
+}

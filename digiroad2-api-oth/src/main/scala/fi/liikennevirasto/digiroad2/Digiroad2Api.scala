@@ -407,7 +407,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     validatePropertiesMaxSize(properties)
     try {
       val id = massTransitStopService.create(NewMassTransitStop(lon, lat, linkId, bearing, properties), userProvider.getCurrentUser().username, roadLink)
-      massTransitStopService.getNormalAndComplementaryById(id)
+      massTransitStopService.getNormalAndComplementaryById(id, roadLink)
     } catch {
       case e: RoadAddressException =>
         logger.warn(e.getMessage)
