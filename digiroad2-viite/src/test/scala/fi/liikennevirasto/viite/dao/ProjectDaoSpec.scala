@@ -20,16 +20,12 @@ import slick.jdbc.StaticQuery.interpolation
   */
 class ProjectDaoSpec  extends FunSuite with Matchers {
 
-  private final val lock: String = "LOCK OBJECT"
-
   def runWithRollback(f: => Unit): Unit = {
     // Prevent deadlocks in DB because we create and delete links in tests and don't handle the project ids properly
     // TODO: create projects with unique ids so we don't get into transaction deadlocks in tests
-    lock.synchronized {
-      Database.forDataSource(OracleDatabase.ds).withDynTransaction {
-        f
-        dynamicSession.rollback()
-      }
+    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+      f
+      dynamicSession.rollback()
     }
   }
 
@@ -38,14 +34,6 @@ class ProjectDaoSpec  extends FunSuite with Matchers {
       roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
       roadAddress.endDate, modifiedBy = Option(project.createdBy), 0L, roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
       roadAddress.sideCode, roadAddress.calibrationPoints, floating = false, roadAddress.geometry, project.id, LinkStatus.NotHandled, RoadType.PublicRoad, roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), 0)
-  }
-
-  def addprojects(): (Long, Long) = {
-    val id1 = Sequences.nextViitePrimaryKeySeqValue
-    val id2 = Sequences.nextViitePrimaryKeySeqValue
-    sqlu"""insert into project (id,state,name,ely,created_by, start_date) VALUES ($id1,0,'testproject',1,'automatedtest', sysdate)""".execute
-    sqlu"""insert into project (id,state,name,ely,created_by, start_date) VALUES ($id2,0,'testproject2',1,'automatedtest', sysdate)""".execute
-    (id1, id2)
   }
 
   test("create empty road address project") {
@@ -90,6 +78,11 @@ class ProjectDaoSpec  extends FunSuite with Matchers {
   test("check the removal of project links") {
     val address = ReservedRoadPart(5: Long, 5: Long, 203: Long, 5.5: Double, 6L, Discontinuity.apply("jatkuva"), 8: Long, None: Option[DateTime], None: Option[DateTime])
     runWithRollback {
+      sqlu"""LOCK TABLE LRM_POSITION IN EXCLUSIVE MODE""".execute
+      sqlu"""LOCK TABLE PROJECT_LINK IN EXCLUSIVE MODE""".execute
+      sqlu"""LOCK TABLE ROAD_ADDRESS IN EXCLUSIVE MODE""".execute
+      sqlu"""LOCK TABLE PROJECT IN EXCLUSIVE MODE""".execute
+      sqlu"""LOCK TABLE PROJECT_RESERVED_ROAD_PART IN EXCLUSIVE MODE""".execute
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(address), None)
       ProjectDAO.createRoadAddressProject(rap)
@@ -140,15 +133,6 @@ class ProjectDaoSpec  extends FunSuite with Matchers {
     }
   }
 
-
-  /*
-  (id: Long, roadNumber: Long, roadPartNumber: Long, track: Track,
-                       discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
-                       endDate: Option[DateTime] = None, modifiedBy: Option[String] = None, lrmPositionId : Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
-                       calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false,
-                       geometry: Seq[Point], projectId: Long, status: LinkStatus, roadType: RoadType, linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, geometryLength: Double)
-
-   */
 
   test("update project link") {
     runWithRollback {
@@ -203,7 +187,6 @@ class ProjectDaoSpec  extends FunSuite with Matchers {
     }
   }
 
-  //TODO: test is always deadlocking, need to see what is happening
   test("get roadaddressprojects") {
     runWithRollback {
       val projectListSize = ProjectDAO.getRoadAddressProjects().length

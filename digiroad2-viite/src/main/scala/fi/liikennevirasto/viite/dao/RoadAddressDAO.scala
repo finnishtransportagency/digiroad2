@@ -636,6 +636,9 @@ object RoadAddressDAO {
 
   def lockRoadAddressTable(): Unit = {
     sqlu"""
+           LOCK TABLE LRM_POSITION IN EXCLUSIVE MODE
+          """.execute
+    sqlu"""
            LOCK TABLE ROAD_ADDRESS IN EXCLUSIVE MODE
           """.execute
   }
