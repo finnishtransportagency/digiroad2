@@ -4,7 +4,7 @@
     var selectedProjectLink = false;
     var activeLayer = false;
     var hasReservedRoadParts = false;
-    
+
     var staticField = function(labelText, dataField) {
       var field;
       field = '<div class="form-group">' +
@@ -373,6 +373,7 @@
         activeLayer = true;
         rootElement.find('.btn-reserve').prop("disabled", false);
         rootElement.find('.btn-next').prop("disabled", false);
+        eventbus.trigger('roadAddressProject:clearTool');
         applicationModel.removeSpinner();
       });
 

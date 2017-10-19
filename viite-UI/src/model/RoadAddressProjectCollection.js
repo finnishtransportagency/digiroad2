@@ -13,15 +13,7 @@
     var dirtyProjectLinks = [];
     var self = this;
     var publishableProject = false;
-    var LinkStatus = {
-      NotHandled: {value: 0, action: "NotHandled"},
-      Unchanged: {value: 1, action: "Unchanged"},
-      New: {value: 2, action: "New"},
-      Transfer: {value: 3, action: "Transfer"},
-      Numbering: {value: 4, action: "Numbering"},
-      Terminated: {value: 5, action: "Terminated"},
-      Revert: {value: 6, action: "Revert"}
-    };
+    var LinkStatus = LinkValues.LinkStatus;
     var BAD_REQUEST_400 = 400;
     var UNAUTHORIZED_401 = 401;
     var PRECONDITION_FAILED_412 = 412;
@@ -52,7 +44,6 @@
     this.getLinkStatus = function () {
       return LinkStatus;
     };
-
 
     this.reset = function(){
       fetchedProjectLinks = [];
@@ -240,13 +231,13 @@
         linkIds: linkIds,
         linkStatus: statusCode,
         projectId: projectId,
-        roadNumber: Number($('#roadAddressProject').find('#tie')[0].value),
-        roadPartNumber: Number($('#roadAddressProject').find('#osa')[0].value),
-        trackCode: Number($('#roadAddressProject').find('#ajr')[0].value),
-        discontinuity: Number($('#roadAddressProject').find('#discontinuityDropdown')[0].value),
-        roadEly: Number($('#roadAddressProject').find('#ely')[0].value),
+        roadNumber: Number($('#roadAddressProjectForm').find('#tie')[0].value),
+        roadPartNumber: Number($('#roadAddressProjectForm').find('#osa')[0].value),
+        trackCode: Number($('#roadAddressProjectForm').find('#ajr')[0].value),
+        discontinuity: Number($('#roadAddressProjectForm').find('#discontinuityDropdown')[0].value),
+        roadEly: Number($('#roadAddressProjectForm').find('#ely')[0].value),
         roadLinkSource: Number(_.first(changedLinks).roadLinkSource),
-        roadType: Number($('#roadAddressProject').find('#roadTypeDropDown')[0].value),
+        roadType: Number($('#roadAddressProjectForm').find('#roadTypeDropDown')[0].value),
         userDefinedEndAddressM: null
       };
       
@@ -290,6 +281,47 @@
         console.log(linkIds);
         eventbus.trigger('roadAddress:projectLinksUpdateFailed', PRECONDITION_FAILED_412);
       }
+    };
+
+    this.saveCuttedProjectLinks = function(changedLinks, statusCodeA, statusCodeB){
+      console.log("Save Cutted Project Links called");
+      applicationModel.addSpinner();
+
+      var splitPoint = changedLinks[0].points[changedLinks[0].points.length-1];
+
+      var linkIds = _.unique(_.map(changedLinks,function (t){
+        if(!_.isUndefined(t.linkId)){
+          return t.linkId;
+        } else return t;
+      }));
+
+      var projectId = projectinfo.id;
+
+      var dataJson = {
+        splitPoint: {x: splitPoint.x, y: splitPoint.y},
+        statusA: statusCodeA,
+        statusB: statusCodeB,
+        roadNumber: Number($('#roadAddressProjectFormCut').find('#tie')[0].value),
+        roadPartNumber: Number($('#roadAddressProjectFormCut').find('#osa')[0].value),
+        trackCode: Number($('#roadAddressProjectFormCut').find('#ajr')[0].value),
+        discontinuity: Number($('#roadAddressProjectFormCut').find('#discontinuityDropdown')[0].value),
+        ely: Number($('#roadAddressProjectFormCut').find('#ely')[0].value),
+        roadLinkSource: Number(_.first(changedLinks).roadLinkSource),
+        roadType: Number($('#roadAddressProjectFormCut').find('#roadTypeDropDown')[0].value),
+        projectId: projectId
+      };
+
+      backend.saveProjectLinkSplit(dataJson, changedLinks[0].linkId, function(successObject){
+        if (!successObject.success) {
+          new ModalConfirm(successObject.reason);
+          applicationModel.removeSpinner();
+        }
+          else{
+          eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
+        }
+
+      }, null);
+
     };
 
     this.createProject = function (data) {

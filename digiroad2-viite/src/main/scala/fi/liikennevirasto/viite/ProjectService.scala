@@ -408,7 +408,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   def splitSuravageLink(linkId:Long, username:String,
                         splitOptions: SplitOptions): Option[String] = {
-    withDynTransaction {
+    withDynSession {
       splitSuravageLinkInTX(linkId, username, splitOptions)
     }
   }
@@ -432,8 +432,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val x = if (endPoints._1.x > endPoints._2.x) (endPoints._2.x, endPoints._1.x) else (endPoints._1.x, endPoints._2.x)
       val rightTop = Point(x._2, endPoints._2.y)
       val leftBottom = Point(x._1, endPoints._1.y)
-      val projectLinks =
-        getProjectLinksInBoundingBox(BoundingRectangle(leftBottom, rightTop), projectId)
+      val projectLinks = getProjectLinksInBoundingBox(BoundingRectangle(leftBottom, rightTop), projectId)
       val suravageProjectLink = suravageLink
       val projectLinksConnected = projectLinks.filter(l =>
         GeometryUtils.areAdjacent(l.geometry, suravageProjectLink.geometry))
@@ -459,11 +458,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   def getProjectLinksInBoundingBox(bbox:BoundingRectangle, projectId:Long): (Seq[ProjectLink]) =
   {
-    withDynSession {
-      val roadLinks = roadLinkService.getRoadLinksWithComplementaryFromVVH(bbox).map(rl => rl.linkId -> rl).toMap
-      val projectLinks = ProjectDAO.getProjectLinksByProjectAndLinkId(roadLinks.keys,projectId).filter(_.status == LinkStatus.NotHandled)
-      projectLinks.map(pl => withGeometry(pl, roadLinks(pl.linkId).geometry, false))
-    }
+    val roadLinks = roadLinkService.getRoadLinksWithComplementaryFromVVH(bbox, Set(), false).map(rl => rl.linkId -> rl).toMap
+    val projectLinks = ProjectDAO.getProjectLinksByProjectAndLinkId(roadLinks.keys,projectId).filter(_.status == LinkStatus.NotHandled)
+    projectLinks.map(pl => withGeometry(pl, roadLinks(pl.linkId).geometry, false))
   }
 
   private def existsInSuravageOrNew(projectLink: Option[ProjectLink]): Boolean = {
