@@ -478,6 +478,9 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   };
 
   var autoUpdateAddressNames = function (originalLinkId, newLinkId) {
+    if(isTerminalBusStop())
+      return;
+
     var popupMessageToShow = 'Säilyykö pysäkin osoite (katunimi) samana? Jos ei, tarkista uusi osoite tallennuksen jälkeen.';
     var roadLinkData = roadCollection.getRoadLinkByLinkId(newLinkId).getData();
 
@@ -524,13 +527,13 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     {
       requestingMovePermission = true;
       if (ownedByELY() || ownedByHSL()){
-        if(isTerminalChild())
-          popupMessageToShow = 'Pysäkkiä siirretty yli 50 metriä. Haluatko siirtää pysäkin uuteen sijaintiin? <br><br><br> *Pysäkin viittaus terminaaliin häviää siirron yhteydessä. Luo yhteys uudelleen tarvittaessa. ' ;
-        else
-          popupMessageToShow = 'Pysäkkiä siirretty yli 50 metriä. Siirron yhteydessä vanha pysäkki lakkautetaan ja luodaan uusi pysäkki.';
+        popupMessageToShow = 'Pysäkkiä siirretty yli 50 metriä. Siirron yhteydessä vanha pysäkki lakkautetaan ja luodaan uusi pysäkki.';
       } else {
         popupMessageToShow = 'Pysäkkiä siirretty yli 50 metriä. Haluatko siirtää pysäkin uuteen sijaintiin?';
       }
+
+      if(isTerminalChild())
+          popupMessageToShow += ' <br><br> *Pysäkin viittaus terminaaliin häviää siirron yhteydessä. Luo yhteys uudelleen tarvittaessa. ' ;
 
       new GenericConfirmPopup(popupMessageToShow,{
         successCallback: function(){
@@ -538,8 +541,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
           roadLayer.clearSelection();
           movementPermissionConfirmed = true;
           requestingMovePermission = false;
-          if(isTerminalBusStop())
-            autoUpdateAddressNames(selectedAsset.data.linkId, nearestLine.linkId);
+          autoUpdateAddressNames(selectedAsset.data.linkId, nearestLine.linkId);
         },
         closeCallback: function(){
           //Moves the stop to the original position
@@ -555,8 +557,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     else
     {
       doMovement(event, angle, nearestLine, coordinates);
-      if(isTerminalBusStop())
-        autoUpdateAddressNames(selectedAsset.data.linkId, nearestLine.linkId);
+      autoUpdateAddressNames(selectedAsset.data.linkId, nearestLine.linkId);
       roadLayer.clearSelection();
     }
   };
