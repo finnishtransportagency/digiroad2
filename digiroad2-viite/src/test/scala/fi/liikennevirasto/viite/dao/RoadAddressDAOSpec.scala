@@ -205,11 +205,6 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
     val localMockEventBus = MockitoSugar.mock[DigiroadEventBus]
     val localRoadAddressService = new RoadAddressService(localMockRoadLinkService,localMockEventBus)
     runWithRollback {
-      sqlu"""LOCK TABLE LRM_POSITION IN EXCLUSIVE MODE""".execute
-      sqlu"""LOCK TABLE PROJECT_LINK IN EXCLUSIVE MODE""".execute
-      sqlu"""LOCK TABLE ROAD_ADDRESS IN EXCLUSIVE MODE""".execute
-      sqlu"""LOCK TABLE PROJECT IN EXCLUSIVE MODE""".execute
-      sqlu"""LOCK TABLE PROJECT_RESERVED_ROAD_PART IN EXCLUSIVE MODE""".execute
       val id1 = RoadAddressDAO.getNextRoadAddressId
       val ra = Seq(RoadAddress(id1, 1943845, 1, RoadType.Unknown, Track.Combined, Discontinuous, 0L, 10L, Some(DateTime.parse("1901-01-01")), None, Option("tester"), 0, 12345L, 0.0, 9.8, SideCode.TowardsDigitizing, 0, (None, None), false,
         Seq(Point(0.0, 0.0), Point(0.0, 9.8)), LinkGeomSource.NormalLinkInterface))
