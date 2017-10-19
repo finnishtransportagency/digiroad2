@@ -280,7 +280,8 @@
         else
         {
           var asset = collection.getAsset(data.id);
-          name = (asset.data && asset.data.name) ? asset.data.name : getPropertyValue({ propertyData: asset.data.propertyData }, 'nimi_suomeksi');
+          if(asset)
+            name = (asset.data && asset.data.name) ? asset.data.name : getPropertyValue({ propertyData: asset.data.propertyData }, 'nimi_suomeksi');
         }
       }else
       {
