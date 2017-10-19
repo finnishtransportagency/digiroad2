@@ -208,10 +208,11 @@
     var requiredPropertiesMissing = function() {
       var isRequiredProperty = function(publicId) {
         //ignore if it is a terminal
-        if(currentAsset.stopTypes && currentAsset.stopTypes[0] == 6)
-          return false;
+        //TODO we need to get a way to know the mandatory fields depending on the bus stop type
+        if(currentAsset.stopTypes && currentAsset.stopTypes[0] == 6 && _.some())
+          return 'liitetyt_pysakit' == publicId;
         if(currentAsset.payload && isTerminalBusStop(currentAsset.payload.properties))
-          return false;
+          return 'liitetyt_pysakit' == publicId;
         return getPropertyMetadata(publicId).required;
       };
       var isChoicePropertyWithUnknownValue = function(property) {
