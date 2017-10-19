@@ -726,7 +726,7 @@
       });
 
       var separated = _.partition(projectCollection.getAll(), function (projectRoad) {
-        return projectRoad.roadLinkSource === 3;
+        return projectRoad.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value;
       });
       calibrationPointLayer.getSource().clear();
 
