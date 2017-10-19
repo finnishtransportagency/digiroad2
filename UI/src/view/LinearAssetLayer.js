@@ -62,7 +62,7 @@
         eventbus.trigger('layer:readOnlyLayer:' + event);
       });
     };
-    eventbus.on('fetchedR', redrawLinearAssets);
+    eventbus.on('fetchedReadOnly', redrawLinearAssets);
 
     return {
       refreshView: refreshView,

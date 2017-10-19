@@ -54,16 +54,16 @@
     };
 
     this.fetchReadOnlyAssets = function(boundingBox) {
-      return fetchR(boundingBox, backend.getReadOnlyLinearAssets(boundingBox, typeId));
+      return fetchReadOnly(boundingBox, backend.getReadOnlyLinearAssets(boundingBox, typeId));
     };
 
-    var fetchR = function(boundingBox, assets) {
+    var fetchReadOnly = function(boundingBox, assets) {
       return assets.then(function(linearAssetGroups) {
         var partitionedLinearAssetGroups = _.groupBy(linearAssetGroups, function(linearAssetGroup) {
           return _.some(linearAssetGroup, function(linearAsset) { return _.has(linearAsset, 'values'); });
         });
         var knownLinearAssets = partitionedLinearAssetGroups[true] || [];
-        eventbus.trigger('fetchedR', knownLinearAssets.concat([]));
+        eventbus.trigger('fetchedReadOnly', knownLinearAssets.concat([]));
       });
     };
 
