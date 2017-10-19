@@ -245,6 +245,19 @@
       });
     };
 
+    this.saveProjectLinkSplit = _.throttle(function(data, linkId, success, errorCallback){
+     $.ajax({
+       contentType: "application/json",
+        type: "PUT",
+        url: "api/viite/project/split/" + linkId,
+        data: JSON.stringify(data),
+        dataType: "json",
+       success: success,
+       error: errorCallback
+     });
+    },
+      1000);
+
     function createCallbackRequestor(getParameters) {
       var requestor = latestResponseRequestor(getParameters);
       return function(parameter, callback) {

@@ -225,13 +225,13 @@ object ProjectDAO {
     listQuery(query)
   }
 
-  def getProjectLinksByProjectAndLinkId(projectLinkIds: Iterable[Long], projectId:Long): List[ProjectLink] = {
-    if (projectLinkIds.isEmpty)
+  def getProjectLinksByProjectAndLinkId(linkIds: Iterable[Long], projectId:Long): List[ProjectLink] = {
+    if (linkIds.isEmpty)
       List()
     else {
       val query =
         s"""$projectLinkQueryBase
-                where project_link.id in (${projectLinkIds.mkString(",")}) AND (PROJECT_LINK.PROJECT_ID = $projectId )   order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
+                where link_id in (${linkIds.mkString(",")}) AND (PROJECT_LINK.PROJECT_ID = $projectId )   order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
       listQuery(query)
     }
   }

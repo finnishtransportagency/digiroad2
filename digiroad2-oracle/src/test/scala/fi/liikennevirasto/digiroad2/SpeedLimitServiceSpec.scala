@@ -32,7 +32,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
     TrafficDirection.UnknownDirection, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
 
   when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-  when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(roadLink), Nil))
+  when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((List(roadLink), Nil))
   when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[Int])).thenReturn((List(roadLink), Nil))
 
   when(mockRoadLinkService.fetchVVHRoadlinksAndComplementary(Set(362964704l, 362955345l, 362955339l)))
@@ -206,14 +206,14 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       sqlu"""insert into asset_link (asset_id,position_id) values ($asset,$lrm)""".execute
       sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset,(select id from enumerated_value where value = 80),(select id from property where public_id = 'rajoitus'))""".execute
 
-      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(oldRoadLink), Nil))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((List(oldRoadLink), Nil))
       val before = service.get(boundingBox, Set(municipalityCode)).toList
 
       before.length should be(1)
       before.head.foreach(_.value should be(Some(NumericValue(80))))
       before.head.foreach(_.sideCode should be(SideCode.BothDirections))
 
-      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((newRoadLinks, changeInfo))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((newRoadLinks, changeInfo))
       val after = service.get(boundingBox, Set(municipalityCode)).toList
 
       after.length should be(3)
@@ -269,7 +269,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       sqlu"""insert into asset_link (asset_id,position_id) values ($asset2,$lrm2)""".execute
       sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset2,(select id from enumerated_value where value = 60),(select id from property where public_id = 'rajoitus'))""".execute
 
-      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(oldRoadLink), Nil))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((List(oldRoadLink), Nil))
       val before = service.get(boundingBox, Set(municipalityCode)).toList
 
 //      before.foreach(println)
@@ -286,7 +286,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       limit1.endMeasure should be (25.0)
       limit2.endMeasure should be (25.0)
 
-      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((newRoadLinks, changeInfo))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((newRoadLinks, changeInfo))
       val after = service.get(boundingBox, Set(municipalityCode)).toList
 
 //      after.foreach(println)
@@ -352,7 +352,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       sqlu"""insert into asset_link (asset_id,position_id) values ($asset2,$lrm2)""".execute
       sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset2,(select id from enumerated_value where value = 60),(select id from property where public_id = 'rajoitus'))""".execute
 
-      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(oldRoadLink), Nil))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((List(oldRoadLink), Nil))
       val before = service.get(boundingBox, Set(municipalityCode)).toList
 
       before.length should be(2)
@@ -368,7 +368,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       limit1.sideCode should be (SideCode.BothDirections)
       limit2.sideCode should be (SideCode.BothDirections)
 
-      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((newRoadLinks, changeInfo))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((newRoadLinks, changeInfo))
       val after = service.get(boundingBox, Set(municipalityCode)).toList
 
       after.length should be(4)
@@ -439,7 +439,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       sqlu"""insert into asset_link (asset_id,position_id) values ($asset3,$lrm3)""".execute
       sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset3,(select id from enumerated_value where value = 80),(select id from property where public_id = 'rajoitus'))""".execute
 
-      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((oldRoadLinks, Nil))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((oldRoadLinks, Nil))
 
       val before = service.get(boundingBox, Set(municipalityCode)).toList
 
@@ -447,7 +447,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       before.head.foreach(_.value should be(Some(NumericValue(80))))
       before.head.foreach(_.sideCode should be(SideCode.BothDirections))
 
-      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfo))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((List(newRoadLink), changeInfo))
 
       val after = service.get(boundingBox, Set(municipalityCode)).toList
 
@@ -493,14 +493,14 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       sqlu"""insert into asset_link (asset_id,position_id) values ($asset1,$lrm1)""".execute
       sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset1,(select id from enumerated_value where value = 80),(select id from property where public_id = 'rajoitus'))""".execute
 
-      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(oldRoadLink), Nil))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((List(oldRoadLink), Nil))
       val before = service.get(boundingBox, Set(municipalityCode)).toList
 
       before.length should be(1)
       before.head.foreach(_.value should be(Some(NumericValue(80))))
       before.head.foreach(_.sideCode should be(SideCode.BothDirections))
 
-      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfo))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((List(newRoadLink), changeInfo))
       val after = service.get(boundingBox, Set(municipalityCode)).toList
 
       after.length should be(1)
@@ -546,14 +546,14 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       sqlu"""insert into asset_link (asset_id,position_id) values ($asset1,$lrm1)""".execute
       sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset1,(select id from enumerated_value where value = 80),(select id from property where public_id = 'rajoitus'))""".execute
 
-      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(oldRoadLink), Nil))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((List(oldRoadLink), Nil))
       val before = service.get(boundingBox, Set(municipalityCode)).toList
 
       before.length should be(1)
       before.head.foreach(_.value should be(Some(NumericValue(80))))
       before.head.foreach(_.sideCode should be(SideCode.BothDirections))
 
-      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfo))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((List(newRoadLink), changeInfo))
       val after = service.get(boundingBox, Set(municipalityCode)).toList
 
       after.length should be(1)
@@ -599,14 +599,14 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       sqlu"""insert into asset_link (asset_id,position_id) values ($asset1,$lrm1)""".execute
       sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset1,(select id from enumerated_value where value = 80),(select id from property where public_id = 'rajoitus'))""".execute
 
-      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(oldRoadLink), Nil))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((List(oldRoadLink), Nil))
       val before = service.get(boundingBox, Set(municipalityCode)).toList
 
       before.length should be(1)
       before.head.foreach(_.value should be(Some(NumericValue(80))))
       before.head.foreach(_.sideCode should be(SideCode.BothDirections))
 
-      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfo))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((List(newRoadLink), changeInfo))
       val after = service.get(boundingBox, Set(municipalityCode)).toList
 
       after.length should be(1)
@@ -666,12 +666,12 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       sqlu"""insert into asset_link (asset_id,position_id) values ($asset3,$lrm3)""".execute
       sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset3,(select id from enumerated_value where value = 80),(select id from property where public_id = 'rajoitus'))""".execute
 
-      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((oldRoadLinks, Nil))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((oldRoadLinks, Nil))
       val before = service.get(boundingBox, Set(municipalityCode)).toList.flatten
 
       before.length should be(3)
 
-      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfo))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((List(newRoadLink), changeInfo))
       val after = service.get(boundingBox, Set(municipalityCode)).toList.flatten
 
       after.length should be(1)
@@ -701,7 +701,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
         override def withDynTransaction[T](f: => T): T = f
       }
 
-      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(), Nil))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((List(), Nil))
 
       provider.get(boundingBox, Set(municipalityCode))
 
@@ -772,7 +772,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       sqlu"""insert into asset_link (asset_id,position_id) values ($asset1,$lrm1)""".execute
       sqlu"""insert into single_choice_value (asset_id,enumerated_value_id,property_id) values ($asset1,(select id from enumerated_value where value = 80),(select id from property where public_id = 'rajoitus'))""".execute
 
-      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(oldRoadLink), Nil))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((List(oldRoadLink), Nil))
       val before = service.get(boundingBox, Set(municipalityCode)).toList
 
       //println(before)
@@ -781,7 +781,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       before.head.foreach(_.value should be(Some(NumericValue(80))))
       before.head.foreach(_.sideCode should be(SideCode.BothDirections))
 
-      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfo))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((List(newRoadLink), changeInfo))
       val after = service.get(boundingBox, Set(municipalityCode)).toList
       //println(after)
 
@@ -913,7 +913,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
 
 
 
-      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfo))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((List(newRoadLink), changeInfo))
 
       val after = service.get(boundingBox, Set(municipalityCode)).toList
       after.flatten.length should be (10)
@@ -958,7 +958,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       sqlu"""Insert into SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID,MODIFIED_DATE,MODIFIED_BY) SELECT '18050499',(select ev.id from enumerated_value ev join property p on (p.id = property_id) where value = 40 and public_id = 'rajoitus'),(select id from property where public_id = 'rajoitus'),to_timestamp('08.04.2016 16:17:11','DD.MM.RRRR HH24:MI:SS'),null from dual""".execute
       sqlu"""Insert into SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID,MODIFIED_DATE,MODIFIED_BY) SELECT '18050501',(select ev.id from enumerated_value ev join property p on (p.id = property_id) where value = 50 and public_id = 'rajoitus'),(select id from property where public_id = 'rajoitus'),to_timestamp('08.04.2016 16:17:12','DD.MM.RRRR HH24:MI:SS'),null from dual""".execute
 
-      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfo))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((List(newRoadLink), changeInfo))
 
       val after = service.get(boundingBox, Set(municipalityCode)).toList
       provider.get(BoundingRectangle(Point(0.0, 0.0), Point(1.0, 1.0)), Set(235))
@@ -1007,7 +1007,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       sqlu"""Insert into SINGLE_CHOICE_VALUE (ASSET_ID,ENUMERATED_VALUE_ID,PROPERTY_ID,MODIFIED_DATE,MODIFIED_BY) SELECT '18050501',(select ev.id from enumerated_value ev join property p on (p.id = property_id) where value = 80 and public_id = 'rajoitus'),(select id from property where public_id = 'rajoitus'),to_timestamp('08.04.2016 16:17:12','DD.MM.RRRR HH24:MI:SS'),null from dual""".execute
 
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(newRoadLink), changeInfo))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((List(newRoadLink), changeInfo))
       when(mockRoadLinkService.getRoadLinkAndComplementaryFromVVH(any[Long], any[Boolean])).thenReturn(Some(newRoadLink))
 
       when(mockRoadLinkService.fetchVVHRoadlinksAndComplementary(any[Set[Long]])).thenReturn(List(vvhRoadLink))
@@ -1151,7 +1151,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       }
 
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((roadLinks, changeInfo))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((roadLinks, changeInfo))
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[Int])).thenReturn((roadLinks, changeInfo))
 
       when(mockRoadLinkService.fetchVVHRoadlinksAndComplementary(any[Set[Long]])).thenReturn(vvhRoadLinks)
@@ -1272,7 +1272,7 @@ class SpeedLimitServiceSpec extends FunSuite with Matchers {
       }
 
       when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
-      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((roadLinks, changeInfo))
+      when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((roadLinks, changeInfo))
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[Int])).thenReturn((roadLinks, changeInfo))
 
       when(mockRoadLinkService.fetchVVHRoadlinksAndComplementary(any[Set[Long]])).thenReturn(vvhRoadLinks)

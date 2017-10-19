@@ -23,7 +23,8 @@
       selectedLinkProperty]);
 
     var assetGroups = groupAssets(
-      linkPropertiesModel);
+      linkPropertiesModel,
+        selectedProjectLinkProperty);
 
     var projectListModel = new ProjectListModel(roadAddressProjectCollection);
     var projectChangeTable = new ProjectChangeTable(projectChangeInfoModel, models.roadAddressProjectCollection);
@@ -146,9 +147,9 @@
     return _(pointAssets).find({ layerName: layerName }).selectedPointAsset;
   }
 
-  function groupAssets(linkPropertiesModel) {
+  function groupAssets(linkPropertiesModel, selectedProjectLinkProperty) {
 
-    var roadLinkBox = new RoadLinkBox(linkPropertiesModel);
+    var roadLinkBox = new RoadLinkBox(selectedProjectLinkProperty);
 
     return [
       [roadLinkBox]

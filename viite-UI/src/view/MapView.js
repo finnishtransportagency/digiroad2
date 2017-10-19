@@ -64,8 +64,8 @@
     }, this);
 
     var setCursor = function(tool) {
-      var cursor = {'Select': 'default', 'Add': 'crosshair', 'Cut': 'pointer', 'Copy': 'copy'};
-      $('.olMap').css('cursor', cursor[tool]);
+      var cursor = {'Select': 'default', 'Add': 'crosshair', 'Cut': 'crosshair', 'Copy': 'copy'};
+      map.getViewport().style.cursor = cursor[tool];
     };
 
     eventbus.on('tool:changed', function(tool) {
@@ -106,6 +106,7 @@
 
     map.on('moveend', function() {
       applicationModel.moveMap(map.getView().getZoom(), map.getLayers().getArray()[0].getExtent(), map.getView().getCenter());
+      setCursor(applicationModel.getSelectedTool());
     });
 
     map.on('pointermove', function(event) {
@@ -116,10 +117,11 @@
     map.on('singleclick', function(event) {
       eventbus.trigger('map:clicked', { x: event.coordinate.shift(), y: event.coordinate.shift() });
     });
+    map.on('dblclick', function(event) {
+      eventbus.trigger('map:dblclicked', { x: event.coordinate.shift(), y: event.coordinate.shift() });
+    });
 
     addCenterMarkerLayerToMap(map);
-
-    setCursor(applicationModel.getSelectedTool());
 
     //initial cursor when the map user is not dragging the map
     map.getViewport().style.cursor = "initial";
@@ -132,6 +134,7 @@
 
     //when the map dragging stops the cursor value returns to the initial one
     map.on('pointerup', function(evt) {
+      if(applicationModel.getSelectedTool() == 'Select')
       map.getViewport().style.cursor = "initial";
     });
 
@@ -145,5 +148,6 @@
         map.getViewport().style.cursor = "initial";
     });
 
+    setCursor(applicationModel.getSelectedTool());
   };
 })(this);

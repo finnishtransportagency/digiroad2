@@ -56,7 +56,7 @@
     };
   };
 
-  root.RoadCollection = function(backend) {
+  root.RoadCollection = function(backend, LinkVals) {
     var roadLinkGroups = [];
     var roadLinkGroupsSuravage = [];
     var tmpRoadLinkGroups = [];
@@ -64,16 +64,7 @@
     var tmpNewRoadAddresses = [];
     var preMovedRoadAddresses = [];
     var changedIds = [];
-
-    var LinkStatus = {
-      NotHandled: {value: 0, action: "NotHandled"},
-      Unchanged: {value: 1, action: "Unchanged"},
-      New: {value: 2, action: "New"},
-      Transfer: {value: 3, action: "Transfer"},
-      Numbering: {value: 4, action: "Numbering"},
-      Terminated: {value: 5, action: "Terminated"},
-      Revert: {value: 6, action: "Revert"}
-    };
+    var LinkStatus = LinkValues.LinkStatus;
 
     var roadLinks = function() {
       return _.flatten(roadLinkGroups);
