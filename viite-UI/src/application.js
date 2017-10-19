@@ -3,16 +3,16 @@
     var backend = customBackend || new Backend();
     var tileMaps = _.isUndefined(withTileMaps) ? true : withTileMaps;
     var roadCollection = new RoadCollection(backend);
-    var roadAddressProjectCollection = new RoadAddressProjectCollection(backend);
+    var projectCollection = new ProjectCollection(backend);
     var selectedLinkProperty = new SelectedLinkProperty(backend, roadCollection);
-    var selectedProjectLinkProperty = new SelectedProjectLink(roadAddressProjectCollection);
+    var selectedProjectLinkProperty = new SelectedProjectLink(projectCollection);
     var linkPropertiesModel = new LinkPropertiesModel();
     var instructionsPopup = new InstructionsPopup(jQuery('.digiroad2'));
     var projectChangeInfoModel = new ProjectChangeInfoModel(backend);
 
     var models = {
       roadCollection: roadCollection,
-      roadAddressProjectCollection: roadAddressProjectCollection,
+      projectCollection: projectCollection,
       selectedLinkProperty: selectedLinkProperty,
       linkPropertiesModel: linkPropertiesModel,
       selectedProjectLinkProperty : selectedProjectLinkProperty
@@ -24,8 +24,8 @@
 
     var linkGroups = groupLinks(selectedProjectLinkProperty);
 
-    var projectListModel = new ProjectListModel(roadAddressProjectCollection);
-    var projectChangeTable = new ProjectChangeTable(projectChangeInfoModel, models.roadAddressProjectCollection);
+    var projectListModel = new ProjectListModel(projectCollection);
+    var projectChangeTable = new ProjectChangeTable(projectChangeInfoModel, models.projectCollection);
 
     NavigationPanel.initialize(
       jQuery('#map-tools'),
@@ -103,12 +103,12 @@
     var mapOverlay = new MapOverlay(jQuery('.container'));
     var styler = new Styler();
     var roadLayer = new RoadLayer3(map, models.roadCollection, styler, models.selectedLinkProperty);
-    var projectLinkLayer = new ProjectLinkLayer(map, models.roadAddressProjectCollection, models.selectedProjectLinkProperty, roadLayer);
+    var projectLinkLayer = new ProjectLinkLayer(map, models.projectCollection, models.selectedProjectLinkProperty, roadLayer);
 
     new LinkPropertyForm(models.selectedLinkProperty);
 
-    new RoadAddressProjectForm(models.roadAddressProjectCollection);
-    new RoadAddressProjectEditForm(models.roadAddressProjectCollection, models.selectedProjectLinkProperty, projectLinkLayer, projectChangeTable);
+    new RoadAddressProjectForm(models.projectCollection);
+    new RoadAddressProjectEditForm(models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer, projectChangeTable);
 
     var layers = _.merge({
       road: roadLayer,
