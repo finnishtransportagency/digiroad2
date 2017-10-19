@@ -244,7 +244,7 @@
     };
 
     var addDiscontinuityDropdown = function(){
-      if(selectedProjectLink[0].endAddressM == 0){
+      if(selectedProjectLink[0].endAddressM === 0){
         return '<select class="form-select-control" id="discontinuityDropdown" size="1">'+
           '<option value = "5" selected disabled hidden>5 Jatkuva</option>'+
           '</select>';
