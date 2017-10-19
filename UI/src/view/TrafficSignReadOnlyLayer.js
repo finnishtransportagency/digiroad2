@@ -58,10 +58,10 @@
     eventbus.on(parentLayerName + ':hideSpeedLimitsSigns', hideSpeedLimitSigns);
     eventbus.on(parentLayerName + ':showSpeedLimitsSigns', showSpeedLimitSigns);
     eventbus.on('readOnlyLayer:' + parentLayerName + ':shown', function (layerName) {
-       checkLayer(layerName);
+       showLayer(layerName);
     }, this);
 
-    var checkLayer = function(layer){
+    var showLayer = function(layer){
       if(layer == parentLayerName && isShowingForLayer[parentLayerName]){
         me.show();
         me.refreshView();
