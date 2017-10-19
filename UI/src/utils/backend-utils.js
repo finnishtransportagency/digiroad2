@@ -243,6 +243,12 @@
       };
     });
 
+    this.getReadOnlyLinearAssetsComplementaries = latestResponseRequestor(function(boundingBox, typeId) {
+      return {
+        url: 'api/linearassets/complementary/massLimitation?bbox=' + boundingBox + '&typeId=' + typeId
+      };
+    });
+
     this.createLinearAssets = _.throttle(function(data, success, failure) {
       $.ajax({
         contentType: "application/json",

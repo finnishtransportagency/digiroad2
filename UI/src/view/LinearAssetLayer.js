@@ -6,6 +6,7 @@
     var style = params.style;
     var collection = params.collection;
     var typeId = params.typeId;
+    var isComplementaryChecked = false;
 
     var uiState = { zoomLevel: 9 };
 
@@ -35,6 +36,14 @@
       vectorLayer.setVisible(false);
     };
 
+    var showWithComplementary = function () {
+      isComplementaryChecked = true;
+    };
+
+    var hideComplementary = function(){
+      isComplementaryChecked = false;
+    };
+
     var removeLayerFeatures = function(){
       vectorLayer.getSource().clear();
     };
@@ -58,9 +67,16 @@
     var refreshView = function () {
       vectorLayer.setVisible(true);
       adjustStylesByZoomLevel(map.getView().getZoom());
-      collection.fetchReadOnlyAssets(map.getView().calculateExtent(map.getSize())).then(function() {
-        eventbus.trigger('layer:readOnlyLayer:' + event);
-      });
+      if(isComplementaryChecked) {
+        collection.fetchReadOnlyAssetsWithComplementary(map.getView().calculateExtent(map.getSize())).then(function () {
+          eventbus.trigger('layer:readOnlyLayer:' + event);
+        });
+      }
+      else {
+        collection.fetchReadOnlyAssets(map.getView().calculateExtent(map.getSize())).then(function () {
+          eventbus.trigger('layer:readOnlyLayer:' + event);
+        });
+      }
     };
     eventbus.on('fetchedReadOnly', redrawLinearAssets);
 
@@ -69,7 +85,9 @@
       redrawLinearAssets: redrawLinearAssets,
       hideLayer: hideLayer,
       showLayer: showLayer,
-      removeLayerFeatures: removeLayerFeatures
+      removeLayerFeatures: removeLayerFeatures,
+      showWithComplementary: showWithComplementary,
+      hideComplementary: hideComplementary
     };
   };
 
@@ -567,6 +585,7 @@ root.LinearAssetLayer  = function(params) {
 
   var showWithComplementary = function() {
     isComplementaryChecked = true;
+    readOnlyLayer.showWithComplementary();
     me.refreshView();
   };
 
@@ -574,6 +593,7 @@ root.LinearAssetLayer  = function(params) {
     selectToolControl.clear();
     selectedLinearAsset.close();
     isComplementaryChecked = false;
+    readOnlyLayer.hideComplementary();
     roadAddressInfoPopup.stop();
     me.refreshView();
   };
