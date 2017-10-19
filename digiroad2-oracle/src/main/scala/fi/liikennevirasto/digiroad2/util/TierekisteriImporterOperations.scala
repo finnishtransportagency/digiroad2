@@ -7,7 +7,7 @@ import javax.naming.OperationNotSupportedException
 import fi.liikennevirasto.digiroad2.TRLaneArrangementType.MassTransitLane
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset.oracle.OracleAssetDao
-import fi.liikennevirasto.digiroad2.{TierekisteriAssetDataClient, TierekisteriLightingAssetClient, TierekisteriRoadWidthAssetClient, _}
+import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
@@ -375,20 +375,86 @@ class SpeedLimitsTierekisteriImporter extends LinearAssetTierekisteriImporterOpe
       trSign.startAddressMValue <= roadAddress.endAddrMValue && roadSide == trSign.roadSide)
   }
 
-  private def createSpeedLimit(roadAddress: ViiteRoadAddress, addressSection: AddressSection, trAssetOption: Option[TierekisteriAssetData], roadLinkOption: Option[VVHRoadlink]): Unit ={
-    roadLinkOption.map{
+  protected def createSpeedLimit(roadAddress: ViiteRoadAddress, addressSection: AddressSection, trAssetOption: Option[TierekisteriAssetData], roadLinkOption: Option[VVHRoadlink], trUrbanAreaAssets: Seq[TierekisteriUrbanAreaData], roadSide: RoadSide): Unit ={
+    def createSpeedLimitByUrbanArea(trUAValue: String, addressSection: AddressSection): Option[TierekisteriAssetData] = {
+      if (trUAValue == "9") {
+        Some(TierekisteriTrafficSignData(addressSection.roadNumber, addressSection.roadPartNumber, addressSection.roadPartNumber, addressSection.track, addressSection.startAddressMValue, addressSection.startAddressMValue, roadSide, TRTrafficSignType.EndUrbanArea, defaultSpeedLimit.toString))
+      } else {
+        Some(TierekisteriTrafficSignData(addressSection.roadNumber, addressSection.roadPartNumber, addressSection.roadPartNumber, addressSection.track, addressSection.startAddressMValue, addressSection.startAddressMValue, roadSide, TRTrafficSignType.UrbanArea, urbanAreaSpeedLimit.toString))
+      }
+    }
+
+    def verifyDefaultTolerance(urbanAreaAddressMValue: Double, addressSectionAddressMValue: Double): Boolean ={
+      val defaultTolerance = 2
+      ((urbanAreaAddressMValue - addressSectionAddressMValue).abs) > defaultTolerance
+    }
+
+    def createMultiSpeedLimitInAddressSection(trUAAsset: TierekisteriUrbanAreaData, roadLink: VVHRoadlink) = {
+      //Inicial Part of The Section Splited
+      if ((trUAAsset.startAddressMValue > addressSection.startAddressMValue) && (verifyDefaultTolerance(trUAAsset.startAddressMValue, addressSection.startAddressMValue)) && (trUAAsset.startAddressMValue <= addressSection.endAddressMValue.head)) {
+        val newStartAddressSection = addressSection.copy(endAddressMValue = Some(trUAAsset.startAddressMValue))
+        calculateMeasures(roadAddress, newStartAddressSection) match {
+          case Some(measure) =>
+            val newTrAsset = TierekisteriTrafficSignData(newStartAddressSection.roadNumber, newStartAddressSection.roadPartNumber, newStartAddressSection.roadPartNumber, newStartAddressSection.track, newStartAddressSection.startAddressMValue, newStartAddressSection.startAddressMValue, roadSide, TRTrafficSignType.EndUrbanArea, defaultSpeedLimit.toString)
+            createLinearAsset(roadLink, roadAddress, newStartAddressSection, measure, newTrAsset)
+          case _ => None
+        }
+      }
+
+      //Middle Part of The Section Splited
+      if ((trUAAsset.startAddressMValue >= addressSection.startAddressMValue) && (trUAAsset.endAddressMValue <= addressSection.endAddressMValue.head)) {
+        val newMiddleAddressSection = addressSection.copy(startAddressMValue = trUAAsset.startAddressMValue, endAddressMValue = Some(trUAAsset.endAddressMValue))
+        calculateMeasures(roadAddress, newMiddleAddressSection) match {
+          case Some(measure) =>
+            val newTrAsset = TierekisteriTrafficSignData(newMiddleAddressSection.roadNumber, newMiddleAddressSection.roadPartNumber, newMiddleAddressSection.roadPartNumber, newMiddleAddressSection.track, newMiddleAddressSection.startAddressMValue, newMiddleAddressSection.startAddressMValue, roadSide, TRTrafficSignType.UrbanArea, urbanAreaSpeedLimit.toString)
+            createLinearAsset(roadLink, roadAddress, newMiddleAddressSection, measure, newTrAsset)
+          case _ => None
+        }
+      }
+
+      //Final Part of The Section Splited
+      if ((trUAAsset.endAddressMValue < addressSection.endAddressMValue.head) && (verifyDefaultTolerance(trUAAsset.endAddressMValue, addressSection.endAddressMValue.head)) && (trUAAsset.endAddressMValue >= addressSection.startAddressMValue)) {
+        val newFinalAddressSection = addressSection.copy(startAddressMValue = trUAAsset.endAddressMValue)
+        calculateMeasures(roadAddress, newFinalAddressSection) match {
+          case Some(measure) =>
+            val newTrAsset = TierekisteriTrafficSignData(newFinalAddressSection.roadNumber, newFinalAddressSection.roadPartNumber, newFinalAddressSection.roadPartNumber, newFinalAddressSection.track, newFinalAddressSection.startAddressMValue, newFinalAddressSection.startAddressMValue, roadSide, TRTrafficSignType.EndUrbanArea, defaultSpeedLimit.toString)
+            createLinearAsset(roadLink, roadAddress, newFinalAddressSection, measure, newTrAsset)
+          case _ => None
+        }
+      }
+    }
+
+    def getSpeedLimitByUrbanArea(measures: Measures, roadLink: VVHRoadlink): Option[TierekisteriAssetData] = {
+      trUrbanAreaAssets.filter(_.startRoadPartNumber == addressSection.roadPartNumber).foreach(
+        trUA =>
+          if ((trUA.startAddressMValue <= addressSection.startAddressMValue) && (trUA.endAddressMValue >= addressSection.endAddressMValue.head)) {
+            return createSpeedLimitByUrbanArea(trUA.assetValue, addressSection)
+          } else {
+            createMultiSpeedLimitInAddressSection(trUA, roadLink)
+            return None
+          }
+      )
+      Some(TierekisteriTrafficSignData(addressSection.roadNumber, addressSection.roadPartNumber, addressSection.roadPartNumber, addressSection.track, addressSection.startAddressMValue, addressSection.startAddressMValue, roadSide, TRTrafficSignType.EndUrbanArea, defaultSpeedLimit.toString))
+    }
+
+    roadLinkOption.map {
       roadLink =>
         calculateMeasures(roadAddress, addressSection).map {
           measures =>
-            trAssetOption.map {
-              trAsset  =>
+            trAssetOption match {
+              case Some(trAsset) =>
                 createLinearAsset(roadLink, roadAddress, addressSection, measures, trAsset)
+              case None =>
+                getSpeedLimitByUrbanArea(measures, roadLink) match {
+                  case Some(trAssetUA) => createLinearAsset(roadLink, roadAddress, addressSection, measures, trAssetUA)
+                  case _ => None
+                }
             }
         }
     }
   }
 
-  private def generateOneSideSpeedLimits(roadNumber: Long, roadSide: RoadSide, trAssets : Seq[TierekisteriAssetData]): Unit = {
+  private def generateOneSideSpeedLimits(roadNumber: Long, roadSide: RoadSide, trAssets : Seq[TierekisteriAssetData], trUrbanAreaAssets: Seq[TierekisteriUrbanAreaData]): Unit = {
     def getViiteRoadAddress(roadSide: RoadSide) = {
       roadSide match {
         case RoadSide.Left =>
@@ -403,7 +469,7 @@ class SpeedLimitsTierekisteriImporter extends LinearAssetTierekisteriImporterOpe
         splitRoadAddressSectionBySigns(trAssets, roadAddress, roadSide).foldLeft(trAsset){
           case (previousTrAsset, (addressSection: AddressSection, beginTrAsset)) =>
             val currentTrAssetSign = beginTrAsset.orElse(previousTrAsset)
-            createSpeedLimit(roadAddress, addressSection, currentTrAssetSign, roadLink)
+            createSpeedLimit(roadAddress, addressSection, currentTrAssetSign, roadLink, trUrbanAreaAssets, roadSide)
             currentTrAssetSign
         }
     }
@@ -439,6 +505,12 @@ class SpeedLimitsTierekisteriImporter extends LinearAssetTierekisteriImporterOpe
   }
 
   override def importAssets(): Unit = {
+    lazy val tierekisteriClientUA: TierekisteriUrbanAreaClient = {
+      new TierekisteriUrbanAreaClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+        dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+        HttpClientBuilder.create().build())
+    }
+
     //Expire all asset in state roads in all the municipalities
     val municipalities = getAllMunicipalities()
     municipalities.foreach { municipality =>
@@ -453,10 +525,12 @@ class SpeedLimitsTierekisteriImporter extends LinearAssetTierekisteriImporterOpe
       roadNumber =>
         withDynTransaction{
           val trAssets = getAllTierekisteriAssets(roadNumber)
+          //Get Urban Areas from Tierekisteri
+          val trUrbanAreaAssets = tierekisteriClientUA.fetchActiveAssetData(roadNumber)
           //Generate all speed limits of the right side of the road
-          generateOneSideSpeedLimits(roadNumber, RoadSide.Right, trAssets)
+          generateOneSideSpeedLimits(roadNumber, RoadSide.Right, trAssets, trUrbanAreaAssets)
           //Generate all speed limits of the left side of the road
-          generateOneSideSpeedLimits(roadNumber, RoadSide.Left, trAssets)
+          generateOneSideSpeedLimits(roadNumber, RoadSide.Left, trAssets, trUrbanAreaAssets)
         }
     }
   }
