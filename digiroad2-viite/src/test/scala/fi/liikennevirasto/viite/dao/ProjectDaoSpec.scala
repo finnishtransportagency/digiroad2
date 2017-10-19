@@ -99,6 +99,11 @@ class ProjectDaoSpec  extends FunSuite with Matchers {
   test("verify if one can increment the project check counter") {
     val address = ReservedRoadPart(5: Long, 5: Long, 203: Long, 5.5: Double, 6, Discontinuity.apply("jatkuva"), 8: Long, None: Option[DateTime], None: Option[DateTime])
     runWithRollback {
+      sqlu"""LOCK TABLE LRM_POSITION IN EXCLUSIVE MODE""".execute
+      sqlu"""LOCK TABLE PROJECT_LINK IN EXCLUSIVE MODE""".execute
+      sqlu"""LOCK TABLE ROAD_ADDRESS IN EXCLUSIVE MODE""".execute
+      sqlu"""LOCK TABLE PROJECT IN EXCLUSIVE MODE""".execute
+      sqlu"""LOCK TABLE PROJECT_RESERVED_ROAD_PART IN EXCLUSIVE MODE""".execute
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(address), None)
       ProjectDAO.createRoadAddressProject(rap)
