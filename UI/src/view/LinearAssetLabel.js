@@ -135,4 +135,91 @@
         };
 
     };
+
+    root.MassLimitationsLabel = function () {
+
+      AssetLabel.call(this);
+      var me = this;
+
+      var backgroundStyle = function (value, counter) {
+        return new ol.style.Style({
+          image: new ol.style.Icon(({
+            src: getImage(value),
+            anchor : [0.5, 1 + counter]
+          }))
+        });
+      };
+
+      var textStyle = function (value) {
+        if (!me.isValidValue(value))
+          return '';
+        // conversion Kg -> t
+        return ''.concat(value/1000, 't');
+      };
+
+      this.isValidValue = function (value) {
+        return value;
+      };
+
+      this.getStyle = function (asset, count) {
+        return [backgroundStyle(getTypeId(asset), count), new ol.style.Style({
+          text: new ol.style.Text({
+            text: textStyle(me.getValue(asset)),
+            fill: new ol.style.Fill({
+              color: '#000000'
+            }),
+            font: '14px sans-serif',
+            offsetY: getTextOffset(asset, count)
+          })
+        })];
+      };
+
+      var getImage = function (typeId) {
+        var images = {
+          30: 'images/mass-limitations/totalWeightLimit.png'   ,
+          40: 'images/mass-limitations/trailerTruckWeightLimit.png',
+          50: 'images/mass-limitations/axleWeightLimit.png',
+          60: 'images/mass-limitations/bogieWeightLimit.png'
+        };
+        return images[typeId];
+      };
+
+
+      var getTextOffset = function (asset, count) {
+        var offsets = { 30: -17 - (count * 35), 40: -12 - (count * 35), 50: -20 - (count * 35), 60: -20 - (count * 35)};
+        return offsets[getTypeId(asset)];
+      };
+
+      var getValues = function (asset) {
+        return asset.values;
+      };
+
+      this.getValue = function (asset) {
+        return asset.value;
+      };
+
+      var getTypeId = function (asset) {
+        return asset.typeId;
+      };
+
+      this.renderFeatures = function (assets, zoomLevel, getPoint) {
+        if (!me.isVisibleZoom(zoomLevel))
+          return [];
+
+
+        return [].concat.apply([], _.chain(assets).map(function (asset) {
+          var values = getValues(asset);
+          var count = 0;
+          return _.map(values, function (assetValues) {
+            var style = me.getStyle(assetValues, count++, getPoint(asset)[1]);
+            var feature = me.createFeature(getPoint(asset));
+            feature.setStyle(style);
+            return feature;
+          });
+        }).filter(function (feature) {
+          return !_.isUndefined(feature);
+        }).value());
+      };
+    };
+
 })(this);

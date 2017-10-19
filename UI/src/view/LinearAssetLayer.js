@@ -40,8 +40,13 @@
       drawLinearAssets(linearAssets);
     };
 
+    var offsetBySideCode = function (linearAsset) {
+      return GeometryUtils.offsetBySideCode(applicationModel.zoom.level, linearAsset);
+    };
+
     var drawLinearAssets = function(linearAssets) {
       var asset = _.filter(linearAssets, function(asset) { return !_.some(asset.values, function(type) { return type.typeId == params.typeId; }); });
+      vectorSource.addFeatures(new MassLimitationsLabel().renderFeaturesByLinearAssets(_.map(_.cloneDeep(linearAssets), offsetBySideCode), uiState.zoomLevel));
       vectorSource.addFeatures(params.style.renderFeatures(asset));
     };
 

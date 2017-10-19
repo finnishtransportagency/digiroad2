@@ -49,8 +49,7 @@
         disabled: 'Ei rajoitusta',
         otherRestrictions : 'Muut massarajoitukset',
         showUnit: true
-      },
-      label: new LinearAssetLabel()
+      }
     },
     {
       typeId: assetType.trailerTruckWeightLimit,
@@ -68,8 +67,7 @@
         disabled: 'Ei rajoitusta',
         otherRestrictions : 'Muut massarajoitukset',
         showUnit: true
-      },
-      label: new LinearAssetLabel()
+      }
     },
     {
       typeId: assetType.axleWeightLimit,
@@ -87,8 +85,7 @@
         disabled: 'Ei rajoitusta',
         otherRestrictions : 'Muut massarajoitukset',
         showUnit: true
-      },
-      label: new LinearAssetLabel()
+      }
     },
     {
       typeId: assetType.bogieWeightLimit,
@@ -106,8 +103,7 @@
         disabled: 'Ei rajoitusta',
         otherRestrictions : 'Muut massarajoitukset',
         showUnit: true
-      },
-      label: new LinearAssetLabel()
+      }
     },
     {
       typeId: assetType.heightLimit,
