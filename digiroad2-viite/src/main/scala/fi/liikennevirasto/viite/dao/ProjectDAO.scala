@@ -513,6 +513,7 @@ object ProjectDAO {
     if (ids.size > 900)
       ids.grouped(900).map(deleteProjectLinks).sum
     else {
+      val lrmIds = Q.queryNA[Long](s"SELECT LRM_POSITION_ID FROM PROJECT_LINK WHERE ID IN (${ids.mkString(",")})").list
       val deleteLinks =
         s"""
          DELETE FROM PROJECT_LINK WHERE id IN (${ids.mkString(",")})
@@ -520,7 +521,7 @@ object ProjectDAO {
       val count = Q.updateNA(deleteLinks).first
       val deleteLrm =
         s"""
-         DELETE FROM LRM_POSITION WHERE id IN (SELECT lrm_position_id from PROJECT_LINK where id in (${ids.mkString(",")}))
+         DELETE FROM LRM_POSITION WHERE id IN (${lrmIds.mkString(",")})
       """
       Q.updateNA(deleteLrm).execute
       count
