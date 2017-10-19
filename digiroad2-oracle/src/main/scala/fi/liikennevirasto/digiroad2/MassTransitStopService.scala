@@ -441,13 +441,10 @@ trait MassTransitStopService extends PointAssetOperations {
   }
 
   private def validateBusStopDirections(properties: Seq[SimpleProperty], roadLink: RoadLink) = {
-    //val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(linkId)
-
     if(!properties.exists(prop => prop.publicId == "vaikutussuunta") ||
       !MassTransitStopOperations.isValidBusStopDirections(properties, Some(roadLink)))
 
       throw new MassTransitStopException()
-    //      halt(NotAcceptable("Invalid Mass Transit Stop direction"))
   }
 
   private def updateFloatingReasonValue(assetId: Long, floatingReason: FloatingReason): Unit ={
