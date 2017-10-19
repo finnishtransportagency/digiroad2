@@ -86,7 +86,7 @@ object ProjectDAO {
   LRM_POSITION.START_MEASURE, LRM_POSITION.END_MEASURE, LRM_POSITION.SIDE_CODE, PROJECT_LINK.LRM_POSITION_ID,
   PROJECT_LINK.CREATED_BY, PROJECT_LINK.MODIFIED_BY, lrm_position.link_id,
   (LRM_POSITION.END_MEASURE - LRM_POSITION.START_MEASURE) as length, PROJECT_LINK.CALIBRATION_POINTS, PROJECT_LINK.STATUS,
-  PROJECT_LINK.ROAD_TYPE, LRM_POSITION.LINK_SOURCE as source, PROJECT_LINK.ROAD_ADDRESS_ID, PROJECT_LINK.CONNECTED_LINK_ID
+  PROJECT_LINK.ROAD_TYPE, LRM_POSITION.LINK_SOURCE as source, PROJECT_LINK.ROAD_ADDRESS_ID, PROJECT_LINK.ELY, PROJECT_LINK.CONNECTED_LINK_ID
   from PROJECT_LINK join LRM_POSITION
     on LRM_POSITION.ID = PROJECT_LINK.LRM_POSITION_ID"""
 
@@ -102,14 +102,14 @@ object ProjectDAO {
       val endAddrM = r.nextLong()
       val startMValue = r.nextDouble()
       val endMValue = r.nextDouble()
-      val sideCode = SideCode.apply(r.nextInt())
+      val sideCode = SideCode.apply(r.nextLong().toInt)
       val lrmPositionId = r.nextLong()
       val createdBy = r.nextString()
       val modifiedBy = r.nextString()
       val linkId = r.nextLong()
       val length = r.nextDouble()
       val calibrationPoints =
-        CalibrationPointsUtils.calibrations(CalibrationCode.apply(r.nextInt()),linkId,startMValue,endMValue,
+        CalibrationPointsUtils.calibrations(CalibrationCode.apply(r.nextLong().toInt),linkId,startMValue,endMValue,
           startAddrM,endAddrM, sideCode )
       val status = LinkStatus.apply(r.nextInt())
       val roadType = RoadType.apply(r.nextInt())

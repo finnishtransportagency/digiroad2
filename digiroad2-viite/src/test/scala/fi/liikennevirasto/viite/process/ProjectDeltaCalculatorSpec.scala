@@ -265,7 +265,10 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
     val addresses = (0 to 9).map(i => createRoadAddress(i*12, 12L))
     val links = addresses.map(toProjectLink(project, LinkStatus.UnChanged))
 
-    val partitioned = ProjectDeltaCalculator.partition(links.map(_.copy(ely = 5)))
-    partitioned
+    val partitioned = ProjectDeltaCalculator.partition(addresses, links.map(_.copy(ely = 5)))
+    partitioned.size should be (1)
+    val (fr, to) = partitioned.head
+    fr.ely should be (8)
+    to.ely should be (5)
   }
 }
