@@ -290,6 +290,9 @@
         }
       }
 
+      if(data.stopTypes[0] == 6)
+        direction = '';
+
       var styles = [];
       styles = styles.concat(createDirectionArrowStyle());
       styles = styles.concat(createStickStyle());
