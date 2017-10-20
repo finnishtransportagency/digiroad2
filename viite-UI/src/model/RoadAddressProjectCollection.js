@@ -544,7 +544,7 @@
     };
 
     this.deleteRotatingProjectId = function(projectId){
-      backend.deleteRotatingProjectId(projectId, function(successObject) {
+      backend.reOpenProject(projectId, function(successObject) {
         eventbus.trigger("roadAddressProject:rotatingIdDeleted",successObject);
       }, function(errorObject){
         console.log("Error at deleting rotatingId: " + errorObject);

@@ -75,7 +75,7 @@
           $('#project-list').html($(html));
           $('[id*="open-project"]').click(function(event) {
             if(event.target.id.startsWith("reopen")){
-              projectCollection.reOpenProject(parseInt(event.currentTarget.value));
+              projectCollection.deleteRotatingProjectId(parseInt(event.currentTarget.value));
               eventbus.once("roadAddressProject:rotatingIdDeleted", function(successData){
                 openProjectSteps(event);
               });
