@@ -2070,4 +2070,29 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       newLinksAfter.head.startAddrMValue should be (unchangedLinks.last.endAddrMValue)
     }
   }
+
+  test("Alteration of roadType and discontinuity on a UnChanged operation") {
+    runWithRollback {
+
+      val address1 = RoadAddressDAO.fetchByRoadPart(11, 8, false).sortBy(_.startAddrMValue)
+      val reservedRoadPart1 = ReservedRoadPart(address1.head.id, address1.head.roadNumber, address1.head.roadPartNumber, address1.last.endAddrMValue, address1.last.endAddrMValue, address1.head.discontinuity, 8, None, None)
+      val rap = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.now(), DateTime.now(), "Some additional info", Seq(reservedRoadPart1), None , None)
+
+      val links = address1.map(address => {
+        toProjectLink(rap, LinkStatus.NotHandled)(address)
+      })
+
+      when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(links.map(toRoadLink))
+      val project = projectService.createRoadLinkProject(rap)
+
+      projectService.updateProjectLinks(project.id, address1.map(_.linkId).toSet, LinkStatus.UnChanged, "TestUser", 0, 0, Option.empty[Int],2,2) should be (None)
+
+      val updatedLinks = ProjectDAO.getProjectLinks(project.id)
+
+      updatedLinks.filter(_.roadType.value == 2).size should be (address1.size)
+      updatedLinks.filter(_.discontinuity.value == 2).size should be (1)
+
+      updatedLinks.maxBy(_.endAddrMValue).id should be (updatedLinks.find(_.discontinuity.value == 2).get.id)
+    }
+  }
 }
