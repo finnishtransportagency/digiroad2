@@ -437,11 +437,11 @@ object ProjectDAO {
   }
 
   def updateProjectStateInfo(stateInfo:String, projectId: Long) = {
-    Q.updateNA(s"UPDATE PROJECT SET Status_Info = $stateInfo WHERE ID= $projectId").execute
+    Q.updateNA(s"UPDATE PROJECT SET STATUS_INFO = '$stateInfo' WHERE ID= $projectId").execute
   }
 
   def getRotatingTRProjectId(projectId: Long) = {
-    Q.queryNA[Long](s"Select tr_id From Project WHERE Id=$projectId").list
+    Q.queryNA[Long](s"Select tr_id From Project WHERE Id=$projectId AND tr_id IS NOT NULL ").list
   }
 
 

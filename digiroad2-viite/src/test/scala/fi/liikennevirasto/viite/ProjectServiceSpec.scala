@@ -58,11 +58,11 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
     override def withDynTransaction[T](f: => T): T = f
   }
 
-    val projectServiceWithRoadAddressMock= new ProjectService(mockRoadAddressService, mockRoadLinkService, mockEventBus) {
-      override def withDynSession[T](f: => T): T = f
+  val projectServiceWithRoadAddressMock= new ProjectService(mockRoadAddressService, mockRoadLinkService, mockEventBus) {
+    override def withDynSession[T](f: => T): T = f
 
-      override def withDynTransaction[T](f: => T): T = f
-    }
+    override def withDynTransaction[T](f: => T): T = f
+  }
 
   after {
     reset(mockRoadLinkService)
@@ -197,6 +197,58 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       val roadAddressProject = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
       val project = projectService.createRoadLinkProject(roadAddressProject)
       project.reservedParts should have size (0)
+    }
+  }
+
+  test("Adding and removing TR_ID") {
+    runWithRollback {
+      val projectId=Sequences.nextViitePrimaryKeySeqValue
+      val rap = RoadAddressProject(projectId, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
+      runWithRollback {
+        ProjectDAO.createRoadAddressProject(rap)
+        val emptyTrId= ProjectDAO.getRotatingTRProjectId(projectId)
+        emptyTrId.isEmpty should be (true)
+        val projectNone= ProjectDAO.getRoadAddressProjectById(projectId)
+        projectService.removeRotatingTRId(projectId)
+        projectNone.head.statusInfo.getOrElse("").size should be (0)
+        ProjectDAO.addRotatingTRProjectId(projectId)
+        val trId= ProjectDAO.getRotatingTRProjectId(projectId)
+        trId.nonEmpty should be (true)
+        projectService.removeRotatingTRId(projectId)
+        emptyTrId.isEmpty should be (true)
+        ProjectDAO.addRotatingTRProjectId(projectId)
+        projectService.removeRotatingTRId(projectId)
+        val project= ProjectDAO.getRoadAddressProjectById(projectId)
+        project.head.statusInfo.getOrElse("1").size should be >2
+      }
+    }
+  }
+
+  test("Using TR_id as project_id when querrying should be emptye") {
+    runWithRollback {
+      val projectId=Sequences.nextViitePrimaryKeySeqValue
+      val rap = RoadAddressProject(projectId, ProjectState.apply(2), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
+      runWithRollback {
+        ProjectDAO.createRoadAddressProject(rap)
+        ProjectDAO.addRotatingTRProjectId(projectId)
+        projectService.updateProjectsWaitingResponseFromTR()
+        val project= ProjectDAO.getRoadAddressProjectById(projectId).head
+        project.statusInfo.getOrElse("").size should be (0)
+        projectService.updateProjectsWaitingResponseFromTR()
+      }
+    }
+  }
+
+  test("Using TR_id as project_id when querrying info: should fail") {
+    runWithRollback {
+      val projectId=Sequences.nextViitePrimaryKeySeqValue
+      val rap = RoadAddressProject(projectId, ProjectState.apply(2), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
+      runWithRollback {
+        ProjectDAO.createRoadAddressProject(rap)
+        projectService.updateProjectsWaitingResponseFromTR()
+        val project= ProjectDAO.getRoadAddressProjectById(projectId).head
+        project.statusInfo.getOrElse("")contains("Failed to find TR-ID") should be (true)
+      }
     }
   }
 
@@ -457,11 +509,11 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   ignore("Fetch project links") { // Needs more of mocking because of Futures + transactions disagreeing
-  val roadLinkService = new RoadLinkService(new VVHClient(properties.getProperty("digiroad2.VVHRestApiEndPoint")), mockEventBus, new DummySerializer) {
-    override def withDynSession[T](f: => T): T = f
+    val roadLinkService = new RoadLinkService(new VVHClient(properties.getProperty("digiroad2.VVHRestApiEndPoint")), mockEventBus, new DummySerializer) {
+      override def withDynSession[T](f: => T): T = f
 
-    override def withDynTransaction[T](f: => T): T = f
-  }
+      override def withDynTransaction[T](f: => T): T = f
+    }
     val roadAddressService = new RoadAddressService(roadLinkService, mockEventBus) {
       override def withDynSession[T](f: => T): T = f
 
