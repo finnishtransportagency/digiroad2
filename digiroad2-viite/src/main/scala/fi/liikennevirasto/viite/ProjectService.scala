@@ -894,6 +894,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             ProjectDAO.updateProjectStateInfo(addedStatus + statusInfo, projectId)
           else
             ProjectDAO.updateProjectStateInfo(addedStatus + statusInfo.substring(0, 300), projectId)
+        case None =>
       }
       ProjectDAO.removeRotatingTRProjectId(projectId)
       None
