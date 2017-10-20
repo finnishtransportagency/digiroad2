@@ -126,21 +126,7 @@ object ProjectDAO {
 
   private def listQuery(query: String) = {
     Q.queryNA[ProjectLink](query).iterator.toSeq
-    /*Q.queryNA[(Long, Long, Int, Int, Long, Long, Long, Long, Double, Double, Long, Long, String, String,
-      Long, Double, Long, Int, Int, Int, Long, Option[Long])](query).list.map(mapToProjectLink)*/
   }
-
-  /*private def mapToProjectLink(row: (Long, Long, Int, Int, Long, Long, Long, Long, Double, Double, Long, Long,
-    String, String, Long, Double, Long, Int, Int, Int, Long, Option[Long])): ProjectLink = {
-    val (projectLinkId, projectId, trackCode, discontinuityType, roadNumber, roadPartNumber, startAddrM, endAddrM,
-    startMValue, endMValue, sideCode , lrmPositionId, createdBy, modifiedBy, linkId, length, calibrationPoints, status,
-    roadType, source, roadAddressId, connectedLinkId) = row
-    ProjectLink(projectLinkId, roadNumber, roadPartNumber, Track.apply(trackCode), Discontinuity.apply(discontinuityType),
-      startAddrM, endAddrM, None, None, None, lrmPositionId, linkId, startMValue, endMValue, SideCode.apply(sideCode.toInt),
-      CalibrationPointsUtils.calibrations(CalibrationCode.apply(calibrationPoints.toInt),linkId,startMValue,endMValue,
-        startAddrM,endAddrM, SideCode.apply(sideCode.toInt)),false, Seq.empty[Point], projectId, LinkStatus.apply(status),
-      RoadType.apply(roadType),LinkGeomSource.apply(source),length, roadAddressId, connectedLinkId)
-  }*/
 
   def create(roadAddresses: Seq[ProjectLink]): Seq[Long] = {
     val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure, adjusted_timestamp, link_source) values (?, ?, ?, ?, ?, ?, ?)")

@@ -907,11 +907,11 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       val projectLinkId = savedProject.reservedParts.head.startingLinkId
       projectLinkId.isEmpty should be(false)
       projectId = savedProject.id
-      val terminatedValue = LinkStatus.UnChanged.value
+      val unchangedValue = LinkStatus.UnChanged.value
       val projectLink = ProjectDAO.fetchFirstLink(projectId, roadNumber, roadPartNumber)
       projectLink.isEmpty should be(false)
       //Changing the status of the test link
-      sqlu"""Update Project_Link Set Status = $terminatedValue
+      sqlu"""Update Project_Link Set Status = $unchangedValue
             Where ID = ${projectLink.get.id} And PROJECT_ID = $projectId""".execute
 
       //Creation of test road_address_changes

@@ -46,6 +46,8 @@ object AddressChangeType {
 
 }
 
+case class RoadAddressChangeTable(roadNumber: Option[Long], trackCode: Option[Long],)
+
 case class RoadAddressChangeSection(roadNumber: Option[Long], trackCode: Option[Long], startRoadPartNumber: Option[Long],
                                     endRoadPartNumber: Option[Long], startAddressM: Option[Long], endAddressM:Option[Long])
 case class RoadAddressChangeInfo(changeType: AddressChangeType, source: RoadAddressChangeSection, target: RoadAddressChangeSection,
@@ -228,6 +230,9 @@ object RoadAddressChangesDAO {
       roadAddressChangePS.setLong(13, newRoadAddressSection.discontinuity.value)
       roadAddressChangePS.setLong(14, newRoadAddressSection.roadType.value)
       roadAddressChangePS.setLong(15, ely)
+      roadAddressChangePS.setLong(16, oldRoadAddressSection.roadType.value)
+      roadAddressChangePS.setLong(17, oldRoadAddressSection.discontinuity.value)
+      roadAddressChangePS.setLong(18, oldRoadAddressSection.ely)
       roadAddressChangePS.addBatch()
     }
 
@@ -240,15 +245,15 @@ object RoadAddressChangesDAO {
             val roadAddressChangePS = dynamicSession.prepareStatement("INSERT INTO ROAD_ADDRESS_CHANGES " +
               "(project_id,change_type,old_road_number,new_road_number,old_road_part_number,new_road_part_number, " +
               "old_track_code,new_track_code,old_start_addr_m,new_start_addr_m,old_end_addr_m,new_end_addr_m," +
-              "new_discontinuity,new_road_type,new_ely) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,? )")
+              "new_discontinuity,new_road_type,new_ely, old_road_type, old_discontinuity, old_ely) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,? )")
             ProjectDeltaCalculator.partition(delta.terminations).foreach { case (roadAddressSection) =>
               addToBatch(roadAddressSection, ely, AddressChangeType.Termination, roadAddressChangePS)
             }
             ProjectDeltaCalculator.partition(delta.newRoads).foreach { case (roadAddressSection) =>
               addToBatch(roadAddressSection, ely, AddressChangeType.New, roadAddressChangePS)
             }
-            ProjectDeltaCalculator.partition(delta.unChanged).foreach { case (roadAddressSection) =>
-              addToBatch(roadAddressSection, ely, AddressChangeType.Unchanged, roadAddressChangePS)
+            ProjectDeltaCalculator.partition(delta.unChanged.mapping).foreach { case (roadAddressSection1, roadAddressSection2) =>
+              addToBatchWithOldValues(roadAddressSection1, roadAddressSection2, ely, AddressChangeType.Unchanged, roadAddressChangePS)
             }
 
             ProjectDeltaCalculator.partition(delta.transferred.mapping).foreach{ case (roadAddressSection1, roadAddressSection2) =>

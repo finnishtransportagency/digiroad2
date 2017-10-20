@@ -26,7 +26,7 @@ object ProjectDeltaCalculator {
       includeFloating = true).map(ra => ra.id -> ra).toMap
     val terminations = findTerminations(projectLinks, currentAddresses)
     val newCreations = findNewCreations(projectLinks)
-    val unChanged = findUnChanged(projectLinks, currentAddresses)
+    val unChanged = Unchanged(findUnChanged(projectLinksFetched, currentAddresses))
     val transferred = Transferred(findTransfers(projectLinksFetched, currentAddresses))
     val numbering = ReNumeration(findNumbering(projectLinksFetched, currentAddresses))
 
@@ -43,12 +43,8 @@ object ProjectDeltaCalculator {
     terminations.values.flatten.toSeq
   }
 
-  private def findUnChanged(projectLinks: Map[RoadPart, Seq[ProjectLink]], currentAddresses: Map[Long, RoadAddress]) = {
-    projectLinks.mapValues(pll =>
-      pll.filter(_.status == LinkStatus.UnChanged).flatMap(pl =>
-        currentAddresses.get(pl.roadAddressId)
-      )
-    ).values.flatten.toSeq
+  private def findUnChanged(projectLinks: Seq[ProjectLink], currentAddresses: Map[Long, RoadAddress]) = {
+    projectLinks.filter(_.status == LinkStatus.UnChanged).map(pl => currentAddresses(pl.roadAddressId) -> pl)
   }
 
   private def findTransfers(projectLinks: Seq[ProjectLink], currentAddresses: Map[Long, RoadAddress]) = {
@@ -223,9 +219,11 @@ object ProjectDeltaCalculator {
 }
 
 case class Delta(startDate: DateTime, terminations: Seq[RoadAddress], newRoads: Seq[ProjectLink],
-                 unChanged: Seq[RoadAddress], transferred: Transferred, numbering : ReNumeration)
+                 unChanged: Unchanged, transferred: Transferred, numbering : ReNumeration)
 
 case class RoadPart(roadNumber: Long, roadPartNumber: Long)
+
+case class Unchanged(mapping: Seq[(RoadAddress, ProjectLink)])
 
 case class Transferred(mapping: Seq[(RoadAddress, ProjectLink)])
 
