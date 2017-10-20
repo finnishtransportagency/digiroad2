@@ -634,12 +634,6 @@ object RoadAddressDAO {
            """.execute
   }
 
-  def lockRoadAddressTable(): Unit = {
-    sqlu"""
-           LOCK TABLE ROAD_ADDRESS IN EXCLUSIVE MODE
-          """.execute
-  }
-
   def expireById(ids: Set[Long]): Int = {
     val query =
       s"""
