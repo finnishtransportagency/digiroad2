@@ -19,7 +19,7 @@ import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Queries, Sequences}
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.{SimpleBusStop, _}
 import fi.liikennevirasto.digiroad2.util.VVHSerializer
-import fi.liikennevirasto.viite.{RoadAddressLinkBuilder, RoadAddressService}
+import fi.liikennevirasto.viite.{RoadAddressLinkBuilder, RoadAddressService, RoadType}
 import fi.liikennevirasto.viite.dao.{RoadAddress, RoadAddressDAO}
 import org.joda.time._
 import org.slf4j.LoggerFactory
@@ -96,6 +96,29 @@ class AssetDataImporter {
   }
 
   case class LRMPos(id: Long, linkId: Long, startM: Double, endM: Double)
+  case class RoadTypeChangePoints(roadNumber: Long, roadPartNumber: Long, addrM: Long, before: RoadType, after: RoadType)
+
+  /**
+    * Get road type for road address object with a list of road type change points
+    * @param changePoints Road part change points for road types
+    * @param roadAddress Road address to get the road type for
+    * @return road type for the road address or if a split is needed then a split point (address) and road types for first and second split
+    */
+  def roadType(changePoints: Seq[RoadTypeChangePoints], roadAddress: RoadAddress): Either[RoadType, (Long, RoadType, RoadType)] = {
+    // Check if this road address overlaps the change point and needs to be split
+    val overlaps = changePoints.find(c => c.addrM > roadAddress.startAddrMValue && c.addrM < roadAddress.endAddrMValue)
+    if (overlaps.nonEmpty)
+      Right((overlaps.get.addrM, overlaps.get.before, overlaps.get.after))
+    else {
+      // There is no overlap, check if this road address is between [0, min(addrM))
+      if (roadAddress.startAddrMValue < changePoints.map(_.addrM).min) {
+        Left(changePoints.minBy(_.addrM).before)
+      } else {
+        Left(changePoints.filter(_.addrM <= roadAddress.startAddrMValue).maxBy(_.addrM).after)
+      }
+    }
+
+  }
 
   private def importRoadAddressData(conversionDatabase: DatabaseDef, vvhClient: VVHClient, ely: Int, importOptions: ImportOptions,
                                     vvhClientProd: Option[VVHClient]): Unit = {
@@ -261,6 +284,7 @@ class AssetDataImporter {
       sqlu"""DELETE FROM ROAD_ADDRESS""".execute
       sqlu"""DELETE FROM LRM_POSITION WHERE
             NOT EXISTS (SELECT LRM_POSITION_ID FROM PROJECT_LINK WHERE LRM_POSITION_ID=LRM_POSITION.ID) AND
+            NOT EXISTS (SELECT LRM_POSITION_ID FROM PROJECT_LINK_HISTORY WHERE LRM_POSITION_ID=LRM_POSITION.ID) AND
             NOT EXISTS (SELECT POSITION_ID FROM ASSET_LINK WHERE POSITION_ID=LRM_POSITION.ID)""".execute
       println (s"${DateTime.now ()} - Old address data removed")
 
