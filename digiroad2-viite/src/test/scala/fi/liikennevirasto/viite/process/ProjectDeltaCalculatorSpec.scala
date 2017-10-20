@@ -287,19 +287,19 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
             values ($reservationId, 6591, 1, ${project.id}, '-', 6550673, 85, 85, 5, 9)
           """.execute
       sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,
-            MODIFIED_DATE,LINK_SOURCE) values (${lrms(0)},null,'3','0','86,818',null,'6550673','1476392565000',
-            to_timestamp('19.10.2017 16:36:04,740409000','DD.MM.RRRR HH24:MI:SSXFF'),'1')""".execute
+            MODIFIED_DATE,LINK_SOURCE) values (${lrms(0)},null,'3','0',86.818,null,'6550673','1476392565000',
+            sysdate,'1')""".execute
       sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,
             LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO) values
             (${ids(0)},'6591','1','0','5','0','85',${lrms(0)},to_date('01.01.1996','DD.MM.RRRR'),null,'tr',
             to_date('16.10.1998','DD.MM.RRRR'),'0','0',MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),
             MDSYS.SDO_ORDINATE_ARRAY(445889.442,7004298.67,0,0,445956.884,7004244.253,0,85)),null)""".execute
       sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE)
-            values (${lrms(1)},null,'3','0','63,926',null,'499972936','0',to_timestamp('20.10.2017 11:15:35,505115000','DD.MM.RRRR HH24:MI:SSXFF'),'3')""".execute
+            values (${lrms(1)},null,'3','0',63.926,null,'499972936','0',sysdate,'3')""".execute
       sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE)
-            values (${lrms(2)},null,'3','63,926','307,99',null,'499972936','0',to_timestamp('20.10.2017 11:15:35,505115000','DD.MM.RRRR HH24:MI:SSXFF'),'3')""".execute
+            values (${lrms(2)},null,'3',63.926,307.99,null,'499972936','0',sysdate,'3')""".execute
       sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE)
-            values (${lrms(3)},null,'3','63,752','86,818',null,'6550673','0',to_timestamp('20.10.2017 11:15:35,505115000','DD.MM.RRRR HH24:MI:SSXFF'),'1')""".execute
+            values (${lrms(3)},null,'3',63.752,86.818,null,'6550673','0',sysdate,'1')""".execute
       sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK_CODE,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,
             START_ADDR_M,END_ADDR_M,LRM_POSITION_ID,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,
             CALIBRATION_POINTS,ROAD_TYPE,ROAD_ADDRESS_ID,CONNECTED_LINK_ID)
