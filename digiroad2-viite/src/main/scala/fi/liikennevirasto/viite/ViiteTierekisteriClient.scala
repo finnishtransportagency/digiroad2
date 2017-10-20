@@ -185,10 +185,11 @@ object ViiteTierekisteriClient {
       proj1.copy(changeInfoSeq = proj1.changeInfoSeq ++ proj2.changeInfoSeq)
     }
   }
+  private val nullRotatingTRProjectId = -1
 
   private def convertChangeDataToChangeProject(changeData: ProjectRoadAddressChange): ChangeProject = {
     val changeInfo = changeData.changeInfo
-    ChangeProject(changeData.projectId, changeData.projectName.getOrElse(""), changeData.user, changeData.ely,
+    ChangeProject(changeData.rotatingTRId.getOrElse(nullRotatingTRProjectId), changeData.projectName.getOrElse(""), changeData.user, changeData.ely,
       DateTimeFormat.forPattern("yyyy-MM-dd").print(changeData.projectStartDate), Seq(changeInfo))
   }
 
@@ -203,7 +204,10 @@ object ViiteTierekisteriClient {
   }
 
   def sendChanges(changes: List[ProjectRoadAddressChange]): ProjectChangeStatus = {
-    sendJsonMessage(convertToChangeProject(changes))
+    val projectChange=convertToChangeProject(changes)
+    if (projectChange.id==nullRotatingTRProjectId)
+      return ProjectChangeStatus(changes.head.projectId,ProjectState.Failed2GenerateTRIdInViite.value,"Could not generate required TR ID")
+    sendJsonMessage(projectChange)
   }
 
   def sendJsonMessage(trProject:ChangeProject): ProjectChangeStatus ={

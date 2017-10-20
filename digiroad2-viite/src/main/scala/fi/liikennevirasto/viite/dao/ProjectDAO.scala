@@ -27,7 +27,7 @@ sealed trait ProjectState{
 
 object ProjectState{
 
-  val values = Set(Closed, Incomplete,Sent2TR,ErroredInTR,TRProcessing,Saved2TR,Unknown)
+  val values = Set(Closed, Incomplete,Sent2TR,ErroredInTR,TRProcessing,Saved2TR,Failed2GenerateTRIdInViite,Unknown)
 
   // These states are final
   val nonActiveStates = Set(ProjectState.Closed.value, ProjectState.Saved2TR.value)
@@ -42,6 +42,7 @@ object ProjectState{
   case object ErroredInTR extends ProjectState {def value=3; def description ="Virhe tierekisterissä"}
   case object TRProcessing extends ProjectState {def value=4; def description="Tierekisterissä käsittelyssä"}
   case object Saved2TR extends ProjectState{def value=5;def description ="Viety tierekisteriin"}
+  case object Failed2GenerateTRIdInViite extends ProjectState { def value = 6; def description = "Tierekisteri ID:tä ei voitu muodostaa"}
   case object Unknown extends ProjectState{def value=99;def description ="Tuntematon"}
 }
 
@@ -427,6 +428,22 @@ object ProjectDAO {
         Q.updateNA(sql).execute
     }
   }
+
+  def addRotatingTRProjectId(projectId:Long) = {
+    Q.updateNA(s"UPDATE PROJECT SET TR_ID = VIITE_PROJECT_SEQ.nextval WHERE ID= $projectId").execute
+  }
+  def removeRotatingTRProjectId(projectId:Long) = {
+    Q.updateNA(s"UPDATE PROJECT SET TR_ID = NULL WHERE ID= $projectId").execute
+  }
+
+  def updateProjectStateInfo(stateInfo:String, projectId: Long) = {
+    Q.updateNA(s"UPDATE PROJECT SET Status_Info = $stateInfo WHERE ID= $projectId").execute
+  }
+
+  def getRotatingTRProjectId(projectId: Long) = {
+    Q.queryNA[Long](s"Select tr_id From Project WHERE Id=$projectId").list
+  }
+
 
   def updateProjectLinkValues (projectId: Long, roadAddress: RoadAddress) = {
     val updateProjectLink = s"UPDATE PROJECT_LINK SET ROAD_NUMBER = ${roadAddress.roadNumber}, " +

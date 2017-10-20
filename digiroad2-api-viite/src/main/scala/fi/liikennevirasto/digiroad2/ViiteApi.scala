@@ -368,6 +368,18 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
   }
 
+  delete("/project/trid/:projectId") {
+    val user = userProvider.getCurrentUser()
+    val projectId = params("projectId").toLong
+    val oError=projectService.removeRotatingTRId(projectId)
+    oError match {
+      case Some(error) =>
+        Map("success" -> "false", "message" -> error  )
+      case None =>
+        Map("success" -> "true", "message" -> "")
+    }
+  }
+
   get("/project/getchangetable/:projectId") {
     val projectId = params("projectId").toLong
     projectService.getChangeProject(projectId).map(project =>
