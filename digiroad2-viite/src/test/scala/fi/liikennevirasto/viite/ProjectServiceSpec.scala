@@ -203,7 +203,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
   test("Adding and removing TR_ID") {
     runWithRollback {
       val projectId=Sequences.nextViitePrimaryKeySeqValue
-      val rap = RoadAddressProject(projectId, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
+      val rap = RoadAddressProject(projectId, ProjectState.apply(3), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
       runWithRollback {
         ProjectDAO.createRoadAddressProject(rap)
         val emptyTrId= ProjectDAO.getRotatingTRProjectId(projectId)
@@ -218,13 +218,14 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
         emptyTrId.isEmpty should be (true)
         ProjectDAO.addRotatingTRProjectId(projectId)
         projectService.removeRotatingTRId(projectId)
-        val project= ProjectDAO.getRoadAddressProjectById(projectId)
-        project.head.statusInfo.getOrElse("1").size should be >2
+        val project= ProjectDAO.getRoadAddressProjectById(projectId).head
+        project.status should be (ProjectState.Incomplete)
+        project.statusInfo.getOrElse("1").size should be >2
       }
     }
   }
 
-  test("Using TR_id as project_id when querrying should be emptye") {
+  test("Using TR_id as project_id when querying should be empty") {
     runWithRollback {
       val projectId=Sequences.nextViitePrimaryKeySeqValue
       val rap = RoadAddressProject(projectId, ProjectState.apply(2), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)

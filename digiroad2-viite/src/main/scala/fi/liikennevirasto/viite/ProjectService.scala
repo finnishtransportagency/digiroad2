@@ -871,20 +871,18 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  /** Nullifies projects tr_id attribute and saved value to status_info. Tries to append old status info if it is possible
+  /** Nullifies projects tr_id attribute, changes status to unfinnished and saves tr_info value to status_info. Tries to append old status info if it is possible
     * otherwise it only takes first 300 chars
     *
     * @param projectId project-id
     * @return returns option error string
     */
-
-
   def removeRotatingTRId(projectId:Long): Option[String] = {
     withDynSession {
       val projects = ProjectDAO.getRoadAddressProjects(projectId)
-
       val rotatingTR_Id = ProjectDAO.getRotatingTRProjectId(projectId)
-      val addedStatus = if (rotatingTR_Id.isEmpty) "" else "OLD TR_ID was " + rotatingTR_Id.head
+      ProjectDAO.updateProjectStatus(projectId,ProjectState.Incomplete)
+      val addedStatus = if (rotatingTR_Id.isEmpty) "" else "[OLD TR_ID was " + rotatingTR_Id.head+ "]"
       if (projects.isEmpty)
         return Some("Projectia ei löytynyt")
       val project = projects.head
@@ -1026,13 +1024,16 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   def setProjectStatusToSend2TR(projectId:Long) :Unit=
   {
-    ProjectDAO.updateProjectStatus(projectId, ProjectState.Sent2TR,"")
+    ProjectDAO.updateProjectStatus(projectId, ProjectState.Sent2TR)
   }
 
   def updateProjectStatusIfNeeded(currentStatus:ProjectState, newStatus:ProjectState, errorMessage:String,projectId:Long) :(ProjectState)= {
     if (currentStatus.value!=newStatus.value && newStatus != ProjectState.Unknown)
     {
-      ProjectDAO.updateProjectStatus(projectId,newStatus,errorMessage)
+      val projects=ProjectDAO.getRoadAddressProjects(projectId)
+      if (projects.nonEmpty)
+        appendStatusInfo(projects.head,errorMessage)
+      ProjectDAO.updateProjectStatus(projectId,newStatus)
     }
     if (newStatus != ProjectState.Unknown){
       newStatus
