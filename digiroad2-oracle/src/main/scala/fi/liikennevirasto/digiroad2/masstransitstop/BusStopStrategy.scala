@@ -2,17 +2,16 @@ package fi.liikennevirasto.digiroad2.masstransitstop
 
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{AssetPropertyConfiguration, MassTransitStopDao, Sequences}
 
-class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopDao, val roadLinkService: RoadLinkService) extends AbstractBusStopStrategy
-{
+class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopDao, val roadLinkService: RoadLinkService) extends AbstractBusStopStrategy {
 
   override def enrichBusStop(asset: PersistedMassTransitStop): (PersistedMassTransitStop, Boolean) = {
     asset.terminalId match {
       case Some(terminalId) =>
         val terminalAssetOption = massTransitStopDao.fetchPointAssets(massTransitStopDao.withId(terminalId)).headOption
-        val displayValue = terminalAssetOption.map{ terminalAsset =>
+        val displayValue = terminalAssetOption.map { terminalAsset =>
           val name = MassTransitStopOperations.extractStopName(terminalAsset.propertyData)
           s"${terminalAsset.nationalId} $name"
         }
@@ -51,7 +50,7 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
 
   override def update(asset: PersistedMassTransitStop, optionalPosition: Option[Position], properties: Set[SimpleProperty], username: String, municipalityValidation: (Int) => Unit, roadLink: RoadLink): PersistedMassTransitStop = {
 
-    if(properties.exists(prop => prop.publicId == "vaikutussuunta")) {
+    if (properties.exists(prop => prop.publicId == "vaikutussuunta")) {
       validateBusStopDirections(properties.toSeq, roadLink)
     }
 
@@ -76,6 +75,15 @@ class BusStopStrategy(val typeId : Int, val massTransitStopDao: MassTransitStopD
 
   override def delete(asset: PersistedMassTransitStop): Unit = {
     massTransitStopDao.deleteAllMassTransitStopData(asset.id)
+  }
+
+  override def isFloating(persistedAsset: PersistedMassTransitStop, roadLinkOption: Option[RoadLinkLike]): (Boolean, Option[FloatingReason]) = {
+    roadLinkOption match {
+      case Some(roadLink) =>
+        val (floatingDir, floatingReasonDir) = MassTransitStopOperations.isFloating(persistedAsset, roadLinkOption)
+          (floatingDir, floatingReasonDir)
+      case _ => (false, None)
+    }
   }
 }
 
