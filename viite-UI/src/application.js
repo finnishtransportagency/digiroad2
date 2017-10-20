@@ -1,5 +1,5 @@
 (function(application) {
-  application.start = function(customBackend, withTileMaps, isExperimental) {
+  application.start = function(customBackend, withTileMaps) {
     var backend = customBackend || new Backend();
     var tileMaps = _.isUndefined(withTileMaps) ? true : withTileMaps;
     var roadCollection = new RoadCollection(backend);
@@ -54,8 +54,6 @@
     });
   };
 
-  var localizedStrings;
-
   var indicatorOverlay = function() {
     jQuery('.container').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
   };
@@ -107,8 +105,9 @@
 
     new LinkPropertyForm(models.selectedLinkProperty);
 
-    new RoadAddressProjectForm(models.projectCollection);
-    new RoadAddressProjectEditForm(models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer, projectChangeTable);
+    new ProjectForm(models.projectCollection);
+    new ProjectEditForm(models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer, projectChangeTable);
+    new SplitForm(models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer, projectChangeTable);
 
     var layers = _.merge({
       road: roadLayer,
@@ -159,7 +158,6 @@
   }
 
   application.restart = function(backend, withTileMaps) {
-    localizedStrings = undefined;
     this.start(backend, withTileMaps);
   };
 

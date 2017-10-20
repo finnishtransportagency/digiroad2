@@ -1,5 +1,5 @@
 (function (root) {
-  root.RoadAddressProjectEditForm = function(projectCollection, selectedProjectLinkProperty, projectLinkLayer, projectChangeTable) {
+  root.ProjectEditForm = function(projectCollection, selectedProjectLinkProperty, projectLinkLayer, projectChangeTable) {
     var LinkStatus = LinkValues.LinkStatus;
     var LinkGeomSource = LinkValues.LinkGeomSource;
     var CalibrationCode = LinkValues.CalibrationCode;
@@ -408,9 +408,6 @@
     var bindEvents = function() {
 
       var rootElement = $('#feature-attributes');
-      var toggleMode = function(readOnly) {
-        rootElement.find('.wrapper read-only').toggle();
-      };
 
       eventbus.on('projectLink:clicked', function(selected) {
         selectedProjectLink = selected;
