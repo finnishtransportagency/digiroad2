@@ -46,8 +46,6 @@ object AddressChangeType {
 
 }
 
-case class RoadAddressChangeTable(roadNumber: Option[Long], trackCode: Option[Long],)
-
 case class RoadAddressChangeSection(roadNumber: Option[Long], trackCode: Option[Long], startRoadPartNumber: Option[Long],
                                     endRoadPartNumber: Option[Long], startAddressM: Option[Long], endAddressM:Option[Long])
 case class RoadAddressChangeInfo(changeType: AddressChangeType, source: RoadAddressChangeSection, target: RoadAddressChangeSection,
