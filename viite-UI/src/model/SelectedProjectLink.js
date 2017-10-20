@@ -41,6 +41,7 @@
 
       splitSuravage.created.id = null;
       splitSuravage.splitMeasure = split.splitMeasure;
+      console.log("split point " + split.point);
 
       splitSuravage.created.marker = 'A';
       splitSuravage.existing.marker = 'B';

@@ -201,22 +201,54 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers {
     sl should have size (2)
     tl should have size (1)
     val terminatedLink = tl.head
-    terminatedLink.status should be (LinkStatus.Terminated)
-    terminatedLink.startAddrMValue should be (template.startAddrMValue)
+    terminatedLink.status should be(LinkStatus.Terminated)
+    terminatedLink.startAddrMValue should be(template.startAddrMValue)
     GeometryUtils.areAdjacent(terminatedLink.geometry,
-      GeometryUtils.truncateGeometry2D(template.geometry, terminatedLink.startMValue, template.geometryLength)) should be (true)
+      GeometryUtils.truncateGeometry2D(template.geometry, terminatedLink.startMValue, template.geometryLength)) should be(true)
     sl.foreach { l =>
-      l.roadAddressId should be (template.roadAddressId)
+      l.roadAddressId should be(template.roadAddressId)
       l.startAddrMValue == terminatedLink.endAddrMValue || l.startAddrMValue == terminatedLink.startAddrMValue &&
         l.status == LinkStatus.New should be(true)
-      l.linkGeomSource should be (LinkGeomSource.SuravageLinkInterface)
+      l.linkGeomSource should be(LinkGeomSource.SuravageLinkInterface)
       l.endAddrMValue == template.endAddrMValue || l.startAddrMValue == template.startAddrMValue should be(true)
-      l.status == LinkStatus.New || l.status == LinkStatus.Transfer should be (true)
-      GeometryUtils.areAdjacent(l.geometry, suravage.geometry) should be (true)
-      l.roadNumber should be (template.roadNumber)
-      l.roadPartNumber should be (template.roadPartNumber)
-      l.sideCode should be (SideCode.TowardsDigitizing)
+      l.status == LinkStatus.New || l.status == LinkStatus.Transfer should be(true)
+      GeometryUtils.areAdjacent(l.geometry, suravage.geometry) should be(true)
+      l.roadNumber should be(template.roadNumber)
+      l.roadPartNumber should be(template.roadPartNumber)
+      l.sideCode should be(SideCode.TowardsDigitizing)
     }
 
+  }
+
+  test("Split shorter suravage link") {
+    val sGeom = Seq(Point(480428.187, 7059183.911), Point(480441.534, 7059195.878), Point(480445.646, 7059199.566),
+      Point(480451.056, 7059204.417), Point(480453.065, 7059206.218), Point(480456.611, 7059209.042),
+      Point(480463.941, 7059214.747))
+    val tGeom = Seq(Point(480428.187,7059183.911),Point(480453.614, 7059206.710), Point(480478.813, 7059226.322),
+      Point(480503.826, 7059244.02),Point(480508.221, 7059247.010))
+    val sLen = GeometryUtils.geometryLength(sGeom)
+    val tLen = GeometryUtils.geometryLength(tGeom)
+    val suravage = ProjectLink(0L, 0L, 0L, Track.Unknown, Discontinuity.Continuous, 0L, 0L, None, None, None, 0L, 123L, 0.0, sLen,
+      SideCode.Unknown, (None, None), false, sGeom, 1L, LinkStatus.NotHandled, RoadType.Unknown, LinkGeomSource.SuravageLinkInterface,
+      sLen, 0L, None)
+    val template = ProjectLink(2L, 27L, 22L, Track.Combined, Discontinuity.Continuous, 5076L, 5131L, None, None, None, 0L, 124L, 0.0, sLen,
+      SideCode.TowardsDigitizing, (None, None), false, tGeom, 1L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface,
+      tLen, 0L, None)
+    val (sl, tl) = ProjectLinkSplitter.split(suravage, template, SplitOptions(Point(480463.941, 7059214.747), LinkStatus.UnChanged,
+      LinkStatus.New, 27L, 22L, Track.Combined, Discontinuity.Continuous, 8L, LinkGeomSource.NormalLinkInterface,
+      RoadType.PublicRoad, 1L)).partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
+    sl should have size (1)
+    tl should have size (1)
+    val terminatedLink = tl.head
+    val unChangedLink = sl.head
+    println(terminatedLink)
+    println(unChangedLink)
+    terminatedLink.status should be (LinkStatus.Terminated)
+    terminatedLink.endAddrMValue should be (template.endAddrMValue)
+    GeometryUtils.areAdjacent(terminatedLink.geometry, unChangedLink.geometry) should be (true)
+    GeometryUtils.areAdjacent(unChangedLink.geometry.head, sGeom.head) should be (true)
+    GeometryUtils.areAdjacent(unChangedLink.geometry.last, sGeom.last) should be (true)
+    unChangedLink.startAddrMValue should be (template.startAddrMValue)
+    unChangedLink.endAddrMValue should be (terminatedLink.startAddrMValue)
   }
 }

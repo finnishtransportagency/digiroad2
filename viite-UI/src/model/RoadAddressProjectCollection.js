@@ -287,6 +287,7 @@
       console.log("Save Cutted Project Links called");
       applicationModel.addSpinner();
 
+      // Wrong link is picked from changedLinks - not splitted but original
       var splitPoint = changedLinks[0].points[changedLinks[0].points.length-1];
 
       var linkIds = _.unique(_.map(changedLinks,function (t){
