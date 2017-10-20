@@ -88,7 +88,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     StartupParameters(east.getOrElse(390000), north.getOrElse(6900000), zoom.getOrElse(2), deploy_date)
   }
 
-
   get("/roadlinks") {
     response.setHeader("Access-Control-Allow-Headers", "*")
 
@@ -140,6 +139,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
     roadAddressService.getAdjacent(chainLinks, linkId).map(roadAddressLinkToApi)
   }
+
   get("/roadlinks/multiSourceAdjacents") {
     val roadData = JSON.parseFull(params.getOrElse("roadData", "[]")).get.asInstanceOf[Seq[Map[String,Any]]]
     if (roadData.isEmpty){
@@ -440,6 +440,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       case _: NumberFormatException => BadRequest("'projectId' or 'linkId' parameter given could not be parsed as an integer number")
     }
   }
+
   private def roadlinksData(): (Seq[String], Seq[String]) = {
     val data = JSON.parseFull(params.get("data").get).get.asInstanceOf[Map[String,Any]]
     val sources = data("sourceLinkIds").asInstanceOf[Seq[String]]

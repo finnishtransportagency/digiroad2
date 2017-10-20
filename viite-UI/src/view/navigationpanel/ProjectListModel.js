@@ -74,16 +74,28 @@
           html += '</table>';
           $('#project-list').html($(html));
           $('[id*="open-project"]').click(function(event) {
-            projectCollection.getProjectsWithLinksById(parseInt(event.currentTarget.value)).then(function(result){
-              setTimeout(function(){}, 0);
-              eventbus.trigger('roadAddress:openProject', result);
-              if(applicationModel.isReadOnly()) {
-                $('.edit-mode-btn:visible').click();
-              }
-            });
+            if(event.target.id.startsWith("reopen")){
+              projectCollection.reOpenProject(parseInt(event.currentTarget.value));
+              eventbus.once("roadAddressProject:rotatingIdDeleted", function(successData){
+                openProjectSteps(event);
+              });
+            }
+            else {
+              openProjectSteps(event);
+            }
           });
         }
       });
+
+      var openProjectSteps = function(event) {
+        projectCollection.getProjectsWithLinksById(parseInt(event.currentTarget.value)).then(function(result){
+          setTimeout(function(){}, 0);
+          eventbus.trigger('roadAddress:openProject', result);
+          if(applicationModel.isReadOnly()) {
+            $('.edit-mode-btn:visible').click();
+          }
+        });
+      };
 
       projectList.on('click', 'button.cancel', function() {
         hide();
