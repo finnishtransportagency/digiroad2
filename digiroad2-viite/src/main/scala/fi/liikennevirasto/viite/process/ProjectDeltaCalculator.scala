@@ -36,7 +36,7 @@ object ProjectDeltaCalculator {
 
   private def adjustIfSplit(pl: ProjectLink, ra: Option[RoadAddress]) = {
     // Test if this link was a split case: if not, return original address, otherwise return a copy that is adjusted
-    if (pl.connectedLinkId.isEmpty)
+    if (pl.connectedLinkId.isEmpty || pl.connectedLinkId.get == 0)
       ra
     else
       ra.map(address => {

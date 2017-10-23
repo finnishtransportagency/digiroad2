@@ -405,8 +405,8 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
     when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink))
     runWithRollback {
       val id = 0
-      val addresses = List(ReservedRoadPart(5: Long, 5: Long, 205: Long, 5: Double, 5: Long, Discontinuity.apply("jatkuva"), 8: Long, None: Option[DateTime], None: Option[DateTime]))
-      val roadAddressProject = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("2021-01-01"), DateTime.now(), "Some additional info", addresses, None)
+      val addresses = List(ReservedRoadPart(5: Long, 5: Long, 205: Long, 5: Double, 5: Long, Discontinuity.apply("jatkuva"), 5: Long, None: Option[DateTime], None: Option[DateTime]))
+      val roadAddressProject = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("2021-01-01"), DateTime.now(), "Some additional info", addresses, None, Some(5))
       val savedProject = projectService.createRoadLinkProject(roadAddressProject)
       val projectLinks = ProjectDAO.getProjectLinks(savedProject.id)
       projectLinks.size should be (66)
@@ -414,10 +414,10 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       val linkIds = projectLinks.map(_.linkId).toSet
       val newLinkTemplates = Seq(ProjectLink(-1000L, 0L, 0L, Track.apply(99), Discontinuity.Continuous, 0L, 0L, None, None,
         None, 0L, 1234L, 0.0, 43.1, SideCode.Unknown, (None, None), false,
-        Seq(Point(468.5, 0.5), Point(512.0, 0.0)), 0L, LinkStatus.Unknown, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 43.1, 0L, 8),
+        Seq(Point(468.5, 0.5), Point(512.0, 0.0)), 0L, LinkStatus.Unknown, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 43.1, 0L, 5),
         ProjectLink(-1000L, 0L, 0L, Track.apply(99), Discontinuity.Continuous, 0L, 0L, None, None,
           None, 0L, 1235L, 0.0, 71.1, SideCode.Unknown, (None, None), false,
-          Seq(Point(510.0, 0.0), Point(581.0, 0.0)), 0L, LinkStatus.Unknown, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 71.1, 0L, 8))
+          Seq(Point(510.0, 0.0), Point(581.0, 0.0)), 0L, LinkStatus.Unknown, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 71.1, 0L, 5))
       reset(mockRoadLinkService)
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenAnswer(
         toMockAnswer(projectLinks ++ newLinkTemplates, roadLink)
@@ -425,11 +425,11 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       ProjectDAO.getProjectLinks(savedProject.id).foreach { l =>
         l.roadType should be(RoadType.UnknownOwnerRoad)
       }
-      projectService.updateProjectLinks(savedProject.id, Set(5172715, 5172714, 5172031, 5172030), LinkStatus.Terminated, "-", 5, 205, None)
-      projectService.updateProjectLinks(savedProject.id, linkIds -- Set(5172715, 5172714, 5172031, 5172030), LinkStatus.Transfer, "-", 5, 205, None)
+      projectService.updateProjectLinks(savedProject.id, Set(5172715, 5172714, 5172031, 5172030), LinkStatus.Terminated, "-", 5, 205, None, RoadType.Unknown.value, Discontinuity.Continuous.value, 5)
+      projectService.updateProjectLinks(savedProject.id, linkIds -- Set(5172715, 5172714, 5172031, 5172030), LinkStatus.Transfer, "-", 5, 205, None, RoadType.Unknown.value, Discontinuity.Continuous.value, 5)
       ProjectDAO.getProjectLinks(savedProject.id).size should be (66)
-      projectService.createProjectLinks(newLinkTemplates.take(1).map(_.linkId).toSet, savedProject.id, 5L, 205L, 1, 5, 2, 1, 8, "U").get("success") should be (Some(true))
-      projectService.createProjectLinks(newLinkTemplates.tail.take(1).map(_.linkId).toSet, savedProject.id, 5L, 205L, 2, 5, 2, 1, 8, "U").get("success") should be (Some(true))
+      projectService.createProjectLinks(newLinkTemplates.take(1).map(_.linkId).toSet, savedProject.id, 5L, 205L, 1, 5, 2, 1, 5, "U").get("success") should be (Some(true))
+      projectService.createProjectLinks(newLinkTemplates.tail.take(1).map(_.linkId).toSet, savedProject.id, 5L, 205L, 2, 5, 2, 1, 5, "U").get("success") should be (Some(true))
       ProjectDAO.getProjectLinks(savedProject.id).size should be (68)
       val changeInfo = projectService.getChangeProject(savedProject.id)
       projectService.projectLinkPublishable(savedProject.id) should be(true)
