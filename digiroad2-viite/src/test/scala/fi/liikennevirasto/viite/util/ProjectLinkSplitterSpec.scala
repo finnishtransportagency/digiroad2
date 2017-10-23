@@ -241,8 +241,6 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers {
     tl should have size (1)
     val terminatedLink = tl.head
     val unChangedLink = sl.head
-    println(terminatedLink)
-    println(unChangedLink)
     terminatedLink.status should be (LinkStatus.Terminated)
     terminatedLink.endAddrMValue should be (template.endAddrMValue)
     GeometryUtils.areAdjacent(terminatedLink.geometry, unChangedLink.geometry) should be (true)
