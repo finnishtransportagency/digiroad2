@@ -3,7 +3,6 @@
     var allowGrouping = true,
       parentLayerName = params.layerName,
       style = params.style,
-      application= applicationModel,
       assetLabel = params.assetLabel,
       collection = params.collection,
       assetGrouping = params.assetGrouping,
@@ -73,23 +72,12 @@
           var features = (!allowGrouping) ? _.map(assets, createFeature) : getGroupedFeatures(assets);
           vectorLayer.getSource().addFeatures(features);
           vectorLayer.getSource().addFeatures(assetLabel.renderFeaturesByPointAssets(assets, map.getView().getZoom()));
-          applySelection();
         });
     };
 
     this.removeLayerFeatures = function() {
       vectorLayer.getSource().clear();
     };
-
-    var selectControl = new SelectToolControl(application, vectorLayer, map, {
-      style : function (feature) {
-        return style.browsingStyleProvider.getStyle(feature);
-      },
-      draggable : false,
-      filterGeometry : function(feature){
-        return feature.getGeometry() instanceof ol.geom.Point;
-      }
-    });
 
     var getGroupedFeatures = function (assets) {
       var assetGroups = assetGrouping.groupByDistance(assets, map.getView().getZoom());
@@ -117,7 +105,7 @@
       var rotation = determineRotation(asset);
       var bearing = determineBearing(asset);
       var feature =  new ol.Feature({geometry : new ol.geom.Point([asset.lon, asset.lat])});
-      var obj = _.merge({}, asset, {rotation: rotation, bearing: bearing/*, administrativeClass: administrativeClass*/}, feature.getProperties());
+      var obj = _.merge({}, asset, {rotation: rotation, bearing: bearing}, feature.getProperties());
       feature.setProperties(obj);
       return feature;
     }
@@ -128,15 +116,6 @@
 
     function determineBearing(asset) {
       return asset.bearing;
-    }
-
-    function applySelection() {
-        var feature = _.filter(vectorLayer.getSource().getFeatures(), function (feature) {
-          return feature.getProperties();
-        });
-        if (feature){
-          selectControl.addSelectionFeaturesWithHighlight(feature, true);
-        }
     }
 
     this.show = function() {

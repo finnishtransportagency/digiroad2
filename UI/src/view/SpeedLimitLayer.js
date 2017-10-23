@@ -7,7 +7,7 @@ window.SpeedLimitLayer = function(params) {
       style = params.style,
       layerName = 'speedLimit',
       roadAddressInfoPopup= params.roadAddressInfoPopup,
-      backend = params.backend;
+      trafficSignsCollection = params.trafficSignsCollection;
   var isActive = false;
   var extraEventListener = _.extend({running: false}, eventbus);
 
@@ -58,7 +58,7 @@ window.SpeedLimitLayer = function(params) {
   var trafficSignReadOnlyLayer = new TrafficSignReadOnlyLayer({
     layerName: layerName,
     style: new PointAssetStyle('trafficSigns'),
-    collection: new TrafficSignsCollection(backend, 'trafficSigns', true),
+    collection: trafficSignsCollection,
     assetLabel: new TrafficSignLabel(),
     assetGrouping: new AssetGrouping(9),
     map: map

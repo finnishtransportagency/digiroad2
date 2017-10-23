@@ -12,7 +12,7 @@ window.LinearAssetLayer = function(params) {
       roadAddressInfoPopup = params.roadAddressInfoPopup,
       editConstrains = params.editConstrains,
       hasTrafficSignReadOnlyLayer = params.hasTrafficSignReadOnlyLayer,
-      backend = params.backend;
+      trafficSignsCollection = params.trafficSignsCollection;
 
   Layer.call(this, layerName, roadLayer);
   var me = this;
@@ -175,7 +175,7 @@ window.LinearAssetLayer = function(params) {
   var trafficSignReadOnlyLayer = new TrafficSignReadOnlyLayer({
       layerName: layerName,
       style: new PointAssetStyle('trafficSigns'),
-      collection: new TrafficSignsCollection(backend, 'trafficSigns', true),
+      collection: trafficSignsCollection,
       assetLabel: new TrafficSignLabel(),
       assetGrouping: new AssetGrouping(9),
       map: map
@@ -188,7 +188,6 @@ window.LinearAssetLayer = function(params) {
       var feature = evt.selected[0];
       var properties = feature.getProperties();
       verifyClickEvent(properties, evt);
-      unHighLightReadOnlyLayer();
     }else{
       if (selectedLinearAsset.exists()) {
          selectedLinearAsset.close();
@@ -491,7 +490,6 @@ window.LinearAssetLayer = function(params) {
 
   var show = function(map) {
     startListeningExtraEvents();
-    // showReadOnlyLayer();
     vectorLayer.setVisible(true);
     indicatorLayer.setVisible(true);
     me.refreshView();

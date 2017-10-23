@@ -243,7 +243,7 @@
        roadAddressInfoPopup: roadAddressInfoPopup,
        editConstrains : asset.editConstrains || function() {return false;},
        hasTrafficSignReadOnlyLayer: asset.hasTrafficSignReadOnlyLayer,
-       backend: backend
+       trafficSignsCollection: new TrafficSignsCollection(backend, 'trafficSigns', true)
      });
      return acc;
     }, {});
@@ -278,7 +278,7 @@
        application: applicationModel,
        collection: models.speedLimitsCollection,
        selectedSpeedLimit: models.selectedSpeedLimit,
-       backend: backend,
+       trafficSignsCollection: new TrafficSignsCollection(backend, 'trafficSigns', true),
        style: SpeedLimitStyle(applicationModel),
        roadLayer: roadLayer,
        roadAddressInfoPopup: roadAddressInfoPopup
