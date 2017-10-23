@@ -1031,8 +1031,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     if (currentStatus.value!=newStatus.value && newStatus != ProjectState.Unknown)
     {
       val projects=ProjectDAO.getRoadAddressProjects(projectId)
-      if (projects.nonEmpty)
-        appendStatusInfo(projects.head,errorMessage)
+      if (projects.nonEmpty && newStatus==ProjectState.ErroredInTR) // We write error message and clear old TR_ID which was stored there, so user wont see it in hower
+        ProjectDAO.updateProjectStateInfo(errorMessage,projectId)
       ProjectDAO.updateProjectStatus(projectId,newStatus)
     }
     if (newStatus != ProjectState.Unknown){
