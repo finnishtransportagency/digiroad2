@@ -377,6 +377,7 @@
     var changeDropDownValue = function (statusCode) {
       var rootElement = $('#feature-attributes');
       if (statusCode === LinkStatus.Unchanged.value) {
+        $("#dropDown_0 option[value="+ LinkStatus.New.description +"]").prop('disabled',true);
         $("#dropDown_0 option[value="+ LinkStatus.Unchanged.description +"]").attr('selected', 'selected').change();
       }
       else if(statusCode === LinkStatus.New.value){
@@ -387,8 +388,8 @@
           rootElement.find('.changeDirectionDiv').prop("hidden", false);
       }
       else if (statusCode == LinkStatus.Transfer.value) {
-        $("select option[value*="+LinkStatus.New.action+"]").prop('disabled',true);
-        $('#dropDown').val(LinkStatus.Transfer.action).change();
+        $("#dropDown_0 option[value="+ LinkStatus.New.description +"]").prop('disabled',true);
+        $("#dropDown_0 option[value="+ LinkStatus.Transfer.description +"]").attr('selected', 'selected').change();
       }
       $('#discontinuityDropdown').val(selectedProjectLink[selectedProjectLink.length - 1].discontinuity);
       $('#roadTypeDropDown').val(selectedProjectLink[0].roadTypeId);
