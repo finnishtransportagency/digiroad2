@@ -119,6 +119,33 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+
+  /**
+    *
+    * @param projectId project's id
+    * @return if state of the project is incomplete
+    */
+
+  def isWritableState(projectId:Long): Boolean = {
+    withDynTransaction {
+      projectWritableCheck(projectId) match {
+        case Some(errorMessage) => false
+        case None => true
+      }
+    }
+  }
+
+  private def projectWritableCheck(projectId:Long):Option[String] = {
+    ProjectDAO.getProjectState(projectId)  match {
+      case Some(projectState) =>
+        if (projectState==ProjectState.Incomplete)
+          return None
+        Some("Projektin tila ei ole keskeneräinen") //project state is not incomplete
+      case None => Some("Projektia ei löytynyt") //project could not be found
+    }
+  }
+
+
   def validateProjectDate(reservedParts: Seq[ReservedRoadPart], date: DateTime): Option[String] = {
     reservedParts.foreach( part => {
       if(part.startDate.nonEmpty && part.startDate.get.isAfter(date))
@@ -1019,7 +1046,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   private def checkAndUpdateProjectStatus(projectID: Long): ProjectState =
   {
-    ProjectDAO.getProjectStatus(projectID).map { currentState =>
+    ProjectDAO.getProjectState(projectID).map { currentState =>
       logger.info(s"Current status is $currentState")
       val trProjectState = ViiteTierekisteriClient.getProjectStatusObject(projectID)
       val newState = getStatusFromTRObject(trProjectState).getOrElse(ProjectState.Unknown)

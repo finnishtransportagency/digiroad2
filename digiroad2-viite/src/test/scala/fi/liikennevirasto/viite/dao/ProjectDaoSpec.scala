@@ -159,7 +159,7 @@ class ProjectDaoSpec  extends FunSuite with Matchers {
       val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
       ProjectDAO.createRoadAddressProject(rap)
       ProjectDAO.updateProjectStatus(id, ProjectState.Saved2TR, "")
-      ProjectDAO.getProjectStatus(id) should be(Some(ProjectState.Saved2TR))
+      ProjectDAO.getProjectState(id) should be(Some(ProjectState.Saved2TR))
     }
   }
 
