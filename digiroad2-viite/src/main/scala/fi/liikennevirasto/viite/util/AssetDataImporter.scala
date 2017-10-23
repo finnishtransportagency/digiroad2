@@ -346,12 +346,12 @@ class AssetDataImporter {
     val roadsWithSingleRoadType = conversionDatabase.withDynSession {
       sql""" select distinct tie, aosa, tietyyppi, ely from VVH_TIEOSOITE_NYKY
              where (tie, aosa) in(
-             SELECT gr.TIE, gr.AOSA FROM VVH_TIEOSOITE_NYKY gr  group by gr.tie, gr.aosa  having count(distinct TIETYYPPI) = 1)
+             SELECT gr.TIE, gr.AOSA FROM VVH_TIEOSOITE_NYKY gr  group by gr.tie, gr.aosa  having count(distinct gr.TIETYYPPI) = 1)
               union
             select distinct tie, aosa, tietyyppi, ely from vvh_tieosoite_taydentava
             where (tie, aosa) in(
-            SELECT gr.TIE, gr.AOSA FROM VVH_TIEOSOITE_NYKY gr  group by gr.tie, gr.aosa  having count(distinct TIETYYPPI) = 1)
-            order by tie, aosa;
+            SELECT t.TIE, t.AOSA FROM vvh_tieosoite_taydentava t  group by t.tie, t.aosa  having count(distinct t.TIETYYPPI) = 1)
+            order by tie, aosa
         """.as[(Long, Long, Long, Long)].list
     }
 
