@@ -764,7 +764,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     try {
       withDynTransaction{
         val (added, modified) = links.partition(_.status == LinkStatus.New.value)
-        revertLinks(projectId, roadNumber, roadPartNumber, added, modified)
+        if (modified.exists(_.status == LinkStatus.Numbering.value)) {
+          logger.info(s"Reverting whole road part in $projectId ($roadNumber/$roadPartNumber)")
+          // Numbering change affects the whole road part
+          revertLinks(projectId, roadNumber, roadPartNumber, added,
+            ProjectDAO.fetchByProjectRoadPart(roadNumber, roadPartNumber, projectId).map(
+              link => LinkToRevert(link.id, link.linkId, link.status.value)))
+        } else {
+          revertLinks(projectId, roadNumber, roadPartNumber, added, modified)
+        }
       }
     }
     catch{
