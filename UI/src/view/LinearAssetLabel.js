@@ -158,19 +158,20 @@
       };
 
       this.isValidValue = function (value) {
-        return value;
+        return !_.isUndefined(value);
       };
 
       this.getStyle = function (asset, counter) {
-        return [backgroundStyle(getTypeId(asset), counter), new ol.style.Style({
-          text: new ol.style.Text({
-            text: textStyle(me.getValue(asset)),
-            fill: new ol.style.Fill({
-              color: '#000000'
-            }),
-            font: '14px sans-serif',
-            offsetY: getTextOffset(asset, counter)
-          })
+        return [backgroundStyle(getTypeId(asset), counter),
+          new ol.style.Style({
+            text: new ol.style.Text({
+              text: textStyle(me.getValue(asset)),
+              fill: new ol.style.Fill({
+                color: '#000000'
+              }),
+              font: '14px sans-serif',
+              offsetY: getTextOffset(asset, counter)
+            })
         })];
       };
 
@@ -209,9 +210,8 @@
 
         return [].concat.apply([], _.chain(assets).map(function (asset) {
           var values = getValues(asset);
-          var size = values.length;
-          return _.map(values, function (assetValues) {
-            var style = me.getStyle(assetValues, --size);
+          return _.map(values, function (assetValues, index) {
+            var style = me.getStyle(assetValues, index);
             var feature = me.createFeature(getPoint(asset));
             feature.setStyle(style);
             return feature;
