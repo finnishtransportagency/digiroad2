@@ -89,9 +89,9 @@ object DataFixture {
     println()
   }
 
-  def updateRoadAddressesValues(): Unit = {
+  def updateRoadAddressesValues(vVHClient: VVHClient): Unit = {
     println(s"\nStarting road address update values from conversion at time: ${DateTime.now()}")
-    dataImporter.updateRoadAddressesValues(Conversion.database())
+    dataImporter.updateRoadAddressesValues(Conversion.database(), vvhClient)
   }
 
   def updateMissingRoadAddresses(): Unit = {
@@ -278,7 +278,7 @@ object DataFixture {
       case Some("import_complementary_road_address") =>
         importComplementaryRoadAddress()
       case Some("update_road_addresses_ely_and_road_type") =>
-        updateRoadAddressesValues()
+        updateRoadAddressesValues(vvhClient)
       case Some ("recalculate_addresses") =>
         recalculate()
       case Some ("update_missing") if geometryFrozen =>

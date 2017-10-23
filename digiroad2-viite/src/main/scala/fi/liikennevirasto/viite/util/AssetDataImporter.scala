@@ -21,6 +21,7 @@ import fi.liikennevirasto.digiroad2.util.AssetDataImporter.{SimpleBusStop, _}
 import fi.liikennevirasto.digiroad2.util.VVHSerializer
 import fi.liikennevirasto.viite.{RoadAddressLinkBuilder, RoadAddressService, RoadType}
 import fi.liikennevirasto.viite.dao.{RoadAddress, RoadAddressDAO}
+import fi.liikennevirasto.viite.process.{RoadAddressChangeInfoMapper, RoadAddressMapping}
 import org.joda.time._
 import org.slf4j.LoggerFactory
 import slick.jdbc.StaticQuery.interpolation
@@ -96,7 +97,7 @@ class AssetDataImporter {
   }
 
   case class LRMPos(id: Long, linkId: Long, startM: Double, endM: Double)
-  case class RoadTypeChangePoints(roadNumber: Long, roadPartNumber: Long, addrM: Long, before: RoadType, after: RoadType)
+  case class RoadTypeChangePoints(roadNumber: Long, roadPartNumber: Long, addrM: Long, before: RoadType, after: RoadType, elyCode: Long)
 
   /**
     * Get road type for road address object with a list of road type change points
@@ -325,22 +326,22 @@ class AssetDataImporter {
     }
   }
 
-  def updateRoadAddressesValues(conversionDatabase: DatabaseDef) = {
-    //fetching the roads with complementaries from conversion database
+  def updateRoadAddressesValues(conversionDatabase: DatabaseDef, vvhClient: VVHClient) = {
+    val eventBus = new DummyEventBus
+    val linkService = new RoadLinkService(vvhClient, eventBus, new DummySerializer)
 
-    val roadsWithMultipleValues = conversionDatabase.withDynSession{
+    val roadsWithMultipleValues = conversionDatabase.withDynSession {
       sql"""SELECT t.tie, t.aosa, ajr, let as addrM, tietyyppi as type_before, (SELECT tietyyppi FROM VVH_TIEOSOITE_NYKY u WHERE u.tie = t.tie AND u.aosa=t.aosa AND (u.ajr = t.ajr OR u.ajr=0 OR t.ajr=0)
-         AND u.aet = t.let AND ROWNUM < 2) type_after FROM VVH_TIEOSOITE_NYKY t
+         AND u.aet = t.let AND ROWNUM < 2) type_after, ely FROM VVH_TIEOSOITE_NYKY t
          JOIN (SELECT gr.TIE, gr.AOSA, count(distinct TIETYYPPI)
          FROM VVH_TIEOSOITE_NYKY gr group by gr.tie, gr.aosa having count(distinct TIETYYPPI) > 1) temp ON
          (temp.tie = t.tie AND temp.aosa = t.aosa)
          WHERE (  EXISTS (SELECT 1 FROM VVH_TIEOSOITE_NYKY chg WHERE chg.tie = t.tie and chg.aosa=t.aosa and (chg.ajr = t.ajr OR chg.ajr=0 OR t.ajr=0) AND chg.aet = t.let AND chg.tietyyppi != t.tietyyppi)) order by tie, aosa, addrM, ajr
-         """.as[(Long, Long, Long, Long, Int, Int)].list.map{
-        case (roadNumber, roadPartNumber, trackCode, addressMChangeRoadType, roadTypeBefore, roadTypeAfter) =>
-          RoadTypeChangePoints(roadNumber, roadPartNumber, addressMChangeRoadType, RoadType.apply(roadTypeBefore), RoadType.apply(roadTypeAfter))
+         """.as[(Long, Long, Long, Long, Int, Int, Int)].list.map {
+        case (roadNumber, roadPartNumber, trackCode, addressMChangeRoadType, roadTypeBefore, roadTypeAfter, ely) =>
+          RoadTypeChangePoints(roadNumber, roadPartNumber, addressMChangeRoadType, RoadType.apply(roadTypeBefore), RoadType.apply(roadTypeAfter), ely)
       }
     }
-
 
     val roadsWithSingleRoadType = conversionDatabase.withDynSession {
       sql""" select distinct tie, aosa, tietyyppi, ely from VVH_TIEOSOITE_NYKY
@@ -358,8 +359,51 @@ class AssetDataImporter {
       roadsWithSingleRoadType.foreach(road => {
         updateRoadWithSingleRoadType(road._1, road._2, road._3, road._4)
       })
+
+      roadsWithMultipleValues.foreach(road =>{
+        val addresses = RoadAddressDAO.fetchByRoadPart(road.roadNumber, road.roadPartNumber, true)
+        addresses.nonEmpty match {
+          case true => {
+            addresses.foreach(address =>{
+              roadType(roadsWithMultipleValues.filter { r=> r.roadNumber == road.roadNumber && r.roadPartNumber == road.roadPartNumber }, address) match {
+                case Left(roadType) =>{
+                  println(s"updating tie = ${address.roadNumber}, aosa = ${address.roadPartNumber}")
+                  sqlu"""UPDATE ROAD_ADDRESS SET ROAD_TYPE = ${roadType.value}, ELY= ${road.elyCode} where ID = ${address.id} """.execute
+                }
+                case Right((addrM, roadTypeBefore, roadTypeAfter)) => {
+                  val roadLinkFromVVH = linkService.getCurrentAndComplementaryRoadLinksFromVVH(Set(address.linkId), false)
+                  val splittedRoadAddresses = splitRoadAddresses(address.copy(geometry = roadLinkFromVVH.head.geometry), addrM, roadTypeBefore, roadTypeAfter, road.elyCode)
+                  RoadAddressDAO.expireById(Set(address.id))
+                  RoadAddressDAO.create(splittedRoadAddresses)
+                }
+              }
+            })
+          }
+          case _ =>
+        }
+      })
     }
 
+  }
+
+  def splitRoadAddresses(roadAddress : RoadAddress, addrMToSplit: Long, roadTypeBefore : RoadType, roadTypeAfter : RoadType, elyCode : Long) : Seq[RoadAddress] = {
+    val splitMValue = roadAddress.startMValue + (roadAddress.endMValue - roadAddress.startMValue) / (roadAddress.endAddrMValue - roadAddress.startAddrMValue) * (addrMToSplit - roadAddress.startAddrMValue)
+    println(s"Splitting road address id = ${roadAddress.id}, tie = ${roadAddress.roadNumber} and aosa = ${roadAddress.roadPartNumber}, on MValue = ${addrMToSplit}")
+    val roadAddressA = roadAddress.copy(
+      id = fi.liikennevirasto.viite.NewRoadAddress,
+      endAddrMValue = addrMToSplit,
+      endMValue = splitMValue,
+      geometry = GeometryUtils.truncateGeometry2D(roadAddress.geometry, 0.0, splitMValue),
+      roadType = roadTypeBefore, ely = elyCode)
+
+    val roadAddressB = roadAddress.copy(
+      id = fi.liikennevirasto.viite.NewRoadAddress,
+      startAddrMValue = addrMToSplit,
+      startMValue = roadAddressA.endMValue,
+      geometry = GeometryUtils.truncateGeometry2D(roadAddress.geometry, splitMValue, roadAddress.endMValue),
+      roadType = roadTypeAfter, ely = elyCode
+    )
+    Seq(roadAddressA, roadAddressB)
   }
 
   def updateRoadWithSingleRoadType(roadNumber:Long, roadPartNumber: Long, roadType : Long, elyCode :Long) = {
