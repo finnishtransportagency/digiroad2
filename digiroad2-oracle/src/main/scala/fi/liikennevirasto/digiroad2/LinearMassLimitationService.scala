@@ -35,7 +35,7 @@ class LinearMassLimitationService(roadLinkService: RoadLinkService, dao: OracleM
 
   def getMassLimitationByRoadLinks(typeIds: Seq[Int], roadLinks: Seq[RoadLink]): Seq[MassLimitationAsset] = {
     val linkIds = roadLinks.map(_.linkId)
-    val allAssets = getAllAssetByTypeId(typeIds, linkIds)
+    val allAssets = getAllAssetsByLinkIds(typeIds, linkIds)
 
     allAssets.groupBy(_.linkId).flatMap {
       case (linkId, assets) =>
@@ -55,8 +55,8 @@ class LinearMassLimitationService(roadLinkService: RoadLinkService, dao: OracleM
 
   protected def assetSplitSideCodes(assets: Seq[PersistedLinearAsset]): Seq[PersistedLinearAsset] = {
     assets.exists(_.sideCode != SideCode.BothDirections.value) && assets.exists(_.sideCode == SideCode.BothDirections.value) match {
-      case true => assets.filter(_.sideCode == SideCode.BothDirections.value).flatMap(asset_sideCode3 =>
-        Seq(asset_sideCode3.copy(sideCode = SideCode.AgainstDigitizing.value), asset_sideCode3.copy(sideCode = SideCode.TowardsDigitizing.value))
+      case true => assets.filter(_.sideCode == SideCode.BothDirections.value).flatMap(asset_sideCode =>
+        Seq(asset_sideCode.copy(sideCode = SideCode.AgainstDigitizing.value), asset_sideCode.copy(sideCode = SideCode.TowardsDigitizing.value))
       ) ++ assets.filterNot(_.sideCode == SideCode.BothDirections.value)
       case false => assets
     }
