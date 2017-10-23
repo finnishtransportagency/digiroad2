@@ -394,7 +394,7 @@ object ProjectDAO {
     Q.queryNA[String](query).firstOption
   }
 
-  def getProjectStatus(projectID: Long): Option[ProjectState] = {
+  def getProjectState(projectID: Long): Option[ProjectState] = {
     val query =
       s""" SELECT state
             FROM project
