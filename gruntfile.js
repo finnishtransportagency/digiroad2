@@ -100,6 +100,18 @@ module.exports = function(grunt) {
             headers: {referer: 'http://www.paikkatietoikkuna.fi/web/fi/kartta'}
           },
           {
+            context: '/vionice',
+            port: '443',
+            host: 'map.vionice.io',
+            https: true,
+            changeOrigin: true,
+            xforward: false,
+            rewrite: {
+                '^/vionice': '/api'
+            },
+            headers: { Host: 'map.vionice.io:443' }
+          },
+          {
             context: '/vkm',
             host: 'localhost',
             port: '8997',
