@@ -609,9 +609,7 @@
       });
 
       rootElement.on('click', ' .project-form button.cancelLink', function() {
-        if(!isCuttingMode) {
           cancelChanges();
-        }
       });
 
       rootElement.on('click', '.project-form button.send', function() {

@@ -628,9 +628,7 @@
       });
 
       rootElement.on('click', ' .split-form button.cancelLink', function(){
-          if(isCuttingMode) {
           cancelChanges();
-          }
       });
 
       rootElement.on('click', '.split-form button.send', function(){
