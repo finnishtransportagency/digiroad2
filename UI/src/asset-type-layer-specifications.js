@@ -47,7 +47,7 @@
         title: 'Rajoitus',
         enabled: 'Rajoitus',
         disabled: 'Ei rajoitusta',
-        otherRestrictions : 'Muut massarajoitukset',
+        massLimitations : 'Muut massarajoitukset',
         showUnit: true
       }
     },
@@ -65,7 +65,7 @@
       editControlLabels: { title: 'Rajoitus',
         enabled: 'Rajoitus',
         disabled: 'Ei rajoitusta',
-        otherRestrictions : 'Muut massarajoitukset',
+        massLimitations : 'Muut massarajoitukset',
         showUnit: true
       }
     },
@@ -83,7 +83,7 @@
       editControlLabels: { title: 'Rajoitus',
         enabled: 'Rajoitus',
         disabled: 'Ei rajoitusta',
-        otherRestrictions : 'Muut massarajoitukset',
+        massLimitations : 'Muut massarajoitukset',
         showUnit: true
       }
     },
@@ -101,7 +101,7 @@
       editControlLabels: { title: 'Rajoitus',
         enabled: 'Rajoitus',
         disabled: 'Ei rajoitusta',
-        otherRestrictions : 'Muut massarajoitukset',
+        massLimitations : 'Muut massarajoitukset',
         showUnit: true
       }
     },
