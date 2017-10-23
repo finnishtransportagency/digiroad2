@@ -58,7 +58,7 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
   test("TR-connection Create test") {
     assume(testConnection)
     val message= ViiteTierekisteriClient.sendJsonMessage(ChangeProject(0, "Testproject", "TestUser", 3, "2017-06-01", Seq {
-      RoadAddressChangeInfo(AddressChangeType.apply(2), RoadAddressChangeSection(None, None, None, None, None, None), RoadAddressChangeSection(Option(403), Option(0), Option(8), Option(0), Option(8), Option(1001)), Discontinuity.apply(1), RoadType.apply(1)) // projectid 0 wont be added to TR
+      RoadAddressChangeInfo(AddressChangeType.apply(2), RoadAddressChangeSection(None, None, None, None, None, None, None, None, None), RoadAddressChangeSection(Option(403), Option(0), Option(8), Option(0), Option(8), Option(1001), Option(RoadType.PublicRoad), Option(Discontinuity.Continuous), Option(5)), Discontinuity.apply(1), RoadType.apply(1)) // projectid 0 wont be added to TR
     }))
     message.projectId should be (0)
     message.status should be (201)

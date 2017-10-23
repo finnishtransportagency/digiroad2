@@ -61,7 +61,7 @@ case object ChangeInfoItemSerializer extends CustomSerializer[RoadAddressChangeI
 }, {
   case o: RoadAddressChangeInfo =>
     implicit val formats = DefaultFormats + ChangeInfoRoadPartsSerializer
-    val emptySection = RoadAddressChangeSection(None, None, None, None, None, None)
+    val emptySection = RoadAddressChangeSectionTR(None, None, None, None, None, None)
     o.changeType match {
       case New =>
         JObject(
@@ -144,7 +144,7 @@ case object ChangeInfoRoadPartsSerializer extends CustomSerializer[RoadAddressCh
     val (road, track, startPart, stm, endPart, enm) =
       (map.get("tie"), map.get("ajr"), map.get("aosa"), map.get("aet"), map.get("losa"), map.get("let"))
     RoadAddressChangeSection(road.map(jIntToLong), track.map(jIntToLong), startPart.map(jIntToLong), endPart.map(jIntToLong),
-      stm.map(jIntToLong), enm.map(jIntToLong))
+      stm.map(jIntToLong), enm.map(jIntToLong), None, None, None)
 }, {
   case s: RoadAddressChangeSection =>
     JObject(JField("tie", s.roadNumber.map(l => JInt(BigInt.apply(l))).orNull),

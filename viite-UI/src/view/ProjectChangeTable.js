@@ -159,9 +159,9 @@
       '<td class="project-change-table-data-cell">' + changeInfoSeq.target.startAddressM + '</td>' +
       '<td class="project-change-table-data-cell">' + changeInfoSeq.target.endRoadPartNumber + '</td>' +
       '<td class="project-change-table-data-cell">' + changeInfoSeq.target.endAddressM + '</td>' +
-      '<td class="project-change-table-data-cell">' + changeInfoSeq.discontinuity + '</td>' +
-      '<td class="project-change-table-data-cell data-cell-road-type">'+ changeInfoSeq.roadType + '</td>' +
-      '<td class="project-change-table-data-cell">' + projectChangeData.ely + '</td>';
+      '<td class="project-change-table-data-cell">' + changeInfoSeq.target.discontinuity + '</td>' +
+      '<td class="project-change-table-data-cell data-cell-road-type">'+ changeInfoSeq.target.roadType + '</td>' +
+      '<td class="project-change-table-data-cell">' + changeInfoSeq.target.ely + '</td>';
     }
 
     function getSourceInfo(changeInfoSeq,  projectChangeData)
@@ -174,9 +174,9 @@
         '<td class="project-change-table-data-cell">' + changeInfoSeq.source.startAddressM + '</td>' +
         '<td class="project-change-table-data-cell">' + changeInfoSeq.source.endRoadPartNumber + '</td>' +
         '<td class="project-change-table-data-cell">' + changeInfoSeq.source.endAddressM + '</td>' +
-        '<td class="project-change-table-data-cell">' + changeInfoSeq.discontinuity + '</td>' +
-        '<td class="project-change-table-data-cell data-cell-road-type">' + changeInfoSeq.roadType + '</td>' +
-        '<td class="project-change-table-data-cell">' + projectChangeData.ely + '</td>';
+        '<td class="project-change-table-data-cell">' + changeInfoSeq.source.discontinuity + '</td>' +
+        '<td class="project-change-table-data-cell data-cell-road-type">' + changeInfoSeq.source.roadType + '</td>' +
+        '<td class="project-change-table-data-cell">' + changeInfoSeq.source.ely + '</td>';
     }
 
     var windowMaximized = false;
