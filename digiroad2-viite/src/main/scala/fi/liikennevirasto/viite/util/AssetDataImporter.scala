@@ -325,6 +325,48 @@ class AssetDataImporter {
     }
   }
 
+  def updateRoadAddressesValues(conversionDatabase: DatabaseDef) = {
+    //fetching the roads with complementaries from conversion database
+
+    val roadsWithMultipleValues = conversionDatabase.withDynSession{
+      sql"""SELECT t.tie, t.aosa, ajr, let as addrM, tietyyppi as type_before, (SELECT tietyyppi FROM VVH_TIEOSOITE_NYKY u WHERE u.tie = t.tie AND u.aosa=t.aosa AND (u.ajr = t.ajr OR u.ajr=0 OR t.ajr=0)
+         AND u.aet = t.let AND ROWNUM < 2) type_after FROM VVH_TIEOSOITE_NYKY t
+         JOIN (SELECT gr.TIE, gr.AOSA, count(distinct TIETYYPPI)
+         FROM VVH_TIEOSOITE_NYKY gr group by gr.tie, gr.aosa having count(distinct TIETYYPPI) > 1) temp ON
+         (temp.tie = t.tie AND temp.aosa = t.aosa)
+         WHERE (  EXISTS (SELECT 1 FROM VVH_TIEOSOITE_NYKY chg WHERE chg.tie = t.tie and chg.aosa=t.aosa and (chg.ajr = t.ajr OR chg.ajr=0 OR t.ajr=0) AND chg.aet = t.let AND chg.tietyyppi != t.tietyyppi)) order by tie, aosa, addrM, ajr
+         """.as[(Long, Long, Long, Long, Int, Int)].list.map{
+        case (roadNumber, roadPartNumber, trackCode, addressMChangeRoadType, roadTypeBefore, roadTypeAfter) =>
+          RoadTypeChangePoints(roadNumber, roadPartNumber, addressMChangeRoadType, RoadType.apply(roadTypeBefore), RoadType.apply(roadTypeAfter))
+      }
+    }
+
+
+    val roadsWithSingleRoadType = conversionDatabase.withDynSession {
+      sql""" select distinct tie, aosa, tietyyppi, ely from VVH_TIEOSOITE_NYKY
+             where (tie, aosa) in(
+             SELECT gr.TIE, gr.AOSA FROM VVH_TIEOSOITE_NYKY gr  group by gr.tie, gr.aosa  having count(distinct TIETYYPPI) = 1)
+              union
+            select distinct tie, aosa, tietyyppi, ely from vvh_tieosoite_taydentava
+            where (tie, aosa) in(
+            SELECT gr.TIE, gr.AOSA FROM VVH_TIEOSOITE_NYKY gr  group by gr.tie, gr.aosa  having count(distinct TIETYYPPI) = 1)
+            order by tie, aosa;
+        """.as[(Long, Long, Long, Long)].list
+    }
+
+    withDynTransaction{
+      roadsWithSingleRoadType.foreach(road => {
+        updateRoadWithSingleRoadType(road._1, road._2, road._3, road._4)
+      })
+    }
+
+  }
+
+  def updateRoadWithSingleRoadType(roadNumber:Long, roadPartNumber: Long, roadType : Long, elyCode :Long) = {
+    println(s"Updating road number $roadNumber and part $roadPartNumber with roadType = $roadType and elyCode = $elyCode")
+    sqlu"""UPDATE ROAD_ADDRESS SET ROAD_TYPE = ${roadType}, ELY= ${elyCode} where ROAD_NUMBER = ${roadNumber} AND ROAD_PART_NUMBER = ${roadPartNumber} """.execute
+  }
+
   def updateMissingRoadAddresses(vvhClient: VVHClient) = {
     val roadNumbersToFetch = Seq((1, 19999), (40000,49999))
     val eventBus = new DummyEventBus
