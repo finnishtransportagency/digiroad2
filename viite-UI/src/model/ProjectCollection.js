@@ -1,5 +1,5 @@
 (function(root) {
-  root.RoadAddressProjectCollection = function(backend) {
+  root.ProjectCollection = function(backend) {
     var roadAddressProjects = [];
     var currentRoadPartList = [];
     var reservedDirtyRoadPartList = [];

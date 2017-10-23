@@ -1,38 +1,38 @@
 <html>
 <head>
-  <meta charset="utf-8">
-  <!--<link rel="stylesheet" type="text/css" href="bower_components/openlayers/css/ol.css">-->
-  <link rel="stylesheet" type="text/css" href="components/theme/default/style.css">
-  <link rel="stylesheet" type="text/css" href="bower_components/pikaday/css/pikaday.css">
-  <link rel="stylesheet" type="text/css" href="css/viite.css">
-  <!-- Google Analytics loaded asynchronously -->
-  <script>
-    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-        (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-  </script>
-  <title>Viite</title>
+    <meta charset="utf-8">
+    <!--<link rel="stylesheet" type="text/css" href="bower_components/openlayers/css/ol.css">-->
+    <link rel="stylesheet" type="text/css" href="components/theme/default/style.css">
+    <link rel="stylesheet" type="text/css" href="bower_components/pikaday/css/pikaday.css">
+    <link rel="stylesheet" type="text/css" href="css/viite.css">
+    <!-- Google Analytics loaded asynchronously -->
+    <script>
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+                    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+                m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+    </script>
+    <title>Viite</title>
 </head>
 <body class="digiroad2">
 <header id="header">
-  <span class="logo">Viite</span>
+    <span class="logo">Viite</span>
   <span class="notification" id="notification">
   </span>
-  <a href="manual/index.html" target="_blank" class="header-link">K&auml;ytt&ouml;ohje</a>
+    <a href="manual/index.html" target="_blank" class="header-link">K&auml;ytt&ouml;ohje</a>
 </header>
 <div class="container">
     <div id="contentMap">
-      <div id="mapdiv">
-        <div id="popup" class="ol-viite-roadaddress-popup">
-         <div id="popup-content"></div>
+        <div id="mapdiv">
+            <div id="popup" class="ol-viite-roadaddress-popup">
+                <div id="popup-content"></div>
+            </div>
         </div>
-      </div>
-      <div class="crosshair crosshair-center"></div>
-      <div class="crosshair crosshair-top"></div>
-      <div class="crosshair crosshair-bottom"></div>
-      <div class="crosshair crosshair-left"></div>
-      <div class="crosshair crosshair-right"></div>
+        <div class="crosshair crosshair-center"></div>
+        <div class="crosshair crosshair-top"></div>
+        <div class="crosshair crosshair-bottom"></div>
+        <div class="crosshair crosshair-left"></div>
+        <div class="crosshair crosshair-right"></div>
     </div>
     <nav id="map-tools"></nav>
     <div id="feature-attributes"></div>
@@ -53,7 +53,20 @@
 <script type="text/javascript" src="bower_components/bacon.jquery/dist/bacon.jquery.js"></script>
 <!-- @if NODE_ENV == 'DEVELOPMENT' -->
 <script type="text/javascript" src="components/ol3.js"></script>
+
+<script type="text/javascript" src="src/main.js"></script>
+
+<script type="text/javascript" src="src/analytics.js"></script>
+
+<script type="text/javascript" src="src/application.js"></script>
+
+<script type="text/javascript" src="src/router.js"></script>
+
+<script type="text/javascript" src="src/map/LinkPropertyMarker.js"></script>
+<script type="text/javascript" src="src/map/CalibrationPointMarker.js"></script>
+
 <script type="text/javascript" src="src/utils/eventbus.js"></script>
+<script type="text/javascript" src="src/utils/script-loader.js"></script>
 <script type="text/javascript" src="src/utils/geometry-calculations.js"></script>
 <script type="text/javascript" src="src/utils/LocationInputParser.js"></script>
 <script type="text/javascript" src="src/utils/session.js"></script>
@@ -63,6 +76,20 @@
 <script type="text/javascript" src="src/utils/environment-utils.js"></script>
 <script type="text/javascript" src="src/utils/zoom-levels.js"></script>
 <script type="text/javascript" src="src/utils/validity-directions.js"></script>
+<script type="text/javascript" src="src/utils/GeometryUtils.js"></script>
+<script type="text/javascript" src="src/utils/OpenLayersRule.js"></script>
+<script type="text/javascript" src="src/utils/StyleRule.js"></script>
+
+<script type="text/javascript" src="src/view/NavigationPanel.js"></script>
+<script type="text/javascript" src="src/view/navigationpanel/EditModeToggleButton.js"></script>
+<script type="text/javascript" src="src/view/navigationpanel/ActionPanelBoxes.js"></script>
+<script type="text/javascript" src="src/view/navigationpanel/RoadLinkBox.js"></script>
+<script type="text/javascript" src="src/view/navigationpanel/LayerSelectBox.js"></script>
+<script type="text/javascript" src="src/view/navigationpanel/ProjectSelectBox.js"></script>
+<script type="text/javascript" src="src/view/navigationpanel/ProjectListModel.js"></script>
+<script type="text/javascript" src="src/view/navigationpanel/SearchBox.js"></script>
+
+<script type="text/javascript" src="src/view/ProjectChangeTable.js"></script>
 <script type="text/javascript" src="src/view/TileMapCollection.js"></script>
 <script type="text/javascript" src="src/view/Layer.js"></script>
 <script type="text/javascript" src="src/view/RoadLayer.js"></script>
@@ -70,7 +97,6 @@
 <script type="text/javascript" src="src/view/ProjectLinkStyler.js"></script>
 <script type="text/javascript" src="src/view/RoadLayer3.js"></script>
 <script type="text/javascript" src="src/view/ProjectLinkLayer.js"></script>
-<script type="text/javascript" src="src/model/SelectedProjectLink.js"></script>
 <script type="text/javascript" src="src/view/RoadLayerSelectionStyle.js"></script>
 <script type="text/javascript" src="src/view/MapView.js"></script>
 <script type="text/javascript" src="src/view/MapOverlay.js"></script>
@@ -80,43 +106,29 @@
 <script type="text/javascript" src="src/view/InstructionsPopup.js"></script>
 <script type="text/javascript" src="src/view/ZoomBox.js"></script>
 <script type="text/javascript" src="src/view/DoubleClickSelectControl.js"></script>
-<script type="text/javascript" src="src/utils/GeometryUtils.js"></script>
-<script type="text/javascript" src="src/utils/OpenLayersRule.js"></script>
-<script type="text/javascript" src="src/utils/StyleRule.js"></script>
 <script type="text/javascript" src="src/view/LinkPropertyLayer.js"></script>
 <script type="text/javascript" src="src/view/LinkPropertyLayerStyles.js"></script>
 <script type="text/javascript" src="src/view/LinkPropertyMassUpdateDialog.js"></script>
-<script type="text/javascript" src="src/view/RoadAddressProjectForm.js"></script>
-<script type="text/javascript" src="src/view/RoadAddressProjectEditForm.js"></script>
-<script type="text/javascript" src="src/model/RoadAddressProjectCollection.js"></script>
-<script type="text/javascript" src="src/map/LinkPropertyMarker.js"></script>
-<script type="text/javascript" src="src/router.js"></script>
-<script type="text/javascript" src="src/application.js"></script>
-<script type="text/javascript" src="src/view/navigationpanel/EditModeToggleButton.js"></script>
-<script type="text/javascript" src="src/view/navigationpanel/ActionPanelBoxes.js"></script>
-<script type="text/javascript" src="src/view/navigationpanel/RoadLinkBox.js"></script>
-<script type="text/javascript" src="src/view/navigationpanel/LayerSelectBox.js"></script>
-<script type="text/javascript" src="src/view/navigationpanel/ProjectSelectBox.js"></script>
-<script type="text/javascript" src="src/view/navigationpanel/ProjectListModel.js"></script>
-<script type="text/javascript" src="src/view/navigationpanel/SearchBox.js"></script>
-<script type="text/javascript" src="src/view/NavigationPanel.js"></script>
-<script type="text/javascript" src="src/view/ProjectChangeTable.js"></script>
+<script type="text/javascript" src="src/view/ProjectEditForm.js"></script>
+<script type="text/javascript" src="src/view/ProjectForm.js"></script>
+<script type="text/javascript" src="src/view/SplitForm.js"></script>
+<script type="text/javascript" src="src/view/CrosshairToggle.js"></script>
+<script type="text/javascript" src="src/view/LinkPropertyForm.js"></script>
+
+<script type="text/javascript" src="src/model/SelectedProjectLink.js"></script>
+<script type="text/javascript" src="src/model/ProjectCollection.js"></script>
 <script type="text/javascript" src="src/model/ApplicationModel.js"></script>
 <script type="text/javascript" src="src/model/RoadCollection.js"></script>
 <script type="text/javascript" src="src/model/SelectedLinkProperty.js"></script>
 <script type="text/javascript" src="src/model/LinkPropertiesModel.js"></script>
 <script type="text/javascript" src="src/model/LocationSearch.js"></script>
-<script type="text/javascript" src="src/map/CalibrationPointMarker.js"></script>
+<script type="text/javascript" src="src/model/ProjectChangeInfoModel.js"></script>
+
 <script type="text/javascript" src="src/modalconfirm/Confirm.js"></script>
 <script type="text/javascript" src="src/modalconfirm/ModalConfirm.js"></script>
-<script type="text/javascript" src="src/view/CrosshairToggle.js"></script>
-<script type="text/javascript" src="src/view/LinkPropertyForm.js"></script>
-<script type="text/javascript" src="src/utils/script-loader.js"></script>
-<script type="text/javascript" src="src/assetgrouping/asset-grouping.js"></script>
-<script type="text/javascript" src="src/analytics.js"></script>
-<script type="text/javascript" src="src/main.js"></script>
-<script type="text/javascript" src="src/model/ProjectChangeInfoModel.js"></script>
 <script type="text/javascript" src="src/modalconfirm/GenericConfirmPopup.js"></script>
+
+<script type="text/javascript" src="src/assetgrouping/asset-grouping.js"></script>
 <!-- @endif -->
 <!-- @if NODE_ENV == 'STAGING' -->
 <script type="text/javascript" src="components/ol3.js"></script>

@@ -355,7 +355,7 @@
       });
     };
 
-    eventbus.on('projectLink:clicked', function () {
+    eventbus.on('projectLink:clicked projectLink:splited', function () {
       highlightFeatures();
     });
 
@@ -700,7 +700,7 @@
 
     eventbus.on('splited:projectLinks', function (splited) {
       _.defer(function(){drawIndicators(splited);});
-        eventbus.trigger('projectLink:clicked', splited);
+        eventbus.trigger('projectLink:splited', splited);
     });
 
     eventbus.on('projectLink:projectLinksCreateSuccess', function () {
