@@ -225,9 +225,9 @@ class AssetDataImporter {
     val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure) values (?, ?, ?, ?, ?)")
     val addressPS = dynamicSession.prepareStatement("insert into ROAD_ADDRESS (id, lrm_position_id, road_number, road_part_number, " +
       "track_code, discontinuity, START_ADDR_M, END_ADDR_M, start_date, end_date, created_by, " +
-      "VALID_FROM, geometry, floating) values (viite_general_seq.nextval, ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), " +
+      "VALID_FROM, geometry, floating, road_type, ely) values (viite_general_seq.nextval, ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), " +
       "TO_DATE(?, 'YYYY-MM-DD'), ?, TO_DATE(?, 'YYYY-MM-DD'), MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(" +
-      "?,?,0.0,0.0,?,?,0.0,?)), ?)")
+      "?,?,0.0,0.0,?,?,0.0,?)), ?, ?, ?)")
     val ids = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= ${lrmPositions.size}""".as[Long].list
     assert(ids.size == lrmPositions.size || lrmPositions.isEmpty)
     lrmPositions.zip(ids).foreach { case ((pos), (lrmId)) =>
@@ -266,6 +266,8 @@ class AssetDataImporter {
       addressPS.setDouble(15, y2)
       addressPS.setDouble(16, endAddrM - startAddrM)
       addressPS.setInt(17, if (floatingLinks.contains(pos.linkId)) 1 else 0)
+      addressPS.setLong(18, address._8)
+      addressPS.setLong(19, address._7)
       addressPS.addBatch()
     }
     lrmPositionPS.executeBatch()
