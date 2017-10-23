@@ -112,16 +112,16 @@ object RoadAddressChangesDAO {
 
   private def toRoadAddressChangeRecipient(row: ChangeRow) = {
     RoadAddressChangeSection(row.targetRoadNumber, row.targetTrackCode, row.targetStartRoadPartNumber, row.targetEndRoadPartNumber, row.targetStartAddressM, row.targetEndAddressM,
-      Some(RoadType.apply(row.targetRoadType.get)), Some(Discontinuity.apply(row.targetDiscontinuity.get)), Some(row.targetEly) )
+      Some(RoadType.apply(row.targetRoadType.getOrElse(RoadType.Unknown.value))), Some(Discontinuity.apply(row.targetDiscontinuity.getOrElse(Discontinuity.Continuous.value))), Some(row.targetEly) )
   }
   private def toRoadAddressChangeSource(row: ChangeRow) = {
     RoadAddressChangeSection(row.sourceRoadNumber, row.sourceTrackCode, row.sourceStartRoadPartNumber, row.sourceEndRoadPartNumber, row.sourceStartAddressM, row.sourceEndAddressM,
-      Some(RoadType.apply(row.sourceRoadType.get)), Some(Discontinuity.apply(row.sourceDiscontinuity.get)), row.sourceEly)
+      Some(RoadType.apply(row.sourceRoadType.getOrElse(RoadType.Unknown.value))), Some(Discontinuity.apply(row.sourceDiscontinuity.getOrElse(Discontinuity.Continuous.value))), row.sourceEly)
   }
   private def toRoadAddressChangeInfo(row: ChangeRow) = {
     val source = toRoadAddressChangeSource(row)
     val target = toRoadAddressChangeRecipient(row)
-    RoadAddressChangeInfo(AddressChangeType.apply(row.changeType), source, target, Discontinuity.apply(row.targetDiscontinuity.get), RoadType.apply(row.targetRoadType.get))
+    RoadAddressChangeInfo(AddressChangeType.apply(row.changeType), source, target, Discontinuity.apply(row.targetDiscontinuity.getOrElse(Discontinuity.Continuous.value)), RoadType.apply(row.targetRoadType.getOrElse(RoadType.Unknown.value)))
   }
 
   // TODO: cleanup after modification dates and modified by are populated correctly

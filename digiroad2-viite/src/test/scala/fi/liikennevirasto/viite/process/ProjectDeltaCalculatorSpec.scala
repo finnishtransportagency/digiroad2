@@ -323,9 +323,9 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
       term.endAddrMValue should be (85)
       term.id should be (ids(0))
       val (uncSource, uncTarget) = delta.unChanged.mapping.head
-      uncTarget.startAddrMValue should be (0)
-      uncTarget.endAddrMValue should be (62)
-      uncTarget.id should be (ids(0))
+      uncSource.startAddrMValue should be (0)
+      uncSource.endAddrMValue should be (62)
+      uncSource.id should be (ids(0))
       val cre = delta.newRoads.head
       cre.startAddrMValue should be (62)
       cre.endAddrMValue should be (85)
