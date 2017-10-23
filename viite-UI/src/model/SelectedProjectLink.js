@@ -19,7 +19,7 @@
 
     var splitSuravageLink = function(suravage, split) {
       splitSuravageLinks(suravage, split, function(splitedSuravageLinks) {
-        selection = [splitedSuravageLinks.created, splitedSuravageLinks.existing];
+        var selection = [splitedSuravageLinks.created, splitedSuravageLinks.existing];
         eventbus.trigger('splited:projectLinks', selection);
       });
     };
