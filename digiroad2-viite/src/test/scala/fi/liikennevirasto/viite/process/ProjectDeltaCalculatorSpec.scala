@@ -1,18 +1,32 @@
 package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
-import fi.liikennevirasto.digiroad2.{GeometryUtils, Point, Vector3d}
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{Queries, Sequences}
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.digiroad2.{GeometryUtils, Point}
 import fi.liikennevirasto.viite.RoadType
 import fi.liikennevirasto.viite.RoadType.PublicRoad
 import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
 import fi.liikennevirasto.viite.dao._
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
+import slick.driver.JdbcDriver.backend.Database
+import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import slick.jdbc.StaticQuery.interpolation
 
 class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
+  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  def runWithRollback[T](f: => T): T = {
+    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+      val t = f
+      dynamicSession.rollback()
+      t
+    }
+  }
+
   private def createRoadAddress(start: Long, distance: Long) = {
     RoadAddress(id = start, roadNumber = 5, roadPartNumber = 205, roadType = PublicRoad, track = Track.Combined,
       discontinuity = Continuous, startAddrMValue = start, endAddrMValue = start+distance, lrmPositionId = start, linkId = start,
@@ -260,4 +274,63 @@ class ProjectDeltaCalculatorSpec  extends FunSuite with Matchers{
       to.endMAddr should be (130)
     })
   }
+
+  test("Calculate delta for split suravage link") {
+    runWithRollback {
+      val reservationId = Sequences.nextViitePrimaryKeySeqValue
+      val lrms = Queries.fetchLrmPositionIds(4)
+      val ids = (0 until 4).map(_ => Sequences.nextViitePrimaryKeySeqValue)
+      val project = RoadAddressProject(Sequences.nextViitePrimaryKeySeqValue, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("2999-01-01"), "TestUser", DateTime.parse("2999-01-01"), DateTime.parse("2999-01-01"), "Some additional info", Seq(), None , None)
+      ProjectDAO.createRoadAddressProject(project)
+      sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART(id, road_number, road_part_number, project_id, created_by, first_link_id, road_length, address_length, discontinuity, ely)
+            values ($reservationId, 6591, 1, ${project.id}, '-', 6550673, 85, 85, 5, 9)
+          """.execute
+      sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,
+            MODIFIED_DATE,LINK_SOURCE) values (${lrms(0)},null,'3','0',86.818,null,'6550673','1476392565000',
+            sysdate,'1')""".execute
+      sqlu"""Insert into ROAD_ADDRESS (ID,ROAD_NUMBER,ROAD_PART_NUMBER,TRACK_CODE,DISCONTINUITY,START_ADDR_M,END_ADDR_M,
+            LRM_POSITION_ID,START_DATE,END_DATE,CREATED_BY,VALID_FROM,CALIBRATION_POINTS,FLOATING,GEOMETRY,VALID_TO) values
+            (${ids(0)},'6591','1','0','5','0','85',${lrms(0)},to_date('01.01.1996','DD.MM.RRRR'),null,'tr',
+            to_date('16.10.1998','DD.MM.RRRR'),'0','0',MDSYS.SDO_GEOMETRY(4002,3067,NULL,MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1),
+            MDSYS.SDO_ORDINATE_ARRAY(445889.442,7004298.67,0,0,445956.884,7004244.253,0,85)),null)""".execute
+      sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE)
+            values (${lrms(1)},null,'3','0',63.926,null,'499972936','0',sysdate,'3')""".execute
+      sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE)
+            values (${lrms(2)},null,'3',63.926,307.99,null,'499972936','0',sysdate,'3')""".execute
+      sqlu"""Insert into LRM_POSITION (ID,LANE_CODE,SIDE_CODE,START_MEASURE,END_MEASURE,MML_ID,LINK_ID,ADJUSTED_TIMESTAMP,MODIFIED_DATE,LINK_SOURCE)
+            values (${lrms(3)},null,'3',63.752,86.818,null,'6550673','0',sysdate,'1')""".execute
+      sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK_CODE,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,
+            START_ADDR_M,END_ADDR_M,LRM_POSITION_ID,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,
+            CALIBRATION_POINTS,ROAD_TYPE,ROAD_ADDRESS_ID,CONNECTED_LINK_ID)
+            values (${ids(1)},${project.id},'0','5','6591','1','0','62',${lrms(1)},'silari',null,
+            to_date('20.10.2017','DD.MM.RRRR'),null,'1','0','1',${ids(0)},'6550673')""".execute
+      sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK_CODE,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,
+            START_ADDR_M,END_ADDR_M,LRM_POSITION_ID,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,
+            CALIBRATION_POINTS,ROAD_TYPE,ROAD_ADDRESS_ID,CONNECTED_LINK_ID)
+             values (${ids(2)},${project.id},'0','5','6591','1','62','85',${lrms(2)},'silari',null,
+             to_date('20.10.2017','DD.MM.RRRR'),null,'2','0','1',${ids(0)},'6550673')""".execute
+      sqlu"""Insert into PROJECT_LINK (ID,PROJECT_ID,TRACK_CODE,DISCONTINUITY_TYPE,ROAD_NUMBER,ROAD_PART_NUMBER,
+            START_ADDR_M,END_ADDR_M,LRM_POSITION_ID,CREATED_BY,MODIFIED_BY,CREATED_DATE,MODIFIED_DATE,STATUS,
+            CALIBRATION_POINTS,ROAD_TYPE,ROAD_ADDRESS_ID,CONNECTED_LINK_ID)
+            values (${ids(3)},${project.id},'0','5','6591','1','62','85',${lrms(3)},'silari',null,
+            to_date('20.10.2017','DD.MM.RRRR'),null,'5','2','9',${ids(0)},'499972936')""".execute
+      val delta = ProjectDeltaCalculator.delta(project.id)
+      delta.terminations should have size (1)
+      delta.unChanged should have size (1)
+      delta.newRoads should have size (1)
+      val term = delta.terminations.head
+      term.startAddrMValue should be (62)
+      term.endAddrMValue should be (85)
+      term.id should be (ids(0))
+      val unc = delta.unChanged.head
+      unc.startAddrMValue should be (0)
+      unc.endAddrMValue should be (62)
+      unc.id should be (ids(0))
+      val cre = delta.newRoads.head
+      cre.startAddrMValue should be (62)
+      cre.endAddrMValue should be (85)
+      cre.id should be (ids(2))
+    }
+  }
+
 }
