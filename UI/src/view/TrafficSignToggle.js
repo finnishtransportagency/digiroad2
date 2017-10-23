@@ -13,13 +13,13 @@
 
     element.find('.checkbox').find('input[type=checkbox]').on('change', function (event) {
       if ($(event.currentTarget).prop('checked')) {
-        eventbus.trigger('showVioniceSigns');
+        eventbus.trigger('map:showVioniceTrafficSign');
       } else {
         if (applicationModel.isDirty()) {
           $(event.currentTarget).prop('checked', true);
           new Confirm();
         } else {
-          eventbus.trigger('hideVioniceSigns');
+          eventbus.trigger('map:hideVioniceTrafficSign');
         }
       }
     });

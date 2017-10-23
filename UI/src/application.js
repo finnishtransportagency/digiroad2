@@ -286,6 +286,8 @@
 
     }, linearAssetLayers, pointAssetLayers);
 
+    VioniceLayer({ map: map });
+
     // Show environment name next to Digiroad logo
     $('#notification').append(Environment.localizedName());
 
