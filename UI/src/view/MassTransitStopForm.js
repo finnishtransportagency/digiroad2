@@ -706,7 +706,11 @@
       eventbus.on('asset:closed', closeAsset);
 
       eventbus.on('enumeratedPropertyValues:fetched', function(values) {
+        _.each(values, function(value) {
+          if(value.publicId === 'tietojen_yllapitaja')
+            value.values = _.filter( value.values, function(property) { return property.propertyValue != 99; }); });
         enumeratedPropertyValues = values;
+
       });
 
       eventbus.on('asset:moved', function() {
