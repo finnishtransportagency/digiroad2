@@ -754,6 +754,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     if (afterUpdateLinks.nonEmpty){
       val adjLinks = withGeometry(afterUpdateLinks)
       ProjectSectionCalculator.assignMValues(adjLinks).foreach(adjLink => ProjectDAO.updateAddrMValues(adjLink))
+    } else {
+      releaseRoadPart(projectId, roadNumber, roadPartNumber)
     }
     None
   }
@@ -772,6 +774,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  private def releaseRoadPart(projectId: Long, roadNumber: Long, roadPartNumber: Long) = {
+    if (ProjectDAO.fetchFirstLink(projectId, roadNumber, roadPartNumber).isEmpty) {
+      val part = ProjectDAO.fetchReservedRoadPart(roadNumber, roadPartNumber).get
+      ProjectDAO.removeReservedRoadPart(projectId, part)
+    }
+  }
   /**
     * Update project links to given status and recalculate delta and change table
     * @param projectId Project's id
