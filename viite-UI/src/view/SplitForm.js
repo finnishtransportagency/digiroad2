@@ -5,7 +5,6 @@
     var CalibrationCode = LinkValues.CalibrationCode;
     var currentProject = false;
     var selectedProjectLink = false;
-    var isCuttingMode = applicationModel.getSelectedTool() == "Cut";
     var markers = ['A', 'B'];
     var backend=new Backend();
     var staticField = function(labelText, dataField) {
@@ -104,7 +103,7 @@
     var defineOptionModifiers = function(option, selection) {
       var roadIsUnknownOrOther = projectCollection.roadIsUnknown(selection[0]) || projectCollection.roadIsOther(selection[0]) || selection[0].roadLinkSource === LinkGeomSource.SuravageLinkInterface.value;
       var roadIsSuravage = selection[0].roadLinkSource === LinkGeomSource.SuravageLinkInterface.value;
-      var isSplitMode = selection.length == 2 && selection[0].linkId === selection[1].linkId && isCuttingMode;
+      var isSplitMode = selection.length == 2 && selection[0].linkId === selection[1].linkId && applicationModel.getSelectedTool() == "Cut";
       var toEdit = !isSplitMode && selection[0].id === 0;
       var linkStatus = selection[0].status;
       var modifiers = '';
@@ -464,19 +463,19 @@
       });
 
       rootElement.on('click','.changeDirection', function () {
-          if(isCuttingMode) {
+          if(applicationModel.getSelectedTool() == "Cut") {
               projectCollection.changeNewProjectLinkDirection(projectCollection.getCurrentProject().project.id, selectedProjectLinkProperty.get());
           }
       });
 
       eventbus.on('roadAddress:projectLinksSaveFailed', function (result) {
-          if(isCuttingMode) {
+          if(applicationModel.getSelectedTool() == "Cut") {
               new ModalConfirm(result.toString());
           }
       });
 
       eventbus.on('roadAddressProject:discardChanges',function(){
-        if(isCuttingMode) {
+        if(applicationModel.getSelectedTool() == "Cut") {
           cancelChanges();
         }
       });
@@ -628,7 +627,9 @@
       });
 
       rootElement.on('click', ' .split-form button.cancelLink', function(){
-          cancelChanges();
+          if(applicationModel.getSelectedTool() == "Cut") {
+              cancelChanges();
+          }
       });
 
       rootElement.on('click', '.split-form button.send', function(){

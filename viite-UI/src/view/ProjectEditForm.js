@@ -5,7 +5,6 @@
     var CalibrationCode = LinkValues.CalibrationCode;
     var currentProject = false;
     var selectedProjectLink = false;
-    var isCuttingMode = applicationModel.getSelectedTool() == "Cut";
     var backend = new Backend();
     var staticField = function(labelText, dataField) {
       var field;
@@ -86,7 +85,7 @@
     var defineOptionModifiers = function(option, selection) {
       var roadIsUnknownOrOther = projectCollection.roadIsUnknown(selection[0]) || projectCollection.roadIsOther(selection[0]) || selection[0].roadLinkSource === LinkGeomSource.SuravageLinkInterface.value;
       var roadIsSuravage = selection[0].roadLinkSource === LinkGeomSource.SuravageLinkInterface.value;
-      var isSplitMode = selection.length == 2 && selection[0].linkId === selection[1].linkId && isCuttingMode;
+      var isSplitMode = selection.length == 2 && selection[0].linkId === selection[1].linkId && applicationModel.getSelectedTool() != "Cut";
       var toEdit = !isSplitMode && selection[0].id === 0;
       var linkStatus = selection[0].status;
       var modifiers = '';
@@ -448,7 +447,7 @@
       });
 
       eventbus.on('roadAddressProject:discardChanges', function() {
-        if(!isCuttingMode){
+        if(applicationModel.getSelectedTool() != "Cut"){
           cancelChanges();
         }
       });
@@ -603,13 +602,15 @@
       });
 
       rootElement.on('change', '.form-group', function() {
-        if(!isCuttingMode) {
+        if(applicationModel.getSelectedTool() != "Cut") {
           rootElement.find('.action-selected-field').prop("hidden", false);
         }
       });
 
       rootElement.on('click', ' .project-form button.cancelLink', function() {
+        if(applicationModel.getSelectedTool() != "Cut") {
           cancelChanges();
+        }
       });
 
       rootElement.on('click', '.project-form button.send', function() {
