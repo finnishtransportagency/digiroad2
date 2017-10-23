@@ -650,7 +650,6 @@
           var lineString = pointsToLineString(nearestSuravage.points);
           var splitMeasure = GeometryUtils.calculateMeasureAtPoint(lineString, point);
           var splitVertices = GeometryUtils.splitByPoint(lineString, point);
-          console.log(splitVertices.secondSplitVertices[0]);
           return _.merge({ splitMeasure: splitMeasure, point: splitVertices.secondSplitVertices[0] }, splitVertices);
         };
 

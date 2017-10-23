@@ -216,7 +216,6 @@
     };
 
     this.saveProjectLinks = function(changedLinks, statusCode) {
-      console.log("Save Project Links called");
       applicationModel.addSpinner();
       //TODO in the future if we want to choose multiple actions foreach link (linkId, newStatus) combo should be used
       var linkIds = _.unique(_.map(changedLinks,function (t){
@@ -276,19 +275,12 @@
           });
         }
       } else {
-        console.log(!_.isEmpty(linkIds));
-        console.log(typeof projectId);
-        console.log(linkIds);
         eventbus.trigger('roadAddress:projectLinksUpdateFailed', PRECONDITION_FAILED_412);
       }
     };
 
     this.saveCuttedProjectLinks = function(changedLinks, statusCodeA, statusCodeB){
-      console.log("Save Cutted Project Links called");
       applicationModel.addSpinner();
-
-      // Wrong link is picked from changedLinks - not splitted but original
-      var splitPoint = changedLinks[0].points[changedLinks[0].points.length-1];
 
       var linkIds = _.unique(_.map(changedLinks,function (t){
         if(!_.isUndefined(t.linkId)){
@@ -322,7 +314,6 @@
           new ModalConfirm(failureObject.reason);
           applicationModel.removeSpinner();
       });
-
     };
 
     this.createProject = function (data) {
@@ -372,7 +363,6 @@
 
     this.publishProject = function() {
       backend.sendProjectToTR(projectinfo.id, function(result) {
-        console.log("Success");
         if(result.sendSuccess) {
           eventbus.trigger('roadAddress:projectSentSuccess');
         }
@@ -380,7 +370,6 @@
           eventbus.trigger('roadAddress:projectSentFailed', result.errorMessage);
         }
       }, function(result) {
-        console.log("Failure");
         eventbus.trigger('roadAddress:projectSentFailed', result.status);
       });
     };
