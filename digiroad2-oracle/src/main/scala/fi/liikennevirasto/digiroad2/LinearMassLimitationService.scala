@@ -47,7 +47,7 @@ class LinearMassLimitationService(roadLinkService: RoadLinkService, dao: OracleM
     }.toSeq
   }
 
-  protected def getAllAssetByTypeId(typeIds: Seq[Int], linkIds: Seq[Long]): Seq[PersistedLinearAsset] = {
+  protected def getAllAssetsByLinkIds(typeIds: Seq[Int], linkIds: Seq[Long]): Seq[PersistedLinearAsset] = {
     withDynTransaction {
       dao.fetchLinearAssetsByLinkIds(typeIds, linkIds, LinearAssetTypes.numericValuePropertyId)
     }.filterNot(_.expired)
