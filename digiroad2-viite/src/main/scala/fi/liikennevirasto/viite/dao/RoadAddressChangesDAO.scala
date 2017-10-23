@@ -218,6 +218,9 @@ object RoadAddressChangesDAO {
       roadAddressChangePS.setLong(13, roadAddressSection.discontinuity.value)
       roadAddressChangePS.setLong(14, roadAddressSection.roadType.value)
       roadAddressChangePS.setLong(15, ely)
+      roadAddressChangePS.setLong(16, roadAddressSection.roadType.value)
+      roadAddressChangePS.setLong(17, roadAddressSection.discontinuity.value)
+      roadAddressChangePS.setLong(18, ely)
       roadAddressChangePS.addBatch()
     }
 

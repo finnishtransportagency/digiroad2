@@ -1,5 +1,6 @@
 package fi.liikennevirasto.viite.process
 
+import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.util.Track.RightSide
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.viite.dao.{ProjectLink, _}
@@ -33,10 +34,22 @@ object ProjectDeltaCalculator {
     Delta(project.startDate, terminations, newCreations, unChanged, transferred, numbering)
   }
 
+  private def adjustIfSplit(pl: ProjectLink, ra: Option[RoadAddress]) = {
+    // Test if this link was a split case: if not, return original address, otherwise return a copy that is adjusted
+    if (pl.connectedLinkId.isEmpty)
+      ra
+    else
+      ra.map(address => {
+        val geom = GeometryUtils.truncateGeometry2D(address.geometry, pl.startMValue, pl.endMValue)
+        address.copy(startMValue = pl.startMValue, endMValue = pl.endMValue,
+          startAddrMValue = pl.startAddrMValue, endAddrMValue = pl.endAddrMValue, geometry = geom)
+      })
+  }
+
   private def findTerminations(projectLinks: Map[RoadPart, Seq[ProjectLink]], currentAddresses: Map[Long, RoadAddress]) = {
     val terminations = projectLinks.mapValues(pll =>
       pll.filter(_.status == LinkStatus.Terminated).flatMap(pl =>
-        currentAddresses.get(pl.roadAddressId)
+        adjustIfSplit(pl, currentAddresses.get(pl.roadAddressId))
       )
     )
     terminations.filterNot(t => t._2.isEmpty).values.foreach(validateTerminations)
@@ -44,11 +57,13 @@ object ProjectDeltaCalculator {
   }
 
   private def findUnChanged(projectLinks: Seq[ProjectLink], currentAddresses: Map[Long, RoadAddress]) = {
-    projectLinks.filter(_.status == LinkStatus.UnChanged).map(pl => currentAddresses(pl.roadAddressId) -> pl)
+    projectLinks.filter(_.status == LinkStatus.UnChanged).map(pl =>
+      adjustIfSplit(pl, currentAddresses.get(pl.roadAddressId)).get -> pl)
   }
 
   private def findTransfers(projectLinks: Seq[ProjectLink], currentAddresses: Map[Long, RoadAddress]) = {
-    projectLinks.filter(_.status == LinkStatus.Transfer).map(pl => currentAddresses(pl.roadAddressId) -> pl)
+    projectLinks.filter(_.status == LinkStatus.Transfer).map(pl =>
+      adjustIfSplit(pl, currentAddresses.get(pl.roadAddressId)).get -> pl)
   }
 
   private def findNumbering(projectLinks: Seq[ProjectLink], currentAddresses: Map[Long, RoadAddress]) = {
@@ -192,6 +207,7 @@ object ProjectDeltaCalculator {
     * @param projectLinks Project Links that have the transfer address values
     * @return Map between the sections old -> new
     */
+  @Deprecated
   def partition(roadAddresses: Seq[RoadAddress], projectLinks: Seq[ProjectLink]): Map[RoadAddressSection, RoadAddressSection] = {
     partition(pair(roadAddresses, projectLinks.groupBy(_.roadAddressId)))
   }
