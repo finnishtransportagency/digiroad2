@@ -131,9 +131,12 @@ object ProjectLinkSplitter {
           exitPoint.map(ep => GeometryUtils.truncateGeometry2D(templateGeom, 0.0,
             GeometryUtils.calculateLinearReferenceFromPoint(ep, templateGeom)))
         } else {
-          val length = GeometryUtils.geometryLength(suravage.geometry)
-          Some(GeometryUtils.truncateGeometry2D(templateGeom, 0.0,
-            Math.max(GeometryUtils.geometryLength(template.geometry), length)))
+          if (suravageGeom.forall(p => GeometryUtils.minimumDistance(p, templateGeom) <= MaxSuravageToleranceToGeometry) ||
+            templateGeom.forall(p => GeometryUtils.minimumDistance(p, suravageGeom) <= MaxSuravageToleranceToGeometry))
+            Some(GeometryUtils.truncateGeometry2D(templateGeom, 0.0,
+              Math.max(GeometryUtils.geometryLength(template.geometry), GeometryUtils.geometryLength(suravage.geometry))))
+          else
+            None
         }
       } else if (GeometryUtils.areAdjacent(suravageGeom.last, templateGeom.head, MaxDistanceForConnectedLinks)) {
         findMatchingSegment(suravageGeom.reverse, templateGeom)

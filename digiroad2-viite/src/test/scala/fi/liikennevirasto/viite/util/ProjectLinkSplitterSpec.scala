@@ -277,6 +277,22 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers {
     {
       pl.connectedLinkId.isEmpty should be (false)
       pl.startAddrMValue should be < pl.endAddrMValue
+      pl.sideCode should be (TowardsDigitizing)
     })
+  }
+
+  test("Geometries that are only touching should not have matching geometry segment") {
+    val template = ProjectLink(452389,77,14,Combined,Continuous,4286,4612,None,None,None,70452560,6138625,0.0,327.138,
+      TowardsDigitizing,(None,Some(CalibrationPoint(6138625,327.138,4612))),false,List(Point(445417.266,7004142.049,0.0),
+        Point(445420.674,7004144.679,0.0), Point(445436.147,7004155.708,0.0), Point(445448.743,7004164.052,0.0),
+        Point(445461.586,7004172.012,0.0), Point(445551.316,7004225.769,0.0), Point(445622.099,7004268.174,0.0),
+        Point(445692.288,7004310.224,0.0), Point(445696.301,7004312.628,0.0)),452278,NotHandled,PublicRoad,
+      NormalLinkInterface,327.13776793597697,295486,None)
+    val suravage = ProjectLink(-1000,0,0,Unknown,Continuous,0,0,None,None,Some("silari"),-1,499972931,0.0,313.38119201522017,
+      TowardsDigitizing,(None,None),false,List(Point(445186.594,7003930.051,0.0), Point(445278.988,7004016.523,0.0),
+        Point(445295.313,7004031.801,0.0), Point(445376.923,7004108.181,0.0), Point(445391.041,7004120.899,0.0),
+        Point(445405.631,7004133.071,0.0), Point(445417.266,7004142.049,0.0)),452278,New,UnknownOwnerRoad,
+      SuravageLinkInterface,313.38119201522017,0,None)
+    ProjectLinkSplitter.findMatchingGeometrySegment(suravage, template) should be (None)
   }
 }
