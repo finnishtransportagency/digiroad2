@@ -21,7 +21,13 @@
 
     var isShowingForLayer = {
       speedLimit: false,
-      trSpeedLimits: false
+      trSpeedLimits: false,
+      totalWeightLimit: false,
+      trailerTruckWeightLimit: false,
+      axleWeightLimit: false,
+      bogieWeightLimit: false,
+      heightLimit: false,
+      lengthLimit: false
     };
 
     var setLayerToShow = function(layerName, isShowing){
@@ -33,16 +39,16 @@
     vectorLayer.setVisible(false);
     map.addLayer(vectorLayer);
 
-    var showSpeedLimitSigns = function(){
+    var showReadOnlyTrafficSigns = function(){
       setLayerToShow(parentLayerName, true);
-      collection.setTrafficSigns('speedLimits', true);
+      collection.setTrafficSigns(parentLayerName, true);
       me.show();
       me.refreshView();
     };
 
-    var hideSpeedLimitSigns = function(){
+    var hideReadOnlyTrafficSigns = function(){
       setLayerToShow(parentLayerName, false);
-      collection.setTrafficSigns('speedLimits', false);
+      collection.setTrafficSigns(parentLayerName, false);
       me.hide();
     };
 
@@ -54,8 +60,8 @@
       vectorLayer.setOpacity(1);
     };
 
-    eventbus.on(parentLayerName + ':hideSpeedLimitsSigns', hideSpeedLimitSigns);
-    eventbus.on(parentLayerName + ':showSpeedLimitsSigns', showSpeedLimitSigns);
+    eventbus.on(parentLayerName + ':hideReadOnlyTrafficSigns', hideReadOnlyTrafficSigns);
+    eventbus.on(parentLayerName + ':showReadOnlyTrafficSigns', showReadOnlyTrafficSigns);
     eventbus.on('readOnlyLayer:' + parentLayerName + ':shown', function (layerName) {
        showLayer(layerName);
     }, this);

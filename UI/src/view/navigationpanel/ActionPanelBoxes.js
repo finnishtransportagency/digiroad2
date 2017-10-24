@@ -182,9 +182,9 @@
 
     elements.expanded.find('#signsCheckbox').on('change', function (event) {
       if ($(event.currentTarget).prop('checked')) {
-        eventbus.trigger('speedLimit:showSpeedLimitsSigns');
+        eventbus.trigger('speedLimit:showReadOnlyTrafficSigns');
       } else {
-        eventbus.trigger('speedLimit:hideSpeedLimitsSigns');
+        eventbus.trigger('speedLimit:hideReadOnlyTrafficSigns');
       }
     });
 

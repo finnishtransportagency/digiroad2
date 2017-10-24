@@ -12,7 +12,7 @@ window.LinearAssetLayer = function(params) {
       roadAddressInfoPopup = params.roadAddressInfoPopup,
       editConstrains = params.editConstrains,
       hasTrafficSignReadOnlyLayer = params.hasTrafficSignReadOnlyLayer,
-      trafficSignsCollection = params.trafficSignsCollection;
+      readOnlyTrafficSignsCollection = params.readOnlyTrafficSignsCollection;
 
   Layer.call(this, layerName, roadLayer);
   var me = this;
@@ -175,7 +175,7 @@ window.LinearAssetLayer = function(params) {
   var trafficSignReadOnlyLayer = new TrafficSignReadOnlyLayer({
       layerName: layerName,
       style: new PointAssetStyle('trafficSigns'),
-      collection: trafficSignsCollection,
+      collection: readOnlyTrafficSignsCollection,
       assetLabel: new TrafficSignLabel(),
       assetGrouping: new AssetGrouping(9),
       map: map
@@ -498,11 +498,15 @@ window.LinearAssetLayer = function(params) {
   };
 
   var showWithComplementary = function() {
+    if(hasTrafficSignReadOnlyLayer)
+      trafficSignReadOnlyLayer.showTrafficSignsComplementary();
     isComplementaryChecked = true;
     me.refreshView();
   };
 
   var hideComplementary = function() {
+    if(hasTrafficSignReadOnlyLayer)
+      trafficSignReadOnlyLayer.hideTrafficSignsComplementary();
     selectToolControl.clear();
     selectedLinearAsset.close();
     isComplementaryChecked = false;
