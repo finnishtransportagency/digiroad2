@@ -240,7 +240,7 @@
         roadType: Number($('#roadAddressProjectForm').find('#roadTypeDropDown')[0].value),
         userDefinedEndAddressM: null
       };
-      
+
       var endDistance = parseInt($('#endDistance').val());
       var originalEndDistance = _.chain(changedLinks).uniq().sortBy(function(cl){
         return cl.endAddressM;
@@ -316,7 +316,7 @@
           new ModalConfirm(successObject.reason);
           applicationModel.removeSpinner();
         }
-          else{
+        else{
           eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
         }
 
@@ -543,10 +543,16 @@
       };
     };
 
-    this.deleteRotatingProjectId = function(projectId){
+    this.reOpenProjectById = function(projectId){
       backend.reOpenProject(projectId, function(successObject) {
-        eventbus.trigger("roadAddressProject:rotatingIdDeleted",successObject);
+        eventbus.trigger("roadAddressProject:reOpenedProject",successObject);
       }, function(errorObject){
+        if(!_.isUndefined(errorObject.message)) {
+          new ModalConfirm(errorObject.message.toString());
+        } else{
+          new ModalConfirm(errorObject.statusText.toString());
+        }
+        applicationModel.removeSpinner();
         console.log("Error at deleting rotatingId: " + errorObject);
       });
     };
