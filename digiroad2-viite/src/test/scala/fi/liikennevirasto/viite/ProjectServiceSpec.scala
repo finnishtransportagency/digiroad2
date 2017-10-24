@@ -247,7 +247,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenReturn(Seq(roadlink))
       val countCurrentProjects = projectService.getRoadAddressAllProjects()
       val id = 0
-      val addresses: List[ReservedRoadPart] = List(ReservedRoadPart(5: Long, 5: Long, 203: Long, 5: Double, 5: Long, Discontinuity.apply("jatkuva"), 8: Long, None: Option[DateTime], None: Option[DateTime]))
+      val addresses: List[ReservedRoadPart] = List(ReservedRoadPart(Sequences.nextViitePrimaryKeySeqValue: Long, 5: Long, 203: Long, 5: Double, 5: Long, Discontinuity.apply("jatkuva"), 8: Long, None: Option[DateTime], None: Option[DateTime]))
       val roadAddressProject = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", addresses, None)
       projectService.createRoadLinkProject(roadAddressProject)
       val countAfterInsertProjects = projectService.getRoadAddressAllProjects()
@@ -269,7 +269,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
         InUse, NormalLinkInterface)
 
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink))
-      val addresses = List(ReservedRoadPart(5: Long, 1130: Long, 4: Long, 5: Double, 5: Long, Discontinuity.apply("jatkuva"), 8: Long, None: Option[DateTime], None: Option[DateTime]))
+      val addresses = List(ReservedRoadPart(Sequences.nextViitePrimaryKeySeqValue: Long, 1130: Long, 4: Long, 5: Double, 5: Long, Discontinuity.apply("jatkuva"), 8: Long, None: Option[DateTime], None: Option[DateTime]))
       val roadAddressProject = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(), None)
       val saved = projectService.createRoadLinkProject(roadAddressProject)
       val changed = saved.copy(reservedParts = addresses)
@@ -285,28 +285,28 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
 
   test("Validate road part dates with project date - startDate") {
     val projDate = DateTime.parse("2015-01-01")
-    val addresses = List(ReservedRoadPart(5: Long, 5: Long, 205: Long, 5: Double, 5: Long, Discontinuity.apply("jatkuva"), 8: Long, Option(DateTime.parse("2017-01-01")): Option[DateTime], None: Option[DateTime]))
+    val addresses = List(ReservedRoadPart(Sequences.nextViitePrimaryKeySeqValue: Long, 5: Long, 205: Long, 5: Double, 5: Long, Discontinuity.apply("jatkuva"), 8: Long, Option(DateTime.parse("2017-01-01")): Option[DateTime], None: Option[DateTime]))
     val errorMsg = projectService.validateProjectDate(addresses, projDate)
     errorMsg should not be (None)
   }
 
   test("Validate road part dates with project date - startDate valid") {
     val projDate = DateTime.parse("2015-01-01")
-    val addresses = List(ReservedRoadPart(5: Long, 5: Long, 205: Long, 5: Double, 5: Long, Discontinuity.apply("jatkuva"), 8: Long, Option(DateTime.parse("2010-01-01")): Option[DateTime], None: Option[DateTime]))
+    val addresses = List(ReservedRoadPart(Sequences.nextViitePrimaryKeySeqValue: Long, 5: Long, 205: Long, 5: Double, 5: Long, Discontinuity.apply("jatkuva"), 8: Long, Option(DateTime.parse("2010-01-01")): Option[DateTime], None: Option[DateTime]))
     val errorMsg = projectService.validateProjectDate(addresses, projDate)
     errorMsg should be(None)
   }
 
   test("Validate road part dates with project date - startDate and endDate") {
     val projDate = DateTime.parse("2015-01-01")
-    val addresses = List(ReservedRoadPart(5: Long, 5: Long, 205: Long, 5: Double, 5: Long, Discontinuity.apply("jatkuva"), 8: Long, Option(DateTime.parse("2010-01-01")): Option[DateTime], Option(DateTime.parse("2017-01-01")): Option[DateTime]))
+    val addresses = List(ReservedRoadPart(Sequences.nextViitePrimaryKeySeqValue: Long, 5: Long, 205: Long, 5: Double, 5: Long, Discontinuity.apply("jatkuva"), 8: Long, Option(DateTime.parse("2010-01-01")): Option[DateTime], Option(DateTime.parse("2017-01-01")): Option[DateTime]))
     val errorMsg = projectService.validateProjectDate(addresses, projDate)
     errorMsg should not be (None)
   }
 
   test("Validate road part dates with project date - startDate and endDate valid") {
     val projDate = DateTime.parse("2018-01-01")
-    val addresses = List(ReservedRoadPart(5: Long, 5: Long, 205: Long, 5: Double, 5: Long, Discontinuity.apply("jatkuva"), 8: Long, Option(DateTime.parse("2010-01-01")): Option[DateTime], Option(DateTime.parse("2017-01-01")): Option[DateTime]))
+    val addresses = List(ReservedRoadPart(Sequences.nextViitePrimaryKeySeqValue: Long, 5: Long, 205: Long, 5: Double, 5: Long, Discontinuity.apply("jatkuva"), 8: Long, Option(DateTime.parse("2010-01-01")): Option[DateTime], Option(DateTime.parse("2017-01-01")): Option[DateTime]))
     val errorMsg = projectService.validateProjectDate(addresses, projDate)
     errorMsg should be(None)
   }
@@ -319,7 +319,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
     when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean],any[Boolean])).thenReturn(Seq(roadlink))
     runWithRollback {
       val countCurrentProjects = projectService.getRoadAddressAllProjects()
-      val addresses = List(ReservedRoadPart(0L, 5L, 205L, 5.0, 5: Long, Discontinuity.apply("jatkuva"), 8: Long, None: Option[DateTime], None: Option[DateTime]))
+      val addresses = List(ReservedRoadPart(Sequences.nextViitePrimaryKeySeqValue, 5L, 205L, 5.0, 5: Long, Discontinuity.apply("jatkuva"), 8: Long, None: Option[DateTime], None: Option[DateTime]))
       val roadAddressProject = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(), None)
       val saved = projectService.createRoadLinkProject(roadAddressProject)
       val changed = saved.copy(reservedParts = addresses)
@@ -354,7 +354,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
     when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean],any[Boolean])).thenReturn(Seq(roadlink))
     runWithRollback {
       val countCurrentProjects = projectService.getRoadAddressAllProjects()
-      val addresses = List(ReservedRoadPart(0L, 5L, 205L, 5.0, 5: Long, Discontinuity.apply("jatkuva"), 8: Long, None: Option[DateTime], None: Option[DateTime]))
+      val addresses = List(ReservedRoadPart(Sequences.nextViitePrimaryKeySeqValue, 5L, 205L, 5.0, 5: Long, Discontinuity.apply("jatkuva"), 8: Long, None: Option[DateTime], None: Option[DateTime]))
       val roadAddressProject = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List(), None)
       val saved = projectService.createRoadLinkProject(roadAddressProject)
       val changed = saved.copy(reservedParts = addresses)
