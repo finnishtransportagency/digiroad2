@@ -98,7 +98,7 @@ object ProjectLinkSplitter {
         splitT)
     }
     def toSeq(splits: (ProjectLink, ProjectLink, ProjectLink)) = {
-      Seq(splits._1, splits._2, splits._3)
+      Seq(splits._1, splits._2, splits._3).filter(pl => Math.abs(pl.endMValue - pl.startMValue) >= fi.liikennevirasto.viite.MinAllowedRoadAddressLength)
     }
     val suravageM = GeometryUtils.calculateLinearReferenceFromPoint(split.splitPoint, suravage.geometry)
     val templateM = GeometryUtils.calculateLinearReferenceFromPoint(split.splitPoint, templateLink.geometry)

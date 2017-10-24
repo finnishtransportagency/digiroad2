@@ -415,7 +415,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   def splitSuravageLinkInTX(linkId:Long, username:String,
                             splitOptions: SplitOptions): Option[String] = {
-    val sOption = getProjectSuravageRoadLinksByLinkIds(Set(linkId)).headOption
+    val sOption = getProjectSuravageRoadLinksByLinkIds(Set(Math.abs(linkId))).headOption
     if (sOption.isEmpty) {
       Some(ErrorSuravageLinkNotFound)
     } else {
@@ -753,7 +753,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val afterUpdateLinks = ProjectDAO.fetchByProjectRoadPart(roadNumber, roadPartNumber, projectId)
     if (afterUpdateLinks.nonEmpty){
       val adjLinks = withGeometry(afterUpdateLinks)
-      ProjectSectionCalculator.assignMValues(adjLinks).foreach(adjLink => ProjectDAO.updateAddrMValues(adjLink))
+      try {
+        ProjectSectionCalculator.assignMValues(adjLinks).foreach(adjLink => ProjectDAO.updateAddrMValues(adjLink))
+      } catch {
+        case e: Exception =>
+          logger.info(s"Unable to recalculate Mvalues after reverting a split in $projectId ($roadNumber, $roadPartNumber): ${e.getMessage}")
+      }
     }
     None
   }
