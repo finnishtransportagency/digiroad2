@@ -113,7 +113,7 @@ trait AddressLinkBuilder {
       roadAddresses
     } else {
       val groupedRoadAddresses = roadAddresses.groupBy(record =>
-        (record.roadNumber, record.roadPartNumber, record.track.value, record.startDate, record.endDate, record.linkId))
+        (record.roadNumber, record.roadPartNumber, record.track.value, record.startDate, record.endDate, record.linkId, record.roadType))
 
       groupedRoadAddresses.flatMap { case (_, record) =>
         fuseRoadAddressInGroup(record.sortBy(_.startMValue))
@@ -207,8 +207,8 @@ trait AddressLinkBuilder {
       Seq(RoadAddress(tempId, nextSegment.roadNumber, nextSegment.roadPartNumber, RoadType.Unknown,
         nextSegment.track, discontinuity, startAddrMValue,
         endAddrMValue, nextSegment.startDate, nextSegment.endDate, nextSegment.modifiedBy, nextSegment.lrmPositionId, nextSegment.linkId,
-        startMValue, endMValue,
-        nextSegment.sideCode, nextSegment.adjustedTimestamp, calibrationPoints, false, combinedGeometry, nextSegment.linkGeomSource))
+        startMValue, endMValue, nextSegment.sideCode, nextSegment.adjustedTimestamp, calibrationPoints, false, combinedGeometry,
+        nextSegment.linkGeomSource, nextSegment.ely))
 
     } else Seq(nextSegment, previousSegment)
 

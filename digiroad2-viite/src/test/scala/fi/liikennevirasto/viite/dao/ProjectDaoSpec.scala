@@ -33,7 +33,8 @@ class ProjectDaoSpec  extends FunSuite with Matchers {
     ProjectLink(id = NewRoadAddress, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track,
       roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
       roadAddress.endDate, modifiedBy = Option(project.createdBy), 0L, roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
-      roadAddress.sideCode, roadAddress.calibrationPoints, floating = false, roadAddress.geometry, project.id, LinkStatus.NotHandled, RoadType.PublicRoad, roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), 0)
+      roadAddress.sideCode, roadAddress.calibrationPoints, floating = false, roadAddress.geometry, project.id, LinkStatus.NotHandled, RoadType.PublicRoad,
+      roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), 0, roadAddress.ely)
   }
 
   test("create empty road address project") {
@@ -241,6 +242,19 @@ class ProjectDaoSpec  extends FunSuite with Matchers {
       ProjectDAO.getRoadAddressProjectById(id).nonEmpty should be(true)
       ProjectDAO.updateProjectEly(id, 100)
       ProjectDAO.getProjectEly(id).get should be (100)
+    }
+  }
+
+  test("update project_link's road_type and discontinuity") {
+    runWithRollback {
+      val projectLinks = ProjectDAO.getProjectLinks(7081807)
+      val biggestProjectLink = projectLinks.maxBy(_.endAddrMValue)
+      ProjectDAO.updateProjectLinkUnchanged(projectLinks.map(x => x.id).filterNot(_ == biggestProjectLink.id).toSet, LinkStatus.UnChanged, "test",2 ,None)
+      ProjectDAO.updateProjectLinkUnchanged(Set(biggestProjectLink.id), LinkStatus.UnChanged, "test",2 ,Some(2))
+      val savedProjectLinks = ProjectDAO.getProjectLinks(7081807)
+      savedProjectLinks.filter(_.roadType.value == 2).size should be (savedProjectLinks.size)
+      savedProjectLinks.filter(_.discontinuity.value == 2).size should be (1)
+      savedProjectLinks.filter(_.discontinuity.value == 2).head.id should be (biggestProjectLink.id)
     }
   }
 }
