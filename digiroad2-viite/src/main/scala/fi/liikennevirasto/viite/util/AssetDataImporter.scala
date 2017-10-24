@@ -363,28 +363,22 @@ class AssetDataImporter {
         updateRoadWithSingleRoadType(road._1, road._2, road._3, road._4)
       })
 
-      roadsWithMultipleValues.foreach(road =>{
-        val addresses = RoadAddressDAO.fetchByRoadPart(road.roadNumber, road.roadPartNumber, true)
-        addresses.nonEmpty match {
-          case true => {
-            println(s"updating tie = ${road.roadNumber}, aosa = ${road.roadPartNumber}")
-            addresses.foreach(address =>{
-              roadType(roadsWithMultipleValues.filter { r=> r.roadNumber == road.roadNumber && r.roadPartNumber == road.roadPartNumber }, address) match {
-                case Left(roadType) =>{
-                  sqlu"""UPDATE ROAD_ADDRESS SET ROAD_TYPE = ${roadType.value}, ELY= ${road.elyCode} where ID = ${address.id} """.execute
-                }
-                case Right((addrM, roadTypeBefore, roadTypeAfter)) => {
-                  val roadLinkFromVVH = linkService.getCurrentAndComplementaryRoadLinksFromVVH(Set(address.linkId), false)
-                  val splittedRoadAddresses = splitRoadAddresses(address.copy(geometry = roadLinkFromVVH.head.geometry), addrM, roadTypeBefore, roadTypeAfter, road.elyCode)
-                  RoadAddressDAO.expireById(Set(address.id))
-                  RoadAddressDAO.create(splittedRoadAddresses)
-                }
-              }
-            })
+      roadsWithMultipleValues.groupBy(m => (m.roadNumber, m.roadPartNumber)).foreach{ case ((roadNumber, roadPartNumber), roadMaps) =>{
+        val addresses = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber, true, true)
+        println(s"updating tie = $roadNumber, aosa = $roadPartNumber: (${addresses.size} rows")
+        addresses.foreach(address => {
+          val ely = roadMaps.head.elyCode
+          roadType(roadMaps, address) match {
+            case Left(roadType) =>
+              sqlu"""UPDATE ROAD_ADDRESS SET ROAD_TYPE = ${roadType.value}, ELY= $ely where ID = ${address.id}""".execute
+            case Right((addrM, roadTypeBefore, roadTypeAfter)) =>
+              val roadLinkFromVVH = linkService.getCurrentAndComplementaryRoadLinksFromVVH(Set(address.linkId), false)
+              val splittedRoadAddresses = splitRoadAddresses(address.copy(geometry = roadLinkFromVVH.head.geometry), addrM, roadTypeBefore, roadTypeAfter, ely)
+              RoadAddressDAO.expireById(Set(address.id))
+              RoadAddressDAO.create(splittedRoadAddresses)
           }
-          case _ =>
-        }
-      })
+        })
+      }}
     }
 
   }
