@@ -11,7 +11,13 @@ BEFORE INSERT OR UPDATE
   ON ROAD_ADDRESS
   FOR EACH ROW
 BEGIN
+  DBMS_OUTPUT.Put_Line('Starting VALID_TERMINATION');
   IF :NEW.TERMINATED = 1 AND :NEW.END_DATE IS NULL
   THEN
+  DBMS_OUTPUT.Put_Line('Will Return error');
     RAISE_APPLICATION_ERROR(-20000, 'Cannot assign value 1 to terminated without a END_DATE being defined.');
+  ELSE
+    DBMS_OUTPUT.Put_Line('NO Error');
+  END IF;
+  DBMS_OUTPUT.Put_Line('Ending VALID_TERMINATION');
 END;
