@@ -216,7 +216,6 @@
     };
 
     this.saveProjectLinks = function(changedLinks, statusCode) {
-      console.log("Save Project Links called");
       applicationModel.addSpinner();
       //TODO in the future if we want to choose multiple actions foreach link (linkId, newStatus) combo should be used
       var linkIds = _.unique(_.map(changedLinks,function (t){
@@ -276,18 +275,12 @@
           });
         }
       } else {
-        console.log(!_.isEmpty(linkIds));
-        console.log(typeof projectId);
-        console.log(linkIds);
         eventbus.trigger('roadAddress:projectLinksUpdateFailed', PRECONDITION_FAILED_412);
       }
     };
 
     this.saveCuttedProjectLinks = function(changedLinks, statusCodeA, statusCodeB){
-      console.log("Save Cutted Project Links called");
       applicationModel.addSpinner();
-
-      var splitPoint = changedLinks[0].points[changedLinks[0].points.length-1];
 
       var linkIds = _.unique(_.map(changedLinks,function (t){
         if(!_.isUndefined(t.linkId)){
@@ -296,32 +289,31 @@
       }));
 
       var projectId = projectinfo.id;
+      var form = $('#roadAddressProjectFormCut');
 
       var dataJson = {
-        splitPoint: {x: splitPoint.x, y: splitPoint.y},
+        splitPoint: {
+          x: Number(form.find('#splitx')[0].value),
+          y: Number(form.find('#splity')[0].value)
+        },
         statusA: statusCodeA,
         statusB: statusCodeB,
-        roadNumber: Number($('#roadAddressProjectFormCut').find('#tie')[0].value),
-        roadPartNumber: Number($('#roadAddressProjectFormCut').find('#osa')[0].value),
-        trackCode: Number($('#roadAddressProjectFormCut').find('#ajr')[0].value),
-        discontinuity: Number($('#roadAddressProjectFormCut').find('#discontinuityDropdown')[0].value),
-        ely: Number($('#roadAddressProjectFormCut').find('#ely')[0].value),
+        roadNumber: Number(form.find('#tie')[0].value),
+        roadPartNumber: Number(form.find('#osa')[0].value),
+        trackCode: Number(form.find('#ajr')[0].value),
+        discontinuity: Number(form.find('#discontinuityDropdown')[0].value),
+        ely: Number(form.find('#ely')[0].value),
         roadLinkSource: Number(_.first(changedLinks).roadLinkSource),
-        roadType: Number($('#roadAddressProjectFormCut').find('#roadTypeDropDown')[0].value),
+        roadType: Number(form.find('#roadTypeDropDown')[0].value),
         projectId: projectId
       };
 
       backend.saveProjectLinkSplit(dataJson, changedLinks[0].linkId, function(successObject){
-        if (!successObject.success) {
-          new ModalConfirm(successObject.reason);
-          applicationModel.removeSpinner();
-        }
-        else{
           eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
-        }
-
-      }, null);
-
+      }, function(failureObject){
+          new ModalConfirm(failureObject.reason);
+          applicationModel.removeSpinner();
+      });
     };
 
     this.createProject = function (data) {
@@ -371,7 +363,6 @@
 
     this.publishProject = function() {
       backend.sendProjectToTR(projectinfo.id, function(result) {
-        console.log("Success");
         if(result.sendSuccess) {
           eventbus.trigger('roadAddress:projectSentSuccess');
         }
@@ -379,7 +370,6 @@
           eventbus.trigger('roadAddress:projectSentFailed', result.errorMessage);
         }
       }, function(result) {
-        console.log("Failure");
         eventbus.trigger('roadAddress:projectSentFailed', result.status);
       });
     };

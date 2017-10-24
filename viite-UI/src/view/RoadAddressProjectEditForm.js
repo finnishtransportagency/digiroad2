@@ -222,6 +222,8 @@
 
     var selectionFormCutted = function(selection, selected){
       return '<form id="roadAddressProjectFormCut" class="input-unit-combination form-group form-horizontal roadAddressProject">'+
+        '<input type="hidden" id="splitx" value="' + selected[0].splitPoint.x + '"/>' +
+        '<input type="hidden" id="splity" value="' + selected[0].splitPoint.y + '"/>' +
         '<label>Toimenpiteet,' + selection[0]  + '</label>' +
           '<span class="marker">'+markers[0]+'</span>'+
         dropdownOption(0, selected) +
