@@ -386,10 +386,10 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       projectLinks.nonEmpty should be (true)
       count = countCurrentProjects.size + 1
       countAfterInsertProjects.size should be(count)
-      sqlu"""UPDATE Project_link set status = ${LinkStatus.Terminated.value}""".execute
+      sqlu"""UPDATE Project_link set status = ${LinkStatus.Terminated.value} Where PROJECT_ID = ${saved.id}""".execute
       val terminations = ProjectDeltaCalculator.delta(saved.id).terminations
       terminations should have size (projectLinks.size)
-      sqlu"""UPDATE Project_link set status = ${LinkStatus.New.value}""".execute
+      sqlu"""UPDATE Project_link set status = ${LinkStatus.New.value} Where PROJECT_ID = ${saved.id}""".execute
       val newCreations = ProjectDeltaCalculator.delta(saved.id).newRoads
       newCreations should have size (projectLinks.size)
       val sections = ProjectDeltaCalculator.partition(terminations)
