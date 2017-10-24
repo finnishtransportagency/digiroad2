@@ -249,8 +249,8 @@ class ProjectDaoSpec  extends FunSuite with Matchers {
     runWithRollback {
       val projectLinks = ProjectDAO.getProjectLinks(7081807)
       val biggestProjectLink = projectLinks.maxBy(_.endAddrMValue)
-      ProjectDAO.updateProjectLinkUnchanged(projectLinks.map(x => x.id).filterNot(_ == biggestProjectLink.id).toSet, LinkStatus.UnChanged, "test",2 ,None)
-      ProjectDAO.updateProjectLinkUnchanged(Set(biggestProjectLink.id), LinkStatus.UnChanged, "test",2 ,Some(2))
+      ProjectDAO.updateProjectLinkRoadTypeDiscontinuity(projectLinks.map(x => x.id).filterNot(_ == biggestProjectLink.id).toSet, LinkStatus.UnChanged, "test",2 ,None)
+      ProjectDAO.updateProjectLinkRoadTypeDiscontinuity(Set(biggestProjectLink.id), LinkStatus.UnChanged, "test",2 ,Some(2))
       val savedProjectLinks = ProjectDAO.getProjectLinks(7081807)
       savedProjectLinks.filter(_.roadType.value == 2).size should be (savedProjectLinks.size)
       savedProjectLinks.filter(_.discontinuity.value == 2).size should be (1)

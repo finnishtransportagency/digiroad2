@@ -832,9 +832,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           case LinkStatus.Transfer => {
             if (isRoadPartTransfer(projectLinks, updatedProjectLinks.filterNot(link => link.status == LinkStatus.Terminated), roadNumber, roadPartNumber)) {
               val updated = updatedProjectLinks.filterNot(link => link.status == LinkStatus.Terminated).map(updl => {
-                updl.copy(roadNumber = roadNumber, roadPartNumber = roadPartNumber, status = linkStatus, calibrationPoints = (None, None))
+                updl.copy(roadNumber = roadNumber, roadPartNumber = roadPartNumber, status = linkStatus, calibrationPoints = (None, None), roadType = RoadType.apply(roadType.toInt))
               })
               ProjectDAO.updateProjectLinksToDB(updated, userName)
+              ProjectDAO.updateProjectLinkRoadTypeDiscontinuity(Set(updated.maxBy(_.endAddrMValue).id), linkStatus, userName, roadType, Some(discontinuity))
             } else {
               ProjectDAO.updateProjectLinks(updatedProjectLinks.filterNot(link => link.status == LinkStatus.Terminated).map(_.id).toSet, linkStatus, userName)
             }
@@ -847,9 +848,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             val lastSegment = targetLinks.maxBy(_.endAddrMValue)
             if(targetLinks.size > 1){
               val linksToUpdate =targetLinks.filterNot(_.id == lastSegment.id)
-              ProjectDAO.updateProjectLinkUnchanged(linksToUpdate.map(_.id).toSet, linkStatus, userName, roadType, None)
+              ProjectDAO.updateProjectLinkRoadTypeDiscontinuity(linksToUpdate.map(_.id).toSet, linkStatus, userName, roadType, None)
             }
-            ProjectDAO.updateProjectLinkUnchanged(Set(lastSegment.id), linkStatus, userName, roadType, Some(discontinuity))
+            ProjectDAO.updateProjectLinkRoadTypeDiscontinuity(Set(lastSegment.id), linkStatus, userName, roadType, Some(discontinuity))
           }
           case _ => ProjectDAO.updateProjectLinks(updatedProjectLinks.filterNot(link => link.status == LinkStatus.Terminated).map(_.id).toSet, linkStatus, userName)
         }
