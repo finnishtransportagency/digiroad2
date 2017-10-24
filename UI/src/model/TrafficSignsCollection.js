@@ -5,25 +5,19 @@
     var me = this;
 
     var trafficSignsShowing = {
-      speedLimits: false, //[1, 2, 3, 4, 5, 6]
-      pedestrianCrossings: false, //[7]
-      maximumLengths: false, //[8]
-      generalWarnings: false, //[9]
-      turningRestrictions: false, //[10, 11, 12]
-      prohibitionsAndRestrictions: false,  //[13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29]
-      maximumRestrictions: false, //[30, 31, 32, 33, 34, 35]
-      generalWarningSigns: false //[36, 37, 38, 39, 40, 41, 42, 43]
+      speedLimits: false,
+      pedestrianCrossings: false,
+      maximumRestrictions: false,
+      generalWarningSigns: false,
+      prohibitionsAndRestrictions: false
     };
 
     var trafficSignValues = {
       speedLimits: [1, 2, 3, 4, 5, 6],
       pedestrianCrossings: [7],
-      maximumLengths: [8],
-      generalWarnings: [9],
-      turningRestrictions: [10, 11, 12],
-      prohibitionsAndRestrictions: [13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29],
-      maximumRestrictions: [30, 31, 32, 33, 34, 35],
-      generalWarningSigns: [36, 37, 38, 39, 40, 41, 42, 43]
+      maximumRestrictions: [8, 30, 31, 32, 33, 34, 35],
+      generalWarningSigns: [9, 36, 37, 38, 39, 40, 41, 42, 43],
+      prohibitionsAndRestrictions: [10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29]
     };
 
     var filterTrafficSigns = function (asset) {

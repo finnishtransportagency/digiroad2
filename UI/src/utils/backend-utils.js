@@ -1,8 +1,8 @@
 (function (root) {
   root.Backend = function() {
     var self = this;
-    this.getEnumeratedPropertyValues = function() {
-      $.getJSON('api/enumeratedPropertyValues/10', function (enumeratedPropertyValues) {
+    this.getEnumeratedPropertyValues = function(typeId) {
+      $.getJSON('api/enumeratedPropertyValues/'+ typeId, function (enumeratedPropertyValues) {
         eventbus.trigger('enumeratedPropertyValues:fetched', enumeratedPropertyValues);
       })
         .fail(function () {
