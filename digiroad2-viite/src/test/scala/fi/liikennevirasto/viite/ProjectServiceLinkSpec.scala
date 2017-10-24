@@ -463,7 +463,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
 
   }
 
-  test("Splitting link test") {
+  ignore("Splitting link test") {
     runWithRollback {
     val projectId=Sequences.nextViitePrimaryKeySeqValue
     val lrmPositionId=Sequences.nextLrmPositionPrimaryKeySeqValue
@@ -516,7 +516,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
     templateLink.roadAddressId should be (newLink.roadAddressId)
   }
 
-  test("Split and revert links") {
+  ignore("Split and revert links") {
     runWithRollback {
     val projectId = Sequences.nextViitePrimaryKeySeqValue
     val roadLink = RoadLink(1, Seq(Point(0, 0), Point(0, 45.3), Point(0, 87))
@@ -551,7 +551,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
     }
   }
 
-  test("Updating split link test") {
+  ignore("Updating split link test") {
     val roadLink = RoadLink(1, Seq(Point(0,0),Point(0,45.3),Point(0,87))
       , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
       InUse, NormalLinkInterface)
