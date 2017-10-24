@@ -415,7 +415,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   def splitSuravageLinkInTX(linkId:Long, username:String,
                             splitOptions: SplitOptions): Option[String] = {
-    val sOption = getProjectSuravageRoadLinksByLinkIds(Set(linkId)).headOption
+    val sOption = getProjectSuravageRoadLinksByLinkIds(Set(Math.abs(linkId))).headOption
     if (sOption.isEmpty) {
       Some(ErrorSuravageLinkNotFound)
     } else {
