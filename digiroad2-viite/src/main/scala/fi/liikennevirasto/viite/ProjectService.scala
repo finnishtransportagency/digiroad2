@@ -753,12 +753,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val afterUpdateLinks = ProjectDAO.fetchByProjectRoadPart(roadNumber, roadPartNumber, projectId)
     if (afterUpdateLinks.nonEmpty){
       val adjLinks = withGeometry(afterUpdateLinks)
-      try {
-        ProjectSectionCalculator.assignMValues(adjLinks).foreach(adjLink => ProjectDAO.updateAddrMValues(adjLink))
-      } catch {
-        case e: Exception =>
-          logger.info(s"Unable to recalculate Mvalues after reverting a split in $projectId ($roadNumber, $roadPartNumber): ${e.getMessage}")
-      }
+      ProjectSectionCalculator.assignMValues(adjLinks).foreach(adjLink => ProjectDAO.updateAddrMValues(adjLink))
+    } else {
+      releaseRoadPart(projectId, roadNumber, roadPartNumber)
     }
     None
   }
@@ -767,7 +764,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     try {
       withDynTransaction{
         val (added, modified) = links.partition(_.status == LinkStatus.New.value)
-        revertLinks(projectId, roadNumber, roadPartNumber, added, modified)
+        if (modified.exists(_.status == LinkStatus.Numbering.value)) {
+          logger.info(s"Reverting whole road part in $projectId ($roadNumber/$roadPartNumber)")
+          // Numbering change affects the whole road part
+          revertLinks(projectId, roadNumber, roadPartNumber, added,
+            ProjectDAO.fetchByProjectRoadPart(roadNumber, roadPartNumber, projectId).map(
+              link => LinkToRevert(link.id, link.linkId, link.status.value)))
+        } else {
+          revertLinks(projectId, roadNumber, roadPartNumber, added, modified)
+        }
       }
     }
     catch{
@@ -777,6 +782,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  private def releaseRoadPart(projectId: Long, roadNumber: Long, roadPartNumber: Long) = {
+    if (ProjectDAO.fetchFirstLink(projectId, roadNumber, roadPartNumber).isEmpty) {
+      val part = ProjectDAO.fetchReservedRoadPart(roadNumber, roadPartNumber).get
+      ProjectDAO.removeReservedRoadPart(projectId, part)
+    }
+  }
   /**
     * Update project links to given status and recalculate delta and change table
     * @param projectId Project's id
@@ -821,9 +832,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           case LinkStatus.Transfer => {
             if (isRoadPartTransfer(projectLinks, updatedProjectLinks.filterNot(link => link.status == LinkStatus.Terminated), roadNumber, roadPartNumber)) {
               val updated = updatedProjectLinks.filterNot(link => link.status == LinkStatus.Terminated).map(updl => {
-                updl.copy(roadNumber = roadNumber, roadPartNumber = roadPartNumber, status = linkStatus, calibrationPoints = (None, None))
+                updl.copy(roadNumber = roadNumber, roadPartNumber = roadPartNumber, status = linkStatus, calibrationPoints = (None, None), roadType = RoadType.apply(roadType.toInt))
               })
               ProjectDAO.updateProjectLinksToDB(updated, userName)
+              ProjectDAO.updateProjectLinkRoadTypeDiscontinuity(Set(updated.maxBy(_.endAddrMValue).id), linkStatus, userName, roadType, Some(discontinuity))
             } else {
               ProjectDAO.updateProjectLinks(updatedProjectLinks.filterNot(link => link.status == LinkStatus.Terminated).map(_.id).toSet, linkStatus, userName)
             }
@@ -836,9 +848,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             val lastSegment = targetLinks.maxBy(_.endAddrMValue)
             if(targetLinks.size > 1){
               val linksToUpdate =targetLinks.filterNot(_.id == lastSegment.id)
-              ProjectDAO.updateProjectLinkUnchanged(linksToUpdate.map(_.id).toSet, linkStatus, userName, roadType, None)
+              ProjectDAO.updateProjectLinkRoadTypeDiscontinuity(linksToUpdate.map(_.id).toSet, linkStatus, userName, roadType, None)
             }
-            ProjectDAO.updateProjectLinkUnchanged(Set(lastSegment.id), linkStatus, userName, roadType, Some(discontinuity))
+            ProjectDAO.updateProjectLinkRoadTypeDiscontinuity(Set(lastSegment.id), linkStatus, userName, roadType, Some(discontinuity))
           }
           case _ => ProjectDAO.updateProjectLinks(updatedProjectLinks.filterNot(link => link.status == LinkStatus.Terminated).map(_.id).toSet, linkStatus, userName)
         }

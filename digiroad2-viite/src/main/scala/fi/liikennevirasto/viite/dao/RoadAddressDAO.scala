@@ -168,7 +168,7 @@ object RoadAddressDAO {
     }
 
     val query = s"""
-        select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
+        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code, pos.adjusted_timestamp,
         ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating,
@@ -234,6 +234,7 @@ object RoadAddressDAO {
       val id = r.nextLong()
       val roadNumber = r.nextLong()
       val roadPartNumber = r.nextLong()
+      val roadType = RoadType.apply(r.nextInt())
       val trackCode = r.nextInt()
       val discontinuity = r.nextInt()
       val startAddrMValue = r.nextLong()
@@ -257,7 +258,7 @@ object RoadAddressDAO {
       val geomSource = LinkGeomSource.apply(r.nextInt)
       val ely = r.nextLong()
 
-      RoadAddress(id, roadNumber, roadPartNumber, RoadType.Unknown, Track.apply(trackCode), Discontinuity.apply(discontinuity),
+      RoadAddress(id, roadNumber, roadPartNumber, roadType, Track.apply(trackCode), Discontinuity.apply(discontinuity),
         startAddrMValue, endAddrMValue, startDate, endDate, createdBy, lrmPositionId, linkId, startMValue, endMValue,
         SideCode.apply(sideCode), adjustedTimestamp, CalibrationPointsUtils.calibrations(CalibrationCode.apply(calibrationCode), linkId, startMValue, endMValue, startAddrMValue,
           endAddrMValue, SideCode.apply(sideCode)), floating, Seq(Point(x,y), Point(x2,y2)), geomSource, ely)
@@ -284,7 +285,7 @@ object RoadAddressDAO {
 
     val query =
       s"""
-        select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
+        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code, pos.adjusted_timestamp,
         ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely
@@ -321,7 +322,7 @@ object RoadAddressDAO {
     }
     val query =
       s"""
-        select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
+        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code, pos.adjusted_timestamp,
         ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely
@@ -349,7 +350,7 @@ object RoadAddressDAO {
           ""
         val query =
           s"""
-        select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
+        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code, pos.adjusted_timestamp,
         ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely
@@ -379,10 +380,10 @@ object RoadAddressDAO {
           ""
         val query =
           s"""
-        select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
+        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code, pos.adjusted_timestamp,
-        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.road_type, ra.discontinuity, ra.ely
+        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely
         from road_address ra cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
@@ -401,7 +402,7 @@ object RoadAddressDAO {
     val endFilter = endAddrM.map(e => s" AND end_addr_m = $e").getOrElse("")
     val query =
       s"""
-        select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
+        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code, pos.adjusted_timestamp,
         ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely
@@ -436,7 +437,7 @@ object RoadAddressDAO {
     // valid_to > sysdate because we may expire and query the data again in same transaction
     val query =
       s"""
-        select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
+        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code, pos.adjusted_timestamp,
         ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely
@@ -481,7 +482,7 @@ object RoadAddressDAO {
     // valid_to > sysdate because we may expire and query the data again in same transaction
     val query =
       s"""
-        select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
+        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code, pos.adjusted_timestamp,
         ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely
@@ -499,7 +500,7 @@ object RoadAddressDAO {
   def fetchMultiSegmentLinkIds(roadNumber: Long) = {
     val query =
       s"""
-        select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
+        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id,pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code, pos.adjusted_timestamp,
         ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely
@@ -831,7 +832,7 @@ object RoadAddressDAO {
       idTableName =>
         val query =
           s"""
-        select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
+        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code, pos.adjusted_timestamp,
         ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely
@@ -859,7 +860,7 @@ object RoadAddressDAO {
     }
     val query =
       s"""
-        select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
+        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code, pos.adjusted_timestamp,
         ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely
@@ -891,7 +892,7 @@ object RoadAddressDAO {
     }
     val query =
       s"""
-        select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
+        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code, pos.adjusted_timestamp,
         ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely
@@ -911,7 +912,7 @@ object RoadAddressDAO {
       idTableName =>
         val query =
           s"""
-        select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
+        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code, pos.adjusted_timestamp,
         ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely
@@ -1009,7 +1010,7 @@ object RoadAddressDAO {
 
   def getRoadAddress(id : Long, linkId : Long) : Option[RoadAddress] = {
     val query = s"""
-        select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
+        select ra.id, ra.road_number, ra.road_part_number, ra.road_type, ra.track_code,
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code, pos.adjusted_timestamp,
         ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating,

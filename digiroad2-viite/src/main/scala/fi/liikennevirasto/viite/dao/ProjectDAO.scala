@@ -436,7 +436,7 @@ object ProjectDAO {
     Q.updateNA(sql).execute
   }
 
-  def updateProjectLinkUnchanged(projectLinkIds: Set[Long], linkStatus: LinkStatus, userName: String, roadType: Long, discontinuity: Option[Long]): Unit = {
+  def updateProjectLinkRoadTypeDiscontinuity(projectLinkIds: Set[Long], linkStatus: LinkStatus, userName: String, roadType: Long, discontinuity: Option[Long]): Unit = {
     val user = userName.replaceAll("[^A-Za-z0-9\\-]+", "")
     if(discontinuity.isEmpty) {
       projectLinkIds.grouped(500).foreach {
