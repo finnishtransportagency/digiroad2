@@ -415,7 +415,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   def splitSuravageLinkInTX(linkId:Long, username:String,
                             splitOptions: SplitOptions): Option[String] = {
-    val sOption = getProjectSuravageRoadLinksByLinkIds(Set(linkId)).headOption
+    val sOption = getProjectSuravageRoadLinksByLinkIds(Set(Math.abs(linkId))).headOption
     if (sOption.isEmpty) {
       Some(ErrorSuravageLinkNotFound)
     } else {
@@ -887,6 +887,49 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  /** Nullifies projects tr_id attribute, changes status to unfinnished and saves tr_info value to status_info. Tries to append old status info if it is possible
+    * otherwise it only takes first 300 chars
+    *
+    * @param projectId project-id
+    * @return returns option error string
+    */
+  def removeRotatingTRId(projectId:Long): Option[String] = {
+    withDynSession {
+      val projects = ProjectDAO.getRoadAddressProjects(projectId)
+      val rotatingTR_Id = ProjectDAO.getRotatingTRProjectId(projectId)
+      ProjectDAO.updateProjectStatus(projectId,ProjectState.Incomplete)
+      val addedStatus = if (rotatingTR_Id.isEmpty) "" else "[OLD TR_ID was " + rotatingTR_Id.head+ "]"
+      if (projects.isEmpty)
+        return Some("Projectia ei löytynyt")
+      val project = projects.head
+      appendStatusInfo(project,addedStatus)
+    }
+    None
+  }
+
+  /**
+    * Tries to append old status info if it is possible
+    * otherwise it only takes first 300 chars of the old status
+    * @param project
+    * @param appendMessage
+    */
+  private def appendStatusInfo(project :RoadAddressProject, appendMessage:String) ={
+    val maxStringLenght = 1000
+    project.statusInfo match { // before removing tr-id we want to save it in statusinfo if we need it later. Currently it is overwriten when we resend and get new error
+      case Some(statusInfo) =>
+        if ((statusInfo + appendMessage).length < maxStringLenght)
+          ProjectDAO.updateProjectStateInfo(appendMessage + statusInfo, project.id)
+        else if (statusInfo.length+appendMessage.length<600)
+          ProjectDAO.updateProjectStateInfo(appendMessage + statusInfo.substring(0, 300),project.id)
+      case None =>
+        if (appendMessage.nonEmpty)
+          ProjectDAO.updateProjectStateInfo(appendMessage, project.id)
+    }
+    ProjectDAO.removeRotatingTRProjectId(project.id)
+
+
+  }
+
   /**
     * Publish project with id projectId
     *
@@ -899,8 +942,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     withDynTransaction {
       try {
         val delta=ProjectDeltaCalculator.delta(projectId)
-        if(!setProjectDeltaToDB(delta,projectId)) {return PublishResult(false, false, Some("Muutostaulun luonti epäonnistui. Tarkasta ely"))}
+        if(!setProjectDeltaToDB(delta,projectId)) {
+          return PublishResult(false, false, Some("Muutostaulun luonti epäonnistui. Tarkasta ely"))}
+        ProjectDAO.addRotatingTRProjectId(projectId) //Generate new TR_ID
         val trProjectStateMessage = getRoadAddressChangesAndSendToTR(Set(projectId))
+        if (trProjectStateMessage.status==ProjectState.Failed2GenerateTRIdInViite.value){
+          return PublishResult(false, false, Some(trProjectStateMessage.reason))
+        }
         trProjectStateMessage.status match {
           case it if 200 until 300 contains it => {
             setProjectStatusToSend2TR(projectId)
@@ -994,13 +1042,16 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   def setProjectStatusToSend2TR(projectId:Long) :Unit=
   {
-    ProjectDAO.updateProjectStatus(projectId, ProjectState.Sent2TR,"")
+    ProjectDAO.updateProjectStatus(projectId, ProjectState.Sent2TR)
   }
 
   def updateProjectStatusIfNeeded(currentStatus:ProjectState, newStatus:ProjectState, errorMessage:String,projectId:Long) :(ProjectState)= {
     if (currentStatus.value!=newStatus.value && newStatus != ProjectState.Unknown)
     {
-      ProjectDAO.updateProjectStatus(projectId,newStatus,errorMessage)
+      val projects=ProjectDAO.getRoadAddressProjects(projectId)
+      if (projects.nonEmpty && newStatus==ProjectState.ErroredInTR) // We write error message and clear old TR_ID which was stored there, so user wont see it in hower
+        ProjectDAO.updateProjectStateInfo(errorMessage,projectId)
+      ProjectDAO.updateProjectStatus(projectId,newStatus)
     }
     if (newStatus != ProjectState.Unknown){
       newStatus
@@ -1035,17 +1086,25 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   private def checkAndUpdateProjectStatus(projectID: Long): ProjectState =
   {
-    ProjectDAO.getProjectStatus(projectID).map { currentState =>
-      logger.info(s"Current status is $currentState")
-      val trProjectState = ViiteTierekisteriClient.getProjectStatusObject(projectID)
-      val newState = getStatusFromTRObject(trProjectState).getOrElse(ProjectState.Unknown)
-      val errorMessage = getTRErrorMessage(trProjectState)
-      logger.info(s"TR returned project status for $projectID: $currentState -> $newState, errMsg: $errorMessage")
-      val updatedStatus = updateProjectStatusIfNeeded(currentState, newState, errorMessage, projectID)
-      if (updatedStatus == Saved2TR)
-        updateRoadAddressWithProjectLinks(updatedStatus, projectID)
-      updatedStatus
-    }.getOrElse(ProjectState.Unknown)
+    ProjectDAO.getRotatingTRProjectId(projectID).headOption match
+    {
+      case Some(trId) =>
+        ProjectDAO.getProjectStatus(projectID).map { currentState =>
+          logger.info(s"Current status is $currentState")
+          val trProjectState = ViiteTierekisteriClient.getProjectStatusObject(trId)
+          val newState = getStatusFromTRObject(trProjectState).getOrElse(ProjectState.Unknown)
+          val errorMessage = getTRErrorMessage(trProjectState)
+          logger.info(s"TR returned project status for $projectID: $currentState -> $newState, errMsg: $errorMessage")
+          val updatedStatus = updateProjectStatusIfNeeded(currentState, newState, errorMessage, projectID)
+          if (updatedStatus == Saved2TR)
+            updateRoadAddressWithProjectLinks(updatedStatus, projectID)
+          updatedStatus
+        }.getOrElse(ProjectState.Unknown)
+      case None=>
+        logger.info(s"During status checking VIITE wasnt able to find TR_ID to project $projectID")
+        appendStatusInfo(ProjectDAO.getRoadAddressProjectById(projectID).head," Failed to find TR-ID ")
+        ProjectState.Unknown
+    }
   }
 
   private def mapTRStateToViiteState(trState:String): Option[ProjectState] ={
