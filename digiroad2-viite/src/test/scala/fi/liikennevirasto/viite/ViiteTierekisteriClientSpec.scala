@@ -3,6 +3,8 @@ package fi.liikennevirasto.viite
 import java.net.ConnectException
 import java.util.Properties
 
+import fi.liikennevirasto.viite.RoadType.PublicRoad
+import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
 import fi.liikennevirasto.viite.dao._
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.HttpGet
@@ -24,7 +26,10 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
     props.load(getClass.getResourceAsStream("/digiroad2.properties"))
     props
   }
-  val defaultChangeInfo=RoadAddressChangeInfo(AddressChangeType.apply(2), RoadAddressChangeSection(None, None, None, None, None, None), RoadAddressChangeSection(Option(403), Option(0), Option(8), Option(0), Option(8), Option(1001)), Discontinuity.apply(1), RoadType.apply(1))
+  val defaultChangeInfo=RoadAddressChangeInfo(AddressChangeType.apply(2),
+    RoadAddressChangeSection(None, None, None, None, None, None, None, None, None),
+    RoadAddressChangeSection(Option(403), Option(0), Option(8), Option(0), Option(8), Option(1001),
+      Option(RoadType.PublicRoad), Option(Discontinuity.Continuous), Option(5)), Discontinuity.apply(1), RoadType.apply(1))
 
   def getRestEndPoint: String = {
     val loadedKeyString = dr2properties.getProperty("digiroad2.tierekisteriViiteRestApiEndPoint", "http://localhost:8080/api/tierekisteri/")
@@ -33,8 +38,6 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
       throw new IllegalArgumentException("Missing TierekisteriViiteRestApiEndPoint")
     loadedKeyString
   }
-
-
 
   private def testConnection: Boolean = {
     // If you get NPE here, you have not included main module (digiroad2) as a test dependency to digiroad2-viite
@@ -62,9 +65,7 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
   test("TR-connection Create test") {
     assume(testConnection)
     val message= ViiteTierekisteriClient.sendJsonMessage(ChangeProject(0, "Testproject", "TestUser", 3, "2017-06-01", Seq {
-      RoadAddressChangeInfo(AddressChangeType.apply(2), RoadAddressChangeSection(None, None, None, None, None, None, None, None, None),
-        RoadAddressChangeSection(Option(403), Option(0), Option(8), Option(0), Option(8), Option(1001),
-          Option(RoadType.PublicRoad), Option(Discontinuity.Continuous), Option(5)), Discontinuity.apply(1), RoadType.apply(1)) // projectid 0 wont be added to TR
+      defaultChangeInfo // projectid 0 wont be added to TR
     }))
     message.projectId should be (0)
     message.status should be (201)
@@ -77,14 +78,10 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
     response == null should be (false)
   }
 
-
   test("Check that project_id is replaced with tr_id attribute") {
     val change=ViiteTierekisteriClient.convertToChangeProject(List(ProjectRoadAddressChange(100L, Some("testproject"), 1, "user", DateTime.now(),defaultChangeInfo,DateTime.now(),Some(2))))
     change.id should be (2)
   }
-
-
-
   test("parse changeinforoadparts from json") {
     val string = "{" +
       "\"tie\": 1," +
