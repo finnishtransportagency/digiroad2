@@ -466,8 +466,8 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
   test("Splitting link test") {
     reset(mockRoadLinkService)
     reset(mockRoadAddressService)
-    val projectId=0
-    val lrmPositionId=1
+    val projectId=Sequences.nextViitePrimaryKeySeqValue
+    val lrmPositionId=Sequences.nextLrmPositionPrimaryKeySeqValue
     val roadLink = RoadLink(1, Seq(Point(0,0),Point(0,45.3),Point(0,87))
       , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
       InUse, NormalLinkInterface)
@@ -523,7 +523,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
   test("Split and revert links") {
     reset(mockRoadLinkService)
     reset(mockRoadAddressService)
-    val projectId = 0
+    val projectId = Sequences.nextViitePrimaryKeySeqValue
     val roadLink = RoadLink(1, Seq(Point(0, 0), Point(0, 45.3), Point(0, 87))
       , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
       InUse, NormalLinkInterface)
@@ -565,7 +565,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
     val roadLink = RoadLink(1, Seq(Point(0,0),Point(0,45.3),Point(0,87))
       , 540.3960283713503, State, 99, TrafficDirection.AgainstDigitizing, UnknownLinkType, Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
       InUse, NormalLinkInterface)
-    val suravageAddressLink= RoadAddressLink(2,2,Seq(Point(0,0),Point(0,45.3),Point(0,123)),123,
+    val suravageAddressLink= RoadAddressLink(Sequences.nextViitePrimaryKeySeqValue,2,Seq(Point(0,0),Point(0,45.3),Point(0,123)),123,
       AdministrativeClass.apply(1),LinkType.apply(1),RoadLinkType.UnknownRoadLinkType,ConstructionType.Planned,LinkGeomSource.SuravageLinkInterface,RoadType.PublicRoad,"testRoad",
       8,None,None,null,1,1,Track.Combined.value,8,Discontinuity.Continuous.value,0,123,"","",0,123,SideCode.AgainstDigitizing,None,None,Anomaly.None,1)
     runWithRollback {
