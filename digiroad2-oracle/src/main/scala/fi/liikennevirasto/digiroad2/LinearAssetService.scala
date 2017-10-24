@@ -558,14 +558,6 @@ trait LinearAssetOperations {
       }
     }
 
-    def getOldCreateByValue(createdBy: Option[String]) = {
-      createdBy match {
-        case Some(user) if user == LinearAssetTypes.dr1Conversion => LinearAssetTypes.VvhGenerated
-        case Some(user) => user
-        case _ => LinearAssetTypes.VvhGenerated
-      }
-    }
-
     val (toInsert, toUpdate) = newLinearAssets.partition(_.id == 0L)
     withDynTransaction {
       val prohibitions = toUpdate.filter(a =>
@@ -584,7 +576,8 @@ trait LinearAssetOperations {
 
       toInsert.foreach{ linearAsset =>
         val id = dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
-          Measures(linearAsset.startMeasure, linearAsset.endMeasure), getOldCreateByValue(linearAsset.createdBy), linearAsset.vvhTimeStamp, getLinkSource(linearAsset.linkId))
+          Measures(linearAsset.startMeasure, linearAsset.endMeasure), LinearAssetTypes.VvhGenerated, linearAsset.vvhTimeStamp,
+          getLinkSource(linearAsset.linkId), true, linearAsset.createdBy, linearAsset.createdDateTime)
         linearAsset.value match {
           case Some(NumericValue(intValue)) =>
             dao.insertValue(id, LinearAssetTypes.numericValuePropertyId, intValue)

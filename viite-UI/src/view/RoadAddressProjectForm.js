@@ -4,6 +4,7 @@
     var selectedProjectLink = false;
     var activeLayer = false;
     var hasReservedRoadParts = false;
+    var projectStatus = LinkValues.ProjectStatus;
 
     var staticField = function(labelText, dataField) {
       var field;
@@ -432,7 +433,11 @@
       };
 
       rootElement.on('click', '#generalNext', function() {
-        if(currentProject.isDirty){
+        if(currentProject.statusCode === projectStatus.ErroredInTR.value){
+          currentProject.statusCode = projectStatus.Incomplete.value;
+          currentProject.statusDescription = projectStatus.Incomplete.description;
+          saveAndNext();
+        } else if(currentProject.isDirty){
           if(currentProject.id === 0){
             createNewProject();
           } else {

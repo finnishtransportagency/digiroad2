@@ -650,7 +650,7 @@
           var lineString = pointsToLineString(nearestSuravage.points);
           var splitMeasure = GeometryUtils.calculateMeasureAtPoint(lineString, point);
           var splitVertices = GeometryUtils.splitByPoint(lineString, point);
-          return _.merge({ splitMeasure: splitMeasure, point: point }, splitVertices);
+          return _.merge({ splitMeasure: splitMeasure, point: splitVertices.secondSplitVertices[0] }, splitVertices);
         };
 
         var nearest = findNearestSuravageLink([mousePoint.x, mousePoint.y]);
@@ -662,7 +662,7 @@
         }
         var nearestSuravage = nearest.feature.projectLinkData;
         var splitProperties = calculateSplitProperties(nearestSuravage, mousePoint);
-        selectedProjectLinkProperty.splitSuravageLink(nearestSuravage, splitProperties);
+        selectedProjectLinkProperty.splitSuravageLink(nearestSuravage, splitProperties, mousePoint);
         selectSingleClick.getFeatures().clear();
         selectSingleClick.getFeatures().push(nearest.feature);
         projectCollection.setTmpDirty([nearest.feature.projectLinkData]);

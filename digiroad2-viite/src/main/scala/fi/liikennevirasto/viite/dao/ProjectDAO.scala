@@ -22,7 +22,7 @@ sealed trait ProjectState{
 
 object ProjectState{
 
-  val values = Set(Closed, Incomplete,Sent2TR,ErroredInTR,TRProcessing,Saved2TR,Unknown)
+  val values = Set(Closed, Incomplete,Sent2TR,ErroredInTR,TRProcessing,Saved2TR,Failed2GenerateTRIdInViite,Unknown)
 
   // These states are final
   val nonActiveStates = Set(ProjectState.Closed.value, ProjectState.Saved2TR.value)
@@ -37,6 +37,7 @@ object ProjectState{
   case object ErroredInTR extends ProjectState {def value=3; def description ="Virhe tierekisterissä"}
   case object TRProcessing extends ProjectState {def value=4; def description="Tierekisterissä käsittelyssä"}
   case object Saved2TR extends ProjectState{def value=5;def description ="Viety tierekisteriin"}
+  case object Failed2GenerateTRIdInViite extends ProjectState { def value = 6; def description = "Tierekisteri ID:tä ei voitu muodostaa"}
   case object Unknown extends ProjectState{def value=99;def description ="Tuntematon"}
 }
 
@@ -157,7 +158,7 @@ object ProjectDAO {
       else
         addressPS.setLong(14, address.roadAddressId)
       if (address.connectedLinkId.isDefined)
-      addressPS.setLong(15, address.connectedLinkId.getOrElse(-1))
+        addressPS.setLong(15, address.connectedLinkId.get)
       else
         addressPS.setString(15, null)
       addressPS.setLong(16,address.ely)
@@ -272,7 +273,7 @@ object ProjectDAO {
   }
 
   def updateAddrMValues(projectLink: ProjectLink): Unit = {
-      sqlu"""update project_link set modified_date = sysdate, start_addr_m = ${projectLink.startAddrMValue}, end_addr_m = ${projectLink.endAddrMValue}, calibration_points = ${CalibrationCode.getFromAddress(projectLink).value} where id = ${projectLink.id}
+    sqlu"""update project_link set modified_date = sysdate, start_addr_m = ${projectLink.startAddrMValue}, end_addr_m = ${projectLink.endAddrMValue}, calibration_points = ${CalibrationCode.getFromAddress(projectLink).value} where id = ${projectLink.id}
           """.execute
   }
 
@@ -430,9 +431,9 @@ object ProjectDAO {
 
   def updateProjectLinkNumbering(projectId: Long, roadNumber: Long, roadPart: Long, linkStatus: LinkStatus, newRoadNumber: Long, newRoadPart: Long, userName: String): Unit = {
     val user = userName.replaceAll("[^A-Za-z0-9\\-]+", "")
-        val sql = s"UPDATE PROJECT_LINK SET STATUS = ${linkStatus.value}, MODIFIED_BY='$user', ROAD_NUMBER = $newRoadNumber, ROAD_PART_NUMBER = $newRoadPart " +
-          s"WHERE PROJECT_ID = $projectId  AND ROAD_NUMBER = $roadNumber AND ROAD_PART_NUMBER = $roadPart AND STATUS != ${LinkStatus.Terminated.value}"
-        Q.updateNA(sql).execute
+    val sql = s"UPDATE PROJECT_LINK SET STATUS = ${linkStatus.value}, MODIFIED_BY='$user', ROAD_NUMBER = $newRoadNumber, ROAD_PART_NUMBER = $newRoadPart " +
+      s"WHERE PROJECT_ID = $projectId  AND ROAD_NUMBER = $roadNumber AND ROAD_PART_NUMBER = $roadPart AND STATUS != ${LinkStatus.Terminated.value}"
+    Q.updateNA(sql).execute
   }
 
   def updateProjectLinkUnchanged(projectLinkIds: Set[Long], linkStatus: LinkStatus, userName: String, roadType: Long, discontinuity: Option[Long]): Unit = {
@@ -460,6 +461,22 @@ object ProjectDAO {
         Q.updateNA(sql).execute
     }
   }
+
+  def addRotatingTRProjectId(projectId:Long) = {
+    Q.updateNA(s"UPDATE PROJECT SET TR_ID = VIITE_PROJECT_SEQ.nextval WHERE ID= $projectId").execute
+  }
+  def removeRotatingTRProjectId(projectId:Long) = {
+    Q.updateNA(s"UPDATE PROJECT SET TR_ID = NULL WHERE ID= $projectId").execute
+  }
+
+  def updateProjectStateInfo(stateInfo:String, projectId: Long) = {
+    Q.updateNA(s"UPDATE PROJECT SET STATUS_INFO = '$stateInfo' WHERE ID= $projectId").execute
+  }
+
+  def getRotatingTRProjectId(projectId: Long) = {
+    Q.queryNA[Long](s"Select tr_id From Project WHERE Id=$projectId AND tr_id IS NOT NULL ").list
+  }
+
 
   def updateProjectLinkValues (projectId: Long, roadAddress: RoadAddress) = {
     val updateProjectLink = s"UPDATE PROJECT_LINK SET ROAD_NUMBER = ${roadAddress.roadNumber}, " +
@@ -519,9 +536,9 @@ object ProjectDAO {
     Q.queryNA[Long](query).first
   }
 
-  def updateProjectStatus(projectID:Long,state:ProjectState,errorMessage:String) {
+  def updateProjectStatus(projectID:Long,state:ProjectState) {
     val projectstate=state.value
-    sqlu""" update project set state=$projectstate, status_info=$errorMessage  WHERE id=$projectID""".execute
+    sqlu""" update project set state=$projectstate WHERE id=$projectID""".execute
   }
 
   def getProjectsWithWaitingTRStatus(): List[Long] = {
