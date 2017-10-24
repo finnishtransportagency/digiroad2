@@ -365,7 +365,7 @@ class AssetDataImporter {
 
       roadsWithMultipleValues.groupBy(m => (m.roadNumber, m.roadPartNumber)).foreach{ case ((roadNumber, roadPartNumber), roadMaps) =>{
         val addresses = RoadAddressDAO.fetchByRoadPart(roadNumber, roadPartNumber, true, true)
-        println(s"updating tie = $roadNumber, aosa = $roadPartNumber: (${addresses.size} rows")
+        println(s"updating tie = $roadNumber, aosa = $roadPartNumber: (${addresses.size} rows)")
         addresses.foreach(address => {
           val ely = roadMaps.head.elyCode
           roadType(roadMaps, address) match {
@@ -374,7 +374,11 @@ class AssetDataImporter {
             case Right((addrM, roadTypeBefore, roadTypeAfter)) =>
               val roadLinkFromVVH = linkService.getCurrentAndComplementaryRoadLinksFromVVH(Set(address.linkId), false)
               val splittedRoadAddresses = splitRoadAddresses(address.copy(geometry = roadLinkFromVVH.head.geometry), addrM, roadTypeBefore, roadTypeAfter, ely)
+              println(s"Split ${address.id} ${address.startMValue}-${address.endMValue} (${address.startAddrMValue}-${address.endAddrMValue}) into")
+              println(s"  ${splittedRoadAddresses.head.startMValue}-${splittedRoadAddresses.head.endMValue} (${splittedRoadAddresses.head.startAddrMValue}-${splittedRoadAddresses.head.endAddrMValue}) and")
+              println(s"  ${splittedRoadAddresses.last.startMValue}-${splittedRoadAddresses.last.endMValue} (${splittedRoadAddresses.last.startAddrMValue}-${splittedRoadAddresses.last.endAddrMValue})")
               RoadAddressDAO.expireById(Set(address.id))
+              sqlu"""UPDATE ROAD_ADDRESS SET ROAD_TYPE = 99, ELY= $ely where ID = ${address.id}""".execute
               RoadAddressDAO.create(splittedRoadAddresses)
           }
         })
@@ -384,19 +388,34 @@ class AssetDataImporter {
   }
 
   def splitRoadAddresses(roadAddress : RoadAddress, addrMToSplit: Long, roadTypeBefore : RoadType, roadTypeAfter : RoadType, elyCode : Long) : Seq[RoadAddress] = {
+    // mValue at split point on a TowardsDigitizing road address:
     val splitMValue = roadAddress.startMValue + (roadAddress.endMValue - roadAddress.startMValue) / (roadAddress.endAddrMValue - roadAddress.startAddrMValue) * (addrMToSplit - roadAddress.startAddrMValue)
-    println(s"Splitting road address id = ${roadAddress.id}, tie = ${roadAddress.roadNumber} and aosa = ${roadAddress.roadPartNumber}, on MValue = ${addrMToSplit}")
+    println(s"Splitting road address id = ${roadAddress.id}, tie = ${roadAddress.roadNumber} and aosa = ${roadAddress.roadPartNumber}, on AddrMValue = $addrMToSplit")
     val roadAddressA = roadAddress.copy(
       id = fi.liikennevirasto.viite.NewRoadAddress,
       endAddrMValue = addrMToSplit,
-      endMValue = splitMValue,
+      endMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
+        roadAddress.endMValue
+      else
+        splitMValue,
+      startMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
+        roadAddress.endMValue - splitMValue
+      else
+        0.0,
       geometry = GeometryUtils.truncateGeometry2D(roadAddress.geometry, 0.0, splitMValue),
       roadType = roadTypeBefore, ely = elyCode)
 
     val roadAddressB = roadAddress.copy(
       id = fi.liikennevirasto.viite.NewRoadAddress,
       startAddrMValue = addrMToSplit,
-      startMValue = roadAddressA.endMValue,
+      startMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
+        0.0
+      else
+        splitMValue,
+      endMValue = if (roadAddress.sideCode == SideCode.AgainstDigitizing)
+        roadAddress.endMValue - splitMValue
+      else
+        roadAddress.endMValue,
       geometry = GeometryUtils.truncateGeometry2D(roadAddress.geometry, splitMValue, roadAddress.endMValue),
       roadType = roadTypeAfter, ely = elyCode
     )
