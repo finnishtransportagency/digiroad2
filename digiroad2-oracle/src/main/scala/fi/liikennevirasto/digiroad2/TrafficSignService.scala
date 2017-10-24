@@ -12,7 +12,7 @@ sealed trait TrafficSignTypeGroup {
   def value: Int
 }
 object TrafficSignTypeGroup {
-  val values = Set(Unknown, SpeedLimits, PedestrianCrossing, MaximumRestrictions, GeneralWarningSigns, TurningRestrictions, ProhibitionsAndRestrictions)
+  val values = Set(Unknown, SpeedLimits, PedestrianCrossing, MaximumRestrictions, GeneralWarningSigns, ProhibitionsAndRestrictions)
 
   def apply(intValue: Int): TrafficSignTypeGroup = {
     values.find(_.value == intValue).getOrElse(Unknown)
@@ -22,8 +22,7 @@ object TrafficSignTypeGroup {
   case object PedestrianCrossing extends TrafficSignTypeGroup { def value = 2 }
   case object MaximumRestrictions extends TrafficSignTypeGroup { def value = 3 }
   case object GeneralWarningSigns extends TrafficSignTypeGroup { def value = 4 }
-  case object TurningRestrictions extends TrafficSignTypeGroup { def value = 5 }
-  case object ProhibitionsAndRestrictions extends TrafficSignTypeGroup { def value = 6 }
+  case object ProhibitionsAndRestrictions extends TrafficSignTypeGroup { def value = 5 }
   case object Unknown extends TrafficSignTypeGroup { def value = 99 }
 }
 
@@ -51,9 +50,9 @@ object TrafficSignType {
   case object PedestrianCrossing extends TrafficSignType { def value = 7;  def group = TrafficSignTypeGroup.PedestrianCrossing; }
   case object MaximumLength extends TrafficSignType { def value = 8;  def group = TrafficSignTypeGroup.MaximumRestrictions; }
   case object Warning extends TrafficSignType { def value = 9;  def group = TrafficSignTypeGroup.GeneralWarningSigns; }
-  case object NoLeftTurn extends TrafficSignType { def value = 10;  def group = TrafficSignTypeGroup.TurningRestrictions; }
-  case object NoRightTurn extends TrafficSignType { def value = 11;  def group = TrafficSignTypeGroup.TurningRestrictions; }
-  case object NoUTurn extends TrafficSignType { def value = 12;  def group = TrafficSignTypeGroup.TurningRestrictions; }
+  case object NoLeftTurn extends TrafficSignType { def value = 10;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
+  case object NoRightTurn extends TrafficSignType { def value = 11;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
+  case object NoUTurn extends TrafficSignType { def value = 12;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
   case object ClosedToAllVehicles extends TrafficSignType { def value = 13;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
   case object NoPowerDrivenVehicles extends TrafficSignType { def value = 14;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
   case object NoLorriesAndVans extends TrafficSignType { def value = 15;  def group = TrafficSignTypeGroup.ProhibitionsAndRestrictions; }
