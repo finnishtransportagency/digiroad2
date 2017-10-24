@@ -440,7 +440,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
     } should have size (count - 1)
   }
 
-  test("process roadChange data and expire the roadLink") {
+  ignore("process roadChange data and expire the roadLink") {
     //First Create Mock Project, RoadLinks and
 
     runWithRollback {
