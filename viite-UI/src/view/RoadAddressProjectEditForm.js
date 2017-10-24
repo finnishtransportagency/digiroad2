@@ -377,18 +377,19 @@
     var changeDropDownValue = function (statusCode) {
       var rootElement = $('#feature-attributes');
       if (statusCode === LinkStatus.Unchanged.value) {
-        $("#dropDown_0" ).val(LinkStatus.Unchanged.description).change();
+        $("#dropDown_0 option[value="+ LinkStatus.New.description +"]").prop('disabled',true);
+        $("#dropDown_0 option[value="+ LinkStatus.Unchanged.description +"]").attr('selected', 'selected').change();
       }
       else if(statusCode === LinkStatus.New.value){
-        $("#dropDown_0" ).val(LinkStatus.New.description).change();
+        $("#dropDown_0 option[value="+ LinkStatus.New.description +"]").attr('selected', 'selected').change();
         projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
         rootElement.find('.new-road-address').prop("hidden", false);
         if(selectedProjectLink[0].id !== 0)
           rootElement.find('.changeDirectionDiv').prop("hidden", false);
       }
       else if (statusCode == LinkStatus.Transfer.value) {
-        $("select option[value*="+LinkStatus.New.action+"]").prop('disabled',true);
-        $('#dropDown').val(LinkStatus.Transfer.action).change();
+        $("#dropDown_0 option[value="+ LinkStatus.New.description +"]").prop('disabled',true);
+        $("#dropDown_0 option[value="+ LinkStatus.Transfer.description +"]").attr('selected', 'selected').change();
       }
       $('#discontinuityDropdown').val(selectedProjectLink[selectedProjectLink.length - 1].discontinuity);
       $('#roadTypeDropDown').val(selectedProjectLink[0].roadTypeId);
@@ -644,7 +645,7 @@
           }
         }
         else if(this.value == LinkStatus.Unchanged.description){
-          rootElement.find('.new-road-address').prop("hidden", true);
+          rootElement.find('.new-road-address').prop("hidden", false);
           rootElement.find('.changeDirectionDiv').prop("hidden", true);
           $('#tie').prop('disabled',true);
           $('#osa').prop('disabled',true);

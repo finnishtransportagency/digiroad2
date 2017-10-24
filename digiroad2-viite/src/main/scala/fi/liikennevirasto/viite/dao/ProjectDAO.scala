@@ -102,14 +102,14 @@ object ProjectDAO {
       val endAddrM = r.nextLong()
       val startMValue = r.nextDouble()
       val endMValue = r.nextDouble()
-      val sideCode = SideCode.apply(r.nextLong().toInt)
+      val sideCode = SideCode.apply(r.nextInt)
       val lrmPositionId = r.nextLong()
       val createdBy = r.nextString()
       val modifiedBy = r.nextString()
       val linkId = r.nextLong()
       val length = r.nextDouble()
       val calibrationPoints =
-        CalibrationPointsUtils.calibrations(CalibrationCode.apply(r.nextLong().toInt),linkId,startMValue,endMValue,
+        CalibrationPointsUtils.calibrations(CalibrationCode.apply(r.nextInt),linkId,startMValue,endMValue,
           startAddrM,endAddrM, sideCode )
       val status = LinkStatus.apply(r.nextInt())
       val roadType = RoadType.apply(r.nextInt())
@@ -126,28 +126,14 @@ object ProjectDAO {
 
   private def listQuery(query: String) = {
     Q.queryNA[ProjectLink](query).iterator.toSeq
-    /*Q.queryNA[(Long, Long, Int, Int, Long, Long, Long, Long, Double, Double, Long, Long, String, String,
-      Long, Double, Long, Int, Int, Int, Long, Option[Long])](query).list.map(mapToProjectLink)*/
   }
-
-  /*private def mapToProjectLink(row: (Long, Long, Int, Int, Long, Long, Long, Long, Double, Double, Long, Long,
-    String, String, Long, Double, Long, Int, Int, Int, Long, Option[Long])): ProjectLink = {
-    val (projectLinkId, projectId, trackCode, discontinuityType, roadNumber, roadPartNumber, startAddrM, endAddrM,
-    startMValue, endMValue, sideCode , lrmPositionId, createdBy, modifiedBy, linkId, length, calibrationPoints, status,
-    roadType, source, roadAddressId, connectedLinkId) = row
-    ProjectLink(projectLinkId, roadNumber, roadPartNumber, Track.apply(trackCode), Discontinuity.apply(discontinuityType),
-      startAddrM, endAddrM, None, None, None, lrmPositionId, linkId, startMValue, endMValue, SideCode.apply(sideCode.toInt),
-      CalibrationPointsUtils.calibrations(CalibrationCode.apply(calibrationPoints.toInt),linkId,startMValue,endMValue,
-        startAddrM,endAddrM, SideCode.apply(sideCode.toInt)),false, Seq.empty[Point], projectId, LinkStatus.apply(status),
-      RoadType.apply(roadType),LinkGeomSource.apply(source),length, roadAddressId, connectedLinkId)
-  }*/
 
   def create(roadAddresses: Seq[ProjectLink]): Seq[Long] = {
     val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure, adjusted_timestamp, link_source) values (?, ?, ?, ?, ?, ?, ?)")
     val addressPS = dynamicSession.prepareStatement("insert into PROJECT_LINK (id, project_id, lrm_position_id, " +
       "road_number, road_part_number, " +
       "track_code, discontinuity_type, START_ADDR_M, END_ADDR_M, created_by, " +
-      "calibration_points, status, road_type, road_address_id, connected_link_id) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)")
+      "calibration_points, status, road_type, road_address_id, connected_link_id, ely) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?)")
     val ids = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= ${roadAddresses.size}""".as[Long].list
     roadAddresses.zip(ids).foreach { case ((address), (lrmId)) =>
       RoadAddressDAO.createLRMPosition(lrmPositionPS, lrmId, address.linkId, address.sideCode.value, address.startMValue, address.endMValue, 0, address.linkGeomSource.value)
@@ -174,6 +160,7 @@ object ProjectDAO {
       addressPS.setLong(15, address.connectedLinkId.getOrElse(-1))
       else
         addressPS.setString(15, null)
+      addressPS.setLong(16,address.ely)
       addressPS.addBatch()
 
     }
@@ -559,6 +546,7 @@ object ProjectDAO {
     if (ids.size > 900)
       ids.grouped(900).map(deleteProjectLinks).sum
     else {
+      val lrmIds = Q.queryNA[Long](s"SELECT LRM_POSITION_ID FROM PROJECT_LINK WHERE ID IN (${ids.mkString(",")})").list
       val deleteLinks =
         s"""
          DELETE FROM PROJECT_LINK WHERE id IN (${ids.mkString(",")})
@@ -566,7 +554,7 @@ object ProjectDAO {
       val count = Q.updateNA(deleteLinks).first
       val deleteLrm =
         s"""
-         DELETE FROM LRM_POSITION WHERE id IN (SELECT lrm_position_id from PROJECT_LINK where id in (${ids.mkString(",")}))
+         DELETE FROM LRM_POSITION WHERE id IN (${lrmIds.mkString(",")})
       """
       Q.updateNA(deleteLrm).execute
       count

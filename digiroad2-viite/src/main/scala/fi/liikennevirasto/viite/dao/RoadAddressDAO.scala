@@ -382,7 +382,7 @@ object RoadAddressDAO {
         select ra.id, ra.road_number, ra.road_part_number, ra.track_code,
         ra.discontinuity, ra.start_addr_m, ra.end_addr_m, ra.lrm_position_id, pos.link_id, pos.start_measure, pos.end_measure,
         pos.side_code, pos.adjusted_timestamp,
-        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.ely
+        ra.start_date, ra.end_date, ra.created_by, ra.valid_from, ra.CALIBRATION_POINTS, ra.floating, t.X, t.Y, t2.X, t2.Y, link_source, ra.road_type, ra.discontinuity, ra.ely
         from road_address ra cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t cross join
         TABLE(SDO_UTIL.GETVERTICES(ra.geometry)) t2
@@ -634,12 +634,6 @@ object RoadAddressDAO {
            insert into missing_road_address (link_id, start_addr_m, end_addr_m,anomaly_code, start_m, end_m)
            values ($linkId, $start_addr_m, $end_addr_m, $anomaly_code, $start_m, $end_m)
            """.execute
-  }
-
-  def lockRoadAddressTable(): Unit = {
-    sqlu"""
-           LOCK TABLE ROAD_ADDRESS IN EXCLUSIVE MODE
-          """.execute
   }
 
   def expireById(ids: Set[Long]): Int = {
@@ -950,9 +944,9 @@ object RoadAddressDAO {
     val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure, adjusted_timestamp, link_source) values (?, ?, ?, ?, ?, ?, ?)")
     val addressPS = dynamicSession.prepareStatement("insert into ROAD_ADDRESS (id, lrm_position_id, road_number, road_part_number, " +
       "track_code, discontinuity, START_ADDR_M, END_ADDR_M, start_date, end_date, created_by, " +
-      "VALID_FROM, geometry, floating, calibration_points) values (?, ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), " +
+      "VALID_FROM, geometry, floating, calibration_points, ely, road_type) values (?, ?, ?, ?, ?, ?, ?, ?, TO_DATE(?, 'YYYY-MM-DD'), " +
       "TO_DATE(?, 'YYYY-MM-DD'), ?, sysdate, MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(" +
-      "?,?,0.0,?,?,?,0.0,?)), ?, ?)")
+      "?,?,0.0,?,?,?,0.0,?)), ?, ?, ? ,?)")
     val ids = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= ${roadAddresses.size}""".as[Long].list
     val savedIds = roadAddresses.zip(ids).map { case ((address), (lrmId)) =>
       createLRMPosition(lrmPositionPS, lrmId, address.linkId, address.sideCode.value, address.startMValue,
@@ -986,6 +980,8 @@ object RoadAddressDAO {
       addressPS.setDouble(17, address.endAddrMValue)
       addressPS.setInt(18, if (address.floating) 1 else 0)
       addressPS.setInt(19, CalibrationCode.getFromAddress(address).value)
+      addressPS.setLong(20, address.ely)
+      addressPS.setInt(21, address.roadType.value)
       addressPS.addBatch()
       nextId
     }

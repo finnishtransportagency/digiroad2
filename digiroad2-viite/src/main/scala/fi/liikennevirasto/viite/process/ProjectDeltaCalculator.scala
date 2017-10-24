@@ -1,5 +1,6 @@
 package fi.liikennevirasto.viite.process
 
+import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.util.Track.RightSide
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.viite.dao.{ProjectLink, _}
@@ -26,33 +27,43 @@ object ProjectDeltaCalculator {
       includeFloating = true).map(ra => ra.id -> ra).toMap
     val terminations = findTerminations(projectLinks, currentAddresses)
     val newCreations = findNewCreations(projectLinks)
-    val unChanged = findUnChanged(projectLinks, currentAddresses)
+    val unChanged = Unchanged(findUnChanged(projectLinksFetched, currentAddresses))
     val transferred = Transferred(findTransfers(projectLinksFetched, currentAddresses))
     val numbering = ReNumeration(findNumbering(projectLinksFetched, currentAddresses))
 
     Delta(project.startDate, terminations, newCreations, unChanged, transferred, numbering)
   }
 
+  private def adjustIfSplit(pl: ProjectLink, ra: Option[RoadAddress]) = {
+    // Test if this link was a split case: if not, return original address, otherwise return a copy that is adjusted
+    if (pl.connectedLinkId.isEmpty || pl.connectedLinkId.get == 0)
+      ra
+    else
+      ra.map(address => {
+        val geom = GeometryUtils.truncateGeometry2D(address.geometry, pl.startMValue, pl.endMValue)
+        address.copy(startMValue = pl.startMValue, endMValue = pl.endMValue,
+          startAddrMValue = pl.startAddrMValue, endAddrMValue = pl.endAddrMValue, geometry = geom)
+      })
+  }
+
   private def findTerminations(projectLinks: Map[RoadPart, Seq[ProjectLink]], currentAddresses: Map[Long, RoadAddress]) = {
     val terminations = projectLinks.mapValues(pll =>
       pll.filter(_.status == LinkStatus.Terminated).flatMap(pl =>
-        currentAddresses.get(pl.roadAddressId)
+        adjustIfSplit(pl, currentAddresses.get(pl.roadAddressId))
       )
     )
     terminations.filterNot(t => t._2.isEmpty).values.foreach(validateTerminations)
     terminations.values.flatten.toSeq
   }
 
-  private def findUnChanged(projectLinks: Map[RoadPart, Seq[ProjectLink]], currentAddresses: Map[Long, RoadAddress]) = {
-    projectLinks.mapValues(pll =>
-      pll.filter(_.status == LinkStatus.UnChanged).flatMap(pl =>
-        currentAddresses.get(pl.roadAddressId)
-      )
-    ).values.flatten.toSeq
+  private def findUnChanged(projectLinks: Seq[ProjectLink], currentAddresses: Map[Long, RoadAddress]) = {
+    projectLinks.filter(_.status == LinkStatus.UnChanged).map(pl =>
+      adjustIfSplit(pl, currentAddresses.get(pl.roadAddressId)).get -> pl)
   }
 
   private def findTransfers(projectLinks: Seq[ProjectLink], currentAddresses: Map[Long, RoadAddress]) = {
-    projectLinks.filter(_.status == LinkStatus.Transfer).map(pl => currentAddresses(pl.roadAddressId) -> pl)
+    projectLinks.filter(_.status == LinkStatus.Transfer).map(pl =>
+      adjustIfSplit(pl, currentAddresses.get(pl.roadAddressId)).get -> pl)
   }
 
   private def findNumbering(projectLinks: Seq[ProjectLink], currentAddresses: Map[Long, RoadAddress]) = {
@@ -196,6 +207,7 @@ object ProjectDeltaCalculator {
     * @param projectLinks Project Links that have the transfer address values
     * @return Map between the sections old -> new
     */
+  @Deprecated
   def partition(roadAddresses: Seq[RoadAddress], projectLinks: Seq[ProjectLink]): Map[RoadAddressSection, RoadAddressSection] = {
     partition(pair(roadAddresses, projectLinks.groupBy(_.roadAddressId)))
   }
@@ -223,9 +235,11 @@ object ProjectDeltaCalculator {
 }
 
 case class Delta(startDate: DateTime, terminations: Seq[RoadAddress], newRoads: Seq[ProjectLink],
-                 unChanged: Seq[RoadAddress], transferred: Transferred, numbering : ReNumeration)
+                 unChanged: Unchanged, transferred: Transferred, numbering : ReNumeration)
 
 case class RoadPart(roadNumber: Long, roadPartNumber: Long)
+
+case class Unchanged(mapping: Seq[(RoadAddress, ProjectLink)])
 
 case class Transferred(mapping: Seq[(RoadAddress, ProjectLink)])
 

@@ -32,17 +32,10 @@
       right.points = split.secondSplitVertices;
       var measureLeft = calculateMeasure(left);
       var measureRight = calculateMeasure(right);
-      if (measureLeft < measureRight) {
-        splitSuravage.created = left;
-        splitSuravage.created.endMValue = measureLeft;
-        splitSuravage.existing = right;
-        splitSuravage.existing.endMValue = measureRight;
-      } else {
-        splitSuravage.created = right;
-        splitSuravage.created.endMValue = measureRight;
-        splitSuravage.existing = left;
-        splitSuravage.existing.endMValue = measureLeft;
-      }
+      splitSuravage.created = left;
+      splitSuravage.created.endMValue = measureLeft;
+      splitSuravage.existing = right;
+      splitSuravage.existing.endMValue = measureRight;
       splitSuravage.created.splitPoint = split.point;
       splitSuravage.existing.splitPoint = split.point;
 

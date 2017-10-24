@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.ReservedRoadPart
 import fi.liikennevirasto.viite.RoadType.UnknownOwnerRoad
-import fi.liikennevirasto.viite.process.{Delta, Transferred, ReNumeration}
+import fi.liikennevirasto.viite.process.{Delta, ReNumeration, Transferred, Unchanged}
 import org.joda.time.DateTime
 import org.scalatest.{FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
@@ -42,7 +42,7 @@ class RoadAddressChangesDAOSpec extends FunSuite with Matchers {
 
   test("confirm data insertion") {
     val newProjectLink = ProjectLink(1, 0, 0, Track.Unknown, Discontinuity.Continuous, 0, 0, None, None, None, 0, 0, 0.0, 0.0, SideCode.Unknown, (None, None), false, List(), 1, LinkStatus.New, UnknownOwnerRoad, LinkGeomSource.NormalLinkInterface, 0.0, 0, 5)
-    val delta = Delta(DateTime.now(), Seq(), Seq(newProjectLink), Seq(), Transferred(Seq()), ReNumeration(Seq()))
+    val delta = Delta(DateTime.now(), Seq(), Seq(newProjectLink), Unchanged(Seq()), Transferred(Seq()), ReNumeration(Seq()))
     runWithRollback {
       addprojects()
       RoadAddressChangesDAO.insertDeltaToRoadChangeTable(delta, 1)
