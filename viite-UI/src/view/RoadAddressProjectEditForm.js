@@ -3,6 +3,10 @@
     var LinkStatus = LinkValues.LinkStatus;
     var LinkGeomSource = LinkValues.LinkGeomSource;
     var CalibrationCode = LinkValues.CalibrationCode;
+    var projectIncomplete = 1;
+    var projectErroredInTR = 3;
+    var projectUnknown = 99;
+    var editableStatus = [projectIncomplete, projectErroredInTR, projectUnknown];
 
     var currentProject = false;
     var selectedProjectLink = false;
@@ -346,6 +350,10 @@
       return projectCollection.getPublishableStatus();
     };
 
+    var isProjectEditable = function(){
+      return _.contains(editableStatus, projectCollection.getCurrentProject().project.statusCode);
+    };
+
     var checkInputs = function () {
       var rootElement = $('#feature-attributes');
       var inputs = rootElement.find('input');
@@ -405,6 +413,15 @@
       }
     };
 
+    var disableFormInputs = function () {
+      if (!isProjectEditable()) {
+        $('#roadAddressProjectForm select').prop('disabled',true);
+        $('#roadAddressProjectFormCut select').prop('disabled',true);
+        $('.update').prop('disabled', true);
+        $('.btn-edit-project').prop('disabled', true);
+      }
+    };
+
     var bindEvents = function() {
 
       var rootElement = $('#feature-attributes');
@@ -421,6 +438,7 @@
         checkInputs();
         toggleAditionalControls();
         changeDropDownValue(selectedProjectLink[0].status);
+        disableFormInputs();
       });
 
       eventbus.on('roadAddress:projectFailed', function() {
@@ -717,7 +735,7 @@
         projectChangeTable.show();
         var publishButton = sendRoadAddressChangeButton();
         var projectChangesButton = showProjectChangeButton();
-        if(isProjectPublishable()) {
+        if(isProjectPublishable() && isProjectEditable()) {
           $('#information-content').html('' +
             '<div class="form form-horizontal">' +
             '<p>' + 'Validointi ok. Voit tehdä tieosoitteenmuutosilmoituksen' + '<br>' +

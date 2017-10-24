@@ -4,6 +4,10 @@
     var selectedProjectLink = false;
     var activeLayer = false;
     var hasReservedRoadParts = false;
+    var projectIncomplete = 1;
+    var projectErroredInTR = 3;
+    var projectUnknown = 99;
+    var editableStatus = [projectIncomplete, projectErroredInTR, projectUnknown];
 
     var staticField = function(labelText, dataField) {
       var field;
@@ -331,6 +335,14 @@
         rootElement.find('.btn-next').prop("disabled", false);
       };
 
+      var disableFormInputs = function () {
+        if (!isProjectEditable()) {
+          $('#roadAddressProject input').prop('disabled',true);
+          $('.btn-reserve').prop('disabled',true);
+          $('.btn-delete').prop('hidden',true);
+        }
+      };
+
       eventbus.on('roadAddress:newProject', function() {
         currentProject = {
           id: 0,
@@ -375,6 +387,7 @@
         rootElement.find('.btn-next').prop("disabled", false);
         eventbus.trigger('roadAddressProject:clearTool');
         applicationModel.removeSpinner();
+        disableFormInputs();
       });
 
       eventbus.on('roadAddress:projectValidationFailed', function (result) {
@@ -431,6 +444,10 @@
         });
       };
 
+      var isProjectEditable = function(){
+        return _.contains(editableStatus, projectCollection.getCurrentProject().project.statusCode);
+      };
+
       rootElement.on('click', '#generalNext', function() {
         if(currentProject.isDirty){
           if(currentProject.id === 0){
@@ -440,6 +457,9 @@
           }
         } else {
           nextStage();
+        }
+        if (!isProjectEditable()) {
+          $('.btn-edit-project').prop('disabled', true);
         }
       });
 
