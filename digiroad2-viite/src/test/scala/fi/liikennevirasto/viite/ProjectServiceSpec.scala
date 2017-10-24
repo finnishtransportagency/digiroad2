@@ -386,7 +386,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
     //First Create Mock Project, RoadLinks and
 
     runWithRollback {
-      var projectId = 0L
+      var projectId = Sequences.nextViitePrimaryKeySeqValue
       val roadNumber = 1943845
       val roadPartNumber = 1
       val linkId = 12345L
@@ -442,7 +442,6 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
     //First Create Mock Project, RoadLinks and
 
     runWithRollback {
-      var projectId = Sequences.nextViitePrimaryKeySeqValue
       val roadNumber = 1943845
       val roadPartNumber = 1
       val linkId = 12345L
@@ -456,12 +455,12 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(Set(linkId))).thenReturn(Seq(RoadLink(linkId, ra.head.geometry, 9.8, State, 1, TrafficDirection.BothDirections,
         Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(167)))))
       //Creation of test project with test links
-      val project = RoadAddressProject(projectId, ProjectState.Incomplete, "testiprojekti", "Test", DateTime.now(), "Test",
+      val project = RoadAddressProject(0, ProjectState.Incomplete, "testiprojekti", "Test", DateTime.now(), "Test",
         DateTime.parse("2020-01-01"), DateTime.now(), "info",
         List(ReservedRoadPart(0: Long, roadNumber: Long, roadPartNumber: Long, 5: Double, 5: Long, Discontinuity.apply("jatkuva"),
           8: Long, None: Option[DateTime], None: Option[DateTime])), None)
       val proj = projectService.createRoadLinkProject(project)
-      projectId = proj.id
+      var projectId = proj.id
       val projectLinkId = proj.reservedParts.head.startingLinkId.get
       val link = ProjectDAO.getProjectLinksByLinkId(projectLinkId).head
       val terminatedValue = LinkStatus.Terminated.value
