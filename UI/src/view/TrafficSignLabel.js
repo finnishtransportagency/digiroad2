@@ -10,7 +10,7 @@
     var backgroundStyle = function (value, counter) {
       return new ol.style.Style({
         image: new ol.style.Icon(({
-          src: isSignWithValue(value) ? correctValue(propertyText) ? getImage(value) : 'images/traffic-signs/badValue.png' : getImage(value),
+          src: isSignWithValue(value) ? correctValue(propertyText, value) ? getImage(value) : 'images/traffic-signs/badValue.png' : getImage(value),
           anchor : [0.5, 1+(counter)]
         }))
       });
@@ -82,9 +82,10 @@
       return "" + value;
     };
 
-    var correctValue = function (value) {
-      if (!value || (value > 120 || value < 0))
-        return false;
+    var correctValue = function (propertyValue, value) {
+      if(value < 9)
+        if (!value || (value > 120 || value < 0))
+          return false;
       return true;
     };
 
@@ -152,7 +153,7 @@
     };
 
     var isSignWithValue = function(trafficSignType){
-      return trafficSignType < 5 || trafficSignType == 8;
+      return trafficSignType < 5 || trafficSignType == 8 || (trafficSignType > 29 && trafficSignType < 36);
     };
 
     var setProperty = function (asset) {
