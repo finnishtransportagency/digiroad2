@@ -142,7 +142,7 @@ object ProjectDAO {
       else
         addressPS.setLong(14, address.roadAddressId)
       if (address.connectedLinkId.isDefined)
-        addressPS.setLong(15, address.connectedLinkId.getOrElse(-1))
+        addressPS.setLong(15, address.connectedLinkId.get)
       else
         addressPS.setString(15, null)
       addressPS.addBatch()
