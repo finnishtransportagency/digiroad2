@@ -5,7 +5,7 @@
 
   var enumeratedPropertyValues = null;
 
-  function bindEvents(typeId, selectedAsset, layerName, localizedTexts, editConstrains, roadCollection, applicationModel, backend) {
+  function bindEvents(typeId, selectedAsset, collection, layerName, localizedTexts, editConstrains, roadCollection, applicationModel, backend) {
     var rootElement = $('#feature-attributes');
 
     backend.getEnumeratedPropertyValues(typeId);
@@ -17,7 +17,7 @@
 
     eventbus.on(layerName + ':selected ' + layerName + ':cancelled roadLinks:fetched', function() {
       if (!_.isEmpty(roadCollection.getAll()) && !_.isNull(selectedAsset.getId())) {
-        renderForm(rootElement, selectedAsset, localizedTexts, editConstrains, roadCollection);
+        renderForm(rootElement, selectedAsset, localizedTexts, editConstrains, roadCollection, collection);
         toggleMode(rootElement, editConstrains(selectedAsset) || applicationModel.isReadOnly());
         if (layerName == 'servicePoints') {
           rootElement.find('button#save-button').prop('disabled', true);
@@ -45,12 +45,12 @@
     });
   }
 
-  function renderForm(rootElement, selectedAsset, localizedTexts, editConstrains, roadCollection) {
+  function renderForm(rootElement, selectedAsset, localizedTexts, editConstrains, roadCollection, collection) {
     var id = selectedAsset.getId();
 
     var title = selectedAsset.isNew() ? "Uusi " + localizedTexts.newAssetLabel : 'ID: ' + id;
     var header = '<header><span>' + title + '</span>' + renderButtons() + '</header>';
-    var form = renderAssetFormElements(selectedAsset, localizedTexts);
+    var form = renderAssetFormElements(selectedAsset, localizedTexts, collection);
     var footer = '<footer>' + renderButtons() + '</footer>';
 
     rootElement.html(header + form + footer);
@@ -164,14 +164,14 @@
     });
   }
 
-  function renderAssetFormElements(selectedAsset, localizedTexts) {
+  function renderAssetFormElements(selectedAsset, localizedTexts, collection) {
     var asset = selectedAsset.get();
 
     if (selectedAsset.isNew()) {
       return '' +
         '<div class="wrapper">' +
         '  <div class="form form-horizontal form-dark form-pointasset">' +
-        renderValueElement(asset) +
+        renderValueElement(asset, collection) +
         '  </div>' +
         '</div>';
     } else {
@@ -185,7 +185,7 @@
         '    <div class="form-group">' +
         '      <p class="form-control-static asset-log-info">Muokattu viimeksi: ' + (asset.modifiedBy || '-') + ' ' + (asset.modifiedAt || '') + '</p>' +
         '    </div>' +
-        renderValueElement(asset) +
+        renderValueElement(asset, collection) +
         '    <div class="form-group form-group delete">' +
         '      <div class="checkbox" >' +
         '        <input type="checkbox">' +
@@ -270,25 +270,36 @@
       '    </div>';
   };
 
-  var singleChoiceHandler = function (property) {
+  var singleChoiceHandler = function (property, collection) {
     var propertyValue = (property.values.length === 0) ? '' : _.first(property.values).propertyValue;
     var propertyDisplayValue = (property.values.length === 0) ? '' : _.first(property.values).propertyDisplayValue;
     var signTypes = _.map(_.filter(enumeratedPropertyValues, function(enumerated) { return enumerated.publicId == 'trafficSigns_type' ; }), function(val) {return val.values; });
-    var trafficSignOptions =   _.map(signTypes[0], function(signType) {
-      return $('<option>', {value: signType.propertyValue, selected: propertyValue == signType.propertyValue, text: signType.propertyDisplayValue})[0].outerHTML;
-    }).join('');
+
+    var groups =  collection.getGroup(signTypes);
+    var groupKeys = Object.keys(groups);
+    var trafficSigns = _.map(groupKeys, function (label) {
+      return $('<optgroup label =  "'+ label +'" >'.concat(
+
+        _.map(groups[label], function(group){
+          return $('<option>',
+            { value: group.propertyValue,
+              selected: propertyValue == group.propertyValue,
+              text: group.propertyDisplayValue}
+              )[0].outerHTML}))
+
+      )[0].outerHTML;}).join('');
 
     return '' +
       '    <div class="form-group editable form-traffic-sign">' +
       '      <label class="control-label">' + property.localizedName + '</label>' +
       '      <p class="form-control-static">' + (propertyDisplayValue || '-') + '</p>' +
       '      <select class="form-control" style="display:none" id="' + property.publicId + '">  ' +
-      trafficSignOptions +
+      trafficSigns +
       '      </select>' +
       '    </div>';
   };
 
-  function renderValueElement(asset) {
+  function renderValueElement(asset, collection) {
     if (asset.obstacleType) {
       return '' +
         '    <div class="form-group editable form-obstacle">' +
@@ -353,7 +364,7 @@
           return textHandler(feature);
 
         if (propertyType === "single_choice")
-          return singleChoiceHandler(feature);
+          return singleChoiceHandler(feature, collection);
 
       }), function(prev, curr) { return prev + curr; }, '');
 

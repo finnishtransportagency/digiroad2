@@ -10,7 +10,7 @@
     var backgroundStyle = function (value, counter) {
       return new ol.style.Style({
         image: new ol.style.Icon(({
-          src: isSignWithValue(value) ? correctValue(propertyText, value) ? getImage(value) : 'images/traffic-signs/badValue.png' : getImage(value),
+          src: isSignWithValue(value) ? correctValue(propertyText, value) ? getImage(value, counter).findImage() : 'images/traffic-signs/badValue.png' : getImage(value, counter).findImage(),
           anchor : [0.5, 1+(counter)]
         }))
       });
@@ -25,7 +25,7 @@
       });
     };
 
-    var getImage = function (value) {
+    var getImage = function (value, counter) {
       var images = {
         'images/traffic-signs/speedLimitSign.png':              {signValue: [1, 8]},
         'images/traffic-signs/endOfSpeedLimitSign.png':         {signValue: [2]},
@@ -57,10 +57,12 @@
         'images/traffic-signs/endOfOvertakingProhibitonSign.png': {signValue: [29]},
         'images/traffic-signs/maxWidthSign.png':                {signValue: [30]},
         'images/traffic-signs/maxHeightSign.png':               {signValue: [31]},
-        'images/traffic-signs/totalWeightLimit.png':            {signValue: [32]},
-        'images/traffic-signs/trailerTruckWeightLimit.png':     {signValue: [33]},
-        'images/traffic-signs/axleWeightLimit.png':             {signValue: [34]},
-        'images/traffic-signs/bogieWeightLimit.png':            {signValue: [35]},
+
+        'images/traffic-signs/totalWeightLimit.png':            {signValue: [32], offset: -15 - (counter * 30) },
+        'images/traffic-signs/trailerTruckWeightLimit.png':     {signValue: [33], offset: -10 - (counter * 30)},
+        'images/traffic-signs/axleWeightLimit.png':             {signValue: [34], offset: -18 - (counter * 30)},
+        'images/traffic-signs/bogieWeightLimit.png':            {signValue: [35], offset: -18 - (counter * 30)},
+
         'images/traffic-signs/rightBendSign.png':               {signValue: [36]},
         'images/traffic-signs/leftBendSign.png':                {signValue: [37]},
         'images/traffic-signs/severalBendRightSign.png':        {signValue: [38]},
@@ -71,9 +73,25 @@
         'images/traffic-signs/childrenSign.png':                {signValue: [43]},
         'images/traffic-signs/badValue.png':                    {signValue: [35]}
       };
-      return _.findKey(images, function (image) {
-        return _.contains(image.signValue, value);
-      });
+
+      function findImage() {
+        return _.findKey(images, function (image) {
+          return _.contains(image.signValue, value);
+        });
+      }
+
+      function getTextOffset(){
+        var key =_.findKey(images, function (image) {
+           return _.contains(image.signValue, value);
+        });
+        return images[key].offset ||  -15 - (counter * 30);
+      }
+
+      return {
+        findImage: findImage,
+        getTextOffset: getTextOffset
+      }
+
     };
 
     var textStyle = function (value) {
@@ -98,7 +116,7 @@
           }),
           font: 'bold 12px sans-serif',
           offsetX: 0,
-          offsetY: -15 - (counter * 30)
+          offsetY: getImage(value, counter).getTextOffset()
         })
       })];
     };
