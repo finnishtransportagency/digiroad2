@@ -17,14 +17,14 @@
       eventbus.trigger('projectLink:clicked', get());
     };
 
-    var splitSuravageLink = function(suravage, split) {
-      splitSuravageLinks(suravage, split, function(splitedSuravageLinks) {
+    var splitSuravageLink = function(suravage, split, mousePoint) {
+      splitSuravageLinks(suravage, split, mousePoint, function(splitedSuravageLinks) {
         var selection = [splitedSuravageLinks.created, splitedSuravageLinks.existing];
         eventbus.trigger('splited:projectLinks', selection);
       });
     };
 
-    var splitSuravageLinks = function(nearestSuravage, split, callback) {
+    var splitSuravageLinks = function(nearestSuravage, split, mousePoint, callback) {
       var left = _.cloneDeep(nearestSuravage);
       left.points = split.firstSplitVertices;
 
@@ -36,8 +36,8 @@
       splitSuravage.created.endMValue = measureLeft;
       splitSuravage.existing = right;
       splitSuravage.existing.endMValue = measureRight;
-      splitSuravage.created.splitPoint = split.point;
-      splitSuravage.existing.splitPoint = split.point;
+      splitSuravage.created.splitPoint = mousePoint;
+      splitSuravage.existing.splitPoint = mousePoint;
 
       splitSuravage.created.id = null;
       splitSuravage.splitMeasure = split.splitMeasure;

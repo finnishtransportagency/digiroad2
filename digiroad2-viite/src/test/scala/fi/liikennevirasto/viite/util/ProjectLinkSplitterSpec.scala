@@ -1,10 +1,16 @@
 package fi.liikennevirasto.viite.util
 
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{NormalLinkInterface, SuravageLinkInterface}
+import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode, State, TrafficDirection}
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.{FeatureClass, GeometryUtils, Point, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.util.Track.{Combined, Unknown}
+import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.viite.RoadType.{PublicRoad, UnknownOwnerRoad}
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.{Discontinuity, LinkStatus, ProjectLink}
+import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
+import fi.liikennevirasto.viite.dao.LinkStatus.{New, NotHandled}
+import fi.liikennevirasto.viite.dao.{CalibrationPoint, Discontinuity, LinkStatus, ProjectLink}
 import org.scalatest.{FunSuite, Matchers}
 
 class ProjectLinkSplitterSpec extends FunSuite with Matchers {
@@ -248,5 +254,29 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers {
     GeometryUtils.areAdjacent(unChangedLink.geometry.last, sGeom.last) should be (true)
     unChangedLink.startAddrMValue should be (template.startAddrMValue)
     unChangedLink.endAddrMValue should be (terminatedLink.startAddrMValue)
+  }
+
+  test("Geometry split") {
+    val splitOptions = SplitOptions(
+      Point(445447.5,7004165.0,0.0),
+      LinkStatus.UnChanged, LinkStatus.New, 77, 1, Combined, Continuous, 8L, SuravageLinkInterface,
+      RoadType.PublicRoad, 1)
+    val template = ProjectLink(452342,77,14,Combined,Continuous,4286,4612,None,None,None,70452502,6138625,0.0,327.138,TowardsDigitizing,
+      (None,Some(CalibrationPoint(6138625,327.138,4612))),false,List(Point(445417.266,7004142.049,0.0), Point(445420.674,7004144.679,0.0),
+        Point(445436.147,7004155.708,0.0), Point(445448.743,7004164.052,0.0), Point(445461.586,7004172.012,0.0),
+        Point(445551.316,7004225.769,0.0), Point(445622.099,7004268.174,0.0), Point(445692.288,7004310.224,0.0),
+        Point(445696.301,7004312.628,0.0)),452278,NotHandled,PublicRoad,NormalLinkInterface,327.13776793597697,295486,None)
+    val suravage = ProjectLink(-1000,0,0,Unknown,Continuous,0,0,None,None,Some("silari"),-1,499972933,0.0,322.45979989463626,
+      TowardsDigitizing,(None,None),false,List(Point(445417.266,7004142.049,0.0), Point(445420.674,7004144.679,0.0),
+        Point(445436.147,7004155.708,0.0), Point(445448.743,7004164.052,0.0), Point(445461.586,7004172.012,0.0),
+        Point(445551.316,7004225.769,0.0), Point(445622.099,7004268.174,0.0), Point(445692.288,7004310.224,0.0)),452278,
+      New,UnknownOwnerRoad,SuravageLinkInterface,322.45979989463626,0,None)
+    val result = ProjectLinkSplitter.split(suravage, template, splitOptions)
+    result should have size(3)
+    result.foreach(pl =>
+    {
+      pl.connectedLinkId.isEmpty should be (false)
+      pl.startAddrMValue should be < pl.endAddrMValue
+    })
   }
 }

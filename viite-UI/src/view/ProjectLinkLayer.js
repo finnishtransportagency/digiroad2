@@ -662,7 +662,7 @@
         }
         var nearestSuravage = nearest.feature.projectLinkData;
         var splitProperties = calculateSplitProperties(nearestSuravage, mousePoint);
-        selectedProjectLinkProperty.splitSuravageLink(nearestSuravage, splitProperties);
+        selectedProjectLinkProperty.splitSuravageLink(nearestSuravage, splitProperties, mousePoint);
         selectSingleClick.getFeatures().clear();
         selectSingleClick.getFeatures().push(nearest.feature);
         projectCollection.setTmpDirty([nearest.feature.projectLinkData]);
