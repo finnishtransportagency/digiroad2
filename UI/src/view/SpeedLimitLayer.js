@@ -7,7 +7,7 @@ window.SpeedLimitLayer = function(params) {
       style = params.style,
       layerName = 'speedLimit',
       roadAddressInfoPopup= params.roadAddressInfoPopup,
-      trafficSignsCollection = params.trafficSignsCollection;
+      trafficSignReadOnlyLayer = params.trafficSignReadOnlyLayer;
   var isActive = false;
   var extraEventListener = _.extend({running: false}, eventbus);
 
@@ -54,15 +54,6 @@ window.SpeedLimitLayer = function(params) {
   });
   map.addLayer(indicatorLayer);
   indicatorLayer.setVisible(false);
-
-  var trafficSignReadOnlyLayer = new TrafficSignReadOnlyLayer({
-    layerName: layerName,
-    style: new PointAssetStyle('trafficSigns'),
-    collection: trafficSignsCollection,
-    assetLabel: new TrafficSignLabel(),
-    assetGrouping: new AssetGrouping(9),
-    map: map
-  });
 
   this.refreshView = function(event) {
     vectorLayer.setVisible(true);

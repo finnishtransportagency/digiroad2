@@ -226,6 +226,17 @@
      PointAssetForm.initialize(pointAsset.selectedPointAsset, pointAsset.layerName, pointAsset.formLabels, pointAsset.editConstrains || function() {return false;}, roadCollection, applicationModel);
     });
 
+    var trafficSignReadOnlyLayer = function(layerName){
+      return new TrafficSignReadOnlyLayer({
+        layerName: layerName,
+        style: new PointAssetStyle('trafficSigns'),
+        collection: new TrafficSignsCollection(backend, 'trafficSigns', true),
+        assetLabel: new TrafficSignLabel(),
+        assetGrouping: new AssetGrouping(9),
+        map: map
+      });
+    };
+
     var linearAssetLayers = _.reduce(linearAssets, function(acc, asset) {
      acc[asset.layerName] = new LinearAssetLayer({
        map: map,
@@ -243,7 +254,7 @@
        roadAddressInfoPopup: roadAddressInfoPopup,
        editConstrains : asset.editConstrains || function() {return false;},
        hasTrafficSignReadOnlyLayer: asset.hasTrafficSignReadOnlyLayer,
-       trafficSignsCollection: new TrafficSignsCollection(backend, 'trafficSigns', true)
+       trafficSignReadOnlyLayer: trafficSignReadOnlyLayer(asset.layerName)
      });
      return acc;
     }, {});
@@ -278,7 +289,7 @@
        application: applicationModel,
        collection: models.speedLimitsCollection,
        selectedSpeedLimit: models.selectedSpeedLimit,
-       trafficSignsCollection: new TrafficSignsCollection(backend, 'trafficSigns', true),
+       trafficSignReadOnlyLayer: trafficSignReadOnlyLayer('speedLimit'),
        style: SpeedLimitStyle(applicationModel),
        roadLayer: roadLayer,
        roadAddressInfoPopup: roadAddressInfoPopup
