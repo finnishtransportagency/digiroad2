@@ -51,14 +51,14 @@ case class RoadAddressChangeSection(roadNumber: Option[Long], trackCode: Option[
 case class RoadAddressChangeInfo(changeType: AddressChangeType, source: RoadAddressChangeSection, target: RoadAddressChangeSection,
                                  discontinuity: Discontinuity, roadType: RoadType)
 case class ProjectRoadAddressChange(projectId: Long, projectName: Option[String], ely: Long, user: String, changeDate: DateTime,
-                                    changeInfo: RoadAddressChangeInfo, projectStartDate: DateTime)
+                                    changeInfo: RoadAddressChangeInfo, projectStartDate: DateTime, rotatingTRId:Option[Long])
 case class ChangeRow(projectId: Long, projectName: Option[String], createdBy: String, createdDate: Option[DateTime],
                      startDate: Option[DateTime], modifiedBy: String, modifiedDate: Option[DateTime], ely: Long,
                      changeType: Int, sourceRoadNumber: Option[Long], sourceTrackCode: Option[Long],
                      sourceStartRoadPartNumber: Option[Long], sourceEndRoadPartNumber: Option[Long],
                      sourceStartAddressM: Option[Long], sourceEndAddressM: Option[Long], targetRoadNumber: Option[Long],
                      targetTrackCode: Option[Long], targetStartRoadPartNumber: Option[Long], targetEndRoadPartNumber: Option[Long],
-                     targetStartAddressM:Option[Long], targetEndAddressM:Option[Long], discontinuity: Int, roadType: Int)
+                     targetStartAddressM:Option[Long], targetEndAddressM:Option[Long], discontinuity: Int, roadType: Int,rotatingTRId: Option[Long])
 
 object RoadAddressChangesDAO {
 
@@ -93,11 +93,12 @@ object RoadAddressChangesDAO {
       val targetEndAddressM = r.nextLongOption
       val discontinuity = r.nextInt
       val roadType = r.nextInt
+      val rotatingTRIdr = r.nextLongOption
 
       ChangeRow(projectId, projectName:Option[String], createdBy:String, createdDate:Option[DateTime], startDate:Option[DateTime], modifiedBy:String, modifiedDate:Option[DateTime], ely:Long, changeType :Int, sourceRoadNumber:Option[Long],
         sourceTrackCode :Option[Long],sourceStartRoadPartNumber:Option[Long], sourceEndRoadPartNumber:Option[Long], sourceStartAddressM:Option[Long], sourceEndAddressM:Option[Long],
         targetRoadNumber:Option[Long], targetTrackCode:Option[Long], targetStartRoadPartNumber:Option[Long], targetEndRoadPartNumber:Option[Long], targetStartAddressM:Option[Long],
-        targetEndAddressM:Option[Long], discontinuity: Int, roadType: Int)
+        targetEndAddressM:Option[Long], discontinuity: Int, roadType: Int, rotatingTRIdr:Option[Long])
     }
   }
 
@@ -140,7 +141,7 @@ object RoadAddressChangesDAO {
     resultList.map { row => {
       val changeInfo = toRoadAddressChangeInfo(row)
       val (user, date) = getUserAndModDate(row)
-      ProjectRoadAddressChange(row.projectId, row.projectName, row.ely, user, date, changeInfo, row.startDate.get)
+      ProjectRoadAddressChange(row.projectId, row.projectName, row.ely, user, date, changeInfo, row.startDate.get, row.rotatingTRId )
     }
     }
   }
@@ -155,7 +156,7 @@ object RoadAddressChangesDAO {
                 rac.old_road_part_number, rac.old_road_part_number,
                 rac.old_start_addr_m, rac.old_end_addr_m, rac.new_road_number, rac.new_track_code,
                 rac.new_road_part_number, rac.new_road_part_number,
-                rac.new_start_addr_m, rac.new_end_addr_m, rac.new_discontinuity, rac.new_road_type
+                rac.new_start_addr_m, rac.new_end_addr_m, rac.new_discontinuity, rac.new_road_type, p.tr_id
                 From Road_Address_Changes rac Inner Join Project p on rac.project_id = p.id
                 $withProjectIds
                 ORDER BY rac.old_road_number, rac.OLD_ROAD_PART_NUMBER, rac.old_start_addr_m, rac.old_track_code DESC"""
