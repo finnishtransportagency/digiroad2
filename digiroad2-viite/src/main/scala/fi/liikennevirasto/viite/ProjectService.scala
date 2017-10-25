@@ -1,15 +1,16 @@
 package fi.liikennevirasto.viite
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.SuravageLinkInterface
-import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, _}
-import fi.liikennevirasto.digiroad2.linearasset.{RoadLinkLike,RoadLink}
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, BothDirections, TowardsDigitizing}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, SideCode, _}
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReservedException, Track}
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
+import fi.liikennevirasto.viite.dao.LinkStatus.{Unknown => _, apply => _, _}
 import fi.liikennevirasto.viite.dao.ProjectState._
-import fi.liikennevirasto.viite.dao.{ProjectDAO, RoadAddressDAO, _}
+import fi.liikennevirasto.viite.dao.{LinkStatus, ProjectDAO, RoadAddressDAO, _}
 import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.util.{GuestimateGeometryForMissingLinks, ProjectLinkSplitter, SplitOptions}
@@ -1120,6 +1121,61 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+  def createSplitRoadAddress(roadAddress: RoadAddress, split: Seq[ProjectLink], project: RoadAddressProject): Seq[RoadAddress] = {
+    def transferValues(terminated: Option[ProjectLink]): (Long, Long, Double, Double) = {
+      terminated.map(termLink =>
+        termLink.sideCode match {
+          case TowardsDigitizing =>
+            if (termLink.startAddrMValue == roadAddress.startAddrMValue)
+              (termLink.endAddrMValue, roadAddress.endAddrMValue,
+                termLink.endMValue, roadAddress.endMValue)
+            else (roadAddress.startAddrMValue, termLink.startAddrMValue,
+              roadAddress.startMValue, termLink.startMValue)
+          case AgainstDigitizing =>
+            if (termLink.startAddrMValue == roadAddress.startAddrMValue)
+              (termLink.endAddrMValue, roadAddress.endAddrMValue,
+                roadAddress.startMValue, termLink.startMValue)
+            else (roadAddress.startAddrMValue, termLink.startAddrMValue,
+              termLink.endMValue, roadAddress.endMValue)
+        }
+      ).getOrElse(roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startMValue, roadAddress.endMValue)
+    }
+    split.flatMap(pl =>
+      pl.status match {
+        case UnChanged =>
+          Seq(roadAddress.copy(id = NewRoadAddress, startAddrMValue = pl.startAddrMValue,
+            endAddrMValue = pl.endAddrMValue, startMValue = pl.startMValue, endMValue = pl.endMValue,
+            linkId = pl.linkId, modifiedBy = Some(project.createdBy)))
+        case New =>
+          Seq(RoadAddress(NewRoadAddress, pl.roadNumber, pl.roadPartNumber, pl.roadType, pl.track,
+            pl.discontinuity, pl.startAddrMValue, pl.endAddrMValue, Some(project.startDate), None, Some(project.createdBy),
+            0L, pl.linkId, pl.startMValue, pl.endMValue, pl.sideCode, VVHClient.createVVHTimeStamp(), pl.calibrationPoints,
+            floating = false, pl.geometry, pl.linkGeomSource, pl.ely, terminated = false))
+        case Transfer =>
+          val (startAddr, endAddr, startM, endM) = transferValues(split.find(_.status == Terminated))
+          Seq(
+            // Transferred part, original values
+            roadAddress.copy(id = NewRoadAddress, endDate = Some(project.startDate),
+              modifiedBy = Some(project.createdBy), startAddrMValue = startAddr,
+              startMValue = startM, endMValue = endM,
+              endAddrMValue = endAddr),
+            // Transferred part, new values
+            roadAddress.copy(id = NewRoadAddress, startDate = Some(project.startDate),
+              startAddrMValue = pl.startAddrMValue, endAddrMValue = pl.endAddrMValue,
+              startMValue = pl.startMValue, endMValue = pl.endMValue,
+              linkId = pl.linkId, modifiedBy = Some(project.createdBy))
+          )
+        case Terminated =>
+          Seq(roadAddress.copy(id = NewRoadAddress, startAddrMValue = pl.startAddrMValue,
+            endAddrMValue = pl.endAddrMValue, endDate = Some(project.startDate), startMValue = pl.startMValue, endMValue = pl.endMValue,
+            linkId = pl.linkId, terminated = true, modifiedBy = Some(project.createdBy)))
+        case _ =>
+          logger.error(s"Invalid status for split project link: ${pl.status} in project ${pl.projectId}")
+          throw new InvalidAddressDataException(s"Invalid status for split project link: ${pl.status}")
+      }
+    )
+  }
+
   def updateRoadAddressWithProjectLinks(newState: ProjectState, projectID: Long): Seq[Long] = {
     if(newState != Saved2TR){
       throw new RuntimeException(s"Project state not at Saved2TR: $newState")
@@ -1127,14 +1183,16 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val project=ProjectDAO.getRoadAddressProjectById(projectID)
     val projectStartDate= Some(project.head.startDate)
     val projectLinks=ProjectDAO.getProjectLinks(projectID)
-    val floatingFalse=true
-    val historyFalse=false
+    val inclFloating=true
+    val inclHistory=true
     if (projectLinks.isEmpty)
       throw new RuntimeException(s"Tried to import empty project to road address table after TR response : $newState")
 
     ProjectDAO.moveProjectLinksToHistory(projectID)
 
-    val roadAddressIDsToExpire = RoadAddressDAO.fetchByLinkId(projectLinks.map( x => x.linkId ).toSet,floatingFalse,historyFalse)
+    val (replacements, additions) = projectLinks.partition(_.roadAddressId > 0)
+    val roadAddressIDsToExpire = RoadAddressDAO.fetchByIdMassQuery(replacements.map(_.roadAddressId).toSet,inclFloating,inclHistory)
+    val (splitReplacements, pureReplacements) = replacements.partition(_.connectedLinkId.nonEmpty)
     //Expiring all old addresses by their ID
     roadAddressService.expireRoadAddresses(roadAddressIDsToExpire.map( x => x.id ).toSet)
     //Create endDate rows for old data that is "valid" (row should be ignored after end_date)

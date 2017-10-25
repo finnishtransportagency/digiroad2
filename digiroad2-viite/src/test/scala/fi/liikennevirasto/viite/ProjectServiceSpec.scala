@@ -12,9 +12,10 @@ import fi.liikennevirasto.digiroad2.linearasset.{PolyLine, RoadLink}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.digiroad2.util.Track.Combined
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, RoadLinkService, _}
 import fi.liikennevirasto.viite.dao.AddressChangeType._
-import fi.liikennevirasto.viite.dao.Discontinuity.Discontinuous
+import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous}
 import fi.liikennevirasto.viite.dao.{Discontinuity, ProjectDAO, ProjectState, RoadAddressProject, _}
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.dao.{AddressChangeType, Discontinuity, ProjectState, RoadAddressProject, _}
@@ -2156,5 +2157,132 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
 
       updatedLinks.maxBy(_.endAddrMValue).id should be (updatedLinks.find(_.discontinuity.value == 2).get.id)
     }
+  }
+
+  test("Calculate split road addresses with Unchanged + Term/New") {
+    val projectDate = Some(DateTime.parse("2021-01-01"))
+    val roadAddress = RoadAddress(123L, 5L, 8L, RoadType.PublicRoad, Combined, Continuous, 1080L, 1137L,
+      Some(DateTime.now()), None, Some("urpo"), 0L, 77447L, 0.0, 56.376, SideCode.AgainstDigitizing, VVHClient.createVVHTimeStamp(-1000), (None, None), false,
+      Seq(Point(1024.0,2048.0), Point(1048.0, 2089.0)), LinkGeomSource.NormalLinkInterface, 8L, false)
+    val splitProjectlinks = Seq(
+      ProjectLink(999L, 5L, 8L, Combined, Continuous, 1080L, 1112L, projectDate,
+        None, Some("bum"), 0L, 413424L, 24.539, 56.376, AgainstDigitizing, (None, None), false, Seq(Point(1032.0,2065.0), Point(1048.0, 2089.0)),
+        1L, LinkStatus.UnChanged, RoadType.PublicRoad, LinkGeomSource.SuravageLinkInterface, 31.837, 123L, 8L, Some(77447L)),
+      ProjectLink(1000L, 5L, 8L, Combined, Continuous, 1112L, 1137L, projectDate,
+        None, Some("bum"), 0L, 413424L, 0.0, 24.539, AgainstDigitizing, (None, None), false, Seq(Point(1024.0,2048.0), Point(1048.0, 2089.0)),
+        1L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.SuravageLinkInterface, 24.539, 123L, 8L, Some(77447L)),
+      ProjectLink(1001L, 5L, 8L, Combined, Continuous, 1112L, 1137L, Some(DateTime.now()),
+        projectDate, Some("bum"), 0L, 77447L, 0.0, 24.539, AgainstDigitizing, (None, None), false, Seq(Point(1024.0,2048.0), Point(1048.0, 2089.0)),
+        1L, LinkStatus.Terminated, RoadType.PublicRoad, LinkGeomSource.SuravageLinkInterface, 24.539, 123L, 8L, Some(413424L)))
+    val project = RoadAddressProject(1L, ProjectState.Sent2TR, "proj", "bum", DateTime.now(), "bum", projectDate.get,
+      DateTime.now(), "", Seq(), None, Some(8L))
+    val resultRA = projectService.createSplitRoadAddress(roadAddress, splitProjectlinks, project)
+    resultRA should have size (3)
+    val termAndNew = resultRA.filter(_.startAddrMValue == 1112L)
+    termAndNew should have size (2)
+    termAndNew.filter(_.linkId == 77447L) should have size (1)
+    termAndNew.filter(_.linkId == 413424L) should have size (1)
+    termAndNew.filter(_.startDate == projectDate) should have size (1)
+    termAndNew.filter(_.endDate == projectDate) should have size (1)
+    termAndNew.filter(_.startDate == roadAddress.startDate) should have size (1)
+    termAndNew.filter(_.endDate == None) should have size (1)
+    termAndNew.filter(_.terminated) should have size (1)
+    val unchanged = resultRA.find(_.startAddrMValue == 1080L).get
+    unchanged.endAddrMValue should be (termAndNew.head.startAddrMValue)
+    unchanged.startDate should be (roadAddress.startDate)
+    unchanged.endDate should be (None)
+    unchanged.linkId should be (413424L)
+  }
+
+  test("Calculate split road addresses with Transfer + Term/New Against") {
+    val projectDate = Some(DateTime.parse("2021-01-01"))
+    val roadAddress = RoadAddress(123L, 5L, 8L, RoadType.PublicRoad, Combined, Continuous, 950L, 1007L,
+      Some(DateTime.now()), None, Some("urpo"), 0L, 77447L, 0.0, 56.376, SideCode.AgainstDigitizing, VVHClient.createVVHTimeStamp(-1000), (None, None), false,
+      Seq(Point(1024.0,2048.0), Point(1048.0, 2089.0)), LinkGeomSource.NormalLinkInterface, 8L, false)
+    val splitProjectlinks = Seq(
+      ProjectLink(999L, 5L, 8L, Combined, Continuous, 1080L, 1112L, projectDate,
+        None, Some("bum"), 0L, 413424L, 24.539, 56.376, AgainstDigitizing, (None, None), false, Seq(Point(1032.0,2065.0), Point(1048.0, 2089.0)),
+        1L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.SuravageLinkInterface, 31.837, 123L, 8L, Some(77447L)),
+      ProjectLink(1000L, 5L, 8L, Combined, Continuous, 1112L, 1137L, projectDate,
+        None, Some("bum"), 0L, 413424L, 0.0, 24.539, AgainstDigitizing, (None, None), false, Seq(Point(1024.0,2048.0), Point(1048.0, 2089.0)),
+        1L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.SuravageLinkInterface, 24.539, 123L, 8L, Some(77447L)),
+      ProjectLink(1001L, 5L, 8L, Combined, Continuous, 982L, 1007L, Some(DateTime.now()),
+        projectDate, Some("bum"), 0L, 77447L, 0.0, 24.539, AgainstDigitizing, (None, None), false, Seq(Point(1024.0,2048.0), Point(1048.0, 2089.0)),
+        1L, LinkStatus.Terminated, RoadType.PublicRoad, LinkGeomSource.SuravageLinkInterface, 24.539, 123L, 8L, Some(413424L)))
+    val project = RoadAddressProject(1L, ProjectState.Sent2TR, "proj", "bum", DateTime.now(), "bum", projectDate.get,
+      DateTime.now(), "", Seq(), None, Some(8L))
+    val resultRA = projectService.createSplitRoadAddress(roadAddress, splitProjectlinks, project)
+    resultRA should have size (4)
+//    resultRA.foreach(ra =>
+//      println(s"${ra.startDate} - ${ra.endDate}: ${ra.linkId} ${ra.startMValue}-${ra.endMValue}: ${ra.startAddrMValue}-${ra.endAddrMValue} ${if (ra.terminated) "TERM" else ""}")
+//    )
+    val (termAndNew, others) = resultRA.partition(_.startMValue == 0.0)
+    termAndNew should have size (2)
+    termAndNew.filter(_.linkId == 77447L) should have size (1)
+    termAndNew.filter(_.linkId == 413424L) should have size (1)
+    termAndNew.filter(_.startDate == projectDate) should have size (1)
+    termAndNew.filter(_.endDate == projectDate) should have size (1)
+    termAndNew.filter(_.startDate == roadAddress.startDate) should have size (1)
+    termAndNew.filter(_.endDate == None) should have size (1)
+    termAndNew.filter(_.terminated) should have size (1)
+    val (original, transfer) = others.partition(_.endDate.nonEmpty)
+    original should have size(1)
+    original.head.startAddrMValue should be (roadAddress.startAddrMValue)
+    original.head.endAddrMValue should be (termAndNew.find(_.terminated).get.startAddrMValue)
+    original.head.startDate should be (roadAddress.startDate)
+    original.head.endDate should be (projectDate)
+    original.head.terminated should be (false)
+    original.head.linkId should be (77447L)
+    transfer should have size(1)
+    transfer.head.endAddrMValue should be (termAndNew.head.startAddrMValue)
+    transfer.head.startDate should be (projectDate)
+    transfer.head.endDate should be (None)
+    transfer.head.linkId should be (413424L)
+  }
+
+  test("Calculate split road addresses with Transfer + Term/New Towards") {
+    val projectDate = Some(DateTime.parse("2021-01-01"))
+    val roadAddress = RoadAddress(123L, 5L, 8L, RoadType.PublicRoad, Combined, Continuous, 950L, 1007L,
+      Some(DateTime.now()), None, Some("urpo"), 0L, 77447L, 0.0, 56.376, SideCode.TowardsDigitizing, VVHClient.createVVHTimeStamp(-1000), (None, None), false,
+      Seq(Point(1024.0,2048.0), Point(1048.0, 2089.0)), LinkGeomSource.NormalLinkInterface, 8L, false)
+    val splitProjectlinks = Seq(
+      ProjectLink(999L, 5L, 8L, Combined, Continuous, 1080L, 1112L, projectDate,
+        None, Some("bum"), 0L, 413424L, 0.0, 31.837, TowardsDigitizing, (None, None), false, Seq(Point(1032.0,2065.0), Point(1048.0, 2089.0)),
+        1L, LinkStatus.Transfer, RoadType.PublicRoad, LinkGeomSource.SuravageLinkInterface, 31.837, 123L, 8L, Some(77447L)),
+      ProjectLink(1000L, 5L, 8L, Combined, Continuous, 1112L, 1137L, projectDate,
+        None, Some("bum"), 0L, 413424L, 31.837, 56.376, TowardsDigitizing, (None, None), false, Seq(Point(1024.0,2048.0), Point(1048.0, 2089.0)),
+        1L, LinkStatus.New, RoadType.PublicRoad, LinkGeomSource.SuravageLinkInterface, 24.539, 123L, 8L, Some(77447L)),
+      ProjectLink(1001L, 5L, 8L, Combined, Continuous, 982L, 1007L, Some(DateTime.now()),
+        projectDate, Some("bum"), 0L, 77447L, 31.837, 56.376, TowardsDigitizing, (None, None), false, Seq(Point(1024.0,2048.0), Point(1048.0, 2089.0)),
+        1L, LinkStatus.Terminated, RoadType.PublicRoad, LinkGeomSource.SuravageLinkInterface, 24.539, 123L, 8L, Some(413424L)))
+    val project = RoadAddressProject(1L, ProjectState.Sent2TR, "proj", "bum", DateTime.now(), "bum", projectDate.get,
+      DateTime.now(), "", Seq(), None, Some(8L))
+    val resultRA = projectService.createSplitRoadAddress(roadAddress, splitProjectlinks, project)
+//    resultRA should have size (4)
+//        resultRA.foreach(ra =>
+//          println(s"${ra.startDate} - ${ra.endDate}: ${ra.linkId} ${ra.startMValue}-${ra.endMValue}: ${ra.startAddrMValue}-${ra.endAddrMValue} ${if (ra.terminated) "TERM" else ""}")
+//        )
+    val (termAndNew, others) = resultRA.partition(_.startMValue > 0.0)
+    termAndNew should have size (2)
+    termAndNew.filter(_.linkId == 77447L) should have size (1)
+    termAndNew.filter(_.linkId == 413424L) should have size (1)
+    termAndNew.filter(_.startDate == projectDate) should have size (1)
+    termAndNew.filter(_.endDate == projectDate) should have size (1)
+    termAndNew.filter(_.startDate == roadAddress.startDate) should have size (1)
+    termAndNew.filter(_.endDate == None) should have size (1)
+    termAndNew.filter(_.terminated) should have size (1)
+    val (original, transfer) = others.partition(_.endDate.nonEmpty)
+    original should have size(1)
+    original.head.startAddrMValue should be (roadAddress.startAddrMValue)
+    original.head.endAddrMValue should be (termAndNew.find(_.terminated).get.startAddrMValue)
+    original.head.startDate should be (roadAddress.startDate)
+    original.head.endDate should be (projectDate)
+    original.head.terminated should be (false)
+    original.head.linkId should be (77447L)
+    transfer should have size(1)
+    transfer.head.endAddrMValue should be (termAndNew.head.startAddrMValue)
+    transfer.head.startDate should be (projectDate)
+    transfer.head.endDate should be (None)
+    transfer.head.linkId should be (413424L)
   }
 }
