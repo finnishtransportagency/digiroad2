@@ -557,9 +557,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       fSuravage <- Future(roadAddressService.getSuravageRoadLinkAddresses(boundingRectangle, Set()))
     } yield (fProjectLink, fSuravage)
     val (projectLinkList,suravageList) =Await.result(combinedFuture, Duration.Inf)
-    val (splitedSuravageLinkIds, projectSuravageLinkIds) = projectLinkList.filter(sl => sl.roadLinkSource == SuravageLinkInterface).partition(sl => sl.connectedLinkId.nonEmpty)
-    roadAddressLinkToProjectAddressLink(suravageList.filterNot(s => (splitedSuravageLinkIds++projectSuravageLinkIds).exists(p => p.linkId == s.linkId))) ++
-    //TODO consider to create one projectBuilder in the future for splited ones
+    val projectSuravageLinkIds = projectLinkList.filter(_.roadLinkSource == SuravageLinkInterface).map(_.linkId).toSet
+    roadAddressLinkToProjectAddressLink(suravageList.filterNot(s => projectSuravageLinkIds.contains(s.linkId))) ++
       projectLinkList
   }
 

@@ -17,6 +17,17 @@
       eventbus.trigger('projectLink:clicked', get());
     };
 
+    var openSplited = function (linkid, multiSelect) {
+      if (!multiSelect) {
+        current = projectLinkCollection.getByLinkId([linkid]);
+        ids = [linkid];
+      } else {
+        ids = projectLinkCollection.getMultiSelectIds(linkid);
+        current = projectLinkCollection.getByLinkId(ids);
+      }
+      eventbus.trigger('projectLink:splited', get());
+    };
+
     var splitSuravageLink = function(suravage, split) {
       splitSuravageLinks(suravage, split, function(splitedSuravageLinks) {
         selection = [splitedSuravageLinks.created, splitedSuravageLinks.existing];
@@ -107,6 +118,7 @@
     return {
       open: open,
       openShift: openShift,
+      openSplited: openSplited,
       get: get,
       clean: clean,
       cleanIds: cleanIds,
