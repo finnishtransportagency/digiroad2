@@ -1125,18 +1125,18 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     def transferValues(terminated: Option[ProjectLink]): (Long, Long, Double, Double) = {
       terminated.map(termLink =>
         termLink.sideCode match {
-          case TowardsDigitizing =>
-            if (termLink.startAddrMValue == roadAddress.startAddrMValue)
-              (termLink.endAddrMValue, roadAddress.endAddrMValue,
-                termLink.endMValue, roadAddress.endMValue)
-            else (roadAddress.startAddrMValue, termLink.startAddrMValue,
-              roadAddress.startMValue, termLink.startMValue)
           case AgainstDigitizing =>
             if (termLink.startAddrMValue == roadAddress.startAddrMValue)
               (termLink.endAddrMValue, roadAddress.endAddrMValue,
                 roadAddress.startMValue, termLink.startMValue)
             else (roadAddress.startAddrMValue, termLink.startAddrMValue,
               termLink.endMValue, roadAddress.endMValue)
+          case _ =>
+            if (termLink.startAddrMValue == roadAddress.startAddrMValue)
+              (termLink.endAddrMValue, roadAddress.endAddrMValue,
+                termLink.endMValue, roadAddress.endMValue)
+            else (roadAddress.startAddrMValue, termLink.startAddrMValue,
+              roadAddress.startMValue, termLink.startMValue)
         }
       ).getOrElse(roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startMValue, roadAddress.endMValue)
     }
@@ -1180,103 +1180,91 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     if(newState != Saved2TR){
       throw new RuntimeException(s"Project state not at Saved2TR: $newState")
     }
-    val project=ProjectDAO.getRoadAddressProjectById(projectID)
-    val projectStartDate= Some(project.head.startDate)
+    val project=ProjectDAO.getRoadAddressProjectById(projectID).get
     val projectLinks=ProjectDAO.getProjectLinks(projectID)
-    val inclFloating=true
-    val inclHistory=true
     if (projectLinks.isEmpty)
       throw new RuntimeException(s"Tried to import empty project to road address table after TR response : $newState")
 
     ProjectDAO.moveProjectLinksToHistory(projectID)
 
     val (replacements, additions) = projectLinks.partition(_.roadAddressId > 0)
-    val roadAddressIDsToExpire = RoadAddressDAO.fetchByIdMassQuery(replacements.map(_.roadAddressId).toSet,inclFloating,inclHistory)
+    val expiringRoadAddresses = RoadAddressDAO.fetchByIdMassQuery(replacements.map(_.roadAddressId).toSet,
+      true,false).map(ra => ra.id -> ra).toMap
+    logger.info(s"Found ${expiringRoadAddresses.size} to expire; expected ${replacements.map(_.roadAddressId).toSet.size}")
+    val linkIds = projectLinks.map(_.linkId).toSet ++ expiringRoadAddresses.values.map(_.linkId).toSet
+    val roadLinks = (roadLinkService.fetchVVHRoadlinks(linkIds, frozenTimeVVHAPIServiceEnabled) ++
+      roadLinkService.fetchSuravageLinksByLinkIdsFromVVH(linkIds)).map(rl => rl.linkId -> rl).toMap
+
     val (splitReplacements, pureReplacements) = replacements.partition(_.connectedLinkId.nonEmpty)
+    val (roadAddressesWithoutGeom, newRoadAddresses) = convertToRoadAddress(splitReplacements, pureReplacements, additions,
+      roadLinks, expiringRoadAddresses, project).partition(_.floating)
+
     //Expiring all old addresses by their ID
-    roadAddressService.expireRoadAddresses(roadAddressIDsToExpire.map( x => x.id ).toSet)
+    roadAddressService.expireRoadAddresses(expiringRoadAddresses.keys.toSet)
     //Create endDate rows for old data that is "valid" (row should be ignored after end_date)
-    RoadAddressDAO.create(roadAddressIDsToExpire.map(x => x.copy(endDate = projectStartDate, id = NewRoadAddress)),
-      Some(project.head.createdBy))
-    //removing terminations and adding start date
-    val roadAddressesToBeImported = projectLinks.filterNot(_.status==LinkStatus.Terminated)
-      .map(x => x.copy(endDate = None, startDate =projectStartDate))
-    //Create new rows to RoadAddress table defining when new address is used
-    importProjectLinksToRoadAddressTable(roadAddressesToBeImported,roadAddressIDsToExpire,Some(project.head.createdBy))
+    RoadAddressDAO.create(guessGeom.guestimateGeometry(roadAddressesWithoutGeom, newRoadAddresses))
   }
 
-  private def importProjectLinksToRoadAddressTable(projectLinks:Seq[ProjectLink], existingRoadAddresses:Seq[RoadAddress],projectOwner:Option[String]) ={
-    val existingRoadAddressLinkIds = existingRoadAddresses.map(x => x.linkId)
-    val (existingProjectAddresses, newProjectLinks) = projectLinks.partition(x => existingRoadAddressLinkIds.contains(x.linkId))
-    val (suravageProjectLinks, newNonSuravageLinks) = newProjectLinks.partition(x => x.linkGeomSource==LinkGeomSource.SuravageLinkInterface)
-    //Fetch geometry for projectlinks from roadaddress table based on link-id
-    val (roadLinksWithGeometry,addressesMissingGeometry) = convertProjectLinksToRoadAddressesWithRoadAddressGeometry(existingProjectAddresses,existingRoadAddresses)
-    //Fetches  geometry for newlinks from VVH (excluding suravagelinks) and combines it with projectlinkdata
-    val (newRoads,missingNewRoadGeometry) = convertProjectLinkToRoadAddressWithVVHLinkGeometry(newNonSuravageLinks,
-      roadLinkService.fetchVVHRoadlinks(newNonSuravageLinks.map( x=> x.linkId).toSet,frozenTimeVVHAPIServiceEnabled))
-    //Fetches geometry for suravagelinks from VVH suravageInterface and combines it to projectLinkdata
-    val (newSuravageRoads,missingSuravageGeometry) = convertProjectLinkToRoadAddressWithVVHLinkGeometry(suravageProjectLinks,
-      roadLinkService.fetchSuravageLinksByLinkIdsFromVVH(suravageProjectLinks.map( x=> x.linkId).toSet))
-    val projectLinksWithGeometry=roadLinksWithGeometry++newRoads++newSuravageRoads
-    val missingGeometry=addressesMissingGeometry++missingNewRoadGeometry++missingSuravageGeometry
-    val guessGeometry=guessGeom.guestimateGeometry(missingGeometry.sortBy(x=>x.roadNumber).sortBy(x=>x.roadPartNumber).sortBy(x=>x.startAddrMValue),projectLinksWithGeometry)
-    RoadAddressDAO.create(roadLinksWithGeometry++newRoads++newSuravageRoads++guessGeometry,projectOwner)
+  def convertToRoadAddress(splitReplacements: Seq[ProjectLink], pureReplacements: Seq[ProjectLink], additions: Seq[ProjectLink],
+                           roadLinks: Map[Long, VVHRoadlink], roadAddresses: Map[Long, RoadAddress],
+                           project: RoadAddressProject): Seq[RoadAddress] = {
+    splitReplacements.groupBy(_.roadAddressId).flatMap { case (id, seq) =>
+      createSplitRoadAddress(roadAddresses(id), seq, project)
+    }.toSeq ++
+      pureReplacements.map(pl => convertProjectLinkToRoadAddress(pl, roadLinks.get(pl.linkId), project, roadAddresses.get(pl.roadAddressId))) ++
+      additions.map(pl => convertProjectLinkToRoadAddress(pl, roadLinks.get(pl.linkId), project, roadAddresses.get(pl.roadAddressId))) ++
+      pureReplacements.flatMap(pl =>
+        setEndDate(roadAddresses(pl.roadAddressId), pl, roadLinks.get(roadAddresses(pl.roadAddressId).linkId)))
   }
 
-
-  private def convertProjectLinkToRoadAddressWithVVHLinkGeometry(projectLinks: Seq[ProjectLink], vvhRoadLinks: Seq[VVHRoadlink]): (Seq[RoadAddress],Seq[RoadAddress])= {
-    val mapped = projectLinks.map(pl => pl -> vvhRoadLinks.find(r => r.linkId == pl.linkId))
-    val (withGeom, missingGeom) = mapped.partition(m => m._2.nonEmpty)
-
-    (withGeom.map { case (pl, vvhLink) =>
-      val (p1, p2) = if (pl.sideCode == SideCode.TowardsDigitizing)
-        GeometryUtils.geometryEndpoints(vvhLink.get.geometry)
-      else GeometryUtils.geometryEndpoints(vvhLink.get.geometry).swap
-
-      RoadAddress(NewRoadAddress,pl.roadNumber,pl.roadPartNumber,pl.roadType,pl.track,
-        pl.discontinuity,pl.startAddrMValue,pl.endAddrMValue,pl.startDate, pl.endDate,pl.modifiedBy,pl.lrmPositionId,pl.linkId,
-        pl.startMValue,pl.endMValue,pl.sideCode,vvhLink.get.vvhTimeStamp,pl.calibrationPoints,pl.floating,
-        Seq(p1, p2),pl.linkGeomSource, pl.ely, pl.status == LinkStatus.Terminated)
-    }, mapProjectLinksAsFloatingRoadAddresses(missingGeom.map(_._1)))
-  }
-
-  private def mapProjectLinksAsFloatingRoadAddresses(projectLinks: Seq[ProjectLink]) :Seq[RoadAddress]={
-    projectLinks.map(x =>
-      RoadAddress(NewRoadAddress,x.roadNumber,x.roadPartNumber,x.roadType,x.track,
-        x.discontinuity,x.startAddrMValue,x.endAddrMValue,x.startDate, x.endDate,x.modifiedBy,x.lrmPositionId,x.linkId,
-        x.startMValue,x.endMValue,x.sideCode,VVHClient.createVVHTimeStamp(),x.calibrationPoints,floating=true,Seq.empty[Point],x.linkGeomSource, x.ely, x.status == LinkStatus.Terminated))
-  }
-
-  private def convertProjectLinksToRoadAddressesWithRoadAddressGeometry(projectLinks: Seq[ProjectLink],
-                                                                        roadAddresses: Seq[RoadAddress]): (Seq[RoadAddress],Seq[RoadAddress]) = {
-    // TODO: use road address id from Project Link to map 1-to-1, this will produce incorrect results on multiple segments on link
-    val mapped = projectLinks.map(pl => pl -> roadAddresses.find(r => r.linkId == pl.linkId))
-    val (withGeom, missingGeom) = mapped.partition(m => m._2.nonEmpty)
-
-    (withGeom.map { case (pl, ra) =>
-      RoadAddress(NewRoadAddress, pl.roadNumber, pl.roadPartNumber, pl.roadType, pl.track, pl.discontinuity, pl.startAddrMValue,
-        pl.endAddrMValue, pl.startDate, pl.endDate, pl.modifiedBy, pl.lrmPositionId, pl.linkId, pl.startMValue, pl.endMValue, pl.sideCode,
-        ra.get.adjustedTimestamp, pl.calibrationPoints, pl.floating, ra.get.geometry, pl.linkGeomSource, pl.ely, pl.status == LinkStatus.Terminated)
-    }, mapProjectLinksAsFloatingRoadAddresses(missingGeom.map(_._1)))
-  }
-
-  // TODO: remove when saving road type to project link table
-  def withFetchedDataFromVVH(roadAddresses: Seq[RoadAddress], roadLinks: Map[Long, RoadLink], Type: Object): Seq[RoadAddress] = {
-    val fetchedAddresses = Type match {
-      case RoadType =>
-        val withRoadType: Seq[RoadAddress] = roadAddresses.par.map {
-          ra =>
-            roadLinks.get(ra.linkId) match {
-              case None => ra
-              case Some(rl) =>
-                val roadType = RoadAddressLinkBuilder.getRoadType(rl.administrativeClass, rl.linkType)
-                ra.copy(roadType = roadType)
-            }
-        }.toList
-        withRoadType
-      case _ => roadAddresses
+  private def convertProjectLinkToRoadAddress(pl: ProjectLink, vvhLink: Option[VVHRoadlink], project: RoadAddressProject,
+                                              source: Option[RoadAddress]): RoadAddress = {
+    val geom = if (vvhLink.nonEmpty) {
+      val linkGeom = GeometryUtils.geometryEndpoints(GeometryUtils.truncateGeometry2D(vvhLink.get.geometry, pl.startMValue, pl.endMValue))
+      if (pl.sideCode == SideCode.TowardsDigitizing)
+        Seq(linkGeom._1, linkGeom._2)
+      else
+        Seq(linkGeom._2, linkGeom._1)
+    } else {
+      Seq()
     }
-    fetchedAddresses
+    val roadAddress = RoadAddress(NewRoadAddress, pl.roadNumber, pl.roadPartNumber, pl.roadType, pl.track,
+      pl.discontinuity, pl.startAddrMValue, pl.endAddrMValue, None, None, pl.modifiedBy, 0L, pl.linkId,
+      pl.startMValue, pl.endMValue, pl.sideCode, vvhLink.map(_.vvhTimeStamp).getOrElse(VVHClient.createVVHTimeStamp()),
+      pl.calibrationPoints, floating = vvhLink.isEmpty, geom, pl.linkGeomSource, pl.ely, terminated = false)
+    pl.status match {
+      case UnChanged =>
+        roadAddress.copy(startDate = source.get.startDate, endDate = source.get.endDate)
+      case Transfer | Numbering =>
+        roadAddress.copy(startDate = Some(project.startDate))
+      case New =>
+        roadAddress.copy(startDate = Some(project.startDate))
+      case Terminated =>
+        roadAddress.copy(terminated = true, startDate = source.get.startDate, endDate = Some(project.startDate))
+      case _ =>
+        logger.error(s"Invalid status for imported project link: ${pl.status} in project ${pl.projectId}")
+        throw new InvalidAddressDataException(s"Invalid status for split project link: ${pl.status}")
+    }
+  }
+
+  /**
+    * Called for road addresses that are replaced by a new version at end date
+    * @param roadAddress
+    * @param pl
+    * @param vvhLink
+    * @return
+    */
+  private def setEndDate(roadAddress: RoadAddress, pl: ProjectLink, vvhLink: Option[VVHRoadlink]): Option[RoadAddress] = {
+    pl.status match {
+        // Unchanged does not get an end date, terminated is created from the project link in convertProjectLinkToRoadAddress
+      case UnChanged | Terminated =>
+        None
+      case Transfer | Numbering =>
+        Some(roadAddress.copy(id = NewRoadAddress, endDate = pl.startDate))
+      case _ =>
+        logger.error(s"Invalid status for imported project link: ${pl.status} in project ${pl.projectId}")
+        throw new InvalidAddressDataException(s"Invalid status for split project link: ${pl.status}")
+    }
   }
 
   def setProjectEly(currentProjectId:Long, newEly: Long): Option[String] = {

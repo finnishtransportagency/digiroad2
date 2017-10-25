@@ -101,6 +101,7 @@ trait BaseRoadAddress {
   def floating: Boolean
   def geometry: Seq[Point]
   def ely: Long
+  def linkGeomSource: LinkGeomSource
 }
 
 // Note: Geometry on road address is not directed: it isn't guaranteed to have a direction of digitization or road addressing
@@ -944,7 +945,7 @@ object RoadAddressDAO {
     Q.updateNA(query).first
   }
 
-  def create(roadAddresses: Seq[RoadAddress], createdBy : Option[String] = None): Seq[Long] = {
+  def create(roadAddresses: Iterable[RoadAddress], createdBy : Option[String] = None): Seq[Long] = {
     val lrmPositionPS = dynamicSession.prepareStatement("insert into lrm_position (ID, link_id, SIDE_CODE, start_measure, end_measure, adjusted_timestamp, link_source) values (?, ?, ?, ?, ?, ?, ?)")
     val addressPS = dynamicSession.prepareStatement("insert into ROAD_ADDRESS (id, lrm_position_id, road_number, road_part_number, " +
       "track_code, discontinuity, START_ADDR_M, END_ADDR_M, start_date, end_date, created_by, " +
@@ -993,7 +994,7 @@ object RoadAddressDAO {
     addressPS.executeBatch()
     lrmPositionPS.close()
     addressPS.close()
-    savedIds
+    savedIds.toSeq
   }
 
   def createLRMPosition(lrmPositionPS: PreparedStatement, id: Long, linkId: Long, sideCode: Int,
