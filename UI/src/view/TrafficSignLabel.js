@@ -4,13 +4,13 @@
     AssetLabel.call(this);
     var me = this;
 
-    var propertyText = '';
+    var MIN_DISTANCE = 3;
     var populatedPoints = [];
 
-    var backgroundStyle = function (type, counter) {
+    var backgroundStyle = function (trafficSign, counter) {
       return new ol.style.Style({
         image: new ol.style.Icon(({
-          src: getLabelProperty(type, counter).findImage(),
+          src: getLabelProperty(trafficSign, counter).findImage(),
           anchor : [0.5, 1+(counter)]
         }))
       });
@@ -25,7 +25,7 @@
       });
     };
 
-    var getLabelProperty = function (value, counter) {
+    var getLabelProperty = function (trafficSign, counter) {
 
       var labelingProperties = [
         {signValue: [1, 8], image: 'images/traffic-signs/speedLimitSign.png', validation: validateSpeedLimitValues},
@@ -71,29 +71,27 @@
         {signValue: [42], image: 'images/traffic-signs/unevenRoadSign.png'},
         {signValue: [43], image:  'images/traffic-signs/childrenSign.png'}
       ];
-       // 'images/traffic-signs/badValue.png':                      {signValue: [35]}
-
 
       function find() {
         return _.find(labelingProperties, function(properties) {
-            return _.contains(properties.signValue, value);
+            return _.contains(properties.signValue, trafficSign.type);
         });
       }
 
       function findImage() {
-        return find() ? find().image : 'images/traffic-signs/badValue.png';
+        return find() && find().image ? find().image : 'images/traffic-signs/badValue.png';
       }
 
       function getTextOffset(){
-        return find() ? find().offset :  -15 - (counter * 30);
+        return find() && find().offset ? find().offset :  -15 - (counter * 30);
       }
 
       function getValidation(){
-        return find() ? find().validation.call(value) : true ;  // || by default deve verificar se não é undefined
+        return find() && find().validation ? find().validation.call(trafficSign) : true ;
       }
 
       function getValue(){
-        return find() ? find().convertion.call(value) : value;
+        return find() && find().convertion ? find().convertion.call(trafficSign) : trafficSign.value;
       }
 
       return {
@@ -105,38 +103,38 @@
 
     };
 
-    var textStyle = function (value) {
-      if (!getLabelProperty(value).getValidation())
+    var textStyle = function (trafficSign) {
+      if (!getLabelProperty(trafficSign).getValidation())
         return '';
-      return "" + getLabelProperty(value).getValue();
+      return "" + getLabelProperty(trafficSign).getValue();
     };
 
-    var convertToTons = function(value){
-      return value/ 1000;
+    var convertToTons = function(){
+      return this.value / 1000;
     };
 
-    var convertToMeters = function(value){
-      return value * 100;
+    var convertToMeters = function(){
+      return this.value / 100;
     };
 
-    var validateSpeedLimitValues = function (value) {
-      return !value || (value < 0 || value > 120);
+    var validateSpeedLimitValues = function () {
+      return this.value && (this.value > 0 && this.value < 120);
     };
 
-    var validateMaximumRestrictions = function (value) {
-      return !value || value < 0;
+    var validateMaximumRestrictions = function () {
+      return this.value && this.value > 0;
     };
 
     this.getStyle = function (trafficSign, counter) {
-      return [backgroundStyle(trafficSign.type, counter), new ol.style.Style({
+      return [backgroundStyle(trafficSign, counter), new ol.style.Style({
         text: new ol.style.Text({
-          text: textStyle(trafficSign.value),
+          text: textStyle(trafficSign),
           fill: new ol.style.Fill({
             color: '#000000'
           }),
           font: 'bold 12px sans-serif',
           offsetX: 0,
-          offsetY: getLabelProperty(trafficSign.value, counter).getTextOffset()
+          offsetY: getLabelProperty(trafficSign, counter).getTextOffset()
         })
       })];
     };
@@ -180,15 +178,11 @@
       }).values);
     };
 
-    var handleValue = function (asset) {
-      if (_.isUndefined(getProperty(asset, "trafficSigns_type")))
-        return;
-      var value = getProperty(asset, "trafficSigns_value") ? getProperty(asset, "trafficSigns_value").propertyValue : undefined;
-      return {value : value, type: parseInt(getProperty(asset, "trafficSigns_type").propertyValue)};
-    };
-
     this.getValue = function (asset) {
-      return handleValue(asset);
+      if (_.isUndefined(getProperty(asset, "trafficSigns_type")))
+          return;
+      var value = getProperty(asset, "trafficSigns_value") ? getProperty(asset, "trafficSigns_value").propertyValue : '';
+      return {value : value, type: parseInt(getProperty(asset, "trafficSigns_type").propertyValue)};
     };
 
     var clearPoints = function () {
@@ -196,7 +190,7 @@
     };
 
     var isInProximity = function (pointA, pointB) {
-      return Math.sqrt(geometrycalculator.getSquaredDistanceBetweenPoints(pointA, pointB.coordinate)) < 3;
+      return Math.sqrt(geometrycalculator.getSquaredDistanceBetweenPoints(pointA, pointB.coordinate)) < MIN_DISTANCE;
     };
 
     this.getCoordinateForGrouping = function(point){
