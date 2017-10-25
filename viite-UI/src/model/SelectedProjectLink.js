@@ -25,8 +25,11 @@
         ids = projectLinkCollection.getMultiSelectIds(linkid);
         current = projectLinkCollection.getByLinkId(ids);
       }
-      //TODO add split markers
-      eventbus.trigger('projectLink:splited', get());
+      var suravageA = get()[0];
+      var suravageB = get()[1];
+       suravageA.marker = "A";
+       suravageB.marker = "B";
+      eventbus.trigger('splited:projectLinks', [suravageA, suravageB]);
     };
 
     var splitSuravageLink = function(suravage, split) {

@@ -441,7 +441,7 @@
               'LET: ' + roadData.endAddressM + '<br>' + '</p>';
           } else {
             infoContent.innerHTML = '<p>' +
-              'Tuntematon tien segmentti' + '</p>'; // road with no address
+              'Tuntematon tien segmentti' + '</p>';
           }
         }
 
@@ -852,7 +852,7 @@
       if (features.length !== 0)
         addFeaturesToSelection(features);
       features = features.concat(partitioned[1]);
-      vectorLayer.getSource().clear(true); // Otherwise we get multiple copies: TODO: clear only inside bbox
+      vectorLayer.getSource().clear(true);
       vectorLayer.getSource().addFeatures(features);
       vectorLayer.changed();
     };
@@ -892,7 +892,6 @@
     eventbus.on('map:moved', mapMovedHandler, this);
 
     eventbus.on('layer:selected', function (layer, previouslySelectedLayer) {
-      //TODO: there might be room for improvement on this, but I am not seeing it
       if (layer !== 'roadAddressProject') {
         deactivateSelectInteractions(true);
         removeSelectInteractions();
