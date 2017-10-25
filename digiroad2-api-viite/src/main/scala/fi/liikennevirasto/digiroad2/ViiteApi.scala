@@ -431,25 +431,26 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     ).getOrElse(None)
   }
 
+get("/project/iswritable/:projectId") {
+    val projectId = params("projectId").toLong
+    val writable=projectService.isWritableState(projectId)
+      Map(
+        "projectIsWritable" -> writable,
+        "success" -> true)
+  }  post("/project/publish"){
+    val user = userProvider.getCurrentUser()
+    try {val projectId = params("projectId").toLong
 
-
-  post("/project/publish") {
-     val user = userProvider.getCurrentUser()
-    try {
-      val projectId = params("projectId").toLong
-      val writableProject = projectWritable(projectId)
+    val writableProject = projectWritable(projectId)
       val publishResult = writableProject.publishProject(projectId)
       if (publishResult.sendSuccess && publishResult.validationSuccess)
-        Map("status" -> "ok")
-      PreconditionFailed(publishResult.errorMessage.getOrElse("Unknown error"))    }
+       Map("status" -> "ok")
+    PreconditionFailed(publishResult.errorMessage.getOrElse("Unknown error"))    }
     catch {
         case e: IllegalStateException => Map("success" -> false, "errorMessage" -> "Projekti ei ole enää muokattavissa")
         case e: MappingException =>
-          logger.warn("Exception treating road links", e)
-          BadRequest("Missing mandatory ProjectLink parameter")
-      }
-    }
-
+          logger.warn("Exception treating road links", e)BadRequest("Missing mandatory ProjectLink parameter")
+  }}
 
   put("/project/split/:linkID") {
     val user = userProvider.getCurrentUser()
