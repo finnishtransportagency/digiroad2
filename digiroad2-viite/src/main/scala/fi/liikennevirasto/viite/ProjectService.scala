@@ -556,10 +556,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       fProjectLink <-  Future(getProjectRoadLinks(projectId, boundingRectangle, roadNumberLimits, municipalities, everything, frozenTimeVVHAPIServiceEnabled))
       fSuravage <- Future(roadAddressService.getSuravageRoadLinkAddresses(boundingRectangle, Set()))
     } yield (fProjectLink, fSuravage)
-    val (projectLinkList,suravageList) =Await.result(combinedFuture, Duration.Inf)
+    val (projectLinkList,suravageList) = Await.result(combinedFuture, Duration.Inf)
     val projectSuravageLinkIds = projectLinkList.filter(_.roadLinkSource == SuravageLinkInterface).map(_.linkId).toSet
+    val(splittedProjectLinks, projectLinks) = projectLinkList.partition(_.connectedLinkId.nonEmpty)
+    val adjustSplittedLinksToplogy = splittedProjectLinks.map(sl => sl.copy(geometry = GeometryUtils.truncateGeometry2D(sl.geometry, sl.startMValue, sl.endMValue)))
     roadAddressLinkToProjectAddressLink(suravageList.filterNot(s => projectSuravageLinkIds.contains(s.linkId))) ++
-      projectLinkList
+      projectLinks ++ adjustSplittedLinksToplogy
   }
 
   def getChangeProject(projectId:Long): Option[ChangeProject] = {
