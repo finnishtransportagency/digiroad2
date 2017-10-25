@@ -242,7 +242,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         projectSaved.reservedParts.map(reservedRoadPartToApi),
         "success" -> true)
     } catch {
-      case e:  IllegalStateException=> Map("success" -> false, "errorMessage" -> "Projekti ei ole enää muokatta11vissa")
+      case e:  IllegalStateException=> Map("success" -> false, "errorMessage" -> "Projekti ei ole enää muokattavissa")
       case ex: IllegalArgumentException => NotFound(s"Project id ${project.id} not found")
       case e: MappingException  =>
         logger.warn("Exception treating road links", e)
@@ -437,7 +437,9 @@ get("/project/iswritable/:projectId") {
       Map(
         "projectIsWritable" -> writable,
         "success" -> true)
-  }  post("/project/publish"){
+  }
+
+  post("/project/publish"){
     val user = userProvider.getCurrentUser()
     try {val projectId = params("projectId").toLong
 
@@ -449,7 +451,8 @@ get("/project/iswritable/:projectId") {
     catch {
         case e: IllegalStateException => Map("success" -> false, "errorMessage" -> "Projekti ei ole enää muokattavissa")
         case e: MappingException =>
-          logger.warn("Exception treating road links", e)BadRequest("Missing mandatory ProjectLink parameter")
+          logger.warn("Exception treating road links", e)
+          BadRequest("Missing mandatory ProjectLink parameter")
   }}
 
   put("/project/split/:linkID") {

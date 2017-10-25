@@ -10,6 +10,7 @@ import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.viite.dao.CalibrationCode.{AtBeginning, AtBoth, AtEnd, No}
+import fi.liikennevirasto.viite.dao.ProjectState.Incomplete
 import fi.liikennevirasto.viite.model.ProjectAddressLink
 import fi.liikennevirasto.viite.{ReservedRoadPart, RoadType}
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
@@ -412,7 +413,7 @@ object ProjectDAO {
     Q.queryNA[String](query).firstOption
   }
 
-  def getProjectState(projectID: Long): Option[ProjectState] = {
+  def getProjectStatus(projectID: Long): Option[ProjectState] = {
     val query =
       s""" SELECT state
             FROM project

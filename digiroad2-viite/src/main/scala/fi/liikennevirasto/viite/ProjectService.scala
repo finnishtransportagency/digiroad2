@@ -136,7 +136,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   private def projectWritableCheck(projectId:Long):Option[String] = {
-    ProjectDAO.getProjectState(projectId)  match {
+    ProjectDAO.getProjectStatus(projectId)  match {
       case Some(projectState) =>
         if (projectState==ProjectState.Incomplete)
           return None
