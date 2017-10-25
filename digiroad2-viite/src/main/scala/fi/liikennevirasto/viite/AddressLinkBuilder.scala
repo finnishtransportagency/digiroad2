@@ -208,7 +208,7 @@ trait AddressLinkBuilder {
         nextSegment.track, discontinuity, startAddrMValue,
         endAddrMValue, nextSegment.startDate, nextSegment.endDate, nextSegment.modifiedBy, nextSegment.lrmPositionId, nextSegment.linkId,
         startMValue, endMValue, nextSegment.sideCode, nextSegment.adjustedTimestamp, calibrationPoints, false, combinedGeometry,
-        nextSegment.linkGeomSource, nextSegment.ely))
+        nextSegment.linkGeomSource, nextSegment.ely, nextSegment.terminated))
 
     } else Seq(nextSegment, previousSegment)
 

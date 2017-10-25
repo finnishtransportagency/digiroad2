@@ -1236,7 +1236,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       RoadAddress(NewRoadAddress,pl.roadNumber,pl.roadPartNumber,pl.roadType,pl.track,
         pl.discontinuity,pl.startAddrMValue,pl.endAddrMValue,pl.startDate, pl.endDate,pl.modifiedBy,pl.lrmPositionId,pl.linkId,
         pl.startMValue,pl.endMValue,pl.sideCode,vvhLink.get.vvhTimeStamp,pl.calibrationPoints,pl.floating,
-        Seq(p1, p2),pl.linkGeomSource, pl.ely)
+        Seq(p1, p2),pl.linkGeomSource, pl.ely, pl.status == LinkStatus.Terminated)
     }, mapProjectLinksAsFloatingRoadAddresses(missingGeom.map(_._1)))
   }
 
@@ -1244,7 +1244,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     projectLinks.map(x =>
       RoadAddress(NewRoadAddress,x.roadNumber,x.roadPartNumber,x.roadType,x.track,
         x.discontinuity,x.startAddrMValue,x.endAddrMValue,x.startDate, x.endDate,x.modifiedBy,x.lrmPositionId,x.linkId,
-        x.startMValue,x.endMValue,x.sideCode,VVHClient.createVVHTimeStamp(),x.calibrationPoints,floating=true,Seq.empty[Point],x.linkGeomSource, x.ely))
+        x.startMValue,x.endMValue,x.sideCode,VVHClient.createVVHTimeStamp(),x.calibrationPoints,floating=true,Seq.empty[Point],x.linkGeomSource, x.ely, x.status == LinkStatus.Terminated))
   }
 
   private def convertProjectLinksToRoadAddressesWithRoadAddressGeometry(projectLinks: Seq[ProjectLink],
@@ -1256,7 +1256,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     (withGeom.map { case (pl, ra) =>
       RoadAddress(NewRoadAddress, pl.roadNumber, pl.roadPartNumber, pl.roadType, pl.track, pl.discontinuity, pl.startAddrMValue,
         pl.endAddrMValue, pl.startDate, pl.endDate, pl.modifiedBy, pl.lrmPositionId, pl.linkId, pl.startMValue, pl.endMValue, pl.sideCode,
-        ra.get.adjustedTimestamp, pl.calibrationPoints, pl.floating, ra.get.geometry, pl.linkGeomSource, pl.ely)
+        ra.get.adjustedTimestamp, pl.calibrationPoints, pl.floating, ra.get.geometry, pl.linkGeomSource, pl.ely, pl.status == LinkStatus.Terminated)
     }, mapProjectLinksAsFloatingRoadAddresses(missingGeom.map(_._1)))
   }
 
