@@ -315,7 +315,7 @@
           new ModalConfirm(successObject.reason);
           applicationModel.removeSpinner();
         }
-          else{
+        else{
           eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
         }
 

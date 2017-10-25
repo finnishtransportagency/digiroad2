@@ -177,7 +177,7 @@
     };
 
     var selectedProjectLinkTemplate = function(project, optionTags, selected) {
-      var selection = ((applicationModel.getSelectedTool() == 'Cut' && selected[0].roadLinkSource == LinkGeomSource.SuravageLinkInterface.value) ? selectedSplitData(selected) : selectedData(selected));
+      var selection = (((applicationModel.getSelectedTool() == 'Cut' || !_.isUndefined(selected[0].connectedLinkId)) && selected[0].roadLinkSource == LinkGeomSource.SuravageLinkInterface.value) ? selectedSplitData(selected) : selectedData(selected));
       return _.template('' +
           '<header>' +
           titleWithProjectName(project.name) +
@@ -627,9 +627,7 @@
       });
 
       rootElement.on('click', ' .split-form button.cancelLink', function(){
-          if(applicationModel.getSelectedTool() == "Cut") {
               cancelChanges();
-          }
       });
 
       rootElement.on('click', '.split-form button.send', function(){

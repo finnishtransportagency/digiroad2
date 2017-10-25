@@ -165,9 +165,12 @@
         selectedProjectLinkProperty.clean();
         $('.wrapper').remove();
         $('#actionButtons').html('<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button><button disabled id ="send-button" class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button>');
-        //TODO check if is selection is from splited or not
         if (!_.isUndefined(selection) && !selectedProjectLinkProperty.isDirty()){
-          selectedProjectLinkProperty.open(selection.projectLinkData.linkId, true);
+          if(!_.isUndefined(selection.projectLinkData.connectedLinkId)){
+            selectedProjectLinkProperty.openSplited(selection.projectLinkData.linkId, true);
+          } else {
+            selectedProjectLinkProperty.open(selection.projectLinkData.linkId, true);
+          }
         }
         else selectedProjectLinkProperty.cleanIds();
       }
@@ -220,9 +223,12 @@
         highlightFeatures();
       } else {
         selectedProjectLinkProperty.clean();
-        //TODO check if selection is from splited or not
-        if (!_.isUndefined(selection) && !selectedProjectLinkProperty.isDirty()) {
-          selectedProjectLinkProperty.open(selection.projectLinkData.linkId);
+        if (!_.isUndefined(selection) && !selectedProjectLinkProperty.isDirty()){
+          if(!_.isUndefined(selection.projectLinkData.connectedLinkId)){
+            selectedProjectLinkProperty.openSplited(selection.projectLinkData.linkId, true);
+          } else {
+            selectedProjectLinkProperty.open(selection.projectLinkData.linkId);
+          }
         }
         else selectedProjectLinkProperty.cleanIds();
       }
