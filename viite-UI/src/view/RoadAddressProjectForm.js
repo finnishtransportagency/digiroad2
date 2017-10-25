@@ -4,10 +4,7 @@
     var selectedProjectLink = false;
     var activeLayer = false;
     var hasReservedRoadParts = false;
-    var projectIncomplete = 1;
-    var projectErroredInTR = 3;
-    var projectUnknown = 99;
-    var editableStatus = [projectIncomplete, projectErroredInTR, projectUnknown];
+    var editableStatus = [LinkValues.ProjectStatus.Incomplete.value, LinkValues.ProjectStatus.ErroredInTR, LinkValues.ProjectStatus.Unknown];
 
     var staticField = function(labelText, dataField) {
       var field;
