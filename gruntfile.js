@@ -2,6 +2,9 @@ module.exports = function(grunt) {
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
     viitepkg: grunt.file.readJSON('viitepackage.json'),
+    properties: {
+      app: 'conf/dev/keys.properties'
+    },
     env: {
       options: {},
       development: {
@@ -92,12 +95,16 @@ module.exports = function(grunt) {
             xforward: false
           },
           {
-            context: '/maasto',
-            host: 'karttamoottori.maanmittauslaitos.fi',
-            https: false,
-            changeOrigin: true,
-            xforward: false,
-            headers: {referer: 'http://www.paikkatietoikkuna.fi/web/fi/kartta'}
+              context: '/maasto',
+              host: '172.17.204.46',
+            /*host: '172.17.206.180',*/
+              port: '8080',
+              https: false,
+              changeOrigin: true,
+              xforward: false,
+              rewrite: {
+                  '^/maasto': '/digiroad/maasto'
+              }
           },
           {
             context: '/vionice',
@@ -107,7 +114,7 @@ module.exports = function(grunt) {
             changeOrigin: true,
             xforward: false,
             rewrite: {
-                '^/vionice': '/api'
+                '^/vionice/api/v1/geoserver/vionice/wms\\?': '/api/v1/geoserver/vionice/wms/?apikey=<%= app.vioniceApiKey %>&'
             },
             headers: { Host: 'map.vionice.io:443' }
           },
@@ -298,6 +305,7 @@ module.exports = function(grunt) {
     }
   });
 
+  grunt.loadNpmTasks('grunt-properties-reader');
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-mocha');
@@ -315,7 +323,7 @@ module.exports = function(grunt) {
 
   var target = grunt.option('target') || 'production';
 
-  grunt.registerTask('server', ['env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'less:development', 'less:viitedev', 'watch:oth']);
+  grunt.registerTask('server', ['properties', 'env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'less:development', 'less:viitedev', 'watch:oth']);
 
   grunt.registerTask('viite', ['env:development', 'configureProxies:viite', 'preprocess:development', 'connect:viite', 'less:viitedev', 'watch:viite']);
 

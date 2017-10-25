@@ -102,7 +102,7 @@ class NLSProxyServlet extends ProxyServlet {
 
 class VioniceProxyServlet extends ProxyServlet {
 
-  def regex = "/(digiroad)".r
+  def regex = "/(digiroad)/(vionice)".r
 
   def appendQueryString(uri: java.net.URI, appendQuery: String): java.net.URI = {
     val newQuery = if (uri.getQuery == null) appendQuery else s"""${uri.getQuery}&${appendQuery}"""
@@ -113,9 +113,9 @@ class VioniceProxyServlet extends ProxyServlet {
   override def rewriteURI(req: HttpServletRequest): java.net.URI = {
     val properties = new Properties()
     properties.load(getClass.getResourceAsStream("/keys.properties"))
-    val apiKey = properties.getProperty("vionice.apiKey", "")
+    val apiKey = properties.getProperty("vioniceApiKey", "")
     val uri = req.getRequestURI
-    appendQueryString(java.net.URI.create("https://map.vionice.io/api" + regex.replaceFirstIn(uri, "")), s"""apiKey=$apiKey""")
+    appendQueryString(java.net.URI.create("https://map.vionice.io" + regex.replaceAllIn(uri, "")), s"""apiKey=$apiKey""")
   }
 
   override def sendProxyRequest(clientRequest: HttpServletRequest, proxyResponse: HttpServletResponse, proxyRequest: Request): Unit = {

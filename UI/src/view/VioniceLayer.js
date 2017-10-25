@@ -5,7 +5,7 @@
             map = params.map;
 
         var vioniceLayer = new ol.layer.Tile({source: new ol.source.TileWMS({
-            url: 'vionice/v1/geoserver/vionice/wms?apikey=598db71938cd2f25552d010a',
+            url: 'vionice/api/v1/geoserver/vionice/wms',
             params: { 'LAYERS' : 'traffic-signs' }
         })});
 
