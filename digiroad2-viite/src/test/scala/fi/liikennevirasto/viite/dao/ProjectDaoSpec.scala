@@ -33,7 +33,8 @@ class ProjectDaoSpec  extends FunSuite with Matchers {
     ProjectLink(id = NewRoadAddress, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track,
       roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
       roadAddress.endDate, modifiedBy = Option(project.createdBy), 0L, roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
-      roadAddress.sideCode, roadAddress.calibrationPoints, floating = false, roadAddress.geometry, project.id, LinkStatus.NotHandled, RoadType.PublicRoad, roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), 0)
+      roadAddress.sideCode, roadAddress.calibrationPoints, floating = false, roadAddress.geometry, project.id, LinkStatus.NotHandled, RoadType.PublicRoad,
+      roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), 0, roadAddress.ely)
   }
 
   test("create empty road address project") {
@@ -158,7 +159,7 @@ class ProjectDaoSpec  extends FunSuite with Matchers {
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
       ProjectDAO.createRoadAddressProject(rap)
-      ProjectDAO.updateProjectStatus(id, ProjectState.Saved2TR, "")
+      ProjectDAO.updateProjectStatus(id, ProjectState.Saved2TR)
       ProjectDAO.getProjectStatus(id) should be(Some(ProjectState.Saved2TR))
     }
   }
@@ -241,6 +242,19 @@ class ProjectDaoSpec  extends FunSuite with Matchers {
       ProjectDAO.getRoadAddressProjectById(id).nonEmpty should be(true)
       ProjectDAO.updateProjectEly(id, 100)
       ProjectDAO.getProjectEly(id).get should be (100)
+    }
+  }
+
+  test("update project_link's road_type and discontinuity") {
+    runWithRollback {
+      val projectLinks = ProjectDAO.getProjectLinks(7081807)
+      val biggestProjectLink = projectLinks.maxBy(_.endAddrMValue)
+      ProjectDAO.updateProjectLinkRoadTypeDiscontinuity(projectLinks.map(x => x.id).filterNot(_ == biggestProjectLink.id).toSet, LinkStatus.UnChanged, "test",2 ,None)
+      ProjectDAO.updateProjectLinkRoadTypeDiscontinuity(Set(biggestProjectLink.id), LinkStatus.UnChanged, "test",2 ,Some(2))
+      val savedProjectLinks = ProjectDAO.getProjectLinks(7081807)
+      savedProjectLinks.filter(_.roadType.value == 2).size should be (savedProjectLinks.size)
+      savedProjectLinks.filter(_.discontinuity.value == 2).size should be (1)
+      savedProjectLinks.filter(_.discontinuity.value == 2).head.id should be (biggestProjectLink.id)
     }
   }
 }

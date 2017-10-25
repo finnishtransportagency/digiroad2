@@ -597,8 +597,6 @@ object DataFixture {
     println("\n")
   }
 
-
-
   private def verifyIsChanged(propertyPublicId: String, propertyId: Long, municipality: Int): Unit = {
     val floatingReasonPublicId = "kellumisen_syy"
     val floatingReasonPropertyId = dataImporter.getPropertyTypeByPublicId(floatingReasonPublicId)
@@ -790,7 +788,6 @@ object DataFixture {
     println(DateTime.now())
     println("\n")
   }
-
 
   def fillLaneAmountsMissingInRoadLink(): Unit = {
     val dao = new OracleLinearAssetDao(null, null)
@@ -1086,6 +1083,7 @@ object DataFixture {
     println(DateTime.now())
     println("\n")
   }
+
   def updatePavedRoadDataFromTR(): Unit ={
     println("\nStart PavedRoad update at: ")
     println(DateTime.now())
@@ -1250,7 +1248,6 @@ object DataFixture {
     println(DateTime.now())
     println("\n")
   }
-
 
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._

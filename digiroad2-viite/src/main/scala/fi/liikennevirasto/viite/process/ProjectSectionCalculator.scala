@@ -262,7 +262,7 @@ object ProjectSectionCalculator {
 
 }
 case class RoadAddressSection(roadNumber: Long, roadPartNumberStart: Long, roadPartNumberEnd: Long, track: Track,
-                              startMAddr: Long, endMAddr: Long, discontinuity: Discontinuity, roadType: RoadType) {
+                              startMAddr: Long, endMAddr: Long, discontinuity: Discontinuity, roadType: RoadType, ely: Long) {
   def includes(ra: BaseRoadAddress): Boolean = {
     // within the road number and parts included
     ra.roadNumber == roadNumber && ra.roadPartNumber >= roadPartNumberStart && ra.roadPartNumber <= roadPartNumberEnd &&

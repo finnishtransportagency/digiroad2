@@ -6,7 +6,7 @@
     var hasReservedRoadParts = false;
     var projectStatus = LinkValues.ProjectStatus;
     var editableStatus = [projectStatus.Incomplete.value, projectStatus.ErroredInTR.value, projectStatus.Unknown.value];
-
+    
     var staticField = function(labelText, dataField) {
       var field;
       field = '<div class="form-group">' +
@@ -447,7 +447,11 @@
       };
 
       rootElement.on('click', '#generalNext', function() {
-        if(currentProject.isDirty){
+        if(currentProject.statusCode === projectStatus.ErroredInTR.value){
+          currentProject.statusCode = projectStatus.Incomplete.value;
+          currentProject.statusDescription = projectStatus.Incomplete.description;
+          saveAndNext();
+        } else if(currentProject.isDirty){
           if(currentProject.id === 0){
             createNewProject();
           } else {
