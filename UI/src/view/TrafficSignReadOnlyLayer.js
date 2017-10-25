@@ -37,6 +37,7 @@
     vectorLayer.set('name', 'trafficSignReadOnly' + parentLayerName);
     vectorLayer.setOpacity(1);
     vectorLayer.setVisible(false);
+    vectorLayer.setZIndex(map.getLayers().getArray().length);
     map.addLayer(vectorLayer);
 
     var showReadOnlyTrafficSigns = function(){

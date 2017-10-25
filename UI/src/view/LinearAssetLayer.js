@@ -12,7 +12,7 @@ window.LinearAssetLayer = function(params) {
       roadAddressInfoPopup = params.roadAddressInfoPopup,
       editConstrains = params.editConstrains,
       hasTrafficSignReadOnlyLayer = params.hasTrafficSignReadOnlyLayer,
-      readOnlyTrafficSignsCollection = params.readOnlyTrafficSignsCollection;
+      trafficSignReadOnlyLayer = params.trafficSignReadOnlyLayer;
 
   Layer.call(this, layerName, roadLayer);
   var me = this;
@@ -171,15 +171,6 @@ window.LinearAssetLayer = function(params) {
   });
   map.addLayer(indicatorLayer);
   indicatorLayer.setVisible(false);
-
-  var trafficSignReadOnlyLayer = new TrafficSignReadOnlyLayer({
-      layerName: layerName,
-      style: new PointAssetStyle('trafficSigns'),
-      collection: readOnlyTrafficSignsCollection,
-      assetLabel: new TrafficSignLabel(),
-      assetGrouping: new AssetGrouping(9),
-      map: map
-    });
 
   var linearAssetCutter = new LinearAssetCutter(me.eventListener, vectorLayer, collection);
 
