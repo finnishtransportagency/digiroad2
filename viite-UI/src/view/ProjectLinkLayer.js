@@ -248,7 +248,8 @@
         };
         var style = new ol.style.Style({
           image : new ol.style.Icon(imageSettings),
-          text : new ol.style.Text(textSettings)
+          text : new ol.style.Text(textSettings),
+          zIndex: 11
         });
         var marker = new ol.Feature({
           geometry : new ol.geom.Point([position.x, position.y]),
