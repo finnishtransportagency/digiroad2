@@ -38,8 +38,7 @@ object ProjectSectionCalculator {
       calibrationPoints)
     // Get left track non-connected points and find the closest to right track starting point
     val leftLinks = newLinks.filter(_.track != Track.RightSide) ++ oldLinks.filter(_.track != Track.RightSide)
-    val leftLinkEnds = leftLinks.flatMap(pl => Seq(pl.startingPoint, pl.endPoint))
-    val leftPoints = leftLinkEnds.filterNot(p1 => leftLinkEnds.count(p2 => GeometryUtils.areAdjacent(p1, p2)) > 1)
+    val leftPoints = TrackSectionOrder.findOnceConnectedLinks(leftLinks).keys
     if (leftPoints.isEmpty)
       throw new InvalidAddressDataException("Missing left track starting points")
     val leftStartPoint = leftPoints.minBy(lp => (lp - rightStartPoint).length())
@@ -263,7 +262,7 @@ object ProjectSectionCalculator {
 
 }
 case class RoadAddressSection(roadNumber: Long, roadPartNumberStart: Long, roadPartNumberEnd: Long, track: Track,
-                              startMAddr: Long, endMAddr: Long, discontinuity: Discontinuity, roadType: RoadType) {
+                              startMAddr: Long, endMAddr: Long, discontinuity: Discontinuity, roadType: RoadType, ely: Long) {
   def includes(ra: BaseRoadAddress): Boolean = {
     // within the road number and parts included
     ra.roadNumber == roadNumber && ra.roadPartNumber >= roadPartNumberStart && ra.roadPartNumber <= roadPartNumberEnd &&

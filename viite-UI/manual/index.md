@@ -457,14 +457,14 @@ _Tieosoiteprojektit -listaus._
 
 
 Tieosoiteprojektissa on mahdollista tehd&auml; seuraavia muutoksia eli toimenpiteit&auml;:
-(T&auml;h&auml;n voi jatkossa lis&auml;t&auml; taulukon jossa toimenpide on sanallisesti kuvattu tarkemmin.) 
+(T&auml;h&auml;n tehd&auml;&auml;n jatkossa taulukko, jossa toimenpiteet on sanallisesti kuvattu tarkemmin.) 
 
 - lakkautus (tieosoitteen lakkautus) 
 - uusi (lis&auml;t&auml;&auml;n uusi tieosoite osoitteettomalle linkille) 
 - ennallaan (osa tieosoitteesta s&auml;ilyy ennallaan, kun osaa siit&auml; muutetaan)
 - siirto (tieosan alkuet&auml;isyys- ja loppuet&auml;isyysarvot p&auml;ivitet&auml;&auml;n, kun muulle osalle tieosaa tehd&auml;&auml;n muutos)
-- numeroinnin muutos (tieosoitetta voi muuttaa manuaalisesti) 
-- et&auml;isyyslukeman muutos [ei viel&auml; toteutettu]
+- numeroinnin muutos (kokonaisen tieosan tienumeron ja/tai tieosanumeron voi muuttaa manuaalisesti) 
+- et&auml;isyyslukeman muutos (et&auml;isyyslukeman loppuarvon voi sy&ouml;tt&auml;&auml; tieosalle manuaalisesti)
 - et&auml;isyyslukemapisteen siirto [ei viel&auml; toteutettu]
 
 My&ouml;s tieosoitteen kasvusuunnan voi k&auml;&auml;nt&auml;&auml;. Seuraavissa kappaleissa kuvataan jokaisen toimenpiteen teko Viitteess&auml;.
@@ -535,31 +535,39 @@ Tallennettuun tieosoitteeseen voi jatkaa uusien linkkien lis&auml;&auml;mist&aum
 
 Tieosoitteen voi antaa Viitteess&auml; my&ouml;s ns. Suravage-linkeille (SuRavaGe = Suunniteltu rakentamisvaiheen geometria). Suravage-tiet n&auml;kyv&auml;t Viitteess&auml; vaaleanpunaisella v&auml;rill&auml; ja niiss&auml; n&auml;kyy my&ouml;s tieosoitteen kasvusuuntanuolet. 
 
-11.1.4 Ennallaan
+11.1.3 Ennallaan
 --------------------------
 Tieosan linkkien tieosoitteen voi s&auml;ilytt&auml;&auml; ennallaan esimerkiksi silloin, kun osalle tieosaa halutaan tehd&auml; tieosoitemuutoksia ja osan s&auml;ilyv&auml;n ennallaan. T&auml;ll&ouml;in tieosa k&auml;sitell&auml;&auml;n toimenpiteell&auml; Ennallaan. Toimenpide tehd&auml;&auml;n varaamalla ensin projektitietojen formilla projektiin muokattava tieosa tai -osat. Seuraavaksi siirryt&auml;&auml;n toimenpiden&auml;yt&ouml;lle Jatka toimenpiteisiin - painikkeella. Valittu tieosa tai sen tietyt linkit valitaan kartalta, jolloin ne muuttuvat vihreiksi, ja lomakkeelle ilmestyy alasvetovalikko. Valikosta valitaan toimenpide "Ennallaan" ja tallennetaan muutokset.   
 
-11.1.6 Siirto
+11.1.4 Siirto
 --------------------------
 Siirto-toimenpide tehd&auml;&auml;n tieosalle uusien m-arvojen laskemiseksi. Siirtoa k&auml;ytet&auml;&auml;n, kun osa tieosan linkeist&auml; k&auml;sitell&auml;&auml;n jollain muulla toimenpiteell&auml; ja loppujen linkkien m-arvot t&auml;ytyy laskea uudelleen. Esimerkkin&auml; osalle tieosan linkeist&auml; voidaan tehd&auml; lakkautus, lis&auml;t&auml; uusia linkkej&auml; ja pit&auml;&auml; osa linkeist&auml; ennallaan. Siirto tehd&auml;&auml;n tieosoiteprojektiin varatulle tieosalle (varaaminen kuvattu kpl:ssa 10) siten, ett&auml; tieosalle on ensin tehty muita toimenpiteit&auml;, kuten lakkautus, uusi tai numerointi. Linkit, joille siirto tehd&auml;&auml;n, valitaan tuplaklikkaamalla ensimm&auml;inen haluttu linkki ja lis&auml;&auml;m&auml;ll&auml; valintaan shift+tuplaklikkaamalla linkkej&auml;. Sitten valitaan toimenpidevalikosta siirto ja tallennetaan. Siirretyt linkit muuttuvat toimenpiteen tallennuksen j&auml;lkeen punaiseksi. Muutokset n&auml;kyv&auml;t projektin yhteenvetotaulukossa.   
    
 
-11.1.3 Numeroinnnin muutos
+11.1.5 Numeroinnnin muutos
 --------------------------
-Tieosoitteen numeroinnin muutoksella tarkoitetaan Viitteess&auml; tienumeron ja tieosanumeron muuttamista. 
+Tieosoitteen numeroinnin muutoksella tarkoitetaan Viitteess&auml; tienumeron ja/tai tieosanumeron muuttamista. 
 Projektiin varataan tarvittava(t) tieosa(t), kuten kappaleessa 10 on kuvattu. Varaamisen j&auml;lkeen siirryt&auml;&auml;n toimenpidelomakkeelle Jatka toimenpiteisiin -painikkeella. Valitaan muokattava keltaisella n&auml;kyv&auml; varattu tieosa klikkaamalla kartalta. Tieosa muuttuu vihre&auml;ksi. Viite poimii t&auml;ll&ouml;in koko tieosan mukaan valintaan, vaikkei se n&auml;kyisi kokonaisuuudessaan karttan&auml;kym&auml;ss&auml; ja k&auml;ytt&auml;j&auml;lle tulee t&auml;st&auml; ilmoitus. Mik&auml;li on tarpeen muuttaa vain tietyn linkin numerointia tieosalla, tehd&auml;&auml;n valinta tuplaklikkauksella halutun linkin p&auml;&auml;lt&auml;. Jos valitaan lis&auml;&auml; yksitt&auml;isi&auml; linkkej&auml;, tehd&auml;&auml;n se shift+tuplaklikkaamalla. Toimenpide-lomakkeelle sy&ouml;tet&auml;&auml;n uusi numerointi (tienumero ja/tai tieosanumero) ja tallennetaan muutokset. Numeroitu osuus muuttuu tallennettaessa ruskeaksi. 
-Jos numeroinnin muutos kohdistuu koko tieosaan, muita toimenpiteit&auml; ei tallennuksen j&auml;lkeen tarvitse tehd&auml;. Jos numerointia on muutettu vain osalle tieosan linkeist&auml;, tulee muut linkit k&auml;sitell&auml; joko ennallaan-toimenpiteell&auml; (tieosan alkup&auml;&auml;n linkit ennen numerointia) tai siirto-toimenpiteell&auml; (tieosan loppup&auml;&auml;n linkit numeroinnin j&auml;lkeen). N&auml;ill&auml; toimenpiteill&auml; lasketaan muille linkeille uudet m-arvot (siirto) tai pidet&auml;&auml;n ne samana kuin aiemmin (ennallaan). 
+Jos numeroinnin muutos kohdistuu koko tieosaan, muita toimenpiteit&auml; ei tallennuksen j&auml;lkeen tarvitse tehd&auml;.  siirto-toimenpiteell&auml; . 
 
-11.1.5 Et&auml;isyyslukeman muutos
+11.1.6 Et&auml;isyyslukeman muutos
 --------------------------
+Tieosoiteprojektissa uudelle tieosoitteistettavalle tieosalle on mahdollista asettaa k&auml;ytt&auml;j&auml;n antama tieosan loppuet&auml;isyyslukema. Ensin valitaan haluttu tieosa kartalta, jonka j&auml;lkeen lomakkeelle ilmestyy kentt&auml;, johon loppuet&auml;isyyden voi muuttaa. Muutettu arvo huomioidaan lomakkeella punaisella huutomerkill&auml;. 
 
 11.1.7 Et&auml;isyyslukemapisteen siirto
 --------------------------
+[Ei viel&auml; toteutettu]
+
+11.1.8 Useiden muutosten tekeminen samalle tieosalle
+--------------------------
+
 
 11.2 Muutosilmoituksien tarkastelu taulukkon&auml;kym&auml;ss&auml;
 --------------------------
 
-Toimenpiden&auml;kym&auml;ss&auml; on mahdollista tarkastella muutosilmoitus taulukkoa (1). "Avaa projektin yhteenvetotaulukko" -painiketta klikkaamalla avautuu taulukkon&auml;kym&auml;, joka kertoo projektissa olevien tieosoitteiden vanhan ja uuden tilanteen sek&auml; tehdyn toimenpiteen. Taulukossa rivit on j&auml;rjestetty suurimasta pienimp&auml;&auml;n tieosoitteen mukaan (tie, tieosa, alkuet&auml;isyys, ajorata), jotta saman tien tieosuudet ovat taulukossa per&auml;kk&auml;in suurimmasta pienimp&auml;&auml;.Taulukon saa suurennettua ja pienennetty&auml; sek&auml; suljettua taulukon oikeasta yl&auml;kulmasta (2). Taulukon voi pit&auml;&auml; auki muokatessa ja muutokset p&auml;ivittyv&auml;t taulukkoon tallennettaessa. Viite-sovelluksen voi esimerkisi venytt&auml;&auml; kahdelle n&auml;yt&ouml;lle, joista toisella voi tarkastella muutostaulukkoa ja k&auml;ytt&auml;&auml; karttan&auml;kym&auml;&auml;. 
+Toimenpiden&auml;kym&auml;ss&auml; on mahdollista tarkastella muutosilmoitus taulukkoa (1). "Avaa projektin yhteenvetotaulukko" -painiketta klikkaamalla avautuu taulukkon&auml;kym&auml;, joka kertoo projektissa olevien tieosoitteiden vanhan ja uuden tilanteen sek&auml; tehdyn toimenpiteen. Taulukossa rivit on j&auml;rjestetty suurimasta pienimp&auml;&auml;n tieosoitteen mukaan (tie, tieosa, alkuet&auml;isyys, ajorata), jotta saman tien tieosuudet ovat taulukossa per&auml;kk&auml;in suurimmasta pienimp&auml;&auml;. Yhteenvetotaulukon AET- ja LET-arvot p&auml;ivittyv&auml;t vasta, kun kaikki tieosan aihiot on k&auml;sitelty. Toimenpiteiden tekoj&auml;rjestyksell&auml; ei ole vaikutusta lopulliseen yhteenvetotaulukoon. 
+
+Taulukon saa suurennettua ja pienennetty&auml; sek&auml; suljettua taulukon oikeasta yl&auml;kulmasta (2). Taulukon voi pit&auml;&auml; auki muokatessa ja muutokset p&auml;ivittyv&auml;t taulukkoon tallennettaessa. Viite-sovelluksen voi esimerkisi venytt&auml;&auml; kahdelle n&auml;yt&ouml;lle, joista toisella voi tarkastella muutostaulukkoa ja k&auml;ytt&auml;&auml; karttan&auml;kym&auml;&auml;. 
 
 ![Avaus](k41.JPG)
 

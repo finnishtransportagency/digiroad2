@@ -19,7 +19,10 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
       case LinkGeomSource.Unknown => UnknownRoadLinkType
     }
 
-    val geom = roadLink.geometry
+    val geom = if (projectLink.connectedLinkId.nonEmpty)
+      GeometryUtils.truncateGeometry3D(roadLink.geometry, projectLink.startMValue, projectLink.endMValue)
+    else
+      roadLink.geometry
     val length = GeometryUtils.geometryLength(geom)
     val roadNumber = projectLink.roadNumber match {
       case 0 => roadLink.attributes.getOrElse(RoadNumber, projectLink.roadNumber).asInstanceOf[Number].longValue()
@@ -41,10 +44,10 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
       case _ => UnknownLinkType
     }
     build(roadLink, projectLink.id, geom, length, roadNumber, roadPartNumber, trackCode, roadName, municipalityCode,
-      linkType, roadLinkType, projectLink.discontinuity, projectLink.startAddrMValue, projectLink.endAddrMValue,
+      linkType, roadLinkType, projectLink.roadType,  projectLink.discontinuity, projectLink.startAddrMValue, projectLink.endAddrMValue,
       projectLink.startMValue, projectLink.endMValue, projectLink.sideCode,
       projectLink.calibrationPoints._1, projectLink.calibrationPoints._2,
-      Anomaly.None, projectLink.lrmPositionId, projectLink.status, projectLink.roadAddressId, projectLink.connectedLinkId)
+      Anomaly.None, projectLink.lrmPositionId, projectLink.status, projectLink.roadAddressId, projectLink.ely, projectLink.connectedLinkId)
   }
 
   def build(roadLink: RoadLinkLike, missingAddress: MissingRoadAddress): ProjectAddressLink = {
@@ -60,17 +63,17 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
       case _ => UnknownLinkType
     }
     build(roadLink, 0L, geom, length, roadLinkRoadNumber, roadLinkRoadPartNumber, roadLinkTrackCode, roadName, municipalityCode,
-      linkType, UnknownRoadLinkType, Discontinuity.Continuous, missingAddress.startAddrMValue.getOrElse(0), missingAddress.endAddrMValue.getOrElse(0),
+      linkType, UnknownRoadLinkType, getRoadType(roadLink.administrativeClass, linkType), Discontinuity.Continuous, missingAddress.startAddrMValue.getOrElse(0), missingAddress.endAddrMValue.getOrElse(0),
       missingAddress.startMValue.getOrElse(0.0), missingAddress.endMValue.getOrElse(0.0),SideCode.Unknown,
-      None, None, Anomaly.None, 0, LinkStatus.Unknown, 0, None)
+      None, None, Anomaly.None, 0, LinkStatus.Unknown, 0, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), None)
   }
 
   private def build(roadLink: RoadLinkLike, id: Long, geom: Seq[Point], length: Double, roadNumber: Long, roadPartNumber: Long,
                     trackCode: Int, roadName: String, municipalityCode: Int, linkType: LinkType, roadLinkType: RoadLinkType,
-                    discontinuity: Discontinuity,
+                    roadType: RoadType, discontinuity: Discontinuity,
                     startAddrMValue: Long, endAddrMValue: Long, startMValue: Double, endMValue: Double,
                     sideCode: SideCode, startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint],
-                    anomaly: Anomaly, lrmPositionId: Long, status: LinkStatus, roadAddressId: Long, connectedLinkId: Option[Long]): ProjectAddressLink = {
+                    anomaly: Anomaly, lrmPositionId: Long, status: LinkStatus, roadAddressId: Long, ely:Long, connectedLinkId: Option[Long]): ProjectAddressLink = {
 
     val linkId =
       if (connectedLinkId.nonEmpty && status == LinkStatus.New)
@@ -79,8 +82,8 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
         roadLink.linkId
     ProjectAddressLink(id, linkId, geom,
       length, roadLink.administrativeClass, linkType, roadLinkType, roadLink.constructionType, roadLink.linkSource,
-      getRoadType(roadLink.administrativeClass, linkType), roadName, municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
-      roadLink.attributes, roadNumber, roadPartNumber, trackCode, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), discontinuity.value,
+      roadType, roadName, municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
+      roadLink.attributes, roadNumber, roadPartNumber, trackCode, ely, discontinuity.value,
       startAddrMValue, endAddrMValue, startMValue, endMValue, sideCode, startCalibrationPoint, endCalibrationPoint, anomaly, lrmPositionId, status, roadAddressId,
       connectedLinkId)
   }

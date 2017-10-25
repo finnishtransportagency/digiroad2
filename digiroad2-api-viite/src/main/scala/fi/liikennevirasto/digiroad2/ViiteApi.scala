@@ -88,7 +88,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     StartupParameters(east.getOrElse(390000), north.getOrElse(6900000), zoom.getOrElse(2), deploy_date)
   }
 
-
   get("/roadlinks") {
     response.setHeader("Access-Control-Allow-Headers", "*")
 
@@ -140,6 +139,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
     roadAddressService.getAdjacent(chainLinks, linkId).map(roadAddressLinkToApi)
   }
+
   get("/roadlinks/multiSourceAdjacents") {
     val roadData = JSON.parseFull(params.getOrElse("roadData", "[]")).get.asInstanceOf[Seq[Map[String,Any]]]
     if (roadData.isEmpty){
@@ -248,7 +248,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   put("/roadlinks/roadaddress/project/directionchangenewroadlink"){
 
     try { //check for validity
-    val projectlinksafe = parsedBody.extract[ProjectRoadAddressInfo]
+      val projectlinksafe = parsedBody.extract[ProjectRoadAddressInfo]
     } catch {
       case NonFatal(e) => BadRequest("Missing mandatory ProjectLink parameter")
     }
@@ -320,8 +320,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val user = userProvider.getCurrentUser()
     try {
       val links = parsedBody.extract[RoadAddressProjectLinksExtractor]
-        projectService.createProjectLinks(links.linkIds, links.projectId, links.roadNumber, links.roadPartNumber,
-          links.trackCode, links.discontinuity, links.roadType, links.roadLinkSource, links.roadEly, user.username)
+      projectService.createProjectLinks(links.linkIds, links.projectId, links.roadNumber, links.roadPartNumber,
+        links.trackCode, links.discontinuity, links.roadType, links.roadLinkSource, links.roadEly, user.username)
     } catch {
       case e: MappingException  =>
         logger.warn("Exception treating road links", e)
@@ -338,7 +338,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     try {
       val links = parsedBody.extract[RoadAddressProjectLinksExtractor]
       projectService.updateProjectLinks(links.projectId, links.linkIds,
-        LinkStatus.apply(links.linkStatus), user.username, links.roadNumber, links.roadPartNumber, links.userDefinedEndAddressM) match {
+        LinkStatus.apply(links.linkStatus), user.username, links.roadNumber, links.roadPartNumber, links.userDefinedEndAddressM, links.roadType, links.discontinuity, links.roadEly) match {
         case Some(errorMessage) => Map("success" -> false, "errormessage" -> errorMessage)
         case None => Map("success" -> true, "id" -> links.projectId, "publishable" -> (projectService.projectLinkPublishable(links.projectId)))
       }
@@ -366,6 +366,18 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       params.get("bbox")
         .map(getProjectLinks(projectId, zoomLevel))
         .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
+  }
+
+  delete("/project/trid/:projectId") {
+    val user = userProvider.getCurrentUser()
+    val projectId = params("projectId").toLong
+    val oError=projectService.removeRotatingTRId(projectId)
+    oError match {
+      case Some(error) =>
+        Map("success" -> "false", "message" -> error  )
+      case None =>
+        Map("success" -> "true", "message" -> "")
+    }
   }
 
   get("/project/getchangetable/:projectId") {
@@ -428,6 +440,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       case _: NumberFormatException => BadRequest("'projectId' or 'linkId' parameter given could not be parsed as an integer number")
     }
   }
+
   private def roadlinksData(): (Seq[String], Seq[String]) = {
     val data = JSON.parseFull(params.get("data").get).get.asInstanceOf[Map[String,Any]]
     val sources = data("sourceLinkIds").asInstanceOf[Seq[String]]
@@ -537,19 +550,19 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   def roadAddressLinkToApi(roadAddressLink: RoadAddressLink): Map[String, Any] = {
     roadAddressLinkLikeToApi(roadAddressLink) ++
-    Map(
-      "startDate" -> roadAddressLink.startDate,
-      "endDate" -> roadAddressLink.endDate,
-      "newGeometry" -> roadAddressLink.newGeometry
-    )
+      Map(
+        "startDate" -> roadAddressLink.startDate,
+        "endDate" -> roadAddressLink.endDate,
+        "newGeometry" -> roadAddressLink.newGeometry
+      )
   }
 
   def projectAddressLinkToApi(projectAddressLink: ProjectAddressLink): Map[String, Any] = {
     roadAddressLinkLikeToApi(projectAddressLink) ++
-    Map(
-      "status" -> projectAddressLink.status.value,
-      "connectedLinkId" -> projectAddressLink.connectedLinkId
-    )
+      Map(
+        "status" -> projectAddressLink.status.value,
+        "connectedLinkId" -> projectAddressLink.connectedLinkId
+      )
   }
 
   def roadAddressProjectToApi(roadAddressProject: RoadAddressProject): Map[String, Any] = {

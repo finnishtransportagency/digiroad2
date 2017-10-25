@@ -20,16 +20,12 @@ import slick.jdbc.StaticQuery.interpolation
   */
 class ProjectDaoSpec  extends FunSuite with Matchers {
 
-  private final val lock: String = "LOCK OBJECT"
-
   def runWithRollback(f: => Unit): Unit = {
     // Prevent deadlocks in DB because we create and delete links in tests and don't handle the project ids properly
     // TODO: create projects with unique ids so we don't get into transaction deadlocks in tests
-    lock.synchronized {
-      Database.forDataSource(OracleDatabase.ds).withDynTransaction {
-        f
-        dynamicSession.rollback()
-      }
+    Database.forDataSource(OracleDatabase.ds).withDynTransaction {
+      f
+      dynamicSession.rollback()
     }
   }
 
@@ -37,31 +33,8 @@ class ProjectDaoSpec  extends FunSuite with Matchers {
     ProjectLink(id = NewRoadAddress, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track,
       roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
       roadAddress.endDate, modifiedBy = Option(project.createdBy), 0L, roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
-      roadAddress.sideCode, roadAddress.calibrationPoints, floating = false, roadAddress.geometry, project.id, LinkStatus.NotHandled, RoadType.PublicRoad, roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), 0)
-  }
-
-  def addprojects(): Unit = {
-    sqlu"""insert into project (id,state,name,ely,created_by, start_date) VALUES (1,0,'testproject',1,'automatedtest', sysdate)""".execute
-    sqlu"""insert into project (id,state,name,ely,created_by, start_date) VALUES (2,0,'testproject2',1,'automatedtest', sysdate)""".execute
-  }
-
-  test("Add two links that are reserved") {
-    OracleDatabase.withDynTransaction {
-      addprojects()
-      ProjectDAO.reserveRoadPart(1, 1, 1, "TestUser")
-      var completed = true
-      /*Insert links to project*/
-      sqlu"""insert into project_link (id,project_id,track_code,discontinuity_type,road_number,road_part_number,start_addr_M,end_addr_M,lrm_position_id,created_by) VALUES (1,1,1,0,1,1,1,1,20000286,'automatedtest')""".execute
-      try {
-        sqlu"""insert into project_link (id,project_id,track_code,discontinuity_type,road_number,road_part_number,start_addr_M,end_addr_M,lrm_position_id,created_by) VALUES (2,2,1,0,1,1,1,1,20000286,'automatedtest')""".execute
-      } catch {
-        case _: SQLException =>
-          completed = false
-      }
-      sql"""SELECT COUNT(*) FROM project_link WHERE created_by = 'automatedtest'""".as[Long].first should be(1L)
-      completed should be(false)
-      dynamicSession.rollback()
-    }
+      roadAddress.sideCode, roadAddress.calibrationPoints, floating = false, roadAddress.geometry, project.id, LinkStatus.NotHandled, RoadType.PublicRoad,
+      roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), 0, roadAddress.ely)
   }
 
   test("create empty road address project") {
@@ -103,7 +76,7 @@ class ProjectDaoSpec  extends FunSuite with Matchers {
   }
 
   //TODO: this test is always deadlocking, need to check better
-  ignore("check the removal of project links") {
+  test("check the removal of project links") {
     val address = ReservedRoadPart(5: Long, 5: Long, 203: Long, 5.5: Double, 6L, Discontinuity.apply("jatkuva"), 8: Long, None: Option[DateTime], None: Option[DateTime])
     runWithRollback {
       val id = Sequences.nextViitePrimaryKeySeqValue
@@ -114,7 +87,7 @@ class ProjectDaoSpec  extends FunSuite with Matchers {
       ProjectDAO.create(addresses)
       ProjectDAO.getRoadAddressProjectById(id).nonEmpty should be(true)
       val projectLinks = ProjectDAO.getProjectLinks(id)
-      ProjectDAO.removeProjectLinksById(projectLinks.map(_.id).toSet)
+      ProjectDAO.removeProjectLinksById(projectLinks.map(_.id).toSet) should be (projectLinks.size)
       ProjectDAO.getProjectLinks(id).nonEmpty should be(false)
     }
   }
@@ -157,15 +130,6 @@ class ProjectDaoSpec  extends FunSuite with Matchers {
   }
 
 
-  /*
-  (id: Long, roadNumber: Long, roadPartNumber: Long, track: Track,
-                       discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
-                       endDate: Option[DateTime] = None, modifiedBy: Option[String] = None, lrmPositionId : Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
-                       calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false,
-                       geometry: Seq[Point], projectId: Long, status: LinkStatus, roadType: RoadType, linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, geometryLength: Double)
-
-   */
-
   test("update project link") {
     runWithRollback {
       val projectLinks = ProjectDAO.getProjectLinks(7081807)
@@ -184,6 +148,10 @@ class ProjectDaoSpec  extends FunSuite with Matchers {
     }
   }
 
+  test("Empty list will not throw an exception") {
+    ProjectDAO.getProjectLinksByIds(Seq())
+    ProjectDAO.removeProjectLinksById(Set())
+  }
 
 
   test("Update project status") {
@@ -191,7 +159,7 @@ class ProjectDaoSpec  extends FunSuite with Matchers {
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
       ProjectDAO.createRoadAddressProject(rap)
-      ProjectDAO.updateProjectStatus(id, ProjectState.Saved2TR, "")
+      ProjectDAO.updateProjectStatus(id, ProjectState.Saved2TR)
       ProjectDAO.getProjectStatus(id) should be(Some(ProjectState.Saved2TR))
     }
   }
@@ -215,8 +183,7 @@ class ProjectDaoSpec  extends FunSuite with Matchers {
     }
   }
 
-  //TODO: test is always deadlocking, need to see what is happening
-  ignore("get roadaddressprojects") {
+  test("get roadaddressprojects") {
     runWithRollback {
       val projectListSize = ProjectDAO.getRoadAddressProjects().length
       val id = Sequences.nextViitePrimaryKeySeqValue
@@ -275,6 +242,19 @@ class ProjectDaoSpec  extends FunSuite with Matchers {
       ProjectDAO.getRoadAddressProjectById(id).nonEmpty should be(true)
       ProjectDAO.updateProjectEly(id, 100)
       ProjectDAO.getProjectEly(id).get should be (100)
+    }
+  }
+
+  test("update project_link's road_type and discontinuity") {
+    runWithRollback {
+      val projectLinks = ProjectDAO.getProjectLinks(7081807)
+      val biggestProjectLink = projectLinks.maxBy(_.endAddrMValue)
+      ProjectDAO.updateProjectLinkRoadTypeDiscontinuity(projectLinks.map(x => x.id).filterNot(_ == biggestProjectLink.id).toSet, LinkStatus.UnChanged, "test",2 ,None)
+      ProjectDAO.updateProjectLinkRoadTypeDiscontinuity(Set(biggestProjectLink.id), LinkStatus.UnChanged, "test",2 ,Some(2))
+      val savedProjectLinks = ProjectDAO.getProjectLinks(7081807)
+      savedProjectLinks.filter(_.roadType.value == 2).size should be (savedProjectLinks.size)
+      savedProjectLinks.filter(_.discontinuity.value == 2).size should be (1)
+      savedProjectLinks.filter(_.discontinuity.value == 2).head.id should be (biggestProjectLink.id)
     }
   }
 }
