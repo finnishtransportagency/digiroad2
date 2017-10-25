@@ -175,6 +175,14 @@
                                     </xs:documentation>
                                 </xs:annotation>
                             </xs:element>
+
+							<xs:element name="ConnectedToTerminal" type="xs:string">
+								<xs:annotation>
+									<xs:documentation>Connected To Terminal
+									</xs:documentation>
+								</xs:annotation>
+							</xs:element>
+
 							<xs:element name="ContactEmails" type="ContactEmailsType">
 								<xs:annotation>
 									<xs:documentation>List of email address who to inform in case

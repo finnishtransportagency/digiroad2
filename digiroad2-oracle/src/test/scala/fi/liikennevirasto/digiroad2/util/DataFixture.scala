@@ -6,7 +6,7 @@ import com.googlecode.flyway.core.Flyway
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.oracle.OracleAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.masstransitstop.MassTransitStopOperations
+import fi.liikennevirasto.digiroad2.masstransitstop.{MassTransitStopOperations, TierekisteriBusStopStrategy, TierekisteriBusStopStrategyOperations}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{MassTransitStopDao, Queries}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
@@ -74,7 +74,6 @@ object DataFixture {
       override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
       override val tierekisteriClient: TierekisteriMassTransitStopClient = DataFixture.tierekisteriClient
       override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
-      override val tierekisteriEnabled = true
     }
     new MassTransitStopServiceWithDynTransaction(eventbus, roadLinkService)
   }
@@ -524,6 +523,7 @@ object DataFixture {
   }
 
   private def updateTierekisteriBusStopsWithoutOTHLiviId(dryRun: Boolean, boundsOffset: Double = 10): Unit ={
+
     case class NearestBusStops(trBusStop: TierekisteriMassTransitStop, othBusStop: PersistedMassTransitStop, distance: Double)
     def hasLiviIdPropertyValue(persistedStop: PersistedMassTransitStop): Boolean ={
       persistedStop.propertyData.
@@ -555,7 +555,7 @@ object DataFixture {
               val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
               val filter = s" where $boundingBoxFilter and a.asset_type_id = 10 and (a.valid_to is null or a.valid_to > sysdate)"
               val persistedStops = OracleDatabase.withDynSession {massTransitStopService.fetchPointAssets(query => query + filter)}.
-                filter(stop => MassTransitStopOperations.isStoredInTierekisteri(Some(stop))).
+                filter(stop => TierekisteriBusStopStrategyOperations.isStoredInTierekisteri(Some(stop))).
                 filterNot(hasLiviIdPropertyValue)
 
               if(persistedStops.isEmpty){
@@ -710,7 +710,8 @@ object DataFixture {
             //Create missed Bus Stop at the Tierekisteri
             if(!dryRun) {
               withDynSession {
-                massTransitStopService.executeTierekisteriOperation(Operation.Create, adjustedStop, roadLinkByLinkId => roadLinks.find(r => r.linkId == roadLinkByLinkId), None, None)
+                //TODO get it from the new variation if we need to execute this batch process again.
+                //massTransitStopService.executeTierekisteriOperation(Operation.Create, adjustedStop, roadLinkByLinkId => roadLinks.find(r => r.linkId == roadLinkByLinkId), None, None)
               }
             }
           } catch {

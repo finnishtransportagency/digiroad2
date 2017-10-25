@@ -49,10 +49,9 @@ class DirectionalTrafficSignServiceSpec extends FunSuite with Matchers {
 
   test("Create new") {
     runWithRollback {
-      val now = DateTime.now()
-      val id = service.create(IncomingDirectionalTrafficSign(2, 0.0, 388553075, 3, Some("HELSINKI:HELSINGFORS;;;;1;1;"), Some(0) ), "jakke", Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 235, linkSource = NormalLinkInterface)
+      val roadLink = RoadLink(388553075, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10, Municipality, 1, TrafficDirection.BothDirections, Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(235)))
+      val id = service.create(IncomingDirectionalTrafficSign(2, 0.0, 388553075, 3, Some("HELSINKI:HELSINGFORS;;;;1;1;"), Some(0) ), "jakke", roadLink)
       val assets = service.getPersistedAssetsByIds(Set(id))
-
 
       assets.size should be(1)
 
