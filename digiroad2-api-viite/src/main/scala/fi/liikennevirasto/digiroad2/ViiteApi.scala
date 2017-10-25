@@ -17,8 +17,6 @@ import org.json4s._
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.{NotFound, _}
 import org.slf4j.LoggerFactory
-
-import scala.util.control.NonFatal
 import scala.util.parsing.json._
 import scala.util.{Left, Right}
 
@@ -201,6 +199,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       case e: RoadAddressException =>
         logger.warn(e.getMessage)
         InternalServerError("An unexpected error occurred while processing this action.")
+      case e: MappingException  =>
+        logger.warn("Exception treating road links", e)
+        BadRequest("Missing mandatory ProjectLink parameter")
     }
   }
 
@@ -209,6 +210,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val user = userProvider.getCurrentUser()
     val roadAddressProject = ProjectConverter.toRoadAddressProject(project, user)
     try {
+      if (project.id!=0) //we check if project is new. If it is then we check project for being in writable state
+        projectWritable(roadAddressProject.id)
       val projectSaved = projectService.createRoadLinkProject(roadAddressProject)
       val fetched = projectService.getRoadAddressSingleProject(projectSaved.id).get
       val firstAddress: Map[String, Any] =
@@ -217,6 +220,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         fetched.reservedParts.map(reservedRoadPartToApi), "success" -> true) ++ firstAddress
     } catch {
       case ex: IllegalArgumentException => BadRequest(s"A project with id ${project.id} has already been created")
+      case e: MappingException  =>
+        logger.warn("Exception treating road links", e)
+        BadRequest("Missing mandatory ProjectLink parameter")
       case ex: RuntimeException => Map("success" -> false, "errorMessage" -> ex.getMessage)
       case ex: RoadPartReservedException => Map("success" -> false, "errorMessage" -> ex.getMessage)
 
@@ -228,39 +234,56 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val user = userProvider.getCurrentUser()
     val roadAddressProject = ProjectConverter.toRoadAddressProject(project, user)
     try {
+      if (project.id!=0) //we check if project is new. If it is then we check project for being in writable state
+        projectWritable(roadAddressProject.id)
       val projectSaved = projectService.saveProject(roadAddressProject)
       val firstLink = projectService.getFirstProjectLink(projectSaved)
       Map("project" -> roadAddressProjectToApi(projectSaved), "projectAddresses" -> firstLink, "formInfo" ->
         projectSaved.reservedParts.map(reservedRoadPartToApi),
         "success" -> true)
     } catch {
+      case e:  IllegalStateException=> Map("success" -> false, "errorMessage" -> "Projekti ei ole enää muokatta11vissa")
       case ex: IllegalArgumentException => NotFound(s"Project id ${project.id} not found")
+      case e: MappingException  =>
+        logger.warn("Exception treating road links", e)
+        BadRequest("Missing mandatory ProjectLink parameter")
       case ex: RuntimeException => Map("success" -> false, "errorMessage" -> ex.getMessage)
       case ex: RoadPartReservedException => Map("success" -> false, "errorMessage" -> ex.getMessage)
     }
   }
 
   post("/roadlinks/roadaddress/project/sendToTR") {
-    (parsedBody \ "projectID").extractOpt[Long].map(projectService.publishProject)
-      .getOrElse(BadRequest(s"Invalid arguments"))
-  }
+    val projectId=(parsedBody \ "projectID").extract[Long]
+
+    val writableProjectService=projectWritable(projectId)
+    val sendStatus= writableProjectService.publishProject(projectId)
+    if (sendStatus.validationSuccess && sendStatus.sendSuccess)
+       Map("sendSuccess"->true)
+    else
+    Map("sendSuccess"->false, "errorMessage"->sendStatus.errorMessage.getOrElse(""))
+      }
+
+    //  case None =>BadRequest(s"Invalid arguments")
+
+
+
+
 
   put("/roadlinks/roadaddress/project/directionchangenewroadlink"){
-
     try { //check for validity
-      val projectlinksafe = parsedBody.extract[ProjectRoadAddressInfo]
+      val roadInfo = parsedBody.extract[ProjectRoadAddressInfo]
+      val writableProjectService=projectWritable(roadInfo.projectId)
+      writableProjectService.changeDirection(roadInfo.projectId, roadInfo.roadNumber, roadInfo.roadPartNumber) match {
+        case Some(errorMessage) =>
+          Map("success" -> false,"errorMessage"->errorMessage)
+        case None=>  Map("success" -> true)
+      }
     } catch {
-      case NonFatal(e) => BadRequest("Missing mandatory ProjectLink parameter")
-    }
-    val roadInfo = parsedBody.extract[ProjectRoadAddressInfo]
-
-    val errorMessage= projectService.changeDirection(roadInfo.projectId, roadInfo.roadNumber, roadInfo.roadPartNumber).getOrElse("")
-    if (errorMessage.equals(""))
-    {
-      Map("success" -> true)
-    } else
-    {
-      Map("success" -> false,"errorMessage"->errorMessage)
+      case e:  IllegalStateException=> Map("success" -> false, "errorMessage" -> e.getMessage)
+      case ex: RuntimeException => Map("success" -> false, "errorMessage" -> ex.getMessage)
+      case e: MappingException  =>
+        logger.warn("Exception treating road links", e)
+        BadRequest("Missing mandatory ProjectLink parameter")
     }
   }
 
@@ -303,12 +326,17 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     try {
       val linksToRevert = parsedBody.extract[RevertRoadLinksExtractor]
       if(linksToRevert.links.nonEmpty){
-        projectService.revertLinks(linksToRevert.projectId, linksToRevert.roadNumber, linksToRevert.roadPartNumber, linksToRevert.links) match {
+        val writableProject=projectWritable(linksToRevert.projectId)
+        writableProject.revertLinks(linksToRevert.projectId, linksToRevert.roadNumber, linksToRevert.roadPartNumber, linksToRevert.links) match {
           case None => Map("success" -> true)
           case Some(s) => Map("success" -> false, "errorMessage" -> s)
         }
       }
     } catch {
+      case e:IllegalStateException=> Map("success" -> false, "errorMessage" -> "Projekti ei ole enää muokattavissa")
+      case e: MappingException  =>
+        logger.warn("Exception treating road links", e)
+        BadRequest("Missing mandatory ProjectLink parameter")
       case e:Exception => {
         logger.error(e.toString, e)
         InternalServerError(e.toString)
@@ -320,9 +348,11 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val user = userProvider.getCurrentUser()
     try {
       val links = parsedBody.extract[RoadAddressProjectLinksExtractor]
-      projectService.createProjectLinks(links.linkIds, links.projectId, links.roadNumber, links.roadPartNumber,
-        links.trackCode, links.discontinuity, links.roadType, links.roadLinkSource, links.roadEly, user.username)
+      val writableProject=projectWritable(links.projectId)
+      writableProject.createProjectLinks(links.linkIds, links.projectId, links.roadNumber, links.roadPartNumber,
+          links.trackCode, links.discontinuity, links.roadType, links.roadLinkSource, links.roadEly, user.username)
     } catch {
+      case e:IllegalStateException=> Map("success" -> false, "errorMessage" -> "Projekti ei ole enää muokattavissa")
       case e: MappingException  =>
         logger.warn("Exception treating road links", e)
         BadRequest("Missing mandatory ProjectLink parameter")
@@ -337,12 +367,17 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val user = userProvider.getCurrentUser()
     try {
       val links = parsedBody.extract[RoadAddressProjectLinksExtractor]
-      projectService.updateProjectLinks(links.projectId, links.linkIds,
-        LinkStatus.apply(links.linkStatus), user.username, links.roadNumber, links.roadPartNumber, links.userDefinedEndAddressM, links.roadType, links.discontinuity, links.roadEly) match {
+      val writableProject=projectWritable(links.projectId)
+      writableProject.updateProjectLinks(links.projectId, links.linkIds,
+        LinkStatus.apply(links.linkStatus), user.username, links.roadNumber, links.roadPartNumber, links.userDefinedEndAddressM) match {
         case Some(errorMessage) => Map("success" -> false, "errormessage" -> errorMessage)
         case None => Map("success" -> true, "id" -> links.projectId, "publishable" -> (projectService.projectLinkPublishable(links.projectId)))
       }
     } catch {
+      case e:IllegalStateException=> Map("success" -> false, "errorMessage" -> "Projekti ei ole enää muokattavissa")
+      case e: MappingException  =>
+        logger.warn("Exception treating road links", e)
+        BadRequest("Missing mandatory ProjectLink parameter")
       case e: Exception => {
         logger.error(e.toString, e)
         InternalServerError(e.toString)
@@ -398,33 +433,35 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
 
 
-  get("/project/iswritable/:projectId") {
-    val projectId = params("projectId").toLong
-    val writable=projectService.isWritableState(projectId)
-      Map(
-        "projectIsWritable" -> writable,
-        "success" -> true)
-  }
+  post("/project/publish") {
+     val user = userProvider.getCurrentUser()
+    try {
+      val projectId = params("projectId").toLong
+      val writableProject = projectWritable(projectId)
+      val publishResult = writableProject.publishProject(projectId)
+      if (publishResult.sendSuccess && publishResult.validationSuccess)
+        Map("status" -> "ok")
+      PreconditionFailed(publishResult.errorMessage.getOrElse("Unknown error"))    }
+    catch {
+        case e: IllegalStateException => Map("success" -> false, "errorMessage" -> "Projekti ei ole enää muokattavissa")
+        case e: MappingException =>
+          logger.warn("Exception treating road links", e)
+          BadRequest("Missing mandatory ProjectLink parameter")
+      }
+    }
 
-  post("/project/publish"){
-    val user = userProvider.getCurrentUser()
-    val projectId = params.get("projectId")
-
-    projectId.map(_.toLong).map(projectService.publishProject).map(_.errorMessage).map {
-      case Some(s) => PreconditionFailed(s)
-      case _ => Map("status" -> "ok")
-    }.getOrElse(BadRequest("Missing mandatory 'projectId' parameter"))
-  }
 
   put("/project/split/:linkID") {
     val user = userProvider.getCurrentUser()
     params.get("linkID").map(_.toLong) match {
       case Some(link)=>
         try {
+          val writableProject = linkHasWritableProject(link)
           val options = parsedBody.extract[SplitOptions]
-          val splitError = projectService.splitSuravageLink(link, user.username, options)
+          val splitError = writableProject.splitSuravageLink(link, user.username, options)
           Map("success" -> splitError.isEmpty, "reason" -> splitError.orNull)
         } catch {
+          case e: IllegalStateException => Map("success" -> false, "errorMessage" -> e.getMessage)
           case _: NumberFormatException => BadRequest("Missing mandatory data")
         }
       case _ => BadRequest("Missing Linkid from url")
@@ -438,7 +475,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       val linkId = params.get("linkId").map(_.toLong)
       (projectId, linkId) match {
         case (Some(project), Some(link)) =>
-          val error = projectService.revertSplit(project, link)
+          val writableProject = linkHasWritableProject(linkId.get)
+          val error =  writableProject.revertSplit(project, link)
           if (error.nonEmpty) {
             PreconditionFailed(error.get)
           } else {
@@ -642,6 +680,23 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         Option(Seq(("point", GeometryUtils.calculatePointFromLinearReference(geometry, point.segmentMValue)), ("value", point.addressMValue)).toMap)
       case _ => None
     }
+  }
+
+  @throws(classOf[Exception])
+  private def projectWritable(projectId: Long) :ProjectService =
+  {
+    val writable=projectService.isWritableState(projectId)
+    if (!writable)
+      throw new IllegalStateException("Projekti ei ole enään muokattavissa") //project is not in modifiable state
+    projectService
+  }
+
+  @throws(classOf[Exception])
+  private def linkHasWritableProject(linkId: Long) :ProjectService=
+  {
+    if (!projectService.isProjectWithGivenLinkIdWritable(linkId))
+      throw new IllegalStateException("Linkki ei ole (enään) olemassa tai se ei kuulu projektiin )") //link does not exists in any project (anymore)
+   projectService
   }
 
   case class StartupParameters(lon: Double, lat: Double, zoom: Int, deploy_date: String)

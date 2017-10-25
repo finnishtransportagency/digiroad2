@@ -787,6 +787,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     None
   }
 
+  def isProjectWithGivenLinkIdWritable (linkId:Long): Boolean = {
+    val projects=ProjectDAO.getProjectsWithGivenLinkId(linkId)
+    if (projects.isEmpty)
+      return false
+    true
+  }
+
+
   def revertLinks(projectId: Long, roadNumber: Long, roadPartNumber: Long, links: Iterable[LinkToRevert]): Option[String] = {
     try {
       withDynTransaction{
