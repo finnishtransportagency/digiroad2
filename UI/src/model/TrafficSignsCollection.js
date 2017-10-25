@@ -31,7 +31,7 @@
               propertyValue: signType.propertyValue,
               propertyDisplayValue: signType.propertyDisplayValue };
           }), function(groups) {
-            return _.some(groups.types, function(group){ return group == signType.propertyValue;  }); }) }), function(groups) {
+            return _.some(groups.types, function(group){ return group == signType.propertyValue;  }); }); }), function(groups) {
           return groups.label;  });
     };
 

@@ -285,7 +285,7 @@
             { value: group.propertyValue,
               selected: propertyValue == group.propertyValue,
               text: group.propertyDisplayValue}
-              )[0].outerHTML}))
+              )[0].outerHTML; }))
 
       )[0].outerHTML;}).join('');
 

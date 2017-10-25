@@ -7,10 +7,10 @@
     var propertyText = '';
     var populatedPoints = [];
 
-    var backgroundStyle = function (value, counter) {
+    var backgroundStyle = function (type, counter) {
       return new ol.style.Style({
         image: new ol.style.Icon(({
-          src: isSignWithValue(value) ? correctValue(propertyText, value) ? getImage(value, counter).findImage() : 'images/traffic-signs/badValue.png' : getImage(value, counter).findImage(),
+          src: getLabelProperty(type, counter).findImage(),
           anchor : [0.5, 1+(counter)]
         }))
       });
@@ -25,98 +25,118 @@
       });
     };
 
-    var getImage = function (value, counter) {
-      var images = {
-        'images/traffic-signs/speedLimitSign.png':              {signValue: [1, 8]},
-        'images/traffic-signs/endOfSpeedLimitSign.png':         {signValue: [2]},
-        'images/traffic-signs/speedLimitZoneSign.png':          {signValue: [3]},
-        'images/traffic-signs/endOfSpeedLimitZoneSign.png':     {signValue: [4]},
-        'images/traffic-signs/urbanAreaSign.png':               {signValue: [5]},
-        'images/traffic-signs/endOfUrbanAreaSign.png':          {signValue: [6]},
-        'images/traffic-signs/crossingSign.png':                {signValue: [7]},
-        'images/traffic-signs/warningSign.png':                 {signValue: [9]},
-        'images/traffic-signs/turningRestrictionLeftSign.png':  {signValue: [10]},
-        'images/traffic-signs/turningRestrictionRightSign.png': {signValue: [11]},
-        'images/traffic-signs/uTurnRestrictionSign.png':        {signValue: [12]},
-        'images/traffic-signs/noVehicles.png':                  {signValue: [13]},
-        'images/traffic-signs/noPowerDrivenVehiclesSign.png':   {signValue: [14]},
-        'images/traffic-signs/noLorriesSign.png':               {signValue: [15]},
-        'images/traffic-signs/noVehicleCombinationsSign.png':   {signValue: [16]},
-        'images/traffic-signs/noTractorSign.png':               {signValue: [17]},
-        'images/traffic-signs/noMotorCycleSign.png':            {signValue: [18]},
-        'images/traffic-signs/noMotorSledgesSign.png':          {signValue: [19]},
-        'images/traffic-signs/noDangerousGoodsSign.png':        {signValue: [20]},
-        'images/traffic-signs/noBusSign.png':                   {signValue: [21]},
-        'images/traffic-signs/noMopedsSign.png':                {signValue: [22]},
-        'images/traffic-signs/noCycleSign.png':                 {signValue: [23]},
-        'images/traffic-signs/noPedestrianSign.png':            {signValue: [24]},
-        'images/traffic-signs/noPedestrianOrCycleSign.png':     {signValue: [25]},
-        'images/traffic-signs/noHorsesSign.png':                {signValue: [26]},
-        'images/traffic-signs/noEntrySign.png':                 {signValue: [27]},
-        'images/traffic-signs/overtakingProhibitedSign.png':    {signValue: [28]},
-        'images/traffic-signs/endOfOvertakingProhibitonSign.png': {signValue: [29]},
-        'images/traffic-signs/maxWidthSign.png':                {signValue: [30]},
-        'images/traffic-signs/maxHeightSign.png':               {signValue: [31]},
+    var getLabelProperty = function (value, counter) {
 
-        'images/traffic-signs/totalWeightLimit.png':            {signValue: [32], offset: -15 - (counter * 30) },
-        'images/traffic-signs/trailerTruckWeightLimit.png':     {signValue: [33], offset: -10 - (counter * 30)},
-        'images/traffic-signs/axleWeightLimit.png':             {signValue: [34], offset: -18 - (counter * 30)},
-        'images/traffic-signs/bogieWeightLimit.png':            {signValue: [35], offset: -18 - (counter * 30)},
+      var labelingProperties = [
+        {signValue: [1, 8], image: 'images/traffic-signs/speedLimitSign.png', validation: validateSpeedLimitValues},
+        {signValue: [2], image: 'images/traffic-signs/endOfSpeedLimitSign.png', validation: validateSpeedLimitValues},
+        {signValue: [3], image: 'images/traffic-signs/speedLimitZoneSign.png', validation: validateSpeedLimitValues},
+        {signValue: [4], image: 'images/traffic-signs/endOfSpeedLimitZoneSign.png', validation: validateSpeedLimitValues},
+        {signValue: [5], image:  'images/traffic-signs/urbanAreaSign.png'},
+        {signValue: [6], image: 'images/traffic-signs/endOfUrbanAreaSign.png'},
+        {signValue: [7], image: 'images/traffic-signs/crossingSign.png'},
+        {signValue: [9], image: 'images/traffic-signs/warningSign.png'},
+        {signValue: [10], image: 'images/traffic-signs/turningRestrictionLeftSign.png'},
+        {signValue: [11], image: 'images/traffic-signs/turningRestrictionRightSign.png'},
+        {signValue: [12], image: 'images/traffic-signs/uTurnRestrictionSign.png'},
+        {signValue: [13], image: 'images/traffic-signs/noVehicles.png'},
+        {signValue: [14], image: 'images/traffic-signs/noPowerDrivenVehiclesSign.png'},
+        {signValue: [15], image: 'images/traffic-signs/noLorriesSign.png'},
+        {signValue: [16], image: 'images/traffic-signs/noVehicleCombinationsSign.png'},
+        {signValue: [17], image: 'images/traffic-signs/noTractorSign.png'},
+        {signValue: [18], image: 'images/traffic-signs/noMotorCycleSign.png'},
+        {signValue: [19], image: 'images/traffic-signs/noMotorSledgesSign.png'},
+        {signValue: [20], image: 'images/traffic-signs/noDangerousGoodsSign.png'},
+        {signValue: [21], image: 'images/traffic-signs/noBusSign.png'},
+        {signValue: [22], image: 'images/traffic-signs/noMopedsSign.png'},
+        {signValue: [23], image: 'images/traffic-signs/noCycleSign.png'},
+        {signValue: [24], image: 'images/traffic-signs/noPedestrianSign.png'},
+        {signValue: [25], image: 'images/traffic-signs/noPedestrianOrCycleSign.png'},
+        {signValue: [26], image: 'images/traffic-signs/noHorsesSign.png'},
+        {signValue: [27], image: 'images/traffic-signs/noEntrySign.png'},
+        {signValue: [28], image: 'images/traffic-signs/overtakingProhibitedSign.png'},
+        {signValue: [29], image: 'images/traffic-signs/endOfOvertakingProhibitonSign.png'},
+        {signValue: [30], image: 'images/traffic-signs/maxWidthSign.png', validation: validateMaximumRestrictions, convertion: convertToMeters },
+        {signValue: [31], image: 'images/traffic-signs/maxHeightSign.png', validation: validateMaximumRestrictions, convertion: convertToMeters},
+        {signValue: [32], image: 'images/traffic-signs/totalWeightLimit.png', validation: validateMaximumRestrictions, offset: -15 - (counter * 30), convertion: convertToTons },
+        {signValue: [33], image: 'images/traffic-signs/trailerTruckWeightLimit.png', validation: validateMaximumRestrictions, offset: -10 - (counter * 30), convertion: convertToTons },
+        {signValue: [34], image: 'images/traffic-signs/axleWeightLimit.png', validation: validateMaximumRestrictions, offset: -18 - (counter * 30), convertion: convertToTons },
+        {signValue: [35], image: 'images/traffic-signs/bogieWeightLimit.png', validation: validateMaximumRestrictions, offset: -18 - (counter * 30), convertion: convertToTons },
+        {signValue: [36], image: 'images/traffic-signs/rightBendSign.png'},
+        {signValue: [37], image: 'images/traffic-signs/leftBendSign.png'},
+        {signValue: [38], image: 'images/traffic-signs/severalBendRightSign.png'},
+        {signValue: [39], image: 'images/traffic-signs/severalBendLeftSign.png'},
+        {signValue: [40], image: 'images/traffic-signs/dangerousDescentSign.png'},
+        {signValue: [41], image: 'images/traffic-signs/steepAscentSign.png'},
+        {signValue: [42], image: 'images/traffic-signs/unevenRoadSign.png'},
+        {signValue: [43], image:  'images/traffic-signs/childrenSign.png'}
+      ];
+       // 'images/traffic-signs/badValue.png':                      {signValue: [35]}
 
-        'images/traffic-signs/rightBendSign.png':               {signValue: [36]},
-        'images/traffic-signs/leftBendSign.png':                {signValue: [37]},
-        'images/traffic-signs/severalBendRightSign.png':        {signValue: [38]},
-        'images/traffic-signs/severalBendLeftSign.png':         {signValue: [39]},
-        'images/traffic-signs/dangerousDescentSign.png':        {signValue: [40]},
-        'images/traffic-signs/steepAscentSign.png':             {signValue: [41]},
-        'images/traffic-signs/unevenRoadSign.png':              {signValue: [42]},
-        'images/traffic-signs/childrenSign.png':                {signValue: [43]},
-        'images/traffic-signs/badValue.png':                    {signValue: [35]}
-      };
 
-      function findImage() {
-        return _.findKey(images, function (image) {
-          return _.contains(image.signValue, value);
+      function find() {
+        return _.find(labelingProperties, function(properties) {
+            return _.contains(properties.signValue, value);
         });
       }
 
+      function findImage() {
+        return find() ? find().image : 'images/traffic-signs/badValue.png';
+      }
+
       function getTextOffset(){
-        var key =_.findKey(images, function (image) {
-           return _.contains(image.signValue, value);
-        });
-        return images[key].offset ||  -15 - (counter * 30);
+        return find() ? find().offset :  -15 - (counter * 30);
+      }
+
+      function getValidation(){
+        return find() ? find().validation.call(value) : true ;  // || by default deve verificar se não é undefined
+      }
+
+      function getValue(){
+        return find() ? find().convertion.call(value) : value;
       }
 
       return {
         findImage: findImage,
-        getTextOffset: getTextOffset
-      }
+        getTextOffset: getTextOffset,
+        getValidation: getValidation,
+        getValue : getValue
+      };
 
     };
 
     var textStyle = function (value) {
-      if (!correctValue(value))
+      if (!getLabelProperty(value).getValidation())
         return '';
-      return "" + value;
+      return "" + getLabelProperty(value).getValue();
     };
 
-    var correctValue = function (propertyValue, value) {
-      if(value < 9)
-        if (!value || (value > 120 || value < 0))
-          return false;
-      return true;
+    var convertToTons = function(value){
+      return value/ 1000;
     };
 
-    this.getStyle = function (value, counter) {
-      return [backgroundStyle(value, counter), new ol.style.Style({
+    var convertToMeters = function(value){
+      return value * 100;
+    };
+
+    var validateSpeedLimitValues = function (value) {
+      return !value || (value < 0 || value > 120);
+    };
+
+    var validateMaximumRestrictions = function (value) {
+      return !value || value < 0;
+    };
+
+    this.getStyle = function (trafficSign, counter) {
+      return [backgroundStyle(trafficSign.type, counter), new ol.style.Style({
         text: new ol.style.Text({
-          text: textStyle(propertyText),
+          text: textStyle(trafficSign.value),
           fill: new ol.style.Fill({
             color: '#000000'
           }),
           font: 'bold 12px sans-serif',
           offsetX: 0,
-          offsetY: getImage(value, counter).getTextOffset()
+          offsetY: getLabelProperty(trafficSign.value, counter).getTextOffset()
         })
       })];
     };
@@ -134,19 +154,19 @@
 
       return _.chain(assets).
       map(function(asset){
-        var assetValue = me.getValue(asset);
+        var trafficSign = me.getValue(asset);
         var assetLocation = getPoint(asset);
-        if(assetValue !== undefined){
+        if(trafficSign !== undefined){
           var styles = [];
           styles = styles.concat(me.getStickStyle());
-          styles = styles.concat(me.getStyle(assetValue, assetLocation[1]));
+          styles = styles.concat(me.getStyle(trafficSign, assetLocation[1]));
           var feature = me.createFeature(assetLocation[0]);
           feature.setStyle(styles);
           feature.setProperties(asset);
           return feature;
         }
       }).
-      filter(function(feature){ return feature !== undefined; }).
+      filter(function(feature){ return !_.isUndefined(feature); }).
       value();
     };
 
@@ -161,23 +181,10 @@
     };
 
     var handleValue = function (asset) {
-      propertyText = '';
       if (_.isUndefined(getProperty(asset, "trafficSigns_type")))
         return;
-      var trafficSignType = parseInt(getProperty(asset, "trafficSigns_type").propertyValue);
-      if (isSignWithValue)
-        setProperty(asset);
-      return trafficSignType;
-    };
-
-    var isSignWithValue = function(trafficSignType){
-      return trafficSignType < 5 || trafficSignType == 8 || (trafficSignType > 29 && trafficSignType < 36);
-    };
-
-    var setProperty = function (asset) {
-      var existingValue = getProperty(asset, "trafficSigns_value");
-      if (existingValue)
-        propertyText = existingValue.propertyValue;
+      var value = getProperty(asset, "trafficSigns_value") ? getProperty(asset, "trafficSigns_value").propertyValue : undefined;
+      return {value : value, type: parseInt(getProperty(asset, "trafficSigns_type").propertyValue)};
     };
 
     this.getValue = function (asset) {
