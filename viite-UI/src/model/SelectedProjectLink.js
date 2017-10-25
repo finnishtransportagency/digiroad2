@@ -25,6 +25,7 @@
         ids = projectLinkCollection.getMultiSelectIds(linkid);
         current = projectLinkCollection.getByLinkId(ids);
       }
+      //TODO add split markers
       eventbus.trigger('projectLink:splited', get());
     };
 

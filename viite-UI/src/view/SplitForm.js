@@ -101,8 +101,8 @@
     };
 
       var defineOptionModifiers = function(option, selection) {
-          var isSplitMode = selection.length == 2 && selection[0].linkId === selection[1].linkId;
-          var linkStatus = selection[0].status;
+          var isSplitMode = !_.isUndefined(selection.connectedLinkId);
+          var linkStatus = selection.status;
           var targetLinkStatus = _.find(LinkStatus, function (ls) {
               return ls.description === option || (option === '' && ls.value == 99);
           });
@@ -192,13 +192,13 @@
     var dropdownOption = function(index, selected){
       return '<div class="input-unit-combination">' +
           '<select class="split-form-control" id="dropdown_'+index+'" size="1">'+
-          '<option id="drop_'+ index +'_' + '" '+ defineOptionModifiers('', selected) +'>Valitse</option>'+
-          '<option id="drop_'+ index +'_' + LinkStatus.Unchanged.description + '" value='+ LinkStatus.Unchanged.description+' ' + defineOptionModifiers(LinkStatus.Unchanged.description, selected) + '>Ennallaan</option>'+
-          '<option id="drop_'+ index +'_' + LinkStatus.Transfer.description + '" value='+ LinkStatus.Transfer.description + ' ' + defineOptionModifiers(LinkStatus.Transfer.description, selected) + '>Siirto</option>'+
-          '<option id="drop_'+ index +'_' + LinkStatus.New.description + '" value='+ LinkStatus.New.description + ' ' + defineOptionModifiers(LinkStatus.New.description, selected) +'>Uusi</option>'+
-          '<option id="drop_'+ index +'_' + LinkStatus.Terminated.description + '" value='+ LinkStatus.Terminated.description + ' ' + defineOptionModifiers(LinkStatus.Terminated.description, selected) + '>Lakkautus</option>'+
-          '<option id="drop_'+ index +'_' + LinkStatus.Numbering.description + '" value='+ LinkStatus.Numbering.description + ' ' + defineOptionModifiers(LinkStatus.Numbering.description, selected) + '>Numerointi</option>'+
-          '<option id="drop_'+ index +'_' + LinkStatus.Revert.description + '" value='+ LinkStatus.Revert.description + ' ' + defineOptionModifiers(LinkStatus.Revert.description, selected) + '>Palautus aihioksi tai tieosoitteettomaksi</option>' +
+          '<option id="drop_'+ index +'_' + '" '+ defineOptionModifiers('', selected[index]) +'>Valitse</option>'+
+          '<option id="drop_'+ index +'_' + LinkStatus.Unchanged.description + '" value='+ LinkStatus.Unchanged.description+' ' + defineOptionModifiers(LinkStatus.Unchanged.description, selected[index]) + '>Ennallaan</option>'+
+          '<option id="drop_'+ index +'_' + LinkStatus.Transfer.description + '" value='+ LinkStatus.Transfer.description + ' ' + defineOptionModifiers(LinkStatus.Transfer.description, selected[index]) + '>Siirto</option>'+
+          '<option id="drop_'+ index +'_' + LinkStatus.New.description + '" value='+ LinkStatus.New.description + ' ' + defineOptionModifiers(LinkStatus.New.description, selected[index]) +'>Uusi</option>'+
+          '<option id="drop_'+ index +'_' + LinkStatus.Terminated.description + '" value='+ LinkStatus.Terminated.description + ' ' + defineOptionModifiers(LinkStatus.Terminated.description, selected[index]) + '>Lakkautus</option>'+
+          '<option id="drop_'+ index +'_' + LinkStatus.Numbering.description + '" value='+ LinkStatus.Numbering.description + ' ' + defineOptionModifiers(LinkStatus.Numbering.description, selected[index]) + '>Numerointi</option>'+
+          '<option id="drop_'+ index +'_' + LinkStatus.Revert.description + '" value='+ LinkStatus.Revert.description + ' ' + defineOptionModifiers(LinkStatus.Revert.description, selected[index]) + '>Palautus aihioksi tai tieosoitteettomaksi</option>' +
           '</select>'+
           '</div>';
     };
