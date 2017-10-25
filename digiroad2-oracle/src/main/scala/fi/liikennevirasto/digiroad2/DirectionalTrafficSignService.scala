@@ -33,7 +33,6 @@ class DirectionalTrafficSignService(val roadLinkService: RoadLinkService) extend
     persistedAsset.copy(floating = floating)
   }
 
-//  override def create(asset: IncomingDirectionalTrafficSign, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass] = None, linkSource: LinkGeomSource): Long = {
   override def create(asset: IncomingDirectionalTrafficSign, username: String, roadLink: RoadLink): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat, 0), roadLink.geometry)
     withDynTransaction {

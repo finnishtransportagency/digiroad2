@@ -165,7 +165,7 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
 
     //Remove from common assets the side code property
     val commonAssetProperties = AssetPropertyConfiguration.commonAssetProperties.
-      filterNot(_._1 == AssetPropertyConfiguration.ValidityDirectionId)
+      filterNot(prop => prop._1 == AssetPropertyConfiguration.ValidityDirectionId || prop._1 == AssetPropertyConfiguration.ValidToId)
 
     val mergedProperties = (asset.propertyData.
       filterNot(property => properties.exists(_.publicId == property.publicId)).
@@ -177,22 +177,13 @@ class TierekisteriBusStopStrategy(typeId : Int, massTransitStopDao: MassTransitS
       val liviId = getLiviIdValue(asset.propertyData).orElse(getLiviIdValue(properties.toSeq)).getOrElse(throw new NoSuchElementException)
       if (calculateMovedDistance(asset, optionalPosition) > MaxMovementDistanceMeters) {
         val position = optionalPosition.get
-        val newInventoryDateValue =
-          asset.propertyData.filter(_.publicId == MassTransitStopOperations.InventoryDateId).map(prop =>
-            Property(prop.id, prop.publicId, prop.propertyType, prop.required, Seq())
-          )
-        val newPropertyData = asset.propertyData.filterNot(_.publicId == MassTransitStopOperations.InventoryDateId) ++ newInventoryDateValue
-        val newAsset = asset.copy(propertyData = newPropertyData)
 
         //Expire the old asset
-        expireMassTransitStop(username, liviId, newAsset)
-
-        //Remove the InventoryDate Property to used the actual instead the old value when create a new asset
-        val mergedPropertiesWithOutInventoryDate = mergedProperties.filterNot(_.publicId == MassTransitStopOperations.InventoryDateId)
+        expireMassTransitStop(username, liviId, asset)
 
         //Create a new asset
         create(NewMassTransitStop(position.lon, position.lat, roadLink.linkId, position.bearing.getOrElse(asset.bearing.get),
-          mergedPropertiesWithOutInventoryDate), username, Point(position.lon, position.lat), roadLink)
+          mergedProperties), username, Point(position.lon, position.lat), roadLink)
 
       }else{
         optionalPosition.map(updatePositionWithBearing(asset.id, roadLink))

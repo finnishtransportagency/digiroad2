@@ -30,7 +30,6 @@ class ObstacleService(val roadLinkService: RoadLinkService) extends PointAssetOp
     }
   }
 
-//  override def create(asset: IncomingObstacle, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass] = None, linkSource: LinkGeomSource): Long = {
   override def create(asset: IncomingObstacle, username: String, roadLink: RoadLink): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat, 0), roadLink.geometry)
     withDynTransaction {

@@ -34,7 +34,6 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
     OracleTrafficLightDao.fetchByFilter(queryFilter)
   }
 
-//  override def create(asset: IncomingAsset, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass] = None, linkSource: LinkGeomSource): Long = {
   override def create(asset: IncomingAsset, username: String, roadLink: RoadLink): Long = {
     val assetPoint = Point(asset.lon, asset.lat, 0)
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(assetPoint, roadLink.geometry)

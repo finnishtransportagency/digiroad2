@@ -331,10 +331,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     validateBusStopMaintainerUser(properties)
     val id = params("id").toLong
 
-//    if(properties.exists(prop => prop.publicId == "vaikutussuunta")) {
-//      val linkId = optionalLinkId.getOrElse(halt(BadRequest("Missing mandatory field linkId")))
-//      validateBusStopDirections(properties, linkId)
-//    }
     validatePropertiesMaxSize(properties)
     val position = (optionalLon, optionalLat, optionalLinkId) match {
       case (Some(lon), Some(lat), Some(linkId)) => Some(Position(lon, lat, linkId, bearing))

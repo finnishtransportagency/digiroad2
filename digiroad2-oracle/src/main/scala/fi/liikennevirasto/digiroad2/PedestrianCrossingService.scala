@@ -21,7 +21,6 @@ class PedestrianCrossingService(val roadLinkService: RoadLinkService) extends Po
     persistedAsset.copy(floating = floating)
   }
 
-//  override def create(asset: IncomingPedestrianCrossing, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass] = None, linkSource: LinkGeomSource): Long = {
   override def create(asset: IncomingPedestrianCrossing, username: String, roadLink: RoadLink): Long = {
     val assetPoint = Point(asset.lon, asset.lat, 0)
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(assetPoint, roadLink.geometry)
