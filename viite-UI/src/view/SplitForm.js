@@ -84,8 +84,8 @@
       _.each(selected, function(sel){
         if (sel) {
           var link = sel;
-          var startM = ((applicationModel.getSelectedTool() === 'Cut' && selected.length == 2) ? Math.round(link.startMValue) : Math.min.apply(Math, _.map(selected, function(l) { return l.startAddressM; })));
-          var endM = ((applicationModel.getSelectedTool() === 'Cut' && selected.length == 2) ? Math.round(link.endMValue) : Math.max.apply(Math, _.map(selected, function(l) { return l.endAddressM; })));
+          var startM = (((applicationModel.getSelectedTool() === 'Cut' || !_.isUndefined(selected[0].connectedLinkId)) && selected.length == 2) ? Math.round(link.startMValue) : Math.min.apply(Math, _.map(selected, function(l) { return l.startAddressM; })));
+          var endM = (((applicationModel.getSelectedTool() === 'Cut' || !_.isUndefined(selected[0].connectedLinkId)) && selected.length == 2) ? Math.round(link.endMValue) : Math.max.apply(Math, _.map(selected, function(l) { return l.endAddressM; })));
           var div = '<div class="project-edit-selections" style="display:inline-block;padding-left:8px;">' +
               '<div class="project-edit">' +
               ' TIE ' + '<span class="project-edit">' + link.roadNumber + '</span>' +
@@ -100,81 +100,59 @@
       return span;
     };
 
-    var defineOptionModifiers = function(option, selection) {
-      var roadIsUnknownOrOther = projectCollection.roadIsUnknown(selection[0]) || projectCollection.roadIsOther(selection[0]) || selection[0].roadLinkSource === LinkGeomSource.SuravageLinkInterface.value;
-      var roadIsSuravage = selection[0].roadLinkSource === LinkGeomSource.SuravageLinkInterface.value;
-      var isSplitMode = selection.length == 2 && selection[0].linkId === selection[1].linkId && applicationModel.getSelectedTool() == "Cut";
-      var toEdit = !isSplitMode && selection[0].id === 0;
-      var linkStatus = selection[0].status;
-      var modifiers = '';
+      var defineOptionModifiers = function(option, selection) {
+          var isSplitMode = selection.length == 2 && selection[0].linkId === selection[1].linkId;
+          var linkStatus = selection[0].status;
+          var targetLinkStatus = _.find(LinkStatus, function (ls) {
+              return ls.description === option || (option === '' && ls.value == 99);
+          });
+          if (isSplitMode)
+              return splitTransitionModifiers(targetLinkStatus, linkStatus);
+          else
+              return transitionModifiers(targetLinkStatus, linkStatus);
+      };
 
-      switch(option) {
-        case LinkStatus.Unchanged.description: {
-          if ((roadIsUnknownOrOther || roadIsSuravage) && !isSplitMode) {
-            modifiers = 'disabled hidden';
-          } else {
-            modifiers = '';
+      var transitionModifiers = function(targetStatus, currentStatus) {
+          var mod;
+          if (_.contains(targetStatus.transitionFrom, currentStatus))
+              mod = '';
+          else
+              mod = 'disabled hidden';
+          if (currentStatus == targetStatus.value)
+              return mod + ' selected';
+          else
+              return mod;
+      };
+
+      var splitTransitionModifiers = function(targetStatus, currentStatus) {
+          var mod;
+          if (currentStatus === LinkStatus.Undefined.value) {
+              if (_.contains([LinkStatus.New, LinkStatus.Unchanged, LinkStatus.Transfer, LinkStatus.Undefined, LinkStatus.NotHandled], targetStatus)) {
+                  mod = '';
+              } else {
+                  if (targetStatus == LinkStatus.Undefined || targetStatus == LinkStatus.NotHandled)
+                      mod = 'selected disabled hidden';
+                  else
+                      mod = 'disabled hidden';
+              }
+          } else if (currentStatus === LinkStatus.New.value) {
+              if (targetStatus === LinkStatus.New)
+                  mod = 'selected';
+              else
+                  mod = 'disabled';
+          } else if (currentStatus === LinkStatus.Unchanged.value || currentStatus === LinkStatus.Transfer.value) {
+              if (targetStatus.value === currentStatus)
+                  mod = 'selected';
+              else {
+                  if (_.contains([LinkStatus.Unchanged, LinkStatus.Transfer], targetStatus)) {
+                      mod = '';
+                  } else {
+                      mod = 'disabled hidden';
+                  }
+              }
           }
-          break;
-        }
-        case LinkStatus.Transfer.description: {
-          if ((roadIsUnknownOrOther || roadIsSuravage) && !isSplitMode) {
-            modifiers = 'disabled hidden';
-          } else if(toEdit){
-            modifiers = 'disabled';
-          }
-          break;
-        }
-        case LinkStatus.New.description: {
-          var enableStatusNew = (selection[0].status !== LinkStatus.NotHandled.value &&
-              selection[0].status !== LinkStatus.Terminated.value) || roadIsSuravage;
-          if(!roadIsUnknownOrOther) {
-            if(!enableStatusNew)
-              modifiers = 'disabled';
-          }
-          break;
-        }
-        case LinkStatus.Terminated.description: {
-          if(roadIsUnknownOrOther || roadIsSuravage){
-            modifiers = 'disabled hidden';
-          } else {
-            var status = _.uniq(_.map(selection, function(l) { return l.status; }));
-            if (status.length == 1)
-              status = status[0];
-            else
-              status = 0;
-            if (status === LinkStatus.Terminated.value){
-              modifiers = 'selected';
-            } else if(selection[0].roadLinkSource === LinkGeomSource.SuravageLinkInterface.value) {
-              modifiers = 'disabled';
-            }
-          }
-          break;
-        }
-        case LinkStatus.Numbering.description: {
-          if(roadIsUnknownOrOther || roadIsSuravage){
-            modifiers = 'disabled hidden';
-          } else if(toEdit) {
-            modifiers = 'disabled';
-          } else if(selection[0].status === LinkStatus.Terminated.value) {
-            modifiers = 'hidden';
-          }
-          break;
-        }
-        case LinkStatus.Revert.description: {
-          if(roadIsUnknownOrOther){
-            modifiers = 'disabled hidden';
-          } else if(toEdit) {
-            modifiers = 'disabled';
-          }
-          break;
-        }
-        default: {
-          modifiers = 'selected disabled hidden';
-        }
-      }
-      return modifiers;
-    };
+          return mod;
+      };
 
     var selectedProjectLinkTemplate = function(project, optionTags, selected) {
       var selection = (((applicationModel.getSelectedTool() == 'Cut' || !_.isUndefined(selected[0].connectedLinkId)) && selected[0].roadLinkSource == LinkGeomSource.SuravageLinkInterface.value) ? selectedSplitData(selected) : selectedData(selected));
