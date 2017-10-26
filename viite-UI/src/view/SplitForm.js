@@ -59,6 +59,12 @@
       return html;
     };
 
+    var revertSplitButton = function() {
+      return '<div class="form-group" style="margin-top:15px">' +
+        '<button id="revertSplit" class="form-group revertSplit btn btn-primary">Palauta aihioksi</button>' +
+        '</div>';
+    };
+
     var selectedData = function (selected) {
       var span = [];
       if (selected[0]) {
@@ -171,6 +177,7 @@
             selectionFormCutted(selection, selected) : selectionForm(selection, selected, 0)) +
           ((selected.size == 2 && selected[0].linkId === selected[1].linkId) ? '' : changeDirection()) +
           actionSelectedField()+
+          ((selected[0].connectedLinkId) ? revertSplitButton(): '') +
           '</div>'+
           '</div>' +
           '</div>'+
@@ -478,6 +485,10 @@
           if(applicationModel.getSelectedTool() == "Cut") {
               projectCollection.changeNewProjectLinkDirection(projectCollection.getCurrentProject().project.id, selectedProjectLinkProperty.get());
           }
+      });
+
+      rootElement.on('click','.revertSplit', function () {
+          projectCollection.removeProjectLinkSplit(projectCollection.getCurrentProject().project, selectedProjectLink);
       });
 
       eventbus.on('roadAddress:projectLinksSaveFailed', function (result) {

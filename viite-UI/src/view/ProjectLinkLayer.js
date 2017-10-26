@@ -759,10 +759,8 @@
         var feature = new ol.Feature({
           geometry: new ol.geom.LineString(points)
         });
-        if (!_.some(editedLinks, function(link){ return projectLink.linkId == link.linkId; })) {
           feature.projectLinkData = projectLink;
           suravageFeatures.push(feature);
-        }
       });
 
       cachedMarker = new LinkPropertyMarker(selectedProjectLinkProperty);
