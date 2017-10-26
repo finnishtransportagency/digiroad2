@@ -232,7 +232,7 @@ trait LinearAssetOperations {
       filledTopology
     }
 
-    val (roadLinks, change) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality)
+    val (roadLinks, change, _) = roadLinkService.reloadRoadLinksWithComplementaryAndChangesFromVVH(municipality)
     getByRoadLinksOptimization(roadLinks, change)
   }
 
