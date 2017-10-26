@@ -5,7 +5,8 @@
     var activeLayer = false;
     var hasReservedRoadParts = false;
     var projectStatus = LinkValues.ProjectStatus;
-
+    var editableStatus = [projectStatus.Incomplete.value, projectStatus.ErroredInTR.value, projectStatus.Unknown.value];
+    
     var staticField = function(labelText, dataField) {
       var field;
       field = '<div class="form-group">' +
@@ -332,6 +333,14 @@
         rootElement.find('.btn-next').prop("disabled", false);
       };
 
+      var disableFormInputs = function () {
+        if (!isProjectEditable()) {
+          $('#roadAddressProject input').prop('disabled',true);
+          $('.btn-reserve').prop('disabled',true);
+          $('.btn-delete').prop('hidden',true);
+        }
+      };
+
       eventbus.on('roadAddress:newProject', function() {
         currentProject = {
           id: 0,
@@ -376,6 +385,7 @@
         rootElement.find('.btn-next').prop("disabled", false);
         eventbus.trigger('roadAddressProject:clearTool');
         applicationModel.removeSpinner();
+        disableFormInputs();
       });
 
       eventbus.on('roadAddress:projectValidationFailed', function (result) {
@@ -432,6 +442,10 @@
         });
       };
 
+      var isProjectEditable = function(){
+        return _.contains(editableStatus, projectCollection.getCurrentProject().project.statusCode);
+      };
+
       rootElement.on('click', '#generalNext', function() {
         if(currentProject.statusCode === projectStatus.ErroredInTR.value){
           currentProject.statusCode = projectStatus.Incomplete.value;
@@ -445,6 +459,9 @@
           }
         } else {
           nextStage();
+        }
+        if (!isProjectEditable()) {
+          $('.btn-edit-project').prop('disabled', true);
         }
       });
 
