@@ -9,7 +9,7 @@ import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MV
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Queries
-import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.pointasset.oracle.RailwayCrossing
 import fi.liikennevirasto.digiroad2.util.{LinearAssetUtils, PolygonTools}
@@ -157,6 +157,13 @@ trait LinearAssetOperations {
       println("Start delete at time: " + DateTime.now())
       val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(changes, roadLinks)
       println("End delete at time: " + DateTime.now())
+
+      println("Start mass insert at time: " + DateTime.now())
+      withDynTransaction{
+        MassQuery.withIds((linkIds ++ removedLinkIds).toSet) { idTableName =>
+          println("End mass insert at time: " + DateTime.now())
+        }
+      }
 
       println("Start fetch at time: " + DateTime.now())
       val existingAssets =
