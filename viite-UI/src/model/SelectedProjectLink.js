@@ -25,8 +25,9 @@
         ids = projectLinkCollection.getMultiSelectIds(linkid);
         current = projectLinkCollection.getByLinkId(ids);
       }
-      var suravageA = get()[0];
-      var suravageB = get()[1];
+      var orderSplitted = _.sortBy(get(), 'startAddressM');
+      var suravageA = orderSplitted[0];
+      var suravageB = orderSplitted[1];
        suravageA.marker = "A";
        suravageB.marker = "B";
       eventbus.trigger('splited:projectLinks', [suravageA, suravageB]);
