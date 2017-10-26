@@ -431,13 +431,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     ).getOrElse(None)
   }
 
-get("/project/iswritable/:projectId") {
-    val projectId = params("projectId").toLong
-    val writable=projectService.isWritableState(projectId)
-      Map(
-        "projectIsWritable" -> writable,
-        "success" -> true)
-  }
 
   post("/project/publish"){
     val user = userProvider.getCurrentUser()
