@@ -563,8 +563,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val fetch = fetchRoadLinksWithComplementarySuravageF(boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads)
     val suravageList = Await.result(fetch._3, Duration.Inf).map(l => RoadAddressLinkBuilder.buildSuravageRoadAddressLink(l))
     val projectLinks = fetchProjectRoadLinks(projectId, boundingRectangle, roadNumberLimits, municipalities, everything, frozenTimeVVHAPIServiceEnabled, fetch)
+    val projectLinksToDiscard = projectLinks.map(_.linkId).toSet filterNot (suravageList.map(_.linkId) contains)
     val projectLinkIds = projectLinks.map(_.linkId).toSet
-    roadAddressLinkToProjectAddressLink(suravageList.filterNot(s => projectLinkIds.contains(s.linkId))) ++
+    roadAddressLinkToProjectAddressLink(suravageList.filterNot(s => projectLinksToDiscard.contains(s.linkId))) ++
       projectLinks
   }
 

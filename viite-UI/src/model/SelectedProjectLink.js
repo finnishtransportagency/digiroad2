@@ -27,15 +27,17 @@
         current = projectLinkCollection.getByLinkId(ids);
       }
       var splitLinks =  _.partition(get(), function(link){
-        return link.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value;
+        return link.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value && !_.isUndefined(link.connectedLinkId);
       });
       var orderSplitted = _.sortBy(splitLinks[0], 'startAddressM');
-      var originalSuravage = _.first(splitLinks[1]);
+      var originalSuravage = _.first(_.filter(splitLinks[1], function(sur){
+        return _.isUndefined(sur.connectedLinkId);
+      }));
       var suravageA = orderSplitted[0];
       var suravageB = orderSplitted[1];
        suravageA.marker = "A";
        suravageB.marker = "B";
-      eventbus.trigger('splited:projectLinks', [originalSuravage, suravageA, suravageB]);
+      eventbus.trigger('splited:projectLinks', [suravageA, suravageB]);
     };
 
     var splitSuravageLink = function(suravage, split, mousePoint) {

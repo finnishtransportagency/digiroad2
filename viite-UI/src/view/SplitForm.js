@@ -187,10 +187,10 @@
     };
 
     var getSplitPointBySideCode = function(link){
-          if(link.sideCode == SideCode.TowardsDigitizing.value){
-            return _.last(link.points);
-          } else if (link.sideCode == SideCode.AgainstDigitizing.value){
-          return _.first(link.points);
+          if(link.sideCode == SideCode.AgainstDigitizing.value){
+            return _.first(link.points);
+          } else {
+          return _.last(link.points);
           }
       };
     var selectionFormCutted = function(selection, selected){
