@@ -95,16 +95,12 @@ module.exports = function(grunt) {
             xforward: false
           },
           {
-              context: '/maasto',
-              host: '172.17.204.46',
-            /*host: '172.17.206.180',*/
-              port: '8080',
-              https: false,
-              changeOrigin: true,
-              xforward: false,
-              rewrite: {
-                  '^/maasto': '/digiroad/maasto'
-              }
+            context: '/maasto',
+            host: 'karttamoottori.maanmittauslaitos.fi',
+            https: false,
+            changeOrigin: true,
+            xforward: false,
+            headers: {referer: 'http://www.paikkatietoikkuna.fi/web/fi/kartta'}
           },
           {
             context: '/vionice',
@@ -114,7 +110,7 @@ module.exports = function(grunt) {
             changeOrigin: true,
             xforward: false,
             rewrite: {
-                '^/vionice/api/v1/geoserver/vionice/wms\\?': '/api/v1/geoserver/vionice/wms/?apikey=<%= app.vioniceApiKey %>&'
+                '^/vionice/api/v1/geoserver/vionice/wms\\?': '/api/v1/geoserver/vionice/wms?apikey=<%= app ? app.vioniceApiKey : "" %>&'
             },
             headers: { Host: 'map.vionice.io:443' }
           },
@@ -268,7 +264,7 @@ module.exports = function(grunt) {
     watch: {
       oth: {
         files: ['<%= jshint.files %>', 'UI/src/**/*.less', 'UI/**/*.html'],
-        tasks: ['jshint', 'env:development', 'preprocess:development', 'less:development', 'mocha:unit', 'mocha:integration', 'configureProxies:oth'],
+        tasks: ['properties', 'jshint', 'env:development', 'preprocess:development', 'less:development', 'mocha:unit', 'mocha:integration', 'configureProxies:oth'],
         options: {
           livereload: true
         }
@@ -305,7 +301,6 @@ module.exports = function(grunt) {
     }
   });
 
-  grunt.loadNpmTasks('grunt-properties-reader');
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-mocha');
@@ -320,6 +315,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-env');
   grunt.loadNpmTasks('grunt-preprocess');
   grunt.loadNpmTasks('grunt-exec');
+  grunt.loadNpmTasks('grunt-properties-reader');
 
   var target = grunt.option('target') || 'production';
 
@@ -327,15 +323,15 @@ module.exports = function(grunt) {
 
   grunt.registerTask('viite', ['env:development', 'configureProxies:viite', 'preprocess:development', 'connect:viite', 'less:viitedev', 'watch:viite']);
 
-  grunt.registerTask('test', ['jshint', 'env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'mocha:unit', 'mocha:integration']);
+  grunt.registerTask('test', ['properties', 'jshint', 'env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'mocha:unit', 'mocha:integration']);
 
   grunt.registerTask('viite-test', ['jshint', 'env:development', 'configureProxies:viite', 'preprocess:development', 'connect:viite', 'mocha:unit', 'mocha:integration']);
 
-  grunt.registerTask('default', ['jshint', 'env:production', 'exec:prepare_openlayers', 'exec:oth_build_openlayers', 'exec:viite_build_openlayers', 'configureProxies:oth', 'preprocess:production', 'connect:oth', 'mocha:unit', 'mocha:integration', 'clean', 'less:production', 'less:viiteprod', 'concat', 'uglify', 'cachebreaker']);
+  grunt.registerTask('default', ['properties', 'jshint', 'env:production', 'exec:prepare_openlayers', 'exec:oth_build_openlayers', 'exec:viite_build_openlayers', 'configureProxies:oth', 'preprocess:production', 'connect:oth', 'mocha:unit', 'mocha:integration', 'clean', 'less:production', 'less:viiteprod', 'concat', 'uglify', 'cachebreaker']);
 
   grunt.registerTask('deploy', ['clean', 'env:'+target, 'exec:prepare_openlayers', 'exec:oth_build_openlayers', 'exec:viite_build_openlayers', 'preprocess:production', 'less:production', 'less:viiteprod', 'concat', 'uglify', 'cachebreaker', 'save_deploy_info']);
 
-  grunt.registerTask('integration-test', ['jshint', 'env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'mocha:integration']);
+  grunt.registerTask('integration-test', ['properties', 'jshint', 'env:development', 'configureProxies:oth', 'preprocess:development', 'connect:oth', 'mocha:integration']);
 
   grunt.registerTask('viite-integration-test', ['jshint', 'env:development', 'configureProxies:viite', 'preprocess:development', 'connect:viite', 'mocha:integration']);
 
