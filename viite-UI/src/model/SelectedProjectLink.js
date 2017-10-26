@@ -5,6 +5,7 @@
     var ids = [];
     var dirty = false;
     var splitSuravage = {};
+    var LinkGeomSource = LinkValues.LinkGeomSource;
 
     var open = function (linkid, multiSelect) {
       if (!multiSelect) {
@@ -25,12 +26,16 @@
         ids = projectLinkCollection.getMultiSelectIds(linkid);
         current = projectLinkCollection.getByLinkId(ids);
       }
-      var orderSplitted = _.sortBy(get(), 'startAddressM');
+      var splitLinks =  _.partition(get(), function(link){
+        return link.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value;
+      });
+      var orderSplitted = _.sortBy(splitLinks[0], 'startAddressM');
+      var originalSuravage = _.first(splitLinks[1]);
       var suravageA = orderSplitted[0];
       var suravageB = orderSplitted[1];
        suravageA.marker = "A";
        suravageB.marker = "B";
-      eventbus.trigger('splited:projectLinks', [suravageA, suravageB]);
+      eventbus.trigger('splited:projectLinks', [originalSuravage, suravageA, suravageB]);
     };
 
     var splitSuravageLink = function(suravage, split, mousePoint) {

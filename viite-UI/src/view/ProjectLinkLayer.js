@@ -365,7 +365,12 @@
       });
     };
 
-    eventbus.on('projectLink:clicked projectLink:splited', function () {
+    //TODO correct highlight. Now is highlighting the original Suravage
+    eventbus.on('projectLink:clicked', function () {
+      highlightFeatures();
+    });
+
+    eventbus.on('projectLink:splited', function () {
       highlightFeatures();
     });
 
@@ -620,7 +625,7 @@
       var findNearestSuravageLink = function(point) {
         return _.chain(vectorSource.getFeatures())
             .filter(function(feature) {
-              return !_.isUndefined(feature.projectLinkData) && feature.projectLinkData.roadLinkSource == 3;
+              return !_.isUndefined(feature.projectLinkData) && feature.projectLinkData.roadLinkSource == LinkGeomSource.SuravageLinkInterface.value;
             })
             .map(function(feature) {
               var closestP = feature.getGeometry().getClosestPoint(point);
@@ -709,7 +714,9 @@
       };
 
     eventbus.on('splited:projectLinks', function (splited) {
-      _.defer(function(){drawIndicators(splited);});
+      _.defer(function(){drawIndicators(_.filter(splited, function(link){
+        return !_.isUndefined(link.marker);
+      }));});
         eventbus.trigger('projectLink:splited', splited);
     });
 

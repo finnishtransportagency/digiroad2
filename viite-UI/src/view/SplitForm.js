@@ -3,6 +3,7 @@
     var LinkStatus = LinkValues.LinkStatus;
     var LinkGeomSource = LinkValues.LinkGeomSource;
     var CalibrationCode = LinkValues.CalibrationCode;
+    var SideCode = LinkValues.SideCode;
     var editableStatus = [LinkValues.ProjectStatus.Incomplete.value, LinkValues.ProjectStatus.ErroredInTR.value, LinkValues.ProjectStatus.Unknown.value];
 
     var currentProject = false;
@@ -174,9 +175,7 @@
           staticField('Lisätty järjestelmään', project.createdBy + ' ' + project.startDate)+
           staticField('Muokattu viimeksi', project.modifiedBy + ' ' + project.dateModified)+
           '<div class="split-form-group editable form-editable-roadAddressProject"> '+
-
-          ((applicationModel.getSelectedTool() === 'Cut' && selected.length == 2) ?
-            selectionFormCutted(selection, selected) : selectionForm(selection, selected, 0)) +
+          selectionFormCutted(selection, selected)+
           ((selected.size == 2 && selected[0].linkId === selected[1].linkId) ? '' : changeDirection()) +
           actionSelectedField()+
           ((!_.isUndefined(selected[0].connectedLinkId)) ? revertSplitButton(): '') +
@@ -187,29 +186,20 @@
           '<footer>' + actionButtons() + '</footer>');
     };
 
-    var selectionForm = function(selection, selected){
-      var defaultOption = (selected[0].status === LinkStatus.NotHandled.value ? LinkStatus.NotHandled.description : LinkStatus.Undefined.description);
-      return '<form id="roadAddressProjectForm" class="input-unit-combination form-group form-horizontal roadAddressProject">'+
-      '<label>Toimenpiteet,' + selection  + '</label>' +
-      '<div class="input-unit-combination">' +
-      '<select class="form-control" id="dropdown_0" size="1">'+
-      '<option id="drop_0_' + '" '+ defineOptionModifiers(defaultOption, selected) +'>Valitse</option>'+
-      '<option id="drop_0_' + LinkStatus.Unchanged.description + '" value='+ LinkStatus.Unchanged.description+' ' + defineOptionModifiers(LinkStatus.Unchanged.description, selected) + '>Ennallaan</option>'+
-      '<option id="drop_0_' + LinkStatus.Transfer.description + '" value='+ LinkStatus.Transfer.description + ' ' + defineOptionModifiers(LinkStatus.Transfer.description, selected) + '>Siirto</option>'+
-      '<option id="drop_0_' + LinkStatus.New.description + '" value='+ LinkStatus.New.description + ' ' + defineOptionModifiers(LinkStatus.New.description, selected) +'>Uusi</option>'+
-      '<option id="drop_0_' + LinkStatus.Terminated.description + '" value='+ LinkStatus.Terminated.description + ' ' + defineOptionModifiers(LinkStatus.Terminated.description, selected) + '>Lakkautus</option>'+
-      '<option id="drop_0_' + LinkStatus.Numbering.description + '" value='+ LinkStatus.Numbering.description + ' ' + defineOptionModifiers(LinkStatus.Numbering.description, selected) + '>Numerointi</option>'+
-      '<option id="drop_0_' + LinkStatus.Revert.description + '" value='+ LinkStatus.Revert.description + ' ' + defineOptionModifiers(LinkStatus.Revert.description, selected) + '>Palautus aihioksi tai tieosoitteettomaksi</option>' +
-      '</select>'+
-      '</div>'+
-      newRoadAddressInfo(selected) +
-      '</form>';
-    };
-
+    var getSplitPointBySideCode = function(link){
+          if(link.sideCode == SideCode.TowardsDigitizing.value){
+            return _.last(link.points);
+          } else if (link.sideCode == SideCode.AgainstDigitizing.value){
+          return _.first(link.points);
+          }
+      };
     var selectionFormCutted = function(selection, selected){
+        var firstLink =_.first(_.sortBy(selected, 'startAddressM'));
+        var splitPoint = ((applicationModel.getSelectedTool() != "Cut" ? getSplitPointBySideCode(firstLink): firstLink.splitPoint));
+
       return '<form id="roadAddressProjectFormCut" class="input-unit-combination split-form-group form-horizontal roadAddressProject">'+
-        '<input type="hidden" id="splitx" value="' + selected[0].splitPoint.x + '"/>' +
-        '<input type="hidden" id="splity" value="' + selected[0].splitPoint.y + '"/>' +
+          '<input type="hidden" id="splitx" value="' + splitPoint.x + '"/>' +
+          '<input type="hidden" id="splity" value="' + splitPoint.y + '"/>' +
         '<label>Toimenpiteet,' + selection[0]  + '</label>' +
           '<span class="marker">'+markers[0]+'</span>'+
           dropdownOption(0, selected) +
@@ -425,7 +415,10 @@
       };
 
       eventbus.on('projectLink:splited', function(selected) {
-        selectedProjectLink = selected;
+          var splittedSelected = _.filter(selected, function(sel){
+              return sel.roadLinkSource == LinkGeomSource.SuravageLinkInterface.value;
+          });
+        selectedProjectLink = splittedSelected;
         currentProject = projectCollection.getCurrentProject();
         clearInformationContent();
         rootElement.html(selectedProjectLinkTemplate(currentProject.project, options, selectedProjectLink));
