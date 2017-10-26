@@ -19,7 +19,10 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
       case LinkGeomSource.Unknown => UnknownRoadLinkType
     }
 
-    val geom = roadLink.geometry
+    val geom = if (projectLink.isSplit)
+      GeometryUtils.truncateGeometry3D(roadLink.geometry, projectLink.startMValue, projectLink.endMValue)
+    else
+      roadLink.geometry
     val length = GeometryUtils.geometryLength(geom)
     val roadNumber = projectLink.roadNumber match {
       case 0 => roadLink.attributes.getOrElse(RoadNumber, projectLink.roadNumber).asInstanceOf[Number].longValue()

@@ -456,46 +456,6 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
-  ignore("Fetch project links") { // Needs more of mocking because of Futures + transactions disagreeing
-  val roadLinkService = new RoadLinkService(new VVHClient(properties.getProperty("digiroad2.VVHRestApiEndPoint")), mockEventBus, new DummySerializer) {
-    override def withDynSession[T](f: => T): T = f
-
-    override def withDynTransaction[T](f: => T): T = f
-  }
-    val roadAddressService = new RoadAddressService(roadLinkService, mockEventBus) {
-      override def withDynSession[T](f: => T): T = f
-
-      override def withDynTransaction[T](f: => T): T = f
-    }
-    val projectService = new ProjectService(roadAddressService, roadLinkService, mockEventBus) {
-      override def withDynSession[T](f: => T): T = f
-
-      override def withDynTransaction[T](f: => T): T = f
-    }
-    runWithRollback {
-      val addresses: List[ReservedRoadPart] = List(ReservedRoadPart(0: Long, 5: Long, 205: Long, 5: Double, 5: Long, Discontinuity.apply("jatkuva"), 8: Long, None: Option[DateTime], None: Option[DateTime]))
-      val roadAddressProject = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", addresses, None)
-      val savedProject = projectService.createRoadLinkProject(roadAddressProject)
-      val startingLinkId = ProjectDAO.getProjectLinks(savedProject.id).filter(_.track == Track.LeftSide).minBy(_.startAddrMValue).linkId
-      val boundingRectangle = roadLinkService.fetchVVHRoadlinks(Set(startingLinkId)).map { vrl =>
-        val x = vrl.geometry.map(l => l.x)
-        val y = vrl.geometry.map(l => l.y)
-
-        BoundingRectangle(Point(x.min, y.min) + Vector3d(-5.0, -5.0, 0.0), Point(x.max, y.max) + Vector3d(5.0, 5.0, 0.0))
-      }.head
-
-      val links = projectService.getProjectRoadLinks(savedProject.id, boundingRectangle, Seq(), Set(), true, true)
-      links.nonEmpty should be(true)
-      links.exists(_.status == LinkStatus.Unknown) should be(true)
-      links.exists(_.status == LinkStatus.NotHandled) should be(true)
-      val (unk, nh) = links.partition(_.status == LinkStatus.Unknown)
-      nh.forall(l => l.roadNumber == 5 && l.roadPartNumber == 205) should be(true)
-      unk.forall(l => l.roadNumber != 5 || l.roadPartNumber != 205) should be(true)
-      nh.map(_.linkId).toSet.intersect(unk.map(_.linkId).toSet) should have size (0)
-      unk.exists(_.attributes.getOrElse("ROADPARTNUMBER", "0").toString == "203") should be(true)
-    }
-  }
-
   test("Validate road part dates with project date - startDate") {
     val projDate = DateTime.parse("2015-01-01")
     val addresses = List(ReservedRoadPart(5: Long, 5: Long, 205: Long, 5: Double, 5: Long, Discontinuity.apply("jatkuva"), 8: Long, Option(DateTime.parse("2017-01-01")): Option[DateTime], None: Option[DateTime]))
