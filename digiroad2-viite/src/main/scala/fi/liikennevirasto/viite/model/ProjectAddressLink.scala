@@ -39,6 +39,7 @@ trait ProjectAddressLinkLike extends RoadAddressLinkLike {
   def roadAddressId: Long
   def connectedLinkId: Option[Long]
   def partitioningName: String
+  def isSplit: Boolean
 }
 
 case class ProjectAddressLink (id: Long, linkId: Long, geometry: Seq[Point],
@@ -55,5 +56,8 @@ case class ProjectAddressLink (id: Long, linkId: Long, geometry: Seq[Point],
       s"$roadNumber/$roadPartNumber/$trackCode"
     else
       roadName
+  }
+  override def isSplit: Boolean = {
+    connectedLinkId.nonEmpty || connectedLinkId.contains(0L)
   }
 }
