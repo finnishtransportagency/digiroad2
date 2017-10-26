@@ -177,7 +177,7 @@
             selectionFormCutted(selection, selected) : selectionForm(selection, selected, 0)) +
           ((selected.size == 2 && selected[0].linkId === selected[1].linkId) ? '' : changeDirection()) +
           actionSelectedField()+
-          ((selected[0].connectedLinkId) ? revertSplitButton(): '') +
+          ((!_.isUndefined(selected[0].connectedLinkId)) ? revertSplitButton(): '') +
           '</div>'+
           '</div>' +
           '</div>'+
