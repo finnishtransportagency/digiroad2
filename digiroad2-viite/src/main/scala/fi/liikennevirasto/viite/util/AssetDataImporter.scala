@@ -266,8 +266,8 @@ class AssetDataImporter {
       addressPS.setDouble(15, y2)
       addressPS.setDouble(16, endAddrM - startAddrM)
       addressPS.setInt(17, if (floatingLinks.contains(pos.linkId)) 1 else 0)
-      addressPS.setLong(18, address._8)
-      addressPS.setLong(19, address._7)
+      addressPS.setLong(18, address._5)
+      addressPS.setLong(19, address._4)
       addressPS.addBatch()
     }
     lrmPositionPS.executeBatch()
