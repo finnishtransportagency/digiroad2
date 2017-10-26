@@ -743,7 +743,7 @@
               {type: 'alert'});
         }
       });
-      backend.getEnumeratedPropertyValues(typeId);
+      backend.getEnumeratedPropertyValues();
     }
   };
 })(this);

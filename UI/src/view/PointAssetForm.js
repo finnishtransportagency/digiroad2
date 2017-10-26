@@ -8,7 +8,7 @@
   function bindEvents(typeId, selectedAsset, collection, layerName, localizedTexts, editConstrains, roadCollection, applicationModel, backend) {
     var rootElement = $('#feature-attributes');
 
-    backend.getEnumeratedPropertyValues(typeId);
+    backend.getAssetEnumeratedPropertyValues(typeId);
 
     eventbus.on('application:readOnly', function(readOnly) {
       if(applicationModel.getSelectedLayer() == layerName && (!_.isEmpty(roadCollection.getAll()) && !_.isNull(selectedAsset.getId())))
@@ -26,6 +26,11 @@
           rootElement.find('.form-controls button').prop('disabled', !selectedAsset.isDirty());
         }
       }
+    });
+
+    eventbus.on('assetEnumeratedPropertyValues:fetched', function(event) {
+        if(event.assetType == typeId)
+            enumeratedPropertyValues = event.enumeratedPropertyValues;
     });
 
     eventbus.on(layerName + ':changed', function() {
@@ -196,10 +201,6 @@
         '</div>';
     }
   }
-
-  eventbus.on('enumeratedPropertyValues:fetched', function(values) {
-    enumeratedPropertyValues = values;
-  });
 
   var obstacleTypes = {
     1: 'Suljettu yhteys',

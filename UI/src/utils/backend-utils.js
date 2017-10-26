@@ -1,14 +1,23 @@
 (function (root) {
   root.Backend = function() {
     var self = this;
-    this.getEnumeratedPropertyValues = function(typeId) {
-      $.getJSON('api/enumeratedPropertyValues/'+ typeId, function (enumeratedPropertyValues) {
+    this.getEnumeratedPropertyValues = function() {
+      $.getJSON('api/enumeratedPropertyValues/10', function (enumeratedPropertyValues) {
         eventbus.trigger('enumeratedPropertyValues:fetched', enumeratedPropertyValues);
       })
         .fail(function () {
           console.log("error");
         });
     };
+
+      this.getAssetEnumeratedPropertyValues = function(assetType) {
+          $.getJSON('api/enumeratedPropertyValues/'+assetType, function (enumeratedPropertyValues) {
+              eventbus.trigger('assetEnumeratedPropertyValues:fetched', { assetType: assetType, enumeratedPropertyValues: enumeratedPropertyValues});
+          })
+              .fail(function () {
+                  console.log("error");
+              });
+      };
 
     this.getAssetTypeMetadata = function(assetTypeId) {
       $.getJSON('api/getAssetTypeMetadata/'+ assetTypeId, function (getAssetTypeMetadata) {
@@ -495,7 +504,14 @@
 
     this.withEnumeratedPropertyValues = function(enumeratedPropertyValuesData) {
       self.getEnumeratedPropertyValues = function () {
-        eventbus.trigger('enumeratedPropertyValues:fetched', enumeratedPropertyValuesData);
+          eventbus.trigger('enumeratedPropertyValues:fetched', enumeratedPropertyValuesData);
+      };
+      return self;
+    };
+
+    this.withAssetEnumeratedPropertyValues = function(enumeratedPropertyValuesData, typeId) {
+      self.getAssetEnumeratedPropertyValues = function (typeId) {
+          eventbus.trigger('assetEnumeratedPropertyValues:fetched', { assetType: assetType, enumeratedPropertyValues: enumeratedPropertyValuesData});
       };
       return self;
     };

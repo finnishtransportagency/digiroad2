@@ -69,7 +69,7 @@
         {signValue: [40], image: 'images/traffic-signs/dangerousDescentSign.png'},
         {signValue: [41], image: 'images/traffic-signs/steepAscentSign.png'},
         {signValue: [42], image: 'images/traffic-signs/unevenRoadSign.png'},
-        {signValue: [43], image:  'images/traffic-signs/childrenSign.png'}
+        {signValue: [43], image: 'images/traffic-signs/childrenSign.png'}
       ];
 
       function find() {
@@ -87,7 +87,7 @@
       }
 
       function getValidation(){
-        return find() && find().validation ? find().validation.call(trafficSign) : true ;
+        return find() && find().validation ? find().validation.call(trafficSign) : false ;
       }
 
       function getValue(){
@@ -100,7 +100,6 @@
         getValidation: getValidation,
         getValue : getValue
       };
-
     };
 
     var textStyle = function (trafficSign) {
