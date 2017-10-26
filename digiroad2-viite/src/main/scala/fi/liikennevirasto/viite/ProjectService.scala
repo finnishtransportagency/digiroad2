@@ -1200,7 +1200,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       roadLinks, expiringRoadAddresses, project).partition(_.floating)
 
     //Expiring all old addresses by their ID
-    roadAddressService.expireRoadAddresses(expiringRoadAddresses.keys.toSet)
+    val (expiringRoadAddressesWithoutTermination, expiringRoadAddressesTermination) =
+      expiringRoadAddresses.partition(_._2.id == replacements.filter(p=> p.status == Terminated).map(_.roadAddressId))
+    roadAddressService.expireRoadAddressesFromProject(expiringRoadAddressesWithoutTermination.keys.toSet, project.startDate, termination = false)
+    roadAddressService.expireRoadAddressesFromProject(expiringRoadAddressesTermination.keys.toSet, project.startDate, termination = true)
     //Create endDate rows for old data that is "valid" (row should be ignored after end_date)
     RoadAddressDAO.create(guessGeom.guestimateGeometry(roadAddressesWithoutGeom, newRoadAddresses))
   }

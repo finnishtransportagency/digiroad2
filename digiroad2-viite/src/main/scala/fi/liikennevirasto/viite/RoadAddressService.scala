@@ -463,6 +463,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     expiredIds.grouped(500).map(group => RoadAddressDAO.expireById(group)).sum
   }
 
+  def expireRoadAddressesFromProject(expiredIds: Set[Long], projectDate: DateTime, termination : Boolean = false ) = {
+    expiredIds.grouped(500).map(group => RoadAddressDAO.expireById(group, projectDate, termination)).sum
+  }
+
   /**
     * Checks that if the geometry is found and updates the geometry to match or sets it floating if not found
     *
