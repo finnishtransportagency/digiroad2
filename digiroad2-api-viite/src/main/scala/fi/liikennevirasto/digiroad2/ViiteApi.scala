@@ -422,11 +422,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       (projectId, linkId) match {
         case (Some(project), Some(link)) =>
           val error = projectService.revertSplit(project, link)
-          if (error.nonEmpty) {
-            PreconditionFailed(error.get)
-          } else {
-            NoContent()
-          }
+          Map("success" -> error.isEmpty)
         case _ => BadRequest("Missing mandatory 'projectId' or 'linkId' parameter from URI: /project/split/:projectId/:linkId")
       }
     } catch {

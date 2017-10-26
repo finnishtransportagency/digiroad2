@@ -502,7 +502,16 @@
             projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Terminated.value); break;
           }
           case LinkStatus.Revert.description : {
-            projectCollection.revertChangesRoadlink(selectedProjectLink); break;
+            var separated = _.partition(selectedProjectLink, function (link) {
+              return !_.isUndefined(link.connectedLinkId);
+            });
+            if (separated[0].length > 0) {
+              projectCollection.revertChangesRoadlink(separated[0]);
+            }
+            if (separated[1].length > 0) {
+              projectCollection.removeProjectLinkSplit(separated[1]);
+            }
+            break;
           }
         }
         selectedProjectLinkProperty.setDirty(false);

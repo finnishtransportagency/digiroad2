@@ -215,6 +215,29 @@
       }
     };
 
+    this.removeProjectLinkSplit = function (links) {
+      if(!_.isEmpty(links)) {
+        applicationModel.addSpinner();
+        var projectId = currentProject.project.id;
+        var linkId = links[0].linkId;
+        backend.removeProjectLinkSplit(projectId, linkId, function (response) {
+          if (response.success) {
+            dirtyProjectLinkIds = [];
+            eventbus.trigger('projectLink:revertedChanges');
+          }
+          else if (response == INTERNAL_SERVER_ERROR_500 || response == BAD_REQUEST_400) {
+            eventbus.trigger('roadAddress:projectLinksUpdateFailed', error.status);
+            new ModalConfirm(response);
+            applicationModel.removeSpinner();
+          }
+          else{
+            new ModalConfirm(response);
+            applicationModel.removeSpinner();
+          }
+        });
+      }
+    };
+
     this.saveProjectLinks = function(changedLinks, statusCode) {
       console.log("Save Project Links called");
       applicationModel.addSpinner();
