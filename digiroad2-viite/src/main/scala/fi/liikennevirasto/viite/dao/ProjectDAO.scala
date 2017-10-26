@@ -118,7 +118,7 @@ object ProjectDAO {
       val source = LinkGeomSource.apply(r.nextInt())
       val roadAddressId = r.nextLong()
       val ely = r.nextLong()
-      val connectedLinkId = Some(r.nextLong())
+      val connectedLinkId = r.nextLongOption()
 
       ProjectLink(projectLinkId, roadNumber, roadPartNumber, trackCode, discontinuityType, startAddrM, endAddrM, None, None,
         None, lrmPositionId, linkId, startMValue, endMValue, sideCode, calibrationPoints, false, Seq.empty[Point], projectId,
