@@ -234,7 +234,6 @@ object Digiroad2Context {
       override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
       override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
       override val tierekisteriClient: TierekisteriMassTransitStopClient = Digiroad2Context.tierekisteriClient
-      override val tierekisteriEnabled = getProperty("digiroad2.tierekisteri.enabled").toBoolean
     }
     new ProductionMassTransitStopService(eventbus, roadLinkService)
   }

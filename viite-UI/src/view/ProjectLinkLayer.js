@@ -660,7 +660,7 @@
           var lineString = pointsToLineString(nearestSuravage.points);
           var splitMeasure = GeometryUtils.calculateMeasureAtPoint(lineString, point);
           var splitVertices = GeometryUtils.splitByPoint(lineString, point);
-          return _.merge({ splitMeasure: splitMeasure, point: point }, splitVertices);
+          return _.merge({ splitMeasure: splitMeasure, point: splitVertices.secondSplitVertices[0] }, splitVertices);
         };
 
         var nearest = findNearestSuravageLink([mousePoint.x, mousePoint.y]);
@@ -672,7 +672,7 @@
         }
         var nearestSuravage = nearest.feature.projectLinkData;
         var splitProperties = calculateSplitProperties(nearestSuravage, mousePoint);
-        selectedProjectLinkProperty.splitSuravageLink(nearestSuravage, splitProperties);
+        selectedProjectLinkProperty.splitSuravageLink(nearestSuravage, splitProperties, mousePoint);
         selectSingleClick.getFeatures().clear();
         selectSingleClick.getFeatures().push(nearest.feature);
         projectCollection.setTmpDirty([nearest.feature.projectLinkData]);
@@ -759,8 +759,10 @@
         var feature = new ol.Feature({
           geometry: new ol.geom.LineString(points)
         });
-        feature.projectLinkData = projectLink;
-        suravageFeatures.push(feature);
+        if (!_.some(editedLinks, function(link){ return projectLink.linkId == link.linkId; })) {
+          feature.projectLinkData = projectLink;
+          suravageFeatures.push(feature);
+        }
       });
 
       cachedMarker = new LinkPropertyMarker(selectedProjectLinkProperty);

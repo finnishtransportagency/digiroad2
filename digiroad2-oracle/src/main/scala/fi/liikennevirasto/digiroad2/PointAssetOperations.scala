@@ -18,7 +18,7 @@ sealed trait FloatingReason {
 }
 
 object FloatingReason{
-  val values = Set(Unknown, RoadOwnerChanged, NoRoadLinkFound, DifferentMunicipalityCode, DistanceToRoad, NoReferencePointForMValue, TrafficDirectionNotMatch)
+  val values = Set(Unknown, RoadOwnerChanged, NoRoadLinkFound, DifferentMunicipalityCode, DistanceToRoad, NoReferencePointForMValue, TrafficDirectionNotMatch, TerminalChildless)
 
   def apply(intValue: Int): FloatingReason = {
     values.find(_.value == intValue).getOrElse(Unknown)
@@ -31,6 +31,7 @@ object FloatingReason{
   case object DistanceToRoad extends FloatingReason { def value = 4 }
   case object NoReferencePointForMValue extends FloatingReason { def value = 5 }
   case object TrafficDirectionNotMatch extends FloatingReason { def value = 6 }
+  case object TerminalChildless extends FloatingReason { def value = 7 }
 }
 
 trait IncomingPointAsset {
@@ -74,7 +75,8 @@ trait PointAssetOperations {
   def typeId: Int
   def fetchPointAssets(queryFilter: String => String, roadLinks: Seq[RoadLinkLike] = Nil): Seq[PersistedAsset]
   def setFloating(persistedAsset: PersistedAsset, floating: Boolean): PersistedAsset
-  def create(asset: IncomingAsset, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass], linkSource: LinkGeomSource): Long
+//  def create(asset: IncomingAsset, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass], linkSource: LinkGeomSource): Long
+  def create(asset: IncomingAsset, username: String, roadLink: RoadLink): Long
   def update(id:Long, updatedAsset: IncomingAsset, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long
 
   def getByBoundingBox(user: User, bounds: BoundingRectangle): Seq[PersistedAsset] = {
@@ -221,9 +223,9 @@ trait PointAssetOperations {
     }
   }
 
-  def getNormalAndComplementaryById(id: Long): Option[PersistedAsset] = {
+  def getNormalAndComplementaryById(id: Long, roadLink: RoadLink): Option[PersistedAsset] = {
     val persistedAsset = getPersistedAssetsByIds(Set(id)).headOption
-    val roadLinks: Option[RoadLinkLike] = persistedAsset.flatMap { x => roadLinkService.getRoadLinkAndComplementaryFromVVH(x.linkId) }
+    val roadLinks: Option[RoadLinkLike] = Some(roadLink)
 
     def findRoadlink(linkId: Long): Option[RoadLinkLike] =
       roadLinks.find(_.linkId == linkId)

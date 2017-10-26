@@ -245,6 +245,16 @@
       });
     };
 
+    this.reOpenProject = function(projectId, success, errorCallback) {
+      $.ajax({
+        type: "DELETE",
+        url: "api/viite/project/trid/"+projectId,
+        success: success,
+        error: errorCallback
+      });
+    };
+
+
     this.saveProjectLinkSplit = _.throttle(function(data, linkId, success, errorCallback){
      $.ajax({
        contentType: "application/json",

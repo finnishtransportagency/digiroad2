@@ -89,6 +89,11 @@ object DataFixture {
     println()
   }
 
+  def updateRoadAddressesValues(vVHClient: VVHClient): Unit = {
+    println(s"\nStarting road address update values from conversion at time: ${DateTime.now()}")
+    dataImporter.updateRoadAddressesValues(Conversion.database(), vvhClient)
+  }
+
   def updateMissingRoadAddresses(): Unit = {
     println(s"\nUpdating missing road address table at time: ${DateTime.now()}")
     val vvhClient = new VVHClient(dr2properties.getProperty("digiroad2.VVHRestApiEndPoint"))
@@ -272,6 +277,8 @@ object DataFixture {
         importRoadAddresses(username.startsWith("dr2dev") || username.startsWith("dr2test"))
       case Some("import_complementary_road_address") =>
         importComplementaryRoadAddress()
+      case Some("update_road_addresses_ely_and_road_type") =>
+        updateRoadAddressesValues(vvhClient)
       case Some ("recalculate_addresses") =>
         recalculate()
       case Some ("update_missing") if geometryFrozen =>
