@@ -61,7 +61,7 @@ case object ChangeInfoItemSerializer extends CustomSerializer[RoadAddressChangeI
 }, {
   case o: RoadAddressChangeInfo =>
     implicit val formats = DefaultFormats + ChangeInfoRoadPartsSerializer
-    val emptySection = RoadAddressChangeSection(None, None, None, None, None, None)
+    val emptySection = RoadAddressChangeSectionTR(None, None, None, None, None, None)
     o.changeType match {
       case New =>
         JObject(
@@ -144,7 +144,7 @@ case object ChangeInfoRoadPartsSerializer extends CustomSerializer[RoadAddressCh
     val (road, track, startPart, stm, endPart, enm) =
       (map.get("tie"), map.get("ajr"), map.get("aosa"), map.get("aet"), map.get("losa"), map.get("let"))
     RoadAddressChangeSection(road.map(jIntToLong), track.map(jIntToLong), startPart.map(jIntToLong), endPart.map(jIntToLong),
-      stm.map(jIntToLong), enm.map(jIntToLong))
+      stm.map(jIntToLong), enm.map(jIntToLong), None, None, None)
 }, {
   case s: RoadAddressChangeSection =>
     JObject(JField("tie", s.roadNumber.map(l => JInt(BigInt.apply(l))).orNull),
@@ -185,10 +185,11 @@ object ViiteTierekisteriClient {
       proj1.copy(changeInfoSeq = proj1.changeInfoSeq ++ proj2.changeInfoSeq)
     }
   }
+  private val nullRotatingTRProjectId = -1
 
   private def convertChangeDataToChangeProject(changeData: ProjectRoadAddressChange): ChangeProject = {
     val changeInfo = changeData.changeInfo
-    ChangeProject(changeData.projectId, changeData.projectName.getOrElse(""), changeData.user, changeData.ely,
+    ChangeProject(changeData.rotatingTRId.getOrElse(nullRotatingTRProjectId), changeData.projectName.getOrElse(""), changeData.user, changeData.ely,
       DateTimeFormat.forPattern("yyyy-MM-dd").print(changeData.projectStartDate), Seq(changeInfo))
   }
 
@@ -203,7 +204,10 @@ object ViiteTierekisteriClient {
   }
 
   def sendChanges(changes: List[ProjectRoadAddressChange]): ProjectChangeStatus = {
-    sendJsonMessage(convertToChangeProject(changes))
+    val projectChange=convertToChangeProject(changes)
+    if (projectChange.id==nullRotatingTRProjectId)
+      return ProjectChangeStatus(changes.head.projectId,ProjectState.Failed2GenerateTRIdInViite.value,"Could not generate required TR ID")
+    sendJsonMessage(projectChange)
   }
 
   def sendJsonMessage(trProject:ChangeProject): ProjectChangeStatus ={

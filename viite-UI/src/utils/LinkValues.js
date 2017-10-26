@@ -76,5 +76,15 @@
         AtBoth:                     {value: 3, description: "AtBoth"}
     };
 
+    root.ProjectStatus = {
+        Closed:                     {value: 0, description: "Suljettu"},
+        Incomplete:                 {value: 1, description: "Keskeneräinen"},
+        Sent2TR:                    {value: 2, description: "Lähetetty tierekisteriin"},
+        ErroredInTR:                {value: 3, description: "Virhe tierekisterissä"},
+        TRProcessing:               {value: 4, description: "Tierekisterissä käsittelyssä"},
+        Saved2TR:                   {value: 5, description: "Viety tierekisteriin"},
+        Unknown:                    {value: 99, description: "Tuntematon"}
+    };
+
 })(window.LinkValues = window.LinkValues || {});
 

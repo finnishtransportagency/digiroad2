@@ -27,7 +27,7 @@ object ProjectDeltaCalculator {
       includeFloating = true).map(ra => ra.id -> ra).toMap
     val terminations = findTerminations(projectLinks, currentAddresses)
     val newCreations = findNewCreations(projectLinks)
-    val unChanged = findUnChanged(projectLinks, currentAddresses)
+    val unChanged = Unchanged(findUnChanged(projectLinksFetched, currentAddresses))
     val transferred = Transferred(findTransfers(projectLinksFetched, currentAddresses))
     val numbering = ReNumeration(findNumbering(projectLinksFetched, currentAddresses))
 
@@ -36,7 +36,7 @@ object ProjectDeltaCalculator {
 
   private def adjustIfSplit(pl: ProjectLink, ra: Option[RoadAddress]) = {
     // Test if this link was a split case: if not, return original address, otherwise return a copy that is adjusted
-    if (pl.connectedLinkId.isEmpty)
+    if (pl.connectedLinkId.isEmpty || pl.connectedLinkId.get == 0)
       ra
     else
       ra.map(address => {
@@ -56,12 +56,9 @@ object ProjectDeltaCalculator {
     terminations.values.flatten.toSeq
   }
 
-  private def findUnChanged(projectLinks: Map[RoadPart, Seq[ProjectLink]], currentAddresses: Map[Long, RoadAddress]) = {
-    projectLinks.mapValues(pll =>
-      pll.filter(_.status == LinkStatus.UnChanged).flatMap(pl =>
-        adjustIfSplit(pl, currentAddresses.get(pl.roadAddressId))
-      )
-    ).values.flatten.toSeq
+  private def findUnChanged(projectLinks: Seq[ProjectLink], currentAddresses: Map[Long, RoadAddress]) = {
+    projectLinks.filter(_.status == LinkStatus.UnChanged).map(pl =>
+      adjustIfSplit(pl, currentAddresses.get(pl.roadAddressId)).get -> pl)
   }
 
   private def findTransfers(projectLinks: Seq[ProjectLink], currentAddresses: Map[Long, RoadAddress]) = {
@@ -148,7 +145,7 @@ object ProjectDeltaCalculator {
     val grouped = roadAddresses.groupBy(ra => (ra.roadNumber, ra.roadPartNumber, ra.track, ra.roadType))
       .mapValues(v => combine(v.sortBy(_.startAddrMValue))).values.flatten.map(ra =>
       RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
-        ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType)
+        ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType, ra.ely)
     ).toSeq
     val paired = grouped.groupBy(section => (section.roadNumber, section.roadPartNumberStart, section.track))
 
@@ -219,7 +216,7 @@ object ProjectDeltaCalculator {
     def toRoadAddressSection(o: Seq[BaseRoadAddress]): Seq[RoadAddressSection] = {
       o.sortBy(_.startAddrMValue).map(ra =>
         RoadAddressSection(ra.roadNumber, ra.roadPartNumber, ra.roadPartNumber,
-          ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType))
+          ra.track, ra.startAddrMValue, ra.endAddrMValue, ra.discontinuity, ra.roadType, ra.ely))
     }
     val sectioned = transfers.groupBy(x => (x._1.roadNumber, x._1.roadPartNumber, x._1.track, x._2.roadNumber, x._2.roadPartNumber, x._2.track))
       .mapValues(v => combinePair(v.sortBy(_._1.startAddrMValue)))
@@ -238,9 +235,11 @@ object ProjectDeltaCalculator {
 }
 
 case class Delta(startDate: DateTime, terminations: Seq[RoadAddress], newRoads: Seq[ProjectLink],
-                 unChanged: Seq[RoadAddress], transferred: Transferred, numbering : ReNumeration)
+                 unChanged: Unchanged, transferred: Transferred, numbering : ReNumeration)
 
 case class RoadPart(roadNumber: Long, roadPartNumber: Long)
+
+case class Unchanged(mapping: Seq[(RoadAddress, ProjectLink)])
 
 case class Transferred(mapping: Seq[(RoadAddress, ProjectLink)])
 

@@ -29,11 +29,27 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     //Increase the buffer around the viewport extend because of group bus stops
     renderBuffer: 300
   });
+  var terminalSource = new ol.source.Vector();
+  var terminalLayer = new ol.layer.Vector({
+      source : terminalSource,
+      style : function(feature) {
+          var properties = feature.getProperties();
+          if(properties.massTransitStop)
+              return properties.massTransitStop.getMarkerDefaultStyles();
+          return [];
+      }
+  });
 
   assetLayer.set('name', layerName);
   assetLayer.setOpacity(1);
   assetLayer.setVisible(true);
   map.addLayer(assetLayer);
+
+  terminalLayer.set('name', 'terminalLayer');
+  terminalLayer.setOpacity(1);
+  terminalLayer.setVisible(true);
+  map.addLayer(terminalLayer);
+
 
   function onSelectMassTransitStop(event) {
     if(event.selected.length > 0){
@@ -121,7 +137,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   });
 
   var createAsset = function(assetData) {
-    var massTransitStop = new MassTransitStop(assetData, map);
+    var massTransitStop = new MassTransitStop(assetData, massTransitStopsCollection, map);
     var marker = massTransitStop.getMarker();
     var asset = {};
     asset.data = assetData;
@@ -189,6 +205,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     roadLayer.clearSelection();
     removeOverlay();
     selectControl.clear();
+    deselectAsset(selectedAsset);
     removeAssetFromMap(selectedAsset);
   };
 
@@ -249,7 +266,8 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
   var handleAssetCreated = function(asset) {
     removeAssetFromMap(selectedAsset);
-    deselectAsset(selectedAsset);
+    if (asset)
+      movementPermissionConfirmed = false;
     selectedAsset = createAndGroupUIAsset(asset);
     removeOverlay();
   };
@@ -308,7 +326,6 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   };
 
   var handleAssetPropertyValueChanged = function(propertyData) {
-
     var features = selectControl.getSelectInteraction().getFeatures();
     if (propertyData.propertyData.publicId === 'vaikutussuunta') {
       _.each(features.getArray(), function(feature){
@@ -330,9 +347,22 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
         feature.setStyle(properties.massTransitStop.getMarkerSelectionStyles());
       });
     }
+
+    if(_.contains(['liitetyt_pysakit'], propertyData.propertyData.publicId)){
+      var asset = selectedMassTransitStopModel.getCurrentAsset();
+      _.each(terminalSource.getFeatures(), function(feature){
+          var busStop = feature.getProperties();
+          if(asset.id == busStop.data.id || _.some(propertyData.propertyData.values, function(value){ return busStop.data.id == parseInt(value.propertyValue);  } )){
+            feature.setStyle(busStop.massTransitStop.getMarkerSelectionStyles());
+          }
+          else{
+            feature.setStyle(busStop.massTransitStop.getMarkerDefaultStyles());
+          }
+      });
+    }
   };
 
-  var createNewAsset = function(coordinate, placement) {
+  var createNewAsset = function(coordinate, placement, stopTypes) {
     var default_asset_direction = {BothDirections: 2, TowardsDigitizing: 2, AgainstDigitizing: 3};
     var nearestLine = geometrycalculator.findNearestLine(roadCollection.getRoadsForMassTransitStops(), coordinate.x, coordinate.y);
     var projectionOnNearestLine = geometrycalculator.nearestPointOnLine(nearestLine, coordinate);
@@ -344,10 +374,10 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       lat: projectionOnNearestLine.y,
       roadLinkId: nearestLine.roadLinkId,
       linkId: nearestLine.linkId,
-      stopTypes: []
+      stopTypes: stopTypes
     };
     data.group = createDummyGroup(projectionOnNearestLine.x, projectionOnNearestLine.y, data);
-    var massTransitStop = new MassTransitStop(data);
+    var massTransitStop = new MassTransitStop(data, massTransitStopsCollection);
     var currentAsset = selectedMassTransitStopModel.getCurrentAsset();
     deselectAsset();
     if(placement){
@@ -355,6 +385,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     }else {
       selectedMassTransitStopModel.place(data);
     }
+    eventbus.trigger('terminalBusStop:selected', stopTypes[0]);
     selectedAsset = createAsset(data);
     var feature = selectedAsset.massTransitStop.getMarkerFeature();
     selectControl.addSelectionFeatures([feature], false, false);
@@ -393,17 +424,43 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     }
   };
 
-  var deselectAsset = function (asset) {
-    if (asset) {
+  var deselectAsset = function(asset) {
+    _.each(terminalSource.getFeatures(), function(feature){
+      feature.setStyle(feature.getProperties().massTransitStop.getMarkerDefaultStyles());
+    });
+    if(selectedAsset)
+      selectedAsset.massTransitStop.getMarkerFeature().setStyle(selectedAsset.massTransitStop.getMarkerDefaultStyles());
+    terminalSource.clear();
+    if (asset)
       movementPermissionConfirmed = false;
       overrideMessageAllow = true;
-    }
-  };
+    };
 
   var handleAssetFetched = function(backendAsset) {
     deselectAsset(selectedAsset);
     selectedAsset = massTransitStopsCollection.getAsset(backendAsset.id);
-    selectedAsset.massTransitStop.getMarkerSelectionStyles();
+
+    var nearestStops = massTransitStopsCollection.getAllTerminalNearestStops(backendAsset.propertyData);
+    var features = _.without(_.map(nearestStops, function(nearestStop){
+      var childAsset = massTransitStopsCollection.getAsset(nearestStop.id);
+      if(childAsset){
+        if(!nearestStop.isChild){
+            if(applicationModel.isReadOnly())
+              return null;
+            childAsset.massTransitStop.getMarkerFeature().setStyle(childAsset.massTransitStop.getMarkerDefaultStyles());
+        }
+        else
+        {
+            childAsset.massTransitStop.getMarkerFeature().setStyle(childAsset.massTransitStop.getMarkerSelectionStyles());
+        }
+        return childAsset.massTransitStop.getMarkerFeature();
+      }
+      return null;
+    }), null);
+
+    selectedAsset.massTransitStop.getMarkerFeature().setStyle(selectedAsset.massTransitStop.getMarkerSelectionStyles());
+    terminalSource.clear();
+    terminalSource.addFeatures(features);
     selectControl.addSelectionFeatures([selectedAsset.massTransitStop.getMarker().feature], false, false);
   };
 
@@ -421,6 +478,9 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   };
 
   var autoUpdateAddressNames = function (originalLinkId, newLinkId) {
+    if(isTerminalBusStop())
+      return;
+
     var popupMessageToShow = 'Säilyykö pysäkin osoite (katunimi) samana? Jos ei, tarkista uusi osoite tallennuksen jälkeen.';
     var roadLinkData = roadCollection.getRoadLinkByLinkId(newLinkId).getData();
 
@@ -444,6 +504,19 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     }
   };
 
+  var isTerminalChild = function () {
+    var properties = selectedMassTransitStopModel.getProperties();
+    return selectedMassTransitStopModel.isTerminalChild(properties);
+  };
+
+  var isTerminalBusStop = function() {
+      return _.some(selectedMassTransitStopModel.getProperties(), function(property) {
+          return property.publicId == 'pysakin_tyyppi' && _.some(property.values, function(value){
+                  return value.propertyValue == "6";
+              });
+      });
+  };
+
   var restrictMovement = function (event, originalCoordinates, angle, nearestLine, coordinates) {
     var movementLimit = 50; //50 meters
     var popupMessageToShow;
@@ -458,6 +531,9 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
       } else {
         popupMessageToShow = 'Pysäkkiä siirretty yli 50 metriä. Haluatko siirtää pysäkin uuteen sijaintiin?';
       }
+
+      if(isTerminalChild())
+          popupMessageToShow += ' <br><br> *Pysäkin viittaus terminaaliin häviää siirron yhteydessä. Luo yhteys uudelleen tarvittaessa. ' ;
 
       new GenericConfirmPopup(popupMessageToShow,{
         successCallback: function(){
@@ -498,6 +574,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
     roadLayer.selectRoadLink(nearestLine);
     feature.getGeometry().setCoordinates([coordinates.lon, coordinates.lat]);
+    selectedAsset.massTransitStop.getMarkerFeature().setStyle(selectedAsset.massTransitStop.getMarkerSelectionStyles());
 
     selectedMassTransitStopModel.move({
       lon: coordinates.lon,
@@ -562,9 +639,9 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
   }
 
   var handleMapClick = function(coordinates) {
-    if (selectedControl === 'Add' && zoomlevels.isInRoadLinkZoomLevel(map.getView().getZoom())) {
+    if ((selectedControl === 'Add' || selectedControl === 'AddTerminal') && zoomlevels.isInRoadLinkZoomLevel(map.getView().getZoom())) {
       selectControl.deactivate();
-      createNewAsset(coordinates, false);
+      createNewAsset(coordinates, false, selectedControl === 'AddTerminal' ? ['6'] : []);
     } else {
       if (selectedMassTransitStopModel.isDirty()) {
         selectControl.deactivate();
@@ -625,6 +702,21 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     eventListener.listenTo(eventbus, 'asset:creationCancelled asset:creationFailed asset:creationTierekisteriFailed asset:creationNotFoundRoadAddressVKM', cancelCreate);
     eventListener.listenTo(eventbus, 'asset:updateCancelled asset:updateFailed asset:updateTierekisteriFailed asset:updateNotFoundRoadAddressVKM', cancelUpdate);
     eventListener.listenTo(eventbus, 'asset:closed', closeAsset);
+    eventListener.listenTo(eventbus, 'asset:modified', function(){
+      terminalSource.clear();
+      var asset = selectedMassTransitStopModel.getCurrentAsset();
+      if(asset.propertyMetadata){
+        var property = _.find(asset.propertyMetadata, function(prop){
+          return prop.publicId == 'liitetyt_pysakit';
+        });
+        if(property)
+          _.each(property.values, function(value){
+              var busStop = massTransitStopsCollection.getAsset(parseInt(value.propertyValue));
+              if(busStop)
+                  terminalSource.addFeature(busStop.massTransitStop.getMarkerFeature());
+          });
+      }
+    });
     eventListener.listenTo(eventbus, 'assets:fetched', function(assets) {
       if (zoomlevels.isInAssetZoomLevel(map.getView().getZoom())) {
         var groupedAssets = assetGrouping.groupByDistance(assets, map.getView().getZoom());

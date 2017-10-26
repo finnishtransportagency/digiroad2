@@ -77,6 +77,6 @@ class OracleMassTransitStopDaoSpec extends FunSuite with MustMatchers {
 
   private def createAssetRow(propertyRow: PropertyRow) = {
     MassTransitStopRow(1, 1, 1, Some(Point(1, 1)), 123l, Some(180), 2, None, None, propertyRow,
-      Modification(None, None), Modification(None, None), Some(Point(1, 1)), lrmPosition = null, AdministrativeClass.apply(99), 235, false)
+      Modification(None, None), Modification(None, None), Some(Point(1, 1)), lrmPosition = null, AdministrativeClass.apply(99), 235, false, None)
   }
 }

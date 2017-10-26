@@ -166,8 +166,10 @@
           staticField('Lisätty järjestelmään', project.createdBy + ' ' + project.startDate)+
           staticField('Muokattu viimeksi', project.modifiedBy + ' ' + project.dateModified)+
           '<div class="split-form-group editable form-editable-roadAddressProject"> '+
-              selectionFormCutted(selection, selected) +
-          ((selected.size == 2 && selected[0].linkId === selected[1].linkId) ? changeDirection(): '') +
+
+          ((applicationModel.getSelectedTool() === 'Cut' && selected.length == 2) ?
+            selectionFormCutted(selection, selected) : selectionForm(selection, selected, 0)) +
+          ((selected.size == 2 && selected[0].linkId === selected[1].linkId) ? '' : changeDirection()) +
           actionSelectedField()+
           '</div>'+
           '</div>' +
@@ -176,9 +178,30 @@
           '<footer>' + actionButtons() + '</footer>');
     };
 
+    var selectionForm = function(selection, selected){
+      var defaultOption = (selected[0].status === LinkStatus.NotHandled.value ? LinkStatus.NotHandled.description : LinkStatus.Undefined.description);
+      return '<form id="roadAddressProjectForm" class="input-unit-combination form-group form-horizontal roadAddressProject">'+
+      '<label>Toimenpiteet,' + selection  + '</label>' +
+      '<div class="input-unit-combination">' +
+      '<select class="form-control" id="dropdown_0" size="1">'+
+      '<option id="drop_0_' + '" '+ defineOptionModifiers(defaultOption, selected) +'>Valitse</option>'+
+      '<option id="drop_0_' + LinkStatus.Unchanged.description + '" value='+ LinkStatus.Unchanged.description+' ' + defineOptionModifiers(LinkStatus.Unchanged.description, selected) + '>Ennallaan</option>'+
+      '<option id="drop_0_' + LinkStatus.Transfer.description + '" value='+ LinkStatus.Transfer.description + ' ' + defineOptionModifiers(LinkStatus.Transfer.description, selected) + '>Siirto</option>'+
+      '<option id="drop_0_' + LinkStatus.New.description + '" value='+ LinkStatus.New.description + ' ' + defineOptionModifiers(LinkStatus.New.description, selected) +'>Uusi</option>'+
+      '<option id="drop_0_' + LinkStatus.Terminated.description + '" value='+ LinkStatus.Terminated.description + ' ' + defineOptionModifiers(LinkStatus.Terminated.description, selected) + '>Lakkautus</option>'+
+      '<option id="drop_0_' + LinkStatus.Numbering.description + '" value='+ LinkStatus.Numbering.description + ' ' + defineOptionModifiers(LinkStatus.Numbering.description, selected) + '>Numerointi</option>'+
+      '<option id="drop_0_' + LinkStatus.Revert.description + '" value='+ LinkStatus.Revert.description + ' ' + defineOptionModifiers(LinkStatus.Revert.description, selected) + '>Palautus aihioksi tai tieosoitteettomaksi</option>' +
+      '</select>'+
+      '</div>'+
+      newRoadAddressInfo(selected) +
+      '</form>';
+    };
+
     var selectionFormCutted = function(selection, selected){
       return '<form id="roadAddressProjectFormCut" class="input-unit-combination split-form-group form-horizontal roadAddressProject">'+
-          '<label>Toimenpiteet,' + selection[0]  + '</label>' +
+        '<input type="hidden" id="splitx" value="' + selected[0].splitPoint.x + '"/>' +
+        '<input type="hidden" id="splity" value="' + selected[0].splitPoint.y + '"/>' +
+        '<label>Toimenpiteet,' + selection[0]  + '</label>' +
           '<span class="marker">'+markers[0]+'</span>'+
           dropdownOption(0, selected) +
           '<hr class="horizontal-line"/>' +
@@ -205,19 +228,19 @@
 
     var newRoadAddressInfo = function(selected){
       return '<div class="split-form-group new-road-address" hidden>' +
-          '<div><label></label></div><div><label style = "margin-top: 50px">TIEOSOITTEEN TIEDOT</label></div>' +
-          addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('AJR')+ addSmallLabel('ELY')  + addSmallLabel('JATKUU')+
-          '</div>' +
-          '<div class="split-form-group new-road-address" id="new-address-input1" hidden>'+
-          addSmallInputNumber('tie',(selectedProjectLink[0].roadNumber !== 0 ? selectedProjectLink[0].roadNumber : '')) +
-          addSmallInputNumber('osa',(selectedProjectLink[0].roadPartNumber !== 0 ? selectedProjectLink[0].roadPartNumber : '')) +
-          addSmallInputNumber('ajr',(selectedProjectLink[0].trackCode !== 99 ? selectedProjectLink[0].trackCode : '')) +
-          addSmallInputNumberDisabled('ely', selectedProjectLink[0].elyCode) +
-          addSelect() +
-          addSmallLabel('TIETYYPPI') +
-          roadTypeDropdown() +
-          ((selected.length == 2 && selected[0].linkId === selected[1].linkId) ? '' : distanceValue()) +
-          '</div>';
+        '<div><label></label></div><div><label style = "margin-top: 50px">TIEOSOITTEEN TIEDOT</label></div>' +
+        addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('AJR')+ addSmallLabel('ELY')  + addSmallLabel('JATKUU')+
+        '</div>' +
+        '<div class="split-form-group new-road-address" id="new-address-input1" hidden>'+
+        addSmallInputNumber('tie',(selectedProjectLink[0].roadNumber !== 0 ? selectedProjectLink[0].roadNumber : '')) +
+        addSmallInputNumber('osa',(selectedProjectLink[0].roadPartNumber !== 0 ? selectedProjectLink[0].roadPartNumber : '')) +
+        addSmallInputNumber('ajr',(selectedProjectLink[0].trackCode !== 99 ? selectedProjectLink[0].trackCode : '')) +
+        addSmallInputNumberDisabled('ely', selectedProjectLink[0].elyCode) +
+        addDiscontinuityDropdown() +
+        addSmallLabel('TIETYYPPI') +
+        roadTypeDropdown() +
+        ((selected.length == 2 && selected[0].linkId === selected[1].linkId) ? '' : distanceValue()) +
+        '</div>';
     };
 
     var replaceAddressInfo = function() {
@@ -259,15 +282,22 @@
           '</div></div>';
     };
 
-    var addSelect = function(){
-      return '<select class="form-select-control" id="discontinuityDropdown" size="1">'+
+    var addDiscontinuityDropdown = function(){
+      if(selectedProjectLink[0].endAddressM === 0){
+        return '<select class="form-select-control" id="discontinuityDropdown" size="1">'+
           '<option value = "5" selected disabled hidden>5 Jatkuva</option>'+
-          '<option value="1" >1 Tien loppu</option>'+
-          '<option value="2" >2 Epäjatkuva</option>'+
-          '<option value="3" >3 ELY:n raja</option>'+
-          '<option value="4" >4 Lievä epäjatkuvuus</option>'+
-          '<option value="5" >5 Jatkuva</option>'+
           '</select>';
+      }
+      else {
+        return '<select class="form-select-control" id="discontinuityDropdown" size="1">' +
+          '<option value = "5" selected disabled hidden>5 Jatkuva</option>' +
+          '<option value="1" >1 Tien loppu</option>' +
+          '<option value="2" >2 Epäjatkuva</option>' +
+          '<option value="3" >3 ELY:n raja</option>' +
+          '<option value="4" >4 Lievä epäjatkuvuus</option>' +
+          '<option value="5" >5 Jatkuva</option>' +
+          '</select>';
+      }
     };
 
     var changeDirection = function () {
@@ -326,18 +356,22 @@
     var changeDropDownValue = function (statusCode) {
       var rootElement = $('#feature-attributes');
       if (statusCode === LinkStatus.Unchanged.value) {
-        $("#dropDown_0" ).val(LinkStatus.Unchanged.description).change();
+        $("#dropDown_0 option[value="+ LinkStatus.New.description +"]").prop('disabled',true);
+        $("#dropDown_0 option[value="+ LinkStatus.Unchanged.description +"]").attr('selected', 'selected').change();
       }
       else if(statusCode === LinkStatus.New.value){
-        $("#dropDown_0" ).val(LinkStatus.New.description).change();
+        $("#dropDown_0 option[value="+ LinkStatus.New.description +"]").attr('selected', 'selected').change();
         projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
         rootElement.find('.new-road-address').prop("hidden", false);
         if(selectedProjectLink[0].id !== 0)
           rootElement.find('.changeDirectionDiv').prop("hidden", false);
       }
       else if (statusCode == LinkStatus.Transfer.value) {
-        $("select option[value*="+LinkStatus.New.action+"]").prop('disabled',true);
-        $('#dropDown').val(LinkStatus.Transfer.action).change();
+        $("#dropDown_0 option[value="+ LinkStatus.New.description +"]").prop('disabled',true);
+        $("#dropDown_0 option[value="+ LinkStatus.Transfer.description +"]").attr('selected', 'selected').change();
+      }
+      else if (statusCode == LinkStatus.Numbering.value) {
+        $("#dropDown_0" ).val(LinkStatus.Numbering.description).change();
       }
       $('#discontinuityDropdown').val(selectedProjectLink[selectedProjectLink.length - 1].discontinuity);
       $('#roadTypeDropDown').val(selectedProjectLink[0].roadTypeId);
@@ -516,6 +550,7 @@
         }
         selectedProjectLinkProperty.setDirty(false);
         rootElement.html(emptyTemplate(currentProject.project));
+        toggleAditionalControls();
       };
 
       var cancelChanges = function() {
@@ -577,6 +612,74 @@
           $('#drop_1_' + LinkStatus.Unchanged.description).prop('disabled', false).prop('hidden', true);
           $('#drop_1_' + LinkStatus.Transfer.description).prop('disabled', false).prop('hidden', true);
           $('#drop_1_' + LinkStatus.Revert.description).prop('disabled', true).prop('hidden', true);
+        }
+      });
+
+      rootElement.on('change', '#roadAddressProjectForm #dropdown_0', function() {
+        selectedProjectLinkProperty.setDirty(true);
+        eventbus.trigger('roadAddressProject:toggleEditingRoad', false);
+        $('#tie').prop('disabled',false);
+        $('#osa').prop('disabled',false);
+        $('#ajr').prop('disabled',false);
+        $('#discontinuityDropdown').prop('disabled',false);
+        $('#roadTypeDropDown').prop('disabled',false);
+        if(this.value == LinkStatus.Terminated.description) {
+          rootElement.find('.new-road-address').prop("hidden", true);
+          rootElement.find('.changeDirectionDiv').prop("hidden", true);
+          projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
+            return {'linkId': link.linkId, 'status': LinkStatus.Terminated.value, 'roadLinkSource': link.roadLinkSource, 'points': link.points};
+          })));
+          projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
+          rootElement.find('.project-form button.update').prop("disabled", false);
+        }
+        else if(this.value == LinkStatus.New.description){
+          projectCollection.setTmpDirty(_.filter(projectCollection.getTmpDirty(), function (l) { return l.status !== LinkStatus.Terminated.value;}).concat(selectedProjectLink));
+          rootElement.find('.new-road-address').prop("hidden", false);
+          if(selectedProjectLink[0].id !== 0) {
+            fillDistanceValues(selectedProjectLink);
+            rootElement.find('.changeDirectionDiv').prop("hidden", false);
+            rootElement.find('#distanceValue').prop("hidden", false);
+          }
+        }
+        else if(this.value == LinkStatus.Unchanged.description){
+          rootElement.find('.new-road-address').prop("hidden", false);
+          rootElement.find('.changeDirectionDiv').prop("hidden", true);
+          $('#tie').prop('disabled',true);
+          $('#osa').prop('disabled',true);
+          $('#ajr').prop('disabled',true);
+          $('#discontinuityDropdown').prop('disabled',false);
+          $('#roadTypeDropDown').prop('disabled',false);
+          projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
+            return {'linkId': link.linkId, 'status': LinkStatus.Unchanged.value, 'roadLinkSource': link.roadLinkSource, 'points': link.points};
+          })));
+          projectCollection.setTmpDirty(projectCollection.getTmpDirty().concat(selectedProjectLink));
+        }
+        else if(this.value == LinkStatus.Transfer.description) {
+          projectCollection.setDirty(_.filter(projectCollection.getDirty(), function(dirty) {return dirty.status !== LinkStatus.Unchanged.value;}).concat(_.map(selectedProjectLink, function (link) {
+            return {'linkId': link.linkId, 'status': LinkStatus.Transfer.value, 'roadLinkSource': link.roadLinkSource, 'points': link.points};
+          })));
+          projectCollection.setTmpDirty(projectCollection.getDirty());
+          rootElement.find('.new-road-address').prop("hidden", false);
+          if(selectedProjectLink[0].id !== 0)
+            rootElement.find('.changeDirectionDiv').prop("hidden", false);
+        }
+        else if(this.value == LinkStatus.Numbering.description) {
+          new ModalConfirm("Numerointi koskee kokonaista tieosaa. Valintaasi on tarvittaessa laajennettu koko tieosalle.");
+          $('#ajr').prop('disabled',true);
+          $('#discontinuityDropdown').prop('disabled',true);
+          $('#roadTypeDropDown').prop('disabled',true);
+          projectCollection.setDirty(projectCollection.getDirty().concat(_.map(selectedProjectLink, function (link) {
+            return {'linkId': link.linkId, 'status': LinkStatus.Numbering.value, 'roadLinkSource': link.roadLinkSource, 'points': link.points};
+          })));
+          projectCollection.setTmpDirty(projectCollection.getDirty());
+          rootElement.find('.new-road-address').prop("hidden", false);
+          rootElement.find('.changeDirectionDiv').prop("hidden", true);
+          rootElement.find('.project-form button.update').prop("disabled", false);
+        }
+        else if(this.value == LinkStatus.Revert.description) {
+          rootElement.find('.new-road-address').prop("hidden", true);
+          rootElement.find('.changeDirectionDiv').prop("hidden", true);
+          rootElement.find('.project-form button.update').prop("disabled", false);
         }
       });
 
