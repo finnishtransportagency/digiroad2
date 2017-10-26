@@ -14,6 +14,7 @@
     var self = this;
     var publishableProject = false;
     var LinkStatus = LinkValues.LinkStatus;
+    var LinkGeomSource = LinkValues.LinkGeomSource;
     var BAD_REQUEST_400 = 400;
     var UNAUTHORIZED_401 = 401;
     var PRECONDITION_FAILED_412 = 412;
@@ -82,7 +83,7 @@
           publishableProject = isPublishable;
 
           var separated = _.partition(self.getAll(), function(projectRoad){
-            return projectRoad.roadLinkSource === 3;
+            return projectRoad.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value;
           });
           fetchedSuravageProjectLinks = separated[0];
           var nonSuravageProjectRoads = separated[1];

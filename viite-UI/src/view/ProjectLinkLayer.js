@@ -309,9 +309,9 @@
       var featuresToHighlight = [];
       var suravageFeaturesToHighlight = [];
       _.each(vectorLayer.getSource().getFeatures(), function (feature) {
-        var canIHighlight = !_.isUndefined(feature.projectLinkData.linkId)
-        && _.isUndefined(feature.projectLinkData.connectedLinkId) ?
-          selectedProjectLinkProperty.isSelected(feature.projectLinkData.linkId) : false;
+        var canIHighlight = ((!_.isUndefined(feature.projectLinkData.linkId)
+        && _.isUndefined(feature.projectLinkData.connectedLinkId)) ?
+          selectedProjectLinkProperty.isSelected(feature.projectLinkData.linkId) : false);
         if (canIHighlight) {
           featuresToHighlight.push(feature);
         }
@@ -572,10 +572,10 @@
       });
     };
 
-    var SuravageCutter = function(vectorLayer, collection, eventListener) {
+    var SuravageCutter = function(suravageLayer, collection, eventListener) {
       var scissorFeatures = [];
       var CUT_THRESHOLD = 20;
-      var vectorSource = vectorLayer.getSource();
+      var suravageSource = suravageLayer.getSource();
       var self = this;
 
       var moveTo = function(x, y) {
@@ -624,10 +624,13 @@
       };
 
       var findNearestSuravageLink = function(point) {
-        return _.chain(vectorSource.getFeatures())
-            .filter(function(feature) {
-              return !_.isUndefined(feature.projectLinkData) && feature.projectLinkData.roadLinkSource == LinkGeomSource.SuravageLinkInterface.value;
-            })
+
+        var possibleSplitted = _.filter(vectorSource.getFeatures().concat(suravageRoadProjectLayer.getSource().getFeatures()), function(feature){
+          var toBeSplitted1stTime = (feature.projectLinkData.roadLinkSource == LinkGeomSource.SuravageLinkInterface.value && _.isUndefined(feature.projectLinkData.connectedLinkId));
+          var toBeSplittedNthTime = (feature.projectLinkData.roadLinkSource == LinkGeomSource.NormalLinkInterface.value && !_.isUndefined(feature.projectLinkData.connectedLinkId) && feature.projectLinkData.status != LinkStatus.Terminated.value);
+          return !_.isUndefined(feature.projectLinkData) && (toBeSplitted1stTime || toBeSplittedNthTime);
+        });
+        return _.chain(possibleSplitted)
             .map(function(feature) {
               var closestP = feature.getGeometry().getClosestPoint(point);
               var distanceBetweenPoints = GeometryUtils.distanceOfPoints(point, closestP);
@@ -701,6 +704,7 @@
         return _.contains(possibleStatus, projectLink.status);
       else return false;
     };
+    
 
     var suravageCutter = new SuravageCutter(suravageRoadProjectLayer, projectCollection, me.eventListener);
 
