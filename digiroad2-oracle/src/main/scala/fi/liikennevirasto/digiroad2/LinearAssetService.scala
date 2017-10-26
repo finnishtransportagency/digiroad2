@@ -144,7 +144,12 @@ trait LinearAssetOperations {
   }
 
   def getByMunicipalityOptimization(typeId: Int, municipality: Int): Seq[PieceWiseLinearAsset] = {
-    def getByRoadLinksOptimization(typeId: Int, roadLinksExist: Seq[RoadLink], changes: Seq[ChangeInfo]): Seq[PieceWiseLinearAsset] = {
+    def getByRoadLinksOptimization(roadLinksExist: Seq[RoadLink], changes: Seq[ChangeInfo]): Seq[PieceWiseLinearAsset] = {
+
+      println("Type :"+typeId)
+      println("Municipality: "+ municipality)
+      println("Roadlinks length: "+ roadLinksExist.length)
+      println("Changes length: "+ changes.length)
 
       val roadLinks: Seq[RoadLink] = roadLinksExist
       val linkIds = roadLinks.map(_.linkId)
@@ -228,7 +233,7 @@ trait LinearAssetOperations {
     }
 
     val (roadLinks, change) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality)
-    getByRoadLinksOptimization(typeId, roadLinks, change)
+    getByRoadLinksOptimization(roadLinks, change)
   }
 
   def getLinearMiddlePointById(typeId: Int, assetId: Long): (Long, Option[Point])  = {
