@@ -327,7 +327,7 @@
 
     var emptyTemplate = function(project) {
       return _.template('' +
-        '<header style ="display:-webkit-inline-box;">' +
+        '<header>' +
         titleWithProjectName(project.name) +
         '</header>' +
         '<footer>'+showProjectChangeButton()+'</footer>');
@@ -540,6 +540,7 @@
         }
         selectedProjectLinkProperty.setDirty(false);
         rootElement.html(emptyTemplate(currentProject.project));
+        toggleAditionalControls();
       };
 
       var cancelChanges = function() {
