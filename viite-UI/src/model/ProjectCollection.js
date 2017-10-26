@@ -288,11 +288,7 @@
 
       var splitPoint = changedLinks[0].points[changedLinks[0].points.length-1];
 
-      var linkIds = _.unique(_.map(changedLinks,function (t){
-        if(!_.isUndefined(t.linkId)){
-          return t.linkId;
-        } else return t;
-      }));
+      var linkId = Math.abs(changedLinks[0].linkId);
 
       var projectId = projectinfo.id;
 
@@ -310,7 +306,7 @@
         projectId: projectId
       };
 
-      backend.saveProjectLinkSplit(dataJson, changedLinks[0].linkId, function(successObject){
+      backend.saveProjectLinkSplit(dataJson, linkId, function(successObject){
         if (!successObject.success) {
           new ModalConfirm(successObject.reason);
           applicationModel.removeSpinner();
