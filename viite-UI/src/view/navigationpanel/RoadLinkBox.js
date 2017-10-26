@@ -2,8 +2,8 @@
   root.RoadLinkBox = function(selectedProjectLinkProperty) {
     var className = 'road-link';
     var title = 'Selite';
-    var selectToolIcon = '<img src="images/select-tool.svg"/>';
-    var cutToolIcon = '<img src="images/cut-tool.svg"/>';
+    var selectToolIcon = '<img src="../images/select-tool.svg"/>';
+    var cutToolIcon = '<img src="../images/cut-tool.svg"/>';
     var expandedTemplate = _.template('' +
       '<div class="panel <%= className %>">' +
         '<header class="panel-header expanded"><%- title %></header>' +

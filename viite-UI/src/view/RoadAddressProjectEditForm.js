@@ -275,7 +275,7 @@
     var distanceValue = function() {
       return '<div id="distanceValue" hidden>' +
         '<div class="form-group" style="margin-top: 15px">' +
-        '<img src="images/calibration-point.svg" style="margin-right: 5px" class="calibration-point"/>' +
+        '<img src="../images/calibration-point.svg" style="margin-right: 5px" class="calibration-point"/>' +
         '<label class="control-label-small" style="display: inline">ETÄISYYSLUKEMA VALINNAN</label>' +
         '</div>' +
         '<div class="form-group">' +

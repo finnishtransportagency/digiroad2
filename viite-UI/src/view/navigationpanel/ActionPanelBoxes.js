@@ -1,7 +1,7 @@
 (function(ActionPanelBoxes) {
-  var selectToolIcon = '<img src="images/select-tool.svg"/>';
-  var cutToolIcon = '<img src="images/cut-tool.svg"/>';
-  var addToolIcon = '<img src="images/add-tool.svg"/>';
+  var selectToolIcon = '<img src="../images/select-tool.svg"/>';
+  var cutToolIcon = '<img src="../images/cut-tool.svg"/>';
+  var addToolIcon = '<img src="../images/add-tool.svg"/>';
 
   var Tool = function(toolName, icon, selectedAssetModel) {
     var className = toolName.toLowerCase();
