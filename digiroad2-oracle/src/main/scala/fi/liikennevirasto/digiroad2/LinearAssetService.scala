@@ -180,7 +180,12 @@ trait LinearAssetOperations {
       println("End fetch at time: " + DateTime.now())
 
       println("Start partition at time: " + DateTime.now())
-      val (assetsOnChangedLinks, assetsWithoutChangedLinks) = existingAssets.partition(a => LinearAssetUtils.newChangeInfoDetected(a, changes))
+      def newChangeInfoDetected(asset: PersistedLinearAsset, roadLinkChanges: Seq[ChangeInfo]): Boolean = {
+        roadLinkChanges.exists(c =>
+          c.vvhTimeStamp > asset.vvhTimeStamp && (c.oldId.getOrElse(0) == asset.linkId || c.newId.getOrElse(0) == asset.linkId)
+        )
+      }
+      val (assetsOnChangedLinks, assetsWithoutChangedLinks) = existingAssets.partition(a => newChangeInfoDetected(a, changes))
       println("End partition at time: " + DateTime.now())
 
       println("Start filter at time: " + DateTime.now())
