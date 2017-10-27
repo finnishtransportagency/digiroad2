@@ -811,8 +811,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     try {
       withDynTransaction{
         val projectLinks = withGeometry(ProjectDAO.getProjectLinks(projectId))
+        val (updatedProjectLinks, _) = projectLinks.partition(pl => linkIds.contains(pl.linkId))
+        if (updatedProjectLinks.exists(_.isSplit))
+          throw new ProjectValidationException("Valitut linkit sisältävät jaetun Suravage-linkin eikä sitä voi päivittää")
         userDefinedEndAddressM.map(addressM => {
-          val endSegment = projectLinks.maxBy(_.endAddrMValue)
+          val endSegment = updatedProjectLinks.maxBy(_.endAddrMValue)
           val calibrationPoint = UserDefinedCalibrationPoint(newCalibrationPointId, endSegment.id, projectId, endSegment.endMValue, addressM)
           // TODO: remove calibration points that exist elsewhere except at the link end or start
           val foundCalibrationPoint = CalibrationPointDAO.findCalibrationPointByRemainingValues(endSegment.id, projectId, endSegment.endMValue)
@@ -822,9 +825,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             CalibrationPointDAO.updateSpecificCalibrationPointMeasures(foundCalibrationPoint.head.id, endSegment.endMValue, addressM)
           Seq(CalibrationPoint)
         })
-        val (updatedProjectLinks, _) = projectLinks.partition(pl => linkIds.contains(pl.linkId))
-        if (updatedProjectLinks.exists(_.isSplit))
-          throw new ProjectValidationException("Valitut linkit sisältävät jaetun Suravage-linkin eikä sitä voi päivittää")
         linkStatus match {
           case LinkStatus.Terminated => {
             //Fetching road addresses in order to obtain the original addressMValues, since we may not have those values on project_link table, after previous recalculations
@@ -864,7 +864,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             }
             ProjectDAO.updateProjectLinkRoadTypeDiscontinuity(Set(lastSegment.id), linkStatus, userName, roadType, Some(discontinuity))
           }
-          case _ => ProjectDAO.updateProjectLinks(updatedProjectLinks.filterNot(link => link.status == LinkStatus.Terminated).map(_.id).toSet, linkStatus, userName)
+          case LinkStatus.New =>
+            ProjectDAO.updateProjectLinks(updatedProjectLinks.map(_.id).toSet, linkStatus, userName)
+          case _ =>
+            throw new ProjectValidationException(s"Virheellinen operaatio ${linkStatus}")
         }
         recalculateProjectLinks(projectId, userName)
         None
