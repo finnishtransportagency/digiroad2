@@ -151,14 +151,10 @@
       };
 
       var textStyle = function (value) {
-        if (!me.isValidValue(value))
+        if (!_.isUndefined(value))
           return '';
         // conversion Kg -> t
         return ''.concat(value/1000, 't');
-      };
-
-      this.isValidValue = function (value) {
-        return !_.isUndefined(value);
       };
 
       this.getStyle = function (asset, counter) {
