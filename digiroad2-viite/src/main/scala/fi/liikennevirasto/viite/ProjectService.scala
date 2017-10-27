@@ -823,6 +823,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           Seq(CalibrationPoint)
         })
         val (updatedProjectLinks, _) = projectLinks.partition(pl => linkIds.contains(pl.linkId))
+        if (updatedProjectLinks.exists(_.isSplit))
+          throw new ProjectValidationException("Valitut linkit sisältävät jaetun Suravage-linkin eikä sitä voi päivittää")
         linkStatus match {
           case LinkStatus.Terminated => {
             //Fetching road addresses in order to obtain the original addressMValues, since we may not have those values on project_link table, after previous recalculations
