@@ -30,9 +30,6 @@
         return link.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value && !_.isUndefined(link.connectedLinkId);
       });
       var orderSplitted = _.sortBy(splitLinks[0], 'startAddressM');
-      var originalSuravage = _.first(_.filter(splitLinks[1], function(sur){
-        return _.isUndefined(sur.connectedLinkId);
-      }));
       var suravageA = orderSplitted[0];
       var suravageB = orderSplitted[1];
        suravageA.marker = "A";
