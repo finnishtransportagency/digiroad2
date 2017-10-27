@@ -309,8 +309,8 @@
       var featuresToHighlight = [];
       var suravageFeaturesToHighlight = [];
       _.each(vectorLayer.getSource().getFeatures(), function (feature) {
-        var canIHighlight = ((!_.isUndefined(feature.projectLinkData.linkId)
-        && _.isUndefined(feature.projectLinkData.connectedLinkId)) ?
+        var canIHighlight = ((!_.isUndefined(feature.projectLinkData.linkId) &&
+        _.isUndefined(feature.projectLinkData.connectedLinkId)) ?
           selectedProjectLinkProperty.isSelected(feature.projectLinkData.linkId) : false);
         if (canIHighlight) {
           featuresToHighlight.push(feature);
