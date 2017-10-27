@@ -436,10 +436,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val leftBottom = Point(x._1, endPoints._1.y)
       val projectLinks = getProjectLinksInBoundingBox(BoundingRectangle(leftBottom, rightTop), projectId)
       val suravageProjectLink = suravageLink
-      println("Suravage")
-      println(endPoints)
-      println("Template")
-      projectLinks.foreach(l => println(GeometryUtils.geometryEndpoints(l.geometry)))
       val projectLinksConnected = projectLinks.filter(l =>
         GeometryUtils.areAdjacent(l.geometry, suravageProjectLink.geometry))
       //we rank template links near suravagelink by how much they overlap with suravage geometry
