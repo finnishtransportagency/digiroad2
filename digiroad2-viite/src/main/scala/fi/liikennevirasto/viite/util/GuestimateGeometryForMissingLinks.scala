@@ -36,7 +36,7 @@ class GuestimateGeometryForMissingLinks {
             val (adjacentLinksWithNoGeometry,previousLinkToChain)=getGeometryLinkToPreviousMissingLinks(missingGeometryOnRoadPartOrTrack,foundGeometryOnRoadPartOrTrack,missingRoadAddress,Seq.empty[T])
             val adjacentIdSeq=adjacentLinksWithNoGeometry.map(x=>x.id)
             // we form geometry to all adjacent link on road or track part here
-            val geometrizedLinks=adjacentLinksWithNoGeometry.map(x=>x.copyWithGeometry(guessGeometryForLink(x,previousLinkToChain,nextLinkGeometry))).asInstanceOf[Set[T]]
+            val geometrizedLinks=adjacentLinksWithNoGeometry.map(x=>x.copyWithGeometry(guessGeometryForLink(x,previousLinkToChain,nextLinkGeometry)).asInstanceOf[T])
             val stillMissingGeometry=missingGeometry.filterNot(x=>adjacentIdSeq.contains(x.id))
             if(stillMissingGeometry.isEmpty)
               return projectRoadaddressGeometry++geometrizedLinks
