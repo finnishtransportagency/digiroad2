@@ -18,6 +18,9 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
 
   val mockOnOffLinearAssetService = MockitoSugar.mock[OnOffLinearAssetService]
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+  val mocklinearAssetService = MockitoSugar.mock[LinearAssetService]
+  val mockObstacleService = MockitoSugar.mock[ObstacleService]
+  val mockAssetService = MockitoSugar.mock[AssetService]
   when(mockOnOffLinearAssetService.getAssetsByMunicipality(any[Int], any[Int])).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 0, None, LinkGeomSource.NormalLinkInterface)))
   when(mockRoadLinkService.getRoadLinkGeometry(any[Long])).thenReturn(Option(Seq(Point(0,0), Point(0,500))))
   when(mockOnOffLinearAssetService.getPersistedAssetsByIds(any[Int], any[Set[Long]])).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, 30, 1, None, LinkGeomSource.NormalLinkInterface)))
@@ -26,8 +29,10 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   when(mockOnOffLinearAssetService.updateWithTimeStamp(Seq(any[Long]), any[Value], any[String], any[Option[Long]], any[Option[Int]])).thenReturn(Seq(3.toLong))
   when(mockOnOffLinearAssetService.create(Seq(any[NewLinearAsset]), any[Int], any[String], any[Long])).thenReturn(Seq(1.toLong))
   when(mockOnOffLinearAssetService.getMunicipalityById(any[Long])).thenReturn(Seq(235.toLong))
+  when(mockAssetService.getMunicipalityById(any[Long])).thenReturn(Seq(235.toLong))
+  when(mockAssetService.getGeometryType(any[Int])).thenReturn("linear")
 
-  private val municipalityApi = new MunicipalityApi(mockOnOffLinearAssetService, mockRoadLinkService)
+  private val municipalityApi = new MunicipalityApi(mockOnOffLinearAssetService, mockRoadLinkService, mocklinearAssetService, mockAssetService)
   addServlet(municipalityApi, "/*")
 
   def getWithBasicUserAuth[A](uri: String, username: String, password: String)(f: => A): A = {
@@ -65,7 +70,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   }
 
   test("create new asset without a valid SideCode", Tag("db")) {
-    val requestPayload = """[{"id": 1, "linkId": 1, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47", "geometryTimestamp": 0, "endMeasure": 200, "sideCode": 4, "properties" : [{"value" : 1, "name" : "lighting"}]}]"""
+    val requestPayload = """[{"id": 1, "linkId": 1, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47", "geometryTimestamp": 0, "endMeasure": 200, "sideCode": 4, "properties" : [{"value" : 1, "name" : "hasLighting"}]}]"""
 
     postJsonWithUserAuth("/235/lighting", requestPayload.getBytes, getAuthorizationHeader("kalpa", "kalpa")) {
       status should be (422)
@@ -73,7 +78,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   }
 
   test("create new asset", Tag("db")) {
-    val requestPayload = """[{"id": 1, "linkId": 1, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47", "geometryTimestamp": 0, "endMeasure": 200, "sideCode": 1, "properties" : [{"value" : 1, "name" : "lighting"}]}]"""
+    val requestPayload = """[{"id": 1, "linkId": 1, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47", "geometryTimestamp": 0, "endMeasure": 200, "sideCode": 1, "properties" : [{"value" : 1, "name" : "hasLighting"}]}]"""
 
     postJsonWithUserAuth("/235/lighting", requestPayload.getBytes, getAuthorizationHeader("kalpa", "kalpa")) {
       status should be (200)
@@ -89,14 +94,14 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   }
 
   test("asset is not created if the asset is longer than the road"){
-    val requestPayload = """[{"id": 1, "linkId": 1, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47", "geometryTimestamp": 2, "endMeasure": 1000, "sideCode": 1, "properties" : [{"value" : 1, "name" : "lighting"}]}]"""
+    val requestPayload = """[{"id": 1, "linkId": 1, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47", "geometryTimestamp": 2, "endMeasure": 1000, "sideCode": 1, "properties" : [{"value" : 1, "name" : "hasLighting"}]}]"""
     postJsonWithUserAuth("/235/lighting", requestPayload.getBytes, getAuthorizationHeader("kalpa", "kalpa")) {
       status should equal(422)
     }
   }
 
   test("asset is not created if one measure is less than 0"){
-    val requestPayload = """[{"id": 1, "linkId": 1, "startMeasure": -1, "createdAt": "01.08.2017 14:33:47", "geometryTimestamp": 2, "endMeasure": 200, "sideCode": 1, "properties" : [{"value" : 1, "name" : "lighting"}]}]"""
+    val requestPayload = """[{"id": 1, "linkId": 1, "startMeasure": -1, "createdAt": "01.08.2017 14:33:47", "geometryTimestamp": 2, "endMeasure": 200, "sideCode": 1, "properties" : [{"value" : 1, "name" : "hasLighting"}]}]"""
     postJsonWithUserAuth("/235/lighting", requestPayload.getBytes, getAuthorizationHeader("kalpa", "kalpa")) {
       status should equal(422)
     }
@@ -109,42 +114,42 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   }
 
   test("asset is updated with newer timestamp and differing measures"){
-    val requestPayload = """[{"id": 1, "linkId": 1, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47", "geometryTimestamp": 1502, "endMeasure": 16, "sideCode": 1, "properties" : [{"value" : 1, "name" : "lighting"}]}]"""
+    val requestPayload = """[{"id": 1, "linkId": 1, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47", "geometryTimestamp": 1502, "endMeasure": 16, "sideCode": 1, "properties" : [{"value" : 1, "name" : "hasLighting"}]}]"""
     putJsonWithUserAuth("/235/lighting/1", requestPayload.getBytes, getAuthorizationHeader("kalpa", "kalpa")) {
       status should equal(200)
     }
   }
 
   test("asset is updated with equal or newer timestamp but same measures"){
-    val requestPayload = """[{"id": 1, "linkId": 1, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47", "geometryTimestamp": 2, "endMeasure": 10, "sideCode": 1, "properties" : [{"value" : 1, "name" : "lighting"}]}]"""
+    val requestPayload = """[{"id": 1, "linkId": 1, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47", "geometryTimestamp": 2, "endMeasure": 10, "sideCode": 1, "properties" : [{"value" : 1, "name" : "hasLighting"}]}]"""
     putJsonWithUserAuth("/235/lighting/1", requestPayload.getBytes, getAuthorizationHeader("kalpa", "kalpa")) {
       status should equal(200)
     }
   }
 
   test("asset is not updated if timestamp is older than the existing asset"){
-    val requestPayload = """[{"id": 1, "linkId": 1, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47", "geometryTimestamp": 0, "endMeasure": 15, "sideCode": 1, "properties" : [{"value" : 1, "name" : "lighting"}]}]"""
+    val requestPayload = """[{"id": 1, "linkId": 1, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47", "geometryTimestamp": 0, "endMeasure": 15, "sideCode": 1, "properties" : [{"value" : 1, "name" : "hasLighting"}]}]"""
     putJsonWithUserAuth("/235/lighting/1", requestPayload.getBytes, getAuthorizationHeader("kalpa", "kalpa")) {
       status should equal(422)
     }
   }
 
   test("asset is not updated if the asset is longer than the road"){
-    val requestPayload = """[{"id": 1, "linkId": 1, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47", "geometryTimestamp": 2, "endMeasure": 1000, "sideCode": 1, "properties" : [{"value" : 1, "name" : "lighting"}]}]"""
+    val requestPayload = """[{"id": 1, "linkId": 1, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47", "geometryTimestamp": 2, "endMeasure": 1000, "sideCode": 1, "properties" : [{"value" : 1, "name" : "hasLighting"}]}]"""
     putJsonWithUserAuth("/235/lighting/1", requestPayload.getBytes, getAuthorizationHeader("kalpa", "kalpa")) {
       status should equal(422)
     }
   }
 
   test("asset is not updated if one measure is less than 0"){
-    val requestPayload = """[{"id": 1, "linkId": 1, "startMeasure": -1, "createdAt": "01.08.2017 14:33:47", "geometryTimestamp": 2, "endMeasure": 15, "sideCode": 1, "properties" : [{"value" : 1, "name" : "lighting"}]}]"""
+    val requestPayload = """[{"id": 1, "linkId": 1, "startMeasure": -1, "createdAt": "01.08.2017 14:33:47", "geometryTimestamp": 2, "endMeasure": 15, "sideCode": 1, "properties" : [{"value" : 1, "name" : "hasLighting"}]}]"""
     putJsonWithUserAuth("/235/lighting/1", requestPayload.getBytes, getAuthorizationHeader("kalpa", "kalpa")) {
       status should equal(422)
     }
   }
 
   test("asset is not updated without a valid sidecode"){
-    val requestPayload = """[{"id": 1, "linkId": 1, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47", "geometryTimestamp": 0, "endMeasure": 15, "sideCode": 11, "properties" : [{"value" : 1, "name" : "lighting"}]}]"""
+    val requestPayload = """[{"id": 1, "linkId": 1, "startMeasure": 0, "createdAt": "01.08.2017 14:33:47", "geometryTimestamp": 0, "endMeasure": 15, "sideCode": 11, "properties" : [{"value" : 1, "name" : "hasLighting"}]}]"""
     putJsonWithUserAuth("/235/lighting/1", requestPayload.getBytes, getAuthorizationHeader("kalpa", "kalpa")) {
       status should equal(422)
     }
@@ -153,7 +158,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   test("encode lighting limit") {
     municipalityApi.linearAssetsToApi(Seq(PersistedLinearAsset(1, 2, SideCode.BothDirections.value, Some(NumericValue(1)), 0, 1, None, None, None, None, false, 100, 0, None, linkSource = NormalLinkInterface)), 235) should be(Seq(Map(
       "id" -> 1,
-      "properties" -> Seq(Map("value" -> Some(1), "name" -> "lighting")),
+      "properties" -> Seq(Map("value" -> Some(1), "name" -> "hasLighting")),
       "linkId" -> 2,
       "startMeasure" -> 0,
       "endMeasure" -> 1,
@@ -161,8 +166,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
       "modifiedAt" -> None,
       "createdAt" -> None,
       "geometryTimestamp" -> 0,
-      "municipalityCode" -> 235,
-      "assetType" -> 100
+      "municipalityCode" -> 235
     )))
   }
 }

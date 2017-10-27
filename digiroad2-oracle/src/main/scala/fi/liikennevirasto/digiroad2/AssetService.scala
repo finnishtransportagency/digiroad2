@@ -1,0 +1,27 @@
+package fi.liikennevirasto.digiroad2
+
+import fi.liikennevirasto.digiroad2.asset.oracle.OracleAssetDao
+import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+
+trait AssetOperations {
+
+  def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  def assetDao: OracleAssetDao
+
+  def getMunicipalityById(id: Long): Seq[Long] = {
+    withDynTransaction {
+      assetDao.getMunicipalityById(id)
+    }
+  }
+
+  def getGeometryType(assetTypeId: Int): String = {
+    withDynTransaction {
+      assetDao.getGeometryType(assetTypeId)
+    }
+  }
+}
+
+class AssetService(eventbus: DigiroadEventBus) extends AssetOperations {
+    override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+    override def assetDao: OracleAssetDao = new OracleAssetDao
+}

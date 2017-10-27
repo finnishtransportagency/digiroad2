@@ -221,6 +221,10 @@ object Digiroad2Context {
     new RoadAddressesService(eventbus, roadLinkService)
   }
 
+  lazy val assetService: AssetService = {
+    new AssetService(eventbus)
+  }
+
   lazy val revision: String = {
     revisionInfo.getProperty("digiroad2.revision")
   }

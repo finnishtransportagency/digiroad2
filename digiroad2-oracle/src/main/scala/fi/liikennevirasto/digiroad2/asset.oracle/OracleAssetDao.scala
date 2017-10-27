@@ -25,6 +25,16 @@ class OracleAssetDao {
 
   }
 
+  def getMunicipalityById(id: Long): Seq[Long] = {
+    val municipalityCode = sql"""select id from municipality where id = $id """.as[Long].list
+    municipalityCode
+  }
+
+  def getGeometryType(typeId: Int): String = {
+    val geometryType = sql""" select GEOMETRY_TYPE from asset_type where id = $typeId""".as[String].firstOption.get
+    geometryType
+  }
+
   /**
     * When invoked will expire assets by Id.
     * It is required that the invoker takes care of the transaction.
