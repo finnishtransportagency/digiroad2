@@ -47,7 +47,9 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
       linkType, roadLinkType, projectLink.roadType,  projectLink.discontinuity, projectLink.startAddrMValue, projectLink.endAddrMValue,
       projectLink.startMValue, projectLink.endMValue, projectLink.sideCode,
       projectLink.calibrationPoints._1, projectLink.calibrationPoints._2,
-      Anomaly.None, projectLink.lrmPositionId, projectLink.status, projectLink.roadAddressId, projectLink.ely, projectLink.connectedLinkId)
+      Anomaly.None, projectLink.lrmPositionId, projectLink.status, projectLink.roadAddressId, projectLink.ely, projectLink.connectedLinkId,
+      projectLink.originalGeometry
+    )
   }
 
   def build(roadLink: RoadLinkLike, missingAddress: MissingRoadAddress): ProjectAddressLink = {
@@ -73,7 +75,8 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
                     roadType: RoadType, discontinuity: Discontinuity,
                     startAddrMValue: Long, endAddrMValue: Long, startMValue: Double, endMValue: Double,
                     sideCode: SideCode, startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint],
-                    anomaly: Anomaly, lrmPositionId: Long, status: LinkStatus, roadAddressId: Long, ely:Long, connectedLinkId: Option[Long]): ProjectAddressLink = {
+                    anomaly: Anomaly, lrmPositionId: Long, status: LinkStatus, roadAddressId: Long, ely:Long, connectedLinkId: Option[Long],
+                    originalGeometry: Option[Seq[Point]] = None): ProjectAddressLink = {
 
     val linkId =
       if (connectedLinkId.nonEmpty && status == LinkStatus.New)
@@ -85,7 +88,7 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
       roadType, roadName, municipalityCode, extractModifiedAtVVH(roadLink.attributes), Some("vvh_modified"),
       roadLink.attributes, roadNumber, roadPartNumber, trackCode, ely, discontinuity.value,
       startAddrMValue, endAddrMValue, startMValue, endMValue, sideCode, startCalibrationPoint, endCalibrationPoint, anomaly, lrmPositionId, status, roadAddressId,
-      connectedLinkId)
+      connectedLinkId, originalGeometry)
   }
 
 }

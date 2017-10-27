@@ -1,8 +1,8 @@
 package fi.liikennevirasto.viite
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.SuravageLinkInterface
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{Unknown => _, apply => _, _}
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, _}
-import fi.liikennevirasto.digiroad2.linearasset.{RoadLinkLike,RoadLink}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, _}
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReservedException, Track}
@@ -563,9 +563,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val fetch = fetchRoadLinksWithComplementarySuravageF(boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads)
     val suravageList = Await.result(fetch._3, Duration.Inf).map(l => RoadAddressLinkBuilder.buildSuravageRoadAddressLink(l))
     val projectLinks = fetchProjectRoadLinks(projectId, boundingRectangle, roadNumberLimits, municipalities, everything, frozenTimeVVHAPIServiceEnabled, fetch)
-    val projectLinksToDiscard = projectLinks.map(_.linkId).toSet filterNot (suravageList.map(_.linkId) contains)
-    val projectLinkIds = projectLinks.map(_.linkId).toSet
-    roadAddressLinkToProjectAddressLink(suravageList.filterNot(s => projectLinksToDiscard.contains(s.linkId))) ++
+    val keptSuravageLinks = suravageList.filterNot(sl => projectLinks.exists(pl => !pl.isSplit &&
+      pl.roadLinkSource == SuravageLinkInterface && sl.linkId == pl.linkId))
+    roadAddressLinkToProjectAddressLink(keptSuravageLinks) ++
       projectLinks
   }
 
@@ -831,7 +831,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         linkStatus match {
           case LinkStatus.Terminated => {
             //Fetching road addresses in order to obtain the original addressMValues, since we may not have those values on project_link table, after previous recalculations
-            val roadAddresses = RoadAddressDAO.fetchByLinkId(updatedProjectLinks.map(pl => pl.linkId).toSet)
+            val roadAddresses = RoadAddressDAO.fetchByIdMassQuery(updatedProjectLinks.map(_.roadAddressId).toSet)
             val updatedPL = updatedProjectLinks.map(pl => {
               val roadAddress = roadAddresses.find(_.id == pl.roadAddressId).get
               pl.copy(startAddrMValue = roadAddress.startAddrMValue, endAddrMValue = roadAddress.endAddrMValue)
@@ -1010,22 +1010,32 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val pl: Seq[ProjectLink] = projectLinks.size match {
       case 0 => return Seq()
       case 1 => projectLinks
-      case _ => fuseProjectLinks(projectLinks)
+      case _ => fuseProjectLinks(projectLinks, rl)
     }
     pl.map(l => ProjectAddressLinkBuilder.build(rl, l))
   }
 
-  private def fuseProjectLinks(links: Seq[ProjectLink]) = {
+  private def fuseProjectLinks(links: Seq[ProjectLink], rl: RoadLinkLike) = {
     val linkIds = links.map(_.linkId).distinct
     if (linkIds.size != 1)
       throw new IllegalArgumentException(s"Multiple road link ids given for building one link: ${linkIds.mkString(", ")}")
     if (links.exists(_.isSplit))
-      links
+      includeOriginalGeometryForSuravage(links, rl)
     else {
       val (startM, endM, startA, endA) = (links.map(_.startMValue).min, links.map(_.endMValue).max,
         links.map(_.startAddrMValue).min, links.map(_.endAddrMValue).max)
       Seq(links.head.copy(startMValue = startM, endMValue = endM, startAddrMValue = startA, endAddrMValue = endA))
     }
+  }
+
+  private def includeOriginalGeometryForSuravage(links: Seq[ProjectLink], rl: RoadLinkLike) = {
+    links.map(pl => {
+      pl.linkGeomSource match {
+        case SuravageLinkInterface => pl.copy(originalGeometry = Some(rl.geometry))
+        case _ => pl
+      }
+    }
+    )
   }
 
   private def fetchRoadLinksWithComplementarySuravageF(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)],
