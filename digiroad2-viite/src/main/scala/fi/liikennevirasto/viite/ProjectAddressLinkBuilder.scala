@@ -43,12 +43,19 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
       case rl: RoadLink => rl.linkType
       case _ => UnknownLinkType
     }
+
+    val originalGeometry =
+      if (projectLink.isSplit)
+        Some(roadLink.geometry)
+      else
+        None
+
     build(roadLink, projectLink.id, geom, length, roadNumber, roadPartNumber, trackCode, roadName, municipalityCode,
       linkType, roadLinkType, projectLink.roadType,  projectLink.discontinuity, projectLink.startAddrMValue, projectLink.endAddrMValue,
       projectLink.startMValue, projectLink.endMValue, projectLink.sideCode,
       projectLink.calibrationPoints._1, projectLink.calibrationPoints._2,
       Anomaly.None, projectLink.lrmPositionId, projectLink.status, projectLink.roadAddressId, projectLink.ely, projectLink.connectedLinkId,
-      projectLink.originalGeometry
+      originalGeometry
     )
   }
 
@@ -67,7 +74,7 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
     build(roadLink, 0L, geom, length, roadLinkRoadNumber, roadLinkRoadPartNumber, roadLinkTrackCode, roadName, municipalityCode,
       linkType, UnknownRoadLinkType, getRoadType(roadLink.administrativeClass, linkType), Discontinuity.Continuous, missingAddress.startAddrMValue.getOrElse(0), missingAddress.endAddrMValue.getOrElse(0),
       missingAddress.startMValue.getOrElse(0.0), missingAddress.endMValue.getOrElse(0.0),SideCode.Unknown,
-      None, None, Anomaly.None, 0, LinkStatus.Unknown, 0, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), None)
+      None, None, Anomaly.None, 0, LinkStatus.Unknown, 0, municipalityRoadMaintainerMapping.getOrElse(roadLink.municipalityCode, -1), None, None)
   }
 
   private def build(roadLink: RoadLinkLike, id: Long, geom: Seq[Point], length: Double, roadNumber: Long, roadPartNumber: Long,
@@ -76,7 +83,7 @@ object ProjectAddressLinkBuilder extends AddressLinkBuilder {
                     startAddrMValue: Long, endAddrMValue: Long, startMValue: Double, endMValue: Double,
                     sideCode: SideCode, startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint],
                     anomaly: Anomaly, lrmPositionId: Long, status: LinkStatus, roadAddressId: Long, ely:Long, connectedLinkId: Option[Long],
-                    originalGeometry: Option[Seq[Point]] = None): ProjectAddressLink = {
+                    originalGeometry: Option[Seq[Point]]): ProjectAddressLink = {
 
     val linkId =
       if (connectedLinkId.nonEmpty && status == LinkStatus.New)

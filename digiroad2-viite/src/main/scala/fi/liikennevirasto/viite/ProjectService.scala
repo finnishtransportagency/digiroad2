@@ -1020,22 +1020,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     if (linkIds.size != 1)
       throw new IllegalArgumentException(s"Multiple road link ids given for building one link: ${linkIds.mkString(", ")}")
     if (links.exists(_.isSplit))
-      includeOriginalGeometryForSuravage(links, rl)
+      links
     else {
       val (startM, endM, startA, endA) = (links.map(_.startMValue).min, links.map(_.endMValue).max,
         links.map(_.startAddrMValue).min, links.map(_.endAddrMValue).max)
       Seq(links.head.copy(startMValue = startM, endMValue = endM, startAddrMValue = startA, endAddrMValue = endA))
     }
-  }
-
-  private def includeOriginalGeometryForSuravage(links: Seq[ProjectLink], rl: RoadLinkLike) = {
-    links.map(pl => {
-      pl.linkGeomSource match {
-        case SuravageLinkInterface => pl.copy(originalGeometry = Some(rl.geometry))
-        case _ => pl
-      }
-    }
-    )
   }
 
   private def fetchRoadLinksWithComplementarySuravageF(boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)],
