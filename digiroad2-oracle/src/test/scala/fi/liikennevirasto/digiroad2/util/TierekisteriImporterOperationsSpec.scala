@@ -1097,7 +1097,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       asset.head.value should be(Some(NumericValue(80)))
       asset.head.startMeasure should be(predictedMeasures.startMeasure +- 0.01)
       asset.head.endMeasure should be(predictedMeasures.endMeasure +- 0.01)
-      asset.head.createdBy should be(Some("batch_process_speedlimit"))
+      asset.head.createdBy should be(Some("batch_process_speedLimitState"))
     }
   }
 
@@ -1138,7 +1138,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       asset.head.value should be(Some(NumericValue(50)))
       asset.head.startMeasure should be(predictedMeasures.startMeasure +- 0.01)
       asset.head.endMeasure should be(predictedMeasures.endMeasure +- 0.01)
-      asset.head.createdBy should be(Some("batch_process_speedlimit"))
+      asset.head.createdBy should be(Some("batch_process_speedLimitState"))
     }
   }
 
@@ -1180,7 +1180,7 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       asset.head.value should be(Some(NumericValue(80)))
       asset.head.startMeasure should be(predictedMeasures.startMeasure +- 0.01)
       asset.head.endMeasure should be(predictedMeasures.endMeasure +- 0.01)
-      asset.head.createdBy should be(Some("batch_process_speedlimit"))
+      asset.head.createdBy should be(Some("batch_process_speedLimitState"))
     }
   }
 
@@ -1221,11 +1221,11 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       asset.head.linkId should be(5001)
       asset.head.sideCode should be(roadSide.value)
       asset.head.value should be(Some(NumericValue(80)))
-      asset.head.createdBy should be(Some("batch_process_speedlimit"))
+      asset.head.createdBy should be(Some("batch_process_speedLimitState"))
       asset.last.linkId should be(5001)
       asset.last.sideCode should be(roadSide.value)
       asset.last.value should be(Some(NumericValue(50)))
-      asset.last.createdBy should be(Some("batch_process_speedlimit"))
+      asset.last.createdBy should be(Some("batch_process_speedLimitState"))
     }
   }
 
@@ -1266,11 +1266,11 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       asset.head.linkId should be(5001)
       asset.head.sideCode should be(roadSide.value)
       asset.head.value should be(Some(NumericValue(50)))
-      asset.head.createdBy should be(Some("batch_process_speedlimit"))
+      asset.head.createdBy should be(Some("batch_process_speedLimitState"))
       asset.last.linkId should be(5001)
       asset.last.sideCode should be(roadSide.value)
       asset.last.value should be(Some(NumericValue(80)))
-      asset.last.createdBy should be(Some("batch_process_speedlimit"))
+      asset.last.createdBy should be(Some("batch_process_speedLimitState"))
     }
   }
 
@@ -1311,17 +1311,17 @@ class TierekisteriImporterOperationsSpec extends FunSuite with Matchers  {
       asset.head.linkId should be(5001)
       asset.head.sideCode should be(roadSide.value)
       asset.head.value should be(Some(NumericValue(80)))
-      asset.head.createdBy should be(Some("batch_process_speedlimit"))
+      asset.head.createdBy should be(Some("batch_process_speedLimitState"))
 
       asset.tail.head.linkId should be(5001)
       asset.tail.head.sideCode should be(roadSide.value)
       asset.tail.head.value should be(Some(NumericValue(50)))
-      asset.tail.head.createdBy should be(Some("batch_process_speedlimit"))
+      asset.tail.head.createdBy should be(Some("batch_process_speedLimitState"))
 
       asset.last.linkId should be(5001)
       asset.last.sideCode should be(roadSide.value)
       asset.last.value should be(Some(NumericValue(80)))
-      asset.last.createdBy should be(Some("batch_process_speedlimit"))
+      asset.last.createdBy should be(Some("batch_process_speedLimitState"))
     }
   }
 }
