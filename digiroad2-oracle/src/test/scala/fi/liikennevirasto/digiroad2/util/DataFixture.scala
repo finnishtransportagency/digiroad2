@@ -1086,6 +1086,18 @@ object DataFixture {
     println(DateTime.now())
     println("\n")
   }
+
+  def updateSpeedLimitDataFromTR(): Unit = {
+    println("\nStart Speed Limits update at: ")
+    println(DateTime.now())
+
+    tierekisteriDataImporter.updateSpeedLimits()
+
+    println("Speed Limits update complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
   def updatePavedRoadDataFromTR(): Unit ={
     println("\nStart PavedRoad update at: ")
     println(DateTime.now())
@@ -1363,6 +1375,8 @@ object DataFixture {
         updateDamagedByThawAssetDataFromTR()
       case Some("import_all_speedLimits_from_TR_to_OTH") =>
         importAllSpeedLimitDataFromTR()
+      case Some("update_speedLimits_from_TR_to_OTH") =>
+        updateSpeedLimitDataFromTR()
       case Some("update_europeanRoad_from_TR_to_OTH") =>
         updateEuropeanRoadDataFromTR()
       case Some("update_areas_on_asset") =>
@@ -1383,7 +1397,8 @@ object DataFixture {
         " fill_lane_amounts_in_missing_road_links | import_all_trafficVolume_from_TR_to_OTH | import_all_litRoad_from_TR_to_OTH | import_all_roadWidth_from_TR_to_OTH |" +
         " import_all_trafficSigns_from_TR_to_OTH | import_all_pavedRoad_from_TR_to_OTH | import_all_massTransitLane_from_TR_to_OTH | update_litRoad_from_TR_to_OTH | " +
         " update_roadWidth_from_TR_to_OTH | update_trafficSigns_from_TR_to_OTH | update_pavedRoad_from_TR_to_OTH | update_massTransitLane_from_TR_to_OTH" +
-        " import_all_damagedByThaw_from_TR_to_OTH | update_damagedByThaw_from_TR_to_OTH | import_all_europeanRoad_from_TR_to_OTH | update_europeanRoad_from_TR_to_OTH | update_areas_on_asset | update_OTH_BS_with_TR_info")
+        " import_all_damagedByThaw_from_TR_to_OTH | update_damagedByThaw_from_TR_to_OTH | import_all_europeanRoad_from_TR_to_OTH | update_speedLimits_from_TR_to_OTH | " +
+        " update_europeanRoad_from_TR_to_OTH | update_areas_on_asset | update_OTH_BS_with_TR_info")
     }
   }
 }
