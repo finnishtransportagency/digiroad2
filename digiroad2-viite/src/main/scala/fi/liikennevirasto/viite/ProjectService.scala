@@ -563,8 +563,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val fetch = fetchRoadLinksWithComplementarySuravageF(boundingRectangle, roadNumberLimits, municipalities, everything, publicRoads)
     val suravageList = Await.result(fetch._3, Duration.Inf).map(l => RoadAddressLinkBuilder.buildSuravageRoadAddressLink(l))
     val projectLinks = fetchProjectRoadLinks(projectId, boundingRectangle, roadNumberLimits, municipalities, everything, frozenTimeVVHAPIServiceEnabled, fetch)
-    val keptSuravageLinks = suravageList.filterNot(sl => projectLinks.exists(pl => !pl.isSplit &&
-      pl.roadLinkSource == SuravageLinkInterface && sl.linkId == pl.linkId))
+    val keptSuravageLinks = suravageList.filter(sl => !projectLinks.exists(pl => sl.linkId == pl.linkId))
     roadAddressLinkToProjectAddressLink(keptSuravageLinks) ++
       projectLinks
   }
