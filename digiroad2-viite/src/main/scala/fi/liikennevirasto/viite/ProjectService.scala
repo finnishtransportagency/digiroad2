@@ -266,7 +266,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val foundWithGeom = found.map{pl =>
       withGeometry(pl, linkGeometries(pl.linkId), resetAddress)}
 
-    val guessedGeom = guessGeom.guestimateProjectLinkGeometry(unfound.sortBy(x=>x.roadNumber).sortBy(x=>x.roadPartNumber).sortBy(x=>x.startAddrMValue), withGeom ++ foundWithGeom)
+    val guessedGeom = guessGeom.guestimateGeometry(unfound.sortBy(x=>x.roadNumber).sortBy(x=>x.roadPartNumber).sortBy(x=>x.startAddrMValue), withGeom ++ foundWithGeom)
     val unfoundWithGuessedGeom = guessedGeom.filterNot(x => linkGeometries.contains(x.linkId))
 
     foundWithGeom ++ unfoundWithGuessedGeom ++ withGeom
