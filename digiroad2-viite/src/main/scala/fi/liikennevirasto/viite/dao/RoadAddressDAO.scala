@@ -652,22 +652,6 @@ object RoadAddressDAO {
       Q.updateNA(query).first
   }
 
-  def expireById(ids: Set[Long], projectDate: DateTime,  termination: Boolean = false): Int = {
-    val updateTermination = if(termination)
-      ", terminated = 1 "
-    else
-      ""
-
-    val query =
-      s"""
-          Update ROAD_ADDRESS ra Set end_date = ${dateFormatter.print(projectDate)} $updateTermination where valid_to IS NULL and id in (${ids.mkString(",")})
-        """
-    if (ids.isEmpty)
-      0
-    else
-      Q.updateNA(query).first
-  }
-
   // This is dangerous, don't use this. Use expireById instead
   @Deprecated
   def expireRoadAddresses (sourceLinkIds: Set[Long]) = {
