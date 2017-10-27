@@ -13,7 +13,7 @@
         ids = [linkid];
       } else {
         ids = projectLinkCollection.getMultiSelectIds(linkid);
-        current = projectLinkCollection.getByLinkId(ids);
+        current = projectLinkCollection.getByLinkId(_.flatten(ids));
       }
       eventbus.trigger('projectLink:clicked', get());
     };
@@ -24,7 +24,7 @@
         ids = [linkid];
       } else {
         ids = projectLinkCollection.getMultiSelectIds(linkid);
-        current = projectLinkCollection.getByLinkId(ids);
+        current = projectLinkCollection.getByLinkId(_.flatten(ids));
       }
       var splitLinks =  _.partition(get(), function(link){
         return link.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value && !_.isUndefined(link.connectedLinkId);
@@ -108,7 +108,7 @@
       current = newSelection;
     };
     var isSelected = function(linkId) {
-      return _.contains(ids, linkId);
+      return _.contains(_.flatten(ids), linkId);
     };
 
     var clean = function(){
