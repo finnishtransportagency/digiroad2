@@ -1250,17 +1250,6 @@ object DataFixture {
     println("\n")
   }
 
-  def runLinearAssetIntegrationApi(typeId: Int, municipalityCode: Int): Unit = {
-    print("Start linear asset optimization tests at time: ")
-    println(DateTime.now())
-
-    val count = linearAssetService.getByMunicipalityOptimization(typeId, municipalityCode).length
-    println("Total: " + count)
-
-    print("End linear asset optimization tests at time: ")
-    println(DateTime.now())
-  }
-
   def main(args:Array[String]) : Unit = {
     import scala.util.control.Breaks._
     val username = properties.getProperty("bonecp.username")
@@ -1382,8 +1371,6 @@ object DataFixture {
         importSpeedLimitAssetFromTR()
       case Some("update_speed_limit_asset_from_TR_to_OTH") =>
         updateSpeedLimitAssetFromTR()
-      case Some("run_integration_api_linear_assets") =>
-        runLinearAssetIntegrationApi(args(1).toInt, args(2).toInt)
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
