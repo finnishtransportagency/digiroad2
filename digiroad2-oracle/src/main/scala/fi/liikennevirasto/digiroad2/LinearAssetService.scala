@@ -680,9 +680,17 @@ trait LinearAssetOperations {
         logger.info("Updated ids/linkids " + toUpdate.map(a => (a.id, a.linkId)))
 
       toInsert.foreach{ linearAsset =>
-        val id = dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
-          Measures(linearAsset.startMeasure, linearAsset.endMeasure), LinearAssetTypes.VvhGenerated, linearAsset.vvhTimeStamp,
-          getLinkSource(linearAsset.linkId), true, linearAsset.createdBy, linearAsset.createdDateTime)
+        val id =
+          (linearAsset.createdBy, linearAsset.createdDateTime) match {
+            case (Some(createdBy), Some(createdDateTime)) =>
+              dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
+                Measures(linearAsset.startMeasure, linearAsset.endMeasure), LinearAssetTypes.VvhGenerated, linearAsset.vvhTimeStamp,
+                getLinkSource(linearAsset.linkId), true, Some(createdBy), Some(createdDateTime))
+            case _ =>
+              dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
+                Measures(linearAsset.startMeasure, linearAsset.endMeasure), LinearAssetTypes.VvhGenerated, linearAsset.vvhTimeStamp, getLinkSource(linearAsset.linkId))
+          }
+
         linearAsset.value match {
           case Some(NumericValue(intValue)) =>
             dao.insertValue(id, LinearAssetTypes.numericValuePropertyId, intValue)
