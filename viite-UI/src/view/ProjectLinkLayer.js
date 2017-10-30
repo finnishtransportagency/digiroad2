@@ -167,7 +167,7 @@
         $('#actionButtons').html('<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button><button disabled id ="send-button" class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button>');
         if (!_.isUndefined(selection) && !selectedProjectLinkProperty.isDirty()){
           if(!_.isUndefined(selection.projectLinkData.connectedLinkId)){
-            selectedProjectLinkProperty.openSplited(selection.projectLinkData.linkId, true);
+            selectedProjectLinkProperty.openSplit(selection.projectLinkData.linkId, true);
           } else {
             selectedProjectLinkProperty.open(selection.projectLinkData.linkId, true);
           }
@@ -225,7 +225,7 @@
         selectedProjectLinkProperty.clean();
         if (!_.isUndefined(selection) && !selectedProjectLinkProperty.isDirty()){
           if(!_.isUndefined(selection.projectLinkData.connectedLinkId)){
-            selectedProjectLinkProperty.openSplited(selection.projectLinkData.linkId, true);
+            selectedProjectLinkProperty.openSplit(selection.projectLinkData.linkId, true);
           } else {
             selectedProjectLinkProperty.open(selection.projectLinkData.linkId);
           }
@@ -366,7 +366,7 @@
       });
     };
 
-    eventbus.on('projectLink:clicked projectLink:splited', function () {
+    eventbus.on('projectLink:clicked projectLink:split', function () {
       highlightFeatures();
     });
 
@@ -620,12 +620,12 @@
 
       var findNearestSuravageLink = function(point) {
 
-        var possibleSplitted = _.filter(vectorSource.getFeatures().concat(suravageRoadProjectLayer.getSource().getFeatures()), function(feature){
-          var toBeSplitted1stTime = (feature.projectLinkData.roadLinkSource == LinkGeomSource.SuravageLinkInterface.value && _.isUndefined(feature.projectLinkData.connectedLinkId));
-          var toBeSplittedNthTime = (feature.projectLinkData.roadLinkSource == LinkGeomSource.NormalLinkInterface.value && !_.isUndefined(feature.projectLinkData.connectedLinkId) && feature.projectLinkData.status != LinkStatus.Terminated.value);
-          return !_.isUndefined(feature.projectLinkData) && (toBeSplitted1stTime || toBeSplittedNthTime);
+        var possibleSplit = _.filter(vectorSource.getFeatures().concat(suravageRoadProjectLayer.getSource().getFeatures()), function(feature){
+          var toBeSplit1stTime = (feature.projectLinkData.roadLinkSource == LinkGeomSource.SuravageLinkInterface.value && _.isUndefined(feature.projectLinkData.connectedLinkId));
+          var toBeSplitNthTime = (feature.projectLinkData.roadLinkSource == LinkGeomSource.NormalLinkInterface.value && !_.isUndefined(feature.projectLinkData.connectedLinkId) && feature.projectLinkData.status != LinkStatus.Terminated.value);
+          return !_.isUndefined(feature.projectLinkData) && (toBeSplit1stTime || toBeSplitNthTime);
         });
-        return _.chain(possibleSplitted)
+        return _.chain(possibleSplit)
             .map(function(feature) {
               var closestP = feature.getGeometry().getClosestPoint(point);
               var distanceBetweenPoints = GeometryUtils.distanceOfPoints(point, closestP);
@@ -713,11 +713,11 @@
           }
       };
 
-    eventbus.on('splited:projectLinks', function (splited) {
-      _.defer(function(){drawIndicators(_.filter(splited, function(link){
+    eventbus.on('split:projectLinks', function (split) {
+      _.defer(function(){drawIndicators(_.filter(split, function(link){
         return !_.isUndefined(link.marker);
       }));});
-        eventbus.trigger('projectLink:splited', splited);
+        eventbus.trigger('projectLink:split', split);
     });
 
     eventbus.on('projectLink:projectLinksCreateSuccess', function () {

@@ -414,11 +414,11 @@
         rootElement.find('.wrapper read-only').toggle();
       };
 
-      eventbus.on('projectLink:splited', function(selected) {
-          var splittedSelected = _.filter(selected, function(sel){
+      eventbus.on('projectLink:split', function(selected) {
+          var splitSelected = _.filter(selected, function(sel){
               return sel.roadLinkSource == LinkGeomSource.SuravageLinkInterface.value;
           });
-        selectedProjectLink = splittedSelected;
+        selectedProjectLink = splitSelected;
         currentProject = projectCollection.getCurrentProject();
         clearInformationContent();
         rootElement.html(selectedProjectLinkTemplate(currentProject.project, options, selectedProjectLink));

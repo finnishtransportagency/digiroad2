@@ -66,10 +66,10 @@
     };
 
     this.getByLinkId = function (ids) {
-      var ProjectLinks = _.filter(_.flatten(fetchedProjectLinks), function (projectLink){
+      var links = _.filter(_.flatten(fetchedProjectLinks), function (projectLink){
         return _.contains(ids, projectLink.getData().linkId);
       });
-      return ProjectLinks;
+      return links;
     };
 
     this.fetch = function(boundingBox, zoom, projectId, isPublishable) {

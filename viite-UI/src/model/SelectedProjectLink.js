@@ -18,7 +18,7 @@
       eventbus.trigger('projectLink:clicked', get());
     };
 
-    var openSplited = function (linkid, multiSelect) {
+    var openSplit = function (linkid, multiSelect) {
       if (!multiSelect) {
         current = projectLinkCollection.getByLinkId([linkid]);
         ids = [linkid];
@@ -29,18 +29,22 @@
       var splitLinks =  _.partition(get(), function(link){
         return link.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value && !_.isUndefined(link.connectedLinkId);
       });
-      var orderSplitted = _.sortBy(splitLinks[0], 'startAddressM');
-      var suravageA = orderSplitted[0];
-      var suravageB = orderSplitted[1];
+      var orderedSplitParts = _.sortBy(splitLinks[0], [
+        function (s) {
+          return (_.isUndefined(s.points) || _.isUndefined(s.points[0])) ? Infinity : s.points[0].y;},
+        function (s) {
+          return (_.isUndefined(s.points) || _.isUndefined(s.points[0])) ? Infinity : s.points[0].x;}]);
+      var suravageA = orderedSplitParts[0];
+      var suravageB = orderedSplitParts[1];
        suravageA.marker = "A";
        suravageB.marker = "B";
-      eventbus.trigger('splited:projectLinks', [suravageA, suravageB]);
+      eventbus.trigger('split:projectLinks', [suravageA, suravageB]);
     };
 
     var splitSuravageLink = function(suravage, split, mousePoint) {
-      splitSuravageLinks(suravage, split, mousePoint, function(splitedSuravageLinks) {
-        var selection = [splitedSuravageLinks.created, splitedSuravageLinks.existing];
-        eventbus.trigger('splited:projectLinks', selection);
+      splitSuravageLinks(suravage, split, mousePoint, function(splitSuravageLinks) {
+        var selection = [splitSuravageLinks.created, splitSuravageLinks.existing];
+        eventbus.trigger('split:projectLinks', selection);
       });
     };
 
@@ -127,7 +131,7 @@
     return {
       open: open,
       openShift: openShift,
-      openSplited: openSplited,
+      openSplit: openSplit,
       get: get,
       clean: clean,
       cleanIds: cleanIds,
