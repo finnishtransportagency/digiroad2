@@ -94,14 +94,14 @@
           eventbus.trigger('roadAddressProject:discardChanges');
           isNotEditingData = true;
           clearHighlights();
-          showChangesAndSendButton();
           if (!_.isUndefined(selection)) {
             if (clickType === 'single')
               showSingleClickChanges(shiftPressed, selection);
             else
               showDoubleClickChanges(shiftPressed, selection);
+          } else {
+            showChangesAndSendButton();
           }
-
         },
         closeCallback: function () {
           isNotEditingData = false;

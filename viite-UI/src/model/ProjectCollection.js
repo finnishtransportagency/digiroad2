@@ -60,7 +60,7 @@
         return _.some(pureChain, {"linkId": linkId})|| _.some(pureChain, {"linkId": -linkId});
       });
       return _.map(chain, function (links) {
-        return _.map(links, function (link) {
+        return _.map(_.sortBy(links, function(l){return l.endAddressM;}), function (link) {
           return link.getData().linkId; });
       });
     };

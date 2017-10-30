@@ -808,6 +808,16 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     */
   def updateProjectLinks(projectId: Long, linkIds: Set[Long], linkStatus: LinkStatus, userName: String,
                          roadNumber: Long = 0, roadPartNumber: Long = 0, userDefinedEndAddressM: Option[Int], roadType: Long = 0, discontinuity: Long = 0, ely: Long = 0): Option[String] = {
+
+    def updateRoadTypeDiscontinuity(links: Seq[ProjectLink]) = {
+      val lastSegment = links.maxBy(_.endAddrMValue)
+      if(links.size > 1){
+        val linksToUpdate =links.filterNot(_.id == lastSegment.id)
+        ProjectDAO.updateProjectLinksToDB(linksToUpdate, userName)
+      }
+      ProjectDAO.updateProjectLinksToDB(Seq(lastSegment.copy(discontinuity = Discontinuity.apply(discontinuity.toInt))), userName)
+    }
+
     try {
       withDynTransaction{
         val projectLinks = withGeometry(ProjectDAO.getProjectLinks(projectId))
@@ -857,15 +867,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             if (!project.isReserved(roadNumber, roadPartNumber))
               ProjectDAO.reserveRoadPart(project.id, roadNumber, roadPartNumber, project.modifiedBy)
             val targetLinks = updatedProjectLinks.filterNot(link => link.status == LinkStatus.Terminated)
-            val lastSegment = targetLinks.maxBy(_.endAddrMValue)
-            if(targetLinks.size > 1){
-              val linksToUpdate =targetLinks.filterNot(_.id == lastSegment.id)
-              ProjectDAO.updateProjectLinkRoadTypeDiscontinuity(linksToUpdate.map(_.id).toSet, linkStatus, userName, roadType, None)
-            }
-            ProjectDAO.updateProjectLinkRoadTypeDiscontinuity(Set(lastSegment.id), linkStatus, userName, roadType, Some(discontinuity))
+            updateRoadTypeDiscontinuity(targetLinks)
           }
-          case LinkStatus.New =>
-            ProjectDAO.updateProjectLinks(updatedProjectLinks.map(_.id).toSet, linkStatus, userName)
+          case LinkStatus.New => {
+            updateRoadTypeDiscontinuity(updatedProjectLinks.map(_.copy(roadType = RoadType.apply(roadType.toInt))))
+          }
           case _ =>
             throw new ProjectValidationException(s"Virheellinen operaatio ${linkStatus}")
         }

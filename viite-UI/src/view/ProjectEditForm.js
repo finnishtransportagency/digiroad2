@@ -137,7 +137,7 @@
       return '<form id="roadAddressProjectForm" class="input-unit-combination form-group form-horizontal roadAddressProject">'+
         '<label>Toimenpiteet,' + selection  + '</label>' +
         '<div class="input-unit-combination">' +
-        '<select class="form-control" id="dropdown_0" size="1">'+
+        '<select class="action-select" id="dropdown_0" size="1">'+
         '<option id="drop_0_' + '" '+ defineOptionModifiers(defaultOption, selected) +'>Valitse</option>'+
         '<option id="drop_0_' + LinkStatus.Unchanged.description + '" value='+ LinkStatus.Unchanged.description+' ' + defineOptionModifiers(LinkStatus.Unchanged.description, selected) + '>Ennallaan</option>'+
         '<option id="drop_0_' + LinkStatus.Transfer.description + '" value='+ LinkStatus.Transfer.description + ' ' + defineOptionModifiers(LinkStatus.Transfer.description, selected) + '>Siirto</option>'+
@@ -153,7 +153,7 @@
 
     var dropdownOption = function(index, selected){
       return '<div class="input-unit-combination">' +
-        '<select class="form-control" id="dropdown_'+index+'" size="1">'+
+        '<select class="action-select" id="dropdown_'+index+'" size="1">'+
         '<option id="drop_'+ index +'_' + '" '+ defineOptionModifiers(LinkStatus.NotHandled.description, selected) +'>Valitse</option>'+
         '<option id="drop_'+ index +'_' + LinkStatus.Unchanged.description + '" value='+ LinkStatus.Unchanged.description+' ' + defineOptionModifiers(LinkStatus.Unchanged.description, selected) + '>Ennallaan</option>'+
         '<option id="drop_'+ index +'_' + LinkStatus.Transfer.description + '" value='+ LinkStatus.Transfer.description + ' ' + defineOptionModifiers(LinkStatus.Transfer.description, selected) + '>Siirto</option>'+
@@ -347,6 +347,11 @@
       }
     };
 
+    var setFormDirty = function() {
+      selectedProjectLinkProperty.setDirty(true);
+      eventbus.trigger('roadAddressProject:toggleEditingRoad', false);
+    };
+
     var bindEvents = function() {
 
       var rootElement = $('#feature-attributes');
@@ -510,10 +515,19 @@
       };
 
       rootElement.on('change', '#endDistance', function(eventData){
+        setFormDirty();
         var changedValue = parseInt(eventData.target.value);
         if(!isNaN(changedValue) && !isNaN(parseInt(endDistanceOriginalValue)) && changedValue !== endDistanceOriginalValue)
           $('#manualCPWarning').css('display', 'inline-block');
         else $('#manualCPWarning').css('display', 'none');
+      });
+
+      rootElement.on('change', '.form-control', function () {
+        setFormDirty();
+      });
+
+      rootElement.on('change', '.form-select-control', function () {
+        setFormDirty();
       });
 
       rootElement.on('click', '.project-form button.update', function() {
@@ -522,8 +536,6 @@
       });
 
       rootElement.on('change', '#roadAddressProjectForm #dropdown_0', function() {
-        selectedProjectLinkProperty.setDirty(true);
-        eventbus.trigger('roadAddressProject:toggleEditingRoad', false);
         $('#tie').prop('disabled',false);
         $('#osa').prop('disabled',false);
         $('#ajr').prop('disabled',false);
