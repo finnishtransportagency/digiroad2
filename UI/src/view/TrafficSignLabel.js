@@ -117,11 +117,12 @@
     };
 
     var validateSpeedLimitValues = function () {
-      return this.value && (this.value > 0 && this.value < 120);
+      return this.value && (this.value > 0 && this.value <= 120);
     };
 
     var validateMaximumRestrictions = function () {
-      return this.value && this.value > 0;
+      // Not specified the maximum restriction value
+      return this.value && (this.value > 0 && this.value < 100000);
     };
 
     this.getStyle = function (trafficSign, counter) {
