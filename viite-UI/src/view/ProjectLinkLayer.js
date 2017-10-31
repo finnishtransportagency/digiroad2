@@ -680,8 +680,6 @@
           nearest.feature.geometry = pointsToLineString(nearestSuravage.originalGeometry);
         }
         selectedProjectLinkProperty.splitSuravageLink(nearestSuravage, splitProperties, mousePoint);
-        selectSingleClick.getFeatures().clear();
-        selectSingleClick.getFeatures().push(nearest.feature);
         projectCollection.setTmpDirty([nearest.feature.projectLinkData]);
       };
     };
