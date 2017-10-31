@@ -908,7 +908,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             if (!project.isReserved(roadNumber, roadPartNumber))
               ProjectDAO.reserveRoadPart(project.id, roadNumber, roadPartNumber, project.modifiedBy)
             val targetLinks = updatedProjectLinks.filterNot(link => link.status == LinkStatus.Terminated)
-            updateRoadTypeDiscontinuity(targetLinks)
+            updateRoadTypeDiscontinuity(targetLinks.map(_.copy(roadType = RoadType.apply(roadType.toInt), status = linkStatus)))
           }
           case LinkStatus.New => {
             updateRoadTypeDiscontinuity(updatedProjectLinks.map(_.copy(roadType = RoadType.apply(roadType.toInt))))
