@@ -8,6 +8,8 @@
     var currentProject = false;
     var selectedProjectLink = false;
     var backend=new Backend();
+    var projectStatus = LinkValues.ProjectStatus;
+
     var staticField = function(labelText, dataField) {
       var field;
       field = '<div class="form-group">' +
@@ -41,10 +43,11 @@
     };
 
     var sendRoadAddressChangeButton = function() {
-
+      var actualProject = projectCollection.getCurrentProject();
+      var disabledInput = !_.isUndefined(actualProject) && actualProject.project.statusCode === projectStatus.ErroredInTR.value;
       return '<div class="project-form form-controls">' +
         '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
-        '<button id ="send-button" class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button></div>';
+        '<button id ="send-button" class="send btn btn-block btn-send"' + (disabledInput ? 'disabled' : '') +'>Tee tieosoitteenmuutosilmoitus</button></div>';
     };
 
     var showProjectChangeButton = function() {
@@ -214,13 +217,15 @@
           '</select>';
       }
       else {
+        var selectedDiscontinuity = _.max(selectedProjectLink, function(projectLink){
+          return projectLink.endAddressM;
+        }).discontinuity;
         return '<select class="form-select-control" id="discontinuityDropdown" size="1">' +
-          '<option value = "5" selected disabled hidden>5 Jatkuva</option>' +
-          '<option value="1" >1 Tien loppu</option>' +
-          '<option value="2" >2 Epäjatkuva</option>' +
-          '<option value="3" >3 ELY:n raja</option>' +
-          '<option value="4" >4 Lievä epäjatkuvuus</option>' +
-          '<option value="5" >5 Jatkuva</option>' +
+          '<option value="1" ' + (selectedDiscontinuity === 1 ? 'selected' : '') + '>1 Tien loppu</option>' +
+          '<option value="2" ' + (selectedDiscontinuity === 2 ? 'selected' : '') + '>2 Epäjatkuva</option>' +
+          '<option value="3" ' + (selectedDiscontinuity === 3 ? 'selected' : '') + '>3 ELY:n raja</option>' +
+          '<option value="4" ' + (selectedDiscontinuity === 4 ? 'selected' : '') + '>4 Lievä epäjatkuvuus</option>' +
+          '<option value="5" ' + (selectedDiscontinuity === 5 ? 'selected' : '') + '>5 Jatkuva</option>' +
           '</select>';
       }
     };
@@ -355,6 +360,10 @@
         toggleAditionalControls();
         changeDropDownValue(selectedProjectLink[0].status);
         disableFormInputs();
+        var selectedDiscontinuity = _.max(selectedProjectLink, function(projectLink){
+          return projectLink.endAddressM;
+        }).discontinuity;
+        $('#discontinuityDropdown').val(selectedDiscontinuity.toString());
       });
 
       eventbus.on('roadAddress:projectFailed', function() {
