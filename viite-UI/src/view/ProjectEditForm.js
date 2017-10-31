@@ -151,20 +151,6 @@
         '</form>';
     };
 
-    var dropdownOption = function(index, selected){
-      return '<div class="input-unit-combination">' +
-        '<select class="action-select" id="dropdown_'+index+'" size="1">'+
-        '<option id="drop_'+ index +'_' + '" '+ defineOptionModifiers(LinkStatus.NotHandled.description, selected) +'>Valitse</option>'+
-        '<option id="drop_'+ index +'_' + LinkStatus.Unchanged.description + '" value='+ LinkStatus.Unchanged.description+' ' + defineOptionModifiers(LinkStatus.Unchanged.description, selected) + '>Ennallaan</option>'+
-        '<option id="drop_'+ index +'_' + LinkStatus.Transfer.description + '" value='+ LinkStatus.Transfer.description + ' ' + defineOptionModifiers(LinkStatus.Transfer.description, selected) + '>Siirto</option>'+
-        '<option id="drop_'+ index +'_' + LinkStatus.New.description + '" value='+ LinkStatus.New.description + ' ' + defineOptionModifiers(LinkStatus.New.description, selected) +'>Uusi</option>'+
-        '<option id="drop_'+ index +'_' + LinkStatus.Terminated.description + '" value='+ LinkStatus.Terminated.description + ' ' + defineOptionModifiers(LinkStatus.Terminated.description, selected) + '>Lakkautus</option>'+
-        '<option id="drop_'+ index +'_' + LinkStatus.Numbering.description + '" value='+ LinkStatus.Numbering.description + ' ' + defineOptionModifiers(LinkStatus.Numbering.description, selected) + '>Numerointi</option>'+
-        '<option id="drop_'+ index +'_' + LinkStatus.Revert.description + '" value='+ LinkStatus.Revert.description + ' ' + defineOptionModifiers(LinkStatus.Revert.description, selected) + '>Palautus aihioksi tai tieosoitteettomaksi</option>' +
-        '</select>'+
-        '</div>';
-    };
-
     var newRoadAddressInfo = function(selected){
       return '<div class="form-group new-road-address" hidden>' +
         '<div><label></label></div><div><label style = "margin-top: 50px">TIEOSOITTEEN TIEDOT</label></div>' +

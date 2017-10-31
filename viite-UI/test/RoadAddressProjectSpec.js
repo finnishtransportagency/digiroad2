@@ -98,33 +98,37 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
       it('Check if project link data is filled', function () {
 
         //Check if when there is no data the inputs are empty
-          var feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 499897070);
-          testHelpers.selectSingleFeatureByInteraction(openLayersMap, feature, testHelpers.getSingleClickNameProjectLinkLayer());
-          expect(feature).to.not.be.undefined;
-          expect(feature.projectLinkData.linkId).to.be.equal(499897070);
-          expect($('#dropdown').val('uusi').is(':disabled')).to.be.false;
-          $('#dropDown').val('uusi').change();
-          var inputsEmpty = ($('#tie').val().length === 0 && $('#osa').val().length === 0 && $('#ajr').val().length === 0);
-          expect(inputsEmpty).to.be.true;
-          //Check if Tallenna is disabled
-          expect($('.update.btn.btn-save').is(':disabled')).to.be.true;
+        var feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 499897070);
+        testHelpers.selectSingleFeatureByInteraction(openLayersMap, feature, testHelpers.getSingleClickNameProjectLinkLayer());
+        expect(feature).to.not.be.undefined;
+        expect(feature.projectLinkData.linkId).to.be.equal(499897070);
+        expect($('#dropdown_0').val('New').is(':disabled')).to.be.false;
+        $('#dropDown_0').val('New').change();
+        expect($('#tie')).to.not.be.undefined;
+        expect($('#osa')).to.not.be.undefined;
+        expect($('#ajr')).to.not.be.undefined;
+        console.log($('#tie'));
+        var inputsEmpty = ($('#tie').val().length === 0 && $('#osa').val().length === 0 && $('#ajr').val().length === 0);
+        expect(inputsEmpty).to.be.true;
+        //Check if Tallenna is disabled
+        expect($('.update.btn.btn-save').is(':disabled')).to.be.true;
 
-          //Select another road to see the pop up
-          feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 1717275);
-          testHelpers.selectSingleFeatureByInteraction(openLayersMap, feature, testHelpers.getSingleClickNameProjectLinkLayer());
-          $('.yes').click();
+        //Select another road to see the pop up
+        feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 1717275);
+        testHelpers.selectSingleFeatureByInteraction(openLayersMap, feature, testHelpers.getSingleClickNameProjectLinkLayer());
+        $('.yes').click();
 
-          //Check if the values are filled in the input fields when data is valid
-          feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 1717395);
-          testHelpers.selectSingleFeatureByInteraction(openLayersMap, feature, testHelpers.getSingleClickNameProjectLinkLayer());
-          expect(feature).to.not.be.undefined;
-          expect(feature.projectLinkData.linkId).to.be.equal(1717395);
-          expect($('#dropdown').val('uusi').is(':disabled')).to.be.false;
-          $('#dropDown').val('uusi').change();
-          inputsEmpty = ($('#tie').val().length === 0 && $('#osa').val().length === 0 && $('#ajr').val().length === 0);
-          expect(inputsEmpty).to.be.false;
-          //Check if Tallenna is enabled
-          expect($('.update.btn.btn-save').is(':disabled')).to.be.false;
+        //Check if the values are filled in the input fields when data is valid
+        feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getRoadAddressProjectLayerName(), 1717395);
+        testHelpers.selectSingleFeatureByInteraction(openLayersMap, feature, testHelpers.getSingleClickNameProjectLinkLayer());
+        expect(feature).to.not.be.undefined;
+        expect(feature.projectLinkData.linkId).to.be.equal(1717395);
+        expect($('#dropdown').val('uusi').is(':disabled')).to.be.false;
+        $('#dropDown').val('uusi').change();
+        inputsEmpty = ($('#tie').val().length === 0 && $('#osa').val().length === 0 && $('#ajr').val().length === 0);
+        expect(inputsEmpty).to.be.false;
+        //Check if Tallenna is enabled
+        expect($('.update.btn.btn-save').is(':disabled')).to.be.false;
       });
     });
 
