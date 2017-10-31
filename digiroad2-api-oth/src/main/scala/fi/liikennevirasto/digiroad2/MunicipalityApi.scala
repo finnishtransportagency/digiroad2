@@ -1,5 +1,6 @@
 package fi.liikennevirasto.digiroad2
 
+import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.Asset.DateTimePropertyFormat
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset._
@@ -20,7 +21,6 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
 
   override def baseAuth: String = "municipality."
   override val realm: String = "Municipality API"
-  val lighting: Int = 100
 
   case object DateTimeSerializer extends CustomSerializer[DateTime](format => ( {
     case _ => throw new NotImplementedError("DateTime deserialization")
@@ -57,14 +57,20 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
 
   private def verifyLinearServiceToUse(typeId: Int): LinearAssetOperations = {
     typeId match {
-      case `lighting` => onOffLinearAssetService
+      case LitRoad.typeId => onOffLinearAssetService
       case _ => linearAssetService
     }
   }
 
-//  private def verifyPointServiceToUse(typeId: Int): PointAssetOperations = {
-//
-//  }
+  private def verifyPointServiceToUse(typeId: Int): PointAssetOperations = {
+    typeId match {
+      case Obstacles.typeId => obstacleService
+      case PedestrianCrossings.typeId => pedestrianCrossingService
+      case RailwayCrossings.typeId => railwayCrossingService
+      case TrafficLights.typeId => trafficLightService
+      //case _ => ?
+    }
+  }
 
 
   private def extractNewLinearAssets(typeId: Int, value: JValue) = {
@@ -161,14 +167,14 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
 
   def getAssetTypeId(assetType: String): Int = {
     assetType match {
-      case "lighting" => lighting
+      case "lighting" => LitRoad.typeId
       case _ => halt(NotFound("Asset type not found"))
     }
   }
 
   def getAssetName(assetTypeId: Int): String = {
     assetTypeId match {
-      case `lighting` => "hasLighting"
+      case LitRoad.typeId => "hasLighting"
       case _ => "asset"
     }
   }
@@ -191,7 +197,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
 
   def validateAssetPropertyValue(assetTypeId: Int, properties:Seq[AssetProperties]):Unit = {
     assetTypeId match {
-      case `lighting` =>
+      case LitRoad.typeId =>
         val value = extractPropertyValue(getAssetName(assetTypeId), properties, firstPropertyValueToInt)
         if(!Seq(0,1).contains(value._2))
           halt(BadRequest(s"The property values for the property with name lighting are not valid."))
