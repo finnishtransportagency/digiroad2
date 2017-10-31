@@ -94,12 +94,17 @@
     function modifyService(services, id, modifications) {
       return _.map(services, function(service) {
         if (service.id === id) {
-          delete service.typeExtension;
+          checkTypeExtension(service, modifications);
           return _.merge({}, service, modifications);
-        } else {
-          return service;
         }
+        return service;
       });
+    }
+
+    function checkTypeExtension(service, modifications)  {
+        var serviceType = modifications.serviceType ? modifications.serviceType : service.serviceType;
+          if(!serviceTypeExtensions[serviceType])
+            delete service.typeExtension;
     }
 
     rootElement.find('.form-service').on('change', '.new-service select', function (event) {
@@ -123,7 +128,7 @@
       selectedAsset.set({ services: newServices });
     });
 
-    rootElement.find('.form-traffic-sign input[type=text],select').on('change', function (event) {
+    rootElement.find('.form-traffic-sign input[type=text],.form-traffic-sign select').on('change', function (event) {
       var eventTarget = $(event.currentTarget);
       var propertyPublicId = eventTarget.attr('id');
       var propertyValue = $(event.currentTarget).val();
