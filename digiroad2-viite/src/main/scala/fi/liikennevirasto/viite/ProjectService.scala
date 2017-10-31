@@ -1016,12 +1016,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val pl: Seq[ProjectLink] = projectLinks.size match {
       case 0 => return Seq()
       case 1 => projectLinks
-      case _ => fuseProjectLinks(projectLinks, rl)
+      case _ => fuseProjectLinks(projectLinks)
     }
     pl.map(l => ProjectAddressLinkBuilder.build(rl, l))
   }
 
-  private def fuseProjectLinks(links: Seq[ProjectLink], rl: RoadLinkLike) = {
+  private def fuseProjectLinks(links: Seq[ProjectLink]) = {
     val linkIds = links.map(_.linkId).distinct
     if (linkIds.size != 1)
       throw new IllegalArgumentException(s"Multiple road link ids given for building one link: ${linkIds.mkString(", ")}")
