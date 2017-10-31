@@ -595,6 +595,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "sideCode" -> roadAddressLink.sideCode.value,
       "linkType" -> roadAddressLink.linkType.value,
       "roadLinkSource" -> roadAddressLink.roadLinkSource.value
+
     )
   }
 
@@ -611,7 +612,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     roadAddressLinkLikeToApi(projectAddressLink) ++
       Map(
         "status" -> projectAddressLink.status.value,
-        "connectedLinkId" -> projectAddressLink.connectedLinkId
+        "connectedLinkId" -> projectAddressLink.connectedLinkId,
+        "reverted" -> projectAddressLink.reversed
       )
   }
 

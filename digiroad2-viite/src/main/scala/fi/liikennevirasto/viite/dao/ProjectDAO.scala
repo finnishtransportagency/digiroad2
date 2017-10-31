@@ -78,7 +78,7 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
                        calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false,
                        geometry: Seq[Point], projectId: Long, status: LinkStatus, roadType: RoadType,
                        linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, geometryLength: Double, roadAddressId : Long,
-                       ely: Long, connectedLinkId: Option[Long] = None)
+                       ely: Long, reversed:Boolean, connectedLinkId: Option[Long] = None)
   extends BaseRoadAddress with PolyLine {
   lazy val startingPoint = if (sideCode == SideCode.AgainstDigitizing) geometry.last else geometry.head
   lazy val endPoint = if (sideCode == SideCode.AgainstDigitizing) geometry.head else geometry.last
@@ -95,7 +95,7 @@ object ProjectDAO {
   LRM_POSITION.START_MEASURE, LRM_POSITION.END_MEASURE, LRM_POSITION.SIDE_CODE, PROJECT_LINK.LRM_POSITION_ID,
   PROJECT_LINK.CREATED_BY, PROJECT_LINK.MODIFIED_BY, lrm_position.link_id,
   (LRM_POSITION.END_MEASURE - LRM_POSITION.START_MEASURE) as length, PROJECT_LINK.CALIBRATION_POINTS, PROJECT_LINK.STATUS,
-  PROJECT_LINK.ROAD_TYPE, LRM_POSITION.LINK_SOURCE as source, PROJECT_LINK.ROAD_ADDRESS_ID, PROJECT_LINK.ELY, PROJECT_LINK.CONNECTED_LINK_ID
+  PROJECT_LINK.ROAD_TYPE, LRM_POSITION.LINK_SOURCE as source, PROJECT_LINK.ROAD_ADDRESS_ID, PROJECT_LINK.ELY, PROJECT_LINK.REVERSED, PROJECT_LINK.CONNECTED_LINK_ID
   from PROJECT_LINK join LRM_POSITION
     on LRM_POSITION.ID = PROJECT_LINK.LRM_POSITION_ID"""
 
@@ -125,11 +125,12 @@ object ProjectDAO {
       val source = LinkGeomSource.apply(r.nextInt())
       val roadAddressId = r.nextLong()
       val ely = r.nextLong()
+      val reversed=r.nextBoolean()
       val connectedLinkId = Some(r.nextLong())
 
       ProjectLink(projectLinkId, roadNumber, roadPartNumber, trackCode, discontinuityType, startAddrM, endAddrM, None, None,
         None, lrmPositionId, linkId, startMValue, endMValue, sideCode, calibrationPoints, false, Seq.empty[Point], projectId,
-        status, roadType, source,length, roadAddressId, ely, connectedLinkId)
+        status, roadType, source,length, roadAddressId, ely,reversed, connectedLinkId)
     }
   }
 
@@ -142,7 +143,7 @@ object ProjectDAO {
     val addressPS = dynamicSession.prepareStatement("insert into PROJECT_LINK (id, project_id, lrm_position_id, " +
       "road_number, road_part_number, " +
       "track_code, discontinuity_type, START_ADDR_M, END_ADDR_M, created_by, " +
-      "calibration_points, status, road_type, road_address_id, connected_link_id, ely) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?)")
+      "calibration_points, status, road_type, road_address_id, connected_link_id, ely, reversed) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?)")
     val ids = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= ${roadAddresses.size}""".as[Long].list
     roadAddresses.zip(ids).foreach { case ((address), (lrmId)) =>
       RoadAddressDAO.createLRMPosition(lrmPositionPS, lrmId, address.linkId, address.sideCode.value, address.startMValue, address.endMValue, 0, address.linkGeomSource.value)
@@ -170,6 +171,7 @@ object ProjectDAO {
       else
         addressPS.setString(15, null)
       addressPS.setLong(16,address.ely)
+      addressPS.setBoolean(17,address.reversed)
       addressPS.addBatch()
 
     }
@@ -182,7 +184,9 @@ object ProjectDAO {
 
 
   def updateProjectLinksToDB( projectLinks: Seq[ProjectLink], modifier:String): Unit ={
-    val projectLinkPS = dynamicSession.prepareStatement("UPDATE project_link SET ROAD_NUMBER = ?,  ROAD_PART_NUMBER = ?, TRACK_CODE=?, DISCONTINUITY_TYPE = ?, START_ADDR_M=?, END_ADDR_M=?, MODIFIED_DATE= ? , MODIFIED_BY= ?, LRM_POSITION_ID= ?, PROJECT_ID= ? , CALIBRATION_POINTS= ? , STATUS=?,  ROAD_TYPE=? WHERE id = ?")
+    val projectLinkPS = dynamicSession.prepareStatement("UPDATE project_link SET ROAD_NUMBER = ?,  ROAD_PART_NUMBER = ?, TRACK_CODE=?, " +
+      "DISCONTINUITY_TYPE = ?, START_ADDR_M=?, END_ADDR_M=?, MODIFIED_DATE= ? , MODIFIED_BY= ?, LRM_POSITION_ID= ?, PROJECT_ID= ? , CALIBRATION_POINTS= ? , " +
+      "STATUS=?,  ROAD_TYPE=?, REVERSED = ? WHERE id = ?")
     val lrmPS = dynamicSession.prepareStatement("UPDATE LRM_POSITION SET SIDE_CODE=?, START_MEASURE=?, END_MEASURE=?, LANE_CODE=?, MODIFIED_DATE=? WHERE ID = ?")
 
     for (projectLink <-projectLinks)
@@ -200,7 +204,8 @@ object ProjectDAO {
       projectLinkPS.setInt(11, CalibrationCode.getFromAddress(projectLink).value)
       projectLinkPS.setInt(12, projectLink.status.value)
       projectLinkPS.setInt(13, projectLink.roadType.value)
-      projectLinkPS.setLong(14, projectLink.id)
+      projectLinkPS.setInt(14, if (projectLink.reversed) 1 else 0)
+      projectLinkPS.setLong(15, projectLink.id)
       projectLinkPS.addBatch()
       lrmPS.setInt(1,projectLink.sideCode.value)
       lrmPS.setDouble(2,projectLink.startMValue)
