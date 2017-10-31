@@ -262,8 +262,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       false, frozenTimeVVHAPIServiceEnabled).map(pal => pal.linkId -> pal.geometry)
       ++ (if (suravageLinks.nonEmpty)
       roadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(suravageLinks.map(_.linkId).toSet, false).map(pal => pal.linkId -> pal.geometry) else Seq())).toMap
-    without.map{pl =>
-      withGeometry(pl, linkGeometries(pl.linkId), resetAddress)}  ++ withGeom
+    val (found, unfound) = without.partition(w => linkGeometries.contains(w.linkId))
+    val foundWithGeom = found.map{pl =>
+      withGeometry(pl, linkGeometries(pl.linkId), resetAddress)}
+
+    val guessedGeom = guessGeom.guestimateGeometry(unfound.sortBy(x=>x.roadNumber).sortBy(x=>x.roadPartNumber).sortBy(x=>x.startAddrMValue), withGeom ++ foundWithGeom)
+    val unfoundWithGuessedGeom = guessedGeom.filterNot(x => linkGeometries.contains(x.linkId))
+
+    foundWithGeom ++ unfoundWithGuessedGeom ++ withGeom
   }
 
   private def withGeometry(pl: ProjectLink, linkGeometry: Seq[Point], resetAddress: Boolean) = {

@@ -101,6 +101,9 @@ trait BaseRoadAddress {
   def floating: Boolean
   def geometry: Seq[Point]
   def ely: Long
+
+  def copyWithGeometry(newGeometry: Seq[Point]): BaseRoadAddress
+
 }
 
 // Note: Geometry on road address is not directed: it isn't guaranteed to have a direction of digitization or road addressing
@@ -126,6 +129,10 @@ case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, roadTyp
         startAddrMValue + Math.round((a-startMValue) * coefficient)
       case _ => throw new InvalidAddressDataException(s"Bad sidecode $sideCode on road address $id (link $linkId)")
     }
+  }
+
+  def copyWithGeometry(newGeometry: Seq[Point]) = {
+    this.copy(geometry = newGeometry)
   }
 }
 

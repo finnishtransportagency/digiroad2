@@ -295,13 +295,15 @@
           '</select>';
       }
       else {
+        var selectedDiscontinuity = _.max(selectedProjectLink, function(projectLink){
+          return projectLink.endAddressM;
+        }).discontinuity;
         return '<select class="form-select-control" id="discontinuityDropdown" size="1">' +
-          '<option value = "5" selected disabled hidden>5 Jatkuva</option>' +
-          '<option value="1" >1 Tien loppu</option>' +
-          '<option value="2" >2 Epäjatkuva</option>' +
-          '<option value="3" >3 ELY:n raja</option>' +
-          '<option value="4" >4 Lievä epäjatkuvuus</option>' +
-          '<option value="5" >5 Jatkuva</option>' +
+          '<option value="1" ' + (selectedDiscontinuity === 1 ? 'selected' : '') + '>1 Tien loppu</option>' +
+          '<option value="2" ' + (selectedDiscontinuity === 2 ? 'selected' : '') + '>2 Epäjatkuva</option>' +
+          '<option value="3" ' + (selectedDiscontinuity === 3 ? 'selected' : '') + '>3 ELY:n raja</option>' +
+          '<option value="4" ' + (selectedDiscontinuity === 4 ? 'selected' : '') + '>4 Lievä epäjatkuvuus</option>' +
+          '<option value="5" ' + (selectedDiscontinuity === 5 ? 'selected' : '') + '>5 Jatkuva</option>' +
           '</select>';
       }
     };
@@ -431,6 +433,10 @@
         toggleAditionalControls();
         changeDropDownValue(selectedProjectLink[0].status);
         disableFormInputs();
+        var selectedDiscontinuity = _.max(selectedProjectLink, function(projectLink){
+          return projectLink.endAddressM;
+        }).discontinuity;
+        $('#discontinuityDropdown').val(selectedDiscontinuity.toString());
       });
 
       eventbus.on('roadAddress:projectFailed', function() {
