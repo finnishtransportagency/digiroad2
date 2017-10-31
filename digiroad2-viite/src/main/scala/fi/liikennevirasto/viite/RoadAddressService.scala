@@ -25,14 +25,6 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
 
-  lazy val dr2properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    props
-  }
-
-  private lazy val useFrozenLinkService : Boolean = dr2properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean
-
   val logger = LoggerFactory.getLogger(getClass)
 
   val HighwayClass = 1
@@ -179,7 +171,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
   private def publishChangeSet(changeSet: AddressChangeSet): Unit = {
     //Temporary filter for missing road addresses QA
-    if(!useFrozenLinkService){
+    if(!frozenTimeVVHAPIServiceEnabled){
       eventbus.publish("roadAddress:persistMissingRoadAddress", changeSet.missingRoadAddresses)
     }
     eventbus.publish("roadAddress:persistAdjustments", changeSet.adjustedMValues)
