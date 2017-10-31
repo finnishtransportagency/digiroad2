@@ -159,6 +159,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       InUse, NormalLinkInterface)
     val (projectLinks, palinks) = l.partition(_.isInstanceOf[ProjectLink])
     val dbLinks = ProjectDAO.getProjectLinks(id)
+    when(mockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
     when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenAnswer(
       toMockAnswer(dbLinks ++ projectLinks.asInstanceOf[Seq[ProjectLink]].filterNot(l => dbLinks.map(_.linkId).contains(l.linkId)),
         roadLink, palinks.asInstanceOf[Seq[ProjectAddressLink]].map(toRoadLink)
@@ -307,6 +308,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       val linkIds205 = partitioned._1.map(_.linkId).toSet
       val linkIds206 = partitioned._2.map(_.linkId).toSet
       reset(mockRoadLinkService)
+      when(mockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenAnswer(
         toMockAnswer(projectLinks, roadLink)
       )
@@ -355,6 +357,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       val highestDistanceEnd= projectLinks.map(p=>p.endAddrMValue).max
       val linkIds207 = partitioned._1.map(_.linkId).toSet
       reset(mockRoadLinkService)
+      when(mockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenAnswer(
         toMockAnswer(projectLinks, roadLink)
       )
@@ -399,6 +402,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       val highestDistanceEnd= projectLinks.map(p=>p.endAddrMValue).max
       val linkIds207 = partitioned._1.map(_.linkId).toSet
       reset(mockRoadLinkService)
+      when(mockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenAnswer(
         toMockAnswer(projectLinks, roadLink)
       )
@@ -427,6 +431,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       , 540.3960283713503, State, 1, TrafficDirection.AgainstDigitizing, Motorway,
       Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
       InUse, NormalLinkInterface)
+    when(mockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
     when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink))
     runWithRollback {
       val id = 0
@@ -444,6 +449,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
           None, 0L, 1235L, 0.0, 71.1, SideCode.Unknown, (None, None), false,
           Seq(Point(510.0, 0.0), Point(581.0, 0.0)), 0L, LinkStatus.Unknown, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface, 71.1, 0L, 0))
       reset(mockRoadLinkService)
+      when(mockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenAnswer(
         toMockAnswer(projectLinks ++ newLinkTemplates, roadLink)
       )
@@ -892,6 +898,7 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
   test("changing project ELY") {
     runWithRollback {
       val roadAddressProject = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None, None)
+      when(mockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
       val project = projectService.createRoadLinkProject(roadAddressProject)
       project.ely should be(None)
       val result = projectService.setProjectEly(project.id, 2)
