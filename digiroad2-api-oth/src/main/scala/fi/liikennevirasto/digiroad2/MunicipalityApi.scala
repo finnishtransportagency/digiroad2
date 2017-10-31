@@ -50,24 +50,23 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
 
   case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
 
-
   before() {
     basicAuth
   }
 
   private def verifyLinearServiceToUse(typeId: Int): LinearAssetOperations = {
     typeId match {
-      case _ if LitRoad.typeId == typeId => onOffLinearAssetService
+      case LitRoad.typeId  => onOffLinearAssetService
       case _ => linearAssetService
     }
   }
 
   private def verifyPointServiceToUse(typeId: Int): PointAssetOperations = {
     typeId match {
-      case _ if Obstacles.typeId == typeId => obstacleService
-      case _ if PedestrianCrossings.typeId == typeId  => pedestrianCrossingService
-      case _ if RailwayCrossings.typeId == typeId  => railwayCrossingService
-      case _ if TrafficLights.typeId == typeId => trafficLightService
+      case Obstacles.typeId  => obstacleService
+      case PedestrianCrossings.typeId   => pedestrianCrossingService
+      case RailwayCrossings.typeId  => railwayCrossingService
+      case TrafficLights.typeId  => trafficLightService
     }
   }
 
@@ -172,7 +171,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
 
   def getAssetName(assetTypeId: Int): String = {
     assetTypeId match {
-      case _ if LitRoad.typeId == assetTypeId   => "hasLighting"
+      case LitRoad.typeId   => "hasLighting"
       case _ => "asset"
     }
   }
@@ -195,7 +194,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
 
   def validateAssetPropertyValue(assetTypeId: Int, properties:Seq[AssetProperties]):Unit = {
     assetTypeId match {
-      case _ if LitRoad.typeId == assetTypeId  =>
+      case LitRoad.typeId  =>
         val value = extractPropertyValue(getAssetName(assetTypeId), properties, firstPropertyValueToInt)
         if(!Seq(0,1).contains(value._2))
           halt(BadRequest(s"The property values for the property with name lighting are not valid."))
