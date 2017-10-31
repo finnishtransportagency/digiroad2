@@ -14,7 +14,7 @@
         ids = projectLinkCollection.getMultiSelectIds(linkid);
         current = projectLinkCollection.getByLinkId(ids);
       }
-      eventbus.trigger('projectLink:clicked', get());
+      eventbus.trigger('projectLink:clicked', get(linkid));
     };
 
     var splitSuravageLink = function(suravage, split, mousePoint) {
@@ -79,11 +79,17 @@
       }
     };
 
-    var get = function() {
-      return _.map(current, function(projectLink) {
-        return projectLink.getData();
+    var get = function(linkId) {
+      var clicked = _.filter(current, function (c) {return c.getData().linkId == linkId;});
+      var others = _.filter(_.map(current, function(projectLink) { return projectLink.getData();}), function (link) {
+        return link.linkId != linkId;
       });
+      if (!_.isUndefined(clicked[0])){
+        return [clicked[0].getData()].concat(others);
+      }
+      return others;
     };
+
     var setCurrent = function(newSelection) {
       current = newSelection;
     };
