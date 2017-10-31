@@ -456,6 +456,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val linkIds205 = partitioned._1.map(_.linkId).toSet
       val linkIds206 = partitioned._2.map(_.linkId).toSet
       reset(mockRoadLinkService)
+      when(mockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenAnswer(
         toMockAnswer(projectLinks, roadLink)
       )
@@ -586,9 +587,6 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       println("\n Total length (0+1/2):" + (sortedLinks.filter(_.track != Track.Combined).map(_.geometryLength).sum/2 +
         sortedLinks.filter(_.track == Track.Combined).map(_.geometryLength).sum))
     }
-    def toGeom(json: Option[Any]): List[Point] = {
-      json.get.asInstanceOf[List[Map[String, Double]]].map(m => Point(m("x"), m("y"), m("z")))
-    }
 
     runWithRollback {
       val links=ProjectDAO.getProjectLinks(7081807)
@@ -605,6 +603,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       ProjectDAO.updateProjectLinksToDB(adjusted, "-")
 
       reset(mockRoadLinkService)
+      when(mockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenAnswer(
         toMockAnswer(adjusted.map(toRoadLink))
       )
