@@ -188,7 +188,7 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
   }
 
   def updateSpeedLimitAssets(): Unit = {
-    val lastUpdate = obtainLastExecutionDate(speedLimitAssetTierekisteriImporter.assetName, SpeedLimit.typeId)
+    val lastUpdate = obtainLastExecutionDate(speedLimitAssetTierekisteriImporter.assetName, SpeedLimitAsset.typeId)
     speedLimitAssetTierekisteriImporter.updateAssets(lastUpdate)
   }
 }

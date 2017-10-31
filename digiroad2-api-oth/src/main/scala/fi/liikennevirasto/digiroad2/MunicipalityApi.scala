@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.Asset.DateTimePropertyFormat
-import fi.liikennevirasto.digiroad2.asset._
+import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, _}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.user.UserProvider
@@ -57,21 +57,19 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
 
   private def verifyLinearServiceToUse(typeId: Int): LinearAssetOperations = {
     typeId match {
-      case LitRoad.typeId => onOffLinearAssetService
+      case _ if LitRoad.typeId == typeId => onOffLinearAssetService
       case _ => linearAssetService
     }
   }
 
   private def verifyPointServiceToUse(typeId: Int): PointAssetOperations = {
     typeId match {
-      case Obstacles.typeId => obstacleService
-      case PedestrianCrossings.typeId => pedestrianCrossingService
-      case RailwayCrossings.typeId => railwayCrossingService
-      case TrafficLights.typeId => trafficLightService
-      //case _ => ?
+      case _ if Obstacles.typeId == typeId => obstacleService
+      case _ if PedestrianCrossings.typeId == typeId  => pedestrianCrossingService
+      case _ if RailwayCrossings.typeId == typeId  => railwayCrossingService
+      case _ if TrafficLights.typeId == typeId => trafficLightService
     }
   }
-
 
   private def extractNewLinearAssets(typeId: Int, value: JValue) = {
     typeId match {
@@ -174,7 +172,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
 
   def getAssetName(assetTypeId: Int): String = {
     assetTypeId match {
-      case LitRoad.typeId => "hasLighting"
+      case _ if LitRoad.typeId == assetTypeId   => "hasLighting"
       case _ => "asset"
     }
   }
@@ -197,7 +195,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
 
   def validateAssetPropertyValue(assetTypeId: Int, properties:Seq[AssetProperties]):Unit = {
     assetTypeId match {
-      case LitRoad.typeId =>
+      case _ if LitRoad.typeId == assetTypeId  =>
         val value = extractPropertyValue(getAssetName(assetTypeId), properties, firstPropertyValueToInt)
         if(!Seq(0,1).contains(value._2))
           halt(BadRequest(s"The property values for the property with name lighting are not valid."))
