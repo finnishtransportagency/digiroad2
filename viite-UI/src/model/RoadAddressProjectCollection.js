@@ -14,6 +14,7 @@
     var self = this;
     var publishableProject = false;
     var LinkStatus = LinkValues.LinkStatus;
+    var projectStatus = LinkValues.ProjectStatus;
     var BAD_REQUEST_400 = 400;
     var UNAUTHORIZED_401 = 401;
     var PRECONDITION_FAILED_412 = 412;
@@ -404,7 +405,8 @@
     };
 
     var deleteButton = function(index, roadNumber, roadPartNumber){
-      return '<button roadNumber="'+roadNumber+'" roadPartNumber="'+roadPartNumber+'" id="'+index+'" class="delete btn-delete">X</button>';
+      var disabledInput = !_.isUndefined(currentProject) && currentProject.project.statusCode === projectStatus.ErroredInTR.value;
+      return '<button roadNumber="'+roadNumber+'" roadPartNumber="'+roadPartNumber+'" id="'+index+'" class="delete btn-delete" '+ (disabledInput ? 'disabled' : '') +'>X</button>';
     };
 
     var addToDirtyRoadPartList = function (queryresult) {

@@ -7,7 +7,11 @@ import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset.PolyLine
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
+import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.viite.dao.CalibrationCode.{AtBeginning, AtBoth, AtEnd, No}
+import fi.liikennevirasto.viite.dao.ProjectState.Incomplete
+import fi.liikennevirasto.viite.model.ProjectAddressLink
 import fi.liikennevirasto.viite.{ReservedRoadPart, RoadType}
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import org.joda.time.DateTime
@@ -275,6 +279,21 @@ object ProjectDAO {
                 where $filter AND ROWNUM < 2 """
     Q.queryNA[Long](query).firstOption.nonEmpty
   }
+
+
+  //Should be only one
+  def getProjectsWithGivenLinkId(linkId:Long): Seq[Long] = {
+    val query =
+      s"""SELECT P.ID
+               FROM PROJECT P
+              JOIN PROJECT_LINK PL ON P.ID=PL.PROJECT_ID
+              JOIN LRM_POSITION L ON PL.LRM_POSITION_ID=L.ID
+              WHERE P.STATE = ${Incomplete.value} AND L.LINK_ID=$linkId;"""
+    Q.queryNA[(Long)](query).list
+  }
+
+
+
 
   def updateAddrMValues(projectLink: ProjectLink): Unit = {
     sqlu"""update project_link set modified_date = sysdate, start_addr_m = ${projectLink.startAddrMValue}, end_addr_m = ${projectLink.endAddrMValue}, calibration_points = ${CalibrationCode.getFromAddress(projectLink).value} where id = ${projectLink.id}

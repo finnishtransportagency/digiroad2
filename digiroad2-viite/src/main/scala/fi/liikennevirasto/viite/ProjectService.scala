@@ -119,6 +119,33 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
+
+  /**
+    *
+    * @param projectId project's id
+    * @return if state of the project is incomplete
+    */
+
+  def isWritableState(projectId:Long): Boolean = {
+    withDynTransaction {
+      projectWritableCheck(projectId) match {
+        case Some(errorMessage) => false
+        case None => true
+      }
+    }
+  }
+
+  private def projectWritableCheck(projectId:Long):Option[String] = {
+    ProjectDAO.getProjectStatus(projectId)  match {
+      case Some(projectState) =>
+        if (projectState==ProjectState.Incomplete)
+          return None
+        Some("Projektin tila ei ole keskeneräinen") //project state is not incomplete
+      case None => Some("Projektia ei löytynyt") //project could not be found
+    }
+  }
+
+
   def validateProjectDate(reservedParts: Seq[ReservedRoadPart], date: DateTime): Option[String] = {
     reservedParts.foreach( part => {
       if(part.startDate.nonEmpty && part.startDate.get.isAfter(date))
@@ -765,6 +792,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
     None
   }
+
+  def isProjectWithGivenLinkIdWritable (linkId:Long): Boolean = {
+    val projects=ProjectDAO.getProjectsWithGivenLinkId(linkId)
+    if (projects.isEmpty)
+      return false
+    true
+  }
+
 
   def revertLinks(projectId: Long, roadNumber: Long, roadPartNumber: Long, links: Iterable[LinkToRevert]): Option[String] = {
     try {

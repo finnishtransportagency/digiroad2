@@ -9,6 +9,8 @@
     var selectedProjectLink = false;
     var markers = ['A', 'B'];
     var backend=new Backend();
+    var projectStatus = LinkValues.ProjectStatus;
+
     var staticField = function(labelText, dataField) {
       var field;
       field = '<div class="form-group">' +
@@ -42,10 +44,11 @@
     };
 
     var sendRoadAddressChangeButton = function() {
-
+      var actualProject = projectCollection.getCurrentProject();
+      var disabledInput = !_.isUndefined(actualProject) && actualProject.project.statusCode === projectStatus.ErroredInTR.value;
       return '<div class="project-form form-controls">' +
         '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
-        '<button id ="send-button" class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button></div>';
+        '<button id ="send-button" class="send btn btn-block btn-send"' + (disabledInput ? 'disabled' : '') +'>Tee tieosoitteenmuutosilmoitus</button></div>';
     };
 
     var showProjectChangeButton = function() {

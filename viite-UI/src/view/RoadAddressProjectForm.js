@@ -5,8 +5,8 @@
     var activeLayer = false;
     var hasReservedRoadParts = false;
     var projectStatus = LinkValues.ProjectStatus;
+    var disabledInput = false;
     var editableStatus = [projectStatus.Incomplete.value, projectStatus.ErroredInTR.value, projectStatus.Unknown.value];
-    
     var staticField = function(labelText, dataField) {
       var field;
       field = '<div class="form-group">' +
@@ -27,7 +27,7 @@
     var largeInputField = function (dataField) {
       return '<div class="form-group">' +
         '<label class="control-label">LISÄTIEDOT</label>'+
-        '<textarea class="form-control large-input roadAddressProject" id="lisatiedot">'+(dataField === undefined || dataField === null ? "" : dataField )+'</textarea>'+
+        '<textarea class="form-control large-input roadAddressProject" id="lisatiedot" ' + (disabledInput ? 'disabled' : '') +'>'+(dataField === undefined || dataField === null ? "" : dataField )+'</textarea>'+
         '</div>';
     };
 
@@ -37,7 +37,7 @@
         lengthLimit = 'maxlength="' + maxLength + '"';
       return '<div class="form-group input-required">' +
         '<label class="control-label required">' + labelText + '</label>' +
-        '<input type="text" class="form-control" id = "'+id+'"'+lengthLimit+' placeholder = "'+placeholder+'" value="'+value+'"/>' +
+        '<input type="text" class="form-control" id = "'+id+'"'+lengthLimit+' placeholder = "'+placeholder+'" value="'+value+'" '+ (disabledInput ? 'disabled' : '') +'/>' +
         '</div>';
     };
 
@@ -186,8 +186,9 @@
 
     var addSmallInputNumber = function(id, value){
       //Validate only number characters on "onkeypress" including TAB and backspace
-      return '<input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode == 8 || event.keyCode == 9)' +
-        '" class="form-control small-input roadAddressProject" id="'+id+'" value="'+(_.isUndefined(value)? '' : value )+'" onclick=""/>';
+      var smallNumberImput = '<input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode == 8 || event.keyCode == 9)' +
+        '" class="form-control small-input roadAddressProject" id="'+id+'" value="'+(_.isUndefined(value)? '' : value )+'" onclick="" '+ (disabledInput ? 'disabled' : '')+'/>';
+      return smallNumberImput;
     };
 
     var addDatePicker = function () {
@@ -262,6 +263,7 @@
           hasReservedRoadParts = false;
           currentProject = result.project;
           currentProject.isDirty = false;
+          disabledInput = !_.isUndefined(currentProject) && currentProject.statusCode === projectStatus.ErroredInTR.value;
           var text = '';
           var index = 0;
           projectCollection.setCurrentRoadPartList(result.formInfo);
@@ -300,6 +302,7 @@
         eventbus.once('roadAddress:projectSaved', function (result) {
           currentProject = result.project;
           currentProject.isDirty = false;
+          disabledInput = !_.isUndefined(currentProject) && currentProject.statusCode === projectStatus.ErroredInTR.value;
           jQuery('.modal-overlay').remove();
           if(!_.isUndefined(result.projectAddresses)) {
             eventbus.trigger('linkProperties:selectedProject', result.projectAddresses);
@@ -346,6 +349,7 @@
           id: 0,
           isDirty:false
         }; //clears old data
+        disabledInput = !_.isUndefined(currentProject) && currentProject.statusCode === projectStatus.ErroredInTR.value;
         $("#roadAddressProject").html("");
         rootElement.html(newProjectTemplate());
         jQuery('.modal-overlay').remove();
@@ -361,6 +365,7 @@
       eventbus.on('roadAddress:openProject', function(result) {
         currentProject = result.project;
         currentProject.isDirty = false;
+        disabledInput = !_.isUndefined(currentProject) && currentProject.statusCode === projectStatus.ErroredInTR.value;
         projectCollection.clearRoadAddressProjects();
         projectCollection.setCurrentRoadPartList(result.projectLinks);
         var text = '';
@@ -381,8 +386,8 @@
         applicationModel.setProjectFeature(currentProject.id);
         applicationModel.setOpenProject(true);
         activeLayer = true;
-        rootElement.find('.btn-reserve').prop("disabled", false);
-        rootElement.find('.btn-next').prop("disabled", false);
+        rootElement.find('.btn-reserve').prop("disabled", disabledInput);
+        rootElement.find('.btn-next').prop("disabled", disabledInput);
         eventbus.trigger('roadAddressProject:clearTool');
         applicationModel.removeSpinner();
         disableFormInputs();
@@ -451,7 +456,7 @@
           currentProject.statusCode = projectStatus.Incomplete.value;
           currentProject.statusDescription = projectStatus.Incomplete.description;
           saveAndNext();
-        } else if(currentProject.isDirty){
+        } else if(currentProject.isDirty && !disabledInput){
           if(currentProject.id === 0){
             createNewProject();
           } else {
@@ -549,7 +554,7 @@
         var isDirty = !_.isUndefined(currentProject.isDirty) && currentProject.isDirty;
         new GenericConfirmPopup(popupMessage, {
           successCallback: function () {
-            if(isDirty){
+            if(isDirty && !disabledInput){
               createOrSaveProject();
               _.defer(function(){
                 closeProjectMode(changeLayerMode);
@@ -579,7 +584,11 @@
       rootElement.on('click', '#cancelEdit', function(){
         new GenericConfirmPopup('Haluatko tallentaa tekemäsi muutokset?', {
           successCallback: function() {
-            saveAndNext();
+            if(!disabledInput) {
+              saveAndNext();
+            } else {
+              reOpenCurrent();
+            }
             eventbus.trigger('roadAddressProject:enableInteractions');
           },
           closeCallback: function(){
