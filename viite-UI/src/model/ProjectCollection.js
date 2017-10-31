@@ -55,14 +55,11 @@
     };
 
     this.getMultiSelectIds = function (linkId) {
-      var chain = _.filter(fetchedProjectLinks, function (linkChain) {
+      var chain = _.find(fetchedProjectLinks, function (linkChain) {
         var pureChain = _.map(linkChain, function(l) { return l.getData(); });
-        return _.some(pureChain, {"linkId": linkId})|| _.some(pureChain, {"linkId": -linkId});
+        return _.some(pureChain, {"linkId": linkId});
       });
-      return _.map(chain, function (links) {
-        return _.map(_.sortBy(links, function(l){return l.endAddressM;}), function (link) {
-          return link.getData().linkId; });
-      });
+      return _.map(chain, function (link) { return link.getData().linkId; });
     };
 
     this.getByLinkId = function (ids) {
