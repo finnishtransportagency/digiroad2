@@ -476,13 +476,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       val linkId = params.get("linkId").map(_.toLong)
       (projectId, linkId) match {
         case (Some(project), Some(link)) =>
-          val writableProject = linkHasWritableProject(linkId.get)
-          val error = writableProject.revertSplit(project, link)
-          if (error.nonEmpty) {
-            PreconditionFailed(error.get)
-          } else {
-            NoContent()
-          }
+          val error = projectService.revertSplit(project, link)
+          Map("success" -> error.isEmpty, "message" -> error)
         case _ => BadRequest("Missing mandatory 'projectId' or 'linkId' parameter from URI: /project/split/:projectId/:linkId")
       }
     } catch {
@@ -529,7 +524,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       case _ => projectService.getProjectLinksWithSuravage(roadAddressService, projectId, boundingRectangle, Seq((1, 19999)), Set())
     }
 
-    val partitionedRoadLinks = ProjectLinkPartitioner.partition(viiteRoadLinks)
+    val partitionedRoadLinks = ProjectLinkPartitioner.partition(viiteRoadLinks.filter(_.length >= MinAllowedRoadAddressLength))
     partitionedRoadLinks.map {
       _.map(projectAddressLinkToApi)
     }
@@ -609,10 +604,15 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   def projectAddressLinkToApi(projectAddressLink: ProjectAddressLink): Map[String, Any] = {
     roadAddressLinkLikeToApi(projectAddressLink) ++
+      (if (projectAddressLink.isSplit)
       Map(
         "status" -> projectAddressLink.status.value,
-        "connectedLinkId" -> projectAddressLink.connectedLinkId
-      )
+        "connectedLinkId" -> projectAddressLink.connectedLinkId,
+        "originalGeometry" -> projectAddressLink.originalGeometry)
+    else
+      Map(
+        "status" -> projectAddressLink.status.value
+      ))
   }
 
   def roadAddressProjectToApi(roadAddressProject: RoadAddressProject): Map[String, Any] = {
