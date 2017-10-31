@@ -621,9 +621,7 @@
       var findNearestSuravageLink = function(point) {
 
         var possibleSplit = _.filter(vectorSource.getFeatures().concat(suravageRoadProjectLayer.getSource().getFeatures()), function(feature){
-          var toBeSplit1stTime = (feature.projectLinkData.roadLinkSource == LinkGeomSource.SuravageLinkInterface.value && _.isUndefined(feature.projectLinkData.connectedLinkId));
-          var toBeSplitNthTime = (feature.projectLinkData.roadLinkSource == LinkGeomSource.NormalLinkInterface.value && !_.isUndefined(feature.projectLinkData.connectedLinkId) && feature.projectLinkData.status != LinkStatus.Terminated.value);
-          return !_.isUndefined(feature.projectLinkData) && (toBeSplit1stTime || toBeSplitNthTime);
+          return !_.isUndefined(feature.projectLinkData) && (feature.projectLinkData.roadLinkSource == LinkGeomSource.SuravageLinkInterface.value);
         });
         return _.chain(possibleSplit)
             .map(function(feature) {
@@ -675,7 +673,12 @@
           return;
         }
         var nearestSuravage = nearest.feature.projectLinkData;
+        nearestSuravage.points = _.isUndefined(nearestSuravage.originalGeometry) ?
+          nearestSuravage.points : nearestSuravage.originalGeometry;
         var splitProperties = calculateSplitProperties(nearestSuravage, mousePoint);
+        if (!_.isUndefined(nearestSuravage.connectedLinkId)) {
+          nearest.feature.geometry = pointsToLineString(nearestSuravage.originalGeometry);
+        }
         selectedProjectLinkProperty.splitSuravageLink(nearestSuravage, splitProperties, mousePoint);
         selectSingleClick.getFeatures().clear();
         selectSingleClick.getFeatures().push(nearest.feature);
