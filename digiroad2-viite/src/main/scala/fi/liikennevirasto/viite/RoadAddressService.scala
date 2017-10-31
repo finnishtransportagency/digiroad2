@@ -1,4 +1,5 @@
 package fi.liikennevirasto.viite
+import java.util.Properties
 import fi.liikennevirasto.digiroad2.RoadLinkType.UnknownRoadLinkType
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
@@ -23,6 +24,14 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
+
+  lazy val dr2properties: Properties = {
+    val props = new Properties()
+    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
+    props
+  }
+
+  private lazy val useFrozenLinkService : Boolean = dr2properties.getProperty("digiroad2.VVHRoadlink.frozen", "false").toBoolean
 
   val logger = LoggerFactory.getLogger(getClass)
 
@@ -169,7 +178,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   private def publishChangeSet(changeSet: AddressChangeSet): Unit = {
-    eventbus.publish("roadAddress:persistMissingRoadAddress", changeSet.missingRoadAddresses)
+    //Temporary filter for missing road addresses QA
+    if(!useFrozenLinkService){
+      eventbus.publish("roadAddress:persistMissingRoadAddress", changeSet.missingRoadAddresses)
+    }
     eventbus.publish("roadAddress:persistAdjustments", changeSet.adjustedMValues)
     eventbus.publish("roadAddress:floatRoadAddress", changeSet.toFloatingAddressIds)
   }
@@ -193,7 +205,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val fetchMissingRoadAddressesByBoundingBoxF = Future(fetchMissingRoadAddressesByBoundingBox(boundingRectangle))
 
     val (floatingViiteRoadLinks, addresses, floating) = Await.result(fetchRoadAddressesByBoundingBoxF, Duration.Inf)
-    val missingViiteRoadAddress = Await.result(fetchMissingRoadAddressesByBoundingBoxF, Duration.Inf)
+    val missingViiteRoadAddress = if(!frozenTimeVVHAPIServiceEnabled) Await.result(fetchMissingRoadAddressesByBoundingBoxF, Duration.Inf) else Map[Long, Seq[MissingRoadAddress]]()
     logger.info("End fetch addresses in %.3f sec".format((System.currentTimeMillis() - fetchAddrStartTime) * 0.001))
 
     val roadsWithEndDate = addresses.values.flatten.filter(a => a.endDate.isDefined).map(_.linkId).toSeq
@@ -228,11 +240,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
     val (filledTopology, changeSet) = RoadAddressFiller.fillTopology(roadLinks, viiteRoadLinks)
 
-    eventbus.publish("roadAddress:persistMissingRoadAddress", changeSet.missingRoadAddresses)
-    eventbus.publish("roadAddress:persistAdjustments", changeSet.adjustedMValues)
-    eventbus.publish("roadAddress:floatRoadAddress", changeSet.toFloatingAddressIds)
+    publishChangeSet(changeSet)
 
-    val returningTopology = filledTopology
+    val returningTopology = filledTopology.filterNot(p => p.anomaly == Anomaly.NoAddressGiven)
 
     returningTopology ++ missingFloating.flatMap(_._2)
 
@@ -544,9 +554,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
     val (filledTopology, changeSet) = RoadAddressFiller.fillTopology(roadLinksWithComplimentary, viiteRoadLinks)
 
-    eventbus.publish("roadAddress:persistMissingRoadAddress", changeSet.missingRoadAddresses)
-    eventbus.publish("roadAddress:persistAdjustments", changeSet.adjustedMValues)
-    eventbus.publish("roadAddress:floatRoadAddress", changeSet.toFloatingAddressIds)
+    publishChangeSet(changeSet)
 
     filledTopology
   }
