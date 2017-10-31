@@ -158,8 +158,6 @@
     };
 
     var selectedProjectLinkTemplate = function (project) {
-      var selection = selectedData(selected);
-
       return _.template('' +
         '<header>' +
         titleWithProjectName(project.name) +
