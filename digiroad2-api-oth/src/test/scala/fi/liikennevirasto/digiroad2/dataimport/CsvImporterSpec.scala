@@ -289,7 +289,6 @@ class CsvImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       override def withDynTransaction[T](f: => T): T = f
       override val tierekisteriClient: TierekisteriMassTransitStopClient = mockTierekisteriClient
       override val massTransitStopDao: MassTransitStopDao = mockMassTransitStopDao
-      override val tierekisteriEnabled = true
     }
 
     val mockMassTransitStopService = MockitoSugar.mock[MassTransitStopService]

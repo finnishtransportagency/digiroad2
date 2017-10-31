@@ -889,10 +889,10 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       sqlu"""
       insert all
         into asset(id, asset_type_id, created_by, created_date, valid_to, modified_by, modified_date)
-        values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $username, CURRENT_TIMESTAMP)
+        values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $username, sysdate)
 
         into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
-        values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, CURRENT_TIMESTAMP, $vvhTimeStamp, $linkSource)
+        values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, sysdate, $vvhTimeStamp, $linkSource)
 
         into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId)
@@ -905,7 +905,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       values ($id, $typeId, $username, sysdate, #$validTo)
 
       into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
-      values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, CURRENT_TIMESTAMP, $vvhTimeStamp, $linkSource)
+      values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, sysdate, $vvhTimeStamp, $linkSource)
 
       into asset_link(asset_id, position_id)
       values ($id, $lrmPositionId)

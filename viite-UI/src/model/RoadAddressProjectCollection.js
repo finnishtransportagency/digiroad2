@@ -135,6 +135,7 @@
       currentRoadPartList = [];
       dirtyProjectLinkIds = [];
       dirtyProjectLinks = [];
+      reservedDirtyRoadPartList = [];
       projectinfo=undefined;
       backend.abortLoadingProject();
     };
