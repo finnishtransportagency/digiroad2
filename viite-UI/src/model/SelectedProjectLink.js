@@ -13,7 +13,7 @@
         ids = [linkid];
       } else {
         ids = projectLinkCollection.getMultiSelectIds(linkid);
-        current = projectLinkCollection.getByLinkId(_.flatten(ids));
+        current = projectLinkCollection.getByLinkId(ids);
       }
       eventbus.trigger('projectLink:clicked', get());
     };
@@ -35,7 +35,7 @@
         ids = [linkid];
       } else {
         ids = projectLinkCollection.getMultiSelectIds(linkid);
-        current = projectLinkCollection.getByLinkId(_.flatten(ids));
+        current = projectLinkCollection.getByLinkId(ids);
       }
       var orderedSplitParts = orderSplitParts(get());
       var suravageA = orderedSplitParts[0];
@@ -139,7 +139,7 @@
       current = newSelection;
     };
     var isSelected = function(linkId) {
-      return _.contains(_.flatten(ids), linkId);
+      return _.contains(ids, linkId);
     };
 
     var clean = function(){
