@@ -436,7 +436,8 @@
       };
 
       var isProjectEditable = function () {
-        return _.contains(editableStatus, projectCollection.getCurrentProject().project.statusCode);
+        return _.isUndefined(projectCollection.getCurrentProject()) ||
+          _.contains(editableStatus, projectCollection.getCurrentProject().project.statusCode);
       };
 
       rootElement.on('click', '#generalNext', function () {
