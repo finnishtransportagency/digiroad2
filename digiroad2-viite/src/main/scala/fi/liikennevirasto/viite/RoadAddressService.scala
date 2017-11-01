@@ -155,7 +155,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val missingLinkIds = linkIds -- floating.keySet -- allRoadAddressesAfterChangeTable.keySet
     val missedRL = withTiming(
       withDynTransaction {
-        if (everything || frozenTimeVVHAPIServiceEnabled) {
+        if (everything || !frozenTimeVVHAPIServiceEnabled) {
           RoadAddressDAO.getMissingRoadAddresses(missingLinkIds)
         } else {
           List[MissingRoadAddress]()
