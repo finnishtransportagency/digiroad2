@@ -153,9 +153,14 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       addresses.keySet.contains(id) || normalRoadLinkIds.contains(id)))
     val allRoadAddressesAfterChangeTable = applyChanges(allRoadLinks, if (!frozenTimeVVHAPIServiceEnabled) filteredChangedRoadLinks else Seq(), addresses)
     val missingLinkIds = linkIds -- floating.keySet -- allRoadAddressesAfterChangeTable.keySet
-    val missedRL = withTiming(withDynTransaction {
-      RoadAddressDAO.getMissingRoadAddresses(missingLinkIds)
-    }.groupBy(_.linkId), "End finding missing road addresses in %.3f sec")
+    val missedRL = withTiming(
+      withDynTransaction {
+        if (everything || frozenTimeVVHAPIServiceEnabled) {
+          RoadAddressDAO.getMissingRoadAddresses(missingLinkIds)
+        } else {
+          List[MissingRoadAddress]()
+        }
+      }.groupBy(_.linkId), "End finding missing road addresses in %.3f sec")
     val (changedFloating, missingFloating) = floatingViiteRoadLinks.partition(ral => linkIds.contains(ral._1))
     val roadAddressLinkMap = createRoadAddressLinkMap(allRoadLinks, changedFloating, allRoadAddressesAfterChangeTable, missedRL)
 
