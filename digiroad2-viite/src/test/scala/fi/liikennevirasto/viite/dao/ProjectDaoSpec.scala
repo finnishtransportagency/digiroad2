@@ -129,6 +129,52 @@ class ProjectDaoSpec  extends FunSuite with Matchers {
     }
   }
 
+  test("Update project link  to reverted") {
+    runWithRollback {
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
+      ProjectDAO.createRoadAddressProject(rap)
+      ProjectDAO.reserveRoadPart(id, 5, 203, rap.createdBy)
+      val addresses = RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(rap))
+      ProjectDAO.create(addresses)
+      val projectLinks = ProjectDAO.getProjectLinks(id)
+      projectLinks.count(x=> !x.reversed) should be (projectLinks.size)
+      val reversedprojectLinks=projectLinks.map(x=>x.copy(reversed = true))
+      ProjectDAO.updateProjectLinksToDB(reversedprojectLinks,"testuset")
+      val updatedProjectLinks = ProjectDAO.getProjectLinks(id)
+      updatedProjectLinks.count(x=>x.reversed) should be (updatedProjectLinks.size)
+    }
+  }
+
+
+  test("Create reverted project link") {
+    runWithRollback {
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
+      ProjectDAO.createRoadAddressProject(rap)
+      ProjectDAO.reserveRoadPart(id, 5, 203, rap.createdBy)
+      val addresses = RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(rap))
+      ProjectDAO.create(addresses.map(x=>x.copy(reversed = true)))
+      val projectLinks = ProjectDAO.getProjectLinks(id)
+      projectLinks.count(x=> x.reversed) should be (projectLinks.size)
+    }
+    }
+
+
+  test("Create reverted project link no reverted links") {
+    runWithRollback {
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
+      ProjectDAO.createRoadAddressProject(rap)
+      ProjectDAO.reserveRoadPart(id, 5, 203, rap.createdBy)
+      val addresses = RoadAddressDAO.fetchByRoadPart(5, 203).map(toProjectLink(rap))
+      ProjectDAO.create(addresses.map(x=>x.copy(reversed = false)))
+      val projectLinks = ProjectDAO.getProjectLinks(id)
+      projectLinks.count(x=> x.reversed) should be (0)
+    }
+  }
+
+
 
   test("update project link") {
     runWithRollback {
