@@ -457,8 +457,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     params.get("linkID").map(_.toLong) match {
       case Some(link) =>
         try {
-          val writableProject = linkHasWritableProject(link)
           val options = parsedBody.extract[SplitOptions]
+          val writableProject = projectWritable(options.projectId)
           val splitError = writableProject.splitSuravageLink(link, user.username, options)
           Map("success" -> splitError.isEmpty, "reason" -> splitError.orNull)
         } catch {
@@ -689,13 +689,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val writable = projectService.isWritableState(projectId)
     if (!writable)
       throw new IllegalStateException("Projekti ei ole enään muokattavissa") //project is not in modifiable state
-    projectService
-  }
-
-  @throws(classOf[Exception])
-  private def linkHasWritableProject(linkId: Long): ProjectService = {
-    if (!projectService.isProjectWithGivenLinkIdWritable(linkId))
-      throw new IllegalStateException("Linkki ei ole (enään) olemassa tai se ei kuulu projektiin )") //link does not exists in any project (anymore)
     projectService
   }
 
