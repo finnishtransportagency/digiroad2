@@ -811,7 +811,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def isProjectWithGivenLinkIdWritable (linkId:Long): Boolean = {
-    val projects=ProjectDAO.getProjectsWithGivenLinkId(linkId)
+    val projects=
+      withDynSession(ProjectDAO.getProjectsWithGivenLinkId(linkId))
     if (projects.isEmpty)
       return false
     true
