@@ -1,16 +1,16 @@
 package fi.liikennevirasto.viite
-import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{Unknown => _, apply => _, _}
+import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{Unknown => _, apply => _}
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, _}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, RoadPartReservedException, Track}
-import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.viite.dao.CalibrationPointDAO.UserDefinedCalibrationPoint
 import fi.liikennevirasto.viite.dao.ProjectState._
 import fi.liikennevirasto.viite.dao.{ProjectDAO, RoadAddressDAO, _}
-import fi.liikennevirasto.viite.model.{ProjectAddressLink, RoadAddressLink, RoadAddressLinkLike}
+import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process._
 import fi.liikennevirasto.viite.util.{GuestimateGeometryForMissingLinks, ProjectLinkSplitter, SplitOptions}
 import org.joda.time.DateTime
@@ -717,11 +717,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
     val fetchMissingRoadAddressStartTime = System.currentTimeMillis()
     val ((floating, addresses), projectLinks) = Await.result(fetchRoadAddressesByBoundingBoxF.zip(fetchProjectLinksF), Duration.Inf)
-    // TODO: When floating handling is enabled we need this - but ignoring the result otherwise here
-    val missingLinkIds = linkIds -- floating.keySet -- addresses.keySet -- projectLinks.keySet
 
     val missedRL = withDynTransaction {
-      RoadAddressDAO.getMissingRoadAddresses(missingLinkIds)
+      if(frozenTimeVVHAPIServiceEnabled){
+        Seq[MissingRoadAddress]()
+      } else {
+        val missingLinkIds = linkIds -- floating.keySet -- addresses.keySet -- projectLinks.keySet
+        RoadAddressDAO.getMissingRoadAddresses(missingLinkIds)
+      }
     }.groupBy(_.linkId)
     val fetchMissingRoadAddressEndTime = System.currentTimeMillis()
     logger.info("End fetch missing and floating road address in %.3f sec".format((fetchMissingRoadAddressEndTime - fetchMissingRoadAddressStartTime) * 0.001))
@@ -758,7 +761,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val complementaryLinkIds = complementaryLinks.map(_.linkId).toSet
     val returningTopology = filledTopology.filter(link => !complementaryLinkIds.contains(link.linkId) ||
       complementaryLinkFilter(roadNumberLimits, municipalities, everything, publicRoads)(link))
-    returningTopology.map(toProjectAddressLink) ++ filledProjectLinks
+    if(frozenTimeVVHAPIServiceEnabled) {
+      returningTopology.filter(link => link.anomaly != Anomaly.NoAddressGiven).map(toProjectAddressLink) ++ filledProjectLinks
+    } else {
+      returningTopology.map(toProjectAddressLink) ++ filledProjectLinks
+    }
   }
 
   def getProjectRoadLinks(projectId: Long, boundingRectangle: BoundingRectangle, roadNumberLimits: Seq[(Int, Int)], municipalities: Set[Int],

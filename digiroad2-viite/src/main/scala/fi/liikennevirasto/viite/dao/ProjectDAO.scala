@@ -289,7 +289,7 @@ object ProjectDAO {
                FROM PROJECT P
               JOIN PROJECT_LINK PL ON P.ID=PL.PROJECT_ID
               JOIN LRM_POSITION L ON PL.LRM_POSITION_ID=L.ID
-              WHERE P.STATE = ${Incomplete.value} AND L.LINK_ID=$linkId;"""
+              WHERE P.STATE = ${Incomplete.value} AND L.LINK_ID=$linkId"""
     Q.queryNA[(Long)](query).list
   }
 
