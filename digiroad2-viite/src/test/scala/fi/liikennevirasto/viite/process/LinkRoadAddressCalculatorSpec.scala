@@ -122,7 +122,6 @@ class LinkRoadAddressCalculatorSpec extends FunSuite with Matchers{
       RoadAddress(5, 1, 1, RoadType.Unknown, Track.Combined, Discontinuity.Continuous, 225, 265, Some(DateTime.now), None, Option("tester"), 0,123L, 224.3, 265.2,
         SideCode.Unknown, 0, (None, Some(CalibrationPoint(225L, 265.2, 265))), false, Seq(), LinkGeomSource.NormalLinkInterface, 8))
     val results = LinkRoadAddressCalculator.recalculate(addresses).toList.sortBy(_.endAddrMValue)
-    results.foreach(println)
     results.last.endAddrMValue should be (265)
     results.head.endAddrMValue should be (108)
     results.filter(_.startAddrMValue==0) should have size (1)
