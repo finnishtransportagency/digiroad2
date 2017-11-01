@@ -43,21 +43,22 @@ trait ProjectAddressLinkLike extends RoadAddressLinkLike {
   def originalGeometry: Option[Seq[Point]]
 }
 
-case class ProjectAddressLink (id: Long, linkId: Long, geometry: Seq[Point],
-                               length: Double, administrativeClass: AdministrativeClass,
-                               linkType: LinkType, roadLinkType: RoadLinkType, constructionType: ConstructionType,
-                               roadLinkSource: LinkGeomSource, roadType: RoadType, roadName: String, municipalityCode: BigInt, modifiedAt: Option[String], modifiedBy: Option[String],
-                               attributes: Map[String, Any] = Map(), roadNumber: Long, roadPartNumber: Long, trackCode: Long, elyCode: Long, discontinuity: Long,
-                               startAddressM: Long, endAddressM: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
-                               startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint],
-                               anomaly: Anomaly = Anomaly.None, lrmPositionId: Long, status: LinkStatus, roadAddressId: Long, reversed:Boolean = false,
-                               connectedLinkId: Option[Long] = None, originalGeometry: Option[Seq[Point]] = None) extends ProjectAddressLinkLike {
-  override def partitioningName:String = {
+case class ProjectAddressLink(id: Long, linkId: Long, geometry: Seq[Point],
+                              length: Double, administrativeClass: AdministrativeClass,
+                              linkType: LinkType, roadLinkType: RoadLinkType, constructionType: ConstructionType,
+                              roadLinkSource: LinkGeomSource, roadType: RoadType, roadName: String, municipalityCode: BigInt, modifiedAt: Option[String], modifiedBy: Option[String],
+                              attributes: Map[String, Any] = Map(), roadNumber: Long, roadPartNumber: Long, trackCode: Long, elyCode: Long, discontinuity: Long,
+                              startAddressM: Long, endAddressM: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
+                              startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint],
+                              anomaly: Anomaly = Anomaly.None, lrmPositionId: Long, status: LinkStatus, roadAddressId: Long, reversed: Boolean = false,
+                              connectedLinkId: Option[Long] = None, originalGeometry: Option[Seq[Point]] = None) extends ProjectAddressLinkLike {
+  override def partitioningName: String = {
     if (roadNumber > 0)
       s"$roadNumber/$roadPartNumber/$trackCode"
     else
       roadName
   }
+
   override def isSplit: Boolean = {
     connectedLinkId.nonEmpty || connectedLinkId.contains(0L)
   }
