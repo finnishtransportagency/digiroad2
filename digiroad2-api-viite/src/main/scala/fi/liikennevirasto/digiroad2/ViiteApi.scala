@@ -457,8 +457,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     params.get("linkID").map(_.toLong) match {
       case Some(link) =>
         try {
-          val writableProject = linkHasWritableProject(link)
           val options = parsedBody.extract[SplitOptions]
+          val writableProject = projectWritable(options.projectId)
           val splitError = writableProject.splitSuravageLink(link, user.username, options)
           Map("success" -> splitError.isEmpty, "reason" -> splitError.orNull)
         } catch {
@@ -476,13 +476,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       val linkId = params.get("linkId").map(_.toLong)
       (projectId, linkId) match {
         case (Some(project), Some(link)) =>
-          val writableProject = linkHasWritableProject(linkId.get)
-          val error = writableProject.revertSplit(project, link)
-          if (error.nonEmpty) {
-            PreconditionFailed(error.get)
-          } else {
-            NoContent()
-          }
+          val error = projectService.revertSplit(project, link)
+          Map("success" -> error.isEmpty, "message" -> error)
         case _ => BadRequest("Missing mandatory 'projectId' or 'linkId' parameter from URI: /project/split/:projectId/:linkId")
       }
     } catch {
@@ -529,7 +524,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       case _ => projectService.getProjectLinksWithSuravage(roadAddressService, projectId, boundingRectangle, Seq((1, 19999)), Set())
     }
 
-    val partitionedRoadLinks = ProjectLinkPartitioner.partition(viiteRoadLinks)
+    val partitionedRoadLinks = ProjectLinkPartitioner.partition(viiteRoadLinks.filter(_.length >= MinAllowedRoadAddressLength))
     partitionedRoadLinks.map {
       _.map(projectAddressLinkToApi)
     }
@@ -610,11 +605,18 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   def projectAddressLinkToApi(projectAddressLink: ProjectAddressLink): Map[String, Any] = {
     roadAddressLinkLikeToApi(projectAddressLink) ++
+      (if (projectAddressLink.isSplit)
       Map(
         "status" -> projectAddressLink.status.value,
         "connectedLinkId" -> projectAddressLink.connectedLinkId,
+        "originalGeometry" -> projectAddressLink.originalGeometry,
         "reverted" -> projectAddressLink.reversed
       )
+    else
+      Map(
+        "status" -> projectAddressLink.status.value
+    "reverted" -> projectAddressLink.reversed
+      ))
   }
 
   def roadAddressProjectToApi(roadAddressProject: RoadAddressProject): Map[String, Any] = {
@@ -691,13 +693,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val writable = projectService.isWritableState(projectId)
     if (!writable)
       throw new IllegalStateException("Projekti ei ole enään muokattavissa") //project is not in modifiable state
-    projectService
-  }
-
-  @throws(classOf[Exception])
-  private def linkHasWritableProject(linkId: Long): ProjectService = {
-    if (!projectService.isProjectWithGivenLinkIdWritable(linkId))
-      throw new IllegalStateException("Linkki ei ole (enään) olemassa tai se ei kuulu projektiin )") //link does not exists in any project (anymore)
     projectService
   }
 

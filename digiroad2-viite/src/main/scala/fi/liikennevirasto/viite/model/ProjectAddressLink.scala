@@ -39,6 +39,8 @@ trait ProjectAddressLinkLike extends RoadAddressLinkLike {
   def roadAddressId: Long
   def connectedLinkId: Option[Long]
   def partitioningName: String
+  def isSplit: Boolean
+  def originalGeometry: Option[Seq[Point]]
 }
 
 case class ProjectAddressLink (id: Long, linkId: Long, geometry: Seq[Point],
@@ -49,11 +51,14 @@ case class ProjectAddressLink (id: Long, linkId: Long, geometry: Seq[Point],
                                startAddressM: Long, endAddressM: Long, startMValue: Double, endMValue: Double, sideCode: SideCode,
                                startCalibrationPoint: Option[CalibrationPoint], endCalibrationPoint: Option[CalibrationPoint],
                                anomaly: Anomaly = Anomaly.None, lrmPositionId: Long, status: LinkStatus, roadAddressId: Long, reversed:Boolean = false,
-                               connectedLinkId: Option[Long] = None) extends ProjectAddressLinkLike {
+                               connectedLinkId: Option[Long] = None, originalGeometry: Option[Seq[Point]] = None) extends ProjectAddressLinkLike {
   override def partitioningName:String = {
     if (roadNumber > 0)
       s"$roadNumber/$roadPartNumber/$trackCode"
     else
       roadName
+  }
+  override def isSplit: Boolean = {
+    connectedLinkId.nonEmpty || connectedLinkId.contains(0L)
   }
 }

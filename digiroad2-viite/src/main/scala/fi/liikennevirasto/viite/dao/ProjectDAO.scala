@@ -82,6 +82,7 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
   extends BaseRoadAddress with PolyLine {
   lazy val startingPoint = if (sideCode == SideCode.AgainstDigitizing) geometry.last else geometry.head
   lazy val endPoint = if (sideCode == SideCode.AgainstDigitizing) geometry.head else geometry.last
+  lazy val isSplit: Boolean = connectedLinkId.nonEmpty || connectedLinkId.contains(0L)
 
   def copyWithGeometry(newGeometry: Seq[Point]) = {
     this.copy(geometry = newGeometry)
@@ -126,7 +127,7 @@ object ProjectDAO {
       val roadAddressId = r.nextLong()
       val ely = r.nextLong()
       val reversed=r.nextBoolean()
-      val connectedLinkId = Some(r.nextLong())
+      val connectedLinkId = r.nextLongOption()
 
       ProjectLink(projectLinkId, roadNumber, roadPartNumber, trackCode, discontinuityType, startAddrM, endAddrM, None, None,
         None, lrmPositionId, linkId, startMValue, endMValue, sideCode, calibrationPoints, false, Seq.empty[Point], projectId,
@@ -293,7 +294,7 @@ object ProjectDAO {
                FROM PROJECT P
               JOIN PROJECT_LINK PL ON P.ID=PL.PROJECT_ID
               JOIN LRM_POSITION L ON PL.LRM_POSITION_ID=L.ID
-              WHERE P.STATE = ${Incomplete.value} AND L.LINK_ID=$linkId;"""
+              WHERE P.STATE = ${Incomplete.value} AND L.LINK_ID=$linkId"""
     Q.queryNA[(Long)](query).list
   }
 
