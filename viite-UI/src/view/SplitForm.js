@@ -480,10 +480,9 @@
         new ModalConfirm(error);
       });
 
-      eventbus.on('roadAddress:projectLinksCreateSuccess', function () {
+      eventbus.on('projectLink:projectLinksSplitSuccess', function () {
         eventbus.trigger('projectChangeTable:refresh');
         projectCollection.setTmpDirty([]);
-        rootElement.find('.changeDirectionDiv').prop("hidden", false);
       });
 
       eventbus.on('roadAddress:changeDirectionFailed', function(error) {

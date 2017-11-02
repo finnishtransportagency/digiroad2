@@ -273,7 +273,7 @@ object ProjectDAO {
   }
 
 
-  def fetchByProjectRoadParts(roadParts: Seq[(Long, Long)], projectId: Long): Seq[ProjectLink] = {
+  def fetchByProjectRoadParts(roadParts: Set[(Long, Long)], projectId: Long): Seq[ProjectLink] = {
     if (roadParts.isEmpty)
       return Seq()
     val roadPartsCond = roadParts.map{case (road, part) => s"(PROJECT_LINK.ROAD_NUMBER = $road AND PROJECT_LINK.ROAD_PART_NUMBER = $part)"}
