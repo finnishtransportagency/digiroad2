@@ -811,7 +811,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val projectLinks = ProjectDAO.getProjectLinksByIds(modified.map(_.id))
     RoadAddressDAO.queryById(projectLinks.map(_.roadAddressId).toSet).foreach( ra =>
       ProjectDAO.updateProjectLinkValues(projectId, ra))
-    val afterUpdateLinks = recalculateProjectLinks(projectId, userName, Set((roadNumber, roadPartNumber)))
+    recalculateProjectLinks(projectId, userName, Set((roadNumber, roadPartNumber)))
+    val afterUpdateLinks = ProjectDAO.fetchByProjectRoadPart(projectId, roadNumber, roadPartNumber)
     if (afterUpdateLinks.isEmpty){
       releaseRoadPart(projectId, roadNumber, roadPartNumber)
     }
@@ -961,7 +962,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         val recalculatedProjectLinks = ProjectSectionCalculator.assignMValues(grp._2, calibrationPoints)
         ProjectDAO.updateProjectLinksToDB(recalculatedProjectLinks, userName)
     }, "recalculated links in %.3f sec")
-    projectLinks
   }
 
   private def recalculateChangeTable(projectId: Long): Boolean = {
