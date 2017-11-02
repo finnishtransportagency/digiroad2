@@ -190,7 +190,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val isSuravage = roadLinkSource == LinkGeomSource.SuravageLinkInterface.value
     val isComplementary = roadLinkSource == LinkGeomSource.ComplimentaryLinkInterface.value
 
-    val rampsGrowthDirection = rampInfoProcess(isRamp, isSuravage, isComplementary, linkIds, roadNumber, roadPartNumber)
+    val rampsGrowthDirection = determineRampGrowthDirection(isRamp, isSuravage, isComplementary, linkIds, roadNumber, roadPartNumber)
 
     val roadLinks = if(isSuravage) {
       getProjectSuravageRoadLinksByLinkIds(linkIds)
@@ -208,7 +208,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  private def rampInfoProcess(isRamp: Boolean, isSuravage: Boolean, isComplementary: Boolean, linkIds: Set[Long], roadNumber: Long, roadPartNumber:Long): Option[SideCode] = {
+  private def determineRampGrowthDirection(isRamp: Boolean, isSuravage: Boolean, isComplementary: Boolean, linkIds: Set[Long], roadNumber: Long, roadPartNumber:Long): Option[SideCode] = {
 
     val rampInfo = if(isRamp && isSuravage) {
       roadAddressService.getSuravageRoadLinkAddressesByLinkIds(linkIds)
@@ -288,11 +288,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           throw new ProjectValidationException("Valittu tiegeometria sisältää haarautumia ja pitää käsitellä osina. Tallennusta ei voi tehdä.")
         val existingLinks = roadPartLinks.filterNot(l => newProjectLinks.contains(l.linkId))
         val combinedLinks = existingLinks ++ newProjectLinks.values.toSeq
-        //Determine geometries for the mValues and addressMValues
-        val linksWithMValues = ProjectSectionCalculator.assignMValues(combinedLinks)
-        //TODO: Work In Progress - Need Assistance
-        if(!rampsGrowthDirection.isEmpty){
-          val test = linksWithMValues.map(link =>link.copy(sideCode = rampsGrowthDirection.get))
+        //Determine geometries for the mValues and addressMValues, with the addition of rampsGrowthDirection
+        val linksWithMValues =  if(!rampsGrowthDirection.isEmpty){
+          ProjectSectionCalculator.assignMValues(combinedLinks).map(link =>link.copy(sideCode = rampsGrowthDirection.get))
+        } else {
+          ProjectSectionCalculator.assignMValues(combinedLinks)
         }
         val (toCreate, toUpdate) = linksWithMValues.partition(_.id == NewRoadAddress)
         ProjectDAO.updateProjectLinksToDB(toUpdate, user)
