@@ -292,7 +292,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         val linksWithMValues = ProjectSectionCalculator.assignMValues(combinedLinks)
         //TODO: Work In Progress - Need Assistance
         if(!rampsGrowthDirection.isEmpty){
-          val test = linksWithMValues.foreach(link =>link.copy(SideCode = rampsGrowthDirection.get.value))
+          val test = linksWithMValues.map(link =>link.copy(sideCode = rampsGrowthDirection.get))
         }
         val (toCreate, toUpdate) = linksWithMValues.partition(_.id == NewRoadAddress)
         ProjectDAO.updateProjectLinksToDB(toUpdate, user)
