@@ -172,6 +172,9 @@ trait AddressLinkBuilder {
 
     val tempId = fi.liikennevirasto.viite.NewRoadAddress
 
+    if(nextSegment.geometry.isEmpty) println("Empty geometry on linkId = " + nextSegment.linkId + ", id = " + nextSegment.id )
+    if(previousSegment.geometry.isEmpty) println("Empty geometry on linkId = " + previousSegment.linkId + ", id = " + previousSegment.id)
+
     if(nextSegment.roadNumber     == previousSegment.roadNumber &&
       nextSegment.roadPartNumber  == previousSegment.roadPartNumber &&
       nextSegment.track.value     == previousSegment.track.value &&
