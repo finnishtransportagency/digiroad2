@@ -610,12 +610,12 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           "status" -> projectAddressLink.status.value,
           "connectedLinkId" -> projectAddressLink.connectedLinkId,
           "originalGeometry" -> projectAddressLink.originalGeometry,
-          "reverted" -> projectAddressLink.reversed
+          "reversed" -> projectAddressLink.reversed
         )
       else
         Map(
           "status" -> projectAddressLink.status.value,
-          "reverted" -> projectAddressLink.reversed
+          "reversed" -> projectAddressLink.reversed
         ))
   }
 

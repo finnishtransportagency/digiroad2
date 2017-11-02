@@ -130,7 +130,7 @@ class ProjectDaoSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Update project link  to reverted") {
+  test("Update project link to reversed") {
     runWithRollback {
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
@@ -148,7 +148,7 @@ class ProjectDaoSpec extends FunSuite with Matchers {
   }
 
 
-  test("Create reverted project link") {
+  test("Create reversed project link") {
     runWithRollback {
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
@@ -162,7 +162,7 @@ class ProjectDaoSpec extends FunSuite with Matchers {
   }
 
 
-  test("Create reverted project link no reverted links") {
+  test("Create project with no reversed links") {
     runWithRollback {
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
