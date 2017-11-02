@@ -24,6 +24,10 @@ import scala.util.control.NonFatal
 case class PreFillInfo(RoadNumber:BigInt, RoadPart:BigInt)
 case class LinkToRevert(id:Long, linkId: Long, status: Long)
 class ProjectService(roadAddressService: RoadAddressService, roadLinkService: RoadLinkService, eventbus: DigiroadEventBus, frozenTimeVVHAPIServiceEnabled: Boolean = false) {
+
+  private val rampsMinBound = 20001
+  private val rampsMaxBound = 39999
+
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
@@ -181,7 +185,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   def createProjectLinks(linkIds: Set[Long], projectId: Long, roadNumber: Long, roadPartNumber:Long, trackCode: Int,
                          discontinuity: Int, roadType: Int, roadLinkSource: Int, roadEly: Long, user: String): Map[String, Any] = {
-    val roadLinks = if(roadLinkSource == LinkGeomSource.SuravageLinkInterface.value) {
+
+    val isRamp = (roadNumber >= rampsMinBound && roadNumber <= rampsMaxBound) && trackCode == 0
+    val isSuravage = roadLinkSource == LinkGeomSource.SuravageLinkInterface.value
+    val isComplementary = roadLinkSource == LinkGeomSource.ComplimentaryLinkInterface.value
+
+    val rampsGrowthDirection = rampInfoProcess(isRamp, isSuravage, isComplementary, linkIds, roadNumber, roadPartNumber)
+
+    val roadLinks = if(isSuravage) {
       getProjectSuravageRoadLinksByLinkIds(linkIds)
     } else {
       getProjectRoadLinksByLinkIds(linkIds)
@@ -189,12 +200,30 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     setProjectEly(projectId, roadEly) match {
       case Some(errorMessage) => Map("success" -> false, "errormessage" -> errorMessage)
       case None => {
-        addNewLinksToProject(roadLinks, projectId, roadNumber, roadPartNumber, trackCode, discontinuity, roadType, user) match {
+        addNewLinksToProject(roadLinks, projectId, roadNumber, roadPartNumber, trackCode, discontinuity, roadType, user, rampsGrowthDirection) match {
           case Some(errorMessage) => Map("success" -> false, "errormessage" -> errorMessage)
           case None => Map ("success" -> true, "publishable" -> projectLinkPublishable(projectId))
         }
       }
     }
+  }
+
+  private def rampInfoProcess(isRamp: Boolean, isSuravage: Boolean, isComplementary: Boolean, linkIds: Set[Long], roadNumber: Long, roadPartNumber:Long): Option[SideCode] = {
+
+    val rampInfo = if(isRamp && isSuravage) {
+      roadAddressService.getSuravageRoadLinkAddressesByLinkIds(linkIds)
+    } else {
+      Seq.empty[RoadAddressLink]
+    }
+     val growthDirection =  if(!rampInfo.isEmpty) {
+        val existingRamps = rampInfo.filter(info => {
+          info.roadNumber == roadNumber && info.roadPartNumber == roadPartNumber
+        }).sortBy(_.startAddressM)
+        Option(existingRamps.head.sideCode)
+      } else {
+       Option.empty[SideCode]
+     }
+    growthDirection
   }
 
   private def newProjectLink(projectAddressLink: ProjectAddressLink, project: RoadAddressProject, sideCode: SideCode, newTrackCode: Long,
@@ -220,7 +249,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     */
   def addNewLinksToProject(newLinks: Seq[ProjectAddressLink], roadAddressProjectID: Long, newRoadNumber: Long,
                            newRoadPartNumber: Long, newTrackCode: Long, newDiscontinuity: Long,
-                           newRoadType: Long = RoadType.Unknown.value, user: String): Option[String] = {
+                           newRoadType: Long = RoadType.Unknown.value, user: String, rampsGrowthDirection: Option[SideCode]): Option[String] = {
 
     def matchSideCodes(newLink: ProjectAddressLink, existingLink: ProjectAddressLink): SideCode = {
       val (startP, endP) =GeometryUtils.geometryEndpoints(existingLink.geometry)
@@ -261,6 +290,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         val combinedLinks = existingLinks ++ newProjectLinks.values.toSeq
         //Determine geometries for the mValues and addressMValues
         val linksWithMValues = ProjectSectionCalculator.assignMValues(combinedLinks)
+        //TODO: Work In Progress - Need Assistance
+        if(!rampsGrowthDirection.isEmpty){
+          val test = linksWithMValues.foreach(link =>link.copy(SideCode = rampsGrowthDirection.get.value))
+        }
         val (toCreate, toUpdate) = linksWithMValues.partition(_.id == NewRoadAddress)
         ProjectDAO.updateProjectLinksToDB(toUpdate, user)
         ProjectDAO.create(toCreate)
