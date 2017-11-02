@@ -591,6 +591,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "sideCode" -> roadAddressLink.sideCode.value,
       "linkType" -> roadAddressLink.linkType.value,
       "roadLinkSource" -> roadAddressLink.roadLinkSource.value
+
     )
   }
 
@@ -606,14 +607,17 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   def projectAddressLinkToApi(projectAddressLink: ProjectAddressLink): Map[String, Any] = {
     roadAddressLinkLikeToApi(projectAddressLink) ++
       (if (projectAddressLink.isSplit)
-      Map(
-        "status" -> projectAddressLink.status.value,
-        "connectedLinkId" -> projectAddressLink.connectedLinkId,
-        "originalGeometry" -> projectAddressLink.originalGeometry)
-    else
-      Map(
-        "status" -> projectAddressLink.status.value
-      ))
+        Map(
+          "status" -> projectAddressLink.status.value,
+          "connectedLinkId" -> projectAddressLink.connectedLinkId,
+          "originalGeometry" -> projectAddressLink.originalGeometry,
+          "reversed" -> projectAddressLink.reversed
+        )
+      else
+        Map(
+          "status" -> projectAddressLink.status.value,
+          "reversed" -> projectAddressLink.reversed
+        ))
   }
 
   def roadAddressProjectToApi(roadAddressProject: RoadAddressProject): Map[String, Any] = {
