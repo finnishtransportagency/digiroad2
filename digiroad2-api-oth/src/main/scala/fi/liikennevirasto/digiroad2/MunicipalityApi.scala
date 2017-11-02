@@ -5,6 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.Asset.DateTimePropertyFormat
 import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, _}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
+import fi.liikennevirasto.digiroad2.pointasset.oracle.Obstacle
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import org.joda.time.DateTime
 import org.scalatra._
@@ -17,7 +18,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
                       val roadLinkService: RoadLinkService,
                       val linearAssetService: LinearAssetService,
                       val assetService: AssetService
-                      ) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport {
+                     ) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport {
 
   override def baseAuth: String = "municipality."
   override val realm: String = "Municipality API"
@@ -81,9 +82,30 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     usedService.expireAsset(assetTypeId, assetId, user.username, expired = true)
   }
 
+  def expirePointAsset(assetTypeId: Int, assetId: Long, username: String): Long = {
+    val service = verifyPointServiceToUse(assetTypeId)
+    service.expire(assetId, user.username) match {
+      case 1 => assetId
+      case _ => halt(BadRequest("Asset not deleted"))
+    }
+  }
+
   def getLinearAssetsByMunicipality(municipalityCode: Int, assetTypeId: Int): Seq[PersistedLinearAsset] ={
     val usedService = verifyLinearServiceToUse(assetTypeId)
     usedService.getAssetsByMunicipality(assetTypeId, municipalityCode).filterNot(_.id == 0).filterNot(_.expired)
+  }
+
+  def getPointAssetsByMunicipality(municipalityCode: Int, assetTypeId: Int): Seq[PersistedPointAsset] ={
+    val service = verifyPointServiceToUse(assetTypeId)
+    service.getByMunicipality(municipalityCode)
+  }
+
+  def getPointAssetById(assetTypeId: Int, assetId: Long): Seq[PersistedPointAsset] ={
+    val service = verifyPointServiceToUse(assetTypeId)
+    service.getById(assetId) match {
+      case Some(asset) => Seq(asset.asInstanceOf[PersistedPointAsset])
+      case _ => Seq.empty[PersistedPointAsset]
+    }
   }
 
   def getLinearAssets(assetTypeId: Int, assetId: Int): Seq[PersistedLinearAsset] ={
@@ -127,24 +149,66 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     }
   }
 
-//  def getPointAssetsByMunicipality(municipalityCode: Int, assetTypeId: Int): Unit ={
-//    val usedService = verifyPointServiceToUse(assetTypeId)
-//    usedService.getByMunicipality(municipalityCode)
-//  }
-//
-//  def getPointAssets(assetTypeId: Int, assetId: Int): Unit ={
-//    val usedService = verifyPointServiceToUse(assetTypeId)
-//    usedService.getById(assetId.toLong)
-//  }
-//
-//  def updatePointAssets(assetTypeId: Int, assetId: Int): Unit ={
-//    val usedService = verifyPointServiceToUse(assetTypeId)
-//
-//  }
-//
-//  def createPointAssets(): Unit ={
-//
-//  }
+  //  def getPointAssetsByMunicipality(municipalityCode: Int, assetTypeId: Int): Unit ={
+  //    val usedService = verifyPointServiceToUse(assetTypeId)
+  //    usedService.getByMunicipality(municipalityCode)
+  //  }
+  //
+  //  def getPointAssets(assetTypeId: Int, assetId: Int): Unit ={
+  //    val usedService = verifyPointServiceToUse(assetTypeId)
+  //    usedService.getById(assetId.toLong)
+  //  }
+  //
+  //  def updatePointAssets(assetTypeId: Int, assetId: Int): Unit ={
+  //    val usedService = verifyPointServiceToUse(assetTypeId)
+  //
+  //  }
+  //
+  //  def createPointAssets(): Unit ={
+  //
+  //  }
+
+  def extractPointProperties(pointAsset: PersistedPointAsset, typeId: Int): Any = {
+    typeId match {
+      case Obstacles.typeId  => Seq(Map("value" ->  pointAsset.asInstanceOf[Obstacle].obstacleType, "name" -> getAssetName(typeId)))
+      //      case PedestrianCrossings.typeId   =>
+      //      case RailwayCrossings.typeId  =>
+      //      case TrafficLights.typeId  =>
+    }
+  }
+
+  def extractModifiedAt(pointAsset: PersistedPointAsset, typeId: Int): Any = {
+    typeId match {
+      case Obstacles.typeId  => pointAsset.asInstanceOf[Obstacle].modifiedAt.orElse( pointAsset.asInstanceOf[Obstacle].createdAt).map(DateTimePropertyFormat.print).getOrElse("")
+      //      case PedestrianCrossings.typeId   =>
+      //      case RailwayCrossings.typeId  =>
+      //      case TrafficLights.typeId  =>
+    }
+  }
+
+  def extractCreatedAt(pointAsset: PersistedPointAsset, typeId: Int): Any = {
+    typeId match {
+      case Obstacles.typeId  => pointAsset.asInstanceOf[Obstacle].createdAt.map(DateTimePropertyFormat.print).getOrElse("")
+      //      case PedestrianCrossings.typeId   =>
+      //      case RailwayCrossings.typeId  =>
+      //      case TrafficLights.typeId  =>
+    }
+  }
+
+
+  def pointAssetToApi(pointAssets: Seq[PersistedPointAsset], typeId: Int) : Seq[Map[String, Any]] = {
+    pointAssets.map { asset =>
+      Map("id" -> asset.id,
+        "properties" -> extractPointProperties(asset, typeId),
+        "linkId" -> asset.linkId,
+        "startMeasure" -> asset.mValue,
+        "modifiedAt" -> extractModifiedAt(asset, typeId),
+        "createdAt" -> extractCreatedAt(asset, typeId),
+        "geometryTimestamp" -> asset.vvhTimeStamp,
+        "municipalityCode" -> asset.municipalityCode
+      )
+    }
+  }
 
   def linearAssetsToApi(linearAssets: Seq[PersistedLinearAsset], municipalityCode: Long): Seq[Map[String, Any]] = {
     linearAssets.map { asset =>
@@ -165,6 +229,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
   def getAssetTypeId(assetType: String): Int = {
     assetType match {
       case "lighting" => LitRoad.typeId
+      case "obstacle" => Obstacles.typeId
       case _ => halt(NotFound("Asset type not found"))
     }
   }
@@ -172,6 +237,10 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
   def getAssetName(assetTypeId: Int): String = {
     assetTypeId match {
       case LitRoad.typeId   => "hasLighting"
+      case Obstacles.typeId => "obstacleType"
+      case PedestrianCrossings.typeId   => "hasPedestrianCrossing"
+      case RailwayCrossings.typeId  => "name"
+      case TrafficLights.typeId  => "hasTrafficLight"
       case _ => "asset"
     }
   }
@@ -227,7 +296,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
 
     assetService.getGeometryType(assetTypeId) match {
       case "linear" => linearAssetsToApi(getLinearAssetsByMunicipality(municipalityCode, assetTypeId), municipalityCode)
-      //case "point" =>
+      case "point" => pointAssetToApi(getPointAssetsByMunicipality(municipalityCode, assetTypeId), assetTypeId)
       case _ =>
     }
   }
@@ -246,7 +315,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
 
     assetService.getGeometryType(assetTypeId) match {
       case "linear" => linearAssetsToApi(getLinearAssets(assetTypeId, assetId), municipalityCode)
-      //case "point" =>
+      case "point" => pointAssetToApi(getPointAssetById(assetTypeId, assetId), assetTypeId)
       case _ =>
     }
   }
@@ -321,11 +390,15 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     val assetType = getAssetTypeId(params("assetType"))
     val assetId = params("assetId").toLong
 
+    if(getPointAssetById(assetType, assetId).isEmpty)
+      halt(NotFound("Asset not found."))
+
     assetService.getGeometryType(assetType) match {
       case "linear" => expireLinearAsset(assetType, assetId, user.username, expired = true)
-      //case "point" =>
+      case "point" => expirePointAsset(assetType, assetId, user.username)
       case _ =>
 
     }
   }
 }
+
