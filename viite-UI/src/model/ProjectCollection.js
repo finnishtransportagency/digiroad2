@@ -376,8 +376,23 @@
 
     this.changeNewProjectLinkDirection = function (projectId, selectedLinks){
       applicationModel.addSpinner();
-      var data = [projectId, selectedLinks[0].roadNumber, selectedLinks[0].roadPartNumber] ;
-      backend.directionChangeNewRoadlink(data, function(successObject) {
+      var linkIds = _.map(selectedLinks, function(link) {return link.linkId; });
+
+      var dataJson = {
+        linkIds: linkIds,
+        linkStatus: selectedLinks[0].status,
+        projectId: projectId,
+        roadNumber: Number($('#roadAddressProjectForm').find('#tie')[0].value),
+        roadPartNumber: Number($('#roadAddressProjectForm').find('#osa')[0].value),
+        trackCode: Number($('#roadAddressProjectForm').find('#ajr')[0].value),
+        discontinuity: Number($('#roadAddressProjectForm').find('#discontinuityDropdown')[0].value),
+        roadEly: Number($('#roadAddressProjectForm').find('#ely')[0].value),
+        roadLinkSource: Number(_.first(selectedLinks).roadLinkSource),
+        roadType: Number($('#roadAddressProjectForm').find('#roadTypeDropDown')[0].value),
+        userDefinedEndAddressM: null
+      };
+      //var data = [projectId, selectedLinks] ;
+      backend.directionChangeNewRoadlink(dataJson, function(successObject) {
         if (!successObject.success) {
           eventbus.trigger('roadAddress:changeDirectionFailed', successObject.errorMessage);
           applicationModel.removeSpinner();

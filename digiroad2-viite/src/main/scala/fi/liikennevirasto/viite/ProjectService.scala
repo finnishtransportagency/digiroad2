@@ -317,7 +317,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       calibrationPoints = if (resetAddress) (None, None) else pl.calibrationPoints)
   }
 
-  def changeDirection(projectId: Long, roadNumber: Long, roadPartNumber: Long): Option[String] = {
+  def changeDirection(projectId : Long, roadNumber : Long, roadPartNumber : Long, status: LinkStatus, linkIds: Set[Long]): Option[String] = {
     RoadAddressLinkBuilder.municipalityRoadMaintainerMapping // make sure it is populated outside of this TX
     try {
       withDynTransaction {
@@ -327,11 +327,23 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         }
         if (ProjectDAO.projectLinksCountUnchanged(projectId, roadNumber, roadPartNumber) > 0)
           return Some("Tieosalle ei voi tehdä kasvusuunnan kääntöä, koska tieosalla on linkkejä, jotka on tässä projektissa määritelty säilymään ennallaan.")
-        ProjectDAO.flipProjectLinksSideCodes(projectId, roadNumber, roadPartNumber)
-        val projectLinks = ProjectDAO.getProjectLinks(projectId)
-        val adjLinks = withGeometry(projectLinks, resetAddress = false)
-        ProjectSectionCalculator.assignMValues(adjLinks).foreach(
-          link => ProjectDAO.updateAddrMValues(link))
+        status match {
+          case LinkStatus.NotHandled => Some("") //TODO message saying that an actions on the links needs to be performed first
+          case LinkStatus.Transfer => {
+            ProjectDAO.flipProjectLinksSideCodesByLinkId(projectId, linkIds.toSeq)
+            val projectLinks = ProjectDAO.getProjectLinks(projectId).filter(l => linkIds.contains(l.linkId))
+            val adjLinks = withGeometry(projectLinks, resetAddress = false)
+            ProjectSectionCalculator.assignMValues(adjLinks).foreach(
+              link => ProjectDAO.updateAddrMValues(link))
+          }
+          case _ => {
+            ProjectDAO.flipProjectLinksSideCodes(projectId, roadNumber, roadPartNumber)
+            val projectLinks = ProjectDAO.getProjectLinks(projectId)
+            val adjLinks = withGeometry(projectLinks, resetAddress = false)
+            ProjectSectionCalculator.assignMValues(adjLinks).foreach(
+              link => ProjectDAO.updateAddrMValues(link))
+          }
+        }
         None
       }
     } catch {
