@@ -57,6 +57,14 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService, val 
     }
   }
 
+  private def extractLinearAssets(typeId: Int, value: JValue) = {
+    typeId match {
+      case `lighting` => value.extractOpt[NewNumericOrTextualValueAsset] match {
+        case Some(v) => NewLinearAsset(v.linkId, v.startMeasure, v.endMeasure, NumericValue(v.properties.map(_.value).head.toInt), v.sideCode, v.geometryTimestamp, None)
+      }
+    }
+  }
+
   def linearAssetsToApi(linearAssets: Seq[PersistedLinearAsset], municipalityCode: Long): Seq[Map[String, Any]] = {
     linearAssets.map { asset =>
       Map("id" -> asset.id,
@@ -88,29 +96,32 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService, val 
     }
   }
 
-  def extractPropertyValue(key: String, properties: Seq[AssetProperties], transformation: ( (String, Seq[String])=> Any)): (String, Any) = {
+  def extractPropertyValue(key: String, properties: Seq[AssetProperties], transformation: ( (String, Seq[String])=> Any)): Any = {
     val values = properties.filter { property => property.name == key }.map { property =>
       property.value
     }
-    key -> transformation(key, values)
+    transformation(key, values)
   }
   def propertyValuesToIntList(key: String, values: Seq[String]): Seq[Int] = { values.map(_.toInt) }
   def propertyValuesToString(key: String, values: Seq[String]): String = { values.mkString }
-  def firstPropertyValueToInt(key: String, values: Seq[String]): Int = {
+  def firstPropertyValueToInt(key: String, values: Seq[String]): Seq[Int] = {
     try {
-      values.headOption.map(_.toInt).get
+      values.map(_.toInt)
     } catch {
       case e: Exception => halt(BadRequest(s"The property values for the property with name $key are not valid."))
     }
   }
 
-  def validateAssetPropertyValue(assetTypeId: Int, properties:Seq[AssetProperties]):Unit = {
-    assetTypeId match {
-      case `lighting` =>
-        val value = extractPropertyValue("lighting", properties, firstPropertyValueToInt)
-        if(!Seq(0,1).contains(value._2))
-          halt(BadRequest(s"The property values for the property with name lighting are not valid."))
-      case _ => ("", None)
+  def validateAssetPropertyValue(assetTypeId: Int, properties:Seq[Seq[AssetProperties]]):Unit = {
+    properties.foreach { prop =>
+      assetTypeId match {
+        case `lighting` =>
+          extractPropertyValue("lighting", prop, firstPropertyValueToInt).asInstanceOf[Seq[Int]].foreach{ value =>
+            if (!Seq(0, 1).contains(value))
+              halt(BadRequest(s"The property values for the property with name hasLighting are not valid."))
+          }
+        case _ => ("", None)
+      }
     }
   }
 
@@ -172,10 +183,12 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService, val 
     if(onOffLinearAssetService.getMunicipalityById(municipalityCode).isEmpty)
       halt(NotFound("Municipality code not found."))
 
-    val linkId = (parsedBody \ "linkId").extractOrElse[Int](halt(UnprocessableEntity("Missing mandatory 'linkId' parameter")))
-    val startMeasure = (parsedBody \ "startMeasure").extractOrElse[Double](halt(BadRequest("Missing mandatory 'startMeasure' parameter")))
-    val geometryTimestamp = (parsedBody \ "geometryTimestamp").extractOrElse[Long](halt(BadRequest("Missing mandatory 'geometryTimestamp' parameter")))
-    val properties = (parsedBody \ "properties").extractOrElse[Seq[AssetProperties]](halt(BadRequest("Missing asset properties")))
+    val body = parsedBody.extractOpt[Seq[JObject]].getOrElse(Nil)
+    val linkIds = body.map(bd => (bd\ "linkId").extractOrElse[Long](halt(UnprocessableEntity("Missing mandatory 'linkId' parameter"))))
+    linkIds.map(linkId => roadLinkService.getRoadLinkGeometry(linkId).getOrElse(halt(UnprocessableEntity(s"Link id: $linkId is not valid or doesn't exist."))))
+    body.map(bd => (bd\ "startMeasure").extractOrElse[Double](halt(BadRequest("Missing mandatory 'startMeasure' parameter"))))
+    val geometryTimestamps = body.map(bd => (bd\ "geometryTimestamp").extractOrElse[Long](halt(BadRequest("Missing mandatory 'geometryTimestamp' parameter"))))
+    val properties = body.map(bd => (bd\ "properties").extractOrElse[Seq[AssetProperties]](halt(BadRequest("Missing asset properties"))))
 
     if(properties.isEmpty)
       halt(BadRequest("Missing asset properties values"))
@@ -184,13 +197,14 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService, val 
     val newLinearAssets = extractNewLinearAssets(assetTypeId, parsedBody)
     validateSideCodes(newLinearAssets)
     newLinearAssets.foreach{
-      newAsset => validateMeasures(Set(newAsset.startMeasure, newAsset.endMeasure), assetTypeId, linkId.toLong)
+      newAsset => validateMeasures(Set(newAsset.startMeasure, newAsset.endMeasure), assetTypeId, newAsset.linkId)
+
     }
-    val assetsIds = onOffLinearAssetService.create(newLinearAssets, assetTypeId, user.username, geometryTimestamp)
-    linearAssetsToApi(onOffLinearAssetService.getPersistedAssetsByIds(assetTypeId, assetsIds.toSet).filterNot(_.expired), municipalityCode).headOption match {
-      case Some(value) => value
-      case _ => halt(NotFound("Asset not found"))
-    }
+    val assetsIds = onOffLinearAssetService.create(newLinearAssets, assetTypeId, user.username)
+    val assets = onOffLinearAssetService.getPersistedAssetsByIds(assetTypeId, assetsIds.toSet).filterNot(_.expired)
+    if(assets.isEmpty)
+      halt(NotFound("Asset not found"))
+    linearAssetsToApi(assets, municipalityCode)
   }
 
   put("/:municipalityCode/:assetType/:assetId"){
@@ -214,10 +228,10 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService, val 
 
     val assetById = onOffLinearAssetService.getPersistedAssetsByIds(assetTypeId, Set(params("assetId").toLong)).filterNot(_.expired)
     if(assetById.isEmpty) halt(UnprocessableEntity("Asset not found."))
-    val newAsset = extractNewLinearAssets(assetTypeId, parsedBody).head
+    val newAsset = extractLinearAssets(assetTypeId, parsedBody)
 
     validateMeasures(Set(newAsset.startMeasure, newAsset.endMeasure), assetTypeId, linkId.toLong)
-    validateAssetPropertyValue(assetTypeId, properties)
+    validateAssetPropertyValue(assetTypeId, Seq(properties))
     validateSideCodes(Seq(newAsset))
 
     val oldAsset = onOffLinearAssetService.getPersistedAssetsByIds(assetTypeId, Set(params("assetId").toLong)).head
