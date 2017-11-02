@@ -620,6 +620,7 @@
 
         geometryChangedLayer.setZIndex(100);
         calibrationPointLayer.setZIndex(22);
+        calibrationPointLayer.getSource().clear();
         if(!applicationModel.isActiveButtons()) {
           var actualPoints = me.drawCalibrationMarkers(calibrationPointLayer.source, roadLinks);
           _.each(actualPoints, function (actualPoint) {

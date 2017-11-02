@@ -257,4 +257,28 @@ class ProjectDaoSpec  extends FunSuite with Matchers {
       savedProjectLinks.filter(_.discontinuity.value == 2).head.id should be (biggestProjectLink.id)
     }
   }
+
+  test("fetch by road parts") {
+    //Creation of Test road
+    runWithRollback {
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
+      ProjectDAO.createRoadAddressProject(rap)
+      ProjectDAO.reserveRoadPart(id, 5, 203, rap.createdBy)
+      ProjectDAO.reserveRoadPart(id, 5, 205, rap.createdBy)
+      val addresses = (RoadAddressDAO.fetchByRoadPart(5, 203) ++ RoadAddressDAO.fetchByRoadPart(5, 205)).map(toProjectLink(rap))
+      ProjectDAO.create(addresses)
+      ProjectDAO.roadPartReservedByProject(5, 203) should be(Some("TestProject"))
+      ProjectDAO.roadPartReservedByProject(5, 205) should be(Some("TestProject"))
+      val reserved203 = ProjectDAO.fetchByProjectRoadParts(Seq((5, 203)), id)
+      reserved203.nonEmpty should be (true)
+      val reserved205 = ProjectDAO.fetchByProjectRoadParts(Seq((5, 205)), id)
+      reserved205.nonEmpty should be (true)
+      reserved203 shouldNot be (reserved205)
+      reserved203.toSet.intersect(reserved205.toSet) should have size (0)
+      val reserved = ProjectDAO.fetchByProjectRoadParts(Seq((5,203), (5, 205)), id)
+      reserved.map(_.id).toSet should be (reserved203.map(_.id).toSet ++ reserved205.map(_.id).toSet)
+      reserved should have size (addresses.size)
+    }
+  }
 }

@@ -272,6 +272,18 @@ object ProjectDAO {
     listQuery(query)
   }
 
+
+  def fetchByProjectRoadParts(roadParts: Seq[(Long, Long)], projectId: Long): Seq[ProjectLink] = {
+    if (roadParts.isEmpty)
+      return Seq()
+    val roadPartsCond = roadParts.map{case (road, part) => s"(PROJECT_LINK.ROAD_NUMBER = $road AND PROJECT_LINK.ROAD_PART_NUMBER = $part)"}
+    val filter = s"${roadPartsCond.mkString("(", " OR ", ")")} AND"
+    val query =
+      s"""$projectLinkQueryBase
+                where $filter (PROJECT_LINK.PROJECT_ID = $projectId) order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
+    listQuery(query)
+  }
+
   def isRoadPartNotHandled(roadNumber: Long, roadPartNumber: Long, projectId: Long): Boolean = {
     val filter = s"PROJECT_LINK.ROAD_NUMBER = $roadNumber AND PROJECT_LINK.ROAD_PART_NUMBER = $roadPartNumber " +
       s"AND PROJECT_LINK.PROJECT_ID = $projectId AND PROJECT_LINK.STATUS = ${LinkStatus.NotHandled.value}"
