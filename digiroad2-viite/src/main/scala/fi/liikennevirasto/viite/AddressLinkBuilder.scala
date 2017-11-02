@@ -178,6 +178,7 @@ trait AddressLinkBuilder {
       nextSegment.startDate       == previousSegment.startDate &&
       nextSegment.endDate         == previousSegment.endDate &&
       nextSegment.linkId          == previousSegment.linkId &&
+      nextSegment.geometry.nonEmpty && previousSegment.geometry.nonEmpty && // Check if geometries are not empty
       addressConnected(nextSegment, previousSegment) &&
       !(cpNext._1.isDefined && cpPrevious._2.isDefined)) { // Check that the calibration point isn't between these segments
 
