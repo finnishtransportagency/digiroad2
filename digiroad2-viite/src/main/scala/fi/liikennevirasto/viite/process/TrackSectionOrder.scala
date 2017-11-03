@@ -2,6 +2,7 @@ package fi.liikennevirasto.viite.process
 
 import fi.liikennevirasto.digiroad2.asset.SideCode
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
+import fi.liikennevirasto.digiroad2.linearasset.PolyLine
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Matrix, Point, Vector3d}
 import fi.liikennevirasto.viite.MaxDistanceForConnectedLinks
@@ -22,7 +23,7 @@ object TrackSectionOrder {
     }
   }
 
-  def findOnceConnectedLinks(seq: Seq[ProjectLink]): Map[Point, ProjectLink] = {
+  def findOnceConnectedLinks[T <: PolyLine](seq: Seq[T]): Map[Point, T] = {
     val pointMap = seq.flatMap(l => {
       val (p1, p2) = GeometryUtils.geometryEndpoints(l.geometry)
       Seq(p1 -> l, p2 -> l)
@@ -33,7 +34,7 @@ object TrackSectionOrder {
     }.toMap.filter(_._2.size == 1).mapValues(_.head)
   }
 
-  def isRoundabout(seq: Seq[ProjectLink]): Boolean = {
+  def isRoundabout[T <: PolyLine](seq: Seq[T]): Boolean = {
     seq.nonEmpty && findOnceConnectedLinks(seq).isEmpty && seq.forall(pl =>
       seq.count(pl2 =>
         GeometryUtils.areAdjacent(pl.geometry, pl2.geometry, MaxDistanceForConnectedLinks)) == 3) // the link itself and two connected
