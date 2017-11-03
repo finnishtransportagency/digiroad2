@@ -137,7 +137,7 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
 
   private def validateRequiredProperties(maintenanceRoad: MaintenanceRoad): Set[String] = {
     val mandatoryProperties: Map[String, String] = maintenanceDAO.getMaintenanceRequiredProperties(maintenanceRoadAssetTypeId)
-    val nonEmptyMandatoryProperties: Seq[Properties] = maintenanceRoad.maintenanceRoad.filter { property =>
+    val nonEmptyMandatoryProperties: Seq[Properties] = maintenanceRoad.properties.filter { property =>
       mandatoryProperties.contains(property.publicId) && property.value.nonEmpty
     }
     mandatoryProperties.keySet -- nonEmptyMandatoryProperties.map(_.publicId).toSet

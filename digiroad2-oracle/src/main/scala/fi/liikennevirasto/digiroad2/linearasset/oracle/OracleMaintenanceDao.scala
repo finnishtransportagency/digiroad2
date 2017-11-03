@@ -134,8 +134,8 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
   /**
     * Updates MaintenanceRoad property. Used by MaintenanceService.updateProjected.
     */
-  def updateMaintenanceRoadValue(assetId: Long, value: MaintenanceRoad, username: String): Option[Long] = {
-    value.maintenanceRoad.foreach { prop =>
+  def updateMaintenanceRoadValue(assetId: Long, maintenanceRoad: MaintenanceRoad, username: String): Option[Long] = {
+    maintenanceRoad.properties.foreach { prop =>
       val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply(prop.publicId).firstOption.getOrElse(throw new IllegalArgumentException("Property: " + prop.publicId + " not found"))
       prop.propertyType match {
         case PropertyTypes.Text => {
@@ -214,8 +214,8 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     requiredProperties
   }
 
-  def insertMaintenanceRoadValue(assetId: Long, value: MaintenanceRoad): Unit = {
-    value.maintenanceRoad.filter(finalProps => finalProps.value != "").foreach(prop => {
+  def insertMaintenanceRoadValue(assetId: Long, maintenanceRoad: MaintenanceRoad): Unit = {
+    maintenanceRoad.properties.filter(finalProps => finalProps.value != "").foreach(prop => {
       prop.propertyType match {
         case PropertyTypes.Text =>
           insertValue(assetId, prop.publicId, prop.value)

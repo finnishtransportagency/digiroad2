@@ -168,7 +168,7 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
         asset.linkId should be(388562360l)
         asset.startMeasure should be(0)
         asset.endMeasure should be(20)
-        asset.value.get.asInstanceOf[MaintenanceRoad].maintenanceRoad.length should be(3)
+        asset.value.get.asInstanceOf[MaintenanceRoad].properties.length should be(3)
       }
     }
   }
