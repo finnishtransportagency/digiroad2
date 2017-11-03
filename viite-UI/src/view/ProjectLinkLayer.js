@@ -864,14 +864,6 @@
       vectorLayer.getSource().clear(true);
       vectorLayer.getSource().addFeatures(features);
       vectorLayer.changed();
-      var layers = map.getLayers().getArray();
-      console.log("Layers list");
-      _.forEach(layers, function(layer) {
-        var source = layer.getSource();
-        if (!_.isUndefined(source) && (source instanceof ol.source.Vector)) {
-          console.log(layer.get("name") + " " + source.getFeatures().length);
-        }
-      });
     };
 
     eventbus.on('tool:changed', changeTool);
