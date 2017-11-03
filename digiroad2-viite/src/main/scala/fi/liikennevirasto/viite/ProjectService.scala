@@ -262,9 +262,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               val created = TrackSectionOrder.mValueRoundabout(ordered._1 ++ ordered._2)
               created
             } else {
-              val isSuravage = newProjectLinks.values.map(_.linkGeomSource).head == LinkGeomSource.SuravageLinkInterface
-              val isComplementary = newProjectLinks.values.map(_.linkGeomSource).head == LinkGeomSource.SuravageLinkInterface
-              fillRampGrowthDirection(isSuravage, isComplementary, newProjectLinks.keys.toSet, newRoadNumber, newRoadPartNumber, newProjectLinks.values.toSeq)
+              fillRampGrowthDirection(newProjectLinks.keys.toSet, newRoadNumber, newRoadPartNumber, newProjectLinks.values.toSeq, firstLinkId)
             }
           } else
             newProjectLinks.values.toSeq
@@ -279,27 +277,28 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   /**
     * Will attempt to find relevant sideCode information to the projectLinks given a number of factors
-    * @param isSuravage check if the links are of Suravage origin
-    * @param isComplementary check if the links are of Complementary origin
+    * for example if they are of suravage or complementary origin
     * @param linkIds the linkIds to process
     * @param roadNumber the roadNumber to apply/was applied to said linkIds
     * @param roadPartNumber the roadPartNumber to apply/was applied to said linkIds
     * @param newProjectLinks the whole newProjectLinks
     * @return the projectLinks with a assigned SideCode
     */
-  private def fillRampGrowthDirection(isSuravage: Boolean, isComplementary: Boolean, linkIds: Set[Long], roadNumber: Long,
-                                      roadPartNumber:Long, newProjectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
+  private def fillRampGrowthDirection( linkIds: Set[Long], roadNumber: Long, roadPartNumber:Long, newProjectLinks: Seq[ProjectLink], firstLinkId: Long): Seq[ProjectLink] = {
 
+    val isSuravage = newProjectLinks.map(_.linkGeomSource).head == LinkGeomSource.SuravageLinkInterface
+    val isComplementary = newProjectLinks.map(_.linkGeomSource).head == LinkGeomSource.SuravageLinkInterface
     //Find adjacents to the linkIds
-    val lowerMValue = newProjectLinks.minBy(_.endMValue)
-    val lowerAdjacents = roadAddressService.getAdjacent(Set(lowerMValue.linkId), lowerMValue.linkId).filter(adj => {
+    val adjacentsToFirst = roadAddressService.getAdjacent(Set(firstLinkId), firstLinkId).filter(adj => {
       //Only include the adjacents that have the same roadNumber and roadPartNumber
-      adj.roadNumber == roadNumber && adj.roadPartNumber == roadPartNumber
+      adj.roadNumber == roadNumber && adj.roadPartNumber == roadPartNumber &&
+      //Also do not include the ones that are within the linkIds
+      !linkIds.contains(adj.linkId)
     })
 
-    if(!lowerAdjacents.isEmpty){
+    if(!adjacentsToFirst.isEmpty){
       //Add fill the sidecode acording to the adjacent data
-      newProjectLinks.map(_.copy(sideCode = lowerAdjacents.map(_.sideCode).distinct.head))
+      newProjectLinks.map(_.copy(sideCode = adjacentsToFirst.map(_.sideCode).distinct.head))
     } else  {
       //No adjacent road address detected, fetching VVH info
       val rampInfo = if(isSuravage) {

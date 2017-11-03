@@ -460,8 +460,8 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       projectService.updateProjectLinks(savedProject.id, Set(5172715, 5172714, 5172031, 5172030), LinkStatus.Terminated, "-", 5, 205, None)
       projectService.updateProjectLinks(savedProject.id, linkIds -- Set(5172715, 5172714, 5172031, 5172030), LinkStatus.Transfer, "-", 5, 205, None)
       ProjectDAO.getProjectLinks(savedProject.id).size should be (66)
-      projectService.createProjectLinks(newLinkTemplates.take(1).map(_.linkId).toSet, savedProject.id, 5L, 205L, 1, 5, 2, 1, 8, "U").get("success") should be (Some(true))
-      projectService.createProjectLinks(newLinkTemplates.tail.take(1).map(_.linkId).toSet, savedProject.id, 5L, 205L, 2, 5, 2, 1, 8, "U").get("success") should be (Some(true))
+      projectService.createProjectLinks(newLinkTemplates.take(1).map(_.linkId), savedProject.id, 5L, 205L, 1, 5, 2, 1, 8, "U").get("success") should be (Some(true))
+      projectService.createProjectLinks(newLinkTemplates.tail.take(1).map(_.linkId), savedProject.id, 5L, 205L, 2, 5, 2, 1, 8, "U").get("success") should be (Some(true))
       ProjectDAO.getProjectLinks(savedProject.id).size should be (68)
       val changeInfo = projectService.getChangeProject(savedProject.id)
       projectService.projectLinkPublishable(savedProject.id) should be(true)
@@ -861,19 +861,19 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       mockForProject(id, Seq(p))
 
       val message1project1 = projectService.addNewLinksToProject(Seq(p), id, projectLink.roadNumber,
-        projectLink.roadPartNumber, projectLink.track.value.toLong, projectLink.discontinuity.value.toLong, projectLink.roadType.value, "U").getOrElse("")
+        projectLink.roadPartNumber, projectLink.track.value.toLong, projectLink.discontinuity.value.toLong, projectLink.roadType.value, "U", p.linkId).getOrElse("")
       val links = ProjectDAO.getProjectLinks(id)
       links.size should be(0)
       message1project1 should be("TIE 5 OSA 203 on jo olemassa projektin alkupäivänä 03.03.1972, tarkista tiedot") //check that it is reserved in roadaddress table
 
       val message1project2 = projectService.addNewLinksToProject(Seq(p), id + 1, projectLink2.roadNumber,
-        projectLink2.roadPartNumber, projectLink2.track.value.toLong, projectLink2.discontinuity.value.toLong, projectLink2.roadType.value, "U")
+        projectLink2.roadPartNumber, projectLink2.track.value.toLong, projectLink2.discontinuity.value.toLong, projectLink2.roadType.value, "U", p.linkId)
       val links2 = ProjectDAO.getProjectLinks(id + 1)
       links2.size should be(1)
       message1project2 should be(None)
 
       val message2project1 = projectService.addNewLinksToProject(Seq(p), id, projectLink3.roadNumber,
-        projectLink3.roadPartNumber, projectLink3.track.value.toLong, projectLink3.discontinuity.value.toLong, projectLink3.roadType.value, "U").getOrElse("")
+        projectLink3.roadPartNumber, projectLink3.track.value.toLong, projectLink3.discontinuity.value.toLong, projectLink3.roadType.value, "U", p.linkId).getOrElse("")
       val links3 = ProjectDAO.getProjectLinks(id)
       links3.size should be(0)
       message2project1 should be("TIE 5 OSA 999 on jo varattuna projektissa TestProject, tarkista tiedot")
