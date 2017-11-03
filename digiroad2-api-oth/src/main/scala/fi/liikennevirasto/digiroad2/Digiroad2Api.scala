@@ -1196,14 +1196,12 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
       halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
     val asset = (parsedBody \ "asset").extract[service.IncomingAsset]
 
-//    for (link <- roadLinkService.fetchVVHRoadlinkAndComplementary(asset.linkId)) {
     for (link <- roadLinkService.getRoadLinkAndComplementaryFromVVH(asset.linkId)) {
       validateUserMunicipalityAccess(user)(link.municipalityCode)
       optTypeID match {
         case Some(typeId) => validateAdministrativeClass(typeId)(link.administrativeClass)
         case _ => None
       }
-//      service.create(asset, user.username, link.geometry, link.municipalityCode, Some(link.administrativeClass), link.linkSource)
       service.create(asset, user.username, link)
     }
   }
