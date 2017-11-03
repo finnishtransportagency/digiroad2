@@ -270,11 +270,12 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
 
 
-  put("/roadlinks/roadaddress/project/directionchangenewroadlink") {
+  put("/roadlinks/roadaddress/project/directionchangeroadlink") {
+    val user = userProvider.getCurrentUser()
     try { //check for validity
       val roadInfo = parsedBody.extract[ProjectRoadAddressInfo]
       val writableProjectService = projectWritable(roadInfo.projectId)
-      writableProjectService.changeDirection(roadInfo.projectId, roadInfo.roadNumber, roadInfo.roadPartNumber) match {
+      writableProjectService.changeDirection(roadInfo.projectId, roadInfo.roadNumber, roadInfo.roadPartNumber,user.username) match {
         case Some(errorMessage) =>
           Map("success" -> false, "errorMessage" -> errorMessage)
         case None => Map("success" -> true)

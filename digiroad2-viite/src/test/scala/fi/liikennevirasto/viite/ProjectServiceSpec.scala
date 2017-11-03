@@ -1,9 +1,7 @@
 package fi.liikennevirasto.viite
 
-import java.net.ConnectException
 import java.util.Properties
 
-import fi.liikennevirasto.viite.util.{SplitOptions, StaticTestData}
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
@@ -15,15 +13,9 @@ import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, RoadLinkService, _}
 import fi.liikennevirasto.viite.dao.AddressChangeType._
 import fi.liikennevirasto.viite.dao.Discontinuity.Discontinuous
-import fi.liikennevirasto.viite.dao.{Discontinuity, ProjectDAO, ProjectState, RoadAddressProject, _}
-import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLink, RoadAddressLinkLike}
-import fi.liikennevirasto.viite.dao.{AddressChangeType, Discontinuity, ProjectState, RoadAddressProject, _}
+import fi.liikennevirasto.viite.dao.{AddressChangeType, Discontinuity, ProjectDAO, ProjectState, RoadAddressProject, _}
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLinkLike}
-import fi.liikennevirasto.viite.process.{ProjectDeltaCalculator, ProjectSectionCalculator}
-import org.apache.http.client.config.RequestConfig
-import org.apache.http.client.methods.HttpGet
-import org.apache.http.conn.{ConnectTimeoutException, HttpHostConnectException}
-import org.apache.http.impl.client.HttpClientBuilder
+import fi.liikennevirasto.viite.process.ProjectDeltaCalculator
 import org.joda.time.DateTime
 import org.mockito.Matchers._
 import org.mockito.Mockito.{when, _}
@@ -34,8 +26,6 @@ import org.scalatest.{BeforeAndAfter, FunSuite, Matchers}
 import slick.driver.JdbcDriver.backend.Database
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
-
-import scala.util.parsing.json.JSON
 
 class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   val properties: Properties = {
@@ -163,6 +153,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val (projectLinks, palinks) = l.partition(_.isInstanceOf[ProjectLink])
     val dbLinks = ProjectDAO.getProjectLinks(id)
     when(mockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
+    when(mockRoadLinkService.getLinkIdSideCodes(any[Set[Long]])).thenReturn(Seq(SideCode.TowardsDigitizing))
     when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenAnswer(
       toMockAnswer(dbLinks ++ projectLinks.asInstanceOf[Seq[ProjectLink]].filterNot(l => dbLinks.map(_.linkId).contains(l.linkId)),
         roadLink, palinks.asInstanceOf[Seq[ProjectAddressLink]].map(toRoadLink)
@@ -201,6 +192,38 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       }
     }
   }
+
+
+
+  test("change roadpart direction and assign reversed attribute, servicelevel") {
+    runWithRollback {
+      val id = Sequences.nextViitePrimaryKeySeqValue
+      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
+      ProjectDAO.createRoadAddressProject(rap)
+      ProjectDAO.reserveRoadPart(id, 5, 207, rap.createdBy)
+      val addresses = RoadAddressDAO.fetchByRoadPart(5, 207).map(toProjectLink(rap))
+      ProjectDAO.create(addresses)
+      val projectLinks = ProjectDAO.getProjectLinks(id)
+      ProjectDAO.updateProjectLinks(projectLinks.map(x => x.id).toSet, LinkStatus.Transfer, "test")
+      mockForProject(id)
+      projectService.changeDirection(id,5,207,"test")
+      val updatedProjectLinks = ProjectDAO.getProjectLinks(id)
+      updatedProjectLinks.foreach(x=>x.reversed should be (true))
+      projectService.changeDirection(id,5,207,"test")
+      val secondUpdatedProjectLinks = ProjectDAO.getProjectLinks(id)
+      secondUpdatedProjectLinks.foreach(x=>x.reversed should be (false))
+    }
+  }
+
+  private def toProjectLink(project: RoadAddressProject)(roadAddress: RoadAddress): ProjectLink = {
+    ProjectLink(id = NewRoadAddress, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track,
+      roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
+      roadAddress.endDate, modifiedBy = Option(project.createdBy), 0L, roadAddress.linkId, roadAddress.startMValue, roadAddress.endMValue,
+      roadAddress.sideCode, roadAddress.calibrationPoints, floating = false, roadAddress.geometry, project.id, LinkStatus.NotHandled, RoadType.PublicRoad,
+      roadAddress.linkGeomSource, GeometryUtils.geometryLength(roadAddress.geometry), 0, roadAddress.ely, false)
+  }
+
+
 
   test("Using TR_id as project_id when querying should be empty") {
     runWithRollback {
@@ -357,7 +380,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       projectService.projectLinkPublishable(savedProject.id) should be(false)
       val projectLinks = ProjectDAO.getProjectLinks(savedProject.id)
       val partitioned = projectLinks.partition(_.roadPartNumber == 207)
-      val highestDistanceStart = projectLinks.map(p => p.startAddrMValue).max
       val highestDistanceEnd = projectLinks.map(p => p.endAddrMValue).max
       val linkIds207 = partitioned._1.map(_.linkId).toSet
       reset(mockRoadLinkService)
@@ -430,7 +452,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("Terminate, new links and then transfer") {
-    var count = 0
     val roadLink = RoadLink(51L, Seq(Point(535605.272, 6982204.22, 85.90899999999965))
       , 540.3960283713503, State, 1, TrafficDirection.AgainstDigitizing, Motorway,
       Some("25.06.2015 03:00:00"), Some("vvh_modified"), Map("MUNICIPALITYCODE" -> BigInt.apply(749)),
@@ -832,6 +853,8 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
 
   }
+
+
 
   test("error message when reserving already used road number&part (in other project ids). Empty error message if same road number&part but == proj id ") {
     runWithRollback {

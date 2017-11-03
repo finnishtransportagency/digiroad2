@@ -435,6 +435,9 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       templateLink2.roadAddressId should be(newLink2.roadAddressId)
     }
   }
+
+
+
   test("get change table test with update change table on every road link change") {
     var count = 0
     val roadLink = RoadLink(5170939L, Seq(Point(535605.272, 6982204.22, 85.90899999999965))
@@ -610,7 +613,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenAnswer(
         toMockAnswer(adjusted.map(toRoadLink))
       )
-      projectService.changeDirection(7081807, 77997, 1)
+      projectService.changeDirection(7081807, 77997, 1,"testuser")
       val changedLinks = ProjectDAO.getProjectLinks(7081807)
 
       // Test that for every link there should be the address before it or after it (unless it's the first or last link)
@@ -682,10 +685,10 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val links = ProjectDAO.getProjectLinks(id)
       links.map(_.linkId).toSet should be(addresses.map(_.linkId).toSet)
       val sideCodes = links.map(l => l.id -> l.sideCode).toMap
-      projectService.changeDirection(id, 75, 2) should be(None)
+      projectService.changeDirection(id, 75, 2,"testuser") should be(None)
       val changedLinks = ProjectDAO.getProjectLinksByIds(links.map { l => l.id })
       changedLinks.foreach(cl => cl.sideCode should not be (sideCodes(cl.id)))
-
+      changedLinks.foreach(cl => cl.reversed should be (true))
       val geom584 = StaticTestData.mappedGeoms(Seq(5176584L)).values.head
       val addProjectAddressLink584 = ProjectAddressLink(NewRoadAddress, 5176584, geom584, GeometryUtils.geometryLength(geom584),
         State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,
@@ -732,7 +735,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val links = ProjectDAO.getProjectLinks(id)
       ProjectDAO.updateProjectLinks(Set(links.head.id), LinkStatus.UnChanged, "test")
       links.map(_.linkId).toSet should be(addresses.map(_.linkId).toSet)
-      val result = projectService.changeDirection(id, 75, 2)
+      val result = projectService.changeDirection(id, 75, 2,"testuser")
       result should be(Some("Tieosalle ei voi tehdä kasvusuunnan kääntöä, koska tieosalla on linkkejä, jotka on tässä projektissa määritelty säilymään ennallaan."))
     }
   }

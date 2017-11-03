@@ -1537,9 +1537,18 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     */
   def getRoadAddressesByLinkIds(linkIds: Set[Long]): Seq[RoadLinkRoadAddress] = {
     withDynTransaction {
-      MassQuery.withIds(linkIds) {
-        idTableName =>
-          val query = s"""
+      getRoadAddressesByLinkIdsSessionless(linkIds)
+    }
+  }
+
+
+
+
+
+  private def getRoadAddressesByLinkIdsSessionless(linkIds: Set[Long]): Seq[RoadLinkRoadAddress] = {
+    MassQuery.withIds(linkIds) {
+      idTableName =>
+        val query = s"""
             SELECT pos.LINK_ID, ra.ROAD_NUMBER, ra.ROAD_PART_NUMBER, ra.TRACK_CODE, pos.SIDE_CODE,
               MIN(ra.START_ADDR_M), MAX(ra.END_ADDR_M)
             FROM ROAD_ADDRESS ra
@@ -1550,13 +1559,19 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
               (START_DATE IS NULL OR START_DATE <= sysdate) AND
               (END_DATE IS NULL OR END_DATE >= sysdate)
             GROUP BY LINK_ID, ROAD_NUMBER, ROAD_PART_NUMBER, TRACK_CODE, SIDE_CODE"""
-          Q.queryNA[(Long, Long, Long, Int, Int, Long, Long)](query).list.map {
-            case (id, roadNumber, roadPartNumber, track, sideCode, startAddrMValue, endAddrMValue)
-            => RoadLinkRoadAddress(id, roadNumber, roadPartNumber, track, sideCode, startAddrMValue, endAddrMValue)
-          }
-      }
+        Q.queryNA[(Long, Long, Long, Int, Int, Long, Long)](query).list.map {
+          case (id, roadNumber, roadPartNumber, track, sideCode, startAddrMValue, endAddrMValue)
+          => RoadLinkRoadAddress(id, roadNumber, roadPartNumber, track, sideCode, startAddrMValue, endAddrMValue)
+        }
     }
   }
+
+  def getLinkIdSideCodes(linkIds: Set[Long]): Seq[SideCode] = {
+    getRoadAddressesByLinkIdsSessionless(linkIds).map(x=>SideCode.apply(x.sideCode))
+  }
+
+
+
 
   /**
     * This method returns Road Link that have been changed in VVH between given dates values. It is used by TN-ITS ChangeApi.

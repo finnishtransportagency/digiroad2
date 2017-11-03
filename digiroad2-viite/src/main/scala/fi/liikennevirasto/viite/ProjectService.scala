@@ -317,7 +317,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       calibrationPoints = if (resetAddress) (None, None) else pl.calibrationPoints)
   }
 
-  def changeDirection(projectId: Long, roadNumber: Long, roadPartNumber: Long): Option[String] = {
+  def changeDirection(projectId: Long, roadNumber: Long, roadPartNumber: Long, username:String): Option[String] = {
     RoadAddressLinkBuilder.municipalityRoadMaintainerMapping // make sure it is populated outside of this TX
     try {
       withDynTransaction {
@@ -330,8 +330,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         ProjectDAO.flipProjectLinksSideCodes(projectId, roadNumber, roadPartNumber)
         val projectLinks = ProjectDAO.getProjectLinks(projectId)
         val adjLinks = withGeometry(projectLinks, resetAddress = false)
-        ProjectSectionCalculator.assignMValues(adjLinks).foreach(
-          link => ProjectDAO.updateAddrMValues(link))
+        val adjustedLinks=ProjectSectionCalculator.assignMValues(adjLinks)
+        ProjectDAO.updateProjectLinksToDB(adjustedLinks.map(x=>x.copy(reversed = directionChangedCheck(x))),username)
         None
       }
     } catch {
@@ -340,6 +340,16 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         Some("Päivitys ei onnistunut")
     }
   }
+
+  private def directionChangedCheck(projectLink: ProjectLink): Boolean ={
+    projectLink.sideCode.value
+    val ra=roadLinkService.getLinkIdSideCodes(Set(projectLink.linkId))
+    if (ra!=null &&ra.nonEmpty)
+      ra.head!=projectLink.sideCode
+    else
+    true
+  }
+
 
   /**
     * Adds reserved road links (from road parts) to a road address project. Clears
@@ -867,7 +877,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @return true, if the delta calculation is successful and change table has been updated.
     */
   def updateProjectLinks(projectId: Long, linkIds: Set[Long], linkStatus: LinkStatus, userName: String,
-                         roadNumber: Long = 0, roadPartNumber: Long = 0, userDefinedEndAddressM: Option[Int], roadType: Long = 0, discontinuity: Long = 0, ely: Long = 0): Option[String] = {
+                         roadNumber: Long = 0, roadPartNumber: Long = 0, userDefinedEndAddressM: Option[Int], roadType: Long = 0, discontinuity: Long = 0, ely: Long = 0, reversed:Boolean= false ): Option[String] = {
 
     def updateRoadTypeDiscontinuity(links: Seq[ProjectLink]) = {
       val lastSegment = links.maxBy(_.endAddrMValue)
