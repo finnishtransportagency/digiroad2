@@ -1019,14 +1019,15 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       projectService.addNewLinksToProject(Seq(newLink), project.id, 77, 35, 0L, 5L, RoadType.PublicRoad.value, "U") should be (None)
 
       val allLinks = ProjectDAO.getProjectLinks(project.id)
-      val newLinks = allLinks.filter(_.status == LinkStatus.New)
       val transferLinks = allLinks.filter(_.status != LinkStatus.New)
 
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(allLinks.map(_.linkId).toSet,false, false)).thenReturn(geomToLinks.map(toRoadLink) ++ Seq(toRoadLink(newLink)))
-      projectService.updateProjectLinks(project.id, transferLinks.map(_.linkId).toSet, LinkStatus.Transfer, "Test", 0, 0, Option.empty[Int]) should be (None)
-      newLinks.head.calibrationPoints._1 should not be (None)
-      transferLinks.head.calibrationPoints._1 should be (None)
-      allLinks.size should be (newLinks.size + transferLinks.size)
+      projectService.updateProjectLinks(project.id, transferLinks.map(_.linkId).toSet, LinkStatus.Transfer, "Test", 77, 35, Option.empty[Int]) should be (None)
+
+      val (resultNew, resultTransfer) = ProjectDAO.getProjectLinks(project.id).partition(_.status == LinkStatus.New)
+      resultNew.head.calibrationPoints._1 should not be (None)
+      resultTransfer.head.calibrationPoints._1 should be (None)
+      allLinks.size should be (resultNew.size + resultTransfer.size)
     }
   }
 
@@ -1066,17 +1067,18 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       projectService.addNewLinksToProject(Seq(newLink), project.id, 847, 6, 0L, 12L, RoadType.PublicRoad.value, "U") should be (None)
 
       val allLinks = ProjectDAO.getProjectLinks(project.id)
-      val newLinks = allLinks.filter(_.status == LinkStatus.New)
-      val terminatedLinks = allLinks.filter(_.status == LinkStatus.Terminated)
       val transferLinks = allLinks.filter(al => {al.status != LinkStatus.New && al.status != LinkStatus.Terminated})
 
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(allLinks.map(_.linkId).toSet,false, false)).thenReturn(geomToLinks.map(toRoadLink) ++ Seq(toRoadLink(newLink)))
       projectService.updateProjectLinks(project.id, transferLinks.map(_.linkId).toSet, LinkStatus.Transfer, "Test", 0, 0, Option.empty[Int]) should be (None)
 
-      newLinks.head.calibrationPoints._1 should not be (None)
-      transferLinks.head.calibrationPoints._1 should be (None)
-      terminatedLinks.head.calibrationPoints._1 should be (None)
-      allLinks.size should be (newLinks.size + transferLinks.size + terminatedLinks.size)
+      val (resultNew, resultOther) = ProjectDAO.getProjectLinks(project.id).partition(_.status == LinkStatus.New)
+      val (resultTransfer, resultTerm) = resultOther.partition(_.status == LinkStatus.Transfer)
+
+      resultNew.head.calibrationPoints._1 should not be (None)
+      resultTransfer.head.calibrationPoints._1 should be (None)
+      resultTerm.head.calibrationPoints._1 should be (None)
+      allLinks.size should be (resultNew.size + resultTransfer.size + resultTerm.size)
     }
   }
 

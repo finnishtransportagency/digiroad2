@@ -294,14 +294,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       roadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(suravageLinks.map(_.linkId).toSet, false).map(pal => pal.linkId -> pal.geometry) else Seq())).toMap
     val historyGeometries = roadLinkService.getViiteRoadLinksHistoryFromVVH(roadLinks.map(_.linkId).toSet -- linkGeometries.keySet).groupBy(_.linkId).mapValues(
       s => s.maxBy(_.endDate).geometry)
-    val (found, unfound) = without.partition(w => linkGeometries.contains(w.linkId))
+    val (found, notFound) = without.partition(w => linkGeometries.contains(w.linkId))
     val foundWithGeom = found.map{pl =>
       withGeometry(pl, (linkGeometries ++ historyGeometries)(pl.linkId), resetAddress)}
 
-    val guessedGeom = guessGeom.guestimateGeometry(unfound.sortBy(x=>x.roadNumber).sortBy(x=>x.roadPartNumber).sortBy(x=>x.startAddrMValue), withGeom ++ foundWithGeom)
-    val unfoundWithGuessedGeom = guessedGeom.filterNot(x => linkGeometries.contains(x.linkId))
-
-    foundWithGeom ++ unfoundWithGuessedGeom ++ withGeom
+    guessGeom.guestimateGeometry(notFound.sortBy(x=>x.roadNumber).sortBy(x=>x.roadPartNumber).sortBy(x=>x.startAddrMValue), withGeom ++ foundWithGeom)
   }
 
   private def withGeometry(pl: ProjectLink, linkGeometry: Seq[Point], resetAddress: Boolean) = {
@@ -395,16 +392,16 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   private def validateReservations(reservedRoadParts: Seq[ReservedRoadPart], projectEly: Option[Long], projectId: Long, projectLinks: Seq[ProjectLink]): Option[String] = {
-    val errors = reservedRoadParts.flatMap{ra =>
-      val roadPartExistsInAddresses = RoadAddressDAO.roadPartExists(ra.roadNumber, ra.roadPartNumber) ||
-        ProjectDAO.fetchProjectLinkIds(projectId, ra.roadNumber, ra.roadPartNumber).nonEmpty
+    val errors = reservedRoadParts.flatMap{part =>
+      val roadPartExistsInAddresses = RoadAddressDAO.roadPartExists(part.roadNumber, part.roadPartNumber) ||
+        ProjectDAO.fetchProjectLinkIds(projectId, part.roadNumber, part.roadPartNumber, None, Some(1)).nonEmpty
       val projectLink = projectLinks.find(p => {
-        ra.roadNumber == p.roadNumber && ra.roadPartNumber == p.roadPartNumber &&
-          ra.discontinuity == p.discontinuity && ra.startDate == p.startDate &&
-          ra.endDate == p.endDate
+        part.roadNumber == p.roadNumber && part.roadPartNumber == p.roadPartNumber &&
+          part.discontinuity == p.discontinuity && part.startDate == p.startDate &&
+          part.endDate == p.endDate
       })
       if ((!roadPartExistsInAddresses) && !existsInSuravageOrNew(projectLink)) {
-        Some(s"TIE ${ra.roadNumber} OSA: ${ra.roadPartNumber}")
+        Some(s"TIE ${part.roadNumber} OSA: ${part.roadPartNumber}")
       } else
         None
     }

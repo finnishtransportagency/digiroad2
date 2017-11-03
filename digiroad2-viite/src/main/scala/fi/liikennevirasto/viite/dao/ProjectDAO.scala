@@ -540,13 +540,15 @@ object ProjectDAO {
     Q.updateNA(updateProjectLink).execute
   }
 
-  def fetchProjectLinkIds(projectId: Long, roadNumber: Long, roadPartNumber: Long, status: Option[LinkStatus] = None): List[Long] =
+  def fetchProjectLinkIds(projectId: Long, roadNumber: Long, roadPartNumber: Long, status: Option[LinkStatus] = None,
+                          maxResults: Option[Int] = None): List[Long] =
   {
     val filter = status.map(s => s" AND status = ${s.value}").getOrElse("")
+    val limit = maxResults.map(s => s" AND ROWNUM <= $s").getOrElse("")
     val query= s"""
          SELECT LRM_position.link_id
          FROM Project_link JOIN LRM_Position on project_link.LRM_POSITION_ID = lrm_position.id
-         WHERE project_id = $projectId and road_number = $roadNumber and road_part_number = $roadPartNumber $filter
+         WHERE project_id = $projectId and road_number = $roadNumber and road_part_number = $roadPartNumber $filter $limit
        """
     Q.queryNA[Long](query).list
   }
