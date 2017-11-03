@@ -10,7 +10,7 @@ import org.scalatra._
 import org.scalatra.json.JacksonJsonSupport
 import org.json4s._
 
-case class NewNumericOrTextualValueAsset(linkId: Long, startMeasure: Double, endMeasure: Double, properties: Seq[AssetProperties], sideCode: Int, geometryTimestamp: Long)
+case class NewNumericOrTextualValueAsset(linkId: Long, startMeasure: Double, endMeasure: Double, properties: Seq[AssetProperties], sideCode: Int)
 
 class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService, val roadLinkService: RoadLinkService) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport {
 
@@ -53,14 +53,14 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService, val 
 
   private def extractNewLinearAssets(typeId: Int, value: JValue) = {
     typeId match {
-      case _ => value.extractOpt[Seq[NewNumericOrTextualValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, NumericValue(x.properties.map(_.value).head.toInt), x.sideCode , x.geometryTimestamp, None))
+      case _ => value.extractOpt[Seq[NewNumericOrTextualValueAsset]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure, NumericValue(x.properties.map(_.value).head.toInt), x.sideCode ,0, None))
     }
   }
 
   private def extractLinearAssets(typeId: Int, value: JValue) = {
     typeId match {
       case `lighting` => value.extractOpt[NewNumericOrTextualValueAsset] match {
-        case Some(v) => NewLinearAsset(v.linkId, v.startMeasure, v.endMeasure, NumericValue(v.properties.map(_.value).head.toInt), v.sideCode, v.geometryTimestamp, None)
+        case Some(v) => NewLinearAsset(v.linkId, v.startMeasure, v.endMeasure, NumericValue(v.properties.map(_.value).head.toInt), v.sideCode, 0, None)
       }
     }
   }
@@ -187,7 +187,6 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService, val 
     val linkIds = body.map(bd => (bd\ "linkId").extractOrElse[Long](halt(UnprocessableEntity("Missing mandatory 'linkId' parameter"))))
     linkIds.map(linkId => roadLinkService.getRoadLinkGeometry(linkId).getOrElse(halt(UnprocessableEntity(s"Link id: $linkId is not valid or doesn't exist."))))
     body.map(bd => (bd\ "startMeasure").extractOrElse[Double](halt(BadRequest("Missing mandatory 'startMeasure' parameter"))))
-    val geometryTimestamps = body.map(bd => (bd\ "geometryTimestamp").extractOrElse[Long](halt(BadRequest("Missing mandatory 'geometryTimestamp' parameter"))))
     val properties = body.map(bd => (bd\ "properties").extractOrElse[Seq[AssetProperties]](halt(BadRequest("Missing asset properties"))))
 
     if(properties.isEmpty)
