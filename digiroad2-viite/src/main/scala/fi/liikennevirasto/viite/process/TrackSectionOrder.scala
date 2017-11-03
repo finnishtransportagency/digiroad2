@@ -23,18 +23,18 @@ object TrackSectionOrder {
     }
   }
 
-  def findOnceConnectedLinks[T <: PolyLine](seq: Seq[T]): Map[Point, T] = {
+  def findOnceConnectedLinks[T <: PolyLine](seq: Iterable[T]): Map[Point, T] = {
     val pointMap = seq.flatMap(l => {
       val (p1, p2) = GeometryUtils.geometryEndpoints(l.geometry)
       Seq(p1 -> l, p2 -> l)
-    }).groupBy(_._1).mapValues(_.map(_._2).distinct)
+    }).groupBy(_._1).mapValues(_.map(_._2).toSeq.distinct)
     pointMap.keys.map{ p =>
       val links = pointMap.filterKeys(m => GeometryUtils.areAdjacent(p, m, MaxDistanceForConnectedLinks)).values.flatten
       p -> links
     }.toMap.filter(_._2.size == 1).mapValues(_.head)
   }
 
-  def isRoundabout[T <: PolyLine](seq: Seq[T]): Boolean = {
+  def isRoundabout[T <: PolyLine](seq: Iterable[T]): Boolean = {
     seq.nonEmpty && findOnceConnectedLinks(seq).isEmpty && seq.forall(pl =>
       seq.count(pl2 =>
         GeometryUtils.areAdjacent(pl.geometry, pl2.geometry, MaxDistanceForConnectedLinks)) == 3) // the link itself and two connected

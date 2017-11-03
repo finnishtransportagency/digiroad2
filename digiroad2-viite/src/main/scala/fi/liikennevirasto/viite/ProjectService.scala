@@ -25,9 +25,6 @@ case class PreFillInfo(RoadNumber:BigInt, RoadPart:BigInt)
 case class LinkToRevert(id:Long, linkId: Long, status: Long)
 class ProjectService(roadAddressService: RoadAddressService, roadLinkService: RoadLinkService, eventbus: DigiroadEventBus, frozenTimeVVHAPIServiceEnabled: Boolean = false) {
 
-  private val rampsMinBound = 20001
-  private val rampsMaxBound = 39999
-
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
@@ -193,11 +190,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   def createProjectLinks(linkIds: Set[Long], projectId: Long, roadNumber: Long, roadPartNumber:Long, trackCode: Int,
                          discontinuity: Int, roadType: Int, roadLinkSource: Int, roadEly: Long, user: String): Map[String, Any] = {
 
-    val isRamp = (roadNumber >= rampsMinBound && roadNumber <= rampsMaxBound) && trackCode == 0
     val isSuravage = roadLinkSource == LinkGeomSource.SuravageLinkInterface.value
     val isComplementary = roadLinkSource == LinkGeomSource.ComplimentaryLinkInterface.value
-
-    val rampsGrowthDirection = determineRampGrowthDirection(isRamp, isSuravage, isComplementary, linkIds, roadNumber, roadPartNumber)
 
     val roadLinks = if(isSuravage) {
       getProjectSuravageRoadLinksByLinkIds(linkIds)
@@ -207,7 +201,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     setProjectEly(projectId, roadEly) match {
       case Some(errorMessage) => Map("success" -> false, "errormessage" -> errorMessage)
       case None => {
-        addNewLinksToProject(roadLinks, projectId, roadNumber, roadPartNumber, trackCode, discontinuity, roadType, user, rampsGrowthDirection) match {
+        addNewLinksToProject(roadLinks, projectId, roadNumber, roadPartNumber, trackCode, discontinuity, roadType, user) match {
           case Some(errorMessage) => Map("success" -> false, "errormessage" -> errorMessage)
           case None => Map ("success" -> true, "publishable" -> projectLinkPublishable(projectId))
         }
@@ -256,44 +250,33 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     */
   def addNewLinksToProject(newLinks: Seq[ProjectAddressLink], projectId: Long, newRoadNumber: Long,
                            newRoadPartNumber: Long, newTrackCode: Long, newDiscontinuity: Long,
-                           newRoadType: Long = RoadType.Unknown.value, user: String, rampsGrowthDirection: Option[SideCode] = None): Option[String] = {
-
-    def matchSideCodes(newLink: ProjectAddressLink, existingLink: ProjectAddressLink): SideCode = {
-      val (startP, endP) =GeometryUtils.geometryEndpoints(existingLink.geometry)
-
-      if (GeometryUtils.areAdjacent(newLink.geometry.head, endP) ||
-        GeometryUtils.areAdjacent(newLink.geometry.last, startP))
-        existingLink.sideCode
-      else {
-        if (existingLink.sideCode.equals(AgainstDigitizing))
-          TowardsDigitizing
-        else
-          AgainstDigitizing
-      }
-    }
+                           newRoadType: Long = RoadType.Unknown.value, user: String): Option[String] = {
 
     try {
       withDynTransaction {
         val roadPartLinks = withGeometry(ProjectDAO.fetchByProjectRoadPart(newRoadNumber, newRoadPartNumber, projectId))
-        val linksInProject = getLinksByProjectLinkId(roadPartLinks.map(l => l.linkId).toSet, projectId, false)
-        val randomSideCode =
-          linksInProject.filterNot(link => link.status == LinkStatus.Terminated).map(l =>
-            l -> newLinks.find(n => GeometryUtils.areAdjacent(l.geometry, n.geometry))).toMap.find { case (l, n) => n.nonEmpty }.map {
-            case (l, Some(n)) =>
-              matchSideCodes(n, l)
-            case _ => SideCode.TowardsDigitizing
-          }.getOrElse(SideCode.TowardsDigitizing)
+        val overwrittenLinks = getLinksByProjectLinkId(roadPartLinks.map(l => l.linkId).toSet, projectId, false)
         val project = getProjectWithReservationChecks(projectId, newRoadNumber, newRoadPartNumber)
         if (!project.isReserved(newRoadNumber, newRoadPartNumber))
           ProjectDAO.reserveRoadPart(project.id, newRoadNumber, newRoadPartNumber, project.modifiedBy)
         val newProjectLinks = newLinks.map(projectLink => {
           projectLink.linkId ->
-            newProjectLink(projectLink, project, randomSideCode, newTrackCode, newRoadNumber, newRoadPartNumber,
+            newProjectLink(projectLink, project, SideCode.Unknown, newTrackCode, newRoadNumber, newRoadPartNumber,
               newDiscontinuity.toInt, newRoadType, projectId)
         }).toMap
-        if (GeometryUtils.isNonLinear(newProjectLinks.values.toSeq))
+        if (GeometryUtils.isNonLinear(newProjectLinks.values))
           throw new ProjectValidationException("Valittu tiegeometria sisältää haarautumia ja pitää käsitellä osina. Tallennusta ei voi tehdä.")
         //Determine geometries for the mValues and addressMValues
+        val createLinks =
+          if (newProjectLinks.values.headOption.exists(isRamp)) {
+            if (TrackSectionOrder.isRoundabout(newProjectLinks.values))
+              TrackSectionOrder.orderRoundAboutLinks(newProjectLinks.values.toSeq)
+            else
+              //TODO: Guilherme, set sidecode to newProjectLinks according to vvh data
+              newProjectLinks.values.toSeq
+          } else
+            newProjectLinks.values.toSeq
+        ProjectDAO.removeProjectLinksById(overwrittenLinks.map(_.id).toSet)
         ProjectDAO.create(newProjectLinks.values.toSeq)
         recalculateProjectLinks(projectId, user, Set((newRoadNumber, newRoadPartNumber)))
         None

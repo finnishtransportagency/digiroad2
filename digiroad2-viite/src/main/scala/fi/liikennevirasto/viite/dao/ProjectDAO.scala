@@ -616,33 +616,37 @@ object ProjectDAO {
     }
   }
 
-  def removeProjectLinksById(projectLinkIds: Set[Long]): Int = {
-    if (projectLinkIds.nonEmpty)
-      deleteProjectLinks(projectLinkIds)
+  def removeProjectLinksById(ids: Set[Long]): Int = {
+    if (ids.nonEmpty)
+      deleteProjectLinks(ids)
     else
       0
   }
 
-  private def removeProjectLinks(projectId: Long, roadNumber: Option[Long], roadPartNumber: Option[Long],
-                                 linkIds: Set[Long] = Set()): Int = {
+  def removeProjectLinksByLinkIds(projectId: Long, roadNumber: Option[Long], roadPartNumber: Option[Long],
+                                  linkIds: Set[Long] = Set()): Int = {
     if (linkIds.size > 900 || linkIds.isEmpty) {
       linkIds.grouped(900).map(g => removeProjectLinks(projectId, roadNumber, roadPartNumber, g)).sum
     } else {
-      val roadFilter = roadNumber.map(l => s"AND road_number = $l").getOrElse("")
-      val roadPartFilter = roadPartNumber.map(l => s"AND road_part_number = $l").getOrElse("")
-      val linkIdFilter = if (linkIds.isEmpty) {
-        ""
-      } else {
-        s"AND pos.LINK_ID IN (${linkIds.mkString(",")})"
-      }
-      val query = s"""SELECT pl.id FROM PROJECT_LINK pl JOIN LRM_POSITION pos ON (pl.lrm_position_id = pos.id) WHERE
-        project_id = $projectId $roadFilter $roadPartFilter $linkIdFilter"""
-      val ids = Q.queryNA[Long](query).iterator.toSet
-      if (ids.nonEmpty)
-        deleteProjectLinks(ids)
-      else
-        0
+      removeProjectLinks(projectId, roadNumber, roadPartNumber, linkIds)
     }
+  }
+  private def removeProjectLinks(projectId: Long, roadNumber: Option[Long], roadPartNumber: Option[Long],
+                                 linkIds: Set[Long] = Set()): Int = {
+    val roadFilter = roadNumber.map(l => s"AND road_number = $l").getOrElse("")
+    val roadPartFilter = roadPartNumber.map(l => s"AND road_part_number = $l").getOrElse("")
+    val linkIdFilter = if (linkIds.isEmpty) {
+      ""
+    } else {
+      s"AND pos.LINK_ID IN (${linkIds.mkString(",")})"
+    }
+    val query = s"""SELECT pl.id FROM PROJECT_LINK pl JOIN LRM_POSITION pos ON (pl.lrm_position_id = pos.id) WHERE
+        project_id = $projectId $roadFilter $roadPartFilter $linkIdFilter"""
+    val ids = Q.queryNA[Long](query).iterator.toSet
+    if (ids.nonEmpty)
+      deleteProjectLinks(ids)
+    else
+      0
   }
 
   def moveProjectLinksToHistory(projectId: Long): Unit= {
