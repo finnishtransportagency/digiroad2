@@ -1363,6 +1363,7 @@
       }
       if (previouslySelectedLayer === 'linkProperty') {
         clearLayers();
+        clearHighlights();
         hideLayer();
         removeSelectInteractions();
       } else if(previouslySelectedLayer === 'roadAddressProject') {

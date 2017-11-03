@@ -863,7 +863,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @return true, if the delta calculation is successful and change table has been updated.
     */
   def updateProjectLinks(projectId: Long, linkIds: Set[Long], linkStatus: LinkStatus, userName: String,
-                         roadNumber: Long = 0, roadPartNumber: Long = 0, userDefinedEndAddressM: Option[Int], roadType: Long = 0, discontinuity: Long = 0, ely: Long = 0): Option[String] = {
+                         roadNumber: Long = 0, roadPartNumber: Long = 0, userDefinedEndAddressM: Option[Int],
+                         roadType: Long = 0, discontinuity: Long = 0, ely: Long = 0): Option[String] = {
 
     def updateRoadTypeDiscontinuity(links: Seq[ProjectLink]) = {
       val lastSegment = links.maxBy(_.endAddrMValue)
@@ -915,7 +916,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               ProjectDAO.updateProjectLinksToDB(updated, userName)
               ProjectDAO.updateProjectLinkRoadTypeDiscontinuity(Set(updated.maxBy(_.endAddrMValue).id), linkStatus, userName, roadType, Some(discontinuity))
             } else {
-              ProjectDAO.updateProjectLinks(updatedProjectLinks.map(_.id).toSet, linkStatus, userName)
+              updateRoadTypeDiscontinuity(updatedProjectLinks.map(_.copy(roadType = RoadType.apply(roadType.toInt), status = linkStatus)))
             }
           }
           case LinkStatus.UnChanged => {
