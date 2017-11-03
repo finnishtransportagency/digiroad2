@@ -184,7 +184,7 @@
     };
 
     var roadTypeDropdown = function() {
-      return '<select class="form-control" id="roadTypeDropDown" size = "1" style="width: auto !important; display: inline">' +
+      return '<select class="form-control roadTypeDropDown" id="roadTypeDropDown" size = "1" style="width: auto !important; display: inline">' +
         '<option value = "1">1 Yleinen tie</option>'+
         '<option value = "2">2 Lauttaväylä yleisellä tiellä</option>'+
         '<option value = "3">3 Kunnan katuosuus</option>'+
@@ -517,10 +517,6 @@
         else $('#manualCPWarning').css('display', 'none');
       });
 
-      rootElement.on('change', '.form-control', function () {
-        setFormDirty();
-      });
-
       rootElement.on('change', '.form-select-control', function () {
         setFormDirty();
       });
@@ -627,6 +623,7 @@
 
       rootElement.on('keyup','.form-control.small-input', function () {
         checkInputs();
+        setFormDirty();
       });
 
     };
