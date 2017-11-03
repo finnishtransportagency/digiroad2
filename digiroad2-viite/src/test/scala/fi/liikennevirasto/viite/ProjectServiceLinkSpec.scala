@@ -647,6 +647,9 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       linksLast.endMValue should be (changedLinksLast.endMValue +- .1)
     }
   }
+  //TODO: test is failing in current build :
+  //[info] - Project link direction change should remain after adding new links *** FAILED ***
+  //[info]   Set(5176512) was not equal to Set(5176512, 5176552) (ProjectServiceLinkSpec.scala:682)
   test("Project link direction change should remain after adding new links") {
     runWithRollback {
       sqlu"DELETE FROM ROAD_ADDRESS WHERE ROAD_NUMBER=75 AND ROAD_PART_NUMBER=2".execute
@@ -704,6 +707,9 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
     }
   }
 
+  //TODO: test is failing on current build
+  //[info] - Project links direction change shouldn't work due to unchanged links on road *** FAILED ***
+  //[info]   Set(5176512) was not equal to Set(5176512, 5176552) (ProjectServiceLinkSpec.scala:733)
   test("Project links direction change shouldn't work due to unchanged links on road"){
     runWithRollback {
       sqlu"DELETE FROM ROAD_ADDRESS WHERE ROAD_NUMBER=75 AND ROAD_PART_NUMBER=2".execute
