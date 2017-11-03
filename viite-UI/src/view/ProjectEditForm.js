@@ -124,9 +124,8 @@
         staticField('Muokattu viimeksi', project.modifiedBy + ' ' + project.dateModified)+
         '<div class="form-group editable form-editable-roadAddressProject"> '+
 
-        ((applicationModel.getSelectedTool() === 'Cut' && selected.length == 2) ?
-          selectionFormCutted(selection, selected) : selectionForm(selection, selected, 0)) +
-        ((selected.size == 2 && selected[0].linkId === selected[1].linkId) ? '' : changeDirection()) +
+        selectionForm(selection, selected, 0) +
+        changeDirection(selected) +
         actionSelectedField()+
         '</div>'+
         '</div>' +
@@ -150,11 +149,11 @@
         '<option id="drop_0_' + LinkStatus.Revert.description + '" value='+ LinkStatus.Revert.description + ' ' + defineOptionModifiers(LinkStatus.Revert.description, selected) + '>Palautus aihioksi tai tieosoitteettomaksi</option>' +
         '</select>'+
         '</div>'+
-        newRoadAddressInfo(selected) +
+        newRoadAddressInfo() +
         '</form>';
     };
 
-    var newRoadAddressInfo = function(selected){
+    var newRoadAddressInfo = function(){
       return '<div class="form-group new-road-address" hidden>' +
         '<div><label></label></div><div><label style = "margin-top: 50px">TIEOSOITTEEN TIEDOT</label></div>' +
         addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('AJR')+ addSmallLabel('ELY')  + addSmallLabel('JATKUU')+
@@ -230,9 +229,23 @@
       }
     };
 
-    var changeDirection = function () {
+    var directionChangedInfo = function (selected, isPartialReversed) {
+      if (isPartialReversed) {
+        return '<label class="split-form-group">Osittain käännetty</label>';
+      } else if (selected[0].reversed) {
+        return '<label class="split-form-group">Käännetty &#9745;</label>';
+      } else {
+        return '<label class="split-form-group">Käännetty &#9744;</label>';
+      }
+    };
+
+    var changeDirection = function (selected) {
+      var reversedInGroup = _.uniq(_.pluck(selected, 'reversed'));
+      var isPartialReversed = ((reversedInGroup.length > 1) ? true : false);
+
       return '<div hidden class="form-group changeDirectionDiv" style="margin-top:15px">' +
         '<button class="form-group changeDirection btn btn-primary">Käännä kasvusuunta</button>' +
+        directionChangedInfo(selected, isPartialReversed) +
         '</div>';
     };
 
