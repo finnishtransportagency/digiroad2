@@ -6,7 +6,8 @@ import fi.liikennevirasto.digiroad2.linearasset.PolyLine
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Matrix, Point, Vector3d}
 import fi.liikennevirasto.viite.MaxDistanceForConnectedLinks
-import fi.liikennevirasto.viite.dao.ProjectLink
+import fi.liikennevirasto.viite.dao.LinkStatus._
+import fi.liikennevirasto.viite.dao.{CalibrationPoint, ProjectLink}
 
 
 object TrackSectionOrder {
@@ -57,7 +58,7 @@ object TrackSectionOrder {
       x.cross(y).z > 0.0 }
   }
 
-  def orderRoundAboutLinks(seq: Seq[ProjectLink]): Seq[ProjectLink] = {
+  def mValueRoundabout(seq: Seq[ProjectLink]): Seq[ProjectLink] = {
     def firstPoint(pl: ProjectLink) = {
       pl.sideCode match {
         case TowardsDigitizing => pl.geometry.head
@@ -65,26 +66,41 @@ object TrackSectionOrder {
         case _ => throw new InvalidGeometryException("SideCode was not decided")
       }
     }
-    def switch(projectLink: ProjectLink): ProjectLink = {
-      projectLink.copy(sideCode = SideCode.switch(projectLink.sideCode))
-    }
     def recursive(currentPoint: Point, ready: Seq[ProjectLink], unprocessed: Seq[ProjectLink]): Seq[ProjectLink] = {
-      if (unprocessed.isEmpty)
-        ready
+      if (unprocessed.isEmpty) {
+        val last = ready.last
+        ready.init ++ Seq(last.copy(calibrationPoints = (None, Some(
+          CalibrationPoint(last.linkId, if (last.sideCode == AgainstDigitizing) 0.0 else last.geometryLength, last.endAddrMValue)))))
+      }
       else {
         val hit = unprocessed.find(pl => GeometryUtils.areAdjacent(pl.geometry, currentPoint, MaxDistanceForConnectedLinks))
           .getOrElse(throw new InvalidGeometryException("Roundabout was not connected"))
         val nextPoint = getOppositeEnd(hit.geometry, currentPoint)
         val sideCode = if (hit.geometry.last == nextPoint) SideCode.TowardsDigitizing else SideCode.AgainstDigitizing
-        recursive(nextPoint, ready ++ Seq(hit.copy(sideCode = sideCode)), unprocessed.filter(_ != hit))
+        val prevAddrM = ready.last.endAddrMValue
+        val endAddrM = hit.status match {
+          case NotHandled | UnChanged | Transfer | Numbering =>
+            ready.last.endAddrMValue + (hit.endAddrMValue - hit.startAddrMValue)
+          case New =>
+            prevAddrM + Math.round(hit.geometryLength)
+          case _ =>
+            hit.endAddrMValue
+        }
+        recursive(nextPoint, ready ++ Seq(hit.copy(sideCode = sideCode, startAddrMValue = prevAddrM,
+          endAddrMValue = endAddrM)), unprocessed.filter(_ != hit))
       }
     }
     val firstLink = seq.head // First link is defined by end user and must be always first
-    val ordered = recursive(firstLink.geometry.last, Seq(firstLink.copy(sideCode = TowardsDigitizing)), seq.tail)
+    val ordered = recursive(firstLink.geometry.last, Seq(firstLink.copy(sideCode = TowardsDigitizing,
+      startAddrMValue = 0L, endAddrMValue = Math.round(firstLink.geometryLength))), seq.tail)
     if (isCounterClockwise(ordered.map(firstPoint)))
       ordered
     else {
-      val reOrdered = Seq(switch(ordered.head)) ++ ordered.tail.map(switch).reverse
+      val reOrdered = recursive(firstLink.geometry.head,
+        Seq(firstLink.copy(sideCode = AgainstDigitizing, startAddrMValue = 0L,
+          endAddrMValue = Math.round(firstLink.geometryLength),
+          calibrationPoints = (Some(CalibrationPoint(firstLink.linkId, firstLink.geometryLength, 0L)), None))),
+        seq.tail)
       if (isCounterClockwise(reOrdered.map(firstPoint)))
         reOrdered
       else

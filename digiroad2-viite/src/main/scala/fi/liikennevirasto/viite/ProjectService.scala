@@ -187,21 +187,27 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def createProjectLinks(linkIds: Set[Long], projectId: Long, roadNumber: Long, roadPartNumber:Long, trackCode: Int,
+  def createProjectLinks(linkIds: Seq[Long], projectId: Long, roadNumber: Long, roadPartNumber:Long, trackCode: Int,
                          discontinuity: Int, roadType: Int, roadLinkSource: Int, roadEly: Long, user: String): Map[String, Any] = {
+    def sortRamps(seq: Seq[ProjectAddressLink]) = {
+      if (seq.headOption.exists(isRamp))
+        seq.find(l => linkIds.contains(l.linkId)).toSeq ++ seq.filter(_.linkId != linkIds.headOption.getOrElse(0L))
+      else
+        seq
+    }
 
     val isSuravage = roadLinkSource == LinkGeomSource.SuravageLinkInterface.value
     val isComplementary = roadLinkSource == LinkGeomSource.ComplimentaryLinkInterface.value
-
+    val linkId = linkIds.head
     val roadLinks = if(isSuravage) {
-      getProjectSuravageRoadLinksByLinkIds(linkIds)
+      getProjectSuravageRoadLinksByLinkIds(linkIds.toSet)
     } else {
-      getProjectRoadLinksByLinkIds(linkIds)
+      getProjectRoadLinksByLinkIds(linkIds.toSet)
     }
     setProjectEly(projectId, roadEly) match {
       case Some(errorMessage) => Map("success" -> false, "errormessage" -> errorMessage)
       case None => {
-        addNewLinksToProject(roadLinks, projectId, roadNumber, roadPartNumber, trackCode, discontinuity, roadType, user) match {
+        addNewLinksToProject(sortRamps(roadLinks), projectId, roadNumber, roadPartNumber, trackCode, discontinuity, roadType, user, linkId) match {
           case Some(errorMessage) => Map("success" -> false, "errormessage" -> errorMessage)
           case None => Map ("success" -> true, "publishable" -> projectLinkPublishable(projectId))
         }
@@ -250,12 +256,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     */
   def addNewLinksToProject(newLinks: Seq[ProjectAddressLink], projectId: Long, newRoadNumber: Long,
                            newRoadPartNumber: Long, newTrackCode: Long, newDiscontinuity: Long,
-                           newRoadType: Long = RoadType.Unknown.value, user: String): Option[String] = {
+                           newRoadType: Long = RoadType.Unknown.value, user: String, firstLinkId: Long): Option[String] = {
 
     try {
       withDynTransaction {
-        val roadPartLinks = withGeometry(ProjectDAO.fetchByProjectRoadPart(newRoadNumber, newRoadPartNumber, projectId))
-        val overwrittenLinks = getLinksByProjectLinkId(roadPartLinks.map(l => l.linkId).toSet, projectId, false)
         val project = getProjectWithReservationChecks(projectId, newRoadNumber, newRoadPartNumber)
         if (!project.isReserved(newRoadNumber, newRoadPartNumber))
           ProjectDAO.reserveRoadPart(project.id, newRoadNumber, newRoadPartNumber, project.modifiedBy)
@@ -272,14 +276,15 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
             logger.info("Added links recognized to be in ramp category")
             if (TrackSectionOrder.isRoundabout(newProjectLinks.values)) {
               logger.info("Added links recognized to be a roundabout - using roundabout addressing scheme")
-              TrackSectionOrder.orderRoundAboutLinks(newProjectLinks.values.toSeq)
+              val ordered = newProjectLinks.values.toSeq.partition(_.linkId == firstLinkId)
+              val created = TrackSectionOrder.mValueRoundabout(ordered._1 ++ ordered._2)
+              created
             } else
               //TODO: Guilherme, set sidecode to newProjectLinks according to vvh data
               newProjectLinks.values.toSeq
           } else
             newProjectLinks.values.toSeq
-        ProjectDAO.removeProjectLinksById(overwrittenLinks.map(_.id).toSet)
-        ProjectDAO.create(newProjectLinks.values.toSeq)
+        ProjectDAO.create(createLinks)
         recalculateProjectLinks(projectId, user, Set((newRoadNumber, newRoadPartNumber)))
         None
       }

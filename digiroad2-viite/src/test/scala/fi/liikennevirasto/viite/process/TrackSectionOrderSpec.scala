@@ -90,7 +90,7 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     TrackSectionOrder.isRoundabout(list) should be (true)
     TrackSectionOrder.isRoundabout(list.init) should be (false)
     TrackSectionOrder.isRoundabout(list.tail) should be (false)
-    val result = TrackSectionOrder.orderRoundAboutLinks(list)
+    val result = TrackSectionOrder.mValueRoundabout(list)
     result should have size(8)
     result.head.sideCode should be (TowardsDigitizing)
     result.forall(_.sideCode == result.head.sideCode) should be (false)
@@ -118,7 +118,7 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     }
     TrackSectionOrder.isRoundabout(list) should be (true)
     intercept[InvalidGeometryException] {
-      TrackSectionOrder.orderRoundAboutLinks(list)
+      TrackSectionOrder.mValueRoundabout(list)
     }
   }
 
@@ -145,7 +145,7 @@ class TrackSectionOrderSpec extends FunSuite with Matchers {
     TrackSectionOrder.isRoundabout(list) should be (true)
     TrackSectionOrder.isRoundabout(list.init) should be (false)
     TrackSectionOrder.isRoundabout(list.tail) should be (false)
-    val result = TrackSectionOrder.orderRoundAboutLinks(list)
+    val result = TrackSectionOrder.mValueRoundabout(list)
     result should have size(8)
     result.head.sideCode should be (AgainstDigitizing)
     result.forall(_.sideCode == result.head.sideCode) should be (false)

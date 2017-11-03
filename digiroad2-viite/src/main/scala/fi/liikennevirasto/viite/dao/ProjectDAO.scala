@@ -145,11 +145,12 @@ object ProjectDAO {
       "track_code, discontinuity_type, START_ADDR_M, END_ADDR_M, created_by, " +
       "calibration_points, status, road_type, road_address_id, connected_link_id, ely) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?)")
     val ids = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= ${roadAddresses.size}""".as[Long].list
-    roadAddresses.zip(ids).foreach { case ((address), (lrmId)) =>
+    val savedIds = roadAddresses.zip(ids).map { case ((address), (lrmId)) =>
       RoadAddressDAO.createLRMPosition(lrmPositionPS, lrmId, address.linkId, address.sideCode.value, address.startMValue, address.endMValue, 0, address.linkGeomSource.value)
-      addressPS.setLong(1, if (address.id == fi.liikennevirasto.viite.NewRoadAddress) {
+      val savedId = if (address.id == fi.liikennevirasto.viite.NewRoadAddress) {
         Sequences.nextViitePrimaryKeySeqValue
-      } else address.id)
+      } else address.id
+      addressPS.setLong(1, savedId)
       addressPS.setLong(2, address.projectId)
       addressPS.setLong(3, lrmId)
       addressPS.setLong(4, address.roadNumber)
@@ -172,13 +173,13 @@ object ProjectDAO {
         addressPS.setString(15, null)
       addressPS.setLong(16,address.ely)
       addressPS.addBatch()
-
+      savedId
     }
     lrmPositionPS.executeBatch()
     addressPS.executeBatch()
     lrmPositionPS.close()
     addressPS.close()
-    roadAddresses.map(_.id)
+    savedIds
   }
 
 
