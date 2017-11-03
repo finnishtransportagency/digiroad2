@@ -215,24 +215,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  private def determineRampGrowthDirection(isRamp: Boolean, isSuravage: Boolean, isComplementary: Boolean, linkIds: Set[Long], roadNumber: Long, roadPartNumber:Long): Option[SideCode] = {
-
-    val rampInfo = if(isRamp && isSuravage) {
-      roadAddressService.getSuravageRoadLinkAddressesByLinkIds(linkIds)
-    } else {
-      Seq.empty[RoadAddressLink]
-    }
-     val growthDirection =  if(!rampInfo.isEmpty) {
-        val existingRamps = rampInfo.filter(info => {
-          info.roadNumber == roadNumber && info.roadPartNumber == roadPartNumber
-        }).sortBy(_.startAddressM)
-        Option(existingRamps.head.sideCode)
-      } else {
-       Option.empty[SideCode]
-     }
-    growthDirection
-  }
-
   private def newProjectLink(projectAddressLink: ProjectAddressLink, project: RoadAddressProject, sideCode: SideCode, newTrackCode: Long,
                              newRoadNumber: Long, newRoadPartNumber: Long, newDiscontinuity: Int, newRoadType: Long, projectId: Long): ProjectLink = {
     toProjectLink(projectAddressLink, NewRoadAddress, Track.apply(newTrackCode.toInt), project, sideCode,
@@ -279,9 +261,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               val ordered = newProjectLinks.values.toSeq.partition(_.linkId == firstLinkId)
               val created = TrackSectionOrder.mValueRoundabout(ordered._1 ++ ordered._2)
               created
-            } else
-              //TODO: Guilherme, set sidecode to newProjectLinks according to vvh data
-              newProjectLinks.values.toSeq
+            } else {
+              val isSuravage = newProjectLinks.values.map(_.linkGeomSource).head == LinkGeomSource.SuravageLinkInterface
+              val isComplementary = newProjectLinks.values.map(_.linkGeomSource).head == LinkGeomSource.SuravageLinkInterface
+              fillRampGrowthDirection(isSuravage, isComplementary, newProjectLinks.keys.toSet, newRoadNumber, newRoadPartNumber, newProjectLinks.values.toSeq)
+            }
           } else
             newProjectLinks.values.toSeq
         ProjectDAO.create(createLinks)
@@ -290,6 +274,51 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       }
     } catch {
       case ex: ProjectValidationException => Some(ex.getMessage)
+    }
+  }
+
+  /**
+    * Will attempt to find relevant sideCode information to the projectLinks given a number of factors
+    * @param isSuravage check if the links are of Suravage origin
+    * @param isComplementary check if the links are of Complementary origin
+    * @param linkIds the linkIds to process
+    * @param roadNumber the roadNumber to apply/was applied to said linkIds
+    * @param roadPartNumber the roadPartNumber to apply/was applied to said linkIds
+    * @param newProjectLinks the whole newProjectLinks
+    * @return the projectLinks with a assigned SideCode
+    */
+  private def fillRampGrowthDirection(isSuravage: Boolean, isComplementary: Boolean, linkIds: Set[Long], roadNumber: Long,
+                                      roadPartNumber:Long, newProjectLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
+
+    //Find adjacents to the linkIds
+    val lowerMValue = newProjectLinks.minBy(_.endMValue)
+    val lowerAdjacents = roadAddressService.getAdjacent(Set(lowerMValue.linkId), lowerMValue.linkId).filter(adj => {
+      //Only include the adjacents that have the same roadNumber and roadPartNumber
+      adj.roadNumber == roadNumber && adj.roadPartNumber == roadPartNumber
+    })
+
+    if(!lowerAdjacents.isEmpty){
+      //Add fill the sidecode acording to the adjacent data
+      newProjectLinks.map(_.copy(sideCode = lowerAdjacents.map(_.sideCode).distinct.head))
+    } else  {
+      //No adjacent road address detected, fetching VVH info
+      val rampInfo = if(isSuravage) {
+        roadLinkService.fetchSuravageLinksByLinkIdsFromVVH(linkIds)
+      } else if (isComplementary){
+        roadLinkService.fetchVVHComplementaryRoadlinks(linkIds)
+      } else {
+        roadLinkService.fetchVVHRoadlinks(linkIds)
+      }
+
+      if(!rampInfo.isEmpty) {
+        //Set the sideCode as defined by the trafficDirection
+        val traficDirection = rampInfo.map(_.trafficDirection.value).distinct.head
+        newProjectLinks.map(_.copy(sideCode = SideCode.apply(traficDirection)))
+      } else {
+        //return the newProjectLinks in order to calculate the MAddresses
+        //Remember TowardsDigitalizing is chosen by a fair dice roll
+        newProjectLinks.map(_.copy(sideCode = SideCode.TowardsDigitizing))
+      }
     }
   }
 
