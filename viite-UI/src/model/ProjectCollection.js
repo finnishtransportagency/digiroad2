@@ -391,7 +391,33 @@
         roadType: Number($('#roadAddressProjectForm').find('#roadTypeDropDown')[0].value),
         userDefinedEndAddressM: null
       };
-      //var data = [projectId, selectedLinks] ;
+      backend.directionChangeNewRoadlink(dataJson, function(successObject) {
+        if (!successObject.success) {
+          eventbus.trigger('roadAddress:changeDirectionFailed', successObject.errorMessage);
+          applicationModel.removeSpinner();
+        } else {
+          eventbus.trigger('changeProjectDirection:clicked');
+        }
+      });
+    };
+
+    this.changeNewProjectLinkCutDirection = function (projectId, selectedLinks){
+      applicationModel.addSpinner();
+      var linkIds = _.map(selectedLinks, function(link) {if(link.linkId < 0) return Math.abs(link.linkId); }).filter(Number);
+
+      var dataJson = {
+        linkIds: linkIds,
+        linkStatus: selectedLinks[0].status,
+        projectId: projectId,
+        roadNumber: Number($('#roadAddressProjectFormCut').find('#tie')[0].value),
+        roadPartNumber: Number($('#roadAddressProjectFormCut').find('#osa')[0].value),
+        trackCode: Number($('#roadAddressProjectFormCut').find('#ajr')[0].value),
+        discontinuity: Number($('#roadAddressProjectFormCut').find('#discontinuityDropdown')[0].value),
+        roadEly: Number($('#roadAddressProjectFormCut').find('#ely')[0].value),
+        roadLinkSource: Number(_.first(selectedLinks).roadLinkSource),
+        roadType: Number($('#roadAddressProjectFormCut').find('#roadTypeDropDown')[0].value),
+        userDefinedEndAddressM: null
+      };
       backend.directionChangeNewRoadlink(dataJson, function(successObject) {
         if (!successObject.success) {
           eventbus.trigger('roadAddress:changeDirectionFailed', successObject.errorMessage);

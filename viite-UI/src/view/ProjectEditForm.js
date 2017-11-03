@@ -429,7 +429,12 @@
       });
 
       rootElement.on('click','.changeDirection', function () {
-        projectCollection.changeNewProjectLinkDirection(projectCollection.getCurrentProject().project.id, selectedProjectLinkProperty.get());
+        if(!_.isUndefined(selectedProjectLinkProperty.get()[0]) && !_.isUndefined(selectedProjectLinkProperty.get()[0].connectedLinkId) && selectedProjectLinkProperty.get()[0].connectedLinkId != 0) {
+          projectCollection.changeNewProjectLinkCutDirection(projectCollection.getCurrentProject().project.id, selectedProjectLinkProperty.get());
+        }
+        else{
+          projectCollection.changeNewProjectLinkDirection(projectCollection.getCurrentProject().project.id, selectedProjectLinkProperty.get());
+        }
       });
 
       eventbus.on('roadAddress:projectLinksSaveFailed', function (result) {

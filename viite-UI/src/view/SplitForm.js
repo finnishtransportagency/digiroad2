@@ -490,12 +490,6 @@
         new ModalConfirm(error);
       });
 
-      rootElement.on('click','.changeDirection', function () {
-          if(applicationModel.getSelectedTool() == "Cut") {
-              projectCollection.changeNewProjectLinkDirection(projectCollection.getCurrentProject().project.id, selectedProjectLinkProperty.get());
-          }
-      });
-
       rootElement.on('click','.revertSplit', function () {
           projectCollection.removeProjectLinkSplit(projectCollection.getCurrentProject().project, selectedProjectLink);
       });
