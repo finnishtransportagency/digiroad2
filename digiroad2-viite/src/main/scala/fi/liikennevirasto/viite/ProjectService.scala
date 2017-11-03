@@ -269,9 +269,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         //Determine geometries for the mValues and addressMValues
         val createLinks =
           if (newProjectLinks.values.headOption.exists(isRamp)) {
-            if (TrackSectionOrder.isRoundabout(newProjectLinks.values))
+            logger.info("Added links recognized to be in ramp category")
+            if (TrackSectionOrder.isRoundabout(newProjectLinks.values)) {
+              logger.info("Added links recognized to be a roundabout - using roundabout addressing scheme")
               TrackSectionOrder.orderRoundAboutLinks(newProjectLinks.values.toSeq)
-            else
+            } else
               //TODO: Guilherme, set sidecode to newProjectLinks according to vvh data
               newProjectLinks.values.toSeq
           } else
