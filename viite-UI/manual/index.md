@@ -504,15 +504,19 @@ T&auml;m&auml;n j&auml;lkeen Jatka toimenpiteisiin-painiketta, jolla siirryt&aum
 11.1.2 Uusi
 --------------------------
 
-Toimenpiteell&auml; m&auml;&auml;ritet&auml;&auml;n uusi tieosoite tieosoitteettomille linkeille. Tieosoitteettomia linkkej&auml;, jotka piirtyv&auml;t kartalle harmaina tai tuntemattomia mustia linkkej&auml;, joissa on kysymysmerkkisymboli tai suravage-linkkej&auml;, voi valita kerta- tai tuplaklikkauksella, kuten muitakin tielinkkej&auml;. Tuplaklikkaus valitsee yhden tielinkin. Kertaklikkaus valitsee homogeenisen jakson, jossa k&auml;ytet&auml;&auml;n VVH:n tienumeroa ja tieosanumeroa. Tienumeron tai tieosanumeron puuttuessa valinnassa k&auml;ytet&auml;&auml;n tienime&auml;.
+Toimenpiteell&auml; m&auml;&auml;ritet&auml;&auml;n uusi tieosoite tieosoitteettomille linkeille. Tieosoitteettomia muun tieverkon linkkej&auml;, jotka piirtyv&auml;t kartalle harmaina tai tuntemattomia mustia linkkej&auml;, joissa on kysymysmerkkisymboli tai suravage-linkkej&auml;, voi valita kerta- tai tuplaklikkauksella, kuten muitakin tielinkkej&auml;. Tuplaklikkaus valitsee yhden tielinkin ja shit+tuplaklikkauksella voi lis&auml;t&auml; tai poistaa valintaan linkkej&auml; yksi kerrallaan. Kertaklikkaus valitsee homogeenisen jakson, jossa k&auml;ytet&auml;&auml;n VVH:n tienumeroa ja tieosanumeroa. Tienumeron tai tieosanumeron puuttuessa valinnassa k&auml;ytet&auml;&auml;n tienime&auml;. Shift+kertaklikkauksella voi lis&auml;t&auml; aiempaan valintaan koko homogeenisen jakson.
 
 Valitut tielinkit n&auml;kyv&auml;t kartalla vihre&auml;ll&auml; korostettuna. Kun valitaan Toimenpiteet-alasvetovalikosta 'Uusi' (1) lomakkeelle avautuvat kent&auml;t uuden tieosoitteen tiedoille (2). Jos valitulla tieosuudella on jo olemassa VVH:ssa tienumero ja tieosanumero, ne esit&auml;yttyv&auml;t kenttiin automattisesti.
 
 ![Uusi tieosoite](k43.JPG)
 
-_Kun toimenpidevalikosta valitaan 'Uusi', oikeaan laitaan ilmestyy n&auml;kyviin kent&auml;t uuden tieosoitteen sy&ouml;tt&auml;mist&auml; varten._
+_Kun toimenpidevalikosta valitaan 'Uusi', oikeaan laitaan ilmestyy n&auml;kyviin kent&auml;t uuden tieosoitteen sy&ouml;tt&auml;mist&auml; varten._ 
 
-Muutokset tallennetaan Tallenna-painikkeella. Ennen tallennusta, muutokset voi perua Peruuta-painikkeesta. Kaikilla lomakkeen kentill&auml; tulee olla arvo ennen kuin tallentaminen on mahdollista.
+Tietyyppi&auml; voi muokata pudotusvalikosta (3). Jatkuu-arvo m&auml;&auml;r&auml;ytyy ensimm&auml;isell&auml; tallennuskerralla automaattisesti jatkuvaksi (5 Jatkuva). Muutokset tallennetaan Tallenna-painikkeella (4). Ennen tallennusta, muutokset voi perua Peruuta-painikkeesta. 
+
+Huom: Mik&auml;li jatkuvuutta t&auml;ytyy muokata, esimerkiksi jos kyseess&auml; on tien loppu, se tulee tehd&auml; seuraavasti. K&auml;ytt&auml;j&auml;n tulee klikata viimeinen "Uusi" toimenpiteell&auml; k&auml;sitelty linkki tieosan lopusta aktiiviseksi, jossa tien loppu sijaitsee. Lomakkeelle tulee tiedot linkin osoitteesta ja sille tehdyst&auml; toimenpiteest&auml;. Nyt linkin jatkuvuuskoodin muokkaaminen on mahdollista ja oikea koodi, esimerkiksi 1 Tien lopppu, valitaan pudotusvalikosta ja tallennetaan. P&auml;ivitetty tieto n&auml;kyy my&ouml;s yhteenvetotaulukossa tallennuksen j&auml;lkeen.   
+
+
 K&auml;ytt&ouml;liittym&auml; varoittaa virheilmoituksella jos uusi tieosoite on jo olemassa projektin alkup&auml;iv&auml;n&auml; tai se on varattuna toisessa tieosoiteprojektissa.
 
 ![Tieosoite on jo olemassa](k44.JPG)

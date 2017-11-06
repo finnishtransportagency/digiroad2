@@ -172,12 +172,16 @@ trait AddressLinkBuilder {
 
     val tempId = fi.liikennevirasto.viite.NewRoadAddress
 
+    if(nextSegment.geometry.isEmpty) println(s"Empty geometry on linkId = ${nextSegment.linkId}, id = ${nextSegment.linkId}" )
+    if(previousSegment.geometry.isEmpty) println(s"Empty geometry on linkId = ${previousSegment.linkId}, id = ${previousSegment.id}")
+
     if(nextSegment.roadNumber     == previousSegment.roadNumber &&
       nextSegment.roadPartNumber  == previousSegment.roadPartNumber &&
       nextSegment.track.value     == previousSegment.track.value &&
       nextSegment.startDate       == previousSegment.startDate &&
       nextSegment.endDate         == previousSegment.endDate &&
       nextSegment.linkId          == previousSegment.linkId &&
+      nextSegment.geometry.nonEmpty && previousSegment.geometry.nonEmpty && // Check if geometries are not empty
       addressConnected(nextSegment, previousSegment) &&
       !(cpNext._1.isDefined && cpPrevious._2.isDefined)) { // Check that the calibration point isn't between these segments
 
