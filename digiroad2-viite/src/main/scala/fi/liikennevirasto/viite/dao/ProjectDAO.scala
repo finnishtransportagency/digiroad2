@@ -7,7 +7,11 @@ import fi.liikennevirasto.digiroad2.Point
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.linearasset.PolyLine
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
+import fi.liikennevirasto.digiroad2.oracle.MassQuery
 import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.viite.dao.CalibrationCode.{AtBeginning, AtBoth, AtEnd, No}
+import fi.liikennevirasto.viite.dao.ProjectState.Incomplete
+import fi.liikennevirasto.viite.model.ProjectAddressLink
 import fi.liikennevirasto.viite.{ReservedRoadPart, RoadType}
 import fi.liikennevirasto.viite.util.CalibrationPointsUtils
 import org.joda.time.DateTime
@@ -78,6 +82,11 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
   extends BaseRoadAddress with PolyLine {
   lazy val startingPoint = if (sideCode == SideCode.AgainstDigitizing) geometry.last else geometry.head
   lazy val endPoint = if (sideCode == SideCode.AgainstDigitizing) geometry.head else geometry.last
+  lazy val isSplit: Boolean = connectedLinkId.nonEmpty || connectedLinkId.contains(0L)
+
+  def copyWithGeometry(newGeometry: Seq[Point]) = {
+    this.copy(geometry = newGeometry)
+  }
 }
 
 object ProjectDAO {
@@ -278,6 +287,21 @@ object ProjectDAO {
     Q.queryNA[Long](query).firstOption.nonEmpty
   }
 
+
+  //Should be only one
+  def getProjectsWithGivenLinkId(linkId:Long): Seq[Long] = {
+    val query =
+      s"""SELECT P.ID
+               FROM PROJECT P
+              JOIN PROJECT_LINK PL ON P.ID=PL.PROJECT_ID
+              JOIN LRM_POSITION L ON PL.LRM_POSITION_ID=L.ID
+              WHERE P.STATE = ${Incomplete.value} AND L.LINK_ID=$linkId"""
+    Q.queryNA[(Long)](query).list
+  }
+
+
+
+
   def updateAddrMValues(projectLink: ProjectLink): Unit = {
     sqlu"""update project_link set modified_date = sysdate, start_addr_m = ${projectLink.startAddrMValue}, end_addr_m = ${projectLink.endAddrMValue}, calibration_points = ${CalibrationCode.getFromAddress(projectLink).value} where id = ${projectLink.id}
           """.execute
@@ -442,7 +466,7 @@ object ProjectDAO {
     Q.updateNA(sql).execute
   }
 
-  def updateProjectLinkUnchanged(projectLinkIds: Set[Long], linkStatus: LinkStatus, userName: String, roadType: Long, discontinuity: Option[Long]): Unit = {
+  def updateProjectLinkRoadTypeDiscontinuity(projectLinkIds: Set[Long], linkStatus: LinkStatus, userName: String, roadType: Long, discontinuity: Option[Long]): Unit = {
     val user = userName.replaceAll("[^A-Za-z0-9\\-]+", "")
     if(discontinuity.isEmpty) {
       projectLinkIds.grouped(500).foreach {

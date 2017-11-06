@@ -1,4 +1,5 @@
 package fi.liikennevirasto.viite
+import java.util.Properties
 import fi.liikennevirasto.digiroad2.RoadLinkType.UnknownRoadLinkType
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset._
@@ -152,9 +153,14 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
       addresses.keySet.contains(id) || normalRoadLinkIds.contains(id)))
     val allRoadAddressesAfterChangeTable = applyChanges(allRoadLinks, if (!frozenTimeVVHAPIServiceEnabled) filteredChangedRoadLinks else Seq(), addresses)
     val missingLinkIds = linkIds -- floating.keySet -- allRoadAddressesAfterChangeTable.keySet
-    val missedRL = withTiming(withDynTransaction {
-      RoadAddressDAO.getMissingRoadAddresses(missingLinkIds)
-    }.groupBy(_.linkId), "End finding missing road addresses in %.3f sec")
+    val missedRL = withTiming(
+      withDynTransaction {
+        if (everything || !frozenTimeVVHAPIServiceEnabled) {
+          RoadAddressDAO.getMissingRoadAddresses(missingLinkIds)
+        } else {
+          List[MissingRoadAddress]()
+        }
+      }.groupBy(_.linkId), "End finding missing road addresses in %.3f sec")
     val (changedFloating, missingFloating) = floatingViiteRoadLinks.partition(ral => linkIds.contains(ral._1))
     val roadAddressLinkMap = createRoadAddressLinkMap(allRoadLinks, changedFloating, allRoadAddressesAfterChangeTable, missedRL)
 
@@ -169,7 +175,10 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
   }
 
   private def publishChangeSet(changeSet: AddressChangeSet): Unit = {
-    eventbus.publish("roadAddress:persistMissingRoadAddress", changeSet.missingRoadAddresses)
+    //Temporary filter for missing road addresses QA
+    if(!frozenTimeVVHAPIServiceEnabled){
+      eventbus.publish("roadAddress:persistMissingRoadAddress", changeSet.missingRoadAddresses)
+    }
     eventbus.publish("roadAddress:persistAdjustments", changeSet.adjustedMValues)
     eventbus.publish("roadAddress:floatRoadAddress", changeSet.toFloatingAddressIds)
   }
@@ -193,7 +202,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
     val fetchMissingRoadAddressesByBoundingBoxF = Future(fetchMissingRoadAddressesByBoundingBox(boundingRectangle))
 
     val (floatingViiteRoadLinks, addresses, floating) = Await.result(fetchRoadAddressesByBoundingBoxF, Duration.Inf)
-    val missingViiteRoadAddress = Await.result(fetchMissingRoadAddressesByBoundingBoxF, Duration.Inf)
+    val missingViiteRoadAddress = if(!frozenTimeVVHAPIServiceEnabled) Await.result(fetchMissingRoadAddressesByBoundingBoxF, Duration.Inf) else Map[Long, Seq[MissingRoadAddress]]()
     logger.info("End fetch addresses in %.3f sec".format((System.currentTimeMillis() - fetchAddrStartTime) * 0.001))
 
     val roadsWithEndDate = addresses.values.flatten.filter(a => a.endDate.isDefined).map(_.linkId).toSeq
@@ -228,11 +237,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
     val (filledTopology, changeSet) = RoadAddressFiller.fillTopology(roadLinks, viiteRoadLinks)
 
-    eventbus.publish("roadAddress:persistMissingRoadAddress", changeSet.missingRoadAddresses)
-    eventbus.publish("roadAddress:persistAdjustments", changeSet.adjustedMValues)
-    eventbus.publish("roadAddress:floatRoadAddress", changeSet.toFloatingAddressIds)
+    publishChangeSet(changeSet)
 
-    val returningTopology = filledTopology
+    val returningTopology = filledTopology.filterNot(p => p.anomaly == Anomaly.NoAddressGiven)
 
     returningTopology ++ missingFloating.flatMap(_._2)
 
@@ -544,9 +551,7 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
 
     val (filledTopology, changeSet) = RoadAddressFiller.fillTopology(roadLinksWithComplimentary, viiteRoadLinks)
 
-    eventbus.publish("roadAddress:persistMissingRoadAddress", changeSet.missingRoadAddresses)
-    eventbus.publish("roadAddress:persistAdjustments", changeSet.adjustedMValues)
-    eventbus.publish("roadAddress:floatRoadAddress", changeSet.toFloatingAddressIds)
+    publishChangeSet(changeSet)
 
     filledTopology
   }

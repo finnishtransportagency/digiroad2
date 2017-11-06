@@ -59,10 +59,10 @@ class RailwayCrossingService(val roadLinkService: RoadLinkService) extends Point
       persistedStop.createdBy, persistedStop.createdAt, persistedStop.modifiedBy, persistedStop.modifiedAt, persistedStop.linkSource)
   }
 
-  override def create(asset: IncomingRailwayCrossing, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass] = None, linkSource: LinkGeomSource): Long = {
-    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat, 0), geometry)
+  override def create(asset: IncomingRailwayCrossing, username: String, roadLink: RoadLink): Long = {
+    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat, 0), roadLink.geometry)
     withDynTransaction {
-      OracleRailwayCrossingDao.create(setAssetPosition(asset, geometry, mValue), mValue, municipality, username, VVHClient.createVVHTimeStamp(), linkSource)
+      OracleRailwayCrossingDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, roadLink.municipalityCode, username, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
     }
   }
 

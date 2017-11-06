@@ -34,12 +34,12 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
     OracleTrafficLightDao.fetchByFilter(queryFilter)
   }
 
-  override def create(asset: IncomingAsset, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass] = None, linkSource: LinkGeomSource): Long = {
+  override def create(asset: IncomingAsset, username: String, roadLink: RoadLink): Long = {
     val assetPoint = Point(asset.lon, asset.lat, 0)
-    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(assetPoint, geometry)
-    val point = GeometryUtils.calculatePointFromLinearReference(geometry, mValue).getOrElse(assetPoint)
+    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(assetPoint, roadLink.geometry)
+    val point = GeometryUtils.calculatePointFromLinearReference(roadLink.geometry, mValue).getOrElse(assetPoint)
     withDynTransaction {
-      OracleTrafficLightDao.create(TrafficLightToBePersisted(asset.linkId, asset.lon, point.y, mValue, municipality, username), username, VVHClient.createVVHTimeStamp(), linkSource)
+      OracleTrafficLightDao.create(TrafficLightToBePersisted(asset.linkId, asset.lon, point.y, mValue, roadLink.municipalityCode, username), username, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
     }
   }
 

@@ -8,6 +8,11 @@
         '<li data-layerid="background" title="Taustakarttasarja" class="selected">Taustakarttasarja</li>' +
         '<li data-layerid="greyscale" title="Harmaasävy">Harmaasävykartta</li>' +
       '</ul>' +
+      '<div class="suravage-visible-wrapper">' +
+        '<div class="checkbox">' +
+          '<label><input type="checkbox" name="suravageVisible" value="suravageVisible" checked="true" id="suravageVisibleCheckbox">Näytä Suravage-Linkit</label>' +
+        '</div>' +
+      '</div>' +
     '</div>';
     container.append(element);
     container.find('li').click(function(event) {
@@ -15,6 +20,11 @@
       var selectedTileMap = $(event.target);
       selectedTileMap.addClass('selected');
       eventbus.trigger('tileMap:selected', selectedTileMap.attr('data-layerid'));
+    });
+
+    $('#suravageVisibleCheckbox').change(function() {
+      eventbus.trigger('suravageRoads:toggleVisibility', this.checked);
+      eventbus.trigger("suravageProjectRoads:toggleVisibility", this.checked);
     });
   };
 })(this);

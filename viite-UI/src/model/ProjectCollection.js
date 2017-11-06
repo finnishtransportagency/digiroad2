@@ -1,5 +1,5 @@
 (function(root) {
-  root.RoadAddressProjectCollection = function(backend) {
+  root.ProjectCollection = function(backend) {
     var roadAddressProjects = [];
     var currentRoadPartList = [];
     var reservedDirtyRoadPartList = [];
@@ -14,6 +14,8 @@
     var self = this;
     var publishableProject = false;
     var LinkStatus = LinkValues.LinkStatus;
+    var ProjectStatus = LinkValues.ProjectStatus;
+    var LinkGeomSource = LinkValues.LinkGeomSource;
     var BAD_REQUEST_400 = 400;
     var UNAUTHORIZED_401 = 401;
     var PRECONDITION_FAILED_412 = 412;
@@ -62,10 +64,10 @@
     };
 
     this.getByLinkId = function (ids) {
-      var ProjectLinks = _.filter(_.flatten(fetchedProjectLinks), function (projectLink){
+      var links = _.filter(_.flatten(fetchedProjectLinks), function (projectLink){
         return _.contains(ids, projectLink.getData().linkId);
       });
-      return ProjectLinks;
+      return links;
     };
 
     this.fetch = function(boundingBox, zoom, projectId, isPublishable) {
@@ -82,7 +84,7 @@
           publishableProject = isPublishable;
 
           var separated = _.partition(self.getAll(), function(projectRoad){
-            return projectRoad.roadLinkSource === 3;
+            return projectRoad.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value;
           });
           fetchedSuravageProjectLinks = separated[0];
           var nonSuravageProjectRoads = separated[1];
@@ -134,6 +136,7 @@
       currentRoadPartList = [];
       dirtyProjectLinkIds = [];
       dirtyProjectLinks = [];
+      reservedDirtyRoadPartList = [];
       projectinfo=undefined;
       backend.abortLoadingProject();
     };
@@ -215,9 +218,31 @@
       }
     };
 
+    this.removeProjectLinkSplit = function (project, selectedProjectLink) {
+      if(!_.isEmpty(project)) {
+        applicationModel.addSpinner();
+        var projectId = project.id;
+        var linkId = Math.abs(selectedProjectLink[0].linkId);
+        backend.removeProjectLinkSplit(projectId, linkId, function (response) {
+          if (response.success) {
+            dirtyProjectLinkIds = [];
+            eventbus.trigger('projectLink:revertedChanges');
+          }
+          else if (response == INTERNAL_SERVER_ERROR_500 || response == BAD_REQUEST_400) {
+            eventbus.trigger('roadAddress:projectLinksUpdateFailed', error.status);
+            new ModalConfirm(response.message);
+            applicationModel.removeSpinner();
+          }
+          else{
+            new ModalConfirm(response.message);
+            applicationModel.removeSpinner();
+          }
+        });
+      }
+    };
+
     this.saveProjectLinks = function(changedLinks, statusCode) {
       applicationModel.addSpinner();
-      //TODO in the future if we want to choose multiple actions foreach link (linkId, newStatus) combo should be used
       var linkIds = _.unique(_.map(changedLinks,function (t){
         if(!_.isUndefined(t.linkId)){
           return t.linkId;
@@ -281,12 +306,8 @@
 
     this.saveCuttedProjectLinks = function(changedLinks, statusCodeA, statusCodeB){
       applicationModel.addSpinner();
-
-      var linkIds = _.unique(_.map(changedLinks,function (t){
-        if(!_.isUndefined(t.linkId)){
-          return t.linkId;
-        } else return t;
-      }));
+      
+      var linkId = Math.abs(changedLinks[0].linkId);
 
       var projectId = projectinfo.id;
       var form = $('#roadAddressProjectFormCut');
@@ -308,9 +329,14 @@
         projectId: projectId
       };
 
-      backend.saveProjectLinkSplit(dataJson, changedLinks[0].linkId, function(successObject){
+      backend.saveProjectLinkSplit(dataJson, linkId, function(successObject){
+        if (!successObject.success) {
+          new ModalConfirm(successObject.reason);
+          applicationModel.removeSpinner();
+        }
+        else{
           eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
-      }, function(failureObject){
+      }}, function(failureObject){
           new ModalConfirm(failureObject.reason);
           applicationModel.removeSpinner();
       });
@@ -403,7 +429,8 @@
     };
 
     var deleteButton = function(index, roadNumber, roadPartNumber){
-      return '<button roadNumber="'+roadNumber+'" roadPartNumber="'+roadPartNumber+'" id="'+index+'" class="delete btn-delete">X</button>';
+      var disabledInput = !_.isUndefined(currentProject) && currentProject.project.statusCode === ProjectStatus.ErroredInTR.value;
+      return '<button roadNumber="'+roadNumber+'" roadPartNumber="'+roadPartNumber+'" id="'+index+'" class="delete btn-delete" '+ (disabledInput ? 'disabled' : '') +'>X</button>';
     };
 
     var addToDirtyRoadPartList = function (queryresult) {
