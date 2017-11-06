@@ -265,7 +265,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               fillRampGrowthDirection(newProjectLinks.keys.toSet, newRoadNumber, newRoadPartNumber, newProjectLinks.values.toSeq, firstLinkId)
             }
           } else
-            newProjectLinks.values.toSeq
+            ProjectSectionCalculator.assignMValues(newProjectLinks.values.toSeq)
         ProjectDAO.create(createLinks)
         recalculateProjectLinks(projectId, user, Set((newRoadNumber, newRoadPartNumber)))
         None
@@ -315,8 +315,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         newProjectLinks.map(_.copy(sideCode = SideCode.apply(traficDirection)))
       } else {
         //return the newProjectLinks in order to calculate the MAddresses
-        //Remember TowardsDigitalizing is chosen by a fair dice roll
-        newProjectLinks.map(_.copy(sideCode = SideCode.TowardsDigitizing))
+        ProjectSectionCalculator.assignMValues(newProjectLinks)
       }
     }
   }
