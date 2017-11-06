@@ -5,7 +5,7 @@ import fi.liikennevirasto.digiroad2.asset.Asset.DateTimePropertyFormat
 import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, _}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.pointasset.oracle.Obstacle
+import fi.liikennevirasto.digiroad2.pointasset.oracle.{DirectionalTrafficSign, Obstacle, PedestrianCrossing}
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import org.joda.time.DateTime
 import org.scalatra._
@@ -90,6 +90,8 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
   }
 
   def expirePointAsset(assetTypeId: Int, assetId: Long, username: String): Long = {
+    getPointAssetById(assetTypeId, assetId)
+
     val service = verifyPointServiceToUse(assetTypeId)
     service.expire(assetId, user.username) match {
       case 1 => assetId
@@ -107,11 +109,11 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     service.getByMunicipality(municipalityCode)
   }
 
-  def getPointAssetById(assetTypeId: Int, assetId: Long): Seq[PersistedPointAsset] ={
+  def getPointAssetById(assetTypeId: Int, assetId: Long): PersistedPointAsset ={
     val service = verifyPointServiceToUse(assetTypeId)
     service.getById(assetId) match {
-      case Some(asset) => Seq(asset.asInstanceOf[PersistedPointAsset])
-      case _ => Seq.empty[PersistedPointAsset]
+      case Some(asset) => asset.asInstanceOf[PersistedPointAsset]
+      case _ => halt(BadRequest("Asset not found."))
     }
   }
 
@@ -149,6 +151,36 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
       case _ => Seq.empty[PersistedLinearAsset]
     }
   }
+
+  def updatePointAssets(assets: JValue, typeId: Int, assetId: Int): PersistedPointAsset = {
+    val service = verifyPointServiceToUse(typeId)
+    val asset = typeId match {
+      case Obstacles.typeId =>
+        parsedBody.extractOpt[NewNumericOrTextualValueAsset].map(x =>IncomingObstacleAsset( x.linkId, x.startMeasure.toLong, x.properties.map(_.value).head.toInt))
+      case PedestrianCrossings.typeId =>
+        parsedBody.extractOpt[NewNumericOrTextualValueAsset].map(x =>IncomingPedestrianCrossingAsset( x.linkId, x.startMeasure.toLong))
+      //      case RailwayCrossings.typeId =>
+      //        parsedBody.extractOpt[NewNumericOrTextualValueAsset].map(x =>IncomingRailwayCrossingtAsset( x.linkId, x.startMeasure.toLong, x.properties.map(_.value).head.toInt, ))
+      case TrafficLights.typeId =>
+        parsedBody.extractOpt[NewNumericOrTextualValueAsset].map(x =>IncomingPedestrianCrossingAsset( x.linkId, x.startMeasure.toLong))
+    }
+
+    asset match {
+      case Some(value) =>
+          roadLinkService.getRoadLinkAndComplementaryFromVVH(value.linkId) match {
+            case Some(link) =>
+              service.toIncomingAsset(value, link) match {
+                case Some(pointAsset) =>  service.update(assetId, pointAsset, link.geometry, link.municipalityCode, user.username, link.linkSource)
+                case None => //TODO : Error message
+              }
+            case None => halt(NotFound(s"Roadlink with mml id ${value.linkId} does not exist"))
+          }
+      case None => //TODO : Error message
+    }
+
+    getPointAssetById(typeId, assetId)
+  }
+
 
   def updateSpeedLimitAssets(assetId: Long, parsedBody: JValue, linkId: Int): Seq[SpeedLimit] = {
     val assetById = speedLimitService.getSpeedLimitAssetsByIds(Set(assetId)).filterNot(_.expired)
@@ -191,8 +223,8 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
         parsedBody.extractOpt[Seq[NewNumericOrTextualValueAsset]].getOrElse(Nil).map(x =>IncomingObstacleAsset( x.linkId, x.startMeasure.toLong, x.properties.map(_.value).head.toInt))
       case PedestrianCrossings.typeId =>
         parsedBody.extractOpt[Seq[NewNumericOrTextualValueAsset]].getOrElse(Nil).map(x =>IncomingPedestrianCrossingAsset( x.linkId, x.startMeasure.toLong))
-      case RailwayCrossings.typeId =>
-        parsedBody.extractOpt[Seq[NewNumericOrTextualValueAsset]].getOrElse(Nil).map(x =>IncomingRailwayCrossingtAsset( x.linkId, x.startMeasure.toLong, x.properties.map(_.value).head.toInt))
+//      case RailwayCrossings.typeId =>
+//        parsedBody.extractOpt[Seq[NewNumericOrTextualValueAsset]].getOrElse(Nil).map(x =>IncomingRailwayCrossingtAsset( x.linkId, x.startMeasure.toLong, x.properties.map(_.value).head.toInt, ))
       case TrafficLights.typeId =>
         parsedBody.extractOpt[Seq[NewNumericOrTextualValueAsset]].getOrElse(Nil).map(x =>IncomingPedestrianCrossingAsset( x.linkId, x.startMeasure.toLong))
     }
@@ -223,23 +255,33 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
   def extractModifiedAt(pointAsset: PersistedPointAsset, typeId: Int): Any = {
     typeId match {
       case Obstacles.typeId  => pointAsset.asInstanceOf[Obstacle].modifiedAt.orElse( pointAsset.asInstanceOf[Obstacle].createdAt).map(DateTimePropertyFormat.print).getOrElse("")
-      //      case PedestrianCrossings.typeId   =>
+      case PedestrianCrossings.typeId  =>  pointAsset.asInstanceOf[Obstacle].modifiedAt.orElse( pointAsset.asInstanceOf[PedestrianCrossing].createdAt).map(DateTimePropertyFormat.print).getOrElse("")
       //      case RailwayCrossings.typeId  =>
-      //      case TrafficLights.typeId  =>
+      case TrafficLights.typeId  =>  pointAsset.asInstanceOf[Obstacle].modifiedAt.orElse( pointAsset.asInstanceOf[DirectionalTrafficSign].createdAt).map(DateTimePropertyFormat.print).getOrElse("")
     }
   }
 
   def extractCreatedAt(pointAsset: PersistedPointAsset, typeId: Int): Any = {
     typeId match {
       case Obstacles.typeId  => pointAsset.asInstanceOf[Obstacle].createdAt.map(DateTimePropertyFormat.print).getOrElse("")
-      //      case PedestrianCrossings.typeId   =>
+      case PedestrianCrossings.typeId  => pointAsset.asInstanceOf[PedestrianCrossing].createdAt.map(DateTimePropertyFormat.print).getOrElse("")
       //      case RailwayCrossings.typeId  =>
-      //      case TrafficLights.typeId  =>
+      case TrafficLights.typeId  => pointAsset.asInstanceOf[DirectionalTrafficSign].createdAt.map(DateTimePropertyFormat.print).getOrElse("")
     }
   }
+  def pointAssetToApi(pointAssets: PersistedPointAsset, typeId: Int) : Map[String, Any] = {
+      Map("id" -> pointAssets.id,
+        "properties" -> extractPointProperties(pointAssets, typeId),
+        "linkId" -> pointAssets.linkId,
+        "startMeasure" -> pointAssets.mValue,
+        "modifiedAt" -> extractModifiedAt(pointAssets, typeId),
+        "createdAt" -> extractCreatedAt(pointAssets, typeId),
+        "geometryTimestamp" -> pointAssets.vvhTimeStamp,
+        "municipalityCode" -> pointAssets.municipalityCode
+      )
+  }
 
-
-  def pointAssetToApi(pointAssets: Seq[PersistedPointAsset], typeId: Int) : Seq[Map[String, Any]] = {
+  def pointAssetsToApi(pointAssets: Seq[PersistedPointAsset], typeId: Int) : Seq[Map[String, Any]] = {
     pointAssets.map { asset =>
       Map("id" -> asset.id,
         "properties" -> extractPointProperties(asset, typeId),
@@ -335,6 +377,19 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
             if (!Seq(30, 40, 50, 60, 70, 80, 90, 100, 120).contains(value))
               halt(BadRequest(s"The property values for the property with name speed limit are not valid."))
           }
+        case Obstacles.typeId =>  extractPropertyValue(getAssetName(assetTypeId), prop, propertyValueToInt).asInstanceOf[Seq[Int]].foreach { value =>
+          if (!Seq(1,2).contains(value))
+            halt(BadRequest(s"The property values for the property with name obstacleType are not valid."))
+        }
+        case PedestrianCrossings.typeId  => extractPropertyValue(getAssetName(assetTypeId), prop, propertyValueToInt).asInstanceOf[Seq[Int]].foreach { value =>
+          if (!Seq(0,1).contains(value))
+            halt(BadRequest(s"The property values for the property with name hasPedestrianCrossing are not valid."))
+        }
+        case RailwayCrossings.typeId  => "name"
+        case TrafficLights.typeId  => extractPropertyValue(getAssetName(assetTypeId), prop, propertyValueToInt).asInstanceOf[Seq[Int]].foreach { value =>
+          if (!Seq(0,1).contains(value))
+            halt(BadRequest(s"The property values for the property with name hasTrafficLight are not valid."))
+        }
         case _ => ("", None)
       }
     }
@@ -366,7 +421,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     assetService.getGeometryType(assetTypeId) match {
       case "linear" if assetTypeId == SpeedLimitAsset.typeId => speedLimitAssetsToApi(getSpeedLimitAssetsByMunicipality(municipalityCode), municipalityCode)
       case "linear" => linearAssetsToApi(getLinearAssetsByMunicipality(municipalityCode, assetTypeId), municipalityCode)
-      case "point" => pointAssetToApi(getPointAssetsByMunicipality(municipalityCode, assetTypeId), assetTypeId)
+      case "point" => pointAssetsToApi(getPointAssetsByMunicipality(municipalityCode, assetTypeId), assetTypeId)
       case _ =>
     }
   }
@@ -412,13 +467,13 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     if(properties.isEmpty)
       halt(BadRequest("Missing asset properties values"))
 
-    //TODO: Missing validation for point assets
-   // validateAssetPropertyValue(assetTypeId, properties)
+    //TODO: Missing validation for railway crossing
+    validateAssetPropertyValue(assetTypeId, properties)
 
     assetService.getGeometryType(assetTypeId) match {
       case "linear" if assetTypeId == SpeedLimitAsset.typeId => speedLimitAssetsToApi(createSpeedLimitAssets(municipalityCode, assetTypeId,  parsedBody), municipalityCode)
       case "linear" => linearAssetsToApi(createLinearAssets(municipalityCode, assetTypeId, parsedBody, linkIds), municipalityCode)
-      case "point" => pointAssetToApi(createPointAssets(parsedBody, assetTypeId), assetTypeId)
+      case "point" => pointAssetsToApi(createPointAssets(parsedBody, assetTypeId), assetTypeId)
       case _ =>
     }
   }
@@ -438,6 +493,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     (parsedBody \ "startMeasure").extractOrElse[Double](halt(BadRequest("Missing mandatory 'startMeasure' parameter")))
     val geometryTimestamp = (parsedBody \ "geometryTimestamp").extractOrElse[Long](halt(BadRequest("Missing mandatory 'geometryTimestamp' parameter")))
     val properties = (parsedBody \ "properties").extractOrElse[Seq[AssetProperties]](halt(BadRequest("Missing asset properties")))
+    //TODO Check if asset exists
     val assetId = params("assetId").toInt
 
     if (properties.isEmpty)
@@ -448,7 +504,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     assetService.getGeometryType(assetTypeId) match {
       case "linear" if assetTypeId ==  SpeedLimitAsset.typeId => speedLimitAssetsToApi(updateSpeedLimitAssets(assetId, parsedBody, linkId), municipalityCode)
       case "linear" => linearAssetsToApi(updateLinearAssets(assetTypeId, assetId, parsedBody, linkId), municipalityCode)
-      //case "point" =>
+      case "point" => pointAssetToApi(updatePointAssets(parsedBody, assetTypeId, assetId), assetTypeId)
       case _ =>
     }
   }
@@ -464,9 +520,6 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
 
     val assetType = getAssetTypeId(params("assetType"))
     val assetId = params("assetId").toLong
-
-    if(getPointAssetById(assetType, assetId).isEmpty)
-      halt(NotFound("Asset not found."))
 
     assetService.getGeometryType(assetType) match {
       case "linear" => expireLinearAsset(assetType, assetId, user.username, expired = true)
