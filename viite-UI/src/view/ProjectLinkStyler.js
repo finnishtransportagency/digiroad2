@@ -30,9 +30,9 @@
 
     var projectLinkRules = [
       new StyleRule().where('status').is(notHandledStatus).use({stroke: {color: '#F7FE2E', width: 8, lineCap: 'round'}}),
-      new StyleRule().where('status').is(unchangedStatus).use({stroke: {color: '#0000FF', width: 5, lineCap: 'round'}}),
+      new StyleRule().where('status').is(unchangedStatus).use({stroke: {color: '#008080', width: 5, lineCap: 'round'}}),
       new StyleRule().where('status').is(newRoadAddressStatus).use({stroke: {color: '#FF55DD', width: 5, lineCap: 'round'}}),
-      new StyleRule().where('status').is(transferredStatus).use({stroke: {color: '#FF0000', width: 3, lineCap: 'round'}}),
+      new StyleRule().where('status').is(transferredStatus).use({stroke: {color: '#ffad99', width: 3, lineCap: 'round'}}),
       new StyleRule().where('status').is(numberingStatus).use({stroke: {color: '#8B4513', width: 5, lineCap: 'round'}}),
       new StyleRule().where('status').is(terminatedStatus).use({stroke: {color: '#383836', width: 3, lineCap: 'round'}}),
       new StyleRule().where('status').is(unknownStatus).use({stroke: {color: '#383836', width: 3, lineCap: 'round'}}),
