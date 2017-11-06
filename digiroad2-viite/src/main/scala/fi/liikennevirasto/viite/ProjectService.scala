@@ -317,7 +317,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       calibrationPoints = if (resetAddress) (None, None) else pl.calibrationPoints)
   }
 
-  def changeDirection(projectId : Long, roadNumber : Long, roadPartNumber : Long, status: LinkStatus, linkIds: Set[Long]): Option[String] = {
+  /*def changeDirection(projectId : Long, roadNumber : Long, roadPartNumber : Long, status: LinkStatus, linkIds: Set[Long]): Option[String] = {
     RoadAddressLinkBuilder.municipalityRoadMaintainerMapping // make sure it is populated outside of this TX
     try {
       withDynTransaction {
@@ -351,7 +351,43 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         logger.info("Direction change failed", e)
         Some("Päivitys ei onnistunut")
     }
+  }*/
+
+  def changeDirection(projectId: Long, roadNumber: Long, roadPartNumber: Long, username:String): Option[String] = {
+    RoadAddressLinkBuilder.municipalityRoadMaintainerMapping // make sure it is populated outside of this TX
+    try {
+      withDynTransaction {
+        if (ProjectDAO.projectLinksCountUnchanged(projectId, roadNumber, roadPartNumber) > 0)
+          return Some("Tieosalle ei voi tehdä kasvusuunnan kääntöä, koska tieosalla on linkkejä, jotka on tässä projektissa määritelty säilymään ennallaan.")
+
+        val projectLinkIds = ProjectDAO.fetchProjectLinkIds(projectId, roadNumber, roadPartNumber)
+        ProjectDAO.reverseRoadPartDirection(projectId, roadNumber, roadPartNumber)
+
+        val projectLinks = withGeometry(ProjectDAO.getProjectLinks(projectId), resetAddress = false)
+        val adjustedLinks = ProjectSectionCalculator.assignMValues(projectLinks)
+
+        val addressIds = projectLinks.groupBy(_.roadAddressId)
+        val originalSideCodes = RoadAddressDAO.fetchByIdMassQuery(projectLinks.map(_.roadAddressId).toSet, true, true)
+          .map(ra => ra.id -> ra.sideCode).toMap
+
+        ProjectDAO.updateProjectLinksToDB(adjustedLinks.map(x =>
+          x.copy(reversed = isReversed(originalSideCodes)(x))),username)
+        None
+      }
+    } catch {
+      case NonFatal(e) =>
+        logger.info("Direction change failed", e)
+        Some("Päivitys ei onnistunut")
+    }
   }
+
+  private def isReversed(originalSideCodes: Map[Long, SideCode])(projectLink: ProjectLink): Boolean ={
+    originalSideCodes.get(projectLink.roadAddressId) match {
+      case Some(sideCode) if sideCode != projectLink.sideCode => true
+      case _ => false
+    }
+  }
+
 
   /**
     * Adds reserved road links (from road parts) to a road address project. Clears
@@ -879,7 +915,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @return true, if the delta calculation is successful and change table has been updated.
     */
   def updateProjectLinks(projectId: Long, linkIds: Set[Long], linkStatus: LinkStatus, userName: String,
-                         roadNumber: Long = 0, roadPartNumber: Long = 0, userDefinedEndAddressM: Option[Int], roadType: Long = 0, discontinuity: Long = 0, ely: Long = 0): Option[String] = {
+                         roadNumber: Long = 0, roadPartNumber: Long = 0, userDefinedEndAddressM: Option[Int],
+                         roadType: Long = 0, discontinuity: Long = 0, ely: Long = 0, reversed: Boolean = false ): Option[String] = {
 
     def updateRoadTypeDiscontinuity(links: Seq[ProjectLink]) = {
       val lastSegment = links.maxBy(_.endAddrMValue)

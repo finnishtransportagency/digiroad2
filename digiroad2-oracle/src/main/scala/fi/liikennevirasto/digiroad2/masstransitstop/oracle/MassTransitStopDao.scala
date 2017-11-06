@@ -68,18 +68,15 @@ class MassTransitStopDao {
     val topLeft = Point(position.x - meters, position.y - meters)
     val bottomRight = Point(position.x + meters, position.y + meters)
     val boundingBoxFilter = OracleDatabase.boundingBoxFilter(BoundingRectangle(topLeft, bottomRight), "a.geometry")
+    val filter = s"where a.asset_type_id = $typeId and (($boundingBoxFilter ) and (a.valid_to is null or a.valid_to > sysdate))"
+    val nearestStops = fetchPointAssets(withFilter(filter)).
+      filter(r => GeometryUtils.geometryLength(Seq(position, Point(r.lon, r.lat))) <= meters)
 
     terminalIdOption match {
       case Some(terminalId) =>
-        val filter = s"    where a.asset_type_id = $typeId and (a.valid_to is null or a.valid_to > sysdate) and " +
-          s"a.id in (SELECT id from asset a WHERE asset_type_id = $typeId AND ($boundingBoxFilter ) UNION " +
-          s"select bus_stop_asset_id FROM terminal_bus_stop_link where terminal_asset_id = $terminalId)"
-        fetchPointAssets(withFilter(filter))
-          .filter(r => GeometryUtils.geometryLength(Seq(position, Point(r.lon, r.lat))) <= meters || r.terminalId.contains(terminalId))
+        nearestStops ++ fetchPointAssets(withId(terminalId))
       case _ =>
-        val filter = s"where a.asset_type_id = $typeId and (($boundingBoxFilter ) and (a.valid_to is null or a.valid_to > sysdate))"
-        fetchPointAssets(withFilter(filter)).
-          filter(r => GeometryUtils.geometryLength(Seq(position, Point(r.lon, r.lat))) <= meters)
+        nearestStops
     }
   }
 

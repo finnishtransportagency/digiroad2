@@ -270,11 +270,14 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
 
 
-  put("/roadlinks/roadaddress/project/directionchangenewroadlink") {
-    try { //check for validity
-      val roadInfo = parsedBody.extract[RoadAddressProjectLinksExtractor]
+  put("/project/reverse") {
+    val user = userProvider.getCurrentUser()
+    try {
+      //check for validity
+      val roadInfo = parsedBody.extract[ProjectRoadAddressInfo]
       val writableProjectService = projectWritable(roadInfo.projectId)
-      writableProjectService.changeDirection(roadInfo.projectId, roadInfo.roadNumber, roadInfo.roadPartNumber, LinkStatus.apply(roadInfo.linkStatus), roadInfo.linkIds) match {
+      //writableProjectService.changeDirection(roadInfo.projectId, roadInfo.roadNumber, roadInfo.roadPartNumber, LinkStatus.apply(roadInfo.linkStatus), roadInfo.linkIds) match {
+      writableProjectService.changeDirection(roadInfo.projectId, roadInfo.roadNumber, roadInfo.roadPartNumber,user.username) match {
         case Some(errorMessage) =>
           Map("success" -> false, "errorMessage" -> errorMessage)
         case None => Map("success" -> true)
@@ -313,9 +316,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       projectService.checkRoadPartsReservable(roadNumber, startPart, endPart) match {
         case Left(err) => Map("success" -> err, "roadparts" -> Seq.empty)
         case Right(reservedRoadParts) => {
-          projectService.validateProjectDate(reservedRoadParts, formatter.parseDateTime(projDate)) match {
-            case Some(errMsg) => Map("success" -> errMsg)
-            case None => Map("success" -> "ok", "roadparts" -> reservedRoadParts.map(reservedRoadPartToApi))
+          if (reservedRoadParts.isEmpty) {
+            Map("success" -> s"Puuttuvan tielinkkidatan takia kyseistä tieosaa ei pystytä varaamaan.")
+          } else {
+            projectService.validateProjectDate(reservedRoadParts, formatter.parseDateTime(projDate)) match {
+              case Some(errMsg) => Map("success" -> errMsg)
+              case None => Map("success" -> "ok", "roadparts" -> reservedRoadParts.map(reservedRoadPartToApi))
+            }
           }
         }
       }
@@ -591,7 +598,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "sideCode" -> roadAddressLink.sideCode.value,
       "linkType" -> roadAddressLink.linkType.value,
       "roadLinkSource" -> roadAddressLink.roadLinkSource.value
-
     )
   }
 
