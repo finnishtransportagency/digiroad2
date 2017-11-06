@@ -208,4 +208,35 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
       assetArea.flatMap(_._2).flatMap(_._2).toSeq.contains(checkedAsset1.head) should be (false)
     }
   }
+
+  test("Get service roads by bounding box") {
+
+    val prop1 = Properties("huoltotie_kayttooikeus", "single_choice", "1")
+    val prop2 = Properties("huoltotie_huoltovastuu", "single_choice", "2")
+    val prop3 = Properties("huoltotie_tiehoitokunta", "text", "text")
+
+    val propertiesSeq :Seq[Properties] = List(prop1, prop2, prop3)
+
+    val changeInfo = Seq(
+      ChangeInfo(Some(1), Some(2), 12345, 1, Some(0), Some(100), Some(0), Some(100), 1476468913000L),
+      ChangeInfo(Some(3), Some(4), 12345, 2, Some(0), Some(20), Some(100), Some(120), 1476468913000L)
+    )
+
+    when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]], any[Boolean])).thenReturn((roadLinkWithLinkSource, changeInfo))
+
+    val maintenanceRoad = MaintenanceRoad(propertiesSeq)
+    runWithRollback {
+      val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, maintenanceRoad, 1, 0, None)), maintenanceRoadAssetTypeId, "testuser")
+      newAssets.length should be(1)
+
+      val assets = ServiceWithDao.getNormalAndComplementaryByBoundingBox(BoundingRectangle(Point(1, 2), Point(3, 4)))
+      assets.map { asset =>
+        asset.linkId should be(388562360l)
+        asset.startMeasure should be(0)
+        asset.endMeasure should be(20)
+        asset.value.get.asInstanceOf[MaintenanceRoad].properties.length should be(3)
+      }
+    }
+
+  }
 }
