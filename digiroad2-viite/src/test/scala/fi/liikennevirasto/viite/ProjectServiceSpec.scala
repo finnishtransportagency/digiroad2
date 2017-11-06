@@ -16,13 +16,16 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.util.Track.Combined
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, RoadLinkService, _}
+import fi.liikennevirasto.viite.RoadType.PublicRoad
 import fi.liikennevirasto.viite.dao.AddressChangeType._
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous}
+import fi.liikennevirasto.viite.dao.ProjectState.Sent2TR
 import fi.liikennevirasto.viite.dao.{Discontinuity, ProjectDAO, ProjectState, RoadAddressProject, _}
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.dao.{AddressChangeType, Discontinuity, ProjectState, RoadAddressProject, _}
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.{ProjectDeltaCalculator, ProjectSectionCalculator}
+import fi.liikennevirasto.viite.util.prettyPrint
 import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.conn.{ConnectTimeoutException, HttpHostConnectException}
@@ -918,5 +921,69 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
       val result3 = projectService.setProjectEly(project.id, 3)
       result3.isEmpty should be (false)
     }
+  }
+
+  test("split road address save behaves correctly on transfer + new") {
+    val road = 5L
+    val roadPart = 205L
+    val origStartM = 1024L
+    val origEndM = 1547L
+    val origStartD = Some(DateTime.now().minusYears(10))
+    val linkId = 1049L
+    val endM = 520.387
+    val suravageLinkId = 5774839L
+    val user = Some("user")
+    val project = RoadAddressProject(-1L, Sent2TR, "split", user.get, DateTime.now(), user.get,
+      DateTime.now().plusMonths(2), DateTime.now(), "", Seq(), None, None)
+    val roadAddress = RoadAddress(1L, 5L, 205L, PublicRoad, Track.Combined, Continuous, origStartM, origEndM, origStartD,
+      None, None, 1L, linkId, 0.0, endM, SideCode.TowardsDigitizing, 86400L, (None, None), false, Seq(Point(1024.0, 0.0), Point(1025.0, 1544.386)),
+      LinkGeomSource.NormalLinkInterface, 8L, false)
+    val transferAndNew = Seq(ProjectLink(2L, 5, 205, Track.Combined, Continuous, 1028, 1128, Some(DateTime.now()), None, user,
+      2L, suravageLinkId, 0.0, 99.384, SideCode.TowardsDigitizing, (None, None), false, Seq(Point(1024.0, 0.0), Point(1024.0, 99.384)),
+      -1L, LinkStatus.Transfer, PublicRoad, LinkGeomSource.SuravageLinkInterface, 99.384, 1L, 8L, Some(linkId)),
+      ProjectLink(3L, 5, 205, Track.Combined, Continuous, 1128, 1205, Some(DateTime.now()), None, user,
+        3L, suravageLinkId, 99.384, 176.495, SideCode.TowardsDigitizing, (None, None), false, Seq(Point(1024.0, 99.384), Point(1101.111, 99.384)),
+        -1L, LinkStatus.New, PublicRoad, LinkGeomSource.SuravageLinkInterface, 77.111, 1L, 8L, Some(linkId)),
+      ProjectLink(4L, 5, 205, Track.Combined, Continuous, origStartM+100L, origEndM, Some(DateTime.now()), None, user,
+        4L, linkId, 99.384, endM, SideCode.TowardsDigitizing, (None, None), false, Seq(Point(1024.0, 99.384), Point(1025.0, 1544.386)),
+        -1L, LinkStatus.Terminated, PublicRoad, LinkGeomSource.NormalLinkInterface, endM - 99.384, 1L, 8L, Some(suravageLinkId)))
+    val result = projectService.createSplitRoadAddress(roadAddress, transferAndNew, project)
+    result should have size(4)
+    result.count(_.terminated) should be (1)
+    result.count(_.startDate == roadAddress.startDate) should be (2)
+    result.count(_.startDate.get == project.startDate) should be (2)
+    result.count(_.endDate.isEmpty) should be (2)
+  }
+
+  test("split road address save behaves correctly on unchanged + new") {
+    val road = 5L
+    val roadPart = 205L
+    val origStartM = 1024L
+    val origEndM = 1547L
+    val origStartD = Some(DateTime.now().minusYears(10))
+    val linkId = 1049L
+    val endM = 520.387
+    val suravageLinkId = 5774839L
+    val user = Some("user")
+    val project = RoadAddressProject(-1L, Sent2TR, "split", user.get, DateTime.now(), user.get,
+      DateTime.now().plusMonths(2), DateTime.now(), "", Seq(), None, None)
+    val roadAddress = RoadAddress(1L, 5L, 205L, PublicRoad, Track.Combined, Continuous, origStartM, origEndM, origStartD,
+      None, None, 1L, linkId, 0.0, endM, SideCode.TowardsDigitizing, 86400L, (None, None), false, Seq(Point(1024.0, 0.0), Point(1025.0, 1544.386)),
+      LinkGeomSource.NormalLinkInterface, 8L, false)
+    val unchangedAndNew = Seq(ProjectLink(2L, 5, 205, Track.Combined, Continuous, origStartM, origStartM+100L, Some(DateTime.now()), None, user,
+      2L, suravageLinkId, 0.0, 99.384, SideCode.TowardsDigitizing, (None, None), false, Seq(Point(1024.0, 0.0), Point(1024.0, 99.384)),
+      -1L, LinkStatus.UnChanged, PublicRoad, LinkGeomSource.SuravageLinkInterface, 99.384, 1L, 8L, Some(linkId)),
+      ProjectLink(3L, 5, 205, Track.Combined, Continuous, origStartM+100L, origStartM+177L, Some(DateTime.now()), None, user,
+        3L, suravageLinkId, 99.384, 176.495, SideCode.TowardsDigitizing, (None, None), false, Seq(Point(1024.0, 99.384), Point(1101.111, 99.384)),
+        -1L, LinkStatus.New, PublicRoad, LinkGeomSource.SuravageLinkInterface, 77.111, 1L, 8L, Some(linkId)),
+      ProjectLink(4L, 5, 205, Track.Combined, Continuous, origStartM+100L, origEndM, Some(DateTime.now()), None, user,
+        4L, linkId, 99.384, endM, SideCode.TowardsDigitizing, (None, None), false, Seq(Point(1024.0, 99.384), Point(1025.0, 1544.386)),
+        -1L, LinkStatus.Terminated, PublicRoad, LinkGeomSource.NormalLinkInterface, endM - 99.384, 1L, 8L, Some(suravageLinkId)))
+    val result = projectService.createSplitRoadAddress(roadAddress, unchangedAndNew, project)
+    result should have size(3)
+    result.count(_.terminated) should be (1)
+    result.count(_.startDate == roadAddress.startDate) should be (2)
+    result.count(_.startDate.get == project.startDate) should be (1)
+    result.count(_.endDate.isEmpty) should be (2)
   }
 }
