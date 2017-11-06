@@ -1346,4 +1346,36 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       revertedProject.get.reservedParts.map(_.roadPartNumber).toSet should be (Set(201L))
     }
   }
+
+
+  test("Create a roundabout addressing") {
+    runWithRollback {
+      val rap = RoadAddressProject(0, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser",
+        DateTime.now(), DateTime.now(), "Some additional info", Seq(), None, None)
+      val project = projectService.createRoadLinkProject(rap)
+      val map = Map("MUNICIPALITYCODE" -> BigInt(456))
+      val roadLinks = Seq(RoadLink(121L, Seq(Point(0.0, 0.0), Point(10.0, 0.0)), 10.0, State, 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None,
+        None, map, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface),
+        RoadLink(122L, Seq(Point(10.0, 0.0), Point(5.0, 8.0)), 9.434, State, 1, TrafficDirection.TowardsDigitizing, LinkType.apply(1), None,
+          None, map, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface),
+        RoadLink(123L, Seq(Point(0.0, 0.0), Point(5.0, 8.0)), 9.434, State, 1, TrafficDirection.AgainstDigitizing, LinkType.apply(1), None,
+          None, map, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface))
+      when(mockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
+      when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenAnswer(
+        toMockAnswer(roadLinks))
+      val resp = projectService.createProjectLinks(Seq(123L, 121L, 122L), project.id, 39999, 12, 0, 1, 1, 1, 8, "user")
+      resp.get("success") should be(Some(true))
+      val links = projectService.getLinksByProjectLinkId(Set(123L, 121L, 122L), project.id, false)
+      val start = links.find(_.linkId == 123L)
+      start.isEmpty should be (false)
+      start.get.sideCode should be (AgainstDigitizing)
+      start.get.startAddressM should be (0L)
+      start.get.endAddressM should be (9L)
+      val end = links.find(_.linkId == 122L)
+      end.isEmpty should be (false)
+      end.get.sideCode should be (TowardsDigitizing)
+      end.get.startAddressM should be (19L)
+      end.get.endAddressM should be (28L)
+    }
+  }
 }

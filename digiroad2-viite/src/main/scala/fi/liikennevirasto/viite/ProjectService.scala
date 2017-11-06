@@ -191,7 +191,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                          discontinuity: Int, roadType: Int, roadLinkSource: Int, roadEly: Long, user: String): Map[String, Any] = {
     def sortRamps(seq: Seq[ProjectAddressLink]) = {
       if (seq.headOption.exists(isRamp))
-        seq.find(l => linkIds.contains(l.linkId)).toSeq ++ seq.filter(_.linkId != linkIds.headOption.getOrElse(0L))
+        seq.find(l => linkIds.headOption.contains(l.linkId)).toSeq ++ seq.filter(_.linkId != linkIds.headOption.getOrElse(0L))
       else
         seq
     }
