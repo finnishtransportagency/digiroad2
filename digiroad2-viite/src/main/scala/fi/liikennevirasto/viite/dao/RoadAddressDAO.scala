@@ -101,6 +101,7 @@ trait BaseRoadAddress {
   def floating: Boolean
   def geometry: Seq[Point]
   def ely: Long
+  def reversed: Boolean
 
   def copyWithGeometry(newGeometry: Seq[Point]): BaseRoadAddress
 
@@ -111,7 +112,7 @@ case class RoadAddress(id: Long, roadNumber: Long, roadPartNumber: Long, roadTyp
                        discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
                        endDate: Option[DateTime] = None, modifiedBy: Option[String] = None, lrmPositionId : Long, linkId: Long, startMValue: Double, endMValue: Double, sideCode: SideCode, adjustedTimestamp: Long,
                        calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false,
-                       geometry: Seq[Point], linkGeomSource: LinkGeomSource, ely: Long) extends BaseRoadAddress {
+                       geometry: Seq[Point], linkGeomSource: LinkGeomSource, ely: Long, reversed: Boolean = false) extends BaseRoadAddress {
   val endCalibrationPoint = calibrationPoints._2
   val startCalibrationPoint = calibrationPoints._1
 

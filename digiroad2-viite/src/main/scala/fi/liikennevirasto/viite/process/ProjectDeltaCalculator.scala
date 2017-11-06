@@ -101,7 +101,7 @@ object ProjectDeltaCalculator {
     val (ra2,pl2) = tr2
     if (pl1.endAddrMValue == pl2.startAddrMValue && pl1.discontinuity == Discontinuity.Continuous &&
       ra1.endAddrMValue == ra2.startAddrMValue && ra1.discontinuity == Discontinuity.Continuous &&
-    pl1.roadType == pl2.roadType)
+    pl1.roadType == pl2.roadType && pl1.reversed == pl2.reversed)
       Seq((
         ra1 match {
           case x: RoadAddress => x.copy(endAddrMValue = ra2.endAddrMValue, discontinuity = ra2.discontinuity).asInstanceOf[R]
