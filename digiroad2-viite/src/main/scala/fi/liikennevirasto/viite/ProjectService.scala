@@ -321,17 +321,21 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     RoadAddressLinkBuilder.municipalityRoadMaintainerMapping // make sure it is populated outside of this TX
     try {
       withDynTransaction {
-        val projectLinkIds = ProjectDAO.fetchProjectLinkIds(projectId, roadNumber, roadPartNumber)
-        if (!projectLinkIds.contains(projectLinkIds.head)) {
-          return Some("Linkit kuuluvat useampaan projektiin")
-        }
         if (ProjectDAO.projectLinksCountUnchanged(projectId, roadNumber, roadPartNumber) > 0)
           return Some("Tieosalle ei voi tehdä kasvusuunnan kääntöä, koska tieosalla on linkkejä, jotka on tässä projektissa määritelty säilymään ennallaan.")
-        ProjectDAO.flipProjectLinksSideCodes(projectId, roadNumber, roadPartNumber)
-        val projectLinks = ProjectDAO.getProjectLinks(projectId)
-        val adjLinks = withGeometry(projectLinks, resetAddress = false)
-        val adjustedLinks=ProjectSectionCalculator.assignMValues(adjLinks)
-        ProjectDAO.updateProjectLinksToDB(adjustedLinks.map(x=>x.copy(reversed = directionChangedCheck(x))),username)
+
+        val projectLinkIds = ProjectDAO.fetchProjectLinkIds(projectId, roadNumber, roadPartNumber)
+        ProjectDAO.reverseRoadPartDirection(projectId, roadNumber, roadPartNumber)
+
+        val projectLinks = withGeometry(ProjectDAO.getProjectLinks(projectId), resetAddress = false)
+        val adjustedLinks = ProjectSectionCalculator.assignMValues(projectLinks)
+
+        val addressIds = projectLinks.groupBy(_.roadAddressId)
+        val originalSideCodes = RoadAddressDAO.fetchByIdMassQuery(projectLinks.map(_.roadAddressId).toSet, true, true)
+          .map(ra => ra.id -> ra.sideCode).toMap
+
+        ProjectDAO.updateProjectLinksToDB(adjustedLinks.map(x =>
+          x.copy(reversed = isReversed(originalSideCodes)(x))),username)
         None
       }
     } catch {
@@ -341,13 +345,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  private def directionChangedCheck(projectLink: ProjectLink): Boolean ={
-    projectLink.sideCode.value
-    val ra=roadLinkService.getLinkIdSideCodes(Set(projectLink.linkId))
-    if (ra!=null &&ra.nonEmpty)
-      ra.head!=projectLink.sideCode
-    else
-    true
+  private def isReversed(originalSideCodes: Map[Long, SideCode])(projectLink: ProjectLink): Boolean ={
+    originalSideCodes.get(projectLink.roadAddressId) match {
+      case Some(sideCode) if sideCode != projectLink.sideCode => true
+      case _ => false
+    }
   }
 
 

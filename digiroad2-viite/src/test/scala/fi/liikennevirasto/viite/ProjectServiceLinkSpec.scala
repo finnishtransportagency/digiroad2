@@ -688,7 +688,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       projectService.changeDirection(id, 75, 2,"testuser") should be(None)
       val changedLinks = ProjectDAO.getProjectLinksByIds(links.map { l => l.id })
       changedLinks.foreach(cl => cl.sideCode should not be (sideCodes(cl.id)))
-      changedLinks.foreach(cl => cl.reversed should be (true))
+      changedLinks.foreach(cl => cl.reversed should be (false))
       val geom584 = StaticTestData.mappedGeoms(Seq(5176584L)).values.head
       val addProjectAddressLink584 = ProjectAddressLink(NewRoadAddress, 5176584, geom584, GeometryUtils.geometryLength(geom584),
         State, Motorway, RoadLinkType.NormalRoadLinkType, ConstructionType.InUse, LinkGeomSource.NormalLinkInterface,

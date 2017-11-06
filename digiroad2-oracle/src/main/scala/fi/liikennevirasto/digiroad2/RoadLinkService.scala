@@ -2,8 +2,8 @@ package fi.liikennevirasto.digiroad2
 
 import java.io.{File, FilenameFilter, IOException}
 import java.text.SimpleDateFormat
-import java.util.{Date, Properties}
 import java.util.concurrent.TimeUnit
+import java.util.{Date, Properties}
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import com.vividsolutions.jts.geom.Polygon
@@ -12,21 +12,19 @@ import fi.liikennevirasto.digiroad2.asset.Asset._
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkProperties}
 import fi.liikennevirasto.digiroad2.oracle.{MassQuery, OracleDatabase}
-import fi.liikennevirasto.digiroad2.roadaddress.oracle.{RoadAddress, RoadAddressDAO}
 import fi.liikennevirasto.digiroad2.roadlinkservice.oracle.RoadLinkServiceDAO
 import fi.liikennevirasto.digiroad2.user.User
-import fi.liikennevirasto.digiroad2.util.{VVHRoadLinkHistoryProcessor, VVHSerializer}
-import org.joda.time.{DateTime, DateTimeZone}
+import fi.liikennevirasto.digiroad2.util.{Track, VVHRoadLinkHistoryProcessor, VVHSerializer}
 import org.joda.time.format.ISODateTimeFormat
+import org.joda.time.{DateTime, DateTimeZone}
 import org.slf4j.LoggerFactory
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
 
-import scala.concurrent.Future
-import scala.concurrent.Await
-import scala.concurrent.duration.Duration
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration.Duration
 
 case class IncompleteLink(linkId: Long, municipalityCode: Int, administrativeClass: AdministrativeClass)
 case class RoadLinkChangeSet(adjustedRoadLinks: Seq[RoadLink], incompleteLinks: Seq[IncompleteLink])
@@ -1519,12 +1517,12 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     )
   }
 
-  case class RoadLinkRoadAddress(linkId: Long, roadNumber: Long, roadPartNumber: Long, track: Int, sideCode: Int,
+  case class RoadLinkRoadAddress(linkId: Long, roadNumber: Long, roadPartNumber: Long, track: Track, sideCode: SideCode,
                                  startAddrMValue: Long, endAddrMValue: Long) {
     def asAttributes: Map[String, Any] = Map("VIITE_ROAD_NUMBER" -> roadNumber,
       "VIITE_ROAD_PART_NUMBER" -> roadPartNumber,
-      "VIITE_TRACK" -> track,
-      "VIITE_SIDECODE" -> sideCode,
+      "VIITE_TRACK" -> track.value,
+      "VIITE_SIDECODE" -> sideCode.value,
       "VIITE_START_ADDR" -> startAddrMValue,
       "VIITE_END_ADDR" -> endAddrMValue)
   }
@@ -1537,15 +1535,11 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
     */
   def getRoadAddressesByLinkIds(linkIds: Set[Long]): Seq[RoadLinkRoadAddress] = {
     withDynTransaction {
-      getRoadAddressesByLinkIdsSessionless(linkIds)
+      getRoadAddressesInTX(linkIds)
     }
   }
 
-
-
-
-
-  private def getRoadAddressesByLinkIdsSessionless(linkIds: Set[Long]): Seq[RoadLinkRoadAddress] = {
+  private def getRoadAddressesInTX(linkIds: Set[Long]): Seq[RoadLinkRoadAddress] = {
     MassQuery.withIds(linkIds) {
       idTableName =>
         val query = s"""
@@ -1561,17 +1555,11 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
             GROUP BY LINK_ID, ROAD_NUMBER, ROAD_PART_NUMBER, TRACK_CODE, SIDE_CODE"""
         Q.queryNA[(Long, Long, Long, Int, Int, Long, Long)](query).list.map {
           case (id, roadNumber, roadPartNumber, track, sideCode, startAddrMValue, endAddrMValue)
-          => RoadLinkRoadAddress(id, roadNumber, roadPartNumber, track, sideCode, startAddrMValue, endAddrMValue)
+          => RoadLinkRoadAddress(id, roadNumber, roadPartNumber, Track.apply(track), SideCode.apply(sideCode),
+            startAddrMValue, endAddrMValue)
         }
     }
   }
-
-  def getLinkIdSideCodes(linkIds: Set[Long]): Seq[SideCode] = {
-    getRoadAddressesByLinkIdsSessionless(linkIds).map(x=>SideCode.apply(x.sideCode))
-  }
-
-
-
 
   /**
     * This method returns Road Link that have been changed in VVH between given dates values. It is used by TN-ITS ChangeApi.
