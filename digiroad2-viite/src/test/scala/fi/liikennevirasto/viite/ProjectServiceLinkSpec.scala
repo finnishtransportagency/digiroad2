@@ -353,7 +353,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean]))
         .thenReturn(Seq(toRoadLink(suravageAddressLink), roadLink))
       when(mockRoadAddressService.getSuravageRoadLinkAddressesByLinkIds(any[Set[Long]])).thenReturn(Seq(suravageAddressLink))
-      projectServiceWithRoadAddressMock.revertSplit(projectId, 1) should be(None)
+      projectServiceWithRoadAddressMock.revertSplit(projectId, 1, "user") should be (None)
     }
   }
 
@@ -526,7 +526,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
         projectLink.calibrationPoints._1,
         projectLink.calibrationPoints._2, Anomaly.None, projectLink.lrmPositionId, projectLink.status, 0)
 
-      mockForProject(id)
+      mockForProject(id, Seq(p))
       projectService.addNewLinksToProject(Seq(p), id, projectLink.roadNumber, projectLink.roadPartNumber, projectLink.track.value.toLong, projectLink.discontinuity.value.toLong, projectLink.roadType.value, "U")
       val links = ProjectDAO.getProjectLinks(id)
       links.size should be(1)
@@ -1029,14 +1029,15 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       projectService.addNewLinksToProject(Seq(newLink), project.id, 77, 35, 0L, 5L, RoadType.PublicRoad.value, "U") should be(None)
 
       val allLinks = ProjectDAO.getProjectLinks(project.id)
-      val newLinks = allLinks.filter(_.status == LinkStatus.New)
       val transferLinks = allLinks.filter(_.status != LinkStatus.New)
 
-      when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(allLinks.map(_.linkId).toSet, false, false)).thenReturn(geomToLinks.map(toRoadLink) ++ Seq(toRoadLink(newLink)))
-      projectService.updateProjectLinks(project.id, transferLinks.map(_.linkId).toSet, LinkStatus.Transfer, "Test", 0, 0, Option.empty[Int]) should be(None)
-      newLinks.head.calibrationPoints._1 should not be (None)
-      transferLinks.head.calibrationPoints._1 should be(None)
-      allLinks.size should be(newLinks.size + transferLinks.size)
+      when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(allLinks.map(_.linkId).toSet,false, false)).thenReturn(geomToLinks.map(toRoadLink) ++ Seq(toRoadLink(newLink)))
+      projectService.updateProjectLinks(project.id, transferLinks.map(_.linkId).toSet, LinkStatus.Transfer, "Test", 77, 35, Option.empty[Int]) should be (None)
+
+      val (resultNew, resultTransfer) = ProjectDAO.getProjectLinks(project.id).partition(_.status == LinkStatus.New)
+      resultNew.head.calibrationPoints._1 should not be (None)
+      resultTransfer.head.calibrationPoints._1 should be (None)
+      allLinks.size should be (resultNew.size + resultTransfer.size)
     }
   }
 
@@ -1076,19 +1077,18 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       projectService.addNewLinksToProject(Seq(newLink), project.id, 847, 6, 0L, 12L, RoadType.PublicRoad.value, "U") should be(None)
 
       val allLinks = ProjectDAO.getProjectLinks(project.id)
-      val newLinks = allLinks.filter(_.status == LinkStatus.New)
-      val terminatedLinks = allLinks.filter(_.status == LinkStatus.Terminated)
-      val transferLinks = allLinks.filter(al => {
-        al.status != LinkStatus.New && al.status != LinkStatus.Terminated
-      })
+      val transferLinks = allLinks.filter(al => {al.status != LinkStatus.New && al.status != LinkStatus.Terminated})
 
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(allLinks.map(_.linkId).toSet, false, false)).thenReturn(geomToLinks.map(toRoadLink) ++ Seq(toRoadLink(newLink)))
       projectService.updateProjectLinks(project.id, transferLinks.map(_.linkId).toSet, LinkStatus.Transfer, "Test", 0, 0, Option.empty[Int]) should be(None)
 
-      newLinks.head.calibrationPoints._1 should not be (None)
-      transferLinks.head.calibrationPoints._1 should be(None)
-      terminatedLinks.head.calibrationPoints._1 should be(None)
-      allLinks.size should be(newLinks.size + transferLinks.size + terminatedLinks.size)
+      val (resultNew, resultOther) = ProjectDAO.getProjectLinks(project.id).partition(_.status == LinkStatus.New)
+      val (resultTransfer, resultTerm) = resultOther.partition(_.status == LinkStatus.Transfer)
+
+      resultNew.head.calibrationPoints._1 should not be (None)
+      resultTransfer.head.calibrationPoints._1 should be (None)
+      resultTerm.head.calibrationPoints._1 should be (None)
+      allLinks.size should be (resultNew.size + resultTransfer.size + resultTerm.size)
     }
   }
 
@@ -1238,20 +1238,14 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       new201R.maxBy(_.startAddrMValue).endAddrMValue should be(new201L.maxBy(_.startAddrMValue).endAddrMValue)
       new202R.maxBy(_.startAddrMValue).endAddrMValue should be(new202L.maxBy(_.startAddrMValue).endAddrMValue)
 
+      projectService.getChangeProject(project.id).isEmpty should be (false)
+
       val changesList = RoadAddressChangesDAO.fetchRoadAddressChanges(Set(project.id))
       changesList.isEmpty should be(false)
-      val terminationChangesRightSide201 = changesList.filter(cl => {
-        cl.changeInfo.source.startRoadPartNumber.get == 201L && cl.changeInfo.changeType == Termination && cl.changeInfo.source.trackCode.get == Track.RightSide.value
-      })
-      val terminationChangesLeftSide201 = changesList.filter(cl => {
-        cl.changeInfo.source.startRoadPartNumber.get == 201 && cl.changeInfo.changeType == Termination && cl.changeInfo.source.trackCode.get == Track.LeftSide.value
-      })
-      val terminationChangesRightSide202 = changesList.filter(cl => {
-        cl.changeInfo.source.startRoadPartNumber.get == 202 && cl.changeInfo.changeType == Termination && cl.changeInfo.source.trackCode.get == Track.RightSide.value
-      })
-      val terminationChangesLeftSide202 = changesList.filter(cl => {
-        cl.changeInfo.source.startRoadPartNumber.get == 202 && cl.changeInfo.changeType == Termination && cl.changeInfo.source.trackCode.get == Track.LeftSide.value
-      })
+      val terminationChangesRightSide201 = changesList.filter(cl => {cl.changeInfo.source.startRoadPartNumber.getOrElse(-1L) == 201L && cl.changeInfo.changeType == Termination && cl.changeInfo.source.trackCode.getOrElse(-1L) == Track.RightSide.value})
+      val terminationChangesLeftSide201 = changesList.filter(cl => {cl.changeInfo.source.startRoadPartNumber.getOrElse(-1L) == 201 && cl.changeInfo.changeType == Termination && cl.changeInfo.source.trackCode.getOrElse(-1L) == Track.LeftSide.value})
+      val terminationChangesRightSide202 = changesList.filter(cl => {cl.changeInfo.source.startRoadPartNumber.getOrElse(-1L) == 202 && cl.changeInfo.changeType == Termination && cl.changeInfo.source.trackCode.getOrElse(-1L) == Track.RightSide.value})
+      val terminationChangesLeftSide202 = changesList.filter(cl => {cl.changeInfo.source.startRoadPartNumber.getOrElse(-1L) == 202 && cl.changeInfo.changeType == Termination && cl.changeInfo.source.trackCode.getOrElse(-1L) == Track.LeftSide.value})
 
       terminationChangesRightSide201.head.changeInfo.source.startAddressM should be(terminationChangesLeftSide201.head.changeInfo.source.startAddressM)
       terminationChangesRightSide201.head.changeInfo.source.endAddressM should be(terminationChangesLeftSide201.head.changeInfo.source.endAddressM)
@@ -1259,10 +1253,11 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       terminationChangesRightSide202.head.changeInfo.source.endAddressM should be(terminationChangesLeftSide202.head.changeInfo.source.endAddressM)
 
       val newChanges = changesList.filter(_.changeInfo.changeType == AddressChangeType.New)
-      newChanges.map(nc => {
-        nc.changeInfo.source.startAddressM should be(nc.changeInfo.target.startAddressM)
-        nc.changeInfo.source.endAddressM should be(nc.changeInfo.target.endAddressM)
-        nc
+      newChanges.foreach(nc =>  {
+        nc.changeInfo.source.startAddressM should be (None)
+        nc.changeInfo.source.endAddressM should be (None)
+        nc.changeInfo.target.startAddressM shouldNot be (None)
+        nc.changeInfo.target.endAddressM shouldNot be (None)
       })
     }
   }
@@ -1346,7 +1341,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       upProject.get.reservedParts.map(_.roadPartNumber).toSet should be(Set(101L, 201L))
 
       val renumberedLinks = ProjectDAO.getProjectLinks(project.id, Some(LinkStatus.Numbering))
-      projectService.revertLinks(renumberedLinks) should be(None)
+      projectService.revertLinks(renumberedLinks, "user") should be (None)
 
       val revertedProject = projectService.getRoadAddressSingleProject(project.id)
       revertedProject.nonEmpty should be(true)

@@ -1038,14 +1038,14 @@ object RoadAddressDAO {
   def roadPartExists(roadNumber:Long, roadPart:Long) :Boolean = {
     val query = s"""SELECT COUNT(1)
             FROM road_address
-             WHERE road_number=$roadNumber AND road_part_number=$roadPart"""
+             WHERE road_number=$roadNumber AND road_part_number=$roadPart AND ROWNUM < 2"""
     if (Q.queryNA[Int](query).first>0) true else false
   }
 
   def roadNumberExists(roadNumber:Long) :Boolean = {
     val query = s"""SELECT COUNT(1)
             FROM road_address
-             WHERE road_number=$roadNumber"""
+             WHERE road_number=$roadNumber AND ROWNUM < 2"""
     if (Q.queryNA[Int](query).first>0) true else false
   }
 

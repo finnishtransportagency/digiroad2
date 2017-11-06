@@ -101,7 +101,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val zoomLevel = chooseDrawType(params.getOrElse("zoom", "5"))
 
     params.get("bbox")
-      .map(getRoadLinksFromVVH(municipalities, zoomLevel))
+      .map(getRoadAddressLinks(municipalities, zoomLevel))
       .getOrElse(BadRequest("Missing mandatory 'bbox' parameter"))
   }
 
@@ -276,7 +276,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       //check for validity
       val roadInfo = parsedBody.extract[ProjectRoadAddressInfo]
       val writableProjectService = projectWritable(roadInfo.projectId)
-      writableProjectService.changeDirection(roadInfo.projectId, roadInfo.roadNumber, roadInfo.roadPartNumber,user.username) match {
+      val user = userProvider.getCurrentUser().username
+      writableProjectService.changeDirection(roadInfo.projectId, roadInfo.roadNumber, roadInfo.roadPartNumber, user) match {
         case Some(errorMessage) =>
           Map("success" -> false, "errorMessage" -> errorMessage)
         case None => Map("success" -> true)
@@ -334,7 +335,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       val linksToRevert = parsedBody.extract[RevertRoadLinksExtractor]
       if (linksToRevert.links.nonEmpty) {
         val writableProject = projectWritable(linksToRevert.projectId)
-        writableProject.revertLinks(linksToRevert.projectId, linksToRevert.roadNumber, linksToRevert.roadPartNumber, linksToRevert.links) match {
+        val user = userProvider.getCurrentUser().username
+        writableProject.revertLinks(linksToRevert.projectId, linksToRevert.roadNumber, linksToRevert.roadPartNumber, linksToRevert.links, user) match {
           case None => Map("success" -> true)
           case Some(s) => Map("success" -> false, "errorMessage" -> s)
         }
@@ -483,7 +485,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       val linkId = params.get("linkId").map(_.toLong)
       (projectId, linkId) match {
         case (Some(project), Some(link)) =>
-          val error = projectService.revertSplit(project, link)
+          val error = projectService.revertSplit(project, link, user.username)
           Map("success" -> error.isEmpty, "message" -> error)
         case _ => BadRequest("Missing mandatory 'projectId' or 'linkId' parameter from URI: /project/split/:projectId/:linkId")
       }
@@ -499,8 +501,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     (sources, targets)
   }
 
-  private def getRoadLinksFromVVH(municipalities: Set[Int], zoomLevel: Int)(bbox: String): Seq[Seq[Map[String, Any]]] = {
+  private def getRoadAddressLinks(municipalities: Set[Int], zoomLevel: Int)(bbox: String): Seq[Seq[Map[String, Any]]] = {
     val boundingRectangle = constructBoundingRectangle(bbox)
+    val startTime = System.currentTimeMillis()
     val viiteRoadLinks = zoomLevel match {
       //TODO: When well-performing solution for main parts and road parts is ready
       case DrawMainRoadPartsOnly =>
@@ -513,6 +516,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       case DrawAllRoads => roadAddressService.getRoadAddressLinksWithSuravage(boundingRectangle, roadNumberLimits = Seq(), municipalities, everything = true)
       case _ => roadAddressService.getRoadAddressLinksWithSuravage(boundingRectangle, roadNumberLimits = Seq((1, 19999)), municipalities)
     }
+    logger.info(s"End fetching data from service (zoom level $zoomLevel) in ${(System.currentTimeMillis() - startTime) * 0.001}s")
     val partitionedRoadLinks = RoadAddressLinkPartitioner.partition(viiteRoadLinks)
     partitionedRoadLinks.map {
       _.map(roadAddressLinkToApi)
@@ -521,6 +525,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   private def getProjectLinks(projectId: Long, zoomLevel: Int)(bbox: String): Seq[Seq[Map[String, Any]]] = {
     val boundingRectangle = constructBoundingRectangle(bbox)
+    val startTime = System.currentTimeMillis()
     val viiteRoadLinks = zoomLevel match {
       case DrawMainRoadPartsOnly =>
         Seq()
@@ -530,6 +535,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       case DrawAllRoads => projectService.getProjectLinksWithSuravage(roadAddressService, projectId, boundingRectangle, Seq(), Set(), everything = true)
       case _ => projectService.getProjectLinksWithSuravage(roadAddressService, projectId, boundingRectangle, Seq((1, 19999)), Set())
     }
+    logger.info(s"End fetching data for id=$projectId project service (zoom level $zoomLevel) in ${(System.currentTimeMillis() - startTime) * 0.001}s")
 
     val partitionedRoadLinks = ProjectLinkPartitioner.partition(viiteRoadLinks.filter(_.length >= MinAllowedRoadAddressLength))
     partitionedRoadLinks.map {
@@ -543,7 +549,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val C3 = new Contains(6 to 10)
     val C4 = new Contains(11 to 16)
     try {
-      val level: Int = zoomLevel.toInt
+      val level: Int = Math.round(zoomLevel.toDouble).toInt
       level match {
         case C1() => DrawMainRoadPartsOnly
         case C2() => DrawRoadPartsOnly
