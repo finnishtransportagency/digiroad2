@@ -303,8 +303,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     val (found, notFound) = without.partition(w => linkGeometries.contains(w.linkId))
     val foundWithGeom = found.map{pl =>
       withGeometry(pl, (linkGeometries ++ historyGeometries)(pl.linkId), resetAddress)}
-    // TODO: fix!
-    guessGeom.guestimateGeometry(notFound.sortBy(x => x.roadNumber).sortBy(x => x.roadPartNumber).sortBy(x=>x.startAddrMValue), withGeom ++ foundWithGeom)
+    notFound.groupBy(pl => (pl.roadNumber, pl.roadPartNumber)).foldLeft(withGeom ++ foundWithGeom){ case (s, (_, links)) =>
+      guessGeom.guestimateGeometry(links.sortBy(_.startAddrMValue), s)}.toSeq
   }
 
   private def withGeometry(pl: ProjectLink, linkGeometry: Seq[Point], resetAddress: Boolean) = {
