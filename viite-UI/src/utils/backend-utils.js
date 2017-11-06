@@ -181,7 +181,7 @@
           $.ajax({
               contentType: "application/json",
               type: "PUT",
-              url: "api/viite/roadlinks/roadaddress/project/directionchangenewroadlink",
+              url: "api/viite/project/reverse",
               data: JSON.stringify(Json),
               dataType: "json",
               success: success,
