@@ -388,7 +388,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-
   /**
     * Adds reserved road links (from road parts) to a road address project. Clears
     * project links that are no longer reserved for the project. Reservability is check before this.
