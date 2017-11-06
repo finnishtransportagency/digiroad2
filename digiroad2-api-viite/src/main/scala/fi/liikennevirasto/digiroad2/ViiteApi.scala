@@ -270,7 +270,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
 
 
-  put("/roadlinks/roadaddress/project/directionchangenewroadlink") {
+  put("/project/reverse") {
+    val user = userProvider.getCurrentUser()
     try {
       //check for validity
       val roadInfo = parsedBody.extract[ProjectRoadAddressInfo]
@@ -620,10 +621,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         Map(
           "status" -> projectAddressLink.status.value,
           "connectedLinkId" -> projectAddressLink.connectedLinkId,
-          "originalGeometry" -> projectAddressLink.originalGeometry)
+          "originalGeometry" -> projectAddressLink.originalGeometry,
+          "reversed" -> projectAddressLink.reversed
+        )
       else
         Map(
-          "status" -> projectAddressLink.status.value
+          "status" -> projectAddressLink.status.value,
+          "reversed" -> projectAddressLink.reversed
         ))
   }
 
