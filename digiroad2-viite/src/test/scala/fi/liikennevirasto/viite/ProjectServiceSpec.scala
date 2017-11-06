@@ -67,6 +67,8 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
     override def withDynTransaction[T](f: => T): T = f
   }
 
+
+
   after {
     reset(mockRoadLinkService)
   }
@@ -203,7 +205,6 @@ class ProjectServiceSpec  extends FunSuite with Matchers with BeforeAndAfter {
   }
 
   test("Using TR_id as project_id when querying should be empty") {
-    assume(testConnection)
     runWithRollback {
       val projectId=Sequences.nextViitePrimaryKeySeqValue
       val rap = RoadAddressProject(projectId, ProjectState.apply(2), "TestProject", "TestUser", DateTime.parse("2700-01-01"), "TestUser", DateTime.parse("2700-01-01"), DateTime.now(), "Some additional info", List.empty[ReservedRoadPart], None)
