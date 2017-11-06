@@ -376,20 +376,13 @@
 
     this.changeNewProjectLinkDirection = function (projectId, selectedLinks){
       applicationModel.addSpinner();
-      var linkIds = _.map(selectedLinks, function(link) {return link.linkId; });
+      var links = _.filter(selectedLinks, function(link) {return link.status !== LinkStatus.Terminated.value;});
 
       var dataJson = {
-        linkIds: linkIds,
-        linkStatus: selectedLinks[0].status,
         projectId: projectId,
-        roadNumber: Number($('#roadAddressProjectForm').find('#tie')[0].value),
-        roadPartNumber: Number($('#roadAddressProjectForm').find('#osa')[0].value),
-        trackCode: Number($('#roadAddressProjectForm').find('#ajr')[0].value),
-        discontinuity: Number($('#roadAddressProjectForm').find('#discontinuityDropdown')[0].value),
-        roadEly: Number($('#roadAddressProjectForm').find('#ely')[0].value),
-        roadLinkSource: Number(_.first(selectedLinks).roadLinkSource),
-        roadType: Number($('#roadAddressProjectForm').find('#roadTypeDropDown')[0].value),
-        userDefinedEndAddressM: null
+        roadNumber: selectedLinks[0].roadNumber,
+        roadPartNumber: selectedLinks[0].roadPartNumber,
+        links: links
       };
       backend.directionChangeNewRoadlink(dataJson, function(successObject) {
         if (!successObject.success) {
@@ -403,20 +396,12 @@
 
     this.changeNewProjectLinkCutDirection = function (projectId, selectedLinks){
       applicationModel.addSpinner();
-      var linkIds = _.map(selectedLinks, function(link) {if(link.linkId < 0) return Math.abs(link.linkId); }).filter(Number);
-
+      var links = _.filter(selectedLinks, function(link) {return link.status !== LinkStatus.Terminated.value;});
       var dataJson = {
-        linkIds: linkIds,
-        linkStatus: selectedLinks[0].status,
         projectId: projectId,
-        roadNumber: Number($('#roadAddressProjectFormCut').find('#tie')[0].value),
-        roadPartNumber: Number($('#roadAddressProjectFormCut').find('#osa')[0].value),
-        trackCode: Number($('#roadAddressProjectFormCut').find('#ajr')[0].value),
-        discontinuity: Number($('#roadAddressProjectFormCut').find('#discontinuityDropdown')[0].value),
-        roadEly: Number($('#roadAddressProjectFormCut').find('#ely')[0].value),
-        roadLinkSource: Number(_.first(selectedLinks).roadLinkSource),
-        roadType: Number($('#roadAddressProjectFormCut').find('#roadTypeDropDown')[0].value),
-        userDefinedEndAddressM: null
+        roadNumber: selectedLinks[0].roadNumber,
+        roadPartNumber: selectedLinks[0].roadPartNumber,
+        links: links
       };
       backend.directionChangeNewRoadlink(dataJson, function(successObject) {
         if (!successObject.success) {

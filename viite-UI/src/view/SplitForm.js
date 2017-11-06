@@ -174,9 +174,9 @@
           '<div class="edit-control-group choice-group">'+
           staticField('Lisätty järjestelmään', project.createdBy + ' ' + project.startDate)+
           staticField('Muokattu viimeksi', project.modifiedBy + ' ' + project.dateModified)+
-          '<div class="split-form-group editable form-editable-roadAddressProject"> '+
+          '<div class="split-form-group editable form-editable-roadAddressProject">'+
           selectionFormCutted(selection, selected)+
-          ((selected.size == 2 && selected[0].linkId === selected[1].linkId) ? '' : changeDirection()) +
+          ((selected.size == 2 && Math.abs(selected[0].linkId) !== Math.abs(selected[1].linkId)) ? '' : changeDirection()) +
           actionSelectedField()+
           ((!_.isUndefined(selected[0].connectedLinkId)) ? revertSplitButton(): '') +
           '</div>'+
@@ -300,7 +300,7 @@
     };
 
     var changeDirection = function () {
-      return '<div hidden class="split-form-group changeDirectionDiv" style="margin-top:15px">' +
+      return '<div class="split-form-group changeDirectionDiv" style="margin-top:15px">' +
           '<button class="split-form-group changeDirection btn btn-primary">Käännä kasvusuunta</button>' +
           '</div>';
     };
