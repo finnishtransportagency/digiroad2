@@ -24,6 +24,9 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
   override def baseAuth: String = "municipality."
   override val realm: String = "Municipality API"
 
+  val Maximum7Restrictions = Set(TotalWeightLimit.typeId, TrailerTruckWeightLimit.typeId, AxleWeightLimit.typeId, BogieWeightLimit.typeId,
+  HeightLimit.typeId, LengthLimit.typeId, WidthLimit.typeId)
+
   case object DateTimeSerializer extends CustomSerializer[DateTime](format => ( {
     case _ => throw new NotImplementedError("DateTime deserialization")
   }, {
@@ -85,8 +88,8 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
       }.get
   }
 
-  def expireLinearAsset(assetTypeId: Int, assetId: Long, username: String, expired: Boolean): Option[Long] = {
-    linearAssetService.expireAsset(assetTypeId, assetId, user.username, expired = true)
+  def expireLinearAsset(assetTypeId: Int, assetId: Long, username: String, expired: Boolean): String = {
+    linearAssetService.expireAsset(assetTypeId, assetId, user.username, expired = true).getOrElse("").toString
   }
 
   def expirePointAsset(assetTypeId: Int, assetId: Long, username: String): Long = {
@@ -130,26 +133,17 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     speedLimitService.get(Seq(assetId.toLong)).filterNot(_.expired)
   }
 
-  def updateLinearAssets(assetTypeId: Int, assetId: Int, parsedBody: JValue, linkId: Long): Seq[PersistedLinearAsset] ={
+  def updateLinearAssets(assetTypeId: Int, assetId: Int, parsedBody: JValue, linkId: Long): Seq[PersistedLinearAsset] = {
     val usedService = verifyLinearServiceToUse(assetTypeId)
-    val assetById = usedService.getPersistedAssetsByIds(assetTypeId, Set(assetId.toLong)).filterNot(_.expired)
-    if(assetById.isEmpty) halt(UnprocessableEntity("Asset not found."))
+    val oldAsset = usedService.getPersistedAssetsByIds(assetTypeId, Set(assetId.toLong)).filterNot(_.expired).headOption.
+      getOrElse(halt(UnprocessableEntity("Asset not found.")))
     val newAsset = extractLinearAssets(assetTypeId, parsedBody)
     validateMeasures(Set(newAsset.startMeasure, newAsset.endMeasure), assetTypeId, linkId)
     validateSideCodes(Seq(newAsset))
-    val oldAsset = usedService.getPersistedAssetsByIds(assetTypeId, Set(assetId.toLong)).head
-    val newPersistedAsset = newAsset.vvhTimeStamp >= oldAsset.vvhTimeStamp match {
-      case true =>
-        usedService.updateWithNewMeasures(Seq(oldAsset.id), newAsset.value, user.username, Some(Measures(newAsset.startMeasure, newAsset.endMeasure)), Some(newAsset.vvhTimeStamp), Some(newAsset.sideCode))
-      case _ => halt(UnprocessableEntity("The geometryTimestamp of the existing asset is newer than the given asset. Asset was not updated."))
-    }
-    newPersistedAsset.headOption match {
-      case Some(asset) => Some(usedService.getPersistedAssetsByIds(assetTypeId, newPersistedAsset.toSet).filterNot(_.expired)) match {
-        case Some(value) => value
-        case _ => halt(NotFound("Asset not found"))
-      }
-      case _ => Seq.empty[PersistedLinearAsset]
-    }
+    validateTimeststamp(newAsset, oldAsset.vvhTimeStamp)
+
+    val updatedId = usedService.updateWithNewMeasures(Seq(oldAsset.id), newAsset.value, user.username, Some(Measures(newAsset.startMeasure, newAsset.endMeasure)), Some(newAsset.vvhTimeStamp), Some(newAsset.sideCode))
+    usedService.getPersistedAssetsByIds(assetTypeId, updatedId.toSet).filterNot(_.expired)
   }
 
   def updatePointAssets(assets: JValue, typeId: Int, assetId: Int): PersistedPointAsset = {
@@ -183,9 +177,13 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
 
 
   def updateSpeedLimitAssets(assetId: Long, parsedBody: JValue, linkId: Int): Seq[SpeedLimit] = {
-    val assetById = speedLimitService.getSpeedLimitAssetsByIds(Set(assetId)).filterNot(_.expired)
-    if (assetById.isEmpty) halt(UnprocessableEntity("Asset not found."))
-    val newAsset = extractNewAssets(20, parsedBody).head
+    val oldAsset = speedLimitService.getSpeedLimitAssetsByIds(Set(assetId)).filterNot(_.expired).headOption
+      .getOrElse(halt(UnprocessableEntity("Asset not found.")))
+
+    val newAsset = extractLinearAssets(SpeedLimitAsset.typeId, parsedBody)
+    validateMeasures(Set(newAsset.startMeasure, newAsset.endMeasure), SpeedLimitAsset.typeId, linkId)
+    validateSideCodes(Seq(newAsset))
+    validateTimeststamp(newAsset, oldAsset.vvhTimeStamp)
 
     val updatedId = speedLimitService.update(assetId, Seq(newAsset), user.username)
     speedLimitService.getSpeedLimitAssetsByIds(updatedId.toSet).filterNot(_.expired)
@@ -208,9 +206,9 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
   def createSpeedLimitAssets(municipalityCode: Int, assetTypeId: Int, parsedBody: JValue): Seq[SpeedLimit] ={
     val newLinearAssets = extractNewAssets(assetTypeId, parsedBody)
     validateSideCodes(newLinearAssets)
-//    newLinearAssets.foreach{
-//      newAsset => validateMeasures(Set(newAsset.startMeasure, newAsset.endMeasure), assetTypeId, linkId.toLong)
-//    }
+    newLinearAssets.foreach{
+      newAsset => validateMeasures(Set(newAsset.startMeasure, newAsset.endMeasure), assetTypeId, newAsset.linkId)
+    }
     val assetsIds = speedLimitService.create(newLinearAssets, assetTypeId, user.username, 0, _ => Unit)
     speedLimitService.getSpeedLimitAssetsByIds(assetsIds.toSet).filterNot(_.expired)
   }
@@ -332,18 +330,34 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
       case "lighting" => LitRoad.typeId
       case "obstacle" => Obstacles.typeId
       case "speed_limit" => SpeedLimitAsset.typeId
+      case "total_weight_limit" => TotalWeightLimit.typeId
+      case "trailer_truck_weight_limit" => TrailerTruckWeightLimit.typeId
+      case "axle_weight_limit" => AxleWeightLimit.typeId
+      case "bogie_weight_limit" => BogieWeightLimit.typeId
+      case "height_limit" => HeightLimit.typeId
+      case "length_limit" => LengthLimit.typeId
+      case "width_limit" => WidthLimit.typeId
+      case "number_of_lanes" => RoadWidth.typeId
       case _ => halt(NotFound("Asset type not found"))
     }
   }
 
   def getAssetName(assetTypeId: Int): String = {
     assetTypeId match {
-      case LitRoad.typeId   => "hasLighting"
+      case LitRoad.typeId => "hasLighting"
       case Obstacles.typeId => "obstacleType"
-      case PedestrianCrossings.typeId   => "hasPedestrianCrossing"
-      case RailwayCrossings.typeId  => "name"
-      case TrafficLights.typeId  => "hasTrafficLight"
+      case PedestrianCrossings.typeId => "hasPedestrianCrossing"
+      case RailwayCrossings.typeId => "name"
+      case TrafficLights.typeId => "hasTrafficLight"
       case SpeedLimitAsset.typeId => "value"
+      case TotalWeightLimit.typeId => "value"
+      case TrailerTruckWeightLimit.typeId => "value"
+      case AxleWeightLimit.typeId => "value"
+      case BogieWeightLimit.typeId => "value"
+      case HeightLimit.typeId => "value"
+      case LengthLimit.typeId => "value"
+      case WidthLimit.typeId => "value"
+      case RoadWidth.typeId => "value"
       case _ => "asset"
     }
   }
@@ -365,6 +379,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
   }
 
   def validateAssetPropertyValue(assetTypeId: Int, properties: Seq[Seq[AssetProperties]]):Unit = {
+
     properties.foreach { prop =>
       assetTypeId match {
         case LitRoad.typeId =>
@@ -390,6 +405,11 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
           if (!Seq(0,1).contains(value))
             halt(BadRequest(s"The property values for the property with name hasTrafficLight are not valid."))
         }
+        case assetType7restrictions if Maximum7Restrictions.contains(assetType7restrictions) =>
+          extractPropertyValue(getAssetName(assetTypeId), prop, propertyValueToInt).asInstanceOf[Seq[Int]].foreach { value =>
+            if(!value.toString.forall(_.isDigit) || value <= 0)
+              halt(BadRequest(s"The property values for the property with name " + AssetTypeInfo.apply(assetTypeId).label + "are not valid."))
+          }
         case _ => ("", None)
       }
     }
@@ -409,6 +429,12 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     measure.foreach( m => if(m < 0 || m > roadLength) halt(UnprocessableEntity("The measure can not be less than 0 and greater than the length of the road. ")))
     if(measure.head == measure.last)halt(UnprocessableEntity("The start and end measure should not be equal for a linear asset."))
   }
+
+  def validateTimeststamp(newAsset: NewLinearAsset, oldAssetVvhTimeStamp: Long) = {
+    if(newAsset.vvhTimeStamp < oldAssetVvhTimeStamp)
+      halt(UnprocessableEntity("The geometryTimestamp of the existing asset is newer than the given asset. Asset was not updated."))
+  }
+
 
   get("/:municipalityCode/:assetType") {
     contentType = formats("json")
@@ -447,7 +473,6 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
   }
 
   post("/:municipalityCode/:assetType"){
-    println(parsedBody)
     contentType = formats("json")
     val assetTypeId = getAssetTypeId(params("assetType"))
 
@@ -464,7 +489,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     body.map(bd => (bd\ "startMeasure").extractOrElse[Double](halt(BadRequest("Missing mandatory 'startMeasure' parameter"))))
     val properties = body.map(bd => (bd\ "properties").extractOrElse[Seq[AssetProperties]](halt(BadRequest("Missing asset properties"))))
 
-    if(properties.isEmpty)
+    if(properties.forall(_.isEmpty))
       halt(BadRequest("Missing asset properties values"))
 
     //TODO: Missing validation for railway crossing

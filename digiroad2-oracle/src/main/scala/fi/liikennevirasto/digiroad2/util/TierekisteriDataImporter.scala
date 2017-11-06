@@ -130,7 +130,7 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
   }
 
   def updateRoadWidthAsset(): Unit = {
-    val lastUpdate = obtainLastExecutionDate(roadWidthImporterOperations.assetName, Width.typeId)
+    val lastUpdate = obtainLastExecutionDate(roadWidthImporterOperations.assetName, RoadWidth.typeId)
     roadWidthImporterOperations.updateAssets(lastUpdate)
   }
 
