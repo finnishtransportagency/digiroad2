@@ -227,7 +227,7 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     Map("Unchecked" -> unchecked )
   }
 
-  def getComplementaryByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[PersistedLinearAsset] = {
+  def getNormalAndComplementaryByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[PersistedLinearAsset] = {
     val (roadLinks, change) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(bounds, municipalities)
     val linkIds = roadLinks.map(_.linkId)
     getPersistedAssetsByLinkIds(linkIds)
