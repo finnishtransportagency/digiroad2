@@ -271,7 +271,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
 
   put("/roadlinks/roadaddress/project/directionchangenewroadlink") {
-    try { //check for validity
+    try {
+      //check for validity
       val roadInfo = parsedBody.extract[ProjectRoadAddressInfo]
       val writableProjectService = projectWritable(roadInfo.projectId)
       val user = userProvider.getCurrentUser().username
@@ -314,9 +315,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       projectService.checkRoadPartsReservable(roadNumber, startPart, endPart) match {
         case Left(err) => Map("success" -> err, "roadparts" -> Seq.empty)
         case Right(reservedRoadParts) => {
-          projectService.validateProjectDate(reservedRoadParts, formatter.parseDateTime(projDate)) match {
-            case Some(errMsg) => Map("success" -> errMsg)
-            case None => Map("success" -> "ok", "roadparts" -> reservedRoadParts.map(reservedRoadPartToApi))
+          if (reservedRoadParts.isEmpty) {
+            Map("success" -> s"Puuttuvan tielinkkidatan takia kyseistä tieosaa ei pystytä varaamaan.")
+          } else {
+            projectService.validateProjectDate(reservedRoadParts, formatter.parseDateTime(projDate)) match {
+              case Some(errMsg) => Map("success" -> errMsg)
+              case None => Map("success" -> "ok", "roadparts" -> reservedRoadParts.map(reservedRoadPartToApi))
+            }
           }
         }
       }
@@ -612,14 +617,14 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   def projectAddressLinkToApi(projectAddressLink: ProjectAddressLink): Map[String, Any] = {
     roadAddressLinkLikeToApi(projectAddressLink) ++
       (if (projectAddressLink.isSplit)
-      Map(
-        "status" -> projectAddressLink.status.value,
-        "connectedLinkId" -> projectAddressLink.connectedLinkId,
-        "originalGeometry" -> projectAddressLink.originalGeometry)
-    else
-      Map(
-        "status" -> projectAddressLink.status.value
-      ))
+        Map(
+          "status" -> projectAddressLink.status.value,
+          "connectedLinkId" -> projectAddressLink.connectedLinkId,
+          "originalGeometry" -> projectAddressLink.originalGeometry)
+      else
+        Map(
+          "status" -> projectAddressLink.status.value
+        ))
   }
 
   def roadAddressProjectToApi(roadAddressProject: RoadAddressProject): Map[String, Any] = {
