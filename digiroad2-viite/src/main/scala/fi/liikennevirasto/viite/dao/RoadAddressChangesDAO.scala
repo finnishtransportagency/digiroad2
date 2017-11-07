@@ -52,7 +52,7 @@ case class RoadAddressChangeSectionTR(roadNumber: Option[Long], trackCode: Optio
                                     endRoadPartNumber: Option[Long], startAddressM: Option[Long], endAddressM:Option[Long])
 
 case class RoadAddressChangeInfo(changeType: AddressChangeType, source: RoadAddressChangeSection, target: RoadAddressChangeSection,
-                                 discontinuity: Discontinuity, roadType: RoadType)
+                                 discontinuity: Discontinuity, roadType: RoadType, reversed: Boolean)
 case class ProjectRoadAddressChange(projectId: Long, projectName: Option[String], ely: Long, user: String, changeDate: DateTime,
                                     changeInfo: RoadAddressChangeInfo, projectStartDate: DateTime, rotatingTRId:Option[Long])
 case class ChangeRow(projectId: Long, projectName: Option[String], createdBy: String, createdDate: Option[DateTime],
@@ -63,7 +63,7 @@ case class ChangeRow(projectId: Long, projectName: Option[String], createdBy: St
                      targetTrackCode: Option[Long], targetStartRoadPartNumber: Option[Long], targetEndRoadPartNumber: Option[Long],
                      targetStartAddressM:Option[Long], targetEndAddressM:Option[Long], targetDiscontinuity: Option[Int], targetRoadType: Option[Int],
                      sourceRoadType: Option[Int], sourceDiscontinuity: Option[Int], sourceEly: Option[Long],
-                     rotatingTRId: Option[Long])
+                     rotatingTRId: Option[Long], reversed: Boolean)
 
 object RoadAddressChangesDAO {
 
@@ -102,12 +102,13 @@ object RoadAddressChangesDAO {
       val sourceDiscontinuity = r.nextIntOption
       val sourceEly = r.nextLongOption
       val rotatingTRIdr = r.nextLongOption
+      val reversed = r.nextBoolean
 
       ChangeRow(projectId, projectName:Option[String], createdBy:String, createdDate:Option[DateTime], startDate:Option[DateTime], modifiedBy:String, modifiedDate:Option[DateTime], targetEly:Long, changeType :Int, sourceRoadNumber:Option[Long],
         sourceTrackCode :Option[Long],sourceStartRoadPartNumber:Option[Long], sourceEndRoadPartNumber:Option[Long], sourceStartAddressM:Option[Long], sourceEndAddressM:Option[Long],
         targetRoadNumber:Option[Long], targetTrackCode:Option[Long], targetStartRoadPartNumber:Option[Long], targetEndRoadPartNumber:Option[Long], targetStartAddressM:Option[Long],
         targetEndAddressM:Option[Long], targetDiscontinuity: Option[Int], targetRoadType: Option[Int], sourceRoadType: Option[Int], sourceDiscontinuity: Option[Int], sourceEly: Option[Long],
-        rotatingTRIdr:Option[Long])
+        rotatingTRIdr:Option[Long], reversed: Boolean)
     }
   }
 
@@ -124,7 +125,7 @@ object RoadAddressChangesDAO {
   private def toRoadAddressChangeInfo(row: ChangeRow) = {
     val source = toRoadAddressChangeSource(row)
     val target = toRoadAddressChangeRecipient(row)
-    RoadAddressChangeInfo(AddressChangeType.apply(row.changeType), source, target, Discontinuity.apply(row.targetDiscontinuity.getOrElse(Discontinuity.Continuous.value)), RoadType.apply(row.targetRoadType.getOrElse(RoadType.Unknown.value)))
+    RoadAddressChangeInfo(AddressChangeType.apply(row.changeType), source, target, Discontinuity.apply(row.targetDiscontinuity.getOrElse(Discontinuity.Continuous.value)), RoadType.apply(row.targetRoadType.getOrElse(RoadType.Unknown.value)), row.reversed)
   }
 
   // TODO: cleanup after modification dates and modified by are populated correctly
@@ -153,7 +154,7 @@ object RoadAddressChangesDAO {
       val changeInfo = toRoadAddressChangeInfo(row)
       val (user, date) = getUserAndModDate(row)
       ProjectRoadAddressChange(row.projectId, row.projectName, row.targetEly, user, date, changeInfo, row.startDate.get,
-        row.rotatingTRId )
+        row.rotatingTRId)
     }
     }
   }
@@ -169,7 +170,7 @@ object RoadAddressChangesDAO {
                 rac.old_start_addr_m, rac.old_end_addr_m, rac.new_road_number, rac.new_track_code,
                 rac.new_road_part_number, rac.new_road_part_number,
                 rac.new_start_addr_m, rac.new_end_addr_m, rac.new_discontinuity, rac.new_road_type, rac.old_road_type,
-                rac.old_discontinuity, rac.old_ely, p.tr_id
+                rac.old_discontinuity, rac.old_ely, p.tr_id, rac.reversed
                 From Road_Address_Changes rac Inner Join Project p on rac.project_id = p.id
                 $withProjectIds
                 ORDER BY rac.old_road_number, rac.OLD_ROAD_PART_NUMBER, rac.old_start_addr_m, rac.old_track_code DESC"""
@@ -226,6 +227,7 @@ object RoadAddressChangesDAO {
       roadAddressChangePS.setLong(16, roadAddressSection.roadType.value)
       roadAddressChangePS.setLong(17, roadAddressSection.discontinuity.value)
       roadAddressChangePS.setLong(18, ely)
+      roadAddressChangePS.setLong(19, if (roadAddressSection.reversed) 1 else 0)
       roadAddressChangePS.addBatch()
     }
 
@@ -248,6 +250,7 @@ object RoadAddressChangesDAO {
       roadAddressChangePS.setLong(16, oldRoadAddressSection.roadType.value)
       roadAddressChangePS.setLong(17, oldRoadAddressSection.discontinuity.value)
       roadAddressChangePS.setLong(18, oldRoadAddressSection.ely)
+      roadAddressChangePS.setLong(19, if(newRoadAddressSection.reversed) 1 else 0)
       roadAddressChangePS.addBatch()
     }
 
@@ -260,7 +263,7 @@ object RoadAddressChangesDAO {
             val roadAddressChangePS = dynamicSession.prepareStatement("INSERT INTO ROAD_ADDRESS_CHANGES " +
               "(project_id,change_type,old_road_number,new_road_number,old_road_part_number,new_road_part_number, " +
               "old_track_code,new_track_code,old_start_addr_m,new_start_addr_m,old_end_addr_m,new_end_addr_m," +
-              "new_discontinuity,new_road_type,new_ely, old_road_type, old_discontinuity, old_ely) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,? )")
+              "new_discontinuity,new_road_type,new_ely, old_road_type, old_discontinuity, old_ely, reverted) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
             ProjectDeltaCalculator.partition(delta.terminations).foreach { case (roadAddressSection) =>
               addToBatch(roadAddressSection, ely, AddressChangeType.Termination, roadAddressChangePS)
             }

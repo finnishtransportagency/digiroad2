@@ -262,25 +262,20 @@ object ProjectSectionCalculator {
 
 }
 case class RoadAddressSection(roadNumber: Long, roadPartNumberStart: Long, roadPartNumberEnd: Long, track: Track,
-                              startMAddr: Long, endMAddr: Long, discontinuity: Discontinuity, roadType: RoadType, ely: Long) {
+                              startMAddr: Long, endMAddr: Long, discontinuity: Discontinuity, roadType: RoadType, ely: Long, reversed: Boolean) {
   def includes(ra: BaseRoadAddress): Boolean = {
     // within the road number and parts included
     ra.roadNumber == roadNumber && ra.roadPartNumber >= roadPartNumberStart && ra.roadPartNumber <= roadPartNumberEnd &&
       // and on the same track
       ra.track == track &&
+      // and by reversed direction
+      ra.reversed == reversed &&
       // and not starting before this section start or after this section ends
       !(ra.startAddrMValue < startMAddr && ra.roadPartNumber == roadPartNumberStart ||
         ra.startAddrMValue > endMAddr && ra.roadPartNumber == roadPartNumberEnd) &&
       // and not ending after this section ends or before this section starts
       !(ra.endAddrMValue > endMAddr && ra.roadPartNumber == roadPartNumberEnd ||
         ra.endAddrMValue < startMAddr && ra.roadPartNumber == roadPartNumberStart)
-  }
-
-  def partialIncludes(ra: BaseRoadAddress): Boolean = {
-    // within the road number and parts included
-    ra.roadNumber == roadNumber && ra.roadPartNumber >= roadPartNumberStart && ra.roadPartNumber <= roadPartNumberEnd &&
-      // and on the same track
-      ra.track == track
   }
 }
 case class RoadLinkLength(linkId: Long, geometryLength: Double)
