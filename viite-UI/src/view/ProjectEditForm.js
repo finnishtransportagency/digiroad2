@@ -459,6 +459,14 @@
         cancelChanges();
       });
 
+      var canChangeDirection = function () {
+        if(_.isUndefined(_.find(selectedProjectLink, function (link) {return (link.status === LinkStatus.Terminated.value || link.status === LinkStatus.NotHandled.value);}))) {
+          rootElement.find('.changeDirectionDiv').prop("hidden", false);
+        } else {
+          rootElement.find('.changeDirectionDiv').prop("hidden", true);
+        }
+      };
+
       var saveChanges = function(){
         currentProject = projectCollection.getCurrentProject();
         //TODO revert dirtyness if others than ACTION_TERMINATE is choosen, because now after Lakkautus, the link(s) stay always in black color
@@ -588,8 +596,7 @@
           })));
           projectCollection.setTmpDirty(projectCollection.getDirty());
           rootElement.find('.new-road-address').prop("hidden", false);
-          if(selectedProjectLink[0].id !== 0)
-            rootElement.find('.changeDirectionDiv').prop("hidden", false);
+          canChangeDirection();
         }
         else if(this.value == LinkStatus.Numbering.description) {
           new ModalConfirm("Numerointi koskee kokonaista tieosaa. Valintaasi on tarvittaessa laajennettu koko tieosalle.");
@@ -601,8 +608,8 @@
           })));
           projectCollection.setTmpDirty(projectCollection.getDirty());
           rootElement.find('.new-road-address').prop("hidden", false);
-          rootElement.find('.changeDirectionDiv').prop("hidden", true);
           rootElement.find('.project-form button.update').prop("disabled", false);
+          canChangeDirection();
         }
         else if(this.value == LinkStatus.Revert.description) {
           rootElement.find('.new-road-address').prop("hidden", true);
