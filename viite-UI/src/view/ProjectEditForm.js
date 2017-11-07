@@ -318,7 +318,7 @@
         $("#dropDown_0 option[value="+ LinkStatus.Transfer.description +"]").attr('selected', 'selected').change();
       }
       else if (statusCode == LinkStatus.Numbering.value) {
-        $("#dropDown_0" ).val(LinkStatus.Numbering.description).change();
+        $("#dropDown_0 option[value="+ LinkStatus.Numbering.description +"]").attr('selected', 'selected').change();
       }
       $('#discontinuityDropdown').val(selectedProjectLink[selectedProjectLink.length - 1].discontinuity);
       $('#roadTypeDropDown').val(selectedProjectLink[0].roadTypeId);
