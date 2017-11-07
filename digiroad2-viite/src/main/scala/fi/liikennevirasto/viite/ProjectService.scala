@@ -320,8 +320,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     RoadAddressLinkBuilder.municipalityRoadMaintainerMapping // make sure it is populated outside of this TX
     try {
       withDynTransaction {
-        if (ProjectDAO.projectLinksCountUnchanged(projectId, roadNumber, roadPartNumber) > 0)
-          return Some("Tieosalle ei voi tehdä kasvusuunnan kääntöä, koska tieosalla on linkkejä, jotka on tässä projektissa määritelty säilymään ennallaan.")
+        if (ProjectDAO.countLinksUnchangedUnhandled(projectId, roadNumber, roadPartNumber) > 0)
+          return Some("Tieosalle ei voi tehdä kasvusuunnan kääntöä, koska tieosalla on linkkejä, joita ei ole käsitelty tai jotka on tässä projektissa määritelty säilymään ennallaan.")
 
         ProjectDAO.reverseRoadPartDirection(projectId, roadNumber, roadPartNumber)
         val projectLinks = withGeometry(ProjectDAO.getProjectLinks(projectId), resetAddress = false)

@@ -588,12 +588,12 @@ object ProjectDAO {
             ely = ${reserved.ely}, FIRST_LINK_ID = ${reserved.startingLinkId} WHERE id = ${reserved.id}""".execute
   }
 
-  def projectLinksCountUnchanged(projectId: Long, roadNumber: Long, roadPartNumber: Long): Long = {
+  def countLinksUnchangedUnhandled(projectId: Long, roadNumber: Long, roadPartNumber: Long): Long = {
     var query =
       s"""
          select count(id) from project_link
           WHERE project_id = $projectId and road_number = $roadNumber and road_part_number = $roadPartNumber and
-          status = ${LinkStatus.UnChanged.value}
+          (status = ${LinkStatus.UnChanged.value} or status = ${LinkStatus.NotHandled.value})
        """
     Q.queryNA[Long](query).first
   }
