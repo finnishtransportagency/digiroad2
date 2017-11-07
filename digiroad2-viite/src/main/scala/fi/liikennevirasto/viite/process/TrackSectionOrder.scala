@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
 import fi.liikennevirasto.digiroad2.{GeometryUtils, Matrix, Point, Vector3d}
 import fi.liikennevirasto.viite.MaxDistanceForConnectedLinks
 import fi.liikennevirasto.viite.dao.LinkStatus._
-import fi.liikennevirasto.viite.dao.{CalibrationPoint, ProjectLink}
+import fi.liikennevirasto.viite.dao.{BaseRoadAddress, CalibrationPoint, ProjectLink}
 
 
 object TrackSectionOrder {
@@ -24,7 +24,7 @@ object TrackSectionOrder {
     }
   }
 
-  def findOnceConnectedLinks[T <: PolyLine](seq: Iterable[T]): Map[Point, T] = {
+  def findOnceConnectedLinks[T <: BaseRoadAddress](seq: Iterable[T]): Map[Point, T] = {
     val pointMap = seq.flatMap(l => {
       val (p1, p2) = GeometryUtils.geometryEndpoints(l.geometry)
       Seq(p1 -> l, p2 -> l)
@@ -35,8 +35,8 @@ object TrackSectionOrder {
     }.toMap.filter(_._2.size == 1).mapValues(_.head)
   }
 
-  def isRoundabout[T <: PolyLine](seq: Iterable[T]): Boolean = {
-    seq.nonEmpty && findOnceConnectedLinks(seq).isEmpty && seq.forall(pl =>
+  def isRoundabout[T <: BaseRoadAddress](seq: Iterable[T]): Boolean = {
+    seq.nonEmpty && seq.map(_.track).toSet.size == 1 && findOnceConnectedLinks(seq).isEmpty && seq.forall(pl =>
       seq.count(pl2 =>
         GeometryUtils.areAdjacent(pl.geometry, pl2.geometry, MaxDistanceForConnectedLinks)) == 3) // the link itself and two connected
   }

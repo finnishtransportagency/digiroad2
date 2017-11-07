@@ -237,7 +237,7 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers {
     val suravage = ProjectLink(0L, 0L, 0L, Track.Unknown, Discontinuity.Continuous, 0L, 0L, None, None, None, 0L, 123L, 0.0, sLen,
       SideCode.Unknown, (None, None), false, sGeom, 1L, LinkStatus.NotHandled, RoadType.Unknown, LinkGeomSource.SuravageLinkInterface,
       sLen, 0L, 9L, None)
-    val template = ProjectLink(2L, 27L, 22L, Track.Combined, Discontinuity.Continuous, 5076L, 5131L, None, None, None, 0L, 124L, 0.0, sLen,
+    val template = ProjectLink(2L, 27L, 22L, Track.Combined, Discontinuity.Continuous, 5076L, 5131L, None, None, None, 0L, 124L, 0.0, tLen,
       SideCode.TowardsDigitizing, (None, None), false, tGeom, 1L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface,
       tLen, 0L, 9L, None)
     val (sl, tl) = ProjectLinkSplitter.split(suravage, template, SplitOptions(Point(480463.941, 7059214.747), LinkStatus.UnChanged,
@@ -249,6 +249,7 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers {
     val unChangedLink = sl.head
     terminatedLink.status should be (LinkStatus.Terminated)
     terminatedLink.endAddrMValue should be (template.endAddrMValue)
+    terminatedLink.endMValue should be (template.endMValue)
     GeometryUtils.areAdjacent(terminatedLink.geometry, unChangedLink.geometry) should be (true)
     GeometryUtils.areAdjacent(unChangedLink.geometry.head, sGeom.head) should be (true)
     GeometryUtils.areAdjacent(unChangedLink.geometry.last, sGeom.last) should be (true)

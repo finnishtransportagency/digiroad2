@@ -2,7 +2,8 @@ package fi.liikennevirasto.viite
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{Unknown => _, apply => _}
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, _}
+import fi.liikennevirasto.digiroad2.asset.TrafficDirection.{BothDirections, UnknownDirection}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, TrafficDirection, _}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -262,7 +263,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               val created = TrackSectionOrder.mValueRoundabout(ordered._1 ++ ordered._2)
               created
             } else {
-              fillRampGrowthDirection(projectId ,newProjectLinks.keys.toSet, newRoadNumber, newRoadPartNumber, newProjectLinks.values.toSeq, firstLinkId)
+              val existingLinks = withGeometry(ProjectDAO.fetchByProjectRoadPart(newRoadNumber, newRoadPartNumber, projectId), false)
+              fillRampGrowthDirection(newProjectLinks.keys.toSet, newRoadNumber, newRoadPartNumber,
+                newProjectLinks.values.toSeq, firstLinkId, existingLinks)
             }
           } else
             newProjectLinks.values.toSeq
@@ -281,41 +284,25 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @param linkIds the linkIds to process
     * @param roadNumber the roadNumber to apply/was applied to said linkIds
     * @param roadPartNumber the roadPartNumber to apply/was applied to said linkIds
-    * @param newProjectLinks the whole newProjectLinks
+    * @param newLinks the whole newProjectLinks
     * @return the projectLinks with a assigned SideCode
     */
-  private def fillRampGrowthDirection(projectId: Long , linkIds: Set[Long], roadNumber: Long,
-                                      roadPartNumber:Long, newProjectLinks: Seq[ProjectLink], firstLinkId: Long): Seq[ProjectLink] = {
-
-    val isSuravage = newProjectLinks.map(_.linkGeomSource).head == LinkGeomSource.SuravageLinkInterface
-    val isComplementary = newProjectLinks.map(_.linkGeomSource).head == LinkGeomSource.SuravageLinkInterface
-
-  //Find all non terminated ProjectLinks that share the same roadNumber and roadPartNumber as our targets
-    val projectLinks = ProjectDAO.getProjectLinks(projectId).filter(link => {
-      link.status.value != LinkStatus.Terminated.value &&
-      link.roadNumber == roadNumber && link.roadPartNumber == roadPartNumber
-    })
-
-    //Verify if there are connected projectLinks to the newLinks
-    val connectedProjectLinks = projectLinks.exists(projectLink => GeometryUtils.areAdjacent(projectLink.geometry, newProjectLinks.flatMap(_.geometry)))
-
-    //If there are not we fetch the Trafic Direction from VVH and use it as a sugestion for the SideCode
-    if(!connectedProjectLinks){
-      val rampInfo = if(isSuravage) {
-        roadLinkService.fetchSuravageLinksByLinkIdsFromVVH(linkIds)
-      } else if (isComplementary){
-        roadLinkService.fetchVVHComplementaryRoadlinks(linkIds)
-      } else {
-        roadLinkService.fetchVVHRoadlinks(linkIds)
-      }
-
-      if(!rampInfo.isEmpty) {
-        //Set the sideCode as defined by the trafficDirection
-        val traficDirection = rampInfo.map(_.trafficDirection.value).distinct.head
-        newProjectLinks.map(_.copy(sideCode = SideCode.apply(traficDirection)))
-      }
+  private def fillRampGrowthDirection(linkIds: Set[Long], roadNumber: Long, roadPartNumber: Long,
+                                      links: Seq[ProjectLink], firstLinkId: Long, existingLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
+    val (newLinks, roadLinks) = withGeometryAndLinks(links)
+    if (newLinks.exists(nl => existingLinks.exists(pl => pl.status != LinkStatus.Terminated &&
+      GeometryUtils.areAdjacent(pl.geometry, nl.geometry)))) {
+      // Connected to existing geometry -> let the track section calculation take it's natural course
+      newLinks.map(_.copy(sideCode = SideCode.Unknown))
+    } else {
+      //Set the sideCode as defined by the trafficDirection
+      val sideCode = roadLinks.map(rl => rl.linkId -> (rl.trafficDirection match {
+        case TrafficDirection.AgainstDigitizing => SideCode.AgainstDigitizing
+        case TrafficDirection.TowardsDigitizing => SideCode.TowardsDigitizing
+        case _ => SideCode.Unknown
+      })).toMap
+      newLinks.map(nl => nl.copy(sideCode = sideCode.getOrElse(nl.linkId, SideCode.Unknown)))
     }
-    newProjectLinks
   }
 
   def getFirstProjectLink(project: RoadAddressProject): Option[ProjectLink] = {

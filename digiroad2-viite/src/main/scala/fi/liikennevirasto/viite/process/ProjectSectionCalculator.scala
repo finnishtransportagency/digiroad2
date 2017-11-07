@@ -27,8 +27,10 @@ object ProjectSectionCalculator {
     val (newLinks, nonTerminatedLinks) = others.partition(l => l.status == LinkStatus.New)
     try {
       if (TrackSectionOrder.isRoundabout(others)) {
+        logger.info(s"Roundabout addressing scheme")
         assignMValuesForRoundabout(newLinks, nonTerminatedLinks, userGivenCalibrationPoints) ++ terminated
       } else {
+        logger.info(s"Normal addressing scheme")
         assignMValues(newLinks, nonTerminatedLinks, userGivenCalibrationPoints) ++ terminated
       }
     } finally {
@@ -77,7 +79,6 @@ object ProjectSectionCalculator {
       throw new InvalidAddressDataException("Missing left track starting points")
     val leftStartPoint = leftPoints.minBy(lp => (lp - rightStartPoint).length())
     (rightStartPoint, leftStartPoint)
-
   }
   /**
     * Find a starting point for this road part
