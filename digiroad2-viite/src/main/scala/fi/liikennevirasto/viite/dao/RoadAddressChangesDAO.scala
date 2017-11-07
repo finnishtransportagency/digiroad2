@@ -263,7 +263,7 @@ object RoadAddressChangesDAO {
             val roadAddressChangePS = dynamicSession.prepareStatement("INSERT INTO ROAD_ADDRESS_CHANGES " +
               "(project_id,change_type,old_road_number,new_road_number,old_road_part_number,new_road_part_number, " +
               "old_track_code,new_track_code,old_start_addr_m,new_start_addr_m,old_end_addr_m,new_end_addr_m," +
-              "new_discontinuity,new_road_type,new_ely, old_road_type, old_discontinuity, old_ely, reverted) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+              "new_discontinuity,new_road_type,new_ely, old_road_type, old_discontinuity, old_ely, reversed) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
             ProjectDeltaCalculator.partition(delta.terminations).foreach { case (roadAddressSection) =>
               addToBatch(roadAddressSection, ely, AddressChangeType.Termination, roadAddressChangePS)
             }
