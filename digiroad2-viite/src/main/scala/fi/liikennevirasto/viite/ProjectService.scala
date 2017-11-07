@@ -262,10 +262,10 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               val created = TrackSectionOrder.mValueRoundabout(ordered._1 ++ ordered._2)
               created
             } else {
-              fillRampGrowthDirection(newProjectLinks.keys.toSet, newRoadNumber, newRoadPartNumber, newProjectLinks.values.toSeq, firstLinkId)
+              fillRampGrowthDirection(projectId ,newProjectLinks.keys.toSet, newRoadNumber, newRoadPartNumber, newProjectLinks.values.toSeq, firstLinkId)
             }
           } else
-            ProjectSectionCalculator.assignMValues(newProjectLinks.values.toSeq)
+            newProjectLinks.values.toSeq
         ProjectDAO.create(createLinks)
         recalculateProjectLinks(projectId, user, Set((newRoadNumber, newRoadPartNumber)))
         None
@@ -284,23 +284,23 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @param newProjectLinks the whole newProjectLinks
     * @return the projectLinks with a assigned SideCode
     */
-  private def fillRampGrowthDirection( linkIds: Set[Long], roadNumber: Long, roadPartNumber:Long, newProjectLinks: Seq[ProjectLink], firstLinkId: Long): Seq[ProjectLink] = {
+  private def fillRampGrowthDirection(projectId: Long , linkIds: Set[Long], roadNumber: Long,
+                                      roadPartNumber:Long, newProjectLinks: Seq[ProjectLink], firstLinkId: Long): Seq[ProjectLink] = {
 
     val isSuravage = newProjectLinks.map(_.linkGeomSource).head == LinkGeomSource.SuravageLinkInterface
     val isComplementary = newProjectLinks.map(_.linkGeomSource).head == LinkGeomSource.SuravageLinkInterface
-    //Find adjacents to the linkIds
-    val adjacentsToFirst = roadAddressService.getAdjacent(Set(firstLinkId), firstLinkId).filter(adj => {
-      //Only include the adjacents that have the same roadNumber and roadPartNumber
-      adj.roadNumber == roadNumber && adj.roadPartNumber == roadPartNumber &&
-      //Also do not include the ones that are within the linkIds
-      !linkIds.contains(adj.linkId)
+
+  //Find all non terminated ProjectLinks that share the same roadNumber and roadPartNumber as our targets
+    val projectLinks = ProjectDAO.getProjectLinks(projectId).filter(link => {
+      link.status.value != LinkStatus.Terminated.value &&
+      link.roadNumber == roadNumber && link.roadPartNumber == roadPartNumber
     })
 
-    if(!adjacentsToFirst.isEmpty){
-      //Add fill the sidecode acording to the adjacent data
-      newProjectLinks.map(_.copy(sideCode = adjacentsToFirst.map(_.sideCode).distinct.head))
-    } else  {
-      //No adjacent road address detected, fetching VVH info
+    //Verify if there are connected projectLinks to the newLinks
+    val connectedProjectLinks = projectLinks.exists(projectLink => GeometryUtils.areAdjacent(projectLink.geometry, newProjectLinks.flatMap(_.geometry)))
+
+    //If there are not we fetch the Trafic Direction from VVH and use it as a sugestion for the SideCode
+    if(!connectedProjectLinks){
       val rampInfo = if(isSuravage) {
         roadLinkService.fetchSuravageLinksByLinkIdsFromVVH(linkIds)
       } else if (isComplementary){
@@ -313,11 +313,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         //Set the sideCode as defined by the trafficDirection
         val traficDirection = rampInfo.map(_.trafficDirection.value).distinct.head
         newProjectLinks.map(_.copy(sideCode = SideCode.apply(traficDirection)))
-      } else {
-        //return the newProjectLinks in order to calculate the MAddresses
-        ProjectSectionCalculator.assignMValues(newProjectLinks)
       }
     }
+    newProjectLinks
   }
 
   def getFirstProjectLink(project: RoadAddressProject): Option[ProjectLink] = {
