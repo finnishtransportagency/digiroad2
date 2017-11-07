@@ -144,13 +144,15 @@ object ProjectDAO {
       "road_number, road_part_number, " +
       "track_code, discontinuity_type, START_ADDR_M, END_ADDR_M, created_by, " +
       "calibration_points, status, road_type, road_address_id, connected_link_id, ely) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?)")
-    val ids = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= ${roadAddresses.size}""".as[Long].list
-    val savedIds = roadAddresses.zip(ids).map { case ((address), (lrmId)) =>
+    val lrmIds = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= ${roadAddresses.size}""".as[Long].list
+    val (ready, idLess) = roadAddresses.partition(_.id != fi.liikennevirasto.viite.NewRoadAddress)
+    val plIds = Sequences.fetchViitePrimaryKeySeqValues(idLess.size)
+    val projectLinks = ready ++ idLess.zip(plIds).map(x =>
+      x._1.copy(id = x._2)
+    )
+    projectLinks.toList.zip(lrmIds).foreach { case (address, lrmId) =>
       RoadAddressDAO.createLRMPosition(lrmPositionPS, lrmId, address.linkId, address.sideCode.value, address.startMValue, address.endMValue, 0, address.linkGeomSource.value)
-      val savedId = if (address.id == fi.liikennevirasto.viite.NewRoadAddress) {
-        Sequences.nextViitePrimaryKeySeqValue
-      } else address.id
-      addressPS.setLong(1, savedId)
+      addressPS.setLong(1, address.id)
       addressPS.setLong(2, address.projectId)
       addressPS.setLong(3, lrmId)
       addressPS.setLong(4, address.roadNumber)
@@ -163,7 +165,7 @@ object ProjectDAO {
       addressPS.setDouble(11, CalibrationCode.getFromAddress(address).value)
       addressPS.setLong(12, address.status.value)
       addressPS.setLong(13, address.roadType.value)
-      if(address.roadAddressId == 0)
+      if (address.roadAddressId == 0)
         addressPS.setString(14, null)
       else
         addressPS.setLong(14, address.roadAddressId)
@@ -171,15 +173,14 @@ object ProjectDAO {
         addressPS.setLong(15, address.connectedLinkId.get)
       else
         addressPS.setString(15, null)
-      addressPS.setLong(16,address.ely)
+      addressPS.setLong(16, address.ely)
       addressPS.addBatch()
-      savedId
     }
     lrmPositionPS.executeBatch()
     addressPS.executeBatch()
     lrmPositionPS.close()
     addressPS.close()
-    savedIds
+    projectLinks.map(_.id)
   }
 
 
