@@ -341,10 +341,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  private def reverseAllRoadPartDirection(projectId: Long, roadNumber: Long, roadPartNumber:Long, username: String): Option[String] ={
-
-  }
-
   private def isReversed(originalSideCodes: Map[Long, SideCode])(projectLink: ProjectLink): Boolean ={
     originalSideCodes.get(projectLink.roadAddressId) match {
       case Some(sideCode) if sideCode != projectLink.sideCode => true
