@@ -68,6 +68,7 @@ case object ChangeInfoItemSerializer extends CustomSerializer[RoadAddressChangeI
           JField("change_type", JInt(BigInt.apply(o.changeType.value))),
           JField("continuity", JInt(BigInt.apply(o.discontinuity.value))),
           JField("road_type", JInt(BigInt.apply(o.roadType.value))),
+          JField("reversed", JInt(BigInt.apply(if (o.reversed) 1 else 0))),
           JField("source", Extraction.decompose(emptySection)),
           JField("target", Extraction.decompose(o.target))
         )
@@ -84,6 +85,7 @@ case object ChangeInfoItemSerializer extends CustomSerializer[RoadAddressChangeI
           JField("change_type", JInt(BigInt.apply(o.changeType.value))),
           JField("continuity", JInt(BigInt.apply(o.discontinuity.value))),
           JField("road_type", JInt(BigInt.apply(o.roadType.value))),
+          JField("reversed", JInt(BigInt.apply(if (o.reversed) 1 else 0))),
           JField("source", Extraction.decompose(o.source)),
           JField("target", Extraction.decompose(o.target))
         )
