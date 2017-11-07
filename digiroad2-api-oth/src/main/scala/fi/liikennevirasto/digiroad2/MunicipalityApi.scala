@@ -4,9 +4,7 @@ import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.Asset.DateTimePropertyFormat
 import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, _}
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.pointasset.oracle.{DirectionalTrafficSign, Obstacle, PedestrianCrossing, RailwayCrossing}
-import fi.liikennevirasto.digiroad2.user.UserProvider
 import org.joda.time.DateTime
 import org.scalatra._
 import org.scalatra.json.JacksonJsonSupport
@@ -165,19 +163,12 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
         parsedBody.extractOpt[NewAssetValues].map(x =>IncomingPedestrianCrossingAsset( x.linkId, x.startMeasure.toLong))
     }
 
-    asset match {
-      case Some(value) =>
-          roadLinkService.getRoadLinkAndComplementaryFromVVH(value.linkId) match {
-            case Some(link) =>
-              service.toIncomingAsset(value, link) match {
-                case Some(pointAsset) =>  service.update(assetId, pointAsset, link.geometry, link.municipalityCode, user.username, link.linkSource)
-                case None => //TODO : Error message
-              }
-            case None => halt(NotFound(s"Roadlink with ${value.linkId} does not exist"))
-          }
-      case None => //TODO : Error message
+    asset.map { value =>
+      roadLinkService.getRoadLinkAndComplementaryFromVVH(value.linkId) match {
+        case Some(link) => service.toIncomingAsset(value, link).map { pointAsset => service.update(assetId, pointAsset, link.geometry, link.municipalityCode, user.username, link.linkSource) }
+        case None => halt(NotFound(s"Roadlink with ${value.linkId} does not exist"))
+      }
     }
-
     getPointAssetById(typeId, assetId)
   }
 
