@@ -333,9 +333,10 @@
         if (!successObject.success) {
           new ModalConfirm(successObject.reason);
           applicationModel.removeSpinner();
-        }
-        else{
+        } else{
+          eventbus.trigger('projectLink:projectLinksSplitSuccess');
           eventbus.trigger('roadAddress:projectLinksUpdated', successObject);
+          applicationModel.removeSpinner();
       }}, function(failureObject){
           new ModalConfirm(failureObject.reason);
           applicationModel.removeSpinner();
