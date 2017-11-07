@@ -270,12 +270,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   }
 
 
-  put("/roadlinks/roadaddress/project/directionchangeroadlink") {
+  put("/project/reverse") {
     val user = userProvider.getCurrentUser()
-    try { //check for validity
-      val roadInfo = parsedBody.extract[ProjectRoadAddressInfo]
+    try {
+      //check for validity
+      val roadInfo = parsedBody.extract[RevertRoadLinksExtractor]
       val writableProjectService = projectWritable(roadInfo.projectId)
-      writableProjectService.changeDirection(roadInfo.projectId, roadInfo.roadNumber, roadInfo.roadPartNumber,user.username) match {
+      writableProjectService.changeDirection(roadInfo.projectId, roadInfo.roadNumber, roadInfo.roadPartNumber, roadInfo.links, user.username) match {
         case Some(errorMessage) =>
           Map("success" -> false, "errorMessage" -> errorMessage)
         case None => Map("success" -> true)
@@ -314,9 +315,13 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       projectService.checkRoadPartsReservable(roadNumber, startPart, endPart) match {
         case Left(err) => Map("success" -> err, "roadparts" -> Seq.empty)
         case Right(reservedRoadParts) => {
-          projectService.validateProjectDate(reservedRoadParts, formatter.parseDateTime(projDate)) match {
-            case Some(errMsg) => Map("success" -> errMsg)
-            case None => Map("success" -> "ok", "roadparts" -> reservedRoadParts.map(reservedRoadPartToApi))
+          if (reservedRoadParts.isEmpty) {
+            Map("success" -> s"Puuttuvan tielinkkidatan takia kyseistä tieosaa ei pystytä varaamaan.")
+          } else {
+            projectService.validateProjectDate(reservedRoadParts, formatter.parseDateTime(projDate)) match {
+              case Some(errMsg) => Map("success" -> errMsg)
+              case None => Map("success" -> "ok", "roadparts" -> reservedRoadParts.map(reservedRoadPartToApi))
+            }
           }
         }
       }
@@ -371,7 +376,8 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       val links = parsedBody.extract[RoadAddressProjectLinksExtractor]
       val writableProject = projectWritable(links.projectId)
       writableProject.updateProjectLinks(links.projectId, links.linkIds,
-        LinkStatus.apply(links.linkStatus), user.username, links.roadNumber, links.roadPartNumber, links.userDefinedEndAddressM) match {
+        LinkStatus.apply(links.linkStatus), user.username, links.roadNumber,
+        links.roadPartNumber, links.userDefinedEndAddressM, links.roadType, links.discontinuity, links.roadEly) match {
         case Some(errorMessage) => Map("success" -> false, "errormessage" -> errorMessage)
         case None => Map("success" -> true, "id" -> links.projectId, "publishable" -> (projectService.projectLinkPublishable(links.projectId)))
       }
@@ -591,7 +597,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "sideCode" -> roadAddressLink.sideCode.value,
       "linkType" -> roadAddressLink.linkType.value,
       "roadLinkSource" -> roadAddressLink.roadLinkSource.value
-
     )
   }
 

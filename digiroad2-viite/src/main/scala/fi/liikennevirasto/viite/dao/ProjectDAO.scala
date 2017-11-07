@@ -522,14 +522,33 @@ object ProjectDAO {
     Q.updateNA(updateLRMPosition).execute
   }
 
-  def flipProjectLinksSideCodes(projectId: Long, roadNumber: Long, roadPartNumber: Long): Unit = {
+  /**
+    * Reverses the road part in project. Switches side codes 2 <-> 3, updates calibration points start <-> end,
+    * updates track codes 1 <-> 2
+    * @param projectId
+    * @param roadNumber
+    * @param roadPartNumber
+    */
+  def reverseRoadPartDirection(projectId: Long, roadNumber: Long, roadPartNumber: Long): Unit = {
     val updateLRM = "update lrm_position set side_code = (CASE side_code WHEN 2 THEN 3 ELSE 2 END)" +
       " where id in (select lrm_position.id from project_link join " +
-      s"LRM_Position on project_link.LRM_POSITION_ID = lrm_position.id where (side_code = 2 or side_code = 3) and project_link.project_id = $projectId and project_link.road_number = $roadNumber and project_link.road_part_number = $roadPartNumber)"
+      s" LRM_Position on project_link.LRM_POSITION_ID = lrm_position.id where (side_code = 2 or side_code = 3) and " +
+      s" project_link.project_id = $projectId and project_link.road_number = $roadNumber and project_link.road_part_number = $roadPartNumber)"
     Q.updateNA(updateLRM).execute
     val updateProjectLink = s"update project_link set calibration_points = (CASE calibration_points WHEN 0 THEN 0 WHEN 1 THEN 2 WHEN 2 THEN 1 ELSE 3 END), " +
       s"track_code = (CASE track_code WHEN 0 THEN 0 WHEN 1 THEN 2 WHEN 2 THEN 1 ELSE 3 END) " +
       s"where project_link.project_id = $projectId and project_link.road_number = $roadNumber and project_link.road_part_number = $roadPartNumber"
+    Q.updateNA(updateProjectLink).execute
+  }
+
+  def flipProjectLinksSideCodesByLinkId(projectId : Long, links : Seq[Long]): Unit = {
+    val updateLRM = "update lrm_position set side_code = (CASE side_code WHEN 2 THEN 3 ELSE 2 END)" +
+      " where id in (select lrm_position.id from project_link join " +
+      s"LRM_Position on project_link.LRM_POSITION_ID = lrm_position.id where (side_code = 2 or side_code = 3) and project_link.project_id = $projectId and link_id in (${links.mkString(",")}))"
+    Q.updateNA(updateLRM).execute
+    val updateProjectLink = s"update project_link set calibration_points = (CASE calibration_points WHEN 0 THEN 0 WHEN 1 THEN 2 WHEN 2 THEN 1 ELSE 3 END), " +
+      s"track_code = (CASE track_code WHEN 0 THEN 0 WHEN 1 THEN 2 WHEN 2 THEN 1 ELSE 3 END) " +
+      s"where project_link.project_id = $projectId and project_link.lrm_position_id IN (select id from lrm_position where link_id in (${links.mkString(",")}))"
     Q.updateNA(updateProjectLink).execute
   }
 

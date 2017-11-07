@@ -183,7 +183,7 @@
     };
 
     var roadTypeDropdown = function() {
-      return '<select class="form-control" id="roadTypeDropDown" size = "1" style="width: auto !important; display: inline">' +
+      return '<select class="form-control roadTypeDropDown" id="roadTypeDropDown" size = "1" style="width: auto !important; display: inline">' +
         '<option value = "1">1 Yleinen tie</option>'+
         '<option value = "2">2 Lauttaväylä yleisellä tiellä</option>'+
         '<option value = "3">3 Kunnan katuosuus</option>'+
@@ -442,7 +442,12 @@
       });
 
       rootElement.on('click','.changeDirection', function () {
-        projectCollection.changeNewProjectLinkDirection(projectCollection.getCurrentProject().project.id, selectedProjectLinkProperty.get());
+        if(!_.isUndefined(selectedProjectLinkProperty.get()[0]) && !_.isUndefined(selectedProjectLinkProperty.get()[0].connectedLinkId) && selectedProjectLinkProperty.get()[0].connectedLinkId !== 0) {
+          projectCollection.changeNewProjectLinkCutDirection(projectCollection.getCurrentProject().project.id, selectedProjectLinkProperty.get());
+        }
+        else{
+          projectCollection.changeNewProjectLinkDirection(projectCollection.getCurrentProject().project.id, selectedProjectLinkProperty.get());
+        }
       });
 
       eventbus.on('roadAddress:projectLinksSaveFailed', function (result) {
@@ -528,10 +533,6 @@
         if(!isNaN(changedValue) && !isNaN(parseInt(endDistanceOriginalValue)) && changedValue !== endDistanceOriginalValue)
           $('#manualCPWarning').css('display', 'inline-block');
         else $('#manualCPWarning').css('display', 'none');
-      });
-
-      rootElement.on('change', '.form-control', function () {
-        setFormDirty();
       });
 
       rootElement.on('change', '.form-select-control', function () {
@@ -640,6 +641,7 @@
 
       rootElement.on('keyup','.form-control.small-input', function () {
         checkInputs();
+        setFormDirty();
       });
 
     };

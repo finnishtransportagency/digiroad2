@@ -173,16 +173,11 @@
     }, 1000);
 
       this.directionChangeNewRoadlink = _.throttle(function (data, success, failure) {
-        var Json = {
-          projectId : data[0],
-          roadNumber : data[1],
-          roadPartNumber : data[2]
-        };
           $.ajax({
               contentType: "application/json",
               type: "PUT",
-              url: "api/viite/roadlinks/roadaddress/project/directionchangeroadlink",
-              data: JSON.stringify(Json),
+              url: "api/viite/project/reverse",
+              data: JSON.stringify(data),
               dataType: "json",
               success: success,
               error: failure

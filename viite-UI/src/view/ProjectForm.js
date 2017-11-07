@@ -1,5 +1,5 @@
 (function (root) {
-  root.ProjectForm = function (projectCollection) {
+  root.ProjectForm = function (projectCollection, selectedProjectLinkProperty) {
     var currentProject = false;
     var selectedProjectLink = false;
     var activeLayer = false;
@@ -50,31 +50,6 @@
         '<button id="saveAndCancelDialogue" class="cancel btn btn-cancel">Poistu</button>' +
         '</div>';
       return html;
-    };
-
-    var selectedData = function (selected) {
-      var span = '';
-      if (selected[0]) {
-        var link = selected[0];
-        var startM = Math.min.apply(Math, _.map(selected, function (l) {
-          return l.startAddressM;
-        }));
-        var endM = Math.max.apply(Math, _.map(selected, function (l) {
-          return l.endAddressM;
-        }));
-        span = '<div class="edit-control-group choice-group">' +
-          '<label class="control-label-floating"> TIE </label>' +
-          '<span class="form-control-static-floating" style="display:inline-flex;width:auto;margin-right:5px">' + link.roadNumber + '</span>' +
-          '<label class="control-label-floating"> OSA </label>' +
-          '<span class="form-control-static-floating" style="display:inline-flex;width:auto;margin-right:5px">' + link.roadPartNumber + '</span>' +
-          '<label class="control-label-floating"> AJR </label>' +
-          '<span class="form-control-static-floating" style="display:inline-flex;width:auto;margin-right:5px">' + link.trackCode + '</span>' +
-          '<label class="control-label-floating"> M: </label>' +
-          '<span class="form-control-static-floating" style="display:inline-flex;width:auto;margin-right:5px">' + startM + ' - ' + endM + '</span>' +
-          '</div>' +
-          '</div>';
-      }
-      return span;
     };
 
     var newProjectTemplate = function () {
@@ -265,8 +240,10 @@
           jQuery('.modal-overlay').remove();
           addDatePicker();
           if (!_.isUndefined(result.projectAddresses)) {
-            eventbus.trigger('linkProperties:selectedProject', result.projectAddresses.linkId);
+            eventbus.trigger('linkProperties:selectedProject', result.projectAddresses.linkId, result.project.id);
           }
+          selectedProjectLinkProperty.setDirty(false);
+          eventbus.trigger('roadAddressProject:toggleEditingRoad', true);
         });
         createOrSaveProject();
       };
@@ -291,13 +268,15 @@
           disabledInput = !_.isUndefined(currentProject) && currentProject.statusCode === ProjectStatus.ErroredInTR.value;
           jQuery('.modal-overlay').remove();
           if (!_.isUndefined(result.projectAddresses)) {
-            eventbus.trigger('linkProperties:selectedProject', result.projectAddresses);
+            eventbus.trigger('linkProperties:selectedProject', result.projectAddresses, result.project.id);
           }
           eventbus.trigger('roadAddressProject:openProject', result.project);
           rootElement.html(selectedProjectLinkTemplate(currentProject));
           _.defer(function () {
             applicationModel.selectLayer('roadAddressProject');
             toggleAditionalControls();
+            selectedProjectLinkProperty.setDirty(false);
+            eventbus.trigger('roadAddressProject:toggleEditingRoad', true);
           });
         });
         createOrSaveProject();
@@ -431,6 +410,7 @@
       var saveAndNext = function () {
         saveChanges();
         eventbus.once('roadAddress:projectSaved', function () {
+          selectedProjectLinkProperty.setDirty(false);
           nextStage();
         });
       };
@@ -572,6 +552,7 @@
       rootElement.on('click', '#cancelEdit', function () {
         new GenericConfirmPopup('Haluatko tallentaa tekemäsi muutokset?', {
           successCallback: function () {
+
             if (!disabledInput) {
               saveAndNext();
             } else {

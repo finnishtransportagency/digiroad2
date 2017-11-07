@@ -12,7 +12,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, RoadLinkService, _}
 import fi.liikennevirasto.viite.dao.AddressChangeType._
-import fi.liikennevirasto.viite.dao.Discontinuity.Discontinuous
+import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous}
 import fi.liikennevirasto.viite.dao.{AddressChangeType, Discontinuity, ProjectDAO, ProjectState, RoadAddressProject, _}
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.ProjectDeltaCalculator
@@ -153,7 +153,6 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     val (projectLinks, palinks) = l.partition(_.isInstanceOf[ProjectLink])
     val dbLinks = ProjectDAO.getProjectLinks(id)
     when(mockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
-    when(mockRoadLinkService.getLinkIdSideCodes(any[Set[Long]])).thenReturn(Seq(SideCode.TowardsDigitizing))
     when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenAnswer(
       toMockAnswer(dbLinks ++ projectLinks.asInstanceOf[Seq[ProjectLink]].filterNot(l => dbLinks.map(_.linkId).contains(l.linkId)),
         roadLink, palinks.asInstanceOf[Seq[ProjectAddressLink]].map(toRoadLink)
@@ -195,21 +194,22 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
 
 
-  test("change roadpart direction and assign reversed attribute, servicelevel") {
+  test("change roadpart direction and check reversed attribute, service level") {
     runWithRollback {
-      val id = Sequences.nextViitePrimaryKeySeqValue
-      val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
-      ProjectDAO.createRoadAddressProject(rap)
-      ProjectDAO.reserveRoadPart(id, 5, 207, rap.createdBy)
-      val addresses = RoadAddressDAO.fetchByRoadPart(5, 207).map(toProjectLink(rap))
-      ProjectDAO.create(addresses)
+      val rap = RoadAddressProject(0L, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"),
+        "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info",
+        Seq(), None)
+      val project = projectService.createRoadLinkProject(rap)
+      val id = project.id
+      mockForProject(id, RoadAddressDAO.fetchByRoadPart(5, 207).map(toProjectLink(project)))
+      projectService.saveProject(project.copy(reservedParts = Seq(ReservedRoadPart(0L, 5, 207, 0.0, 0L, Continuous, 8L, None, None, None, true))))
       val projectLinks = ProjectDAO.getProjectLinks(id)
       ProjectDAO.updateProjectLinks(projectLinks.map(x => x.id).toSet, LinkStatus.Transfer, "test")
       mockForProject(id)
-      projectService.changeDirection(id,5,207,"test")
+      projectService.changeDirection(id,5,207, projectLinks.map(l => LinkToRevert(l.id, l.linkId, l.status.value)),"test") should be (None)
       val updatedProjectLinks = ProjectDAO.getProjectLinks(id)
       updatedProjectLinks.foreach(x=>x.reversed should be (true))
-      projectService.changeDirection(id,5,207,"test")
+      projectService.changeDirection(id,5,207, projectLinks.map(l => LinkToRevert(l.id, l.linkId, l.status.value)),"test")
       val secondUpdatedProjectLinks = ProjectDAO.getProjectLinks(id)
       secondUpdatedProjectLinks.foreach(x=>x.reversed should be (false))
     }
