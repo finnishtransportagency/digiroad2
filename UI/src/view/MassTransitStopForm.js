@@ -355,7 +355,7 @@
 
       var directionChoiceHandler = function(property){
         if (!readOnly) {
-          return createWrapper(property).append(createDirectionChoiceElement(readOnly, property));
+          return createWrapper(property).append(createDirectionChoiceElement(property));
         }
       };
 
