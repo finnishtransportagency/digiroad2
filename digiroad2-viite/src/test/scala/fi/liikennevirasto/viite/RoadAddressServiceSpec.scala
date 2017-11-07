@@ -34,6 +34,9 @@ import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery
 import slick.jdbc.StaticQuery.interpolation
 
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext.Implicits.global
+
 class RoadAddressServiceSpec extends FunSuite with Matchers{
   val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
   val mockEventBus = MockitoSugar.mock[DigiroadEventBus]
@@ -266,10 +269,11 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
       when(localMockRoadLinkService.getViiteRoadLinksFromVVH(any[BoundingRectangle], any[Seq[(Int,Int)]], any[Set[Int]], any[Boolean], any[Boolean],any[Boolean])).thenReturn(Seq(roadLink))
       when(localMockRoadLinkService.getComplementaryRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq.empty)
       when(localMockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq.empty)
-      when(localMockRoadLinkService.getChangeInfoFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq.empty)
+      when(localMockRoadLinkService.getChangeInfoFromVVHF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq.empty))
+      when(localMockRoadLinkService.getSuravageLinksFromVVHF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq.empty))
       val captor: ArgumentCaptor[Iterable[Any]] = ArgumentCaptor.forClass(classOf[Iterable[Any]])
       reset(localMockEventBus)
-      val links = localRoadAddressService.getRoadAddressLinks(boundingRectangle, Seq(), Set())
+      val links = localRoadAddressService.getRoadAddressLinksWithSuravage(boundingRectangle, Seq(), Set())
       links.size should be (1)
       verify(localMockEventBus, times(3)).publish(any[String], captor.capture)
       val capturedAdjustments = captor.getAllValues
@@ -414,9 +418,11 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     when(mockRoadLinkService.getViiteRoadLinksFromVVH(BoundingRectangle(Point(351714,6674367),Point(361946,6681967)), Seq((1,50000)), Set(), false, true, false)).thenReturn(links)
     when(mockRoadLinkService.getComplementaryRoadLinksFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq())
     when(mockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(history)
-    when(mockRoadLinkService.getChangeInfoFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn(Seq.empty)
+    when(mockRoadLinkService.getChangeInfoFromVVHF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq.empty))
+    when(mockRoadLinkService.getSuravageLinksFromVVHF(any[BoundingRectangle], any[Set[Int]])).thenReturn(Future(Seq.empty))
+    when(mockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(StaticTestData.road1130HistoryLinks)
     runWithRollback {
-      val addressLinks = roadAddressService.getRoadAddressLinks(BoundingRectangle(Point(351714, 6674367), Point(361946, 6681967)), Seq((1, 50000)), Set(), false, true)
+      val addressLinks = roadAddressService.getRoadAddressLinksWithSuravage(BoundingRectangle(Point(351714, 6674367), Point(361946, 6681967)), Seq((1, 50000)), Set(), false, true)
       addressLinks.count(_.id == 0L) should be(2) // >There should be 2 unknown address links
       addressLinks.forall(_.id == 0L) should be(false)
       addressLinks.count(_.roadLinkSource == LinkGeomSource.HistoryLinkInterface) should be(4)
