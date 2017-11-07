@@ -85,27 +85,27 @@
             if (changeInfoSeq.changetype === newLinkStatus) {
               htmlTable += '<tr class="change-table-data-row">';
               htmlTable += getEmptySource(changeInfoSeq);
-              htmlTable += getTartgetInfo(changeInfoSeq, projectChangeData);
+              htmlTable += getTargetInfo(changeInfoSeq);
               htmlTable += '</tr>';
             } else if (changeInfoSeq.changetype === terminatedLinkStatus) {
               htmlTable += '<tr class="change-table-data-row">';
-              htmlTable += getSourceInfo(changeInfoSeq, projectChangeData);
-              htmlTable += getEmptyTarget(changeInfoSeq);
+              htmlTable += getSourceInfo(changeInfoSeq);
+              htmlTable += getEmptyTarget();
               htmlTable += '</tr>';
             } else if (changeInfoSeq.changetype === unchangedStatus) {
               htmlTable += '<tr class="change-table-data-row">';
-              htmlTable += getSourceInfo(changeInfoSeq, projectChangeData);
-              htmlTable += getTartgetInfo(changeInfoSeq, projectChangeData);
+              htmlTable += getSourceInfo(changeInfoSeq);
+              htmlTable += getTargetInfo(changeInfoSeq);
               htmlTable += '</tr>';
             } else if (changeInfoSeq.changetype === transferredLinkStatus) {
               htmlTable += '<tr class="change-table-data-row">';
-              htmlTable += getSourceInfo(changeInfoSeq, projectChangeData);
-              htmlTable += getTartgetInfo(changeInfoSeq, projectChangeData);
+              htmlTable += getSourceInfo(changeInfoSeq);
+              htmlTable += getTargetInfo(changeInfoSeq);
               htmlTable += '</tr>';
             } else if (changeInfoSeq.changetype === numberingLinkStatus) {
               htmlTable += '<tr class="change-table-data-row">';
-              htmlTable += getSourceInfo(changeInfoSeq, projectChangeData);
-              htmlTable += getTartgetInfo(changeInfoSeq, projectChangeData);
+              htmlTable += getSourceInfo(changeInfoSeq);
+              htmlTable += getTargetInfo(changeInfoSeq);
               htmlTable += '</tr>';
             }
           });
@@ -138,7 +138,7 @@
         '<td class="project-change-table-data-cell data-cell-road-type"></td>' +
         '<td class="project-change-table-data-cell"></td>';
     }
-    function getEmptyTarget(changeInfoSeq) {
+    function getEmptyTarget() {
       return'<td class="project-change-table-data-cell"></td>' +
         '<td class="project-change-table-data-cell"></td>' +
         '<td class="project-change-table-data-cell"></td>' +
@@ -151,7 +151,7 @@
     }
 
 
-    function getTartgetInfo(changeInfoSeq, projectChangeData)
+    function getTargetInfo(changeInfoSeq)
     {
      return '<td class="project-change-table-data-cell">' + changeInfoSeq.target.roadNumber + '</td>'+
       '<td class="project-change-table-data-cell">' + changeInfoSeq.target.trackCode + '</td>' +
@@ -164,7 +164,7 @@
       '<td class="project-change-table-data-cell">' + changeInfoSeq.target.ely + '</td>';
     }
 
-    function getSourceInfo(changeInfoSeq,  projectChangeData)
+    function getSourceInfo(changeInfoSeq)
     {
      return '<tr class="change-table-data-row">' +
         '<td class="project-change-table-dimension-first">' + getChangeType(changeInfoSeq.changetype) + '</td>' +
