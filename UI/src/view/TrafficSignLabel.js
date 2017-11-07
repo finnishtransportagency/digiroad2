@@ -72,26 +72,25 @@
         {signValue: [43], image: 'images/traffic-signs/childrenSign.png'}
       ];
 
-      function find() {
-        return _.find(labelingProperties, function(properties) {
-            return _.contains(properties.signValue, trafficSign.type);
-        });
-      }
+      var labelProperty = _.find(labelingProperties, function(properties) {
+          return _.contains(properties.signValue, trafficSign.type);
+      });
+
 
       function findImage() {
-        return find() && find().image ? find().image : 'images/traffic-signs/badValue.png';
+        return labelProperty && labelProperty.image ? labelProperty.image : 'images/traffic-signs/badValue.png';
       }
 
       function getTextOffset(){
-        return find() && find().offset ? find().offset :  -15 - (counter * 30);
+        return labelProperty && labelProperty.offset ? labelProperty.offset :  -15 - (counter * 30);
       }
 
       function getValidation(){
-        return find() && find().validation ? find().validation.call(trafficSign) : false ;
+        return labelProperty && labelProperty.validation ? labelProperty.validation.call(trafficSign) : false ;
       }
 
       function getValue(){
-        return find() && find().convertion ? find().convertion.call(trafficSign) : trafficSign.value;
+        return labelProperty && labelProperty.convertion ? labelProperty.convertion.call(trafficSign) : trafficSign.value;
       }
 
       return {

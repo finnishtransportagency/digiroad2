@@ -121,7 +121,6 @@
       poistaSelected = false;
       var streetViewHandler;
       var isTRMassTransitStop = false;
-      var typeId = 10;
 
       var MStopDeletebutton = function(readOnly) {
 
