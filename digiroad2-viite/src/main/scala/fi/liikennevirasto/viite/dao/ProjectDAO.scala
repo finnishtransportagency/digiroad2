@@ -153,13 +153,16 @@ object ProjectDAO {
     val addressPS = dynamicSession.prepareStatement("insert into PROJECT_LINK (id, project_id, lrm_position_id, " +
       "road_number, road_part_number, " +
       "track_code, discontinuity_type, START_ADDR_M, END_ADDR_M, created_by, " +
-      "calibration_points, status, road_type, road_address_id, connected_link_id, ely, reversed) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?)")
-    val ids = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= ${roadAddresses.size}""".as[Long].list
-    roadAddresses.zip(ids).foreach { case ((address), (lrmId)) =>
+      "calibration_points, status, road_type, road_address_id, connected_link_id, ely) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?)")
+    val lrmIds = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= ${roadAddresses.size}""".as[Long].list
+    val (ready, idLess) = roadAddresses.partition(_.id != fi.liikennevirasto.viite.NewRoadAddress)
+    val plIds = Sequences.fetchViitePrimaryKeySeqValues(idLess.size)
+    val projectLinks = ready ++ idLess.zip(plIds).map(x =>
+      x._1.copy(id = x._2)
+    )
+    projectLinks.toList.zip(lrmIds).foreach { case (address, lrmId) =>
       RoadAddressDAO.createLRMPosition(lrmPositionPS, lrmId, address.linkId, address.sideCode.value, address.startMValue, address.endMValue, 0, address.linkGeomSource.value)
-      addressPS.setLong(1, if (address.id == fi.liikennevirasto.viite.NewRoadAddress) {
-        Sequences.nextViitePrimaryKeySeqValue
-      } else address.id)
+      addressPS.setLong(1, address.id)
       addressPS.setLong(2, address.projectId)
       addressPS.setLong(3, lrmId)
       addressPS.setLong(4, address.roadNumber)
@@ -182,14 +185,14 @@ object ProjectDAO {
         addressPS.setString(15, null)
       addressPS.setLong(16, address.ely)
       addressPS.setBoolean(17, address.reversed)
+      addressPS.setLong(16, address.ely)
       addressPS.addBatch()
-
     }
     lrmPositionPS.executeBatch()
     addressPS.executeBatch()
     lrmPositionPS.close()
     addressPS.close()
-    roadAddresses.map(_.id)
+    projectLinks.map(_.id)
   }
 
 
