@@ -10,7 +10,7 @@ import org.scalatra._
 import org.scalatra.json.JacksonJsonSupport
 import org.json4s._
 
-case class NewAssetValues(linkId: Long, startMeasure: Double, endMeasure: Option[Double], properties: Seq[AssetProperties], sideCode: Int, geometryTimestamp: Option[Long])
+case class NewAssetValues(linkId: Long, startMeasure: Double, endMeasure: Option[Double], properties: Seq[AssetProperties], sideCode: Option[Int], geometryTimestamp: Option[Long])
 
 class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
                       val roadLinkService: RoadLinkService,
@@ -75,14 +75,14 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
 
   private def extractNewAssets(typeId: Int, value: JValue) = {
     AssetTypeInfo.apply(typeId).geometryType match {
-      case "linear" => value.extractOpt[Seq[NewAssetValues]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure.getOrElse(0), NumericValue(x.properties.map(_.value).head.toInt), x.sideCode , x.geometryTimestamp.getOrElse(vvhClient.roadLinkData.createVVHTimeStamp()), None))
+      case "linear" => value.extractOpt[Seq[NewAssetValues]].getOrElse(Nil).map(x => NewLinearAsset(x.linkId, x.startMeasure, x.endMeasure.getOrElse(0), NumericValue(x.properties.map(_.value).head.toInt), x.sideCode.getOrElse(SideCode.BothDirections.value) , x.geometryTimestamp.getOrElse(vvhClient.roadLinkData.createVVHTimeStamp()), None))
       case _ => Seq.empty[NewLinearAsset]
     }
   }
 
   private def extractLinearAssets(typeId: Int, value: JValue) = {
      value.extractOpt[NewAssetValues].map { v =>
-        NewLinearAsset(v.linkId, v.startMeasure, v.endMeasure.getOrElse(0), NumericValue(v.properties.map(_.value).head.toInt), v.sideCode, v.geometryTimestamp.getOrElse(vvhClient.roadLinkData.createVVHTimeStamp()), None)
+        NewLinearAsset(v.linkId, v.startMeasure, v.endMeasure.getOrElse(0), NumericValue(v.properties.map(_.value).head.toInt), v.sideCode.getOrElse(SideCode.BothDirections.value), v.geometryTimestamp.getOrElse(vvhClient.roadLinkData.createVVHTimeStamp()), None)
       }.get
   }
 
@@ -165,7 +165,10 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
 
     asset.map { value =>
       roadLinkService.getRoadLinkAndComplementaryFromVVH(value.linkId) match {
-        case Some(link) => service.toIncomingAsset(value, link).map { pointAsset => service.update(assetId, pointAsset, link.geometry, link.municipalityCode, user.username, link.linkSource) }
+        case Some(link) => service.toIncomingAsset(value, link).map {
+          pointAsset =>
+            service.update(assetId, pointAsset, link.geometry, link.municipalityCode, user.username, link.linkSource)
+        }
         case None => halt(NotFound(s"Roadlink with ${value.linkId} does not exist"))
       }
     }
@@ -276,6 +279,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
       case TrafficLights.typeId  => pointAsset.asInstanceOf[DirectionalTrafficSign].createdAt.map(DateTimePropertyFormat.print).getOrElse("")
     }
   }
+
   def pointAssetToApi(pointAssets: PersistedPointAsset, typeId: Int) : Map[String, Any] = {
       Map("id" -> pointAssets.id,
         "properties" -> extractPointProperties(pointAssets, typeId),
