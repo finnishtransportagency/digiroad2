@@ -48,9 +48,9 @@
     var splitSuravageLink = function(suravage, split, mousePoint) {
       splitSuravageLinks(suravage, split, mousePoint, function(splitSuravageLinks) {
         var selection = [splitSuravageLinks.created, splitSuravageLinks.existing];
+        ids = projectLinkCollection.getMultiSelectIds(splitSuravageLinks.created.linkId);
         if (!_.isUndefined(splitSuravageLinks.created.connectedLinkId)) {
           // Re-split with a new split point
-          ids = projectLinkCollection.getMultiSelectIds(splitSuravageLinks.created.linkId);
           current = projectLinkCollection.getByLinkId(_.flatten(ids));
           var orderedSplitParts = orderSplitParts(get());
           var orderedPreviousSplit = orderSplitParts(selection);
