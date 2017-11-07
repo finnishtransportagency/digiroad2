@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.Digiroad2Context._
 import fi.liikennevirasto.digiroad2.asset.Asset.DateTimePropertyFormat
 import fi.liikennevirasto.digiroad2.asset.{AssetTypeInfo, _}
 import fi.liikennevirasto.digiroad2.linearasset._
-import fi.liikennevirasto.digiroad2.pointasset.oracle.{DirectionalTrafficSign, Obstacle, PedestrianCrossing, RailwayCrossing}
+import fi.liikennevirasto.digiroad2.pointasset.oracle._
 import org.joda.time.DateTime
 import org.scalatra._
 import org.scalatra.json.JacksonJsonSupport
@@ -160,7 +160,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
             x.properties.find(_.name == "name").map { name => name.value }
           ))
       case TrafficLights.typeId =>
-        parsedBody.extractOpt[NewAssetValues].map(x =>IncomingPedestrianCrossingAsset( x.linkId, x.startMeasure.toLong))
+        parsedBody.extractOpt[NewAssetValues].map(x =>IncomingTrafficLightAsset( x.linkId, x.startMeasure.toLong))
     }
 
     asset.map { value =>
@@ -230,7 +230,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
               x.properties.find(_.name == "name").map { name => name.value }
             ))
       case TrafficLights.typeId =>
-        parsedBody.extractOpt[Seq[NewAssetValues]].getOrElse(Nil).map(x =>IncomingPedestrianCrossingAsset( x.linkId, x.startMeasure.toLong))
+        parsedBody.extractOpt[Seq[NewAssetValues]].getOrElse(Nil).map(x =>IncomingTrafficLightAsset( x.linkId, x.startMeasure.toLong))
     }
 
     val links = roadLinkService.getRoadLinksAndComplementariesFromVVH(assets.map(_.linkId).toSet)
@@ -267,7 +267,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
       case Obstacles.typeId  => pointAsset.asInstanceOf[Obstacle].modifiedAt.orElse( pointAsset.asInstanceOf[Obstacle].createdAt).map(DateTimePropertyFormat.print).getOrElse("")
       case PedestrianCrossings.typeId  =>  pointAsset.asInstanceOf[PedestrianCrossing].modifiedAt.orElse( pointAsset.asInstanceOf[PedestrianCrossing].createdAt).map(DateTimePropertyFormat.print).getOrElse("")
       case RailwayCrossings.typeId  =>  pointAsset.asInstanceOf[RailwayCrossing].modifiedAt.orElse( pointAsset.asInstanceOf[RailwayCrossing].createdAt).map(DateTimePropertyFormat.print).getOrElse("")
-      case TrafficLights.typeId  =>  pointAsset.asInstanceOf[DirectionalTrafficSign].modifiedAt.orElse( pointAsset.asInstanceOf[DirectionalTrafficSign].createdAt).map(DateTimePropertyFormat.print).getOrElse("")
+      case TrafficLights.typeId  =>  pointAsset.asInstanceOf[TrafficLight].modifiedAt.orElse( pointAsset.asInstanceOf[TrafficLight].createdAt).map(DateTimePropertyFormat.print).getOrElse("")
     }
   }
 
@@ -276,7 +276,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
       case Obstacles.typeId  => pointAsset.asInstanceOf[Obstacle].createdAt.map(DateTimePropertyFormat.print).getOrElse("")
       case PedestrianCrossings.typeId  => pointAsset.asInstanceOf[PedestrianCrossing].createdAt.map(DateTimePropertyFormat.print).getOrElse("")
       case RailwayCrossings.typeId  => pointAsset.asInstanceOf[RailwayCrossing].createdAt.map(DateTimePropertyFormat.print).getOrElse("")
-      case TrafficLights.typeId  => pointAsset.asInstanceOf[DirectionalTrafficSign].createdAt.map(DateTimePropertyFormat.print).getOrElse("")
+      case TrafficLights.typeId  => pointAsset.asInstanceOf[TrafficLight].createdAt.map(DateTimePropertyFormat.print).getOrElse("")
     }
   }
 
