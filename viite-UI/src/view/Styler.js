@@ -31,41 +31,43 @@
      * @param roadLinkSource Indicates what is the source of said road.
      * @returns {string} The default solid color of a line in the RGBA format.
      */
+    var opacityMultiplier=1;
+
     var generateStrokeColor = function (roadClass, anomaly, constructionType, roadLinkType, gapTransfering, roadLinkSource) {
       if(roadLinkSource === LINKSOURCE_SURAVAGE) {
-        return 'rgba(211, 175, 246, 0.65)';
+        return 'rgba(211, 175, 246, 0.65 * opacityMultiplier)';
       } else if (anomaly !== 1) {
         if(roadLinkType === -1){
           if(constructionType === 1) {
-            return 'rgba(164, 164, 162, 0.65)';
+            return 'rgba(164, 164, 162, 0.65 * opacityMultiplier)';
           } else {
-            return 'rgba(247, 254, 46, 0.45)';
+            return 'rgba(247, 254, 46, 0.45 *opacityMultiplier)';
           }
         } else  {
           switch (roadClass) {
-            case 1 : return 'rgba(255, 0, 0, 0.65)';
-            case 2 : return 'rgba(255, 102, 0, 0.65)';
-            case 3 : return 'rgba(255, 153, 51, 0.65)';
-            case 4 : return 'rgba(0, 17, 187, 0.65)';
-            case 5 : return 'rgba(51, 204, 204, 0.65)';
-            case 6 : return 'rgba(224, 29, 217, 0.65)';
-            case 7 : return 'rgba(0, 204, 221, 0.65)';
-            case 8 : return 'rgba(252, 109, 160, 0.65)';
-            case 9 : return 'rgba(255, 85, 221, 0.65)';
-            case 10 : return 'rgba(255, 85, 221, 0.65)';
-            case 11 : return 'rgba(68, 68, 68, 0.75)';
-            case 97 : return 'rgba(30, 30, 30, 1)';
-            case 98 : return 'rgba(250, 250, 250, 1)';
-            case 99 : return 'rgba(164, 164, 162, 0.65)';
+            case 1 : return 'rgba(255, 0, 0,' + 0.65 * opacityMultiplier+')';
+            case 2 : return 'rgba(255, 102, 0,' + 0.65 * opacityMultiplier+')';
+            case 3 : return 'rgba(255, 153, 51,' + 0.65 * opacityMultiplier+')';
+            case 4 : return 'rgba(0, 17, 187,' + 0.65 * opacityMultiplier+')';
+            case 5 : return 'rgba(51, 204, 204,'+ 0.65 * opacityMultiplier+')';
+            case 6 : return 'rgba(224, 29, 217,'+ 0.65 * opacityMultiplier+')';
+            case 7 : return 'rgba(0, 204, 221,' + 0.65 * opacityMultiplier+')';
+            case 8 : return 'rgba(252, 109, 160,'+ 0.65 * opacityMultiplier+')';
+            case 9 : return 'rgba(255, 85, 221,'+ 0.65 * opacityMultiplier+')';
+            case 10 : return 'rgba(255, 85, 221,'+ 0.65 * opacityMultiplier+')';
+            case 11 : return 'rgba(68, 68, 68,' +0.75 * opacityMultiplier+')';
+            case 97 : return 'rgba(30, 30, 30,'+   opacityMultiplier +')';
+            case 98 : return 'rgba(250, 250, 250,' +  opacityMultiplier+')';
+            case 99 : return 'rgba(164, 164, 162,'+ 0.65 * opacityMultiplier+')';
           }
         }
       } else {
         if(constructionType === 1) {
-          return 'rgba(255, 153, 0, 0.95)';
+          return 'rgba(255, 153, 0, 0.95 * opacityMultiplier)';
         } else if (gapTransfering === true ) {
-          return 'rgb(0, 255, 0, 0.75)';
+          return 'rgb(0, 255, 0, 0.75 * opacityMultiplier)';
         } else {
-          return 'rgba(56, 56, 54, 1)';
+          return 'rgba(56, 56, 54, 1 * opacityMultiplier)';
         }
       }
     };
@@ -287,10 +289,16 @@
       return [borderStyle , underlineStyle, middleLineStyle, lineStyle, adminClassStyle];
     };
 
+    var SetOpacityMultiplier = function(multiplier){
+      opacityMultiplier=multiplier;
+
+    };
+
     return {
       generateStyleByFeature: generateStyleByFeature,
       strokeWidthByZoomLevel: strokeWidthByZoomLevel,
-      determineZIndex: determineZIndex
+      determineZIndex: determineZIndex,
+      opacityMultiplier: SetOpacityMultiplier
     };
   };
 })(this);
