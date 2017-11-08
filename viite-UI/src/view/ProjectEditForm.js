@@ -392,9 +392,8 @@
         selectedProjectLink = false;
         if (typeof data !== 'undefined' && typeof data.publishable !== 'undefined' && data.publishable) {
           eventbus.trigger('roadAddressProject:projectLinkSaved', data.id, data.publishable);
-        }
-        else {
-          eventbus.trigger('roadAddressProject:projectLinkSaved', data.id, data.publishable);
+        } else {
+          eventbus.trigger('roadAddressProject:projectLinkSaved');
         }
       });
 

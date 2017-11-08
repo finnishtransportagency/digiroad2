@@ -26,12 +26,48 @@ object ProjectSectionCalculator {
     val (terminated, others) = projectLinks.partition(_.status == LinkStatus.Terminated)
     val (newLinks, nonTerminatedLinks) = others.partition(l => l.status == LinkStatus.New)
     try {
-      assignMValues(newLinks, nonTerminatedLinks, userGivenCalibrationPoints) ++ terminated
+      if (TrackSectionOrder.isRoundabout(others)) {
+        logger.info(s"Roundabout addressing scheme")
+        assignMValuesForRoundabout(newLinks, nonTerminatedLinks, userGivenCalibrationPoints) ++ terminated
+      } else {
+        logger.info(s"Normal addressing scheme")
+        assignMValues(newLinks, nonTerminatedLinks, userGivenCalibrationPoints) ++ terminated
+      }
     } finally {
       logger.info(s"Finished MValue assignment for ${projectLinks.size} links")
     }
   }
 
+  private def assignMValuesForRoundabout(newProjectLinks: Seq[ProjectLink], oldProjectLinks: Seq[ProjectLink],
+    userCalibrationPoints: Seq[UserDefinedCalibrationPoint]): Seq[ProjectLink] = {
+    def toCalibrationPoints(linkId: Long, st: Option[UserDefinedCalibrationPoint], en: Option[UserDefinedCalibrationPoint]) = {
+      (st.map(cp => CalibrationPoint(linkId, cp.segmentMValue, cp.addressMValue)),
+      en.map(cp => CalibrationPoint(linkId, cp.segmentMValue, cp.addressMValue)))
+    }
+    val startingLink = oldProjectLinks.sortBy(_.startAddrMValue).headOption.orElse(newProjectLinks.headOption).toSeq
+    val rest = (newProjectLinks ++ oldProjectLinks).filterNot(startingLink.contains)
+    val mValued = TrackSectionOrder.mValueRoundabout(startingLink ++ rest)
+    if (userCalibrationPoints.nonEmpty) {
+      val withCalibration = mValued.map(pl =>
+        userCalibrationPoints.filter(_.projectLinkId == pl.id) match {
+          case s if s.size == 2 =>
+            val (st, en) = (s.minBy(_.addressMValue), s.maxBy(_.addressMValue))
+            pl.copy(startAddrMValue = st.addressMValue, endAddrMValue = en.addressMValue, calibrationPoints = toCalibrationPoints(pl.linkId, Some(st), Some(en)))
+          case s if s.size == 1 && s.head.segmentMValue == 0.0 =>
+            pl.copy(startAddrMValue = s.head.addressMValue, calibrationPoints = toCalibrationPoints(pl.linkId, Some(s.head), None))
+          case s if s.size == 1 && s.head.segmentMValue != 0.0 =>
+            pl.copy(endAddrMValue = s.head.addressMValue, calibrationPoints = toCalibrationPoints(pl.linkId, None, Some(s.head)))
+          case _ =>
+            pl.copy(calibrationPoints = (None, None))
+        }
+      )
+      val factors = ProjectSectionMValueCalculator.calculateAddressingFactors(withCalibration)
+      val coEff = (withCalibration.map(_.endAddrMValue).max - factors.unChangedLength - factors.transferLength) / factors.newLength
+      ProjectSectionMValueCalculator.assignLinkValues(withCalibration, None, coEff)
+    } else {
+      mValued
+    }
+  }
   def findStartingPoints(newLinks: Seq[ProjectLink], oldLinks: Seq[ProjectLink],
                                 calibrationPoints: Seq[UserDefinedCalibrationPoint]): (Point, Point) = {
     val rightStartPoint = findStartingPoint(newLinks.filter(_.track != Track.LeftSide), oldLinks.filter(_.track != Track.LeftSide),
@@ -43,7 +79,6 @@ object ProjectSectionCalculator {
       throw new InvalidAddressDataException("Missing left track starting points")
     val leftStartPoint = leftPoints.minBy(lp => (lp - rightStartPoint).length())
     (rightStartPoint, leftStartPoint)
-
   }
   /**
     * Find a starting point for this road part

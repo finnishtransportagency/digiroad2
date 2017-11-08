@@ -302,10 +302,10 @@ object GeometryUtils {
     (Point(left, top), Point(right, bottom))
   }
 
-  def isLinear(polyLines: Seq[PolyLine]): Boolean =
+  def isLinear(polyLines: Iterable[PolyLine]): Boolean =
     !isNonLinear(polyLines)
 
-  def isNonLinear(polyLines: Seq[PolyLine]): Boolean = {
+  def isNonLinear(polyLines: Iterable[PolyLine]): Boolean = {
     if (polyLines.isEmpty)
       false
     else {

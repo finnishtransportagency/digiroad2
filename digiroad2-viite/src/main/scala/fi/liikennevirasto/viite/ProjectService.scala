@@ -3,7 +3,8 @@ package fi.liikennevirasto.viite
 import fi.liikennevirasto.digiroad2._
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{SuravageLinkInterface, Unknown => _, apply => _}
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
-import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, _}
+import fi.liikennevirasto.digiroad2.asset.TrafficDirection.{BothDirections, UnknownDirection}
+import fi.liikennevirasto.digiroad2.asset.{BoundingRectangle, LinkGeomSource, TrafficDirection, _}
 import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
@@ -29,6 +30,7 @@ case class PreFillInfo(RoadNumber: BigInt, RoadPart: BigInt)
 case class LinkToRevert(id: Long, linkId: Long, status: Long)
 
 class ProjectService(roadAddressService: RoadAddressService, roadLinkService: RoadLinkService, eventbus: DigiroadEventBus, frozenTimeVVHAPIServiceEnabled: Boolean = false) {
+
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
   def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
@@ -193,17 +195,27 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def createProjectLinks(linkIds: Set[Long], projectId: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Int,
+  def createProjectLinks(linkIds: Seq[Long], projectId: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Int,
                          discontinuity: Int, roadType: Int, roadLinkSource: Int, roadEly: Long, user: String): Map[String, Any] = {
-    val roadLinks = if (roadLinkSource == LinkGeomSource.SuravageLinkInterface.value) {
-      getProjectSuravageRoadLinksByLinkIds(linkIds)
+    def sortRamps(seq: Seq[ProjectAddressLink]) = {
+      if (seq.headOption.exists(isRamp))
+        seq.find(l => linkIds.headOption.contains(l.linkId)).toSeq ++ seq.filter(_.linkId != linkIds.headOption.getOrElse(0L))
+      else
+        seq
+    }
+
+    val isSuravage = roadLinkSource == LinkGeomSource.SuravageLinkInterface.value
+    val isComplementary = roadLinkSource == LinkGeomSource.ComplimentaryLinkInterface.value
+    val linkId = linkIds.head
+    val roadLinks = if(isSuravage) {
+      getProjectSuravageRoadLinksByLinkIds(linkIds.toSet)
     } else {
-      getProjectRoadLinksByLinkIds(linkIds)
+      getProjectRoadLinksByLinkIds(linkIds.toSet)
     }
     setProjectEly(projectId, roadEly) match {
       case Some(errorMessage) => Map("success" -> false, "errormessage" -> errorMessage)
       case None => {
-        addNewLinksToProject(roadLinks, projectId, roadNumber, roadPartNumber, trackCode, discontinuity, roadType, user) match {
+        addNewLinksToProject(sortRamps(roadLinks), projectId, roadNumber, roadPartNumber, trackCode, discontinuity, roadType, user, linkId) match {
           case Some(errorMessage) => Map("success" -> false, "errormessage" -> errorMessage)
           case None => Map("success" -> true, "publishable" -> projectLinkPublishable(projectId))
         }
@@ -234,50 +246,69 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     */
   def addNewLinksToProject(newLinks: Seq[ProjectAddressLink], projectId: Long, newRoadNumber: Long,
                            newRoadPartNumber: Long, newTrackCode: Long, newDiscontinuity: Long,
-                           newRoadType: Long = RoadType.Unknown.value, user: String): Option[String] = {
-
-    def matchSideCodes(newLink: ProjectAddressLink, existingLink: ProjectAddressLink): SideCode = {
-      val (startP, endP) = GeometryUtils.geometryEndpoints(existingLink.geometry)
-
-      if (GeometryUtils.areAdjacent(newLink.geometry.head, endP) ||
-        GeometryUtils.areAdjacent(newLink.geometry.last, startP))
-        existingLink.sideCode
-      else {
-        if (existingLink.sideCode.equals(AgainstDigitizing))
-          TowardsDigitizing
-        else
-          AgainstDigitizing
-      }
-    }
+                           newRoadType: Long = RoadType.Unknown.value, user: String, firstLinkId: Long): Option[String] = {
 
     try {
       withDynTransaction {
-        val roadPartLinks = withGeometry(ProjectDAO.fetchByProjectRoadPart(newRoadNumber, newRoadPartNumber, projectId))
-        val linksInProject = getLinksByProjectLinkId(roadPartLinks.map(l => l.linkId).toSet, projectId, false)
-        val randomSideCode =
-          linksInProject.filterNot(link => link.status == LinkStatus.Terminated).map(l =>
-            l -> newLinks.find(n => GeometryUtils.areAdjacent(l.geometry, n.geometry))).toMap.find { case (l, n) => n.nonEmpty }.map {
-            case (l, Some(n)) =>
-              matchSideCodes(n, l)
-            case _ => SideCode.TowardsDigitizing
-          }.getOrElse(SideCode.TowardsDigitizing)
         val project = getProjectWithReservationChecks(projectId, newRoadNumber, newRoadPartNumber)
         if (!project.isReserved(newRoadNumber, newRoadPartNumber))
           ProjectDAO.reserveRoadPart(project.id, newRoadNumber, newRoadPartNumber, project.modifiedBy)
         val newProjectLinks = newLinks.map(projectLink => {
           projectLink.linkId ->
-            newProjectLink(projectLink, project, randomSideCode, newTrackCode, newRoadNumber, newRoadPartNumber,
+            newProjectLink(projectLink, project, SideCode.Unknown, newTrackCode, newRoadNumber, newRoadPartNumber,
               newDiscontinuity.toInt, newRoadType, projectId)
         }).toMap
-        if (GeometryUtils.isNonLinear(newProjectLinks.values.toSeq))
+        if (GeometryUtils.isNonLinear(newProjectLinks.values))
           throw new ProjectValidationException("Valittu tiegeometria sisältää haarautumia ja pitää käsitellä osina. Tallennusta ei voi tehdä.")
         //Determine geometries for the mValues and addressMValues
-        ProjectDAO.create(newProjectLinks.values.toSeq)
+        val createLinks =
+          if (newProjectLinks.values.headOption.exists(isRamp)) {
+            logger.info("Added links recognized to be in ramp category")
+            if (TrackSectionOrder.isRoundabout(newProjectLinks.values)) {
+              logger.info("Added links recognized to be a roundabout - using roundabout addressing scheme")
+              val ordered = newProjectLinks.values.toSeq.partition(_.linkId == firstLinkId)
+              val created = TrackSectionOrder.mValueRoundabout(ordered._1 ++ ordered._2)
+              created
+            } else {
+              val existingLinks = withGeometry(ProjectDAO.fetchByProjectRoadPart(newRoadNumber, newRoadPartNumber, projectId), false)
+              fillRampGrowthDirection(newProjectLinks.keys.toSet, newRoadNumber, newRoadPartNumber,
+                newProjectLinks.values.toSeq, firstLinkId, existingLinks)
+            }
+          } else
+            newProjectLinks.values.toSeq
+        ProjectDAO.create(createLinks)
         recalculateProjectLinks(projectId, user, Set((newRoadNumber, newRoadPartNumber)))
         None
       }
     } catch {
       case ex: ProjectValidationException => Some(ex.getMessage)
+    }
+  }
+
+  /**
+    * Will attempt to find relevant sideCode information to the projectLinks given a number of factors
+    * for example if they are of suravage or complementary origin
+    * @param linkIds the linkIds to process
+    * @param roadNumber the roadNumber to apply/was applied to said linkIds
+    * @param roadPartNumber the roadPartNumber to apply/was applied to said linkIds
+    * @param newLinks the whole newProjectLinks
+    * @return the projectLinks with a assigned SideCode
+    */
+  private def fillRampGrowthDirection(linkIds: Set[Long], roadNumber: Long, roadPartNumber: Long,
+                                      links: Seq[ProjectLink], firstLinkId: Long, existingLinks: Seq[ProjectLink]): Seq[ProjectLink] = {
+    val (newLinks, roadLinks) = withGeometryAndLinks(links)
+    if (newLinks.exists(nl => existingLinks.exists(pl => pl.status != LinkStatus.Terminated &&
+      GeometryUtils.areAdjacent(pl.geometry, nl.geometry)))) {
+      // Connected to existing geometry -> let the track section calculation take it's natural course
+      newLinks.map(_.copy(sideCode = SideCode.Unknown))
+    } else {
+      //Set the sideCode as defined by the trafficDirection
+      val sideCode = roadLinks.map(rl => rl.linkId -> (rl.trafficDirection match {
+        case TrafficDirection.AgainstDigitizing => SideCode.AgainstDigitizing
+        case TrafficDirection.TowardsDigitizing => SideCode.TowardsDigitizing
+        case _ => SideCode.Unknown
+      })).toMap
+      newLinks.map(nl => nl.copy(sideCode = sideCode.getOrElse(nl.linkId, SideCode.Unknown)))
     }
   }
 
@@ -292,20 +323,26 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  private def withGeometry(projectLinks: Seq[ProjectLink], resetAddress: Boolean = false): Seq[ProjectLink] = {
+  private def withGeometryAndLinks(projectLinks: Seq[ProjectLink], resetAddress: Boolean = false): (Seq[ProjectLink], Seq[RoadLink]) = {
     val (withGeom, without) = projectLinks.partition(_.geometry.length > 1)
     val (suravageLinks, roadLinks) = without.partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
-    val linkGeometries = (roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(roadLinks.map(_.linkId).toSet,
-      false, frozenTimeVVHAPIServiceEnabled).map(pal => pal.linkId -> pal.geometry)
+    val links = (roadLinkService.getViiteRoadLinksByLinkIdsFromVVH(roadLinks.map(_.linkId).toSet,
+      false, frozenTimeVVHAPIServiceEnabled)
       ++ (if (suravageLinks.nonEmpty)
-      roadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(suravageLinks.map(_.linkId).toSet, false).map(pal => pal.linkId -> pal.geometry) else Seq())).toMap
+      roadLinkService.getSuravageRoadLinksByLinkIdsFromVVH(suravageLinks.map(_.linkId).toSet, false) else Seq()))
+    val linkGeometries = links.map(pal => pal.linkId -> pal.geometry).toMap
     val historyGeometries = roadLinkService.getViiteRoadLinksHistoryFromVVH(roadLinks.map(_.linkId).toSet -- linkGeometries.keySet).groupBy(_.linkId).mapValues(
       s => s.maxBy(_.endDate).geometry)
     val (found, notFound) = without.partition(w => linkGeometries.contains(w.linkId))
     val foundWithGeom = found.map{pl =>
       withGeometry(pl, (linkGeometries ++ historyGeometries)(pl.linkId), resetAddress)}
-    notFound.groupBy(pl => (pl.roadNumber, pl.roadPartNumber)).foldLeft(withGeom ++ foundWithGeom){ case (s, (_, links)) =>
-      guessGeom.guestimateGeometry(links.sortBy(_.startAddrMValue), s)}.toSeq
+    (notFound.groupBy(pl => (pl.roadNumber, pl.roadPartNumber)).foldLeft(withGeom ++ foundWithGeom){ case (s, (_, links)) =>
+      guessGeom.guestimateGeometry(links.sortBy(_.startAddrMValue), s)}.toSeq,
+      links)
+  }
+
+  private def withGeometry(projectLinks: Seq[ProjectLink], resetAddress: Boolean = false): Seq[ProjectLink] = {
+    withGeometryAndLinks(projectLinks, resetAddress)._1
   }
 
   private def withGeometry(pl: ProjectLink, linkGeometry: Seq[Point], resetAddress: Boolean) = {
