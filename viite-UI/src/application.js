@@ -106,8 +106,8 @@
     new LinkPropertyForm(models.selectedLinkProperty);
 
     new ProjectForm(models.projectCollection, models.selectedProjectLinkProperty);
-    new ProjectEditForm(models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer, projectChangeTable);
-    new SplitForm(models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer, projectChangeTable);
+    new ProjectEditForm(models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend);
+    new SplitForm(models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend);
 
     var layers = _.merge({
       road: roadLayer,

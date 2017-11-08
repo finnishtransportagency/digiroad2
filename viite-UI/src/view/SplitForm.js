@@ -1,5 +1,5 @@
 (function (root) {
-  root.SplitForm = function(projectCollection, selectedProjectLinkProperty, projectLinkLayer, projectChangeTable) {
+  root.SplitForm = function(projectCollection, selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend) {
     var LinkStatus = LinkValues.LinkStatus;
     var LinkGeomSource = LinkValues.LinkGeomSource;
     var SideCode = LinkValues.SideCode;
@@ -8,38 +8,13 @@
     var currentProject = false;
     var selectedProjectLink = false;
     var markers = ['A', 'B'];
-    var backend=new Backend();
     var formCommon = new FormCommon('split-');
 
-    var staticField = function(labelText, dataField) {
-      var field;
-      field = '<div class="split-form-group">' +
-          '<p class="form-control-static asset-log-info">' + labelText + ' : ' + dataField + '</p>' +
-          '</div>';
-      return field;
-    };
-    var endDistanceOriginalValue = '--';
     var options =['Valitse'];
-
-    var title = function() {
-      return '<span class ="edit-mode-title">Uusi tieosoiteprojekti</span>';
-    };
-
-    var titleWithProjectName = function(projectName) {
-      return '<span class ="edit-mode-title">'+projectName+'<button id="editProject_'+ currentProject.id +'" ' +
-          'class="btn-edit-project" style="visibility:hidden;" value="' + currentProject.id + '"></button></span>' +
-          '<span id="closeProjectSpan" class="rightSideSpan" style="visibility:hidden;">Poistu projektista</span>';
-    };
-
-    var sendRoadAddressChangeButton = function() {
-      var project = projectCollection.getCurrentProject();
-      return formCommon.sendRoadAddressChangeButton('split-', project);
-    };
 
     var showProjectChangeButton = function() {
       return '<div class="split-form form-controls">' +
-          '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
-          '<button disabled id ="send-button" class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button></div>';
+        formCommon.projectButtons() + '</div>';
     };
 
     var revertSplitButton = function() {
@@ -127,24 +102,24 @@
       var selection = (((applicationModel.getSelectedTool() == 'Cut' || !_.isUndefined(selected[0].connectedLinkId)) &&
       selected[0].roadLinkSource == LinkGeomSource.SuravageLinkInterface.value) ? selectedSplitData(selected) : formCommon.selectedData(selected));
       return _.template('' +
-          '<header>' +
-          titleWithProjectName(project.name) +
-          '</header>' +
-          '<div class="wrapper read-only">'+
-          '<div class="form form-horizontal form-dark">'+
-          '<div class="edit-control-group choice-group">'+
-          staticField('Lisätty järjestelmään', project.createdBy + ' ' + project.startDate)+
-          staticField('Muokattu viimeksi', project.modifiedBy + ' ' + project.dateModified)+
-          '<div class="split-form-group editable form-editable-roadAddressProject"> '+
-          selectionFormCutted(selection, selected)+
-          ((selected.size == 2 && selected[0].linkId === selected[1].linkId) ? '' : formCommon.changeDirection()) +
-          formCommon.actionSelectedField()+
-          ((!_.isUndefined(selected[0].connectedLinkId)) ? revertSplitButton(): '') +
-          '</div>'+
-          '</div>' +
-          '</div>'+
-          '</div>'+
-          '<footer>' + formCommon.actionButtons('split-', projectCollection.isDirty()) + '</footer>');
+        '<header>' +
+        formCommon.titleWithProjectName(project.name, currentProject) +
+        '</header>' +
+        '<div class="wrapper read-only">'+
+        '<div class="form form-horizontal form-dark">'+
+        '<div class="edit-control-group choice-group">'+
+        formCommon.staticField('Lisätty järjestelmään', project.createdBy + ' ' + project.startDate)+
+        formCommon.staticField('Muokattu viimeksi', project.modifiedBy + ' ' + project.dateModified)+
+        '<div class="split-form-group editable form-editable-roadAddressProject"> '+
+        selectionFormCutted(selection, selected)+
+        ((selected.size == 2 && selected[0].linkId === selected[1].linkId) ? '' : formCommon.changeDirection()) +
+        formCommon.actionSelectedField()+
+        ((!_.isUndefined(selected[0].connectedLinkId)) ? revertSplitButton(): '') +
+        '</div>'+
+        '</div>' +
+        '</div>'+
+        '</div>'+
+        '<footer>' + formCommon.actionButtons('split-', projectCollection.isDirty()) + '</footer>');
     };
 
     var getSplitPointBySideCode = function(link){
@@ -189,7 +164,7 @@
     var emptyTemplate = function(project) {
       return _.template('' +
           '<header style ="display:-webkit-inline-box;">' +
-          titleWithProjectName(project.name) +
+          formCommon.titleWithProjectName(project.name, currentProject) +
           '</header>' +
           '<footer>'+showProjectChangeButton()+'</footer>');
     };
@@ -268,18 +243,6 @@
           return new ModalConfirm("Siirto ei onnistunut taustajärjestelmässä tapahtuneen virheen takia, ota yhteyttä järjestelmätukeen.");
         } else {
           return new ModalConfirm("Siirto ei onnistunut taustajärjestelmässä tapahtuneen tuntemattoman virheen takia, ota yhteyttä järjestelmätukeen.");
-        }
-      });
-
-      eventbus.on('roadAddress:projectLinksUpdated',function(data){
-        eventbus.trigger('projectChangeTable:refresh');
-        projectCollection.setTmpDirty([]);
-        selectedProjectLinkProperty.cleanIds();
-        if (typeof data !== 'undefined' && typeof data.publishable !== 'undefined' && data.publishable) {
-          eventbus.trigger('roadAddressProject:projectLinkSaved', data.id, data.publishable);
-        }
-        else {
-          eventbus.trigger('roadAddressProject:projectLinkSaved', data.id, data.publishable);
         }
       });
 
@@ -414,13 +377,6 @@
         }
       };
 
-      rootElement.on('change', '#endDistance', function(eventData){
-        var changedValue = parseInt(eventData.target.value);
-        if(!isNaN(changedValue) && !isNaN(parseInt(endDistanceOriginalValue)) && changedValue !== endDistanceOriginalValue)
-          $('#manualCPWarning').css('display', 'inline-block');
-        else $('#manualCPWarning').css('display', 'none');
-      });
-
       rootElement.on('click', '.split-form button.update', function() {
         eventbus.trigger('roadAddressProject:toggleEditingRoad', true);
         saveChanges();
@@ -503,11 +459,10 @@
       rootElement.on('click', '.split-form button.show-changes', function(){
         $(this).empty();
         projectChangeTable.show();
-        var publishButton = sendRoadAddressChangeButton();
         var projectChangesButton = showProjectChangeButton();
         if(isProjectPublishable() && isProjectEditable()) {
           formCommon.setInformationContent();
-          $('footer').html(publishButton);
+          $('footer').html(formCommon.sendRoadAddressChangeButton('split-', projectCollection.getCurrentProject()));
         }
         else
           $('footer').html(projectChangesButton);

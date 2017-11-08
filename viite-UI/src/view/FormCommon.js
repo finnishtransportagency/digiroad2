@@ -1,6 +1,22 @@
 (function (root) {
   root.FormCommon = function(prefix) {
     var projectStatus = LinkValues.ProjectStatus;
+
+    var title = function() {
+      return '<span class ="edit-mode-title">Uusi tieosoiteprojekti</span>';
+    };
+
+    var titleWithProjectName = function(projectName, project) {
+      return '<span class ="edit-mode-title">'+projectName+'<button id="editProject_'+ project.id +'" ' +
+        'class="btn-edit-project" style="visibility:hidden;" value="' + project.id + '"></button></span>' +
+        '<span id="closeProjectSpan" class="rightSideSpan" style="visibility:hidden;">Poistu projektista</span>';
+    };
+
+    var projectButtons = function() {
+      return '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
+      '<button disabled id ="send-button" class="send btn btn-block btn-send">Tee tieosoitteenmuutosilmoitus</button>';
+    };
+
     var newRoadAddressInfo = function(selected, link){
       var road = link.roadNumber;
       var part = link.roadPartNumber;
@@ -177,6 +193,14 @@
         '</div></div>';
     };
 
+    var staticField = function(labelText, dataField) {
+      var field;
+      field = '<div class="'+prefix+'form-group">' +
+        '<p class="form-control-static asset-log-info">' + labelText + ' : ' + dataField + '</p>' +
+        '</div>';
+      return field;
+    };
+
     return {
       newRoadAddressInfo: newRoadAddressInfo,
       replaceAddressInfo: replaceAddressInfo,
@@ -194,7 +218,11 @@
       clearInformationContent: clearInformationContent,
       setInformationContent: setInformationContent,
       sendRoadAddressChangeButton: sendRoadAddressChangeButton,
-      distanceValue: distanceValue
+      distanceValue: distanceValue,
+      title: title,
+      titleWithProjectName: titleWithProjectName,
+      projectButtons: projectButtons,
+      staticField: staticField
     };
   };
 })(this);
