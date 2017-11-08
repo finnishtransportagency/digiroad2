@@ -50,7 +50,7 @@ class LinearMassLimitationServiceSpec extends FunSuite with Matchers {
       val administrativeClass = Municipality
       val roadLink = Seq(RoadLink(1000l, geometry, GeometryUtils.geometryLength(geometry), administrativeClass, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(municipalityCode)))
 
-      val test = service.getMassLimitationByRoadLinks(MassLimitationAssetTypes, roadLink)
+      val test = service.getByRoadLinks(MassLimitationAssetTypes, roadLink)
       val roadLinkSide2 = test.filter(_.sideCode == SideCode.TowardsDigitizing.value)
       val roadLinkSide3 = test.filter(_.sideCode == SideCode.AgainstDigitizing.value)
       roadLinkSide2.size should be (1)
@@ -75,7 +75,7 @@ class LinearMassLimitationServiceSpec extends FunSuite with Matchers {
       val administrativeClass = Municipality
       val roadLink = Seq(RoadLink(1002l, geometry, GeometryUtils.geometryLength(geometry), administrativeClass, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(municipalityCode)))
 
-      val test = service.getMassLimitationByRoadLinks(MassLimitationAssetTypes, roadLink)
+      val test = service.getByRoadLinks(MassLimitationAssetTypes, roadLink)
       val roadLinkSide2 = test.filter(_.sideCode == SideCode.TowardsDigitizing.value)
       val roadLinkSide3 = test.filter(_.sideCode == SideCode.AgainstDigitizing.value)
       roadLinkSide2.map(_.geometry) should be (roadLinkSide3.map(_.geometry))
@@ -99,7 +99,7 @@ class LinearMassLimitationServiceSpec extends FunSuite with Matchers {
       val administrativeClass = Municipality
       val roadLink = Seq(RoadLink(1001l, geometry, GeometryUtils.geometryLength(geometry), administrativeClass, 1, TrafficDirection.BothDirections, Motorway, None, None, Map(municipalityCode)))
 
-      val test = service.getMassLimitationByRoadLinks(MassLimitationAssetTypes, roadLink)
+      val test = service.getByRoadLinks(MassLimitationAssetTypes, roadLink)
       val roadLinkSide2 = test.filter(_.sideCode == SideCode.TowardsDigitizing.value)
       val roadLinkSide3 = test.filter(_.sideCode == SideCode.AgainstDigitizing.value)
       roadLinkSide2.size should be (0)

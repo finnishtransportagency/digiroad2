@@ -15,25 +15,17 @@ class LinearMassLimitationService(roadLinkService: RoadLinkService, dao: OracleM
     LinearAssetTypes.AxleWeightLimits,
     LinearAssetTypes.BogieWeightLimits)
 
-  def getMassLimitationByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[MassLimitationAsset]] = {
+  def getByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[MassLimitationAsset]] = {
     val roadLinks = roadLinkService.getRoadLinksFromVVH(bounds, municipalities)
-    typeId match {
-      case typeIdValue if MassLimitationAssetTypes.contains(typeIdValue) =>
-        Seq(getMassLimitationByRoadLinks(MassLimitationAssetTypes, roadLinks))
-      case _ => Seq(Seq())
-    }
+    Seq(getByRoadLinks(MassLimitationAssetTypes, roadLinks))
   }
 
-  def getMassLimitationWithComplementaryByBoundingBox(typeId: Int, bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[MassLimitationAsset]] = {
+  def getWithComplementaryByBoundingBox(bounds: BoundingRectangle, municipalities: Set[Int] = Set()): Seq[Seq[MassLimitationAsset]] = {
     val roadLinks = roadLinkService.getRoadLinksWithComplementaryFromVVH(bounds, municipalities)
-    typeId match {
-      case typeIdValue if MassLimitationAssetTypes.contains(typeIdValue) =>
-        Seq(getMassLimitationByRoadLinks(MassLimitationAssetTypes, roadLinks))
-      case _ => Seq(Seq())
-    }
+    Seq(getByRoadLinks(MassLimitationAssetTypes, roadLinks))
   }
 
-  def getMassLimitationByRoadLinks(typeIds: Seq[Int], roadLinks: Seq[RoadLink]): Seq[MassLimitationAsset] = {
+  def getByRoadLinks(typeIds: Seq[Int], roadLinks: Seq[RoadLink]): Seq[MassLimitationAsset] = {
     val linkIds = roadLinks.map(_.linkId)
     val allAssets = getAllAssetsByLinkIds(typeIds, linkIds)
 
@@ -47,13 +39,13 @@ class LinearMassLimitationService(roadLinkService: RoadLinkService, dao: OracleM
     }.toSeq
   }
 
-  protected def getAllAssetsByLinkIds(typeIds: Seq[Int], linkIds: Seq[Long]): Seq[PersistedLinearAsset] = {
+  private def getAllAssetsByLinkIds(typeIds: Seq[Int], linkIds: Seq[Long]): Seq[PersistedLinearAsset] = {
     withDynTransaction {
       dao.fetchLinearAssetsByLinkIds(typeIds, linkIds, LinearAssetTypes.numericValuePropertyId)
     }.filterNot(_.expired)
   }
 
-  protected def assetSplitSideCodes(assets: Seq[PersistedLinearAsset]): Seq[PersistedLinearAsset] = {
+  private def assetSplitSideCodes(assets: Seq[PersistedLinearAsset]): Seq[PersistedLinearAsset] = {
     assets.exists(_.sideCode != SideCode.BothDirections.value) && assets.exists(_.sideCode == SideCode.BothDirections.value) match {
       case true => assets.filter(_.sideCode == SideCode.BothDirections.value).flatMap(asset_sideCode =>
         Seq(asset_sideCode.copy(sideCode = SideCode.AgainstDigitizing.value), asset_sideCode.copy(sideCode = SideCode.TowardsDigitizing.value))
@@ -62,7 +54,7 @@ class LinearMassLimitationService(roadLinkService: RoadLinkService, dao: OracleM
     }
   }
 
-  protected def getAssetBySideCode(assets: Seq[PersistedLinearAsset], geometry: Seq[Point]): MassLimitationAsset = {
+  private def getAssetBySideCode(assets: Seq[PersistedLinearAsset], geometry: Seq[Point]): MassLimitationAsset = {
       val values = assets.map(a => AssetTypes(a.typeId, a.value.getOrElse(NumericValue(0)).asInstanceOf[NumericValue].value.toString ))
       MassLimitationAsset(geometry, assets.head.sideCode, Some(MassLimitationValue(values)))
   }

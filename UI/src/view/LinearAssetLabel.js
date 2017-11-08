@@ -151,7 +151,7 @@
       };
 
       var textStyle = function (value) {
-        if (!_.isUndefined(value))
+        if (_.isUndefined(value))
           return '';
         // conversion Kg -> t
         return ''.concat(value/1000, 't');

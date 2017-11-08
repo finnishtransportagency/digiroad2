@@ -245,7 +245,7 @@
 
     this.getReadOnlyLinearAssetsComplementaries = latestResponseRequestor(function(boundingBox, typeId) {
       return {
-        url: 'api/linearassets/complementary/massLimitation?bbox=' + boundingBox + '&typeId=' + typeId
+        url: 'api/linearassets/massLimitation/complementary/?bbox=' + boundingBox + '&typeId=' + typeId
       };
     });
 
