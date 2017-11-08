@@ -35,13 +35,13 @@
 
     var generateStrokeColor = function (roadClass, anomaly, constructionType, roadLinkType, gapTransfering, roadLinkSource) {
       if(roadLinkSource === LINKSOURCE_SURAVAGE) {
-        return 'rgba(211, 175, 246, 0.65 * opacityMultiplier)';
+        return 'rgba(211, 175, 246,'+ 0.65 * opacityMultiplier+')';
       } else if (anomaly !== 1) {
         if(roadLinkType === -1){
           if(constructionType === 1) {
-            return 'rgba(164, 164, 162, 0.65 * opacityMultiplier)';
+            return 'rgba(164, 164, 162,'+ 0.65 * opacityMultiplier+')';
           } else {
-            return 'rgba(247, 254, 46, 0.45 *opacityMultiplier)';
+            return 'rgba(247, 254, 46,'+ 0.45 *opacityMultiplier+')';
           }
         } else  {
           switch (roadClass) {
@@ -63,11 +63,11 @@
         }
       } else {
         if(constructionType === 1) {
-          return 'rgba(255, 153, 0, 0.95 * opacityMultiplier)';
+          return 'rgba(255, 153, 0,'+ 0.95 * opacityMultiplier+')';
         } else if (gapTransfering === true ) {
-          return 'rgb(0, 255, 0, 0.75 * opacityMultiplier)';
+          return 'rgb(0, 255, 0,'+ 0.75 * opacityMultiplier+')';
         } else {
-          return 'rgba(56, 56, 54, 1 * opacityMultiplier)';
+          return 'rgba(56, 56, 54,'+ opacityMultiplier+')';
         }
       }
     };
@@ -181,9 +181,16 @@
       var red = parseInt(rgba[0]) * (changeColor ? mult : 1);
       var green = parseInt(rgba[1]) * (changeColor ? mult : 1);
       var blue = parseInt(rgba[2]) * (changeColor ? mult : 1);
-      var opacity = parseFloat(rgba[3]) * (changeOpacity ? mult : 1);
-      return 'rgba(' + Math.round(red) + ', ' + Math.round(green) + ', ' + Math.round(blue) + ', ' + opacity + ')';
+      var opacityParced =parseFloat(rgba[3]);
+      if (!isNaN(opacityParced))
+      {
+        var opacity = opacityParced * (changeOpacity ? mult : 1);
+        return 'rgba(' + Math.round(red) + ', ' + Math.round(green) + ', ' + Math.round(blue) + ', ' + opacity + opacityMultiplier+ ')';
+      }
+      else
+        return 'rgba(' + Math.round(red) + ', ' + Math.round(green) + ', ' + Math.round(blue) + ', ' + 1+ ')';
     };
+
 
     /**
      * Method evoked by feature that will determine what kind of style said feature will have.

@@ -21,7 +21,7 @@
     Layer.call(this, layerName, roadLayer);
     var me = this;
     var styler = new Styler();
-    styler.opacityMultiplier(0.1);
+    styler.opacityMultiplier(0.2);
     var projectLinkStyler = new ProjectLinkStyler();
 
     var vectorSource = new ol.source.Vector({
