@@ -10,7 +10,7 @@ import org.scalatra._
 import org.scalatra.json.JacksonJsonSupport
 import org.json4s._
 
-case class NewNumericOrTextualValueAsset(linkId: Long, startMeasure: Double, endMeasure: Double, properties: Seq[AssetProperties], sideCode: Int)
+case class NewNumericOrTextualValueAsset(linkId: Long, startMeasure: Double, endMeasure: Double, properties: Seq[AssetProperties], sideCode: Int, geometryTimestamp: Option[Long])
 
 class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService, val roadLinkService: RoadLinkService) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport {
 
@@ -60,7 +60,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService, val 
   private def extractLinearAssets(typeId: Int, value: JValue) = {
     typeId match {
       case `lighting` => value.extractOpt[NewNumericOrTextualValueAsset] match {
-        case Some(v) => NewLinearAsset(v.linkId, v.startMeasure, v.endMeasure, NumericValue(v.properties.map(_.value).head.toInt), v.sideCode, 0, None)
+        case Some(v) => NewLinearAsset(v.linkId, v.startMeasure, v.endMeasure, NumericValue(v.properties.map(_.value).head.toInt), v.sideCode, v.geometryTimestamp.getOrElse(VVHClient.createVVHTimeStamp()), None)
       }
     }
   }
