@@ -94,15 +94,19 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
 object ProjectDAO {
 
   private val projectLinkQueryBase =
-    """select PROJECT_LINK.ID, PROJECT_LINK.PROJECT_ID, PROJECT_LINK.TRACK_CODE, PROJECT_LINK.DISCONTINUITY_TYPE,
+    s"""select PROJECT_LINK.ID, PROJECT_LINK.PROJECT_ID, PROJECT_LINK.TRACK_CODE, PROJECT_LINK.DISCONTINUITY_TYPE,
   PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.START_ADDR_M, PROJECT_LINK.END_ADDR_M,
   LRM_POSITION.START_MEASURE, LRM_POSITION.END_MEASURE, LRM_POSITION.SIDE_CODE, PROJECT_LINK.LRM_POSITION_ID,
   PROJECT_LINK.CREATED_BY, PROJECT_LINK.MODIFIED_BY, lrm_position.link_id,
   (LRM_POSITION.END_MEASURE - LRM_POSITION.START_MEASURE) as length, PROJECT_LINK.CALIBRATION_POINTS, PROJECT_LINK.STATUS,
-  PROJECT_LINK.ROAD_TYPE, LRM_POSITION.LINK_SOURCE as source, PROJECT_LINK.ROAD_ADDRESS_ID, PROJECT_LINK.ELY, PROJECT_LINK.REVERSED, PROJECT_LINK.CONNECTED_LINK_ID
-  from PROJECT_LINK join LRM_POSITION
-    on LRM_POSITION.ID = PROJECT_LINK.LRM_POSITION_ID"""
-
+  PROJECT_LINK.ROAD_TYPE, LRM_POSITION.LINK_SOURCE as source, PROJECT_LINK.ROAD_ADDRESS_ID, PROJECT_LINK.ELY, PROJECT_LINK.REVERSED, PROJECT_LINK.CONNECTED_LINK_ID,
+  CASE
+    WHEN STATUS = ${LinkStatus.NotHandled.value} THEN null
+    WHEN STATUS IN (${LinkStatus.Terminated.value}, ${LinkStatus.UnChanged.value}) THEN ROAD_ADDRESS.START_DATE
+    ELSE PRJ.START_DATE END as start_date,
+  CASE WHEN STATUS = ${LinkStatus.Terminated.value} THEN PRJ.START_DATE ELSE null END as end_date
+  from PROJECT prj JOIN PROJECT_LINK ON (prj.id = PROJECT_LINK.PROJECT_ID) join LRM_POSITION
+    on (LRM_POSITION.ID = PROJECT_LINK.LRM_POSITION_ID) LEFT JOIN ROAD_ADDRESS ON (ROAD_ADDRESS.ID = PROJECT_LINK.ROAD_ADDRESS_ID)"""
   implicit val getProjectLinkRow = new GetResult[ProjectLink] {
     def apply(r: PositionedResult) = {
       val projectLinkId = r.nextLong()
@@ -131,8 +135,10 @@ object ProjectDAO {
       val ely = r.nextLong()
       val reversed = r.nextBoolean()
       val connectedLinkId = r.nextLongOption()
+      val startDate = r.nextDateOption().map(d => new DateTime(d.getTime))
+      val endDate = r.nextDateOption().map(d => new DateTime(d.getTime))
 
-      ProjectLink(projectLinkId, roadNumber, roadPartNumber, trackCode, discontinuityType, startAddrM, endAddrM, None, None,
+      ProjectLink(projectLinkId, roadNumber, roadPartNumber, trackCode, discontinuityType, startAddrM, endAddrM, startDate, endDate,
         None, lrmPositionId, linkId, startMValue, endMValue, sideCode, calibrationPoints, false, Seq.empty[Point], projectId,
         status, roadType, source, length, roadAddressId, ely, reversed, connectedLinkId)
     }
@@ -147,7 +153,8 @@ object ProjectDAO {
     val addressPS = dynamicSession.prepareStatement("insert into PROJECT_LINK (id, project_id, lrm_position_id, " +
       "road_number, road_part_number, " +
       "track_code, discontinuity_type, START_ADDR_M, END_ADDR_M, created_by, " +
-      "calibration_points, status, road_type, road_address_id, connected_link_id, ely, reversed) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?,?)")
+      "calibration_points, status, road_type, road_address_id, connected_link_id, ely, reversed) values " +
+      "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
     val lrmIds = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= ${roadAddresses.size}""".as[Long].list
     val (ready, idLess) = roadAddresses.partition(_.id != fi.liikennevirasto.viite.NewRoadAddress)
     val plIds = Sequences.fetchViitePrimaryKeySeqValues(idLess.size)
@@ -605,11 +612,10 @@ object ProjectDAO {
   }
 
   def fetchFirstLink(projectId: Long, roadNumber: Long, roadPartNumber: Long): Option[ProjectLink] = {
-    val query =
-      s"""$projectLinkQueryBase
-    where ROAD_PART_NUMBER=$roadPartNumber AND ROAD_NUMBER=$roadNumber AND
-      START_ADDR_M = (SELECT MIN(START_ADDR_M) FROM PROJECT_LINK WHERE
-      PROJECT_LINK.PROJECT_ID = $projectId AND ROAD_PART_NUMBER=$roadPartNumber AND ROAD_NUMBER=$roadNumber)
+    val query = s"""$projectLinkQueryBase
+    where PROJECT_LINK.ROAD_PART_NUMBER=$roadPartNumber AND PROJECT_LINK.ROAD_NUMBER=$roadNumber AND
+      PROJECT_LINK.START_ADDR_M = (SELECT MIN(START_ADDR_M) FROM PROJECT_LINK WHERE
+      PROJECT_LINK.PROJECT_ID = $projectId AND PROJECT_LINK.ROAD_PART_NUMBER=$roadPartNumber AND PROJECT_LINK.ROAD_NUMBER=$roadNumber)
     order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.START_ADDR_M, PROJECT_LINK.TRACK_CODE"""
     listQuery(query).headOption
   }

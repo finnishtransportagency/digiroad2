@@ -2,17 +2,23 @@ package fi.liikennevirasto.viite
 
 import java.util.Properties
 
+import fi.liikennevirasto.digiroad2.FeatureClass.AllOthers
+import fi.liikennevirasto.viite.util.{SplitOptions, StaticTestData}
 import fi.liikennevirasto.digiroad2.asset.ConstructionType.InUse
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
+import fi.liikennevirasto.digiroad2.asset.TrafficDirection.BothDirections
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.{PolyLine, RoadLink}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.digiroad2.util.Track.Combined
 import fi.liikennevirasto.digiroad2.{DigiroadEventBus, Point, RoadLinkService, _}
+import fi.liikennevirasto.viite.RoadType.PublicRoad
 import fi.liikennevirasto.viite.dao.AddressChangeType._
 import fi.liikennevirasto.viite.dao.Discontinuity.{Continuous, Discontinuous}
+import fi.liikennevirasto.viite.dao.ProjectState.Sent2TR
 import fi.liikennevirasto.viite.dao.{AddressChangeType, Discontinuity, ProjectDAO, ProjectState, RoadAddressProject, _}
 import fi.liikennevirasto.viite.model.{Anomaly, ProjectAddressLink, RoadAddressLinkLike}
 import fi.liikennevirasto.viite.process.ProjectDeltaCalculator
@@ -53,6 +59,8 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
     override def withDynTransaction[T](f: => T): T = f
   }
+
+
 
   after {
     reset(mockRoadLinkService)
@@ -559,6 +567,10 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
       when(mockRoadLinkService.getViiteRoadLinksHistoryFromVVH(any[Set[Long]])).thenReturn(Seq())
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(Set(linkId))).thenReturn(Seq(RoadLink(linkId, ra.head.geometry, 9.8, State, 1, TrafficDirection.BothDirections,
         Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(167)))))
+      when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(Seq(VVHRoadlink(linkId, 167,
+        ra.head.geometry, State, TrafficDirection.BothDirections, FeatureClass.AllOthers, None, Map("MUNICIPALITYCODE" -> BigInt(167)),
+        ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)))
+      when(mockRoadLinkService.fetchSuravageLinksByLinkIdsFromVVH(Set(linkId))).thenReturn(Seq())
       //Creation of test project with test links
       val project = RoadAddressProject(projectId, ProjectState.Incomplete, "testiprojekti", "Test", DateTime.now(), "Test",
         DateTime.parse("1990-01-01"), DateTime.now(), "info",
@@ -583,18 +595,16 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       projectService.updateRoadAddressWithProjectLinks(ProjectState.Saved2TR, projectId)
 
-      val roadsAfterChanges = RoadAddressDAO.fetchByLinkId(Set(linkId))
-      roadsAfterChanges.size should be(2)
+      val roadsAfterChanges = RoadAddressDAO.fetchByLinkId(Set(linkId), false, true)
+      roadsAfterChanges.size should be(1)
       val roadsAfterPublishing = roadsAfterChanges.filter(x => x.startDate.nonEmpty && x.endDate.isEmpty).head
       val endedAddress = roadsAfterChanges.filter(x => x.endDate.nonEmpty)
 
       roadsBeforeChanges.linkId should be(roadsAfterPublishing.linkId)
       roadsBeforeChanges.roadNumber should be(roadsAfterPublishing.roadNumber)
       roadsBeforeChanges.roadPartNumber should be(roadsAfterPublishing.roadPartNumber)
-      endedAddress.head.endDate.nonEmpty should be(true)
-      endedAddress.size should be(1)
-      endedAddress.head.endDate.get.toString("yyyy-MM-dd") should be("1990-01-01")
-      roadsAfterPublishing.startDate.get.toString("yyyy-MM-dd") should be("1990-01-01")
+      endedAddress.isEmpty should be (true)
+      roadsAfterPublishing.startDate.get.toString("yyyy-MM-dd") should be("1901-01-01")
     }
   }
 
@@ -670,7 +680,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     } should have size (count - 1)
   }
 
-  ignore("process roadChange data and expire the roadLink") {
+  test("process roadChange data and expire the roadLink") {
     //First Create Mock Project, RoadLinks and
 
     runWithRollback {
@@ -688,6 +698,10 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(Set(linkId))).thenReturn(Seq(RoadLink(linkId, ra.head.geometry, 9.8, State, 1, TrafficDirection.BothDirections,
         Motorway, None, None, Map("MUNICIPALITYCODE" -> BigInt(167)))))
+      when(mockRoadLinkService.fetchVVHRoadlinks(any[Set[Long]], any[Boolean])).thenReturn(Seq(VVHRoadlink(linkId, 167,
+        ra.head.geometry, State, TrafficDirection.BothDirections, FeatureClass.AllOthers, None, Map("MUNICIPALITYCODE" -> BigInt(167)),
+        ConstructionType.InUse, LinkGeomSource.NormalLinkInterface)))
+      when(mockRoadLinkService.fetchSuravageLinksByLinkIdsFromVVH(Set(linkId))).thenReturn(Seq())
       //Creation of test project with test links
       val project = RoadAddressProject(projectId, ProjectState.Incomplete, "testiprojekti", "Test", DateTime.now(), "Test",
         DateTime.parse("2020-01-01"), DateTime.now(), "info",
@@ -937,4 +951,67 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     }
   }
 
+  test("split road address save behaves correctly on transfer + new") {
+    val road = 5L
+    val roadPart = 205L
+    val origStartM = 1024L
+    val origEndM = 1547L
+    val origStartD = Some(DateTime.now().minusYears(10))
+    val linkId = 1049L
+    val endM = 520.387
+    val suravageLinkId = 5774839L
+    val user = Some("user")
+    val project = RoadAddressProject(-1L, Sent2TR, "split", user.get, DateTime.now(), user.get,
+      DateTime.now().plusMonths(2), DateTime.now(), "", Seq(), None, None)
+    val roadAddress = RoadAddress(1L, 5L, 205L, PublicRoad, Track.Combined, Continuous, origStartM, origEndM, origStartD,
+      None, None, 1L, linkId, 0.0, endM, SideCode.TowardsDigitizing, 86400L, (None, None), false, Seq(Point(1024.0, 0.0), Point(1025.0, 1544.386)),
+      LinkGeomSource.NormalLinkInterface, 8L, false)
+    val transferAndNew = Seq(ProjectLink(2L, 5, 205, Track.Combined, Continuous, 1028, 1128, Some(DateTime.now()), None, user,
+      2L, suravageLinkId, 0.0, 99.384, SideCode.TowardsDigitizing, (None, None), false, Seq(Point(1024.0, 0.0), Point(1024.0, 99.384)),
+      -1L, LinkStatus.Transfer, PublicRoad, LinkGeomSource.SuravageLinkInterface, 99.384, 1L, 8L, false, Some(linkId)),
+      ProjectLink(3L, 5, 205, Track.Combined, Continuous, 1128, 1205, Some(DateTime.now()), None, user,
+        3L, suravageLinkId, 99.384, 176.495, SideCode.TowardsDigitizing, (None, None), false, Seq(Point(1024.0, 99.384), Point(1101.111, 99.384)),
+        -1L, LinkStatus.New, PublicRoad, LinkGeomSource.SuravageLinkInterface, 77.111, 1L, 8L, false, Some(linkId)),
+      ProjectLink(4L, 5, 205, Track.Combined, Continuous, origStartM+100L, origEndM, Some(DateTime.now()), None, user,
+        4L, linkId, 99.384, endM, SideCode.TowardsDigitizing, (None, None), false, Seq(Point(1024.0, 99.384), Point(1025.0, 1544.386)),
+        -1L, LinkStatus.Terminated, PublicRoad, LinkGeomSource.NormalLinkInterface, endM - 99.384, 1L, 8L, false, Some(suravageLinkId)))
+    val result = projectService.createSplitRoadAddress(roadAddress, transferAndNew, project)
+    result should have size(4)
+    result.count(_.terminated) should be (1)
+    result.count(_.startDate == roadAddress.startDate) should be (2)
+    result.count(_.startDate.get == project.startDate) should be (2)
+    result.count(_.endDate.isEmpty) should be (2)
+  }
+
+  test("split road address save behaves correctly on unchanged + new") {
+    val road = 5L
+    val roadPart = 205L
+    val origStartM = 1024L
+    val origEndM = 1547L
+    val origStartD = Some(DateTime.now().minusYears(10))
+    val linkId = 1049L
+    val endM = 520.387
+    val suravageLinkId = 5774839L
+    val user = Some("user")
+    val project = RoadAddressProject(-1L, Sent2TR, "split", user.get, DateTime.now(), user.get,
+      DateTime.now().plusMonths(2), DateTime.now(), "", Seq(), None, None)
+    val roadAddress = RoadAddress(1L, 5L, 205L, PublicRoad, Track.Combined, Continuous, origStartM, origEndM, origStartD,
+      None, None, 1L, linkId, 0.0, endM, SideCode.TowardsDigitizing, 86400L, (None, None), false, Seq(Point(1024.0, 0.0), Point(1025.0, 1544.386)),
+      LinkGeomSource.NormalLinkInterface, 8L, false)
+    val unchangedAndNew = Seq(ProjectLink(2L, 5, 205, Track.Combined, Continuous, origStartM, origStartM+100L, Some(DateTime.now()), None, user,
+      2L, suravageLinkId, 0.0, 99.384, SideCode.TowardsDigitizing, (None, None), false, Seq(Point(1024.0, 0.0), Point(1024.0, 99.384)),
+      -1L, LinkStatus.UnChanged, PublicRoad, LinkGeomSource.SuravageLinkInterface, 99.384, 1L, 8L, false, Some(linkId)),
+      ProjectLink(3L, 5, 205, Track.Combined, Continuous, origStartM+100L, origStartM+177L, Some(DateTime.now()), None, user,
+        3L, suravageLinkId, 99.384, 176.495, SideCode.TowardsDigitizing, (None, None), false, Seq(Point(1024.0, 99.384), Point(1101.111, 99.384)),
+        -1L, LinkStatus.New, PublicRoad, LinkGeomSource.SuravageLinkInterface, 77.111, 1L, 8L, false, Some(linkId)),
+      ProjectLink(4L, 5, 205, Track.Combined, Continuous, origStartM+100L, origEndM, Some(DateTime.now()), None, user,
+        4L, linkId, 99.384, endM, SideCode.TowardsDigitizing, (None, None), false, Seq(Point(1024.0, 99.384), Point(1025.0, 1544.386)),
+        -1L, LinkStatus.Terminated, PublicRoad, LinkGeomSource.NormalLinkInterface, endM - 99.384, 1L, 8L, false, Some(suravageLinkId)))
+    val result = projectService.createSplitRoadAddress(roadAddress, unchangedAndNew, project)
+    result should have size(3)
+    result.count(_.terminated) should be (1)
+    result.count(_.startDate == roadAddress.startDate) should be (2)
+    result.count(_.startDate.get == project.startDate) should be (1)
+    result.count(_.endDate.isEmpty) should be (2)
+  }
 }
