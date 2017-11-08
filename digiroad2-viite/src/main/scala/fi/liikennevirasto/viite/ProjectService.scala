@@ -482,7 +482,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         revertLinks(projectId, previousSplit.head.roadNumber, previousSplit.head.roadPartNumber,
           suravage.map(link => LinkToRevert(link.id, link.linkId, link.status.value)),
           original.map(link => LinkToRevert(link.id, link.linkId, link.status.value)),
-          username)
+          username, false)
       }
       val suravageLink = sOption.get
       val endPoints = GeometryUtils.geometryEndpoints(suravageLink.geometry)
@@ -506,6 +506,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           Track.Unknown.value, 0L, 0L, 0, RoadType.Unknown.value, projectId), bestFit, splitOptions)
         ProjectDAO.removeProjectLinksByLinkId(projectId, splitLinks.map(_.linkId).toSet)
         ProjectDAO.create(splitLinks.map(x => x.copy(modifiedBy = Some(username))))
+        recalculateProjectLinks(project.id, username, Set((splitOptions.roadNumber, splitOptions.roadPartNumber)))
         None
       }
     }
@@ -827,12 +828,13 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   private def revertLinks(projectId: Long, roadNumber: Long, roadPartNumber: Long, toRemove: Iterable[LinkToRevert],
-                          modified: Iterable[LinkToRevert], userName: String) = {
+                          modified: Iterable[LinkToRevert], userName: String, recalculate: Boolean = true) = {
     ProjectDAO.removeProjectLinksByLinkId(projectId, toRemove.map(_.linkId).toSet)
     val projectLinks = ProjectDAO.getProjectLinksByIds(modified.map(_.id))
     RoadAddressDAO.queryById(projectLinks.map(_.roadAddressId).toSet).foreach(ra =>
       ProjectDAO.updateProjectLinkValues(projectId, ra))
-    recalculateProjectLinks(projectId, userName, Set((roadNumber, roadPartNumber)))
+    if (recalculate)
+      recalculateProjectLinks(projectId, userName, Set((roadNumber, roadPartNumber)))
     val afterUpdateLinks = ProjectDAO.fetchByProjectRoadPart(projectId, roadNumber, roadPartNumber)
     if (afterUpdateLinks.isEmpty){
       releaseRoadPart(projectId, roadNumber, roadPartNumber)
@@ -893,12 +895,14 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
                          roadType: Long = 0, discontinuity: Long = 0, ely: Long = 0, reversed: Boolean = false ): Option[String] = {
 
     def updateRoadTypeDiscontinuity(links: Seq[ProjectLink]) = {
-      val lastSegment = links.maxBy(_.endAddrMValue)
-      if (links.size > 1) {
-        val linksToUpdate = links.filterNot(_.id == lastSegment.id)
-        ProjectDAO.updateProjectLinksToDB(linksToUpdate, userName)
+      if (links.nonEmpty) {
+        val lastSegment = links.maxBy(_.endAddrMValue)
+        if (links.size > 1) {
+          val linksToUpdate = links.filterNot(_.id == lastSegment.id)
+          ProjectDAO.updateProjectLinksToDB(linksToUpdate, userName)
+        }
+        ProjectDAO.updateProjectLinksToDB(Seq(lastSegment.copy(discontinuity = Discontinuity.apply(discontinuity.toInt))), userName)
       }
-      ProjectDAO.updateProjectLinksToDB(Seq(lastSegment.copy(discontinuity = Discontinuity.apply(discontinuity.toInt))), userName)
     }
 
     try {
