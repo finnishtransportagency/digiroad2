@@ -7,8 +7,8 @@
   width: auto;
   position: absolute;
   background-color: #e3e3e1;
-  left: 315px;
-  right: 472px;
+  left: 250px;
+  right: 450px;
 
 }
 .change-table-header {
@@ -56,13 +56,20 @@
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+  text-align: center;
 }
-.project-change-table-dimension-first {
-  width: 11em;
-  padding-left: 10px;
+.project-change-table-dimension-first-h {
+  width: 10em;
   font-weight: bold;
   font-size: 12px;
   text-transform: uppercase;
+  text-align: center;
+}.project-change-table-dimension-first {
+  width: 9em;
+  font-weight: bold;
+  font-size: 12px;
+  text-transform: uppercase;
+  text-align: center;
 }
 .project-changes {
   height: @project-changes-height;
@@ -73,10 +80,11 @@
   height: 28px;
   font-size: 12px;
   overflow: hidden;
-  width: 4.5em;
+  width: 4.4em;
   max-width: 4.5em;
   text-overflow: ellipsis;
   word-wrap: break-word;
+  text-align: center;
 }
 .project-changes tr:nth-child(odd) {
   background-color: #cbcbc9;
@@ -89,37 +97,52 @@
 #change-table-borders-changetype {
   position: absolute;
   height: @table-borders-height;
-  width: 125px;
+  width: 110px;
   border-right: 1px solid #a4a4a2;
   border-bottom: 1px solid #a4a4a2;
   z-index: 1;
   pointer-events: none;
+}
+#change-table-borders-reversed {
+  position: absolute;
+  height: @table-borders-height;
+  width: 60px;
+  border-right: 1px solid #a4a4a2;
+  border-bottom: 1px solid #a4a4a2;
+  z-index: 1;
+  pointer-events: none;
+  padding-left: 580px;
 }
 #change-table-borders-source {
   position: absolute;
   height: @table-borders-height;
-  width: 612px;
+  width: 475px;
   border-right: 1px solid #a4a4a2;
   border-bottom: 1px solid #a4a4a2;
   z-index: 1;
   pointer-events: none;
+  padding-left: 110px;
 }
 #change-table-borders-target {
   position: absolute;
   height: @table-borders-height;
-  width: 1116px;
+  width: 470px;
   border-bottom: 1px solid #a4a4a2;
   z-index: 1;
   pointer-events: none;
+  padding-left: 640px;
 }
 #label-type {
-  width: 9em;
+  width: 7.5em;
+}
+#label-reverse {
+  width: 3.5em;
 }
 #label-source {
-  width: 37em;
+  width: 36em;
 }
 #label-target {
-  width: 37em;
+  width: 31em;
 }
 .data-cell-road-type {
   padding-right: 5px;

@@ -23,18 +23,20 @@
     changeTable.append('<div class="change-table-header">Validointi ok. Alla näet muutokset projektissa.</div>');
     changeTable.append('<button class="close wbtn-close">Sulje <span>X</span></button>');
     changeTable.append('<button class="max wbtn-max"><span id="buttonText">Suurenna </span><span id="sizeSymbol" style="font-size: 175%;font-weight: 900;">□</span></button>');
-    changeTable.append('<div class="change-table-borders"></div>' +
+    changeTable.append('<div class="change-table-borders">' +
       '<div id ="change-table-borders-changetype"></div>' +
       '<div id ="change-table-borders-source"></div>' +
-      '<div id ="change-table-borders-target"></div>');
+      '<div id ="change-table-borders-reversed"></div>' +
+      '<div id ="change-table-borders-target"></div>' + '</div>');
     changeTable.append('<div class="change-table-sections">' +
       '<label class="change-table-heading-label" id="label-type">Ilmoitus</label>' +
       '<label class="change-table-heading-label" id="label-source">Nykyosoite</label>' +
+      '<label class="change-table-heading-label" id="label-reverse"></label>' +
       '<label class="change-table-heading-label" id="label-target">Uusi osoite</label>');
     changeTable.append('<div class="change-table-dimension-headers">' +
       '<table class="change-table-dimensions">' +
       '<tr>' +
-      '<td class="project-change-table-dimension-first"></td>' +
+      '<td class="project-change-table-dimension-first-h"></td>' +
       '<td class="project-change-table-dimension">TIE</td>' +
       '<td class="project-change-table-dimension">AJR</td>' +
       '<td class="project-change-table-dimension">AOSA</td>' +
@@ -43,7 +45,7 @@
       '<td class="project-change-table-dimension">LET</td>' +
       '<td class="project-change-table-dimension">JATKUU</td>' +
       '<td class="project-change-table-dimension dimension-road-type">TIETYYPPI</td>' +
-      '<td class="project-change-table-dimension ">ELY</td>' +
+      '<td class="project-change-table-dimension">ELY</td>' +
       '<td class="project-change-table-dimension">KAANTO</td>' +
       '<td class="project-change-table-dimension">TIE</td>' +
       '<td class="project-change-table-dimension">AJR</td>' +
@@ -123,6 +125,7 @@
       changeTable.on('click', 'button.close', function (){
         $('.project-changes').height('110px');
         $('[id=change-table-borders-target]').height('180px');
+        $('[id=change-table-borders-reverse]').height('180px');
         $('[id=change-table-borders-source]').height('180px');
         $('[id=change-table-borders-changetype]').height('180px');
         $('#information-content').empty();
@@ -159,7 +162,6 @@
         '<td class="project-change-table-data-cell"></td>';
     }
 
-
     function getTargetInfo(changeInfoSeq)
     {
       return '<td class="project-change-table-data-cell">' + changeInfoSeq.target.roadNumber + '</td>'+
@@ -195,6 +197,7 @@
         $('.project-changes').height('110px');
         $('[id=change-table-borders-target]').height('180px');
         $('[id=change-table-borders-source]').height('180px');
+        $('[id=change-table-borders-reversed]').height('180px');
         $('[id=change-table-borders-changetype]').height('180px');
         $('[id=buttonText]').text("Suurenna ");
         $('[id=sizeSymbol]').text("□");
@@ -204,6 +207,7 @@
         $('.project-changes').height('560px');
         $('[id=change-table-borders-target]').height('670px');
         $('[id=change-table-borders-source]').height('670px');
+        $('[id=change-table-borders-reversed]').height('670px');
         $('[id=change-table-borders-changetype]').height('670px');
         $('[id=buttonText]').text("Pienennä ");
         $('[id=sizeSymbol]').text("_");
