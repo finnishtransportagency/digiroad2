@@ -62,11 +62,23 @@
 
     this.selectControl = selectControl;
 
+    function isAllowedToDrag(features) {
+      if (selectedAsset.exists()) {
+        if ((layerName == 'trafficSigns') && (editConstrains(selectedAsset))) {
+          return [];
+        } else {
+          return features;
+        }
+      } else {
+        return features;
+      }
+    }
+
     var dragControl = defineOpenLayersDragControl();
     function defineOpenLayersDragControl() {
         var dragHandler = layerName === 'servicePoints' ? dragFreely : dragAlongNearestLink;
         var dragControl = new ol.interaction.Translate({
-           features : selectControl.getSelectInteraction().getFeatures()
+           features : new FilterCollection(selectControl.getSelectInteraction().getFeatures(), isAllowedToDrag)
         });
 
         dragControl.on('translating', dragHandler);
