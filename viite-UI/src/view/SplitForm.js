@@ -451,6 +451,7 @@
       eventbus.on('roadAddress:projectLinksUpdated',function(data){
         eventbus.trigger('projectChangeTable:refresh');
         projectCollection.setTmpDirty([]);
+        selectedProjectLinkProperty.cleanIds();
         if (typeof data !== 'undefined' && typeof data.publishable !== 'undefined' && data.publishable) {
           eventbus.trigger('roadAddressProject:projectLinkSaved', data.id, data.publishable);
         }
@@ -483,6 +484,7 @@
       eventbus.on('projectLink:projectLinksSplitSuccess', function () {
         eventbus.trigger('projectChangeTable:refresh');
         projectCollection.setTmpDirty([]);
+        selectedProjectLinkProperty.cleanIds();
       });
 
       eventbus.on('roadAddress:changeDirectionFailed', function(error) {
