@@ -71,7 +71,7 @@ sealed trait SurfaceType {
 }
 
 object SurfaceType {
-  val values = Set(Unknown, None, Paved, RoadWidth)
+  val values = Set(Unknown, None, Paved)
 
   def apply(intValue: Int): SurfaceType = {
     values.find(_.value == intValue).getOrElse(None)
@@ -80,8 +80,6 @@ object SurfaceType {
   case object Unknown extends SurfaceType { def value = 0 }
   case object None extends SurfaceType { def value = 1 }
   case object Paved extends SurfaceType { def value = 2}
-  case object RoadWidth extends SurfaceType { def value = 3}
-
 }
 
 sealed trait MTKClassWidth {

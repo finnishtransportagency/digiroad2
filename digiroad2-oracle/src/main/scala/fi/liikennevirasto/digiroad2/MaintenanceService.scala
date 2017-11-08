@@ -177,7 +177,7 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
 
     eventBus.publish("linearAssets:update", changeSet.copy(expiredAssetIds = expiredAssetIds.filterNot(_ == 0L)))
 
-    //Remove the asset ids ajusted in the "linearAssets:update" otherwise if the "maintenanceRoads:saveProjectedLinearAssets" is executed after the "linearAssets:update"
+    //Remove the asset ids ajusted in the "maintenanceRoads:update" otherwise if the "maintenanceRoads:saveProjectedLinearAssets" is executed after the "maintenanceRoads:update"
     //it will update the mValues to the previous ones
     eventBus.publish("maintenanceRoads:saveProjectedMaintenanceRoads", newAssets.filterNot(a => changeSet.adjustedMValues.exists(_.assetId == a.id)))
 
