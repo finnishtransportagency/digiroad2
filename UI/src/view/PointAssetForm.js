@@ -7,8 +7,13 @@
     var rootElement = $('#feature-attributes');
 
     eventbus.on('application:readOnly', function(readOnly) {
-      if(applicationModel.getSelectedLayer() == layerName && (!_.isEmpty(roadCollection.getAll()) && !_.isNull(selectedAsset.getId())))
+      if(applicationModel.getSelectedLayer() == layerName && (!_.isEmpty(roadCollection.getAll()) && !_.isNull(selectedAsset.getId()))){
         toggleMode(rootElement, (editConstrains && editConstrains(selectedAsset)) || readOnly);
+        //TODO: add form configurations to asset-type-layer-specifications.js to avoid if-clauses
+        if (layerName == 'servicePoints' && isSingleService(selectedAsset)){
+          rootElement.find('button.delete').hide();
+        }
+      }
     });
 
     eventbus.on(layerName + ':selected ' + layerName + ':cancelled roadLinks:fetched', function() {
@@ -18,6 +23,9 @@
         if (layerName == 'servicePoints') {
           rootElement.find('button#save-button').prop('disabled', true);
           rootElement.find('button#cancel-button').prop('disabled', false);
+          if(isSingleService(selectedAsset)){
+            rootElement.find('button.delete').hide();
+          }
         } else {
           rootElement.find('.form-controls button').prop('disabled', !selectedAsset.isDirty());
         }
@@ -89,6 +97,9 @@
     renderForm(rootElement, selectedAsset, localizedTexts, editConstrains, roadCollection);
     toggleMode(rootElement, editConstrains(selectedAsset) || applicationModel.isReadOnly());
     rootElement.find('.form-controls button').prop('disabled', !selectedAsset.isDirty());
+    if(services.length < 2){
+      rootElement.find('button.delete').hide();
+    }
   });
 
     function modifyService(services, id, modifications) {
@@ -117,6 +128,9 @@
       renderForm(rootElement, selectedAsset, localizedTexts, editConstrains, roadCollection);
       toggleMode(rootElement, editConstrains(selectedAsset) || applicationModel.isReadOnly());
       rootElement.find('.form-controls button').prop('disabled', !selectedAsset.isDirty());
+      if(newServices.length < 2){
+        rootElement.find('button.delete').hide();
+      }
     });
 
     rootElement.on('click', 'button.delete', function (evt) {
@@ -125,6 +139,9 @@
       var serviceId =  parseInt(existingService.find('input[type="text"]').attr('data-service-id'), 10);
       var services = selectedAsset.get().services;
       var newServices = _.reject(services, { id: serviceId });
+      if(newServices.length < 2){
+        rootElement.find('button.delete').hide();
+      }
       selectedAsset.set({ services: newServices });
     });
 
@@ -475,6 +492,10 @@
       '<div class="form form-horizontal" data-layer-name="' + layerName + '">' +
       '<a id="point-asset-work-list-link" class="floating-point-assets" href="#work-list/' + layerName + '">Geometrian ulkopuolelle jääneet ' + localizedTexts.manyFloatingAssetsLabel + '</a>' +
       '</div>');
+  }
+
+  function isSingleService(selectedAsset){
+    return selectedAsset.get().services.length < 2;
   }
 
   function toggleMode(rootElement, readOnly) {
