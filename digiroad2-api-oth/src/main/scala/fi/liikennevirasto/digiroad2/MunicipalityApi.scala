@@ -61,7 +61,9 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService, val 
     typeId match {
       case `lighting` => value.extractOpt[NewNumericOrTextualValueAsset] match {
         case Some(v) => NewLinearAsset(v.linkId, v.startMeasure, v.endMeasure, NumericValue(v.properties.map(_.value).head.toInt), v.sideCode, v.geometryTimestamp.getOrElse(VVHClient.createVVHTimeStamp()), None)
+        case _ => halt(NotFound("Asset not found"))
       }
+      case _ => halt(NotFound("Asset not found"))
     }
   }
 
@@ -189,7 +191,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService, val 
     body.map(bd => (bd\ "startMeasure").extractOrElse[Double](halt(BadRequest("Missing mandatory 'startMeasure' parameter"))))
     val properties = body.map(bd => (bd\ "properties").extractOrElse[Seq[AssetProperties]](halt(BadRequest("Missing asset properties"))))
 
-    if(properties.isEmpty)
+    if(properties.forall(_.isEmpty))
       halt(BadRequest("Missing asset properties values"))
 
     validateAssetPropertyValue(assetTypeId, properties)
