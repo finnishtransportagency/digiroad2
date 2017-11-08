@@ -75,7 +75,9 @@ input[type="checkbox"]:focus {
 // input[type="color"]
 
 .form-control,
-.form-select-control{
+.split-form-control,
+.form-select-control,
+.action-select {
   display: block;
   width: 100%;
   height: (@line-height-modifier * 5) + 2; // Height at least of their button counterparts: line-height + padding + border
@@ -119,7 +121,8 @@ input[type="checkbox"]:focus {
 // Designed to help with the organization and spacing of vertical forms. For
 // horizontal forms, use the predefined grid classes.
 
-.form-group {
+.form-group,
+.split-form-group{
   margin-bottom: @input-margin;
 }
 
@@ -286,7 +289,18 @@ form.roadAddressProject .form-control.small-input{
   margin-right: 11px;
 }
 
-form.roadAddressProject .form-control{
+form.roadAddressProject .split-form-control.small-input{
+  width: 55px !important;
+  margin-right: 11px;
+}
+
+form.roadAddressProject .form-control,
+form.roadAddressProject .action-select{
+  width: 190px !important;
+  margin-top: 6px !important;
+}
+
+form.roadAddressProject .split-form-control{
   width: 190px !important;
   margin-top: 6px !important;
 }
@@ -320,6 +334,11 @@ form.roadAddressProject p {
   margin-top: 6px !important;
 }
 
+.modal-dialog form.roadAddressProject .split-form-control {
+  width: 170px !important;
+  margin-top: 6px !important;
+}
+
 // Help text
 //
 // Apply to any element you wish to create light text for placement immediately
@@ -335,7 +354,8 @@ form.roadAddressProject p {
 //
 // Apply contextual and semantic states to individual form controls.
 
-.form-group {
+.form-group,
+.split-form-group{
   &.error {
     label {
       color: @error;
@@ -354,7 +374,8 @@ form.roadAddressProject p {
 // NOTE: you still have to manually set widths of labels and inputs to make them float correctly!
 
 .form-horizontal {
-  .form-group {
+  .form-group,
+  .split-form-group {
     .clearfix();
   }
 
@@ -377,6 +398,7 @@ form.roadAddressProject p {
   }
 
   .form-control,
+  .split-form-control,
   .checkbox,
   .select,
   .form-control-static,
@@ -387,6 +409,7 @@ form.roadAddressProject p {
 
   .choice-group {
     .form-control,
+    .split-form-control,
     .checkbox,
     .select {
       float: none;
@@ -427,7 +450,7 @@ form.roadAddressProject p {
     color: @gray-lighter;
   }
 
-  .form-control, .form-select-control {
+  .form-control, .split-form-control, .form-select-control, .action-select {
     border-color: @input-border-dark;
     color: @input-color-dark;
     background-color: @input-bg-dark;

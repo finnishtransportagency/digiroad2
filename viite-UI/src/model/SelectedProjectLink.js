@@ -5,6 +5,7 @@
     var ids = [];
     var dirty = false;
     var splitSuravage = {};
+    var LinkGeomSource = LinkValues.LinkGeomSource;
 
     var open = function (linkid, multiSelect) {
       if (!multiSelect) {
@@ -14,13 +15,64 @@
         ids = projectLinkCollection.getMultiSelectIds(linkid);
         current = projectLinkCollection.getByLinkId(ids);
       }
-      eventbus.trigger('projectLink:clicked', get());
+      eventbus.trigger('projectLink:clicked', get(linkid));
+    };
+
+    var orderSplitParts = function(links) {
+      var splitLinks =  _.partition(links, function(link){
+        return link.roadLinkSource === LinkGeomSource.SuravageLinkInterface.value && !_.isUndefined(link.connectedLinkId);
+      });
+      return _.sortBy(splitLinks[0], [
+        function (s) {
+          return (_.isUndefined(s.points) || _.isUndefined(s.points[0])) ? Infinity : s.points[0].y;},
+        function (s) {
+          return (_.isUndefined(s.points) || _.isUndefined(s.points[0])) ? Infinity : s.points[0].x;}]);
+    };
+
+    var openSplit = function (linkid, multiSelect) {
+      if (!multiSelect) {
+        current = projectLinkCollection.getByLinkId([linkid]);
+        ids = [linkid];
+      } else {
+        ids = projectLinkCollection.getMultiSelectIds(linkid);
+        current = projectLinkCollection.getByLinkId(ids);
+      }
+      var orderedSplitParts = orderSplitParts(get());
+      var suravageA = orderedSplitParts[0];
+      var suravageB = orderedSplitParts[1];
+      suravageA.marker = "A";
+      suravageB.marker = "B";
+      eventbus.trigger('split:projectLinks', [suravageA, suravageB]);
     };
 
     var splitSuravageLink = function(suravage, split, mousePoint) {
-      splitSuravageLinks(suravage, split, mousePoint, function(splitedSuravageLinks) {
-        var selection = [splitedSuravageLinks.created, splitedSuravageLinks.existing];
-        eventbus.trigger('splited:projectLinks', selection);
+      splitSuravageLinks(suravage, split, mousePoint, function(splitSuravageLinks) {
+        var selection = [splitSuravageLinks.created, splitSuravageLinks.existing];
+        if (!_.isUndefined(splitSuravageLinks.created.connectedLinkId)) {
+          // Re-split with a new split point
+          ids = projectLinkCollection.getMultiSelectIds(splitSuravageLinks.created.linkId);
+          current = projectLinkCollection.getByLinkId(_.flatten(ids));
+          var orderedSplitParts = orderSplitParts(get());
+          var orderedPreviousSplit = orderSplitParts(selection);
+          var suravageA = orderedSplitParts[0];
+          var suravageB = orderedSplitParts[1];
+          suravageA.marker = "A";
+          suravageB.marker = "B";
+          suravageA.points = orderedPreviousSplit[0].points;
+          suravageB.points = orderedPreviousSplit[1].points;
+          suravageA.splitPoint = mousePoint;
+          suravageB.splitPoint = mousePoint;
+          var measureLeft = calculateMeasure(suravageA);
+          var measureRight = calculateMeasure(suravageB);
+          suravageA.startMValue = 0;
+          suravageA.endMValue = measureLeft;
+          suravageB.startMValue = measureLeft;
+          suravageB.endMValue = measureLeft + measureRight;
+          eventbus.trigger('split:projectLinks', [suravageA, suravageB]);
+        } else {
+          ids = _.uniq(_.pluck(selection, 'linkId'));
+          eventbus.trigger('split:projectLinks', selection);
+        }
       });
     };
 
@@ -79,11 +131,17 @@
       }
     };
 
-    var get = function() {
-      return _.map(current, function(projectLink) {
-        return projectLink.getData();
+    var get = function(linkId) {
+      var clicked = _.filter(current, function (c) {return c.getData().linkId == linkId;});
+      var others = _.filter(_.map(current, function(projectLink) { return projectLink.getData();}), function (link) {
+        return link.linkId != linkId;
       });
+      if (!_.isUndefined(clicked[0])){
+        return [clicked[0].getData()].concat(others);
+      }
+      return others;
     };
+
     var setCurrent = function(newSelection) {
       current = newSelection;
     };
@@ -107,6 +165,7 @@
     return {
       open: open,
       openShift: openShift,
+      openSplit: openSplit,
       get: get,
       clean: clean,
       cleanIds: cleanIds,

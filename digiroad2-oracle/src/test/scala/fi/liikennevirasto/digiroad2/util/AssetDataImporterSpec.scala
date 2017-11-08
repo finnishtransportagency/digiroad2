@@ -96,7 +96,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Split multi-link lit road assets") {
+  ignore("Split multi-link lit road assets - mostly expired link ids") {
     TestTransactions.runWithRollback() {
       val originalId = createMultiLinkLinearAsset(100, Seq(LinearAssetSegment(Some(1), 0, 50), LinearAssetSegment(Some(2), 0, 50)))
 
@@ -123,7 +123,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Assign values to lit road properties") {
+  ignore("Assign values to lit road properties - mostly expired link ids") {
     TestTransactions.runWithRollback() {
       val litRoadId = createMultiLinkLinearAsset(100, Seq(LinearAssetSegment(Some(1), 0, 50)))
       val numericalLimitId = createMultiLinkLinearAsset(30, Seq(LinearAssetSegment(Some(1), 0, 50)))

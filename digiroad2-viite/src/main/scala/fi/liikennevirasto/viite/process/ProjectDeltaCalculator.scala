@@ -3,6 +3,7 @@ package fi.liikennevirasto.viite.process
 import fi.liikennevirasto.digiroad2.GeometryUtils
 import fi.liikennevirasto.digiroad2.util.Track.RightSide
 import fi.liikennevirasto.digiroad2.util.{RoadAddressException, Track}
+import fi.liikennevirasto.viite.dao.LinkStatus._
 import fi.liikennevirasto.viite.dao.{ProjectLink, _}
 import org.joda.time.DateTime
 import org.slf4j.LoggerFactory
@@ -34,15 +35,27 @@ object ProjectDeltaCalculator {
     Delta(project.startDate, terminations, newCreations, unChanged, transferred, numbering)
   }
 
-  private def adjustIfSplit(pl: ProjectLink, ra: Option[RoadAddress]) = {
+  private def adjustIfSplit(pl: ProjectLink, ra: Option[RoadAddress], connectedLink: Option[ProjectLink] = None) = {
     // Test if this link was a split case: if not, return original address, otherwise return a copy that is adjusted
-    if (pl.connectedLinkId.isEmpty || pl.connectedLinkId.get == 0)
+    if (!pl.isSplit)
       ra
     else
       ra.map(address => {
         val geom = GeometryUtils.truncateGeometry2D(address.geometry, pl.startMValue, pl.endMValue)
-        address.copy(startMValue = pl.startMValue, endMValue = pl.endMValue,
-          startAddrMValue = pl.startAddrMValue, endAddrMValue = pl.endAddrMValue, geometry = geom)
+        pl.status match {
+          case Transfer =>
+            val termAddress = connectedLink.map(l => (l.startAddrMValue, l.endAddrMValue))
+            termAddress.map{ case (st, en) =>
+              address.copy(startMValue = pl.startMValue, endMValue = pl.endMValue,
+                startAddrMValue = if (st == address.startAddrMValue) en else address.startAddrMValue,
+                endAddrMValue = if (en == address.endAddrMValue) st else address.endAddrMValue, geometry = geom)
+            }.getOrElse(address)
+          case UnChanged | Terminated =>
+            address.copy(startMValue = pl.startMValue, endMValue = pl.endMValue,
+              startAddrMValue = pl.startAddrMValue, endAddrMValue = pl.endAddrMValue, geometry = geom)
+          case _ =>
+            address
+        }
       })
   }
 
@@ -61,9 +74,13 @@ object ProjectDeltaCalculator {
       adjustIfSplit(pl, currentAddresses.get(pl.roadAddressId)).get -> pl)
   }
 
-  private def findTransfers(projectLinks: Seq[ProjectLink], currentAddresses: Map[Long, RoadAddress]) = {
-    projectLinks.filter(_.status == LinkStatus.Transfer).map(pl =>
-      adjustIfSplit(pl, currentAddresses.get(pl.roadAddressId)).get -> pl)
+  private def findTransfers(projectLinks: Seq[ProjectLink], currentAddresses: Map[Long, RoadAddress]): Seq[(RoadAddress, ProjectLink)] = {
+    val (split, nonSplit) = projectLinks.filter(_.status == LinkStatus.Transfer).partition(_.isSplit)
+    split.map(pl =>
+      adjustIfSplit(pl, currentAddresses.get(pl.roadAddressId),
+        projectLinks.find(_.linkId == pl.connectedLinkId.get)).get -> pl) ++
+      nonSplit.map(pl =>
+        adjustIfSplit(pl, currentAddresses.get(pl.roadAddressId)).get -> pl)
   }
 
   private def findNumbering(projectLinks: Seq[ProjectLink], currentAddresses: Map[Long, RoadAddress]) = {

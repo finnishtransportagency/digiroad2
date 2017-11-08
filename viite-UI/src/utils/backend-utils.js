@@ -181,7 +181,7 @@
           $.ajax({
               contentType: "application/json",
               type: "PUT",
-              url: "api/viite/roadlinks/roadaddress/project/directionchangenewroadlink",
+              url: "api/viite/project/reverse",
               data: JSON.stringify(Json),
               dataType: "json",
               success: success,
@@ -205,9 +205,9 @@
       return loadingProject;
     }, 1000);
 
-    this.getChangeTable = function(id,callback) {
+    this.getChangeTable = _.throttle(function(id,callback) {
       $.getJSON('api/viite/project/getchangetable/'+id, callback);
-    };
+    }, 500);
 
 
     this.getUserRoles = function () {

@@ -23,7 +23,8 @@
 
 //## Separate styles if the box is holding a form
 .form-box {
-	.form-group {
+	.form-group,
+	.split-form-group {
 		margin-bottom: 0;
 		padding: @line-height-modifier * 2;
 		border-bottom: 1px solid @gray-light-2;
@@ -45,7 +46,8 @@
 			.box-sizing(border-box);
 		}
 
-		.form-control {
+		.form-control,
+		.split-form-control {
 			width: 75%;
 		}
 
@@ -57,7 +59,8 @@
 	}
 
 	.form-dark {
-		.form-group {
+		.form-group,
+		.split-form-group {
 			border-color: @gray-darker-2;
 		}
 	}

@@ -33,7 +33,6 @@ class ViiteTierekisteriClientSpec extends FunSuite with Matchers {
 
   def getRestEndPoint: String = {
     val loadedKeyString = dr2properties.getProperty("digiroad2.tierekisteriViiteRestApiEndPoint", "http://localhost:8080/api/tierekisteri/")
-    println("viite-endpoint = "+loadedKeyString)
     if (loadedKeyString == null)
       throw new IllegalArgumentException("Missing TierekisteriViiteRestApiEndPoint")
     loadedKeyString

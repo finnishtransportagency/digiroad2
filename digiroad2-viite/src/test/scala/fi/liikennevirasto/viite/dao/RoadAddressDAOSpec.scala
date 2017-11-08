@@ -93,7 +93,6 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
     }
   }
 
-
   test("Set road address to floating and update the geometry as well") {
     runWithRollback {
       val address = RoadAddressDAO.fetchByLinkId(Set(5170942)).head
@@ -416,6 +415,15 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Returning of a terminated road") {
+    runWithRollback {
+      createTerminatedRoadAddress7777(Option.apply(DateTime.parse("1975-11-18")))
+      val roadAddresses = RoadAddressDAO.fetchByLinkId(Set(7777777))
+      roadAddresses.size should be (1)
+      roadAddresses.head.terminated should be (true)
+    }
+  }
+
   private def createRoadAddress8888(startDate: Option[DateTime], endDate: Option[DateTime] = None): Unit = {
     RoadAddressDAO.create(
       Seq(
@@ -424,4 +432,16 @@ class RoadAddressDAOSpec extends FunSuite with Matchers {
           Option("TestUser"), Sequences.nextLrmPositionPrimaryKeySeqValue, 8888888, 0, 35, SideCode.TowardsDigitizing,
           0, (None, None), false, Seq(Point(24.24477,987.456)), LinkGeomSource.Unknown, 8)))
   }
+
+  private def createTerminatedRoadAddress7777(startDate: Option[DateTime]): Unit = {
+    val roadAddressId = Sequences.nextViitePrimaryKeySeqValue
+    RoadAddressDAO.create(
+      Seq(
+        RoadAddress(roadAddressId, 7777, 1, RoadType.PublicRoad, Track.Combined,
+          Discontinuity.Continuous, 0, 35, startDate, Option.apply(DateTime.parse("2000-01-01")),
+          Option("TestUser"), Sequences.nextLrmPositionPrimaryKeySeqValue, 7777777, 0, 35, SideCode.TowardsDigitizing,
+          0, (None, None), false, Seq(Point(24.24477,987.456)), LinkGeomSource.Unknown, 8)))
+    sqlu"""UPDATE ROAD_ADDRESS SET Terminated = 1 Where ID = ${roadAddressId}""".execute
+  }
+
 }
