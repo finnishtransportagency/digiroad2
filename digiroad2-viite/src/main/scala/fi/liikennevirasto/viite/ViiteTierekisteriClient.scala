@@ -68,7 +68,6 @@ case object ChangeInfoItemSerializer extends CustomSerializer[RoadAddressChangeI
           JField("change_type", JInt(BigInt.apply(o.changeType.value))),
           JField("continuity", JInt(BigInt.apply(o.discontinuity.value))),
           JField("road_type", JInt(BigInt.apply(o.roadType.value))),
-          JField("reversed", JInt(BigInt.apply(if (o.reversed) 1 else 0))),
           JField("source", Extraction.decompose(emptySection)),
           JField("target", Extraction.decompose(o.target))
         )
@@ -199,7 +198,7 @@ object ViiteTierekisteriClient {
 
   private val client = HttpClientBuilder.create().build
 
-  def createJsonmessage(trProject:ChangeProject): StringEntity = {
+  def createJsonMessage(trProject:ChangeProject): StringEntity = {
     implicit val formats = DefaultFormats + ChangeInfoRoadPartsSerializer + ChangeInfoItemSerializer + ChangeProjectSerializer
     val json = Serialization.write(Extraction.decompose(trProject))
     new StringEntity(json, ContentType.APPLICATION_JSON)
@@ -216,7 +215,7 @@ object ViiteTierekisteriClient {
     implicit val formats = DefaultFormats
     val request = new HttpPost(getRestEndPoint+"addresschange/")
     request.addHeader("X-Authorization", "Basic " + auth.getAuthInBase64)
-    request.setEntity(createJsonmessage(trProject))
+    request.setEntity(createJsonMessage(trProject))
     val response = client.execute(request)
     try {
       val statusCode = response.getStatusLine.getStatusCode

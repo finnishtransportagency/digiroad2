@@ -14,7 +14,7 @@
     var transferredLinkStatus = 3;
     var numberingLinkStatus = 4;
     var terminatedLinkStatus = 5;
-    
+
     var changeTable =
       $('<div class="change-table-frame"></div>');
     // Text about validation success hard-coded now
@@ -44,6 +44,7 @@
       '<td class="project-change-table-dimension">JATKUU</td>' +
       '<td class="project-change-table-dimension dimension-road-type">TIETYYPPI</td>' +
       '<td class="project-change-table-dimension ">ELY</td>' +
+      '<td class="project-change-table-dimension">KAANTO</td>' +
       '<td class="project-change-table-dimension">TIE</td>' +
       '<td class="project-change-table-dimension">AJR</td>' +
       '<td class="project-change-table-dimension">AOSA</td>' +
@@ -85,26 +86,31 @@
             if (changeInfoSeq.changetype === newLinkStatus) {
               htmlTable += '<tr class="change-table-data-row">';
               htmlTable += getEmptySource(changeInfoSeq);
+              htmlTable += getReversed(changeInfoSeq);
               htmlTable += getTargetInfo(changeInfoSeq);
               htmlTable += '</tr>';
             } else if (changeInfoSeq.changetype === terminatedLinkStatus) {
               htmlTable += '<tr class="change-table-data-row">';
               htmlTable += getSourceInfo(changeInfoSeq);
+              htmlTable += getReversed(changeInfoSeq);
               htmlTable += getEmptyTarget();
               htmlTable += '</tr>';
             } else if (changeInfoSeq.changetype === unchangedStatus) {
               htmlTable += '<tr class="change-table-data-row">';
               htmlTable += getSourceInfo(changeInfoSeq);
+              htmlTable += getReversed(changeInfoSeq);
               htmlTable += getTargetInfo(changeInfoSeq);
               htmlTable += '</tr>';
             } else if (changeInfoSeq.changetype === transferredLinkStatus) {
               htmlTable += '<tr class="change-table-data-row">';
               htmlTable += getSourceInfo(changeInfoSeq);
+              htmlTable += getReversed(changeInfoSeq);
               htmlTable += getTargetInfo(changeInfoSeq);
               htmlTable += '</tr>';
             } else if (changeInfoSeq.changetype === numberingLinkStatus) {
               htmlTable += '<tr class="change-table-data-row">';
               htmlTable += getSourceInfo(changeInfoSeq);
+              htmlTable += getReversed(changeInfoSeq);
               htmlTable += getTargetInfo(changeInfoSeq);
               htmlTable += '</tr>';
             }
@@ -125,6 +131,9 @@
       });
     }
 
+    function getReversed(changeInfoSeq){
+      return ((changeInfoSeq.reversed) ? '<td class="project-change-table-data-cell">&#9745</td>': '<td class="project-change-table-data-cell">&#9744</td>');
+    }
 
     function getEmptySource(changeInfoSeq) {
       return '<td class="project-change-table-dimension-first">' + getChangeType(changeInfoSeq.changetype) + '</td>' +
@@ -153,20 +162,20 @@
 
     function getTargetInfo(changeInfoSeq)
     {
-     return '<td class="project-change-table-data-cell">' + changeInfoSeq.target.roadNumber + '</td>'+
-      '<td class="project-change-table-data-cell">' + changeInfoSeq.target.trackCode + '</td>' +
-      '<td class="project-change-table-data-cell">' + changeInfoSeq.target.startRoadPartNumber + '</td>' +
-      '<td class="project-change-table-data-cell">' + changeInfoSeq.target.startAddressM + '</td>' +
-      '<td class="project-change-table-data-cell">' + changeInfoSeq.target.endRoadPartNumber + '</td>' +
-      '<td class="project-change-table-data-cell">' + changeInfoSeq.target.endAddressM + '</td>' +
-      '<td class="project-change-table-data-cell">' + changeInfoSeq.target.discontinuity + '</td>' +
-      '<td class="project-change-table-data-cell data-cell-road-type">'+ changeInfoSeq.target.roadType + '</td>' +
-      '<td class="project-change-table-data-cell">' + changeInfoSeq.target.ely + '</td>';
+      return '<td class="project-change-table-data-cell">' + changeInfoSeq.target.roadNumber + '</td>'+
+        '<td class="project-change-table-data-cell">' + changeInfoSeq.target.trackCode + '</td>' +
+        '<td class="project-change-table-data-cell">' + changeInfoSeq.target.startRoadPartNumber + '</td>' +
+        '<td class="project-change-table-data-cell">' + changeInfoSeq.target.startAddressM + '</td>' +
+        '<td class="project-change-table-data-cell">' + changeInfoSeq.target.endRoadPartNumber + '</td>' +
+        '<td class="project-change-table-data-cell">' + changeInfoSeq.target.endAddressM + '</td>' +
+        '<td class="project-change-table-data-cell">' + changeInfoSeq.target.discontinuity + '</td>' +
+        '<td class="project-change-table-data-cell data-cell-road-type">'+ changeInfoSeq.target.roadType + '</td>' +
+        '<td class="project-change-table-data-cell">' + changeInfoSeq.target.ely + '</td>';
     }
 
     function getSourceInfo(changeInfoSeq)
     {
-     return '<tr class="change-table-data-row">' +
+      return '<tr class="change-table-data-row">' +
         '<td class="project-change-table-dimension-first">' + getChangeType(changeInfoSeq.changetype) + '</td>' +
         '<td class="project-change-table-data-cell">' + changeInfoSeq.source.roadNumber + '</td>' +
         '<td class="project-change-table-data-cell">' + changeInfoSeq.source.trackCode + '</td>' +
