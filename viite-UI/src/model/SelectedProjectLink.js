@@ -70,6 +70,7 @@
           suravageB.endMValue = measureLeft + measureRight;
           eventbus.trigger('split:projectLinks', [suravageA, suravageB]);
         } else {
+          ids = _.uniq(_.pluck(selection, 'linkId'));
           eventbus.trigger('split:projectLinks', selection);
         }
       });
