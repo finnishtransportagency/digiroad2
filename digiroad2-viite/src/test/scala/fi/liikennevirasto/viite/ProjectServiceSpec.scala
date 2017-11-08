@@ -595,18 +595,16 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
 
       projectService.updateRoadAddressWithProjectLinks(ProjectState.Saved2TR, projectId)
 
-      val roadsAfterChanges = RoadAddressDAO.fetchByLinkId(Set(linkId))
-      roadsAfterChanges.size should be(2)
+      val roadsAfterChanges = RoadAddressDAO.fetchByLinkId(Set(linkId), false, true)
+      roadsAfterChanges.size should be(1)
       val roadsAfterPublishing = roadsAfterChanges.filter(x => x.startDate.nonEmpty && x.endDate.isEmpty).head
       val endedAddress = roadsAfterChanges.filter(x => x.endDate.nonEmpty)
 
       roadsBeforeChanges.linkId should be(roadsAfterPublishing.linkId)
       roadsBeforeChanges.roadNumber should be(roadsAfterPublishing.roadNumber)
       roadsBeforeChanges.roadPartNumber should be(roadsAfterPublishing.roadPartNumber)
-      endedAddress.head.endDate.nonEmpty should be(true)
-      endedAddress.size should be(1)
-      endedAddress.head.endDate.get.toString("yyyy-MM-dd") should be("1990-01-01")
-      roadsAfterPublishing.startDate.get.toString("yyyy-MM-dd") should be("1990-01-01")
+      endedAddress.isEmpty should be (true)
+      roadsAfterPublishing.startDate.get.toString("yyyy-MM-dd") should be("1901-01-01")
     }
   }
 
@@ -682,7 +680,7 @@ class ProjectServiceSpec extends FunSuite with Matchers with BeforeAndAfter {
     } should have size (count - 1)
   }
 
-  ignore("process roadChange data and expire the roadLink") {
+  test("process roadChange data and expire the roadLink") {
     //First Create Mock Project, RoadLinks and
 
     runWithRollback {

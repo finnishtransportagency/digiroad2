@@ -153,7 +153,8 @@ object ProjectDAO {
     val addressPS = dynamicSession.prepareStatement("insert into PROJECT_LINK (id, project_id, lrm_position_id, " +
       "road_number, road_part_number, " +
       "track_code, discontinuity_type, START_ADDR_M, END_ADDR_M, created_by, " +
-      "calibration_points, status, road_type, road_address_id, connected_link_id, ely) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?)")
+      "calibration_points, status, road_type, road_address_id, connected_link_id, ely, reversed) values " +
+      "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
     val lrmIds = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= ${roadAddresses.size}""".as[Long].list
     val (ready, idLess) = roadAddresses.partition(_.id != fi.liikennevirasto.viite.NewRoadAddress)
     val plIds = Sequences.fetchViitePrimaryKeySeqValues(idLess.size)
@@ -185,7 +186,6 @@ object ProjectDAO {
         addressPS.setString(15, null)
       addressPS.setLong(16, address.ely)
       addressPS.setBoolean(17, address.reversed)
-      addressPS.setLong(16, address.ely)
       addressPS.addBatch()
     }
     lrmPositionPS.executeBatch()

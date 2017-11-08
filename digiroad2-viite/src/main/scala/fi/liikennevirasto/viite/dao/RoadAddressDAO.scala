@@ -961,7 +961,12 @@ object RoadAddressDAO {
       "TO_DATE(?, 'YYYY-MM-DD'), ?, sysdate, MDSYS.SDO_GEOMETRY(4002, 3067, NULL, MDSYS.SDO_ELEM_INFO_ARRAY(1,2,1), MDSYS.SDO_ORDINATE_ARRAY(" +
       "?,?,0.0,?,?,?,0.0,?)), ?, ?, ? ,?)")
     val ids = sql"""SELECT lrm_position_primary_key_seq.nextval FROM dual connect by level <= ${roadAddresses.size}""".as[Long].list
-    val savedIds = roadAddresses.zip(ids).map { case ((address), (lrmId)) =>
+    val (ready, idLess) = roadAddresses.partition(_.id != fi.liikennevirasto.viite.NewRoadAddress)
+    val plIds = Sequences.fetchViitePrimaryKeySeqValues(idLess.size)
+    val createAddresses = ready ++ idLess.zip(plIds).map(x =>
+      x._1.copy(id = x._2)
+    )
+    val savedIds = createAddresses.zip(ids).foreach { case ((address), (lrmId)) =>
       createLRMPosition(lrmPositionPS, lrmId, address.linkId, address.sideCode.value, address.startMValue,
         address.endMValue, address.adjustedTimestamp, address.linkGeomSource.value)
       val nextId = if (address.id == fi.liikennevirasto.viite.NewRoadAddress)
@@ -996,13 +1001,12 @@ object RoadAddressDAO {
       addressPS.setLong(20, address.ely)
       addressPS.setInt(21, address.roadType.value)
       addressPS.addBatch()
-      nextId
     }
     lrmPositionPS.executeBatch()
     addressPS.executeBatch()
     lrmPositionPS.close()
     addressPS.close()
-    savedIds.toSeq
+    createAddresses.map(_.id).toSeq
   }
 
   def createLRMPosition(lrmPositionPS: PreparedStatement, id: Long, linkId: Long, sideCode: Int,
