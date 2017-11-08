@@ -376,6 +376,7 @@ class ProjectSectionCalculatorSpec extends FunSuite with Matchers {
       Seq(Point(42, 11), Point(103, 15)), LinkGeomSource.NormalLinkInterface, 8))
     val list = List(projectLink0, projectLink1, projectLink2, projectLink3, projectLink4, projectLink5)
     val ordered = ProjectSectionCalculator.assignMValues(list)
+    ordered.map(fi.liikennevirasto.viite.util.prettyPrint).foreach(println)
     ordered.flatMap(_.calibrationPoints._1).foreach(
       _.addressMValue should be (0L)
     )

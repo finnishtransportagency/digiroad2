@@ -33,7 +33,7 @@ case class ProjectRoadAddressInfo(projectId: Long, roadNumber: Long, roadPartNum
 case class RoadAddressProjectExtractor(id: Long, projectEly: Option[Long], status: Long, name: String, startDate: String,
                                        additionalInfo: String, roadPartList: List[RoadPartExtractor])
 
-case class RoadAddressProjectLinksExtractor(linkIds: Set[Long], linkStatus: Int, projectId: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Int, discontinuity: Int, roadEly: Long, roadLinkSource: Int, roadType: Int, userDefinedEndAddressM: Option[Int])
+case class RoadAddressProjectLinksExtractor(linkIds: Seq[Long], linkStatus: Int, projectId: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Int, discontinuity: Int, roadEly: Long, roadLinkSource: Int, roadType: Int, userDefinedEndAddressM: Option[Int])
 
 case class RoadPartExtractor(roadNumber: Long, roadPartNumber: Long, ely: Long)
 
@@ -356,6 +356,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val user = userProvider.getCurrentUser()
     try {
       val links = parsedBody.extract[RoadAddressProjectLinksExtractor]
+      logger.info(s"Creating new links: ${links.linkIds.mkString(",")}")
       val writableProject = projectWritable(links.projectId)
       writableProject.createProjectLinks(links.linkIds, links.projectId, links.roadNumber, links.roadPartNumber,
         links.trackCode, links.discontinuity, links.roadType, links.roadLinkSource, links.roadEly, user.username)
@@ -376,7 +377,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     try {
       val links = parsedBody.extract[RoadAddressProjectLinksExtractor]
       val writableProject = projectWritable(links.projectId)
-      writableProject.updateProjectLinks(links.projectId, links.linkIds,
+      writableProject.updateProjectLinks(links.projectId, links.linkIds.toSet,
         LinkStatus.apply(links.linkStatus), user.username, links.roadNumber,
         links.roadPartNumber, links.userDefinedEndAddressM, links.roadType, links.discontinuity, links.roadEly) match {
         case Some(errorMessage) => Map("success" -> false, "errormessage" -> errorMessage)

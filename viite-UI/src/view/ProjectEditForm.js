@@ -154,14 +154,18 @@
     };
 
     var newRoadAddressInfo = function(){
+      var road = selectedProjectLink[0].roadNumber;
+      var part = selectedProjectLink[0].roadPartNumber;
+      var track = selectedProjectLink[0].trackCode;
       return '<div class="form-group new-road-address" hidden>' +
         '<div><label></label></div><div><label style = "margin-top: 50px">TIEOSOITTEEN TIEDOT</label></div>' +
         addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('AJR')+ addSmallLabel('ELY')  + addSmallLabel('JATKUU')+
         '</div>' +
         '<div class="form-group new-road-address" id="new-address-input1" hidden>'+
-        addSmallInputNumber('tie',(selectedProjectLink[0].roadNumber !== 0 ? selectedProjectLink[0].roadNumber : '')) +
-        addSmallInputNumber('osa',(selectedProjectLink[0].roadPartNumber !== 0 ? selectedProjectLink[0].roadPartNumber : '')) +
-        addSmallInputNumber('ajr',(selectedProjectLink[0].trackCode !== 99 ? selectedProjectLink[0].trackCode : '')) +
+        addSmallInputNumber('tie',(road !== 0 ? road : '')) +
+        addSmallInputNumber('osa',(part !== 0 ? part : '')) +
+        addSmallInputNumber('ajr',(track !== 99 ? track :
+          (road >= 20001 && road <= 39999 ? '0' : ''))) +
         addSmallInputNumberDisabled('ely', selectedProjectLink[0].elyCode) +
         addDiscontinuityDropdown() +
         addSmallLabel('TIETYYPPI') +
@@ -177,6 +181,8 @@
           if (response.success) {
             $('#tie').val(response.roadNumber);
             $('#osa').val(response.roadPartNumber);
+            if (!_.isUndefined(response.roadNumber) && response.roadNumber >= 20001 && response.roadNumber <= 39999)
+              $('#ajr').val("0");
           }
         });
       }
@@ -201,7 +207,7 @@
         '<label class="control-label-small" style="display: inline">ETÄISYYSLUKEMA VALINNAN</label>' +
         '</div>' +
         '<div class="form-group">' +
-        '<label class="control-label-small" style="float: left; margin-top: 10px">ALLUSSA</label>' +
+        '<label class="control-label-small" style="float: left; margin-top: 10px">ALUSSA</label>' +
         addSmallInputNumber('beginDistance', '--') +
         '<label class="control-label-small" style="float: left;margin-top: 10px">LOPUSSA</label>' +
         addSmallInputNumber('endDistance', '--') +
@@ -405,9 +411,8 @@
         selectedProjectLink = false;
         if (typeof data !== 'undefined' && typeof data.publishable !== 'undefined' && data.publishable) {
           eventbus.trigger('roadAddressProject:projectLinkSaved', data.id, data.publishable);
-        }
-        else {
-          eventbus.trigger('roadAddressProject:projectLinkSaved', data.id, data.publishable);
+        } else {
+          eventbus.trigger('roadAddressProject:projectLinkSaved');
         }
       });
 
