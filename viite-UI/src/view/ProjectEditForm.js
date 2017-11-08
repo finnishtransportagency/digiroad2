@@ -8,20 +8,12 @@
     var currentProject = false;
     var selectedProjectLink = false;
     var backend=new Backend();
-    var projectStatus = LinkValues.ProjectStatus;
+    var formCommon = new FormCommon('');
 
     var staticField = function(labelText, dataField) {
       var field;
       field = '<div class="form-group">' +
         '<p class="form-control-static asset-log-info">' + labelText + ' : ' + dataField + '</p>' +
-        '</div>';
-      return field;
-    };
-    var actionSelectedField = function() {
-      //TODO: cancel and save buttons Viite-374
-      var field;
-      field = '<div class="form-group action-selected-field" hidden = "true">' +
-        '<div class="asset-log-info">' + 'Tarkista tekemäsi muutokset.' + '<br>' + 'Jos muutokset ok, tallenna.' + '</div>' +
         '</div>';
       return field;
     };
@@ -38,16 +30,9 @@
         '<span id="closeProjectSpan" class="rightSideSpan" style="visibility:hidden;">Poistu projektista</span>';
     };
 
-    var clearInformationContent = function() {
-      $('#information-content').empty();
-    };
-
     var sendRoadAddressChangeButton = function() {
       var actualProject = projectCollection.getCurrentProject();
-      var disabledInput = !_.isUndefined(actualProject) && actualProject.project.statusCode === projectStatus.ErroredInTR.value;
-      return '<div class="project-form form-controls">' +
-        '<button class="show-changes btn btn-block btn-show-changes">Avaa projektin yhteenvetotaulukko</button>' +
-        '<button id ="send-button" class="send btn btn-block btn-send"' + (disabledInput ? 'disabled' : '') +'>Tee tieosoitteenmuutosilmoitus</button></div>';
+      return formCommon.sendRoadAddressChangeButton('project-', actualProject);
     };
 
     var showProjectChangeButton = function() {
@@ -112,7 +97,7 @@
     };
 
     var selectedProjectLinkTemplate = function(project, optionTags, selected) {
-      var selection = selectedData(selected);
+      var selection = formCommon.selectedData(selected);
       return _.template('' +
         '<header>' +
         titleWithProjectName(project.name) +
@@ -126,13 +111,13 @@
 
         ((applicationModel.getSelectedTool() === 'Cut' && selected.length == 2) ?
           selectionFormCutted(selection, selected) : selectionForm(selection, selected, 0)) +
-        ((selected.size == 2 && selected[0].linkId === selected[1].linkId) ? '' : changeDirection()) +
-        actionSelectedField()+
+        ((selected.size == 2 && selected[0].linkId === selected[1].linkId) ? '' : formCommon.changeDirection()) +
+        formCommon.actionSelectedField()+
         '</div>'+
         '</div>' +
         '</div>'+
         '</div>'+
-        '<footer>' + actionButtons() + '</footer>');
+        '<footer>' + formCommon.actionButtons('project-', projectCollection.isDirty()) + '</footer>');
     };
 
     var selectionForm = function(selection, selected){
@@ -150,55 +135,8 @@
         '<option id="drop_0_' + LinkStatus.Revert.description + '" value='+ LinkStatus.Revert.description + ' ' + defineOptionModifiers(LinkStatus.Revert.description, selected) + '>Palautus aihioksi tai tieosoitteettomaksi</option>' +
         '</select>'+
         '</div>'+
-        newRoadAddressInfo(selected) +
+        formCommon.newRoadAddressInfo(selected, selectedProjectLink[0]) +
         '</form>';
-    };
-
-    var newRoadAddressInfo = function(selected){
-      var road = selectedProjectLink[0].roadNumber;
-      var part = selectedProjectLink[0].roadPartNumber;
-      var track = selectedProjectLink[0].trackCode;
-      return '<div class="form-group new-road-address" hidden>' +
-        '<div><label></label></div><div><label style = "margin-top: 50px">TIEOSOITTEEN TIEDOT</label></div>' +
-        addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('AJR')+ addSmallLabel('ELY')  + addSmallLabel('JATKUU')+
-        '</div>' +
-        '<div class="form-group new-road-address" id="new-address-input1" hidden>'+
-        addSmallInputNumber('tie',(road !== 0 ? road : '')) +
-        addSmallInputNumber('osa',(part !== 0 ? part : '')) +
-        addSmallInputNumber('ajr',(track !== 99 ? track :
-          (road >= 20001 && road <= 39999 ? '0' : ''))) +
-        addSmallInputNumberDisabled('ely', selectedProjectLink[0].elyCode) +
-        addDiscontinuityDropdown() +
-        addSmallLabel('TIETYYPPI') +
-        roadTypeDropdown() +
-        distanceValue() +
-        '</div>';
-    };
-
-    var replaceAddressInfo = function() {
-      if (selectedProjectLink[0].roadNumber === 0 && selectedProjectLink[0].roadPartNumber === 0 && selectedProjectLink[0].trackCode === 99 )
-      {
-        backend.getNonOverridenVVHValuesForLink(selectedProjectLink[0].linkId, function (response) {
-          if (response.success) {
-            $('#tie').val(response.roadNumber);
-            $('#osa').val(response.roadPartNumber);
-            if (!_.isUndefined(response.roadNumber) && response.roadNumber >= 20001 && response.roadNumber <= 39999)
-              $('#ajr').val("0");
-          }
-        });
-      }
-    };
-
-    var roadTypeDropdown = function() {
-      return '<select class="form-control roadTypeDropDown" id="roadTypeDropDown" size = "1" style="width: auto !important; display: inline">' +
-        '<option value = "1">1 Yleinen tie</option>'+
-        '<option value = "2">2 Lauttaväylä yleisellä tiellä</option>'+
-        '<option value = "3">3 Kunnan katuosuus</option>'+
-        '<option value = "4">4 Yleisen tien työmaa</option>'+
-        '<option value = "5">5 Yksityistie</option>'+
-        '<option value = "9">9 Omistaja selvittämättä</option>' +
-        '<option value = "99">99 Ei määritelty</option>' +
-        '</select>';
     };
 
     var distanceValue = function() {
@@ -216,44 +154,10 @@
         '</div></div>';
     };
 
-    var addDiscontinuityDropdown = function(){
-      if(selectedProjectLink[0].endAddressM === 0){
-        return '<select class="form-select-control" id="discontinuityDropdown" size="1">'+
-          '<option value = "5" selected disabled hidden>5 Jatkuva</option>'+
-          '</select>';
-      }
-      else {
-        var selectedDiscontinuity = _.max(selectedProjectLink, function(projectLink){
-          return projectLink.endAddressM;
-        }).discontinuity;
-        return '<select class="form-select-control" id="discontinuityDropdown" size="1">' +
-          '<option value="1" ' + (selectedDiscontinuity === 1 ? 'selected' : '') + '>1 Tien loppu</option>' +
-          '<option value="2" ' + (selectedDiscontinuity === 2 ? 'selected' : '') + '>2 Epäjatkuva</option>' +
-          '<option value="3" ' + (selectedDiscontinuity === 3 ? 'selected' : '') + '>3 ELY:n raja</option>' +
-          '<option value="4" ' + (selectedDiscontinuity === 4 ? 'selected' : '') + '>4 Lievä epäjatkuvuus</option>' +
-          '<option value="5" ' + (selectedDiscontinuity === 5 ? 'selected' : '') + '>5 Jatkuva</option>' +
-          '</select>';
-      }
-    };
-
     var changeDirection = function () {
       return '<div hidden class="form-group changeDirectionDiv" style="margin-top:15px">' +
         '<button class="form-group changeDirection btn btn-primary">Käännä kasvusuunta</button>' +
         '</div>';
-    };
-
-    var addSmallLabel = function(label){
-      return '<label class="control-label-small">'+label+'</label>';
-    };
-
-    var addSmallInputNumber = function(id, value){
-      //Validate only number characters on "onkeypress" including TAB and backspace
-      return '<input type="text" onkeypress="return (event.charCode >= 48 && event.charCode <= 57) || (event.keyCode == 8 || event.keyCode == 9)' +
-        '"class="form-control small-input roadAddressProject" id="'+id+'" value="'+(_.isUndefined(value)? '' : value )+'" onclick=""/>';
-    };
-
-    var addSmallInputNumberDisabled = function(id, value){
-      return '<input type="text" class="form-control small-input roadAddressProject" id="'+id+'" value="'+(_.isUndefined(value)? '' : value )+'" readonly="readonly"/>';
     };
 
     var emptyTemplate = function(project) {
@@ -286,11 +190,6 @@
       } else {
         rootElement.find('.project-form button.update').prop("disabled", true);
       }
-    };
-
-    var toggleAditionalControls = function(){
-      $('[id^=editProject]').css('visibility', 'visible');
-      $('#closeProjectSpan').css('visibility', 'visible');
     };
 
     var changeDropDownValue = function (statusCode) {
@@ -359,11 +258,11 @@
       eventbus.on('projectLink:clicked', function(selected) {
         selectedProjectLink = selected;
         currentProject = projectCollection.getCurrentProject();
-        clearInformationContent();
+        formCommon.clearInformationContent();
         rootElement.html(selectedProjectLinkTemplate(currentProject.project, options, selectedProjectLink));
-        replaceAddressInfo();
-        checkInputs();
-        toggleAditionalControls();
+        formCommon.replaceAddressInfo(backend, selectedProjectLink);
+        checkInputs('.project-');
+        formCommon.toggleAdditionalControls();
         changeDropDownValue(selectedProjectLink[0].status);
         disableFormInputs();
         var selectedDiscontinuity = _.max(selectedProjectLink, function(projectLink){
@@ -497,7 +396,7 @@
         }
         selectedProjectLinkProperty.setDirty(false);
         rootElement.html(emptyTemplate(currentProject.project));
-        toggleAditionalControls();
+        formCommon.toggleAdditionalControls();
       };
 
       var cancelChanges = function() {
@@ -618,11 +517,7 @@
         var publishButton = sendRoadAddressChangeButton();
         var projectChangesButton = showProjectChangeButton();
         if(isProjectPublishable() && isProjectEditable()) {
-          $('#information-content').html('' +
-            '<div class="form form-horizontal">' +
-            '<p>' + 'Validointi ok. Voit tehdä tieosoitteenmuutosilmoituksen' + '<br>' +
-            'tai jatkaa muokkauksia.' + '</p>' +
-            '</div>');
+          formCommon.setInformationContent();
           $('footer').html(publishButton);
         }
         else
@@ -630,7 +525,7 @@
       });
 
       rootElement.on('keyup','.form-control.small-input', function () {
-        checkInputs();
+        checkInputs('.project-');
         setFormDirty();
       });
 
