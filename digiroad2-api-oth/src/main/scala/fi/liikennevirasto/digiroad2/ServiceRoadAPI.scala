@@ -25,8 +25,7 @@ class ServiceRoadAPI(val maintenanceService: MaintenanceService, val roadLinkSer
     contentType = formats("json")
     val bbox = params.get("boundingBox").map(constructBoundingRectangle).getOrElse(halt(BadRequest("Bounding box was missing")))
     validateBoundingBox(bbox)
-
-
+    createGeoJson(maintenanceService.getAllByBoundingBox(bbox))
   }
 
   get("/huoltotiet/:areaId"){
@@ -49,20 +48,15 @@ class ServiceRoadAPI(val maintenanceService: MaintenanceService, val roadLinkSer
     }
   }
 
-  private def createGeoJson(maintenanceAsset: Seq[PersistedLinearAsset]) = {
-    val linkIdMap = maintenanceAsset.groupBy(_.linkId).mapValues(_.map(_.id))
-    val roadLinks = roadLinkService.getRoadLinksByLinkIdsFromVVH(linkIdMap.keySet)
-
-    maintenanceAsset.flatMap { asset =>
-      roadLinks.find(_.linkId == asset.linkId).map{
-        roadlink =>
-          val geometry = GeometryUtils.truncateGeometry2D(roadlink.geometry, asset.startMeasure, asset.endMeasure)
-          Map(
-            "type" -> "Feature",
-            "geometry" -> getLineStringGeometry(geometry),
-            "properties" -> getProperties(asset, asset.value.getOrElse(MaintenanceRoad(Seq())).asInstanceOf[MaintenanceRoad].properties, roadlink)
-          )
-      }
+  private def createGeoJson(maintenanceAsset: Seq[(PersistedLinearAsset, RoadLink)]) = {
+    maintenanceAsset.map {
+      case (asset, roadlink) =>
+        val geometry = GeometryUtils.truncateGeometry2D(roadlink.geometry, asset.startMeasure, asset.endMeasure)
+        Map(
+          "type" -> "Feature",
+          "geometry" -> getLineStringGeometry(geometry),
+          "properties" -> getProperties(asset, asset.value.getOrElse(MaintenanceRoad(Seq())).asInstanceOf[MaintenanceRoad].properties, roadlink)
+        )
     }
   }
 
@@ -104,10 +98,10 @@ class ServiceRoadAPI(val maintenanceService: MaintenanceService, val roadLinkSer
   }
 
   private def getProperties(asset: PersistedLinearAsset, properties: Seq[Properties], roadLink: RoadLink) ={
+    val maintainerId = getFieldValueInt(properties, "huoltotie_huoltovastuu")
+    val accessId = getFieldValueInt(properties, "huoltotie_kayttooikeus")
     Map (
       "id" -> asset.id,
-      //TODO check if the area is really needed
-      //"areaId" -> asset.a,
       "linkId" -> asset.linkId,
       "mmlId" -> roadLink.attributes.get("MTKID"),
       "verticalLevel" -> roadLink.verticalLevel,
@@ -115,10 +109,10 @@ class ServiceRoadAPI(val maintenanceService: MaintenanceService, val roadLinkSer
       "endMeasure" -> asset.endMeasure,
       "modifiedAt" -> convertToDate(if(asset.modifiedDateTime.nonEmpty) asset.modifiedDateTime else asset.createdDateTime),
       "modifiedBy" -> (if(asset.modifiedBy.nonEmpty) asset.modifiedBy else asset.createdBy),
-      "access" -> getFieldValueInt(properties, "huoltotie_kayttooikeus"),
-      //"accessDesc" -> "",
-      "maintainer" -> getFieldValueInt(properties, "huoltotie_huoltovastuu"),
-      //"maintainerDesc" -> "",
+      "access" -> accessId,
+      "accessDesc" -> getAccessDescription(accessId),
+      "maintainer" -> maintainerId,
+      "maintainerDesc" -> getMaintainerDescription(maintainerId),
       "maintainerName" -> getFieldValue(properties, "huoltotie_tiehoitokunta"),
       "person" -> getFieldValue(properties, "huoltotie_nimi"),
       "address" -> getFieldValue(properties, "huoltotie_osoite"),
@@ -152,10 +146,28 @@ class ServiceRoadAPI(val maintenanceService: MaintenanceService, val roadLinkSer
     BoundingRectangle(Point(bboxList(0), bboxList(1)), Point(bboxList(2), bboxList(3)))
   }
 
-  def getModifiedByValue(modifiedValue: Option[String]) : Int = {
+  private def getModifiedByValue(modifiedValue: Option[String]) : Int = {
     modifiedValue match {
       case Some(value) if value == "vvh_generated" => 1
       case _ => 0
+    }
+  }
+
+  private def getAccessDescription(accessValue: Option[Int]): Option[String] ={
+    accessValue.map {
+      case 1 => "Tieoikeus"
+      case 2 => "Tiekunnan osakkuus"
+      case 3 => "LiVin hallinnoimalla maa-alueella"
+      case 4 => "Kevyen liikenteen väylä"
+      case _ => "Tuntematon"
+    }
+  }
+
+  private def getMaintainerDescription(maintainerValue: Option[Int]): Option[String] ={
+    maintainerValue.map {
+      case 1 => "LiVi"
+      case 2 => "Muu"
+      case _ => "Ei tietoa"
     }
   }
 }

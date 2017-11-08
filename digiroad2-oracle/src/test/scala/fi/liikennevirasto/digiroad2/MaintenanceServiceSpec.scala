@@ -229,8 +229,9 @@ class MaintenanceServiceSpec extends FunSuite with Matchers {
       val newAssets = ServiceWithDao.create(Seq(NewLinearAsset(388562360l, 0, 20, maintenanceRoad, 1, 0, None)), maintenanceRoadAssetTypeId, "testuser")
       newAssets.length should be(1)
 
-      val assets = ServiceWithDao.getNormalAndComplementaryByBoundingBox(BoundingRectangle(Point(1, 2), Point(3, 4)))
-      assets.map { asset =>
+      val assets = ServiceWithDao.getAllByBoundingBox(BoundingRectangle(Point(1, 2), Point(3, 4)))
+      assets.foreach {
+        case (asset, _) =>
         asset.linkId should be(388562360l)
         asset.startMeasure should be(0)
         asset.endMeasure should be(20)
