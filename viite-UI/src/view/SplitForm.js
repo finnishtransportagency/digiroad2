@@ -549,7 +549,7 @@
           }
           case LinkStatus.Transfer.description : {
             if(!_.isUndefined(statusDropdown_1) && statusDropdown_1 == LinkStatus.New.description){
-              projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Unchanged.value, LinkStatus.New.value);
+              projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Transfer.value, LinkStatus.New.value);
             }
             else if(_.isUndefined(statusDropdown_1)){
               projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Transfer.value);
@@ -570,6 +570,7 @@
               projectCollection.revertChangesRoadlink(separated[0]);
             }
             if (separated[1].length > 0) {
+              selectedProjectLinkProperty.revertSuravage();
               projectCollection.removeProjectLinkSplit(separated[1]);
             }
             break;
