@@ -419,13 +419,15 @@ object ProjectDAO {
           FROM project $filter order by name, id """
     Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String, Option[String], Option[Long])](query).list.map {
       case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo, statusInfo, ely) => {
-        val filteredRoadParts = fetchReservedRoadParts(projectId).filterNot(rp => {
-          fetchByProjectRoadPart(rp.roadNumber, rp.roadPartNumber, projectId).filter(_.status == LinkStatus.Numbering)
-            .exists(p => p.roadNumber == rp.roadNumber && p.roadPartNumber == rp.roadPartNumber)
-        })
-        if(filterNumeric)
+
+        if(filterNumeric) {
+          val filteredRoadParts = fetchReservedRoadParts(projectId).filterNot(rp => {
+            fetchByProjectRoadPart(rp.roadNumber, rp.roadPartNumber, projectId).filter(_.status == LinkStatus.Numbering)
+              .exists(p => p.roadNumber == rp.roadNumber && p.roadPartNumber == rp.roadPartNumber)
+          })
           RoadAddressProject(id, ProjectState.apply(state), name, createdBy, createdDate, modifiedBy, start_date,
             modifiedDate, addInfo, filteredRoadParts, statusInfo, ely)
+        }
         else
           RoadAddressProject(id, ProjectState.apply(state), name, createdBy, createdDate, modifiedBy, start_date,
             modifiedDate, addInfo, fetchReservedRoadParts(projectId), statusInfo, ely)
@@ -555,6 +557,7 @@ object ProjectDAO {
   /**
     * Reverses the road part in project. Switches side codes 2 <-> 3, updates calibration points start <-> end,
     * updates track codes 1 <-> 2
+    *
     * @param projectId
     * @param roadNumber
     * @param roadPartNumber

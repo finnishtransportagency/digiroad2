@@ -291,7 +291,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @param linkIds the linkIds to process
     * @param roadNumber the roadNumber to apply/was applied to said linkIds
     * @param roadPartNumber the roadPartNumber to apply/was applied to said linkIds
-    * @param newLinks the whole newProjectLinks
+    * @param existingLinks the whole newProjectLinks
     * @return the projectLinks with a assigned SideCode
     */
   private def fillRampGrowthDirection(linkIds: Set[Long], roadNumber: Long, roadPartNumber: Long,
@@ -611,7 +611,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   def getRoadAddressSingleProject(projectId: Long, filterNumeric: Boolean = false): Option[RoadAddressProject] = {
     withDynTransaction {
-      ProjectDAO.getRoadAddressProjects(projectId).headOption
+      ProjectDAO.getRoadAddressProjects(projectId, filterNumeric).headOption
     }
   }
 
