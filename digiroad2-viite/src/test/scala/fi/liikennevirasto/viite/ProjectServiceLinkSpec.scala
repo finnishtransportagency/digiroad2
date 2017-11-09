@@ -739,7 +739,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       ProjectDAO.updateProjectLinks(Set(links.head.id), LinkStatus.UnChanged, "test")
       links.map(_.linkId).toSet should be(addresses.map(_.linkId).toSet)
       val result = projectService.changeDirection(id, 75, 2, links.map(l => LinkToRevert(l.id, l.linkId, l.status.value)),"testuser")
-      result should be(Some("Tieosalle ei voi tehdä kasvusuunnan kääntöä, koska tieosalla on linkkejä, jotka on tässä projektissa määritelty säilymään ennallaan."))
+      result should be(Some("Tieosalle ei voi tehdä kasvusuunnan kääntöä, koska tieosalla on linkkejä, joita ei ole käsitelty tai jotka on tässä projektissa määritelty säilymään ennallaan."))
     }
   }
 
