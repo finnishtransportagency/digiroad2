@@ -185,7 +185,7 @@
       if (!isNaN(opacityParced))
       {
         var opacity = opacityParced * (changeOpacity ? mult : 1);
-        return 'rgba(' + Math.round(red) + ', ' + Math.round(green) + ', ' + Math.round(blue) + ', ' + opacity + opacityMultiplier+ ')';
+        return 'rgba(' + Math.round(red) + ', ' + Math.round(green) + ', ' + Math.round(blue) + ', ' + opacity * opacityMultiplier+ ')';
       }
       else
         return 'rgba(' + Math.round(red) + ', ' + Math.round(green) + ', ' + Math.round(blue) + ', ' + 1+ ')';
