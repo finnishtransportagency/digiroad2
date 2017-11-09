@@ -551,6 +551,11 @@ object ProjectDAO {
     * @param roadPartNumber
     */
   def reverseRoadPartDirection(projectId: Long, roadNumber: Long, roadPartNumber: Long): Unit = {
+    val roadPartMaxAddr =
+      sql"""SELECT MAX(END_ADDR_M) FROM PROJECT_LINK
+         where project_link.project_id = $projectId and project_link.road_number = $roadNumber and project_link.road_part_number = $roadPartNumber
+         and project_link.status != ${LinkStatus.Terminated.value}
+         """.as[Long].firstOption.getOrElse(0L)
     val updateLRM = "update lrm_position set side_code = (CASE side_code WHEN 2 THEN 3 ELSE 2 END)" +
       " where id in (select lrm_position.id from project_link join " +
       s" LRM_Position on project_link.LRM_POSITION_ID = lrm_position.id where (side_code = 2 or side_code = 3) and " +
@@ -558,7 +563,8 @@ object ProjectDAO {
       s" and project_link.status != ${LinkStatus.Terminated.value})"
     Q.updateNA(updateLRM).execute
     val updateProjectLink = s"update project_link set calibration_points = (CASE calibration_points WHEN 0 THEN 0 WHEN 1 THEN 2 WHEN 2 THEN 1 ELSE 3 END), " +
-      s"track_code = (CASE track_code WHEN 0 THEN 0 WHEN 1 THEN 2 WHEN 2 THEN 1 ELSE 3 END) " +
+      s"track_code = (CASE track_code WHEN 0 THEN 0 WHEN 1 THEN 2 WHEN 2 THEN 1 ELSE 3 END), " +
+      s"(start_addr_m, end_addr_m) = (SELECT $roadPartMaxAddr - pl2.end_addr_m, $roadPartMaxAddr - pl2.start_addr_m FROM PROJECT_LINK pl2 WHERE pl2.id = project_link.id) " +
       s"where project_link.project_id = $projectId and project_link.road_number = $roadNumber and project_link.road_part_number = $roadPartNumber " +
       s"and project_link.status != ${LinkStatus.Terminated.value}"
     Q.updateNA(updateProjectLink).execute

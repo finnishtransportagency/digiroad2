@@ -14,6 +14,8 @@ object ProjectSectionCalculator {
   private val logger = LoggerFactory.getLogger(getClass)
 
   /**
+    * NOTE! Should be called from project service only at recalculate method - other places are usually wrong places
+    * and may miss user given calibration points etc.
     * Recalculates the AddressMValues for project links. LinkStatus.New will get reassigned values and all
     * others will have the transfer/unchanged rules applied for them.
     * Terminated links will not be recalculated

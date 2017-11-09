@@ -362,12 +362,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           return Some("Tieosalle ei voi tehdä kasvusuunnan kääntöä, koska tieosalla on linkkejä, joita ei ole käsitelty tai jotka on tässä projektissa määritelty säilymään ennallaan.")
 
         ProjectDAO.reverseRoadPartDirection(projectId, roadNumber, roadPartNumber)
-        val projectLinks = withGeometry(ProjectDAO.getProjectLinks(projectId), resetAddress = false).filter(_.status != LinkStatus.Terminated)
-        val adjustedLinks = ProjectSectionCalculator.assignMValues(projectLinks)
+        val projectLinks = withGeometry(ProjectDAO.getProjectLinks(projectId).filter(_.status != LinkStatus.Terminated), resetAddress = false)
         val originalSideCodes = RoadAddressDAO.fetchByIdMassQuery(projectLinks.map(_.roadAddressId).toSet, true, true)
           .map(ra => ra.id -> ra.sideCode).toMap
 
-        ProjectDAO.updateProjectLinksToDB(adjustedLinks.map(x =>
+        ProjectDAO.updateProjectLinksToDB(projectLinks.map(x =>
           x.copy(reversed = isReversed(originalSideCodes)(x))),username)
         recalculateProjectLinks(projectId, username, Set((roadNumber, roadPartNumber)))
         None
