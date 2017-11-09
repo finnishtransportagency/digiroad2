@@ -1,7 +1,7 @@
 (function(BackboneEvents) {
   window.eventbus = BackboneEvents;
   eventbus.on('all', function(eventName, entity) {
-    if (eventName !== 'map:mouseMoved') {
+    if (window.DR2_LOGGING && eventName !== 'map:mouseMoved') {
       console.log(eventName, entity);
     }
   });
