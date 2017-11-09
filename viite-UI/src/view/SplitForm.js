@@ -179,7 +179,7 @@
         '</header>' +
         '<div class="wrapper read-only">' +
         '<div class="form form-horizontal form-dark">' +
-        '<div class="edit-control-group choice-group">' +
+        '<div class="edit-control-group project-choice-group">' +
         staticField('Lisätty järjestelmään', project.createdBy + ' ' + project.startDate) +
         staticField('Muokattu viimeksi', project.modifiedBy + ' ' + project.dateModified) +
         '<div class="split-form-group editable form-editable-roadAddressProject"> ' +
