@@ -360,14 +360,21 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       withDynTransaction {
         if (ProjectDAO.countLinksUnchangedUnhandled(projectId, roadNumber, roadPartNumber) > 0)
           return Some("Tieosalle ei voi tehdä kasvusuunnan kääntöä, koska tieosalla on linkkejä, joita ei ole käsitelty tai jotka on tässä projektissa määritelty säilymään ennallaan.")
-
+        val continuity = ProjectDAO.getContinuityCodes(projectId, roadNumber, roadPartNumber)
+        val newContinuity: Map[Long, Discontinuity] = if (continuity.nonEmpty) {
+          val discontinuityAtEnd = continuity.maxBy(_._1)
+          continuity.filterKeys(_ < discontinuityAtEnd._1).map{ case (addr, d) => (discontinuityAtEnd._1 - addr) -> d} ++
+            Map(discontinuityAtEnd._1 -> discontinuityAtEnd._2)
+        } else
+          Map()
         ProjectDAO.reverseRoadPartDirection(projectId, roadNumber, roadPartNumber)
         val projectLinks = withGeometry(ProjectDAO.getProjectLinks(projectId).filter(_.status != LinkStatus.Terminated), resetAddress = false)
         val originalSideCodes = RoadAddressDAO.fetchByIdMassQuery(projectLinks.map(_.roadAddressId).toSet, true, true)
           .map(ra => ra.id -> ra.sideCode).toMap
 
         ProjectDAO.updateProjectLinksToDB(projectLinks.map(x =>
-          x.copy(reversed = isReversed(originalSideCodes)(x))),username)
+          x.copy(reversed = isReversed(originalSideCodes)(x),
+            discontinuity = newContinuity.getOrElse(x.endAddrMValue, Discontinuity.Continuous))),username)
         recalculateProjectLinks(projectId, username, Set((roadNumber, roadPartNumber)))
         None
       }
