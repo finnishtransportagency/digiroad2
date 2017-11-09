@@ -22,6 +22,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   val mockObstacleService = MockitoSugar.mock[ObstacleService]
   val mockAssetService = MockitoSugar.mock[AssetService]
   val mockSpeedLimitService = MockitoSugar.mock[SpeedLimitService]
+  val mockPavingService = MockitoSugar.mock[PavingService]
   when(mocklinearAssetService.getAssetsByMunicipality(TotalWeightLimit.typeId, 235)).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, TotalWeightLimit.typeId, 0, None, LinkGeomSource.NormalLinkInterface)))
   when(mocklinearAssetService.getAssetsByMunicipality(TrailerTruckWeightLimit.typeId, 235)).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, TrailerTruckWeightLimit.typeId, 0, None, LinkGeomSource.NormalLinkInterface)))
   when(mocklinearAssetService.getAssetsByMunicipality(AxleWeightLimit.typeId, 235)).thenReturn(Seq(PersistedLinearAsset(1, 100, 1, Some(NumericValue(1)), 0, 10, None, None, None, None, false, AxleWeightLimit.typeId, 0, None, LinkGeomSource.NormalLinkInterface)))
@@ -64,7 +65,7 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
   when(mockAssetService.getMunicipalityById(any[Long])).thenReturn(Seq(235.toLong))
   when(mockAssetService.getGeometryType(any[Int])).thenReturn("linear")
 
-  private val municipalityApi = new MunicipalityApi(mockOnOffLinearAssetService, mockRoadLinkService, mocklinearAssetService, mockSpeedLimitService, mockAssetService)
+  private val municipalityApi = new MunicipalityApi(mockOnOffLinearAssetService, mockRoadLinkService, mocklinearAssetService, mockSpeedLimitService, mockPavingService, mockAssetService)
   addServlet(municipalityApi, "/*")
 
   def getWithBasicUserAuth[A](uri: String, username: String, password: String)(f: => A): A = {
@@ -325,6 +326,4 @@ class MunicipalityApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfte
       "municipalityCode" -> 235
     ))
   }
-
-
 }

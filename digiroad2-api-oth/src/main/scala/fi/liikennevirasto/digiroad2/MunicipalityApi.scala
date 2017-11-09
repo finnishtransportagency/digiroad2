@@ -16,6 +16,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
                       val roadLinkService: RoadLinkService,
                       val linearAssetService: LinearAssetService,
                       val speedLimitService: SpeedLimitService,
+                      val pavingService: PavingService,
                       val assetService: AssetService
                      ) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport {
 
@@ -59,7 +60,8 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
 
   private def verifyLinearServiceToUse(typeId: Int): LinearAssetOperations = {
     typeId match {
-      case LitRoad.typeId  => onOffLinearAssetService
+      case LitRoad.typeId | MassTransitLane.typeId  => onOffLinearAssetService
+      case PavedRoad.typeId => pavingService
       case _ => linearAssetService
     }
   }
@@ -354,6 +356,8 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
       case "length_limit" => LengthLimit.typeId
       case "width_limit" => WidthLimit.typeId
       case "number_of_lanes" => RoadWidth.typeId
+      case "pavement"  => PavedRoad.typeId
+      case "public_transport_lane" => MassTransitLane.typeId
       case _ => halt(NotFound("Asset type not found"))
     }
   }
@@ -373,6 +377,8 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
       case LengthLimit.typeId => "value"
       case WidthLimit.typeId => "value"
       case RoadWidth.typeId => "value"
+      case PavedRoad.typeId => "hasPavement"
+      case MassTransitLane.typeId => "hasLane"
       case _ => "asset"
     }
   }
@@ -408,6 +414,14 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
         case LitRoad.typeId => extractPropertyValue(getAssetName(assetTypeId), prop, propertyValueToInt).asInstanceOf[Seq[Int]].foreach{ value =>
           if (!Seq(0, 1).contains(value))
             halt(BadRequest(s"The property values for the property with name hasLighting are not valid."))
+        }
+        case PavedRoad.typeId => extractPropertyValue(getAssetName(assetTypeId), prop, propertyValueToInt).asInstanceOf[Seq[Int]].foreach{ value =>
+          if (!Seq(0, 1).contains(value))
+            halt(BadRequest(s"The property values for the property with name hasPavement are not valid."))
+        }
+        case MassTransitLane.typeId => extractPropertyValue(getAssetName(assetTypeId), prop, propertyValueToInt).asInstanceOf[Seq[Int]].foreach{ value =>
+          if (!Seq(0, 1).contains(value))
+            halt(BadRequest(s"The property values for the property with name hasLane are not valid."))
         }
         case SpeedLimitAsset.typeId => extractPropertyValue(getAssetName(assetTypeId), prop, propertyValueToInt).asInstanceOf[Seq[Int]].foreach { value =>
             if (!Seq(30, 40, 50, 60, 70, 80, 90, 100, 120).contains(value))
