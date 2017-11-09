@@ -184,7 +184,7 @@
         staticField('Muokattu viimeksi', project.modifiedBy + ' ' + project.dateModified) +
         '<div class="split-form-group editable form-editable-roadAddressProject"> ' +
         selectionFormCutted(selection, selected) +
-        ((selected.size == 2 && selected[0].linkId === selected[1].linkId) ? '' : changeDirection(selected)) +
+        ((selected.length == 2 && selected[0].linkId === selected[1].linkId) ? '' : changeDirection(selected)) +
         actionSelectedField() +
         ((!_.isUndefined(selected[0].connectedLinkId)) ? revertSplitButton() : '') +
         '</div>' +
@@ -399,9 +399,13 @@
       else if (statusCode == LinkStatus.Transfer.value) {
         $("#dropDown_0 option[value="+ LinkStatus.New.description +"]").prop('disabled',true);
         $("#dropDown_0 option[value="+ LinkStatus.Transfer.description +"]").attr('selected', 'selected').change();
+        if(selectedProjectLink[0].id !== 0)
+          rootElement.find('.changeDirectionDiv').prop("hidden", false);
       }
       else if (statusCode == LinkStatus.Numbering.value) {
         $("#dropDown_0" ).val(LinkStatus.Numbering.description).change();
+        if(selectedProjectLink[0].id !== 0)
+          rootElement.find('.changeDirectionDiv').prop("hidden", false);
       }
       $('#discontinuityDropdown').val(selectedProjectLink[selectedProjectLink.length - 1].discontinuity);
       $('#roadTypeDropDown').val(selectedProjectLink[0].roadTypeId);

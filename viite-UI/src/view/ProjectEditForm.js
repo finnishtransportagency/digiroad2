@@ -123,7 +123,6 @@
         staticField('Lisätty järjestelmään', project.createdBy + ' ' + project.startDate)+
         staticField('Muokattu viimeksi', project.modifiedBy + ' ' + project.dateModified)+
         '<div class="form-group editable form-editable-roadAddressProject"> '+
-
         selectionForm(selection, selected, 0) +
         '</div>'+
         changeDirection(selected) +
