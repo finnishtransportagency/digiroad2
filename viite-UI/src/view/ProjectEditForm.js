@@ -125,9 +125,9 @@
         '<div class="form-group editable form-editable-roadAddressProject"> '+
 
         selectionForm(selection, selected, 0) +
+        '</div>'+
         changeDirection(selected) +
         actionSelectedField()+
-        '</div>'+
         '</div>' +
         '</div>'+
         '</div>'+

@@ -27,7 +27,7 @@
       '<div id ="change-table-borders-changetype"></div>' +
       '<div id ="change-table-borders-source"></div>' +
       '<div id ="change-table-borders-reversed"></div>' +
-      '<div id ="change-table-borders-target"></div>' + '</div>');
+      '<div id ="change-table-borders-target"></div></div>');
     changeTable.append('<div class="change-table-sections">' +
       '<label class="change-table-heading-label" id="label-type">Ilmoitus</label>' +
       '<label class="change-table-heading-label" id="label-source">Nykyosoite</label>' +
@@ -46,7 +46,7 @@
       '<td class="project-change-table-dimension">JATKUU</td>' +
       '<td class="project-change-table-dimension dimension-road-type">TIETYYPPI</td>' +
       '<td class="project-change-table-dimension">ELY</td>' +
-      '<td class="project-change-table-dimension">KAANTO</td>' +
+      '<td class="project-change-table-dimension">KÄÄNTO</td>' +
       '<td class="project-change-table-dimension">TIE</td>' +
       '<td class="project-change-table-dimension">AJR</td>' +
       '<td class="project-change-table-dimension">AOSA</td>' +
