@@ -18,6 +18,12 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
   val litRoadAssetId = 100
   val roadWidthAssetId = 120
   val trafficSignsId = 300
+  val pavedRoadAssetId = 110
+  val massTransitLaneAssetId = 160
+  val damagedByThawAssetId = 130
+  val europeanRoadAssetId = 260
+  val speedLimitAssetId = 20
+
   val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
 
   lazy val litRoadImporterOperations: LitRoadTierekisteriImporter = {
@@ -30,6 +36,30 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
 
   lazy val trafficSignTierekisteriImporter: TrafficSignTierekisteriImporter = {
     new TrafficSignTierekisteriImporter()
+  }
+
+  lazy val pavedRoadImporterOperations: PavedRoadTierekisteriImporter = {
+    new PavedRoadTierekisteriImporter()
+  }
+
+  lazy val massTransitLaneImporterOperations: MassTransitLaneTierekisteriImporter = {
+    new MassTransitLaneTierekisteriImporter()
+  }
+
+  lazy val damagedByThawAssetImporterOperations: DamagedByThawTierekisteriImporter = {
+    new DamagedByThawTierekisteriImporter()
+  }
+
+  lazy val europeanRoadImporterOperations: EuropeanRoadTierekisteriImporter = {
+    new EuropeanRoadTierekisteriImporter()
+  }
+
+  lazy val speedLimitTierekisteriImporter: SpeedLimitsTierekisteriImporter = {
+    new SpeedLimitsTierekisteriImporter()
+  }
+
+  lazy val speedLimitAssetTierekisteriImporter: SpeedLimitAssetTierekisteriImporter = {
+    new SpeedLimitAssetTierekisteriImporter()
   }
 
   lazy val assetDao : OracleAssetDao = {
@@ -121,5 +151,54 @@ class TierekisteriDataImporter(vvhClient: VVHClient, oracleLinearAssetDao: Oracl
   def updateTrafficSigns(): Unit = {
     val lastUpdate = obtainLastExecutionDate(trafficSignTierekisteriImporter.assetName, trafficSignsId)
     trafficSignTierekisteriImporter.updateAssets(lastUpdate)
+  }
+
+  def importSpeedLimits(): Unit = {
+    speedLimitTierekisteriImporter.importAssets();
+  }
+
+  def importPavedRoadAsset(): Unit = {
+    pavedRoadImporterOperations.importAssets()
+  }
+
+  def updatePavedRoadAsset(): Unit = {
+    val lastUpdate = obtainLastExecutionDate(pavedRoadImporterOperations.assetName, pavedRoadAssetId)
+    pavedRoadImporterOperations.updateAssets(lastUpdate)
+  }
+
+  def importMassTransitLaneAsset(): Unit = {
+    massTransitLaneImporterOperations.importAssets()
+  }
+
+  def updateMassTransitLaneAsset(): Unit = {
+    val lastUpdate = obtainLastExecutionDate(massTransitLaneImporterOperations.assetName, massTransitLaneAssetId)
+    massTransitLaneImporterOperations.updateAssets(lastUpdate)
+  }
+
+  def importDamagedByThawAsset(): Unit = {
+    damagedByThawAssetImporterOperations.importAssets()
+  }
+
+  def updateDamagedByThawAsset(): Unit = {
+    val lastUpdate = obtainLastExecutionDate(damagedByThawAssetImporterOperations.assetName, damagedByThawAssetId)
+    damagedByThawAssetImporterOperations.updateAssets(lastUpdate)
+  }
+
+  def importEuropeanRoadAsset(): Unit = {
+    europeanRoadImporterOperations.importAssets()
+  }
+
+  def updateEuropeanRoadAsset(): Unit = {
+    val lastUpdate = obtainLastExecutionDate(europeanRoadImporterOperations.assetName, europeanRoadAssetId)
+    europeanRoadImporterOperations.updateAssets(lastUpdate)
+  }
+
+  def importSpeedLimitAsset(): Unit = {
+    speedLimitAssetTierekisteriImporter.importAssets()
+  }
+
+  def updateSpeedLimitAssets(): Unit = {
+    val lastUpdate = obtainLastExecutionDate(speedLimitAssetTierekisteriImporter.assetName, speedLimitAssetId)
+    speedLimitAssetTierekisteriImporter.updateAssets(lastUpdate)
   }
 }

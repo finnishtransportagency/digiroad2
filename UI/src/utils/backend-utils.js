@@ -19,7 +19,7 @@
           });
     };
 
-    this.getRoadLinks = createCallbackRequestor(function(boundingBox) {
+    this.getRoadLinks = createCallbackRequestorWithParameters(function(boundingBox) {
       return {
         url: 'api/roadlinks?bbox=' + boundingBox
       };
@@ -118,9 +118,9 @@
       };
     });
 
-    this.getSpeedLimits = latestResponseRequestor(function(boundingBox) {
+    this.getSpeedLimits = latestResponseRequestor(function(boundingBox, withRoadAddress) {
       return {
-        url: 'api/speedlimits?bbox=' + boundingBox
+        url: 'api/speedlimits?bbox=' + boundingBox + '&withRoadAddress=' + withRoadAddress
       };
     });
 
@@ -225,9 +225,9 @@
       });
     }, 1000);
 
-    this.getLinearAssets = latestResponseRequestor(function(boundingBox, typeId) {
+    this.getLinearAssets = latestResponseRequestor(function(boundingBox, typeId, withRoadAddress) {
       return {
-        url: 'api/linearassets?bbox=' + boundingBox + '&typeId=' + typeId
+        url: 'api/linearassets?bbox=' + boundingBox + '&typeId=' + typeId + '&withRoadAddress=' + withRoadAddress
       };
     });
 
@@ -313,10 +313,6 @@
       $.get('api/massTransitStops/' + nationalId, callback);
     };
 
-    this.getAssetTypeProperties = function(callback) {
-      $.get('api/assetTypeProperties/10', callback);
-    };
-
     this.getUserRoles = function () {
       $.get('api/user/roles', function (roles) {
         eventbus.trigger('roles:fetched', roles);
@@ -334,6 +330,14 @@
 
     this.getFloatingMassTransitStops = function() {
       return $.getJSON('api/massTransitStops/floating');
+    };
+
+    this.getAssetTypeProperties = function (position, callback) {
+      if (position) {
+        $.get('api/massTransitStops/metadata?position=' + position.lon + ',' + position.lat, callback);
+      } else {
+        $.get('api/massTransitStops/metadata', callback);
+      }
     };
 
     this.getIncompleteLinks = function() {
@@ -456,6 +460,13 @@
       };
     }
 
+    function createCallbackRequestorWithParameters(getParameters) {
+      var requestor = latestResponseRequestor(getParameters);
+      return function(parameter, callback) {
+        requestor(parameter).then(callback);
+      };
+    }
+
     function latestResponseRequestor(getParameters) {
       var deferred;
       var requests = new Bacon.Bus();
@@ -522,7 +533,7 @@
     };
 
     this.withSpeedLimitsData = function(speedLimitsData) {
-      self.getSpeedLimits = function(boundingBox) {
+      self.getSpeedLimits = function(boundingBox, withRoadAddress) {
         return $.Deferred().resolve(speedLimitsData);
       };
       return self;
@@ -555,7 +566,7 @@
     };
 
     this.withAssetTypePropertiesData = function(assetTypePropertiesData) {
-      self.getAssetTypeProperties = function(callback) {
+      self.getAssetTypeProperties = function(position, callback) {
         callback(assetTypePropertiesData);
       };
       return self;

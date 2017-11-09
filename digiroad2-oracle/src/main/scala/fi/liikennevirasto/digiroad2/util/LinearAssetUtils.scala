@@ -14,11 +14,9 @@ object LinearAssetUtils {
     * @return true if speed limit may be outdated
     */
   def newChangeInfoDetected(asset : LinearAsset, change: Seq[ChangeInfo]) = {
-    change.map(c => (c.oldId.getOrElse(0), c.newId.getOrElse(0), c.vvhTimeStamp)).exists {
-      case (oldId: Long, newId: Long, vvhTimeStamp: Long) => (oldId == asset.linkId || newId == asset.linkId) &&
-        vvhTimeStamp > asset.vvhTimeStamp
-      case _ => false
-    }
+    change.exists(c =>
+      c.vvhTimeStamp > asset.vvhTimeStamp && (c.oldId.getOrElse(0) == asset.linkId || c.newId.getOrElse(0) == asset.linkId)
+    )
   }
 
   def newChangeInfoDetected(a: PersistedLinearAsset, changes: Seq[ChangeInfo]): Boolean = {

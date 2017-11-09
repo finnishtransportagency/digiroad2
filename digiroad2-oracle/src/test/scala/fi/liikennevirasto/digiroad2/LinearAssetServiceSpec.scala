@@ -6,6 +6,7 @@ import fi.liikennevirasto.digiroad2.linearasset.LinearAssetFiller.{ChangeSet, MV
 import fi.liikennevirasto.digiroad2.linearasset.ValidityPeriodDayOfWeek.{Saturday, Weekday}
 import fi.liikennevirasto.digiroad2.linearasset._
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
+import fi.liikennevirasto.digiroad2.masstransitstop.oracle.Sequences
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.util.{PolygonTools, TestTransactions}
 import org.joda.time.DateTime
@@ -365,20 +366,22 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       ChangeInfo(Some(oldLinkId3), Some(newLinkId), 12345, 2, Some(0), Some(5), Some(20), Some(25), 144000000))
 
     OracleDatabase.withDynTransaction {
-      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES (1, $oldLinkId1, 0.0, 10.0, ${SideCode.BothDirections.value})""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values (1,$assetTypeId, TO_TIMESTAMP('2014-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX1')""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values (1,1)""".execute
-      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values (1,1,(select id from property where public_id = 'mittarajoitus'),1)""".execute
+      val (lrm1, lrm2, lrm3) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue)
+      val (asset1, asset2, asset3) = (Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId1, 0.0, 10.0, ${SideCode.BothDirections.value})""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values ($asset1,$assetTypeId, TO_TIMESTAMP('2014-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX1')""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values ($asset1,$lrm1)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values ($asset1,$asset1,(select id from property where public_id = 'mittarajoitus'),1)""".execute
 
-      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES (2, $oldLinkId2, 0, 10.0, ${SideCode.BothDirections.value})""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values (2,$assetTypeId, TO_TIMESTAMP('2016-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX2')""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values (2,2)""".execute
-      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values (2,2,(select id from property where public_id = 'mittarajoitus'),1)""".execute
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm2, $oldLinkId2, 0, 10.0, ${SideCode.BothDirections.value})""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values ($asset2,$assetTypeId, TO_TIMESTAMP('2016-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX2')""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values ($asset2,$lrm2)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values ($asset2,$asset2,(select id from property where public_id = 'mittarajoitus'),1)""".execute
 
-      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES (3, $oldLinkId3, 0, 5.0, ${SideCode.BothDirections.value})""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values (3,$assetTypeId, TO_TIMESTAMP('2015-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX3')""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values (3,3)""".execute
-      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values (3,3,(select id from property where public_id = 'mittarajoitus'),1)""".execute
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm3, $oldLinkId3, 0, 5.0, ${SideCode.BothDirections.value})""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values ($asset3,$assetTypeId, TO_TIMESTAMP('2015-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX3')""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values ($asset3,$lrm3)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values ($asset3,$asset3,(select id from property where public_id = 'mittarajoitus'),1)""".execute
 
       when(mockRoadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(any[Int])).thenReturn((newRoadLinks, changeInfo))
 
@@ -386,7 +389,7 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
 
       val captor = ArgumentCaptor.forClass(classOf[ChangeSet])
       verify(mockEventBus, times(1)).publish(org.mockito.Matchers.eq("linearAssets:update"), captor.capture())
-      captor.getValue.expiredAssetIds should be (Set(1,2,3))
+      captor.getValue.expiredAssetIds should be (Set(asset1,asset2,asset3))
 
       dynamicSession.rollback()
     }
@@ -425,10 +428,12 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       ChangeInfo(Some(oldLinkId), Some(newLinkId3), 12347, 6, Some(20), Some(25), Some(0), Some(5), 144000000))
 
     OracleDatabase.withDynTransaction {
-      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES (1, $oldLinkId, 0.0, 25.0, 1)""".execute
-      sqlu"""insert into asset (id, asset_type_id) values (1,$assetTypeId)""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values (1,1)""".execute
-      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values (1,1,(select id from property where public_id = 'mittarajoitus'),1)""".execute
+      val lrm1 = Sequences.nextLrmPositionPrimaryKeySeqValue
+      val asset1 = Sequences.nextPrimaryKeySeqValue
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId, 0.0, 25.0, 1)""".execute
+      sqlu"""insert into asset (id, asset_type_id) values ($asset1,$assetTypeId)""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values ($asset1,$lrm1)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values ($asset1,$asset1,(select id from property where public_id = 'mittarajoitus'),1)""".execute
 
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(oldRoadLink), Nil))
       val before = service.getByBoundingBox(assetTypeId, boundingBox).toList
@@ -501,10 +506,12 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       ChangeInfo(Some(oldLinkId), Some(newLinkId3), 12347, 6, Some(20), Some(25), Some(0), Some(5), 144000000))
 
     OracleDatabase.withDynTransaction {
-      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES (1, $oldLinkId, 5.0, 15.0, ${SideCode.BothDirections.value})""".execute
-      sqlu"""insert into asset (id, asset_type_id) values (1,$assetTypeId)""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values (1,1)""".execute
-      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values (1,1,(select id from property where public_id = 'mittarajoitus'), 1)""".execute
+      val lrm1 = Sequences.nextLrmPositionPrimaryKeySeqValue
+      val asset1 = Sequences.nextPrimaryKeySeqValue
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId, 5.0, 15.0, ${SideCode.BothDirections.value})""".execute
+      sqlu"""insert into asset (id, asset_type_id) values ($asset1,$assetTypeId)""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values ($asset1,$lrm1)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values ($asset1,$asset1,(select id from property where public_id = 'mittarajoitus'), 1)""".execute
 
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(oldRoadLink), Nil))
       val before = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
@@ -574,18 +581,20 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       ChangeInfo(Some(oldLinkId3), Some(newLinkId), 12345, 2, Some(0), Some(5), Some(20), Some(25), 144000000))
 
     OracleDatabase.withDynTransaction {
-      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES (1, $oldLinkId1, 0.0, 10.0, ${SideCode.BothDirections.value})""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values (1,$assetTypeId, TO_TIMESTAMP('2014-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX1')""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values (1,1)""".execute
-      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values (1,1,(select id from property where public_id = 'mittarajoitus'),1)""".execute
-      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES (2, $oldLinkId2, 0, 10.0, ${SideCode.BothDirections.value})""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values (2,$assetTypeId, TO_TIMESTAMP('2016-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX2')""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values (2,2)""".execute
-      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values (2,2,(select id from property where public_id = 'mittarajoitus'),1)""".execute
-      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES (3, $oldLinkId3, 0, 5.0, ${SideCode.BothDirections.value})""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values (3,$assetTypeId, TO_TIMESTAMP('2015-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX3')""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values (3,3)""".execute
-      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values (3,3,(select id from property where public_id = 'mittarajoitus'),1)""".execute
+      val (lrm1, lrm2, lrm3) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue)
+      val (asset1, asset2, asset3) = (Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId1, 0.0, 10.0, ${SideCode.BothDirections.value})""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values ($asset1,$assetTypeId, TO_TIMESTAMP('2014-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX1')""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values ($asset1,$lrm1)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values ($asset1,$asset1,(select id from property where public_id = 'mittarajoitus'),1)""".execute
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm2, $oldLinkId2, 0, 10.0, ${SideCode.BothDirections.value})""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values ($asset2,$assetTypeId, TO_TIMESTAMP('2016-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX2')""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values ($asset2,$lrm2)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values (2,$asset2,(select id from property where public_id = 'mittarajoitus'),1)""".execute
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm3, $oldLinkId3, 0, 5.0, ${SideCode.BothDirections.value})""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values ($asset3,$assetTypeId, TO_TIMESTAMP('2015-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX3')""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values ($asset3,$lrm3)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values (3,$asset3,(select id from property where public_id = 'mittarajoitus'),1)""".execute
 
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((oldRoadLinks, Nil))
       val before = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
@@ -660,10 +669,12 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       ChangeInfo(Some(oldLinkId), Some(newLinkId3), 12347, 6, Some(20), Some(25), Some(0), Some(5), 144000000))
 
     OracleDatabase.withDynTransaction {
-      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) values (1, $oldLinkId, 0, 25.000, 1)""".execute
-      sqlu"""insert into asset (id, asset_type_id, created_date, created_by) values (1, $assetTypeId, SYSDATE, 'dr2_test_data')""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values (1, 1)""".execute
-      sqlu"""insert into text_property_value(id, asset_id, property_id, value_fi, created_date, created_by) values (1, 1, (select id from property where public_id='eurooppatienumero'), 'E666' || chr(10) || 'E667', sysdate, 'dr2_test_data')""".execute
+      val lrm = Sequences.nextLrmPositionPrimaryKeySeqValue
+      val assetId = Sequences.nextPrimaryKeySeqValue
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) values ($lrm, $oldLinkId, 0, 25.000, 1)""".execute
+      sqlu"""insert into asset (id, asset_type_id, created_date, created_by) values ($assetId, $assetTypeId, SYSDATE, 'dr2_test_data')""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values ($assetId, $lrm)""".execute
+      sqlu"""insert into text_property_value(id, asset_id, property_id, value_fi, created_date, created_by) values ($assetId, $assetId, (select id from property where public_id='eurooppatienumero'), 'E666' || chr(10) || 'E667', sysdate, 'dr2_test_data')""".execute
 
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((List(oldRoadLink), Nil))
       val before = service.getByBoundingBox(assetTypeId, boundingBox).toList
@@ -729,18 +740,20 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       ChangeInfo(Some(oldLinkId2), Some(newLinkId), 12345, 2, Some(0), Some(10), Some(10), Some(20), 144000000))
 
     OracleDatabase.withDynTransaction {
-      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES (1, $oldLinkId1, 0.0, 10.0, ${SideCode.AgainstDigitizing.value})""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values (1,$assetTypeId, TO_TIMESTAMP('2014-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX1')""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values (1,1)""".execute
-      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values (1,1,(select id from property where public_id = 'mittarajoitus'),40)""".execute
-      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES (2, $oldLinkId1, 0, 10.0, ${SideCode.TowardsDigitizing.value})""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values (2,$assetTypeId, TO_TIMESTAMP('2016-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX2')""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values (2,2)""".execute
-      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values (2,2,(select id from property where public_id = 'mittarajoitus'),50)""".execute
-      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES (3, $oldLinkId2, 0, 5.0, ${SideCode.BothDirections.value})""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values (3,$assetTypeId, TO_TIMESTAMP('2015-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX3')""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values (3,3)""".execute
-      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values (3,3,(select id from property where public_id = 'mittarajoitus'),60)""".execute
+      val (lrm1, lrm2, lrm3) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue)
+      val (asset1, asset2, asset3) = (Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId1, 0.0, 10.0, ${SideCode.AgainstDigitizing.value})""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values ($asset1,$assetTypeId, TO_TIMESTAMP('2014-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX1')""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values ($asset1,$lrm1)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values ($asset1,$asset1,(select id from property where public_id = 'mittarajoitus'),40)""".execute
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm2, $oldLinkId1, 0, 10.0, ${SideCode.TowardsDigitizing.value})""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values ($asset2,$assetTypeId, TO_TIMESTAMP('2016-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX2')""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values ($asset2,$lrm2)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values ($asset2,$asset2,(select id from property where public_id = 'mittarajoitus'),50)""".execute
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm3, $oldLinkId2, 0, 5.0, ${SideCode.BothDirections.value})""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values ($asset3,$assetTypeId, TO_TIMESTAMP('2015-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX3')""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values ($asset3,$lrm3)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values ($asset3,$asset3,(select id from property where public_id = 'mittarajoitus'),60)""".execute
 
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((oldRoadLinks, Nil))
       val before = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
@@ -801,20 +814,22 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       ChangeInfo(Some(oldLinkId2), Some(newLinkId), 12345, 2, Some(0), Some(10), Some(10), Some(20), 144000000))
 
     OracleDatabase.withDynTransaction {
-      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES (1, $oldLinkId1, 0.0, 10.0, ${SideCode.AgainstDigitizing.value})""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values (1,$assetTypeId, TO_TIMESTAMP('2014-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX1')""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values (1,1)""".execute
-      sqlu"""insert into prohibition_value (id, asset_id, type) values (1,1,24)""".execute
-      sqlu"""insert into prohibition_validity_period (id, prohibition_value_id, type, start_hour, end_hour) values (1,1,1,11,12)""".execute
-      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES (2, $oldLinkId1, 0, 10.0, ${SideCode.TowardsDigitizing.value})""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values (2,$assetTypeId, TO_TIMESTAMP('2016-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX2')""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values (2,2)""".execute
-      sqlu"""insert into prohibition_value (id, asset_id, type) values (2,2,25)""".execute
-      sqlu"""insert into prohibition_validity_period (id, prohibition_value_id, type, start_hour, end_hour) values (2,2,2,12,13)""".execute
-      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES (3, $oldLinkId2, 0, 5.0, ${SideCode.BothDirections.value})""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values (3,$assetTypeId, TO_TIMESTAMP('2015-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX3')""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values (3,3)""".execute
-      sqlu"""insert into prohibition_value (id, asset_id, type) values (3,3,24)""".execute
+      val (lrm1, lrm2, lrm3) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue)
+      val (asset1, asset2, asset3) = (Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId1, 0.0, 10.0, ${SideCode.AgainstDigitizing.value})""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values ($asset1,$assetTypeId, TO_TIMESTAMP('2014-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX1')""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values ($asset1,$lrm1)""".execute
+      sqlu"""insert into prohibition_value (id, asset_id, type) values ($asset1,$asset1,24)""".execute
+      sqlu"""insert into prohibition_validity_period (id, prohibition_value_id, type, start_hour, end_hour) values ($asset1,$asset1,1,11,12)""".execute
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm2, $oldLinkId1, 0, 10.0, ${SideCode.TowardsDigitizing.value})""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values ($asset2,$assetTypeId, TO_TIMESTAMP('2016-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX2')""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values ($asset2,$lrm2)""".execute
+      sqlu"""insert into prohibition_value (id, asset_id, type) values ($asset2,$asset2,25)""".execute
+      sqlu"""insert into prohibition_validity_period (id, prohibition_value_id, type, start_hour, end_hour) values ($asset2,$asset2,2,12,13)""".execute
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm3, $oldLinkId2, 0, 5.0, ${SideCode.BothDirections.value})""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values ($asset3,$assetTypeId, TO_TIMESTAMP('2015-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX3')""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values ($asset3,$lrm3)""".execute
+      sqlu"""insert into prohibition_value (id, asset_id, type) values ($asset3,$asset3,24)""".execute
 
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((oldRoadLinks, Nil))
       val before = service.getByBoundingBox(assetTypeId, boundingBox).toList.flatten
@@ -883,25 +898,27 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       ChangeInfo(Some(oldLinkId2), Some(newLinkId), 12345, 2, Some(0), Some(10), Some(10), Some(20), 144000000))
 
     OracleDatabase.withDynTransaction {
-      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES (1, $oldLinkId1, 0.0, 10.0, ${SideCode.AgainstDigitizing.value})""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values (1,$assetTypeId, TO_TIMESTAMP('2014-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX1')""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values (1,1)""".execute
-      sqlu"""insert into prohibition_value (id, asset_id, type) values (1,1,24)""".execute
-      sqlu"""insert into prohibition_validity_period (id, prohibition_value_id, type, start_hour, end_hour) values (1,1,1,11,12)""".execute
-      sqlu"""insert into prohibition_exception (id, prohibition_value_id, type) values (600010, 1, 10)""".execute
+      val (lrm1, lrm2, lrm3) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue)
+      val (asset1, asset2, asset3) = (Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId1, 0.0, 10.0, ${SideCode.AgainstDigitizing.value})""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values ($asset1,$assetTypeId, TO_TIMESTAMP('2014-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX1')""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values ($asset1,$lrm1)""".execute
+      sqlu"""insert into prohibition_value (id, asset_id, type) values ($asset1,$asset1,24)""".execute
+      sqlu"""insert into prohibition_validity_period (id, prohibition_value_id, type, start_hour, end_hour) values ($asset1,$asset1,1,11,12)""".execute
+      sqlu"""insert into prohibition_exception (id, prohibition_value_id, type) values (600010, $asset1, 10)""".execute
 
-      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES (2, $oldLinkId1, 0, 10.0, ${SideCode.TowardsDigitizing.value})""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values (2,$assetTypeId, TO_TIMESTAMP('2016-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX2')""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values (2,2)""".execute
-      sqlu"""insert into prohibition_value (id, asset_id, type) values (2,2,25)""".execute
-      sqlu"""insert into prohibition_validity_period (id, prohibition_value_id, type, start_hour, end_hour) values (2,2,2,12,13)""".execute
-      sqlu"""insert into prohibition_exception (id, prohibition_value_id, type) values (600011, 2, 10)""".execute
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm2, $oldLinkId1, 0, 10.0, ${SideCode.TowardsDigitizing.value})""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values ($asset2,$assetTypeId, TO_TIMESTAMP('2016-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX2')""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values ($asset2,$lrm2)""".execute
+      sqlu"""insert into prohibition_value (id, asset_id, type) values ($asset2,$asset2,25)""".execute
+      sqlu"""insert into prohibition_validity_period (id, prohibition_value_id, type, start_hour, end_hour) values ($asset2,$asset2,2,12,13)""".execute
+      sqlu"""insert into prohibition_exception (id, prohibition_value_id, type) values (600011, $asset2, 10)""".execute
 
-      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES (3, $oldLinkId2, 0, 5.0, ${SideCode.BothDirections.value})""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values (3,$assetTypeId, TO_TIMESTAMP('2015-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX3')""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values (3,3)""".execute
-      sqlu"""insert into prohibition_value (id, asset_id, type) values (3,3,24)""".execute
-      sqlu"""insert into prohibition_exception (id, prohibition_value_id, type) values (600012, 3, 10)""".execute
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm3, $oldLinkId2, 0, 5.0, ${SideCode.BothDirections.value})""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values ($asset3,$assetTypeId, TO_TIMESTAMP('2015-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX3')""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values ($asset3,$lrm3)""".execute
+      sqlu"""insert into prohibition_value (id, asset_id, type) values ($asset3,$asset3,24)""".execute
+      sqlu"""insert into prohibition_exception (id, prohibition_value_id, type) values (600012, $asset3, 10)""".execute
 
 
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((oldRoadLinks, Nil))
@@ -953,26 +970,28 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     val assetTypeId = 100
     val vvhTimeStamp = 14440000
     OracleDatabase.withDynTransaction {
-      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES (1, $oldLinkId1, 0.0, 10.0, ${SideCode.AgainstDigitizing.value})""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values (1,$assetTypeId, TO_TIMESTAMP('2014-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX1')""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values (1,1)""".execute
-      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values (1,1,(select id from property where public_id = 'mittarajoitus'),40)""".execute
-      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES (2, $oldLinkId1, 0, 10.0, ${SideCode.TowardsDigitizing.value})""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values (2,$assetTypeId, TO_TIMESTAMP('2016-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX2')""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values (2,2)""".execute
-      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values (2,2,(select id from property where public_id = 'mittarajoitus'),50)""".execute
-      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES (3, $oldLinkId2, 0, 5.0, ${SideCode.BothDirections.value})""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values (3,$assetTypeId, TO_TIMESTAMP('2015-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX3')""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values (3,3)""".execute
-      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values (3,3,(select id from property where public_id = 'mittarajoitus'),60)""".execute
+      val (lrm1, lrm2, lrm3) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue)
+      val (asset1, asset2, asset3) = (Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId1, 0.0, 10.0, ${SideCode.AgainstDigitizing.value})""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values ($asset1,$assetTypeId, TO_TIMESTAMP('2014-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX1')""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values ($asset1,$lrm1)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values ($asset1,$asset1,(select id from property where public_id = 'mittarajoitus'),40)""".execute
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm2, $oldLinkId1, 0, 10.0, ${SideCode.TowardsDigitizing.value})""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values ($asset2,$assetTypeId, TO_TIMESTAMP('2016-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX2')""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values ($asset2,$lrm2)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values ($asset2,$asset2,(select id from property where public_id = 'mittarajoitus'),50)""".execute
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm3, $oldLinkId2, 0, 5.0, ${SideCode.BothDirections.value})""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values ($asset3,$assetTypeId, TO_TIMESTAMP('2015-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX3')""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values ($asset3,$lrm3)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values ($asset3,$asset3,(select id from property where public_id = 'mittarajoitus'),60)""".execute
 
-      val original = service.getPersistedAssetsByIds(assetTypeId, Set(1L)).head
+      val original = service.getPersistedAssetsByIds(assetTypeId, Set(asset1)).head
       val projectedLinearAssets = Seq(original.copy(startMeasure = 0.1, endMeasure = 10.1, sideCode = 1, vvhTimeStamp = vvhTimeStamp))
 
       service.persistProjectedLinearAssets(projectedLinearAssets)
       val all = service.dao.fetchLinearAssetsByLinkIds(assetTypeId, Seq(oldLinkId1, oldLinkId2), "mittarajoitus")
       all.size should be (3)
-      val persisted = service.getPersistedAssetsByIds(assetTypeId, Set(1L))
+      val persisted = service.getPersistedAssetsByIds(assetTypeId, Set(asset1))
       persisted.size should be (1)
       val head = persisted.head
       head.id should be (original.id)
@@ -1002,34 +1021,36 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     val vvhTimeStamp = 14440000
 
     OracleDatabase.withDynTransaction {
-      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES (1, $oldLinkId1, 0.0, 10.0, ${SideCode.AgainstDigitizing.value})""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values (1,$assetTypeId, TO_TIMESTAMP('2014-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX1')""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values (1,1)""".execute
-      sqlu"""insert into prohibition_value (id, asset_id, type) values (1,1,24)""".execute
-      sqlu"""insert into prohibition_validity_period (id, prohibition_value_id, type, start_hour, end_hour) values (1,1,1,11,12)""".execute
-      sqlu"""insert into prohibition_exception (id, prohibition_value_id, type) values (600010, 1, 10)""".execute
+      val (lrm1, lrm2, lrm3) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue)
+      val (asset1, asset2, asset3) = (Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId1, 0.0, 10.0, ${SideCode.AgainstDigitizing.value})""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values ($asset1,$assetTypeId, TO_TIMESTAMP('2014-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX1')""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values ($asset1,$lrm1)""".execute
+      sqlu"""insert into prohibition_value (id, asset_id, type) values ($asset1,$asset1,24)""".execute
+      sqlu"""insert into prohibition_validity_period (id, prohibition_value_id, type, start_hour, end_hour) values ($asset1,$asset1,1,11,12)""".execute
+      sqlu"""insert into prohibition_exception (id, prohibition_value_id, type) values (600010, $asset1, 10)""".execute
 
-      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES (2, $oldLinkId1, 0, 10.0, ${SideCode.TowardsDigitizing.value})""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values (2,$assetTypeId, TO_TIMESTAMP('2016-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX2')""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values (2,2)""".execute
-      sqlu"""insert into prohibition_value (id, asset_id, type) values (2,2,25)""".execute
-      sqlu"""insert into prohibition_validity_period (id, prohibition_value_id, type, start_hour, end_hour) values (2,2,2,12,13)""".execute
-      sqlu"""insert into prohibition_exception (id, prohibition_value_id, type) values (600011, 2, 10)""".execute
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm2, $oldLinkId1, 0, 10.0, ${SideCode.TowardsDigitizing.value})""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values ($asset2,$assetTypeId, TO_TIMESTAMP('2016-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX2')""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values ($asset2,$lrm2)""".execute
+      sqlu"""insert into prohibition_value (id, asset_id, type) values ($asset2,$asset2,25)""".execute
+      sqlu"""insert into prohibition_validity_period (id, prohibition_value_id, type, start_hour, end_hour) values ($asset2,$asset2,2,12,13)""".execute
+      sqlu"""insert into prohibition_exception (id, prohibition_value_id, type) values (600011, $asset2, 10)""".execute
 
-      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES (3, $oldLinkId2, 0, 5.0, ${SideCode.BothDirections.value})""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values (3,$assetTypeId, TO_TIMESTAMP('2015-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX3')""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values (3,3)""".execute
-      sqlu"""insert into prohibition_value (id, asset_id, type) values (3,3,24)""".execute
-      sqlu"""insert into prohibition_exception (id, prohibition_value_id, type) values (600012, 3, 10)""".execute
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm3, $oldLinkId2, 0, 5.0, ${SideCode.BothDirections.value})""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values ($asset3,$assetTypeId, TO_TIMESTAMP('2015-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX3')""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values ($asset3,$lrm3)""".execute
+      sqlu"""insert into prohibition_value (id, asset_id, type) values ($asset3,$asset3,24)""".execute
+      sqlu"""insert into prohibition_exception (id, prohibition_value_id, type) values (600012, $asset3, 10)""".execute
 
 
-      val original = service.getPersistedAssetsByIds(assetTypeId, Set(1L)).head
+      val original = service.getPersistedAssetsByIds(assetTypeId, Set(asset1)).head
       val projectedProhibitions = Seq(original.copy(startMeasure = 0.1, endMeasure = 10.1, sideCode = 1, vvhTimeStamp = vvhTimeStamp))
 
       service.persistProjectedLinearAssets(projectedProhibitions)
-      val all = service.dao.fetchProhibitionsByIds(assetTypeId, Set(1,2,3), false)
+      val all = service.dao.fetchProhibitionsByIds(assetTypeId, Set(asset1,asset2,asset3), false)
       all.size should be (3)
-      val persisted = service.getPersistedAssetsByIds(assetTypeId, Set(1L))
+      val persisted = service.getPersistedAssetsByIds(assetTypeId, Set(asset1))
       persisted.size should be (1)
       val head = persisted.head
       head.id should be (original.id)
@@ -1068,19 +1089,21 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       ChangeInfo(None, Some(newLinkId), 12345, 4, None, None, Some(10), Some(20), 144000000))
 
     OracleDatabase.withDynTransaction {
-      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES (1, $oldLinkId1, 0.0, 10.0, ${SideCode.AgainstDigitizing.value})""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values (1,$assetTypeId, TO_TIMESTAMP('2014-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX1')""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values (1,1)""".execute
-      sqlu"""insert into prohibition_value (id, asset_id, type) values (1,1,24)""".execute
-      sqlu"""insert into prohibition_validity_period (id, prohibition_value_id, type, start_hour, end_hour) values (1,1,1,11,12)""".execute
-      sqlu"""insert into prohibition_exception (id, prohibition_value_id, type) values (600010, 1, 10)""".execute
+      val (lrm1, lrm2, lrm3) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue)
+      val (asset1, asset2, asset3) = (Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm1, $oldLinkId1, 0.0, 10.0, ${SideCode.AgainstDigitizing.value})""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values ($asset1,$assetTypeId, TO_TIMESTAMP('2014-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX1')""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values ($asset1,$lrm1)""".execute
+      sqlu"""insert into prohibition_value (id, asset_id, type) values ($asset1,$asset1,24)""".execute
+      sqlu"""insert into prohibition_validity_period (id, prohibition_value_id, type, start_hour, end_hour) values ($asset1,$asset1,1,11,12)""".execute
+      sqlu"""insert into prohibition_exception (id, prohibition_value_id, type) values (600010, $asset1, 10)""".execute
 
-      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES (2, $oldLinkId1, 0, 9.0, ${SideCode.TowardsDigitizing.value})""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values (2,$assetTypeId, TO_TIMESTAMP('2016-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX2')""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values (2,2)""".execute
-      sqlu"""insert into prohibition_value (id, asset_id, type) values (2,2,25)""".execute
-      sqlu"""insert into prohibition_validity_period (id, prohibition_value_id, type, start_hour, end_hour) values (2,2,2,12,13)""".execute
-      sqlu"""insert into prohibition_exception (id, prohibition_value_id, type) values (600011, 2, 10)""".execute
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code) VALUES ($lrm2, $oldLinkId1, 0, 9.0, ${SideCode.TowardsDigitizing.value})""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values ($asset2,$assetTypeId, TO_TIMESTAMP('2016-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX2')""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values ($asset2,$lrm2)""".execute
+      sqlu"""insert into prohibition_value (id, asset_id, type) values ($asset2,$asset2,25)""".execute
+      sqlu"""insert into prohibition_validity_period (id, prohibition_value_id, type, start_hour, end_hour) values ($asset2,$asset2,2,12,13)""".execute
+      sqlu"""insert into prohibition_exception (id, prohibition_value_id, type) values (600011, $asset2, 10)""".execute
 
 
 
@@ -1158,11 +1181,12 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       ChangeInfo(Some(oldLinkId1), None, 1204467577, 8, Some(164.92962409), Some(165.37927110999999), None, None, 1461970812000L))
 
     OracleDatabase.withDynTransaction {
+      val (lrm, asset) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
       sqlu"""DELETE FROM asset_link WHERE position_id in (SELECT id FROM lrm_position where link_id = $oldLinkId1)""".execute
-      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code, adjusted_timestamp) VALUES (1, $oldLinkId1, 0.0, 83.715, ${SideCode.BothDirections.value}, 1)""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values (1,$assetTypeId, TO_TIMESTAMP('2014-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX1')""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values (1,1)""".execute
-      sqlu"""insert into number_property_value (id, asset_id, property_id, value) (SELECT 1, 1, id, 4779 FROM PROPERTY WHERE PUBLIC_ID = 'mittarajoitus')""".execute
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code, adjusted_timestamp) VALUES ($lrm, $oldLinkId1, 0.0, 83.715, ${SideCode.BothDirections.value}, 1)""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values ($asset,$assetTypeId, TO_TIMESTAMP('2014-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX1')""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values ($asset,$lrm)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) (SELECT $asset, $asset, id, 4779 FROM PROPERTY WHERE PUBLIC_ID = 'mittarajoitus')""".execute
 
       when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((roadLinks, changeInfo))
       when(mockRoadLinkService.getRoadLinksAndComplementariesFromVVH(any[Set[Long]], any[Boolean])).thenReturn(roadLinks)
@@ -1176,13 +1200,60 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
       id should have size (1)
       id.head should not be (0)
 
-      val assets = service.getPersistedAssetsByIds(assetTypeId, Set(1L, id.head))
+      val assets = service.getPersistedAssetsByIds(assetTypeId, Set(asset, id.head))
       assets should have size (2)
       assets.forall(_.vvhTimeStamp > 0L) should be (true)
 
       val after = service.getByBoundingBox(assetTypeId, boundingBox, Set(municipalityCode))
       after should have size(1)
       after.flatten.forall(_.id != 0) should be (true)
+      dynamicSession.rollback()
+    }
+  }
+
+  test("Should apply pavement on whole segment") {
+
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+    val timeStamp = new VVHRoadLinkClient("http://localhost:6080").createVVHTimeStamp(-5)
+    when(mockVVHRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
+    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+    val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
+      override def withDynTransaction[T](f: => T): T = f
+    }
+
+    val oldLinkId1 = 4393233
+    val municipalityCode = 444
+    val administrativeClass = State
+    val trafficDirection = TrafficDirection.BothDirections
+    val functionalClass = 1
+    val linkType = Freeway
+    val boundingBox = BoundingRectangle(Point(123, 345), Point(567, 678))
+    val assetTypeId = 110
+    val geom = List(Point(428906.372,6693954.166),Point(428867.234,6693997.01),Point(428857.131,6694009.293))
+    val len = GeometryUtils.geometryLength(geom)
+    //      [{"modifiedAt":"19.05.2016 14:16:23","linkId":3056622,"roadNameFi":"Lohjanharjuntie","roadPartNumber":1,"administrativeClass":"State","municipalityCode":444,"roadNumber":1125,"points":[{"x":346005.726,"y":6688024.548,"z":0.0},{"x":346020.228,"y":6688034.371,"z":0.0},{"x":346046.054,"y":6688061.11,"z":0.0},{"x":346067.323,"y":6688080.86,"z":0.0}],"verticalLevel":0,"maxAddressNumberRight":1365,"trafficDirection":"TowardsDigitizing","minAddressNumberRight":1361,"roadNameSe":"Lojoåsvägen","functionalClass":4,"linkType":2,"mmlId":1204467577,"modifiedBy":"k638654"}],
+
+    val roadLinks = Seq(RoadLink(oldLinkId1, geom, len, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))))
+    val changeInfo = Seq(
+      ChangeInfo(Some(oldLinkId1), Some(oldLinkId1), 1204467577, 3, Some(0), Some(46.23260977), Some(27.86340569), Some(73.93340102), 1470653580000L),
+      ChangeInfo(Some(oldLinkId1), Some(oldLinkId1), 1204467577, 3, None, None, Some(0), Some(27.86340569), 1470653580000L))
+    OracleDatabase.withDynTransaction {
+      val (lrm, asset) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
+      sqlu"""DELETE FROM asset_link WHERE position_id in (SELECT id FROM lrm_position where link_id = $oldLinkId1)""".execute
+      sqlu"""insert into lrm_position (id, link_id, start_measure, end_measure, side_code, adjusted_timestamp) VALUES ($lrm, $oldLinkId1, 0.0, 46.233, ${SideCode.BothDirections.value}, 1)""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date, modified_by) values ($asset,$assetTypeId, TO_TIMESTAMP('2014-02-17 10:03:51.047483', 'YYYY-MM-DD HH24:MI:SS.FF6'),'KX1')""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values ($asset,$lrm)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) (SELECT $asset, $asset, id, 1 FROM PROPERTY WHERE PUBLIC_ID = 'mittarajoitus')""".execute
+
+      val assets = service.getPersistedAssetsByIds(assetTypeId, Set(asset))
+      assets should have size(1)
+
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((roadLinks, changeInfo))
+      val after = service.getByBoundingBox(assetTypeId, boundingBox, Set(municipalityCode))
+      after should have size(1)
+
       dynamicSession.rollback()
     }
   }
@@ -1217,18 +1288,20 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     val heightLimitAssetId = 70
 
     OracleDatabase.withDynTransaction {
-      sqlu"""insert into lrm_position (id, link_id) VALUES (1, 100)""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date) values (1, ${heightLimitAssetId}, TO_TIMESTAMP('2016-11-01 16:00', 'YYYY-MM-DD HH24:MI'))""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values (1, 1)""".execute
-      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values (1, 1, (select id from property where public_id = 'mittarajoitus'), 1000)""".execute
-      sqlu"""insert into lrm_position (id, link_id) VALUES (2, 200)""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date) values (2,  ${heightLimitAssetId}, TO_TIMESTAMP('2016-11-01 16:00', 'YYYY-MM-DD HH24:MI'))""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values (2, 2)""".execute
-      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values (2, 2, (select id from property where public_id = 'mittarajoitus'), 1000)""".execute
-      sqlu"""insert into lrm_position (id, link_id) VALUES (3, 300)""".execute
-      sqlu"""insert into asset (id, asset_type_id, modified_date) values (3,  ${heightLimitAssetId}, TO_TIMESTAMP('2016-11-01 16:00', 'YYYY-MM-DD HH24:MI'))""".execute
-      sqlu"""insert into asset_link (asset_id, position_id) values (3, 3)""".execute
-      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values (3, 3, (select id from property where public_id = 'mittarajoitus'), 1000)""".execute
+      val (lrm1, lrm2, lrm3) = (Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue, Sequences.nextLrmPositionPrimaryKeySeqValue)
+      val (asset1, asset2, asset3) = (Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue, Sequences.nextPrimaryKeySeqValue)
+      sqlu"""insert into lrm_position (id, link_id) VALUES ($lrm1, 100)""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date) values ($asset1, ${heightLimitAssetId}, TO_TIMESTAMP('2016-11-01 16:00', 'YYYY-MM-DD HH24:MI'))""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values ($asset1, $lrm1)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values ($asset1, $asset1, (select id from property where public_id = 'mittarajoitus'), 1000)""".execute
+      sqlu"""insert into lrm_position (id, link_id) VALUES ($lrm2, 200)""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date) values ($asset2,  ${heightLimitAssetId}, TO_TIMESTAMP('2016-11-01 16:00', 'YYYY-MM-DD HH24:MI'))""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values ($asset2, $lrm2)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values ($asset2, $asset2, (select id from property where public_id = 'mittarajoitus'), 1000)""".execute
+      sqlu"""insert into lrm_position (id, link_id) VALUES ($lrm3, 300)""".execute
+      sqlu"""insert into asset (id, asset_type_id, modified_date) values ($asset3,  ${heightLimitAssetId}, TO_TIMESTAMP('2016-11-01 16:00', 'YYYY-MM-DD HH24:MI'))""".execute
+      sqlu"""insert into asset_link (asset_id, position_id) values ($asset3, $lrm3)""".execute
+      sqlu"""insert into number_property_value (id, asset_id, property_id, value) values ($asset3, $asset3, (select id from property where public_id = 'mittarajoitus'), 1000)""".execute
 
       when(mockRoadLinkService.getRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean])).thenReturn(Seq(roadLink1, roadLink2, roadLink3))
 
@@ -1277,5 +1350,78 @@ class LinearAssetServiceSpec extends FunSuite with Matchers {
     }
   }
 
+  test("Create linear asset on a road link that has changed previously"){
+    val oldLinkId1 = 5000
+    val linkId1 = 5001
+    val newLinkId = 6000
+    val municipalityCode = 235
+    val administrativeClass = Municipality
+    val trafficDirection = TrafficDirection.BothDirections
+    val functionalClass = 1
+    val linkType = Freeway
+    val assetTypeId = 120
 
+    val mockRoadLinkService = MockitoSugar.mock[RoadLinkService]
+    val mockVVHRoadLinkClient = MockitoSugar.mock[VVHRoadLinkClient]
+    val mockVVHClient = MockitoSugar.mock[VVHClient]
+    val timeStamp = new VVHRoadLinkClient("http://localhost:6080").createVVHTimeStamp(5)
+    when(mockVVHRoadLinkClient.createVVHTimeStamp(any[Int])).thenReturn(timeStamp)
+    when(mockVVHClient.roadLinkData).thenReturn(mockVVHRoadLinkClient)
+
+    val service = new LinearAssetService(mockRoadLinkService, new DummyEventBus) {
+      override def withDynTransaction[T](f: => T): T = f
+      override def vvhClient: VVHClient = mockVVHClient
+    }
+
+    val roadLinks = Seq(
+      RoadLink(linkId1, List(Point(0.0, 0.0), Point(20.0, 0.0)), 20.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))),
+      RoadLink(newLinkId, List(Point(0.0, 0.0), Point(120.0, 0.0)), 120.0, administrativeClass, functionalClass, trafficDirection, linkType, None, None, Map("MUNICIPALITYCODE" -> BigInt(municipalityCode), "SURFACETYPE" -> BigInt(2))))
+
+    val changeInfo = Seq(
+      ChangeInfo(Some(oldLinkId1), Some(newLinkId), 12345, 1, Some(0), Some(100), Some(0), Some(100), 1476468913000L),
+      ChangeInfo(Some(linkId1), Some(newLinkId), 12345, 2, Some(0), Some(20), Some(100), Some(120), 1476468913000L)
+    )
+
+    OracleDatabase.withDynTransaction {
+      when(mockRoadLinkService.getRoadLinksAndChangesFromVVH(any[BoundingRectangle], any[Set[Int]])).thenReturn((roadLinks, changeInfo))
+      val newAsset1 = NewLinearAsset(linkId1, 0.0, 20, NumericValue(2017), 1, 234567, None)
+      val id1 = service.create(Seq(newAsset1), assetTypeId, "KX2")
+
+      val newAsset = NewLinearAsset(newLinkId, 0.0, 120, NumericValue(4779), 1, 234567, None)
+      val id = service.create(Seq(newAsset), assetTypeId, "KX2")
+
+      id should have size (1)
+      id.head should not be (0)
+
+      val assets = service.getPersistedAssetsByIds(assetTypeId, Set(1L, id.head, id1.head))
+      assets should have size (2)
+      assets.forall(_.vvhTimeStamp > 0L) should be (true)
+
+      val after = service.getByBoundingBox(assetTypeId, BoundingRectangle(Point(0.0, 0.0), Point(120.0, 120.0)), Set(municipalityCode))
+      after should have size(2)
+      after.flatten.forall(_.id != 0) should be (true)
+      dynamicSession.rollback()
+
+    }
+  }
+
+  test("Fetch assets by municipality - lighting") {
+    runWithRollback {
+
+      val newAssetId = ServiceWithDao.create(Seq(NewLinearAsset(1, 0, 20, NumericValue(1), 1, 0, None)), 100, "testuser")
+      val newAsset = ServiceWithDao.getPersistedAssetsByIds(100, newAssetId.toSet)
+
+      when(mockLinearAssetDao.fetchLinearAssetsByLinkIds(any[Int], any[Seq[Long]], any[String])).thenReturn(List(newAsset.head))
+      val assets = PassThroughService.getAssetsByMunicipality(100, 235)
+
+      assets.length should be (1)
+      assets.foreach { asset =>
+        asset.linkId should be (1)
+        asset.value.get should be(NumericValue(1))
+        asset.startMeasure should be(0)
+        asset.endMeasure should be (20)
+        asset.typeId should be (100)
+      }
+    }
+  }
 }

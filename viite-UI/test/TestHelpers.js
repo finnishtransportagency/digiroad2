@@ -121,7 +121,7 @@ define(['RoadAddressTestData',
       map.dispatchEvent({ type: 'singleclick', coordinate: [longitude, latitude] });
     };
 
-    var clickEnabledSirraButton = function(){
+    var clickEnabledSiirraButton = function(){
       $('.link-properties button.calculate:enabled').click();
     };
 
@@ -134,7 +134,7 @@ define(['RoadAddressTestData',
     };
 
     var clickNextButton = function(){
-      $('.btn-next').click();
+      $('#generalNext').click();
     };
 
     var clickReserveButton = function(){
@@ -262,7 +262,7 @@ define(['RoadAddressTestData',
       defaultBackend: defaultBackend,
       fakeBackend: fakeBackend,
       clickValintaButton:clickValintaButton,
-      clickEnabledSirraButton: clickEnabledSirraButton,
+      clickEnabledSiirraButton: clickEnabledSiirraButton,
       clickVisibleEditModeButton: clickVisibleEditModeButton,
       clickProjectListButton: clickProjectListButton,
       clickNextButton: clickNextButton,

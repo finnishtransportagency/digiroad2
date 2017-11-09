@@ -69,11 +69,10 @@
       [-1, 'Kyllä']
     ];
 
-     function getRoadType(askedRoadType){
+    function getRoadType(askedRoadType){
       var RoadType = _.find(allRoadTypes, function(x){return x[0] === askedRoadType;});
       return RoadType && RoadType[1];
     }
-
 
     var getDiscontinuityType = function(discontinuity){
       var DiscontinuityType = _.find(discontinuities, function(x){return x[0] === discontinuity;});
@@ -272,7 +271,6 @@
         return '';
     };
 
-
     var template = function(options) {
       var roadTypes = selectedLinkProperty.count() == 1 ? staticField('TIETYYPPI', 'roadType') : dynamicField('TIETYYPPI');
       var startAddress = selectedLinkProperty.count() == 1 ? staticField('ALKUETÄISYYS', 'startAddressM') : dynamicField('ALKUETÄISYYS');
@@ -383,8 +381,25 @@
       }
     };
 
+    var addOpenProjectButton = function(){
+      var rootElement = $('#feature-attributes');
+      rootElement.empty();
+      var emptyFormDiv = '<div class="form-initial-state" id="emptyFormDiv">' +
+        '<span class="header-noposition">Aloita valitsemalla projekti.</span>' +
+        '<button id="formProjectButton" class="action-mode-btn btn btn-block btn-primary">Tieosoiteprojektit</button>' +
+        '</div>';
+      rootElement.append(emptyFormDiv);
+      $('[id=formProjectButton]').click(function(){
+        $('[id=projectListButton]').click();
+        return false;
+      });
+    };
+
+
     var bindEvents = function() {
       var rootElement = $('#feature-attributes');
+
+      addOpenProjectButton();
 
       var switchMode = function (readOnly){
         toggleMode(readOnly);
@@ -455,6 +470,7 @@
       };
 
       eventbus.on('linkProperties:selected linkProperties:cancelled', function(linkProperties) {
+        rootElement.empty();
         if(!_.isEmpty(selectedLinkProperty.get()) || !_.isEmpty(linkProperties)){
 
           compactForm = !_.isEmpty(selectedLinkProperty.get()) && (selectedLinkProperty.get()[0].roadLinkType === floatingRoadLinkType || selectedLinkProperty.getFeaturesToKeep().length >= 1);
@@ -587,9 +603,29 @@
       eventbus.on('linkProperties:changed', function() {
         rootElement.find('.link-properties button').attr('disabled', false);
       });
+
+      eventbus.on('layer:selected', function(layer, previouslySelectedLayer, toggleStart){
+        if(layer === "linkProperty" && toggleStart){
+          addOpenProjectButton();
+        }
+      });
+
+      eventbus.on('roadLayer:toggleProjectSelectionInForm', function(layer, noSave){
+        if(layer === "linkProperty"){
+          addOpenProjectButton();
+          if(noSave){
+            $('#formProjectButton').click();
+          } else {
+            eventbus.once('roadAddress:projectSaved', function(){
+              $('#formProjectButton').click();
+            });
+          }
+        }
+      });
+
       eventbus.on('linkProperties:unselected', function() {
         if(('all' === applicationModel.getSelectionType() || 'floating' === applicationModel.getSelectionType()) && !applicationModel.isProjectOpen()){
-          rootElement.empty();
+          addOpenProjectButton();
         }
       });
       eventbus.on('application:readOnly', toggleMode);
@@ -694,7 +730,7 @@
       });
 
       eventbus.on('roadAddressProject:selected', function() {
-          $('.wrapper').remove();
+        $('.wrapper').remove();
       });
     };
     bindEvents();

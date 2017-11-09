@@ -155,21 +155,39 @@ object TRTrafficSignType {
   case object Unknown extends TRTrafficSignType { def value = 999999;  def trafficSignType = TrafficSignType.Unknown; }
 }
 
-sealed trait Operation {
+/**
+  * Values for PavementRoad types enumeration
+  */
+sealed trait TRPavedRoadType {
   def value: Int
+  def pavedRoadType: String
 }
-object Operation {
-  val values = Set(Create, Update, Expire, Remove, Noop)
+object TRPavedRoadType {
+  val values = Set(CementConcrete, Cobblestone, HardAsphalt, SoftAsphalt)
 
-  def apply(intValue: Int): Operation = {
-    values.find(_.value == intValue).getOrElse(Noop)
+  def apply(value: Int): TRPavedRoadType = {
+    values.find(_.value == value).getOrElse(Unknown)
   }
 
-  case object Create extends Operation { def value = 0 }
-  case object Update extends Operation { def value = 1 }
-  case object Expire extends Operation { def value = 2 }
-  case object Remove extends Operation { def value = 3 }
-  case object Noop extends Operation { def value = 3 }
+  case object CementConcrete extends TRPavedRoadType { def value = 1; def pavedRoadType = "Cement Concrete";}
+  case object Cobblestone extends TRPavedRoadType { def value = 2; def pavedRoadType = "Cobblestone";}
+  case object HardAsphalt extends TRPavedRoadType { def value = 10; def pavedRoadType = "Hard Asphalt";}
+  case object SoftAsphalt extends TRPavedRoadType { def value = 20; def pavedRoadType = "Soft Asphalt";}
+  case object Unknown extends TRPavedRoadType { def value = 99;  def pavedRoadType = "Unknown";}
+}
+
+sealed trait TRLaneArrangementType {
+  def value: Int
+}
+object TRLaneArrangementType {
+  val values = Set(MassTransitLane)
+
+  def apply(value: Int): TRLaneArrangementType = {
+    values.find(_.value == value).getOrElse(Unknown)
+  }
+
+  case object MassTransitLane extends TRLaneArrangementType { def value = 5; }
+  case object Unknown extends TRLaneArrangementType { def value = 99; }
 }
 
 case class TierekisteriMassTransitStop(nationalId: Long,
@@ -209,6 +227,21 @@ case class TierekisteriLightingData(roadNumber: Long, startRoadPartNumber: Long,
 
 case class TierekisteriTrafficSignData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
                                     track: Track, startAddressMValue: Long, endAddressMValue: Long, roadSide: RoadSide, assetType: TRTrafficSignType, assetValue: String) extends TierekisteriAssetData
+
+case class TierekisteriPavedRoadData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
+                                    track: Track, startAddressMValue: Long, endAddressMValue: Long, pavementType: TRPavedRoadType) extends TierekisteriAssetData
+
+case class TierekisteriMassTransitLaneData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
+                                     track: Track, startAddressMValue: Long, endAddressMValue: Long, laneType: TRLaneArrangementType) extends TierekisteriAssetData
+
+case class TierekisteriDamagedByThawData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
+                                           track: Track, startAddressMValue: Long, endAddressMValue: Long) extends TierekisteriAssetData
+
+case class TierekisteriEuropeanRoadData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
+                                     track: Track, startAddressMValue: Long, endAddressMValue: Long, assetValue: String) extends TierekisteriAssetData
+
+case class TierekisteriSpeedLimitData(roadNumber: Long, startRoadPartNumber: Long, endRoadPartNumber: Long,
+                                      track: Track, startAddressMValue: Long, endAddressMValue: Long, assetValue: Int, roadSide: RoadSide) extends TierekisteriAssetData
 
 case class TierekisteriError(content: Map[String, Any], url: String)
 
@@ -800,7 +833,7 @@ class TierekisteriTrafficSignAssetClient(trEndPoint: String, trEnable: Boolean, 
   private val trPUOLI = "PUOLI"
 
   override def mapFields(data: Map[String, Any]): TierekisteriTrafficSignData = {
-    val assetValue = getFieldValue(data, trLMTEKSTI).getOrElse("")
+    val assetValue = getFieldValue(data, trLMTEKSTI).getOrElse("").trim
     //TODO remove the orElse and ignrore the all row when we give support for that on TierekisteriClient base implementation
     val assetNumber = convertToInt(getFieldValue(data, trLMNUMERO).orElse(Some("99"))).get
     val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
@@ -810,6 +843,129 @@ class TierekisteriTrafficSignAssetClient(trEndPoint: String, trEnable: Boolean, 
     val roadSide = convertToInt(getMandatoryFieldValue(data, trPUOLI)).map(RoadSide.apply).getOrElse(RoadSide.Unknown)
 
     TierekisteriTrafficSignData(roadNumber, roadPartNumber, roadPartNumber, track, startMValue, startMValue, roadSide, TRTrafficSignType.apply(assetNumber), assetValue)
+  }
+}
+
+class TierekisteriPavedRoadAssetClient(trEndPoint: String, trEnable: Boolean, httpClient: CloseableHttpClient) extends TierekisteriAssetDataClient {
+  override def tierekisteriRestApiEndPoint: String = trEndPoint
+  override def tierekisteriEnabled: Boolean = trEnable
+  override def client: CloseableHttpClient = httpClient
+  type TierekisteriType = TierekisteriPavedRoadData
+
+  override val trAssetType = "tl137"
+  private val trPavementType = "PAALLUOK"
+
+  override def mapFields(data: Map[String, Any]): TierekisteriPavedRoadData = {
+    //Mandatory field
+    val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
+    val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
+    val endRoadPartNumber = convertToLong(getMandatoryFieldValue(data, trEndRoadPartNumber)).getOrElse(roadPartNumber)
+    val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
+    val endMValue = convertToLong(getMandatoryFieldValue(data, trEndMValue)).get
+    val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
+    val pavementType = convertToInt(getMandatoryFieldValue(data, trPavementType)).get
+
+    TierekisteriPavedRoadData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue, TRPavedRoadType.apply(pavementType))
+  }
+}
+
+class TierekisteriMassTransitLaneAssetClient(trEndPoint: String, trEnable: Boolean, httpClient: CloseableHttpClient) extends TierekisteriAssetDataClient {
+  override def tierekisteriRestApiEndPoint: String = trEndPoint
+  override def tierekisteriEnabled: Boolean = trEnable
+  override def client: CloseableHttpClient = httpClient
+  type TierekisteriType = TierekisteriMassTransitLaneData
+
+  override val trAssetType = "tl161"
+  private val trLaneType = "KAISTATY"
+
+  override def mapFields(data: Map[String, Any]): TierekisteriMassTransitLaneData = {
+    //Mandatory field
+    val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
+    val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
+    val endRoadPartNumber = convertToLong(getMandatoryFieldValue(data, trEndRoadPartNumber)).getOrElse(roadPartNumber)
+    val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
+    val endMValue = convertToLong(getMandatoryFieldValue(data, trEndMValue)).get
+    val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
+    val laneType = convertToInt(getMandatoryFieldValue(data, trLaneType)).get
+
+    TierekisteriMassTransitLaneData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue, TRLaneArrangementType.apply(laneType))
+  }
+}
+
+class TierekisteriDamagedByThawAssetClient(trEndPoint: String, trEnable: Boolean, httpClient: CloseableHttpClient) extends TierekisteriAssetDataClient {
+  override def tierekisteriRestApiEndPoint: String = trEndPoint
+  override def tierekisteriEnabled: Boolean = trEnable
+  override def client: CloseableHttpClient = httpClient
+  type TierekisteriType = TierekisteriDamagedByThawData
+
+  override val trAssetType = "tl162"
+
+  override def mapFields(data: Map[String, Any]): TierekisteriDamagedByThawData = {
+    //Mandatory field
+    val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
+    val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
+    val endRoadPartNumber = convertToLong(getMandatoryFieldValue(data, trEndRoadPartNumber)).getOrElse(roadPartNumber)
+    val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
+    val endMValue = convertToLong(getMandatoryFieldValue(data, trEndMValue)).get
+    val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
+
+    TierekisteriDamagedByThawData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue)
+  }
+}
+
+class TierekisteriEuropeanRoadAssetClient(trEndPoint: String, trEnable: Boolean, httpClient: CloseableHttpClient) extends TierekisteriAssetDataClient{
+  override def tierekisteriRestApiEndPoint: String = trEndPoint
+  override def tierekisteriEnabled: Boolean = trEnable
+  override def client: CloseableHttpClient = httpClient
+  type TierekisteriType = TierekisteriEuropeanRoadData
+
+  override val trAssetType = "tl130"
+  private val trEuropeanRoadNumber = "EURONRO"
+
+  override def mapFields(data: Map[String, Any]): TierekisteriEuropeanRoadData = {
+    val assetValue =
+      getFieldValue(data, trEuropeanRoadNumber) match {
+        case Some(value) => value
+        case None => " "
+      }
+
+    //Mandatory field
+    val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
+    val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
+    val endRoadPartNumber = convertToLong(getMandatoryFieldValue(data, trEndRoadPartNumber)).getOrElse(roadPartNumber)
+    val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
+    val endMValue = convertToLong(getMandatoryFieldValue(data, trEndMValue)).get
+    val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
+
+    TierekisteriEuropeanRoadData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue, assetValue)
+  }
+}
+
+class TierekisteriSpeedLimitAssetClient(trEndPoint: String, trEnable: Boolean, httpClient: CloseableHttpClient) extends TierekisteriAssetDataClient {
+  override def tierekisteriRestApiEndPoint: String = trEndPoint
+  override def tierekisteriEnabled: Boolean = trEnable
+  override def client: CloseableHttpClient = httpClient
+  type TierekisteriType = TierekisteriSpeedLimitData
+
+  override val trAssetType = "tl168"
+  private val trSpeedLimitValue = "NOPRAJ"
+  private val trSide = "PUOLI"
+
+
+  override def mapFields(data: Map[String, Any]): TierekisteriSpeedLimitData = {
+
+    //Mandatory field
+    val assetValue = convertToInt(getMandatoryFieldValue(data, trSpeedLimitValue)).get
+    val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
+    val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
+    val endRoadPartNumber = convertToLong(getMandatoryFieldValue(data, trEndRoadPartNumber)).getOrElse(roadPartNumber)
+    val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
+    val endMValue = convertToLong(getMandatoryFieldValue(data, trEndMValue)).get
+    val track = convertToInt(getMandatoryFieldValue(data, trTrackCode)).map(Track.apply).getOrElse(Track.Unknown)
+    val roadSide = convertToInt(getMandatoryFieldValue(data, trSide)).map(RoadSide.apply).getOrElse(RoadSide.Unknown)
+
+
+    TierekisteriSpeedLimitData(roadNumber, roadPartNumber, endRoadPartNumber, track, startMValue, endMValue, assetValue, roadSide)
   }
 }
 

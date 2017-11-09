@@ -16,7 +16,24 @@
       display: block;
       padding: @line-height-modifier * 2;
       line-height: (@line-height-modifier * 5) + 2;
+      float: left;
     }
+  }
+
+  .rightSideSpan {
+    display: block;
+    float: right;
+    width: max-content;
+    color: @blue-dark;
+    cursor: pointer;
+  }
+
+  .manualCPWarningSpan {
+    color: #FF0000;
+    font-size: 25px;
+    margin-top: 10px;
+    margin-bottom: -10px;
+    display: none;
   }
 
   .wrapper {
@@ -294,6 +311,7 @@
   }
 
   .form-control,
+  .split-form-control,
   .checkbox,
   .select,
   .form-control-static,

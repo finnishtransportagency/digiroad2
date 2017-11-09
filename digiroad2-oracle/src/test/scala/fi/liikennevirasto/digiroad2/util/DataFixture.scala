@@ -7,7 +7,7 @@ import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.oracle.OracleAssetDao
 import fi.liikennevirasto.digiroad2.linearasset.{MTKClassWidth, NumericValue, PersistedLinearAsset}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
-import fi.liikennevirasto.digiroad2.masstransitstop.MassTransitStopOperations
+import fi.liikennevirasto.digiroad2.masstransitstop.{MassTransitStopOperations, TierekisteriBusStopStrategy, TierekisteriBusStopStrategyOperations}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{MassTransitStopDao, Queries}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
@@ -65,6 +65,9 @@ object DataFixture {
   lazy val tierekisteriDataImporter: TierekisteriDataImporter = {
     new TierekisteriDataImporter(vvhClient, oracleLinearAssetDao, roadAddressDao, linearAssetService)
   }
+  lazy val speedLimitService: SpeedLimitService = {
+    new SpeedLimitService(new DummyEventBus, vvhClient, roadLinkService)
+  }
 
   lazy val massTransitStopService: MassTransitStopService = {
     class MassTransitStopServiceWithDynTransaction(val eventbus: DigiroadEventBus, val roadLinkService: RoadLinkService) extends MassTransitStopService {
@@ -72,7 +75,6 @@ object DataFixture {
       override def withDynSession[T](f: => T): T = OracleDatabase.withDynSession(f)
       override val tierekisteriClient: TierekisteriMassTransitStopClient = DataFixture.tierekisteriClient
       override val massTransitStopDao: MassTransitStopDao = new MassTransitStopDao
-      override val tierekisteriEnabled = true
     }
     new MassTransitStopServiceWithDynTransaction(eventbus, roadLinkService)
   }
@@ -107,6 +109,12 @@ object DataFixture {
 
   lazy val maintenanceService: MaintenanceService = {
     new MaintenanceService(roadLinkService, new DummyEventBus)
+  }
+
+  lazy val tierekisteriSpeedLimitAsset : TierekisteriSpeedLimitAssetClient = {
+    new TierekisteriSpeedLimitAssetClient(getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+      getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+      HttpClientBuilder.create().build())
   }
 
   lazy val assetDao : OracleAssetDao = {
@@ -516,6 +524,7 @@ object DataFixture {
   }
 
   private def updateTierekisteriBusStopsWithoutOTHLiviId(dryRun: Boolean, boundsOffset: Double = 10): Unit ={
+
     case class NearestBusStops(trBusStop: TierekisteriMassTransitStop, othBusStop: PersistedMassTransitStop, distance: Double)
     def hasLiviIdPropertyValue(persistedStop: PersistedMassTransitStop): Boolean ={
       persistedStop.propertyData.
@@ -547,7 +556,7 @@ object DataFixture {
               val boundingBoxFilter = OracleDatabase.boundingBoxFilter(bounds, "a.geometry")
               val filter = s" where $boundingBoxFilter and a.asset_type_id = 10 and (a.valid_to is null or a.valid_to > sysdate)"
               val persistedStops = OracleDatabase.withDynSession {massTransitStopService.fetchPointAssets(query => query + filter)}.
-                filter(stop => MassTransitStopOperations.isStoredInTierekisteri(Some(stop))).
+                filter(stop => TierekisteriBusStopStrategyOperations.isStoredInTierekisteri(Some(stop))).
                 filterNot(hasLiviIdPropertyValue)
 
               if(persistedStops.isEmpty){
@@ -588,8 +597,6 @@ object DataFixture {
     println(DateTime.now())
     println("\n")
   }
-
-
 
   private def verifyIsChanged(propertyPublicId: String, propertyId: Long, municipality: Int): Unit = {
     val floatingReasonPublicId = "kellumisen_syy"
@@ -704,7 +711,8 @@ object DataFixture {
             //Create missed Bus Stop at the Tierekisteri
             if(!dryRun) {
               withDynSession {
-                massTransitStopService.executeTierekisteriOperation(Operation.Create, adjustedStop, roadLinkByLinkId => roadLinks.find(r => r.linkId == roadLinkByLinkId), None, None)
+                //TODO get it from the new variation if we need to execute this batch process again.
+                //massTransitStopService.executeTierekisteriOperation(Operation.Create, adjustedStop, roadLinkByLinkId => roadLinks.find(r => r.linkId == roadLinkByLinkId), None, None)
               }
             }
           } catch {
@@ -782,7 +790,6 @@ object DataFixture {
     println(DateTime.now())
     println("\n")
   }
-
 
   def fillLaneAmountsMissingInRoadLink(): Unit = {
     val dao = new OracleLinearAssetDao(null, null)
@@ -1018,6 +1025,73 @@ object DataFixture {
     println("\n")
   }
 
+  def importAllSpeedLimitDataFromTR(): Unit ={
+    println("\nStart Speed Limits import at time: ")
+    println(DateTime.now())
+
+    tierekisteriDataImporter.importSpeedLimits()
+
+    println("Speed Limits import complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
+  def importAllPavedRoadDataFromTR(): Unit ={
+    println("\nStart PavedRoad import at time: ")
+    println(DateTime.now())
+
+    tierekisteriDataImporter.importPavedRoadAsset
+
+    println("PavedRoad import complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
+  def importAllMassTransitLaneDataFromTR(): Unit ={
+    println("\nStart MassTransitLane import at time: ")
+    println(DateTime.now())
+
+    tierekisteriDataImporter.importMassTransitLaneAsset
+
+    println("MassTransitLane import complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
+  def importAllDamagedByThawDataFromTR(): Unit ={
+    println("\nStart DamagedByThaw import at time: ")
+    println(DateTime.now())
+
+    tierekisteriDataImporter.importDamagedByThawAsset
+
+    println("DamagedByThaw import complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
+  def importAllEuropeanRoadDataFromTR(): Unit ={
+    println("\nStart EuropeanRoad import at time: ")
+    println(DateTime.now())
+
+    tierekisteriDataImporter.importEuropeanRoadAsset
+
+    println("EuropeanRoad import complete at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
+  def importSpeedLimitAssetFromTR(): Unit ={
+    println("\nStart Speed limit import at time: ")
+    println(DateTime.now())
+
+    tierekisteriDataImporter.importSpeedLimitAsset()
+
+    println("Speed limit import complete at time: ")
+    println(DateTime.now())
+    println("\n")
+
+  }
+
   def updateLitRoadDataFromTR(): Unit ={
     println("\nStart lighting update at: ")
     println(DateTime.now())
@@ -1078,14 +1152,184 @@ object DataFixture {
         println("Municipality -> " + municipality  + " MaintenanceRoad Assets -> " + assets.size )
 
         assets.foreach { asset =>
-          roadLinks.filter(_.linkId == asset._2)
-          val area = maintenanceService.getAssetArea(roadLinks.find(_.linkId == asset._2), Measures(asset._3, asset._4), None)
-          assets.foreach(asset => oracleLinearAssetDao.updateArea(asset._1, area))
+          try {
+            val area = maintenanceService.getAssetArea(roadLinks.find(_.linkId == asset._2), Measures(asset._3, asset._4), None)
+            assets.foreach(asset => oracleLinearAssetDao.updateArea(asset._1, area))
+          } catch {
+            case ex: Exception => {
+              println(s"""asset id ${asset._1} in link id ${asset._2} as failed with the following exception ${ex.getMessage}""")
+            }
+          }
         }
       }
     }
 
     println("\nEnd Update areas on Asset at time: ")
+    println(DateTime.now())
+    println("\n")
+  }
+
+  def updatePavedRoadDataFromTR(): Unit ={
+    println("\nStart PavedRoad update at: ")
+    println(DateTime.now())
+
+    tierekisteriDataImporter.updatePavedRoadAsset()
+
+    println("PavedRoad update complete at time: ")
+    println(DateTime.now())
+    println("\n")
+
+  }
+
+  def updateMassTransitLaneAssetDataFromTR(): Unit ={
+    println("\nStart MassTransitLane update at: ")
+    println(DateTime.now())
+
+    tierekisteriDataImporter.updateMassTransitLaneAsset()
+
+    println("MassTransitLane update complete at time: ")
+    println(DateTime.now())
+    println("\n")
+
+  }
+
+  def updateDamagedByThawAssetDataFromTR(): Unit ={
+    println("\nStart DamagedByThaw update at: ")
+    println(DateTime.now())
+
+    tierekisteriDataImporter.updateDamagedByThawAsset()
+
+    println("DamagedByThaw update complete at time: ")
+    println(DateTime.now())
+    println("\n")
+
+  }
+
+  def updateEuropeanRoadDataFromTR(): Unit ={
+    println("\nStart EuropeanRoad update at: ")
+    println(DateTime.now())
+
+    tierekisteriDataImporter.updateEuropeanRoadAsset()
+
+    println("EuropeanRoad update complete at time: ")
+    println(DateTime.now())
+    println("\n")
+
+  }
+
+  def updateSpeedLimitAssetFromTR(): Unit ={
+    println("\nStart Speed limit update at: ")
+    println(DateTime.now())
+
+    tierekisteriDataImporter.updateSpeedLimitAssets()
+
+    println("Speed limit import complete at time: ")
+    println(DateTime.now())
+    println("\n")
+
+  }
+
+  def updateOTHBusStopWithTRInfo(): Unit = {
+    println("\nSynchronize name (Swedish), korotettu and katos (shelter) info of bus stops according to the info saved in TR")
+    println(DateTime.now())
+
+    val username = "batch_process_sync_BS_with_TR_info"
+
+    var persistedStop: Seq[PersistedMassTransitStop] = Seq()
+    var outdatedBusStopsOTH: Seq[PersistedMassTransitStop] = Seq()
+
+    //Get All Municipalities
+    val municipalities: Seq[Int] =
+      OracleDatabase.withDynSession {
+        Queries.getMunicipalities
+      }
+
+    //Get a List of All Bus Stops present in Tierekisteri
+    val allBusStopsTR = tierekisteriClient.fetchActiveMassTransitStops
+
+    //Save Tierekisteri LiviIDs into a List
+    val liviIdsListTR = allBusStopsTR.map(_.liviId)
+
+    municipalities.foreach { municipality =>
+      println("Start processing municipality %d".format(municipality))
+
+      //Get all OTH Bus Stops By Municipality
+      persistedStop = massTransitStopService.getByMunicipality(municipality, false)
+
+      persistedStop.foreach { stop =>
+        val stopLiviId = stop.propertyData.
+          find(property => property.publicId == MassTransitStopOperations.LiViIdentifierPublicId).
+          flatMap(property => property.values.headOption).map(p => p.propertyValue)
+
+        // Validate if OTH stop are known in Tierekisteri and if is maintained by ELY
+        if (stopLiviId.isDefined && liviIdsListTR.contains(stopLiviId.get)) {
+          //Data From OTH
+          val stopNameSE =
+            stop.propertyData.find(property => property.publicId == MassTransitStopOperations.nameSePublicId).
+              flatMap(property => property.values.headOption).map(p => p.propertyValue)
+            match {
+              case Some(roofValue) => roofValue
+              case _ => ""
+            }
+
+          val stopRoofValue =
+            stop.propertyData.find(property => property.publicId == MassTransitStopOperations.roofPublicId).
+              flatMap(property => property.values.headOption).map(p => p.propertyValue)
+            match {
+              case Some(roofValue) => Existence.fromPropertyValue(roofValue)
+              case _ => ""
+            }
+
+          val stopRaisedBusStopValue =
+            stop.propertyData.find(property => property.publicId == MassTransitStopOperations.raisePublicId).
+              flatMap(property => property.values.headOption).map(p => p.propertyValue)
+            match {
+              case Some(raisedValue) => Existence.fromPropertyValue(raisedValue)
+              case _ => ""
+            }
+
+          //Data From TR
+          val busStopsTR = allBusStopsTR.find(_.liviId == stopLiviId.get)
+
+          val nameSEinTR = busStopsTR.head.nameSe match {
+            case Some(name) => name
+            case _ => ""
+          }
+          val roofValueinTR = busStopsTR.head.equipments.get(Equipment.Roof) match {
+            case Some(roofValue) => roofValue
+            case _ => ""
+          }
+          val raisedValueinTR = busStopsTR.head.equipments.get(Equipment.RaisedBusStop) match {
+            case Some(raisedValue) => raisedValue
+            case _ => ""
+          }
+
+          if ((stopNameSE != nameSEinTR) || (stopRoofValue != roofValueinTR) || (stopRaisedBusStopValue != raisedValueinTR)) {
+            val propertiesToUpdate = Seq(
+              SimpleProperty(MassTransitStopOperations.nameSePublicId, Seq(PropertyValue(nameSEinTR))),
+              SimpleProperty(MassTransitStopOperations.roofPublicId, Seq(PropertyValue(roofValueinTR.asInstanceOf[Existence].propertyValue.toString()))),
+              SimpleProperty(MassTransitStopOperations.raisePublicId, Seq(PropertyValue(raisedValueinTR.asInstanceOf[Existence].propertyValue.toString())))
+            )
+
+            massTransitStopService.updatePropertiesForAsset(stop.id, propertiesToUpdate)
+
+            //Add a list of outdated Bus Stops
+            outdatedBusStopsOTH = outdatedBusStopsOTH ++ List(stop)
+          }
+        }
+      }
+
+      println("End processing municipality %d".format(municipality))
+    }
+
+    //Print the List of Bus stops where info is not the same
+    println("List of Bus stops where info is not the same:")
+    outdatedBusStopsOTH.foreach { busStops =>
+      println("External Id: " + busStops.nationalId)
+    }
+
+    println("\n")
+    println("Complete at time: ")
     println(DateTime.now())
     println("\n")
   }
@@ -1181,14 +1425,38 @@ object DataFixture {
         importAllRoadWidthDataFromTR()
       case Some("import_all_trafficSigns_from_TR_to_OTH") =>
         importAllTrafficSignDataFromTR()
+      case Some("import_all_pavedRoad_from_TR_to_OTH") =>
+        importAllPavedRoadDataFromTR()
+      case Some("import_all_massTransitLane_from_TR_to_OTH") =>
+        importAllMassTransitLaneDataFromTR()
+      case Some("import_all_damagedByThaw_from_TR_to_OTH") =>
+        importAllDamagedByThawDataFromTR()
+      case Some("import_all_europeanRoad_from_TR_to_OTH") =>
+        importAllEuropeanRoadDataFromTR()
       case Some("update_litRoad_from_TR_to_OTH") =>
         updateLitRoadDataFromTR()
       case Some("update_roadWidth_from_TR_to_OTH") =>
         updateRoadWidthDataFromTR()
       case Some("update_trafficSigns_from_TR_to_OTH") =>
         updateTrafficSignDataFromTR()
+      case Some("update_pavedRoad_from_TR_to_OTH") =>
+        updatePavedRoadDataFromTR()
+      case Some("update_massTransitLane_from_TR_to_OTH") =>
+        updateMassTransitLaneAssetDataFromTR()
+      case Some("update_damagedByThaw_from_TR_to_OTH") =>
+        updateDamagedByThawAssetDataFromTR()
+      case Some("import_all_speedLimits_from_TR_to_OTH") =>
+        importAllSpeedLimitDataFromTR()
+      case Some("update_europeanRoad_from_TR_to_OTH") =>
+        updateEuropeanRoadDataFromTR()
       case Some("update_areas_on_asset") =>
         updateAreasOnAsset()
+      case Some("update_OTH_BS_with_TR_info") =>
+        updateOTHBusStopWithTRInfo()
+      case Some("import_speed_limit_asset_from_TR_to_OTH") =>
+        importSpeedLimitAssetFromTR()
+      case Some("update_speed_limit_asset_from_TR_to_OTH") =>
+        updateSpeedLimitAssetFromTR()
       case _ => println("Usage: DataFixture test | import_roadlink_data |" +
         " split_speedlimitchains | split_linear_asset_chains | dropped_assets_csv | dropped_manoeuvres_csv |" +
         " unfloat_linear_assets | expire_split_assets_without_mml | generate_values_for_lit_roads | get_addresses_to_masstransitstops_from_vvh |" +
@@ -1197,7 +1465,9 @@ object DataFixture {
         " check_unknown_speedlimits | set_transitStops_floating_reason | verify_roadLink_administrative_class_changed | set_TR_bus_stops_without_OTH_LiviId |" +
         " check_TR_bus_stops_without_OTH_LiviId | check_bus_stop_matching_between_OTH_TR | listing_bus_stops_with_side_code_conflict_with_roadLink_direction |" +
         " fill_lane_amounts_in_missing_road_links | import_all_trafficVolume_from_TR_to_OTH | import_all_litRoad_from_TR_to_OTH | import_all_roadWidth_from_TR_to_OTH |" +
-        " update_litRoad_from_TR_to_OTH | update_roadWidth_from_TR_to_OTH | update_areas_on_asset | fill_roadWidth_in_road_links")
+        " import_all_trafficSigns_from_TR_to_OTH | import_all_pavedRoad_from_TR_to_OTH | import_all_massTransitLane_from_TR_to_OTH | update_litRoad_from_TR_to_OTH | " +
+        " update_roadWidth_from_TR_to_OTH | update_trafficSigns_from_TR_to_OTH | update_pavedRoad_from_TR_to_OTH | update_massTransitLane_from_TR_to_OTH" +
+        " import_all_damagedByThaw_from_TR_to_OTH | update_damagedByThaw_from_TR_to_OTH | import_all_europeanRoad_from_TR_to_OTH | update_europeanRoad_from_TR_to_OTH | update_areas_on_asset | update_OTH_BS_with_TR_info | fill_roadWidth_in_road_links")
     }
   }
 }

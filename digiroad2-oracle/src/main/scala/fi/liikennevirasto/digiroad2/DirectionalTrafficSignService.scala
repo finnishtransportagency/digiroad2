@@ -2,7 +2,7 @@ package fi.liikennevirasto.digiroad2
 
 
 import fi.liikennevirasto.digiroad2.asset.{AdministrativeClass, LinkGeomSource}
-import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, RoadLinkLike}
 import fi.liikennevirasto.digiroad2.pointasset.oracle._
 
 case class IncomingDirectionalTrafficSign(lon: Double, lat: Double, linkId: Long, validityDirection: Int, text: Option[String], bearing: Option[Int]) extends IncomingPointAsset
@@ -11,6 +11,15 @@ case class IncomingDirectionalTrafficSign(lon: Double, lat: Double, linkId: Long
 class DirectionalTrafficSignService(val roadLinkService: RoadLinkService) extends PointAssetOperations {
   type IncomingAsset = IncomingDirectionalTrafficSign
   type PersistedAsset = DirectionalTrafficSign
+
+  private def setAssetPosition(asset: IncomingAsset, geometry: Seq[Point], mValue: Double): IncomingAsset = {
+    GeometryUtils.calculatePointFromLinearReference(geometry, mValue) match {
+      case Some(point) =>
+        asset.copy(lon = point.x, lat = point.y)
+      case _ =>
+        asset
+    }
+  }
 
   override def typeId: Int = 240
 
@@ -24,16 +33,17 @@ class DirectionalTrafficSignService(val roadLinkService: RoadLinkService) extend
     persistedAsset.copy(floating = floating)
   }
 
-  override def create(asset: IncomingDirectionalTrafficSign, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass] = None, linkSource: LinkGeomSource): Long = {
-    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat, 0), geometry)
+  override def create(asset: IncomingDirectionalTrafficSign, username: String, roadLink: RoadLink): Long = {
+    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat, 0), roadLink.geometry)
     withDynTransaction {
-      OracleDirectionalTrafficSignDao.create(asset, mValue, municipality ,username)
+      OracleDirectionalTrafficSignDao.create(setAssetPosition(asset, roadLink.geometry, mValue), mValue, roadLink.municipalityCode ,username)
     }
   }
+
   override def update(id: Long, updatedAsset: IncomingDirectionalTrafficSign, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long = {
     val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat, 0), geometry)
     withDynTransaction {
-      OracleDirectionalTrafficSignDao.update(id, updatedAsset, mValue, municipality, username)
+      OracleDirectionalTrafficSignDao.update(id, setAssetPosition(updatedAsset, geometry, mValue), mValue, municipality, username)
     }
     id
   }

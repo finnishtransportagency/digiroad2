@@ -22,10 +22,12 @@
       return me.eventListener.running;
     };
     this.activateSelection = function() {
-      me.selectControl.activate();
+      if(!_.isUndefined(me.selectControl))
+        me.selectControl.activate();
     };
     this.deactivateSelection = function() {
-      me.selectControl.deactivate();
+      if(!_.isUndefined(me.selectControl))
+        me.selectControl.deactivate();
     };
     this.start = function(event) {
       if (!me.isStarted()) {
@@ -66,20 +68,26 @@
     };
 
     this.drawCalibrationMarkers = function(layer, roadLinks) {
-      var calibrationPoints = _.flatten(_.filter(roadLinks, function(roadLink) {
-        return roadLink.calibrationPoints.length > 0;
-      }).map(function(roadLink) {
-        return roadLink.calibrationPoints;
-      }));
-      return _.filter(calibrationPoints, function(cp){
-        return cp.point !== undefined;
+      var calibrationPointsWithValue = [];
+      (_.filter(roadLinks, function (roadLink) {
+          return roadLink.calibrationPoints.length > 0;
+        }
+      )).forEach(function (roadLink) {
+        roadLink.calibrationPoints.forEach(function (currentPoint) {
+          var point=currentPoint.point;
+          if(point)
+            calibrationPointsWithValue.push({points:point,calibrationCode:roadLink.calibrationCode});
+        });
       });
+
+      return calibrationPointsWithValue;
+
     };
 
     this.mapOverLinkMiddlePoints = mapOverLinkMiddlePoints;
     this.show = function(map) {
       eventbus.on('map:moved', me.handleMapMoved);
-      if (map.getZoom() >= me.minZoomForContent) {
+      if (map.getView().getZoom() >= me.minZoomForContent) {
         me.start('shown');
       }
     };

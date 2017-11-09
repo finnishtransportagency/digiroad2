@@ -108,10 +108,13 @@ window.LinearAssetLayer = function(params) {
     this.updateByPosition = function(mousePoint) {
       var closestLinearAssetLink = findNearestLinearAssetLink(mousePoint);
       if (closestLinearAssetLink) {
-        if (isWithinCutThreshold(closestLinearAssetLink.distance)) {
-          moveTo(closestLinearAssetLink.point[0], closestLinearAssetLink.point[1]);
-        } else {
-          remove();
+        var nearestLineAsset = closestLinearAssetLink.feature.getProperties();
+        if (!editConstrains(nearestLineAsset)) {
+          if (isWithinCutThreshold(closestLinearAssetLink.distance)) {
+            moveTo(closestLinearAssetLink.point[0], closestLinearAssetLink.point[1]);
+          } else {
+            remove();
+          }
         }
       }
     };
@@ -137,10 +140,12 @@ window.LinearAssetLayer = function(params) {
       }
 
       var nearestLinearAsset = nearest.feature.getProperties();
-      var splitProperties = calculateSplitProperties(nearestLinearAsset, mousePoint);
-      selectedLinearAsset.splitLinearAsset(nearestLinearAsset.id, splitProperties);
+      if(!editConstrains(nearestLinearAsset)) {
+        var splitProperties = calculateSplitProperties(nearestLinearAsset, mousePoint);
+        selectedLinearAsset.splitLinearAsset(nearestLinearAsset.id, splitProperties);
 
-      remove();
+        remove();
+      }
     };
   };
 
@@ -287,6 +292,7 @@ window.LinearAssetLayer = function(params) {
     eventListener.listenTo(eventbus, multiElementEvent('cancelled'), linearAssetCancelled);
     eventListener.listenTo(eventbus, singleElementEvents('selectByLinkId'), selectLinearAssetByLinkId);
     eventListener.listenTo(eventbus, multiElementEvent('massUpdateFailed'), cancelSelection);
+    eventListener.listenTo(eventbus, 'toggleWithRoadAddress', refreshSelectedView);
   };
 
   var startListeningExtraEvents = function(){
@@ -307,6 +313,7 @@ window.LinearAssetLayer = function(params) {
 
   var linearAssetUnSelected = function () {
     selectToolControl.clear();
+    me.eventListener.stopListening(eventbus, 'map:clicked', me.displayConfirmMessage);
   };
   
   var linearAssetSelected = function(){
@@ -493,6 +500,11 @@ window.LinearAssetLayer = function(params) {
     stopListeningExtraEvents();
     me.stop();
     me.hide();
+  };
+
+  var refreshSelectedView = function(){
+    if(applicationModel.getSelectedLayer() == layerName)
+      me.refreshView();
   };
 
   return {

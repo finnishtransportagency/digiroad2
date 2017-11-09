@@ -87,7 +87,7 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     val roadlinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(oldAssets.map(_.linkId).toSet, false)
 
     oldAssets.map { oldAsset =>
-    //Expire the old asset
+      //Expire the old asset
       dao.updateExpiration(oldAsset.id, expired = true, username)
 
     //Create New Asset
@@ -96,7 +96,7 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     }
   }
 
-  override protected def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, measures: Option[Measures] = None): Seq[Long] = {
+  override protected def updateWithoutTransaction(ids: Seq[Long], value: Value, username: String, measures: Option[Measures] = None, vvhTimeStamp: Option[Long], sideCode: Option[Int]): Seq[Long] = {
     if (ids.isEmpty)
       return ids
 
@@ -107,7 +107,20 @@ class MaintenanceService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Dig
     updateValueByExpiration(ids, value.asInstanceOf[MaintenanceRoad], maintenanceRoadAssetTypeId.toString(), username, measures)
   }
 
-  override def createWithoutTransaction(typeId: Int, linkId: Long, value: Value, sideCode: Int, measures: Measures, username: String, vvhTimeStamp: Long, roadLink: Option[RoadLinkLike], fromUpdate: Boolean = false,
+
+  /**
+    * Saves new linear assets from UI. Used by Digiroad2Api /linearassets POST endpoint.
+    */
+  override def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String, vvhTimeStamp: Long = vvhClient.roadLinkData.createVVHTimeStamp()): Seq[Long] = {
+    val roadlink = roadLinkService.getRoadLinksAndComplementariesFromVVH(newLinearAssets.map(_.linkId).toSet)
+    withDynTransaction {
+      newLinearAssets.map { newAsset =>
+        createAssetWithoutTransaction(typeId, newAsset.linkId, newAsset.value, newAsset.sideCode, Measures(newAsset.startMeasure, newAsset.endMeasure), username, vvhClient.roadLinkData.createVVHTimeStamp(), roadlink.find(_.linkId == newAsset.linkId))
+      }
+    }
+  }
+
+  def createAssetWithoutTransaction(typeId: Int, linkId: Long, value: Value, sideCode: Int, measures: Measures, username: String, vvhTimeStamp: Long, roadLink: Option[RoadLink], fromUpdate: Boolean = false,
                                        createdByFromUpdate: Option[String] = Some(""),
                                        createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now())): Long = {
 

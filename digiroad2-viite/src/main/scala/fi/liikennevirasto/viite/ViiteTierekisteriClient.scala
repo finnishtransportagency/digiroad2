@@ -1,6 +1,7 @@
 package fi.liikennevirasto.viite
 import java.util.Properties
 
+import fi.liikennevirasto.viite.dao.AddressChangeType._
 import fi.liikennevirasto.viite.dao._
 import fi.liikennevirasto.viite.util.ViiteTierekisteriAuthPropertyReader
 import org.apache.http.client.methods.{HttpGet, HttpPost}
@@ -19,10 +20,10 @@ case class TRProjectStatus(id:Option[Long], trProjectId:Option[Long], trSubProje
                            trModifiedDate:Option[String], user:Option[String], trPublishedDate:Option[String],
                            trJobNumber:Option[Long], errorMessage:Option[String], trProcessingStarted:Option[String],
                            trProcessingEnded:Option[String], errorCode:Option[Int])
-case class TRstatusresponse(id_tr_projekti:Option[Long], projekti:Option[Long],id:Option[Long], tunnus:Option[Long],
-                            status:Option[String], name:Option[String], changeDate:Option[String], ely:Option[Int],
+case class TRStatusResponse(id_tr_projekti:Option[Long], projekti:Option[Long], id:Option[Long], tunnus:Option[Long],
+                            status:Option[String], name:Option[String], change_date:Option[String], ely:Option[Int],
                             muutospvm:Option[String], user:Option[String], published_date:Option[String],
-                            job_number:Option[Long], errorMessage:Option[String], start_time:Option[String],
+                            job_number:Option[Long], error_message:Option[String], start_time:Option[String],
                             end_time:Option[String], error_code:Option[Int])
 
 case class ChangeProject(id:Long, name:String, user:String, ely:Long, changeDate:String, changeInfoSeq:Seq[RoadAddressChangeInfo])
@@ -54,19 +55,39 @@ case object ChangeInfoItemSerializer extends CustomSerializer[RoadAddressChangeI
   case o: JObject =>
     implicit val formats = DefaultFormats + ChangeInfoRoadPartsSerializer
     RoadAddressChangeInfo(AddressChangeType.apply(o.values("change_type").asInstanceOf[BigInt].intValue),
-      (o \\ "source").extract[RoadAddressChangeRecipient], (o \\ "target").extract[RoadAddressChangeRecipient],
+      (o \\ "source").extract[RoadAddressChangeSection], (o \\ "target").extract[RoadAddressChangeSection],
       Discontinuity.apply(o.values("continuity").asInstanceOf[BigInt].intValue),
       RoadType.apply(o.values("road_type").asInstanceOf[BigInt].intValue))
 }, {
   case o: RoadAddressChangeInfo =>
     implicit val formats = DefaultFormats + ChangeInfoRoadPartsSerializer
-    JObject(
-      JField("change_type", JInt(BigInt.apply(o.changeType.value))),
-      JField("continuity", JInt(BigInt.apply(o.discontinuity.value))),
-      JField("road_type", JInt(BigInt.apply(o.roadType.value))),
-      JField("source", Extraction.decompose(o.source)),
-      JField("target", Extraction.decompose(o.target))
-    )
+    val emptySection = RoadAddressChangeSectionTR(None, None, None, None, None, None)
+    o.changeType match {
+      case New =>
+        JObject(
+          JField("change_type", JInt(BigInt.apply(o.changeType.value))),
+          JField("continuity", JInt(BigInt.apply(o.discontinuity.value))),
+          JField("road_type", JInt(BigInt.apply(o.roadType.value))),
+          JField("source", Extraction.decompose(emptySection)),
+          JField("target", Extraction.decompose(o.target))
+        )
+      case Termination =>
+        JObject(
+          JField("change_type", JInt(BigInt.apply(o.changeType.value))),
+          JField("continuity", JInt(BigInt.apply(o.discontinuity.value))),
+          JField("road_type", JInt(BigInt.apply(o.roadType.value))),
+          JField("source", Extraction.decompose(o.source)),
+          JField("target", Extraction.decompose(emptySection))
+        )
+      case _ =>
+        JObject(
+          JField("change_type", JInt(BigInt.apply(o.changeType.value))),
+          JField("continuity", JInt(BigInt.apply(o.discontinuity.value))),
+          JField("road_type", JInt(BigInt.apply(o.roadType.value))),
+          JField("source", Extraction.decompose(o.source)),
+          JField("target", Extraction.decompose(o.target))
+        )
+    }
 }))
 
 case object TRProjectStatusSerializer extends CustomSerializer[TRProjectStatus](format => ( {
@@ -114,7 +135,7 @@ case object TRProjectStatusSerializer extends CustomSerializer[TRProjectStatus](
       JField("error_code", s.errorCode.map(l => JInt(BigInt.apply(l))).orNull))
 }))
 
-case object ChangeInfoRoadPartsSerializer extends CustomSerializer[RoadAddressChangeRecipient](format => ( {
+case object ChangeInfoRoadPartsSerializer extends CustomSerializer[RoadAddressChangeSection](format => ( {
   case o: JObject =>
     def jIntToLong(jInt: Any): Long = {
       jInt.asInstanceOf[BigInt].longValue()
@@ -122,10 +143,10 @@ case object ChangeInfoRoadPartsSerializer extends CustomSerializer[RoadAddressCh
     val map = o.values
     val (road, track, startPart, stm, endPart, enm) =
       (map.get("tie"), map.get("ajr"), map.get("aosa"), map.get("aet"), map.get("losa"), map.get("let"))
-    RoadAddressChangeRecipient(road.map(jIntToLong), track.map(jIntToLong), startPart.map(jIntToLong), endPart.map(jIntToLong),
-      stm.map(jIntToLong), enm.map(jIntToLong))
+    RoadAddressChangeSection(road.map(jIntToLong), track.map(jIntToLong), startPart.map(jIntToLong), endPart.map(jIntToLong),
+      stm.map(jIntToLong), enm.map(jIntToLong), None, None, None)
 }, {
-  case s: RoadAddressChangeRecipient =>
+  case s: RoadAddressChangeSection =>
     JObject(JField("tie", s.roadNumber.map(l => JInt(BigInt.apply(l))).orNull),
       JField("ajr", s.trackCode.map(l => JInt(BigInt.apply(l))).orNull),
       JField("aosa", s.startRoadPartNumber.map(l => JInt(BigInt.apply(l))).orNull),
@@ -148,7 +169,6 @@ object ViiteTierekisteriClient {
     val loadedKeyString = if(isTREnabled){
       properties.getProperty("digiroad2.tierekisteriViiteRestApiEndPoint")
     }  else "http://localhost:8080/trrest/"
-    println("viite-endpoint = "+loadedKeyString)
     if (loadedKeyString == null)
       throw new IllegalArgumentException("Missing TierekisteriViiteRestApiEndPoint")
     loadedKeyString
@@ -165,10 +185,11 @@ object ViiteTierekisteriClient {
       proj1.copy(changeInfoSeq = proj1.changeInfoSeq ++ proj2.changeInfoSeq)
     }
   }
+  private val nullRotatingTRProjectId = -1
 
   private def convertChangeDataToChangeProject(changeData: ProjectRoadAddressChange): ChangeProject = {
     val changeInfo = changeData.changeInfo
-    ChangeProject(changeData.projectId, changeData.projectName.getOrElse(""), changeData.user, changeData.ely,
+    ChangeProject(changeData.rotatingTRId.getOrElse(nullRotatingTRProjectId), changeData.projectName.getOrElse(""), changeData.user, changeData.ely,
       DateTimeFormat.forPattern("yyyy-MM-dd").print(changeData.projectStartDate), Seq(changeInfo))
   }
 
@@ -183,7 +204,10 @@ object ViiteTierekisteriClient {
   }
 
   def sendChanges(changes: List[ProjectRoadAddressChange]): ProjectChangeStatus = {
-    sendJsonMessage(convertToChangeProject(changes))
+    val projectChange=convertToChangeProject(changes)
+    if (projectChange.id==nullRotatingTRProjectId)
+      return ProjectChangeStatus(changes.head.projectId,ProjectState.Failed2GenerateTRIdInViite.value,"Could not generate required TR ID")
+    sendJsonMessage(projectChange)
   }
 
   def sendJsonMessage(trProject:ChangeProject): ProjectChangeStatus ={
@@ -194,8 +218,13 @@ object ViiteTierekisteriClient {
     val response = client.execute(request)
     try {
       val statusCode = response.getStatusLine.getStatusCode
-      val errorMessage = parse(StreamInput(response.getEntity.getContent)).extractOpt[TRErrorResponse].getOrElse(TRErrorResponse("")) // would be nice if we didn't need case class for parsing of one attribute
-      ProjectChangeStatus(trProject.id, statusCode, errorMessage.error_message)
+      if (statusCode >= 500) {
+        logger.info(scala.io.Source.fromInputStream(response.getEntity.getContent).getLines().mkString("\n"))
+        throw new RuntimeException("Unable to submit: Tierekisteri error 500")
+      } else {
+        val errorMessage = parse(StreamInput(response.getEntity.getContent)).extractOpt[TRErrorResponse].getOrElse(TRErrorResponse("")) // would be nice if we didn't need case class for parsing of one attribute
+        ProjectChangeStatus(trProject.id, statusCode, errorMessage.error_message)
+      }
     } catch {
       case NonFatal(e) =>
         logger.error(s"Submit to Tierekisteri failed: ${e.getMessage}", e)
@@ -236,14 +265,14 @@ object ViiteTierekisteriClient {
     fetchTRProjectStatus(projectId).map(responseMapper)
   }
 
-  private def fetchTRProjectStatus(projectId: Long): Option[TRstatusresponse] = {
+  private def fetchTRProjectStatus(projectId: Long): Option[TRStatusResponse] = {
     implicit val formats = DefaultFormats
     val request = new HttpGet(s"${getRestEndPoint}addresschange/$projectId")
     request.addHeader("X-Authorization", "Basic " + auth.getAuthInBase64)
 
     val response = client.execute(request)
     try {
-      val  receivedData = parse(StreamInput(response.getEntity.getContent)).extract[TRstatusresponse]
+      val  receivedData = parse(StreamInput(response.getEntity.getContent)).extract[TRStatusResponse]
       Option(receivedData)
     } catch {
       case NonFatal(e) =>
@@ -254,8 +283,10 @@ object ViiteTierekisteriClient {
     }
   }
 
-  def responseMapper (response:TRstatusresponse): TRProjectStatus = {
-    TRProjectStatus(response.id, response.id_tr_projekti, response.tunnus, response.job_number, response.status, response.name, response.changeDate, response.ely, response.muutospvm, response.user, response.published_date, response.job_number, response.errorMessage, response.start_time, response.end_time, response.error_code)
+  def responseMapper (response:TRStatusResponse): TRProjectStatus = {
+    TRProjectStatus(response.id, response.id_tr_projekti, response.tunnus, response.job_number, response.status,
+      response.name, response.change_date, response.ely, response.muutospvm, response.user, response.published_date,
+      response.job_number, response.error_message, response.start_time, response.end_time, response.error_code)
   }
 
 }

@@ -88,7 +88,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
       originalSpeedLimitSegments.length should be(4)
       originalSpeedLimitSegments.map(_._1).toSet should be(Set(originalId1, originalId2))
       originalSpeedLimitSegments.foreach { case (_, _, linkId, _, _, _, floating, validTo, modifiedBy, _) =>
-        val now = DateTime.now().plusSeconds(2) // add two seconds because of date time precision in db
+        val now = getDateTimeNowFromDatabase().headOption.getOrElse(DateTime.now().plusSeconds(2)) // add two seconds because of date time precision in db
         validTo.get.isBefore(now) should be(true)
         floating should be(false)
         modifiedBy should be("expired_splitted_linearasset")
@@ -96,7 +96,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Split multi-link lit road assets") {
+  ignore("Split multi-link lit road assets - mostly expired link ids") {
     TestTransactions.runWithRollback() {
       val originalId = createMultiLinkLinearAsset(100, Seq(LinearAssetSegment(Some(1), 0, 50), LinearAssetSegment(Some(2), 0, 50)))
 
@@ -115,7 +115,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
       val originalSpeedLimitSegments = fetchNumericalLimitSegments("asset_data_importer_spec")
 
       originalSpeedLimitSegments.length should be(2)
-      val now = DateTime.now().plusSeconds(2)
+      val now = getDateTimeNowFromDatabase().headOption.getOrElse(DateTime.now().plusSeconds(2))
       originalSpeedLimitSegments(0)._8.get.isBefore(now) should be(true)
       originalSpeedLimitSegments(1)._8.get.isBefore(now) should be(true)
       originalSpeedLimitSegments(0)._1 should be(originalId)
@@ -123,7 +123,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
     }
   }
 
-  test("Assign values to lit road properties") {
+  ignore("Assign values to lit road properties - mostly expired link ids") {
     TestTransactions.runWithRollback() {
       val litRoadId = createMultiLinkLinearAsset(100, Seq(LinearAssetSegment(Some(1), 0, 50)))
       val numericalLimitId = createMultiLinkLinearAsset(30, Seq(LinearAssetSegment(Some(1), 0, 50)))
@@ -735,7 +735,7 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
 
     sqlu"""
       insert into single_choice_value(asset_id, enumerated_value_id, property_id, modified_date)
-      values ($assetId, (select id from enumerated_value where property_id = $propertyId and value = $value), $propertyId, current_timestamp)
+      values ($assetId, (select id from enumerated_value where property_id = $propertyId and value = $value), $propertyId, SYSDATE)
       """.execute
   }
 
@@ -771,5 +771,11 @@ class AssetDataImporterSpec extends FunSuite with Matchers {
         join enumerated_value e on e.id = s.enumerated_value_id
         where a.created_by = $creator
       """.as[(Long, Long, Long, Double, Double, Int, Boolean)].list
+  }
+
+  private def getDateTimeNowFromDatabase() ={
+    sql"""
+          select SYSTIMESTAMP from dual
+      """.as[(DateTime)].list
   }
 }

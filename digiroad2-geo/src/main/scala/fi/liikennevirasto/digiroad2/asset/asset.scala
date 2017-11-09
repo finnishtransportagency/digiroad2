@@ -131,6 +131,14 @@ object SideCode {
     values.find(_.value == intValue).getOrElse(Unknown)
   }
 
+  def switch(sideCode: SideCode): SideCode = {
+    sideCode match {
+      case TowardsDigitizing => AgainstDigitizing
+      case AgainstDigitizing => TowardsDigitizing
+      case _ => sideCode
+    }
+  }
+
   case object BothDirections extends SideCode { def value = 1 }
   case object TowardsDigitizing extends SideCode { def value = 2 }
   case object AgainstDigitizing extends SideCode { def value = 3 }
@@ -165,7 +173,7 @@ abstract class AbstractProperty {
 case class Modification(modificationTime: Option[DateTime], modifier: Option[String])
 case class SimpleProperty(publicId: String, values: Seq[PropertyValue]) extends AbstractProperty
 case class Property(id: Long, publicId: String, propertyType: String, required: Boolean = false, values: Seq[PropertyValue]) extends AbstractProperty
-case class PropertyValue(propertyValue: String, propertyDisplayValue: Option[String] = None)
+case class PropertyValue(propertyValue: String, propertyDisplayValue: Option[String] = None, checked: Boolean = false)
 case class EnumeratedPropertyValue(propertyId: Long, publicId: String, propertyName: String, propertyType: String, required: Boolean = false, values: Seq[PropertyValue]) extends AbstractProperty
 case class Position(lon: Double, lat: Double, linkId: Long, bearing: Option[Int])
 

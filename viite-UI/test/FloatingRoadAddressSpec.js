@@ -43,7 +43,9 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
     describe('Clicking the \"Valinta\" button',function(){
       before(function(done) {
         testHelpers.clickValintaButton();
-        done();
+        setTimeout(function(){
+          done();
+        },150);
       });
 
       it('check that the \"Valinta\" was pressed and the unknowns are \"forward\"', function () {
@@ -57,6 +59,7 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
     describe('Selecting a unknown road to transfer the floatings', function(){
       before(function(done){
         var ol3Feature = testHelpers.getFeatureByLinkId(openLayersMap, testHelpers.getPickRoadsLayerName(), unknownRoadLinkId);
+        expect(ol3Feature).to.not.be.undefined;
         testHelpers.selectSingleFeatureByInteraction(openLayersMap, ol3Feature, testHelpers.getSingleClickNameLinkPropertyLayer());
         setTimeout(function(){
           done();
@@ -83,9 +86,9 @@ define(['chai', 'eventbus', 'TestHelpers'], function(chai, eventbus, testHelpers
       });
     });
 
-    describe('Click the Sirra button to start the simulation', function() {
+    describe('Click the Siirrä button to start the simulation', function() {
       before(function(done){
-        testHelpers.clickEnabledSirraButton();
+        testHelpers.clickEnabledSiirraButton();
         setTimeout(function(){
           done();
         },2000);

@@ -229,6 +229,7 @@
       eventListener.listenTo(eventbus, layerName + ':unselected', handleUnSelected);
       eventListener.listenTo(eventbus, layerName + ':changed', handleChanged);
       eventListener.listenTo(eventbus, 'application:readOnly', toggleMode);
+      eventListener.listenTo(eventbus, 'toggleWithRoadAddress', refreshSelectedView);
     }
     eventbus.on( layerName + ':changeSigns', function(trafficSignData){
       setTrafficSigns(trafficSignData[0], trafficSignData[1]);
@@ -360,6 +361,11 @@
         return !editConstrains(selectedAsset, roads.linkId);
       });
     }
+
+    var refreshSelectedView = function(){
+      if(applicationModel.getSelectedLayer() == layerName)
+        me.refreshView();
+    };
 
     return {
       show: show,

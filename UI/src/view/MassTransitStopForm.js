@@ -49,10 +49,18 @@
     };
   };
 
-  var SaveButton = function() {
+  var validatePlatformNumberMaxSize = function (target) {
+    var propertyValue = target.currentTarget.value;
+    if (propertyValue.length > 3) {
+      target.currentTarget.value = propertyValue.substring(0, 3);
+    }
+  };
+
+  var SaveButton = function(isTerminalActive) {
+    var deleteMessage = isTerminalActive ? 'valitsemasi terminaalipysäkin' : 'pysäkin';
     var element = $('<button />').addClass('save btn btn-primary').text('Tallenna').click(function () {
       if (poistaSelected) {
-        new GenericConfirmPopup('Haluatko varmasti poistaa pysäkin?', {
+        new GenericConfirmPopup('Haluatko varmasti poistaa ' + deleteMessage + '?', {
           successCallback: function () {
             element.prop('disabled', true);
             selectedMassTransitStopModel.deleteMassTransitStop(poistaSelected);
@@ -114,6 +122,7 @@
       poistaSelected = false;
       var streetViewHandler;
       var isTRMassTransitStop = false;
+      var isTerminalBusStop = false;
 
       var MStopDeletebutton = function(readOnly) {
 
@@ -144,7 +153,7 @@
         var featureAttributesElement = container.append(header).append(wrapper);
         addDatePickers();
 
-        var saveBtn = new SaveButton();
+        var saveBtn = new SaveButton(isTerminalBusStop);
         var cancelBtn = new CancelButton();
         var validationErrorLabel = new ValidationErrorLabel();
 
@@ -164,13 +173,15 @@
         function busStopHeader(asset) {
           var buttons = $('<div/>').addClass('mass-transit-stop').addClass('form-controls')
             .append(new ValidationErrorLabel().element)
-            .append(new SaveButton().element)
+            .append(new SaveButton(isTerminalBusStop).element)
             .append(new CancelButton().element);
 
           var header = $('<header/>');
 
           if (_.isNumber(selectedMassTransitStopModel.get('nationalId'))) {
             header.append('<span>Valtakunnallinen ID: ' + selectedMassTransitStopModel.get('nationalId') + '</span>');
+          } else if (isTerminalBusStop) {
+            header.append('<span class="terminal-header"> Uusi terminaalipys&auml;kki</span>');
           } else {
             header.append('<span>Uusi pys&auml;kki</span>');
           }
@@ -212,6 +223,20 @@
         }
       };
 
+      var createTerminalWrapper = function(property) {
+        var wrapper = createFormRowDiv();
+        wrapper.append(createTerminalLabelElement(property));
+        return wrapper;
+      };
+
+      var createTerminalLabelElement = function(property) {
+        var label = $('<label />').addClass('control-terminal-label').text(property.localizedName);
+        if (property.required) {
+          label.addClass('required');
+        }
+        return label;
+      };
+
       var createWrapper = function(property) {
         var wrapper = createFormRowDiv();
         wrapper.append(createLabelElement(property));
@@ -232,8 +257,8 @@
 
       var readOnlyHandler = function(property){
         var outer = createFormRowDiv();
-        var propertyVal = _.isEmpty(property.values) === false ? property.values[0].propertyDisplayValue : '';
-        if (property.propertyType === 'read_only_text' && property.publicId != 'yllapitajan_koodi') {
+        var propertyVal = !_.isEmpty(property.values) ? property.values[0].propertyDisplayValue : '';
+        if (property.propertyType === 'read_only_text' && property.publicId != 'yllapitajan_koodi' && property.publicId != 'liitetty_terminaaliin') {
           outer.append($('<p />').addClass('form-control-static asset-log-info').text(property.localizedName + ': ' + propertyVal));
         } else {
           outer.append(createLabelElement(property));
@@ -261,8 +286,10 @@
           }
         } else {
           elementType = property.propertyType === 'long_text' ?
-            $('<textarea />').addClass('form-control') : $('<input type="text"/>').addClass('form-control');
+            $('<textarea />').addClass('form-control') : $('<input type="text"/>').addClass('form-control').attr('id', property.publicId);
           element = elementType.bind('input', function(target){
+            if (property.publicId === 'laiturinumero')
+              validatePlatformNumberMaxSize(target);
             selectedMassTransitStopModel.setProperty(property.publicId, [{ propertyValue: target.currentTarget.value, propertyDisplayValue: target.currentTarget.value  }], property.propertyType, property.required);
           });
 
@@ -303,7 +330,7 @@
           if (property.values && property.values[0]) {
             element.text(property.values[0].propertyDisplayValue);
           } else {
-            element.html('Ei tiedossa');
+            element.addClass('undefined').html('Ei m&auml;&auml;ritetty');
           }
         } else {
           element = $('<select />').addClass('form-control').change(function(x){
@@ -328,7 +355,7 @@
 
       var directionChoiceHandler = function(property){
         if (!readOnly) {
-          return createWrapper(property).append(createDirectionChoiceElement(readOnly, property));
+          return createWrapper(property).append(createDirectionChoiceElement(property));
         }
       };
 
@@ -393,6 +420,74 @@
         return element;
       };
 
+      var terminalMultiChoiceHandler = function (property) {
+        property.localizedName = "Liitetyt Pysakit";
+        return createTerminalWrapper(property).append(createTerminalMultiChoiceElement(readOnly, property));
+      };
+
+      var createTerminalMultiChoiceElement = function (readOnly, property) {
+        var element;
+        var enumValues = property.values;
+
+        if (readOnly) {
+          element = $('<ul />');
+        } else {
+          element = $('<div />');
+        }
+
+        element.addClass('choice-terminal-group');
+
+        element = _.reduce(enumValues, function (element, value) {
+          if (readOnly) {
+            if (value.checked) {
+              var item = $('<li />');
+              item.text(value.propertyDisplayValue);
+              element.append(item);
+            }
+          } else {
+            var container = $('<div class="checkbox" />');
+            var input = $('<input type="checkbox" />').change(function (evt) {
+              value.checked = evt.currentTarget.checked;
+              var values = _.chain(enumValues)
+                  .filter(function (value) {
+                    return value.checked;
+                  })
+                  .map(function (value) {
+                    return {
+                      propertyValue: parseInt(value.propertyValue, 10),
+                      propertyDisplayValue: value.propertyDisplayValue,
+                      checked: true
+                    };
+                  })
+                  .value();
+              if (_.isEmpty(values)) {
+                values.push({propertyValue: 99});
+              }
+              selectedMassTransitStopModel.setProperty(property.publicId, values, property.propertyType);
+            });
+
+            input.prop('checked', value.checked);
+
+            var label = $('<label />').text(value.propertyDisplayValue);
+            element.append(container.append(label.append(input)));
+          }
+
+          return element;
+        }, element);
+
+        if ((!readOnly) && (applicationModel.getSelectedTool() == 'AddTerminal')) {
+          var anyValueChecked = _.some(property.values, function (value) {
+            return value.checked === true;
+          });
+          if (!anyValueChecked) {
+            var terminalDefaultValue = {propertyValue: 99};
+            selectedMassTransitStopModel.setProperty(property.publicId, terminalDefaultValue, property.propertyType, true);
+            selectedMassTransitStopModel.setProperty("pysakin_tyyppi", [{propertyValue: 6, propertyDisplayValue: "", checked: true}], "multiple_choice", true);
+          }
+        }
+        return element;
+      };
+
       var multiChoiceHandler = function(property, choices){
         var choiceValidation = new InvalidCombinationError();
         return createWrapper(property).append(createMultiChoiceElement(readOnly, property, choices).append(choiceValidation.element));
@@ -407,7 +502,7 @@
           })
           .pluck('values')
           .flatten()
-          .filter(function(x) { return x.propertyValue !== '99'; })
+          .filter(function(x) { return !(x.propertyValue === '99' || x.propertyValue === '6'); })
           .value();
 
         if (readOnly) {
@@ -470,6 +565,8 @@
           'yllapitajan_tunnus',
           'yllapitajan_koodi',
           'matkustajatunnus',
+          'laiturinumero', //Platform Number
+          'liitetty_terminaaliin',
           'maastokoordinaatti_x',
           'maastokoordinaatti_y',
           'maastokoordinaatti_z',
@@ -504,12 +601,28 @@
         });
       };
 
+      var sortAndFilterTerminalProperties = function(properties) {
+        var propertyOrdering = [
+          'lisatty_jarjestelmaan',
+          'muokattu_viimeksi',
+          'nimi_suomeksi',
+          'nimi_ruotsiksi',
+          'liitetyt_pysakit'];
+
+        return _.sortBy(properties, function(property) {
+          return _.indexOf(propertyOrdering, property.publicId);
+        }).filter(function(property){
+          return _.indexOf(propertyOrdering, property.publicId) >= 0;
+        });
+      };
+
       var floatingStatus = function(selectedAssetModel) {
         var text;
         switch (selectedMassTransitStopModel.getFloatingReason()){
           case '2': //NoRoadLinkFound
           case '4': //DistanceToRoad
           case '5': //NoReferencePointForMValue
+          case '6': //DirectionNotMatch
             text = 'Kadun tai tien geometria on muuttunut...';
             break;
           case '1': //RoadOwnerChanged
@@ -518,6 +631,9 @@
           case '3': //DifferentMunicipalityCode
             text = 'Kadun tai tien omistava kunta on vaihtunut. Tarkista ja korjaa pysäkin sijainti.';
             break;
+          case '7': //TerminalChildless
+              text = 'Kyseisellä terminaalipysäkillä ei ole yhtään liitettyä pysäkkiä.';
+              break;
           default:
             text = 'Kadun tai tien geometria on muuttunut, tarkista ja korjaa pysäkin sijainti.';
         }
@@ -531,10 +647,15 @@
 
       var getAssetForm = function() {
         var allProperties = selectedMassTransitStopModel.getProperties();
-        var properties = sortAndFilterProperties(allProperties);
+        var properties;
 
-        setIsTRMassTransitStopValue(allProperties); // allProperties contains linkin_hallinnollinen_luokka property
-        disableFormIfTRMassTransitStopHasEndDate(properties);
+        if (isTerminalBusStop) {
+          properties = sortAndFilterTerminalProperties(allProperties);
+        } else {
+          properties = sortAndFilterProperties(allProperties);
+          setIsTRMassTransitStopValue(allProperties); // allProperties contains linkin_hallinnollinen_luokka property
+          disableFormIfTRMassTransitStopHasEndDate(properties);
+        }
 
         var contents = _.take(properties, 2)
           .concat(floatingStatus(selectedMassTransitStopModel))
@@ -550,6 +671,8 @@
             return directionChoiceHandler(feature);
           } else if (propertyType === "single_choice") {
             return singleChoiceHandler(feature, enumeratedPropertyValues);
+          } else if (feature.propertyType === "multiple_choice" && isTerminalBusStop) {
+            return terminalMultiChoiceHandler(feature);
           } else if (feature.propertyType === "multiple_choice") {
             return multiChoiceHandler(feature, enumeratedPropertyValues);
           } else if (propertyType === "date" || feature.publicId == 'inventointipaiva') {
@@ -702,6 +825,10 @@
         streetViewHandler.update();
       });
 
+      eventbus.on('textElementValue:set', function (newTextValue, textId) {
+        $('input[id='+textId+']').val(newTextValue);
+      });
+
       eventbus.on('assetPropertyValue:changed', function (event) {
         var property = event.propertyData;
 
@@ -726,6 +853,10 @@
               'Olet siirtämässä pysäkin ELYn ylläpitoon! Huomioithan, että osa pysäkin varustetiedoista saattaa kadota tallennuksen yhteydessä.',
               {type: 'alert'});
         }
+      });
+
+      eventbus.on('terminalBusStop:selected', function(value) {
+        isTerminalBusStop = value;
       });
       backend.getEnumeratedPropertyValues();
     }

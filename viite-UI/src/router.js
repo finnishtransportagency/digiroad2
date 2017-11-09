@@ -47,8 +47,9 @@
       },
 
       roadAddressProject: function (projectId) {
-        eventbus.trigger('roadAddressProject:openProject', {id: projectId});
         applicationModel.selectLayer('roadAddressProject');
+        var parsedProjectId = parseInt(projectId);
+        eventbus.trigger('roadAddressProject:startProject', parsedProjectId, true);
       }
     });
 
@@ -77,14 +78,17 @@
       }
     });
 
-    eventbus.on('linkProperties:selectedProject', function (linkId) {
-      if (typeof linkId !== 'undefined') {
-        router.navigate('linkProperty/' + linkId);
-        applicationModel.selectLayer('linkProperty');
-        backend.getRoadLinkByLinkId(linkId, function (response) {
-          map.getView().setCenter([response.middlePoint.x, response.middlePoint.y]);
-          map.getView().setZoom(8);
-        });
+    eventbus.on('linkProperties:selectedProject', function (linkId, projectId) {
+      if(typeof projectId !== 'undefined') {
+        var baseUrl = 'roadAddressProject/' + projectId;
+        var linkIdUrl = typeof linkId !== 'undefined' ? '/' + linkId : '';
+        router.navigate(baseUrl + linkIdUrl);
+        if (typeof linkId !== 'undefined') {
+          applicationModel.selectLayer('linkProperty', false);
+          backend.getRoadLinkByLinkId(linkId, function (response) {
+            map.getView().setCenter([response.middlePoint.x, response.middlePoint.y]);
+          });
+        }
       }
     });
 

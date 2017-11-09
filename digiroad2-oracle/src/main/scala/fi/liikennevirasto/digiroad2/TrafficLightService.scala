@@ -17,9 +17,11 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
   override def typeId: Int = 280
 
   override def update(id: Long, updatedAsset: IncomingAsset, geometry: Seq[Point], municipality: Int, username: String, linkSource: LinkGeomSource): Long = {
-    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(updatedAsset.lon, updatedAsset.lat, 0), geometry)
+    val assetPoint = Point(updatedAsset.lon, updatedAsset.lat, 0)
+    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(assetPoint, geometry)
+    val point = GeometryUtils.calculatePointFromLinearReference(geometry, mValue).getOrElse(assetPoint)
     withDynTransaction {
-      OracleTrafficLightDao.update(id, TrafficLightToBePersisted(updatedAsset.linkId, updatedAsset.lon, updatedAsset.lat, mValue, municipality, username), Some(VVHClient.createVVHTimeStamp()), linkSource)
+      OracleTrafficLightDao.update(id, TrafficLightToBePersisted(updatedAsset.linkId, point.x, point.y, mValue, municipality, username), Some(VVHClient.createVVHTimeStamp()), linkSource)
     }
     id
   }
@@ -32,10 +34,12 @@ class TrafficLightService(val roadLinkService: RoadLinkService) extends PointAss
     OracleTrafficLightDao.fetchByFilter(queryFilter)
   }
 
-  override def create(asset: IncomingAsset, username: String, geometry: Seq[Point], municipality: Int, administrativeClass: Option[AdministrativeClass] = None, linkSource: LinkGeomSource): Long = {
-    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(Point(asset.lon, asset.lat, 0), geometry)
+  override def create(asset: IncomingAsset, username: String, roadLink: RoadLink): Long = {
+    val assetPoint = Point(asset.lon, asset.lat, 0)
+    val mValue = GeometryUtils.calculateLinearReferenceFromPoint(assetPoint, roadLink.geometry)
+    val point = GeometryUtils.calculatePointFromLinearReference(roadLink.geometry, mValue).getOrElse(assetPoint)
     withDynTransaction {
-      OracleTrafficLightDao.create(TrafficLightToBePersisted(asset.linkId, asset.lon, asset.lat, mValue, municipality, username), username, VVHClient.createVVHTimeStamp(), linkSource)
+      OracleTrafficLightDao.create(TrafficLightToBePersisted(asset.linkId, asset.lon, point.y, mValue, roadLink.municipalityCode, username), username, VVHClient.createVVHTimeStamp(), roadLink.linkSource)
     }
   }
 

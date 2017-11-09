@@ -14,7 +14,7 @@ object RoadLinkServiceDAO {
     if (existingValue != value) {
       sqlu"""update #$table
                  set #$column = $value,
-                     modified_date = current_timestamp,
+                     modified_date = SYSDATE,
                      modified_by = $username
                  where link_id = $linkId""".execute
     }
@@ -41,7 +41,7 @@ object RoadLinkServiceDAO {
   }
 
   def insertValues(table: String, column: String, vvhColumn: String, linkId: Long, username: Option[String], existingValue: Int, value: Int, mmlId: Option[Long], optionalVVHValue: Option[Int]) = {
-    sqlu"""insert into #$table (id, link_id, #$column, modified_by, mml_id, #$vvhColumn )
+    sqlu"""insert into #$table (id, link_id, #$column, created_by, mml_id, #$vvhColumn )
                    select primary_key_seq.nextval, $linkId, $value, $username, $mmlId, $optionalVVHValue
                    from dual
                    where exists (select * from #$table where link_id = $linkId)""".execute
@@ -52,7 +52,7 @@ object RoadLinkServiceDAO {
 
   def expireExistingLinkPropertyRow(table: String, linkId: Long, username: Option[String]) = {
     sqlu"""update #$table
-                 set valid_to = current_timestamp - 1,
+                 set valid_to = SYSDATE - 1,
                      modified_by = $username
                  where link_id = $linkId""".execute
   }

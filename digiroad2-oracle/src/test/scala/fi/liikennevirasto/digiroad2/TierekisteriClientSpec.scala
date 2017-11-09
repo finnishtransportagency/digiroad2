@@ -65,6 +65,30 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
       HttpClientBuilder.create().build())
   }
 
+  lazy val tierekisteriPavedRoadAsset: TierekisteriPavedRoadAssetClient = {
+    new TierekisteriPavedRoadAssetClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+      HttpClientBuilder.create().build())
+  }
+
+  lazy val tierekisteriMassTransitLaneAsset: TierekisteriMassTransitLaneAssetClient = {
+    new TierekisteriMassTransitLaneAssetClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+      HttpClientBuilder.create().build())
+  }
+
+  lazy val tierekisteriEuropeanRoadAsset: TierekisteriEuropeanRoadAssetClient = {
+    new TierekisteriEuropeanRoadAssetClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+      HttpClientBuilder.create().build())
+  }
+
+  lazy val tierekisteriSpeedLimitAsset: TierekisteriSpeedLimitAssetClient = {
+    new TierekisteriSpeedLimitAssetClient(dr2properties.getProperty("digiroad2.tierekisteriRestApiEndPoint"),
+      dr2properties.getProperty("digiroad2.tierekisteri.enabled").toBoolean,
+      HttpClientBuilder.create().build())
+  }
+
   lazy val connectedToTierekisteri = testConnection
 
   private def testConnection: Boolean = {
@@ -496,6 +520,118 @@ class TierekisteriClientSpec extends FunSuite with Matchers  {
   test("Fetch Traffic Signs from Tierekisteri by fieldCode, roadNumber, roadPartNumber, startDistance") {
     assume(testConnection)
     val assets = tierekisteriTrafficSignAsset.fetchActiveAssetData(45, 1, 1)
+
+    assets.size should not be (0)
+  }
+
+  test("fetch from tierekisteri active Paved Road with fieldCode and roadNumber") {
+    assume(testConnection)
+    val assets = tierekisteriPavedRoadAsset.fetchActiveAssetData( 45)
+
+    assets.size should be (1)
+  }
+
+  test("fetch from tierekisteri active Paved Road with fieldCode, roadNumber and roadPartNumber") {
+    assume(testConnection)
+    val assets = tierekisteriPavedRoadAsset.fetchActiveAssetData( 45, 1)
+
+    assets.size should be (1)
+  }
+
+  test("fetch from tierekisteri active Paved Road with fieldCode, roadNumber, roadPartNumber and startDistance") {
+    assume(testConnection)
+    val assets = tierekisteriPavedRoadAsset.fetchActiveAssetData(45, 1, 0)
+
+    assets.size should be (1)
+  }
+
+  test("fetch from tierekisteri active Paved Road with fieldCode, roadNumber, roadPartNumber, startDistance, endPart and endDistance") {
+    assume(testConnection)
+    val assets = tierekisteriPavedRoadAsset.fetchActiveAssetData(45, 1, 0, 0, 100)
+
+    assets.size should be (1)
+  }
+
+  test("fetch from tierekisteri active Mass Transit Lane with fieldCode and roadNumber") {
+    assume(testConnection)
+    val assets = tierekisteriMassTransitLaneAsset.fetchActiveAssetData( 45)
+
+    assets.size should be (1)
+  }
+
+  test("fetch from tierekisteri active Mass Transit Lane with fieldCode, roadNumber and roadPartNumber") {
+    assume(testConnection)
+    val assets = tierekisteriMassTransitLaneAsset.fetchActiveAssetData( 45, 1)
+
+    assets.size should be (1)
+  }
+
+  test("fetch from tierekisteri active Mass Transit Lane with fieldCode, roadNumber, roadPartNumber and startDistance") {
+    assume(testConnection)
+    val assets = tierekisteriMassTransitLaneAsset.fetchActiveAssetData(45, 1, 0)
+
+    assets.size should be (1)
+  }
+
+  test("fetch from tierekisteri active Mass Transit Lane with fieldCode, roadNumber, roadPartNumber, startDistance, endPart and endDistance") {
+    assume(testConnection)
+    val assets = tierekisteriMassTransitLaneAsset.fetchActiveAssetData(45, 1, 0, 0, 100)
+
+    assets.size should be (1)
+  }
+
+  test("fetch from tierekisteri active European Road with fieldCode and roadNumber") {
+    assume(testConnection)
+    val assets = tierekisteriEuropeanRoadAsset.fetchActiveAssetData( 45)
+
+    assets.size should be (1)
+  }
+
+  test("fetch from tierekisteri active European Road with fieldCode, roadNumber and roadPartNumber") {
+    assume(testConnection)
+    val assets = tierekisteriEuropeanRoadAsset.fetchActiveAssetData( 45, 1)
+
+    assets.size should be (1)
+  }
+
+  test("fetch from tierekisteri active European Road with fieldCode, roadNumber, roadPartNumber and startDistance") {
+    assume(testConnection)
+    val assets = tierekisteriEuropeanRoadAsset.fetchActiveAssetData(45, 1, 0)
+
+    assets.size should be (1)
+  }
+
+  test("fetch from tierekisteri active European Road with fieldCode, roadNumber, roadPartNumber, startDistance, endPart and endDistance") {
+    assume(testConnection)
+    val assets = tierekisteriEuropeanRoadAsset.fetchActiveAssetData(45, 1, 0, 0, 100)
+
+    assets.size should be (1)
+  }
+
+  test("fetch from tierekisteri active Speed limit asset data with fieldCode and roadNumber") {
+    assume(testConnection)
+    val assets = tierekisteriSpeedLimitAsset.fetchActiveAssetData(45)
+
+    assets.size should not be (0)
+  }
+
+  test("fetch from tierekisteri active Speed limit asset data with fieldCode, roadNumber and roadPartNumber") {
+    assume(testConnection)
+    val assets = tierekisteriSpeedLimitAsset.fetchActiveAssetData(45, 1)
+
+    assets.size should not be (0)
+  }
+
+  test("fetch from tierekisteri active Speed limit asset datad with fieldCode, roadNumber, roadPartNumber and startDistance") {
+    assume(testConnection)
+    val assets = tierekisteriSpeedLimitAsset.fetchActiveAssetData(45, 1, 3709)
+
+    assets.size should not be (0)
+  }
+
+  test("fetch from tierekisteri active Speed limit asset data with fieldCode, roadNumber, roadPartNumber, startDistance, endPart and endDistance") {
+    assume(testConnection)
+    val assets = tierekisteriSpeedLimitAsset.fetchActiveAssetData(45, 1, 3709, 2, 3301)
 
     assets.size should not be (0)
   }

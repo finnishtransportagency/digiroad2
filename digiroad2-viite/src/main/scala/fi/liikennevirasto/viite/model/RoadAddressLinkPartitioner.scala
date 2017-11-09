@@ -13,7 +13,7 @@ object RoadAddressLinkPartitioner extends GraphPartitioner {
       )
     }
     val clusters = for (linkGroup <- linkGroups.values.toSeq;
-                        cluster <- clusterLinks(linkGroup)) yield cluster
+                        cluster <- clusterLinks(linkGroup, fi.liikennevirasto.viite.MaxDistanceForConnectedLinks)) yield cluster
 
     clusters.map(linksFromCluster)
   }

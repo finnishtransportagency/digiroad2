@@ -9,8 +9,10 @@
       'Numerointi',
       'Lakkautettu'
     ];
-
+    var unchangedStatus = 1;
     var newLinkStatus = 2;
+    var transferredLinkStatus = 3;
+    var numberingLinkStatus = 4;
     var terminatedLinkStatus = 5;
     
     var changeTable =
@@ -78,58 +80,37 @@
     function bindEvents(){
       eventbus.once('projectChanges:fetched', function(projectChangeData){
         var htmlTable ='<table class="change-table">';
-        _.each(projectChangeData.changeInfoSeq, function(changeInfoSeq) {
-          if(changeInfoSeq.changetype === newLinkStatus){
-            htmlTable += '<tr class="change-table-data-row">' +
-              '<td class="project-change-table-dimension-first">' + getChangeType(changeInfoSeq.changetype) + '</td>' +
-              '<td class="project-change-table-data-cell"></td>' +
-              '<td class="project-change-table-data-cell"></td>' +
-              '<td class="project-change-table-data-cell"></td>' +
-              '<td class="project-change-table-data-cell"></td>' +
-              '<td class="project-change-table-data-cell"></td>' +
-              '<td class="project-change-table-data-cell"></td>' +
-              '<td class="project-change-table-data-cell"></td>' +
-              '<td class="project-change-table-data-cell data-cell-road-type"></td>' +
-              '<td class="project-change-table-data-cell"></td>';
-            htmlTable+=
-              '<td class="project-change-table-data-cell">' + changeInfoSeq.target.roadNumber + '</td>'+
-              '<td class="project-change-table-data-cell">' + changeInfoSeq.target.trackCode + '</td>' +
-              '<td class="project-change-table-data-cell">' + changeInfoSeq.target.startRoadPartNumber + '</td>' +
-              '<td class="project-change-table-data-cell">' + changeInfoSeq.target.startAddressM + '</td>' +
-              '<td class="project-change-table-data-cell">' + changeInfoSeq.target.endRoadPartNumber + '</td>' +
-              '<td class="project-change-table-data-cell">' + changeInfoSeq.target.endAddressM + '</td>' +
-              '<td class="project-change-table-data-cell">' + changeInfoSeq.discontinuity + '</td>' +
-              '<td class="project-change-table-data-cell data-cell-road-type">'+ changeInfoSeq.roadType + '</td>' +
-              '<td class="project-change-table-data-cell">' + projectChangeData.ely + '</td>' +
-              '</tr>';
-          } else if (changeInfoSeq.changetype === terminatedLinkStatus) {
-            htmlTable += '<tr class="change-table-data-row">' +
-              '<td class="project-change-table-dimension-first">' + getChangeType(changeInfoSeq.changetype) + '</td>' +
-              '<td class="project-change-table-data-cell">' + changeInfoSeq.source.roadNumber + '</td>' +
-              '<td class="project-change-table-data-cell">' + changeInfoSeq.source.trackCode + '</td>' +
-              '<td class="project-change-table-data-cell">' + changeInfoSeq.source.startRoadPartNumber + '</td>' +
-              '<td class="project-change-table-data-cell">' + changeInfoSeq.source.startAddressM + '</td>' +
-              '<td class="project-change-table-data-cell">' + changeInfoSeq.source.endRoadPartNumber + '</td>' +
-              '<td class="project-change-table-data-cell">' + changeInfoSeq.source.endAddressM + '</td>' +
-              '<td class="project-change-table-data-cell">' + changeInfoSeq.discontinuity + '</td>' +
-              '<td class="project-change-table-data-cell data-cell-road-type">' + changeInfoSeq.roadType + '</td>' +
-              '<td class="project-change-table-data-cell">' + projectChangeData.ely + '</td>';
-
-            htmlTable +=
-              '<td class="project-change-table-data-cell"></td>' +
-              '<td class="project-change-table-data-cell"></td>' +
-              '<td class="project-change-table-data-cell"></td>' +
-              '<td class="project-change-table-data-cell"></td>' +
-              '<td class="project-change-table-data-cell"></td>' +
-              '<td class="project-change-table-data-cell"></td>' +
-              '<td class="project-change-table-data-cell"></td>' +
-              '<td class="project-change-table-data-cell data-cell-road-type"></td>' +
-              '<td class="project-change-table-data-cell"></td>' +
-              '</tr>';
-          }
-        });
+        if(projectChangeData !== null){
+          _.each(projectChangeData.changeInfoSeq, function(changeInfoSeq) {
+            if (changeInfoSeq.changetype === newLinkStatus) {
+              htmlTable += '<tr class="change-table-data-row">';
+              htmlTable += getEmptySource(changeInfoSeq);
+              htmlTable += getTartgetInfo(changeInfoSeq, projectChangeData);
+              htmlTable += '</tr>';
+            } else if (changeInfoSeq.changetype === terminatedLinkStatus) {
+              htmlTable += '<tr class="change-table-data-row">';
+              htmlTable += getSourceInfo(changeInfoSeq, projectChangeData);
+              htmlTable += getEmptyTarget(changeInfoSeq);
+              htmlTable += '</tr>';
+            } else if (changeInfoSeq.changetype === unchangedStatus) {
+              htmlTable += '<tr class="change-table-data-row">';
+              htmlTable += getSourceInfo(changeInfoSeq, projectChangeData);
+              htmlTable += getTartgetInfo(changeInfoSeq, projectChangeData);
+              htmlTable += '</tr>';
+            } else if (changeInfoSeq.changetype === transferredLinkStatus) {
+              htmlTable += '<tr class="change-table-data-row">';
+              htmlTable += getSourceInfo(changeInfoSeq, projectChangeData);
+              htmlTable += getTartgetInfo(changeInfoSeq, projectChangeData);
+              htmlTable += '</tr>';
+            } else if (changeInfoSeq.changetype === numberingLinkStatus) {
+              htmlTable += '<tr class="change-table-data-row">';
+              htmlTable += getSourceInfo(changeInfoSeq, projectChangeData);
+              htmlTable += getTartgetInfo(changeInfoSeq, projectChangeData);
+              htmlTable += '</tr>';
+            }
+          });
+        }
         htmlTable += '</table>';
-
         $('.project-changes').html($(htmlTable));
       });
 
@@ -142,6 +123,60 @@
         $('#send-button').attr('disabled', true);
         hide();
       });
+    }
+
+
+    function getEmptySource(changeInfoSeq) {
+      return '<td class="project-change-table-dimension-first">' + getChangeType(changeInfoSeq.changetype) + '</td>' +
+        '<td class="project-change-table-data-cell"></td>' +
+        '<td class="project-change-table-data-cell"></td>' +
+        '<td class="project-change-table-data-cell"></td>' +
+        '<td class="project-change-table-data-cell"></td>' +
+        '<td class="project-change-table-data-cell"></td>' +
+        '<td class="project-change-table-data-cell"></td>' +
+        '<td class="project-change-table-data-cell"></td>' +
+        '<td class="project-change-table-data-cell data-cell-road-type"></td>' +
+        '<td class="project-change-table-data-cell"></td>';
+    }
+    function getEmptyTarget(changeInfoSeq) {
+      return'<td class="project-change-table-data-cell"></td>' +
+        '<td class="project-change-table-data-cell"></td>' +
+        '<td class="project-change-table-data-cell"></td>' +
+        '<td class="project-change-table-data-cell"></td>' +
+        '<td class="project-change-table-data-cell"></td>' +
+        '<td class="project-change-table-data-cell"></td>' +
+        '<td class="project-change-table-data-cell"></td>' +
+        '<td class="project-change-table-data-cell data-cell-road-type"></td>' +
+        '<td class="project-change-table-data-cell"></td>';
+    }
+
+
+    function getTartgetInfo(changeInfoSeq, projectChangeData)
+    {
+     return '<td class="project-change-table-data-cell">' + changeInfoSeq.target.roadNumber + '</td>'+
+      '<td class="project-change-table-data-cell">' + changeInfoSeq.target.trackCode + '</td>' +
+      '<td class="project-change-table-data-cell">' + changeInfoSeq.target.startRoadPartNumber + '</td>' +
+      '<td class="project-change-table-data-cell">' + changeInfoSeq.target.startAddressM + '</td>' +
+      '<td class="project-change-table-data-cell">' + changeInfoSeq.target.endRoadPartNumber + '</td>' +
+      '<td class="project-change-table-data-cell">' + changeInfoSeq.target.endAddressM + '</td>' +
+      '<td class="project-change-table-data-cell">' + changeInfoSeq.target.discontinuity + '</td>' +
+      '<td class="project-change-table-data-cell data-cell-road-type">'+ changeInfoSeq.target.roadType + '</td>' +
+      '<td class="project-change-table-data-cell">' + changeInfoSeq.target.ely + '</td>';
+    }
+
+    function getSourceInfo(changeInfoSeq,  projectChangeData)
+    {
+     return '<tr class="change-table-data-row">' +
+        '<td class="project-change-table-dimension-first">' + getChangeType(changeInfoSeq.changetype) + '</td>' +
+        '<td class="project-change-table-data-cell">' + changeInfoSeq.source.roadNumber + '</td>' +
+        '<td class="project-change-table-data-cell">' + changeInfoSeq.source.trackCode + '</td>' +
+        '<td class="project-change-table-data-cell">' + changeInfoSeq.source.startRoadPartNumber + '</td>' +
+        '<td class="project-change-table-data-cell">' + changeInfoSeq.source.startAddressM + '</td>' +
+        '<td class="project-change-table-data-cell">' + changeInfoSeq.source.endRoadPartNumber + '</td>' +
+        '<td class="project-change-table-data-cell">' + changeInfoSeq.source.endAddressM + '</td>' +
+        '<td class="project-change-table-data-cell">' + changeInfoSeq.source.discontinuity + '</td>' +
+        '<td class="project-change-table-data-cell data-cell-road-type">' + changeInfoSeq.source.roadType + '</td>' +
+        '<td class="project-change-table-data-cell">' + changeInfoSeq.source.ely + '</td>';
     }
 
     var windowMaximized = false;
@@ -165,6 +200,11 @@
         $('[id=sizeSymbol]').text("_");
         windowMaximized=true;
       }
+    });
+
+    eventbus.on('projectChangeTable:refresh', function() {
+      bindEvents();
+      getChanges();
     });
 
     return{
