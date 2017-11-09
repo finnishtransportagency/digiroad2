@@ -278,7 +278,7 @@
     function latestResponseRequestor(getParameters) {
       var deferred;
       var requests = new Bacon.Bus();
-      var responses = requests.debounce(200).flatMapLatest(function(params) {
+      var responses = requests.debounceImmediate(500).flatMapLatest(function(params) {
         return Bacon.$.ajax(params, true);
       });
 

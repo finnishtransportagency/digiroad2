@@ -433,7 +433,7 @@
         else {
           roadData = featureAtPixel.roadLinkData;
         }
-        //TODO roadData !== null is there for test having no info ready (race condition where hower often looses) should be somehow resolved
+        //TODO roadData !== null is there for test having no info ready (race condition where hover often loses) should be somehow resolved
         if (infoContent !== null) {
           if (roadData !== null || (roadData.roadNumber !== 0 && roadData.roadPartNumber !== 0 && roadData.roadPartNumber !== 99 )) {
             infoContent.innerHTML = '<p>' +
@@ -731,6 +731,7 @@
     });
 
     eventbus.on('projectLink:revertedChanges', function () {
+      eventbus.trigger('roadAddress:projectLinksUpdated');
       projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1, undefined, projectCollection.getPublishableStatus());
     });
 

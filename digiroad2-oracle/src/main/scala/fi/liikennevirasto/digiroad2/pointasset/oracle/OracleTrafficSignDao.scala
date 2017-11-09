@@ -202,7 +202,7 @@ object OracleTrafficSignDao {
   def insertSingleChoiceProperty(assetId: Long, propertyId: Long, value: Long) = {
     sqlu"""
       insert into single_choice_value(asset_id, enumerated_value_id, property_id, modified_date)
-      values ($assetId, (select id from enumerated_value where property_id = $propertyId and value = $value), $propertyId, current_timestamp)
+      values ($assetId, (select id from enumerated_value where property_id = $propertyId and value = $value), $propertyId, SYSDATE)
     """
   }
 

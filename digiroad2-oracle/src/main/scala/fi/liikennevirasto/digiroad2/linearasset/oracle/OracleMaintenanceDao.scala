@@ -181,10 +181,10 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       sqlu"""
       insert all
         into asset(id, asset_type_id, created_by, created_date, valid_to, modified_by, modified_date, area)
-        values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $username, CURRENT_TIMESTAMP, $area)
+        values ($id, $typeId, $createdByFromUpdate, $createdDateTimeFromUpdate, #$validTo, $username, SYSDATE, $area)
 
         into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
-        values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, CURRENT_TIMESTAMP, $vvhTimeStamp, $linkSource)
+        values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, SYSDATE, $vvhTimeStamp, $linkSource)
 
         into asset_link(asset_id, position_id)
         values ($id, $lrmPositionId)
@@ -197,7 +197,7 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       values ($id, $typeId, $username, sysdate, #$validTo, $area)
 
       into lrm_position(id, start_measure, end_measure, link_id, side_code, modified_date, adjusted_timestamp, link_source)
-      values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, CURRENT_TIMESTAMP, $vvhTimeStamp, $linkSource)
+      values ($lrmPositionId, ${measures.startMeasure}, ${measures.endMeasure}, $linkId, $sideCode, SYSDATE, $vvhTimeStamp, $linkSource)
 
       into asset_link(asset_id, position_id)
       values ($id, $lrmPositionId)
@@ -240,7 +240,7 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     val propertyId = Q.query[String, Long](Queries.propertyIdByPublicId).apply(valuePropertyId).first
     sqlu"""
        insert into single_choice_value(asset_id, enumerated_value_id, property_id, modified_date)
-       values ($assetId, (select id from enumerated_value where property_id = $propertyId and value = $value), $propertyId, current_timestamp)
+       values ($assetId, (select id from enumerated_value where property_id = $propertyId and value = $value), $propertyId, SYSDATE)
      """.execute
   }
 
@@ -253,7 +253,7 @@ class OracleMaintenanceDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
           left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id
           join enumerated_value e on e.id = s.enumerated_value_id and e.value = 0
           where a.asset_type_id = 290
-          and(valid_to is NULL OR valid_to >= CURRENT_TIMESTAMP)"""
+          and(valid_to is NULL OR valid_to >= SYSDATE)"""
 
     val sql = optionalAreas match {
       case Some(area) => uncheckedQuery + s" and a.area in ($area)"
