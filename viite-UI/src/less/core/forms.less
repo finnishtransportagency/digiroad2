@@ -403,11 +403,13 @@ form.roadAddressProject p {
   .select,
   .form-control-static,
   .form-control-static-floating,
-  .choice-group {
+  .choice-group,
+  .project-choice-group{
     float: left;
   }
 
-  .choice-group {
+  .choice-group,
+  .project-choice-group{
     .form-control,
     .split-form-control,
     .checkbox,
@@ -420,8 +422,15 @@ form.roadAddressProject p {
     display: block;
     clear: both;
   }
+  .project-choice-group .radio label {
+    display: block;
+    clear: both;
+  }
 
   .choice-group input[type="text"] {
+    float: left;
+  }
+  .project-choice-group input[type="text"] {
     float: left;
   }
 
