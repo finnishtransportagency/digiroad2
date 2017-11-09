@@ -1,14 +1,15 @@
 package fi.liikennevirasto.digiroad2.dataimport
 
+import java.io.InputStream
+
 import fi.liikennevirasto.digiroad2.Digiroad2Context.{Digiroad2ServerOriginatedResponseHeader, userProvider}
 import fi.liikennevirasto.digiroad2.authentication.RequestHeaderAuthentication
-import fi.liikennevirasto.digiroad2.dataimport.DataCsvImporter.RoadLinkCsvImporter.{ImportResult}
-import fi.liikennevirasto.digiroad2.{Digiroad2Context, VVHClient}
+import fi.liikennevirasto.digiroad2.{Digiroad2Context, LinearAssetOperations, VVHClient}
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import fi.liikennevirasto.digiroad2.oracle.ImportLogService
 import org.json4s.{DefaultFormats, Extraction, Formats}
 import org.scalatra._
-import org.scalatra.servlet.FileUploadSupport
+import org.scalatra.servlet.{FileItem, FileUploadSupport}
 import org.scalatra.json.JacksonJsonSupport
 
 class ImportDataApi extends ScalatraServlet with FileUploadSupport with JacksonJsonSupport with RequestHeaderAuthentication {
@@ -16,9 +17,14 @@ class ImportDataApi extends ScalatraServlet with FileUploadSupport with JacksonJ
   protected implicit val jsonFormats: Formats = DefaultFormats
   private val CSV_LOG_PATH = "/tmp/csv_data_import_logs/"
   private val  ROAD_LINK_LOG = "road link import"
-  private val csvImporter = new RoadLinkCsvImporter {
-    override val userProvider: UserProvider = Digiroad2Context.userProvider
-    override val vvhClient: VVHClient = Digiroad2Context.vvhClient
+  private val roadLinkCsvImporter = new RoadLinkCsvImporter
+  private val trafficSignCsvImporter = new TrafficSignCsvImporter
+
+  private def verifyServiceToUse(assetType: String, csvFileInputStream: InputStream): CsvDataImporterOperations = {
+    assetType match {
+      case "trafficsigns" => trafficSignCsvImporter
+      case _ => importRoadLinks(csvFileInputStream)
+    }
   }
 
   before() {
@@ -31,21 +37,13 @@ class ImportDataApi extends ScalatraServlet with FileUploadSupport with JacksonJ
     response.setHeader(Digiroad2ServerOriginatedResponseHeader, "true")
   }
 
-  get("/log/:id") {
-    params.getAs[Long]("id").flatMap(id => ImportLogService.get(id, ROAD_LINK_LOG)).getOrElse("Logia ei löytynyt.")
-  }
-
-  post("/csv") {
-    if (!userProvider.getCurrentUser().isOperator()) {
-      halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
-    }
+  def importRoadLinks(csvFileInputStream: InputStream): Nothing = {
     val id = ImportLogService.save("Kohteiden lataus on käynnissä. Päivitä sivu hetken kuluttua uudestaan.", ROAD_LINK_LOG)
-    val csvFileInputStream = fileParams("csv-file").getInputStream
     try {
-      val result = csvImporter.importLinkAttribute(csvFileInputStream)
+      val result = roadLinkCsvImporter.importLinkAttribute(csvFileInputStream)
       val response = result match {
-        case ImportResult(Nil, Nil, Nil, Nil) => "CSV tiedosto käsitelty." //succesfully processed
-        case ImportResult(Nil, Nil, Nil, excludedLinks) => "CSV tiedosto käsitelty. Seuraavat päivitykset on jätetty huomioimatta:\n" + pretty(Extraction.decompose(excludedLinks)) //following links have been excluded
+        case roadLinkCsvImporter.ImportResult(Nil, Nil, Nil, Nil) => "CSV tiedosto käsitelty." //succesfully processed
+        case roadLinkCsvImporter.ImportResult(Nil, Nil, Nil, excludedLinks) => "CSV tiedosto käsitelty. Seuraavat päivitykset on jätetty huomioimatta:\n" + pretty(Extraction.decompose(excludedLinks)) //following links have been excluded
         case _ => pretty(Extraction.decompose(result))
       }
       ImportLogService.save(id, response, ROAD_LINK_LOG)
@@ -58,5 +56,18 @@ class ImportDataApi extends ScalatraServlet with FileUploadSupport with JacksonJ
       csvFileInputStream.close()
     }
     redirect(url("/log/" + id))
+  }
+
+  get("/log/:id") {
+    params.getAs[Long]("id").flatMap(id => ImportLogService.get(id, ROAD_LINK_LOG)).getOrElse("Logia ei löytynyt.")
+  }
+
+  post("/csv") {
+    if (!userProvider.getCurrentUser().isOperator()) {
+      halt(Forbidden("Vain operaattori voi suorittaa Excel-ajon"))
+    }
+    val csvFileInputStream = fileParams("csv-file").getInputStream
+    val assetType = params.getOrElse("asset-type", halt(BadRequest("Import not supported for selected asset type")))
+    verifyServiceToUse(assetType, csvFileInputStream)
   }
 }

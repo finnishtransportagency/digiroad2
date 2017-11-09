@@ -1,43 +1,85 @@
 package fi.liikennevirasto.digiroad2.dataimport
 
 import java.io.{InputStream, InputStreamReader}
+import java.util.Properties
 
 import com.github.tototoshi.csv.{CSVReader, DefaultCSVFormat}
-import com.jolbox.bonecp.{BoneCPDataSource, BoneCPConfig}
+import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset._
-import fi.liikennevirasto.digiroad2.dataimport.DataCsvImporter.RoadLinkCsvImporter._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.roadlinkservice.oracle.RoadLinkServiceDAO
-import fi.liikennevirasto.digiroad2.{VVHClient}
+import fi.liikennevirasto.digiroad2.VVHClient
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import org.apache.commons.lang3.StringUtils.isBlank
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
+import fi.liikennevirasto.digiroad2.Digiroad2Context.{userProvider}
 
-object DataCsvImporter {
 
-  object RoadLinkCsvImporter {
-    case class NonUpdatedLink(linkId: Long, csvRow: String)
-    case class IncompleteLink(missingParameters: List[String], csvRow: String)
-    case class MalformedLink(malformedParameters: List[String], csvRow: String)
-    case class ExcludedLink(unauthorizedAdminClass: List[String], csvRow: String)
-    case class ImportResult(nonUpdatedLinks: List[NonUpdatedLink] = Nil,
-                            incompleteLinks: List[IncompleteLink] = Nil,
-                            malformedLinks: List[MalformedLink] = Nil,
-                            excludedLinks: List[ExcludedLink] = Nil)
-  }
-}
 
 class RoadLinkNotFoundException(linkId: Int) extends RuntimeException
 
-trait RoadLinkCsvImporter {
-  val vvhClient: VVHClient
-  val userProvider: UserProvider
+trait CsvDataImporterOperations {
+
+  lazy val vvhClient = { new VVHClient(getProperty("digiroad2.VVHRestApiEndPoint")) }
   def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  lazy val dr2properties: Properties = {
+    val props = new Properties()
+    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
+    props
+  }
 
   lazy val dataSource = {
     val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))
     new BoneCPDataSource(cfg)
   }
+
+  protected def getProperty(name: String) = {
+    val property = dr2properties.getProperty(name)
+    if(property != null)
+      property
+    else
+      throw new RuntimeException(s"cannot find property $name")
+  }
+}
+class TrafficSignCsvImporter extends CsvDataImporterOperations {
+
+  override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+
+  val trafficSignAssetTypeId: Int = 300
+
+}
+
+class RoadLinkCsvImporter extends CsvDataImporterOperations {
+
+  override lazy val dr2properties: Properties = {
+    val props = new Properties()
+    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
+    props
+  }
+
+  override lazy val dataSource = {
+    val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))
+    new BoneCPDataSource(cfg)
+  }
+
+  override protected def getProperty(name: String) = {
+    val property = dr2properties.getProperty(name)
+    if(property != null)
+      property
+    else
+      throw new RuntimeException(s"cannot find property $name")
+  }
+
+  override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+
+  case class NonUpdatedLink(linkId: Long, csvRow: String)
+  case class IncompleteLink(missingParameters: List[String], csvRow: String)
+  case class MalformedLink(malformedParameters: List[String], csvRow: String)
+  case class ExcludedLink(unauthorizedAdminClass: List[String], csvRow: String)
+  case class ImportResult(nonUpdatedLinks: List[NonUpdatedLink] = Nil,
+                          incompleteLinks: List[IncompleteLink] = Nil,
+                          malformedLinks: List[MalformedLink] = Nil,
+                          excludedLinks: List[ExcludedLink] = Nil)
 
   case class LinkProperty(columnName: String, value: Any)
   case class CsvRoadLinkRow(linkId: Int, objectID: Int = 0, properties: Seq[LinkProperty])
