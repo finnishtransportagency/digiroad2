@@ -54,7 +54,7 @@
         '<div class="form-group editable form-editable-roadAddressProject"> '+
 
         selectionForm(selection, selected, 0) +
-        formCommon.changeDirection() +
+        formCommon.changeDirection(selected) +
         formCommon.actionSelectedField()+
         '</div>'+
         '</div>' +
@@ -105,16 +105,6 @@
       } else {
         return '<label class="split-form-group">&#9744; Käännetty</label>';
       }
-    };
-
-    var changeDirection = function (selected) {
-      var reversedInGroup = _.uniq(_.pluck(selected, 'reversed'));
-      var isPartialReversed = ((reversedInGroup.length > 1) ? true : false);
-
-      return '<div hidden class="form-group changeDirectionDiv" style="margin-top:15px">' +
-        '<button class="form-group changeDirection btn btn-primary">Käännä kasvusuunta</button>' +
-        directionChangedInfo(selected, isPartialReversed) +
-        '</div>';
     };
 
     var emptyTemplate = function(project) {
