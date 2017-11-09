@@ -698,7 +698,10 @@ object ProjectDAO {
   }
 
   def removeProjectLinksByLinkId(projectId: Long, linkIds: Set[Long]): Int = {
-    removeProjectLinks(projectId, None, None, linkIds)
+    if (linkIds.nonEmpty)
+      removeProjectLinks(projectId, None, None, linkIds)
+    else
+      0
   }
 
   def fetchSplitLinks(projectId: Long, linkId: Long): Seq[ProjectLink] = {

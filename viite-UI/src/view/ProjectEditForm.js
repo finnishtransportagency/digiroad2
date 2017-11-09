@@ -409,6 +409,7 @@
         projectCollection.setTmpDirty([]);
         projectCollection.setDirty([]);
         selectedProjectLink = false;
+        selectedProjectLinkProperty.cleanIds();
         if (typeof data !== 'undefined' && typeof data.publishable !== 'undefined' && data.publishable) {
           eventbus.trigger('roadAddressProject:projectLinkSaved', data.id, data.publishable);
         } else {
@@ -440,6 +441,7 @@
       eventbus.on('roadAddress:projectLinksCreateSuccess', function () {
         eventbus.trigger('projectChangeTable:refresh');
         projectCollection.setTmpDirty([]);
+        selectedProjectLinkProperty.cleanIds();
         rootElement.find('.changeDirectionDiv').prop("hidden", false);
       });
 

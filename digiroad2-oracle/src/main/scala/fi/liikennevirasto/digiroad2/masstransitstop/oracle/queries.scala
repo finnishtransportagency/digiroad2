@@ -74,7 +74,7 @@ object Queries {
 
   def updateAssetModified(assetId: Long, updater: String) =
     sqlu"""
-      update asset set modified_by = $updater, modified_date = CURRENT_TIMESTAMP where id = $assetId
+      update asset set modified_by = $updater, modified_date = SYSDATE where id = $assetId
     """
 
   def updateAssetGeometry(id: Long, point: Point): Unit = {
@@ -118,13 +118,13 @@ object Queries {
     sqlu"""
       insert into multiple_choice_value(id, property_id, asset_id, enumerated_value_id, modified_date)
       values (primary_key_seq.nextval, $propertyId, $assetId,
-        (select id from enumerated_value WHERE value = $propertyValue and property_id = $propertyId), current_timestamp)
+        (select id from enumerated_value WHERE value = $propertyValue and property_id = $propertyId), SYSDATE)
     """
 
   def insertTextProperty(assetId: Long, propertyId: Long, valueFi: String) = {
     sqlu"""
       insert into text_property_value(id, property_id, asset_id, value_fi, created_date)
-      values (primary_key_seq.nextval, $propertyId, $assetId, $valueFi, CURRENT_TIMESTAMP)
+      values (primary_key_seq.nextval, $propertyId, $assetId, $valueFi, SYSDATE)
     """
   }
 
@@ -156,7 +156,7 @@ object Queries {
   def insertSingleChoiceProperty(assetId: Long, propertyId: Long, value: Long) = {
     sqlu"""
       insert into single_choice_value(asset_id, enumerated_value_id, property_id, modified_date)
-      values ($assetId, (select id from enumerated_value where property_id = $propertyId and value = $value), $propertyId, current_timestamp)
+      values ($assetId, (select id from enumerated_value where property_id = $propertyId and value = $value), $propertyId, SYSDATE)
     """
   }
 
