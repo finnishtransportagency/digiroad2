@@ -41,6 +41,13 @@ case class RoadLink(linkId: Long, geometry: Seq[Point],
   def isPaved : Boolean = surfaceType == SurfaceType.Paved.value
   def isNotPaved : Boolean = surfaceType == SurfaceType.None.value
 
+  def extractMTKClass(attributes: Map[String, Any]): MTKClassWidth = {
+    Try(attributes("MTKCLASS").asInstanceOf[BigInt])
+      .map(_.toInt)
+      .map(MTKClassWidth.apply)
+      .getOrElse(MTKClassWidth.Unknown)
+  }
+
   def roadIdentifier: Option[Either[Int, String]] = {
     Try(Left(attributes("ROADNUMBER").asInstanceOf[BigInt].intValue()))
       .orElse(Try(Right(getStringAttribute("ROADNAME_FI"))))
@@ -72,6 +79,27 @@ object SurfaceType {
 
   case object Unknown extends SurfaceType { def value = 0 }
   case object None extends SurfaceType { def value = 1 }
-  case object Paved extends SurfaceType { def value = 2 }
+  case object Paved extends SurfaceType { def value = 2}
+}
 
+sealed trait MTKClassWidth {
+  def value: Int
+  def width: Int
+}
+
+object MTKClassWidth {
+  val values = Set(CarRoad_Ia, CarRoad_Ib, CarRoad_IIa, CarRoad_IIb, CarRoad_IIIa, CarRoad_IIIb, DriveWay)
+
+  def apply(intValue: Int): MTKClassWidth = {
+    values.find(_.value == intValue).getOrElse(Unknown)
+  }
+
+  case object CarRoad_Ia extends MTKClassWidth { def value = 12111; def  width = 1100}
+  case object CarRoad_Ib extends MTKClassWidth { def value = 12112; def  width	= 1100}
+  case object CarRoad_IIa extends MTKClassWidth { def value = 12121; def width = 650 }
+  case object CarRoad_IIb extends MTKClassWidth { def value = 12122; def  width = 650 }
+  case object CarRoad_IIIa extends MTKClassWidth { def value = 12131; def width = 400 }
+  case object CarRoad_IIIb extends MTKClassWidth { def value = 12132; def width = 400 }
+  case object DriveWay	extends MTKClassWidth { def value = 12141; def width = 250}
+  case object Unknown extends MTKClassWidth {def value=0; def width = 0}
 }
