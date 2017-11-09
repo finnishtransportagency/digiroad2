@@ -54,12 +54,6 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     with CorsSupport
     with RequestHeaderAuthentication
     with GZipSupport {
-    val serviceRoadTypeid=290
-    val trafficVolumeTypeid=170
-    val roadWidthTypeId = 120
-    val pavingTypeId = 110
-    val lightingTypeId = 100
-    val trafficSignTypeId = 300
 
     val logger = LoggerFactory.getLogger(getClass)
   // Somewhat arbitrarily chosen limit for bounding box (Math.abs(y1 - y2) * Math.abs(x1 - x2))
@@ -769,9 +763,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val user = userProvider.getCurrentUser()
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
     val usedService = getLinearAssetService(typeId)
-    if (user.isServiceRoadMaintainer() && typeId!=serviceRoadTypeid)
+    if (user.isServiceRoadMaintainer() && typeId != MaintenanceRoadAsset.typeId)
       halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
-    if (typeId==trafficVolumeTypeid)
+    if (typeId == TrafficVolume.typeId)
       halt(BadRequest("Cannot modify 'traffic Volume' asset"))
     val valueOption = extractLinearAssetValue(parsedBody \ "value")
     val existingAssets = (parsedBody \ "ids").extract[Set[Long]]
@@ -810,9 +804,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val user = userProvider.getCurrentUser()
     val ids = (parsedBody \ "ids").extract[Set[Long]]
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
-    if (user.isServiceRoadMaintainer() && typeId!=serviceRoadTypeid)
+    if (user.isServiceRoadMaintainer() && typeId != MaintenanceRoadAsset.typeId)
       halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
-    if (typeId==trafficVolumeTypeid)
+    if (typeId == TrafficVolume.typeId)
       halt(BadRequest("Cannot delete 'traffic Volume' asset"))
     val usedService =  getLinearAssetService(typeId)
     val linkIds = usedService.getPersistedAssetsByIds(typeId, ids).map(_.linkId)
@@ -827,9 +821,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val user = userProvider.getCurrentUser()
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
     val usedService =  getLinearAssetService(typeId)
-    if (user.isServiceRoadMaintainer() && typeId!=serviceRoadTypeid)
+    if (user.isServiceRoadMaintainer() && typeId != MaintenanceRoadAsset.typeId)
       halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
-    if (typeId==trafficVolumeTypeid)
+    if (typeId == TrafficVolume.typeId)
       halt(BadRequest("Cannot modify 'traffic Volume' asset"))
     usedService.split(params("id").toLong,
       (parsedBody \ "splitMeasure").extract[Double],
@@ -843,9 +837,9 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     val user = userProvider.getCurrentUser()
     val typeId = (parsedBody \ "typeId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'typeId' parameter")))
     val usedService =  getLinearAssetService(typeId)
-    if (user.isServiceRoadMaintainer() && typeId!=serviceRoadTypeid)
+    if (user.isServiceRoadMaintainer() && typeId != MaintenanceRoadAsset.typeId)
       halt(Unauthorized("ServiceRoad user is only authorized to alter serviceroad assets"))
-    if (typeId==trafficVolumeTypeid)
+    if (typeId == TrafficVolume.typeId)
       halt(BadRequest("Cannot modify 'traffic Volume' asset"))
     usedService.separate(params("id").toLong,
       extractLinearAssetValue(parsedBody \ "valueTowardsDigitization"),
@@ -1019,7 +1013,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
   }
 
   private def validateAdministrativeClass(typeId: Int)(administrativeClass: AdministrativeClass): Unit  = {
-    if ((typeId == lightingTypeId || typeId == roadWidthTypeId || typeId == trafficSignTypeId ) && administrativeClass == State)
+    if ((typeId == LitRoad.typeId || typeId == RoadWidth.typeId || typeId == TrafficSigns.typeId ) && administrativeClass == State)
       halt(BadRequest("Modification restriction for this asset on state roads"))
   }
 
