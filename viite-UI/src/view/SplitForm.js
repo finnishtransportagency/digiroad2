@@ -234,9 +234,9 @@
     };
 
     var newRoadAddressInfo = function(selected){
-      var road = selectedProjectLink[0].roadNumber;
-      var part = selectedProjectLink[0].roadPartNumber;
-      var track = selectedProjectLink[0].trackCode;
+      var road = selected[0].roadNumber;
+      var part = selected[0].roadPartNumber;
+      var track = selected[0].trackCode;
       return '<div class="split-form-group new-road-address" hidden>' +
         '<div><label></label></div><div><label style = "margin-top: 50px">TIEOSOITTEEN TIEDOT</label></div>' +
         addSmallLabel('TIE') + addSmallLabel('OSA') + addSmallLabel('AJR') + addSmallLabel('ELY') + addSmallLabel('JATKUU') +
@@ -246,7 +246,7 @@
         addSmallInputNumber('osa',(part !== 0 ? part : '')) +
         addSmallInputNumber('ajr',(track !== 99 ? track :
           (road >= 20001 && road <= 39999 ? '0' : ''))) +
-        addSmallInputNumberDisabled('ely', selectedProjectLink[0].elyCode) +
+        addSmallInputNumberDisabled('ely', selected[0].elyCode) +
         addDiscontinuityDropdown() +
         addSmallLabel('TIETYYPPI') +
         roadTypeDropdown() +
