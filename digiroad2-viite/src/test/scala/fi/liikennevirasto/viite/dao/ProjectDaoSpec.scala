@@ -115,7 +115,8 @@ class ProjectDaoSpec extends FunSuite with Matchers {
 
   }
 
-  test("Update project link status") {
+  // Tests now also for VIITE-855 - accidentally removing all links if set is empty
+  test("Update project link status and remove zero links") {
     runWithRollback {
       val id = Sequences.nextViitePrimaryKeySeqValue
       val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.parse("1901-01-01"), "TestUser", DateTime.parse("1901-01-01"), DateTime.now(), "Some additional info", List.empty, None)
@@ -127,6 +128,8 @@ class ProjectDaoSpec extends FunSuite with Matchers {
       ProjectDAO.updateProjectLinks(projectLinks.map(x => x.id).toSet, LinkStatus.Terminated, "test")
       val updatedProjectLinks = ProjectDAO.getProjectLinks(id)
       updatedProjectLinks.head.status should be(LinkStatus.Terminated)
+      ProjectDAO.removeProjectLinksByLinkId(id, Set())
+      ProjectDAO.getProjectLinks(id).size should be(updatedProjectLinks.size)
     }
   }
 
