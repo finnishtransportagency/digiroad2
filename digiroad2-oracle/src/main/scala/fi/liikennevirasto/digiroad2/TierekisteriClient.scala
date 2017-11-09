@@ -875,9 +875,10 @@ class TierekisteriUrbanAreaClient(trEndPoint: String, trEnable: Boolean, httpCli
 
   override val trAssetType = "tl139"
   private val trUrbanAreaValue = "TIENAS"
+  private val defaultUrbanAreaValue = "9"
 
   override def mapFields(data: Map[String, Any]): TierekisteriUrbanAreaData = {
-    val assetValue = getFieldValue(data, trUrbanAreaValue).orElse(Some("9")).get
+    val assetValue = getFieldValue(data, trUrbanAreaValue).orElse(Some(defaultUrbanAreaValue)).get
     val roadNumber = convertToLong(getMandatoryFieldValue(data, trRoadNumber)).get
     val roadPartNumber = convertToLong(getMandatoryFieldValue(data, trRoadPartNumber)).get
     val startMValue = convertToLong(getMandatoryFieldValue(data, trStartMValue)).get
