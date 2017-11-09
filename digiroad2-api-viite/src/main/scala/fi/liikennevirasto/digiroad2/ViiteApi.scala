@@ -297,7 +297,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   get("/roadlinks/roadaddress/project/all/projectId/:id") {
     val projectId = params("id").toLong
-    val project = projectService.getRoadAddressSingleProject(projectId).get
+    val project = projectService.getRoadAddressSingleProject(projectId, true).get
     val projectMap = roadAddressProjectToApi(project)
     val parts = project.reservedParts.map(reservedRoadPartToApi)
     val publishable = projectService.projectLinkPublishable(projectId)
