@@ -53,13 +53,13 @@ class MassTransitStopDao {
         from asset a
           join asset_link al on a.id = al.asset_id
           join lrm_position lrm on al.position_id = lrm.id
-        join property p on a.asset_type_id = p.asset_type_id
+          join property p on a.asset_type_id = p.asset_type_id
+          left join terminal_bus_stop_link tbs on tbs.bus_stop_asset_id = a.id
           left join single_choice_value s on s.asset_id = a.id and s.property_id = p.id and p.property_type = 'single_choice'
           left join text_property_value tp on tp.asset_id = a.id and tp.property_id = p.id and (p.property_type = 'text' or p.property_type = 'long_text' or p.property_type = 'read_only_text')
           left join multiple_choice_value mc on mc.asset_id = a.id and mc.property_id = p.id and p.property_type = 'multiple_choice'
           left join number_property_value np on np.asset_id = a.id and np.property_id = p.id and p.property_type = 'read_only_number'
           left join enumerated_value e on mc.enumerated_value_id = e.id or s.enumerated_value_id = e.id
-          left join terminal_bus_stop_link tbs on tbs.bus_stop_asset_id = a.id
       """
     queryToPersistedMassTransitStops(queryFilter(query))
   }
@@ -74,7 +74,7 @@ class MassTransitStopDao {
 
     terminalIdOption match {
       case Some(terminalId) =>
-        nearestStops ++ fetchPointAssets(withId(terminalId))
+        nearestStops ++ fetchPointAssets(withTerminalId(terminalId))
       case _ =>
         nearestStops
     }
@@ -568,6 +568,10 @@ class MassTransitStopDao {
 
   def withId(id: Long)(query: String): String = {
     query + s" where a.id = $id"
+  }
+
+  def withTerminalId(terminalId: Long)(query: String): String = {
+    query + s" where terminal_asset_id = $terminalId"
   }
 
   def withNationalId(nationalId: Long)(query: String): String = {
