@@ -249,14 +249,14 @@ object ProjectDAO {
     listQuery(query)
   }
 
-  //TODO: support for bigger queries than 1000 link ids
-  def getProjectLinksByIds(linkIds: Iterable[Long]): Seq[ProjectLink] = {
-    if (linkIds.isEmpty)
+  //TODO: support for bigger queries than 1000 ids
+  def getProjectLinksByIds(ids: Iterable[Long]): Seq[ProjectLink] = {
+    if (ids.isEmpty)
       List()
     else {
       val query =
         s"""$projectLinkQueryBase
-                where project_link.id in (${linkIds.mkString(",")}) order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
+                where project_link.id in (${ids.mkString(",")}) order by PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.END_ADDR_M """
       listQuery(query)
     }
   }
@@ -605,8 +605,7 @@ object ProjectDAO {
   }
 
   def updateProjectStatus(projectID: Long, state: ProjectState) {
-    val projectstate = state.value
-    sqlu""" update project set state=$projectstate WHERE id=$projectID""".execute
+    sqlu""" update project set state=${state.value} WHERE id=$projectID""".execute
   }
 
   def getProjectsWithWaitingTRStatus(): List[Long] = {
