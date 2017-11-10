@@ -48,13 +48,13 @@
         '</header>' +
         '<div class="wrapper read-only">'+
         '<div class="form form-horizontal form-dark">'+
-        '<div class="edit-control-group choice-group">'+
+        '<div class="edit-control-group project-choice-group">'+
         formCommon.staticField('Lisätty järjestelmään', project.createdBy + ' ' + project.startDate)+
         formCommon.staticField('Muokattu viimeksi', project.modifiedBy + ' ' + project.dateModified)+
         '<div class="form-group editable form-editable-roadAddressProject"> '+
 
         selectionForm(selection, selected, 0) +
-        formCommon.changeDirection() +
+        formCommon.changeDirection(selected) +
         formCommon.actionSelectedField()+
         '</div>'+
         '</div>' +
@@ -97,10 +97,14 @@
         '</div></div>';
     };
 
-    var changeDirection = function () {
-      return '<div hidden class="form-group changeDirectionDiv" style="margin-top:15px">' +
-        '<button class="form-group changeDirection btn btn-primary">Käännä kasvusuunta</button>' +
-        '</div>';
+    var directionChangedInfo = function (selected, isPartialReversed) {
+      if (isPartialReversed) {
+        return '<label class="split-form-group">Osittain käännetty</label>';
+      } else if (selected[0].reversed) {
+        return '<label class="split-form-group">&#9745; Käännetty</label>';
+      } else {
+        return '<label class="split-form-group">&#9744; Käännetty</label>';
+      }
     };
 
     var emptyTemplate = function(project) {
@@ -153,7 +157,7 @@
         $("#dropDown_0 option[value="+ LinkStatus.Transfer.description +"]").attr('selected', 'selected').change();
       }
       else if (statusCode == LinkStatus.Numbering.value) {
-        $("#dropDown_0" ).val(LinkStatus.Numbering.description).change();
+        $("#dropDown_0 option[value="+ LinkStatus.Numbering.description +"]").attr('selected', 'selected').change();
       }
       $('#discontinuityDropdown').val(selectedProjectLink[selectedProjectLink.length - 1].discontinuity);
       $('#roadTypeDropDown').val(selectedProjectLink[0].roadTypeId);
@@ -276,7 +280,12 @@
       });
 
       rootElement.on('click','.changeDirection', function () {
-        projectCollection.changeNewProjectLinkDirection(projectCollection.getCurrentProject().project.id, selectedProjectLinkProperty.get());
+        if(!_.isUndefined(selectedProjectLinkProperty.get()[0]) && !_.isUndefined(selectedProjectLinkProperty.get()[0].connectedLinkId) && selectedProjectLinkProperty.get()[0].connectedLinkId !== 0) {
+          projectCollection.changeNewProjectLinkCutDirection(projectCollection.getCurrentProject().project.id, selectedProjectLinkProperty.get());
+        }
+        else{
+          projectCollection.changeNewProjectLinkDirection(projectCollection.getCurrentProject().project.id, selectedProjectLinkProperty.get());
+        }
       });
 
       eventbus.on('roadAddress:projectLinksSaveFailed', function (result) {
@@ -286,6 +295,14 @@
       eventbus.on('roadAddressProject:discardChanges',function(){
         cancelChanges();
       });
+
+      var canChangeDirection = function () {
+        if(_.isUndefined(_.find(selectedProjectLink, function (link) {return (link.status === LinkStatus.Terminated.value || link.status === LinkStatus.NotHandled.value);}))) {
+          rootElement.find('.changeDirectionDiv').prop("hidden", false);
+        } else {
+          rootElement.find('.changeDirectionDiv').prop("hidden", true);
+        }
+      };
 
       var saveChanges = function(){
         currentProject = projectCollection.getCurrentProject();
@@ -364,6 +381,10 @@
         else $('#manualCPWarning').css('display', 'none');
       });
 
+      rootElement.on('change', '.roadTypeDropDown', function(){
+        setFormDirty();
+      });
+
       rootElement.on('change', '.form-select-control', function () {
         setFormDirty();
       });
@@ -416,8 +437,7 @@
           })));
           projectCollection.setTmpDirty(projectCollection.getDirty());
           rootElement.find('.new-road-address').prop("hidden", false);
-          if(selectedProjectLink[0].id !== 0)
-            rootElement.find('.changeDirectionDiv').prop("hidden", false);
+          canChangeDirection();
         }
         else if(this.value == LinkStatus.Numbering.description) {
           new ModalConfirm("Numerointi koskee kokonaista tieosaa. Valintaasi on tarvittaessa laajennettu koko tieosalle.");
@@ -429,8 +449,8 @@
           })));
           projectCollection.setTmpDirty(projectCollection.getDirty());
           rootElement.find('.new-road-address').prop("hidden", false);
-          rootElement.find('.changeDirectionDiv').prop("hidden", true);
           rootElement.find('.project-form button.update').prop("disabled", false);
+          canChangeDirection();
         }
         else if(this.value == LinkStatus.Revert.description) {
           rootElement.find('.new-road-address').prop("hidden", true);

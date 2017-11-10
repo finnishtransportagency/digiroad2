@@ -96,12 +96,24 @@
       }
     };
 
-    var changeDirection = function () {
-      return '<div hidden class="'+prefix+'form-group changeDirectionDiv" style="margin-top:15px">' +
-        '<button class="'+prefix+'form-group changeDirection btn btn-primary">Käännä kasvusuunta</button>' +
-        '</div>';
+    var directionChangedInfo = function (selected, isPartialReversed) {
+      if (isPartialReversed) {
+        return '<label class="split-form-group">Osittain käännetty</label>';
+      } else if (selected[0].reversed) {
+        return '<label class="split-form-group">&#9745; Käännetty</label>';
+      } else {
+        return '<label class="split-form-group">&#9744; Käännetty</label>';
+      }
     };
 
+    var changeDirection = function (selected) {
+      var reversedInGroup = _.uniq(_.pluck(selected, 'reversed'));
+      var isPartialReversed = ((reversedInGroup.length > 1) ? true : false);
+      return '<div hidden class="'+prefix+'form-group changeDirectionDiv" style="margin-top:15px">' +
+        '<button class="'+prefix+'form-group changeDirection btn btn-primary">Käännä kasvusuunta</button>' +
+        directionChangedInfo(selected, isPartialReversed) +
+        '</div>';
+    };
 
     var selectedData = function (selected) {
       var span = [];

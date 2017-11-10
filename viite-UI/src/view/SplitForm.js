@@ -17,7 +17,7 @@
         formCommon.projectButtons() + '</div>';
     };
 
-    var revertSplitButton = function() {
+    var revertSplitButton = function () {
       return '<div class="form-group" style="margin-top:15px">' +
         '<button id="revertSplit" class="form-group revertSplit btn btn-primary">Palauta aihioksi</button>' +
         '</div>';
@@ -25,78 +25,82 @@
 
     var selectedSplitData = function (selected) {
       var span = [];
-      _.each(selected, function(sel){
+      _.each(selected, function (sel) {
         if (sel) {
           var link = sel;
-          var startM = (((applicationModel.getSelectedTool() === 'Cut' || !_.isUndefined(selected[0].connectedLinkId)) && selected.length == 2) ? Math.round(link.startMValue) : Math.min.apply(Math, _.map(selected, function(l) { return l.startAddressM; })));
-          var endM = (((applicationModel.getSelectedTool() === 'Cut' || !_.isUndefined(selected[0].connectedLinkId)) && selected.length == 2) ? Math.round(link.endMValue) : Math.max.apply(Math, _.map(selected, function(l) { return l.endAddressM; })));
+          var startM = (((applicationModel.getSelectedTool() === 'Cut' || !_.isUndefined(selected[0].connectedLinkId)) && selected.length == 2) ? Math.round(link.startMValue) : Math.min.apply(Math, _.map(selected, function (l) {
+            return l.startAddressM;
+          })));
+          var endM = (((applicationModel.getSelectedTool() === 'Cut' || !_.isUndefined(selected[0].connectedLinkId)) && selected.length == 2) ? Math.round(link.endMValue) : Math.max.apply(Math, _.map(selected, function (l) {
+            return l.endAddressM;
+          })));
           var div = '<div class="project-edit-selections" style="display:inline-block;padding-left:8px;">' +
-              '<div class="project-edit">' +
-              ' TIE ' + '<span class="project-edit">' + link.roadNumber + '</span>' +
-              ' OSA ' + '<span class="project-edit">' + link.roadPartNumber + '</span>' +
-              ' AJR ' + '<span class="project-edit">' + link.trackCode + '</span>' +
-              ' M:  ' + '<span class="project-edit">' + startM + ' - ' + endM + '</span>' +
-              '</div>' +
-              '</div>';
+            '<div class="project-edit">' +
+            ' TIE ' + '<span class="project-edit">' + link.roadNumber + '</span>' +
+            ' OSA ' + '<span class="project-edit">' + link.roadPartNumber + '</span>' +
+            ' AJR ' + '<span class="project-edit">' + link.trackCode + '</span>' +
+            ' M:  ' + '<span class="project-edit">' + startM + ' - ' + endM + '</span>' +
+            '</div>' +
+            '</div>';
           span.push(div);
         }
       });
       return span;
     };
 
-      var defineOptionModifiers = function(option, selection) {
-          var isSplitMode = !_.isUndefined(selection.connectedLinkId);
-          var linkStatus = selection.status;
-          var targetLinkStatus = _.find(LinkStatus, function (ls) {
-              return ls.description === option || (option === '' && ls.value == 99);
-          });
-          if (isSplitMode)
-              return splitTransitionModifiers(targetLinkStatus, linkStatus);
-          else
-              return transitionModifiers(targetLinkStatus, linkStatus);
-      };
+    var defineOptionModifiers = function (option, selection) {
+      var isSplitMode = !_.isUndefined(selection.connectedLinkId);
+      var linkStatus = selection.status;
+      var targetLinkStatus = _.find(LinkStatus, function (ls) {
+        return ls.description === option || (option === '' && ls.value == 99);
+      });
+      if (isSplitMode)
+        return splitTransitionModifiers(targetLinkStatus, linkStatus);
+      else
+        return transitionModifiers(targetLinkStatus, linkStatus);
+    };
 
-      var transitionModifiers = function(targetStatus, currentStatus) {
-          var mod;
-          if (_.contains(targetStatus.transitionFrom, currentStatus))
-              mod = '';
-          else
-              mod = 'disabled hidden';
-          if (currentStatus == targetStatus.value)
-              return mod + ' selected';
-          else
-              return mod;
-      };
+    var transitionModifiers = function (targetStatus, currentStatus) {
+      var mod;
+      if (_.contains(targetStatus.transitionFrom, currentStatus))
+        mod = '';
+      else
+        mod = 'disabled hidden';
+      if (currentStatus == targetStatus.value)
+        return mod + ' selected';
+      else
+        return mod;
+    };
 
-      var splitTransitionModifiers = function(targetStatus, currentStatus) {
-          var mod;
-          if (currentStatus === LinkStatus.Undefined.value) {
-              if (_.contains([LinkStatus.New, LinkStatus.Unchanged, LinkStatus.Transfer, LinkStatus.Undefined, LinkStatus.NotHandled], targetStatus)) {
-                  mod = '';
-              } else {
-                  if (targetStatus == LinkStatus.Undefined || targetStatus == LinkStatus.NotHandled)
-                      mod = 'selected disabled hidden';
-                  else
-                      mod = 'disabled hidden';
-              }
-          } else if (currentStatus === LinkStatus.New.value) {
-              if (targetStatus === LinkStatus.New)
-                  mod = 'selected';
-              else
-                  mod = 'disabled';
-          } else if (currentStatus === LinkStatus.Unchanged.value || currentStatus === LinkStatus.Transfer.value) {
-              if (targetStatus.value === currentStatus)
-                  mod = 'selected';
-              else {
-                  if (_.contains([LinkStatus.Unchanged, LinkStatus.Transfer], targetStatus)) {
-                      mod = '';
-                  } else {
-                      mod = 'disabled hidden';
-                  }
-              }
+    var splitTransitionModifiers = function (targetStatus, currentStatus) {
+      var mod;
+      if (currentStatus === LinkStatus.Undefined.value) {
+        if (_.contains([LinkStatus.New, LinkStatus.Unchanged, LinkStatus.Transfer, LinkStatus.Undefined, LinkStatus.NotHandled], targetStatus)) {
+          mod = '';
+        } else {
+          if (targetStatus == LinkStatus.Undefined || targetStatus == LinkStatus.NotHandled)
+            mod = 'selected disabled hidden';
+          else
+            mod = 'disabled hidden';
+        }
+      } else if (currentStatus === LinkStatus.New.value) {
+        if (targetStatus === LinkStatus.New)
+          mod = 'selected';
+        else
+          mod = 'disabled';
+      } else if (currentStatus === LinkStatus.Unchanged.value || currentStatus === LinkStatus.Transfer.value) {
+        if (targetStatus.value === currentStatus)
+          mod = 'selected';
+        else {
+          if (_.contains([LinkStatus.Unchanged, LinkStatus.Transfer], targetStatus)) {
+            mod = '';
+          } else {
+            mod = 'disabled hidden';
           }
-          return mod;
-      };
+        }
+      }
+      return mod;
+    };
 
     var selectedProjectLinkTemplate = function(project, optionTags, selected) {
       var selection = (((applicationModel.getSelectedTool() == 'Cut' || !_.isUndefined(selected[0].connectedLinkId)) &&
@@ -107,12 +111,12 @@
         '</header>' +
         '<div class="wrapper read-only">'+
         '<div class="form form-horizontal form-dark">'+
-        '<div class="edit-control-group choice-group">'+
+        '<div class="edit-control-group project-choice-group">'+
         formCommon.staticField('Lisätty järjestelmään', project.createdBy + ' ' + project.startDate)+
         formCommon.staticField('Muokattu viimeksi', project.modifiedBy + ' ' + project.dateModified)+
         '<div class="split-form-group editable form-editable-roadAddressProject"> '+
         selectionFormCutted(selection, selected)+
-        ((selected.size == 2 && selected[0].linkId === selected[1].linkId) ? '' : formCommon.changeDirection()) +
+        ((selected.length == 2 && selected[0].linkId === selected[1].linkId) ? '' : formCommon.changeDirection(selected)) +
         formCommon.actionSelectedField()+
         ((!_.isUndefined(selected[0].connectedLinkId)) ? revertSplitButton(): '') +
         '</div>'+
@@ -122,16 +126,16 @@
         '<footer>' + formCommon.actionButtons('split-', projectCollection.isDirty()) + '</footer>');
     };
 
-    var getSplitPointBySideCode = function(link){
-          if(link.sideCode == SideCode.AgainstDigitizing.value){
-            return _.first(link.points);
-          } else {
-          return _.last(link.points);
-          }
-      };
-    var selectionFormCutted = function(selection, selected){
-        var firstLink =_.first(_.sortBy(selected, 'startAddressM'));
-        var splitPoint = ((applicationModel.getSelectedTool() != "Cut" ? getSplitPointBySideCode(firstLink): firstLink.splitPoint));
+    var getSplitPointBySideCode = function (link) {
+      if (link.sideCode == SideCode.AgainstDigitizing.value) {
+        return _.first(link.points);
+      } else {
+        return _.last(link.points);
+      }
+    };
+    var selectionFormCutted = function (selection, selected) {
+      var firstLink = _.first(_.sortBy(selected, 'startAddressM'));
+      var splitPoint = ((applicationModel.getSelectedTool() != "Cut" ? getSplitPointBySideCode(firstLink) : firstLink.splitPoint));
 
       return '<form id="roadAddressProjectFormCut" class="input-unit-combination split-form-group form-horizontal roadAddressProject">'+
           '<input type="hidden" id="splitx" value="' + splitPoint.x + '"/>' +
@@ -147,18 +151,18 @@
           '</form>';
     };
 
-    var dropdownOption = function(index, selected){
+    var dropdownOption = function (index, selected) {
       return '<div class="input-unit-combination">' +
-          '<select class="split-form-control" id="dropdown_'+index+'" size="1">'+
-          '<option id="drop_'+ index +'_' + '" '+ defineOptionModifiers('', selected[index]) +'>Valitse</option>'+
-          '<option id="drop_'+ index +'_' + LinkStatus.Unchanged.description + '" value='+ LinkStatus.Unchanged.description+' ' + defineOptionModifiers(LinkStatus.Unchanged.description, selected[index]) + '>Ennallaan</option>'+
-          '<option id="drop_'+ index +'_' + LinkStatus.Transfer.description + '" value='+ LinkStatus.Transfer.description + ' ' + defineOptionModifiers(LinkStatus.Transfer.description, selected[index]) + '>Siirto</option>'+
-          '<option id="drop_'+ index +'_' + LinkStatus.New.description + '" value='+ LinkStatus.New.description + ' ' + defineOptionModifiers(LinkStatus.New.description, selected[index]) +'>Uusi</option>'+
-          '<option id="drop_'+ index +'_' + LinkStatus.Terminated.description + '" value='+ LinkStatus.Terminated.description + ' ' + defineOptionModifiers(LinkStatus.Terminated.description, selected[index]) + '>Lakkautus</option>'+
-          '<option id="drop_'+ index +'_' + LinkStatus.Numbering.description + '" value='+ LinkStatus.Numbering.description + ' ' + defineOptionModifiers(LinkStatus.Numbering.description, selected[index]) + '>Numerointi</option>'+
-          '<option id="drop_'+ index +'_' + LinkStatus.Revert.description + '" value='+ LinkStatus.Revert.description + ' ' + defineOptionModifiers(LinkStatus.Revert.description, selected[index]) + '>Palautus aihioksi tai tieosoitteettomaksi</option>' +
-          '</select>'+
-          '</div>';
+        '<select class="split-form-control" id="dropdown_' + index + '" size="1">' +
+        '<option id="drop_' + index + '_' + '" ' + defineOptionModifiers('', selected[index]) + '>Valitse</option>' +
+        '<option id="drop_' + index + '_' + LinkStatus.Unchanged.description + '" value=' + LinkStatus.Unchanged.description + ' ' + defineOptionModifiers(LinkStatus.Unchanged.description, selected[index]) + '>Ennallaan</option>' +
+        '<option id="drop_' + index + '_' + LinkStatus.Transfer.description + '" value=' + LinkStatus.Transfer.description + ' ' + defineOptionModifiers(LinkStatus.Transfer.description, selected[index]) + '>Siirto</option>' +
+        '<option id="drop_' + index + '_' + LinkStatus.New.description + '" value=' + LinkStatus.New.description + ' ' + defineOptionModifiers(LinkStatus.New.description, selected[index]) + '>Uusi</option>' +
+        '<option id="drop_' + index + '_' + LinkStatus.Terminated.description + '" value=' + LinkStatus.Terminated.description + ' ' + defineOptionModifiers(LinkStatus.Terminated.description, selected[index]) + '>Lakkautus</option>' +
+        '<option id="drop_' + index + '_' + LinkStatus.Numbering.description + '" value=' + LinkStatus.Numbering.description + ' ' + defineOptionModifiers(LinkStatus.Numbering.description, selected[index]) + '>Numerointi</option>' +
+        '<option id="drop_' + index + '_' + LinkStatus.Revert.description + '" value=' + LinkStatus.Revert.description + ' ' + defineOptionModifiers(LinkStatus.Revert.description, selected[index]) + '>Palautus aihioksi tai tieosoitteettomaksi</option>' +
+        '</select>' +
+        '</div>';
     };
 
     var emptyTemplate = function(project) {
@@ -193,9 +197,13 @@
       else if (statusCode == LinkStatus.Transfer.value) {
         $("#dropDown_0 option[value="+ LinkStatus.New.description +"]").prop('disabled',true);
         $("#dropDown_0 option[value="+ LinkStatus.Transfer.description +"]").attr('selected', 'selected').change();
+        if(selectedProjectLink[0].id !== 0)
+          rootElement.find('.changeDirectionDiv').prop("hidden", false);
       }
       else if (statusCode == LinkStatus.Numbering.value) {
         $("#dropDown_0" ).val(LinkStatus.Numbering.description).change();
+        if(selectedProjectLink[0].id !== 0)
+          rootElement.find('.changeDirectionDiv').prop("hidden", false);
       }
       $('#discontinuityDropdown').val(selectedProjectLink[selectedProjectLink.length - 1].discontinuity);
       $('#roadTypeDropDown').val(selectedProjectLink[0].roadTypeId);
@@ -277,12 +285,6 @@
         new ModalConfirm(error);
       });
 
-      rootElement.on('click','.changeDirection', function () {
-          if(applicationModel.getSelectedTool() == "Cut") {
-              projectCollection.changeNewProjectLinkDirection(projectCollection.getCurrentProject().project.id, selectedProjectLinkProperty.get());
-          }
-      });
-
       rootElement.on('click','.revertSplit', function () {
           projectCollection.removeProjectLinkSplit(projectCollection.getCurrentProject().project, selectedProjectLink);
       });
@@ -329,7 +331,7 @@
           }
           case LinkStatus.Transfer.description : {
             if(!_.isUndefined(statusDropdown_1) && statusDropdown_1 == LinkStatus.New.description){
-              projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Unchanged.value, LinkStatus.New.value);
+              projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Transfer.value, LinkStatus.New.value);
             }
             else if(_.isUndefined(statusDropdown_1)){
               projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Transfer.value);
@@ -350,6 +352,7 @@
               projectCollection.revertChangesRoadlink(separated[0]);
             }
             if (separated[1].length > 0) {
+              selectedProjectLinkProperty.revertSuravage();
               projectCollection.removeProjectLinkSplit(separated[1]);
             }
             break;

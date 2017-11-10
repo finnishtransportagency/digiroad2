@@ -727,6 +727,15 @@
 
     eventbus.on('changeProjectDirection:clicked', function () {
       projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1, undefined, projectCollection.getPublishableStatus());
+      eventbus.once('roadAddressProject:fetched', function () {
+        if (selectedProjectLinkProperty.get().length > 1 && !_.isUndefined(selectedProjectLinkProperty.get()[0].connectedLinkId)) {
+          selectedProjectLinkProperty.openSplit(selectedProjectLinkProperty.get()[0].linkId, true);
+        } else
+        if (selectedProjectLinkProperty.get().length > 1 && _.isUndefined(selectedProjectLinkProperty.get()[0].connectedLinkId))
+          selectedProjectLinkProperty.open(selectedProjectLinkProperty.get()[0].linkId, true);
+        else
+          selectedProjectLinkProperty.open(selectedProjectLinkProperty.get()[0].linkId, false);
+      });
     });
 
     eventbus.on('projectLink:revertedChanges', function () {

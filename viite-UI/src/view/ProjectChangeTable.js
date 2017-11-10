@@ -14,7 +14,7 @@
     var transferredLinkStatus = 3;
     var numberingLinkStatus = 4;
     var terminatedLinkStatus = 5;
-    
+
     var changeTable =
       $('<div class="change-table-frame"></div>');
     // Text about validation success hard-coded now
@@ -23,18 +23,20 @@
     changeTable.append('<div class="change-table-header">Validointi ok. Alla näet muutokset projektissa.</div>');
     changeTable.append('<button class="close wbtn-close">Sulje <span>X</span></button>');
     changeTable.append('<button class="max wbtn-max"><span id="buttonText">Suurenna </span><span id="sizeSymbol" style="font-size: 175%;font-weight: 900;">□</span></button>');
-    changeTable.append('<div class="change-table-borders"></div>' +
+    changeTable.append('<div class="change-table-borders">' +
       '<div id ="change-table-borders-changetype"></div>' +
       '<div id ="change-table-borders-source"></div>' +
-      '<div id ="change-table-borders-target"></div>');
+      '<div id ="change-table-borders-reversed"></div>' +
+      '<div id ="change-table-borders-target"></div></div>');
     changeTable.append('<div class="change-table-sections">' +
       '<label class="change-table-heading-label" id="label-type">Ilmoitus</label>' +
       '<label class="change-table-heading-label" id="label-source">Nykyosoite</label>' +
+      '<label class="change-table-heading-label" id="label-reverse"></label>' +
       '<label class="change-table-heading-label" id="label-target">Uusi osoite</label>');
     changeTable.append('<div class="change-table-dimension-headers">' +
       '<table class="change-table-dimensions">' +
       '<tr>' +
-      '<td class="project-change-table-dimension-first"></td>' +
+      '<td class="project-change-table-dimension-first-h"></td>' +
       '<td class="project-change-table-dimension">TIE</td>' +
       '<td class="project-change-table-dimension">AJR</td>' +
       '<td class="project-change-table-dimension">AOSA</td>' +
@@ -43,7 +45,8 @@
       '<td class="project-change-table-dimension">LET</td>' +
       '<td class="project-change-table-dimension">JATKUU</td>' +
       '<td class="project-change-table-dimension dimension-road-type">TIETYYPPI</td>' +
-      '<td class="project-change-table-dimension ">ELY</td>' +
+      '<td class="project-change-table-dimension">ELY</td>' +
+      '<td class="project-change-table-dimension">KÄÄNTO</td>' +
       '<td class="project-change-table-dimension">TIE</td>' +
       '<td class="project-change-table-dimension">AJR</td>' +
       '<td class="project-change-table-dimension">AOSA</td>' +
@@ -85,27 +88,32 @@
             if (changeInfoSeq.changetype === newLinkStatus) {
               htmlTable += '<tr class="change-table-data-row">';
               htmlTable += getEmptySource(changeInfoSeq);
-              htmlTable += getTartgetInfo(changeInfoSeq, projectChangeData);
+              htmlTable += getReversed(changeInfoSeq);
+              htmlTable += getTargetInfo(changeInfoSeq);
               htmlTable += '</tr>';
             } else if (changeInfoSeq.changetype === terminatedLinkStatus) {
               htmlTable += '<tr class="change-table-data-row">';
-              htmlTable += getSourceInfo(changeInfoSeq, projectChangeData);
-              htmlTable += getEmptyTarget(changeInfoSeq);
+              htmlTable += getSourceInfo(changeInfoSeq);
+              htmlTable += getReversed(changeInfoSeq);
+              htmlTable += getEmptyTarget();
               htmlTable += '</tr>';
             } else if (changeInfoSeq.changetype === unchangedStatus) {
               htmlTable += '<tr class="change-table-data-row">';
-              htmlTable += getSourceInfo(changeInfoSeq, projectChangeData);
-              htmlTable += getTartgetInfo(changeInfoSeq, projectChangeData);
+              htmlTable += getSourceInfo(changeInfoSeq);
+              htmlTable += getReversed(changeInfoSeq);
+              htmlTable += getTargetInfo(changeInfoSeq);
               htmlTable += '</tr>';
             } else if (changeInfoSeq.changetype === transferredLinkStatus) {
               htmlTable += '<tr class="change-table-data-row">';
-              htmlTable += getSourceInfo(changeInfoSeq, projectChangeData);
-              htmlTable += getTartgetInfo(changeInfoSeq, projectChangeData);
+              htmlTable += getSourceInfo(changeInfoSeq);
+              htmlTable += getReversed(changeInfoSeq);
+              htmlTable += getTargetInfo(changeInfoSeq);
               htmlTable += '</tr>';
             } else if (changeInfoSeq.changetype === numberingLinkStatus) {
               htmlTable += '<tr class="change-table-data-row">';
-              htmlTable += getSourceInfo(changeInfoSeq, projectChangeData);
-              htmlTable += getTartgetInfo(changeInfoSeq, projectChangeData);
+              htmlTable += getSourceInfo(changeInfoSeq);
+              htmlTable += getReversed(changeInfoSeq);
+              htmlTable += getTargetInfo(changeInfoSeq);
               htmlTable += '</tr>';
             }
           });
@@ -117,6 +125,7 @@
       changeTable.on('click', 'button.close', function (){
         $('.project-changes').height('110px');
         $('[id=change-table-borders-target]').height('180px');
+        $('[id=change-table-borders-reverse]').height('180px');
         $('[id=change-table-borders-source]').height('180px');
         $('[id=change-table-borders-changetype]').height('180px');
         $('#information-content').empty();
@@ -125,6 +134,9 @@
       });
     }
 
+    function getReversed(changeInfoSeq){
+      return ((changeInfoSeq.reversed) ? '<td class="project-change-table-data-cell">&#9745</td>': '<td class="project-change-table-data-cell">&#9744</td>');
+    }
 
     function getEmptySource(changeInfoSeq) {
       return '<td class="project-change-table-dimension-first">' + getChangeType(changeInfoSeq.changetype) + '</td>' +
@@ -138,7 +150,7 @@
         '<td class="project-change-table-data-cell data-cell-road-type"></td>' +
         '<td class="project-change-table-data-cell"></td>';
     }
-    function getEmptyTarget(changeInfoSeq) {
+    function getEmptyTarget() {
       return'<td class="project-change-table-data-cell"></td>' +
         '<td class="project-change-table-data-cell"></td>' +
         '<td class="project-change-table-data-cell"></td>' +
@@ -150,23 +162,22 @@
         '<td class="project-change-table-data-cell"></td>';
     }
 
-
-    function getTartgetInfo(changeInfoSeq, projectChangeData)
+    function getTargetInfo(changeInfoSeq)
     {
-     return '<td class="project-change-table-data-cell">' + changeInfoSeq.target.roadNumber + '</td>'+
-      '<td class="project-change-table-data-cell">' + changeInfoSeq.target.trackCode + '</td>' +
-      '<td class="project-change-table-data-cell">' + changeInfoSeq.target.startRoadPartNumber + '</td>' +
-      '<td class="project-change-table-data-cell">' + changeInfoSeq.target.startAddressM + '</td>' +
-      '<td class="project-change-table-data-cell">' + changeInfoSeq.target.endRoadPartNumber + '</td>' +
-      '<td class="project-change-table-data-cell">' + changeInfoSeq.target.endAddressM + '</td>' +
-      '<td class="project-change-table-data-cell">' + changeInfoSeq.target.discontinuity + '</td>' +
-      '<td class="project-change-table-data-cell data-cell-road-type">'+ changeInfoSeq.target.roadType + '</td>' +
-      '<td class="project-change-table-data-cell">' + changeInfoSeq.target.ely + '</td>';
+      return '<td class="project-change-table-data-cell">' + changeInfoSeq.target.roadNumber + '</td>'+
+        '<td class="project-change-table-data-cell">' + changeInfoSeq.target.trackCode + '</td>' +
+        '<td class="project-change-table-data-cell">' + changeInfoSeq.target.startRoadPartNumber + '</td>' +
+        '<td class="project-change-table-data-cell">' + changeInfoSeq.target.startAddressM + '</td>' +
+        '<td class="project-change-table-data-cell">' + changeInfoSeq.target.endRoadPartNumber + '</td>' +
+        '<td class="project-change-table-data-cell">' + changeInfoSeq.target.endAddressM + '</td>' +
+        '<td class="project-change-table-data-cell">' + changeInfoSeq.target.discontinuity + '</td>' +
+        '<td class="project-change-table-data-cell data-cell-road-type">'+ changeInfoSeq.target.roadType + '</td>' +
+        '<td class="project-change-table-data-cell">' + changeInfoSeq.target.ely + '</td>';
     }
 
-    function getSourceInfo(changeInfoSeq,  projectChangeData)
+    function getSourceInfo(changeInfoSeq)
     {
-     return '<tr class="change-table-data-row">' +
+      return '<tr class="change-table-data-row">' +
         '<td class="project-change-table-dimension-first">' + getChangeType(changeInfoSeq.changetype) + '</td>' +
         '<td class="project-change-table-data-cell">' + changeInfoSeq.source.roadNumber + '</td>' +
         '<td class="project-change-table-data-cell">' + changeInfoSeq.source.trackCode + '</td>' +
@@ -186,6 +197,7 @@
         $('.project-changes').height('110px');
         $('[id=change-table-borders-target]').height('180px');
         $('[id=change-table-borders-source]').height('180px');
+        $('[id=change-table-borders-reversed]').height('180px');
         $('[id=change-table-borders-changetype]').height('180px');
         $('[id=buttonText]').text("Suurenna ");
         $('[id=sizeSymbol]').text("□");
@@ -195,6 +207,7 @@
         $('.project-changes').height('560px');
         $('[id=change-table-borders-target]').height('670px');
         $('[id=change-table-borders-source]').height('670px');
+        $('[id=change-table-borders-reversed]').height('670px');
         $('[id=change-table-borders-changetype]').height('670px');
         $('[id=buttonText]').text("Pienennä ");
         $('[id=sizeSymbol]').text("_");

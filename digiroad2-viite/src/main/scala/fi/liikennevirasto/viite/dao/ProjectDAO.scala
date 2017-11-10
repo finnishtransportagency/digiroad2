@@ -551,14 +551,22 @@ object ProjectDAO {
     * @param roadPartNumber
     */
   def reverseRoadPartDirection(projectId: Long, roadNumber: Long, roadPartNumber: Long): Unit = {
+    val roadPartMaxAddr =
+      sql"""SELECT MAX(END_ADDR_M) FROM PROJECT_LINK
+         where project_link.project_id = $projectId and project_link.road_number = $roadNumber and project_link.road_part_number = $roadPartNumber
+         and project_link.status != ${LinkStatus.Terminated.value}
+         """.as[Long].firstOption.getOrElse(0L)
     val updateLRM = "update lrm_position set side_code = (CASE side_code WHEN 2 THEN 3 ELSE 2 END)" +
       " where id in (select lrm_position.id from project_link join " +
       s" LRM_Position on project_link.LRM_POSITION_ID = lrm_position.id where (side_code = 2 or side_code = 3) and " +
-      s" project_link.project_id = $projectId and project_link.road_number = $roadNumber and project_link.road_part_number = $roadPartNumber)"
+      s" project_link.project_id = $projectId and project_link.road_number = $roadNumber and project_link.road_part_number = $roadPartNumber" +
+      s" and project_link.status != ${LinkStatus.Terminated.value})"
     Q.updateNA(updateLRM).execute
     val updateProjectLink = s"update project_link set calibration_points = (CASE calibration_points WHEN 0 THEN 0 WHEN 1 THEN 2 WHEN 2 THEN 1 ELSE 3 END), " +
-      s"track_code = (CASE track_code WHEN 0 THEN 0 WHEN 1 THEN 2 WHEN 2 THEN 1 ELSE 3 END) " +
-      s"where project_link.project_id = $projectId and project_link.road_number = $roadNumber and project_link.road_part_number = $roadPartNumber"
+      s"track_code = (CASE track_code WHEN 0 THEN 0 WHEN 1 THEN 2 WHEN 2 THEN 1 ELSE 3 END), " +
+      s"(start_addr_m, end_addr_m) = (SELECT $roadPartMaxAddr - pl2.end_addr_m, $roadPartMaxAddr - pl2.start_addr_m FROM PROJECT_LINK pl2 WHERE pl2.id = project_link.id) " +
+      s"where project_link.project_id = $projectId and project_link.road_number = $roadNumber and project_link.road_part_number = $roadPartNumber " +
+      s"and project_link.status != ${LinkStatus.Terminated.value}"
     Q.updateNA(updateProjectLink).execute
   }
 
@@ -586,12 +594,12 @@ object ProjectDAO {
             ely = ${reserved.ely}, FIRST_LINK_ID = ${reserved.startingLinkId} WHERE id = ${reserved.id}""".execute
   }
 
-  def projectLinksCountUnchanged(projectId: Long, roadNumber: Long, roadPartNumber: Long): Long = {
-    val query =
+  def countLinksUnchangedUnhandled(projectId: Long, roadNumber: Long, roadPartNumber: Long): Long = {
+    var query =
       s"""
          select count(id) from project_link
           WHERE project_id = $projectId and road_number = $roadNumber and road_part_number = $roadPartNumber and
-          status = ${LinkStatus.UnChanged.value}
+          (status = ${LinkStatus.UnChanged.value} or status = ${LinkStatus.NotHandled.value})
        """
     Q.queryNA[Long](query).first
   }
@@ -608,6 +616,15 @@ object ProjectDAO {
          WHERE state=${ProjectState.Sent2TR.value} OR state=${ProjectState.TRProcessing.value}
        """
     Q.queryNA[Long](query).list
+  }
+
+  def getContinuityCodes(projectId: Long, roadNumber: Long, roadPartNumber: Long): Map[Long, Discontinuity] = {
+    sql""" SELECT END_ADDR_M, DISCONTINUITY_TYPE FROM PROJECT_LINK WHERE PROJECT_ID = $projectId AND
+         ROAD_NUMBER = $roadNumber AND ROAD_PART_NUMBER = $roadPartNumber AND STATUS != ${LinkStatus.Terminated.value}
+         AND (DISCONTINUITY_TYPE != ${Discontinuity.Continuous.value} OR END_ADDR_M =
+         (SELECT MAX(END_ADDR_M) FROM PROJECT_LINK WHERE PROJECT_ID = $projectId AND
+           ROAD_NUMBER = $roadNumber AND ROAD_PART_NUMBER = $roadPartNumber AND STATUS != ${LinkStatus.Terminated.value}))
+       """.as[(Long, Int)].list.map(x => x._1 -> Discontinuity.apply(x._2)).toMap
   }
 
   def fetchFirstLink(projectId: Long, roadNumber: Long, roadPartNumber: Long): Option[ProjectLink] = {

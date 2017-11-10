@@ -274,10 +274,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val user = userProvider.getCurrentUser()
     try {
       //check for validity
-      val roadInfo = parsedBody.extract[ProjectRoadAddressInfo]
+      val roadInfo = parsedBody.extract[RevertRoadLinksExtractor]
       val writableProjectService = projectWritable(roadInfo.projectId)
-      val user = userProvider.getCurrentUser().username
-      writableProjectService.changeDirection(roadInfo.projectId, roadInfo.roadNumber, roadInfo.roadPartNumber, user) match {
+      writableProjectService.changeDirection(roadInfo.projectId, roadInfo.roadNumber, roadInfo.roadPartNumber, roadInfo.links, user.username) match {
         case Some(errorMessage) =>
           Map("success" -> false, "errorMessage" -> errorMessage)
         case None => Map("success" -> true)
@@ -438,7 +437,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
         "changeInfoSeq" -> project.changeInfoSeq.map(changeInfo =>
           Map("changetype" -> changeInfo.changeType.value, "roadType" -> changeInfo.roadType.value,
             "discontinuity" -> changeInfo.discontinuity.value, "source" -> changeInfo.source,
-            "target" -> changeInfo.target)))
+            "target" -> changeInfo.target, "reversed"-> changeInfo.reversed)))
     ).getOrElse(None)
   }
 
