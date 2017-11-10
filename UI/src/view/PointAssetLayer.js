@@ -63,15 +63,9 @@
     this.selectControl = selectControl;
 
     function isAllowedToDrag(features) {
-      if (selectedAsset.exists()) {
-        if ((layerName == 'trafficSigns') && (editConstrains(selectedAsset))) {
-          return [];
-        } else {
-          return features;
-        }
-      } else {
-        return features;
-      }
+      if (selectedAsset.exists() && (layerName == 'trafficSigns' && editConstrains(selectedAsset)))
+        return [];
+      return features;
     }
 
     var dragControl = defineOpenLayersDragControl();
