@@ -6,12 +6,11 @@
 
     var projectMode=projectmode;
 
-
-    var strokeByZomLevel = function (zoomLevel, style) {
+    var strokeByZoomLevel = function (zoomLevel, style) {
       return new StyleRule().where('zoomLevel').is(zoomLevel).use(style);
     };
 
-    var strokeWidthRule = _.partial(strokeByZomLevel);
+    var strokeWidthRule = _.partial(strokeByZoomLevel);
     var strokeWidthRules = [
       strokeWidthRule(5, { stroke: {width: 1}}),
       strokeWidthRule(6, { stroke: {width: 1}}),
@@ -25,8 +24,6 @@
       strokeWidthRule(14, { stroke: {width: 12}}),
       strokeWidthRule(15, { stroke: {width: 12}})
     ];
-
-
 
     var projectStyles= [
       new StyleRule().where('roadClass').is(1).use({stroke: {color: 'rgba(255, 0, 0, 0.05)', width: 8, lineCap: 'round'}}),
@@ -42,22 +39,16 @@
       new StyleRule().where('roadClass').is(11).use({stroke: {color: 'rgba(68, 68, 68, 0.1)', width: 8, lineCap: 'round'}}),
       new StyleRule().where('roadClass').is(97).use({stroke: {color: 'rgba(rgba(30, 30, 30, 0.1)', width: 8, lineCap: 'round'}}),
       new StyleRule().where('roadClass').is(98).use({stroke: {color: 'rgba(250, 250, 250, 0.1)', width: 8, lineCap: 'round'}}),
-      new StyleRule().where('constructionType').is(1).use({stroke: {color: 'rgba(255, 153, 0, 0.1)', width: 8, lineCap: 'round'}}),
+      new StyleRule().where('constructionType').is(LinkValues.ConstructionType.UnderConstruction.value).use(
+        {stroke: {color: 'rgba(255, 153, 0, 0.1)', width: 8, lineCap: 'round'}}),
       new StyleRule().where('gapTransfering').is(true).use({stroke: {color: 'rgb(0, 255, 0, 0.1)', width: 8, lineCap: 'round'}}),
       new StyleRule().where('roadClass').is(99).use({stroke: {color: 'rgba(164, 164, 162, 0.05)', width: 8, lineCap: 'round'}})
 
     ];
 
-    var styleChooser = function () {
-      if (projectMode) return projectStyles;
-      else
-        return normalStyles;
-    };
-
     var selectionStyleRules = [
       new StyleRule().where('roadClass').isDefined().use({stroke: {color: '#00FF00'}})
     ];
-
 
     var projectLinkStyle = new StyleRuleProvider({});
     projectLinkStyle.addRules(projectStyles);
