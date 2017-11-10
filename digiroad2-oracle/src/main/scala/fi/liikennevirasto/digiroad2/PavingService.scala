@@ -190,6 +190,19 @@ class PavingService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digiroad
     }
   }
 
+  override def create(newLinearAssets: Seq[NewLinearAsset], typeId: Int, username: String, vvhTimeStamp: Long = vvhClient.roadLinkData.createVVHTimeStamp()): Seq[Long] = {
+    withDynTransaction {
+      val roadlinks = roadLinkService.getRoadLinksAndComplementariesFromVVH(newLinearAssets.map(_.linkId).toSet, false)
+      newLinearAssets.flatMap{ newAsset =>
+        if (newAsset.value.toJson == 1) {
+          Some(createWithoutTransaction(typeId, newAsset.linkId, newAsset.value, newAsset.sideCode, Measures(newAsset.startMeasure, newAsset.endMeasure), username, vvhTimeStamp, roadlinks.find(_.linkId == newAsset.linkId)))
+        } else {
+          None
+        }
+      }
+    }
+  }
+
   override protected def createWithoutTransaction(typeId: Int, linkId: Long, value: Value, sideCode: Int, measures: Measures, username: String, vvhTimeStamp: Long, roadLink: Option[RoadLinkLike], fromUpdate: Boolean = false,
                                          createdByFromUpdate: Option[String] = Some(""),
                                          createdDateTimeFromUpdate: Option[DateTime] = Some(DateTime.now())): Long = {
@@ -212,14 +225,23 @@ class PavingService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digiroad
       case _ => return None
     }
 
+    val measure = measures.getOrElse(Measures(oldAsset.startMeasure, oldAsset.endMeasure))
+
     //Expire the old asset
     dao.updateExpiration(assetId, expired = true, username)
     val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(oldAsset.linkId, newTransaction = false)
-    //Create New Asset
-    val newAssetIDcreate = createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, valueToUpdate, sideCode.getOrElse(oldAsset.sideCode),
-      measures.getOrElse(Measures(oldAsset.startMeasure, oldAsset.endMeasure)), username, vvhTimeStamp.getOrElse(vvhClient.roadLinkData.createVVHTimeStamp()), roadLink, true, oldAsset.createdBy, oldAsset.createdDateTime)
-
-    Some(newAssetIDcreate)
+    if (valueToUpdate.toJson == 0){
+      Seq(Measures(oldAsset.startMeasure, measure.startMeasure), Measures(measure.endMeasure, oldAsset.endMeasure)).map {
+        m =>
+          if (m.endMeasure - m.startMeasure > 0.01)
+            createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, valueToUpdate, sideCode.getOrElse(oldAsset.sideCode),
+              m, username, vvhTimeStamp.getOrElse(vvhClient.roadLinkData.createVVHTimeStamp()), roadLink, true, oldAsset.createdBy, Some(oldAsset.createdDateTime.getOrElse(DateTime.now())))
+      }
+      None
+    }else {
+      Some(createWithoutTransaction(oldAsset.typeId, oldAsset.linkId, valueToUpdate, sideCode.getOrElse(oldAsset.sideCode),
+        measure, username, vvhTimeStamp.getOrElse(vvhClient.roadLinkData.createVVHTimeStamp()), roadLink, true, oldAsset.createdBy, Some(oldAsset.createdDateTime.getOrElse(DateTime.now()))))
+    }
   }
 
   override def getPersistedAssetsByIds(typeId: Int, ids: Set[Long]): Seq[PersistedLinearAsset] = {
