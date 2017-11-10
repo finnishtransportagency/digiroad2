@@ -9,11 +9,11 @@
     var terminatedStatus = 5;
     var unknownStatus = 99;
 
-    var strokeByZomLevel = function (zoomLevel, style) {
+    var strokeByZoomLevel = function (zoomLevel, style) {
       return new StyleRule().where('zoomLevel').is(zoomLevel).use(style);
     };
 
-    var strokeWidthRule = _.partial(strokeByZomLevel);
+    var strokeWidthRule = _.partial(strokeByZoomLevel);
     var strokeWidthRules = [
       strokeWidthRule(5, { stroke: {width: 5}}),
       strokeWidthRule(6, { stroke: {width: 5}}),
@@ -47,8 +47,12 @@
       new StyleRule().where('status').is(numberingStatus).use({stroke: {color: '#00FF00'}}),
       new StyleRule().where('status').is(terminatedStatus).use({stroke: {color: '#00FF00'}}),
       new StyleRule().where('roadLinkSource').is(3).use({stroke: {color: '#00FF00'}}),
-      new StyleRule().where('anomaly').is(3).and(status).is(unknownStatus).use({stroke: {color: '#00FF00'}}),
+      new StyleRule().where('anomaly').is(3).and('status').is(unknownStatus).use({stroke: {color: '#00FF00'}}),
       new StyleRule().where('roadClass').is(99).use({stroke: {color: '#00FF00'}})
+    ];
+
+    var cutterStyleRules = [
+      new StyleRule().where('type').is('cutter-crosshair').use({icon: {src: 'images/cursor-crosshair.svg'}})
     ];
 
     var projectLinkStyle = new StyleRuleProvider({});
@@ -59,6 +63,7 @@
     selectionLinkStyle.addRules(projectLinkRules);
     selectionLinkStyle.addRules(strokeWidthRules);
     selectionLinkStyle.addRules(selectionStyleRules);
+    selectionLinkStyle.addRules(cutterStyleRules);
 
     var getProjectLinkStyle = function () {
       return projectLinkStyle;

@@ -215,6 +215,25 @@
 		box-shadow: inset 0 1px 0 rgba(red(@blue-darker), green(@blue-darker), blue(@blue-darker), .325);
 	}
 }
+
+.btn-new-error {
+	border-color: #ff704d;
+	background-color: #ff9900;
+	box-shadow: inset 0 1px 0 rgba(red(@blue-lightest), green(@blue-lightest), blue(@blue-lightest), .325), @btn-drop-shadow;
+	margin-top:6px !important;
+
+	&:hover,
+	&:focus {
+		background-color: #e68a00;
+		box-shadow: inset 0 1px 0 rgba(red(@blue-lighter), green(@blue-lighter), blue(@blue-lighter), .325), @btn-drop-shadow-hover;
+	}
+
+	&:active,
+	&.active {
+		box-shadow: inset 0 1px 0 rgba(red(#e68a00), green(#e68a00), blue(#e68a00), .325);
+	}
+}
+
 .btn-reserve {
 	width: 60px;
 	height: 30px;

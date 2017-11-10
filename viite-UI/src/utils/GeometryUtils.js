@@ -22,39 +22,40 @@
   };
 
   var segmentsOfLineString = function (lineString, point) {
-    return _.reduce(lineString.getVertices(), function (acc, vertex, index, vertices) {
-      if (index > 0) {
-        var previousVertex = vertices[index - 1];
-        var segmentGeometry = new OpenLayers.Geometry.LineString([previousVertex, vertex]);
-        var distanceObject = segmentGeometry.distanceTo(point, {details: true});
-        var segment = {
-          distance: distanceObject.distance,
-          splitPoint: {
-            x: distanceObject.x0,
-            y: distanceObject.y0
-          },
-          index: index - 1
-        };
-        return acc.concat([segment]);
-      } else {
+    return _.reduce(lineString.getCoordinates(), function (acc, vertex, index, vertices) {
+      if(index === 0)
         return acc;
-      }
+
+      var previousVertex = vertices[index - 1];
+      var segmentGeometry = new ol.geom.LineString([previousVertex, vertex]);
+      var distanceObject = distanceToPoint(segmentGeometry, [point.x, point.y]);
+      var segment = {
+        distance: distanceObject.distance,
+        splitPoint: {
+          x: distanceObject.x0,
+          y: distanceObject.y0
+        },
+        index: index - 1
+      };
+      return acc.concat([segment]);
+
     }, []);
   };
 
   root.calculateMeasureAtPoint = function (lineString, point) {
     var segments = segmentsOfLineString(lineString, point);
     var splitSegment = _.head(_.sortBy(segments, 'distance'));
-    var split = _.reduce(lineString.getVertices(), function (acc, vertex, index) {
+    var split = _.reduce(lineString.getCoordinates(), function (acc, vertex, index) {
+      var convertedVertex = { x: vertex[0] , y: vertex[1] };
       if (acc.firstSplit) {
         if (acc.previousVertex) {
-          acc.splitMeasure = acc.splitMeasure + vectorLength(subtractVector(acc.previousVertex, vertex));
+          acc.splitMeasure = acc.splitMeasure + vectorLength(subtractVector(acc.previousVertex, convertedVertex));
         }
         if (index === splitSegment.index) {
-          acc.splitMeasure = acc.splitMeasure + vectorLength(subtractVector(vertex, splitSegment.splitPoint));
+          acc.splitMeasure = acc.splitMeasure + vectorLength(subtractVector(convertedVertex, splitSegment.splitPoint));
           acc.firstSplit = false;
         }
-        acc.previousVertex = vertex;
+        acc.previousVertex = convertedVertex;
       }
       return acc;
     }, {
@@ -66,9 +67,6 @@
   };
 
   root.offsetBySideCode = function (zoom, asset) {
-    if (asset.sideCode === 1) {
-      return asset;
-    }
     asset.points = _.map(asset.points, function (point, index, geometry) {
       var baseOffset = -3.5;
       return root.offsetPoint(point, index, geometry, asset.sideCode, baseOffset);
@@ -76,19 +74,74 @@
     return asset;
   };
 
+  var distanceToSegment  = function (coordinate, segment) {
+    var x0 = coordinate[0];
+    var y0 = coordinate[1];
+    var start = segment[0];
+    var end = segment[1];
+    var x1 = start[0];
+    var y1 = start[1];
+    var x2 = end[0];
+    var y2 = end[1];
+    var dx = x2 - x1;
+    var dy = y2 - y1;
+    var along = (dx === 0 && dy === 0) ? 0 : ((dx * (x0 - x1)) + (dy * (y0 - y1))) /
+    (Math.pow(dx, 2) + Math.pow(dy, 2));
+    var x, y;
+    if (along <= 0) {
+      x = x1;
+      y = y1;
+    } else if (along >= 1) {
+      x = x2;
+      y = y2;
+    } else {
+      x = x1 + along * dx;
+      y = y1 + along * dy;
+    }
+    return{
+      distance: Math.sqrt(Math.pow(x - x0, 2) + Math.pow(y - y0, 2)),
+      x: x, y: y,
+      along: along
+    };
+  };
+
+  var distanceToPoint = function (geometry, point) {
+    var result, best = {};
+    var min = Number.POSITIVE_INFINITY;
+    var i = 0;
+    geometry.forEachSegment(function (segPoint1, segPoint2) {
+      result = distanceToSegment(point, [segPoint1, segPoint2]);
+      if(result.distance < min) {
+        min = result.distance;
+        best = {
+          distance: min,
+          x0: result.x, y0: result.y,
+          x1: point[0], y1: point[1],
+          index: i
+        };
+        if(min === 0) {
+          return best;
+        }
+      }
+      i++;
+    });
+    return best;
+
+  };
+
   root.splitByPoint = function (lineString, point) {
     var segments = segmentsOfLineString(lineString, point);
     var splitSegment = _.head(_.sortBy(segments, 'distance'));
-    var split = _.reduce(lineString.getVertices(), function (acc, vertex, index) {
+    var split = _.reduce(lineString.getCoordinates(), function (acc, vertex, index) {
       if (acc.firstSplit) {
-        acc.firstSplitVertices.push({x: vertex.x, y: vertex.y});
+        acc.firstSplitVertices.push({x: vertex[0], y: vertex[1]});
         if (index === splitSegment.index) {
           acc.firstSplitVertices.push({x: splitSegment.splitPoint.x, y: splitSegment.splitPoint.y});
           acc.secondSplitVertices.push({x: splitSegment.splitPoint.x, y: splitSegment.splitPoint.y});
           acc.firstSplit = false;
         }
       } else {
-        acc.secondSplitVertices.push({x: vertex.x, y: vertex.y});
+        acc.secondSplitVertices.push({x: vertex[0], y: vertex[1]});
       }
       return acc;
     }, {
@@ -111,7 +164,7 @@
   };
 
   var distanceOfPoints = function (end, start) {
-    return Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2));
+    return Math.sqrt(Math.pow(end[0] - start[0], 2) + Math.pow(end[1] - start[1], 2));
   };
   root.distanceOfPoints = distanceOfPoints;
 
@@ -157,11 +210,6 @@
     else return firstVertex;
   };
 
-  root.pointsToLineString = function(points) {
-    var openlayersPoints = _.map(points, function(point) { return new OpenLayers.Geometry.Point(point.x, point.y); });
-    return new OpenLayers.Geometry.LineString(openlayersPoints);
-  };
-
   root.areAdjacents = function(geometry1, geometry2){
     var epsilon = 0.01;
     var geom1FirstPoint = _.first(geometry1);
@@ -173,6 +221,6 @@
       distanceOfPoints(geom2FirstPoint,geom1LastPoint) < epsilon ||
       distanceOfPoints(geom2LastPoint,geom1LastPoint) < epsilon;
   };
-  
+
 })(window.GeometryUtils = window.GeometryUtils || {});
 

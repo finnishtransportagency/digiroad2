@@ -1,6 +1,6 @@
 (function(root) {
 
-  root.MassTransitStop = function(data, map) {
+  root.MassTransitStop = function(data, collection, map) {
     var me = this;
     var cachedMassTransitMarker = null;
     var cachedFeature = null;
@@ -34,7 +34,7 @@
     };
 
     var createNewMarker = function() {
-      cachedMassTransitMarker = new MassTransitMarkerStyle(data, map);
+      cachedMassTransitMarker = new MassTransitMarkerStyle(data, collection, map);
       cachedFeature = cachedMassTransitMarker.createFeature();
       return { feature: cachedFeature };
     };

@@ -1,18 +1,18 @@
 (function(application) {
-  application.start = function(customBackend, withTileMaps, isExperimental) {
+  application.start = function(customBackend, withTileMaps) {
     var backend = customBackend || new Backend();
     var tileMaps = _.isUndefined(withTileMaps) ? true : withTileMaps;
     var roadCollection = new RoadCollection(backend);
-    var roadAddressProjectCollection = new RoadAddressProjectCollection(backend);
+    var projectCollection = new ProjectCollection(backend);
     var selectedLinkProperty = new SelectedLinkProperty(backend, roadCollection);
-    var selectedProjectLinkProperty = new SelectedProjectLink(roadAddressProjectCollection);
+    var selectedProjectLinkProperty = new SelectedProjectLink(projectCollection);
     var linkPropertiesModel = new LinkPropertiesModel();
-    var instructionsPopup = new InstructionsPopup($('.digiroad2'));
+    var instructionsPopup = new InstructionsPopup(jQuery('.digiroad2'));
     var projectChangeInfoModel = new ProjectChangeInfoModel(backend);
 
     var models = {
       roadCollection: roadCollection,
-      roadAddressProjectCollection: roadAddressProjectCollection,
+      projectCollection: projectCollection,
       selectedLinkProperty: selectedLinkProperty,
       linkPropertiesModel: linkPropertiesModel,
       selectedProjectLinkProperty : selectedProjectLinkProperty
@@ -22,20 +22,19 @@
     window.applicationModel = new ApplicationModel([
       selectedLinkProperty]);
 
-    var assetGroups = groupAssets(
-      linkPropertiesModel);
+    var linkGroups = groupLinks(selectedProjectLinkProperty);
 
-    var projectListModel = new ProjectListModel(roadAddressProjectCollection);
-    var projectChangeTable = new ProjectChangeTable(projectChangeInfoModel, models.roadAddressProjectCollection);
+    var projectListModel = new ProjectListModel(projectCollection);
+    var projectChangeTable = new ProjectChangeTable(projectChangeInfoModel, models.projectCollection);
 
     NavigationPanel.initialize(
-      $('#map-tools'),
+      jQuery('#map-tools'),
       new SearchBox(
         instructionsPopup,
         new LocationSearch(backend, window.applicationModel)
       ),
       new ProjectSelectBox(projectListModel),
-      assetGroups
+        linkGroups
     );
 
     backend.getUserRoles();
@@ -54,8 +53,6 @@
       eventbus.trigger('application:initialized');
     });
   };
-
-  var localizedStrings;
 
   var indicatorOverlay = function() {
     jQuery('.container').append('<div class="spinner-overlay modal-overlay"><div class="spinner"></div></div>');
@@ -101,37 +98,38 @@
 
     var map = createOpenLayersMap(startupParameters, tileMaps.layers);
 
-    var mapOverlay = new MapOverlay($('.container'));
+    var mapOverlay = new MapOverlay(jQuery('.container'));
     var styler = new Styler();
     var roadLayer = new RoadLayer3(map, models.roadCollection, styler, models.selectedLinkProperty);
-    var projectLinkLayer = new ProjectLinkLayer(map, models.roadAddressProjectCollection, models.selectedProjectLinkProperty, roadLayer);
+    var projectLinkLayer = new ProjectLinkLayer(map, models.projectCollection, models.selectedProjectLinkProperty, roadLayer);
 
     new LinkPropertyForm(models.selectedLinkProperty);
 
-    new RoadAddressProjectForm(models.roadAddressProjectCollection);
-    new RoadAddressProjectEditForm(models.roadAddressProjectCollection, models.selectedProjectLinkProperty, projectLinkLayer, projectChangeTable);
+    new ProjectForm(models.projectCollection, models.selectedProjectLinkProperty);
+    new ProjectEditForm(models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend);
+    new SplitForm(models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend);
 
     var layers = _.merge({
       road: roadLayer,
       roadAddressProject: projectLinkLayer,
       linkProperty: new LinkPropertyLayer(map, roadLayer, models.selectedLinkProperty, models.roadCollection, models.linkPropertiesModel, applicationModel, styler)});
 
-    var mapPluginsContainer = $('#map-plugins');
+    var mapPluginsContainer = jQuery('#map-plugins');
     new ScaleBar(map, mapPluginsContainer);
     new TileMapSelector(mapPluginsContainer);
     new ZoomBox(map, mapPluginsContainer);
     new CoordinatesDisplay(map, mapPluginsContainer);
 
     // Show environment name next to Digiroad logo
-    $('#notification').append(Environment.localizedName());
-    $('#notification').append(' Päivämäärä: ' + startupParameters.deploy_date);
+    jQuery('#notification').append(Environment.localizedName());
+    jQuery('#notification').append(' Päivämäärä: ' + startupParameters.deploy_date);
 
     // Show information modal in integration environment (remove when not needed any more)
     if (Environment.name() === 'integration') {
       showInformationModal('Huom!<br>Olet integraatiotestiympäristössä.');
     }
 
-    new MapView(map, layers, new InstructionsPopup($('.digiroad2')));
+    new MapView(map, layers, new InstructionsPopup(jQuery('.digiroad2')));
 
     applicationModel.moveMap(map.getView().getZoom(), map.getLayers().getArray()[0].getExtent());
 
@@ -142,46 +140,24 @@
     proj4.defs('EPSG:3067', '+proj=utm +zone=35 +ellps=GRS80 +units=m +no_defs');
   };
 
-  function getSelectedPointAsset(pointAssets, layerName) {
-    return _(pointAssets).find({ layerName: layerName }).selectedPointAsset;
-  }
+  function groupLinks(selectedProjectLinkProperty) {
 
-  function groupAssets(linkPropertiesModel) {
-
-    var roadLinkBox = new RoadLinkBox(linkPropertiesModel);
+    var roadLinkBox = new RoadLinkBox(selectedProjectLinkProperty);
 
     return [
       [roadLinkBox]
     ];
-
-    function getLinearAsset(typeId) {
-      var asset = _.find(linearAssets, {typeId: typeId});
-      if (asset) {
-        var legendValues = [asset.editControlLabels.disabled, asset.editControlLabels.enabled];
-        return [new LinearAssetBox(asset.selectedLinearAsset, asset.layerName, asset.title, asset.className, legendValues)];
-      }
-      return [];
-    }
-
-    function getPointAsset(typeId) {
-      var asset = _.find(pointAssets, {typeId: typeId});
-      if (asset) {
-        return [PointAssetBox(asset.selectedPointAsset, asset.title, asset.layerName, asset.legendValues)];
-      }
-      return [];
-    }
   }
 
   // Shows modal with message and close button
   function showInformationModal(message) {
-    $('.container').append('<div class="modal-overlay confirm-modal" style="z-index: 2000"><div class="modal-dialog"><div class="content">' + message + '</div><div class="actions"><button class="btn btn-secondary close">Sulje</button></div></div></div></div>');
-    $('.confirm-modal .close').on('click', function() {
-      $('.confirm-modal').remove();
+    jQuery('.container').append('<div class="modal-overlay confirm-modal" style="z-index: 2000"><div class="modal-dialog"><div class="content">' + message + '</div><div class="actions"><button class="btn btn-secondary close">Sulje</button></div></div></div></div>');
+    jQuery('.confirm-modal .close').on('click', function() {
+      jQuery('.confirm-modal').remove();
     });
   }
 
   application.restart = function(backend, withTileMaps) {
-    localizedStrings = undefined;
     this.start(backend, withTileMaps);
   };
 

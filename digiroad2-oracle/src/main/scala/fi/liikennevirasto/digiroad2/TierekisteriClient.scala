@@ -176,23 +176,6 @@ object TRPavedRoadType {
   case object Unknown extends TRPavedRoadType { def value = 99;  def pavedRoadType = "Unknown";}
 }
 
-sealed trait Operation {
-  def value: Int
-}
-object Operation {
-  val values = Set(Create, Update, Expire, Remove, Noop)
-
-  def apply(intValue: Int): Operation = {
-    values.find(_.value == intValue).getOrElse(Noop)
-  }
-
-  case object Create extends Operation { def value = 0 }
-  case object Update extends Operation { def value = 1 }
-  case object Expire extends Operation { def value = 2 }
-  case object Remove extends Operation { def value = 3 }
-  case object Noop extends Operation { def value = 3 }
-}
-
 sealed trait TRLaneArrangementType {
   def value: Int
 }

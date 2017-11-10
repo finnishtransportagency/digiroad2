@@ -14,6 +14,8 @@ object ProjectSectionCalculator {
   private val logger = LoggerFactory.getLogger(getClass)
 
   /**
+    * NOTE! Should be called from project service only at recalculate method - other places are usually wrong places
+    * and may miss user given calibration points etc.
     * Recalculates the AddressMValues for project links. LinkStatus.New will get reassigned values and all
     * others will have the transfer/unchanged rules applied for them.
     * Terminated links will not be recalculated
@@ -26,25 +28,59 @@ object ProjectSectionCalculator {
     val (terminated, others) = projectLinks.partition(_.status == LinkStatus.Terminated)
     val (newLinks, nonTerminatedLinks) = others.partition(l => l.status == LinkStatus.New)
     try {
-      assignMValues(newLinks, nonTerminatedLinks, userGivenCalibrationPoints) ++ terminated
+      if (TrackSectionOrder.isRoundabout(others)) {
+        logger.info(s"Roundabout addressing scheme")
+        assignMValuesForRoundabout(newLinks, nonTerminatedLinks, userGivenCalibrationPoints) ++ terminated
+      } else {
+        logger.info(s"Normal addressing scheme")
+        assignMValues(newLinks, nonTerminatedLinks, userGivenCalibrationPoints) ++ terminated
+      }
     } finally {
       logger.info(s"Finished MValue assignment for ${projectLinks.size} links")
     }
   }
 
+  private def assignMValuesForRoundabout(newProjectLinks: Seq[ProjectLink], oldProjectLinks: Seq[ProjectLink],
+    userCalibrationPoints: Seq[UserDefinedCalibrationPoint]): Seq[ProjectLink] = {
+    def toCalibrationPoints(linkId: Long, st: Option[UserDefinedCalibrationPoint], en: Option[UserDefinedCalibrationPoint]) = {
+      (st.map(cp => CalibrationPoint(linkId, cp.segmentMValue, cp.addressMValue)),
+      en.map(cp => CalibrationPoint(linkId, cp.segmentMValue, cp.addressMValue)))
+    }
+    val startingLink = oldProjectLinks.sortBy(_.startAddrMValue).headOption.orElse(newProjectLinks.headOption).toSeq
+    val rest = (newProjectLinks ++ oldProjectLinks).filterNot(startingLink.contains)
+    val mValued = TrackSectionOrder.mValueRoundabout(startingLink ++ rest)
+    if (userCalibrationPoints.nonEmpty) {
+      val withCalibration = mValued.map(pl =>
+        userCalibrationPoints.filter(_.projectLinkId == pl.id) match {
+          case s if s.size == 2 =>
+            val (st, en) = (s.minBy(_.addressMValue), s.maxBy(_.addressMValue))
+            pl.copy(startAddrMValue = st.addressMValue, endAddrMValue = en.addressMValue, calibrationPoints = toCalibrationPoints(pl.linkId, Some(st), Some(en)))
+          case s if s.size == 1 && s.head.segmentMValue == 0.0 =>
+            pl.copy(startAddrMValue = s.head.addressMValue, calibrationPoints = toCalibrationPoints(pl.linkId, Some(s.head), None))
+          case s if s.size == 1 && s.head.segmentMValue != 0.0 =>
+            pl.copy(endAddrMValue = s.head.addressMValue, calibrationPoints = toCalibrationPoints(pl.linkId, None, Some(s.head)))
+          case _ =>
+            pl.copy(calibrationPoints = (None, None))
+        }
+      )
+      val factors = ProjectSectionMValueCalculator.calculateAddressingFactors(withCalibration)
+      val coEff = (withCalibration.map(_.endAddrMValue).max - factors.unChangedLength - factors.transferLength) / factors.newLength
+      ProjectSectionMValueCalculator.assignLinkValues(withCalibration, None, coEff)
+    } else {
+      mValued
+    }
+  }
   def findStartingPoints(newLinks: Seq[ProjectLink], oldLinks: Seq[ProjectLink],
                                 calibrationPoints: Seq[UserDefinedCalibrationPoint]): (Point, Point) = {
     val rightStartPoint = findStartingPoint(newLinks.filter(_.track != Track.LeftSide), oldLinks.filter(_.track != Track.LeftSide),
       calibrationPoints)
     // Get left track non-connected points and find the closest to right track starting point
     val leftLinks = newLinks.filter(_.track != Track.RightSide) ++ oldLinks.filter(_.track != Track.RightSide)
-    val leftLinkEnds = leftLinks.flatMap(pl => Seq(pl.startingPoint, pl.endPoint))
-    val leftPoints = leftLinkEnds.filterNot(p1 => leftLinkEnds.count(p2 => GeometryUtils.areAdjacent(p1, p2)) > 1)
+    val leftPoints = TrackSectionOrder.findOnceConnectedLinks(leftLinks).keys
     if (leftPoints.isEmpty)
       throw new InvalidAddressDataException("Missing left track starting points")
     val leftStartPoint = leftPoints.minBy(lp => (lp - rightStartPoint).length())
     (rightStartPoint, leftStartPoint)
-
   }
   /**
     * Find a starting point for this road part
@@ -263,25 +299,20 @@ object ProjectSectionCalculator {
 
 }
 case class RoadAddressSection(roadNumber: Long, roadPartNumberStart: Long, roadPartNumberEnd: Long, track: Track,
-                              startMAddr: Long, endMAddr: Long, discontinuity: Discontinuity, roadType: RoadType) {
+                              startMAddr: Long, endMAddr: Long, discontinuity: Discontinuity, roadType: RoadType, ely: Long, reversed: Boolean) {
   def includes(ra: BaseRoadAddress): Boolean = {
     // within the road number and parts included
     ra.roadNumber == roadNumber && ra.roadPartNumber >= roadPartNumberStart && ra.roadPartNumber <= roadPartNumberEnd &&
       // and on the same track
       ra.track == track &&
+      // and by reversed direction
+      ra.reversed == reversed &&
       // and not starting before this section start or after this section ends
       !(ra.startAddrMValue < startMAddr && ra.roadPartNumber == roadPartNumberStart ||
         ra.startAddrMValue > endMAddr && ra.roadPartNumber == roadPartNumberEnd) &&
       // and not ending after this section ends or before this section starts
       !(ra.endAddrMValue > endMAddr && ra.roadPartNumber == roadPartNumberEnd ||
         ra.endAddrMValue < startMAddr && ra.roadPartNumber == roadPartNumberStart)
-  }
-
-  def partialIncludes(ra: BaseRoadAddress): Boolean = {
-    // within the road number and parts included
-    ra.roadNumber == roadNumber && ra.roadPartNumber >= roadPartNumberStart && ra.roadPartNumber <= roadPartNumberEnd &&
-      // and on the same track
-      ra.track == track
   }
 }
 case class RoadLinkLength(linkId: Long, geometryLength: Double)

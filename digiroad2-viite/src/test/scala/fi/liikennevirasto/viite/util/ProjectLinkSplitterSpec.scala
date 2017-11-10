@@ -1,10 +1,16 @@
 package fi.liikennevirasto.viite.util
 
+import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.{NormalLinkInterface, SuravageLinkInterface}
+import fi.liikennevirasto.digiroad2.asset.SideCode.TowardsDigitizing
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode, State, TrafficDirection}
 import fi.liikennevirasto.digiroad2.util.Track
-import fi.liikennevirasto.digiroad2.{FeatureClass, GeometryUtils, Point, VVHRoadlink}
+import fi.liikennevirasto.digiroad2.util.Track.{Combined, Unknown}
+import fi.liikennevirasto.digiroad2._
+import fi.liikennevirasto.viite.RoadType.{PublicRoad, UnknownOwnerRoad}
 import fi.liikennevirasto.viite._
-import fi.liikennevirasto.viite.dao.{Discontinuity, LinkStatus, ProjectLink}
+import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
+import fi.liikennevirasto.viite.dao.LinkStatus.{New, NotHandled}
+import fi.liikennevirasto.viite.dao.{CalibrationPoint, Discontinuity, LinkStatus, ProjectLink}
 import org.scalatest.{FunSuite, Matchers}
 
 class ProjectLinkSplitterSpec extends FunSuite with Matchers {
@@ -127,10 +133,10 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers {
     val tLen = GeometryUtils.geometryLength(tGeom)
     val suravage = ProjectLink(0L, 0L, 0L, Track.Unknown, Discontinuity.Continuous, 0L, 0L, None, None, None, 0L, 123L, 0.0, sLen,
       SideCode.Unknown, (None, None), false, sGeom, 1L, LinkStatus.NotHandled, RoadType.Unknown, LinkGeomSource.SuravageLinkInterface,
-      sLen, 0L, None)
+      sLen, 0L, 5, false)
     val template = ProjectLink(2L, 5L, 205L, Track.Combined, Discontinuity.Continuous, 1024L, 1040L, None, None, None, 0L, 124L, 0.0, sLen,
       SideCode.TowardsDigitizing, (None, None), false, tGeom, 1L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface,
-      tLen, 0L, None)
+      tLen, 0L, 5, false)
     val (sl, tl) = ProjectLinkSplitter.split(suravage, template, SplitOptions(Point(15.5, 0.75), LinkStatus.UnChanged,
       LinkStatus.New, 5L, 205L, Track.Combined, Discontinuity.Continuous, 8L, LinkGeomSource.NormalLinkInterface,
       RoadType.PublicRoad, 1L)).partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
@@ -162,10 +168,10 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers {
     val tLen = GeometryUtils.geometryLength(tGeom)
     val suravage = ProjectLink(0L, 0L, 0L, Track.Unknown, Discontinuity.Continuous, 0L, 0L, None, None, None, 0L, 123L, 0.0, sLen,
       SideCode.Unknown, (None, None), false, sGeom, 1L, LinkStatus.NotHandled, RoadType.Unknown, LinkGeomSource.SuravageLinkInterface,
-      sLen, 0L, None)
+      sLen, 0L, 5, false)
     val template = ProjectLink(2L, 5L, 205L, Track.Combined, Discontinuity.Continuous, 1024L, 1040L, None, None, None, 0L, 124L, 0.0, sLen,
       SideCode.TowardsDigitizing, (None, None), false, tGeom, 1L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface,
-      tLen, 0L, None)
+      tLen, 0L, 5, false)
     val (sl, tl) = ProjectLinkSplitter.split(suravage, template, SplitOptions(Point(15.5, 0.75), LinkStatus.New,
       LinkStatus.UnChanged, 5L, 205L, Track.Combined, Discontinuity.Continuous, 8L, LinkGeomSource.NormalLinkInterface,
       RoadType.PublicRoad, 1L)).partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
@@ -191,32 +197,103 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers {
     val tLen = GeometryUtils.geometryLength(tGeom)
     val suravage = ProjectLink(0L, 0L, 0L, Track.Unknown, Discontinuity.Continuous, 0L, 0L, None, None, None, 0L, 123L, 0.0, sLen,
       SideCode.Unknown, (None, None), false, sGeom, 1L, LinkStatus.NotHandled, RoadType.Unknown, LinkGeomSource.SuravageLinkInterface,
-      sLen, 0L, None)
+      sLen, 0L, 5, false)
     val template = ProjectLink(2L, 5L, 205L, Track.Combined, Discontinuity.Continuous, 1024L, 1040L, None, None, None, 0L, 124L, 0.0, sLen,
       SideCode.TowardsDigitizing, (None, None), false, tGeom, 1L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface,
-      tLen, 10L, None)
+      tLen, 10L, 5,false)
     val (sl, tl) = ProjectLinkSplitter.split(suravage, template, SplitOptions(Point(15.0, 0.0), LinkStatus.New,
       LinkStatus.Transfer, 5L, 205L, Track.Combined, Discontinuity.Continuous, 8L, LinkGeomSource.NormalLinkInterface,
       RoadType.PublicRoad, 1L)).partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
     sl should have size (2)
     tl should have size (1)
     val terminatedLink = tl.head
-    terminatedLink.status should be (LinkStatus.Terminated)
-    terminatedLink.startAddrMValue should be (template.startAddrMValue)
+    terminatedLink.status should be(LinkStatus.Terminated)
+    terminatedLink.startAddrMValue should be(template.startAddrMValue)
     GeometryUtils.areAdjacent(terminatedLink.geometry,
-      GeometryUtils.truncateGeometry2D(template.geometry, terminatedLink.startMValue, template.geometryLength)) should be (true)
+      GeometryUtils.truncateGeometry2D(template.geometry, terminatedLink.startMValue, template.geometryLength)) should be(true)
     sl.foreach { l =>
-      l.roadAddressId should be (template.roadAddressId)
+      l.roadAddressId should be(template.roadAddressId)
       l.startAddrMValue == terminatedLink.endAddrMValue || l.startAddrMValue == terminatedLink.startAddrMValue &&
         l.status == LinkStatus.New should be(true)
-      l.linkGeomSource should be (LinkGeomSource.SuravageLinkInterface)
+      l.linkGeomSource should be(LinkGeomSource.SuravageLinkInterface)
       l.endAddrMValue == template.endAddrMValue || l.startAddrMValue == template.startAddrMValue should be(true)
-      l.status == LinkStatus.New || l.status == LinkStatus.Transfer should be (true)
-      GeometryUtils.areAdjacent(l.geometry, suravage.geometry) should be (true)
-      l.roadNumber should be (template.roadNumber)
-      l.roadPartNumber should be (template.roadPartNumber)
-      l.sideCode should be (SideCode.TowardsDigitizing)
+      l.status == LinkStatus.New || l.status == LinkStatus.Transfer should be(true)
+      GeometryUtils.areAdjacent(l.geometry, suravage.geometry) should be(true)
+      l.roadNumber should be(template.roadNumber)
+      l.roadPartNumber should be(template.roadPartNumber)
+      l.sideCode should be(SideCode.TowardsDigitizing)
     }
 
+  }
+
+  test("Split shorter suravage link") {
+    val sGeom = Seq(Point(480428.187, 7059183.911), Point(480441.534, 7059195.878), Point(480445.646, 7059199.566),
+      Point(480451.056, 7059204.417), Point(480453.065, 7059206.218), Point(480456.611, 7059209.042),
+      Point(480463.941, 7059214.747))
+    val tGeom = Seq(Point(480428.187,7059183.911),Point(480453.614, 7059206.710), Point(480478.813, 7059226.322),
+      Point(480503.826, 7059244.02),Point(480508.221, 7059247.010))
+    val sLen = GeometryUtils.geometryLength(sGeom)
+    val tLen = GeometryUtils.geometryLength(tGeom)
+    val suravage = ProjectLink(0L, 0L, 0L, Track.Unknown, Discontinuity.Continuous, 0L, 0L, None, None, None, 0L, 123L, 0.0, sLen,
+      SideCode.Unknown, (None, None), false, sGeom, 1L, LinkStatus.NotHandled, RoadType.Unknown, LinkGeomSource.SuravageLinkInterface,
+      sLen, 0L, 9L, false,None)
+    val template = ProjectLink(2L, 27L, 22L, Track.Combined, Discontinuity.Continuous, 5076L, 5131L, None, None, None, 0L, 124L, 0.0, tLen,
+      SideCode.TowardsDigitizing, (None, None), false, tGeom, 1L, LinkStatus.NotHandled, RoadType.PublicRoad, LinkGeomSource.NormalLinkInterface,
+      tLen, 0L, 9L, false, None)
+    val (sl, tl) = ProjectLinkSplitter.split(suravage, template, SplitOptions(Point(480463.941, 7059214.747), LinkStatus.UnChanged,
+      LinkStatus.New, 27L, 22L, Track.Combined, Discontinuity.Continuous, 8L, LinkGeomSource.NormalLinkInterface,
+      RoadType.PublicRoad, 1L)).partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
+    sl should have size (1)
+    tl should have size (1)
+    val terminatedLink = tl.head
+    val unChangedLink = sl.head
+    terminatedLink.status should be (LinkStatus.Terminated)
+    terminatedLink.endAddrMValue should be (template.endAddrMValue)
+    terminatedLink.endMValue should be (template.endMValue)
+    GeometryUtils.areAdjacent(terminatedLink.geometry, unChangedLink.geometry) should be (true)
+    GeometryUtils.areAdjacent(unChangedLink.geometry.head, sGeom.head) should be (true)
+    GeometryUtils.areAdjacent(unChangedLink.geometry.last, sGeom.last) should be (true)
+    unChangedLink.startAddrMValue should be (template.startAddrMValue)
+    unChangedLink.endAddrMValue should be (terminatedLink.startAddrMValue)
+  }
+
+  test("Geometry split") {
+    val splitOptions = SplitOptions(
+      Point(445447.5,7004165.0,0.0),
+      LinkStatus.UnChanged, LinkStatus.New, 77, 1, Combined, Continuous, 8L, SuravageLinkInterface,
+      RoadType.PublicRoad, 1)
+    val template = ProjectLink(452342,77,14,Combined,Continuous,4286,4612,None,None,None,70452502,6138625,0.0,327.138,TowardsDigitizing,
+      (None,Some(CalibrationPoint(6138625,327.138,4612))),false,List(Point(445417.266,7004142.049,0.0), Point(445420.674,7004144.679,0.0),
+        Point(445436.147,7004155.708,0.0), Point(445448.743,7004164.052,0.0), Point(445461.586,7004172.012,0.0),
+        Point(445551.316,7004225.769,0.0), Point(445622.099,7004268.174,0.0), Point(445692.288,7004310.224,0.0),
+        Point(445696.301,7004312.628,0.0)),452278,NotHandled,PublicRoad,NormalLinkInterface,327.13776793597697,295486,8L,false,None)
+    val suravage = ProjectLink(-1000,0,0,Unknown,Continuous,0,0,None,None,Some("silari"),-1,499972933,0.0,322.45979989463626,
+      TowardsDigitizing,(None,None),false,List(Point(445417.266,7004142.049,0.0), Point(445420.674,7004144.679,0.0),
+        Point(445436.147,7004155.708,0.0), Point(445448.743,7004164.052,0.0), Point(445461.586,7004172.012,0.0),
+        Point(445551.316,7004225.769,0.0), Point(445622.099,7004268.174,0.0), Point(445692.288,7004310.224,0.0)),452278,
+      New,UnknownOwnerRoad,SuravageLinkInterface,322.45979989463626,0,8L,false,None)
+    val result = ProjectLinkSplitter.split(suravage, template, splitOptions)
+    result should have size(3)
+    result.foreach(pl =>
+    {
+      pl.connectedLinkId.isEmpty should be (false)
+      pl.startAddrMValue should be < pl.endAddrMValue
+      pl.sideCode should be (TowardsDigitizing)
+    })
+  }
+
+  test("Geometries that are only touching should not have matching geometry segment") {
+    val template = ProjectLink(452389,77,14,Combined,Continuous,4286,4612,None,None,None,70452560,6138625,0.0,327.138,
+      TowardsDigitizing,(None,Some(CalibrationPoint(6138625,327.138,4612))),false,List(Point(445417.266,7004142.049,0.0),
+        Point(445420.674,7004144.679,0.0), Point(445436.147,7004155.708,0.0), Point(445448.743,7004164.052,0.0),
+        Point(445461.586,7004172.012,0.0), Point(445551.316,7004225.769,0.0), Point(445622.099,7004268.174,0.0),
+        Point(445692.288,7004310.224,0.0), Point(445696.301,7004312.628,0.0)),452278,NotHandled,PublicRoad,
+      NormalLinkInterface,327.13776793597697,295486,9L,false,None)
+    val suravage = ProjectLink(-1000,0,0,Unknown,Continuous,0,0,None,None,Some("silari"),-1,499972931,0.0,313.38119201522017,
+      TowardsDigitizing,(None,None),false,List(Point(445186.594,7003930.051,0.0), Point(445278.988,7004016.523,0.0),
+        Point(445295.313,7004031.801,0.0), Point(445376.923,7004108.181,0.0), Point(445391.041,7004120.899,0.0),
+        Point(445405.631,7004133.071,0.0), Point(445417.266,7004142.049,0.0)),452278,New,UnknownOwnerRoad,
+      SuravageLinkInterface,313.38119201522017,0,9L,false,None)
+    ProjectLinkSplitter.findMatchingGeometrySegment(suravage, template) should be (None)
   }
 }

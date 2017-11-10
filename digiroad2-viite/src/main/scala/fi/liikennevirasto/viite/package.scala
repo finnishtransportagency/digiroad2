@@ -1,6 +1,9 @@
 package fi.liikennevirasto
 
 import fi.liikennevirasto.digiroad2.asset.SideCode
+import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.viite.dao.BaseRoadAddress
+import fi.liikennevirasto.viite.model.RoadAddressLinkLike
 
 package object viite {
   /* Tolerance in which we can allow MValues to be equal */
@@ -44,10 +47,24 @@ package object viite {
   val ErrorFollowingPartsHaveDifferingEly = "Seuraavat tieosat ovat eri ELY-numerolla kuin projektin muut osat:"
   val ErrorRoadPartsHaveDifferingEly = "Tieosat ovat eri ELYistä"
   val ErrorSuravageLinkNotFound = "Suravage-linkkiä ei löytynyt"
+  val RampsMinBound = 20001
+  val RampsMaxBound = 39999
+
 
   def switchSideCode(sideCode: SideCode): SideCode = {
     // Switch between against and towards 2 -> 3, 3 -> 2
     SideCode.apply(5-sideCode.value)
   }
 
+  private def isRamp(roadNumber: Long, trackCode: Long): Boolean = {
+    roadNumber >= RampsMinBound && roadNumber <= RampsMaxBound && trackCode == 0
+  }
+
+  def isRamp(r: RoadAddressLinkLike): Boolean = {
+    isRamp(r.roadNumber, r.trackCode)
+  }
+
+  def isRamp(r: BaseRoadAddress): Boolean = {
+    isRamp(r.roadNumber, r.track.value)
+  }
 }

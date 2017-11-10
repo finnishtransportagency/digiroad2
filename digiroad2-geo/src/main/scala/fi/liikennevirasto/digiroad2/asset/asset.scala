@@ -173,7 +173,7 @@ abstract class AbstractProperty {
 case class Modification(modificationTime: Option[DateTime], modifier: Option[String])
 case class SimpleProperty(publicId: String, values: Seq[PropertyValue]) extends AbstractProperty
 case class Property(id: Long, publicId: String, propertyType: String, required: Boolean = false, values: Seq[PropertyValue]) extends AbstractProperty
-case class PropertyValue(propertyValue: String, propertyDisplayValue: Option[String] = None)
+case class PropertyValue(propertyValue: String, propertyDisplayValue: Option[String] = None, checked: Boolean = false)
 case class EnumeratedPropertyValue(propertyId: Long, publicId: String, propertyName: String, propertyType: String, required: Boolean = false, values: Seq[PropertyValue]) extends AbstractProperty
 case class Position(lon: Double, lat: Double, linkId: Long, bearing: Option[Int])
 

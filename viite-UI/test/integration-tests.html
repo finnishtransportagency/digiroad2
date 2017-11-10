@@ -41,6 +41,14 @@
     <div id="feature-attributes"></div>
 </div>
 <div id="mocha"></div>
+
+<script type="text/javascript" src="../src/application.js"></script>
+
+<script type="text/javascript" src="../src/router.js"></script>
+
+<script type="text/javascript" src="../src/map/LinkPropertyMarker.js"></script>
+<script type="text/javascript" src="../src/map/CalibrationPointMarker.js"></script>
+
 <script type="text/javascript" src="../src/utils/eventbus.js"></script>
 <script type="text/javascript" src="../src/utils/geometry-calculations.js"></script>
 <script type="text/javascript" src="../src/utils/LocationInputParser.js"></script>
@@ -50,7 +58,21 @@
 <script type="text/javascript" src="../src/utils/environment-utils.js"></script>
 <script type="text/javascript" src="../src/utils/zoom-levels.js"></script>
 <script type="text/javascript" src="../src/utils/validity-directions.js"></script>
+<script type="text/javascript" src="../src/utils/GeometryUtils.js"></script>
+<script type="text/javascript" src="../src/utils/OpenLayersRule.js"></script>
 <script type="text/javascript" src="../src/utils/StyleRule.js"></script>
+<script type="text/javascript" src="../src/utils/LinkValues.js"></script>
+<script type="text/javascript" src="../src/utils/script-loader.js"></script>
+
+<script type="text/javascript" src="../src/view/NavigationPanel.js"></script>
+<script type="text/javascript" src="../src/view/navigationpanel/EditModeToggleButton.js"></script>
+<script type="text/javascript" src="../src/view/navigationpanel/ActionPanelBoxes.js"></script>
+<script type="text/javascript" src="../src/view/navigationpanel/RoadLinkBox.js"></script>
+<script type="text/javascript" src="../src/view/navigationpanel/LayerSelectBox.js"></script>
+<script type="text/javascript" src="../src/view/navigationpanel/ProjectSelectBox.js"></script>
+<script type="text/javascript" src="../src/view/navigationpanel/ProjectListModel.js"></script>
+<script type="text/javascript" src="../src/view/navigationpanel/SearchBox.js"></script>
+
 <script type="text/javascript" src="../src/view/TileMapCollection.js"></script>
 <script type="text/javascript" src="../src/view/Layer.js"></script>
 <script type="text/javascript" src="../src/view/RoadLayer.js"></script>
@@ -65,43 +87,34 @@
 <script type="text/javascript" src="../src/view/TileMapSelector.js"></script>
 <script type="text/javascript" src="../src/view/InstructionsPopup.js"></script>
 <script type="text/javascript" src="../src/view/ZoomBox.js"></script>
+<script type="text/javascript" src="../src/view/CrosshairToggle.js"></script>
+<script type="text/javascript" src="../src/view/LinkPropertyForm.js"></script>
 <script type="text/javascript" src="../src/view/DoubleClickSelectControl.js"></script>
-<script type="text/javascript" src="../src/utils/GeometryUtils.js"></script>
-<script type="text/javascript" src="../src/utils/OpenLayersRule.js"></script>
 <script type="text/javascript" src="../src/view/LinkPropertyLayer.js"></script>
 <script type="text/javascript" src="../src/view/LinkPropertyLayerStyles.js"></script>
 <script type="text/javascript" src="../src/view/LinkPropertyMassUpdateDialog.js"></script>
-<script type="text/javascript" src="../src/view/RoadAddressProjectForm.js"></script>
-<script type="text/javascript" src="../src/view/RoadAddressProjectEditForm.js"></script>
-<script type="text/javascript" src="../src/model/RoadAddressProjectCollection.js"></script>
+<script type="text/javascript" src="../src/view/ProjectEditForm.js"></script>
+<script type="text/javascript" src="../src/view/ProjectForm.js"></script>
+<script type="text/javascript" src="../src/view/SplitForm.js"></script>
+<script type="text/javascript" src="../src/view/FormCommon.js"></script>
 <script type="text/javascript" src="../src/view/ProjectLinkLayer.js"></script>
-<script type="text/javascript" src="../src/model/SelectedProjectLink.js"></script>
-<script type="text/javascript" src="../src/map/LinkPropertyMarker.js"></script>
-<script type="text/javascript" src="../src/router.js"></script>
-<script type="text/javascript" src="../src/application.js"></script>
-<script type="text/javascript" src="../src/view/navigationpanel/EditModeToggleButton.js"></script>
-<script type="text/javascript" src="../src/view/navigationpanel/ActionPanelBoxes.js"></script>
-<script type="text/javascript" src="../src/view/navigationpanel/RoadLinkBox.js"></script>
-<script type="text/javascript" src="../src/view/navigationpanel/LayerSelectBox.js"></script>
-<script type="text/javascript" src="../src/view/navigationpanel/ProjectSelectBox.js"></script>
-<script type="text/javascript" src="../src/view/navigationpanel/ProjectListModel.js"></script>
-<script type="text/javascript" src="../src/view/navigationpanel/SearchBox.js"></script>
-<script type="text/javascript" src="../src/view/NavigationPanel.js"></script>
 <script type="text/javascript" src="../src/view/ProjectChangeTable.js"></script>
+
+<script type="text/javascript" src="../src/model/ProjectCollection.js"></script>
+<script type="text/javascript" src="../src/model/SelectedProjectLink.js"></script>
 <script type="text/javascript" src="../src/model/ProjectChangeInfoModel.js"></script>
 <script type="text/javascript" src="../src/model/ApplicationModel.js"></script>
 <script type="text/javascript" src="../src/model/RoadCollection.js"></script>
 <script type="text/javascript" src="../src/model/SelectedLinkProperty.js"></script>
 <script type="text/javascript" src="../src/model/LinkPropertiesModel.js"></script>
 <script type="text/javascript" src="../src/model/LocationSearch.js"></script>
-<script type="text/javascript" src="../src/map/CalibrationPointMarker.js"></script>
+
 <script type="text/javascript" src="../src/modalconfirm/Confirm.js"></script>
 <script type="text/javascript" src="../src/modalconfirm/ModalConfirm.js"></script>
-<script type="text/javascript" src="../src/view/CrosshairToggle.js"></script>
-<script type="text/javascript" src="../src/view/LinkPropertyForm.js"></script>
-<script type="text/javascript" src="../src/utils/script-loader.js"></script>
-<script type="text/javascript" src="../src/assetgrouping/asset-grouping.js"></script>
 <script type="text/javascript" src="../src/modalconfirm/GenericConfirmPopup.js"></script>
+
+<script type="text/javascript" src="../src/assetgrouping/asset-grouping.js"></script>
+
 <script src="../../bower_components/WebConsole-reporter/WebConsole.js"></script>
 <script data-main="run-integration-tests" src="../../bower_components/requirejs/require.js"></script>
 <script src="../../bower_components/mocha/mocha.js"></script>
