@@ -741,6 +741,7 @@
     eventbus.on('projectLink:revertedChanges', function () {
       eventbus.trigger('roadAddress:projectLinksUpdated');
       projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1, undefined, projectCollection.getPublishableStatus());
+      showChangesAndSendButton();
     });
 
     var redraw = function () {
