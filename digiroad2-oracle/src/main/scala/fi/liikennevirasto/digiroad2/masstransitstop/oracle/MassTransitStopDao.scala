@@ -74,7 +74,8 @@ class MassTransitStopDao {
 
     terminalIdOption match {
       case Some(terminalId) =>
-        nearestStops ++ fetchPointAssets(withTerminalId(terminalId))
+        val terminalStops = fetchPointAssets(withTerminalId(terminalId))
+        nearestStops.filterNot(ns => terminalStops.exists(t => t.id == ns.id)) ++ terminalStops
       case _ =>
         nearestStops
     }
