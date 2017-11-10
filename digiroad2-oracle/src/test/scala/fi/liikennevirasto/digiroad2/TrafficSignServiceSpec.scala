@@ -3,12 +3,13 @@ package fi.liikennevirasto.digiroad2
 import fi.liikennevirasto.digiroad2.asset.LinkGeomSource.NormalLinkInterface
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
+import fi.liikennevirasto.digiroad2.user.oracle.OracleUserProvider
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util.TestTransactions
 import org.mockito.Matchers._
 import org.mockito.Mockito._
 import org.scalatest.mock.MockitoSugar
-import org.scalatest.{Matchers, FunSuite}
+import org.scalatest.{FunSuite, Matchers}
 
 class TrafficSignServiceSpec extends FunSuite with Matchers {
   def toRoadLink(l: VVHRoadlink) = {
@@ -31,8 +32,8 @@ class TrafficSignServiceSpec extends FunSuite with Matchers {
   when(mockRoadLinkService.getRoadLinkFromVVH(1191950690)).thenReturn(Seq(
     VVHRoadlink(1191950690, 235, Seq(Point(373500.349, 6677657.152), Point(373494.182, 6677669.918)), Private,
       TrafficDirection.BothDirections, FeatureClass.AllOthers)).map(toRoadLink).headOption)
-
-  val service = new TrafficSignService(mockRoadLinkService) {
+  val userProvider = new OracleUserProvider
+  val service = new TrafficSignService(mockRoadLinkService, userProvider) {
     override def withDynTransaction[T](f: => T): T = f
 
     override def withDynSession[T](f: => T): T = f

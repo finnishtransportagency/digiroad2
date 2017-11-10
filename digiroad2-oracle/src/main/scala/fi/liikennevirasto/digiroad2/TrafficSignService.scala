@@ -1,10 +1,11 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.PointAssetFiller.AssetAdjustment
+import fi.liikennevirasto.digiroad2.asset.SideCode.BothDirections
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLinkLike
-import fi.liikennevirasto.digiroad2.pointasset.oracle.{PersistedTrafficSign, OracleTrafficSignDao}
-import fi.liikennevirasto.digiroad2.user.User
+import fi.liikennevirasto.digiroad2.pointasset.oracle.{OracleTrafficSignDao, PersistedTrafficSign}
+import fi.liikennevirasto.digiroad2.user.{User, UserProvider}
 
 case class IncomingTrafficSign(lon: Double, lat: Double, linkId: Long, propertyData: Set[SimpleProperty], validityDirection: Int, bearing: Option[Int]) extends IncomingPointAsset
 
@@ -52,7 +53,7 @@ object TrafficSignType {
   case object Unknown extends TrafficSignType { def value = 99;  def group = TrafficSignTypeGroup.Unknown; }
 }
 
-class TrafficSignService(val roadLinkService: RoadLinkService) extends PointAssetOperations {
+class TrafficSignService(val roadLinkService: RoadLinkService, val userProvider: UserProvider) extends PointAssetOperations {
   type IncomingAsset = IncomingTrafficSign
   type PersistedAsset = PersistedTrafficSign
 
@@ -119,4 +120,15 @@ class TrafficSignService(val roadLinkService: RoadLinkService) extends PointAsse
       persistedStop.linkSource)
   }
 
+  def createFromCoordinates(lon: Long, lat: Long, trafficSignType: TRTrafficSignType, value: Option[Int], twoSided: Boolean = false, trafficDirection: TrafficDirection, bearing: Option[Int]) ={
+    roadLinkService.getClosestRoadlinkFromVVH(userProvider.getCurrentUser(), Point(lon, lat)).map { vvhroad =>
+      roadLinkService.getRoadLinkFromVVH(vvhroad.linkId).filter(_.isCarTrafficRoad) match {
+        case Some(link) =>
+          //TODO: Properties and ValidityDirection
+          val asset = IncomingTrafficSign(lon, lat, link.linkId, Set.empty[SimpleProperty], BothDirections.value ,bearing )
+          create(asset, userProvider.getCurrentUser().username, link.geometry, link.municipalityCode, Some(link.administrativeClass), link.linkSource)
+        case _ => None
+      }
+    }
+  }
 }
