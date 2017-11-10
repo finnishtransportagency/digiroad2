@@ -59,6 +59,11 @@ object TrackSectionOrder {
   }
 
   def mValueRoundabout(seq: Seq[ProjectLink]): Seq[ProjectLink] = {
+    /* None = No change. Therefore for calibration points
+       None            = No change
+       Some(None)      = Clear if there was any
+       Some(Some(...)) = Set to this value
+      */
     def adjust(pl: ProjectLink, sideCode: Option[SideCode] = None, startAddrMValue: Option[Long] = None,
                endAddrMValue: Option[Long] = None, startCalibrationPoint: Option[Option[CalibrationPoint]] = None,
                endCalibrationPoint: Option[Option[CalibrationPoint]] = None) = {
