@@ -609,9 +609,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def getRoadAddressSingleProject(projectId: Long, filterNumeric: Boolean = false): Option[RoadAddressProject] = {
+  def getRoadAddressSingleProject(projectId: Long, filterNotStatus: Seq[LinkStatus] = Seq.empty[LinkStatus]): Option[RoadAddressProject] = {
     withDynTransaction {
-      ProjectDAO.getRoadAddressProjects(projectId, filterNumeric).headOption
+      ProjectDAO.getRoadAddressProjects(projectId, filterNotStatus).headOption
     }
   }
 

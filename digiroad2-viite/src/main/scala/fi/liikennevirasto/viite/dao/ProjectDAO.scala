@@ -409,7 +409,7 @@ object ProjectDAO {
     }
   }
 
-  def getRoadAddressProjects(projectId: Long = 0, filterNumeric: Boolean = false): List[RoadAddressProject] = {
+  def getRoadAddressProjects(projectId: Long = 0, filterNotStatus: Seq[LinkStatus] = Seq.empty[LinkStatus]): List[RoadAddressProject] = {
     val filter = projectId match {
       case 0 => ""
       case _ => s""" where id =$projectId """
@@ -420,9 +420,10 @@ object ProjectDAO {
     Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String, Option[String], Option[Long])](query).list.map {
       case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo, statusInfo, ely) => {
 
-        if(filterNumeric) {
+        if(!filterNotStatus.isEmpty) {
           val filteredRoadParts = fetchReservedRoadParts(projectId).filterNot(rp => {
-            fetchByProjectRoadPart(rp.roadNumber, rp.roadPartNumber, projectId).filter(_.status == LinkStatus.Numbering)
+            fetchByProjectRoadPart(rp.roadNumber, rp.roadPartNumber, projectId)
+              .filter(parts =>filterNotStatus.map(_.value).contains(parts.status.value))
               .exists(p => p.roadNumber == rp.roadNumber && p.roadPartNumber == rp.roadPartNumber)
           })
           RoadAddressProject(id, ProjectState.apply(state), name, createdBy, createdDate, modifiedBy, start_date,
