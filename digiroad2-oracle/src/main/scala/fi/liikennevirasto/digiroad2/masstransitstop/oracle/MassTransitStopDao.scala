@@ -572,7 +572,7 @@ class MassTransitStopDao {
   }
 
   def withTerminalId(terminalId: Long)(query: String): String = {
-    query + s" where terminal_asset_id = $terminalId"
+    query + s" where terminal_asset_id = $terminalId and (a.valid_to is null or a.valid_to > sysdate)"
   }
 
   def withNationalId(nationalId: Long)(query: String): String = {
