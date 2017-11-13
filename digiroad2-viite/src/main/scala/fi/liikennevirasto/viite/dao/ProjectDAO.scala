@@ -68,11 +68,13 @@ object LinkStatus {
 
 case class RoadAddressProject(id: Long, status: ProjectState, name: String, createdBy: String, createdDate: DateTime,
                               modifiedBy: String, startDate: DateTime, dateModified: DateTime, additionalInfo: String,
-                              reservedParts: Seq[ReservedRoadPart], statusInfo: Option[String], ely: Option[Long] = None) {
+                              reservedParts: Seq[ReservedRoadPart], statusInfo: Option[String], ely: Option[Long] = None, coordinates: Option[ProjectCoordinates] = None) {
   def isReserved(roadNumber: Long, roadPartNumber: Long): Boolean = {
     reservedParts.exists(p => p.roadNumber == roadNumber && p.roadPartNumber == roadPartNumber)
   }
 }
+
+case class ProjectCoordinates(x: Double, y: Double, zoom: Int)
 
 case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: Track,
                        discontinuity: Discontinuity, startAddrMValue: Long, endAddrMValue: Long, startDate: Option[DateTime] = None,
@@ -369,17 +371,18 @@ object ProjectDAO {
   def getRoadAddressProjectById(projectId: Long): Option[RoadAddressProject] = {
     val where = s""" where id =${projectId}"""
     val query =
-      s"""SELECT id, state, name, created_by, created_date, start_date, modified_by, COALESCE(modified_date, created_date), add_info, ely, status_info
-          FROM project $where"""
-    Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String, Option[Long], Option[String])](query).list.map {
+      s"""SELECT id, state, name, created_by, created_date, start_date, modified_by, COALESCE(modified_date, created_date),
+           add_info, ely, status_info, coord_x, coord_y, zoom
+           FROM project $where"""
+    Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String, Option[Long], Option[String], Double, Double, Int)](query).list.map {
       case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo,
-      ely, statusInfo) if ely.contains(-1L) =>
+      ely, statusInfo, coordX, coordY, zoom) if ely.contains(-1L) =>
         RoadAddressProject(id, ProjectState.apply(state), name, createdBy, createdDate, modifiedBy, start_date, modifiedDate,
-          addInfo, fetchReservedRoadParts(id), statusInfo, None)
+          addInfo, fetchReservedRoadParts(id), statusInfo, None, Some(ProjectCoordinates(coordX, coordY, zoom)))
       case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo,
-      ely, statusInfo) =>
+      ely, statusInfo, coordX, coordY, zoom) =>
         RoadAddressProject(id, ProjectState.apply(state), name, createdBy, createdDate, modifiedBy, start_date, modifiedDate,
-          addInfo, fetchReservedRoadParts(id), statusInfo, ely)
+          addInfo, fetchReservedRoadParts(id), statusInfo, ely, Some(ProjectCoordinates(coordX, coordY, zoom)))
     }.headOption
   }
 
@@ -415,12 +418,13 @@ object ProjectDAO {
       case _ => s""" where id =$projectId """
     }
     val query =
-      s"""SELECT id, state, name, created_by, created_date, start_date, modified_by, COALESCE(modified_date, created_date), add_info, status_info, ely
+      s"""SELECT id, state, name, created_by, created_date, start_date, modified_by, COALESCE(modified_date, created_date),
+           add_info, status_info, ely, coord_x, coor_y, zoom
           FROM project $filter order by name, id """
-    Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String, Option[String], Option[Long])](query).list.map {
-      case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo, statusInfo, ely) =>
+    Q.queryNA[(Long, Long, String, String, DateTime, DateTime, String, DateTime, String, Option[String], Option[Long], Double, Double, Int)](query).list.map {
+      case (id, state, name, createdBy, createdDate, start_date, modifiedBy, modifiedDate, addInfo, statusInfo, ely, coordX, coordY, zoom) =>
         RoadAddressProject(id, ProjectState.apply(state), name, createdBy, createdDate, modifiedBy, start_date,
-          modifiedDate, addInfo, fetchReservedRoadParts(projectId), statusInfo, ely)
+          modifiedDate, addInfo, fetchReservedRoadParts(projectId), statusInfo, ely, Some(ProjectCoordinates(coordX, coordY, zoom)))
     }
   }
 
