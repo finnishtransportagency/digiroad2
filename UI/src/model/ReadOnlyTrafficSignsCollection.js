@@ -28,8 +28,8 @@
       lengthLimit: [8]
     };
 
-    var filterTrafficSigns = function (asset) {
-      return _.filter(asset, function (asset) {
+    var filterTrafficSigns = function (assets) {
+      return _.filter(assets, function (asset) {
         var existingValue = _.first(_.find(asset.propertyData, function (prop) {
           return prop.publicId === "trafficSigns_type";
         }).values);
