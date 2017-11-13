@@ -76,13 +76,17 @@ object ProjectSectionCalculator {
                                 calibrationPoints: Seq[UserDefinedCalibrationPoint]): (Point, Point) = {
     val rightStartPoint = findStartingPoint(newLinks.filter(_.track != Track.LeftSide), oldLinks.filter(_.track != Track.LeftSide),
       calibrationPoints)
-    // Get left track non-connected points and find the closest to right track starting point
-    val leftLinks = newLinks.filter(_.track != Track.RightSide) ++ oldLinks.filter(_.track != Track.RightSide)
-    val leftPoints = TrackSectionOrder.findOnceConnectedLinks(leftLinks).keys
-    if (leftPoints.isEmpty)
-      throw new InvalidAddressDataException("Missing left track starting points")
-    val leftStartPoint = leftPoints.minBy(lp => (lp - rightStartPoint).length())
-    (rightStartPoint, leftStartPoint)
+    if ((oldLinks ++ newLinks).exists(l => GeometryUtils.areAdjacent(l.geometry, rightStartPoint) && l.track == Track.Combined))
+      (rightStartPoint, rightStartPoint)
+    else {
+      // Get left track non-connected points and find the closest to right track starting point
+      val leftLinks = newLinks.filter(_.track != Track.RightSide) ++ oldLinks.filter(_.track != Track.RightSide)
+      val leftPoints = TrackSectionOrder.findOnceConnectedLinks(leftLinks).keys
+      if (leftPoints.isEmpty)
+        throw new InvalidAddressDataException("Missing left track starting points")
+      val leftStartPoint = leftPoints.minBy(lp => (lp - rightStartPoint).length())
+      (rightStartPoint, leftStartPoint)
+    }
   }
   /**
     * Find a starting point for this road part
@@ -109,20 +113,7 @@ object ProjectSectionCalculator {
         // Approximate estimate of the mid point: averaged over count, not link length
         val midPoint = points.map(p => p._1 + (p._2 - p._1).scale(0.5)).foldLeft(Vector3d(0,0,0)){case (x, p) =>
           (p - Point(0,0)).scale(1.0/points.size) + x}
-
-        points.foldLeft((Point(0.0, 0.0), Double.MaxValue)) { case ((current), (start, end)) =>
-          // Find if any other link is connected to start or end: if not, add them to possible starting points' list
-          val s = Seq(current) ++
-            (if (points.exists(p => GeometryUtils.areAdjacent(p._2, start)))
-              Seq()
-            else
-              Seq(start -> direction.dot(start.toVector - midPoint))) ++
-            (if (points.exists(p => GeometryUtils.areAdjacent(p._1, end)))
-              Seq()
-            else
-              Seq(end -> direction.dot(end.toVector - midPoint)))
-          s.minBy(_._2)
-        }._1
+        TrackSectionOrder.findOnceConnectedLinks(remainLinks).keys.minBy(p => direction.dot(p.toVector - midPoint))
       }
 
     )
@@ -229,6 +220,12 @@ object ProjectSectionCalculator {
       } catch {
         case ex: InvalidAddressDataException =>
           logger.info(s"Can't calculate road/road part ${part._1}/${part._2}: " + ex.getMessage)
+          projectLinks ++ oldLinks
+        case ex: NoSuchElementException =>
+          logger.info("Delta calculation failed: " + ex.getMessage, ex)
+          projectLinks ++ oldLinks
+        case ex: NullPointerException =>
+          logger.info("Delta calculation failed (NPE)", ex)
           projectLinks ++ oldLinks
         case ex: Throwable =>
           logger.info("Delta calculation not possible: " + ex.getMessage)
