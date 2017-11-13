@@ -197,6 +197,11 @@ object ProjectDAO {
     projectLinks.map(_.id)
   }
 
+  def updateProjectCoordinates(projectId: Long, coordinates: ProjectCoordinates): Unit = {
+    sqlu"""
+         update project set coord_x = ${coordinates.x}, coord_y = ${coordinates.y}, zoom= ${coordinates.zoom}
+         where project_id = $projectId""".execute
+  }
 
   def updateProjectLinksToDB(projectLinks: Seq[ProjectLink], modifier: String): Unit = {
     val projectLinkPS = dynamicSession.prepareStatement("UPDATE project_link SET ROAD_NUMBER = ?,  ROAD_PART_NUMBER = ?, TRACK_CODE=?, " +
