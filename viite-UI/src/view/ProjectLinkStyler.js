@@ -9,11 +9,11 @@
     var terminatedStatus = 5;
     var unknownStatus = 99;
 
-    var strokeByZoomLevel = function (zoomLevel, style) {
+    var strokeByZomLevel = function (zoomLevel, style) {
       return new StyleRule().where('zoomLevel').is(zoomLevel).use(style);
     };
 
-    var strokeWidthRule = _.partial(strokeByZoomLevel);
+    var strokeWidthRule = _.partial(strokeByZomLevel);
     var strokeWidthRules = [
       strokeWidthRule(5, { stroke: {width: 5}}),
       strokeWidthRule(6, { stroke: {width: 5}}),

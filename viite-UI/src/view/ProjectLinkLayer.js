@@ -20,7 +20,7 @@
     var isNotEditingData = true;
     Layer.call(this, layerName, roadLayer);
     var me = this;
-    var styler = new Styler();
+    var styler = new RoadLinkStyler(true);
     var projectLinkStyler = new ProjectLinkStyler();
 
     var vectorSource = new ol.source.Vector({
@@ -77,7 +77,7 @@
         if (status === LinkStatus.NotHandled.value || status === LinkStatus.Terminated.value || status  === LinkStatus.New.value || status == LinkStatus.Transfer.value || status === LinkStatus.Unchanged.value || status == LinkStatus.Numbering.value) {
           return projectLinkStyler.getProjectLinkStyle().getStyle( feature.projectLinkData, {zoomLevel: currentZoom});
         } else {
-          return styler.generateStyleByFeature(feature.projectLinkData, currentZoom);
+          return styler.getRoadLinkStyle().getStyle(feature.projectLinkData, currentZoom);
         }
     }
     });
