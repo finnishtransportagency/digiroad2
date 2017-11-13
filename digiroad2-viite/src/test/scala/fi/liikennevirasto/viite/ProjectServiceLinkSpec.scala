@@ -1382,6 +1382,8 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       end.get.sideCode should be (TowardsDigitizing)
       end.get.startAddressM should be (19L)
       end.get.endAddressM should be (28L)
+      end.get.discontinuity should be (Discontinuity.EndOfRoad.value)
+      links.count(_.discontinuity != Discontinuity.Continuous.value) should be (1)
     }
   }
 }
