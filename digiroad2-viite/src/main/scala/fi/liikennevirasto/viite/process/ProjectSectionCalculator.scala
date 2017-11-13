@@ -46,7 +46,9 @@ object ProjectSectionCalculator {
       (st.map(cp => CalibrationPoint(linkId, cp.segmentMValue, cp.addressMValue)),
       en.map(cp => CalibrationPoint(linkId, cp.segmentMValue, cp.addressMValue)))
     }
-    val startingLink = oldProjectLinks.sortBy(_.startAddrMValue).headOption.orElse(newProjectLinks.headOption).toSeq
+    val startingLink = oldProjectLinks.sortBy(_.startAddrMValue).headOption.orElse(
+      newProjectLinks.find(pl => pl.endAddrMValue != 0 && pl.startAddrMValue == 0)).orElse(
+      newProjectLinks.headOption).toSeq
     val rest = (newProjectLinks ++ oldProjectLinks).filterNot(startingLink.contains)
     val mValued = TrackSectionOrder.mValueRoundabout(startingLink ++ rest)
     if (userCalibrationPoints.nonEmpty) {
