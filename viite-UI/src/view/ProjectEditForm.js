@@ -381,7 +381,7 @@
         else $('#manualCPWarning').css('display', 'none');
       });
 
-      rootElement.on('change', '.roadTypeDropDown', function(){
+      rootElement.on('change', '#roadTypeDropDown', function(){
         setFormDirty();
       });
 

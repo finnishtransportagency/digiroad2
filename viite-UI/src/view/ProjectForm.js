@@ -1,5 +1,5 @@
 (function (root) {
-  root.ProjectForm = function (projectCollection, selectedProjectLinkProperty) {
+  root.ProjectForm = function (projectCollection, selectedProjectLinkProperty, projectLinkLayer) {
     var currentProject = false;
     var selectedProjectLink = false;
     var activeLayer = false;
@@ -537,8 +537,21 @@
         });
       };
 
+      var cancelChanges = function() {
+          projectCollection.revertLinkStatus();
+          projectCollection.setDirty([]);
+          projectCollection.setTmpDirty([]);
+          projectLinkLayer.clearHighlights();
+          $('.wrapper').remove();
+          eventbus.trigger('roadAddress:projectLinksEdited');
+          eventbus.trigger('roadAddressProject:toggleEditingRoad', true);
+          eventbus.trigger('roadAddressProject:reOpenCurrent');
+      };
+
       var reOpenCurrent = function () {
         rootElement.empty();
+        selectedProjectLinkProperty.setDirty(false);
+        nextStage();
         rootElement.html(selectedProjectLinkTemplate(currentProject));
         toggleAditionalControls();
         eventbus.trigger('roadAddressProject:enableInteractions');
@@ -561,7 +574,7 @@
             eventbus.trigger('roadAddressProject:enableInteractions');
           },
           closeCallback: function () {
-            reOpenCurrent();
+            cancelChanges();
           }
         });
 
