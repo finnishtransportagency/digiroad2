@@ -251,8 +251,11 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     try {
       withDynTransaction {
         val project = getProjectWithReservationChecks(projectId, newRoadNumber, newRoadPartNumber)
-        if (!project.isReserved(newRoadNumber, newRoadPartNumber))
-          ProjectDAO.reserveRoadPart(project.id, newRoadNumber, newRoadPartNumber, project.modifiedBy)
+
+        val ely= if (newLinks.nonEmpty)newLinks.head.elyCode else -1
+        if (!project.isReserved(newRoadNumber, newRoadPartNumber)){}
+
+          ProjectDAO.reserveRoadPart(project.id, newRoadNumber, newRoadPartNumber, project.modifiedBy, ely)
         val newProjectLinks = newLinks.map(projectLink => {
           projectLink.linkId ->
             newProjectLink(projectLink, project, SideCode.Unknown, newTrackCode, newRoadNumber, newRoadPartNumber,
@@ -291,7 +294,6 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @param linkIds the linkIds to process
     * @param roadNumber the roadNumber to apply/was applied to said linkIds
     * @param roadPartNumber the roadPartNumber to apply/was applied to said linkIds
-    * @param newLinks the whole newProjectLinks
     * @return the projectLinks with a assigned SideCode
     */
   private def fillRampGrowthDirection(linkIds: Set[Long], roadNumber: Long, roadPartNumber: Long,
@@ -644,7 +646,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         ProjectDAO.fetchReservedRoadPart(reservedRoadPart.roadNumber, reservedRoadPart.roadPartNumber)
       case _ =>
         ProjectDAO.reserveRoadPart(project.id, reservedRoadPart.roadNumber, reservedRoadPart.roadPartNumber,
-          project.modifiedBy)
+          project.modifiedBy, reservedRoadPart.ely)
         ProjectDAO.fetchReservedRoadPart(reservedRoadPart.roadNumber, reservedRoadPart.roadPartNumber)
     }
   }
@@ -974,7 +976,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           case LinkStatus.Numbering => {
             val project = getProjectWithReservationChecks(projectId, roadNumber, roadPartNumber)
             if (!project.isReserved(roadNumber, roadPartNumber))
-              ProjectDAO.reserveRoadPart(project.id, roadNumber, roadPartNumber, project.modifiedBy)
+              ProjectDAO.reserveRoadPart(project.id, roadNumber, roadPartNumber, project.modifiedBy,ely)
             ProjectDAO.updateProjectLinkNumbering(projectId, updatedProjectLinks.head.roadNumber, updatedProjectLinks.head.roadPartNumber, linkStatus, roadNumber, roadPartNumber, userName)
           }
           case LinkStatus.Transfer => {
@@ -991,7 +993,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           case LinkStatus.UnChanged => {
             val project = getProjectWithReservationChecks(projectId, roadNumber, roadPartNumber)
             if (!project.isReserved(roadNumber, roadPartNumber))
-              ProjectDAO.reserveRoadPart(project.id, roadNumber, roadPartNumber, project.modifiedBy)
+              ProjectDAO.reserveRoadPart(project.id, roadNumber, roadPartNumber, project.modifiedBy, ely)
             val targetLinks = updatedProjectLinks.filterNot(link => link.status == LinkStatus.Terminated)
             updateRoadTypeDiscontinuity(targetLinks.map(_.copy(roadType = RoadType.apply(roadType.toInt), status = linkStatus)))
           }
