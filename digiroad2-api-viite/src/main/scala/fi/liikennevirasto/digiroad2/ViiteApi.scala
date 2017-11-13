@@ -645,7 +645,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       "statusCode" -> roadAddressProject.status.value,
       "statusDescription" -> roadAddressProject.status.description,
       "statusInfo" -> roadAddressProject.statusInfo,
-      "ely" -> roadAddressProject.ely.getOrElse(-1)
+      "ely" -> roadAddressProject.ely.getOrElse(-1),
+      "coordX" -> roadAddressProject.coordinates.get.x,
+      "coordY" -> roadAddressProject.coordinates.get.y,
+      "zoomLevel" -> roadAddressProject.coordinates.get.zoom
     )
   }
 
