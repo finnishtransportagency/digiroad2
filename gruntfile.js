@@ -283,7 +283,7 @@ module.exports = function(grunt) {
       },
       viite: {
         files: ['<%= jshint.files %>', 'viite-UI/src/**/*.less', 'viite-UI/**/*.html'],
-        tasks: ['jshint', 'env:development', 'preprocess:development', 'less:viitedev', 'mocha:unit', 'mocha:integration', 'configureProxies:viite'],
+        tasks: ['jshint', 'env:development', 'preprocess:development', 'less:viitedev', 'mocha:viite_unit', 'mocha:viite_integration', 'configureProxies:viite'],
         options: {
           livereload: true
         }
