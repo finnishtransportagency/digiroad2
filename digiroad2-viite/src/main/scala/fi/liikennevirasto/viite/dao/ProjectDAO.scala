@@ -391,7 +391,7 @@ object ProjectDAO {
            PROJECT_LINK.ROAD_PART_NUMBER = rp.ROAD_PART_NUMBER AND
            PROJECT_LINK.PROJECT_ID = rp.PROJECT_ID AND ROWNUM < 2) as pl_id """
     val finalPart = s""" FROM
-           PROJECT_RESERVED_ROAD_PART rp WHERE project_id = $projectId ORDER BY road_number, road_part_number"
+           PROJECT_RESERVED_ROAD_PART rp WHERE project_id = $projectId ORDER BY road_number, road_part_number
          """
     val finalPartWithFilter = s""" FROM
            PROJECT_RESERVED_ROAD_PART rp WHERE project_id = $projectId And NOT EXISTS (
