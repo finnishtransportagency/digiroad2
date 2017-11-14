@@ -128,7 +128,7 @@
       backend.abortLoadingProject();
     };
 
-    this.saveProject = function (data) {
+    this.saveProject = function (data,resolution) {
       var projectid = 0;
       if (projectinfo !== undefined) {
         projectid = projectinfo.id;
@@ -152,7 +152,8 @@
             roadPartNumber: part.roadPartNumber,
             startingLinkId: part.startingLinkId
           };
-        })
+        }),
+        resolution: resolution
       };
 
       backend.saveRoadAddressProject(dataJson, function (result) {

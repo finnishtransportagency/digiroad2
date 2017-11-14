@@ -87,15 +87,17 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def calculateProjectCoordinates(links: Seq[ProjectLink], resolution: Int): ProjectCoordinates = {
-    val corners = GeometryUtils.boundingRectangleCorners(withGeometry(links).flatten(_.geometry))
-    val centerX = (corners._1.x + corners._2.x) / 2
-    val centerY = (corners._1.y + corners._2.y) / 2
-    val (xLength,yLength) = (corners._2.x - corners._1.x, corners._2.y - corners._1.y)
-    val zoom = Resolutions.indexOf(Resolutions.find(r => {
-      val (x, y) = (r * DefaultScreenWidth, r * DefaultScreenHeight)
-      x < xLength && y < yLength
-    }).getOrElse(8))
-    ProjectCoordinates(centerX,centerY, zoom)
+      val corners = GeometryUtils.boundingRectangleCorners(withGeometry(links).flatten(_.geometry))
+      val centerX = (corners._1.x + corners._2.x) / 2
+      val centerY = (corners._1.y + corners._2.y) / 2
+      val (xLength,yLength) = (Math.abs(corners._2.x - corners._1.x), Math.abs(corners._2.y - corners._1.y))
+      val zoom = Resolutions.map(r => {
+        (xLength / r, yLength / r) match {
+          case (x, y) if x < DefaultScreenWidth && y < DefaultScreenHeight  => Resolutions.indexOf(r)
+          case _ => 0
+        }
+      })
+      ProjectCoordinates(centerX,centerY, zoom.max)
   }
 
   private def createProject(roadAddressProject: RoadAddressProject, resolution: Int): RoadAddressProject = {
@@ -455,7 +457,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         logger.debug(s"Removed deleted ${linksOnRemovedParts.size}")
         ProjectDAO.create(newProjectLinks)
         logger.debug(s"New links created ${newProjectLinks.size}")
-        ProjectDAO.updateProjectCoordinates(project.id, calculateProjectCoordinates(newProjectLinks, resolution))
+        if (newProjectLinks.nonEmpty) {
+          ProjectDAO.updateProjectCoordinates(project.id, calculateProjectCoordinates(newProjectLinks, resolution))
+        }
         if (project.ely.isEmpty) {
           val ely = ProjectDAO.fetchReservedRoadParts(project.id).find(_.ely != -1).map(_.ely)
           if (ely.nonEmpty)

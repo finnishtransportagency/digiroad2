@@ -214,7 +214,7 @@
           projectCollection.setDirtyRoadParts(projectCollection.getReservedDirtyRoadParts());
           projectCollection.createProject(data, map.getView().getResolution());
         } else {
-          projectCollection.saveProject(data);
+          projectCollection.saveProject(data, map.getView().getResolution());
         }
       };
 
