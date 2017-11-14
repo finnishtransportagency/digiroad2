@@ -22,8 +22,10 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
   }
 
   private def fuseLengthChanges(sources: Seq[ChangeInfo]) = {
-    val (lengthened, others) = sources.partition(ci => ci.changeType == LengthenedCommonPart.value ||
+    val (lengthened, rest) = sources.partition(ci => ci.changeType == LengthenedCommonPart.value ||
     ci.changeType == LengthenedNewPart.value)
+    val (shortened, others) = rest.partition(ci => ci.changeType == ShortenedRemovedPart.value ||
+      ci.changeType == ShortenedCommonPart.value)
     others ++
       lengthened.groupBy(ci => (ci.newId, ci.vvhTimeStamp)).mapValues{ s =>
         val common = s.find(_.changeType == LengthenedCommonPart.value)
@@ -35,6 +37,19 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
             else
               (min(c.newStartMeasure.get, a.newStartMeasure.get, a.newEndMeasure.get), max(c.newEndMeasure.get, a.newEndMeasure.get, a.newStartMeasure.get))
             Some(c.copy(newStartMeasure = Some(expStart), newEndMeasure = Some(expEnd)))
+          case _ => None
+        }
+      }.values.flatten.toSeq ++
+      shortened.groupBy(ci => (ci.oldId, ci.vvhTimeStamp)).mapValues{ s =>
+        val common = s.find(_.changeType == ShortenedCommonPart.value)
+        val removed = s.find(_.changeType == ShortenedRemovedPart.value)
+        (common, removed) match {
+          case (Some(c), Some(r)) =>
+            val (expStart, expEnd) = if (c.oldStartMeasure.get > c.oldEndMeasure.get)
+              (max(c.oldStartMeasure.get, r.newStartMeasure.get, r.newEndMeasure.get), min(c.oldEndMeasure.get, c.newStartMeasure.get, r.newEndMeasure.get))
+            else
+              (min(c.oldStartMeasure.get, r.newStartMeasure.get, r.newEndMeasure.get), max(c.oldEndMeasure.get, r.newEndMeasure.get, r.newStartMeasure.get))
+            Some(c.copy(oldStartMeasure = Some(expStart), oldEndMeasure = Some(expEnd)))
           case _ => None
         }
       }.values.flatten.toSeq
