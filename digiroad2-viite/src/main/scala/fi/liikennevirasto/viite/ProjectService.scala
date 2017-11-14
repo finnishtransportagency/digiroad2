@@ -88,8 +88,8 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
 
   def calculateProjectCoordinates(links: Seq[ProjectLink], resolution: Int): ProjectCoordinates = {
     val corners = GeometryUtils.boundingRectangleCorners(withGeometry(links).flatten(_.geometry))
-    val centerX = Math.abs((corners._1.x + corners._2.x) / 2)
-    val centerY = Math.abs((corners._1.y + corners._2.y) / 2)
+    val centerX = (corners._1.x + corners._2.x) / 2
+    val centerY = (corners._1.y + corners._2.y) / 2
     val (xLength,yLength) = (corners._2.x - corners._1.x, corners._2.y - corners._1.y)
     val zoom = Resolutions.indexOf(Resolutions.find(r => {
       val (x, y) = (r * DefaultScreenWidth, r * DefaultScreenHeight)
