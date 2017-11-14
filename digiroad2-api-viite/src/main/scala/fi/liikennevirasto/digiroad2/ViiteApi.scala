@@ -32,7 +32,7 @@ case class RevertRoadLinksExtractor(projectId: Long, roadNumber: Long, roadPartN
 case class ProjectRoadAddressInfo(projectId: Long, roadNumber: Long, roadPartNumber: Long)
 
 case class RoadAddressProjectExtractor(id: Long, projectEly: Option[Long], status: Long, name: String, startDate: String,
-                                       additionalInfo: String, roadPartList: List[RoadPartExtractor])
+                                       additionalInfo: String, roadPartList: List[RoadPartExtractor], resolution: Int)
 
 case class RoadAddressProjectLinksExtractor(linkIds: Seq[Long], linkStatus: Int, projectId: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Int, discontinuity: Int, roadEly: Long, roadLinkSource: Int, roadType: Int, userDefinedEndAddressM: Option[Int])
 
@@ -217,10 +217,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val user = userProvider.getCurrentUser()
     val roadAddressProject = ProjectConverter.toRoadAddressProject(project, user)
     try {
-      //TODO 2. add coordinates to method
       if (project.id != 0) //we check if project is new. If it is then we check project for being in writable state
         projectWritable(roadAddressProject.id)
-      val projectSaved = projectService.createRoadLinkProject(roadAddressProject)
+      val projectSaved = projectService.createRoadLinkProject(roadAddressProject, project.resolution)
       val fetched = projectService.getRoadAddressSingleProject(projectSaved.id).get
       val firstAddress: Map[String, Any] =
         fetched.reservedParts.find(_.startingLinkId.nonEmpty).map(p => "projectAddresses" -> p.startingLinkId.get).toMap
@@ -244,7 +243,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     try {
       if (project.id != 0) //we check if project is new. If it is then we check project for being in writable state
         projectWritable(roadAddressProject.id)
-      val projectSaved = projectService.saveProject(roadAddressProject)
+      val projectSaved = projectService.saveProject(roadAddressProject, project.resolution)
       val firstLink = projectService.getFirstProjectLink(projectSaved)
       Map("project" -> roadAddressProjectToApi(projectSaved), "projectAddresses" -> firstLink, "formInfo" ->
         projectSaved.reservedParts.map(reservedRoadPartToApi),

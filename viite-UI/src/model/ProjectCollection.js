@@ -337,15 +337,16 @@
       });
     };
 
-    this.createProject = function (data) {
-      var coordinates = applicationModel.getUserGeoLocation();
+    this.createProject = function (data, resolution) {
+
       var dataJson = {
         id: 0,
         status: 1,
         name: data[0].value,
         startDate: data[1].value,
         additionalInfo: data[2].value,
-        roadPartList: dirtyRoadPartList
+        roadPartList: dirtyRoadPartList,
+        resolution: resolution
       };
 
       backend.createRoadAddressProject(dataJson, function (result) {

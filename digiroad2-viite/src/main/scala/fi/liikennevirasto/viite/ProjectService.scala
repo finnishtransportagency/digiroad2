@@ -86,20 +86,23 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     }
   }
 
-  def calculateProjectCoordinates(reserved: Seq[ReservedRoadPart]): ProjectCoordinates = {
-    ProjectCoordinates(0,0,0)
-    /*val links = withGeometry(ProjectDAO.getProjectLinks())
-    reserved.map(r => {
-      r
-      //r.
-    })*/
+  def calculateProjectCoordinates(links: Seq[ProjectLink], resolution: Int): ProjectCoordinates = {
+    val corners = GeometryUtils.boundingRectangleCorners(withGeometry(links).flatten(_.geometry))
+    val centerX = Math.abs((corners._1.x + corners._2.x) / 2)
+    val centerY = Math.abs((corners._1.y + corners._2.y) / 2)
+    val (xLength,yLength) = (corners._2.x - corners._1.x, corners._2.y - corners._1.y)
+    val zoom = Resolutions.indexOf(Resolutions.find(r => {
+      val (x, y) = (r * DefaultScreenWidth, r * DefaultScreenHeight)
+      x < xLength && y < yLength
+    }).getOrElse(8))
+    ProjectCoordinates(centerX,centerY, zoom)
   }
 
-  private def createProject(roadAddressProject: RoadAddressProject): RoadAddressProject = {
+  private def createProject(roadAddressProject: RoadAddressProject, resolution: Int): RoadAddressProject = {
     val id = Sequences.nextViitePrimaryKeySeqValue
     val project = roadAddressProject.copy(id = id)
     ProjectDAO.createRoadAddressProject(project)
-    val error = addLinksToProject(project)
+    val error = addLinksToProject(project, resolution)
     if (error.nonEmpty)
       throw new RoadPartReservedException(error.get)
     ProjectDAO.getRoadAddressProjectById(id).get
@@ -405,7 +408,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * Adds reserved road links (from road parts) to a road address project. Clears
     * project links that are no longer reserved for the project. Reservability is check before this.
     */
-  private def addLinksToProject(project: RoadAddressProject): Option[String] = {
+  private def addLinksToProject(project: RoadAddressProject, resolution: Int): Option[String] = {
     def toProjectLink(roadTypeMap: Map[Long, RoadType])(roadAddress: RoadAddress): ProjectLink = {
       ProjectLink(id = NewRoadAddress, roadAddress.roadNumber, roadAddress.roadPartNumber, roadAddress.track,
         roadAddress.discontinuity, roadAddress.startAddrMValue, roadAddress.endAddrMValue, roadAddress.startDate,
@@ -452,6 +455,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         logger.debug(s"Removed deleted ${linksOnRemovedParts.size}")
         ProjectDAO.create(newProjectLinks)
         logger.debug(s"New links created ${newProjectLinks.size}")
+        ProjectDAO.updateProjectCoordinates(project.id, calculateProjectCoordinates(newProjectLinks, resolution))
         if (project.ely.isEmpty) {
           val ely = ProjectDAO.fetchReservedRoadParts(project.id).find(_.ely != -1).map(_.ely)
           if (ely.nonEmpty)
@@ -596,7 +600,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @param roadAddressProject Updated road address project case class
     * @return Updated project reloaded from the database
     */
-  def saveProject(roadAddressProject: RoadAddressProject): RoadAddressProject = {
+  def saveProject(roadAddressProject: RoadAddressProject, resolution: Int = 8): RoadAddressProject = {
     if (projectFound(roadAddressProject).isEmpty)
       throw new IllegalArgumentException("Project not found")
     withDynTransaction {
@@ -605,17 +609,17 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         roadAddressProject.reservedParts.exists(rp => rp.roadPartNumber == part.roadPartNumber &&
           rp.roadNumber == part.roadNumber))
       removed.foreach(p => ProjectDAO.removeReservedRoadPart(roadAddressProject.id, p))
-      addLinksToProject(roadAddressProject)
+      addLinksToProject(roadAddressProject, resolution)
       ProjectDAO.updateRoadAddressProject(roadAddressProject)
       ProjectDAO.getRoadAddressProjectById(roadAddressProject.id).get
     }
   }
 
-  def createRoadLinkProject(roadAddressProject: RoadAddressProject): RoadAddressProject = {
+  def createRoadLinkProject(roadAddressProject: RoadAddressProject, resolution: Int = 8): RoadAddressProject = {
     if (roadAddressProject.id != 0)
       throw new IllegalArgumentException(s"Road address project to create has an id ${roadAddressProject.id}")
     withDynTransaction {
-      createProject(roadAddressProject)
+      createProject(roadAddressProject, resolution)
     }
   }
 

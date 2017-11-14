@@ -1,5 +1,5 @@
 (function (root) {
-  root.ProjectForm = function (projectCollection, selectedProjectLinkProperty, projectLinkLayer) {
+  root.ProjectForm = function (map, projectCollection, selectedProjectLinkProperty, projectLinkLayer) {
     var currentProject = false;
     var selectedProjectLink = false;
     var activeLayer = false;
@@ -212,7 +212,7 @@
         var data = $('#roadAddressProject').get(0);
         if (_.isUndefined(currentProject) || currentProject.id === 0) {
           projectCollection.setDirtyRoadParts(projectCollection.getReservedDirtyRoadParts());
-          projectCollection.createProject(data);
+          projectCollection.createProject(data, map.getView().getResolution());
         } else {
           projectCollection.saveProject(data);
         }
