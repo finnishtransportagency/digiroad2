@@ -69,8 +69,12 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
 
     val lastChanges = changeInfos.filter(_.newId.isDefined).groupBy(_.newId.get).mapValues(c => c.maxBy(_.vvhTimeStamp))
 
-    val sortExpired = expiredAssets.sortWith((a, b) => a.modifiedDateTime.isDefined && b.modifiedDateTime.isDefined && a.modifiedDateTime.get.isAfter(b.modifiedDateTime.get))
-    val lastModified = sortExpired.groupBy(_.linkId).mapValues(_.head).values
+    val lastModified = expiredAssets.groupBy(_.linkId).mapValues(
+      _.maxBy{x => x.modifiedDateTime match {
+        case Some(modifiedDate) => modifiedDate.getMillis
+        case _ => 0
+      }
+    }).values
     val notByMTKClass = lastModified.filterNot(_.modifiedBy == "vvh_mtkclass_default")
 
     //Map all existing assets by roadlink and changeinfo
