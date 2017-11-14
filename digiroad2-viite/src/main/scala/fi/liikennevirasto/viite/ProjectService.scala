@@ -253,8 +253,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         val project = getProjectWithReservationChecks(projectId, newRoadNumber, newRoadPartNumber)
 
         val ely= if (newLinks.nonEmpty)newLinks.head.elyCode else -1
-        if (!project.isReserved(newRoadNumber, newRoadPartNumber)){}
-
+        if (!project.isReserved(newRoadNumber, newRoadPartNumber))
           ProjectDAO.reserveRoadPart(project.id, newRoadNumber, newRoadPartNumber, project.modifiedBy, ely)
         val newProjectLinks = newLinks.map(projectLink => {
           projectLink.linkId ->
