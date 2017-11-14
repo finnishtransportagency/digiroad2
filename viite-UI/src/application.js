@@ -105,7 +105,7 @@
 
     new LinkPropertyForm(models.selectedLinkProperty);
 
-    new ProjectForm(models.projectCollection, models.selectedProjectLinkProperty);
+    new ProjectForm(models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer);
     new ProjectEditForm(models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend);
     new SplitForm(models.projectCollection, models.selectedProjectLinkProperty, projectLinkLayer, projectChangeTable, backend);
 
