@@ -268,7 +268,12 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
               logger.info("Added links recognized to be a roundabout - using roundabout addressing scheme")
               val ordered = newProjectLinks.values.toSeq.partition(_.linkId == firstLinkId)
               val created = TrackSectionOrder.mValueRoundabout(ordered._1 ++ ordered._2)
-              created
+              val endingM = created.map(_.endAddrMValue).max
+              created.map(pl =>
+                if (pl.endAddrMValue == endingM && endingM > 0)
+                  pl.copy(discontinuity = Discontinuity.EndOfRoad)
+                else
+                  pl.copy(discontinuity = Discontinuity.Continuous))
             } else {
               val existingLinks = withGeometry(ProjectDAO.fetchByProjectRoadPart(newRoadNumber, newRoadPartNumber, projectId), false)
               fillRampGrowthDirection(newProjectLinks.keys.toSet, newRoadNumber, newRoadPartNumber,

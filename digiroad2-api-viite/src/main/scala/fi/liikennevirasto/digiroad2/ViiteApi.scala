@@ -356,7 +356,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val user = userProvider.getCurrentUser()
     try {
       val links = parsedBody.extract[RoadAddressProjectLinksExtractor]
-      logger.info(s"Creating new links: ${links.linkIds.mkString(",")}")
+      logger.debug(s"Creating new links: ${links.linkIds.mkString(",")}")
       val writableProject = projectWritable(links.projectId)
       writableProject.createProjectLinks(links.linkIds, links.projectId, links.roadNumber, links.roadPartNumber,
         links.trackCode, links.discontinuity, links.roadType, links.roadLinkSource, links.roadEly, user.username)
