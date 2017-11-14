@@ -122,7 +122,12 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
 
   def getLinearAssets(assetTypeId: Int, assetId: Int): Seq[PersistedLinearAsset] ={
     val usedService = verifyLinearServiceToUse(assetTypeId)
-    usedService.getPersistedAssetsByIds(assetTypeId, Set(assetId.toLong)).filterNot(_.expired)
+    val linearAssets = usedService.getPersistedAssetsByIds(assetTypeId, Set(assetId.toLong)).filterNot(_.expired)
+
+    if (linearAssets.isEmpty)
+      halt(BadRequest("Asset not found."))
+
+    linearAssets
   }
 
   def getSpeedLimitAssetsByMunicipality(municipalityCode: Int): Seq[SpeedLimit] ={
@@ -130,7 +135,12 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
   }
 
   def getSpeedLimitAssets(assetId: Int): Seq[SpeedLimit] = {
-    speedLimitService.get(Seq(assetId.toLong)).filterNot(_.expired)
+    val speedLimits = speedLimitService.get(Seq(assetId.toLong)).filterNot(_.expired)
+
+    if (speedLimits.isEmpty)
+      halt(BadRequest("Asset not found."))
+
+    speedLimits
   }
 
   def updateLinearAssets(assetTypeId: Int, assetId: Int, parsedBody: JValue, linkId: Long): Seq[PersistedLinearAsset] = {
@@ -483,6 +493,10 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     if(!params.contains("municipalityCode"))
       halt(BadRequest("Missing municipality code."))
     val municipalityCode = params("municipalityCode").toInt
+
+    if (assetService.getMunicipalityById(municipalityCode).isEmpty)
+      halt(NotFound("Municipality code not found."))
+
     val assetTypeId = getAssetTypeId(params("assetType"))
 
     assetService.getGeometryType(assetTypeId) match {
