@@ -32,7 +32,7 @@ case class RevertRoadLinksExtractor(projectId: Long, roadNumber: Long, roadPartN
 case class ProjectRoadAddressInfo(projectId: Long, roadNumber: Long, roadPartNumber: Long)
 
 case class RoadAddressProjectExtractor(id: Long, projectEly: Option[Long], status: Long, name: String, startDate: String,
-                                       additionalInfo: String, roadPartList: List[RoadPartExtractor], coordinates: ProjectCoordinates)
+                                       additionalInfo: String, roadPartList: List[RoadPartExtractor])
 
 case class RoadAddressProjectLinksExtractor(linkIds: Seq[Long], linkStatus: Int, projectId: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Int, discontinuity: Int, roadEly: Long, roadLinkSource: Int, roadType: Int, userDefinedEndAddressM: Option[Int])
 
@@ -275,7 +275,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   put("/project/reverse") {
     val user = userProvider.getCurrentUser()
     try {
-      //TODO 4.
+      //TODO 4. add coordinates to method
       //check for validity
       val roadInfo = parsedBody.extract[RevertRoadLinksExtractor]
       val writableProjectService = projectWritable(roadInfo.projectId)
@@ -339,7 +339,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       if (linksToRevert.links.nonEmpty) {
         val writableProject = projectWritable(linksToRevert.projectId)
         val user = userProvider.getCurrentUser().username
-        writableProject.revertLinks(linksToRevert.projectId, linksToRevert.roadNumber, linksToRevert.roadPartNumber, linksToRevert.links, user) match {
+        writableProject.revertLinks(linksToRevert.projectId, linksToRevert.roadNumber, linksToRevert.roadPartNumber, linksToRevert.links, linksToRevert.coordinates, user) match {
           case None => Map("success" -> true)
           case Some(s) => Map("success" -> false, "errorMessage" -> s)
         }
@@ -380,7 +380,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   put("/roadlinks/roadaddress/project/links") {
     val user = userProvider.getCurrentUser()
     try {
-      //TODO 4. add coordinates to method
+      //TODO 5. add coordinates to method
       val links = parsedBody.extract[RoadAddressProjectLinksExtractor]
       val writableProject = projectWritable(links.projectId)
       writableProject.updateProjectLinks(links.projectId, links.linkIds.toSet,
@@ -491,10 +491,9 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       val projectId = data.projectId
       val linkId = data.linkId
       val coordinates = data.coordinates
-
       (projectId, linkId) match {
         case (Some(project), Some(link)) =>
-          val error = projectService.revertSplit(project, link, user.username)
+          val error = projectService.revertSplit(project, link, coordinates, user.username)
           Map("success" -> error.isEmpty, "message" -> error)
         case _ => BadRequest("Missing mandatory 'projectId' or 'linkId' parameter from URI: /project/split/:projectId/:linkId")
       }

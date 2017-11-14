@@ -353,7 +353,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean]))
         .thenReturn(Seq(toRoadLink(suravageAddressLink), roadLink))
       when(mockRoadAddressService.getSuravageRoadLinkAddressesByLinkIds(any[Set[Long]])).thenReturn(Seq(suravageAddressLink))
-      projectServiceWithRoadAddressMock.revertSplit(projectId, 1, "user") should be (None)
+      projectServiceWithRoadAddressMock.revertSplit(projectId, 1, ProjectCoordinates(0, 1, 1), "user") should be (None)
     }
   }
 
@@ -1344,7 +1344,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       upProject.get.reservedParts.map(_.roadPartNumber).toSet should be(Set(101L, 201L))
 
       val renumberedLinks = ProjectDAO.getProjectLinks(project.id, Some(LinkStatus.Numbering))
-      projectService.revertLinks(renumberedLinks, "user") should be (None)
+      projectService.revertLinks(renumberedLinks, ProjectCoordinates(0, 1, 1), "user") should be (None)
 
       val revertedProject = projectService.getRoadAddressSingleProject(project.id)
       revertedProject.nonEmpty should be(true)

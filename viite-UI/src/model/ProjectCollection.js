@@ -130,7 +130,6 @@
 
     this.saveProject = function (data) {
       var projectid = 0;
-      var coordinates = applicationModel.getUserGeoLocation();
       if (projectinfo !== undefined) {
         projectid = projectinfo.id;
       } else if (currentProject!==undefined && currentProject.project.id!==undefined)
@@ -153,8 +152,7 @@
             roadPartNumber: part.roadPartNumber,
             startingLinkId: part.startingLinkId
           };
-        }),
-        coordinates: coordinates
+        })
       };
 
       backend.saveRoadAddressProject(dataJson, function (result) {
@@ -347,8 +345,7 @@
         name: data[0].value,
         startDate: data[1].value,
         additionalInfo: data[2].value,
-        roadPartList: dirtyRoadPartList,
-        coordinates:coordinates
+        roadPartList: dirtyRoadPartList
       };
 
       backend.createRoadAddressProject(dataJson, function (result) {
