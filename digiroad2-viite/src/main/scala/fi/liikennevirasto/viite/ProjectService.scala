@@ -291,7 +291,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
     * @param linkIds the linkIds to process
     * @param roadNumber the roadNumber to apply/was applied to said linkIds
     * @param roadPartNumber the roadPartNumber to apply/was applied to said linkIds
-    * @param existingLinks the whole newProjectLinks
+    * @param existingLinks the whole existingProjectLinks
     * @return the projectLinks with a assigned SideCode
     */
   private def fillRampGrowthDirection(linkIds: Set[Long], roadNumber: Long, roadPartNumber: Long,
