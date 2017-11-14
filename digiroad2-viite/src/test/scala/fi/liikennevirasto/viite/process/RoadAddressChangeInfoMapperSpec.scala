@@ -1,8 +1,10 @@
 package fi.liikennevirasto.viite.process
 
+import fi.liikennevirasto.digiroad2.asset.SideCode.{AgainstDigitizing, TowardsDigitizing}
 import fi.liikennevirasto.digiroad2.{ChangeInfo, Point}
 import fi.liikennevirasto.digiroad2.asset.{LinkGeomSource, SideCode}
 import fi.liikennevirasto.digiroad2.util.Track
+import fi.liikennevirasto.viite.dao.Discontinuity.EndOfRoad
 import fi.liikennevirasto.viite.{NewRoadAddress, RoadType}
 import fi.liikennevirasto.viite.dao.{Discontinuity, RoadAddress}
 import fi.liikennevirasto.viite.util.prettyPrint
@@ -154,5 +156,50 @@ class RoadAddressChangeInfoMapperSpec extends FunSuite with Matchers {
     addr3.adjustedTimestamp should be (changesVVHTimestamp)
   }
 
+  test("split a road address link into three") {
+    val roadLinkId1 = 123L
+    val roadLinkId2 = 456L
+    val roadLinkId3 = 789L
+
+    val roadAdjustedTimestamp = 0L
+    val changesVVHTimestamp = 96400L
+
+    val roadAddress1 = RoadAddress(1, 1, 1, RoadType.Unknown, Track.RightSide, Discontinuity.EndOfRoad, 400, 1400, Some(DateTime.now), None,
+      None, 0L, roadLinkId1, 0.0, 960.434, SideCode.AgainstDigitizing, roadAdjustedTimestamp, (None, None), false, Seq(Point(0.0, 0.0), Point(960.434, 0.0)), LinkGeomSource.NormalLinkInterface, 8)
+    val map = Seq(roadAddress1).groupBy(_.linkId)
+    val changes = Seq(
+      //Remain
+      ChangeInfo(Some(roadLinkId1), Some(roadLinkId1), 123L, 5, Some(399.648), Some(847.331), Some(0.0), Some(447.682), changesVVHTimestamp),
+      //Move
+      ChangeInfo(Some(roadLinkId1), Some(roadLinkId2), 456L, 6, Some(0.0), Some(399.648), Some(0.0), Some(399.648), changesVVHTimestamp),
+      ChangeInfo(Some(roadLinkId1), Some(roadLinkId3), 789L, 6, Some(847.331), Some(960.434), Some(113.103), Some(0.0), changesVVHTimestamp)
+    )
+    val results = RoadAddressChangeInfoMapper.resolveChangesToMap(map, Seq(), changes).mapValues(_.sortBy(_.startAddrMValue))
+    results.get(roadLinkId1).isEmpty should be (false)
+    results.get(roadLinkId2).isEmpty should be (false)
+    results.get(roadLinkId3).isEmpty should be (false)
+    val addr1 = results(roadLinkId1)(0)
+    addr1.startMValue should be (0.0)
+    addr1.endMValue should be (447.682)
+    addr1.startAddrMValue should be (518)
+    addr1.endAddrMValue should be (984)
+    addr1.adjustedTimestamp should be (changesVVHTimestamp)
+    addr1.sideCode should be (AgainstDigitizing)
+    val addr2 = results(roadLinkId2)(0)
+    addr2.startMValue should be (0.0)
+    addr2.endMValue should be (399.648)
+    addr2.startAddrMValue should be (984)
+    addr2.endAddrMValue should be (1400)
+    addr2.adjustedTimestamp should be (changesVVHTimestamp)
+    addr2.sideCode should be (AgainstDigitizing)
+    val addr3 = results(roadLinkId3)(0)
+    addr3.startMValue should be (0.0)
+    addr3.endMValue should be (113.103)
+    addr3.startAddrMValue should be (400)
+    addr3.endAddrMValue should be (518)
+    addr3.adjustedTimestamp should be (changesVVHTimestamp)
+    addr3.sideCode should be (TowardsDigitizing)
+    addr3.discontinuity should be (EndOfRoad)
+  }
 
 }
