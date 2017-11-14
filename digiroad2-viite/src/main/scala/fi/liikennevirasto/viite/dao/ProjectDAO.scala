@@ -200,7 +200,7 @@ object ProjectDAO {
   def updateProjectCoordinates(projectId: Long, coordinates: ProjectCoordinates): Unit = {
     sqlu"""
          update project set coord_x = ${coordinates.x}, coord_y = ${coordinates.y}, zoom= ${coordinates.zoom}
-         where project_id = $projectId""".execute
+         where id = $projectId""".execute
   }
 
   def updateProjectLinksToDB(projectLinks: Seq[ProjectLink], modifier: String): Unit = {
