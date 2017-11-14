@@ -42,6 +42,7 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
   val MunicipalityKauniainen = 235
   val testUserProvider = userProvider
   val roadLinkCsvImporter = importerWithNullService()
+  val trafficSignCsvImporter : TrafficSignCsvImporter = new TrafficSignCsvImporter
 
   private def importerWithNullService() : RoadLinkCsvImporter = {
     new RoadLinkCsvImporter {
@@ -69,6 +70,14 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
     val headers = defaultKeys.mkString(";") + "\n"
     val rows = assets.map { asset =>
       defaultKeys.map { key => asset.getOrElse(key, "") }.mkString(";")
+    }.mkString("\n")
+    headers + rows
+  }
+
+  private def createCsvForTrafficSigns(assets: Map[String, Any]*): String = {
+    val headers = trafficSignCsvImporter.mappings.keys.toList.mkString(";") + "\n"
+    val rows = assets.map { asset =>
+      trafficSignCsvImporter.mappings.keys.toList.map { key => asset.getOrElse(key, "") }.mkString(";")
     }.mkString("\n")
     headers + rows
   }
@@ -302,6 +311,17 @@ class CsvDataImporterSpec extends AuthenticatedApiSpec with BeforeAndAfter {
       roadLinkCsvImporter.importLinkAttribute(csv) should equal(roadLinkCsvImporter.ImportResult())
       RoadLinkServiceDAO.getLinkTypeValue(link_id) should equal(Some(linkTypeValue))
     }
+  }
+
+  test("validation for traffic sign import fails if type contains illegal characters", Tag("db")) {
+    val assetFields = Map("Koordinaatti X" -> 1, "Koordinaatti Y" -> 1, "Liikennemerkin tyyppi" -> "a")
+    val invalidCsv = csvToInputStream(createCsvForTrafficSigns(assetFields))
+    val defaultValues = trafficSignCsvImporter.mappings.keys.toList.map { key => key -> "" }.toMap
+
+    trafficSignCsvImporter.importTrafficSigns(invalidCsv) should equal(trafficSignCsvImporter.ImportResult(
+      malformedAssets = List(trafficSignCsvImporter.MalformedAsset(
+        malformedParameters = List("Liikennemerkin tyyppi"),
+        csvRow = trafficSignCsvImporter.rowToString(defaultValues ++ assetFields)))))
   }
 
   private def csvToInputStream(csv: String): InputStream = new ByteArrayInputStream(csv.getBytes())

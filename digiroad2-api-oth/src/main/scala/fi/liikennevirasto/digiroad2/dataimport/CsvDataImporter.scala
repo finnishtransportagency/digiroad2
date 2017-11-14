@@ -8,11 +8,13 @@ import com.jolbox.bonecp.{BoneCPConfig, BoneCPDataSource}
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
 import fi.liikennevirasto.digiroad2.roadlinkservice.oracle.RoadLinkServiceDAO
-import fi.liikennevirasto.digiroad2.VVHClient
+import fi.liikennevirasto.digiroad2.{Digiroad2Context, TRTrafficSignType, TrafficSignService, VVHClient}
 import fi.liikennevirasto.digiroad2.user.UserProvider
 import org.apache.commons.lang3.StringUtils.isBlank
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
-import fi.liikennevirasto.digiroad2.Digiroad2Context.{userProvider}
+import fi.liikennevirasto.digiroad2.Digiroad2Context.userProvider
+
+import scala.util.Try
 
 
 
@@ -43,34 +45,166 @@ trait CsvDataImporterOperations {
 }
 class TrafficSignCsvImporter extends CsvDataImporterOperations {
 
+  type MalformedParameters = List[String]
+  type ParsedProperties = List[AssetProperty]
+  type ParsedAssetRow = (MalformedParameters, ParsedProperties)
+
+  case class IncompleteAsset(missingParameters: List[String], csvRow: String)
+  case class MalformedAsset(malformedParameters: List[String], csvRow: String)
+  case class ExcludedAsset(affectedRoadLinkType: String, csvRow: String)
+  case class ImportResult(incompleteAssets: List[IncompleteAsset] = Nil,
+                          malformedAssets: List[MalformedAsset] = Nil,
+                          excludedAssets: List[ExcludedAsset] = Nil)
+  case class AssetProperty(columnName: String, value: Any)
+  case class CsvAssetRow(properties: Seq[AssetProperty])
+
   override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
+  val trafficSignService: TrafficSignService = Digiroad2Context.trafficSignService
 
   val trafficSignAssetTypeId: Int = 300
+  val authorizedValues: List[Int] = List(341, 342, 344, 345, 346, 347, 361, 363, 364, 572, 571, 551, 376, 374, 375, 373, 372, 352, 351, 342, 333, 331, 324, 312, 311, 152, 511, 371)
 
+  private val longValueFieldMappings = Map(
+    "Koordinaatti X" -> "lon",
+    "Koordinaatti Y" -> "lat"
+  )
+
+  private val nonMandatoryMappings = Map(
+    "Arvo" -> "value",
+    "Kaksipuolinen merkki" -> "twoSided",
+    "Liikennevirran suunta" -> "trafficDirection"
+  )
+
+  private val intFieldMappings = Map(
+    "suuntima" -> "bearing"
+  )
+
+  private val codeValueFieldMappings = Map(
+    "Liikennemerkin tyyppi" -> "trafficSignType"
+  )
+
+  val mappings = intFieldMappings ++ longValueFieldMappings ++ nonMandatoryMappings ++ codeValueFieldMappings
+
+  private val mandatoryFields = List("Koordinaatti X", "Koordinaatti Y", "Liikennemerkin tyyppi")
+
+  val MandatoryParameters: Set[String] = mappings.keySet ++ mandatoryFields
+
+  private def findMissingParameters(csvRowWithHeaders: Map[String, String]): List[String] = {
+    MandatoryParameters.diff(csvRowWithHeaders.keys.toSet).toList
+  }
+
+  def rowToString(csvRowWithHeaders: Map[String, Any]): String = {
+    csvRowWithHeaders.view map { case (key, value) => key + ": '" + value + "'" } mkString ", "
+  }
+
+  private def verifyValueType(parameterName: String, parameterValue: String): ParsedAssetRow = {
+    parameterValue.forall(_.isDigit) match {
+      case true => (Nil, List(AssetProperty(columnName = intFieldMappings(parameterName), value = parameterValue.toInt)))
+      case false => (List(parameterName), Nil)
+    }
+  }
+
+  private def verifyDoubleType(parameterName: String, parameterValue: String): ParsedAssetRow = {
+    if(parameterValue.matches("[0-9.]*")) {
+      (Nil, List(AssetProperty(columnName = longValueFieldMappings(parameterName), value = BigDecimal(parameterValue))))
+    } else {
+      (List(parameterName), Nil)
+    }
+  }
+
+  private def verifyValueCode(parameterName: String, parameterValue: String): ParsedAssetRow = {
+    parameterValue.forall(_.isDigit) match {
+      case true => if (authorizedValues.contains(parameterValue.toInt)) {
+        (Nil, List(AssetProperty(columnName = codeValueFieldMappings(parameterName), value = parameterValue.toInt)))
+      } else {
+        (List(parameterName), Nil)
+      }
+      case false => (List(parameterName), Nil)
+    }
+  }
+
+  def tryToInt(propertyValue: String ) = {
+    Try(propertyValue.toInt).toOption
+  }
+
+  private def assetRowToProperties(csvRowWithHeaders: Map[String, String]): ParsedAssetRow = {
+    csvRowWithHeaders.foldLeft(Nil: MalformedParameters, Nil: ParsedProperties) { (result, parameter) =>
+      val (key, value) = parameter
+
+      if (isBlank(value.toString)) {
+        if (mandatoryFields.contains(key))
+          result.copy(_1 = List(key) ::: result._1, _2 = result._2)
+        else if ((nonMandatoryMappings.contains(key))) {
+          result.copy(_2 = AssetProperty(columnName = nonMandatoryMappings(key), value = value) :: result._2)
+        }else
+          result
+      } else {
+        if (intFieldMappings.contains(key)) {
+          val (malformedParameters, properties) = verifyValueType(key, value.toString)
+          result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
+        } else if (longValueFieldMappings.contains(key)) {
+          val (malformedParameters, properties) = verifyDoubleType(key, value.toString)
+          result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
+        } else if (codeValueFieldMappings.contains(key)) {
+          val (malformedParameters, properties) = verifyValueCode(key, value.toString)
+          result.copy(_1 = malformedParameters ::: result._1, _2 = properties ::: result._2)
+        } else if (nonMandatoryMappings.contains(key)) {
+          result.copy(_2 = AssetProperty(columnName = nonMandatoryMappings(key), value = value) :: result._2)
+        } else
+          result
+      }
+    }
+  }
+  def getPropertyValue(trafficSignAttributes: CsvAssetRow, propertyName: String): Option[AssetProperty] = {
+    trafficSignAttributes.properties.find (prop => prop.columnName == propertyName)
+  }
+  def createTrafficSigns(trafficSignAttributes: CsvAssetRow): Unit ={
+    val value = tryToInt(getPropertyValue(trafficSignAttributes, "value").map(_.value).get.toString)
+    val trafficSignType = getPropertyValue(trafficSignAttributes, "trafficSignType").map(_.value).get.toString.toInt
+    val bearing = getPropertyValue(trafficSignAttributes, "bearing").map(_.value).get.toString.toInt
+    val trafficDirection = tryToInt(getPropertyValue(trafficSignAttributes, "trafficDirection").map(_.value).get.toString)
+    val twoSided = tryToInt(getPropertyValue(trafficSignAttributes, "twoSided").map(_.value).get.toString)
+    val lon = getPropertyValue(trafficSignAttributes, "lon").map(_.value).get.asInstanceOf[BigDecimal].toLong
+    val lat = getPropertyValue(trafficSignAttributes, "lat").map(_.value).get.asInstanceOf[BigDecimal].toLong
+
+
+//    trafficSignService.createFromCoordinates(lon, lat, TRTrafficSignType.apply(trafficSignType), value, false, TrafficDirection.UnknownDirection, Some(bearing))
+  }
+
+
+  def importTrafficSigns(inputStream: InputStream): ImportResult = {
+    val streamReader = new InputStreamReader(inputStream, "UTF-8")
+    val csvReader = CSVReader.open(streamReader)(new DefaultCSVFormat {
+      override val delimiter: Char = ';'
+    })
+    csvReader.allWithHeaders().foldLeft(ImportResult()) { (result, row) =>
+
+      val missingParameters = findMissingParameters(row)
+      val (malformedParameters, properties) = assetRowToProperties(row)
+
+      if (missingParameters.nonEmpty || malformedParameters.nonEmpty) {
+        result.copy(
+          incompleteAssets = missingParameters match {
+            case Nil => result.incompleteAssets
+            case parameters => IncompleteAsset(missingParameters = parameters, csvRow = rowToString(row)) :: result.incompleteAssets
+          },
+          malformedAssets = malformedParameters match {
+            case Nil => result.malformedAssets
+            case parameters => MalformedAsset(malformedParameters = parameters, csvRow = rowToString(row)) :: result.malformedAssets
+          })
+
+      } else {
+        withDynTransaction {
+          val parsedRow = CsvAssetRow(properties = properties)
+          createTrafficSigns(parsedRow)
+
+          result
+        }
+      }
+    }
+    }
 }
-
 class RoadLinkCsvImporter extends CsvDataImporterOperations {
-
-  override lazy val dr2properties: Properties = {
-    val props = new Properties()
-    props.load(getClass.getResourceAsStream("/digiroad2.properties"))
-    props
-  }
-
-  override lazy val dataSource = {
-    val cfg = new BoneCPConfig(OracleDatabase.loadProperties("/bonecp.properties"))
-    new BoneCPDataSource(cfg)
-  }
-
-  override protected def getProperty(name: String) = {
-    val property = dr2properties.getProperty(name)
-    if(property != null)
-      property
-    else
-      throw new RuntimeException(s"cannot find property $name")
-  }
-
-  override def withDynTransaction[T](f: => T): T = OracleDatabase.withDynTransaction(f)
 
   case class NonUpdatedLink(linkId: Long, csvRow: String)
   case class IncompleteLink(missingParameters: List[String], csvRow: String)

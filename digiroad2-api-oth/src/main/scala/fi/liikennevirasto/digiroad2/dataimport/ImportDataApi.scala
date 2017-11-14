@@ -17,12 +17,13 @@ class ImportDataApi extends ScalatraServlet with FileUploadSupport with JacksonJ
   protected implicit val jsonFormats: Formats = DefaultFormats
   private val CSV_LOG_PATH = "/tmp/csv_data_import_logs/"
   private val  ROAD_LINK_LOG = "road link import"
+  private val TRAFFIC_SIGN_LOG = "traffic sign import"
   private val roadLinkCsvImporter = new RoadLinkCsvImporter
   private val trafficSignCsvImporter = new TrafficSignCsvImporter
 
   private def verifyServiceToUse(assetType: String, csvFileInputStream: InputStream): CsvDataImporterOperations = {
     assetType match {
-      case "trafficsigns" => trafficSignCsvImporter
+      case "trafficsigns" => importTrafficSigns(csvFileInputStream)
       case _ => importRoadLinks(csvFileInputStream)
     }
   }
@@ -35,6 +36,27 @@ class ImportDataApi extends ScalatraServlet with FileUploadSupport with JacksonJ
       case ise: IllegalStateException => halt(Unauthorized("Authentication error: " + ise.getMessage))
     }
     response.setHeader(Digiroad2ServerOriginatedResponseHeader, "true")
+  }
+
+  def importTrafficSigns(csvFileInputStream: InputStream): Nothing = {
+    val id = ImportLogService.save("Kohteiden lataus on käynnissä. Päivitä sivu hetken kuluttua uudestaan.", TRAFFIC_SIGN_LOG)
+    try {
+      val result = trafficSignCsvImporter.importTrafficSigns(csvFileInputStream)
+      val response = result match {
+        case trafficSignCsvImporter.ImportResult(Nil, Nil, Nil) => "CSV tiedosto käsitelty." //succesfully processed
+        case trafficSignCsvImporter.ImportResult(Nil, excludedLinks, Nil) => "CSV tiedosto käsitelty. Seuraavat päivitykset on jätetty huomioimatta:\n" + pretty(Extraction.decompose(excludedLinks)) //following links have been excluded
+        case _ => pretty(Extraction.decompose(result))
+      }
+      ImportLogService.save(id, response, TRAFFIC_SIGN_LOG)
+    } catch {
+      case e: Exception => {
+        ImportLogService.save(id, "Latauksessa tapahtui odottamaton virhe: " + e.toString(), TRAFFIC_SIGN_LOG) //error when saving log
+        throw e
+      }
+    } finally {
+      csvFileInputStream.close()
+    }
+    redirect(url("/log/" + id + "/" + TRAFFIC_SIGN_LOG))
   }
 
   def importRoadLinks(csvFileInputStream: InputStream): Nothing = {
@@ -55,11 +77,11 @@ class ImportDataApi extends ScalatraServlet with FileUploadSupport with JacksonJ
     } finally {
       csvFileInputStream.close()
     }
-    redirect(url("/log/" + id))
+    redirect(url("/log/" + id + "/" + ROAD_LINK_LOG))
   }
 
-  get("/log/:id") {
-    params.getAs[Long]("id").flatMap(id => ImportLogService.get(id, ROAD_LINK_LOG)).getOrElse("Logia ei löytynyt.")
+  get("/log/:id/:assetTypeLog") {
+    params.getAs[Long]("id").flatMap(id => ImportLogService.get(id, params("assetTypeLog"))).getOrElse("Logia ei löytynyt.")
   }
 
   post("/csv") {
