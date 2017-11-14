@@ -20,7 +20,7 @@
     var isNotEditingData = true;
     Layer.call(this, layerName, roadLayer);
     var me = this;
-    var styler = new Styler();
+    var styler = new RoadLinkStyler(true);
     var projectLinkStyler = new ProjectLinkStyler();
 
     var vectorSource = new ol.source.Vector({
@@ -77,7 +77,7 @@
         if (status === LinkStatus.NotHandled.value || status === LinkStatus.Terminated.value || status  === LinkStatus.New.value || status == LinkStatus.Transfer.value || status === LinkStatus.Unchanged.value || status == LinkStatus.Numbering.value) {
           return projectLinkStyler.getProjectLinkStyle().getStyle( feature.projectLinkData, {zoomLevel: currentZoom});
         } else {
-          return styler.generateStyleByFeature(feature.projectLinkData, currentZoom);
+          return styler.getRoadLinkStyle().getStyle(feature.projectLinkData, currentZoom);
         }
     }
     });
@@ -432,7 +432,7 @@
         else {
           roadData = featureAtPixel.roadLinkData;
         }
-        //TODO roadData !== null is there for test having no info ready (race condition where hower often looses) should be somehow resolved
+        //TODO roadData !== null is there for test having no info ready (race condition where hover often loses) should be somehow resolved
         if (infoContent !== null) {
           if (roadData !== null || (roadData.roadNumber !== 0 && roadData.roadPartNumber !== 0 && roadData.roadPartNumber !== 99 )) {
             infoContent.innerHTML = '<p>' +
@@ -727,11 +727,21 @@
 
     eventbus.on('changeProjectDirection:clicked', function () {
       projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1, undefined, projectCollection.getPublishableStatus());
+      eventbus.once('roadAddressProject:fetched', function () {
+        if (selectedProjectLinkProperty.get().length > 1 && !_.isUndefined(selectedProjectLinkProperty.get()[0].connectedLinkId)) {
+          selectedProjectLinkProperty.openSplit(selectedProjectLinkProperty.get()[0].linkId, true);
+        } else
+        if (selectedProjectLinkProperty.get().length > 1 && _.isUndefined(selectedProjectLinkProperty.get()[0].connectedLinkId))
+          selectedProjectLinkProperty.open(selectedProjectLinkProperty.get()[0].linkId, true);
+        else
+          selectedProjectLinkProperty.open(selectedProjectLinkProperty.get()[0].linkId, false);
+      });
     });
 
     eventbus.on('projectLink:revertedChanges', function () {
       eventbus.trigger('roadAddress:projectLinksUpdated');
       projectCollection.fetch(map.getView().calculateExtent(map.getSize()).join(','), currentZoom + 1, undefined, projectCollection.getPublishableStatus());
+      showChangesAndSendButton();
     });
 
     var redraw = function () {

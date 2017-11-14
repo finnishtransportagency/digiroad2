@@ -173,16 +173,11 @@
     }, 1000);
 
       this.directionChangeNewRoadlink = _.throttle(function (data, success, failure) {
-        var Json = {
-          projectId : data[0],
-          roadNumber : data[1],
-          roadPartNumber : data[2]
-        };
           $.ajax({
               contentType: "application/json",
               type: "PUT",
               url: "api/viite/project/reverse",
-              data: JSON.stringify(Json),
+              data: JSON.stringify(data),
               dataType: "json",
               success: success,
               error: failure
@@ -278,7 +273,7 @@
     function latestResponseRequestor(getParameters) {
       var deferred;
       var requests = new Bacon.Bus();
-      var responses = requests.debounce(200).flatMapLatest(function(params) {
+      var responses = requests.debounceImmediate(500).flatMapLatest(function(params) {
         return Bacon.$.ajax(params, true);
       });
 

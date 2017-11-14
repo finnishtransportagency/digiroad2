@@ -14,6 +14,8 @@ object ProjectSectionCalculator {
   private val logger = LoggerFactory.getLogger(getClass)
 
   /**
+    * NOTE! Should be called from project service only at recalculate method - other places are usually wrong places
+    * and may miss user given calibration points etc.
     * Recalculates the AddressMValues for project links. LinkStatus.New will get reassigned values and all
     * others will have the transfer/unchanged rules applied for them.
     * Terminated links will not be recalculated
@@ -44,7 +46,9 @@ object ProjectSectionCalculator {
       (st.map(cp => CalibrationPoint(linkId, cp.segmentMValue, cp.addressMValue)),
       en.map(cp => CalibrationPoint(linkId, cp.segmentMValue, cp.addressMValue)))
     }
-    val startingLink = oldProjectLinks.sortBy(_.startAddrMValue).headOption.orElse(newProjectLinks.headOption).toSeq
+    val startingLink = oldProjectLinks.sortBy(_.startAddrMValue).headOption.orElse(
+      newProjectLinks.find(pl => pl.endAddrMValue != 0 && pl.startAddrMValue == 0)).orElse(
+      newProjectLinks.headOption).toSeq
     val rest = (newProjectLinks ++ oldProjectLinks).filterNot(startingLink.contains)
     val mValued = TrackSectionOrder.mValueRoundabout(startingLink ++ rest)
     if (userCalibrationPoints.nonEmpty) {
@@ -72,13 +76,17 @@ object ProjectSectionCalculator {
                                 calibrationPoints: Seq[UserDefinedCalibrationPoint]): (Point, Point) = {
     val rightStartPoint = findStartingPoint(newLinks.filter(_.track != Track.LeftSide), oldLinks.filter(_.track != Track.LeftSide),
       calibrationPoints)
-    // Get left track non-connected points and find the closest to right track starting point
-    val leftLinks = newLinks.filter(_.track != Track.RightSide) ++ oldLinks.filter(_.track != Track.RightSide)
-    val leftPoints = TrackSectionOrder.findOnceConnectedLinks(leftLinks).keys
-    if (leftPoints.isEmpty)
-      throw new InvalidAddressDataException("Missing left track starting points")
-    val leftStartPoint = leftPoints.minBy(lp => (lp - rightStartPoint).length())
-    (rightStartPoint, leftStartPoint)
+    if ((oldLinks ++ newLinks).exists(l => GeometryUtils.areAdjacent(l.geometry, rightStartPoint) && l.track == Track.Combined))
+      (rightStartPoint, rightStartPoint)
+    else {
+      // Get left track non-connected points and find the closest to right track starting point
+      val leftLinks = newLinks.filter(_.track != Track.RightSide) ++ oldLinks.filter(_.track != Track.RightSide)
+      val leftPoints = TrackSectionOrder.findOnceConnectedLinks(leftLinks).keys
+      if (leftPoints.isEmpty)
+        throw new InvalidAddressDataException("Missing left track starting points")
+      val leftStartPoint = leftPoints.minBy(lp => (lp - rightStartPoint).length())
+      (rightStartPoint, leftStartPoint)
+    }
   }
   /**
     * Find a starting point for this road part
@@ -105,20 +113,7 @@ object ProjectSectionCalculator {
         // Approximate estimate of the mid point: averaged over count, not link length
         val midPoint = points.map(p => p._1 + (p._2 - p._1).scale(0.5)).foldLeft(Vector3d(0,0,0)){case (x, p) =>
           (p - Point(0,0)).scale(1.0/points.size) + x}
-
-        points.foldLeft((Point(0.0, 0.0), Double.MaxValue)) { case ((current), (start, end)) =>
-          // Find if any other link is connected to start or end: if not, add them to possible starting points' list
-          val s = Seq(current) ++
-            (if (points.exists(p => GeometryUtils.areAdjacent(p._2, start)))
-              Seq()
-            else
-              Seq(start -> direction.dot(start.toVector - midPoint))) ++
-            (if (points.exists(p => GeometryUtils.areAdjacent(p._1, end)))
-              Seq()
-            else
-              Seq(end -> direction.dot(end.toVector - midPoint)))
-          s.minBy(_._2)
-        }._1
+        TrackSectionOrder.findOnceConnectedLinks(remainLinks).keys.minBy(p => direction.dot(p.toVector - midPoint))
       }
 
     )
@@ -226,6 +221,12 @@ object ProjectSectionCalculator {
         case ex: InvalidAddressDataException =>
           logger.info(s"Can't calculate road/road part ${part._1}/${part._2}: " + ex.getMessage)
           projectLinks ++ oldLinks
+        case ex: NoSuchElementException =>
+          logger.info("Delta calculation failed: " + ex.getMessage, ex)
+          projectLinks ++ oldLinks
+        case ex: NullPointerException =>
+          logger.info("Delta calculation failed (NPE)", ex)
+          projectLinks ++ oldLinks
         case ex: Throwable =>
           logger.info("Delta calculation not possible: " + ex.getMessage)
           projectLinks ++ oldLinks
@@ -297,25 +298,20 @@ object ProjectSectionCalculator {
 
 }
 case class RoadAddressSection(roadNumber: Long, roadPartNumberStart: Long, roadPartNumberEnd: Long, track: Track,
-                              startMAddr: Long, endMAddr: Long, discontinuity: Discontinuity, roadType: RoadType, ely: Long) {
+                              startMAddr: Long, endMAddr: Long, discontinuity: Discontinuity, roadType: RoadType, ely: Long, reversed: Boolean) {
   def includes(ra: BaseRoadAddress): Boolean = {
     // within the road number and parts included
     ra.roadNumber == roadNumber && ra.roadPartNumber >= roadPartNumberStart && ra.roadPartNumber <= roadPartNumberEnd &&
       // and on the same track
       ra.track == track &&
+      // and by reversed direction
+      ra.reversed == reversed &&
       // and not starting before this section start or after this section ends
       !(ra.startAddrMValue < startMAddr && ra.roadPartNumber == roadPartNumberStart ||
         ra.startAddrMValue > endMAddr && ra.roadPartNumber == roadPartNumberEnd) &&
       // and not ending after this section ends or before this section starts
       !(ra.endAddrMValue > endMAddr && ra.roadPartNumber == roadPartNumberEnd ||
         ra.endAddrMValue < startMAddr && ra.roadPartNumber == roadPartNumberStart)
-  }
-
-  def partialIncludes(ra: BaseRoadAddress): Boolean = {
-    // within the road number and parts included
-    ra.roadNumber == roadNumber && ra.roadPartNumber >= roadPartNumberStart && ra.roadPartNumber <= roadPartNumberEnd &&
-      // and on the same track
-      ra.track == track
   }
 }
 case class RoadLinkLength(linkId: Long, geometryLength: Double)

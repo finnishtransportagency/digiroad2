@@ -162,6 +162,10 @@
       eventbus.trigger('layer:enableButtons', true);
     };
 
+    var revertSuravage = function(){
+      splitSuravage = {};
+    };
+
     return {
       open: open,
       openShift: openShift,
@@ -174,7 +178,8 @@
       setCurrent: setCurrent,
       isDirty: isDirty,
       setDirty: setDirty,
-      splitSuravageLink: splitSuravageLink
+      splitSuravageLink: splitSuravageLink,
+      revertSuravage: revertSuravage
     };
   };
 })(this);

@@ -377,8 +377,34 @@
 
     this.changeNewProjectLinkDirection = function (projectId, selectedLinks){
       applicationModel.addSpinner();
-      var data = [projectId, selectedLinks[0].roadNumber, selectedLinks[0].roadPartNumber] ;
-      backend.directionChangeNewRoadlink(data, function(successObject) {
+      var links = _.filter(selectedLinks, function(link) {return link.status !== LinkStatus.Terminated.value;});
+
+      var dataJson = {
+        projectId: projectId,
+        roadNumber: selectedLinks[0].roadNumber,
+        roadPartNumber: selectedLinks[0].roadPartNumber,
+        links: links
+      };
+      backend.directionChangeNewRoadlink(dataJson, function(successObject) {
+        if (!successObject.success) {
+          eventbus.trigger('roadAddress:changeDirectionFailed', successObject.errorMessage);
+          applicationModel.removeSpinner();
+        } else {
+          eventbus.trigger('changeProjectDirection:clicked');
+        }
+      });
+    };
+
+    this.changeNewProjectLinkCutDirection = function (projectId, selectedLinks){
+      applicationModel.addSpinner();
+      var links = _.filter(selectedLinks, function(link) {return link.status !== LinkStatus.Terminated.value;});
+      var dataJson = {
+        projectId: projectId,
+        roadNumber: selectedLinks[0].roadNumber,
+        roadPartNumber: selectedLinks[0].roadPartNumber,
+        links: links
+      };
+      backend.directionChangeNewRoadlink(dataJson, function(successObject) {
         if (!successObject.success) {
           eventbus.trigger('roadAddress:changeDirectionFailed', successObject.errorMessage);
           applicationModel.removeSpinner();

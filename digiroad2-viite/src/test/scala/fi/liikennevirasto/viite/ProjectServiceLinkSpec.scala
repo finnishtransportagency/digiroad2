@@ -615,7 +615,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       when(mockRoadLinkService.getViiteRoadLinksByLinkIdsFromVVH(any[Set[Long]], any[Boolean], any[Boolean])).thenAnswer(
         toMockAnswer(adjusted.map(toRoadLink))
       )
-      projectService.changeDirection(7081807, 77997, 1,"testuser")
+      projectService.changeDirection(7081807, 77997, 1, links.map(l => LinkToRevert(l.id, l.linkId, l.status.value)), "testuser")
       val changedLinks = ProjectDAO.getProjectLinks(7081807)
 
       // Test that for every link there should be the address before it or after it (unless it's the first or last link)
@@ -688,7 +688,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val links=ProjectDAO.getProjectLinks(id)
       links.map(_.linkId).toSet should be (addresses.map(_.linkId).toSet)
       val sideCodes = links.map(l => l.id -> l.sideCode).toMap
-      projectService.changeDirection(id, 75, 2,"testuser") should be(None)
+      projectService.changeDirection(id, 75, 2, links.map(l => LinkToRevert(l.id, l.linkId, l.status.value)),"testuser") should be(None)
       val changedLinks = ProjectDAO.getProjectLinksByIds(links.map { l => l.id })
       changedLinks.foreach(cl => cl.sideCode should not be (sideCodes(cl.id)))
       changedLinks.foreach(cl => cl.reversed should be (false))
@@ -738,8 +738,8 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val links = ProjectDAO.getProjectLinks(id)
       ProjectDAO.updateProjectLinks(Set(links.head.id), LinkStatus.UnChanged, "test")
       links.map(_.linkId).toSet should be(addresses.map(_.linkId).toSet)
-      val result = projectService.changeDirection(id, 75, 2,"testuser")
-      result should be(Some("Tieosalle ei voi tehdä kasvusuunnan kääntöä, koska tieosalla on linkkejä, jotka on tässä projektissa määritelty säilymään ennallaan."))
+      val result = projectService.changeDirection(id, 75, 2, links.map(l => LinkToRevert(l.id, l.linkId, l.status.value)),"testuser")
+      result should be(Some("Tieosalle ei voi tehdä kasvusuunnan kääntöä, koska tieosalla on linkkejä, joita ei ole käsitelty tai jotka on tässä projektissa määritelty säilymään ennallaan."))
     }
   }
 
@@ -755,7 +755,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val reservedRoadPart1 = ReservedRoadPart(164, 77, 35, 5405, 5405, Discontinuity.EndOfRoad, 8, None, None)
       val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.now(), DateTime.now(), "Some additional info", Seq(reservedRoadPart1), None)
       ProjectDAO.createRoadAddressProject(rap)
-      ProjectDAO.reserveRoadPart(rap.id, 77, 35, "TestUser")
+      ProjectDAO.reserveRoadPart(rap.id, 77, 35, "TestUser",8)
       val addressesOnPart = RoadAddressDAO.fetchByRoadPart(77, 35, false)
       ProjectDAO.create(addressesOnPart.map(address => {
         toProjectLink(rap, LinkStatus.NotHandled)(address)
@@ -1382,6 +1382,8 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       end.get.sideCode should be (TowardsDigitizing)
       end.get.startAddressM should be (19L)
       end.get.endAddressM should be (28L)
+      end.get.discontinuity should be (Discontinuity.EndOfRoad.value)
+      links.count(_.discontinuity != Discontinuity.Continuous.value) should be (1)
     }
   }
 }

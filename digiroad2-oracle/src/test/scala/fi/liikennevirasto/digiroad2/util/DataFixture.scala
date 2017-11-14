@@ -5,6 +5,7 @@ import java.util.Properties
 import com.googlecode.flyway.core.Flyway
 import fi.liikennevirasto.digiroad2.asset._
 import fi.liikennevirasto.digiroad2.asset.oracle.OracleAssetDao
+import fi.liikennevirasto.digiroad2.linearasset.{MTKClassWidth, NumericValue, PersistedLinearAsset}
 import fi.liikennevirasto.digiroad2.linearasset.oracle.OracleLinearAssetDao
 import fi.liikennevirasto.digiroad2.masstransitstop.{MassTransitStopOperations, TierekisteriBusStopStrategy, TierekisteriBusStopStrategyOperations}
 import fi.liikennevirasto.digiroad2.masstransitstop.oracle.{MassTransitStopDao, Queries}
@@ -897,6 +898,89 @@ object DataFixture {
     println("\n")
   }
 
+  def fillRoadWidthInRoadLink(): Unit = {
+    println("\nFill Road Width in missing and incomplete road links")
+    println(DateTime.now())
+
+    val dao = new OracleLinearAssetDao(null, null)
+    val roadLinkService = new RoadLinkService(vvhClient, new DummyEventBus, new DummySerializer)
+
+    lazy val roadWidthService: RoadWidthService = {
+      new RoadWidthService(roadLinkService, new DummyEventBus)
+    }
+
+    val roadWidthAssetTypeId: Int = 120
+    val maxAllowedError = 0.01
+    val minAllowedLength = 2.0
+    val minOfLength: Double = 0
+
+    //Get All Municipalities
+    val municipalities: Seq[Int] =
+    OracleDatabase.withDynSession {
+      Queries.getMunicipalities
+    }
+
+    municipalities.foreach { municipality =>
+      println("Working on... municipality -> " + municipality)
+      val (roadLinks, changes) = roadLinkService.getRoadLinksAndChangesFromVVH(municipality)
+      //filter roadLink by administrative class and roadLink with MTKClass valid
+      val roadLinkAdminClass = roadLinks.filter(road => road.administrativeClass == Municipality || road.administrativeClass == Private)
+      val roadWithMTKClass = roadLinkAdminClass.filter(road => MTKClassWidth.values.toSeq.contains(road.extractMTKClass(road.attributes)))
+
+      OracleDatabase.withDynTransaction {
+        val existingAssets = dao.fetchLinearAssetsByLinkIds(roadWidthAssetTypeId, roadLinks.map(_.linkId), LinearAssetTypes.numericValuePropertyId).filterNot(_.expired)
+
+        val lastChanges = changes.filter(_.newId.isDefined).groupBy(_.newId.get).mapValues(c => c.maxBy(_.vvhTimeStamp))
+
+        //Map all existing assets by roadLink and changeInfo
+        val changedAssets = lastChanges.map{
+          case (linkId, changeInfo) =>
+            (roadWithMTKClass.find(road => road.linkId == linkId ), changeInfo, existingAssets.filter(_.linkId == linkId))
+        }
+
+        val expiredAssetsIds = changedAssets.flatMap {
+          case (Some(roadLink), changeInfo, assets) if assets.nonEmpty =>
+            assets.filter(asset => asset.vvhTimeStamp < changeInfo.vvhTimeStamp && asset.createdBy.contains("vvh_mtkclass_default")).map(_.id)
+          case _ =>
+            List()
+        }.toSet[Long]
+
+        val newAssets = changedAssets.flatMap{
+          case (Some(roadLink), changeInfo, assets) =>
+            val pointsOfInterest = (assets.map(_.startMeasure) ++ assets.map(_.endMeasure) ++  Seq(minOfLength, GeometryUtils.geometryLength(roadLink.geometry))).distinct.sorted
+
+            //Not create asset with the length less MinAllowedLength
+            val pieces = pointsOfInterest.zip(pointsOfInterest.tail).filterNot{piece => (piece._2 - piece._1) < minAllowedLength}
+            pieces.flatMap { measures =>
+              Some(PersistedLinearAsset(0L, roadLink.linkId, SideCode.BothDirections.value, Some(NumericValue(roadLink.extractMTKClass(roadLink.attributes).width)),
+                measures._1, measures._2, Some("vvh_mtkclass_default"), None, None, None, false, roadWidthAssetTypeId, changeInfo.vvhTimeStamp, None, linkSource = roadLink.linkSource))
+            }.filterNot(a => assets.filterNot(asset => expiredAssetsIds.contains(asset.id)).exists(asset => math.abs(a.startMeasure - asset.startMeasure) < maxAllowedError && math.abs(a.endMeasure - asset.endMeasure) < maxAllowedError))
+          case _ =>
+            None
+        }.toSeq
+
+        if (expiredAssetsIds.nonEmpty)
+          println("\nExpiring ids " + expiredAssetsIds.mkString(", "))
+        expiredAssetsIds.foreach(dao.updateExpiration(_, expired = true, "vvh_mtkclass_default"))
+
+        newAssets.foreach { linearAsset =>
+          val roadLink = roadLinks.find(_.linkId == linearAsset.linkId).getOrElse(throw new IllegalStateException("Road link no longer available"))
+
+          val id = dao.createLinearAsset(linearAsset.typeId, linearAsset.linkId, linearAsset.expired, linearAsset.sideCode,
+            Measures(linearAsset.startMeasure, linearAsset.endMeasure), linearAsset.createdBy.getOrElse("vvh_mtkclass_default"), linearAsset.vvhTimeStamp, Some(roadLink.linkSource.value))
+          linearAsset.value match {
+            case Some(NumericValue(intValue)) =>
+              dao.insertValue(id, LinearAssetTypes.numericValuePropertyId, intValue)
+            case _ => None
+          }
+        }
+      }
+    }
+
+    println("\nFill Road Width in missing and incomplete road links")
+    println(DateTime.now())
+  }
+
   def importAllTrafficVolumeDataFromTR() {
     println("\nStart TrafficVolume import at time: ")
     println(DateTime.now())
@@ -1331,6 +1415,8 @@ object DataFixture {
         listingBusStopsWithSideCodeConflictWithRoadLinkDirection()
       case Some("fill_lane_amounts_in_missing_road_links") =>
         fillLaneAmountsMissingInRoadLink()
+      case Some("fill_roadWidth_in_road_links") =>
+        fillRoadWidthInRoadLink()
       case Some("import_all_trafficVolume_from_TR_to_OTH") =>
         importAllTrafficVolumeDataFromTR()
       case Some("import_all_litRoad_from_TR_to_OTH") =>
@@ -1381,7 +1467,7 @@ object DataFixture {
         " fill_lane_amounts_in_missing_road_links | import_all_trafficVolume_from_TR_to_OTH | import_all_litRoad_from_TR_to_OTH | import_all_roadWidth_from_TR_to_OTH |" +
         " import_all_trafficSigns_from_TR_to_OTH | import_all_pavedRoad_from_TR_to_OTH | import_all_massTransitLane_from_TR_to_OTH | update_litRoad_from_TR_to_OTH | " +
         " update_roadWidth_from_TR_to_OTH | update_trafficSigns_from_TR_to_OTH | update_pavedRoad_from_TR_to_OTH | update_massTransitLane_from_TR_to_OTH" +
-        " import_all_damagedByThaw_from_TR_to_OTH | update_damagedByThaw_from_TR_to_OTH | import_all_europeanRoad_from_TR_to_OTH | update_europeanRoad_from_TR_to_OTH | update_areas_on_asset | update_OTH_BS_with_TR_info")
+        " import_all_damagedByThaw_from_TR_to_OTH | update_damagedByThaw_from_TR_to_OTH | import_all_europeanRoad_from_TR_to_OTH | update_europeanRoad_from_TR_to_OTH | update_areas_on_asset | update_OTH_BS_with_TR_info | fill_roadWidth_in_road_links")
     }
   }
 }

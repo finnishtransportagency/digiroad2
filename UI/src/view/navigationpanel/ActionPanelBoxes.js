@@ -395,8 +395,8 @@
   ActionPanelBoxes.AssetBox = function(selectedMassTransitStopModel) {
     var toolSelection = new ToolSelection([
       new Tool('Select', selectToolIcon, selectedMassTransitStopModel),
-      new Tool('Add', addToolIcon, selectedMassTransitStopModel),
-      new Tool('AddTerminal', terminalToolIcon, selectedMassTransitStopModel)
+      new Tool('Add', setTitleTool(addToolIcon, 'Lisää pysäkki'), selectedMassTransitStopModel),
+      new Tool('AddTerminal', setTitleTool(terminalToolIcon, 'Lisää terminaalipysäkki'), selectedMassTransitStopModel)
     ]);
 
     var editModeToggle = new EditModeToggleButton(toolSelection);
@@ -569,6 +569,10 @@
 
     function hide() {
       element.hide();
+    }
+
+    function setTitleTool(icon, title) {
+      return icon.replace('/>', ' title="'+title+'"/>');
     }
 
     return {

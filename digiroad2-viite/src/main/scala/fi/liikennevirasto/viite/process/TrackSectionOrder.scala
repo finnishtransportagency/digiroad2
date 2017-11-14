@@ -59,6 +59,20 @@ object TrackSectionOrder {
   }
 
   def mValueRoundabout(seq: Seq[ProjectLink]): Seq[ProjectLink] = {
+    /* None = No change. Therefore for calibration points
+       None            = No change
+       Some(None)      = Clear if there was any
+       Some(Some(...)) = Set to this value
+      */
+    def adjust(pl: ProjectLink, sideCode: Option[SideCode] = None, startAddrMValue: Option[Long] = None,
+               endAddrMValue: Option[Long] = None, startCalibrationPoint: Option[Option[CalibrationPoint]] = None,
+               endCalibrationPoint: Option[Option[CalibrationPoint]] = None) = {
+      pl.copy(sideCode = sideCode.getOrElse(pl.sideCode),
+        startAddrMValue = startAddrMValue.getOrElse(pl.startAddrMValue),
+        endAddrMValue = endAddrMValue.getOrElse(pl.endAddrMValue),
+        calibrationPoints = (startCalibrationPoint.getOrElse(pl.calibrationPoints._1), endCalibrationPoint.getOrElse(pl.calibrationPoints._2))
+      )
+    }
     def firstPoint(pl: ProjectLink) = {
       pl.sideCode match {
         case TowardsDigitizing => pl.geometry.head
@@ -68,8 +82,9 @@ object TrackSectionOrder {
     }
     def recursive(currentPoint: Point, ready: Seq[ProjectLink], unprocessed: Seq[ProjectLink]): Seq[ProjectLink] = {
       if (unprocessed.isEmpty) {
+        // Put calibration point at the end
         val last = ready.last
-        ready.init ++ Seq(last.copy(calibrationPoints = (None, Some(
+        ready.init ++ Seq(adjust(last, startCalibrationPoint = Some(None), endCalibrationPoint = Some(Some(
           CalibrationPoint(last.linkId, if (last.sideCode == AgainstDigitizing) 0.0 else last.geometryLength, last.endAddrMValue)))))
       }
       else {
@@ -86,20 +101,34 @@ object TrackSectionOrder {
           case _ =>
             hit.endAddrMValue
         }
-        recursive(nextPoint, ready ++ Seq(hit.copy(sideCode = sideCode, startAddrMValue = prevAddrM,
-          endAddrMValue = endAddrM)), unprocessed.filter(_ != hit))
+        recursive(nextPoint, ready ++ Seq(adjust(hit, sideCode = Some(sideCode), startAddrMValue = Some(prevAddrM),
+          endAddrMValue = Some(endAddrM), startCalibrationPoint = Some(None), endCalibrationPoint = Some(None))),
+          unprocessed.filter(_ != hit))
       }
     }
     val firstLink = seq.head // First link is defined by end user and must be always first
-    val ordered = recursive(firstLink.geometry.last, Seq(firstLink.copy(sideCode = TowardsDigitizing,
-      startAddrMValue = 0L, endAddrMValue = Math.round(firstLink.geometryLength))), seq.tail)
+    // Put calibration point at the beginning
+    val ordered = recursive(firstLink.geometry.last, Seq(adjust(firstLink, sideCode = Some(TowardsDigitizing),
+      startAddrMValue = Some(0L), endAddrMValue =
+        Some(if (firstLink.status == New)
+          Math.round(firstLink.geometryLength)
+        else
+          firstLink.endAddrMValue - firstLink.startAddrMValue),
+      startCalibrationPoint = Some(Some(CalibrationPoint(firstLink.linkId, 0.0, 0L))),
+      endCalibrationPoint = Some(None))), seq.tail)
     if (isCounterClockwise(ordered.map(firstPoint)))
       ordered
     else {
       val reOrdered = recursive(firstLink.geometry.head,
-        Seq(firstLink.copy(sideCode = AgainstDigitizing, startAddrMValue = 0L,
-          endAddrMValue = Math.round(firstLink.geometryLength),
-          calibrationPoints = (Some(CalibrationPoint(firstLink.linkId, firstLink.geometryLength, 0L)), None))),
+
+        Seq(adjust(firstLink, sideCode = Some(AgainstDigitizing),
+          startAddrMValue = Some(0L), endAddrMValue =
+            Some(if (firstLink.status == New)
+              Math.round(firstLink.geometryLength)
+            else
+              firstLink.endAddrMValue - firstLink.startAddrMValue),
+          startCalibrationPoint = Some(Some(CalibrationPoint(firstLink.linkId, firstLink.geometryLength, 0L))),
+          endCalibrationPoint = Some(None))),
         seq.tail)
       if (isCounterClockwise(reOrdered.map(firstPoint)))
         reOrdered

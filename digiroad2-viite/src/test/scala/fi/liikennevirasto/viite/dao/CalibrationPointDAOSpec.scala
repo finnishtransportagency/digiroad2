@@ -37,8 +37,8 @@ class CalibrationPointDAOSpec extends FunSuite with Matchers {
   }
 
   def addProjectRoads(): Unit = {
-    ProjectDAO.reserveRoadPart(1, 1, 1, "TestUser")
-    ProjectDAO.reserveRoadPart(2, 1, 1, "TestUser")
+    ProjectDAO.reserveRoadPart(1, 1, 1, "TestUser",0)
+    ProjectDAO.reserveRoadPart(2, 1, 1, "TestUser",0)
     sqlu"""insert into project_link (id,project_id,track_code,discontinuity_type,road_number,road_part_number,start_addr_M,end_addr_M,lrm_position_id,created_by) VALUES (1,1,1,0,1,1,1,1,20000286,'automatedtest')""".execute
     sqlu"""insert into project_link (id,project_id,track_code,discontinuity_type,road_number,road_part_number,start_addr_M,end_addr_M,lrm_position_id,created_by) VALUES (2,2,1,0,1,1,1,1,20000286,'automatedtest')""".execute
   }
