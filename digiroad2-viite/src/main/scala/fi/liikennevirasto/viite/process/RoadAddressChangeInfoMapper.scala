@@ -1,32 +1,55 @@
 package fi.liikennevirasto.viite.process
 
+import fi.liikennevirasto.digiroad2.ChangeType._
 import fi.liikennevirasto.digiroad2.linearasset.RoadLink
-import fi.liikennevirasto.digiroad2.{ChangeInfo, Point}
-import fi.liikennevirasto.viite.RoadType
-import fi.liikennevirasto.viite.dao.{Discontinuity, RoadAddress}
+import fi.liikennevirasto.digiroad2.{ChangeInfo, ChangeType, Point}
+import fi.liikennevirasto.viite.dao.RoadAddress
 import org.slf4j.LoggerFactory
 
 object RoadAddressChangeInfoMapper extends RoadAddressMapper {
   private val logger = LoggerFactory.getLogger(getClass)
 
+  private def isLengthChange(ci: ChangeInfo) = {
+    Set(LengthenedCommonPart.value, LengthenedNewPart.value, ShortenedCommonPart.value, ShortenedRemovedPart.value).contains(ci.changeType)
+  }
+
+  private def max(doubles: Double*) = {
+    doubles.max
+  }
+
+  private def min(doubles: Double*) = {
+    doubles.min
+  }
+
+  private def fuseLengthChanges(sources: Seq[ChangeInfo]) = {
+    val (lengthened, others) = sources.partition(ci => ci.changeType == LengthenedCommonPart.value ||
+    ci.changeType == LengthenedNewPart.value)
+    others ++
+      lengthened.groupBy(ci => (ci.newId, ci.vvhTimeStamp)).mapValues{ s =>
+        val common = s.find(_.changeType == LengthenedCommonPart.value)
+        val added = s.find(_.changeType == LengthenedNewPart.value)
+        (common, added) match {
+          case (Some(c), Some(a)) =>
+            val (expStart, expEnd) = if (c.newStartMeasure.get > c.newEndMeasure.get)
+              (max(c.newStartMeasure.get, a.newStartMeasure.get, a.newEndMeasure.get), min(c.newEndMeasure.get, a.newStartMeasure.get, a.newEndMeasure.get))
+            else
+              (min(c.newStartMeasure.get, a.newStartMeasure.get, a.newEndMeasure.get), max(c.newEndMeasure.get, a.newEndMeasure.get, a.newStartMeasure.get))
+            Some(c.copy(newStartMeasure = Some(expStart), newEndMeasure = Some(expEnd)))
+          case _ => None
+        }
+      }.values.flatten.toSeq
+  }
+
   private def createAddressMap(sources: Seq[ChangeInfo]): Seq[RoadAddressMapping] = {
     val pseudoGeom = Seq(Point(0.0, 0.0), Point(1.0, 0.0))
-    sources.map(ci => {
-      ci.changeType match {
-        case 1 =>
+    fuseLengthChanges(sources).map(ci => {
+      ChangeType.apply(ci.changeType) match {
+        case CombinedModifiedPart | CombinedRemovedPart | DividedModifiedPart | DividedNewPart =>
           logger.debug("Change info> oldId: "+ci.oldId+" newId: "+ci.newId+" changeType: "+ci.changeType)
           Some(RoadAddressMapping(ci.oldId.get, ci.newId.get, ci.oldStartMeasure.get, ci.oldEndMeasure.get,
             ci.newStartMeasure.get, ci.newEndMeasure.get, pseudoGeom, pseudoGeom, Some(ci.vvhTimeStamp)))
-        case 2 =>
-          logger.debug("Change info> oldId: "+ci.oldId+" newId: "+ci.newId+" changeType: "+ci.changeType)
-          Some(RoadAddressMapping(ci.oldId.get, ci.newId.get, ci.oldStartMeasure.get, ci.oldEndMeasure.get,
-            ci.newStartMeasure.get, ci.newEndMeasure.get, pseudoGeom, pseudoGeom, Some(ci.vvhTimeStamp)))
-        case 5 =>
-          logger.debug("Change info> oldId: "+ci.oldId+" newId: "+ci.newId+" changeType: "+ci.changeType)
-          Some(RoadAddressMapping(ci.oldId.get, ci.newId.get, ci.oldStartMeasure.get, ci.oldEndMeasure.get,
-            ci.newStartMeasure.get, ci.newEndMeasure.get, pseudoGeom, pseudoGeom, Some(ci.vvhTimeStamp)))
-        case 6 =>
-          logger.debug("Change info> oldId: "+ci.oldId+" newId: "+ci.newId+" changeType: "+ci.changeType)
+        case LengthenedCommonPart | LengthenedNewPart | ShortenedCommonPart | ShortenedRemovedPart =>
+          logger.debug("Change info, length change > oldId: "+ci.oldId+" newId: "+ci.newId+" changeType: "+ci.changeType + s" $ci")
           Some(RoadAddressMapping(ci.oldId.get, ci.newId.get, ci.oldStartMeasure.get, ci.oldEndMeasure.get,
             ci.newStartMeasure.get, ci.newEndMeasure.get, pseudoGeom, pseudoGeom, Some(ci.vvhTimeStamp)))
         case _ => None
@@ -35,18 +58,42 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
   }
 
   private def applyChanges(changes: Seq[Seq[ChangeInfo]], roadAddresses: Map[Long, Seq[RoadAddress]]): Map[Long, Seq[RoadAddress]] = {
+    changes.foldLeft(roadAddresses) { case (addresses, changeInfo) =>
+      val (length, maps) = changeInfo.partition(isLengthChange)
+      applyLengthChanges(length, applyMappedChanges(maps, addresses)).values.toSeq.flatten.groupBy(_.linkId)
+    }
+  }
+
+  private def mapAddress(mapping: Seq[RoadAddressMapping])(ra: RoadAddress) = {
+    if (!ra.floating && mapping.exists(_.matches(ra))) {
+      val changeVVHTimestamp = mapping.head.vvhTimeStamp.get
+      mapRoadAddresses(mapping)(ra).map(_.copy(adjustedTimestamp = changeVVHTimestamp))
+    } else
+      Seq(ra)
+  }
+
+  private def applyMappedChanges(changes: Seq[ChangeInfo], roadAddresses: Map[Long, Seq[RoadAddress]]): Map[Long, Seq[RoadAddress]] = {
     if (changes.isEmpty)
       roadAddresses
     else {
-      val mapping = createAddressMap(changes.head)
+      val mapping = createAddressMap(changes)
+      val mapped = roadAddresses.mapValues(_.flatMap(mapAddress(mapping)))
+      mapped.values.toSeq.flatten.groupBy(_.linkId)
+    }
+  }
+
+  private def applyLengthChanges(changes: Seq[ChangeInfo], roadAddresses: Map[Long, Seq[RoadAddress]]): Map[Long, Seq[RoadAddress]] = {
+    if (changes.isEmpty)
+      roadAddresses
+    else {
+      val mapping = createAddressMap(changes)
       val mapped = roadAddresses.mapValues(_.flatMap(ra =>
-        if (mapping.exists(_.matches(ra))) {
-          val changeVVHTimestamp = mapping.head.vvhTimeStamp.get
-          mapRoadAddresses(mapping)(ra).map(_.copy(adjustedTimestamp = changeVVHTimestamp))
-        }
-        else
-          Seq(ra)))
-      applyChanges(changes.tail, mapped.values.toSeq.flatten.groupBy(_.linkId))
+        if (mapping.exists(m => m.matches(ra) && Math.abs(m.sourceLen - m.targetLen) > fi.liikennevirasto.viite.MaxLengthChange)) {
+          Seq(ra.copy(floating = true))
+        } else
+          mapAddress(mapping)(ra)
+      ))
+      mapped.values.toSeq.flatten.groupBy(_.linkId)
     }
   }
 
