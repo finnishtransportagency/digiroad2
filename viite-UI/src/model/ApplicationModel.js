@@ -100,7 +100,7 @@
       return {
         x: centerLonLat[0],
         y:centerLonLat[1],
-        zoom:zoom
+        zoom:zoom.level
       };
     };
 

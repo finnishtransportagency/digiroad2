@@ -197,12 +197,6 @@ object ProjectDAO {
     projectLinks.map(_.id)
   }
 
-  def updateProjectCoordinates(projectId: Long, coordinates: ProjectCoordinates): Unit = {
-    sqlu"""
-         update project set coord_x = ${coordinates.x}, coord_y = ${coordinates.y}, zoom= ${coordinates.zoom}
-         where id = $projectId""".execute
-  }
-
   def updateProjectLinksToDB(projectLinks: Seq[ProjectLink], modifier: String): Unit = {
     val projectLinkPS = dynamicSession.prepareStatement("UPDATE project_link SET ROAD_NUMBER = ?,  ROAD_PART_NUMBER = ?, TRACK_CODE=?, " +
       "DISCONTINUITY_TYPE = ?, START_ADDR_M=?, END_ADDR_M=?, MODIFIED_DATE= ? , MODIFIED_BY= ?, LRM_POSITION_ID= ?, PROJECT_ID= ? , CALIBRATION_POINTS= ? , " +
@@ -530,6 +524,10 @@ object ProjectDAO {
 
   def updateProjectStateInfo(stateInfo: String, projectId: Long) = {
     Q.updateNA(s"UPDATE PROJECT SET STATUS_INFO = '$stateInfo' WHERE ID= $projectId").execute
+  }
+
+  def updateProjectCoordinates(projectId: Long, coordinates: ProjectCoordinates) = {
+    Q.updateNA(s"UPDATE PROJECT SET COORD_X = ${coordinates.x},COORD_Y = ${coordinates.y}, ZOOM = ${coordinates.zoom} WHERE ID= $projectId").execute
   }
 
   def getRotatingTRProjectId(projectId: Long) = {

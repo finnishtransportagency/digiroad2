@@ -34,7 +34,7 @@ case class ProjectRoadAddressInfo(projectId: Long, roadNumber: Long, roadPartNum
 case class RoadAddressProjectExtractor(id: Long, projectEly: Option[Long], status: Long, name: String, startDate: String,
                                        additionalInfo: String, roadPartList: List[RoadPartExtractor], resolution: Int)
 
-case class RoadAddressProjectLinksExtractor(linkIds: Seq[Long], linkStatus: Int, projectId: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Int, discontinuity: Int, roadEly: Long, roadLinkSource: Int, roadType: Int, userDefinedEndAddressM: Option[Int])
+case class RoadAddressProjectLinksExtractor(linkIds: Seq[Long], linkStatus: Int, projectId: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Int, discontinuity: Int, roadEly: Long, roadLinkSource: Int, roadType: Int, userDefinedEndAddressM: Option[Int], coordinates: ProjectCoordinates)
 
 case class RoadPartExtractor(roadNumber: Long, roadPartNumber: Long, ely: Long)
 
@@ -274,11 +274,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   put("/project/reverse") {
     val user = userProvider.getCurrentUser()
     try {
-      //TODO 4. add coordinates to method
       //check for validity
       val roadInfo = parsedBody.extract[RevertRoadLinksExtractor]
       val writableProjectService = projectWritable(roadInfo.projectId)
-      writableProjectService.changeDirection(roadInfo.projectId, roadInfo.roadNumber, roadInfo.roadPartNumber, roadInfo.links, user.username) match {
+      writableProjectService.changeDirection(roadInfo.projectId, roadInfo.roadNumber, roadInfo.roadPartNumber, roadInfo.links, roadInfo.coordinates, user.username) match {
         case Some(errorMessage) =>
           Map("success" -> false, "errorMessage" -> errorMessage)
         case None => Map("success" -> true)
@@ -333,7 +332,6 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   put("/roadlinks/roadaddress/project/revertchangesroadlink") {
     try {
-      //TODO 1. add coordinates to method
       val linksToRevert = parsedBody.extract[RevertRoadLinksExtractor]
       if (linksToRevert.links.nonEmpty) {
         val writableProject = projectWritable(linksToRevert.projectId)
@@ -358,12 +356,11 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   post("/roadlinks/roadaddress/project/links") {
     val user = userProvider.getCurrentUser()
     try {
-      //TODO 3. add coordinates to method
       val links = parsedBody.extract[RoadAddressProjectLinksExtractor]
       logger.info(s"Creating new links: ${links.linkIds.mkString(",")}")
       val writableProject = projectWritable(links.projectId)
       writableProject.createProjectLinks(links.linkIds, links.projectId, links.roadNumber, links.roadPartNumber,
-        links.trackCode, links.discontinuity, links.roadType, links.roadLinkSource, links.roadEly, user.username)
+        links.trackCode, links.discontinuity, links.roadType, links.roadLinkSource, links.roadEly, links.coordinates, user.username)
     } catch {
       case e: IllegalStateException => Map("success" -> false, "errorMessage" -> "Projekti ei ole enää muokattavissa")
       case e: MappingException =>
@@ -379,11 +376,10 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   put("/roadlinks/roadaddress/project/links") {
     val user = userProvider.getCurrentUser()
     try {
-      //TODO 5. add coordinates to method
       val links = parsedBody.extract[RoadAddressProjectLinksExtractor]
       val writableProject = projectWritable(links.projectId)
       writableProject.updateProjectLinks(links.projectId, links.linkIds.toSet,
-        LinkStatus.apply(links.linkStatus), user.username, links.roadNumber,
+        LinkStatus.apply(links.linkStatus), user.username,links.coordinates, links.roadNumber,
         links.roadPartNumber, links.userDefinedEndAddressM, links.roadType, links.discontinuity, links.roadEly) match {
         case Some(errorMessage) => Map("success" -> false, "errormessage" -> errorMessage)
         case None => Map("success" -> true, "id" -> links.projectId, "publishable" -> (projectService.projectLinkPublishable(links.projectId)))
