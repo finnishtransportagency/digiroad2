@@ -231,10 +231,11 @@
         .then(function(x) { return JSON.parse(x); });
     };
 
-    this.removeProjectLinkSplit = function(projectId, linkId, success, errorCallback) {
+    this.removeProjectLinkSplit = function(data, success, errorCallback) {
       $.ajax({
         type: "DELETE",
-        url: "api/viite/project/split/" + projectId + "/" + linkId,
+        url: "api/viite/project/split",
+        data: JSON.stringify(data),
         success: success,
         error: errorCallback
       });

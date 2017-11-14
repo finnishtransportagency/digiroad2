@@ -8,7 +8,6 @@
     var currentProject;
     var fetchedProjectLinks = [];
     var fetchedSuravageProjectLinks = [];
-    var roadAddressProjectLinks = [];
     var dirtyProjectLinkIds = [];
     var dirtyProjectLinks = [];
     var self = this;
@@ -25,16 +24,8 @@
       return _.flatten(fetchedProjectLinks);
     };
 
-    var projectSuravageLinks = function () {
-      return _.flatten(fetchedSuravageProjectLinks);
-    };
-
     this.getProjectLinks = function() {
       return _.flatten(fetchedProjectLinks);
-    };
-
-    this.getSuravageProjectLinks = function(){
-      return _.flatten(fetchedSuravageProjectLinks);
     };
 
     this.getAll = function () {
@@ -49,10 +40,6 @@
 
     this.reset = function(){
       fetchedProjectLinks = [];
-    };
-
-    this.resetSuravage = function () {
-      fetchedSuravageProjectLinks = [];
     };
 
     this.getMultiSelectIds = function (linkId) {
@@ -143,6 +130,7 @@
 
     this.saveProject = function (data) {
       var projectid = 0;
+      var coordinates = applicationModel.getUserGeoLocation();
       if (projectinfo !== undefined) {
         projectid = projectinfo.id;
       } else if (currentProject!==undefined && currentProject.project.id!==undefined)
@@ -165,7 +153,8 @@
             roadPartNumber: part.roadPartNumber,
             startingLinkId: part.startingLinkId
           };
-        })
+        }),
+        coordinates: coordinates
       };
 
       backend.saveRoadAddressProject(dataJson, function (result) {
@@ -192,13 +181,15 @@
     this.revertChangesRoadlink = function (links) {
       if(!_.isEmpty(links)) {
         applicationModel.addSpinner();
+        var coordinates = applicationModel.getUserGeoLocation();
         var data = {
           'projectId': currentProject.project.id,
           'roadNumber': links[0].roadNumber,
           'roadPartNumber': links[0].roadPartNumber,
           'links': _.map(links, function (link) {
             return {'id': link.id, 'linkId': link.linkId, 'status': link.status};
-          })
+          }),
+          'coordinates': coordinates
         };
         backend.revertChangesRoadlink(data, function (response) {
           if (response.success) {
@@ -221,9 +212,12 @@
     this.removeProjectLinkSplit = function (project, selectedProjectLink) {
       if(!_.isEmpty(project)) {
         applicationModel.addSpinner();
-        var projectId = project.id;
-        var linkId = Math.abs(selectedProjectLink[0].linkId);
-        backend.removeProjectLinkSplit(projectId, linkId, function (response) {
+        var data = {
+          projectId: project.id,
+          linkId: Math.abs(selectedProjectLink[0].linkId),
+          coordinates: applicationModel.getUserGeoLocation()
+        };
+        backend.removeProjectLinkSplit(data, function (response) {
           if (response.success) {
             dirtyProjectLinkIds = [];
             eventbus.trigger('projectLink:revertedChanges');
@@ -250,7 +244,7 @@
       }));
 
       var projectId = projectinfo.id;
-
+      var coordinates = applicationModel.getUserGeoLocation();
       var dataJson = {
         linkIds: linkIds,
         linkStatus: statusCode,
@@ -262,7 +256,8 @@
         roadEly: Number($('#roadAddressProjectForm').find('#ely')[0].value),
         roadLinkSource: Number(_.first(changedLinks).roadLinkSource),
         roadType: Number($('#roadAddressProjectForm').find('#roadTypeDropDown')[0].value),
-        userDefinedEndAddressM: null
+        userDefinedEndAddressM: null,
+        coordinates:coordinates
       };
 
       var endDistance = parseInt($('#endDistance').val());
@@ -311,7 +306,7 @@
 
       var projectId = projectinfo.id;
       var form = $('#roadAddressProjectFormCut');
-
+      var coordinates = applicationModel.getUserGeoLocation();
       var dataJson = {
         splitPoint: {
           x: Number(form.find('#splitx')[0].value),
@@ -326,7 +321,8 @@
         ely: Number(form.find('#ely')[0].value),
         roadLinkSource: Number(_.first(changedLinks).roadLinkSource),
         roadType: Number(form.find('#roadTypeDropDown')[0].value),
-        projectId: projectId
+        projectId: projectId,
+        coordinates:coordinates
       };
 
       backend.saveProjectLinkSplit(dataJson, linkId, function(successObject){
@@ -344,14 +340,15 @@
     };
 
     this.createProject = function (data) {
-
+      var coordinates = applicationModel.getUserGeoLocation();
       var dataJson = {
         id: 0,
         status: 1,
         name: data[0].value,
         startDate: data[1].value,
         additionalInfo: data[2].value,
-        roadPartList: dirtyRoadPartList
+        roadPartList: dirtyRoadPartList,
+        coordinates:coordinates
       };
 
       backend.createRoadAddressProject(dataJson, function (result) {
@@ -378,12 +375,13 @@
     this.changeNewProjectLinkDirection = function (projectId, selectedLinks){
       applicationModel.addSpinner();
       var links = _.filter(selectedLinks, function(link) {return link.status !== LinkStatus.Terminated.value;});
-
+      var coordinates = applicationModel.getUserGeoLocation();
       var dataJson = {
         projectId: projectId,
         roadNumber: selectedLinks[0].roadNumber,
         roadPartNumber: selectedLinks[0].roadPartNumber,
-        links: links
+        links: links,
+        coordinates: coordinates
       };
       backend.directionChangeNewRoadlink(dataJson, function(successObject) {
         if (!successObject.success) {
@@ -398,11 +396,13 @@
     this.changeNewProjectLinkCutDirection = function (projectId, selectedLinks){
       applicationModel.addSpinner();
       var links = _.filter(selectedLinks, function(link) {return link.status !== LinkStatus.Terminated.value;});
+      var coordinates = applicationModel.getUserGeoLocation();
       var dataJson = {
         projectId: projectId,
         roadNumber: selectedLinks[0].roadNumber,
         roadPartNumber: selectedLinks[0].roadPartNumber,
-        links: links
+        links: links,
+        coordinates: coordinates
       };
       backend.directionChangeNewRoadlink(dataJson, function(successObject) {
         if (!successObject.success) {

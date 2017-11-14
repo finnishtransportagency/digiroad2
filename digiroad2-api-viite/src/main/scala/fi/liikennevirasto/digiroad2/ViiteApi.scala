@@ -26,12 +26,13 @@ import scala.util.{Left, Right}
 
 case class NewAddressDataExtracted(sourceIds: Set[Long], targetIds: Set[Long])
 
-case class RevertRoadLinksExtractor(projectId: Long, roadNumber: Long, roadPartNumber: Long, links: List[LinkToRevert])
+case class RevertSplitExtractor(projectId: Option[Long], linkId: Option[Long], coordinates: ProjectCoordinates)
+case class RevertRoadLinksExtractor(projectId: Long, roadNumber: Long, roadPartNumber: Long, links: List[LinkToRevert], coordinates: ProjectCoordinates)
 
 case class ProjectRoadAddressInfo(projectId: Long, roadNumber: Long, roadPartNumber: Long)
 
 case class RoadAddressProjectExtractor(id: Long, projectEly: Option[Long], status: Long, name: String, startDate: String,
-                                       additionalInfo: String, roadPartList: List[RoadPartExtractor])
+                                       additionalInfo: String, roadPartList: List[RoadPartExtractor], coordinates: ProjectCoordinates)
 
 case class RoadAddressProjectLinksExtractor(linkIds: Seq[Long], linkStatus: Int, projectId: Long, roadNumber: Long, roadPartNumber: Long, trackCode: Int, discontinuity: Int, roadEly: Long, roadLinkSource: Int, roadType: Int, userDefinedEndAddressM: Option[Int])
 
@@ -216,6 +217,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     val user = userProvider.getCurrentUser()
     val roadAddressProject = ProjectConverter.toRoadAddressProject(project, user)
     try {
+      //TODO 2. add coordinates to method
       if (project.id != 0) //we check if project is new. If it is then we check project for being in writable state
         projectWritable(roadAddressProject.id)
       val projectSaved = projectService.createRoadLinkProject(roadAddressProject)
@@ -273,6 +275,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   put("/project/reverse") {
     val user = userProvider.getCurrentUser()
     try {
+      //TODO 4.
       //check for validity
       val roadInfo = parsedBody.extract[RevertRoadLinksExtractor]
       val writableProjectService = projectWritable(roadInfo.projectId)
@@ -331,6 +334,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
 
   put("/roadlinks/roadaddress/project/revertchangesroadlink") {
     try {
+      //TODO 1. add coordinates to method
       val linksToRevert = parsedBody.extract[RevertRoadLinksExtractor]
       if (linksToRevert.links.nonEmpty) {
         val writableProject = projectWritable(linksToRevert.projectId)
@@ -355,6 +359,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   post("/roadlinks/roadaddress/project/links") {
     val user = userProvider.getCurrentUser()
     try {
+      //TODO 3. add coordinates to method
       val links = parsedBody.extract[RoadAddressProjectLinksExtractor]
       logger.info(s"Creating new links: ${links.linkIds.mkString(",")}")
       val writableProject = projectWritable(links.projectId)
@@ -375,6 +380,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
   put("/roadlinks/roadaddress/project/links") {
     val user = userProvider.getCurrentUser()
     try {
+      //TODO 4. add coordinates to method
       val links = parsedBody.extract[RoadAddressProjectLinksExtractor]
       val writableProject = projectWritable(links.projectId)
       writableProject.updateProjectLinks(links.projectId, links.linkIds.toSet,
@@ -478,11 +484,14 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
     }
   }
 
-  delete("/project/split/:projectId/:linkId") {
+  delete("/project/split") {
     val user = userProvider.getCurrentUser()
-    try {
-      val projectId = params.get("projectId").map(_.toLong)
-      val linkId = params.get("linkId").map(_.toLong)
+    try{
+      val data = parsedBody.extract[RevertSplitExtractor]
+      val projectId = data.projectId
+      val linkId = data.linkId
+      val coordinates = data.coordinates
+
       (projectId, linkId) match {
         case (Some(project), Some(link)) =>
           val error = projectService.revertSplit(project, link, user.username)

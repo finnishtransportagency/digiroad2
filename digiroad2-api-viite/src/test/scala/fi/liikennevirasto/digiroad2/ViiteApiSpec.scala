@@ -4,7 +4,7 @@ import fi.liikennevirasto.digiroad2.asset.LinkGeomSource
 import fi.liikennevirasto.digiroad2.user.{Configuration, User}
 import fi.liikennevirasto.digiroad2.util.{DigiroadSerializers, Track}
 import fi.liikennevirasto.viite.RoadType
-import fi.liikennevirasto.viite.dao.{Discontinuity, LinkStatus}
+import fi.liikennevirasto.viite.dao.{Discontinuity, LinkStatus, ProjectCoordinates}
 import fi.liikennevirasto.viite.util.SplitOptions
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
@@ -32,7 +32,7 @@ class ViiteApiSpec extends FunSuite with ScalatraSuite with BeforeAndAfter{
 
   test("Conversion of SplitOptions objects") {
     val options = SplitOptions(Point(123,456,789), LinkStatus.New, LinkStatus.Terminated, 4L, 5L, Track.Combined,
-      Discontinuity.MinorDiscontinuity, 9L, LinkGeomSource.SuravageLinkInterface, RoadType.PublicRoad, 4L)
+      Discontinuity.MinorDiscontinuity, 9L, LinkGeomSource.SuravageLinkInterface, RoadType.PublicRoad, 4L, ProjectCoordinates(0, 1, 1))
     val s = Serialization.write(options)
     val json=parse(s)
     val read = json.extract[SplitOptions]
