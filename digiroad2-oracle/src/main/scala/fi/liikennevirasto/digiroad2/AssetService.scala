@@ -13,12 +13,6 @@ trait AssetOperations {
       assetDao.getMunicipalityById(id)
     }
   }
-
-  def getGeometryType(assetTypeId: Int): String = {
-    withDynTransaction {
-      assetDao.getGeometryType(assetTypeId)
-    }
-  }
 }
 
 class AssetService(eventbus: DigiroadEventBus) extends AssetOperations {

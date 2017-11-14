@@ -1,9 +1,10 @@
 package fi.liikennevirasto.digiroad2
 
 import fi.liikennevirasto.digiroad2.asset.BoundingRectangle
-import fi.liikennevirasto.digiroad2.linearasset.{ValidityPeriodDayOfWeek, ValidityPeriod, RoadLink}
-import fi.liikennevirasto.digiroad2.manoeuvre.oracle.{PersistedManoeuvreRow, ManoeuvreDao}
+import fi.liikennevirasto.digiroad2.linearasset.{RoadLink, ValidityPeriod, ValidityPeriodDayOfWeek}
+import fi.liikennevirasto.digiroad2.manoeuvre.oracle.{ManoeuvreDao, PersistedManoeuvreRow}
 import fi.liikennevirasto.digiroad2.oracle.OracleDatabase
+import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 
 case class Manoeuvre(id: Long, elements: Seq[ManoeuvreElement], validityPeriods: Set[ValidityPeriod], exceptions: Seq[Int], modifiedDateTime: String, modifiedBy: String, additionalInfo: String)
@@ -32,9 +33,9 @@ class ManoeuvreService(roadLinkService: RoadLinkService) {
     getByRoadLinks(roadLinks)
   }
 
-  def updateManoeuvre(userName: String, manoeuvreId: Long, manoeuvreUpdates: ManoeuvreUpdates) = {
+  def updateManoeuvre(userName: String, manoeuvreId: Long, manoeuvreUpdates: ManoeuvreUpdates, modifiedDate: Option[DateTime]) = {
     withDynTransaction {
-      dao.updateManoueuvre(userName, manoeuvreId, manoeuvreUpdates)
+      dao.updateManoueuvre(userName, manoeuvreId, manoeuvreUpdates, modifiedDate)
     }
   }
 

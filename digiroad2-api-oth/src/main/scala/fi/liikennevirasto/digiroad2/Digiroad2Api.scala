@@ -1075,7 +1075,7 @@ class Digiroad2Api(val roadLinkService: RoadLinkService,
     manoeuvreUpdates.foreach { case (id, updates) =>
       val sourceRoadLinkId = manoeuvreService.getSourceRoadLinkIdById(id)
       validateUserMunicipalityAccess(user)(vvhClient.roadLinkData.fetchByLinkId(sourceRoadLinkId).get.municipalityCode)
-      manoeuvreService.updateManoeuvre(user.username, id, updates)
+      manoeuvreService.updateManoeuvre(user.username, id, updates, None)
     }
   }
 

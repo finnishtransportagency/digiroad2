@@ -211,7 +211,7 @@ object AssetTypeInfo {
                     NumberOfLanes, CongestionTendency, MassTransitLane, TrafficVolume, WinterSpeedLimit,
                     Prohibition, PedestrianCrossings, HazardousMaterialTransportProhibition, Obstacles,
                     RailwayCrossings, DirectionalTrafficSigns, ServicePoints, EuropeanRoads, ExitNumbers,
-                    TrafficLights, MaintenanceRoadAsset, TrafficSigns, UnknownAssetTypeId)
+                    TrafficLights, MaintenanceRoadAsset, TrafficSigns, Manoeuvres, UnknownAssetTypeId)
 
   def apply(value: Int): AssetTypeInfo = {
     values.find(_.typeId == value).getOrElse(UnknownAssetTypeId)
@@ -250,4 +250,5 @@ case object ExitNumbers extends AssetTypeInfo { val typeId = 270; def geometryTy
 case object TrafficLights extends AssetTypeInfo { val typeId = 280; def geometryType = "point"; val label =  ""}
 case object MaintenanceRoadAsset extends AssetTypeInfo { val typeId = 290; def geometryType = "linear"; val label = "" }
 case object TrafficSigns extends AssetTypeInfo { val typeId = 300; def geometryType = "point"; val label = ""}
+case object Manoeuvres extends AssetTypeInfo { val typeId = 999; def geometryType = "linear"; val label = "Manoeuvre" }
 case object UnknownAssetTypeId extends  AssetTypeInfo {val typeId = 99; def geometryType = ""; val label = ""}

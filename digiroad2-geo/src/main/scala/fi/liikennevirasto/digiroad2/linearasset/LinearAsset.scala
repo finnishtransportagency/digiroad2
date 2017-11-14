@@ -30,6 +30,7 @@ case class Prohibitions(prohibitions: Seq[ProhibitionValue]) extends Value {
 }
 
 case class AssetProperties(name: String, value: String)
+case class ManoeuvreProperties(name: String, value: Any)
 
 case class Properties(publicId: String, propertyType: String, value: String)
 
