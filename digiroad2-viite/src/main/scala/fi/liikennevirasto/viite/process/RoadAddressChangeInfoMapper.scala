@@ -13,6 +13,10 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
     Set(LengthenedCommonPart.value, LengthenedNewPart.value, ShortenedCommonPart.value, ShortenedRemovedPart.value).contains(ci.changeType)
   }
 
+  private def isFloatingChange(ci: ChangeInfo) = {
+    Set(Removed.value, ReplacedCommonPart.value, ReplacedNewPart.value, ReplacedRemovedPart.value).contains(ci.changeType)
+  }
+
   private def max(doubles: Double*) = {
     doubles.max
   }
@@ -74,8 +78,14 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
 
   private def applyChanges(changes: Seq[Seq[ChangeInfo]], roadAddresses: Map[Long, Seq[RoadAddress]]): Map[Long, Seq[RoadAddress]] = {
     changes.foldLeft(roadAddresses) { case (addresses, changeInfo) =>
-      val (length, maps) = changeInfo.partition(isLengthChange)
-      applyLengthChanges(length, applyMappedChanges(maps, addresses)).values.toSeq.flatten.groupBy(_.linkId)
+      val (toFloat, other) = changeInfo.partition(isFloatingChange)
+      val (length, maps) = other.partition(isLengthChange)
+      val changeOperations: Seq[Map[Long, Seq[RoadAddress]] => Map[Long, Seq[RoadAddress]]] = Seq(
+        applyFloating(toFloat),
+        applyMappedChanges(maps),
+        applyLengthChanges(length)
+      )
+      changeOperations.foldLeft(addresses){ case (addrMap, op) => op(addrMap)}
     }
   }
 
@@ -87,7 +97,7 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
       Seq(ra)
   }
 
-  private def applyMappedChanges(changes: Seq[ChangeInfo], roadAddresses: Map[Long, Seq[RoadAddress]]): Map[Long, Seq[RoadAddress]] = {
+  private def applyMappedChanges(changes: Seq[ChangeInfo])(roadAddresses: Map[Long, Seq[RoadAddress]]): Map[Long, Seq[RoadAddress]] = {
     if (changes.isEmpty)
       roadAddresses
     else {
@@ -97,16 +107,31 @@ object RoadAddressChangeInfoMapper extends RoadAddressMapper {
     }
   }
 
-  private def applyLengthChanges(changes: Seq[ChangeInfo], roadAddresses: Map[Long, Seq[RoadAddress]]): Map[Long, Seq[RoadAddress]] = {
+  private def applyLengthChanges(changes: Seq[ChangeInfo])(roadAddresses: Map[Long, Seq[RoadAddress]]): Map[Long, Seq[RoadAddress]] = {
     if (changes.isEmpty)
       roadAddresses
     else {
       val mapping = createAddressMap(changes)
       val mapped = roadAddresses.mapValues(_.flatMap(ra =>
+        // If change is not within maximum allowed then float the address
         if (mapping.exists(m => m.matches(ra) && Math.abs(m.sourceLen - m.targetLen) > fi.liikennevirasto.viite.MaxLengthChange)) {
           Seq(ra.copy(floating = true))
         } else
           mapAddress(mapping)(ra)
+      ))
+      mapped.values.toSeq.flatten.groupBy(_.linkId)
+    }
+  }
+
+  private def applyFloating(changes: Seq[ChangeInfo])(roadAddresses: Map[Long, Seq[RoadAddress]]): Map[Long, Seq[RoadAddress]] = {
+    if (changes.isEmpty)
+      roadAddresses
+    else {
+      val mapped = roadAddresses.mapValues(_.map(ra =>
+        if (changes.exists(c => c.oldId.contains(ra.linkId) && c.vvhTimeStamp > ra.adjustedTimestamp)) {
+          ra.copy(floating = true)
+        } else
+          ra
       ))
       mapped.values.toSeq.flatten.groupBy(_.linkId)
     }
