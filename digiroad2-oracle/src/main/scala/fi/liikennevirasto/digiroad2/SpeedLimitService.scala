@@ -327,7 +327,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
     validateMunicipalities(dao.getLinksWithLengthFromVVH(20, id))
 
     //Get all data from the speedLimit to update
-    val speedLimit = dao.getPersistedSpeedLimit(id).filter(_.expired).getOrElse(throw new IllegalStateException("Asset no longer available"))
+    val speedLimit = dao.getPersistedSpeedLimit(id).filterNot(_.expired).getOrElse(throw new IllegalStateException("Asset no longer available"))
 
     //Expire old speed limit
     dao.updateExpiration(id, true, username)

@@ -92,6 +92,9 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
   }
 
   def expireLinearAsset(assetTypeId: Int, assetId: Long, username: String, expired: Boolean): String = {
+    if (linearAssetService.getPersistedAssetsByIds(assetTypeId, Set(assetId.toLong)).isEmpty)
+      halt(UnprocessableEntity("Asset not found."))
+
     linearAssetService.expireAsset(assetTypeId, assetId, user.username, expired = true).getOrElse("").toString
   }
 
@@ -153,7 +156,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     }
   }
 
-  def updateLinearAssets(assetTypeId: Int, assetId: Int, parsedBody: JValue, linkId: Long): Seq[PersistedLinearAsset] = {
+  def updateLinearAsset(assetTypeId: Int, assetId: Int, parsedBody: JValue, linkId: Long): PersistedLinearAsset = {
     val usedService = verifyLinearServiceToUse(assetTypeId)
     val oldAsset = usedService.getPersistedAssetsByIds(assetTypeId, Set(assetId.toLong)).filterNot(_.expired).headOption.
       getOrElse(halt(UnprocessableEntity("Asset not found.")))
@@ -163,7 +166,10 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     validateTimeststamp(newAsset.vvhTimeStamp, oldAsset.vvhTimeStamp)
 
     val updatedId = usedService.updateWithNewMeasures(Seq(oldAsset.id), newAsset.value, user.username, Some(Measures(newAsset.startMeasure, newAsset.endMeasure)), Some(newAsset.vvhTimeStamp), Some(newAsset.sideCode))
-    usedService.getPersistedAssetsByIds(assetTypeId, updatedId.toSet).filterNot(_.expired)
+    usedService.getPersistedAssetsByIds(assetTypeId, updatedId.toSet).filterNot(_.expired).headOption match {
+      case Some(linearAssetUpdated) => linearAssetUpdated
+      case _ => halt(BadRequest("Asset not Updated"))
+    }
   }
 
   def updatePointAssets(parsedBody: JValue, typeId: Int, assetId: Int): PersistedPointAsset = {
@@ -197,7 +203,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     getPointAssetById(typeId, assetId)
   }
 
-  def updateSpeedLimitAssets(assetId: Long, parsedBody: JValue, linkId: Int): Seq[SpeedLimit] = {
+  def updateSpeedLimitAsset(assetId: Long, parsedBody: JValue, linkId: Int): SpeedLimit = {
     val oldAsset = speedLimitService.getSpeedLimitAssetsByIds(Set(assetId)).filterNot(_.expired).headOption
       .getOrElse(halt(UnprocessableEntity("Asset not found.")))
 
@@ -207,7 +213,10 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     validateTimeststamp(newAsset.vvhTimeStamp, oldAsset.vvhTimeStamp)
 
     val updatedId = speedLimitService.update(assetId, Seq(newAsset), user.username)
-    speedLimitService.getSpeedLimitAssetsByIds(updatedId.toSet).filterNot(_.expired)
+    speedLimitService.getSpeedLimitAssetsByIds(updatedId.toSet).filterNot(_.expired).headOption match {
+      case Some(speedLimitUpdated) => speedLimitUpdated
+      case _ => halt(BadRequest("Asset not Updated"))
+    }
   }
 
   def updateManoeuvreAssets(assetId: Long, parsedBody: JValue, linkId: Int): Seq[Manoeuvre] = {
@@ -552,9 +561,11 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     }
   }
 
-  def validateAssetPropertyValue(assetTypeId: Int, properties: Seq[Seq[AssetProperties]]):Unit = {
+  def validateAssetProperties(assetTypeId: Int, properties: Seq[Seq[AssetProperties]]):Unit = {
 
     properties.foreach { prop =>
+      validateNameInProperty(assetTypeId, prop)
+
       assetTypeId match {
         case LitRoad.typeId => extractPropertyValue(getAssetName(assetTypeId), prop, propertyValueToInt).asInstanceOf[Seq[Int]].foreach{ value =>
           if (!Seq(0, 1).contains(value))
@@ -603,6 +614,11 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
         case _ => ("", None)
       }
     }
+  }
+
+  def validateNameInProperty(assetTypeId: Int, properties: Seq[AssetProperties]): Unit = {
+    if (extractNameProperty(getAssetName(assetTypeId), properties, propertyValuesToString).asInstanceOf[String].isEmpty)
+      halt(BadRequest(s"The property name doesn't exist or is not valid for this type of asset."))
   }
 
   def validateSideCodes(assets: Seq[NewLinearAsset]) : Unit = {
@@ -688,7 +704,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
         body.map(bd => (bd \ "properties").extractOrElse[Seq[ManoeuvreProperties]](halt(BadRequest("Missing asset properties"))))
       case _ =>
         val properties = body.map(bd => (bd \ "properties").extractOrElse[Seq[AssetProperties]](halt(BadRequest("Missing asset properties"))))
-        validateAssetPropertyValue(assetTypeId, properties)
+        validateAssetProperties(assetTypeId, properties)
         properties
     }
 
@@ -722,7 +738,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
         (parsedBody \ "properties").extractOrElse[Seq[ManoeuvreProperties]](halt(BadRequest("Missing asset properties")))
       case _ =>
         val properties = (parsedBody \ "properties").extractOrElse[Seq[AssetProperties]](halt(BadRequest("Missing asset properties")))
-        validateAssetPropertyValue(assetTypeId,Seq(properties))
+        validateAssetProperties(assetTypeId,Seq(properties))
         properties
     }
 
@@ -730,9 +746,9 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
       halt(BadRequest("Missing asset properties values"))
 
     AssetTypeInfo.apply(assetTypeId).geometryType match {
-      case "linear" if assetTypeId ==  SpeedLimitAsset.typeId => speedLimitAssetsToApi(updateSpeedLimitAssets(assetId, parsedBody, linkId), municipalityCode)
+      case "linear" if assetTypeId ==  SpeedLimitAsset.typeId => speedLimitAssetToApi(updateSpeedLimitAsset(assetId, parsedBody, linkId), municipalityCode)
       case "linear" if assetTypeId == Manoeuvres.typeId => manoeuvreAssetsToApi(updateManoeuvreAssets(assetId, parsedBody, linkId), municipalityCode)
-      case "linear" => linearAssetsToApi(updateLinearAssets(assetTypeId, assetId, parsedBody, linkId), municipalityCode)
+      case "linear" => linearAssetToApi(updateLinearAsset(assetTypeId, assetId, parsedBody, linkId), municipalityCode)
       case "point" => pointAssetToApi(updatePointAssets(parsedBody, assetTypeId, assetId), assetTypeId)
       case _ =>
     }
