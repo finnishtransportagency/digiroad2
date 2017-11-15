@@ -219,7 +219,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
       if (project.id != 0) //we check if project is new. If it is then we check project for being in writable state
         projectWritable(roadAddressProject.id)
       val projectSaved = projectService.createRoadLinkProject(roadAddressProject)
-      val fetched = projectService.getRoadAddressSingleProject(projectSaved.id, Seq.empty[LinkStatus]).get
+      val fetched = projectService.getRoadAddressSingleProject(projectSaved.id).get
       val firstAddress: Map[String, Any] =
         fetched.reservedParts.find(_.startingLinkId.nonEmpty).map(p => "projectAddresses" -> p.startingLinkId.get).toMap
       Map("project" -> roadAddressProjectToApi(fetched), "formInfo" ->

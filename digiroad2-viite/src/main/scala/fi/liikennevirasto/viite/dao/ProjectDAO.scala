@@ -384,26 +384,21 @@ object ProjectDAO {
   }
 
   def fetchReservedRoadParts(projectId: Long, filterNotStatus: Seq[Int] = Seq.empty[Int]): Seq[ReservedRoadPart] = {
-    val baseQuery =
+    val filter = if (filterNotStatus.nonEmpty) s""" And NOT EXISTS (
+           SELECT * FROM PROJECT_LINK pl WHERE pl.project_id = rp.PROJECT_ID AND
+           pl.ROAD_NUMBER = rp.ROAD_NUMBER AND pl.ROAD_PART_NUMBER = rp.ROAD_PART_NUMBER AND STATUS IN (${filterNotStatus.mkString(" ,")}))
+      """
+    else
+      ""
+    val sql =
       s"""
            SELECT id, road_number, road_part_number, road_length, ADDRESS_LENGTH, discontinuity, ely, first_link_id,
            (select PROJECT_LINK.ID from PROJECT_LINK WHERE PROJECT_LINK.ROAD_NUMBER = rp.ROAD_NUMBER AND
            PROJECT_LINK.ROAD_PART_NUMBER = rp.ROAD_PART_NUMBER AND
-           PROJECT_LINK.PROJECT_ID = rp.PROJECT_ID AND ROWNUM < 2) as pl_id """
-    val finalPart = s""" FROM
-           PROJECT_RESERVED_ROAD_PART rp WHERE project_id = $projectId ORDER BY road_number, road_part_number
+           PROJECT_LINK.PROJECT_ID = rp.PROJECT_ID AND ROWNUM < 2) as pl_id
+           FROM PROJECT_RESERVED_ROAD_PART rp WHERE project_id = $projectId $filter ORDER BY road_number, road_part_number
          """
-    val finalPartWithFilter = s""" FROM
-           PROJECT_RESERVED_ROAD_PART rp WHERE project_id = $projectId And NOT EXISTS (
-           SELECT * FROM PROJECT_LINK pl WHERE pl.project_id = rp.PROJECT_ID AND
-           pl.ROAD_NUMBER = rp.ROAD_NUMBER AND pl.ROAD_PART_NUMBER = rp.ROAD_PART_NUMBER AND STATUS IN (${filterNotStatus.mkString(" ,")})) ORDER BY road_number, road_part_number
-         """
-    val assembledQuery = if(filterNotStatus.isEmpty) {
-      baseQuery.concat(finalPart)
-    } else {
-      baseQuery.concat(finalPartWithFilter)
-    }
-    Q.queryNA[(Long, Long, Long, Double, Long, Int, Long, Option[Long], Option[Long])](assembledQuery).list.map {
+    Q.queryNA[(Long, Long, Long, Double, Long, Int, Long, Option[Long], Option[Long])](sql).list.map {
       case (id, road, part, length, addrLength, discontinuity, ely, linkId, plId) => ReservedRoadPart(id, road, part,
         length, addrLength, Discontinuity.apply(discontinuity), ely, None, None, linkId, plId.nonEmpty)
     }
