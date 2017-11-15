@@ -926,27 +926,35 @@ object DataFixture {
       //filter roadLink by administrative class and roadLink with MTKClass valid
       val roadLinkAdminClass = roadLinks.filter(road => road.administrativeClass == Municipality || road.administrativeClass == Private)
       val roadWithMTKClass = roadLinkAdminClass.filter(road => MTKClassWidth.values.toSeq.contains(road.extractMTKClass(road.attributes)))
+      println("Road links with MTKClass valid -> " + roadWithMTKClass.size)
 
       OracleDatabase.withDynTransaction {
-        val existingAssets = dao.fetchLinearAssetsByLinkIds(roadWidthAssetTypeId, roadLinks.map(_.linkId), LinearAssetTypes.numericValuePropertyId).filterNot(_.expired)
+        val existingAssets = dao.fetchLinearAssetsByLinkIds(roadWidthAssetTypeId, roadWithMTKClass.map(_.linkId), LinearAssetTypes.numericValuePropertyId).filterNot(_.expired)
+        println("Existing assets -> " + existingAssets.size)
 
         val lastChanges = changes.filter(_.newId.isDefined).groupBy(_.newId.get).mapValues(c => c.maxBy(_.vvhTimeStamp))
+        println("Change info -> " + lastChanges.size)
 
         //Map all existing assets by roadLink and changeInfo
-        val changedAssets = lastChanges.map{
+        val changedAssets = lastChanges.flatMap{
           case (linkId, changeInfo) =>
-            (roadWithMTKClass.find(road => road.linkId == linkId ), changeInfo, existingAssets.filter(_.linkId == linkId))
+            roadWithMTKClass.find(road => road.linkId == linkId ).map {
+              roadLink =>
+                (roadLink, changeInfo, existingAssets.filter(_.linkId == linkId))
+            }
         }
 
-        val expiredAssetsIds = changedAssets.flatMap {
-          case (Some(roadLink), changeInfo, assets) if assets.nonEmpty =>
-            assets.filter(asset => asset.vvhTimeStamp < changeInfo.vvhTimeStamp && asset.createdBy.contains("vvh_mtkclass_default")).map(_.id)
-          case _ =>
-            List()
-        }.toSet[Long]
+        println("Changed assets -> " + changedAssets.size)
 
-        val newAssets = changedAssets.flatMap{
-          case (Some(roadLink), changeInfo, assets) =>
+        val expiredAssetsIds = changedAssets.flatMap {
+          case (_, changeInfo, assets) =>
+            assets.filter(asset => asset.vvhTimeStamp < changeInfo.vvhTimeStamp && asset.createdBy.contains("vvh_mtkclass_default")).map(_.id)
+        }.toSet
+
+        println("Expired assets -> " + expiredAssetsIds.size)
+
+        val newAssets = changedAssets.flatMap {
+          case (roadLink, changeInfo, assets) =>
             val pointsOfInterest = (assets.map(_.startMeasure) ++ assets.map(_.endMeasure) ++  Seq(minOfLength, GeometryUtils.geometryLength(roadLink.geometry))).distinct.sorted
 
             //Not create asset with the length less MinAllowedLength
@@ -954,13 +962,17 @@ object DataFixture {
             pieces.flatMap { measures =>
               Some(PersistedLinearAsset(0L, roadLink.linkId, SideCode.BothDirections.value, Some(NumericValue(roadLink.extractMTKClass(roadLink.attributes).width)),
                 measures._1, measures._2, Some("vvh_mtkclass_default"), None, None, None, false, roadWidthAssetTypeId, changeInfo.vvhTimeStamp, None, linkSource = roadLink.linkSource))
-            }.filterNot(a => assets.filterNot(asset => expiredAssetsIds.contains(asset.id)).exists(asset => math.abs(a.startMeasure - asset.startMeasure) < maxAllowedError && math.abs(a.endMeasure - asset.endMeasure) < maxAllowedError))
-          case _ =>
-            None
-        }.toSeq
+            }.filterNot(a =>
+              assets.filterNot(asset => expiredAssetsIds.contains(asset.id)).
+              exists(asset => math.abs(a.startMeasure - asset.startMeasure) < maxAllowedError && math.abs(a.endMeasure - asset.endMeasure) < maxAllowedError)
+            )
+        }
+
+        println("New assets assets -> " + newAssets.size)
 
         if (expiredAssetsIds.nonEmpty)
           println("\nExpiring ids " + expiredAssetsIds.mkString(", "))
+
         expiredAssetsIds.foreach(dao.updateExpiration(_, expired = true, "vvh_mtkclass_default"))
 
         newAssets.foreach { linearAsset =>
