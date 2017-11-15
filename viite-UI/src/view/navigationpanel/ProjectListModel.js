@@ -6,17 +6,18 @@
     projectList.append('<div class="content">Tieosoiteprojektit</div>');
     projectList.append('<div class="content-new">' +
       '<label class="content-new label">PROJEKTIN NIMI</label>' +
+      '<label class="content-new label" style="width: 100px">ELY</label>' +
+      '<label class="content-new label" style="width: 100px">KÄYTTÄJÄ</label>' +
       '<label class="content-new label" style="width: 100px">TILA</label>' +
       '<div class="actions">' +
     '<button class="new btn btn-primary" style="margin-top:-5px;">Uusi tieosoiteprojekti</button></div>' +
       '</div>');
-    projectList.append('<div id="project-list" style="width:730px; height:400px; overflow:auto;"></div>');
+    projectList.append('<div id="project-list" style="width:810px; height:400px; overflow:auto;"></div>');
 
-    var staticField = function(labelText, dataField) {
+    var staticFieldProjectName = function(dataField) {
       var field;
       field = '<div>' +
-        '<label class="control-label-projects">' + labelText + '</label>' +
-        '<label class="control-label-projects">' + dataField + '</label>' +
+        '<label class="control-label-projects-list" style="width: 300px">' + dataField + '</label>' +
         '</div>';
       return field;
     };
@@ -54,20 +55,22 @@
           return proj.statusCode < 6 && proj.statusCode > 0 ;
         });
         if(!_.isEmpty(unfinishedProjects)){
-          var html = '<table align="left" width="100%">';
+          var html = '<table style="align-content: left;align-items: left;table-layout: fixed;width: 100%;">';
           _.each(unfinishedProjects, function(proj) {
             var info = typeof(proj.statusInfo) !== "undefined" ? proj.statusInfo : 'Ei lisätietoja';
             if(proj.statusCode === projectStatus.ErroredInTR.value) {
               html += '<tr class="project-item">' +
-                '<td width="300px;">'+ staticFieldProjectList(proj.name)+'</td>'+
-                '<td width="300px;" title="'+ info +'">'+ staticFieldProjectList(proj.statusDescription)+'</td>'+
+                '<td>'+ staticFieldProjectName(proj.name)+'</td>'+
+                '<td title="'+ info +'">'+ staticFieldProjectList(proj.statusDescription)+'</td>'+
                 '<td>'+'<button class="project-open btn btn-new-error" style="alignment: right; margin-bottom:6px" id="reopen-project-'+proj.id +'" value="'+proj.id+'"">Avaa uudelleen</button>' +'</td>'+
                 '</tr>' + '<tr style="border-bottom:1px solid darkgray; "><td colspan="100%"></td></tr>';
             } else {
               html += '<tr class="project-item">' +
-                '<td width="300px;">'+ staticFieldProjectList(proj.name)+'</td>'+
-                '<td width="300px;" title="'+ info +'">'+ staticFieldProjectList(proj.statusDescription)+'</td>'+
-                '<td>'+'<button class="project-open btn btn-new" style="alignment: right; margin-bottom:6px" id="open-project-'+proj.id +'" value="'+proj.id+'"">Avaa</button>' +'</td>'+
+                '<td style="width: 310px;">'+ staticFieldProjectName(proj.name)+'</td>'+
+                '<td style="width: 110px;" title="'+ info +'">'+ staticFieldProjectList(proj.ely)+'</td>'+
+                '<td style="width: 110px;" title="'+ info +'">'+ staticFieldProjectList(proj.createdBy)+'</td>'+
+                '<td style="width: 110px;" title="'+ info +'">'+ staticFieldProjectList(proj.statusDescription)+'</td>'+
+                '<td>'+'<button class="project-open btn btn-new" style="alignment: right; margin-bottom:6px; margin-left: 70px" id="open-project-'+proj.id +'" value="'+proj.id+'"">Avaa</button>' +'</td>'+
                 '</tr>' + '<tr style="border-bottom:1px solid darkgray; "><td colspan="100%"></td></tr>';
             }
           });
