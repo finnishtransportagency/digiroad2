@@ -134,7 +134,7 @@
       }
     };
     var selectionFormCutted = function (selection, selected) {
-      var firstLink = _.first(_.sortBy(selected, 'startAddressM'));
+      var firstLink = _.first(_.sortBy(_.filter(selected, function (s) {return s.endMValue !== 0; }), 'startAddressM'));
       var splitPoint = ((applicationModel.getSelectedTool() != "Cut" ? getSplitPointBySideCode(firstLink) : firstLink.splitPoint));
 
       return '<form id="roadAddressProjectFormCut" class="input-unit-combination split-form-group form-horizontal roadAddressProject">'+
