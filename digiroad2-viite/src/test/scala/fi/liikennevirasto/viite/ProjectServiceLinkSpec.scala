@@ -755,7 +755,7 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       val reservedRoadPart1 = ReservedRoadPart(164, 77, 35, 5405, 5405, Discontinuity.EndOfRoad, 8, None, None)
       val rap = RoadAddressProject(id, ProjectState.apply(1), "TestProject", "TestUser", DateTime.now(), "TestUser", DateTime.now(), DateTime.now(), "Some additional info", Seq(reservedRoadPart1), None)
       ProjectDAO.createRoadAddressProject(rap)
-      ProjectDAO.reserveRoadPart(rap.id, 77, 35, "TestUser")
+      ProjectDAO.reserveRoadPart(rap.id, 77, 35, "TestUser",8)
       val addressesOnPart = RoadAddressDAO.fetchByRoadPart(77, 35, false)
       ProjectDAO.create(addressesOnPart.map(address => {
         toProjectLink(rap, LinkStatus.NotHandled)(address)
@@ -1382,6 +1382,8 @@ class ProjectServiceLinkSpec extends FunSuite with Matchers with BeforeAndAfter 
       end.get.sideCode should be (TowardsDigitizing)
       end.get.startAddressM should be (19L)
       end.get.endAddressM should be (28L)
+      end.get.discontinuity should be (Discontinuity.EndOfRoad.value)
+      links.count(_.discontinuity != Discontinuity.Continuous.value) should be (1)
     }
   }
 }

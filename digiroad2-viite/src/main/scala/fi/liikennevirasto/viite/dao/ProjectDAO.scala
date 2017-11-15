@@ -590,9 +590,9 @@ object ProjectDAO {
     Q.queryNA[Long](query).list
   }
 
-  def reserveRoadPart(projectId: Long, roadNumber: Long, roadPartNumber: Long, user: String): Unit = {
-    sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART(id, road_number, road_part_number, project_id, created_by)
-      SELECT viite_general_seq.nextval, $roadNumber, $roadPartNumber, $projectId, $user FROM DUAL""".execute
+  def reserveRoadPart(projectId: Long, roadNumber: Long, roadPartNumber: Long, user: String,ely:Long): Unit = {
+    sqlu"""INSERT INTO PROJECT_RESERVED_ROAD_PART(id, road_number, road_part_number, project_id, created_by, ely)
+      SELECT viite_general_seq.nextval, $roadNumber, $roadPartNumber, $projectId, $user, $ely FROM DUAL""".execute
   }
 
   def updateReservedRoadPart(reserved: ReservedRoadPart): Unit = {
