@@ -17,7 +17,7 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
 
   override def getUncheckedLinearAssets(areas: Option[Set[Int]]) = throw new UnsupportedOperationException("Not supported method")
 
-  override protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Seq[PieceWiseLinearAsset] = {
+/*  override protected def getByRoadLinks(typeId: Int, roadLinks: Seq[RoadLink], changes: Seq[ChangeInfo]): Seq[PieceWiseLinearAsset] = {
     val linkIds = roadLinks.map(_.linkId)
     val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(changes, roadLinks)
     val (expiredAssets, existingAssets) =
@@ -59,9 +59,9 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     eventBus.publish("RoadWidth:saveProjectedRoadWidth", newAssets.filterNot(a => changeSet.adjustedMValues.exists(_.assetId == a.id)))
 
     filledTopology
-  }
+  }*/
 
-  def getRoadWidthAssetChanges(existingLinearAssets: Seq[PersistedLinearAsset], expiredAssets: Seq[PersistedLinearAsset],
+  /*def getRoadWidthAssetChanges(existingLinearAssets: Seq[PersistedLinearAsset], expiredAssets: Seq[PersistedLinearAsset],
                          roadLinks: Seq[RoadLink], changeInfos: Seq[ChangeInfo]): (Set[Long], Seq[PersistedLinearAsset]) = {
 
     val roadLinkAdminClass = roadLinks.filter(road => road.administrativeClass == Municipality || road.administrativeClass == Private)
@@ -69,8 +69,12 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
 
     val lastChanges = changeInfos.filter(_.newId.isDefined).groupBy(_.newId.get).mapValues(c => c.maxBy(_.vvhTimeStamp))
 
-    val sortExpired = expiredAssets.sortWith((a, b) => a.modifiedDateTime.isDefined && b.modifiedDateTime.isDefined && a.modifiedDateTime.get.isAfter(b.modifiedDateTime.get))
-    val lastModified = sortExpired.groupBy(_.linkId).mapValues(_.head).values
+    val lastModified = expiredAssets.groupBy(_.linkId).mapValues(
+      _.maxBy{x => x.modifiedDateTime match {
+        case Some(modifiedDate) => modifiedDate.getMillis
+        case _ => 0
+      }
+    }).values
     val notByMTKClass = lastModified.filterNot(_.modifiedBy == "vvh_mtkclass_default")
 
     //Map all existing assets by roadlink and changeinfo
@@ -101,7 +105,7 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
 
     (expiredAssetsIds, newAssets)
   }
-
+*/
   override def persistProjectedLinearAssets(newLinearAssets: Seq[PersistedLinearAsset]): Unit ={
     if (newLinearAssets.nonEmpty)
       logger.info("Saving projected road Width assets")
