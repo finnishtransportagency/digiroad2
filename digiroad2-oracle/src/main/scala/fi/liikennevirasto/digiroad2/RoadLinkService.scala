@@ -107,7 +107,6 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       enrichRoadLinksFromVVH(vvhRoadLinks).headOption
   }
 
-
   /**
     * ATENTION Use this method always with transation not with session
     * Returns the road links from VVH by municipality.
@@ -122,6 +121,27 @@ class RoadLinkService(val vvhClient: VVHClient, val eventbus: DigiroadEventBus, 
       }
     else
       enrichRoadLinksFromVVH(vvhRoadLinks)
+  }
+
+  /**
+    * ATENTION Use this method always with transation not with session
+    * Returns the road links and changes from VVH by municipality.
+    *
+    * @param municipality A integer, representative of the municipality Id.
+    */
+  def getRoadLinksAndChangesFromVVHByMunicipality(municipality: Int, newTransaction: Boolean = true): (Seq[RoadLink], Seq[ChangeInfo]) = {
+    val fut = for{
+      changeInfos <- vvhClient.roadLinkChangeInfo.fetchByMunicipalityF(municipality)
+      vvhRoadLinks <- vvhClient.roadLinkData.fetchByMunicipalityF(municipality)
+    } yield (changeInfos, vvhRoadLinks)
+
+    val (changeInfos, vvhRoadLinks) = Await.result(fut, Duration.Inf)
+    if (newTransaction)
+      withDynTransaction {
+        (enrichRoadLinksFromVVH(vvhRoadLinks), changeInfos)
+      }
+    else
+      (enrichRoadLinksFromVVH(vvhRoadLinks), changeInfos)
   }
 
   /**

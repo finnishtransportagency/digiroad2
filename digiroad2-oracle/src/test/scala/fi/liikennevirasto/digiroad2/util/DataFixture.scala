@@ -922,7 +922,7 @@ object DataFixture {
 
     municipalities.foreach { municipality =>
       println("Working on... municipality -> " + municipality)
-      val (roadLinks, changes) = roadLinkService.getRoadLinksAndChangesFromVVH(municipality)
+      val (roadLinks, changes) = roadLinkService.getRoadLinksAndChangesFromVVHByMunicipality(municipality)
       //filter roadLink by administrative class and roadLink with MTKClass valid
       val roadLinkAdminClass = roadLinks.filter(road => road.administrativeClass == Municipality || road.administrativeClass == Private)
       val roadWithMTKClass = roadLinkAdminClass.filter(road => MTKClassWidth.values.toSeq.contains(road.extractMTKClass(road.attributes)))
