@@ -564,6 +564,7 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
           Track.Unknown.value, 0L, 0L, 0, RoadType.Unknown.value, projectId), bestFit, splitOptions)
         ProjectDAO.removeProjectLinksByLinkId(projectId, splitLinks.map(_.linkId).toSet)
         ProjectDAO.create(splitLinks.map(x => x.copy(modifiedBy = Some(username))))
+        ProjectDAO.updateProjectCoordinates(projectId, splitOptions.coordinates)
         recalculateProjectLinks(project.id, username, Set((splitOptions.roadNumber, splitOptions.roadPartNumber)))
         None
       }

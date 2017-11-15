@@ -233,9 +233,11 @@
 
     this.removeProjectLinkSplit = function(data, success, errorCallback) {
       $.ajax({
+        contentType: "application/json",
         type: "DELETE",
         url: "api/viite/project/split",
         data: JSON.stringify(data),
+        dataType: "json",
         success: success,
         error: errorCallback
       });

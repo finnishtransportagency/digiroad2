@@ -211,10 +211,11 @@
     this.removeProjectLinkSplit = function (project, selectedProjectLink) {
       if(!_.isEmpty(project)) {
         applicationModel.addSpinner();
+        var coordinates = applicationModel.getUserGeoLocation();
         var data = {
           projectId: project.id,
           linkId: Math.abs(selectedProjectLink[0].linkId),
-          coordinates: applicationModel.getUserGeoLocation()
+          coordinates: coordinates
         };
         backend.removeProjectLinkSplit(data, function (response) {
           if (response.success) {
