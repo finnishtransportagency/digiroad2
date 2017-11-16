@@ -114,7 +114,7 @@
         roadLinkSource: adjacentLink.roadLinkSource,
         connectedLinkId: adjacentLink.connectedLinkId,
         linkId: adjacentLink.linkId,
-        status: adjacentLink.status,
+        status: LinkValues.LinkStatus.NotHandled.value,
         points:  getPoint(adjacentLink),
         startAddressM: 0,
         endAddressM: 0,

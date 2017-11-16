@@ -205,7 +205,7 @@
         if(selectedProjectLink[0].id !== 0)
           rootElement.find('.changeDirectionDiv').prop("hidden", false);
       }
-      $('#discontinuityDropdown').val(selectedProjectLink[selectedProjectLink.length - 1].discontinuity);
+      $('#discontinuityDropdown').val(selectedProjectLink[0].discontinuity);
       $('#roadTypeDropDown').val(selectedProjectLink[0].roadTypeId);
     };
 
