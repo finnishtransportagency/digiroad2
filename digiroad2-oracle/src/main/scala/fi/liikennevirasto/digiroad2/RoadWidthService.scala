@@ -89,12 +89,12 @@ class RoadWidthService(roadLinkServiceImpl: RoadLinkService, eventBusImpl: Digir
     val newAssets = changedAssets.flatMap{
       case (Some(roadLink), changeInfo, assets, expired) if assets.isEmpty && expired.isEmpty =>
         Some(PersistedLinearAsset(0L, roadLink.linkId, SideCode.BothDirections.value, Some(NumericValue(roadLink.extractMTKClass(roadLink.attributes).width)),
-          0, GeometryUtils.geometryLength(roadLink.geometry), Some("vvh_mtkclass_default"), None, None, None, false, LinearAssetTypes.RoadWidthAssetTypeId, changeInfo.vvhTimeStamp, None, linkSource = roadLink.linkSource))
+          0, GeometryUtils.geometryLength(roadLink.geometry), Some("vvh_mtkclass_default"), None, None, None, false, LinearAssetTypes.RoadWidthAssetTypeId, changeInfo.vvhTimeStamp, None, None, linkSource = roadLink.linkSource))
       case (Some(roadLink), changeInfo, assets, expired) if assets.nonEmpty =>
         //if the asset was created by changeInfo and there is a new changeInfo, expire and crete a new asset
         assets.filter(asset => expiredAssetsIds.contains(asset.id)).map { asset =>
         PersistedLinearAsset(0L, roadLink.linkId, SideCode.BothDirections.value, Some(NumericValue(roadLink.extractMTKClass(roadLink.attributes).width)),
-          asset.startMeasure, asset.endMeasure, Some("vvh_mtkclass_default"), None, None, None, false, LinearAssetTypes.RoadWidthAssetTypeId, changeInfo.vvhTimeStamp, None, linkSource = roadLink.linkSource)}
+          asset.startMeasure, asset.endMeasure, Some("vvh_mtkclass_default"), None, None, None, false, LinearAssetTypes.RoadWidthAssetTypeId, changeInfo.vvhTimeStamp, None, None, linkSource = roadLink.linkSource)}
       case _ =>
         None
     }.toSeq

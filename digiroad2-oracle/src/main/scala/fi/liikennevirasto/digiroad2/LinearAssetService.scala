@@ -59,7 +59,6 @@ trait LinearAssetOperations {
 
   val logger = LoggerFactory.getLogger(getClass)
 
-
   def getMunicipalityCodeByAssetId(assetId: Int): Int = {
     var municipalityCode = -1
     withDynTransaction {
@@ -113,13 +112,11 @@ trait LinearAssetOperations {
     LinearAssetPartitioner.partition(linearAssets, roadLinks.groupBy(_.linkId).mapValues(_.head))
   }
 
-
   def getAssetsByMunicipality(typeId: Int, municipality: Int): Seq[PersistedLinearAsset] = {
     val (roadLinks, changes) = roadLinkService.getRoadLinksWithComplementaryAndChangesFromVVH(municipality)
-    val roadLink: Seq[RoadLink] = roadLinks.filter(_.functionalClass > 4 || typeId != LinearAssetTypes.MaintenanceRoadAssetTypeId)
-    val linkIds = roadLink.map(_.linkId)
+    val linkIds = roadLinks.map(_.linkId)
     val removedLinkIds = LinearAssetUtils.deletedRoadLinkIds(changes, roadLinks)
-    withDynTransaction {
+    val linearAssets = withDynTransaction {
       typeId match {
         case LinearAssetTypes.ProhibitionAssetTypeId | LinearAssetTypes.HazmatTransportProhibitionAssetTypeId =>
           dao.fetchProhibitionsByLinkIds(typeId, linkIds ++ removedLinkIds, includeFloating = false)
@@ -129,6 +126,10 @@ trait LinearAssetOperations {
           dao.fetchLinearAssetsByLinkIds(typeId, linkIds ++ removedLinkIds, LinearAssetTypes.numericValuePropertyId)
       }
     }.filterNot(_.expired)
+
+    linearAssets.map { linearAsset =>
+      linearAsset.copy(municipalityCode = roadLinks.find(_.linkId == linearAsset.linkId).map(_.municipalityCode))
+    }
   }
 
   /**

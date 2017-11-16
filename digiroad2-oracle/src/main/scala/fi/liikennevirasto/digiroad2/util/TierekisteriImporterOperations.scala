@@ -187,15 +187,20 @@ trait TierekisteriAssetImporterOperations {
 
   def importAssets(): Unit = {
     //Expire all asset in state roads in all the municipalities
-    val municipalities = getAllMunicipalities()
-    municipalities.foreach { municipality =>
-      withDynTransaction{
-        expireAssets(municipality, Some(State))
-      }
-    }
+//    val municipalities = getAllMunicipalities()
+//    municipalities.foreach { municipality =>
+//      withDynTransaction{
+//        expireAssets(municipality, Some(State))
+//      }
+//    }
+//val municipalities = Seq(5)
+//    val roadNumbers = getAllViiteRoadNumbers()
+    val roadNumbers = Seq(
 
-    val roadNumbers = getAllViiteRoadNumbers()
-
+    12009,
+    26020,
+    259,
+    11256)
     roadNumbers.foreach {
       roadNumber =>
         //Fetch asset from Tierekisteri and then generates the sections foreach returned asset

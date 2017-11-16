@@ -355,7 +355,7 @@ class AssetDataImporter {
         val prohibitionResults = parseProhibitionValues(segmentsPerSide, expandedExceptions, linkId, sideCode)
         val linearAssets = prohibitionResults.filter(_.isRight).map(_.right.get) match {
           case Nil => Nil
-          case prohibitionValues => Seq(Right(PersistedLinearAsset(0l, linkId, sideCode, Some(Prohibitions(prohibitionValues)), 0.0, roadLinkLength, None, None, None, None, false, 190, 0, None, roadLinkSource)))
+          case prohibitionValues => Seq(Right(PersistedLinearAsset(0l, linkId, sideCode, Some(Prohibitions(prohibitionValues)), 0.0, roadLinkLength, None, None, None, None, false, 190, 0, None, None, roadLinkSource)))
         }
         val parseErrors = prohibitionResults.filter(_.isLeft).map(_.left.get).map(Left(_))
         linearAssets ++ parseErrors
@@ -407,7 +407,7 @@ class AssetDataImporter {
         ProhibitionValue(prohibitionType, validityPeriods, exceptions)
       }
       // TODO: when linear assets get included in change history
-      PersistedLinearAsset(assetId, linkId, sideCode, Some(Prohibitions(prohibitionValues)), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, prohibitionAssetTypeId, 0, None, LinkGeomSource.apply(linkSource))
+      PersistedLinearAsset(assetId, linkId, sideCode, Some(Prohibitions(prohibitionValues)), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, prohibitionAssetTypeId, 0, None, None, LinkGeomSource.apply(linkSource))
     }.toSeq
   }
 

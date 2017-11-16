@@ -224,7 +224,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
           where a.floating = 0
       """.as[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[DateTime], Int)].list
       assets.map { case (id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, linkSource) =>
-        PersistedLinearAsset(id, linkId, sideCode, value.map(NumericValue), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, LinkGeomSource.apply(linkSource))
+        PersistedLinearAsset(id, linkId, sideCode, value.map(NumericValue), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, None, LinkGeomSource.apply(linkSource))
       }
     }
   }
@@ -248,7 +248,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
           where a.floating = 0
       """.as[(Long, Long, Int, Option[String], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[DateTime], Int)].list
       assets.map { case (id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, linkSource) =>
-        PersistedLinearAsset(id, linkId, sideCode, value.map(TextualValue), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, LinkGeomSource.apply(linkSource))
+        PersistedLinearAsset(id, linkId, sideCode, value.map(TextualValue), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, None, LinkGeomSource.apply(linkSource))
       }
     }
   }
@@ -275,7 +275,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
           #$filterExpired"""
         .as[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[DateTime], Int)].list
       assets.map { case(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, linkSource) =>
-        PersistedLinearAsset(id, linkId, sideCode, value.map(NumericValue), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, LinkGeomSource.apply(linkSource))
+        PersistedLinearAsset(id, linkId, sideCode, value.map(NumericValue), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, None, LinkGeomSource.apply(linkSource))
       }
     }
   }
@@ -301,7 +301,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
           and a.floating = 0"""
         .as[(Long, Long, Int, Option[String], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[DateTime], Int)].list
       assets.map { case(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, linkSource) =>
-        PersistedLinearAsset(id, linkId, sideCode, value.map(TextualValue), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, LinkGeomSource.apply(linkSource))
+        PersistedLinearAsset(id, linkId, sideCode, value.map(TextualValue), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, None, LinkGeomSource.apply(linkSource))
       }
     }
   }
@@ -351,7 +351,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
         }.toSet
         ProhibitionValue(prohibitionType, validityPeriods, exceptions, prohibitionAdditionalInfo)
       }
-      PersistedLinearAsset(assetId, linkId, sideCode, Some(Prohibitions(prohibitionValues)), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, prohibitionAssetTypeId, vvhTimeStamp, geomModifiedDate, LinkGeomSource.apply(linkSource))
+      PersistedLinearAsset(assetId, linkId, sideCode, Some(Prohibitions(prohibitionValues)), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, prohibitionAssetTypeId, vvhTimeStamp, geomModifiedDate, None, LinkGeomSource.apply(linkSource))
     }.toSeq
   }
 
@@ -399,7 +399,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
         }.toSet
         ProhibitionValue(prohibitionType, validityPeriods, exceptions, prohibitionAdditionalInfo)
       }
-      PersistedLinearAsset(assetId, linkId, sideCode, Some(Prohibitions(prohibitionValues)), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, prohibitionAssetTypeId, vvhTimeStamp, geomModifiedDate, LinkGeomSource.apply(linkSource))
+      PersistedLinearAsset(assetId, linkId, sideCode, Some(Prohibitions(prohibitionValues)), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, prohibitionAssetTypeId, vvhTimeStamp, geomModifiedDate, None, LinkGeomSource.apply(linkSource))
     }.toSeq
   }
 
@@ -483,7 +483,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
       .as[(Long, Long, Int, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Boolean, Int, Long, Option[DateTime], Int)].list
 
     assets.map { case(id, linkId, sideCode, value, startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, linkSource) =>
-      PersistedLinearAsset(id, linkId, sideCode, value.map(NumericValue), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, LinkGeomSource.apply(linkSource))
+      PersistedLinearAsset(id, linkId, sideCode, value.map(NumericValue), startMeasure, endMeasure, createdBy, createdDate, modifiedBy, modifiedDate, expired, typeId, vvhTimeStamp, geomModifiedDate, None, LinkGeomSource.apply(linkSource))
     }
   }
 
@@ -491,7 +491,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     val (assetId, linkId, sideCode, speedLimit, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, geomModifiedDate) = segment
     val roadLink = topology.find(_.linkId == linkId).get
     val geometry = GeometryUtils.truncateGeometry3D(roadLink.geometry, startMeasure, endMeasure)
-    SpeedLimit(assetId, linkId, sideCode, roadLink.trafficDirection, speedLimit.map(NumericValue), geometry, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, geomModifiedDate, linkSource = roadLink.linkSource)
+    SpeedLimit(assetId, linkId, sideCode, roadLink.trafficDirection, speedLimit.map(NumericValue), geometry, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, geomModifiedDate, municipalityCode = Some(roadLink.municipalityCode), linkSource = roadLink.linkSource)
   }
 
   /**
@@ -516,7 +516,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
 
     speedLimits.map { case (assetId, linkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, geomModifiedDate) =>
       val vvhRoadLink = roadLinksWithComplementaryByLinkId.find(_.linkId == linkId).getOrElse(throw new NoSuchElementException)
-      SpeedLimit(assetId, linkId, sideCode, vvhRoadLink.trafficDirection, value.map(NumericValue), GeometryUtils.truncateGeometry3D(vvhRoadLink.geometry, startMeasure, endMeasure), startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, geomModifiedDate, linkSource = vvhRoadLink.linkSource)
+      SpeedLimit(assetId, linkId, sideCode, vvhRoadLink.trafficDirection, value.map(NumericValue), GeometryUtils.truncateGeometry3D(vvhRoadLink.geometry, startMeasure, endMeasure), startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, geomModifiedDate, municipalityCode = Some(vvhRoadLink.municipalityCode), linkSource = vvhRoadLink.linkSource)
     }
   }
 
@@ -539,7 +539,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     }
     speedLimits.map {
       case (assetId, linkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, geomModifiedDate, linkSource) =>
-        SpeedLimit(assetId, linkId, sideCode, TrafficDirection.UnknownDirection, value.map(NumericValue), Seq(Point(0.0, 0.0)), startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, geomModifiedDate, linkSource = LinkGeomSource.apply(linkSource))
+        SpeedLimit(assetId, linkId, sideCode, TrafficDirection.UnknownDirection, value.map(NumericValue), Seq(Point(0.0, 0.0)), startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, geomModifiedDate, municipalityCode = None, linkSource = LinkGeomSource.apply(linkSource))
     }
   }
 
@@ -580,7 +580,7 @@ class OracleLinearAssetDao(val vvhClient: VVHClient, val roadLinkService: RoadLi
     val idSql = sql + makeLinkIdSql(idString)
     Q.queryNA[(Long, Long, SideCode, Option[Int], Double, Double, Option[String], Option[DateTime], Option[String], Option[DateTime], Long, Option[DateTime], Int)](idSql).list.map {
       case (assetId, linkId, sideCode, value, startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, geomModifiedDate, linkSource) =>
-        SpeedLimit(assetId, linkId, sideCode, TrafficDirection.UnknownDirection, value.map(NumericValue), Seq(Point(0.0, 0.0)), startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, geomModifiedDate, linkSource = LinkGeomSource.apply(linkSource))
+        SpeedLimit(assetId, linkId, sideCode, TrafficDirection.UnknownDirection, value.map(NumericValue), Seq(Point(0.0, 0.0)), startMeasure, endMeasure, modifiedBy, modifiedDate, createdBy, createdDate, vvhTimeStamp, geomModifiedDate, municipalityCode = None, linkSource = LinkGeomSource.apply(linkSource))
     }
   }
 

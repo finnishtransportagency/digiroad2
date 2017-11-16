@@ -19,6 +19,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
                       val linearAssetService: LinearAssetService,
                       val speedLimitService: SpeedLimitService,
                       val pavingService: PavingService,
+                      val roadWidthService: RoadWidthService,
                       val manoeuvreService: ManoeuvreService,
                       val assetService: AssetService
                      ) extends ScalatraServlet with JacksonJsonSupport with AuthenticationSupport {
@@ -53,7 +54,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     case t: TrafficDirection => JString(t.toString)
   }))
 
-  protected implicit val jsonFormats: Formats = DefaultFormats + DateTimeSerializer + LinkGeomSourceSerializer + SideCodeSerializer + TrafficDirectionSerializer //+ BigIntToIntSerializer
+  protected implicit val jsonFormats: Formats = DefaultFormats + DateTimeSerializer + LinkGeomSourceSerializer + SideCodeSerializer + TrafficDirectionSerializer
 
   case class AssetTimeStamps(created: Modification, modified: Modification) extends TimeStamps
 
@@ -65,6 +66,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     typeId match {
       case LitRoad.typeId | MassTransitLane.typeId  => onOffLinearAssetService
       case PavedRoad.typeId => pavingService
+      case RoadWidth.typeId => roadWidthService
       case _ => linearAssetService
     }
   }
@@ -129,6 +131,11 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
   def getLinearAssets(assetTypeId: Int, assetId: Int): Seq[PersistedLinearAsset] ={
     val usedService = verifyLinearServiceToUse(assetTypeId)
     val linearAssets = usedService.getPersistedAssetsByIds(assetTypeId, Set(assetId.toLong)).filterNot(_.expired)
+
+    linearAssets.map { linearAsset =>
+      val roadLink = roadLinkService.getRoadLinkAndComplementaryFromVVH(linearAsset.linkId).getOrElse(halt(NotFound("Roadlink not found")))
+      linearAsset.copy(municipalityCode = Some(roadLink.municipalityCode))
+    }
 
     if (linearAssets.isEmpty)
       halt(BadRequest("Asset not found."))
@@ -244,7 +251,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     manoeuvreService.find(assetId).toSeq
   }
 
-  def createLinearAssets(municipalityCode: Int, assetTypeId: Int, parsedBody: JValue, linkId: Seq[Long]): Seq[PersistedLinearAsset] ={
+  def createLinearAssets(assetTypeId: Int, parsedBody: JValue, linkId: Seq[Long]): Seq[PersistedLinearAsset] ={
     val usedService = verifyLinearServiceToUse(assetTypeId)
     val newLinearAssets = extractNewAssets(assetTypeId, parsedBody)
     validateSideCodes(newLinearAssets)
@@ -258,7 +265,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     }
   }
 
-  def createSpeedLimitAssets(municipalityCode: Int, assetTypeId: Int, parsedBody: JValue): Seq[SpeedLimit] ={
+  def createSpeedLimitAssets(assetTypeId: Int, parsedBody: JValue): Seq[SpeedLimit] ={
     val newSpeedLimitAssets = extractNewAssets(assetTypeId, parsedBody)
     validateSideCodes(newSpeedLimitAssets)
     newSpeedLimitAssets.foreach{
@@ -268,7 +275,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     speedLimitService.getSpeedLimitAssetsByIds(assetsIds.toSet).filterNot(_.expired)
   }
 
-  def createManoeuvreAssets(municipalityCode: Int, assetTypeId: Int, parsedBody: JValue): Seq[Manoeuvre] = {
+  def createManoeuvreAssets(assetTypeId: Int, parsedBody: JValue): Seq[Manoeuvre] = {
     val manoeuvreIds = parsedBody.extractOpt[Seq[NewManoeuvreValues]].map { x =>
       x.foreach { newAsset =>
         validateMeasuresOnLinears(Set(newAsset.startMeasure, newAsset.endMeasure.get), assetTypeId, newAsset.linkId)
@@ -421,7 +428,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     }
   }
 
-  def linearAssetToApi(linearAsset: PersistedLinearAsset, municipalityCode: Long): Map[String, Any] = {
+  def linearAssetToApi(linearAsset: PersistedLinearAsset): Map[String, Any] = {
     Map("id" -> linearAsset.id,
       "properties" -> Seq(Map("value" -> linearAsset.value.map(_.toJson), "name" -> getAssetName(linearAsset.typeId))),
       "linkId" -> linearAsset.linkId,
@@ -431,17 +438,17 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
       "modifiedAt" -> linearAsset.modifiedDateTime,
       "createdAt" -> linearAsset.createdDateTime,
       "geometryTimestamp" -> linearAsset.vvhTimeStamp,
-      "municipalityCode" -> municipalityCode
+      "municipalityCode" -> linearAsset.municipalityCode
     )
   }
 
-  def linearAssetsToApi(linearAssets: Seq[PersistedLinearAsset], municipalityCode: Long): Seq[Map[String, Any]] = {
+  def linearAssetsToApi(linearAssets: Seq[PersistedLinearAsset]): Seq[Map[String, Any]] = {
     linearAssets.map { linearAsset =>
-      linearAssetToApi(linearAsset, municipalityCode)
+      linearAssetToApi(linearAsset)
     }
   }
 
-  def speedLimitAssetToApi(speedLimit: SpeedLimit, municipalityCode: Long): Map[String, Any] = {
+  def speedLimitAssetToApi(speedLimit: SpeedLimit): Map[String, Any] = {
     Map("id" -> speedLimit.id,
       "properties" -> Seq(Map("value" -> speedLimit.value.map(_.toJson), "name" -> getAssetName( SpeedLimitAsset.typeId))),
       "linkId" -> speedLimit.linkId,
@@ -451,42 +458,37 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
       "modifiedAt" -> speedLimit.modifiedDateTime,
       "createdAt" -> speedLimit.createdDateTime,
       "geometryTimestamp" -> speedLimit.vvhTimeStamp,
-      "municipalityCode" -> municipalityCode
+      "municipalityCode" -> speedLimit.municipalityCode
     )
   }
 
-  def speedLimitAssetsToApi(speedLimits: Seq[SpeedLimit], municipalityCode: Long): Seq[Map[String, Any]] = {
+  def speedLimitAssetsToApi(speedLimits: Seq[SpeedLimit]): Seq[Map[String, Any]] = {
     speedLimits.map { speedLimit =>
-      speedLimitAssetToApi(speedLimit, municipalityCode)
+      speedLimitAssetToApi(speedLimit)
     }
   }
 
-  private def manoeuvreAssetToApi(manoeuvre: Manoeuvre, municipalityCode: Long, roadLinkOpt: Option[Seq[RoadLink]]): Map[String, Any] = {
-    val roadLink = (roadLinkOpt match {
-      case Some(roadlinks) => roadlinks.find(_.linkId == manoeuvre.elements.find(_.elementType == ElementTypes.LastElement).map(_.sourceLinkId).getOrElse(
-                              manoeuvre.elements.find(_.elementType == ElementTypes.FirstElement).map(_.sourceLinkId)).asInstanceOf[Long])
-      case _ => roadLinkService.getRoadLinkFromVVH(manoeuvre.elements.find(_.elementType == ElementTypes.LastElement).map(_.sourceLinkId).getOrElse(
-        manoeuvre.elements.find(_.elementType == ElementTypes.FirstElement).map(_.sourceLinkId)).asInstanceOf[Long])
-    }).getOrElse(halt(NotFound("Roadlink not found")))
+  private def manoeuvreAssetToApi(manoeuvre: Manoeuvre, roadLinks: Seq[RoadLink]): Map[String, Any] = {
+    val geomtry = roadLinks.find(_.linkId == manoeuvre.elements.find(_.elementType == ElementTypes.LastElement).map(_.sourceLinkId))
+      .getOrElse(halt(NotFound("Roadlink not found"))).geometry
 
+    val municipalityCode = roadLinks.find(_.linkId == manoeuvre.elements.find(_.elementType == ElementTypes.FirstElement).map(_.sourceLinkId))
+      .getOrElse(halt(NotFound("Roadlink not found"))).municipalityCode
     Map("id" -> manoeuvre.id,
       "properties" -> extractManoeuvreProperties(manoeuvre),
       "linkId" -> manoeuvre.elements.find(_.elementType == ElementTypes.FirstElement).map(_.sourceLinkId),
       "startMeasure" -> 0,
-      "endMeasure" -> GeometryUtils.geometryLength(roadLink.geometry),
+      "endMeasure" -> GeometryUtils.geometryLength(geomtry),
       "modifiedAt" -> manoeuvre.modifiedDateTime,
       "geometryTimestamp" -> convertStringToDate(manoeuvre.modifiedDateTime),
       "municipalityCode" -> municipalityCode
     )
   }
 
-
-  private def manoeuvreAssetsToApi(manoeuvres: Seq[Manoeuvre], municipalityCode: Long): Seq[Map[String, Any]] = {
-    val roadLinks = roadLinkService.getRoadsLinksFromVVH(manoeuvres.map(_.elements.find(_.elementType == ElementTypes.LastElement).map(_.sourceLinkId) ++
-      manoeuvres.map(_.elements.find(_.elementType == ElementTypes.FirstElement).map(_.sourceLinkId))).asInstanceOf[Set[Long]])
+  private def manoeuvreAssetsToApi(manoeuvres: Seq[Manoeuvre]): Seq[Map[String, Any]] = {
 
     manoeuvres.map { manoeuvre =>
-      manoeuvreAssetToApi(manoeuvre,  municipalityCode, Some(roadLinks))
+      manoeuvreAssetToApi(manoeuvre, getRoadLinksForManoeuvres(manoeuvres))
     }
   }
 
@@ -507,6 +509,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
       case "width_limit" => WidthLimit.typeId
       case "number_of_lanes" => RoadWidth.typeId
       case "pavement"  => PavedRoad.typeId
+      case "road_width" => RoadWidth.typeId
       case "public_transport_lane" => MassTransitLane.typeId
       case "manoeuvre" => Manoeuvres.typeId
       case _ => halt(NotFound("Asset type not found"))
@@ -536,6 +539,16 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
 
   private def convertStringToDate(strDate: String): Long = {
     new SimpleDateFormat("dd.MM.yyyy hh:mm:ss").parse(strDate).getTime
+  }
+
+  private def getRoadLinksForManoeuvres(manoeuvres: Seq[Manoeuvre]) : Seq[RoadLink] = {
+    val roadLinks = roadLinkService.getRoadsLinksFromVVH((manoeuvres.flatMap(_.elements.find(_.elementType == ElementTypes.LastElement).map(_.sourceLinkId)) ++
+      manoeuvres.flatMap(_.elements.find(_.elementType == ElementTypes.FirstElement).map(_.sourceLinkId))).toSet)
+
+    if (roadLinks.size < 2)
+      halt(NotFound("Roadlink not found"))
+
+    roadLinks
   }
 
   def extractPropertyValue(key: String, properties: Seq[AssetProperties], transformation: ( (String, Seq[String])=> Any)):  Any = {
@@ -608,6 +621,10 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
             if(!value.toString.forall(_.isDigit) || value <= 0)
               halt(BadRequest(s"The property values for the property with name " + AssetTypeInfo.apply(assetTypeId).label + "are not valid."))
           }
+        case RoadWidth.typeId => extractPropertyValue(getAssetName(assetTypeId), prop, propertyValueToInt).asInstanceOf[Seq[Int]].foreach { value =>
+          if(!value.toString.forall(_.isDigit) || value <= 0)
+            halt(BadRequest(s"The property values for the property with name " + AssetTypeInfo.apply(assetTypeId).label + "are not valid."))
+        }
         case NumberOfLanes.typeId => extractPropertyValue(getAssetName(assetTypeId), prop, propertyValueToInt).asInstanceOf[Seq[Int]].foreach { value =>
           if(!value.toString.forall(_.isDigit) || value <= 0)
             halt(BadRequest(s"The property values for the property with name " + AssetTypeInfo.apply(assetTypeId).label + "are not valid."))
@@ -646,53 +663,44 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
       halt(UnprocessableEntity("The geometryTimestamp of the existing asset is newer than the given asset. Asset was not updated."))
   }
 
-
-  get("/:municipalityCode/:assetType") {
-    contentType = formats("json")
-
-    if(!params.contains("municipalityCode"))
-      halt(BadRequest("Missing municipality code."))
-    val municipalityCode = params("municipalityCode").toInt
-
-    if (assetService.getMunicipalityById(municipalityCode).isEmpty)
-      halt(NotFound("Municipality code not found."))
-
-    val assetTypeId = getAssetTypeId(params("assetType"))
-
-    AssetTypeInfo.apply(assetTypeId).geometryType match {
-      case "linear" if assetTypeId == SpeedLimitAsset.typeId => speedLimitAssetsToApi(getSpeedLimitAssetsByMunicipality(municipalityCode), municipalityCode)
-      case "linear" if assetTypeId == Manoeuvres.typeId => manoeuvreAssetsToApi(manoeuvreService.getByMunicipality(municipalityCode), municipalityCode)
-      case "linear" => linearAssetsToApi(getLinearAssetsByMunicipality(municipalityCode, assetTypeId), municipalityCode)
-      case "point" => pointAssetsToApi(getPointAssetsByMunicipality(municipalityCode, assetTypeId), assetTypeId)
-      case _ =>
-    }
-  }
-
-  get("/:municipalityCode/:assetType/:assetId") {
+  get("/:assetType/:assetId") {
     contentType = formats("json")
     val assetId = params("assetId").toInt
     val assetTypeId = getAssetTypeId(params("assetType"))
-    val municipalityCode =  params.get("municipalityCode").getOrElse(halt(BadRequest("Missing municipality code."))).toInt
-
-    if(assetService.getMunicipalityById(municipalityCode).isEmpty)
-      halt(NotFound("Municipality code not found."))
 
     AssetTypeInfo.apply(assetTypeId).geometryType match {
-      case "linear" if assetTypeId == SpeedLimitAsset.typeId => speedLimitAssetToApi(getSpeedLimitAssets(assetId).head, municipalityCode)
-      case "linear" if assetTypeId == Manoeuvres.typeId => manoeuvreAssetToApi(getManoeuvreAssets(assetId).head, municipalityCode, None)
-      case "linear" => linearAssetToApi(getLinearAssets(assetTypeId, assetId).head, municipalityCode)
+      case "linear" if assetTypeId == SpeedLimitAsset.typeId => speedLimitAssetToApi(getSpeedLimitAssets(assetId).head)
+      case "linear" if assetTypeId == Manoeuvres.typeId =>
+        val manoeuvres = getManoeuvreAssets(assetId).head
+                          manoeuvreAssetToApi(manoeuvres, getRoadLinksForManoeuvres(Seq(manoeuvres)))
+      case "linear" => linearAssetToApi(getLinearAssets(assetTypeId, assetId).head)
       case "point" => pointAssetToApi(getPointAssetById(assetTypeId, assetId), assetTypeId)
       case _ =>
     }
   }
 
-  post("/:municipalityCode/:assetType") {
+  get("/:assetType") {
     contentType = formats("json")
-    val assetTypeId = getAssetTypeId(params("assetType"))
+
     val municipalityCode = params.get("municipalityCode").getOrElse(halt(BadRequest("Missing municipality code."))).toInt
 
     if (assetService.getMunicipalityById(municipalityCode).isEmpty)
       halt(NotFound("Municipality code not found."))
+
+    val assetTypeId = getAssetTypeId(params("assetType"))
+
+    AssetTypeInfo.apply(assetTypeId).geometryType match {
+      case "linear" if assetTypeId == SpeedLimitAsset.typeId => speedLimitAssetsToApi(getSpeedLimitAssetsByMunicipality(municipalityCode))
+      case "linear" if assetTypeId == Manoeuvres.typeId => manoeuvreAssetsToApi(manoeuvreService.getByMunicipality(municipalityCode))
+      case "linear" => linearAssetsToApi(getLinearAssetsByMunicipality(municipalityCode, assetTypeId))
+      case "point" => pointAssetsToApi(getPointAssetsByMunicipality(municipalityCode, assetTypeId), assetTypeId)
+      case _ =>
+    }
+  }
+
+  post("/:assetType") {
+    contentType = formats("json")
+    val assetTypeId = getAssetTypeId(params("assetType"))
 
     val body = parsedBody.extractOpt[Seq[JObject]].getOrElse(Nil)
     val linkIds = body.map(bd => (bd \ "linkId").extractOrElse[Long](halt(UnprocessableEntity("Missing mandatory 'linkId' parameter"))))
@@ -717,20 +725,16 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
       halt(BadRequest("Missing asset properties values"))
 
     AssetTypeInfo.apply(assetTypeId).geometryType match {
-      case "linear" if assetTypeId == SpeedLimitAsset.typeId => speedLimitAssetsToApi(createSpeedLimitAssets(municipalityCode, assetTypeId,  parsedBody), municipalityCode)
-      case "linear" if assetTypeId == Manoeuvres.typeId => manoeuvreAssetsToApi(createManoeuvreAssets(municipalityCode, assetTypeId,  parsedBody), municipalityCode)
-      case "linear" => linearAssetsToApi(createLinearAssets(municipalityCode, assetTypeId, parsedBody, linkIds), municipalityCode)
+      case "linear" if assetTypeId == SpeedLimitAsset.typeId => speedLimitAssetsToApi(createSpeedLimitAssets(assetTypeId, parsedBody))
+      case "linear" if assetTypeId == Manoeuvres.typeId => manoeuvreAssetsToApi(createManoeuvreAssets(assetTypeId,  parsedBody))
+      case "linear" => linearAssetsToApi(createLinearAssets(assetTypeId, parsedBody, linkIds))
       case "point" => pointAssetsToApi(createPointAssets(parsedBody, assetTypeId), assetTypeId)
       case _ =>
     }
   }
 
-  put("/:municipalityCode/:assetType/:assetId") {
+  put("/:assetType/:assetId") {
     contentType = formats("json")
-    val municipalityCode = params.get("municipalityCode").getOrElse(halt(BadRequest("Missing municipality code."))).toInt
-
-    if (assetService.getMunicipalityById(municipalityCode).isEmpty)
-      halt(NotFound("Municipality code not found."))
 
     val assetTypeId = getAssetTypeId(params("assetType"))
     val linkId = (parsedBody \ "linkId").extractOrElse[Int](halt(BadRequest("Missing mandatory 'linkId' parameter")))
@@ -751,9 +755,9 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
       halt(BadRequest("Missing asset properties values"))
 
     AssetTypeInfo.apply(assetTypeId).geometryType match {
-      case "linear" if assetTypeId ==  SpeedLimitAsset.typeId => speedLimitAssetToApi(updateSpeedLimitAsset(assetId, parsedBody, linkId), municipalityCode)
-      case "linear" if assetTypeId == Manoeuvres.typeId => manoeuvreAssetsToApi(updateManoeuvreAssets(assetId, parsedBody, linkId), municipalityCode)
-      case "linear" => linearAssetToApi(updateLinearAsset(assetTypeId, assetId, parsedBody, linkId), municipalityCode)
+      case "linear" if assetTypeId ==  SpeedLimitAsset.typeId => speedLimitAssetToApi(updateSpeedLimitAsset(assetId, parsedBody, linkId))
+      case "linear" if assetTypeId == Manoeuvres.typeId => manoeuvreAssetsToApi(updateManoeuvreAssets(assetId, parsedBody, linkId))
+      case "linear" => linearAssetToApi(updateLinearAsset(assetTypeId, assetId, parsedBody, linkId))
       case "point" => pointAssetToApi(updatePointAssets(parsedBody, assetTypeId, assetId), assetTypeId)
       case _ =>
     }

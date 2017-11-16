@@ -139,6 +139,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
             createdBy = speedLimit.createdBy, createdDateTime = speedLimit.createdDate,
             vvhTimeStamp = speedLimit.vvhTimeStamp, geomModifiedDate = speedLimit.geomModifiedDate,
             expired = speedLimit.expired,
+            municipalityCode = None,
             linkSource = roadLink.linkSource
           ),
           link = roadLink
@@ -358,6 +359,7 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
       persistedSpeedLimit.startMeasure, persistedSpeedLimit.endMeasure,
       persistedSpeedLimit.modifiedBy, persistedSpeedLimit.modifiedDate,
       persistedSpeedLimit.createdBy, persistedSpeedLimit.createdDate, persistedSpeedLimit.vvhTimeStamp, persistedSpeedLimit.geomModifiedDate,
+      municipalityCode = None,
       linkSource = persistedSpeedLimit.linkSource)
   }
 
@@ -391,7 +393,10 @@ class SpeedLimitService(eventbus: DigiroadEventBus, vvhClient: VVHClient, roadLi
   def get(municipality: Int): Seq[SpeedLimit] = {
     val (roadLinks, changes) = roadLinkServiceImplementation.getRoadLinksWithComplementaryAndChangesFromVVH(municipality)
     withDynTransaction {
-      getFilledTopologyAndRoadLinks(roadLinks, changes)._1
+      val speedLimits = getFilledTopologyAndRoadLinks(roadLinks, changes)._1
+      speedLimits.map { speedLimit =>
+        speedLimit.copy(municipalityCode = roadLinks.find(_.linkId == speedLimit.linkId).map(_.municipalityCode))
+      }
     }
   }
 
