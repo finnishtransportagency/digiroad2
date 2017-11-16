@@ -856,6 +856,51 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
     }
   }
 
+  test("Test change info on link 5622931 divided to 5622931, 5622953, 499914628 and 499914643") {
+    val n5622953Geom = Seq(Point(6734148, 332339), Point(6734173, 332309))
+    val n499914643Geom = Seq(Point(6734010, 332412), Point(6734148, 332339))
+    val n5622931Geom = Seq(Point(6733990, 332420), Point(6734010, 332412))
+    val n499914628Geom = Seq(Point(6733893, 332453), Point(6733990, 332420))
+
+    val o5622931Geom = n499914628Geom  ++ n5622931Geom ++ n499914643Geom ++ n5622953Geom
+    val o1Geom = Seq(Point(6734173, 332309-1984), Point(6734173,332309))
+
+    runWithRollback {
+      val oldAddressLinks = Seq(
+        createRoadAddressLink(Sequences.nextViitePrimaryKeySeqValue, 5622931, o5622931Geom, 2825, 3, 0, 1984, 2304, SideCode.AgainstDigitizing, Anomaly.None, false, true),
+        createRoadAddressLink(Sequences.nextViitePrimaryKeySeqValue, 1, o1Geom, 2825, 3, 0, 0, 1984, SideCode.TowardsDigitizing, Anomaly.None, true, false)
+      )
+
+      val addresses = oldAddressLinks.map(roadAddressLinkToRoadAddress(false))
+
+      val newLinks = Seq(
+        createRoadAddressLink(0, 1, o1Geom, 0, 0, 0, 0, 0, SideCode.TowardsDigitizing, Anomaly.None, false, false),
+        createRoadAddressLink(0, 499914628, n499914628Geom, 0, 0, 0, 0, 0, SideCode.TowardsDigitizing, Anomaly.None, false, false),
+        createRoadAddressLink(0, 499914643, n499914643Geom, 0, 0, 0, 0, 0, SideCode.TowardsDigitizing, Anomaly.None, false, false),
+        createRoadAddressLink(0, 5622931, n5622931Geom, 0, 0, 0, 0, 0, SideCode.TowardsDigitizing, Anomaly.None, false, false),
+        createRoadAddressLink(0, 5622953, n5622953Geom, 0, 0, 0, 0, 0, SideCode.TowardsDigitizing, Anomaly.None, false, false)
+      ).map(roadAddressLinkToRoadLink)
+      val changeTable = Seq(
+        createChangeTable(5622931, 5622931, ChangeType.DividedModifiedPart, 195.170, 216.710, 0.0, 21.541, 1476478965000L),
+        createChangeTable(5622931, 5622953, ChangeType.DividedNewPart, 0, 39.051, 0, 39.051, 1476478965000L),
+        createChangeTable(5622931, 499914628, ChangeType.DividedNewPart, 216.710, 319.170, 93.90506222, 103.78471484, 1476478965000L),
+        createChangeTable(5622931, 499914643, ChangeType.DividedNewPart, 39.051, 195.170, 0.0, 21.541, 1476478965000L)
+      )
+
+      RoadAddressDAO.create(addresses)
+      val newAddresses = roadAddressService.applyChanges(newLinks, changeTable, addresses.groupBy(_.linkId))
+      newAddresses should have size (5)
+      newAddresses(5622953).headOption.exists(_.calibrationPoints._2.nonEmpty) should be (true)
+      val flatList = newAddresses.values.flatten
+      flatList.count(_.calibrationPoints._2.nonEmpty) should be (1)
+      flatList.count(_.calibrationPoints._1.nonEmpty) should be (1)
+      flatList.count(_.startAddrMValue == 0) should be (1)
+      flatList.count(_.endAddrMValue == 2304) should be (1)
+      // Test that the range is continuous
+      flatList.flatMap(r => Seq(r.startAddrMValue, r.endAddrMValue)).filterNot(l => l == 0 || l == 2304).groupBy(l => l)
+        .values.forall(_.size == 2) should be (true)
+    }
+  }
   private def createRoadAddressLink(id: Long, linkId: Long, geom: Seq[Point], roadNumber: Long, roadPartNumber: Long, trackCode: Long,
                                     startAddressM: Long, endAddressM: Long, sideCode: SideCode, anomaly: Anomaly, startCalibrationPoint: Boolean = false,
                                     endCalibrationPoint: Boolean = false) = {
@@ -872,7 +917,7 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
   private def createChangeTable(oldId: Long, newId: Long, changeType: ChangeType, oldStart: Double, oldEnd: Double,
                                 newStart: Double, newEnd: Double, vvhTimeStamp: Long) = {
     changeType match {
-      case CombinedRemovedPart | CombinedModifiedPart | ReplacedCommonPart =>
+      case CombinedRemovedPart | CombinedModifiedPart | ReplacedCommonPart | DividedModifiedPart | DividedNewPart =>
         ChangeInfo(Some(oldId), Some(newId), newId, changeType.value, Some(oldStart), Some(oldEnd), Some(newStart),
           Some(newEnd), vvhTimeStamp)
       case ReplacedNewPart => ChangeInfo(None, Some(newId), newId, changeType.value, None, None, Some(newStart),
@@ -881,8 +926,6 @@ class RoadAddressServiceSpec extends FunSuite with Matchers{
 //      case ChangeType.Unknown =>
 //      case LenghtenedCommonPart =>
 //      case LengthenedNewPart =>
-//      case DividedModifiedPart =>
-//      case DividedNewPart =>
 //      case ShortenedCommonPart =>
 //      case ShortenedRemovedPart =>
 //      case Removed =>

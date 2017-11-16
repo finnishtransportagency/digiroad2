@@ -50,6 +50,8 @@ package object viite {
   val RampsMinBound = 20001
   val RampsMaxBound = 39999
 
+  val MaxLengthChange = 1.0
+
 
   def switchSideCode(sideCode: SideCode): SideCode = {
     // Switch between against and towards 2 -> 3, 3 -> 2
