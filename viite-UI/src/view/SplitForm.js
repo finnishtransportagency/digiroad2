@@ -314,41 +314,21 @@
         var statusDropdown_1 = $('#dropdown_1').val();
         switch (statusDropdown_0){
           case LinkStatus.Unchanged.description : {
-            if(!_.isUndefined(statusDropdown_1) && statusDropdown_1 == LinkStatus.New.description){
-              projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Unchanged.value, LinkStatus.New.value);
-            }
-            else if(_.isUndefined(statusDropdown_1)){
-              projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Unchanged.value);
-            }
+            projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Unchanged.value, LinkStatus.New.value);
             break;
           }
           case LinkStatus.New.description : {
-            if(!_.isUndefined(statusDropdown_1) && statusDropdown_1 == LinkStatus.Unchanged.description){
+            if(statusDropdown_1 == LinkStatus.Unchanged.description){
               projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), LinkStatus.New.value, LinkStatus.Unchanged.value);
             }
-
-            else if(!_.isUndefined(statusDropdown_1) && statusDropdown_1 == LinkStatus.Transfer.description){
+            else if(_.isUndefined(statusDropdown_1) || statusDropdown_1 == LinkStatus.Transfer.description){
               projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), LinkStatus.New.value, LinkStatus.Transfer.value);
-            }
-            else if(_.isUndefined(statusDropdown_1)) {
-              projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.New.value);
             }
             break;
           }
           case LinkStatus.Transfer.description : {
-            if(!_.isUndefined(statusDropdown_1) && statusDropdown_1 == LinkStatus.New.description){
-              projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Transfer.value, LinkStatus.New.value);
-            }
-            else if(_.isUndefined(statusDropdown_1)){
-              projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Transfer.value);
-            }
+            projectCollection.saveCuttedProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Transfer.value, LinkStatus.New.value);
             break;
-          }
-          case LinkStatus.Numbering.description : {
-            projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Numbering.value); break;
-          }
-          case LinkStatus.Terminated.description: {
-            projectCollection.saveProjectLinks(projectCollection.getTmpDirty(), LinkStatus.Terminated.value); break;
           }
           case LinkStatus.Revert.description : {
             var separated = _.partition(selectedProjectLink, function (link) {
