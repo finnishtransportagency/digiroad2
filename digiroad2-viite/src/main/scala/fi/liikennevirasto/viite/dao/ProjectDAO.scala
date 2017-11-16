@@ -2,6 +2,7 @@ package fi.liikennevirasto.viite.dao
 
 import java.sql.{Timestamp, Types}
 import java.util.Date
+import java.util.regex.{Matcher, Pattern}
 
 import com.github.tototoshi.slick.MySQLJodaSupport._
 import fi.liikennevirasto.digiroad2.Point
@@ -19,6 +20,8 @@ import org.joda.time.DateTime
 import slick.driver.JdbcDriver.backend.Database.dynamicSession
 import slick.jdbc.StaticQuery.interpolation
 import slick.jdbc.{GetResult, PositionedResult, StaticQuery => Q}
+
+import scala.util.control.NonFatal
 
 sealed trait ProjectState {
   def value: Int
@@ -80,7 +83,7 @@ case class ProjectLink(id: Long, roadNumber: Long, roadPartNumber: Long, track: 
                        calibrationPoints: (Option[CalibrationPoint], Option[CalibrationPoint]) = (None, None), floating: Boolean = false,
                        geometry: Seq[Point], projectId: Long, status: LinkStatus, roadType: RoadType,
                        linkGeomSource: LinkGeomSource = LinkGeomSource.NormalLinkInterface, geometryLength: Double, roadAddressId: Long,
-                       ely: Long, reversed: Boolean, connectedLinkId: Option[Long] = None)
+                       ely: Long, reversed: Boolean,  connectedLinkId: Option[Long] = None)
   extends BaseRoadAddress with PolyLine {
   lazy val startingPoint = if (sideCode == SideCode.AgainstDigitizing) geometry.last else geometry.head
   lazy val endPoint = if (sideCode == SideCode.AgainstDigitizing) geometry.head else geometry.last
@@ -97,7 +100,7 @@ object ProjectDAO {
     s"""select PROJECT_LINK.ID, PROJECT_LINK.PROJECT_ID, PROJECT_LINK.TRACK_CODE, PROJECT_LINK.DISCONTINUITY_TYPE,
   PROJECT_LINK.ROAD_NUMBER, PROJECT_LINK.ROAD_PART_NUMBER, PROJECT_LINK.START_ADDR_M, PROJECT_LINK.END_ADDR_M,
   LRM_POSITION.START_MEASURE, LRM_POSITION.END_MEASURE, LRM_POSITION.SIDE_CODE, PROJECT_LINK.LRM_POSITION_ID,
-  PROJECT_LINK.CREATED_BY, PROJECT_LINK.MODIFIED_BY, lrm_position.link_id,
+  PROJECT_LINK.CREATED_BY, PROJECT_LINK.MODIFIED_BY, lrm_position.link_id, PROJECT_LINK.GEOMETRY,
   (LRM_POSITION.END_MEASURE - LRM_POSITION.START_MEASURE) as length, PROJECT_LINK.CALIBRATION_POINTS, PROJECT_LINK.STATUS,
   PROJECT_LINK.ROAD_TYPE, LRM_POSITION.LINK_SOURCE as source, PROJECT_LINK.ROAD_ADDRESS_ID, PROJECT_LINK.ELY, PROJECT_LINK.REVERSED, PROJECT_LINK.CONNECTED_LINK_ID,
   CASE
@@ -124,6 +127,7 @@ object ProjectDAO {
       val createdBy = r.nextString()
       val modifiedBy = r.nextString()
       val linkId = r.nextLong()
+      val geom=r.nextString()
       val length = r.nextDouble()
       val calibrationPoints =
         CalibrationPointsUtils.calibrations(CalibrationCode.apply(r.nextInt), linkId, startMValue, endMValue,
@@ -139,10 +143,35 @@ object ProjectDAO {
       val endDate = r.nextDateOption().map(d => new DateTime(d.getTime))
 
       ProjectLink(projectLinkId, roadNumber, roadPartNumber, trackCode, discontinuityType, startAddrM, endAddrM, startDate, endDate,
-        None, lrmPositionId, linkId, startMValue, endMValue, sideCode, calibrationPoints, false, Seq.empty[Point], projectId,
+        None, lrmPositionId, linkId, startMValue, endMValue, sideCode, calibrationPoints, false, parseStringGeomToPoints(geom), projectId,
         status, roadType, source, length, roadAddressId, ely, reversed, connectedLinkId)
     }
   }
+
+
+  private def parseStringGeomToPoints(geomString:String): Seq[Point] = {
+    val Bracketed = """\[.*?\]""".r
+    (Bracketed findAllIn geomString).toSeq.map(row => stringCoordinatesToPoints(row)
+    )
+  }
+  def parseDouble(s: String) = {
+    try {
+      Some(s.toDouble)
+    } catch {
+      case NonFatal(e) => None
+    }
+  }
+
+  private def stringCoordinatesToPoints(stringPoint: String): Point = {
+    val coordinates = stringPoint.replace("[","").replace("]","").split(",")
+    val arrayLength = coordinates.size
+    val x = if (arrayLength > 0) parseDouble(coordinates(0)) else Some(0D)
+    val y = if (arrayLength > 1) parseDouble(coordinates(1)) else Some(0D)
+    val z = if (arrayLength > 2) parseDouble(coordinates(2)) else Some(0D)
+    Point(x.getOrElse(0), y.getOrElse(0), z.getOrElse(0))
+  }
+
+
 
   private def listQuery(query: String) = {
     Q.queryNA[ProjectLink](query).iterator.toSeq
@@ -233,6 +262,25 @@ object ProjectDAO {
     projectLinkPS.close()
   }
 
+
+  def updateProjectLinksGeometry(projectLinks: Seq[ProjectLink], modifier: String): Unit = {
+    val projectLinkPS = dynamicSession.prepareStatement("UPDATE project_link SET  GEOMETRY = ?, MODIFIED_BY= ? WHERE id = ?")
+    val lrmPS = dynamicSession.prepareStatement("UPDATE LRM_POSITION SET ADJUSTED_TIMESTAMP = ? WHERE ID = ?")
+
+    for (projectLink <- projectLinks) {
+      projectLinkPS.setString(1, projectLink.geometry.map(x => "[" + x.x + "," + x.y + "," + x.z + "]").mkString(","))
+      projectLinkPS.setString(2, modifier)
+      projectLinkPS.setLong(3, projectLink.id)
+      projectLinkPS.addBatch()
+      lrmPS.setLong(1, new Date().getTime)
+      lrmPS.setLong(2, projectLink.lrmPositionId)
+      lrmPS.addBatch()
+    }
+    projectLinkPS.executeBatch()
+    lrmPS.executeBatch()
+    lrmPS.close()
+    projectLinkPS.close()
+  }
 
   def createRoadAddressProject(roadAddressProject: RoadAddressProject): Unit = {
     sqlu"""
