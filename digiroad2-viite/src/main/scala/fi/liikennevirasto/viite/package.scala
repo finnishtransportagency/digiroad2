@@ -52,6 +52,10 @@ package object viite {
 
   val MaxLengthChange = 1.0
 
+  val DefaultScreenWidth = 1920
+  val DefaultScreenHeight = 1080
+  val Resolutions = Array(2048, 1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1, 0.5, 0.25, 0.125, 0.0625)
+
 
   def switchSideCode(sideCode: SideCode): SideCode = {
     // Switch between against and towards 2 -> 3, 3 -> 2

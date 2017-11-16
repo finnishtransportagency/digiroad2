@@ -10,7 +10,7 @@ import fi.liikennevirasto.viite.RoadType.{PublicRoad, UnknownOwnerRoad}
 import fi.liikennevirasto.viite._
 import fi.liikennevirasto.viite.dao.Discontinuity.Continuous
 import fi.liikennevirasto.viite.dao.LinkStatus.{New, NotHandled}
-import fi.liikennevirasto.viite.dao.{CalibrationPoint, Discontinuity, LinkStatus, ProjectLink}
+import fi.liikennevirasto.viite.dao._
 import org.scalatest.{FunSuite, Matchers}
 
 class ProjectLinkSplitterSpec extends FunSuite with Matchers {
@@ -139,7 +139,7 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers {
       tLen, 0L, 5, false)
     val (sl, tl) = ProjectLinkSplitter.split(suravage, template, SplitOptions(Point(15.5, 0.75), LinkStatus.UnChanged,
       LinkStatus.New, 5L, 205L, Track.Combined, Discontinuity.Continuous, 8L, LinkGeomSource.NormalLinkInterface,
-      RoadType.PublicRoad, 1L)).partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
+      RoadType.PublicRoad, 1L, ProjectCoordinates(0, 1, 1))).partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
     sl should have size (2)
     tl should have size (1)
     val terminatedLink = tl.head
@@ -174,7 +174,7 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers {
       tLen, 0L, 5, false)
     val (sl, tl) = ProjectLinkSplitter.split(suravage, template, SplitOptions(Point(15.5, 0.75), LinkStatus.New,
       LinkStatus.UnChanged, 5L, 205L, Track.Combined, Discontinuity.Continuous, 8L, LinkGeomSource.NormalLinkInterface,
-      RoadType.PublicRoad, 1L)).partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
+      RoadType.PublicRoad, 1L, ProjectCoordinates(0, 1, 1))).partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
     sl should have size (2)
     tl should have size (1)
     val terminatedLink = tl.head
@@ -203,7 +203,7 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers {
       tLen, 10L, 5,false)
     val (sl, tl) = ProjectLinkSplitter.split(suravage, template, SplitOptions(Point(15.0, 0.0), LinkStatus.New,
       LinkStatus.Transfer, 5L, 205L, Track.Combined, Discontinuity.Continuous, 8L, LinkGeomSource.NormalLinkInterface,
-      RoadType.PublicRoad, 1L)).partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
+      RoadType.PublicRoad, 1L, ProjectCoordinates(0, 1, 1))).partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
     sl should have size (2)
     tl should have size (1)
     val terminatedLink = tl.head
@@ -242,7 +242,7 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers {
       tLen, 0L, 9L, false, None)
     val (sl, tl) = ProjectLinkSplitter.split(suravage, template, SplitOptions(Point(480463.941, 7059214.747), LinkStatus.UnChanged,
       LinkStatus.New, 27L, 22L, Track.Combined, Discontinuity.Continuous, 8L, LinkGeomSource.NormalLinkInterface,
-      RoadType.PublicRoad, 1L)).partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
+      RoadType.PublicRoad, 1L, ProjectCoordinates(0, 1, 1))).partition(_.linkGeomSource == LinkGeomSource.SuravageLinkInterface)
     sl should have size (1)
     tl should have size (1)
     val terminatedLink = tl.head
@@ -261,7 +261,7 @@ class ProjectLinkSplitterSpec extends FunSuite with Matchers {
     val splitOptions = SplitOptions(
       Point(445447.5,7004165.0,0.0),
       LinkStatus.UnChanged, LinkStatus.New, 77, 1, Combined, Continuous, 8L, SuravageLinkInterface,
-      RoadType.PublicRoad, 1)
+      RoadType.PublicRoad, 1, ProjectCoordinates(0, 1, 1))
     val template = ProjectLink(452342,77,14,Combined,Continuous,4286,4612,None,None,None,70452502,6138625,0.0,327.138,TowardsDigitizing,
       (None,Some(CalibrationPoint(6138625,327.138,4612))),false,List(Point(445417.266,7004142.049,0.0), Point(445420.674,7004144.679,0.0),
         Point(445436.147,7004155.708,0.0), Point(445448.743,7004164.052,0.0), Point(445461.586,7004172.012,0.0),

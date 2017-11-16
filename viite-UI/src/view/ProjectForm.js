@@ -1,5 +1,5 @@
 (function (root) {
-  root.ProjectForm = function (projectCollection, selectedProjectLinkProperty, projectLinkLayer) {
+  root.ProjectForm = function (map, projectCollection, selectedProjectLinkProperty, projectLinkLayer) {
     var currentProject = false;
     var selectedProjectLink = false;
     var activeLayer = false;
@@ -212,9 +212,9 @@
         var data = $('#roadAddressProject').get(0);
         if (_.isUndefined(currentProject) || currentProject.id === 0) {
           projectCollection.setDirtyRoadParts(projectCollection.getReservedDirtyRoadParts());
-          projectCollection.createProject(data);
+          projectCollection.createProject(data, map.getView().getResolution());
         } else {
-          projectCollection.saveProject(data);
+          projectCollection.saveProject(data, map.getView().getResolution());
         }
       };
 
@@ -240,7 +240,7 @@
           jQuery('.modal-overlay').remove();
           addDatePicker();
           if (!_.isUndefined(result.projectAddresses)) {
-            eventbus.trigger('linkProperties:selectedProject', result.projectAddresses.linkId, result.project.id);
+            eventbus.trigger('linkProperties:selectedProject', result.projectAddresses.linkId, result.project);
           }
           selectedProjectLinkProperty.setDirty(false);
           eventbus.trigger('roadAddressProject:toggleEditingRoad', true);
@@ -268,7 +268,7 @@
           disabledInput = !_.isUndefined(currentProject) && currentProject.statusCode === ProjectStatus.ErroredInTR.value;
           jQuery('.modal-overlay').remove();
           if (!_.isUndefined(result.projectAddresses)) {
-            eventbus.trigger('linkProperties:selectedProject', result.projectAddresses, result.project.id);
+            eventbus.trigger('linkProperties:selectedProject', result.projectAddresses, result.project);
           }
           eventbus.trigger('roadAddressProject:openProject', result.project);
           rootElement.html(selectedProjectLinkTemplate(currentProject));
@@ -347,7 +347,7 @@
         setTimeout(function () {
         }, 0);
         if (!_.isUndefined(currentProject))
-          eventbus.trigger('linkProperties:selectedProject', result.linkId, result.project.id);
+          eventbus.trigger('linkProperties:selectedProject', result.linkId, result.project);
         applicationModel.setProjectButton(true);
         applicationModel.setProjectFeature(currentProject.id);
         applicationModel.setOpenProject(true);
