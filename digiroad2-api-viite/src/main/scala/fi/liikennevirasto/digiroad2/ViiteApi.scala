@@ -487,7 +487,7 @@ class ViiteApi(val roadLinkService: RoadLinkService, val vVHClient: VVHClient,
           val options = parsedBody.extract[SplitOptions]
           val writableProject = projectWritable(options.projectId)
           val splitError = writableProject.splitSuravageLink(link, user.username, options)
-          Map("success" -> splitError.isEmpty, "reason" -> splitError)
+          Map("success" -> splitError.isEmpty)
         } catch {
           case e: IllegalStateException => Map("success" -> false, "errorMessage" -> e.getMessage)
           case _: NumberFormatException => BadRequest("Missing mandatory data")
