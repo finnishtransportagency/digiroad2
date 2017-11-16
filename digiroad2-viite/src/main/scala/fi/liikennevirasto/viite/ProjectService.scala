@@ -528,17 +528,17 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
   }
 
   def splitSuravageLink(linkId: Long, username: String,
-                        splitOptions: SplitOptions): Option[String] = {
+                        splitOptions: SplitOptions): Seq[ProjectLink] = {
     withDynSession {
       splitSuravageLinkInTX(linkId, username, splitOptions)
     }
   }
 
   def splitSuravageLinkInTX(linkId: Long, username: String,
-                            splitOptions: SplitOptions): Option[String] = {
+                            splitOptions: SplitOptions): Seq[ProjectLink] = {
     val sOption = getProjectSuravageRoadLinksByLinkIds(Set(Math.abs(linkId))).headOption
     if (sOption.isEmpty) {
-      Some(ErrorSuravageLinkNotFound)
+      throw new RuntimeException(ErrorSuravageLinkNotFound)
     } else {
       val projectId = splitOptions.projectId
       val previousSplit = ProjectDAO.fetchSplitLinks(projectId, linkId)
@@ -563,17 +563,19 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
         x -> ProjectLinkSplitter.findMatchingGeometrySegment(suravageLink, x).map(GeometryUtils.geometryLength)
           .getOrElse(0.0)).filter(_._2 > MinAllowedRoadAddressLength)
       if (commonSections.isEmpty)
-        Some(ErrorNoMatchingProjectLinkForSplit)
+        throw new RuntimeException(ErrorNoMatchingProjectLinkForSplit)
       else {
         val bestFit = commonSections.maxBy(_._2)._1
         val project = ProjectDAO.getRoadAddressProjectById(projectId).get
         val splitLinks = ProjectLinkSplitter.split(newProjectLink(suravageProjectLink, project, SideCode.TowardsDigitizing,
           Track.Unknown.value, 0L, 0L, 0, RoadType.Unknown.value, projectId), bestFit, splitOptions)
-        ProjectDAO.removeProjectLinksByLinkId(projectId, splitLinks.map(_.linkId).toSet)
-        ProjectDAO.create(splitLinks.map(x => x.copy(modifiedBy = Some(username))))
-        ProjectDAO.updateProjectCoordinates(projectId, splitOptions.coordinates)
+        if (!splitOptions.isPreview){
+          ProjectDAO.removeProjectLinksByLinkId(projectId, splitLinks.map(_.linkId).toSet)
+          ProjectDAO.create(splitLinks.map(x => x.copy(modifiedBy = Some(username))))
+          ProjectDAO.updateProjectCoordinates(projectId, splitOptions.coordinates)
+        }
         recalculateProjectLinks(project.id, username, Set((splitOptions.roadNumber, splitOptions.roadPartNumber)))
-        None
+        splitLinks
       }
     }
 
