@@ -109,7 +109,10 @@ object ProjectLinkSplitter {
       if (isReversed)
         movedFromStart(suravageM, templateM, splitAddressM)
       else
-        movedFromEnd(suravageM, templateM, splitAddressM)
+        if(isTailConnected(suravage, templateLink))
+          movedFromEnd(suravageM, templateM, splitAddressM)
+        else
+          movedFromStart(suravageM, templateM, splitAddressM)
     if (isDirectionReversed(suravage, templateLink))
       toSeq(switchDigitization(splits))
     else
