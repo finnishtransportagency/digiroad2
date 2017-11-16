@@ -132,6 +132,12 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     };
   }
 
+  var pointTool = new PointerTool(eventListener, assetLayer, selectControl, roadCollection, {
+    style : function(feature) {
+      return massTransitStopLayerStyles.default.getStyle(feature, {zoomLevel: zoomlevels.isInRoadLinkZoomLevel(map.getView().getZoom())});
+    }
+  });
+
   roadLayer.setLayerSpecificStyleProvider('massTransitStop', function() {
     return massTransitStopLayerStyles;
   });
@@ -588,6 +594,10 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
 
   var toolSelectionChange = function(action) {
     selectedControl = action;
+    if ((selectedControl === 'Add' || selectedControl === 'AddTerminal') && zoomlevels.isInRoadLinkZoomLevel(map.getView().getZoom()))
+      pointTool.activate();
+    else
+      pointTool.deactivate();
   };
 
   var createNewUIAssets = function(backendAssetGroups) {
