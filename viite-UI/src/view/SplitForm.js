@@ -144,11 +144,17 @@
           '<span class="marker">'+markers[0]+'</span>'+
           dropdownOption(0, selected) +
           '<hr class="horizontal-line"/>' +
-          '<label>Toimenpiteet,' + selection[1]  + '</label>' +
-          '<span class="marker">'+markers[1]+'</span>' +
-          dropdownOption(1, selected)+
-        formCommon.newRoadAddressInfo(selected, selectedProjectLink[0]) +
+          secondPartForm(selection[1], selected) +
+          formCommon.newRoadAddressInfo(selected, selectedProjectLink[0]) +
           '</form>';
+    };
+
+    var secondPartForm = function(selection, selected){
+      if (selected[1].endMValue !== selected[1].startMValue) {
+        return '<label>Toimenpiteet,' + selection  + '</label>' +
+          '<span class="marker">'+markers[1]+'</span>' +
+          dropdownOption(1, selected);
+      } else return '';
     };
 
     var dropdownOption = function (index, selected) {
