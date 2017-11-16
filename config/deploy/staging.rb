@@ -11,5 +11,5 @@ namespace :deploy do
     end
   end
 
-  after :published, :start_vallu_server
+  after :finishing, :start_vallu_server
 end
