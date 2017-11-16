@@ -286,8 +286,9 @@ class RoadAddressService(roadLinkService: RoadLinkService, eventbus: DigiroadEve
         val adjustedRoadParts = changedRoadParts.flatMap(r => r._2.map(p => r._1 -> p)).toSeq.filter { x =>
           recalculateRoadAddresses(x._1, x._2)}
         // re-fetch after recalculation
-        adjustedRoadParts.flatMap { case (road, part) => RoadAddressDAO.fetchByRoadPart(road, part) }.groupBy(_.linkId) ++ unchanged.filterNot(ra =>
-          adjustedRoadParts.contains((ra.roadNumber, ra.roadPartNumber))).groupBy(_.linkId)
+        val adjustedAddresses = adjustedRoadParts.flatMap { case (road, part) => RoadAddressDAO.fetchByRoadPart(road, part) }
+
+        (adjustedAddresses ++ RoadAddressDAO.fetchByIdMassQuery(ids -- adjustedAddresses.map(_.id).toSet, true, true)).groupBy(_.linkId)
       }
   }
 
