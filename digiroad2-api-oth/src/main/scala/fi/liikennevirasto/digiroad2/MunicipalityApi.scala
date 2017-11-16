@@ -161,7 +161,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     val oldAsset = usedService.getPersistedAssetsByIds(assetTypeId, Set(assetId.toLong)).filterNot(_.expired).headOption.
       getOrElse(halt(UnprocessableEntity("Asset not found.")))
     val newAsset = extractLinearAssets(assetTypeId, parsedBody)
-    validateMeasures(Set(newAsset.startMeasure, newAsset.endMeasure), assetTypeId, linkId)
+    validateMeasuresOnLinears(Set(newAsset.startMeasure, newAsset.endMeasure), assetTypeId, linkId)
     validateSideCodes(Seq(newAsset))
     validateTimeststamp(newAsset.vvhTimeStamp, oldAsset.vvhTimeStamp)
 
@@ -192,6 +192,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     }
 
     asset.map { value =>
+      validateMeasures(Set(value.mValue), typeId, value.linkId)
       roadLinkService.getRoadLinkAndComplementaryFromVVH(value.linkId) match {
         case Some(link) => service.toIncomingAsset(value, link).map {
           pointAsset =>
@@ -208,7 +209,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
       .getOrElse(halt(UnprocessableEntity("Asset not found.")))
 
     val newAsset = extractLinearAssets(SpeedLimitAsset.typeId, parsedBody)
-    validateMeasures(Set(newAsset.startMeasure, newAsset.endMeasure), SpeedLimitAsset.typeId, linkId)
+    validateMeasuresOnLinears(Set(newAsset.startMeasure, newAsset.endMeasure), SpeedLimitAsset.typeId, linkId)
     validateSideCodes(Seq(newAsset))
     validateTimeststamp(newAsset.vvhTimeStamp, oldAsset.vvhTimeStamp)
 
@@ -223,7 +224,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     val oldAsset = manoeuvreService.find(assetId).getOrElse(halt(UnprocessableEntity("Asset not found.")))
     parsedBody.extractOpt[NewManoeuvreValues].foreach { manoeuvre =>
 
-      validateMeasures(Set(manoeuvre.startMeasure, manoeuvre.endMeasure.get), Manoeuvres.typeId, linkId)
+      validateMeasuresOnLinears(Set(manoeuvre.startMeasure, manoeuvre.endMeasure.get), Manoeuvres.typeId, linkId)
 
       validateTimeststamp(manoeuvre.geometryTimestamp.getOrElse(halt(NotFound("geometryTimestamp not found"))), convertStringToDate(oldAsset.modifiedDateTime))
 
@@ -248,7 +249,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     val newLinearAssets = extractNewAssets(assetTypeId, parsedBody)
     validateSideCodes(newLinearAssets)
     newLinearAssets.foreach{
-      newAsset => validateMeasures(Set(newAsset.startMeasure, newAsset.endMeasure), assetTypeId, newAsset.linkId)
+      newAsset => validateMeasuresOnLinears(Set(newAsset.startMeasure, newAsset.endMeasure), assetTypeId, newAsset.linkId)
     }
     val assetsIds = usedService.create(newLinearAssets, assetTypeId, user.username)
     Some(usedService.getPersistedAssetsByIds(assetTypeId, assetsIds.toSet).filterNot(_.expired)) match {
@@ -261,7 +262,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
     val newSpeedLimitAssets = extractNewAssets(assetTypeId, parsedBody)
     validateSideCodes(newSpeedLimitAssets)
     newSpeedLimitAssets.foreach{
-      newAsset => validateMeasures(Set(newAsset.startMeasure, newAsset.endMeasure), assetTypeId, newAsset.linkId)
+      newAsset => validateMeasuresOnLinears(Set(newAsset.startMeasure, newAsset.endMeasure), assetTypeId, newAsset.linkId)
     }
     val assetsIds = speedLimitService.create(newSpeedLimitAssets, assetTypeId, user.username, 0, _ => Unit)
     speedLimitService.getSpeedLimitAssetsByIds(assetsIds.toSet).filterNot(_.expired)
@@ -270,7 +271,7 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
   def createManoeuvreAssets(municipalityCode: Int, assetTypeId: Int, parsedBody: JValue): Seq[Manoeuvre] = {
     val manoeuvreIds = parsedBody.extractOpt[Seq[NewManoeuvreValues]].map { x =>
       x.foreach { newAsset =>
-        validateMeasures(Set(newAsset.startMeasure, newAsset.endMeasure.get), assetTypeId, newAsset.linkId)
+        validateMeasuresOnLinears(Set(newAsset.startMeasure, newAsset.endMeasure.get), assetTypeId, newAsset.linkId)
       }
 
       x.map {asset =>
@@ -629,11 +630,15 @@ class MunicipalityApi(val onOffLinearAssetService: OnOffLinearAssetService,
       )
   }
 
+  def validateMeasuresOnLinears(measure: Set[Double], typeId: Int, linkId: Long): Unit = {
+    validateMeasures(measure, typeId, linkId)
+    if(measure.head == measure.last)halt(UnprocessableEntity("The start and end measure should not be equal for a linear asset."))
+  }
+
   def validateMeasures(measure: Set[Double], typeId: Int, linkId: Long): Unit = {
     val roadGeometry = roadLinkService.getRoadLinkGeometry(linkId).getOrElse(halt(UnprocessableEntity("Link id is not valid or doesn't exist.")))
     val roadLength = GeometryUtils.geometryLength(roadGeometry)
     measure.foreach( m => if(m < 0 || m > roadLength) halt(UnprocessableEntity("The measure can not be less than 0 and greater than the length of the road. ")))
-    if(measure.head == measure.last)halt(UnprocessableEntity("The start and end measure should not be equal for a linear asset."))
   }
 
   def validateTimeststamp(newAssetVvhTimeStamp: Long, oldAssetVvhTimeStamp: Long) = {
