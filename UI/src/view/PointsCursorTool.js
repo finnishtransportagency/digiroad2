@@ -1,5 +1,5 @@
 (function(root) {
-  root.PointerTool = function (eventListener, vectorLayer, selectControl, roadCollection, options) {
+  root.PointsCursorTool = function (eventListener, vectorLayer, selectControl, roadCollection, options) {
 
     var settings = _.extend({
       style: function(){}

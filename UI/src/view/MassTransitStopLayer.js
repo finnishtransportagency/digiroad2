@@ -132,7 +132,7 @@ window.MassTransitStopLayer = function(map, roadCollection, mapOverlay, assetGro
     };
   }
 
-  var pointTool = new PointerTool(eventListener, assetLayer, selectControl, roadCollection, {
+  var pointTool = new PointsCursorTool(eventListener, assetLayer, selectControl, roadCollection, {
     style : function(feature) {
       return massTransitStopLayerStyles.default.getStyle(feature, {zoomLevel: zoomlevels.isInRoadLinkZoomLevel(map.getView().getZoom())});
     }
