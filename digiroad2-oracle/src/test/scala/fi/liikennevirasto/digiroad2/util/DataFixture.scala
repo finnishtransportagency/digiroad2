@@ -954,12 +954,13 @@ object DataFixture {
         println("Expired assets -> " + expiredAssetsIds.size)
 
         val newAssets = changedAssets.flatMap {
-          case (roadLink, changeInfo, assets) =>
-            val roadlinkLength = GeometryUtils.geometryLength(roadLink.geometry)
+          case (roadLink, changeInfo, allAssets) =>
+            val assets = allAssets.filterNot(asset => expiredAssetsIds.contains(asset.id))
+            val roadLinkLength = GeometryUtils.geometryLength(roadLink.geometry)
             val measures = (assets.map(_.startMeasure) ++ assets.map(_.endMeasure) ++  Seq(minOfLength)).distinct.sorted
 
-            val pointsOfInterest = if(roadlinkLength - measures.last > maxAllowedError)
-              measures ++ Seq(roadlinkLength)
+            val pointsOfInterest = if(roadLinkLength - measures.last > maxAllowedError)
+              measures ++ Seq(roadLinkLength)
             else
               measures
 
@@ -969,7 +970,7 @@ object DataFixture {
               Some(PersistedLinearAsset(0L, roadLink.linkId, SideCode.BothDirections.value, Some(NumericValue(roadLink.extractMTKClass(roadLink.attributes).width)),
                 measures._1, measures._2, Some("vvh_mtkclass_default"), None, None, None, false, roadWidthAssetTypeId, changeInfo.vvhTimeStamp, None, linkSource = roadLink.linkSource))
             }.filterNot(a =>
-              assets.filterNot(asset => expiredAssetsIds.contains(asset.id)).
+              assets.
               exists(asset => math.abs(a.startMeasure - asset.startMeasure) < maxAllowedError && math.abs(a.endMeasure - asset.endMeasure) < maxAllowedError)
             )
         }
