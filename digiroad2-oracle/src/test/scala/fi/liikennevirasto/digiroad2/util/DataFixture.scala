@@ -14,7 +14,7 @@ import fi.liikennevirasto.digiroad2.oracle.OracleDatabase._
 import fi.liikennevirasto.digiroad2.pointasset.oracle.Obstacle
 import fi.liikennevirasto.digiroad2.roadaddress.oracle.RoadAddressDAO
 import fi.liikennevirasto.digiroad2.util.AssetDataImporter.Conversion
-import fi.liikennevirasto.digiroad2.{MassTransitStopService, _}
+import fi.liikennevirasto.digiroad2.{MassTransitStopService, asset, _}
 import org.apache.http.impl.client.HttpClientBuilder
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
@@ -948,7 +948,10 @@ object DataFixture {
 
         val expiredAssetsIds = changedAssets.flatMap {
           case (_, changeInfo, assets) =>
-            assets.filter(asset => asset.vvhTimeStamp <= changeInfo.vvhTimeStamp && asset.createdBy.contains("vvh_mtkclass_default")).map(_.id)
+            assets.filter(asset =>
+              asset.createdBy.contains("dr1_conversion") ||
+              (asset.vvhTimeStamp < changeInfo.vvhTimeStamp && asset.createdBy.contains("vvh_mtkclass_default"))
+            ).map(_.id)
         }.toSet
 
         println("Expired assets -> " + expiredAssetsIds.size)
