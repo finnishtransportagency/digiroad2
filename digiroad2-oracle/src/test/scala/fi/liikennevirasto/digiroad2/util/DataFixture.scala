@@ -948,14 +948,20 @@ object DataFixture {
 
         val expiredAssetsIds = changedAssets.flatMap {
           case (_, changeInfo, assets) =>
-            assets.filter(asset => asset.vvhTimeStamp < changeInfo.vvhTimeStamp && asset.createdBy.contains("vvh_mtkclass_default")).map(_.id)
+            assets.filter(asset => asset.vvhTimeStamp <= changeInfo.vvhTimeStamp && asset.createdBy.contains("vvh_mtkclass_default")).map(_.id)
         }.toSet
 
         println("Expired assets -> " + expiredAssetsIds.size)
 
         val newAssets = changedAssets.flatMap {
           case (roadLink, changeInfo, assets) =>
-            val pointsOfInterest = (assets.map(_.startMeasure) ++ assets.map(_.endMeasure) ++  Seq(minOfLength, GeometryUtils.geometryLength(roadLink.geometry))).distinct.sorted
+            val roadlinkLength = GeometryUtils.geometryLength(roadLink.geometry)
+            val measures = (assets.map(_.startMeasure) ++ assets.map(_.endMeasure) ++  Seq(minOfLength)).distinct.sorted
+
+            val pointsOfInterest = if(roadlinkLength - measures.last > maxAllowedError)
+              measures ++ Seq(roadlinkLength)
+            else
+              measures
 
             //Not create asset with the length less MinAllowedLength
             val pieces = pointsOfInterest.zip(pointsOfInterest.tail).filterNot{piece => (piece._2 - piece._1) < minAllowedLength}
