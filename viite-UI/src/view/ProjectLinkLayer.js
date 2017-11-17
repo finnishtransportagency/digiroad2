@@ -679,7 +679,8 @@
         if (!_.isUndefined(nearestSuravage.connectedLinkId)) {
           nearest.feature.geometry = pointsToLineString(nearestSuravage.originalGeometry);
         }
-        selectedProjectLinkProperty.splitSuravageLink(nearestSuravage, splitProperties, mousePoint);
+        // selectedProjectLinkProperty.splitSuravageLink(nearestSuravage, splitProperties, mousePoint);
+        selectedProjectLinkProperty.preSplitSuravageLink(nearestSuravage, mousePoint);
         projectCollection.setTmpDirty([nearest.feature.projectLinkData]);
       };
     };
