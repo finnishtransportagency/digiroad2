@@ -632,9 +632,9 @@ class ProjectService(roadAddressService: RoadAddressService, roadLinkService: Ro
       val projectLinks= if(onlyNotHandled) ProjectDAO.getProjectLinks(projectId).filter(x=>x.status==LinkStatus.UnChanged) else ProjectDAO.getProjectLinks(projectId)
       val normalcomplimentaryProjectLinks= roadLinkService.getCurrentAndComplementaryVVHRoadLinks(projectLinks.filter(x=>x.linkGeomSource==LinkGeomSource.NormalLinkInterface
         || x.linkGeomSource==LinkGeomSource.FrozenLinkInterface || x.linkGeomSource==LinkGeomSource.ComplimentaryLinkInterface).map(x=>x.linkId).toSet)
-      val suravageLinks=roadLinkService.fetchSuravageLinksByLinkIdsFromVVH(projectLinks.filter(x=>x.linkGeomSource==LinkGeomSource).map(x=>x.linkId).toSet)
+      val suravageLinks=roadLinkService.fetchSuravageLinksByLinkIdsFromVVH(projectLinks.filter(x=>x.linkGeomSource==LinkGeomSource.SuravageLinkInterface).map(x=>x.linkId).toSet)
       val vvhLinks=normalcomplimentaryProjectLinks++suravageLinks
-      val updatedProjectLinks=projectLinks.map(pl=>pl.copy(geometry=vvhLinks.filter(vvhLink=>vvhLink.linkId==pl.linkId).headOption match {
+      val updatedProjectLinks=projectLinks.map(pl=>pl.copy(geometry=vvhLinks.find(vvhLink=>vvhLink.linkId==pl.linkId) match {
         case Some(geom) => geom.geometry
         case None => println("test")
           Seq.empty[Point]
