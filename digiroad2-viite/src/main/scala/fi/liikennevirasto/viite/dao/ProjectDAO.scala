@@ -488,6 +488,13 @@ object ProjectDAO {
     Q.updateNA(sql).execute
   }
 
+  def updateProjectLinkNumberingAndTrack(projectId: Long, projectLinkIds: Seq[Long], newRoadNumber: Long, newRoadPart: Long, newTrackCode:Long, userName: String ): Unit ={
+    val user = userName.replaceAll("[^A-Za-z0-9\\-]+", "")
+    val sql = s"UPDATE PROJECT_LINK SET MODIFIED_BY='$user', ROAD_NUMBER = $newRoadNumber, ROAD_PART_NUMBER = $newRoadPart, TRACK_CODE= $newTrackCode " +
+      s"WHERE PROJECT_ID = $projectId AND  ID IN ${projectLinkIds.mkString("(", ",", ")")}  AND STATUS != ${LinkStatus.Terminated.value}"
+    Q.updateNA(sql).execute
+  }
+
   def updateProjectLinkRoadTypeDiscontinuity(projectLinkIds: Set[Long], linkStatus: LinkStatus, userName: String, roadType: Long, discontinuity: Option[Long]): Unit = {
     val user = userName.replaceAll("[^A-Za-z0-9\\-]+", "")
     if (discontinuity.isEmpty) {
