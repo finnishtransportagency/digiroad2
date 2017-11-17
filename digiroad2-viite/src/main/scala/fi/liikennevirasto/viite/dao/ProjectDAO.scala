@@ -127,7 +127,7 @@ object ProjectDAO {
       val createdBy = r.nextString()
       val modifiedBy = r.nextString()
       val linkId = r.nextLong()
-      val geom=r.nextString()
+      val geom=r.nextStringOption()
       val length = r.nextDouble()
       val calibrationPoints =
         CalibrationPointsUtils.calibrations(CalibrationCode.apply(r.nextInt), linkId, startMValue, endMValue,
@@ -149,10 +149,12 @@ object ProjectDAO {
   }
 
 
-  private def parseStringGeomToPoints(geomString:String): Seq[Point] = {
+  private def parseStringGeomToPoints(geomString:Option[String]): Seq[Point] = {
     val Bracketed = """\[.*?\]""".r
-    (Bracketed findAllIn geomString).toSeq.map(row => stringCoordinatesToPoints(row)
-    )
+    geomString match{
+      case Some(geomAsString)=>(Bracketed findAllIn geomAsString).toSeq.map(row => stringCoordinatesToPoints(row))
+      case _=> Seq.empty[Point]
+    }
   }
   def parseDouble(s: String) = {
     try {
@@ -163,11 +165,11 @@ object ProjectDAO {
   }
 
   private def stringCoordinatesToPoints(stringPoint: String): Point = {
-    val coordinates = stringPoint.replace("[","").replace("]","").split(",")
-    val arrayLength = coordinates.size
-    val x = if (arrayLength > 0) parseDouble(coordinates(0)) else Some(0D)
-    val y = if (arrayLength > 1) parseDouble(coordinates(1)) else Some(0D)
-    val z = if (arrayLength > 2) parseDouble(coordinates(2)) else Some(0D)
+    val coordinates = stringPoint.drop(1).dropRight(1).split(",")//removes brackets and splits values with ','
+    val coordinateListSize = coordinates.size
+    val x = if (coordinateListSize > 0) parseDouble(coordinates(0)) else Some(0D)
+    val y = if (coordinateListSize > 1) parseDouble(coordinates(1)) else Some(0D)
+    val z = if (coordinateListSize > 2) parseDouble(coordinates(2)) else Some(0D)
     Point(x.getOrElse(0), y.getOrElse(0), z.getOrElse(0))
   }
 
